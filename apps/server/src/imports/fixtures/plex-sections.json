@@ -1,0 +1,30 @@
+{
+  "MediaContainer": {
+    "size": 3,
+    "Directory": [
+      {
+        "key": "1",
+        "title": "Films",
+        "type": "movie",
+        "agent": "tv.plex.agents.movie",
+        "scanner": "Plex Movie",
+        "language": "en-US",
+        "uuid": "u1",
+        "Location": [{ "id": 1, "path": "/media/films" }]
+      },
+      {
+        "key": "2",
+        "title": "TV",
+        "type": "show",
+        "agent": "tv.plex.agents.series",
+        "Location": [{ "id": 2, "path": "/media/tv" }]
+      },
+      {
+        "key": "3",
+        "title": "Pictures",
+        "type": "photo",
+        "Location": [{ "id": 3, "path": "/media/photos" }]
+      }
+    ]
+  }
+}

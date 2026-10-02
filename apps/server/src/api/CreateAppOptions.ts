@@ -1,5 +1,11 @@
+import type { ImportService } from '@ValenceServer/imports/createImportService';
+import type { ImportedAccount } from '@ValenceServer/arrImport/ImportedAccount';
 import type { PreTranscodingService } from '@ValenceServer/preTranscoding/PreTranscodingService';
-import type { AccountCreation } from '@ValenceServer/auth/createAccount';
+import type { SetupLinkService } from '@ValenceServer/accounts/setupLinks/SetupLinkService';
+import type {
+  AccountWithoutPasswordOutcome,
+  AccountWithoutPasswordRequest,
+} from '@ValenceServer/accounts/createAccountWithoutPassword';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type {
   QueueControl,
@@ -58,9 +64,11 @@ import type { ResourceHistoryStore } from '@ValenceServer/logging/createResource
 import type { HistoryService } from '@ValenceServer/history/HistoryService';
 import type { VideoDevices } from '@ValenceServer/video/createVideoDevices';
 import type { MusicServices } from '@ValenceServer/music/MusicServices';
+import type { CollectionService } from '@ValenceServer/collections/CollectionService';
 import type { ReencodeService } from '@ValenceServer/reencode/ReencodeService';
 import type { PluginService } from '@ValenceServer/plugins/service/createPluginService';
 import type { PluginHost } from '@ValenceServer/plugins/broker/PluginHost';
+import type { EmailService } from '@ValenceServer/email/EmailService';
 
 type ArtefactCount = { count: number; bytes: number };
 
@@ -97,15 +105,14 @@ type CreateAppOptions = {
   unbanAccount?: (userId: string) => Promise<boolean>;
   removeAccount?: (userId: string) => Promise<boolean>;
   isAccountBanned?: (userId: string) => Promise<boolean>;
-  inviteAccount?: (request: {
-    name: string;
-    email: string;
-    password: string;
-  }) => Promise<AccountCreation>;
   editAccount?: (
     userId: string,
-    changes: { name?: string; email?: string },
-  ) => Promise<'changed' | 'missing' | 'taken'>;
+    changes: { name?: string; email?: string | null; username?: string },
+  ) => Promise<'changed' | 'missing' | 'taken' | 'usernameTaken'>;
+  setupLinks?: SetupLinkService;
+  createAccountWithoutPassword?: (
+    request: AccountWithoutPasswordRequest,
+  ) => Promise<AccountWithoutPasswordOutcome>;
   readBanReason?: (userId: string) => Promise<string | null>;
   resetAccountPassword?: (userId: string, password: string) => Promise<boolean>;
   listAccountSessions?: (userId: string) => Promise<
@@ -146,6 +153,7 @@ type CreateAppOptions = {
   books?: BookService;
   streamBookFile?: (path: string, range: string | null) => Promise<TranscoderStreamedFile | null>;
   music?: MusicServices;
+  collections?: CollectionService;
   videoDevices?: VideoDevices;
   bookDevices?: BookDevices;
   reencodes?: ReencodeService;
@@ -162,7 +170,16 @@ type CreateAppOptions = {
     | { kind: 'failed' }
   >;
   listUsers?: () => Promise<
-    { id: string; name: string; email: string; role: string | null; createdAt: string }[]
+    {
+      id: string;
+      name: string;
+      email: string;
+      role: string | null;
+      createdAt: string;
+      username?: string | null;
+      canSignIn?: boolean;
+      lastSignedInAt?: string | null;
+    }[]
   >;
   capabilities?: () => Promise<{
     ffmpegVersion: string;
@@ -200,6 +217,7 @@ type CreateAppOptions = {
   searchCatalogue?: (query: string, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;
   describeForRequest?: (tmdbId: number, kind: VideoRequestKind) => Promise<RequestCatalogue | null>;
   seriesOfTvdbId?: (tvdbId: number) => Promise<number | null>;
+  importedAccounts?: () => Promise<ImportedAccount[]>;
   describeMusicForRequest?: (
     musicBrainzId: string,
     kind: MusicRequestKind,
@@ -213,6 +231,9 @@ type CreateAppOptions = {
   resourceHistory?: ResourceHistoryStore;
   events?: EventBus;
   plugins?: (requests: PluginHost['requests']) => PluginService;
+  imports?: ImportService;
+  email?: EmailService;
+  requestPasswordReset?: (identifier: string, redirectTo: string) => Promise<void>;
   sayALinkWasWithdrawn?: (told: {
     accountId: string;
     title: string;

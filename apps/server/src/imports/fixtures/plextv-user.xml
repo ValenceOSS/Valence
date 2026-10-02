@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<user id="1111" uuid="owner-uuid" username="lee" email="lee@example.test" title="Lee &amp; Co" thumb="https://plex.tv/users/owner-uuid/avatar?c=1" hasPassword="1" protected="0" home="1">
+  <subscription active="1" status="Active"/>
+</user>

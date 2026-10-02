@@ -6,6 +6,7 @@ import { motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { TabPanel } from '@ValenceUI/TabPanel';
 import { SettingsPanel } from './components/SettingsPanel/SettingsPanel';
+import { EmailCard } from './components/EmailCard/EmailCard';
 import { ActivityPanel } from './components/ActivityPanel/ActivityPanel';
 import { ObservabilityPage } from '@ValenceScreens/components/ObservabilityPage/ObservabilityPage';
 import { LibrariesPanel } from './components/LibrariesPanel/LibrariesPanel';
@@ -48,6 +49,7 @@ import { OverviewPanel } from './components/OverviewPanel/OverviewPanel';
 import { RolesPanel } from './components/RolesPanel/RolesPanel';
 import { WebhooksPanel } from './components/WebhooksPanel/WebhooksPanel';
 import { PluginsPanel } from './components/PluginsPanel/PluginsPanel';
+import { ImportWizard } from '@ValenceScreens/components/ImportWizard/ImportWizard';
 import { SharesPanel } from './components/SharesPanel/SharesPanel';
 import {
   changeWebhook,
@@ -1224,38 +1226,42 @@ const AdminArea = ({
           </TabPanel>
 
           <TabPanel value="settings" travel={travel}>
-            <SettingsPanel
-              overview={overview}
-              onCatalogueKeySaved={() => {
-                void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
-              }}
-              onHardwareAccelSaved={() => {
-                void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
-              }}
-              onRoundnessSaved={() => {
-                void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
-                void cache.invalidateQueries({ queryKey: appearanceQueries.key });
-              }}
-              onPreviewQualitySaved={() => {
-                void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
-              }}
-              onCertificationRegionSaved={() => {
-                void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
-              }}
-              onProfileVisibilitySaved={() => {
-                void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
-              }}
-              onCatalogueTrailersSaved={() => {
-                void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
-              }}
-              onMusicDetailsSaved={() => {
-                void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
-              }}
-              onSplashscreenSaved={() => {
-                void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
-                void cache.invalidateQueries({ queryKey: sessionQueries.wayIn().queryKey });
-              }}
-            />
+            <div className="flex flex-col gap-5">
+              <SettingsPanel
+                overview={overview}
+                onCatalogueKeySaved={() => {
+                  void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
+                }}
+                onHardwareAccelSaved={() => {
+                  void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
+                }}
+                onRoundnessSaved={() => {
+                  void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
+                  void cache.invalidateQueries({ queryKey: appearanceQueries.key });
+                }}
+                onPreviewQualitySaved={() => {
+                  void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
+                }}
+                onCertificationRegionSaved={() => {
+                  void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
+                }}
+                onProfileVisibilitySaved={() => {
+                  void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
+                }}
+                onCatalogueTrailersSaved={() => {
+                  void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
+                }}
+                onMusicDetailsSaved={() => {
+                  void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
+                }}
+                onSplashscreenSaved={() => {
+                  void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
+                  void cache.invalidateQueries({ queryKey: sessionQueries.wayIn().queryKey });
+                }}
+              />
+
+              <EmailCard />
+            </div>
           </TabPanel>
 
           <TabPanel value="shares" travel={travel}>
@@ -1264,6 +1270,10 @@ const AdminArea = ({
 
           <TabPanel value="plugins" travel={travel}>
             <PluginsPanel />
+          </TabPanel>
+
+          <TabPanel value="imports" travel={travel}>
+            <ImportWizard />
           </TabPanel>
 
           <TabPanel value="webhooks" travel={travel}>

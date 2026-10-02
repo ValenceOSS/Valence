@@ -37,6 +37,8 @@ const user = mysqlTable('user', {
   banned: boolean('banned').default(false),
   banReason: mediumtext('banReason'),
   banExpires: moment('banExpires'),
+  username: varchar('username', { length: 255 }).unique(),
+  displayUsername: mediumtext('displayUsername'),
 });
 
 const accountActivity = mysqlTable('account_activity', {
@@ -224,6 +226,8 @@ const watchHistory = mysqlTable(
     lastWatchedAt: momentNow('lastWatchedAt').notNull(),
     secondsWatched: float('secondsWatched').notNull().default(0),
     isFinished: boolean('isFinished').notNull().default(false),
+    importedFrom: varchar('importedFrom', { length: 32 }),
+    importKey: varchar('importKey', { length: 255 }).unique(),
   },
   (table) => [
     index('watch_history_recent_idx').on(table.profileId, table.lastWatchedAt),
@@ -1452,6 +1456,143 @@ const pluginProfile = mysqlTable(
   (table) => [primaryKey({ columns: [table.pluginId, table.profileId] })],
 );
 
+const collection = mysqlTable('collection', {
+  id: identifier('id').primaryKey(),
+  name: mediumtext('name').notNull(),
+  description: mediumtext('description'),
+  artworkPath: mediumtext('artworkPath'),
+  isOrdered: boolean('isOrdered').notNull().default(false),
+  createdBy: identifier('createdBy').references(() => user.id, { onDelete: 'set null' }),
+  createdAt: momentNow('createdAt').notNull(),
+  updatedAt: momentNow('updatedAt').notNull(),
+});
+
+const collectionEntry = mysqlTable(
+  'collection_entry',
+  {
+    id: identifier('id').primaryKey(),
+    collectionId: identifier('collectionId')
+      .notNull()
+      .references(() => collection.id, { onDelete: 'cascade' }),
+    mediaItemId: identifier('mediaItemId').references(() => mediaItem.id, { onDelete: 'cascade' }),
+    seriesId: identifier('seriesId').references(() => series.id, { onDelete: 'cascade' }),
+    position: double('position').notNull(),
+    addedAt: momentNow('addedAt').notNull(),
+  },
+  (table) => [
+    uniqueIndex('collection_entry_item_idx').on(table.collectionId, table.mediaItemId),
+    uniqueIndex('collection_entry_series_idx').on(table.collectionId, table.seriesId),
+    index('collection_entry_order_idx').on(table.collectionId, table.position),
+    index('collection_entry_media_item_idx').on(table.mediaItemId),
+    index('collection_entry_series_id_idx').on(table.seriesId),
+  ],
+);
+
+const accountSetupLink = mysqlTable(
+  'account_setup_link',
+  {
+    id: identifier('id').primaryKey(),
+    userId: identifier('userId')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    tokenHash: varchar('tokenHash', { length: 255 }).notNull().unique(),
+    expiresAt: moment('expiresAt').notNull(),
+    usedAt: moment('usedAt'),
+    revokedAt: moment('revokedAt'),
+    createdBy: identifier('createdBy').references(() => user.id, { onDelete: 'set null' }),
+    createdAt: momentNow('createdAt').notNull(),
+  },
+  (table) => [index('account_setup_link_user_idx').on(table.userId)],
+);
+
+const emailSend = mysqlTable(
+  'email_send',
+  {
+    id: identifier('id').primaryKey(),
+    kind: varchar('kind', { length: 64 }).notNull(),
+    recipient: mediumtext('recipient').notNull(),
+    idempotencyKey: varchar('idempotencyKey', { length: 255 }).notNull().unique(),
+    state: varchar('state', { length: 16 }).notNull(),
+    failure: jsonColumn('failure').$type<Said>(),
+    createdAt: momentNow('createdAt').notNull(),
+  },
+  (table) => [
+    index('email_send_recent_idx').on(table.createdAt),
+    check('email_send_state', sql`${table.state} in ('sent', 'failed')`),
+  ],
+);
+
+const importSource = mysqlTable(
+  'import_source',
+  {
+    id: identifier('id').primaryKey(),
+    kind: varchar('kind', { length: 32 }).notNull(),
+    name: mediumtext('name').notNull(),
+    url: mediumtext('url').notNull(),
+    token: mediumtext('token').notNull(),
+    details: jsonColumn('details')
+      .notNull()
+      .$defaultFn(() => ({})),
+    createdAt: momentNow('createdAt').notNull(),
+    updatedAt: momentNow('updatedAt').notNull(),
+  },
+  (table) => [
+    check(
+      'import_source_kind',
+      sql`${table.kind} in ('jellyfin', 'emby', 'plex', 'radarr', 'sonarr', 'lidarr', 'prowlarr', 'overseerr', 'jellyseerr')`,
+    ),
+  ],
+);
+
+const importRun = mysqlTable(
+  'import_run',
+  {
+    id: identifier('id').primaryKey(),
+    sourceId: identifier('sourceId')
+      .notNull()
+      .references(() => importSource.id, { onDelete: 'cascade' }),
+    state: varchar('state', { length: 16 }).notNull().default('planning'),
+    options: jsonColumn('options')
+      .notNull()
+      .$defaultFn(() => ({})),
+    cursor: jsonColumn('cursor'),
+    report: jsonColumn('report'),
+    failure: jsonColumn('failure').$type<Said>(),
+    jobId: identifier('jobId'),
+    createdAt: momentNow('createdAt').notNull(),
+    startedAt: moment('startedAt'),
+    finishedAt: moment('finishedAt'),
+  },
+  (table) => [
+    index('import_run_source_idx').on(table.sourceId, table.createdAt),
+    index('import_run_state_idx').on(table.state),
+    check(
+      'import_run_state',
+      sql`${table.state} in ('planning', 'planned', 'importing', 'completed', 'failed', 'cancelled')`,
+    ),
+  ],
+);
+
+const importLink = mysqlTable(
+  'import_link',
+  {
+    id: identifier('id').primaryKey(),
+    sourceId: identifier('sourceId')
+      .notNull()
+      .references(() => importSource.id, { onDelete: 'cascade' }),
+    kind: varchar('kind', { length: 32 }).notNull(),
+    sourceKey: varchar('sourceKey', { length: 4096 }).notNull(),
+    sourceKeyHash: hashOf('sourceKeyHash', 'sourceKey'),
+    valenceId: varchar('valenceId', { length: 255 }).notNull(),
+    createdAt: momentNow('createdAt').notNull(),
+    updatedAt: momentNow('updatedAt').notNull(),
+  },
+  (table) => [
+    uniqueIndex('import_link_key_idx').on(table.sourceId, table.kind, table.sourceKeyHash),
+    index('import_link_valence_idx').on(table.kind, table.valenceId),
+  ],
+);
+
 const authSchema = {
   user,
   session,
@@ -1539,4 +1680,11 @@ export {
   favouriteArtist,
   playlist,
   playlistEntry,
+  collection,
+  collectionEntry,
+  accountSetupLink,
+  emailSend,
+  importSource,
+  importRun,
+  importLink,
 };

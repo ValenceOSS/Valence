@@ -1,0 +1,78 @@
+---
+title: Email
+description: Let Valence email password reset links and setup links through your own mail server or provider, such as Resend, and what that sends where.
+order: 15
+---
+
+Valence can email two things: a **password reset link** to somebody who forgot their password, and a **setup link** to somebody you added an account for. It sends them through a mail server you choose, over SMTP, so any provider works: Resend, Postmark, Mailgun, Amazon SES, Fastmail, Gmail, or a mail server of your own.
+
+Email is off until you set it up, and nothing depends on it. Without it, a setup link can still be copied and handed over, and every password reset link is written to the [server log](/use/jobs-and-logs), where whoever runs the server can find it.
+
+## Setting it up
+
+Open the admin area, choose **Settings**, and find the **Email** card below the settings. Changing it needs the `server.settings` permission.
+
+| Setting                    | What it is                                                                                                                                                                                                                    |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Send email                 | Turns email on or off. Nothing is emailed while it is off.                                                                                                                                                                    |
+| Mail server                | Your provider's SMTP host, such as `smtp.resend.com`.                                                                                                                                                                         |
+| Port                       | Usually `465` for TLS or `587` for STARTTLS.                                                                                                                                                                                  |
+| Security                   | **TLS** encrypts from the first byte, usually on port 465. **STARTTLS** connects and then upgrades, usually on port 587, and refuses to go on unencrypted. **None** sends in the clear, for a relay on your own network only. |
+| Username and password      | What your provider gives you for SMTP. The password is never shown again once saved; leave the field empty to keep it, or type a new one to replace it.                                                                       |
+| Send as: name and address  | Who the email comes from, such as `Valence` and `valence@your-domain.com`. The address must be one your provider lets you send from, usually on a domain you verified with them.                                              |
+| Email password reset links | Emails the link to whoever asks on the sign-in screen, when their account has an address.                                                                                                                                     |
+| Email setup links          | Shows **Send by email** beside **Copy link** when you add an account with an address.                                                                                                                                         |
+
+Press **Save**, then type your own address under **Send a test to** and press **Send test email**. The test uses what is saved, even before **Send email** is on, so you can check the server before anybody relies on it. If it fails, the card says why: the server could not be reached, it refused the username or password, or what it answered in its own words.
+
+<Callout title="Check with your provider first" tone="quiet">
+  Most providers only send from a domain you have verified with them, and refuse anything else with
+  a message such as "domain not verified". Their own dashboard says which DNS records to add.
+</Callout>
+
+## Using Resend
+
+[Resend](https://resend.com) is one provider among many, and the card has a button for it.
+
+1. In Resend, add and verify your domain, then create an API key with permission to send.
+2. On the **Email** card, press **Use Resend**. It fills in `smtp.resend.com`, port `465`, **TLS** and the username `resend`.
+3. Paste the API key as the **Password**.
+4. Set **Send as** to an address on the domain you verified, turn on **Send email** and what you want emailed, and press **Save**.
+5. Send a test.
+
+Port `587` with **STARTTLS** works too, if your network blocks 465.
+
+## Setting it in the environment instead
+
+If you keep secrets in your compose file, set the server's mail server there instead:
+
+```env
+SMTP_URL=smtps://resend:re_yourapikey@smtp.resend.com:465
+SMTP_FROM=Valence <valence@your-domain.com>
+```
+
+`smtps://` means TLS from the start and `smtp://` means STARTTLS; add `?security=none` to an `smtp://` address to send without encryption. Percent-encode any `@`, `:` or `/` in the username or password. While `SMTP_URL` is set it decides the mail server and sender, email counts as on, and the card shows the server it names and says it comes from the environment. The switches for what is emailed still come from the card. See [Environment variables](/reference/environment-variables#email).
+
+## What is sent
+
+| Email               | When                                                                                     | What it says                                                                                    |
+| ------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Setup link          | An administrator presses **Send by email** for a new account                             | Which server made the account, the link to choose a password and sign in, and when it expires.  |
+| Password reset link | Somebody presses **Forgot your password?** on the sign-in screen and names their account | The link to choose a new password, that it works once for an hour, and to ignore it if unasked. |
+| Test email          | An administrator presses **Send test email**                                             | That email from Valence works.                                                                  |
+
+Every email comes as plain text and as HTML saying the same thing, in English. Valence does not yet know which language somebody reads before they have signed in, so it writes in the server's language.
+
+Somebody who forgot their password can name their account by its username or its email address. The answer is the same whether or not the account exists, and Valence asks for at most one link a minute for any one account, so the form cannot be used to find out who has an account or to fill somebody's inbox. An account without an email address is never emailed; its link is only in the server log.
+
+## Sending well
+
+- **Once per email.** Each email is recorded with a key of its own, so a send that is retried, or pressed twice, never goes out twice.
+- **At a steady pace.** Valence sends at most ten emails a second, inside what providers allow.
+- **Failures are kept.** An email that could not be sent is logged and listed under **Recent emails** on the card, with the reason, rather than quietly dropped. The list shows the latest twenty, sent and failed.
+
+## Privacy
+
+Valence runs no mail service of its own and nothing goes through anything the Valence project runs. Once email is on, the addresses Valence sends to and everything each email says, including the links in it, go to the mail provider you chose, under that provider's terms. That is the price of email; if you would rather nothing leave the server, leave it off and hand links over yourself.
+
+The SMTP password is stored in the server's settings in the database and is never sent to a browser. If you would rather it lived only in your compose file, use `SMTP_URL`.

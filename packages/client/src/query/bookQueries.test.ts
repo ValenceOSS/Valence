@@ -1,5 +1,24 @@
-import { describe, expect, it } from 'vitest';
+import { QueryClient } from '@tanstack/react-query';
+import { describe, expect, it, vi } from 'vitest';
 import { bookQueries } from './bookQueries';
+
+const books = vi.hoisted(() => ({
+  fetchBook: vi.fn(),
+  fetchBookContents: vi.fn(),
+  fetchBookDocument: vi.fn(),
+  fetchBooks: vi.fn(),
+  fetchReading: vi.fn(),
+  fetchReadingProgress: vi.fn(),
+  findBooks: vi.fn(),
+}));
+
+const listening = vi.hoisted(() => ({
+  fetchListening: vi.fn(),
+  fetchListeningProgress: vi.fn(),
+}));
+
+vi.mock('@ValenceClient/books/fetchBooks', () => books);
+vi.mock('@ValenceClient/books/fetchListening', () => listening);
 
 describe('bookQueries', () => {
   it('keeps every book query under one key, so a scan can refresh them all', () => {
@@ -39,5 +58,35 @@ describe('bookQueries', () => {
     expect(bookQueries.document('b', 'c', 1).queryKey).not.toEqual(
       bookQueries.document('b', 'c', 2).queryKey,
     );
+  });
+});
+
+describe('bookQueries, asked', () => {
+  it('asks the reader each query names, with what it was given', async () => {
+    const cache = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+    for (const reader of [...Object.values(books), ...Object.values(listening)]) {
+      reader.mockResolvedValue('read');
+    }
+
+    await cache.fetchQuery(bookQueries.inLibrary('l'));
+    await cache.fetchQuery(bookQueries.one('b'));
+    await cache.fetchQuery(bookQueries.progress('b'));
+    await cache.fetchQuery(bookQueries.contents('b', 'c'));
+    await cache.fetchQuery(bookQueries.document('b', 'c', 2));
+    await cache.fetchQuery(bookQueries.find({ search: 'austen' }));
+    await cache.fetchQuery(bookQueries.reading());
+    await cache.fetchQuery(bookQueries.listening());
+    await cache.fetchQuery(bookQueries.listeningPlace('b'));
+
+    expect(books.fetchBooks).toHaveBeenCalledWith('l');
+    expect(books.fetchBook).toHaveBeenCalledWith('b');
+    expect(books.fetchReadingProgress).toHaveBeenCalledWith('b');
+    expect(books.fetchBookContents).toHaveBeenCalledWith('b', 'c');
+    expect(books.fetchBookDocument).toHaveBeenCalledWith('b', 'c', 2);
+    expect(books.findBooks).toHaveBeenCalledWith({ search: 'austen' });
+    expect(books.fetchReading).toHaveBeenCalledOnce();
+    expect(listening.fetchListening).toHaveBeenCalledOnce();
+    expect(listening.fetchListeningProgress).toHaveBeenCalledWith('b');
   });
 });

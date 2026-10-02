@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MediaContainer friendlyName="myPlex" identifier="com.plexapp.plugins.myplex" machineIdentifier="x" totalSize="3" size="3">
+  <User id="1111" uuid="owner-uuid" admin="1" guest="0" restricted="0" protected="0" title="Lee &amp; Co" username="lee" email="lee@example.test" thumb="https://plex.tv/users/owner-uuid/avatar?c=1"/>
+  <User id="2222" uuid="kid-uuid" admin="0" guest="0" restricted="1" restrictionProfile="older_kid" protected="1" title="Ash" username="" email="" thumb="https://plex.tv/users/kid-uuid/avatar?c=1"/>
+  <User id="3333" uuid="partner-uuid" admin="0" guest="0" restricted="0" protected="0" title="Jo" username="jo" email="jo@example.test" thumb=""/>
+</MediaContainer>

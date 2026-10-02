@@ -58,6 +58,8 @@ const EnvSchema = z.object({
     .enum(['true', 'false'])
     .default('true')
     .transform((value) => value === 'true'),
+  SMTP_URL: z.string().default(''),
+  SMTP_FROM: z.string().default(''),
 });
 
 type Env = z.infer<typeof EnvSchema>;

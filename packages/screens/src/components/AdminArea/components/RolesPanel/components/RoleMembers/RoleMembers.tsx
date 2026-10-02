@@ -1,3 +1,4 @@
+import { accountHandleOf } from '@ValenceClient/accounts/accountHandleOf';
 import { useMemo, useState } from 'react';
 import { Search as SearchIcon } from '@keyline-icons/react';
 import { Icon } from '@ValenceUI/Icon';
@@ -29,7 +30,9 @@ const RoleMembers = ({ accounts, heldIds, onToggle }: RoleMembersProps) => {
 
     return accounts.filter(
       (account) =>
-        account.name.toLowerCase().includes(query) || account.email.toLowerCase().includes(query),
+        account.name.toLowerCase().includes(query) ||
+        accountHandleOf(account).toLowerCase().includes(query) ||
+        (account.email ?? '').toLowerCase().includes(query),
     );
   }, [accounts, search]);
 
@@ -66,7 +69,9 @@ const RoleMembers = ({ accounts, heldIds, onToggle }: RoleMembersProps) => {
 
                 <span className="flex min-w-0 flex-col">
                   <span className="truncate text-sm font-medium text-text">{account.name}</span>
-                  <span className="truncate text-xs text-text-muted">{account.email}</span>
+                  <span className="truncate text-xs text-text-muted">
+                    {accountHandleOf(account)}
+                  </span>
                 </span>
               </div>
 

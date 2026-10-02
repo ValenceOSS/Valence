@@ -1,0 +1,106 @@
+{
+  "GET /api/v1/system/status": {
+    "appName": "Lidarr",
+    "instanceName": "Lidarr",
+    "version": "2.5.3.4341",
+    "urlBase": ""
+  },
+  "GET /api/v1/downloadclient": [
+    {
+      "enable": true,
+      "protocol": "usenet",
+      "priority": 1,
+      "name": "NZBGet",
+      "fields": [
+        { "order": 0, "name": "host", "value": "nzbget" },
+        { "order": 1, "name": "port", "value": 6789 },
+        { "order": 2, "name": "useSsl", "value": false },
+        { "order": 3, "name": "urlBase" },
+        { "order": 4, "name": "username", "value": "nzbget" },
+        { "order": 5, "name": "password", "value": "********" },
+        { "order": 6, "name": "musicCategory", "value": "Music" }
+      ],
+      "implementationName": "NZBGet",
+      "implementation": "Nzbget",
+      "configContract": "NzbgetSettings",
+      "tags": [],
+      "id": 1
+    }
+  ],
+  "GET /api/v1/remotepathmapping": [],
+  "GET /api/v1/indexer": [],
+  "GET /api/v1/qualityprofile": [
+    {
+      "name": "Lossless",
+      "upgradeAllowed": true,
+      "cutoff": 1005,
+      "items": [
+        { "quality": { "id": 13, "name": "WAV" }, "items": [], "allowed": true },
+        { "quality": { "id": 4, "name": "MP3-320" }, "items": [], "allowed": true },
+        {
+          "name": "Lossless",
+          "items": [
+            { "quality": { "id": 7, "name": "FLAC" }, "items": [], "allowed": true },
+            { "quality": { "id": 21, "name": "FLAC 24bit" }, "items": [], "allowed": true },
+            { "quality": { "id": 20, "name": "ALAC" }, "items": [], "allowed": true }
+          ],
+          "allowed": true,
+          "id": 1005
+        }
+      ],
+      "minFormatScore": 0,
+      "formatItems": [],
+      "id": 2
+    }
+  ],
+  "GET /api/v1/customformat": [],
+  "GET /api/v1/releaseprofile": [],
+  "GET /api/v1/rootfolder": [
+    {
+      "name": "Music",
+      "path": "/music",
+      "defaultMetadataProfileId": 1,
+      "defaultQualityProfileId": 2,
+      "defaultMonitorOption": "all",
+      "defaultNewItemMonitorOption": "all",
+      "defaultTags": [],
+      "accessible": true,
+      "freeSpace": 1099511627776,
+      "totalSpace": 4398046511104,
+      "id": 1
+    }
+  ],
+  "GET /api/v1/metadataprofile": [
+    { "id": 1, "name": "Standard" },
+    { "id": 2, "name": "None" }
+  ],
+  "GET /api/v1/artist": [
+    {
+      "artistName": "Radiohead",
+      "foreignArtistId": "a74b1b7f-71a5-4011-9441-d0b5e4122711",
+      "monitored": true,
+      "path": "/music/Radiohead",
+      "rootFolderPath": "/music",
+      "qualityProfileId": 2,
+      "metadataProfileId": 1,
+      "statistics": {
+        "albumCount": 9,
+        "trackFileCount": 10,
+        "trackCount": 120,
+        "totalTrackCount": 120,
+        "sizeOnDisk": 400000000
+      },
+      "id": 1
+    },
+    {
+      "artistName": "Portishead",
+      "foreignArtistId": "8f6bd1e4-fbe1-4f50-aa9b-94c450ec0f11",
+      "monitored": true,
+      "path": "/music/Portishead",
+      "qualityProfileId": 2,
+      "metadataProfileId": 1,
+      "statistics": { "albumCount": 3, "trackFileCount": 33, "trackCount": 33 },
+      "id": 2
+    }
+  ]
+}

@@ -70,6 +70,14 @@ describe('writeLocation', () => {
     );
   });
 
+  it('writes an open collection as a query, so a title can open over it', () => {
+    expect(writeLocation({ ...HOME, collection: 'saga' })).toBe('/?collection=saga');
+  });
+
+  it('reads a collection back out of an address', () => {
+    expect(readLocation('http://valence.local/?collection=saga').collection).toBe('saga');
+  });
+
   it('reads a series back out of an address', () => {
     expect(readLocation('http://valence.local/?show=a-sign-of-affection').show).toBe(
       'a-sign-of-affection',
@@ -109,6 +117,7 @@ describe('writeLocation', () => {
       inspecting: 'abc',
       book: 'def',
       show: null,
+      collection: null,
       person: null,
       shareToken: null,
       playing: null,

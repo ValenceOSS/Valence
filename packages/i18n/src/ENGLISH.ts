@@ -397,10 +397,10 @@ const ENGLISH = {
   'client.requests.releaseTypeNames.singles': 'Singles',
   'client.requests.seasonStandingNames.notRequested': 'Not requested',
   'client.session.auth.addAPasskeyFromValenceIn': 'Add a passkey from Valence in your browser.',
-  'client.session.auth.thatAddressAndPasswordWereNot':
-    'That address and password were not accepted.',
   'client.session.auth.thatCodeWasNotAccepted': 'That code was not accepted.',
   'client.session.auth.thatPasskeyWasNotAccepted': 'That passkey was not accepted.',
+  'client.session.auth.thatUsernameOrAddressAndPassword':
+    'That username or address and password weren’t right.',
   'client.session.auth.tooManyTriesWaitAMinute': 'Too many tries. Wait a minute and try again.',
   'client.session.auth.yourDeviceCouldNotCreateA': 'Your device could not create a passkey.',
   'client.session.readServerAddress.aValenceServerIsReachedOver':
@@ -408,6 +408,8 @@ const ENGLISH = {
   'client.session.readServerAddress.enterTheAddressOfYourValence':
     'Enter the address of your Valence server.',
   'client.session.readServerAddress.thatDoesNotLookLikeA': 'That does not look like a web address.',
+  'client.session.resetPassword.thatLinkHasExpired':
+    'That link has expired or was already used. Ask for a new one.',
   'client.sharing.saidOpened.openedOf1Time': '{opened} of 1 time',
   'client.sharing.saidOpened.openedOfCapTimes': '{opened} of {cap} times',
   'client.sharing.shareCaps.anybodyWithTheLink': 'Anybody with the link',
@@ -449,6 +451,7 @@ const ENGLISH = {
   'common.addOneToGetStarted': 'Add one to get started.',
   'common.address': 'Address',
   'common.addSongsToItFromThe': 'Add songs to it from the menu beside any song.',
+  'common.addToACollection': 'Add to a collection',
   'common.addToPlaylist': 'Add to playlist',
   'common.addToPlaylist2': 'Add to playlist…',
   'common.addToQueue': 'Add to queue',
@@ -476,6 +479,7 @@ const ENGLISH = {
   'common.approvedTitle': 'Approved {title}.',
   'common.areYouStillWatching': 'Are you still watching?',
   'common.areYouSure': 'Are you sure?',
+  'common.arrangeIt': 'Arrange it',
   'common.artist': 'Artist',
   'common.artists': 'Artists',
   'common.artwork': 'Artwork',
@@ -492,6 +496,7 @@ const ENGLISH = {
   'common.aTitleOrWhoAsked': 'A title, or who asked',
   'common.atLeastCountCharacters.one': 'At least {count} character.',
   'common.atLeastCountCharacters.other': 'At least {count} characters.',
+  'common.atUsername': '@{username}',
   'common.audio': 'Audio',
   'common.audiobook': 'Audiobook',
   'common.audioOnly': 'Audio only',
@@ -511,6 +516,8 @@ const ENGLISH = {
   'common.bringTitleBack': 'Bring {title} back',
   'common.browser': 'Browser',
   'common.byAuthor': 'By {author}',
+  'common.byName': 'By name',
+  'common.byYear': 'By year',
   'common.cameraDistance': 'Camera distance',
   'common.cancel': 'Cancel',
   'common.cancelRequest': 'Cancel request',
@@ -544,6 +551,8 @@ const ENGLISH = {
   'common.cloud': 'Cloud',
   'common.cloudScale': 'Cloud scale',
   'common.clumping': 'Clumping',
+  'common.collection': 'Collection',
+  'common.collections': 'Collections',
   'common.colour': 'Colour',
   'common.colours': 'Colours',
   'common.comingUp': 'Coming up',
@@ -592,6 +601,8 @@ const ENGLISH = {
   'common.count.hoursShort.other': '{count} h',
   'common.count.items.one': '{count} item',
   'common.count.items.other': '{count} items',
+  'common.count.libraries.one': '{count} library',
+  'common.count.libraries.other': '{count} libraries',
   'common.count.minutes.one': '{count} minute',
   'common.count.minutes.other': '{count} minutes',
   'common.count.minutesShort.one': '{count} min',
@@ -628,6 +639,7 @@ const ENGLISH = {
   'common.count.years.other': '{count} years',
   'common.countEpisodesLeft.one': '{count} episode left',
   'common.countEpisodesLeft.other': '{count} episodes left',
+  'common.countTitlesInOrder': '{count}, in order',
   'common.coverOnItsOwn': 'Cover on its own',
   'common.create': 'Create',
   'common.createWebhook': 'Create webhook',
@@ -759,8 +771,10 @@ const ENGLISH = {
   'common.itDidNotAnswer': 'It did not answer.',
   'common.items': 'Items',
   'common.itFailed': 'It failed.',
+  'common.itsOwnOrder': 'Its own order',
   'common.itWillNotBeFetchedAnd':
     'It will not be fetched, and whatever it had started downloading is deleted. You can request it again whenever you like.',
+  'common.jellyseerr': 'Jellyseerr',
   'common.job': 'Job',
   'common.jobs': 'Jobs',
   'common.jobsLogs': 'Jobs & logs',
@@ -843,6 +857,7 @@ const ENGLISH = {
   'common.needsAttention': 'Needs attention',
   'common.never': 'Never',
   'common.neverUsed': 'Never used',
+  'common.newCollection': 'New collection',
   'common.newestFirst': 'Newest first',
   'common.newFolder': 'New folder',
   'common.newPlaylist': 'New playlist',
@@ -882,6 +897,7 @@ const ENGLISH = {
   'common.nothingHereMatchesThat': 'Nothing here matches that.',
   'common.nothingInThisBookYetScanning':
     'Nothing in this book yet. Scanning the library again may find it.',
+  'common.nothingInThisCollectionYet': 'Nothing in this collection yet',
   'common.nothingInThisPlaylistYet': 'Nothing in this playlist yet',
   'common.nothingIsPlaying': 'Nothing is playing.',
   'common.nothingIsPlaying2': 'Nothing is playing',
@@ -933,6 +949,7 @@ const ENGLISH = {
   'common.order': 'Order',
   'common.original': 'Original',
   'common.otherChoice': 'Other',
+  'common.overseerr': 'Overseerr',
   'common.page': 'Page',
   'common.pages': 'Pages',
   'common.pageValue': 'Page {value}',
@@ -1125,6 +1142,7 @@ const ENGLISH = {
   'common.state': 'State',
   'common.statsForNerds': 'Stats for nerds',
   'common.status': 'Status',
+  'common.stepNumberOfTotal': 'Step {number} of {total}',
   'common.stillWatching': 'Still watching',
   'common.stop': 'Stop',
   'common.stopKeepingTitle': 'Stop keeping {title}',
@@ -1203,6 +1221,7 @@ const ENGLISH = {
   'common.theWholeProgramme': 'The whole programme',
   'common.thingsYouHaveTakenOutOf':
     'Things you have taken out of your own browsing. Anything here can be brought back.',
+  'common.thisCollectionCouldNotBeRead': 'This collection could not be read.',
   'common.thisDevice': 'This device',
   'common.thisItem': 'This item',
   'common.thisLinkNoLongerWorks': 'This link no longer works.',
@@ -1610,7 +1629,12 @@ const ENGLISH = {
   'error.account.accountAdministrationIsAtApiAdmin':
     'Account administration is at /api/admin/accounts.',
   'error.account.noSuchAccount': 'No such account.',
+  'error.account.setupLinksAreNotSentByEmail':
+    'This server doesn’t send setup links by email. Turn it on in the email settings first.',
+  'error.account.thatAccountHasNoAddress': 'That account has no email address to send it to.',
+  'error.account.thatAddressCannotBeUsed': 'That address can’t be used.',
   'error.account.thatAddressIsAlreadyInUse': 'That address is already in use.',
+  'error.account.thatUsernameIsAlreadyInUse': 'That username is already in use.',
   'error.admin.noSuchJobIsWaiting': 'No such job is waiting.',
   'error.admin.noSuchJobKind': 'No such job kind.',
   'error.admin.noSuchJobKindOrOne': 'No such job kind, or one that cannot be scheduled.',
@@ -1629,12 +1653,16 @@ const ENGLISH = {
   'error.arrApps.noSuchConnectedApp': 'No such connected app.',
   'error.arrApps.thatIsNotAChangeToAConnectedApp': 'That is not a change to a connected app.',
   'error.arrApps.thatIsNotAConnectedApp': 'That is not a connected app.',
+  'error.arrImport.thatIsNotASetupToBringIn': 'That is not a setup to bring in.',
   'error.book.noCoverForThatBook': 'No cover for that book.',
   'error.book.noSuchChapter': 'No such chapter.',
   'error.book.noSuchPage': 'No such page.',
   'error.book.noSuchPartOfThatBook': 'No such part of that book.',
   'error.book.thatIsNotABookThat': 'That is not a book that reflows.',
   'error.book.thatIsNotInThisBook': 'That is not in this book.',
+  'error.collections.noSuchCollection': 'No such collection.',
+  'error.collections.thatCollectionHasNoArtworkOf': 'That collection has no artwork of its own.',
+  'error.collections.thatEntryIsNotInThatCollection': 'That entry is not in that collection.',
   'error.common.nobodyIsSignedIn': 'Nobody is signed in.',
   'error.common.noFrameThere': 'No frame there.',
   'error.common.noSuchAlbum': 'No such album.',
@@ -1697,6 +1725,11 @@ const ENGLISH = {
   'error.household.thisServerHasNoPictureBehind': 'This server has no picture behind the way in.',
   'error.image.noArtworkForThatItem': 'No artwork for that item.',
   'error.image.thatArtworkCouldNotBeRead': 'That artwork could not be read.',
+  'error.imports.noSuchImport': 'There is no such import.',
+  'error.imports.noSuchSource': 'There is no such server to import from.',
+  'error.imports.thatImportIsNotReadyToRun':
+    'That import has not been planned yet, or is already running.',
+  'error.imports.thisServerCannotImport': "This server can't import from Jellyfin, Emby or Plex.",
   'error.indexers.noSuchDefinition': 'No such definition.',
   'error.indexers.noSuchIndexer': 'No such indexer.',
   'error.indexers.thatIsNotAChangeTo': 'That is not a change to an indexer.',
@@ -1806,6 +1839,10 @@ const ENGLISH = {
   'error.setup.setupHasAlreadyBeenCompleted': 'Setup has already been completed.',
   'error.setup.theAdministratorAccountCouldNotBe':
     'The administrator account could not be created.',
+  'error.setupLink.chooseAUsernameToSignInWith': 'Choose a username to sign in with.',
+  'error.setupLink.thatAccountAlreadyHasAPassword': 'This account already has a password.',
+  'error.setupLink.thatLinkNoLongerWorks':
+    'This setup link no longer works. It may have been used, replaced or run out. Ask whoever runs this server for a new one.',
   'error.share.noSuchLink': 'No such link.',
   'error.share.thatIsNotPartOfWhat': 'That is not part of what was shared.',
   'error.share.thereIsNothingHereToShare': 'There is nothing here to share.',
@@ -2104,6 +2141,31 @@ const ENGLISH = {
     'Sonarr cannot find it by its TVDB or TMDB id.',
   'requests.arrApps.handOff.theAppItWasHandedToIsGone':
     'The connected app it was handed to has been removed.',
+  'requests.arrImport.aLeastFormatScoreWasLeftOut':
+    'The minimum custom format score of {score} was left out.',
+  'requests.arrImport.customFormatNameWasApproximated':
+    'The custom format {name} could only be approximated with words.',
+  'requests.arrImport.customFormatNameWasLeftOut':
+    'The custom format {name} judges more than release names, so it was left out.',
+  'requests.arrImport.everyResolutionIsTakenFromEverySource':
+    'Valence takes every allowed resolution from every allowed source, which allows a little more than before.',
+  'requests.arrImport.itListsNoHost': 'It lists no host to reach it at.',
+  'requests.arrImport.libraryCouldNotBeHandedToApp':
+    '{library} could not be handed to {app}, so it was left as it was.',
+  'requests.arrImport.nameCouldNotBeAddedProblem': '{name} could not be added: {problem}',
+  'requests.arrImport.nameCouldNotBeReadProblem': '{name} could not be read: {problem}',
+  'requests.arrImport.noQualityMatchedSoValencesDefaultsHold':
+    'No quality it allows matches one of Valence’s, so Valence’s defaults hold.',
+  'requests.arrImport.onlyTheFirstFiftyWordsWereKept':
+    'Only the first 50 words of each kind were kept.',
+  'requests.arrImport.releaseProfileNameHoldsForTaggedOnly':
+    'The release profile {name} only holds for tagged series, so it was left out.',
+  'requests.arrImport.someCategoriesKeepValencesOwn':
+    'Some kinds keep Valence’s own category, because the apps’ categories clash or use characters Valence does not allow.',
+  'requests.arrImport.valenceCannotUseClientYet': 'Valence cannot use {client} yet.',
+  'requests.arrImport.valenceCannotUseIndexerYet': 'Valence cannot use {indexer} indexers yet.',
+  'requests.arrImport.valenceHasNoMatchForQualities':
+    'Valence has nothing to match {qualities}, so they were left out.',
   'requests.cardigann.cardigannIndexer.downloadUriQueryKey': '.DownloadUri.Query.{key}',
   'requests.cardigann.cardigannIndexer.loggingInToTheSiteDid':
     'Logging in to the site did not work. Check the settings.',
@@ -2449,6 +2511,24 @@ const ENGLISH = {
     'Where this account is signed in',
   'screens.accountsPanel.accountDevices.whereThisAccountIsSignedInCouldNotBeRead':
     'Where this account is signed in could not be read.',
+  'screens.accountStanding.active': 'Active',
+  'screens.accountStanding.cannotSignInYet': 'Can’t sign in yet',
+  'screens.accountStanding.linkExpired': 'Link expired',
+  'screens.accountStanding.waitingForSetup': 'Waiting for setup',
+  'screens.addAccountDialog.addAnAccount': 'Add account',
+  'screens.addAccountDialog.emailOptional': 'Email (optional)',
+  'screens.addAccountDialog.giveThemAPassword': 'Give them a password',
+  'screens.addAccountDialog.giveThisToNameToSetUp':
+    'Give this to {name}. They open it to choose how they sign in.',
+  'screens.addAccountDialog.howTheySignIn': 'How they sign in',
+  'screens.addAccountDialog.onlyANameIsNeeded':
+    'Only a name is needed. Anything you leave out, they choose when they set up.',
+  'screens.addAccountDialog.sendThemASetupLink': 'Send them a setup link',
+  'screens.addAccountDialog.sentTheLinkToEmail': 'Sent the setup link to {email}.',
+  'screens.addAccountDialog.thatIsNotAnEmailAddress': 'That isn’t an email address.',
+  'screens.addAccountDialog.theirSetupLink': 'Their setup link',
+  'screens.addAccountDialog.theyStartWithTheDefaultRole':
+    'They start with the default role. Set their roles and libraries in the account editor.',
   'screens.addLibraryDialog.libraryPresets.anime': 'Anime',
   'screens.addLibraryDialog.libraryPresets.manga': 'Manga',
   'screens.addLibraryDialog.validateAddLibraryForm.enterANameForThisLibrary':
@@ -2457,6 +2537,14 @@ const ENGLISH = {
     'Enter the path to this library on the machine running Valence.',
   'screens.addLibraryDialog.validateAddLibraryForm.sayWhatKindOfLibraryThis':
     'Say what kind of library this is.',
+  'screens.addToCollectionDialog.addTitleToACollection': 'Add {title} to a collection',
+  'screens.addToCollectionDialog.alreadyInIt': 'Already in it',
+  'screens.addToCollectionDialog.readingTheCollections': 'Reading the collections',
+  'screens.addToCollectionDialog.thatCouldNotBeAdded': 'That could not be added to the collection.',
+  'screens.addToCollectionDialog.thereAreNoCollectionsYet':
+    'There are no collections yet. Make a new one for it.',
+  'screens.addToCollectionDialog.titleIsInANewCollection': '{title} is in a new collection.',
+  'screens.addToCollectionDialog.titleIsNowInName': '{title} is now in {name}.',
   'screens.admin.describeLogLevel.debug': 'Debug',
   'screens.admin.describeLogLevel.errors': 'Errors',
   'screens.admin.describeLogLevel.info': 'Info',
@@ -2484,6 +2572,8 @@ const ENGLISH = {
   'screens.adminArea.accelerationOptions.useWhicheverTheMachineProvesIt':
     'Use whichever the machine proves it can do',
   'screens.adminArea.accelerationOptions.vAAPI': 'VAAPI',
+  'screens.adminArea.accountsPanel.aBanSignsThemOutAndKeepsThemOut':
+    'A ban signs them out everywhere and keeps them out until you let them back in.',
   'screens.adminArea.accountsPanel.accountUnbanned': 'Account unbanned.',
   'screens.adminArea.accountsPanel.addedInviteName': 'Added {inviteName}.',
   'screens.adminArea.accountsPanel.addUser': 'Add user',
@@ -2498,12 +2588,15 @@ const ENGLISH = {
   'screens.adminArea.accountsPanel.banned': 'banned',
   'screens.adminArea.accountsPanel.banned2': 'Banned',
   'screens.adminArea.accountsPanel.bannedBanReason': 'Banned — {banReason}',
+  'screens.adminArea.accountsPanel.bannedCount': 'Banned ({count})',
   'screens.adminArea.accountsPanel.bannedFromTheAdminArea': 'Banned from the admin area',
   'screens.adminArea.accountsPanel.bannedName': 'Banned {name}.',
   'screens.adminArea.accountsPanel.banThisAccount': 'Ban this account?',
   'screens.adminArea.accountsPanel.changesSaved': 'Changes saved.',
   'screens.adminArea.accountsPanel.changesToTheirNamePictureRoles':
     'Changes to their name, picture, roles and libraries apply when you save. Resetting their password and ending sessions happen right away.',
+  'screens.adminArea.accountsPanel.copiedTheSetupLink': 'Copied the setup link.',
+  'screens.adminArea.accountsPanel.copyLink': 'Copy link',
   'screens.adminArea.accountsPanel.deleteAccount': 'Delete account',
   'screens.adminArea.accountsPanel.deleteThisAccount': 'Delete this account?',
   'screens.adminArea.accountsPanel.editAccount': 'Edit account',
@@ -2511,11 +2604,18 @@ const ENGLISH = {
     'Ends every session this account holds, without changing its password.',
   'screens.adminArea.accountsPanel.endsEverySessionThisAccountHolds2':
     'Ends every session this account holds. Valence cannot send email, so tell them the new password yourself.',
+  'screens.adminArea.accountsPanel.everyoneCount': 'Everyone ({count})',
   'screens.adminArea.accountsPanel.everySessionItHoldsWillBe':
     'Every session it holds will be ended. Its password is unchanged.',
   'screens.adminArea.accountsPanel.everySessionItHoldsWillBe2':
     'Every session it holds will be ended, and it will need the new password to sign in again.',
+  'screens.adminArea.accountsPanel.findSomebodyByNameOrUsername':
+    'Find somebody by name, username or email',
+  'screens.adminArea.accountsPanel.handleAndEmail': '{handle} · {email}',
   'screens.adminArea.accountsPanel.keepNameFromName2': 'Keep {name} from {name2}',
+  'screens.adminArea.accountsPanel.lastSignedIn': 'Last signed in',
+  'screens.adminArea.accountsPanel.leaveItEmptyForNoAddress':
+    'Leave it empty for an account without an email address.',
   'screens.adminArea.accountsPanel.letBackIn': 'Let back in',
   'screens.adminArea.accountsPanel.letNameSeeName2': 'Let {name} see {name2}',
   'screens.adminArea.accountsPanel.nameGoesAndSoDoesEvery':
@@ -2527,13 +2627,18 @@ const ENGLISH = {
   'screens.adminArea.accountsPanel.noRoles': 'No roles',
   'screens.adminArea.accountsPanel.nothingAbove': 'Nothing above',
   'screens.adminArea.accountsPanel.passwordReset': 'Password reset.',
+  'screens.adminArea.accountsPanel.readingTheAccounts': 'Reading the accounts',
   'screens.adminArea.accountsPanel.resetPassword': 'Reset password',
   'screens.adminArea.accountsPanel.resetThisAccountsPassword': "Reset this account's password?",
+  'screens.adminArea.accountsPanel.sendASetupLink': 'Send a setup link',
+  'screens.adminArea.accountsPanel.setAPassword': 'Set a password',
+  'screens.adminArea.accountsPanel.setPassword': 'Set password',
   'screens.adminArea.accountsPanel.signedThemOutEverywhere': 'Signed them out everywhere.',
   'screens.adminArea.accountsPanel.signOutEverywhere': 'Sign out everywhere',
   'screens.adminArea.accountsPanel.signThisAccountOutEverywhere':
     'Sign this account out everywhere?',
   'screens.adminArea.accountsPanel.theAccountsCouldNotBeRead': 'The accounts could not be read.',
+  'screens.adminArea.accountsPanel.theLinkCouldNotBeCopied': 'The link couldn’t be copied.',
   'screens.adminArea.accountsPanel.thereAreNoRolesYet': 'There are no roles yet.',
   'screens.adminArea.accountsPanel.theyArriveAbleToWatchAnd':
     'They arrive able to watch and nothing more, until you give them a role.',
@@ -2541,11 +2646,13 @@ const ENGLISH = {
     'They can reach nothing at all, which looks broken rather than restricted to whoever signs in.',
   'screens.adminArea.accountsPanel.valenceCannotSendEmailSoTell':
     'Valence cannot send email, so tell them this password yourself.',
+  'screens.adminArea.accountsPanel.waitingForSetupCount': 'Waiting for setup ({count})',
   'screens.adminArea.accountsPanel.whatTheyMaySeeAndHow':
     'What they may see, and how old it may be. Everything, until you say otherwise.',
   'screens.adminArea.accountsPanel.whatToChangeAboutThisAccount':
     'What to change about this account',
   'screens.adminArea.accountsPanel.whetherNameHoldsName2': 'Whether {name} holds {name2}',
+  'screens.adminArea.accountsPanel.whoToShow': 'Who to show',
   'screens.adminArea.accountsPanel.youDoNotHoldThePermission':
     'You do not hold the permission to reset passwords or end sessions.',
   'screens.adminArea.activityPanel.nobodyHasTheAppOpenRight': 'Nobody has the app open right now.',
@@ -2577,6 +2684,7 @@ const ENGLISH = {
   'screens.adminArea.addTriggerDialog.unit': 'Unit',
   'screens.adminArea.adminSections.activity': 'Activity',
   'screens.adminArea.adminSections.content': 'Content',
+  'screens.adminArea.adminSections.import': 'Import',
   'screens.adminArea.adminSections.overview': 'Overview',
   'screens.adminArea.adminSetupGuide.addAMetadataKey': 'Add a metadata key',
   'screens.adminArea.adminSetupGuide.aLibraryIsAFolderOf':
@@ -2631,6 +2739,9 @@ const ENGLISH = {
   'screens.adminArea.arrAppDialog.whereItsLibraryIs': 'Where its library is',
   'screens.adminArea.arrAppDialog.whereTheRequestsServiceReachesIt':
     'Where the requests service reaches it, with any URL base it is set to.',
+  'screens.adminArea.arrAppsPanel.bringInASetup': 'Import a setup',
+  'screens.adminArea.arrAppsPanel.bringInASetupDetail':
+    'Bring the download clients, indexers, quality profiles and waiting requests of Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr into Valence. Nothing in them is changed.',
   'screens.adminArea.arrAppsPanel.connectedApps': 'Connected apps',
   'screens.adminArea.arrAppsPanel.disconnect': 'Disconnect',
   'screens.adminArea.arrAppsPanel.disconnectedName': 'Disconnected {name}.',
@@ -2983,6 +3094,54 @@ const ENGLISH = {
     'The download clients could not be read.',
   'screens.adminArea.downloadsPanel.theDownloadsCouldNotBeRead': 'The downloads could not be read.',
   'screens.adminArea.downloadsPanel.whatToShowAboutDownloads': 'What to show about downloads',
+  'screens.adminArea.emailCard.aPasswordIsSavedLeaveIt':
+    'A password is saved. Leave the field empty to keep it, or type a new one to replace it.',
+  'screens.adminArea.emailCard.aPortFrom1To65535': 'A port from 1 to 65535.',
+  'screens.adminArea.emailCard.emailPasswordResetLinks': 'Email password reset links',
+  'screens.adminArea.emailCard.emailSetupLinks': 'Email setup links',
+  'screens.adminArea.emailCard.forResendTheUsernameIs':
+    'For Resend, the username is resend and the password is an API key.',
+  'screens.adminArea.emailCard.howToSetUpEmail': 'How to set up email',
+  'screens.adminArea.emailCard.mailServer': 'Mail server',
+  'screens.adminArea.emailCard.nothingIsEmailedWhileThisIs':
+    'Nothing is emailed while this is off. Links can still be copied, and reset links are written to the server log.',
+  'screens.adminArea.emailCard.onceEmailIsOnTheAddresses':
+    'Once email is on, the addresses Valence sends to and everything each email says go to the mail provider you set up here.',
+  'screens.adminArea.emailCard.port': 'Port',
+  'screens.adminArea.emailCard.readingTheEmailSettings': 'Reading the email settings…',
+  'screens.adminArea.emailCard.recentEmails.failedBecause': 'Failed: {reason}',
+  'screens.adminArea.emailCard.recentEmails.noReasonGiven': 'no reason was given',
+  'screens.adminArea.emailCard.recentEmails.nothingHasBeenSentYet': 'Nothing has been sent yet.',
+  'screens.adminArea.emailCard.recentEmails.passwordReset': 'Password reset',
+  'screens.adminArea.emailCard.recentEmails.recentEmails': 'Recent emails',
+  'screens.adminArea.emailCard.recentEmails.sent': 'Sent',
+  'screens.adminArea.emailCard.recentEmails.setupLink': 'Setup link',
+  'screens.adminArea.emailCard.recentEmails.testEmail': 'Test email',
+  'screens.adminArea.emailCard.savedLeaveEmptyToKeep': 'Saved; leave empty to keep it',
+  'screens.adminArea.emailCard.savedTheEmailSettings': 'Saved the email settings.',
+  'screens.adminArea.emailCard.sendAs': 'Send as',
+  'screens.adminArea.emailCard.sendATestTo': 'Send a test to',
+  'screens.adminArea.emailCard.sendByEmailAppearsBesideCopy':
+    'Send by email appears beside Copy link when you add an account with an address.',
+  'screens.adminArea.emailCard.sendEmail': 'Send email',
+  'screens.adminArea.emailCard.sendPasswordResetLinksAndSetup':
+    'Send password reset links and setup links by email, through any mail server you have an account with.',
+  'screens.adminArea.emailCard.sendTestEmail': 'Send test email',
+  'screens.adminArea.emailCard.sentCheckTheInboxOf': 'Sent. Check the inbox of {to}.',
+  'screens.adminArea.emailCard.setByTheEnvironment': 'Set by the environment',
+  'screens.adminArea.emailCard.smtpUrlIsSetSoTheMail':
+    "SMTP_URL is set, so the mail server and sender come from the server's environment and are changed there. The switches below still apply.",
+  'screens.adminArea.emailCard.starttls': 'STARTTLS',
+  'screens.adminArea.emailCard.theAddressMustBeOneYour':
+    'The address must be one your mail provider lets you send from, usually on a domain you verified with them.',
+  'screens.adminArea.emailCard.theEmailSettingsCouldNotBe': 'The email settings could not be read.',
+  'screens.adminArea.emailCard.theSmtpServerOfYourEmail':
+    'The SMTP server of your email provider, its port, and how the connection is encrypted.',
+  'screens.adminArea.emailCard.tls': 'TLS',
+  'screens.adminArea.emailCard.toWhoeverAsksOnTheSign':
+    'To whoever asks on the sign-in screen, when their account has an address.',
+  'screens.adminArea.emailCard.useResend': 'Use Resend',
+  'screens.adminArea.emailCard.whatLeavesTheServer': 'What leaves the server',
   'screens.adminArea.encodingPanel.alreadyDone': 'Already done',
   'screens.adminArea.encodingPanel.aReplacementKeepsBothFilesUntil':
     'A replacement keeps both files until you have watched it and said it is fine. Nothing is discarded on a timer.',
@@ -4071,6 +4230,8 @@ const ENGLISH = {
   'screens.audiobookBar.audiobookPanel.whereTheBookIs': 'Where the book is',
   'screens.audiobookBar.listeningTo': 'Listening to',
   'screens.audiobookBar.stopListening': 'Stop listening',
+  'screens.banDialog.keepItShorter': 'Keep it to 200 characters.',
+  'screens.banDialog.whatTheyAreTold': 'What they are told',
   'screens.bookDialog.aBook': 'A book',
   'screens.bookDialog.chapterList.reflowsToFit': 'Reflows to fit',
   'screens.bookDialog.ebookAndAudiobook': 'Ebook and audiobook',
@@ -4110,6 +4271,24 @@ const ENGLISH = {
   'screens.cacheBreakdown.cacheRows.sets.other': '{count} sets',
   'screens.cacheBreakdown.cacheRows.stillCounting': 'Still counting',
   'screens.cacheBreakdown.cacheRows.transcodeSessions': 'Transcode sessions',
+  'screens.collectionDialog.addFilmsAndProgrammesFromTheir':
+    'Add films and programmes to it from their own pages.',
+  'screens.collectionDialog.chooseArtwork': 'Choose artwork',
+  'screens.collectionDialog.deleteCollection': 'Delete collection',
+  'screens.collectionDialog.earlier': 'Earlier',
+  'screens.collectionDialog.later': 'Later',
+  'screens.collectionDialog.nameHasNewArtwork': '{name} has new artwork.',
+  'screens.collectionDialog.thatCollectionCouldNotBeDeleted':
+    'That collection could not be deleted.',
+  'screens.collectionDialog.theFilmsAndProgrammesInIt':
+    'The films and programmes in it stay in the library.',
+  'screens.collectionDialog.useThePostersInIt': 'Use the posters in it',
+  'screens.collectionEditDialog.aCollectionNeedsAName': 'A collection needs a name.',
+  'screens.collectionEditDialog.editCollection': 'Edit collection',
+  'screens.collectionEditDialog.forASagaWatchedInOrder':
+    'For a saga watched in the order it was made, rather than a body of work in any order.',
+  'screens.collectionEditDialog.thatCollectionCouldNotBeMade': 'That collection could not be made.',
+  'screens.collectionEditDialog.whatTheseHaveInCommon': 'What these have in common',
   'screens.colourChoice.anyColourForLabel': 'Any colour for {label}',
   'screens.confirmHiding.hideThis': 'Hide this?',
   'screens.connectToServer.foundOnThisMachine': 'Found on this machine',
@@ -4128,6 +4307,11 @@ const ENGLISH = {
   'screens.decideForSomebody.whoMayWatchTitleName': 'Who may watch {title}: {name}',
   'screens.definitionSettingsFields.describeOptionLabel.ascending': 'Ascending',
   'screens.definitionSettingsFields.describeOptionLabel.descending': 'Descending',
+  'screens.describeLinkLife.linkHasRunOut': 'Link has run out',
+  'screens.describeLinkLife.linkWorksForDays.one': 'Link works for {count} more day',
+  'screens.describeLinkLife.linkWorksForDays.other': 'Link works for {count} more days',
+  'screens.describeLinkLife.linkWorksForHours.one': 'Link works for {count} more hour',
+  'screens.describeLinkLife.linkWorksForHours.other': 'Link works for {count} more hours',
   'screens.deviceApproval.aTelevisionShowedYouACode':
     'A television showed you a code. Type it here and {name} will let it in as you.',
   'screens.deviceApproval.checkingThatCode': 'Checking that code',
@@ -4315,6 +4499,14 @@ const ENGLISH = {
     '{name} needs a name and a picture, and a remote is a poor way to give it either. Open this on your phone and this television will carry on by itself.',
   'screens.finishOnAnotherDevice.waitingForYouToFinish': 'Waiting for you to finish',
   'screens.folderLink.openFolderInFiles': 'Open {folder} in Files',
+  'screens.forgotPassword.forgotYourPassword': 'Forgot your password?',
+  'screens.forgotPassword.ifAnAccountAnswersToThat':
+    'If an account answers to that, a link to choose a new password is on its way. It works once, for an hour. No email? Whoever runs this server can find the link in its log.',
+  'screens.forgotPassword.resetYourPassword': 'Reset your password',
+  'screens.forgotPassword.sendMeALink': 'Send me a link',
+  'screens.forgotPassword.typeYourUsernameOrTheEmail':
+    'Type your username or the email address on your account, and Valence sends a link to choose a new password.',
+  'screens.forgotPassword.usernameOrEmail': 'Username or email',
   'screens.giveUpRulesList.metadataWaitChoices.fifteenMinutes': 'Fifteen minutes',
   'screens.giveUpRulesList.metadataWaitChoices.halfAnHour': 'Half an hour',
   'screens.giveUpRulesList.stalledWaitChoices.twelveHours': 'Twelve hours',
@@ -4358,6 +4550,216 @@ const ENGLISH = {
   'screens.householdOnboarding.youSignedInAWhileAgo':
     'You signed in a while ago. Add a passkey from your account, where you can confirm it is you.',
   'screens.immersiveMusic.titleImmersive': '{title}, immersive',
+  'screens.importWizard.arrImportStep.addAMapping': 'Add a mapping',
+  'screens.importWizard.arrImportStep.addAnotherApp': 'Add another app',
+  'screens.importWizard.arrImportStep.alreadyInValence': 'Already in Valence',
+  'screens.importWizard.arrImportStep.apiKeyForItem': 'API key for {item}',
+  'screens.importWizard.arrImportStep.appsConnectedKept':
+    'Apps connected: {added} new, {kept} already connected',
+  'screens.importWizard.arrImportStep.appsRead': 'Apps read',
+  'screens.importWizard.arrImportStep.askingForWhatWasWaitedFor':
+    'Asking for what was being waited for',
+  'screens.importWizard.arrImportStep.bringItIn': 'Import it',
+  'screens.importWizard.arrImportStep.checkingRequesting': 'Checking whether requesting is on',
+  'screens.importWizard.arrImportStep.clientsAddedKept':
+    'Download clients: {added} added, {kept} already in Valence',
+  'screens.importWizard.arrImportStep.detailFromApps': '{detail}, from {apps}',
+  'screens.importWizard.arrImportStep.filledByAppFrom': 'Filled by {app} from {folders}',
+  'screens.importWizard.arrImportStep.folderAsTheAppsSeeIt': 'Folder as the apps see it',
+  'screens.importWizard.arrImportStep.fromApps': 'From {apps}',
+  'screens.importWizard.arrImportStep.giveAtLeastOneApp':
+    'Give at least one app’s address and API key.',
+  'screens.importWizard.arrImportStep.giveNameAnAddressAndAKey':
+    'Give {name} both an address and an API key, or leave both empty.',
+  'screens.importWizard.arrImportStep.handOffExplained':
+    '{app} keeps doing the downloading while it keeps running, and Valence passes each request to it. This is the default.',
+  'screens.importWizard.arrImportStep.handToApp': 'Hand requests to {app}',
+  'screens.importWizard.arrImportStep.howToSwitchRequestingOn': 'How to switch requesting on',
+  'screens.importWizard.arrImportStep.indexersAddedKept':
+    'Indexers: {added} added, {kept} already in Valence',
+  'screens.importWizard.arrImportStep.indexersThroughProwlarr.one':
+    '{count} indexer through {name}',
+  'screens.importWizard.arrImportStep.indexersThroughProwlarr.other':
+    '{count} indexers through {name}',
+  'screens.importWizard.arrImportStep.itCouldNotBeAskedFor': 'It could not be asked for.',
+  'screens.importWizard.arrImportStep.itCouldNotBeBroughtIn': 'The setup could not be brought in.',
+  'screens.importWizard.arrImportStep.leaveAsItIs': 'Leave as it is',
+  'screens.importWizard.arrImportStep.leaveExplained':
+    'The library stays as it is: nothing about who fulfils its requests changes.',
+  'screens.importWizard.arrImportStep.mapFoldersExplained':
+    'Radarr, Sonarr and Lidarr often see your media at other paths than Valence does. Map each folder as they write it to the same folder as Valence sees it, so their root folders find the right library.',
+  'screens.importWizard.arrImportStep.matchedByNameOnly': 'Matched by its folder’s name only',
+  'screens.importWizard.arrImportStep.monitoredArtists.one':
+    '{count} monitored artist still missing tracks',
+  'screens.importWizard.arrImportStep.monitoredArtists.other':
+    '{count} monitored artists still missing tracks',
+  'screens.importWizard.arrImportStep.monitoredFilms.one':
+    '{count} monitored film with no file yet',
+  'screens.importWizard.arrImportStep.monitoredFilms.other':
+    '{count} monitored films with no file yet',
+  'screens.importWizard.arrImportStep.monitoredSeries.one':
+    '{count} monitored series still missing episodes',
+  'screens.importWizard.arrImportStep.monitoredSeries.other':
+    '{count} monitored series still missing episodes',
+  'screens.importWizard.arrImportStep.nameAddress': '{name} address',
+  'screens.importWizard.arrImportStep.nameApiKey': '{name} API key',
+  'screens.importWizard.arrImportStep.noLibraryHoldsTheseFolders':
+    'No library holds these folders. Add a path mapping so Valence can find theirs.',
+  'screens.importWizard.arrImportStep.notBroughtAcross': 'Not imported',
+  'screens.importWizard.arrImportStep.nothingHere': 'Nothing to bring in here.',
+  'screens.importWizard.arrImportStep.overseerrFindsTheRest':
+    'Give Overseerr or Jellyseerr, and Valence finds the Radarr and Sonarr it sends to, with their keys. Leave any app you do not run empty.',
+  'screens.importWizard.arrImportStep.passwordForItem': 'Password for {item}',
+  'screens.importWizard.arrImportStep.passwordsAndKeys': 'Passwords and keys',
+  'screens.importWizard.arrImportStep.pathFromApp': '{path}, from {app}',
+  'screens.importWizard.arrImportStep.profilesAddedKept':
+    'Quality profiles: {added} added, {kept} already in Valence',
+  'screens.importWizard.arrImportStep.qualityProfiles': 'Quality profiles',
+  'screens.importWizard.arrImportStep.readItAgain': 'Read it again',
+  'screens.importWizard.arrImportStep.readTheSetup': 'Read the setup',
+  'screens.importWizard.arrImportStep.removeThisMapping': 'Remove this mapping',
+  'screens.importWizard.arrImportStep.requestingIsNotSwitchedOn': 'Requesting is not switched on',
+  'screens.importWizard.arrImportStep.requestsMadeAlready.one':
+    '{count} request made, {already} asked for already',
+  'screens.importWizard.arrImportStep.requestsMadeAlready.other':
+    '{count} requests made, {already} asked for already',
+  'screens.importWizard.arrImportStep.sameFolderAsValenceSeesIt': 'Same folder as Valence sees it',
+  'screens.importWizard.arrImportStep.skipThis': 'Skip this',
+  'screens.importWizard.arrImportStep.someThingsCouldNotBeDone': 'Some things could not be done',
+  'screens.importWizard.arrImportStep.switchOnTheRequestsProfile':
+    'Importing from Radarr, Sonarr and the rest needs the requests service. Start Valence with the requests profile in your Docker Compose file, then come back.',
+  'screens.importWizard.arrImportStep.takeOverExplained':
+    'Valence’s own downloader takes over, with the download clients and indexers brought in. Switch {app} off afterwards so the two do not both download.',
+  'screens.importWizard.arrImportStep.takeOverWithProfileExplained':
+    'Valence’s own downloader takes over, judging releases by {profile}. Switch {app} off afterwards so the two do not both download.',
+  'screens.importWizard.arrImportStep.theseAppsShowSecretsMasked':
+    'Newer versions of these apps show passwords and keys only masked, so type these in again. Anything left empty can be filled in later.',
+  'screens.importWizard.arrImportStep.titleProblem': '{title}: {problem}',
+  'screens.importWizard.arrImportStep.titlesWithNoId.one':
+    '{count} title has no id Valence can ask for it by',
+  'screens.importWizard.arrImportStep.titlesWithNoId.other':
+    '{count} titles have no id Valence can ask for them by',
+  'screens.importWizard.arrImportStep.urlFoundThrough': '{url}, found through {through}',
+  'screens.importWizard.arrImportStep.valenceDownloads': 'Valence downloads',
+  'screens.importWizard.arrImportStep.valenceOnlyReadsFromTheseApps':
+    'Valence only reads from these apps and never changes them, so they keep working as before.',
+  'screens.importWizard.arrImportStep.waitingRequests.one':
+    '{count} Overseerr or Jellyseerr request still waiting',
+  'screens.importWizard.arrImportStep.waitingRequests.other':
+    '{count} Overseerr or Jellyseerr requests still waiting',
+  'screens.importWizard.arrImportStep.whatIsBroughtAcross': 'What is imported from them',
+  'screens.importWizard.arrImportStep.whatWasBeingWaitedFor': 'What was being waited for',
+  'screens.importWizard.arrImportStep.whereTheirFoldersAre': 'Where their folders are',
+  'screens.importWizard.arrImportStep.whichRequestApp': 'Which request app',
+  'screens.importWizard.arrImportStep.whoFulfilsLibrary': 'Who fulfils {library}',
+  'screens.importWizard.arrImportStep.willBeAdded': 'Will be added',
+  'screens.importWizard.arrImportStep.yourApps': 'Your apps',
+  'screens.importWizard.handOutTheLinks': 'Hand out the setup links',
+  'screens.importWizard.importing': 'Importing',
+  'screens.importWizard.importReportView.andCountMore.one': 'And {count} more.',
+  'screens.importWizard.importReportView.andCountMore.other': 'And {count} more.',
+  'screens.importWizard.importReportView.couldNotBeBroughtAcross': 'Could not be imported',
+  'screens.importWizard.importReportView.librariesUpToAge':
+    '{libraries}, nothing rated above {age}',
+  'screens.importWizard.importReportView.markers': 'Checked for markers',
+  'screens.importWizard.importReportView.matched': 'Matched',
+  'screens.importWizard.importReportView.matchedOfItems': '{matched} of {items}',
+  'screens.importWizard.importReportView.notMatched': 'Not matched',
+  'screens.importWizard.importReportView.plays': 'Plays',
+  'screens.importWizard.importReportView.titleYear': '{title} ({year})',
+  'screens.importWizard.importReportView.watchedResumesPlaysFavouritesRatingsPlaylists':
+    'Watched {watched}, in progress {resumes}, plays {plays}, favourites {favourites}, ratings {ratings}, playlists {playlists}',
+  'screens.importWizard.importReportView.whatComesAcross': 'What is imported',
+  'screens.importWizard.importReportView.whatStaysBehind': 'What stays behind',
+  'screens.importWizard.importReportView.whatWasWritten': 'What was written',
+  'screens.importWizard.importStep.carryingOnPicksUpWhereItStopped':
+    'Carrying on picks up where it stopped. Nothing is imported twice.',
+  'screens.importWizard.importStep.carryOn': 'Carry on',
+  'screens.importWizard.importStep.theImportStopped': 'The import stopped.',
+  'screens.importWizard.librariesFirst': 'Libraries first',
+  'screens.importWizard.librariesStep.comesInto': 'Comes into',
+  'screens.importWizard.librariesStep.leaveItOut': 'Leave it out',
+  'screens.importWizard.librariesStep.makeAndScanTheseLibraries': 'Make and scan these libraries',
+  'screens.importWizard.librariesStep.makeAndScanThisLibrary':
+    'A new library, made and scanned now',
+  'screens.importWizard.librariesStep.readingTheLibraries': 'Reading the libraries',
+  'screens.importWizard.librariesStep.sourcePathBecomesValencePath': '{sourcePath} → {valencePath}',
+  'screens.importWizard.librariesStep.valenceHasNoLibraryLikeThis':
+    'Valence has no library like this, so it stays behind.',
+  'screens.importWizard.librariesStep.waitForTheScansToFinish':
+    'Wait for the scans to finish, so the films and episodes are there to be matched.',
+  'screens.importWizard.librariesStep.whereAreTheFolders': 'Where are the folders?',
+  'screens.importWizard.libraryNameFor.nameNumber': '{name} {number}',
+  'screens.importWizard.pathMappings.addAFolder': 'Add a folder',
+  'screens.importWizard.pathMappings.inValence': 'In Valence',
+  'screens.importWizard.pathMappings.onSource': 'On {source}',
+  'screens.importWizard.pathMappings.removeThisPair': 'Remove this folder',
+  'screens.importWizard.pathMappings.saveAndLookAgain': 'Save and look again',
+  'screens.importWizard.pathMappings.sourceAndValenceMaySeeTheSameFiles':
+    "{source} and Valence may see the same files at different paths. Where they differ, say where each of {source}'s folders is in Valence.",
+  'screens.importWizard.pathMappings.sourceFolderExample': '/data/movies',
+  'screens.importWizard.pathMappings.valenceFolderExample': '/media/movies',
+  'screens.importWizard.peopleStep.disabled': 'Disabled',
+  'screens.importWizard.peopleStep.everybodyOnSource': 'Everybody on {source}',
+  'screens.importWizard.peopleStep.noneOfThem': 'None of them',
+  'screens.importWizard.peopleStep.plexWillNotShareTheirWatching':
+    'Plex will not share their watching with Valence, so their account and the plays the server remembers come across, but not where they stopped or their ratings.',
+  'screens.importWizard.peopleStep.readingWhoIsOnIt': 'Reading who is on it',
+  'screens.importWizard.peopleStep.theirPin': 'Their PIN',
+  'screens.importWizard.peopleStep.usePin': 'Use PIN',
+  'screens.importWizard.peopleStep.whichOfThemIsYou': 'Which of them is you?',
+  'screens.importWizard.peopleStep.withoutTheirPinTheyAreLeftOut':
+    'Without their PIN they are left out. It is not kept.',
+  'screens.importWizard.peopleStep.yourOwnAccountIsUsedForYou':
+    'Your own account gets your watching, rather than a new account being made for you.',
+  'screens.importWizard.planStep.importEverything': 'Import everything',
+  'screens.importWizard.planStep.nothingHasBeenWrittenYet':
+    'Nothing has been written yet. This is what importing everything would do.',
+  'screens.importWizard.planStep.planAgain': 'Plan again',
+  'screens.importWizard.planStep.readingEverythingWritingNothing':
+    'Reading everything on {source} and writing nothing.',
+  'screens.importWizard.planStep.startingTheDryRun': 'Starting the dry run',
+  'screens.importWizard.planStep.theDryRunStopped': 'The dry run stopped.',
+  'screens.importWizard.readingWhatIsConnected': 'Reading what is connected',
+  'screens.importWizard.requestingToo': 'Requesting too',
+  'screens.importWizard.runProgress.gettingReady': 'Getting ready',
+  'screens.importWizard.runProgress.processedOfTotal': '{processed} of {total}',
+  'screens.importWizard.scanFollower.scanned': 'Scanned',
+  'screens.importWizard.scanFollower.scanningName': 'Scanning {name}',
+  'screens.importWizard.scanFollower.theScanFailed': 'The scan failed',
+  'screens.importWizard.setupLinksStep.makingTheLinks': 'Making the links',
+  'screens.importWizard.setupLinksStep.nobodyNewWasAdded':
+    'Nobody new was added, so there are no links to hand out.',
+  'screens.importWizard.setupLinksStep.passwordsCannotBeCopied':
+    'Passwords cannot be copied from another server, so each new person signs in the first time with their own link and chooses a password there.',
+  'screens.importWizard.setupLinksStep.sentNamesLink': 'Sent {name} their link.',
+  'screens.importWizard.setupLinksStep.signingInTheFirstTime': 'Signing in the first time',
+  'screens.importWizard.sourceStep.carryOn': 'Carry on with this one',
+  'screens.importWizard.sourceStep.connect': 'Connect and check',
+  'screens.importWizard.sourceStep.connectedBefore': 'Connected before',
+  'screens.importWizard.sourceStep.emby': 'Emby',
+  'screens.importWizard.sourceStep.jellyfin': 'Jellyfin',
+  'screens.importWizard.sourceStep.mediaBrowserAddressExample': 'http://192.168.1.10:8096',
+  'screens.importWizard.sourceStep.nameAtAddress': '{name} at {address}',
+  'screens.importWizard.sourceStep.plex': 'Plex',
+  'screens.importWizard.sourceStep.plexAddressExample': 'http://192.168.1.10:32400',
+  'screens.importWizard.sourceStep.plexToken': 'Plex token',
+  'screens.importWizard.sourceStep.signsInWithAnApiKey':
+    'People, watching and libraries, read with an API key.',
+  'screens.importWizard.sourceStep.signsInWithAPlexToken':
+    'People, watching and libraries, read with a Plex token.',
+  'screens.importWizard.sourceStep.theAddressValenceCanReachItOn':
+    'The address Valence can reach it on, with its port. A local address is fine.',
+  'screens.importWizard.sourceStep.whereIsEverythingNow': 'Where is everything now?',
+  'screens.importWizard.sourceStep.whereToFindAJellyfinKey':
+    'In Jellyfin, open Dashboard, then API Keys, and add a key called Valence. It needs no other setting.',
+  'screens.importWizard.sourceStep.whereToFindAnEmbyKey':
+    'In Emby, open Settings, then API Keys under Advanced, and add a key called Valence.',
+  'screens.importWizard.sourceStep.whereToFindAPlexToken':
+    "Signed in to Plex as the server's owner, open any film's menu, choose Get Info, then View XML, and copy the value after X-Plex-Token= in the address.",
+  'screens.importWizard.whatWillComeAcross': 'What will be imported',
+  'screens.importWizard.whereIsEverythingComingFrom': 'Where is everything coming from?',
+  'screens.importWizard.whoComesAcross': 'Who to import',
   'screens.indexerDialog.definitionSettingsFields.keptTypeANewOneTo':
     'Kept. Type a new one to replace it, or leave this empty to keep it.',
   'screens.indexerDialog.readIndexerForm.aRatioIsANumberFrom':
@@ -4425,6 +4827,7 @@ const ENGLISH = {
   'screens.libraryBrowser.goToMusic': 'Go to Music',
   'screens.libraryBrowser.readingYourLibrary': 'Reading your library',
   'screens.libraryBrowser.thisServerHasNoFilmsOr': 'This server has no films or programmes yet.',
+  'screens.lifetimeChoice.linkWorksFor': 'Link works for',
   'screens.logDetailDialog.happened': 'Happened',
   'screens.logDetailDialog.level': 'Level',
   'screens.logExplorer.levelToggles.levels': 'Levels',
@@ -4755,6 +5158,7 @@ const ENGLISH = {
   'screens.pageReader.screen': 'Screen',
   'screens.pageReader.twoPages': 'Two',
   'screens.pageReader.width': 'Width',
+  'screens.partOfCollections.partOf': 'Part of',
   'screens.partyMenu.startAWatchParty': 'Start a watch party',
   'screens.partyMenu.watchParty': 'Watch party',
   'screens.partyMenu.watchPartyWatchingWatching': 'Watch party · {watching} watching',
@@ -5175,6 +5579,11 @@ const ENGLISH = {
   'screens.requestsPanel.describeRequestsVpn.theTunnelIsUpAndTraffic':
     'The tunnel is up, and traffic leaves from {value}.',
   'screens.requestsPanel.describeRequestsVpn.up': 'Up',
+  'screens.resetPasswordPage.setThePassword': 'Set the password',
+  'screens.resetPasswordPage.theTwoPasswordsAreNotThe': 'The two passwords are not the same.',
+  'screens.resetPasswordPage.typeItAgain': 'Type it again',
+  'screens.resetPasswordPage.yourPasswordIsChanged':
+    'Your password is changed. Sign in with it now.',
   'screens.rolesPanel.colorSwatchPicker.noColour': 'No colour',
   'screens.rolesPanel.permissionEditor.letsSomebodyUseThisPartOf':
     'Lets somebody use this part of {pluginName}.',
@@ -5207,20 +5616,132 @@ const ENGLISH = {
   'screens.session.useSignOut.youAreStillSignedInThe':
     'You are still signed in. The server would not end the session.',
   'screens.sessionCard.deviceIcon.chrome': 'Chrome',
+  'screens.setupLinkHandover.aCodeThatOpensNamesSetupLink': 'A code that opens {name}’s setup link',
+  'screens.setupLinkHandover.sendByEmail': 'Send by email',
+  'screens.setupLinkHandover.setupLinkForName': 'Setup link for {name}',
+  'screens.setupLinkHandover.worksOnceUntilValenceKeepsNoCopy':
+    'Works once, until {until}. Valence keeps no copy of it, so hand it over now.',
+  'screens.setupLinkSection.aLinkToChooseANewPasswordWorksUntil':
+    'A link to choose a new password or a passkey works until {until}.',
+  'screens.setupLinkSection.madeANewLink': 'Made a new setup link. The old one no longer works.',
+  'screens.setupLinkSection.makeASetupLink': 'Make a setup link',
+  'screens.setupLinkSection.newLink': 'New link',
+  'screens.setupLinkSection.revokeLink': 'Revoke link',
+  'screens.setupLinkSection.revokeThisLink': 'Revoke this setup link?',
+  'screens.setupLinkSection.sendThemALinkToChooseANewPassword':
+    'Send them a link to choose a new password or a passkey. Every session they hold ends when they use it.',
+  'screens.setupLinkSection.theirLinkRanOutMakeANewOne':
+    'Their link ran out before they used it. Make a new one.',
+  'screens.setupLinkSection.theLinkNoLongerWorks': 'The setup link no longer works.',
+  'screens.setupLinkSection.theLinkStopsWorkingAtOnce':
+    'The link stops working at once. {name} can’t use it to set up until you make a new one.',
+  'screens.setupLinkSection.theyHaveNoWayToSignInYet':
+    'They have no password or passkey yet. Make a setup link for them to choose one.',
+  'screens.setupLinkSection.valenceKeepsNoCopyMakeANewOne':
+    'Valence keeps no copy of a link once it is shown. To hand it over again, make a new one.',
+  'screens.setupLinkSection.waitingForNameToSetUpUntil':
+    'Waiting for {name} to set up. Their link works until {until}.',
+  'screens.setupWizard.accessStep.addAnotherAddress': 'Add another address',
+  'screens.setupWizard.accessStep.createMyAccount': 'Create my account',
+  'screens.setupWizard.accessStep.howValenceIsReached': 'How Valence is reached',
+  'screens.setupWizard.accessStep.originExample': 'https://valence.example.com',
+  'screens.setupWizard.accessStep.signingInHereStopsWorking':
+    'With HTTPS on, signing in from this address stops working once Valence starts again. Leave it off unless Valence is behind HTTPS.',
+  'screens.setupWizard.accessStep.stopTrustingOrigin': 'Stop trusting {origin}',
+  'screens.setupWizard.accessStep.suggested': 'Suggested:',
+  'screens.setupWizard.accessStep.thisBrowser': 'This browser',
+  'screens.setupWizard.accessStep.thisBrowserReachedItOverPlainHttp':
+    'This browser reached Valence over plain HTTP',
+  'screens.setupWizard.accessStep.valenceOnlyAcceptsSignInsFrom':
+    'Valence only accepts sign-ins from addresses it trusts. Add every address it is opened on: its local address, a domain name, or a reverse proxy in front of it.',
+  'screens.setupWizard.accountStep.onlyForAPasswordResetLink':
+    'Only used to send you a link if you forget your password.',
+  'screens.setupWizard.accountStep.thisIsTheAdministrator':
+    'This is the administrator: the one account that can change everything on this server. You can add everybody else afterwards.',
+  'screens.setupWizard.addLibrariesStep.addAnother': 'Add another library',
+  'screens.setupWizard.addLibrariesStep.aLibraryIsAFolderOfOneKind':
+    'A library is a folder of one kind of thing: films, series, music or books. Add each one and Valence starts reading it straight away.',
+  'screens.setupWizard.addLibrariesStep.comingFromAnotherServer':
+    'Moving from Jellyfin, Emby or Plex? You can skip this: the next step makes libraries from theirs.',
+  'screens.setupWizard.addLibrariesStep.readingCarriesOn':
+    'Reading carries on in the background while you go on.',
+  'screens.setupWizard.addLibrariesStep.yourLibraries': 'Your libraries',
+  'screens.setupWizard.catalogueStep.aKeyIsAlreadySet': 'A catalogue key is already set',
+  'screens.setupWizard.catalogueStep.checkingForAKey': 'Checking for a key',
+  'screens.setupWizard.catalogueStep.getAFreeKeyFromTmdb':
+    '{link} from The Movie Database, then paste its API key above. It takes a minute.',
+  'screens.setupWizard.catalogueStep.itCanBeChangedInSettings':
+    'Titles will be looked up with it. It can be changed in Settings.',
+  'screens.setupWizard.catalogueStep.saveAndContinue': 'Save and continue',
+  'screens.setupWizard.catalogueStep.titlesAndArtwork': 'Titles and artwork',
+  'screens.setupWizard.catalogueStep.valenceLooksTitlesUpInTmdb':
+    'Valence looks titles, artwork, years and ratings up in The Movie Database. Without a key a library is a list of file names, so it is best added before the first one is read.',
   'screens.setupWizard.cookiesWillNotBeMarkedSecure':
     'Cookies will not be marked secure, so Valence works over plain HTTP on your network.',
-  'screens.setupWizard.createTheAdministratorAccountAndConfirm':
-    'Create the administrator account and confirm how this server is reached.',
-  'screens.setupWizard.detectedDetectedOriginAddEveryAddressYou':
-    'Detected {detectedOrigin}. Add every address you use to reach Valence, separated by commas.',
-  'screens.setupWizard.finishSetup': 'Finish setup',
+  'screens.setupWizard.doneStep.aCatalogueKeyIsSet': 'A catalogue key for titles and artwork',
+  'screens.setupWizard.doneStep.countTrustedAddresses.one': '{count} trusted address',
+  'screens.setupWizard.doneStep.countTrustedAddresses.other': '{count} trusted addresses',
+  'screens.setupWizard.doneStep.hereIsWhatWasSetUp':
+    'Here is what was set up. Anything left for later is a click away in Settings.',
+  'screens.setupWizard.doneStep.importedFromYourOldServer': 'Imported from your old server',
+  'screens.setupWizard.doneStep.noCatalogueKeyYet':
+    'No catalogue key yet: add one in Settings when you are ready',
+  'screens.setupWizard.doneStep.noLibrariesYet': 'No libraries yet: add them in Settings',
+  'screens.setupWizard.doneStep.openValence': 'Open Valence',
+  'screens.setupWizard.doneStep.startedFresh': 'Started fresh, with nothing imported',
+  'screens.setupWizard.doneStep.startValenceAgain': 'Start Valence again',
+  'screens.setupWizard.doneStep.theHttpsChoiceHoldsOnceItStartsAgain':
+    'The HTTPS setting takes hold the next time Valence starts. Restart it once you are done here, then sign in again.',
+  'screens.setupWizard.doneStep.valenceIsReady': 'Valence is ready',
+  'screens.setupWizard.doneStep.yourAccountUsername': 'Your account, {username}',
+  'screens.setupWizard.doneStep.yourRequestingAppsAreConnected':
+    'Your requesting apps are connected',
+  'screens.setupWizard.householdStep.addSomebody': 'Add somebody',
+  'screens.setupWizard.householdStep.eachPersonGetsAProfile':
+    'Everybody who watches on this account gets a profile of their own, with their own history and where they got to. Add them now or later.',
+  'screens.setupWizard.householdStep.readingTheHousehold': 'Reading the household',
+  'screens.setupWizard.householdStep.thatPersonCouldNotBeAdded':
+    'That person could not be added. Try again.',
+  'screens.setupWizard.householdStep.theirName': 'Their name',
+  'screens.setupWizard.householdStep.whoWatchesHereHeading': 'People on this account',
+  'screens.setupWizard.importStep.chooseAgain': 'Choose again',
+  'screens.setupWizard.importStep.comingFromAnotherServer':
+    'Coming from another server? Import its people, libraries, watching, playlists and collections, or start with nothing.',
+  'screens.setupWizard.importStep.finishWithoutImporting': 'Finish without importing',
+  'screens.setupWizard.importStep.fromJellyfinEmbyOrPlex': 'From Jellyfin, Emby or Plex',
+  'screens.setupWizard.importStep.nothingOnTheOldServerChanges':
+    'Connect it, choose who and what to import, and follow the import as it runs. Nothing on the old server is changed.',
+  'screens.setupWizard.importStep.nothingToImport':
+    'Nothing to import. It can be done later from Settings.',
+  'screens.setupWizard.importStep.onlyMyRequestingApps': 'Import only my requesting apps',
+  'screens.setupWizard.importStep.peopleWatchingAndLibraries':
+    'People, what they have watched, favourites, playlists and libraries.',
+  'screens.setupWizard.importStep.radarrSonarrLidarrProwlarrAndSeerr':
+    'Radarr, Sonarr, Lidarr, Prowlarr, Overseerr or Jellyseerr.',
+  'screens.setupWizard.importStep.startFresh': 'Start fresh',
+  'screens.setupWizard.importStep.yourRequestingApps': 'Your requesting apps',
+  'screens.setupWizard.profileStep.howYouAppearHere':
+    'How you appear to everybody here, and how Valence looks and moves for you. The same settings live in your account afterwards.',
+  'screens.setupWizard.profileStep.readingYourProfile': 'Reading your profile',
+  'screens.setupWizard.profileStep.yourProfile': 'Your profile',
   'screens.setupWizard.secureCookiesWillBeUsedLogin':
     'Secure cookies will be used. Login will not work over plain HTTP.',
   'screens.setupWizard.setupCouldNotBeCompletedCheck':
     'Setup could not be completed. Check the details and try again.',
   'screens.setupWizard.setUpValence': 'Set up Valence',
-  'screens.setupWizard.thisServerHasAlreadyBeenSet':
-    'This server has already been set up. Reload the page to sign in.',
+  'screens.setupWizard.skipForNow': 'Skip for now',
+  'screens.setupWizard.steps.addressesAndHttps': 'Addresses and HTTPS',
+  'screens.setupWizard.steps.aFreeCatalogueKey': 'A free catalogue key',
+  'screens.setupWizard.steps.howYouAppear': 'How you appear',
+  'screens.setupWizard.steps.ifYouAreMovingIn': 'If you are moving in',
+  'screens.setupWizard.steps.importFromAnotherServer': 'Import from another server',
+  'screens.setupWizard.steps.intoValence': 'Into Valence',
+  'screens.setupWizard.steps.theAdministrator': 'The administrator',
+  'screens.setupWizard.steps.welcome': 'Welcome',
+  'screens.setupWizard.steps.whatSetupDoes': 'What setup does',
+  'screens.setupWizard.steps.whereYourMediaIs': 'Where your media is',
+  'screens.setupWizard.steps.whoWatchesHere': 'Who watches here',
+  'screens.setupWizard.steps.yourHousehold': 'Your household',
   'screens.setupWizard.thisServerIsReachedOverHTTPS': 'This server is reached over HTTPS',
   'screens.setupWizard.trustedOrigins': 'Trusted origins',
   'screens.setupWizard.validateSetupForm.eachOriginMustBeAFull':
@@ -5231,6 +5752,9 @@ const ENGLISH = {
   'screens.setupWizard.validateSetupForm.enterAValidEmailAddress': 'Enter a valid email address.',
   'screens.setupWizard.validateSetupForm.useAtLeastMINIMUMPASSWORDLENGTH':
     'Use at least {MINIMUM_PASSWORD_LENGTH} characters.',
+  'screens.setupWizard.welcomeStep.makeYourAccount': 'Make your account',
+  'screens.setupWizard.welcomeStep.nobodyHasAnAccountHereYet':
+    'Nobody has an account on this server yet. Make yours, say where Valence is reached and where your media is, and import everything from Jellyfin, Emby or Plex if you are moving. All of it can be changed later.',
   'screens.shareArea.askWhoeverSentItForA': 'Ask whoever sent it for a new one.',
   'screens.shareArea.openingWhatWasSharedWithYou': 'Opening what was shared with you on {name}',
   'screens.shareArea.sharedWithYouOnName': 'Shared with you on {name}',
@@ -5319,6 +5843,10 @@ const ENGLISH = {
   'screens.twoFactorSetup.setupKey': 'Setup key',
   'screens.twoFactorSetup.thatPasswordIsIncorrect': 'That password is incorrect.',
   'screens.twoFactorSetup.twoFactorSetupQRCode': 'Two-factor setup QR code',
+  'screens.usernameField.lettersDigitsDotsAndUnderscores':
+    '{least} to {most} letters, digits, dots and underscores.',
+  'screens.usernameField.thatUsernameIsFree': 'That username is free.',
+  'screens.usernameField.usernameOptional': 'Username (optional)',
   'screens.videoPlayer.bringItBack': 'Bring it back',
   'screens.videoPlayer.captionSettings.backgroundOpacity': 'Background opacity',
   'screens.videoPlayer.captionSettings.captionBackgroundColour': 'Caption background colour',
@@ -5418,6 +5946,26 @@ const ENGLISH = {
   'screens.webhooksPanel.webhookFilterList.findInTitle': 'Find in {title}',
   'screens.webhooksPanel.webhookFilterList.onlyThese': 'Only these',
   'screens.webhooksPanel.webhookFilterList.whichTitle': 'Which {title}',
+  'screens.welcomePage.anAddressLetsYouResetYourPassword':
+    'With an address, you can reset your password yourself if you forget it.',
+  'screens.welcomePage.chooseANewPasswordOrAPasskey':
+    'Choose a new password, or make a passkey. Every other device you were signed in on is signed out.',
+  'screens.welcomePage.chooseHowYouSignIn':
+    'You have an account on {server}. Choose how you sign in.',
+  'screens.welcomePage.readingYourLink': 'Reading your setup link',
+  'screens.welcomePage.tryThePasskeyAgain': 'Try the passkey again',
+  'screens.welcomePage.useAPasswordInstead': 'Use a password instead',
+  'screens.welcomePage.useThisPasswordInstead': 'Use this password instead',
+  'screens.welcomePage.yourAccountIsSetUpTryThePasskeyAgain':
+    'Your account is set up and you’re signed in. Try the passkey again, or choose a password to sign in with instead.',
+  'screens.welcomePage.yourDeviceWillAskToMakeAPasskey':
+    'When you finish, your device asks to make a passkey for this account.',
+  'screens.welcomePage.yourPasskeyWasNotMade': 'Your passkey wasn’t made',
+  'screens.welcomePage.yourPasswordIsSetSignInWithIt':
+    'Your password is set. Sign in with it, and the code from your authenticator app.',
+  'screens.welcomePage.yourUsernameIsUsername': 'Your username is {username}.',
+  'screens.welcomePage.youSignInWithThisOrYourEmail':
+    'You sign in with this, or with your email address if you give one.',
   'screens.welcomeTour.skipTour': 'Skip tour',
   'screens.welcomeTour.valueOfLength': '{value} of {length}',
   'screens.welcomeToValence.householdIsReadyEverythingElseCan':
@@ -5456,6 +6004,8 @@ const ENGLISH = {
     'The catalogue knows no series by that TVDB id.',
   'server.arrEmulation.valenceHasNothingByThatId': 'Valence has nothing by that id.',
   'server.arrEmulation.whateverTheLibraryUses': 'Whatever the library uses',
+  'server.arrImport.libraryCouldNotBeChanged':
+    '{library} could not be changed to hand its requests over as chosen.',
   'server.auth.describeSignInAttempt.somebodyWhoGaveNoAddress': 'somebody who gave no address',
   'server.auth.describeSignInAttempt.thoseDetailsWereNotAccepted':
     'those details were not accepted.',
@@ -5497,13 +6047,115 @@ const ENGLISH = {
   'server.downloads.followTheDownloads.theDownloadsCouldNotBeFollowed':
     'The downloads could not be followed.',
   'server.downloads.keepingProfile.aFileToKeep': 'A file to keep',
+  'server.email.composeLinkEmail.chooseANewPassword': 'Choose a new password',
+  'server.email.composeLinkEmail.helloName': 'Hello {name},',
+  'server.email.composeLinkEmail.ifYouDidNotAsk':
+    'If you did not ask for this, ignore this email. Your password stays as it is.',
+  'server.email.composeLinkEmail.resetYourPasswordOn': 'Reset your password on {server}',
+  'server.email.composeLinkEmail.serverMadeYouAnAccount':
+    '{server} has made you an account on Valence. Open the link to choose your password and sign in.',
+  'server.email.composeLinkEmail.setUpYourAccount': 'Set up your account',
+  'server.email.composeLinkEmail.somebodyAskedToReset':
+    'Somebody asked to reset the password of your account on {server}. Open the link to choose a new one.',
+  'server.email.composeLinkEmail.theLinkWorksOnceUntil': 'The link works once, until {expiresAt}.',
+  'server.email.composeLinkEmail.welcomeName': 'Welcome, {name}',
+  'server.email.composeLinkEmail.yourAccountOn': 'Your account on {server}',
+  'server.email.composeTestEmail.emailFromValenceWorks': 'Email from Valence works',
+  'server.email.composeTestEmail.thisIsTheTest':
+    'This is the test sent from Settings on {server}. If you can read it, Valence can send email.',
+  'server.email.createEmailService.thereIsNoMailServer':
+    'There is no mail server or sending address set up yet.',
+  'server.email.describeSendFailure.couldNotReachTheMailServer':
+    'Valence could not reach the mail server at {host}. Check its address, port and encryption.',
+  'server.email.describeSendFailure.theEmailCouldNotBeSent':
+    'The mail server did not take the email.',
+  'server.email.describeSendFailure.theMailServerAnswered':
+    'The mail server refused the email: {answer}',
+  'server.email.describeSendFailure.theMailServerRefusedTheSignIn':
+    'The mail server at {host} refused the username or password.',
+  'server.email.renderEmail.ifTheButtonDoesNotWork':
+    'If the button does not work, copy this address into your browser:',
+  'server.email.renderEmail.sentByValenceAt': 'Sent by Valence at {server}.',
   'server.events.webhookEventBus.anEventCouldNotBePublished': 'An event could not be published.',
   'server.images.imageCache.thatIsNotAnImageContentType': 'That is not an image: {contentType}.',
   'server.images.imageCache.theCatalogueAnsweredStatus': 'The catalogue answered {status}.',
   'server.images.imageCache.unreachable': 'Unreachable.',
   'server.images.imageTooLarge': 'That image is {megabytes}MB, which is too large to be artwork.',
+  'server.imports.bringPersonAcross.accountsCannotBeMadeHere':
+    'This server cannot make accounts, so they were not imported.',
+  'server.imports.bringPersonAcross.disabledOnSource':
+    'Disabled on {source} before it was imported.',
+  'server.imports.bringPersonAcross.theirAccountCouldNotBeMade': 'Their account could not be made.',
+  'server.imports.bringPersonAcross.theirPictureCouldNotBeKept':
+    'Their picture could not be kept, so they have their initial instead.',
+  'server.imports.importService.somethingWentWrongReadingTheSource':
+    'Something went wrong reading the other server. Check its address and key, then try again.',
+  'server.imports.importService.thatLibraryIsNotInValence':
+    'That library is not in Valence. Choose another.',
+  'server.imports.importService.valenceCannotSeeAFolderAtPath':
+    'Valence cannot see a folder at {path}. Check the folder is mounted into Valence, or change where it maps to.',
+  'server.imports.matchSourceItem.moreThanOneMatches':
+    'More than one thing in Valence has this title, so it was left alone rather than guessed.',
+  'server.imports.matchSourceItem.nothingMatches':
+    'Nothing in Valence has the same catalogue id, file or title. Scan its library, then plan again.',
+  'server.imports.matchSourceItem.valenceKeepsNothingLikeIt': 'Valence keeps nothing like this.',
+  'server.imports.mediaBrowserReader.thereIsNobodyOnIt':
+    'The other server has no accounts to read with.',
+  'server.imports.mediaBrowserReader.thisLooksLikeEmby':
+    'This looks like an Emby server. Choose Emby instead.',
+  'server.imports.mediaBrowserReader.thisLooksLikeJellyfin':
+    'This looks like a Jellyfin server. Choose Jellyfin instead.',
+  'server.imports.planImport.collectionsAreOff':
+    'Collections cannot be built on this server, so they stay behind.',
+  'server.imports.planImport.favouriteProgrammesStayBehind.one':
+    '{count} favourite programme stays behind, because Valence keeps favourites for each film, episode and song.',
+  'server.imports.planImport.favouriteProgrammesStayBehind.other':
+    '{count} favourite programmes stay behind, because Valence keeps favourites for each film, episode and song.',
+  'server.imports.planImport.languagePreferencesStayBehind':
+    'Subtitle and audio language choices stay behind, because Valence keeps them on each device.',
+  'server.imports.planImport.likesStayBehind':
+    'Likes and dislikes stay behind. Ratings come across as stars.',
+  'server.imports.planImport.passwordsStayBehind':
+    'Passwords cannot be copied, so each new account signs in the first time with a setup link.',
+  'server.imports.planImport.playCountsAreSpreadOnSource':
+    '{source} keeps only how often something was played and when last, so earlier plays are dated evenly back to when it arrived.',
+  'server.imports.planImport.plexWatchlistsStayBehind':
+    'Plex watchlists live on plex.tv rather than on the server, so they stay behind.',
+  'server.imports.progress.bringingEachPersonsWatchingAcross': "Importing each person's watching",
+  'server.imports.progress.bringingIntroAndCreditsMarkersAcross':
+    'Importing intro and credits markers',
+  'server.imports.progress.bringingTheAccountsAcross': 'Importing the accounts',
+  'server.imports.progress.bringingThePlaylistsAcross': 'Importing the playlists',
+  'server.imports.progress.buildingTheCollections': 'Building the collections',
+  'server.imports.progress.matchingWhatIsOnSource': 'Matching what is on {source}',
+  'server.imports.progress.readingCollectionsAndPlaylists': 'Reading collections and playlists',
+  'server.imports.progress.readingTheLibrariesOnSource': 'Reading the libraries on {source}',
+  'server.imports.progress.readingWhatEachPersonWatched': 'Reading what each person watched',
+  'server.imports.progress.settingWhatEachPersonMaySee': 'Setting what each person may see',
+  'server.imports.resolvePlexHomeToken.plexDidNotLetValenceIn':
+    'Plex did not let Valence in as them.',
+  'server.imports.resolvePlexHomeToken.thatPinWasNotRight': 'That PIN was not right.',
+  'server.imports.resolvePlexHomeToken.thisServerIsNotSharedWithThem':
+    'This Plex server is not shared with them.',
+  'server.imports.runImport.itsMarkersCouldNotBeRead':
+    'Its intro and credits markers could not be read.',
+  'server.imports.runImport.thePlaylistCouldNotBeMade': 'The playlist could not be made.',
+  'server.imports.skipReasonOf.theirPinWasNotGiven':
+    'Their Plex PIN was not given, so they were left out.',
+  'server.imports.skipReasonOf.youLeftThemOut': 'You chose to leave them out.',
+  'server.imports.sourceCaller.nameAnsweredPathInAShapeValenceCannotRead':
+    '{name} answered {path} in a shape Valence cannot read.',
+  'server.imports.sourceCaller.nameAnsweredStatusAtPath': '{name} answered {status} at {path}.',
+  'server.imports.sourceCaller.nameCouldNotBeReached':
+    '{name} could not be reached. Check the address, and that Valence can reach it on your network.',
+  'server.imports.sourceCaller.nameDidNotAnswerInTime': '{name} did not answer in time.',
+  'server.imports.sourceCaller.nameRefusedTheKey':
+    '{name} refused the key. Check you copied all of it.',
+  'server.jobs.jobDefinitions.bringEverythingAcross': 'Import from Jellyfin, Emby or Plex',
   'server.jobs.jobDefinitions.bringRequestsUpToDateWith':
     'Bring requests up to date with the catalogue',
+  'server.jobs.jobDefinitions.bringsPeopleWatchingAndLibrariesAcross':
+    'Imports people, their watching, collections and playlists from Jellyfin, Emby or Plex.',
   'server.jobs.jobDefinitions.checkCatalogueConnectivity': 'Check catalogue connectivity',
   'server.jobs.jobDefinitions.checkDiskSpace': 'Check disk space',
   'server.jobs.jobDefinitions.checksTheRequestsServiceAndIts':
@@ -5550,12 +6202,15 @@ const ENGLISH = {
     'Keeps a copy beside each film and episode that modest devices play without converting it, in the hours chosen under Encoding.',
   'server.jobs.jobDefinitions.makesTheReEncodesAnAdministrator':
     'Makes the re-encodes an administrator asked for.',
+  'server.jobs.jobDefinitions.planAnImport': 'Plan an import',
   'server.jobs.jobDefinitions.preTranscodeTheLibraries': 'Pre-transcode the libraries',
   'server.jobs.jobDefinitions.pruneOldJobHistory': 'Prune old job history',
   'server.jobs.jobDefinitions.pruneOldLogRecords': 'Prune old log records',
   'server.jobs.jobDefinitions.pruneOldServerLoadHistory': 'Prune old server load history',
   'server.jobs.jobDefinitions.pruneOldViewingHistory': 'Prune old viewing history',
   'server.jobs.jobDefinitions.pruneOldWebhookDeliveries': 'Prune old webhook deliveries',
+  'server.jobs.jobDefinitions.readsJellyfinEmbyOrPlexWithoutWriting':
+    'Reads Jellyfin, Emby or Plex and reports what an import would bring, writing nothing.',
   'server.jobs.jobDefinitions.rendersPreviewClipsForItemsWithout':
     'Renders preview clips for items without one.',
   'server.jobs.jobDefinitions.rendersSeekBarThumbnailsForItems':

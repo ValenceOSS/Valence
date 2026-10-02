@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { AccountCreation } from '@ValenceServer/auth/createAccount';
+import type {
+  AccountWithoutPasswordOutcome,
+  AccountWithoutPasswordRequest,
+} from '@ValenceServer/accounts/createAccountWithoutPassword';
+import type { SetupLinkService } from '@ValenceServer/accounts/setupLinks/SetupLinkService';
 import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
@@ -17,11 +21,13 @@ import type { Permission } from '@ValenceContracts/schemas/Permission';
 
 const OTHER = 'usr_other';
 
+const NEW = 'usr_new';
+
 const AccountsSchema = z.object({
   accounts: z.array(
     z.object({
       id: z.string(),
-      email: z.string(),
+      email: z.string().nullable(),
       isBanned: z.boolean(),
       position: z.number().nullable(),
       isAdministrator: z.boolean(),
@@ -35,30 +41,39 @@ const build = () => {
   const { auth, settings, store } = createMemoryAuth();
   const permissions = createMemoryPermissionService();
   const banAccount = vi.fn<(userId: string, reason: string) => Promise<boolean>>();
-  const inviteAccount =
-    vi.fn<
-      (request: { name: string; email: string; password: string }) => Promise<AccountCreation>
-    >();
+  const createAccountWithoutPassword =
+    vi.fn<(request: AccountWithoutPasswordRequest) => Promise<AccountWithoutPasswordOutcome>>();
+  const resetAccountPassword = vi.fn<(userId: string, password: string) => Promise<boolean>>();
+  const setupLinks = {
+    issue: vi.fn<SetupLinkService['issue']>(),
+    linkFor: vi.fn<SetupLinkService['linkFor']>(),
+    stateOf: vi.fn<SetupLinkService['stateOf']>(),
+    statesOf: vi.fn<SetupLinkService['statesOf']>(),
+    revoke: vi.fn<SetupLinkService['revoke']>(),
+    inspect: vi.fn<SetupLinkService['inspect']>(),
+    redeem: vi.fn<SetupLinkService['redeem']>(),
+  } satisfies SetupLinkService;
   const editAccount =
     vi.fn<
       (
         userId: string,
-        changes: { name?: string; email?: string },
-      ) => Promise<'changed' | 'missing' | 'taken'>
+        changes: { name?: string; email?: string | null; username?: string },
+      ) => Promise<'changed' | 'missing' | 'taken' | 'usernameTaken'>
     >();
   const unbanAccount = vi.fn<(userId: string) => Promise<boolean>>();
   const removeAccount = vi.fn<(userId: string) => Promise<boolean>>();
 
   banAccount.mockResolvedValue(true);
-  inviteAccount.mockResolvedValue({
-    kind: 'created',
-    account: {
-      id: 'usr_new',
-      name: 'Alex',
-      email: 'alex@valence.local',
-      createdAt: '2026-01-01T00:00:00.000Z',
-    },
+  createAccountWithoutPassword.mockResolvedValue({ kind: 'created', userId: NEW });
+  resetAccountPassword.mockResolvedValue(true);
+  setupLinks.issue.mockResolvedValue({
+    url: 'http://localhost:8420/welcome/a-token',
+    token: 'a-token',
+    expiresAt: new Date(Date.UTC(2026, 9, 9)),
   });
+  setupLinks.statesOf.mockResolvedValue(
+    new Map([[NEW, { state: 'waiting', expiresAt: new Date(Date.UTC(2026, 9, 9)) }]]),
+  );
   editAccount.mockResolvedValue('changed');
   unbanAccount.mockResolvedValue(true);
   removeAccount.mockResolvedValue(true);
@@ -73,7 +88,9 @@ const build = () => {
     banAccount,
     unbanAccount,
     removeAccount,
-    inviteAccount,
+    createAccountWithoutPassword,
+    resetAccountPassword,
+    setupLinks,
     editAccount,
     countUsers: () => Promise.resolve(1),
     promoteToAdmin: () => Promise.resolve(null),
@@ -93,6 +110,15 @@ const build = () => {
           role: null,
           createdAt: '2026-01-01T00:00:00.000Z',
         },
+        {
+          id: NEW,
+          name: 'Alex',
+          email: `${NEW}@no-email.invalid`,
+          username: 'alex',
+          role: null,
+          createdAt: '2026-01-01T00:00:00.000Z',
+          canSignIn: false,
+        },
       ]),
     library: createMemoryLibraryService(),
     playback: createMemoryPlaybackService(),
@@ -111,7 +137,9 @@ const build = () => {
     banAccount,
     unbanAccount,
     removeAccount,
-    inviteAccount,
+    createAccountWithoutPassword,
+    resetAccountPassword,
+    setupLinks,
     editAccount,
   };
 };
@@ -397,55 +425,75 @@ describe('account administration', () => {
   describe('inviting', () => {
     it('refuses somebody without account.invite', async () => {
       const context = await signedInWith(['account.manage']);
-      const response = await context.request('/api/admin/accounts', 'POST', {
-        name: 'Alex',
-        email: 'alex@valence.local',
-        password: 'a-long-enough-password',
-      });
+      const response = await context.request('/api/admin/accounts', 'POST', { name: 'Alex' });
 
       expect(response.status).toBe(403);
-      expect(context.inviteAccount).not.toHaveBeenCalled();
+      expect(context.createAccountWithoutPassword).not.toHaveBeenCalled();
     });
 
-    it('creates an account', async () => {
+    it('adds an account with only a name, and hands back its setup link', async () => {
       const context = await signedInWith(['account.invite']);
       const response = await context.request('/api/admin/accounts', 'POST', {
         name: 'Alex',
+        lifetimeDays: 30,
+      });
+
+      expect(response.status).toBe(201);
+      expect(await response.json()).toMatchObject({
+        account: { id: NEW, username: 'alex', email: null, setup: { state: 'waiting' } },
+        setupLink: { url: 'http://localhost:8420/welcome/a-token' },
+      });
+      expect(context.createAccountWithoutPassword).toHaveBeenCalledWith({
+        name: 'Alex',
+        by: context.actorId,
+      });
+      expect(context.setupLinks.issue).toHaveBeenCalledWith(
+        NEW,
+        expect.objectContaining({ lifetimeDays: 30, by: context.actorId }),
+      );
+    });
+
+    it('gives a link a week to be used unless told otherwise', async () => {
+      const context = await signedInWith(['account.invite']);
+
+      await context.request('/api/admin/accounts', 'POST', { name: 'Alex' });
+
+      expect(context.setupLinks.issue).toHaveBeenCalledWith(
+        NEW,
+        expect.objectContaining({ lifetimeDays: 7 }),
+      );
+    });
+
+    it('uses a username and address given, and a password instead of a link', async () => {
+      const context = await signedInWith(['account.invite']);
+      const response = await context.request('/api/admin/accounts', 'POST', {
+        name: 'Alex',
+        username: 'Alex.R',
         email: 'alex@valence.local',
         password: 'a-long-enough-password',
       });
 
       expect(response.status).toBe(201);
-      expect(await response.json()).toMatchObject({ id: 'usr_new', email: 'alex@valence.local' });
-      expect(context.inviteAccount).toHaveBeenCalledWith({
+      expect(await response.json()).toMatchObject({ setupLink: null });
+      expect(context.createAccountWithoutPassword).toHaveBeenCalledWith({
         name: 'Alex',
+        username: 'Alex.R',
         email: 'alex@valence.local',
-        password: 'a-long-enough-password',
+        by: context.actorId,
       });
+      expect(context.resetAccountPassword).toHaveBeenCalledWith(NEW, 'a-long-enough-password');
+      expect(context.setupLinks.issue).not.toHaveBeenCalled();
     });
 
     it('refuses a password one character shorter than signing in needs', async () => {
       const context = await signedInWith(['account.invite']);
       const response = await context.request('/api/admin/accounts', 'POST', {
         name: 'Alex',
-        email: 'alex@valence.local',
         password: '123456789',
       });
 
       expect(response.status).toBe(400);
-      expect(context.inviteAccount).not.toHaveBeenCalled();
-    });
-
-    it('refuses a password too short to be one', async () => {
-      const context = await signedInWith(['account.invite']);
-      const response = await context.request('/api/admin/accounts', 'POST', {
-        name: 'Alex',
-        email: 'alex@valence.local',
-        password: 'short',
-      });
-
-      expect(response.status).toBe(400);
-      expect(context.inviteAccount).not.toHaveBeenCalled();
+      expect(context.createAccountWithoutPassword).not.toHaveBeenCalled();
     });
 
     it('refuses something that is not an address', async () => {
@@ -453,7 +501,27 @@ describe('account administration', () => {
       const response = await context.request('/api/admin/accounts', 'POST', {
         name: 'Alex',
         email: 'not-an-address',
-        password: 'a-long-enough-password',
+      });
+
+      expect(response.status).toBe(400);
+    });
+
+    it('refuses the placeholder an account without an address holds', async () => {
+      const context = await signedInWith(['account.invite']);
+      const response = await context.request('/api/admin/accounts', 'POST', {
+        name: 'Alex',
+        email: 'someone@no-email.invalid',
+      });
+
+      expect(response.status).toBe(400);
+      expect(context.createAccountWithoutPassword).not.toHaveBeenCalled();
+    });
+
+    it('refuses a username that is not one', async () => {
+      const context = await signedInWith(['account.invite']);
+      const response = await context.request('/api/admin/accounts', 'POST', {
+        name: 'Alex',
+        username: 'has spaces',
       });
 
       expect(response.status).toBe(400);
@@ -462,33 +530,73 @@ describe('account administration', () => {
     it('reports an address already in use', async () => {
       const context = await signedInWith(['account.invite']);
 
-      context.inviteAccount.mockResolvedValue({ kind: 'taken' });
+      context.createAccountWithoutPassword.mockResolvedValue({ kind: 'taken', field: 'email' });
 
       const response = await context.request('/api/admin/accounts', 'POST', {
         name: 'Alex',
         email: 'dan@valence.local',
-        password: 'a-long-enough-password',
       });
 
       expect(response.status).toBe(400);
-      expect(await response.text()).toContain('already in use');
+      expect(await response.text()).toContain('address is already in use');
+    });
+
+    it('reports a username already in use', async () => {
+      const context = await signedInWith(['account.invite']);
+
+      context.createAccountWithoutPassword.mockResolvedValue({ kind: 'taken', field: 'username' });
+
+      const response = await context.request('/api/admin/accounts', 'POST', {
+        name: 'Alex',
+        username: 'dan',
+      });
+
+      expect(response.status).toBe(400);
+      expect(await response.text()).toContain('username is already in use');
     });
 
     it('does not blame the address for anything else that goes wrong', async () => {
       const context = await signedInWith(['account.invite']);
 
-      context.inviteAccount.mockResolvedValue({ kind: 'failed', reason: 'the database is away' });
+      context.createAccountWithoutPassword.mockResolvedValue({ kind: 'failed' });
 
-      const response = await context.request('/api/admin/accounts', 'POST', {
-        name: 'Alex',
-        email: 'alex@valence.local',
-        password: 'a-long-enough-password',
-      });
+      const response = await context.request('/api/admin/accounts', 'POST', { name: 'Alex' });
       const said = await response.text();
 
       expect(response.status).toBe(500);
       expect(said).toContain('could not be made');
       expect(said).not.toContain('already in use');
+    });
+  });
+
+  describe('listing what an account stands at', () => {
+    it('hides the placeholder address and says the account is waiting for setup', async () => {
+      const context = await signedInWith(['account.manage']);
+      const response = await context.request('/api/admin/accounts');
+      const body = z
+        .object({
+          accounts: z.array(
+            z.object({
+              id: z.string(),
+              email: z.string().nullable(),
+              username: z.string().nullable(),
+              canSignIn: z.boolean(),
+              setup: z.object({ state: z.string(), expiresAt: z.string().nullable() }),
+            }),
+          ),
+          canEmailSetupLinks: z.boolean(),
+        })
+        .parse(await response.json());
+      const waiting = body.accounts.find((one) => one.id === NEW);
+
+      expect(waiting).toMatchObject({
+        email: null,
+        username: 'alex',
+        canSignIn: false,
+        setup: { state: 'waiting', expiresAt: '2026-10-09T00:00:00.000Z' },
+      });
+      expect(body.canEmailSetupLinks).toBe(false);
+      expect(JSON.stringify(body)).not.toContain('no-email.invalid');
     });
   });
 
@@ -559,6 +667,52 @@ describe('account administration', () => {
       });
 
       expect(response.status).toBe(400);
+    });
+
+    it('changes a username', async () => {
+      const context = await signedInWith(['account.manage']);
+
+      const response = await context.request(`/api/admin/accounts/${OTHER}`, 'PATCH', {
+        username: 'Sam.J',
+      });
+
+      expect(response.status).toBe(204);
+      expect(context.editAccount).toHaveBeenCalledWith(OTHER, { username: 'Sam.J' });
+    });
+
+    it('reports a username already in use', async () => {
+      const context = await signedInWith(['account.manage']);
+
+      context.editAccount.mockResolvedValue('usernameTaken');
+
+      const response = await context.request(`/api/admin/accounts/${OTHER}`, 'PATCH', {
+        username: 'dan',
+      });
+
+      expect(response.status).toBe(400);
+      expect(await response.text()).toContain('username is already in use');
+    });
+
+    it('takes an address away, leaving the account without one', async () => {
+      const context = await signedInWith(['account.manage']);
+
+      const response = await context.request(`/api/admin/accounts/${OTHER}`, 'PATCH', {
+        email: null,
+      });
+
+      expect(response.status).toBe(204);
+      expect(context.editAccount).toHaveBeenCalledWith(OTHER, { email: null });
+    });
+
+    it('will not change an address to the placeholder', async () => {
+      const context = await signedInWith(['account.manage']);
+
+      const response = await context.request(`/api/admin/accounts/${OTHER}`, 'PATCH', {
+        email: 'x@no-email.invalid',
+      });
+
+      expect(response.status).toBe(400);
+      expect(context.editAccount).not.toHaveBeenCalled();
     });
 
     it('reports an account that is not there', async () => {
@@ -693,6 +847,6 @@ describe('a server with no way to act on accounts', () => {
     const response = await request('/api/admin/accounts', 'GET');
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ accounts: [] });
+    expect(await response.json()).toEqual({ accounts: [], canEmailSetupLinks: false });
   });
 });

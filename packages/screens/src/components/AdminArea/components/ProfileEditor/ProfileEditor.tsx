@@ -1,3 +1,4 @@
+import { accountHandleOf } from '@ValenceClient/accounts/accountHandleOf';
 import { notify } from '@ValenceUI/notify';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
@@ -531,7 +532,7 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
                     askers={(accounts.data ?? []).map((account) => ({
                       id: account.id,
                       name: account.name,
-                      detail: account.email,
+                      detail: accountHandleOf(account),
                     }))}
                     chosen={new Set(form.accountIds)}
                     onChange={(chosen) => {

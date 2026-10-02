@@ -1,0 +1,54 @@
+{
+  "GET /api/v1/status": {
+    "version": "2.5.2",
+    "commitTag": "v2.5.2",
+    "updateAvailable": false,
+    "commitsBehind": 0,
+    "restartRequired": false
+  },
+  "GET /api/v1/settings/radarr": [],
+  "GET /api/v1/settings/sonarr": [],
+  "GET /api/v1/request": {
+    "pageInfo": { "pages": 1, "pageSize": 100, "results": 2, "page": 1 },
+    "results": [
+      {
+        "id": 21,
+        "status": 2,
+        "type": "movie",
+        "is4k": false,
+        "media": {
+          "id": 41,
+          "mediaType": "movie",
+          "tmdbId": 27205,
+          "status": 6,
+          "jellyfinMediaId": null
+        },
+        "seasons": [],
+        "requestedBy": {
+          "id": 5,
+          "email": "robin@example.com",
+          "jellyfinUserId": "6f1a2b3c4d5e6f708192a3b4c5d6e7f8",
+          "jellyfinUsername": "robin",
+          "userType": 3,
+          "displayName": "Robin"
+        }
+      },
+      {
+        "id": 22,
+        "status": 1,
+        "type": "movie",
+        "is4k": false,
+        "media": { "id": 42, "mediaType": "movie", "tmdbId": 157336, "status": 4 },
+        "seasons": [],
+        "requestedBy": {
+          "id": 5,
+          "email": "",
+          "jellyfinUserId": "6f1a2b3c4d5e6f708192a3b4c5d6e7f8",
+          "jellyfinUsername": "robin",
+          "userType": 3,
+          "displayName": "Robin"
+        }
+      }
+    ]
+  }
+}

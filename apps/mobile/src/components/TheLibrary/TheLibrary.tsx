@@ -155,6 +155,7 @@ const styles = StyleSheet.create({
  * @param onAlbum - Told to open an album.
  * @param onArtist - Told to open an artist.
  * @param onPlaylist - Told to open a playlist.
+ * @param onCollection - Told to open a collection.
  * @param onLiked - Told to open the songs this profile has liked.
  * @param onAllAlbums - Told somebody wants every album.
  * @param onAllArtists - Told somebody wants every artist.
@@ -177,6 +178,7 @@ const TheLibrary = ({
   onAlbum,
   onArtist,
   onPlaylist,
+  onCollection,
   onLiked,
   onAllAlbums,
   onAllArtists,
@@ -189,7 +191,7 @@ const TheLibrary = ({
   accountPage,
 }: TheLibraryProps) => {
   const colours = useTheColours();
-  const told = useRef({ onWatch, onLookAt, onLookAtShow });
+  const told = useRef({ onWatch, onLookAt, onLookAtShow, onCollection });
   const libraries = useQuery(libraryQueries.all());
   const watched = useQuery(viewingQueries.progress());
   const filters = useLibraryFilters();
@@ -273,7 +275,7 @@ const TheLibrary = ({
   const isOnTop = useIsOnTop();
 
   useLayoutEffect(() => {
-    told.current = { onWatch, onLookAt, onLookAtShow };
+    told.current = { onWatch, onLookAt, onLookAtShow, onCollection };
   });
 
   useLayoutEffect(() => {
@@ -288,6 +290,9 @@ const TheLibrary = ({
   }, []);
   const lookAtShow = useCallback((libraryId: string, showId: string) => {
     told.current.onLookAtShow(libraryId, showId);
+  }, []);
+  const lookAtCollection = useCallback((collectionId: string) => {
+    told.current.onCollection(collectionId);
   }, []);
   const [chosen, setChosen] = useState(EVERY);
   const [arrangements, setArrangements] = useState<Readonly<Record<string, Arrangement>>>({});
@@ -712,6 +717,7 @@ const TheLibrary = ({
           onWatch={watch}
           onLookAt={lookAt}
           onLookAtShow={lookAtShow}
+          onLookAtCollection={lookAtCollection}
           onShowing={onShowing}
           onClip={setClip}
           onScrolled={homeScrolled}

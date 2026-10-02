@@ -1,3 +1,4 @@
+import { accountHandleOf } from '@ValenceClient/accounts/accountHandleOf';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -101,7 +102,7 @@ const DecideForSomebody = ({ about, onClose }: DecideForSomebodyProps) => {
 
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="truncate text-sm font-medium text-text">{account.name}</span>
-                <span className="truncate text-xs text-text-muted">{account.email}</span>
+                <span className="truncate text-xs text-text-muted">{accountHandleOf(account)}</span>
               </span>
 
               <SegmentedRow

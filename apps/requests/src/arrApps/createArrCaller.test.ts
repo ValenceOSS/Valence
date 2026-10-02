@@ -51,6 +51,20 @@ describe('createArrCaller', () => {
     expect(arr.asked[0]?.query.get('a')).toBe('b');
   });
 
+  it('asks Overseerr and Jellyseerr under their own API root', async () => {
+    const arr = aFakeArr({
+      'GET /api/v1/status': { body: { version: '1.35.0', commitTag: 'v1.35.0' } },
+    });
+    const caller = createArrCaller(arr.fetch, {
+      name: 'Overseerr',
+      kind: 'overseerr',
+      url: 'http://overseerr:5055',
+      apiKey: 'overseerr-key',
+    });
+
+    expect(await caller.read('/status', ArrStatusSchema)).toMatchObject({ version: '1.35.0' });
+  });
+
   it('sends a body as JSON, with the key in its header', async () => {
     const fetch = vi.fn<ArrFetch>(() => Promise.resolve(Response.json({ id: 7 })));
     const caller = createArrCaller(fetch, anArrApp({ kind: 'lidarr', url: 'http://lidarr:8686' }));

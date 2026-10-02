@@ -207,6 +207,48 @@ describe('createRequestsClient', () => {
       });
     });
 
+    it('asks the service to plan and to bring in a Radarr and Sonarr setup', async () => {
+      const order = {
+        sources: [{ kind: 'radarr' as const, url: 'http://radarr:7878', apiKey: 'key' }],
+        pathMappings: [],
+        secrets: {},
+        choices: {},
+        libraries: [],
+      };
+      const plan = {
+        sources: [],
+        clients: [],
+        indexers: [],
+        prowlarr: null,
+        profiles: [],
+        libraries: [],
+        unplacedFolders: [],
+        wanted: { films: 0, series: 0, artists: 0, requests: 0, unaskable: 0 },
+        secrets: [],
+      };
+      const applied = {
+        clients: { added: 1, kept: 0 },
+        indexers: { added: 0, kept: 0 },
+        profiles: { added: 0, kept: 0 },
+        apps: { added: 0, kept: 0 },
+        prowlarr: null,
+        libraries: [],
+        wanted: [],
+        problems: [],
+      };
+      const planning = aClient(200, plan);
+      const applying = aClient(200, applied);
+
+      expect(await planning.client.planArrImport(order)).toEqual({ kind: 'answered', value: plan });
+      expect(await applying.client.applyArrImport(order)).toEqual({
+        kind: 'answered',
+        value: applied,
+      });
+      expect(planning.fetch.mock.calls[0]?.[0]).toBe('http://requests:8421/api/imports/arr/plan');
+      expect(applying.fetch.mock.calls[0]?.[0]).toBe('http://requests:8421/api/imports/arr/apply');
+      expect(applying.fetch.mock.calls[0]?.[1].body).toBe(JSON.stringify(order));
+    });
+
     it('tells the service what the library now holds of a request', async () => {
       const { client, fetch } = aClient(400, { error: 'No', code: null, values: {} });
 

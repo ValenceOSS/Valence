@@ -1,0 +1,35 @@
+{
+  "Items": [
+    {
+      "Name": "Heat",
+      "Id": "item-heat",
+      "Type": "Movie",
+      "UserData": {
+        "PlaybackPositionTicks": 0,
+        "PlayCount": 3,
+        "IsFavorite": true,
+        "Played": true,
+        "LastPlayedDate": "2026-03-04T21:00:00.0000000Z",
+        "Rating": 9,
+        "Key": "949",
+        "ItemId": "item-heat"
+      }
+    },
+    {
+      "Name": "The Wire",
+      "Id": "item-wire",
+      "Type": "Series",
+      "UserData": {
+        "PlaybackPositionTicks": 0,
+        "PlayCount": 0,
+        "IsFavorite": true,
+        "Played": false,
+        "Rating": 10,
+        "Key": "1438",
+        "ItemId": "item-wire"
+      }
+    }
+  ],
+  "TotalRecordCount": 2,
+  "StartIndex": 0
+}

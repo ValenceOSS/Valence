@@ -5,6 +5,7 @@ import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  Download as DownloadIcon,
   MoreHorizontal as MoreHorizontalIcon,
   Plus as PlusIcon,
   ToggleOff as ToggleOffIcon,
@@ -35,6 +36,7 @@ import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
 import { ARR_APP_NAMES } from '@ValenceScreens/components/AdminArea/ARR_APP_NAMES';
 import { ArrAppDialog } from '@ValenceScreens/components/AdminArea/components/ArrAppDialog/ArrAppDialog';
 import { describeArrAppState } from './describeArrAppState';
+import { ArrImportDialog } from './components/ArrImportDialog/ArrImportDialog';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { ArrApp } from '@ValenceContracts/schemas/ArrApp';
 import { say } from '@ValenceI18n/say';
@@ -49,6 +51,7 @@ const ArrAppsPanel = () => {
   const asked = useQuery(requestsQueries.arrApps());
   const [editing, setEditing] = useState<ArrApp | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [removing, setRemoving] = useState<ArrApp | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
@@ -253,16 +256,34 @@ const ArrAppsPanel = () => {
       title={say('screens.adminArea.arrAppsPanel.connectedApps')}
       isFlush
       actions={
-        <PanelCardAction
-          icon={PlusIcon}
-          onClick={() => {
-            setIsAdding(true);
-          }}
-        >
-          {say('screens.adminArea.arrAppDialog.connectAnApp')}
-        </PanelCardAction>
+        <>
+          <PanelCardAction
+            icon={DownloadIcon}
+            onClick={() => {
+              setIsImporting(true);
+            }}
+          >
+            {say('screens.adminArea.arrAppsPanel.bringInASetup')}
+          </PanelCardAction>
+          <PanelCardAction
+            icon={PlusIcon}
+            onClick={() => {
+              setIsAdding(true);
+            }}
+          >
+            {say('screens.adminArea.arrAppDialog.connectAnApp')}
+          </PanelCardAction>
+        </>
       }
     >
+      <ArrImportDialog
+        isOpen={isImporting}
+        onClose={() => {
+          setIsImporting(false);
+          void reread();
+        }}
+      />
+
       <ArrAppDialog
         isOpen={isAdding || editing !== null}
         app={editing}

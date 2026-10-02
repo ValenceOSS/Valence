@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources size="2">
+  <resource name="Other" product="Plex Media Server" clientIdentifier="other-machine" accessToken="wrong-token" provides="server"/>
+  <resource name="Shed" product="Plex Media Server" clientIdentifier="abc123machine" accessToken="ash-server-token" provides="server">
+    <connections><connection protocol="http" address="192.168.1.12" port="32400" uri="http://192.168.1.12:32400" local="1"/></connections>
+  </resource>
+</resources>

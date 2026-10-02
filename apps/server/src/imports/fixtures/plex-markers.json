@@ -1,0 +1,30 @@
+{
+  "MediaContainer": {
+    "size": 1,
+    "Metadata": [
+      {
+        "ratingKey": "301",
+        "type": "episode",
+        "title": "The Target",
+        "duration": 3720000,
+        "Marker": [
+          {
+            "id": 1,
+            "type": "intro",
+            "startTimeOffset": 30000,
+            "endTimeOffset": 90000,
+            "final": false
+          },
+          {
+            "id": 2,
+            "type": "credits",
+            "startTimeOffset": 3500000,
+            "endTimeOffset": 3600000,
+            "final": true
+          },
+          { "id": 3, "type": "commercial", "startTimeOffset": 1, "endTimeOffset": 2 }
+        ]
+      }
+    ]
+  }
+}

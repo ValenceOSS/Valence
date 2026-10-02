@@ -1,160 +1,398 @@
-import { Icon } from '@ValenceUI/Icon';
-import { Lock as LockIcon, Unlock as UnlockIcon } from '@keyline-icons/react';
-import { useState } from 'react';
-import { Button } from '@ValenceUI/Button';
-import { Checkbox } from '@ValenceUI/Checkbox';
-import { TextField } from '@ValenceUI/TextField';
-import { validateSetupForm, parseOrigins } from './validateSetupForm';
-import type { SetupFormErrors, SetupWizardProps } from './SetupWizard.types';
+import { useCallback, useState } from 'react';
+import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
+import type { Variants } from 'motion/react';
+import { useQueryClient } from '@tanstack/react-query';
+import { Logo } from '@ValenceUI/Logo';
+import { SegmentedRow } from '@ValenceUI/SegmentedRow';
+import { Stepper } from '@ValenceUI/Stepper';
+import { revealTransition } from '@ValenceUI/animations/reveal';
+import { useTravelDirection } from '@ValenceUI/useTravelDirection';
+import { readTheme } from '@ValenceClient/shell/theme';
+import { useTheme } from '@ValenceClient/shell/useTheme';
+import { signInWithUsernameOrEmail } from '@ValenceClient/session/auth';
+import { completeSetup } from '@ValenceClient/setup/completeSetup';
+import { finishSetupFlow } from '@ValenceClient/setup/finishSetupFlow';
+import { finishOnboarding } from '@ValenceClient/household/fetchHousehold';
+import { householdQueries } from '@ValenceClient/query/householdQueries';
+import { adminQueries } from '@ValenceClient/query/adminQueries';
+import type { Library } from '@ValenceContracts/schemas/Library';
 import { say } from '@ValenceI18n/say';
-import { sayCount } from '@ValenceI18n/sayCount';
-import { MINIMUM_PASSWORD_LENGTH } from '@ValenceContracts/constants/MINIMUM_PASSWORD_LENGTH';
+import { WayInBackground } from '@ValenceScreens/components/WayInBackground/WayInBackground';
+import { THEME_CHOICES } from '@ValenceScreens/theme/themeChoices';
+import { AccessStep } from './components/AccessStep/AccessStep';
+import { AccountStep } from './components/AccountStep/AccountStep';
+import { AddLibrariesStep } from './components/AddLibrariesStep/AddLibrariesStep';
+import { ImportFromStep } from './components/ImportFromStep/ImportFromStep';
+import { CatalogueStep } from './components/CatalogueStep/CatalogueStep';
+import { DoneStep } from './components/DoneStep/DoneStep';
+import { HouseholdStep } from './components/HouseholdStep/HouseholdStep';
+import { ProfileStep } from './components/ProfileStep/ProfileStep';
+import { WelcomeStep } from './components/WelcomeStep/WelcomeStep';
+import type {
+  AccountDraft,
+  ImportedFrom,
+  SetupStepId,
+  SetupWizardProps,
+} from './SetupWizard.types';
+
+const ORDER: readonly SetupStepId[] = [
+  'welcome',
+  'account',
+  'access',
+  'profile',
+  'household',
+  'catalogue',
+  'libraries',
+  'import',
+  'done',
+];
+
+const STEPS = [
+  {
+    id: 'welcome',
+    label: say('screens.setupWizard.steps.welcome'),
+    detail: say('screens.setupWizard.steps.whatSetupDoes'),
+  },
+  {
+    id: 'account',
+    label: say('screens.accountDialog.yourAccount'),
+    detail: say('screens.setupWizard.steps.theAdministrator'),
+  },
+  {
+    id: 'access',
+    label: say('screens.setupWizard.accessStep.howValenceIsReached'),
+    detail: say('screens.setupWizard.steps.addressesAndHttps'),
+  },
+  {
+    id: 'profile',
+    label: say('screens.setupWizard.profileStep.yourProfile'),
+    detail: say('screens.setupWizard.steps.howYouAppear'),
+  },
+  {
+    id: 'household',
+    label: say('screens.setupWizard.steps.yourHousehold'),
+    detail: say('screens.setupWizard.steps.whoWatchesHere'),
+  },
+  {
+    id: 'catalogue',
+    label: say('screens.setupWizard.catalogueStep.titlesAndArtwork'),
+    detail: say('screens.setupWizard.steps.aFreeCatalogueKey'),
+  },
+  {
+    id: 'libraries',
+    label: say('common.libraries'),
+    detail: say('screens.setupWizard.steps.whereYourMediaIs'),
+  },
+  {
+    id: 'import',
+    label: say('screens.setupWizard.steps.importFromAnotherServer'),
+    detail: say('screens.setupWizard.steps.ifYouAreMovingIn'),
+  },
+  {
+    id: 'done',
+    label: say('common.done'),
+    detail: say('screens.setupWizard.steps.intoValence'),
+  },
+] as const;
+
+const SLIDE = 56;
 
 /**
- * Walks whoever opened Valence first through making it theirs: the administrator account, what the
- * server is called, and which origins may reach it. Shown in place of everything else until it is
- * done, because a server with no account on it has nothing else worth showing.
+ * How a step arrives and leaves: from the side it was reached from and out the other, or simply
+ * fading for somebody who asked for less movement.
+ *
+ * @param prefersReducedMotion - What the system reports.
+ * @returns The variants, which take the direction of travel.
+ */
+const slideVariants = (prefersReducedMotion: boolean | null): Variants =>
+  prefersReducedMotion === true
+    ? { enter: { opacity: 0 }, center: { opacity: 1 }, exit: { opacity: 0 } }
+    : {
+        enter: (direction: number) => ({
+          opacity: 0,
+          x: direction * SLIDE,
+          filter: 'blur(6px)',
+        }),
+        center: { opacity: 1, x: 0, filter: 'blur(0px)' },
+        exit: (direction: number) => ({
+          opacity: 0,
+          x: direction * -SLIDE,
+          filter: 'blur(6px)',
+          transition: { duration: 0.18, ease: 'easeIn' },
+        }),
+      };
+
+/**
+ * Walks whoever opened Valence first through making it theirs, one step at a time: what setup does,
+ * their account, how the server is reached, their profile and household, a catalogue key, their
+ * libraries, and importing
+ * from another server if they are moving, followed by what came of it. Steps that
+ * follow making the account are shown again to the administrator after a reload, until they finish.
  *
  * @param status - What setup has established so far.
- * @param onComplete - Called once the server is set up and ready to be signed in to.
+ * @param onComplete - Called once setup is finished and the app can open.
+ * @param startsAt - Where to begin: the welcome, or the profile for an administrator coming back to
+ *   finish.
  */
-const SetupWizard = ({ status, onComplete }: SetupWizardProps) => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [trustedOrigins, setTrustedOrigins] = useState(status.suggestedTrustedOrigins.join(', '));
+const SetupWizard = ({ status, onComplete, startsAt = 'welcome' }: SetupWizardProps) => {
+  const cache = useQueryClient();
+  const prefersReducedMotion = useReducedMotionConfig();
+  const { theme, choose } = useTheme();
+  const [step, setStep] = useState<SetupStepId>(startsAt);
+  const direction = useTravelDirection(ORDER, step);
+  const [draft, setDraft] = useState<AccountDraft>({
+    name: '',
+    username: '',
+    email: '',
+    password: '',
+    again: '',
+  });
+  const [origins, setOrigins] = useState<string[]>([...status.suggestedTrustedOrigins]);
   const [cookieSecure, setCookieSecure] = useState(status.isSecureContext);
-  const [errors, setErrors] = useState<SetupFormErrors>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const [isMade, setIsMade] = useState(startsAt !== 'welcome');
+  const [restartRequired, setRestartRequired] = useState(false);
+  const [hasCatalogueKey, setHasCatalogueKey] = useState<boolean | null>(null);
+  const [libraries, setLibraries] = useState<Library[] | null>(null);
+  const [scans, setScans] = useState<ReadonlyMap<string, string>>(new Map());
+  const [imported, setImported] = useState<ImportedFrom | null>(null);
+  const [household, setHousehold] = useState('');
 
-  const submit = async () => {
-    const found = validateSetupForm({ name, email, password, trustedOrigins });
+  const go = useCallback((to: SetupStepId) => {
+    setProblem(null);
+    setStep(to);
+    window.scrollTo({ top: 0 });
+  }, []);
 
-    setErrors(found);
+  const create = async () => {
+    setIsCreating(true);
+    setProblem(null);
 
-    if (Object.keys(found).length > 0) {
+    const email = draft.email.trim();
+    const made = await completeSetup({
+      admin: {
+        name: draft.name.trim(),
+        username: draft.username.trim(),
+        password: draft.password,
+        ...(email === '' ? {} : { email }),
+      },
+      trustedOrigins: origins,
+      cookieSecure,
+    });
+
+    if (made.kind === 'refused') {
+      setIsCreating(false);
+      setProblem(made.refusal?.message ?? say('screens.setupWizard.setupCouldNotBeCompletedCheck'));
+
       return;
     }
 
-    setIsSubmitting(true);
-
-    try {
-      const response = await fetch('/api/setup', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          admin: { name, email, password },
-          trustedOrigins: parseOrigins(trustedOrigins),
-          cookieSecure,
-        }),
-      });
-
-      if (!response.ok) {
-        setErrors({
-          submit:
-            response.status === 409
-              ? say('screens.setupWizard.thisServerHasAlreadyBeenSet')
-              : say('screens.setupWizard.setupCouldNotBeCompletedCheck'),
-        });
-
-        return;
-      }
-
-      onComplete();
-    } catch {
-      setErrors({ submit: say('common.couldNotReachTheServerCheck') });
-    } finally {
-      setIsSubmitting(false);
+    if (!made.value.isSignedIn) {
+      await signInWithUsernameOrEmail(draft.username.trim(), draft.password);
     }
+
+    setIsCreating(false);
+    setIsMade(true);
+    setRestartRequired(made.value.restartRequired);
+    go('profile');
   };
 
+  const finish = async () => {
+    await Promise.all([finishSetupFlow(), finishOnboarding()]);
+    await cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
+    await cache.invalidateQueries({ queryKey: householdQueries.key });
+    onComplete();
+  };
+
+  const read = useCallback((found: Library[]) => {
+    setLibraries(found);
+  }, []);
+
+  const content = (() => {
+    switch (step) {
+      case 'welcome':
+        return (
+          <WelcomeStep
+            onBegin={() => {
+              go('account');
+            }}
+          />
+        );
+      case 'account':
+        return (
+          <AccountStep
+            draft={draft}
+            onChange={setDraft}
+            onBack={() => {
+              go('welcome');
+            }}
+            onContinue={() => {
+              go('access');
+            }}
+          />
+        );
+      case 'access':
+        return (
+          <AccessStep
+            detectedOrigin={status.detectedOrigin}
+            suggestedOrigins={status.suggestedTrustedOrigins}
+            origins={origins}
+            onOriginsChange={setOrigins}
+            cookieSecure={cookieSecure}
+            onCookieSecureChange={setCookieSecure}
+            isCreating={isCreating}
+            problem={problem}
+            onBack={() => {
+              go('account');
+            }}
+            onCreate={() => {
+              void create();
+            }}
+          />
+        );
+      case 'profile':
+        return (
+          <ProfileStep
+            onContinue={() => {
+              go('household');
+            }}
+          />
+        );
+      case 'household':
+        return (
+          <HouseholdStep
+            onBack={() => {
+              go('profile');
+            }}
+            onContinue={(named) => {
+              setHousehold(named);
+              go('catalogue');
+            }}
+          />
+        );
+      case 'catalogue':
+        return (
+          <CatalogueStep
+            onBack={() => {
+              go('household');
+            }}
+            onSaved={() => {
+              setHasCatalogueKey(true);
+              go('libraries');
+            }}
+            onSkip={() => {
+              setHasCatalogueKey(false);
+              go('libraries');
+            }}
+          />
+        );
+      case 'libraries':
+        return (
+          <AddLibrariesStep
+            libraries={libraries}
+            scans={scans}
+            onRead={read}
+            onAdded={(library, jobId) => {
+              setLibraries((held) => [...(held ?? []), library]);
+
+              if (jobId !== null) {
+                setScans((held) => new Map(held).set(library.id, jobId));
+              }
+            }}
+            onBack={() => {
+              go('catalogue');
+            }}
+            onContinue={() => {
+              go('import');
+            }}
+          />
+        );
+      case 'import':
+        return (
+          <ImportFromStep
+            onBack={() => {
+              go('libraries');
+            }}
+            onDone={(what) => {
+              setImported(what);
+              go('done');
+            }}
+          />
+        );
+      case 'done':
+        return null;
+    }
+  })();
+
+  if (step === 'done') {
+    return (
+      <main className="relative min-h-svh overflow-x-clip">
+        <WayInBackground />
+
+        <DoneStep
+          username={isMade && draft.username !== '' ? draft.username.trim() : null}
+          origins={startsAt === 'welcome' ? origins : []}
+          hasCatalogueKey={hasCatalogueKey}
+          libraryCount={libraries?.length ?? 0}
+          imported={imported}
+          restartRequired={restartRequired}
+          household={household}
+          onFinish={() => {
+            void finish();
+          }}
+        />
+      </main>
+    );
+  }
+
   return (
-    <main className="mx-auto flex max-w-lg flex-col gap-6 p-8">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold text-text">
-          {say('screens.setupWizard.setUpValence')}
-        </h1>
-        <p className="text-text-muted">
-          {say('screens.setupWizard.createTheAdministratorAccountAndConfirm')}
-        </p>
-      </header>
+    <main className="relative min-h-svh overflow-x-clip">
+      <WayInBackground />
 
-      <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-medium text-text">{say('common.administrator')}</h2>
+      <div className="relative mx-auto flex min-h-svh w-full max-w-6xl flex-col px-4 pb-12 pt-[calc(1.25rem+var(--valence-window-bar))] sm:px-8">
+        <motion.header
+          initial={{ opacity: 0, y: prefersReducedMotion === true ? 0 : -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={revealTransition(prefersReducedMotion)}
+          className="flex items-center justify-between gap-4"
+        >
+          <Logo size={30} isSolid label={say('common.valence')} />
 
-        <TextField
-          label={say('common.name')}
-          value={name}
-          onValueChange={setName}
-          autoComplete="name"
-          {...(errors.name === undefined ? {} : { error: errors.name })}
-        />
+          <SegmentedRow
+            size="sm"
+            tone="accent"
+            label={say('common.theme')}
+            value={theme}
+            items={THEME_CHOICES}
+            onSelect={(picked) => {
+              choose(readTheme(picked));
+            }}
+          />
+        </motion.header>
 
-        <TextField
-          label={say('common.email')}
-          type="email"
-          value={email}
-          onValueChange={setEmail}
-          autoComplete="email"
-          {...(errors.email === undefined ? {} : { error: errors.email })}
-        />
+        <div className="mt-8 grid flex-1 items-start gap-10 lg:mt-20 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-20">
+          <aside className="lg:sticky lg:top-20">
+            <Stepper label={say('screens.setupWizard.setUpValence')} steps={STEPS} current={step} />
+          </aside>
 
-        <TextField
-          label={say('common.password')}
-          type="password"
-          value={password}
-          onValueChange={setPassword}
-          autoComplete="new-password"
-          description={sayCount('common.atLeastCountCharacters', MINIMUM_PASSWORD_LENGTH)}
-          {...(errors.password === undefined ? {} : { error: errors.password })}
-        />
-      </section>
-
-      <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-medium text-text">{say('common.access')}</h2>
-
-        <TextField
-          label={say('screens.setupWizard.trustedOrigins')}
-          value={trustedOrigins}
-          onValueChange={setTrustedOrigins}
-          description={say('screens.setupWizard.detectedDetectedOriginAddEveryAddressYou', {
-            detectedOrigin: status.detectedOrigin,
-          })}
-          {...(errors.trustedOrigins === undefined ? {} : { error: errors.trustedOrigins })}
-        />
-
-        <Checkbox
-          label={say('screens.setupWizard.thisServerIsReachedOverHTTPS')}
-          checked={cookieSecure}
-          onCheckedChange={setCookieSecure}
-        />
-
-        <p className="flex items-start gap-2 text-sm text-text-muted">
-          {cookieSecure ? (
-            <Icon of={LockIcon} size={16} className="mt-0.5 shrink-0" />
-          ) : (
-            <Icon of={UnlockIcon} size={16} className="mt-0.5 shrink-0" />
-          )}
-          {cookieSecure
-            ? say('screens.setupWizard.secureCookiesWillBeUsedLogin')
-            : say('screens.setupWizard.cookiesWillNotBeMarkedSecure')}
-        </p>
-      </section>
-
-      {errors.submit === undefined ? null : (
-        <p role="alert" className="text-sm text-danger">
-          {errors.submit}
-        </p>
-      )}
-
-      <Button
-        isLoading={isSubmitting}
-        onClick={() => {
-          void submit();
-        }}
-      >
-        {say('screens.setupWizard.finishSetup')}
-      </Button>
+          <div className="min-w-0">
+            <AnimatePresence mode="wait" custom={direction}>
+              <motion.div
+                key={step}
+                custom={direction}
+                variants={slideVariants(prefersReducedMotion)}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={revealTransition(prefersReducedMotion)}
+              >
+                {content}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
     </main>
   );
 };

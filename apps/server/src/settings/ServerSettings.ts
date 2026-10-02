@@ -7,11 +7,13 @@ import {
   PreTranscodingSettingsSchema,
 } from '@ValenceContracts/schemas/PreTranscoding';
 import { SEERR_DEFAULTS, SeerrSettingsSchema } from '@ValenceContracts/schemas/SeerrLink';
+import { EMAIL_DEFAULTS, EmailSettingsSchema } from '@ValenceContracts/schemas/EmailSettings';
 
 const ServerSettingsSchema = z.object({
   trustedOrigins: z.array(z.string().url()),
   cookieSecure: z.boolean(),
   setupCompletedAt: z.string().datetime().nullable(),
+  setupFlow: z.enum(['open', 'finished']).default('finished'),
   catalogueApiKey: z.string().default(''),
   hardwareAccel: z.string().default(''),
   previewQuality: PreviewQualitySchema.default('high'),
@@ -35,6 +37,7 @@ const ServerSettingsSchema = z.object({
   keepsDownloadsForDays: z.number().int().nonnegative().max(3650).default(14),
   preTranscoding: PreTranscodingSettingsSchema.default(PRE_TRANSCODING_DEFAULTS),
   seerr: SeerrSettingsSchema.default(SEERR_DEFAULTS),
+  email: EmailSettingsSchema.default(EMAIL_DEFAULTS),
 });
 
 type ServerSettings = z.infer<typeof ServerSettingsSchema>;

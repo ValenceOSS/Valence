@@ -3,7 +3,8 @@ import { z } from 'zod';
 const SessionUserSchema = z.object({
   id: z.string().min(1),
   name: z.string(),
-  email: z.string().email(),
+  email: z.string().email().nullable(),
+  username: z.string().nullish(),
   emailVerified: z.boolean(),
   image: z.string().nullish(),
   role: z.string().nullish(),

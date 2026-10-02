@@ -1,0 +1,27 @@
+[
+  {
+    "Name": "Films",
+    "Locations": ["/data/movies"],
+    "CollectionType": "movies",
+    "ItemId": "lib-films",
+    "RefreshStatus": "Idle"
+  },
+  {
+    "Name": "Shows",
+    "Locations": ["/data/tv", "/data/tv-extra"],
+    "CollectionType": "tvshows",
+    "ItemId": "lib-shows"
+  },
+  {
+    "Name": "Music",
+    "Locations": ["/data/music"],
+    "CollectionType": "music",
+    "ItemId": "lib-music"
+  },
+  {
+    "Name": "Photos",
+    "Locations": ["/data/photos"],
+    "CollectionType": "homevideos",
+    "ItemId": "lib-photos"
+  }
+]

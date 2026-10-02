@@ -1,4 +1,4 @@
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryObserver } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { adminQueries } from './adminQueries';
 
@@ -36,6 +36,15 @@ const fetchMediaPaths = vi.hoisted(() => vi.fn());
 const fetchEverybodysShares = vi.hoisted(() => vi.fn());
 const fetchAlbums = vi.hoisted(() => vi.fn());
 const fetchBooks = vi.hoisted(() => vi.fn());
+const fetchAccountList = vi.hoisted(() => vi.fn());
+const fetchAccountSessions = vi.hoisted(() => vi.fn());
+const searchFolders = vi.hoisted(() => vi.fn());
+const fetchLibraryFolder = vi.hoisted(() => vi.fn());
+const searchLibraryFiles = vi.hoisted(() => vi.fn());
+const reencodeReaders = vi.hoisted(() => ({ fetchReencodes: vi.fn(), fetchRenditions: vi.fn() }));
+const fetchPreTranscoding = vi.hoisted(() => vi.fn());
+const fetchEmailSetup = vi.hoisted(() => vi.fn());
+const access = vi.hoisted(() => ({ fetchLibraryAccess: vi.fn(), fetchExceptionsOn: vi.fn() }));
 
 vi.mock('@ValenceClient/admin/fetchAdmin', () => admin);
 vi.mock('@ValenceClient/admin/fetchLogs', () => ({ fetchLogs }));
@@ -53,6 +62,15 @@ vi.mock('@ValenceClient/admin/fetchMediaPaths', () => ({ fetchMediaPaths }));
 vi.mock('@ValenceClient/sharing/fetchShares', () => ({ fetchEverybodysShares }));
 vi.mock('@ValenceClient/music/fetchMusic', () => ({ fetchAlbums }));
 vi.mock('@ValenceClient/books/fetchBooks', () => ({ fetchBooks }));
+vi.mock('@ValenceClient/admin/fetchAccountList', () => ({ fetchAccountList }));
+vi.mock('@ValenceClient/admin/fetchAccountSessions', () => ({ fetchAccountSessions }));
+vi.mock('@ValenceClient/admin/searchFolders', () => ({ searchFolders }));
+vi.mock('@ValenceClient/admin/fetchLibraryFolder', () => ({ fetchLibraryFolder }));
+vi.mock('@ValenceClient/admin/searchLibraryFiles', () => ({ searchLibraryFiles }));
+vi.mock('@ValenceClient/admin/fetchReencodes', () => reencodeReaders);
+vi.mock('@ValenceClient/admin/fetchPreTranscoding', () => ({ fetchPreTranscoding }));
+vi.mock('@ValenceClient/admin/fetchEmailSetup', () => ({ fetchEmailSetup }));
+vi.mock('@ValenceClient/admin/fetchLibraryAccess', () => access);
 
 const aCache = (): QueryClient =>
   new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
@@ -126,6 +144,104 @@ describe('adminQueries', () => {
     expect(adminQueries.folders(null).retry).toBe(false);
   });
 
+  it('reads the accounts, their devices and libraries, and who has an exception to something', async () => {
+    const cache = aCache();
+
+    fetchAccountList.mockResolvedValue({ accounts: [] });
+    fetchAccountSessions.mockResolvedValue([]);
+    access.fetchLibraryAccess.mockResolvedValue({ libraries: [] });
+    access.fetchExceptionsOn.mockResolvedValue([]);
+
+    await expect(cache.fetchQuery(adminQueries.accountList())).resolves.toEqual({ accounts: [] });
+    await expect(cache.fetchQuery(adminQueries.accountSessions('usr-1'))).resolves.toEqual([]);
+    await expect(cache.fetchQuery(adminQueries.libraryAccess('usr-1'))).resolves.toEqual({
+      libraries: [],
+    });
+    await expect(
+      cache.fetchQuery(adminQueries.exceptionsOn({ kind: 'series', subjectId: 'show' })),
+    ).resolves.toEqual([]);
+    expect(fetchAccountSessions).toHaveBeenCalledWith('usr-1');
+    expect(access.fetchLibraryAccess).toHaveBeenCalledWith('usr-1');
+    expect(access.fetchExceptionsOn).toHaveBeenCalledWith({ kind: 'series', subjectId: 'show' });
+    expect(adminQueries.accountSessions(null).enabled).toBe(false);
+    expect(adminQueries.libraryAccess(null).enabled).toBe(false);
+    expect(adminQueries.exceptionsOn(null).enabled).toBe(false);
+  });
+
+  it('searches the folders on the machine and the files in the libraries, never asking twice', async () => {
+    const cache = aCache();
+
+    searchFolders.mockResolvedValue({ folders: [] });
+    fetchLibraryFolder.mockResolvedValue({ entries: [] });
+    searchLibraryFiles.mockResolvedValue({ entries: [] });
+
+    await expect(cache.fetchQuery(adminQueries.folderSearch('films', '/media'))).resolves.toEqual({
+      folders: [],
+    });
+    await expect(cache.fetchQuery(adminQueries.libraryFolder('/media/films'))).resolves.toEqual({
+      entries: [],
+    });
+    await expect(cache.fetchQuery(adminQueries.libraryFileSearch('dune', null))).resolves.toEqual({
+      entries: [],
+    });
+    expect(searchFolders).toHaveBeenCalledWith('films', '/media');
+    expect(fetchLibraryFolder).toHaveBeenCalledWith('/media/films');
+    expect(searchLibraryFiles).toHaveBeenCalledWith('dune', null);
+    expect(adminQueries.folderSearch('films', null).retry).toBe(false);
+    expect(adminQueries.libraryFolder(null).retry).toBe(false);
+    expect(adminQueries.libraryFileSearch('dune', null).retry).toBe(false);
+  });
+
+  it('asks again about encodes only while one is still being written', async () => {
+    const cache = aCache();
+    const options = adminQueries.reencodes();
+
+    reencodeReaders.fetchReencodes.mockResolvedValue([{ state: 'encoding' }]);
+    await cache.fetchQuery(options);
+
+    const query = new QueryObserver(cache, options).getCurrentQuery();
+    const interval = options.refetchInterval;
+
+    expect(typeof interval === 'function' ? interval(query) : null).toBeGreaterThan(0);
+
+    cache.setQueryData(options.queryKey, []);
+
+    expect(typeof interval === 'function' ? interval(query) : null).toBe(false);
+  });
+
+  it('asks again about pre-transcoding only while a copy is being made', async () => {
+    const cache = aCache();
+    const options = adminQueries.preTranscoding();
+
+    fetchPreTranscoding.mockResolvedValue({ current: { state: 'encoding' } });
+    await cache.fetchQuery(options);
+
+    const query = new QueryObserver(cache, options).getCurrentQuery();
+    const interval = options.refetchInterval;
+
+    expect(typeof interval === 'function' ? interval(query) : null).toBeGreaterThan(0);
+
+    fetchPreTranscoding.mockResolvedValue({ current: null });
+    await cache.refetchQueries({ queryKey: options.queryKey });
+
+    expect(typeof interval === 'function' ? interval(query) : null).toBe(false);
+  });
+
+  it('reads what is kept beside an item, and how email is sent', async () => {
+    const cache = aCache();
+
+    reencodeReaders.fetchRenditions.mockResolvedValue([]);
+    fetchEmailSetup.mockResolvedValue({ settings: {}, recent: [] });
+
+    await expect(cache.fetchQuery(adminQueries.renditions('film'))).resolves.toEqual([]);
+    await expect(cache.fetchQuery(adminQueries.emailSetup())).resolves.toEqual({
+      settings: {},
+      recent: [],
+    });
+    expect(reencodeReaders.fetchRenditions).toHaveBeenCalledWith('film');
+    expect(adminQueries.renditions(null).enabled).toBe(false);
+  });
+
   it('watches a scan on a timer, since a scan finishes without announcing it', () => {
     expect(adminQueries.scans().refetchInterval).toBeGreaterThan(0);
   });
@@ -137,6 +253,10 @@ describe('adminQueries', () => {
   it('watches a pre-transcoded copy being made on a timer, the same way', () => {
     expect(typeof adminQueries.preTranscoding().refetchInterval).toBe('function');
     expect(adminQueries.preTranscoding().queryKey).toContain('preTranscoding');
+  });
+
+  it('keeps the email setup under the admin key, where saving it is cached', () => {
+    expect(adminQueries.emailSetup().queryKey).toContain('email');
   });
 
   it('reads a running scan', async () => {

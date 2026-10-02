@@ -16,6 +16,7 @@ import {
   SlidersHorizontal as SlidersHorizontalIcon,
   Tape as TapeIcon,
   Terminal as TerminalIcon,
+  Truck as TruckIcon,
   Users as UsersIcon,
   Video as VideoIcon,
 } from '@keyline-icons/react';
@@ -37,6 +38,7 @@ import {
   SlidersHorizontal as SlidersHorizontalFilledIcon,
   Tape as TapeFilledIcon,
   Terminal as TerminalFilledIcon,
+  Truck as TruckFilledIcon,
   Users as UsersFilledIcon,
   Video as VideoFilledIcon,
 } from '@keyline-icons/react/fill';
@@ -156,6 +158,12 @@ const ADMIN_SECTIONS = [
         activeIcon: RouteFilledIcon,
       },
       { id: 'plugins', label: say('common.plugins'), icon: PlugIcon, activeIcon: PlugFilledIcon },
+      {
+        id: 'imports',
+        label: say('screens.adminArea.adminSections.import'),
+        icon: TruckIcon,
+        activeIcon: TruckFilledIcon,
+      },
     ],
   },
 ] as const;

@@ -29,6 +29,20 @@ describe('isPublicRoute', () => {
     expect(isPublicRoute('GET', '/api/plugins')).toBe(false);
   });
 
+  it('lets somebody signed out open a setup link and use it, but not give themselves a password', () => {
+    const address = `/api/setup-links/${'a'.repeat(43)}`;
+
+    expect(isPublicRoute('GET', address)).toBe(true);
+    expect(isPublicRoute('POST', address)).toBe(true);
+    expect(isPublicRoute('POST', '/api/setup-links/password')).toBe(false);
+    expect(isPublicRoute('DELETE', address)).toBe(false);
+  });
+
+  it('lets somebody who cannot sign in ask for a password reset link, and only ask', () => {
+    expect(isPublicRoute('POST', '/api/password-reset')).toBe(true);
+    expect(isPublicRoute('GET', '/api/password-reset')).toBe(false);
+  });
+
   it('lets an outside service post to a plugin’s webhook address, and only post there', () => {
     const address = '/api/plugins/music-import/hooks/spotify/Zm9vYmFyYmF6cXV4cXV1eDEyMzQ1Njc4';
 

@@ -27,6 +27,8 @@ import {
   PRUNE_RESOURCE_HISTORY_JOB,
   REENCODE_JOB,
   PRE_TRANSCODE_JOB,
+  IMPORT_PLAN_JOB,
+  IMPORT_RUN_JOB,
   scheduleTriggerKind,
 } from './JobQueue';
 import type { ScheduleTrigger } from './scheduleTrigger';
@@ -334,6 +336,30 @@ const JOB_DEFINITIONS: JobDefinition[] = [
     announcesFinish: false,
     runsByHand: true,
     schedulable: true,
+  },
+  {
+    kind: IMPORT_PLAN_JOB,
+    label: saying('server.jobs.jobDefinitions.planAnImport'),
+    group: 'library',
+    description: saying('server.jobs.jobDefinitions.readsJellyfinEmbyOrPlexWithoutWriting'),
+    needsLibrary: false,
+    destructive: false,
+    takesParts: false,
+    announcesFinish: false,
+    runsByHand: false,
+    schedulable: false,
+  },
+  {
+    kind: IMPORT_RUN_JOB,
+    label: saying('server.jobs.jobDefinitions.bringEverythingAcross'),
+    group: 'library',
+    description: saying('server.jobs.jobDefinitions.bringsPeopleWatchingAndLibrariesAcross'),
+    needsLibrary: false,
+    destructive: false,
+    takesParts: false,
+    announcesFinish: true,
+    runsByHand: false,
+    schedulable: false,
   },
 ];
 

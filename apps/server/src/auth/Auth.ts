@@ -7,6 +7,7 @@ import { readCallerAddress } from '@ValenceServer/web/readCallerAddress';
 import { setSessionCookie } from 'better-auth/cookies';
 import { bearerWithoutACookie } from '@ValenceServer/auth/bearerWithoutACookie';
 import { confirmItIsYou } from '@ValenceServer/auth/confirmItIsYou';
+import { finishSetup } from '@ValenceServer/auth/finishSetup';
 import {
   admin,
   deviceAuthorization,
@@ -15,12 +16,16 @@ import {
   oneTimeToken,
   openAPI,
   twoFactor,
+  username,
 } from 'better-auth/plugins';
 import { apiKey } from '@better-auth/api-key';
 import { passkey } from '@better-auth/passkey';
 import { trustedOriginsFor } from '@ValenceServer/auth/trustedOriginsFor';
 import type { Env } from '@ValenceServer/env/Env';
 import { MINIMUM_PASSWORD_LENGTH } from '@ValenceContracts/constants/MINIMUM_PASSWORD_LENGTH';
+import { PASSWORD_RESET_LIFETIME_SECONDS } from '@ValenceServer/auth/PASSWORD_RESET_LIFETIME_SECONDS';
+import { MINIMUM_USERNAME_LENGTH } from '@ValenceContracts/constants/MINIMUM_USERNAME_LENGTH';
+import { MAXIMUM_USERNAME_LENGTH } from '@ValenceContracts/constants/MAXIMUM_USERNAME_LENGTH';
 import type { SettingsStore } from '@ValenceServer/settings/ServerSettings';
 
 type AuthDatabase = DBAdapter | DBAdapterInstance;
@@ -32,7 +37,7 @@ type CreateAuthOptions = {
   cookieSecure: boolean;
   onUserCreated?: (userId: string) => Promise<void>;
   onSignedIn?: (userId: string, at: Date) => Promise<void>;
-  onPasswordResetRequested?: (email: string, url: string) => Promise<void>;
+  onPasswordResetRequested?: (email: string, url: string, name: string) => Promise<void>;
   onSignInSettled?: (attempt: SignInAttempt) => void;
 };
 
@@ -84,8 +89,9 @@ const createAuth = ({
     emailAndPassword: {
       enabled: true,
       minPasswordLength: MINIMUM_PASSWORD_LENGTH,
+      resetPasswordTokenExpiresIn: PASSWORD_RESET_LIFETIME_SECONDS,
       sendResetPassword: async ({ user, url }) => {
-        await onPasswordResetRequested?.(user.email, url);
+        await onPasswordResetRequested?.(user.email, url, user.name);
       },
     },
     advanced: {
@@ -157,12 +163,17 @@ const createAuth = ({
       twoFactor({ issuer: VALENCE_APP_NAME }),
       passkey({ rpName: VALENCE_APP_NAME }),
       confirmItIsYou(),
+      finishSetup(),
       deviceAuthorization({ expiresIn: '10m', interval: '5s' }),
       bearerWithoutACookie(),
       jwt(),
       oneTimeToken({ disableClientRequest: true, storeToken: 'hashed', expiresIn: 3 }),
       apiKey({ enableSessionForAPIKeys: true }),
       admin(),
+      username({
+        minUsernameLength: MINIMUM_USERNAME_LENGTH,
+        maxUsernameLength: MAXIMUM_USERNAME_LENGTH,
+      }),
       genericOAuth({ config: [] }),
       openAPI({ disableDefaultReference: true }),
     ],

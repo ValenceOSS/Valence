@@ -1,0 +1,129 @@
+{
+  "GET /api/v1/status": {
+    "version": "1.35.0",
+    "commitTag": "v1.35.0",
+    "updateAvailable": false,
+    "commitsBehind": 0,
+    "restartRequired": false
+  },
+  "GET /api/v1/settings/radarr": [
+    {
+      "id": 0,
+      "name": "Radarr",
+      "hostname": "radarr",
+      "port": 7878,
+      "apiKey": "radarr-plain-key",
+      "useSsl": false,
+      "baseUrl": "",
+      "activeProfileId": 4,
+      "activeProfileName": "HD-1080p",
+      "activeDirectory": "/movies",
+      "is4k": false,
+      "minimumAvailability": "released",
+      "tags": [],
+      "isDefault": true,
+      "externalUrl": "",
+      "syncEnabled": false,
+      "preventSearch": false,
+      "tagRequests": false
+    }
+  ],
+  "GET /api/v1/settings/sonarr": [
+    {
+      "id": 0,
+      "name": "Sonarr",
+      "hostname": "sonarr",
+      "port": 8989,
+      "apiKey": "sonarr-plain-key",
+      "useSsl": false,
+      "baseUrl": "",
+      "activeProfileId": 7,
+      "activeProfileName": "WEB-1080p",
+      "activeDirectory": "/tv",
+      "activeAnimeProfileId": null,
+      "activeAnimeDirectory": null,
+      "is4k": false,
+      "isDefault": true,
+      "enableSeasonFolders": true,
+      "seriesType": "standard",
+      "animeSeriesType": "anime",
+      "syncEnabled": false,
+      "preventSearch": false,
+      "tagRequests": false
+    }
+  ],
+  "GET /api/v1/request": {
+    "pageInfo": { "pages": 1, "pageSize": 100, "results": 3, "page": 1 },
+    "results": [
+      {
+        "id": 11,
+        "status": 1,
+        "createdAt": "2026-09-20T10:00:00.000Z",
+        "updatedAt": "2026-09-20T10:00:00.000Z",
+        "type": "movie",
+        "is4k": false,
+        "serverId": 0,
+        "profileId": 4,
+        "rootFolder": "/movies",
+        "media": {
+          "id": 31,
+          "mediaType": "movie",
+          "tmdbId": 603,
+          "tvdbId": null,
+          "status": 2,
+          "status4k": 1
+        },
+        "seasons": [],
+        "requestedBy": {
+          "permissions": 32,
+          "id": 2,
+          "email": "sam@example.com",
+          "plexUsername": "sam",
+          "username": null,
+          "userType": 1,
+          "plexId": 1234567,
+          "avatar": "https://plex.tv/users/abc/avatar",
+          "requestCount": 4,
+          "displayName": "Sam"
+        },
+        "modifiedBy": null,
+        "seasonCount": 0
+      },
+      {
+        "id": 12,
+        "status": 2,
+        "type": "tv",
+        "is4k": false,
+        "serverId": 0,
+        "media": { "id": 32, "mediaType": "tv", "tmdbId": 95396, "tvdbId": 371980, "status": 3 },
+        "seasons": [
+          { "id": 1, "seasonNumber": 2, "status": 2 },
+          { "id": 2, "seasonNumber": 3, "status": 2 }
+        ],
+        "requestedBy": {
+          "id": 3,
+          "email": "alex@example.com",
+          "plexUsername": "alex",
+          "userType": 1,
+          "plexId": 7654321,
+          "displayName": "Alex"
+        },
+        "seasonCount": 2
+      },
+      {
+        "id": 13,
+        "status": 3,
+        "type": "movie",
+        "is4k": false,
+        "media": { "id": 33, "mediaType": "movie", "tmdbId": 13, "status": 1 },
+        "seasons": [],
+        "requestedBy": {
+          "id": 2,
+          "email": "sam@example.com",
+          "displayName": "Sam",
+          "plexId": 1234567
+        }
+      }
+    ]
+  }
+}

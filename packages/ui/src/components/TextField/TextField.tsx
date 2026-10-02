@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import { FieldNote } from './components/FieldNote/FieldNote';
 import { cn } from '@ValenceUI/cn';
 import type { TextFieldProps } from './TextField.types';
 
@@ -12,8 +13,11 @@ import type { TextFieldProps } from './TextField.types';
  * @param value - What the field holds now.
  * @param onValueChange - Told the new text on every keystroke.
  * @param type - Which kind of input, such as a search box or a password.
- * @param description - A line under the field explaining what is wanted.
- * @param error - What is wrong with what was typed, which replaces the description.
+ * @param description - A line explaining what is wanted.
+ * @param descriptionPlacement - Where that line sits: between the label and the field, or under the
+ *   field, where an error takes its place and the change is animated. Fields side by side in a row
+ *   put it under, so their inputs line up whatever each one says.
+ * @param error - What is wrong with what was typed.
  * @param placeholder - What to show while the field is empty.
  * @param required - Whether the form refuses to submit without it.
  * @param disabled - Whether it can be typed in at all.
@@ -32,6 +36,7 @@ const TextField = ({
   onValueChange,
   type = 'text',
   description,
+  descriptionPlacement = 'above',
   error,
   placeholder,
   required = false,
@@ -49,6 +54,7 @@ const TextField = ({
 }: TextFieldProps) => {
   const fieldId = useId();
   const describedBy = `${fieldId}-said`;
+  const isBelow = descriptionPlacement === 'below';
 
   return (
     <div data-slot="field" className={cn('flex flex-col gap-1.5', className)}>
@@ -59,7 +65,7 @@ const TextField = ({
         {label}
       </label>
 
-      {description === undefined ? null : (
+      {description === undefined || isBelow ? null : (
         <p id={describedBy} className="text-sm text-text-muted">
           {description}
         </p>
@@ -81,7 +87,9 @@ const TextField = ({
           required={required}
           disabled={disabled}
           {...(error === undefined ? {} : { 'aria-invalid': true })}
-          {...(description === undefined ? {} : { 'aria-describedby': describedBy })}
+          {...(description === undefined && !(isBelow && error !== undefined)
+            ? {}
+            : { 'aria-describedby': describedBy })}
           {...(autoComplete === undefined ? {} : { autoComplete })}
           {...(min === undefined ? {} : { min })}
           {...(max === undefined ? {} : { max })}
@@ -115,7 +123,11 @@ const TextField = ({
         />
       </span>
 
-      {error === undefined ? null : (
+      {isBelow ? (
+        <FieldNote id={describedBy} {...(error === undefined ? {} : { error })}>
+          {description}
+        </FieldNote>
+      ) : error === undefined ? null : (
         <p role="alert" className="text-sm text-destructive">
           {error}
         </p>

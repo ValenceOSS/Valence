@@ -1,0 +1,51 @@
+{
+  "GET /api/v1/system/status": {
+    "appName": "Prowlarr",
+    "instanceName": "Prowlarr",
+    "version": "1.24.3.4754",
+    "urlBase": ""
+  },
+  "GET /api/v1/indexer": [
+    {
+      "indexerUrls": ["https://1337x.to/"],
+      "definitionName": "1337x",
+      "description": "1337X is a Public torrent site",
+      "language": "en-US",
+      "enable": true,
+      "redirect": false,
+      "supportsRss": true,
+      "supportsSearch": true,
+      "appProfileId": 1,
+      "privacy": "public",
+      "capabilities": {
+        "categories": [
+          { "id": 2000, "name": "Movies", "subCategories": [] },
+          { "id": 100001, "name": "Other", "subCategories": [] }
+        ]
+      },
+      "priority": 25,
+      "name": "1337x",
+      "fields": [],
+      "implementationName": "Cardigann",
+      "implementation": "Cardigann",
+      "configContract": "CardigannSettings",
+      "protocol": "torrent",
+      "tags": [],
+      "id": 1
+    },
+    {
+      "definitionName": "nzbgeek",
+      "enable": true,
+      "appProfileId": 1,
+      "privacy": "private",
+      "capabilities": { "categories": [{ "id": 5000, "name": "TV", "subCategories": [] }] },
+      "priority": 10,
+      "name": "NZBgeek",
+      "fields": [{ "order": 0, "name": "apiKey", "value": "********", "privacy": "apiKey" }],
+      "implementation": "Newznab",
+      "protocol": "usenet",
+      "tags": [],
+      "id": 2
+    }
+  ]
+}

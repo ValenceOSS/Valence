@@ -1,0 +1,97 @@
+---
+title: Moving from Jellyfin, Emby or Plex
+description: Bring people, libraries, watch history, favourites, ratings, collections, playlists, access and intro markers across from an existing media server, safely and as often as you like.
+order: 17
+---
+
+Valence can import everything from a Jellyfin, Emby or Plex server you already run, so switching does not mean starting again. It is a step of [first-run setup](/use/first-run#import-from-another-server), and stays in the admin area under **Import** for later.
+
+The copy is one way. Valence only reads from the old server, and the old server keeps working exactly as before. You can run both side by side for as long as you like and bring things across again whenever you want.
+
+## What comes across
+
+| From the old server                           | In Valence                                                                                                                              |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Users (Jellyfin, Emby), Plex Home and friends | An account each, with its username taken from the old name, its email address where Plex has one, and its picture as the profile photo. |
+| Administrators                                | The Administrator role.                                                                                                                 |
+| Disabled users                                | A banned account, saying it was disabled on the old server.                                                                             |
+| Watched                                       | Marked as finished, dated when it was last played.                                                                                      |
+| Resume positions                              | Where each person stopped, dated when they stopped, so Continue watching carries on.                                                    |
+| Play counts and plays                         | One viewing in history for each play. Imported viewings are never removed by the yearly history cleanup.                                |
+| Favourite films, episodes, songs and artists  | Kept items and kept artists.                                                                                                            |
+| Ratings out of ten                            | One to five stars, halved and rounded. Programme ratings come across as programme ratings.                                              |
+| Collections and box sets                      | [Collections](/use/collections), filled with whatever matched.                                                                          |
+| Playlists, video and music                    | Playlists owned by the person who made them. A playlist that was shared stays shared.                                                   |
+| Libraries and their folders                   | Libraries, made and scanned for you, one for each folder.                                                                               |
+| Library access                                | The libraries a person could not see are refused to them.                                                                               |
+| Parental ratings                              | An age ceiling on each film and series library the person can see, and whether unrated titles are allowed.                              |
+| Intro and credits markers                     | Skip intro and Skip credits, from Jellyfin's media segments or the Intro Skipper plugin, Emby's chapter markers, or Plex's markers.     |
+
+## What stays behind, and why
+
+- **Passwords.** No server hands out its passwords, so each new account signs in the first time with a [setup link](/use/accounts-and-roles), which you copy or send by email at the end of the import.
+- **Subtitle and audio language preferences.** Valence keeps these on each device rather than on the server, so there is nowhere to put them.
+- **Plex watchlists.** They live on plex.tv rather than on the Plex server, and plex.tv only shows a friend's watchlist to the friend.
+- **Favourite programmes and albums.** Valence keeps favourites per film, episode and song. The report counts how many favourite programmes stay behind.
+- **Likes and dislikes** in Jellyfin. Ratings come across; likes have no equivalent.
+- **Anything the libraries do not hold.** Photos, home videos and mixed libraries have no Valence library to go into. Items that cannot be matched are listed in the report with the reason.
+
+## How it works
+
+1. **Connect.** Choose Jellyfin, Emby or Plex, and give its address and key. Local addresses such as `http://192.168.1.10:8096` work, since these servers are almost always on the same network. Valence reads the server once to check the key before going on.
+   - Jellyfin: **Dashboard → API Keys**, then add a key.
+   - Emby: **Settings → Advanced → API Keys**, then add a key.
+   - Plex: the server owner's token. Signed in to Plex in a browser, open any film's **Get Info → View XML**, and copy the value after `X-Plex-Token=` in the address.
+2. **People.** Choose who comes across, and which of them is you. Your own account in Valence gets your watching instead of a new account being made for you.
+3. **Libraries first.** Map the folders, then say which Valence library each of the old server's folders comes into: one you already have, a new one made and scanned for it, or none. New libraries are scanned straight away, so the media exists before anybody's watching is matched to it, and the scans are followed live.
+4. **Dry run.** Valence reads everything and writes nothing, then reports how many people, items, plays and so on would come across, what each person will get, and what could not be matched and why.
+5. **Import.** Valence brings it all across as a background job, with its progress shown as it goes. You can stop it, and carry on later.
+6. **Requesting too.** If the [requests service](/install/requesting) is running, Sonarr, Radarr, Lidarr, Prowlarr and Overseerr or Jellyseerr come across next. If it is not, the wizard says how to turn it on.
+7. **Setup links.** Each new person is listed with their setup link, to copy or to send by email when [email](/use/email) is on. Links work for seven days unless you choose one or thirty.
+
+## Matching
+
+Each film, episode, programme and track on the old server is found in Valence in this order:
+
+1. By catalogue id: TMDb, then IMDb. A programme known only by its TVDB id is looked up in the catalogue first. Episodes match by their programme and their season and episode numbers.
+2. By where the file is, through the folder mappings.
+3. By title and year, allowing the year to be one out. When more than one item has the same title, nothing is guessed and the item is listed as unmatched.
+
+Music matches by its MusicBrainz release id with the disc and track number, then by file, then by album title and position.
+
+## Mapping folders
+
+Jellyfin, Emby and Plex usually see your media at a different path from Valence, because each runs in its own container. If the old server's movies are at `/data/movies` and Valence mounts the same folder at `/media/movies`, add a mapping from `/data/movies` to `/media/movies`. The longest matching folder wins, and Windows paths are compared with forward slashes.
+
+A library is made only for a folder Valence can see. If Valence cannot see a mapped folder, the wizard says so, and the folder needs mounting into Valence's container first. A folder that already has a Valence library is used as it is.
+
+## Plex people
+
+Plex keeps who uses a server on plex.tv, so Valence asks plex.tv as the owner:
+
+- **The owner** comes across in full.
+- **Friends** the server is shared with come across in full, read with the token plex.tv holds for them on this server.
+- **Plex Home members** come across in full. A member with a PIN needs it typed into the wizard once; the PIN is used to sign in to plex.tv as them, and is never stored. A member whose PIN is not given is left out, and the report says so.
+- When plex.tv cannot be reached, only the owner can be read in full, and everybody else's plays come from the server's own history.
+
+Plex keeps how often each person played something, and the server remembers individual plays for a while. Those plays come across with their real dates.
+
+## Play dates from Jellyfin and Emby
+
+Jellyfin and Emby keep only how many times something was played and when it was last played. The last play keeps its real date. The earlier ones are spread evenly back to when the item arrived on the old server, or a day apart where that is not known. The counts in history are right; the dates of the earlier plays are an estimate.
+
+## Running it again
+
+Bringing things across again is safe. Every account, library, collection and playlist the import made is remembered against the old server, so running it again updates them rather than making copies:
+
+- Accounts are reused, and new people on the old server get new accounts.
+- Watched and resume positions are only written where they are newer than what Valence already has.
+- Each play is written once, however often the import runs.
+- Collections and playlists are refilled in place.
+- Intro and credits markers you set by hand in Valence are never replaced.
+
+If Valence restarts during an import, the job starts again and carries on from where it had got to.
+
+## Read only
+
+Valence never writes to the old server. Every request to Jellyfin, Emby and the Plex server reads. The one exception is the request that signs in to plex.tv as a Plex Home member, which changes nothing on the server or in their account.

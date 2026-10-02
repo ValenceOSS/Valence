@@ -1,0 +1,10 @@
+[
+  { "Name": "G", "Value": 0 },
+  { "Name": "TV-Y", "Value": 0 },
+  { "Name": "PG", "Value": 10 },
+  { "Name": "PG-13", "Value": 13 },
+  { "Name": "TV-14", "Value": 14 },
+  { "Name": "R", "Value": 17 },
+  { "Name": "NC-17", "Value": 17 },
+  { "Name": "TV-MA", "Value": 17 }
+]

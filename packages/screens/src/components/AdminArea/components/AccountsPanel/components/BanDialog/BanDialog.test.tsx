@@ -1,0 +1,40 @@
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
+import { BanDialog } from './BanDialog';
+
+describe('BanDialog', () => {
+  it('bans with the reason given', async () => {
+    const onBan = vi.fn();
+
+    render(<BanDialog name="Sam" onClose={vi.fn()} onBan={onBan} />);
+
+    const reason = screen.getByLabelText('What they are told');
+
+    await userEvent.clear(reason);
+    await userEvent.type(reason, 'Sharing the password around');
+    await userEvent.click(screen.getByRole('button', { name: 'Ban' }));
+
+    expect(onBan).toHaveBeenCalledWith('Sharing the password around');
+  });
+
+  it('starts with the usual reason filled in', () => {
+    render(<BanDialog name="Sam" onClose={vi.fn()} onBan={vi.fn()} />);
+
+    expect(screen.getByLabelText('What they are told')).not.toHaveValue('');
+  });
+
+  it('will not ban without a reason', async () => {
+    render(<BanDialog name="Sam" onClose={vi.fn()} onBan={vi.fn()} />);
+
+    await userEvent.clear(screen.getByLabelText('What they are told'));
+
+    expect(screen.getByRole('button', { name: 'Ban' })).toBeDisabled();
+  });
+
+  it('is shut while nobody is to be banned', () => {
+    render(<BanDialog name={null} onClose={vi.fn()} onBan={vi.fn()} />);
+
+    expect(screen.queryByLabelText('What they are told')).not.toBeInTheDocument();
+  });
+});

@@ -23,7 +23,7 @@ import { DataTable } from '@ValenceUI/DataTable';
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import { describeScanResult } from '@ValenceClient/admin/describeScanResult';
-import { AddLibraryDialog } from '@ValenceScreens/components/AdminArea/components/AddLibraryDialog/AddLibraryDialog';
+import { AddLibraryDialog } from '@ValenceScreens/components/AddLibraryDialog/AddLibraryDialog';
 import { LibrarySettingsDialog } from '@ValenceScreens/components/AdminArea/components/LibrarySettingsDialog/LibrarySettingsDialog';
 import { RunningWorkDialog } from '@ValenceScreens/components/AdminArea/components/RunningWorkDialog/RunningWorkDialog';
 import { describeScanKind } from '@ValenceScreens/components/AdminArea/describeScanKind';

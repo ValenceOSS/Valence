@@ -1,0 +1,50 @@
+{
+  "MediaContainer": {
+    "size": 2,
+    "totalSize": 2,
+    "offset": 0,
+    "Metadata": [
+      {
+        "ratingKey": "101",
+        "key": "/library/metadata/101",
+        "guid": "plex://movie/5d776825880197001ec967c6",
+        "type": "movie",
+        "title": "Heat",
+        "year": 1995,
+        "contentRating": "R",
+        "duration": 10200000,
+        "addedAt": 1704153600,
+        "viewCount": 2,
+        "lastViewedAt": 1709586000,
+        "userRating": 8,
+        "Guid": [{ "id": "imdb://tt0113277" }, { "id": "tmdb://949" }, { "id": "tvdb://1234" }],
+        "Media": [
+          {
+            "id": 1,
+            "duration": 10200000,
+            "Part": [
+              {
+                "id": 1,
+                "key": "/library/parts/1/file.mkv",
+                "file": "/media/films/Heat (1995)/Heat.mkv",
+                "size": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "ratingKey": "102",
+        "key": "/library/metadata/102",
+        "guid": "com.plexapp.agents.imdb://tt0078748?lang=en",
+        "type": "movie",
+        "title": "Alien",
+        "year": 1979,
+        "duration": 7002000,
+        "viewOffset": 1200000,
+        "lastViewedAt": 1709600000,
+        "Media": [{ "Part": [{ "file": "/media/films/Alien.mkv" }] }]
+      }
+    ]
+  }
+}
