@@ -117,6 +117,8 @@ jest.mock('@ValenceClient/presence/watchPresence', () => ({
 
 jest.mock('@ValenceClient/music/useMusicRemote', () => ({ useMusicRemote: () => undefined }));
 
+jest.mock('@ValenceClient/party/useListenAlong', () => ({ useListenAlong: () => undefined }));
+
 jest.mock('@ValenceClient/music/theMusicPlayer', () => ({ theMusicPlayer: () => mockMusic }));
 
 jest.mock('@ValenceTv/music/useSystemNowPlaying', () => ({

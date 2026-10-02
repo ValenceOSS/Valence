@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 
-type PlayerPanelProps = {
+type SidePanelProps = {
   title: string;
   children: ReactNode;
 };
 
-export type { PlayerPanelProps };
+export type { SidePanelProps };

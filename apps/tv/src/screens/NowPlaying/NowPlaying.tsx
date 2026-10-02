@@ -19,6 +19,7 @@ import {
   Repeat1,
   Shuffle,
   Sparkles,
+  Users,
 } from '@keyline-icons/react-native';
 import { Heart, Pause, Play, SkipBack, SkipForward } from '@keyline-icons/react-native/fill';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
@@ -28,6 +29,10 @@ import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
+import { useListeningParty } from '@ValenceClient/party/listeningParty';
+import { listenerControls } from '@ValenceClient/party/listenerControls';
+import { sessionQueries } from '@ValenceClient/query/sessionQueries';
+import { PartyPanel } from '@ValenceTv/components/PartyPanel/PartyPanel';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { Badges } from '@ValenceTv/components/Badges/Badges';
@@ -99,10 +104,16 @@ const HEART = 72;
  * foot. While this television is controlling another device, everything here is
  * that device's: its song, its place in it, and every button sent to it.
  *
+ * In somebody else's listening party the song and where it has got to are the host's: skipping,
+ * shuffling and repeating are put away, and pausing and moving through the song go to the host
+ * unless they have let everybody. The party is opened from beside the other ways to send the music
+ * elsewhere, to start one around the song playing, see who is listening, or leave.
+ *
  * @param onEmpty - Told when nothing is playing any more, to close the screen.
  * @param onBack - Told when the button at the top left is pressed, to go back as Menu does.
+ * @param watchParty - The party this television holds, through which a listening party is had.
  */
-const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
+const NowPlaying = ({ onEmpty, onBack, watchParty }: NowPlayingProps) => {
   const { state, player } = useMusicPlayer(theMusicPlayer(), { followsPosition: true });
   const shown = useWhatIsPlaying(state);
   const watching = useQuery(profileQueries.watching());
@@ -113,7 +124,16 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
     enabled: trackId !== null && state.current?.hasLyrics !== false,
   });
   const [wantsWords, setWantsWords] = useState(true);
-  const [panel, setPanel] = useState<'queue' | 'devices' | null>(null);
+  const [panel, setPanel] = useState<'queue' | 'devices' | 'party' | null>(null);
+  const listening = useListeningParty();
+  const everyone = useQuery({
+    ...sessionQueries.everyone(),
+    enabled: (watchParty?.party ?? null) !== null,
+  });
+  const household = useMemo(
+    () => (everyone.data ?? []).map((person) => ({ id: person.id, name: person.name })),
+    [everyone.data],
+  );
   const [touchedAt, setTouchedAt] = useState(() => Date.now());
   const [isResting, setIsResting] = useState(false);
   const [controlsHeight, setControlsHeight] = useState(0);
@@ -244,6 +264,8 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
             : []),
         ];
   const settles = (controlsHeight + tokens.space.lg) / 2;
+  const controls = listenerControls(listening, shown, player);
+  const { isFollowing } = controls;
 
   return (
     <View style={styles.screen}>
@@ -358,7 +380,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
               onFocus={awayFromTheEdges}
               position={shown.positionSeconds}
               duration={shown.durationSeconds}
-              onSeek={player.seek}
+              onSeek={controls.seek}
             />
 
             <View style={styles.transport}>
@@ -368,7 +390,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
                 icon={shuffling === 'smart' ? Sparkles : Shuffle}
                 variant={shuffling === 'off' ? 'ghost' : 'soft'}
                 isIconOnly
-                isDisabled={isOrdered}
+                isDisabled={isOrdered || isFollowing}
                 onPress={player.cycleShuffle}
               />
               <Button
@@ -378,6 +400,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
                 variant="ghost"
                 isIconOnly
                 iconSize={40}
+                isDisabled={isFollowing}
                 onPress={player.previous}
               />
               <Button
@@ -389,7 +412,8 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
                 isIconOnly
                 iconSize={64}
                 hasPreferredFocus
-                onPress={player.toggle}
+                isDisabled={!controls.mayPlayPause}
+                onPress={controls.playPause}
               />
               <Button
                 onFocus={awayFromTheEdges}
@@ -398,6 +422,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
                 variant="ghost"
                 isIconOnly
                 iconSize={40}
+                isDisabled={isFollowing}
                 onPress={player.next}
               />
               <Button
@@ -412,7 +437,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
                 icon={repeat === 'one' ? Repeat1 : Repeat}
                 variant={repeat === 'off' ? 'ghost' : 'soft'}
                 isIconOnly
-                isDisabled={isOrdered}
+                isDisabled={isOrdered || isFollowing}
                 onPress={player.cycleRepeat}
               />
             </View>
@@ -456,6 +481,19 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
                   setPanel('devices');
                 }}
               />
+              {watchParty === undefined ? null : (
+                <Button
+                  onFocus={awayFromTheEdges}
+                  label={say('common.listeningParty')}
+                  icon={Users}
+                  variant={listening === null ? 'ghost' : 'soft'}
+                  size="md"
+                  isIconOnly
+                  onPress={() => {
+                    setPanel('party');
+                  }}
+                />
+              )}
             </View>
           </Animated.View>
         </TVFocusGuideView>
@@ -466,7 +504,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
               <LyricLines
                 lyrics={words}
                 positionMs={shown.positionSeconds * 1000}
-                onSeek={player.seek}
+                onSeek={controls.seek}
               />
             </FadeIn>
           </TVFocusGuideView>
@@ -485,6 +523,16 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
       ) : null}
 
       {panel === 'devices' ? <DevicesPanel shown={shown} onChosen={closePanel} /> : null}
+
+      {panel === 'party' && watchParty !== undefined ? (
+        <PartyPanel
+          kind="listen"
+          watchParty={watchParty}
+          mediaId={shown.trackId}
+          people={household}
+          onLeave={closePanel}
+        />
+      ) : null}
     </View>
   );
 };

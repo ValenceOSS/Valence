@@ -1,13 +1,13 @@
 import { render } from '@testing-library/react-native';
 import { Text } from 'react-native';
-import { PlayerPanel } from './PlayerPanel';
+import { SidePanel } from './SidePanel';
 
-describe('PlayerPanel', () => {
+describe('SidePanel', () => {
   it('draws what it holds under its title', async () => {
     const drawn = await render(
-      <PlayerPanel title="Settings">
+      <SidePanel title="Settings">
         <Text>Inside</Text>
-      </PlayerPanel>,
+      </SidePanel>,
     );
 
     expect(drawn.getByText('Settings')).toBeTruthy();

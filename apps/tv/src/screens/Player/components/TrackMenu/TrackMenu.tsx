@@ -1,6 +1,6 @@
 import { Check } from '@keyline-icons/react-native';
 import { ActionRow } from '@ValenceTv/components/ActionRow/ActionRow';
-import { PlayerPanel } from '@ValenceTv/screens/Player/components/PlayerPanel/PlayerPanel';
+import { SidePanel } from '@ValenceTv/components/SidePanel/SidePanel';
 import type { TrackMenuProps } from './TrackMenu.types';
 
 /**
@@ -15,7 +15,7 @@ import type { TrackMenuProps } from './TrackMenu.types';
  * @param onChoose - Told which was chosen.
  */
 const TrackMenu = ({ title, choices, chosen, onChoose }: TrackMenuProps) => (
-  <PlayerPanel title={title}>
+  <SidePanel title={title}>
     {choices.map((choice) => (
       <ActionRow
         key={choice.id}
@@ -31,7 +31,7 @@ const TrackMenu = ({ title, choices, chosen, onChoose }: TrackMenuProps) => (
         }}
       />
     ))}
-  </PlayerPanel>
+  </SidePanel>
 );
 
 TrackMenu.displayName = 'TrackMenu';

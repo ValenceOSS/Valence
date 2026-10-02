@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { ChevronRight } from '@keyline-icons/react-native';
-import { PlayerPanel } from '@ValenceTv/screens/Player/components/PlayerPanel/PlayerPanel';
+import { SidePanel } from '@ValenceTv/components/SidePanel/SidePanel';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { Icon } from '@ValenceTv/components/Icon/Icon';
 import { tokens } from '@ValenceTv/theme/tokens';
@@ -18,7 +18,7 @@ import { say } from '@ValenceI18n/say';
  * @param onOpen - Told which setting was chosen, to show its choices.
  */
 const SettingsMenu = ({ title = say('common.settings'), settings, onOpen }: SettingsMenuProps) => (
-  <PlayerPanel title={title}>
+  <SidePanel title={title}>
     {settings.map((setting, at) => (
       <Focusable
         key={setting.id}
@@ -45,7 +45,7 @@ const SettingsMenu = ({ title = say('common.settings'), settings, onOpen }: Sett
         }}
       </Focusable>
     ))}
-  </PlayerPanel>
+  </SidePanel>
 );
 
 SettingsMenu.displayName = 'SettingsMenu';

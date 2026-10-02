@@ -8,6 +8,7 @@ import { useFreshFromTheSocket } from '@ValenceClient/query/useFreshFromTheSocke
 import { getRealtimeClient } from '@ValenceClient/realtime/getRealtimeClient';
 import { watchPresence } from '@ValenceClient/presence/watchPresence';
 import { useWatchParty } from '@ValenceClient/party/useWatchParty';
+import { useListenAlong } from '@ValenceClient/party/useListenAlong';
 import { PARTY_NOTICE_LINGERS_MS } from '@ValenceClient/party/PARTY_NOTICE_LINGERS_MS';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { useProgress } from '@ValenceTv/library/useProgress';
@@ -154,7 +155,8 @@ const bookMoodOf = (book: Book): string | null => (book.hasCover ? bookCoverUrl(
  *
  * The watch party this television may be in is held here rather than in the player, since an
  * invitation arrives with the notifications and a party outlives any one film being opened. Choosing
- * an invitation opens the film it is watching, joined, and somebody put out of a party is told so
+ * an invitation opens the film it is watching, joined, or joins a listening party and opens what is
+ * playing once the host's song arrives, the music kept in step with theirs from then on; somebody put out of a party is told so
  * for a moment.
  *
  * When something this viewer asked for arrives, a banner slides in to say so, and Play/Pause opens
@@ -284,6 +286,9 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
   }, []);
 
   const watchParty = useWatchParty(getRealtimeClient());
+  const [listenInvitation, setListenInvitation] = useState<string | null>(null);
+
+  useListenAlong(watchParty, listenInvitation);
   const { notice: partyNotice, forgetNotice: forgetPartyNotice } = watchParty;
   const { progress } = useProgress();
 
@@ -300,21 +305,6 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
       clearTimeout(goes);
     };
   }, [partyNotice, forgetPartyNotice]);
-
-  const join = useCallback(
-    (invitation: PartyInvitation) => {
-      if (invitation.kind === 'watch') {
-        open({
-          kind: 'play',
-          mediaId: invitation.mediaId,
-          startSeconds: resumeFor(progress, invitation.mediaId) ?? 0,
-          carriedOn: 0,
-          invitedTo: invitation.partyId,
-        });
-      }
-    },
-    [open, progress],
-  );
 
   useEffect(
     () =>
@@ -508,6 +498,35 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
   const closeNowPlaying = useCallback(() => {
     setOpened((was) => was.filter((place) => place.kind !== 'nowPlaying'));
   }, []);
+
+  const [isWaitingToHear, setIsWaitingToHear] = useState(false);
+
+  useEffect(() => {
+    if (isWaitingToHear && heard === 'music') {
+      setIsWaitingToHear(false);
+      openNowPlaying();
+    }
+  }, [isWaitingToHear, heard, openNowPlaying]);
+
+  const join = useCallback(
+    (invitation: PartyInvitation) => {
+      if (invitation.kind === 'listen') {
+        setListenInvitation(invitation.partyId);
+        setIsWaitingToHear(true);
+
+        return;
+      }
+
+      open({
+        kind: 'play',
+        mediaId: invitation.mediaId,
+        startSeconds: resumeFor(progress, invitation.mediaId) ?? 0,
+        carriedOn: 0,
+        invitedTo: invitation.partyId,
+      });
+    },
+    [open, progress],
+  );
 
   const featureBooks = useCallback((path: string | null) => {
     setMoods((was) => ({ ...was, books: path }));
@@ -736,7 +755,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
 
       {top?.kind === 'nowPlaying' ? (
         <View style={styles.over}>
-          <NowPlaying onEmpty={closeNowPlaying} onBack={back} />
+          <NowPlaying onEmpty={closeNowPlaying} onBack={back} watchParty={watchParty} />
         </View>
       ) : null}
 

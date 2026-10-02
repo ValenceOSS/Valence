@@ -44,7 +44,7 @@ import { SettingsMenu } from '@ValenceTv/screens/Player/components/SettingsMenu/
 import { StreamStats } from '@ValenceTv/screens/Player/components/StreamStats/StreamStats';
 import { TrackMenu } from '@ValenceTv/screens/Player/components/TrackMenu/TrackMenu';
 import { UpNext } from '@ValenceTv/screens/Player/components/UpNext/UpNext';
-import { PartyMenu } from '@ValenceTv/screens/Player/components/PartyMenu/PartyMenu';
+import { PartyPanel } from '@ValenceTv/components/PartyPanel/PartyPanel';
 import { roomPlayerOfExpo } from '@ValenceNative/party/roomPlayerOfExpo';
 import { useFollowTheRoom } from '@ValenceClient/party/useFollowTheRoom';
 import { usePartyPlayback } from '@ValenceClient/party/usePartyPlayback';
@@ -922,7 +922,8 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
       ) : null}
 
       {watchParty !== undefined && (menu === 'party' || isAskedForAPassword) ? (
-        <PartyMenu
+        <PartyPanel
+          kind="watch"
           watchParty={watchParty}
           mediaId={mediaId}
           people={household}

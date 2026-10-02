@@ -1,7 +1,7 @@
 import { ScrollView, StyleSheet, Text, TVFocusGuideView } from 'react-native';
 import { FadeIn } from '@ValenceTv/components/FadeIn/FadeIn';
 import { tokens } from '@ValenceTv/theme/tokens';
-import type { PlayerPanelProps } from './PlayerPanel.types';
+import type { SidePanelProps } from './SidePanel.types';
 
 const WIDTH = 720;
 
@@ -12,7 +12,7 @@ const WIDTH = 720;
  * @param title - What it is.
  * @param children - What it holds.
  */
-const PlayerPanel = ({ title, children }: PlayerPanelProps) => (
+const SidePanel = ({ title, children }: SidePanelProps) => (
   <TVFocusGuideView style={styles.panel} trapFocusLeft trapFocusRight trapFocusUp trapFocusDown>
     <FadeIn>
       <Text style={styles.title}>{title}</Text>
@@ -24,7 +24,7 @@ const PlayerPanel = ({ title, children }: PlayerPanelProps) => (
   </TVFocusGuideView>
 );
 
-PlayerPanel.displayName = 'PlayerPanel';
+SidePanel.displayName = 'SidePanel';
 
 const styles = StyleSheet.create({
   panel: {
@@ -47,4 +47,4 @@ const styles = StyleSheet.create({
   list: { gap: tokens.space.xs, paddingBottom: tokens.space.xl },
 });
 
-export { PlayerPanel };
+export { SidePanel };

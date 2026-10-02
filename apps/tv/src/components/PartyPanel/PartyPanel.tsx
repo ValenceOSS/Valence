@@ -12,32 +12,37 @@ import {
 import { ActionRow } from '@ValenceTv/components/ActionRow/ActionRow';
 import { QrCode } from '@ValenceTv/components/QrCode/QrCode';
 import { TextField } from '@ValenceTv/components/TextField/TextField';
-import { PlayerPanel } from '@ValenceTv/screens/Player/components/PlayerPanel/PlayerPanel';
+import { SidePanel } from '@ValenceTv/components/SidePanel/SidePanel';
 import { tokens } from '@ValenceTv/theme/tokens';
 import { describeDrift } from '@ValenceClient/party/describeDrift';
 import { invitationTo } from '@ValenceClient/party/invitationTo';
+import { listeningInvitationTo } from '@ValenceClient/party/listeningInvitationTo';
+import { PARTY_WORDS } from '@ValenceClient/party/PARTY_WORDS';
 import { ROLE_NAMES } from '@ValenceClient/party/ROLE_NAMES';
 import { whoCanBeAsked } from '@ValenceClient/party/whoCanBeAsked';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
-import type { PartyMenuProps } from './PartyMenu.types';
+import type { PartyPanelProps } from './PartyPanel.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 
 const INVITATION_SIZE = 240;
 
 /**
- * The watch party, from the player's settings, as the web's party menu has it: the way to start one
- * around what is playing; and once there is one, who is in it and whether they are watching and in
- * step, whoever the room is waiting for, the invitation as a code a phone can scan, the household to
- * ask along, and — for whoever runs it — who may do what, who is put out, and its password. Where a
- * party asks this television for its password, that is asked here.
+ * A watch party or a listening party, in a panel down the right, as the web's party panels have
+ * them: the way to start one around what is playing; and once there is one, who is in it and
+ * whether they are watching or listening and in step, whoever the room is waiting for, the
+ * invitation as a code a phone can scan, the household to ask along, and — for whoever runs it — who
+ * may do what, who is put out, and its password. Where a party asks this television for its
+ * password, that is asked here. A listening party is not offered to somebody already in a watch
+ * party, since nobody can be in two at once.
  *
+ * @param kind - Which kind of party this is about.
  * @param watchParty - The party this television holds.
- * @param mediaId - What is playing, which a new party gathers around.
+ * @param mediaId - What is playing, which a new party gathers around, or nothing yet.
  * @param people - Everybody with an account here, to be asked along.
  * @param onLeave - Told they have left the party, or gone without its password.
  */
-const PartyMenu = ({ watchParty, mediaId, people, onLeave }: PartyMenuProps) => {
+const PartyPanel = ({ kind, watchParty, mediaId, people, onLeave }: PartyPanelProps) => {
   const [password, setPassword] = useState('');
   const [asked, setAsked] = useState<readonly string[]>([]);
   const [passwordsSet, setPasswordsSet] = useState(0);
@@ -47,8 +52,9 @@ const PartyMenu = ({ watchParty, mediaId, people, onLeave }: PartyMenuProps) => 
     setPasswordsSet((was) => was + 1);
   };
   const { meConnectionId, waitingFor, passwordWanted } = watchParty;
-  const party = watchParty.party?.kind === 'watch' ? watchParty.party : null;
-  const title = say('common.partyMenu.watchParty');
+  const party = watchParty.party?.kind === kind ? watchParty.party : null;
+  const words = PARTY_WORDS[kind];
+  const { title } = words;
 
   if (passwordWanted !== null) {
     const join = () => {
@@ -58,7 +64,7 @@ const PartyMenu = ({ watchParty, mediaId, people, onLeave }: PartyMenuProps) => 
     };
 
     return (
-      <PlayerPanel title={title}>
+      <SidePanel title={title}>
         <Text style={styles.heading}>
           {say('common.partyPasswordDialog.thisWatchPartyHasAPassword')}
         </Text>
@@ -88,23 +94,41 @@ const PartyMenu = ({ watchParty, mediaId, people, onLeave }: PartyMenuProps) => 
             onLeave();
           }}
         />
-      </PlayerPanel>
+      </SidePanel>
+    );
+  }
+
+  if (party === null && kind === 'listen' && watchParty.party !== null) {
+    return (
+      <SidePanel title={title}>
+        <Text style={styles.heading}>{say('common.listeningPartyPanel.youAreInAWatchParty')}</Text>
+        <Text style={styles.note}>
+          {say('common.listeningPartyPanel.leaveItBeforeStartingAParty')}
+        </Text>
+      </SidePanel>
     );
   }
 
   if (party === null) {
     return (
-      <PlayerPanel title={title}>
-        <Text style={styles.note}>{say('common.partyMenu.watchThisWithOtherPeopleHere')}</Text>
+      <SidePanel title={title}>
+        <Text style={styles.note}>
+          {mediaId === null
+            ? say('common.listeningPartyPanel.playSomethingThenStartAParty')
+            : words.intro}
+        </Text>
         <ActionRow
-          label={say('common.partyMenu.startAWatchParty')}
+          label={words.start}
           icon={Users}
           hasPreferredFocus
+          isDisabled={mediaId === null}
           onPress={() => {
-            watchParty.open(mediaId);
+            if (mediaId !== null) {
+              watchParty.open(mediaId, kind);
+            }
           }}
         />
-      </PlayerPanel>
+      </SidePanel>
     );
   }
 
@@ -114,11 +138,15 @@ const PartyMenu = ({ watchParty, mediaId, people, onLeave }: PartyMenuProps) => 
   const isHost = me?.role === 'host';
   const mayAsk = isHost || me?.role === 'coHost';
   const elsewhere = whoCanBeAsked(party, people);
-  const invitation = invitationTo(party.id, party.mediaId, platformInUse().serverAddress() ?? '');
+  const origin = platformInUse().serverAddress() ?? '';
+  const invitation =
+    kind === 'watch'
+      ? invitationTo(party.id, party.mediaId, origin)
+      : listeningInvitationTo(party.id, origin);
 
   return (
-    <PlayerPanel title={title}>
-      <Text style={styles.heading}>{sayCount('common.partyPanel.countWatching', watching)}</Text>
+    <SidePanel title={title}>
+      <Text style={styles.heading}>{sayCount(words.doing, watching)}</Text>
 
       {!party.isHeld || waitingFor.length === 0 ? null : (
         <Text style={styles.warning}>
@@ -135,7 +163,7 @@ const PartyMenu = ({ watchParty, mediaId, people, onLeave }: PartyMenuProps) => 
         const detail = [
           ROLE_NAMES[member.role],
           member.connectionId === party.timekeeperId ? say('common.partyPanel.keepingTime') : null,
-          member.isWatching ? say('common.watching') : say('common.partyPanel.notWatching'),
+          member.isWatching ? words.isDoing : words.notDoing,
           drift,
         ]
           .filter((part) => part !== null)
@@ -178,7 +206,7 @@ const PartyMenu = ({ watchParty, mediaId, people, onLeave }: PartyMenuProps) => 
       })}
 
       <Text style={styles.heading}>{say('common.partyPanel.invite')}</Text>
-      <Text style={styles.note}>{say('common.partyPanel.sendThisToWatchAlong')}</Text>
+      <Text style={styles.note}>{words.invitation}</Text>
       <View style={styles.code}>
         <QrCode value={invitation} size={INVITATION_SIZE} label={say('common.partyPanel.invite')} />
       </View>
@@ -272,11 +300,11 @@ const PartyMenu = ({ watchParty, mediaId, people, onLeave }: PartyMenuProps) => 
           onLeave();
         }}
       />
-    </PlayerPanel>
+    </SidePanel>
   );
 };
 
-PartyMenu.displayName = 'PartyMenu';
+PartyPanel.displayName = 'PartyPanel';
 
 const styles = StyleSheet.create({
   heading: {
@@ -306,4 +334,4 @@ const styles = StyleSheet.create({
   code: { alignItems: 'flex-start', paddingHorizontal: tokens.space.md },
 });
 
-export { PartyMenu };
+export { PartyPanel };
