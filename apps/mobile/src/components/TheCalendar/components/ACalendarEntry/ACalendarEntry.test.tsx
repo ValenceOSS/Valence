@@ -33,7 +33,7 @@ describe('ACalendarEntry', () => {
     const drawn = await render(
       <ACalendarEntry
         entry={aCalendarEntry({
-          title: 'Dune',
+          title: 'A Film',
           episode: null,
           release: 'cinema',
           state: 'wanted',

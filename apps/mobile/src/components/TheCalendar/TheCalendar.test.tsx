@@ -22,15 +22,15 @@ const TODAY = localDayOf();
 const AN_EPISODE = aCalendarEntry({ date: TODAY });
 
 const A_FILM = aCalendarEntry({
-  id: 'movie:438631',
+  id: 'film:100:digital',
   date: TODAY,
-  title: 'Dune',
+  title: 'A Film',
   episode: null,
   release: 'digital',
   artworkMediaId: null,
   state: 'wanted',
   source: 'request',
-  opens: { kind: 'asking', requestKind: 'film', catalogueId: '438631' },
+  opens: { kind: 'asking', requestKind: 'film', catalogueId: '100' },
 });
 
 const drawCalendar = (onOpen: (page: APage) => void = jest.fn()) =>
@@ -54,7 +54,7 @@ describe('TheCalendar', () => {
     const drawn = await drawCalendar();
 
     expect(await drawn.findByText('A Show')).toBeTruthy();
-    expect(drawn.getByText('Dune')).toBeTruthy();
+    expect(drawn.getByText('A Film')).toBeTruthy();
     expect(drawn.getByText(nameTheMonth(TODAY))).toBeTruthy();
     expect(fetchReleaseCalendar).toHaveBeenCalledWith(grid[0], grid[grid.length - 1], 'mine');
   });
@@ -148,7 +148,7 @@ describe('TheCalendar', () => {
       aCalendarEntry({ date: TODAY, opens: { kind: 'item', mediaId: 'dune' } }),
       { kind: 'title', mediaId: 'dune' },
     ],
-    ['a film only asked for', A_FILM, { kind: 'asking', about: 'film', id: '438631' }],
+    ['a film only asked for', A_FILM, { kind: 'asking', about: 'film', id: '100' }],
   ])('opens the page of %s', async (_, entry, page) => {
     jest.mocked(fetchReleaseCalendar).mockResolvedValue([entry]);
     const onOpen = jest.fn();
