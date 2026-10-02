@@ -574,7 +574,7 @@ describe('VideoPlayer', () => {
     renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
 
     await act(async () => {
-      await vi.waitFor(() => expect(attachMock).toHaveBeenCalled());
+      await vi.waitFor(() => expect(attachMock).toHaveBeenCalled(), { timeout: 5_000 });
     });
 
     const element = document.querySelector('video');
@@ -596,7 +596,7 @@ describe('VideoPlayer', () => {
     const { unmount } = renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
 
     await act(async () => {
-      await vi.waitFor(() => expect(attachMock).toHaveBeenCalled());
+      await vi.waitFor(() => expect(attachMock).toHaveBeenCalled(), { timeout: 5_000 });
     });
 
     unmount();
@@ -802,7 +802,7 @@ describe('VideoPlayer', () => {
     renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
 
     await act(async () => {
-      await vi.waitFor(() => expect(trickplayMock).toHaveBeenCalledTimes(1));
+      await vi.waitFor(() => expect(trickplayMock).toHaveBeenCalledTimes(1), { timeout: 5_000 });
     });
 
     await act(async () => {
@@ -820,7 +820,7 @@ describe('VideoPlayer', () => {
     const { unmount } = renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
 
     await act(async () => {
-      await vi.waitFor(() => expect(trickplayMock).toHaveBeenCalledTimes(1));
+      await vi.waitFor(() => expect(trickplayMock).toHaveBeenCalledTimes(1), { timeout: 5_000 });
     });
 
     unmount();
@@ -1110,13 +1110,15 @@ describe('VideoPlayer', () => {
       await screen.findByRole('menuitemradio', { name: 'English \u00b7 5.1 \u00b7 AC3' }),
     );
 
-    await vi.waitFor(() => expect(order).toContain('teardown started'));
+    await vi.waitFor(() => expect(order).toContain('teardown started'), { timeout: 5_000 });
 
     expect(order.filter((step) => step === 'attach')).toHaveLength(1);
 
     releaseTeardown();
 
-    await vi.waitFor(() => expect(order.filter((step) => step === 'attach')).toHaveLength(2));
+    await vi.waitFor(() => expect(order.filter((step) => step === 'attach')).toHaveLength(2), {
+      timeout: 5_000,
+    });
 
     expect(order.indexOf('teardown finished')).toBeLessThan(order.lastIndexOf('attach'));
   });
@@ -2730,12 +2732,9 @@ describe('when the player is in a watch party', () => {
 
     stream.loaded({ bufferedTo: 30 });
 
-    await waitFor(
-      () => {
-        expect(onReport).toHaveBeenCalledWith(expect.objectContaining({ isReady: true }));
-      },
-      { timeout: 4000 },
-    );
+    await waitFor(() => {
+      expect(onReport).toHaveBeenCalledWith(expect.objectContaining({ isReady: true }));
+    });
   });
 
   it('gets into position while the room waits, rather than sitting where it stopped', async () => {

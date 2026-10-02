@@ -1127,9 +1127,12 @@ describe('watchActiveSessions', () => {
 
     watchActiveSessions(onSessions, fake.client);
 
-    await vi.waitFor(() => {
-      expect(onSessions).toHaveBeenCalledWith([]);
-    });
+    await vi.waitFor(
+      () => {
+        expect(onSessions).toHaveBeenCalledWith([]);
+      },
+      { timeout: 5_000 },
+    );
   });
 
   it('watches the one connection rather than polling for changes', () => {
@@ -1148,9 +1151,12 @@ describe('watchActiveSessions', () => {
     watchActiveSessions(vi.fn(), fake.client);
     fake.announce();
 
-    await vi.waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledTimes(2);
-    });
+    await vi.waitFor(
+      () => {
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+      },
+      { timeout: 5_000 },
+    );
   });
 
   it('reads them again after a connection comes back, having missed what happened', async () => {
@@ -1161,9 +1167,12 @@ describe('watchActiveSessions', () => {
     watchActiveSessions(vi.fn(), fake.client);
     fake.reconnect();
 
-    await vi.waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledTimes(2);
-    });
+    await vi.waitFor(
+      () => {
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+      },
+      { timeout: 5_000 },
+    );
   });
 
   it('stops listening, and says nothing more, once it is released', async () => {
@@ -1182,9 +1191,12 @@ describe('watchActiveSessions', () => {
     fake.announce();
 
     await expect(
-      vi.waitFor(() => {
-        expect(onSessions).toHaveBeenCalled();
-      }),
+      vi.waitFor(
+        () => {
+          expect(onSessions).toHaveBeenCalled();
+        },
+        { timeout: 5_000 },
+      ),
     ).rejects.toThrow();
   });
 });

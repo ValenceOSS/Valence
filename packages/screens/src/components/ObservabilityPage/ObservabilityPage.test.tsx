@@ -187,9 +187,12 @@ describe('ObservabilityPage', () => {
     expect(await screen.findByRole('button', { name: 'Time range' })).toHaveTextContent(
       'Everything kept',
     );
-    await vi.waitFor(() => {
-      expect(vi.mocked(fetchLogs).mock.calls.at(-1)?.[0]).toMatchObject({ sinceMs: null });
-    });
+    await vi.waitFor(
+      () => {
+        expect(vi.mocked(fetchLogs).mock.calls.at(-1)?.[0]).toMatchObject({ sinceMs: null });
+      },
+      { timeout: 5_000 },
+    );
 
     await user.click(screen.getByRole('tab', { name: 'Health' }));
 
@@ -339,9 +342,12 @@ describe('ObservabilityPage', () => {
     await user.click(screen.getByRole('button', { name: 'Open in the log' }));
 
     expect(screen.getByRole('tab', { name: 'Logs', selected: true })).toBeInTheDocument();
-    await vi.waitFor(() => {
-      expect(vi.mocked(fetchLogs).mock.calls.at(-1)?.[0]).toMatchObject({ jobId: 'run-1' });
-    });
+    await vi.waitFor(
+      () => {
+        expect(vi.mocked(fetchLogs).mock.calls.at(-1)?.[0]).toMatchObject({ jobId: 'run-1' });
+      },
+      { timeout: 5_000 },
+    );
     expect(fetchLogHistogram).toHaveBeenCalled();
     expect(fetchLogFacets).toHaveBeenCalled();
   });

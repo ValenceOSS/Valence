@@ -1,5 +1,6 @@
 import { screen, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { loadEveryPage } from '@ValenceScreens/testing/loadEveryPage';
 import { renderTheApp } from '@ValenceScreens/testing/renderTheApp';
 import { signedInOnThisPage } from '@ValenceScreens/phone/signedInOnThisPage';
 
@@ -115,6 +116,8 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
 });
+
+beforeAll(loadEveryPage, 60_000);
 
 describe('SignedIn', () => {
   it('asks who is watching when nobody is', async () => {

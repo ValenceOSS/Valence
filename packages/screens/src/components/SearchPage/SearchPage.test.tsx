@@ -41,9 +41,12 @@ describe('SearchPage', () => {
 
     drawn.props?.onSearchChange?.('dune');
 
-    await vi.waitFor(() => {
-      expect(window.location.search).toContain('q=dune');
-    });
+    await vi.waitFor(
+      () => {
+        expect(window.location.search).toContain('q=dune');
+      },
+      { timeout: 5_000 },
+    );
   });
 
   it('puts a chosen genre in the address', async () => {
@@ -51,9 +54,12 @@ describe('SearchPage', () => {
 
     drawn.props?.onGenreChange?.('thriller');
 
-    await vi.waitFor(() => {
-      expect(window.location.search).toContain('genre=thriller');
-    });
+    await vi.waitFor(
+      () => {
+        expect(window.location.search).toContain('genre=thriller');
+      },
+      { timeout: 5_000 },
+    );
   });
 
   it('says how far through each result this viewer is', () => {

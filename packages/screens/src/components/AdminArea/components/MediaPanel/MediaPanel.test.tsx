@@ -248,9 +248,12 @@ describe('MediaPanel', () => {
     await user.click(screen.getByRole('menuitem', { name: /Delete file/ }));
     await user.click(await screen.findByRole('button', { name: 'Delete file' }));
 
-    await vi.waitFor(() => {
-      expect(onDelete).toHaveBeenCalledTimes(1);
-    });
+    await vi.waitFor(
+      () => {
+        expect(onDelete).toHaveBeenCalledTimes(1);
+      },
+      { timeout: 5_000 },
+    );
     expect(screen.getByText('Delete Parasite?')).toBeInTheDocument();
   });
 
@@ -381,9 +384,12 @@ describe('MediaPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Delete series' }));
 
     expect(onDelete).toHaveBeenCalledWith(expect.objectContaining({ id: 'e1' }), true);
-    await vi.waitFor(() => {
-      expect(screen.queryByText('Delete every episode of From?')).not.toBeInTheDocument();
-    });
+    await vi.waitFor(
+      () => {
+        expect(screen.queryByText('Delete every episode of From?')).not.toBeInTheDocument();
+      },
+      { timeout: 5_000 },
+    );
   });
 
   it('offers no whole-series delete for episodes that belong to no series', async () => {

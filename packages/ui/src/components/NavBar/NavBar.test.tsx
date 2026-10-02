@@ -304,7 +304,7 @@ describe('NavBar', () => {
 
     await user.hover(screen.getByRole('button', { name: 'Search' }));
 
-    expect(await screen.findByText('Search', {}, { timeout: 3000 })).toBeInTheDocument();
+    expect(await screen.findByText('Search')).toBeInTheDocument();
   });
 
   it('does a tool where it stands rather than going somewhere', async () => {

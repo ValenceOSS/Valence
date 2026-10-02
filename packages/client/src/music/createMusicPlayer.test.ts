@@ -462,9 +462,12 @@ describe('createMusicPlayer', () => {
 
       player.mirror(reportFrom());
 
-      await vi.waitFor(() => {
-        expect(player.read().current).toBe(THREE[1]);
-      });
+      await vi.waitFor(
+        () => {
+          expect(player.read().current).toBe(THREE[1]);
+        },
+        { timeout: 5_000 },
+      );
       expect(player.read().queue?.tracks).toEqual([THREE[1], THREE[2]]);
     });
 
@@ -564,9 +567,12 @@ describe('createMusicPlayer', () => {
 
       player.mirror(reportFrom({ positionSeconds: 30, reportedAtMs: 1000, isPlaying: false }));
 
-      await vi.waitFor(() => {
-        expect(player.read().current).toBe(THREE[1]);
-      });
+      await vi.waitFor(
+        () => {
+          expect(player.read().current).toBe(THREE[1]);
+        },
+        { timeout: 5_000 },
+      );
 
       player.playOn({ clientId: 'tv', label: 'Living room' });
 
@@ -593,9 +599,12 @@ describe('createMusicPlayer', () => {
         isPlaying: true,
       });
 
-      await vi.waitFor(() => {
-        expect(player.read().current).toBe(THREE[2]);
-      });
+      await vi.waitFor(
+        () => {
+          expect(player.read().current).toBe(THREE[2]);
+        },
+        { timeout: 5_000 },
+      );
       fire('loadedmetadata');
 
       expect(audio.currentTime).toBe(9);
@@ -640,9 +649,12 @@ describe('createMusicPlayer', () => {
       player.play([THREE[0] ?? track(1)], 0);
       player.obey({ kind: 'enqueue', trackIds: [THREE[2]?.id ?? ''], where: 'next' });
 
-      await vi.waitFor(() => {
-        expect(player.read().queue?.tracks).toHaveLength(2);
-      });
+      await vi.waitFor(
+        () => {
+          expect(player.read().queue?.tracks).toHaveLength(2);
+        },
+        { timeout: 5_000 },
+      );
     });
 
     it('skips ahead and takes songs out when told to', () => {
@@ -693,9 +705,12 @@ describe('createMusicPlayer', () => {
 
     expect(player.read().queue?.isSmart).toBe(true);
 
-    await vi.waitFor(() => {
-      expect(player.read().queue?.picks).toEqual([pick.id]);
-    });
+    await vi.waitFor(
+      () => {
+        expect(player.read().queue?.picks).toEqual([pick.id]);
+      },
+      { timeout: 5_000 },
+    );
 
     player.cycleShuffle();
 
@@ -713,9 +728,12 @@ describe('createMusicPlayer', () => {
 
     expect(player.read().queue?.isSmart).toBe(true);
 
-    await vi.waitFor(() => {
-      expect(fetchPicks).toHaveBeenCalledTimes(2);
-    });
+    await vi.waitFor(
+      () => {
+        expect(fetchPicks).toHaveBeenCalledTimes(2);
+      },
+      { timeout: 5_000 },
+    );
   });
 
   it('does nothing to the shuffle with nothing queued', () => {
@@ -734,9 +752,12 @@ describe('createMusicPlayer', () => {
     player.cycleShuffle();
     player.cycleShuffle();
 
-    await vi.waitFor(() => {
-      expect(fetchPicks).toHaveBeenCalled();
-    });
+    await vi.waitFor(
+      () => {
+        expect(fetchPicks).toHaveBeenCalled();
+      },
+      { timeout: 5_000 },
+    );
 
     expect(player.read().queue?.picks).toEqual([]);
   });

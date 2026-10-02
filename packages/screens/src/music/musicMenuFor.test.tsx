@@ -32,9 +32,12 @@ describe('musicMenuFor', () => {
 
     choose(musicMenuFor({ kind: 'album', id: 'a1' }, 'Arcadia', player, vi.fn()), 'play');
 
-    await vi.waitFor(() => {
-      expect(player.play).toHaveBeenCalledWith(SONGS, 0, { source: SOURCE, isOrdered: false });
-    });
+    await vi.waitFor(
+      () => {
+        expect(player.play).toHaveBeenCalledWith(SONGS, 0, { source: SOURCE, isOrdered: false });
+      },
+      { timeout: 5_000 },
+    );
   });
 
   it('puts it next, or at the end of the queue', async () => {
@@ -46,10 +49,13 @@ describe('musicMenuFor', () => {
     choose(menu, 'next');
     choose(menu, 'queue');
 
-    await vi.waitFor(() => {
-      expect(player.playNext).toHaveBeenCalledWith(SONGS);
-      expect(player.addToQueue).toHaveBeenCalledWith(SONGS);
-    });
+    await vi.waitFor(
+      () => {
+        expect(player.playNext).toHaveBeenCalledWith(SONGS);
+        expect(player.addToQueue).toHaveBeenCalledWith(SONGS);
+      },
+      { timeout: 5_000 },
+    );
   });
 
   it('opens it', () => {

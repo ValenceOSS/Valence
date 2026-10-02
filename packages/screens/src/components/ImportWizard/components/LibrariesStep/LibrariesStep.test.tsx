@@ -192,12 +192,9 @@ describe('LibrariesStep', () => {
     );
     expect(screen.getByLabelText('Scanning Shows 1')).toBeInTheDocument();
 
-    await waitFor(
-      () => {
-        expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled();
-      },
-      { timeout: 3000 },
-    );
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled();
+    });
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
     expect(onContinue).toHaveBeenCalledOnce();
