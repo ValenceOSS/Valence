@@ -205,6 +205,13 @@ pub struct Session {
     /// is written in its own playlist, and a number held in memory would be a
     /// second answer to a question the disk already answers.
     running_from: Option<u64>,
+    /// Which run is the live one, by the number it was given as it started.
+    ///
+    /// A session is addressed by what it produces, so one stopped and started
+    /// again has the same id, and its new run can begin at the same segment as
+    /// the old one did. Only a number of its own tells a run that has just
+    /// ended apart from the one that replaced it.
+    run: u64,
     last_touched: Instant,
     /// The highest numbered segment this session has handed out.
     ///
@@ -1025,6 +1032,7 @@ impl SessionRegistry {
             plan,
             cancel: None,
             running_from: None,
+            run: 0,
             last_touched: Instant::now(),
             reached: Arc::new(AtomicU64::new(0)),
             woken: Arc::new(Notify::new()),
@@ -1094,14 +1102,18 @@ impl SessionRegistry {
 
     /// Records that a run has ended, however it ended.
     ///
-    /// Only if it is still the run the session believes in: a restart has
-    /// already replaced it, and the run being replaced must not clear the
-    /// record of the one that replaced it.
-    async fn run_ended(&self, id: &str, from: u64) {
+    /// Only if it is still the run the session holds. A restart, or a stop and
+    /// a start of the same thing, has already replaced it, and the run being
+    /// replaced must not clear the record of the one that replaced it. Matched
+    /// on where the run began, an old run ending late cleared a new one that
+    /// began at the same segment and dropped what stops it, which stopped it:
+    /// the viewer who had just started was left waiting for a playlist that
+    /// would never be written.
+    async fn run_ended(&self, id: &str, run: u64) {
         let mut sessions = self.sessions.lock().await;
 
         if let Some(session) = sessions.get_mut(id) {
-            if session.running_from == Some(from) {
+            if session.run == run {
                 session.running_from = None;
                 session.cancel = None;
             }
@@ -1415,6 +1427,11 @@ impl SegmentView {
     }
 }
 
+/// Numbers every run this process starts, from one, so that a run that has
+/// ended can tell whether it is still the one its session holds. Nought is no
+/// run at all.
+static RUNS: AtomicU64 = AtomicU64::new(1);
+
 /// Starts a run at a segment and records that it is the live one.
 ///
 /// The run's own playlist is removed first. It is how far the transcode has
@@ -1465,18 +1482,20 @@ async fn begin_run_inner(registry: &SessionRegistry, session: &mut Session, want
     let woken = Arc::clone(&session.woken);
     let ending = registry.clone();
     let id = session.id.clone();
+    let run = RUNS.fetch_add(1, Ordering::Relaxed);
 
     session.reached.store(wanted, Ordering::Relaxed);
 
     tokio::spawn(async move {
         supervise(config, supervised, cancel_rx, watched, woken).await;
 
-        ending.run_ended(&id, wanted).await;
+        ending.run_ended(&id, run).await;
     });
 
     session.plan = plan;
     session.cancel = Some(cancel_tx);
     session.running_from = Some(wanted);
+    session.run = run;
 }
 
 /// Runs one ffmpeg attempt to completion, or until cancelled.
@@ -1839,14 +1858,20 @@ mod tests {
     use super::{
         classify_exit, classify_reuse, is_another_viewer, is_segment_ready, release_device,
         releases_a_hold, resolve_segment, resume_from, run_has_closed, run_is_writing,
-        should_retry_in_software, ExitClass, Reuse, RunPosition, SegmentPlan, SessionConfig,
-        SessionRegistry, COMPLETE_MARKER,
+        should_retry_in_software, ExitClass, Reuse, RunPosition, SegmentPlan, Session,
+        SessionConfig, SessionRegistry, COMPLETE_MARKER,
     };
     use crate::boundaries::{Boundaries, LAYOUT, LENGTHS_NAME};
     use crate::transcode_plan::{
         AudioAction, HardwareAccel, SegmentContainer, SessionSpec, SubtitleAction, Track,
         VideoAction,
     };
+    use crate::transcode_plan::{DeviceFilters, SegmentStart, TranscodePlan};
+    use std::collections::HashMap;
+    use std::sync::atomic::AtomicU64;
+    use std::sync::Arc;
+    use std::time::Instant;
+    use tokio::sync::{oneshot, Notify};
 
     fn run(from: u64, head: Option<u64>) -> RunPosition {
         RunPosition { from, head }
@@ -2379,6 +2404,105 @@ mod tests {
     #[test]
     fn does_not_retry_something_that_worked() {
         assert!(!should_retry_in_software(ExitClass::Completed, true));
+    }
+
+    /// A session whose live run is `run`, begun at the first segment, as the
+    /// registry holds one between a start and a stop, with what stops the run.
+    fn a_session_running(run: u64) -> (Session, oneshot::Receiver<()>) {
+        let spec = SessionSpec {
+            input_path: "/media/film.mkv".to_owned(),
+            start_seconds: 0,
+            segment_seconds: 4,
+            hardware_accel: HardwareAccel::None,
+            video: VideoAction::Copy,
+            audio: AudioAction::Copy,
+            audio_stream_index: None,
+            subtitles: SubtitleAction::None,
+            source_size: None,
+            container: SegmentContainer::Fmp4,
+            source_video_codec: None,
+            track: Track::Both,
+            source_range: None,
+            source_range_base: None,
+        };
+        let (cancel, stopped) = oneshot::channel();
+
+        let session = Session {
+            id: "film".to_owned(),
+            directory: std::env::temp_dir().join("valence-run-ended"),
+            spec: spec.clone(),
+            plan: TranscodePlan {
+                spec,
+                output_directory: String::new(),
+                device: String::new(),
+                device_filters: DeviceFilters::default(),
+                start_at: SegmentStart::default(),
+                cut_seconds: 4.0,
+            },
+            cancel: Some(cancel),
+            running_from: Some(0),
+            run,
+            last_touched: Instant::now(),
+            reached: Arc::new(AtomicU64::new(0)),
+            woken: Arc::new(Notify::new()),
+            holders: 1,
+            devices: HashMap::new(),
+            reuse: Reuse::None,
+            groups: Arc::new(Vec::new()),
+            lengths: Arc::new(vec![4.0]),
+            seeks_forward: false,
+            last_wanted: 0,
+            companion: None,
+        };
+
+        (session, stopped)
+    }
+
+    /// The race behind a session that never started: stopped, and started
+    /// again at the same segment before the stopped run had finished ending.
+    /// The stopped run ending late must leave the new one running.
+    #[tokio::test]
+    async fn keeps_the_live_run_when_one_it_replaced_ends_late() {
+        let registry = SessionRegistry::new(SessionConfig::default());
+        let (session, mut stopped) = a_session_running(2);
+
+        registry
+            .sessions
+            .lock()
+            .await
+            .insert("film".to_owned(), session);
+        registry.run_ended("film", 1).await;
+
+        let sessions = registry.sessions.lock().await;
+        let held = sessions.get("film").expect("the session is still held");
+
+        assert_eq!(held.running_from, Some(0));
+        assert!(held.cancel.is_some(), "the live run can still be stopped");
+        assert!(
+            matches!(stopped.try_recv(), Err(oneshot::error::TryRecvError::Empty)),
+            "nothing told the live run to stop"
+        );
+    }
+
+    /// And the live run ending is still recorded, or a session would believe in
+    /// a run that is gone and never start another.
+    #[tokio::test]
+    async fn records_the_live_run_ending() {
+        let registry = SessionRegistry::new(SessionConfig::default());
+        let (session, _stopped) = a_session_running(2);
+
+        registry
+            .sessions
+            .lock()
+            .await
+            .insert("film".to_owned(), session);
+        registry.run_ended("film", 2).await;
+
+        let sessions = registry.sessions.lock().await;
+        let held = sessions.get("film").expect("the session is still held");
+
+        assert_eq!(held.running_from, None);
+        assert!(held.cancel.is_none());
     }
 
     #[tokio::test]
