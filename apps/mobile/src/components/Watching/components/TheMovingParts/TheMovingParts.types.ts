@@ -11,6 +11,7 @@ type TheMovingPartsProps = {
   subtitleOffset: number;
   captionStyle: CaptionStyle;
   areControlsDrawn: boolean;
+  onMoveTo: (seconds: number) => void;
   controls: Omit<TheControlsProps, 'at' | 'runsFor' | 'buffered' | 'onSeek'>;
 };
 

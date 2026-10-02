@@ -30,9 +30,11 @@ const controls = (): TheMovingPartsProps['controls'] => ({
 const Playing = ({
   segments = [],
   areControlsDrawn = false,
+  onMoveTo = jest.fn(),
 }: {
   segments?: MediaSegment[];
   areControlsDrawn?: boolean;
+  onMoveTo?: (seconds: number) => void;
 }) => {
   const player = useVideoPlayer({ uri: '/film' });
 
@@ -44,6 +46,7 @@ const Playing = ({
       subtitleOffset={0}
       captionStyle={DEFAULT_CAPTION_STYLE}
       areControlsDrawn={areControlsDrawn}
+      onMoveTo={onMoveTo}
       controls={controls()}
     />
   );
@@ -71,14 +74,15 @@ describe('TheMovingParts', () => {
     expect(drawn.getByLabelText('Skip Intro')).toBeTruthy();
   });
 
-  it('skips to the end of the stretch from wherever the film has got to', async () => {
+  it('moves the film to the end of the stretch', async () => {
     theFakePlayer.currentTime = 405;
+    const onMoveTo = jest.fn();
 
-    const drawn = await render(<Playing segments={[AN_INTRO]} />);
+    const drawn = await render(<Playing segments={[AN_INTRO]} onMoveTo={onMoveTo} />);
 
     await userEvent.press(drawn.getByLabelText('Skip Intro'));
 
-    expect(theFakePlayer.currentTime).toBe(500);
+    expect(onMoveTo).toHaveBeenCalledWith(500);
   });
 
   it('draws the controls only when asked to', async () => {

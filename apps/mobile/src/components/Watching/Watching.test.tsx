@@ -19,6 +19,8 @@ import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { aFakeHeldFiles } from '@ValenceClient/testing/aFakeHeldFiles';
 import { rememberWatchedOffline, watchedOffline } from '@ValenceClient/offline/watchedOffline';
+import { aWatchParty } from '@ValenceClient/testing/aWatchParty';
+import { aWatchPartyStateWith } from '@ValenceClient/testing/aWatchPartyStateWith';
 import { Watching } from './Watching';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { StartedSession, StartOutcome } from '@ValenceClient/playback/startPlaybackSession';
@@ -537,6 +539,69 @@ describe('Watching', () => {
     await userEvent.press(drawn.getByLabelText('Forward 10 seconds'));
 
     expect(theFakePlayer.currentTime).toBe(110);
+  });
+
+  it('asks the room to pause rather than pausing, while it is part of a watch party', async () => {
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    theFakePlayer.currentTime = 100;
+    const watchParty = aWatchPartyStateWith(jest.fn, { party: aWatchParty() });
+
+    const drawn = await render(
+      around(<Watching mediaId="a-film" onDone={jest.fn()} watchParty={watchParty} />),
+    );
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Forward 10 seconds')).toBeTruthy();
+    });
+
+    await userEvent.press(drawn.getByLabelText('Forward 10 seconds'));
+
+    expect(watchParty.send).toHaveBeenCalledWith({ kind: 'seek', atSeconds: 110 });
+    expect(theFakePlayer.currentTime).toBe(100);
+
+    await userEvent.press(drawn.getByLabelText(/^(Play|Pause)$/u));
+
+    expect(watchParty.send).toHaveBeenCalledWith({ kind: 'pause', atSeconds: 100 });
+  });
+
+  it('opens the watch party from the controls, to start one around what is playing', async () => {
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    const watchParty = aWatchPartyStateWith(jest.fn);
+    const drawn = await render(
+      around(<Watching mediaId="a-film" onDone={jest.fn()} watchParty={watchParty} />),
+    );
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Watch party')).toBeTruthy();
+    });
+
+    await userEvent.press(drawn.getByLabelText('Watch party'));
+    await userEvent.press(drawn.getByLabelText('Start a watch party'));
+
+    expect(watchParty.open).toHaveBeenCalledWith('a-film');
+  });
+
+  it('offers no watch party for a copy kept on the phone', async () => {
+    aPhoneKeeping();
+
+    const drawn = await render(
+      around(
+        <Watching
+          mediaId={KEPT.mediaId}
+          kept={KEPT}
+          onDone={jest.fn()}
+          watchParty={aWatchPartyStateWith(jest.fn)}
+        />,
+      ),
+    );
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Forward 10 seconds')).toBeTruthy();
+    });
+
+    expect(drawn.queryByLabelText('Watch party')).toBeNull();
   });
 
   it('gets out of the way while a film is playing', async () => {

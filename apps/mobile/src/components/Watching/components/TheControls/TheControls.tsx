@@ -5,6 +5,7 @@ import {
   RotateCcw,
   RotateCw,
   Settings,
+  Users,
   X,
 } from '@keyline-icons/react-native/fill';
 import { useState } from 'react';
@@ -129,6 +130,7 @@ const styles = StyleSheet.create({
  * @param onClose - Told they are done watching.
  * @param onSettings - Told they want the rest of it.
  * @param onEpisodes - Told they want another episode, where this is one.
+ * @param onParty - Told they want the watch party, where one can be had.
  */
 const TheControls = ({
   fade,
@@ -146,6 +148,7 @@ const TheControls = ({
   onClose,
   onSettings,
   onEpisodes,
+  onParty,
 }: TheControlsProps) => {
   const room = useSafeAreaInsets();
   const [scrubbingTo, setScrubbingTo] = useState<number | null>(null);
@@ -188,6 +191,12 @@ const TheControls = ({
         {onEpisodes === undefined ? null : (
           <Button tone="bare" label={say('common.episodes')} onPress={onEpisodes}>
             <Icon of={ListVideo} size={26} colour={OVER_THE_PICTURE} />
+          </Button>
+        )}
+
+        {onParty === undefined ? null : (
+          <Button tone="bare" label={say('common.partyMenu.watchParty')} onPress={onParty}>
+            <Icon of={Users} size={26} colour={OVER_THE_PICTURE} />
           </Button>
         )}
 

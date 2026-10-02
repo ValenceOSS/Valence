@@ -52,6 +52,11 @@ import { useCaptionStyle } from '@ValenceClient/playback/useCaptionStyle';
 import { howBigToDrawIt } from '@ValenceMobile/components/Watching/howBigToDrawIt';
 import { usePinchToFill } from '@ValenceMobile/components/Watching/usePinchToFill';
 import { theChoicesOn } from '@ValenceMobile/components/Watching/theChoicesOn';
+import { TheParty } from '@ValenceMobile/components/Watching/components/TheParty/TheParty';
+import { roomPlayerOfExpo } from '@ValenceNative/party/roomPlayerOfExpo';
+import { useFollowTheRoom } from '@ValenceClient/party/useFollowTheRoom';
+import { usePartyPlayback } from '@ValenceClient/party/usePartyPlayback';
+import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import type { WatchingProps } from './Watching.types';
 import type { VideoSource, VideoView as VideoViewRef } from 'expo-video';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
@@ -78,6 +83,13 @@ const HOW_OFTEN_IT_SAYS_WHERE_IT_IS = 0.25;
 const NO_SEASONS: NonNullable<WatchingProps['seasons']> = [];
 
 const NO_SEGMENTS: MediaSegment[] = [];
+
+const SAID_FOR = 4000;
+
+/**
+ * Nothing, for a player that cannot refuse to start the way a browser can.
+ */
+const NEVER_REFUSES = () => undefined;
 
 const styles = StyleSheet.create({
   picture: { backgroundColor: '#000000', flex: 1 },
@@ -173,6 +185,10 @@ const styles = StyleSheet.create({
  * @param kept - A copy this phone keeps, played straight from the file with nothing asked of the
  * server: named from what was kept, scrubbed with the thumbnails kept beside it, resumed from where
  * it was left on this phone, and remembered there until the server can be told.
+ * @param watchParty - The watch party this phone holds. Where it is watching this, the film is kept
+ * in step with the room — playing, pausing and moving go to the room rather than straight to the
+ * player, and what the others did is said over the picture — and the party is opened from the
+ * controls, to start one, see who is in it or leave. A copy kept on the phone is never in one.
  */
 const Watching = ({
   mediaId,
@@ -182,6 +198,7 @@ const Watching = ({
   seasons = NO_SEASONS,
   onChooseEpisode,
   kept,
+  watchParty,
 }: WatchingProps) => {
   const colours = useTheColours();
   const [source, setSource] = useState<VideoSource | null>(null);
@@ -200,6 +217,8 @@ const Watching = ({
   const [lastTouched, setLastTouched] = useState(0);
   const [isChoosing, setIsChoosing] = useState(false);
   const [isPickingAnEpisode, setIsPickingAnEpisode] = useState(false);
+  const [isPartying, setIsPartying] = useState(false);
+  const [heard, setHeard] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const isKept = kept !== undefined;
   const frames = useQuery({
@@ -349,13 +368,64 @@ const Watching = ({
     ready.staysActiveInBackground = true;
   });
 
+  const status = useEvent(player, 'statusChange', { status: player.status });
+  const partyPlayback = usePartyPlayback(watchParty);
+  const party = isKept || partyPlayback === null ? undefined : partyPlayback;
+  const playerOf = useCallback(() => roomPlayerOfExpo(player), [player]);
+  const inStep = useFollowTheRoom({
+    party,
+    playerOf,
+    isSessionPlaying: source !== null && status.status === 'readyToPlay',
+    onSaid: setHeard,
+    onCannotStart: NEVER_REFUSES,
+  });
+  const people = useQuery({
+    ...sessionQueries.everyone(),
+    enabled: (watchParty?.party ?? null) !== null,
+  });
+  const household = useMemo(
+    () => (people.data ?? []).map((person) => ({ id: person.id, name: person.name })),
+    [people.data],
+  );
+
   useEventListener(player, 'sourceLoad', () => {
+    inStep.rememberWhere(seekTo);
+
     if (seekTo > 0) {
       player.seekBy(seekTo - player.currentTime);
     }
 
-    player.play();
+    if (party === undefined) {
+      player.play();
+    }
   });
+
+  useEffect(() => {
+    if (heard === null) {
+      return;
+    }
+
+    const gone = setTimeout(() => {
+      setHeard(null);
+    }, SAID_FOR);
+
+    return () => {
+      clearTimeout(gone);
+    };
+  }, [heard]);
+
+  const moveTo = useCallback(
+    (seconds: number) => {
+      if (party !== undefined) {
+        party.onCommand({ kind: 'seek', atSeconds: Math.max(0, seconds) });
+
+        return;
+      }
+
+      player.seekBy(seconds - player.currentTime);
+    },
+    [party, player],
+  );
 
   const moving = useEvent(player, 'playingChange', { isPlaying: player.playing });
   const loaded = useEvent(player, 'sourceLoad');
@@ -379,9 +449,9 @@ const Watching = ({
 
   const leapBy = useCallback(
     (by: number) => {
-      player.seekBy(by);
+      moveTo(player.currentTime + by);
     },
-    [player],
+    [moveTo, player],
   );
 
   const { tapped, leap } = useTapsOnThePicture(screen.width, toggleTheControls, leapBy);
@@ -470,7 +540,7 @@ const Watching = ({
   }, [areControlsUp, fade]);
 
   useEffect(() => {
-    if (!areControlsUp || !moving.isPlaying || isChoosing) {
+    if (!areControlsUp || !moving.isPlaying || isChoosing || isPartying) {
       return;
     }
 
@@ -481,7 +551,7 @@ const Watching = ({
     return () => {
       clearTimeout(going);
     };
-  }, [areControlsUp, moving.isPlaying, isChoosing, lastTouched]);
+  }, [areControlsUp, moving.isPlaying, isChoosing, isPartying, lastTouched]);
 
   useEffect(() => {
     if (sessionId === null && !isKept) {
@@ -692,6 +762,16 @@ const Watching = ({
         />
       )}
 
+      {notice !== null || (heard ?? watchParty?.notice ?? null) === null ? null : (
+        <TheNotice
+          says={heard ?? watchParty?.notice ?? ''}
+          onDismiss={() => {
+            setHeard(null);
+            watchParty?.forgetNotice();
+          }}
+        />
+      )}
+
       <TheMovingParts
         player={player}
         segments={marked.data ?? NO_SEGMENTS}
@@ -699,6 +779,10 @@ const Watching = ({
         subtitleOffset={subtitleOffset}
         captionStyle={captions.style}
         areControlsDrawn={areControlsDrawn}
+        onMoveTo={(seconds) => {
+          keepThemUp();
+          moveTo(seconds);
+        }}
         controls={{
           fade,
           title: called?.name ?? '',
@@ -708,6 +792,15 @@ const Watching = ({
           onPlayPause: () => {
             keepThemUp();
 
+            if (party !== undefined) {
+              party.onCommand({
+                kind: party.isPlaying ? 'pause' : 'play',
+                atSeconds: player.currentTime,
+              });
+
+              return;
+            }
+
             if (moving.isPlaying) {
               player.pause();
             } else {
@@ -716,7 +809,7 @@ const Watching = ({
           },
           onSkip: (by) => {
             keepThemUp();
-            player.seekBy(by);
+            moveTo(player.currentTime + by);
           },
           onTouched: keepThemUp,
           onClose: onDone,
@@ -729,6 +822,12 @@ const Watching = ({
               : () => {
                   setIsPickingAnEpisode(true);
                 },
+          onParty:
+            isKept || watchParty === undefined
+              ? undefined
+              : () => {
+                  setIsPartying(true);
+                },
         }}
       />
 
@@ -739,6 +838,22 @@ const Watching = ({
       ) : null}
 
       {isChoosing ? <TheChoices sets={settings} onClose={stopChoosing} /> : null}
+
+      {watchParty !== undefined && !isKept && (isPartying || watchParty.passwordWanted !== null) ? (
+        <TheParty
+          watchParty={watchParty}
+          mediaId={mediaId}
+          people={household}
+          onClose={() => {
+            if (watchParty.passwordWanted !== null) {
+              watchParty.stopAsking();
+            }
+
+            setIsPartying(false);
+            keepThemUp();
+          }}
+        />
+      ) : null}
     </View>
   );
 };

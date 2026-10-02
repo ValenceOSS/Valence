@@ -33,12 +33,43 @@ describe('TheNotifications', () => {
       unread: 1,
     });
     const onOpen = jest.fn();
-    const drawn = await render(<TheNotifications onOpen={onOpen} onBack={jest.fn()} />, {
-      wrapper: CacheScope,
-    });
+    const drawn = await render(
+      <TheNotifications onOpen={onOpen} onJoin={jest.fn()} onBack={jest.fn()} />,
+      {
+        wrapper: CacheScope,
+      },
+    );
 
     await userEvent.press(await drawn.findByRole('button', { name: 'Dune is here' }));
 
     expect(onOpen).toHaveBeenCalledWith({ kind: 'book', bookId: 'dune' });
+  });
+
+  it('joins the watch party an invitation asks them into', async () => {
+    jest.mocked(fetchNotifications).mockResolvedValue({
+      notifications: [
+        {
+          id: '00000000-0000-4000-8000-0000000000d2',
+          event: 'party.invited',
+          title: sayVerbatim('Jo asked you to watch Dune'),
+          body: sayVerbatim('Join them.'),
+          link: '/watch/dune?party=p-1',
+          createdAt: '2026-09-23T10:00:00.000Z',
+          readAt: null,
+        },
+      ],
+      unread: 1,
+    });
+    const onOpen = jest.fn();
+    const onJoin = jest.fn();
+    const drawn = await render(
+      <TheNotifications onOpen={onOpen} onJoin={onJoin} onBack={jest.fn()} />,
+      { wrapper: CacheScope },
+    );
+
+    await userEvent.press(await drawn.findByRole('button', { name: 'Jo asked you to watch Dune' }));
+
+    expect(onJoin).toHaveBeenCalledWith({ kind: 'watch', partyId: 'p-1', mediaId: 'dune' });
+    expect(onOpen).not.toHaveBeenCalled();
   });
 });

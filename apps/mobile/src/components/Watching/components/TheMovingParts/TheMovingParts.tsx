@@ -17,6 +17,7 @@ import type { TheMovingPartsProps } from './TheMovingParts.types';
  * @param subtitleOffset - How far the lines are moved against the film.
  * @param captionStyle - How this phone draws the lines.
  * @param areControlsDrawn - Whether the controls are drawn.
+ * @param onMoveTo - Told to move the film to a moment, by skipping a marked stretch or scrubbing.
  * @param controls - What the controls are told, apart from where the film is.
  */
 const TheMovingParts = ({
@@ -26,6 +27,7 @@ const TheMovingParts = ({
   subtitleOffset,
   captionStyle,
   areControlsDrawn,
+  onMoveTo,
   controls,
 }: TheMovingPartsProps) => {
   const ticking = useEvent(player, 'timeUpdate', {
@@ -42,7 +44,7 @@ const TheMovingParts = ({
         <TheSkip
           says={describeSkip(skippable)}
           onSkip={() => {
-            player.seekBy(skippable.endSeconds - ticking.currentTime);
+            onMoveTo(skippable.endSeconds);
           }}
         />
       )}
@@ -62,7 +64,7 @@ const TheMovingParts = ({
           buffered={ticking.bufferedPosition}
           onSeek={(to) => {
             controls.onTouched();
-            player.seekBy(to - ticking.currentTime);
+            onMoveTo(to);
           }}
         />
       ) : null}
