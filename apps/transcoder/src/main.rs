@@ -269,7 +269,7 @@ async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
         Ok(None) => {}
         Err(reason) => {
             eprintln!("{reason}");
-            return;
+            std::process::exit(1);
         }
     }
 

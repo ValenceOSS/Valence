@@ -94,8 +94,12 @@ jobs:
         with:
           ref: ${{ inputs.tag || github.ref_name }}
 
-      - uses: dtolnay/rust-toolchain@stable
+      # By commit rather than by the branch name, here and below: this workflow holds a token that
+      # can write releases and packages, and a branch can be moved under it. Pinned that way, the
+      # action has to be told which toolchain it was named for.
+      - uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
         with:
+          toolchain: stable
           components: clippy, rustfmt
 
       - uses: Swatinem/rust-cache@v2
@@ -266,8 +270,9 @@ jobs:
         with:
           ref: ${{ inputs.tag || github.ref_name }}
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
         with:
+          toolchain: stable
           targets: aarch64-apple-darwin, x86_64-apple-darwin
 
       - name: Build both architectures
