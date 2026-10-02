@@ -13,6 +13,9 @@ patchedDependencies:
   '@react-native-cookies/cookies':
     hash: ec064f4a202698a202758abc5b5d8deafb70ffb31585c78608d257295d731b9a
     path: patches/@react-native-cookies__cookies.patch
+  electron-vite@5.0.0:
+    hash: 60e136d369686e9fbedf28afd014aeee35f6fbf0f78f7d0c277bfb63d93ecb7c
+    path: patches/electron-vite@5.0.0.patch
 
 importers:
   .:
@@ -146,7 +149,7 @@ importers:
         version: 26.15.3(electron-builder-squirrel-windows@26.15.3)
       electron-vite:
         specifier: ^5.0.0
-        version: 5.0.0(vite@8.3.0(@types/node@24.13.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1))
+        version: 5.0.0(patch_hash=60e136d369686e9fbedf28afd014aeee35f6fbf0f78f7d0c277bfb63d93ecb7c)(vite@8.3.0(@types/node@24.13.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1))
       jsdom:
         specifier: ^30.0.0
         version: 30.0.1(@noble/hashes@2.4.0)
@@ -1232,6 +1235,9 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^4.1.11
         version: 4.1.11(vitest@4.1.11)
+      electron-vite:
+        specifier: ^5.0.0
+        version: 5.0.0(patch_hash=60e136d369686e9fbedf28afd014aeee35f6fbf0f78f7d0c277bfb63d93ecb7c)(vite@8.3.0(@types/node@24.13.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1))
       sharp:
         specifier: ^0.35.4
         version: 0.35.4(@types/node@24.13.4)
@@ -24948,7 +24954,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  electron-vite@5.0.0(vite@8.3.0(@types/node@24.13.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1)):
+  electron-vite@5.0.0(patch_hash=60e136d369686e9fbedf28afd014aeee35f6fbf0f78f7d0c277bfb63d93ecb7c)(vite@8.3.0(@types/node@24.13.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1)):
     dependencies:
       '@babel/core': 7.29.7
       '@babel/plugin-transform-arrow-functions': 7.29.7(@babel/core@7.29.7)
