@@ -30,7 +30,7 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ShowDetail } from '@ValenceContracts/schemas/Show';
 import type { ShowPageProps } from './ShowPage.types';
-import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
+import { placeOfEpisode } from '@ValenceTv/library/placeOfEpisode';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 
@@ -44,18 +44,6 @@ const STARRING = 4;
  */
 const seasonKey = (seasonNumber: number | null): string =>
   seasonNumber === null ? 'other' : seasonNumber.toString();
-
-/**
- * An episode's place in its programme, as the television's apps write it: "S1: E3".
- *
- * @param episode - The episode.
- * @returns Its season and number.
- */
-const placeOf = (episode: MediaSummary): string =>
-  say('tv.showPage.sValueEValue2', {
-    value: (episode.seasonNumber ?? 1).toString(),
-    value2: describeEpisodeNumbers(episode.episodeNumber ?? 1, episode.episodeNumberEnd),
-  });
 
 /**
  * What the catalogue says happens in an episode, where it says anything.
@@ -173,7 +161,9 @@ const ShowPage = ({ libraryId, showId, viewerId, onPlay }: ShowPageProps) => {
       ])}
       badges={cover.data === undefined || cover.data === null ? [] : qualityBadges(cover.data)}
       tagline={
-        carryingOn === null ? null : `${placeOf(carryingOn.episode)} · ${carryingOn.episode.title}`
+        carryingOn === null
+          ? null
+          : `${placeOfEpisode(carryingOn.episode)} · ${carryingOn.episode.title}`
       }
       overview={
         show.overview ?? (carryingOn === null ? null : overviewOf(show, carryingOn.episode))
@@ -231,10 +221,10 @@ const ShowPage = ({ libraryId, showId, viewerId, onPlay }: ShowPageProps) => {
           label={
             carryingOn.isResuming
               ? say('tv.showPage.resumeEpisodeFromStartSeconds', {
-                  episode: placeOf(carryingOn.episode),
+                  episode: placeOfEpisode(carryingOn.episode),
                   startSeconds: formatDuration(carryingOn.startSeconds),
                 })
-              : say('tv.showPage.playEpisode', { episode: placeOf(carryingOn.episode) })
+              : say('tv.showPage.playEpisode', { episode: placeOfEpisode(carryingOn.episode) })
           }
           icon={Play}
           hasPreferredFocus

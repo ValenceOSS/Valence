@@ -26395,6 +26395,11 @@
     "context": "Shown in the phone sign in of the television app."
   },
   {
+    "handler": "tv.placeOfEpisode.sValueEValue2",
+    "text": "S{value}: E{value2}",
+    "context": "An episode’s place in its programme on the television, on its programme’s page and in the player. {value} is the season; {value2} is the episode’s number."
+  },
+  {
     "handler": "tv.platform.installTvPlatform.aTelevisionIsSignedInFrom",
     "text": "A television is signed in from a phone.",
     "context": "Shown in the platform of the television app (from `installTvPlatform`)."
@@ -26628,11 +26633,6 @@
     "handler": "tv.showPage.resumeEpisodeFromStartSeconds",
     "text": "Resume {episode} from {startSeconds}",
     "context": "Shown in the show page of the television app. {episode} is filled in by the app; {startSeconds} is filled in by the app."
-  },
-  {
-    "handler": "tv.showPage.sValueEValue2",
-    "text": "S{value}: E{value2}",
-    "context": "Shown in the show page of the television app. {value} is filled in by the app; {value2} is filled in by the app."
   },
   {
     "handler": "tv.showPage.thisProgrammeCouldNotBeFound",

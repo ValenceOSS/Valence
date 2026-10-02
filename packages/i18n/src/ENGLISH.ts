@@ -6652,6 +6652,7 @@ const ENGLISH = {
   'tv.phoneSignIn.thatCodeRanOutHereIs': 'That code ran out. Here is a new one.',
   'tv.phoneSignIn.thatPhoneSaidNo': 'That phone said no.',
   'tv.phoneSignIn.thisValenceWouldNotStartA': 'This Valence would not start a sign-in.',
+  'tv.placeOfEpisode.sValueEValue2': 'S{value}: E{value2}',
   'tv.platform.installTvPlatform.aTelevisionIsSignedInFrom':
     'A television is signed in from a phone.',
   'tv.player.playerControls.nextEpisode': 'Next episode',
@@ -6703,7 +6704,6 @@ const ENGLISH = {
   'tv.showPage.playEpisode': 'Play {episode}',
   'tv.showPage.playFromTheFirstEpisode': 'Play from the first episode',
   'tv.showPage.resumeEpisodeFromStartSeconds': 'Resume {episode} from {startSeconds}',
-  'tv.showPage.sValueEValue2': 'S{value}: E{value2}',
   'tv.showPage.thisProgrammeCouldNotBeFound': 'This programme could not be found.',
   'tv.topBar.nameSProfile': "{name}'s profile",
   'tv.trackRow.e': 'E · ',

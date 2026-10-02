@@ -619,6 +619,35 @@ describe('Player', () => {
       expect(onLeave).toHaveBeenCalledTimes(1);
     });
 
+    it('lists the programme’s episodes in the settings, playing the one chosen', async () => {
+      const { drawn, onNext } = await draw({ show: SHOW });
+
+      await userEvent.press(drawn.getByRole('button', { name: 'Settings' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Episodes, S1: E2' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'S1: E3, In Perpetuity' }));
+
+      expect(onNext).toHaveBeenCalledWith(NEXT_EPISODE, 0);
+    });
+
+    it('closes the episodes without playing anything on choosing the one playing', async () => {
+      const { drawn, onNext } = await draw({ show: SHOW });
+
+      await userEvent.press(drawn.getByRole('button', { name: 'Settings' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Episodes, S1: E2' }));
+      await userEvent.press(drawn.getByRole('button', { name: /^S1: E2/ }));
+
+      expect(onNext).not.toHaveBeenCalled();
+      expect(drawn.queryByRole('button', { name: 'S1: E3, In Perpetuity' })).toBeNull();
+    });
+
+    it('offers no episodes for a film', async () => {
+      const { drawn } = await draw({ detail: FILM });
+
+      await userEvent.press(drawn.getByRole('button', { name: 'Settings' }));
+
+      expect(drawn.queryByRole('button', { name: /^Episodes/ })).toBeNull();
+    });
+
     it('closes the settings, and steps back to them from a choice', async () => {
       const { drawn } = await draw();
 

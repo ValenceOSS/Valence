@@ -50,6 +50,7 @@ import type { QualityPreference } from '@ValenceClient/playback/qualityPreferenc
 import type { StreamReading } from '@ValenceTv/screens/Player/components/StreamStats/StreamStats.types';
 import type { PlayerProps } from './Player.types';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
+import { placeOfEpisode } from '@ValenceTv/library/placeOfEpisode';
 import { say } from '@ValenceI18n/say';
 
 const HIDES_AFTER_MS = 5000;
@@ -174,15 +175,17 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
     enabled: showId !== null && detail.data !== undefined && detail.data !== null,
   });
 
-  const following = useMemo(
+  const episodes = useMemo(
     () =>
-      summary === null || show.data === undefined || show.data === null
-        ? null
-        : nextEpisode(
-            show.data.seasons.flatMap((season) => season.episodes),
-            summary,
-          ),
-    [summary, show.data],
+      show.data === undefined || show.data === null
+        ? []
+        : show.data.seasons.flatMap((season) => season.episodes),
+    [show.data],
+  );
+
+  const following = useMemo(
+    () => (summary === null || episodes.length === 0 ? null : nextEpisode(episodes, summary)),
+    [summary, episodes],
   );
 
   const decided = decideWhatFollows({
@@ -194,9 +197,9 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
   const [audio, setAudio] = useState<number | undefined>(undefined);
   const [startFrom, setStartFrom] = useState(startSeconds);
   const [chosenSubtitles, setChosenSubtitles] = useState<string | null>(null);
-  const [menu, setMenu] = useState<'settings' | 'subtitles' | 'audio' | 'quality' | 'speed' | null>(
-    null,
-  );
+  const [menu, setMenu] = useState<
+    'settings' | 'subtitles' | 'audio' | 'quality' | 'speed' | 'episodes' | null
+  >(null);
   const [speed, setSpeed] = useState(1);
   const [isShowingStats, setIsShowingStats] = useState(false);
   const [reading, setReading] = useState<StreamReading>(NOTHING_READ);
@@ -730,6 +733,15 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
               value: textTracks.find((track) => track.id === subtitles)?.label ?? say('common.off'),
             },
             { id: 'speed', label: say('common.speed'), value: speedLabelOf(speed) },
+            ...(episodes.length < 2 || summary === null
+              ? []
+              : [
+                  {
+                    id: 'episodes',
+                    label: say('common.episodes'),
+                    value: placeOfEpisode(summary),
+                  },
+                ]),
             {
               id: 'stats',
               label: say('common.statsForNerds'),
@@ -744,9 +756,38 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
               return;
             }
 
-            if (id === 'quality' || id === 'audio' || id === 'subtitles' || id === 'speed') {
+            if (
+              id === 'quality' ||
+              id === 'audio' ||
+              id === 'subtitles' ||
+              id === 'speed' ||
+              id === 'episodes'
+            ) {
               setMenu(id);
             }
+          }}
+        />
+      ) : null}
+
+      {menu === 'episodes' ? (
+        <TrackMenu
+          title={say('common.episodes')}
+          chosen={mediaId}
+          choices={episodes.map((episode) => ({
+            id: episode.id,
+            label: placeOfEpisode(episode),
+            detail: episode.title,
+          }))}
+          onChoose={(id) => {
+            const chosen = episodes.find((episode) => episode.id === id);
+
+            if (chosen === undefined || chosen.id === mediaId) {
+              closeMenu();
+
+              return;
+            }
+
+            onNext(chosen, 0);
           }}
         />
       ) : null}
