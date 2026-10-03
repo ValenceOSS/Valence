@@ -1,5 +1,64 @@
 # Changelog
 
+## [1.3.0](https://github.com/ValenceOSS/Valence/compare/v1.2.0...v1.3.0) (2026-10-03)
+
+
+### Added
+
+* **desktop,web:** downloads keep their scrubbing thumbnails, and play in the phone's own player ([#470](https://github.com/ValenceOSS/Valence/issues/470)) ([531c597](https://github.com/ValenceOSS/Valence/commit/531c59743cd2ca0cc96d754fc513bf3b39ab1466))
+* **desktop:** use a passkey through windows hello, or in your own browser on macos and linux ([c20647d](https://github.com/ValenceOSS/Valence/commit/c20647d194047cfd26171d60c1a68a30ff61067e))
+* **i18n:** every client reads its words from the strings file ([#479](https://github.com/ValenceOSS/Valence/issues/479)) ([fb1e243](https://github.com/ValenceOSS/Valence/commit/fb1e243aa6e7ba78b082a3ef4e3b65263452fe95))
+* **i18n:** servers send every message's code beside its english ([#478](https://github.com/ValenceOSS/Valence/issues/478)) ([ad77373](https://github.com/ValenceOSS/Valence/commit/ad77373ea89c553dee2349eee2d9933bffa26043))
+* **landing,ui,server:** a ui library page, a refreshed landing, and choosing a title's artwork ([#477](https://github.com/ValenceOSS/Valence/issues/477)) ([863686a](https://github.com/ValenceOSS/Valence/commit/863686aa3e0b0d722e929b622b0f2a8a51b0176a))
+* **mobile:** play music from carplay ([#459](https://github.com/ValenceOSS/Valence/issues/459)) ([14f102a](https://github.com/ValenceOSS/Valence/commit/14f102aeb4311269f87b3ca9cf95a93b888f836e))
+* **plugin-sdk,server,web,tv:** plugins that run sandboxed, from a signed catalogue (val-297) ([#462](https://github.com/ValenceOSS/Valence/issues/462)) ([a2d5be9](https://github.com/ValenceOSS/Valence/commit/a2d5be9279d750007e1117152d26a3d365a98633))
+* **plugin-sdk,server:** plugins can look up what an event was about, and refresh a playlist ([#481](https://github.com/ValenceOSS/Valence/issues/481)) ([b5490fc](https://github.com/ValenceOSS/Valence/commit/b5490fca03d8b18339da0bf15fe23db7303aae8b))
+* **repo,tv:** the phone and the television catch up with the web ([#495](https://github.com/ValenceOSS/Valence/issues/495)) ([c94c568](https://github.com/ValenceOSS/Valence/commit/c94c5680bd77acd7e49cc8105d68e6e7a664f4a9))
+* **requests,server,web,docs:** hand requests to radarr, sonarr and lidarr, and take seerr's ([#485](https://github.com/ValenceOSS/Valence/issues/485)) ([06af868](https://github.com/ValenceOSS/Valence/commit/06af868c1126d39e3ad2bc48053275cd0438e24e))
+* **requests:** choose when a download is given up on, and clear finished torrents out of the client ([#475](https://github.com/ValenceOSS/Valence/issues/475)) ([fc6a229](https://github.com/ValenceOSS/Valence/commit/fc6a229eb159e994bf5ef9e4ff93269b0b431f3d))
+* **server,core,contracts,web:** pre-transcode media ahead of time, kept beside the original ([#483](https://github.com/ValenceOSS/Valence/issues/483)) ([ed2b956](https://github.com/ValenceOSS/Valence/commit/ed2b956bf6b77bb6af0b57cad34f03e1c400a7a5))
+* **server,requests,web,docs:** import from jellyfin, emby or plex, with setup links and email ([#491](https://github.com/ValenceOSS/Valence/issues/491)) ([cf5df0e](https://github.com/ValenceOSS/Valence/commit/cf5df0e0ebcfcf0412e3926f3c87c768e4a6852a))
+* **server,web,repo:** add the release calendar to any calendar app, by a private link ([#502](https://github.com/ValenceOSS/Valence/issues/502)) ([41f4f61](https://github.com/ValenceOSS/Valence/commit/41f4f61d96292fa93f2a828049f8eadb62a1fe5d))
+* **server,web,repo:** link valence servers, share libraries and watch, read and request across them ([#498](https://github.com/ValenceOSS/Valence/issues/498)) ([7cd70f7](https://github.com/ValenceOSS/Valence/commit/7cd70f777e718fc7f969bc4c703a2a44bbabefbc))
+* **server,web,tv,repo:** a release calendar of what comes out when, on web, phone and tv ([#501](https://github.com/ValenceOSS/Valence/issues/501)) ([a65da3a](https://github.com/ValenceOSS/Valence/commit/a65da3a119e859aa35dae1a253a1e93b4a0992ec))
+* **server,web,tv:** songs and audiobooks raise playback events, and books show in sessions ([#482](https://github.com/ValenceOSS/Valence/issues/482)) ([c3ebd11](https://github.com/ValenceOSS/Valence/commit/c3ebd11d68648a0dae0d1eca0542486d7f3c6d25))
+* **server,web:** leave a file or folder out of a library, and bring it back (val-348) ([#505](https://github.com/ValenceOSS/Valence/issues/505)) ([ce5829b](https://github.com/ValenceOSS/Valence/commit/ce5829be85aa698f3c4d8a0f924551cde54eef1a))
+* **server:** support MySQL and MariaDB beside Postgres ([#480](https://github.com/ValenceOSS/Valence/issues/480)) ([73ad607](https://github.com/ValenceOSS/Valence/commit/73ad607d97646b8f17212eafebf7c66753c2af9b))
+* **transcoder,docs,repo:** run the transcoder natively on windows, with qsv and amf on direct3d 11 ([#490](https://github.com/ValenceOSS/Valence/issues/490)) ([706d283](https://github.com/ValenceOSS/Valence/commit/706d28390b8a744ed4301daf2273540a1bde9ee6))
+* **transcoder,docs,repo:** run the transcoder outside the container, so it can reach the host's video hardware ([#489](https://github.com/ValenceOSS/Valence/issues/489)) ([c5b0d01](https://github.com/ValenceOSS/Valence/commit/c5b0d01e84590aba3a9aa187a563cc18ff0581da))
+* **transcoder:** send a film's sound apart from its picture, so a big copied segment isn't refused ([#464](https://github.com/ValenceOSS/Valence/issues/464)) ([fd0d104](https://github.com/ValenceOSS/Valence/commit/fd0d104203da439aaa494da6f01d513f1c2d29b3))
+* **web,tv,desktop,repo:** the new valence icon and logo, drawn everywhere from design ([#463](https://github.com/ValenceOSS/Valence/issues/463)) ([3e5e1ff](https://github.com/ValenceOSS/Valence/commit/3e5e1ffbc8e44cac62d084e1aa4f8a3462ac3bb3))
+* **web,tv,i18n,repo:** a new episode brings its show to the front, and the phone and tv can sort ([#487](https://github.com/ValenceOSS/Valence/issues/487)) ([302ce5c](https://github.com/ValenceOSS/Valence/commit/302ce5cb4f98e3010478cee9a3be623a2492cd7f))
+* **web,ui,core,i18n:** show each party member's face at where they are on one timeline ([#493](https://github.com/ValenceOSS/Valence/issues/493)) ([646113f](https://github.com/ValenceOSS/Valence/commit/646113fedc3b642da392e0c48ab1e0210a13aacf))
+* **web,ui,core:** a polish pass across the web client, and a page curl for the reader ([#473](https://github.com/ValenceOSS/Valence/issues/473)) ([dd6917d](https://github.com/ValenceOSS/Valence/commit/dd6917d440ecbacca8d6e347ca5fa3ab053d4b6c))
+* **web,ui,repo:** redesign the admin area, tidy the tooling, and write the 1.2 and 1.3 changelog ([#503](https://github.com/ValenceOSS/Valence/issues/503)) ([13a7859](https://github.com/ValenceOSS/Valence/commit/13a78599b0edbfffd6de9e80440031185f34ee58))
+
+
+### Fixed
+
+* **auth:** adding a passkey failed a day after signing in; ask for the password first ([960a897](https://github.com/ValenceOSS/Valence/commit/960a89737ed86cb3fd02403fdfcbea4309a8fa00))
+* **desktop:** ask before fetching an update, and never miss the one found at launch ([#456](https://github.com/ValenceOSS/Valence/issues/456)) ([39b6c22](https://github.com/ValenceOSS/Valence/commit/39b6c22f2f568e83d3b5e528cc6bb70721dd0ea3))
+* **desktop:** cast portraits and catalogue posters were blank in the desktop app ([#465](https://github.com/ValenceOSS/Valence/issues/465)) ([74417fb](https://github.com/ValenceOSS/Valence/commit/74417fbba65a7478af122ed5b32c7520f1a4100e))
+* **desktop:** the desktop app opened with no window, its main process built empty ([#500](https://github.com/ValenceOSS/Valence/issues/500)) ([03b4533](https://github.com/ValenceOSS/Valence/commit/03b45331969b773f15bf268e5700ab07471b2ea1))
+* **desktop:** the player's controls and title weren't showing in full screen ([#458](https://github.com/ValenceOSS/Valence/issues/458)) ([e68dd35](https://github.com/ValenceOSS/Valence/commit/e68dd35258b707655608525beb6ceebbae684f7f))
+* **repo,tv,web:** follow-ups from the review of client parity ([#496](https://github.com/ValenceOSS/Valence/issues/496)) ([752571c](https://github.com/ValenceOSS/Valence/commit/752571cc994fa66f7f17e2ac8296b19d46a7971f))
+* **repo:** the phone downloaded a picture again for every row it was shown in ([#486](https://github.com/ValenceOSS/Valence/issues/486)) ([9aaae15](https://github.com/ValenceOSS/Valence/commit/9aaae15118293d32303b691cc914c1051df2ca6e))
+* **repo:** the server image stopped building; give cargo the desktop crate its workspace names ([dd11631](https://github.com/ValenceOSS/Valence/commit/dd1163190eb96b2351924ba18e486bf1d3088a21))
+* **requests:** a release titled 4K could be a 1080p telesync, and nothing checked the file ([#472](https://github.com/ValenceOSS/Valence/issues/472)) ([c8dd193](https://github.com/ValenceOSS/Valence/commit/c8dd19369f281e946833804ebdfe8940a7e13ad7))
+* **server,web,i18n:** adding an account with a capital in its address said it was already in use ([#488](https://github.com/ValenceOSS/Valence/issues/488)) ([1b0a5d6](https://github.com/ValenceOSS/Valence/commit/1b0a5d66e3298730e2f29941161c1ac72b9de368))
+* **server,web:** a smaller quality could be bigger than the original ([#467](https://github.com/ValenceOSS/Valence/issues/467)) ([b1b9acd](https://github.com/ValenceOSS/Valence/commit/b1b9acd18719288b07b2cf599600655017f28a31))
+* **server:** every release server said "server unknown"; report its version and commit ([cf91d11](https://github.com/ValenceOSS/Valence/commit/cf91d1154318e71c6e86f9a55353baead2afc1ad))
+* **server:** music from a request never had its lyrics or artwork looked up ([#476](https://github.com/ValenceOSS/Valence/issues/476)) ([d3721a2](https://github.com/ValenceOSS/Valence/commit/d3721a28042826e810e797cd3a13ecd2ab33fad9))
+* **server:** start again, by extending zod for openapi before any schema is built ([#492](https://github.com/ValenceOSS/Valence/issues/492)) ([bc365e5](https://github.com/ValenceOSS/Valence/commit/bc365e57e480444852db624298a20ce546e97697))
+* **server:** watched episodes showed as unwatched once sixty others had been watched since ([#468](https://github.com/ValenceOSS/Valence/issues/468)) ([d18ff93](https://github.com/ValenceOSS/Valence/commit/d18ff93434177ada5bcbd3def9a47047bffa444e))
+* **transcoder,server,core:** hdr came out too dark when tone mapped to sdr, on every backend ([#494](https://github.com/ValenceOSS/Valence/issues/494)) ([a9c8eb0](https://github.com/ValenceOSS/Valence/commit/a9c8eb0f86096be2ac3030ce91e5bce74f7be760))
+* **transcoder:** a session stopped and started again straight away could never start ([#499](https://github.com/ValenceOSS/Valence/issues/499)) ([ef26fb3](https://github.com/ValenceOSS/Valence/commit/ef26fb35271b098fd69d46f6c46f97f96c7e9ef5))
+* **ui:** draw a card's new-title flag in the film glass, without an edge ([03cdb40](https://github.com/ValenceOSS/Valence/commit/03cdb407ae26f5779a901196d2fbbbeb30b1daa1))
+* **ui:** studio logos came out in inverted colours; draw them in the text's colours ([#461](https://github.com/ValenceOSS/Valence/issues/461)) ([933c694](https://github.com/ValenceOSS/Valence/commit/933c6948c57e76aaf2f3981d5c753f8430213a98))
+* **web,desktop:** offline mode still asked the server for things, and downloads offered choices they couldn't make ([#469](https://github.com/ValenceOSS/Valence/issues/469)) ([89585b9](https://github.com/ValenceOSS/Valence/commit/89585b95e3d42ea76878741a7e2de890be5fb6bf))
+* **web:** a film resumed part way in wouldn't load ([#466](https://github.com/ValenceOSS/Valence/issues/466)) ([127cb43](https://github.com/ValenceOSS/Valence/commit/127cb43977c488c3ce63d2bc973b84a921bd97f6))
+* **web:** the phone's light mode drew dark glass and grey pages, and some controls could hardly be seen ([#471](https://github.com/ValenceOSS/Valence/issues/471)) ([8228e5f](https://github.com/ValenceOSS/Valence/commit/8228e5f1ee40b503455fd0720a2835ac5a8ddda0))
+
 ## [1.2.0](https://github.com/ValenceOSS/Valence/compare/v1.1.2...v1.2.0) (2026-09-28)
 
 
