@@ -314,7 +314,7 @@ const uiCatalogueContent = (): Plugin => ({
     }
 
     const tool = UiCatalogueToolSchema.parse(
-      await tsImport('../../tools/uiCatalogue/buildUiCatalogue.ts', import.meta.url),
+      await tsImport('./src/uiCatalogue/buildUiCatalogue.ts', import.meta.url),
     );
 
     return `export default ${JSON.stringify(UiCatalogueSchema.parse(tool.buildUiCatalogue(REPOSITORY_ROOT)))};`;

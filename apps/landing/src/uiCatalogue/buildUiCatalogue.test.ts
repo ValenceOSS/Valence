@@ -2,7 +2,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { buildUiCatalogue } from './buildUiCatalogue';
 
-const ROOT = join(import.meta.dirname, '..', '..');
+const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
 
 describe('buildUiCatalogue', () => {
   const catalogue = buildUiCatalogue(ROOT);
