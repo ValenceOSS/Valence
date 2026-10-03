@@ -139,4 +139,17 @@ describe('isPublicRoute', () => {
       expect(isPublicRoute('GET', '/api/profiles')).toBe(false);
     });
   });
+
+  it('leaves everything another Valence calls to the federation gate', () => {
+    expect(isPublicRoute('GET', '/api/federation/v1/server')).toBe(true);
+    expect(isPublicRoute('POST', '/api/federation/v1/pair')).toBe(true);
+    expect(
+      isPublicRoute('GET', '/api/federation/v1/pair/00000000-0000-4000-8000-000000000001'),
+    ).toBe(true);
+    expect(isPublicRoute('POST', '/api/federation/v1/unlink')).toBe(true);
+    expect(isPublicRoute('GET', '/api/federation/v1/libraries')).toBe(true);
+    expect(isPublicRoute('DELETE', '/api/federation/v1/api/playback/session/one')).toBe(true);
+    expect(isPublicRoute('PUT', '/api/federation/v1/libraries')).toBe(false);
+    expect(isPublicRoute('GET', '/api/linked-servers')).toBe(false);
+  });
 });

@@ -1,0 +1,1 @@
+ALTER TABLE "linked_server" ADD COLUMN "playsDirect" boolean DEFAULT false NOT NULL;

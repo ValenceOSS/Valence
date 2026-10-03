@@ -3,6 +3,18 @@ import type { ImportService } from '@ValenceServer/imports/createImportService';
 import type { ImportedAccount } from '@ValenceServer/arrImport/ImportedAccount';
 import type { PreTranscodingService } from '@ValenceServer/preTranscoding/PreTranscodingService';
 import type { SetupLinkService } from '@ValenceServer/accounts/setupLinks/SetupLinkService';
+import type { LinkStore } from '@ValenceServer/linking/LinkStore';
+import type { LinkService } from '@ValenceServer/linking/LinkService';
+import type { PartyBinding } from '@ValenceServer/parties/handlePartyMessage';
+import type { PartyRelayHub } from '@ValenceServer/linking/parties/createPartyRelayHub';
+import type { AskedAlong } from '@ValenceContracts/schemas/LinkSharing';
+import type { PersonScope } from '@ValenceServer/linking/content/createPersonScope';
+import type { SyncOutcome } from '@ValenceServer/linking/catalogue/createCatalogueSync';
+import type { LinkSharingStore } from '@ValenceServer/linking/LinkSharingStore';
+import type { PeerClient } from '@ValenceServer/linking/createPeerClient';
+import type { PeerItem } from '@ValenceServer/linking/PeerItem';
+import type { PeerSubject } from '@ValenceServer/linking/FederationReach';
+import type { CataloguePage } from '@ValenceServer/linking/catalogue/CataloguePageSchema';
 import type {
   AccountWithoutPasswordOutcome,
   AccountWithoutPasswordRequest,
@@ -112,6 +124,31 @@ type CreateAppOptions = {
     changes: { name?: string; email?: string | null; username?: string },
   ) => Promise<'changed' | 'missing' | 'taken' | 'usernameTaken'>;
   setupLinks?: SetupLinkService;
+  linking?: {
+    service?: LinkService;
+    people?: PersonScope;
+    syncServer?: (id: string) => Promise<SyncOutcome | null>;
+    isReachable?: (id: string) => boolean;
+    takesRequests?: (id: string) => boolean;
+    ask?: (
+      serverId: string,
+      route: string,
+      asking: { method: string; headers: Headers; body?: ArrayBuffer },
+    ) => Promise<Response | null>;
+    parties?: {
+      binding: PartyBinding;
+      hub: PartyRelayHub;
+      onAskedAlong: (serverId: string, ask: AskedAlong) => Promise<void>;
+    };
+    store: LinkStore;
+    sharing: LinkSharingStore;
+    address: string;
+    defaultName?: string;
+    peers: PeerClient;
+    subjectOf?: (subject: PeerSubject) => Promise<PeerItem | null>;
+    catalogue?: (libraryId: string, after: string | null) => Promise<CataloguePage | null>;
+    warn?: (message: string) => void;
+  };
   createAccountWithoutPassword?: (
     request: AccountWithoutPasswordRequest,
   ) => Promise<AccountWithoutPasswordOutcome>;

@@ -187,7 +187,7 @@ const NavBar = ({
                   id: item.id,
                   label: item.label,
                   ...(item.icon === undefined ? {} : { icon: item.icon }),
-                  ...(item.id === selectedId ? { detail: say('ui.navBar.here') } : {}),
+                  ...(item.id === selectedId ? { detail: say('common.here') } : {}),
                   onChoose: () => {
                     onSelect(item.id);
                   },

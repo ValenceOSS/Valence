@@ -15,6 +15,7 @@ const PROFILE: ViewerProfile = {
   avatar: { kind: 'initial', font: 'gilroy' },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
+  prefersBestCopy: false,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
@@ -25,6 +26,7 @@ const DRAFT: ProfileDraft = {
   avatar: { kind: 'initial', font: 'gilroy' },
   askStillWatchingAfter: 2,
   showsWhatIamWatching: true,
+  prefersBestCopy: true,
   photo: null,
 };
 
@@ -47,6 +49,7 @@ describe('saveProfileDraft', () => {
       { kind: 'initial', font: 'gilroy' },
       2,
       true,
+      true,
     );
   });
 
@@ -59,6 +62,7 @@ describe('saveProfileDraft', () => {
       '#3ac47d',
       { kind: 'initial', font: 'gilroy' },
       2,
+      true,
       true,
     );
   });

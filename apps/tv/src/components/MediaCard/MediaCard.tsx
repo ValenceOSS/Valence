@@ -9,6 +9,9 @@ import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { ProgressLine } from '@ValenceTv/components/ProgressLine/ProgressLine';
 import { tokens } from '@ValenceTv/theme/tokens';
 import { cardSizes } from './cardSizes';
+import { inkFor } from '@ValenceClient/library/inkFor';
+import { useOriginOf } from '@ValenceClient/linking/useOriginOf';
+import { LETTER_INKS } from '@ValenceNative/library/LETTER_INKS';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MediaCardProps, MediaCardShape } from './MediaCard.types';
 import { sayCount } from '@ValenceI18n/sayCount';
@@ -78,6 +81,7 @@ const MediaCard = ({
   const name = media.seriesTitle ?? media.title;
   const [hasNoLogo, setHasNoLogo] = useState(false);
   const isLettered = shape === 'wide' && media.hasLogo && !hasNoLogo;
+  const origin = useOriginOf()(media.libraryId);
 
   const picture = useMemo(
     () => (
@@ -111,6 +115,18 @@ const MediaCard = ({
 
         {watchedFraction === undefined ? null : <ProgressLine fraction={watchedFraction} />}
 
+        {origin === null ? null : (
+          <View
+            style={[styles.origin, { backgroundColor: origin.colour }]}
+            accessible
+            accessibilityLabel={origin.label}
+          >
+            <Text style={[styles.originWords, { color: LETTER_INKS[inkFor(origin.colour)] }]}>
+              {origin.initial}
+            </Text>
+          </View>
+        )}
+
         {unwatchedCount === undefined || unwatchedCount <= 0 ? null : (
           <View
             style={styles.count}
@@ -124,12 +140,12 @@ const MediaCard = ({
         )}
       </View>
     ),
-    [media, shape, size, isLettered, isUrgent, watchedFraction, unwatchedCount],
+    [media, shape, size, isLettered, isUrgent, watchedFraction, unwatchedCount, origin],
   );
 
   return (
     <Focusable
-      label={name}
+      label={origin === null ? name : `${name}, ${origin.label}`}
       shadow={{ height: size.height, cornerRadius: tokens.radii.xl }}
       hasPreferredFocus={hasPreferredFocus}
       scale={1.1}
@@ -206,6 +222,17 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   hidden: { opacity: 0 },
+  origin: {
+    position: 'absolute',
+    top: tokens.space.sm,
+    left: tokens.space.sm,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  originWords: { fontSize: tokens.type.small - 2, fontWeight: '700' },
   detail: { color: tokens.colours.muted, fontSize: tokens.type.small - 2 },
 });
 

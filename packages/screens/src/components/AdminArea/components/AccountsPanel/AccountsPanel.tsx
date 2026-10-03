@@ -702,7 +702,7 @@ const AccountsPanel = () => {
                       {
                         id: 'ban',
                         label: account.isBanned
-                          ? say('screens.adminArea.accountsPanel.letBackIn')
+                          ? say('common.letBackIn')
                           : say('screens.adminArea.accountsPanel.ban'),
                         icon: <Icon of={CircleXFilledIcon} size={15} />,
                         onChoose: () => {
@@ -1141,7 +1141,7 @@ const AccountsPanel = () => {
                       }}
                     >
                       {picked.isBanned
-                        ? say('screens.adminArea.accountsPanel.letBackIn')
+                        ? say('common.letBackIn')
                         : say('screens.adminArea.accountsPanel.ban')}
                     </Button>
                   </FormField>
@@ -1254,7 +1254,7 @@ const AccountsPanel = () => {
                               })}
                               groups={[
                                 {
-                                  name: say('screens.adminArea.accountsPanel.nothingAbove'),
+                                  name: say('common.nothingAbove'),
                                   selectedId:
                                     shelf.maximumAge === null ? 'none' : String(shelf.maximumAge),
                                   onSelect: (id) => {
@@ -1296,7 +1296,7 @@ const AccountsPanel = () => {
                                 });
                               }}
                             >
-                              {say('screens.adminArea.accountsPanel.allowUnrated')}
+                              {say('common.allowUnrated')}
                             </Button>
                           )}
                         </li>

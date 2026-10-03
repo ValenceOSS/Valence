@@ -33,4 +33,4 @@ const listSegmentsRoute = createRoute({
   },
 });
 
-export { listSegmentsRoute };
+export { SegmentListSchema, listSegmentsRoute };

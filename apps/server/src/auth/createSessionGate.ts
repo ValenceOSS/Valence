@@ -9,6 +9,7 @@ type SessionGateOptions = {
   auth: ValenceAuth;
   showsFaces: () => Promise<boolean>;
   shareGate?: MiddlewareHandler;
+  isPassedThrough?: (headers: Headers) => boolean;
 };
 
 /**
@@ -19,17 +20,25 @@ type SessionGateOptions = {
  * has been looked for and not found, so a share can never widen what somebody signed in already
  * has, and a signed-in request never touches it at all.
  *
+ * A request a linked server's call was passed through as has no session either, and is let by:
+ * the federation gate made it, after holding the call to what that server is shared.
+ *
  * Whether the faces are open is asked per request rather than read once at startup, so turning the
  * setting off shuts them for the next request instead of at the next restart.
  *
  * @param auth - The authentication layer to resolve the session against.
  * @param showsFaces - Whether this server shows who lives here before anybody has signed in.
  * @param shareGate - What to try for a request carrying no session, where sharing is enabled.
+ * @param isPassedThrough - Whether a request was passed through from a linked server by the
+ *   federation gate, which has already held it to what is shared with that server.
  * @returns The middleware.
  */
-const createSessionGate = ({ auth, showsFaces, shareGate }: SessionGateOptions) =>
+const createSessionGate = ({ auth, showsFaces, shareGate, isPassedThrough }: SessionGateOptions) =>
   createMiddleware(async (context, next) => {
-    if (isPublicRoute(context.req.method, context.req.path, await showsFaces())) {
+    if (
+      isPassedThrough?.(context.req.raw.headers) === true ||
+      isPublicRoute(context.req.method, context.req.path, await showsFaces())
+    ) {
       await next();
 
       return;

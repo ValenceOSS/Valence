@@ -141,6 +141,10 @@
       "@ValenceUI/ArtCard.types": ["./packages/ui/src/components/ArtCard/ArtCard.types.ts"],
       "@ValenceUI/MediaCard": ["./packages/ui/src/components/MediaCard/MediaCard.tsx"],
       "@ValenceUI/MediaCard.types": ["./packages/ui/src/components/MediaCard/MediaCard.types.ts"],
+      "@ValenceUI/OriginMark": ["./packages/ui/src/components/OriginMark/OriginMark.tsx"],
+      "@ValenceUI/OriginMark.types": [
+        "./packages/ui/src/components/OriginMark/OriginMark.types.ts"
+      ],
       "@ValenceUI/MoodBackground": [
         "./packages/ui/src/components/MoodBackground/MoodBackground.tsx"
       ],

@@ -33,6 +33,7 @@ const aProfile = (showsWhatIamWatching: boolean): ViewerProfile => ({
   avatar: { kind: 'initial', font: 'gilroy' },
   askStillWatchingAfter: 3,
   showsWhatIamWatching,
+  prefersBestCopy: false,
   createdAt: '2026-08-01T00:00:00.000Z',
   updatedAt: '2026-08-01T00:00:00.000Z',
 });

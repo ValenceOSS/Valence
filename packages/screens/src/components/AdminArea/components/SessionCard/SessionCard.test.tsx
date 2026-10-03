@@ -26,6 +26,7 @@ const IDLE_SESSION: ActiveSession = {
   profileName: 'Dan',
   isGuest: false,
   guestOf: null,
+  fromServer: null,
   deviceLabel: 'Living room TV',
   clientKind: 'browser' as const,
   connectedAt: 1000,

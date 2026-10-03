@@ -10,6 +10,7 @@ const aProfile = (overrides: Partial<ViewerProfile> = {}): ViewerProfile => ({
   avatar: { kind: 'photo', isVideo: false, frame: null },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
+  prefersBestCopy: false,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-09-22T10:00:00.000Z',
   ...overrides,

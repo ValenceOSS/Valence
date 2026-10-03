@@ -15,6 +15,7 @@ const LAPTOP: PresenceEntry = {
   profileId: 'me',
   profileName: 'Marques',
   guestOf: null,
+  fromServer: null,
   viaShare: null,
   address: null,
   deviceLabel: 'Laptop',

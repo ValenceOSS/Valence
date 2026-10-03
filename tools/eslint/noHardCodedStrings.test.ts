@@ -51,6 +51,7 @@ ruleTester.run('no-hard-coded-strings', noHardCodedStrings, {
     { code: "type Kind = 'Some Thing';" },
     { code: "const it = { code: 'ClientSupportsSource' };" },
     { code: "const it = 'RefFramesNotSupported';" },
+    { code: "const it = z.literal('Ed25519');" },
     { code: 'const it = `series:${key}`;' },
     { code: "const it = 'https:';" },
     { code: "const it = headers.get('Content-Type');" },

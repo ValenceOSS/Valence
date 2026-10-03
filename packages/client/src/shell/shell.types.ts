@@ -2,6 +2,7 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 import type { SessionUser } from '@ValenceContracts/schemas/Session';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import type { Askable } from '@ValenceClient/party/whoCanBeAsked';
 import type { WatchPartyState } from '@ValenceClient/party/useWatchParty';
 
 type MoodLight = {
@@ -15,7 +16,7 @@ type Shell = {
   title: string;
   user: SessionUser;
   watcher: ViewerProfile | null;
-  household: readonly ViewerProfile[];
+  household: readonly Askable[];
   known: ReadonlyMap<string, MediaSummary>;
   rememberItems: (items: MediaSummary[]) => void;
   progress: ReadonlyMap<string, WatchProgress>;

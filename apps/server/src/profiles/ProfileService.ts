@@ -7,6 +7,7 @@ type ProfileRequest = {
   avatar?: Avatar;
   askStillWatchingAfter?: number;
   showsWhatIamWatching?: boolean;
+  prefersBestCopy?: boolean;
 };
 
 type ProfileService = {

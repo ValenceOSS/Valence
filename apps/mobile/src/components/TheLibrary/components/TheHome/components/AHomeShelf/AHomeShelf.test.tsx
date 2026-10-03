@@ -1,4 +1,5 @@
 import { render, userEvent } from '@testing-library/react-native';
+import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { MediaSummarySchema } from '@ValenceContracts/schemas/Library';
@@ -73,6 +74,7 @@ describe('AHomeShelf', () => {
         onLookAtCollection={jest.fn()}
         flagOf={() => null}
       />,
+      { wrapper: CacheScope },
     );
 
     expect(drawn.getByText('Recently added')).toBeTruthy();
@@ -99,6 +101,7 @@ describe('AHomeShelf', () => {
         onLookAtCollection={jest.fn()}
         flagOf={() => null}
       />,
+      { wrapper: CacheScope },
     );
 
     expect(drawn.getByText('Severance')).toBeTruthy();
@@ -123,6 +126,7 @@ describe('AHomeShelf', () => {
         onLookAtCollection={jest.fn()}
         flagOf={(media) => (media.id === aFilm.id ? 'New episode' : null)}
       />,
+      { wrapper: CacheScope },
     );
 
     expect(drawn.getByText('New episode')).toBeTruthy();
@@ -143,6 +147,7 @@ describe('AHomeShelf', () => {
         onLookAtCollection={jest.fn()}
         flagOf={() => null}
       />,
+      { wrapper: CacheScope },
     );
 
     expect(drawn.getByText('Coming up')).toBeTruthy();
@@ -181,6 +186,7 @@ describe('AHomeShelf', () => {
         onLookAtCollection={onLookAtCollection}
         flagOf={() => null}
       />,
+      { wrapper: CacheScope },
     );
 
     await userEvent.press(drawn.getByRole('button', { name: 'Saga' }));

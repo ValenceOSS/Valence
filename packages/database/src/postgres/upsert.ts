@@ -14,6 +14,8 @@ import type { AnyDatabase } from '#dialect/AnyDatabase';
  * @param set - What to change on a row that was already there.
  * @param targetWhere - The condition of a partial unique index, where the key is one. MySQL has no
  *   partial indexes and ignores it; the key there is the same one, NULLs being distinct.
+ * @param sameRowOn - Other unique keys that can only ever name the row the target does. Postgres
+ *   decides by the target alone, so it needs none and ignores them; MySQL checks them.
  */
 const upsert = async <T extends PgTable>(
   db: AnyDatabase,
@@ -28,6 +30,7 @@ const upsert = async <T extends PgTable>(
     target: IndexColumn | IndexColumn[];
     set: PgUpdateSetSource<T>;
     targetWhere?: SQL;
+    sameRowOn?: readonly IndexColumn[][];
   },
 ): Promise<void> => {
   await db

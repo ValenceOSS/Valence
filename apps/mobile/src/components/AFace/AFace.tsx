@@ -6,6 +6,7 @@ import { thePictureFor } from '@ValenceMobile/components/AFace/thePictureFor';
 import { APicture } from '@ValenceMobile/components/APicture/APicture';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { inkFor } from '@ValenceClient/library/inkFor';
+import { LETTER_INKS } from '@ValenceNative/library/LETTER_INKS';
 import { LETTER_FACES } from '@ValenceMobile/theme/LETTER_FACES';
 import type { ViewStyle } from 'react-native';
 import type { Avatar } from '@ValenceContracts/schemas/ViewerProfile';
@@ -16,8 +17,6 @@ const SIDE = 96;
 const LARGE_SIDE = 136;
 
 const ROUNDNESS = 0.06;
-
-const INK = { dark: '#15171a', light: '#f7f7f5' } as const;
 
 const styles = StyleSheet.create({
   face: { alignItems: 'center', gap: 8 },
@@ -113,7 +112,7 @@ const AFace = ({ profile, picked = null, isLarge = false, tileMotion }: AFacePro
               styles.initial,
               isLarge && styles.largeInitial,
               {
-                color: INK[inkFor(profile.colour)],
+                color: LETTER_INKS[inkFor(profile.colour)],
                 fontFamily:
                   LETTER_FACES[profile.avatar.kind === 'initial' ? profile.avatar.font : 'gilroy'],
               },

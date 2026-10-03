@@ -126,4 +126,24 @@ describe('APoster', () => {
 
     expect(drawn.getByText('S1 · E2  Pilot')).toBeTruthy();
   });
+
+  it('marks a title from a linked server with its initial, in ink that reads on its colour', async () => {
+    const drawn = await render(
+      <APoster
+        {...asDrawn(aTitle())}
+        origin={{ initial: 'F', colour: '#f5e663', label: 'From Films' }}
+      />,
+    );
+
+    const mark = drawn.getByLabelText('From Films');
+
+    expect(mark).toBeTruthy();
+    expect(drawn.getByText('F')).toHaveStyle({ color: '#15171a' });
+  });
+
+  it('marks nothing on a title of this server’s own', async () => {
+    const drawn = await render(<APoster {...asDrawn(aTitle())} />);
+
+    expect(drawn.queryByLabelText(/^From /u)).toBeNull();
+  });
 });

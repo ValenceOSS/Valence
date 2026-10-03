@@ -6,6 +6,7 @@ import {
   readBrowseArrangement,
   saveBrowseArrangement,
 } from '@ValenceClient/library/browseArrangementPreference';
+import { librariesChosen } from '@ValenceClient/library/librariesChosen';
 import type { Arrangement } from '@ValenceClient/library/browseArrangementPreference';
 import { nameBrowseOrder } from '@ValenceClient/library/nameBrowseOrder';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -150,11 +151,11 @@ const BrowseArea = ({
 
   const libraryIds = useMemo(() => {
     const every = libraries.data ?? [];
-    const only = every.find((entry) => entry.id === libraryId);
+    const chosen = librariesChosen(every, libraryId);
 
     return (
-      only !== undefined && (kind === 'films' ? only.kind === 'movies' : only.kind === kind)
-        ? [only]
+      chosen.some((entry) => (kind === 'films' ? entry.kind === 'movies' : entry.kind === kind))
+        ? chosen
         : every
     ).map((entry) => entry.id);
   }, [libraries.data, libraryId, kind]);

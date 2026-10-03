@@ -6,6 +6,7 @@ import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { theArtworkFor } from '@ValenceMobile/components/APoster/theArtworkFor';
 import { theStillFor } from '@ValenceMobile/components/APoster/theStillFor';
 import { Button } from '@ValenceMobile/components/Button/Button';
+import { useOriginOf } from '@ValenceClient/linking/useOriginOf';
 import type { ACardProps } from './ACard.types';
 
 /**
@@ -44,11 +45,14 @@ const ACard = ({
   const isAnEpisode = showId === null && isStill && typeof media.seriesTitle === 'string';
   const title = showId === null && !isAnEpisode ? media.title : (media.seriesTitle ?? media.title);
   const detail = isAnEpisode ? whereItFalls(media) : null;
+  const origin = useOriginOf()(media.libraryId);
 
   return (
     <Button
       tone="bare"
-      label={[title, detail, flag].filter((part) => part !== null).join(', ')}
+      label={[title, detail, flag, origin?.label ?? null]
+        .filter((part) => part !== null)
+        .join(', ')}
       onPress={() => {
         if (showId === null) {
           onLookAt(media.id);
@@ -75,6 +79,7 @@ const ACard = ({
           count={showId === null ? 0 : count}
           isStill={isStill}
           detail={detail}
+          origin={origin}
           {...(wide === undefined ? {} : { wide })}
         />
       )}

@@ -67,6 +67,9 @@ import { SeasonMate } from './components/SeasonMate/SeasonMate';
 import { PartOfCollections } from '@ValenceScreens/components/PartOfCollections/PartOfCollections';
 import { AddToCollectionDialog } from '@ValenceScreens/components/AddToCollectionDialog/AddToCollectionDialog';
 import { subjectOfMedia } from '@ValenceClient/collections/subjectOfMedia';
+import { Callout } from '@ValenceUI/Callout';
+import { useOriginOf } from '@ValenceClient/linking/useOriginOf';
+import { usePreferredCopy } from '@ValenceClient/linking/usePreferredCopy';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MediaDetailDialogProps } from './MediaDetailDialog.types';
 import { say } from '@ValenceI18n/say';
@@ -168,18 +171,31 @@ const MediaDetailDialog = ({
   const percent = `${Math.round((preparing?.progress ?? 0) * 100).toString()}%`;
   const shownResume = useHeldWhileLeaving(resumeSeconds, media !== null);
   const shownSiblings = useHeldWhileLeaving(siblings, media !== null, siblingKey);
+  const originOf = useOriginOf();
   const extras = detail?.extras ?? [];
   const trailer = extras.find((one) => one.extraKind === 'trailer') ?? null;
   const trailerKey = trailer === null ? (detail?.trailerKey ?? null) : null;
   const hasTrailer = trailer !== null || trailerKey !== null;
   const versions = detail?.versions ?? [];
-  const chosenVersion = versions.find((one) => one.id === version) ?? null;
+  const preferred = usePreferredCopy(shown, versions);
+  const chosenVersion = versions.find((one) => one.id === (version ?? preferred)) ?? null;
+  const isTheSameTitle = chosenVersion !== null && originOf(chosenVersion.libraryId) !== null;
 
   if (shown === null) {
     return null;
   }
 
   const metadata = detail?.metadata ?? null;
+  const origin = originOf(shown.libraryId);
+  const alsoOn = [
+    ...new Set(
+      versions.flatMap((one) => {
+        const elsewhere = originOf(one.libraryId);
+
+        return elsewhere === null ? [] : [elsewhere.name];
+      }),
+    ),
+  ];
   const season = metadata?.seasonNumber ?? null;
   const genres = metadata?.genres ?? [];
   const cast = metadata?.cast ?? [];
@@ -297,6 +313,18 @@ const MediaDetailDialog = ({
                 />
               </DialogHeadlinePart>
 
+              {origin === null ? null : (
+                <DialogHeadlinePart className="text-sm text-on-scrim/80">
+                  {say('common.fromName', { name: origin.name })}
+                </DialogHeadlinePart>
+              )}
+
+              {origin !== null || alsoOn.length === 0 ? null : (
+                <DialogHeadlinePart className="text-sm text-on-scrim/80">
+                  {say('common.alsoOnNames', { names: alsoOn.join(', ') })}
+                </DialogHeadlinePart>
+              )}
+
               <DialogHeadlinePart className="text-on-scrim/85">
                 <TitleBadges detail={detail} />
               </DialogHeadlinePart>
@@ -306,6 +334,13 @@ const MediaDetailDialog = ({
           <span ref={pastTheArtwork} aria-hidden className="block h-px" />
 
           <DialogSections className="flex flex-col gap-3 px-0 pb-4 pt-4">
+            {origin === null || origin.isReachable ? null : (
+              <Callout
+                tone="warning"
+                title={say('common.nameCannotBeReachedRightNow', { name: origin.name })}
+              />
+            )}
+
             {onRate === undefined ? null : (
               <RatingPanel
                 subject={{ mediaId: shown.id }}
@@ -473,7 +508,10 @@ const MediaDetailDialog = ({
                   choiceLabel={say('screens.mediaDetailDialog.whichEditionToPlay')}
                   choiceName={say('screens.mediaDetailDialog.editions')}
                   onClick={() => {
-                    onPlay(chosenVersion ?? shown, chosenVersion === null ? (shownResume ?? 0) : 0);
+                    onPlay(
+                      chosenVersion ?? shown,
+                      chosenVersion === null || isTheSameTitle ? (shownResume ?? 0) : 0,
+                    );
                   }}
                   options={editionOptionsOf(shown, detail?.versionLabel ?? null, versions)}
                   selectedId={chosenVersion?.id ?? shown.id}
@@ -572,7 +610,7 @@ const MediaDetailDialog = ({
                     onChoose: () => {
                       onPlayOn(
                         chosenVersion ?? shown,
-                        chosenVersion === null ? (shownResume ?? 0) : 0,
+                        chosenVersion === null || isTheSameTitle ? (shownResume ?? 0) : 0,
                       );
                     },
                   },

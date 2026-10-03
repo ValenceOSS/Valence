@@ -1,6 +1,7 @@
 import { PRE_TRANSCODING_DEFAULTS } from '@ValenceContracts/schemas/PreTranscoding';
 import { SEERR_DEFAULTS } from '@ValenceContracts/schemas/SeerrLink';
 import { EMAIL_DEFAULTS } from '@ValenceContracts/schemas/EmailSettings';
+import { LINK_SETTINGS_DEFAULTS } from '@ValenceServer/linking/LinkSettings';
 import { describe, expect, it } from 'vitest';
 import { createMemoryJobScheduleService } from './createMemoryJobScheduleService';
 import { createMemorySettingsStore } from '@ValenceServer/settings/createMemorySettingsStore';
@@ -37,6 +38,7 @@ const SETTINGS: ServerSettings = {
   preTranscoding: PRE_TRANSCODING_DEFAULTS,
   seerr: SEERR_DEFAULTS,
   email: EMAIL_DEFAULTS,
+  linking: LINK_SETTINGS_DEFAULTS,
 };
 
 const build = (seededJobTriggerKinds: string[] = []) => ({

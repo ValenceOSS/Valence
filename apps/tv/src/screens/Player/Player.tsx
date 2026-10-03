@@ -48,9 +48,9 @@ import { PartyPanel } from '@ValenceTv/components/PartyPanel/PartyPanel';
 import { roomPlayerOfExpo } from '@ValenceNative/party/roomPlayerOfExpo';
 import { useFollowTheRoom } from '@ValenceClient/party/useFollowTheRoom';
 import { usePartyPlayback } from '@ValenceClient/party/usePartyPlayback';
-import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { sayCount } from '@ValenceI18n/sayCount';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { useAskableAlong } from '@ValenceClient/party/useAskableAlong';
 import type { HWEvent } from 'react-native';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
 import type { StreamReading } from '@ValenceTv/screens/Player/components/StreamStats/StreamStats.types';
@@ -313,14 +313,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
     onSaid: setHeard,
     onCannotStart: NEVER_REFUSES,
   });
-  const everyone = useQuery({
-    ...sessionQueries.everyone(),
-    enabled: (watchParty?.party ?? null) !== null,
-  });
-  const household = useMemo(
-    () => (everyone.data ?? []).map((person) => ({ id: person.id, name: person.name })),
-    [everyone.data],
-  );
+  const household = useAskableAlong((watchParty?.party ?? null) !== null);
   const { rememberWhere } = inStep;
   const isInAParty = party !== undefined;
 

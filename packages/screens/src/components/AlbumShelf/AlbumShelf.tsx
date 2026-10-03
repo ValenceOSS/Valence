@@ -7,6 +7,7 @@ import { useMyPlaylists } from '@ValenceClient/music/useMyPlaylists';
 import { musicMenuFor } from '@ValenceScreens/music/musicMenuFor';
 import { RevealItem } from '@ValenceUI/RevealItem';
 import { MusicShelf } from '@ValenceScreens/components/MusicShelf/MusicShelf';
+import { useCardOrigin } from '@ValenceScreens/linking/useCardOrigin';
 import type { MusicAlbum } from '@ValenceContracts/schemas/Music';
 import type { AlbumShelfProps } from './AlbumShelf.types';
 
@@ -39,6 +40,7 @@ const AlbumShelf = ({
   const { open } = useMusicNavigation();
   const { player } = useMusicPlayer();
   const addingTo = useMyPlaylists();
+  const cardOrigin = useCardOrigin();
 
   if (albums.length === 0) {
     return null;
@@ -56,6 +58,7 @@ const AlbumShelf = ({
                 src={album.hasArtwork ? albumArtworkUrl(album.id) : null}
                 label={album.title}
                 travelsAs={`album-${album.id}`}
+                {...cardOrigin(album.libraryId)}
                 className="w-full"
               />
             }

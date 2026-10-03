@@ -183,6 +183,9 @@ const library = pgTable('library', {
   requestProfileId: text('requestProfileId'),
   requestPath: text('requestPath'),
   requestFulfilment: jsonb('requestFulfilment').$type<Fulfilment>(),
+  linkedServerId: text('linkedServerId').references((): AnyPgColumn => linkedServer.id, {
+    onDelete: 'cascade',
+  }),
 });
 
 const viewerProfile = pgTable(
@@ -200,6 +203,7 @@ const viewerProfile = pgTable(
     avatarLook: jsonb('avatarLook').$type<Avatar>(),
     askStillWatchingAfter: integer('askStillWatchingAfter').notNull().default(4),
     showsWhatIamWatching: boolean('showsWhatIamWatching').notNull().default(false),
+    prefersBestCopy: boolean('prefersBestCopy').notNull().default(false),
     createdAt: timestamp('createdAt').notNull().defaultNow(),
     updatedAt: timestamp('updatedAt').notNull().defaultNow(),
   },
@@ -1263,6 +1267,109 @@ const webhookDelivery = pgTable(
   ],
 );
 
+const linkInvite = pgTable(
+  'link_invite',
+  {
+    id: text('id').primaryKey(),
+    codeHash: text('codeHash').notNull(),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+    expiresAt: timestamp('expiresAt').notNull(),
+    usedAt: timestamp('usedAt'),
+  },
+  (table) => [uniqueIndex('link_invite_code_idx').on(table.codeHash)],
+);
+
+const linkedServer = pgTable(
+  'linked_server',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    colour: text('colour').notNull(),
+    address: text('address').notNull(),
+    publicKey: jsonb('publicKey').notNull(),
+    fingerprint: text('fingerprint').notNull(),
+    state: text('state').notNull(),
+    theirPairingId: text('theirPairingId'),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+    linkedAt: timestamp('linkedAt'),
+    lastSeenAt: timestamp('lastSeenAt'),
+    maximumAge: integer('maximumAge'),
+    allowsUnrated: boolean('allowsUnrated').notNull().default(false),
+    namesTravel: boolean('namesTravel').notNull().default(true),
+    showsActivity: boolean('showsActivity').notNull().default(false),
+    mostStreams: integer('mostStreams'),
+    qualityCeiling: text('qualityCeiling'),
+    takesTheirControls: boolean('takesTheirControls').notNull().default(true),
+    allowsDownloads: boolean('allowsDownloads').notNull().default(false),
+    takesTheirRequests: boolean('takesTheirRequests').notNull().default(false),
+    playsDirect: boolean('playsDirect').notNull().default(false),
+  },
+  (table) => [
+    uniqueIndex('linked_server_fingerprint_idx').on(table.fingerprint),
+    check(
+      'linked_server_state',
+      sql`${table.state} in ('awaitingThem', 'awaitingUs', 'linked', 'refused', 'unlinkedByThem', 'unlinked')`,
+    ),
+  ],
+);
+
+const linkGrant = pgTable(
+  'link_grant',
+  {
+    linkedServerId: text('linkedServerId')
+      .notNull()
+      .references(() => linkedServer.id, { onDelete: 'cascade' }),
+    libraryId: text('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    grantedAt: timestamp('grantedAt').notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.linkedServerId, table.libraryId] }),
+    index('link_grant_library_idx').on(table.libraryId),
+  ],
+);
+
+const remotePerson = pgTable(
+  'remote_person',
+  {
+    id: text('id').primaryKey(),
+    linkedServerId: text('linkedServerId')
+      .notNull()
+      .references(() => linkedServer.id, { onDelete: 'cascade' }),
+    pseudonym: text('pseudonym').notNull(),
+    name: text('name'),
+    firstSeenAt: timestamp('firstSeenAt').notNull().defaultNow(),
+    lastSeenAt: timestamp('lastSeenAt').notNull().defaultNow(),
+    blockedAt: timestamp('blockedAt'),
+  },
+  (table) => [uniqueIndex('remote_person_pseudonym_idx').on(table.linkedServerId, table.pseudonym)],
+);
+
+const federationAudit = pgTable(
+  'federation_audit',
+  {
+    id: text('id').primaryKey(),
+    linkedServerId: text('linkedServerId')
+      .notNull()
+      .references(() => linkedServer.id, { onDelete: 'cascade' }),
+    remotePersonId: text('remotePersonId').references(() => remotePerson.id, {
+      onDelete: 'set null',
+    }),
+    action: text('action').notNull(),
+    mediaId: text('mediaId'),
+    mediaTitle: text('mediaTitle'),
+    outcome: text('outcome').notNull(),
+    count: integer('count').notNull().default(1),
+    sameEventKey: text('sameEventKey').notNull(),
+    at: timestamp('at').notNull().defaultNow(),
+  },
+  (table) => [
+    index('federation_audit_server_idx').on(table.linkedServerId, table.at),
+    index('federation_audit_same_event_idx').on(table.sameEventKey, table.at),
+  ],
+);
+
 const notification = pgTable(
   'notification',
   {
@@ -1649,6 +1756,11 @@ export {
   jobTrigger,
   webhookSubscription,
   webhookDelivery,
+  federationAudit,
+  linkGrant,
+  linkInvite,
+  linkedServer,
+  remotePerson,
   notification,
   notificationPreference,
   pushSubscription,

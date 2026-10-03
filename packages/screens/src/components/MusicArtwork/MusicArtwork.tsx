@@ -3,6 +3,7 @@ import { motion, useReducedMotionConfig } from 'motion/react';
 import { MusicNote as MusicNoteIcon } from '@keyline-icons/react';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
+import { OriginMark } from '@ValenceUI/OriginMark';
 import { liquidSpring, stillTransition } from '@ValenceUI/animations/reveal';
 import type { MusicArtworkProps } from './MusicArtwork.types';
 
@@ -22,6 +23,7 @@ import type { MusicArtworkProps } from './MusicArtwork.types';
  * @param shape - Square for an album, round for a person.
  * @param isLifted - Whether it stands off the page on a shadow, as a cover shown large does.
  * @param travelsAs - The name the picture travels between places as, where it should.
+ * @param origin - The other server it comes from, marked in a corner, where it does.
  * @param className - Its size and anything else the caller's layout needs.
  */
 const MusicArtwork = ({
@@ -30,6 +32,7 @@ const MusicArtwork = ({
   shape = 'square',
   isLifted = false,
   travelsAs,
+  origin,
   className,
 }: MusicArtworkProps) => {
   const [hasFailed, setHasFailed] = useState<string | null>(null);
@@ -76,6 +79,10 @@ const MusicArtwork = ({
         />
       ) : (
         <span className="sr-only">{label}</span>
+      )}
+
+      {origin === undefined ? null : (
+        <OriginMark {...origin} className="absolute bottom-1.5 left-1.5 size-5" />
       )}
     </motion.span>
   );

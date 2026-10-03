@@ -146,6 +146,7 @@ const session = (overrides: Partial<ActiveSession> = {}): ActiveSession => ({
   profileName: 'Dan',
   isGuest: false,
   guestOf: null,
+  fromServer: null,
   deviceLabel: 'Chrome on macOS',
   clientKind: 'browser' as const,
   connectedAt: 0,

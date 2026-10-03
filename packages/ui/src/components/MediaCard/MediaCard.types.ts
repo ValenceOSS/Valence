@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { IconGlyph } from '@ValenceUI/Icon.types';
+import type { OriginMarkProps } from '@ValenceUI/OriginMark.types';
 
 type MediaCardShape = 'poster' | 'wide' | 'book';
 
@@ -10,12 +11,15 @@ type MediaCardCorner = {
   label: string;
 };
 
+type MediaCardOrigin = Omit<OriginMarkProps, 'className'>;
+
 type MediaCardProps = {
   title: string;
   eyebrow?: ReactNode;
   subtitle: ReactNode;
   badges?: string[];
   corner?: MediaCardCorner;
+  origin?: MediaCardOrigin;
   count?: number;
   countLabel?: string;
   imageUrl?: string;
@@ -27,4 +31,4 @@ type MediaCardProps = {
   className?: string;
 };
 
-export type { MediaCardCorner, MediaCardProps, MediaCardShape };
+export type { MediaCardCorner, MediaCardOrigin, MediaCardProps, MediaCardShape };

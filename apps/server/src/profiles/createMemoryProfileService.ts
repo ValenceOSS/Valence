@@ -50,6 +50,7 @@ const createMemoryProfileService = (
       avatar,
       askStillWatchingAfter: STILL_WATCHING_DEFAULT,
       showsWhatIamWatching: false,
+      prefersBestCopy: false,
       createdAt: stamp(),
       updatedAt: stamp(),
     };
@@ -96,6 +97,7 @@ const createMemoryProfileService = (
         avatar: request.avatar ?? held.profile.avatar,
         askStillWatchingAfter: request.askStillWatchingAfter ?? held.profile.askStillWatchingAfter,
         showsWhatIamWatching: request.showsWhatIamWatching ?? held.profile.showsWhatIamWatching,
+        prefersBestCopy: request.prefersBestCopy ?? held.profile.prefersBestCopy,
         updatedAt: stamp(),
       };
 

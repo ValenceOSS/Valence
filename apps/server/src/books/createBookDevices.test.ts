@@ -9,6 +9,7 @@ const entry = (clientId: string): PresenceEntry => ({
   profileId: 'me',
   profileName: 'Marques',
   guestOf: null,
+  fromServer: null,
   viaShare: null,
   address: null,
   deviceLabel: clientId,

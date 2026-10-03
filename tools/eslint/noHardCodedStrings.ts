@@ -145,8 +145,9 @@ type Place = 'quiet' | 'worded' | 'open';
 const createRule = ESLintUtils.RuleCreator(() => 'https://valence.local/no-hard-coded-strings');
 
 /**
- * Whether a piece of text is plainly for a machine: an identifier, a path, a list of directives
- * such as a cache policy, a style value such as a font stack, or a run of class names.
+ * Whether a piece of text is plainly for a machine: an identifier, a name run into a number such
+ * as a curve or a codec, a path, a list of directives such as a cache policy, a style value such
+ * as a font stack, or a run of class names.
  *
  * @param text - The text.
  */
@@ -163,7 +164,7 @@ const readsAsCode = (text: string): boolean => {
     return true;
   }
 
-  if (/^\p{Lu}\p{Ll}+\p{Lu}[\p{L}\d]*$|^[^\s]*[_/@#(-][^\s]*$/u.test(trimmed)) {
+  if (/^\p{Lu}\p{Ll}+\p{Lu}[\p{L}\d]*$|^\p{L}+\d+$|^[^\s]*[_/@#(-][^\s]*$/u.test(trimmed)) {
     return true;
   }
 

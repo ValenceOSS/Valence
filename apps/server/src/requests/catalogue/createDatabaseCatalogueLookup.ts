@@ -1,6 +1,14 @@
 import { concatenated } from '@ValenceDatabase/concatenated';
 import { and, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
-import { book, mediaItem, musicAlbum, musicArtist, series } from '#dialect/Schema';
+import {
+  book,
+  library,
+  linkedServer,
+  mediaItem,
+  musicAlbum,
+  musicArtist,
+  series,
+} from '#dialect/Schema';
 import { nameKey } from '@ValenceServer/music/nameKey';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { CatalogueLookup, NamedBook } from '@ValenceServer/requests/catalogue/CatalogueLookup';
@@ -45,11 +53,13 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
       db
         .select({ key: mediaItem.externalId, id: mediaItem.id })
         .from(mediaItem)
+        .innerJoin(library, eq(library.id, mediaItem.libraryId))
         .where(
           and(
             inArray(mediaItem.externalId, wanted),
             isNull(mediaItem.seriesId),
             isNull(mediaItem.parentId),
+            isNull(library.linkedServerId),
           ),
         ),
     ),
@@ -59,7 +69,8 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
       db
         .select({ key: series.externalId, id: series.id })
         .from(series)
-        .where(inArray(series.externalId, wanted)),
+        .innerJoin(library, eq(library.id, series.libraryId))
+        .where(and(inArray(series.externalId, wanted), isNull(library.linkedServerId))),
     ),
 
   episodesHeld: async (tmdbId) => {
@@ -89,7 +100,8 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
       db
         .select({ key: musicArtist.musicbrainzId, id: musicArtist.id })
         .from(musicArtist)
-        .where(inArray(musicArtist.musicbrainzId, wanted)),
+        .innerJoin(library, eq(library.id, musicArtist.libraryId))
+        .where(and(inArray(musicArtist.musicbrainzId, wanted), isNull(library.linkedServerId))),
     ),
 
   albums: (releaseGroupIds) =>
@@ -97,10 +109,12 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
       db
         .select({ key: musicAlbum.releaseGroupMusicbrainzId, id: musicAlbum.id })
         .from(musicAlbum)
+        .innerJoin(library, eq(library.id, musicAlbum.libraryId))
         .where(
           and(
             isNotNull(musicAlbum.releaseGroupMusicbrainzId),
             inArray(musicAlbum.releaseGroupMusicbrainzId, wanted),
+            isNull(library.linkedServerId),
           ),
         ),
     ),
@@ -110,7 +124,8 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
       db
         .select({ key: musicArtist.nameKey, id: musicArtist.id })
         .from(musicArtist)
-        .where(inArray(musicArtist.nameKey, wanted)),
+        .innerJoin(library, eq(library.id, musicArtist.libraryId))
+        .where(and(inArray(musicArtist.nameKey, wanted), isNull(library.linkedServerId))),
     ),
 
   albumsNamed: (titleKeys) =>
@@ -122,8 +137,52 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
         })
         .from(musicAlbum)
         .innerJoin(musicArtist, eq(musicArtist.id, musicAlbum.artistId))
-        .where(inArray(concatenated(musicArtist.nameKey, '/', musicAlbum.titleKey), wanted)),
+        .innerJoin(library, eq(library.id, musicAlbum.libraryId))
+        .where(
+          and(
+            inArray(concatenated(musicArtist.nameKey, '/', musicAlbum.titleKey), wanted),
+            isNull(library.linkedServerId),
+          ),
+        ),
     ),
+
+  elsewhere: async (tmdbIds) => {
+    if (tmdbIds.length === 0) {
+      return new Map();
+    }
+
+    const wanted = [...new Set(tmdbIds)];
+    const [films, programmes] = await Promise.all([
+      db
+        .select({ key: mediaItem.externalId, id: mediaItem.id, server: linkedServer.name })
+        .from(mediaItem)
+        .innerJoin(library, eq(library.id, mediaItem.libraryId))
+        .innerJoin(linkedServer, eq(linkedServer.id, library.linkedServerId))
+        .where(
+          and(
+            inArray(mediaItem.externalId, wanted),
+            isNull(mediaItem.seriesId),
+            isNull(mediaItem.parentId),
+            eq(linkedServer.state, 'linked'),
+          ),
+        ),
+      db
+        .select({ key: series.externalId, id: series.id, server: linkedServer.name })
+        .from(series)
+        .innerJoin(library, eq(library.id, series.libraryId))
+        .innerJoin(linkedServer, eq(linkedServer.id, library.linkedServerId))
+        .where(and(inArray(series.externalId, wanted), eq(linkedServer.state, 'linked'))),
+    ]);
+    const found = new Map<string, { mediaId: string; fromServer: string }>();
+
+    for (const row of [...films, ...programmes]) {
+      if (row.key !== null && !found.has(row.key)) {
+        found.set(row.key, { mediaId: row.id, fromServer: row.server });
+      }
+    }
+
+    return found;
+  },
 
   booksNamed: async (wanted: readonly NamedBook[]) => {
     if (wanted.length === 0) {
@@ -133,10 +192,14 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
     const held = await db
       .select({ id: book.id, title: book.title, authors: book.authors })
       .from(book)
+      .innerJoin(library, eq(library.id, book.libraryId))
       .where(
-        inArray(sql`lower(${book.title})`, [
-          ...new Set(wanted.map((one) => one.title.toLowerCase())),
-        ]),
+        and(
+          inArray(sql`lower(${book.title})`, [
+            ...new Set(wanted.map((one) => one.title.toLowerCase())),
+          ]),
+          isNull(library.linkedServerId),
+        ),
       );
 
     const keys = new Set(wanted.map((one) => one.key));

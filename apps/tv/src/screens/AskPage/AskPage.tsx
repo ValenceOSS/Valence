@@ -15,6 +15,8 @@ import { DownloadPanel } from '@ValenceTv/components/DownloadPanel/DownloadPanel
 import { TitleSpread } from '@ValenceTv/components/TitleSpread/TitleSpread';
 import { joinFacts } from '@ValenceTv/library/joinFacts';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { askLinkedServer } from '@ValenceClient/linking/askLinkedServer';
+import { linkingQueries } from '@ValenceClient/query/linkingQueries';
 import type { CatalogueSeason, MediaRequestAsk } from '@ValenceContracts/schemas/MediaRequest';
 import type { AskPageProps } from './AskPage.types';
 import { say } from '@ValenceI18n/say';
@@ -56,7 +58,10 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
       query.state.data?.standing.status === 'requested' ? FOLLOWED_EVERY_MS : false,
   });
   const title = found.data ?? null;
-  const isAskable = title?.standing.status === 'askable';
+  const isElsewhere = title?.standing.status === 'linked';
+  const faces = useQuery(linkingQueries.faces());
+  const isAskable =
+    title?.standing.status === 'askable' || (isElsewhere && title.standing.requestId === null);
   const seasons = useQuery({
     ...requestsQueries.seriesSeasons(kind === 'series' && title !== null ? Number(id) : null),
   });
@@ -256,11 +261,32 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
             />
           ) : null}
 
+          {isElsewhere && kind === 'film' && title.standing.mediaId !== null ? (
+            <ActionRow
+              label={say('common.watchOnName', {
+                name: title.standing.fromServer ?? say('common.linkedServers'),
+              })}
+              icon={Play}
+              hasPreferredFocus
+              onPress={() => {
+                if (title.standing.mediaId !== null) {
+                  onOpenFilm(title.standing.mediaId);
+                }
+              }}
+            />
+          ) : null}
+
           {isAskable && kind === 'film' ? (
             <ActionRow
-              label={isBusy ? say('tv.askPage.requesting') : say('common.request')}
+              label={
+                isBusy
+                  ? say('tv.askPage.requesting')
+                  : isElsewhere
+                    ? say('common.requestHere')
+                    : say('common.request')
+              }
               icon={Plus}
-              hasPreferredFocus
+              hasPreferredFocus={!isElsewhere}
               onPress={() => {
                 if (!isBusy) {
                   ask(askingFor(title, null, []));
@@ -268,6 +294,32 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
               }}
             />
           ) : null}
+
+          {isAskable && kind === 'film'
+            ? (faces.data ?? [])
+                .filter((server) => server.takesRequests && server.isReachable)
+                .map((server) => (
+                  <ActionRow
+                    key={server.id}
+                    label={say('common.askName', { name: server.name })}
+                    icon={Plus}
+                    onPress={() => {
+                      if (isBusy) {
+                        return;
+                      }
+
+                      setIsBusy(true);
+                      void askLinkedServer(server.id, askingFor(title, null, []))
+                        .then((sent) => {
+                          setProblem(sent.refusal?.message ?? null);
+                        })
+                        .finally(() => {
+                          setIsBusy(false);
+                        });
+                    }}
+                  />
+                ))
+            : null}
 
           {kind === 'series'
             ? (seasons.data ?? []).map((season) => {

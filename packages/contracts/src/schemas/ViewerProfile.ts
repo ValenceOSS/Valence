@@ -72,6 +72,7 @@ const ViewerProfileSchema = z.object({
   avatar: AvatarSchema,
   askStillWatchingAfter: StillWatchingSchema,
   showsWhatIamWatching: z.boolean().default(false),
+  prefersBestCopy: z.boolean().default(false),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -82,6 +83,7 @@ const ViewerProfileRequestSchema = z.object({
   avatar: AvatarSchema.optional(),
   askStillWatchingAfter: HowOftenToAskSchema.optional(),
   showsWhatIamWatching: z.boolean().optional(),
+  prefersBestCopy: z.boolean().optional(),
 });
 
 const ViewerProfileListSchema = z.object({ profiles: z.array(ViewerProfileSchema) });

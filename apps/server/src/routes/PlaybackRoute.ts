@@ -253,6 +253,9 @@ const trickplayFileRoute = createRoute({
 });
 
 export {
+  ExplainResponse,
+  StartResponse,
+  TrickplayResponse,
   explainRoute,
   startRoute,
   sessionFileRoute,

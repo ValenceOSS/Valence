@@ -18,6 +18,8 @@ import { say } from '@ValenceI18n/say';
  * @param onFocus - Told when the remote lands on any of its pills.
  * @param isFiltered - Whether any filter narrows the wall, which lights its pill.
  * @param onFilters - Told to open the filters.
+ * @param where - Which server's titles are shown and how to choose another, where any come from a
+ *   linked server.
  */
 const ArrangementRow = ({
   arrangement,
@@ -25,6 +27,7 @@ const ArrangementRow = ({
   onFocus,
   isFiltered,
   onFilters,
+  where,
 }: ArrangementRowProps) => (
   <TVFocusGuideView autoFocus style={styles.row}>
     <View style={styles.orders}>
@@ -44,6 +47,17 @@ const ArrangementRow = ({
     </View>
 
     <View style={styles.orders}>
+      {where === undefined ? null : (
+        <Button
+          label={where.label}
+          variant="soft"
+          size="md"
+          isPill
+          onFocus={onFocus}
+          onPress={where.onPress}
+        />
+      )}
+
       <Button
         label={say('common.filters')}
         variant={isFiltered ? 'primary' : 'soft'}
