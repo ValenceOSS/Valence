@@ -6,6 +6,7 @@ type ProfileDraft = {
   avatar: Avatar;
   askStillWatchingAfter: number;
   showsWhatIamWatching: boolean;
+  prefersBestCopy: boolean;
   photo: File | null;
 };
 

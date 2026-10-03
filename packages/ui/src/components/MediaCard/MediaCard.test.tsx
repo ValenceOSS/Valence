@@ -178,4 +178,17 @@ describe('MediaCard', () => {
 
     expect(screen.queryByRole('img', { name: /left/ })).not.toBeInTheDocument();
   });
+
+  it('wears the mark of the server something comes from, where that is another', () => {
+    render(
+      <MediaCard
+        title="Arrival"
+        subtitle="2016"
+        onSelect={vi.fn()}
+        origin={{ initial: 'F', colour: '#e8503a', ink: 'light', label: 'From Films' }}
+      />,
+    );
+
+    expect(screen.getByRole('img', { name: 'From Films' })).toHaveTextContent('F');
+  });
 });

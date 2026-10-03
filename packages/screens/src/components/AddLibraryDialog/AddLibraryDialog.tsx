@@ -11,6 +11,7 @@ import { Icon } from '@ValenceUI/Icon';
 import { Folder as FolderIcon } from '@keyline-icons/react';
 import { FolderBrowser } from '@ValenceScreens/components/AdminArea/components/FolderBrowser/FolderBrowser';
 import { SELECTABLE_LIBRARY_KINDS } from '@ValenceContracts/schemas/Library';
+import { LIBRARY_KIND_NAMES } from '@ValenceClient/library/LIBRARY_KIND_NAMES';
 import { LIBRARY_PRESETS } from './LIBRARY_PRESETS';
 import { createLibrary } from '@ValenceClient/library/fetchLibrary';
 import { validateAddLibraryForm } from './validateAddLibraryForm';
@@ -19,13 +20,6 @@ import type { AddLibraryDialogProps, AddLibraryFormErrors } from './AddLibraryDi
 import { say } from '@ValenceI18n/say';
 
 const CUSTOM = 'custom';
-
-const KIND_LABELS: Record<LibraryKind, string> = {
-  movies: say('common.movies'),
-  shows: say('common.shows'),
-  music: say('common.music'),
-  books: say('common.books'),
-};
 
 /**
  * Adds a library: what to call it, and the folder on the machine running Valence that holds it. Does not
@@ -173,7 +167,7 @@ const AddLibraryDialog = ({ isOpen, onClose, onCreated }: AddLibraryDialogProps)
                     }}
                   >
                     {say('screens.adminArea.addLibraryDialog.readsLikeKINDLABELS', {
-                      KIND_LABELS: KIND_LABELS[entry].toLowerCase(),
+                      KIND_LABELS: LIBRARY_KIND_NAMES[entry].toLowerCase(),
                     })}
                   </Button>
                 ))}

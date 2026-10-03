@@ -135,6 +135,7 @@ const streaming = (bufferedAheadSeconds: number, isPlaying = true): ActiveSessio
   profileName: 'Dan',
   isGuest: false,
   guestOf: null,
+  fromServer: null,
   deviceLabel: 'Chrome on macOS',
   clientKind: 'browser' as const,
   connectedAt: 0,

@@ -25,19 +25,26 @@ const STATE_TONES: Readonly<Record<LinkState, BadgeTone>> = {
   linked: 'success',
   refused: 'danger',
   unlinkedByThem: 'quiet',
+  unlinked: 'quiet',
 };
 
 /**
  * The servers this one is linked with, or on the way to being: each by its name and colour, where
  * it is, its fingerprint, how things stand and when it last answered, with what can be done about
  * it — approving or refusing a server asking to link, asking again after one this server is waiting
- * on, unlinking, or forgetting one that refused or unlinked. Unlinking is asked about first.
+ * on, managing what a linked one is shared, unlinking, or forgetting one that refused or unlinked.
+ * Unlinking is asked about first.
  *
  * @param servers - The servers.
+ * @param managing - The linked server whose sharing is open, if any.
+ * @param onManage - Told which linked server to open, or to close the one that is.
  */
-const LinkedServerList = ({ servers }: LinkedServerListProps) => {
+const LinkedServerList = ({ servers, managing, onManage }: LinkedServerListProps) => {
   const cache = useQueryClient();
-  const [unlinking, setUnlinking] = useState<LinkedServer | null>(null);
+  const [asking, setAsking] = useState<{
+    server: LinkedServer;
+    about: 'unlink' | 'forget';
+  } | null>(null);
   const [working, setWorking] = useState<string | null>(null);
   const reread = () => cache.invalidateQueries({ queryKey: adminQueries.linking().queryKey });
 
@@ -61,14 +68,16 @@ const LinkedServerList = ({ servers }: LinkedServerListProps) => {
       });
   };
 
-  const forget = (server: LinkedServer) => {
+  const forget = (server: LinkedServer, about: 'unlink' | 'forget') => {
     setWorking(server.id);
 
     void unlinkServer(server.id)
       .then(async (refusal) => {
         if (refusal === null) {
           notify.worked(
-            say('screens.adminArea.linkedServersPanel.unlinkedName', { name: server.name }),
+            about === 'unlink'
+              ? say('screens.adminArea.linkedServersPanel.unlinkedName', { name: server.name })
+              : say('screens.adminArea.linkedServersPanel.forgotName', { name: server.name }),
           );
         } else {
           notify.failed(refusal.message);
@@ -78,27 +87,43 @@ const LinkedServerList = ({ servers }: LinkedServerListProps) => {
       })
       .finally(() => {
         setWorking(null);
-        setUnlinking(null);
+        setAsking(null);
       });
   };
 
   return (
     <PanelCard title={say('common.linkedServers')} isFlush>
       <ConfirmDialog
-        title={say('screens.adminArea.linkedServersPanel.unlinkNameAsk', {
-          name: unlinking?.name ?? '',
-        })}
-        detail={say('screens.adminArea.linkedServersPanel.neitherServerReachesTheOther')}
-        confirmLabel={say('screens.adminArea.linkedServersPanel.unlink')}
+        title={
+          asking?.about === 'forget'
+            ? say('screens.adminArea.linkedServersPanel.forgetNameAsk', {
+                name: asking.server.name,
+              })
+            : say('screens.adminArea.linkedServersPanel.unlinkNameAsk', {
+                name: asking?.server.name ?? '',
+              })
+        }
+        detail={
+          asking?.about === 'forget'
+            ? say('screens.adminArea.linkedServersPanel.everythingKeptFromNameGoes', {
+                name: asking.server.name,
+              })
+            : say('screens.adminArea.linkedServersPanel.neitherServerReachesTheOther')
+        }
+        confirmLabel={
+          asking?.about === 'forget'
+            ? say('common.forget')
+            : say('screens.adminArea.linkedServersPanel.unlink')
+        }
         isDestructive
-        isBusy={unlinking !== null && working === unlinking.id}
-        isOpen={unlinking !== null}
+        isBusy={asking !== null && working === asking.server.id}
+        isOpen={asking !== null}
         onClose={() => {
-          setUnlinking(null);
+          setAsking(null);
         }}
         onConfirm={() => {
-          if (unlinking !== null) {
-            forget(unlinking);
+          if (asking !== null) {
+            forget(asking.server, asking.about);
           }
         }}
       />
@@ -144,6 +169,22 @@ const LinkedServerList = ({ servers }: LinkedServerListProps) => {
                 </div>
 
                 <div className="flex gap-1">
+                  {server.state === 'linked' ? (
+                    <Button
+                      variant={managing === server.id ? 'glossy' : 'ghost'}
+                      size="sm"
+                      aria-pressed={managing === server.id}
+                      label={say('screens.adminArea.linkedServersPanel.manageName', {
+                        name: server.name,
+                      })}
+                      onClick={() => {
+                        onManage(managing === server.id ? null : server.id);
+                      }}
+                    >
+                      {say('common.manage')}
+                    </Button>
+                  ) : null}
+
                   {server.state === 'awaitingUs' ? (
                     <>
                       <Button
@@ -182,13 +223,15 @@ const LinkedServerList = ({ servers }: LinkedServerListProps) => {
                     </Button>
                   ) : null}
 
-                  {server.state === 'refused' || server.state === 'unlinkedByThem' ? (
+                  {server.state === 'refused' ||
+                  server.state === 'unlinkedByThem' ||
+                  server.state === 'unlinked' ? (
                     <Button
                       variant="ghost"
                       size="sm"
                       isLoading={isWorking}
                       onClick={() => {
-                        forget(server);
+                        setAsking({ server, about: 'forget' });
                       }}
                     >
                       {say('common.forget')}
@@ -199,7 +242,7 @@ const LinkedServerList = ({ servers }: LinkedServerListProps) => {
                       size="sm"
                       disabled={isWorking}
                       onClick={() => {
-                        setUnlinking(server);
+                        setAsking({ server, about: 'unlink' });
                       }}
                     >
                       {say('screens.adminArea.linkedServersPanel.unlink')}

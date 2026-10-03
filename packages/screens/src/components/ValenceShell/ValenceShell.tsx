@@ -13,6 +13,7 @@ import { DownloadsDialog } from '@ValenceScreens/components/DownloadsDialog/Down
 import { ShareDialog } from '@ValenceScreens/components/ShareDialog/ShareDialog';
 import { useMayRequest } from '@ValenceClient/requests/useMayRequest';
 import { useSeasonMates } from '@ValenceScreens/library/useSeasonMates';
+import { linkingQueries } from '@ValenceClient/query/linkingQueries';
 import type { ShareSubject } from '@ValenceClient/sharing/newShareFor.types';
 import { StillWatchingDialog } from '@ValenceScreens/components/StillWatchingDialog/StillWatchingDialog';
 import { NotificationBell } from '@ValenceScreens/components/NotificationBell/NotificationBell';
@@ -173,13 +174,19 @@ const ValenceShell = () => {
   const libraries = useQuery(libraryQueries.all());
 
   const libraryKinds = [...new Set((libraries.data ?? []).map((one) => one.kind))];
+  const faces = useQuery(linkingQueries.faces());
 
   const libraryChoices = useMemo(
     () =>
-      libraryChoicesFor(libraries.data ?? [], place.library, (library, section) => {
-        go({ section, library });
-      }),
-    [libraries.data, place.library, go],
+      libraryChoicesFor(
+        libraries.data ?? [],
+        faces.data ?? [],
+        place.library,
+        (library, section) => {
+          go({ section, library });
+        },
+      ),
+    [libraries.data, faces.data, place.library, go],
   );
 
   const requestsChoices = useMemo(

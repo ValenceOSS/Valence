@@ -9,6 +9,9 @@ import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { changeLinkIdentity } from '@ValenceClient/admin/changeLinkIdentity';
 import { groupFingerprint } from '@ValenceClient/linking/groupFingerprint';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
+import { SettingList } from '@ValenceUI/SettingList';
+import { SettingRow } from '@ValenceUI/SettingRow';
+import { Switch } from '@ValenceUI/Switch';
 import type { ThisServerCardProps } from './ThisServerCard.types';
 import { say } from '@ValenceI18n/say';
 
@@ -76,6 +79,40 @@ const ThisServerCard = ({ identity }: ThisServerCardProps) => {
         </div>
 
         <ColourChoice label={say('common.colour')} value={colour} onChange={setColour} />
+
+        <SettingList>
+          <SettingRow
+            title={say('screens.adminArea.linkedServersPanel.dropRequestsALinkedServerHas')}
+            description={say('screens.adminArea.linkedServersPanel.whenALinkedServerGetsSomething')}
+          >
+            <Switch
+              label={say('screens.adminArea.linkedServersPanel.dropRequestsALinkedServerHas')}
+              isLabelHidden
+              isOn={identity.dropsRequestsElsewhere}
+              disabled={isSaving}
+              onToggle={() => {
+                setIsSaving(true);
+
+                void changeLinkIdentity({
+                  dropsRequestsElsewhere: !identity.dropsRequestsElsewhere,
+                })
+                  .then(async (sent) => {
+                    if (sent.refusal !== null) {
+                      notify.failed(sent.refusal.message);
+
+                      return;
+                    }
+
+                    notify.worked(say('screens.adminArea.linkedServersPanel.savedThisServer'));
+                    await cache.invalidateQueries({ queryKey: adminQueries.linking().queryKey });
+                  })
+                  .finally(() => {
+                    setIsSaving(false);
+                  });
+              }}
+            />
+          </SettingRow>
+        </SettingList>
 
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="flex flex-col gap-1">

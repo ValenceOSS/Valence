@@ -42,13 +42,19 @@ beforeEach(() => {
 
 describe('LinkedServerList', () => {
   it('says so when nothing is linked', () => {
-    renderInAnAddress(<LinkedServerList servers={[]} />);
+    renderInAnAddress(<LinkedServerList servers={[]} managing={null} onManage={vi.fn()} />);
 
     expect(screen.getByText('No servers are linked yet.')).toBeInTheDocument();
   });
 
   it('approves a server asking to link', async () => {
-    renderInAnAddress(<LinkedServerList servers={[aServer({ state: 'awaitingUs' })]} />);
+    renderInAnAddress(
+      <LinkedServerList
+        servers={[aServer({ state: 'awaitingUs' })]}
+        managing={null}
+        onManage={vi.fn()}
+      />,
+    );
 
     expect(screen.getByText('Asking to link')).toBeInTheDocument();
 
@@ -60,7 +66,13 @@ describe('LinkedServerList', () => {
   });
 
   it('asks again after a server it is waiting on', async () => {
-    renderInAnAddress(<LinkedServerList servers={[aServer({ state: 'awaitingThem' })]} />);
+    renderInAnAddress(
+      <LinkedServerList
+        servers={[aServer({ state: 'awaitingThem' })]}
+        managing={null}
+        onManage={vi.fn()}
+      />,
+    );
 
     await userEvent.click(screen.getByRole('button', { name: 'Check again' }));
 
@@ -70,7 +82,9 @@ describe('LinkedServerList', () => {
   });
 
   it('unlinks only once asked', async () => {
-    renderInAnAddress(<LinkedServerList servers={[aServer()]} />);
+    renderInAnAddress(
+      <LinkedServerList servers={[aServer()]} managing={null} onManage={vi.fn()} />,
+    );
 
     await userEvent.click(screen.getByRole('button', { name: 'Unlink' }));
 
@@ -90,13 +104,62 @@ describe('LinkedServerList', () => {
     });
   });
 
-  it('forgets a server that unlinked, without asking', async () => {
-    renderInAnAddress(<LinkedServerList servers={[aServer({ state: 'unlinkedByThem' })]} />);
+  it('forgets a server that unlinked only once asked, saying what goes with it', async () => {
+    renderInAnAddress(
+      <LinkedServerList
+        servers={[aServer({ state: 'unlinkedByThem' })]}
+        managing={null}
+        onManage={vi.fn()}
+      />,
+    );
 
     await userEvent.click(screen.getByRole('button', { name: 'Forget' }));
+
+    expect(unlinkServer).not.toHaveBeenCalled();
+    expect(await screen.findByText('Forget Films?')).toBeInTheDocument();
+
+    const confirm = screen.getAllByRole('button', { name: 'Forget' }).at(-1);
+
+    if (confirm === undefined) {
+      throw new Error('There was no button to confirm with.');
+    }
+
+    await userEvent.click(confirm);
 
     await waitFor(() => {
       expect(unlinkServer).toHaveBeenCalledWith(aServer().id);
     });
+  });
+
+  it('offers to forget a server this one unlinked', () => {
+    renderInAnAddress(
+      <LinkedServerList
+        servers={[aServer({ state: 'unlinked' })]}
+        managing={null}
+        onManage={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Unlinked')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Forget' })).toBeInTheDocument();
+  });
+
+  it('opens a linked server to manage, and closes it again', async () => {
+    const onManage = vi.fn();
+    const { rerender } = renderInAnAddress(
+      <LinkedServerList servers={[aServer()]} managing={null} onManage={onManage} />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Manage Films' }));
+
+    expect(onManage).toHaveBeenLastCalledWith(aServer().id);
+
+    rerender(
+      <LinkedServerList servers={[aServer()]} managing={aServer().id} onManage={onManage} />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Manage Films' }));
+
+    expect(onManage).toHaveBeenLastCalledWith(null);
   });
 });

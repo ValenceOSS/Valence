@@ -6,6 +6,7 @@ import { Badge } from '@ValenceUI/Badge';
 import { Check as CheckIcon } from '@keyline-icons/react';
 import { Icon } from '@ValenceUI/Icon';
 import { Tooltip } from '@ValenceUI/Tooltip';
+import { OriginMark } from '@ValenceUI/OriginMark';
 import { revealTransition } from '@ValenceUI/animations/reveal';
 import { CARD_HOVER, CARD_PRESS } from '@ValenceUI/animations/motion';
 import { WatchedBar } from '@ValenceUI/WatchedBar';
@@ -29,6 +30,8 @@ const SHAPE_CLASSES: Record<MediaCardShape, string> = {
  * @param badges - Short facts to show over the artwork, such as the format.
  * @param corner - A mark in the top right corner of the artwork, for one fact that is better shown as an
  *   icon than said, such as that it is already in the library.
+ * @param origin - Where the thing comes from, where that is another server: its initial in its colour,
+ *   in the bottom left corner of the artwork, named on hover. Nothing is drawn for this server's own.
  * @param count - A number to show in the top right corner of the artwork, such as how many episodes
  *   are left to watch; nothing is drawn for none.
  * @param countLabel - What the number means, read out and shown on hover.
@@ -49,6 +52,7 @@ const MediaCard = ({
   subtitle,
   badges = [],
   corner,
+  origin,
   count,
   countLabel,
   imageUrl,
@@ -157,6 +161,10 @@ const MediaCard = ({
                   </span>
                 </Tooltip>
               </span>
+            )}
+
+            {origin === undefined ? null : (
+              <OriginMark {...origin} className="absolute bottom-3 left-3" />
             )}
 
             {watchedFraction === undefined || watchedFraction < 1 ? null : (

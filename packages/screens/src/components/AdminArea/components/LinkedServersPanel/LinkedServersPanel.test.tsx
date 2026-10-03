@@ -16,6 +16,7 @@ const LINKING: Linking = {
     name: 'Anime',
     colour: '#3a8ee8',
     address: 'https://anime.example',
+    dropsRequestsElsewhere: false,
     protocols: ['valence-link/1'],
     publicKey: { kty: 'OKP', crv: 'Ed25519', x: 'AAAA' },
     fingerprint: '0123456789abcdef',

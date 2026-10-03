@@ -16,6 +16,7 @@ const IDENTITY: LinkIdentity = {
   name: 'Anime',
   colour: '#3a8ee8',
   address: 'https://anime.example',
+  dropsRequestsElsewhere: false,
   protocols: ['valence-link/1'],
   publicKey: { kty: 'OKP', crv: 'Ed25519', x: 'AAAA' },
   fingerprint: '0123456789abcdef',
@@ -47,6 +48,18 @@ describe('ThisServerCard', () => {
       expect(changeLinkIdentity).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'Kai’s Valence' }),
       );
+    });
+  });
+
+  it('drops requests a linked server has, once asked to', async () => {
+    renderInAnAddress(<ThisServerCard identity={IDENTITY} />);
+
+    await userEvent.click(
+      screen.getByRole('switch', { name: 'Drop requests a linked server has' }),
+    );
+
+    await waitFor(() => {
+      expect(changeLinkIdentity).toHaveBeenCalledWith({ dropsRequestsElsewhere: true });
     });
   });
 });

@@ -50,11 +50,7 @@ const RequestHistoryTab = ({ request }: RequestHistoryTabProps) => {
   }
 
   if (said.data.length === 0) {
-    return (
-      <p className="font-body text-sm text-text-muted">
-        {say('screens.requestDetailDialog.requestHistoryTab.nothingYet')}
-      </p>
-    );
+    return <p className="font-body text-sm text-text-muted">{say('common.nothingYet')}</p>;
   }
 
   return (

@@ -22,6 +22,7 @@ const saveProfileDraft = async (profile: ViewerProfile, draft: ProfileDraft): Pr
       draft.avatar,
       draft.askStillWatchingAfter,
       draft.showsWhatIamWatching,
+      draft.prefersBestCopy,
     )
   );
 };

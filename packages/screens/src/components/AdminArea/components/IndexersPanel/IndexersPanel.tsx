@@ -210,7 +210,7 @@ const IndexersPanel = () => {
 
               {row.original.sourceAppId === null ? null : (
                 <Badge size="sm" tone="outline">
-                  {say('screens.adminArea.indexersPanel.fromName', {
+                  {say('common.fromName', {
                     name: appNames.get(row.original.sourceAppId) ?? say('common.prowlarr'),
                   })}
                 </Badge>

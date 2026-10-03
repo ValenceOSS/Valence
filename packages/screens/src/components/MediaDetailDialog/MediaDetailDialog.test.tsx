@@ -9,6 +9,10 @@ import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import type * as MotionReact from 'motion/react';
 import type * as FetchTrickplay from '@ValenceClient/playback/fetchTrickplay';
+import type * as CurrentProfile from '@ValenceClient/profiles/currentProfile';
+import type * as FetchProfiles from '@ValenceClient/profiles/fetchProfiles';
+import { aLibrary } from '@ValenceClient/testing/aLibrary';
+import { aLinkedServerFace } from '@ValenceClient/testing/aLinkedServerFace';
 
 const motion = vi.hoisted(() => ({ isReduced: false }));
 
@@ -20,8 +24,43 @@ vi.mock('motion/react', async () => ({
 
 const detailMock = vi.hoisted(() => vi.fn());
 
+const librariesMock = vi.hoisted(() => vi.fn());
+
 vi.mock('@ValenceClient/library/fetchLibrary', () => ({
   fetchMediaDetail: detailMock,
+  fetchLibraries: librariesMock,
+  fetchLibraryItems: vi.fn(),
+}));
+
+const facesMock = vi.hoisted(() => vi.fn());
+
+vi.mock('@ValenceClient/linking/fetchLinkedServerFaces', () => ({
+  fetchLinkedServerFaces: facesMock,
+}));
+
+const watcher = vi.hoisted(() => ({ prefersBestCopy: false }));
+
+vi.mock('@ValenceClient/profiles/currentProfile', async (importOriginal) => ({
+  ...(await importOriginal<typeof CurrentProfile>()),
+  readCurrentProfile: () => 'profile-1',
+}));
+
+vi.mock('@ValenceClient/profiles/fetchProfiles', async (importOriginal) => ({
+  ...(await importOriginal<typeof FetchProfiles>()),
+  fetchProfiles: () =>
+    Promise.resolve([
+      {
+        id: 'profile-1',
+        name: 'Dan',
+        colour: '#e8503a',
+        avatar: { kind: 'initial', font: 'gilroy' },
+        askStillWatchingAfter: 3,
+        showsWhatIamWatching: false,
+        prefersBestCopy: watcher.prefersBestCopy,
+        createdAt: '2026-08-01T00:00:00.000Z',
+        updatedAt: '2026-08-01T00:00:00.000Z',
+      },
+    ]),
 }));
 
 const downloadsMock = vi.hoisted(() => vi.fn());
@@ -133,6 +172,10 @@ beforeEach(() => {
   downloadsMock.mockResolvedValue([]);
   collectionsMock.mockReset();
   collectionsMock.mockResolvedValue([]);
+  librariesMock.mockReset();
+  librariesMock.mockResolvedValue([]);
+  facesMock.mockReset();
+  facesMock.mockResolvedValue([]);
 });
 
 afterEach(() => {
@@ -140,6 +183,7 @@ afterEach(() => {
   permissions.mayOverride = false;
   permissions.mayEditLibraries = false;
   scrubs.areBuilt = true;
+  watcher.prefersBestCopy = false;
 });
 
 const openTheMenu = async (): Promise<void> => {
@@ -1016,5 +1060,79 @@ describe('playing it on a television', () => {
     await pressAction('Play on TV');
 
     expect(onPlayOn).toHaveBeenCalledWith(summary, 0);
+  });
+});
+
+describe('a title from a linked server', () => {
+  const FILMS = aLinkedServerFace();
+  const theirCopy: MediaSummary = {
+    ...summary,
+    id: 'theirs-1',
+    libraryId: 'theirs',
+    parentId: 'media-1',
+    height: 2160,
+    versionLabel: '4K · Films',
+  };
+
+  beforeEach(() => {
+    librariesMock.mockResolvedValue([
+      aLibrary({ id: 'library-1' }),
+      aLibrary({ id: 'theirs', linkedServerId: FILMS.id }),
+    ]);
+    facesMock.mockResolvedValue([FILMS]);
+  });
+
+  it('says which server it is from', async () => {
+    renderInAnAddress(
+      <MediaDetailDialog
+        media={{ ...summary, libraryId: 'theirs' }}
+        onClose={vi.fn()}
+        onPlay={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByText('From Films')).toBeInTheDocument();
+  });
+
+  it('says so where its server cannot be reached', async () => {
+    facesMock.mockResolvedValue([{ ...FILMS, isReachable: false }]);
+
+    renderInAnAddress(
+      <MediaDetailDialog
+        media={{ ...summary, libraryId: 'theirs' }}
+        onClose={vi.fn()}
+        onPlay={vi.fn()}
+      />,
+    );
+
+    expect(
+      await screen.findByText(
+        'Films cannot be reached right now. Its titles can be browsed, but not played until it is back.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('names the linked servers that also have a title held here', async () => {
+    detailMock.mockResolvedValue({ ...detail(), versions: [theirCopy] });
+
+    renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
+
+    expect(await screen.findByText('Also on Films')).toBeInTheDocument();
+  });
+
+  it('plays the other server’s copy from where somebody got to, being the same film', async () => {
+    const onPlay = vi.fn();
+    watcher.prefersBestCopy = true;
+    detailMock.mockResolvedValue({ ...detail(), versions: [theirCopy] });
+
+    renderInAnAddress(
+      <MediaDetailDialog media={summary} resumeSeconds={600} onClose={vi.fn()} onPlay={onPlay} />,
+    );
+
+    const play = await screen.findByRole('button', { name: /^(Play|Resume).*4K/u });
+
+    await userEvent.setup().click(play);
+
+    expect(onPlay).toHaveBeenCalledWith(expect.objectContaining({ id: 'theirs-1' }), 600);
   });
 });
