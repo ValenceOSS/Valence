@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { useMountArrival } from '@ValenceScreens/motion/useMountArrival';
+import { fadeVariants, stillTransition } from '@ValenceUI/animations/reveal';
 import { cn } from '@ValenceUI/cn';
 import type { PanelCardProps } from './PanelCard.types';
 
@@ -35,11 +35,12 @@ const PanelCard = ({
   isCompact = false,
   className,
 }: PanelCardProps) => {
-  const arrivalOf = useMountArrival();
-
   return (
     <motion.section
-      {...arrivalOf()}
+      variants={fadeVariants}
+      initial="hidden"
+      animate="shown"
+      transition={stillTransition}
       className={cn(
         'valence-card-shell group/card flex flex-col',
         isHighlighted && 'ring-1 ring-accent/40',
