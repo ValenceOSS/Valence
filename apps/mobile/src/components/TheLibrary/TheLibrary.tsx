@@ -52,6 +52,9 @@ import { theVeilFor } from '@ValenceMobile/components/TheLibrary/theVeilFor';
 import { ACCOUNT_PANELS } from '@ValenceMobile/components/TheAccount/ACCOUNT_PANELS';
 import { useAccountPanels } from '@ValenceMobile/components/TheAccount/useAccountPanels';
 import { usePluginThemeInStep } from '@ValenceMobile/plugins/usePluginThemeInStep';
+import { librariesChosen } from '@ValenceClient/library/librariesChosen';
+import { libraryOptionsFor } from '@ValenceClient/library/libraryOptionsFor';
+import { linkingQueries } from '@ValenceClient/query/linkingQueries';
 import type { ReactNode } from 'react';
 import type { VideoPlayer } from 'expo-video';
 import type { ALight } from '@ValenceMobile/components/AMoodBackground/AMoodBackground.types';
@@ -193,6 +196,7 @@ const TheLibrary = ({
   const colours = useTheColours();
   const told = useRef({ onWatch, onLookAt, onLookAtShow, onCollection });
   const libraries = useQuery(libraryQueries.all());
+  const faces = useQuery(linkingQueries.faces());
   const watched = useQuery(viewingQueries.progress());
   const filters = useLibraryFilters();
   const [part, setPart] = useState('home');
@@ -332,7 +336,9 @@ const TheLibrary = ({
     () => (part === 'films' ? films : part === 'shows' ? programmes : NO_LIBRARIES),
     [part, films, programmes],
   );
-  const reading = chosen === EVERY ? ofThisKind.map((library) => library.id) : [chosen];
+  const reading = librariesChosen(ofThisKind, chosen === EVERY ? null : chosen).map(
+    (library) => library.id,
+  );
   const isFiltered = filters.selected.size > 0;
   const parts = [
     { id: 'home', label: say('common.home'), icon: HomeFilled },
@@ -564,10 +570,7 @@ const TheLibrary = ({
             {ofThisKind.length > 1 ? (
               <SegmentedRow
                 label={say('common.whichLibrary')}
-                items={[
-                  { id: EVERY, label: say('common.all') },
-                  ...ofThisKind.map((library) => ({ id: library.id, label: library.name })),
-                ]}
+                items={libraryOptionsFor(ofThisKind, faces.data ?? [], EVERY, say('common.all'))}
                 value={chosen}
                 onSelect={setChosen}
               />
@@ -619,6 +622,7 @@ const TheLibrary = ({
       isWaiting,
       drawsItsOwn,
       ofThisKind,
+      faces.data,
       chosen,
       filters.groups,
       filters.selected,
