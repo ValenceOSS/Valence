@@ -59,12 +59,10 @@ const ON: SeerrLink = {
 beforeEach(() => {
   fetchSeerrLink.mockReset().mockResolvedValue(ON);
   changeSeerrLink.mockReset().mockResolvedValue({ value: ON, refusal: null });
-  rotateSeerrKey
-    .mockReset()
-    .mockResolvedValue({
-      value: { ...ON, apiKey: 'fedcba9876543210fedcba9876543210' },
-      refusal: null,
-    });
+  rotateSeerrKey.mockReset().mockResolvedValue({
+    value: { ...ON, apiKey: 'fedcba9876543210fedcba9876543210' },
+    refusal: null,
+  });
 });
 
 describe('SeerrCard', () => {

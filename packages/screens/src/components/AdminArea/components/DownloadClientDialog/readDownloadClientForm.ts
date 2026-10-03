@@ -24,7 +24,8 @@ type DownloadClientForm = {
 };
 
 type ReadDownloadClientForm =
-  { draft: DownloadClientDraft; problem: null } | { draft: null; problem: string };
+  | { draft: DownloadClientDraft; problem: null }
+  | { draft: null; problem: string };
 
 const CLIENT_KINDS = [
   {

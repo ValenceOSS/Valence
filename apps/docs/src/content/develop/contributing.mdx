@@ -75,7 +75,7 @@ Husky runs three hooks.
 | Hook         | What it runs                                                                                         |
 | ------------ | ---------------------------------------------------------------------------------------------------- |
 | `commit-msg` | commitlint on the message                                                                            |
-| `pre-commit` | `lint-staged`: oxlint, eslint and prettier on staged code                                            |
+| `pre-commit` | `lint-staged`: oxlint and oxfmt on staged code                                                       |
 | `pre-push`   | `pnpm lint`, `pnpm typecheck`, `pnpm branch:check`, `pnpm test`, `pnpm rust:check`, `pnpm rust:test` |
 
 <Callout title="Do not bypass the hooks" tone="warning">

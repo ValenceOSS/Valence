@@ -9,7 +9,9 @@ import type { DiskRefusal } from '@ValenceServer/files/diskRefusalOf';
 const MOST_LISTED = 2000;
 
 type LibraryFolderAnswer =
-  { kind: 'listed'; folder: LibraryFolder } | { kind: 'outside' } | DiskRefusal;
+  | { kind: 'listed'; folder: LibraryFolder }
+  | { kind: 'outside' }
+  | DiskRefusal;
 
 /**
  * Lists what is in a folder inside a library — or, asked about nothing, the libraries themselves —

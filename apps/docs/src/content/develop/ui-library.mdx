@@ -70,7 +70,7 @@ Every colour in Valence is a custom property, and the whole palette is redefined
 - Tailwind's `dark:` variant is bound to the attribute, `[data-theme='dark']`, for the cases where a component needs to say something specific.
 - Motion is separate. `data-motion="reduced"` or `prefers-reduced-motion` turns motion down, and the `still` variant in the stylesheet lets a component say what it does when motion is off.
 
-Because colour is a token, a component never needs to know which theme it is in. Prefer a semantic utility (`bg-surface-raised`, `text-text-muted`, `bg-accent`) over anything that names a hue. The ESLint rule `valence/no-raw-colours` fails literal colours (`#fff`, `rgb(...)`, `oklch(...)`) and `white` or `black` utilities in UI source, so a colour that only one theme is right about cannot be written by accident. If the palette lacks something, add a token to `valence.css`.
+Because colour is a token, a component never needs to know which theme it is in. Prefer a semantic utility (`bg-surface-raised`, `text-text-muted`, `bg-accent`) over anything that names a hue. The oxlint rule `valence/no-raw-colours` fails literal colours (`#fff`, `rgb(...)`, `oklch(...)`) and `white` or `black` utilities in UI source, so a colour that only one theme is right about cannot be written by accident. If the palette lacks something, add a token to `valence.css`.
 
 Translating a reference design across themes means keeping its tonal steps in dark mode, not carrying its light values across.
 
@@ -120,7 +120,7 @@ Conventions every component follows:
 
 ## One component owns each interactive element
 
-This is the rule that keeps the library coherent. A raw HTML control appears in exactly one component, and everything else composes it. ESLint fails the build on `<a>`, `<button>`, `<input>`, `<select>`, `<textarea>`, `<dialog>` and `<iframe>` anywhere else.
+This is the rule that keeps the library coherent. A raw HTML control appears in exactly one component, and everything else composes it. oxlint fails the build on `<a>`, `<button>`, `<input>`, `<select>`, `<textarea>`, `<dialog>` and `<iframe>` anywhere else.
 
 | Element                              | Owner           |
 | ------------------------------------ | --------------- |
@@ -160,7 +160,7 @@ export { HomeMark };
 ```
 
 - **On is solid.** Say "this one is selected" with the filled twin, through `whenActive`, not a different glyph. Every active navigation item, favourite, toggle and pressed button draws the fill. Play, pause and skip are always solid, and so is an icon inside a primary or confirm button.
-- **Colour is a tone.** `tone` is `inherit` (the default), `strong`, `muted`, `faint`, `danger` or `scrim`. Do not put a text colour in an icon's `className`. ESLint fails it. `className` on an icon is for where it sits.
+- **Colour is a tone.** `tone` is `inherit` (the default), `strong`, `muted`, `faint`, `danger` or `scrim`. Do not put a text colour in an icon's `className`. oxlint fails it. `className` on an icon is for where it sits.
 - **Size is in pixels at the base text size.** `Icon` draws it in `rem`, so it scales with the text.
 - **A label makes it meaningful.** Without a `label` the icon is hidden from assistive technology, because the words beside it say it. With one it becomes an image with that name.
 - **No raw SVG anywhere.** No inline `<svg>`, no `.svg` imported as a component, no SVG strings. Brand assets (logo, wordmark, favicon) are files referenced by URL. The landing site is the only place that draws from another set (`@tabler/icons-react`), for brand glyphs the product set lacks.

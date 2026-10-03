@@ -8,9 +8,7 @@ describe('howToFillIt', () => {
   });
 
   it('says every library wants scanning where all of them are empty', () => {
-    expect(howToFillIt('everyLibrary', false)).toBe(
-      'Ask the server admin to scan your libraries.',
-    );
+    expect(howToFillIt('everyLibrary', false)).toBe('Ask the server admin to scan your libraries.');
   });
 
   it('says the one library wants scanning where only it is empty', () => {

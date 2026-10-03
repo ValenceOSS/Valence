@@ -21,9 +21,9 @@ describe('PasswordResetRequestSchema', () => {
   });
 
   it('refuses a request that names nobody', () => {
-    expect(PasswordResetRequestSchema.safeParse({ identifier: ' ', redirectTo: BACK }).success).toBe(
-      false,
-    );
+    expect(
+      PasswordResetRequestSchema.safeParse({ identifier: ' ', redirectTo: BACK }).success,
+    ).toBe(false);
     expect(PasswordResetRequestSchema.safeParse({ redirectTo: BACK }).success).toBe(false);
     expect(
       PasswordResetRequestSchema.safeParse({ profileId: 'not-an-id', redirectTo: BACK }).success,

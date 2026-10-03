@@ -53,7 +53,7 @@ Their `typecheck` scripts run both, so `pnpm typecheck` catches code that only c
 
 ## Writing a query every database reads
 
-Query code outside the dialect folders is written once and runs on Postgres, MySQL and MariaDB. The `valence/neutral-queries` ESLint rule bans what only one of them reads, and names what to use instead. The helpers live in `packages/database` and are imported as `@ValenceDatabase/*`.
+Query code outside the dialect folders is written once and runs on Postgres, MySQL and MariaDB. The `valence/neutral-queries` oxlint rule bans what only one of them reads, and names what to use instead. The helpers live in `packages/database` and are imported as `@ValenceDatabase/*`.
 
 | Not in shared code                  | Instead                                                   |
 | ----------------------------------- | --------------------------------------------------------- |
@@ -68,7 +68,7 @@ Query code outside the dialect folders is written once and runs on Postgres, MyS
 | `filter (where ...)` in `sql`       | `countWhere`                                              |
 | A double-quoted identifier in `sql` | `sql.identifier`, or the column itself                    |
 
-Others cover what the dialects spell differently: `jsonContains` and `jsonTextElements` for JSON arrays, `millisecondsBetween` and `epochMilliseconds` for time, and more beside them in `packages/database/src`. Only files inside a dialect folder may import a driver or a dialect's own Drizzle module, such as `drizzle-orm/pg-core`, `pg`, `drizzle-orm/mysql-core` or `mysql2`, and ESLint enforces that outside tests.
+Others cover what the dialects spell differently: `jsonContains` and `jsonTextElements` for JSON arrays, `millisecondsBetween` and `epochMilliseconds` for time, and more beside them in `packages/database/src`. Only files inside a dialect folder may import a driver or a dialect's own Drizzle module, such as `drizzle-orm/pg-core`, `pg`, `drizzle-orm/mysql-core` or `mysql2`, and oxlint enforces that outside tests.
 
 The rules are in [Coding standard](/develop/coding-standard), and the tests that prove a query on every engine are in [Testing](/develop/testing#tests-on-mysql-and-mariadb).
 

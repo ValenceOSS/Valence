@@ -21,7 +21,7 @@ Valence is one pnpm workspace with a Cargo workspace beside it. This page lists 
 | `Cargo.toml`, `Cargo.lock`, `rustfmt.toml`                                           | The Rust workspace, whose only member is `apps/transcoder`. Clippy lints are set here.                                                                                                                                                           |
 | `package.json`, `pnpm-workspace.yaml`, `turbo.json`                                  | The pnpm workspace and turbo tasks                                                                                                                                                                                                               |
 | `tsconfig.base.json`, `tsconfig.paths.json`, `tsconfig.json`                         | Compiler options, the alias map and the project references                                                                                                                                                                                       |
-| `eslint.config.ts`, `.oxlintrc.json`, `.prettierrc.json`, `commitlint.config.ts`     | Lint, format and commit rules                                                                                                                                                                                                                    |
+| `oxlint.config.ts`, `oxfmt.config.ts`, `commitlint.config.ts`                        | Lint, format and commit rules                                                                                                                                                                                                                    |
 | `compose.yaml`, `compose.dev.yaml`, `Dockerfile`, `docker-entrypoint.sh`             | Production and development container definitions                                                                                                                                                                                                 |
 | `.env.example`                                                                       | Every setting the server reads, documented. Copy to `.env`.                                                                                                                                                                                      |
 | `fixtures.manifest.json`                                                             | The media test corpus manifest: name, tier, licence and checksum of every fixture                                                                                                                                                                |
@@ -136,7 +136,7 @@ Shared animations live in `packages/ui/src/animations`. An animation used inside
 
 The rules that keep this honest:
 
-- Neither `packages/client` nor `packages/screens` may import `@ValenceWeb/*`. ESLint enforces it.
+- Neither `packages/client` nor `packages/screens` may import `@ValenceWeb/*`. oxlint enforces it.
 - `packages/client` may not import `@ValenceUI/*` either, because it does not draw. `packages/screens` is what draws.
 - Anything either package needs from a host is a port on `Platform`, installed by the host with `installPlatform` before anything else runs.
 - A host is a handful of source files. If something you are adding to `apps/web` is not the entry point, a platform port or a browser API, it belongs in a package.

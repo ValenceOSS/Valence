@@ -19,8 +19,8 @@
     "lint": "pnpm --filter @valence/tools build:oxlint && oxlint --deny-warnings && tsx tools/comments/checkComments.ts",
     "lint:fix": "pnpm --filter @valence/tools build:oxlint && oxlint --fix --deny-warnings && tsx tools/comments/checkComments.ts --fix",
     "branch:check": "tsx tools/branches/checkBranchName.ts",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
     "rust:check": "cargo clippy --all-targets -- -D warnings && cargo fmt --check",
     "rust:test": "cargo test",
     "prepare": "husky && pnpm --filter @valence/tools build:oxlint",
@@ -39,7 +39,7 @@
     "lint-staged": "^17.0.0",
     "oxlint": "^1.86.0",
     "oxlint-tsgolint": "^7.0.2003",
-    "prettier": "^3.9.6",
+    "oxfmt": "^0.71.0",
     "tsx": "^4.23.13",
     "turbo": "^2.10.12",
     "typescript": "^7.0.2"
@@ -47,10 +47,10 @@
   "lint-staged": {
     "*.{ts,tsx}": [
       "oxlint --fix",
-      "prettier --write"
+      "oxfmt --no-error-on-unmatched-pattern"
     ],
-    "*.{json,md,css,yaml,yml}": [
-      "prettier --write"
+    "*.{json,md,mdx,css,yaml,yml}": [
+      "oxfmt --no-error-on-unmatched-pattern"
     ],
     "*.rs": [
       "rustfmt --edition 2021"

@@ -1,5 +1,8 @@
 type DiskRefusal =
-  { kind: 'missing' } | { kind: 'readOnly' } | { kind: 'denied' } | { kind: 'failed' };
+  | { kind: 'missing' }
+  | { kind: 'readOnly' }
+  | { kind: 'denied' }
+  | { kind: 'failed' };
 
 /**
  * What the disk's refusal was, told apart so that the fix for a mount that is read-only, or a folder

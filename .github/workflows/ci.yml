@@ -150,6 +150,8 @@ jobs:
 
       - run: pnpm lint
 
+      - run: pnpm format:check
+
       # A hand-written migration with no snapshot beside it leaves generation silent and recreating
       # tables that already exist. See VAL-193.
       - run: pnpm db:check

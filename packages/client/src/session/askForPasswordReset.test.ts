@@ -13,9 +13,9 @@ describe('askForPasswordReset', () => {
 
     vi.stubGlobal('fetch', fetching);
 
-    await expect(askForPasswordReset({ identifier: 'ada' }, 'https://v.example/reset-password')).resolves.toBe(
-      true,
-    );
+    await expect(
+      askForPasswordReset({ identifier: 'ada' }, 'https://v.example/reset-password'),
+    ).resolves.toBe(true);
     expect(fetching).toHaveBeenCalledWith(
       '/api/password-reset',
       expect.objectContaining({

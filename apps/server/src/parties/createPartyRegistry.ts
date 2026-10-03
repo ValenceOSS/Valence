@@ -27,7 +27,8 @@ type Joined =
   | { kind: 'unknown' };
 
 type Issued =
-  { kind: 'sent'; party: WatchParty; command?: SequencedCommand } | { kind: 'refused'; why: Said };
+  | { kind: 'sent'; party: WatchParty; command?: SequencedCommand }
+  | { kind: 'refused'; why: Said };
 
 type PartyRegistry = {
   open: (options: {

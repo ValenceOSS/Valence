@@ -3,7 +3,9 @@ import { isUploadableTo } from '@ValenceContracts/functions/isUploadableTo';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 
 type UploadPlan =
-  { kind: 'planned'; destination: string } | { kind: 'badPath' } | { kind: 'refused' };
+  | { kind: 'planned'; destination: string }
+  | { kind: 'badPath' }
+  | { kind: 'refused' };
 
 const LONGEST_NAME = 255;
 

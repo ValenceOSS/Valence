@@ -30,7 +30,9 @@ type RegisterOutcome =
 type ConfirmOutcome = { kind: 'confirmed' } | { kind: 'failed'; reason: string };
 
 type AuthenticateOutcome =
-  { kind: 'signedIn' } | { kind: 'cancelled' } | { kind: 'failed'; reason: string };
+  | { kind: 'signedIn' }
+  | { kind: 'cancelled' }
+  | { kind: 'failed'; reason: string };
 
 type Enrollment = { totpURI: string; backupCodes: string[] };
 

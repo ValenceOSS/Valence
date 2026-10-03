@@ -139,9 +139,9 @@ From the repository root, with Node 24 or later and pnpm 10. Most run through [T
 | `pnpm test:coverage` | The same suites with coverage.                                                                                                                                                                                                                                             |
 | `pnpm coverage`      | Runs coverage, then checks the average against the threshold.                                                                                                                                                                                                              |
 | `pnpm typecheck`     | `turbo run typecheck`: TypeScript across the workspace.                                                                                                                                                                                                                    |
-| `pnpm lint`          | `oxlint`, then `eslint .`, then the comment checker.                                                                                                                                                                                                                       |
+| `pnpm lint`          | `oxlint`, type-aware, then the comment checker.                                                                                                                                                                                                                            |
 | `pnpm lint:fix`      | The same with automatic fixes.                                                                                                                                                                                                                                             |
-| `pnpm format`        | Prettier, writing changes. `pnpm format:check` only checks.                                                                                                                                                                                                                |
+| `pnpm format`        | oxfmt, writing changes. `pnpm format:check` only checks.                                                                                                                                                                                                                   |
 | `pnpm rust:check`    | `cargo clippy --all-targets -- -D warnings` and `cargo fmt --check`.                                                                                                                                                                                                       |
 | `pnpm rust:test`     | `cargo test`.                                                                                                                                                                                                                                                              |
 | `pnpm branch:check`  | Checks the current branch name follows the convention, such as `feat/some-thing`.                                                                                                                                                                                          |
@@ -219,7 +219,7 @@ Valence uses [Drizzle](https://orm.drizzle.team). The server has one schema per 
 
 ## Linting and comments
 
-`pnpm lint` runs `oxlint`, `eslint .` and `tsx tools/comments/checkComments.ts`. The comment checker enforces the repository's rule on comments, and `--fix` removes what it can. You can call it on its own:
+`pnpm lint` bundles Valence's own rules for oxlint, then runs `oxlint` and `tsx tools/comments/checkComments.ts`. The comment checker enforces the repository's rule on comments, and `--fix` removes what it can. You can call it on its own:
 
 ```bash
 pnpm --filter @valence/tools lint:comments

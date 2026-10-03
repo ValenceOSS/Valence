@@ -216,9 +216,9 @@ pnpm --filter @valence/docs build
 | `pnpm test:coverage`               | The same, passing `--coverage`                                              |
 | `pnpm coverage`                    | Coverage, then checks the mean across packages against the 90 percent floor |
 | `pnpm typecheck`                   | `turbo run typecheck`                                                       |
-| `pnpm lint`                        | `oxlint`, then `eslint .`, then the comment checker                         |
+| `pnpm lint`                        | `oxlint`, type-aware, then the comment checker                              |
 | `pnpm lint:fix`                    | The same with `--fix`                                                       |
-| `pnpm format`, `pnpm format:check` | Prettier over the whole tree                                                |
+| `pnpm format`, `pnpm format:check` | oxfmt over the whole tree                                                   |
 | `pnpm branch:check`                | Checks the current branch name                                              |
 | `pnpm db:check`                    | Checks the Drizzle snapshots still describe the schema                      |
 | `pnpm rust:check`                  | `cargo clippy --all-targets -- -D warnings` and `cargo fmt --check`         |
@@ -232,11 +232,11 @@ Turbo's `build` and `typecheck` tasks depend on `^build`, so a package's depende
 
 Husky installs three hooks.
 
-| Hook         | Runs                                                                                                                         |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| `commit-msg` | `commitlint`, enforcing [Conventional Commits](/develop/coding-standard)                                                     |
-| `pre-commit` | `lint-staged`: oxlint, eslint and prettier on staged TypeScript, prettier on JSON, Markdown, CSS and YAML, `rustfmt` on Rust |
-| `pre-push`   | `pnpm lint`, `pnpm typecheck`, `pnpm branch:check`, `pnpm test`, `pnpm rust:check` and `pnpm rust:test`                      |
+| Hook         | Runs                                                                                                           |
+| ------------ | -------------------------------------------------------------------------------------------------------------- |
+| `commit-msg` | `commitlint`, enforcing [Conventional Commits](/develop/coding-standard)                                       |
+| `pre-commit` | `lint-staged`: oxlint and oxfmt on staged TypeScript, oxfmt on JSON, Markdown, CSS and YAML, `rustfmt` on Rust |
+| `pre-push`   | `pnpm lint`, `pnpm typecheck`, `pnpm branch:check`, `pnpm test`, `pnpm rust:check` and `pnpm rust:test`        |
 
 Do not use `--no-verify` to get past a failing hook. CI runs the same checks, so it only delays the failure.
 

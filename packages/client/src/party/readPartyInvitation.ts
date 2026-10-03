@@ -3,7 +3,8 @@ const TO_WATCH = /^\/watch\/([^/?#]+)\?(?:[^#]*&)?party=([^&#]+)/u;
 const TO_LISTEN = /^\/music\?(?:[^#]*&)?party=([^&#]+)/u;
 
 type PartyInvitation =
-  { kind: 'watch'; partyId: string; mediaId: string } | { kind: 'listen'; partyId: string };
+  | { kind: 'watch'; partyId: string; mediaId: string }
+  | { kind: 'listen'; partyId: string };
 
 /**
  * Which party an invitation asks somebody into, read from the link the server wrote for it — a

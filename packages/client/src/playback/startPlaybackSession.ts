@@ -28,7 +28,8 @@ const StartedSessionSchema = z.object({
 type StartedSession = z.infer<typeof StartedSessionSchema>;
 
 type StartOutcome =
-  { kind: 'started'; session: StartedSession } | { kind: 'failed'; reason: string };
+  | { kind: 'started'; session: StartedSession }
+  | { kind: 'failed'; reason: string };
 
 const ErrorSchema = z.object({ error: z.string() });
 
