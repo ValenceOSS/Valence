@@ -12,18 +12,20 @@ export default defineConfig({
     resolve: { tsconfigPaths: true },
     define: DEFINE,
     build: {
+      externalizeDeps: false,
       outDir: 'dist-main',
       lib: { entry: 'src/main/Main.ts' },
-      rollupOptions: { external: NOT_BUNDLED, output: { entryFileNames: 'main/Main.js' } },
+      rolldownOptions: { external: NOT_BUNDLED, output: { entryFileNames: 'main/Main.js' } },
     },
   },
   preload: {
     resolve: { tsconfigPaths: true },
     define: DEFINE,
     build: {
+      externalizeDeps: false,
       outDir: 'dist-preload',
       lib: { entry: 'src/preload/Preload.ts' },
-      rollupOptions: { external: NOT_BUNDLED, output: { entryFileNames: 'preload/Preload.js' } },
+      rolldownOptions: { external: NOT_BUNDLED },
     },
   },
   renderer: {
@@ -31,6 +33,6 @@ export default defineConfig({
     resolve: { tsconfigPaths: true },
     plugins: [react(), tailwindcss()],
     server: { hmr: { protocol: 'ws', host: 'localhost', port: 5174 } },
-    build: { outDir: 'dist', target: 'chrome138', rollupOptions: { input: 'index.html' } },
+    build: { outDir: 'dist', target: 'chrome138', rolldownOptions: { input: 'index.html' } },
   },
 });

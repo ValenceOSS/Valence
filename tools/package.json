@@ -15,7 +15,7 @@
     "typescript6": "npm:@typescript/typescript6@^6.0.2",
     "@valence/i18n": "workspace:*",
     "@vitest/coverage-v8": "^4.1.11",
-    "electron-vite": "^5.0.0",
+    "electron-vite": "6.0.0-beta.5",
     "sharp": "^0.35.4",
     "tsx": "^4.23.13",
     "vite": "^8.3.0",

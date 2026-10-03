@@ -33,7 +33,7 @@ describe('the desktop main bundle', () => {
         '    build: {',
         `      outDir: ${JSON.stringify(join(root, 'out'))},`,
         `      lib: { entry: ${JSON.stringify(join(root, 'Main.ts'))} },`,
-        "      rollupOptions: { output: { entryFileNames: 'Main.js' } },",
+        "      rolldownOptions: { output: { entryFileNames: 'Main.js' } },",
         '    },',
         '  },',
         '};',

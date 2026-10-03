@@ -24,11 +24,6 @@ packageExtensions:
   react-native-tvos:
     peerDependencies:
       react-native: '*'
-patchedDependencies:
-  # electron-vite 5 found the last import in a built bundle with a regular expression, which took a
-  # string ending in "import" for one and spliced its shims into the middle of it, so the desktop's
-  # main process built empty. 6.0 parses the bundle instead; this is that change, to drop with 6.0.
-  electron-vite@5.0.0: patches/electron-vite@5.0.0.patch
 
 # drizzle-orm is resolved once per set of optional peers it finds. better-auth brings
 # better-sqlite3 12 into the server, while the database package and the requests service would pick

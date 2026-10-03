@@ -53,7 +53,7 @@ const openTheWindow = (): BrowserWindow => {
       contextIsolation: true,
       sandbox: false,
       devTools: !app.isPackaged,
-      preload: join(app.getAppPath(), 'dist-preload/preload/Preload.js'),
+      preload: join(app.getAppPath(), 'dist-preload/Preload.mjs'),
     },
   });
 
