@@ -1,9 +1,10 @@
-import { useDeferredValue, useMemo, useState } from 'react';
+import { useCallback, useDeferredValue, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Bin as BinFilledIcon,
   ChevronRight as ChevronRightIcon,
   ChevronUp as ChevronUpIcon,
+  EyeOff as EyeOffFilledIcon,
   File as FileIcon,
   FileArrowUp as FileArrowUpFilledIcon,
   Folder as FolderIcon,
@@ -28,6 +29,9 @@ import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { RequestFailed } from '@ValenceClient/query/RequestFailed';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { LeaveOutDialog } from '@ValenceScreens/components/AdminArea/components/LeaveOutDialog/LeaveOutDialog';
+import type { LeaveOutTarget } from '@ValenceScreens/components/AdminArea/components/LeaveOutDialog/LeaveOutDialog.types';
+import { libraryHolding } from './libraryHolding';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { failureOfThrown } from '@ValenceScreens/admin/failureOf';
 import { UploadMediaDialog } from '@ValenceScreens/components/AdminArea/components/UploadMediaDialog/UploadMediaDialog';
@@ -75,6 +79,7 @@ const FilesPanel = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isNamingFolder, setIsNamingFolder] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [leaving, setLeaving] = useState<LeaveOutTarget | null>(null);
   const cache = useQueryClient();
 
   const asked = useQuery(adminQueries.libraryFolder(at));
@@ -130,12 +135,39 @@ const FilesPanel = ({
     return failure;
   };
 
+  const leaveOutItemsFor = useCallback(
+    (entry: LibraryEntry) => {
+      const holding = libraryHolding(entry.path, libraries);
+
+      return holding === null
+        ? []
+        : [
+            {
+              id: 'leave-out',
+              label: say('common.leaveOutOfTheLibrary'),
+              icon: <Icon of={EyeOffFilledIcon} size={15} />,
+              onChoose: () => {
+                setLeaving({
+                  libraryId: holding.id,
+                  libraryPath: holding.path,
+                  path: entry.path,
+                  name: entry.name,
+                  isFolder: entry.isFolder,
+                });
+              },
+            },
+          ];
+    },
+    [libraries],
+  );
+
   const columns = useMemo<DataTableColumn<LibraryEntry>[]>(
     () => [
       {
         id: 'name',
         header: say('common.name'),
         accessorFn: (entry) => entry.name,
+        meta: { fills: true },
         cell: ({ row }) => (
           <span className="flex min-w-0 items-center gap-2.5">
             <Icon of={row.original.isFolder ? FolderIcon : FileIcon} size={16} tone="muted" />
@@ -228,10 +260,11 @@ const FilesPanel = ({
                       },
                     ],
                   },
-                  ...(mayDelete
-                    ? [
-                        {
-                          items: [
+                  {
+                    items: [
+                      ...leaveOutItemsFor(row.original),
+                      ...(mayDelete
+                        ? [
                             {
                               id: 'delete',
                               label: say('screens.adminArea.filesPanel.delete'),
@@ -241,17 +274,17 @@ const FilesPanel = ({
                                 setCondemned(row.original);
                               },
                             },
-                          ],
-                        },
-                      ]
-                    : []),
-                ]}
+                          ]
+                        : []),
+                    ],
+                  },
+                ].filter((group) => group.items.length > 0)}
               />
             </span>
           ),
       },
     ],
-    [at, isSearching, mayDelete],
+    [at, isSearching, leaveOutItemsFor, mayDelete],
   );
 
   return (
@@ -409,6 +442,13 @@ const FilesPanel = ({
             : say('screens.adminArea.filesPanel.showingTheFirst2000Things')}
         </p>
       ) : null}
+
+      <LeaveOutDialog
+        target={leaving}
+        onClose={() => {
+          setLeaving(null);
+        }}
+      />
 
       <NameEntryDialog
         key={`rename-${renaming?.path ?? 'none'}`}

@@ -7,6 +7,7 @@ import {
 import { fetchComingUp, fetchShows, fetchShow } from '@ValenceClient/library/fetchShows';
 import { readEveryItem } from '@ValenceClient/library/readEveryItem';
 import { fetchFacets } from '@ValenceClient/library/fetchFacets';
+import { fetchLeftOut } from '@ValenceClient/library/fetchLeftOut';
 import { fetchPerson, fetchPersonCredits } from '@ValenceClient/library/fetchPerson';
 import type { ListItemsOptions } from '@ValenceClient/library/fetchLibrary';
 
@@ -193,6 +194,18 @@ const everything = (
     enabled: libraryIds.length > 0,
   });
 
+/**
+ * The files and folders left out of a library's scans.
+ *
+ * @param libraryId - The library.
+ * @returns The query.
+ */
+const leftOut = (libraryId: string) =>
+  queryOptions({
+    queryKey: [...LIBRARY, libraryId, 'left-out'],
+    queryFn: () => fetchLeftOut(libraryId),
+  });
+
 const libraryQueries = {
   all,
   items,
@@ -205,6 +218,7 @@ const libraryQueries = {
   person,
   credits,
   across,
+  leftOut,
   key: LIBRARY,
 };
 

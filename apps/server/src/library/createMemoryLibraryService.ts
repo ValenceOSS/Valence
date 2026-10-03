@@ -8,6 +8,8 @@ import type {
 } from '@ValenceContracts/schemas/Library';
 import type { LibraryService, ListItemsOptions, PreviewMomentOutcome } from './LibraryService';
 import type { Person } from '@ValenceContracts/schemas/Person';
+import type { LeftOut } from '@ValenceContracts/schemas/LeftOut';
+import { isUnderAny } from './isUnderAny';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import { LIBRARY_PARTS_BY_KIND } from '@ValenceContracts/schemas/LibraryPart';
 
@@ -57,6 +59,7 @@ type HiddenRow = {
 type MemoryState = {
   libraries: Library[];
   media: MediaDetail[];
+  leftOut?: LeftOut[];
   series?: { id: string; title: string }[];
   starsFor?: (mediaId: string) => number | null;
   people?: Record<number, Person>;
@@ -720,6 +723,58 @@ const createMemoryLibraryService = (
         ? { jobId: `job-${libraryId}${force ? '-force' : ''}`, state: 'queued' }
         : null,
     ),
+
+  listLeftOut: (libraryId) =>
+    Promise.resolve(
+      state.libraries.some((entry) => entry.id === libraryId)
+        ? (state.leftOut ?? []).filter((one) => one.libraryId === libraryId)
+        : null,
+    ),
+
+  leaveOut: (libraryId, asked, by) => {
+    const found = state.libraries.find((entry) => entry.id === libraryId);
+
+    if (found === undefined) {
+      return Promise.resolve({ kind: 'noLibrary' } as const);
+    }
+
+    if (asked.path === found.path || !isUnderAny(asked.path, [found.path])) {
+      return Promise.resolve({ kind: 'outside' } as const);
+    }
+
+    const held = (state.leftOut ?? []).find(
+      (one) => one.libraryId === libraryId && one.path === asked.path,
+    );
+    const leftOut = held ?? {
+      id: randomUUID(),
+      libraryId,
+      path: asked.path,
+      isFolder: !/\.[^/]+$/u.test(asked.path),
+      note: asked.note,
+      createdAt: new Date().toISOString(),
+      createdBy: by,
+    };
+
+    if (held === undefined) {
+      state.leftOut = [...(state.leftOut ?? []), leftOut];
+    }
+
+    return Promise.resolve({ kind: 'left', leftOut, jobId: `job-${libraryId}` } as const);
+  },
+
+  bringBack: (libraryId, leftOutId) => {
+    const leftOut = (state.leftOut ?? []).find(
+      (one) => one.libraryId === libraryId && one.id === leftOutId,
+    );
+
+    if (leftOut === undefined) {
+      return Promise.resolve(null);
+    }
+
+    state.leftOut = (state.leftOut ?? []).filter((one) => one.id !== leftOutId);
+
+    return Promise.resolve({ leftOut, jobId: `job-${libraryId}` });
+  },
 
   correctMatch: (mediaId) => {
     const item = state.media.find((one) => one.id === mediaId);

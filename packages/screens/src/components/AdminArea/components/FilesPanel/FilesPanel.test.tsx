@@ -126,6 +126,31 @@ const openFilms = async (actor: ReturnType<typeof userEvent.setup>) => {
 };
 
 describe('FilesPanel', () => {
+  it('offers to leave a folder out of its library, saying it takes everything in it', async () => {
+    const actor = userEvent.setup();
+
+    draw();
+    await openFilms(actor);
+
+    await actor.click(screen.getByRole('button', { name: 'Actions for Arrival (2016)' }));
+    await actor.click(screen.getByRole('menuitem', { name: 'Leave out of the library' }));
+
+    expect(await screen.findByText('Leave Arrival (2016) out?')).toBeInTheDocument();
+    expect(screen.getByText(/this folder and everything in it/)).toBeInTheDocument();
+  });
+
+  it('offers to leave a file out even where nothing may be deleted', async () => {
+    const actor = userEvent.setup();
+
+    draw(false);
+    await openFilms(actor);
+
+    await actor.click(screen.getByRole('button', { name: 'Actions for Arrival.mkv' }));
+
+    expect(screen.getByRole('menuitem', { name: 'Leave out of the library' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /Delete/ })).toBeNull();
+  });
+
   it('starts at the libraries, with nothing to do to them but open them', async () => {
     draw();
 

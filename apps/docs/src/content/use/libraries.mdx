@@ -178,6 +178,16 @@ The **Last read** column reports when the library was last scanned and what chan
 
 A scan of every library runs daily at 03:00 by default, as a scheduled job. You can change or add triggers on the jobs page, described in [Jobs and logs](/use/jobs-and-logs). Reading is queued library by library. The slower follow up work (intros, previews, scrub thumbnails) is queued separately, so you can start watching a library as soon as it has been read.
 
+### Leaving files and folders out
+
+Some files should never be in a library: one that is broken and stutters every time it plays, a folder of behind the scenes clips, a copy you keep only as a backup. Leave it out, and every scan from then on passes over it as if it were not on the disk.
+
+Choose **Leave out of the library** from the actions menu of a film, an episode or a series on the **Media** page, or of any file or folder on the **Files** page. Leaving out a series leaves out its folder. You can say why, which is shown beside it later. Leaving out a folder leaves out everything inside it, and matches whole folder names, so leaving out `Extras` does not touch `Extras Archive`.
+
+What Valence found there goes at the next scan, which starts straight away. Nothing is deleted from the disk.
+
+Everything left out of a library is listed at the foot of its **Library settings**, with why. **Bring back** forgets it, and the next scan reads it again as a new file.
+
 ### Deleting a library
 
 Deleting removes the library and everything Valence knows about its contents: watch progress, ratings, favourites, previews and thumbnails. Playlists that hold items from it keep their places and say what they lost. The files on disk are never touched, and anything running for the library is stopped.
@@ -193,6 +203,8 @@ Deleting removes the library and everything Valence knows about its contents: wa
 | Takes requests               | On                                   | Whether media that people request can be filed in this library.                                                                                                                                                              |
 | Quality profile for requests | Whichever profile names this library | Which quality profile releases for this library are judged by.                                                                                                                                                               |
 | Where requests are filed     | The library's own folder             | A folder of its own for fetched media, when you want it kept apart.                                                                                                                                                          |
+
+Below the settings, **Left out of this library** lists the files and folders its scans pass over, as described in [Leaving files and folders out](#leaving-files-and-folders-out).
 
 The request settings are explained in [Requests](/use/requests). The count of files rendered at once is also bounded by what your hardware proves it can do, so it never exceeds the number of hardware encodes the machine can run. See [Hardware transcoding](/install/hardware-transcoding).
 
@@ -274,7 +286,7 @@ The **media.hide** permission lets a role hide an item from every profile, rathe
 | Permission       | Allows                                                                                 |
 | ---------------- | -------------------------------------------------------------------------------------- |
 | `library.create` | Adding libraries and using the folder browser, including creating folders.             |
-| `library.edit`   | Changing library settings and uploading media.                                         |
+| `library.edit`   | Changing library settings, uploading media, and leaving files and folders out.         |
 | `library.delete` | Deleting a library.                                                                    |
 | `jobs.run`       | Scanning, reading files again, generating missing previews and watching scan progress. |
 | `media.override` | Correcting matches, rebuilding a title's previews and choosing preview moments.        |

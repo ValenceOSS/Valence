@@ -534,6 +534,7 @@ const ENGLISH = {
   'common.books': 'Books',
   'common.bornBornOn': 'Born {bornOn}',
   'common.brightness': 'Brightness',
+  'common.bringBack': 'Bring back',
   'common.bringTitleBack': 'Bring {title} back',
   'common.browser': 'Browser',
   'common.byAuthor': 'By {author}',
@@ -840,6 +841,7 @@ const ENGLISH = {
   'common.larger': 'Larger',
   'common.lastReadLastReadAt': 'Last read {lastReadAt}',
   'common.lasts': 'Lasts',
+  'common.leaveOutOfTheLibrary': 'Leave out of the library',
   'common.leftToRight': 'Left to right',
   'common.lens': 'Lens',
   'common.letBackIn': 'Let back in',
@@ -1908,6 +1910,7 @@ const ENGLISH = {
   'error.library.catalogueCouldNotBeAsked': 'The catalogue could not be asked what it has.',
   'error.library.noSuchItemMatchedToTheCatalogue': 'No such item matched to the catalogue.',
   'error.library.noSuchSeries': 'No such series.',
+  'error.library.nothingLikeThatIsLeftOut': 'Nothing like that is left out of this library.',
   'error.library.notMatchedToTheCatalogueYet':
     'This is not matched to the catalogue yet. Correct the match first.',
   'error.library.pictureIsNotOneTheCatalogueHas':
@@ -1917,6 +1920,7 @@ const ENGLISH = {
   'error.library.thatAppCannotFulfilThisLibrary':
     'That connected app cannot fulfil requests for this library. Films go to Radarr, series to Sonarr and music to Lidarr.',
   'error.library.thatDoesNotLookLikeA': 'That does not look like a catalogue address or id.',
+  'error.library.thatIsNotInsideThisLibrary': 'That is not inside this library.',
   'error.library.thatIsPastTheEndThe':
     'That is past the end — the file runs {durationSeconds} seconds.',
   'error.library.thatPathIsNotAReadable': 'That path is not a readable directory.',
@@ -3537,6 +3541,25 @@ const ENGLISH = {
   'screens.adminArea.keptTheNewEncodeAndRemoved': 'Kept the new encode and removed the original.',
   'screens.adminArea.labelCouldNotBeStarted': '{label} could not be started.',
   'screens.adminArea.labelCouldNotBeStopped': '{label} could not be stopped.',
+  'screens.adminArea.leaveOutDialog.breaksUpAnHourIn': 'Breaks up an hour in',
+  'screens.adminArea.leaveOutDialog.leaveNameOut': 'Leave {name} out?',
+  'screens.adminArea.leaveOutDialog.nameIsLeftOut':
+    '{name} is left out. The next scan takes it away.',
+  'screens.adminArea.leaveOutDialog.scansPassOverThisFile':
+    'Scans pass over this file from now on, and what Valence found in it goes at the next scan. Nothing is deleted from the disk, and it can be brought back from the library’s settings.',
+  'screens.adminArea.leaveOutDialog.scansPassOverThisFolder':
+    'Scans pass over this folder and everything in it from now on, and what Valence found there goes at the next scan. Nothing is deleted from the disk, and it can be brought back from the library’s settings.',
+  'screens.adminArea.leaveOutDialog.shownBesideItInThe':
+    'Optional. Shown beside it in the library’s settings, for whoever looks later.',
+  'screens.adminArea.leftOutList.bringPathBack': 'Bring {path} back',
+  'screens.adminArea.leftOutList.filesAndFoldersThisLibrarysScans':
+    'Files and folders this library’s scans pass over. Bring one back and the next scan reads it again.',
+  'screens.adminArea.leftOutList.leftOutOfThisLibrary': 'Left out of this library',
+  'screens.adminArea.leftOutList.nothingIsLeftOut':
+    'Nothing is left out. Leave out a file or folder from Media or Files.',
+  'screens.adminArea.leftOutList.pathIsBack': '{path} is back. The next scan reads it again.',
+  'screens.adminArea.leftOutList.whatIsLeftOutCouldNot':
+    'What is left out of this library could not be read.',
   'screens.adminArea.librariesPanel.deleteLibrary': 'Delete library',
   'screens.adminArea.librariesPanel.deleteThisLibrary': 'Delete this library?',
   'screens.adminArea.librariesPanel.everyFileIsProbedAgainRather':

@@ -8,6 +8,7 @@ import { createArtworkChoices } from '@ValenceServer/library/createArtworkChoice
 import { jobBehindTheKey } from '@ValenceServer/library/jobBehindTheKey';
 import { randomUUID } from 'node:crypto';
 import { rm, stat } from 'node:fs/promises';
+import { isUnderAny } from './isUnderAny';
 import { z } from 'zod';
 import {
   and,
@@ -329,6 +330,28 @@ const createDatabaseLibraryService = ({
   forgetKeptCopies = () => Promise.resolve(),
 }: CreateDatabaseLibraryServiceOptions): DatabaseLibraryService => {
   const store = createMediaStore(db, certificationRegion, forgetKeptCopies);
+
+  /**
+   * The files of a library as its scans should see them: everything on the disk, less what an
+   * administrator has left out of it, and less everything inside a folder left out.
+   *
+   * @param libraryId - The library being scanned.
+   * @returns The same file system, its listing narrowed.
+   */
+  const filesFor = (libraryId: string): typeof files => ({
+    ...files,
+    listFiles: async (within) => {
+      const [walked, leftOut] = await Promise.all([
+        files.listFiles(within),
+        store.listLeftOut(libraryId),
+      ]);
+      const paths = leftOut.map((one) => one.path);
+
+      return paths.length === 0
+        ? walked
+        : { ...walked, files: walked.files.filter((file) => !isUnderAny(file.path, paths)) };
+    },
+  });
 
   const shapes = createExpiringCache<SeriesShape | null>(SERIES_SHAPE_LIVES_FOR_MS);
 
@@ -819,7 +842,7 @@ const createDatabaseLibraryService = ({
       libraryId: found.id,
       kind: found.kind === 'shows' ? 'shows' : 'movies',
       root: found.path,
-      files,
+      files: filesFor(found.id),
       store,
       transcoder,
       force,
@@ -867,7 +890,7 @@ const createDatabaseLibraryService = ({
     const result = await scanBookLibrary({
       libraryId: found.id,
       root: found.path,
-      files,
+      files: filesFor(found.id),
       store: books,
       force,
       readMarks: async (path, durationSeconds) =>
@@ -937,7 +960,7 @@ const createDatabaseLibraryService = ({
     return scanMusicLibrary({
       libraryId: found.id,
       root: found.path,
-      files: { ...music.files, listFiles: files.listFiles },
+      files: { ...music.files, listFiles: filesFor(found.id).listFiles },
       store: music.store,
       artwork: music.artwork,
       force,
@@ -1456,6 +1479,61 @@ const createDatabaseLibraryService = ({
       const jobId = await queueReadAgain(paths.libraryId, paths.paths);
 
       return { corrected: paths.paths.length, jobId };
+    },
+
+    listLeftOut: async (libraryId) =>
+      (await findLibrary(libraryId)) === null ? null : store.listLeftOut(libraryId),
+
+    leaveOut: async (libraryId, asked, by) => {
+      const found = await findLibrary(libraryId);
+
+      if (found === null) {
+        return { kind: 'noLibrary' };
+      }
+
+      const path = asked.path.replace(/[\\/]+$/u, '');
+
+      if (path === found.path || !isUnderAny(path, [found.path])) {
+        return { kind: 'outside' };
+      }
+
+      const isFolder = await stat(path).then(
+        (held) => held.isDirectory(),
+        () => false,
+      );
+      const leftOut = await store.leaveOut({
+        libraryId,
+        path,
+        isFolder,
+        note: asked.note,
+        createdBy: by,
+      });
+
+      if (leftOut === null) {
+        return { kind: 'noLibrary' };
+      }
+
+      const queued = await askForLibraryWork(jobs, SCAN_LIBRARY_JOB, libraryId, {
+        libraryId,
+        force: false,
+      });
+
+      return { kind: 'left', leftOut, jobId: queued?.jobId ?? null };
+    },
+
+    bringBack: async (libraryId, leftOutId) => {
+      const leftOut = await store.bringBack(libraryId, leftOutId);
+
+      if (leftOut === null) {
+        return null;
+      }
+
+      const queued = await askForLibraryWork(jobs, SCAN_LIBRARY_JOB, libraryId, {
+        libraryId,
+        force: false,
+      });
+
+      return { leftOut, jobId: queued?.jobId ?? null };
     },
 
     forgetCorrection: async (mediaId) => {
@@ -2272,7 +2350,7 @@ const createDatabaseLibraryService = ({
         kind: found.kind,
         root: found.path,
         within: folder,
-        files,
+        files: filesFor(libraryId),
         store,
         transcoder,
         isPartial: true,

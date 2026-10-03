@@ -95,6 +95,34 @@ const aStore = async () => {
 };
 
 describe('createMediaStore', { timeout: STARTING_POSTGRES_MS }, () => {
+  it('keeps what is left out of a library once per path, and brings it back', async () => {
+    const { store } = await aStore();
+    const asked = {
+      libraryId: SHOWS_ID,
+      path: '/shows/Broken Show',
+      isFolder: true,
+      note: 'Every episode stutters',
+      createdBy: null,
+    };
+
+    const first = await store.leaveOut(asked);
+    const again = await store.leaveOut({ ...asked, note: 'A second note' });
+
+    expect(first).toMatchObject({
+      path: '/shows/Broken Show',
+      isFolder: true,
+      note: 'Every episode stutters',
+    });
+    expect(again?.id).toBe(first?.id);
+    await expect(store.listLeftOut(SHOWS_ID)).resolves.toHaveLength(1);
+
+    await expect(store.bringBack(SHOWS_ID, first?.id ?? '')).resolves.toMatchObject({
+      path: '/shows/Broken Show',
+    });
+    await expect(store.listLeftOut(SHOWS_ID)).resolves.toEqual([]);
+    await expect(store.bringBack(SHOWS_ID, first?.id ?? '')).resolves.toBeNull();
+  });
+
   it('hands back the same id when a file is scanned again, and forgets what was done to it', async () => {
     const { db, store } = await aStore();
     const first = await store.upsert(anEpisode('/shows/Show/1.mkv', 'Show', null));

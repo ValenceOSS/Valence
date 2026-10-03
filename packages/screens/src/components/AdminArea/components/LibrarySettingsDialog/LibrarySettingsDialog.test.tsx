@@ -1,10 +1,24 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render as renderBare, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { CacheScope } from '@ValenceClient/testing/CacheScope';
+import type { ReactElement } from 'react';
 import { LibrarySettingsDialog } from './LibrarySettingsDialog';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { ArrApp } from '@ValenceContracts/schemas/ArrApp';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
+
+/**
+ * Draws the component under the cache the queries it makes need.
+ *
+ * @param ui - What to draw.
+ * @returns What testing-library hands back.
+ */
+const render = (ui: ReactElement) => renderBare(ui, { wrapper: CacheScope });
+
+vi.mock('@ValenceClient/library/fetchLeftOut', () => ({
+  fetchLeftOut: vi.fn(() => Promise.resolve([])),
+}));
 
 const updateLibraryMock = vi.hoisted(() => vi.fn());
 

@@ -691,6 +691,25 @@ const mediaOverride = pgTable(
   ],
 );
 
+const mediaLeftOut = pgTable(
+  'media_left_out',
+  {
+    id: text('id').primaryKey(),
+    libraryId: text('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    path: text('path').notNull(),
+    isFolder: boolean('isFolder').notNull().default(false),
+    note: text('note'),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+    createdBy: text('createdBy'),
+  },
+  (table) => [
+    uniqueIndex('media_left_out_path_idx').on(table.libraryId, table.path),
+    index('media_left_out_library_idx').on(table.libraryId),
+  ],
+);
+
 const mediaPreviewOverride = pgTable(
   'media_preview_override',
   {
@@ -1766,6 +1785,7 @@ export {
   authSchema,
   valenceSchema,
   library,
+  mediaLeftOut,
   mediaOverride,
   mediaPreviewOverride,
   mediaArtworkChoice,

@@ -1,9 +1,19 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render as renderBare, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { CacheScope } from '@ValenceClient/testing/CacheScope';
+import type { ReactElement } from 'react';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { MediaPanel } from './MediaPanel';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
+
+/**
+ * Draws the component under the cache the queries it makes need.
+ *
+ * @param ui - What to draw.
+ * @returns What testing-library hands back.
+ */
+const render = (ui: ReactElement) => renderBare(ui, { wrapper: CacheScope });
 
 const item = (overrides: Partial<MediaSummary> = {}): MediaSummary => ({
   id: 'item-1',
@@ -536,6 +546,57 @@ describe('MediaPanel', () => {
     );
 
     expect(onOpenFolder).toHaveBeenCalledWith('/media/films/Parasite (2019)');
+  });
+
+  it('offers to leave a film’s file out of the library, and asks first', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MediaPanel
+        {...props}
+        media={[item()]}
+        paths={{ 'item-1': '/media/films/Parasite (2019)/Parasite.mkv' }}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /Actions for/ }));
+    await user.click(screen.getByRole('menuitem', { name: 'Leave out of the library' }));
+
+    expect(await screen.findByText('Leave Parasite out?')).toBeInTheDocument();
+    expect(screen.getByText('Parasite (2019)/Parasite.mkv')).toBeInTheDocument();
+    expect(screen.getByText(/Scans pass over this file/)).toBeInTheDocument();
+  });
+
+  it('leaves a whole series out by its folder', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MediaPanel
+        {...props}
+        media={[episode('e1', 1, 1, 'Pilot'), episode('e2', 2, 1, 'Return')]}
+        paths={{
+          e1: '/media/shows/From/Season 1/From S01E01.mkv',
+          e2: '/media/shows/From/Season 2/From S02E01.mkv',
+        }}
+      />,
+    );
+
+    await chooseFrom(user, 'Which library', 'Shows');
+    await user.click(await screen.findByRole('button', { name: 'Actions for From' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Leave out of the library' }));
+
+    expect(await screen.findByText('Leave From out?')).toBeInTheDocument();
+    expect(screen.getByText(/this folder and everything in it/)).toBeInTheDocument();
+  });
+
+  it('offers no way to leave out a file whose place on the disk is not known', async () => {
+    const user = userEvent.setup();
+
+    render(<MediaPanel {...props} media={[item()]} />);
+
+    await user.click(screen.getByRole('button', { name: /Actions for/ }));
+
+    expect(screen.queryByRole('menuitem', { name: 'Leave out of the library' })).toBeNull();
   });
 
   it('shows a series’ own folder, and each episode’s folder from its row', async () => {

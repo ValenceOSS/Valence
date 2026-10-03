@@ -228,6 +228,13 @@ const WHAT_DELETION_REMOVES: readonly OwnedThing[] = [
     rule: 'saysWhoDecided',
   },
   {
+    table: 'media_left_out',
+    column: 'createdBy',
+    owner: 'account',
+    fate: 'namesItWithoutHoldingIt',
+    rule: 'saysWhoDecided',
+  },
+  {
     table: 'media_preview_override',
     column: 'updatedBy',
     owner: 'account',
@@ -376,6 +383,13 @@ const WHAT_DELETION_REMOVES: readonly OwnedThing[] = [
   },
   {
     table: 'media_override',
+    column: 'libraryId',
+    owner: 'library',
+    fate: 'goesWithIt',
+    rule: 'meansNothingWithoutIt',
+  },
+  {
+    table: 'media_left_out',
     column: 'libraryId',
     owner: 'library',
     fate: 'goesWithIt',

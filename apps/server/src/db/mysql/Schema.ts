@@ -667,6 +667,26 @@ const mediaOverride = mysqlTable(
   ],
 );
 
+const mediaLeftOut = mysqlTable(
+  'media_left_out',
+  {
+    id: identifier('id').primaryKey(),
+    libraryId: identifier('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    path: varchar('path', { length: 4096 }).notNull(),
+    pathHash: hashOf('pathHash', 'path'),
+    isFolder: boolean('isFolder').notNull().default(false),
+    note: mediumtext('note'),
+    createdAt: momentNow('createdAt').notNull(),
+    createdBy: mediumtext('createdBy'),
+  },
+  (table) => [
+    uniqueIndex('media_left_out_path_idx').on(table.libraryId, table.pathHash),
+    index('media_left_out_library_idx').on(table.libraryId),
+  ],
+);
+
 const mediaPreviewOverride = mysqlTable(
   'media_preview_override',
   {
@@ -1749,6 +1769,7 @@ export {
   authSchema,
   valenceSchema,
   library,
+  mediaLeftOut,
   mediaOverride,
   mediaPreviewOverride,
   mediaArtworkChoice,
