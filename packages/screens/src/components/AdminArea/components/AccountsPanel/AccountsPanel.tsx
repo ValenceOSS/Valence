@@ -621,7 +621,7 @@ const AccountsPanel = () => {
                     copyLink(link);
                   }}
                 >
-                  {say('screens.adminArea.accountsPanel.copyLink')}
+                  {say('common.copyLink')}
                   <Icon of={CopyIcon} size={14} />
                 </Button>
               )}
@@ -649,7 +649,7 @@ const AccountsPanel = () => {
                         : [
                             {
                               id: 'copy',
-                              label: say('screens.adminArea.accountsPanel.copyLink'),
+                              label: say('common.copyLink'),
                               icon: <Icon of={CopyIcon} size={15} />,
                               onChoose: () => {
                                 copyLink(link);

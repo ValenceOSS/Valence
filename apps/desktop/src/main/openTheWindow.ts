@@ -1,5 +1,6 @@
 import { app, BrowserWindow, shell } from 'electron';
 import { join } from 'node:path';
+import { opensOutside } from '@ValenceDesktop/main/opensOutside';
 
 const WIDTH = 1280;
 
@@ -58,7 +59,7 @@ const openTheWindow = (): BrowserWindow => {
   });
 
   window.webContents.setWindowOpenHandler(({ url }) => {
-    if (/^https?:\/\//u.test(url)) {
+    if (opensOutside(url)) {
       void shell.openExternal(url);
     }
 

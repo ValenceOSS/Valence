@@ -743,6 +743,13 @@
       "when": 1790975077249,
       "tag": "0105_link_direct",
       "breakpoints": true
+    },
+    {
+      "idx": 106,
+      "version": "7",
+      "when": 1790990488336,
+      "tag": "0106_calendar_feed",
+      "breakpoints": true
     }
   ]
 }

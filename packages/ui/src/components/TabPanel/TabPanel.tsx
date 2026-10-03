@@ -26,19 +26,20 @@ const SLIDES_IN_BY_PIXELS = 24;
 const TabPanel = ({ value, children, render, travel, className }: TabPanelProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
 
-  const held =
-    travel === undefined || prefersReducedMotion === true ? (
-      children
-    ) : (
-      <motion.div
-        key={value}
-        initial={{ opacity: 0, x: travel * SLIDES_IN_BY_PIXELS }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ type: 'spring', stiffness: 420, damping: 40 }}
-      >
-        {children}
-      </motion.div>
-    );
+  const isStill = travel === undefined || prefersReducedMotion === true;
+  const held = isStill ? (
+    children
+  ) : (
+    <motion.div
+      key={value}
+      className={className}
+      initial={{ opacity: 0, x: travel * SLIDES_IN_BY_PIXELS }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ type: 'spring', stiffness: 420, damping: 40 }}
+    >
+      {children}
+    </motion.div>
+  );
 
   return (
     <RadixTabs.Content
@@ -48,7 +49,7 @@ const TabPanel = ({ value, children, render, travel, className }: TabPanelProps)
         'outline-none data-[state=active]:animate-in data-[state=active]:fade-in-0',
         'duration-[var(--duration-fast)] ease-[var(--ease-out)]',
         'motion-reduce:duration-[var(--duration-instant)]',
-        className,
+        isStill ? className : '',
       )}
     >
       {render === undefined ? held : cloneElement(render, undefined, held)}

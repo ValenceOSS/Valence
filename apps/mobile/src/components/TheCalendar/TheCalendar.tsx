@@ -1,7 +1,12 @@
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from '@keyline-icons/react-native';
+import {
+  Calendar as CalendarIcon,
+  CalendarPlus,
+  ChevronLeft,
+  ChevronRight,
+} from '@keyline-icons/react-native';
 import { addDays } from '@ValenceCore/functions/addDays';
 import { localDayOf } from '@ValenceCore/functions/localDayOf';
 import { monthGridOf } from '@ValenceCore/functions/monthGridOf';
@@ -21,6 +26,7 @@ import { SegmentedRow } from '@ValenceMobile/components/SegmentedRow/SegmentedRo
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { pageInTheLibrary } from '@ValenceMobile/components/SignedIn/pageInTheLibrary';
 import { whatAPhoneAsksFor } from '@ValenceMobile/components/TheSearch/whatAPhoneAsksFor';
+import { ACalendarSubscribeSheet } from '@ValenceMobile/components/ACalendarSubscribeSheet/ACalendarSubscribeSheet';
 import { ACalendarDaySheet } from '@ValenceMobile/components/TheCalendar/components/ACalendarDaySheet/ACalendarDaySheet';
 import { ACalendarEntry } from '@ValenceMobile/components/TheCalendar/components/ACalendarEntry/ACalendarEntry';
 import { ACalendarMonth } from '@ValenceMobile/components/TheCalendar/components/ACalendarMonth/ACalendarMonth';
@@ -41,7 +47,8 @@ const styles = StyleSheet.create({
 /**
  * The release calendar on a phone: a month of dates dotted for what comes out on them over the
  * day picked, or a list of what is coming over the next two months, each opening its page. Pressing
- * the month's name opens a sheet to turn it to any day.
+ * the month's name opens a sheet to turn it to any day, and the circle by the title adds the
+ * calendar to a calendar app.
  *
  * @param onOpen - Told to open the page an entry is about.
  * @param onBack - Told somebody is done with it.
@@ -53,6 +60,7 @@ const TheCalendar = ({ onOpen, onBack }: TheCalendarProps) => {
   const [view, setView] = useState<'month' | 'upcoming'>('month');
   const [day, setDay] = useState(today);
   const [isPicking, setIsPicking] = useState(false);
+  const [isSubscribing, setIsSubscribing] = useState(false);
   const grid = monthGridOf(day);
   const from = view === 'month' ? grid[0] : today;
   const to = view === 'month' ? grid[grid.length - 1] : addDays(today, UPCOMING_DAYS - 1);
@@ -89,7 +97,16 @@ const TheCalendar = ({ onOpen, onBack }: TheCalendarProps) => {
 
   return (
     <Screen scrolls onBack={onBack}>
-      <Words size="title">{say('common.calendar')}</Words>
+      <View style={styles.month}>
+        <Words size="title">{say('common.calendar')}</Words>
+        <AGlassCircle
+          of={CalendarPlus}
+          label={say('common.addToCalendar')}
+          onPress={() => {
+            setIsSubscribing(true);
+          }}
+        />
+      </View>
 
       <SegmentedRow
         label={say('common.calendarViews')}
@@ -193,6 +210,13 @@ const TheCalendar = ({ onOpen, onBack }: TheCalendarProps) => {
       )}
 
       {asked.isError ? <Words tone="danger">{say('common.thoseCouldNotBeRead')}</Words> : null}
+
+      <ACalendarSubscribeSheet
+        isOpen={isSubscribing}
+        onClose={() => {
+          setIsSubscribing(false);
+        }}
+      />
 
       <ACalendarDaySheet
         isOpen={isPicking}

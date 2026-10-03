@@ -23,7 +23,7 @@ const describeCalendarState = (state: CalendarState): StateBadge => {
     case 'notHeld':
       return {
         ...STATUS_LOOK.stopped,
-        label: say('client.calendar.describeCalendarState.notInTheLibrary'),
+        label: say('common.notInTheLibrary'),
         detail: null,
       };
   }
