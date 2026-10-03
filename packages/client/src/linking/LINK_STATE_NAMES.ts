@@ -7,6 +7,7 @@ const LINK_STATE_NAMES: Readonly<Record<LinkState, string>> = {
   linked: say('common.linkState.linked'),
   refused: say('common.refused'),
   unlinkedByThem: say('common.linkState.unlinkedByThem'),
+  unlinked: say('common.linkState.unlinked'),
 };
 
 export { LINK_STATE_NAMES };

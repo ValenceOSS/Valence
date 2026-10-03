@@ -3,8 +3,9 @@ import { say } from '@ValenceI18n/say';
 
 /**
  * What to call where a title stands, and which kind of state that is, for any client to draw in its
- * own way: in the library, somewhere along being fetched, or nothing at all where it is simply there
- * to be asked for.
+ * own way: in the library, on a linked server, somewhere along being fetched, or nothing at all
+ * where it is simply there to be asked for. Something on a linked server that is also asked for here
+ * says how the request is getting on, since that is what the asking is about.
  *
  * @param standing - Where the title stands.
  * @returns Its label and the kind of state it is, or nothing where it can just be asked for.
@@ -14,6 +15,13 @@ const nameTheStanding = (
 ): { label: string; look: 'queued' | 'working' | 'attention' | 'done' | 'failed' } | null => {
   if (standing.status === 'library') {
     return { look: 'done', label: say('common.inYourLibrary') };
+  }
+
+  if (standing.status === 'linked' && standing.requestId === null) {
+    return {
+      look: 'done',
+      label: say('common.onName', { name: standing.fromServer ?? say('common.linkedServers') }),
+    };
   }
 
   if (standing.status === 'askable') {

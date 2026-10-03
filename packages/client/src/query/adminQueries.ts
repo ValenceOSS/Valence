@@ -1,4 +1,9 @@
 import { fetchLinking } from '@ValenceClient/admin/fetchLinking';
+import { fetchLinkActivity } from '@ValenceClient/admin/fetchLinkActivity';
+import { fetchLinkSharing } from '@ValenceClient/admin/fetchLinkSharing';
+import { fetchRemotePeople } from '@ValenceClient/admin/fetchRemotePeople';
+import { fetchTheirActivity } from '@ValenceClient/admin/fetchTheirActivity';
+import { fetchTheirLibraries } from '@ValenceClient/admin/fetchTheirLibraries';
 import { fetchAlbums } from '@ValenceClient/music/fetchMusic';
 import { fetchBooks } from '@ValenceClient/books/fetchBooks';
 import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
@@ -350,6 +355,61 @@ const linking = () =>
   });
 
 /**
+ * What this server shares with one linked server.
+ *
+ * @param id - The linked server.
+ */
+const linkSharing = (id: string) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'linking', id, 'sharing'],
+    queryFn: () => fetchLinkSharing(id),
+  });
+
+/**
+ * The people from one linked server this one has seen.
+ *
+ * @param id - The linked server.
+ */
+const remotePeople = (id: string) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'linking', id, 'people'],
+    queryFn: () => fetchRemotePeople(id),
+  });
+
+/**
+ * This server's record of what one linked server asked for.
+ *
+ * @param id - The linked server.
+ */
+const linkActivity = (id: string) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'linking', id, 'activity'],
+    queryFn: () => fetchLinkActivity(id),
+  });
+
+/**
+ * What one linked server shares with this one, asked of it.
+ *
+ * @param id - The linked server.
+ */
+const theirLibraries = (id: string) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'linking', id, 'theirLibraries'],
+    queryFn: () => fetchTheirLibraries(id),
+  });
+
+/**
+ * One linked server's record of this server's people, asked of it.
+ *
+ * @param id - The linked server.
+ */
+const theirActivity = (id: string) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'linking', id, 'theirActivity'],
+    queryFn: () => fetchTheirActivity(id),
+  });
+
+/**
  * What happened the last times one was called.
  *
  * @param webhookId - Which webhook, or null where none is open.
@@ -617,6 +677,11 @@ const adminQueries = {
   accountSessions,
   webhooks,
   linking,
+  linkActivity,
+  linkSharing,
+  remotePeople,
+  theirActivity,
+  theirLibraries,
   deliveries,
   albums,
   books,

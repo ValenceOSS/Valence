@@ -39,6 +39,9 @@ const createProfile = async (
  * @param name - What to call them.
  * @param colour - The colour their face is drawn in.
  * @param avatar - What to draw them as, where they chose something other than a colour.
+ * @param askStillWatchingAfter - How many episodes to play before asking whether they are still there.
+ * @param showsWhatIamWatching - Whether others are shown what they are watching.
+ * @param prefersBestCopy - Whether they would rather be played the best copy of a title, wherever it is.
  * @returns Whether the change was written.
  */
 const saveProfile = async (
@@ -48,6 +51,7 @@ const saveProfile = async (
   avatar?: Avatar,
   askStillWatchingAfter?: number,
   showsWhatIamWatching?: boolean,
+  prefersBestCopy?: boolean,
 ): Promise<boolean> => {
   const response = await fetch(`/api/profiles/${profileId}`, {
     method: 'PATCH',
@@ -58,6 +62,7 @@ const saveProfile = async (
       ...(avatar === undefined ? {} : { avatar }),
       ...(askStillWatchingAfter === undefined ? {} : { askStillWatchingAfter }),
       ...(showsWhatIamWatching === undefined ? {} : { showsWhatIamWatching }),
+      ...(prefersBestCopy === undefined ? {} : { prefersBestCopy }),
     }),
   }).catch(() => null);
 
