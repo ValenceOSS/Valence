@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "start": "serve dist -l ${PORT:-3000}",
     "test": "vitest run",
+    "test:shard": "vitest run --shard=$VITEST_SHARD",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
