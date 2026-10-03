@@ -1,0 +1,22 @@
+{
+  "name": "@valence/lint",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsx src/oxlint/buildValencePlugin.ts",
+    "lint:comments": "tsx src/comments/checkComments.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@oxlint/plugins": "^1.86.0",
+    "zod": "^4.6.4"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.0",
+    "oxlint": "^1.86.0",
+    "tsx": "^4.23.13",
+    "vitest": "^4.1.11"
+  }
+}

@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 import { build } from 'esbuild';
 
-const OUT = join(import.meta.dirname, '..', 'dist', 'valence-oxlint.js');
+const OUT = join(import.meta.dirname, '..', '..', 'dist', 'valence-oxlint.js');
 
 /**
  * Bundles Valence's own lint rules into the one file oxlint loads, since oxlint reads a plugin with

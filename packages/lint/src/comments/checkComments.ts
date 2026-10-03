@@ -3,7 +3,7 @@ import { join, relative } from 'node:path';
 import { findProseComments } from './findProseComments';
 import type { Language, ProseComment } from './findProseComments';
 
-const ROOT = join(import.meta.dirname, '..', '..');
+const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
 
 const SKIPPED = new Set([
   'node_modules',

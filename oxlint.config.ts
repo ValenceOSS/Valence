@@ -179,7 +179,7 @@ const DATABASE_TESTS = [
 
 export default defineConfig({
   plugins: ['react', 'typescript', 'unicorn', 'import'],
-  jsPlugins: ['./tools/dist/valence-oxlint.js'],
+  jsPlugins: ['./packages/lint/dist/valence-oxlint.js'],
   options: { typeAware: true },
   env: { browser: true, es2024: true },
   ignorePatterns: [
