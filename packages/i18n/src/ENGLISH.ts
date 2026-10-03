@@ -42,6 +42,8 @@ const ENGLISH = {
     'Hold API keys for use outside the browser',
   'client.admin.describePermission.installAndManagePlugins': 'Install and manage plugins',
   'client.admin.describePermission.inviteSomebody': 'Invite somebody',
+  'client.admin.describePermission.linkThisServerWithOthers':
+    'Link this server with other Valence servers',
   'client.admin.describePermission.manageAccounts': 'Manage accounts',
   'client.admin.describePermission.manageOtherPeoplesProfiles': 'Manage other people’s profiles',
   'client.admin.describePermission.manageRoles': 'Manage roles',
@@ -105,6 +107,8 @@ const ENGLISH = {
     'Install plugins from the catalogue or a file, choose what they may do, change their settings and remove them.',
   'client.admin.describePermissionDetail.inviteSomebodyNewToSignIn':
     'Invite somebody new to sign in and hold an account.',
+  'client.admin.describePermissionDetail.linkThisServerWithOthers':
+    'Make and use invites to link this server with another Valence, approve or refuse a server asking to link, and unlink. Linking alone shares nothing.',
   'client.admin.describePermissionDetail.pauseSomebodyElsesStreamFromWhere':
     'Pause somebody else’s stream from where they are watching.',
   'client.admin.describePermissionDetail.pointValenceAtANewFolder':
@@ -185,6 +189,11 @@ const ENGLISH = {
   'client.books.listeningChoices.minutesMinutes': '{minutes} minutes',
   'client.books.listenLabel.listen': 'Listen',
   'client.books.listenLabel.listenAgain': 'Listen again',
+  'client.calendar.describeCalendarEntry.inCinemas': 'In cinemas',
+  'client.calendar.describeCalendarEntry.onDisc': 'On disc',
+  'client.calendar.describeCalendarEntry.sSeasonNumberEEpisodeNumberTitle':
+    'S{seasonNumber} E{episodeNumber} · {title}',
+  'client.calendar.describeCalendarEntry.toBuyOrRent': 'To buy or rent',
   'client.downloads.useFetchWhatThisDeviceAsked.itIsReadyToWatchOffline':
     'It is ready to watch offline.',
   'client.downloads.useFetchWhatThisDeviceAsked.titleIsOnThisDevice': '{title} is on this device',
@@ -452,6 +461,7 @@ const ENGLISH = {
   'common.address': 'Address',
   'common.addSongsToItFromThe': 'Add songs to it from the menu beside any song.',
   'common.addToACollection': 'Add to a collection',
+  'common.addToCalendar': 'Add to Calendar',
   'common.addToPlaylist': 'Add to playlist',
   'common.addToPlaylist2': 'Add to playlist…',
   'common.addToQueue': 'Add to queue',
@@ -463,7 +473,10 @@ const ENGLISH = {
   'common.aLibrary': 'A library',
   'common.aLibraryThatHasGone': 'A library that has gone',
   'common.all': 'All',
+  'common.allowed': 'Allowed',
+  'common.allowUnrated': 'Allow unrated',
   'common.alphaGain': 'Alpha gain',
+  'common.alsoOnNames': 'Also on {names}',
   'common.aMonth': 'A month',
   'common.anHour': 'An hour',
   'common.animSpeed': 'Anim speed',
@@ -475,6 +488,7 @@ const ENGLISH = {
   'common.aPIKey': 'API key',
   'common.aPlaylistNeedsAName': 'A playlist needs a name.',
   'common.appearsOn': 'Appears on',
+  'common.appleCalendarOrOutlook': 'Apple Calendar or Outlook',
   'common.appleTV': 'Apple TV',
   'common.approve': 'Approve',
   'common.approvedTitle': 'Approved {title}.',
@@ -490,6 +504,7 @@ const ENGLISH = {
   'common.askIfYouAreStillWatching': 'Ask if you are still watching',
   'common.askingEveryIndexer': 'Asking every indexer',
   'common.askingTheCatalogue': 'Asking the catalogue',
+  'common.askName': 'Ask {name}',
   'common.askTheServerAdminToAdd': 'Ask the server admin to add one.',
   'common.askTheServerAdminToScan': 'Ask the server admin to scan it.',
   'common.aTelevisionIsAskingToSign':
@@ -512,6 +527,8 @@ const ENGLISH = {
   'common.backgroundOpacity': 'Background opacity',
   'common.backupCode': 'Backup code',
   'common.bitrate': 'Bitrate',
+  'common.block': 'Block',
+  'common.blocked': 'Blocked',
   'common.book': 'Book',
   'common.books': 'Books',
   'common.bornBornOn': 'Born {bornOn}',
@@ -521,6 +538,11 @@ const ENGLISH = {
   'common.byAuthor': 'By {author}',
   'common.byName': 'By name',
   'common.byYear': 'By year',
+  'common.calendar': 'Calendar',
+  'common.calendarAppsSubscribedToIt':
+    'Calendar apps subscribed to it will stop seeing what comes out.',
+  'common.calendarLink': 'Calendar link',
+  'common.calendarViews': 'Calendar views',
   'common.cameraDistance': 'Camera distance',
   'common.cancel': 'Cancel',
   'common.cancelRequest': 'Cancel request',
@@ -575,6 +597,7 @@ const ENGLISH = {
   'common.copied': 'Copied',
   'common.copiedToTheClipboard': 'Copied to the clipboard.',
   'common.copy': 'Copy',
+  'common.copyLink': 'Copy link',
   'common.core': 'Core',
   'common.correctedTheMatch': 'Corrected the match.',
   'common.couldNotReachTheServerCheck':
@@ -704,6 +727,8 @@ const ENGLISH = {
   'common.enterTheCurrentCodeFromYour': 'Enter the current code from your authenticator app.',
   'common.episode': 'Episode',
   'common.episodes': 'Episodes',
+  'common.episodesAndRequestsAppearHere':
+    'Episodes of shows in your library, and films and shows you have asked for, appear here once they have a date.',
   'common.events': 'Events',
   'common.everyLibrary2': 'Every library',
   'common.everyone': 'Everyone',
@@ -711,10 +736,20 @@ const ENGLISH = {
   'common.everySeason': 'Every season',
   'common.everySongYouHaveLiked': 'Every song you have liked',
   'common.everything': 'Everything',
+  'common.everywhere': 'Everywhere',
   'common.exposure': 'Exposure',
   'common.extras': 'Extras',
   'common.failed': 'Failed',
   'common.favourites': 'Favourites',
+  'common.federationAction.activity': 'Read its record',
+  'common.federationAction.catalogue': 'Read a library',
+  'common.federationAction.libraries': 'Read what is shared',
+  'common.federationAction.media': 'Asked about a title',
+  'common.federationAction.parties': 'Took part in a watch party',
+  'common.federationAction.requests': 'Asked for a title',
+  'common.federationOutcome.aboveTheAge': 'Above the age',
+  'common.federationOutcome.notShared': 'Not shared',
+  'common.federationOutcome.tooMany': 'Too often',
   'common.filed': 'Filed',
   'common.files': 'Files',
   'common.filing': 'Filing',
@@ -740,6 +775,7 @@ const ENGLISH = {
   'common.forgetTitle': 'Forget {title}?',
   'common.forgotYourPassword': 'Forgot your password?',
   'common.foundOnYourNetwork': 'Found on your network',
+  'common.fromName': 'From {name}',
   'common.fromPluginName': 'From {pluginName}',
   'common.fromWikipedia': 'From Wikipedia',
   'common.gain': 'Gain',
@@ -749,10 +785,13 @@ const ENGLISH = {
   'common.getAFreeKey': 'Get a free key',
   'common.glow': 'Glow',
   'common.goBack': 'Go back',
+  'common.googleCalendar': 'Google Calendar',
+  'common.goToADay': 'Go to a day',
   'common.goToAlbum': 'Go to album',
   'common.goToArtist': 'Go to artist',
   'common.grainSize': 'Grain size',
   'common.green': 'Green',
+  'common.here': 'Here',
   'common.hidden': 'Hidden',
   'common.hiddenHiddenAt': 'Hidden {hiddenAt}',
   'common.hide': 'Hide',
@@ -797,9 +836,11 @@ const ENGLISH = {
   'common.language': 'Language',
   'common.large': 'Large',
   'common.larger': 'Larger',
+  'common.lastReadLastReadAt': 'Last read {lastReadAt}',
   'common.lasts': 'Lasts',
   'common.leftToRight': 'Left to right',
   'common.lens': 'Lens',
+  'common.letBackIn': 'Let back in',
   'common.libraries': 'Libraries',
   'common.library': 'Library',
   'common.lidarr': 'Lidarr',
@@ -808,7 +849,13 @@ const ENGLISH = {
   'common.likedSongs': 'Liked songs',
   'common.likedSongs2': 'Liked Songs',
   'common.likeTitle': 'Like {title}',
+  'common.linkedServers': 'Linked servers',
   'common.links': 'Links',
+  'common.linkState.awaitingThem': 'Waiting for them',
+  'common.linkState.awaitingUs': 'Asking to link',
+  'common.linkState.linked': 'Linked',
+  'common.linkState.unlinked': 'Unlinked',
+  'common.linkState.unlinkedByThem': 'They unlinked',
   'common.linkTo': 'Link to',
   'common.linux': 'Linux',
   'common.list.andAlso': '{first}; {rest}',
@@ -836,7 +883,10 @@ const ENGLISH = {
   'common.lyricsForTitle': 'Lyrics for {title}',
   'common.madeCreatedAt': 'Made {createdAt}',
   'common.makeALink': 'Make a link',
+  'common.makeANewCalendarLink': 'Make a new calendar link?',
+  'common.makeANewLink': 'Make a new link',
   'common.makeIt': 'Make it',
+  'common.manage': 'Manage',
   'common.margins': 'Margins',
   'common.markAllRead': 'Mark all read',
   'common.markSeasonUnwatched': 'Mark season unwatched',
@@ -847,6 +897,7 @@ const ENGLISH = {
   'common.medium': 'Medium',
   'common.mode': 'Mode',
   'common.mono': 'Mono',
+  'common.month': 'Month',
   'common.more': 'More',
   'common.moreForName': 'More for {name}',
   'common.moreForTitle': 'More for {title}',
@@ -863,7 +914,10 @@ const ENGLISH = {
   'common.n1Item': '1 item',
   'common.name': 'Name',
   'common.nameAnswered': '{name} answered.',
+  'common.nameCannotBeReachedRightNow':
+    '{name} cannot be reached right now. Its titles can be browsed, but not played until it is back.',
   'common.nameCouldNotBeDeleted': '{name} could not be deleted.',
+  'common.nameFromServer': '{name} from {server}',
   'common.nameRefusedTheUsernameOrPassword': '{name} refused the username or password',
   'common.nameSettings': '{name} settings',
   'common.nameTakesNZBsNotTorrents': '{name} takes NZBs, not torrents',
@@ -902,16 +956,19 @@ const ENGLISH = {
   'common.noMusicYet': 'No music yet',
   'common.none': 'None',
   'common.noReasonGiven': 'no reason given',
+  'common.noReleases': 'No releases',
   'common.normal': 'Normal',
   'common.noShowsYet': 'No shows yet',
   'common.noSynopsis': 'No synopsis.',
   'common.notChecked': 'Not checked',
   'common.notFollowingAnybodyYet': 'Not following anybody yet',
+  'common.nothingAbove': 'Nothing above',
   'common.nothingAfterThis': 'Nothing after this.',
   'common.nothingAnsweredAtAddressCheckThe':
     'Nothing answered at {address}. Check the address and that Valence is running.',
   'common.nothingCameBackUnderThatName': 'Nothing came back under that name.',
   'common.nothingChosen': 'Nothing chosen',
+  'common.nothingComesOutOnTheseDays': 'Nothing comes out on these days',
   'common.nothingHereMatchesThat': 'Nothing here matches that.',
   'common.nothingInThisBookYetScanning':
     'Nothing in this book yet. Scanning the library again may find it.',
@@ -923,7 +980,9 @@ const ENGLISH = {
   'common.nothingMatchesThat': 'Nothing matches that.',
   'common.nothingMatchesThose': 'Nothing matches those',
   'common.nothingToWatchYet': 'Nothing to watch yet',
+  'common.nothingYet': 'Nothing yet.',
   'common.notifications': 'Notifications',
+  'common.notInTheLibrary': 'Not in the library',
   'common.notInThisLibrary': 'Not in this library',
   'common.notInThisLibraryAirs': 'Not in this library · {airs}',
   'common.notInYourLibrary': 'Not in your library',
@@ -932,6 +991,7 @@ const ENGLISH = {
   'common.notNow': 'Not now',
   'common.notOutYet': 'Not out yet',
   'common.notPlaying': 'Not playing',
+  'common.notReadByACalendarApp': 'Not read by a calendar app yet',
   'common.notSigned': 'Not signed',
   'common.noValenceHasBeenChosenYet': 'No Valence has been chosen yet.',
   'common.nowPlaying': 'Now playing',
@@ -951,6 +1011,7 @@ const ENGLISH = {
   'common.onForwardSecondsSeconds': 'On {forwardSeconds} seconds',
   'common.online': 'Online',
   'common.onlyWhatYouHaveNotWatched': 'Only what you have not watched',
+  'common.onName': 'On {name}',
   'common.onThisDevice': 'On this device',
   'common.onThisPhone': 'On this phone',
   'common.open': 'Open',
@@ -1129,6 +1190,7 @@ const ENGLISH = {
   'common.replace': 'Replace',
   'common.request': 'Request',
   'common.requested': 'Requested',
+  'common.requestHere': 'Request here',
   'common.requestMedia': 'Request media',
   'common.requests': 'Requests',
   'common.resetAndRebuild': 'Reset and rebuild',
@@ -1180,6 +1242,7 @@ const ENGLISH = {
   'common.share': 'Share',
   'common.sharedLinks': 'Shared links',
   'common.sharedWithYou': 'Shared with you',
+  'common.shareLink': 'Share link',
   'common.shareWithTheHousehold': 'Share with the household',
   'common.sheen': 'Sheen',
   'common.show': 'Show',
@@ -1209,6 +1272,7 @@ const ENGLISH = {
   'common.softwareOnly': 'Software only',
   'common.somebody': 'Somebody',
   'common.somebodyElse': 'Somebody else',
+  'common.someoneFromName': 'Someone from {name}',
   'common.something': 'Something',
   'common.somethingNewToWatch': 'Something new to watch',
   'common.sonarr': 'Sonarr',
@@ -1241,6 +1305,8 @@ const ENGLISH = {
   'common.stopShuffling': 'Stop shuffling',
   'common.streamStats': 'Stream stats',
   'common.subject': 'Subject',
+  'common.subscribeToYourReleaseCalendar':
+    'Add your release calendar to Apple Calendar, Google Calendar or any other calendar app, and what comes out appears there as it is announced. Anyone with the link can see what is on it, so keep it to yourself.',
   'common.subtitles': 'Subtitles',
   'common.subtitleTiming': 'Subtitle timing',
   'common.suitableForAll': 'Suitable for all',
@@ -1275,6 +1341,8 @@ const ENGLISH = {
   'common.thatTitleCouldNotBeRead': 'That title could not be read.',
   'common.thatTrackWouldNotPlay': 'That track would not play.',
   'common.theAddressNeedsToBeA': 'The address needs to be a whole http or https address.',
+  'common.theCalendarLinkCouldNotBeChanged': 'The calendar link could not be changed. Try again.',
+  'common.theCalendarLinkCouldNotBeMade': 'The calendar link could not be made.',
   'common.theCatalogue': 'The catalogue',
   'common.theCatalogueCouldNotBeRead': 'The catalogue could not be read.',
   'common.theClientCouldNotBeAsked': 'The client could not be asked',
@@ -1286,6 +1354,8 @@ const ENGLISH = {
   'common.theLibrary': 'The library',
   'common.theLibraryCouldNotBeRead': 'The library could not be read.',
   'common.theLibrarysOwnProfile': 'The library’s own profile',
+  'common.theLinkYouHaveNowStops':
+    'The link you have now stops working at once, and any calendar app subscribed to it will need the new one.',
   'common.theme': 'Theme',
   'common.themesFromPlugins': 'Themes from plugins',
   'common.theOrderMatters': 'The order matters',
@@ -1311,6 +1381,7 @@ const ENGLISH = {
   'common.thisDevice': 'This device',
   'common.thisItem': 'This item',
   'common.thisLinkNoLongerWorks': 'This link no longer works.',
+  'common.thisServer': 'This server',
   'common.thoseChangesWereNotSaved': 'Those changes were not saved.',
   'common.thoseCouldNotBeRead': 'Those could not be read.',
   'common.threeDays': 'Three days',
@@ -1324,6 +1395,8 @@ const ENGLISH = {
   'common.titleCountEpisodes.one': '{title} — {count} episode',
   'common.titleCountEpisodes.other': '{title} — {count} episodes',
   'common.titleTheTrailer': '{title}, the trailer',
+  'common.today': 'Today',
+  'common.tomorrow': 'Tomorrow',
   'common.took': 'Took',
   'common.torznab': 'Torznab',
   'common.trailer': 'Trailer',
@@ -1337,6 +1410,7 @@ const ENGLISH = {
   'common.turnNameOff': 'Turn {name} off',
   'common.turnNameOn': 'Turn {name} on',
   'common.turnOff': 'Turn off',
+  'common.turnOffYourCalendarLink': 'Turn off your calendar link?',
   'common.turnOnTwoFactor': 'Turn on two-factor',
   'common.twinkleRate': 'Twinkle rate',
   'common.twoStepSignIn': 'Two-step sign in',
@@ -1346,6 +1420,7 @@ const ENGLISH = {
   'common.unlikeTitle': 'Unlike {title}',
   'common.unmute': 'Unmute',
   'common.upAFolder': 'Up a folder',
+  'common.upcoming': 'Upcoming',
   'common.updateToVersion': 'Update to {version}',
   'common.upgrades': 'Upgrades',
   'common.upload': 'Upload',
@@ -1378,10 +1453,12 @@ const ENGLISH = {
   'common.watchHistory': 'Watch history',
   'common.watching': 'Watching',
   'common.watchingOnAddress': 'Watching on {address}',
+  'common.watchOnName': 'Watch on {name}',
   'common.watchTheTrailer': 'Watch the trailer',
   'common.watchTheVideo': 'Watch the video',
   'common.water': 'Water',
   'common.webhooks': 'Webhooks',
+  'common.week': 'Week',
   'common.weekly': 'Weekly',
   'common.welcomeToName': 'Welcome to {name}',
   'common.whatItHasDone': 'What it has done',
@@ -1392,6 +1469,7 @@ const ENGLISH = {
   'common.whatToChange': 'What to change',
   'common.whatToShare': 'What to share',
   'common.whatToShow': 'What to show',
+  'common.where': 'Where',
   'common.whereYouAre': 'Where you are',
   'common.whichArtistsToShow': 'Which artists to show',
   'common.whichLibrary': 'Which library',
@@ -1407,6 +1485,7 @@ const ENGLISH = {
   'common.why': 'Why',
   'common.wide': 'Wide',
   'common.windows': 'Windows',
+  'common.withdraw': 'Withdraw',
   'common.withdrawIt': 'Withdraw it',
   'common.withdrawTheLinkToTitle': 'Withdraw the link to {title}',
   'common.withdrawThisLink': 'Withdraw this link?',
@@ -1838,6 +1917,34 @@ const ENGLISH = {
     'That is past the end — the file runs {durationSeconds} seconds.',
   'error.library.thatPathIsNotAReadable': 'That path is not a readable directory.',
   'error.libraryAccess.noSuchThingToMakeAn': 'No such thing to make an exception of.',
+  'error.linking.alreadyLinked':
+    'This server is already linked with that one, or is waiting on it.',
+  'error.linking.askAlongFromTheServerHoldingIt':
+    'Ask people along from the server holding this party.',
+  'error.linking.noSuchInvite': 'There is no such open invite.',
+  'error.linking.noSuchPerson': 'There is no such person from that server.',
+  'error.linking.noSuchServer': 'There is no such linked server.',
+  'error.linking.notSignedByALinkedServer': 'That was not signed by a server this one knows.',
+  'error.linking.notTheServerThatMadeTheInvite':
+    'The server at that address is not the one that made the invite.',
+  'error.linking.thatInviteHasBeenUsed':
+    'That invite has been used, withdrawn or has run out. Ask for a new one.',
+  'error.linking.thatInviteIsFromThisServer':
+    'That invite is from this server. Use it on the other one.',
+  'error.linking.thatIsNotAnInvite': 'That is not an invite from another Valence.',
+  'error.linking.thatIsNotSharedWithYourServer': 'That is not shared with your server.',
+  'error.linking.thatServerCouldNotBeReached':
+    'That server could not be reached. Check its address can be reached from this one.',
+  'error.linking.thatServerDoesNotShowItsRecord':
+    'That server does not show its record of your people.',
+  'error.linking.thatServerTakesNoRequestsFromYours': 'That server takes no requests from yours.',
+  'error.linking.thisAccountMayNotLinkServers':
+    'This account may not link this server with others.',
+  'error.linking.thisPersonMayNotWatchFromHere': 'This person may not watch from this server.',
+  'error.linking.yourServerIsAskingTooOften':
+    'Your server is asking too often. Try again in a minute.',
+  'error.linking.yourServerIsPlayingAsMuchAsItMay':
+    'Your server is already playing as many streams from here as it may. Stop one first.',
   'error.listening.noSuchTrackInThatBook': 'No such track in that book.',
   'error.listening.noSuchTrackToListenTo': 'No such track to listen to.',
   'error.music.chooseAProfileFirst': 'Choose a profile first.',
@@ -2093,7 +2200,6 @@ const ENGLISH = {
   'phone.theAccount.theShares.linksYouHaveHandedOutShare':
     'Links you have handed out. Share something from its own page, and it will be here.',
   'phone.theAccount.theShares.openedShare': 'Opened {share}',
-  'phone.theAccount.theShares.withdraw': 'Withdraw',
   'phone.theAccount.theShares.withdrawTheLinkToTitle': 'Withdraw the link to {title}?',
   'phone.theAccount.theShares.youHaveNotSharedAnythingYet': 'You have not shared anything yet.',
   'phone.theBadges.shortenedForAPhone.atmos': 'Atmos',
@@ -2554,6 +2660,7 @@ const ENGLISH = {
     'Following the machine uses whatever your system asks for. Reduced stills the interface here without changing anything else you run.',
   'screens.accountArea.profileSettings.keptOnThisDeviceRatherThan':
     'Kept on this device rather than on your account, and applied as soon as you choose it.',
+  'screens.accountArea.profileSettings.preferTheBestCopy': 'Prefer the best copy',
   'screens.accountArea.profileSettings.profilePicture': 'Profile picture',
   'screens.accountArea.profileSettings.showWhatIAmPlayingOn': 'Show what I am playing on Discord',
   'screens.accountArea.profileSettings.theBackgroundBehindYourInitialAnd':
@@ -2562,6 +2669,8 @@ const ENGLISH = {
     'The title, and the series and episode or the artist where there is one, appear in your Discord status while something is playing. It needs Valence open on the same machine as Discord.',
   'screens.accountArea.profileSettings.whatEverybodySharingThisServerSees':
     'What everybody sharing this server sees when they pick who is watching.',
+  'screens.accountArea.profileSettings.whereALinkedServerHasABetter':
+    'Where a linked server has a clearly better copy of something here, and can be reached, play that one instead.',
   'screens.accountArea.profileSettings.yourNewFaceIsSavedWhen':
     'Your new face is saved when you press Save.',
   'screens.accountArea.sharePanel.anybodyHoldingOneOfTheseCan':
@@ -2661,10 +2770,8 @@ const ENGLISH = {
   'screens.adminArea.accountsPanel.ageLimitInNameForName2': 'Age limit in {name} for {name2}',
   'screens.adminArea.accountsPanel.aLimitAppliesToThisAccount':
     'A limit applies to this account and so to every face on it. If a parent and a child share this one, give the child an account of their own and limit that instead.',
-  'screens.adminArea.accountsPanel.allowed': 'Allowed',
   'screens.adminArea.accountsPanel.allowUncertificatedThingsInNameFor':
     'Allow uncertificated things in {name} for {name2}',
-  'screens.adminArea.accountsPanel.allowUnrated': 'Allow unrated',
   'screens.adminArea.accountsPanel.ban': 'Ban',
   'screens.adminArea.accountsPanel.banned': 'banned',
   'screens.adminArea.accountsPanel.banned2': 'Banned',
@@ -2677,7 +2784,6 @@ const ENGLISH = {
   'screens.adminArea.accountsPanel.changesToTheirNamePictureRoles':
     'Changes to their name, picture, roles and libraries apply when you save. Resetting their password and ending sessions happen right away.',
   'screens.adminArea.accountsPanel.copiedTheSetupLink': 'Copied the setup link.',
-  'screens.adminArea.accountsPanel.copyLink': 'Copy link',
   'screens.adminArea.accountsPanel.deleteAccount': 'Delete account',
   'screens.adminArea.accountsPanel.deleteThisAccount': 'Delete this account?',
   'screens.adminArea.accountsPanel.editAccount': 'Edit account',
@@ -2697,7 +2803,6 @@ const ENGLISH = {
   'screens.adminArea.accountsPanel.lastSignedIn': 'Last signed in',
   'screens.adminArea.accountsPanel.leaveItEmptyForNoAddress':
     'Leave it empty for an account without an email address.',
-  'screens.adminArea.accountsPanel.letBackIn': 'Let back in',
   'screens.adminArea.accountsPanel.letNameSeeName2': 'Let {name} see {name2}',
   'screens.adminArea.accountsPanel.nameGoesAndSoDoesEvery':
     "{name} goes, and so does every profile on the account and everything those profiles were watching. Their API keys and share links are revoked at once, so anything using one stops working. Shared playlists stay, marked as a removed profile's. Nothing leaves the library, and this cannot be undone.",
@@ -2706,7 +2811,6 @@ const ENGLISH = {
   'screens.adminArea.accountsPanel.newPassword': 'New password',
   'screens.adminArea.accountsPanel.nobodyHasAnAccountYet': 'Nobody has an account yet.',
   'screens.adminArea.accountsPanel.noRoles': 'No roles',
-  'screens.adminArea.accountsPanel.nothingAbove': 'Nothing above',
   'screens.adminArea.accountsPanel.passwordReset': 'Password reset.',
   'screens.adminArea.accountsPanel.readingTheAccounts': 'Reading the accounts',
   'screens.adminArea.accountsPanel.resetPassword': 'Reset password',
@@ -3383,7 +3487,6 @@ const ENGLISH = {
   'screens.adminArea.indexerDialog.whichOfTheSitesAddressesTo':
     'Which of the site’s addresses to use. Try another if one is blocked.',
   'screens.adminArea.indexerReportList.whatEachIndexerSaid': 'What each indexer said',
-  'screens.adminArea.indexersPanel.fromName': 'From {name}',
   'screens.adminArea.indexersPanel.fromNameAddedUpdatedRemoved':
     'From {name}: {added} added, {updated} changed, {removed} removed.',
   'screens.adminArea.indexersPanel.importFromProwlarr': 'Import from Prowlarr',
@@ -3507,6 +3610,107 @@ const ENGLISH = {
     'Whichever profile names this library',
   'screens.adminArea.librarySettingsDialog.whoFulfilsRequests': 'Who fetches what is asked for',
   'screens.adminArea.librarySettingsDialog.yourBrowser': 'Your browser',
+  'screens.adminArea.linkedServersPanel.ageLimitForName': 'Age limit for {name}',
+  'screens.adminArea.linkedServersPanel.allowUncertificatedThingsForName':
+    'Allow uncertificated things for {name}',
+  'screens.adminArea.linkedServersPanel.anInviteLinksOneServer':
+    'An invite links one other Valence with this one. It works once, for a day, and you approve the server that uses it before they are linked.',
+  'screens.adminArea.linkedServersPanel.askedNameToLink':
+    'Asked {name} to link. You are linked once their admin approves.',
+  'screens.adminArea.linkedServersPanel.blockedName': 'Blocked {name}.',
+  'screens.adminArea.linkedServersPanel.blockName': 'Block {name}',
+  'screens.adminArea.linkedServersPanel.checkAgain': 'Check again',
+  'screens.adminArea.linkedServersPanel.copyItNowItIsNotShownAgain':
+    'Copy it now. It is not shown again.',
+  'screens.adminArea.linkedServersPanel.dropRequestsALinkedServerHas':
+    'Drop requests a linked server has',
+  'screens.adminArea.linkedServersPanel.everythingKeptFromNameGoes':
+    'Everything people here watched, rated or kept from {name} goes with it, for good.',
+  'screens.adminArea.linkedServersPanel.fingerprint': 'Fingerprint',
+  'screens.adminArea.linkedServersPanel.forgetNameAsk': 'Forget {name}?',
+  'screens.adminArea.linkedServersPanel.forgotName': 'Forgot {name}.',
+  'screens.adminArea.linkedServersPanel.highestQuality': 'Highest quality',
+  'screens.adminArea.linkedServersPanel.highestQualityForName': 'Highest quality for {name}',
+  'screens.adminArea.linkedServersPanel.howManyOfNamesPeopleMayWatch':
+    'How many of {name}’s people may watch from here at the same time.',
+  'screens.adminArea.linkedServersPanel.howOtherServersSeeThisOne':
+    'How other Valence servers see this one. Another admin checks an invite against its fingerprint.',
+  'screens.adminArea.linkedServersPanel.inviteAServer': 'Invite a server',
+  'screens.adminArea.linkedServersPanel.lastHeardFromWhen': 'Last heard from {when}',
+  'screens.adminArea.linkedServersPanel.letNameBackIn': 'Let {name} back in.',
+  'screens.adminArea.linkedServersPanel.letNameBackInAsk': 'Let {name} back in',
+  'screens.adminArea.linkedServersPanel.letsNamesAdminReadWhatTheir':
+    'Lets {name}’s admin read what their people asked this server for.',
+  'screens.adminArea.linkedServersPanel.letTheirAdminPauseAndMessage':
+    'Let their admin pause and message your people',
+  'screens.adminArea.linkedServersPanel.letThemKeepTitlesOffline': 'Let them keep titles offline',
+  'screens.adminArea.linkedServersPanel.link': 'Link',
+  'screens.adminArea.linkedServersPanel.linkedServersCouldNotBeRead':
+    'Linked servers could not be read.',
+  'screens.adminArea.linkedServersPanel.linkedWithName': 'Linked with {name}.',
+  'screens.adminArea.linkedServersPanel.linkToAServer': 'Link to a server',
+  'screens.adminArea.linkedServersPanel.makeAnInvite': 'Make an invite',
+  'screens.adminArea.linkedServersPanel.manageName': 'Manage {name}',
+  'screens.adminArea.linkedServersPanel.nameCouldNotBeReached': '{name} could not be reached.',
+  'screens.adminArea.linkedServersPanel.nameDoesNotShowThisServerIts':
+    '{name} does not show this server its record.',
+  'screens.adminArea.linkedServersPanel.nameItself': '{name} itself',
+  'screens.adminArea.linkedServersPanel.namesAdminCanPauseSomebodyHere':
+    '{name}’s admin can pause somebody here watching from it, or send them a message. Stopping a stream needs no leave, since it is theirs.',
+  'screens.adminArea.linkedServersPanel.nameSeesWhoIsWatchingByName':
+    '{name} sees who is watching by name. Off, it sees “Someone from {server}” instead.',
+  'screens.adminArea.linkedServersPanel.nameSharesNothingWithThisServer':
+    '{name} shares nothing with this server yet.',
+  'screens.adminArea.linkedServersPanel.namesPeopleMayAskThisServer':
+    '{name}’s people may ask this server for films and series. Their requests join your queue, named with their server, for you to approve.',
+  'screens.adminArea.linkedServersPanel.namesPeopleMayDownloadWhatIs':
+    '{name}’s people may download what is shared, as it is, to watch without a connection.',
+  'screens.adminArea.linkedServersPanel.neitherServerReachesTheOther':
+    'Neither server reaches the other until they link again with a new invite. What people here watched from it is kept, and comes back if you do.',
+  'screens.adminArea.linkedServersPanel.nobodyFromNameHasAskedFor':
+    'Nobody from {name} has asked for anything yet.',
+  'screens.adminArea.linkedServersPanel.noLibrariesToShareYet':
+    'This server has no libraries to share yet.',
+  'screens.adminArea.linkedServersPanel.noServersAreLinkedYet': 'No servers are linked yet.',
+  'screens.adminArea.linkedServersPanel.nothingIsSharedUntilYouChoose':
+    'Nothing is shared until you choose. Their people see only these libraries, and only what is within the age you set.',
+  'screens.adminArea.linkedServersPanel.pasteAnInvite':
+    'Paste an invite another Valence’s admin made. They approve this server before you are linked.',
+  'screens.adminArea.linkedServersPanel.peopleFromName': 'People from {name}',
+  'screens.adminArea.linkedServersPanel.playersFetchFromNameDirectly':
+    'Players fetch {name}’s titles from {name} itself, rather than through this server. Turn this on when your people watch away from home and this server’s upload is the slower link.',
+  'screens.adminArea.linkedServersPanel.playStraightFromThem': 'Play straight from them',
+  'screens.adminArea.linkedServersPanel.readAgainNow': 'Read again now',
+  'screens.adminArea.linkedServersPanel.readCountTitlesFromName':
+    'Read {count} titles from {name}.',
+  'screens.adminArea.linkedServersPanel.readingLinkedServers': 'Reading linked servers',
+  'screens.adminArea.linkedServersPanel.runsOutWhen': 'Runs out {when}',
+  'screens.adminArea.linkedServersPanel.savedThisServer': 'Saved how other servers see this one.',
+  'screens.adminArea.linkedServersPanel.savedWhatNameCanSee': 'Saved what {name} can see.',
+  'screens.adminArea.linkedServersPanel.seenWhen': 'Seen {when}',
+  'screens.adminArea.linkedServersPanel.sendYourPeoplesNames': 'Send your people’s names',
+  'screens.adminArea.linkedServersPanel.shareNameWithName2': 'Share {name} with {name2}',
+  'screens.adminArea.linkedServersPanel.showThemTheirRecord': 'Show them their record',
+  'screens.adminArea.linkedServersPanel.streamsAtOnce': 'Streams at once',
+  'screens.adminArea.linkedServersPanel.streamsAtOnceForName': 'Streams at once for {name}',
+  'screens.adminArea.linkedServersPanel.takeTheirRequests': 'Take their requests',
+  'screens.adminArea.linkedServersPanel.theBestNamesPeopleAreSent':
+    'The best {name}’s people are sent, whatever they ask for.',
+  'screens.adminArea.linkedServersPanel.theInvite': 'The invite',
+  'screens.adminArea.linkedServersPanel.theInviteCouldNotBeCopied':
+    'The invite couldn’t be copied. Select it and copy it by hand, since it is not shown again.',
+  'screens.adminArea.linkedServersPanel.theirInvite': 'Their invite',
+  'screens.adminArea.linkedServersPanel.theirRecordOfYourPeople': 'Their record of your people',
+  'screens.adminArea.linkedServersPanel.unlink': 'Unlink',
+  'screens.adminArea.linkedServersPanel.unlinkedName': 'Unlinked {name}.',
+  'screens.adminArea.linkedServersPanel.unlinkNameAsk': 'Unlink {name}?',
+  'screens.adminArea.linkedServersPanel.whatNameAskedFor': 'What {name} asked for',
+  'screens.adminArea.linkedServersPanel.whatNameCanSee': 'What {name} can see',
+  'screens.adminArea.linkedServersPanel.whatNameSharesWithYou': 'What {name} shares with you',
+  'screens.adminArea.linkedServersPanel.whenALinkedServerGetsSomething':
+    'When a linked server gets something somebody here asked for, they are told either way. On, the request here is dropped too.',
+  'screens.adminArea.linkedServersPanel.whereOtherServersReachIt': 'Where other servers reach it',
+  'screens.adminArea.linkedServersPanel.withdrawTheInvite': 'Withdraw the invite made {when}',
   'screens.adminArea.matchPicker.choosingHereCorrectsEveryEpisodeOf':
     'Choosing here corrects every episode of this series, and every scan after it.',
   'screens.adminArea.matchPicker.choosingHereCorrectsThisFilmAnd':
@@ -3646,7 +3850,6 @@ const ENGLISH = {
   'screens.adminArea.overviewPanel.allSessions': 'All sessions',
   'screens.adminArea.overviewPanel.allWork': 'All work',
   'screens.adminArea.overviewPanel.countedTheStorageAgain': 'Counted the storage again.',
-  'screens.adminArea.overviewPanel.manage': 'Manage',
   'screens.adminArea.overviewPanel.nobodyIsWatchingListeningOrReading':
     'Nobody is watching, listening to or reading anything.',
   'screens.adminArea.overviewPanel.noLibrariesYet': 'No libraries yet.',
@@ -4293,6 +4496,7 @@ const ENGLISH = {
   'screens.artworkPicker.artworkTile.choosingThisPicture': 'Choosing this picture',
   'screens.artworkPicker.artworkTile.chosen': 'Chosen',
   'screens.artworkPicker.artworkTile.theCataloguesPick': 'The catalogue’s pick',
+  'screens.askableDialog.askedNameForTitle': 'Asked {name} for {title}.',
   'screens.askableDialog.chooseQualityDialog.requestTitle': 'Request {title}',
   'screens.askableDialog.chooseQualityDialog.wellFetchTheBestReleaseThat':
     'We’ll fetch the best release that fits.',
@@ -4352,6 +4556,13 @@ const ENGLISH = {
   'screens.cacheBreakdown.cacheRows.sets.other': '{count} sets',
   'screens.cacheBreakdown.cacheRows.stillCounting': 'Still counting',
   'screens.cacheBreakdown.cacheRows.transcodeSessions': 'Transcode sessions',
+  'screens.calendar.describeCalendarFilters.libraryOrRequests': 'Library or requests',
+  'screens.calendar.describeCalendarFilters.whoseRequests': 'Whose requests',
+  'screens.calendarPage.calendarMonth.countMore.one': '{count} more',
+  'screens.calendarPage.calendarMonth.countMore.other': '{count} more',
+  'screens.calendarPage.narrowTheCalendar': 'Narrow the calendar',
+  'screens.calendarPage.readingTheCalendar': 'Reading the calendar',
+  'screens.calendarPage.theCalendarCouldNotBeRead': 'The calendar could not be read',
   'screens.collectionDialog.addFilmsAndProgrammesFromTheir':
     'Add films and programmes to it from their own pages.',
   'screens.collectionDialog.chooseArtwork': 'Choose artwork',
@@ -4860,7 +5071,6 @@ const ENGLISH = {
     '{value} of {count} answered. {value2}',
   'screens.jobHistory.describeRunSubject.aLibraryThatHasBeenRemoved':
     'A library that has been removed',
-  'screens.jobHistory.describeRunSubject.thisServer': 'This server',
   'screens.jobRunner.describeCountdown.dueNow': 'Due now',
   'screens.jobRunner.describeCountdown.inValueDValue2H': 'in {value}d {value2}h',
   'screens.jobRunner.describeCountdown.inValueHValue2M': 'in {value}h {value2}m',
@@ -5517,7 +5727,6 @@ const ENGLISH = {
     'What it will not try again',
   'screens.requestDetailDialog.requestBlocklistTab.whatItWillNotTryAgainCouldNotBeRead':
     'What it will not try again could not be read.',
-  'screens.requestDetailDialog.requestHistoryTab.nothingYet': 'Nothing yet.',
   'screens.requestDetailDialog.requestHistoryTab.readingWhatItHasDone': 'Reading what it has done',
   'screens.requestDetailDialog.requestProgressTab.nothingIsDownloadingForThisJust':
     'Nothing is downloading for this just now.',
@@ -5945,7 +6154,6 @@ const ENGLISH = {
   'screens.videoRemote.whereTheFilmIsUpTo': 'Where the film is up to',
   'screens.videoRemoteBar.onLabel': 'On {label}',
   'screens.videoRemoteBar.openTheRemoteForLabel': 'Open the remote for {label}',
-  'screens.webhookFields.webhookPanes.where': 'Where',
   'screens.webhookFields.webhookPanes.who': 'Who',
   'screens.webhooksPanel.addWebhookDialog.creating': 'Creating…',
   'screens.webhooksPanel.addWebhookDialog.valenceWillPostToThisAddress':
@@ -6004,6 +6212,7 @@ const ENGLISH = {
     'That connection was started somewhere else.',
   'server.admin.thisStreamWasPausedByAn': 'This stream was paused by an admin.',
   'server.admin.thisStreamWasStoppedByAn': 'This stream was stopped by an admin.',
+  'server.api.serveCalendarFeed.valenceCalendar': 'Valence calendar',
   'server.appContext.thatAccountIsAtOrAbove': 'That account is at or above your own rank.',
   'server.appContext.thatRoleIsAtOrAbove': 'That role is at or above your own.',
   'server.appContext.youCannotDoThatToYour': 'You cannot do that to your own account.',
@@ -6033,6 +6242,11 @@ const ENGLISH = {
     'That book already reads another way, so this was left out of it.',
   'server.books.scanBookLibrary.thatFileCouldNotBeOpened':
     'That file could not be opened as a book.',
+  'server.calendar.calendarEvents.showSeasonEpisodeTitle':
+    '{show} · S{seasonNumber} E{episodeNumber} · {episode}',
+  'server.calendar.calendarEvents.titleInCinemas': '{title} in cinemas',
+  'server.calendar.calendarEvents.titleOnDisc': '{title} on disc',
+  'server.calendar.calendarEvents.titleToBuyOrRent': '{title} to buy or rent',
   'server.catalogue.catalogueClient.nameCouldNotBeDownloaded': '{name} could not be downloaded.',
   'server.catalogue.catalogueClient.nameIsNotSignedByThe':
     '{name} is not signed by the key the catalogue names.',
@@ -6217,6 +6431,8 @@ const ENGLISH = {
   'server.jobs.jobDefinitions.generateMissingScrubPreviews': 'Generate missing scrub previews',
   'server.jobs.jobDefinitions.keepsACopyBesideEachFilm':
     'Keeps a copy beside each film and episode that modest devices play without converting it, in the hours chosen under Encoding.',
+  'server.jobs.jobDefinitions.keepsTheTitlesOtherValenceServers':
+    'Keeps the titles other Valence servers share with this one up to date, so they can be browsed here.',
   'server.jobs.jobDefinitions.makesTheReEncodesAnAdministrator':
     'Makes the re-encodes an administrator asked for.',
   'server.jobs.jobDefinitions.planAnImport': 'Plan an import',
@@ -6228,6 +6444,7 @@ const ENGLISH = {
   'server.jobs.jobDefinitions.pruneOldWebhookDeliveries': 'Prune old webhook deliveries',
   'server.jobs.jobDefinitions.readsJellyfinEmbyOrPlexWithoutWriting':
     'Reads Jellyfin, Emby or Plex and reports what an import would bring, writing nothing.',
+  'server.jobs.jobDefinitions.readWhatLinkedServersShare': 'Read what linked servers share',
   'server.jobs.jobDefinitions.rendersPreviewClipsForItemsWithout':
     'Renders preview clips for items without one.',
   'server.jobs.jobDefinitions.rendersSeekBarThumbnailsForItems':
@@ -6306,16 +6523,22 @@ const ENGLISH = {
     '{byName} withdrew your link to {title}. Anybody watching through it has stopped.',
   'server.main.doneBroughtUpToDate': '{done} brought up to date',
   'server.main.doneOfTotalLookedUp': '{done} of {total} looked up',
+  'server.main.nameHasItAlready': '{name} has it already.',
   'server.main.notFound': 'not found',
   'server.main.theServerRestartedWhileThisWas':
     'The server restarted while this was running. What it finished is kept, and the rest is picked up the next time it runs.',
   'server.main.titleHasBeenPreparedAndThe':
     '{title} has been prepared, and the device you asked on is fetching it.',
+  'server.main.titleIsOnName': '{title} is on {name}',
   'server.main.titleIsReady': '{title} is ready',
   'server.main.titleIsReadyToKeep': '{title} is ready to keep',
   'server.main.titleWhichYouAskedForIs': '{title}, which you asked for, is in the library now.',
   'server.main.transcoderDidNotAnswer': '{address} did not answer a health check.',
+  'server.main.youAskedForTitleNameHasIt':
+    'You asked for {title}. {name} has it, and you can watch it from there now.',
+  'server.music.couldNotKeepTrack': 'That file was read, but could not be kept: {reason}',
   'server.music.couldNotReadTrack': 'That file could not be read as a track.',
+  'server.music.couldNotReadTrackBecause': 'That file could not be read as a track: {reason}',
   'server.music.musicDevices.anAdministrator': 'An administrator',
   'server.notifications.digestBody': '{counts} — {names}',
   'server.notifications.notifyHousehold.theHouseholdCouldNotBeTold':
@@ -6745,7 +6968,6 @@ const ENGLISH = {
     'Page {value} of {pageCount} · {everyRow} in total',
   'ui.dataTable.showingHoldingOfLengthScrollFor': 'Showing {holding} of {length} · scroll for more',
   'ui.filterMenu.clearFilters': 'Clear filters',
-  'ui.navBar.here': 'Here',
   'ui.navBar.sections': 'Sections',
   'ui.orbs.orbPrelude.precisionHighpFloatUniformVec2URes':
     '\nprecision highp float;\nuniform vec2 uRes;\nuniform float uTime;\nuniform float uAnim;\nuniform float uInput;\nuniform float uOutput;\nfloat hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123); }\nfloat noise(vec2 p) {\n  vec2 i = floor(p);\n  vec2 f = fract(p);\n  f = f * f * (3.0 - 2.0 * f);\n  return mix(\n    mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),\n    mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x),\n    f.y\n  );\n}\nfloat fbm(vec2 p) {\n  float v = 0.0;\n  float a = 0.5;\n  for (int i = 0; i < 5; i++) {\n    v += a * noise(p);\n    p = p * 2.03 + vec2(11.7, 7.3);\n    a *= 0.5;\n  }\n  return v;\n}\nvec2 orbUV() { return (2.0 * gl_FragCoord.xy - uRes) / min(uRes.x, uRes.y); }\nvec3 tanh3(vec3 x) {\n  x = clamp(x, -10.0, 10.0);\n  vec3 e = exp(2.0 * x);\n  return (e - 1.0) / (e + 1.0);\n}\n',

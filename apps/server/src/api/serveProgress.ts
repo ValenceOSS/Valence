@@ -4,6 +4,7 @@ import {
   forgetProgressRoute,
 } from '@ValenceServer/routes/ProgressRoute';
 import { watchedBetween } from '@ValenceServer/progress/accumulateWatchTime';
+import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
@@ -34,13 +35,25 @@ const serveProgress = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
-    const { mediaId } = context.req.valid('param');
+    const asked = context.req.valid('param').mediaId;
 
-    const item = await library.getMedia(mediaId);
+    const copy = await library.getMedia(asked);
 
-    if (item === null) {
+    if (copy === null) {
       return context.json(refuse('error.common.noSuchMediaItem'), 404);
     }
+
+    const isACopyFromElsewhere =
+      copy.parentId !== null &&
+      copy.parentId !== undefined &&
+      (copy.extraKind ?? null) === null &&
+      ((await library.list(asTheServer)).find((shelf) => shelf.id === copy.libraryId)
+        ?.linkedServerId ?? null) !== null;
+    const mediaId =
+      isACopyFromElsewhere && copy.parentId !== undefined && copy.parentId !== null
+        ? copy.parentId
+        : asked;
+    const item = mediaId === asked ? copy : ((await library.getMedia(mediaId)) ?? copy);
 
     if ((item.extraKind ?? null) !== null) {
       return context.body(null, 204);

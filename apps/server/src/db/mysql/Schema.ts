@@ -189,6 +189,9 @@ const library = mysqlTable('library', {
   requestProfileId: identifier('requestProfileId'),
   requestPath: mediumtext('requestPath'),
   requestFulfilment: jsonColumn('requestFulfilment').$type<Fulfilment>(),
+  linkedServerId: identifier('linkedServerId').references((): AnyMySqlColumn => linkedServer.id, {
+    onDelete: 'cascade',
+  }),
 });
 
 const viewerProfile = mysqlTable(
@@ -206,6 +209,7 @@ const viewerProfile = mysqlTable(
     avatarLook: jsonColumn('avatarLook').$type<Avatar>(),
     askStillWatchingAfter: int('askStillWatchingAfter').notNull().default(4),
     showsWhatIamWatching: boolean('showsWhatIamWatching').notNull().default(false),
+    prefersBestCopy: boolean('prefersBestCopy').notNull().default(false),
     createdAt: momentNow('createdAt').notNull(),
     updatedAt: momentNow('updatedAt').notNull(),
   },
@@ -464,6 +468,27 @@ const share = mysqlTable(
     index('share_creator_idx').on(table.createdBy),
     check('share_kind', sql`${table.kind} in ('item', 'series', 'book')`),
     check('share_view_cap', sql`${table.viewCap} is null or ${table.viewCap} > 0`),
+  ],
+);
+
+const calendarFeed = mysqlTable(
+  'calendar_feed',
+  {
+    id: identifier('id').primaryKey(),
+    tokenHash: varchar('tokenHash', { length: 255 }).notNull(),
+    sealedToken: mediumtext('sealedToken').notNull(),
+    ownerKey: varchar('ownerKey', { length: 255 }).notNull(),
+    accountId: identifier('accountId')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    profileId: identifier('profileId').references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    createdAt: momentNow('createdAt').notNull(),
+    lastReadAt: moment('lastReadAt'),
+  },
+  (table) => [
+    uniqueIndex('calendar_feed_token_idx').on(table.tokenHash),
+    uniqueIndex('calendar_feed_owner_idx').on(table.ownerKey),
+    index('calendar_feed_account_idx').on(table.accountId),
   ],
 );
 
@@ -1245,6 +1270,109 @@ const webhookDelivery = mysqlTable(
   ],
 );
 
+const linkInvite = mysqlTable(
+  'link_invite',
+  {
+    id: identifier('id').primaryKey(),
+    codeHash: varchar('codeHash', { length: 255 }).notNull(),
+    createdAt: momentNow('createdAt').notNull(),
+    expiresAt: moment('expiresAt').notNull(),
+    usedAt: moment('usedAt'),
+  },
+  (table) => [uniqueIndex('link_invite_code_idx').on(table.codeHash)],
+);
+
+const linkedServer = mysqlTable(
+  'linked_server',
+  {
+    id: identifier('id').primaryKey(),
+    name: mediumtext('name').notNull(),
+    colour: varchar('colour', { length: 16 }).notNull(),
+    address: mediumtext('address').notNull(),
+    publicKey: jsonColumn('publicKey').notNull(),
+    fingerprint: varchar('fingerprint', { length: 64 }).notNull(),
+    state: varchar('state', { length: 32 }).notNull(),
+    theirPairingId: identifier('theirPairingId'),
+    createdAt: momentNow('createdAt').notNull(),
+    linkedAt: moment('linkedAt'),
+    lastSeenAt: moment('lastSeenAt'),
+    maximumAge: int('maximumAge'),
+    allowsUnrated: boolean('allowsUnrated').notNull().default(false),
+    namesTravel: boolean('namesTravel').notNull().default(true),
+    showsActivity: boolean('showsActivity').notNull().default(false),
+    mostStreams: int('mostStreams'),
+    qualityCeiling: varchar('qualityCeiling', { length: 16 }),
+    takesTheirControls: boolean('takesTheirControls').notNull().default(true),
+    allowsDownloads: boolean('allowsDownloads').notNull().default(false),
+    takesTheirRequests: boolean('takesTheirRequests').notNull().default(false),
+    playsDirect: boolean('playsDirect').notNull().default(false),
+  },
+  (table) => [
+    uniqueIndex('linked_server_fingerprint_idx').on(table.fingerprint),
+    check(
+      'linked_server_state',
+      sql`${table.state} in ('awaitingThem', 'awaitingUs', 'linked', 'refused', 'unlinkedByThem', 'unlinked')`,
+    ),
+  ],
+);
+
+const linkGrant = mysqlTable(
+  'link_grant',
+  {
+    linkedServerId: identifier('linkedServerId')
+      .notNull()
+      .references(() => linkedServer.id, { onDelete: 'cascade' }),
+    libraryId: identifier('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    grantedAt: momentNow('grantedAt').notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.linkedServerId, table.libraryId] }),
+    index('link_grant_library_idx').on(table.libraryId),
+  ],
+);
+
+const remotePerson = mysqlTable(
+  'remote_person',
+  {
+    id: identifier('id').primaryKey(),
+    linkedServerId: identifier('linkedServerId')
+      .notNull()
+      .references(() => linkedServer.id, { onDelete: 'cascade' }),
+    pseudonym: varchar('pseudonym', { length: 64 }).notNull(),
+    name: mediumtext('name'),
+    firstSeenAt: momentNow('firstSeenAt').notNull(),
+    lastSeenAt: momentNow('lastSeenAt').notNull(),
+    blockedAt: moment('blockedAt'),
+  },
+  (table) => [uniqueIndex('remote_person_pseudonym_idx').on(table.linkedServerId, table.pseudonym)],
+);
+
+const federationAudit = mysqlTable(
+  'federation_audit',
+  {
+    id: identifier('id').primaryKey(),
+    linkedServerId: identifier('linkedServerId')
+      .notNull()
+      .references(() => linkedServer.id, { onDelete: 'cascade' }),
+    remotePersonId: identifier('remotePersonId').references(() => remotePerson.id, {
+      onDelete: 'set null',
+    }),
+    action: varchar('action', { length: 32 }).notNull(),
+    mediaId: identifier('mediaId'),
+    mediaTitle: mediumtext('mediaTitle'),
+    outcome: varchar('outcome', { length: 32 }).notNull(),
+    count: int('count').notNull().default(1),
+    sameEventKey: varchar('sameEventKey', { length: 191 }).notNull(),
+    at: momentNow('at').notNull(),
+  },
+  (table) => [
+    index('federation_audit_server_idx').on(table.linkedServerId, table.at),
+    index('federation_audit_same_event_idx').on(table.sameEventKey, table.at),
+  ],
+);
+
 const notification = mysqlTable(
   'notification',
   {
@@ -1608,6 +1736,7 @@ const authSchema = {
 const valenceSchema = { userProfile, viewerProfile, serverSetting, library, mediaItem };
 
 export {
+  calendarFeed,
   pluginInstallation,
   pluginStorage,
   pluginPrevious,
@@ -1632,6 +1761,11 @@ export {
   jobTrigger,
   webhookSubscription,
   webhookDelivery,
+  federationAudit,
+  linkGrant,
+  linkInvite,
+  linkedServer,
+  remotePerson,
   notification,
   notificationPreference,
   pushSubscription,

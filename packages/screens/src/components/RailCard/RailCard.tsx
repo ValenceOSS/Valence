@@ -8,6 +8,7 @@ import {
 } from '@keyline-icons/react';
 import { Heart as HeartFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCardOrigin } from '@ValenceScreens/linking/useCardOrigin';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
@@ -141,6 +142,7 @@ const RailCard = ({
 
   const holderRef = useRef<HTMLDivElement>(null);
   const [anchor, setAnchor] = useState<Anchor | null>(null);
+  const cardOrigin = useCardOrigin();
   const prefersReducedMotion = useReducedMotionConfig();
 
   const close = useCallback(() => {
@@ -324,6 +326,7 @@ const RailCard = ({
                 countLabel: sayCount('common.countEpisodesLeft', unwatchedCount),
               })}
           {...(restingUrl === undefined ? {} : { imageUrl: restingUrl })}
+          {...cardOrigin(media.libraryId)}
           onSelect={inspect}
           className="w-full"
         />

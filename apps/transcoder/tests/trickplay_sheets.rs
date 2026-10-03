@@ -75,8 +75,8 @@ fn app(name: &str) -> axum::Router {
             device: valence_transcoder::transcode_plan::DEFAULT_DEVICE.to_owned(),
             ffmpeg: ffmpeg(),
             ffprobe: ffprobe(),
-            cache_root: std::env::temp_dir().join(format!("valence-test-trickplay-{name}")),
-            artefact_root: std::env::temp_dir().join(format!("valence-test-trickplay-{name}")),
+            cache_root: common::scratch(format!("valence-test-trickplay-{name}")),
+            artefact_root: common::scratch(format!("valence-test-trickplay-{name}")),
             idle_timeout: Duration::from_secs(60),
             manifest_timeout: std::time::Duration::from_secs(120),
             max_concurrent: 2,
@@ -227,8 +227,8 @@ async fn refuses_a_file_outside_the_media_roots() {
             device: valence_transcoder::transcode_plan::DEFAULT_DEVICE.to_owned(),
             ffmpeg: ffmpeg(),
             ffprobe: ffprobe(),
-            cache_root: std::env::temp_dir().join("valence-test-trickplay-confined"),
-            artefact_root: std::env::temp_dir().join("valence-test-trickplay-confined"),
+            cache_root: common::scratch("valence-test-trickplay-confined"),
+            artefact_root: common::scratch("valence-test-trickplay-confined"),
             idle_timeout: Duration::from_secs(60),
             manifest_timeout: std::time::Duration::from_secs(120),
             max_concurrent: 2,
@@ -299,7 +299,7 @@ fn runs_recorded(tally: &std::path::Path) -> usize {
 
 #[tokio::test]
 async fn asking_twice_at_once_renders_one_set_rather_than_two() {
-    let root = std::env::temp_dir().join("valence-test-trickplay-concurrent");
+    let root = common::scratch("valence-test-trickplay-concurrent");
     let _ = std::fs::remove_dir_all(&root);
 
     let (ffmpeg_path, tally) = counting_ffmpeg(&root.join("bin"));
@@ -405,7 +405,7 @@ fn intel() -> Capabilities {
 /// finds out, so the render has to be able to run again without the hardware.
 #[tokio::test]
 async fn draws_the_sheets_in_software_when_the_device_will_not_take_the_file() {
-    let root = std::env::temp_dir().join("valence-test-trickplay-refused");
+    let root = common::scratch("valence-test-trickplay-refused");
     let _ = std::fs::remove_dir_all(&root);
 
     let (ffmpeg_path, refusals) = ffmpeg_refusing_hardware(&root.join("bin"));

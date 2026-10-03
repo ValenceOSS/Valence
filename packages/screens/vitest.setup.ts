@@ -1,10 +1,11 @@
 import '@testing-library/jest-dom/vitest';
-import { cleanup, configure } from '@testing-library/react';
+import { configure } from '@testing-library/react';
 import { afterEach, beforeEach } from 'vitest';
 import { toast } from 'sonner';
 import { MotionGlobalConfig } from 'motion/react';
 import { JSDOM } from 'jsdom';
 import { installATestClient } from './src/testing/installATestClient';
+import { tidyAfterATest } from './src/testing/tidyAfterATest';
 
 /**
  * Gives the tests web storage back, on a Node that has taken it away.
@@ -223,9 +224,7 @@ if (typeof HTMLCanvasElement !== 'undefined') {
   });
 }
 
-afterEach(() => {
-  cleanup();
-});
+afterEach(tidyAfterATest);
 
 /**
  * Takes back everything that outlives the component that made it.

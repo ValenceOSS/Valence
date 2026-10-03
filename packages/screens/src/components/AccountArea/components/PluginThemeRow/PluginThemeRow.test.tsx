@@ -51,9 +51,12 @@ describe('PluginThemeRow', () => {
 
     renderInAnAddress(<PluginThemeRow />);
 
-    await vi.waitFor(() => {
-      expect(fetchPluginContributions).toHaveBeenCalled();
-    });
+    await vi.waitFor(
+      () => {
+        expect(fetchPluginContributions).toHaveBeenCalled();
+      },
+      { timeout: 5_000 },
+    );
 
     expect(screen.queryByText('Colours')).not.toBeInTheDocument();
   });

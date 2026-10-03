@@ -9,6 +9,7 @@ const PREFLIGHT_SECONDS = 600;
 
 type AllowCrossOriginClientsOptions = {
   trustedOrigins: () => Promise<readonly string[]>;
+  opensToEveryOrigin?: (path: string) => boolean;
 };
 
 /**
@@ -26,11 +27,34 @@ type AllowCrossOriginClientsOptions = {
  * The origins are the ones better-auth is already given, read per request rather than at startup so
  * that an operator adding one on the admin page is obeyed without a restart.
  *
+ * @param opensToEveryOrigin - Whether a path is open to a player on any origin without credentials,
+ *   because what it carries in its address is the credential, as a linked server's ticket is.
  * @param trustedOrigins - The origins this deployment answers to.
  * @returns The middleware.
  */
-const allowCrossOriginClients = ({ trustedOrigins }: AllowCrossOriginClientsOptions) =>
+const allowCrossOriginClients = ({
+  trustedOrigins,
+  opensToEveryOrigin,
+}: AllowCrossOriginClientsOptions) =>
   createMiddleware(async (context, next) => {
+    if (opensToEveryOrigin?.(context.req.path) === true) {
+      if (context.req.method === 'OPTIONS') {
+        return context.body(null, 204, {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, OPTIONS',
+          'Access-Control-Allow-Headers': ALLOWED_HEADERS.join(', '),
+          'Access-Control-Max-Age': PREFLIGHT_SECONDS.toString(),
+        });
+      }
+
+      await next();
+
+      context.res.headers.set('Access-Control-Allow-Origin', '*');
+      context.res.headers.set('Access-Control-Expose-Headers', EXPOSED_HEADERS.join(', '));
+
+      return;
+    }
+
     const asked = context.req.header('origin');
     const allowed = originIsAllowed(asked, await trustedOrigins());
 

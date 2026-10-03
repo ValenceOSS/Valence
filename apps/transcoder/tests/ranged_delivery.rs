@@ -34,7 +34,7 @@ const CONTENT: &[u8] = b"0123456789abcdefghijklmnopqrstuvwxyz";
 const PREVIEW_ID: &str = "ranged";
 
 fn cache_root(name: &str) -> std::path::PathBuf {
-    std::env::temp_dir().join(format!("valence-test-ranged-{name}"))
+    common::scratch(format!("valence-test-ranged-{name}"))
 }
 
 fn app(name: &str) -> axum::Router {

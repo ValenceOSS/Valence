@@ -4,12 +4,19 @@ import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { askForMedia, removeMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
 import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
+import { askLinkedServer } from '@ValenceClient/linking/askLinkedServer';
+import { linkingQueries } from '@ValenceClient/query/linkingQueries';
+import { aLinkedServerFace } from '@ValenceClient/testing/aLinkedServerFace';
 import { AskPage } from '@ValenceTv/screens/AskPage/AskPage';
 import type { CatalogueTitleDetail } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { CatalogueSeason } from '@ValenceContracts/schemas/MediaRequest';
 
 jest.mock('@ValenceClient/session/auth', () => ({
   fetchSession: () => new Promise(() => undefined),
+}));
+
+jest.mock('@ValenceClient/linking/askLinkedServer', () => ({
+  askLinkedServer: jest.fn(),
 }));
 
 jest.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
@@ -58,9 +65,16 @@ type Held = {
   kind?: 'film' | 'series';
   seasons?: CatalogueSeason[];
   choices?: { id: string; name: string; kind: 'video' }[];
+  faces?: ReturnType<typeof aLinkedServerFace>[];
 };
 
-const aCacheHolding = ({ title, kind = 'film', seasons = [], choices = [] }: Held): QueryClient => {
+const aCacheHolding = ({
+  title,
+  kind = 'film',
+  seasons = [],
+  choices = [],
+  faces = [],
+}: Held): QueryClient => {
   const cache = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Infinity, gcTime: Infinity } },
   });
@@ -72,6 +86,7 @@ const aCacheHolding = ({ title, kind = 'film', seasons = [], choices = [] }: Hel
     aMediaRequest({ id: REQUEST_ID, requestedBy: { id: 'me', name: 'Marques' } }),
   ]);
   cache.setQueryData(sessionQueries.who().queryKey, ME);
+  cache.setQueryData(linkingQueries.faces().queryKey, faces);
 
   return cache;
 };
@@ -97,6 +112,10 @@ beforeEach(() => {
   jest.mocked(removeMediaRequest).mockReset();
   jest.mocked(askForMedia).mockResolvedValue({ value: aMediaRequest(), refusal: null });
   jest.mocked(removeMediaRequest).mockResolvedValue(null);
+  jest
+    .mocked(askLinkedServer)
+    .mockReset()
+    .mockResolvedValue({ value: { title: 'Dune', isNew: true }, refusal: null });
 });
 
 afterEach(() => {
@@ -261,6 +280,62 @@ describe('AskPage', () => {
 
     await waitFor(() => {
       expect(removeMediaRequest).toHaveBeenCalledWith(REQUEST_ID, true);
+    });
+  });
+
+  it('offers to watch a film a linked server has, or to request it here anyway', async () => {
+    const onOpenFilm = jest.fn();
+    const drawn = await drawAsk(
+      aCacheHolding({
+        title: aTitle({
+          standing: {
+            status: 'linked',
+            mediaId: 'theirs',
+            requestId: null,
+            requestState: null,
+            fromServer: 'Films',
+          },
+        }),
+      }),
+      { onOpenFilm },
+    );
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Watch on Films' }));
+
+    expect(onOpenFilm).toHaveBeenCalledWith('theirs');
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Request here' }));
+
+    await waitFor(() => {
+      expect(askForMedia).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('asks a linked server that takes requests, and only one that can be reached', async () => {
+    const drawn = await drawAsk(
+      aCacheHolding({
+        title: aTitle(),
+        faces: [
+          aLinkedServerFace({ takesRequests: true }),
+          aLinkedServerFace({
+            id: '00000000-0000-4000-8000-000000000002',
+            name: 'Away',
+            takesRequests: true,
+            isReachable: false,
+          }),
+        ],
+      }),
+    );
+
+    expect(drawn.queryByRole('button', { name: 'Ask Away' })).toBeNull();
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Ask Films' }));
+
+    await waitFor(() => {
+      expect(askLinkedServer).toHaveBeenCalledWith(
+        aLinkedServerFace().id,
+        expect.objectContaining({ kind: 'film', tmdbId: 438631 }),
+      );
     });
   });
 });

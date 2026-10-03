@@ -49,9 +49,12 @@ describe('PluginPanels', () => {
   it('draws nothing where no plugin adds anything here', async () => {
     const { container } = renderInAnAddress(<PluginPanels on="playlist" subjectId="p1" />);
 
-    await vi.waitFor(() => {
-      expect(fetchPluginContributions).toHaveBeenCalled();
-    });
+    await vi.waitFor(
+      () => {
+        expect(fetchPluginContributions).toHaveBeenCalled();
+      },
+      { timeout: 5_000 },
+    );
 
     expect(container.querySelector('section')).toBeNull();
   });

@@ -1,4 +1,5 @@
 import { fireEvent, render, userEvent } from '@testing-library/react-native';
+import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { StyleSheet } from 'react-native';
 import { z } from 'zod';
 import { Shelf } from '@ValenceTv/components/Shelf/Shelf';
@@ -48,6 +49,7 @@ describe('Shelf', () => {
         progress={NO_PROGRESS}
         onOpen={jest.fn()}
       />,
+      { wrapper: CacheScope },
     );
 
     expect(drawn.getByText('Recently added')).toBeOnTheScreen();
@@ -64,6 +66,7 @@ describe('Shelf', () => {
         progress={NO_PROGRESS}
         onOpen={onOpen}
       />,
+      { wrapper: CacheScope },
     );
 
     await userEvent.press(drawn.getByRole('button', { name: 'Arrival' }));
@@ -81,6 +84,7 @@ describe('Shelf', () => {
         onOpen={jest.fn()}
         onFocus={onFocus}
       />,
+      { wrapper: CacheScope },
     );
 
     await fireEvent(drawn.getByRole('button', { name: 'Dune' }), 'focus');
@@ -108,6 +112,7 @@ describe('Shelf', () => {
         progress={progress}
         onOpen={jest.fn()}
       />,
+      { wrapper: CacheScope },
     );
 
     expect(progressShown(drawn)).toEqual([0.25]);
@@ -128,6 +133,7 @@ describe('Shelf', () => {
         onOpen={jest.fn()}
         areEpisodes
       />,
+      { wrapper: CacheScope },
     );
 
     expect(drawn.getByRole('button', { name: 'Severance' })).toBeOnTheScreen();
@@ -138,6 +144,7 @@ describe('Shelf', () => {
     const onOpen = jest.fn();
     const drawn = await render(
       <Shelf title="Recently added" items={[DUNE]} progress={NO_PROGRESS} onOpen={onOpen} />,
+      { wrapper: CacheScope },
     );
 
     await drawn.rerender(
@@ -152,6 +159,7 @@ describe('Shelf', () => {
     const onOpen = jest.fn();
     const drawn = await render(
       <Shelf title="Recently added" items={[DUNE]} progress={NO_PROGRESS} onOpen={onOpen} />,
+      { wrapper: CacheScope },
     );
 
     await drawn.rerender(

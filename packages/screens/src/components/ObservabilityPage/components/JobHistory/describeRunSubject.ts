@@ -18,7 +18,7 @@ const describeScope = (kind: string): string => {
   }
 
   if (kind.startsWith('server.')) {
-    return say('screens.jobHistory.describeRunSubject.thisServer');
+    return say('common.thisServer');
   }
 
   if (kind.startsWith('requests.')) {

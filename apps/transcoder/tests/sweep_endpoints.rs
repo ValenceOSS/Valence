@@ -34,7 +34,7 @@ mod common;
 use common::{ffmpeg, ffprobe};
 
 fn cache_root(name: &str) -> std::path::PathBuf {
-    let path = std::env::temp_dir().join(format!("valence-test-sweep-{name}"));
+    let path = common::scratch(format!("valence-test-sweep-{name}"));
 
     std::fs::remove_dir_all(&path).ok();
 

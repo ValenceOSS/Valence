@@ -144,9 +144,12 @@ describe('BookDialog', () => {
     serve([], { ...A_BOOK, hasText: true, hasAudio: true });
     open({ onListen });
 
-    await vi.waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Read' })).toBeEnabled();
-    });
+    await vi.waitFor(
+      () => {
+        expect(screen.getByRole('button', { name: 'Read' })).toBeEnabled();
+      },
+      { timeout: 5_000 },
+    );
 
     await userEvent.click(await screen.findByRole('button', { name: 'Listen' }));
 

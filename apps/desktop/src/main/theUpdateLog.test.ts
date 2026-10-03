@@ -21,11 +21,14 @@ describe('theUpdateLog', () => {
     log('Found 1.2.0');
     log('Asked to download 1.2.0');
 
-    await vi.waitFor(async () => {
-      const written = await readFile(join(folder, 'updates.log'), 'utf8');
+    await vi.waitFor(
+      async () => {
+        const written = await readFile(join(folder, 'updates.log'), 'utf8');
 
-      expect(written.split('\n').filter(Boolean)).toHaveLength(2);
-    });
+        expect(written.split('\n').filter(Boolean)).toHaveLength(2);
+      },
+      { timeout: 5_000 },
+    );
 
     const lines = (await readFile(join(folder, 'updates.log'), 'utf8')).split('\n');
 

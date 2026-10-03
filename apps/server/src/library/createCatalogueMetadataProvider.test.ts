@@ -11,6 +11,8 @@ import type { MediaFacts } from './MetadataProvider';
 import type { MediaProbe } from '@ValenceServer/transcoder/TranscoderClient';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 
+vi.mock('@ValenceCore/functions/wait', () => ({ wait: () => Promise.resolve() }));
+
 const probe: MediaProbe = {
   container: 'mkv',
   durationSeconds: 7200,
@@ -707,6 +709,69 @@ describe('reading the next episode of a series', () => {
       provider({}, { key: null }).instance.describeNextEpisode?.('5'),
     ).resolves.toBeNull();
     await expect(provider({}).instance.describeNextEpisode?.('5')).resolves.toBeNull();
+  });
+});
+
+describe('reading the season a series is airing', () => {
+  it('reads the season of the next episode, keeping only episodes with a day, with their stills', async () => {
+    const { instance, calls } = provider({
+      '/tv/5': {
+        id: 5,
+        name: 'A Show',
+        next_episode_to_air: { air_date: '2026-10-08', season_number: 2, episode_number: 3 },
+      },
+      '/tv/5/season/2': {
+        episodes: [
+          { episode_number: 2, name: 'Second', air_date: '2026-10-01', still_path: '/second.jpg' },
+          { episode_number: 3, air_date: '2026-10-08' },
+          { episode_number: 4, name: 'Undated', air_date: null },
+        ],
+      },
+    });
+
+    await expect(instance.describeAiringSeason?.('5')).resolves.toEqual({
+      seasonNumber: 2,
+      episodes: [
+        {
+          episodeNumber: 2,
+          title: 'Second',
+          airDate: '2026-10-01',
+          stillUrl: 'https://image.tmdb.org/t/p/w780/second.jpg',
+        },
+        { episodeNumber: 3, title: 'Episode 3', airDate: '2026-10-08', stillUrl: null },
+      ],
+    });
+    expect(calls.map((call) => new URL(call).pathname)).toEqual(['/3/tv/5', '/3/tv/5/season/2']);
+  });
+
+  it('reads the season just finished where nothing is due next', async () => {
+    const { instance } = provider({
+      '/tv/5': {
+        id: 5,
+        name: 'A Show',
+        next_episode_to_air: null,
+        last_episode_to_air: { air_date: '2026-09-24', season_number: 1, episode_number: 8 },
+      },
+      '/tv/5/season/1': { episodes: [{ episode_number: 8, name: 'Last', air_date: '2026-09-24' }] },
+    });
+
+    await expect(instance.describeAiringSeason?.('5')).resolves.toMatchObject({ seasonNumber: 1 });
+  });
+
+  it('knows of none for specials, without a key, or for a series it does not know', async () => {
+    await expect(
+      provider({
+        '/tv/5': {
+          id: 5,
+          name: 'A Show',
+          next_episode_to_air: { air_date: '2026-10-08', season_number: 0, episode_number: 1 },
+        },
+      }).instance.describeAiringSeason?.('5'),
+    ).resolves.toBeNull();
+    await expect(
+      provider({}, { key: null }).instance.describeAiringSeason?.('5'),
+    ).resolves.toBeNull();
+    await expect(provider({}).instance.describeAiringSeason?.('5')).resolves.toBeNull();
   });
 });
 

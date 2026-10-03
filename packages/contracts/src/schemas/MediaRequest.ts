@@ -49,6 +49,14 @@ const RequestApprovalSchema = z.enum(REQUEST_APPROVALS);
 
 const CalendarDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
+const ReleaseDatesSchema = z.object({
+  theatrical: CalendarDateSchema.nullable(),
+  digital: CalendarDateSchema.nullable(),
+  physical: CalendarDateSchema.nullable(),
+});
+
+const NO_RELEASE_DATES = { theatrical: null, digital: null, physical: null } as const;
+
 const CatalogueEpisodeSchema = z.object({
   season: z.number().int().nonnegative(),
   episode: z.number().int().nonnegative(),
@@ -70,13 +78,7 @@ const RequestCatalogueSchema = z.object({
   overview: z.string().nullable().default(null),
   posterUrl: z.string().nullable().default(null),
   runtimeMinutes: z.number().int().positive().nullable().default(null),
-  releaseDates: z
-    .object({
-      theatrical: CalendarDateSchema.nullable(),
-      digital: CalendarDateSchema.nullable(),
-      physical: CalendarDateSchema.nullable(),
-    })
-    .default({ theatrical: null, digital: null, physical: null }),
+  releaseDates: ReleaseDatesSchema.default(NO_RELEASE_DATES),
   episodes: z.array(CatalogueEpisodeSchema).max(5000).default([]),
   isEnded: z.boolean().default(false),
   artist: z.string().nullable().default(null),
@@ -200,6 +202,7 @@ const MediaRequestSchema = z.object({
   seasons: SeasonsSchema,
   releaseTypes: ReleaseTypesSchema.nullable(),
   releaseDate: CalendarDateSchema.nullable(),
+  releaseDates: ReleaseDatesSchema.default(NO_RELEASE_DATES),
   items: z.array(RequestItemSchema),
   mediaId: z.string().nullable(),
   createdAt: z.string().datetime(),
@@ -326,6 +329,7 @@ type MusicCatalogueHit = z.infer<typeof MusicCatalogueHitSchema>;
 type RequestItemState = (typeof REQUEST_ITEM_STATES)[number];
 type MediaRequestState = (typeof MEDIA_REQUEST_STATES)[number];
 type CatalogueEpisode = z.infer<typeof CatalogueEpisodeSchema>;
+type ReleaseDates = z.infer<typeof ReleaseDatesSchema>;
 type RequestCatalogue = z.infer<typeof RequestCatalogueSchema>;
 type RequestCatalogueDraft = z.input<typeof RequestCatalogueSchema>;
 type MediaRequestAsk = z.input<typeof MediaRequestAskSchema>;
@@ -372,6 +376,7 @@ export type {
   MusicRequestKind,
   ReleaseType,
   RequestCatalogue,
+  ReleaseDates,
   RequestCatalogueDraft,
   RequestCatalogueUpdate,
   RequestItem,
@@ -391,6 +396,7 @@ export {
   REQUEST_ITEM_STATES,
   BlockedReleaseSchema,
   CalendarDateSchema,
+  ReleaseDatesSchema,
   CatalogueAlbumSchema,
   CatalogueEpisodeSchema,
   CatalogueSeasonSchema,

@@ -51,7 +51,10 @@ describe('asking for a password reset over HTTP', () => {
 
     expect(answer.status).toBe(202);
     expect(await answer.json()).toEqual({ requested: true });
-    expect(requestPasswordReset).toHaveBeenCalledWith({ identifier: 'ada' }, `${BASE}/reset-password`);
+    expect(requestPasswordReset).toHaveBeenCalledWith(
+      { identifier: 'ada' },
+      `${BASE}/reset-password`,
+    );
   });
 
   it('takes the face somebody picked, for a phone that signs in by face', async () => {

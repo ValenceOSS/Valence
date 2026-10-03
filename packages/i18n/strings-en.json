@@ -165,6 +165,11 @@
     "context": "Shown in the admin (from `describePermission`)."
   },
   {
+    "handler": "client.admin.describePermission.linkThisServerWithOthers",
+    "text": "Link this server with other Valence servers",
+    "context": "The short name of the permission to link servers, in the roles editor."
+  },
+  {
     "handler": "client.admin.describePermission.manageAccounts",
     "text": "Manage accounts",
     "context": "Shown in the admin (from `describePermission`)."
@@ -363,6 +368,11 @@
     "handler": "client.admin.describePermissionDetail.inviteSomebodyNewToSignIn",
     "text": "Invite somebody new to sign in and hold an account.",
     "context": "Shown in the admin (from `describePermissionDetail`)."
+  },
+  {
+    "handler": "client.admin.describePermissionDetail.linkThisServerWithOthers",
+    "text": "Make and use invites to link this server with another Valence, approve or refuse a server asking to link, and unlink. Linking alone shares nothing.",
+    "context": "What the permission to link servers allows, in the roles editor."
   },
   {
     "handler": "client.admin.describePermissionDetail.pauseSomebodyElsesStreamFromWhere",
@@ -648,6 +658,26 @@
     "handler": "client.books.listenLabel.listenAgain",
     "text": "Listen again",
     "context": "Shown in the books (from `listenLabel`)."
+  },
+  {
+    "handler": "client.calendar.describeCalendarEntry.inCinemas",
+    "text": "In cinemas",
+    "context": "The line under a film's title on the release calendar, on the day it opens in cinemas."
+  },
+  {
+    "handler": "client.calendar.describeCalendarEntry.onDisc",
+    "text": "On disc",
+    "context": "The line under a film's title on the release calendar, on the day it comes out on DVD or Blu-ray."
+  },
+  {
+    "handler": "client.calendar.describeCalendarEntry.sSeasonNumberEEpisodeNumberTitle",
+    "text": "S{seasonNumber} E{episodeNumber} · {title}",
+    "context": "The line under a show's name on the release calendar, saying which episode airs that day. {seasonNumber} and {episodeNumber} are numbers, {title} is the episode's title."
+  },
+  {
+    "handler": "client.calendar.describeCalendarEntry.toBuyOrRent",
+    "text": "To buy or rent",
+    "context": "The line under a film's title on the release calendar, on the day it comes out to buy or rent online."
   },
   {
     "handler": "client.downloads.useFetchWhatThisDeviceAsked.itIsReadyToWatchOffline",
@@ -1650,6 +1680,11 @@
     "context": "An action on the page about a film or a programme, for somebody who may edit libraries: put it into a collection."
   },
   {
+    "handler": "common.addToCalendar",
+    "text": "Add to Calendar",
+    "context": "The button, on the release calendar and on the account page's links, that adds the release calendar to a calendar app by subscribing to it."
+  },
+  {
     "handler": "common.addToPlaylist",
     "text": "Add to playlist",
     "context": "The label of a button, used in several places, among them the album of the phone app and the music of the phone app (from `askWhichPlaylist`)."
@@ -1705,9 +1740,24 @@
     "context": "The label, used in several places, among them the library of the phone app and the media panel in the admin area."
   },
   {
+    "handler": "common.allowed",
+    "text": "Allowed",
+    "context": "Text shown in the accounts panel in the admin area."
+  },
+  {
+    "handler": "common.allowUnrated",
+    "text": "Allow unrated",
+    "context": "The label of a button in the accounts panel in the admin area."
+  },
+  {
     "handler": "common.alphaGain",
     "text": "Alpha gain",
     "context": "The label, used in several places, among them the cloud in the variants and the galaxy in the variants."
+  },
+  {
+    "handler": "common.alsoOnNames",
+    "text": "Also on {names}",
+    "context": "On a title this server has that a linked Valence server has a copy of too. {names} are those servers."
   },
   {
     "handler": "common.aMonth",
@@ -1763,6 +1813,11 @@
     "handler": "common.appearsOn",
     "text": "Appears on",
     "context": "Shown, used in the artist of the phone app and in the artist view in the music page."
+  },
+  {
+    "handler": "common.appleCalendarOrOutlook",
+    "text": "Apple Calendar or Outlook",
+    "context": "A choice in the Add to Calendar menu: subscribe in the calendar app on this device, which is Apple Calendar on a Mac, iPhone or iPad, and Outlook on Windows."
   },
   {
     "handler": "common.appleTV",
@@ -1838,6 +1893,11 @@
     "handler": "common.askingTheCatalogue",
     "text": "Asking the catalogue",
     "context": "The label of a spinner, used in several places, among them the ask for media dialog in the admin area and the correction picker in the admin area."
+  },
+  {
+    "handler": "common.askName",
+    "text": "Ask {name}",
+    "context": "Button asking a linked Valence server to get a title, rather than this one. {name} is that server."
   },
   {
     "handler": "common.askTheServerAdminToAdd",
@@ -1944,6 +2004,12 @@
     "text": "Bitrate",
     "context": "Shown, used in the stream stats in the player of the television app and in the stream stats in the video player."
   },
+  { "handler": "common.block", "text": "Block", "context": "Button that blocks somebody." },
+  {
+    "handler": "common.blocked",
+    "text": "Blocked",
+    "context": "Marks somebody who has been blocked."
+  },
   {
     "handler": "common.book",
     "text": "Book",
@@ -1988,6 +2054,26 @@
     "handler": "common.byYear",
     "text": "By year",
     "context": "One way of laying out a collection's titles: oldest first, by the year each came out."
+  },
+  {
+    "handler": "common.calendar",
+    "text": "Calendar",
+    "context": "The name of the release calendar: the section in the navigation, and its page, showing when films and episodes come out."
+  },
+  {
+    "handler": "common.calendarAppsSubscribedToIt",
+    "text": "Calendar apps subscribed to it will stop seeing what comes out.",
+    "context": "What turning off a calendar link means, in the dialog confirming it."
+  },
+  {
+    "handler": "common.calendarLink",
+    "text": "Calendar link",
+    "context": "The heading, in the release calendar's Add to Calendar menu or sheet, over the ways to look after the link calendar apps read it by."
+  },
+  {
+    "handler": "common.calendarViews",
+    "text": "Calendar views",
+    "context": "The name, read by assistive technology, of the control that switches the release calendar between its views, on the web or a phone."
   },
   {
     "handler": "common.cameraDistance",
@@ -2258,6 +2344,11 @@
     "handler": "common.copy",
     "text": "Copy",
     "context": "Shown, used in several places, among them the copyable address in the plugin settings dialog and the api key panel."
+  },
+  {
+    "handler": "common.copyLink",
+    "text": "Copy link",
+    "context": "A button or menu item that copies a link: an account's setup link, or the link a calendar app subscribes to the release calendar by."
   },
   {
     "handler": "common.core",
@@ -2890,6 +2981,11 @@
     "context": "The title, used in several places, among them the person of the phone app and the show of the phone app."
   },
   {
+    "handler": "common.episodesAndRequestsAppearHere",
+    "text": "Episodes of shows in your library, and films and shows you have asked for, appear here once they have a date.",
+    "context": "The release calendar, on the web or a phone or a television, beneath the title saying nothing comes out on the days shown."
+  },
+  {
     "handler": "common.events",
     "text": "Events",
     "context": "The label, used in the webhook fields (from `webhookPanes`) and in the log explorer in the observability page."
@@ -2925,6 +3021,11 @@
     "context": "The label, used in several places, among them the search of the phone app and the admin (from `groupPermissions`)."
   },
   {
+    "handler": "common.everywhere",
+    "text": "Everywhere",
+    "context": "In the Where filter: titles from this server and every linked server."
+  },
+  {
     "handler": "common.exposure",
     "text": "Exposure",
     "context": "The label, used in several places, among them the cloud in the variants and the galaxy in the variants."
@@ -2943,6 +3044,51 @@
     "handler": "common.favourites",
     "text": "Favourites",
     "context": "The label, used in several places, among them the app shell and the browse area."
+  },
+  {
+    "handler": "common.federationAction.activity",
+    "text": "Read its record",
+    "context": "In the record of what a linked server asked for: it read this server's record of its own people."
+  },
+  {
+    "handler": "common.federationAction.catalogue",
+    "text": "Read a library",
+    "context": "In the record of what a linked server asked for: it read a page of a shared library's catalogue."
+  },
+  {
+    "handler": "common.federationAction.libraries",
+    "text": "Read what is shared",
+    "context": "In the record of what a linked server asked for: it read which libraries this server shares with it."
+  },
+  {
+    "handler": "common.federationAction.media",
+    "text": "Asked about a title",
+    "context": "In the record of what a linked server asked for: it asked about one film, episode, song or book."
+  },
+  {
+    "handler": "common.federationAction.parties",
+    "text": "Took part in a watch party",
+    "context": "In the record of what a linked server asked for: one of its people took part in a watch party here."
+  },
+  {
+    "handler": "common.federationAction.requests",
+    "text": "Asked for a title",
+    "context": "In the record of what a linked server asked for: one of its people asked this server to get something."
+  },
+  {
+    "handler": "common.federationOutcome.aboveTheAge",
+    "text": "Above the age",
+    "context": "In the record of what a linked server asked for: refused, because the title is above the age that server was given."
+  },
+  {
+    "handler": "common.federationOutcome.notShared",
+    "text": "Not shared",
+    "context": "In the record of what a linked server asked for: refused, because it is not in a library shared with that server."
+  },
+  {
+    "handler": "common.federationOutcome.tooMany",
+    "text": "Too often",
+    "context": "In the record of what a linked server asked for: refused, because it asked too many times in a minute."
   },
   {
     "handler": "common.filed",
@@ -3065,6 +3211,11 @@
     "context": "Text shown, used in the where is your valence of the phone app and in the connect to server."
   },
   {
+    "handler": "common.fromName",
+    "text": "From {name}",
+    "context": "Shown in the admin area: a badge on an indexer brought in from a connected Prowlarr. {name} is what the admin called the Prowlarr."
+  },
+  {
     "handler": "common.fromPluginName",
     "text": "From {pluginName}",
     "context": "The description, used in several places, among them the plugin panel in the plugin panels of the phone app and the webhooks on the server (from `discordEmbedFor`). {pluginName} is filled in by the app."
@@ -3110,6 +3261,16 @@
     "context": "The label of a button, used in the player of the television app and in the kept player page."
   },
   {
+    "handler": "common.googleCalendar",
+    "text": "Google Calendar",
+    "context": "A choice in the Add to Calendar menu: subscribe in Google Calendar, on its website."
+  },
+  {
+    "handler": "common.goToADay",
+    "text": "Go to a day",
+    "context": "The release calendar's way to turn it to any day: on the web the name, read by assistive technology and shown on hover, of the button that opens a month to pick from; on a phone the title of the sheet that does the same."
+  },
+  {
     "handler": "common.goToAlbum",
     "text": "Go to album",
     "context": "The label, used in the music of the phone app (from `askAboutATrack`) and in the track menu."
@@ -3129,6 +3290,7 @@
     "text": "Green",
     "context": "The label, used in the bricks in the variants and in the tokens (from `captionColours`)."
   },
+  { "handler": "common.here", "text": "Here", "context": "The detail in the nav bar." },
   {
     "handler": "common.hidden",
     "text": "Hidden",
@@ -3345,6 +3507,11 @@
     "context": "Shown, used in the text reader in the reader of the phone app and in the text reader."
   },
   {
+    "handler": "common.lastReadLastReadAt",
+    "text": "Last read {lastReadAt}",
+    "context": "When a calendar app last read somebody's calendar link. {lastReadAt} is a date and time."
+  },
+  {
     "handler": "common.lasts",
     "text": "Lasts",
     "context": "Text shown, used in the share sheet of the phone app and in the share dialog."
@@ -3358,6 +3525,11 @@
     "handler": "common.lens",
     "text": "Lens",
     "context": "The label, used in several places, among them the cloud in the variants and the galaxy in the variants."
+  },
+  {
+    "handler": "common.letBackIn",
+    "text": "Let back in",
+    "context": "Shown in the accounts panel in the admin area."
   },
   {
     "handler": "common.libraries",
@@ -3400,9 +3572,39 @@
     "context": "Shown, used in several places, among them the now playing of the television app and the immersive music. {title} is filled in by the app."
   },
   {
+    "handler": "common.linkedServers",
+    "text": "Linked servers",
+    "context": "The admin area section for linking this Valence with other Valence servers."
+  },
+  {
     "handler": "common.links",
     "text": "Links",
     "context": "The label, used in the account area (from `accountPanels`) and in the admin area (from `adminSections`)."
+  },
+  {
+    "handler": "common.linkState.awaitingThem",
+    "text": "Waiting for them",
+    "context": "A linked server whose admin has not yet approved the request this server sent."
+  },
+  {
+    "handler": "common.linkState.awaitingUs",
+    "text": "Asking to link",
+    "context": "A server that asked to link with this one, waiting for this server's admin."
+  },
+  {
+    "handler": "common.linkState.linked",
+    "text": "Linked",
+    "context": "A server linked with this one, both admins having agreed."
+  },
+  {
+    "handler": "common.linkState.unlinked",
+    "text": "Unlinked",
+    "context": "A linked Valence server this one unlinked from. What was kept from it stays, hidden, until the two link again."
+  },
+  {
+    "handler": "common.linkState.unlinkedByThem",
+    "text": "They unlinked",
+    "context": "A server whose admin unlinked it from this one."
   },
   {
     "handler": "common.linkTo",
@@ -3525,9 +3727,24 @@
     "context": "The label of a button, used in the share sheet of the phone app and in the share dialog."
   },
   {
+    "handler": "common.makeANewCalendarLink",
+    "text": "Make a new calendar link?",
+    "context": "The title of the dialog confirming a new calendar link, which stops the old one."
+  },
+  {
+    "handler": "common.makeANewLink",
+    "text": "Make a new link",
+    "context": "The button, and the confirm button, that replace somebody's calendar link with a new one, stopping the old one."
+  },
+  {
     "handler": "common.makeIt",
     "text": "Make it",
     "context": "Shown, used in the playlist details of the phone app and in the playlist dialog."
+  },
+  {
+    "handler": "common.manage",
+    "text": "Manage",
+    "context": "Shown in the overview panel in the admin area."
   },
   {
     "handler": "common.margins",
@@ -3578,6 +3795,11 @@
     "handler": "common.mono",
     "text": "Mono",
     "context": "A sound track's channels, in the player's sound menu: one channel."
+  },
+  {
+    "handler": "common.month",
+    "text": "Month",
+    "context": "The choice that shows the release calendar a month at a time."
   },
   {
     "handler": "common.more",
@@ -3660,9 +3882,19 @@
     "context": "After testing one indexer, when it answered. {name} is the indexer's name."
   },
   {
+    "handler": "common.nameCannotBeReachedRightNow",
+    "text": "{name} cannot be reached right now. Its titles can be browsed, but not played until it is back.",
+    "context": "Shown on a title from a linked server that is not answering. {name} is that server."
+  },
+  {
     "handler": "common.nameCouldNotBeDeleted",
     "text": "{name} could not be deleted.",
     "context": "Shown, used in the admin area and in the libraries panel in the admin area. {name} is filled in by the app."
+  },
+  {
+    "handler": "common.nameFromServer",
+    "text": "{name} from {server}",
+    "context": "Somebody watching from a linked Valence server, such as “Sam from Kai’s Valence”. {name} is the person, {server} their server."
   },
   {
     "handler": "common.nameRefusedTheUsernameOrPassword",
@@ -3845,6 +4077,11 @@
     "context": "Shown, used in several places, among them the definitions in the requests service (from `createDefinitionCatalogue`) and the media requests in the requests service (from `createRequestWorker`)."
   },
   {
+    "handler": "common.noReleases",
+    "text": "No releases",
+    "context": "A day on the release calendar, on the web's month or week view or the phone's month, with nothing released on it."
+  },
+  {
     "handler": "common.normal",
     "text": "Normal",
     "context": "Shown, used in several places, among them the text reader in the reader of the phone app and the player of the television app."
@@ -3870,6 +4107,11 @@
     "context": "The title of a nothing here, used in the artists of the phone app and in the artists view in the music page."
   },
   {
+    "handler": "common.nothingAbove",
+    "text": "Nothing above",
+    "context": "The name in the accounts panel in the admin area."
+  },
+  {
     "handler": "common.nothingAfterThis",
     "text": "Nothing after this.",
     "context": "Shown, used in the up next in the music player of the phone app and in the queue panel in the music page."
@@ -3888,6 +4130,11 @@
     "handler": "common.nothingChosen",
     "text": "Nothing chosen",
     "context": "Shown, used in the select block in the plugin surface of the phone app and in the plugin block in the plugin surface of the television app."
+  },
+  {
+    "handler": "common.nothingComesOutOnTheseDays",
+    "text": "Nothing comes out on these days",
+    "context": "The release calendar, on the web or a phone or a television, when nothing the viewer can see is released on the days shown."
   },
   {
     "handler": "common.nothingHereMatchesThat",
@@ -3940,9 +4187,19 @@
     "context": "The title of a nothing here, used in the home in the library of the phone app and in the library browser."
   },
   {
+    "handler": "common.nothingYet",
+    "text": "Nothing yet.",
+    "context": "Text shown in the request history tab in the request detail dialog."
+  },
+  {
     "handler": "common.notifications",
     "text": "Notifications",
     "context": "Shown, used in several places, among them the bell of the phone app and the notifications of the phone app."
+  },
+  {
+    "handler": "common.notInTheLibrary",
+    "text": "Not in the library",
+    "context": "Where something on the release calendar has got to, in the app or a calendar app subscribed to it: an episode that has aired but that nobody has, since nobody asked for it."
   },
   {
     "handler": "common.notInThisLibrary",
@@ -3983,6 +4240,11 @@
     "handler": "common.notPlaying",
     "text": "Not playing",
     "context": "Shown, used in the devices sheet of the phone app and in the devices panel in the music page."
+  },
+  {
+    "handler": "common.notReadByACalendarApp",
+    "text": "Not read by a calendar app yet",
+    "context": "Said of a calendar link no calendar app has read since it was made."
   },
   {
     "handler": "common.notSigned",
@@ -4063,6 +4325,11 @@
     "handler": "common.onlyWhatYouHaveNotWatched",
     "text": "Only what you have not watched",
     "context": "The choice that leaves out what somebody has watched from a page of films or shows, on the web, the phone and the television."
+  },
+  {
+    "handler": "common.onName",
+    "text": "On {name}",
+    "context": "Where a title someone might ask for already is: on a linked Valence server, such as “On Mika’s Valence”."
   },
   {
     "handler": "common.onThisDevice",
@@ -4894,6 +5161,11 @@
     "context": "The label of a glass circle, used in several places, among them the library of the phone app and the search of the phone app."
   },
   {
+    "handler": "common.requestHere",
+    "text": "Request here",
+    "context": "Button asking for a copy of a title on this server, though a linked server already has it."
+  },
+  {
     "handler": "common.requestMedia",
     "text": "Request media",
     "context": "The title of a dialog title, used in the ask for media dialog in the admin area and in the media requests panel in the admin area."
@@ -5144,6 +5416,11 @@
     "context": "The title of a shelf, used in several places, among them the music in the library of the phone app and the music home in the music page."
   },
   {
+    "handler": "common.shareLink",
+    "text": "Share link",
+    "context": "A choice in the phone's Add to Calendar sheet: hand the calendar's link to another app, or copy it, through the phone's share sheet."
+  },
+  {
     "handler": "common.shareWithTheHousehold",
     "text": "Share with the household",
     "context": "Shown, used in the playlist of the phone app and in the playlist view in the music page."
@@ -5287,6 +5564,11 @@
     "handler": "common.somebodyElse",
     "text": "Somebody else",
     "context": "The label of a button, used in several places, among them the ask for the code of the phone app and the ask for the password of the phone app."
+  },
+  {
+    "handler": "common.someoneFromName",
+    "text": "Someone from {name}",
+    "context": "Stands for a person from a linked server whose name that server does not send. {name} is that server."
   },
   {
     "handler": "common.something",
@@ -5447,6 +5729,11 @@
     "handler": "common.subject",
     "text": "Subject",
     "context": "Shown, used in the background jobs in the admin area and in the job history in the observability page."
+  },
+  {
+    "handler": "common.subscribeToYourReleaseCalendar",
+    "text": "Add your release calendar to Apple Calendar, Google Calendar or any other calendar app, and what comes out appears there as it is announced. Anyone with the link can see what is on it, so keep it to yourself.",
+    "context": "What the calendar link is for, at the top of its panel on the account page."
   },
   {
     "handler": "common.subtitles",
@@ -5614,6 +5901,16 @@
     "context": "The problem, used in the download client dialog (from `readDownloadClientForm`) and in the indexer dialog (from `readIndexerForm`)."
   },
   {
+    "handler": "common.theCalendarLinkCouldNotBeChanged",
+    "text": "The calendar link could not be changed. Try again.",
+    "context": "Said when making a new calendar link, or turning the link off, failed."
+  },
+  {
+    "handler": "common.theCalendarLinkCouldNotBeMade",
+    "text": "The calendar link could not be made.",
+    "context": "Said in the phone's Add to Calendar sheet when the link calendar apps subscribe by could not be made, beside a way to try again."
+  },
+  {
     "handler": "common.theCatalogue",
     "text": "The catalogue",
     "context": "Shown, used in several places, among them the indexer catalogue dialog in the admin area and the plugins panel in the admin area."
@@ -5667,6 +5964,11 @@
     "handler": "common.theLibrarysOwnProfile",
     "text": "The library’s own profile",
     "context": "Shown, used in the approve request dialog in the admin area and in the ask for media dialog in the admin area."
+  },
+  {
+    "handler": "common.theLinkYouHaveNowStops",
+    "text": "The link you have now stops working at once, and any calendar app subscribed to it will need the new one.",
+    "context": "Why making a new calendar link needs confirming."
   },
   {
     "handler": "common.theme",
@@ -5774,6 +6076,11 @@
     "context": "Shown, used in several places, among them the app on the server (from `serveShare`) and the sharing on the server (from `createShareGate`)."
   },
   {
+    "handler": "common.thisServer",
+    "text": "This server",
+    "context": "Shown in the job history (from `describeRunSubject`)."
+  },
+  {
     "handler": "common.thoseChangesWereNotSaved",
     "text": "Those changes were not saved.",
     "context": "Shown, used in the profile in the account of the phone app and in the account dialog."
@@ -5837,6 +6144,16 @@
     "handler": "common.titleTheTrailer",
     "text": "{title}, the trailer",
     "context": "The label of a embedded video, used in the media detail dialog and in the show dialog. {title} is filled in by the app."
+  },
+  {
+    "handler": "common.today",
+    "text": "Today",
+    "context": "The name of today, above what is happening on it on the release calendar, and the button that brings the calendar back to it."
+  },
+  {
+    "handler": "common.tomorrow",
+    "text": "Tomorrow",
+    "context": "The name of tomorrow, above what is happening on it on the release calendar."
   },
   {
     "handler": "common.took",
@@ -5904,6 +6221,11 @@
     "context": "Shown, used in the security in the account of the phone app and in the two factor setup."
   },
   {
+    "handler": "common.turnOffYourCalendarLink",
+    "text": "Turn off your calendar link?",
+    "context": "The title of the dialog confirming that somebody's calendar link is turned off."
+  },
+  {
     "handler": "common.turnOnTwoFactor",
     "text": "Turn on two-factor",
     "context": "The label of a button, used in the security in the account of the phone app and in the two factor setup."
@@ -5947,6 +6269,11 @@
     "handler": "common.upAFolder",
     "text": "Up a folder",
     "context": "The label of a button, used in the files panel in the admin area and in the folder browser in the admin area."
+  },
+  {
+    "handler": "common.upcoming",
+    "text": "Upcoming",
+    "context": "The choice that shows the release calendar as a list of what is coming, starting today."
   },
   {
     "handler": "common.updateToVersion",
@@ -6109,6 +6436,11 @@
     "context": "Text shown in the account of the phone app. {address} is filled in by the app."
   },
   {
+    "handler": "common.watchOnName",
+    "text": "Watch on {name}",
+    "context": "Button opening a title a linked Valence server already has, rather than asking for a copy here. {name} is that server."
+  },
+  {
     "handler": "common.watchTheTrailer",
     "text": "Watch the trailer",
     "context": "The label of a button, used in several places, among them the askable dialog and the media detail dialog."
@@ -6127,6 +6459,11 @@
     "handler": "common.webhooks",
     "text": "Webhooks",
     "context": "The label, used in the admin area (from `adminSections`) and in the webhooks panel in the admin area."
+  },
+  {
+    "handler": "common.week",
+    "text": "Week",
+    "context": "The choice that shows the release calendar a week at a time."
   },
   {
     "handler": "common.weekly",
@@ -6177,6 +6514,11 @@
     "handler": "common.whatToShow",
     "text": "What to show",
     "context": "The label of a segmented row, used in the library of the phone app and in the search of the phone app."
+  },
+  {
+    "handler": "common.where",
+    "text": "Where",
+    "context": "The label in the webhook fields (from `webhookPanes`)."
   },
   {
     "handler": "common.whereYouAre",
@@ -6252,6 +6594,11 @@
     "handler": "common.windows",
     "text": "Windows",
     "context": "The name, used in the platform of the desktop app (from `describeThisDesktop`) and in the playback (from `detectClientLabel`)."
+  },
+  {
+    "handler": "common.withdraw",
+    "text": "Withdraw",
+    "context": "The label of a button in the shares in the account of the phone app."
   },
   {
     "handler": "common.withdrawIt",
@@ -7919,6 +8266,96 @@
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveLibraryAccess`)."
   },
   {
+    "handler": "error.linking.alreadyLinked",
+    "text": "This server is already linked with that one, or is waiting on it.",
+    "context": "Refusal when two servers are already linked or a request between them is pending."
+  },
+  {
+    "handler": "error.linking.askAlongFromTheServerHoldingIt",
+    "text": "Ask people along from the server holding this party.",
+    "context": "Refusal when somebody in a watch party held on a linked server tries to ask people along or start a party from this server."
+  },
+  {
+    "handler": "error.linking.noSuchInvite",
+    "text": "There is no such open invite.",
+    "context": "Refusal when an invite to withdraw does not exist or is already used."
+  },
+  {
+    "handler": "error.linking.noSuchPerson",
+    "text": "There is no such person from that server.",
+    "context": "Refusal when blocking or unblocking somebody from a linked server who is not known."
+  },
+  {
+    "handler": "error.linking.noSuchServer",
+    "text": "There is no such linked server.",
+    "context": "Refusal when a linked server asked about does not exist."
+  },
+  {
+    "handler": "error.linking.notSignedByALinkedServer",
+    "text": "That was not signed by a server this one knows.",
+    "context": "Refusal to another server whose signed request could not be verified."
+  },
+  {
+    "handler": "error.linking.notTheServerThatMadeTheInvite",
+    "text": "The server at that address is not the one that made the invite.",
+    "context": "Refusal when the key of the server answering does not match the invite's fingerprint."
+  },
+  {
+    "handler": "error.linking.thatInviteHasBeenUsed",
+    "text": "That invite has been used, withdrawn or has run out. Ask for a new one.",
+    "context": "Refusal when an invite to link servers can no longer be used."
+  },
+  {
+    "handler": "error.linking.thatInviteIsFromThisServer",
+    "text": "That invite is from this server. Use it on the other one.",
+    "context": "Refusal when an admin pastes their own server's invite into it."
+  },
+  {
+    "handler": "error.linking.thatIsNotAnInvite",
+    "text": "That is not an invite from another Valence.",
+    "context": "Refusal when what was pasted as an invite to link servers is not one."
+  },
+  {
+    "handler": "error.linking.thatIsNotSharedWithYourServer",
+    "text": "That is not shared with your server.",
+    "context": "Refusal sent to a linked Valence server that asked for a route, library or title this server does not share with it."
+  },
+  {
+    "handler": "error.linking.thatServerCouldNotBeReached",
+    "text": "That server could not be reached. Check its address can be reached from this one.",
+    "context": "Refusal when the server an invite names does not answer."
+  },
+  {
+    "handler": "error.linking.thatServerDoesNotShowItsRecord",
+    "text": "That server does not show its record of your people.",
+    "context": "Refusal when a linked server's admin has not let this server read its record of what this server's people asked for."
+  },
+  {
+    "handler": "error.linking.thatServerTakesNoRequestsFromYours",
+    "text": "That server takes no requests from yours.",
+    "context": "Refusal sent to a linked Valence server whose people ask this one for something when this server's admin has not let it."
+  },
+  {
+    "handler": "error.linking.thisAccountMayNotLinkServers",
+    "text": "This account may not link this server with others.",
+    "context": "Refusal when somebody without the right to link servers asks to."
+  },
+  {
+    "handler": "error.linking.thisPersonMayNotWatchFromHere",
+    "text": "This person may not watch from this server.",
+    "context": "Refusal sent to a linked Valence server when the person it asks for has been blocked by this server's admin."
+  },
+  {
+    "handler": "error.linking.yourServerIsAskingTooOften",
+    "text": "Your server is asking too often. Try again in a minute.",
+    "context": "Refusal sent to a linked Valence server that has made too many requests in the last minute."
+  },
+  {
+    "handler": "error.linking.yourServerIsPlayingAsMuchAsItMay",
+    "text": "Your server is already playing as many streams from here as it may. Stop one first.",
+    "context": "Refusal sent to a linked Valence server whose people are already watching as many streams at once as this server's admin allows it."
+  },
+  {
     "handler": "error.listening.noSuchTrackInThatBook",
     "text": "No such track in that book.",
     "context": "An error the server answers with (HTTP 404) in the books on the server (from `registerListeningRoutes`)."
@@ -8977,11 +9414,6 @@
     "handler": "phone.theAccount.theShares.openedShare",
     "text": "Opened {share}",
     "context": "Shown in the shares in the account of the phone app. {share} is filled in by the app."
-  },
-  {
-    "handler": "phone.theAccount.theShares.withdraw",
-    "text": "Withdraw",
-    "context": "The label of a button in the shares in the account of the phone app."
   },
   {
     "handler": "phone.theAccount.theShares.withdrawTheLinkToTitle",
@@ -10579,6 +11011,11 @@
     "context": "The description of a setting row in the profile settings in the account area."
   },
   {
+    "handler": "screens.accountArea.profileSettings.preferTheBestCopy",
+    "text": "Prefer the best copy",
+    "context": "Profile setting: play the better copy of a title where a linked server has one."
+  },
+  {
     "handler": "screens.accountArea.profileSettings.profilePicture",
     "text": "Profile picture",
     "context": "The title of a setting row in the profile settings in the account area."
@@ -10602,6 +11039,11 @@
     "handler": "screens.accountArea.profileSettings.whatEverybodySharingThisServerSees",
     "text": "What everybody sharing this server sees when they pick who is watching.",
     "context": "The description of a setting row in the profile settings in the account area."
+  },
+  {
+    "handler": "screens.accountArea.profileSettings.whereALinkedServerHasABetter",
+    "text": "Where a linked server has a clearly better copy of something here, and can be reached, play that one instead.",
+    "context": "Explains the profile setting to prefer the best copy of a title across linked servers."
   },
   {
     "handler": "screens.accountArea.profileSettings.yourNewFaceIsSavedWhen",
@@ -10969,19 +11411,9 @@
     "context": "Text shown in the accounts panel in the admin area."
   },
   {
-    "handler": "screens.adminArea.accountsPanel.allowed",
-    "text": "Allowed",
-    "context": "Text shown in the accounts panel in the admin area."
-  },
-  {
     "handler": "screens.adminArea.accountsPanel.allowUncertificatedThingsInNameFor",
     "text": "Allow uncertificated things in {name} for {name2}",
     "context": "The label of a button in the accounts panel in the admin area. {name} is filled in by the app; {name2} is filled in by the app."
-  },
-  {
-    "handler": "screens.adminArea.accountsPanel.allowUnrated",
-    "text": "Allow unrated",
-    "context": "The label of a button in the accounts panel in the admin area."
   },
   {
     "handler": "screens.adminArea.accountsPanel.ban",
@@ -11037,11 +11469,6 @@
     "handler": "screens.adminArea.accountsPanel.copiedTheSetupLink",
     "text": "Copied the setup link.",
     "context": "Said once a setup link has been copied from the accounts list."
-  },
-  {
-    "handler": "screens.adminArea.accountsPanel.copyLink",
-    "text": "Copy link",
-    "context": "Copies an account's setup link, in the accounts list."
   },
   {
     "handler": "screens.adminArea.accountsPanel.deleteAccount",
@@ -11109,11 +11536,6 @@
     "context": "Beneath the email field in the account editor."
   },
   {
-    "handler": "screens.adminArea.accountsPanel.letBackIn",
-    "text": "Let back in",
-    "context": "Shown in the accounts panel in the admin area."
-  },
-  {
     "handler": "screens.adminArea.accountsPanel.letNameSeeName2",
     "text": "Let {name} see {name2}",
     "context": "Shown in the accounts panel in the admin area. {name} is filled in by the app; {name2} is filled in by the app."
@@ -11142,11 +11564,6 @@
     "handler": "screens.adminArea.accountsPanel.noRoles",
     "text": "No roles",
     "context": "Text shown in the accounts panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.accountsPanel.nothingAbove",
-    "text": "Nothing above",
-    "context": "The name in the accounts panel in the admin area."
   },
   {
     "handler": "screens.adminArea.accountsPanel.passwordReset",
@@ -13669,11 +14086,6 @@
     "context": "Read aloud by screen readers as the name in the indexer report list in the admin area."
   },
   {
-    "handler": "screens.adminArea.indexersPanel.fromName",
-    "text": "From {name}",
-    "context": "Shown in the admin area: a badge on an indexer brought in from a connected Prowlarr. {name} is what the admin called the Prowlarr."
-  },
-  {
     "handler": "screens.adminArea.indexersPanel.fromNameAddedUpdatedRemoved",
     "text": "From {name}: {added} added, {updated} changed, {removed} removed.",
     "context": "Shown in the admin area: said after bringing a Prowlarr's indexers in. {name} is the Prowlarr; the others are counts."
@@ -14122,6 +14534,376 @@
     "handler": "screens.adminArea.librarySettingsDialog.yourBrowser",
     "text": "Your browser",
     "context": "The detail in the library settings dialog in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.ageLimitForName",
+    "text": "Age limit for {name}",
+    "context": "Accessible name of the menu choosing the highest age a linked server's people may watch. {name} is the server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.allowUncertificatedThingsForName",
+    "text": "Allow uncertificated things for {name}",
+    "context": "Accessible name of the button letting a linked server's people watch titles nobody certificated, under an age limit. {name} is the server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.anInviteLinksOneServer",
+    "text": "An invite links one other Valence with this one. It works once, for a day, and you approve the server that uses it before they are linked.",
+    "context": "Explains invites to link servers."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.askedNameToLink",
+    "text": "Asked {name} to link. You are linked once their admin approves.",
+    "context": "Toast after using an invite, waiting for the other server's admin."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.blockedName",
+    "text": "Blocked {name}.",
+    "context": "Toast after blocking a person from a linked server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.blockName",
+    "text": "Block {name}",
+    "context": "Accessible name of the button blocking one person from a linked server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.checkAgain",
+    "text": "Check again",
+    "context": "Button asking a server whether its admin has answered a request to link."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.copyItNowItIsNotShownAgain",
+    "text": "Copy it now. It is not shown again.",
+    "context": "Shown under a freshly made invite to link servers."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.dropRequestsALinkedServerHas",
+    "text": "Drop requests a linked server has",
+    "context": "Setting: whether a request is dropped once a linked server gets the title asked for."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.everythingKeptFromNameGoes",
+    "text": "Everything people here watched, rated or kept from {name} goes with it, for good.",
+    "context": "Explains forgetting a server this one is no longer linked with. {name} is that server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.fingerprint",
+    "text": "Fingerprint",
+    "context": "Label of a server's key fingerprint, read out to check an invite."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.forgetNameAsk",
+    "text": "Forget {name}?",
+    "context": "Title of the dialog confirming that a server this one is no longer linked with should be forgotten."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.forgotName",
+    "text": "Forgot {name}.",
+    "context": "Toast after forgetting a server this one is no longer linked with."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.highestQuality",
+    "text": "Highest quality",
+    "context": "Setting: the best quality a linked server's people are sent."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.highestQualityForName",
+    "text": "Highest quality for {name}",
+    "context": "Accessible name of the menu choosing the best quality a linked server is sent."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.howManyOfNamesPeopleMayWatch",
+    "text": "How many of {name}’s people may watch from here at the same time.",
+    "context": "Explains the setting of how many streams a linked server may play at once. {name} is that server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.howOtherServersSeeThisOne",
+    "text": "How other Valence servers see this one. Another admin checks an invite against its fingerprint.",
+    "context": "Explains the card with this server's name, colour, address and fingerprint."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.inviteAServer",
+    "text": "Invite a server",
+    "context": "Card title: making an invite for another Valence's admin."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.lastHeardFromWhen",
+    "text": "Last heard from {when}",
+    "context": "When a linked server last answered, as a relative time."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.letNameBackIn",
+    "text": "Let {name} back in.",
+    "context": "Toast after unblocking a person from a linked server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.letNameBackInAsk",
+    "text": "Let {name} back in",
+    "context": "Accessible name of the button unblocking one person from a linked server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.letsNamesAdminReadWhatTheir",
+    "text": "Lets {name}’s admin read what their people asked this server for.",
+    "context": "Explains the setting to show a linked server its record. {name} is that server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.letTheirAdminPauseAndMessage",
+    "text": "Let their admin pause and message your people",
+    "context": "Setting: whether a linked server's admin may pause, or send a message to, somebody here watching something of theirs."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.letThemKeepTitlesOffline",
+    "text": "Let them keep titles offline",
+    "context": "Setting: whether a linked server's people may download what this server shares with it."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.link",
+    "text": "Link",
+    "context": "Button that uses a pasted invite to link with another server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.linkedServersCouldNotBeRead",
+    "text": "Linked servers could not be read.",
+    "context": "Shown when the linked servers page could not be read from the server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.linkedWithName",
+    "text": "Linked with {name}.",
+    "context": "Toast when two servers become linked."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.linkToAServer",
+    "text": "Link to a server",
+    "context": "Card title: using an invite another Valence's admin made."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.makeAnInvite",
+    "text": "Make an invite",
+    "context": "Button that makes an invite to link another server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.manageName",
+    "text": "Manage {name}",
+    "context": "Accessible name of the button opening what is shared with one linked server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.nameCouldNotBeReached",
+    "text": "{name} could not be reached.",
+    "context": "Shown when a linked server did not answer. {name} is that server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.nameDoesNotShowThisServerIts",
+    "text": "{name} does not show this server its record.",
+    "context": "Shown when a linked server's admin has not let this server read its record. {name} is that server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.nameItself",
+    "text": "{name} itself",
+    "context": "In a record, a request a linked server made for itself rather than for one of its people. {name} is that server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.namesAdminCanPauseSomebodyHere",
+    "text": "{name}’s admin can pause somebody here watching from it, or send them a message. Stopping a stream needs no leave, since it is theirs.",
+    "context": "Explains the setting letting a linked server's admin pause and message this server's people. {name} is that server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.nameSeesWhoIsWatchingByName",
+    "text": "{name} sees who is watching by name. Off, it sees “Someone from {server}” instead.",
+    "context": "Explains the setting to send people's names to a linked server. {name} is that server, {server} this one."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.nameSharesNothingWithThisServer",
+    "text": "{name} shares nothing with this server yet.",
+    "context": "Shown when a linked server shares no libraries with this one. {name} is that server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.namesPeopleMayAskThisServer",
+    "text": "{name}’s people may ask this server for films and series. Their requests join your queue, named with their server, for you to approve.",
+    "context": "Explains the setting letting a linked server's people request things from this server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.namesPeopleMayDownloadWhatIs",
+    "text": "{name}’s people may download what is shared, as it is, to watch without a connection.",
+    "context": "Explains the setting letting a linked server's people download shared titles. {name} is that server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.neitherServerReachesTheOther",
+    "text": "Neither server reaches the other until they link again with a new invite. What people here watched from it is kept, and comes back if you do.",
+    "context": "Detail of the confirmation before unlinking a server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.nobodyFromNameHasAskedFor",
+    "text": "Nobody from {name} has asked for anything yet.",
+    "context": "Shown when no person from a linked server has been seen. {name} is that server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.noLibrariesToShareYet",
+    "text": "This server has no libraries to share yet.",
+    "context": "Shown in place of the libraries to share with a linked server, when there are none."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.noServersAreLinkedYet",
+    "text": "No servers are linked yet.",
+    "context": "Empty state of the list of linked servers."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.nothingIsSharedUntilYouChoose",
+    "text": "Nothing is shared until you choose. Their people see only these libraries, and only what is within the age you set.",
+    "context": "Explains how sharing with a linked server works, under the heading of the card that chooses it."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.pasteAnInvite",
+    "text": "Paste an invite another Valence’s admin made. They approve this server before you are linked.",
+    "context": "Explains using an invite to link servers."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.peopleFromName",
+    "text": "People from {name}",
+    "context": "Heading of the list of people from a linked server who have watched here. {name} is that server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.playersFetchFromNameDirectly",
+    "text": "Players fetch {name}’s titles from {name} itself, rather than through this server. Turn this on when your people watch away from home and this server’s upload is the slower link.",
+    "context": "Explains the direct-play setting for a linked server. {name} is that server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.playStraightFromThem",
+    "text": "Play straight from them",
+    "context": "Setting: whether this server's people stream a linked server's titles from that server directly, rather than through this one."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.readAgainNow",
+    "text": "Read again now",
+    "context": "Button reading what a linked server shares with this one again straight away, rather than waiting for the next time it is read."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.readCountTitlesFromName",
+    "text": "Read {count} titles from {name}.",
+    "context": "Toast after reading what a linked server shares. {count} is how many titles and books, {name} the server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.readingLinkedServers",
+    "text": "Reading linked servers",
+    "context": "Accessible label while linked servers load."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.runsOutWhen",
+    "text": "Runs out {when}",
+    "context": "When an open invite to link servers stops working, as a relative time."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.savedThisServer",
+    "text": "Saved how other servers see this one.",
+    "context": "Toast after saving this server's name, colour or address for linking."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.savedWhatNameCanSee",
+    "text": "Saved what {name} can see.",
+    "context": "Toast after changing what a linked server is shared. {name} is that server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.seenWhen",
+    "text": "Seen {when}",
+    "context": "When a person from a linked server was last seen, such as “Seen 5 minutes ago”."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.sendYourPeoplesNames",
+    "text": "Send your people’s names",
+    "context": "Setting: whether this server tells a linked server the names of its people who watch from there."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.shareNameWithName2",
+    "text": "Share {name} with {name2}",
+    "context": "Accessible name of the button sharing one library with a linked server. {name} is the library, {name2} the server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.showThemTheirRecord",
+    "text": "Show them their record",
+    "context": "Setting: whether a linked server's admin may read this server's record of what their people asked for."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.streamsAtOnce",
+    "text": "Streams at once",
+    "context": "Setting: how many streams a linked server's people may watch from this server at the same time."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.streamsAtOnceForName",
+    "text": "Streams at once for {name}",
+    "context": "Accessible name of the menu choosing how many streams a linked server may play at once."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.takeTheirRequests",
+    "text": "Take their requests",
+    "context": "Setting: whether a linked server's people may ask this server to get things."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.theBestNamesPeopleAreSent",
+    "text": "The best {name}’s people are sent, whatever they ask for.",
+    "context": "Explains the quality ceiling for a linked server. {name} is that server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.theInvite",
+    "text": "The invite",
+    "context": "Accessible label of the box showing a freshly made invite."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.theInviteCouldNotBeCopied",
+    "text": "The invite couldn’t be copied. Select it and copy it by hand, since it is not shown again.",
+    "context": "Toast when copying a new linking invite to the clipboard fails."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.theirInvite",
+    "text": "Their invite",
+    "context": "Label of the field an invite from another server is pasted into."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.theirRecordOfYourPeople",
+    "text": "Their record of your people",
+    "context": "Heading of a linked server's record of what this server's people asked it for."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.unlink",
+    "text": "Unlink",
+    "context": "Button and confirmation ending a link with another server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.unlinkedName",
+    "text": "Unlinked {name}.",
+    "context": "Toast after unlinking a server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.unlinkNameAsk",
+    "text": "Unlink {name}?",
+    "context": "Title of the confirmation before unlinking a server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.whatNameAskedFor",
+    "text": "What {name} asked for",
+    "context": "Heading of this server's record of what a linked server and its people asked for. {name} is that server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.whatNameCanSee",
+    "text": "What {name} can see",
+    "context": "Heading of the card choosing what a linked server is shared. {name} is that server's name."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.whatNameSharesWithYou",
+    "text": "What {name} shares with you",
+    "context": "Heading of the card listing the libraries a linked server shares with this one. {name} is that server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.whenALinkedServerGetsSomething",
+    "text": "When a linked server gets something somebody here asked for, they are told either way. On, the request here is dropped too.",
+    "context": "Explains the setting to drop requests a linked server already has."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.whereOtherServersReachIt",
+    "text": "Where other servers reach it",
+    "context": "Label of the field holding the public address of this server for linking."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.withdrawTheInvite",
+    "text": "Withdraw the invite made {when}",
+    "context": "Accessible label of the button withdrawing an open invite."
   },
   {
     "handler": "screens.adminArea.matchPicker.choosingHereCorrectsEveryEpisodeOf",
@@ -14676,11 +15458,6 @@
   {
     "handler": "screens.adminArea.overviewPanel.countedTheStorageAgain",
     "text": "Counted the storage again.",
-    "context": "Shown in the overview panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.overviewPanel.manage",
-    "text": "Manage",
     "context": "Shown in the overview panel in the admin area."
   },
   {
@@ -17160,6 +17937,11 @@
     "context": "Text shown in the artwork tile in the artwork picker."
   },
   {
+    "handler": "screens.askableDialog.askedNameForTitle",
+    "text": "Asked {name} for {title}.",
+    "context": "Toast after asking a linked Valence server to get a title."
+  },
+  {
     "handler": "screens.askableDialog.chooseQualityDialog.requestTitle",
     "text": "Request {title}",
     "context": "The title of a dialog title in the choose quality dialog in the askable dialog. {title} is filled in by the app."
@@ -17434,6 +18216,41 @@
     "handler": "screens.cacheBreakdown.cacheRows.transcodeSessions",
     "text": "Transcode sessions",
     "context": "The label in the cache breakdown (from `cacheRows`)."
+  },
+  {
+    "handler": "screens.calendar.describeCalendarFilters.libraryOrRequests",
+    "text": "Library or requests",
+    "context": "The heading, in the release calendar's filter menu, over the choice between showing what is already in the library and what has been requested."
+  },
+  {
+    "handler": "screens.calendar.describeCalendarFilters.whoseRequests",
+    "text": "Whose requests",
+    "context": "The heading, in the release calendar's filter menu, over the choice to show everybody's requests rather than only the viewer's own. Only offered to people who may see everybody's."
+  },
+  {
+    "handler": "screens.calendarPage.calendarMonth.countMore.one",
+    "text": "{count} more",
+    "context": "A day on the release calendar's month view with more on it than fits; pressing it opens that day's week. {count} is always 1."
+  },
+  {
+    "handler": "screens.calendarPage.calendarMonth.countMore.other",
+    "text": "{count} more",
+    "context": "A day on the release calendar's month view with more on it than fits; pressing it opens that day's week. {count} is a number above 1."
+  },
+  {
+    "handler": "screens.calendarPage.narrowTheCalendar",
+    "text": "Narrow the calendar",
+    "context": "The name of the release calendar's filter menu."
+  },
+  {
+    "handler": "screens.calendarPage.readingTheCalendar",
+    "text": "Reading the calendar",
+    "context": "The release calendar's loading indicator, read by assistive technology."
+  },
+  {
+    "handler": "screens.calendarPage.theCalendarCouldNotBeRead",
+    "text": "The calendar could not be read",
+    "context": "The release calendar, when the server could not be asked what comes out."
   },
   {
     "handler": "screens.collectionDialog.addFilmsAndProgrammesFromTheir",
@@ -19369,11 +20186,6 @@
     "handler": "screens.jobHistory.describeRunSubject.aLibraryThatHasBeenRemoved",
     "text": "A library that has been removed",
     "context": "The name in the job history (from `describeRunSubject`)."
-  },
-  {
-    "handler": "screens.jobHistory.describeRunSubject.thisServer",
-    "text": "This server",
-    "context": "Shown in the job history (from `describeRunSubject`)."
   },
   {
     "handler": "screens.jobRunner.describeCountdown.dueNow",
@@ -22097,11 +22909,6 @@
     "context": "Shown where what it will not try again could not be read from the server, followed by a sentence about why and a button to try again."
   },
   {
-    "handler": "screens.requestDetailDialog.requestHistoryTab.nothingYet",
-    "text": "Nothing yet.",
-    "context": "Text shown in the request history tab in the request detail dialog."
-  },
-  {
     "handler": "screens.requestDetailDialog.requestHistoryTab.readingWhatItHasDone",
     "text": "Reading what it has done",
     "context": "The label of a spinner in the request history tab in the request detail dialog."
@@ -23787,11 +24594,6 @@
     "context": "The label of a button in the video remote bar. {label} is filled in by the app."
   },
   {
-    "handler": "screens.webhookFields.webhookPanes.where",
-    "text": "Where",
-    "context": "The label in the webhook fields (from `webhookPanes`)."
-  },
-  {
     "handler": "screens.webhookFields.webhookPanes.who",
     "text": "Who",
     "context": "The label in the webhook fields (from `webhookPanes`)."
@@ -24012,6 +24814,11 @@
     "context": "Shown in the app on the server (from `serveAdmin`)."
   },
   {
+    "handler": "server.api.serveCalendarFeed.valenceCalendar",
+    "text": "Valence calendar",
+    "context": "The name a calendar app gives the release calendar once somebody subscribes to it."
+  },
+  {
     "handler": "server.appContext.thatAccountIsAtOrAbove",
     "text": "That account is at or above your own rank.",
     "context": "Shown in the app on the server (from `createAppContext`)."
@@ -24110,6 +24917,26 @@
     "handler": "server.books.scanBookLibrary.thatFileCouldNotBeOpened",
     "text": "That file could not be opened as a book.",
     "context": "Shown in the books on the server (from `scanBookLibrary`)."
+  },
+  {
+    "handler": "server.calendar.calendarEvents.showSeasonEpisodeTitle",
+    "text": "{show} · S{seasonNumber} E{episodeNumber} · {episode}",
+    "context": "The title of an episode in the release calendar's feed, as a calendar app shows it: the show's name, which season and episode it is, and the episode's own name."
+  },
+  {
+    "handler": "server.calendar.calendarEvents.titleInCinemas",
+    "text": "{title} in cinemas",
+    "context": "The title of a film's cinema release in the release calendar's feed, as a calendar app shows it."
+  },
+  {
+    "handler": "server.calendar.calendarEvents.titleOnDisc",
+    "text": "{title} on disc",
+    "context": "The title of a film's release on disc in the release calendar's feed, as a calendar app shows it."
+  },
+  {
+    "handler": "server.calendar.calendarEvents.titleToBuyOrRent",
+    "text": "{title} to buy or rent",
+    "context": "The title of a film's digital release in the release calendar's feed, as a calendar app shows it."
   },
   {
     "handler": "server.catalogue.catalogueClient.nameCouldNotBeDownloaded",
@@ -24722,6 +25549,11 @@
     "context": "The description of the pre-transcoding job on the jobs page. Encoding is the name of a section of the administration area."
   },
   {
+    "handler": "server.jobs.jobDefinitions.keepsTheTitlesOtherValenceServers",
+    "text": "Keeps the titles other Valence servers share with this one up to date, so they can be browsed here.",
+    "context": "Description of the job that reads what linked servers share."
+  },
+  {
     "handler": "server.jobs.jobDefinitions.makesTheReEncodesAnAdministrator",
     "text": "Makes the re-encodes an administrator asked for.",
     "context": "The description in the jobs on the server (from `jobDefinitions`)."
@@ -24765,6 +25597,11 @@
     "handler": "server.jobs.jobDefinitions.readsJellyfinEmbyOrPlexWithoutWriting",
     "text": "Reads Jellyfin, Emby or Plex and reports what an import would bring, writing nothing.",
     "context": "The description of the import's dry-run job in the jobs list on the server."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.readWhatLinkedServersShare",
+    "text": "Read what linked servers share",
+    "context": "Name of the job that keeps this server's index of the libraries other linked Valence servers share with it."
   },
   {
     "handler": "server.jobs.jobDefinitions.rendersPreviewClipsForItemsWithout",
@@ -25077,6 +25914,11 @@
     "context": "Shown in the main on the server. {done} is filled in by the app; {total} is filled in by the app."
   },
   {
+    "handler": "server.main.nameHasItAlready",
+    "text": "{name} has it already.",
+    "context": "Reason a request was dropped because a linked Valence server has the title. {name} is that server."
+  },
+  {
     "handler": "server.main.notFound",
     "text": "not found",
     "context": "Shown in the main on the server."
@@ -25090,6 +25932,11 @@
     "handler": "server.main.titleHasBeenPreparedAndThe",
     "text": "{title} has been prepared, and the device you asked on is fetching it.",
     "context": "The body in the main on the server. {title} is filled in by the app."
+  },
+  {
+    "handler": "server.main.titleIsOnName",
+    "text": "{title} is on {name}",
+    "context": "Notification title when a linked Valence server now has something the person asked for. {name} is that server."
   },
   {
     "handler": "server.main.titleIsReady",
@@ -25112,9 +25959,24 @@
     "context": "The reason in the main on the server. {address} is filled in by the app."
   },
   {
+    "handler": "server.main.youAskedForTitleNameHasIt",
+    "text": "You asked for {title}. {name} has it, and you can watch it from there now.",
+    "context": "Notification body when a linked Valence server now has something the person asked for."
+  },
+  {
+    "handler": "server.music.couldNotKeepTrack",
+    "text": "That file was read, but could not be kept: {reason}",
+    "context": "Why a music file was skipped while scanning when saving it failed, with the database's own reason. Shown with the scan's issues on the admin area's jobs page."
+  },
+  {
     "handler": "server.music.couldNotReadTrack",
     "text": "That file could not be read as a track.",
     "context": "Why a music file was skipped while scanning a music library. Shown with the scan's issues on the admin area's jobs page."
+  },
+  {
+    "handler": "server.music.couldNotReadTrackBecause",
+    "text": "That file could not be read as a track: {reason}",
+    "context": "Why a music file was skipped while scanning, with the reader's own reason. Shown with the scan's issues on the admin area's jobs page."
   },
   {
     "handler": "server.music.musicDevices.anAdministrator",
@@ -26807,7 +27669,6 @@
     "text": "Clear filters",
     "context": "Text shown in the filter menu."
   },
-  { "handler": "ui.navBar.here", "text": "Here", "context": "The detail in the nav bar." },
   {
     "handler": "ui.navBar.sections",
     "text": "Sections",

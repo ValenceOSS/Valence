@@ -8,6 +8,9 @@ import type { CatalogueTitleDetail } from '@ValenceContracts/schemas/CatalogueTi
 import type * as Askable from '@ValenceClient/requests/fetchAskable';
 import type * as Requests from '@ValenceClient/requests/fetchMediaRequests';
 import type { ProfilesOnOffer } from '@ValenceContracts/schemas/QualityProfile';
+import type * as Linked from '@ValenceClient/linking/askLinkedServer';
+import type { LinkedServerFace } from '@ValenceContracts/schemas/LinkSharing';
+import { aLinkedServerFace } from '@ValenceClient/testing/aLinkedServerFace';
 
 const fetchAskable = vi.fn<typeof Askable.fetchAskable>();
 const askForMedia = vi.fn<typeof Requests.askForMedia>();
@@ -21,6 +24,18 @@ vi.mock('@ValenceClient/requests/fetchAskable', () => ({
 
 vi.mock('@ValenceClient/requests/fetchProfiles', () => ({
   fetchProfilesOnOffer: () => fetchProfilesOnOffer(),
+}));
+
+const fetchLinkedServerFaces = vi.fn<() => Promise<LinkedServerFace[]>>();
+const askLinkedServer = vi.fn<typeof Linked.askLinkedServer>();
+
+vi.mock('@ValenceClient/linking/fetchLinkedServerFaces', () => ({
+  fetchLinkedServerFaces: () => fetchLinkedServerFaces(),
+}));
+
+vi.mock('@ValenceClient/linking/askLinkedServer', () => ({
+  askLinkedServer: (...given: Parameters<typeof Linked.askLinkedServer>) =>
+    askLinkedServer(...given),
 }));
 
 vi.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
@@ -61,6 +76,10 @@ beforeEach(() => {
   fetchAskable.mockReset().mockResolvedValue(aTitle());
   askForMedia.mockReset().mockResolvedValue({ value: aMediaRequest(), refusal: null });
   fetchProfilesOnOffer.mockReset().mockResolvedValue({ choices: [], forcedId: null });
+  fetchLinkedServerFaces.mockReset().mockResolvedValue([]);
+  askLinkedServer
+    .mockReset()
+    .mockResolvedValue({ value: { title: 'Dune', isNew: true }, refusal: null });
 });
 
 /**
@@ -346,5 +365,47 @@ describe('AskableDialog', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(AskableDialog.displayName).toBe('AskableDialog');
+  });
+
+  it('offers to watch a title a linked server has, or to request it here anyway', async () => {
+    fetchAskable.mockResolvedValue(
+      aTitle({
+        standing: { ...ASKABLE, status: 'linked', mediaId: 'theirs', fromServer: 'Films' },
+      }),
+    );
+    const { onOpen } = open();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Watch on Films' }));
+
+    expect(onOpen).toHaveBeenCalledWith('film', 'theirs');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Request here' }));
+
+    await waitFor(() => {
+      expect(askForMedia).toHaveBeenCalledOnce();
+    });
+  });
+
+  it('asks a linked server that takes requests for a film', async () => {
+    fetchLinkedServerFaces.mockResolvedValue([
+      aLinkedServerFace({ takesRequests: true }),
+      aLinkedServerFace({
+        id: '00000000-0000-4000-8000-000000000002',
+        name: 'Away',
+        takesRequests: true,
+        isReachable: false,
+      }),
+    ]);
+    open();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Ask Films' }));
+
+    await waitFor(() => {
+      expect(askLinkedServer).toHaveBeenCalledWith(
+        aLinkedServerFace().id,
+        expect.objectContaining({ kind: 'film', tmdbId: 438631 }),
+      );
+    });
+    expect(screen.queryByRole('button', { name: 'Ask Away' })).toBeNull();
   });
 });

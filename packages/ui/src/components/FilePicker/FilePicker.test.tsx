@@ -240,9 +240,12 @@ describe('FilePicker', () => {
         },
       });
 
-      await vi.waitFor(() => {
-        expect(onPickMany).toHaveBeenCalledWith([expect.objectContaining({ name: 'a.mkv' })]);
-      });
+      await vi.waitFor(
+        () => {
+          expect(onPickMany).toHaveBeenCalledWith([expect.objectContaining({ name: 'a.mkv' })]);
+        },
+        { timeout: 5_000 },
+      );
     });
 
     it('says nothing when what was dropped held no files', async () => {

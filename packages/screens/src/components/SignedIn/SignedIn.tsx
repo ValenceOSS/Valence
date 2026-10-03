@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FaceFlight } from '@ValenceScreens/components/FaceFlight/FaceFlight';
+import { linkingQueries } from '@ValenceClient/query/linkingQueries';
 import type { FaceLeaving } from '@ValenceScreens/components/FaceFlight/FaceFlight.types';
 import { LayoutGroup } from 'motion/react';
 import { Outlet } from '@tanstack/react-router';
@@ -194,7 +195,14 @@ const SignedIn = ({ title }: SignedInProps) => {
     enabled: watchParty.party !== null,
   });
 
-  const household = everyone.data ?? NOBODY;
+  const elsewhere = useQuery({
+    ...linkingQueries.askableElsewhere(),
+    enabled: watchParty.party !== null,
+  });
+  const household = useMemo(
+    () => [...(everyone.data ?? NOBODY), ...(elsewhere.data ?? [])],
+    [everyone.data, elsewhere.data],
+  );
 
   const rememberItems = useCallback((items: MediaSummary[]) => {
     setKnown((current) => {

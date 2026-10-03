@@ -6,13 +6,14 @@ import {
   MediaRequestStateSchema,
 } from './MediaRequest';
 
-const CATALOGUE_STANDINGS = ['library', 'requested', 'askable'] as const;
+const CATALOGUE_STANDINGS = ['library', 'linked', 'requested', 'askable'] as const;
 
 const CatalogueStandingSchema = z.object({
   status: z.enum(CATALOGUE_STANDINGS),
   mediaId: z.string().nullable(),
   requestId: z.string().uuid().nullable(),
   requestState: MediaRequestStateSchema.nullable(),
+  fromServer: z.string().nullable().optional(),
 });
 
 const CatalogueTitleSchema = z.object({

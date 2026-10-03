@@ -129,6 +129,8 @@ describe('writeLocation', () => {
       listen: null,
       asking: null,
       requestsView: null,
+      calendarView: null,
+      calendarDay: null,
     } as const;
 
     expect(readLocation(`http://valence.local${writeLocation(place)}`)).toEqual(place);
@@ -150,6 +152,20 @@ describe('writeLocation', () => {
     expect(writeLocation(mine)).toBe('/requests?view=mine');
     expect(readLocation(`http://valence.local${writeLocation(mine)}`)).toEqual(mine);
     expect(placeIn('/films', { view: 'mine' }).requestsView).toBeNull();
+  });
+
+  it('carries which view of the calendar is open, and the day it shows', () => {
+    const week = {
+      ...HOME,
+      section: 'calendar',
+      calendarView: 'week',
+      calendarDay: '2026-10-08',
+    } as const;
+
+    expect(writeLocation(week)).toBe('/calendar?view=week&on=2026-10-08');
+    expect(readLocation(`http://valence.local${writeLocation(week)}`)).toEqual(week);
+    expect(placeIn('/calendar', { on: 'next tuesday' }).calendarDay).toBeNull();
+    expect(placeIn('/requests', { on: '2026-10-08' }).calendarDay).toBeNull();
   });
 
   it('carries a listening party in the music section', () => {

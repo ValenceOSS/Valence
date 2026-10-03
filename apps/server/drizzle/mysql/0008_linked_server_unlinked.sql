@@ -1,0 +1,2 @@
+ALTER TABLE `linked_server` DROP CONSTRAINT `linked_server_state`;--> statement-breakpoint
+ALTER TABLE `linked_server` ADD CONSTRAINT `linked_server_state` CHECK (`linked_server`.`state` in ('awaitingThem', 'awaitingUs', 'linked', 'refused', 'unlinkedByThem', 'unlinked'));

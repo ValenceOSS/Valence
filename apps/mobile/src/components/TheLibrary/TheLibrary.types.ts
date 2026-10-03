@@ -6,6 +6,7 @@ type TheLibraryProps = {
   onLookAtShow: (libraryId: string, showId: string) => void;
   onNotifications: () => void;
   onScan: () => void;
+  onCalendar?: () => void;
   onRequested?: () => void;
   onAlbum: (albumId: string) => void;
   onArtist: (artistId: string) => void;

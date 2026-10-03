@@ -149,13 +149,28 @@ const isFatal = (problem: SandboxWords): boolean =>
  * timers. What it gets is the `valence` object in its handlers' context, whose every method is a
  * message to the parent, which decides whether the plugin may do what it asked.
  *
- * Each time control enters the sandbox it has a fixed budget of time before it is interrupted, and
- * the sandbox has a fixed budget of memory. A plugin that exhausts either is not trusted to carry
- * on: the sandbox says so and closes, and the parent starts a fresh one.
+ * Each time control enters the sandbox it has a fixed budget of processor time before it is
+ * interrupted, and the sandbox has a fixed budget of memory. A plugin that exhausts either is not
+ * trusted to carry on: the sandbox says so and closes, and the parent starts a fresh one.
  *
  * @param channel - How this sandbox talks to the process that owns it.
  * @returns Once it is listening.
  */
+/**
+ * How much processor time this process has spent, in milliseconds.
+ *
+ * A plugin's budget is counted in this rather than on the clock, because the clock goes on running
+ * while the machine is busy with something else and the plugin is not running at all. Counted on
+ * the clock, a plugin doing nothing wrong was stopped for the machine being loaded.
+ *
+ * @returns The processor time spent so far.
+ */
+const processorMilliseconds = (): number => {
+  const { user, system } = process.cpuUsage();
+
+  return (user + system) / 1000;
+};
+
 const runPluginSandbox = async (channel: SandboxChannel): Promise<void> => {
   const quickjs = await getQuickJS();
   const waitingForHost = new Map<number, QuickJSDeferredPromise>();
@@ -170,9 +185,9 @@ const runPluginSandbox = async (channel: SandboxChannel): Promise<void> => {
   };
 
   const enter = <T>(vm: QuickJSContext, run: () => T): T => {
-    const deadline = Date.now() + cpuMilliseconds;
+    const deadline = processorMilliseconds() + cpuMilliseconds;
 
-    vm.runtime.setInterruptHandler(() => Date.now() > deadline);
+    vm.runtime.setInterruptHandler(() => processorMilliseconds() > deadline);
 
     return run();
   };

@@ -1,12 +1,13 @@
 import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
 import { FromClientSchema } from '@ValenceContracts/schemas/Realtime';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
-import type { FromServer } from '@ValenceContracts/schemas/Realtime';
+import type { FromClient, FromServer } from '@ValenceContracts/schemas/Realtime';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import { handlePartyMessage, tellEveryone } from '@ValenceServer/parties/handlePartyMessage';
 import type { RealtimeRegistry } from './createRealtimeRegistry';
 import type { PartyBinding } from '@ValenceServer/parties/handlePartyMessage';
 import type { PresenceControlEvent } from '@ValenceServer/presence/PresenceService';
+import type { LinkPerson } from '@ValenceServer/linking/LinkPerson';
 import { say } from '@ValenceI18n/say';
 
 type RealtimeSocket = {
@@ -53,6 +54,16 @@ type HandlerOptions = {
   ownsProfile: (accountId: string, profileId: string) => Promise<boolean>;
   presence?: PresenceBinding;
   party?: PartyBinding;
+  relay?: {
+    takes: (connectionId: string, message: FromClient) => boolean;
+    say: (
+      connectionId: string,
+      person: LinkPerson | null,
+      write: (message: FromServer) => void,
+      message: FromClient,
+    ) => Promise<void>;
+    forget: (connectionId: string) => void;
+  };
 };
 
 type PresenceControl = PresenceControlEvent;
@@ -123,6 +134,7 @@ const createRealtimeHandler = ({
   ownsProfile,
   presence,
   party,
+  relay,
 }: HandlerOptions): RealtimeHandler => ({
   open: (who, socket) => {
     const id = newId();
@@ -185,6 +197,19 @@ const createRealtimeHandler = ({
         }
 
         if (read.data.kind.startsWith('party')) {
+          if (relay !== undefined && who.accountId !== null && relay.takes(id, read.data)) {
+            await relay.say(
+              id,
+              chosenProfileId === null
+                ? null
+                : { profileId: chosenProfileId, name: await nameFor() },
+              write,
+              read.data,
+            );
+
+            return;
+          }
+
           if (party !== undefined && who.accountId !== null) {
             handlePartyMessage(
               read.data,
@@ -269,6 +294,7 @@ const createRealtimeHandler = ({
           tellEveryone(party, party.registry.leave(id));
         }
 
+        relay?.forget(id);
         registry.close(id);
       },
     };

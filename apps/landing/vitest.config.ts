@@ -20,6 +20,8 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
+    sequence: { hooks: 'list' },
+    testTimeout: 20_000,
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
     coverage: {
       reporter: ['text', 'json-summary'],

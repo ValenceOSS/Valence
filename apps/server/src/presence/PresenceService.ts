@@ -37,6 +37,7 @@ type PresenceSession = {
   profileName: string | null;
   guestOf: string | null;
   viaShare: string | null;
+  fromServer: string | null;
   deviceLabel: string;
   clientKind: ClientKind | null;
   address: string | null;
@@ -88,6 +89,7 @@ type PresenceArrival = {
   profileName: string | null;
   guestOf?: string | null;
   viaShare?: string | null;
+  fromServer?: string | null;
   deviceLabel: string;
   clientKind?: ClientKind | null;
   address?: string | null;
@@ -185,6 +187,7 @@ const createPresenceService = (watchers: PresenceWatchers = {}): PresenceService
       profileName,
       guestOf = null,
       viaShare = null,
+      fromServer = null,
       deviceLabel,
       clientKind = null,
       address = null,
@@ -208,6 +211,7 @@ const createPresenceService = (watchers: PresenceWatchers = {}): PresenceService
         profileName,
         guestOf,
         viaShare,
+        fromServer,
         deviceLabel,
         clientKind,
         address,

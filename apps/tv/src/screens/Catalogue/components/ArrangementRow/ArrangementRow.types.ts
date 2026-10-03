@@ -6,6 +6,7 @@ type ArrangementRowProps = {
   onFocus: () => void;
   isFiltered: boolean;
   onFilters: () => void;
+  where?: { label: string; onPress: () => void };
 };
 
 export type { ArrangementRowProps };

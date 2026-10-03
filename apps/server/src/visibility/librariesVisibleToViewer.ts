@@ -2,6 +2,7 @@ import { and, eq, notExists, sql } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
 import { hidden, library, libraryBlock } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
+import { fromLinkedServersOnly } from '@ValenceServer/visibility/fromLinkedServersOnly';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 /**
@@ -16,13 +17,20 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
  * saying they never want to see it, which is the cheapest hiding there is — somebody who does not
  * watch television hides one thing and their home page becomes theirs.
  *
+ * A library kept from a server this one is no longer linked with is offered to nobody, until the two
+ * link again; the server itself, which keeps it, still reads it.
+ *
  * @param db - The database the subqueries are built against.
  * @param viewer - Who is asking.
  * @returns The condition, or nothing where this viewer is offered everything.
  */
 const librariesVisibleToViewer = (db: AnyValenceDatabase, viewer: Viewer): SQL | undefined => {
-  if (viewer.kind !== 'account') {
+  if (viewer.kind === 'server') {
     return undefined;
+  }
+
+  if (viewer.kind !== 'account') {
+    return fromLinkedServersOnly(db, 'library');
   }
 
   const { accountId, profileId, isAdministrator } = viewer;
@@ -46,7 +54,7 @@ const librariesVisibleToViewer = (db: AnyValenceDatabase, viewer: Viewer): SQL |
             .where(and(eq(hidden.profileId, profileId), eq(hidden.libraryId, library.id))),
         );
 
-  return and(reachable, unhidden);
+  return and(fromLinkedServersOnly(db, 'library'), reachable, unhidden);
 };
 
 export { librariesVisibleToViewer };

@@ -102,6 +102,20 @@ const WHAT_DELETION_REMOVES: readonly OwnedThing[] = [
     rule: 'grantsAccess',
   },
   {
+    table: 'calendar_feed',
+    column: 'accountId',
+    owner: 'account',
+    fate: 'goesWithIt',
+    rule: 'grantsAccess',
+  },
+  {
+    table: 'calendar_feed',
+    column: 'profileId',
+    owner: 'profile',
+    fate: 'goesWithIt',
+    rule: 'grantsAccess',
+  },
+  {
     table: 'account_setup_link',
     column: 'userId',
     owner: 'account',
@@ -299,6 +313,13 @@ const WHAT_DELETION_REMOVES: readonly OwnedThing[] = [
   },
   {
     table: 'media_artwork_choice',
+    column: 'libraryId',
+    owner: 'library',
+    fate: 'goesWithIt',
+    rule: 'meansNothingWithoutIt',
+  },
+  {
+    table: 'link_grant',
     column: 'libraryId',
     owner: 'library',
     fate: 'goesWithIt',

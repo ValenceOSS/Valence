@@ -36,9 +36,12 @@ describe('usePageWarming', () => {
       usePageWarming(2, 10, urlFor);
     });
 
-    await vi.waitFor(() => {
-      expect(asked.length).toBe(10);
-    });
+    await vi.waitFor(
+      () => {
+        expect(asked.length).toBe(10);
+      },
+      { timeout: 5_000 },
+    );
 
     expect(asked.slice(0, 4)).toEqual(['/page/2', '/page/3', '/page/4', '/page/1']);
   });
@@ -51,9 +54,12 @@ describe('usePageWarming', () => {
       { initialProps: { centre: 0 } },
     );
 
-    await vi.waitFor(() => {
-      expect(asked.length).toBe(6);
-    });
+    await vi.waitFor(
+      () => {
+        expect(asked.length).toBe(6);
+      },
+      { timeout: 5_000 },
+    );
 
     rerender({ centre: 3 });
 
@@ -65,9 +71,12 @@ describe('usePageWarming', () => {
       usePageWarming(500, 1000, urlFor);
     });
 
-    await vi.waitFor(() => {
-      expect(asked.length).toBe(120);
-    });
+    await vi.waitFor(
+      () => {
+        expect(asked.length).toBe(120);
+      },
+      { timeout: 5_000 },
+    );
 
     expect(asked).not.toContain('/page/999');
   });

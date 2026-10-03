@@ -1,6 +1,9 @@
 import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
+import { linkingQueries } from '@ValenceClient/query/linkingQueries';
+import { aLibrary } from '@ValenceClient/testing/aLibrary';
+import { aLinkedServerFace } from '@ValenceClient/testing/aLinkedServerFace';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { setFavourite } from '@ValenceClient/library/fetchFavourites';
 import { setRating } from '@ValenceClient/library/fetchRatings';
@@ -288,5 +291,20 @@ describe('FilmPage', () => {
     await userEvent.press(drawn.getByRole('button', { name: 'Amy Adams, Louise' }));
 
     expect(onOpenPerson).toHaveBeenCalledWith(9273);
+  });
+
+  it('says which linked server a film comes from, and that it cannot be reached', async () => {
+    const cache = aCacheHolding({});
+
+    cache.setQueryData(libraryQueries.all().queryKey, [
+      aLibrary({ id: ARRIVAL.libraryId, linkedServerId: aLinkedServerFace().id }),
+    ]);
+    cache.setQueryData(linkingQueries.faces().queryKey, [
+      aLinkedServerFace({ isReachable: false }),
+    ]);
+
+    const drawn = await drawFilm(cache);
+
+    expect(drawn.getByText(/Films cannot be reached right now/u)).toBeTruthy();
   });
 });

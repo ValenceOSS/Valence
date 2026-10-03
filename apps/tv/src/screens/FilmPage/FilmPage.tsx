@@ -34,6 +34,9 @@ import { joinFacts } from '@ValenceTv/library/joinFacts';
 import { useProgress } from '@ValenceTv/library/useProgress';
 import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { useOriginOf } from '@ValenceClient/linking/useOriginOf';
+import { whereFrom } from '@ValenceClient/linking/whereFrom';
+import { usePreferredCopy } from '@ValenceClient/linking/usePreferredCopy';
 import type { FilmPageProps } from './FilmPage.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
@@ -61,6 +64,8 @@ const FilmPage = ({ mediaId, viewerId, onPlay, onOpenPerson }: FilmPageProps) =>
   const [panel, setPanel] = useState<'rating' | 'version' | null>(null);
   const [chosenVersion, setChosenVersion] = useState<string | null>(null);
   const detail = useQuery(libraryQueries.detail(mediaId));
+  const originOf = useOriginOf();
+  const preferred = usePreferredCopy(detail.data, detail.data?.versions ?? []);
 
   useConfirmHiding(hiding);
   useMenuButton(
@@ -87,9 +92,12 @@ const FilmPage = ({ mediaId, viewerId, onPlay, onOpenPerson }: FilmPageProps) =>
 
   const versions = film.versions ?? [];
   const offered = theVersionsOf(film.id, versions);
-  const playing = versions.find((one) => one.id === chosenVersion) ?? null;
+  const playing = versions.find((one) => one.id === (chosenVersion ?? preferred)) ?? null;
   const summary = playing ?? summariseDetail(film);
-  const resume = resumeFor(progress, summary.id);
+  const resume = resumeFor(
+    progress,
+    playing !== null && originOf(playing.libraryId) !== null ? film.id : summary.id,
+  );
   const watched = progress.get(summary.id);
   const trailer =
     (film.extras ?? []).find((extra) => extra.extraKind === 'trailer' && extra.id !== film.id) ??
@@ -104,6 +112,7 @@ const FilmPage = ({ mediaId, viewerId, onPlay, onOpenPerson }: FilmPageProps) =>
       hasLogo={film.metadata.hasLogo}
       stillPath={film.metadata.hasBackdrop ? artworkUrl(film.id, 'backdrop') : null}
       facts={joinFacts([
+        whereFrom(originOf(film.libraryId)),
         film.year?.toString(),
         formatDuration(film.durationSeconds),
         typeof film.metadata.rating === 'number' ? `★ ${film.metadata.rating.toFixed(1)}` : null,

@@ -1,4 +1,4 @@
-import { Film, Inbox, Monitor, ScanQrCode, SearchX } from '@keyline-icons/react-native';
+import { Calendar, Film, Inbox, Monitor, ScanQrCode, SearchX } from '@keyline-icons/react-native';
 import {
   Film as FilmFilled,
   Home as HomeFilled,
@@ -52,6 +52,9 @@ import { theVeilFor } from '@ValenceMobile/components/TheLibrary/theVeilFor';
 import { ACCOUNT_PANELS } from '@ValenceMobile/components/TheAccount/ACCOUNT_PANELS';
 import { useAccountPanels } from '@ValenceMobile/components/TheAccount/useAccountPanels';
 import { usePluginThemeInStep } from '@ValenceMobile/plugins/usePluginThemeInStep';
+import { librariesChosen } from '@ValenceClient/library/librariesChosen';
+import { libraryOptionsFor } from '@ValenceClient/library/libraryOptionsFor';
+import { linkingQueries } from '@ValenceClient/query/linkingQueries';
 import type { ReactNode } from 'react';
 import type { VideoPlayer } from 'expo-video';
 import type { ALight } from '@ValenceMobile/components/AMoodBackground/AMoodBackground.types';
@@ -151,6 +154,7 @@ const styles = StyleSheet.create({
  * @param onLookAtShow - Told which programme, in which library.
  * @param onNotifications - Told somebody wants to see what the server has told them.
  * @param onScan - Told somebody wants to scan a television's code to sign it in.
+ * @param onCalendar - Told somebody wants to see what comes out when, where requesting is on.
  * @param onRequested - Told somebody wants to see what has been asked for, where they may ask.
  * @param onAlbum - Told to open an album.
  * @param onArtist - Told to open an artist.
@@ -174,6 +178,7 @@ const TheLibrary = ({
   onLookAtShow,
   onNotifications,
   onScan,
+  onCalendar,
   onRequested,
   onAlbum,
   onArtist,
@@ -193,6 +198,7 @@ const TheLibrary = ({
   const colours = useTheColours();
   const told = useRef({ onWatch, onLookAt, onLookAtShow, onCollection });
   const libraries = useQuery(libraryQueries.all());
+  const faces = useQuery(linkingQueries.faces());
   const watched = useQuery(viewingQueries.progress());
   const filters = useLibraryFilters();
   const [part, setPart] = useState('home');
@@ -332,7 +338,9 @@ const TheLibrary = ({
     () => (part === 'films' ? films : part === 'shows' ? programmes : NO_LIBRARIES),
     [part, films, programmes],
   );
-  const reading = chosen === EVERY ? ofThisKind.map((library) => library.id) : [chosen];
+  const reading = librariesChosen(ofThisKind, chosen === EVERY ? null : chosen).map(
+    (library) => library.id,
+  );
   const isFiltered = filters.selected.size > 0;
   const parts = [
     { id: 'home', label: say('common.home'), icon: HomeFilled },
@@ -444,6 +452,9 @@ const TheLibrary = ({
           <View style={styles.aside}>
             {onRequested === undefined ? null : (
               <AGlassCircle of={Inbox} label={say('common.requested')} onPress={onRequested} />
+            )}
+            {onCalendar === undefined ? null : (
+              <AGlassCircle of={Calendar} label={say('common.calendar')} onPress={onCalendar} />
             )}
             <AGlassCircle
               of={ScanQrCode}
@@ -564,10 +575,7 @@ const TheLibrary = ({
             {ofThisKind.length > 1 ? (
               <SegmentedRow
                 label={say('common.whichLibrary')}
-                items={[
-                  { id: EVERY, label: say('common.all') },
-                  ...ofThisKind.map((library) => ({ id: library.id, label: library.name })),
-                ]}
+                items={libraryOptionsFor(ofThisKind, faces.data ?? [], EVERY, say('common.all'))}
                 value={chosen}
                 onSelect={setChosen}
               />
@@ -619,6 +627,7 @@ const TheLibrary = ({
       isWaiting,
       drawsItsOwn,
       ofThisKind,
+      faces.data,
       chosen,
       filters.groups,
       filters.selected,

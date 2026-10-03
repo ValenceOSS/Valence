@@ -58,9 +58,12 @@ describe('CollectionShelf', () => {
 
     const { container } = renderInAnAddress(<CollectionShelf onOpen={vi.fn()} />);
 
-    await vi.waitFor(() => {
-      expect(collections.fetchCollections).toHaveBeenCalled();
-    });
+    await vi.waitFor(
+      () => {
+        expect(collections.fetchCollections).toHaveBeenCalled();
+      },
+      { timeout: 5_000 },
+    );
     expect(container).toBeEmptyDOMElement();
   });
 

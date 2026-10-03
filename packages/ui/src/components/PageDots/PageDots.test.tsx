@@ -66,7 +66,7 @@ describe('PageDots', () => {
 
     await user.hover(screen.getByRole('button', { name: 'Show Dune' }));
 
-    expect(await screen.findByText('Dune', {}, { timeout: 3000 })).toBeInTheDocument();
+    expect(await screen.findByText('Dune')).toBeInTheDocument();
   });
 
   it('names the row itself, since a page may carry more than one', () => {

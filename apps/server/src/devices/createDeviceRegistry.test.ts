@@ -12,6 +12,7 @@ const entry = (
   profileId,
   profileName: 'Marques',
   guestOf: null,
+  fromServer: null,
   viaShare: null,
   address: null,
   deviceLabel: `${clientId} label`,

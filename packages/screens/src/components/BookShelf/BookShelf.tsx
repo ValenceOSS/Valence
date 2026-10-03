@@ -5,6 +5,7 @@ import { NothingHere } from '@ValenceUI/NothingHere';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { BookRail } from '@ValenceScreens/components/BookRail/BookRail';
+import { librariesChosen } from '@ValenceClient/library/librariesChosen';
 import type { BookShelfProps } from './BookShelf.types';
 import { say } from '@ValenceI18n/say';
 
@@ -23,9 +24,7 @@ import { say } from '@ValenceI18n/say';
 const BookShelf = ({ onOpen, onAddLibrary, libraryId = null }: BookShelfProps) => {
   const asked = useQuery(libraryQueries.all());
   const every = (asked.data ?? []).filter((library) => library.kind === 'books');
-  const shelves = every.some((library) => library.id === libraryId)
-    ? every.filter((library) => library.id === libraryId)
-    : every;
+  const shelves = librariesChosen(every, libraryId);
 
   const onEachShelf = useQueries({
     queries: shelves.map((library) => bookQueries.inLibrary(library.id)),

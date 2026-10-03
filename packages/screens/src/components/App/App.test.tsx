@@ -2,7 +2,8 @@ import { act, screen, waitFor, within } from '@testing-library/react';
 import { focusManager } from '@tanstack/react-query';
 import { renderTheApp } from '@ValenceScreens/testing/renderTheApp';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { loadEveryPage } from '@ValenceScreens/testing/loadEveryPage';
 import { JsonValueSchema, type JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type { RealtimeEvent } from '@ValenceContracts/schemas/Realtime';
 
@@ -264,6 +265,8 @@ const arrive = async () => {
     });
   }
 };
+
+beforeAll(loadEveryPage, 60_000);
 
 describe('App routing', () => {
   it('shows a spinner while loading', async () => {

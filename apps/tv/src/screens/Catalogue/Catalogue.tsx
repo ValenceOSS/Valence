@@ -16,6 +16,11 @@ import {
 } from '@ValenceClient/library/browseArrangementPreference';
 import { unwatchedByShow } from '@ValenceClient/library/unwatchedByShow';
 import { useLibraryFilters } from '@ValenceClient/library/useLibraryFilters';
+import { librariesChosen } from '@ValenceClient/library/librariesChosen';
+import { libraryOptionsFor } from '@ValenceClient/library/libraryOptionsFor';
+import { WHERE_CHOICE } from '@ValenceClient/library/WHERE_CHOICE';
+import { linkingQueries } from '@ValenceClient/query/linkingQueries';
+import { WherePanel } from './components/WherePanel/WherePanel';
 import type { Arrangement } from '@ValenceClient/library/browseArrangementPreference';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { MediaCard } from '@ValenceTv/components/MediaCard/MediaCard';
@@ -29,6 +34,7 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { CatalogueProps } from './Catalogue.types';
 import { say } from '@ValenceI18n/say';
 
+const EVERYWHERE = 'everywhere';
 const ACROSS = 6;
 
 const RESTS_AFTER_MS = 600;
@@ -89,10 +95,35 @@ const CataloguePage = ({ kind, watchable, onOpen, onFeature, upTo }: CataloguePr
   );
   const filters = useLibraryFilters();
   const [isFiltering, setIsFiltering] = useState(false);
+  const [where, setWhere] = useState(EVERYWHERE);
+  const [isChoosingWhere, setIsChoosingWhere] = useState(false);
+  const libraries = useQuery(libraryQueries.all());
+  const faces = useQuery(linkingQueries.faces());
+  const shown = useMemo(
+    () => (libraries.data ?? []).filter((library) => watchable.includes(library.id)),
+    [libraries.data, watchable],
+  );
+  const wheres = useMemo(
+    () =>
+      libraryOptionsFor(shown, faces.data ?? [], EVERYWHERE, say('common.all')).filter(
+        (option) =>
+          option.id === EVERYWHERE ||
+          option.id === WHERE_CHOICE.here ||
+          option.id.startsWith(WHERE_CHOICE.fromPrefix),
+      ),
+    [shown, faces.data],
+  );
+  const reaching = useMemo(
+    () =>
+      shown.length === 0
+        ? watchable
+        : librariesChosen(shown, where === EVERYWHERE ? null : where).map((library) => library.id),
+    [shown, watchable, where],
+  );
   const isFiltered = filters.selected.size > 0;
   const everything = useQuery({
-    ...libraryQueries.everything(watchable, { kind, ...filters.asked }),
-    enabled: watchable.length > 0,
+    ...libraryQueries.everything(reaching, { kind, ...filters.asked }),
+    enabled: reaching.length > 0,
     placeholderData: keepPreviousData,
   });
 
@@ -169,6 +200,16 @@ const CataloguePage = ({ kind, watchable, onOpen, onFeature, upTo }: CataloguePr
                 onFilters={() => {
                   setIsFiltering(true);
                 }}
+                {...(wheres.length < 2
+                  ? {}
+                  : {
+                      where: {
+                        label: wheres.find((option) => option.id === where)?.label ?? '',
+                        onPress: () => {
+                          setIsChoosingWhere(true);
+                        },
+                      },
+                    })}
               />
 
               {items.length === 0 ? (
@@ -206,6 +247,17 @@ const CataloguePage = ({ kind, watchable, onOpen, onFeature, upTo }: CataloguePr
           }}
         />
       )}
+
+      {isChoosingWhere ? (
+        <WherePanel
+          options={wheres}
+          chosen={where}
+          onChoose={setWhere}
+          onClose={() => {
+            setIsChoosingWhere(false);
+          }}
+        />
+      ) : null}
 
       {isFiltering ? (
         <FilterPanel

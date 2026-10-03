@@ -78,6 +78,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
       draft.colour !== profile.colour ||
       draft.askStillWatchingAfter !== profile.askStillWatchingAfter ||
       draft.showsWhatIamWatching !== profile.showsWhatIamWatching ||
+      draft.prefersBestCopy !== profile.prefersBestCopy ||
       JSON.stringify(draft.avatar) !== JSON.stringify(profile.avatar));
 
   const save = async () => {

@@ -112,4 +112,10 @@ const readSubtitleCuesRoute = createRoute({
   },
 });
 
-export { listSubtitlesRoute, readSubtitleCuesRoute, readSubtitleRoute };
+export {
+  SubtitleCuesSchema,
+  SubtitleListSchema,
+  listSubtitlesRoute,
+  readSubtitleCuesRoute,
+  readSubtitleRoute,
+};

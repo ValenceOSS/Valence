@@ -11,6 +11,7 @@ const aSession: PresenceSession = {
   profileId: 'profile-1',
   profileName: 'Connie',
   guestOf: null,
+  fromServer: null,
   viaShare: null,
   clientKind: null,
   deviceLabel: 'A phone',

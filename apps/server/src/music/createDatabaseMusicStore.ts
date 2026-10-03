@@ -156,20 +156,21 @@ const createDatabaseMusicStore = (
     const [known] = await found();
 
     if (known !== undefined) {
-      await db
-        .update(musicAlbum)
-        .set({
-          ...(row.year === null ? {} : { year: row.year }),
-          ...(row.genres.length === 0 ? {} : { genres: row.genres }),
-          ...(row.musicbrainzId === null || known.isCorrected
-            ? {}
-            : { musicbrainzId: row.musicbrainzId }),
-          ...(row.releaseGroupMusicbrainzId === null || known.isCorrected
-            ? {}
-            : { releaseGroupMusicbrainzId: row.releaseGroupMusicbrainzId }),
-          ...(row.isCompilation ? { isCompilation: true } : {}),
-        })
-        .where(eq(musicAlbum.id, known.id));
+      const learnt = {
+        ...(row.year === null ? {} : { year: row.year }),
+        ...(row.genres.length === 0 ? {} : { genres: row.genres }),
+        ...(row.musicbrainzId === null || known.isCorrected
+          ? {}
+          : { musicbrainzId: row.musicbrainzId }),
+        ...(row.releaseGroupMusicbrainzId === null || known.isCorrected
+          ? {}
+          : { releaseGroupMusicbrainzId: row.releaseGroupMusicbrainzId }),
+        ...(row.isCompilation ? { isCompilation: true } : {}),
+      };
+
+      if (Object.keys(learnt).length > 0) {
+        await db.update(musicAlbum).set(learnt).where(eq(musicAlbum.id, known.id));
+      }
 
       return {
         id: known.id,

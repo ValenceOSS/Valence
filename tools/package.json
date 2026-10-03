@@ -13,6 +13,7 @@
     "@typescript-eslint/rule-tester": "^8.70.0",
     "@typescript-eslint/utils": "^8.70.0",
     "@vitest/coverage-v8": "^4.1.11",
+    "electron-vite": "^5.0.0",
     "sharp": "^0.35.4",
     "tsx": "^4.23.13",
     "vite": "^8.3.0",

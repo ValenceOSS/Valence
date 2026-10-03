@@ -119,11 +119,13 @@ const fillsKey = <T extends MySqlTable>(row: MySqlInsertValue<T>, key: KeyField[
  * @param table - The table.
  * @param target - The key the upsert is meant to be decided by.
  * @param values - The rows being written.
+ * @param sameRowOn - Other keys the caller knows can only ever name the row the target does.
  */
 const assertOnlyTargetCanClash = <T extends MySqlTable>(
   table: T,
   target: IndexColumn | IndexColumn[],
   values: MySqlInsertValue<T>[],
+  sameRowOn: readonly IndexColumn[][] = [],
 ): void => {
   const keys = keysOf(table);
   const wanted = (Array.isArray(target) ? target : [target]).map((column) => nameOf(table, column));
@@ -135,8 +137,12 @@ const assertOnlyTargetCanClash = <T extends MySqlTable>(
     );
   }
 
+  const vouched = sameRowOn.map((key) => key.map((column) => nameOf(table, column)));
   const clashing = keys.unique.find(
-    (key) => !isSameKey(key, wanted) && values.some((row) => fillsKey(row, key)),
+    (key) =>
+      !isSameKey(key, wanted) &&
+      !vouched.some((one) => isSameKey(key, one)) &&
+      values.some((row) => fillsKey(row, key)),
   );
 
   if (clashing !== undefined) {
@@ -158,6 +164,8 @@ const assertOnlyTargetCanClash = <T extends MySqlTable>(
  * @param set - What to change on a row that was already there.
  * @param targetWhere - The condition of a partial unique index, where the key is one. MySQL has no
  *   partial indexes and ignores it; the key there is the same one, NULLs being distinct.
+ * @param sameRowOn - Other unique keys the rows fill that can only ever name the row the target
+ *   does, such as a path made from the id, so MySQL changing the row by one of them is safe.
  */
 const upsert = async <T extends MySqlTable>(
   db: AnyDatabase,
@@ -166,14 +174,16 @@ const upsert = async <T extends MySqlTable>(
     values,
     target,
     set,
+    sameRowOn,
   }: {
     values: MySqlInsertValue<T>[];
     target: IndexColumn | IndexColumn[];
     set: MySqlUpdateSetSource<T>;
     targetWhere?: SQL;
+    sameRowOn?: readonly IndexColumn[][];
   },
 ): Promise<void> => {
-  assertOnlyTargetCanClash(table, target, values);
+  assertOnlyTargetCanClash(table, target, values, sameRowOn);
 
   await db.insert(table).values(values).onDuplicateKeyUpdate({ set });
 };

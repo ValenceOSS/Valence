@@ -60,6 +60,7 @@ import { TheAccount } from '@ValenceMobile/components/TheAccount/TheAccount';
 import { TheDownloads } from '@ValenceMobile/components/TheDownloads/TheDownloads';
 import { TheLibrary } from '@ValenceMobile/components/TheLibrary/TheLibrary';
 import { TheNotifications } from '@ValenceMobile/components/TheNotifications/TheNotifications';
+import { TheCalendar } from '@ValenceMobile/components/TheCalendar/TheCalendar';
 import { TheSearch } from '@ValenceMobile/components/TheSearch/TheSearch';
 import { TheTabs } from '@ValenceMobile/components/TheTabs/TheTabs';
 import { AProgrammeBySeries } from '@ValenceMobile/components/SignedIn/components/AProgrammeBySeries/AProgrammeBySeries';
@@ -569,6 +570,8 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
         );
       case 'notifications':
         return <TheNotifications onOpen={open} onJoin={join} onBack={back} />;
+      case 'calendar':
+        return <TheCalendar onOpen={open} onBack={back} />;
       case 'album':
         return (
           <AnAlbum
@@ -666,6 +669,9 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
           }}
           {...(mayRequest
             ? {
+                onCalendar: () => {
+                  open({ kind: 'calendar' });
+                },
                 onRequested: () => {
                   setSearchSide('asked');
                   setPart('search');

@@ -146,6 +146,9 @@ const stemOf = (path: string): string => path.replace(/\.[^./]+$/, '');
  * A partial scan reads one folder of the library, such as an album just filed into it, and takes
  * away only what is gone from that folder — the rest of the library is not under it, not gone.
  *
+ * A file that cannot be read, or that is read but cannot be kept, is skipped with why, in the
+ * reader's or the database's own words, rather than ending the scan for every file after it.
+ *
  * @param options - The library, where it is, what to read it with, and where to put it.
  * @returns What the scan changed.
  */
@@ -221,105 +224,128 @@ const scanMusicLibrary = async (options: ScanMusicLibraryOptions): Promise<ScanR
     processed += 1;
     onProgress?.(processed, changed.length);
 
-    const tags = await files.readTags(file.path).catch(() => null);
+    let read: { tags: TrackTags | null; why: string | null };
+
+    try {
+      read = { tags: await files.readTags(file.path), why: null };
+    } catch (error) {
+      read = { tags: null, why: error instanceof Error ? error.message : String(error) };
+    }
+
+    const { tags } = read;
 
     if (tags === null) {
       failed += 1;
-      onProblem?.(file.path, saying('server.music.couldNotReadTrack'));
+      onProblem?.(
+        file.path,
+        read.why === null
+          ? saying('server.music.couldNotReadTrack')
+          : saying('server.music.couldNotReadTrackBecause', { reason: read.why }),
+      );
 
       continue;
     }
 
-    const folder = dirname(file.path);
-    const albumArtistName = tags.isCompilation
-      ? VARIOUS_ARTISTS
-      : (tags.albumArtists[0] ?? tags.artists[0] ?? UNKNOWN_ARTIST);
-    const albumArtist = await artistNamed(
-      albumArtistName,
-      tags.isCompilation ? null : (tags.artistMusicbrainzIds[0] ?? null),
-    );
+    try {
+      const folder = dirname(file.path);
+      const albumArtistName = tags.isCompilation
+        ? VARIOUS_ARTISTS
+        : (tags.albumArtists[0] ?? tags.artists[0] ?? UNKNOWN_ARTIST);
+      const albumArtist = await artistNamed(
+        albumArtistName,
+        tags.isCompilation ? null : (tags.artistMusicbrainzIds[0] ?? null),
+      );
 
-    const album = await store.keepAlbum({
-      libraryId,
-      artistId: albumArtist.id,
-      title: tags.album ?? basename(folder),
-      year: tags.year,
-      genres: tags.genres,
-      isCompilation: tags.isCompilation,
-      musicbrainzId: tags.albumMusicbrainzId,
-      releaseGroupMusicbrainzId: tags.releaseGroupMusicbrainzId,
-    });
+      const album = await store.keepAlbum({
+        libraryId,
+        artistId: albumArtist.id,
+        title: tags.album ?? basename(folder),
+        year: tags.year,
+        genres: tags.genres,
+        isCompilation: tags.isCompilation,
+        musicbrainzId: tags.albumMusicbrainzId,
+        releaseGroupMusicbrainzId: tags.releaseGroupMusicbrainzId,
+      });
 
-    const credited = tags.artists.length === 0 ? [albumArtistName] : tags.artists;
-    const artistIds: string[] = [];
+      const credited = tags.artists.length === 0 ? [albumArtistName] : tags.artists;
+      const artistIds: string[] = [];
 
-    for (const name of credited) {
-      artistIds.push((await artistNamed(name, null)).id);
-    }
-
-    const worthKeeping = (words: string | null): string | null =>
-      words !== null && hasRealWords(words) ? words : null;
-    const lyrics =
-      worthKeeping(tags.lyrics) ??
-      worthKeeping(await files.readSidecarLyrics(file.path).catch(() => null));
-
-    await store.keepTrack({
-      libraryId,
-      albumId: album.id,
-      artistIds,
-      path: file.path,
-      sizeBytes: file.sizeBytes,
-      modifiedAtMs: file.modifiedAtMs,
-      title: tags.title,
-      year: tags.year,
-      genres: tags.genres,
-      durationSeconds: tags.durationSeconds,
-      container: tags.container,
-      codec: tags.codec,
-      isLossless: tags.isLossless,
-      isExplicit: tags.isExplicit,
-      bitDepth: tags.bitDepth,
-      sampleRate: tags.sampleRate,
-      bitrateKbps: tags.bitrateKbps,
-      discNumber: tags.discNumber,
-      trackNumber: tags.trackNumber,
-      lyrics,
-      lyricsModifiedAtMs: lyricFiles.get(stemOf(file.path)) ?? null,
-    });
-
-    if (!pictured.has(album.id) && !album.isCorrected && (force || !album.hasArtwork)) {
-      const folderArt =
-        tags.picture === null ? await files.findFolderArt(folder).catch(() => null) : null;
-      const source: ArtworkSource | null =
-        tags.picture === null
-          ? folderArt === null
-            ? null
-            : { path: folderArt }
-          : { picture: tags.picture };
-      const kept = source === null ? null : await artwork.keep('album', album.id, source);
-
-      if (kept !== null) {
-        pictured.add(album.id);
-        await store.setAlbumArtwork(album.id, kept);
+      for (const name of credited) {
+        artistIds.push((await artistNamed(name, null)).id);
       }
-    }
 
-    if (!dressed.has(albumArtist.id) && (force || !albumArtist.hasImage)) {
-      dressed.add(albumArtist.id);
+      const worthKeeping = (words: string | null): string | null =>
+        words !== null && hasRealWords(words) ? words : null;
+      const lyrics =
+        worthKeeping(tags.lyrics) ??
+        worthKeeping(await files.readSidecarLyrics(file.path).catch(() => null));
 
-      const image = await files.findArtistImage(folder).catch(() => null);
-      const kept =
-        image === null ? null : await artwork.keep('artist', albumArtist.id, { path: image });
+      await store.keepTrack({
+        libraryId,
+        albumId: album.id,
+        artistIds,
+        path: file.path,
+        sizeBytes: file.sizeBytes,
+        modifiedAtMs: file.modifiedAtMs,
+        title: tags.title,
+        year: tags.year,
+        genres: tags.genres,
+        durationSeconds: tags.durationSeconds,
+        container: tags.container,
+        codec: tags.codec,
+        isLossless: tags.isLossless,
+        isExplicit: tags.isExplicit,
+        bitDepth: tags.bitDepth,
+        sampleRate: tags.sampleRate,
+        bitrateKbps: tags.bitrateKbps,
+        discNumber: tags.discNumber,
+        trackNumber: tags.trackNumber,
+        lyrics,
+        lyricsModifiedAtMs: lyricFiles.get(stemOf(file.path)) ?? null,
+      });
 
-      if (kept !== null) {
-        await store.setArtistImage(albumArtist.id, kept);
+      if (!pictured.has(album.id) && !album.isCorrected && (force || !album.hasArtwork)) {
+        const folderArt =
+          tags.picture === null ? await files.findFolderArt(folder).catch(() => null) : null;
+        const source: ArtworkSource | null =
+          tags.picture === null
+            ? folderArt === null
+              ? null
+              : { path: folderArt }
+            : { picture: tags.picture };
+        const kept = source === null ? null : await artwork.keep('album', album.id, source);
+
+        if (kept !== null) {
+          pictured.add(album.id);
+          await store.setAlbumArtwork(album.id, kept);
+        }
       }
-    }
 
-    if (stored.has(file.path)) {
-      updated += 1;
-    } else {
-      added += 1;
+      if (!dressed.has(albumArtist.id) && (force || !albumArtist.hasImage)) {
+        dressed.add(albumArtist.id);
+
+        const image = await files.findArtistImage(folder).catch(() => null);
+        const kept =
+          image === null ? null : await artwork.keep('artist', albumArtist.id, { path: image });
+
+        if (kept !== null) {
+          await store.setArtistImage(albumArtist.id, kept);
+        }
+      }
+
+      if (stored.has(file.path)) {
+        updated += 1;
+      } else {
+        added += 1;
+      }
+    } catch (error) {
+      failed += 1;
+      onProblem?.(
+        file.path,
+        saying('server.music.couldNotKeepTrack', {
+          reason: error instanceof Error ? error.message : String(error),
+        }),
+      );
     }
   }
 

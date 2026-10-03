@@ -47,6 +47,9 @@ import { useTheProgrammeOfEpisode } from '@ValenceMobile/hooks/useTheProgrammeOf
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { useOriginOf } from '@ValenceClient/linking/useOriginOf';
+import { whereFrom } from '@ValenceClient/linking/whereFrom';
+import { usePreferredCopy } from '@ValenceClient/linking/usePreferredCopy';
 import type { ShareSubject } from '@ValenceClient/sharing/newShareFor.types';
 import type { ATitleProps } from './ATitle.types';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
@@ -106,8 +109,17 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
   const title = asking.data;
   const seriesTitle = title?.metadata.seriesTitle ?? null;
   const programme = useTheProgrammeOfEpisode(mediaId);
-  const playing = version ?? mediaId;
-  const carryOnAt = resumeFor(byMediaId(watched.data ?? []), playing);
+  const originOf = useOriginOf();
+  const copies = title?.versions ?? [];
+  const preferred = usePreferredCopy(title, copies);
+  const playing = version ?? preferred ?? mediaId;
+  const playingElsewhere = copies.find((copy) => copy.id === playing);
+  const carryOnAt = resumeFor(
+    byMediaId(watched.data ?? []),
+    playingElsewhere !== undefined && originOf(playingElsewhere.libraryId) !== null
+      ? mediaId
+      : playing,
+  );
 
   useConfirmHiding(hiding, onBack);
 
@@ -152,6 +164,7 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
   const tagline = seriesTitle === null ? (metadata.tagline ?? null) : null;
   const overview = metadata.overview ?? null;
   const offered = theVersionsOf(mediaId, versions);
+  const origin = originOf(title.libraryId);
 
   return (
     <Screen
@@ -168,6 +181,10 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
       }
     >
       {seriesTitle === null ? null : <Words size="heading">{title.title}</Words>}
+
+      {origin === null ? null : (
+        <Words tone={origin.isReachable ? 'muted' : 'danger'}>{whereFrom(origin)}</Words>
+      )}
 
       <View style={styles.facts}>
         <Words tone="muted">{facts.join(' · ')}</Words>

@@ -37,4 +37,15 @@ describe('sealing plugin secrets', () => {
   it('derives the same key from the same secret', () => {
     expect(sealingKeyFrom('x'.repeat(40)).equals(sealingKeyFrom('x'.repeat(40)))).toBe(true);
   });
+
+  it('derives another key for another purpose, keeping plugin secrets the default', () => {
+    const secret = 'x'.repeat(40);
+
+    expect(sealingKeyFrom(secret, 'valence-plugin-secrets').equals(sealingKeyFrom(secret))).toBe(
+      true,
+    );
+    expect(sealingKeyFrom(secret, 'valence-calendar-feeds').equals(sealingKeyFrom(secret))).toBe(
+      false,
+    );
+  });
 });

@@ -1,6 +1,9 @@
 import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fetchMediaDetail } from '@ValenceClient/library/fetchLibrary';
+import { fetchLibraries, fetchMediaDetail } from '@ValenceClient/library/fetchLibrary';
+import { fetchLinkedServerFaces } from '@ValenceClient/linking/fetchLinkedServerFaces';
+import { aLibrary } from '@ValenceClient/testing/aLibrary';
+import { aLinkedServerFace } from '@ValenceClient/testing/aLinkedServerFace';
 import { fetchWatchProgress } from '@ValenceClient/playback/watchProgress';
 import { ATitle } from './ATitle';
 import { MediaDetailSchema } from '@ValenceContracts/schemas/Library';
@@ -8,6 +11,7 @@ import type { ReactNode } from 'react';
 import type { MediaDetail } from '@ValenceContracts/schemas/Library';
 
 jest.mock('@ValenceClient/library/fetchLibrary');
+jest.mock('@ValenceClient/linking/fetchLinkedServerFaces');
 jest.mock('@ValenceClient/playback/watchProgress', () => ({
   ...jest.requireActual<object>('@ValenceClient/playback/watchProgress'),
   fetchWatchProgress: jest.fn(),
@@ -60,6 +64,8 @@ const partWayThrough = (positionSeconds: number) => {
 
 beforeEach(() => {
   jest.mocked(fetchMediaDetail).mockReset();
+  jest.mocked(fetchLibraries).mockReset().mockResolvedValue([]);
+  jest.mocked(fetchLinkedServerFaces).mockReset().mockResolvedValue([]);
   jest.mocked(fetchWatchProgress).mockReset().mockResolvedValue([]);
 });
 
@@ -288,5 +294,29 @@ describe('ATitle', () => {
     });
 
     expect(drawn.queryByText('Start again')).toBeNull();
+  });
+
+  it('says which linked server a title comes from', async () => {
+    jest.mocked(fetchMediaDetail).mockResolvedValue(detailOf());
+    jest
+      .mocked(fetchLibraries)
+      .mockResolvedValue([
+        aLibrary({ id: detailOf().libraryId, linkedServerId: aLinkedServerFace().id }),
+      ]);
+    jest.mocked(fetchLinkedServerFaces).mockResolvedValue([aLinkedServerFace()]);
+
+    const drawn = await render(
+      around(
+        <ATitle
+          mediaId="one"
+          onWatch={jest.fn()}
+          onLookAtPerson={jest.fn()}
+          onLookAtShow={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
+    );
+
+    expect(await drawn.findByText('From Films')).toBeTruthy();
   });
 });

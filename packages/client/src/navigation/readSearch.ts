@@ -18,6 +18,7 @@ type PlaceSearch = {
   listen?: string;
   ask?: string;
   view?: string;
+  on?: string;
 };
 
 const NOTHING: PlaceSearch = {};
@@ -42,6 +43,11 @@ const SearchSchema = z.object({
   listen: said,
   ask: said,
   view: said,
+  on: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullish()
+    .catch(null),
 });
 
 /**

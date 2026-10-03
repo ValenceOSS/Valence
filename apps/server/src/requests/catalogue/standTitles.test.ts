@@ -24,6 +24,7 @@ const aLookup = (
     films: held('films'),
     series: held('series'),
     episodesHeld: () => Promise.resolve(new Map<number, number>()),
+    elsewhere: () => Promise.resolve(new Map()),
     artists: held('artists'),
     albums: held('albums'),
     artistsNamed: held('artistsNamed'),
@@ -85,6 +86,7 @@ const aRequest = (overrides: Partial<MediaRequest>): MediaRequest => ({
   seasons: null,
   releaseTypes: null,
   releaseDate: null,
+  releaseDates: { theatrical: null, digital: null, physical: null },
   items: [],
   mediaId: null,
   createdAt: '2026-09-19T00:00:00.000Z',
@@ -177,5 +179,56 @@ describe('standTitles', () => {
 
   it('asks the library nothing it has no ids for', async () => {
     expect(await standTitles([], aLookup(), [])).toEqual([]);
+  });
+
+  it('says which linked server has a film or a programme, and how a request for it here is going', async () => {
+    const lookup: CatalogueLookup = {
+      ...aLookup(),
+      elsewhere: (keys) =>
+        Promise.resolve(
+          new Map(
+            keys
+              .filter((key) => key === '438631' || key === '95396')
+              .map((key) => [key, { mediaId: `there-${key}`, fromServer: 'Films' }] as const),
+          ),
+        ),
+    };
+    const stood = await standTitles(
+      [aTitle('film', '438631'), aTitle('series', '95396'), aTitle('film', '1')],
+      lookup,
+      [aRequest({})],
+    );
+
+    expect(stood.map((title) => title.standing)).toEqual([
+      {
+        status: 'linked',
+        mediaId: 'there-438631',
+        requestId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+        requestState: 'downloading',
+        fromServer: 'Films',
+      },
+      {
+        status: 'linked',
+        mediaId: 'there-95396',
+        requestId: null,
+        requestState: null,
+        fromServer: 'Films',
+      },
+      { status: 'askable', mediaId: null, requestId: null, requestState: null },
+    ]);
+  });
+
+  it('says a title held here is in the library, even where a linked server has it too', async () => {
+    const stood = await standTitles(
+      [aTitle('film', '438631')],
+      {
+        ...aLookup({ films: { '438631': 'here-1' } }),
+        elsewhere: () =>
+          Promise.resolve(new Map([['438631', { mediaId: 'there', fromServer: 'Films' }]])),
+      },
+      [],
+    );
+
+    expect(stood[0]?.standing.status).toBe('library');
   });
 });

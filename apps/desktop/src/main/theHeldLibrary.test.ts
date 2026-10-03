@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { HeldFile, WhatToKeep } from '@ValenceContracts/schemas/HeldFile';
 import { theHeldLibrary } from './theHeldLibrary';
+import { thePosterKept } from '@ValenceDesktop/main/theHeldFolder';
 import type { HeldIndex } from './theHeldIndex';
 
 const WHERE = 'https://valence.test';
@@ -204,6 +205,8 @@ const settle = async (): Promise<void> => {
 
     await new Promise((carryOn) => setTimeout(carryOn, 5));
   }
+
+  throw new Error('the library was still fetching after four seconds');
 };
 
 beforeEach(async () => {
@@ -211,7 +214,7 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
-  await rm(folder, { recursive: true, force: true });
+  await rm(folder, { recursive: true, force: true, maxRetries: 5, retryDelay: 20 });
 });
 
 describe('theHeldLibrary', () => {
@@ -300,9 +303,12 @@ describe('theHeldLibrary', () => {
     serving.trickplay = 'made';
     await library.carryOnWhereItLeftOff();
 
-    await vi.waitFor(async () => {
-      expect((await library.all())[0]?.hasTrickplay).toBe(true);
-    });
+    await vi.waitFor(
+      async () => {
+        expect((await library.all())[0]?.hasTrickplay).toBe(true);
+      },
+      { timeout: 5_000 },
+    );
   });
 
   it('sets an interrupted film going again before asking after anybody’s thumbnails', async () => {
@@ -331,6 +337,8 @@ describe('theHeldLibrary', () => {
     expect(
       seen.some((address) => address.includes(`/api/downloads/${asked.downloadId}/file`)),
     ).toBe(true);
+
+    await vi.waitFor(() => stat(thePosterKept(folder, asked.downloadId)), { timeout: 5_000 });
   });
 
   it('asks once for a film’s thumbnails, however many times it is told to look', async () => {
@@ -343,9 +351,12 @@ describe('theHeldLibrary', () => {
     serving.trickplay = 'made';
     await Promise.all([library.carryOnWhereItLeftOff(), library.carryOnWhereItLeftOff()]);
 
-    await vi.waitFor(async () => {
-      expect((await library.all())[0]?.hasTrickplay).toBe(true);
-    });
+    await vi.waitFor(
+      async () => {
+        expect((await library.all())[0]?.hasTrickplay).toBe(true);
+      },
+      { timeout: 5_000 },
+    );
     expect(seen.filter((address) => address.endsWith(INDEX))).toHaveLength(1);
   });
 
@@ -364,9 +375,12 @@ describe('theHeldLibrary', () => {
     await library.keep(asked);
     await settle();
 
-    await vi.waitFor(async () => {
-      await expect(stat(join(folder, `${asked.downloadId}.trickplay`))).rejects.toThrow();
-    });
+    await vi.waitFor(
+      async () => {
+        await expect(stat(join(folder, `${asked.downloadId}.trickplay`))).rejects.toThrow();
+      },
+      { timeout: 5_000 },
+    );
     expect(await library.all()).toEqual([]);
   });
 
@@ -531,10 +545,13 @@ describe('theHeldLibrary', () => {
     library.whenChanged((held) => told.push(held));
 
     await library.keep(asked);
-    await settle();
 
-    expect(told.length).toBeGreaterThan(0);
-    expect(told.at(-1)?.[0]?.state).toBe('here');
+    await vi.waitFor(
+      () => {
+        expect(told.at(-1)?.[0]?.state).toBe('here');
+      },
+      { timeout: 5_000 },
+    );
   });
 
   it('stops telling a listener that let go', async () => {

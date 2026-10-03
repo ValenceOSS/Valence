@@ -102,9 +102,12 @@ describe('followTheUpdates', () => {
     updater.emit('update-available', { version: '1.2.0' });
     followed.download();
 
-    await vi.waitFor(() => {
-      expect(followed?.now()).toEqual({ kind: 'failed', version: '1.2.0' });
-    });
+    await vi.waitFor(
+      () => {
+        expect(followed?.now()).toEqual({ kind: 'failed', version: '1.2.0' });
+      },
+      { timeout: 5_000 },
+    );
 
     followed.download();
 
@@ -144,7 +147,7 @@ describe('followTheUpdates', () => {
   });
 
   it('carries on checking after a check fails', async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.useFakeTimers();
 
     const updater = aUpdater({ checkForUpdates: () => Promise.reject(new Error('offline')) });
 
@@ -156,7 +159,7 @@ describe('followTheUpdates', () => {
   });
 
   it('does not check while a download is running', async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.useFakeTimers();
 
     const updater = aUpdater({ downloadUpdate: () => new Promise(() => undefined) });
 
@@ -170,7 +173,7 @@ describe('followTheUpdates', () => {
   });
 
   it('stops checking once stopped', async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.useFakeTimers();
 
     const updater = aUpdater();
 

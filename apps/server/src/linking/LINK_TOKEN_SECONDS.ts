@@ -1,0 +1,3 @@
+const LINK_TOKEN_SECONDS = 60;
+
+export { LINK_TOKEN_SECONDS };

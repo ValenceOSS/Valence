@@ -7,6 +7,7 @@ type AccountProps = {
   user: SessionUser;
   onChangeServer: () => void;
   onRequests: () => void;
+  onCalendar: () => void;
   onOpenRequest: (request: MediaRequest) => void;
   onOpenPluginPage: (page: { pluginId: string; pageId: string }) => void;
   onOpenNamed: (wanted: {

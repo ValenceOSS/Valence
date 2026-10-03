@@ -56,7 +56,7 @@ import { APartyPanel } from '@ValenceMobile/components/APartyPanel/APartyPanel';
 import { roomPlayerOfExpo } from '@ValenceNative/party/roomPlayerOfExpo';
 import { useFollowTheRoom } from '@ValenceClient/party/useFollowTheRoom';
 import { usePartyPlayback } from '@ValenceClient/party/usePartyPlayback';
-import { sessionQueries } from '@ValenceClient/query/sessionQueries';
+import { useAskableAlong } from '@ValenceClient/party/useAskableAlong';
 import type { WatchingProps } from './Watching.types';
 import type { VideoSource, VideoView as VideoViewRef } from 'expo-video';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
@@ -379,14 +379,7 @@ const Watching = ({
     onSaid: setHeard,
     onCannotStart: NEVER_REFUSES,
   });
-  const people = useQuery({
-    ...sessionQueries.everyone(),
-    enabled: (watchParty?.party ?? null) !== null,
-  });
-  const household = useMemo(
-    () => (people.data ?? []).map((person) => ({ id: person.id, name: person.name })),
-    [people.data],
-  );
+  const household = useAskableAlong((watchParty?.party ?? null) !== null);
 
   useEventListener(player, 'sourceLoad', () => {
     inStep.rememberWhere(seekTo);

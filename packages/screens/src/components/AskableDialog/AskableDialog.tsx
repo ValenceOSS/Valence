@@ -37,6 +37,10 @@ import { DialogSections } from '@ValenceScreens/components/DialogSections/Dialog
 import { DialogArrival } from '@ValenceScreens/components/DialogArrival/DialogArrival';
 import { DialogHeadline } from '@ValenceScreens/components/DialogHeadline/DialogHeadline';
 import { DialogHeadlinePart } from '@ValenceScreens/components/DialogHeadlinePart/DialogHeadlinePart';
+import { askLinkedServer } from '@ValenceClient/linking/askLinkedServer';
+import { linkingQueries } from '@ValenceClient/query/linkingQueries';
+import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
+import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
 import type { MediaRequestAsk, ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 import type { AskableDialogProps } from './AskableDialog.types';
 import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
@@ -70,11 +74,16 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   const [seasons, setSeasons] = useState<number[] | null>(null);
   const [releaseTypes, setReleaseTypes] = useState<ReleaseType[]>(['album']);
   const [isAsking, setIsAsking] = useState(false);
+  const [askingElsewhere, setAskingElsewhere] = useState<string | null>(null);
+  const faces = useQuery(linkingQueries.faces());
   const [askedAlbums, setAskedAlbums] = useState<ReadonlySet<string>>(new Set());
   const [problem, setProblem] = useState<string | null>(null);
   const title = found.data ?? null;
   const heldKind = title?.kind ?? null;
   const heldId = title?.standing.status === 'library' ? title.standing.mediaId : null;
+  const isElsewhere = title?.standing.status === 'linked';
+  const isAskable =
+    title?.standing.status === 'askable' || (isElsewhere && title.standing.requestId === null);
 
   useEffect(() => {
     if (heldKind !== null && heldId !== null) {
@@ -92,9 +101,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   const [choosing, setChoosing] = useState<Choosing | null>(null);
   const [isWatchingTrailer, setIsWatchingTrailer] = useState(false);
   const trailerKey = title?.trailerKey ?? null;
-  const offered = useQuery(
-    requestsQueries.profilesOnOffer(title?.kind ?? 'film', title?.standing.status === 'askable'),
-  );
+  const offered = useQuery(requestsQueries.profilesOnOffer(title?.kind ?? 'film', isAskable));
   const choices = offered.data?.forcedId === null ? offered.data.choices : [];
   const mayCancel =
     request !== null &&
@@ -262,7 +269,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                 </DialogSection>
               )}
 
-              {title.standing.status !== 'askable' ? null : title.kind === 'series' ? (
+              {!isAskable ? null : title.kind === 'series' ? (
                 <DialogSection>
                   <SeasonChooser
                     tmdbId={Number(title.id)}
@@ -366,19 +373,30 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
         confirm={
           title === null
             ? undefined
-            : title.standing.status === 'askable'
+            : isElsewhere && title.standing.mediaId !== null
               ? {
-                  label:
-                    title.kind === 'artist'
-                      ? say('screens.askableDialog.watchThisArtist')
-                      : say('common.request'),
-                  isDisabled: !isReady,
-                  isLoading: isAsking,
+                  label: say('common.watchOnName', {
+                    name: title.standing.fromServer ?? say('common.linkedServers'),
+                  }),
                   onChoose: () => {
-                    ask(askingFor(title, seasons, releaseTypes));
+                    if (title.standing.mediaId !== null) {
+                      onOpen(title.kind, title.standing.mediaId);
+                    }
                   },
                 }
-              : undefined
+              : isAskable
+                ? {
+                    label:
+                      title.kind === 'artist'
+                        ? say('screens.askableDialog.watchThisArtist')
+                        : say('common.request'),
+                    isDisabled: !isReady,
+                    isLoading: isAsking,
+                    onChoose: () => {
+                      ask(askingFor(title, seasons, releaseTypes));
+                    },
+                  }
+                : undefined
         }
       >
         {mayCancel ? (
@@ -389,6 +407,51 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
             }}
           >
             {say('common.cancelRequest')}
+          </Button>
+        ) : null}
+
+        {title === null || !isAskable || (title.kind !== 'film' && title.kind !== 'series')
+          ? null
+          : (faces.data ?? [])
+              .filter((server) => server.takesRequests && server.isReachable)
+              .map((server) => (
+                <Button
+                  key={server.id}
+                  variant="ghost"
+                  disabled={!isReady}
+                  isLoading={askingElsewhere === server.id}
+                  onClick={() => {
+                    setAskingElsewhere(server.id);
+
+                    void askLinkedServer(server.id, askingFor(title, seasons, releaseTypes))
+                      .then((sent) => {
+                        tellOutcome(
+                          say('screens.askableDialog.askedNameForTitle', {
+                            name: server.name,
+                            title: title.title,
+                          }),
+                          failureOfRefusal(sent.refusal),
+                        );
+                      })
+                      .finally(() => {
+                        setAskingElsewhere(null);
+                      });
+                  }}
+                >
+                  {say('common.askName', { name: server.name })}
+                </Button>
+              ))}
+
+        {title !== null && isElsewhere && isAskable ? (
+          <Button
+            variant="secondary"
+            disabled={!isReady}
+            isLoading={isAsking}
+            onClick={() => {
+              ask(askingFor(title, seasons, releaseTypes));
+            }}
+          >
+            {say('common.requestHere')}
           </Button>
         ) : null}
       </DialogFooter>

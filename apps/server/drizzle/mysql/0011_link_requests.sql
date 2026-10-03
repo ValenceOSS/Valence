@@ -1,0 +1,1 @@
+ALTER TABLE `linked_server` ADD `takesTheirRequests` boolean DEFAULT false NOT NULL;

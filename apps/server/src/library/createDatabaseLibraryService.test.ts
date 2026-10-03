@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import { library, mediaItem, rating, series, user, viewerProfile } from '#dialect/Schema';
 import { createDatabaseLibraryService } from './createDatabaseLibraryService';
@@ -155,6 +155,130 @@ const aLibrary = async () => {
  */
 const titlesIn = (found: { items: { title: string }[] } | null): string[] =>
   found?.items.map((item) => item.title) ?? [];
+
+describe('the release calendar', { timeout: STARTING_POSTGRES_MS }, () => {
+  /**
+   * A library holding the first two episodes of a show's second season, over a catalogue that
+   * knows the season runs to three.
+   *
+   * @returns The service and what the catalogue was asked.
+   */
+  const aShowAiring = async () => {
+    const db = await aMigratedDatabase();
+
+    await db.insert(library).values({ id: SHOWS_ID, name: 'Shows', kind: 'shows', path: '/shows' });
+    await db
+      .insert(series)
+      .values({ id: 'a-show', libraryId: SHOWS_ID, key: 'show', title: 'Show' });
+    await db.insert(mediaItem).values(
+      [1, 2].map((episodeNumber) =>
+        aFilm(`episode-${episodeNumber.toString()}`, `Episode ${episodeNumber.toString()}`, {
+          libraryId: SHOWS_ID,
+          path: `/shows/show/s02e0${episodeNumber.toString()}.mkv`,
+          seriesId: 'a-show',
+          seriesTitle: 'Show',
+          seasonNumber: 2,
+          episodeNumber,
+          externalId: '300',
+        }),
+      ),
+    );
+
+    const describeAiringSeason = vi.fn(() =>
+      Promise.resolve({
+        seasonNumber: 2,
+        episodes: [
+          { episodeNumber: 1, title: 'One', airDate: '2026-09-28', stillUrl: null },
+          { episodeNumber: 2, title: 'Two', airDate: '2026-10-05', stillUrl: '/two.jpg' },
+          { episodeNumber: 3, title: 'Three', airDate: '2026-10-12', stillUrl: null },
+        ],
+      }),
+    );
+
+    const service = createDatabaseLibraryService({
+      db,
+      files: { listFiles: NOT_USED },
+      transcoder: TRANSCODER,
+      jobs: JOBS,
+      providers: [{ name: 'catalogue', describe: NOT_USED, describeAiringSeason }],
+    });
+
+    return { service, describeAiringSeason };
+  };
+
+  it('lists the episodes airing in the days asked about, saying which are on disk', async () => {
+    const { service } = await aShowAiring();
+
+    const episodes = await service.releaseCalendar(SERVER, '2026-10-01', '2026-10-31');
+
+    expect(
+      episodes.map((episode) => [
+        episode.externalId,
+        episode.seasonNumber,
+        episode.episodeNumber,
+        episode.airDate,
+        episode.isHeld,
+        episode.stillUrl,
+      ]),
+    ).toEqual([
+      ['300', 2, 2, '2026-10-05', true, '/two.jpg'],
+      ['300', 2, 3, '2026-10-12', false, null],
+    ]);
+    expect(episodes[0]?.show).toMatchObject({ title: 'Show', seriesId: 'a-show' });
+  });
+
+  it('names the stills of the episodes a series in the catalogue is airing', async () => {
+    const { service, describeAiringSeason } = await aShowAiring();
+
+    const stills = await service.airingStills(['300', '300']);
+
+    expect([...stills]).toEqual([['tv:300:s2e2', '/two.jpg']]);
+    expect(describeAiringSeason).toHaveBeenCalledTimes(1);
+  });
+
+  it('reads a title’s backdrop and logo from the catalogue once, however often it is asked', async () => {
+    const db = await aMigratedDatabase();
+    const describeTitle = vi.fn(() =>
+      Promise.resolve({
+        title: 'A Film',
+        year: 2026,
+        overview: null,
+        posterUrl: null,
+        backdropUrl: '/backdrop.jpg',
+        genres: [],
+        runtimeMinutes: null,
+        cast: [],
+        trailerKey: null,
+      }),
+    );
+    const readLogoUrl = vi.fn(() => Promise.resolve('/logo.png'));
+    const service = createDatabaseLibraryService({
+      db,
+      files: { listFiles: NOT_USED },
+      transcoder: TRANSCODER,
+      jobs: JOBS,
+      providers: [{ name: 'catalogue', describe: NOT_USED, describeTitle, readLogoUrl }],
+    });
+
+    const title = { kind: 'movie' as const, externalId: '100' };
+
+    expect([...(await service.catalogueArtwork([title, title]))]).toEqual([
+      ['movie:100', { backdropUrl: '/backdrop.jpg', logoUrl: '/logo.png' }],
+    ]);
+    await service.catalogueArtwork([title]);
+    expect(describeTitle).toHaveBeenCalledTimes(1);
+    expect(readLogoUrl).toHaveBeenCalledWith({ externalId: '100', isSeries: false });
+  });
+
+  it('asks the catalogue about a show once, however often the calendar is read', async () => {
+    const { service, describeAiringSeason } = await aShowAiring();
+
+    await service.releaseCalendar(SERVER, '2026-10-01', '2026-10-31');
+    await service.releaseCalendar(SERVER, '2026-09-01', '2026-09-30');
+
+    expect(describeAiringSeason).toHaveBeenCalledOnce();
+  });
+});
 
 describe('createDatabaseLibraryService', { timeout: STARTING_POSTGRES_MS }, () => {
   it('counts the films in a library once each, whatever versions they come in', async () => {

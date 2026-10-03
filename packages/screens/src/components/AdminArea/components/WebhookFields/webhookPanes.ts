@@ -5,7 +5,7 @@ const WEBHOOK_PANES = ['where', 'events', 'who'] as const;
 type WebhookPane = (typeof WEBHOOK_PANES)[number];
 
 const WEBHOOK_PANE_ITEMS = [
-  { id: 'where', label: say('screens.webhookFields.webhookPanes.where') },
+  { id: 'where', label: say('common.where') },
   { id: 'events', label: say('common.events') },
   { id: 'who', label: say('screens.webhookFields.webhookPanes.who') },
 ] as const;

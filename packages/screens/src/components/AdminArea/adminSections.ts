@@ -5,6 +5,7 @@ import {
   Download as DownloadIcon,
   FolderOpen as FolderOpenIcon,
   Folders as FoldersIcon,
+  Globe as GlobeIcon,
   Inbox as InboxIcon,
   LayoutDashboard as LayoutDashboardIcon,
   Link as LinkIcon,
@@ -27,6 +28,7 @@ import {
   Download as DownloadFilledIcon,
   FolderOpen as FolderOpenFilledIcon,
   Folders as FoldersFilledIcon,
+  Globe as GlobeFilledIcon,
   Inbox as InboxFilledIcon,
   LayoutDashboard as LayoutDashboardFilledIcon,
   Link as LinkFilledIcon,
@@ -156,6 +158,12 @@ const ADMIN_SECTIONS = [
         label: say('common.webhooks'),
         icon: RouteIcon,
         activeIcon: RouteFilledIcon,
+      },
+      {
+        id: 'linking',
+        label: say('common.linkedServers'),
+        icon: GlobeIcon,
+        activeIcon: GlobeFilledIcon,
       },
       { id: 'plugins', label: say('common.plugins'), icon: PlugIcon, activeIcon: PlugFilledIcon },
       {

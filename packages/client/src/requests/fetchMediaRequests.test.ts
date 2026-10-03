@@ -42,6 +42,7 @@ const REQUEST = {
   seasons: null,
   releaseTypes: null,
   releaseDate: '2021-12-03',
+  releaseDates: { theatrical: null, digital: null, physical: null },
   items: [],
   mediaId: null,
   createdAt: '2026-09-19T00:00:00.000Z',
