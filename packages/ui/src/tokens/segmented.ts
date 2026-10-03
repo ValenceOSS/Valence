@@ -1,10 +1,10 @@
 const SEGMENTED = {
   track:
-    'valence-rail relative isolate flex w-fit max-w-full shrink-0 items-center gap-1 overflow-x-auto rounded-md',
+    'valence-rail relative isolate flex w-fit max-w-full shrink-0 items-center overflow-x-auto rounded-md',
   trackSizes: {
-    xs: 'p-[3px]',
-    sm: 'p-[3px]',
-    md: 'p-1.5',
+    xs: '',
+    sm: '',
+    md: '',
   },
   item: [
     'relative flex shrink-0 cursor-pointer items-center rounded-md outline-none',
@@ -22,12 +22,12 @@ const SEGMENTED = {
     inverted: {
       track: 'border border-[var(--surface-line)] bg-[var(--surface-hover)]',
       mark: 'rounded-md border border-[var(--surface-line)] bg-[var(--surface-active)]',
-      chosen: 'font-semibold text-text hover:text-text focus-visible:text-text',
+      chosen: 'text-text hover:text-text focus-visible:text-text',
     },
     accent: {
       track: 'border border-[var(--surface-line)] bg-[var(--surface-hover)]',
       mark: 'rounded-md border border-[var(--surface-line)] bg-[var(--surface-active)]',
-      chosen: 'font-semibold text-text hover:text-text focus-visible:text-text',
+      chosen: 'text-text hover:text-text focus-visible:text-text',
     },
   },
 } as const;

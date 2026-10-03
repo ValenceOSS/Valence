@@ -58,8 +58,8 @@ const Checkbox = ({
         {...(description === undefined ? {} : { 'aria-describedby': describedId })}
         data-slot="checkbox"
         className={cn(
-          'flex size-5 shrink-0 items-center justify-center rounded-sm border border-input',
-          'bg-secondary outline-none',
+          'flex size-[1.125rem] shrink-0 items-center justify-center rounded-[0.3125rem] border border-[var(--surface-divider)]',
+          'bg-[var(--surface-hover)] outline-none hover:border-text-muted',
           'transition-colors duration-[var(--duration-instant)] ease-[var(--ease-out)]',
           'motion-reduce:transition-none',
           'focus-visible:ring-[3px] focus-visible:ring-ring',

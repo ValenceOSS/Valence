@@ -77,13 +77,13 @@ const FilterMenu = ({ label, groups, selected, hasLabel = false, onChange }: Fil
           sideOffset={8}
           aria-label={label}
           className={cn(
-            'valence-float z-50 flex max-h-96 w-64 flex-col overflow-y-auto rounded-xl p-1.5 text-sm text-text',
+            'valence-menu z-50 flex max-h-96 min-w-56 flex-col overflow-y-auto rounded-lg p-1 text-[0.8125rem] font-medium text-text',
             POPUP_MOTION,
           )}
         >
           {groups.map((group) => (
             <RadixMenu.Group key={group.name} aria-label={group.name} className="flex flex-col">
-              <RadixMenu.Label className={MENU.label}>{group.name}</RadixMenu.Label>
+              <RadixMenu.Label className={MENU.stickyLabel}>{group.name}</RadixMenu.Label>
 
               {group.options.map((option) => (
                 <RadixMenu.CheckboxItem
@@ -111,8 +111,10 @@ const FilterMenu = ({ label, groups, selected, hasLabel = false, onChange }: Fil
                   }}
                   className={cn(
                     MENU.item,
-                    'justify-between data-[highlighted]:bg-[var(--surface-hover)]',
-                    selected.has(option.id) ? 'text-text' : 'text-text-muted',
+                    'min-h-8 justify-between py-1.5 data-[highlighted]:bg-[var(--surface-hover)] data-[highlighted]:text-text',
+                    selected.has(option.id)
+                      ? 'bg-[var(--surface-hover)] text-text'
+                      : 'text-text-muted',
                   )}
                 >
                   <span className="truncate">{option.label}</span>
@@ -127,7 +129,7 @@ const FilterMenu = ({ label, groups, selected, hasLabel = false, onChange }: Fil
 
           {selected.size === 0 ? null : (
             <>
-              <RadixMenu.Separator className="my-1.5 h-px bg-[var(--surface-line)]" />
+              <RadixMenu.Separator className="my-1 h-px bg-[var(--surface-line)]" />
 
               <RadixMenu.Item
                 className={cn(

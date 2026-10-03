@@ -30,9 +30,7 @@ const StatStrip = ({ items, label, className }: StatStripProps) => (
           </span>
         )}
 
-        <dt className="relative text-[0.6875rem] uppercase tracking-[0.16em] text-text-muted">
-          {item.label}
-        </dt>
+        <dt className="relative text-[0.6875rem] font-medium text-text-muted">{item.label}</dt>
 
         <dd
           className={cn(

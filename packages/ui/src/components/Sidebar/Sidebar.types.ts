@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 import type { SidebarItem } from '@ValenceUI/SidebarGroup.types';
 
 type SidebarGroupData = {
+  id?: string;
+  isOpen?: boolean;
   label?: string;
   items: readonly SidebarItem[];
 };
@@ -16,6 +18,7 @@ type SidebarProps = {
   onSelect: (id: string) => void;
   isCollapsed?: boolean;
   onCollapsedChange?: (isCollapsed: boolean) => void;
+  onGroupOpenChange?: (id: string, isOpen: boolean) => void;
   footer?: ReactNode;
   variant?: SidebarVariant;
   className?: string;

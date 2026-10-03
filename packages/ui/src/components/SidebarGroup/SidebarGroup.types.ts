@@ -16,6 +16,8 @@ type SidebarGroupProps = {
   pointedAt: string | null;
   onPointAt: (id: string | null) => void;
   defaultIsOpen?: boolean;
+  isOpen?: boolean;
+  onOpenChange?: (isOpen: boolean) => void;
   className?: string;
 };
 

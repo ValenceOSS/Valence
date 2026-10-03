@@ -5,6 +5,10 @@ type TrendChartProps = {
   ceiling: number;
   label: string;
   caption?: ReactNode;
+  tipOf?: (index: number) => ReactNode;
+  gridLines?: readonly number[];
+  tickOf?: (value: number) => string;
+  isTall?: boolean;
   className?: string;
 };
 

@@ -135,7 +135,7 @@ const RADAR: OrbVariant = {
     { key: 'c3', label: say('ui.variants.radar.class3'), standard: '#22c35c' },
     { key: 'c4', label: say('ui.variants.radar.class4'), standard: '#e8322a' },
     { key: 'c5', label: say('ui.variants.radar.class5'), standard: '#f5d020' },
-    { key: 'c6', label: say('ui.variants.radar.peak'), standard: '#e030c0' },
+    { key: 'c6', label: say('common.peak'), standard: '#e030c0' },
   ],
 };
 

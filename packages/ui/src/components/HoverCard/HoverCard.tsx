@@ -13,6 +13,8 @@ import type { HoverCardProps } from './HoverCard.types';
  * @param detail - What to show about it.
  * @param side - Which side of the thing to appear on.
  * @param align - Which edge of the thing the card lines up with.
+ * @param isList - Whether the detail is a list of facts — rows, a heading, a note — laid out as a
+ *   menu's options are, rather than words that want room around them.
  * @param className - Extra classes for the caller's own layout.
  */
 const HoverCard = ({
@@ -20,6 +22,7 @@ const HoverCard = ({
   detail,
   side = 'top',
   align = 'end',
+  isList = false,
   className,
 }: HoverCardProps) => {
   const portalContainer = usePortalContainer();
@@ -39,7 +42,10 @@ const HoverCard = ({
           sideOffset={8}
           data-slot="hover-card-content"
           className={cn(
-            'z-50 valence-float w-72 rounded-lg p-4 text-sm text-text outline-none',
+            'z-50 valence-menu rounded-lg text-[0.8125rem] text-text outline-none',
+            isList
+              ? 'flex w-auto min-w-64 max-w-sm flex-col p-1'
+              : 'w-72 px-3.5 py-3 leading-relaxed',
             POPUP_MOTION,
             className,
           )}

@@ -134,7 +134,7 @@ describe('Button', () => {
     );
   });
 
-  it('fills the main action and the dangerous one with their own colour, and nothing more', () => {
+  it('fills the main action in the primary colour and the dangerous one in its own', () => {
     render(
       <>
         <Button variant="primary">Save</Button>
@@ -142,7 +142,7 @@ describe('Button', () => {
       </>,
     );
 
-    expect(screen.getByRole('button', { name: 'Save' })).toHaveClass('bg-accent');
+    expect(screen.getByRole('button', { name: 'Save' })).toHaveClass('bg-primary');
     expect(screen.getByRole('button', { name: 'Delete' })).toHaveClass('bg-danger');
   });
 
@@ -187,8 +187,8 @@ describe('Button', () => {
       </>,
     );
 
-    expect(screen.getByRole('button', { name: 'Add a webhook' })).toHaveClass('h-7', 'text-xs');
-    expect(screen.getByRole('button', { name: 'Reload' })).toHaveClass('size-7');
+    expect(screen.getByRole('button', { name: 'Add a webhook' })).toHaveClass('h-6', 'text-xs');
+    expect(screen.getByRole('button', { name: 'Reload' })).toHaveClass('size-6');
   });
 
   it('offers a size for a hero control', () => {
@@ -221,7 +221,7 @@ describe('Button', () => {
 
       const button = screen.getByRole('button', { name: 'Mute' });
 
-      expect(button).toHaveClass('size-9');
+      expect(button).toHaveClass('size-8');
       expect(button).not.toHaveClass('px-3');
     });
 

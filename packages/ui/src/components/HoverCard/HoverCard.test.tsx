@@ -32,7 +32,7 @@ describe('HoverCard', () => {
       '[data-slot="hover-card-content"]',
     );
 
-    expect(card).toHaveClass('valence-float');
+    expect(card).toHaveClass('valence-menu');
     expect(card?.className).not.toContain('valence-glass');
   });
 

@@ -108,7 +108,7 @@ describe('FilePicker', () => {
 
     const label = screen.getByText('Choose').closest('label');
 
-    expect(label).toHaveClass('rounded-md', 'border', 'bg-[var(--surface-hover)]', 'h-9');
+    expect(label).toHaveClass('rounded-md', 'border', 'bg-[var(--surface-hover)]', 'h-8');
     expect(label?.className).not.toMatch(/rounded-(full|pill)/);
   });
 
@@ -127,7 +127,7 @@ describe('FilePicker', () => {
 
     expect(screen.getByText('Choose').closest('label')).toHaveClass(
       'bg-[var(--surface-hover)]',
-      'h-10',
+      'h-9',
     );
   });
 
@@ -277,11 +277,11 @@ describe('FilePicker', () => {
 
       fireEvent.dragOver(zone);
 
-      expect(zone).toHaveClass('border-accent');
+      expect(zone).toHaveClass('border-primary');
 
       fireEvent.dragLeave(zone);
 
-      expect(zone).not.toHaveClass('border-accent');
+      expect(zone).not.toHaveClass('border-primary');
     });
 
     it('takes nothing dropped on it while it is disabled', async () => {

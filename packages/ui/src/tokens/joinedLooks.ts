@@ -1,7 +1,7 @@
 import { buttonStyles } from '@ValenceUI/Button/buttonStyles';
 import { cn } from '@ValenceUI/cn';
 
-const JOINED_SIZE = 'size-10 coarse:size-11';
+const JOINED_SIZE = 'size-9 coarse:size-11';
 
 const DIVIDER =
   'relative before:pointer-events-none before:absolute before:inset-y-2.5 before:left-0 before:w-px';

@@ -296,8 +296,9 @@
   --color-card-foreground: var(--color-text);
   --color-popover: var(--color-surface-raised);
   --color-popover-foreground: var(--color-text);
-  --color-primary: var(--color-accent);
-  --color-primary-foreground: var(--color-accent-contrast);
+  --color-primary: var(--color-text);
+  --color-primary-hover: color-mix(in oklab, var(--color-text) 86%, var(--color-surface));
+  --color-primary-foreground: var(--color-surface);
   --color-secondary: var(--color-surface-raised);
   --color-secondary-foreground: var(--color-text);
   --color-muted: var(--color-surface-raised);
@@ -313,7 +314,7 @@
   --color-input: var(--color-border);
   --color-ring: transparent;
 
-  --radius-scale: 1;
+  --radius-scale: 1.6;
   --radius: calc(0.375rem * var(--radius-scale));
   --radius-xs: calc(0.25rem * var(--radius-scale));
   --radius-sm: calc(0.3125rem * var(--radius-scale));
@@ -359,6 +360,10 @@
   --surface-divider: color-mix(in oklab, var(--color-text) 18%, transparent);
   --card-shell: color-mix(in oklab, var(--color-text) 5%, transparent);
   --card-face: var(--color-surface);
+  --frame-back: oklch(1 0 0);
+  --frame-panel: var(--color-surface-raised);
+  --frame-tint: color-mix(in oklab, var(--color-text) 3%, transparent);
+  --frame-card: color-mix(in oklab, var(--color-text) 5%, transparent);
   --mark-on-dark: none;
   --mark-on-light: block;
 
@@ -402,6 +407,10 @@
       --surface-divider: color-mix(in oklab, white 24%, transparent);
       --card-shell: color-mix(in oklab, white 3%, transparent);
       --card-face: color-mix(in oklab, var(--color-surface-raised) 90%, white);
+      --frame-back: oklch(0.225 0 0);
+      --frame-panel: oklch(0.185 0 0);
+      --frame-card: oklch(0.2 0 0);
+      --frame-tint: color-mix(in oklab, white 3%, transparent);
       --mark-on-dark: block;
       --mark-on-light: none;
       --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -16px rgb(0 0 0 / 0.7);
@@ -439,6 +448,10 @@
     --surface-divider: color-mix(in oklab, white 24%, transparent);
     --card-shell: color-mix(in oklab, white 3%, transparent);
     --card-face: color-mix(in oklab, var(--color-surface-raised) 90%, white);
+    --frame-back: oklch(0.225 0 0);
+    --frame-panel: oklch(0.185 0 0);
+    --frame-card: oklch(0.2 0 0);
+    --frame-tint: color-mix(in oklab, white 3%, transparent);
     --mark-on-dark: block;
     --mark-on-light: none;
     --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -16px rgb(0 0 0 / 0.7);
@@ -775,6 +788,14 @@ body[data-scroll-locked] .valence-navbar {
 
 .valence-float {
   background-color: var(--color-surface-raised);
+  box-shadow:
+    0 0 0 1px var(--surface-line),
+    var(--shadow-overlay);
+}
+
+.valence-menu {
+  --menu-surface: color-mix(in oklab, var(--color-surface-raised) 94%, var(--color-text));
+  background-color: var(--menu-surface);
   box-shadow:
     0 0 0 1px var(--surface-line),
     var(--shadow-overlay);

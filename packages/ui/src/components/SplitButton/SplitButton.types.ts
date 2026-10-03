@@ -12,6 +12,8 @@ type SplitButtonProps = {
   selectedId: string;
   onSelect: (id: string) => void;
   tone?: SplitButtonTone;
+  size?: 'sm' | 'lg';
+  footer?: ReactNode;
   className?: string;
 };
 

@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useReducedMotionConfig } from 'motion/react';
-import { PanelLeft as PanelLeftIcon } from '@keyline-icons/react';
-import { Icon } from '@ValenceUI/Icon';
-import { Button } from '@ValenceUI/Button';
+import { SidebarToggle } from '@ValenceUI/SidebarToggle';
 import { SidebarGroup } from '@ValenceUI/SidebarGroup';
 import { cn } from '@ValenceUI/cn';
 import { scrollDeltaToReveal } from './scrollDeltaToReveal';
@@ -10,6 +8,8 @@ import type { SidebarProps } from './Sidebar.types';
 import { say } from '@ValenceI18n/say';
 
 const REVEAL_MARGIN = 16;
+
+const FADE = 48;
 
 /**
  * The one column of destinations standing against the left edge of a full page — an admin area, an
@@ -37,6 +37,8 @@ const REVEAL_MARGIN = 16;
  * @param onSelect - Told which destination was chosen.
  * @param isCollapsed - Whether the sidebar is closed.
  * @param onCollapsedChange - Told when the close toggle is pressed.
+ * @param onGroupOpenChange - Told when a group with an id is opened or folded, so the caller can
+ *   remember it.
  * @param footer - What sits pinned below every group — sign out, a theme choice, an account face.
  * @param variant - Whether it stands flush against the page's own edge, or floats a step in from
  *   every edge with a border and a shadow of its own.
@@ -50,6 +52,7 @@ const Sidebar = ({
   onSelect,
   isCollapsed = false,
   onCollapsedChange,
+  onGroupOpenChange,
   footer,
   variant = 'flush',
   className,
@@ -59,6 +62,44 @@ const Sidebar = ({
   const prefersReducedMotion = useReducedMotionConfig();
   const markGroup = `sidebar-mark-${label}`;
   const isFloating = variant === 'floating';
+  const [hidden, setHidden] = useState({ isAbove: false, isBelow: false });
+
+  const measure = () => {
+    const list = scroller.current;
+
+    if (list === null) {
+      return;
+    }
+
+    const next = {
+      isAbove: list.scrollTop > 1,
+      isBelow: list.scrollTop + list.clientHeight < list.scrollHeight - 1,
+    };
+
+    setHidden((before) =>
+      before.isAbove === next.isAbove && before.isBelow === next.isBelow ? before : next,
+    );
+  };
+
+  useEffect(() => {
+    const list = scroller.current;
+
+    if (list === null || typeof ResizeObserver === 'undefined') {
+      return;
+    }
+
+    const watcher = new ResizeObserver(measure);
+
+    watcher.observe(list);
+
+    for (const child of list.children) {
+      watcher.observe(child);
+    }
+
+    return () => {
+      watcher.disconnect();
+    };
+  }, [groups]);
 
   useEffect(() => {
     const list = scroller.current;
@@ -89,39 +130,41 @@ const Sidebar = ({
       aria-label={label}
       aria-hidden={isCollapsed}
       className={cn(
-        'valence-surface flex flex-col overflow-hidden py-4',
+        'flex flex-col overflow-hidden py-3',
         'transition-[width,margin] duration-200 ease-out',
         isFloating ? 'self-stretch' : 'h-full',
         isCollapsed
           ? 'm-0 w-0'
           : isFloating
-            ? 'my-6 ml-6 w-64 rounded-2xl border border-[var(--surface-line)] shadow-[var(--shadow-lifted)]'
-            : 'valence-surface--right-edge w-64',
+            ? 'my-6 ml-6 w-60 rounded-2xl border border-[var(--surface-line)] shadow-[var(--shadow-lifted)]'
+            : 'w-60',
         className,
       )}
     >
-      <div className="flex w-64 shrink-0 items-center justify-between gap-2 border-b border-[var(--surface-line)] px-3 pb-4">
+      <div className="flex h-10 w-60 shrink-0 items-center justify-between gap-2 px-4">
         {brand === undefined ? null : (
           <div className="flex min-w-0 flex-1 items-center gap-2">{brand}</div>
         )}
 
         {onCollapsedChange === undefined ? null : (
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
+          <SidebarToggle
+            isOpen
             label={say('common.closeTheSidebar')}
-            onClick={() => {
+            onToggle={() => {
               onCollapsedChange(true);
             }}
-          >
-            <Icon of={PanelLeftIcon} size={17} />
-          </Button>
+          />
         )}
       </div>
 
       <div
         ref={scroller}
+        onScroll={measure}
+        {...(hidden.isAbove ? { 'data-more-above': '' } : {})}
+        {...(hidden.isBelow ? { 'data-more-below': '' } : {})}
+        style={{
+          maskImage: `linear-gradient(to bottom, ${hidden.isAbove ? 'transparent' : 'black'} 0, black ${(hidden.isAbove ? FADE / 2 : 0).toString()}px, black calc(100% - ${(hidden.isBelow ? FADE : 0).toString()}px), ${hidden.isBelow ? 'transparent' : 'black'} 100%)`,
+        }}
         onPointerLeave={() => {
           setPointedAt(null);
         }}
@@ -130,12 +173,22 @@ const Sidebar = ({
             setPointedAt(null);
           }
         }}
-        className="flex w-64 shrink-0 flex-1 flex-col gap-4 overflow-y-auto px-3 pt-4"
+        className="flex w-60 shrink-0 flex-1 flex-col gap-5 overflow-y-auto px-3 pt-5"
       >
         {groups.map((group, index) => (
           <SidebarGroup
             key={group.label ?? `group-${index.toString()}`}
             {...(group.label === undefined ? {} : { label: group.label })}
+            {...(group.isOpen === undefined ? {} : { isOpen: group.isOpen })}
+            {...(onGroupOpenChange === undefined
+              ? {}
+              : {
+                  onOpenChange: (next: boolean) => {
+                    if (group.id !== undefined) {
+                      onGroupOpenChange(group.id, next);
+                    }
+                  },
+                })}
             items={group.items}
             value={value}
             onSelect={onSelect}
@@ -147,9 +200,7 @@ const Sidebar = ({
       </div>
 
       {footer === undefined ? null : (
-        <div className="flex w-64 shrink-0 flex-col gap-2 border-t border-[var(--surface-line)] px-3 pt-3">
-          {footer}
-        </div>
+        <div className="flex w-60 shrink-0 flex-col gap-2 px-3 pt-3">{footer}</div>
       )}
     </nav>
   );

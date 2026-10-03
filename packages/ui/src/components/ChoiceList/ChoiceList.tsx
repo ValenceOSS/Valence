@@ -60,7 +60,7 @@ const ChoiceList = ({
             className={cn(
               'items-center gap-3 rounded-xl border px-4 py-3',
               isChosen
-                ? 'border-accent/60 bg-accent/10 hover:bg-accent/15'
+                ? 'border-primary/50 bg-[var(--surface-hover)] hover:bg-[var(--surface-active)]'
                 : 'border-[var(--surface-line)]',
               choice.isDisabled === true && 'opacity-50',
             )}
@@ -69,7 +69,7 @@ const ChoiceList = ({
               className={cn(
                 'flex size-5 shrink-0 items-center justify-center rounded-full border',
                 isChosen
-                  ? 'border-accent bg-accent text-accent-contrast'
+                  ? 'border-primary bg-primary text-primary-foreground'
                   : 'border-[var(--surface-line)]',
               )}
             >
@@ -151,7 +151,7 @@ const ChoiceTiles = ({
             {isChosen ? (
               <motion.span
                 layoutId={frameId}
-                className="absolute inset-0 rounded-xl bg-[var(--surface-hover)] ring-1 ring-inset ring-accent/70"
+                className="absolute inset-0 rounded-xl bg-[var(--surface-hover)] ring-1 ring-inset ring-primary/60"
                 transition={revealTransition(prefersReducedMotion)}
               />
             ) : null}
@@ -163,7 +163,7 @@ const ChoiceTiles = ({
                 className={cn(
                   'flex size-5 shrink-0 items-center justify-center rounded-full transition-colors',
                   isChosen
-                    ? 'bg-accent text-accent-contrast'
+                    ? 'bg-primary text-primary-foreground'
                     : 'ring-1 ring-inset ring-[var(--surface-divider)]',
                 )}
               >

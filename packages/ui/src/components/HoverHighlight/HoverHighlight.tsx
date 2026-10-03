@@ -4,6 +4,7 @@ import { VALENCE_TOKENS } from '@ValenceUI/tokens';
 import type { HoverHighlightProps } from './HoverHighlight.types';
 
 const RADIUS_CLASSES = {
+  none: 'rounded-none',
   xs: 'rounded-xs',
   sm: 'rounded-sm',
   md: 'rounded-md',

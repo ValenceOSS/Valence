@@ -48,7 +48,7 @@ const Stepper = ({ label, steps, current, shape = 'fits', className }: StepperPr
         )}
       >
         <div className="flex items-baseline justify-between gap-3">
-          <span className="shrink-0 text-xs font-medium uppercase tracking-[0.16em] text-text-muted">
+          <span className="shrink-0 text-xs font-medium text-text-muted">
             {say('common.stepNumberOfTotal', {
               number: (index + 1).toString(),
               total: steps.length.toString(),
@@ -78,7 +78,7 @@ const Stepper = ({ label, steps, current, shape = 'fits', className }: StepperPr
               <motion.span
                 className={cn(
                   'absolute inset-0 origin-left rounded-full',
-                  at === index ? 'bg-accent' : 'bg-text/70',
+                  at === index ? 'bg-primary' : 'bg-text/70',
                 )}
                 initial={false}
                 animate={{ scaleX: at <= index ? 1 : 0 }}
@@ -137,7 +137,7 @@ const Stepper = ({ label, steps, current, shape = 'fits', className }: StepperPr
                   'relative flex size-6 shrink-0 items-center justify-center rounded-full text-[0.6875rem] font-semibold tabular-nums',
                   'transition-colors duration-300',
                   isCurrent
-                    ? 'bg-accent text-accent-contrast'
+                    ? 'bg-primary text-primary-foreground'
                     : isDone
                       ? 'bg-text text-background'
                       : 'text-text-muted ring-1 ring-inset ring-[var(--surface-divider)]',

@@ -95,8 +95,8 @@ const FilePicker = ({
               'flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-6 py-10 text-center text-sm',
               'transition-colors duration-[var(--duration-fast)] focus-within:ring-[3px] focus-within:ring-ring',
               isOver
-                ? 'border-accent bg-accent/10 text-text'
-                : 'border-[var(--surface-line)] bg-[var(--surface-hover)] text-text-muted hover:border-accent/60 hover:text-text',
+                ? 'border-primary bg-[var(--surface-hover)] text-text'
+                : 'border-[var(--surface-line)] bg-[var(--surface-hover)] text-text-muted hover:border-[var(--surface-divider)] hover:text-text',
             )
           : cn(
               buttonStyles({ variant, size }),

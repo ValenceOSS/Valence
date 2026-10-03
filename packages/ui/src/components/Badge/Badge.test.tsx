@@ -1,3 +1,4 @@
+import { CircleCheck as CircleCheckIcon } from '@keyline-icons/react/fill';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { Badge } from './Badge';
@@ -48,10 +49,10 @@ describe('Badge', () => {
   it('paints a fact that is wrong differently from one that is merely notable', () => {
     render(<Badge tone="danger">NVENC</Badge>);
 
-    expect(badgeOf('NVENC')).toHaveClass('bg-danger');
+    expect(badgeOf('NVENC')).toHaveClass('bg-danger/15', 'text-danger');
   });
 
-  it('is a solid fill rather than glass over whatever is behind it', () => {
+  it('is a tint of its tone rather than glass over whatever is behind it', () => {
     render(
       <>
         <Badge tone="quiet">One</Badge>
@@ -61,14 +62,50 @@ describe('Badge', () => {
     );
 
     for (const text of ['One', 'Two', 'Three']) {
-      expect(badgeOf(text).className).not.toMatch(/backdrop-blur|bg-[a-z]+\/\d+/);
+      expect(badgeOf(text).className).not.toMatch(/backdrop-blur/);
     }
+
+    expect(badgeOf('Two')).toHaveClass('bg-accent/15', 'text-accent');
   });
 
-  it('sets its text in semibold', () => {
+  it('sets its text in medium weight', () => {
     render(<Badge>4K</Badge>);
 
-    expect(badgeOf('4K')).toHaveClass('font-semibold');
+    expect(badgeOf('4K')).toHaveClass('font-medium');
+  });
+
+  it('says how a settled outcome went with a solid mark after its words', () => {
+    const { container } = render(
+      <>
+        <Badge tone="success">Done</Badge>
+        <Badge tone="warning">Slow</Badge>
+        <Badge tone="danger">Failed</Badge>
+        <Badge tone="waiting">Queued</Badge>
+      </>,
+    );
+
+    for (const text of ['Done', 'Slow', 'Failed', 'Queued']) {
+      expect(badgeOf(text).firstChild?.textContent).toBe(text);
+      expect(badgeOf(text).lastElementChild?.tagName.toLowerCase()).toBe('svg');
+    }
+
+    expect(container.querySelectorAll('svg')).toHaveLength(4);
+  });
+
+  it('draws no mark for a tone that is only a fact', () => {
+    render(<Badge tone="quiet">4K</Badge>);
+
+    expect(badgeOf('4K').querySelector('svg')).toBeNull();
+  });
+
+  it('draws the mark it is given in place of the one its tone carries', () => {
+    render(
+      <Badge tone="quiet" icon={CircleCheckIcon}>
+        Live
+      </Badge>,
+    );
+
+    expect(badgeOf('Live').querySelector('svg')).not.toBeNull();
   });
 
   it('spins while something is in progress, and not once it has settled', () => {
@@ -93,20 +130,20 @@ describe('Badge', () => {
   it('paints a costly choice differently from a broken one', () => {
     render(<Badge tone="warning">Software only</Badge>);
 
-    expect(badgeOf('Software only')).toHaveClass('bg-highlight');
+    expect(badgeOf('Software only')).toHaveClass('bg-highlight/15', 'text-highlight');
   });
 
   it('paints a good outcome in its own colour rather than borrowing the one for attention', () => {
     render(<Badge tone="success">Finished</Badge>);
 
-    expect(badgeOf('Finished')).toHaveClass('bg-success');
+    expect(badgeOf('Finished')).toHaveClass('bg-success/15', 'text-success');
     expect(badgeOf('Finished')).not.toHaveClass('bg-accent');
   });
 
   it('paints something under way in its own colour, apart from a warning', () => {
     render(<Badge tone="busy">Downloading</Badge>);
 
-    expect(badgeOf('Downloading')).toHaveClass('bg-busy');
+    expect(badgeOf('Downloading')).toHaveClass('bg-busy/15', 'text-busy');
     expect(badgeOf('Downloading')).not.toHaveClass('bg-highlight');
   });
 
@@ -136,13 +173,13 @@ describe('Badge', () => {
       </Badge>,
     );
 
-    expect(badgeOf('Down')).toHaveClass('bg-danger');
+    expect(badgeOf('Down')).toHaveClass('bg-danger/15', 'text-danger');
   });
 
   it('paints something waiting in the colour of work under way, without the spinner', () => {
     render(<Badge tone="waiting">Queued</Badge>);
 
-    expect(badgeOf('Queued')).toHaveClass('bg-busy');
+    expect(badgeOf('Queued')).toHaveClass('bg-busy/15', 'text-busy');
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 

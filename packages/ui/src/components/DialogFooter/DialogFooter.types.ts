@@ -7,8 +7,10 @@ type DialogAnswer = {
   isDisabled?: boolean;
 };
 
-type DialogConfirmation = DialogAnswer & {
+type DialogConfirmation = Omit<DialogAnswer, 'onChoose'> & {
   label: string;
+  onChoose?: () => void;
+  isSubmit?: boolean;
   isDestructive?: boolean;
 };
 

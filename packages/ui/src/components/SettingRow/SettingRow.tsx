@@ -29,11 +29,11 @@ const SettingRow = ({
     data-slot="setting-row"
     {...(isMarked ? { 'data-marked': 'true' } : {})}
     className={cn(
-      'flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-5 py-4',
+      'flex flex-wrap items-center justify-between gap-x-6 gap-y-3 py-4',
       'transition-colors duration-[var(--duration-fast)] ease-[var(--ease-soft)]',
       'motion-reduce:transition-none',
       isMarked
-        ? 'relative z-10 rounded-lg bg-highlight/[0.07] ring-2 ring-highlight ring-inset'
+        ? 'relative z-10 -mx-3 rounded-lg bg-highlight/[0.07] px-3 ring-2 ring-highlight ring-inset'
         : '',
       className,
     )}

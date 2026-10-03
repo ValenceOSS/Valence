@@ -179,15 +179,15 @@ describe('the sizes a field comes in', () => {
   };
 
   it('is the same height as a small button', () => {
-    expect(heightOf('sm')).toContain('h-8');
+    expect(heightOf('sm')).toContain('h-7');
   });
 
   it('is the same height as an ordinary button by default', () => {
-    expect(heightOf('md')).toContain('h-9');
+    expect(heightOf('md')).toContain('h-8');
   });
 
   it('is the same height as a large button', () => {
-    expect(heightOf('lg')).toContain('h-10');
+    expect(heightOf('lg')).toContain('h-9');
   });
 
   it('is the same height as the largest button', () => {
@@ -295,5 +295,24 @@ describe('the sizes a field comes in', () => {
     );
 
     expect(screen.getByLabelText('Username')).not.toHaveAttribute('aria-describedby');
+  });
+});
+
+describe('a control after the field', () => {
+  it('sits on the same line as the field, after it', () => {
+    render(
+      <TextField
+        label="Host"
+        value=""
+        onValueChange={vi.fn()}
+        trailing={<button type="button">Test</button>}
+      />,
+    );
+
+    const field = screen.getByRole('textbox', { name: 'Host' });
+    const control = screen.getByRole('button', { name: 'Test' });
+
+    expect(field.compareDocumentPosition(control) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(control.parentElement?.parentElement).toBe(field.parentElement);
   });
 });

@@ -18,6 +18,8 @@ import type { SplitButtonProps } from './SplitButton.types';
  * @param selectedId - What is chosen now.
  * @param onSelect - Called with what was chosen.
  * @param tone - How loudly it stands.
+ * @param size - How large it stands: large for the answer of a page, small for a card's heading.
+ * @param footer - Something to say beneath the choices, such as what changing them does.
  * @param className - Extra classes for the caller's own layout.
  */
 const SplitButton = ({
@@ -29,19 +31,23 @@ const SplitButton = ({
   selectedId,
   onSelect,
   tone = 'confirm',
+  size = 'lg',
+  footer,
   className,
 }: SplitButtonProps) => (
   <div className={cn('inline-flex min-w-0', className)}>
-    <Button variant={tone} size="lg" joins="next" className="min-w-0 flex-1" onClick={onClick}>
+    <Button variant={tone} size={size} joins="next" className="min-w-0 flex-1" onClick={onClick}>
       {children}
     </Button>
 
     <OptionMenu
       label={choiceLabel}
-      trigger={<Icon of={ChevronDownIcon} size={16} />}
+      trigger={<Icon of={ChevronDownIcon} size={size === 'sm' ? 14 : 16} />}
       triggerShape={tone === 'confirm' ? 'confirmJoined' : 'secondaryJoined'}
       align="end"
       groups={[{ name: choiceName, options, selectedId, onSelect }]}
+      {...(size === 'sm' ? { className: 'size-7 before:inset-y-1.5' } : {})}
+      {...(footer === undefined ? {} : { footer })}
     />
   </div>
 );

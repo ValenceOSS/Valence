@@ -175,7 +175,7 @@ describe('OptionMenu', () => {
 
     const menu = await screen.findByRole('menu', { name: 'Playback speed' });
 
-    expect(menu).toHaveClass('valence-float');
+    expect(menu).toHaveClass('valence-menu');
     expect(menu).not.toHaveClass('valence-surface');
   });
 
@@ -185,7 +185,7 @@ describe('OptionMenu', () => {
     const header = await screen.findByText('Playback Speed');
 
     expect(header).toHaveClass('sticky', 'top-0');
-    expect(header.className).toContain('bg-[var(--color-surface-raised)]');
+    expect(header.className).toContain('bg-[var(--menu-surface)]');
   });
 });
 

@@ -5,6 +5,7 @@ type HoverCardProps = {
   detail: ReactNode;
   side?: 'top' | 'bottom' | 'left' | 'right';
   align?: 'start' | 'center' | 'end';
+  isList?: boolean;
   className?: string;
 };
 

@@ -184,9 +184,7 @@ const MediaCard = ({
             {isLead ? (
               <span className="absolute inset-x-4 bottom-4 flex flex-col gap-1">
                 {eyebrow === undefined ? null : (
-                  <span className="text-[0.65rem] uppercase tracking-[0.18em] text-on-scrim/60">
-                    {eyebrow}
-                  </span>
+                  <span className="text-[0.65rem] font-medium text-on-scrim/60">{eyebrow}</span>
                 )}
 
                 <span className="text-2xl font-semibold leading-tight tracking-tight text-on-scrim sm:text-3xl">
@@ -206,7 +204,7 @@ const MediaCard = ({
       {isLead ? null : (
         <span className="flex flex-col gap-0.5 px-0.5">
           {eyebrow === undefined ? null : (
-            <span className="line-clamp-1 text-[0.65rem] uppercase tracking-[0.16em] text-text-muted">
+            <span className="line-clamp-1 text-[0.65rem] font-medium text-text-muted">
               {eyebrow}
             </span>
           )}
