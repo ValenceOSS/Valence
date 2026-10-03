@@ -1563,10 +1563,48 @@ describe('VideoPlayer', () => {
       });
 
       expect(stageOf(element).className).toContain('cursor-none');
-      expect(stageOf(element)).toContainElement(
-        container.querySelector<HTMLElement>('[data-slot="picture-cover"]'),
-      );
+      const cover = container.querySelector<HTMLElement>('[data-slot="picture-cover"]');
+
+      expect(stageOf(element)).toContainElement(cover);
+      expect(cover).toHaveClass('bg-shade/1');
     } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('draws the paused screen inside what goes full screen while it is full screen, and over the whole player otherwise', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+
+    try {
+      renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} isImmersive />);
+
+      await settled();
+
+      const element = await screen.findByLabelText('Arrival');
+      const stage = stageOf(element);
+
+      fireEvent.play(element);
+      fireEvent.pause(element);
+
+      act(() => {
+        vi.advanceTimersByTime(11_000);
+      });
+
+      expect(await screen.findByText('Paused')).toBeInTheDocument();
+      expect(stage).not.toContainElement(screen.getByText('Paused'));
+
+      Object.defineProperty(document, 'fullscreenElement', { configurable: true, value: stage });
+      fireEvent(document, new Event('fullscreenchange'));
+
+      expect(stage).toContainElement(await screen.findByText('Paused'));
+
+      fireEvent.pointerMove(stage, { clientX: 10, clientY: 10 });
+
+      await waitFor(() => {
+        expect(screen.queryByText('Paused')).not.toBeInTheDocument();
+      });
+    } finally {
+      Reflect.deleteProperty(document, 'fullscreenElement');
       vi.useRealTimers();
     }
   });
@@ -1591,10 +1629,9 @@ describe('VideoPlayer', () => {
       });
 
       expect(await screen.findByText('You’re watching')).toBeInTheDocument();
+      expect(screen.getByText('Paused')).toBeInTheDocument();
 
       const stage = stageOf(screen.getByLabelText('Arrival'));
-
-      expect(stage).toContainElement(screen.getByText('Paused'));
 
       if (stage !== null) {
         fireEvent.pointerMove(stage, { clientX: 10, clientY: 10 });

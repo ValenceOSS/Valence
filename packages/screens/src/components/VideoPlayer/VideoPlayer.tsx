@@ -2159,9 +2159,11 @@ const VideoPlayer = ({
             />
           </div>
 
-          {isImmersive ? <PausedScreen media={media} isShown={isResting} /> : null}
+          {isImmersive && isFullscreen ? <PausedScreen media={media} isShown={isResting} /> : null}
         </div>
       </div>
+
+      {isImmersive && !isFullscreen ? <PausedScreen media={media} isShown={isResting} /> : null}
 
       {state === 'failed' ? (
         <p role="alert" className="text-sm text-danger">
