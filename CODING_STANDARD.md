@@ -596,11 +596,16 @@ or confirm button, so the action that matters reads heavier than the ones around
 **No raw SVG anywhere in the codebase.** No inline `<svg>` elements, no
 `.svg` imported as a component, no SVG strings.
 
-The sole exception is brand assets — logo, wordmark, favicon — which live as
-files in `packages/ui/assets/brand/` and are referenced by URL, never inlined
-into JSX. That exception also covers the marks the icon set does not draw: it
-has no brand glyphs, so a browser or a service is named in words or given a
-generic shape rather than approximated with the nearest thing.
+The sole exception is brand assets, which are files referenced by URL and never
+inlined into JSX:
+
+- Valence's own logo, wordmark and favicon, in `packages/ui/assets/brand/`.
+- The marks of the browsers and systems a session runs in, which the icon set
+  does not draw. They are single files from Simple Icons in
+  `packages/ui/src/assets/brands/`, with their source and licence in its
+  `SOURCES.md`, and only `BrandGlyph` draws them — through a CSS mask, so they
+  take the colour of the text around them like any icon. A brand with no mark
+  there keeps a generic shape rather than borrowing one that is not its own.
 
 ---
 
