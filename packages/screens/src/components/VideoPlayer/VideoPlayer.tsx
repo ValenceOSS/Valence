@@ -1857,6 +1857,12 @@ const VideoPlayer = ({
             />
           </div>
 
+          <div
+            data-slot="picture-cover"
+            aria-hidden
+            className="pointer-events-none absolute inset-0 bg-shade/1 will-change-[opacity]"
+          />
+
           {fetchableTrack === null ? null : (
             <SubtitleCues
               src={subtitleTrackUrl(media.id, fetchableTrack.id)}
@@ -2152,10 +2158,12 @@ const VideoPlayer = ({
               )}
             />
           </div>
+
+          {isImmersive && isFullscreen ? <PausedScreen media={media} isShown={isResting} /> : null}
         </div>
       </div>
 
-      {isImmersive ? <PausedScreen media={media} isShown={isResting} /> : null}
+      {isImmersive && !isFullscreen ? <PausedScreen media={media} isShown={isResting} /> : null}
 
       {state === 'failed' ? (
         <p role="alert" className="text-sm text-danger">

@@ -1546,6 +1546,69 @@ describe('VideoPlayer', () => {
     }
   });
 
+  it('keeps something over the picture while the controls are away, so the picture is never lifted above them', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+
+    try {
+      const { container } = renderInAnAddress(
+        <VideoPlayer media={media} onClose={vi.fn()} isImmersive />,
+      );
+
+      const element = await screen.findByLabelText('Arrival');
+
+      fireEvent.play(element);
+
+      act(() => {
+        vi.advanceTimersByTime(4000);
+      });
+
+      expect(stageOf(element).className).toContain('cursor-none');
+      const cover = container.querySelector<HTMLElement>('[data-slot="picture-cover"]');
+
+      expect(stageOf(element)).toContainElement(cover);
+      expect(cover).toHaveClass('bg-shade/1');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('draws the paused screen inside what goes full screen while it is full screen, and over the whole player otherwise', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+
+    try {
+      renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} isImmersive />);
+
+      await settled();
+
+      const element = await screen.findByLabelText('Arrival');
+      const stage = stageOf(element);
+
+      fireEvent.play(element);
+      fireEvent.pause(element);
+
+      act(() => {
+        vi.advanceTimersByTime(11_000);
+      });
+
+      expect(await screen.findByText('Paused')).toBeInTheDocument();
+      expect(stage).not.toContainElement(screen.getByText('Paused'));
+
+      Object.defineProperty(document, 'fullscreenElement', { configurable: true, value: stage });
+      fireEvent(document, new Event('fullscreenchange'));
+
+      expect(stage).toContainElement(await screen.findByText('Paused'));
+
+      fireEvent.pointerMove(stage, { clientX: 10, clientY: 10 });
+
+      await waitFor(() => {
+        expect(screen.queryByText('Paused')).not.toBeInTheDocument();
+      });
+    } finally {
+      Reflect.deleteProperty(document, 'fullscreenElement');
+      vi.useRealTimers();
+    }
+  });
+
   it('says what is being watched once it has been left paused a while', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
 
