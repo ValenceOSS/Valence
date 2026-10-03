@@ -43,6 +43,16 @@ describe('DialogFooter', () => {
     expect(foot.className).not.toMatch(/(^|\s)flex-row/);
   });
 
+  it('lets a footer of its own, such as a bar of actions, fill the row rather than shrink into the corner', () => {
+    render(
+      <DialogFooter>
+        <div>Play, share and more</div>
+      </DialogFooter>,
+    );
+
+    expect(screen.getByRole('contentinfo')).toHaveClass('sm:[&>:not(button):only-child]:flex-1');
+  });
+
   it('is the shade of the sidebar, like the head', () => {
     render(
       <DialogFooter>
