@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
@@ -63,5 +63,27 @@ describe('LinkedServersPanel', () => {
     );
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Linked servers could not be read.');
+  });
+
+  it('shows this server as it was saved once it is read again, rather than as it was typed', async () => {
+    const cache = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+    renderInAnAddress(
+      <QueryClientProvider client={cache}>
+        <LinkedServersPanel />
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByLabelText('Name')).toHaveValue('Anime');
+
+    fetchLinking.mockResolvedValue({
+      ...LINKING,
+      identity: { ...LINKING.identity, name: 'Kai’s Anime' },
+    });
+    await cache.invalidateQueries();
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Name')).toHaveValue('Kai’s Anime');
+    });
   });
 });

@@ -1,28 +1,9 @@
 import { createLinkService } from '@ValenceServer/linking/createLinkService';
 import { createMemoryLinkStore } from '@ValenceServer/linking/createMemoryLinkStore';
-import { LINK_SETTINGS_DEFAULTS } from '@ValenceServer/linking/LinkSettings';
+import { someLinkSettings } from '@ValenceServer/testing/someLinkSettings';
 import type { LinkService } from '@ValenceServer/linking/LinkService';
-import type { LinkSettings } from '@ValenceServer/linking/LinkSettings';
 import type { LinkStore } from '@ValenceServer/linking/LinkStore';
 import type { PeerClient } from '@ValenceServer/linking/createPeerClient';
-
-/**
- * Settings held in memory, as the server's own would be.
- *
- * @returns Where a service keeps its key, name, colour and address.
- */
-const someSettings = () => {
-  let held: LinkSettings = LINK_SETTINGS_DEFAULTS;
-
-  return {
-    read: () => Promise.resolve(held),
-    write: (next: LinkSettings) => {
-      held = next;
-
-      return Promise.resolve();
-    },
-  };
-};
 
 /**
  * A peer client that reaches whichever service answers at an address, without a network.
@@ -82,7 +63,7 @@ const twoLinkingServers = () => {
   ) => {
     const service = createLinkService({
       store,
-      settings: someSettings(),
+      settings: someLinkSettings(),
       address,
       defaultName,
       peers,

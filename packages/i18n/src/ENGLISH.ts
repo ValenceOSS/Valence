@@ -3660,6 +3660,8 @@ const ENGLISH = {
   'screens.adminArea.linkedServersPanel.theBestNamesPeopleAreSent':
     'The best {name}’s people are sent, whatever they ask for.',
   'screens.adminArea.linkedServersPanel.theInvite': 'The invite',
+  'screens.adminArea.linkedServersPanel.theInviteCouldNotBeCopied':
+    'The invite couldn’t be copied. Select it and copy it by hand, since it is not shown again.',
   'screens.adminArea.linkedServersPanel.theirInvite': 'Their invite',
   'screens.adminArea.linkedServersPanel.theirRecordOfYourPeople': 'Their record of your people',
   'screens.adminArea.linkedServersPanel.unlink': 'Unlink',

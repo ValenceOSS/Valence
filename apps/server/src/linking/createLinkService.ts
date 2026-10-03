@@ -92,6 +92,8 @@ const createLinkService = ({
   peers,
   now = () => new Date(),
 }: LinkServiceOptions): LinkService => {
+  let making: Promise<LinkSettings> | null = null;
+
   const keys = async (): Promise<LinkSettings> => {
     const held = await settings.read();
 
@@ -99,15 +101,21 @@ const createLinkService = ({
       return held;
     }
 
-    const made = {
-      ...held,
-      ...(held.publicKey === '' || held.privateKey === '' ? makeServerKey() : {}),
-      ...(held.pseudonymSecret === '' ? { pseudonymSecret: makePseudonymSecret() } : {}),
-    };
+    making ??= (async () => {
+      const made = {
+        ...held,
+        ...(held.publicKey === '' || held.privateKey === '' ? makeServerKey() : {}),
+        ...(held.pseudonymSecret === '' ? { pseudonymSecret: makePseudonymSecret() } : {}),
+      };
 
-    await settings.write(made);
+      await settings.write(made);
 
-    return made;
+      return made;
+    })().finally(() => {
+      making = null;
+    });
+
+    return making;
   };
 
   const identity = async (): Promise<LinkIdentity> => {
@@ -297,11 +305,12 @@ const createLinkService = ({
       if (answered.kind === 'refused') {
         return {
           kind: 'refused',
-          why: answered.code.endsWith('alreadyLinked')
-            ? 'alreadyLinked'
-            : answered.code.endsWith('itself')
-              ? 'itself'
-              : 'inviteSpent',
+          why:
+            answered.code === 'error.linking.alreadyLinked'
+              ? 'alreadyLinked'
+              : answered.code === 'error.linking.thatInviteIsFromThisServer'
+                ? 'itself'
+                : 'inviteSpent',
         };
       }
 
@@ -340,7 +349,10 @@ const createLinkService = ({
         await tokenFor(server),
       );
 
-      if (answered.kind === 'unreachable') {
+      if (
+        answered.kind === 'unreachable' ||
+        (answered.kind === 'refused' && answered.code !== 'error.linking.notSignedByALinkedServer')
+      ) {
         return shownOf(server);
       }
 

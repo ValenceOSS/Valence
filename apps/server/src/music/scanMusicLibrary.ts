@@ -224,10 +224,14 @@ const scanMusicLibrary = async (options: ScanMusicLibraryOptions): Promise<ScanR
     processed += 1;
     onProgress?.(processed, changed.length);
 
-    const read = await files.readTags(file.path).then(
-      (tags) => ({ tags, why: null }),
-      (error: Error) => ({ tags: null, why: error.message }),
-    );
+    let read: { tags: TrackTags | null; why: string | null };
+
+    try {
+      read = { tags: await files.readTags(file.path), why: null };
+    } catch (error) {
+      read = { tags: null, why: error instanceof Error ? error.message : String(error) };
+    }
+
     const { tags } = read;
 
     if (tags === null) {

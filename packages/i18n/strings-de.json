@@ -14686,6 +14686,11 @@
     "context": "Accessible label of the box showing a freshly made invite."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.theInviteCouldNotBeCopied",
+    "text": "The invite couldn’t be copied. Select it and copy it by hand, since it is not shown again.",
+    "context": "Toast when copying a new linking invite to the clipboard fails."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.theirInvite",
     "text": "Their invite",
     "context": "Label of the field an invite from another server is pasted into."

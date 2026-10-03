@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { someLinkSettings } from '@ValenceServer/testing/someLinkSettings';
 import { twoLinkingServers } from '@ValenceServer/testing/twoLinkingServers';
+import { createLinkService } from './createLinkService';
 
 describe('createLinkService', () => {
   it('makes a key once, and is known by a fingerprint of it', async () => {
@@ -155,5 +157,48 @@ describe('createLinkService', () => {
     expect(await films.pseudonymFor(animeAtFilms, 'kai')).not.toBe(pseudonym);
     expect(await anime.signFor('00000000-0000-4000-8000-000000000000')).toBeNull();
     expect(filmsAtAnime).not.toBe('');
+  });
+
+  it('makes one key however many ask for it at once on a fresh server', async () => {
+    const { anime } = twoLinkingServers();
+    const [one, two, three] = await Promise.all([
+      anime.identity(),
+      anime.makeInvite(),
+      anime.identity(),
+    ]);
+
+    expect(two.invite).toBeTruthy();
+    expect(three.fingerprint).toBe(one.fingerprint);
+    expect((await anime.identity()).fingerprint).toBe(one.fingerprint);
+  });
+
+  it('keeps waiting on a server that is briefly unwell, rather than reading it as unlinked', async () => {
+    const { anime, films, filmsStore } = twoLinkingServers();
+    const used = await films.useInvite((await anime.makeInvite()).invite);
+    const waiting = used.kind === 'used' ? used.server.id : '';
+    const answering = (code: string) =>
+      createLinkService({
+        store: filmsStore,
+        settings: someLinkSettings(),
+        address: 'https://films.example',
+        defaultName: 'Films',
+        peers: {
+          identityAt: () => Promise.resolve(null),
+          pair: () => Promise.resolve({ kind: 'unreachable' }),
+          pairingState: () => Promise.resolve({ kind: 'refused', code }),
+          tellUnlinked: () => Promise.resolve(false),
+          libraries: () => Promise.resolve({ kind: 'unreachable' }),
+          activity: () => Promise.resolve({ kind: 'unreachable' }),
+          catalogue: () => Promise.resolve({ kind: 'unreachable' }),
+          passThrough: () => Promise.resolve(null),
+        },
+      });
+
+    expect((await answering('error.common.somethingWentWrong').check(waiting))?.state).toBe(
+      'awaitingThem',
+    );
+    expect((await answering('error.linking.notSignedByALinkedServer').check(waiting))?.state).toBe(
+      'unlinkedByThem',
+    );
   });
 });

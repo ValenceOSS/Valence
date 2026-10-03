@@ -392,6 +392,32 @@ describe('scanMusicLibrary', () => {
     );
   });
 
+  it('says why the reader could not read a track, where it gave no error to read', async () => {
+    const onProblem = vi.fn();
+    const { store } = memoryStore();
+
+    await scanMusicLibrary({
+      libraryId: 'lib',
+      root: '/music',
+      store,
+      artwork: keptArtwork(),
+      files: filesWith(
+        [fileAt('/music/odd.mp3')],
+        {},
+        {
+          // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- a reader can reject with anything, which is what this checks
+          readTags: () => Promise.reject('no frames'),
+        },
+      ),
+      onProblem,
+    });
+
+    expect(onProblem).toHaveBeenCalledWith(
+      '/music/odd.mp3',
+      expect.objectContaining({ values: { reason: 'no frames' } }),
+    );
+  });
+
   it('skips a track it could not keep, saying why, and keeps the rest', async () => {
     const onProblem = vi.fn();
     const { store, tracks } = memoryStore();

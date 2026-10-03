@@ -81,9 +81,16 @@ const InviteCard = ({ invites }: InviteCardProps) => {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  void navigator.clipboard.writeText(made).then(() => {
-                    setHasCopied(true);
-                  });
+                  void navigator.clipboard.writeText(made).then(
+                    () => {
+                      setHasCopied(true);
+                    },
+                    () => {
+                      notify.failed(
+                        say('screens.adminArea.linkedServersPanel.theInviteCouldNotBeCopied'),
+                      );
+                    },
+                  );
                 }}
               >
                 <Icon of={hasCopied ? CircleCheckIcon : CopyIcon} size={14} />

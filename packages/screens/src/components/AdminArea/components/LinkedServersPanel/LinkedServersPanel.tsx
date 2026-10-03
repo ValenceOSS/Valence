@@ -66,7 +66,10 @@ const LinkedServersPanel = () => {
         <InviteCard invites={invites} />
         <LinkToServerCard />
       </div>
-      <ThisServerCard identity={identity} />
+      <ThisServerCard
+        key={`${identity.name}\n${identity.colour}\n${identity.address}`}
+        identity={identity}
+      />
     </div>
   );
 };
