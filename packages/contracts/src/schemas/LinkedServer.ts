@@ -5,7 +5,14 @@ const LINK_PROTOCOL = 'valence-link/1';
 
 const LINK_INVITE_PREFIX = 'valence-link:';
 
-const LINK_STATES = ['awaitingThem', 'awaitingUs', 'linked', 'refused', 'unlinkedByThem'] as const;
+const LINK_STATES = [
+  'awaitingThem',
+  'awaitingUs',
+  'linked',
+  'refused',
+  'unlinkedByThem',
+  'unlinked',
+] as const;
 
 const LinkStateSchema = z.enum(LINK_STATES);
 
@@ -31,12 +38,14 @@ const ServerIdentitySchema = z.object({
 
 const LinkIdentitySchema = ServerIdentitySchema.extend({
   address: LinkAddressSchema,
+  dropsRequestsElsewhere: z.boolean().default(false),
 });
 
 const LinkIdentityChangeSchema = z.object({
   name: z.string().trim().min(1).max(60).optional(),
   colour: ProfileColourSchema.optional(),
   address: LinkAddressSchema.optional(),
+  dropsRequestsElsewhere: z.boolean().optional(),
 });
 
 const LinkInviteSchema = z.object({
