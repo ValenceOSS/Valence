@@ -12,6 +12,7 @@ export default defineConfig({
     'pnpm-lock.yaml',
     '**/drizzle/**/meta/**',
     'CHANGELOG.md',
+    '.release-please-manifest.json',
     '**/*.toml',
   ],
 });
