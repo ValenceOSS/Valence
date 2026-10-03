@@ -680,11 +680,6 @@
     "context": "The line under a film's title on the release calendar, on the day it comes out to buy or rent online."
   },
   {
-    "handler": "client.calendar.describeCalendarState.notInTheLibrary",
-    "text": "Not in the library",
-    "context": "The badge on a release calendar entry for an episode of a show in the library that has aired but is not on disk, and that nobody has requested."
-  },
-  {
     "handler": "client.downloads.useFetchWhatThisDeviceAsked.itIsReadyToWatchOffline",
     "text": "It is ready to watch offline.",
     "context": "The body in the use fetch what this device asked in the downloads."
@@ -1685,6 +1680,11 @@
     "context": "An action on the page about a film or a programme, for somebody who may edit libraries: put it into a collection."
   },
   {
+    "handler": "common.addToCalendar",
+    "text": "Add to Calendar",
+    "context": "The button, on the release calendar and on the account page's links, that adds the release calendar to a calendar app by subscribing to it."
+  },
+  {
     "handler": "common.addToPlaylist",
     "text": "Add to playlist",
     "context": "The label of a button, used in several places, among them the album of the phone app and the music of the phone app (from `askWhichPlaylist`)."
@@ -1808,6 +1808,11 @@
     "handler": "common.appearsOn",
     "text": "Appears on",
     "context": "Shown, used in the artist of the phone app and in the artist view in the music page."
+  },
+  {
+    "handler": "common.appleCalendarOrOutlook",
+    "text": "Apple Calendar or Outlook",
+    "context": "A choice in the Add to Calendar menu: subscribe in the calendar app on this device, which is Apple Calendar on a Mac, iPhone or iPad, and Outlook on Windows."
   },
   {
     "handler": "common.appleTV",
@@ -2049,6 +2054,16 @@
     "handler": "common.calendar",
     "text": "Calendar",
     "context": "The name of the release calendar: the section in the navigation, and its page, showing when films and episodes come out."
+  },
+  {
+    "handler": "common.calendarAppsSubscribedToIt",
+    "text": "Calendar apps subscribed to it will stop seeing what comes out.",
+    "context": "What turning off a calendar link means, in the dialog confirming it."
+  },
+  {
+    "handler": "common.calendarLink",
+    "text": "Calendar link",
+    "context": "The heading, in the release calendar's Add to Calendar menu or sheet, over the ways to look after the link calendar apps read it by."
   },
   {
     "handler": "common.calendarViews",
@@ -2324,6 +2339,11 @@
     "handler": "common.copy",
     "text": "Copy",
     "context": "Shown, used in several places, among them the copyable address in the plugin settings dialog and the api key panel."
+  },
+  {
+    "handler": "common.copyLink",
+    "text": "Copy link",
+    "context": "A button or menu item that copies a link: an account's setup link, or the link a calendar app subscribes to the release calendar by."
   },
   {
     "handler": "common.core",
@@ -3236,6 +3256,11 @@
     "context": "The label of a button, used in the player of the television app and in the kept player page."
   },
   {
+    "handler": "common.googleCalendar",
+    "text": "Google Calendar",
+    "context": "A choice in the Add to Calendar menu: subscribe in Google Calendar, on its website."
+  },
+  {
     "handler": "common.goToADay",
     "text": "Go to a day",
     "context": "The release calendar's way to turn it to any day: on the web the name, read by assistive technology and shown on hover, of the button that opens a month to pick from; on a phone the title of the sheet that does the same."
@@ -3477,6 +3502,11 @@
     "context": "Shown, used in the text reader in the reader of the phone app and in the text reader."
   },
   {
+    "handler": "common.lastReadLastReadAt",
+    "text": "Last read {lastReadAt}",
+    "context": "When a calendar app last read somebody's calendar link. {lastReadAt} is a date and time."
+  },
+  {
     "handler": "common.lasts",
     "text": "Lasts",
     "context": "Text shown, used in the share sheet of the phone app and in the share dialog."
@@ -3690,6 +3720,16 @@
     "handler": "common.makeALink",
     "text": "Make a link",
     "context": "The label of a button, used in the share sheet of the phone app and in the share dialog."
+  },
+  {
+    "handler": "common.makeANewCalendarLink",
+    "text": "Make a new calendar link?",
+    "context": "The title of the dialog confirming a new calendar link, which stops the old one."
+  },
+  {
+    "handler": "common.makeANewLink",
+    "text": "Make a new link",
+    "context": "The button, and the confirm button, that replace somebody's calendar link with a new one, stopping the old one."
   },
   {
     "handler": "common.makeIt",
@@ -4152,6 +4192,11 @@
     "context": "Shown, used in several places, among them the bell of the phone app and the notifications of the phone app."
   },
   {
+    "handler": "common.notInTheLibrary",
+    "text": "Not in the library",
+    "context": "Where something on the release calendar has got to, in the app or a calendar app subscribed to it: an episode that has aired but that nobody has, since nobody asked for it."
+  },
+  {
     "handler": "common.notInThisLibrary",
     "text": "Not in this library",
     "context": "Shown in the missing episode in the show of the phone app."
@@ -4190,6 +4235,11 @@
     "handler": "common.notPlaying",
     "text": "Not playing",
     "context": "Shown, used in the devices sheet of the phone app and in the devices panel in the music page."
+  },
+  {
+    "handler": "common.notReadByACalendarApp",
+    "text": "Not read by a calendar app yet",
+    "context": "Said of a calendar link no calendar app has read since it was made."
   },
   {
     "handler": "common.notSigned",
@@ -5361,6 +5411,11 @@
     "context": "The title of a shelf, used in several places, among them the music in the library of the phone app and the music home in the music page."
   },
   {
+    "handler": "common.shareLink",
+    "text": "Share link",
+    "context": "A choice in the phone's Add to Calendar sheet: hand the calendar's link to another app, or copy it, through the phone's share sheet."
+  },
+  {
     "handler": "common.shareWithTheHousehold",
     "text": "Share with the household",
     "context": "Shown, used in the playlist of the phone app and in the playlist view in the music page."
@@ -5671,6 +5726,11 @@
     "context": "Shown, used in the background jobs in the admin area and in the job history in the observability page."
   },
   {
+    "handler": "common.subscribeToYourReleaseCalendar",
+    "text": "Add your release calendar to Apple Calendar, Google Calendar or any other calendar app, and what comes out appears there as it is announced. Anyone with the link can see what is on it, so keep it to yourself.",
+    "context": "What the calendar link is for, at the top of its panel on the account page."
+  },
+  {
     "handler": "common.subtitles",
     "text": "Subtitles",
     "context": "The heading, used in several places, among them the watching of the phone app (from `theChoicesOn`) and the player of the television app."
@@ -5836,6 +5896,16 @@
     "context": "The problem, used in the download client dialog (from `readDownloadClientForm`) and in the indexer dialog (from `readIndexerForm`)."
   },
   {
+    "handler": "common.theCalendarLinkCouldNotBeChanged",
+    "text": "The calendar link could not be changed. Try again.",
+    "context": "Said when making a new calendar link, or turning the link off, failed."
+  },
+  {
+    "handler": "common.theCalendarLinkCouldNotBeMade",
+    "text": "The calendar link could not be made.",
+    "context": "Said in the phone's Add to Calendar sheet when the link calendar apps subscribe by could not be made, beside a way to try again."
+  },
+  {
     "handler": "common.theCatalogue",
     "text": "The catalogue",
     "context": "Shown, used in several places, among them the indexer catalogue dialog in the admin area and the plugins panel in the admin area."
@@ -5889,6 +5959,11 @@
     "handler": "common.theLibrarysOwnProfile",
     "text": "The library’s own profile",
     "context": "Shown, used in the approve request dialog in the admin area and in the ask for media dialog in the admin area."
+  },
+  {
+    "handler": "common.theLinkYouHaveNowStops",
+    "text": "The link you have now stops working at once, and any calendar app subscribed to it will need the new one.",
+    "context": "Why making a new calendar link needs confirming."
   },
   {
     "handler": "common.theme",
@@ -6139,6 +6214,11 @@
     "handler": "common.turnOff",
     "text": "Turn off",
     "context": "Shown, used in the security in the account of the phone app and in the two factor setup."
+  },
+  {
+    "handler": "common.turnOffYourCalendarLink",
+    "text": "Turn off your calendar link?",
+    "context": "The title of the dialog confirming that somebody's calendar link is turned off."
   },
   {
     "handler": "common.turnOnTwoFactor",
@@ -11384,11 +11464,6 @@
     "handler": "screens.adminArea.accountsPanel.copiedTheSetupLink",
     "text": "Copied the setup link.",
     "context": "Said once a setup link has been copied from the accounts list."
-  },
-  {
-    "handler": "screens.adminArea.accountsPanel.copyLink",
-    "text": "Copy link",
-    "context": "Copies an account's setup link, in the accounts list."
   },
   {
     "handler": "screens.adminArea.accountsPanel.deleteAccount",
@@ -24739,6 +24814,11 @@
     "context": "Shown in the app on the server (from `serveAdmin`)."
   },
   {
+    "handler": "server.api.serveCalendarFeed.valenceCalendar",
+    "text": "Valence calendar",
+    "context": "The name a calendar app gives the release calendar once somebody subscribes to it."
+  },
+  {
     "handler": "server.appContext.thatAccountIsAtOrAbove",
     "text": "That account is at or above your own rank.",
     "context": "Shown in the app on the server (from `createAppContext`)."
@@ -24837,6 +24917,26 @@
     "handler": "server.books.scanBookLibrary.thatFileCouldNotBeOpened",
     "text": "That file could not be opened as a book.",
     "context": "Shown in the books on the server (from `scanBookLibrary`)."
+  },
+  {
+    "handler": "server.calendar.calendarEvents.showSeasonEpisodeTitle",
+    "text": "{show} · S{seasonNumber} E{episodeNumber} · {episode}",
+    "context": "The title of an episode in the release calendar's feed, as a calendar app shows it: the show's name, which season and episode it is, and the episode's own name."
+  },
+  {
+    "handler": "server.calendar.calendarEvents.titleInCinemas",
+    "text": "{title} in cinemas",
+    "context": "The title of a film's cinema release in the release calendar's feed, as a calendar app shows it."
+  },
+  {
+    "handler": "server.calendar.calendarEvents.titleOnDisc",
+    "text": "{title} on disc",
+    "context": "The title of a film's release on disc in the release calendar's feed, as a calendar app shows it."
+  },
+  {
+    "handler": "server.calendar.calendarEvents.titleToBuyOrRent",
+    "text": "{title} to buy or rent",
+    "context": "The title of a film's digital release in the release calendar's feed, as a calendar app shows it."
   },
   {
     "handler": "server.catalogue.catalogueClient.nameCouldNotBeDownloaded",

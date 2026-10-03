@@ -1,3 +1,4 @@
+import type { CalendarFeedService } from '@ValenceServer/calendarFeed/CalendarFeedService';
 import type { PasswordResetAsk } from '@ValenceContracts/schemas/PasswordResetRequest';
 import type { ImportService } from '@ValenceServer/imports/createImportService';
 import type { ImportedAccount } from '@ValenceServer/arrImport/ImportedAccount';
@@ -184,6 +185,7 @@ type CreateAppOptions = {
   hiding?: HiddenService;
   ratings: RatingService;
   shares?: ShareService;
+  calendarFeeds?: CalendarFeedService;
   shareSessions?: ShareSessions;
   playbackSessions?: PlaybackSessions;
   profiles?: ProfileService;

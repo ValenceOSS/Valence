@@ -1,5 +1,6 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { fetchReleaseCalendar } from '@ValenceClient/calendar/fetchReleaseCalendar';
+import { fetchCalendarFeed } from '@ValenceClient/calendar/fetchCalendarFeed';
 import type { CalendarAudience } from '@ValenceContracts/schemas/ReleaseCalendar';
 
 const CALENDAR = ['calendar'] as const;
@@ -26,6 +27,17 @@ const releases = (from: string, to: string, who: CalendarAudience) =>
     placeholderData: keepPreviousData,
   });
 
-const calendarQueries = { key: CALENDAR, releases };
+/**
+ * Whether the person signed in has a link to subscribe to the release calendar by.
+ *
+ * @returns The query.
+ */
+const feed = () =>
+  queryOptions({
+    queryKey: [...CALENDAR, 'feed'],
+    queryFn: fetchCalendarFeed,
+  });
+
+const calendarQueries = { key: CALENDAR, releases, feed };
 
 export { calendarQueries };

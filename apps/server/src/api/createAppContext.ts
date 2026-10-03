@@ -1,3 +1,5 @@
+import { createMemoryCalendarFeedService } from '@ValenceServer/calendarFeed/createMemoryCalendarFeedService';
+import type { Asker } from '@ValenceServer/api/Asker';
 import { createLinkService } from '@ValenceServer/linking/createLinkService';
 import { createMemoryLinkStore } from '@ValenceServer/linking/createMemoryLinkStore';
 import { createPeerClient } from '@ValenceServer/linking/createPeerClient';
@@ -219,6 +221,7 @@ const createAppContext = (options: CreateAppOptions) => {
     ratings,
     shares,
     shareSessions,
+    calendarFeeds = createMemoryCalendarFeedService(),
     playbackSessions,
     profiles,
     households,
@@ -387,11 +390,6 @@ const createAppContext = (options: CreateAppOptions) => {
    */
   const requires = async (headers: Headers, permission: Permission): Promise<boolean> =>
     (await grantsOf(headers)).has(permission);
-
-  type Asker = {
-    account: () => Promise<{ id: string; name: string } | null>;
-    holds: (permission: Permission) => Promise<boolean>;
-  };
 
   /**
    * Somebody asking, as whatever the request carries says: its session, narrowed by any key.
@@ -1484,6 +1482,7 @@ const createAppContext = (options: CreateAppOptions) => {
     ratings,
     shares,
     shareSessions,
+    calendarFeeds,
     playbackSessions,
     profiles,
     households,
@@ -1612,6 +1611,8 @@ const createAppContext = (options: CreateAppOptions) => {
     REQUESTING_OFF,
     reachRequests,
     throughRequests,
+    askerOf,
+    askerFor,
     APPROVERS,
     ASKERS,
     SEES_EVERY_REQUEST,

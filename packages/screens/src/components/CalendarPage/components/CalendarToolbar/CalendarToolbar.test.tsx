@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { nameTheDay } from '@ValenceClient/calendar/nameTheDay';
 import { nameTheMonth } from '@ValenceClient/calendar/nameTheMonth';
 import { nameTheWeek } from '@ValenceClient/calendar/nameTheWeek';
@@ -24,7 +25,7 @@ const draw = (overrides: Partial<CalendarToolbarProps> = {}) => {
     ...overrides,
   };
 
-  render(<CalendarToolbar {...props} />);
+  render(<CalendarToolbar {...props} />, { wrapper: CacheScope });
 
   return props;
 };
@@ -84,6 +85,12 @@ describe('CalendarToolbar', () => {
 
     expect(props.onView).toHaveBeenNthCalledWith(1, 'week');
     expect(props.onView).toHaveBeenNthCalledWith(2, 'upcoming');
+  });
+
+  it('offers to add the calendar to a calendar app', () => {
+    draw();
+
+    expect(screen.getByRole('button', { name: 'Add to Calendar' })).toBeInTheDocument();
   });
 
   it('offers a way to narrow the calendar', () => {

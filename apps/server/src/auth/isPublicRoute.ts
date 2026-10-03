@@ -14,6 +14,7 @@ const PUBLIC_ROUTES: readonly PublicRoute[] = [
   { method: 'POST', path: /^\/api\/profiles\/[^/]+\/sign-in$/ },
   { method: 'POST', path: /^\/api\/phone\/exchange$/ },
   { method: 'GET', path: /^\/api\/share\/[^/]+$/ },
+  { method: 'GET', path: /^\/api\/calendar\/feed\/[A-Za-z0-9_-]{43}\.ics$/ },
   { method: 'POST', path: /^\/api\/password-reset$/ },
   { method: 'GET', path: /^\/api\/setup-links\/[A-Za-z0-9_-]{32,128}$/ },
   { method: 'POST', path: /^\/api\/setup-links\/[A-Za-z0-9_-]{32,128}$/ },
