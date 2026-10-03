@@ -1,15 +1,7 @@
-import { RuleTester } from '@typescript-eslint/rule-tester';
-import { afterAll, describe, it } from 'vitest';
+import { aRuleTester } from './aRuleTester';
 import { noComments } from './noComments';
 
-RuleTester.afterAll = afterAll;
-RuleTester.describe = describe;
-RuleTester.it = it;
-RuleTester.itOnly = it.only;
-
-const ruleTester = new RuleTester({
-  linterOptions: { reportUnusedDisableDirectives: 'off' },
-});
+const ruleTester = aRuleTester();
 
 ruleTester.run('no-comments', noComments, {
   valid: [
@@ -24,7 +16,7 @@ ruleTester.run('no-comments', noComments, {
     },
     { code: 'const READ_EVERY = 10;' },
     {
-      code: '// eslint-disable-next-line no-console -- the tool prints its findings\nconsole.log(1);',
+      code: '// oxlint-disable-next-line no-console -- the tool prints its findings\nconsole.log(1);',
     },
     { code: '/// <reference types="vite/client" />' },
   ],
@@ -55,7 +47,7 @@ ruleTester.run('no-comments', noComments, {
       errors: [{ messageId: 'prose' }],
     },
     {
-      code: '// eslint-disable-next-line no-console\nconst rows = [1, 2];',
+      code: '// oxlint-disable-next-line no-console\nconst rows = [1, 2];',
       errors: [{ messageId: 'noReason' }],
     },
   ],

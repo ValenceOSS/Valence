@@ -16,14 +16,14 @@
     "test:coverage": "turbo run test -- --coverage",
     "coverage": "pnpm test:coverage && pnpm --filter @valence/tools exec tsx coverageAverage/checkCoverageAverage.ts",
     "typecheck": "turbo run typecheck",
-    "lint": "oxlint --deny-warnings && eslint --max-warnings 0 . && tsx tools/comments/checkComments.ts",
-    "lint:fix": "oxlint --fix --deny-warnings && eslint --fix --max-warnings 0 . && tsx tools/comments/checkComments.ts --fix",
+    "lint": "pnpm --filter @valence/tools build:oxlint && oxlint --deny-warnings && tsx tools/comments/checkComments.ts",
+    "lint:fix": "pnpm --filter @valence/tools build:oxlint && oxlint --fix --deny-warnings && tsx tools/comments/checkComments.ts --fix",
     "branch:check": "tsx tools/branches/checkBranchName.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "rust:check": "cargo clippy --all-targets -- -D warnings && cargo fmt --check",
     "rust:test": "cargo test",
-    "prepare": "husky",
+    "prepare": "husky && pnpm --filter @valence/tools build:oxlint",
     "fixtures:sync": "tsx tools/fixtures/syncFixtures.ts",
     "ffmpeg:sync": "tsx tools/ffmpeg/syncFfmpeg.ts",
     "brand:render": "tsx tools/brand/renderBrand.ts",
@@ -34,22 +34,19 @@
     "@commitlint/cli": "^21.0.0",
     "@commitlint/config-conventional": "^21.0.0",
     "@types/node": "^24.0.0",
-    "@typescript-eslint/utils": "^8.70.0",
-    "eslint": "^10.0.0",
     "husky": "^9.1.7",
     "jiti": "^2.7.0",
     "lint-staged": "^17.0.0",
-    "oxlint": "^1.0.0",
+    "oxlint": "^1.86.0",
+    "oxlint-tsgolint": "^7.0.2003",
     "prettier": "^3.9.6",
     "tsx": "^4.23.13",
     "turbo": "^2.10.12",
-    "typescript": "^7.0.2",
-    "typescript-eslint": "^8.70.0"
+    "typescript": "^7.0.2"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
       "oxlint --fix",
-      "eslint --fix",
       "prettier --write"
     ],
     "*.{json,md,css,yaml,yml}": [

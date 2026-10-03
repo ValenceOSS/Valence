@@ -26,7 +26,7 @@ const WHILE_HERE = 30000;
  * @returns Where the server is, whether it has gone quiet, and a way to ask it now.
  */
 const useTheServer = (
-  pickingUp: 'elsewhere' | 'here' | 'beside the socket' = 'elsewhere',
+  pickingUp: 'elsewhere' | 'here' | 'besideTheSocket' = 'elsewhere',
 ): { address: string | null; isAway: boolean; tryNow: () => void } => {
   const cache = useQueryClient();
   const address = platformInUse().serverAddress();

@@ -70,7 +70,7 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
   const isSignedIn = session.data !== null && session.data !== undefined;
   const wasSignedIn = useRef(isSignedIn);
 
-  const { isAway } = useTheServer(isSignedIn ? 'beside the socket' : 'here');
+  const { isAway } = useTheServer(isSignedIn ? 'besideTheSocket' : 'here');
 
   useEffect(() => {
     if (wasSignedIn.current && !isSignedIn) {

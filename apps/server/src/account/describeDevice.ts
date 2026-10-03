@@ -1,7 +1,7 @@
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { saying } from '@ValenceI18n/saying';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
-/* eslint-disable valence/no-hard-coded-strings -- browsers' and systems' own names, and the marks their user agents carry */
+/* oxlint-disable valence/no-hard-coded-strings -- browsers' and systems' own names, and the marks their user agents carry */
 const BROWSERS = [
   { named: 'Edge', marks: ['Edg/'] },
   { named: 'Opera', marks: ['OPR/', 'Opera'] },
@@ -18,7 +18,7 @@ const SYSTEMS = [
   { named: 'Windows', marks: ['Windows'] },
   { named: 'Linux', marks: ['Linux', 'X11'] },
 ] as const;
-/* eslint-enable valence/no-hard-coded-strings */
+/* oxlint-enable valence/no-hard-coded-strings */
 
 const KEPT = 40;
 

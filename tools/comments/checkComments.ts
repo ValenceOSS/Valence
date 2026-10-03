@@ -52,7 +52,7 @@ const filesUnder = (directory: string): string[] => {
 
 /**
  * Decides which language a file is in, by extension, and answers with nothing for the ones this
- * check does not cover — TypeScript is ESLint's to police, not this tool's.
+ * check does not cover — TypeScript is oxlint's to police, not this tool's.
  *
  * @param path - The file.
  * @returns Its language, or null where it is not one this checks.

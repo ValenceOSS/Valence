@@ -1,4 +1,4 @@
-/* eslint-disable valence/no-hard-coded-strings -- a user agent, read by the server rather than by people */
+/* oxlint-disable valence/no-hard-coded-strings -- a user agent, read by the server rather than by people */
 /**
  * What one of Valence's own apps calls itself in the user agent it sends, so the list of devices
  * signed in names it rather than printing the networking library's line underneath it.

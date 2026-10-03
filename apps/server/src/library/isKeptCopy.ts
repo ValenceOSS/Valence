@@ -1,4 +1,4 @@
-// eslint-disable-next-line valence/no-hard-coded-strings -- part of a file name, matched on disk rather than read by people
+// oxlint-disable-next-line valence/no-hard-coded-strings -- part of a file name, matched on disk rather than read by people
 const KEPT_COPY_MARK = '.valence.';
 
 /**

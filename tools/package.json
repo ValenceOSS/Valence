@@ -4,15 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build:oxlint": "tsx oxlint/buildValencePlugin.ts",
     "lint:comments": "tsx comments/checkComments.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "esbuild": "^0.28.0",
+    "@oxlint/plugins": "^1.86.0",
     "typescript6": "npm:@typescript/typescript6@^6.0.2",
     "@valence/i18n": "workspace:*",
-    "@typescript-eslint/rule-tester": "^8.70.0",
-    "@typescript-eslint/utils": "^8.70.0",
     "@vitest/coverage-v8": "^4.1.11",
     "electron-vite": "^5.0.0",
     "sharp": "^0.35.4",

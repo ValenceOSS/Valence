@@ -41,7 +41,7 @@ reference, not a substitute for reading it.
    `<dialog>` in `Dialog`, `<iframe>` in `EmbeddedVideo`, `<a>` in `Link` — and
    nowhere else,
    including elsewhere in ValenceUI.
-   Every other control composes one of those; there is no `IconButton`. ESLint
+   Every other control composes one of those; there is no `IconButton`. oxlint
    enforces it.
 9. **No raw SVG anywhere.** Icons come from `@keyline-icons/react` and are
    drawn by `@ValenceUI/Icon`, never by the renderer directly.
@@ -52,7 +52,7 @@ reference, not a substitute for reading it.
     `packages/i18n/strings-en.json`, said by its handler; run `pnpm i18n:write`
     after editing it. Servers send `{ code, message, values }` (`saying`) and
     refuse with `{ error, code, values }` (`refuse`); logs and webhooks stay
-    English. ESLint's `valence/no-hard-coded-strings` enforces it.
+    English. oxlint's `valence/no-hard-coded-strings` enforces it.
 
 ## File layout
 
@@ -83,7 +83,7 @@ standalone functions. snake_case for Rust modules.
 | UI            | Radix + Tailwind + CVA + Motion                     |
 | Desktop       | Electron, a window onto the server                  |
 | Phone         | Expo + React Native, no admin                       |
-| Lint          | oxlint + ESLint + husky                             |
+| Lint          | oxlint (type-aware) + oxfmt + husky                 |
 | Realtime      | One WebSocket, viewer + admin feeds                 |
 | Web state     | TanStack Query + TanStack Router                    |
 
@@ -104,7 +104,7 @@ that runs it.
 | `apps/tv`          | What a television is: entry, platform, and the screens it draws   |
 | `packages/native`  | What the phone and the television share that touches React Native |
 
-- **Neither package may import `@ValenceWeb/*`.** ESLint says so. Neither reaches
+- **Neither package may import `@ValenceWeb/*`.** oxlint says so. Neither reaches
   into a client. `packages/client` may not import `@ValenceUI/*` either — it does
   not draw — while `packages/screens` is what draws.
 - **Anything either needs from a client is a port on `Platform`** — today a

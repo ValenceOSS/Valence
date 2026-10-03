@@ -736,7 +736,7 @@ const describeListening = async ({
     deviceLabel: device.deviceLabel,
     clientKind: device.clientKind ?? 'browser',
     mediaId: report.trackId,
-    // eslint-disable-next-line valence/no-hard-coded-strings -- a playback mode a subscriber matches on, not words a person reads
+    // oxlint-disable-next-line valence/no-hard-coded-strings -- a playback mode a subscriber matches on, not words a person reads
     mode: listening.delivery === 'encoded' ? 'Transcode' : 'DirectPlay',
     positionSeconds: null,
     durationSeconds: null,

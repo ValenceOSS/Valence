@@ -405,7 +405,7 @@ describe('scanMusicLibrary', () => {
         [fileAt('/music/odd.mp3')],
         {},
         {
-          // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- a reader can reject with anything, which is what this checks
+          // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- a reader can reject with anything, which is what this checks
           readTags: () => Promise.reject('no frames'),
         },
       ),

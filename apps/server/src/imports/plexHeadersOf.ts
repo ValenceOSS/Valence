@@ -1,4 +1,4 @@
-/* eslint-disable valence/no-hard-coded-strings -- product names, which are never translated */
+/* oxlint-disable valence/no-hard-coded-strings -- product names, which are never translated */
 const PRODUCT = 'Valence';
 
 /**

@@ -51,31 +51,31 @@ const PAGES: Record<
     title: string;
     empty: string;
     of: IconGlyph;
-    emptyIsAbout: 'one library' | 'every library' | 'nothing anybody scanned';
+    emptyIsAbout: 'oneLibrary' | 'everyLibrary' | 'nothingScanned';
   }
 > = {
   shows: {
     title: say('common.shows'),
     empty: say('common.noShowsYet'),
-    emptyIsAbout: 'one library',
+    emptyIsAbout: 'oneLibrary',
     of: MonitorIcon,
   },
   films: {
     title: say('common.films'),
     empty: say('common.noFilmsYet'),
-    emptyIsAbout: 'one library',
+    emptyIsAbout: 'oneLibrary',
     of: FilmIcon,
   },
   new: {
     title: say('common.newPopular'),
     empty: say('screens.browseArea.nothingNewYet'),
-    emptyIsAbout: 'every library',
+    emptyIsAbout: 'everyLibrary',
     of: FlameIcon,
   },
   favourites: {
     title: say('common.favourites'),
     empty: say('screens.browseArea.nothingHasBeenFavouritedYet'),
-    emptyIsAbout: 'nothing anybody scanned',
+    emptyIsAbout: 'nothingScanned',
     of: HeartIcon,
   },
 };
@@ -334,7 +334,7 @@ const BrowseArea = ({
             <NothingHere
               of={FolderOpenIcon}
               title={say('common.noLibrariesYet')}
-              detail={howToFillIt('no libraries', onAddLibrary !== undefined)}
+              detail={howToFillIt('noLibraries', onAddLibrary !== undefined)}
               {...(onAddLibrary === undefined
                 ? {}
                 : {
@@ -345,7 +345,7 @@ const BrowseArea = ({
                     ),
                   })}
             />
-          ) : page.emptyIsAbout === 'nothing anybody scanned' ? (
+          ) : page.emptyIsAbout === 'nothingScanned' ? (
             <NothingHere of={page.of} title={page.empty} />
           ) : (
             <NothingHere

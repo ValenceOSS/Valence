@@ -70,7 +70,7 @@ const commentStartsAt = (line: string, language: Language): number => {
 
 /**
  * Finds every comment in a file that is prose rather than something the language or the tooling
- * needs, for the languages ESLint cannot reach. Reports where each one begins and ends so a caller
+ * needs, for the languages oxlint cannot reach. Reports where each one begins and ends so a caller
  * can remove it without disturbing anything around it.
  *
  * @param source - The file to read.

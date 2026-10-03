@@ -1,4 +1,4 @@
-/* eslint-disable valence/no-hard-coded-strings -- a MusicBrainz search query */
+/* oxlint-disable valence/no-hard-coded-strings -- a MusicBrainz search query */
 import { z } from 'zod';
 import { quotedForMusicBrainz } from './quotedForMusicBrainz';
 import { tidyAlbumTitle } from './tidyAlbumTitle';

@@ -97,7 +97,7 @@ describe('useTheServer', () => {
   it('leaves it to a socket that is already back and has asked for everything itself', async () => {
     socketIsLive(true);
 
-    const invalidate = await comesBack('beside the socket');
+    const invalidate = await comesBack('besideTheSocket');
 
     expect(invalidate).not.toHaveBeenCalled();
   });
@@ -105,7 +105,7 @@ describe('useTheServer', () => {
   it('asks for everything itself where the socket is not back yet', async () => {
     socketIsLive(false);
 
-    const invalidate = await comesBack('beside the socket');
+    const invalidate = await comesBack('besideTheSocket');
 
     await waitFor(() => {
       expect(invalidate).toHaveBeenCalledTimes(1);

@@ -1,4 +1,4 @@
-/* eslint-disable valence/no-hard-coded-strings -- folder names matched on disk */
+/* oxlint-disable valence/no-hard-coded-strings -- folder names matched on disk */
 const IGNORED_FOLDERS = new Set([
   'sample',
   'minta',

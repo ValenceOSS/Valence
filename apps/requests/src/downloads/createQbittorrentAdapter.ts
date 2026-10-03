@@ -39,6 +39,7 @@ const TransferSchema = z.object({ dl_info_speed: z.number(), up_info_speed: z.nu
 const NEVER_SECONDS = 8_640_000;
 
 const STATES: Readonly<Record<string, QueuedDownloadState>> = {
+  // oxlint-disable-next-line valence/no-hard-coded-strings -- qBittorrent's error state, named as ours
   error: 'failed',
   missingFiles: 'failed',
   uploading: 'done',

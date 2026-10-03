@@ -466,7 +466,7 @@ const createJobQueue = ({
         .set({
           state: 'failed',
           finishedAt: new Date(),
-          // eslint-disable-next-line valence/no-hard-coded-strings -- kept in the queue's own table for whoever reads it, never shown
+          // oxlint-disable-next-line valence/no-hard-coded-strings -- kept in the queue's own table for whoever reads it, never shown
           lastError: 'The server stopped.',
         })
         .where(and(eq(queuedJob.state, 'running'), gt(queuedJob.attempts, queuedJob.retryLimit)));

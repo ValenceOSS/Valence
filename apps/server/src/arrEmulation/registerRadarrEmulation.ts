@@ -46,7 +46,7 @@ const registerRadarrEmulation = (app: OpenAPIHono, emulation: ArrEmulation): voi
     app,
     SEERR_RADARR_PATH,
     'film',
-    // eslint-disable-next-line valence/no-hard-coded-strings -- the program Overseerr and Jellyseerr expect to be talking to, not words a person reads
+    // oxlint-disable-next-line valence/no-hard-coded-strings -- the program Overseerr and Jellyseerr expect to be talking to, not words a person reads
     { appName: 'Radarr', version: RADARR_VERSION },
     emulation,
   );

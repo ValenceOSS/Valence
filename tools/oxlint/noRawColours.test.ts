@@ -1,15 +1,7 @@
-import { RuleTester } from '@typescript-eslint/rule-tester';
-import { afterAll, describe, it } from 'vitest';
+import { aRuleTester } from './aRuleTester';
 import { noRawColours } from './noRawColours';
 
-RuleTester.afterAll = afterAll;
-RuleTester.describe = describe;
-RuleTester.it = it;
-RuleTester.itOnly = it.only;
-
-const ruleTester = new RuleTester({
-  linterOptions: { reportUnusedDisableDirectives: 'off' },
-});
+const ruleTester = aRuleTester();
 
 ruleTester.run('no-raw-colours', noRawColours, {
   valid: [

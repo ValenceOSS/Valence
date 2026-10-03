@@ -73,7 +73,7 @@ const watchCastState = (
 
   const remote = element.remote;
 
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- TypeScript's description of the DOM says every video element has this. Safari's has not, and asking a browser what it can actually do beats believing a type.
+  // oxlint-disable-next-line typescript/no-unnecessary-condition -- TypeScript's description of the DOM says every video element has this. Safari's has not, and asking a browser what it can actually do beats believing a type.
   if (remote !== undefined) {
     const said = (state: string) => {
       onChange(
@@ -144,7 +144,7 @@ const promptForDevice = async (element: HTMLVideoElement): Promise<PromptOutcome
 
   const remote = element.remote;
 
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- As above: the type is a promise the browser has not necessarily kept.
+  // oxlint-disable-next-line typescript/no-unnecessary-condition -- As above: the type is a promise the browser has not necessarily kept.
   if (remote === undefined) {
     return 'unsupported';
   }

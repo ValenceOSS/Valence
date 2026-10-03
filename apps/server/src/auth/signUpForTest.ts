@@ -1,4 +1,4 @@
-/* eslint-disable valence/no-hard-coded-strings -- stands in for somebody in tests */
+/* oxlint-disable valence/no-hard-coded-strings -- stands in for somebody in tests */
 type RequestableApp = {
   request: (input: string | Request, init?: RequestInit) => Response | Promise<Response>;
 };

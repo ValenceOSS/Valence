@@ -10,6 +10,7 @@ const NODE_LEVEL_FOR: Readonly<Record<(typeof TRANSCODER_LEVELS)[number], LogLev
   debug: 'debug',
   info: 'info',
   warn: 'warn',
+  // oxlint-disable-next-line valence/no-hard-coded-strings -- the transcoder's log level, named as ours
   error: 'error',
 };
 

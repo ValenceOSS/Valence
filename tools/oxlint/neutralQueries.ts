@@ -1,5 +1,5 @@
-import { AST_NODE_TYPES, ESLintUtils } from '@typescript-eslint/utils';
-import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
+import { defineRule } from '@oxlint/plugins';
+import type { ESTree } from '@oxlint/plugins';
 
 const DIALECT_METHODS = new Set([
   'returning',
@@ -24,26 +24,21 @@ const DIALECT_SQL = [
   },
 ] as const;
 
-const createRule = ESLintUtils.RuleCreator(() => 'https://valence.local/neutral-queries');
-
-type MessageId = 'method' | 'ilike' | 'raw';
-
 /**
  * Whether a tag or callee is drizzle's `sql`, or `sql.raw`.
  *
  * @param node - The tag of a template, or the callee of a call.
  * @returns Whether it builds raw SQL.
  */
-const isSql = (node: TSESTree.Node): boolean =>
-  (node.type === AST_NODE_TYPES.Identifier && node.name === 'sql') ||
-  (node.type === AST_NODE_TYPES.MemberExpression &&
-    node.object.type === AST_NODE_TYPES.Identifier &&
+const isSql = (node: ESTree.Node): boolean =>
+  (node.type === 'Identifier' && node.name === 'sql') ||
+  (node.type === 'MemberExpression' &&
+    node.object.type === 'Identifier' &&
     node.object.name === 'sql' &&
-    node.property.type === AST_NODE_TYPES.Identifier &&
+    node.property.type === 'Identifier' &&
     node.property.name === 'raw');
 
-const neutralQueries = createRule({
-  name: 'neutral-queries',
+const neutralQueries = defineRule({
   meta: {
     type: 'problem',
     docs: {
@@ -59,9 +54,8 @@ const neutralQueries = createRule({
     },
     schema: [],
   },
-  defaultOptions: [],
-  create: (context: Readonly<TSESLint.RuleContext<MessageId, []>>) => {
-    const lookAt = (node: TSESTree.Node, text: string): void => {
+  create: (context) => {
+    const lookAt = (node: ESTree.Node, text: string): void => {
       const construct = DIALECT_SQL.find(({ pattern }) => pattern.test(text));
 
       if (construct !== undefined) {
@@ -80,7 +74,7 @@ const neutralQueries = createRule({
         if (isSql(callee)) {
           const [text] = node.arguments;
 
-          if (text?.type === AST_NODE_TYPES.Literal && typeof text.value === 'string') {
+          if (text?.type === 'Literal' && typeof text.value === 'string') {
             lookAt(node, text.value);
           }
 
@@ -88,8 +82,8 @@ const neutralQueries = createRule({
         }
 
         if (
-          callee.type === AST_NODE_TYPES.MemberExpression &&
-          callee.property.type === AST_NODE_TYPES.Identifier &&
+          callee.type === 'MemberExpression' &&
+          callee.property.type === 'Identifier' &&
           DIALECT_METHODS.has(callee.property.name)
         ) {
           const found = callee.property.name;
@@ -113,8 +107,8 @@ const neutralQueries = createRule({
         node.specifiers
           .filter(
             (specifier) =>
-              specifier.type === AST_NODE_TYPES.ImportSpecifier &&
-              specifier.imported.type === AST_NODE_TYPES.Identifier &&
+              specifier.type === 'ImportSpecifier' &&
+              specifier.imported.type === 'Identifier' &&
               specifier.imported.name === 'ilike',
           )
           .forEach((specifier) => {

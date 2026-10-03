@@ -86,7 +86,7 @@ const LANGUAGE_CODES: Record<string, string> = {
   vi: 'vi',
 };
 
-/* eslint-disable valence/no-hard-coded-strings -- each language named in its own language, the way a track menu shows it */
+/* oxlint-disable valence/no-hard-coded-strings -- each language named in its own language, the way a track menu shows it */
 const LANGUAGE_NAMES: Record<string, string> = {
   en: 'English',
   fr: 'Français',
@@ -115,7 +115,7 @@ const LANGUAGE_NAMES: Record<string, string> = {
   uk: 'Українська',
   vi: 'Tiếng Việt',
 };
-/* eslint-enable valence/no-hard-coded-strings */
+/* oxlint-enable valence/no-hard-coded-strings */
 
 const UNKNOWN_LANGUAGES = new Set(['', 'und', 'unknown', 'zxx', 'mul', 'mis']);
 
@@ -215,7 +215,7 @@ const describeAudioTrack = (track: AudioTrackFacts, position: number): string =>
 
   const qualities = [
     describeChannels(track.channels),
-    // eslint-disable-next-line valence/no-hard-coded-strings -- a sound format's own name
+    // oxlint-disable-next-line valence/no-hard-coded-strings -- a sound format's own name
     track.isAtmos === true ? 'Atmos' : track.codec.toUpperCase(),
   ];
 

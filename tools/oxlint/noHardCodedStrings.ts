@@ -1,5 +1,5 @@
-import { AST_NODE_TYPES, ESLintUtils } from '@typescript-eslint/utils';
-import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
+import { defineRule } from '@oxlint/plugins';
+import type { ESTree } from '@oxlint/plugins';
 
 const WORDED_PROPS = new Set([
   'accessibilityHint',
@@ -128,6 +128,10 @@ const CLASSES = /(?:^|\s)[\w[\]!/.%-]*[-:[][\w[\]!/.%:()'#,-]*(?:\s|$)/u;
 
 const PLAIN_WORD = /^[\p{L}’']+[,.!?…:;]?$/u;
 
+const LOWER_CASE_WORD = /^\p{Ll}{2,}$/u;
+
+const SCHEMA_METHODS = new Set(['onDelete', 'onUpdate']);
+
 const MEASURE = /^[\d.,]+\s?(?:p|K|k|i|MB|GB|TB|kbps|Mbps|fps|Hz|kHz|x|ms|s)$/u;
 
 const STYLE_VALUE =
@@ -141,8 +145,6 @@ const ALLOWED_IN =
   /\.(?:test|stories)\.[jt]sx?$|[\\/]testing[\\/]|Route\.ts$|[\\/]server[\\/]src[\\/]db[\\/]/u;
 
 type Place = 'quiet' | 'worded' | 'open';
-
-const createRule = ESLintUtils.RuleCreator(() => 'https://valence.local/no-hard-coded-strings');
 
 /**
  * Whether a piece of text is plainly for a machine: an identifier, a name run into a number such
@@ -172,20 +174,15 @@ const readsAsCode = (text: string): boolean => {
 };
 
 /**
- * Whether a piece of text reads as words for a person rather than as a name for a machine.
- *
- * @param text - The text.
- */
-/**
  * Whether a condition asks if a number is one, the way code picks between one of something and
  * several of it.
  *
  * @param test - The condition.
  */
-const asksWhetherOne = (test: TSESTree.Expression): boolean =>
-  test.type === AST_NODE_TYPES.BinaryExpression &&
+const asksWhetherOne = (test: ESTree.Expression): boolean =>
+  test.type === 'BinaryExpression' &&
   (test.operator === '===' || test.operator === '!==') &&
-  [test.left, test.right].some((side) => side.type === AST_NODE_TYPES.Literal && side.value === 1);
+  [test.left, test.right].some((side) => side.type === 'Literal' && side.value === 1);
 
 /**
  * Whether the words written around a template's values read as a phrase for a person, such as
@@ -195,7 +192,7 @@ const asksWhetherOne = (test: TSESTree.Expression): boolean =>
  *
  * @param node - The template.
  */
-const wordsAroundValues = (node: TSESTree.TemplateLiteral): boolean => {
+const wordsAroundValues = (node: ESTree.TemplateLiteral): boolean => {
   const text = node.quasis.map((quasi) => quasi.value.cooked).join('0');
 
   return (
@@ -203,6 +200,11 @@ const wordsAroundValues = (node: TSESTree.TemplateLiteral): boolean => {
   );
 };
 
+/**
+ * Whether a piece of text reads as words for a person rather than as a name for a machine.
+ *
+ * @param text - The text.
+ */
 const readsAsWords = (text: string): boolean => {
   if (!LETTER.test(text) || readsAsCode(text) || /^\p{Ll}[\p{Ll}\d]*[.!?]?$/u.test(text.trim())) {
     return false;
@@ -220,22 +222,19 @@ const readsAsWords = (text: string): boolean => {
  *
  * @param callee - What is being called.
  */
-const calledAs = (callee: TSESTree.Expression): { name: string | null; on: string | null } => {
-  if (callee.type === AST_NODE_TYPES.Identifier) {
+const calledAs = (callee: ESTree.Expression): { name: string | null; on: string | null } => {
+  if (callee.type === 'Identifier') {
     return { name: callee.name, on: null };
   }
 
-  if (
-    callee.type === AST_NODE_TYPES.MemberExpression &&
-    callee.property.type === AST_NODE_TYPES.Identifier
-  ) {
+  if (callee.type === 'MemberExpression' && callee.property.type === 'Identifier') {
     const on =
-      callee.object.type === AST_NODE_TYPES.Identifier
+      callee.object.type === 'Identifier'
         ? callee.object.name
-        : callee.object.type === AST_NODE_TYPES.ThisExpression
+        : callee.object.type === 'ThisExpression'
           ? 'this'
-          : callee.object.type === AST_NODE_TYPES.MemberExpression &&
-              callee.object.property.type === AST_NODE_TYPES.Identifier
+          : callee.object.type === 'MemberExpression' &&
+              callee.object.property.type === 'Identifier'
             ? callee.object.property.name
             : null;
 
@@ -250,38 +249,38 @@ const calledAs = (callee: TSESTree.Expression): { name: string | null; on: strin
  *
  * @param key - The key.
  */
-const nameOf = (key: TSESTree.Node): string | null => {
-  if (key.type === AST_NODE_TYPES.Identifier || key.type === AST_NODE_TYPES.JSXIdentifier) {
+const nameOf = (key: ESTree.Node): string | null => {
+  if (key.type === 'Identifier' || key.type === 'JSXIdentifier') {
     return key.name;
   }
 
-  if (key.type === AST_NODE_TYPES.Literal && typeof key.value === 'string') {
+  if (key.type === 'Literal' && typeof key.value === 'string') {
     return key.value;
   }
 
   return null;
 };
 
-const NEVER_WORDS = new Set<AST_NODE_TYPES>([
-  AST_NODE_TYPES.ImportDeclaration,
-  AST_NODE_TYPES.ExportAllDeclaration,
-  AST_NODE_TYPES.ExportNamedDeclaration,
-  AST_NODE_TYPES.ImportExpression,
-  AST_NODE_TYPES.TSLiteralType,
-  AST_NODE_TYPES.TSEnumMember,
-  AST_NODE_TYPES.SwitchCase,
-  AST_NODE_TYPES.TSExternalModuleReference,
-  AST_NODE_TYPES.TaggedTemplateExpression,
+const NEVER_WORDS = new Set<string>([
+  'ImportDeclaration',
+  'ExportAllDeclaration',
+  'ExportNamedDeclaration',
+  'ImportExpression',
+  'TSLiteralType',
+  'TSEnumMember',
+  'SwitchCase',
+  'TSExternalModuleReference',
+  'TaggedTemplateExpression',
 ]);
 
-const PASSES_THROUGH = new Set<AST_NODE_TYPES>([
-  AST_NODE_TYPES.ConditionalExpression,
-  AST_NODE_TYPES.LogicalExpression,
-  AST_NODE_TYPES.TemplateLiteral,
-  AST_NODE_TYPES.JSXExpressionContainer,
-  AST_NODE_TYPES.TSAsExpression,
-  AST_NODE_TYPES.TSSatisfiesExpression,
-  AST_NODE_TYPES.ArrayExpression,
+const PASSES_THROUGH = new Set<string>([
+  'ConditionalExpression',
+  'LogicalExpression',
+  'TemplateLiteral',
+  'JSXExpressionContainer',
+  'TSAsExpression',
+  'TSSatisfiesExpression',
+  'ArrayExpression',
 ]);
 
 /**
@@ -291,12 +290,12 @@ const PASSES_THROUGH = new Set<AST_NODE_TYPES>([
  * @param call - The call.
  * @param child - The part of the call the string is in.
  */
-const placeInACall = (call: TSESTree.CallExpression, child: TSESTree.Node): Place => {
+const placeInACall = (call: ESTree.CallExpression, child: ESTree.Node): Place => {
   if (child === call.callee) {
     return 'open';
   }
 
-  if (call.callee.type === AST_NODE_TYPES.Super) {
+  if (call.callee.type === 'Super') {
     return 'quiet';
   }
 
@@ -304,6 +303,10 @@ const placeInACall = (call: TSESTree.CallExpression, child: TSESTree.Node): Plac
 
   if (name === null) {
     return 'open';
+  }
+
+  if (SCHEMA_METHODS.has(name)) {
+    return 'quiet';
   }
 
   if (on === null) {
@@ -323,7 +326,7 @@ const placeInACall = (call: TSESTree.CallExpression, child: TSESTree.Node): Plac
  * @param parent - The step up.
  * @param child - Where the string came up from.
  */
-const placeInAParent = (parent: TSESTree.Node, child: TSESTree.Node): Place | 'through' => {
+const placeInAParent = (parent: ESTree.Node, child: ESTree.Node): Place | 'through' => {
   if (NEVER_WORDS.has(parent.type)) {
     return 'quiet';
   }
@@ -332,21 +335,21 @@ const placeInAParent = (parent: TSESTree.Node, child: TSESTree.Node): Place | 't
     return 'through';
   }
 
-  if (parent.type === AST_NODE_TYPES.BinaryExpression) {
+  if (parent.type === 'BinaryExpression') {
     return parent.operator === '+' ? 'through' : 'quiet';
   }
 
-  if (parent.type === AST_NODE_TYPES.NewExpression) {
-    return parent.callee.type === AST_NODE_TYPES.Identifier && parent.callee.name.endsWith('Error')
+  if (parent.type === 'NewExpression') {
+    return parent.callee.type === 'Identifier' && parent.callee.name.endsWith('Error')
       ? 'quiet'
       : 'open';
   }
 
-  if (parent.type === AST_NODE_TYPES.CallExpression) {
+  if (parent.type === 'CallExpression') {
     return placeInACall(parent, child);
   }
 
-  if (parent.type === AST_NODE_TYPES.Property) {
+  if (parent.type === 'Property') {
     const key = child === parent.key ? null : nameOf(parent.key);
 
     if (child === parent.key || (key !== null && (QUIET_KEYS.has(key) || HEADER_NAME.test(key)))) {
@@ -356,7 +359,7 @@ const placeInAParent = (parent: TSESTree.Node, child: TSESTree.Node): Place | 't
     return key !== null && WORDED_PROPS.has(key) ? 'worded' : 'open';
   }
 
-  if (parent.type === AST_NODE_TYPES.JSXAttribute) {
+  if (parent.type === 'JSXAttribute') {
     const key = nameOf(parent.name);
 
     if (key === null || QUIET_ATTRIBUTES.test(key)) {
@@ -366,13 +369,12 @@ const placeInAParent = (parent: TSESTree.Node, child: TSESTree.Node): Place | 't
     return WORDED_PROPS.has(key) ? 'worded' : 'open';
   }
 
-  if (parent.type === AST_NODE_TYPES.MemberExpression) {
+  if (parent.type === 'MemberExpression') {
     return child === parent.property || nameOf(parent.property) === 'length' ? 'quiet' : 'open';
   }
 
-  if (parent.type === AST_NODE_TYPES.AssignmentExpression) {
-    return parent.left.type === AST_NODE_TYPES.MemberExpression &&
-      nameOf(parent.left.property) === 'displayName'
+  if (parent.type === 'AssignmentExpression') {
+    return parent.left.type === 'MemberExpression' && nameOf(parent.left.property) === 'displayName'
       ? 'quiet'
       : 'open';
   }
@@ -386,11 +388,11 @@ const placeInAParent = (parent: TSESTree.Node, child: TSESTree.Node): Place | 't
  *
  * @param node - The string.
  */
-const placeOf = (node: TSESTree.Node): Place => {
-  let child: TSESTree.Node = node;
+const placeOf = (node: ESTree.Node): Place => {
+  let child: ESTree.Node = node;
   let parent = node.parent;
 
-  while (parent !== undefined) {
+  while (parent !== null) {
     const place = placeInAParent(parent, child);
 
     if (place !== 'through') {
@@ -404,8 +406,7 @@ const placeOf = (node: TSESTree.Node): Place => {
   return 'open';
 };
 
-const noHardCodedStrings = createRule({
-  name: 'no-hard-coded-strings',
+const noHardCodedStrings = defineRule({
   meta: {
     type: 'problem',
     docs: {
@@ -420,38 +421,16 @@ const noHardCodedStrings = createRule({
     },
     schema: [],
   },
-  defaultOptions: [],
-  create: (context: Readonly<TSESLint.RuleContext<'words' | 'counted', []>>) => {
+  create: (context) => {
     if (ALLOWED_IN.test(context.filename)) {
       return {};
     }
 
-    const services = ESLintUtils.getParserServices(context, true);
-    const checker = services.program?.getTypeChecker() ?? null;
-
-    /**
-     * Whether a string is one of the exact values its type allows, which makes it a key rather
-     * than words: a lower-case member of a union of string literals, such as `'every library'`.
-     *
-     * @param node - The string.
-     * @param text - What it says.
-     */
-    const isAChoiceOfItsType = (node: TSESTree.Literal, text: string): boolean => {
-      if (checker === null || CAPITALISED.test(text)) {
-        return false;
-      }
-
-      const type = checker.getContextualType(services.esTreeNodeToTSNodeMap.get(node));
-      const members = type === undefined ? [] : type.isUnion() ? type.types : [type];
-
-      return members.some((member) => member.isStringLiteral() && member.value === text);
-    };
-
-    const report = (node: TSESTree.Node, text: string): void => {
+    const report = (node: ESTree.Node, text: string): void => {
       context.report({ node, messageId: 'words', data: { hint: text.trim().slice(0, 24) } });
     };
 
-    const look = (node: TSESTree.Node, text: string): void => {
+    const look = (node: ESTree.Node, text: string): void => {
       const place = placeOf(node);
 
       if (place === 'quiet') {
@@ -464,17 +443,18 @@ const noHardCodedStrings = createRule({
     };
 
     /**
-     * The words one branch of a choice says, or null where it says none: a literal whose type does
-     * not make it a key, or a template, with each value in it standing as a number.
+     * The words one branch of a choice says, or null where it says none: a literal, or a template
+     * with each value in it standing as a number. A branch that is one lower-case word is a key, such
+     * as a variant, rather than words that change with the number.
      *
      * @param branch - The branch.
      */
-    const wordsOfBranch = (branch: TSESTree.Expression): string | null => {
-      if (branch.type === AST_NODE_TYPES.Literal && typeof branch.value === 'string') {
-        return isAChoiceOfItsType(branch, branch.value) ? null : branch.value;
+    const wordsOfBranch = (branch: ESTree.Expression): string | null => {
+      if (branch.type === 'Literal' && typeof branch.value === 'string') {
+        return branch.value;
       }
 
-      return branch.type === AST_NODE_TYPES.TemplateLiteral
+      return branch.type === 'TemplateLiteral'
         ? branch.quasis.map((quasi) => quasi.value.cooked).join('0')
         : null;
     };
@@ -487,7 +467,15 @@ const noHardCodedStrings = createRule({
 
         const said = [node.consequent, node.alternate].map(wordsOfBranch);
 
-        if (said.some((text) => text !== null && LETTER.test(text) && !readsAsCode(text))) {
+        if (
+          said.some(
+            (text) =>
+              text !== null &&
+              LETTER.test(text) &&
+              !readsAsCode(text) &&
+              !LOWER_CASE_WORD.test(text.trim()),
+          )
+        ) {
           context.report({ node, messageId: 'counted' });
         }
       },
@@ -497,7 +485,7 @@ const noHardCodedStrings = createRule({
         }
       },
       Literal: (node) => {
-        if (typeof node.value === 'string' && !isAChoiceOfItsType(node, node.value)) {
+        if (typeof node.value === 'string') {
           look(node, node.value);
         }
       },

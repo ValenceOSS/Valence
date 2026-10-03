@@ -1,16 +1,7 @@
-import { RuleTester } from '@typescript-eslint/rule-tester';
-import { afterAll, describe, it } from 'vitest';
+import { aRuleTester } from './aRuleTester';
 import { noHardCodedStrings } from './noHardCodedStrings';
 
-RuleTester.afterAll = afterAll;
-RuleTester.describe = describe;
-RuleTester.it = it;
-RuleTester.itOnly = it.only;
-
-const ruleTester = new RuleTester({
-  languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
-  linterOptions: { reportUnusedDisableDirectives: 'off' },
-});
+const ruleTester = aRuleTester();
 
 ruleTester.run('no-hard-coded-strings', noHardCodedStrings, {
   valid: [
@@ -108,34 +99,19 @@ ruleTester.run('no-hard-coded-strings', noHardCodedStrings, {
   ],
 });
 
-const typedRuleTester = new RuleTester({
-  languageOptions: {
-    parserOptions: {
-      projectService: { allowDefaultProject: ['*.ts'] },
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-});
-
-typedRuleTester.run('no-hard-coded-strings, with types', noHardCodedStrings, {
+ruleTester.run('no-hard-coded-strings, as keys', noHardCodedStrings, {
   valid: [
-    {
-      code: "const look = (variant: 'ghost' | 'soft') => variant; look(speed === 1 ? 'ghost' : 'soft');",
-    },
-    {
-      code: "const pick = (about: 'one library' | 'every library') => about; pick('every library');",
-    },
-    {
-      code: "type Page = { about: 'one library' | 'no libraries' }; const it: Page = { about: 'no libraries' };",
-    },
+    { code: "const look = speed === 1 ? 'ghost' : 'soft';" },
+    { code: "const states = { paused: 'stopped' };" },
+    { code: "const page = { about: 'everyLibrary' };" },
+    { code: "const column = text('ownerId').references(() => owner.id).onDelete('set null');" },
   ],
   invalid: [
+    { code: "pick('every library');", errors: [{ messageId: 'words' }] },
+    { code: "const page = { about: 'no libraries' };", errors: [{ messageId: 'words' }] },
+    { code: "const states = { error: 'failed' };", errors: [{ messageId: 'words' }] },
     {
-      code: "const pick = (label: string) => label; pick('every library');",
-      errors: [{ messageId: 'words' }],
-    },
-    {
-      code: "const flag = (isNew: boolean): 'New episode' | 'Recently added' => isNew ? 'New episode' : 'Recently added';",
+      code: "const flag = (isNew: boolean) => isNew ? 'New episode' : 'Recently added';",
       errors: [{ messageId: 'words' }, { messageId: 'words' }],
     },
   ],

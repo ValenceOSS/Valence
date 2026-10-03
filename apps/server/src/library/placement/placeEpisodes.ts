@@ -74,7 +74,7 @@ const episodeKeyOf = (path: string): string | null => {
 
   return read.seasonNumber === null || read.episodeNumber === null
     ? null
-    : // eslint-disable-next-line valence/no-hard-coded-strings -- an episode's number, written the way file names write it
+    : // oxlint-disable-next-line valence/no-hard-coded-strings -- an episode's number, written the way file names write it
       `S${String(read.seasonNumber)}E${String(read.episodeNumber)}`;
 };
 

@@ -62,7 +62,7 @@ const registerSonarrEmulation = (app: OpenAPIHono, emulation: ArrEmulation): voi
     app,
     SEERR_SONARR_PATH,
     'series',
-    // eslint-disable-next-line valence/no-hard-coded-strings -- the program Overseerr and Jellyseerr expect to be talking to, not words a person reads
+    // oxlint-disable-next-line valence/no-hard-coded-strings -- the program Overseerr and Jellyseerr expect to be talking to, not words a person reads
     { appName: 'Sonarr', version: SONARR_VERSION },
     emulation,
   );

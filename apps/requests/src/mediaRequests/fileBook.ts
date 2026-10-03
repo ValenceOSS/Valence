@@ -1,4 +1,4 @@
-/* eslint-disable valence/no-hard-coded-strings -- file and folder names on disk, which media servers read in English */
+/* oxlint-disable valence/no-hard-coded-strings -- file and folder names on disk, which media servers read in English */
 import { basename, dirname, extname, join } from 'node:path';
 import { parseFile } from 'music-metadata';
 import { audiobookTitleOf } from '@ValenceContracts/functions/audiobookTitleOf';

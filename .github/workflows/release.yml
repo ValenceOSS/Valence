@@ -50,11 +50,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # Type-aware ESLint holds the whole repository's program in memory at once, and outgrew 6 GB
-      # once two database dialects were typechecked. The runner has 16.
       - run: pnpm lint
-        env:
-          NODE_OPTIONS: --max-old-space-size=12288
 
       - run: pnpm typecheck
 

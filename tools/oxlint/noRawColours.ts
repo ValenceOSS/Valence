@@ -1,5 +1,5 @@
-import { AST_NODE_TYPES, ESLintUtils } from '@typescript-eslint/utils';
-import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
+import { defineRule } from '@oxlint/plugins';
+import type { ESTree } from '@oxlint/plugins';
 
 const RAW_UTILITY =
   /\b(?:bg|text|border|ring|divide|from|via|to|fill|stroke|shadow|outline|accent|caret|decoration)-(?:white|black)(?:\/\d{1,3}|\/\[[^\]]+\])?\b/u;
@@ -8,24 +8,16 @@ const RAW_VALUE = /(?:#[0-9a-fA-F]{3,8}\b|(?<![a-zA-Z])(?:rgba?|hsla?|oklch|okla
 
 const ALLOWED_IN = /\.(?:test|stories)\.[jt]sx?$|[\\/]styles[\\/]|[\\/]tokens[\\/]/u;
 
-const createRule = ESLintUtils.RuleCreator(() => 'https://valence.local/no-raw-colours');
-
 /**
  * Reads a string literal or a template chunk, whichever the node happens to be.
  *
  * @param node - The node to read.
- * @returns Its text, or nothing where it carries none.
+ * @returns Its text.
  */
-const textOf = (node: TSESTree.Node): string | null => {
-  if (node.type === AST_NODE_TYPES.Literal) {
-    return typeof node.value === 'string' ? node.value : null;
-  }
+const textOf = (node: ESTree.StringLiteral | ESTree.TemplateElement): string =>
+  node.type === 'TemplateElement' ? node.value.raw : node.value;
 
-  return node.type === AST_NODE_TYPES.TemplateElement ? node.value.raw : null;
-};
-
-const noRawColours = createRule({
-  name: 'no-raw-colours',
+const noRawColours = defineRule({
   meta: {
     type: 'problem',
     docs: {
@@ -40,19 +32,13 @@ const noRawColours = createRule({
     },
     schema: [],
   },
-  defaultOptions: [],
-  create: (context: Readonly<TSESLint.RuleContext<'utility' | 'value', []>>) => {
+  create: (context) => {
     if (ALLOWED_IN.test(context.filename)) {
       return {};
     }
 
-    const look = (node: TSESTree.Node): void => {
+    const look = (node: ESTree.StringLiteral | ESTree.TemplateElement): void => {
       const text = textOf(node);
-
-      if (text === null) {
-        return;
-      }
-
       const utility = RAW_UTILITY.exec(text);
 
       if (utility !== null) {
@@ -69,7 +55,11 @@ const noRawColours = createRule({
     };
 
     return {
-      Literal: look,
+      Literal: (node) => {
+        if (typeof node.value === 'string') {
+          look(node);
+        }
+      },
       TemplateElement: look,
     };
   },

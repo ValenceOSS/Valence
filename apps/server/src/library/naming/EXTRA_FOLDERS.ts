@@ -1,4 +1,4 @@
-/* eslint-disable valence/no-hard-coded-strings -- folder names matched on disk */
+/* oxlint-disable valence/no-hard-coded-strings -- folder names matched on disk */
 import type { ExtraKind } from '@ValenceContracts/schemas/Library';
 
 const EXTRA_FOLDERS: ReadonlyMap<string, ExtraKind> = new Map<string, ExtraKind>([

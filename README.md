@@ -167,7 +167,7 @@ packages/
 ```bash
 pnpm test         # every package
 pnpm typecheck    # every package
-pnpm lint         # oxlint, then eslint
+pnpm lint         # oxlint, type-aware, with Valence's own rules
 pnpm build        # every package and app
 pnpm db:check     # every schema matches its migrations
 pnpm i18n:write   # after editing packages/i18n/strings-en.json

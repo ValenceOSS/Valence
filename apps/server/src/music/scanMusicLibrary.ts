@@ -107,12 +107,12 @@ type ScanMusicLibraryOptions = {
   isCancelled?: () => boolean;
 };
 
-// eslint-disable-next-line valence/no-hard-coded-strings -- stored as an artist's name and matched against file tags
+// oxlint-disable-next-line valence/no-hard-coded-strings -- stored as an artist's name and matched against file tags
 const VARIOUS_ARTISTS = 'Various Artists';
 
 const LYRIC_FILE = /\.(lrc|txt)$/i;
 
-// eslint-disable-next-line valence/no-hard-coded-strings -- stored as an artist's name and matched against file tags
+// oxlint-disable-next-line valence/no-hard-coded-strings -- stored as an artist's name and matched against file tags
 const UNKNOWN_ARTIST = 'Unknown Artist';
 
 /**

@@ -1,5 +1,5 @@
-import { ESLintUtils, TSESTree } from '@typescript-eslint/utils';
-import type { TSESLint } from '@typescript-eslint/utils';
+import { defineRule } from '@oxlint/plugins';
+import type { Comment, ESTree, FixFn, Visitor } from '@oxlint/plugins';
 
 const DIRECTIVES = [
   'eslint-disable',
@@ -55,8 +55,8 @@ const isDirective = (text: string): boolean => {
  * @param comment - The comment as the parser found it.
  * @returns Whether it is documentation rather than a plain block comment.
  */
-const isTsDoc = (comment: TSESTree.Comment): boolean =>
-  comment.type === TSESTree.AST_TOKEN_TYPES.Block && comment.value.startsWith('*');
+const isTsDoc = (comment: Comment): boolean =>
+  comment.type === 'Block' && comment.value.startsWith('*');
 
 /**
  * Decides whether a directive that silences a rule explains itself, which is required of anything
@@ -73,12 +73,7 @@ const hasReason = (text: string): boolean => {
   return !isSilencing || trimmed.includes(' -- ');
 };
 
-const createRule = ESLintUtils.RuleCreator(
-  () => 'https://github.com/MarquesCoding/Valence/blob/main/CODING_STANDARD.md',
-);
-
-const noComments = createRule({
-  name: 'no-comments',
+const noComments = defineRule({
   meta: {
     type: 'suggestion',
     docs: {
@@ -94,10 +89,9 @@ const noComments = createRule({
       noReason: 'A lint directive must say why, after ` -- `. See code standards section 6.',
     },
   },
-  defaultOptions: [],
   create(context) {
     const { sourceCode } = context;
-    const documented = new Set<TSESTree.Comment>();
+    const documented = new Set<Comment>();
 
     /**
      * Builds the fix that removes a comment, taking the JSX braces with it where they hold nothing
@@ -105,15 +99,13 @@ const noComments = createRule({
      * its whole line takes the line with it rather than leaving a blank one behind.
      *
      * @param comment - The comment to remove.
-     * @returns The fix ESLint applies under `--fix`.
+     * @returns The fix oxlint applies under `--fix`.
      */
-    const remove = (comment: TSESTree.Comment): TSESLint.ReportFixFunction => {
+    const remove = (comment: Comment): FixFn => {
       return (fixer) => {
         const held = sourceCode.getNodeByRangeIndex(comment.range[0]);
-        const container =
-          held?.type === TSESTree.AST_NODE_TYPES.JSXEmptyExpression ? held.parent : held;
-        const target =
-          container?.type === TSESTree.AST_NODE_TYPES.JSXExpressionContainer ? container : comment;
+        const container = held?.type === 'JSXEmptyExpression' ? held.parent : held;
+        const target = container?.type === 'JSXExpressionContainer' ? container : comment;
 
         const [start, end] = target.range;
         const before = sourceCode.getText().slice(0, start);
@@ -131,29 +123,25 @@ const noComments = createRule({
       };
     };
 
-    const visitor: TSESLint.RuleListener = {};
+    const visitor: Visitor = {};
 
     for (const type of DOCUMENTABLE) {
-      visitor[type] = (node: TSESTree.Node) => {
+      visitor[type] = (node: ESTree.Node) => {
         for (const comment of sourceCode.getCommentsBefore(node)) {
           documented.add(comment);
         }
       };
     }
 
-    visitor.VariableDeclaration = (node: TSESTree.VariableDeclaration) => {
+    visitor.VariableDeclaration = (node: ESTree.VariableDeclaration) => {
       const [first] = node.declarations;
-      const held = first.init?.type;
+      const held = first?.init?.type;
 
-      if (
-        held !== TSESTree.AST_NODE_TYPES.ArrowFunctionExpression &&
-        held !== TSESTree.AST_NODE_TYPES.FunctionExpression
-      ) {
+      if (held !== 'ArrowFunctionExpression' && held !== 'FunctionExpression') {
         return;
       }
 
-      const owner =
-        node.parent.type === TSESTree.AST_NODE_TYPES.ExportNamedDeclaration ? node.parent : node;
+      const owner = node.parent.type === 'ExportNamedDeclaration' ? node.parent : node;
 
       for (const comment of sourceCode.getCommentsBefore(owner)) {
         documented.add(comment);

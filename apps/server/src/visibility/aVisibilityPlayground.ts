@@ -1,4 +1,4 @@
-/* eslint-disable valence/no-hard-coded-strings -- stands in for a household's libraries and profiles in tests */
+/* oxlint-disable valence/no-hard-coded-strings -- stands in for a household's libraries and profiles in tests */
 import { asc } from 'drizzle-orm';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import {
