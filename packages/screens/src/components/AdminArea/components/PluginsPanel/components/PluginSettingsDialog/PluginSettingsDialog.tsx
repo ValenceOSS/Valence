@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
+import { Form } from '@ValenceUI/Form';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { Switch } from '@ValenceUI/Switch';
@@ -58,100 +59,110 @@ const PluginSettingsDialog = ({
         <>
           <DialogTitle title={say('common.nameSettings', { name: plugin.name })} />
 
-          <DialogContent className="flex flex-col gap-4">
-            {redirectUri === null ||
-            !plugin.permissions.some((permission) => permission.kind === 'accounts') ? null : (
-              <CopyableAddress
-                title={say('screens.pluginsPanel.pluginSettingsDialog.redirectAddress')}
-                detail={say('screens.pluginsPanel.pluginSettingsDialog.giveThisToEachServiceWhen')}
-                address={redirectUri}
-              />
-            )}
+          <Form
+            label={say('common.nameSettings', { name: plugin.name })}
+            onSubmit={(event) => {
+              event.preventDefault();
 
-            {plugin.webhooks.map((hook) => (
-              <CopyableAddress
-                key={hook.id}
-                title={hook.title}
-                detail={say(
-                  'screens.pluginsPanel.pluginSettingsDialog.giveThisWebhookAddressToThe',
-                )}
-                address={hook.url}
-              />
-            ))}
+              const settings = Object.fromEntries(
+                plugin.settings
+                  .filter((setting) => setting.kind !== 'secret' || values[setting.id] !== '')
+                  .map((setting) => [setting.id, values[setting.id] ?? '']),
+              );
 
-            {plugin.settings.map((setting) => {
-              const value = values[setting.id];
+              setIsSaving(true);
 
-              return setting.kind === 'toggle' ? (
-                <div key={setting.id} className="flex flex-col gap-1">
-                  <Switch
+              void changePlugin(plugin.id, { settings })
+                .then(() => {
+                  tellOutcome(
+                    say('screens.pluginsPanel.pluginSettingsDialog.savedNameSSettings', {
+                      name: plugin.name,
+                    }),
+                    null,
+                  );
+                  onSaved();
+                })
+                .catch((problem: Error) => {
+                  tellOutcome('', problem.message);
+                })
+                .finally(() => {
+                  setIsSaving(false);
+                });
+            }}
+            isDialog
+          >
+            <DialogContent className="flex flex-col gap-4">
+              {redirectUri === null ||
+              !plugin.permissions.some((permission) => permission.kind === 'accounts') ? null : (
+                <CopyableAddress
+                  title={say('screens.pluginsPanel.pluginSettingsDialog.redirectAddress')}
+                  detail={say(
+                    'screens.pluginsPanel.pluginSettingsDialog.giveThisToEachServiceWhen',
+                  )}
+                  address={redirectUri}
+                />
+              )}
+
+              {plugin.webhooks.map((hook) => (
+                <CopyableAddress
+                  key={hook.id}
+                  title={hook.title}
+                  detail={say(
+                    'screens.pluginsPanel.pluginSettingsDialog.giveThisWebhookAddressToThe',
+                  )}
+                  address={hook.url}
+                />
+              ))}
+
+              {plugin.settings.map((setting) => {
+                const value = values[setting.id];
+
+                return setting.kind === 'toggle' ? (
+                  <div key={setting.id} className="flex flex-col gap-1">
+                    <Switch
+                      label={setting.label}
+                      isOn={value === true}
+                      onToggle={() => {
+                        setValues((was) => ({ ...was, [setting.id]: was[setting.id] !== true }));
+                      }}
+                    />
+
+                    {setting.help === null ? null : (
+                      <span className="text-xs text-text-muted">{setting.help}</span>
+                    )}
+                  </div>
+                ) : (
+                  <TextField
+                    key={setting.id}
                     label={setting.label}
-                    isOn={value === true}
-                    onToggle={() => {
-                      setValues((was) => ({ ...was, [setting.id]: was[setting.id] !== true }));
+                    type={setting.kind === 'secret' ? 'password' : 'text'}
+                    autoComplete={setting.kind === 'secret' ? 'new-password' : 'off'}
+                    value={typeof value === 'string' ? value : ''}
+                    {...(setting.kind === 'secret' && setting.isSet
+                      ? {
+                          placeholder: say(
+                            'screens.pluginsPanel.pluginSettingsDialog.savedTypeToReplaceIt',
+                          ),
+                        }
+                      : {})}
+                    {...(setting.help === null ? {} : { description: setting.help })}
+                    onValueChange={(next) => {
+                      setValues((was) => ({ ...was, [setting.id]: next }));
                     }}
                   />
-
-                  {setting.help === null ? null : (
-                    <span className="text-xs text-text-muted">{setting.help}</span>
-                  )}
-                </div>
-              ) : (
-                <TextField
-                  key={setting.id}
-                  label={setting.label}
-                  type={setting.kind === 'secret' ? 'password' : 'text'}
-                  autoComplete={setting.kind === 'secret' ? 'new-password' : 'off'}
-                  value={typeof value === 'string' ? value : ''}
-                  {...(setting.kind === 'secret' && setting.isSet
-                    ? {
-                        placeholder: say(
-                          'screens.pluginsPanel.pluginSettingsDialog.savedTypeToReplaceIt',
-                        ),
-                      }
-                    : {})}
-                  {...(setting.help === null ? {} : { description: setting.help })}
-                  onValueChange={(next) => {
-                    setValues((was) => ({ ...was, [setting.id]: next }));
-                  }}
-                />
-              );
-            })}
-          </DialogContent>
-
-          <DialogFooter
-            dismiss={{ onChoose: onClose }}
-            confirm={{
-              label: say('common.save'),
-              isLoading: isSaving,
-              onChoose: () => {
-                const settings = Object.fromEntries(
-                  plugin.settings
-                    .filter((setting) => setting.kind !== 'secret' || values[setting.id] !== '')
-                    .map((setting) => [setting.id, values[setting.id] ?? '']),
                 );
+              })}
+            </DialogContent>
 
-                setIsSaving(true);
-
-                void changePlugin(plugin.id, { settings })
-                  .then(() => {
-                    tellOutcome(
-                      say('screens.pluginsPanel.pluginSettingsDialog.savedNameSSettings', {
-                        name: plugin.name,
-                      }),
-                      null,
-                    );
-                    onSaved();
-                  })
-                  .catch((problem: Error) => {
-                    tellOutcome('', problem.message);
-                  })
-                  .finally(() => {
-                    setIsSaving(false);
-                  });
-              },
-            }}
-          />
+            <DialogFooter
+              dismiss={{ onChoose: onClose }}
+              confirm={{
+                label: say('common.save'),
+                isLoading: isSaving,
+                isSubmit: true,
+              }}
+            />
+          </Form>
         </>
       )}
     </Dialog>

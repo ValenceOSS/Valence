@@ -3,7 +3,14 @@ import type { View } from 'react-native';
 import type { KeylineIcon } from '@ValenceTv/components/Icon/Icon.types';
 
 type ButtonVariant =
-  'primary' | 'secondary' | 'glossy' | 'confirm' | 'overlay' | 'soft' | 'ghost' | 'danger';
+  | 'primary'
+  | 'secondary'
+  | 'glossy'
+  | 'confirm'
+  | 'overlay'
+  | 'soft'
+  | 'ghost'
+  | 'danger';
 
 type ButtonSize = 'md' | 'lg' | 'xl';
 

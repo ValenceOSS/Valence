@@ -1,18 +1,15 @@
 import { useDeferredValue, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  Bin as BinFilledIcon,
   ChevronRight as ChevronRightIcon,
   ChevronUp as ChevronUpIcon,
   File as FileIcon,
-  Folder as FolderIcon,
-  MoreHorizontal as MoreHorizontalIcon,
-  Search as SearchIcon,
-} from '@keyline-icons/react';
-import {
-  Bin as BinFilledIcon,
   FileArrowUp as FileArrowUpFilledIcon,
+  Folder as FolderIcon,
   FolderOpen as FolderOpenFilledIcon,
   FolderPlus as FolderPlusFilledIcon,
+  MoreHorizontal as MoreHorizontalIcon,
   Move as MoveFilledIcon,
   PenLine as PenLineFilledIcon,
 } from '@keyline-icons/react/fill';
@@ -274,7 +271,6 @@ const FilesPanel = ({
           }
           value={typed}
           onValueChange={setTyped}
-          icon={<Icon of={SearchIcon} size={14} />}
           className="w-64 max-w-full"
         />
       }

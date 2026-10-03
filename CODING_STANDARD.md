@@ -14,7 +14,7 @@ Where a rule has a known cost, that cost is stated. Rules are not folklore.
 **TypeScript and Rust only. No JavaScript.**
 
 This includes configuration. Build config, scripts, tooling, and lint config are
-authored in TypeScript (`vite.config.ts`, `eslint.config.ts`, `scripts/*.ts`)
+authored in TypeScript (`vite.config.ts`, `oxlint.config.ts`, `scripts/*.ts`)
 and executed via `tsx` where a runtime needs them. Where a tool physically
 cannot load TypeScript config, the generated JavaScript is a build artifact and
 is `.gitignore`d, never hand-edited.
@@ -123,7 +123,7 @@ system's own alerts and the native glue around a behaviour both clients share.
 It does not hold screens or components. A phone is driven by touch and a
 television by its remote, so what each draws, and how focus moves through it,
 stays in its own app. It never imports either app, nor anything that draws the
-web (`@ValenceScreens/*`, `@ValenceUI/*`, `@ValenceWeb/*`); ESLint says so.
+web (`@ValenceScreens/*`, `@ValenceUI/*`, `@ValenceWeb/*`); oxlint says so.
 
 It ships as source and is never built on its own. Each app's Metro bundles it
 and each app's Jest runs its tests, with React and React Native resolved to that
@@ -278,7 +278,7 @@ mysql folder by the `mysql` build condition. The helpers shared code needs live 
 `packages/database`, whose entries re-export from its own `#dialect/*`; each app keeps its schema
 and its migration plumbing in `src/db/postgres` and `src/db/mysql`. Only files inside a dialect
 folder may import `drizzle-orm/pg-core`, `drizzle-orm/node-postgres`, `drizzle-orm/pglite`, `pg`,
-`@electric-sql/pglite`, `drizzle-orm/mysql-core`, `drizzle-orm/mysql2` or `mysql2`; ESLint
+`@electric-sql/pglite`, `drizzle-orm/mysql-core`, `drizzle-orm/mysql2` or `mysql2`; oxlint
 enforces it outside tests, and each dialect folder holds the same files exporting the same members,
 which a test checks. The two `Schema.ts` files of an app are the one sanctioned exception to "no
 duplication": they describe the same tables in two dialects' DDL, and a parity test fails when
@@ -337,7 +337,7 @@ together. `pnpm db:check` fails when a snapshot is out of step with its schema, 
 3. **`// SAFETY:` on every `unsafe` block in Rust.** This is required by
    `clippy::undocumented_unsafe_blocks`, which is enabled. A rule that fights the
    linter is a rule that gets disabled, so this exception exists by necessity.
-4. **Lint suppression directives** (`// eslint-disable-next-line`,
+4. **Lint suppression directives** (`// oxlint-disable-next-line`,
    `#[allow(...)]`). These are instructions to tooling, not commentary. Each
    requires a reason string, and each is reviewed as a change in its own right.
 
@@ -350,7 +350,7 @@ issue where it can be tracked, not in a comment where it cannot.
 
 Two checks, because no one linter reads every language here.
 
-`valence/no-comments` in `tools/eslint/noComments.ts` covers TypeScript. It fails
+`valence/no-comments` in `packages/lint/src/oxlint/noComments.ts` covers TypeScript. It fails
 on any comment that is not one of the exceptions above, and removes it under
 `--fix`. TSDoc counts only when it sits on a function — a declaration, a method,
 or a `const` holding an arrow function. On a type, a constant or a property it is
@@ -359,7 +359,7 @@ costume and rejected as prose.
 A third slash means `/// <reference>` and nothing else: `/// prose` is Rust
 syntax in the wrong language, and is rejected too.
 
-`tools/comments/checkComments.ts` covers Rust and CSS, which ESLint cannot see
+`packages/lint/src/comments/checkComments.ts` covers Rust and CSS, which oxlint cannot see
 at all. It parses rather than pattern-matches, so a `//` inside a string literal
 stays where it is. Both run under `pnpm lint`, which runs on every commit.
 
@@ -543,11 +543,11 @@ to it, and every one of those is a place a future theme will be wrong.
 
 ### How this is enforced
 
-ESLint fails the build on `<button>`, `<input>`, `<select>`, `<textarea>`,
+oxlint fails the build on `<button>`, `<input>`, `<select>`, `<textarea>`,
 `<dialog>` and `<iframe>` anywhere in the repo, and on `<a>` anywhere in the app
 itself: `packages/ui`, `packages/screens`, `apps/web` and `apps/desktop`. The
 docs site and the landing page draw no ValenceUI, so they write their own links.
-The exceptions are listed by filename in `eslint.config.ts`: the components that
+The exceptions are listed by filename in `oxlint.config.ts`: the components that
 own those elements, and test files, where a raw element stands in for an
 arbitrary caller-supplied child.
 
@@ -559,14 +559,14 @@ only when a new primitive gets an owner.
 ## 10. Icons
 
 **All icons come from `@keyline-icons/react`, and are drawn by
-`@ValenceUI/Icon`.** Phosphor, Remix Icon, Tabler, Lucide and Hugeicons are all banned in ESLint, so a
+`@ValenceUI/Icon`.** Phosphor, Remix Icon, Tabler, Lucide and Hugeicons are all banned by oxlint, so a
 second set cannot come back a file at a time. A call site names the icon it wants, aliased with
 an `Icon` suffix so it never shadows anything else in the file, and `Icon` decides how it is
 drawn, which is what keeps the set swappable in one file.
 
 An icon that is not the colour of the text around it is given a `tone` (`strong`, `muted`,
 `faint` or `danger`) rather than a colour in `className`. `className` on an icon is for where
-it sits. ESLint fails the build on a text colour in an icon's `className`.
+it sits. oxlint fails the build on a text colour in an icon's `className`.
 
 ```tsx
 import { Icon } from '@ValenceUI/Icon';
@@ -579,7 +579,7 @@ import { Home as HomeFilledIcon } from '@keyline-icons/react/fill';
 **`apps/landing` is the one exception, and draws from `@tabler/icons-react`
 directly instead.** getvalence.app is a marketing page rather than the
 product, and wants brand icons no product set has. A landing component imports
-a Tabler icon and renders it itself where it needs one. `eslint.config.ts` scopes the ban accordingly: `apps/landing/src`
+a Tabler icon and renders it itself where it needs one. `oxlint.config.ts` scopes the ban accordingly: `apps/landing/src`
 keeps every other rule in this section, Tabler included, everywhere else
 still refuses it.
 
@@ -596,11 +596,16 @@ or confirm button, so the action that matters reads heavier than the ones around
 **No raw SVG anywhere in the codebase.** No inline `<svg>` elements, no
 `.svg` imported as a component, no SVG strings.
 
-The sole exception is brand assets — logo, wordmark, favicon — which live as
-files in `packages/ui/assets/brand/` and are referenced by URL, never inlined
-into JSX. That exception also covers the marks the icon set does not draw: it
-has no brand glyphs, so a browser or a service is named in words or given a
-generic shape rather than approximated with the nearest thing.
+The sole exception is brand assets, which are files referenced by URL and never
+inlined into JSX:
+
+- Valence's own logo, wordmark and favicon, in `packages/ui/assets/brand/`.
+- The marks of the browsers and systems a session runs in, which the icon set
+  does not draw. They are single files from Simple Icons in
+  `packages/ui/src/assets/brands/`, with their source and licence in its
+  `SOURCES.md`, and only `BrandGlyph` draws them — through a CSS mask, so they
+  take the colour of the text around them like any icon. A brand with no mark
+  there keeps a generic shape rather than borrowing one that is not its own.
 
 ---
 
@@ -679,10 +684,11 @@ mandatory and drives the changelog.
 
 ## 14. Enforcement
 
-**oxlint** runs first for
-speed and owns all non-type-aware rules; **ESLint** owns only rules requiring the
-type checker; **husky** blocks anything non-conforming before it reaches the
-remote.
+**oxlint** owns every rule, the type-aware ones included, which it reads from
+TypeScript 7's native checker through `oxlint-tsgolint`. Valence's own rules live
+in `packages/lint` as a plugin, bundled by `pnpm --filter @valence/lint
+build` for oxlint to load. **husky** blocks anything non-conforming before
+it reaches the remote.
 
 Where a rule maps onto an existing lint rule, it is configured and enforced.
 Rules with no upstream equivalent — no comments, no index files, export shape,
@@ -747,11 +753,15 @@ format and the helpers.
   rolls fills a gap of one entry: in `packages/screens` through `Sentence`, elsewhere
   through `sayParts` or `sayCountParts`. Never split a sentence around an element.
 
-ESLint's `valence/no-hard-coded-strings` reports string literals that read like
+oxlint's `valence/no-hard-coded-strings` reports string literals that read like
 words for a person, templates with words around their values, and choices made on
 whether a number is one. A machine value that happens to read like words, such as a user
 agent or a mode a client matches on, takes a disable comment with its reason:
 
 ```ts
-// eslint-disable-next-line valence/no-hard-coded-strings -- a user agent, read by sites rather than by people
+// oxlint-disable-next-line valence/no-hard-coded-strings -- a user agent, read by sites rather than by people
 ```
+
+A value of a type that only code reads, such as a mode or a page's subject, is written as one
+lower-case word or in camelCase (`everyLibrary`, not `'every library'`), which the rule reads as
+code without being told.

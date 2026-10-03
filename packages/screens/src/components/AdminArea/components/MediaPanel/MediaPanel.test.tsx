@@ -69,6 +69,22 @@ const props = {
   onRebuildArtefacts: vi.fn().mockResolvedValue(true),
 };
 
+/**
+ * Opens one of the card's choices and takes the one named.
+ *
+ * @param user - Who is pressing.
+ * @param menu - What the choice is for.
+ * @param choice - Which to take.
+ */
+const chooseFrom = async (
+  user: ReturnType<typeof userEvent.setup>,
+  menu: string,
+  choice: string,
+) => {
+  await user.click(screen.getByRole('button', { name: menu }));
+  await user.click(await screen.findByRole('menuitemradio', { name: choice }));
+};
+
 describe('MediaPanel', () => {
   it('lists what the libraries hold', () => {
     render(<MediaPanel {...props} media={[item()]} />);
@@ -257,7 +273,7 @@ describe('MediaPanel', () => {
     expect(screen.getByText('Delete Parasite?')).toBeInTheDocument();
   });
 
-  it('gives each library of films or series its own tab', async () => {
+  it('offers each library of films or series as its own choice', async () => {
     const user = userEvent.setup();
 
     render(<MediaPanel {...props} media={[item(), episode('e1', 1, 1, 'Pilot')]} />);
@@ -265,7 +281,7 @@ describe('MediaPanel', () => {
     expect(screen.getByText('Parasite')).toBeInTheDocument();
     expect(screen.queryByText('From')).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('tab', { name: 'Shows' }));
+    await chooseFrom(user, 'Which library', 'Shows');
 
     expect(await screen.findByText('From')).toBeInTheDocument();
     expect(screen.queryByText('Parasite')).not.toBeInTheDocument();
@@ -281,7 +297,7 @@ describe('MediaPanel', () => {
       />,
     );
 
-    await user.click(screen.getByRole('tab', { name: 'Shows' }));
+    await chooseFrom(user, 'Which library', 'Shows');
 
     const row = await screen.findByRole('row', { name: /From/ });
 
@@ -304,7 +320,7 @@ describe('MediaPanel', () => {
       />,
     );
 
-    await user.click(screen.getByRole('tab', { name: 'Shows' }));
+    await chooseFrom(user, 'Which library', 'Shows');
     await user.click(await screen.findByRole('button', { name: 'Show the episodes of From' }));
 
     const seasonOne = screen.getByRole('row', { name: /Season 1/ });
@@ -340,7 +356,7 @@ describe('MediaPanel', () => {
       />,
     );
 
-    await user.click(screen.getByRole('tab', { name: 'Shows' }));
+    await chooseFrom(user, 'Which library', 'Shows');
     await user.click(await screen.findByRole('button', { name: 'Show the episodes of From' }));
 
     expect(screen.getByRole('row', { name: /Pilot/ })).toHaveAttribute('data-depth', '1');
@@ -359,7 +375,7 @@ describe('MediaPanel', () => {
       />,
     );
 
-    await user.click(screen.getByRole('tab', { name: 'Shows' }));
+    await chooseFrom(user, 'Which library', 'Shows');
     await user.click(await screen.findByRole('button', { name: 'Show the episodes of From' }));
     await user.click(screen.getByRole('button', { name: 'Actions for Pilot' }));
     await user.click(screen.getByRole('menuitem', { name: /Delete file/ }));
@@ -374,7 +390,7 @@ describe('MediaPanel', () => {
 
     render(<MediaPanel {...props} media={[episode('e1', 1, 1, 'Pilot')]} onDelete={onDelete} />);
 
-    await user.click(screen.getByRole('tab', { name: 'Shows' }));
+    await chooseFrom(user, 'Which library', 'Shows');
     await user.click(await screen.findByRole('button', { name: 'Actions for From' }));
     await user.click(screen.getByRole('menuitem', { name: /Delete series/ }));
 
@@ -403,7 +419,7 @@ describe('MediaPanel', () => {
       />,
     );
 
-    await user.click(screen.getByRole('tab', { name: 'Shows' }));
+    await chooseFrom(user, 'Which library', 'Shows');
     await user.click(await screen.findByRole('button', { name: 'Actions for From' }));
 
     expect(screen.queryByRole('menuitem', { name: /Delete series/ })).not.toBeInTheDocument();
@@ -421,7 +437,7 @@ describe('MediaPanel', () => {
       />,
     );
 
-    await user.click(screen.getByRole('tab', { name: 'Shows' }));
+    await chooseFrom(user, 'Which library', 'Shows');
     await user.click(await screen.findByRole('button', { name: 'Actions for From' }));
     await user.click(screen.getByRole('menuitem', { name: /Re-encode every episode/ }));
 
@@ -473,7 +489,7 @@ describe('MediaPanel', () => {
 
     expect(screen.getByText('Unmatched')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Unmatched (2)' }));
+    await chooseFrom(user, 'Which titles', 'Unmatched (2)');
 
     expect(screen.queryByText('Parasite')).not.toBeInTheDocument();
     expect(screen.getByText('Heat')).toBeInTheDocument();
@@ -538,7 +554,7 @@ describe('MediaPanel', () => {
       />,
     );
 
-    await user.click(screen.getByRole('tab', { name: 'Shows' }));
+    await chooseFrom(user, 'Which library', 'Shows');
 
     expect(
       await screen.findByRole('button', { name: 'Open /media/shows/From in Files' }),
@@ -582,12 +598,16 @@ describe('MediaPanel', () => {
       />,
     );
 
-    await user.click(screen.getByRole('tab', { name: 'Music' }));
+    await chooseFrom(user, 'Which library', 'Music');
 
     expect(await screen.findByText('Blue')).toBeInTheDocument();
     expect(screen.getByText('Joni Mitchell · 10 tracks · 36:00')).toBeInTheDocument();
-    expect(screen.getByText('1 album')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'No cover (1)' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Which titles' }));
+
+    expect(await screen.findByRole('menuitemradio', { name: 'No cover (1)' })).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
 
     await user.click(screen.getByRole('button', { name: 'Actions for Blue' }));
     await user.click(screen.getByRole('menuitem', { name: /Wrong match/ }));
@@ -628,7 +648,7 @@ describe('MediaPanel', () => {
       />,
     );
 
-    await user.click(screen.getByRole('tab', { name: 'Books' }));
+    await chooseFrom(user, 'Which library', 'Books');
 
     expect(await screen.findByText('Dune')).toBeInTheDocument();
     expect(screen.getByText('Frank Herbert · 48 chapters')).toBeInTheDocument();
@@ -694,7 +714,7 @@ describe('MediaPanel', () => {
       />,
     );
 
-    await user.click(screen.getByRole('tab', { name: 'Shows' }));
+    await chooseFrom(user, 'Which library', 'Shows');
     await user.click(await screen.findByRole('button', { name: 'Show the episodes of From' }));
 
     expect(screen.getAllByRole('row', { name: /Pilot/ })).toHaveLength(1);

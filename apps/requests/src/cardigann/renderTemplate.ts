@@ -1,4 +1,4 @@
-/* eslint-disable valence/no-hard-coded-strings -- Cardigann templates spell a true value as True */
+/* oxlint-disable valence/no-hard-coded-strings -- Cardigann templates spell a true value as True */
 import { translateRegex } from '@ValenceRequests/cardigann/translateRegex';
 import { translateReplacement } from '@ValenceRequests/cardigann/translateReplacement';
 import type {

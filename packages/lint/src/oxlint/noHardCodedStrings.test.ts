@@ -1,0 +1,118 @@
+import { aRuleTester } from './aRuleTester';
+import { noHardCodedStrings } from './noHardCodedStrings';
+
+const ruleTester = aRuleTester();
+
+ruleTester.run('no-hard-coded-strings', noHardCodedStrings, {
+  valid: [
+    { code: "const it = say('offline.heading');" },
+    { code: "import { say } from '@ValenceI18n/say';" },
+    { code: 'const it = <p className="flex items-center gap-2">{say(\'a.b\')}</p>;' },
+    { code: "const it = cn('relative flex h-9', isOn && 'text-text');" },
+    { code: "const it = 'valence-rail relative isolate flex w-fit items-center';" },
+    { code: "const it = { label: 'px-3 py-1.5 text-xs uppercase tracking-[0.14em]' };" },
+    { code: "Thing.displayName = 'Thing';" },
+    { code: "console.error('Something went wrong here');" },
+    { code: "log.info('The scan finished');" },
+    { code: "log('Listening on port 3000.');" },
+    { code: "const it = { label: '1080p' };" },
+    { code: "const it = rate === 1 ? say('common.normal') : `${rate.toString()}x`;" },
+    { code: "const it = <Tile className={count === 1 ? 'col-span-2' : 'col-span-1'} />;" },
+    { code: 'const it = { sans: \'system-ui, "Segoe UI", Roboto, sans-serif\' };' },
+    { code: 'const it = { transform: `translate3d(${x}px, ${y}px, 0)` };' },
+    { code: "const it = { rel: 'noreferrer noopener' };" },
+    { code: 'const it = `attachment; filename="${name}.mp4"`;' },
+    {
+      code: 'class Failed extends Error { constructor(path: string) { super(`${path} answered badly`); } }',
+    },
+    { code: 'const it = `valence.shared.${bookId}`;' },
+    { code: "const it = 'valence.held.resume.';" },
+    { code: "const it = isShared ? 'public, max-age=604800, immutable' : 'no-store';" },
+    { code: 'const it = saying(`server.jobs.phase.${phase}`);' },
+    { code: "const it = line.slice('Dialogue:'.length);" },
+    { code: "context.res.headers.append('Vary', 'Origin');" },
+    { code: "const it = { 'Access-Control-Allow-Methods': 'GET, POST, PUT' };" },
+    { code: 'const it = <Chip label="4K" />;' },
+    { code: "print('Filed The Thing into Films.');" },
+    { code: "const it = { Authorization: `Bearer ${secret}`, 'user-agent': 'Valence Server' };" },
+    { code: "process.stdout.write('Restoring the database');" },
+    { code: "throw new Error('That should never happen');" },
+    { code: "if (kind === 'Films') {}" },
+    { code: "switch (x) { case 'Some Thing': break; }" },
+    { code: "type Kind = 'Some Thing';" },
+    { code: "const it = { code: 'ClientSupportsSource' };" },
+    { code: "const it = 'RefFramesNotSupported';" },
+    { code: "const it = z.literal('Ed25519');" },
+    { code: 'const it = `series:${key}`;' },
+    { code: "const it = 'https:';" },
+    { code: "const it = headers.get('Content-Type');" },
+    { code: "const it = line.startsWith('Format:');" },
+    { code: "const it = { id: 'Films' };" },
+    { code: "const it = { label: 'phone.theLibrary.films' };" },
+    { code: "const it = 'here';" },
+    { code: 'const it = sql`SELECT count(*) FROM thing WHERE name = ${name}`;' },
+    { code: "context.header('Cache-Control', 'no-store, max-age=0');" },
+    { code: 'const it = <EmbeddedVideo allow="autoplay; fullscreen" />;' },
+    { code: 'const it = <View testID="Main screen" />;' },
+    { filename: 'a/b/Thing.test.tsx', code: 'const it = <p>Hello there</p>;' },
+    { filename: 'apps/server/src/routes/MusicRoute.ts', code: "const it = 'Not signed in';" },
+  ],
+  invalid: [
+    { code: 'const it = <p>On this device</p>;', errors: [{ messageId: 'words' }] },
+    { code: 'const it = <Button label="Delete" />;', errors: [{ messageId: 'words' }] },
+    { code: "const it = <Field placeholder={'search'} />;", errors: [{ messageId: 'words' }] },
+    { code: "const it = { label: 'Films' };", errors: [{ messageId: 'words' }] },
+    { code: "const it = { error: 'Nobody is signed in.' };", errors: [{ messageId: 'words' }] },
+    { code: "const it = 'Skip Intro';", errors: [{ messageId: 'words' }] },
+    { code: "const it = 'Unknown';", errors: [{ messageId: 'words' }] },
+    { code: "const it = 'it disappears.';", errors: [{ messageId: 'words' }] },
+    { code: "const it = 'at some point';", errors: [{ messageId: 'words' }] },
+    {
+      code: 'const it = `${count.toString()} min ago`;',
+      errors: [{ messageId: 'words' }],
+    },
+    {
+      code: 'const it = <Rail label={`Forward a page of ${title}`} />;',
+      errors: [{ messageId: 'words' }],
+    },
+    {
+      code: "const it = isOn ? 'Switch off' : 'Switch on';",
+      errors: [{ messageId: 'words' }, { messageId: 'words' }],
+    },
+    { code: "const it = 'Hello ' + name;", errors: [{ messageId: 'words' }] },
+    {
+      code: 'const it = `${formatBytes(done)} of ${formatBytes(size)}`;',
+      errors: [{ messageId: 'words' }],
+    },
+    {
+      code: 'const it = <p>{`${describeLength(left)} left`}</p>;',
+      errors: [{ messageId: 'words' }],
+    },
+    {
+      code: "const it = count === 1 ? '1 episode' : `${count.toString()} episodes`;",
+      errors: [{ messageId: 'counted' }, { messageId: 'words' }],
+    },
+    {
+      code: "const it = `${count.toString()} song${count === 1 ? '' : 's'}`;",
+      errors: [{ messageId: 'counted' }],
+    },
+  ],
+});
+
+ruleTester.run('no-hard-coded-strings, as keys', noHardCodedStrings, {
+  valid: [
+    { code: "const look = speed === 1 ? 'ghost' : 'soft';" },
+    { code: "const states = { paused: 'stopped' };" },
+    { code: "const page = { about: 'everyLibrary' };" },
+    { code: "const column = text('ownerId').references(() => owner.id).onDelete('set null');" },
+  ],
+  invalid: [
+    { code: "pick('every library');", errors: [{ messageId: 'words' }] },
+    { code: "const page = { about: 'no libraries' };", errors: [{ messageId: 'words' }] },
+    { code: "const states = { error: 'failed' };", errors: [{ messageId: 'words' }] },
+    {
+      code: "const flag = (isNew: boolean) => isNew ? 'New episode' : 'Recently added';",
+      errors: [{ messageId: 'words' }, { messageId: 'words' }],
+    },
+  ],
+});

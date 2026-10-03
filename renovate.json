@@ -6,7 +6,7 @@
       "customType": "regex",
       "description": "The valence-ffmpeg build the image installs, which local development syncs from too, the default the docs give for it, and the build each workflow installs",
       "managerFilePatterns": [
-        "/(^|/)Dockerfile$/",
+        "/(^|/)(\\w+\\.)?Dockerfile$/",
         "/(^|/)apps/docs/src/content/reference/environment-variables\\.mdx$/",
         "/(^|/)\\.github/workflows/[^/]+\\.ya?ml$/"
       ],

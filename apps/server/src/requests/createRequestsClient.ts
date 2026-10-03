@@ -118,7 +118,8 @@ type RequestsAnswer<Value> =
   | { kind: 'silent'; reason: Said; problemCode: ProblemCode };
 
 type ReleaseDownload =
-  { kind: 'magnet'; url: string } | { kind: 'file'; bytes: Uint8Array; contentType: string };
+  | { kind: 'magnet'; url: string }
+  | { kind: 'file'; bytes: Uint8Array; contentType: string };
 
 type RequestsFetch = (
   url: string,

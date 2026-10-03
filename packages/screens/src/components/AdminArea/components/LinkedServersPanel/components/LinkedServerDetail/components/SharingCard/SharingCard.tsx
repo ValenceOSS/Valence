@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronsUpDown as ChevronsUpDownIcon } from '@keyline-icons/react';
+import { ChevronsUpDown as ChevronsUpDownIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Icon } from '@ValenceUI/Icon';

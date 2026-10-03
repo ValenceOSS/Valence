@@ -61,7 +61,7 @@ describe('useAppliedPluginTheme', () => {
     renderHook(() => useAppliedPluginTheme(), { wrapper });
 
     await waitFor(() => {
-      expect(document.documentElement.style.getPropertyValue('--radius-scale')).toBe('0.6');
+      expect(document.documentElement.style.getPropertyValue('--radius-scale')).toBe('1');
     });
 
     expect(fetchPluginContributions).not.toHaveBeenCalled();
@@ -88,7 +88,7 @@ describe('useAppliedPluginTheme', () => {
       expect(accent()).toBe('');
     });
 
-    expect(document.documentElement.style.getPropertyValue('--radius-scale')).toBe('0.6');
+    expect(document.documentElement.style.getPropertyValue('--radius-scale')).toBe('1');
   });
 
   it('falls back to Valence’s own colours when the plugin has gone', async () => {

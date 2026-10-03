@@ -1,12 +1,5 @@
-import { readWholeNumber } from '@ValenceCore/functions/readWholeNumber';
-import type {
-  Indexer,
-  IndexerDraft,
-  IndexerKind,
-  IndexerSettings,
-} from '@ValenceContracts/schemas/Indexer';
+import type { Indexer, IndexerKind, IndexerSettings } from '@ValenceContracts/schemas/Indexer';
 import type { IndexerStart } from '@ValenceScreens/components/AdminArea/IndexerStart';
-import { say } from '@ValenceI18n/say';
 
 type IndexerForm = {
   kind: IndexerKind;
@@ -24,8 +17,6 @@ type IndexerForm = {
   seedSeconds: string;
   seedRatio: string;
 };
-
-type ReadIndexerForm = { draft: IndexerDraft; problem: null } | { draft: null; problem: string };
 
 const A_NEW_INDEXER: IndexerForm = {
   kind: 'torznab',
@@ -86,94 +77,6 @@ const formFor = (indexer: Indexer | null, start: IndexerStart | null = null): In
   };
 };
 
-/**
- * Reads the indexer form into an indexer to keep or try, or says the first thing wrong with it in
- * words that point at the field.
- *
- * @param form - The form as it stands.
- * @returns The indexer, or what is wrong.
- */
-const readIndexerForm = (form: IndexerForm): ReadIndexerForm => {
-  const name = form.name.trim();
-  const url = form.url.trim();
-
-  if (name === '') {
-    return {
-      draft: null,
-      problem: say('screens.indexerDialog.readIndexerForm.giveTheIndexerAName'),
-    };
-  }
-
-  if (!URL.canParse(url) || !/^https?:$/.test(new URL(url).protocol)) {
-    return { draft: null, problem: say('common.theAddressNeedsToBeA') };
-  }
-
-  const priority = readWholeNumber(form.priority, 1, 50);
-
-  if (priority === null) {
-    return { draft: null, problem: say('common.priorityIsAWholeNumberFrom') };
-  }
-
-  const perMinute =
-    form.requestsPerMinute.trim() === '' ? null : readWholeNumber(form.requestsPerMinute, 1, 600);
-
-  if (perMinute === null && form.requestsPerMinute.trim() !== '') {
-    return {
-      draft: null,
-      problem: say('screens.indexerDialog.readIndexerForm.theLimitIsAWholeNumber'),
-    };
-  }
-
-  const timeout = readWholeNumber(form.timeoutSeconds, 5, 120);
-
-  if (timeout === null) {
-    return {
-      draft: null,
-      problem: say('screens.indexerDialog.readIndexerForm.waitBetween5And120Seconds'),
-    };
-  }
-
-  const seedSeconds =
-    form.seedSeconds.trim() === '' ? null : readWholeNumber(form.seedSeconds, 0, 31_536_000);
-
-  if (seedSeconds === null && form.seedSeconds.trim() !== '') {
-    return {
-      draft: null,
-      problem: say('screens.indexerDialog.readIndexerForm.seedTimeIsAWholeNumber'),
-    };
-  }
-
-  const ratio = form.seedRatio.trim() === '' ? null : Number(form.seedRatio.trim());
-
-  if (ratio !== null && (!Number.isFinite(ratio) || ratio < 0 || ratio > 1000)) {
-    return {
-      draft: null,
-      problem: say('screens.indexerDialog.readIndexerForm.aRatioIsANumberFrom'),
-    };
-  }
-
-  return {
-    draft: {
-      kind: form.kind,
-      name,
-      url,
-      apiKey: form.apiKey.trim(),
-      priority,
-      requestsPerMinute: perMinute,
-      timeoutSeconds: timeout,
-      isEnabled: form.isEnabled,
-      categories: form.categories,
-      definitionId: form.kind === 'cardigann' ? form.definitionId : null,
-      settings: form.kind === 'cardigann' ? form.settings : {},
-      removesWhenDone:
-        form.removesWhenDone === 'tracker' ? null : form.removesWhenDone === 'always',
-      seedSeconds,
-      seedRatio: ratio,
-    },
-    problem: null,
-  };
-};
-
 export type { IndexerForm };
 
-export { A_NEW_INDEXER, formFor, readIndexerForm };
+export { A_NEW_INDEXER, formFor };

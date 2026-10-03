@@ -1,0 +1,54 @@
+# Throwaway databases for the engine tests, kept in memory so nothing outlives them:
+#   docker compose -f docker/compose.test.yaml up -d --wait
+# then MYSQL_TEST_URL=mysql://root:valence@127.0.0.1:<port>: 3307 for MySQL 8.4 and 3308 for
+# MariaDB 11.4. MariaDB 10.6, the oldest Valence supports, is on 3309 behind `--profile oldest`:
+# every scratch database lives in memory, and three engines at once outgrow a small Docker VM,
+# which is also why each runs with a small buffer pool and no performance schema.
+name: valence-test
+
+services:
+  mysql:
+    image: mysql:8.4
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_0900_bin
+      --innodb-buffer-pool-size=64M --performance-schema=OFF
+    environment:
+      MYSQL_ROOT_PASSWORD: valence
+    ports:
+      - '3307:3306'
+    tmpfs:
+      - /var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-pvalence']
+      interval: 2s
+      retries: 60
+
+  mariadb:
+    image: mariadb:11.4
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_nopad_bin
+      --innodb-buffer-pool-size=64M --performance-schema=OFF
+    environment:
+      MARIADB_ROOT_PASSWORD: valence
+    ports:
+      - '3308:3306'
+    tmpfs:
+      - /var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'healthcheck.sh', '--connect', '--innodb_initialized']
+      interval: 2s
+      retries: 60
+
+  mariadb-oldest:
+    image: mariadb:10.6
+    profiles: [oldest]
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_nopad_bin
+      --innodb-buffer-pool-size=64M --performance-schema=OFF
+    environment:
+      MARIADB_ROOT_PASSWORD: valence
+    ports:
+      - '3309:3306'
+    tmpfs:
+      - /var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'healthcheck.sh', '--connect', '--innodb_initialized']
+      interval: 2s
+      retries: 60

@@ -20,7 +20,8 @@ import type { CalendarEpisode } from '@ValenceServer/calendar/CalendarEpisode';
 type MediaDeletion = MediaFileDeletion | { kind: 'absent' };
 
 type SeriesDeletion =
-  { kind: 'deleted'; files: number } | Exclude<MediaDeletion, { kind: 'deleted' }>;
+  | { kind: 'deleted'; files: number }
+  | Exclude<MediaDeletion, { kind: 'deleted' }>;
 
 type ListItemsOptions = {
   search?: string;

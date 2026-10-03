@@ -20,13 +20,13 @@ that the brokered plugin model does not become a wall.
 
 ```bash
 pnpm install
-docker compose -f compose.dev.yaml up -d db  # Postgres
+docker compose --project-directory . -f docker/compose.dev.yaml up -d db  # Postgres
 pnpm ffmpeg:sync         # Valence's own FFmpeg
 pnpm dev
 ```
 
 `pnpm ffmpeg:sync` fetches the build the shipped image carries — the version
-pinned in the `Dockerfile`, so it is the same one — and points your `.env` at
+pinned in `docker/server.Dockerfile`, so it is the same one — and points your `.env` at
 it. It never overwrites `VALENCE_FFMPEG` or `VALENCE_FFPROBE` if you have set them
 somewhere deliberate.
 
@@ -90,7 +90,7 @@ Full detail in the standards document. The ones that most often surprise people:
   Icons come from Hugeicons' free stroke set, drawn through `@ValenceUI/Icon`.
 - **Every function and component ships with a co-located test.**
 
-Where these map onto lint rules they are enforced by oxlint, ESLint and husky.
+Where these map onto lint rules they are enforced by oxlint and husky.
 The rest are upheld in review against
 [`CODING_STANDARD.md`](CODING_STANDARD.md), which is the reference a
 review comment will cite.

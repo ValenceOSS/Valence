@@ -284,7 +284,7 @@ describe('SettingsPanel', () => {
       />,
     );
 
-    expect(screen.getByText('secure')).toBeInTheDocument();
+    expect(screen.getByText('Secure')).toBeInTheDocument();
     expect(screen.getByText(/localhost:8420/)).toBeInTheDocument();
   });
 

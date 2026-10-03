@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   ShieldCheck as ShieldCheckIcon,
   TriangleAlert as TriangleAlertIcon,
-} from '@keyline-icons/react';
+} from '@keyline-icons/react/fill';
 import { Badge } from '@ValenceUI/Badge';
 import { Callout } from '@ValenceUI/Callout';
 import { Checkbox } from '@ValenceUI/Checkbox';
@@ -96,7 +96,7 @@ const InstallReviewDialog = ({ preview, onClose, onInstalled }: InstallReviewDia
             <p className="text-sm leading-relaxed text-text">{preview.plugin.description}</p>
 
             <section className="flex flex-col gap-2">
-              <h3 className="text-sm font-medium uppercase tracking-[0.18em] text-text-muted">
+              <h3 className="text-sm font-medium text-text-muted">
                 {say('screens.pluginsPanel.installReviewDialog.itWillBeAllowedTo')}
               </h3>
 

@@ -2,28 +2,25 @@ import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { OverviewPanel } from './OverviewPanel';
-import { measureStorage } from '@ValenceClient/admin/fetchAdmin';
 import { fetchResourceHistory } from '@ValenceClient/admin/fetchResourceHistory';
 import type { ReactElement } from 'react';
-import type * as FetchAdmin from '@ValenceClient/admin/fetchAdmin';
 import type { ActiveSession, AdminOverview, Job, Monitor } from '@ValenceClient/admin/fetchAdmin';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { PlaybackPlan, Reason } from '@ValenceContracts/schemas/PlaybackPlan';
 import type { ResourceSampleRecord } from '@ValenceContracts/schemas/ResourceSample';
 
-vi.mock('@ValenceClient/admin/fetchAdmin', async (importOriginal) => ({
-  ...(await importOriginal<typeof FetchAdmin>()),
-  measureStorage: vi.fn(),
-}));
-
 vi.mock('@ValenceClient/admin/fetchResourceHistory', () => ({
   fetchResourceHistory: vi.fn(),
 }));
 
-const measured = vi.mocked(measureStorage);
 const askedResourceHistory = vi.mocked(fetchResourceHistory);
+
+beforeEach(() => {
+  askedResourceHistory.mockReset();
+  askedResourceHistory.mockResolvedValue([]);
+});
 
 /**
  * Renders under the query client the load range toggle needs, since choosing a range beyond the
@@ -179,7 +176,7 @@ const props = {
   monitor: monitor(),
   libraries: [library()],
   sessions: [],
-  history: [],
+  readings: [],
   onOpenPanel: vi.fn(),
 };
 
@@ -337,55 +334,9 @@ describe('OverviewPanel', () => {
     expect(OverviewPanel.displayName).toBe('OverviewPanel');
   });
 
-  describe('counting the storage again', () => {
-    const counted = {
-      cache: {
-        previews: { count: 1, bytes: 5 * 1024 ** 2 },
-        trickplay: { count: 1, bytes: 1024 },
-        sessions: { count: 0, bytes: 0 },
-        atMs: Date.now(),
-      },
-      artwork: { count: 2, bytes: 2048, atMs: Date.now() },
-      bookPages: null,
-      libraryBytes: 3 * 1024 ** 4,
-    };
-
-    it('offers a way to ask for the figures again', () => {
-      renderPanel(<OverviewPanel {...props} />);
-
-      expect(screen.getByRole('button', { name: /Refresh/ })).toBeInTheDocument();
-    });
-
-    it('shows what the count found, rather than what the timer last saw', async () => {
-      measured.mockResolvedValue(counted);
-
-      const actor = userEvent.setup();
-
-      renderPanel(<OverviewPanel {...props} />);
-      await actor.click(screen.getByRole('button', { name: /Refresh/ }));
-
-      await waitFor(() => {
-        expect(screen.getByText('5.0 MB')).toBeInTheDocument();
-      });
-    });
-
-    it('leaves the figures alone when the count could not be made', async () => {
-      measured.mockResolvedValue(null);
-
-      const actor = userEvent.setup();
-
-      renderPanel(<OverviewPanel {...props} />);
-      await actor.click(screen.getByRole('button', { name: /Refresh/ }));
-
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /Refresh/ })).toBeEnabled();
-      });
-
-      expect(screen.getAllByText('Still counting').length).toBeGreaterThan(0);
-    });
-  });
-
   describe('load range', () => {
+    const RANGE_MENU = 'How far back to show the load';
+
     const sample = (overrides: Partial<ResourceSampleRecord> = {}): ResourceSampleRecord => ({
       id: 'sample-1',
       atMs: Date.now(),
@@ -397,14 +348,31 @@ describe('OverviewPanel', () => {
       ...overrides,
     });
 
-    it('shows the last minute by default, fed by the live buffer rather than a fetch', () => {
-      renderPanel(<OverviewPanel {...props} history={[10, 20, 30]} />);
+    it('shows the last seven days by default', async () => {
+      askedResourceHistory.mockResolvedValue([]);
 
-      expect(screen.getByRole('button', { name: 'Last minute' })).toHaveAttribute(
-        'aria-pressed',
-        'true',
-      );
-      expect(askedResourceHistory).not.toHaveBeenCalled();
+      renderPanel(<OverviewPanel {...props} />);
+
+      expect(screen.getByRole('button', { name: RANGE_MENU })).toHaveTextContent('Last 7 days');
+
+      await waitFor(() => {
+        expect(askedResourceHistory).toHaveBeenCalledWith('7d');
+      });
+    });
+
+    it('feeds the last minute from the live buffer rather than a fetch', async () => {
+      const actor = userEvent.setup();
+
+      askedResourceHistory.mockResolvedValue([]);
+      renderPanel(<OverviewPanel {...props} readings={[sample({ systemCpuPercent: 10 })]} />);
+      await waitFor(() => {
+        expect(askedResourceHistory).toHaveBeenCalledTimes(1);
+      });
+
+      await actor.click(screen.getByRole('button', { name: RANGE_MENU }));
+      await actor.click(await screen.findByRole('menuitemradio', { name: 'Last minute' }));
+
+      expect(askedResourceHistory).toHaveBeenCalledTimes(1);
     });
 
     it('reads a persisted range once it is chosen, and charts it', async () => {
@@ -417,22 +385,17 @@ describe('OverviewPanel', () => {
 
       renderPanel(<OverviewPanel {...props} />);
 
-      await actor.click(screen.getByRole('button', { name: '24h' }));
+      await actor.click(screen.getByRole('button', { name: RANGE_MENU }));
+      await actor.click(await screen.findByRole('menuitemradio', { name: 'Last 24 hours' }));
 
-      expect(
-        (await screen.findByText('80%', { exact: false })).closest('figcaption'),
-      ).toHaveTextContent(/Peak 80%/);
+      expect((await screen.findByText('Peak')).nextElementSibling).toHaveTextContent('80%');
       expect(askedResourceHistory).toHaveBeenCalledWith('24h');
     });
 
     it('says nothing has been measured yet rather than drawing an empty chart oddly', async () => {
-      const actor = userEvent.setup();
-
       askedResourceHistory.mockResolvedValue([]);
 
       renderPanel(<OverviewPanel {...props} />);
-
-      await actor.click(screen.getByRole('button', { name: '7d' }));
 
       expect(await screen.findByText('Nothing measured yet.')).toBeInTheDocument();
     });

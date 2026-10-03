@@ -14,7 +14,7 @@ type Loaded = {
   invoke: QuickJSHandle;
 };
 
-// eslint-disable-next-line valence/no-hard-coded-strings -- code that runs inside the sandbox
+// oxlint-disable-next-line valence/no-hard-coded-strings -- code that runs inside the sandbox
 const PRELUDE = `
 (() => {
   const host = globalThis.__valenceHost;
@@ -362,7 +362,7 @@ const runPluginSandbox = async (channel: SandboxChannel): Promise<void> => {
       deferred.resolve(value);
       value.dispose();
     } else {
-      // eslint-disable-next-line valence/no-hard-coded-strings -- thrown into the plugin's own code, for its author to read
+      // oxlint-disable-next-line valence/no-hard-coded-strings -- thrown into the plugin's own code, for its author to read
       const error = vm.newError(message.error ?? 'Valence refused that.');
 
       deferred.reject(error);

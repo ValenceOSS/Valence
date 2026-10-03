@@ -16,23 +16,29 @@ import type { FormFieldProps } from './FormField.types';
  *
  * @param label - What is being asked for.
  * @param description - What answering it does, said in a line or two.
+ * @param error - What is wrong with the answer, in red beneath it, for a control that does not say
+ *   so itself.
  * @param hint - Anything to say after the control, such as what happens to what was typed.
  * @param children - The control that answers it.
  * @param className - Extra classes for the caller's own layout.
  */
-const FormField = ({ label, description, hint, children, className }: FormFieldProps) => (
+const FormField = ({ label, description, hint, error, children, className }: FormFieldProps) => (
   <div data-slot="form-field" className={cn('flex flex-col gap-2', className)}>
-    <div className="flex flex-col gap-1">
-      <h4 className="text-[0.9375rem] font-semibold leading-tight text-text">{label}</h4>
+    <div className="flex flex-col gap-0.5">
+      <h4 className="text-[0.8125rem] font-medium leading-tight text-text">{label}</h4>
 
       {description === undefined ? null : (
-        <span className="font-body text-[0.8125rem] leading-snug text-text-muted">
-          {description}
-        </span>
+        <span className="font-body text-xs leading-snug text-text-muted">{description}</span>
       )}
     </div>
 
     <div className="flex min-w-0 flex-col gap-2">{children}</div>
+
+    {error === undefined ? null : (
+      <span role="alert" className="font-body text-xs leading-snug text-danger">
+        {error}
+      </span>
+    )}
 
     {hint === undefined ? null : (
       <span className="font-body text-xs leading-snug text-text-muted">{hint}</span>

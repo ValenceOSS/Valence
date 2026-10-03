@@ -2,8 +2,7 @@ import { MINIMUM_PASSWORD_LENGTH } from '@ValenceContracts/constants/MINIMUM_PAS
 import { UsernameSchema } from '@ValenceContracts/schemas/SetupLink';
 import { say } from '@ValenceI18n/say';
 import type { AccountDraft, AccountErrors } from './SetupWizard.types';
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { EMAIL_PATTERN } from '@ValenceContracts/constants/EMAIL_PATTERN';
 
 /**
  * Checks the administrator's account before it reaches the server, so whoever is setting up is told

@@ -112,7 +112,7 @@ const BOARDS: Readonly<Record<string, string>> = {
   US: 'MPA',
   AU: 'ACB',
   DE: 'FSK',
-  // eslint-disable-next-line valence/no-hard-coded-strings -- a ratings board's own name
+  // oxlint-disable-next-line valence/no-hard-coded-strings -- a ratings board's own name
   NL: 'Kijkwijzer',
   FR: 'CNC',
   ES: 'ICAA',

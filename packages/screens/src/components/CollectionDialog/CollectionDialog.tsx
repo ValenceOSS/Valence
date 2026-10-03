@@ -1,11 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  ArrowLeft as ArrowLeftIcon,
-  ArrowRight as ArrowRightIcon,
   ImagePlus as ImagePlusIcon,
   Layers as LayersIcon,
-  Minus as MinusIcon,
   MoreHorizontal as MoreHorizontalIcon,
   X as XIcon,
 } from '@keyline-icons/react';
@@ -13,6 +10,9 @@ import {
   Bin as BinFilledIcon,
   Image as ImageFilledIcon,
   SquarePen as SquarePenFilledIcon,
+  ArrowLeft as ArrowLeftFilledIcon,
+  ArrowRight as ArrowRightFilledIcon,
+  Minus as MinusFilledIcon,
 } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Button } from '@ValenceUI/Button';
@@ -157,10 +157,7 @@ const CollectionDialog = ({
               </DialogHeadlinePart>
 
               <span className="flex min-w-0 flex-1 flex-col gap-2">
-                <DialogHeadlinePart
-                  as="span"
-                  className="text-xs font-semibold uppercase tracking-[0.2em] text-text-muted"
-                >
+                <DialogHeadlinePart as="span" className="text-xs font-semibold text-text-muted">
                   {say('common.collection')}
                 </DialogHeadlinePart>
 
@@ -312,7 +309,7 @@ const CollectionDialog = ({
                     <span className="flex flex-wrap items-center gap-1">
                       {mayReorder && at > 0 ? (
                         <PanelCardAction
-                          icon={ArrowLeftIcon}
+                          icon={ArrowLeftFilledIcon}
                           onClick={() => {
                             move(at, at - 1);
                           }}
@@ -323,7 +320,7 @@ const CollectionDialog = ({
 
                       {mayReorder && at < entries.length - 1 ? (
                         <PanelCardAction
-                          icon={ArrowRightIcon}
+                          icon={ArrowRightFilledIcon}
                           onClick={() => {
                             move(at, at + 1);
                           }}
@@ -333,7 +330,7 @@ const CollectionDialog = ({
                       ) : null}
 
                       <PanelCardAction
-                        icon={MinusIcon}
+                        icon={MinusFilledIcon}
                         onClick={() => {
                           void dropFromCollection(collection.id, entry.id).then(refresh);
                         }}

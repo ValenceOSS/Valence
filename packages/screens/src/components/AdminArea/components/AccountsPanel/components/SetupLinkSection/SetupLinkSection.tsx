@@ -3,7 +3,7 @@ import {
   Link as LinkIcon,
   Mail as MailIcon,
   RefreshCw as RefreshCwIcon,
-} from '@keyline-icons/react';
+} from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { FormField } from '@ValenceUI/FormField';

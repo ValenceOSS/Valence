@@ -20,7 +20,7 @@ type ActionMenuGroup = {
 
 type ActionMenuSize = 'sm' | 'md';
 
-type ActionMenuLook = 'plain' | 'face' | 'pill' | 'raised';
+type ActionMenuLook = 'plain' | 'face' | 'pill' | 'raised' | 'labelled';
 
 type ActionMenuProps = {
   label: string;

@@ -46,19 +46,26 @@ describe('SessionMessageDialog', () => {
     expect(onSend).toHaveBeenCalledWith('Tea is ready');
   });
 
-  it('will not send nothing', () => {
-    render(<SessionMessageDialog {...props} />);
+  it('will not send nothing, and says so', async () => {
+    const actor = userEvent.setup();
+    const onSend = vi.fn(() => Promise.resolve());
 
-    expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();
+    render(<SessionMessageDialog {...props} onSend={onSend} />);
+    await actor.click(screen.getByRole('button', { name: 'Send' }));
+
+    expect(onSend).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toBeInTheDocument();
   });
 
   it('will not send a line of only spaces', async () => {
     const actor = userEvent.setup();
+    const onSend = vi.fn(() => Promise.resolve());
 
-    render(<SessionMessageDialog {...props} />);
+    render(<SessionMessageDialog {...props} onSend={onSend} />);
     await actor.type(screen.getByLabelText('What to tell them'), '   ');
+    await actor.click(screen.getByRole('button', { name: 'Send' }));
 
-    expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();
+    expect(onSend).not.toHaveBeenCalled();
   });
 
   it('says how much room is left rather than cutting the ending off', async () => {
@@ -74,14 +81,16 @@ describe('SessionMessageDialog', () => {
 
   it('refuses to send one too long for the banner, rather than truncating it', async () => {
     const actor = userEvent.setup();
+    const onSend = vi.fn(() => Promise.resolve());
 
-    render(<SessionMessageDialog {...props} />);
+    render(<SessionMessageDialog {...props} onSend={onSend} />);
     await actor.type(
       screen.getByLabelText('What to tell them'),
       'a'.repeat(SESSION_MESSAGE_MAX_LENGTH + 1),
     );
+    await actor.click(screen.getByRole('button', { name: 'Send' }));
 
-    expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();
+    expect(onSend).not.toHaveBeenCalled();
     expect(screen.getByText(/too long/)).toBeInTheDocument();
   });
 

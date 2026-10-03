@@ -1600,6 +1600,11 @@
     "context": "The label of a qr code, used in the phone sign in of the television app and in the scan to connect of the television app."
   },
   {
+    "handler": "common.actions",
+    "text": "Actions",
+    "context": "The words on a card's menu of things to do with the whole card, such as scanning every library, opening a list of them."
+  },
+  {
     "handler": "common.actionsForName",
     "text": "Actions for {name}",
     "context": "The label of a action menu, used in several places, among them the device list in the account area and the accounts panel in the admin area. {name} is filled in by the app."
@@ -2954,6 +2959,11 @@
     "handler": "common.enterACodeFromYourApp",
     "text": "Enter a code from your app to finish. Two-factor is not on until you do.",
     "context": "Text shown, used in the security in the account of the phone app and in the two factor setup."
+  },
+  {
+    "handler": "common.enterAName",
+    "text": "Enter a name.",
+    "context": "Shown under a name field in a form that was sent with the name left empty."
   },
   {
     "handler": "common.enterOneOfTheBackupCodes",
@@ -4721,6 +4731,11 @@
     "context": "Shown, used in the downloads of the phone app and in the track list. {title} is filled in by the app."
   },
   {
+    "handler": "common.peak",
+    "text": "Peak",
+    "context": "The highest point something reached: the busiest moment on the server load card, or the colour of a radar orb's highest readings."
+  },
+  {
     "handler": "common.peers",
     "text": "Peers",
     "context": "Shown, used in the download queue table in the downloads panel and in the admin area (from `releaseColumns`)."
@@ -5274,6 +5289,11 @@
     "handler": "common.saveTheseNowEachWorksOnce",
     "text": "Save these now. Each works once if you lose your authenticator, and they are not shown again.",
     "context": "Text shown, used in the security in the account of the phone app and in the two factor setup."
+  },
+  {
+    "handler": "common.sayWhy",
+    "text": "Say why.",
+    "context": "Shown under a reason field in a form that was sent with the reason left empty."
   },
   {
     "handler": "common.scanForChanges",
@@ -11746,6 +11766,16 @@
     "context": "The description of a form field in the add library dialog in the admin area."
   },
   {
+    "handler": "screens.adminArea.addTriggerDialog.aTimeOfDay",
+    "text": "A time of day, such as 03:00.",
+    "context": "Shown under the time a scheduled job runs, when what was typed is not a time of day."
+  },
+  {
+    "handler": "screens.adminArea.addTriggerDialog.aWholeNumberFrom1To",
+    "text": "A whole number from 1 to {most}.",
+    "context": "Shown under how often a scheduled job runs, when what was typed is not a whole number in range. {most} is the largest allowed, 59 for minutes or 23 for hours."
+  },
+  {
     "handler": "screens.adminArea.addTriggerDialog.daily",
     "text": "Daily",
     "context": "The label in the add trigger dialog in the admin area."
@@ -15461,6 +15491,31 @@
     "context": "Shown in the overview panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.overviewPanel.loadFigures.average",
+    "text": "Average",
+    "context": "Above the average processor share over the range shown, over the server load chart on the admin overview."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.loadFigures.latest",
+    "text": "Latest",
+    "context": "Above the most recent processor share saved, over the server load chart on the admin overview, when it shows a past range."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.loadFigures.loadAverage",
+    "text": "Load average",
+    "context": "Above the system load average (the count of processes waiting for a processor), over the server load chart on the admin overview."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.loadFigures.now",
+    "text": "Now",
+    "context": "Above the processor share in use at this moment, over the server load chart on the admin overview."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.memoryUsedOfTotal",
+    "text": "{used} of {total}",
+    "context": "Memory in use out of what the machine has, in the tooltip of the server load chart. {used} and {total} are sizes such as 37 GB."
+  },
+  {
     "handler": "screens.adminArea.overviewPanel.nobodyIsWatchingListeningOrReading",
     "text": "Nobody is watching, listening to or reading anything.",
     "context": "Text shown in the overview panel in the admin area when nobody is playing or reading anything."
@@ -15524,6 +15579,36 @@
     "handler": "screens.adminArea.overviewPanel.serverLoad",
     "text": "Server load",
     "context": "The title of a region in the overview panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.storageInfo.aboutTheStorage",
+    "text": "About the storage Valence is using",
+    "context": "The read-out name of the information button on the storage card of the admin overview."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.storageInfo.addedOnTop",
+    "text": "Added on top",
+    "context": "A line of the storage card's information on the admin overview: how much Valence's own files add to the library, as a share of it."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.storageInfo.countedWhen",
+    "text": "Counted {value}",
+    "context": "The heading of the storage card's information on the admin overview. {value} says how long ago the disk was counted, such as \"3 minutes ago\"."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.storageInfo.countsItself",
+    "text": "Valence counts this itself every five minutes.",
+    "context": "The last line of the storage card's information on the admin overview, in place of a button to count it again."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.storageInfo.shareOfTheLibrary",
+    "text": "{share} of the library",
+    "context": "How much Valence's own files add, in the storage card's information on the admin overview. {share} is a percentage such as 0.7%."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.storageInfo.valencesOwnFiles",
+    "text": "Valence's own files",
+    "context": "A line of the storage card's information on the admin overview: everything Valence itself has written to the disk."
   },
   {
     "handler": "screens.adminArea.overviewPanel.storageValenceIsUsing",
@@ -16571,6 +16656,11 @@
     "context": "Shown in the roles panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.rolesPanel.giveTheRoleAName",
+    "text": "Give the role a name.",
+    "context": "Shown under a role's name when it has been left empty."
+  },
+  {
     "handler": "screens.adminArea.rolesPanel.housemate",
     "text": "Housemate",
     "context": "Shown in an empty text field until something is typed in the roles panel in the admin area."
@@ -16599,6 +16689,11 @@
     "handler": "screens.adminArea.rolesPanel.rank",
     "text": "Rank",
     "context": "The label of a text field in the roles panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.rolesPanel.rankIsAWholeNumber",
+    "text": "A rank is a whole number from 0 up.",
+    "context": "Shown under a role's rank when it is not a whole number of zero or more."
   },
   {
     "handler": "screens.adminArea.rolesPanel.roleSaved",
@@ -16904,6 +16999,11 @@
     "handler": "screens.adminArea.sessionMessageDialog.whatToTellThem",
     "text": "What to tell them",
     "context": "The label of a text field in the session message dialog in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.sessionMessageDialog.writeWhatToTellThem",
+    "text": "Write what to tell them.",
+    "context": "Shown under the message field when an administrator tries to send an empty message to somebody watching."
   },
   {
     "handler": "screens.adminArea.sessionStatsDialog.bufferedAheadSecondsSAhead",
@@ -17631,6 +17731,11 @@
     "context": "Shown in an empty text field until something is typed in the webhook fields in the admin area."
   },
   {
+    "handler": "screens.adminArea.webhookFields.generic",
+    "text": "Generic",
+    "context": "The name of the webhook shape that posts Valence's own JSON envelope."
+  },
+  {
     "handler": "screens.adminArea.webhookFields.howArrivalsAreReported",
     "text": "How arrivals are reported",
     "context": "The label of a segmented row in the webhook fields in the admin area."
@@ -17646,6 +17751,11 @@
     "context": "Shown in the webhook fields in the admin area."
   },
   {
+    "handler": "screens.adminArea.webhookFields.ntfy",
+    "text": "ntfy",
+    "context": "The name of the webhook shape that posts a notification through ntfy, a notification service written in lower case."
+  },
+  {
     "handler": "screens.adminArea.webhookFields.oncePerScan",
     "text": "Once per scan",
     "context": "The label in the webhook fields in the admin area."
@@ -17654,6 +17764,11 @@
     "handler": "screens.adminArea.webhookFields.oneForEachThing",
     "text": "One for each thing",
     "context": "The label in the webhook fields in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.webhookFields.pickAtLeastOneEvent",
+    "text": "Pick at least one event to send.",
+    "context": "Shown above the list of events in the webhook dialog when it is saved with none of them chosen."
   },
   {
     "handler": "screens.adminArea.webhookFields.shape",
@@ -20969,9 +21084,24 @@
     "context": "The title of a headed section in the job health in the observability page."
   },
   {
+    "handler": "screens.observabilityPage.jobHealth.filterTheKinds",
+    "text": "Filter the kinds of job",
+    "context": "The read-out name of the filter menu on the health tab of jobs and logs."
+  },
+  {
+    "handler": "screens.observabilityPage.jobHealth.findAKindOfJob",
+    "text": "Find a kind of job",
+    "context": "The read-out name of the search box on the health tab of jobs and logs."
+  },
+  {
     "handler": "screens.observabilityPage.jobHealth.finishedWell",
     "text": "Finished well",
     "context": "The label in the job health in the observability page."
+  },
+  {
+    "handler": "screens.observabilityPage.jobHealth.hasFailed",
+    "text": "Has failed",
+    "context": "A filter on the health tab of jobs and logs: only kinds of job with at least one failed run in the range shown."
   },
   {
     "handler": "screens.observabilityPage.jobHealth.howEachKindOfJobHas",
@@ -20994,6 +21124,11 @@
     "context": "Shown in the job health in the observability page."
   },
   {
+    "handler": "screens.observabilityPage.jobHealth.neverFailed",
+    "text": "Never failed",
+    "context": "A filter on the health tab of jobs and logs: only kinds of job with no failed run in the range shown."
+  },
+  {
     "handler": "screens.observabilityPage.jobHealth.noJobHasRunInThis",
     "text": "No job has run in this time.",
     "context": "Shown in the job health in the observability page."
@@ -21012,6 +21147,11 @@
     "handler": "screens.observabilityPage.jobHealth.runs",
     "text": "Runs",
     "context": "The label in the job health in the observability page."
+  },
+  {
+    "handler": "screens.observabilityPage.jobHealth.searchByJob",
+    "text": "Search by job",
+    "context": "The placeholder of the search box on the health tab of jobs and logs, which narrows the table to kinds of job whose name matches."
   },
   {
     "handler": "screens.observabilityPage.jobHealth.slowestRun",
@@ -21657,6 +21797,11 @@
     "handler": "screens.overviewPanel.loadRangeToggle.howFarBackToShowThe",
     "text": "How far back to show the load",
     "context": "The label of a segmented row in the load range toggle in the overview panel."
+  },
+  {
+    "handler": "screens.overviewPanel.loadRangeToggle.last3Days",
+    "text": "Last 3 days",
+    "context": "One of the ranges the server load chart on the admin overview can show."
   },
   {
     "handler": "screens.overviewPanel.loadRangeToggle.lastMinute",
@@ -28472,11 +28617,6 @@
   {
     "handler": "ui.variants.radar.gridZoom",
     "text": "Grid zoom",
-    "context": "The label in the radar in the variants."
-  },
-  {
-    "handler": "ui.variants.radar.peak",
-    "text": "Peak",
     "context": "The label in the radar in the variants."
   },
   {

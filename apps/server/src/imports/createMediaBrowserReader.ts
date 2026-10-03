@@ -1,4 +1,4 @@
-/* eslint-disable valence/no-hard-coded-strings -- the source's own item types, fields, modes and element names, sent and matched rather than shown */
+/* oxlint-disable valence/no-hard-coded-strings -- the source's own item types, fields, modes and element names, sent and matched rather than shown */
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { SegmentKind } from '@ValenceContracts/schemas/MediaSegment';
 import { saying } from '@ValenceI18n/saying';

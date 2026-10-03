@@ -295,10 +295,7 @@ const MediaDetailDialog = ({
               </DialogHeadlinePart>
 
               {shown.seriesTitle === null || shown.seriesTitle === undefined ? null : (
-                <DialogHeadlinePart
-                  as="span"
-                  className="text-sm font-medium uppercase tracking-[0.2em] text-on-scrim/75"
-                >
+                <DialogHeadlinePart as="span" className="text-sm font-medium text-on-scrim/75">
                   {shown.title}
                 </DialogHeadlinePart>
               )}

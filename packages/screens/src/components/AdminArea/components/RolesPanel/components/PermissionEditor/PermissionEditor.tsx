@@ -1,6 +1,4 @@
 import { useMemo, useState } from 'react';
-import { Search as SearchIcon } from '@keyline-icons/react';
-import { Icon } from '@ValenceUI/Icon';
 import { TextField } from '@ValenceUI/TextField';
 import { describePermission } from '@ValenceClient/admin/describePermission';
 import { describePermissionDetail } from '@ValenceClient/admin/describePermissionDetail';
@@ -78,7 +76,6 @@ const PermissionEditor = ({
         value={search}
         onValueChange={setSearch}
         placeholder={say('screens.rolesPanel.permissionEditor.searchPermissions')}
-        icon={<Icon of={SearchIcon} size={15} />}
       />
 
       {groups.length === 0 && pluginGroups.length === 0 ? (

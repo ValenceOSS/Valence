@@ -63,6 +63,13 @@ const NEAR_THE_END = 200;
 
 const SHRINKS = 'w-px whitespace-nowrap pr-0 sm:pr-0';
 
+const FILLS = 'w-full max-w-0';
+
+const BAND = 'bg-[color-mix(in_oklab,var(--card-face)_93%,var(--color-text))]';
+
+const STRIPES =
+  '[&>tr:nth-child(even)]:bg-[color-mix(in_oklab,var(--color-text)_2.5%,transparent)]';
+
 const HEIGHT_CLASSES = {
   compact: 'max-h-[28rem]',
   fill: 'max-h-[calc(100dvh-16rem)]',
@@ -186,7 +193,12 @@ const DataTable = <Row extends RowData>({
     totalRows === undefined ? table.getPageCount() : Math.max(1, Math.ceil(totalRows / pageSize));
 
   return (
-    <div className={cn('flex flex-col pb-3', className)}>
+    <div
+      className={cn(
+        'valence-well m-2 flex flex-col overflow-hidden rounded-xl border-[color-mix(in_oklab,var(--color-text)_13%,transparent)]!',
+        className,
+      )}
+    >
       {toolbar === undefined ? null : (
         <div className="flex flex-wrap items-center justify-end gap-3 px-5 pb-4 pt-4">
           {toolbar}
@@ -206,7 +218,7 @@ const DataTable = <Row extends RowData>({
           HEIGHT_CLASSES[height],
         )}
       >
-        <HoverHighlight rect={rect} radius="md" />
+        <HoverHighlight rect={rect} radius="none" />
 
         <table className="w-full border-collapse text-sm" aria-label={label}>
           <thead>
@@ -223,7 +235,8 @@ const DataTable = <Row extends RowData>({
                       key={header.id}
                       scope="col"
                       className={cn(
-                        'sticky top-0 z-20 bg-[var(--card-face)] px-3 py-2 first:rounded-tl-lg last:rounded-tr-lg text-left text-xs font-medium uppercase tracking-[0.14em] text-text-muted sm:px-5',
+                        'sticky top-0 z-20 border-b border-[var(--surface-line)] px-3 py-2.5 text-left text-xs font-medium text-text-muted sm:px-5',
+                        BAND,
                         header.column.columnDef.meta?.shrinks === true ? SHRINKS : '',
                       )}
                     >
@@ -233,7 +246,7 @@ const DataTable = <Row extends RowData>({
                             variant="subtle"
                             size="none"
                             onClick={header.column.getToggleSortingHandler()}
-                            className="inline-flex items-center gap-1.5 uppercase tracking-[0.14em]"
+                            className="inline-flex items-center gap-1.5 font-medium"
                           >
                             <DrawnCell
                               draw={() =>
@@ -291,7 +304,7 @@ const DataTable = <Row extends RowData>({
             ))}
           </thead>
 
-          <tbody className="relative z-10">
+          <tbody className={cn('relative z-10', STRIPES)}>
             {rows.length === 0 ? (
               <tr>
                 <td
@@ -315,6 +328,9 @@ const DataTable = <Row extends RowData>({
                   const shrinks = row
                     .getAllCells()
                     .map((cell) => cell.column.columnDef.meta?.shrinks === true);
+                  const fills = row
+                    .getAllCells()
+                    .map((cell) => cell.column.columnDef.meta?.fills === true);
 
                   return row.depth === 0 ? (
                     <tr
@@ -336,6 +352,7 @@ const DataTable = <Row extends RowData>({
                           className={cn(
                             'px-3 py-3 align-middle sm:px-5',
                             shrinks[at] === true ? SHRINKS : '',
+                            fills[at] === true ? FILLS : '',
                           )}
                         >
                           {drawn}
@@ -364,6 +381,7 @@ const DataTable = <Row extends RowData>({
                           className={cn(
                             'px-3 align-middle sm:px-5',
                             shrinks[at] === true ? SHRINKS : '',
+                            fills[at] === true ? FILLS : '',
                           )}
                         >
                           <motion.div
@@ -388,7 +406,12 @@ const DataTable = <Row extends RowData>({
 
       {growsOnScroll ? (
         holding >= rows.length ? null : (
-          <p className="px-5 pt-3 font-body text-xs text-text-muted">
+          <p
+            className={cn(
+              'border-t border-[var(--surface-line)] px-5 py-2.5 font-body text-xs text-text-muted',
+              BAND,
+            )}
+          >
             {say('ui.dataTable.showingHoldingOfLengthScrollFor', {
               holding: holding.toString(),
               length: rows.length.toString(),
@@ -396,7 +419,12 @@ const DataTable = <Row extends RowData>({
           </p>
         )
       ) : pageCount <= 1 ? null : (
-        <div className="flex items-center justify-between gap-4 px-5 pt-3">
+        <div
+          className={cn(
+            'flex items-center justify-between gap-4 border-t border-[var(--surface-line)] px-5 py-2',
+            BAND,
+          )}
+        >
           <p className="font-body text-xs text-text-muted">
             {say('ui.dataTable.pageValueOfPageCountEveryRowIn', {
               value: (page + 1).toString(),

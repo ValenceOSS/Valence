@@ -7,7 +7,9 @@ import { say } from '@ValenceI18n/say';
 const LOOPBACK = new Set(['localhost', '127.0.0.1', '[::1]']);
 
 type Reply<Done> =
-  { kind: 'done'; done: Done } | { kind: 'cancelled' } | { kind: 'failed'; reason: string };
+  | { kind: 'done'; done: Done }
+  | { kind: 'cancelled' }
+  | { kind: 'failed'; reason: string };
 
 /**
  * Whether a server is somewhere a passkey can be used for at all: over HTTPS, or on this machine.

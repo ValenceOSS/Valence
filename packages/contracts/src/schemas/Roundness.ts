@@ -9,9 +9,9 @@ type Roundness = z.infer<typeof RoundnessSchema>;
 
 const ROUNDNESS_SCALES: Readonly<Record<Roundness, number>> = {
   sharp: 0,
-  soft: 0.6,
-  default: 1,
-  round: 1.6,
+  soft: 1,
+  default: 1.6,
+  round: 2.2,
 };
 
 const ROUNDNESS_LABELS: Readonly<Record<Roundness, string>> = {

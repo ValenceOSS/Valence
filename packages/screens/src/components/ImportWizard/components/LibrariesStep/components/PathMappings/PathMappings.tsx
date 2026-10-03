@@ -75,7 +75,6 @@ const PathMappings = ({ sourceName, mappings, isSaving, onSave }: PathMappingsPr
       <div className="flex flex-wrap gap-2">
         <Button
           variant="secondary"
-          size="sm"
           onClick={() => {
             setRows((held) => [...held, { from: '', to: '' }]);
           }}
@@ -86,7 +85,6 @@ const PathMappings = ({ sourceName, mappings, isSaving, onSave }: PathMappingsPr
 
         <Button
           variant="secondary"
-          size="sm"
           isLoading={isSaving}
           onClick={() => {
             onSave(rows.filter((row) => row.from.trim() !== '' && row.to.trim() !== ''));

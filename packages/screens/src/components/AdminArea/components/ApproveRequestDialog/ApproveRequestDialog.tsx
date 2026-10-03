@@ -1,14 +1,11 @@
 import { notify } from '@ValenceUI/notify';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronsUpDown as ChevronsUpDownIcon } from '@keyline-icons/react';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
-import { FormField } from '@ValenceUI/FormField';
-import { Icon } from '@ValenceUI/Icon';
-import { OptionMenu } from '@ValenceUI/OptionMenu';
+import { SelectField } from '@ValenceUI/SelectField';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import {
@@ -63,7 +60,6 @@ const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDi
       .filter((profile) => profile.kind === (isMusic ? 'music' : 'video'))
       .map((profile) => ({ id: profile.id, label: profile.name })),
   ];
-  const quality = qualities.find((one) => one.id === (profileId ?? THE_LIBRARYS));
 
   const places =
     request === null
@@ -71,7 +67,6 @@ const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDi
       : (libraries.data ?? [])
           .filter((entry) => entry.kind === libraryKindOf(request.kind) && entry.takesRequests)
           .map((entry) => ({ id: entry.id, label: entry.name }));
-  const place = places.find((one) => one.id === libraryId);
 
   const title =
     request === null
@@ -130,62 +125,26 @@ const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDi
       />
 
       <DialogContent className="flex flex-col gap-4">
-        <FormField
+        <SelectField
           label={say('common.quality')}
           description={say('common.theProfileItsReleasesAreJudged')}
-        >
-          <OptionMenu
-            label={say('common.quality')}
-            triggerShape="field"
-            matchTriggerWidth
-            groups={[
-              {
-                name: say('common.quality'),
-                selectedId: profileId ?? THE_LIBRARYS,
-                onSelect: (next) => {
-                  setProfileId(next === THE_LIBRARYS ? null : next);
-                },
-                options: qualities,
-              },
-            ]}
-            trigger={
-              <>
-                <span className="truncate">
-                  {quality?.label ?? say('common.theLibrarysOwnProfile')}
-                </span>
-                <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
-              </>
-            }
-          />
-        </FormField>
+          options={qualities}
+          value={profileId ?? THE_LIBRARYS}
+          onSelect={(next) => {
+            setProfileId(next === THE_LIBRARYS ? null : next);
+          }}
+          placeholder={say('common.theLibrarysOwnProfile')}
+        />
 
         {places.length < 2 ? null : (
-          <FormField
+          <SelectField
             label={say('common.library')}
             description={say('screens.adminArea.approveRequestDialog.whereItIsFiledOnceIt')}
-          >
-            <OptionMenu
-              label={say('common.library')}
-              triggerShape="field"
-              matchTriggerWidth
-              groups={[
-                {
-                  name: say('common.library'),
-                  selectedId: libraryId ?? '',
-                  onSelect: setLibraryId,
-                  options: places,
-                },
-              ]}
-              trigger={
-                <>
-                  <span className="truncate">
-                    {place?.label ?? say('screens.adminArea.approveRequestDialog.chooseALibrary')}
-                  </span>
-                  <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
-                </>
-              }
-            />
-          </FormField>
+            options={places}
+            value={libraryId ?? ''}
+            onSelect={setLibraryId}
+            placeholder={say('screens.adminArea.approveRequestDialog.chooseALibrary')}
+          />
         )}
 
         {request?.kind !== 'artist' ? null : (

@@ -1,4 +1,4 @@
-import { ChevronDown as ChevronDownIcon, Clock as ClockIcon } from '@keyline-icons/react';
+import { ChevronDown as ChevronDownIcon, Clock as ClockIcon } from '@keyline-icons/react/fill';
 import { Icon } from '@ValenceUI/Icon';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { defaultLogView } from '@ValenceClient/admin/defaultLogView';
@@ -25,6 +25,7 @@ const TimeRangeMenu = ({ search, onSearchChange }: TimeRangeMenuProps) => {
   return (
     <OptionMenu
       label={say('screens.observabilityPage.timeRangeMenu.timeRange')}
+      size="sm"
       triggerShape="field"
       className="w-auto"
       groups={[

@@ -33,7 +33,7 @@ const BarList = ({
 
   return (
     <div className={cn('flex flex-col gap-1', className)}>
-      <div className="flex items-center justify-between px-2 text-[0.6875rem] uppercase tracking-[0.14em] text-text-muted">
+      <div className="flex items-center justify-between px-2 text-[0.6875rem] font-medium text-text-muted">
         <span>{heading}</span>
         <span>{valueHeading}</span>
       </div>

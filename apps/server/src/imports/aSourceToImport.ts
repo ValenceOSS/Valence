@@ -1,4 +1,4 @@
-/* eslint-disable valence/no-hard-coded-strings -- test fixtures: the titles and names stand in for what a real server holds, and are never shown */
+/* oxlint-disable valence/no-hard-coded-strings -- test fixtures: the titles and names stand in for what a real server holds, and are never shown */
 import { NO_IDS } from './NO_IDS';
 import type { SourceItem, SourceReader, SourceUser } from './SourceReader';
 

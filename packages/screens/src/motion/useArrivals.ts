@@ -3,7 +3,8 @@ import { useReducedMotionConfig } from 'motion/react';
 import { revealItemVariants } from '@ValenceUI/animations/reveal';
 import type { MotionProps } from 'motion/react';
 
-const BATCH_GAP_MS = 300;
+import { takeArrivalPlace } from './takeArrivalPlace';
+import type { ArrivalBatch } from './ArrivalBatch';
 
 /**
  * Lets a long grid bring its cards in one after another the first time each is drawn, and never
@@ -28,23 +29,14 @@ const useArrivals = (): ((
   const prefersReducedMotion = useReducedMotionConfig();
   const seenRef = useRef(new Set<string>());
   const placesRef = useRef(new Map<string, number>());
-  const batchRef = useRef({ size: 0, lastAt: -Infinity });
+  const batchRef = useRef<ArrivalBatch>({ size: 0, lastAt: -Infinity });
 
   return (key: string) => {
     const isNew = !seenRef.current.has(key);
     let place = placesRef.current.get(key);
 
     if (isNew && place === undefined) {
-      const now = performance.now();
-      const batch = batchRef.current;
-
-      if (now - batch.lastAt > BATCH_GAP_MS) {
-        batch.size = 0;
-      }
-
-      place = batch.size;
-      batch.size += 1;
-      batch.lastAt = now;
+      place = takeArrivalPlace(batchRef.current, performance.now());
       placesRef.current.set(key, place);
     }
 

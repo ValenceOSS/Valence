@@ -1,6 +1,6 @@
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { useMemo, useRef, useState } from 'react';
-import { FileArrowUp as FileArrowUpIcon, Folder as FolderIcon } from '@keyline-icons/react';
+import { FileArrowUp as FileArrowUpIcon, Folder as FolderIcon } from '@keyline-icons/react/fill';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';

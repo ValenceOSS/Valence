@@ -23,7 +23,8 @@ type OptionMenuProps = {
   className?: string;
   align?: 'start' | 'center' | 'end';
   matchTriggerWidth?: boolean;
-  triggerShape?: 'icon' | 'field' | 'button' | 'confirmJoined' | 'secondaryJoined';
+  size?: 'sm' | 'md';
+  triggerShape?: 'icon' | 'field' | 'button' | 'quiet' | 'confirmJoined' | 'secondaryJoined';
 };
 
 export type { MenuOption, MenuGroup, OptionMenuProps };

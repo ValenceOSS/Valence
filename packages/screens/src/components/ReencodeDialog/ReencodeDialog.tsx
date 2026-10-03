@@ -47,7 +47,7 @@ const MODE_MEANINGS: Record<ReencodeMode, string> = {
   audioOnly: say('screens.reencodeDialog.thePictureIsCopiedUntouchedAnd'),
 };
 
-const SECTION = 'text-xs uppercase tracking-[0.14em] text-text-muted';
+const SECTION = 'text-xs font-medium text-text-muted';
 
 const AS_IT_WAS = 'original';
 

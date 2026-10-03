@@ -41,7 +41,7 @@
     "jest": "~30.5.2",
     "jest-expo": "~57.0.5",
     "react-test-renderer": "19.2.3",
-    "typescript": "^5.9.3"
+    "typescript": "^7.0.2"
   },
   "expo": {
     "install": {

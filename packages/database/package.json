@@ -23,6 +23,7 @@
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",
     "@vitest/coverage-v8": "^4.1.11",
+    "vite": "^8.3.0",
     "vitest": "^4.1.11"
   }
 }

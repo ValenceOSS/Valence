@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Plus as PlusIcon } from '@keyline-icons/react';
+import { Plus as PlusFilledIcon } from '@keyline-icons/react/fill';
 import { Rail } from '@ValenceUI/Rail';
 import { RevealItem } from '@ValenceUI/RevealItem';
 import { collectionQueries } from '@ValenceClient/query/collectionQueries';
@@ -44,7 +44,7 @@ const CollectionShelf = ({ onOpen }: CollectionShelfProps) => {
           ? {
               action: (
                 <PanelCardAction
-                  icon={PlusIcon}
+                  icon={PlusFilledIcon}
                   onClick={() => {
                     setIsMaking(true);
                   }}

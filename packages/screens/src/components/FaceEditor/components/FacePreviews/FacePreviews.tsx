@@ -23,7 +23,7 @@ const FacePreviews = ({ name, colour, avatar, source, pending, className }: Face
       <FaceCircle {...face} isLifted className="size-48 text-6xl" />
 
       <div className="flex w-full flex-col gap-3">
-        <p className="text-center text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">
+        <p className="text-center text-[0.65rem] font-medium text-text-muted">
           {say('screens.faceEditor.facePreviews.aroundValence')}
         </p>
 

@@ -77,7 +77,7 @@ describe('ProfilesPanel', () => {
     expect(within(rowOf('HD')).getByText('1080p · Blu-ray')).toBeInTheDocument();
   });
 
-  it('shows films and series first, and music behind its own tab', async () => {
+  it('shows films and series first, and music behind its own choice', async () => {
     const user = userEvent.setup();
 
     renderInAnAddress(<ProfilesPanel />);
@@ -85,7 +85,8 @@ describe('ProfilesPanel', () => {
     expect(await screen.findByText('HD')).toBeInTheDocument();
     expect(screen.queryByText('Lossless')).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('tab', { name: 'Music' }));
+    await user.click(screen.getByRole('button', { name: 'Which profiles to show' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Music' }));
 
     expect(await screen.findByText('Lossless')).toBeInTheDocument();
     expect(within(rowOf('Lossless')).getByText('Every library')).toBeInTheDocument();

@@ -1,7 +1,7 @@
 import { notify } from '@ValenceUI/notify';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronsUpDown as ChevronsUpDownIcon, Search as SearchIcon } from '@keyline-icons/react';
+import { Search as SearchIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
@@ -10,7 +10,7 @@ import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { FormField } from '@ValenceUI/FormField';
 import { Icon } from '@ValenceUI/Icon';
-import { OptionMenu } from '@ValenceUI/OptionMenu';
+import { SelectField } from '@ValenceUI/SelectField';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Spinner } from '@ValenceUI/Spinner';
 import { TextField } from '@ValenceUI/TextField';
@@ -147,7 +147,6 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
       .filter((profile) => profile.kind === (isMusic ? 'music' : 'video'))
       .map((profile) => ({ id: profile.id, label: profile.name })),
   ];
-  const quality = qualities.find((one) => one.id === (profileId ?? THE_LIBRARYS));
   const [problem, setProblem] = useState<string | null>(null);
 
   const isReady =
@@ -301,7 +300,16 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
               />
             </FormField>
 
-            <div className="flex flex-wrap items-end gap-3">
+            <form
+              className="flex flex-wrap items-end gap-3"
+              onSubmit={(event) => {
+                event.preventDefault();
+
+                if (query.trim() !== '') {
+                  look();
+                }
+              }}
+            >
               <TextField
                 label={
                   KINDS.find((one) => one.id === kind)?.searchFor ??
@@ -313,15 +321,15 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
               />
 
               <Button
+                type="submit"
                 variant="secondary"
                 disabled={query.trim() === ''}
                 isLoading={isSearching}
-                onClick={look}
               >
                 <Icon of={SearchIcon} size={16} />
                 {say('common.search')}
               </Button>
-            </div>
+            </form>
 
             {isSearching ? <Spinner label={say('common.askingTheCatalogue')} size="sm" /> : null}
 
@@ -377,34 +385,16 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
               </Button>
             </div>
 
-            <FormField
+            <SelectField
               label={say('common.quality')}
               description={say('common.theProfileItsReleasesAreJudged')}
-            >
-              <OptionMenu
-                label={say('common.quality')}
-                triggerShape="field"
-                matchTriggerWidth
-                groups={[
-                  {
-                    name: say('common.quality'),
-                    selectedId: profileId ?? THE_LIBRARYS,
-                    onSelect: (next) => {
-                      setProfileId(next === THE_LIBRARYS ? null : next);
-                    },
-                    options: qualities,
-                  },
-                ]}
-                trigger={
-                  <>
-                    <span className="truncate">
-                      {quality?.label ?? say('common.theLibrarysOwnProfile')}
-                    </span>
-                    <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
-                  </>
-                }
-              />
-            </FormField>
+              options={qualities}
+              value={profileId ?? THE_LIBRARYS}
+              onSelect={(next) => {
+                setProfileId(next === THE_LIBRARYS ? null : next);
+              }}
+              placeholder={say('common.theLibrarysOwnProfile')}
+            />
 
             {kind !== 'artist' ? null : (
               <ReleaseTypeChooser value={releaseTypes} onChange={setReleaseTypes} />

@@ -1,5 +1,7 @@
 import { notify } from '@ValenceUI/notify';
-import { useState } from 'react';
+import { useZodForm } from '@ValenceClient/forms/useZodForm';
+import { Form } from '@ValenceUI/Form';
+import { RefuseFormSchema } from './RefuseFormSchema';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -28,9 +30,6 @@ const RefuseRequestDialog = ({
   onRefused,
   onRefuseMany,
 }: RefuseRequestDialogProps) => {
-  const [reason, setReason] = useState('');
-  const [isRefusing, setIsRefusing] = useState(false);
-  const [problem, setProblem] = useState<string | null>(null);
   const isMany = howMany > 1 && onRefuseMany !== undefined;
   const title = isMany
     ? sayCount('screens.adminArea.refuseRequestDialog.refuseCountRequests', howMany)
@@ -38,42 +37,33 @@ const RefuseRequestDialog = ({
       ? say('screens.adminArea.refuseRequestDialog.refuseThisRequest')
       : say('screens.adminArea.refuseRequestDialog.refuseTitle', { title: request.title });
 
-  const refuse = () => {
+  const form = useZodForm(RefuseFormSchema, { reason: '' }, async (answers, { reset }) => {
     if (request === null) {
-      return;
+      return null;
     }
 
     if (isMany) {
-      setReason('');
-      onRefuseMany(reason);
+      reset({ reason: '' });
+      onRefuseMany(answers.reason);
 
-      return;
+      return null;
     }
 
-    setIsRefusing(true);
-    setProblem(null);
+    const { value, refusal } = await refuseMediaRequest(request.id, answers.reason);
 
-    void refuseMediaRequest(request.id, reason)
-      .then(({ value, refusal }) => {
-        if (value === null) {
-          setProblem(
-            refusal?.message ?? say('screens.adminArea.refuseRequestDialog.itCouldNotBeRefused'),
-          );
+    if (value === null) {
+      return refusal?.message ?? say('screens.adminArea.refuseRequestDialog.itCouldNotBeRefused');
+    }
 
-          return;
-        }
+    notify.worked(
+      say('screens.adminArea.refuseRequestDialog.refusedTitle', { title: request.title }),
+    );
+    reset({ reason: '' });
+    onRefused(value);
+    onClose();
 
-        notify.worked(
-          say('screens.adminArea.refuseRequestDialog.refusedTitle', { title: request.title }),
-        );
-        setReason('');
-        onRefused(value);
-        onClose();
-      })
-      .finally(() => {
-        setIsRefusing(false);
-      });
-  };
+    return null;
+  });
 
   return (
     <DialogCompanion label={title} isOpen={request !== null} onClose={onClose}>
@@ -83,34 +73,35 @@ const RefuseRequestDialog = ({
         detail={say('screens.adminArea.refuseRequestDialog.nothingIsFetchedForItIt')}
       />
 
-      <DialogContent>
-        <TextField
-          label={say('common.why')}
-          value={reason}
-          onValueChange={setReason}
-          placeholder={say('screens.adminArea.refuseRequestDialog.optional')}
-          description={
-            isMany
-              ? say('screens.adminArea.refuseRequestDialog.shownToEverybodyWhoRequestedOne')
-              : request === null
-                ? say('screens.adminArea.refuseRequestDialog.shownToWhoeverAsked')
-                : say('screens.adminArea.refuseRequestDialog.shownToName', {
-                    name: request.requestedBy.name,
-                  })
-          }
-        />
-      </DialogContent>
+      <Form label={title} onSubmit={form.submit} isDialog>
+        <DialogContent>
+          <TextField
+            label={say('common.why')}
+            {...form.text('reason')}
+            placeholder={say('screens.adminArea.refuseRequestDialog.optional')}
+            description={
+              isMany
+                ? say('screens.adminArea.refuseRequestDialog.shownToEverybodyWhoRequestedOne')
+                : request === null
+                  ? say('screens.adminArea.refuseRequestDialog.shownToWhoeverAsked')
+                  : say('screens.adminArea.refuseRequestDialog.shownToName', {
+                      name: request.requestedBy.name,
+                    })
+            }
+          />
+        </DialogContent>
 
-      <DialogFooter
-        note={problem}
-        dismiss={{ onChoose: onClose }}
-        confirm={{
-          label: say('common.refuse'),
-          onChoose: refuse,
-          isLoading: isRefusing,
-          isDestructive: true,
-        }}
-      />
+        <DialogFooter
+          note={form.problem}
+          dismiss={{ onChoose: onClose }}
+          confirm={{
+            label: say('common.refuse'),
+            isSubmit: true,
+            isLoading: form.isSubmitting,
+            isDestructive: true,
+          }}
+        />
+      </Form>
     </DialogCompanion>
   );
 };

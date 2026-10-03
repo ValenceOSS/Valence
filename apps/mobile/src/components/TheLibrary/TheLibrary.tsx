@@ -611,7 +611,7 @@ const TheLibrary = ({
                   of={part === 'films' ? Film : Monitor}
                   title={part === 'films' ? say('common.noFilmsYet') : say('common.noShowsYet')}
                   detail={howToFillIt(
-                    chosen === EVERY && ofThisKind.length > 1 ? 'every library' : 'one library',
+                    chosen === EVERY && ofThisKind.length > 1 ? 'everyLibrary' : 'oneLibrary',
                     false,
                   )}
                 />

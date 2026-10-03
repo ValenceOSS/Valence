@@ -10,14 +10,14 @@ import { say } from '@ValenceI18n/say';
  * @returns The line to put under the title.
  */
 const howToFillIt = (
-  missing: 'no libraries' | 'every library' | 'one library',
+  missing: 'noLibraries' | 'everyLibrary' | 'oneLibrary',
   canManage: boolean,
 ): string => {
-  if (missing === 'no libraries') {
+  if (missing === 'noLibraries') {
     return canManage ? say('common.addOneToGetStarted') : say('common.askTheServerAdminToAdd');
   }
 
-  if (missing === 'every library') {
+  if (missing === 'everyLibrary') {
     return canManage
       ? say('client.library.howToFillIt.scanYourLibrariesOrAddFiles')
       : say('client.library.howToFillIt.askTheServerAdminToScan');

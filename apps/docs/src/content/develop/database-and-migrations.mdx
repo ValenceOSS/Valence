@@ -53,7 +53,7 @@ Their `typecheck` scripts run both, so `pnpm typecheck` catches code that only c
 
 ## Writing a query every database reads
 
-Query code outside the dialect folders is written once and runs on Postgres, MySQL and MariaDB. The `valence/neutral-queries` ESLint rule bans what only one of them reads, and names what to use instead. The helpers live in `packages/database` and are imported as `@ValenceDatabase/*`.
+Query code outside the dialect folders is written once and runs on Postgres, MySQL and MariaDB. The `valence/neutral-queries` oxlint rule bans what only one of them reads, and names what to use instead. The helpers live in `packages/database` and are imported as `@ValenceDatabase/*`.
 
 | Not in shared code                  | Instead                                                   |
 | ----------------------------------- | --------------------------------------------------------- |
@@ -68,7 +68,7 @@ Query code outside the dialect folders is written once and runs on Postgres, MyS
 | `filter (where ...)` in `sql`       | `countWhere`                                              |
 | A double-quoted identifier in `sql` | `sql.identifier`, or the column itself                    |
 
-Others cover what the dialects spell differently: `jsonContains` and `jsonTextElements` for JSON arrays, `millisecondsBetween` and `epochMilliseconds` for time, and more beside them in `packages/database/src`. Only files inside a dialect folder may import a driver or a dialect's own Drizzle module, such as `drizzle-orm/pg-core`, `pg`, `drizzle-orm/mysql-core` or `mysql2`, and ESLint enforces that outside tests.
+Others cover what the dialects spell differently: `jsonContains` and `jsonTextElements` for JSON arrays, `millisecondsBetween` and `epochMilliseconds` for time, and more beside them in `packages/database/src`. Only files inside a dialect folder may import a driver or a dialect's own Drizzle module, such as `drizzle-orm/pg-core`, `pg`, `drizzle-orm/mysql-core` or `mysql2`, and oxlint enforces that outside tests.
 
 The rules are in [Coding standard](/develop/coding-standard), and the tests that prove a query on every engine are in [Testing](/develop/testing#tests-on-mysql-and-mariadb).
 
@@ -212,16 +212,16 @@ Test the pure parts, and if you add a query with subtle SQL, read it with `toSQL
 The dev database is a Docker volume, so resetting it means removing the volume. This deletes every account, library record and job. Your media files are untouched, because Valence never writes to them.
 
 1. Stop the server so nothing is connected.
-2. Remove the containers and the named volumes of `compose.dev.yaml`, which includes the database volume `db-data`:
+2. Remove the containers and the named volumes of `docker/compose.dev.yaml`, which includes the database volume `db-data`:
 
    ```bash
-   docker compose -f compose.dev.yaml down --volumes
+   docker compose --project-directory . -f docker/compose.dev.yaml down --volumes
    ```
 
 3. Start it again:
 
    ```bash
-   docker compose -f compose.dev.yaml up -d db
+   docker compose --project-directory . -f docker/compose.dev.yaml up -d db
    ```
 
 4. Start the server. It finds no ledger table, applies every migration from the first, and first-run setup appears again in the web client.

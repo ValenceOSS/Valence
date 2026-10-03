@@ -95,7 +95,7 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
             <motion.span
               variants={rises}
               transition={moves}
-              className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted"
+              className="text-xs font-semibold text-text-muted"
             >
               {song === null
                 ? say('screens.musicHome.musicFeature.newestInYourLibrary')
@@ -173,9 +173,7 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
 
       {upNext.length === 0 ? null : (
         <section aria-label={say('common.upNext')} className="hidden flex-col gap-2 lg:flex">
-          <h3 className="px-2 text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
-            {say('common.upNext')}
-          </h3>
+          <h3 className="px-2 text-xs font-semibold text-text-muted">{say('common.upNext')}</h3>
           <ol className="flex flex-col">
             {upNext.map(({ at, track }) => (
               <li key={`${track.id}-${at.toString()}`}>

@@ -84,7 +84,7 @@ const DevicesPanel = () => {
       </div>
 
       <section aria-label={say('common.yourOtherDevices')} className="flex flex-col gap-1">
-        <h3 className="px-1 text-xs font-semibold uppercase tracking-[0.14em] text-text-muted">
+        <h3 className="px-1 text-xs font-semibold text-text-muted">
           {say('common.yourOtherDevices')}
         </h3>
 

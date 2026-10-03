@@ -15,7 +15,7 @@ describe('DialogFooter', () => {
     expect(screen.getByRole('contentinfo')).toHaveTextContent('CancelSave');
   });
 
-  it('gives every answer the same width once there is room, so none is suggested by being larger', () => {
+  it('sets the answers in a row at the end once there is room, each at least as wide as the rest', () => {
     render(
       <DialogFooter>
         <span>Save</span>
@@ -23,9 +23,10 @@ describe('DialogFooter', () => {
     );
 
     expect(screen.getByRole('contentinfo')).toHaveClass(
-      'sm:grid-flow-col',
-      'sm:[grid-auto-columns:1fr]',
-      '[&>*]:w-full',
+      'sm:flex-row',
+      'sm:justify-end',
+      'sm:[&>*]:w-auto',
+      'sm:[&>button]:min-w-24',
     );
   });
 
@@ -38,9 +39,8 @@ describe('DialogFooter', () => {
 
     const foot = screen.getByRole('contentinfo');
 
-    expect(foot).toHaveClass('grid');
-    expect(foot.className).not.toMatch(/(^|\s)grid-flow-col/);
-    expect(foot.className).not.toMatch(/(^|\s)\[grid-auto-columns:1fr\]/);
+    expect(foot).toHaveClass('flex-col', '[&>*]:w-full');
+    expect(foot.className).not.toMatch(/(^|\s)flex-row/);
   });
 
   it('is the shade of the sidebar, like the head', () => {

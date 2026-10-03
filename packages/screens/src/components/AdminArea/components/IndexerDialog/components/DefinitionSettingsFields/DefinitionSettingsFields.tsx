@@ -1,8 +1,5 @@
-import { ChevronsUpDown as ChevronsUpDownIcon } from '@keyline-icons/react';
 import { Checkbox } from '@ValenceUI/Checkbox';
-import { FormField } from '@ValenceUI/FormField';
-import { Icon } from '@ValenceUI/Icon';
-import { OptionMenu } from '@ValenceUI/OptionMenu';
+import { SelectField } from '@ValenceUI/SelectField';
 import { TextField } from '@ValenceUI/TextField';
 import { describeOptionLabel } from './describeOptionLabel';
 import { splitSettingLabel } from './splitSettingLabel';
@@ -61,36 +58,19 @@ const DefinitionSettingsFields = ({
           const chosen = typeof value === 'string' ? value : '';
 
           return (
-            <FormField key={setting.name} label={setting.label}>
-              <OptionMenu
-                label={setting.label}
-                triggerShape="field"
-                matchTriggerWidth
-                groups={[
-                  {
-                    name: setting.label,
-                    selectedId: chosen,
-                    onSelect: (next) => {
-                      onChange(setting.name, next);
-                    },
-                    options: setting.options.map((option) => ({
-                      id: option.value,
-                      label: describeOptionLabel(option.label),
-                    })),
-                  },
-                ]}
-                trigger={
-                  <>
-                    <span className="truncate">
-                      {describeOptionLabel(
-                        setting.options.find((option) => option.value === chosen)?.label ?? chosen,
-                      )}
-                    </span>
-                    <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
-                  </>
-                }
-              />
-            </FormField>
+            <SelectField
+              key={setting.name}
+              label={setting.label}
+              options={setting.options.map((option) => ({
+                id: option.value,
+                label: describeOptionLabel(option.label),
+              }))}
+              value={chosen}
+              onSelect={(next) => {
+                onChange(setting.name, next);
+              }}
+              placeholder={describeOptionLabel(chosen)}
+            />
           );
         }
         case 'text':

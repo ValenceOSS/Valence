@@ -130,7 +130,7 @@ describe('fetchLogos', () => {
     await fetchLogos({
       libraryId: 'lib',
       store,
-      // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- the point of this test is a rejection that is not an Error
+      // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- the point of this test is a rejection that is not an Error
       readLogoUrl: () => Promise.reject('a bare string'),
       onProblem,
     });

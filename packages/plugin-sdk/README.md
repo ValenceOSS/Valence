@@ -100,26 +100,26 @@ tsx node_modules/@valence/plugin-sdk/src/cli/valencePlugin.ts pack . --out packa
 
 `valence-plugin` has four commands:
 
-| Command | What it does |
-| --- | --- |
-| `pack [folder] [--out dist]` | Packs `manifest.json`, the entry it names and pictures under `assets/` (png, jpg or webp) into `<id>-<version>.vplugin` |
-| `sign <file> [--key key.pem]` | Writes `<file>.sig`, an Ed25519 signature, with the key from `--key` or `VALENCE_PLUGIN_SIGNING_KEY` |
-| `keygen <key-id> [--out keys]` | Makes a key pair: `<key-id>.pem` (keep it secret) and `<key-id>.pub.pem` |
-| `catalogue <folder> --key-id … --package-url … --source-url … --icon-url … [--out site]` | Builds and signs `catalogue.json` from every package in a folder. Templates take `{id}`, `{version}` and `{file}` |
+| Command                                                                                  | What it does                                                                                                            |
+| ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `pack [folder] [--out dist]`                                                             | Packs `manifest.json`, the entry it names and pictures under `assets/` (png, jpg or webp) into `<id>-<version>.vplugin` |
+| `sign <file> [--key key.pem]`                                                            | Writes `<file>.sig`, an Ed25519 signature, with the key from `--key` or `VALENCE_PLUGIN_SIGNING_KEY`                    |
+| `keygen <key-id> [--out keys]`                                                           | Makes a key pair: `<key-id>.pem` (keep it secret) and `<key-id>.pub.pem`                                                |
+| `catalogue <folder> --key-id … --package-url … --source-url … --icon-url … [--out site]` | Builds and signs `catalogue.json` from every package in a folder. Templates take `{id}`, `{version}` and `{file}`       |
 
 An administrator can install an unsigned package by uploading it, after a warning. Packages in the
 official catalogue are signed by Valence's key, which every server trusts.
 
 ## What is in here
 
-| Folder | What it holds |
-| --- | --- |
+| Folder      | What it holds                                                                                                         |
+| ----------- | --------------------------------------------------------------------------------------------------------------------- |
 | `manifest/` | `PluginManifestSchema` (manifest v2), `PermissionSchema`, `ContributionsSchema`, `EVENT_TOPICS`, `PLUGIN_API_VERSION` |
-| `host/` | `definePlugin`, `PluginDefinition` (handlers), `ValenceHost` (everything a plugin can call) |
-| `surface/` | `SurfaceSchema` and `SurfaceBlockSchema` (the building blocks), actions, image references, limits |
-| `theme/` | `PluginThemeSchema`, with the readability check every theme must pass |
-| `package/` | The `.vplugin` format, the catalogue format, packing, reading, hashing, signing and verifying |
-| `cli/` | The `valence-plugin` command |
+| `host/`     | `definePlugin`, `PluginDefinition` (handlers), `ValenceHost` (everything a plugin can call)                           |
+| `surface/`  | `SurfaceSchema` and `SurfaceBlockSchema` (the building blocks), actions, image references, limits                     |
+| `theme/`    | `PluginThemeSchema`, with the readability check every theme must pass                                                 |
+| `package/`  | The `.vplugin` format, the catalogue format, packing, reading, hashing, signing and verifying                         |
+| `cli/`      | The `valence-plugin` command                                                                                          |
 
 The full guide, with every permission, host method and building block, is at
 [docs.getvalence.app/develop/plugins](https://docs.getvalence.app/develop/plugins).

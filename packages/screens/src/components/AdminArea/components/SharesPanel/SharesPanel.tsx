@@ -1,7 +1,7 @@
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { failureOfAnswer } from '@ValenceScreens/admin/failureOf';
 import { Icon } from '@ValenceUI/Icon';
-import { Info as InfoIcon, Unlink as UnlinkIcon } from '@keyline-icons/react';
+import { Info as InfoIcon, Unlink as UnlinkIcon } from '@keyline-icons/react/fill';
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';

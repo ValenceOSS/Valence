@@ -21,25 +21,25 @@ import { say } from '@ValenceI18n/say';
  * A footer with answers that do not fit this shape — three of them, or a control that is not a
  * button — passes children instead and lays them out itself.
  *
- * The buttons share the bar as equal columns. A question with two answers should not suggest which
- * one to give by making it wider, and a bar of actions with three buttons huddled at one end reads
- * as an afterthought rather than as the thing the dialog is for.
+ * The buttons sit at the end of the bar at their own width, the way out before the answer, so the
+ * answer is the last thing the eye reaches and the bar reads as the end of the form rather than as a
+ * second form of its own. A note, where there is one, takes the room at the start.
  *
- * Equal columns is what a bar of actions wants when there is room for one. On a phone there is not:
- * three answers across 358px is 111px each, and a button will not shrink to fit — it is
- * `whitespace-nowrap` and `shrink-0` by design, so the labels run out of their cells rather than
- * wrapping inside them. Below the small breakpoint the answers stack instead, one to a line, which
- * is the one arrangement that cannot overflow however long a label is.
+ * On a phone there is no room to sit buttons side by side: a button will not shrink to fit — it is
+ * `whitespace-nowrap` and `shrink-0` by design — so below the small breakpoint the answers stack
+ * instead, one to a line and full width, which is the one arrangement that cannot overflow however
+ * long a label is.
  *
  * A footer holding more actions than a phone can stack without filling the screen wants `ActionBar`
  * inside it rather than this: folding the lesser actions into a menu keeps the main one readable,
  * where stacking only moves the problem down the page.
  *
  * @param children - The buttons answering the dialog, where its answers are its own.
- * @param lead - Something more to offer, such as a way to watch a trailer. The answer then comes
- *   first and stands wider, with this after it and the way out last.
+ * @param lead - Something more to offer, such as a way to watch a trailer, set at the start of the
+ *   bar apart from the answers.
  * @param dismiss - The way out, painted in the default gray. Says Cancel beside an answer and Close alone.
- * @param confirm - The answer, painted white, or red where it destroys something.
+ * @param confirm - The answer, painted white, or red where it destroys something. Where it sends the
+ *   form the footer sits in, it is that form's button and Enter presses it too.
  * @param note - Why the last attempt was refused, in red above the answers, when it was.
  * @param className - Extra classes for the caller's own layout.
  */
@@ -48,10 +48,10 @@ const DialogFooter = ({ children, lead, dismiss, confirm, note, className }: Dia
     confirm === undefined ? null : (
       <Button
         variant={confirm.isDestructive === true ? 'danger' : 'confirm'}
-        className={lead === undefined ? '' : 'sm:col-span-2'}
+        type={confirm.isSubmit === true ? 'submit' : 'button'}
         disabled={confirm.isDisabled ?? false}
         isLoading={confirm.isLoading ?? false}
-        onClick={confirm.onChoose}
+        {...(confirm.onChoose === undefined ? {} : { onClick: confirm.onChoose })}
       >
         {confirm.label}
       </Button>
@@ -60,25 +60,19 @@ const DialogFooter = ({ children, lead, dismiss, confirm, note, className }: Dia
   return (
     <footer
       className={cn(
-        'grid shrink-0 gap-3',
-        'sm:grid-flow-col sm:[grid-auto-columns:1fr]',
-        'border-t border-[var(--surface-line)] bg-[var(--color-surface-raised)] p-4',
-        '[&>*]:w-full',
+        'flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-end',
+        'border-t border-[var(--surface-line)] bg-[var(--color-surface-raised)] px-5 py-3.5',
+        '[&>*]:w-full sm:[&>*]:w-auto sm:[&>button]:min-w-24',
         className,
       )}
     >
       {note === undefined || note === null || note === '' ? null : (
-        <span
-          role="alert"
-          className="self-center text-sm text-danger sm:[grid-column:1/-1] sm:justify-self-start"
-        >
+        <span role="alert" className="text-sm text-danger sm:mr-auto">
           {note}
         </span>
       )}
 
-      {lead === undefined ? null : confirmButton}
-
-      {lead}
+      {lead === undefined ? null : <span className="sm:mr-auto">{lead}</span>}
 
       {dismiss === undefined ? null : (
         <Button
@@ -93,7 +87,7 @@ const DialogFooter = ({ children, lead, dismiss, confirm, note, className }: Dia
 
       {children}
 
-      {lead === undefined ? confirmButton : null}
+      {confirmButton}
     </footer>
   );
 };

@@ -1,4 +1,4 @@
-/* eslint-disable valence/no-hard-coded-strings -- file and folder names on disk, which media servers read in English */
+/* oxlint-disable valence/no-hard-coded-strings -- file and folder names on disk, which media servers read in English */
 import { join } from 'node:path';
 import { libraryFolderOf } from '@ValenceRequests/mediaRequests/libraryFolderOf';
 import { safeFileName } from '@ValenceRequests/mediaRequests/safeFileName';

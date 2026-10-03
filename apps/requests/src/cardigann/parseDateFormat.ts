@@ -1,4 +1,4 @@
-/* eslint-disable valence/no-hard-coded-strings -- the month and day names a site writes its dates in, read rather than shown */
+/* oxlint-disable valence/no-hard-coded-strings -- the month and day names a site writes its dates in, read rather than shown */
 import { MONTHS } from '@ValenceRequests/cardigann/MONTHS';
 
 type Part = { kind: 'literal'; text: string } | { kind: 'field'; letter: string; length: number };

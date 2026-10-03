@@ -111,7 +111,7 @@ The phone and TV clients map `sayParts` or `sayCountParts` into keyed fragments 
 
 ## Enforcement
 
-The ESLint rule `valence/no-hard-coded-strings` covers every package and app except the docs,
+The oxlint rule `valence/no-hard-coded-strings` covers every package and app except the docs,
 landing and plugin SDK. It reports:
 
 - a string literal that reads like words for a person: a capitalised phrase, a sentence, or text
@@ -130,7 +130,7 @@ Machine values that look like words, such as a cookie's `sameSite`, a user agent
 client matches on, take a disable comment with a reason:
 
 ```ts
-// eslint-disable-next-line valence/no-hard-coded-strings -- a user agent, read by sites rather than by people
+// oxlint-disable-next-line valence/no-hard-coded-strings -- a user agent, read by sites rather than by people
 ```
 
 ## Testing

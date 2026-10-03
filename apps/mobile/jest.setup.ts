@@ -79,8 +79,8 @@ jest.mock('expo', () => ({
   },
 }));
 
-jest.mock('@react-native-cookies/cookies', () => ({
-  get: jest.fn(() => Promise.resolve({})),
+jest.mock('@ValenceMobile/platform/theCookiesThisPhoneHolds', () => ({
+  theCookiesThisPhoneHolds: jest.fn(() => Promise.resolve(null)),
 }));
 
 jest.mock('expo-image', () => ({

@@ -202,10 +202,7 @@ const BookDialog = ({
               )}
 
               <div className="flex min-w-0 flex-1 flex-col justify-end gap-2">
-                <DialogHeadlinePart
-                  as="span"
-                  className="text-xs font-medium uppercase tracking-[0.18em] text-text-muted"
-                >
+                <DialogHeadlinePart as="span" className="text-xs font-medium text-text-muted">
                   {kindOf(book)}
                 </DialogHeadlinePart>
 

@@ -93,10 +93,10 @@ jobs:
         with:
           path: /tmp/valence-fixtures
           key: >-
-            fixtures-${{ env.VALENCE_FFMPEG_VERSION }}-${{ hashFiles('tools/fixtures/fixtureMatrix.ts',
-            'tools/fixtures/fixtureArguments.ts', 'tools/fixtures/fetchedFixtures.ts',
-            'tools/fixtures/derivedFixtures.ts', 'tools/fixtures/synthesisedFixtures.ts',
-            'tools/fixtures/synthesisedMetadata.ts') }}
+            fixtures-${{ env.VALENCE_FFMPEG_VERSION }}-${{ hashFiles('apps/transcoder/scripts/fixtures/fixtureMatrix.ts',
+            'apps/transcoder/scripts/fixtures/fixtureArguments.ts', 'apps/transcoder/scripts/fixtures/fetchedFixtures.ts',
+            'apps/transcoder/scripts/fixtures/derivedFixtures.ts', 'apps/transcoder/scripts/fixtures/synthesisedFixtures.ts',
+            'apps/transcoder/scripts/fixtures/synthesisedMetadata.ts') }}
 
       # Tier two as well, which is the Dolby Vision and HDR10+ pair. Neither can be authored by
       # FFmpeg, so they are written by two MIT tools the sync fetches and muxed by mkvmerge, whose
@@ -107,7 +107,7 @@ jobs:
       # Asserts every fixture is what the matrix claims, which is what makes the corpus worth
       # testing against. A corpus that lies is worse than none.
       - name: Check the corpus describes itself honestly
-        run: pnpm --filter @valence/tools exec vitest run fixtures/
+        run: pnpm --filter @valence/transcoder exec vitest run scripts/fixtures/
 
       - name: Test the media pipeline against it
         run: cargo test

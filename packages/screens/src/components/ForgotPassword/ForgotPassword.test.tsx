@@ -4,7 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PasswordResetAsk } from '@ValenceContracts/schemas/PasswordResetRequest';
 import { ForgotPassword } from './ForgotPassword';
 
-const askForPasswordReset = vi.fn<(ask: PasswordResetAsk, redirectTo: string) => Promise<boolean>>();
+const askForPasswordReset =
+  vi.fn<(ask: PasswordResetAsk, redirectTo: string) => Promise<boolean>>();
 
 vi.mock('@ValenceClient/session/askForPasswordReset', () => ({
   askForPasswordReset: (ask: PasswordResetAsk, redirectTo: string) =>

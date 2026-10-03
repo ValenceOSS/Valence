@@ -1,5 +1,4 @@
-import type { ArrApp, ArrAppDraft, ArrAppKind } from '@ValenceContracts/schemas/ArrApp';
-import { say } from '@ValenceI18n/say';
+import type { ArrApp, ArrAppKind } from '@ValenceContracts/schemas/ArrApp';
 
 type ArrAppForm = {
   kind: ArrAppKind;
@@ -10,8 +9,6 @@ type ArrAppForm = {
   localPath: string;
   isEnabled: boolean;
 };
-
-type ReadArrAppForm = { draft: ArrAppDraft; problem: null } | { draft: null; problem: string };
 
 const USUAL_ADDRESSES: Readonly<Record<ArrAppKind, string>> = {
   radarr: 'http://radarr:7878',
@@ -76,52 +73,6 @@ const choosingArrKind = (
   };
 };
 
-/**
- * Reads the form into an app to connect or try, or says the first thing wrong with it.
- *
- * @param form - The form as it stands.
- * @param hasKey - Whether the app being changed has a key already, which an empty field keeps.
- * @returns The app, or what is wrong.
- */
-const readArrAppForm = (form: ArrAppForm, hasKey: boolean): ReadArrAppForm => {
-  const name = form.name.trim();
-  const url = form.url.trim();
-  const remotePath = form.remotePath.trim();
-  const localPath = form.localPath.trim();
-
-  if (name === '') {
-    return { draft: null, problem: say('screens.adminArea.arrAppDialog.giveTheAppAName') };
-  }
-
-  if (!URL.canParse(url) || !/^https?:$/.test(new URL(url).protocol)) {
-    return { draft: null, problem: say('common.theAddressNeedsToBeA') };
-  }
-
-  if (form.apiKey.trim() === '' && !hasKey) {
-    return { draft: null, problem: say('screens.adminArea.arrAppDialog.itNeedsItsApiKey') };
-  }
-
-  if ((remotePath === '') !== (localPath === '')) {
-    return {
-      draft: null,
-      problem: say('screens.adminArea.arrAppDialog.sayWhereItsLibraryIsBothWays'),
-    };
-  }
-
-  return {
-    draft: {
-      kind: form.kind,
-      name,
-      url,
-      apiKey: form.apiKey.trim(),
-      remotePath,
-      localPath,
-      isEnabled: form.isEnabled,
-    },
-    problem: null,
-  };
-};
-
 export type { ArrAppForm };
 
-export { USUAL_ADDRESSES, arrAppFormFor, choosingArrKind, readArrAppForm };
+export { USUAL_ADDRESSES, arrAppFormFor, choosingArrKind };

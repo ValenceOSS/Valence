@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
 import type { ReactNode } from 'react';
-import { Info as InfoIcon, MoreHorizontal as MoreHorizontalIcon } from '@keyline-icons/react';
 import {
   Bin as BinFilledIcon,
   Folders as FoldersFilledIcon,
+  Info as InfoIcon,
+  MoreHorizontal as MoreHorizontalIcon,
   Pause as PauseFilledIcon,
   Play as PlayFilledIcon,
 } from '@keyline-icons/react/fill';

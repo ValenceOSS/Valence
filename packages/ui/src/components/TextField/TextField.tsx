@@ -27,6 +27,8 @@ import type { TextFieldProps } from './TextField.types';
  * @param size - How large to draw it.
  * @param isBare - Whether to paint no box at all, for a field that supplies its own surface.
  * @param icon - Something to draw inside the field, such as a magnifying glass.
+ * @param trailing - A control to set after the field on the same line, such as a way to browse for
+ *   what it asks, kept level with the field however the notes beneath it grow.
  * @param hasFocusOnMount - Whether to put the cursor here as soon as it appears.
  * @param className - Extra classes for the caller's own layout.
  */
@@ -49,6 +51,7 @@ const TextField = ({
   isBare = false,
   isLabelHidden = false,
   icon,
+  trailing,
   hasFocusOnMount = false,
   className,
 }: TextFieldProps) => {
@@ -60,13 +63,13 @@ const TextField = ({
     <div data-slot="field" className={cn('flex flex-col gap-1.5', className)}>
       <label
         htmlFor={fieldId}
-        className={cn('text-sm font-medium text-text', isLabelHidden ? 'sr-only' : '')}
+        className={cn('text-[0.8125rem] font-medium text-text', isLabelHidden ? 'sr-only' : '')}
       >
         {label}
       </label>
 
       {description === undefined || isBelow ? null : (
-        <p id={describedBy} className="text-sm text-text-muted">
+        <p id={describedBy} className="font-body text-xs leading-snug text-text-muted">
           {description}
         </p>
       )}
@@ -110,17 +113,19 @@ const TextField = ({
             isBare
               ? ''
               : size === 'sm'
-                ? 'h-8 px-3.5 text-[0.8125rem]'
+                ? 'h-7 px-2.5 text-xs'
                 : size === 'lg'
-                  ? 'h-10 px-5 text-sm'
+                  ? 'h-9 px-3.5 text-sm'
                   : size === 'xl'
                     ? 'h-12 px-6 text-base'
-                    : 'h-9 px-3.5 text-sm',
+                    : 'h-8 px-3 text-[0.8125rem]',
             isBare && size === 'xl' ? 'text-2xl tracking-tight sm:text-3xl' : '',
             isBare ? '' : isPill ? 'rounded-full' : 'rounded-md',
             error === undefined ? '' : 'border-destructive',
           )}
         />
+
+        {trailing === undefined ? null : <span className="flex shrink-0">{trailing}</span>}
       </span>
 
       {isBelow ? (
@@ -128,7 +133,7 @@ const TextField = ({
           {description}
         </FieldNote>
       ) : error === undefined ? null : (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="font-body text-xs leading-snug text-danger">
           {error}
         </p>
       )}

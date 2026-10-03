@@ -35,13 +35,20 @@ const StatTile = ({
   trend,
   className,
 }: StatTileProps) => (
-  <div className={cn('valence-card-shell flex h-full flex-col', className)}>
-    <dt className="flex items-center justify-between gap-2 px-2.5 pb-1.5 pt-1.5 text-[0.6875rem] uppercase tracking-[0.16em] text-text-muted">
+  <div className={cn('valence-card-shell group/tile flex h-full flex-col', className)}>
+    <dt className="flex min-h-12 items-center justify-between gap-2 px-3 py-1 text-[0.6875rem] font-medium uppercase tracking-[0.08em] text-text/50">
       <span className="truncate">{label}</span>
       {icon === undefined ? null : <span className="flex shrink-0 items-center">{icon}</span>}
     </dt>
 
-    <dd className="valence-card-face relative flex flex-1 flex-col gap-2 overflow-hidden p-3">
+    <dd
+      className={cn(
+        'valence-card-face relative flex flex-1 flex-col gap-2 overflow-hidden p-3',
+        'ring-1 ring-transparent transition-[box-shadow] duration-[var(--duration-base)] ease-[var(--ease-out)]',
+        'group-hover/tile:shadow-[var(--shadow-lifted)] group-hover/tile:ring-[var(--surface-divider)]',
+        'motion-reduce:transition-none',
+      )}
+    >
       {history === undefined ? null : (
         <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 opacity-30">
           {history}

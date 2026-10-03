@@ -262,13 +262,13 @@ const TheHomePage = ({
             <ANothingHere
               of={FolderOpen}
               title={say('common.noLibrariesYet')}
-              detail={howToFillIt('no libraries', false)}
+              detail={howToFillIt('noLibraries', false)}
             />
           ) : (
             <ANothingHere
               of={Film}
               title={say('common.nothingToWatchYet')}
-              detail={howToFillIt('every library', false)}
+              detail={howToFillIt('everyLibrary', false)}
             />
           )
         ) : undefined

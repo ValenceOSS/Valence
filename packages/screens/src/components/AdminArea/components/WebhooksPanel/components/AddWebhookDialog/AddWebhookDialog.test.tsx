@@ -52,10 +52,13 @@ const fillIn = async (user: ReturnType<typeof userEvent.setup>) => {
 };
 
 describe('AddWebhookDialog', () => {
-  it('will not add one before it has been told where to send', () => {
-    draw();
+  it('will not add one before it has been told where to send', async () => {
+    const user = userEvent.setup();
+    const { onCreate } = draw();
 
-    expect(screen.getByRole('button', { name: 'Create webhook' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'Create webhook' }));
+
+    expect(onCreate).not.toHaveBeenCalled();
   });
 
   it('starts listening for failures rather than for everything', async () => {
@@ -133,7 +136,7 @@ describe('AddWebhookDialog', () => {
     const { onCreate } = draw();
 
     await fillIn(user);
-    await user.click(screen.getByRole('button', { name: /ntfy/ }));
+    await user.click(screen.getByRole('radio', { name: /ntfy/ }));
     await user.click(screen.getByRole('button', { name: 'Create webhook' }));
 
     expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({ preset: 'ntfy' }));
@@ -142,13 +145,14 @@ describe('AddWebhookDialog', () => {
   it('will not add one that listens for nothing', async () => {
     const user = userEvent.setup();
 
-    draw();
+    const { onCreate } = draw();
 
     await fillIn(user);
     await openPane(user, 'Events');
     await user.click(screen.getByRole('switch', { name: 'Job failed' }));
+    await user.click(screen.getByRole('button', { name: 'Create webhook' }));
 
-    expect(screen.getByRole('button', { name: 'Create webhook' })).toBeDisabled();
+    expect(onCreate).not.toHaveBeenCalled();
   });
 
   it('shows why an address was refused, against the address', async () => {

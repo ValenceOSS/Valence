@@ -3,14 +3,18 @@ import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { MoreHorizontal as MoreHorizontalIcon, Plus as PlusIcon } from '@keyline-icons/react';
-import { Bin as BinFilledIcon, Pen as PenFilledIcon } from '@keyline-icons/react/fill';
+import {
+  Bin as BinFilledIcon,
+  MoreHorizontal as MoreHorizontalIcon,
+  Pen as PenFilledIcon,
+  Plus as PlusFilledIcon,
+} from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { DataTable } from '@ValenceUI/DataTable';
 import { TabPanel } from '@ValenceUI/TabPanel';
-import { TabRow } from '@ValenceUI/TabRow';
+import { PanelCardChoice } from '@ValenceScreens/components/PanelCardChoice/PanelCardChoice';
 import { Tabs } from '@ValenceUI/Tabs';
 import { Icon } from '@ValenceUI/Icon';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -174,23 +178,26 @@ const ProfilesPanel = () => {
         title={say('common.profiles')}
         isFlush
         actions={
-          <PanelCardAction
-            icon={PlusIcon}
-            onClick={() => {
-              setIsAdding(true);
-            }}
-          >
-            {say('common.addMediaProfile')}
-          </PanelCardAction>
-        }
-        below={
-          <TabRow
-            label={say('screens.adminArea.profilesPanel.whichProfilesToShow')}
-            tone="underlined"
-            size="sm"
-            value={shown}
-            groups={[{ items: KINDS.map(({ id, label }) => ({ id, label })) }]}
-          />
+          <>
+            <PanelCardChoice
+              label={say('screens.adminArea.profilesPanel.whichProfilesToShow')}
+              options={KINDS.map(({ id, label }) => ({ id, label }))}
+              value={shown}
+              onSelect={(next) => {
+                if (isProfileKind(next)) {
+                  setShown(next);
+                }
+              }}
+            />
+            <PanelCardAction
+              icon={PlusFilledIcon}
+              onClick={() => {
+                setIsAdding(true);
+              }}
+            >
+              {say('common.addMediaProfile')}
+            </PanelCardAction>
+          </>
         }
       >
         <ProfileEditor

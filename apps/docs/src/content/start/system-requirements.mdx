@@ -22,7 +22,7 @@ With requesting switched on, allow for the requests service as well: about 150 M
 Two facts come from the repository and are not recommendations:
 
 - The published release image is built for **linux/amd64** only. The release workflow states that the emulated second architecture was left out on purpose because a release-mode Rust build under emulation is too slow. Nightly builds can be requested for linux/arm64 by hand, but those are for testing.
-- The image bundles its own FFmpeg build (pinned in the `Dockerfile`), so you do not need FFmpeg on the host.
+- The image bundles its own FFmpeg build (pinned in `docker/server.Dockerfile`), so you do not need FFmpeg on the host.
 
 ### Graphics hardware
 
@@ -84,7 +84,7 @@ Other devices, such as televisions, sign in with a device authorisation code flo
 | Port | Service                | Published by default | Purpose                                                                                            |
 | ---- | ---------------------- | -------------------- | -------------------------------------------------------------------------------------------------- |
 | 8420 | Valence                | Yes (`VALENCE_PORT`) | The web client, the API and the WebSocket at `/api/realtime`. Your reverse proxy points here.      |
-| 5432 | Postgres               | No                   | Reached over the stack's own network only. `compose.dev.yaml` publishes it for development.        |
+| 5432 | Postgres               | No                   | Reached over the stack's own network only. `docker/compose.dev.yaml` publishes it for development. |
 | 3306 | MySQL or MariaDB       | No                   | Only with `compose.mysql.yaml` or `compose.mariadb.yaml`, in place of 5432. Inside the stack only. |
 | 8421 | Requests service       | No                   | Only with the `requests` profile. Valence reaches it at `http://requests:8421` inside the stack.   |
 | 8000 | gluetun control server | No                   | Only with the `vpn` profile.                                                                       |

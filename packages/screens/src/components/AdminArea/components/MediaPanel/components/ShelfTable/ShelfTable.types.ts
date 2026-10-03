@@ -4,7 +4,7 @@ import type { ShelfItem } from '@ValenceScreens/components/AdminArea/components/
 type ShelfTableProps = {
   label: string;
   items: ShelfItem[];
-  toolbar: ReactNode;
+  toolbar?: ReactNode;
   emptyMessage: string;
   onOpenFolder?: (path: string) => void;
 };

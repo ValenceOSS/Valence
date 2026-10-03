@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import { Button } from '@ValenceUI/Button';
+import { ChoiceList } from '@ValenceUI/ChoiceList';
 import { FormField } from '@ValenceUI/FormField';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Switch } from '@ValenceUI/Switch';
@@ -17,6 +18,12 @@ import type { MediaKind } from '@ValenceContracts/schemas/MediaKind';
 import type { WebhookPreset, WebhookSubscribableEvent } from '@ValenceContracts/schemas/Webhook';
 import type { WebhookFieldsProps } from './WebhookFields.types';
 import { say } from '@ValenceI18n/say';
+
+const PRESET_NAMES: Record<WebhookPreset, string> = {
+  generic: say('screens.adminArea.webhookFields.generic'),
+  discord: say('screens.adminArea.webhookFields.discord'),
+  ntfy: say('screens.adminArea.webhookFields.ntfy'),
+};
 
 const PRESET_LABELS: Record<WebhookPreset, string> = {
   generic: say('screens.adminArea.webhookFields.valencesOwnEnvelopeAsJSONBuild'),
@@ -59,6 +66,7 @@ const isMediaKind = (candidate: string): candidate is MediaKind =>
  * @param onChange - Told the whole draft again whenever any part of it changes.
  * @param accounts - The accounts this subscription can be narrowed to.
  * @param profiles - The profiles this subscription can be narrowed to.
+ * @param errors - What is wrong with the name, the address and the events, beneath each.
  * @param hasRequests - Whether requesting is on, without which its events are not offered.
  * @param travel - Which way the pane should slide in from.
  */
@@ -69,6 +77,7 @@ const WebhookFields = ({
   profiles,
   hasRequests = false,
   travel,
+  errors = {},
 }: WebhookFieldsProps) => {
   const noteIdPrefix = useId();
 
@@ -88,7 +97,7 @@ const WebhookFields = ({
             }}
             placeholder={say('screens.adminArea.webhookFields.discord')}
             description={say('screens.adminArea.webhookFields.whatThisIsCalledInThe')}
-            required
+            {...(errors.name === undefined ? {} : { error: errors.name })}
           />
 
           <TextField
@@ -100,36 +109,41 @@ const WebhookFields = ({
             }}
             placeholder="https://discord.com/api/webhooks/…"
             description={say('screens.adminArea.webhookFields.whereTheDeliveriesArePosted')}
-            required
+            {...(errors.url === undefined ? {} : { error: errors.url })}
           />
 
           <FormField
             label={say('screens.adminArea.webhookFields.shape')}
             description={say('screens.adminArea.webhookFields.whatValenceSendsSoTheOther')}
           >
-            <div className="flex flex-col gap-1.5">
-              {WEBHOOK_PRESETS.map((candidate) => (
-                <Button
-                  key={candidate}
-                  variant={draft.preset === candidate ? 'secondary' : 'bare'}
-                  size="none"
-                  aria-pressed={draft.preset === candidate}
-                  className="flex flex-col items-start gap-0.5 px-3 py-2 text-left"
-                  onClick={() => {
-                    onChange({ ...draft, preset: candidate });
-                  }}
-                >
-                  <span className="text-sm text-text">{candidate}</span>
-                  <span className="text-xs text-text-muted">{PRESET_LABELS[candidate]}</span>
-                </Button>
-              ))}
-            </div>
+            <ChoiceList
+              label={say('screens.adminArea.webhookFields.shape')}
+              choices={WEBHOOK_PRESETS.map((candidate) => ({
+                id: candidate,
+                title: PRESET_NAMES[candidate],
+                detail: PRESET_LABELS[candidate],
+              }))}
+              value={draft.preset}
+              onChoose={(next) => {
+                const chosen = WEBHOOK_PRESETS.find((candidate) => candidate === next);
+
+                if (chosen !== undefined) {
+                  onChange({ ...draft, preset: chosen });
+                }
+              }}
+            />
           </FormField>
         </div>
       </TabPanel>
 
       <TabPanel value="events" travel={travel}>
         <div className="flex flex-col gap-5">
+          {errors.events === undefined ? null : (
+            <p role="alert" className="font-body text-xs leading-snug text-danger">
+              {errors.events}
+            </p>
+          )}
+
           {WEBHOOK_EVENT_GROUPS.filter((group) => hasRequests || group.id !== 'requests').map(
             (group) => {
               const chosenHere = group.events.filter((event) => draft.events.includes(event));

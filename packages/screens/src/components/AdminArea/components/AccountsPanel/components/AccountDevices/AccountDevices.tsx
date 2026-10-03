@@ -1,7 +1,9 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { Icon } from '@ValenceUI/Icon';
-import { MoreHorizontal as MoreHorizontalIcon } from '@keyline-icons/react';
-import { DoorOpen as DoorOpenFilledIcon } from '@keyline-icons/react/fill';
+import {
+  DoorOpen as DoorOpenFilledIcon,
+  MoreHorizontal as MoreHorizontalIcon,
+} from '@keyline-icons/react/fill';
 import { useCallback, useMemo, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';

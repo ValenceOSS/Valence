@@ -1,4 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { useZodForm } from '@ValenceClient/forms/useZodForm';
+import { Form } from '@ValenceUI/Form';
+import { BanFormSchema } from './BanFormSchema';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -6,8 +9,6 @@ import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { TextField } from '@ValenceUI/TextField';
 import { say } from '@ValenceI18n/say';
 import type { BanDialogProps } from './BanDialog.types';
-
-const MOST_REASON_CHARACTERS = 200;
 
 /**
  * Asks before banning somebody, and why: the reason is what they are told when they next try to
@@ -18,13 +19,17 @@ const MOST_REASON_CHARACTERS = 200;
  * @param onBan - Told to ban them, with the reason.
  */
 const BanDialog = ({ name, onClose, onBan }: BanDialogProps) => {
-  const [reason, setReason] = useState('');
+  const form = useZodForm(BanFormSchema, { reason: '' }, (answers) => {
+    onBan(answers.reason);
+
+    return null;
+  });
+
+  const { reset } = form;
 
   useEffect(() => {
-    setReason(say('screens.adminArea.accountsPanel.bannedFromTheAdminArea'));
-  }, [name]);
-
-  const trimmed = reason.trim();
+    reset({ reason: say('screens.adminArea.accountsPanel.bannedFromTheAdminArea') });
+  }, [name, reset]);
 
   return (
     <DialogCompanion
@@ -38,28 +43,24 @@ const BanDialog = ({ name, onClose, onBan }: BanDialogProps) => {
         detail={say('screens.adminArea.accountsPanel.nameWillBeSignedOutAnd', { name: name ?? '' })}
       />
 
-      <DialogContent>
-        <TextField
-          label={say('screens.banDialog.whatTheyAreTold')}
-          value={reason}
-          onValueChange={setReason}
-          {...(reason.length > MOST_REASON_CHARACTERS
-            ? { error: say('screens.banDialog.keepItShorter') }
-            : {})}
-        />
-      </DialogContent>
+      <Form
+        label={say('screens.adminArea.accountsPanel.banThisAccount')}
+        onSubmit={form.submit}
+        isDialog
+      >
+        <DialogContent>
+          <TextField label={say('screens.banDialog.whatTheyAreTold')} {...form.text('reason')} />
+        </DialogContent>
 
-      <DialogFooter
-        dismiss={{ onChoose: onClose }}
-        confirm={{
-          label: say('screens.adminArea.accountsPanel.ban'),
-          isDestructive: true,
-          isDisabled: trimmed === '' || reason.length > MOST_REASON_CHARACTERS,
-          onChoose: () => {
-            onBan(trimmed);
-          },
-        }}
-      />
+        <DialogFooter
+          dismiss={{ onChoose: onClose }}
+          confirm={{
+            label: say('screens.adminArea.accountsPanel.ban'),
+            isDestructive: true,
+            isSubmit: true,
+          }}
+        />
+      </Form>
     </DialogCompanion>
   );
 };

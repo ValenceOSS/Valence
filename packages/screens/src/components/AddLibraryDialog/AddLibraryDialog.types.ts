@@ -6,11 +6,4 @@ type AddLibraryDialogProps = {
   onCreated: (library: Library) => void;
 };
 
-type AddLibraryFormErrors = {
-  name?: string;
-  flavour?: string;
-  path?: string;
-  submit?: string;
-};
-
-export type { AddLibraryDialogProps, AddLibraryFormErrors };
+export type { AddLibraryDialogProps };

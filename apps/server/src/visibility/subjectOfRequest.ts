@@ -1,5 +1,7 @@
 type Subject =
-  { kind: 'item'; mediaId: string } | { kind: 'series'; seriesId: string } | { kind: 'none' };
+  | { kind: 'item'; mediaId: string }
+  | { kind: 'series'; seriesId: string }
+  | { kind: 'none' };
 
 const ID = '[0-9a-fA-F-]{36}';
 

@@ -13,6 +13,7 @@ import {
 type DataTableColumnMeta = {
   filterOptions?: readonly { id: string; label: string }[];
   shrinks?: boolean;
+  fills?: boolean;
 };
 
 const columnMeta: DataTableColumnMeta = {};

@@ -20,6 +20,7 @@ type TextFieldProps = {
   isBare?: boolean;
   isLabelHidden?: boolean;
   icon?: ReactNode;
+  trailing?: ReactNode;
   hasFocusOnMount?: boolean;
   autoComplete?: HTMLInputAutoCompleteAttribute;
   className?: string;

@@ -30,14 +30,16 @@ describe('NameEntryDialog', () => {
   it('starts on the name it was given, and will not save it unchanged or blank', async () => {
     const actor = userEvent.setup();
 
-    draw();
+    const { onName } = draw();
 
     expect(screen.getByLabelText('Name')).toHaveValue('Arrival.mkv');
     expect(screen.getByRole('button', { name: 'Rename' })).toBeDisabled();
 
     await actor.clear(screen.getByLabelText('Name'));
+    await actor.click(screen.getByRole('button', { name: 'Rename' }));
 
-    expect(screen.getByRole('button', { name: 'Rename' })).toBeDisabled();
+    expect(onName).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toBeInTheDocument();
   });
 
   it('says the new name, trimmed', async () => {

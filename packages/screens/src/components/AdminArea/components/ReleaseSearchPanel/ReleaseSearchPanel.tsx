@@ -2,11 +2,9 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   ChevronsUpDown as ChevronsUpDownIcon,
-  MoreHorizontal as MoreHorizontalIcon,
-} from '@keyline-icons/react';
-import {
   Download as DownloadFilledIcon,
   Link2 as Link2FilledIcon,
+  MoreHorizontal as MoreHorizontalIcon,
   Send as SendFilledIcon,
   SquareArrowUpRight as SquareArrowUpRightFilledIcon,
 } from '@keyline-icons/react/fill';

@@ -11,7 +11,8 @@ type FulfilmentForm = {
 };
 
 type ReadFulfilmentForm =
-  { fulfilment: Fulfilment | null; problem: null } | { fulfilment: null; problem: string };
+  | { fulfilment: Fulfilment | null; problem: null }
+  | { fulfilment: null; problem: string };
 
 const VALENCE = 'valence';
 

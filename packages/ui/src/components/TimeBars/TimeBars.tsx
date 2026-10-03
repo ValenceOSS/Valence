@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { PointerEvent } from 'react';
 import { cn } from '@ValenceUI/cn';
+import { InfoHeading } from '@ValenceUI/InfoHeading';
 import type { TimeBarsProps } from './TimeBars.types';
 import { say } from '@ValenceI18n/say';
 
@@ -164,7 +165,7 @@ const TimeBars = ({
         {shown === undefined || shown === null || over === null ? null : (
           <div
             role="tooltip"
-            className="pointer-events-none absolute top-1 z-10 min-w-40 rounded-md bg-text px-2.5 py-1.5 font-body text-xs text-surface shadow-lg"
+            className="valence-menu pointer-events-none absolute top-1 z-30 flex min-w-48 flex-col rounded-lg p-1 text-[0.8125rem] font-medium text-text"
             style={{
               left: `${(((over + 0.5) / bars.length) * 100).toFixed(2)}%`,
               transform:
@@ -173,12 +174,15 @@ const TimeBars = ({
                   : 'translateX(0.75rem)',
             }}
           >
-            <p className="mb-1 font-medium">
+            <InfoHeading>
               {(formatSpan ?? ((from) => formatTick(from)))(shown.atMs, shown.atMs + bucketMs)}
-            </p>
+            </InfoHeading>
             {series.map((one) => (
-              <p key={one.key} className="flex items-center justify-between gap-4 tabular-nums">
-                <span className="flex items-center gap-1.5">
+              <p
+                key={one.key}
+                className="flex min-h-7 items-center justify-between gap-6 rounded-md px-2.5 py-1"
+              >
+                <span className="flex items-center gap-2 text-text-muted">
                   <span
                     aria-hidden
                     className="size-2 rounded-full"
@@ -186,7 +190,9 @@ const TimeBars = ({
                   />
                   {one.label}
                 </span>
-                <span>{(shown.values[one.key] ?? 0).toLocaleString()}</span>
+                <span className="tabular-nums text-text">
+                  {(shown.values[one.key] ?? 0).toLocaleString()}
+                </span>
               </p>
             ))}
           </div>

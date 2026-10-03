@@ -1,4 +1,4 @@
-/* eslint-disable valence/no-hard-coded-strings -- the source's own item types, fields, modes and element names, sent and matched rather than shown */
+/* oxlint-disable valence/no-hard-coded-strings -- the source's own item types, fields, modes and element names, sent and matched rather than shown */
 import { findXmlElements } from './findXmlElements';
 import { readXmlElements } from './readXmlElements';
 import type { XmlElement } from './readXmlElements';

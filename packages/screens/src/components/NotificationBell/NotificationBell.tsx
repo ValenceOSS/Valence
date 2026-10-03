@@ -1,8 +1,11 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { Icon } from '@ValenceUI/Icon';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
-import { Bell as BellFilledIcon } from '@keyline-icons/react/fill';
-import { Bin as BinIcon, CircleCheck as CircleCheckIcon } from '@keyline-icons/react';
+import {
+  Bell as BellFilledIcon,
+  Bin as BinFilledIcon,
+  CircleCheck as CircleCheckFilledIcon,
+} from '@keyline-icons/react/fill';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { PopoverPanel } from '@ValenceUI/PopoverPanel';
@@ -75,13 +78,13 @@ const NotificationBell = ({
         actions={
           <>
             {unread === 0 ? null : (
-              <PanelCardAction icon={CircleCheckIcon} onClick={onReadAll}>
+              <PanelCardAction icon={CircleCheckFilledIcon} onClick={onReadAll}>
                 {say('common.markAllRead')}
               </PanelCardAction>
             )}
 
             {notifications.length === 0 ? null : (
-              <PanelCardAction icon={BinIcon} onClick={onClearAll}>
+              <PanelCardAction icon={BinFilledIcon} onClick={onClearAll}>
                 {say('common.clearAll')}
               </PanelCardAction>
             )}

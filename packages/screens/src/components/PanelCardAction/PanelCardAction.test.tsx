@@ -26,7 +26,7 @@ describe('PanelCardAction', () => {
       </PanelCardAction>,
     );
 
-    expect(screen.getByRole('button')).toHaveClass('bg-transparent', 'h-7');
+    expect(screen.getByRole('button')).toHaveClass('bg-transparent', 'h-6');
   });
 
   it('draws its icon after the words', () => {

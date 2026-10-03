@@ -29,12 +29,12 @@ describe('ChangelogEntryPage', () => {
   });
 
   it('has nothing newer to lead to from the newest release', async () => {
-    await renderWithRoutes(ChangelogEntryPage, '/changelog/steadier-tests');
+    await renderWithRoutes(ChangelogEntryPage, '/changelog/linked-servers-and-calendars');
 
     const around = await screen.findByRole('navigation', { name: 'Other releases' });
 
     expect(around).not.toHaveTextContent('Newer');
-    expect(around).toHaveTextContent('Older · v1.1.1');
+    expect(around).toHaveTextContent('Older · v1.2.0');
   });
 
   it('says the page is not there for a release that does not exist', async () => {

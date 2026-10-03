@@ -1,0 +1,17 @@
+{
+  "name": "@valence/brand",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "render": "tsx src/renderBrand.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "sharp": "^0.35.4",
+    "tsx": "^4.23.13",
+    "vitest": "^4.1.11",
+    "zod": "^4.6.4"
+  }
+}

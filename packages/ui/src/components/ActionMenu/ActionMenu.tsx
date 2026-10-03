@@ -13,7 +13,7 @@ import type { ActionMenuProps, ActionMenuSize } from './ActionMenu.types';
 
 const TRIGGER_SIZES: Record<ActionMenuSize, string> = {
   sm: 'size-7',
-  md: 'size-9',
+  md: 'size-8',
 };
 
 const LOOKS = {
@@ -21,6 +21,7 @@ const LOOKS = {
   face: 'rounded-full hover:bg-transparent data-[state=open]:bg-transparent',
   pill: 'size-auto rounded-full bg-[var(--surface-hover)] p-1 hover:bg-[var(--surface-active)] data-[state=open]:bg-[var(--surface-active)]',
   raised: 'border border-[var(--surface-line)] bg-[var(--surface-hover)]',
+  labelled: 'h-6 w-auto gap-1.5 px-2 text-xs font-medium',
 } as const;
 
 /**
@@ -48,8 +49,9 @@ const LOOKS = {
  * @param size - How large the trigger stands — smaller for a row's own action, standing size
  *   elsewhere.
  * @param look - Plain, lit only when pointed at; a face, which is a circle that is not lit at all,
- *   for a picture standing in as the control; or raised, with a fill and an edge of its own, for a
- *   control that has to be found on a busy row.
+ *   for a picture standing in as the control; raised, with a fill and an edge of its own, for a
+ *   control that has to be found on a busy row; or labelled, sized to words rather than a glyph, for
+ *   a menu that says what it is.
  * @param onOpenChange - Told when it opens or closes, for a caller that must not vanish from under
  *   it while it is open.
  * @param className - Extra classes for the caller's own layout.

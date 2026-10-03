@@ -1,4 +1,4 @@
-import { Check as CheckIcon } from '@keyline-icons/react';
+import { Check as CheckIcon } from '@keyline-icons/react/fill';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Card } from '@ValenceUI/Card';
@@ -130,7 +130,9 @@ const AdminSetupGuide = ({
             key={step.id}
             aria-current={step.id === next ? 'step' : undefined}
             className={`flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center ${
-              step.id === next ? 'border-accent/40 bg-accent/10' : 'border-transparent'
+              step.id === next
+                ? 'border-[var(--surface-divider)] bg-[var(--surface-hover)]'
+                : 'border-transparent'
             }`}
           >
             <span

@@ -24,7 +24,10 @@ const THIS_FILE = join(HERE, 'metro.config.ts');
 
 const SINGLETONS = ['react', 'react-native', '@tanstack/react-query'];
 
-const aliases = (): { wildcards: { prefix: string; target: string }[]; exact: Map<string, string> } => {
+const aliases = (): {
+  wildcards: { prefix: string; target: string }[];
+  exact: Map<string, string>;
+} => {
   const read: Paths = JSON.parse(readFileSync(join(REPO_ROOT, 'tsconfig.paths.json'), 'utf8'));
   const entries = Object.entries(read.compilerOptions.paths).flatMap(([pattern, targets]) =>
     targets[0] === undefined ? [] : [[pattern, targets[0]] as const],
@@ -55,7 +58,11 @@ const config = getDefaultConfig(HERE);
 const resolveRequest: Resolve = (context, moduleName, platform) => {
   if (isSingleton(moduleName)) {
     try {
-      return context.resolveRequest({ ...context, originModulePath: THIS_FILE }, moduleName, platform);
+      return context.resolveRequest(
+        { ...context, originModulePath: THIS_FILE },
+        moduleName,
+        platform,
+      );
     } catch {
       return context.resolveRequest(context, moduleName, platform);
     }

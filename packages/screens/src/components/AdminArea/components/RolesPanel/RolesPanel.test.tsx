@@ -96,10 +96,12 @@ describe('RolesPanel', () => {
     renderInAnAddress(<RolesPanel />);
 
     await user.click(await screen.findByRole('button', { name: /Create role/ }));
-
-    expect(
+    await user.click(
       within(await screen.findByRole('dialog')).getByRole('button', { name: 'Create role' }),
-    ).toBeDisabled();
+    );
+
+    expect(mocks.createRole).not.toHaveBeenCalled();
+    expect(await screen.findByText('Give the role a name.')).toBeInTheDocument();
   });
 
   it('creates a role below everybody already using the server', async () => {
@@ -213,8 +215,10 @@ describe('RolesPanel', () => {
 
       await edit(user, 'Member');
       await user.clear(screen.getByLabelText('Name'));
+      await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
-      expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled();
+      expect(mocks.updateRole).not.toHaveBeenCalled();
+      expect(screen.getByText('Give the role a name.')).toBeInTheDocument();
     });
 
     it('renames a role', async () => {
@@ -241,17 +245,16 @@ describe('RolesPanel', () => {
       expect(mocks.updateRole).toHaveBeenCalledWith('role_2', { position: 250 });
     });
 
-    it('leaves the rank alone rather than sending nonsense when the field is empty', async () => {
+    it('will not send an empty rank, and says what a rank is', async () => {
       const user = userEvent.setup();
       renderInAnAddress(<RolesPanel />);
 
       await edit(user, 'Member');
       await user.clear(screen.getByLabelText('Rank'));
-      await user.clear(screen.getByLabelText('Name'));
-      await user.type(screen.getByLabelText('Name'), 'Housemate');
       await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
-      expect(mocks.updateRole).toHaveBeenCalledWith('role_2', { name: 'Housemate' });
+      expect(mocks.updateRole).not.toHaveBeenCalled();
+      expect(screen.getByText('A rank is a whole number from 0 up.')).toBeInTheDocument();
     });
 
     it('explains a rank the server would not accept', async () => {

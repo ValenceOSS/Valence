@@ -261,7 +261,7 @@ describe('Hero', () => {
 
   it('carries on turning after a dot is chosen, rather than stopping there', async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-    // eslint-disable-next-line @typescript-eslint/unbound-method -- called back on its own element below
+    // oxlint-disable-next-line typescript/unbound-method -- called back on its own element below
     const matches = Element.prototype.matches;
 
     vi.spyOn(Element.prototype, 'matches').mockImplementation(function (

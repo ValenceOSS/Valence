@@ -28,8 +28,10 @@ const HOVER_CLOSES_MS = 220;
  *   arrow is pressed on it, and pressing it still does what it did.
  * @param columns - The choices, in one or more named columns.
  * @param className - Extra classes for the caller's own layout.
- * @param triggerShape - How its own control is drawn: a glyph, a field, a button, or an arrow that
- *   runs on from the button before it and is painted as that button.
+ * @param size - How tall its field is, to sit level with the fields and buttons beside it.
+ * @param triggerShape - How its own control is drawn: a glyph, a field, a button, a quiet
+ *   button for the heading of a card, or an arrow that runs on from the button before it and is
+ *   painted as that button.
  */
 const OptionMenu = ({
   label,
@@ -40,7 +42,8 @@ const OptionMenu = ({
   isDisabled = false,
   className,
   align = 'end',
-  matchTriggerWidth = false,
+  matchTriggerWidth = true,
+  size = 'md',
   triggerShape = 'icon',
 }: OptionMenuProps) => {
   const portalContainer = usePortalContainer();
@@ -77,11 +80,11 @@ const OptionMenu = ({
   };
 
   const control =
-    triggerShape === 'button' ? (
+    triggerShape === 'button' || triggerShape === 'quiet' ? (
       <RadixMenu.Trigger asChild disabled={isDisabled}>
         <Button
-          variant="secondary"
-          size="sm"
+          variant={triggerShape === 'quiet' ? 'ghost' : 'secondary'}
+          size={triggerShape === 'quiet' ? 'xs' : 'sm'}
           label={label}
           hasTooltip={false}
           {...(className === undefined ? {} : { className })}
@@ -104,7 +107,8 @@ const OptionMenu = ({
               ? JOINED_LOOKS.secondary
               : triggerShape === 'field'
                 ? cn(
-                    'h-8 w-full justify-between gap-2 rounded-md px-3 text-[0.8125rem] font-semibold',
+                    'w-full justify-between gap-2 rounded-md px-2.5 text-[0.8125rem] font-medium',
+                    size === 'sm' ? 'h-7' : 'h-8',
                     'border border-[var(--surface-line)] bg-[var(--surface-hover)] text-text',
                     'hover:bg-[var(--surface-active)]',
                   )
@@ -169,7 +173,7 @@ const OptionMenu = ({
             ? { style: { minWidth: 'var(--radix-dropdown-menu-trigger-width)' } }
             : {})}
           className={cn(
-            'valence-float z-50 flex max-h-80 flex-col overflow-hidden rounded-xl p-1.5 text-sm text-text',
+            'valence-menu z-50 flex max-h-80 flex-col overflow-hidden rounded-lg p-1 text-[0.8125rem] font-medium text-text',
             POPUP_MOTION,
           )}
         >
@@ -184,7 +188,7 @@ const OptionMenu = ({
             {groups.map((group) => (
               <RadixMenu.Group
                 key={group.name}
-                className="flex min-w-44 flex-1 flex-col overflow-y-auto rounded-lg border-l border-[var(--surface-line)] pl-1.5 first:border-l-0 first:pl-0"
+                className="flex min-w-40 flex-1 flex-col overflow-y-auto rounded-md border-l border-[var(--surface-line)] pl-1 first:border-l-0 first:pl-0"
               >
                 <RadixMenu.Label className={MENU.stickyLabel}>{group.name}</RadixMenu.Label>
 
@@ -201,19 +205,19 @@ const OptionMenu = ({
                       value={option.id}
                       data-highlight={`${group.name}:${option.id}`}
                       className={cn(
-                        'relative z-10 flex cursor-default items-center justify-between gap-4 rounded-sm px-3 py-2.5',
-                        'outline-none transition-colors duration-[var(--duration-fast)]',
-                        'data-[checked]:text-text',
+                        'relative z-10 flex min-h-8 cursor-default items-center justify-between gap-4 rounded-md px-2.5 py-1.5',
+                        'text-text-muted outline-none transition-colors duration-[var(--duration-fast)]',
+                        'hover:text-text focus:text-text data-[state=checked]:bg-[var(--surface-hover)] data-[state=checked]:text-text',
                       )}
                     >
-                      <span className="flex flex-col">
+                      <span className="flex flex-col gap-0.5">
                         {option.label}
                         {option.detail === undefined ? null : (
                           <span className="text-xs text-text-muted">{option.detail}</span>
                         )}
                       </span>
 
-                      <RadixMenu.ItemIndicator className="flex size-4 shrink-0 items-center justify-center text-accent">
+                      <RadixMenu.ItemIndicator className="flex size-4 shrink-0 items-center justify-center text-text">
                         <Icon of={CheckIcon} size={15} />
                       </RadixMenu.ItemIndicator>
                     </RadixMenu.RadioItem>
@@ -226,7 +230,7 @@ const OptionMenu = ({
           </div>
 
           {footer === undefined ? null : (
-            <div className="border-t border-[var(--surface-line)] px-3 py-2.5">{footer}</div>
+            <div className="border-t border-[var(--surface-line)] px-2.5 py-2">{footer}</div>
           )}
         </RadixMenu.Content>
       </RadixMenu.Portal>

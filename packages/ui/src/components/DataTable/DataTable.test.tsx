@@ -280,13 +280,27 @@ describe('DataTable', () => {
     expect(onPageChange).toHaveBeenCalledWith(1);
   });
 
-  it('rounds the outer corners of its heading, so it sits inside a rounded container', () => {
+  it('keeps its heading square, leaving the rounding to the framed well it sits in', () => {
     render(<DataTable label="Library roots" columns={COLUMNS} rows={ROWS} />);
 
     const headings = screen.getAllByRole('columnheader');
 
-    expect(headings[0]).toHaveClass('first:rounded-tl-lg');
-    expect(headings[headings.length - 1]).toHaveClass('last:rounded-tr-lg');
+    for (const heading of headings) {
+      expect(heading.className).not.toMatch(/rounded/);
+    }
+
+    expect(screen.getByRole('table').closest('.valence-well')).toHaveClass(
+      'rounded-xl',
+      'overflow-hidden',
+    );
+  });
+
+  it('stripes every other row, so a long table can be followed across', () => {
+    render(<DataTable label="Library roots" columns={COLUMNS} rows={ROWS} />);
+
+    const body = screen.getAllByRole('rowgroup').find((group) => group.tagName === 'TBODY');
+
+    expect(body?.className).toMatch(/even/);
   });
 
   it('caps its height, or takes the room its parent gives it', () => {

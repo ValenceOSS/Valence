@@ -226,7 +226,7 @@ const ShowDialog = ({
 
           <DialogHeadline className="absolute inset-x-0 bottom-0 flex flex-col gap-3 p-5 sm:p-8">
             <DialogHeadlinePart className="flex flex-wrap items-center gap-3">
-              <span className="text-sm font-medium uppercase tracking-[0.2em] text-on-scrim/75">
+              <span className="text-sm font-medium text-on-scrim/75">
                 {shown.seasonCount === 1
                   ? sayCount('common.count.episodes', shown.episodeCount)
                   : [

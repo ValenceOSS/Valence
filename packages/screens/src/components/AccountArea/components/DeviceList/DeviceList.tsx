@@ -2,10 +2,7 @@ import { sayAgain } from '@ValenceI18n/sayAgain';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Icon } from '@ValenceUI/Icon';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
-import {
-  DoorOpen as DoorOpenIcon,
-  MoreHorizontal as MoreHorizontalIcon,
-} from '@keyline-icons/react';
+import { MoreHorizontal as MoreHorizontalIcon } from '@keyline-icons/react';
 import { DoorOpen as DoorOpenFilledIcon } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
@@ -113,7 +110,7 @@ const DeviceList = () => {
       actions={
         elsewhere.length === 0 ? undefined : (
           <PanelCardAction
-            icon={DoorOpenIcon}
+            icon={DoorOpenFilledIcon}
             onClick={() => {
               setIsEndingRest(true);
             }}

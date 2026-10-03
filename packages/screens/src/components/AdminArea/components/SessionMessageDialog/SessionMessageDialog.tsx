@@ -1,6 +1,9 @@
 import { Icon } from '@ValenceUI/Icon';
-import { X as XIcon } from '@keyline-icons/react';
-import { useEffect, useState } from 'react';
+import { X as XIcon } from '@keyline-icons/react/fill';
+import { useEffect } from 'react';
+import { useZodForm } from '@ValenceClient/forms/useZodForm';
+import { Form } from '@ValenceUI/Form';
+import { SessionMessageFormSchema } from './SessionMessageFormSchema';
 import { Button } from '@ValenceUI/Button';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -25,26 +28,22 @@ import { say } from '@ValenceI18n/say';
  * @returns The dialog.
  */
 const SessionMessageDialog = ({ watcher, isOpen, onSend, onClose }: SessionMessageDialogProps) => {
-  const [text, setText] = useState('');
-  const [isSending, setIsSending] = useState(false);
+  const form = useZodForm(SessionMessageFormSchema, { text: '' }, async (answers) => {
+    await onSend(answers.text);
+    onClose();
+
+    return null;
+  });
+
+  const { reset } = form;
 
   useEffect(() => {
     if (isOpen) {
-      setText('');
-      setIsSending(false);
+      reset({ text: '' });
     }
-  }, [isOpen]);
+  }, [isOpen, reset]);
 
-  const trimmed = text.trim();
-  const isTooLong = trimmed.length > SESSION_MESSAGE_MAX_LENGTH;
-  const canSend = trimmed !== '' && !isTooLong && !isSending;
-
-  const send = async () => {
-    setIsSending(true);
-    await onSend(trimmed);
-    setIsSending(false);
-    onClose();
-  };
+  const trimmed = form.values.text.trim();
 
   return (
     <Dialog
@@ -60,39 +59,38 @@ const SessionMessageDialog = ({ watcher, isOpen, onSend, onClose }: SessionMessa
         </Button>
       </DialogTitle>
 
-      <DialogContent>
-        <div className="flex flex-col gap-2">
-          <TextField
-            label={say('screens.adminArea.sessionMessageDialog.whatToTellThem')}
-            value={text}
-            onValueChange={setText}
-            placeholder={say('screens.adminArea.sessionMessageDialog.restartingInFiveMinutes')}
-            hasFocusOnMount
-            {...(isTooLong
-              ? { error: say('screens.adminArea.sessionMessageDialog.thatIsTooLongToFit') }
-              : {})}
-          />
+      <Form
+        label={say('screens.adminArea.sessionMessageDialog.sendAMessage')}
+        onSubmit={form.submit}
+        isDialog
+      >
+        <DialogContent>
+          <div className="flex flex-col gap-2">
+            <TextField
+              label={say('screens.adminArea.sessionMessageDialog.whatToTellThem')}
+              {...form.text('text')}
+              placeholder={say('screens.adminArea.sessionMessageDialog.restartingInFiveMinutes')}
+              hasFocusOnMount
+            />
 
-          <p className="text-xs text-text-muted">
-            {say('screens.adminArea.sessionMessageDialog.lengthOfSESSIONMESSAGEMAXLENGTH', {
-              length: trimmed.length.toString(),
-              SESSION_MESSAGE_MAX_LENGTH: SESSION_MESSAGE_MAX_LENGTH.toString(),
-            })}
-          </p>
-        </div>
-      </DialogContent>
+            <p className="text-xs text-text-muted">
+              {say('screens.adminArea.sessionMessageDialog.lengthOfSESSIONMESSAGEMAXLENGTH', {
+                length: trimmed.length.toString(),
+                SESSION_MESSAGE_MAX_LENGTH: SESSION_MESSAGE_MAX_LENGTH.toString(),
+              })}
+            </p>
+          </div>
+        </DialogContent>
 
-      <DialogFooter
-        dismiss={{ onChoose: onClose }}
-        confirm={{
-          label: say('screens.adminArea.sessionMessageDialog.send'),
-          onChoose: () => {
-            void send();
-          },
-          isDisabled: !canSend,
-          isLoading: isSending,
-        }}
-      />
+        <DialogFooter
+          dismiss={{ onChoose: onClose }}
+          confirm={{
+            label: say('screens.adminArea.sessionMessageDialog.send'),
+            isSubmit: true,
+            isLoading: form.isSubmitting,
+          }}
+        />
+      </Form>
     </Dialog>
   );
 };

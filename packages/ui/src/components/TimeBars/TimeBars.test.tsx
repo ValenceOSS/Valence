@@ -103,6 +103,14 @@ describe('TimeBars', () => {
     expect(tip).toHaveTextContent('4');
   });
 
+  it('is drawn as a menu is, rising above the bars it is beside', () => {
+    draw();
+
+    fireEvent.pointerMove(chart(), { clientX: 10 });
+
+    expect(screen.getByRole('tooltip')).toHaveClass('valence-menu', 'z-30');
+  });
+
   it('lays the note over the chart beside the bar, on the side that has room', () => {
     draw();
 

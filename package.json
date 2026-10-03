@@ -14,46 +14,42 @@
     "test": "turbo run test",
     "test:serial": "turbo run test --concurrency=1",
     "test:coverage": "turbo run test -- --coverage",
-    "coverage": "pnpm test:coverage && pnpm --filter @valence/tools exec tsx coverageAverage/checkCoverageAverage.ts",
     "typecheck": "turbo run typecheck",
-    "lint": "oxlint --deny-warnings && eslint --max-warnings 0 . && tsx tools/comments/checkComments.ts",
-    "lint:fix": "oxlint --fix --deny-warnings && eslint --fix --max-warnings 0 . && tsx tools/comments/checkComments.ts --fix",
-    "branch:check": "tsx tools/branches/checkBranchName.ts",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "lint": "pnpm --filter @valence/lint build && oxlint --deny-warnings && tsx packages/lint/src/comments/checkComments.ts",
+    "lint:fix": "pnpm --filter @valence/lint build && oxlint --fix --deny-warnings && tsx packages/lint/src/comments/checkComments.ts --fix",
+    "branch:check": "tsx packages/lint/src/branches/checkBranchName.ts",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
     "rust:check": "cargo clippy --all-targets -- -D warnings && cargo fmt --check",
     "rust:test": "cargo test",
-    "prepare": "husky",
-    "fixtures:sync": "tsx tools/fixtures/syncFixtures.ts",
-    "ffmpeg:sync": "tsx tools/ffmpeg/syncFfmpeg.ts",
-    "brand:render": "tsx tools/brand/renderBrand.ts",
-    "db:check": "tsx tools/drizzle/checkDrizzleSnapshot.ts",
-    "i18n:write": "tsx tools/i18n/writeStrings.ts"
+    "prepare": "husky && pnpm --filter @valence/lint build",
+    "fixtures:sync": "tsx apps/transcoder/scripts/fixtures/syncFixtures.ts",
+    "ffmpeg:sync": "tsx apps/transcoder/scripts/ffmpeg/syncFfmpeg.ts",
+    "brand:render": "tsx packages/brand/src/renderBrand.ts",
+    "db:check": "tsx packages/database/src/drizzle/checkDrizzleSnapshot.ts",
+    "i18n:write": "tsx packages/i18n/src/writeStrings.ts"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.0.0",
     "@commitlint/config-conventional": "^21.0.0",
     "@types/node": "^24.0.0",
-    "@typescript-eslint/utils": "^8.70.0",
-    "eslint": "^10.0.0",
     "husky": "^9.1.7",
     "jiti": "^2.7.0",
     "lint-staged": "^17.0.0",
-    "oxlint": "^1.0.0",
-    "prettier": "^3.9.6",
+    "oxlint": "^1.86.0",
+    "oxlint-tsgolint": "^7.0.2003",
+    "oxfmt": "^0.71.0",
     "tsx": "^4.23.13",
     "turbo": "^2.10.12",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.70.0"
+    "typescript": "^7.0.2"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
       "oxlint --fix",
-      "eslint --fix",
-      "prettier --write"
+      "oxfmt --no-error-on-unmatched-pattern"
     ],
-    "*.{json,md,css,yaml,yml}": [
-      "prettier --write"
+    "*.{json,md,mdx,css,yaml,yml}": [
+      "oxfmt --no-error-on-unmatched-pattern"
     ],
     "*.rs": [
       "rustfmt --edition 2021"

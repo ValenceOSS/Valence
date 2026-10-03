@@ -199,7 +199,7 @@ describe('ActionMenu', () => {
 
     const menu = await screen.findByRole('menu');
 
-    expect(menu).toHaveClass('valence-float');
+    expect(menu).toHaveClass('valence-menu');
     expect(menu).not.toHaveClass('valence-surface');
   });
 

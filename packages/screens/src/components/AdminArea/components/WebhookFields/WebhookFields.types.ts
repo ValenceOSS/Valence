@@ -20,6 +20,7 @@ type WebhookFieldsProps = {
   profiles: WebhookFilterChoice[];
   hasRequests?: boolean;
   travel: 1 | -1;
+  errors?: { name?: string | undefined; url?: string | undefined; events?: string | undefined };
 };
 
 export type { WebhookDraft, WebhookFieldsProps };

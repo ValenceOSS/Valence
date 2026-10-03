@@ -37,6 +37,7 @@
     "jsdom": "^30.0.0",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.13",
+    "typescript6": "npm:@typescript/typescript6@^6.0.2",
     "vite": "^8.3.0",
     "vitest": "^4.1.11"
   }

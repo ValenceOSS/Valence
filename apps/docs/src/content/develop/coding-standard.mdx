@@ -14,25 +14,25 @@ The rules in `CODING_STANDARD.md` are binding. Tooling enforces every rule that 
 
 ## The rules at a glance
 
-| Section | Rule                                                         | Enforced by                                         |
-| ------- | ------------------------------------------------------------ | --------------------------------------------------- |
-| 1       | TypeScript and Rust only, config included                    | Review                                              |
-| 2       | No duplication across modules                                | Review                                              |
-| 3       | No `../` imports, use aliases                                | ESLint                                              |
-| 4       | No `index.ts` or `index.tsx`, no barrels                     | Review                                              |
-| 5       | Named exports only, one member per file                      | oxlint (`import/no-default-export`) and review      |
-| 6       | No comments beyond the allowed few                           | ESLint (`valence/no-comments`) and `tools/comments` |
-| 7       | PascalCase and camelCase file naming, co-located types       | Review                                              |
-| 8       | No `any`, `unknown` or `as`                                  | ESLint and oxlint                                   |
-| 9       | One ValenceUI component owns each interactive element        | ESLint                                              |
-| 10      | Icons from `@keyline-icons/react` through `Icon`, no raw SVG | ESLint and review                                   |
-| 11      | Motion for animation, respect reduced motion                 | Review                                              |
-| 12      | Every function and component has a co-located Vitest test    | Coverage thresholds in CI and review                |
-| 13      | Conventional Commits                                         | commitlint                                          |
+| Section | Rule                                                         | Enforced by                                        |
+| ------- | ------------------------------------------------------------ | -------------------------------------------------- |
+| 1       | TypeScript and Rust only, config included                    | Review                                             |
+| 2       | No duplication across modules                                | Review                                             |
+| 3       | No `../` imports, use aliases                                | oxlint                                             |
+| 4       | No `index.ts` or `index.tsx`, no barrels                     | Review                                             |
+| 5       | Named exports only, one member per file                      | oxlint (`import/no-default-export`) and review     |
+| 6       | No comments beyond the allowed few                           | oxlint (`valence/no-comments`) and `packages/lint` |
+| 7       | PascalCase and camelCase file naming, co-located types       | Review                                             |
+| 8       | No `any`, `unknown` or `as`                                  | oxlint                                             |
+| 9       | One ValenceUI component owns each interactive element        | oxlint                                             |
+| 10      | Icons from `@keyline-icons/react` through `Icon`, no raw SVG | oxlint and review                                  |
+| 11      | Motion for animation, respect reduced motion                 | Review                                             |
+| 12      | Every function and component has a co-located Vitest test    | Coverage thresholds in CI and review               |
+| 13      | Conventional Commits                                         | commitlint                                         |
 
 ## Languages
 
-TypeScript and Rust only. Build config, scripts, tooling and lint config are all TypeScript (`vite.config.ts`, `eslint.config.ts`) and run through `tsx` where a runtime needs them. No `.js`, `.jsx`, `.mjs` or `.cjs` file is committed. Where a tool physically cannot load TypeScript config, the generated JavaScript is a git-ignored build artefact and is never hand edited.
+TypeScript and Rust only. Build config, scripts, tooling and lint config are all TypeScript (`vite.config.ts`, `oxlint.config.ts`) and run through `tsx` where a runtime needs them. No `.js`, `.jsx`, `.mjs` or `.cjs` file is committed. Where a tool physically cannot load TypeScript config, the generated JavaScript is a git-ignored build artefact and is never hand edited.
 
 ## No duplication
 
@@ -55,7 +55,7 @@ Extraction must not create a dependency cycle. If it would, the shared thing bel
 import { Button } from '@ValenceUI/Button';
 ```
 
-Relative parent imports are banned in any form (`../`, `../../`). Same-directory imports such as `./Button.types` are fine. The aliases are `@ValenceUI/*`, `@ValenceClient/*`, `@ValenceContracts/*`, `@ValenceCore/*`, `@ValenceSDK/*` and the per-app aliases listed in [Repository layout](/develop/repository-layout). The `no-restricted-imports` rule in `eslint.config.ts` bans the `../*` pattern.
+Relative parent imports are banned in any form (`../`, `../../`). Same-directory imports such as `./Button.types` are fine. The aliases are `@ValenceUI/*`, `@ValenceClient/*`, `@ValenceContracts/*`, `@ValenceCore/*`, `@ValenceSDK/*` and the per-app aliases listed in [Repository layout](/develop/repository-layout). The `no-restricted-imports` rule in `oxlint.config.ts` bans the `../*` pattern.
 
 ### No index files
 
@@ -91,11 +91,11 @@ There are no comments in the codebase, with four exceptions.
 1. TSDoc on functions and components, and on nothing else. One sentence saying what the function does, plus `@param` and `@returns` only where the name and type do not already say it. Types, constants, properties and interfaces carry no TSDoc at all. If a type needs a paragraph to be understood, the name is wrong. TSDoc is required on anything exported from `packages/plugin-sdk` or `packages/contracts`, because those generate public documentation.
 2. Rust doc comments (`///` and `//!`) on public items.
 3. A `// SAFETY:` comment on every Rust `unsafe` block, which `clippy::undocumented_unsafe_blocks` requires.
-4. Lint suppression directives such as `eslint-disable-next-line` and `#[allow(...)]`. Each requires a reason, and each is reviewed as a change in its own right.
+4. Lint suppression directives such as `oxlint-disable-next-line` and `#[allow(...)]`. Each requires a reason, and each is reviewed as a change in its own right.
 
 Explanatory comments, section banners, commented-out code, `TODO` and `FIXME` are all rejected. If code needs explaining, the explanation belongs in a name, a type or a TSDoc block. Outstanding work belongs in an issue where it can be tracked.
 
-Two checks enforce it, because no single linter reads every language here. The ESLint rule `valence/no-comments` (in `tools/eslint/noComments.ts`) covers TypeScript and removes offenders under `--fix`. TSDoc counts only when it sits on a function: a declaration, a method or a `const` holding an arrow function. `tools/comments/checkComments.ts` covers Rust and CSS, which ESLint cannot see. It parses rather than pattern-matches, so a slash pair inside a string literal is left alone. Both run under `pnpm lint`.
+Two checks enforce it, because no single linter reads every language here. The oxlint rule `valence/no-comments` (in `packages/lint/src/oxlint/noComments.ts`) covers TypeScript and removes offenders under `--fix`. TSDoc counts only when it sits on a function: a declaration, a method or a `const` holding an arrow function. `packages/lint/src/comments/checkComments.ts` covers Rust and CSS, which oxlint cannot see. It parses rather than pattern-matches, so a slash pair inside a string literal is left alone. Both run under `pnpm lint`.
 
 ## Types
 
@@ -135,9 +135,9 @@ Raw HTML form and interactive elements are banned outside the one ValenceUI comp
 
 A control that is not one of these is a shape of one of them. An icon button is `Button` with an icon and a label. There is no `IconButton`, and there should be no equivalent for any other primitive: a second component wrapping the same element is a second set of focus, disabled and keyboard behaviour that drifts from the first. When a control needs something the owner lacks, widen the owner. `Button` carries `variant="bare"` and `size="none"` for controls that supply their own shape.
 
-`className` on a ValenceUI component is for where a thing sits (width, margin, grid placement), not what it looks like. A look that appears in more than one place is a named variant, painted from tokens, so a theme can move it. ESLint enforces a set of these through `no-restricted-syntax` selectors, for example refusing fill, border and shadow classes on a `Button` and text colour classes on an `Icon`. Structural elements such as `div`, `span`, `section` and `ul` are fine.
+`className` on a ValenceUI component is for where a thing sits (width, margin, grid placement), not what it looks like. A look that appears in more than one place is a named variant, painted from tokens, so a theme can move it. oxlint enforces a set of these through selectors in `valence/banned-syntax`, for example refusing fill, border and shadow classes on a `Button` and text colour classes on an `Icon`. Structural elements such as `div`, `span`, `section` and `ul` are fine.
 
-Icons come from `@keyline-icons/react` and are drawn by `@ValenceUI/Icon`. Other icon sets are banned by ESLint. `apps/landing` is the one exception and draws from `@tabler/icons-react`, because the marketing site wants brand icons the product set lacks. Whether a thing is on is said with the filled twin through `whenActive`, not a different glyph. Play, pause and skip always draw solid. There is no raw SVG anywhere: no inline `<svg>`, no `.svg` imported as a component, no SVG strings. Brand assets are the exception and are referenced by URL. See [UI library](/develop/ui-library).
+Icons come from `@keyline-icons/react` and are drawn by `@ValenceUI/Icon`. Other icon sets are banned by oxlint. `apps/landing` is the one exception and draws from `@tabler/icons-react`, because the marketing site wants brand icons the product set lacks. Whether a thing is on is said with the filled twin through `whenActive`, not a different glyph. Play, pause and skip always draw solid. There is no raw SVG anywhere: no inline `<svg>`, no `.svg` imported as a component, no SVG strings. Brand assets are the exception and are referenced by URL: Valence's own logo, wordmark and favicon, and the browser and system marks in `packages/ui/src/assets/brands/`, which come from Simple Icons and are drawn only by `BrandGlyph`, through a CSS mask. See [UI library](/develop/ui-library).
 
 A colour written into a component is a colour only one theme is right about, so `valence/no-raw-colours` fails literal colours and `white` or `black` palette utilities in `packages/ui`, `packages/screens`, `apps/web` and `apps/landing` source. Tests, stylesheets and token files are exempt.
 
@@ -151,20 +151,19 @@ Every function and every component is tested, with Vitest, co-located. Component
 
 ## What the tools enforce
 
-| Tool                     | Config                            | What it owns                                                                                                                                                                                                                              |
-| ------------------------ | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| oxlint                   | `.oxlintrc.json`                  | Fast, non-type-aware rules: `no-console`, `no-debugger`, `eqeqeq`, `prefer-const`, `typescript/no-explicit-any`, `consistent-type-imports`, `react/rules-of-hooks`, `react/no-danger`, `import/no-duplicates`, `import/no-default-export` |
-| ESLint                   | `eslint.config.ts`                | Rules that need the type checker (`no-floating-promises`, `no-misused-promises`, `no-unnecessary-condition`, `switch-exhaustiveness-check`), import bans, the raw control ban, the `unknown` and `as` bans, and the two Valence rules     |
-| `valence/no-comments`    | `tools/eslint/noComments.ts`      | The comment rule for TypeScript                                                                                                                                                                                                           |
-| `valence/no-raw-colours` | `tools/eslint/noRawColours.ts`    | Literal colours in UI code                                                                                                                                                                                                                |
-| `checkComments`          | `tools/comments/checkComments.ts` | The comment rule for Rust and CSS                                                                                                                                                                                                         |
-| clippy and rustfmt       | `Cargo.toml`, `rustfmt.toml`      | `all` denied, `pedantic` as warnings, `unwrap_used` and `expect_used` denied, `undocumented_unsafe_blocks` denied                                                                                                                         |
-| Prettier                 | `.prettierrc.json`                | Single quotes, semicolons, trailing commas, 100 columns                                                                                                                                                                                   |
-| commitlint               | `commitlint.config.ts`            | Commit messages                                                                                                                                                                                                                           |
-| `tools/branches`         | `pnpm branch:check`               | Branch names                                                                                                                                                                                                                              |
-| `db:check`               | `tools/drizzle`                   | Drizzle snapshots match the schema                                                                                                                                                                                                        |
+| Tool                     | Config                                        | What it owns                                                                                                                                                                                                                                                                                                         |
+| ------------------------ | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| oxlint                   | `oxlint.config.ts`                            | Every rule, type-aware ones included through `oxlint-tsgolint` and TypeScript 7: `no-floating-promises`, `no-misused-promises`, `no-unnecessary-condition`, `switch-exhaustiveness-check` and the rest of the type-checked set, import bans, the raw control ban, the `unknown` and `as` bans, and the Valence rules |
+| `valence/no-comments`    | `packages/lint/src/oxlint/noComments.ts`      | The comment rule for TypeScript                                                                                                                                                                                                                                                                                      |
+| `valence/no-raw-colours` | `packages/lint/src/oxlint/noRawColours.ts`    | Literal colours in UI code                                                                                                                                                                                                                                                                                           |
+| `checkComments`          | `packages/lint/src/comments/checkComments.ts` | The comment rule for Rust and CSS                                                                                                                                                                                                                                                                                    |
+| clippy and rustfmt       | `Cargo.toml`, `rustfmt.toml`                  | `all` denied, `pedantic` as warnings, `unwrap_used` and `expect_used` denied, `undocumented_unsafe_blocks` denied                                                                                                                                                                                                    |
+| oxfmt                    | `oxfmt.config.ts`                             | Single quotes, semicolons, trailing commas, 100 columns                                                                                                                                                                                                                                                              |
+| commitlint               | `commitlint.config.ts`                        | Commit messages                                                                                                                                                                                                                                                                                                      |
+| `packages/lint`          | `pnpm branch:check`                           | Branch names                                                                                                                                                                                                                                                                                                         |
+| `db:check`               | `packages/database`                           | Drizzle snapshots match the schema                                                                                                                                                                                                                                                                                   |
 
-oxlint runs first for speed. ESLint keeps only the rules that need the type checker. Husky blocks anything non-conforming before it reaches the remote, and CI runs the same checks. `react/set-state-in-effect` is deliberately off in `.oxlintrc.json`: it could not model cleanup functions and mislabelled thirty-six correct timers, subscriptions and loaders as mistakes. A rule that fights the linter is a rule that gets disabled, and this is that principle pointed the other way.
+oxlint holds every rule, and Valence's own live in `packages/lint` as a plugin it loads. Husky blocks anything non-conforming before it reaches the remote, and CI runs the same checks. `react/set-state-in-effect` is deliberately off in `oxlint.config.ts`: it could not model cleanup functions and mislabelled thirty-six correct timers, subscriptions and loaders as mistakes. A rule that fights the linter is a rule that gets disabled, and this is that principle pointed the other way.
 
 Some rules have no upstream equivalent and are upheld in review: no barrels, one exported member per file, the naming scheme and no raw SVG.
 

@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { Plus as PlusIcon, X as XIcon } from '@keyline-icons/react';
+import { Plus as PlusIcon, X as XIcon } from '@keyline-icons/react/fill';
 import { useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { AddTriggerDialog } from '@ValenceScreens/components/AdminArea/components/AddTriggerDialog/AddTriggerDialog';
@@ -33,7 +33,7 @@ const JobSchedulePage = ({ triggers, onAdd, onRemove, timezone = null }: JobSche
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="text-xs uppercase tracking-[0.16em] text-text-muted">
+          <h3 className="text-xs font-medium text-text-muted">
             {say('screens.adminArea.jobSchedulePage.triggers')}
           </h3>
 

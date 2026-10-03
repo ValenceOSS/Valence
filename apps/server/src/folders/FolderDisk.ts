@@ -5,7 +5,9 @@ type FolderEntry = {
 };
 
 type DirectoryRead =
-  { kind: 'read'; entries: FolderEntry[] } | { kind: 'missing' } | { kind: 'unreadable' };
+  | { kind: 'read'; entries: FolderEntry[] }
+  | { kind: 'missing' }
+  | { kind: 'unreadable' };
 
 type DirectoryMade = 'made' | 'exists' | 'missing' | 'readOnly' | 'denied';
 

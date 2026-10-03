@@ -1,10 +1,12 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { FilterMenu } from '@ValenceUI/FilterMenu';
+import { TextField } from '@ValenceUI/TextField';
+import type { FilterGroup } from '@ValenceUI/FilterMenu.types';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
-import { HeadedSection } from '@ValenceUI/HeadedSection';
 import { StatStrip } from '@ValenceUI/StatStrip';
 import { useAnchoredNow } from '@ValenceScreens/admin/useAnchoredNow';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
@@ -35,6 +37,17 @@ const showRate = (rate: number | null) =>
     />
   );
 
+const FILTERS: FilterGroup[] = [
+  {
+    name: say('common.status'),
+    isSingle: true,
+    options: [
+      { id: 'state:failed', label: say('screens.observabilityPage.jobHealth.hasFailed') },
+      { id: 'state:clean', label: say('screens.observabilityPage.jobHealth.neverFailed') },
+    ],
+  },
+];
+
 /**
  * Says how reliable and how quick each kind of job has been over a stretch of time — the service
  * levels an operator holds them to: how often a run ended well, how long the typical run took, how
@@ -56,10 +69,23 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
     anchor - KEPT_MS;
   const asked = useQuery({ ...adminQueries.jobStats(sinceMs), placeholderData: keepPreviousData });
   const kinds = useMemo(() => asked.data?.kinds ?? [], [asked.data]);
+  const [typed, setTyped] = useState('');
+  const [chosen, setChosen] = useState<ReadonlySet<string>>(new Set());
   const labels = useMemo(
     () => new Map(definitions.map((definition) => [definition.kind, sayAgain(definition.label)])),
     [definitions],
   );
+
+  const shown = useMemo(() => {
+    const words = typed.trim().toLowerCase();
+
+    return kinds.filter(
+      (kind) =>
+        (words === '' || describeJobKind(kind.kind, labels).toLowerCase().includes(words)) &&
+        (!chosen.has('state:failed') || kind.failed > 0) &&
+        (!chosen.has('state:clean') || kind.failed === 0),
+    );
+  }, [kinds, typed, chosen, labels]);
 
   const totals = kinds.reduce(
     (sum, kind) => ({
@@ -166,61 +192,77 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
   );
 
   return (
-    <div className="flex flex-col gap-6">
-      <HeadedSection
-        isInset
-        title={say('screens.observabilityPage.jobHealth.howTheJobsAreDoing')}
-        actions={<TimeRangeMenu search={search} onSearchChange={onSearchChange} />}
-      >
-        <StatStrip
-          label={say('screens.observabilityPage.jobHealth.howTheJobsAreDoingOverall')}
-          items={[
-            {
-              id: 'runs',
-              label: say('screens.observabilityPage.jobHealth.runs'),
-              value: <AnimatedNumber value={totals.runs} />,
-            },
-            {
-              id: 'rate',
-              label: say('screens.observabilityPage.jobHealth.finishedWell'),
-              value: showRate(overall),
-              isAlarming: overall !== null && overall < 0.9,
-              detail: say('screens.observabilityPage.jobHealth.ofTheRunsThatHaveEnded'),
-            },
-            {
-              id: 'failed',
-              label: say('common.failed'),
-              value: <AnimatedNumber value={totals.failed} />,
-              isAlarming: totals.failed > 0,
-            },
-            {
-              id: 'slowest',
-              label: say('screens.observabilityPage.jobHealth.slowestRun'),
-              value: totals.slowest === 0 ? '—' : <ElapsedTime ms={totals.slowest} />,
-            },
-          ]}
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <TextField
+          label={say('screens.observabilityPage.jobHealth.findAKindOfJob')}
+          isLabelHidden
+          size="sm"
+          type="search"
+          placeholder={say('screens.observabilityPage.jobHealth.searchByJob')}
+          value={typed}
+          onValueChange={setTyped}
+          className="min-w-56 flex-1"
         />
-      </HeadedSection>
 
-      <HeadedSection isInset title={say('screens.observabilityPage.jobHealth.byKindOfJob')}>
-        <DataTable
-          label={say('screens.observabilityPage.jobHealth.howEachKindOfJobHas')}
-          columns={columns}
-          rows={kinds}
-          getRowId={(kind) => kind.kind}
-          page={(search.hpage ?? 1) - 1}
-          onPageChange={(next) => {
-            onSearchChange({ hpage: next === 0 ? undefined : next + 1 });
-          }}
-          height="fill"
-          pageSize={12}
-          emptyMessage={
-            asked.isPending
-              ? say('screens.observabilityPage.jobHealth.readingHowTheJobsHaveGone')
-              : say('screens.observabilityPage.jobHealth.noJobHasRunInThis')
-          }
+        <TimeRangeMenu search={search} onSearchChange={onSearchChange} />
+
+        <FilterMenu
+          label={say('screens.observabilityPage.jobHealth.filterTheKinds')}
+          groups={FILTERS}
+          selected={chosen}
+          hasLabel
+          onChange={setChosen}
         />
-      </HeadedSection>
+      </div>
+
+      <StatStrip
+        label={say('screens.observabilityPage.jobHealth.howTheJobsAreDoingOverall')}
+        items={[
+          {
+            id: 'runs',
+            label: say('screens.observabilityPage.jobHealth.runs'),
+            value: <AnimatedNumber value={totals.runs} />,
+          },
+          {
+            id: 'rate',
+            label: say('screens.observabilityPage.jobHealth.finishedWell'),
+            value: showRate(overall),
+            isAlarming: overall !== null && overall < 0.9,
+            detail: say('screens.observabilityPage.jobHealth.ofTheRunsThatHaveEnded'),
+          },
+          {
+            id: 'failed',
+            label: say('common.failed'),
+            value: <AnimatedNumber value={totals.failed} />,
+            isAlarming: totals.failed > 0,
+          },
+          {
+            id: 'slowest',
+            label: say('screens.observabilityPage.jobHealth.slowestRun'),
+            value: totals.slowest === 0 ? '—' : <ElapsedTime ms={totals.slowest} />,
+          },
+        ]}
+      />
+
+      <DataTable
+        className="m-0"
+        label={say('screens.observabilityPage.jobHealth.howEachKindOfJobHas')}
+        columns={columns}
+        rows={shown}
+        getRowId={(kind) => kind.kind}
+        page={(search.hpage ?? 1) - 1}
+        onPageChange={(next) => {
+          onSearchChange({ hpage: next === 0 ? undefined : next + 1 });
+        }}
+        height="fill"
+        pageSize={12}
+        emptyMessage={
+          asked.isPending
+            ? say('screens.observabilityPage.jobHealth.readingHowTheJobsHaveGone')
+            : say('screens.observabilityPage.jobHealth.noJobHasRunInThis')
+        }
+      />
     </div>
   );
 };

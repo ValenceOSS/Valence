@@ -17,7 +17,7 @@ import type { AskerPickerProps } from './AskerPicker.types';
  */
 const AskerPicker = ({ legend, everyLabel, askers, chosen, onChange }: AskerPickerProps) => (
   <fieldset className="flex flex-col gap-3">
-    <legend className="mb-3 text-xs uppercase tracking-[0.14em] text-text-muted">{legend}</legend>
+    <legend className="mb-3 text-xs font-medium text-text-muted">{legend}</legend>
 
     <Checkbox
       label={everyLabel}

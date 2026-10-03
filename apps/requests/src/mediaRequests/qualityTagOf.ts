@@ -1,4 +1,4 @@
-/* eslint-disable valence/no-hard-coded-strings -- the tags release names use, written into file names */
+/* oxlint-disable valence/no-hard-coded-strings -- the tags release names use, written into file names */
 import type {
   AudioCodec,
   ParsedRelease,

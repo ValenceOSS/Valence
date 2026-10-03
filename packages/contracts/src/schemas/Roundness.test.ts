@@ -15,8 +15,8 @@ describe('Roundness', () => {
     }
   });
 
-  it('makes the default level the scale of nothing changed', () => {
-    expect(ROUNDNESS_SCALES.default).toBe(1);
+  it('makes the default level the scale the stylesheet starts on', () => {
+    expect(ROUNDNESS_SCALES.default).toBe(1.6);
   });
 
   it('orders the levels from sharpest to roundest', () => {

@@ -1,7 +1,9 @@
 import { shouldAskStillWatching } from '@ValenceContracts/schemas/StillWatching';
 
 type Following<Episode> =
-  { kind: 'nothing' } | { kind: 'ask'; episode: Episode } | { kind: 'play'; episode: Episode };
+  | { kind: 'nothing' }
+  | { kind: 'ask'; episode: Episode }
+  | { kind: 'play'; episode: Episode };
 
 type WhatFollows<Episode> = {
   following: Episode | null;

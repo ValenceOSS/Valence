@@ -23,9 +23,7 @@ const UNFRAMED = { zoom: 1, x: 0, y: 0 };
 const PhotoStudio = ({ fileName, hasPicture, frame, onPick, onFrame }: PhotoStudioProps) => (
   <div className="flex flex-col gap-8">
     <section className="flex flex-col gap-3">
-      <h3 className="text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">
-        {say('common.picture')}
-      </h3>
+      <h3 className="text-[0.65rem] font-medium text-text-muted">{say('common.picture')}</h3>
       <div className="flex items-center gap-3">
         <FilePicker
           label={say('screens.faceEditor.photoStudio.chooseAPictureGIFOrVideo')}
@@ -47,7 +45,7 @@ const PhotoStudio = ({ fileName, hasPicture, frame, onPick, onFrame }: PhotoStud
 
     {hasPicture ? (
       <section className="flex flex-col gap-5">
-        <h3 className="text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">
+        <h3 className="text-[0.65rem] font-medium text-text-muted">
           {say('screens.faceEditor.photoStudio.framing')}
         </h3>
 

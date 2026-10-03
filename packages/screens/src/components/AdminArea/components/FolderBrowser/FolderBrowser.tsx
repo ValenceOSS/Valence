@@ -7,7 +7,7 @@ import {
   Folder as FolderIcon,
   FolderPlus as FolderPlusIcon,
   Search as SearchIcon,
-} from '@keyline-icons/react';
+} from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Icon } from '@ValenceUI/Icon';

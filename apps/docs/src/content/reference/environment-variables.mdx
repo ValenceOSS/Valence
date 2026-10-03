@@ -213,7 +213,7 @@ Fixed values in `compose.yaml` that you do not set: the database user and name a
 
 ### The development compose file
 
-`compose.dev.yaml` is for working on Valence, not for running it. It builds the images from source, publishes the database on 5432, and reads these differently.
+`docker/compose.dev.yaml` is for working on Valence, not for running it. It builds the images from source, publishes the database on 5432, and reads these differently.
 
 | Variable                                                                                                                                                                           | Default                 | Description                                                                                |
 | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------- | :----------------------------------------------------------------------------------------- |
@@ -259,7 +259,7 @@ These variables affect building and testing rather than running a server.
 
 ## Image build arguments
 
-These are `ARG` values of the `Dockerfile`, passed with `--build-arg`, and not runtime variables.
+These are `ARG` values of `docker/server.Dockerfile`, passed with `--build-arg`, and not runtime variables.
 
 | Argument                 | Default       | Description                                                                                                                                                                             |
 | :----------------------- | :------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

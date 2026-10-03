@@ -1,5 +1,6 @@
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { render, screen } from '@testing-library/react';
+import { waitForArrivals } from '@ValenceScreens/testing/waitForArrivals';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { EncodingPanel } from './EncodingPanel';
@@ -40,21 +41,27 @@ const props = {
 };
 
 describe('EncodingPanel', () => {
-  it('says nothing is waiting, and why that is not a timer', () => {
+  it('says nothing is waiting, and why that is not a timer', async () => {
     render(<EncodingPanel {...props} />);
+
+    await waitForArrivals();
 
     expect(screen.getByText('Nothing is waiting')).toBeVisible();
     expect(screen.getByText(/discarded on a timer/)).toBeVisible();
   });
 
-  it('lists what is waiting for somebody to judge it', () => {
+  it('lists what is waiting for somebody to judge it', async () => {
     render(<EncodingPanel {...props} reencodes={[at('a', 'awaitingReview')]} />);
+
+    await waitForArrivals();
 
     expect(screen.getByRole('button', { name: 'Review' })).toBeVisible();
   });
 
-  it('says what confirming one would free', () => {
+  it('says what confirming one would free', async () => {
     render(<EncodingPanel {...props} reencodes={[at('a', 'awaitingReview')]} />);
+
+    await waitForArrivals();
 
     expect(screen.getByText(/frees/)).toBeVisible();
   });
@@ -90,13 +97,15 @@ describe('EncodingPanel', () => {
     expect(onReview).toHaveBeenCalledWith(waiting);
   });
 
-  it('shows how far through a running encode is', () => {
+  it('shows how far through a running encode is', async () => {
     render(<EncodingPanel {...props} reencodes={[at('a', 'encoding', { progress: 0.4 })]} />);
+
+    await waitForArrivals();
 
     expect(screen.getByRole('progressbar')).toBeVisible();
   });
 
-  it('says how much faster than watching it, rather than how fast the file grows', () => {
+  it('says how much faster than watching it, rather than how fast the file grows', async () => {
     const started = new Date(Date.now() - 180_000).toISOString();
 
     render(
@@ -106,17 +115,21 @@ describe('EncodingPanel', () => {
       />,
     );
 
+    await waitForArrivals();
+
     expect(screen.getByText(/× real time/)).toBeVisible();
     expect(screen.queryByText(/MB\/s/)).toBeNull();
   });
 
-  it('marks an encode pre-transcoding queued, so it is not taken for one somebody asked for', () => {
+  it('marks an encode pre-transcoding queued, so it is not taken for one somebody asked for', async () => {
     render(
       <EncodingPanel
         {...props}
         reencodes={[at('a', 'encoding', { origin: 'preTranscode', progress: 0.2 })]}
       />,
     );
+
+    await waitForArrivals();
 
     expect(screen.getByText('Pre-transcoding')).toBeVisible();
   });
@@ -141,7 +154,7 @@ describe('EncodingPanel', () => {
     expect(onChoose).toHaveBeenCalled();
   });
 
-  it('says why one failed rather than only that it did', () => {
+  it('says why one failed rather than only that it did', async () => {
     render(
       <EncodingPanel
         {...props}
@@ -149,11 +162,15 @@ describe('EncodingPanel', () => {
       />,
     );
 
+    await waitForArrivals();
+
     expect(screen.getByText('The file would not decode')).toBeVisible();
   });
 
-  it('says the queue could not be read rather than that it is empty', () => {
+  it('says the queue could not be read rather than that it is empty', async () => {
     render(<EncodingPanel {...props} isUnreachable />);
+
+    await waitForArrivals();
 
     expect(screen.getByText(/not the same as it being/)).toBeVisible();
   });

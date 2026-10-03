@@ -167,9 +167,9 @@ describe('LibrariesPanel', () => {
   });
 
   it('labels a library with the kind it is where it has no type of its own', () => {
-    render(<LibrariesPanel {...props} libraries={[library({ flavour: null })]} />);
+    render(<LibrariesPanel {...props} libraries={[library({ name: 'Cinema', flavour: null })]} />);
 
-    expect(screen.getByText('movies')).toBeInTheDocument();
+    expect(screen.getByText('Films')).toBeInTheDocument();
   });
 
   it('tells somebody not to add a library when the list simply could not be read', () => {
@@ -186,9 +186,9 @@ describe('LibrariesPanel', () => {
   });
 
   it('shows a library with where it reads from and how much is in it', () => {
-    render(<LibrariesPanel {...props} libraries={[library()]} />);
+    render(<LibrariesPanel {...props} libraries={[library({ name: 'Cinema' })]} />);
 
-    expect(screen.getByText('Films')).toBeInTheDocument();
+    expect(screen.getByText('Cinema')).toBeInTheDocument();
     expect(screen.getByText('/media/films')).toBeInTheDocument();
     expect(screen.getByText(readsWhole('4 items'))).toBeInTheDocument();
   });

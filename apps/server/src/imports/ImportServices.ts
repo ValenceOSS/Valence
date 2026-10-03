@@ -34,7 +34,8 @@ type ImportServices = {
   segments: SegmentService;
   collections: Pick<CollectionService, 'create' | 'replaceEntries'> | null;
   createAccountWithoutPassword:
-    ((request: AccountWithoutPasswordRequest) => Promise<AccountWithoutPasswordOutcome>) | null;
+    | ((request: AccountWithoutPasswordRequest) => Promise<AccountWithoutPasswordOutcome>)
+    | null;
   setupLinks: Pick<SetupLinkService, 'issue'> | null;
   email: Pick<EmailService, 'isOn'> | null;
   grantAdministrator: (userId: string) => Promise<void>;
@@ -43,7 +44,8 @@ type ImportServices = {
   regions: () => Promise<readonly string[]>;
   fetch: SourceFetch;
   readerFor?:
-    ((source: StoredImportSource, regions: readonly string[]) => SourceReader) | undefined;
+    | ((source: StoredImportSource, regions: readonly string[]) => SourceReader)
+    | undefined;
   jobs: Pick<JobQueue, 'enqueue' | 'reportProgress' | 'readProgress' | 'isCancelled' | 'cancel'>;
   recordIssue: (jobId: string, what: string, reason: Said) => void;
   requestsReach: () => RequestsReach;

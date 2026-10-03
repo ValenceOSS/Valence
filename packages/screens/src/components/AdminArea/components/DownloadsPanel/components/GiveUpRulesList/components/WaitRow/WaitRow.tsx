@@ -1,4 +1,4 @@
-import { ChevronsUpDown as ChevronsUpDownIcon } from '@keyline-icons/react';
+import { ChevronsUpDown as ChevronsUpDownIcon } from '@keyline-icons/react/fill';
 import { Icon } from '@ValenceUI/Icon';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { SettingRow } from '@ValenceUI/SettingRow';

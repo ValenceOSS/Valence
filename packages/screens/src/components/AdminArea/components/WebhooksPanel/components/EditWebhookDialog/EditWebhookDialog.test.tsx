@@ -145,12 +145,13 @@ describe('EditWebhookDialog', () => {
   it('will not save a subscription that listens for nothing', async () => {
     const user = userEvent.setup();
 
-    draw();
+    const { onSave } = draw();
 
     await openPane(user, 'Events');
     await user.click(screen.getByRole('switch', { name: 'Job failed' }));
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
-    expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled();
+    expect(onSave).not.toHaveBeenCalled();
   });
 
   it('drops an event a subscription can no longer ask for, rather than sending it back', async () => {

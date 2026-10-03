@@ -68,10 +68,13 @@ describe('AddAccountDialog', () => {
     expect(screen.queryByRole('button', { name: /Send by email/ })).not.toBeInTheDocument();
   });
 
-  it('cannot add an account without a name', () => {
+  it('cannot add an account without a name, and says so', async () => {
     open();
 
-    expect(screen.getByRole('button', { name: 'Add' })).toBeDisabled();
+    await userEvent.click(screen.getByRole('button', { name: 'Add' }));
+
+    expect(inviteAccount).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toBeInTheDocument();
   });
 
   it('sends a password instead of a link when one is chosen, and closes', async () => {
@@ -85,8 +88,9 @@ describe('AddAccountDialog', () => {
     await userEvent.type(screen.getByLabelText('Name'), 'Ada');
     await userEvent.type(screen.getByLabelText('Email (optional)'), 'ada@example.com');
     await userEvent.click(screen.getByRole('button', { name: 'Give them a password' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add' }));
 
-    expect(screen.getByRole('button', { name: 'Add' })).toBeDisabled();
+    expect(inviteAccount).not.toHaveBeenCalled();
 
     await userEvent.type(screen.getByLabelText('Password'), 'a-long-enough-password');
     await userEvent.click(screen.getByRole('button', { name: 'Add' }));

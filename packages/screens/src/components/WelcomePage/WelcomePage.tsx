@@ -17,10 +17,9 @@ import { isPasskeySupported } from '@ValenceScreens/passkeys/isPasskeySupported'
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 import type { WelcomePageProps } from './WelcomePage.types';
+import { EMAIL_PATTERN } from '@ValenceContracts/constants/EMAIL_PATTERN';
 
 type Finish = 'choosing' | 'passkeyFailed' | 'needsSignIn';
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * Where a setup link lands, for somebody signed out: welcomes them by name and asks for what their

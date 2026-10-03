@@ -3,11 +3,12 @@ import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Icon } from '@ValenceUI/Icon';
 import {
+  Bin as BinFilledIcon,
   MoreHorizontal as MoreHorizontalIcon,
-  Plus as PlusIcon,
+  PenLine as PenLineFilledIcon,
+  Plus as PlusFilledIcon,
   TriangleAlert as TriangleAlertIcon,
-} from '@keyline-icons/react';
-import { Bin as BinFilledIcon, PenLine as PenLineFilledIcon } from '@keyline-icons/react/fill';
+} from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
@@ -18,6 +19,10 @@ import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { DataTable } from '@ValenceUI/DataTable';
 import { FormField } from '@ValenceUI/FormField';
+import { Form } from '@ValenceUI/Form';
+import { useZodForm } from '@ValenceClient/forms/useZodForm';
+import { RoleFormSchema } from './RoleFormSchema';
+import { A_NEW_ROLE } from './A_NEW_ROLE';
 import { TabPanel } from '@ValenceUI/TabPanel';
 import { TabRow } from '@ValenceUI/TabRow';
 import { Tabs } from '@ValenceUI/Tabs';
@@ -44,8 +49,6 @@ import type { GrantedPermission, Permission, Role } from '@ValenceContracts/sche
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
-
-const NEW_ROLE_POSITION = 50;
 
 const NO_ROLES: Role[] = [];
 
@@ -75,15 +78,7 @@ const RolesPanel = () => {
   const [editTab, setEditTab] = useState<EditTab>('display');
   const [deleting, setDeleting] = useState<Role | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [newRolePosition, setNewRolePosition] = useState(NEW_ROLE_POSITION.toString());
-  const [newRolePermissions, setNewRolePermissions] = useState<GrantedPermission[]>([]);
-  const [newRoleName, setNewRoleName] = useState('');
-  const [newRoleColor, setNewRoleColor] = useState<string | null>(null);
   const [refusal, setRefusal] = useState<Refusal>(null);
-  const [draftName, setDraftName] = useState('');
-  const [draftPosition, setDraftPosition] = useState('');
-  const [draftColor, setDraftColor] = useState<string | null>(null);
-  const [draftPermissions, setDraftPermissions] = useState<GrantedPermission[]>([]);
   const [draftMemberIds, setDraftMemberIds] = useState<ReadonlySet<string>>(new Set());
 
   const cache = useQueryClient();
@@ -108,13 +103,107 @@ const RolesPanel = () => {
     [cache],
   );
 
+  const selected = roles.find((role) => role.id === selectedRoleId) ?? null;
+
+  const creating = useZodForm(RoleFormSchema, A_NEW_ROLE, async (answers, { reset }) => {
+    const refused = await createRole(answers);
+
+    if (refused !== null) {
+      return refused.message;
+    }
+
+    tellOutcome(
+      say('screens.adminArea.rolesPanel.createdTheNewRoleNameRole', { newRoleName: answers.name }),
+      null,
+    );
+    await reload();
+    reset(A_NEW_ROLE);
+    setIsCreating(false);
+
+    return null;
+  });
+
+  const editing = useZodForm(RoleFormSchema, A_NEW_ROLE, async (answers) => {
+    if (selected === null) {
+      return null;
+    }
+
+    const patch: Partial<Omit<Role, 'id'>> = {};
+
+    if (answers.name !== selected.name) {
+      patch.name = answers.name;
+    }
+
+    if (answers.position !== selected.position) {
+      patch.position = answers.position;
+    }
+
+    if (answers.color !== selected.color) {
+      patch.color = answers.color;
+    }
+
+    if (
+      answers.permissions.length !== selected.permissions.length ||
+      answers.permissions.some((permission) => !selected.permissions.includes(permission))
+    ) {
+      patch.permissions = answers.permissions;
+    }
+
+    if (Object.keys(patch).length > 0) {
+      const outcome = await updateRole(selected.id, patch);
+
+      if (outcome !== null) {
+        return outcome.message;
+      }
+    }
+
+    const heldIds = new Set(
+      accounts
+        .filter((account) => account.roles.includes(selected.name))
+        .map((account) => account.id),
+    );
+
+    for (const accountId of draftMemberIds) {
+      if (!heldIds.has(accountId)) {
+        const outcome = await assignRole(accountId, selected.id);
+
+        if (outcome !== null) {
+          return outcome.message;
+        }
+      }
+    }
+
+    for (const accountId of heldIds) {
+      if (!draftMemberIds.has(accountId)) {
+        const outcome = await removeRole(accountId, selected.id);
+
+        if (outcome !== null) {
+          return outcome.message;
+        }
+      }
+    }
+
+    tellOutcome(say('screens.adminArea.rolesPanel.roleSaved'), null);
+    await reload();
+
+    return null;
+  });
+
+  const resetEditing = editing.reset;
+
   useEffect(() => {
     const picked = roles.find((candidate) => candidate.id === selectedRoleId) ?? null;
 
-    setDraftName(picked?.name ?? '');
-    setDraftPosition(picked === null ? '' : picked.position.toString());
-    setDraftColor(picked?.color ?? null);
-    setDraftPermissions(picked?.permissions ?? []);
+    resetEditing(
+      picked === null
+        ? A_NEW_ROLE
+        : {
+            name: picked.name,
+            position: picked.position.toString(),
+            color: picked.color,
+            permissions: picked.permissions,
+          },
+    );
     setDraftMemberIds(
       new Set(
         picked === null
@@ -124,7 +213,7 @@ const RolesPanel = () => {
               .map((account) => account.id),
       ),
     );
-  }, [selectedRoleId, roles, accounts]);
+  }, [selectedRoleId, roles, accounts, resetEditing]);
 
   const act = useCallback(
     async (run: () => Promise<Refusal>, done: string) => {
@@ -142,107 +231,31 @@ const RolesPanel = () => {
     [reload],
   );
 
-  const selected = roles.find((role) => role.id === selectedRoleId) ?? null;
   const travel = useTravelDirection([...EDIT_TABS], editTab);
   const memberCount = draftMemberIds.size;
 
+  const draft = editing.values;
   const hasUnsavedChanges =
     selected !== null &&
-    (draftName !== selected.name ||
-      draftPosition !== selected.position.toString() ||
-      draftColor !== selected.color ||
-      draftPermissions.length !== selected.permissions.length ||
-      draftPermissions.some((permission) => !selected.permissions.includes(permission)) ||
-      draftMemberIds.size !==
-        accounts.filter((account) => account.roles.includes(selected.name)).length ||
+    (draft.name !== selected.name ||
+      draft.position !== selected.position.toString() ||
+      draft.color !== selected.color ||
+      draft.permissions.length !== selected.permissions.length ||
+      draft.permissions.some((permission) => !selected.permissions.includes(permission)) ||
       accounts.some(
         (account) => account.roles.includes(selected.name) !== draftMemberIds.has(account.id),
       ));
 
-  const saveChanges = useCallback(async () => {
-    if (selected === null) {
-      return;
-    }
+  const togglePermission = (form: typeof creating) => (permission: GrantedPermission) => {
+    const held = form.values.permissions;
 
-    const position = Number.parseInt(draftPosition, 10);
-    const patch: Partial<Omit<Role, 'id'>> = {};
-
-    if (draftName !== selected.name) {
-      patch.name = draftName;
-    }
-
-    if (!Number.isNaN(position) && position !== selected.position) {
-      patch.position = position;
-    }
-
-    if (draftColor !== selected.color) {
-      patch.color = draftColor;
-    }
-
-    if (
-      draftPermissions.length !== selected.permissions.length ||
-      draftPermissions.some((permission) => !selected.permissions.includes(permission))
-    ) {
-      patch.permissions = draftPermissions;
-    }
-
-    if (Object.keys(patch).length > 0) {
-      const outcome = await updateRole(selected.id, patch);
-
-      if (outcome !== null) {
-        setRefusal(outcome);
-        tellOutcome('', failureOfRefusal(outcome));
-        return;
-      }
-    }
-
-    const heldIds = new Set(
-      accounts
-        .filter((account) => account.roles.includes(selected.name))
-        .map((account) => account.id),
+    form.set(
+      'permissions',
+      held.includes(permission)
+        ? held.filter((candidate) => candidate !== permission)
+        : [...held, permission],
     );
-
-    for (const accountId of draftMemberIds) {
-      if (heldIds.has(accountId)) {
-        continue;
-      }
-
-      const outcome = await assignRole(accountId, selected.id);
-
-      if (outcome !== null) {
-        setRefusal(outcome);
-        tellOutcome('', failureOfRefusal(outcome));
-        return;
-      }
-    }
-
-    for (const accountId of heldIds) {
-      if (draftMemberIds.has(accountId)) {
-        continue;
-      }
-
-      const outcome = await removeRole(accountId, selected.id);
-
-      if (outcome !== null) {
-        setRefusal(outcome);
-        tellOutcome('', failureOfRefusal(outcome));
-        return;
-      }
-    }
-
-    setRefusal(null);
-    tellOutcome(say('screens.adminArea.rolesPanel.roleSaved'), null);
-    await reload();
-  }, [
-    selected,
-    draftName,
-    draftPosition,
-    draftColor,
-    draftPermissions,
-    draftMemberIds,
-    accounts,
-    reload,
-  ]);
+  };
 
   const live = useRef({
     onEdit: (id: string) => {
@@ -347,7 +360,7 @@ const RolesPanel = () => {
         isFlush
         actions={
           <PanelCardAction
-            icon={PlusIcon}
+            icon={PlusFilledIcon}
             onClick={() => {
               setIsCreating(true);
             }}
@@ -389,82 +402,63 @@ const RolesPanel = () => {
           detail={say('screens.adminArea.rolesPanel.aRoleIsANameAnd')}
         />
 
-        <DialogContent className="flex flex-col gap-5">
-          <div className="flex flex-wrap items-end gap-3">
-            <TextField
-              label={say('common.name')}
-              value={newRoleName}
-              onValueChange={setNewRoleName}
-              placeholder={say('screens.adminArea.rolesPanel.housemate')}
-              className="min-w-48 flex-1"
+        <Form
+          label={say('screens.adminArea.rolesPanel.createARole')}
+          onSubmit={creating.submit}
+          isDialog
+        >
+          <DialogContent className="flex flex-col gap-5">
+            <div className="flex flex-wrap items-start gap-3">
+              <TextField
+                label={say('common.name')}
+                {...creating.text('name')}
+                placeholder={say('screens.adminArea.rolesPanel.housemate')}
+                className="min-w-48 flex-1"
+              />
+
+              <TextField
+                label={say('screens.adminArea.rolesPanel.rank')}
+                type="number"
+                min={0}
+                {...creating.text('position')}
+                className="w-24 shrink-0"
+              />
+            </div>
+
+            <FormField
+              label={say('common.colour')}
+              description={say('screens.adminArea.rolesPanel.shownWhereverSomebodyHoldingThisRole')}
+            >
+              <ColorSwatchPicker
+                value={creating.values.color}
+                onChange={(next) => {
+                  creating.set('color', next);
+                }}
+              />
+            </FormField>
+
+            <PermissionEditor
+              catalogue={catalogue}
+              {...(pluginNodes === undefined ? {} : { pluginNodes })}
+              selected={creating.values.permissions}
+              onToggle={togglePermission(creating)}
             />
+          </DialogContent>
 
-            <TextField
-              label={say('screens.adminArea.rolesPanel.rank')}
-              type="number"
-              min={0}
-              value={newRolePosition}
-              onValueChange={setNewRolePosition}
-              className="w-24 shrink-0"
-            />
-          </div>
-
-          <FormField
-            label={say('common.colour')}
-            description={say('screens.adminArea.rolesPanel.shownWhereverSomebodyHoldingThisRole')}
-          >
-            <ColorSwatchPicker value={newRoleColor} onChange={setNewRoleColor} />
-          </FormField>
-
-          <PermissionEditor
-            catalogue={catalogue}
-            {...(pluginNodes === undefined ? {} : { pluginNodes })}
-            selected={newRolePermissions}
-            onToggle={(permission) => {
-              setNewRolePermissions((held) =>
-                held.includes(permission)
-                  ? held.filter((candidate) => candidate !== permission)
-                  : [...held, permission],
-              );
+          <DialogFooter
+            note={creating.problem}
+            dismiss={{
+              onChoose: () => {
+                setIsCreating(false);
+              },
+            }}
+            confirm={{
+              label: say('screens.adminArea.rolesPanel.createRole'),
+              isSubmit: true,
+              isLoading: creating.isSubmitting,
             }}
           />
-        </DialogContent>
-
-        <DialogFooter
-          dismiss={{
-            onChoose: () => {
-              setIsCreating(false);
-            },
-          }}
-          confirm={{
-            label: say('screens.adminArea.rolesPanel.createRole'),
-            onChoose: () => {
-              const position = Number.parseInt(newRolePosition, 10);
-
-              void act(
-                () =>
-                  createRole({
-                    name: newRoleName,
-                    position: Number.isNaN(position) ? NEW_ROLE_POSITION : position,
-                    color: newRoleColor,
-                    permissions: newRolePermissions,
-                  }),
-                say('screens.adminArea.rolesPanel.createdTheNewRoleNameRole', { newRoleName }),
-              ).then((made) => {
-                if (made !== null) {
-                  return;
-                }
-
-                setNewRoleName('');
-                setNewRolePosition(NEW_ROLE_POSITION.toString());
-                setNewRolePermissions([]);
-                setNewRoleColor(null);
-                setIsCreating(false);
-              });
-            },
-            isDisabled: newRoleName === '',
-          }}
-        />
+        </Form>
       </DialogCompanion>
 
       <ConfirmDialog
@@ -547,104 +541,101 @@ const RolesPanel = () => {
               }
             />
 
-            <DialogContent className="flex min-h-[28rem] max-h-[32rem] flex-col gap-5">
-              {refusal === null ? null : (
-                <p
-                  role="alert"
-                  className="flex items-start gap-3 rounded-md border border-danger/40 bg-danger/10 p-3 text-sm text-text"
-                >
-                  <Icon
-                    of={TriangleAlertIcon}
-                    size={16}
-                    tone="danger"
-                    className="mt-0.5 shrink-0"
-                  />
-                  {refusal.message}
-                </p>
-              )}
+            <Form
+              label={say('screens.adminArea.rolesPanel.editRole')}
+              onSubmit={(event) => {
+                if (
+                  editing.errorOf('name') !== undefined ||
+                  editing.errorOf('position') !== undefined
+                ) {
+                  setEditTab('display');
+                }
 
-              <TabPanel value="display" travel={travel}>
-                <div className="flex flex-col gap-5">
-                  <div className="flex flex-wrap items-end gap-3">
-                    <TextField
-                      label={say('common.name')}
-                      value={draftName}
-                      onValueChange={setDraftName}
-                      className="min-w-48 flex-1"
-                    />
+                editing.submit(event);
+              }}
+              isDialog
+            >
+              <DialogContent className="flex min-h-[28rem] max-h-[32rem] flex-col gap-5">
+                <TabPanel value="display" travel={travel}>
+                  <div className="flex flex-col gap-5">
+                    <div className="flex flex-wrap items-start gap-3">
+                      <TextField
+                        label={say('common.name')}
+                        {...editing.text('name')}
+                        className="min-w-48 flex-1"
+                      />
 
-                    <TextField
-                      label={say('screens.adminArea.rolesPanel.rank')}
-                      type="number"
-                      min={0}
-                      value={draftPosition}
-                      onValueChange={setDraftPosition}
-                      className="w-24 shrink-0"
-                    />
+                      <TextField
+                        label={say('screens.adminArea.rolesPanel.rank')}
+                        type="number"
+                        min={0}
+                        {...editing.text('position')}
+                        className="w-24 shrink-0"
+                      />
+                    </div>
+
+                    <FormField
+                      label={say('common.colour')}
+                      description={say(
+                        'screens.adminArea.rolesPanel.shownWhereverSomebodyHoldingThisRole',
+                      )}
+                    >
+                      <ColorSwatchPicker
+                        value={draft.color}
+                        onChange={(next) => {
+                          editing.set('color', next);
+                        }}
+                      />
+                    </FormField>
                   </div>
+                </TabPanel>
 
-                  <FormField
-                    label={say('common.colour')}
-                    description={say(
-                      'screens.adminArea.rolesPanel.shownWhereverSomebodyHoldingThisRole',
-                    )}
-                  >
-                    <ColorSwatchPicker value={draftColor} onChange={setDraftColor} />
-                  </FormField>
-                </div>
-              </TabPanel>
+                <TabPanel value="permissions" travel={travel}>
+                  <PermissionEditor
+                    catalogue={catalogue}
+                    {...(pluginNodes === undefined ? {} : { pluginNodes })}
+                    selected={draft.permissions}
+                    onToggle={togglePermission(editing)}
+                  />
+                </TabPanel>
 
-              <TabPanel value="permissions" travel={travel}>
-                <PermissionEditor
-                  catalogue={catalogue}
-                  {...(pluginNodes === undefined ? {} : { pluginNodes })}
-                  selected={draftPermissions}
-                  onToggle={(permission) => {
-                    setDraftPermissions((held) =>
-                      held.includes(permission)
-                        ? held.filter((candidate) => candidate !== permission)
-                        : [...held, permission],
-                    );
-                  }}
-                />
-              </TabPanel>
+                <TabPanel value="members" travel={travel}>
+                  <RoleMembers
+                    accounts={accounts}
+                    heldIds={draftMemberIds}
+                    onToggle={(accountId) => {
+                      setDraftMemberIds((held) => {
+                        const next = new Set(held);
 
-              <TabPanel value="members" travel={travel}>
-                <RoleMembers
-                  accounts={accounts}
-                  heldIds={draftMemberIds}
-                  onToggle={(accountId) => {
-                    setDraftMemberIds((held) => {
-                      const next = new Set(held);
+                        if (next.has(accountId)) {
+                          next.delete(accountId);
+                        } else {
+                          next.add(accountId);
+                        }
 
-                      if (next.has(accountId)) {
-                        next.delete(accountId);
-                      } else {
-                        next.add(accountId);
-                      }
+                        return next;
+                      });
+                    }}
+                  />
+                </TabPanel>
+              </DialogContent>
 
-                      return next;
-                    });
-                  }}
-                />
-              </TabPanel>
-            </DialogContent>
-
-            <DialogFooter
-              dismiss={{
-                label: say('common.close'),
-                onChoose: () => {
-                  setSelectedRoleId(null);
-                },
-              }}
-              confirm={{
-                label: say('common.saveChanges'),
-                onChoose: () => {
-                  void saveChanges();
-                },
-                isDisabled: draftName === '' || !hasUnsavedChanges,
-              }}
-            />
+              <DialogFooter
+                note={editing.problem}
+                dismiss={{
+                  label: say('common.close'),
+                  onChoose: () => {
+                    setSelectedRoleId(null);
+                  },
+                }}
+                confirm={{
+                  label: say('common.saveChanges'),
+                  isSubmit: true,
+                  isLoading: editing.isSubmitting,
+                  isDisabled: !hasUnsavedChanges,
+                }}
+              />
+            </Form>
           </Tabs>
         )}
       </DialogCompanion>

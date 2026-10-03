@@ -14,9 +14,7 @@ const StatsSummary = ({ items }: StatsSummaryProps) => (
   >
     {items.map((item) => (
       <div key={item.label} className="valence-card-face flex min-w-0 flex-col gap-0.5 px-2.5 py-2">
-        <dt className="truncate text-[0.625rem] uppercase tracking-[0.14em] text-text-muted">
-          {item.label}
-        </dt>
+        <dt className="truncate text-[0.625rem] font-medium text-text-muted">{item.label}</dt>
         <dd
           className={
             item.value === null

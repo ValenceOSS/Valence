@@ -70,14 +70,14 @@ The desktop client is trusted without being listed. Its dev server is an ordinar
 pnpm ffmpeg:sync
 ```
 
-This fetches the FFmpeg build the shipped image carries (the version pinned in the `Dockerfile`), unpacks it into `.ffmpeg` at the repository root and records `VALENCE_FFMPEG` and `VALENCE_FFPROBE` in your `.env`. It never overwrites either variable if you have already set them.
+This fetches the FFmpeg build the shipped image carries (the version pinned in `docker/server.Dockerfile`), unpacks it into `.ffmpeg` at the repository root and records `VALENCE_FFMPEG` and `VALENCE_FFPROBE` in your `.env`. It never overwrites either variable if you have already set them.
 
 ## Start Postgres
 
-`compose.dev.yaml` defines a Postgres 18 service named `db` (user, password and database all `valence`, port 5432), plus a `valence` service that builds the whole image and two optional profiles. For daily development you only want the database.
+`docker/compose.dev.yaml` defines a Postgres 18 service named `db` (user, password and database all `valence`, port 5432), plus a `valence` service that builds the whole image and two optional profiles. For daily development you only want the database.
 
 ```bash
-docker compose -f compose.dev.yaml up -d db
+docker compose --project-directory . -f docker/compose.dev.yaml up -d db
 ```
 
 Data lives in a named volume, `db-data`, so it survives restarts. The optional service is `requests`, behind the `requests` profile and built from `apps/requests/Dockerfile`. You normally run the requests service from source instead, as described below.
@@ -93,10 +93,10 @@ pnpm --filter @valence/requests dev:mysql
 
 The plain `dev` scripts run the Postgres build, and a build refuses a database of the other kind, so the script has to match the address.
 
-For the tests that run on MySQL and MariaDB, `compose.test.yaml` starts throwaway engines kept in memory:
+For the tests that run on MySQL and MariaDB, `docker/compose.test.yaml` starts throwaway engines kept in memory:
 
 ```bash
-docker compose -f compose.test.yaml up -d --wait
+docker compose -f docker/compose.test.yaml up -d --wait
 ```
 
 It starts MySQL 8.4 on `127.0.0.1:3307` and MariaDB 11.4 on `127.0.0.1:3308`, and MariaDB 10.6 on `127.0.0.1:3309` with `--profile oldest`. [Testing](/develop/testing#tests-on-mysql-and-mariadb) says how to run the tests against them.
@@ -128,13 +128,13 @@ pnpm --filter @valence/transcoder dev
 pnpm --filter @valence/requests dev
 ```
 
-| Service          | Command                                 | What it does                                                                                     | Port                                              |
-| ---------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------- |
-| Server           | `pnpm --filter @valence/server dev`     | `tsx watch` over `src/Main.ts`, reading the root `.env`                                          | 8420                                              |
-| Web client       | `pnpm --filter @valence/web dev`        | Vite dev server that proxies `/api` (with WebSockets) to 8420                                    | 5173                                              |
-| Media service    | `pnpm --filter @valence/transcoder dev` | Runs `cargo run --bin valence-transcoder -- serve` through `tools/transcoder/serveTranscoder.ts` | The unix socket in `TRANSCODER_URL`               |
-| Requests service | `pnpm --filter @valence/requests dev`   | `tsx watch` over its `src/Main.ts`                                                               | 8421, from `REQUESTS_PORT`                        |
-| Desktop          | `pnpm --filter @valence/desktop dev`    | Builds the native module with `tools/desktop/buildDesktopNative.ts`, then `electron-vite dev`    | The renderer's dev server, 5174 in `.env.example` |
+| Service          | Command                                 | What it does                                                                                                | Port                                              |
+| ---------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Server           | `pnpm --filter @valence/server dev`     | `tsx watch` over `src/Main.ts`, reading the root `.env`                                                     | 8420                                              |
+| Web client       | `pnpm --filter @valence/web dev`        | Vite dev server that proxies `/api` (with WebSockets) to 8420                                               | 5173                                              |
+| Media service    | `pnpm --filter @valence/transcoder dev` | Runs `cargo run --bin valence-transcoder -- serve` through `apps/transcoder/scripts/dev/serveTranscoder.ts` | The unix socket in `TRANSCODER_URL`               |
+| Requests service | `pnpm --filter @valence/requests dev`   | `tsx watch` over its `src/Main.ts`                                                                          | 8421, from `REQUESTS_PORT`                        |
+| Desktop          | `pnpm --filter @valence/desktop dev`    | Builds the native module with `apps/desktop/src/build/buildDesktopNative.ts`, then `electron-vite dev`      | The renderer's dev server, 5174 in `.env.example` |
 
 The media service dev script decides for you what to do. With a `unix:` address in `TRANSCODER_URL` it starts the Rust service. With an `http://` address it assumes the service runs elsewhere and starts nothing. With no address it stops and tells you to copy `.env.example`.
 
@@ -185,7 +185,7 @@ To work on the web client you only need a library folder with a few files in it.
 pnpm fixtures:sync --tier 1
 ```
 
-Fixtures are generated or fetched by `tools/fixtures` and written outside the working tree, to `~/.cache/valence-fixtures` unless `VALENCE_FIXTURES_DIR` says otherwise. The bytes stay out of the repository so cloning stays fast. `fixtures.manifest.json` at the repository root records each fixture, its tier, its licence and its checksum.
+Fixtures are generated or fetched by `apps/transcoder/scripts/fixtures` and written outside the working tree, to `~/.cache/valence-fixtures` unless `VALENCE_FIXTURES_DIR` says otherwise. The bytes stay out of the repository so cloning stays fast. `fixtures.manifest.json` at the repository root records each fixture, its tier, its licence and its checksum.
 
 | Tier | Contents                                                                                                                                  |
 | ---- | ----------------------------------------------------------------------------------------------------------------------------------------- |
@@ -208,23 +208,22 @@ pnpm --filter @valence/docs build
 
 ## Root scripts
 
-| Command                            | What it does                                                                |
-| ---------------------------------- | --------------------------------------------------------------------------- |
-| `pnpm build`                       | `turbo run build` across every package and app                              |
-| `pnpm dev`                         | `turbo run dev`, see above                                                  |
-| `pnpm test`                        | `turbo run test`, every package                                             |
-| `pnpm test:coverage`               | The same, passing `--coverage`                                              |
-| `pnpm coverage`                    | Coverage, then checks the mean across packages against the 90 percent floor |
-| `pnpm typecheck`                   | `turbo run typecheck`                                                       |
-| `pnpm lint`                        | `oxlint`, then `eslint .`, then the comment checker                         |
-| `pnpm lint:fix`                    | The same with `--fix`                                                       |
-| `pnpm format`, `pnpm format:check` | Prettier over the whole tree                                                |
-| `pnpm branch:check`                | Checks the current branch name                                              |
-| `pnpm db:check`                    | Checks the Drizzle snapshots still describe the schema                      |
-| `pnpm rust:check`                  | `cargo clippy --all-targets -- -D warnings` and `cargo fmt --check`         |
-| `pnpm rust:test`                   | `cargo test`                                                                |
-| `pnpm fixtures:sync`               | Builds the media fixture corpus                                             |
-| `pnpm ffmpeg:sync`                 | Fetches Valence's FFmpeg build                                              |
+| Command                            | What it does                                                        |
+| ---------------------------------- | ------------------------------------------------------------------- |
+| `pnpm build`                       | `turbo run build` across every package and app                      |
+| `pnpm dev`                         | `turbo run dev`, see above                                          |
+| `pnpm test`                        | `turbo run test`, every package                                     |
+| `pnpm test:coverage`               | The same, passing `--coverage`                                      |
+| `pnpm typecheck`                   | `turbo run typecheck`                                               |
+| `pnpm lint`                        | `oxlint`, type-aware, then the comment checker                      |
+| `pnpm lint:fix`                    | The same with `--fix`                                               |
+| `pnpm format`, `pnpm format:check` | oxfmt over the whole tree                                           |
+| `pnpm branch:check`                | Checks the current branch name                                      |
+| `pnpm db:check`                    | Checks the Drizzle snapshots still describe the schema              |
+| `pnpm rust:check`                  | `cargo clippy --all-targets -- -D warnings` and `cargo fmt --check` |
+| `pnpm rust:test`                   | `cargo test`                                                        |
+| `pnpm fixtures:sync`               | Builds the media fixture corpus                                     |
+| `pnpm ffmpeg:sync`                 | Fetches Valence's FFmpeg build                                      |
 
 Turbo's `build` and `typecheck` tasks depend on `^build`, so a package's dependencies build first. Remember that `packages/screens` typechecks against the built output of `packages/ui`, so rebuild the UI package with `pnpm --filter @valence/ui build` before trusting a type error in screens.
 
@@ -232,11 +231,11 @@ Turbo's `build` and `typecheck` tasks depend on `^build`, so a package's depende
 
 Husky installs three hooks.
 
-| Hook         | Runs                                                                                                                         |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| `commit-msg` | `commitlint`, enforcing [Conventional Commits](/develop/coding-standard)                                                     |
-| `pre-commit` | `lint-staged`: oxlint, eslint and prettier on staged TypeScript, prettier on JSON, Markdown, CSS and YAML, `rustfmt` on Rust |
-| `pre-push`   | `pnpm lint`, `pnpm typecheck`, `pnpm branch:check`, `pnpm test`, `pnpm rust:check` and `pnpm rust:test`                      |
+| Hook         | Runs                                                                                                           |
+| ------------ | -------------------------------------------------------------------------------------------------------------- |
+| `commit-msg` | `commitlint`, enforcing [Conventional Commits](/develop/coding-standard)                                       |
+| `pre-commit` | `lint-staged`: oxlint and oxfmt on staged TypeScript, oxfmt on JSON, Markdown, CSS and YAML, `rustfmt` on Rust |
+| `pre-push`   | `pnpm lint`, `pnpm typecheck`, `pnpm branch:check`, `pnpm test`, `pnpm rust:check` and `pnpm rust:test`        |
 
 Do not use `--no-verify` to get past a failing hook. CI runs the same checks, so it only delays the failure.
 

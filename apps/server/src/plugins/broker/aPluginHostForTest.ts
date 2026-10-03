@@ -1,4 +1,4 @@
-/* eslint-disable valence/no-hard-coded-strings -- stands in for a plugin host in tests */
+/* oxlint-disable valence/no-hard-coded-strings -- stands in for a plugin host in tests */
 import { vi } from 'vitest';
 import { A_PLUGIN_MEDIA_FOR_TEST } from './A_PLUGIN_MEDIA_FOR_TEST';
 import type { PluginHost } from './PluginHost';

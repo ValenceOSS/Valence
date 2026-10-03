@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { waitForArrivals } from '@ValenceScreens/testing/waitForArrivals';
 import type { Answer } from '@ValenceClient/admin/sendToServer';
 import type { ConnectMediaImport, MediaImportSource } from '@ValenceContracts/schemas/MediaImport';
 import { SourceStep } from './SourceStep';
@@ -87,6 +88,7 @@ describe('SourceStep', () => {
     const onForgotten = vi.fn();
 
     render(<SourceStep sources={[DEN]} onConnected={onConnected} onForgotten={onForgotten} />);
+    await waitForArrivals();
 
     expect(screen.getByText('Den at http://den:8096')).toBeVisible();
 

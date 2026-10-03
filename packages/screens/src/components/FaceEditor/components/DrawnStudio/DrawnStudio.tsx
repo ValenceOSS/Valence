@@ -26,7 +26,7 @@ const STYLE_NAMES: Record<(typeof AVATAR_STYLES)[number], string> = {
 const DrawnStudio = ({ style, seed, onChange }: DrawnStudioProps) => (
   <div className="flex flex-col gap-8">
     <section className="flex flex-col gap-3">
-      <h3 className="text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">
+      <h3 className="text-[0.65rem] font-medium text-text-muted">
         {say('screens.faceEditor.drawnStudio.style')}
       </h3>
       <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
@@ -51,7 +51,7 @@ const DrawnStudio = ({ style, seed, onChange }: DrawnStudioProps) => (
               className={cn(
                 'size-16 rounded-xl bg-subtle transition-transform group-hover:scale-105',
                 one === style &&
-                  'ring-2 ring-accent ring-offset-2 ring-offset-[var(--color-surface-raised)]',
+                  'ring-2 ring-primary ring-offset-2 ring-offset-[var(--color-surface-raised)]',
               )}
             />
             <span className={cn('text-[0.7rem]', one === style ? 'text-text' : 'text-text-muted')}>

@@ -1,4 +1,4 @@
-import { Check as CheckIcon, X as XIcon } from '@keyline-icons/react';
+import { Check as CheckIcon, X as XIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import type { TryItButtonProps } from './TryItButton.types';

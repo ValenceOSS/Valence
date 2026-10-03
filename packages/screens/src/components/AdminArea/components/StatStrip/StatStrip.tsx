@@ -1,4 +1,7 @@
-import { Info as InfoIcon } from '@keyline-icons/react';
+import { motion } from 'motion/react';
+import { useMountArrival } from '@ValenceScreens/motion/useMountArrival';
+import { Info as InfoIcon } from '@keyline-icons/react/fill';
+import { Button } from '@ValenceUI/Button';
 import { HoverCard } from '@ValenceUI/HoverCard';
 import { Icon } from '@ValenceUI/Icon';
 import { StatTile } from '@ValenceUI/StatTile';
@@ -23,34 +26,41 @@ const COLUMN_CLASSES: Record<number, string> = {
  *
  * @param stats - The figures to show, in the order they should read.
  */
-const StatStrip = ({ stats }: StatStripProps) => (
-  <dl className={`grid grid-cols-2 gap-3 ${COLUMN_CLASSES[stats.length] ?? 'lg:grid-cols-4'}`}>
-    {stats.map((stat) => (
-      <StatTile
-        key={stat.label}
-        label={stat.label}
-        value={stat.value}
-        {...(stat.detail === undefined ? {} : { detail: stat.detail })}
-        {...(stat.fraction === undefined ? {} : { fraction: stat.fraction })}
-        {...(stat.info === undefined
-          ? {}
-          : {
-              icon: (
-                <HoverCard side="bottom" align="start" detail={stat.info}>
-                  <span className="text-text-muted hover:text-text">
-                    <Icon
-                      of={InfoIcon}
-                      size={14}
-                      label={say('screens.adminArea.statStrip.aboutLabel', { label: stat.label })}
-                    />
-                  </span>
-                </HoverCard>
-              ),
-            })}
-      />
-    ))}
-  </dl>
-);
+const StatStrip = ({ stats }: StatStripProps) => {
+  const arrivalOf = useMountArrival(stats.length);
+
+  return (
+    <div className={`grid grid-cols-2 gap-3 ${COLUMN_CLASSES[stats.length] ?? 'lg:grid-cols-4'}`}>
+      {stats.map((stat, at) => (
+        <motion.dl key={stat.label} {...arrivalOf(at)} className="min-w-0">
+          <StatTile
+            label={stat.label}
+            value={stat.value}
+            {...(stat.detail === undefined ? {} : { detail: stat.detail })}
+            {...(stat.fraction === undefined ? {} : { fraction: stat.fraction })}
+            {...(stat.info === undefined
+              ? {}
+              : {
+                  icon: (
+                    <HoverCard side="bottom" align="end" isList detail={stat.info}>
+                      <Button
+                        variant="ghost"
+                        size="xs"
+                        isIconOnly
+                        label={say('screens.adminArea.statStrip.aboutLabel', { label: stat.label })}
+                        hasTooltip={false}
+                      >
+                        <Icon of={InfoIcon} size={15} />
+                      </Button>
+                    </HoverCard>
+                  ),
+                })}
+          />
+        </motion.dl>
+      ))}
+    </div>
+  );
+};
 
 StatStrip.displayName = 'StatStrip';
 

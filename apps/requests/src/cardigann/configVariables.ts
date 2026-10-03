@@ -1,4 +1,4 @@
-/* eslint-disable valence/no-hard-coded-strings -- Cardigann templates spell a ticked setting as True */
+/* oxlint-disable valence/no-hard-coded-strings -- Cardigann templates spell a ticked setting as True */
 import { settingsOf } from '@ValenceRequests/cardigann/settingsOf';
 import type { CardigannDefinition } from '@ValenceRequests/cardigann/CardigannDefinitionSchema';
 import type { IndexerSettings } from '@ValenceRequests/cardigann/IndexerSettings';

@@ -5,17 +5,14 @@ import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Download as DownloadIcon,
-  MoreHorizontal as MoreHorizontalIcon,
-  Plus as PlusIcon,
-  ToggleOff as ToggleOffIcon,
-  ToggleOn as ToggleOnIcon,
-} from '@keyline-icons/react';
-import {
   Bin as BinFilledIcon,
   Download as DownloadFilledIcon,
+  MoreHorizontal as MoreHorizontalIcon,
   Pen as PenFilledIcon,
   Plug as PlugFilledIcon,
+  Plus as PlusFilledIcon,
+  ToggleOff as ToggleOffIcon,
+  ToggleOn as ToggleOnIcon,
 } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
@@ -258,7 +255,7 @@ const ArrAppsPanel = () => {
       actions={
         <>
           <PanelCardAction
-            icon={DownloadIcon}
+            icon={DownloadFilledIcon}
             onClick={() => {
               setIsImporting(true);
             }}
@@ -266,7 +263,7 @@ const ArrAppsPanel = () => {
             {say('screens.adminArea.arrAppsPanel.bringInASetup')}
           </PanelCardAction>
           <PanelCardAction
-            icon={PlusIcon}
+            icon={PlusFilledIcon}
             onClick={() => {
               setIsAdding(true);
             }}

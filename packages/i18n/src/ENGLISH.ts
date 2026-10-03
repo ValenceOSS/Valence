@@ -445,6 +445,7 @@ const ENGLISH = {
   'common.aCodeFromAnAuthenticatorApp':
     'A code from an authenticator app as well as your password, every time you sign in.',
   'common.aCodeToScanWithYour': "A code to scan with your phone's camera",
+  'common.actions': 'Actions',
   'common.actionsForName': 'Actions for {name}',
   'common.actionsForTitle': 'Actions for {title}',
   'common.aDay': 'A day',
@@ -721,6 +722,7 @@ const ENGLISH = {
   'common.enterABackupCode': 'Enter a backup code.',
   'common.enterACodeFromYourApp':
     'Enter a code from your app to finish. Two-factor is not on until you do.',
+  'common.enterAName': 'Enter a name.',
   'common.enterOneOfTheBackupCodes':
     'Enter one of the backup codes you saved. Each can be used once.',
   'common.enterTheCodeFromYourAuthenticator': 'Enter the code from your authenticator app.',
@@ -1102,6 +1104,7 @@ const ENGLISH = {
   'common.paused': 'Paused',
   'common.pausedOn': 'Paused on',
   'common.pauseTitle': 'Pause {title}',
+  'common.peak': 'Peak',
   'common.peers': 'Peers',
   'common.people': 'People',
   'common.percent': '{value}%',
@@ -1214,6 +1217,7 @@ const ENGLISH = {
   'common.savedName': 'Saved {name}.',
   'common.saveTheseNowEachWorksOnce':
     'Save these now. Each works once if you lose your authenticator, and they are not shown again.',
+  'common.sayWhy': 'Say why.',
   'common.scanForChanges': 'Scan for changes',
   'common.scanIt': 'Scan it',
   'common.scanItOrAddFilesTo': 'Scan it, or add files to its folder.',
@@ -2857,6 +2861,8 @@ const ENGLISH = {
   'screens.adminArea.addLibraryDialog.whatToCallThisKindOf': 'What to call this kind of library.',
   'screens.adminArea.addLibraryDialog.whichOfTheBuiltInKinds':
     'Which of the built-in kinds it is read as.',
+  'screens.adminArea.addTriggerDialog.aTimeOfDay': 'A time of day, such as 03:00.',
+  'screens.adminArea.addTriggerDialog.aWholeNumberFrom1To': 'A whole number from 1 to {most}.',
   'screens.adminArea.addTriggerDialog.daily': 'Daily',
   'screens.adminArea.addTriggerDialog.day': 'Day',
   'screens.adminArea.addTriggerDialog.every': 'Every',
@@ -3850,6 +3856,11 @@ const ENGLISH = {
   'screens.adminArea.overviewPanel.allSessions': 'All sessions',
   'screens.adminArea.overviewPanel.allWork': 'All work',
   'screens.adminArea.overviewPanel.countedTheStorageAgain': 'Counted the storage again.',
+  'screens.adminArea.overviewPanel.loadFigures.average': 'Average',
+  'screens.adminArea.overviewPanel.loadFigures.latest': 'Latest',
+  'screens.adminArea.overviewPanel.loadFigures.loadAverage': 'Load average',
+  'screens.adminArea.overviewPanel.loadFigures.now': 'Now',
+  'screens.adminArea.overviewPanel.memoryUsedOfTotal': '{used} of {total}',
   'screens.adminArea.overviewPanel.nobodyIsWatchingListeningOrReading':
     'Nobody is watching, listening to or reading anything.',
   'screens.adminArea.overviewPanel.noLibrariesYet': 'No libraries yet.',
@@ -3868,6 +3879,14 @@ const ENGLISH = {
   'screens.adminArea.overviewPanel.runningNow': 'Running now',
   'screens.adminArea.overviewPanel.scannedLastScannedAt': 'Scanned {lastScannedAt}',
   'screens.adminArea.overviewPanel.serverLoad': 'Server load',
+  'screens.adminArea.overviewPanel.storageInfo.aboutTheStorage':
+    'About the storage Valence is using',
+  'screens.adminArea.overviewPanel.storageInfo.addedOnTop': 'Added on top',
+  'screens.adminArea.overviewPanel.storageInfo.countedWhen': 'Counted {value}',
+  'screens.adminArea.overviewPanel.storageInfo.countsItself':
+    'Valence counts this itself every five minutes.',
+  'screens.adminArea.overviewPanel.storageInfo.shareOfTheLibrary': '{share} of the library',
+  'screens.adminArea.overviewPanel.storageInfo.valencesOwnFiles': "Valence's own files",
   'screens.adminArea.overviewPanel.storageValenceIsUsing': 'Storage Valence is using',
   'screens.adminArea.overviewPanel.theStorageCouldNotBeCounted':
     'The storage could not be counted.',
@@ -4139,6 +4158,7 @@ const ENGLISH = {
   'screens.adminArea.rolesPanel.deleteRole': 'Delete role',
   'screens.adminArea.rolesPanel.deleteThisRole': 'Delete this role?',
   'screens.adminArea.rolesPanel.editRole': 'Edit role',
+  'screens.adminArea.rolesPanel.giveTheRoleAName': 'Give the role a name.',
   'screens.adminArea.rolesPanel.housemate': 'Housemate',
   'screens.adminArea.rolesPanel.manageMembersMemberCount': 'Manage members ({memberCount})',
   'screens.adminArea.rolesPanel.nameWillBeRemovedAndAnybody':
@@ -4146,6 +4166,7 @@ const ENGLISH = {
   'screens.adminArea.rolesPanel.noRolesYet': 'No roles yet.',
   'screens.adminArea.rolesPanel.permissions': 'Permissions',
   'screens.adminArea.rolesPanel.rank': 'Rank',
+  'screens.adminArea.rolesPanel.rankIsAWholeNumber': 'A rank is a whole number from 0 up.',
   'screens.adminArea.rolesPanel.roleSaved': 'Role saved.',
   'screens.adminArea.rolesPanel.shownWhereverSomebodyHoldingThisRole':
     'Shown wherever somebody holding this role is.',
@@ -4224,6 +4245,7 @@ const ENGLISH = {
   'screens.adminArea.sessionMessageDialog.thatIsTooLongToFit':
     'That is too long to fit on the banner.',
   'screens.adminArea.sessionMessageDialog.whatToTellThem': 'What to tell them',
+  'screens.adminArea.sessionMessageDialog.writeWhatToTellThem': 'Write what to tell them.',
   'screens.adminArea.sessionStatsDialog.bufferedAheadSecondsSAhead':
     '{bufferedAheadSeconds}s ahead',
   'screens.adminArea.sessionStatsDialog.nothingDecodedYet': 'Nothing decoded yet',
@@ -4265,7 +4287,7 @@ const ENGLISH = {
   'screens.adminArea.settingsPanel.low': 'Low',
   'screens.adminArea.settingsPanel.metadataCatalogue': 'Metadata catalogue',
   'screens.adminArea.settingsPanel.musicDetailsSettingSaved': 'Music details setting saved.',
-  'screens.adminArea.settingsPanel.notSecure': 'not secure',
+  'screens.adminArea.settingsPanel.notSecure': 'Not secure',
   'screens.adminArea.settingsPanel.offersATrailerForTitlesThat':
     'Offers a trailer for titles that have none on disk, played in a frame from the video host the catalogue points at. That is the one thing Valence does that reaches outside this server, which is why it is off until you say otherwise. A trailer already beside the file is always used instead.',
   'screens.adminArea.settingsPanel.oMDbKey': 'OMDb key',
@@ -4289,7 +4311,7 @@ const ENGLISH = {
   'screens.adminArea.settingsPanel.roundnessSaved': 'Roundness saved.',
   'screens.adminArea.settingsPanel.saveTheOMDbKey': 'Save the OMDb key',
   'screens.adminArea.settingsPanel.saveTheTheAudioDBKey': 'Save the TheAudioDB key',
-  'screens.adminArea.settingsPanel.secure': 'secure',
+  'screens.adminArea.settingsPanel.secure': 'Secure',
   'screens.adminArea.settingsPanel.showWhoLivesHere': 'Show who lives here',
   'screens.adminArea.settingsPanel.signingIn': 'Signing in',
   'screens.adminArea.settingsPanel.signInScreenSaved': 'Sign-in screen saved.',
@@ -4423,11 +4445,14 @@ const ENGLISH = {
   'screens.adminArea.webhookFields.decidesWhoseWatchingIsReported':
     'Decides whose watching is reported.',
   'screens.adminArea.webhookFields.discord': 'Discord',
+  'screens.adminArea.webhookFields.generic': 'Generic',
   'screens.adminArea.webhookFields.howArrivalsAreReported': 'How arrivals are reported',
   'screens.adminArea.webhookFields.kinds': 'Kinds',
   'screens.adminArea.webhookFields.nothingToChooseFrom': 'Nothing to choose from.',
+  'screens.adminArea.webhookFields.ntfy': 'ntfy',
   'screens.adminArea.webhookFields.oncePerScan': 'Once per scan',
   'screens.adminArea.webhookFields.oneForEachThing': 'One for each thing',
+  'screens.adminArea.webhookFields.pickAtLeastOneEvent': 'Pick at least one event to send.',
   'screens.adminArea.webhookFields.shape': 'Shape',
   'screens.adminArea.webhookFields.thisServerHasNoOtherAccounts':
     'This server has no other accounts yet.',
@@ -5245,16 +5270,21 @@ const ENGLISH = {
   'screens.nowPlayingBar.streamingQuality': 'Streaming quality',
   'screens.observabilityPage.health': 'Health',
   'screens.observabilityPage.jobHealth.byKindOfJob': 'By kind of job',
+  'screens.observabilityPage.jobHealth.filterTheKinds': 'Filter the kinds of job',
+  'screens.observabilityPage.jobHealth.findAKindOfJob': 'Find a kind of job',
   'screens.observabilityPage.jobHealth.finishedWell': 'Finished well',
+  'screens.observabilityPage.jobHealth.hasFailed': 'Has failed',
   'screens.observabilityPage.jobHealth.howEachKindOfJobHas': 'How each kind of job has gone',
   'screens.observabilityPage.jobHealth.howTheJobsAreDoing': 'How the jobs are doing',
   'screens.observabilityPage.jobHealth.howTheJobsAreDoingOverall': 'How the jobs are doing overall',
   'screens.observabilityPage.jobHealth.lastRun': 'Last run',
+  'screens.observabilityPage.jobHealth.neverFailed': 'Never failed',
   'screens.observabilityPage.jobHealth.noJobHasRunInThis': 'No job has run in this time.',
   'screens.observabilityPage.jobHealth.ofTheRunsThatHaveEnded': 'Of the runs that have ended',
   'screens.observabilityPage.jobHealth.readingHowTheJobsHaveGone':
     'Reading how the jobs have gone…',
   'screens.observabilityPage.jobHealth.runs': 'Runs',
+  'screens.observabilityPage.jobHealth.searchByJob': 'Search by job',
   'screens.observabilityPage.jobHealth.slowestRun': 'Slowest run',
   'screens.observabilityPage.jobHealth.typicalRun': 'Typical run',
   'screens.observabilityPage.jobHistory.actionsForKind': 'Actions for {kind}',
@@ -5406,6 +5436,7 @@ const ENGLISH = {
   'screens.openInTheApp.openInTheApp': 'Open in the app',
   'screens.openInTheApp.openInTheValenceApp': 'Open in the Valence app',
   'screens.overviewPanel.loadRangeToggle.howFarBackToShowThe': 'How far back to show the load',
+  'screens.overviewPanel.loadRangeToggle.last3Days': 'Last 3 days',
   'screens.overviewPanel.loadRangeToggle.lastMinute': 'Last minute',
   'screens.pageProblem.describeProblem.askWhoeverRunsThisValenceTo':
     'Ask whoever runs this Valence to give you access, or sign in as somebody who has it.',
@@ -7140,7 +7171,6 @@ const ENGLISH = {
   'ui.variants.radar.frontSpeed': 'Front speed',
   'ui.variants.radar.grid': 'Grid',
   'ui.variants.radar.gridZoom': 'Grid zoom',
-  'ui.variants.radar.peak': 'Peak',
   'ui.variants.radar.peakThreshold': 'Peak threshold',
   'ui.variants.radar.quiet': 'Quiet',
   'ui.variants.radar.quietDensity': 'Quiet density',

@@ -1,3 +1,5 @@
+import { motion } from 'motion/react';
+import { useMountArrival } from '@ValenceScreens/motion/useMountArrival';
 import { cn } from '@ValenceUI/cn';
 import type { PanelCardProps } from './PanelCard.types';
 
@@ -32,45 +34,56 @@ const PanelCard = ({
   isHighlighted = false,
   isCompact = false,
   className,
-}: PanelCardProps) => (
-  <section
-    className={cn(
-      'valence-card-shell flex flex-col',
-      isHighlighted && 'ring-1 ring-accent/40',
-      className,
-    )}
-  >
-    <header className={cn('flex flex-col gap-2', isCompact ? 'px-2.5 py-0.5' : 'px-3 py-1')}>
-      <div
-        className={cn(
-          'flex flex-wrap items-center justify-between gap-2',
-          isCompact ? 'min-h-7' : 'min-h-10',
-        )}
-      >
-        <h3
+}: PanelCardProps) => {
+  const arrivalOf = useMountArrival();
+
+  return (
+    <motion.section
+      {...arrivalOf()}
+      className={cn(
+        'valence-card-shell group/card flex flex-col',
+        isHighlighted && 'ring-1 ring-accent/40',
+        className,
+      )}
+    >
+      <header className={cn('flex flex-col gap-2', isCompact ? 'px-2.5 py-0.5' : 'px-3 py-1')}>
+        <div
           className={cn(
-            'uppercase text-text-muted',
-            isCompact ? 'text-[0.6875rem] tracking-[0.14em]' : 'text-xs tracking-[0.16em]',
+            'flex flex-wrap items-center justify-between gap-2',
+            isCompact ? 'min-h-7' : 'min-h-10',
           )}
         >
-          {title}
-        </h3>
+          <h3
+            className={cn(
+              'font-medium uppercase tracking-[0.08em] text-text/50',
+              isCompact ? 'text-[0.625rem]' : 'text-[0.6875rem]',
+            )}
+          >
+            {title}
+          </h3>
 
-        {actions === undefined ? null : (
-          <div className="ml-auto flex shrink-0 flex-wrap items-center gap-2">{actions}</div>
+          {actions === undefined ? null : (
+            <div className="ml-auto flex shrink-0 flex-wrap items-center gap-2">{actions}</div>
+          )}
+        </div>
+
+        {below === undefined ? null : below}
+      </header>
+
+      <div
+        className={cn(
+          'valence-card-face flex flex-1 flex-col overflow-hidden',
+          'ring-1 ring-transparent transition-[box-shadow] duration-[var(--duration-base)] ease-[var(--ease-out)]',
+          'group-hover/card:shadow-[var(--shadow-lifted)] group-hover/card:ring-[var(--surface-divider)]',
+          'motion-reduce:transition-none',
+          isFlush ? '' : 'p-4',
         )}
+      >
+        {children}
       </div>
-
-      {below === undefined ? null : below}
-    </header>
-
-    <div
-      className={cn('valence-card-face flex flex-1 flex-col overflow-hidden', isFlush ? '' : 'p-4')}
-    >
-      {children}
-    </div>
-  </section>
-);
+    </motion.section>
+  );
+};
 
 PanelCard.displayName = 'PanelCard';
 

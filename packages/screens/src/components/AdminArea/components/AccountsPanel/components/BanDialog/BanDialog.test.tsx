@@ -24,12 +24,16 @@ describe('BanDialog', () => {
     expect(screen.getByLabelText('What they are told')).not.toHaveValue('');
   });
 
-  it('will not ban without a reason', async () => {
-    render(<BanDialog name="Sam" onClose={vi.fn()} onBan={vi.fn()} />);
+  it('will not ban without a reason, and says so', async () => {
+    const onBan = vi.fn();
+
+    render(<BanDialog name="Sam" onClose={vi.fn()} onBan={onBan} />);
 
     await userEvent.clear(screen.getByLabelText('What they are told'));
+    await userEvent.click(screen.getByRole('button', { name: 'Ban' }));
 
-    expect(screen.getByRole('button', { name: 'Ban' })).toBeDisabled();
+    expect(onBan).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toBeInTheDocument();
   });
 
   it('is shut while nobody is to be banned', () => {

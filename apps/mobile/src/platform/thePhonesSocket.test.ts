@@ -1,4 +1,4 @@
-import { get } from '@react-native-cookies/cookies';
+import { theCookiesThisPhoneHolds } from '@ValenceMobile/platform/theCookiesThisPhoneHolds';
 import { thePhonesSocket } from './thePhonesSocket';
 import { THE_SERVER_ADDRESS } from './THE_SERVER_ADDRESS';
 import type { DeviceStore } from '@ValenceClient/platform/Platform.types';
@@ -65,7 +65,7 @@ beforeEach(() => {
   handlers.onMessage.mockClear();
   handlers.onClose.mockClear();
   Object.defineProperty(globalThis, 'WebSocket', { configurable: true, value: ASocket });
-  jest.mocked(get).mockReset().mockResolvedValue({});
+  jest.mocked(theCookiesThisPhoneHolds).mockReset().mockResolvedValue(null);
 });
 
 const onceItHasAsked = async () => {
@@ -133,9 +133,7 @@ describe('thePhonesSocket', () => {
   });
 
   it('opens it with this phone\u2019s session on it, which a socket does not carry by itself', async () => {
-    jest.mocked(get).mockResolvedValue({
-      'valence.session_token': { name: 'valence.session_token', value: 'abc' },
-    });
+    jest.mocked(theCookiesThisPhoneHolds).mockResolvedValue('valence.session_token=abc');
 
     thePhonesSocket(aStore('http://one.local:8420'))(handlers);
     await onceItHasAsked();

@@ -1,7 +1,7 @@
 import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Upload as UploadIcon } from '@keyline-icons/react';
+import { Upload as UploadIcon } from '@keyline-icons/react/fill';
 import { Callout } from '@ValenceUI/Callout';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';

@@ -72,7 +72,7 @@ jobs:
           EVENT: ${{ github.event_name }}
           BASE: ${{ github.base_ref }}
         run: |
-          testable='["@valence/i18n","@valence/contracts","@valence/core","@valence/plugin-sdk","@valence/tools","@valence/ui","@valence/client","@valence/server","@valence/requests","@valence/database","@valence/web","@valence/desktop","@valence/landing","@valence/docs"]'
+          testable='["@valence/i18n","@valence/contracts","@valence/core","@valence/plugin-sdk","@valence/lint","@valence/brand","@valence/transcoder","@valence/ui","@valence/client","@valence/server","@valence/requests","@valence/database","@valence/web","@valence/desktop","@valence/landing","@valence/docs"]'
 
           if [ "$EVENT" != "pull_request" ]; then
             {
@@ -148,11 +148,9 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # Type-aware ESLint holds the whole repository's program in memory at once, and outgrew 6 GB
-      # once two database dialects were typechecked. The runner has 16.
       - run: pnpm lint
-        env:
-          NODE_OPTIONS: --max-old-space-size=12288
+
+      - run: pnpm format:check
 
       # A hand-written migration with no snapshot beside it leaves generation silent and recreating
       # tables that already exist. See VAL-193.
@@ -343,7 +341,7 @@ jobs:
           docker logs engine
           exit 1
 
-      - run: pnpm --filter @valence/tools exec vitest run --config vitest.mysql.config.ts
+      - run: pnpm --filter @valence/database exec vitest run --config vitest.mysql.config.ts
         env:
           MYSQL_TEST_URL: mysql://root:valence@127.0.0.1:3306
 

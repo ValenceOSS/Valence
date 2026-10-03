@@ -54,7 +54,11 @@ type SettingsPanelRow = {
 };
 
 type SettingsRow =
-  SettingsChoiceRow | SettingsToggleRow | SettingsActionRow | SettingsCustomRow | SettingsPanelRow;
+  | SettingsChoiceRow
+  | SettingsToggleRow
+  | SettingsActionRow
+  | SettingsCustomRow
+  | SettingsPanelRow;
 
 type SettingsMenuProps = {
   label: string;

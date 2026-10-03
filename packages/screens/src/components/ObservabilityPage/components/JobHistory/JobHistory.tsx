@@ -1,13 +1,13 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
-import { Bookmark as BookmarkFilledIcon } from '@keyline-icons/react/fill';
 import { JobRunMix } from '@ValenceScreens/components/ObservabilityPage/components/JobRunMix/JobRunMix';
 import { cn } from '@ValenceUI/cn';
 import { Icon } from '@ValenceUI/Icon';
 import {
+  Bookmark as BookmarkFilledIcon,
   ChevronDown as ChevronDownIcon,
   Info as InfoIcon,
   MoreHorizontal as MoreHorizontalIcon,
-} from '@keyline-icons/react';
+} from '@keyline-icons/react/fill';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
@@ -53,6 +53,7 @@ import type {
 } from '@ValenceContracts/schemas/JobRun';
 import type { JobHistoryProps } from './JobHistory.types';
 import { describeJobStatus } from '@ValenceScreens/status/describeJobStatus';
+import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
 import { say } from '@ValenceI18n/say';
 import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
 
@@ -490,7 +491,9 @@ const JobHistoryPanel = ({
 
                             <div className="flex flex-col">
                               <dt className="text-text-muted">{say('common.kind')}</dt>
-                              <dd className="text-text">{library.kind}</dd>
+                              <dd className="text-text">
+                                {LIBRARY_KIND_NAMES[library.kind].label}
+                              </dd>
                             </div>
 
                             <div className="flex flex-col">
@@ -688,6 +691,7 @@ const JobHistoryPanel = ({
 
         <OptionMenu
           label={say('common.order')}
+          size="sm"
           triggerShape="field"
           className="w-auto"
           groups={sortGroups}
@@ -712,29 +716,28 @@ const JobHistoryPanel = ({
         />
       </Well>
 
-      <Well isFlush className="p-1">
-        <DataTable
-          label={say('screens.observabilityPage.jobHistory.whatTheJobQueueHasRun')}
-          columns={columns}
-          rows={records}
-          totalRows={askedHistory.data?.total ?? records.length}
-          page={page}
-          onPageChange={(next) => {
-            onSearchChange({ rpage: next === 0 ? undefined : next + 1 });
-          }}
-          getRowId={runId}
-          onChooseRow={traceRun}
-          height="fill"
-          pageSize={ROWS_PER_PAGE}
-          emptyMessage={
-            askedHistory.isError
-              ? say('screens.observabilityPage.jobHistory.jobHistoryCouldNotBeRead')
-              : askedHistory.isPending
-                ? say('screens.observabilityPage.jobHistory.readingJobHistory')
-                : say('screens.observabilityPage.jobHistory.noJobRunsMatchThis')
-          }
-        />
-      </Well>
+      <DataTable
+        className="m-0"
+        label={say('screens.observabilityPage.jobHistory.whatTheJobQueueHasRun')}
+        columns={columns}
+        rows={records}
+        totalRows={askedHistory.data?.total ?? records.length}
+        page={page}
+        onPageChange={(next) => {
+          onSearchChange({ rpage: next === 0 ? undefined : next + 1 });
+        }}
+        getRowId={runId}
+        onChooseRow={traceRun}
+        height="fill"
+        pageSize={ROWS_PER_PAGE}
+        emptyMessage={
+          askedHistory.isError
+            ? say('screens.observabilityPage.jobHistory.jobHistoryCouldNotBeRead')
+            : askedHistory.isPending
+              ? say('screens.observabilityPage.jobHistory.readingJobHistory')
+              : say('screens.observabilityPage.jobHistory.noJobRunsMatchThis')
+        }
+      />
 
       <RunningWorkDialog
         title={openWork === undefined ? '' : describeJobKind(openWork.kind, labels)}

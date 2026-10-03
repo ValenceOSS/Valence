@@ -8,7 +8,7 @@ import { trackId } from './SubtitleService';
 import type { SubtitleService, SubtitleTrack } from './SubtitleService';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
 
-// eslint-disable-next-line valence/no-hard-coded-strings -- words matched in a track's title
+// oxlint-disable-next-line valence/no-hard-coded-strings -- words matched in a track's title
 const HEARING_IMPAIRED_MARKERS = ['sdh', 'cc', 'hearing', 'hard of hearing'];
 
 const UNREADABLE = new Set(['unknown']);

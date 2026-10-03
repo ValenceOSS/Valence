@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Search as SearchIcon } from '@keyline-icons/react';
+import { Search as SearchIcon } from '@keyline-icons/react/fill';
 import { Icon } from '@ValenceUI/Icon';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Switch } from '@ValenceUI/Switch';

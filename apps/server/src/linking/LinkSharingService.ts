@@ -42,7 +42,9 @@ type Admission =
   | { kind: 'refused'; status: 401 | 403 | 429; code: FederationRefusalCode };
 
 type SharingChange =
-  { kind: 'changed'; sharing: LinkSharing } | { kind: 'noSuchServer' } | { kind: 'noSuchLibrary' };
+  | { kind: 'changed'; sharing: LinkSharing }
+  | { kind: 'noSuchServer' }
+  | { kind: 'noSuchLibrary' };
 
 type LinkSharingService = {
   admit: (request: FederationRequest) => Promise<Admission>;

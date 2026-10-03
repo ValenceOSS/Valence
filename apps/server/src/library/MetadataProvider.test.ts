@@ -139,7 +139,7 @@ describe('resolveSeriesShape', () => {
     const problems: string[] = [];
     const providers = [
       named('one', () =>
-        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- The point of the test: a provider that rejects with something that is not an Error.
+        // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- The point of the test: a provider that rejects with something that is not an Error.
         Promise.reject({ why: 'a plain object' }),
       ),
     ];

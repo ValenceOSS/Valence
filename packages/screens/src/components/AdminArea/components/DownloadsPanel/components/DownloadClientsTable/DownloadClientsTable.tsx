@@ -1,13 +1,11 @@
 import { useMemo } from 'react';
 import {
-  MoreHorizontal as MoreHorizontalIcon,
-  ToggleOff as ToggleOffIcon,
-  ToggleOn as ToggleOnIcon,
-} from '@keyline-icons/react';
-import {
   Bin as BinFilledIcon,
+  MoreHorizontal as MoreHorizontalIcon,
   Pen as PenFilledIcon,
   Plug as PlugFilledIcon,
+  ToggleOff as ToggleOffIcon,
+  ToggleOn as ToggleOnIcon,
 } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';

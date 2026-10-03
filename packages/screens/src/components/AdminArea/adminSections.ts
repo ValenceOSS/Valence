@@ -49,6 +49,8 @@ import { say } from '@ValenceI18n/say';
 
 const ADMIN_SECTIONS = [
   {
+    id: 'main',
+    isFoldedAtFirst: false,
     label: null,
     items: [
       {
@@ -60,6 +62,8 @@ const ADMIN_SECTIONS = [
     ],
   },
   {
+    id: 'activity',
+    isFoldedAtFirst: false,
     label: say('screens.adminArea.adminSections.activity'),
     items: [
       {
@@ -78,6 +82,8 @@ const ADMIN_SECTIONS = [
     ],
   },
   {
+    id: 'content',
+    isFoldedAtFirst: false,
     label: say('screens.adminArea.adminSections.content'),
     items: [
       {
@@ -97,6 +103,8 @@ const ADMIN_SECTIONS = [
     ],
   },
   {
+    id: 'people',
+    isFoldedAtFirst: false,
     label: say('common.people'),
     items: [
       {
@@ -109,6 +117,8 @@ const ADMIN_SECTIONS = [
     ],
   },
   {
+    id: 'requests',
+    isFoldedAtFirst: true,
     label: say('common.requests'),
     items: [
       {
@@ -145,6 +155,8 @@ const ADMIN_SECTIONS = [
     ],
   },
   {
+    id: 'system',
+    isFoldedAtFirst: true,
     label: say('common.system'),
     items: [
       {

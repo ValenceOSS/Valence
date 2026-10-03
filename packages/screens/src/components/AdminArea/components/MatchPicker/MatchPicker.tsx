@@ -1,5 +1,8 @@
 import { Icon } from '@ValenceUI/Icon';
-import { ArrowUTurnLeft as ArrowUTurnLeftIcon, Search as SearchIcon } from '@keyline-icons/react';
+import {
+  ArrowUTurnLeft as ArrowUTurnLeftIcon,
+  Search as SearchIcon,
+} from '@keyline-icons/react/fill';
 import { useEffect, useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
@@ -113,7 +116,16 @@ const MatchPicker = ({ media, onClose, onCorrected }: MatchPickerProps) => {
       />
 
       <DialogContent className="flex flex-col gap-5">
-        <div className="flex flex-wrap items-end gap-3">
+        <form
+          className="flex flex-wrap items-end gap-3"
+          onSubmit={(event) => {
+            event.preventDefault();
+
+            if (query.trim() !== '') {
+              void look(query);
+            }
+          }}
+        >
           <TextField
             label={
               isEpisode
@@ -126,17 +138,15 @@ const MatchPicker = ({ media, onClose, onCorrected }: MatchPickerProps) => {
           />
 
           <Button
+            type="submit"
             variant="secondary"
             disabled={query.trim() === ''}
             isLoading={isSearching}
-            onClick={() => {
-              void look(query);
-            }}
           >
             <Icon of={SearchIcon} size={16} />
             {say('common.search')}
           </Button>
-        </div>
+        </form>
 
         {isSearching ? <Spinner label={say('common.askingTheCatalogue')} size="sm" /> : null}
 

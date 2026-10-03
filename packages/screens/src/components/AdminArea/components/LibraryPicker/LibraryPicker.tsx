@@ -17,7 +17,7 @@ const LibraryPicker = ({ libraries, chosen, onChange }: LibraryPickerProps) => {
 
   return (
     <fieldset className="flex flex-col gap-3">
-      <legend className="mb-3 text-xs uppercase tracking-[0.14em] text-text-muted">
+      <legend className="mb-3 text-xs font-medium text-text-muted">
         {say('common.libraries')}
       </legend>
 

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Home as HomeIcon } from '@keyline-icons/react';
 import { Sidebar } from './Sidebar';
@@ -88,6 +88,68 @@ describe('Sidebar', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(Sidebar.displayName).toBe('Sidebar');
+  });
+
+  it('fades out at the bottom where more destinations wait below', () => {
+    Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+      configurable: true,
+      value: 400,
+    });
+    Object.defineProperty(HTMLElement.prototype, 'scrollHeight', {
+      configurable: true,
+      value: 900,
+    });
+
+    render(<Sidebar label="Admin" groups={GROUPS} value="sessions" onSelect={vi.fn()} />);
+
+    const list = screen.getByRole('button', { name: 'Jobs' }).closest('.overflow-y-auto');
+
+    fireEvent.scroll(list ?? document.body);
+
+    expect(list).toHaveAttribute('data-more-below');
+    expect(list).not.toHaveAttribute('data-more-above');
+  });
+
+  it('fades at the top too once scrolled down', () => {
+    Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+      configurable: true,
+      value: 400,
+    });
+    Object.defineProperty(HTMLElement.prototype, 'scrollHeight', {
+      configurable: true,
+      value: 900,
+    });
+
+    render(<Sidebar label="Admin" groups={GROUPS} value="sessions" onSelect={vi.fn()} />);
+
+    const list = screen.getByRole('button', { name: 'Jobs' }).closest('.overflow-y-auto');
+
+    if (list !== null) {
+      list.scrollTop = 120;
+      fireEvent.scroll(list);
+    }
+
+    expect(list).toHaveAttribute('data-more-above');
+  });
+
+  it('draws no fade where every destination fits', () => {
+    Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+      configurable: true,
+      value: 400,
+    });
+    Object.defineProperty(HTMLElement.prototype, 'scrollHeight', {
+      configurable: true,
+      value: 400,
+    });
+
+    render(<Sidebar label="Admin" groups={GROUPS} value="sessions" onSelect={vi.fn()} />);
+
+    const list = screen.getByRole('button', { name: 'Jobs' }).closest('.overflow-y-auto');
+
+    fireEvent.scroll(list ?? document.body);
+
+    expect(list).not.toHaveAttribute('data-more-above');
+    expect(list).not.toHaveAttribute('data-more-below');
   });
 
   it('does nothing where the list has no height to scroll, such as while it is closed', () => {

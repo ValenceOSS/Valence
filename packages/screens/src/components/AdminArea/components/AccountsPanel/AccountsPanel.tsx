@@ -4,20 +4,19 @@ import { AccountFace } from '@ValenceScreens/components/AdminArea/components/Acc
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Icon } from '@ValenceUI/Icon';
 import {
+  Bin as BinFilledIcon,
   ChevronsUpDown as ChevronsUpDownIcon,
+  CircleX as CircleXFilledIcon,
   Copy as CopyIcon,
+  Link as LinkFilledIcon,
+  Mail as MailFilledIcon,
   MoreHorizontal as MoreHorizontalIcon,
+  Plus as PlusFilledIcon,
   Plus as PlusIcon,
   RefreshCw as RefreshCwIcon,
   TriangleAlert as TriangleAlertIcon,
-  Users as UsersIcon,
-} from '@keyline-icons/react';
-import {
-  Bin as BinFilledIcon,
-  CircleX as CircleXFilledIcon,
-  Link as LinkFilledIcon,
-  Mail as MailFilledIcon,
   UserCheck as UserCheckFilledIcon,
+  Users as UsersIcon,
 } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
@@ -55,7 +54,6 @@ import { revokeSetupLink } from '@ValenceClient/admin/revokeSetupLink';
 import { accountHandleOf } from '@ValenceClient/accounts/accountHandleOf';
 import { notify } from '@ValenceUI/notify';
 import { NothingHere } from '@ValenceUI/NothingHere';
-import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Skeleton } from '@ValenceUI/Skeleton';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
 import { DEFAULT_SETUP_LINK_LIFETIME } from '@ValenceContracts/schemas/SetupLink';
@@ -79,6 +77,7 @@ import type { Role } from '@ValenceContracts/schemas/Permission';
 import type { LibraryReach } from '@ValenceContracts/schemas/LibraryAccess';
 import type { Avatar } from '@ValenceContracts/schemas/ViewerProfile';
 import type { AccountAvatarDraft } from './components/AccountAvatarPicker/AccountAvatarPicker.types';
+import { PanelCardChoice } from '@ValenceScreens/components/PanelCardChoice/PanelCardChoice';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { setCeiling, setLibraryAccess } from '@ValenceClient/admin/fetchLibraryAccess';
 import { describeCeiling } from '@ValenceContracts/schemas/LibraryAccess';
@@ -849,7 +848,7 @@ const AccountsPanel = () => {
             />
 
             <PanelCardAction
-              icon={PlusIcon}
+              icon={PlusFilledIcon}
               onClick={() => {
                 setIsAddingAccount(true);
               }}
@@ -903,26 +902,26 @@ const AccountsPanel = () => {
           <div className="flex flex-col">
             {counts.waiting === 0 && counts.banned === 0 ? null : (
               <div className="px-3 pt-3 sm:px-5">
-                <SegmentedRow
+                <PanelCardChoice
                   label={say('screens.adminArea.accountsPanel.whoToShow')}
-                  size="sm"
                   value={showing}
-                  items={SHOWINGS.map((one) => ({
-                    id: one,
-                    label:
-                      one === 'everyone'
-                        ? say('screens.adminArea.accountsPanel.everyoneCount', {
-                            count: counts.everyone,
-                          })
-                        : one === 'waiting'
-                          ? say('screens.adminArea.accountsPanel.waitingForSetupCount', {
-                              count: counts.waiting,
+                  options={SHOWINGS.filter((one) => one === showing || counts[one] > 0).map(
+                    (one) => ({
+                      id: one,
+                      label:
+                        one === 'everyone'
+                          ? say('screens.adminArea.accountsPanel.everyoneCount', {
+                              count: counts.everyone,
                             })
-                          : say('screens.adminArea.accountsPanel.bannedCount', {
-                              count: counts.banned,
-                            }),
-                    isAbsent: counts[one] === 0,
-                  }))}
+                          : one === 'waiting'
+                            ? say('screens.adminArea.accountsPanel.waitingForSetupCount', {
+                                count: counts.waiting,
+                              })
+                            : say('screens.adminArea.accountsPanel.bannedCount', {
+                                count: counts.banned,
+                              }),
+                    }),
+                  )}
                   onSelect={(id) => {
                     const chosen = SHOWINGS.find((one) => one === id);
 

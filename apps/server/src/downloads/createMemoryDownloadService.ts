@@ -1,4 +1,4 @@
-/* eslint-disable valence/no-hard-coded-strings -- stands in for a download in tests */
+/* oxlint-disable valence/no-hard-coded-strings -- stands in for a download in tests */
 import { randomUUID } from 'node:crypto';
 import { theEpisodesAskedFor } from './theEpisodesAskedFor';
 import type { Download, DownloadQuality, Holding } from '@ValenceContracts/schemas/Download';

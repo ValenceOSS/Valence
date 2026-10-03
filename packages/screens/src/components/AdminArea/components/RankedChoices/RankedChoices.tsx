@@ -1,4 +1,7 @@
-import { ChevronDown as ChevronDownIcon, ChevronUp as ChevronUpIcon } from '@keyline-icons/react';
+import {
+  ChevronDown as ChevronDownIcon,
+  ChevronUp as ChevronUpIcon,
+} from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { Checkbox } from '@ValenceUI/Checkbox';
 import { Icon } from '@ValenceUI/Icon';
@@ -34,10 +37,16 @@ const RankedChoices = <Choice extends string>({
   };
 
   return (
-    <ol aria-label={label} className="flex flex-col gap-1">
+    <ol
+      aria-label={label}
+      className="flex flex-col divide-y divide-[var(--surface-line)] overflow-hidden rounded-lg border border-[var(--surface-line)]"
+    >
       {chosen.map((id, place) => (
-        <li key={id} className="flex items-center gap-2">
-          <span className="w-5 text-right text-xs tabular-nums text-text-muted">
+        <li
+          key={id}
+          className="flex h-10 items-center gap-2.5 pl-3 pr-1.5 transition-colors duration-[var(--duration-fast)] hover:bg-[var(--surface-hover)]"
+        >
+          <span className="w-4 text-right text-xs tabular-nums text-text-muted">
             {(place + 1).toString()}
           </span>
 
@@ -79,7 +88,10 @@ const RankedChoices = <Choice extends string>({
       ))}
 
       {unchosen.map((option) => (
-        <li key={option.id} className="flex items-center gap-2 pl-7">
+        <li
+          key={option.id}
+          className="flex h-10 items-center gap-2.5 pl-[2.125rem] pr-1.5 text-text-muted transition-colors duration-[var(--duration-fast)] hover:bg-[var(--surface-hover)]"
+        >
           <Checkbox
             label={option.label}
             checked={false}

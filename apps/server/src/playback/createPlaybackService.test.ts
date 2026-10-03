@@ -816,7 +816,7 @@ describe('the details a conversion has to be told', () => {
   it('says the media service failed when it threw something that was not an error', async () => {
     const { service } = build({
       startSession: () =>
-        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- The point of the test: a media service that rejects with something that is not an Error.
+        // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- The point of the test: a media service that rejects with something that is not an Error.
         Promise.reject({ why: 'a plain object' }),
     });
 

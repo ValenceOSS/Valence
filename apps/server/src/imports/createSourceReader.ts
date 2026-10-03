@@ -1,4 +1,4 @@
-/* eslint-disable valence/no-hard-coded-strings -- product names, which are never translated */
+/* oxlint-disable valence/no-hard-coded-strings -- product names, which are never translated */
 import type { MediaImportKind } from '@ValenceContracts/schemas/MediaImport';
 import { createMediaBrowserReader } from './createMediaBrowserReader';
 import { createPlexReader } from './createPlexReader';

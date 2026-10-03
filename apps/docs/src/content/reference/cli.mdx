@@ -122,8 +122,8 @@ On MySQL or MariaDB, put `-f compose.yaml -f compose.mysql.yaml` or `-f compose.
 The development file is used with `-f`:
 
 ```bash
-docker compose -f compose.dev.yaml up -d db
-docker compose -f compose.dev.yaml --profile requests up
+docker compose --project-directory . -f docker/compose.dev.yaml up -d db
+docker compose --project-directory . -f docker/compose.dev.yaml --profile requests up
 ```
 
 ## Root scripts
@@ -137,11 +137,10 @@ From the repository root, with Node 24 or later and pnpm 10. Most run through [T
 | `pnpm build`         | `turbo run build`: builds every package in dependency order.                                                                                                                                                                                                               |
 | `pnpm test`          | `turbo run test`: the Vitest suites of every package.                                                                                                                                                                                                                      |
 | `pnpm test:coverage` | The same suites with coverage.                                                                                                                                                                                                                                             |
-| `pnpm coverage`      | Runs coverage, then checks the average against the threshold.                                                                                                                                                                                                              |
 | `pnpm typecheck`     | `turbo run typecheck`: TypeScript across the workspace.                                                                                                                                                                                                                    |
-| `pnpm lint`          | `oxlint`, then `eslint .`, then the comment checker.                                                                                                                                                                                                                       |
+| `pnpm lint`          | `oxlint`, type-aware, then the comment checker.                                                                                                                                                                                                                            |
 | `pnpm lint:fix`      | The same with automatic fixes.                                                                                                                                                                                                                                             |
-| `pnpm format`        | Prettier, writing changes. `pnpm format:check` only checks.                                                                                                                                                                                                                |
+| `pnpm format`        | oxfmt, writing changes. `pnpm format:check` only checks.                                                                                                                                                                                                                   |
 | `pnpm rust:check`    | `cargo clippy --all-targets -- -D warnings` and `cargo fmt --check`.                                                                                                                                                                                                       |
 | `pnpm rust:test`     | `cargo test`.                                                                                                                                                                                                                                                              |
 | `pnpm branch:check`  | Checks the current branch name follows the convention, such as `feat/some-thing`.                                                                                                                                                                                          |
@@ -191,9 +190,12 @@ Package names are `@valence/` followed by the folder name.
 | `docs`                                                       | `spec`                                                 | Writes the OpenAPI document to `public/openapi.json`.                                                          |
 | `docs`                                                       | `build`                                                | `pnpm spec && tsc --build && vite build`.                                                                      |
 | `docs`                                                       | `preview`, `start`, `test`, `typecheck`                | Vite preview, `serve dist` on `PORT` or 3000, Vitest, `tsc --noEmit`.                                          |
-| `transcoder`                                                 | `dev`                                                  | Runs the media service from source, through `tools/transcoder/serveTranscoder.ts`.                             |
+| `transcoder`                                                 | `dev`                                                  | Runs the media service from source, through `apps/transcoder/scripts/dev/serveTranscoder.ts`.                  |
 | `client`, `contracts`, `core`, `plugin-sdk`, `screens`, `ui` | `build`, `test`, `typecheck`                           | `tsc --build`, Vitest, `tsc --noEmit`.                                                                         |
-| `tools`                                                      | `lint:comments`, `test`, `typecheck`                   | The comment checker, Vitest and `tsc --noEmit`.                                                                |
+| `transcoder`                                                 | `test`, `typecheck`                                    | Vitest over its scripts, and `tsc --noEmit`.                                                                   |
+| `lint`                                                       | `build`                                                | Bundles Valence's own rules into the plugin oxlint loads.                                                      |
+| `lint`                                                       | `lint:comments`, `test`, `typecheck`                   | The comment checker, Vitest and `tsc --noEmit`.                                                                |
+| `brand`                                                      | `render`, `test`, `typecheck`                          | Renders the icons and logos from `assets/`, Vitest and `tsc --noEmit`.                                         |
 
 ### The documentation spec script
 
@@ -219,10 +221,10 @@ Valence uses [Drizzle](https://orm.drizzle.team). The server has one schema per 
 
 ## Linting and comments
 
-`pnpm lint` runs `oxlint`, `eslint .` and `tsx tools/comments/checkComments.ts`. The comment checker enforces the repository's rule on comments, and `--fix` removes what it can. You can call it on its own:
+`pnpm lint` bundles Valence's own rules for oxlint, then runs `oxlint` and `tsx packages/lint/src/comments/checkComments.ts`. The comment checker enforces the repository's rule on comments, and `--fix` removes what it can. You can call it on its own:
 
 ```bash
-pnpm --filter @valence/tools lint:comments
+pnpm --filter @valence/lint lint:comments
 ```
 
 The coding rules those tools enforce are in [Coding standard](/develop/coding-standard).

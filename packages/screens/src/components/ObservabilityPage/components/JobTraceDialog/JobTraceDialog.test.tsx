@@ -123,8 +123,22 @@ describe('JobTraceDialog', () => {
     draw();
 
     expect(
-      (await screen.findByRole('progressbar', { name: 'Scan for changes progress' })).parentElement,
+      (await screen.findByRole('progressbar', { name: 'Scan for changes progress' })).parentElement
+        ?.parentElement,
     ).toHaveTextContent('Files · 40 of 50');
+  });
+
+  it('hides the lines of a level once that level is turned off', async () => {
+    const user = userEvent.setup();
+
+    draw();
+
+    expect(await screen.findByText('Line a')).toBeInTheDocument();
+
+    await user.click(await screen.findByRole('button', { name: /^Info/ }));
+
+    expect(screen.queryByText('Line a')).not.toBeInTheDocument();
+    expect(screen.getByText(/^Could/)).toBeInTheDocument();
   });
 
   it('reads what it logged in order, each line with how long after the start', async () => {
@@ -185,7 +199,7 @@ describe('JobTraceDialog', () => {
       expect(await screen.findByText('Read another folder')).toBeInTheDocument();
       expect(
         (await screen.findByRole('progressbar', { name: 'Scan for changes progress' }))
-          .parentElement,
+          .parentElement?.parentElement,
       ).toHaveTextContent('Files · 30 of 50');
     });
 

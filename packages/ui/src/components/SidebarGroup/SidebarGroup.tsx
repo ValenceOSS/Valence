@@ -8,9 +8,12 @@ import { cn } from '@ValenceUI/cn';
 import { stillTransition, spring } from '@ValenceUI/animations/reveal';
 import type { SidebarGroupProps } from './SidebarGroup.types';
 
-const OPENS = [
-  'transition-[width,margin,opacity] duration-[var(--duration-base)] ease-[var(--ease-soft)]',
-  'motion-reduce:transition-none',
+const BRANCH = [
+  'relative pl-[1.375rem] [--branch:color-mix(in_oklab,var(--color-text)_22%,var(--frame-back))]',
+  'before:pointer-events-none before:absolute before:left-[0.9375rem] before:top-0 before:h-1/2',
+  'before:w-2 before:rounded-bl-[0.3125rem] before:border-b before:border-l before:border-[var(--branch)]',
+  'after:pointer-events-none after:absolute after:left-[0.9375rem] after:top-1/2 after:-bottom-1',
+  'after:border-l after:border-[var(--branch)] last:after:hidden',
 ].join(' ');
 
 /**
@@ -26,7 +29,9 @@ const OPENS = [
  *   items in different groups rather than jumping.
  * @param pointedAt - Which item the pointer rests on, for the whole rail.
  * @param onPointAt - Told which item the pointer now rests on, or none.
- * @param defaultIsOpen - Whether the group starts open.
+ * @param defaultIsOpen - Whether the group starts open, where nobody holds the answer for it.
+ * @param isOpen - Whether the group is open, for a caller that remembers it.
+ * @param onOpenChange - Told when the group is opened or folded.
  * @param className - Extra classes for the caller's own layout.
  */
 const SidebarGroup = ({
@@ -38,10 +43,13 @@ const SidebarGroup = ({
   pointedAt,
   onPointAt,
   defaultIsOpen = true,
+  isOpen: heldOpen,
+  onOpenChange,
   className,
 }: SidebarGroupProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
-  const [isOpen, setIsOpen] = useState(defaultIsOpen);
+  const [ownOpen, setOwnOpen] = useState(defaultIsOpen);
+  const isOpen = heldOpen ?? ownOpen;
   const showsFold = label !== undefined;
 
   return (
@@ -52,11 +60,12 @@ const SidebarGroup = ({
           size="none"
           aria-expanded={isOpen}
           onClick={() => {
-            setIsOpen((was) => !was);
+            setOwnOpen(!isOpen);
+            onOpenChange?.(!isOpen);
           }}
           className={cn(
-            'flex items-center justify-between rounded-md px-2.5 py-1.5 text-left text-[0.6875rem]',
-            'font-medium uppercase tracking-[0.14em] text-text-muted',
+            'group/fold flex items-center justify-between rounded-md px-2.5 py-1 text-left text-[0.6875rem]',
+            'font-medium uppercase tracking-[0.06em] text-text-muted',
             'transition-colors duration-[var(--duration-fast)] hover:text-text',
           )}
         >
@@ -66,8 +75,9 @@ const SidebarGroup = ({
             of={ChevronDownIcon}
             size={13}
             className={cn(
-              'transition-transform duration-[var(--duration-fast)]',
-              isOpen ? '' : '-rotate-90',
+              'opacity-0 transition-[rotate,opacity] duration-[var(--duration-base)] ease-[var(--ease-out)]',
+              'group-hover/fold:opacity-100 group-focus-visible/fold:opacity-100',
+              isOpen ? '' : '-rotate-90 opacity-100',
             )}
           />
         </Button>
@@ -80,14 +90,14 @@ const SidebarGroup = ({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={prefersReducedMotion ? stillTransition : spring}
-            className="flex flex-col gap-0.5 overflow-hidden"
+            className={cn('flex flex-col overflow-hidden', showsFold ? 'gap-1 pt-1' : 'gap-0.5')}
           >
             {items.map((item) => {
               const isCurrent = item.id === value;
               const isLit = item.id === (pointedAt ?? value);
 
               return (
-                <li key={item.id}>
+                <li key={item.id} className={showsFold ? BRANCH : undefined}>
                   <Button
                     variant="bare"
                     size="sm"
@@ -104,33 +114,30 @@ const SidebarGroup = ({
                       onSelect(item.id);
                     }}
                     className={cn(
-                      'relative isolate flex w-full items-center justify-start gap-2.5 rounded-md px-2.5',
+                      'relative isolate flex h-8 w-full items-center justify-start gap-2.5 rounded-md px-2.5',
                       'transition-colors duration-[var(--duration-fast)]',
-                      isCurrent
-                        ? 'font-semibold text-accent'
-                        : isLit
-                          ? 'text-text'
-                          : 'text-text-muted',
+                      isCurrent ? 'font-medium text-text' : isLit ? 'text-text' : 'text-text-muted',
                     )}
                   >
                     {isLit ? (
                       <SlidingMark
                         group={markGroup}
-                        className={isCurrent ? 'bg-accent/15' : 'bg-[var(--surface-active)]'}
+                        className={
+                          isCurrent ? 'bg-[var(--surface-active)]' : 'bg-[var(--surface-hover)]'
+                        }
                       />
                     ) : null}
 
                     <span
                       className={cn(
-                        'relative z-10 flex shrink-0 overflow-hidden',
-                        OPENS,
-                        isCurrent ? 'ml-0 w-[17px] opacity-100' : '-ml-2.5 w-0 opacity-0',
+                        'relative z-10 flex shrink-0',
+                        isCurrent ? 'text-text' : 'text-text-muted',
                       )}
                     >
                       <Icon
                         of={item.icon}
                         {...(item.activeIcon === undefined ? {} : { whenActive: item.activeIcon })}
-                        size={17}
+                        size={16}
                         isActive={isCurrent}
                       />
                     </span>

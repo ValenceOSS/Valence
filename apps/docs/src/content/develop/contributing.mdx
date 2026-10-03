@@ -30,7 +30,7 @@ The short version is below. [Local setup](/develop/local-setup) has the full wal
 git clone https://github.com/ValenceOSS/Valence.git
 cd Valence
 pnpm install
-docker compose -f compose.dev.yaml up -d db
+docker compose --project-directory . -f docker/compose.dev.yaml up -d db
 pnpm ffmpeg:sync
 pnpm dev --filter=@valence/server --filter=@valence/web --filter=@valence/transcoder
 ```
@@ -75,7 +75,7 @@ Husky runs three hooks.
 | Hook         | What it runs                                                                                         |
 | ------------ | ---------------------------------------------------------------------------------------------------- |
 | `commit-msg` | commitlint on the message                                                                            |
-| `pre-commit` | `lint-staged`: oxlint, eslint and prettier on staged code                                            |
+| `pre-commit` | `lint-staged`: oxlint and oxfmt on staged code                                                       |
 | `pre-push`   | `pnpm lint`, `pnpm typecheck`, `pnpm branch:check`, `pnpm test`, `pnpm rust:check`, `pnpm rust:test` |
 
 <Callout title="Do not bypass the hooks" tone="warning">

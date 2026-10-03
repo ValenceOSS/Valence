@@ -7,11 +7,11 @@ jest.mock('expo', () => ({
   requireOptionalNativeModule: jest.fn(),
 }));
 
-/* eslint-disable no-restricted-syntax -- a player is forty members of somebody else's interface and
+/* oxlint-disable valence/banned-syntax -- a player is forty members of somebody else's interface and
    this hands it straight to native without reading one of them, so a stand-in is the only thing a
    test can pass and there is nothing about it to parse. */
 const aPlayer = (): VideoPlayer => ({}) as unknown as VideoPlayer;
-/* eslint-enable no-restricted-syntax */
+/* oxlint-enable valence/banned-syntax */
 
 const sayingItMay = jest.fn<boolean, [VideoPlayer]>();
 

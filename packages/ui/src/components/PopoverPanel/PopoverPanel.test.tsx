@@ -87,7 +87,7 @@ describe('PopoverPanel', () => {
       </PopoverPanel>,
     );
 
-    expect(screen.getByRole('button', { name: 'Filters' })).toHaveClass('h-8', 'px-2.5');
+    expect(screen.getByRole('button', { name: 'Filters' })).toHaveClass('h-7', 'px-2.5');
     expect(screen.getByRole('button', { name: 'Filters' })).not.toHaveClass('size-10');
   });
 

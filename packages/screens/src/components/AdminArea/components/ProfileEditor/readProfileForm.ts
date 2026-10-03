@@ -7,7 +7,6 @@ import type {
 import type {
   ProfileKind,
   QualityProfile,
-  QualityProfileDraft,
   QualitySize,
   ReleaseWait,
 } from '@ValenceContracts/schemas/QualityProfile';
@@ -38,10 +37,6 @@ type ProfileForm = {
 };
 
 type ProfileTab = 'quality' | 'matching' | 'access';
-
-type ReadProfileForm =
-  | { draft: QualityProfileDraft; problem: null; at: null }
-  | { draft: null; problem: string; at: ProfileTab };
 
 const DEFAULTS = QualityProfileDraftSchema.parse({
   name: say('screens.profileEditor.readProfileForm.new'),
@@ -105,126 +100,6 @@ const formFor = (profile: QualityProfile | null): ProfileForm =>
         accountIds: profile.accountIds,
       };
 
-/**
- * Reads words typed into the form, separated by commas.
- *
- * @param text - What was typed.
- * @returns The words.
- */
-const wordsOf = (text: string): string[] =>
-  text
-    .split(',')
-    .map((word) => word.trim())
-    .filter((word) => word !== '');
-
-/**
- * Reads a size typed into the form, where one was.
- *
- * @param text - What was typed.
- * @returns The size, null for none, or undefined where it is not a size.
- */
-const sizeOf = (text: string): number | null | undefined => {
-  if (text.trim() === '') {
-    return null;
-  }
-
-  const size = Number(text.trim());
-
-  return Number.isFinite(size) && size >= 0 ? size : undefined;
-};
-
-/**
- * Reads the profile form into a profile to keep, or says the first thing wrong with it in words
- * that point at the field, and which tab of the dialog to show to reach it. A video profile must allow at least one resolution, and a music profile
- * at least one format, or it would take nothing. Video is limited by the size of each quality, and
- * music by the size of an album.
- *
- * @param form - The form as it stands.
- * @returns The profile, or what is wrong.
- */
-const readProfileForm = (form: ProfileForm): ReadProfileForm => {
-  const name = form.name.trim();
-  const smallestMb = sizeOf(form.smallestMb);
-  const largestMb = sizeOf(form.largestMb);
-
-  if (name === '') {
-    return {
-      draft: null,
-      problem: say('screens.profileEditor.readProfileForm.giveTheProfileAName'),
-      at: 'quality',
-    };
-  }
-
-  if (form.kind === 'video' && form.resolutions.length === 0) {
-    return {
-      draft: null,
-      problem: say('screens.profileEditor.readProfileForm.allowAtLeastOneResolution'),
-      at: 'quality',
-    };
-  }
-
-  if (form.kind === 'music' && form.musicQualities.length === 0) {
-    return {
-      draft: null,
-      problem: say('screens.profileEditor.readProfileForm.allowAtLeastOneFormat'),
-      at: 'quality',
-    };
-  }
-
-  const isMusic = form.kind === 'music';
-
-  if (isMusic && (smallestMb === undefined || largestMb === undefined || largestMb === 0)) {
-    return {
-      draft: null,
-      problem: say('screens.profileEditor.readProfileForm.aSizeIsANumberOf'),
-      at: 'quality',
-    };
-  }
-
-  if (
-    isMusic &&
-    smallestMb !== null &&
-    smallestMb !== undefined &&
-    largestMb !== null &&
-    largestMb !== undefined &&
-    largestMb <= smallestMb
-  ) {
-    return {
-      draft: null,
-      problem: say('screens.profileEditor.readProfileForm.theLargestSizeHasToBe'),
-      at: 'quality',
-    };
-  }
-
-  return {
-    draft: {
-      name,
-      kind: form.kind,
-      resolutions: form.resolutions,
-      sources: form.sources,
-      musicQualities: form.musicQualities,
-      smallestMb: isMusic ? (smallestMb ?? null) : null,
-      largestMb: isMusic ? (largestMb ?? null) : null,
-      sizes: form.sizes,
-      releaseWait: form.releaseWait,
-      preferredWords: wordsOf(form.preferredWords),
-      requiredWords: wordsOf(form.requiredWords),
-      bannedWords: wordsOf(form.bannedWords),
-      isUpgrading: form.isUpgrading,
-      upgradeUntilResolution: form.isUpgrading ? form.upgradeUntilResolution : null,
-      upgradeUntilSource: form.isUpgrading ? form.upgradeUntilSource : null,
-      upgradeUntilMusicQuality: form.isUpgrading ? form.upgradeUntilMusicQuality : null,
-      libraryIds: form.libraryIds,
-      preferredLanguage: form.preferredLanguage,
-      isDefault: form.isDefault,
-      roleIds: form.isDefault ? [] : form.roleIds,
-      accountIds: form.isDefault ? [] : form.accountIds,
-    },
-    problem: null,
-    at: null,
-  };
-};
-
 export type { ProfileForm, ProfileTab };
 
-export { A_NEW_PROFILE, formFor, readProfileForm };
+export { A_NEW_PROFILE, formFor };

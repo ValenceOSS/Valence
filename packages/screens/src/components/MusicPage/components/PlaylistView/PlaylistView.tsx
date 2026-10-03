@@ -357,7 +357,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
             aria-label={say('screens.musicPage.playlistView.alsoInThisPlaylist')}
             className="flex flex-col gap-2"
           >
-            <h2 className="px-2 text-sm font-semibold uppercase tracking-[0.12em] text-text-muted">
+            <h2 className="px-2 text-sm font-semibold text-text-muted">
               {say('screens.musicPage.playlistView.alsoInThisPlaylist')}
             </h2>
             <ul className="flex flex-col">
@@ -382,7 +382,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
             aria-label={say('common.noLongerInTheLibrary')}
             className="flex flex-col gap-2 px-2"
           >
-            <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-text-muted">
+            <h2 className="text-sm font-semibold text-text-muted">
               {say('common.noLongerInTheLibrary')}
             </h2>
             <p className="text-sm text-text-muted">

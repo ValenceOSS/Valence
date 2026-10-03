@@ -44,7 +44,7 @@ const ArtworkTile = ({
     className={cn(
       'group relative block w-full overflow-hidden rounded-lg ring-1 ring-line',
       'transition-shadow duration-[var(--duration-fast)] ease-[var(--ease-out)] motion-reduce:transition-none',
-      isChosen ? 'ring-[3px] ring-accent' : 'hover-hover:hover:ring-[var(--surface-divider)]',
+      isChosen ? 'ring-[3px] ring-primary' : 'hover-hover:hover:ring-[var(--surface-divider)]',
       SHAPES[kind],
       kind === 'logo' || previewUrl === null ? 'bg-surface-raised' : 'bg-card',
     )}
