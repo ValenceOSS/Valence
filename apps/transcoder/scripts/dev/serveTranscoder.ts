@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { planFfmpegNotice } from './planFfmpegNotice';
 import { planTranscoderDev } from './planTranscoderDev';
 
-const ROOT = join(import.meta.dirname, '..', '..');
+const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
 
 /**
  * Loads the same environment file the server reads, so that the transcoder started for development

@@ -40,7 +40,7 @@ type ManifestEntry = z.infer<typeof ManifestEntrySchema>;
 
 type Manifest = z.infer<typeof ManifestSchema>;
 
-const MANIFEST_PATH = join(import.meta.dirname, '..', '..', 'fixtures.manifest.json');
+const MANIFEST_PATH = join(import.meta.dirname, '..', '..', '..', '..', 'fixtures.manifest.json');
 
 const ffmpeg = (): string => process.env['VALENCE_FFMPEG'] ?? 'ffmpeg';
 

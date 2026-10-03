@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { planFfmpegDownload, SUITE } from './planFfmpegDownload';
 
-const ROOT = join(import.meta.dirname, '..', '..');
+const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
 
 const VERSION = '8.1.2-5.2';
 

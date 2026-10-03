@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { pinnedFfmpegVersion } from './pinnedFfmpegVersion';
 
-const ROOT = join(import.meta.dirname, '..', '..');
+const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
 
 const CI_VERSIONS = /^\s*VALENCE_FFMPEG_VERSION:\s*(?<version>\S+)\s*$/gmu;
 

@@ -23,8 +23,8 @@
     "rust:check": "cargo clippy --all-targets -- -D warnings && cargo fmt --check",
     "rust:test": "cargo test",
     "prepare": "husky && pnpm --filter @valence/tools build:oxlint",
-    "fixtures:sync": "tsx tools/fixtures/syncFixtures.ts",
-    "ffmpeg:sync": "tsx tools/ffmpeg/syncFfmpeg.ts",
+    "fixtures:sync": "tsx apps/transcoder/scripts/fixtures/syncFixtures.ts",
+    "ffmpeg:sync": "tsx apps/transcoder/scripts/ffmpeg/syncFfmpeg.ts",
     "brand:render": "tsx tools/brand/renderBrand.ts",
     "db:check": "tsx packages/database/src/drizzle/checkDrizzleSnapshot.ts",
     "i18n:write": "tsx packages/i18n/src/writeStrings.ts"

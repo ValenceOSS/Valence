@@ -5,7 +5,7 @@ import { envFileWithFfmpeg } from './envFileWithFfmpeg';
 import { pinnedFfmpegVersion } from './pinnedFfmpegVersion';
 import { planFfmpegDownload } from './planFfmpegDownload';
 
-const ROOT = join(import.meta.dirname, '..', '..');
+const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
 
 const INSTALL_DIR = join(ROOT, '.ffmpeg');
 
