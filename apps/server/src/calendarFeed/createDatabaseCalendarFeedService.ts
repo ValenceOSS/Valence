@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { countAffected } from '@ValenceDatabase/countAffected';
+import { isDeadlock } from '@ValenceDatabase/isDeadlock';
 import { isUniqueViolation } from '@ValenceDatabase/isUniqueViolation';
 import { ownerKeyOf } from '@ValenceServer/calendarFeed/ownerKeyOf';
 import { calendarFeed } from '#dialect/Schema';
@@ -81,7 +82,8 @@ const createDatabaseCalendarFeedService = (
 
   /**
    * What somebody's link is after making one collided with another request making one at the same
-   * moment: the link that request stored, which is as new as the one that lost.
+   * moment — on the one-link-per-person key, or in a deadlock the database broke by giving up on
+   * this one: the link that request stored, which is as new as the one that lost.
    *
    * @param owner - Whose link it is.
    * @param error - Why storing the link failed.
@@ -91,7 +93,7 @@ const createDatabaseCalendarFeedService = (
     owner: CalendarFeedOwner,
     error: Failure,
   ): Promise<CalendarFeed | null> => {
-    const stored = isUniqueViolation(error) ? await read(owner) : null;
+    const stored = isUniqueViolation(error) || isDeadlock(error) ? await read(owner) : null;
 
     return stored === null || stored.token === null ? null : stored;
   };

@@ -48,6 +48,7 @@ const build = async () => {
     (viewer: Viewer, from: string, to: string) => Promise<CalendarEpisode[]>
   >(() => Promise.resolve([EPISODE]));
   const library = createMemoryLibraryService({ libraries: [], media: [] });
+  const banned = new Set<string>();
 
   const app = createApp({
     auth,
@@ -66,6 +67,7 @@ const build = async () => {
     favourites: createMemoryFavouriteService(),
     ratings: createMemoryRatingService(),
     calendarFeeds: createMemoryCalendarFeedService(),
+    isAccountBanned: (userId) => Promise.resolve(banned.has(userId)),
   });
 
   const cookie = await signUpForTest(app);
@@ -80,7 +82,7 @@ const build = async () => {
   const renew = async () =>
     CalendarFeedSchema.parse(await (await call('POST', '/api/calendar/feed/renew')).json());
 
-  return { call, ensure, renew, releaseCalendar, accountId: store.user[0]?.id ?? '' };
+  return { call, ensure, renew, releaseCalendar, banned, accountId: store.user[0]?.id ?? '' };
 };
 
 describe('the calendar feed', () => {
@@ -141,6 +143,15 @@ describe('the calendar feed', () => {
     expect((await call('GET', `/api/calendar/feed/${second.token ?? ''}.ics`, {})).status).toBe(
       404,
     );
+  });
+
+  it('serves nothing by the link of an account that has been banned', async () => {
+    const { call, ensure, banned, accountId } = await build();
+    const { token } = await ensure();
+
+    banned.add(accountId);
+
+    expect((await call('GET', `/api/calendar/feed/${token ?? ''}.ics`, {})).status).toBe(404);
   });
 
   it('asks for sign-in for anything under the feed that is not a link', async () => {

@@ -30,6 +30,9 @@ const FEED_CACHING = 'private, max-age=900';
  * and the feed itself, read by that link with no sign-in, the link's token being the only
  * credential.
  *
+ * A banned account's link serves nothing, though banning one also deletes its links, so a link
+ * cannot outlast the account's sessions and keys.
+ *
  * The feed is worked out for the person the link belongs to, exactly as the calendar in the app is
  * — their face's age ceiling and hidden titles, the libraries they may see, and their own requests —
  * from a month back to three months on.
@@ -38,7 +41,7 @@ const FEED_CACHING = 'private, max-age=900';
  * @param context - What the routes read from.
  */
 const serveCalendarFeed = (app: OpenAPIHono, context: AppContext): void => {
-  const { viewerOf, calendarFeeds, permissions, askerFor, listUsers } = context;
+  const { viewerOf, calendarFeeds, permissions, askerFor, listUsers, isAccountBanned } = context;
   const read = createCalendarReader(context);
 
   /**
@@ -101,7 +104,7 @@ const serveCalendarFeed = (app: OpenAPIHono, context: AppContext): void => {
     const { file } = context.req.valid('param');
     const owner = await calendarFeeds.resolve(file.slice(0, -'.ics'.length));
 
-    if (owner === null) {
+    if (owner === null || ((await isAccountBanned?.(owner.accountId)) ?? false)) {
       return context.json(refuse('error.common.thisLinkDoesNotWork'), 404);
     }
 

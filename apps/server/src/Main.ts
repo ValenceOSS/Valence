@@ -82,6 +82,7 @@ import {
   user,
   account,
   accountActivity,
+  calendarFeed,
   passkey,
   library,
   mediaItem,
@@ -3712,6 +3713,7 @@ const app = createApp({
     await db.update(user).set({ banned: true, banReason: reason }).where(eq(user.id, userId));
     await db.delete(session).where(eq(session.userId, userId));
     await db.update(apikey).set({ enabled: false }).where(eq(apikey.referenceId, userId));
+    await db.delete(calendarFeed).where(eq(calendarFeed.accountId, userId));
 
     return true;
   },
