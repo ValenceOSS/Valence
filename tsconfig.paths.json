@@ -22,6 +22,7 @@
       "@ValenceLanding/*": ["./apps/landing/src/*"],
       "@ValenceMobile/*": ["./apps/mobile/src/*"],
       "@ValenceRatings/*": ["./packages/ui/src/assets/ratings/*"],
+      "@ValenceBrands/*": ["./packages/ui/src/assets/brands/*"],
       "@ValenceSDK/*": ["./packages/plugin-sdk/src/*"],
       "@ValenceScreens/*": ["./packages/screens/src/*"],
       "@ValenceServer/*": ["./apps/server/src/*"],
@@ -108,6 +109,8 @@
       "@ValenceUI/FilterMenu.types": [
         "./packages/ui/src/components/FilterMenu/FilterMenu.types.ts"
       ],
+      "@ValenceUI/Form": ["./packages/ui/src/components/Form/Form.tsx"],
+      "@ValenceUI/Form.types": ["./packages/ui/src/components/Form/Form.types.ts"],
       "@ValenceUI/FormField": ["./packages/ui/src/components/FormField/FormField.tsx"],
       "@ValenceUI/FormField.types": ["./packages/ui/src/components/FormField/FormField.types.ts"],
       "@ValenceUI/Drawer": ["./packages/ui/src/components/Drawer/Drawer.tsx"],
@@ -126,8 +129,20 @@
       "@ValenceUI/HoverHighlight.types": [
         "./packages/ui/src/components/HoverHighlight/HoverHighlight.types.ts"
       ],
+      "@ValenceUI/BrandGlyph": ["./packages/ui/src/components/BrandGlyph/BrandGlyph.tsx"],
+      "@ValenceUI/BrandGlyph.types": [
+        "./packages/ui/src/components/BrandGlyph/BrandGlyph.types.ts"
+      ],
       "@ValenceUI/Icon": ["./packages/ui/src/components/Icon/Icon.tsx"],
       "@ValenceUI/Icon.types": ["./packages/ui/src/components/Icon/Icon.types.ts"],
+      "@ValenceUI/InfoHeading": ["./packages/ui/src/components/InfoHeading/InfoHeading.tsx"],
+      "@ValenceUI/InfoHeading.types": [
+        "./packages/ui/src/components/InfoHeading/InfoHeading.types.ts"
+      ],
+      "@ValenceUI/InfoNote": ["./packages/ui/src/components/InfoNote/InfoNote.tsx"],
+      "@ValenceUI/InfoNote.types": ["./packages/ui/src/components/InfoNote/InfoNote.types.ts"],
+      "@ValenceUI/InfoRow": ["./packages/ui/src/components/InfoRow/InfoRow.tsx"],
+      "@ValenceUI/InfoRow.types": ["./packages/ui/src/components/InfoRow/InfoRow.types.ts"],
       "@ValenceUI/Link": ["./packages/ui/src/components/Link/Link.tsx"],
       "@ValenceUI/Link.types": ["./packages/ui/src/components/Link/Link.types.ts"],
       "@ValenceUI/Logo": ["./packages/ui/src/components/Logo/Logo.tsx"],
@@ -190,6 +205,14 @@
       "@ValenceUI/TimeBars.types": ["./packages/ui/src/components/TimeBars/TimeBars.types.ts"],
       "@ValenceUI/Well": ["./packages/ui/src/components/Well/Well.tsx"],
       "@ValenceUI/Well.types": ["./packages/ui/src/components/Well/Well.types.ts"],
+      "@ValenceUI/SelectField": ["./packages/ui/src/components/SelectField/SelectField.tsx"],
+      "@ValenceUI/SelectField.types": [
+        "./packages/ui/src/components/SelectField/SelectField.types.ts"
+      ],
+      "@ValenceUI/SettingGroup": ["./packages/ui/src/components/SettingGroup/SettingGroup.tsx"],
+      "@ValenceUI/SettingGroup.types": [
+        "./packages/ui/src/components/SettingGroup/SettingGroup.types.ts"
+      ],
       "@ValenceUI/SettingList": ["./packages/ui/src/components/SettingList/SettingList.tsx"],
       "@ValenceUI/SettingList.types": [
         "./packages/ui/src/components/SettingList/SettingList.types.ts"
@@ -208,6 +231,10 @@
       ],
       "@ValenceUI/Sidebar": ["./packages/ui/src/components/Sidebar/Sidebar.tsx"],
       "@ValenceUI/Sidebar.types": ["./packages/ui/src/components/Sidebar/Sidebar.types.ts"],
+      "@ValenceUI/SidebarToggle": ["./packages/ui/src/components/SidebarToggle/SidebarToggle.tsx"],
+      "@ValenceUI/SidebarToggle.types": [
+        "./packages/ui/src/components/SidebarToggle/SidebarToggle.types.ts"
+      ],
       "@ValenceUI/SidebarGroup": ["./packages/ui/src/components/SidebarGroup/SidebarGroup.tsx"],
       "@ValenceUI/SidebarGroup.types": [
         "./packages/ui/src/components/SidebarGroup/SidebarGroup.types.ts"
