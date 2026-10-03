@@ -12,7 +12,6 @@ Valence is one pnpm workspace with a Cargo workspace beside it. This page lists 
 | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `apps/`                                                                              | Things that run: the server, the clients, the media service and the sites                                                                                                                                                                                                                                                                                  |
 | `packages/`                                                                          | Libraries the apps share                                                                                                                                                                                                                                                                                                                                   |
-| `tools/`                                                                             | Repository tooling written in TypeScript: lint rules, the branch check, fixtures, FFmpeg sync, Drizzle checks, transcoder dev script, the icon renderer                                                                                                                                                                                                    |
 | `.github/`                                                                           | Workflows, the pull request template and release note configuration                                                                                                                                                                                                                                                                                        |
 | `.husky/`                                                                            | The three git hooks: `commit-msg`, `pre-commit` and `pre-push`                                                                                                                                                                                                                                                                                             |
 | `assets/`                                                                            | Valence's icon and logo, and the pictures the README shows. The sources are `valence-icon.icon`, an Icon Composer bundle, and `valence-logo.svg`: `valence-icon.icon`, an Icon Composer bundle, and `valence-logo.svg`. Change these, then run `pnpm brand:render` (on a Mac with Xcode 26 or later) to redraw every icon, favicon and logo the apps carry |
@@ -28,34 +27,36 @@ Valence is one pnpm workspace with a Cargo workspace beside it. This page lists 
 | `release-please-config.json`, `.release-please-manifest.json`                        | Release automation. See [Releasing](/develop/releasing).                                                                                                                                                                                                                                                                                                   |
 | `CODING_STANDARD.md`, `CONTRIBUTING.md`, `SECURITY.md`, `DEPLOYMENT.md`, `CLAUDE.md` | Rules and operator guidance in the repository                                                                                                                                                                                                                                                                                                              |
 
-The workspace members are listed in `pnpm-workspace.yaml`: `apps/desktop`, `apps/docs`, `apps/landing`, `apps/web`, `apps/server`, `apps/requests`, `apps/transcoder`, every directory under `packages/`, and `tools`.
+The workspace members are listed in `pnpm-workspace.yaml`: `apps/desktop`, `apps/docs`, `apps/landing`, `apps/web`, `apps/server`, `apps/requests`, and `apps/transcoder`, and every directory under `packages/`.
 
 ## Apps
 
-| Directory         | Package name                                 | Purpose                                                       | Alias                               |
-| ----------------- | -------------------------------------------- | ------------------------------------------------------------- | ----------------------------------- |
-| `apps/server`     | `@valence/server`                            | The Hono API, auth, jobs, realtime, database access           | `@ValenceServer/*`                  |
-| `apps/requests`   | `@valence/requests`                          | The optional service that finds and downloads requested media | `@ValenceRequests/*`                |
-| `apps/transcoder` | `@valence/transcoder` (a dev script wrapper) | The Rust media service, crate `valence-transcoder`            | None. Rust modules are not aliased. |
-| `apps/web`        | `@valence/web`                               | The browser host: entry, platform, socket, service worker     | `@ValenceWeb/*`                     |
-| `apps/desktop`    | `@valence/desktop`                           | The Electron host                                             | `@ValenceDesktop/*`                 |
-| `apps/landing`    | `@valence/landing`                           | The getvalence.app marketing site                             | `@ValenceLanding/*`                 |
-| `apps/docs`       | `@valence/docs`                              | This documentation site                                       | `@ValenceDocs/*`                    |
+| Directory         | Package name          | Purpose                                                                                                                                   | Alias                               |
+| ----------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| `apps/server`     | `@valence/server`     | The Hono API, auth, jobs, realtime, database access                                                                                       | `@ValenceServer/*`                  |
+| `apps/requests`   | `@valence/requests`   | The optional service that finds and downloads requested media                                                                             | `@ValenceRequests/*`                |
+| `apps/transcoder` | `@valence/transcoder` | The Rust media service, crate `valence-transcoder`, and the scripts that run it from source, sync its FFmpeg and build its fixture corpus | None. Rust modules are not aliased. |
+| `apps/web`        | `@valence/web`        | The browser host: entry, platform, socket, service worker                                                                                 | `@ValenceWeb/*`                     |
+| `apps/desktop`    | `@valence/desktop`    | The Electron host                                                                                                                         | `@ValenceDesktop/*`                 |
+| `apps/landing`    | `@valence/landing`    | The getvalence.app marketing site                                                                                                         | `@ValenceLanding/*`                 |
+| `apps/docs`       | `@valence/docs`       | This documentation site                                                                                                                   | `@ValenceDocs/*`                    |
 
 ## Packages
 
-| Directory             | Published name        | Purpose                                                                          | Alias                 |
-| --------------------- | --------------------- | -------------------------------------------------------------------------------- | --------------------- |
-| `packages/contracts`  | `@valence/contracts`  | Zod schemas and shared types. The source of truth for API shapes.                | `@ValenceContracts/*` |
-| `packages/core`       | `@valence/core`       | Pure shared logic, such as playback source selection and default roles           | `@ValenceCore/*`      |
-| `packages/client`     | `@valence/client`     | What Valence is: readers, queries, realtime, session, sharing. It does not draw. | `@ValenceClient/*`    |
-| `packages/screens`    | `@valence/screens`    | What Valence looks like: every screen and the routes onto them                   | `@ValenceScreens/*`   |
-| `packages/ui`         | `@valence/ui`         | ValenceUI, the component library, tokens and stylesheet                          | `@ValenceUI/<Name>`   |
-| `packages/plugin-sdk` | `@valence/plugin-sdk` | The plugin manifest contract                                                     | `@ValenceSDK/*`       |
+| Directory             | Published name        | Purpose                                                                                   | Alias                 |
+| --------------------- | --------------------- | ----------------------------------------------------------------------------------------- | --------------------- |
+| `packages/contracts`  | `@valence/contracts`  | Zod schemas and shared types. The source of truth for API shapes.                         | `@ValenceContracts/*` |
+| `packages/core`       | `@valence/core`       | Pure shared logic, such as playback source selection and default roles                    | `@ValenceCore/*`      |
+| `packages/client`     | `@valence/client`     | What Valence is: readers, queries, realtime, session, sharing. It does not draw.          | `@ValenceClient/*`    |
+| `packages/screens`    | `@valence/screens`    | What Valence looks like: every screen and the routes onto them                            | `@ValenceScreens/*`   |
+| `packages/ui`         | `@valence/ui`         | ValenceUI, the component library, tokens and stylesheet                                   | `@ValenceUI/<Name>`   |
+| `packages/plugin-sdk` | `@valence/plugin-sdk` | The plugin manifest contract                                                              | `@ValenceSDK/*`       |
+| `packages/lint`       | `@valence/lint`       | Valence's own oxlint rules, the comment check for Rust and CSS, and the branch name check | None                  |
+| `packages/brand`      | `@valence/brand`      | Renders every icon and logo the apps ship from the sources in `assets/`                   | None                  |
 
 The alias and the package name are deliberately different things. `@ValenceUI` is an internal alias only, because npm scopes must be lowercase; anything published to a registry uses a lowercase name such as `@valence/ui`. All of these packages are currently marked `private` in their manifests.
 
-`tools` (`@valence/tools`) has no alias. Its files are run with `tsx` and import each other with same-directory relative paths.
+`packages/lint` and `packages/brand` have no alias. Their files are run with `tsx` and import each other with same-directory relative paths.
 
 ### How the aliases resolve
 

@@ -190,9 +190,12 @@ Package names are `@valence/` followed by the folder name.
 | `docs`                                                       | `spec`                                                 | Writes the OpenAPI document to `public/openapi.json`.                                                          |
 | `docs`                                                       | `build`                                                | `pnpm spec && tsc --build && vite build`.                                                                      |
 | `docs`                                                       | `preview`, `start`, `test`, `typecheck`                | Vite preview, `serve dist` on `PORT` or 3000, Vitest, `tsc --noEmit`.                                          |
-| `transcoder`                                                 | `dev`                                                  | Runs the media service from source, through `tools/transcoder/serveTranscoder.ts`.                             |
+| `transcoder`                                                 | `dev`                                                  | Runs the media service from source, through `apps/transcoder/scripts/dev/serveTranscoder.ts`.                  |
 | `client`, `contracts`, `core`, `plugin-sdk`, `screens`, `ui` | `build`, `test`, `typecheck`                           | `tsc --build`, Vitest, `tsc --noEmit`.                                                                         |
-| `tools`                                                      | `lint:comments`, `test`, `typecheck`                   | The comment checker, Vitest and `tsc --noEmit`.                                                                |
+| `transcoder`                                                 | `test`, `typecheck`                                    | Vitest over its scripts, and `tsc --noEmit`.                                                                   |
+| `lint`                                                       | `build`                                                | Bundles Valence's own rules into the plugin oxlint loads.                                                      |
+| `lint`                                                       | `lint:comments`, `test`, `typecheck`                   | The comment checker, Vitest and `tsc --noEmit`.                                                                |
+| `brand`                                                      | `render`, `test`, `typecheck`                          | Renders the icons and logos from `assets/`, Vitest and `tsc --noEmit`.                                         |
 
 ### The documentation spec script
 
@@ -218,10 +221,10 @@ Valence uses [Drizzle](https://orm.drizzle.team). The server has one schema per 
 
 ## Linting and comments
 
-`pnpm lint` bundles Valence's own rules for oxlint, then runs `oxlint` and `tsx tools/comments/checkComments.ts`. The comment checker enforces the repository's rule on comments, and `--fix` removes what it can. You can call it on its own:
+`pnpm lint` bundles Valence's own rules for oxlint, then runs `oxlint` and `tsx packages/lint/src/comments/checkComments.ts`. The comment checker enforces the repository's rule on comments, and `--fix` removes what it can. You can call it on its own:
 
 ```bash
-pnpm --filter @valence/tools lint:comments
+pnpm --filter @valence/lint lint:comments
 ```
 
 The coding rules those tools enforce are in [Coding standard](/develop/coding-standard).

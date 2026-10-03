@@ -128,13 +128,13 @@ pnpm --filter @valence/transcoder dev
 pnpm --filter @valence/requests dev
 ```
 
-| Service          | Command                                 | What it does                                                                                     | Port                                              |
-| ---------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------- |
-| Server           | `pnpm --filter @valence/server dev`     | `tsx watch` over `src/Main.ts`, reading the root `.env`                                          | 8420                                              |
-| Web client       | `pnpm --filter @valence/web dev`        | Vite dev server that proxies `/api` (with WebSockets) to 8420                                    | 5173                                              |
-| Media service    | `pnpm --filter @valence/transcoder dev` | Runs `cargo run --bin valence-transcoder -- serve` through `tools/transcoder/serveTranscoder.ts` | The unix socket in `TRANSCODER_URL`               |
-| Requests service | `pnpm --filter @valence/requests dev`   | `tsx watch` over its `src/Main.ts`                                                               | 8421, from `REQUESTS_PORT`                        |
-| Desktop          | `pnpm --filter @valence/desktop dev`    | Builds the native module with `tools/desktop/buildDesktopNative.ts`, then `electron-vite dev`    | The renderer's dev server, 5174 in `.env.example` |
+| Service          | Command                                 | What it does                                                                                                | Port                                              |
+| ---------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Server           | `pnpm --filter @valence/server dev`     | `tsx watch` over `src/Main.ts`, reading the root `.env`                                                     | 8420                                              |
+| Web client       | `pnpm --filter @valence/web dev`        | Vite dev server that proxies `/api` (with WebSockets) to 8420                                               | 5173                                              |
+| Media service    | `pnpm --filter @valence/transcoder dev` | Runs `cargo run --bin valence-transcoder -- serve` through `apps/transcoder/scripts/dev/serveTranscoder.ts` | The unix socket in `TRANSCODER_URL`               |
+| Requests service | `pnpm --filter @valence/requests dev`   | `tsx watch` over its `src/Main.ts`                                                                          | 8421, from `REQUESTS_PORT`                        |
+| Desktop          | `pnpm --filter @valence/desktop dev`    | Builds the native module with `apps/desktop/src/build/buildDesktopNative.ts`, then `electron-vite dev`      | The renderer's dev server, 5174 in `.env.example` |
 
 The media service dev script decides for you what to do. With a `unix:` address in `TRANSCODER_URL` it starts the Rust service. With an `http://` address it assumes the service runs elsewhere and starts nothing. With no address it stops and tells you to copy `.env.example`.
 
@@ -185,7 +185,7 @@ To work on the web client you only need a library folder with a few files in it.
 pnpm fixtures:sync --tier 1
 ```
 
-Fixtures are generated or fetched by `tools/fixtures` and written outside the working tree, to `~/.cache/valence-fixtures` unless `VALENCE_FIXTURES_DIR` says otherwise. The bytes stay out of the repository so cloning stays fast. `fixtures.manifest.json` at the repository root records each fixture, its tier, its licence and its checksum.
+Fixtures are generated or fetched by `apps/transcoder/scripts/fixtures` and written outside the working tree, to `~/.cache/valence-fixtures` unless `VALENCE_FIXTURES_DIR` says otherwise. The bytes stay out of the repository so cloning stays fast. `fixtures.manifest.json` at the repository root records each fixture, its tier, its licence and its checksum.
 
 | Tier | Contents                                                                                                                                  |
 | ---- | ----------------------------------------------------------------------------------------------------------------------------------------- |

@@ -9,7 +9,6 @@ packages:
   - 'apps/transcoder'
   - 'apps/tv'
   - 'packages/*'
-  - 'tools'
 
 onlyBuiltDependencies:
   - electron

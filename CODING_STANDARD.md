@@ -350,7 +350,7 @@ issue where it can be tracked, not in a comment where it cannot.
 
 Two checks, because no one linter reads every language here.
 
-`valence/no-comments` in `tools/oxlint/noComments.ts` covers TypeScript. It fails
+`valence/no-comments` in `packages/lint/src/oxlint/noComments.ts` covers TypeScript. It fails
 on any comment that is not one of the exceptions above, and removes it under
 `--fix`. TSDoc counts only when it sits on a function — a declaration, a method,
 or a `const` holding an arrow function. On a type, a constant or a property it is
@@ -359,7 +359,7 @@ costume and rejected as prose.
 A third slash means `/// <reference>` and nothing else: `/// prose` is Rust
 syntax in the wrong language, and is rejected too.
 
-`tools/comments/checkComments.ts` covers Rust and CSS, which oxlint cannot see
+`packages/lint/src/comments/checkComments.ts` covers Rust and CSS, which oxlint cannot see
 at all. It parses rather than pattern-matches, so a `//` inside a string literal
 stays where it is. Both run under `pnpm lint`, which runs on every commit.
 
@@ -681,8 +681,8 @@ mandatory and drives the changelog.
 
 **oxlint** owns every rule, the type-aware ones included, which it reads from
 TypeScript 7's native checker through `oxlint-tsgolint`. Valence's own rules live
-in `tools/oxlint` as a plugin, bundled by `pnpm --filter @valence/tools
-build:oxlint` for oxlint to load. **husky** blocks anything non-conforming before
+in `packages/lint` as a plugin, bundled by `pnpm --filter @valence/lint
+build` for oxlint to load. **husky** blocks anything non-conforming before
 it reaches the remote.
 
 Where a rule maps onto an existing lint rule, it is configured and enforced.

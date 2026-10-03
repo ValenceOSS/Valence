@@ -193,7 +193,7 @@ Where a function needs the clock, timers, the network or a child process, it tak
 
 ## Tests on MySQL and MariaDB
 
-The ordinary suite runs every test on Postgres, through PGlite. Every test that opens a database, directly or through a test helper, runs a second time under the `mysql` condition against a real MySQL or MariaDB server, from its own Vitest config at `tools/vitest.mysql.config.ts`. It covers `packages/database`, `apps/server` and `apps/requests`.
+The ordinary suite runs every test on Postgres, through PGlite. Every test that opens a database, directly or through a test helper, runs a second time under the `mysql` condition against a real MySQL or MariaDB server, from its own Vitest config at `packages/database/vitest.mysql.config.ts`. It covers `packages/database`, `apps/server` and `apps/requests`.
 
 Start the engines from `docker/compose.test.yaml`. They keep their data in memory, so nothing outlives them:
 
@@ -207,10 +207,10 @@ docker compose -f docker/compose.test.yaml up -d --wait
 | MariaDB 11.4 | `127.0.0.1:3308` | By default              |
 | MariaDB 10.6 | `127.0.0.1:3309` | With `--profile oldest` |
 
-Then, from the `tools` folder, point `MYSQL_TEST_URL` at one of them and run the config:
+Then, from `packages/database`, point `MYSQL_TEST_URL` at one of them and run the config:
 
 ```bash
-cd tools
+cd packages/database
 MYSQL_TEST_URL=mysql://root:valence@127.0.0.1:3307 pnpm exec vitest run --config vitest.mysql.config.ts
 MYSQL_TEST_URL=mysql://root:valence@127.0.0.1:3308 pnpm exec vitest run --config vitest.mysql.config.ts --project apps/server
 ```
@@ -239,7 +239,7 @@ The FFmpeg you test against matters. One test scribbles over the middle of a cli
 
 ## Fixtures and the media pipeline
 
-The fixture corpus is a matrix of small generated and fetched media files that cover codecs, HDR ranges, interlacing, timestamps, audio layouts and containers. It is built by `tools/fixtures`.
+The fixture corpus is a matrix of small generated and fetched media files that cover codecs, HDR ranges, interlacing, timestamps, audio layouts and containers. It is built by `apps/transcoder/scripts/fixtures`.
 
 ```bash
 pnpm fixtures:sync --tier 0
@@ -250,7 +250,7 @@ Files are written outside the repository, to `~/.cache/valence-fixtures` unless 
 
 Only freely redistributable media may become a fixture. Clips from commercial films are not redistributable at any length. Every fixture records its licence, and a pull request adding one without a licence field is rejected. This is a legal constraint on the project.
 
-Tests in `tools/fixtures` check that the corpus describes itself honestly, meaning each fixture is what the matrix claims. A corpus that lies is worse than none.
+Tests in `apps/transcoder/scripts/fixtures` check that the corpus describes itself honestly, meaning each fixture is what the matrix claims. A corpus that lies is worse than none.
 
 ### The media pipeline workflow
 
@@ -259,7 +259,7 @@ Tests in `tools/fixtures` check that the corpus describes itself honestly, meani
 1. installs the pinned Valence FFmpeg build and asserts its tone mapping filters (`zscale` or `libplacebo`) are present;
 2. installs Node, pnpm and Rust;
 3. restores or builds the fixture corpus at tier 2, cached on the fixture definitions and FFmpeg version;
-4. runs `pnpm --filter @valence/tools exec vitest run fixtures/` to check the corpus;
+4. runs `pnpm --filter @valence/transcoder exec vitest run scripts/fixtures/` to check the corpus;
 5. runs `cargo test` against it;
 6. uploads the manifest it produced for amd64 as an artefact.
 
@@ -267,7 +267,7 @@ It is separate from `ci.yml` because a Debian container, a Rust build and minute
 
 ## What CI runs
 
-`ci.yml` runs lint and `pnpm db:check`, one shared build job, typecheck, then a matrix of one test job per package (`@valence/contracts`, `core`, `plugin-sdk`, `tools`, `ui`, `client`, `server`, `requests`, `web`, `desktop` and `landing`) and a four way sharded job for `@valence/screens`. The Rust job runs only when a pull request touches `apps/transcoder`, `Cargo.toml`, `Cargo.lock` or the CI workflow itself, and always on `main`. See [Local setup](/develop/local-setup#hooks-and-ci) for the hooks that run the same checks before you push.
+`ci.yml` runs lint and `pnpm db:check`, one shared build job, typecheck, then a matrix of one test job per package (`@valence/contracts`, `core`, `plugin-sdk`, `lint`, `brand`, `transcoder`, `ui`, `client`, `server`, `requests`, `web`, `desktop` and `landing`) and a four way sharded job for `@valence/screens`. The Rust job runs only when a pull request touches `apps/transcoder`, `Cargo.toml`, `Cargo.lock` or the CI workflow itself, and always on `main`. See [Local setup](/develop/local-setup#hooks-and-ci) for the hooks that run the same checks before you push.
 
 ## Writing a good test here
 
