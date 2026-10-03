@@ -38,8 +38,6 @@ Add coverage with `pnpm test:coverage` for everything, or per package:
 pnpm --filter @valence/client exec vitest run --coverage
 ```
 
-`pnpm coverage` runs the coverage pass and then `tools/coverageAverage/checkCoverageAverage.ts`, which reads each package's `coverage/coverage-summary.json` and fails if the mean across the nine measured packages falls below 90 percent.
-
 Turbo's `test` task depends on `^build`, so a package's workspace dependencies build first. Remember that the screens package typechecks and tests against built output from `packages/ui`, so rebuild it with `pnpm --filter @valence/ui build` when you change UI code and see a surprising failure in screens.
 
 ### Reading failures

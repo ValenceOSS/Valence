@@ -10,7 +10,7 @@ describe('planBrandOutputs', () => {
     ).toEqual(
       ['web', 'desktop', 'docs', 'landing'].map((app) => ({
         kind: 'copy',
-        from: 'design/valence-logo.svg',
+        from: 'assets/valence-logo.svg',
         to: `apps/${app}/public/valence-logo.svg`,
       })),
     );
@@ -22,7 +22,7 @@ describe('planBrandOutputs', () => {
     ).toEqual(
       ['web', 'docs', 'landing'].map((app) => ({
         kind: 'icon',
-        from: 'design/valence-icon.icon',
+        from: 'assets/valence-icon.icon',
         to: `apps/${app}/public/icon.png`,
         pixels: 256,
         margin: 0,
@@ -33,7 +33,7 @@ describe('planBrandOutputs', () => {
   it('renders the icon the README shows', () => {
     expect(outputs).toContainEqual({
       kind: 'icon',
-      from: 'design/valence-icon.icon',
+      from: 'assets/valence-icon.icon',
       to: 'assets/valence-icon.png',
       pixels: 256,
       margin: 0,
@@ -42,17 +42,17 @@ describe('planBrandOutputs', () => {
 
   it('gives the desktop the bundle for the Mac, a flat icon, and a dock icon with the Mac margin', () => {
     expect(outputs.filter((output) => output.to.startsWith('apps/desktop/build'))).toEqual([
-      { kind: 'copy', from: 'design/valence-icon.icon', to: 'apps/desktop/build/icon.icon' },
+      { kind: 'copy', from: 'assets/valence-icon.icon', to: 'apps/desktop/build/icon.icon' },
       {
         kind: 'icon',
-        from: 'design/valence-icon.icon',
+        from: 'assets/valence-icon.icon',
         to: 'apps/desktop/build/icon.png',
         pixels: 1024,
         margin: 0,
       },
       {
         kind: 'icon',
-        from: 'design/valence-icon.icon',
+        from: 'assets/valence-icon.icon',
         to: 'apps/desktop/build/icon-dev.png',
         pixels: 1024,
         margin: 100,

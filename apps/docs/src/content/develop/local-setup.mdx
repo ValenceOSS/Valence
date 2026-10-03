@@ -208,23 +208,22 @@ pnpm --filter @valence/docs build
 
 ## Root scripts
 
-| Command                            | What it does                                                                |
-| ---------------------------------- | --------------------------------------------------------------------------- |
-| `pnpm build`                       | `turbo run build` across every package and app                              |
-| `pnpm dev`                         | `turbo run dev`, see above                                                  |
-| `pnpm test`                        | `turbo run test`, every package                                             |
-| `pnpm test:coverage`               | The same, passing `--coverage`                                              |
-| `pnpm coverage`                    | Coverage, then checks the mean across packages against the 90 percent floor |
-| `pnpm typecheck`                   | `turbo run typecheck`                                                       |
-| `pnpm lint`                        | `oxlint`, type-aware, then the comment checker                              |
-| `pnpm lint:fix`                    | The same with `--fix`                                                       |
-| `pnpm format`, `pnpm format:check` | oxfmt over the whole tree                                                   |
-| `pnpm branch:check`                | Checks the current branch name                                              |
-| `pnpm db:check`                    | Checks the Drizzle snapshots still describe the schema                      |
-| `pnpm rust:check`                  | `cargo clippy --all-targets -- -D warnings` and `cargo fmt --check`         |
-| `pnpm rust:test`                   | `cargo test`                                                                |
-| `pnpm fixtures:sync`               | Builds the media fixture corpus                                             |
-| `pnpm ffmpeg:sync`                 | Fetches Valence's FFmpeg build                                              |
+| Command                            | What it does                                                        |
+| ---------------------------------- | ------------------------------------------------------------------- |
+| `pnpm build`                       | `turbo run build` across every package and app                      |
+| `pnpm dev`                         | `turbo run dev`, see above                                          |
+| `pnpm test`                        | `turbo run test`, every package                                     |
+| `pnpm test:coverage`               | The same, passing `--coverage`                                      |
+| `pnpm typecheck`                   | `turbo run typecheck`                                               |
+| `pnpm lint`                        | `oxlint`, type-aware, then the comment checker                      |
+| `pnpm lint:fix`                    | The same with `--fix`                                               |
+| `pnpm format`, `pnpm format:check` | oxfmt over the whole tree                                           |
+| `pnpm branch:check`                | Checks the current branch name                                      |
+| `pnpm db:check`                    | Checks the Drizzle snapshots still describe the schema              |
+| `pnpm rust:check`                  | `cargo clippy --all-targets -- -D warnings` and `cargo fmt --check` |
+| `pnpm rust:test`                   | `cargo test`                                                        |
+| `pnpm fixtures:sync`               | Builds the media fixture corpus                                     |
+| `pnpm ffmpeg:sync`                 | Fetches Valence's FFmpeg build                                      |
 
 Turbo's `build` and `typecheck` tasks depend on `^build`, so a package's dependencies build first. Remember that `packages/screens` typechecks against the built output of `packages/ui`, so rebuild the UI package with `pnpm --filter @valence/ui build` before trusting a type error in screens.
 

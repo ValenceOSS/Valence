@@ -39,7 +39,7 @@ const config: ExpoConfig = {
         },
       ],
     },
-    icon: '../../design/valence-icon.icon',
+    icon: '../../assets/valence-icon.icon',
     supportsTablet: true,
     infoPlist: {
       CFBundleDisplayName: 'Valence',

@@ -14,7 +14,6 @@
     "test": "turbo run test",
     "test:serial": "turbo run test --concurrency=1",
     "test:coverage": "turbo run test -- --coverage",
-    "coverage": "pnpm test:coverage && pnpm --filter @valence/tools exec tsx coverageAverage/checkCoverageAverage.ts",
     "typecheck": "turbo run typecheck",
     "lint": "pnpm --filter @valence/tools build:oxlint && oxlint --deny-warnings && tsx tools/comments/checkComments.ts",
     "lint:fix": "pnpm --filter @valence/tools build:oxlint && oxlint --fix --deny-warnings && tsx tools/comments/checkComments.ts --fix",

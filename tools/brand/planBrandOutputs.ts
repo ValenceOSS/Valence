@@ -1,6 +1,6 @@
-const ICON = 'design/valence-icon.icon';
+const ICON = 'assets/valence-icon.icon';
 
-const LOGO = 'design/valence-logo.svg';
+const LOGO = 'assets/valence-logo.svg';
 
 const MAC_ICON_MARGIN = 100;
 
