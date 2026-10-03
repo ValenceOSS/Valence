@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "20cbd210-a57f-4eb0-b84a-7e94401b800c",
+  "id": "2762f7a7-d211-4c2b-b3d8-db6ae0e6ee8a",
   "prevId": "cd6ac863-06b6-4afa-9648-8adcb84784ab",
   "tables": {
     "account": {
@@ -1021,6 +1021,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "ownerKey": {
+          "name": "ownerKey",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "accountId": {
           "name": "accountId",
           "type": "varchar(64)",
@@ -1055,6 +1062,11 @@
         "calendar_feed_token_idx": {
           "name": "calendar_feed_token_idx",
           "columns": ["tokenHash"],
+          "isUnique": true
+        },
+        "calendar_feed_owner_idx": {
+          "name": "calendar_feed_owner_idx",
+          "columns": ["ownerKey"],
           "isUnique": true
         },
         "calendar_feed_account_idx": {

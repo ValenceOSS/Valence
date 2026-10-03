@@ -473,6 +473,7 @@ const calendarFeed = mysqlTable(
     id: identifier('id').primaryKey(),
     tokenHash: varchar('tokenHash', { length: 255 }).notNull(),
     sealedToken: mediumtext('sealedToken').notNull(),
+    ownerKey: varchar('ownerKey', { length: 255 }).notNull(),
     accountId: identifier('accountId')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
@@ -482,6 +483,7 @@ const calendarFeed = mysqlTable(
   },
   (table) => [
     uniqueIndex('calendar_feed_token_idx').on(table.tokenHash),
+    uniqueIndex('calendar_feed_owner_idx').on(table.ownerKey),
     index('calendar_feed_account_idx').on(table.accountId),
   ],
 );

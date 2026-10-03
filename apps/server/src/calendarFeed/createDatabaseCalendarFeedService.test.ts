@@ -98,6 +98,20 @@ describe('createDatabaseCalendarFeedService', () => {
   );
 
   it(
+    'hands back the one link stored when two requests race to make the first',
+    async () => {
+      const { db, service } = await aService();
+      const [first, second] = await Promise.all([service.ensure(ADA), service.ensure(ADA)]);
+
+      expect(second.token).toBe(first.token);
+      expect(
+        await db.select().from(calendarFeed).where(eq(calendarFeed.accountId, 'ada')),
+      ).toHaveLength(1);
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
     'keeps a link for a face apart from the account’s own',
     async () => {
       const { service } = await aService();

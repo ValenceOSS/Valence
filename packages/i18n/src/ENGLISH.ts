@@ -1303,6 +1303,7 @@ const ENGLISH = {
   'common.thatTrackWouldNotPlay': 'That track would not play.',
   'common.theAddressNeedsToBeA': 'The address needs to be a whole http or https address.',
   'common.theCalendarLinkCouldNotBeChanged': 'The calendar link could not be changed. Try again.',
+  'common.theCalendarLinkCouldNotBeMade': 'The calendar link could not be made.',
   'common.theCatalogue': 'The catalogue',
   'common.theCatalogueCouldNotBeRead': 'The catalogue could not be read.',
   'common.theClientCouldNotBeAsked': 'The client could not be asked',

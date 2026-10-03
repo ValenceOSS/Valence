@@ -116,6 +116,28 @@ describe('CalendarSubscribe', () => {
     await waitFor(() => {
       expect(ensureCalendarFeed).toHaveBeenCalledTimes(1);
     });
+    await waitFor(() => {
+      expect(screen.getByRole('menuitem', { name: 'Copy link' })).not.toHaveAttribute(
+        'aria-disabled',
+        'true',
+      );
+    });
+  });
+
+  it('keeps the ways to add the calendar waiting until there is a link to add', async () => {
+    const user = userEvent.setup();
+
+    fetchCalendarFeed.mockResolvedValue(null);
+    ensureCalendarFeed.mockResolvedValue(null);
+    renderInAnAddress(<CalendarSubscribe />);
+    await openTheMenu(user);
+
+    for (const name of ['Apple Calendar or Outlook', 'Google Calendar', 'Copy link']) {
+      expect(await screen.findByRole('menuitem', { name })).toHaveAttribute(
+        'aria-disabled',
+        'true',
+      );
+    }
   });
 
   it('looks after the link once there is one: when it was last read, a new one, or none', async () => {

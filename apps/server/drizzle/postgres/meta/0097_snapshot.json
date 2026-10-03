@@ -1,5 +1,5 @@
 {
-  "id": "6e62abe0-9ce3-44b5-8833-e5186c386431",
+  "id": "0535462a-b765-43c0-9be9-8596f2386ab6",
   "prevId": "3ddee481-a60a-4ec4-877a-9c827d95a7c4",
   "version": "7",
   "dialect": "postgresql",
@@ -1044,6 +1044,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "ownerKey": {
+          "name": "ownerKey",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
         "accountId": {
           "name": "accountId",
           "type": "text",
@@ -1076,6 +1082,21 @@
           "columns": [
             {
               "expression": "tokenHash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "calendar_feed_owner_idx": {
+          "name": "calendar_feed_owner_idx",
+          "columns": [
+            {
+              "expression": "ownerKey",
               "isExpression": false,
               "asc": true,
               "nulls": "last"

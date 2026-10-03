@@ -499,6 +499,7 @@ const calendarFeed = pgTable(
     id: text('id').primaryKey(),
     tokenHash: text('tokenHash').notNull(),
     sealedToken: text('sealedToken').notNull(),
+    ownerKey: text('ownerKey').notNull(),
     accountId: text('accountId')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
@@ -508,6 +509,7 @@ const calendarFeed = pgTable(
   },
   (table) => [
     uniqueIndex('calendar_feed_token_idx').on(table.tokenHash),
+    uniqueIndex('calendar_feed_owner_idx').on(table.ownerKey),
     index('calendar_feed_account_idx').on(table.accountId),
   ],
 );

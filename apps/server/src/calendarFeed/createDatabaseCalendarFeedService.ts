@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import { and, eq, isNull } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { countAffected } from '@ValenceDatabase/countAffected';
+import { isUniqueViolation } from '@ValenceDatabase/isUniqueViolation';
+import { ownerKeyOf } from '@ValenceServer/calendarFeed/ownerKeyOf';
 import { calendarFeed } from '#dialect/Schema';
 import { openSecret } from '@ValenceServer/plugins/openSecret';
 import { sealSecret } from '@ValenceServer/plugins/sealSecret';
@@ -18,7 +20,9 @@ import type { CalendarFeedService } from '@ValenceServer/calendarFeed/CalendarFe
  * handed the same link whenever they ask to add the calendar again — on another device, say —
  * without a copy of the database being a copy of everybody's calendars. A token sealed under a key
  * the server no longer has opens to nothing, and the link is then made afresh when next asked for.
- * Making a new link replaces the old one, which stops working at once.
+ * Making a new link replaces the old one, which stops working at once. Each person has at most one
+ * link, which the database holds to: where two requests to make the first link race, the one that
+ * loses hands back the link the other stored.
  *
  * @param db - The database.
  * @param sealingKey - The key the tokens are sealed with.
@@ -28,13 +32,7 @@ const createDatabaseCalendarFeedService = (
   db: AnyValenceDatabase,
   sealingKey: Buffer,
 ): CalendarFeedService => {
-  const ownedBy = (owner: CalendarFeedOwner) =>
-    and(
-      eq(calendarFeed.accountId, owner.accountId),
-      owner.profileId === null
-        ? isNull(calendarFeed.profileId)
-        : eq(calendarFeed.profileId, owner.profileId),
-    );
+  const ownedBy = (owner: CalendarFeedOwner) => eq(calendarFeed.ownerKey, ownerKeyOf(owner));
 
   const read = async (owner: CalendarFeedOwner): Promise<CalendarFeed | null> => {
     const [held] = await db
@@ -56,24 +54,40 @@ const createDatabaseCalendarFeedService = (
         };
   };
 
-  const renew = async (owner: CalendarFeedOwner): Promise<CalendarFeed> => {
+  /**
+   * A new link for somebody, as the row that holds it and what is said of it.
+   *
+   * @param owner - Whose link it is.
+   * @returns The row to store, and the link.
+   */
+  const aNewLink = (owner: CalendarFeedOwner) => {
     const token = makeShareToken();
     const createdAt = new Date();
 
-    await db.transaction(async (tx) => {
-      await tx.delete(calendarFeed).where(ownedBy(owner));
-      await tx.insert(calendarFeed).values({
+    return {
+      row: {
         id: randomUUID(),
         tokenHash: hashShareToken(token),
         sealedToken: sealSecret(sealingKey, token),
+        ownerKey: ownerKeyOf(owner),
         accountId: owner.accountId,
         profileId: owner.profileId,
         createdAt,
         lastReadAt: null,
-      });
+      },
+      feed: { token, createdAt: createdAt.toISOString(), lastReadAt: null },
+    };
+  };
+
+  const renew = async (owner: CalendarFeedOwner): Promise<CalendarFeed> => {
+    const made = aNewLink(owner);
+
+    await db.transaction(async (tx) => {
+      await tx.delete(calendarFeed).where(ownedBy(owner));
+      await tx.insert(calendarFeed).values(made.row);
     });
 
-    return { token, createdAt: createdAt.toISOString(), lastReadAt: null };
+    return made.feed;
   };
 
   return {
@@ -82,7 +96,29 @@ const createDatabaseCalendarFeedService = (
     ensure: async (owner) => {
       const held = await read(owner);
 
-      return held !== null && held.token !== null ? held : renew(owner);
+      if (held !== null && held.token !== null) {
+        return held;
+      }
+
+      if (held !== null) {
+        return renew(owner);
+      }
+
+      const made = aNewLink(owner);
+
+      try {
+        await db.insert(calendarFeed).values(made.row);
+
+        return made.feed;
+      } catch (error) {
+        const stored = isUniqueViolation(error) ? await read(owner) : null;
+
+        if (stored === null || stored.token === null) {
+          throw error;
+        }
+
+        return stored;
+      }
     },
 
     renew,

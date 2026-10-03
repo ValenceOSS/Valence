@@ -5734,6 +5734,11 @@
     "context": "Said when making a new calendar link, or turning the link off, failed."
   },
   {
+    "handler": "common.theCalendarLinkCouldNotBeMade",
+    "text": "The calendar link could not be made.",
+    "context": "Said in the phone's Add to Calendar sheet when the link calendar apps subscribe by could not be made, beside a way to try again."
+  },
+  {
     "handler": "common.theCatalogue",
     "text": "The catalogue",
     "context": "Shown, used in several places, among them the indexer catalogue dialog in the admin area and the plugins panel in the admin area."

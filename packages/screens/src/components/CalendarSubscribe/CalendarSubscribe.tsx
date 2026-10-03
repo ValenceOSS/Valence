@@ -29,7 +29,9 @@ const GOOGLE_CALENDAR = 'https://calendar.google.com/calendar/render';
  *
  * There is no link to make first: the person's own link is fetched as the menu opens, made for them
  * if they have none, and is the same link every time, so adding the calendar on a second device
- * does not stop it on the first. Once they have one, the menu says when a calendar app last read
+ * does not stop it on the first. The ways to add it wait for the link, so each acts on the press
+ * itself, which a browser asks of anything opening a window, and the link is only ever the one the
+ * server last said, so one replaced elsewhere is never handed out. Once they have one, the menu says when a calendar app last read
  * it, and offers to replace it, for a link that has been shared, or turn it off — each asked about
  * first, since either stops every subscription to it. In the desktop app the subscription is handed
  * to the system, which opens the calendar app it belongs to.
@@ -39,43 +41,33 @@ const GOOGLE_CALENDAR = 'https://calendar.google.com/calendar/render';
 const CalendarSubscribe = ({ className }: CalendarSubscribeProps) => {
   const cache = useQueryClient();
   const asked = useQuery(calendarQueries.feed());
-  const [token, setToken] = useState<string | null>(null);
   const [hasCopied, setHasCopied] = useState(false);
   const [asking, setAsking] = useState<'renew' | 'stop' | null>(null);
   const [isWorking, setIsWorking] = useState(false);
   const [hasFailed, setHasFailed] = useState(false);
   const feed = asked.data ?? null;
-  const known = token ?? feed?.token ?? null;
+  const known = feed?.token ?? null;
   const origin = window.location.origin;
   const readAt = feed === null || feed.lastReadAt === null ? null : saidWhen(feed.lastReadAt);
 
   const reread = () => cache.invalidateQueries({ queryKey: calendarQueries.feed().queryKey });
 
-  const ready = async (): Promise<string | null> => {
+  const ready = async () => {
     if (known !== null) {
-      return known;
+      return;
     }
 
     const made = await ensureCalendarFeed();
 
-    setToken(made?.token ?? null);
-    await reread();
-
-    return made?.token ?? null;
+    if (made !== null) {
+      cache.setQueryData(calendarQueries.feed().queryKey, made);
+    }
   };
 
   const withLink = (act: (link: string) => void) => {
     if (known !== null) {
       act(known);
-
-      return;
     }
-
-    void ready().then((link) => {
-      if (link !== null) {
-        act(link);
-      }
-    });
   };
 
   const change = async (doing: () => Promise<boolean>) => {
@@ -87,7 +79,6 @@ const CalendarSubscribe = ({ className }: CalendarSubscribeProps) => {
     setHasFailed(!isDone);
 
     if (isDone) {
-      setToken(null);
       setAsking(null);
       await reread();
     }
@@ -119,6 +110,7 @@ const CalendarSubscribe = ({ className }: CalendarSubscribeProps) => {
               {
                 id: 'device',
                 label: say('common.appleCalendarOrOutlook'),
+                isDisabled: known === null,
                 onChoose: () => {
                   withLink((link) => {
                     const subscription = calendarFeedAddress(link, origin, true);
@@ -136,6 +128,7 @@ const CalendarSubscribe = ({ className }: CalendarSubscribeProps) => {
               {
                 id: 'google',
                 label: say('common.googleCalendar'),
+                isDisabled: known === null,
                 onChoose: () => {
                   withLink((link) => {
                     const cid = new URLSearchParams({
@@ -149,6 +142,7 @@ const CalendarSubscribe = ({ className }: CalendarSubscribeProps) => {
               {
                 id: 'copy',
                 label: hasCopied ? say('common.copied') : say('common.copyLink'),
+                isDisabled: known === null,
                 icon: <Icon of={hasCopied ? CopiedIcon : CopyIcon} size={15} />,
                 keepsOpen: true,
                 onChoose: () => {

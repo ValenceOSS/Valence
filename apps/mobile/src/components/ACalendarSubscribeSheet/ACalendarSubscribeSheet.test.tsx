@@ -104,6 +104,19 @@ describe('ACalendarSubscribeSheet', () => {
     });
   });
 
+  it('says so where the link could not be made, and tries again when asked', async () => {
+    jest.mocked(fetchCalendarFeed).mockResolvedValue(null);
+    jest.mocked(ensureCalendarFeed).mockResolvedValueOnce(null).mockResolvedValueOnce(FEED);
+    const drawn = await drawSheet();
+
+    expect(await drawn.findByText('The calendar link could not be made.')).toBeTruthy();
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Try again' }));
+
+    expect(await drawn.findByRole('button', { name: 'Google Calendar' })).toBeTruthy();
+    expect(ensureCalendarFeed).toHaveBeenCalledTimes(2);
+  });
+
   it('says no calendar app has read the link yet', async () => {
     const drawn = await drawSheet();
 

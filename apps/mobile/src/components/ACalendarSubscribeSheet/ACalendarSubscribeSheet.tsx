@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
   row: { alignItems: 'center', flexDirection: 'row', gap: 14, padding: 14 },
   said: { gap: 2, paddingHorizontal: 16, paddingVertical: 12 },
   whole: { gap: 16 },
-  waiting: { padding: 20 },
+  waiting: { alignItems: 'center', gap: 12, padding: 20 },
 });
 
 /**
@@ -52,23 +52,28 @@ const ACalendarSubscribeSheet = ({ isOpen, onClose }: ACalendarSubscribeSheetPro
   const colours = useTheColours();
   const cache = useQueryClient();
   const asked = useQuery({ ...calendarQueries.feed(), enabled: isOpen });
-  const [made, setMade] = useState<string | null>(null);
+  const [hasFailed, setHasFailed] = useState(false);
   const feed = asked.data ?? null;
-  const token = made ?? feed?.token ?? null;
+  const token = feed?.token ?? null;
   const readAt = feed === null || feed.lastReadAt === null ? null : saidWhen(feed.lastReadAt);
   const origin = platformInUse().serverAddress();
   const lacks = isOpen && asked.isSuccess && (asked.data?.token ?? null) === null;
 
   useEffect(() => {
-    if (!lacks || made !== null) {
+    if (!lacks || hasFailed) {
       return;
     }
 
-    void ensureCalendarFeed().then(async (feed) => {
-      setMade(feed?.token ?? null);
-      await cache.invalidateQueries({ queryKey: calendarQueries.feed().queryKey });
+    void ensureCalendarFeed().then((made) => {
+      if (made === null) {
+        setHasFailed(true);
+
+        return;
+      }
+
+      cache.setQueryData(calendarQueries.feed().queryKey, made);
     });
-  }, [lacks, made, cache]);
+  }, [lacks, hasFailed, cache]);
 
   /**
    * Asks whether to do something to the link, does it if so, and says when it did not work. Either
@@ -94,7 +99,6 @@ const ACalendarSubscribeSheet = ({ isOpen, onClose }: ACalendarSubscribeSheetPro
               return;
             }
 
-            setMade(null);
             await cache.invalidateQueries({ queryKey: calendarQueries.feed().queryKey });
           });
         },
@@ -148,7 +152,21 @@ const ACalendarSubscribeSheet = ({ isOpen, onClose }: ACalendarSubscribeSheetPro
       <View style={styles.whole}>
         <Words tone="muted">{say('common.subscribeToYourReleaseCalendar')}</Words>
 
-        {token === null ? (
+        {token === null && hasFailed ? (
+          <View style={styles.waiting}>
+            <Words tone="danger" isCentred>
+              {say('common.theCalendarLinkCouldNotBeMade')}
+            </Words>
+            <Button
+              tone="quiet"
+              onPress={() => {
+                setHasFailed(false);
+              }}
+            >
+              {say('common.tryAgain')}
+            </Button>
+          </View>
+        ) : token === null ? (
           <View style={styles.waiting}>
             <ActivityIndicator color={colours.textMuted} />
           </View>
