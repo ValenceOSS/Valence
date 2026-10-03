@@ -117,7 +117,7 @@ describe('Music', () => {
   it('says so when there is no music yet', async () => {
     const { drawn } = await draw({ albums: [], playlists: [] });
 
-    expect(drawn.getByText('There is no music here yet.')).toBeTruthy();
+    expect(drawn.getByText('No music yet.')).toBeTruthy();
   });
 
   it('names the newest album large, lit by its picture, before the remote rests anywhere', async () => {
@@ -174,9 +174,7 @@ describe('Music', () => {
     expect(drawn.getByText('Artists')).toBeTruthy();
     expect(drawn.getByText('Playlists')).toBeTruthy();
     expect(drawn.getByRole('button', { name: 'Artist 1, Artist' })).toBeTruthy();
-    expect(
-      drawn.getByRole('button', { name: 'Liked Songs, Every song you have liked' }),
-    ).toBeTruthy();
+    expect(drawn.getByRole('button', { name: 'Liked Songs, All your liked songs' })).toBeTruthy();
   });
 
   it('leaves out a shelf with nothing on it', async () => {

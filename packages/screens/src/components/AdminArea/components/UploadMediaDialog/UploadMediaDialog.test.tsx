@@ -99,7 +99,7 @@ describe('UploadMediaDialog', () => {
     expect(within(list).getByText('Waiting')).toBeInTheDocument();
     expect(within(list).queryByText('cover.jpg')).not.toBeInTheDocument();
     expect(
-      screen.getByText('1 file was left out because this library does not read it.'),
+      screen.getByText('1 file was skipped because this library doesn’t support its type.'),
     ).toBeInTheDocument();
   });
 
@@ -120,7 +120,7 @@ describe('UploadMediaDialog', () => {
 
     expect(accepted).toContain('.mp3');
     expect(accepted).not.toContain('.mkv');
-    expect(screen.getByText(/Music takes .* .mp3/)).toBeInTheDocument();
+    expect(screen.getByText(/Music accepts .* .mp3/)).toBeInTheDocument();
   });
 
   it('takes files and folders dropped on it, queuing what the library reads and saying what it left out', async () => {
@@ -176,7 +176,7 @@ describe('UploadMediaDialog', () => {
 
     expect(await screen.findByText('Arrival (2016)/Arrival.mkv')).toBeInTheDocument();
     expect(
-      screen.getByText('1 file was left out because this library does not read it.'),
+      screen.getByText('1 file was skipped because this library doesn’t support its type.'),
     ).toBeInTheDocument();
   });
 
@@ -378,7 +378,7 @@ describe('UploadMediaDialog', () => {
     expect(within(section).getByText('Dune (2021).mkv')).toBeInTheDocument();
     expect(within(section).getByText(/Choose the same file again/)).toBeInTheDocument();
 
-    await actor.click(within(section).getByRole('button', { name: 'Forget Dune (2021).mkv' }));
+    await actor.click(within(section).getByRole('button', { name: 'Remove Dune (2021).mkv' }));
 
     expect(giveUpUploadMock).toHaveBeenCalledWith(unfinished);
   });
@@ -406,9 +406,7 @@ describe('UploadMediaDialog', () => {
     await actor.click(screen.getByRole('button', { name: 'Upload' }));
 
     expect(
-      await screen.findByText(
-        'The connection dropped. Press Upload to carry on from where it stopped.',
-      ),
+      await screen.findByText('The connection dropped. Select Upload to resume.'),
     ).toBeInTheDocument();
   });
 

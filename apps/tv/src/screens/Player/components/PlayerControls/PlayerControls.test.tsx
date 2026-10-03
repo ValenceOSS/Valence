@@ -107,7 +107,7 @@ describe('PlayerControls', () => {
 
     expect(drawn.getAllByText('10:00')).toHaveLength(2);
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Scrub' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Seek' }));
 
     expect(props.onScrubPress).toHaveBeenCalledTimes(1);
   });

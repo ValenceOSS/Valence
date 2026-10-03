@@ -83,7 +83,7 @@ describe('push subscriptions', () => {
     });
 
     const theirs = await signUpForTest(app, {
-      name: 'Somebody else',
+      name: 'Someone else',
       email: 'else@valence.local',
       password: 'a-long-enough-password',
     });

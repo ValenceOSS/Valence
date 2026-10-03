@@ -26,7 +26,7 @@ describe('InstallReviewDialog', () => {
     );
 
     expect(screen.getByText('Official')).toBeInTheDocument();
-    expect(screen.getByText('Talk to other websites')).toBeInTheDocument();
+    expect(screen.getByText('Connect to other websites')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Install' }));
 
@@ -54,7 +54,7 @@ describe('InstallReviewDialog', () => {
       />,
     );
 
-    expect(screen.getByText('Valence cannot vouch for this plugin')).toBeInTheDocument();
+    expect(screen.getByText('Valence can’t verify this plugin')).toBeInTheDocument();
     expect(screen.getByText('It asks to reach more hosts than before.')).toBeInTheDocument();
     expect(screen.getByText(/replaces version 0.9.0/u)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Install anyway' })).toBeDisabled();
@@ -78,6 +78,6 @@ describe('InstallReviewDialog', () => {
       />,
     );
 
-    expect(screen.getByText(/Nothing beyond drawing its own pages/u)).toBeInTheDocument();
+    expect(screen.getByText(/No permissions beyond showing its own pages/u)).toBeInTheDocument();
   });
 });

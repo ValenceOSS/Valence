@@ -38,7 +38,7 @@ describe('describeFailure', () => {
   });
 
   it('says something even for an error carrying no message', () => {
-    expect(describeFailure(new Error(''))).toBe('It failed, and said nothing about why.');
+    expect(describeFailure(new Error(''))).toBe('It failed without giving a reason.');
   });
   it('reads the attempts gathered in an AggregateError, which carries no message of its own', () => {
     const refused = new Error('connect ECONNREFUSED 127.0.0.1:8420');
@@ -61,8 +61,6 @@ describe('describeFailure', () => {
   });
 
   it('says something for a gathering error that gathered nothing', () => {
-    expect(describeFailure(new AggregateError([], ''))).toBe(
-      'It failed, and said nothing about why.',
-    );
+    expect(describeFailure(new AggregateError([], ''))).toBe('It failed without giving a reason.');
   });
 });

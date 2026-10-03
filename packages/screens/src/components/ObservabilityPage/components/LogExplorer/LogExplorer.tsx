@@ -63,12 +63,12 @@ const SORTS: readonly { id: LogSort; label: string; detail: string }[] = [
   {
     id: 'newest',
     label: say('common.newestFirst'),
-    detail: say('screens.observabilityPage.logExplorer.whatJustHappened'),
+    detail: say('common.newestFirst'),
   },
   {
     id: 'oldest',
     label: say('common.oldestFirst'),
-    detail: say('screens.observabilityPage.logExplorer.readItAsAStory'),
+    detail: say('common.oldestFirst'),
   },
   {
     id: 'severest',
@@ -461,7 +461,7 @@ const LogExplorer = ({
         </Button>
 
         <PanelCardMenu
-          label={say('screens.observabilityPage.logExplorer.moreAboutTheseLines')}
+          label={say('screens.mediaDetailDialog.moreToDoWithThis')}
           groups={[
             {
               items: [

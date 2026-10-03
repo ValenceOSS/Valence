@@ -21,7 +21,7 @@ describe('SessionMessageDialog', () => {
   it('promises not to interrupt what they are watching', () => {
     render(<SessionMessageDialog {...props} />);
 
-    expect(screen.getByText(/will not pause/)).toBeInTheDocument();
+    expect(screen.getByText(/won’t pause/)).toBeInTheDocument();
   });
 
   it('sends what was typed', async () => {
@@ -29,7 +29,7 @@ describe('SessionMessageDialog', () => {
     const onSend = vi.fn(() => Promise.resolve());
 
     render(<SessionMessageDialog {...props} onSend={onSend} />);
-    await actor.type(screen.getByLabelText('What to tell them'), 'Tea is ready');
+    await actor.type(screen.getByLabelText('Message'), 'Tea is ready');
     await actor.click(screen.getByRole('button', { name: 'Send' }));
 
     expect(onSend).toHaveBeenCalledWith('Tea is ready');
@@ -40,7 +40,7 @@ describe('SessionMessageDialog', () => {
     const onSend = vi.fn(() => Promise.resolve());
 
     render(<SessionMessageDialog {...props} onSend={onSend} />);
-    await actor.type(screen.getByLabelText('What to tell them'), '  Tea is ready  ');
+    await actor.type(screen.getByLabelText('Message'), '  Tea is ready  ');
     await actor.click(screen.getByRole('button', { name: 'Send' }));
 
     expect(onSend).toHaveBeenCalledWith('Tea is ready');
@@ -62,7 +62,7 @@ describe('SessionMessageDialog', () => {
     const onSend = vi.fn(() => Promise.resolve());
 
     render(<SessionMessageDialog {...props} onSend={onSend} />);
-    await actor.type(screen.getByLabelText('What to tell them'), '   ');
+    await actor.type(screen.getByLabelText('Message'), '   ');
     await actor.click(screen.getByRole('button', { name: 'Send' }));
 
     expect(onSend).not.toHaveBeenCalled();
@@ -72,7 +72,7 @@ describe('SessionMessageDialog', () => {
     const actor = userEvent.setup();
 
     render(<SessionMessageDialog {...props} />);
-    await actor.type(screen.getByLabelText('What to tell them'), 'Tea');
+    await actor.type(screen.getByLabelText('Message'), 'Tea');
 
     expect(
       screen.getByText(new RegExp(`3 of ${SESSION_MESSAGE_MAX_LENGTH.toString()}`)),
@@ -84,10 +84,7 @@ describe('SessionMessageDialog', () => {
     const onSend = vi.fn(() => Promise.resolve());
 
     render(<SessionMessageDialog {...props} onSend={onSend} />);
-    await actor.type(
-      screen.getByLabelText('What to tell them'),
-      'a'.repeat(SESSION_MESSAGE_MAX_LENGTH + 1),
-    );
+    await actor.type(screen.getByLabelText('Message'), 'a'.repeat(SESSION_MESSAGE_MAX_LENGTH + 1));
     await actor.click(screen.getByRole('button', { name: 'Send' }));
 
     expect(onSend).not.toHaveBeenCalled();
@@ -99,7 +96,7 @@ describe('SessionMessageDialog', () => {
     const onClose = vi.fn();
 
     render(<SessionMessageDialog {...props} onClose={onClose} />);
-    await actor.type(screen.getByLabelText('What to tell them'), 'Tea is ready');
+    await actor.type(screen.getByLabelText('Message'), 'Tea is ready');
     await actor.click(screen.getByRole('button', { name: 'Send' }));
 
     await waitFor(() => {
@@ -112,7 +109,7 @@ describe('SessionMessageDialog', () => {
     const onSend = vi.fn(() => Promise.resolve());
 
     render(<SessionMessageDialog {...props} onSend={onSend} />);
-    await actor.type(screen.getByLabelText('What to tell them'), 'Tea is ready');
+    await actor.type(screen.getByLabelText('Message'), 'Tea is ready');
     await actor.click(screen.getByRole('button', { name: 'Cancel' }));
 
     expect(onSend).not.toHaveBeenCalled();
@@ -123,7 +120,7 @@ describe('SessionMessageDialog', () => {
 
     rerender(<SessionMessageDialog {...props} isOpen />);
 
-    expect(screen.getByLabelText('What to tell them')).toHaveValue('');
+    expect(screen.getByLabelText('Message')).toHaveValue('');
   });
 
   it('sets a display name so devtools can identify it', () => {

@@ -60,11 +60,11 @@ describe('usePluginSurface', () => {
     });
 
     act(() => {
-      result.current.act({ id: 'forget', confirm: 'Forget it all?' }, {});
+      result.current.act({ id: 'forget', confirm: 'Remove it all?' }, {});
     });
 
     await waitFor(() => {
-      expect(host.askToConfirm).toHaveBeenCalledWith('Forget it all?');
+      expect(host.askToConfirm).toHaveBeenCalledWith('Remove it all?');
     });
     expect(actOnPluginSurface).not.toHaveBeenCalled();
   });
@@ -133,7 +133,7 @@ describe('usePluginSurface', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.problem).toBe('That did not work. Try again in a moment.');
+      expect(result.current.problem).toBe('That didn’t work. Try again in a moment.');
     });
     expect(result.current.isActing).toBe(false);
   });

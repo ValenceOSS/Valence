@@ -74,7 +74,7 @@ const RemoveDownloadDialog = ({
       <DialogFooter
         dismiss={{ onChoose: onClose }}
         confirm={{
-          label: say('common.remove'),
+          label: say('common.forget'),
           onChoose: () => {
             onConfirm(deleteData && !keepsFinishedFiles);
           },

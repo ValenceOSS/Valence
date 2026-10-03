@@ -155,7 +155,7 @@ describe('WelcomePage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Finish' }));
 
     expect(
-      await screen.findByRole('heading', { name: 'Your passkey wasn’t made' }),
+      await screen.findByRole('heading', { name: 'Your passkey wasn’t created' }),
     ).toBeInTheDocument();
 
     await userEvent.type(screen.getByLabelText('Password'), PASSWORD);

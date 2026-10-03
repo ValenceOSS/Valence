@@ -25,7 +25,7 @@ describe('describeChains', () => {
       chain('qsv', 'transcode', 10, true),
     ]);
 
-    expect(said.label).toBe('3 of 3 proved');
+    expect(said.label).toBe('3 of 3 passed');
     expect(said.tone).toBe('quiet');
   });
 
@@ -35,12 +35,12 @@ describe('describeChains', () => {
       chain('vaapi', 'sheet', 10, false, 'Impossible to convert between the formats'),
     ]);
 
-    expect(said.label).toBe('1 of 2 proved');
+    expect(said.label).toBe('1 of 2 passed');
     expect(said.tone).toBe('warning');
     expect(said.refusals).toEqual([
       {
         id: 'vaapi-sheet-10',
-        what: 'vaapi cannot draw thumbnail sheets at 10 bits',
+        what: 'vaapi can’t generate thumbnail sheets at 10-bit',
         reason: 'Impossible to convert between the formats',
       },
     ]);
@@ -49,7 +49,7 @@ describe('describeChains', () => {
   it('says so where a chain refused without saying why', () => {
     const [refusal] = describeChains([chain('qsv', 'transcode', 10, false)]).refusals;
 
-    expect(refusal?.reason).toBe('It produced nothing, and said nothing about why.');
+    expect(refusal?.reason).toBe('It produced no output and reported no error.');
   });
 
   it('tells the depths apart, because one can run where the other cannot', () => {
@@ -59,7 +59,7 @@ describe('describeChains', () => {
     ]);
 
     expect(said.refusals.map((refusal) => refusal.what)).toEqual([
-      'qsv cannot draw scrub previews at 10 bits',
+      'qsv can’t generate scrub previews at 10-bit',
     ]);
   });
 });

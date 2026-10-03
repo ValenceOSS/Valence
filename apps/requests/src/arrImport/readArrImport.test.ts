@@ -65,8 +65,8 @@ describe('readArrImport', () => {
     );
 
     expect(read.sources.map((one) => one.problem?.message ?? null)).toEqual([
-      'That address answers as Sonarr, not radarr.',
-      'Lidarr could not be reached',
+      'That address belongs to Sonarr, not radarr.',
+      'Couldn’t connect to Lidarr',
       null,
     ]);
     expect(read.arrs).toEqual([]);

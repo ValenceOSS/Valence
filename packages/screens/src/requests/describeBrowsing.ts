@@ -10,7 +10,7 @@ const KIND_WORDS: Record<CatalogueBrowseKind, string> = { film: 'films', series:
 const LIST_WORDS: Record<CatalogueList, string> = {
   trending: say('screens.requests.describeBrowsing.trending'),
   popular: say('common.popular'),
-  upcoming: say('screens.requests.describeBrowsing.coming'),
+  upcoming: say('common.upcoming'),
 };
 
 /**

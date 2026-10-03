@@ -194,7 +194,7 @@ describe('createDownloadQueue', () => {
       await queue.check();
 
       const problem =
-        'It holds a program, Dune/Dune.2021.1080p.mkv.exe, which no film, series, album or book comes with';
+        'It contains a program, Dune/Dune.2021.1080p.mkv.exe, which no film, series, album or book should include';
 
       expect(adapter.remove).toHaveBeenCalledWith(HASH, true);
       expect(adapter.skip).not.toHaveBeenCalled();
@@ -205,7 +205,7 @@ describe('createDownloadQueue', () => {
     it('throws out a torrent whose videos are not what was asked for, saying why', async () => {
       const judgeFiles = vi.fn(() =>
         Promise.resolve<Said | null>(
-          sayVerbatim('Its file, Dune.1080p.mkv, is 1080p, which this profile does not take'),
+          sayVerbatim('Its file, Dune.1080p.mkv, is 1080p, which this profile doesn’t allow'),
         ),
       );
       const adapter = aSortingAdapter([
@@ -223,7 +223,7 @@ describe('createDownloadQueue', () => {
       expect(adapter.remove).toHaveBeenCalledWith(HASH, true);
       expect(await downloads.find(aSentDownload().id)).toMatchObject({
         state: 'failed',
-        problem: 'Its file, Dune.1080p.mkv, is 1080p, which this profile does not take',
+        problem: 'Its file, Dune.1080p.mkv, is 1080p, which this profile doesn’t allow',
       });
     });
 
@@ -266,7 +266,7 @@ describe('createDownloadQueue', () => {
 
       expect(await downloads.find(aSentDownload().id)).toMatchObject({
         state: 'failed',
-        problem: 'It holds nothing Valence can file',
+        problem: 'It contains nothing Valence can import',
       });
     });
 
@@ -419,11 +419,11 @@ describe('createDownloadQueue', () => {
 
     it('says why nothing could take it', async () => {
       expect(await aQueue({ clients: [] }).queue.send(SEND)).toEqual({
-        refused: 'No torrent client is set up and switched on',
+        refused: 'No torrent client is set up and turned on',
         problemCode: null,
       });
       expect(await aQueue().queue.send({ ...SEND, protocol: 'usenet' })).toEqual({
-        refused: 'No usenet client is set up and switched on',
+        refused: 'No usenet client is set up and turned on',
         problemCode: null,
       });
       expect(
@@ -432,20 +432,20 @@ describe('createDownloadQueue', () => {
           clientId: QBITTORRENT.id,
         }),
       ).toEqual({
-        refused: 'That download client is not set up, or is switched off',
+        refused: 'That download client isn’t set up, or is turned off',
         problemCode: null,
       });
       expect(
         await aQueue().queue.send({ ...SEND, protocol: 'usenet', clientId: QBITTORRENT.id }),
-      ).toEqual({ refused: 'qBittorrent cannot take a usenet release', problemCode: null });
+      ).toEqual({ refused: 'qBittorrent can’t download usenet releases', problemCode: null });
     });
 
     it('says why the release could not be fetched', async () => {
       const failing = (error: Error) =>
         aQueue({ fetchRelease: () => Promise.reject(error) }).queue.send(SEND);
 
-      expect(await failing(new IndexerFailure(sayVerbatim('The site answered 410')))).toEqual({
-        refused: 'The site answered 410',
+      expect(await failing(new IndexerFailure(sayVerbatim('The site returned 410')))).toEqual({
+        refused: 'The site returned 410',
         problemCode: null,
       });
       expect(
@@ -460,11 +460,11 @@ describe('createDownloadQueue', () => {
         problemCode: 'CloudflareRefusesAddress',
       });
       expect(await failing(new Error('boom'))).toEqual({
-        refused: 'The release could not be fetched',
+        refused: 'Couldn’t download the release',
         problemCode: null,
       });
       expect(await aQueue({ fetchRelease: () => Promise.resolve(null) }).queue.send(SEND)).toEqual({
-        refused: 'The indexer that found it is no longer set up',
+        refused: 'The indexer that found it has been removed',
         problemCode: null,
       });
     });
@@ -473,12 +473,12 @@ describe('createDownloadQueue', () => {
       const refusing = anAdapter();
 
       refusing.add.mockRejectedValueOnce(
-        new DownloadClientFailure(sayVerbatim('qBittorrent would not take the torrent')),
+        new DownloadClientFailure(sayVerbatim('qBittorrent rejected the torrent')),
       );
       refusing.add.mockRejectedValueOnce(new Error('boom'));
       refusing.add.mockRejectedValueOnce(
         new DownloadClientFailure(
-          sayVerbatim('qBittorrent could not be reached'),
+          sayVerbatim('Couldn’t connect to qBittorrent'),
           'DownloadClientUnreachable',
         ),
       );
@@ -486,15 +486,15 @@ describe('createDownloadQueue', () => {
       const { queue } = aQueue({ adapter: refusing });
 
       expect(await queue.send(SEND)).toEqual({
-        refused: 'qBittorrent would not take the torrent',
+        refused: 'qBittorrent rejected the torrent',
         problemCode: null,
       });
       expect(await queue.send(SEND)).toEqual({
-        refused: 'The client could not be asked',
+        refused: 'Couldn’t reach the download client',
         problemCode: null,
       });
       expect(await queue.send(SEND)).toEqual({
-        refused: 'qBittorrent could not be reached',
+        refused: 'Couldn’t connect to qBittorrent',
         problemCode: 'DownloadClientUnreachable',
       });
     });
@@ -575,7 +575,7 @@ describe('createDownloadQueue', () => {
       const { queue, events } = aQueue({
         sent: [aSentDownload()],
         adapter: anAdapter([
-          anItem({ state: 'failed', problem: sayVerbatim('qBittorrent cannot find its files') }),
+          anItem({ state: 'failed', problem: sayVerbatim('qBittorrent can’t find its files') }),
         ]),
       });
 
@@ -585,7 +585,7 @@ describe('createDownloadQueue', () => {
       expect(await events.pending()).toEqual([
         expect.objectContaining({
           kind: 'failed',
-          problem: sayVerbatim('qBittorrent cannot find its files'),
+          problem: sayVerbatim('qBittorrent can’t find its files'),
         }),
       ]);
     });
@@ -598,7 +598,9 @@ describe('createDownloadQueue', () => {
 
       await queue.check();
 
-      expect(await events.pending()).toMatchObject([{ problem: 'qBittorrent says it failed' }]);
+      expect(await events.pending()).toMatchObject([
+        { problem: 'qBittorrent reports that it failed' },
+      ]);
     });
 
     it('notes when a download finished', async () => {
@@ -651,7 +653,7 @@ describe('createDownloadQueue', () => {
 
       expect(await downloads.find(unfinished.id)).toMatchObject({
         state: 'failed',
-        problem: 'It is no longer in qBittorrent',
+        problem: 'It’s no longer in qBittorrent',
       });
       expect(await downloads.find(finished.id)).toEqual(finished);
       expect((await downloads.find('6ba7b819-9dad-11d1-80b4-00c04fd430c8'))?.state).toBe(
@@ -664,7 +666,7 @@ describe('createDownloadQueue', () => {
       const unreachable = anAdapter();
 
       unreachable.list.mockRejectedValueOnce(
-        new DownloadClientFailure(sayVerbatim('qBittorrent could not be reached')),
+        new DownloadClientFailure(sayVerbatim('Couldn’t connect to qBittorrent')),
       );
       unreachable.list.mockRejectedValueOnce(new Error('boom'));
 
@@ -675,13 +677,15 @@ describe('createDownloadQueue', () => {
 
       expect((await queue.queue()).clients[0]).toMatchObject({
         isReachable: false,
-        problem: 'qBittorrent could not be reached',
+        problem: 'Couldn’t connect to qBittorrent',
         downloadBytesPerSecond: null,
       });
 
       await queue.check();
 
-      expect((await queue.queue()).clients[0]?.problem).toEqual('The client could not be asked');
+      expect((await queue.queue()).clients[0]?.problem).toEqual(
+        'Couldn’t reach the download client',
+      );
       expect(await downloads.find(kept.id)).toEqual(kept);
     });
 
@@ -729,7 +733,7 @@ describe('createDownloadQueue', () => {
       const { downloads } = await queue.queue();
 
       expect(downloads.map((download) => download.title)).toEqual(['New', 'Old']);
-      expect(downloads[0]?.clientName).toBe('A client that has gone');
+      expect(downloads[0]?.clientName).toBe('A removed download client');
       expect(downloads[0]?.downloadBytesPerSecond).toBeNull();
     });
 
@@ -766,15 +770,15 @@ describe('createDownloadQueue', () => {
       const refusing = anAdapter();
 
       refusing.pause.mockRejectedValueOnce(
-        new DownloadClientFailure(sayVerbatim('qBittorrent answered 409')),
+        new DownloadClientFailure(sayVerbatim('qBittorrent returned 409')),
       );
       refusing.pause.mockRejectedValueOnce(new Error('boom'));
 
       const kept = aSentDownload();
       const { queue } = aQueue({ sent: [kept], adapter: refusing });
 
-      expect(await queue.pause(kept.id)).toEqual({ refused: 'qBittorrent answered 409' });
-      expect(await queue.pause(kept.id)).toEqual({ refused: 'The client could not be asked' });
+      expect(await queue.pause(kept.id)).toEqual({ refused: 'qBittorrent returned 409' });
+      expect(await queue.pause(kept.id)).toEqual({ refused: 'Couldn’t reach the download client' });
       expect(await queue.pause('nothing')).toBeNull();
     });
 
@@ -809,7 +813,7 @@ describe('createDownloadQueue', () => {
       const refusing = anAdapter();
 
       refusing.remove.mockRejectedValueOnce(
-        new DownloadClientFailure(sayVerbatim('qBittorrent could not be reached')),
+        new DownloadClientFailure(sayVerbatim('Couldn’t connect to qBittorrent')),
       );
       refusing.remove.mockRejectedValueOnce(new Error('boom'));
 
@@ -817,10 +821,10 @@ describe('createDownloadQueue', () => {
       const { queue, downloads } = aQueue({ sent: [kept], adapter: refusing });
 
       expect(await queue.remove(kept.id, false)).toEqual({
-        refused: 'qBittorrent could not be reached',
+        refused: 'Couldn’t connect to qBittorrent',
       });
       expect(await queue.remove(kept.id, false)).toEqual({
-        refused: 'The client could not be asked',
+        refused: 'Couldn’t reach the download client',
       });
       expect(await downloads.list()).toEqual([kept]);
     });

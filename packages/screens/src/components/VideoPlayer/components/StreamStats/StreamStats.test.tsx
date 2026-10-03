@@ -206,7 +206,7 @@ describe('StreamStats', () => {
   it('says a transcode is being made now where nothing was reused', () => {
     draw();
 
-    expect(screen.getByText('No — this transcode is being made now')).toBeInTheDocument();
+    expect(screen.getByText('No — this transcode is running now')).toBeInTheDocument();
   });
 
   it('says when the whole transcode was already on disk', () => {
@@ -221,7 +221,7 @@ describe('StreamStats', () => {
       },
     });
 
-    expect(screen.getByText('Yes — the whole transcode was already made')).toBeInTheDocument();
+    expect(screen.getByText('Yes — the whole transcode was already done')).toBeInTheDocument();
   });
 
   it('leaves the reuse question blank for a stream nothing transcodes', () => {

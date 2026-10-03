@@ -133,7 +133,7 @@ const AccountDevices = ({ accountId }: AccountDevicesProps) => {
         />
       ) : (
         <DataTable
-          label={say('screens.accountsPanel.accountDevices.whereThisAccountIsSignedIn')}
+          label={say('screens.accountArea.deviceList.whereYouAreSignedIn')}
           columns={columns}
           rows={sessions}
           emptyMessage={say('screens.accountsPanel.accountDevices.thisAccountIsNotSignedIn')}

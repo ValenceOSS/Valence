@@ -500,7 +500,7 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack, watchParty }: TheMusicPlaye
         tone="bare"
         label={
           firstArtist === undefined
-            ? say('phone.theMusicPlayer.openTheArtist')
+            ? say('common.goToArtist')
             : say('common.openName', { name: firstArtist.name })
         }
         onPress={() => {

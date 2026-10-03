@@ -81,7 +81,7 @@ describe('signing a television in from a phone', () => {
 
     render(<TelevisionHandoff name="Valence" onSignedIn={vi.fn()} />);
 
-    expect(await screen.findByText('That code ran out. Ask for another one.')).toBeInTheDocument();
+    expect(await screen.findByText('That code expired. Get a new one.')).toBeInTheDocument();
   });
 
   it('says plainly when somebody turned it down on the other device', async () => {
@@ -90,7 +90,7 @@ describe('signing a television in from a phone', () => {
     render(<TelevisionHandoff name="Valence" onSignedIn={vi.fn()} />);
 
     expect(
-      await screen.findByText('That was turned down on the other device.'),
+      await screen.findByText('The request was declined on the other device.'),
     ).toBeInTheDocument();
   });
 
@@ -99,7 +99,7 @@ describe('signing a television in from a phone', () => {
 
     render(<TelevisionHandoff name="Valence" onSignedIn={vi.fn()} />);
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Ask for another code' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Get a new code' }));
 
     await waitFor(() => {
       expect(startDeviceGrant).toHaveBeenCalledTimes(2);
@@ -111,7 +111,7 @@ describe('signing a television in from a phone', () => {
 
     render(<TelevisionHandoff name="Valence" onSignedIn={vi.fn()} />);
 
-    expect(await screen.findByText('Valence could not be reached.')).toBeInTheDocument();
+    expect(await screen.findByText('Couldn’t reach the Valence server.')).toBeInTheDocument();
   });
 
   it('waits the interval the server named before asking at all', async () => {

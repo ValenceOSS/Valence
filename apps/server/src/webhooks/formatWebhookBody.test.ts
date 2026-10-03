@@ -111,7 +111,7 @@ describe('formatWebhookBody', () => {
 
   it('says somebody stopped listening to a song, not watching it', () => {
     expect(formatWebhookBody('ntfy', aSongStopped).body).toContain(
-      'Ada stopped listening to Running Up That Hill (1985) 50% of the way through.',
+      'Ada stopped listening to Running Up That Hill (1985) at 50%.',
     );
   });
 
@@ -205,7 +205,7 @@ describe('formatWebhookBody', () => {
   it('writes a test as reassurance rather than as an alarm', () => {
     const written = formatWebhookBody('ntfy', { ...anEnvelope, event: 'webhook.test', data: {} });
 
-    expect(written.body).toContain('Nothing has gone wrong');
+    expect(written.body).toContain('This is a test message');
   });
 
   it('says what a viewer would notice when the catalogue is unreachable', () => {
@@ -308,8 +308,8 @@ describe('formatWebhookBody', () => {
       data: {},
     });
 
-    expect(written.body).toContain('answering again');
-    expect(written.body).toContain('Nothing needs doing');
+    expect(written.body).toContain('responding again');
+    expect(written.body).toContain('No action needed');
   });
 
   it('says the same for a catalogue that came back', () => {
@@ -319,7 +319,7 @@ describe('formatWebhookBody', () => {
       data: {},
     });
 
-    expect(written.body).toContain('Nothing needs doing');
+    expect(written.body).toContain('No action needed');
   });
 
   it('says a job that has never once worked has never once worked', () => {
@@ -365,7 +365,7 @@ describe('formatWebhookBody', () => {
     });
 
     expect(written.body).toContain('Check disk space');
-    expect(written.body).toContain('Nothing needs doing');
+    expect(written.body).toContain('No action needed');
   });
 
   it('says which disk is filling and how much is left', () => {
@@ -392,7 +392,7 @@ describe('formatWebhookBody', () => {
     });
 
     expect(written.body).toContain('/media');
-    expect(written.body).toContain('Nothing needs doing');
+    expect(written.body).toContain('No action needed');
   });
 
   it('carries the reason the transcoder could not be reached', () => {
@@ -416,7 +416,7 @@ describe('formatWebhookBody', () => {
     });
 
     expect(written.body).toBe(
-      'The requests service could not be reached — http://requests:8421 did not answer. How to fix it: https://docs.getvalence.app/install/requesting#the-requests-service-cannot-be-reached',
+      'Couldn’t reach the requests service — http://requests:8421 did not answer. How to fix it: https://docs.getvalence.app/install/requesting#the-requests-service-cannot-be-reached',
     );
   });
 
@@ -427,7 +427,7 @@ describe('formatWebhookBody', () => {
       data: {},
     });
 
-    expect(written.body).toContain('Nothing needs doing');
+    expect(written.body).toContain('No action needed');
   });
 
   it('says why the VPN went down', () => {
@@ -438,7 +438,7 @@ describe('formatWebhookBody', () => {
     });
 
     expect(written.body).toBe(
-      'The VPN the requests service downloads through is down — The tunnel is stopped',
+      'The requests service’s download VPN is down — The tunnel is stopped',
     );
   });
 
@@ -449,7 +449,7 @@ describe('formatWebhookBody', () => {
       data: { publicAddress: '203.0.113.7', country: 'Netherlands' },
     });
 
-    expect(written.body).toContain('leaving from 203.0.113.7, Netherlands');
+    expect(written.body).toContain('with public IP 203.0.113.7, Netherlands');
   });
 
   it('says the VPN is up without saying where when it does not know', () => {
@@ -459,7 +459,7 @@ describe('formatWebhookBody', () => {
       data: { publicAddress: null, country: null },
     });
 
-    expect(written.body).toBe('The VPN the requests service downloads through is up.');
+    expect(written.body).toBe('The requests service’s download VPN is up.');
   });
 
   it('names an indexer that keeps failing, and why', () => {
@@ -485,7 +485,7 @@ describe('formatWebhookBody', () => {
       data: { name: 'Jackett' },
     });
 
-    expect(written.body).toContain('Nothing needs doing');
+    expect(written.body).toContain('No action needed');
   });
 
   it('says which client a download was sent to', () => {
@@ -518,14 +518,14 @@ describe('formatWebhookBody', () => {
         event: 'requests.made',
         data: { title: 'Dune', kind: 'film', requestedBy: 'Sam' },
       }),
-    ).toBe('Sam asked for the film Dune.');
+    ).toBe('Sam requested the film Dune.');
     expect(
       said({
         ...anEnvelope,
         event: 'requests.approved',
         data: { title: 'Dune', approvedBy: null },
       }),
-    ).toBe('Dune was approved as it was asked for.');
+    ).toBe('Dune was approved as requested.');
     expect(
       said({
         ...anEnvelope,
@@ -535,35 +535,35 @@ describe('formatWebhookBody', () => {
     ).toBe('Alex approved Dune.');
     expect(
       said({ ...anEnvelope, event: 'requests.refused', data: { title: 'Dune', reason: null } }),
-    ).toBe('Dune was refused.');
+    ).toBe('Dune was declined.');
     expect(
       said({
         ...anEnvelope,
         event: 'requests.refused',
         data: { title: 'Dune', reason: 'No room' },
       }),
-    ).toBe('Dune was refused — No room');
+    ).toBe('Dune was declined — No room');
     expect(
       said({
         ...anEnvelope,
         event: 'requests.chosen',
         data: { title: 'Dune', release: 'Dune.2021.1080p.WEB-DL' },
       }),
-    ).toBe('Dune.2021.1080p.WEB-DL was chosen for Dune.');
+    ).toBe('Dune.2021.1080p.WEB-DL was selected for Dune.');
     expect(
       said({
         ...anEnvelope,
         event: 'requests.filed',
         data: { title: 'Dune', folder: '/media/Films/Dune (2021)' },
       }),
-    ).toBe('Dune was filed into /media/Films/Dune (2021).');
+    ).toBe('Dune was moved to /media/Films/Dune (2021).');
     expect(
       said({
         ...anEnvelope,
         event: 'requests.available',
         data: { title: 'Dune', requestedBy: 'Sam', mediaId: 'media-1' },
       }),
-    ).toBe('Dune is ready to watch, as Sam asked.');
+    ).toBe('Dune is ready to watch, as requested by Sam.');
   });
 });
 
@@ -680,7 +680,7 @@ describe('formatWebhookBody, a sign-in', () => {
         },
       }),
     ).toBe(
-      'A sign-in as ada@example.com was refused on Chrome on macOS from 203.0.113.7 — those details were not accepted.',
+      'A sign-in as ada@example.com was blocked on Chrome on macOS from 203.0.113.7 — those details were not accepted.',
     );
   });
 

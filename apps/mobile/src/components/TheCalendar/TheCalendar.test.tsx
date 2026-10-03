@@ -114,11 +114,11 @@ describe('TheCalendar', () => {
   it('opens a sheet to add the calendar to a calendar app from beside its title', async () => {
     const drawn = await drawCalendar();
 
-    expect(drawn.queryByText('Add to Calendar')).toBeNull();
+    expect(drawn.queryByText('Add to calendar')).toBeNull();
 
-    await userEvent.press(await drawn.findByRole('button', { name: 'Add to Calendar' }));
+    await userEvent.press(await drawn.findByRole('button', { name: 'Add to calendar' }));
 
-    expect(await drawn.findByText('Add to Calendar')).toBeTruthy();
+    expect(await drawn.findByText('Add to calendar')).toBeTruthy();
   });
 
   it('opens a show the lookup failed for as its series, rather than doing nothing', async () => {
@@ -160,7 +160,7 @@ describe('TheCalendar', () => {
 
     await userEvent.press(drawn.getByRole('button', { name: 'Upcoming' }));
 
-    expect(await drawn.findByText('Nothing comes out on these days')).toBeTruthy();
+    expect(await drawn.findByText('No releases on these dates')).toBeTruthy();
   });
 
   it('says so where the calendar could not be read', async () => {
@@ -168,7 +168,7 @@ describe('TheCalendar', () => {
 
     const drawn = await drawCalendar();
 
-    expect(await drawn.findByText('Those could not be read.')).toBeTruthy();
+    expect(await drawn.findByText('Couldn’t load these.')).toBeTruthy();
   });
 
   it.each<[string, CalendarEntry, APage]>([

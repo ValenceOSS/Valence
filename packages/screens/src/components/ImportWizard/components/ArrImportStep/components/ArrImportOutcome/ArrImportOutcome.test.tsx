@@ -26,7 +26,7 @@ const APPLIED: ArrImportApplied = {
   prowlarr: { added: 4, updated: 0, removed: 0, unchanged: 2 },
   libraries: [],
   wanted: [A_WANTED, { ...A_WANTED, key: 'film:604' }],
-  problems: [sayVerbatim('Lidarr could not be read: it did not answer')],
+  problems: [sayVerbatim('Couldn’t read Lidarr: it didn’t respond')],
 };
 
 describe('ArrImportOutcome', () => {
@@ -47,8 +47,8 @@ describe('ArrImportOutcome', () => {
     expect(screen.getByText('Download clients: 2 added, 1 already in Valence')).toBeInTheDocument();
     expect(screen.getByText('Indexers: 5 added, 2 already in Valence')).toBeInTheDocument();
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
-    expect(screen.getByText('1 request made, 0 asked for already')).toBeInTheDocument();
-    expect(screen.getByText('Lidarr could not be read: it did not answer')).toBeInTheDocument();
+    expect(screen.getByText('1 request made, 0 already requested')).toBeInTheDocument();
+    expect(screen.getByText('Couldn’t read Lidarr: it didn’t respond')).toBeInTheDocument();
     expect(screen.getByText('film:604: Not known')).toBeInTheDocument();
   });
 

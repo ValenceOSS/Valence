@@ -109,7 +109,7 @@ describe('createDefinitionCatalogue', () => {
     expect(read.definitions).toHaveLength(1);
     expect(read.updatedAt).toEqual(NOW.toISOString());
     expect(read.problem).toEqual(
-      'The definitions could not be fetched from Prowlarr/Indexers@master/definitions/v11: Prowlarr/Indexers@master/definitions/v11 answered 403',
+      'Couldn’t download the definitions from Prowlarr/Indexers@master/definitions/v11: Prowlarr/Indexers@master/definitions/v11 answered 403',
     );
 
     const offline = await createDefinitionCatalogue({

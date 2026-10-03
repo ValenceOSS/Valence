@@ -4,23 +4,23 @@ import { TRANSCODE_REUSES } from '@ValenceContracts/schemas/TranscodeReuse';
 
 describe('describeTranscodeReuse', () => {
   it('says a finished transcode was reused whole', () => {
-    expect(describeTranscodeReuse('whole')).toBe('Yes — the whole transcode was already made');
+    expect(describeTranscodeReuse('whole')).toBe('Yes — the whole transcode was already done');
   });
 
   it('names the case where one encoder is serving two viewers', () => {
     expect(describeTranscodeReuse('shared')).toBe(
-      'Shared — another viewer’s transcode of exactly this',
+      'Shared — reusing another viewer’s identical transcode',
     );
   });
 
   it('says a part-finished directory was resumed rather than started again', () => {
     expect(describeTranscodeReuse('partial')).toBe(
-      'Partly — resumed where an earlier session stopped',
+      'Partly — resumed from where an earlier session stopped',
     );
   });
 
   it('says plainly that a fresh transcode is being made now', () => {
-    expect(describeTranscodeReuse('none')).toBe('No — this transcode is being made now');
+    expect(describeTranscodeReuse('none')).toBe('No — this transcode is running now');
   });
 
   it('says the question does not apply where nothing is transcoded', () => {

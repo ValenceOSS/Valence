@@ -16,7 +16,7 @@ const quality: ASetOfChoices = {
   heading: 'Quality',
   chosen: 'original',
   choices: [
-    { id: 'original', label: 'Original', detail: 'As it is on the server' },
+    { id: 'original', label: 'Original', detail: 'Original quality' },
     { id: '1080p', label: '1080p', detail: 'up to 4.5 Mbps' },
   ],
   onChoose: jest.fn(),
@@ -83,7 +83,7 @@ describe('TheChoices', () => {
     const onClose = jest.fn();
     const drawn = await render(<TheChoices sets={[audio]} onClose={onClose} />);
 
-    const [, onTheButton] = drawn.getAllByLabelText('Close the settings');
+    const [, onTheButton] = drawn.getAllByLabelText('Close settings');
 
     await userEvent.press(onTheButton ?? drawn.getByText('Settings'));
 
@@ -94,7 +94,7 @@ describe('TheChoices', () => {
     const onClose = jest.fn();
     const drawn = await render(<TheChoices sets={[audio]} onClose={onClose} />);
 
-    const [behindIt] = drawn.getAllByLabelText('Close the settings');
+    const [behindIt] = drawn.getAllByLabelText('Close settings');
 
     await userEvent.press(behindIt ?? drawn.getByText('Settings'));
 

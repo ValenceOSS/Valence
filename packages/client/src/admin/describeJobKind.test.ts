@@ -13,7 +13,7 @@ describe('describeJobKind', () => {
 
   it('gives the copy that runs on a clock the same name, and says so', () => {
     expect(describeJobKind('library.detectSegments.scheduled', LABELS)).toBe(
-      'Detect missing intros and outros (on its schedule)',
+      'Detect missing intros and outros (scheduled)',
     );
   });
 
@@ -24,7 +24,7 @@ describe('describeJobKind', () => {
 
   it('does the same for the clock copy of a kind it has no name for', () => {
     expect(describeJobKind('library.regenerateTrickplay.scheduled', LABELS)).toBe(
-      'Regenerate trickplay (on its schedule)',
+      'Regenerate trickplay (scheduled)',
     );
   });
 

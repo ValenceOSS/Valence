@@ -23,12 +23,12 @@ describe('failureOfTest', () => {
   it('still says it failed where no reason came back', () => {
     expect(
       failureOfTest('Jackett', { value: { ...ANSWERED, isWorking: false }, refusal: null }),
-    ).toBe('Jackett: did not answer');
+    ).toBe('Jackett: no response');
   });
 
   it('gives the refusal, naming the indexer, where the server would not test it', () => {
     expect(
-      failureOfTest('Jackett', { value: null, refusal: { message: 'Requesting is off.' } }),
-    ).toBe('Jackett: Requesting is off.');
+      failureOfTest('Jackett', { value: null, refusal: { message: 'Requests are turned off.' } }),
+    ).toBe('Jackett: Requests are turned off.');
   });
 });

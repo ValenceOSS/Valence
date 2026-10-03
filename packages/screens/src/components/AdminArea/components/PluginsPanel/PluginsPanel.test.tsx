@@ -96,7 +96,7 @@ describe('PluginsPanel', () => {
       new File(['s'], 'thing.vplugin.sig'),
     ]);
 
-    expect(await screen.findByText('Valence cannot vouch for this plugin')).toBeInTheDocument();
+    expect(await screen.findByText('Valence can’t verify this plugin')).toBeInTheDocument();
     expect(uploadPluginPackage).toHaveBeenCalledWith(expect.any(File), expect.any(File));
   });
 
@@ -115,7 +115,7 @@ describe('PluginsPanel', () => {
   it('turns a plugin off, and removes one after asking', async () => {
     renderInAnAddress(<PluginsPanel />);
 
-    await userEvent.click(await screen.findByRole('switch', { name: 'Turn AniList off' }));
+    await userEvent.click(await screen.findByRole('switch', { name: 'Disable AniList' }));
 
     await waitFor(() => {
       expect(changePlugin).toHaveBeenCalledWith('anilist', { isEnabled: false });
@@ -149,10 +149,10 @@ describe('PluginsPanel', () => {
     const dialog = screen.getByRole('dialog');
 
     expect(
-      await within(dialog).findByText('2 accounts connected to AniList are forgotten.'),
+      await within(dialog).findByText('2 accounts connected to AniList are disconnected.'),
     ).toBeInTheDocument();
 
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Turn it off' }));
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Disable plugin' }));
 
     await waitFor(() => {
       expect(changePlugin).toHaveBeenCalledWith('anilist', { isEnabled: false });
@@ -176,7 +176,7 @@ describe('PluginsPanel', () => {
     const dialog = screen.getByRole('dialog');
 
     expect(
-      within(dialog).getByText(/Anything it kept since the upgrade is lost/u),
+      within(dialog).getByText(/Anything it saved after the upgrade is deleted/u),
     ).toBeInTheDocument();
 
     await userEvent.click(within(dialog).getByRole('button', { name: 'Roll back' }));
@@ -198,7 +198,7 @@ describe('PluginsPanel', () => {
     renderInAnAddress(<PluginsPanel />);
 
     expect(
-      await screen.findByText(/GitHub did not answer\. Plugins already installed keep working\./u),
+      await screen.findByText(/GitHub did not answer\. Installed plugins still work\./u),
     ).toBeInTheDocument();
     expect(screen.getByText('Official plugins are unavailable')).toBeInTheDocument();
     expect(await screen.findByText(/No plugins yet/u)).toBeInTheDocument();
@@ -248,13 +248,13 @@ describe('PluginsPanel', () => {
 
   it('says so when something could not be done', async () => {
     changePlugin.mockRejectedValue(new Error('It is busy.'));
-    previewCataloguePlugin.mockRejectedValue(new Error('The catalogue refused.'));
+    previewCataloguePlugin.mockRejectedValue(new Error('The catalogue declined.'));
     removePlugin.mockRejectedValue(new Error('It would not go.'));
     uploadPluginPackage.mockRejectedValue(new Error('Too large.'));
 
     renderInAnAddress(<PluginsPanel />);
 
-    await userEvent.click(await screen.findByRole('switch', { name: 'Turn AniList off' }));
+    await userEvent.click(await screen.findByRole('switch', { name: 'Disable AniList' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Install' }));
     await userEvent.upload(
       screen.getByLabelText(/Install from a file/u),
@@ -269,7 +269,7 @@ describe('PluginsPanel', () => {
       expect(told.failed.mock.calls.map(([said]: string[]) => said)).toEqual(
         expect.arrayContaining([
           'It is busy.',
-          'The catalogue refused.',
+          'The catalogue declined.',
           'Too large.',
           'It would not go.',
         ]),

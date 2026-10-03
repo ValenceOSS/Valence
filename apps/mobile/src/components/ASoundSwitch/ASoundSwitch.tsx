@@ -18,9 +18,7 @@ const styles = StyleSheet.create({
 const ASoundSwitch = ({ isMuted, onToggle }: ASoundSwitchProps) => (
   <Button
     tone="bare"
-    label={
-      isMuted ? say('phone.aSoundSwitch.turnTheSoundOn') : say('phone.aSoundSwitch.turnTheSoundOff')
-    }
+    label={isMuted ? say('common.unmute') : say('common.mute')}
     onPress={onToggle}
   >
     <View style={styles.reach}>

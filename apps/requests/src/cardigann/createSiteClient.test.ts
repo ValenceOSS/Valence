@@ -195,7 +195,7 @@ describe('createSiteClient', () => {
         { url: 'https://x.example/', method: 'GET', body: null, headers: {} },
         { ...OPTIONS, session: aSession() },
       ),
-    ).rejects.toThrow('The site could not be reached');
+    ).rejects.toThrow('Couldn’t connect to the site');
 
     const slow = createSiteClient({
       fetch: () => Promise.reject(new DOMException('timed out', 'TimeoutError')),
@@ -206,7 +206,7 @@ describe('createSiteClient', () => {
         { url: 'https://x.example/', method: 'GET', body: null, headers: {} },
         { ...OPTIONS, timeoutSeconds: 10, session: aSession() },
       ),
-    ).rejects.toThrow('The site did not answer within 10 seconds');
+    ).rejects.toThrow('The site didn’t respond within 10 seconds');
   });
 
   describe('behind Cloudflare', () => {
@@ -249,7 +249,7 @@ describe('createSiteClient', () => {
           ...OPTIONS,
           session: aSession(),
         }),
-      ).rejects.toThrow('this service has no browser to get past it');
+      ).rejects.toThrow('this service has no browser to pass it');
     });
 
     it('asks through the browser, keeping the cookies and browser it got past with', async () => {
@@ -346,17 +346,15 @@ describe('createSiteClient', () => {
       await client.send(aGet('https://x.example/s'), { ...OPTIONS, session: aSession() });
 
       solver.fetch.mockRejectedValueOnce(
-        new IndexerFailure(
-          sayVerbatim('The site’s browser check would not let the request through'),
-        ),
+        new IndexerFailure(sayVerbatim('The site’s browser check blocked the request')),
       );
 
       await expect(
         client.send(aGet('https://x.example/u'), { ...OPTIONS, session: aSession() }),
-      ).rejects.toThrow('would not let the request through');
+      ).rejects.toThrow('browser check blocked the request');
       await expect(
         client.send(aGet('https://x.example/u'), { ...OPTIONS, session: aSession() }),
-      ).rejects.toThrow('The browser that gets past Cloudflare’s check could not be started');
+      ).rejects.toThrow('Couldn’t start the browser used to pass Cloudflare’s check');
     });
   });
 });

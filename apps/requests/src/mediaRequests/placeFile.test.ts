@@ -130,7 +130,7 @@ describe('placeFile where it may not write', () => {
         () => 'user 1000 and group 1000',
       ),
     ).rejects.toThrow(
-      `The requests service, running as user 1000 and group 1000, may not write to ${join(root, 'Films')}. Set PUID and PGID on it to the owner of your media folders.`,
+      `The requests service, running as user 1000 and group 1000, doesn’t have permission to write to ${join(root, 'Films')}. Set its PUID and PGID to the owner of your media folders.`,
     );
   });
 

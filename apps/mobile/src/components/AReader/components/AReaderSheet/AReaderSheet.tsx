@@ -78,7 +78,7 @@ const AReaderSheet = ({
           <Toolbar>
             <Form modifiers={[navigationTitle(title)]}>
               <Section
-                title={say('phone.aReader.aReaderSheet.pagesTurn')}
+                title={say('common.readingDirection')}
                 footer={<Text>{say('phone.aReader.aReaderSheet.mangaIsUsuallyReadRightTo')}</Text>}
               >
                 <Picker

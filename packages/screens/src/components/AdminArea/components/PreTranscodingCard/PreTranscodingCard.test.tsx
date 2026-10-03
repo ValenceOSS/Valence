@@ -88,7 +88,7 @@ describe('PreTranscodingCard', () => {
   it('says how far it has got and that it waits for quiet hours', async () => {
     draw();
 
-    expect(await screen.findByText('Still to make')).toBeVisible();
+    expect(await screen.findByText('Remaining')).toBeVisible();
     expect(screen.getByText('12')).toBeVisible();
     expect(screen.getByText('Waiting for quiet hours')).toBeVisible();
     expect(screen.getByText(/Europe\/London/)).toBeVisible();
@@ -131,7 +131,7 @@ describe('PreTranscodingCard', () => {
     draw();
 
     await userEvent.click(
-      await screen.findByRole('checkbox', { name: /Every library of films and shows/ }),
+      await screen.findByRole('checkbox', { name: /All film and series libraries/ }),
     );
 
     expect(screen.getByRole('checkbox', { name: /Films/ })).toBeChecked();
@@ -169,7 +169,7 @@ describe('PreTranscodingCard', () => {
     runPreTranscodingNowMock.mockResolvedValue(true);
     draw();
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Make the next copy now' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Start the next copy now' }));
 
     expect(runPreTranscodingNowMock).toHaveBeenCalled();
   });
@@ -180,6 +180,6 @@ describe('PreTranscodingCard', () => {
     await screen.findByRole('switch', { name: 'Pre-transcoding' });
 
     expect(screen.queryByRole('button', { name: 'Pause' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Make the next copy now' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Start the next copy now' })).toBeNull();
   });
 });

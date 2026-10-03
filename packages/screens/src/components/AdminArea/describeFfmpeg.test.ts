@@ -7,18 +7,18 @@ describe('describeFfmpeg', () => {
       describeFfmpeg(
         'ffmpeg version 8.1.2-5.2-Valence Copyright (c) 2000-2026 the FFmpeg developers',
       ),
-    ).toBe('FFmpeg 8.1.2-5.2-Valence, the build Valence ships');
+    ).toBe('FFmpeg 8.1.2-5.2-Valence, the build bundled with Valence');
   });
 
   it('still recognises a build from before it was renamed', () => {
     expect(describeFfmpeg('ffmpeg version 7.1-Flux Copyright (c) 2000-2025')).toBe(
-      'FFmpeg 7.1-Flux, the build Valence ships',
+      'FFmpeg 7.1-Flux, the build bundled with Valence',
     );
   });
 
   it('says so where it is somebody else’s build', () => {
     expect(describeFfmpeg('ffmpeg version 6.1.1-3ubuntu5 Copyright (c) 2000-2023')).toBe(
-      'FFmpeg 6.1.1-3ubuntu5, not the build Valence ships',
+      'FFmpeg 6.1.1-3ubuntu5, not the build bundled with Valence',
     );
   });
 

@@ -22,9 +22,9 @@ describe('describeClientState', () => {
   });
 
   it('says a client has not been asked yet', () => {
-    expect(describeClientState(true, undefined).label).toBe('Not asked yet');
+    expect(describeClientState(true, undefined).label).toBe('Not checked yet');
     expect(describeClientState(true, { ...A_READING, checkedAt: null }).label).toBe(
-      'Not asked yet',
+      'Not checked yet',
     );
   });
 
@@ -38,13 +38,13 @@ describe('describeClientState', () => {
       describeClientState(true, {
         ...A_READING,
         isReachable: false,
-        problem: sayVerbatim('qBittorrent could not be reached'),
+        problem: sayVerbatim('Couldn’t connect to qBittorrent'),
         problemCode: 'DownloadClientUnreachable',
       }),
     ).toEqual({
       label: 'Offline',
       tone: 'danger',
-      detail: 'qBittorrent could not be reached',
+      detail: 'Couldn’t connect to qBittorrent',
       help: 'https://docs.getvalence.app/install/requesting#a-download-client-cannot-be-reached',
     });
   });

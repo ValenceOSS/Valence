@@ -235,7 +235,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                   {going === null ? null : (
                     <DialogHeadlinePart>
                       <ProgressBar
-                        label={say('common.howMuchOfTitleHasArrived', { title: title.title })}
+                        label={say('common.howFarTitleHasDownloaded', { title: title.title })}
                         value={Math.round(going.progress * 1000) / 10}
                         className="max-w-md"
                         readout={
@@ -459,7 +459,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
       <Dialog
         label={
           title === null
-            ? say('screens.askableDialog.thisTheTrailer')
+            ? say('common.trailer')
             : say('common.titleTheTrailer', { title: title.title })
         }
         isOpen={isWatchingTrailer && trailerKey !== null}
@@ -473,7 +473,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
             <EmbeddedVideo
               label={
                 title === null
-                  ? say('screens.askableDialog.thisTheTrailer')
+                  ? say('common.trailer')
                   : say('common.titleTheTrailer', { title: title.title })
               }
               src={catalogueTrailerUrl(trailerKey)}

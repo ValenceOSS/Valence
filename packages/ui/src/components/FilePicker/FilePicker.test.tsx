@@ -147,12 +147,12 @@ describe('FilePicker', () => {
     const actor = userEvent.setup();
 
     render(
-      <FilePicker label="Choose films" onPickMany={onPickMany}>
+      <FilePicker label="Select films" onPickMany={onPickMany}>
         <span>Choose</span>
       </FilePicker>,
     );
 
-    await actor.upload(screen.getByLabelText(/Choose films/), [fileOf('a.mkv'), fileOf('b.mkv')]);
+    await actor.upload(screen.getByLabelText(/Select films/), [fileOf('a.mkv'), fileOf('b.mkv')]);
 
     expect(onPickMany).toHaveBeenCalledWith([
       expect.objectContaining({ name: 'a.mkv' }),
@@ -172,44 +172,44 @@ describe('FilePicker', () => {
 
   it('lets several be chosen where several are wanted', () => {
     render(
-      <FilePicker label="Choose films" onPickMany={vi.fn()}>
+      <FilePicker label="Select films" onPickMany={vi.fn()}>
         <span>Choose</span>
       </FilePicker>,
     );
 
-    expect(screen.getByLabelText(/Choose films/)).toHaveAttribute('multiple');
+    expect(screen.getByLabelText(/Select films/)).toHaveAttribute('multiple');
   });
 
   it('chooses a whole folder where asked to', () => {
     render(
-      <FilePicker label="Choose a folder" onPickMany={vi.fn()} isFolder>
+      <FilePicker label="Select a folder" onPickMany={vi.fn()} isFolder>
         <span>Choose</span>
       </FilePicker>,
     );
 
-    expect(screen.getByLabelText(/Choose a folder/)).toHaveAttribute('webkitdirectory');
+    expect(screen.getByLabelText(/Select a folder/)).toHaveAttribute('webkitdirectory');
   });
 
   it('chooses files, not a folder, by default', () => {
     render(
-      <FilePicker label="Choose films" onPickMany={vi.fn()}>
+      <FilePicker label="Select films" onPickMany={vi.fn()}>
         <span>Choose</span>
       </FilePicker>,
     );
 
-    expect(screen.getByLabelText(/Choose films/)).not.toHaveAttribute('webkitdirectory');
+    expect(screen.getByLabelText(/Select films/)).not.toHaveAttribute('webkitdirectory');
   });
 
   it('says nothing when nothing was chosen', () => {
     const onPickMany = vi.fn();
 
     render(
-      <FilePicker label="Choose films" onPickMany={onPickMany}>
+      <FilePicker label="Select films" onPickMany={onPickMany}>
         <span>Choose</span>
       </FilePicker>,
     );
 
-    fireEvent.change(screen.getByLabelText(/Choose films/), { target: { files: [] } });
+    fireEvent.change(screen.getByLabelText(/Select films/), { target: { files: [] } });
 
     expect(onPickMany).not.toHaveBeenCalled();
   });

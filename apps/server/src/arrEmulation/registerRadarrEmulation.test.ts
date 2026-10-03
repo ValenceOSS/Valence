@@ -122,7 +122,7 @@ describe('what the Test button reads', () => {
       const profiles = await (await ask(path)).json();
 
       expect(profiles).toEqual([
-        expect.objectContaining({ id: 1, name: 'Whatever the library uses' }),
+        expect.objectContaining({ id: 1, name: 'Library default' }),
         expect.objectContaining({ id: arrIdOf(HD.id), name: 'HD-1080p' }),
       ]);
     }
@@ -249,12 +249,12 @@ describe('adding a film', () => {
   it('says why where Valence would not ask for it', async () => {
     const { ask } = build({
       ask: () =>
-        Promise.resolve({ kind: 'refused', status: 403, message: 'Choose the account first.' }),
+        Promise.resolve({ kind: 'refused', status: 403, message: 'Select the account first.' }),
     });
     const response = await ask('/movie', 'POST', SEERR_ADD_MOVIE);
 
     expect(response.status).toBe(403);
-    expect(await response.json()).toEqual({ message: 'Choose the account first.' });
+    expect(await response.json()).toEqual({ message: 'Select the account first.' });
   });
 
   it('turns away a body with no TMDB id', async () => {

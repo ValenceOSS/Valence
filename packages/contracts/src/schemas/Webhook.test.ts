@@ -517,7 +517,7 @@ describe('WebhookPayloadSchema, where somebody came from', () => {
         identifier: 'ada@example.com',
         deviceLabel: 'Chrome on macOS',
         address: '192.168.1.40',
-        reason: 'those details were not accepted.',
+        reason: 'those details weren’t accepted.',
       },
     });
 

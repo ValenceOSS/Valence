@@ -71,7 +71,7 @@ describe('SharesPanel', () => {
 
     renderInAnAddress(<SharesPanel />);
 
-    await user.click(await screen.findByRole('button', { name: /Handed out by/ }));
+    await user.click(await screen.findByRole('button', { name: /Created by/ }));
 
     const [, first] = screen.getAllByRole('row');
 
@@ -84,7 +84,7 @@ describe('SharesPanel', () => {
     renderInAnAddress(<SharesPanel />);
 
     expect(await screen.findByText('Live')).toBeInTheDocument();
-    expect(screen.getByText('Until it is withdrawn')).toBeInTheDocument();
+    expect(screen.getByText('Until revoked')).toBeInTheDocument();
   });
 
   it('warns that withdrawing tells whoever made the link, and names them', async () => {
@@ -94,10 +94,12 @@ describe('SharesPanel', () => {
 
     renderInAnAddress(<SharesPanel />);
 
-    await user.click(await screen.findByRole('button', { name: 'Withdraw the link to The Thing' }));
+    await user.click(
+      await screen.findByRole('button', { name: 'Revoke the share link for The Thing' }),
+    );
 
-    expect(await screen.findByText(/Ada’s link to The Thing/)).toBeInTheDocument();
-    expect(screen.getByText(/They will be told it was withdrawn/)).toBeInTheDocument();
+    expect(await screen.findByText(/Ada’s share link for The Thing/)).toBeInTheDocument();
+    expect(screen.getByText(/They’ll be told the link was revoked/)).toBeInTheDocument();
   });
 
   it('withdraws a link, and reads the list again once it has', async () => {
@@ -107,8 +109,10 @@ describe('SharesPanel', () => {
 
     renderInAnAddress(<SharesPanel />);
 
-    await user.click(await screen.findByRole('button', { name: 'Withdraw the link to The Thing' }));
-    await user.click(await screen.findByRole('button', { name: 'Withdraw it' }));
+    await user.click(
+      await screen.findByRole('button', { name: 'Revoke the share link for The Thing' }),
+    );
+    await user.click(await screen.findByRole('button', { name: 'Revoke link' }));
 
     await waitFor(() => {
       expect(revokeAnybodysShare).toHaveBeenCalledWith('share-1');
@@ -148,7 +152,7 @@ describe('SharesPanel', () => {
 
     renderInAnAddress(<SharesPanel />);
 
-    await user.click(await screen.findByRole('button', { name: /Standing/ }));
+    await user.click(await screen.findByRole('button', { name: /Status/ }));
 
     const [, first] = screen.getAllByRole('row');
 
@@ -162,11 +166,13 @@ describe('SharesPanel', () => {
 
     renderInAnAddress(<SharesPanel />);
 
-    await user.click(await screen.findByRole('button', { name: 'Withdraw the link to The Thing' }));
+    await user.click(
+      await screen.findByRole('button', { name: 'Revoke the share link for The Thing' }),
+    );
     await user.keyboard('{Escape}');
 
     await waitFor(() => {
-      expect(screen.queryByRole('button', { name: 'Withdraw it' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Revoke link' })).not.toBeInTheDocument();
     });
 
     expect(revokeAnybodysShare).not.toHaveBeenCalled();
@@ -177,9 +183,9 @@ describe('SharesPanel', () => {
 
     renderInAnAddress(<SharesPanel />);
 
-    expect(await screen.findByText('Withdrawn')).toBeInTheDocument();
+    expect(await screen.findByText('Revoked')).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Withdraw the link to The Thing' }),
+      screen.queryByRole('button', { name: 'Revoke the share link for The Thing' }),
     ).not.toBeInTheDocument();
   });
 
@@ -190,10 +196,12 @@ describe('SharesPanel', () => {
 
     renderInAnAddress(<SharesPanel />);
 
-    expect(await screen.findByText('Whoever opened it can still watch')).toBeInTheDocument();
+    expect(await screen.findByText('Anyone who opened it can still watch')).toBeInTheDocument();
 
-    await user.click(await screen.findByRole('button', { name: 'Withdraw the link to The Thing' }));
-    await user.click(await screen.findByRole('button', { name: 'Withdraw it' }));
+    await user.click(
+      await screen.findByRole('button', { name: 'Revoke the share link for The Thing' }),
+    );
+    await user.click(await screen.findByRole('button', { name: 'Revoke link' }));
 
     await waitFor(() => {
       expect(revokeAnybodysShare).toHaveBeenCalledWith('share-1');
@@ -203,12 +211,12 @@ describe('SharesPanel', () => {
   it('says plainly when nobody has handed anything out', async () => {
     renderInAnAddress(<SharesPanel />);
 
-    expect(await screen.findByText('Nobody has handed out a link.')).toBeInTheDocument();
+    expect(await screen.findByText('No share links have been created.')).toBeInTheDocument();
   });
 
   it('says nothing rather than an empty list while it is still reading', () => {
     renderInAnAddress(<SharesPanel />);
 
-    expect(screen.getByLabelText('Reading the links')).toBeInTheDocument();
+    expect(screen.getByLabelText('Loading share links')).toBeInTheDocument();
   });
 });

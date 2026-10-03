@@ -165,11 +165,11 @@ const MusicLibrary = () => {
 
       <div className="px-3">
         <TextField
-          label={say('screens.musicPage.musicLibrary.findInYourLibrary')}
+          label={say('screens.searchArea.everythingYouOwn')}
           isLabelHidden
           type="search"
           size="sm"
-          placeholder={say('screens.musicPage.musicLibrary.findInYourLibrary')}
+          placeholder={say('screens.searchArea.everythingYouOwn')}
           value={filter}
           onValueChange={setFilter}
         />

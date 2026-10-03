@@ -31,7 +31,7 @@ describe('renderEmail', () => {
     expect(html).toContain('Welcome, &lt;Ada&gt;');
     expect(html).toContain('Tom &amp; Jerry');
     expect(html).toContain('href="https://v.example/setup?a=1&amp;b=&quot;2&quot;"');
-    expect(html).toContain('If the button does not work');
+    expect(html).toContain('If the button doesn’t work');
     expect(html).not.toContain('<Ada>');
   });
 

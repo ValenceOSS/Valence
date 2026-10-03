@@ -108,7 +108,7 @@ describe('askWindowsForAPasskey', () => {
 
     await expect(askWindowsForAPasskey(WINDOW, OPTIONS, SERVER)).resolves.toEqual({
       kind: 'failed',
-      reason: 'This build cannot ask Windows for a passkey.',
+      reason: 'This build can’t use Windows passkeys.',
     });
   });
 });

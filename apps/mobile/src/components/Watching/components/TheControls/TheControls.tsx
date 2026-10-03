@@ -279,7 +279,7 @@ const TheControls = ({
         )}
 
         <Slider
-          label={say('common.seekThroughTitle', { title })}
+          label={say('common.moveThroughTitle', { title })}
           value={at}
           furthest={runsFor}
           buffered={buffered}

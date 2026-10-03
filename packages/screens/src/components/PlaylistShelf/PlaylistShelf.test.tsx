@@ -64,12 +64,12 @@ describe('PlaylistShelf', () => {
   });
 
   it('says whose somebody else’s playlist is', () => {
-    expect(describePlaylist(PLAYLIST)).toBe('By Sam · 1 thing');
-    expect(describePlaylist({ ...PLAYLIST, isMine: true, entryCount: 4 })).toBe('4 things');
+    expect(describePlaylist(PLAYLIST)).toBe('By Sam · 1 item');
+    expect(describePlaylist({ ...PLAYLIST, isMine: true, entryCount: 4 })).toBe('4 items');
   });
 
   it('says a shared playlist belongs to a removed profile once its owner is gone', () => {
-    expect(describePlaylist({ ...PLAYLIST, owner: null })).toBe('By a removed profile · 1 thing');
+    expect(describePlaylist({ ...PLAYLIST, owner: null })).toBe('By a removed profile · 1 item');
   });
 
   it('plays a playlist straight from the shelf, keeping its order where it matters', async () => {

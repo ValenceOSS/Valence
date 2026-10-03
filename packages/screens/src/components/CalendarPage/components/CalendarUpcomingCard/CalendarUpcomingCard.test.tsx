@@ -16,7 +16,7 @@ describe('CalendarUpcomingCard', () => {
   it('says nothing of who asked for something nobody asked for', () => {
     render(<CalendarUpcomingCard entry={aCalendarEntry()} myId="me" onOpen={vi.fn()} />);
 
-    expect(screen.queryByText(/Asked by/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Requested by/)).not.toBeInTheDocument();
   });
 
   it('names who asked for it', () => {
@@ -28,7 +28,7 @@ describe('CalendarUpcomingCard', () => {
       />,
     );
 
-    expect(screen.getByText('Asked by Sam')).toBeInTheDocument();
+    expect(screen.getByText('Requested by Sam')).toBeInTheDocument();
   });
 
   it('says a request of your own is yours rather than naming you', () => {
@@ -40,7 +40,7 @@ describe('CalendarUpcomingCard', () => {
       />,
     );
 
-    expect(screen.getByText('Asked by you')).toBeInTheDocument();
+    expect(screen.getByText('Requested by you')).toBeInTheDocument();
   });
 
   it('opens what the library has', async () => {

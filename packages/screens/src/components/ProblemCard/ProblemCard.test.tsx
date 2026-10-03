@@ -8,16 +8,14 @@ describe('ProblemCard', () => {
     render(
       <ProblemCard
         icon={CompassIcon}
-        headline="This page could not be found"
+        headline="Page not found"
         reason="It may have moved."
         actions={<button type="button">Go back</button>}
       />,
     );
 
     expect(screen.getByRole('alert')).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { name: 'This page could not be found' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
     expect(screen.getByText('It may have moved.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Go back' })).toBeInTheDocument();
   });

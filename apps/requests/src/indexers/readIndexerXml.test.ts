@@ -17,7 +17,7 @@ describe('readIndexerXml', () => {
   it('names a refused key', () => {
     expect(() =>
       readIndexerXml('<error code="100" description="Incorrect user credentials"/>'),
-    ).toThrow('The indexer refused the API key');
+    ).toThrow('The indexer rejected the API key');
   });
 
   it('passes on what any other error said', () => {
@@ -27,13 +27,15 @@ describe('readIndexerXml', () => {
   });
 
   it('still says something for an error that says nothing', () => {
-    expect(() => readIndexerXml('<error code="900"/>')).toThrow('The indexer said: error 900');
-    expect(() => readIndexerXml('<error/>')).toThrow('The indexer said: error without a code');
+    expect(() => readIndexerXml('<error code="900"/>')).toThrow('The indexer returned error 900');
+    expect(() => readIndexerXml('<error/>')).toThrow(
+      'The indexer returned an error without a code',
+    );
   });
 
   it('refuses an answer that is not XML', () => {
     expect(() => readIndexerXml('{"error":"nope"}')).toThrow(
-      'The indexer answered something that was not Torznab or Newznab',
+      'The indexer’s response wasn’t Torznab or Newznab',
     );
   });
 });

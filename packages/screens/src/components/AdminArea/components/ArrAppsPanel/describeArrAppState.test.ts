@@ -39,12 +39,12 @@ describe('describeArrAppState', () => {
       describeArrAppState({
         ...APP,
         isWorking: false,
-        lastProblem: { code: null, message: 'Radarr refused its API key', values: {} },
+        lastProblem: { code: null, message: 'Radarr rejected its API key', values: {} },
         lastProblemCode: 'ArrAppKeyRefused',
       }),
     ).toMatchObject({
       tone: 'danger',
-      detail: 'Radarr refused its API key',
+      detail: 'Radarr rejected its API key',
       help: 'https://docs.getvalence.app/install/requesting#a-connected-app-refuses-its-key',
     });
     expect(describeArrAppState({ ...APP, isWorking: false })).toMatchObject({

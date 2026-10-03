@@ -7,8 +7,6 @@ import { say } from '@ValenceI18n/say';
  * @returns "In time", or the nudge signed to two places.
  */
 const describeSubtitleOffset = (seconds: number): string =>
-  seconds === 0
-    ? say('client.playback.describeSubtitleOffset.inTime')
-    : `${seconds > 0 ? '+' : ''}${seconds.toFixed(2)}s`;
+  seconds === 0 ? say('common.inSync') : `${seconds > 0 ? '+' : ''}${seconds.toFixed(2)}s`;
 
 export { describeSubtitleOffset };

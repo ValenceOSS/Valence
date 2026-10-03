@@ -57,7 +57,7 @@ describe('TheBooks', () => {
       { wrapper: CacheScope },
     );
 
-    await userEvent.press(await drawn.findByRole('button', { name: 'Carry on reading Dune' }));
+    await userEvent.press(await drawn.findByRole('button', { name: 'Continue reading Dune' }));
     await userEvent.press(drawn.getByRole('button', { name: 'Emma' }));
 
     expect(onRead).toHaveBeenCalledWith(aBook().id);
@@ -98,7 +98,7 @@ describe('TheBooks', () => {
     );
 
     await userEvent.press(
-      await drawn.findByRole('button', { name: 'Carry on listening to Red Rising' }),
+      await drawn.findByRole('button', { name: 'Continue listening to Red Rising' }),
     );
 
     expect(drawn.getByText('Continue listening')).toBeTruthy();

@@ -274,19 +274,21 @@ describe('createIndexerService', () => {
   it('counts a failed test against an indexer, saying why', async () => {
     const { service, store } = aService(
       [anIndexer()],
-      aClient({ capabilities: new IndexerFailure(sayVerbatim('The indexer refused the API key')) }),
+      aClient({
+        capabilities: new IndexerFailure(sayVerbatim('The indexer rejected the API key')),
+      }),
     );
 
     expect(await service.test(anIndexer().id)).toEqual({
       isWorking: false,
-      problem: 'The indexer refused the API key',
+      problem: 'The indexer rejected the API key',
       problemCode: null,
       capabilities: null,
       captcha: null,
     });
     expect(await store.find(anIndexer().id)).toMatchObject({
       failures: 1,
-      lastProblem: 'The indexer refused the API key',
+      lastProblem: 'The indexer rejected the API key',
       lastProblemCode: null,
       lastFailedAt: NOW.toISOString(),
     });
@@ -320,7 +322,9 @@ describe('createIndexerService', () => {
   it('says something even for a failure it did not expect', async () => {
     const { service } = aService([anIndexer()], aClient({ capabilities: new Error('boom') }));
 
-    expect((await service.test(anIndexer().id))?.problem).toEqual('The indexer could not be asked');
+    expect((await service.test(anIndexer().id))?.problem).toEqual(
+      'Couldn’t connect to the indexer',
+    );
   });
 
   it('tries an indexer before it is kept, keeping nothing', async () => {
@@ -449,7 +453,7 @@ describe('createIndexerService', () => {
       aClient({
         search: (indexer) => {
           if (indexer.id === SECOND) {
-            throw new IndexerFailure(sayVerbatim('The indexer did not answer within 30 seconds'));
+            throw new IndexerFailure(sayVerbatim('The indexer didn’t respond within 30 seconds'));
           }
 
           return [aRelease(indexer, 'Dune')];
@@ -461,7 +465,7 @@ describe('createIndexerService', () => {
 
     expect(outcome.releases).toHaveLength(1);
     expect(outcome.indexers.find((one) => one.indexerId === SECOND)?.problem).toEqual(
-      'The indexer did not answer within 30 seconds',
+      'The indexer didn’t respond within 30 seconds',
     );
     expect((await store.find(SECOND))?.failures).toBe(1);
   });
@@ -477,7 +481,7 @@ describe('createIndexerService', () => {
     );
 
     expect((await service.search({ query: 'x' })).indexers[0]?.problem).toEqual(
-      'The indexer could not be asked',
+      'Couldn’t connect to the indexer',
     );
   });
 
@@ -485,7 +489,7 @@ describe('createIndexerService', () => {
     const { service, store } = aService(
       [anIndexer({ failures: 4 })],
       aClient({
-        capabilities: new IndexerFailure(sayVerbatim('The indexer could not be reached')),
+        capabilities: new IndexerFailure(sayVerbatim('Couldn’t connect to the indexer')),
       }),
     );
 
@@ -494,7 +498,7 @@ describe('createIndexerService', () => {
     expect(await store.find(anIndexer().id)).toMatchObject({
       isEnabled: false,
       failures: 5,
-      turnedOffBecause: 'Turned off after 5 failures in a row: The indexer could not be reached',
+      turnedOffBecause: 'Turned off after 5 failures in a row: Couldn’t connect to the indexer',
     });
   });
 
@@ -604,10 +608,10 @@ search:
       const { service } = withDefinitions();
 
       expect(await service.add({ ...A_DRAFT, definitionId: 'nope' })).toEqual({
-        refused: 'There is no definition named nope in the catalogue',
+        refused: 'No definition named nope in the catalogue',
       });
       expect(await service.add({ ...A_DRAFT, definitionId: null })).toEqual({
-        refused: 'The indexer names no definition from the catalogue',
+        refused: 'The indexer has no definition selected',
       });
     });
 
@@ -689,7 +693,7 @@ search:
 
       expect(await service.test(kept().id)).toEqual({
         isWorking: false,
-        problem: 'Type the characters in the picture to log in',
+        problem: 'Enter the characters in the image to log in',
         problemCode: null,
         capabilities: null,
         captcha: { image: 'data:image/png;base64,AQID' },
@@ -717,7 +721,7 @@ search:
 
       expect(await service.tryDraft({ ...A_DRAFT, definitionId: 'nope' })).toEqual({
         isWorking: false,
-        problem: 'There is no definition named nope in the catalogue',
+        problem: 'No definition named nope in the catalogue',
         problemCode: null,
         capabilities: null,
         captcha: null,

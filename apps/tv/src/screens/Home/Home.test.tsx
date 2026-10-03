@@ -137,7 +137,7 @@ describe('Home', () => {
 
     const drawn = await drawHome();
 
-    expect(drawn.queryByText('There is nothing to watch here yet.')).toBeNull();
+    expect(drawn.queryByText('Nothing to watch yet.')).toBeNull();
     expect(drawn.queryByText(/Featuring/)).toBeNull();
   });
 
@@ -146,7 +146,7 @@ describe('Home', () => {
 
     const drawn = await drawHome();
 
-    expect(drawn.getByText('There is nothing to watch here yet.')).toBeTruthy();
+    expect(drawn.getByText('Nothing to watch yet.')).toBeTruthy();
   });
 
   it('still shelves what this viewer kept where the other shelves came back empty', async () => {
@@ -154,7 +154,7 @@ describe('Home', () => {
 
     const drawn = await drawHome({ favourites: [DUNE.id] });
 
-    expect(drawn.queryByText('There is nothing to watch here yet.')).toBeNull();
+    expect(drawn.queryByText('Nothing to watch yet.')).toBeNull();
     expect(await drawn.findByText('Favourites')).toBeTruthy();
   });
 

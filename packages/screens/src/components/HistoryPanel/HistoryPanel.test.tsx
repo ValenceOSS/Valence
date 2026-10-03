@@ -136,7 +136,7 @@ describe('a viewer’s history', () => {
   it('lets a viewer forget one thing', async () => {
     renderInAnAddress(<HistoryPanel now={NOW} />);
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Forget Arrival' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Remove Arrival' }));
 
     expect(forgetOneMock).toHaveBeenCalledWith('viewing-1');
 
@@ -150,7 +150,7 @@ describe('a viewer’s history', () => {
 
     renderInAnAddress(<HistoryPanel now={NOW} />);
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Forget Arrival' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Remove Arrival' }));
 
     expect(await screen.findByText('Arrival')).toBeInTheDocument();
   });
@@ -166,7 +166,7 @@ describe('a viewer’s history', () => {
 
     await screen.findByText('Arrival');
 
-    await userEvent.click(screen.getByRole('button', { name: /Forget everything/ }));
+    await userEvent.click(screen.getByRole('button', { name: /Clear all history/ }));
 
     expect(forgetAllMock).toHaveBeenCalled();
     expect(await screen.findByText(/Nothing yet/)).toBeInTheDocument();
@@ -205,7 +205,7 @@ describe('a viewer’s history', () => {
   it('says viewings are forgotten eventually, where somebody will read it', async () => {
     renderInAnAddress(<HistoryPanel now={NOW} />);
 
-    expect(await screen.findByText(/forgotten automatically after a year/)).toBeInTheDocument();
+    expect(await screen.findByText(/deleted automatically after one year/)).toBeInTheDocument();
   });
 
   it('lists what was read beside what was watched, most recent first', async () => {
@@ -243,7 +243,7 @@ describe('a viewer’s history', () => {
     renderInAnAddress(<HistoryPanel now={NOW} />);
 
     await userEvent.click(
-      await screen.findByRole('button', { name: 'Forget Pride and Prejudice' }),
+      await screen.findByRole('button', { name: 'Remove Pride and Prejudice' }),
     );
 
     await waitFor(() => {
@@ -257,7 +257,7 @@ describe('a viewer’s history', () => {
 
     renderInAnAddress(<HistoryPanel now={NOW} />);
 
-    await userEvent.click(await screen.findByRole('button', { name: /Forget everything/ }));
+    await userEvent.click(await screen.findByRole('button', { name: /Clear all history/ }));
 
     await waitFor(() => {
       expect(forgetReadingMock).toHaveBeenCalledWith();

@@ -22,16 +22,14 @@ describe('describeAcceleration', () => {
   });
 
   it('says what a choice the machine cannot keep will actually do', () => {
-    expect(describeAcceleration('nvenc', ['videotoolbox']).detail).toContain(
-      'fall back to software',
-    );
+    expect(describeAcceleration('nvenc', ['videotoolbox']).detail).toContain('run in software');
   });
 
   it('marks forced software as costly rather than as broken', () => {
     const shown = describeAcceleration('none', ['videotoolbox']);
 
     expect(shown.tone).toBe('warning');
-    expect(shown.detail).toContain('done by the processor');
+    expect(shown.detail).toContain('runs on the CPU');
   });
 
   it('leaves software chosen by nobody quiet, since there is nothing to reconsider', () => {

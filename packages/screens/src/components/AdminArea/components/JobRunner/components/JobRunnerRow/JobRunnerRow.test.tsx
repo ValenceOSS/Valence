@@ -75,7 +75,7 @@ describe('JobRunnerRow', () => {
   it('says a job that cannot be scheduled is run by hand only', () => {
     draw({ definition: { ...SCAN, schedulable: false } });
 
-    expect(screen.getByText('Run by hand only')).toBeInTheDocument();
+    expect(screen.getByText('Manual only')).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'Edit the schedule for Scan for changes' }),
     ).not.toBeInTheDocument();

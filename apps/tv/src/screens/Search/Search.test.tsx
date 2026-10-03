@@ -253,7 +253,7 @@ describe('Search', () => {
 
     await userEvent.type(drawn.getByPlaceholderText('Films and shows'), 'zzz');
 
-    expect(await drawn.findByText('Nothing called “zzz” here.')).toBeTruthy();
+    expect(await drawn.findByText('No results for “zzz”.')).toBeTruthy();
   });
 
   it('plays a song that was found', async () => {

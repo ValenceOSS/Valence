@@ -145,7 +145,7 @@ describe('JobRunner', () => {
         definitions={[
           {
             kind: 'library.clearParts',
-            label: sayVerbatim('Clear and fetch again'),
+            label: sayVerbatim('Clear and refresh'),
             description: sayVerbatim('Erases the chosen parts of a library.'),
             needsLibrary: true,
             destructive: true,
@@ -166,11 +166,11 @@ describe('JobRunner', () => {
     );
 
     expect(
-      screen.queryByRole('button', { name: 'Edit the schedule for Clear and fetch again' }),
+      screen.queryByRole('button', { name: 'Edit the schedule for Clear and refresh' }),
     ).not.toBeInTheDocument();
-    expect(screen.getByText('Run by hand only')).toBeInTheDocument();
+    expect(screen.getByText('Manual only')).toBeInTheDocument();
 
-    await press(user, 'Run Clear and fetch again');
+    await press(user, 'Run Clear and refresh');
     await user.click(screen.getByRole('checkbox', { name: /^Cast/ }));
     await user.click(screen.getByRole('button', { name: 'Clear 1 part' }));
 
@@ -186,8 +186,8 @@ describe('JobRunner', () => {
         definitions={[
           {
             kind: 'history.prune',
-            label: sayVerbatim('Prune old viewing history'),
-            description: sayVerbatim('Forgets viewings older than a year.'),
+            label: sayVerbatim('Prune old watch history'),
+            description: sayVerbatim('Deletes watch history older than a year.'),
             needsLibrary: false,
             destructive: true,
             takesParts: false,
@@ -206,11 +206,11 @@ describe('JobRunner', () => {
       />,
     );
 
-    await press(user, 'Run Prune old viewing history');
+    await press(user, 'Run Prune old watch history');
 
     expect(onRun).not.toHaveBeenCalled();
 
-    await user.click(screen.getByRole('button', { name: 'Prune old viewing history' }));
+    await user.click(screen.getByRole('button', { name: 'Prune old watch history' }));
 
     expect(onRun).toHaveBeenCalledWith('history.prune');
   });
@@ -425,7 +425,7 @@ describe('JobRunner', () => {
 
     expect(onStop).not.toHaveBeenCalled();
 
-    await user.click(await screen.findByRole('button', { name: 'Stop it' }));
+    await user.click(await screen.findByRole('button', { name: 'Stop job' }));
 
     expect(onStop).toHaveBeenCalledWith('library.scan');
   });
@@ -799,7 +799,7 @@ describe('JobRunner', () => {
 
     await user.click(screen.getByRole('button', { name: /is doing/ }));
 
-    expect(await screen.findByText('Nothing in the queue is tied to it yet.')).toBeInTheDocument();
+    expect(await screen.findByText('Nothing is queued for it yet.')).toBeInTheDocument();
     expect(screen.queryByText('Unrelated.mkv')).not.toBeInTheDocument();
   });
 

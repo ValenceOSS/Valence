@@ -50,7 +50,7 @@ describe('ConnectToServer', () => {
     await world.actor.click(world.connect());
 
     expect(
-      await screen.findByText(/nothing answered at https:\/\/valence\.example\.com/i),
+      await screen.findByText(/Couldn’t connect to https:\/\/valence\.example\.com/i),
     ).toBeInTheDocument();
     expect(world.onConnected).not.toHaveBeenCalled();
   });
@@ -62,7 +62,7 @@ describe('ConnectToServer', () => {
     await world.actor.type(world.field(), 'not a server');
     await world.actor.click(world.connect());
 
-    expect(await screen.findByText(/does not look like a web address/i)).toBeInTheDocument();
+    expect(await screen.findByText(/isn’t a valid web address/i)).toBeInTheDocument();
     expect(reach).not.toHaveBeenCalled();
   });
 
@@ -88,7 +88,7 @@ describe('ConnectToServer', () => {
     await world.actor.type(world.field(), 'valence.example.com');
     await world.actor.click(world.connect());
 
-    expect(await screen.findByText(/looking for it/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Looking for it/i)).toBeInTheDocument();
 
     answer(true);
 
@@ -109,7 +109,7 @@ describe('coming back because the server stopped answering', () => {
     );
 
     expect(
-      screen.getByText(/Valence at https:\/\/valence\.example\.com could not be reached/),
+      screen.getByText(/Couldn’t reach Valence at https:\/\/valence\.example\.com/),
     ).toBeInTheDocument();
   });
 
@@ -129,7 +129,7 @@ describe('coming back because the server stopped answering', () => {
     render(<ConnectToServer onConnected={vi.fn()} />);
 
     expect(screen.getByLabelText('Server address')).toHaveValue('');
-    expect(screen.queryByText(/could not be reached/)).toBeNull();
+    expect(screen.queryByText(/Couldn’t reach/)).toBeNull();
   });
 });
 
@@ -143,7 +143,9 @@ describe('the way in', () => {
   it('asks its question as a heading, at the size the profile gate asks its own', () => {
     render(<ConnectToServer onConnected={vi.fn()} />);
 
-    expect(screen.getByRole('heading', { name: 'Which Valence is yours?' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Which Valence server do you use?' }),
+    ).toBeInTheDocument();
   });
 });
 
@@ -271,7 +273,7 @@ describe('what it was pointed at before', () => {
     await userEvent.click(screen.getByRole('button', { name: 'demo.getvalence.app' }));
 
     expect(
-      await screen.findByText(/nothing answered at https:\/\/demo\.getvalence\.app/i),
+      await screen.findByText(/Couldn’t connect to https:\/\/demo\.getvalence\.app/i),
     ).toBeInTheDocument();
     expect(screen.getByLabelText('Server address')).toHaveValue('https://demo.getvalence.app');
     expect(onConnected).not.toHaveBeenCalled();

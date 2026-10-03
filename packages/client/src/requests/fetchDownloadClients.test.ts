@@ -94,11 +94,11 @@ describe('fetchDownloadClients', () => {
   });
 
   it('says why a client was not kept', async () => {
-    answering({ error: 'That is not a download client.' }, 400);
+    answering({ error: 'That isn’t a valid download client.' }, 400);
 
     expect(await addDownloadClient(A_DRAFT)).toEqual({
       value: null,
-      refusal: { message: 'That is not a download client.' },
+      refusal: { message: 'That isn’t a valid download client.' },
     });
   });
 });

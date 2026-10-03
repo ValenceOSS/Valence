@@ -78,7 +78,7 @@ const PluginSurfaceView = ({ place, className }: PluginSurfaceViewProps) => {
       <ConfirmDialog
         title={say('common.areYouSure')}
         detail={question ?? ''}
-        confirmLabel={say('screens.pluginSurfaceView.goAhead')}
+        confirmLabel={say('common.continue')}
         isOpen={question !== null}
         onClose={() => {
           answer(false);

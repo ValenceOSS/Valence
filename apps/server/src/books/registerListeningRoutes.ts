@@ -60,7 +60,7 @@ const registerListeningRoutes = (
       : null;
 
     if (file === null || !isAudiobookFormat(file.format)) {
-      return context.json(refuse('error.listening.noSuchTrackToListenTo'), 404);
+      return context.json(refuse('error.common.noSuchTrack'), 404);
     }
 
     const streamed = await streamFile(file.path, context.req.header('range') ?? null);

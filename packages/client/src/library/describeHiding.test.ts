@@ -11,12 +11,12 @@ describe('describeHiding', () => {
   it('says a programme goes whole', () => {
     expect(
       describeHiding({ kind: 'series', subjectId: 's-1', title: 'Severance' }, false).detail,
-    ).toMatch(/^Every episode of it disappears/u);
+    ).toMatch(/^Every episode is hidden/u);
   });
 
   it('says only you lose it, where the account is shared', () => {
     expect(
       describeHiding({ kind: 'item', subjectId: 'm-1', title: 'Arrival' }, true).detail,
-    ).toContain('for you and for nobody else on this account');
+    ).toContain('This only affects you, not anyone else on this account');
   });
 });

@@ -97,7 +97,7 @@ const asPayload = (event: PresenceControl): JsonValue => {
   return { kind: event.kind, reason: event.reason };
 };
 
-const UNNAMED = say('server.realtime.realtimeHandler.someone');
+const UNNAMED = say('common.somebody');
 
 const readMessage = (raw: string) => {
   try {

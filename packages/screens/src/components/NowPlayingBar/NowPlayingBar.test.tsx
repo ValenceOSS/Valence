@@ -159,7 +159,7 @@ describe('NowPlayingBar', () => {
     renderInAnAddress(<NowPlayingBar player={player} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Shuffle' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Repeat everything' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Repeat all' }));
 
     expect(player.cycleShuffle).toHaveBeenCalled();
     expect(player.cycleRepeat).toHaveBeenCalled();
@@ -171,7 +171,7 @@ describe('NowPlayingBar', () => {
     renderInAnAddress(<NowPlayingBar player={player} />);
 
     expect(screen.getByRole('button', { name: 'Shuffle' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Repeat everything' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Repeat all' })).toBeDisabled();
   });
 
   it('likes the song playing', async () => {
@@ -255,7 +255,7 @@ describe('NowPlayingBar', () => {
       expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
       expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
       expect(screen.getByRole('button', { name: 'Pause' })).toBeDisabled();
-      expect(screen.getByRole('slider', { name: 'Where the song is' })).toHaveAttribute(
+      expect(screen.getByRole('slider', { name: 'Song position' })).toHaveAttribute(
         'data-disabled',
       );
     });

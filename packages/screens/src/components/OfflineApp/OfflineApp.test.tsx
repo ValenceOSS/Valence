@@ -74,13 +74,13 @@ describe('OfflineApp', () => {
 
     render(<OfflineApp title="Valence" />);
 
-    expect(screen.getByText(/Valence cannot be reached/)).toBeInTheDocument();
+    expect(screen.getByText(/Can’t reach Valence/)).toBeInTheDocument();
   });
 
   it('says it was asked for when the server is answering fine', () => {
     render(<OfflineApp title="Valence" />);
 
-    expect(screen.getByText(/offline because you asked/)).toBeInTheDocument();
+    expect(screen.getByText(/You turned on offline mode/)).toBeInTheDocument();
   });
 
   it('offers no way back while there is nothing to go back to', () => {

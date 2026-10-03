@@ -14,7 +14,7 @@ const ACCOUNT_PANELS = [
   { id: 'devices', label: say('common.devices'), icon: SmartphoneFilled },
   { id: 'history', label: say('common.history'), icon: ClockFilled },
   { id: 'hidden', label: say('common.hidden'), icon: EyeOffFilled },
-  { id: 'shares', label: say('phone.theAccount.accountPanels.shares'), icon: LinkFilled },
+  { id: 'shares', label: say('common.sharedLinks'), icon: LinkFilled },
 ] as const;
 
 export { ACCOUNT_PANELS };

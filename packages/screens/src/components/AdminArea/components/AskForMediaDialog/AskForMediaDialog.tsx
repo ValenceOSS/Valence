@@ -58,7 +58,7 @@ const KINDS: readonly { id: MediaRequestKind; label: string; searchFor: string }
   {
     id: 'album',
     label: say('screens.adminArea.askForMediaDialog.anAlbum2'),
-    searchFor: say('screens.adminArea.askForMediaDialog.searchForAnAlbum'),
+    searchFor: say('screens.adminArea.searchForARecord'),
   },
 ];
 
@@ -281,9 +281,9 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
           />
         ) : chosen === null ? (
           <>
-            <FormField label={say('screens.adminArea.askForMediaDialog.what')}>
+            <FormField label={say('screens.adminArea.addLibraryDialog.type')}>
               <SegmentedRow
-                label={say('screens.adminArea.askForMediaDialog.what')}
+                label={say('screens.adminArea.addLibraryDialog.type')}
                 size="sm"
                 items={KINDS}
                 value={kind}
@@ -311,10 +311,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
               }}
             >
               <TextField
-                label={
-                  KINDS.find((one) => one.id === kind)?.searchFor ??
-                  say('screens.adminArea.askForMediaDialog.searchForIt')
-                }
+                label={KINDS.find((one) => one.id === kind)?.searchFor ?? say('common.search')}
                 value={query}
                 onValueChange={setQuery}
                 className="min-w-0 flex-1"
@@ -442,7 +439,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
                   onChoose: findReleases,
                 }
               : {
-                  label: say('screens.adminArea.askForMediaDialog.requestIt'),
+                  label: say('common.request'),
                   isDisabled: !isReady,
                   isLoading: isAsking,
                   onChoose: () => {

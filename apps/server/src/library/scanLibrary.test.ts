@@ -257,7 +257,7 @@ describe('a library whose files have gone from under it', () => {
 
     await run();
 
-    expect(problems.join(' ')).toContain('not mounted');
+    expect(problems.join(' ')).toContain('unmounted');
   });
 
   it('probes again where nobody recorded the colour depth', async () => {
@@ -790,7 +790,7 @@ describe('scanLibrary', () => {
 
     await run();
 
-    expect(problems.join(' ')).toContain('catalogue did not answer');
+    expect(problems.join(' ')).toContain('catalogue didn’t respond');
   });
 
   it('still writes the answer when the catalogue is the one giving it', async () => {
@@ -1318,7 +1318,7 @@ describe('a media service that goes away mid-scan', () => {
       onProblem: (_path, reason) => problems.push(reason.message),
     }).run();
 
-    expect(problems.some((reason) => reason.includes('media service stopped answering'))).toBe(
+    expect(problems.some((reason) => reason.includes('media service stopped responding'))).toBe(
       true,
     );
   });

@@ -210,7 +210,7 @@ describe('PageReader', () => {
   it('remembers how somebody likes to read, on the device', async () => {
     draw();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Show panel' }));
     await userEvent.click(screen.getByRole('button', { name: 'Two' }));
 
     expect(held.get('valence.reader')).toContain('"isDouble":true');
@@ -231,7 +231,7 @@ describe('PageReader', () => {
   it('offers a gap between the two pages of a spread only while two are showing', async () => {
     draw();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Show panel' }));
 
     expect(screen.queryByRole('slider', { name: 'Gap between pages' })).not.toBeInTheDocument();
 
@@ -243,7 +243,7 @@ describe('PageReader', () => {
   it('remembers whether turning a page is animated', async () => {
     draw();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Show panel' }));
     await userEvent.click(screen.getByRole('switch', { name: 'Animate turning pages' }));
 
     expect(held.get('valence.reader')).toContain('"isAnimated":false');
@@ -252,7 +252,7 @@ describe('PageReader', () => {
   it('lays the chapter down as one strip to scroll, and remembers that', async () => {
     draw();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Show panel' }));
     await userEvent.click(screen.getByRole('button', { name: 'Scroll' }));
 
     expect(screen.getByRole('img', { name: 'Page 1' })).toBeInTheDocument();
@@ -265,7 +265,7 @@ describe('PageReader', () => {
 
     draw({ onChapterChange });
 
-    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Show panel' }));
     await userEvent.click(screen.getByRole('button', { name: 'Scroll' }));
     const strip = screen
       .getByRole('img', { name: 'Page 1' })
@@ -283,7 +283,7 @@ describe('PageReader', () => {
   it('says in the panel which book, which chapter and which page', async () => {
     draw();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Show panel' }));
 
     const panel = screen.getByRole('complementary', { name: 'Reading' });
 
@@ -297,7 +297,7 @@ describe('PageReader', () => {
 
     draw({ onChapterChange });
 
-    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Show panel' }));
     await userEvent.click(screen.getByRole('button', { name: 'Next chapter' }));
 
     expect(onChapterChange).toHaveBeenCalledWith('two');
@@ -306,20 +306,22 @@ describe('PageReader', () => {
   it('offers the cover on its own only when pages are shown two at a time', async () => {
     draw();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Show panel' }));
 
-    expect(screen.queryByRole('switch', { name: 'Cover on its own' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('switch', { name: 'Show cover as a single page' }),
+    ).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Two' }));
 
-    expect(screen.getByRole('switch', { name: 'Cover on its own' })).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'Show cover as a single page' })).toBeInTheDocument();
   });
 
   it('keeps the panel open next time where somebody pinned it', async () => {
     draw();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Keep the panel beside the page' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Show panel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Pin panel' }));
 
     expect(held.get('valence.reader.panel')).toBe('pinned');
   });

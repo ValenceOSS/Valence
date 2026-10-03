@@ -49,7 +49,7 @@ describe('WebhooksPanel', () => {
   it('says what this is for when nothing is set up', () => {
     draw();
 
-    expect(screen.getByText(/Nothing is being told about anything/)).toBeInTheDocument();
+    expect(screen.getByText(/No webhooks yet/)).toBeInTheDocument();
   });
 
   it('names a subscription and where it points', () => {
@@ -71,13 +71,13 @@ describe('WebhooksPanel', () => {
         aWebhook({
           lastAttemptAt: '2026-08-14T20:00:00.000Z',
           lastStatus: 500,
-          lastError: 'The receiver answered 500.',
+          lastError: 'The receiving server returned 500.',
         }),
       ],
     });
 
     expect(screen.getByText(/Failing since/)).toBeInTheDocument();
-    expect(screen.getByText('The receiver answered 500.')).toBeInTheDocument();
+    expect(screen.getByText('The receiving server returned 500.')).toBeInTheDocument();
   });
 
   it('turns one off', async () => {
@@ -110,7 +110,7 @@ describe('WebhooksPanel', () => {
 
     await user.click(screen.getByRole('button', { name: 'Delete' }));
 
-    expect(screen.getByText(/the signing secret is lost/)).toBeInTheDocument();
+    expect(screen.getByText(/the signing secret is deleted/)).toBeInTheDocument();
     expect(onDelete).not.toHaveBeenCalled();
   });
 
@@ -163,7 +163,7 @@ describe('WebhooksPanel', () => {
       deliveries: [],
     });
 
-    expect(screen.getAllByText('Nothing has been sent to this yet.')).toHaveLength(1);
+    expect(screen.getAllByText('Nothing has been sent to this webhook yet.')).toHaveLength(1);
   });
 
   it('shows a new secret once, and says it will not be shown again', () => {
@@ -172,7 +172,7 @@ describe('WebhooksPanel', () => {
     draw({ created });
 
     expect(screen.getByText('whsec_abc123')).toBeInTheDocument();
-    expect(screen.getByText(/only time it is shown/)).toBeInTheDocument();
+    expect(screen.getByText(/only time it’s shown/)).toBeInTheDocument();
   });
 
   it('lets somebody put the secret away once they have copied it', async () => {
@@ -180,7 +180,7 @@ describe('WebhooksPanel', () => {
     const created: CreatedWebhook = { ...aWebhook(), secret: 'whsec_abc123' };
     const { onDismissCreated } = draw({ created });
 
-    await user.click(screen.getByRole('button', { name: 'I have copied it' }));
+    await user.click(screen.getByRole('button', { name: 'I’ve copied it' }));
 
     expect(onDismissCreated).toHaveBeenCalled();
   });

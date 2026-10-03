@@ -4,9 +4,9 @@ import { EmbeddedVideo } from './EmbeddedVideo';
 
 describe('EmbeddedVideo', () => {
   it('frames what it was pointed at, named for anybody who cannot see it', () => {
-    render(<EmbeddedVideo label="Arrival, the trailer" src="https://elsewhere/embed/abc" />);
+    render(<EmbeddedVideo label="Arrival trailer" src="https://elsewhere/embed/abc" />);
 
-    const framed = screen.getByTitle('Arrival, the trailer');
+    const framed = screen.getByTitle('Arrival trailer');
 
     expect(framed).toHaveAttribute('src', 'https://elsewhere/embed/abc');
   });

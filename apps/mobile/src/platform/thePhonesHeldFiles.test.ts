@@ -123,7 +123,7 @@ describe('thePhonesHeldFiles', () => {
 
     expect((await held.all())[0]).toMatchObject({
       state: 'failed',
-      failure: 'The file arrived incomplete.',
+      failure: 'The download is incomplete.',
     });
   });
 

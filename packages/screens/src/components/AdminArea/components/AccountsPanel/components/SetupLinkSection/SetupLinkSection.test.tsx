@@ -67,7 +67,7 @@ describe('SetupLinkSection', () => {
     draw({ account: account() });
 
     expect(screen.getByText(/Waiting for Ada to set up/)).toBeInTheDocument();
-    expect(screen.getByText(/keeps no copy/)).toBeInTheDocument();
+    expect(screen.getByText(/doesn’t keep a copy/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /New link/ })).toBeInTheDocument();
   });
 
@@ -93,8 +93,8 @@ describe('SetupLinkSection', () => {
   it('offers an account in use a link to choose a new password', () => {
     draw({ account: account({ canSignIn: true, setup: { state: 'none', expiresAt: null } }) });
 
-    expect(screen.getByText(/choose a new password or a passkey/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Make a setup link/ })).toBeInTheDocument();
+    expect(screen.getByText(/choose a new password or passkey/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Create setup link/ })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Revoke link' })).not.toBeInTheDocument();
   });
 

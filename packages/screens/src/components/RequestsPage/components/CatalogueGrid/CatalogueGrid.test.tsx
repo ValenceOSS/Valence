@@ -68,7 +68,7 @@ describe('CatalogueGrid', () => {
 
     renderInAnAddress(<CatalogueGrid browsing={BROWSING} onAsk={vi.fn()} />);
 
-    expect(await screen.findByText('Nothing to ask for here')).toBeInTheDocument();
+    expect(await screen.findByText('Nothing to request here')).toBeInTheDocument();
   });
 
   it('says so where the catalogue could not be read', async () => {
@@ -147,6 +147,6 @@ describe('CatalogueGrid', () => {
 
     renderInAnAddress(<CatalogueGrid browsing={BROWSING} onAsk={vi.fn()} />);
 
-    expect(await screen.findByText('The catalogue listed nothing.')).toBeInTheDocument();
+    expect(await screen.findByText('The catalogue returned nothing.')).toBeInTheDocument();
   });
 });

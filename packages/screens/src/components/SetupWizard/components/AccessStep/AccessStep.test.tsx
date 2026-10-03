@@ -61,7 +61,7 @@ describe('AccessStep', () => {
   it('stops trusting an address, and will not make the account with none', async () => {
     render(<Held />);
 
-    await userEvent.click(screen.getByRole('button', { name: `Stop trusting ${DETECTED}` }));
+    await userEvent.click(screen.getByRole('button', { name: `Remove ${DETECTED}` }));
 
     expect(screen.getByText('Enter at least one origin.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create my account' })).toBeDisabled();
@@ -85,7 +85,7 @@ describe('AccessStep', () => {
 
     await userEvent.type(screen.getByLabelText('Add another address'), `${DETECTED}/{Enter}`);
 
-    expect(screen.getAllByRole('button', { name: `Stop trusting ${DETECTED}` })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: `Remove ${DETECTED}` })).toHaveLength(1);
   });
 
   it('says what is wrong with something that is not an address, until it is changed', async () => {
@@ -115,11 +115,9 @@ describe('AccessStep', () => {
   it('explains what secure cookies mean either way', async () => {
     render(<Held />);
 
-    expect(screen.getByText(/Cookies will not be marked secure/)).toBeInTheDocument();
+    expect(screen.getByText(/Cookies won’t be marked secure/)).toBeInTheDocument();
 
-    await userEvent.click(
-      screen.getByRole('switch', { name: 'This server is reached over HTTPS' }),
-    );
+    await userEvent.click(screen.getByRole('switch', { name: 'Valence is served over HTTPS' }));
 
     expect(screen.getByText(/Secure cookies will be used/)).toBeInTheDocument();
   });
@@ -127,19 +125,19 @@ describe('AccessStep', () => {
   it('warns that secure cookies stop signing in here over plain HTTP', async () => {
     render(<Held />);
 
-    expect(screen.queryByText('This browser reached Valence over plain HTTP')).toBeNull();
+    expect(screen.queryByText('This browser connected to Valence over plain HTTP')).toBeNull();
 
-    await userEvent.click(
-      screen.getByRole('switch', { name: 'This server is reached over HTTPS' }),
-    );
+    await userEvent.click(screen.getByRole('switch', { name: 'Valence is served over HTTPS' }));
 
-    expect(screen.getByText('This browser reached Valence over plain HTTP')).toBeInTheDocument();
+    expect(
+      screen.getByText('This browser connected to Valence over plain HTTP'),
+    ).toBeInTheDocument();
   });
 
   it('does not warn about plain HTTP to a browser that came in over HTTPS', () => {
     render(<Held cookieSecure detectedOrigin="https://valence.example.com" />);
 
-    expect(screen.queryByText('This browser reached Valence over plain HTTP')).toBeNull();
+    expect(screen.queryByText('This browser connected to Valence over plain HTTP')).toBeNull();
   });
 
   it('makes the account, and goes back, when asked', async () => {

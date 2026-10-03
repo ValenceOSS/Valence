@@ -54,7 +54,7 @@ describe('ReencodeReview', () => {
   it('says plainly that nothing has been discarded yet', () => {
     render(<ReencodeReview {...props} />);
 
-    expect(screen.getByText(/Nothing is discarded until you say so/)).toBeVisible();
+    expect(screen.getByText(/Nothing is deleted until you confirm/)).toBeVisible();
   });
 
   it('says what confirming would free, on the button that does it', () => {
@@ -68,7 +68,7 @@ describe('ReencodeReview', () => {
 
     render(<ReencodeReview {...props} onReject={onReject} />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Reject and put the original back' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Reject and restore the original' }));
 
     expect(onReject).toHaveBeenCalledWith('reencode-1');
   });
@@ -80,7 +80,7 @@ describe('ReencodeReview', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /Confirm and free/ }));
 
-    expect(screen.getByText(/nothing brings it back/)).toBeVisible();
+    expect(screen.getByText(/it’s gone for good/)).toBeVisible();
     expect(onConfirm).not.toHaveBeenCalled();
   });
 
@@ -90,7 +90,7 @@ describe('ReencodeReview', () => {
     render(<ReencodeReview {...props} onConfirm={onConfirm} />);
 
     await userEvent.click(screen.getByRole('button', { name: /Confirm and free/ }));
-    await userEvent.click(screen.getByRole('button', { name: /Dispose of it/ }));
+    await userEvent.click(screen.getByRole('button', { name: /Delete it/ }));
 
     expect(onConfirm).toHaveBeenCalledWith('reencode-1');
   });

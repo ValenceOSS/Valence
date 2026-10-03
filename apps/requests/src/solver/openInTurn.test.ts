@@ -43,7 +43,7 @@ describe('openInTurn', () => {
         }),
       1000,
     );
-    const failing = expect(stuck).rejects.toThrow('The browser did not open a tab in time');
+    const failing = expect(stuck).rejects.toThrow('The browser didn’t open a tab in time');
 
     await vi.advanceTimersByTimeAsync(1000);
     await failing;

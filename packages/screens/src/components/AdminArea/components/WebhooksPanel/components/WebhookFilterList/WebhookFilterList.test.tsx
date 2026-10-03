@@ -35,7 +35,7 @@ describe('WebhookFilterList', () => {
 
     expect(
       within(screen.getByRole('group', { name: 'Which accounts' })).getByRole('button', {
-        name: 'Everybody',
+        name: 'Everyone',
       }),
     ).toHaveAttribute('aria-pressed', 'true');
   });
@@ -77,7 +77,7 @@ describe('WebhookFilterList', () => {
 
     await user.click(
       within(screen.getByRole('group', { name: 'Which accounts' })).getByRole('button', {
-        name: 'Everybody',
+        name: 'Everyone',
       }),
     );
 
@@ -92,18 +92,18 @@ describe('WebhookFilterList', () => {
 
     await user.click(
       within(screen.getByRole('group', { name: 'Which accounts' })).getByRole('button', {
-        name: 'Everybody',
+        name: 'Everyone',
       }),
     );
     await user.click(
       within(screen.getByRole('group', { name: 'Which accounts' })).getByRole('button', {
-        name: 'Everybody',
+        name: 'Everyone',
       }),
     );
 
     expect(
       within(screen.getByRole('group', { name: 'Which accounts' })).getByRole('button', {
-        name: 'Everybody',
+        name: 'Everyone',
       }),
     ).toHaveAttribute('aria-pressed', 'true');
     expect(screen.queryByRole('switch')).not.toBeInTheDocument();

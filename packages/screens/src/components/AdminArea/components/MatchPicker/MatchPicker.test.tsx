@@ -123,11 +123,11 @@ describe('MatchPicker', () => {
 
     await user.click(screen.getByRole('button', { name: 'Search' }));
 
-    expect(await screen.findByText(/Nothing came back/)).toBeInTheDocument();
+    expect(await screen.findByText(/No results for that name/)).toBeInTheDocument();
   });
 
   it('shows why a correction failed, and stays open so it can be tried again', async () => {
-    correctMatchMock.mockResolvedValue({ problem: 'That is for administrators.' });
+    correctMatchMock.mockResolvedValue({ problem: 'Only administrators can do that.' });
 
     const onClose = vi.fn();
     const user = userEvent.setup();
@@ -149,7 +149,7 @@ describe('MatchPicker', () => {
     const user = userEvent.setup();
     render(<MatchPicker media={episode} onClose={vi.fn()} onCorrected={vi.fn()} />);
 
-    await user.click(screen.getByRole('button', { name: /Forget the correction/ }));
+    await user.click(screen.getByRole('button', { name: /Remove correction/ }));
 
     expect(forgetCorrectionMock).toHaveBeenCalledWith(episode.id);
   });
@@ -160,7 +160,7 @@ describe('MatchPicker', () => {
     const user = userEvent.setup();
     render(<MatchPicker media={episode} onClose={onClose} onCorrected={onCorrected} />);
 
-    await user.click(screen.getByRole('button', { name: /Forget the correction/ }));
+    await user.click(screen.getByRole('button', { name: /Remove correction/ }));
 
     await waitFor(() => {
       expect(onCorrected).toHaveBeenCalled();
@@ -181,9 +181,9 @@ describe('MatchPicker', () => {
       </>,
     );
 
-    await user.click(screen.getByRole('button', { name: /Forget the correction/ }));
+    await user.click(screen.getByRole('button', { name: /Remove correction/ }));
 
-    expect(await screen.findByText(/could not be put back/)).toBeInTheDocument();
+    expect(await screen.findByText(/Couldn’t restore that/)).toBeInTheDocument();
     expect(onClose).not.toHaveBeenCalled();
   });
 
@@ -191,7 +191,7 @@ describe('MatchPicker', () => {
     const user = userEvent.setup();
     render(<MatchPicker media={episode} onClose={vi.fn()} onCorrected={vi.fn()} />);
 
-    await user.click(screen.getByRole('button', { name: /Forget the correction/ }));
+    await user.click(screen.getByRole('button', { name: /Remove correction/ }));
 
     expect(searchCatalogueMock).not.toHaveBeenCalled();
   });

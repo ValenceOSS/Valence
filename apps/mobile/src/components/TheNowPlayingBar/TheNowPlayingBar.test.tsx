@@ -56,7 +56,7 @@ describe('TheNowPlayingBar', () => {
     expect(drawn.getByText('Red Rising')).toBeTruthy();
     expect(drawn.getByText('Pierce Brown')).toBeTruthy();
 
-    await userEvent.press(drawn.getByRole('button', { name: 'On 30 seconds' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Skip forward 30 seconds' }));
     await userEvent.press(drawn.getByRole('button', { name: 'Open the player' }));
 
     expect(mockFake.player.read().bookPositionSeconds).toBe(30);

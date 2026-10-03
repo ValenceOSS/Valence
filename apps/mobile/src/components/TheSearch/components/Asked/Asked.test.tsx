@@ -47,6 +47,6 @@ describe('Asked', () => {
 
     const drawn = await render(around(<Asked onAsk={jest.fn()} />));
 
-    expect(await drawn.findByText('Nothing asked for yet.')).toBeTruthy();
+    expect(await drawn.findByText('You haven’t requested anything yet.')).toBeTruthy();
   });
 });

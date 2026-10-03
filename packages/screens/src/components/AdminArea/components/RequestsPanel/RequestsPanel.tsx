@@ -110,7 +110,7 @@ const RequestsPanel = () => {
                 <Badge size="sm">{say('common.notChecked')}</Badge>
               ) : overview.isReachable ? (
                 <Badge size="sm" tone="success">
-                  {say('screens.adminArea.requestsPanel.answering')}
+                  {say('common.online')}
                 </Badge>
               ) : (
                 <Badge size="sm" tone="danger">

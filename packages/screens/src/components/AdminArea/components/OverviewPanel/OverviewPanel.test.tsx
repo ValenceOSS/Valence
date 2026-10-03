@@ -207,9 +207,7 @@ describe('OverviewPanel', () => {
     it('says when nobody is', () => {
       renderPanel(<OverviewPanel {...props} />);
 
-      expect(
-        screen.getByText('Nobody is watching, listening to or reading anything.'),
-      ).toBeInTheDocument();
+      expect(screen.getByText('No one is watching, listening or reading.')).toBeInTheDocument();
     });
 
     it('names what is playing, and who is playing it', () => {
@@ -256,9 +254,7 @@ describe('OverviewPanel', () => {
     it('ignores a session with the app open but nothing playing', () => {
       renderPanel(<OverviewPanel {...props} sessions={[session()]} />);
 
-      expect(
-        screen.getByText('Nobody is watching, listening to or reading anything.'),
-      ).toBeInTheDocument();
+      expect(screen.getByText('No one is watching, listening or reading.')).toBeInTheDocument();
     });
   });
 
@@ -335,7 +331,7 @@ describe('OverviewPanel', () => {
   });
 
   describe('load range', () => {
-    const RANGE_MENU = 'How far back to show the load';
+    const RANGE_MENU = 'Load time range';
 
     const sample = (overrides: Partial<ResourceSampleRecord> = {}): ResourceSampleRecord => ({
       id: 'sample-1',

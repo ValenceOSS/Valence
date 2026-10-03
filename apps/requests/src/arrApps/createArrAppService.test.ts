@@ -123,7 +123,7 @@ describe('createArrAppService', () => {
 
     expect(await service.test(anArrApp().id)).toMatchObject({
       isWorking: false,
-      problem: { message: 'That address answers as Sonarr, not radarr.' },
+      problem: { message: 'That address belongs to Sonarr, not radarr.' },
     });
   });
 
@@ -169,7 +169,7 @@ describe('createArrAppService', () => {
 
     expect(await service.choices(SONARR.id)).toMatchObject({ rootFolders: [{ path: '/tv' }] });
     expect(await service.choices(PROWLARR.id)).toMatchObject({
-      refused: { message: 'Prowlarr keeps indexers and takes no requests.' },
+      refused: { message: 'Prowlarr manages indexers and can’t take requests.' },
     });
     expect(await service.choices('nothing')).toBeNull();
   });
@@ -178,7 +178,7 @@ describe('createArrAppService', () => {
     const { service } = aService([SONARR]);
 
     expect(await service.choices(SONARR.id)).toMatchObject({
-      refused: { message: 'Sonarr answered with HTTP 404: NotFound' },
+      refused: { message: 'Sonarr returned HTTP 404: NotFound' },
     });
   });
 
@@ -203,14 +203,14 @@ describe('createArrAppService', () => {
       {
         sync: (app) =>
           app.name === 'Second'
-            ? Promise.reject(new ArrAppFailure(sayVerbatim('Second could not be reached')))
+            ? Promise.reject(new ArrAppFailure(sayVerbatim('Couldn’t connect to Second')))
             : Promise.resolve({ added: 0, updated: 0, removed: 0, unchanged: 3 }),
       },
     );
 
     expect((await service.syncProwlarr()).map(({ app, outcome }) => [app.name, outcome])).toEqual([
       ['Prowlarr', { added: 0, updated: 0, removed: 0, unchanged: 3 }],
-      ['Second', { code: null, message: 'Second could not be reached', values: {} }],
+      ['Second', { code: null, message: 'Couldn’t connect to Second', values: {} }],
     ]);
   });
 
@@ -223,7 +223,7 @@ describe('createArrAppService', () => {
 
     await expect(service.importIndexers(PROWLARR.id)).rejects.toThrow('Broken');
     expect((await service.syncProwlarr())[0]?.outcome).toMatchObject({
-      message: 'The app could not be asked.',
+      message: 'Couldn’t connect to the app.',
     });
   });
 

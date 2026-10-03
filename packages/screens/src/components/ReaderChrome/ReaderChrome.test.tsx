@@ -91,7 +91,7 @@ describe('ReaderChrome', () => {
   it('brings out the panel when asked', async () => {
     const { onPanelOpenChange } = draw();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Show panel' }));
 
     expect(onPanelOpenChange).toHaveBeenCalledWith(true);
   });
@@ -100,13 +100,13 @@ describe('ReaderChrome', () => {
     draw({ isPanelOpen: true, isPanelPinned: true });
 
     expect(screen.getByText('The panel')).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: 'Put the panel away' })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: 'Close panel' })).toHaveLength(1);
   });
 
   it('puts a loose panel away when the page is touched', async () => {
     const { onPanelOpenChange } = draw({ isPanelOpen: true, isPanelPinned: false });
 
-    const [, overThePage] = screen.getAllByRole('button', { name: 'Put the panel away' });
+    const [, overThePage] = screen.getAllByRole('button', { name: 'Close panel' });
 
     if (overThePage !== undefined) {
       await userEvent.click(overThePage);
@@ -131,14 +131,14 @@ describe('ReaderChrome', () => {
     Object.defineProperty(document, 'fullscreenEnabled', { configurable: true, value: false });
     draw();
 
-    expect(screen.queryByRole('button', { name: 'Fill the screen' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Full screen' })).not.toBeInTheDocument();
   });
 
   it('offers to fill the screen where the browser will allow it', () => {
     Object.defineProperty(document, 'fullscreenEnabled', { configurable: true, value: true });
     draw();
 
-    expect(screen.getByRole('button', { name: 'Fill the screen' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Full screen' })).toBeInTheDocument();
   });
 
   it('draws an arrow in each edge, faded with the bars but still pressable', async () => {

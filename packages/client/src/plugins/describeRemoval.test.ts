@@ -31,19 +31,19 @@ describe('describeRemoval', () => {
         keepsEarlierVersion: true,
       }),
     ).toEqual([
-      '2.0 KB it kept is deleted.',
-      '3 accounts connected to AniList are forgotten.',
-      '1 account connected to Spotify is forgotten, and Spotify is asked to cancel access.',
-      'Roles lose the 2 permissions it added, and adding it again does not bring them back.',
-      'Its webhook address stops working; a new install gets new ones.',
-      'Anyone using its theme goes back to Valence’s own colours.',
-      'The earlier version kept for rolling back goes too.',
+      '2.0 KB of plugin data is deleted.',
+      '3 accounts connected to AniList are disconnected.',
+      '1 account connected to Spotify is disconnected, and Spotify is asked to revoke access.',
+      'Roles lose the 2 permissions it added, and reinstalling doesn’t restore them.',
+      'Its webhook URL stops working. Reinstalling it creates a new one.',
+      'Anyone using its theme is switched back to Valence’s default colours.',
+      'The previous version saved for rollback is also deleted.',
     ]);
   });
 
   it('names the people who used it when nobody connected an account', () => {
     expect(describeRemoval({ ...NOTHING, people: 1 })).toEqual([
-      '1 person loses what they had in it.',
+      '1 person loses the data they saved in it.',
     ]);
   });
 });

@@ -36,7 +36,7 @@ describe('discordEmbedFor', () => {
     const drawn = embed(anArrival);
 
     expect(drawn.title).toBe('Dune (2021)');
-    expect(drawn.description).toBe('Arrived in Films');
+    expect(drawn.description).toBe('Added to Films');
   });
 
   it('hangs the poster on it, straight from the catalogue', () => {
@@ -81,7 +81,7 @@ describe('discordEmbedFor', () => {
         identifier: 'ada@example.com',
         deviceLabel: 'Chrome on macOS',
         address: null,
-        reason: 'those details were not accepted.',
+        reason: 'those details weren’t accepted.',
       },
     }).color;
 
@@ -249,7 +249,7 @@ describe('discordEmbedFor', () => {
       },
     });
 
-    expect(drawn.description).toBe('Somebody with a share link started watching');
+    expect(drawn.description).toBe('Someone with a share link started watching');
   });
 
   it('says how far through somebody got', () => {
@@ -300,11 +300,11 @@ describe('discordEmbedFor', () => {
         identifier: 'ada@example.com',
         deviceLabel: 'Chrome on macOS',
         address: null,
-        reason: 'those details were not accepted.',
+        reason: 'those details weren’t accepted.',
       },
     });
 
-    expect(drawn.title).toBe('A sign-in was refused');
+    expect(drawn.title).toBe('A sign-in was blocked');
     expect(drawn.fields.map((one) => one.name)).not.toContain('Address');
   });
 

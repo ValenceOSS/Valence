@@ -112,7 +112,7 @@ const AShareSheet = ({ subject, onClose }: AShareSheetProps) => {
           <View style={styles.choice}>
             <Words size="heading">{say('common.lasts')}</Words>
             <SegmentedRow
-              label={say('phone.aShareSheet.howLongTheLinkLasts')}
+              label={say('common.linkWorksFor')}
               items={SHARE_LASTS}
               value={lasts}
               onSelect={setLasts}
@@ -155,7 +155,7 @@ const AShareSheet = ({ subject, onClose }: AShareSheetProps) => {
               void Share.share({ url: link, message: link });
             }}
           >
-            {say('phone.aShareSheet.shareTheLink')}
+            {say('common.shareLink')}
           </Button>
         </>
       )}

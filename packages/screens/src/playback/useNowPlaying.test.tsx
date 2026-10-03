@@ -102,7 +102,7 @@ describe('useNowPlaying', () => {
   it('says which episode, the way somebody would say it', () => {
     playing();
 
-    expect(session.metadata).toMatchObject({ album: 'Series 2, Episode 12' });
+    expect(session.metadata).toMatchObject({ album: 'Season 2, Episode 12' });
   });
 
   it('says Valence for a film, which belongs to no programme', () => {

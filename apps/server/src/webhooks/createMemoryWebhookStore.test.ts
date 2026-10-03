@@ -84,12 +84,15 @@ describe('createMemoryWebhookStore', () => {
     await store.recordAttempt(subscription.id, {
       ok: false,
       status: 500,
-      error: 'The receiver answered 500.',
+      error: 'The receiving server returned 500.',
     });
 
     const [read] = await store.list();
 
-    expect(read).toMatchObject({ lastStatus: 500, lastError: 'The receiver answered 500.' });
+    expect(read).toMatchObject({
+      lastStatus: 500,
+      lastError: 'The receiving server returned 500.',
+    });
     expect(read?.lastAttemptAt).not.toBeNull();
   });
 
@@ -109,7 +112,7 @@ const anOccurrence = (eventId: string, subscriptionId: string) => ({
 
 const landed = { ok: true, status: 200, error: null };
 
-const refused = { ok: false, status: 503, error: 'The receiver answered 503.' };
+const refused = { ok: false, status: 503, error: 'The receiving server returned 503.' };
 
 describe('the delivery history', () => {
   it('files a delivery', async () => {

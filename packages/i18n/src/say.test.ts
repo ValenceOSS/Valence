@@ -3,7 +3,7 @@ import { say } from './say';
 
 describe('say', () => {
   it('says the words for a handler', () => {
-    expect(say('error.common.nobodyIsSignedIn')).toBe('Nobody is signed in.');
+    expect(say('error.common.nobodyIsSignedIn')).toBe('You’re not signed in.');
   });
 
   it('fills each gap from what it is given', () => {

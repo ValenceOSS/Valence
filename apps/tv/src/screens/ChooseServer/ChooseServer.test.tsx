@@ -26,9 +26,9 @@ describe('ChooseServer', () => {
   it('asks which Valence this is and keeps looking while it has heard of none', async () => {
     const drawn = await render(<ChooseServer onChosen={jest.fn()} />);
 
-    expect(drawn.getByText('Which Valence is yours?')).toBeTruthy();
-    expect(drawn.getByText('Looking on your network…')).toBeTruthy();
-    expect(drawn.getByRole('button', { name: 'Another address, Type it in' })).toBeTruthy();
+    expect(drawn.getByText('Which Valence server do you use?')).toBeTruthy();
+    expect(drawn.getByText('Searching your network…')).toBeTruthy();
+    expect(drawn.getByRole('button', { name: 'Another address, Enter address' })).toBeTruthy();
   });
 
   it('offers what it heard on the network and chooses it at once', async () => {
@@ -39,7 +39,7 @@ describe('ChooseServer', () => {
     const onChosen = jest.fn();
     const drawn = await render(<ChooseServer onChosen={onChosen} />);
 
-    expect(drawn.getByText('Found 2 on your network')).toBeTruthy();
+    expect(drawn.getByText('Found 2 servers on your network')).toBeTruthy();
 
     await userEvent.press(drawn.getByRole('button', { name: 'Living room, 192.168.1.10:8420' }));
 
@@ -51,7 +51,7 @@ describe('ChooseServer', () => {
     mockHeard = [{ name: 'Living room', address: 'http://192.168.1.10:8420' }];
     const drawn = await render(<ChooseServer onChosen={jest.fn()} />);
 
-    expect(drawn.getByText('Found 1 Valence on your network')).toBeTruthy();
+    expect(drawn.getByText('Found 1 Valence server on your network')).toBeTruthy();
   });
 
   it('asks a server used before whether it is there before choosing it', async () => {
@@ -59,7 +59,7 @@ describe('ChooseServer', () => {
     const onChosen = jest.fn();
     const drawn = await render(<ChooseServer onChosen={onChosen} />);
 
-    await userEvent.press(drawn.getByRole('button', { name: 'old.local:8420, Used before' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'old.local:8420, Recent servers' }));
 
     expect(isAValence).toHaveBeenCalledWith('http://old.local:8420');
     await waitFor(() => {
@@ -73,11 +73,11 @@ describe('ChooseServer', () => {
     const onChosen = jest.fn();
     const drawn = await render(<ChooseServer onChosen={onChosen} />);
 
-    await userEvent.press(drawn.getByRole('button', { name: 'old.local:8420, Used before' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'old.local:8420, Recent servers' }));
 
     expect(
       await drawn.findByText(
-        'Nothing answered at http://old.local:8420. Check the address and that Valence is running.',
+        'Couldn’t connect to http://old.local:8420. Check the address and make sure Valence is running.',
       ),
     ).toBeTruthy();
     expect(onChosen).not.toHaveBeenCalled();
@@ -87,7 +87,7 @@ describe('ChooseServer', () => {
     const onChosen = jest.fn();
     const drawn = await render(<ChooseServer onChosen={onChosen} />);
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Another address, Type it in' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Another address, Enter address' }));
     await userEvent.type(drawn.getByPlaceholderText('192.168.1.10:8420'), 'valence.home');
     await userEvent.press(drawn.getByRole('button', { name: 'Connect' }));
 
@@ -99,7 +99,7 @@ describe('ChooseServer', () => {
   it('says what is wrong with an address that cannot be one', async () => {
     const drawn = await render(<ChooseServer onChosen={jest.fn()} />);
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Another address, Type it in' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Another address, Enter address' }));
     await userEvent.press(drawn.getByRole('button', { name: 'Connect' }));
 
     expect(drawn.getByText('Enter the address of your Valence server.')).toBeTruthy();
@@ -109,10 +109,10 @@ describe('ChooseServer', () => {
   it('goes back to the row of servers from typing', async () => {
     const drawn = await render(<ChooseServer onChosen={jest.fn()} />);
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Another address, Type it in' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Another address, Enter address' }));
     await userEvent.press(drawn.getByRole('button', { name: 'Back' }));
 
-    expect(drawn.getByRole('button', { name: 'Another address, Type it in' })).toBeTruthy();
+    expect(drawn.getByRole('button', { name: 'Another address, Enter address' })).toBeTruthy();
   });
 
   it('starts at the box, with the address that stopped answering, where nothing was used before', async () => {
@@ -120,7 +120,9 @@ describe('ChooseServer', () => {
       <ChooseServer onChosen={jest.fn()} couldNotReach="http://gone.local:8420" />,
     );
 
-    expect(drawn.getByText('Valence at http://gone.local:8420 could not be reached.')).toBeTruthy();
+    expect(
+      drawn.getByText('Couldn’t reach the Valence server at http://gone.local:8420.'),
+    ).toBeTruthy();
     expect(drawn.getByDisplayValue('http://gone.local:8420')).toBeTruthy();
   });
 });

@@ -326,7 +326,7 @@ const BrowseArea = ({
         ) : isReading ? (
           <Spinner
             isCentered
-            label={say('screens.browseArea.readingTitle', { title: page.title.toLowerCase() })}
+            label={say('common.loadingTitle', { title: page.title.toLowerCase() })}
             size="sm"
           />
         ) : items.length === 0 && books.length === 0 ? (

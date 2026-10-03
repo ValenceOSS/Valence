@@ -339,7 +339,7 @@ describe('createDatabaseReencodeService', { timeout: STARTING_POSTGRES_MS }, () 
 
     expect(onProblem).toHaveBeenCalledWith(
       'reencode',
-      'took /films/stranded.mkv back up, since this server stopped while it was being worked on',
+      'restored /films/stranded.mkv from its backup because the server stopped during the re-encode',
     );
     expect(onProgress.mock.calls).toEqual([
       [0, 3],

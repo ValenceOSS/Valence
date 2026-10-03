@@ -4,7 +4,7 @@ import { describeAskers } from './describeAskers';
 
 describe('describeAskers', () => {
   it('says a profile naming nobody is anybody’s', () => {
-    expect(describeAskers(aQualityProfile())).toBe('Anybody');
+    expect(describeAskers(aQualityProfile())).toBe('Anyone');
   });
 
   it('counts the roles and the people named on it', () => {

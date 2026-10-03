@@ -87,7 +87,7 @@ describe('AddAccountDialog', () => {
 
     await userEvent.type(screen.getByLabelText('Name'), 'Ada');
     await userEvent.type(screen.getByLabelText('Email (optional)'), 'ada@example.com');
-    await userEvent.click(screen.getByRole('button', { name: 'Give them a password' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Set a password for them' }));
     await userEvent.click(screen.getByRole('button', { name: 'Add' }));
 
     expect(inviteAccount).not.toHaveBeenCalled();

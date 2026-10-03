@@ -128,7 +128,7 @@ describe('RequestDetailDialog', () => {
 
     expect(await screen.findByText('Searched for it.')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('tab', { name: 'Never again' }));
+    await user.click(screen.getByRole('tab', { name: 'Blocklist' }));
 
     expect(await screen.findByText('Dune.2021.2160p.BAD')).toBeInTheDocument();
   });
@@ -172,7 +172,7 @@ describe('RequestDetailDialog', () => {
       />,
     );
 
-    await user.click(await screen.findByRole('button', { name: 'Try it again' }));
+    await user.click(await screen.findByRole('button', { name: 'Remove from blocklist' }));
 
     await waitFor(() => {
       expect(liftRequestBlock).toHaveBeenCalledWith(
@@ -186,6 +186,6 @@ describe('RequestDetailDialog', () => {
   it('shows nothing at all while it is closed', () => {
     renderInAnAddress(<RequestDetailDialog request={null} onClose={vi.fn()} onChanged={vi.fn()} />);
 
-    expect(screen.queryByRole('tab', { name: 'How it is going' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Progress' })).not.toBeInTheDocument();
   });
 });

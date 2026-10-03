@@ -62,21 +62,21 @@ describe('downloadClientFormSchema', () => {
 
   it.each([
     [{ name: ' ' }, 'Give the client a name.'],
-    [{ url: 'qbittorrent:8080' }, 'The address needs to be a whole http or https address.'],
-    [{ url: 'ftp://qbittorrent' }, 'The address needs to be a whole http or https address.'],
+    [{ url: 'qbittorrent:8080' }, 'Enter a full http or https address.'],
+    [{ url: 'ftp://qbittorrent' }, 'Enter a full http or https address.'],
     [
       { categories: { ...A_NEW_CLIENT.categories, shows: 'tv/films' } },
-      'A category is letters, numbers, spaces, dots, dashes and underscores.',
+      'A category can only contain letters, numbers, spaces, dots, dashes and underscores.',
     ],
     [
       { categories: { ...A_NEW_CLIENT.categories, shows: ' Valence-Films ' } },
-      'Each kind needs a category of its own.',
+      'Each media type needs its own category.',
     ],
     [
       { remotePath: '/downloads' },
-      'Say where the downloads folder is both as the client sees it and as Valence does, or neither.',
+      'Enter the downloads folder both as the client sees it and as Valence sees it, or leave both empty.',
     ],
-    [{ priority: '0' }, 'Priority is a whole number from 1 to 50.'],
+    [{ priority: '0' }, 'Priority must be a whole number from 1 to 50.'],
   ])('says what is wrong with %o', (change, problem) => {
     expect(read({ ...FILLED, ...change })).toEqual({ draft: null, problem });
   });

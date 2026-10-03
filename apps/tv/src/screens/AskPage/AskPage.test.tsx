@@ -131,7 +131,7 @@ describe('AskPage', () => {
 
     const drawn = await drawAsk(cache);
 
-    expect(await drawn.findByText('This title could not be found.')).toBeTruthy();
+    expect(await drawn.findByText('Couldn’t find this title.')).toBeTruthy();
   });
 
   it('lights the page with the title and says what it is and who is in it', async () => {

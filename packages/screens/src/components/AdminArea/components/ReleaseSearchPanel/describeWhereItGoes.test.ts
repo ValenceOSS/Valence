@@ -9,22 +9,22 @@ const LIBRARIES = [
 describe('describeWhereItGoes', () => {
   it('files a film into the first library of films', () => {
     expect(describeWhereItGoes('movies', LIBRARIES, 'valence-films')).toBe(
-      'As a film, filed into Films once it has downloaded.',
+      'As a film, imported into Films once it’s downloaded.',
     );
   });
 
   it('says a series has nowhere to go without a library of series', () => {
     expect(describeWhereItGoes('shows', LIBRARIES, 'valence-series')).toBe(
-      'As a series. There is no library of series to file it into, so it stays in the client under valence-series.',
+      'As a series. There’s no series library to import it into, so it stays in the download client under valence-series.',
     );
   });
 
   it('files music and books into their own libraries too', () => {
     expect(describeWhereItGoes('music', LIBRARIES, 'valence-music')).toBe(
-      'As music, filed into Albums once it has downloaded.',
+      'As music, imported into Albums once it’s downloaded.',
     );
     expect(describeWhereItGoes('books', LIBRARIES, 'valence-books')).toBe(
-      'As a book. There is no library of books to file it into, so it stays in the client under valence-books.',
+      'As a book. There’s no book library to import it into, so it stays in the download client under valence-books.',
     );
   });
 });

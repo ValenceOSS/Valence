@@ -68,7 +68,7 @@ describe('CalendarUpcoming', () => {
       />,
     );
 
-    expect(await screen.findByText('Asked by you')).toBeInTheDocument();
+    expect(await screen.findByText('Requested by you')).toBeInTheDocument();
   });
 
   it('draws nothing where nothing is coming', () => {

@@ -26,7 +26,7 @@ beforeEach(() => {
     'fetch',
     answerMusicRequests({
       '/api/music/devices': {
-        devices: [{ clientId: 'client-1', label: 'This one', nowPlaying: null }, PHONE],
+        devices: [{ clientId: 'client-1', label: 'This device', nowPlaying: null }, PHONE],
       },
     }),
   );
@@ -68,7 +68,7 @@ describe('DevicesPanel', () => {
 
     renderInAnAddress(<DevicesPanel />);
 
-    expect(await screen.findByText(/Open Valence on another device/)).toBeInTheDocument();
+    expect(await screen.findByText(/Your other devices appear here/)).toBeInTheDocument();
   });
 
   it('draws a device by what it calls itself', () => {

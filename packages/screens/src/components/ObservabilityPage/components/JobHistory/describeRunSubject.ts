@@ -52,7 +52,7 @@ const describeRunSubject = (
 
   if (library === null && IDENTIFIER.test(subject)) {
     return {
-      name: say('screens.jobHistory.describeRunSubject.aLibraryThatHasBeenRemoved'),
+      name: say('common.aLibraryThatHasGone'),
       library: null,
     };
   }

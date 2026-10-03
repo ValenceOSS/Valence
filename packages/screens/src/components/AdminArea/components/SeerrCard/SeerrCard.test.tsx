@@ -82,7 +82,7 @@ describe('SeerrCard', () => {
     renderInAnAddress(<SeerrCard origin="http://valence.local" />);
 
     await userEvent.click(
-      await screen.findByRole('switch', { name: 'Answer Overseerr and Jellyseerr' }),
+      await screen.findByRole('switch', { name: 'Accept requests from Overseerr and Jellyseerr' }),
     );
 
     await waitFor(() => {
@@ -95,7 +95,7 @@ describe('SeerrCard', () => {
     renderInAnAddress(<SeerrCard origin="http://valence.local" />);
 
     expect(
-      await screen.findByRole('switch', { name: 'Answer Overseerr and Jellyseerr' }),
+      await screen.findByRole('switch', { name: 'Accept requests from Overseerr and Jellyseerr' }),
     ).toBeInTheDocument();
     expect(screen.queryByText('http://valence.local/arr/radarr')).not.toBeInTheDocument();
   });
@@ -106,7 +106,7 @@ describe('SeerrCard', () => {
 
     expect(
       await screen.findByText(
-        'Choose an account to ask as. Until you do, what they send is turned away.',
+        'Choose an account to request as. Until you do, requests from them are rejected.',
       ),
     ).toBeInTheDocument();
   });
@@ -114,7 +114,7 @@ describe('SeerrCard', () => {
   it('makes a new key on asking, and shows it', async () => {
     renderInAnAddress(<SeerrCard origin="http://valence.local" />);
 
-    await userEvent.click(await screen.findByRole('button', { name: /Make a new key/ }));
+    await userEvent.click(await screen.findByRole('button', { name: /Regenerate API key/ }));
 
     expect(await screen.findByText('fedcba9876543210fedcba9876543210')).toBeInTheDocument();
   });
@@ -123,7 +123,7 @@ describe('SeerrCard', () => {
     fetchSeerrLink.mockResolvedValue({ ...OFF, isRequestingOn: false });
     renderInAnAddress(<SeerrCard origin="http://valence.local" />);
 
-    expect(await screen.findByText(/Requesting is off on this server/)).toBeInTheDocument();
+    expect(await screen.findByText(/Requesting is turned off on this server/)).toBeInTheDocument();
     expect(screen.queryByRole('switch')).not.toBeInTheDocument();
   });
 
@@ -133,7 +133,7 @@ describe('SeerrCard', () => {
 
     expect(await screen.findByRole('button', { name: /try again/i })).toBeInTheDocument();
     expect(
-      screen.getByText(/The link to Overseerr and Jellyseerr could not be read\./),
+      screen.getByText(/Couldn’t load the Overseerr and Jellyseerr settings\./),
     ).toBeInTheDocument();
   });
 });

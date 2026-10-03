@@ -133,7 +133,7 @@ const HouseholdStep = ({ onBack, onContinue }: HouseholdStepProps) => {
       }
     >
       {household === null ? (
-        <Spinner size="sm" label={say('screens.setupWizard.householdStep.readingTheHousehold')} />
+        <Spinner size="sm" label={say('screens.profileGate.readingWhoIsHere')} />
       ) : (
         <>
           <div className="grid items-start gap-6 sm:grid-cols-[minmax(0,1fr)_11rem]">
@@ -190,7 +190,7 @@ const HouseholdStep = ({ onBack, onContinue }: HouseholdStepProps) => {
                           variant="ghost"
                           size="xs"
                           isIconOnly
-                          label={say('phone.theAccount.theSecurity.removeName2', {
+                          label={say('common.forgetName', {
                             name: person.name,
                           })}
                           onClick={() => {
@@ -219,7 +219,7 @@ const HouseholdStep = ({ onBack, onContinue }: HouseholdStepProps) => {
                 isLabelHidden
                 value={newcomer}
                 onValueChange={setNewcomer}
-                placeholder={say('screens.setupWizard.householdStep.theirName')}
+                placeholder={say('common.name')}
                 autoComplete="off"
                 className="min-w-0 flex-1"
                 descriptionPlacement="below"

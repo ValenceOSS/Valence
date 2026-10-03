@@ -11,8 +11,8 @@ describe('ScanToConnect', () => {
       />,
     );
 
-    expect(drawn.getByLabelText("A code to scan with your phone's camera")).toBeTruthy();
-    expect(drawn.getByText('Connect on your phone')).toBeTruthy();
+    expect(drawn.getByLabelText('A QR code to scan with your phone’s camera')).toBeTruthy();
+    expect(drawn.getByText('Sign in on your phone')).toBeTruthy();
 
     await userEvent.press(drawn.getByText('Done'));
 

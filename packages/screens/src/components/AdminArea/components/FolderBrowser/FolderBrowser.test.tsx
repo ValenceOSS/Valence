@@ -108,9 +108,9 @@ describe('FolderBrowser', () => {
 
     await user.click(await screen.findByRole('button', { name: 'films' }));
 
-    expect(await screen.findByText('No folders in here.')).toBeInTheDocument();
+    expect(await screen.findByText('This folder has no subfolders.')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Up a folder' }));
+    await user.click(screen.getByRole('button', { name: 'Parent folder' }));
 
     expect(await screen.findByRole('button', { name: 'shows' })).toBeInTheDocument();
   });
@@ -120,7 +120,7 @@ describe('FolderBrowser', () => {
 
     draw('/media/films');
 
-    await screen.findByText('No folders in here.');
+    await screen.findByText('This folder has no subfolders.');
 
     await user.click(screen.getByRole('button', { name: 'media' }));
 
@@ -132,7 +132,7 @@ describe('FolderBrowser', () => {
     const { onChoose } = draw('/media');
 
     await user.click(await screen.findByRole('button', { name: 'films' }));
-    await screen.findByText('No folders in here.');
+    await screen.findByText('This folder has no subfolders.');
     await user.click(screen.getByRole('button', { name: 'Use this folder' }));
 
     expect(onChoose).toHaveBeenCalledWith('/media/films');
@@ -142,7 +142,7 @@ describe('FolderBrowser', () => {
     draw('/locked');
 
     expect(
-      await screen.findByText('Valence is not allowed to read that folder.'),
+      await screen.findByText('Valence doesn’t have permission to read that folder.'),
     ).toBeInTheDocument();
   });
 
@@ -224,7 +224,7 @@ describe('making a folder', () => {
 
     await screen.findByRole('button', { name: 'films' });
     await actor.click(screen.getByRole('button', { name: 'New folder' }));
-    await actor.click(screen.getByRole('button', { name: 'Cancel the new folder' }));
+    await actor.click(screen.getByRole('button', { name: 'Cancel new folder' }));
 
     expect(screen.queryByLabelText('Folder name')).not.toBeInTheDocument();
   });
@@ -236,7 +236,7 @@ describe('FolderBrowser, finding a folder', () => {
     const { onChoose } = draw('/media');
 
     await screen.findByRole('button', { name: 'films' });
-    await actor.type(screen.getByLabelText('Find a folder'), 'fil');
+    await actor.type(screen.getByLabelText('Search folders'), 'fil');
 
     const found = await screen.findByRole('list', { name: 'Folders found' });
 
@@ -244,8 +244,8 @@ describe('FolderBrowser, finding a folder', () => {
 
     await actor.click(within(found).getByRole('button', { name: /films/ }));
 
-    expect(await screen.findByText('No folders in here.')).toBeInTheDocument();
-    expect(screen.getByLabelText('Find a folder')).toHaveValue('');
+    expect(await screen.findByText('This folder has no subfolders.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Search folders')).toHaveValue('');
 
     await actor.click(screen.getByRole('button', { name: 'Use this folder' }));
 
@@ -258,9 +258,9 @@ describe('FolderBrowser, finding a folder', () => {
     searchFoldersMock.mockResolvedValue({ folders: [], isTruncated: false });
     draw('/media');
 
-    await actor.type(await screen.findByLabelText('Find a folder'), 'nothing');
+    await actor.type(await screen.findByLabelText('Search folders'), 'nothing');
 
-    expect(await screen.findByText('No folder here is called that.')).toBeInTheDocument();
+    expect(await screen.findByText('No folders match that name.')).toBeInTheDocument();
   });
 
   it('goes straight to a path typed whole, without searching', async () => {
@@ -268,7 +268,7 @@ describe('FolderBrowser, finding a folder', () => {
 
     draw();
 
-    await actor.type(await screen.findByLabelText('Find a folder'), '/media');
+    await actor.type(await screen.findByLabelText('Search folders'), '/media');
     await actor.click(await screen.findByRole('button', { name: 'Go to /media' }));
 
     expect(await screen.findByRole('button', { name: 'shows' })).toBeInTheDocument();
@@ -280,7 +280,7 @@ describe('FolderBrowser, finding a folder', () => {
 
     draw('/media');
 
-    await actor.type(await screen.findByLabelText('Find a folder'), 'f');
+    await actor.type(await screen.findByLabelText('Search folders'), 'f');
 
     expect(screen.getByRole('button', { name: 'films' })).toBeInTheDocument();
     expect(searchFoldersMock).not.toHaveBeenCalled();

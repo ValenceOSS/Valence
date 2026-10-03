@@ -94,7 +94,7 @@ describe('KeptCopiesDialog', () => {
 
     draw();
 
-    expect(await screen.findByText('No copies are kept of this')).toBeVisible();
+    expect(await screen.findByText('No saved copies of this')).toBeVisible();
   });
 
   it('asks nothing while no film is chosen', () => {

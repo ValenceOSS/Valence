@@ -20,8 +20,8 @@ describe('ActivityList', () => {
     );
 
     expect(screen.getByText('Sam')).toBeInTheDocument();
-    expect(screen.getByText('Asked about a title · Arrival')).toBeInTheDocument();
-    expect(screen.getByText('Above the age')).toBeInTheDocument();
+    expect(screen.getByText('Looked up a title · Arrival')).toBeInTheDocument();
+    expect(screen.getByText('Above the age limit')).toBeInTheDocument();
     expect(screen.getByText(/3 times/u)).toBeInTheDocument();
   });
 
@@ -39,6 +39,6 @@ describe('ActivityList', () => {
 
     expect(screen.getByText('Films itself')).toBeInTheDocument();
     expect(screen.getByText('Someone from Films')).toBeInTheDocument();
-    expect(screen.getByText('Read what is shared')).toBeInTheDocument();
+    expect(screen.getByText('Listed shared libraries')).toBeInTheDocument();
   });
 });

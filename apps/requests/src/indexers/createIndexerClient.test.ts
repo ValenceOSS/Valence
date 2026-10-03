@@ -83,10 +83,10 @@ describe('createIndexerClient', () => {
   });
 
   it.each([
-    [401, 'The indexer refused the API key'],
-    [403, 'The indexer refused the API key'],
-    [429, 'The indexer says it has been asked too often'],
-    [502, 'The indexer answered 502'],
+    [401, 'The indexer rejected the API key'],
+    [403, 'The indexer rejected the API key'],
+    [429, 'The indexer is rate-limiting requests'],
+    [502, 'The indexer returned 502'],
   ])('says what an answer of %i means', async (status, reason) => {
     const client = createIndexerClient({ fetch: answering('', status), pacer: createPacer() });
 
@@ -99,7 +99,7 @@ describe('createIndexerClient', () => {
       pacer: createPacer(),
     });
 
-    await expect(client.capabilities(JACKETT)).rejects.toThrow('The indexer could not be reached');
+    await expect(client.capabilities(JACKETT)).rejects.toThrow('Couldn’t connect to the indexer');
   });
 
   it('says how long it waited for an indexer that took too long', async () => {
@@ -110,7 +110,7 @@ describe('createIndexerClient', () => {
     });
 
     await expect(client.search({ ...JACKETT, timeoutSeconds: 10 }, { query: 'x' })).rejects.toThrow(
-      'The indexer did not answer within 10 seconds',
+      'The indexer didn’t respond within 10 seconds',
     );
   });
 
@@ -148,13 +148,13 @@ describe('createIndexerClient', () => {
           JACKETT,
           'http://j/1',
         ),
-      ).rejects.toThrow('The indexer answered the download with 404');
+      ).rejects.toThrow('The indexer returned 404 for the download');
       await expect(
         createIndexerClient({
           fetch: () => Promise.reject(new TypeError('offline')),
           pacer: createPacer(),
         }).download(JACKETT, 'http://j/1'),
-      ).rejects.toThrow('The indexer could not be reached');
+      ).rejects.toThrow('Couldn’t connect to the indexer');
     });
   });
 

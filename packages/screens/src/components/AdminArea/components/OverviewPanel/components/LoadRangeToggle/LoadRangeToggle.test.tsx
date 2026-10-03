@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { LoadRangeToggle } from './LoadRangeToggle';
 
-const MENU = 'How far back to show the load';
+const MENU = 'Load time range';
 
 describe('LoadRangeToggle', () => {
   it('shows the range chosen on its trigger', () => {

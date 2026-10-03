@@ -40,13 +40,13 @@ describe('TheShares', () => {
     const drawn = await render(<TheShares />, { wrapper: CacheScope });
 
     expect(await drawn.findByText('Arrival')).toBeTruthy();
-    expect(drawn.getByText('Live · Opened 2 times · Until it is withdrawn')).toBeTruthy();
+    expect(drawn.getByText('Live · Opened 2 times · Until revoked')).toBeTruthy();
 
-    await userEvent.press(drawn.getByText('Withdraw'));
+    await userEvent.press(drawn.getByText('Revoke'));
     await act(() => {
       asking.mock.calls
         .at(-1)?.[2]
-        ?.find((button) => button.text === 'Withdraw')
+        ?.find((button) => button.text === 'Revoke')
         ?.onPress?.();
     });
 
@@ -57,7 +57,7 @@ describe('TheShares', () => {
     jest.mocked(fetchShares).mockResolvedValue([aShare({ isRevoked: true })]);
     const drawn = await render(<TheShares />, { wrapper: CacheScope });
 
-    expect(await drawn.findByText(/Withdrawn/u)).toBeTruthy();
+    expect(await drawn.findByText(/Revoked/u)).toBeTruthy();
     expect(drawn.queryByText('Withdraw')).toBeNull();
   });
 });

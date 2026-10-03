@@ -93,7 +93,7 @@ describe('createRadarrHandOff', () => {
         [],
         HAND_OFF,
       ),
-    ).rejects.toThrow('It has no TMDB id to hand over.');
+    ).rejects.toThrow('It has no TMDB ID to send to Radarr.');
   });
 
   it('sees a film imported, queued or still missing', async () => {

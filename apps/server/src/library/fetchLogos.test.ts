@@ -135,7 +135,7 @@ describe('fetchLogos', () => {
       onProblem,
     });
 
-    expect(onProblem).toHaveBeenCalledWith('a', 'The catalogue did not answer.');
+    expect(onProblem).toHaveBeenCalledWith('a', 'The metadata catalogue didn’t respond.');
   });
 
   it('does not insist on being told about problems at all', async () => {

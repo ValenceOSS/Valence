@@ -113,7 +113,7 @@ const aClient = (
 };
 
 const asking = (): HTMLElement | null =>
-  screen.queryByRole('heading', { name: 'Which Valence is yours?' });
+  screen.queryByRole('heading', { name: 'Which Valence server do you use?' });
 
 beforeEach(() => {
   theWindowOffers([]);
@@ -308,7 +308,7 @@ describe('Desktop', () => {
     expect(screen.getByDisplayValue('http://valence.example')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Valence at http://valence.example could not be reached. Check that it is running.',
+        'Couldn’t reach Valence at http://valence.example. Check that the server is running.',
       ),
     ).toBeInTheDocument();
   });

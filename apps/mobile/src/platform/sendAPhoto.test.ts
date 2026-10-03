@@ -55,7 +55,7 @@ describe('sendAPhoto', () => {
     jest.mocked(uploadAsync).mockRejectedValue(new Error('offline'));
 
     expect(await sendAPhoto('/api/profiles/one/photo', 'file:///phone/face.jpg')).toBe(
-      'That photo could not be sent.',
+      'Couldn’t upload that photo.',
     );
   });
 });

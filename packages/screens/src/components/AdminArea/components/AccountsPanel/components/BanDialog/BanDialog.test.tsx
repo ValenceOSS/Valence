@@ -9,7 +9,7 @@ describe('BanDialog', () => {
 
     render(<BanDialog name="Sam" onClose={vi.fn()} onBan={onBan} />);
 
-    const reason = screen.getByLabelText('What they are told');
+    const reason = screen.getByLabelText('Reason shown to them');
 
     await userEvent.clear(reason);
     await userEvent.type(reason, 'Sharing the password around');
@@ -21,7 +21,7 @@ describe('BanDialog', () => {
   it('starts with the usual reason filled in', () => {
     render(<BanDialog name="Sam" onClose={vi.fn()} onBan={vi.fn()} />);
 
-    expect(screen.getByLabelText('What they are told')).not.toHaveValue('');
+    expect(screen.getByLabelText('Reason shown to them')).not.toHaveValue('');
   });
 
   it('will not ban without a reason, and says so', async () => {
@@ -29,7 +29,7 @@ describe('BanDialog', () => {
 
     render(<BanDialog name="Sam" onClose={vi.fn()} onBan={onBan} />);
 
-    await userEvent.clear(screen.getByLabelText('What they are told'));
+    await userEvent.clear(screen.getByLabelText('Reason shown to them'));
     await userEvent.click(screen.getByRole('button', { name: 'Ban' }));
 
     expect(onBan).not.toHaveBeenCalled();
@@ -39,6 +39,6 @@ describe('BanDialog', () => {
   it('is shut while nobody is to be banned', () => {
     render(<BanDialog name={null} onClose={vi.fn()} onBan={vi.fn()} />);
 
-    expect(screen.queryByLabelText('What they are told')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Reason shown to them')).not.toBeInTheDocument();
   });
 });

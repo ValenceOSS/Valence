@@ -122,7 +122,7 @@ const EnterPassword = ({
             {needsCode ? (
               <TextField
                 key="code"
-                label={say('tv.enterPassword.theCodeFromYourAuthenticator')}
+                label={say('common.authenticatorCode')}
                 value={code}
                 onChange={setCode}
                 onSubmit={() => {
@@ -166,12 +166,12 @@ const EnterPassword = ({
         </View>
 
         <View style={styles.side}>
-          <Text style={styles.heading}>{say('tv.enterPassword.useYourPhone')}</Text>
+          <Text style={styles.heading}>{say('common.signInWithYourPhone')}</Text>
           <PhoneSignIn onSignedIn={inByPhone} isStacked />
         </View>
       </View>
 
-      <Button label={say('tv.enterPassword.someoneElse')} variant="ghost" onPress={onBack} />
+      <Button label={say('common.somebodyElse')} variant="ghost" onPress={onBack} />
     </View>
   );
 };

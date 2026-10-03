@@ -43,7 +43,7 @@ const AN_INDEXER = {
 
 const A_TEST = {
   isWorking: false,
-  problem: sayVerbatim('The indexer refused the API key'),
+  problem: sayVerbatim('The indexer rejected the API key'),
   problemCode: null,
   capabilities: null,
   captcha: null,
@@ -90,11 +90,11 @@ describe('addIndexer', () => {
   });
 
   it('says why it was refused, in the server’s words', async () => {
-    answering({ error: 'That is not an indexer.' }, 400);
+    answering({ error: 'That isn’t a valid indexer.' }, 400);
 
     await expect(addIndexer(A_DRAFT)).resolves.toEqual({
       value: null,
-      refusal: { message: 'That is not an indexer.' },
+      refusal: { message: 'That isn’t a valid indexer.' },
     });
   });
 
@@ -103,7 +103,7 @@ describe('addIndexer', () => {
 
     await expect(addIndexer(A_DRAFT)).resolves.toEqual({
       value: null,
-      refusal: { message: 'The server could not be reached.' },
+      refusal: { message: 'Couldn’t reach the server.' },
     });
   });
 });
@@ -210,18 +210,18 @@ describe('fetchRelease', () => {
   });
 
   it('says why it could not be fetched', async () => {
-    answering({ error: 'The site answered 410' }, 502);
+    answering({ error: 'The site returned 410' }, 502);
 
     await expect(fetchRelease(AN_INDEXER.id, 'x')).resolves.toEqual({
       value: null,
-      refusal: { message: 'The site answered 410' },
+      refusal: { message: 'The site returned 410' },
     });
 
     vi.stubGlobal('fetch', () => Promise.reject(new TypeError('offline')));
 
     await expect(fetchRelease(AN_INDEXER.id, 'x')).resolves.toEqual({
       value: null,
-      refusal: { message: 'The server could not be reached.' },
+      refusal: { message: 'Couldn’t reach the server.' },
     });
   });
 });

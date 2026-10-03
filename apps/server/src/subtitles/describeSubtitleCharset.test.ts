@@ -20,7 +20,7 @@ describe('saying what a subtitle file was read as', () => {
     expect(
       describeSubtitleCharset({ text: '', charset: 'windows-1252', decidedBy: 'fallback' }),
     ).toEqual(
-      'read as windows-1252 (a guess, since the file does not name its language; not valid UTF-8)',
+      'read as windows-1252 (guessed, because the file doesn’t specify its language; not valid UTF-8)',
     );
   });
 });

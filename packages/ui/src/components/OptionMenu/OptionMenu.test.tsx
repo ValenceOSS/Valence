@@ -273,7 +273,7 @@ describe('OptionMenu anchored to something that does its own job', () => {
 
     render(
       <OptionMenu
-        label="Order films"
+        label="Sort films"
         triggerShape="button"
         trigger="Recently added"
         groups={[
@@ -290,7 +290,7 @@ describe('OptionMenu anchored to something that does its own job', () => {
       />,
     );
 
-    const button = screen.getByRole('button', { name: 'Order films' });
+    const button = screen.getByRole('button', { name: 'Sort films' });
 
     await actor.hover(button);
 

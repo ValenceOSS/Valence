@@ -87,7 +87,7 @@ describe('PluginPage', () => {
 
     await userEvent.press(await drawn.findByText('Connect AniList'));
 
-    expect(await drawn.findByText('Connect on your phone')).toBeTruthy();
+    expect(await drawn.findByText('Sign in on your phone')).toBeTruthy();
     expect(drawn.queryByText('Keep your anime list in step.')).toBeNull();
 
     await userEvent.press(drawn.getByText('Done'));
@@ -106,7 +106,7 @@ describe('PluginPage', () => {
       },
     );
 
-    expect(await drawn.findByText('This page could not be read.')).toBeTruthy();
+    expect(await drawn.findByText('Couldn’t load this page.')).toBeTruthy();
 
     await userEvent.press(drawn.getByRole('button', { name: 'Try again' }));
 

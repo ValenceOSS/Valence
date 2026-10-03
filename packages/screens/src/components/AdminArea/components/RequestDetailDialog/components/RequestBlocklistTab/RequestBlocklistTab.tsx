@@ -72,7 +72,7 @@ const RequestBlocklistTab = ({ request, onLifted }: RequestBlocklistTabProps) =>
       )}
 
       <ul
-        aria-label={say('screens.requestDetailDialog.requestBlocklistTab.whatItWillNotTryAgain')}
+        aria-label={say('screens.adminArea.requestDetailDialog.neverAgain')}
         className="flex flex-col gap-2"
       >
         {blocked.data.map((block) => (

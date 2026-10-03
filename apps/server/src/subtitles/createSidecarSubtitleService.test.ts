@@ -166,7 +166,7 @@ describe('a subtitle Valence cannot draw', () => {
       expect.stringContaining('Arrival (2016).en.sup'),
       expect.anything(),
     );
-    expect(onProblem.mock.calls[0]?.[1].message).toContain('pictures');
+    expect(onProblem.mock.calls[0]?.[1].message).toContain('image-based');
   });
 
   it('says nothing about one belonging to a different film', async () => {

@@ -154,7 +154,7 @@ describe('managing roles over HTTP', () => {
       });
 
       expect(response.status).toBe(403);
-      expect(await response.text()).toContain('cannot grant a permission you do not hold');
+      expect(await response.text()).toContain('can’t grant a permission you don’t have');
     });
 
     it('refuses the obvious escalation outright', async () => {
@@ -356,7 +356,7 @@ describe('managing roles over HTTP', () => {
       );
 
       expect(response.status).toBe(403);
-      expect(await response.text()).toContain('at or above your own rank');
+      expect(await response.text()).toContain('equal to or higher than yours');
     });
 
     it('refuses to lift a deny for something the actor does not hold, since that hands it over', async () => {
@@ -373,7 +373,7 @@ describe('managing roles over HTTP', () => {
       );
 
       expect(response.status).toBe(403);
-      expect(await response.text()).toContain('cannot grant a permission you do not hold');
+      expect(await response.text()).toContain('can’t grant a permission you don’t have');
     });
 
     it('lifts a deny for something the actor does hold', async () => {

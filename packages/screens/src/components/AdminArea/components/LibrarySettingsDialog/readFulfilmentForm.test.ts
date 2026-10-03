@@ -76,7 +76,7 @@ describe('readFulfilmentForm', () => {
 
   it('says what is still to be chosen', () => {
     expect(readFulfilmentForm({ ...FORM, rootFolderPath: '' }, 'radarr').problem).toBe(
-      'Choose a root folder and a quality profile in the app.',
+      'Choose a root folder and a quality profile from the app.',
     );
     expect(readFulfilmentForm({ ...FORM, qualityProfileId: '' }, 'radarr').problem).not.toBeNull();
     expect(readFulfilmentForm(FORM, 'lidarr').problem).toBe(

@@ -8,7 +8,7 @@ import type { Library } from '@ValenceContracts/schemas/Library';
 
 const CLEAR: JobDefinition = {
   kind: 'library.clearParts',
-  label: sayVerbatim('Clear and fetch again'),
+  label: sayVerbatim('Clear and refresh'),
   description: sayVerbatim('Erases the chosen parts of a library.'),
   needsLibrary: true,
   destructive: true,
@@ -115,7 +115,7 @@ describe('ClearLibraryPartsDialog', () => {
   it('says there is nothing to clear in a library where nothing is fetched', () => {
     open([BOOKS]);
 
-    expect(screen.getByText(/nothing to clear/)).toBeInTheDocument();
+    expect(screen.getByText(/no downloaded or generated data to clear/)).toBeInTheDocument();
   });
 
   it('asks for a library before it offers any part', async () => {
@@ -135,7 +135,7 @@ describe('ClearLibraryPartsDialog', () => {
 
     await userEvent.click(screen.getByRole('checkbox', { name: /^Descriptions/ }));
 
-    expect(screen.getByRole('note')).toHaveTextContent(/reading every file/);
+    expect(screen.getByRole('note')).toHaveTextContent(/rescanning every file/);
   });
 
   it('lets a part be ticked and cleared again', async () => {
@@ -150,7 +150,7 @@ describe('ClearLibraryPartsDialog', () => {
   it('warns that clearing cannot be undone', () => {
     open([MOVIES]);
 
-    expect(screen.getByText(/cannot be undone/)).toBeInTheDocument();
+    expect(screen.getByText(/can’t be undone/)).toBeInTheDocument();
   });
 
   it('lets the operator back out', async () => {

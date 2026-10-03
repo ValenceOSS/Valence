@@ -3,7 +3,7 @@ import { askHowMuchToDownload } from './askHowMuchToDownload';
 
 const WAYS = [
   { kind: 'these' as const, label: 'The next 3 episodes', mediaIds: ['a', 'b', 'c'] },
-  { kind: 'choose' as const, label: 'Choose episodes' },
+  { kind: 'choose' as const, label: 'Select episodes' },
 ];
 
 describe('askHowMuchToDownload', () => {

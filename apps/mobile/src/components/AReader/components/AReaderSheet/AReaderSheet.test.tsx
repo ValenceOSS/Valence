@@ -114,7 +114,7 @@ describe('AReaderSheet', () => {
 
     expect(everyHostWith((one) => 'selection' in one.props)).toHaveLength(1);
     expect(
-      theHostWith((one) => one.props.text === 'Open the phone out to read two pages side by side.'),
+      theHostWith((one) => one.props.text === 'Unfold the phone to read two pages side by side.'),
     ).toBeTruthy();
   });
 
@@ -123,7 +123,7 @@ describe('AReaderSheet', () => {
 
     await render(aSheet({ onCoverAlone }));
     await fireEvent(
-      theHostWith((one) => one.props.label === 'Cover on its own'),
+      theHostWith((one) => one.props.label === 'Show cover as a single page'),
       'isOnChange',
       { nativeEvent: { isOn: false } },
     );

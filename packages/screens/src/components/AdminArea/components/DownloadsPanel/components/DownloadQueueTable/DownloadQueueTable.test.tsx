@@ -81,7 +81,7 @@ describe('DownloadQueueTable', () => {
     expect(row.getByText('9 seeding')).toBeInTheDocument();
     expect(row.getByText('2 fetching')).toBeInTheDocument();
     expect(
-      row.getByRole('progressbar', { name: 'How much of Dune has arrived' }),
+      row.getByRole('progressbar', { name: 'Download progress for Dune' }),
     ).toBeInTheDocument();
   });
 
@@ -117,10 +117,10 @@ describe('DownloadQueueTable', () => {
     show([aDownload({ state: 'done', progress: 1, filedInto: '/media/Films/Dune (2021)' })]);
 
     await userEvent.hover(
-      within(rowOf('Dune')).getByRole('img', { name: 'Filed into /media/Films/Dune (2021).' }),
+      within(rowOf('Dune')).getByRole('img', { name: 'Imported into /media/Films/Dune (2021).' }),
     );
 
-    expect(await screen.findByText('Filed into /media/Films/Dune (2021).')).toBeInTheDocument();
+    expect(await screen.findByText('Imported into /media/Films/Dune (2021).')).toBeInTheDocument();
     expect(within(rowOf('Dune')).getByText('Done')).toBeInTheDocument();
     expect(within(rowOf('Dune')).queryByRole('status')).not.toBeInTheDocument();
   });
@@ -216,7 +216,7 @@ describe('DownloadQueueTable', () => {
     expect(screen.queryByText('Now, named from the release.')).not.toBeInTheDocument();
     await user.hover(document.querySelector('[data-slot="menu-hint"]') ?? document.body);
     expect((await screen.findAllByText('Now, named from the release.')).length).toBeGreaterThan(0);
-    await user.click(screen.getByRole('menuitem', { name: /File into Films/ }));
+    await user.click(screen.getByRole('menuitem', { name: /Import into Films/ }));
     expect(onFile).toHaveBeenCalledWith(expect.objectContaining({ title: 'Dune' }), 'films');
 
     await user.click(screen.getByRole('button', { name: 'Actions for Heat' }));
@@ -228,12 +228,12 @@ describe('DownloadQueueTable', () => {
 
     await user.click(screen.getByRole('button', { name: 'Actions for Arrival' }));
     await user.hover(document.querySelector('[data-slot="menu-hint"]') ?? document.body);
-    expect((await screen.findAllByText('Once it has downloaded.')).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('When the download finishes.')).length).toBeGreaterThan(0);
     await user.keyboard('{Escape}{Escape}');
 
     await user.click(screen.getByRole('button', { name: 'Actions for Kid A' }));
-    expect(screen.queryByRole('menuitem', { name: /File into Films/ })).not.toBeInTheDocument();
-    await user.click(screen.getByRole('menuitem', { name: /File into Albums/ }));
+    expect(screen.queryByRole('menuitem', { name: /Import into Films/ })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('menuitem', { name: /Import into Albums/ }));
     expect(onFile).toHaveBeenCalledWith(expect.objectContaining({ title: 'Kid A' }), 'albums');
 
     await user.click(screen.getByRole('button', { name: 'Actions for Dune Messiah' }));

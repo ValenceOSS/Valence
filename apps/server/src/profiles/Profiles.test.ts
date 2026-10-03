@@ -772,7 +772,7 @@ describe('giving a profile a picture of its own', () => {
 
     expect(response.status).toBe(400);
     expect(await response.json()).toMatchObject({
-      error: 'A picture has to be a JPEG, PNG, WebP, AVIF or GIF.',
+      error: 'The picture must be a JPEG, PNG, WebP, AVIF or GIF.',
     });
   });
 
@@ -798,7 +798,7 @@ describe('giving a profile a picture of its own', () => {
     });
 
     expect(response.status).toBe(413);
-    expect(await response.json()).toMatchObject({ error: 'A picture has to be 6 MB or smaller.' });
+    expect(await response.json()).toMatchObject({ error: 'The picture must be 6 MB or smaller.' });
   });
 
   it('says how much detail a picture may hold, when one holds more', async () => {
@@ -812,7 +812,7 @@ describe('giving a profile a picture of its own', () => {
 
     expect(response.status).toBe(400);
     expect(await response.json()).toMatchObject({
-      error: 'A picture has to be 4096 by 4096 or smaller.',
+      error: 'The picture must be 4096 × 4096 pixels or smaller.',
     });
   });
 
@@ -827,7 +827,7 @@ describe('giving a profile a picture of its own', () => {
 
     expect(response.status).toBe(400);
     expect(await response.json()).toMatchObject({
-      error: 'That file could not be read as a picture.',
+      error: 'Couldn’t read the file as a picture.',
     });
   });
 

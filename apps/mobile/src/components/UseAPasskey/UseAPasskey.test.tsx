@@ -52,7 +52,7 @@ describe('UseAPasskey', () => {
 
     await userEvent.press(drawn.getByRole('button', { name: 'Sign in with a passkey' }));
 
-    expect(await drawn.findByText('That did not sign you in. Try again.')).toBeTruthy();
+    expect(await drawn.findByText('Couldn’t sign you in. Try again.')).toBeTruthy();
     expect(onIn).not.toHaveBeenCalled();
   });
 
@@ -67,6 +67,6 @@ describe('UseAPasskey', () => {
       expect(signInThroughTheBrowser).toHaveBeenCalled();
     });
 
-    expect(drawn.queryByText('That did not sign you in. Try again.')).toBeNull();
+    expect(drawn.queryByText('Couldn’t sign you in. Try again.')).toBeNull();
   });
 });

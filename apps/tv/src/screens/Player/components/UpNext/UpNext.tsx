@@ -92,7 +92,7 @@ const UpNext = ({ episode, isAsking, onPlay, onStay }: UpNextProps) => {
             onPress={onPlay}
           />
           <Button
-            label={say('tv.player.upNext.stay')}
+            label={say('common.cancel')}
             icon={X}
             variant="overlay"
             size="md"

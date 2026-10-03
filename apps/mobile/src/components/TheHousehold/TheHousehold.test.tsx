@@ -44,7 +44,7 @@ describe('TheHousehold', () => {
     const drawn = await render(around(<TheHousehold onElsewhere={jest.fn()} />));
 
     await waitFor(() => {
-      expect(drawn.getByText('Who is watching?')).toBeTruthy();
+      expect(drawn.getByText('Who’s watching?')).toBeTruthy();
     });
   });
 
@@ -65,7 +65,7 @@ describe('TheHousehold', () => {
 
     await waitFor(() => {
       expect(drawn.queryByLabelText('What to show')).toBeNull();
-      expect(drawn.getByText('Who is watching?')).toBeTruthy();
+      expect(drawn.getByText('Who’s watching?')).toBeTruthy();
     });
   });
 });

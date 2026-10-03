@@ -187,7 +187,7 @@ afterEach(() => {
 });
 
 const openTheMenu = async (): Promise<void> => {
-  const [menu] = await screen.findAllByRole('button', { name: 'More to do with this' });
+  const [menu] = await screen.findAllByRole('button', { name: 'More actions' });
 
   if (menu !== undefined) {
     await userEvent.setup().click(menu);
@@ -266,7 +266,7 @@ describe('choosing where the preview is cut from', () => {
     await openTheMenu();
 
     expect(
-      await screen.findByRole('menuitem', { name: 'Choose the preview moment' }),
+      await screen.findByRole('menuitem', { name: 'Choose the preview frame' }),
     ).toBeInTheDocument();
   });
 
@@ -281,7 +281,7 @@ describe('choosing where the preview is cut from', () => {
     await screen.findByRole('menuitem', { name: /Download/ });
 
     expect(
-      screen.queryByRole('menuitem', { name: 'Choose the preview moment' }),
+      screen.queryByRole('menuitem', { name: 'Choose the preview frame' }),
     ).not.toBeInTheDocument();
   });
 
@@ -293,7 +293,7 @@ describe('choosing where the preview is cut from', () => {
     await screen.findByRole('menuitem', { name: /Download/ });
 
     expect(
-      screen.queryByRole('menuitem', { name: 'Choose the preview moment' }),
+      screen.queryByRole('menuitem', { name: 'Choose the preview frame' }),
     ).not.toBeInTheDocument();
   });
 
@@ -305,9 +305,9 @@ describe('choosing where the preview is cut from', () => {
     await openTheMenu();
     await userEvent
       .setup()
-      .click(await screen.findByRole('menuitem', { name: 'Choose the preview moment' }));
+      .click(await screen.findByRole('menuitem', { name: 'Choose the preview frame' }));
 
-    expect(await screen.findByRole('dialog', { name: 'Choose the preview moment' })).toBeVisible();
+    expect(await screen.findByRole('dialog', { name: 'Choose the preview frame' })).toBeVisible();
   });
 });
 
@@ -331,7 +331,7 @@ describe('MediaDetailDialog', () => {
 
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    const [menu] = screen.queryAllByRole('button', { name: 'More to do with this' });
+    const [menu] = screen.queryAllByRole('button', { name: 'More actions' });
 
     if (menu !== undefined) {
       await userEvent.setup().click(menu);
@@ -438,7 +438,7 @@ describe('MediaDetailDialog', () => {
     });
 
     expect(screen.getByRole('heading', { name: 'Cast' })).toBeInTheDocument();
-    expect(await screen.findByText(/metadata provider supplies the cast/)).toBeInTheDocument();
+    expect(await screen.findByText(/These come from a metadata provider/)).toBeInTheDocument();
   });
 
   it('states when it came out, what it cost and what it took, where the catalogue said', async () => {
@@ -600,7 +600,9 @@ describe('keeping something, and getting back to where you were', () => {
       />,
     );
 
-    expect(await screen.findByRole('button', { name: 'Stop keeping Arrival' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: 'Remove Arrival from favourites' }),
+    ).toBeInTheDocument();
   });
 
   it('offers nothing to keep with when nobody is listening', () => {
@@ -919,7 +921,7 @@ describe('the extras a film carries', () => {
     await pressAction('Watch the trailer');
 
     expect(onPlay).not.toHaveBeenCalled();
-    expect(screen.getByTitle(/the trailer/)).toHaveAttribute(
+    expect(screen.getByTitle(/ trailer$/)).toHaveAttribute(
       'src',
       expect.stringContaining('youtube-nocookie.com/embed/abc123'),
     );
@@ -938,7 +940,7 @@ describe('the extras a film carries', () => {
     await pressAction('Watch the trailer');
 
     expect(onPlay).toHaveBeenCalledWith(expect.objectContaining({ id: 'extra-trailer' }), 0);
-    expect(screen.queryByTitle(/the trailer/)).not.toBeInTheDocument();
+    expect(screen.queryByTitle(/ trailer$/)).not.toBeInTheDocument();
   });
 
   it('plays one when it is chosen, from the beginning', async () => {
@@ -1107,7 +1109,7 @@ describe('a title from a linked server', () => {
 
     expect(
       await screen.findByText(
-        'Films cannot be reached right now. Its titles can be browsed, but not played until it is back.',
+        'Films can’t be reached right now. You can browse its titles, but you can’t play them until it’s back online.',
       ),
     ).toBeInTheDocument();
   });

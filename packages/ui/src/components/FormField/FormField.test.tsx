@@ -25,13 +25,16 @@ describe('FormField', () => {
 
   it('explains what answering it does, where the label alone leaves something unsaid', () => {
     render(
-      <FormField label="Shape" description="What Valence sends, so the other end understands it.">
+      <FormField
+        label="Shape"
+        description="The format Valence sends, so the receiving service can understand it."
+      >
         <input aria-label="Shape" />
       </FormField>,
     );
 
     expect(
-      screen.getByText('What Valence sends, so the other end understands it.'),
+      screen.getByText('The format Valence sends, so the receiving service can understand it.'),
     ).toBeInTheDocument();
   });
 

@@ -33,8 +33,8 @@ describe('LinkActivityCard', () => {
 
     expect(await screen.findByText('Sam')).toBeInTheDocument();
     expect(await screen.findByText('Dan')).toBeInTheDocument();
-    expect(screen.getByText('What Films asked for')).toBeInTheDocument();
-    expect(screen.getByText('Their record of your people')).toBeInTheDocument();
+    expect(screen.getByText('What Films requested')).toBeInTheDocument();
+    expect(screen.getByText('Their request history for your people')).toBeInTheDocument();
   });
 
   it('says where the other server does not show its record', async () => {
@@ -43,7 +43,7 @@ describe('LinkActivityCard', () => {
     renderInAnAddress(<LinkActivityCard server={FILMS} thisServer="Anime" />);
 
     expect(
-      await screen.findByText('Films does not show this server its record.'),
+      await screen.findByText('Films doesn’t share its request history with this server.'),
     ).toBeInTheDocument();
   });
 
@@ -52,7 +52,7 @@ describe('LinkActivityCard', () => {
 
     renderInAnAddress(<LinkActivityCard server={FILMS} thisServer="Anime" />);
 
-    expect(await screen.findByText('Films could not be reached.')).toBeInTheDocument();
+    expect(await screen.findByText('Couldn’t reach Films.')).toBeInTheDocument();
   });
 
   it('says where this server’s own record could not be read', async () => {
@@ -60,6 +60,6 @@ describe('LinkActivityCard', () => {
 
     renderInAnAddress(<LinkActivityCard server={FILMS} thisServer="Anime" />);
 
-    expect(await screen.findByText(/That could not be read\./u)).toBeInTheDocument();
+    expect(await screen.findByText(/Couldn’t load that\./u)).toBeInTheDocument();
   });
 });

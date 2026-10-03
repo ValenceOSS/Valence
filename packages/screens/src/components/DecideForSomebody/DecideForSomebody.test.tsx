@@ -101,7 +101,7 @@ describe('DecideForSomebody', () => {
   it('names the film it is deciding about', async () => {
     renderInAShell(<DecideForSomebody about={media()} onClose={vi.fn()} />);
 
-    expect(await screen.findByText('Who may watch Arrival')).toBeInTheDocument();
+    expect(await screen.findByText('Who can watch Arrival')).toBeInTheDocument();
   });
 
   it('decides about the programme rather than the episode standing for it', async () => {
@@ -112,13 +112,13 @@ describe('DecideForSomebody', () => {
       />,
     );
 
-    expect(await screen.findByText('Who may watch Curb Your Enthusiasm')).toBeInTheDocument();
+    expect(await screen.findByText('Who can watch Curb Your Enthusiasm')).toBeInTheDocument();
   });
 
   it('says a denial always wins, which is what people rely on', async () => {
     renderInAShell(<DecideForSomebody about={media()} onClose={vi.fn()} />);
 
-    expect(await screen.findByText(/A denial always wins/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Deny always takes priority/i)).toBeInTheDocument();
   });
 
   it('leaves out whoever is deciding, hiding being what they want for themselves', async () => {
@@ -141,7 +141,7 @@ describe('DecideForSomebody', () => {
 
     renderInAShell(<DecideForSomebody about={media()} onClose={vi.fn()} />);
 
-    expect(await screen.findByText(/There is nobody to decide about/i)).toBeInTheDocument();
+    expect(await screen.findByText(/There’s no one to set this for/i)).toBeInTheDocument();
   });
 
   it('shows each face, and who they are', async () => {

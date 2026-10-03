@@ -73,7 +73,7 @@ const AccessStep = ({
 
   return (
     <SetupStepFrame
-      title={say('screens.setupWizard.accessStep.howValenceIsReached')}
+      title={say('common.access')}
       lead={say('screens.setupWizard.accessStep.valenceOnlyAcceptsSignInsFrom')}
       back={
         <Button variant="ghost" disabled={isCreating} onClick={onBack}>

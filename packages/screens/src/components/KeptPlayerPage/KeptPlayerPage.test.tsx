@@ -69,7 +69,7 @@ describe('KeptPlayerPage', () => {
 
     await userEvent.setup().click(await screen.findByRole('button', { name: /Go back/ }));
 
-    expect(screen.getByText(/not on this device any more/)).toBeInTheDocument();
+    expect(screen.getByText(/no longer on this device/)).toBeInTheDocument();
     expect(back).toHaveBeenCalled();
   });
 

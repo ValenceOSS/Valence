@@ -81,7 +81,7 @@ describe('AnArtistStory', () => {
         isPickedByHand: false,
       });
     });
-    expect(alert).toHaveBeenLastCalledWith('That could not be requested.');
+    expect(alert).toHaveBeenLastCalledWith('Couldn’t request that.');
   });
 
   it('offers nothing to request to somebody who may not ask for things', async () => {

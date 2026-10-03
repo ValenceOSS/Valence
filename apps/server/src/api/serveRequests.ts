@@ -541,7 +541,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
           return {
             kind: 'refused',
             status: 404,
-            refusal: refuse('error.requests.thereIsNoSuchRequest'),
+            refusal: refuse('error.requests.noSuchRequest'),
           };
         }
 
@@ -1012,7 +1012,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
         ? Promise.resolve({
             kind: 'refused' as const,
             status: 400 as const,
-            refusal: refuse('error.requests.thereIsNoSuchLibrary'),
+            refusal: refuse('error.common.noSuchLibrary'),
           })
         : client.fileDownload(context.req.valid('param').id, { id: into.id, path: into.path }),
     );

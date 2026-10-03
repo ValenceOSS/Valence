@@ -86,7 +86,7 @@ const WEBHOOK_EVENT_LABELS: Record<WebhookEvent, string> = {
   'requests.indexerFailing': say('contracts.schemas.webhook.indexerFailing'),
   'requests.indexerWorking': say('contracts.schemas.webhook.indexerWorkingAgain'),
   'requests.downloadStarted': say('contracts.schemas.webhook.downloadStarted'),
-  'requests.downloadFailed': say('contracts.schemas.webhook.downloadFailed'),
+  'requests.downloadFailed': say('common.downloadFailed'),
   'requests.made': say('contracts.schemas.webhook.requestMade'),
   'requests.approved': say('contracts.schemas.webhook.requestApproved'),
   'requests.refused': say('contracts.schemas.webhook.requestRefused'),

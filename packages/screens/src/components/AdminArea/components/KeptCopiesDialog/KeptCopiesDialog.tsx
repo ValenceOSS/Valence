@@ -96,7 +96,7 @@ const KeptCopiesDialog = ({ subject, onClose }: KeptCopiesDialogProps) => {
                     void remove(copy.id);
                   }}
                 >
-                  {say('common.remove')}
+                  {say('common.forget')}
                 </PanelCardAction>
               </li>
             ))}

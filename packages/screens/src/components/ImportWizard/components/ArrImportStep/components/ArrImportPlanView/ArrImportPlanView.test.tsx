@@ -29,7 +29,7 @@ const PLAN: ArrImportPlan = {
       name: 'Lidarr',
       version: null,
       foundThrough: null,
-      problem: sayVerbatim('Lidarr could not be reached'),
+      problem: sayVerbatim('Couldn’t connect to Lidarr'),
     },
   ],
   clients: [
@@ -51,7 +51,7 @@ const PLAN: ArrImportPlan = {
       url: null,
       from: ['Radarr'],
       standing: 'unsupported',
-      notes: [sayVerbatim('Valence cannot use Deluge yet.')],
+      notes: [sayVerbatim('Valence doesn’t support Deluge yet.')],
     },
   ],
   indexers: [],
@@ -63,7 +63,7 @@ const PLAN: ArrImportPlan = {
       kind: 'video',
       from: 'Radarr',
       standing: 'new',
-      notes: [sayVerbatim('Valence has nothing to match BR-DISK, so they were left out.')],
+      notes: [sayVerbatim('Valence has no equivalent for BR-DISK, so they weren’t imported.')],
     },
   ],
   libraries: [
@@ -104,12 +104,12 @@ describe('ArrImportPlanView', () => {
     );
 
     expect(screen.getByText('http://radarr:7878, found through Overseerr')).toBeInTheDocument();
-    expect(screen.getAllByRole('alert')[0]).toHaveTextContent('Lidarr could not be reached');
-    expect(screen.getByText('Valence cannot use Deluge yet.')).toBeInTheDocument();
+    expect(screen.getAllByRole('alert')[0]).toHaveTextContent('Couldn’t connect to Lidarr');
+    expect(screen.getByText('Valence doesn’t support Deluge yet.')).toBeInTheDocument();
     expect(screen.getByText('12 indexers through Prowlarr')).toBeInTheDocument();
     expect(screen.getByText('/movies4k, from Radarr')).toBeInTheDocument();
     expect(screen.getByText('3 monitored films with no file yet')).toBeInTheDocument();
-    expect(screen.getByText('1 title has no id Valence can ask for it by')).toBeInTheDocument();
+    expect(screen.getByText('1 title has no ID Valence can request it by')).toBeInTheDocument();
   });
 
   it('asks again for each secret shown masked, and passes on each library’s choice', async () => {

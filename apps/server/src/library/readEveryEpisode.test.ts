@@ -17,7 +17,7 @@ const episode = (id: string): MediaSummary => ({
   hasBackdrop: true,
   hasLogo: false,
   seriesId: null,
-  seriesTitle: 'A programme',
+  seriesTitle: 'A series',
   seasonNumber: 1,
   episodeNumber: 1,
 });

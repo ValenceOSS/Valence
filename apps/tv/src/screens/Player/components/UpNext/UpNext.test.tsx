@@ -112,7 +112,7 @@ describe('UpNext', () => {
       <UpNext episode={EPISODE} isAsking={false} onPlay={jest.fn()} onStay={onStay} />,
     );
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Stay' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Cancel' }));
 
     expect(onStay).toHaveBeenCalledTimes(1);
   });

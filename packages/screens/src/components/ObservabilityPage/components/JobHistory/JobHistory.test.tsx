@@ -249,7 +249,7 @@ describe('JobHistory', () => {
       />,
     );
 
-    expect(screen.getByText('Reading job history…')).toBeInTheDocument();
+    expect(screen.getByText('Loading job history…')).toBeInTheDocument();
   });
 
   it('says nothing matches once a confirmed-empty page arrives', async () => {
@@ -267,7 +267,7 @@ describe('JobHistory', () => {
       />,
     );
 
-    expect(await screen.findByText('No job runs match this.')).toBeInTheDocument();
+    expect(await screen.findByText('No job runs match these filters.')).toBeInTheDocument();
   });
 
   it('says history could not be read when the request fails', async () => {
@@ -286,7 +286,7 @@ describe('JobHistory', () => {
     );
 
     expect(
-      await screen.findByText('Job history could not be read from the server.'),
+      await screen.findByText('Couldn’t load job history from the server.'),
     ).toBeInTheDocument();
   });
 
@@ -350,7 +350,7 @@ describe('JobHistory', () => {
 
     await screen.findByText('Movies');
 
-    const table = screen.getByRole('table', { name: 'What the job queue has run' });
+    const table = screen.getByRole('table', { name: 'Job run history' });
 
     expect(within(table).queryByRole('button', { name: /Job|Status|Subject|When/ })).toBeNull();
     expect(within(table).queryByRole('button', { name: 'Filter by status' })).toBeNull();
@@ -768,7 +768,7 @@ describe('JobHistory', () => {
 
       drawHistory();
 
-      const strip = await screen.findByLabelText('How the job runs stand');
+      const strip = await screen.findByLabelText('Job run summary');
 
       await waitFor(() => {
         expect(within(strip).getByText('completed').previousElementSibling).toHaveTextContent('2');
@@ -817,10 +817,10 @@ describe('JobHistory', () => {
       });
 
       await userEvent.click(menus[1] ?? menus[0]!);
-      await userEvent.click(await screen.findByRole('menuitem', { name: 'Pin to the top' }));
+      await userEvent.click(await screen.findByRole('menuitem', { name: 'Pin to top' }));
 
       expect(rows()[0]).toHaveTextContent('second one');
-      expect(screen.getByLabelText('Pinned to the top')).toBeInTheDocument();
+      expect(screen.getByLabelText('Pinned')).toBeInTheDocument();
       expect(onTrace).not.toHaveBeenCalled();
     });
 
@@ -846,7 +846,7 @@ describe('JobHistory', () => {
         await userEvent.click(first);
       }
 
-      await userEvent.click(await screen.findByRole('menuitem', { name: 'Unpin from the top' }));
+      await userEvent.click(await screen.findByRole('menuitem', { name: 'Unpin' }));
 
       expect(screen.getAllByRole('row').slice(1)[0]).toHaveTextContent('first one');
 

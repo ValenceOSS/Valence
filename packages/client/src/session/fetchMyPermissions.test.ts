@@ -46,7 +46,7 @@ describe('fetchMyPermissions', () => {
   });
 
   it('says so when nobody is signed in, rather than answering with nothing held', async () => {
-    answerWith({ error: 'Nobody is signed in.' }, false);
+    answerWith({ error: 'You’re not signed in.' }, false);
 
     await expect(fetchMyPermissions()).rejects.toThrow();
   });

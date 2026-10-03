@@ -503,7 +503,7 @@ describe('indexers and searching, through the server', () => {
       isOn: true,
       isAdministrator: true,
       service: () =>
-        new Response(JSON.stringify({ error: 'That is not an indexer.' }), { status: 400 }),
+        new Response(JSON.stringify({ error: 'That isn’t a valid indexer.' }), { status: 400 }),
     });
 
     for (const [method, path, body] of [
@@ -925,7 +925,7 @@ describe('download clients and the queue, through the server', () => {
       isOn: true,
       isAdministrator: true,
       service: () =>
-        new Response(JSON.stringify({ error: 'No torrent client is set up and switched on' }), {
+        new Response(JSON.stringify({ error: 'No torrent client is set up and turned on' }), {
           status: 400,
         }),
     });
@@ -933,7 +933,7 @@ describe('download clients and the queue, through the server', () => {
 
     expect(sent.status).toBe(400);
     expect(await sent.json()).toMatchObject({
-      error: 'No torrent client is set up and switched on',
+      error: 'No torrent client is set up and turned on',
     });
 
     const missing = await build({
@@ -992,7 +992,7 @@ describe('download clients and the queue, through the server', () => {
           libraryId: 'elsewhere',
         })
       ).json(),
-    ).toMatchObject({ error: 'There is no such library.' });
+    ).toMatchObject({ error: 'No such library.' });
   });
 
   it('sends a release for the library of its kind it will be filed into, and for none where there is none', async () => {
@@ -1375,7 +1375,7 @@ describe('requests for films and series, through the server', () => {
 
     expect(
       await (await unknown.ask('/api/requests/media', 'POST', { kind: 'film', tmdbId: 1 })).json(),
-    ).toMatchObject({ error: 'The catalogue does not know that, or cannot be asked just now.' });
+    ).toMatchObject({ error: 'The catalogue doesn’t have that, or can’t be reached right now.' });
 
     const nowhere = await build({
       isOn: true,
@@ -1388,7 +1388,7 @@ describe('requests for films and series, through the server', () => {
       await (
         await nowhere.ask('/api/requests/media', 'POST', { kind: 'series', tmdbId: 1 })
       ).json(),
-    ).toMatchObject({ error: 'There is no library of series to put it in.' });
+    ).toMatchObject({ error: 'There’s no series library to put it in.' });
     expect(
       (await nowhere.ask('/api/requests/media', 'POST', { kind: 'film', tmdbId: 1 })).status,
     ).toBe(201);
@@ -1464,7 +1464,7 @@ describe('requests for films and series, through the server', () => {
           musicBrainzId: '83d91898-7763-47d7-b03b-b92132375c47',
         })
       ).json(),
-    ).toMatchObject({ error: 'There is no library of music to put it in.' });
+    ).toMatchObject({ error: 'There’s no music library to put it in.' });
   });
 
   it('searches MusicBrainz for artists and albums, for whoever may ask', async () => {
@@ -1675,7 +1675,8 @@ describe('requests for films and series, through the server', () => {
         })
       ).json(),
     ).toMatchObject({
-      error: 'It was asked for, but that release could not be fetched: No torrent client is set up',
+      error:
+        'The request was made, but that release couldn’t be downloaded: No torrent client is set up',
     });
 
     const asking = await build({ isOn: true, granted: ['requests.ask'], service: aWillingKeeper });
@@ -2162,7 +2163,7 @@ describe('requests for films and series, through the server', () => {
 
       expect(
         await (await ask('/api/requests/media', 'POST', { kind: 'book', openLibraryId: 1 })).json(),
-      ).toMatchObject({ error: 'There is no library of books to put it in.' });
+      ).toMatchObject({ error: 'There’s no books library to put it in.' });
     });
 
     it('will not ask for a book by a TMDB id, nor for a film by an Open Library one', async () => {
@@ -2195,7 +2196,7 @@ describe('requests for films and series, through the server', () => {
         await (
           await ask('/api/requests/media', 'POST', { kind: 'book', openLibraryId: 99 })
         ).json(),
-      ).toMatchObject({ error: 'The catalogue does not know that, or cannot be asked just now.' });
+      ).toMatchObject({ error: 'The catalogue doesn’t have that, or can’t be reached right now.' });
     });
 
     it('shelves books for anybody who may ask for films, and for nobody who may not', async () => {
@@ -2442,7 +2443,7 @@ describe('requests for films and series, through the server', () => {
     state = 'available';
 
     expect(await (await ask(`/api/requests/media/${REQUEST.id}`, 'DELETE')).json()).toMatchObject({
-      error: 'It is in the library already, so there is nothing left to cancel.',
+      error: 'It’s already in the library, so there’s nothing to cancel.',
     });
 
     owner = 'someone-else';
@@ -2457,7 +2458,7 @@ describe('requests for films and series, through the server', () => {
       isOn: true,
       isAdministrator: true,
       service: () =>
-        new Response(JSON.stringify({ error: 'The film is on its way already' }), { status: 400 }),
+        new Response(JSON.stringify({ error: 'The film is already downloading' }), { status: 400 }),
     });
 
     for (const [method, path, body] of [
@@ -2585,7 +2586,7 @@ describe('requests for films and series, through the server', () => {
 
       expect(refused.status).toBe(403);
       expect(await refused.json()).toMatchObject({
-        error: 'That quality is not available to you.',
+        error: 'That quality isn’t available to you.',
       });
       expect(sent.some(({ url }) => url.endsWith('/api/requests'))).toBe(false);
     });

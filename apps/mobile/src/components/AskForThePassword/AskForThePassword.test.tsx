@@ -63,7 +63,7 @@ describe('AskForThePassword', () => {
   it('says why it was refused, rather than doing nothing', async () => {
     jest
       .mocked(signInAsProfile)
-      .mockResolvedValue({ kind: 'refused', reason: 'That password is not right.' });
+      .mockResolvedValue({ kind: 'refused', reason: 'Incorrect password.' });
 
     const drawn = await render(
       <AskForThePassword profile={A_FACE} onIn={jest.fn()} onBack={jest.fn()} />,
@@ -74,7 +74,7 @@ describe('AskForThePassword', () => {
     await userEvent.press(drawn.getByText('Watch'));
 
     await waitFor(() => {
-      expect(drawn.getByText('That password is not right.')).toBeTruthy();
+      expect(drawn.getByText('Incorrect password.')).toBeTruthy();
     });
   });
 
@@ -122,7 +122,7 @@ describe('AskForThePassword', () => {
       { wrapper: CacheScope },
     );
 
-    await userEvent.press(drawn.getByText('Somebody else'));
+    await userEvent.press(drawn.getByText('Someone else'));
 
     expect(onBack).toHaveBeenCalled();
   });
@@ -163,7 +163,7 @@ describe('AskForThePassword', () => {
 
     await userEvent.press(drawn.getByText('Forgot your password?'));
 
-    expect(await drawn.findByText('That could not be done.')).toBeTruthy();
+    expect(await drawn.findByText('Something went wrong. Try again.')).toBeTruthy();
     expect(drawn.getByText('Forgot your password?')).toBeTruthy();
   });
 });

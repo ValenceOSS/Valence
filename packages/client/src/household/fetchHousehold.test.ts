@@ -71,17 +71,17 @@ describe('putting a picture on a household', () => {
   });
 
   it('carries back the sentence the server refused it with', async () => {
-    answering(asJson({ error: 'A picture has to be 6 MB or smaller.' }), 413);
+    answering(asJson({ error: 'The picture must be 6 MB or smaller.' }), 413);
 
     await expect(uploadHouseholdPhoto(aFile())).resolves.toBe(
-      'A picture has to be 6 MB or smaller.',
+      'The picture must be 6 MB or smaller.',
     );
   });
 
   it('says something useful where the server said nothing it could read', async () => {
     answering('not json at all', 500);
 
-    await expect(uploadHouseholdPhoto(aFile())).resolves.toBe('That picture could not be used.');
+    await expect(uploadHouseholdPhoto(aFile())).resolves.toBe('Couldn’t use that picture.');
   });
 });
 

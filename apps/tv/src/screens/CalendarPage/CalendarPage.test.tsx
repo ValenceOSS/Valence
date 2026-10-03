@@ -53,7 +53,7 @@ describe('CalendarPage', () => {
     const drawn = await drawCalendar(null, { onLight });
 
     expect(drawn.getByText('Calendar')).toBeTruthy();
-    expect(drawn.queryByText('Nothing comes out on these days')).toBeNull();
+    expect(drawn.queryByText('No releases on these dates')).toBeNull();
     expect(drawn.queryByRole('button')).toBeNull();
     expect(onLight).toHaveBeenCalledWith(null);
   });
@@ -61,10 +61,10 @@ describe('CalendarPage', () => {
   it('says so when nothing comes out over the next two months', async () => {
     const drawn = await drawCalendar([]);
 
-    expect(drawn.getByText('Nothing comes out on these days')).toBeTruthy();
+    expect(drawn.getByText('No releases on these dates')).toBeTruthy();
     expect(
       drawn.getByText(
-        'Episodes of shows in your library, and films and shows you have asked for, appear here once they have a date.',
+        'Episodes of shows in your library, and films and shows you’ve requested, appear here once they have a release date.',
       ),
     ).toBeTruthy();
   });

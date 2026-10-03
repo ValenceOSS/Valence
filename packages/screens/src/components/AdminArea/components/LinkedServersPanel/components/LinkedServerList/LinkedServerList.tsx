@@ -77,7 +77,7 @@ const LinkedServerList = ({ servers, managing, onManage }: LinkedServerListProps
           notify.worked(
             about === 'unlink'
               ? say('screens.adminArea.linkedServersPanel.unlinkedName', { name: server.name })
-              : say('screens.adminArea.linkedServersPanel.forgotName', { name: server.name }),
+              : say('common.removedName', { name: server.name }),
           );
         } else {
           notify.failed(refusal.message);
@@ -96,7 +96,7 @@ const LinkedServerList = ({ servers, managing, onManage }: LinkedServerListProps
       <ConfirmDialog
         title={
           asking?.about === 'forget'
-            ? say('screens.adminArea.linkedServersPanel.forgetNameAsk', {
+            ? say('common.removeName', {
                 name: asking.server.name,
               })
             : say('screens.adminArea.linkedServersPanel.unlinkNameAsk', {
@@ -219,7 +219,7 @@ const LinkedServerList = ({ servers, managing, onManage }: LinkedServerListProps
                         answer(server, 'check');
                       }}
                     >
-                      {say('screens.adminArea.linkedServersPanel.checkAgain')}
+                      {say('screens.importWizard.arrImportStep.readItAgain')}
                     </Button>
                   ) : null}
 

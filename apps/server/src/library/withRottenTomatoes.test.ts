@@ -123,7 +123,7 @@ describe('withRottenTomatoes', () => {
     });
 
     await expect(provider.describe(FACTS)).resolves.toEqual(FOUND);
-    expect(onProblem).toHaveBeenCalledWith('OMDb answered tt2543164 with an error');
+    expect(onProblem).toHaveBeenCalledWith('OMDb returned an error for tt2543164');
   });
 
   it('never lets OMDb being unreachable cost a title the rest of its description', async () => {
@@ -135,7 +135,7 @@ describe('withRottenTomatoes', () => {
     });
 
     await expect(provider.describe(FACTS)).resolves.toEqual(FOUND);
-    expect(onProblem).toHaveBeenCalledWith('OMDb could not be reached for tt2543164');
+    expect(onProblem).toHaveBeenCalledWith('Couldn’t reach OMDb for tt2543164');
   });
 
   it('asks once for a title however many of its files are described', async () => {

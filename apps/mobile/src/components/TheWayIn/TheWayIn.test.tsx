@@ -53,7 +53,7 @@ describe('TheWayIn', () => {
       ),
     );
 
-    expect(drawn.getByText('Who is watching?')).toBeTruthy();
+    expect(drawn.getByText('Who’s watching?')).toBeTruthy();
   });
 
   it('draws a face for everybody who lives here', async () => {

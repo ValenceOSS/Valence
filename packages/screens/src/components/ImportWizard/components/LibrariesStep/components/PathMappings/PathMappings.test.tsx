@@ -26,14 +26,14 @@ describe('PathMappings', () => {
     await userEvent.type(sources[1] ?? document.body, '/data/kids');
     await userEvent.clear(valence[0] ?? document.body);
     await userEvent.type(valence[0] ?? document.body, '/srv');
-    await userEvent.click(screen.getByRole('button', { name: 'Save and look again' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save and check again' }));
 
     expect(onSave).toHaveBeenLastCalledWith([{ from: '/data', to: '/srv' }]);
 
     await userEvent.click(
       screen.getAllByRole('button', { name: 'Remove this folder' })[0] ?? document.body,
     );
-    await userEvent.click(screen.getByRole('button', { name: 'Save and look again' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save and check again' }));
 
     expect(onSave).toHaveBeenLastCalledWith([]);
   });

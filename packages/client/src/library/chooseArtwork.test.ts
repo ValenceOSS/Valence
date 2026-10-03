@@ -38,10 +38,10 @@ describe('chooseArtwork', () => {
   });
 
   it('passes on why a picture was refused', async () => {
-    answering(400, { error: 'That picture is not one the catalogue has for this.' });
+    answering(400, { error: 'That image isn’t one of the catalogue’s choices for this item.' });
 
     expect(
       await chooseArtwork('film-1', 'poster', 'https://image.tmdb.org/t/p/original/x.jpg'),
-    ).toEqual({ problem: 'That picture is not one the catalogue has for this.' });
+    ).toEqual({ problem: 'That image isn’t one of the catalogue’s choices for this item.' });
   });
 });

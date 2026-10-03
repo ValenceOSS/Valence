@@ -26,7 +26,7 @@ describe('describeAudioQuality', () => {
 
   it('says an encode no smaller than the file plays the file instead', () => {
     expect(describeAudioQuality('high', MP3).detail).toBe(
-      'Plays the original, which is no bigger · about 137 MB an hour',
+      'Original file, already this size or smaller · about 137 MB an hour',
     );
     expect(describeAudioQuality('normal', MP3).detail).toBe('160 kbps · about 69 MB an hour');
   });
@@ -34,7 +34,7 @@ describe('describeAudioQuality', () => {
   it('describes the file plainly where nothing is playing', () => {
     expect(describeAudioQuality('lossless', null)).toEqual({
       label: 'Lossless',
-      detail: 'The file as it is on the server',
+      detail: 'Original file',
     });
   });
 });

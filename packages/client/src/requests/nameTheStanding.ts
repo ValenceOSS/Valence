@@ -42,9 +42,9 @@ const nameTheStanding = (
     case 'filing':
     case 'filed':
     case 'available':
-      return { look: 'working', label: say('client.requests.nameTheStanding.arriving') };
+      return { look: 'working', label: say('common.filing') };
     case 'failed':
-      return { look: 'failed', label: say('client.requests.nameTheStanding.stuck') };
+      return { look: 'failed', label: say('common.stalled') };
     case 'waiting':
     case 'wanted':
     case 'searching':

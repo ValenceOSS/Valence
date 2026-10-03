@@ -133,7 +133,7 @@ const CollectionEditDialog = ({
       <DialogFooter
         dismiss={{ onChoose: onClose }}
         confirm={{
-          label: isNew ? say('common.makeIt') : say('common.save'),
+          label: isNew ? say('common.create') : say('common.save'),
           onChoose: () => {
             void save();
           },

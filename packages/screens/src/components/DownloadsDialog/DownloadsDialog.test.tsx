@@ -37,21 +37,21 @@ describe('DownloadsDialog', () => {
   it('says a kept file is the viewer’s, since that is the thing worth knowing about one', () => {
     renderInAnAddress(<DownloadsDialog isOpen onClose={vi.fn()} />);
 
-    expect(screen.getByText(/yours until you delete it/)).toBeInTheDocument();
+    expect(screen.getByText(/stays until you delete it/)).toBeInTheDocument();
   });
 
   it('in a browser, says it is for seeing progress and offers no going offline', () => {
     installATestClient({ canKeepFiles: () => false });
     renderInAnAddress(<DownloadsDialog isOpen onClose={vi.fn()} />);
 
-    expect(screen.getByText(/how far along each is/)).toBeInTheDocument();
+    expect(screen.getByText(/and their progress/)).toBeInTheDocument();
     expect(screen.queryByText('Go offline')).toBeNull();
   });
 
   it('shows what has been asked for', async () => {
     renderInAnAddress(<DownloadsDialog isOpen onClose={vi.fn()} />);
 
-    expect(await screen.findByText(/Nothing prepared yet/)).toBeInTheDocument();
+    expect(await screen.findByText(/No downloads yet/)).toBeInTheDocument();
   });
 
   it('closes when the close button is pressed', async () => {

@@ -6,7 +6,7 @@ import { say } from '@ValenceI18n/say';
 const PHASE_LABELS: Record<string, string> = {
   probing: say('screens.adminArea.scanProgressBar.probing'),
   previews: say('screens.adminArea.scanProgressBar.generatingPreviews'),
-  trickplay: say('screens.adminArea.scanProgressBar.generatingScrubPreviews'),
+  trickplay: say('screens.adminArea.describeQueueKind.drawingScrubPreviews'),
   segments: say('screens.adminArea.scanProgressBar.findingIntros'),
   clearing: say('screens.adminArea.scanProgressBar.clearing'),
 };

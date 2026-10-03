@@ -33,7 +33,7 @@ describe('UsernameField', () => {
     await settle();
 
     expect(checks).toHaveBeenCalledWith('ada', 'usr-1');
-    expect(screen.getByText('That username is free.')).toBeInTheDocument();
+    expect(screen.getByText('That username is available.')).toBeInTheDocument();
   });
 
   it('says a username somebody holds is taken', async () => {

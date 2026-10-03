@@ -7,15 +7,15 @@ describe('GridSizeChooser', () => {
   it('says what the row of controls is for', () => {
     render(<GridSizeChooser value="medium" onValueChange={vi.fn()} />);
 
-    expect(screen.getByRole('group', { name: 'How large the cards are' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Card size' })).toBeInTheDocument();
   });
 
   it('offers every size, named by what it does rather than by its glyph alone', () => {
     render(<GridSizeChooser value="medium" onValueChange={vi.fn()} />);
 
-    expect(screen.getByRole('button', { name: 'Small cards, more of them' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Small cards, more per row' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Medium cards' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Large cards, fewer of them' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Large cards, fewer per row' })).toBeInTheDocument();
   });
 
   it('changes the size when one is pressed', async () => {
@@ -24,7 +24,7 @@ describe('GridSizeChooser', () => {
 
     render(<GridSizeChooser value="medium" onValueChange={onValueChange} />);
 
-    await user.click(screen.getByRole('button', { name: 'Large cards, fewer of them' }));
+    await user.click(screen.getByRole('button', { name: 'Large cards, fewer per row' }));
 
     expect(onValueChange).toHaveBeenCalledWith('large');
   });
@@ -32,7 +32,7 @@ describe('GridSizeChooser', () => {
   it('says which size is in force rather than only drawing it differently', () => {
     render(<GridSizeChooser value="small" onValueChange={vi.fn()} />);
 
-    expect(screen.getByRole('button', { name: 'Small cards, more of them' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Small cards, more per row' })).toHaveAttribute(
       'aria-pressed',
       'true',
     );
@@ -44,7 +44,7 @@ describe('GridSizeChooser', () => {
     const marks = document.querySelectorAll('[data-mark]');
 
     expect(marks).toHaveLength(1);
-    expect(screen.getByRole('button', { name: 'Small cards, more of them' })).toContainElement(
+    expect(screen.getByRole('button', { name: 'Small cards, more per row' })).toContainElement(
       marks[0] instanceof HTMLElement ? marks[0] : null,
     );
   });
@@ -54,12 +54,12 @@ describe('GridSizeChooser', () => {
 
     render(<GridSizeChooser value="small" onValueChange={vi.fn()} />);
 
-    await user.hover(screen.getByRole('button', { name: 'Large cards, fewer of them' }));
+    await user.hover(screen.getByRole('button', { name: 'Large cards, fewer per row' }));
 
     const marks = document.querySelectorAll('[data-mark]');
 
     expect(marks).toHaveLength(1);
-    expect(screen.getByRole('button', { name: 'Large cards, fewer of them' })).toContainElement(
+    expect(screen.getByRole('button', { name: 'Large cards, fewer per row' })).toContainElement(
       marks[0] instanceof HTMLElement ? marks[0] : null,
     );
   });
@@ -69,12 +69,12 @@ describe('GridSizeChooser', () => {
 
     render(<GridSizeChooser value="small" onValueChange={vi.fn()} />);
 
-    await user.hover(screen.getByRole('button', { name: 'Large cards, fewer of them' }));
-    await user.unhover(screen.getByRole('button', { name: 'Large cards, fewer of them' }));
+    await user.hover(screen.getByRole('button', { name: 'Large cards, fewer per row' }));
+    await user.unhover(screen.getByRole('button', { name: 'Large cards, fewer per row' }));
 
     const marks = document.querySelectorAll('[data-mark]');
 
-    expect(screen.getByRole('button', { name: 'Small cards, more of them' })).toContainElement(
+    expect(screen.getByRole('button', { name: 'Small cards, more per row' })).toContainElement(
       marks[0] instanceof HTMLElement ? marks[0] : null,
     );
   });
@@ -88,7 +88,7 @@ describe('how the sizes are drawn', () => {
   it('draws each size with its own glyph, from many small squares to one large one', () => {
     render(<GridSizeChooser value="medium" onValueChange={vi.fn()} />);
 
-    const drawn = ['Small cards, more of them', 'Medium cards', 'Large cards, fewer of them'].map(
+    const drawn = ['Small cards, more per row', 'Medium cards', 'Large cards, fewer per row'].map(
       (name) => screen.getByRole('button', { name }).querySelector('svg')?.innerHTML ?? '',
     );
 
@@ -99,7 +99,7 @@ describe('how the sizes are drawn', () => {
   it('sits in the flat track the other segmented controls use, rather than in glass', () => {
     render(<GridSizeChooser value="medium" onValueChange={vi.fn()} />);
 
-    const track = screen.getByRole('group', { name: 'How large the cards are' });
+    const track = screen.getByRole('group', { name: 'Card size' });
 
     expect(track).toHaveClass('bg-[var(--surface-hover)]');
     expect(track).not.toHaveClass('valence-glass');
@@ -108,6 +108,6 @@ describe('how the sizes are drawn', () => {
   it('stands as tall as the small buttons beside it, such as Filters', () => {
     render(<GridSizeChooser value="medium" onValueChange={vi.fn()} />);
 
-    expect(screen.getByRole('group', { name: 'How large the cards are' })).toHaveClass('h-8');
+    expect(screen.getByRole('group', { name: 'Card size' })).toHaveClass('h-8');
   });
 });

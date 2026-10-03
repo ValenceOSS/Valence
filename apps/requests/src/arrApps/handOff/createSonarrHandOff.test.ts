@@ -145,12 +145,12 @@ describe('createSonarrHandOff', () => {
 
     await expect(
       handOff.place({ ...SEVERANCE_REQUEST, tvdbId: null }, [], HAND_OFF),
-    ).rejects.toThrow('Sonarr cannot find it by its TVDB or TMDB id.');
+    ).rejects.toThrow('Sonarr can’t find it by its TVDB or TMDB ID.');
     await expect(
       handOff.place({ ...SEVERANCE_REQUEST, tvdbId: null, tmdbId: null }, [], HAND_OFF),
-    ).rejects.toThrow('Sonarr cannot find it by its TVDB or TMDB id.');
+    ).rejects.toThrow('Sonarr can’t find it by its TVDB or TMDB ID.');
     await expect(handOff.place(SEVERANCE_REQUEST, [], HAND_OFF)).rejects.toThrow(
-      'Sonarr cannot find it by its TVDB or TMDB id.',
+      'Sonarr can’t find it by its TVDB or TMDB ID.',
     );
   });
 

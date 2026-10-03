@@ -22,10 +22,10 @@ describe('ForgotPassword', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Forgot your password?' }));
     await userEvent.type(screen.getByLabelText('Username or email'), ' ada ');
-    await userEvent.click(screen.getByRole('button', { name: 'Send me a link' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Send reset link' }));
 
     expect(
-      await screen.findByText(/a link to choose a new password is on its way/),
+      await screen.findByText(/a link to set a new password has been sent/),
     ).toBeInTheDocument();
     expect(askForPasswordReset).toHaveBeenCalledWith(
       { identifier: 'ada' },
@@ -46,8 +46,8 @@ describe('ForgotPassword', () => {
     render(<ForgotPassword initialIdentifier="ada" />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Forgot your password?' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Send me a link' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Send reset link' }));
 
-    expect(await screen.findByText('That could not be done.')).toBeInTheDocument();
+    expect(await screen.findByText('Something went wrong. Try again.')).toBeInTheDocument();
   });
 });

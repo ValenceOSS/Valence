@@ -172,7 +172,7 @@ describe('useFetchWhatThisDeviceAsked', () => {
     });
 
     expect(notices).toEqual([
-      { title: 'Arrival is on this device', body: 'It is ready to watch offline.' },
+      { title: 'Arrival has finished downloading', body: 'It’s ready to watch offline.' },
     ]);
   });
 });

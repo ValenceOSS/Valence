@@ -306,7 +306,7 @@ const IndexersPanel = () => {
                   items: [
                     {
                       id: 'remove',
-                      label: say('common.remove'),
+                      label: say('common.forget'),
                       icon: <Icon of={BinFilledIcon} size={15} />,
                       isDestructive: true,
                       onChoose: () => {
@@ -398,7 +398,7 @@ const IndexersPanel = () => {
             : say('common.removeName', { name: removing.name })
         }
         detail={say('screens.adminArea.indexersPanel.itWillNotBeSearchedAgain')}
-        confirmLabel={say('common.remove')}
+        confirmLabel={say('common.forget')}
         isDestructive
         isOpen={removing !== null}
         onClose={() => {

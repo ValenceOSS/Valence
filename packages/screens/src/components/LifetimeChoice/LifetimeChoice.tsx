@@ -12,9 +12,9 @@ import type { LifetimeChoiceProps } from './LifetimeChoice.types';
  * @param onChoose - Told when another is chosen.
  */
 const LifetimeChoice = ({ value, onChoose }: LifetimeChoiceProps) => (
-  <FormField label={say('screens.lifetimeChoice.linkWorksFor')}>
+  <FormField label={say('common.linkWorksFor')}>
     <SegmentedRow
-      label={say('screens.lifetimeChoice.linkWorksFor')}
+      label={say('common.linkWorksFor')}
       size="sm"
       value={String(value)}
       items={SETUP_LINK_LIFETIMES.map((days) => ({

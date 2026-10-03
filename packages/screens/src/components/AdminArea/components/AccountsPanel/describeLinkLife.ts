@@ -16,7 +16,7 @@ const describeLinkLife = (expiresAt: string, now: number): string => {
   const left = Date.parse(expiresAt) - now;
 
   if (Number.isNaN(left) || left <= 0) {
-    return say('screens.describeLinkLife.linkHasRunOut');
+    return say('screens.accountStanding.linkExpired');
   }
 
   if (left >= DAY) {

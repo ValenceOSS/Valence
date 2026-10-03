@@ -56,7 +56,7 @@ describe('PlanStep', () => {
     startMediaImport.mockResolvedValue({ kind: 'answered', value: importing });
     render(<PlanStep source={SOURCE} choice={CHOICE} onStarted={onStarted} onBack={vi.fn()} />);
 
-    expect(await screen.findByText(/Nothing has been written yet/)).toBeVisible();
+    expect(await screen.findByText(/Nothing has been changed yet/)).toBeVisible();
     expect(planMediaImport).toHaveBeenCalledWith('den', CHOICE);
 
     await userEvent.click(screen.getByRole('button', { name: 'Import everything' }));
@@ -72,7 +72,9 @@ describe('PlanStep', () => {
     });
     render(<PlanStep source={SOURCE} choice={CHOICE} onStarted={vi.fn()} onBack={vi.fn()} />);
 
-    expect(await screen.findByText('Reading everything on Den and writing nothing.')).toBeVisible();
+    expect(
+      await screen.findByText('Reading everything on Den without changing anything.'),
+    ).toBeVisible();
 
     await userEvent.click(screen.getByRole('button', { name: 'Stop' }));
 
@@ -82,9 +84,9 @@ describe('PlanStep', () => {
       kind: 'answered',
       value: aMediaImportRun({ state: 'planned', report: A_REPORT }),
     });
-    await userEvent.click(screen.getByRole('button', { name: 'Plan again' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Run dry run again' }));
 
-    expect(await screen.findByText(/Nothing has been written yet/)).toBeVisible();
+    expect(await screen.findByText(/Nothing has been changed yet/)).toBeVisible();
   });
 
   it('says why a dry run failed, and why one could not start', async () => {
@@ -105,7 +107,7 @@ describe('PlanStep', () => {
       kind: 'refused',
       refusal: { message: 'No such server.' },
     });
-    await userEvent.click(screen.getByRole('button', { name: 'Plan again' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Run dry run again' }));
 
     expect(await screen.findByText('No such server.')).toBeVisible();
 
@@ -125,7 +127,7 @@ describe('PlanStep', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Import everything' }));
 
     await waitFor(() => {
-      expect(screen.getByText('That could not be done.')).toBeVisible();
+      expect(screen.getByText('Something went wrong. Try again.')).toBeVisible();
     });
   });
 });

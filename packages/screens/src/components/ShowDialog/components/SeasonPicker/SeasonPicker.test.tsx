@@ -25,7 +25,7 @@ describe('SeasonPicker', () => {
 
     expect(screen.queryByRole('button', { name: 'Season 9' })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Which season' }));
+    await user.click(screen.getByRole('button', { name: 'Season' }));
     await user.click(await screen.findByRole('menuitemradio', { name: /Season 9/ }));
 
     expect(onChange).toHaveBeenCalledWith(9);
@@ -34,7 +34,7 @@ describe('SeasonPicker', () => {
   it('says which season is being read on the menu itself', () => {
     render(<SeasonPicker seasons={seasonsUpTo(10)} value={7} onChange={vi.fn()} />);
 
-    expect(screen.getByRole('button', { name: 'Which season' })).toHaveTextContent('Season 7');
+    expect(screen.getByRole('button', { name: 'Season' })).toHaveTextContent('Season 7');
   });
 
   it('says a season the library does not hold is not held', async () => {
@@ -48,7 +48,7 @@ describe('SeasonPicker', () => {
       />,
     );
 
-    await user.click(screen.getByRole('button', { name: 'Which season' }));
+    await user.click(screen.getByRole('button', { name: 'Season' }));
 
     expect(await screen.findByText('Not in your library')).toBeInTheDocument();
   });

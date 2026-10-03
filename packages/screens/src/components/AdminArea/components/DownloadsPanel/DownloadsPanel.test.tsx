@@ -304,7 +304,7 @@ describe('DownloadsPanel', () => {
     await waitFor(() => {
       expect(fetchLibraries).toHaveBeenCalled();
     });
-    await choose(user, 'Dune', /File into Films/);
+    await choose(user, 'Dune', /Import into Films/);
 
     await waitFor(() => {
       expect(fileQueuedDownload).toHaveBeenCalledWith(DOWNLOAD.id, 'films');
@@ -315,7 +315,7 @@ describe('DownloadsPanel', () => {
   it('pauses and resumes a download, saying why where it could not', async () => {
     resumeQueuedDownload.mockResolvedValue({
       value: null,
-      refusal: { message: 'qBittorrent could not be reached' },
+      refusal: { message: 'Couldn’t connect to qBittorrent' },
     });
 
     const user = userEvent.setup();
@@ -341,7 +341,7 @@ describe('DownloadsPanel', () => {
 
     await choose(user, 'Dune', /Resume/);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('qBittorrent could not be reached');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Couldn’t connect to qBittorrent');
   });
 
   it('removes a download, deleting what it downloaded where asked', async () => {
@@ -350,7 +350,7 @@ describe('DownloadsPanel', () => {
     renderInAnAddress(<DownloadsPanel />);
 
     await choose(user, 'Dune', /Remove/);
-    await user.click(await screen.findByRole('checkbox', { name: /Delete what it downloaded/ }));
+    await user.click(await screen.findByRole('checkbox', { name: /Also delete downloaded files/ }));
     await user.click(screen.getByRole('button', { name: 'Remove' }));
 
     await waitFor(() => {
@@ -370,7 +370,7 @@ describe('DownloadsPanel', () => {
 
     await choose(user, 'Dune', /Remove/);
 
-    expect(await screen.findByText(/NZBGet keeps what it has finished with/)).toBeInTheDocument();
+    expect(await screen.findByText(/NZBGet doesn’t delete finished downloads/)).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
 
@@ -393,7 +393,7 @@ describe('DownloadsPanel', () => {
     });
     testDownloadClient.mockResolvedValueOnce({
       value: null,
-      refusal: { message: 'Requesting is off.' },
+      refusal: { message: 'Requests are turned off.' },
     });
 
     const user = userEvent.setup();
@@ -406,7 +406,7 @@ describe('DownloadsPanel', () => {
 
     await choose(user, 'qBittorrent', /Test/);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('qBittorrent: did not answer');
+    expect(await screen.findByRole('alert')).toHaveTextContent('qBittorrent: no response');
 
     await choose(user, 'qBittorrent', /Test/);
 
@@ -414,7 +414,7 @@ describe('DownloadsPanel', () => {
 
     await choose(user, 'qBittorrent', /Test/);
 
-    expect(await screen.findByText('Requesting is off.')).toBeInTheDocument();
+    expect(await screen.findByText('Requests are turned off.')).toBeInTheDocument();
   });
 
   it('switches a client off, and says why where it could not', async () => {
@@ -425,7 +425,7 @@ describe('DownloadsPanel', () => {
     renderInAnAddress(<DownloadsPanel />);
 
     await user.click(screen.getByRole('tab', { name: 'Clients' }));
-    await choose(user, 'qBittorrent', /Switch off/);
+    await choose(user, 'qBittorrent', /Disable/);
 
     expect(changeDownloadClient).toHaveBeenCalledWith(CLIENT.id, { isEnabled: false });
     expect(await screen.findByRole('alert')).toHaveTextContent('No.');
@@ -505,12 +505,12 @@ describe('DownloadsPanel', () => {
 
     renderInAnAddress(<DownloadsPanel />);
 
-    expect(screen.getByRole('status', { name: 'Reading the downloads' })).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Loading downloads' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('tab', { name: 'Clients' }));
 
     expect(
-      await screen.findByRole('status', { name: 'Reading the download clients' }),
+      await screen.findByRole('status', { name: 'Loading download clients' }),
     ).toBeInTheDocument();
   });
 

@@ -48,7 +48,7 @@ describe('AChoiceOfEpisodes', () => {
       />,
     );
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Pick Season 1' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Select Season 1' }));
 
     expect(drawn.getByText('Download 2 episodes')).toBeTruthy();
   });

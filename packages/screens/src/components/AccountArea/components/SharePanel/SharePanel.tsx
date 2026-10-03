@@ -60,7 +60,7 @@ const SharePanel = () => {
       },
       {
         id: 'standing',
-        header: say('common.standing'),
+        header: say('common.status'),
         accessorFn: (share) => shareStanding(share, Date.now()).label,
         cell: ({ row }) => {
           const standing = shareStanding(row.original, Date.now());
@@ -169,7 +169,7 @@ const SharePanel = () => {
         />
       ) : (
         <DataTable
-          label={say('screens.accountArea.sharePanel.linksYouHaveHandedOut')}
+          label={say('screens.accountArea.sharePanel.yourLinks')}
           columns={columns}
           rows={asked.data}
           emptyMessage={say('screens.accountArea.sharePanel.youHaveNotHandedOutAny')}

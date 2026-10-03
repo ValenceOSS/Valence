@@ -46,7 +46,7 @@ describe('AskForTheCode', () => {
     await userEvent.press(drawn.getByText('Continue'));
 
     await waitFor(() => {
-      expect(drawn.getByText('That code is not valid. Try the next one.')).toBeTruthy();
+      expect(drawn.getByText('That code isn’t valid. Try the next one.')).toBeTruthy();
     });
     expect(onIn).not.toHaveBeenCalled();
   });
@@ -89,9 +89,7 @@ describe('AskForTheCode', () => {
     await userEvent.press(drawn.getByText('Continue'));
 
     await waitFor(() => {
-      expect(
-        drawn.getByText('Could not reach the server. Check that it is still running.'),
-      ).toBeTruthy();
+      expect(drawn.getByText('Couldn’t reach the server. Check that it’s running.')).toBeTruthy();
     });
   });
 });

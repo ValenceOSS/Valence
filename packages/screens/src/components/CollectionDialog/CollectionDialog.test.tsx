@@ -146,7 +146,7 @@ describe('CollectionDialog', () => {
     await screen.findByRole('heading', { name: 'Saga' });
 
     expect(shownTitles()).toEqual(['Hope', 'Empire', 'Return']);
-    expect(screen.queryByRole('button', { name: 'Its own order' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Custom order' })).not.toBeInTheDocument();
   });
 
   it('offers nobody who may not edit the libraries a way to change it', async () => {
@@ -155,7 +155,7 @@ describe('CollectionDialog', () => {
     await screen.findByRole('heading', { name: 'Saga' });
 
     expect(screen.queryByRole('button', { name: /Remove/ })).not.toBeInTheDocument();
-    expect(screen.queryByText('Choose artwork')).not.toBeInTheDocument();
+    expect(screen.queryByText('Select artwork')).not.toBeInTheDocument();
   });
 
   it('takes a title out, and moves one earlier', async () => {

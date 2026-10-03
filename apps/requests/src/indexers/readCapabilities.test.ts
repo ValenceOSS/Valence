@@ -72,7 +72,7 @@ describe('readCapabilities', () => {
 
   it('refuses a document that is not capabilities at all', () => {
     expect(() => readCapabilities(readIndexerXml('<rss><channel/></rss>'))).toThrow(
-      'The indexer did not say what it can search',
+      'The indexer didn’t report its search capabilities',
     );
   });
 });

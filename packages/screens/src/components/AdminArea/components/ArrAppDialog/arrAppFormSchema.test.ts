@@ -32,14 +32,14 @@ describe('arrAppFormSchema', () => {
   });
 
   it('says the first thing wrong', () => {
-    expect(read({ ...FORM, name: ' ' }, false).problem).toBe('Give the app a name.');
+    expect(read({ ...FORM, name: ' ' }, false).problem).toBe('Enter a name for the app.');
     expect(read({ ...FORM, url: 'radarr' }, false).problem).not.toBeNull();
     expect(read({ ...FORM, url: 'ftp://radarr' }, false).problem).not.toBeNull();
     expect(read({ ...FORM, apiKey: '' }, false).problem).toBe(
-      'It needs its API key, from Settings → General in the app.',
+      'Enter the app’s API key, found under Settings → General in the app.',
     );
     expect(read({ ...FORM, remotePath: '/movies' }, false).problem).toBe(
-      'Say where its library is both as the app sees it and as Valence does, or neither.',
+      'Enter both the app’s path and Valence’s path, or leave both empty.',
     );
   });
 });

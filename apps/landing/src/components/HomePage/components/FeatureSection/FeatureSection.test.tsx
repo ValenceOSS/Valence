@@ -12,7 +12,7 @@ describe('FeatureSection', () => {
       <FeatureSection
         group={{
           title: 'Platform',
-          detail: 'What it takes to run it.',
+          detail: 'What it accepts to run it.',
           features: featuresNamed('One image', 'Read only', 'Real auth'),
         }}
         number={5}
@@ -21,7 +21,7 @@ describe('FeatureSection', () => {
 
     const region = screen.getByRole('region', { name: 'Platform' });
 
-    expect(within(region).getByText('What it takes to run it.')).toBeInTheDocument();
+    expect(within(region).getByText('What it accepts to run it.')).toBeInTheDocument();
     expect(within(region).getByRole('heading', { name: 'Read only' })).toBeInTheDocument();
     expect(within(region).getByText('Fig 5.2')).toBeInTheDocument();
   });

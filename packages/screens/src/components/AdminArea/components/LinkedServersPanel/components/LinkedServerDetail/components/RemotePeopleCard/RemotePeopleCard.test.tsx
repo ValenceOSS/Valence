@@ -35,7 +35,7 @@ describe('RemotePeopleCard', () => {
     renderInAnAddress(<RemotePeopleCard server={FILMS} />);
 
     expect(
-      await screen.findByText('Nobody from Films has asked for anything yet.'),
+      await screen.findByText('No one from Films has requested anything yet.'),
     ).toBeInTheDocument();
   });
 
@@ -58,7 +58,7 @@ describe('RemotePeopleCard', () => {
 
     expect(await screen.findByText('Blocked')).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Let Someone from Films back in' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Unblock Someone from Films' }));
 
     await waitFor(() => {
       expect(blockRemotePerson).toHaveBeenCalledWith(FILMS.id, aRemotePerson().id, false);

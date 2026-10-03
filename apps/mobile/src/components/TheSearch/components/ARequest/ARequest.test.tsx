@@ -29,7 +29,7 @@ describe('ARequest', () => {
       <ARequest request={aMediaRequest()} progress={[]} myId="someone" onAsk={jest.fn()} />,
     );
 
-    expect(drawn.getByText('Asked by you')).toBeTruthy();
+    expect(drawn.getByText('Requested by you')).toBeTruthy();
   });
 
   it('names somebody else who asked', async () => {
@@ -37,7 +37,7 @@ describe('ARequest', () => {
       <ARequest request={aMediaRequest()} progress={[]} myId="me" onAsk={jest.fn()} />,
     );
 
-    expect(drawn.getByText('Asked by Sam')).toBeTruthy();
+    expect(drawn.getByText('Requested by Sam')).toBeTruthy();
   });
 
   it('shows how far a download has got', async () => {
@@ -83,7 +83,7 @@ describe('ARequest', () => {
       />,
     );
 
-    expect(drawn.getByLabelText('How far Dune has downloaded')).toBeTruthy();
+    expect(drawn.getByLabelText('Download progress for Dune')).toBeTruthy();
   });
 
   it('opens what explains its problem, where it has one', async () => {

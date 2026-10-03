@@ -1295,11 +1295,11 @@ describe('the picture behind the way in', () => {
     fetchMock.mockResolvedValue({
       ok: false,
       status: 413,
-      json: () => Promise.resolve({ error: 'A picture has to be 16 MB or smaller.' }),
+      json: () => Promise.resolve({ error: 'The picture must be 16 MB or smaller.' }),
     });
 
     await expect(saveSplashscreen(aPicture())).resolves.toEqual({
-      problem: 'A picture has to be 16 MB or smaller.',
+      problem: 'The picture must be 16 MB or smaller.',
     });
   });
 
@@ -1311,7 +1311,7 @@ describe('the picture behind the way in', () => {
     });
 
     await expect(saveSplashscreen(aPicture())).resolves.toEqual({
-      problem: 'The server answered 500.',
+      problem: 'The server responded with 500.',
     });
   });
 
@@ -1319,7 +1319,7 @@ describe('the picture behind the way in', () => {
     fetchMock.mockRejectedValue(new Error('offline'));
 
     await expect(saveSplashscreen(aPicture())).resolves.toEqual({
-      problem: 'The server could not be reached.',
+      problem: 'Couldn’t reach the server.',
     });
   });
 
@@ -1329,7 +1329,7 @@ describe('the picture behind the way in', () => {
     await expect(removeSplashscreen()).resolves.toBe(true);
     expect(fetchMock.mock.calls.at(-1)?.[1]?.method).toBe('DELETE');
 
-    answerWith({ error: 'That is for administrators.' }, false);
+    answerWith({ error: 'Only administrators can do that.' }, false);
 
     await expect(removeSplashscreen()).resolves.toBe(false);
   });

@@ -35,7 +35,7 @@ const AThemeChoice = () => {
   const themes = contributions.data?.themes ?? [];
 
   return (
-    <AGroup title={say('phone.aThemeChoice.look')}>
+    <AGroup title={say('common.theme')}>
       <SegmentedRow
         label={say('phone.aThemeChoice.lightOrDark')}
         items={SCHEMES}

@@ -106,24 +106,26 @@ describe('handing out a link', () => {
   it('says a link can be withdrawn while somebody is watching', () => {
     draw();
 
-    expect(screen.getByText(/withdraw it at any time, even mid-watch/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/revoke the link at any time, even while someone is watching/),
+    ).toBeInTheDocument();
   });
 
   it('makes a link and shows it once', async () => {
     draw();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Make a link' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Create share link' }));
 
     await waitFor(() => {
       expect(screen.getByDisplayValue('https://valence.example/share/a-token')).toBeInTheDocument();
     });
-    expect(screen.getByText(/only time it is shown/)).toBeInTheDocument();
+    expect(screen.getByText(/only time it’s shown/)).toBeInTheDocument();
   });
 
   it('shares one item by default', async () => {
     draw();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Make a link' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Create share link' }));
 
     await waitFor(() => {
       expect(createMock).toHaveBeenCalled();
@@ -135,7 +137,7 @@ describe('handing out a link', () => {
   it('sets an expiry from the span that was chosen', async () => {
     draw();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Make a link' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Create share link' }));
 
     await waitFor(() => {
       expect(createMock).toHaveBeenCalled();
@@ -151,9 +153,9 @@ describe('handing out a link', () => {
 
     draw();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Make a link' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Create share link' }));
 
-    expect(await screen.findByText(/could not be shared/)).toBeInTheDocument();
+    expect(await screen.findByText(/Couldn’t create a share link/)).toBeInTheDocument();
   });
 });
 
@@ -189,7 +191,7 @@ describe('sharing an episode', () => {
 
     drawProgramme();
 
-    await user.click(screen.getByRole('button', { name: 'Make a link' }));
+    await user.click(screen.getByRole('button', { name: 'Create share link' }));
 
     expect(createMock).toHaveBeenCalledWith(
       expect.objectContaining({ kind: 'series', seriesId: episode.seriesId }),
@@ -209,7 +211,7 @@ describe('sharing an episode', () => {
     await userEvent.click(
       await screen.findByRole('menuitemradio', { name: 'The whole programme' }),
     );
-    await userEvent.click(screen.getByRole('button', { name: 'Make a link' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Create share link' }));
 
     await waitFor(() => {
       expect(createMock).toHaveBeenCalled();
@@ -225,7 +227,7 @@ describe('sharing an episode', () => {
 
     draw(episode);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Make a link' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Create share link' }));
     await screen.findByDisplayValue('https://valence.example/share/a-token');
 
     await userEvent.click(screen.getByRole('button', { name: /Copy/ }));
@@ -269,7 +271,7 @@ describe('sharing an episode', () => {
     expect(screen.getByText('The whole book')).toBeInTheDocument();
     expect(screen.getByText(/Only this book/)).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: /Make a link/ }));
+    await userEvent.click(screen.getByRole('button', { name: /Create share link/ }));
 
     await waitFor(() => {
       expect(createMock).toHaveBeenCalledWith(

@@ -65,7 +65,7 @@ describe('ConfirmHiding', () => {
     );
 
     expect(await screen.findByText('Hide Curb Your Enthusiasm?')).toBeInTheDocument();
-    expect(await screen.findByText(/Every episode of it disappears/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Every episode is hidden/i)).toBeInTheDocument();
   });
 
   it('says it affects nobody else, where there is somebody else', async () => {
@@ -78,7 +78,7 @@ describe('ConfirmHiding', () => {
     );
 
     expect(
-      await screen.findByText(/for you and for nobody else on this account/i),
+      await screen.findByText(/This only affects you, not anyone else on this account/i),
     ).toBeInTheDocument();
   });
 
@@ -91,7 +91,7 @@ describe('ConfirmHiding', () => {
 
     await screen.findByText('Hide Arrival?');
 
-    expect(screen.queryByText(/nobody else on this account/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/not anyone else on this account/i)).not.toBeInTheDocument();
   });
 
   it('says where the way back is, which is what makes it an easy yes', async () => {
@@ -101,9 +101,7 @@ describe('ConfirmHiding', () => {
       />,
     );
 
-    expect(
-      await screen.findByText(/Bring it back from Hidden on your profile/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/unhide it from Hidden on your profile/i)).toBeInTheDocument();
   });
 
   it('hides it when somebody agrees, and says so to whoever was showing it', async () => {

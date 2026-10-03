@@ -20,14 +20,14 @@ describe('EmptyLibrary', () => {
   it('says the rest of the server is fine when only this library is empty', () => {
     render(<EmptyLibrary search="" libraryName="Documentaries" hasContentElsewhere canManage />);
 
-    expect(screen.getByText('Scan it, or add files to its folder.')).toBeInTheDocument();
+    expect(screen.getByText('Scan the library, or add files to its folder.')).toBeInTheDocument();
   });
 
   it('treats a server with nothing anywhere as one that has not been set up', () => {
     render(<EmptyLibrary search="" libraryName="Films" hasContentElsewhere={false} canManage />);
 
     expect(screen.getByText('Nothing has been scanned yet')).toBeInTheDocument();
-    expect(screen.getByText('Scan it, or add files to its folder.')).toBeInTheDocument();
+    expect(screen.getByText('Scan the library, or add files to its folder.')).toBeInTheDocument();
   });
 
   it('copes with no library having been chosen yet', () => {
@@ -71,7 +71,7 @@ describe('EmptyLibrary', () => {
       />,
     );
 
-    await userEvent.click(screen.getByRole('button', { name: 'Scan it' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Scan library' }));
 
     expect(manage).toHaveBeenCalledTimes(1);
   });
@@ -79,6 +79,6 @@ describe('EmptyLibrary', () => {
   it('gives nothing to press to somebody who could not act on it', () => {
     render(<EmptyLibrary search="" libraryName="Films" hasContentElsewhere={false} />);
 
-    expect(screen.queryByRole('button', { name: 'Scan it' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Scan library' })).not.toBeInTheDocument();
   });
 });

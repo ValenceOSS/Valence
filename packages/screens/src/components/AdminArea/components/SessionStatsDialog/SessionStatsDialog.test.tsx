@@ -95,7 +95,7 @@ describe('SessionStatsDialog', () => {
   it('says a transcode is being made now where nothing was reused', () => {
     render(<SessionStatsDialog session={WATCHING_SESSION} isOpen onClose={vi.fn()} />);
 
-    expect(screen.getByText('No — this transcode is being made now')).toBeInTheDocument();
+    expect(screen.getByText('No — this transcode is running now')).toBeInTheDocument();
   });
 
   it('says when a session is playing a transcode that was already made', () => {
@@ -109,7 +109,7 @@ describe('SessionStatsDialog', () => {
 
     render(<SessionStatsDialog session={session} isOpen onClose={vi.fn()} />);
 
-    expect(screen.getByText('Yes — the whole transcode was already made')).toBeInTheDocument();
+    expect(screen.getByText('Yes — the whole transcode was already done')).toBeInTheDocument();
   });
 
   it('says when nothing is playing rather than showing empty fields', () => {

@@ -25,7 +25,7 @@ describe('ArrLibraryChoiceRow', () => {
       />,
     );
 
-    expect(screen.getByText(/Radarr keeps doing the downloading/)).toBeInTheDocument();
+    expect(screen.getByText(/Radarr keeps handling downloads/)).toBeInTheDocument();
     expect(screen.getByText('Matched by its folder’s name only')).toBeInTheDocument();
   });
 
@@ -43,7 +43,7 @@ describe('ArrLibraryChoiceRow', () => {
 
     expect(screen.getByText(/HD-1080p/)).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Leave as it is' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Don’t change' }));
 
     expect(onChoose).toHaveBeenCalledWith('leave');
   });
@@ -53,9 +53,9 @@ describe('ArrLibraryChoiceRow', () => {
 
     render(<ArrLibraryChoiceRow library={LIBRARY} choice="leave" isDisabled onChoose={onChoose} />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Hand requests to Radarr' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Send requests to Radarr' }));
 
     expect(onChoose).not.toHaveBeenCalled();
-    expect(screen.getByText(/stays as it is/)).toBeInTheDocument();
+    expect(screen.getByText(/The library isn’t changed/)).toBeInTheDocument();
   });
 });

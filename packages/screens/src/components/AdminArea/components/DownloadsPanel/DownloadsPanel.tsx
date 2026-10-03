@@ -286,7 +286,7 @@ const DownloadsPanel = () => {
               : say('common.removeName', { name: removingClient.name })
           }
           detail={say('screens.adminArea.downloadsPanel.nothingWillBeSentToIt')}
-          confirmLabel={say('common.remove')}
+          confirmLabel={say('common.forget')}
           isDestructive
           isOpen={removingClient !== null}
           onClose={() => {

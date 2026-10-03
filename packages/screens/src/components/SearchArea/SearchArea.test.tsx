@@ -239,7 +239,7 @@ describe('SearchArea', () => {
     await user.click(await screen.findByRole('button', { name: 'Films' }));
     fetchLibraryItems.mockResolvedValue({ items: [], total: 0 });
 
-    expect(await screen.findByText(/Taking one of the filters off/)).toBeInTheDocument();
+    expect(await screen.findByText(/Try removing one/)).toBeInTheDocument();
   });
 
   it('takes the genre off on request, from the chip that says it is on', async () => {

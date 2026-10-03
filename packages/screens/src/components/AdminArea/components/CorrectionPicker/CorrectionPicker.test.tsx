@@ -70,7 +70,7 @@ describe('CorrectionPicker', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Search' }));
 
-    expect(await screen.findByText('Nothing came back under that name.')).toBeInTheDocument();
+    expect(await screen.findByText('No results for that name.')).toBeInTheDocument();
   });
 
   it('will not search for nothing', async () => {
@@ -92,7 +92,7 @@ describe('CorrectionPicker', () => {
     });
     expect(props.choose).toHaveBeenCalledWith(MATCH);
     expect(props.onChanged).toHaveBeenCalled();
-    expect(notify.worked).toHaveBeenCalledWith('Corrected the match.');
+    expect(notify.worked).toHaveBeenCalledWith('Match updated.');
   });
 
   it('says why a choice could not be kept and stays open', async () => {
@@ -113,21 +113,21 @@ describe('CorrectionPicker', () => {
   it('forgets an earlier choice so the files are read again', async () => {
     const props = picker();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Use what the files say' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Use details from the files' }));
 
     await waitFor(() => {
       expect(props.onClose).toHaveBeenCalled();
     });
     expect(props.forget).toHaveBeenCalled();
     expect(notify.worked).toHaveBeenCalledWith(
-      'It will say what its files say from the next scan.',
+      'It will use the details from its files after the next scan.',
     );
   });
 
   it('says why an earlier choice could not be forgotten', async () => {
     const props = picker({ forget: vi.fn(() => Promise.resolve('Nothing was corrected.')) });
 
-    await userEvent.click(screen.getByRole('button', { name: 'Use what the files say' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Use details from the files' }));
 
     await waitFor(() => {
       expect(notify.failed).toHaveBeenCalledWith('Nothing was corrected.');

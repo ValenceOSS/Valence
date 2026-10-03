@@ -23,7 +23,7 @@ describe('ArrQueueTable', () => {
               id: '6b2e3d4c-5f6a-4b7c-9d8e-0f1a2b3c4d5e',
               name: 'Series',
               kind: 'sonarr',
-              problem: sayVerbatim('Series could not be reached'),
+              problem: sayVerbatim('Couldn’t connect to Series'),
               problemCode: 'ArrAppUnreachable',
             },
           ],
@@ -73,7 +73,7 @@ describe('ArrQueueTable', () => {
     expect(screen.getByText('qBittorrent')).toBeInTheDocument();
     expect(screen.getByText('No files found are eligible for import')).toBeInTheDocument();
     expect(screen.getByText('Heat.1995')).toBeInTheDocument();
-    expect(screen.getByRole('alert')).toHaveTextContent('Series: Series could not be reached');
+    expect(screen.getByRole('alert')).toHaveTextContent('Series: Couldn’t connect to Series');
   });
 
   it('says nothing is downloading, or that no app is there to download anything', () => {

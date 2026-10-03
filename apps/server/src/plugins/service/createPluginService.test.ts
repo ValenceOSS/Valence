@@ -270,7 +270,7 @@ describe('a plugin from upload to use, through its own process', () => {
     });
 
     expect(before).toEqual({
-      problem: 'An administrator has not given Counter its AniList client id yet.',
+      problem: 'An administrator hasn’t set the AniList client ID for Counter yet.',
     });
 
     await service.change('counter', { settings: { clientId: 'client-1' } });
@@ -430,7 +430,7 @@ describe('a plugin from upload to use, through its own process', () => {
       blocks: [{ type: 'text', text: 'Pressed 2' }],
     });
     expect(await service.rollback('counter')).toEqual({
-      refused: 'No earlier version of this plugin is kept to go back to.',
+      refused: 'There’s no earlier version of this plugin to roll back to.',
     });
 
     service.stop();
@@ -450,7 +450,7 @@ describe('a plugin from upload to use, through its own process', () => {
     );
 
     expect('refused' in upgraded ? upgraded.refused.message : '').toMatch(
-      /Counter 3\.0\.0 could not bring its data up to date, so 1\.0\.0 was put back as it was\..*The old list could not be read\./u,
+      /Counter 3\.0\.0 couldn’t migrate its data, so it was rolled back to 1\.0\.0\..*The old list could not be read\./u,
     );
 
     const [kept] = await service.listInstalled();

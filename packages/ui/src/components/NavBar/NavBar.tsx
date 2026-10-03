@@ -161,7 +161,7 @@ const NavBar = ({
       />
 
       <nav
-        aria-label={say('ui.navBar.sections')}
+        aria-label={say('common.sections')}
         onPointerLeave={() => {
           setPointedAt(null);
         }}

@@ -109,7 +109,7 @@ describe('ACalendarSubscribeSheet', () => {
     jest.mocked(ensureCalendarFeed).mockResolvedValueOnce(null).mockResolvedValueOnce(FEED);
     const drawn = await drawSheet();
 
-    expect(await drawn.findByText('The calendar link could not be made.')).toBeTruthy();
+    expect(await drawn.findByText('Couldn’t create the calendar link.')).toBeTruthy();
 
     await userEvent.press(drawn.getByRole('button', { name: 'Try again' }));
 
@@ -120,22 +120,22 @@ describe('ACalendarSubscribeSheet', () => {
   it('says no calendar app has read the link yet', async () => {
     const drawn = await drawSheet();
 
-    expect(await drawn.findByText('Not read by a calendar app yet')).toBeTruthy();
+    expect(await drawn.findByText('Not used by a calendar app yet')).toBeTruthy();
   });
 
   it('asks before making a new link, and makes it once asked', async () => {
     const drawn = await drawSheet();
 
-    await userEvent.press(await drawn.findByRole('button', { name: 'Make a new link' }));
+    await userEvent.press(await drawn.findByRole('button', { name: 'Create new link' }));
 
     expect(alert).toHaveBeenCalledWith(
-      'Make a new calendar link?',
+      'Create a new calendar link?',
       expect.any(String),
       expect.any(Array),
     );
     expect(renewCalendarFeed).not.toHaveBeenCalled();
 
-    answerTheAlert('Make a new link');
+    answerTheAlert('Create new link');
 
     await waitFor(() => {
       expect(renewCalendarFeed).toHaveBeenCalledTimes(1);
@@ -160,11 +160,11 @@ describe('ACalendarSubscribeSheet', () => {
     jest.mocked(renewCalendarFeed).mockResolvedValue(null);
     const drawn = await drawSheet();
 
-    await userEvent.press(await drawn.findByRole('button', { name: 'Make a new link' }));
-    answerTheAlert('Make a new link');
+    await userEvent.press(await drawn.findByRole('button', { name: 'Create new link' }));
+    answerTheAlert('Create new link');
 
     await waitFor(() => {
-      expect(alert).toHaveBeenLastCalledWith('The calendar link could not be changed. Try again.');
+      expect(alert).toHaveBeenLastCalledWith('Couldn’t change the calendar link. Try again.');
     });
   });
 });

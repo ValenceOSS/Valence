@@ -66,13 +66,13 @@ describe('KeepingControls', () => {
   it('offers to keep something the device does not have', () => {
     render(<KeepingControls download={prepared} held={null} />);
 
-    expect(screen.getByRole('button', { name: 'Keep on this device' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Download to this device' })).toBeInTheDocument();
   });
 
   it('asks the device to hold it', async () => {
     render(<KeepingControls download={prepared} held={null} />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Keep on this device' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Download to this device' }));
 
     await waitFor(() => {
       expect(files.asked[0]?.downloadId).toBe(prepared.id);
@@ -99,13 +99,13 @@ describe('KeepingControls', () => {
   it('shows a transfer as it moves', () => {
     render(<KeepingControls download={prepared} held={aFile({ state: 'fetching', bytes: 10 })} />);
 
-    expect(screen.getByRole('button', { name: /Stop fetching/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Pause downloading/ })).toBeInTheDocument();
   });
 
   it('carries on with a stopped one', async () => {
     render(<KeepingControls download={prepared} held={aFile({ state: 'paused', bytes: 10 })} />);
 
-    await userEvent.click(screen.getByRole('button', { name: /Carry on fetching/ }));
+    await userEvent.click(screen.getByRole('button', { name: /Resume download/ }));
 
     await waitFor(() => {
       expect(files.paused).toEqual([[prepared.id, false]]);

@@ -113,8 +113,8 @@ describe('ArrImportStep', () => {
     fetchRequestsAvailability.mockResolvedValue({ isEnabled: false });
     renderInAnAddress(<ArrImportStep onSkip={onSkip} />);
 
-    expect(await screen.findByText('Requesting is not switched on')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'How to switch requesting on' })).toHaveAttribute(
+    expect(await screen.findByText('Requests aren’t enabled')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'How to enable requests' })).toHaveAttribute(
       'href',
       'https://docs.getvalence.app/install/requesting#switching-it-on',
     );
@@ -127,10 +127,10 @@ describe('ArrImportStep', () => {
   it('says what is missing before reading anything', async () => {
     renderInAnAddress(<ArrImportStep />);
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Read the setup' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Check setup' }));
 
     expect(screen.getByRole('alert')).toHaveTextContent(
-      'Give at least one app’s address and API key.',
+      'Enter at least one app’s address and API key.',
     );
     expect(planArrImport).not.toHaveBeenCalled();
   });
@@ -147,7 +147,7 @@ describe('ArrImportStep', () => {
       'http://overseerr:5055',
     );
     await userEvent.type(screen.getByLabelText('Overseerr API key'), 'key');
-    await userEvent.click(screen.getByRole('button', { name: 'Read the setup' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Check setup' }));
 
     expect(planArrImport).toHaveBeenCalledWith({
       sources: [{ kind: 'overseerr', url: 'http://overseerr:5055', apiKey: 'key' }],
@@ -169,7 +169,7 @@ describe('ArrImportStep', () => {
         choices: { films: 'takeOver' },
       }),
     );
-    expect(await screen.findByText('26 requests made, 0 asked for already')).toBeInTheDocument();
+    expect(await screen.findByText('26 requests made, 0 already requested')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Done' }));
 
@@ -177,13 +177,16 @@ describe('ArrImportStep', () => {
   });
 
   it('says why a plan was refused', async () => {
-    planArrImport.mockResolvedValue({ value: null, refusal: { message: 'Requesting is off.' } });
+    planArrImport.mockResolvedValue({
+      value: null,
+      refusal: { message: 'Requests are turned off.' },
+    });
     renderInAnAddress(<ArrImportStep />);
 
     await userEvent.type(await screen.findByLabelText('Radarr address'), 'http://radarr:7878');
     await userEvent.type(screen.getByLabelText('Radarr API key'), 'key');
-    await userEvent.click(screen.getByRole('button', { name: 'Read the setup' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Check setup' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Requesting is off.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Requests are turned off.');
   });
 });

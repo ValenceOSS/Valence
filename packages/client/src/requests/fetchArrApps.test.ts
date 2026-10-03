@@ -110,11 +110,11 @@ describe('fetchArrApps', () => {
   });
 
   it('says why an app was not connected', async () => {
-    answering({ error: 'That is not a connected app.' }, 400);
+    answering({ error: 'That isn’t a valid connected app.' }, 400);
 
     expect(await addArrApp(A_DRAFT)).toEqual({
       value: null,
-      refusal: { message: 'That is not a connected app.' },
+      refusal: { message: 'That isn’t a valid connected app.' },
     });
   });
 });

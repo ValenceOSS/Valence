@@ -53,7 +53,7 @@ const openTheMenu = async (user: ReturnType<typeof userEvent.setup>) => {
   await waitFor(() => {
     expect(fetchCalendarFeed).toHaveBeenCalled();
   });
-  await user.click(screen.getByRole('button', { name: 'Add to Calendar' }));
+  await user.click(screen.getByRole('button', { name: 'Add to calendar' }));
 };
 
 afterEach(() => {
@@ -69,7 +69,7 @@ describe('CalendarSubscribe', () => {
     await waitFor(() => {
       expect(fetchCalendarFeed).toHaveBeenCalled();
     });
-    await user.click(screen.getByRole('button', { name: 'Add to Calendar' }));
+    await user.click(screen.getByRole('button', { name: 'Add to calendar' }));
     await user.click(await screen.findByRole('menuitem', { name: 'Google Calendar' }));
 
     await waitFor(() => {
@@ -94,7 +94,7 @@ describe('CalendarSubscribe', () => {
     await waitFor(() => {
       expect(fetchCalendarFeed).toHaveBeenCalled();
     });
-    await user.click(screen.getByRole('button', { name: 'Add to Calendar' }));
+    await user.click(screen.getByRole('button', { name: 'Add to calendar' }));
     await user.click(await screen.findByRole('menuitem', { name: 'Copy link' }));
 
     await waitFor(() => {
@@ -111,7 +111,7 @@ describe('CalendarSubscribe', () => {
     await waitFor(() => {
       expect(fetchCalendarFeed).toHaveBeenCalled();
     });
-    await user.click(screen.getByRole('button', { name: 'Add to Calendar' }));
+    await user.click(screen.getByRole('button', { name: 'Add to calendar' }));
 
     await waitFor(() => {
       expect(ensureCalendarFeed).toHaveBeenCalledTimes(1);
@@ -146,8 +146,8 @@ describe('CalendarSubscribe', () => {
     renderInAnAddress(<CalendarSubscribe />);
     await openTheMenu(user);
 
-    expect(await screen.findByText('Not read by a calendar app yet')).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: /Make a new link/ })).toBeInTheDocument();
+    expect(await screen.findByText('Not used by a calendar app yet')).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /Create new link/ })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Turn off' })).toBeInTheDocument();
   });
 
@@ -168,12 +168,12 @@ describe('CalendarSubscribe', () => {
 
     renderInAnAddress(<CalendarSubscribe />);
     await openTheMenu(user);
-    await user.click(await screen.findByRole('menuitem', { name: /Make a new link/ }));
+    await user.click(await screen.findByRole('menuitem', { name: /Create new link/ }));
 
-    expect(await screen.findByText('Make a new calendar link?')).toBeInTheDocument();
+    expect(await screen.findByText('Create a new calendar link?')).toBeInTheDocument();
     expect(renewCalendarFeed).not.toHaveBeenCalled();
 
-    await user.click(screen.getByRole('button', { name: 'Make a new link' }));
+    await user.click(screen.getByRole('button', { name: 'Create new link' }));
 
     await waitFor(() => {
       expect(renewCalendarFeed).toHaveBeenCalledTimes(1);
@@ -193,7 +193,7 @@ describe('CalendarSubscribe', () => {
     await user.click(screen.getByRole('button', { name: 'Turn off' }));
 
     expect(
-      await screen.findByText('The calendar link could not be changed. Try again.'),
+      await screen.findByText('Couldn’t change the calendar link. Try again.'),
     ).toBeInTheDocument();
     expect(stopCalendarFeed).toHaveBeenCalledTimes(1);
   });

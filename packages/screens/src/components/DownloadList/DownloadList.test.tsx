@@ -40,7 +40,7 @@ const FAILED = {
   ...READY,
   id: '00000000-0000-4000-8000-000000000004',
   state: 'failed',
-  failure: sayVerbatim('The media service could not be reached.'),
+  failure: sayVerbatim('Couldn’t connect to the media service.'),
 };
 
 const RequestSchema = z.object({ method: z.string().optional() });
@@ -75,22 +75,22 @@ describe('DownloadList', () => {
   it('says there is nothing yet, and where one would come from', async () => {
     drawWith([]);
 
-    expect(await screen.findByText(/Nothing prepared yet/)).toBeInTheDocument();
+    expect(await screen.findByText(/No downloads yet/)).toBeInTheDocument();
   });
 
   it('names what has been prepared and how large it turned out', async () => {
     drawWith([READY]);
 
     expect(await screen.findByText('Arrival')).toBeInTheDocument();
-    expect(screen.getByText(/Ready to keep on this device/)).toBeInTheDocument();
+    expect(screen.getByText(/Ready to download to this device/)).toBeInTheDocument();
   });
 
   it('only shows how far along things are in a browser, offering nothing to download', async () => {
     installATestClient({ canKeepFiles: () => false });
     drawWith([READY]);
 
-    expect(await screen.findByText(/Ready on the device that asked/)).toBeInTheDocument();
-    expect(screen.queryByText('Keep on this device')).toBeNull();
+    expect(await screen.findByText(/Ready on the device that requested it/)).toBeInTheDocument();
+    expect(screen.queryByText('Download to this device')).toBeNull();
     expect(screen.queryByRole('button', { name: /Save file/ })).toBeNull();
   });
 
@@ -113,7 +113,7 @@ describe('DownloadList', () => {
   it('says Valence can be closed while the server prepares something', async () => {
     drawWith([PREPARING]);
 
-    expect(await screen.findByText(/Valence can be closed in the meantime/)).toBeInTheDocument();
+    expect(await screen.findByText(/you can close Valence in the meantime/)).toBeInTheDocument();
   });
 
   it('says nothing about closing it once nothing is being prepared', async () => {
@@ -121,7 +121,7 @@ describe('DownloadList', () => {
 
     await screen.findByText('Arrival');
 
-    expect(screen.queryByText(/can be closed/)).toBeNull();
+    expect(screen.queryByText(/close Valence/)).toBeNull();
   });
 
   it('measures a preparing download against finishing, not against a hundred', async () => {
@@ -138,7 +138,7 @@ describe('DownloadList', () => {
   it('says why one failed rather than only that it did', async () => {
     drawWith([FAILED]);
 
-    expect(await screen.findByText(/could not be reached/)).toBeInTheDocument();
+    expect(await screen.findByText(/Couldn’t connect to the media service/)).toBeInTheDocument();
   });
 
   it('offers to keep only what is ready', async () => {
@@ -146,14 +146,16 @@ describe('DownloadList', () => {
 
     await screen.findByText(/40% done/);
 
-    expect(screen.queryByRole('button', { name: 'Keep on this device' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Download to this device' }),
+    ).not.toBeInTheDocument();
   });
 
   it('offers to stop keeping one on the server, saying which', async () => {
     drawWith([READY]);
 
     expect(
-      await screen.findByRole('button', { name: /Stop keeping Arrival on the server/ }),
+      await screen.findByRole('button', { name: /Remove the server copy of Arrival/ }),
     ).toBeInTheDocument();
   });
 
@@ -163,7 +165,7 @@ describe('DownloadList', () => {
     drawWith([READY]);
 
     await actor.click(
-      await screen.findByRole('button', { name: /Stop keeping Arrival on the server/ }),
+      await screen.findByRole('button', { name: /Remove the server copy of Arrival/ }),
     );
 
     expect(await screen.findByText('Delete Arrival?')).toBeInTheDocument();
@@ -186,7 +188,7 @@ describe('DownloadList', () => {
     drawWith([READY]);
 
     await actor.click(
-      await screen.findByRole('button', { name: /Stop keeping Arrival on the server/ }),
+      await screen.findByRole('button', { name: /Remove the server copy of Arrival/ }),
     );
     await actor.click(await screen.findByRole('button', { name: 'Cancel' }));
 
@@ -198,20 +200,20 @@ describe('DownloadList', () => {
   it('says a queued one is waiting rather than leaving it looking stuck', async () => {
     drawWith([{ ...READY, state: 'queued', progress: 0, sizeBytes: null, readyAt: null }]);
 
-    expect(await screen.findByText(/Waiting its turn/)).toBeInTheDocument();
+    expect(await screen.findByText(/Queued/)).toBeInTheDocument();
   });
 
   it('says a paused one keeps what it has done, which is the worry somebody has', async () => {
     drawWith([{ ...READY, state: 'paused', progress: 0.4, sizeBytes: null, readyAt: null }]);
 
-    expect(await screen.findByText(/Paused at 40%. What is done is kept/)).toBeInTheDocument();
+    expect(await screen.findByText(/Paused at 40%. Progress so far is saved/)).toBeInTheDocument();
   });
 
   it('offers to stop one that is being prepared', async () => {
     drawWith([PREPARING]);
 
     expect(
-      await screen.findByRole('button', { name: /Stop preparing Arrival for now/ }),
+      await screen.findByRole('button', { name: /Pause preparing Arrival/ }),
     ).toBeInTheDocument();
   });
 
@@ -219,7 +221,7 @@ describe('DownloadList', () => {
     drawWith([{ ...READY, state: 'paused', progress: 0.4, sizeBytes: null, readyAt: null }]);
 
     expect(
-      await screen.findByRole('button', { name: /Carry on preparing Arrival/ }),
+      await screen.findByRole('button', { name: /Resume preparing Arrival/ }),
     ).toBeInTheDocument();
   });
 
@@ -228,7 +230,7 @@ describe('DownloadList', () => {
 
     await screen.findByText('Arrival');
 
-    expect(screen.queryByRole('button', { name: /Stop preparing/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Pause preparing/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Carry on preparing/ })).not.toBeInTheDocument();
   });
 
@@ -237,7 +239,7 @@ describe('DownloadList', () => {
 
     drawWith([PREPARING]);
 
-    await actor.click(await screen.findByRole('button', { name: /Stop preparing Arrival/ }));
+    await actor.click(await screen.findByRole('button', { name: /Pause preparing Arrival/ }));
 
     await waitFor(() => {
       expect(

@@ -67,7 +67,7 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
       </SettingRow>
 
       <SettingRow
-        title={say('screens.accountArea.profileSettings.profilePicture')}
+        title={say('screens.faceEditor.yourFace')}
         description={
           draft?.photo === null || draft?.photo === undefined
             ? say('screens.accountArea.profileSettings.anOrbAPhotographOrGIF')

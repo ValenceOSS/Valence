@@ -114,7 +114,9 @@ describe('DevicesPanel', () => {
     const drawn = await draw([THIS_TELEVISION]);
 
     expect(
-      drawn.getByText('Open Valence on another device, signed in as you, and it will be here.'),
+      drawn.getByText(
+        'Your other devices appear here when Valence is open and signed in to your account.',
+      ),
     ).toBeTruthy();
   });
 

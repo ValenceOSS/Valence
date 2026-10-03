@@ -375,7 +375,7 @@ const ReleaseSearchPanel = () => {
 
         <div className="flex flex-wrap items-end gap-3">
           <SegmentedRow
-            label={say('screens.adminArea.releaseSearchPanel.whatItIs')}
+            label={say('screens.adminArea.addLibraryDialog.type')}
             size="sm"
             items={MODES}
             value={mode}

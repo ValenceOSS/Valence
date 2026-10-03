@@ -74,7 +74,7 @@ const startPlaybackSession = async (
   if (response === null) {
     return {
       kind: 'failed',
-      reason: say('client.playback.startPlaybackSession.couldNotReachTheServer'),
+      reason: say('common.theServerCouldNotBeReached'),
     };
   }
 

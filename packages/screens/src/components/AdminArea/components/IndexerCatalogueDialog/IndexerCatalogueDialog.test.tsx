@@ -89,12 +89,12 @@ describe('IndexerCatalogueDialog', () => {
     open();
 
     await screen.findByText('RuTor');
-    await user.type(screen.getByRole('searchbox', { name: /Find a site/ }), 'hd');
+    await user.type(screen.getByRole('searchbox', { name: /Search indexers/ }), 'hd');
 
     expect(screen.queryByText('RuTor')).not.toBeInTheDocument();
     expect(screen.getByText('HDBits')).toBeInTheDocument();
 
-    await user.clear(screen.getByRole('searchbox', { name: /Find a site/ }));
+    await user.clear(screen.getByRole('searchbox', { name: /Search indexers/ }));
     await user.click(screen.getByRole('button', { name: 'Public' }));
 
     expect(screen.queryByText('HDBits')).not.toBeInTheDocument();
@@ -108,7 +108,7 @@ describe('IndexerCatalogueDialog', () => {
     await user.click(await screen.findByRole('menuitemradio', { name: 'Movies' }));
 
     expect(
-      await screen.findByText('No site matches. Try fewer words, or another category.'),
+      await screen.findByText('No indexers match. Try fewer words or another category.'),
     ).toBeInTheDocument();
   });
 
@@ -140,7 +140,7 @@ describe('IndexerCatalogueDialog', () => {
     open();
 
     await screen.findByText('RuTor');
-    await user.click(screen.getByRole('button', { name: /Bring up to date/ }));
+    await user.click(screen.getByRole('button', { name: /Update catalogue/ }));
 
     expect(await screen.findByText('Newcomer')).toBeInTheDocument();
   });
@@ -159,11 +159,11 @@ describe('IndexerCatalogueDialog', () => {
 
     expect(await screen.findByText('The definitions could not be fetched')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /Bring up to date/ }));
+    await user.click(screen.getByRole('button', { name: /Update catalogue/ }));
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(
-        'The catalogue could not be brought up to date.',
+        'Couldn’t update the catalogue. Try again.',
       );
     });
   });
@@ -173,7 +173,7 @@ describe('IndexerCatalogueDialog', () => {
 
     open();
 
-    expect(await screen.findByText(/The catalogue is empty/)).toBeInTheDocument();
+    expect(await screen.findByText(/No indexers are listed yet/)).toBeInTheDocument();
   });
 
   it('says it could not read the catalogue, and offers to try again', async () => {

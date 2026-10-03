@@ -170,7 +170,7 @@ const DownloadClientsTable = ({
                   items: [
                     {
                       id: 'remove',
-                      label: say('common.remove'),
+                      label: say('common.forget'),
                       icon: <Icon of={BinFilledIcon} size={15} />,
                       isDestructive: true,
                       onChoose: () => {

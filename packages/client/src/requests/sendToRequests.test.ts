@@ -48,7 +48,7 @@ describe('sendToRequests', () => {
 
     expect(await sendToRequests('/api/x', 'GET', undefined, () => Promise.resolve(1))).toEqual({
       value: null,
-      refusal: { message: 'The server could not be reached.' },
+      refusal: { message: 'Couldn’t reach the server.' },
     });
   });
 });

@@ -75,7 +75,7 @@ describe('SetupLinksStep', () => {
     });
     renderInAnAddress(<SetupLinksStep run={RUN} onFinish={onFinish} />);
 
-    expect(await screen.findByText(/Nobody new was added/)).toBeVisible();
+    expect(await screen.findByText(/No new users were added/)).toBeVisible();
 
     await userEvent.click(screen.getByRole('button', { name: 'Done' }));
 

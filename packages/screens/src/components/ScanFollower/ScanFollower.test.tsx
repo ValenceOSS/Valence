@@ -43,7 +43,7 @@ describe('ScanFollower', () => {
       .mockResolvedValueOnce({
         jobId: 'j',
         state: 'running',
-        phase: { code: null, message: 'Reading files', values: {} },
+        phase: { code: null, message: 'Loading files', values: {} },
         processed: 5,
         total: 10,
         item: null,
@@ -59,11 +59,11 @@ describe('ScanFollower', () => {
 
     render(<ScanFollower jobId="j" name="Films" onSettled={onSettled} />);
 
-    expect(screen.getByText('Waiting its turn')).toBeVisible();
+    expect(screen.getByText('Queued')).toBeVisible();
 
     await aSecondPasses();
 
-    expect(screen.getByText('Reading files')).toBeVisible();
+    expect(screen.getByText('Loading files')).toBeVisible();
 
     await aSecondPasses();
     await aSecondPasses();

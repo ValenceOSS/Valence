@@ -4,7 +4,12 @@ import { describe, expect, it, vi } from 'vitest';
 import { ChoiceList } from './ChoiceList';
 
 const SIZES = [
-  { id: 'original', title: 'Original', detail: 'Exactly what is on the server.', aside: '20 GB' },
+  {
+    id: 'original',
+    title: 'Original',
+    detail: 'Exactly what is available on the server.',
+    aside: '20 GB',
+  },
   { id: '1080p', title: '1080p', note: 'Converted', aside: '3.2 GB' },
 ];
 
@@ -23,7 +28,7 @@ describe('ChoiceList', () => {
   it('shows what each one is, what it notes and what sets it apart', () => {
     render(<ChoiceList label="Size" choices={SIZES} value={null} onChoose={vi.fn()} />);
 
-    expect(screen.getByText('Exactly what is on the server.')).toBeInTheDocument();
+    expect(screen.getByText('Exactly what is available on the server.')).toBeInTheDocument();
     expect(screen.getByText('Converted')).toBeInTheDocument();
     expect(screen.getByText('20 GB')).toBeInTheDocument();
   });
@@ -77,7 +82,7 @@ describe('ChoiceList', () => {
         <ChoiceList label="Size" choices={SIZES} value={null} onChoose={vi.fn()} look="tiles" />,
       );
 
-      expect(screen.getByText('Exactly what is on the server.')).toBeInTheDocument();
+      expect(screen.getByText('Exactly what is available on the server.')).toBeInTheDocument();
       expect(screen.queryByText('20 GB')).toBeNull();
       expect(screen.queryByText('Converted')).toBeNull();
     });

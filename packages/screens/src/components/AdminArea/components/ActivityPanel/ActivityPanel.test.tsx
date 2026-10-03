@@ -34,7 +34,7 @@ describe('ActivityPanel', () => {
   it('says when nobody has the app open', () => {
     render(<ActivityPanel {...props} />);
 
-    expect(screen.getByText('Nobody has the app open right now.')).toBeInTheDocument();
+    expect(screen.getByText('No one is using the app right now.')).toBeInTheDocument();
   });
 
   it('groups sessions under the viewer holding them', () => {

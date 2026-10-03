@@ -93,18 +93,18 @@ describe('whyShareEnded', () => {
   it('says it was withdrawn before it says anything else', () => {
     const both = standing({ revokedAt: NOW, expiresAt: new Date('2020-01-01T00:00:00Z') });
 
-    expect(whyShareEnded(both, NOW)).toBe('This link was withdrawn.');
+    expect(whyShareEnded(both, NOW)).toBe('This share link was revoked.');
   });
 
   it('says it expired', () => {
     expect(whyShareEnded(standing({ expiresAt: new Date('2020-01-01T00:00:00Z') }), NOW)).toBe(
-      'This link has expired.',
+      'This share link has expired.',
     );
   });
 
   it('says it has been used up', () => {
     expect(whyShareEnded(standing({ viewCap: 1, views: 1 }), NOW)).toBe(
-      'This link has been used up.',
+      'This share link has reached its usage limit.',
     );
   });
 });

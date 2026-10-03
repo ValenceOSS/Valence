@@ -124,7 +124,7 @@ const FILMS: Library = { ...SHOWS, id: 'valence-films', name: 'Our films', kind:
  */
 const chooseFor = async (index: number, option: string) => {
   await userEvent.click(
-    (await screen.findAllByRole('button', { name: 'Comes into' }))[index] ?? document.body,
+    (await screen.findAllByRole('button', { name: 'Import into' }))[index] ?? document.body,
   );
   await userEvent.click(screen.getByRole('menuitemradio', { name: new RegExp(`^${option}`) }));
 };
@@ -151,7 +151,7 @@ describe('LibrariesStep', () => {
 
     expect(await screen.findByText('/data/tv → /media/tv')).toBeVisible();
     expect(screen.getAllByText('Already in Valence')).toHaveLength(1);
-    expect(screen.getByText(/Valence has no library like this/)).toBeVisible();
+    expect(screen.getByText(/Valence doesn’t support this library type/)).toBeVisible();
   });
 
   it('makes and scans the chosen libraries, follows the scans, and goes on once they finish', async () => {
@@ -177,9 +177,9 @@ describe('LibrariesStep', () => {
     });
     render(<LibrariesStep source={SOURCE} onContinue={onContinue} onBack={vi.fn()} />);
 
-    await chooseFor(2, 'Leave it out');
-    await chooseFor(2, 'A new library, made and scanned now');
-    await userEvent.click(screen.getByRole('button', { name: 'Make and scan these libraries' }));
+    await chooseFor(2, 'Don’t import');
+    await chooseFor(2, 'New library, created and scanned now');
+    await userEvent.click(screen.getByRole('button', { name: 'Create and scan these libraries' }));
 
     expect(createImportLibraries).toHaveBeenCalledWith('den', {
       libraries: [
@@ -203,12 +203,12 @@ describe('LibrariesStep', () => {
   it('leaves out a folder that is not wanted, and saves the mappings', async () => {
     render(<LibrariesStep source={SOURCE} onContinue={vi.fn()} onBack={vi.fn()} />);
 
-    await chooseFor(1, 'Leave it out');
-    await chooseFor(2, 'Leave it out');
+    await chooseFor(1, 'Don’t import');
+    await chooseFor(2, 'Don’t import');
 
-    expect(screen.getByRole('button', { name: 'Make and scan these libraries' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Create and scan these libraries' })).toBeDisabled();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Save and look again' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save and check again' }));
 
     expect(saveImportMappings).toHaveBeenCalledWith('den', []);
   });
@@ -231,7 +231,7 @@ describe('LibrariesStep', () => {
     render(<LibrariesStep source={SOURCE} onContinue={vi.fn()} onBack={vi.fn()} />);
 
     await userEvent.click(
-      (await screen.findAllByRole('button', { name: 'Comes into' }))[1] ?? document.body,
+      (await screen.findAllByRole('button', { name: 'Import into' }))[1] ?? document.body,
     );
 
     expect(screen.queryByRole('menuitemradio', { name: /^Our films/ })).not.toBeInTheDocument();
@@ -244,7 +244,7 @@ describe('LibrariesStep', () => {
       libraryId: SHOWS.id,
     });
     expect(await screen.findAllByText('Already in Valence')).toHaveLength(1);
-    expect(screen.getByRole('button', { name: 'Comes into' })).toHaveTextContent('Our shows');
+    expect(screen.getByRole('button', { name: 'Import into' })).toHaveTextContent('Our shows');
   });
 
   it('says why a folder could not be linked', async () => {
@@ -264,7 +264,7 @@ describe('LibrariesStep', () => {
     render(<LibrariesStep source={SOURCE} onContinue={vi.fn()} onBack={vi.fn()} />);
 
     await userEvent.click(
-      (await screen.findAllByRole('button', { name: 'Comes into' }))[1] ?? document.body,
+      (await screen.findAllByRole('button', { name: 'Import into' }))[1] ?? document.body,
     );
 
     expect(screen.getAllByRole('menuitemradio')).toHaveLength(2);
@@ -273,10 +273,10 @@ describe('LibrariesStep', () => {
   it('says why the libraries could not be read', async () => {
     fetchImportLibraries.mockResolvedValue({
       kind: 'refused',
-      refusal: { message: 'Den could not be reached.' },
+      refusal: { message: 'Couldn’t connect to Den.' },
     });
     render(<LibrariesStep source={SOURCE} onContinue={vi.fn()} onBack={vi.fn()} />);
 
-    expect(await screen.findByText(/Den could not be reached\./)).toBeVisible();
+    expect(await screen.findByText(/Couldn’t connect to Den\./)).toBeVisible();
   });
 });

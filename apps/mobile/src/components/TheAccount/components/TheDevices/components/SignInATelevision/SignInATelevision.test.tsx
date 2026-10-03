@@ -24,7 +24,7 @@ describe('SignInATelevision', () => {
   it('asks for the code on the television', async () => {
     const drawn = await render(<SignInATelevision />, { wrapper: CacheScope });
 
-    expect(drawn.getByLabelText('The code on the television')).toBeTruthy();
+    expect(drawn.getByLabelText('Code shown on your TV')).toBeTruthy();
   });
 
   it('signs the television in once somebody says it is theirs', async () => {
@@ -33,10 +33,10 @@ describe('SignInATelevision', () => {
       wrapper: CacheScope,
     });
 
-    await userEvent.press(await drawn.findByText('Yes, that is mine'));
+    await userEvent.press(await drawn.findByText('Yes, this was me'));
 
     expect(answerDeviceRequest).toHaveBeenCalledWith('ABCD1234', true);
-    expect(await drawn.findByText(/Done\. The television should be watching/u)).toBeTruthy();
+    expect(await drawn.findByText(/Done\. The TV will be signed in shortly/u)).toBeTruthy();
   });
 
   it('turns a television down where somebody did not ask for it', async () => {
@@ -45,7 +45,7 @@ describe('SignInATelevision', () => {
       wrapper: CacheScope,
     });
 
-    await userEvent.press(await drawn.findByText('No, I did not ask for this'));
+    await userEvent.press(await drawn.findByText('No, this wasn’t me'));
 
     expect(answerDeviceRequest).toHaveBeenCalledWith('ABCD1234', false);
   });
@@ -58,7 +58,7 @@ describe('SignInATelevision', () => {
 
     await userEvent.press(drawn.getByLabelText('Scan the QR code'));
 
-    expect(await drawn.findByText(/Type the code the television shows/u)).toBeTruthy();
+    expect(await drawn.findByText(/Enter the code the TV shows to confirm/u)).toBeTruthy();
     expect(readDeviceRequest).not.toHaveBeenCalled();
   });
 
@@ -68,6 +68,6 @@ describe('SignInATelevision', () => {
 
     await userEvent.press(drawn.getByLabelText('Scan the QR code'));
 
-    expect(await drawn.findByText('That QR code is not one a television showed.')).toBeTruthy();
+    expect(await drawn.findByText('That QR code isn’t a Valence TV sign-in code.')).toBeTruthy();
   });
 });

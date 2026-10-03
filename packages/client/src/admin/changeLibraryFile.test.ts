@@ -53,11 +53,11 @@ describe('changeLibraryFile', () => {
     fetchMock.mockResolvedValue({
       ok: false,
       status: 409,
-      json: () => Promise.resolve({ error: 'Something of that name is already there.' }),
+      json: () => Promise.resolve({ error: 'Something with that name already exists.' }),
     });
 
     await expect(
       changeLibraryFile('/media/films/Arrival.mkv', { kind: 'rename', name: 'Dune.mkv' }),
-    ).rejects.toThrow('Something of that name is already there.');
+    ).rejects.toThrow('Something with that name already exists.');
   });
 });

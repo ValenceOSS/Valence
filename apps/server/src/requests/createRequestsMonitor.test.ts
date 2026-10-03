@@ -16,7 +16,7 @@ const aVpn = (isUp: boolean | null): RequestsVpn => ({
   publicAddress: isUp === true ? '203.0.113.7' : null,
   country: isUp === true ? 'Netherlands' : null,
   checkedAt: isUp === null ? null : NOW.toISOString(),
-  problem: isUp === false ? sayVerbatim('The tunnel is stopped') : null,
+  problem: isUp === false ? sayVerbatim('The VPN tunnel is stopped') : null,
   problemCode: isUp === false ? 'VpnDown' : null,
 });
 
@@ -35,7 +35,7 @@ const answered = (isUp: boolean | null): RequestsReading => ({
 
 const SILENT: RequestsReading = {
   kind: 'silent',
-  reason: sayVerbatim('http://requests:8421 did not answer'),
+  reason: sayVerbatim('http://requests:8421 didn’t respond'),
   problemCode: 'RequestsUnreachable',
 };
 
@@ -103,12 +103,12 @@ describe('createRequestsMonitor', () => {
 
     expect(onLost).toHaveBeenCalledTimes(1);
     expect(onLost).toHaveBeenCalledWith(
-      'http://requests:8421 did not answer',
+      'http://requests:8421 didn’t respond',
       'RequestsUnreachable',
     );
     expect(monitor.overview()).toMatchObject({
       isReachable: false,
-      problem: 'http://requests:8421 did not answer',
+      problem: 'http://requests:8421 didn’t respond',
       problemCode: 'RequestsUnreachable',
     });
   });
@@ -133,7 +133,7 @@ describe('createRequestsMonitor', () => {
     await monitor.check();
     await monitor.check();
 
-    expect(onVpnDown).toHaveBeenCalledWith('The tunnel is stopped', 'VpnDown');
+    expect(onVpnDown).toHaveBeenCalledWith('The VPN tunnel is stopped', 'VpnDown');
     expect(onVpnUp).toHaveBeenCalledWith(aVpn(true));
   });
 
@@ -158,7 +158,7 @@ describe('createRequestsMonitor', () => {
 
     await monitor.check();
 
-    expect(onVpnDown).toHaveBeenCalledWith('The tunnel is down', 'VpnDown');
+    expect(onVpnDown).toHaveBeenCalledWith('The VPN tunnel is down', 'VpnDown');
   });
 
   it('says nothing about a VPN that was never set up', async () => {

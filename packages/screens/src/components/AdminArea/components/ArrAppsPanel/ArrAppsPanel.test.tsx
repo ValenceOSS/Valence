@@ -53,7 +53,7 @@ const PROWLARR = anApp({
   name: 'Indexers',
   kind: 'prowlarr',
   isWorking: false,
-  lastProblem: sayVerbatim('Indexers refused its API key'),
+  lastProblem: sayVerbatim('Indexers rejected its API key'),
   lastProblemCode: 'ArrAppKeyRefused',
 });
 
@@ -86,7 +86,7 @@ describe('ArrAppsPanel', () => {
     expect(await screen.findByText('Films')).toBeInTheDocument();
     expect(screen.getByText('Radarr')).toBeInTheDocument();
     expect(screen.getByText('Version 5.14')).toBeInTheDocument();
-    expect(screen.getByText('Indexers refused its API key')).toBeInTheDocument();
+    expect(screen.getByText('Indexers rejected its API key')).toBeInTheDocument();
   });
 
   it('says there are none yet, and could not be read', async () => {
@@ -94,7 +94,7 @@ describe('ArrAppsPanel', () => {
 
     renderInAnAddress(<ArrAppsPanel />);
 
-    expect(await screen.findByText(/None yet/)).toBeInTheDocument();
+    expect(await screen.findByText(/No apps connected/)).toBeInTheDocument();
   });
 
   it('opens the dialog to connect one, or to change one', async () => {
@@ -129,7 +129,7 @@ describe('ArrAppsPanel', () => {
     });
     await choose(user, 'Films', 'Test');
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Films: It did not answer');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Films: It didn’t respond');
   });
 
   it('brings in a Prowlarr’s indexers, offering it only for Prowlarr', async () => {
@@ -156,7 +156,7 @@ describe('ArrAppsPanel', () => {
 
     renderInAnAddress(<ArrAppsPanel />);
 
-    await choose(user, 'Films', 'Switch off');
+    await choose(user, 'Films', 'Disable');
 
     await waitFor(() => {
       expect(changeArrApp).toHaveBeenCalledWith(anApp().id, { isEnabled: false });
@@ -170,7 +170,9 @@ describe('ArrAppsPanel', () => {
 
     await choose(user, 'Indexers', 'Disconnect');
 
-    expect(await screen.findByText(/The indexers it brought in are removed/)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/The indexers imported from it are removed too/),
+    ).toBeInTheDocument();
     expect(removeArrApp).not.toHaveBeenCalled();
 
     await user.click(await screen.findByRole('button', { name: 'Disconnect' }));

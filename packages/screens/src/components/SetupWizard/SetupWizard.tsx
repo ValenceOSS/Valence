@@ -60,7 +60,7 @@ const STEPS = [
   },
   {
     id: 'access',
-    label: say('screens.setupWizard.accessStep.howValenceIsReached'),
+    label: say('common.access'),
     detail: say('screens.setupWizard.steps.addressesAndHttps'),
   },
   {

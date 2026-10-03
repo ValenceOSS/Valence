@@ -108,7 +108,7 @@ const APlaylistDetails = ({ isOpen, editing, onClose, onDone }: APlaylistDetails
         label={say('common.description')}
         value={description}
         onValueChange={setDescription}
-        placeholder={say('common.whatItIsFor')}
+        placeholder={say('common.description')}
       />
 
       <View style={styles.ordered}>
@@ -129,7 +129,7 @@ const APlaylistDetails = ({ isOpen, editing, onClose, onDone }: APlaylistDetails
           void save();
         }}
       >
-        {editing === null ? say('common.makeIt') : say('common.save')}
+        {editing === null ? say('common.create') : say('common.save')}
       </Button>
     </ASheet>
   );

@@ -59,7 +59,7 @@ describe('fetchWayIn', () => {
   });
 
   it('says so when the server keeps who lives here to itself', async () => {
-    answerWith({ error: 'Nobody is signed in.' }, false);
+    answerWith({ error: 'You’re not signed in.' }, false);
 
     await expect(fetchWayIn()).rejects.toThrow();
   });

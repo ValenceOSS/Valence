@@ -73,7 +73,7 @@ describe('TimeBars', () => {
   it('says nothing was there where there are no bars', () => {
     draw({ bars: [] });
 
-    expect(screen.getByText('Nothing in this time.')).toBeInTheDocument();
+    expect(screen.getByText('Nothing in this time range.')).toBeInTheDocument();
   });
 
   it('labels the moments along the bottom and names each series', () => {

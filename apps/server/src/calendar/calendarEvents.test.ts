@@ -54,10 +54,10 @@ describe('calendarEvents', () => {
     );
 
     expect(cinema?.summary).toBe('A Film in cinemas');
-    expect(cinema?.description).toBe('Wanted\nAsked by Ada');
+    expect(cinema?.description).toBe('Wanted\nRequested by Ada');
     expect(digital?.summary).toBe('A Film to buy or rent');
     expect(disc?.summary).toBe('A Film on disc');
-    expect(disc?.description).toBe('Available\nAsked by Ada');
+    expect(disc?.description).toBe('Available\nRequested by Ada');
   });
 
   it('says when an episode has aired but nobody has it', () => {

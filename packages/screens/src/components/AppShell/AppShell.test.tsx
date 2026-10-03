@@ -111,7 +111,7 @@ describe('AppShell', () => {
 
     await user.click(screen.getByRole('button', { name: 'Account' }));
 
-    expect(await screen.findByRole('menuitem', { name: 'My Account' })).toBeInTheDocument();
+    expect(await screen.findByRole('menuitem', { name: 'My account' })).toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: 'Admin' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Admin' })).not.toBeInTheDocument();
   });
@@ -133,7 +133,7 @@ describe('AppShell', () => {
 
     await user.click(screen.getByRole('button', { name: 'Account' }));
 
-    const mine = (await screen.findByRole('menuitem', { name: 'My Account' })).closest(
+    const mine = (await screen.findByRole('menuitem', { name: 'My account' })).closest(
       '[role="group"]',
     );
 
@@ -173,7 +173,7 @@ describe('AppShell', () => {
     const { props } = draw();
 
     await user.click(screen.getByRole('button', { name: 'Account' }));
-    await user.click(await screen.findByRole('menuitem', { name: 'My Account' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'My account' }));
 
     expect(props.onOpenAccount).toHaveBeenCalledOnce();
     expect(props.onSectionChange).not.toHaveBeenCalled();
@@ -277,7 +277,7 @@ describe('AppShell', () => {
     draw();
 
     await user.click(screen.getByRole('button', { name: 'Account' }));
-    await screen.findByRole('menuitem', { name: 'My Account' });
+    await screen.findByRole('menuitem', { name: 'My account' });
 
     expect(screen.queryByRole('menuitem', { name: 'Sign out' })).not.toBeInTheDocument();
   });
@@ -345,7 +345,7 @@ describe('AppShell', () => {
     await user.click(screen.getByRole('button', { name: 'Choose something at random' }));
 
     expect(await screen.findByRole('menuitem', { name: 'Anything' })).toBeInTheDocument();
-    expect(await screen.findByRole('menuitem', { name: 'A programme' })).toBeInTheDocument();
+    expect(await screen.findByRole('menuitem', { name: 'A series' })).toBeInTheDocument();
 
     await user.click(await screen.findByRole('menuitem', { name: 'A film' }));
 

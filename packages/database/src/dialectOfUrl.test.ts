@@ -14,7 +14,7 @@ describe('dialectOfUrl', () => {
 
   it('refuses MongoDB, and says which databases it can use', () => {
     expect(() => dialectOfUrl('mongodb://db/valence')).toThrow(
-      /postgres:\/\/, mysql:\/\/ or mariadb:\/\/, not mongodb:\/\/.*MongoDB is not one it can use/,
+      /postgres:\/\/, mysql:\/\/ or mariadb:\/\/, not mongodb:\/\/.*not MongoDB/,
     );
   });
 });

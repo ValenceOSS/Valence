@@ -111,7 +111,7 @@ describe('ReencodeDialog', () => {
   it('says what replacing means, including that nothing else in Valence does it', () => {
     render(<ReencodeDialog {...props} />);
 
-    expect(screen.getByText(/destroys your own media/)).toBeVisible();
+    expect(screen.getByText(/Nothing else in Valence deletes your media/)).toBeVisible();
   });
 
   it('says what keeping one alongside buys, which is the opposite trade', async () => {
@@ -119,7 +119,7 @@ describe('ReencodeDialog', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Keep alongside' }));
 
-    expect(screen.getByText(/never converts anything/)).toBeVisible();
+    expect(screen.getByText(/won’t need to transcode these files/)).toBeVisible();
   });
 
   const aProgramme = [
@@ -156,7 +156,7 @@ describe('ReencodeDialog', () => {
 
     expect(screen.queryByRole('checkbox', { name: /Charm Offensive/ })).toBeNull();
 
-    await userEvent.click(screen.getByRole('button', { name: /Show what Pluribus is made of/ }));
+    await userEvent.click(screen.getByRole('button', { name: /Expand Pluribus/ }));
 
     expect(screen.getByRole('checkbox', { name: /Charm Offensive/ })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: /Grace/ })).toBeInTheDocument();
@@ -177,7 +177,7 @@ describe('ReencodeDialog', () => {
   it('says a programme is partly taken when only some of it is', async () => {
     render(<ReencodeDialog {...props} media={aProgramme} />);
 
-    await userEvent.click(screen.getByRole('button', { name: /Show what Pluribus is made of/ }));
+    await userEvent.click(screen.getByRole('button', { name: /Expand Pluribus/ }));
     await userEvent.click(screen.getByRole('checkbox', { name: /Charm Offensive/ }));
 
     expect(screen.getByRole('checkbox', { name: /Pluribus/ })).toHaveAttribute(
@@ -425,7 +425,7 @@ describe('ReencodeDialog', () => {
 
     await userEvent.click(theFilm());
 
-    expect(screen.getByText('There is not enough room')).toBeVisible();
+    expect(screen.getByText('Not enough disk space')).toBeVisible();
   });
 
   it('says the queue is paused when too many are already waiting', async () => {
@@ -444,7 +444,7 @@ describe('ReencodeDialog', () => {
   it('will not start with nothing chosen, and says so on the button', () => {
     render(<ReencodeDialog {...props} />);
 
-    expect(screen.getByRole('button', { name: 'Choose something first' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Select something first' })).toBeDisabled();
   });
 
   it('asks again before queueing a replacement', async () => {
@@ -455,7 +455,7 @@ describe('ReencodeDialog', () => {
     await userEvent.click(theFilm());
     await userEvent.click(screen.getByRole('button', { name: /^Re-encode 1$/ }));
 
-    expect(screen.getByText(/gone for good/)).toBeVisible();
+    expect(screen.getByText(/lost for good/)).toBeVisible();
     expect(onStart).not.toHaveBeenCalled();
   });
 

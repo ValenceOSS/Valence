@@ -122,7 +122,7 @@ describe('createEmailService', () => {
     expect(await service.sendPasswordReset(LINK)).toMatchObject({
       kind: 'failed',
       problem: {
-        message: 'The mail server at smtp.example.com refused the username or password.',
+        message: 'The mail server at smtp.example.com rejected the username or password.',
       },
     });
     expect(log.warn).toHaveBeenCalled();

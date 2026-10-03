@@ -216,7 +216,7 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
 
                   {going === null ? null : (
                     <ProgressBar
-                      label={say('common.howMuchOfTitleHasArrived', { title: request.title })}
+                      label={say('common.howFarTitleHasDownloaded', { title: request.title })}
                       value={Math.round(going.progress * 1000) / 10}
                       readout={
                         <DownloadProgressReadout progress={going} className="text-text-muted" />

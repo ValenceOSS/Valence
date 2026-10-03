@@ -162,7 +162,7 @@ describe('PasskeySetup when available', () => {
     await actor.clear(nameField());
     await actor.click(screen.getByRole('button', { name: /Save/ }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Give the passkey a name');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Enter a name for the passkey');
     expect(renamePasskeyMock).not.toHaveBeenCalled();
   });
 
@@ -188,21 +188,21 @@ describe('PasskeySetup when available', () => {
     await screen.findByText('Laptop');
     await actor.click(screen.getByRole('button', { name: /Remove/ }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('could not be removed');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Couldn’t remove that passkey');
   });
 
   it('reports a list that could not be loaded', async () => {
     listPasskeysMock.mockRejectedValue(new Error('offline'));
     render(<PasskeySetup />);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load your passkeys');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Couldn’t load your passkeys');
   });
 });
 
 describe('PasskeySetup when unavailable', () => {
   it('explains why instead of offering a button that cannot work', async () => {
     describeUnavailabilityMock.mockReturnValue(
-      'Passkeys need a secure connection. Reach Valence over HTTPS, or on localhost, to add one.',
+      'Passkeys need a secure connection. Open Valence over HTTPS, or on localhost, to add one.',
     );
     render(<PasskeySetup />);
 
@@ -227,7 +227,7 @@ describe('PasskeySetup where passkeys are added in the browser', () => {
       ...platformInUse(),
       passkeys: () => ({ kind: 'through-a-sign-in-page', signIn: vi.fn(), addOne }),
     });
-    describeUnavailabilityMock.mockReturnValue('Passkeys are added from Valence in your browser.');
+    describeUnavailabilityMock.mockReturnValue('Add passkeys in Valence in your web browser.');
     render(<PasskeySetup />);
 
     await userEvent.click(await screen.findByRole('button', { name: /Add in your browser/ }));

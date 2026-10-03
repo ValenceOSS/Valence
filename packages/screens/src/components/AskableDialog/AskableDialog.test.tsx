@@ -187,9 +187,9 @@ describe('AskableDialog', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Watch the trailer' }));
 
-    const playing = await screen.findByRole('dialog', { name: 'Dune, the trailer' });
+    const playing = await screen.findByRole('dialog', { name: 'Dune trailer' });
 
-    expect(within(playing).getByTitle('Dune, the trailer')).toHaveAttribute(
+    expect(within(playing).getByTitle('Dune trailer')).toHaveAttribute(
       'src',
       'https://www.youtube-nocookie.com/embed/abc123?rel=0&modestbranding=1',
     );
@@ -307,7 +307,7 @@ describe('AskableDialog', () => {
     open('artist:deezer-2');
 
     await userEvent.click(await screen.findByRole('checkbox', { name: 'Live' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Watch this artist' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Request this artist' }));
 
     await waitFor(() => {
       expect(askForMedia).toHaveBeenCalledWith({
@@ -351,7 +351,7 @@ describe('AskableDialog', () => {
   it('says why something could not be asked for', async () => {
     askForMedia.mockResolvedValue({
       value: null,
-      refusal: { message: 'There is no library of films to put it in.' },
+      refusal: { message: 'There’s no films library to put it in.' },
     });
 
     open();
@@ -359,7 +359,7 @@ describe('AskableDialog', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Request' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'There is no library of films to put it in.',
+      'There’s no films library to put it in.',
     );
   });
 

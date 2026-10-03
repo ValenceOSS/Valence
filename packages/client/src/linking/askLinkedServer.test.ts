@@ -23,7 +23,7 @@ describe('askLinkedServer', () => {
   it('says why a linked server refused', async () => {
     aServerAnswering(
       {
-        error: 'That server takes no requests from yours.',
+        error: 'That server doesn’t accept requests from yours.',
         code: 'error.linking.thatServerTakesNoRequestsFromYours',
         values: {},
       },
@@ -33,6 +33,6 @@ describe('askLinkedServer', () => {
     const sent = await askLinkedServer('films', { kind: 'film', tmdbId: 603, seasons: null });
 
     expect(sent.value).toBeNull();
-    expect(sent.refusal?.message).toBe('That server takes no requests from yours.');
+    expect(sent.refusal?.message).toBe('That server doesn’t accept requests from yours.');
   });
 });

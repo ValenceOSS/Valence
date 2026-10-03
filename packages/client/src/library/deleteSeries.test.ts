@@ -47,6 +47,8 @@ describe('deleteSeries', () => {
       json: () => Promise.reject(new Error('not json')),
     });
 
-    await expect(deleteSeries('series-1')).rejects.toThrow('The series could not be deleted.');
+    await expect(deleteSeries('series-1')).rejects.toThrow(
+      'Couldn’t delete the series. Try again.',
+    );
   });
 });

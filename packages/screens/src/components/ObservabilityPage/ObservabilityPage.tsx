@@ -233,9 +233,7 @@ const ObservabilityPage = ({
                     onClick={() => {
                       void setQueuePaused(!monitor.queue.paused);
                     }}
-                    choiceLabel={say(
-                      'screens.observabilityPage.queueConcurrency.howManyJobsRunAtOnce',
-                    )}
+                    choiceLabel={say('screens.observabilityPage.queueConcurrency.jobsAtOnce')}
                     choiceName={say('screens.observabilityPage.queueConcurrency.jobsAtOnce')}
                     options={QUEUE_CONCURRENCY_CHOICES}
                     selectedId={monitor.queue.concurrency.toString()}
@@ -262,7 +260,7 @@ const ObservabilityPage = ({
           }
           below={
             <TabRow
-              label={say('screens.observabilityPage.whatToLookAt')}
+              label={say('common.sections')}
               tone="underlined"
               size="sm"
               value={view}

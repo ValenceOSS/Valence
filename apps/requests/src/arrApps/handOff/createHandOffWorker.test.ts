@@ -98,7 +98,7 @@ describe('createHandOffWorker', () => {
 
     expect(placing).toHaveBeenCalledTimes(1);
     expect(await requests.find(aMediaRequest().id)).toMatchObject({ handOffId: 12 });
-    expect(log.said.map((line) => line.message.message)).toEqual(['Handed to Radarr.']);
+    expect(log.said.map((line) => line.message.message)).toEqual(['Sent to Radarr.']);
   });
 
   it('leaves alone what is not handed off, not approved, or not due to be watched again', async () => {
@@ -280,7 +280,7 @@ describe('createHandOffWorker', () => {
       place: () =>
         isRefusing
           ? Promise.reject(
-              new ArrAppFailure(sayVerbatim('Radarr could not be reached'), 'ArrAppUnreachable'),
+              new ArrAppFailure(sayVerbatim('Couldn’t connect to Radarr'), 'ArrAppUnreachable'),
             )
           : Promise.resolve(12),
     });
@@ -290,7 +290,7 @@ describe('createHandOffWorker', () => {
     await worker.step();
 
     expect(await requests.find(id)).toMatchObject({
-      problem: { message: 'Radarr could not take it: Radarr could not be reached' },
+      problem: { message: 'Radarr couldn’t add it: Couldn’t connect to Radarr' },
       problemCode: 'ArrAppUnreachable',
     });
     expect(log.said).toHaveLength(1);
@@ -307,7 +307,7 @@ describe('createHandOffWorker', () => {
       others: [second],
       place: () =>
         Promise.reject(
-          new ArrAppFailure(sayVerbatim('Radarr could not be reached'), 'ArrAppUnreachable'),
+          new ArrAppFailure(sayVerbatim('Couldn’t connect to Radarr'), 'ArrAppUnreachable'),
         ),
     });
 
@@ -315,7 +315,7 @@ describe('createHandOffWorker', () => {
 
     expect(placing).toHaveBeenCalledTimes(1);
     expect(await requests.find(second.id)).toMatchObject({
-      problem: { message: 'Radarr could not take it: Radarr could not be reached' },
+      problem: { message: 'Radarr couldn’t add it: Couldn’t connect to Radarr' },
       problemCode: 'ArrAppUnreachable',
     });
 
@@ -329,7 +329,7 @@ describe('createHandOffWorker', () => {
     const { worker, placing } = aWorker({
       others: [second],
       place: () =>
-        Promise.reject(new ArrAppFailure(sayVerbatim('Radarr answered with HTTP 400'), null, 400)),
+        Promise.reject(new ArrAppFailure(sayVerbatim('Radarr returned HTTP 400'), null, 400)),
     });
 
     await worker.step();
@@ -341,7 +341,7 @@ describe('createHandOffWorker', () => {
     const { worker, requests } = aWorker({
       request: aMediaRequest({ handOff: HAND_OFF, handOffId: 12 }),
       sees: () => {
-        throw new ArrAppFailure(sayVerbatim('Radarr answered with HTTP 404'), null, 404);
+        throw new ArrAppFailure(sayVerbatim('Radarr returned HTTP 404'), null, 404);
       },
     });
 
@@ -360,13 +360,13 @@ describe('createHandOffWorker', () => {
     await prowlarr.worker.step();
 
     expect((await gone.requests.find(aMediaRequest().id))?.problem?.message).toBe(
-      'The connected app it was handed to has been removed.',
+      'The connected app it was sent to has been removed.',
     );
     expect((await off.requests.find(aMediaRequest().id))?.problem?.message).toBe(
-      'Radarr is switched off, or cannot take requests.',
+      'Radarr is turned off, or can’t take requests.',
     );
     expect((await prowlarr.requests.find(aMediaRequest().id))?.problem?.message).toBe(
-      'Radarr is switched off, or cannot take requests.',
+      'Radarr is turned off, or can’t take requests.',
     );
   });
 

@@ -13,12 +13,12 @@ describe('ArrImportDialog', () => {
   it('shows the import step while it is open', async () => {
     renderInAnAddress(<ArrImportDialog isOpen onClose={vi.fn()} />);
 
-    expect(await screen.findByRole('button', { name: 'Read the setup' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Check setup' })).toBeInTheDocument();
   });
 
   it('shows nothing while it is closed', () => {
     renderInAnAddress(<ArrImportDialog isOpen={false} onClose={vi.fn()} />);
 
-    expect(screen.queryByRole('button', { name: 'Read the setup' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Check setup' })).not.toBeInTheDocument();
   });
 });

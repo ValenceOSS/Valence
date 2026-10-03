@@ -24,9 +24,9 @@ describe('describeStanding', () => {
       'Waiting for approval',
     );
     expect(describeStanding(standing('requested', 'downloading'))?.tone).toBe('busy');
-    expect(describeStanding(standing('requested', 'filed'))?.label).toBe('Arriving');
-    expect(describeStanding(standing('requested', 'failed'))?.label).toBe('Stuck');
+    expect(describeStanding(standing('requested', 'filed'))?.label).toBe('Importing');
+    expect(describeStanding(standing('requested', 'failed'))?.label).toBe('Stalled');
     expect(describeStanding(standing('requested', 'wanted'))?.label).toBe('Requested');
-    expect(describeStanding(standing('requested', 'refused'))?.label).toBe('Refused');
+    expect(describeStanding(standing('requested', 'refused'))?.label).toBe('Declined');
   });
 });

@@ -4,7 +4,7 @@ import { chooseADownloadQuality } from './chooseADownloadQuality';
 const ORIGINAL = {
   quality: 'original' as const,
   label: 'Original',
-  meaning: 'As it is on the server',
+  meaning: 'Original quality',
   bytes: 4_000_000_000,
   comparison: null,
   wouldTranscode: false,

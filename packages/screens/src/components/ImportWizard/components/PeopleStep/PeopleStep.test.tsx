@@ -48,7 +48,7 @@ describe('PeopleStep', () => {
 
     expect(screen.getByRole('button', { name: 'Which of them is you?' })).toHaveTextContent('Lee');
     expect(screen.getByText('Disabled')).toBeVisible();
-    expect(screen.getByText(/Plex will not share their watching/)).toBeVisible();
+    expect(screen.getByText(/Plex doesn’t share this user’s watch data/)).toBeVisible();
     expect(onContinue).toHaveBeenCalledWith({ skipUserIds: ['4444'], meUserId: '1111' });
   });
 
@@ -68,7 +68,7 @@ describe('PeopleStep', () => {
 
   it('takes a Home member’s PIN, reading everybody again once it worked', async () => {
     givePlexPin
-      .mockResolvedValueOnce({ kind: 'refused', refusal: { message: 'That PIN was not right.' } })
+      .mockResolvedValueOnce({ kind: 'refused', refusal: { message: 'That PIN is incorrect.' } })
       .mockResolvedValue({ kind: 'answered', value: { done: true } });
     render(<PeopleStep source={SOURCE} onContinue={vi.fn()} onBack={vi.fn()} />);
 
@@ -79,7 +79,7 @@ describe('PeopleStep', () => {
     await userEvent.type(pin, '0000');
     await userEvent.click(screen.getByRole('button', { name: 'Use PIN' }));
 
-    expect(await screen.findByText('That PIN was not right.')).toBeVisible();
+    expect(await screen.findByText('That PIN is incorrect.')).toBeVisible();
 
     await userEvent.click(screen.getByRole('button', { name: 'Use PIN' }));
 
@@ -94,11 +94,11 @@ describe('PeopleStep', () => {
 
     fetchImportPeople.mockResolvedValueOnce({
       kind: 'refused',
-      refusal: { message: 'plex.tv could not be reached.' },
+      refusal: { message: 'Couldn’t connect to plex.tv.' },
     });
     render(<PeopleStep source={SOURCE} onContinue={vi.fn()} onBack={onBack} />);
 
-    expect(await screen.findByText(/plex\.tv could not be reached\./)).toBeVisible();
+    expect(await screen.findByText(/Couldn’t connect to plex\.tv\./)).toBeVisible();
 
     await userEvent.click(screen.getByRole('button', { name: /Try again/ }));
     await userEvent.click(await screen.findByRole('button', { name: 'Back' }));

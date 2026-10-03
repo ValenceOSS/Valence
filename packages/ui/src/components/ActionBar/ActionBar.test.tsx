@@ -113,31 +113,27 @@ describe('ActionBar', () => {
   });
 
   it('folds them into a menu for a phone, named for anybody who cannot see the dots', () => {
-    render(
-      <ActionBar label="More to do with this" primary={<span>Play</span>} actions={ACTIONS} />,
-    );
+    render(<ActionBar label="More actions" primary={<span>Play</span>} actions={ACTIONS} />);
 
-    expect(screen.getAllByRole('button', { name: 'More to do with this' }).length).toBeGreaterThan(
-      0,
-    );
+    expect(screen.getAllByRole('button', { name: 'More actions' }).length).toBeGreaterThan(0);
   });
 
   it('offers no menu on a wide screen where everything is pinned, since nothing is folded', () => {
     render(
       <ActionBar
-        label="More to do with this"
+        label="More actions"
         primary={<span>Play</span>}
         actions={[{ id: 'share', label: 'Share', isPinned: true, onChoose: vi.fn() }]}
       />,
     );
 
-    expect(screen.getAllByRole('button', { name: 'More to do with this' })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: 'More actions' })).toHaveLength(1);
   });
 
   it('has no menu to fold anything into where there is nothing else to do', () => {
-    render(<ActionBar label="More to do with this" primary={<span>Play</span>} actions={[]} />);
+    render(<ActionBar label="More actions" primary={<span>Play</span>} actions={[]} />);
 
-    expect(screen.queryByRole('button', { name: 'More to do with this' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'More actions' })).not.toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

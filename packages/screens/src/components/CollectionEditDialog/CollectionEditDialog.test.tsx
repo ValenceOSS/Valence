@@ -45,7 +45,7 @@ describe('CollectionEditDialog', () => {
 
     await userEvent.type(screen.getByLabelText('Name'), 'Saga');
     await userEvent.click(screen.getByRole('switch', { name: 'The order matters' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Make it' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Create' }));
 
     await waitFor(() => {
       expect(onSaved).toHaveBeenCalledWith(SAGA.id);
@@ -61,7 +61,7 @@ describe('CollectionEditDialog', () => {
   it('will not make a collection with no name', async () => {
     renderInAnAddress(<CollectionEditDialog isOpen onClose={vi.fn()} />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Make it' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Create' }));
 
     expect(await screen.findByText('A collection needs a name.')).toBeInTheDocument();
     expect(collections.createCollection).not.toHaveBeenCalled();
@@ -73,9 +73,11 @@ describe('CollectionEditDialog', () => {
     renderInAnAddress(<CollectionEditDialog isOpen onClose={vi.fn()} />);
 
     await userEvent.type(screen.getByLabelText('Name'), 'Saga');
-    await userEvent.click(screen.getByRole('button', { name: 'Make it' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Create' }));
 
-    expect(await screen.findByText('That collection could not be made.')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Couldn’t create the collection. Try again.'),
+    ).toBeInTheDocument();
   });
 
   it('changes a collection it was opened on', async () => {

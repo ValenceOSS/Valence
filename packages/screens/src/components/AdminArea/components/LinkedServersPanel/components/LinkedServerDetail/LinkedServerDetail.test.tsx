@@ -40,7 +40,7 @@ describe('LinkedServerDetail', () => {
     expect(await screen.findByText('What Films can see')).toBeInTheDocument();
     expect(screen.getByText('What Films shares with you')).toBeInTheDocument();
     expect(screen.getByText('People from Films')).toBeInTheDocument();
-    expect(screen.getByText('What Films asked for')).toBeInTheDocument();
-    expect(screen.getByText('Their record of your people')).toBeInTheDocument();
+    expect(screen.getByText('What Films requested')).toBeInTheDocument();
+    expect(screen.getByText('Their request history for your people')).toBeInTheDocument();
   });
 });

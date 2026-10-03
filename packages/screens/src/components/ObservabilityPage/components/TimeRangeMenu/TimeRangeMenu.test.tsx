@@ -26,7 +26,7 @@ describe('TimeRangeMenu', () => {
   it('says the range the address names', () => {
     draw({ range: 'all' });
 
-    expect(screen.getByRole('button', { name: 'Time range' })).toHaveTextContent('Everything kept');
+    expect(screen.getByRole('button', { name: 'Time range' })).toHaveTextContent('All');
   });
 
   it('says so where the log has been zoomed into a stretch', () => {
@@ -61,7 +61,7 @@ describe('TimeRangeMenu', () => {
     const onSearchChange = draw({ from: 100, until: 200 });
 
     await open();
-    await userEvent.click(await screen.findByRole('menuitemradio', { name: 'Everything kept' }));
+    await userEvent.click(await screen.findByRole('menuitemradio', { name: 'All' }));
 
     expect(onSearchChange).toHaveBeenCalledWith({
       range: 'all',

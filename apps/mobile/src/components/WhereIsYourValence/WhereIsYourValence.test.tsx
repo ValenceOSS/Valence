@@ -15,7 +15,7 @@ describe('WhereIsYourValence', () => {
       wrapper: CacheScope,
     });
 
-    expect(drawn.getByText('Where is your Valence?')).toBeTruthy();
+    expect(drawn.getByText('Connect to your server')).toBeTruthy();
   });
 
   it('hands over the address that answered', async () => {
@@ -58,7 +58,7 @@ describe('WhereIsYourValence', () => {
     await userEvent.press(drawn.getByText('Connect'));
 
     await waitFor(() => {
-      expect(drawn.getByText('Nothing answered at that address.')).toBeTruthy();
+      expect(drawn.getByText('Couldn’t connect to a server at that address.')).toBeTruthy();
     });
 
     expect(onChosen).not.toHaveBeenCalled();

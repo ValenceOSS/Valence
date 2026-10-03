@@ -63,7 +63,7 @@ describe('DownloadClientDraftSchema', () => {
         url: 'http://sabnzbd:8080',
         categories: { movies: 'films', shows: 'Films', music: 'music', books: 'books' },
       }),
-    ).toThrow('Each kind needs a category of its own');
+    ).toThrow('Each media type needs its own category');
   });
 
   it('refuses a kind it does not know', () => {

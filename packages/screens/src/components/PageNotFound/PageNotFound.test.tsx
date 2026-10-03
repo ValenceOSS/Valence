@@ -11,9 +11,7 @@ describe('PageNotFound', () => {
   it('says the page could not be found', () => {
     render(<PageNotFound />);
 
-    expect(
-      screen.getByRole('heading', { name: 'This page could not be found' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
   });
 
   it('goes back to where somebody came from', async () => {
@@ -30,7 +28,7 @@ describe('PageNotFound', () => {
   it('offers the way to the start as well', () => {
     render(<PageNotFound />);
 
-    expect(screen.getByRole('button', { name: 'Go to the start' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Go to home page' })).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

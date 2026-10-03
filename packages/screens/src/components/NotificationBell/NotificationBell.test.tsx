@@ -71,7 +71,7 @@ describe('NotificationBell', () => {
     draw();
     await open(user);
 
-    expect(await screen.findByText(/New films and episodes will show up here/)).toBeInTheDocument();
+    expect(await screen.findByText(/New films and episodes will appear here/)).toBeInTheDocument();
   });
 
   it('reads the list again when it is opened', async () => {

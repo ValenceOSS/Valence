@@ -140,7 +140,7 @@ const InstalledPluginCard = ({
 
         <Button size="sm" variant="ghost" disabled={isBusy} onClick={onRemove}>
           <Icon of={BinIcon} size={14} />
-          {say('common.remove')}
+          {say('common.forget')}
         </Button>
       </div>
     </li>

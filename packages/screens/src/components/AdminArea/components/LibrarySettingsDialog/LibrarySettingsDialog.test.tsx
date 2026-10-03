@@ -122,7 +122,7 @@ describe('LibrarySettingsDialog', () => {
       />,
     );
 
-    expect(screen.getByText("Each file's own default")).toBeInTheDocument();
+    expect(screen.getByText('File’s default track')).toBeInTheDocument();
   });
 
   it('pins the detected browser language to the top of the list', async () => {
@@ -220,7 +220,7 @@ describe('LibrarySettingsDialog', () => {
     await actor.click(await screen.findByRole('menuitemradio', { name: 'Deutsch' }));
     await actor.click(screen.getByRole('button', { name: 'Save' }));
 
-    expect(await screen.findByText(/preview generation task/)).toBeInTheDocument();
+    expect(await screen.findByText(/This starts generating previews/)).toBeInTheDocument();
     expect(onUpdated).not.toHaveBeenCalled();
   });
 
@@ -315,7 +315,7 @@ describe('LibrarySettingsDialog', () => {
       />,
     );
 
-    await user.click(screen.getByRole('button', { name: /Files at once/ }));
+    await user.click(screen.getByRole('button', { name: /Files processed at once/ }));
     await user.click(await screen.findByRole('menuitemradio', { name: /One at a time/ }));
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
@@ -363,7 +363,7 @@ describe('LibrarySettingsDialog', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: /Files at once/ })).toHaveTextContent(
+    expect(screen.getByRole('button', { name: /Files processed at once/ })).toHaveTextContent(
       'One at a time',
     );
   });
@@ -384,7 +384,7 @@ describe('LibrarySettingsDialog', () => {
     );
 
     await user.type(
-      screen.getByRole('textbox', { name: 'Where requests are filed' }),
+      screen.getByRole('textbox', { name: 'Download folder for requests' }),
       '/media/asked-for',
     );
     await user.click(screen.getByRole('button', { name: 'Save' }));
@@ -416,10 +416,10 @@ describe('LibrarySettingsDialog', () => {
       />,
     );
 
-    await user.click(screen.getByRole('switch', { name: 'Takes requests' }));
+    await user.click(screen.getByRole('switch', { name: 'Accept requests' }));
 
     expect(
-      screen.queryByRole('textbox', { name: 'Where requests are filed' }),
+      screen.queryByRole('textbox', { name: 'Download folder for requests' }),
     ).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Save' }));
@@ -456,28 +456,28 @@ describe('LibrarySettingsDialog', () => {
       />,
     );
 
-    await user.click(screen.getByRole('button', { name: /Who fetches what is asked for/ }));
+    await user.click(screen.getByRole('button', { name: /Download requests with/ }));
 
     expect(screen.queryByRole('menuitemradio', { name: /Music app/ })).not.toBeInTheDocument();
 
     await user.click(await screen.findByRole('menuitemradio', { name: /Films app/ }));
 
     expect(
-      screen.queryByRole('textbox', { name: 'Where requests are filed' }),
+      screen.queryByRole('textbox', { name: 'Download folder for requests' }),
     ).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Choose a root folder and a quality profile in the app.',
+      'Choose a root folder and a quality profile from the app.',
     );
 
     await user.click(await screen.findByRole('button', { name: /Root folder/ }));
-    expect(await screen.findByText('The app cannot reach this folder')).toBeInTheDocument();
+    expect(await screen.findByText('The app can’t access this folder')).toBeInTheDocument();
     await user.click(await screen.findByRole('menuitemradio', { name: '/movies' }));
     await user.click(screen.getByRole('button', { name: /Quality profile in the app/ }));
     await user.click(await screen.findByRole('menuitemradio', { name: 'HD-1080p' }));
-    await user.click(screen.getByRole('switch', { name: 'Search as soon as it is added' }));
+    await user.click(screen.getByRole('switch', { name: 'Search as soon as it’s added' }));
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => {

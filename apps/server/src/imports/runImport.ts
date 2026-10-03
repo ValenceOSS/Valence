@@ -485,11 +485,7 @@ const bringPlaylists = async (
         });
 
         if (made === null) {
-          services.recordIssue(
-            jobId,
-            list.name,
-            saying('server.imports.runImport.thePlaylistCouldNotBeMade'),
-          );
+          services.recordIssue(jobId, list.name, saying('common.thatPlaylistCouldNotBeMade'));
 
           continue;
         }

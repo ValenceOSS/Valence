@@ -6,7 +6,7 @@ describe('LIKED_SONGS', () => {
       kind: 'liked',
       id: 'liked',
       title: 'Liked Songs',
-      detail: 'Every song you have liked',
+      detail: 'All your liked songs',
       art: null,
       view: { kind: 'liked' },
     });

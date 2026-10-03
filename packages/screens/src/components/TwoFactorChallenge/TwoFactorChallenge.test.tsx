@@ -75,7 +75,7 @@ describe('TwoFactorChallenge', () => {
     await actor.type(screen.getByLabelText('Authenticator code'), '123456');
     await actor.click(screen.getByRole('button', { name: 'Verify' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('not valid');
+    expect(await screen.findByRole('alert')).toHaveTextContent('isn’t valid');
     expect(onVerified).not.toHaveBeenCalled();
   });
 
@@ -139,6 +139,6 @@ describe('TwoFactorChallenge', () => {
     await actor.type(screen.getByLabelText('Authenticator code'), '123456');
     await actor.click(screen.getByRole('button', { name: 'Verify' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(/Could not reach the server/);
+    expect(await screen.findByRole('alert')).toHaveTextContent(/Couldn’t reach the server/);
   });
 });

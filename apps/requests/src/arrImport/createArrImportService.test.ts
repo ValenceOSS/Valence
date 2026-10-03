@@ -177,7 +177,7 @@ describe('createArrImportService', () => {
     });
 
     expect(applied.problems.map((one) => one.message)).toEqual([
-      'Sonarr could not be read: Sonarr could not be reached',
+      'Couldn’t read Sonarr: Couldn’t connect to Sonarr',
     ]);
     expect(applied.clients).toEqual({ added: 0, kept: 0 });
   });

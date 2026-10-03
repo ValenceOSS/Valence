@@ -168,7 +168,7 @@ describe('choosing a folder over HTTP', () => {
 
     expect(response.status).toBe(403);
     expect(await response.json()).toMatchObject({
-      error: 'Valence is not allowed to read that folder.',
+      error: 'Valence doesn’t have permission to read that folder.',
     });
   });
 
@@ -293,7 +293,8 @@ describe('making a folder over HTTP', () => {
 
     expect(response.status).toBe(403);
     expect(await response.json()).toMatchObject({
-      error: 'That disk is read-only to Valence. Give it read-write access to make folders there.',
+      error:
+        'That disk is read-only to Valence. Give Valence read-write access to create folders there.',
     });
   });
 

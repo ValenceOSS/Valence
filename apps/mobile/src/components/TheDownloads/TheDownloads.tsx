@@ -123,7 +123,7 @@ const TheDownloads = ({
         ? say('common.onThisPhone')
         : file?.state === 'fetching'
           ? [
-              say('phone.theDownloads.fetching'),
+              say('common.downloading'),
               file.ofBytes === null
                 ? null
                 : say('common.doneOfTotal', {
@@ -137,7 +137,7 @@ const TheDownloads = ({
           : file?.state === 'paused'
             ? say('common.paused')
             : file?.state === 'failed'
-              ? (file.failure ?? say('phone.theDownloads.couldNotBeFetched'))
+              ? (file.failure ?? say('common.downloadFailed'))
               : download?.state === 'preparing'
                 ? say('common.theServerIsPreparingIt')
                 : download?.state === 'ready'
@@ -219,7 +219,7 @@ const TheDownloads = ({
         {fraction === null ? null : (
           <HowFar
             fraction={fraction}
-            label={say('phone.theDownloads.howFarTitleHasGot', { title: row.title })}
+            label={say('common.howFarTitleHasDownloaded', { title: row.title })}
           />
         )}
       </View>

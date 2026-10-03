@@ -38,10 +38,10 @@ describe('changeGiveUpRules', () => {
   });
 
   it('says why they were refused', async () => {
-    answering({ error: 'Those are not rules for giving up on a download.' }, 400);
+    answering({ error: 'Those aren’t valid rules for abandoning a download.' }, 400);
 
     expect((await changeGiveUpRules(GIVE_UP_DEFAULTS)).refusal?.message).toBe(
-      'Those are not rules for giving up on a download.',
+      'Those aren’t valid rules for abandoning a download.',
     );
   });
 });

@@ -47,7 +47,7 @@ describe('ArrangementRow', () => {
       />,
     );
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Only what you have not watched' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Unwatched only' }));
 
     expect(onArrange).toHaveBeenCalledWith({ order: 'size', isHidingWatched: false });
   });
@@ -65,7 +65,7 @@ describe('ArrangementRow', () => {
     );
 
     await fireEvent(drawn.getByRole('button', { name: 'Title' }), 'focus');
-    await fireEvent(drawn.getByRole('button', { name: 'Only what you have not watched' }), 'focus');
+    await fireEvent(drawn.getByRole('button', { name: 'Unwatched only' }), 'focus');
 
     expect(onFocus).toHaveBeenCalledTimes(2);
   });

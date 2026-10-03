@@ -101,7 +101,7 @@ describe('checking a surface before a client sees it', () => {
 
     expect(answer.surface.blocks[0]).toMatchObject({
       type: 'notice',
-      title: 'This could not be shown',
+      title: 'Couldn’t show this',
     });
     expect(answer.problem).not.toBeNull();
   });
@@ -115,7 +115,7 @@ describe('checking a surface before a client sees it', () => {
 
   it('replaces an answer that is not JSON', () => {
     expect(cleanSurface('not json', manifest, assets).problem).toEqual(
-      'The plugin answered with something that is not JSON.',
+      'The plugin returned something that isn’t JSON.',
     );
   });
 });

@@ -40,14 +40,14 @@ describe('describeRequestsVpn', () => {
     expect(describeRequestsVpn(hearing(A_VPN))).toEqual({
       label: 'Up',
       tone: 'success',
-      detail: 'The tunnel is up, and traffic leaves from 203.0.113.7, Netherlands.',
+      detail: 'The VPN tunnel is up, and traffic leaves from 203.0.113.7, Netherlands.',
     });
   });
 
   it('says the tunnel is up without saying where, where that is not known yet', () => {
     expect(
       describeRequestsVpn(hearing({ ...A_VPN, publicAddress: null, country: null })).detail,
-    ).toBe('The tunnel is up.');
+    ).toBe('The VPN tunnel is up.');
   });
 
   it('says why the tunnel is down', () => {
@@ -56,21 +56,21 @@ describe('describeRequestsVpn', () => {
         hearing({
           ...A_VPN,
           isUp: false,
-          problem: sayVerbatim('The tunnel is stopped'),
+          problem: sayVerbatim('The VPN tunnel is stopped'),
           problemCode: null,
         }),
       ),
     ).toEqual({
       label: 'Down',
       tone: 'danger',
-      detail: 'The tunnel is stopped',
+      detail: 'The VPN tunnel is stopped',
       help: 'https://docs.getvalence.app/install/requesting#the-vpn-is-down',
     });
   });
 
   it('still says the tunnel is down where no reason was given', () => {
     expect(describeRequestsVpn(hearing({ ...A_VPN, isUp: false })).detail).toBe(
-      'The tunnel is down.',
+      'The VPN tunnel is down.',
     );
   });
 

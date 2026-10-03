@@ -11,7 +11,7 @@ describe('SetupLinkHandover', () => {
 
     expect(screen.getByText(LINK.url)).toBeInTheDocument();
     expect(await screen.findByRole('img', { name: /Ada/ })).toBeInTheDocument();
-    expect(screen.getByText(/keeps no copy/)).toBeInTheDocument();
+    expect(screen.getByText(/doesn’t keep a copy/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Send by email/ })).not.toBeInTheDocument();
   });
 

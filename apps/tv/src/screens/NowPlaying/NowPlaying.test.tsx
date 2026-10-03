@@ -295,11 +295,11 @@ describe('NowPlaying', () => {
 
     const drawn = await draw({ lyrics: WORDS });
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Hide the words' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Hide lyrics' }));
 
     expect(drawn.queryByText('Caramel heart')).toBeNull();
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Show the words' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Show lyrics' }));
 
     expect(drawn.getByText('Caramel heart')).toBeTruthy();
   });
@@ -309,7 +309,7 @@ describe('NowPlaying', () => {
 
     const drawn = await draw();
 
-    expect(drawn.getByRole('button', { name: 'Show the words' })).toBeDisabled();
+    expect(drawn.getByRole('button', { name: 'Show lyrics' })).toBeDisabled();
   });
 
   it('lists what plays next, and plays the chosen song now', async () => {

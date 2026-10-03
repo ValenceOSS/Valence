@@ -29,6 +29,6 @@ describe('readOptional', () => {
 
     await expect(
       readOptional(createArrCaller(arr.fetch, anArrApp()), '/customformat', LIST, []),
-    ).rejects.toThrow('Radarr answered with HTTP 500');
+    ).rejects.toThrow('Radarr returned HTTP 500');
   });
 });

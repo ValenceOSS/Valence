@@ -49,15 +49,15 @@ describe('RequestsPage', () => {
     const drawn = await drawRequests(null);
 
     expect(drawn.getByText('Requests')).toBeTruthy();
-    expect(drawn.queryByText('Nothing has been asked for yet.')).toBeNull();
+    expect(drawn.queryByText('No requests yet.')).toBeNull();
     expect(drawn.queryByRole('button')).toBeNull();
   });
 
   it('says so when nothing has been asked for', async () => {
     const drawn = await drawRequests([]);
 
-    expect(drawn.getByText('Nothing has been asked for yet.')).toBeTruthy();
-    expect(drawn.getByText('Find something in Search, and request it from its page.')).toBeTruthy();
+    expect(drawn.getByText('No requests yet.')).toBeTruthy();
+    expect(drawn.getByText('Find a title in Search and request it from its page.')).toBeTruthy();
   });
 
   it('lists films and series newest first, and lights the page with the newest', async () => {
@@ -91,7 +91,7 @@ describe('RequestsPage', () => {
       aMediaRequest({ id: 'b', title: 'Arrival', requestedBy: { id: 'sam', name: 'Sam' } }),
     ]);
 
-    expect(drawn.getByText('Requested   ·   Asked for by Sam')).toBeTruthy();
+    expect(drawn.getByText('Requested   ·   Requested by Sam')).toBeTruthy();
     expect(drawn.getByText('Requested')).toBeTruthy();
   });
 

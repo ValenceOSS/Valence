@@ -40,6 +40,6 @@ describe('AnAlbum', () => {
       { wrapper: CacheScope },
     );
 
-    expect(await drawn.findByText('That album could not be read.')).toBeTruthy();
+    expect(await drawn.findByText('Couldn’t load that album.')).toBeTruthy();
   });
 });

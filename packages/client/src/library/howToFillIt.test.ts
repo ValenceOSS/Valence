@@ -12,6 +12,6 @@ describe('howToFillIt', () => {
   });
 
   it('says the one library wants scanning where only it is empty', () => {
-    expect(howToFillIt('oneLibrary', true)).toBe('Scan it, or add files to its folder.');
+    expect(howToFillIt('oneLibrary', true)).toBe('Scan the library, or add files to its folder.');
   });
 });

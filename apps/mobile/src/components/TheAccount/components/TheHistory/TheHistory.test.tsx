@@ -61,7 +61,7 @@ describe('TheHistory', () => {
   it('forgets one book', async () => {
     const drawn = await render(<TheHistory />, { wrapper: CacheScope });
 
-    await userEvent.press(await drawn.findByRole('button', { name: 'Forget Dune' }));
+    await userEvent.press(await drawn.findByRole('button', { name: 'Remove Dune' }));
 
     expect(forgetReading).toHaveBeenCalledWith(aBook().id);
   });
@@ -70,7 +70,7 @@ describe('TheHistory', () => {
     const asking = jest.spyOn(Alert, 'alert');
     const drawn = await render(<TheHistory />, { wrapper: CacheScope });
 
-    await userEvent.press(await drawn.findByText('Forget everything'));
+    await userEvent.press(await drawn.findByText('Clear all history'));
     await act(() => {
       asking.mock.calls
         .at(-1)?.[2]

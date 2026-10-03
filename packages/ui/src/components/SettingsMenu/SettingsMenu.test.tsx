@@ -218,14 +218,14 @@ describe('SettingsMenu', () => {
         id: 'timing',
         label: 'Subtitle timing',
         icon: <span aria-hidden>·</span>,
-        detail: 'In time',
+        detail: 'In sync',
         control: <button type="button">Later</button>,
       },
     ]);
     await open(actor);
 
     expect(await screen.findByRole('button', { name: 'Later' })).toBeInTheDocument();
-    expect(screen.getByText('In time')).toBeInTheDocument();
+    expect(screen.getByText('In sync')).toBeInTheDocument();
   });
 
   it('gives a page of its own to something too big for a list', async () => {

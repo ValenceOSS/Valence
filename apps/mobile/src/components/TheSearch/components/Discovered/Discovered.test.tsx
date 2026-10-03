@@ -59,6 +59,6 @@ describe('Discovered', () => {
 
     const drawn = await render(around(<Discovered onAsk={jest.fn()} />));
 
-    expect(await drawn.findByText('That could not be read.')).toBeTruthy();
+    expect(await drawn.findByText('Couldn’t load that.')).toBeTruthy();
   });
 });

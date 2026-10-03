@@ -29,7 +29,7 @@ const fill = async () => {
   await userEvent.type(screen.getByLabelText('Name'), 'Operator');
   await userEvent.type(screen.getByLabelText('Username'), 'operator');
   await userEvent.type(screen.getByLabelText('Password'), 'a-long-enough-password');
-  await userEvent.type(screen.getByLabelText('Type it again'), 'a-long-enough-password');
+  await userEvent.type(screen.getByLabelText('Confirm password'), 'a-long-enough-password');
 };
 
 describe('AccountStep', () => {
@@ -89,15 +89,15 @@ describe('AccountStep', () => {
       start: { ...EMPTY, password: 'a-long-enough-password' },
     });
 
-    const again = screen.getByLabelText('Type it again');
+    const again = screen.getByLabelText('Confirm password');
 
     await userEvent.type(again, 'a-long');
 
-    expect(screen.queryByText('The two passwords are not the same.')).toBeNull();
+    expect(screen.queryByText('The passwords don’t match.')).toBeNull();
 
     await userEvent.type(again, '-enough-passwore');
 
-    expect(screen.getByText('The two passwords are not the same.')).toBeInTheDocument();
+    expect(screen.getByText('The passwords don’t match.')).toBeInTheDocument();
   });
 
   it('goes back to the welcome', async () => {

@@ -410,7 +410,7 @@ const ShowDialog = ({
 
       <DialogFooter>
         <ActionBar
-          label={say('screens.showDialog.moreToDoWithThisProgramme')}
+          label={say('screens.bookDialog.moreToDoWithThisBook')}
           primary={
             carryingOn === null ? (
               <Button variant="confirm" size="lg" isLoading disabled>

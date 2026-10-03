@@ -69,13 +69,13 @@ describe('Books', () => {
   it('says so when there is nothing to listen to', async () => {
     const { drawn } = await draw({ books: [{ ...book, hasAudio: false }] });
 
-    expect(drawn.getByText('There are no audiobooks here yet.')).toBeTruthy();
+    expect(drawn.getByText('No audiobooks yet.')).toBeTruthy();
   });
 
   it('lists every audiobook by title, naming the first large, lit by its cover', async () => {
     const { drawn, onFeature } = await draw();
 
-    expect(drawn.getByText('Every audiobook')).toBeTruthy();
+    expect(drawn.getByText('All audiobooks')).toBeTruthy();
     expect(drawn.getAllByText('Golden Son')).toHaveLength(2);
     expect(onFeature).toHaveBeenLastCalledWith(`/api/books/${GOLDEN_SON.id}/cover`);
     expect(drawn.queryByText('Continue listening')).toBeNull();

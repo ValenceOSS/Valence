@@ -52,7 +52,7 @@ describe('BackgroundJobs', () => {
   it('calls the seek-bar strip scrub previews', () => {
     render(<BackgroundJobs monitor={monitor([job({ kind: 'thumbnails' })])} />);
 
-    expect(screen.getByText('Drawing scrub previews')).toBeInTheDocument();
+    expect(screen.getByText('Generating scrub previews')).toBeInTheDocument();
     expect(screen.queryByText('thumbnails')).not.toBeInTheDocument();
   });
 
@@ -92,22 +92,22 @@ describe('BackgroundJobs', () => {
     render(<BackgroundJobs monitor={monitor([])} />);
 
     expect(screen.queryByText('Ted S01E01.mkv')).not.toBeInTheDocument();
-    expect(screen.getByText('Nothing queued.')).toBeInTheDocument();
+    expect(screen.getByText('No jobs queued.')).toBeInTheDocument();
   });
 
   it('says it is still reading before the first reading arrives, not confirmed empty', () => {
     render(<BackgroundJobs monitor={null} />);
 
-    expect(screen.getByText('Reading the queue…')).toBeInTheDocument();
-    expect(screen.queryByText('Nothing queued.')).not.toBeInTheDocument();
+    expect(screen.getByText('Loading the queue…')).toBeInTheDocument();
+    expect(screen.queryByText('No jobs queued.')).not.toBeInTheDocument();
   });
 
   it('tells an operator when the reading could not be had at all', () => {
     render(<BackgroundJobs monitor={null} isUnreachable />);
 
     expect(screen.queryByText('Comparing episode audio')).not.toBeInTheDocument();
-    expect(screen.getByText('The queue could not be read from the server.')).toBeInTheDocument();
-    expect(screen.queryByText('Reading the queue…')).not.toBeInTheDocument();
+    expect(screen.getByText('Couldn’t load the queue from the server.')).toBeInTheDocument();
+    expect(screen.queryByText('Loading the queue…')).not.toBeInTheDocument();
   });
 
   it('paints each state in the colour that state means, not one borrowed from another', () => {

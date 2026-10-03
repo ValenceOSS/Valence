@@ -10,7 +10,7 @@ const STARTING_POSTGRES_MS = 60_000;
 const A_NOTE = {
   event: 'media.added',
   title: sayVerbatim('New'),
-  body: sayVerbatim('Something arrived'),
+  body: sayVerbatim('Media added'),
   link: null,
 } satisfies Parameters<NotificationStore['notify']>[1];
 

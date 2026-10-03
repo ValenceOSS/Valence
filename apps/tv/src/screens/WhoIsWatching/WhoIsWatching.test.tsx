@@ -80,7 +80,7 @@ describe('WhoIsWatching', () => {
   it('asks who is watching and shows the household’s faces', async () => {
     const drawn = await drawWhoIsWatching(aCacheHolding([JO, SAM]));
 
-    expect(drawn.getByText('Who is watching?')).toBeTruthy();
+    expect(drawn.getByText('Who’s watching?')).toBeTruthy();
     expect(drawn.getByRole('button', { name: 'Jo' })).toBeTruthy();
     expect(drawn.getByRole('button', { name: 'Sam' })).toBeTruthy();
   });
@@ -89,7 +89,7 @@ describe('WhoIsWatching', () => {
     const drawn = await drawWhoIsWatching(aCacheHolding(null));
 
     expect(drawn.queryByRole('button', { name: 'Jo' })).toBeNull();
-    expect(drawn.queryByText('This Valence could not be reached.')).toBeNull();
+    expect(drawn.queryByText('Couldn’t reach this Valence server.')).toBeNull();
   });
 
   it('says so when the server cannot be reached', async () => {
@@ -97,7 +97,7 @@ describe('WhoIsWatching', () => {
 
     const drawn = await drawWhoIsWatching(aCacheHolding(null));
 
-    expect(await drawn.findByText('This Valence could not be reached.')).toBeTruthy();
+    expect(await drawn.findByText('Couldn’t reach this Valence server.')).toBeTruthy();
   });
 
   it('tells which face was picked, and where it and the mark were', async () => {
@@ -129,7 +129,7 @@ describe('WhoIsWatching', () => {
     const drawn = await drawWhoIsWatching(aCacheHolding([]));
 
     expect(drawn.getByText('Sign in with your phone')).toBeTruthy();
-    expect(drawn.queryByText('Who is watching?')).toBeNull();
+    expect(drawn.queryByText('Who’s watching?')).toBeNull();
     expect(await drawn.findByText('WDJB-MJHT')).toBeTruthy();
   });
 

@@ -75,7 +75,7 @@ describe('keepADownload', () => {
     expect(outcome).toEqual({
       bytes: 5,
       isComplete: false,
-      failure: 'The server sent 5 of the 11 bytes it said the file was.',
+      failure: 'The download is incomplete: the server sent 5 of 11 bytes.',
     });
   });
 
@@ -166,7 +166,11 @@ describe('keepADownload', () => {
       report: () => {},
     }).finished;
 
-    expect(outcome).toEqual({ bytes: 0, isComplete: false, failure: 'The server answered 404.' });
+    expect(outcome).toEqual({
+      bytes: 0,
+      isComplete: false,
+      failure: 'The server responded with 404.',
+    });
   });
 
   it('treats being stopped as unfinished rather than as failed', async () => {

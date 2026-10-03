@@ -24,7 +24,7 @@ describe('APlaylistDetails', () => {
     );
 
     await userEvent.type(drawn.getByLabelText('Name'), 'Late nights');
-    await userEvent.press(drawn.getByText('Make it'));
+    await userEvent.press(drawn.getByText('Create'));
 
     expect(createPlaylist).toHaveBeenCalledWith(expect.objectContaining({ name: 'Late nights' }));
     expect(onDone).toHaveBeenCalledWith('00000000-0000-4000-8000-0000000000bb');

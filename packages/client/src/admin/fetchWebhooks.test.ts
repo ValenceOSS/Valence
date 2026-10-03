@@ -42,7 +42,10 @@ describe('fetchWebhooks', () => {
   });
 
   it('says so when the server refuses, rather than answering with nothing', async () => {
-    vi.stubGlobal('fetch', answering({ error: 'This account may not manage webhooks.' }, 403));
+    vi.stubGlobal(
+      'fetch',
+      answering({ error: 'This account isn’t allowed to manage webhooks.' }, 403),
+    );
 
     await expect(fetchWebhooks()).rejects.toThrow();
   });
@@ -73,7 +76,7 @@ describe('createWebhook', () => {
   it('carries back why an address was refused rather than saying it went wrong', async () => {
     vi.stubGlobal(
       'fetch',
-      answering({ error: 'Valence will not send deliveries to that address.' }, 400),
+      answering({ error: 'Valence won’t send webhooks to that address.' }, 400),
     );
 
     const { created, refusal } = await createWebhook({
@@ -85,7 +88,7 @@ describe('createWebhook', () => {
     });
 
     expect(created).toBeNull();
-    expect(refusal?.message).toContain('will not send deliveries');
+    expect(refusal?.message).toContain('won’t send webhooks');
   });
 
   it('says so plainly when the server could not be reached', async () => {
@@ -99,7 +102,7 @@ describe('createWebhook', () => {
       filters: DEFAULT_WEBHOOK_FILTERS,
     });
 
-    expect(refusal?.message).toContain('could not be reached');
+    expect(refusal?.message).toContain('Couldn’t reach the server');
   });
 });
 
@@ -185,7 +188,7 @@ describe('testWebhook', () => {
   });
 
   it('carries back a refusal for a subscription that is turned off', async () => {
-    vi.stubGlobal('fetch', answering({ error: 'No such subscription, or it is turned off.' }, 404));
+    vi.stubGlobal('fetch', answering({ error: 'No such subscription, or it’s turned off.' }, 404));
 
     expect((await testWebhook(aSubscription.id))?.message).toContain('turned off');
   });
@@ -203,7 +206,7 @@ describe('when the server cannot be reached at all', () => {
     ]);
 
     for (const refusal of said) {
-      expect(refusal?.message).toContain('could not be reached');
+      expect(refusal?.message).toContain('Couldn’t reach the server');
     }
 
     await expect(fetchWebhookDeliveries(aSubscription.id)).rejects.toThrow();

@@ -16,7 +16,7 @@ describe('ImportReportView', () => {
     ).toBeVisible();
     expect(screen.getByText('Every library')).toBeVisible();
     expect(screen.getByText('You')).toBeVisible();
-    expect(screen.getByText('Their Plex PIN was not given, so they were left out.')).toBeVisible();
+    expect(screen.getByText('Their Plex PIN wasn’t entered, so they were skipped.')).toBeVisible();
   });
 
   it('lists what could not be matched and why, and what stays behind', async () => {
@@ -26,7 +26,7 @@ describe('ImportReportView', () => {
 
     expect(screen.getByText('A Home Movie (2019)')).toBeVisible();
     expect(screen.getByText('And 3 more.')).toBeVisible();
-    expect(screen.getByText(/Passwords cannot be copied/)).toBeVisible();
+    expect(screen.getByText(/Passwords can’t be copied/)).toBeVisible();
     expect(screen.queryByLabelText('What was written')).toBeNull();
   });
 
@@ -52,7 +52,7 @@ describe('ImportReportView', () => {
 
     expect(screen.getByLabelText('What was written')).toBeInTheDocument();
     expect(screen.getByText('Could not be imported')).toBeVisible();
-    expect(screen.getByText('2 libraries, nothing rated above 15')).toBeVisible();
+    expect(screen.getByText('2 libraries, rated up to 15')).toBeVisible();
     expect(screen.queryByText('Not matched')).toBeNull();
   });
 });

@@ -369,9 +369,7 @@ const ATextReader = ({
     >
       {contents.isError || document.isError ? (
         <View style={[styles.whole, { padding: 24, paddingTop: topRoom }]}>
-          <Words colour={colours.ink}>
-            {say('phone.aReader.aTextReader.thisBookCouldNotBeRead')}
-          </Words>
+          <Words colour={colours.ink}>{say('common.thatBookCouldNotBeRead')}</Words>
         </View>
       ) : (
         <View style={styles.whole} {...swiping.panHandlers}>

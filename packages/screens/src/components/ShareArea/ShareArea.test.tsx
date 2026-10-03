@@ -93,7 +93,7 @@ describe('what a guest is shown', () => {
     opened({ ended: 'withdrawn' });
 
     expect(
-      await screen.findByRole('heading', { name: 'This link was withdrawn.' }),
+      await screen.findByRole('heading', { name: 'This share link was revoked.' }),
     ).toBeInTheDocument();
 
     expect(screen.queryByRole('button', { name: 'Play' })).not.toBeInTheDocument();
@@ -193,9 +193,9 @@ describe('a link that no longer works', () => {
     opened();
 
     expect(
-      await screen.findByRole('heading', { name: 'This link has expired.' }),
+      await screen.findByRole('heading', { name: 'This share link has expired.' }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/made to last a while/)).toBeInTheDocument();
+    expect(screen.getByText(/This link has expired/)).toBeInTheDocument();
   });
 
   it('says a withdrawn link was withdrawn, and that somebody did it', async () => {
@@ -204,9 +204,9 @@ describe('a link that no longer works', () => {
     opened();
 
     expect(
-      await screen.findByRole('heading', { name: 'This link was withdrawn.' }),
+      await screen.findByRole('heading', { name: 'This share link was revoked.' }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/stopped it working/)).toBeInTheDocument();
+    expect(screen.getByText(/This link was revoked/)).toBeInTheDocument();
   });
 
   it('says a link opened its full number of times has been used up', async () => {
@@ -215,9 +215,9 @@ describe('a link that no longer works', () => {
     opened();
 
     expect(
-      await screen.findByRole('heading', { name: 'This link has been used up.' }),
+      await screen.findByRole('heading', { name: 'This share link has reached its usage limit.' }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/set number of times/)).toBeInTheDocument();
+    expect(screen.getByText(/maximum number of uses/)).toBeInTheDocument();
   });
 
   it('tells the three endings apart rather than calling them all withdrawn', async () => {
@@ -225,7 +225,7 @@ describe('a link that no longer works', () => {
 
     opened();
 
-    await screen.findByRole('heading', { name: 'This link has been used up.' });
+    await screen.findByRole('heading', { name: 'This share link has reached its usage limit.' });
 
     expect(screen.queryByText(/withdrawn/)).not.toBeInTheDocument();
     expect(screen.queryByText(/expired/)).not.toBeInTheDocument();
@@ -236,7 +236,7 @@ describe('a link that no longer works', () => {
 
     opened();
 
-    expect(await screen.findByText(/does not work/)).toBeInTheDocument();
+    expect(await screen.findByText(/This link isn’t valid/)).toBeInTheDocument();
   });
 
   it('offers no way in, since a guest has no account to sign in to', async () => {
@@ -244,7 +244,7 @@ describe('a link that no longer works', () => {
 
     opened();
 
-    await screen.findByRole('heading', { name: 'This link has expired.' });
+    await screen.findByRole('heading', { name: 'This share link has expired.' });
 
     expect(screen.queryByRole('button', { name: /sign in/i })).not.toBeInTheDocument();
   });
@@ -277,7 +277,7 @@ describe('a link that no longer works', () => {
 
     expect(await screen.findByRole('heading', { name: 'Pride and Prejudice' })).toBeInTheDocument();
     expect(screen.getByText('Jane Austen')).toBeInTheDocument();
-    expect(screen.getByText(/kept on this device only/)).toBeInTheDocument();
+    expect(screen.getByText(/saved on this device only/)).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Read' }));
 

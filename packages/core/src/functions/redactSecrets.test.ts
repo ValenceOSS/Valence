@@ -105,7 +105,7 @@ describe('redactSecrets', () => {
   });
 
   it('leaves an ordinary sentence alone', () => {
-    const line = 'job queue: the media service did not answer';
+    const line = 'job queue: the media service didn’t respond';
 
     expect(redactSecrets(line)).toBe(line);
   });

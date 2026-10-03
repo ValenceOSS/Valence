@@ -141,7 +141,7 @@ describe('SignedIn', () => {
     renderTheApp();
 
     expect(
-      await screen.findByRole('heading', { name: 'Valence is not reachable' }),
+      await screen.findByRole('heading', { name: 'Can’t connect to Valence' }),
     ).toBeInTheDocument();
   });
 
@@ -273,7 +273,7 @@ describe('SignedIn', () => {
       expect(authenticateWithPasskey).toHaveBeenCalled();
     });
     await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: 'Sign in to the app' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Use a passkey' })).not.toBeInTheDocument();
     });
     expect(signedInOnThisPage.read()).toBe(false);
     expect(handBackToThePhone).not.toHaveBeenCalled();

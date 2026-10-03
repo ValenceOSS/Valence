@@ -166,7 +166,7 @@ const ImportReportView = ({ report }: ImportReportViewProps) => (
       </PanelCard>
     )}
 
-    <PanelCard title={say('screens.importWizard.importReportView.whatStaysBehind')}>
+    <PanelCard title={say('screens.importWizard.arrImportStep.notBroughtAcross')}>
       <ul className="flex list-disc flex-col gap-1 pl-5 text-sm text-text-muted">
         {report.notBroughtAcross.map((said) => (
           <li key={said.message}>{sayAgain(said)}</li>

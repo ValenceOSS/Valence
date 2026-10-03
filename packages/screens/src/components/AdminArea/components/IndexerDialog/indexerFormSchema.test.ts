@@ -44,14 +44,10 @@ describe('indexerFormSchema', () => {
 
   it('says what is wrong with a seed time or a ratio it cannot read', () => {
     expect(read({ ...FILLED, seedSeconds: 'ages' }).problem).toBe(
-      'Seed time is a whole number of seconds, up to a year.',
+      'Enter a seed time as a whole number of seconds, up to one year.',
     );
-    expect(read({ ...FILLED, seedRatio: 'lots' }).problem).toBe(
-      'A ratio is a number from 0 to 1000.',
-    );
-    expect(read({ ...FILLED, seedRatio: '-1' }).problem).toBe(
-      'A ratio is a number from 0 to 1000.',
-    );
+    expect(read({ ...FILLED, seedRatio: 'lots' }).problem).toBe('Enter a ratio from 0 to 1000.');
+    expect(read({ ...FILLED, seedRatio: '-1' }).problem).toBe('Enter a ratio from 0 to 1000.');
   });
 
   it('reads a filled form, trimming what was typed', () => {
@@ -82,13 +78,16 @@ describe('indexerFormSchema', () => {
 
   it.each([
     [{ name: '  ' }, 'Give the indexer a name.'],
-    [{ url: 'jackett' }, 'The address needs to be a whole http or https address.'],
-    [{ url: 'ftp://jackett/' }, 'The address needs to be a whole http or https address.'],
-    [{ priority: '0' }, 'Priority is a whole number from 1 to 50.'],
-    [{ priority: 'high' }, 'Priority is a whole number from 1 to 50.'],
-    [{ requestsPerMinute: '2.5' }, 'The limit is a whole number of searches a minute, up to 600.'],
-    [{ timeoutSeconds: '300' }, 'Wait between 5 and 120 seconds for an answer.'],
-    [{ timeoutSeconds: '' }, 'Wait between 5 and 120 seconds for an answer.'],
+    [{ url: 'jackett' }, 'Enter a full http or https address.'],
+    [{ url: 'ftp://jackett/' }, 'Enter a full http or https address.'],
+    [{ priority: '0' }, 'Priority must be a whole number from 1 to 50.'],
+    [{ priority: 'high' }, 'Priority must be a whole number from 1 to 50.'],
+    [
+      { requestsPerMinute: '2.5' },
+      'Enter a limit as a whole number of searches per minute, up to 600.',
+    ],
+    [{ timeoutSeconds: '300' }, 'Enter a timeout between 5 and 120 seconds.'],
+    [{ timeoutSeconds: '' }, 'Enter a timeout between 5 and 120 seconds.'],
   ])('says what is wrong with %o', (change, problem) => {
     expect(read({ ...FILLED, ...change })).toEqual({ draft: null, problem });
   });

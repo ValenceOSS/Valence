@@ -44,7 +44,7 @@ describe('TheListeningPlayer', () => {
 
     const drawn = await render(<TheListeningPlayer onBack={jest.fn()} />, { wrapper: CacheScope });
 
-    await userEvent.press(drawn.getByRole('button', { name: 'On 30 seconds' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Skip forward 30 seconds' }));
     expect(mockFake.player.read().bookPositionSeconds).toBe(30);
 
     await userEvent.press(drawn.getByRole('button', { name: 'Back 15 seconds' }));

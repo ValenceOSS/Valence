@@ -39,7 +39,7 @@ describe('fetchFacets', () => {
   });
 
   it('says so when the server refuses, rather than answering with nothing', async () => {
-    vi.stubGlobal('fetch', answering({ error: 'Nobody is signed in.' }, 401));
+    vi.stubGlobal('fetch', answering({ error: 'You’re not signed in.' }, 401));
 
     await expect(fetchFacets()).rejects.toThrow();
   });

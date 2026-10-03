@@ -5,8 +5,7 @@ describe('saidOfRefusal', () => {
   it('passes on why a linked server refused, in its words', async () => {
     const answered = Response.json(
       {
-        error:
-          'Your server is already playing as many streams from here as it may. Stop one first.',
+        error: 'Your server has reached its stream limit on this server. Stop a stream first.',
         code: 'error.linking.yourServerIsPlayingAsMuchAsItMay',
         values: {},
       },
@@ -15,8 +14,7 @@ describe('saidOfRefusal', () => {
 
     expect(await saidOfRefusal(answered)).toEqual({
       code: 'error.linking.yourServerIsPlayingAsMuchAsItMay',
-      message:
-        'Your server is already playing as many streams from here as it may. Stop one first.',
+      message: 'Your server has reached its stream limit on this server. Stop a stream first.',
       values: {},
     });
   });
@@ -24,7 +22,7 @@ describe('saidOfRefusal', () => {
   it('says the server could not be reached where it gave no reason this one can read', async () => {
     const unreachable = {
       code: 'error.linking.thatServerCouldNotBeReached',
-      message: 'That server could not be reached. Check its address can be reached from this one.',
+      message: 'Couldn’t connect to that server. Check its address is reachable from this one.',
       values: {},
     };
 

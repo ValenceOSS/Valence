@@ -175,7 +175,7 @@ describe('LibrariesPanel', () => {
   it('tells somebody not to add a library when the list simply could not be read', () => {
     render(<LibrariesPanel {...props} isUnreachable />);
 
-    expect(screen.getByText(/could not be read from the server/)).toBeInTheDocument();
+    expect(screen.getByText(/Couldn’t load the libraries from the server/)).toBeInTheDocument();
     expect(screen.queryByText(/No libraries yet/)).not.toBeInTheDocument();
   });
 
@@ -235,11 +235,11 @@ describe('LibrariesPanel', () => {
 
     render(<LibrariesPanel {...props} libraries={[library()]} onScan={onScan} />);
 
-    await choose(user, 'Films', /Read every file again/);
+    await choose(user, 'Films', /Rescan all files/);
 
     expect(onScan).not.toHaveBeenCalled();
 
-    await user.click(await screen.findByRole('button', { name: 'Read every file again' }));
+    await user.click(await screen.findByRole('button', { name: 'Rescan all files' }));
 
     expect(onScan).toHaveBeenCalledWith(library().id, true);
   });
@@ -250,7 +250,7 @@ describe('LibrariesPanel', () => {
 
     render(<LibrariesPanel {...props} libraries={[library()]} onScan={onScan} />);
 
-    await choose(user, 'Films', /Read every file again/);
+    await choose(user, 'Films', /Rescan all files/);
     await user.click(await screen.findByRole('button', { name: 'Cancel' }));
 
     expect(onScan).not.toHaveBeenCalled();
@@ -389,8 +389,8 @@ describe('LibrariesPanel', () => {
 
     await choose(user, 'Films', /Delete library/);
 
-    expect(await screen.findByText(/files on disk are not touched/)).toBeInTheDocument();
-    expect(screen.getByText(/Anything running for it now is stopped/)).toBeInTheDocument();
+    expect(await screen.findByText(/Files on disk aren’t touched/)).toBeInTheDocument();
+    expect(screen.getByText(/Any tasks running for it are stopped/)).toBeInTheDocument();
   });
 
   it('deletes the library once confirmed, and lets the list drop it', async () => {

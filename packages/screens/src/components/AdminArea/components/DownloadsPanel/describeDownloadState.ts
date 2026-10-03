@@ -84,7 +84,7 @@ const describeDownloadState = (download: QueuedDownload): StateBadge => {
           }
         : {
             ...STATUS_LOOK.attention,
-            label: say('screens.downloadsPanel.describeDownloadState.notFiled'),
+            label: say('screens.importWizard.arrImportStep.notBroughtAcross'),
             detail: sayAgain(download.filingProblem),
             help: docsFor(download.filingProblemCode),
           };

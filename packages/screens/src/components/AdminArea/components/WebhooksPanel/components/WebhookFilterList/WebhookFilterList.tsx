@@ -71,7 +71,7 @@ const WebhookFilterList = ({
             tone="accent"
             size="sm"
             items={[
-              { id: EVERYONE, label: say('screens.webhooksPanel.webhookFilterList.everybody') },
+              { id: EVERYONE, label: say('common.everyone') },
               { id: SOME, label: say('screens.webhooksPanel.webhookFilterList.onlyThese') },
             ]}
             value={isPicking ? SOME : EVERYONE}

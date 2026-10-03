@@ -53,7 +53,8 @@ describe('createRequestsClient', () => {
 
     expect(await client.readStatus()).toEqual({
       kind: 'silent',
-      reason: 'http://requests:8421 refused the secret; REQUESTS_SECRET must be the same on both',
+      reason:
+        'http://requests:8421 rejected the secret. REQUESTS_SECRET must match on both servers',
 
       problemCode: 'RequestsSecretRefused',
     });
@@ -68,7 +69,7 @@ describe('createRequestsClient', () => {
 
     expect(await client.readStatus()).toEqual({
       kind: 'silent',
-      reason: 'http://requests:8421 answered 502',
+      reason: 'http://requests:8421 returned 502',
 
       problemCode: 'RequestsUnreachable',
     });
@@ -83,7 +84,7 @@ describe('createRequestsClient', () => {
 
     expect(await client.readStatus()).toEqual({
       kind: 'silent',
-      reason: 'http://requests:8421 answered, but not as the requests service',
+      reason: 'http://requests:8421 responded, but it isn’t the requests service',
 
       problemCode: 'RequestsUnreachable',
     });
@@ -98,7 +99,7 @@ describe('createRequestsClient', () => {
 
     expect(await client.readStatus()).toEqual({
       kind: 'silent',
-      reason: 'http://requests:8421 did not answer',
+      reason: 'http://requests:8421 didn’t respond',
 
       problemCode: 'RequestsUnreachable',
     });
@@ -404,7 +405,7 @@ describe('createRequestsClient', () => {
       expect(await client.addIndexer(A_DRAFT)).toMatchObject({
         kind: 'refused',
         status: 400,
-        refusal: { error: 'The requests service refused that.' },
+        refusal: { error: 'The requests service rejected that.' },
       });
     });
 
@@ -413,7 +414,7 @@ describe('createRequestsClient', () => {
 
       expect(await client.listIndexers()).toEqual({
         kind: 'silent',
-        reason: 'http://requests:8421 answered 503',
+        reason: 'http://requests:8421 returned 503',
 
         problemCode: 'RequestsUnreachable',
       });
@@ -424,7 +425,7 @@ describe('createRequestsClient', () => {
 
       expect(await client.readStatus()).toEqual({
         kind: 'silent',
-        reason: 'http://requests:8421 refused to say how it is',
+        reason: 'http://requests:8421 refused the status check',
 
         problemCode: 'RequestsUnreachable',
       });
@@ -440,7 +441,7 @@ describe('createRequestsClient', () => {
 
       expect(await client.listIndexers()).toEqual({
         kind: 'silent',
-        reason: 'http://requests:8421 answered, but not as the requests service',
+        reason: 'http://requests:8421 responded, but it isn’t the requests service',
 
         problemCode: 'RequestsUnreachable',
       });
@@ -535,16 +536,16 @@ describe('createRequestsClient', () => {
         refusal: { error: 'No such indexer.' },
       });
       expect(
-        await aClient(502, { error: 'The site answered 410' }).client.download(AN_INDEXER.id, 'x'),
+        await aClient(502, { error: 'The site returned 410' }).client.download(AN_INDEXER.id, 'x'),
       ).toEqual({
         kind: 'silent',
-        reason: 'The site answered 410',
+        reason: 'The site returned 410',
 
         problemCode: 'RequestsUnreachable',
       });
       expect(await aClient(500, null).client.download(AN_INDEXER.id, 'x')).toEqual({
         kind: 'silent',
-        reason: 'http://requests:8421 answered 500',
+        reason: 'http://requests:8421 returned 500',
 
         problemCode: 'RequestsUnreachable',
       });
@@ -557,7 +558,7 @@ describe('createRequestsClient', () => {
 
       expect(await offline.download(AN_INDEXER.id, 'x')).toEqual({
         kind: 'silent',
-        reason: 'http://requests:8421 did not answer',
+        reason: 'http://requests:8421 didn’t respond',
 
         problemCode: 'RequestsUnreachable',
       });
@@ -752,7 +753,7 @@ describe('createRequestsClient with download clients', () => {
   it('passes on why a release was not sent', async () => {
     expect(
       await aClient(400, {
-        error: 'No torrent client is set up and switched on',
+        error: 'No torrent client is set up and turned on',
       }).client.sendRelease({
         indexerId: A_CLIENT.id,
         url: 'magnet:?',
@@ -763,7 +764,7 @@ describe('createRequestsClient with download clients', () => {
     ).toMatchObject({
       kind: 'refused',
       status: 400,
-      refusal: { error: 'No torrent client is set up and switched on' },
+      refusal: { error: 'No torrent client is set up and turned on' },
     });
   });
 
@@ -792,7 +793,7 @@ describe('createRequestsClient with download clients', () => {
         await streaming(
           `data: ${JSON.stringify(frame)}\n\ndata: not json\n\ndata: {"kind":"gossip"}\n\n`,
         ).streamDownloads((read) => heard.push(read), new AbortController().signal),
-      ).toEqual('http://requests:8421 closed the stream of downloads');
+      ).toEqual('http://requests:8421 closed the download stream');
       expect(heard).toEqual([frame]);
     });
 
@@ -800,7 +801,7 @@ describe('createRequestsClient with download clients', () => {
       const signal = new AbortController().signal;
 
       expect(await streaming('', 401).streamDownloads(() => undefined, signal)).toEqual(
-        'http://requests:8421 answered 401',
+        'http://requests:8421 returned 401',
       );
 
       const offline = createRequestsClient({
@@ -810,7 +811,7 @@ describe('createRequestsClient with download clients', () => {
       });
 
       expect(await offline.streamDownloads(() => undefined, signal)).toEqual(
-        'http://requests:8421 did not answer',
+        'http://requests:8421 didn’t respond',
       );
 
       const breaking = createRequestsClient({
@@ -829,7 +830,7 @@ describe('createRequestsClient with download clients', () => {
       });
 
       expect(await breaking.streamDownloads(() => undefined, signal)).toEqual(
-        'http://requests:8421 stopped streaming the downloads',
+        'http://requests:8421 stopped sending download updates',
       );
     });
   });
@@ -1041,7 +1042,7 @@ describe('createRequestsClient with requests for films and series', () => {
     });
     expect(
       (
-        await aClient(400, { error: 'The film is on its way already' }).client.pickRelease(
+        await aClient(400, { error: 'The film is already downloading' }).client.pickRelease(
           REQUEST.id,
           {
             id: 'x',

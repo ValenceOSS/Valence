@@ -73,7 +73,7 @@ describe('AddLibraryDialog', () => {
 
     await actor.click(screen.getByRole('button', { name: 'Browse' }));
     await actor.click(await screen.findByRole('button', { name: '/media' }));
-    await screen.findByText('No folders in here.');
+    await screen.findByText('This folder has no subfolders.');
     await actor.click(screen.getByRole('button', { name: 'Use this folder' }));
 
     expect(screen.getByLabelText('Path')).toHaveValue('/media');
@@ -182,7 +182,7 @@ describe('AddLibraryDialog', () => {
 
     await actor.click(screen.getByRole('button', { name: 'Custom' }));
     await actor.type(screen.getByLabelText('Type name'), '  Documentaries ');
-    await actor.click(screen.getByRole('button', { name: 'Reads like movies' }));
+    await actor.click(screen.getByRole('button', { name: 'Based on movies' }));
     await fillForm(actor);
     await actor.click(screen.getByRole('button', { name: 'Add library' }));
 
@@ -204,7 +204,7 @@ describe('AddLibraryDialog', () => {
     await fillForm(actor);
     await actor.click(screen.getByRole('button', { name: 'Add library' }));
 
-    expect(await screen.findByText('Say what kind of library this is.')).toBeInTheDocument();
+    expect(await screen.findByText('Choose a library type.')).toBeInTheDocument();
     expect(createLibraryMock).not.toHaveBeenCalled();
   });
 

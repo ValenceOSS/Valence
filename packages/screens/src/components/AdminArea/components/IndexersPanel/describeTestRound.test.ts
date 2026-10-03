@@ -8,12 +8,12 @@ describe('describeTestRound', () => {
         { name: 'Jackett', failure: null },
         { name: 'Prowlarr', failure: null },
       ]),
-    ).toEqual({ done: 'All 2 answered.', failure: null });
+    ).toEqual({ done: 'All 2 responded.', failure: null });
   });
 
   it('names the one indexer where only one was tested', () => {
     expect(describeTestRound([{ name: 'Jackett', failure: null }])).toEqual({
-      done: 'Jackett answered.',
+      done: 'Connected to Jackett.',
       failure: null,
     });
   });
@@ -23,9 +23,9 @@ describe('describeTestRound', () => {
       describeTestRound([
         { name: 'Jackett', failure: null },
         { name: 'Prowlarr', failure: 'Prowlarr: Timed out' },
-        { name: 'Torrents', failure: 'Torrents: did not answer' },
+        { name: 'Torrents', failure: 'Torrents: no response' },
       ]).failure,
-    ).toBe('1 of 3 answered. Prowlarr: Timed out; Torrents: did not answer');
+    ).toBe('1 of 3 responded. Prowlarr: Timed out; Torrents: no response');
   });
 
   it('gives a lone failure as it is', () => {

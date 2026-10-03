@@ -151,7 +151,7 @@ describe('PersonDialog', () => {
 
     expect(
       await screen.findByText(
-        'Nothing is known about them, and nothing of theirs is on this server.',
+        'No details are available for this person, and none of their work is on this server.',
       ),
     ).toBeInTheDocument();
   });

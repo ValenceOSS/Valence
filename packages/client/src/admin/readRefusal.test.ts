@@ -18,7 +18,7 @@ describe('readRefusal', () => {
     const response = new Response('<html>no</html>', { status: 500 });
 
     expect(await readRefusal(response)).toStrictEqual({
-      message: 'That could not be done. Try again in a moment.',
+      message: 'Couldn’t do that. Try again in a moment.',
     });
   });
 });

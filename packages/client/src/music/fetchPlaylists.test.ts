@@ -57,7 +57,7 @@ describe('fetchPlaylists', () => {
   });
 
   it('makes nothing where the server refuses', async () => {
-    answerWith({ error: 'Choose a profile first.' }, false);
+    answerWith({ error: 'Select a profile first.' }, false);
 
     await expect(createPlaylist({ name: 'x' })).resolves.toBeNull();
   });
@@ -142,7 +142,7 @@ describe('fetchPlaylists', () => {
     fetchMock.mockRejectedValue(new Error('offline'));
 
     await expect(savePlaylistArtwork(SUMMARY.id, new Blob(['x']))).resolves.toBe(
-      'That picture could not be sent.',
+      'Couldn’t upload that picture.',
     );
   });
 

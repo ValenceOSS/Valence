@@ -7,7 +7,7 @@ describe('CaptchaNeeded', () => {
     const needed = new CaptchaNeeded('data:image/png;base64,AQID');
 
     expect(needed.image).toBe('data:image/png;base64,AQID');
-    expect(needed.message).toBe('Type the characters in the picture to log in');
+    expect(needed.message).toBe('Enter the characters in the image to log in');
     expect(needed.name).toBe('CaptchaNeeded');
     expect(needed).toBeInstanceOf(IndexerFailure);
   });

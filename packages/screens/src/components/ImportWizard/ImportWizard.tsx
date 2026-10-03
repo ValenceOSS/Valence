@@ -40,10 +40,10 @@ const titleOf = (step: ImportStepId): string =>
   ({
     source: say('screens.importWizard.whereIsEverythingComingFrom'),
     people: say('screens.importWizard.whoComesAcross'),
-    libraries: say('screens.importWizard.librariesFirst'),
+    libraries: say('common.libraries'),
     plan: say('screens.importWizard.whatWillComeAcross'),
-    importing: say('screens.importWizard.importing'),
-    requests: say('screens.importWizard.requestingToo'),
+    importing: say('common.filing'),
+    requests: say('common.requests'),
     links: say('screens.importWizard.handOutTheLinks'),
   })[step];
 

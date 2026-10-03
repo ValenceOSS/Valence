@@ -16,7 +16,7 @@ const timeline = (
   ],
 ) => (
   <SharedTimeline
-    label="Where everybody is"
+    label="Each member’s position in the party"
     durationSeconds={2400}
     filledSeconds={1200}
     people={people}
@@ -29,7 +29,9 @@ describe('SharedTimeline', () => {
   it('names the bar for assistive technology', () => {
     render(timeline());
 
-    expect(screen.getByRole('group', { name: 'Where everybody is' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('group', { name: 'Each member’s position in the party' }),
+    ).toBeInTheDocument();
   });
 
   it('gives everybody a face that says who they are and where', () => {
@@ -73,7 +75,7 @@ describe('SharedTimeline', () => {
   it('shows a status between the two times', () => {
     render(
       <SharedTimeline
-        label="Where everybody is"
+        label="Each member’s position in the party"
         durationSeconds={2400}
         filledSeconds={1200}
         people={[]}
@@ -89,7 +91,9 @@ describe('SharedTimeline', () => {
   it('fans out the group under the pointer, and gathers it again after', () => {
     render(timeline(TOGETHER));
 
-    const strip = screen.getByRole('group', { name: 'Where everybody is' }).firstElementChild;
+    const strip = screen.getByRole('group', {
+      name: 'Each member’s position in the party',
+    }).firstElementChild;
 
     expect(strip).toHaveAttribute('data-fanned', '');
 
@@ -105,7 +109,9 @@ describe('SharedTimeline', () => {
   it('does not fan anything for a pointer beside the faces rather than over them', () => {
     render(timeline(TOGETHER));
 
-    const strip = screen.getByRole('group', { name: 'Where everybody is' }).firstElementChild;
+    const strip = screen.getByRole('group', {
+      name: 'Each member’s position in the party',
+    }).firstElementChild;
 
     fireEvent.pointerMove(strip ?? document.body, { clientX: 0, clientY: -200 });
 

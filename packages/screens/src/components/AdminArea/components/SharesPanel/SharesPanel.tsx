@@ -72,7 +72,7 @@ const SharesPanel = () => {
       },
       {
         id: 'standing',
-        header: say('common.standing'),
+        header: say('common.status'),
         accessorFn: (share) => shareStanding(share, Date.now()).label,
         cell: ({ row }) => {
           const standing = shareStanding(row.original, Date.now());
@@ -208,7 +208,7 @@ const SharesPanel = () => {
       ) : (
         <DataTable
           height="fills"
-          label={say('screens.adminArea.sharesPanel.linksHandedOut')}
+          label={say('common.sharedLinks')}
           columns={columns}
           rows={asked.data}
           emptyMessage={say('screens.adminArea.sharesPanel.nobodyHasHandedOutALink')}

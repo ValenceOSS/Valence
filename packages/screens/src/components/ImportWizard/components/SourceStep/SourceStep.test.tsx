@@ -92,8 +92,8 @@ describe('SourceStep', () => {
 
     expect(screen.getByText('Den at http://den:8096')).toBeVisible();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Carry on with this one' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Forget' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Continue with this server' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Remove' }));
 
     expect(onConnected).toHaveBeenCalledWith(DEN);
     expect(forgetImportSource).toHaveBeenCalledWith('den');

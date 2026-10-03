@@ -73,7 +73,7 @@ describe('createQbittorrentAdapter', () => {
     });
 
     await expect(createQbittorrentAdapter(SETTINGS, fetch).version()).rejects.toThrow(
-      'qBittorrent refused the username or password',
+      'qBittorrent rejected the username or password',
     );
   });
 
@@ -81,7 +81,7 @@ describe('createQbittorrentAdapter', () => {
     const { fetch } = aFakeClient({ 'POST /api/v2/auth/login': () => new Response('Fails.') });
 
     await expect(createQbittorrentAdapter(SETTINGS, fetch).version()).rejects.toThrow(
-      'qBittorrent refused the username or password',
+      'qBittorrent rejected the username or password',
     );
     await expect(createQbittorrentAdapter(SETTINGS, fetch).version()).rejects.toMatchObject({
       problemCode: 'DownloadClientLoginRefused',
@@ -94,7 +94,7 @@ describe('createQbittorrentAdapter', () => {
     });
 
     await expect(createQbittorrentAdapter(SETTINGS, fetch).version()).rejects.toThrow(
-      'banned this address',
+      'blocked this address',
     );
   });
 
@@ -121,7 +121,7 @@ describe('createQbittorrentAdapter', () => {
     });
 
     await expect(createQbittorrentAdapter(SETTINGS, fetch).version()).rejects.toThrow(
-      'refused the username or password',
+      'rejected the username or password',
     );
   });
 
@@ -214,14 +214,14 @@ describe('createQbittorrentAdapter', () => {
 
     await expect(
       adapter.add({ kind: 'nzb', bytes: new Uint8Array() }, 'Dune', 'valence'),
-    ).rejects.toThrow('takes torrents, not NZBs');
+    ).rejects.toThrow('accepts torrents, not NZBs');
     await expect(
       adapter.add(
         { kind: 'torrent', bytes: new TextEncoder().encode('<html>') },
         'Dune',
         'valence',
       ),
-    ).rejects.toThrow('not a torrent Valence can read');
+    ).rejects.toThrow('isn’t a torrent Valence can read');
   });
 
   it('says so when the category cannot be made, or the torrent is refused', async () => {
@@ -236,7 +236,7 @@ describe('createQbittorrentAdapter', () => {
         'Dune',
         'valence',
       ),
-    ).rejects.toThrow('would not make the category valence');
+    ).rejects.toThrow('couldn’t create the category valence');
 
     const refusingTorrent = aFakeClient({
       'POST /api/v2/auth/login': loggingIn(),
@@ -250,7 +250,7 @@ describe('createQbittorrentAdapter', () => {
         'Dune',
         'valence',
       ),
-    ).rejects.toThrow('would not take the torrent');
+    ).rejects.toThrow('rejected the torrent');
   });
 
   it('lists only its own category, reading each torrent’s state', async () => {
@@ -310,7 +310,7 @@ describe('createQbittorrentAdapter', () => {
     expect(arrival?.doneBytes).toEqual(5);
     expect(arrival?.secondsLeft).toBeNull();
     expect(heat?.state).toEqual('failed');
-    expect(heat?.problem).toEqual('qBittorrent cannot find its files');
+    expect(heat?.problem).toEqual('qBittorrent can’t find its files');
     expect(heat?.sizeBytes).toBeNull();
     expect(heat?.doneBytes).toBeNull();
     expect(alien?.state).toBe('queued');
@@ -377,7 +377,7 @@ describe('createQbittorrentAdapter', () => {
     });
 
     await expect(createQbittorrentAdapter(SETTINGS, fetch).speeds()).rejects.toThrow(
-      'qBittorrent answered 500',
+      'qBittorrent returned 500',
     );
   });
 
@@ -421,7 +421,7 @@ describe('createQbittorrentAdapter', () => {
     });
 
     await expect(createQbittorrentAdapter(SETTINGS, fetch).pause(HASH)).rejects.toThrow(
-      'answered 409',
+      'returned 409',
     );
   });
 

@@ -37,7 +37,7 @@ const LABELS: Record<Permission, string> = {
   'requests.approve': say('client.admin.describePermission.approveOrTurnDownRequests'),
   'requests.manage': say('client.admin.describePermission.setUpIndexersDownloadClientsAnd'),
 
-  'account.invite': say('client.admin.describePermission.inviteSomebody'),
+  'account.invite': say('common.partyPanel.askAlong'),
   'account.manage': say('client.admin.describePermission.manageAccounts'),
   'account.ban': say('client.admin.describePermission.banAnAccount'),
   'account.roles': say('client.admin.describePermission.manageRoles'),
@@ -46,7 +46,7 @@ const LABELS: Record<Permission, string> = {
 
   'server.settings': say('client.admin.describePermission.changeServerSettings'),
   'server.backup': say('client.admin.describePermission.backTheServerUp'),
-  'server.logs': say('client.admin.describePermission.readTheLogs'),
+  'server.logs': say('common.readTheLogs'),
   'account.keys': say('client.admin.describePermission.holdAPIKeysForUseOutside'),
   'server.monitor': say('client.admin.describePermission.seeWhatTheServerIsDoing'),
   'server.webhooks': say('client.admin.describePermission.haveTheServerCallOutWhen'),

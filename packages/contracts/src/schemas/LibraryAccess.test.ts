@@ -58,7 +58,7 @@ describe('taking away the last one', () => {
 
 describe('how a ceiling reads', () => {
   it('says plainly when there is none', () => {
-    expect(describeCeiling(null)).toBe('No ceiling');
+    expect(describeCeiling(null)).toBe('No age limit');
   });
 
   it('writes out the strictest one rather than leaving a zero to look like nothing', () => {

@@ -59,7 +59,7 @@ describe('AnArtCard', () => {
       <AnArtCard title="Arrival" artwork={null} logo={null} watched={0.4} />,
     );
 
-    expect(drawn.getByLabelText('How far through Arrival')).toBeTruthy();
+    expect(drawn.getByLabelText('Progress for Arrival')).toBeTruthy();
   });
 
   it('draws no line once it has been watched through', async () => {
@@ -67,7 +67,7 @@ describe('AnArtCard', () => {
       <AnArtCard title="Arrival" artwork={null} logo={null} watched={1} />,
     );
 
-    expect(drawn.queryByLabelText('How far through Arrival')).toBeNull();
+    expect(drawn.queryByLabelText('Progress for Arrival')).toBeNull();
   });
 
   it('sets a display name so devtools can identify it', () => {

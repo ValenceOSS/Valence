@@ -141,7 +141,7 @@ const TheSearch = ({
       ) : (
         <>
           <SegmentedRow
-            label={say('phone.theSearch.whatToLookFor')}
+            label={say('common.whatToLookFor')}
             fills
             items={[...KINDS, ...(hasMusic ? [MUSIC] : []), ...(hasBooks ? [BOOKS] : [])]}
             value={kind}

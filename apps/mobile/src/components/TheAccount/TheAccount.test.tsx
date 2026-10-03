@@ -50,7 +50,7 @@ describe('TheAccount', () => {
     });
 
     expect(await drawn.findByText('dan@example.com')).toBeTruthy();
-    expect(drawn.getByText('Shares')).toBeTruthy();
+    expect(drawn.getByText('Share links')).toBeTruthy();
 
     await userEvent.press(drawn.getByText('Sign out'));
 

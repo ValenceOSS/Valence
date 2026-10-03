@@ -171,7 +171,7 @@ describe('ATitle', () => {
     );
 
     await waitFor(() => {
-      expect(drawn.getByText('That title could not be read.')).toBeTruthy();
+      expect(drawn.getByText('Couldn’t load that title.')).toBeTruthy();
     });
   });
 

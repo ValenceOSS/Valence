@@ -51,7 +51,7 @@ describe('describeIndexerState', () => {
   });
 
   it('says one nobody has tried has not been', () => {
-    expect(describeIndexerState({ ...AN_INDEXER, capabilities: null }).label).toBe('Not tried');
+    expect(describeIndexerState({ ...AN_INDEXER, capabilities: null }).label).toBe('Not tested');
   });
 
   it('says how often one has failed, and why', () => {

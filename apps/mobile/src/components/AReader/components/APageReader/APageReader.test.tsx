@@ -197,7 +197,7 @@ describe('APageReader', () => {
     expect(theCurl()).toHaveProp('page', 2);
     expect(screen.getByText('Page 3 of 3')).toBeTruthy();
 
-    await userEvent.press(screen.getByText('Read on: Chapter 2'));
+    await userEvent.press(screen.getByText('Continue reading: Chapter 2'));
 
     expect(onChapter).toHaveBeenCalledWith(SECOND);
   });
@@ -249,7 +249,7 @@ describe('APageReader', () => {
 
     await render(aReader({ chapters: [aChapter(1, { format: 'cbz', pageCount: null })], onBack }));
 
-    expect(screen.getByText('This chapter has no pages to show.')).toBeTruthy();
+    expect(screen.getByText('This chapter has no pages.')).toBeTruthy();
 
     await userEvent.press(screen.getByText('Back'));
 

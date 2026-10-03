@@ -25,20 +25,20 @@ describe('ResetPasswordPage', () => {
   it('sets the new password with the token, once typed the same twice', async () => {
     render(<ResetPasswordPage name="Valence" />);
 
-    const set = screen.getByRole('button', { name: 'Set the password' });
+    const set = screen.getByRole('button', { name: 'Set password' });
 
     await userEvent.type(screen.getByLabelText('New password'), NEW_PASSWORD);
-    await userEvent.type(screen.getByLabelText('Type it again'), 'something else');
+    await userEvent.type(screen.getByLabelText('Confirm password'), 'something else');
 
     expect(set).toBeDisabled();
-    expect(screen.getByText('The two passwords are not the same.')).toBeInTheDocument();
+    expect(screen.getByText('The passwords don’t match.')).toBeInTheDocument();
 
-    await userEvent.clear(screen.getByLabelText('Type it again'));
-    await userEvent.type(screen.getByLabelText('Type it again'), NEW_PASSWORD);
+    await userEvent.clear(screen.getByLabelText('Confirm password'));
+    await userEvent.type(screen.getByLabelText('Confirm password'), NEW_PASSWORD);
     await userEvent.click(set);
 
     expect(
-      await screen.findByText('Your password is changed. Sign in with it now.'),
+      await screen.findByText('Your password has been changed. Sign in with it now.'),
     ).toBeInTheDocument();
     expect(resetPassword).toHaveBeenCalledWith('tok', NEW_PASSWORD);
   });
@@ -48,8 +48,8 @@ describe('ResetPasswordPage', () => {
     render(<ResetPasswordPage name="Valence" />);
 
     await userEvent.type(screen.getByLabelText('New password'), NEW_PASSWORD);
-    await userEvent.type(screen.getByLabelText('Type it again'), NEW_PASSWORD);
-    await userEvent.click(screen.getByRole('button', { name: 'Set the password' }));
+    await userEvent.type(screen.getByLabelText('Confirm password'), NEW_PASSWORD);
+    await userEvent.click(screen.getByRole('button', { name: 'Set password' }));
 
     expect(await screen.findByText('That link has expired.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Forgot your password?' })).toBeInTheDocument();
@@ -60,7 +60,7 @@ describe('ResetPasswordPage', () => {
     render(<ResetPasswordPage name="Valence" />);
 
     expect(
-      screen.getByText('That link has expired or was already used. Ask for a new one.'),
+      screen.getByText('That link has expired or has already been used. Request a new one.'),
     ).toBeInTheDocument();
     expect(screen.queryByLabelText('New password')).not.toBeInTheDocument();
   });

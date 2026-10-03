@@ -260,7 +260,7 @@ describe('setting a household up over HTTP', () => {
 
     expect(response.status).toBe(400);
     expect(await response.json()).toMatchObject({
-      error: 'That file could not be read as a picture.',
+      error: 'Couldn’t read the file as a picture.',
     });
   });
 });

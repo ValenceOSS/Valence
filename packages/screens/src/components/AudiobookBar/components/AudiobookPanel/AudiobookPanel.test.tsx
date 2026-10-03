@@ -78,7 +78,7 @@ describe('AudiobookPanel', () => {
       audio.fire('error');
     });
 
-    expect(screen.getByRole('alert')).toHaveTextContent('That track would not play.');
+    expect(screen.getByRole('alert')).toHaveTextContent('Couldn’t play that track.');
   });
 
   it('sets a display name so devtools can identify it', () => {

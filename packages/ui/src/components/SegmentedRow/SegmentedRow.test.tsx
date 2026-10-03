@@ -64,7 +64,7 @@ describe('SegmentedRow', () => {
   it('draws a choice with nothing behind it fainter, rather than in a dashed outline', () => {
     render(
       <SegmentedRow
-        label="Which season"
+        label="Season"
         items={[
           { id: 's1', label: 'Season 1' },
           { id: 's2', label: 'Season 2', isAbsent: true },
@@ -83,7 +83,7 @@ describe('SegmentedRow', () => {
   it('draws that choice in full once it is the one chosen', () => {
     render(
       <SegmentedRow
-        label="Which season"
+        label="Season"
         items={[
           { id: 's1', label: 'Season 1' },
           { id: 's2', label: 'Season 2', isAbsent: true },

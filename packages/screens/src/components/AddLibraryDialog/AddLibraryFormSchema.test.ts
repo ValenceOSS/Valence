@@ -31,13 +31,13 @@ describe('AddLibraryFormSchema', () => {
 
   it('requires a path', () => {
     expect(problemsOf({ ...FILLED, path: '' }).path).toBe(
-      'Enter the path to this library on the machine running Valence.',
+      'Enter the path to this library on the server running Valence.',
     );
   });
 
   it('asks what kind of library a custom one is, but not otherwise', () => {
     expect(problemsOf({ ...FILLED, preset: CUSTOM_PRESET, flavour: '  ' }).flavour).toBe(
-      'Say what kind of library this is.',
+      'Choose a library type.',
     );
     expect(problemsOf({ ...FILLED, preset: CUSTOM_PRESET, flavour: 'Documentaries' })).toEqual({});
   });

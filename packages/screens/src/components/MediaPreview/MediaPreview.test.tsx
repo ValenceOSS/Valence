@@ -492,7 +492,7 @@ describe('MediaPreview', () => {
 
     await settle();
 
-    expect(await screen.findByText(/being made/i)).toBeInTheDocument();
+    expect(await screen.findByText(/being generated/i)).toBeInTheDocument();
     expect(play).not.toHaveBeenCalled();
   });
 

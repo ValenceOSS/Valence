@@ -187,7 +187,7 @@ describe('createDownloadClientService', () => {
     );
 
     expect((await breaking.service.test(QBITTORRENT.id))?.problem).toEqual(
-      'The client could not be asked',
+      'Couldn’t reach the download client',
     );
   });
 

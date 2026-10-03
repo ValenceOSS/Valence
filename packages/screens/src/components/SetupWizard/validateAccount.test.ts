@@ -45,7 +45,7 @@ describe('validateAccount', () => {
 
   it('says when the password was typed differently the second time', () => {
     expect(validateAccount({ ...GOOD, again: 'something-else-entirely' })).toEqual({
-      again: 'The two passwords are not the same.',
+      again: 'The passwords don’t match.',
     });
   });
 

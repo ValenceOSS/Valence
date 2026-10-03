@@ -158,7 +158,7 @@ describe('TrackMenu', () => {
     renderInAnAddress(<TrackMenu track={aTrack(1, { videoKey: 'abcdefghijk' })} />);
 
     await openMenu();
-    await userEvent.click(await screen.findByRole('menuitem', { name: 'Watch the video' }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Watch music video' }));
 
     expect(fake.player.pause).toHaveBeenCalled();
     expect(readVideo()).toEqual({ title: 'Track 1', videoKey: 'abcdefghijk' });
@@ -169,6 +169,6 @@ describe('TrackMenu', () => {
 
     await openMenu();
 
-    expect(screen.queryByRole('menuitem', { name: 'Watch the video' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Watch music video' })).not.toBeInTheDocument();
   });
 });

@@ -42,7 +42,7 @@ describe('PlaylistDialog', () => {
     renderInAnAddress(<PlaylistDialog isOpen onClose={vi.fn()} onSaved={onSaved} />);
 
     await userEvent.type(screen.getByLabelText('Name'), 'Sunday morning');
-    await userEvent.click(screen.getByRole('button', { name: 'Make it' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Create' }));
 
     await waitFor(() => {
       expect(onSaved).toHaveBeenCalledWith(SUMMARY.id);
@@ -57,7 +57,7 @@ describe('PlaylistDialog', () => {
   it('will not make a playlist with no name', async () => {
     renderInAnAddress(<PlaylistDialog isOpen onClose={vi.fn()} />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Make it' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Create' }));
 
     expect(await screen.findByText('A playlist needs a name.')).toBeInTheDocument();
     expect(playlists.createPlaylist).not.toHaveBeenCalled();
@@ -68,7 +68,7 @@ describe('PlaylistDialog', () => {
 
     await userEvent.type(screen.getByLabelText('Name'), 'Chapters');
     await userEvent.click(screen.getByRole('switch', { name: 'The order matters' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Make it' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Create' }));
 
     await waitFor(() => {
       expect(playlists.createPlaylist).toHaveBeenCalledWith(
@@ -101,9 +101,9 @@ describe('PlaylistDialog', () => {
     renderInAnAddress(<PlaylistDialog isOpen onClose={vi.fn()} />);
 
     await userEvent.type(screen.getByLabelText('Name'), 'x');
-    await userEvent.click(screen.getByRole('button', { name: 'Make it' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Create' }));
 
-    expect(await screen.findByText('That playlist could not be made.')).toBeInTheDocument();
+    expect(await screen.findByText('Couldn’t create the playlist.')).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

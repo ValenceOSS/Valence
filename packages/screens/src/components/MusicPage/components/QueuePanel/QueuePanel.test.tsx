@@ -56,7 +56,7 @@ describe('QueuePanel', () => {
 
     render(<QueuePanel />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Take Track 2 out of the queue' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Remove Track 2 from the queue' }));
 
     expect(fake.player.removeFromQueue).toHaveBeenCalledWith(1);
   });

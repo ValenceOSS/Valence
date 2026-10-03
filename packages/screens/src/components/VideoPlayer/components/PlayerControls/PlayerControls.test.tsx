@@ -247,7 +247,7 @@ describe('PlayerControls', () => {
   it('says how to leave the immersive view while in it', () => {
     draw({ onToggleGlow: vi.fn(), isGlowing: true });
 
-    expect(screen.getByRole('button', { name: 'Leave the immersive view' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Exit immersive view' })).toBeInTheDocument();
   });
 
   it('offers to play on a television only where the player has one to send to', () => {

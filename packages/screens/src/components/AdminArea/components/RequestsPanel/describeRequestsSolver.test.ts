@@ -63,7 +63,7 @@ describe('describeRequestsSolver', () => {
     ).toMatchObject({
       label: 'Can’t start',
       tone: 'danger',
-      detail: 'It would not start: No browser installed',
+      detail: 'Couldn’t start: No browser installed',
     });
   });
 

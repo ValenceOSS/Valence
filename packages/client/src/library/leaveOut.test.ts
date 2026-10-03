@@ -35,13 +35,11 @@ describe('leaveOut', () => {
 
   it('fails with the server’s own words where it refuses', async () => {
     vi.stubGlobal('fetch', () =>
-      Promise.resolve(
-        Response.json({ error: 'That is not inside this library.' }, { status: 400 }),
-      ),
+      Promise.resolve(Response.json({ error: 'That isn’t inside this library.' }, { status: 400 })),
     );
 
     await expect(leaveOut('library-1', '/elsewhere', null)).rejects.toThrow(
-      'That is not inside this library.',
+      'That isn’t inside this library.',
     );
   });
 });

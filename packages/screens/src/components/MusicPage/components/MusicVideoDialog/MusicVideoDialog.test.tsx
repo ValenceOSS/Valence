@@ -11,7 +11,7 @@ describe('MusicVideoDialog', () => {
   it('shows nothing until a video is asked for', () => {
     render(<MusicVideoDialog />);
 
-    expect(screen.queryByTitle('Caramel, the video')).not.toBeInTheDocument();
+    expect(screen.queryByTitle('Caramel, music video')).not.toBeInTheDocument();
   });
 
   it('plays the video asked for from the video host', async () => {
@@ -21,7 +21,7 @@ describe('MusicVideoDialog', () => {
       setMusicVideo({ title: 'Caramel', videoKey: 'abcdefghijk' });
     });
 
-    expect(await screen.findByTitle('Caramel, the video')).toHaveAttribute(
+    expect(await screen.findByTitle('Caramel, music video')).toHaveAttribute(
       'src',
       expect.stringContaining('abcdefghijk'),
     );

@@ -64,7 +64,7 @@ const RequestRow = ({
                 {isSomeoneElses
                   ? joinFacts([
                       where,
-                      say('tv.requestsPage.requestRow.askedForByName', {
+                      say('common.askedByName', {
                         name: request.requestedBy.name,
                       }),
                     ])

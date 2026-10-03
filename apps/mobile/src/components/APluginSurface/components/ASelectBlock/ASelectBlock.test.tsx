@@ -30,6 +30,6 @@ describe('ASelectBlock', () => {
       <ASelectBlock label="Which list" value="" options={options} onChoose={jest.fn()} />,
     );
 
-    expect(drawn.getByLabelText('Which list: Nothing chosen')).toBeTruthy();
+    expect(drawn.getByLabelText('Which list: Nothing selected')).toBeTruthy();
   });
 });

@@ -40,6 +40,6 @@ describe('AReader', () => {
       { wrapper: CacheScope },
     );
 
-    expect(await drawn.findByText(/Nothing in this book yet/u)).toBeTruthy();
+    expect(await drawn.findByText(/No content found for this book/u)).toBeTruthy();
   });
 });

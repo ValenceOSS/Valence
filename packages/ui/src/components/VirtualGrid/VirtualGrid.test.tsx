@@ -5,12 +5,12 @@ import { VirtualGrid } from './VirtualGrid';
 describe('VirtualGrid', () => {
   it('draws the things it is asked for, under the label it is given', () => {
     render(
-      <VirtualGrid count={3} label="What is here" leastCardWidth={170} rowHeight={300}>
+      <VirtualGrid count={3} label="Library items" leastCardWidth={170} rowHeight={300}>
         {(at) => <p key={at}>{`Card ${(at + 1).toString()}`}</p>}
       </VirtualGrid>,
     );
 
-    expect(screen.getByLabelText('What is here')).toBeInTheDocument();
+    expect(screen.getByLabelText('Library items')).toBeInTheDocument();
     expect(screen.getByText('Card 1')).toBeInTheDocument();
   });
 

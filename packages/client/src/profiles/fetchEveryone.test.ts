@@ -125,7 +125,7 @@ describe('signInAsProfile', () => {
 
     await expect(signInAsProfile('abc', 'wrong')).resolves.toEqual({
       kind: 'refused',
-      reason: 'That password is not right.',
+      reason: 'Incorrect password.',
     });
   });
 
@@ -134,7 +134,7 @@ describe('signInAsProfile', () => {
 
     await expect(signInAsProfile('abc', 'a password')).resolves.toEqual({
       kind: 'refused',
-      reason: 'Valence could not be reached.',
+      reason: 'Couldn’t reach the Valence server.',
     });
   });
 

@@ -707,7 +707,7 @@ const MediaRequestsPanel = () => {
       },
       {
         id: 'requestedBy',
-        header: say('screens.adminArea.mediaRequestsPanel.requestedBy'),
+        header: say('screens.requests.describeRequestFilters.askedBy'),
         accessorFn: (entry) => (entry.kind === 'request' ? entry.request.requestedBy.name : ''),
         cell: ({ row }) => {
           if (row.original.kind !== 'request') {
@@ -1005,7 +1005,7 @@ const MediaRequestsPanel = () => {
               act(
                 gone,
                 async () => ({ refusal: await removeMediaRequest(gone.id) }),
-                say('screens.adminArea.mediaRequestsPanel.forgotTitle', { title: gone.title }),
+                say('screens.adminArea.downloadsPanel.removedTitle', { title: gone.title }),
               );
             }
           }}

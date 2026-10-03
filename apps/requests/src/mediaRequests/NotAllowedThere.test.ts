@@ -7,7 +7,7 @@ describe('NotAllowedThere', () => {
 
     expect(error.name).toBe('NotAllowedThere');
     expect(error.message).toBe(
-      'The requests service, running as user 1000 and group 1000, may not write to /media/Films. Set PUID and PGID on it to the owner of your media folders.',
+      'The requests service, running as user 1000 and group 1000, doesn’t have permission to write to /media/Films. Set its PUID and PGID to the owner of your media folders.',
     );
   });
 });

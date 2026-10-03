@@ -107,7 +107,7 @@ describe('MediaPanel', () => {
 
     render(<MediaPanel {...props} media={[item(), item({ id: 'item-2', title: 'Heat' })]} />);
 
-    await user.type(screen.getByLabelText('Find a programme or film'), 'heat');
+    await user.type(screen.getByLabelText('Find a series or film'), 'heat');
 
     expect(screen.getByText('Heat')).toBeInTheDocument();
     expect(screen.queryByText('Parasite')).not.toBeInTheDocument();
@@ -118,9 +118,9 @@ describe('MediaPanel', () => {
 
     render(<MediaPanel {...props} media={[item()]} />);
 
-    await user.type(screen.getByLabelText('Find a programme or film'), 'zzz');
+    await user.type(screen.getByLabelText('Find a series or film'), 'zzz');
 
-    expect(screen.getByText(/Nothing here matches that/)).toBeInTheDocument();
+    expect(screen.getByText(/Nothing matches your search/)).toBeInTheDocument();
   });
 
   it('asks for the item whose match is wrong', async () => {
@@ -168,7 +168,7 @@ describe('MediaPanel', () => {
     render(<MediaPanel {...props} media={[item()]} onChooseMoment={onChooseMoment} />);
 
     await user.click(screen.getByRole('button', { name: /Actions for/ }));
-    await user.click(screen.getByRole('menuitem', { name: 'Choose the preview moment' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Choose the preview frame' }));
 
     expect(onChooseMoment).toHaveBeenCalledWith(item());
   });
@@ -464,7 +464,7 @@ describe('MediaPanel', () => {
     render(<MediaPanel {...props} media={[item()]} onShowCopies={onShowCopies} />);
 
     await user.click(screen.getByRole('button', { name: /Actions for/ }));
-    await user.click(screen.getByRole('menuitem', { name: 'Kept copies' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Saved copies' }));
 
     expect(onShowCopies).toHaveBeenCalledWith(
       expect.objectContaining({ id: item().id }),
@@ -519,11 +519,11 @@ describe('MediaPanel', () => {
 
     rerender(<MediaPanel {...props} isUnreachable />);
 
-    expect(screen.getByText(/could not be read from the server/)).toBeInTheDocument();
+    expect(screen.getByText(/Couldn’t load the libraries from the server/)).toBeInTheDocument();
 
     rerender(<MediaPanel {...props} libraries={[]} />);
 
-    expect(screen.getByText(/no library yet/)).toBeInTheDocument();
+    expect(screen.getByText(/no libraries yet/)).toBeInTheDocument();
   });
 
   it('shows where a film’s file is, and opens its folder in Files', async () => {
@@ -560,11 +560,11 @@ describe('MediaPanel', () => {
     );
 
     await user.click(screen.getByRole('button', { name: /Actions for/ }));
-    await user.click(screen.getByRole('menuitem', { name: 'Leave out of the library' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Exclude from library' }));
 
-    expect(await screen.findByText('Leave Parasite out?')).toBeInTheDocument();
+    expect(await screen.findByText('Exclude Parasite?')).toBeInTheDocument();
     expect(screen.getByText('Parasite (2019)/Parasite.mkv')).toBeInTheDocument();
-    expect(screen.getByText(/Scans pass over this file/)).toBeInTheDocument();
+    expect(screen.getByText(/Scans will skip this file/)).toBeInTheDocument();
   });
 
   it('leaves a whole series out by its folder', async () => {
@@ -583,9 +583,9 @@ describe('MediaPanel', () => {
 
     await chooseFrom(user, 'Which library', 'Shows');
     await user.click(await screen.findByRole('button', { name: 'Actions for From' }));
-    await user.click(screen.getByRole('menuitem', { name: 'Leave out of the library' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Exclude from library' }));
 
-    expect(await screen.findByText('Leave From out?')).toBeInTheDocument();
+    expect(await screen.findByText('Exclude From?')).toBeInTheDocument();
     expect(screen.getByText(/this folder and everything in it/)).toBeInTheDocument();
   });
 
@@ -596,7 +596,7 @@ describe('MediaPanel', () => {
 
     await user.click(screen.getByRole('button', { name: /Actions for/ }));
 
-    expect(screen.queryByRole('menuitem', { name: 'Leave out of the library' })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: 'Exclude from library' })).toBeNull();
   });
 
   it('shows a series’ own folder, and each episode’s folder from its row', async () => {

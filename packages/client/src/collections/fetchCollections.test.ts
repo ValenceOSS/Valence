@@ -77,7 +77,7 @@ describe('fetchCollections', () => {
   });
 
   it('makes nothing where the server refuses', async () => {
-    answerWith({ error: 'That is for administrators.' }, false);
+    answerWith({ error: 'Only administrators can do that.' }, false);
 
     await expect(createCollection({ name: 'x' })).resolves.toBeNull();
   });
@@ -140,7 +140,7 @@ describe('fetchCollections', () => {
     fetchMock.mockRejectedValue(new Error('offline'));
 
     await expect(saveCollectionArtwork(SUMMARY.id, new Blob(['x']))).resolves.toBe(
-      'That picture could not be sent.',
+      'Couldn’t upload that picture.',
     );
   });
 

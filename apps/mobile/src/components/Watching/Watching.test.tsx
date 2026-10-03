@@ -662,7 +662,7 @@ describe('Watching', () => {
       jest.advanceTimersByTime(5000);
     });
 
-    await fireEvent.press(drawn.getByLabelText('Show the controls'));
+    await fireEvent.press(drawn.getByLabelText('Show controls'));
 
     expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
   });

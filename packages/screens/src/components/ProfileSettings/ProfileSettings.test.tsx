@@ -77,7 +77,7 @@ describe('ProfileSettings', () => {
   it('offers no way to show Discord status outside the desktop client', () => {
     renderInAnAddress(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={vi.fn()} />);
 
-    expect(screen.queryByText('Show what I am playing on Discord')).not.toBeInTheDocument();
+    expect(screen.queryByText('Show what I’m playing on Discord')).not.toBeInTheDocument();
   });
 
   it('offers it on the desktop client, since only it can reach Discord', () => {
@@ -85,7 +85,7 @@ describe('ProfileSettings', () => {
 
     renderInAnAddress(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={vi.fn()} />);
 
-    expect(screen.getByText('Show what I am playing on Discord')).toBeInTheDocument();
+    expect(screen.getByText('Show what I’m playing on Discord')).toBeInTheDocument();
   });
 
   it('writes preferring the best copy into the draft', async () => {
@@ -93,7 +93,7 @@ describe('ProfileSettings', () => {
 
     renderInAnAddress(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={onDraft} />);
 
-    await userEvent.click(screen.getByRole('switch', { name: 'Prefer the best copy' }));
+    await userEvent.click(screen.getByRole('switch', { name: 'Prefer the best version' }));
 
     expect(onDraft).toHaveBeenCalledWith({ prefersBestCopy: true });
   });

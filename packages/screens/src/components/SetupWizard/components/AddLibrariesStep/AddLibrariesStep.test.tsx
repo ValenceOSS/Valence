@@ -108,7 +108,7 @@ describe('AddLibrariesStep', () => {
 
     render(<Held />);
 
-    expect(screen.getByRole('status', { name: 'Reading the libraries' })).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Loading libraries' })).toBeInTheDocument();
     expect(await screen.findByText('/media/films')).toBeInTheDocument();
     expect(screen.getAllByText('Films')).toHaveLength(2);
     expect(screen.getByText('12 items')).toBeInTheDocument();
@@ -144,7 +144,7 @@ describe('AddLibrariesStep', () => {
     expect(await screen.findByText('Following Series as job-1')).toBeInTheDocument();
     expect(scanLibrary).toHaveBeenCalledWith(SERIES.id);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    expect(screen.getByText(/Reading carries on in the background/)).toBeInTheDocument();
+    expect(screen.getByText(/Scanning continues in the background/)).toBeInTheDocument();
   });
 
   it('lists a library whose reading did not start, without following it', async () => {

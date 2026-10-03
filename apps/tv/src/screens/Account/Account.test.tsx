@@ -93,7 +93,7 @@ describe('Account', () => {
     const drawn = await drawAccount(aCache({ mayRequest: false }));
 
     expect(drawn.getByText('Jo')).toBeTruthy();
-    expect(drawn.getByText('Watching on this Valence')).toBeTruthy();
+    expect(drawn.getByText('Watching on this server')).toBeTruthy();
     expect(drawn.getByText(/Server abc123/)).toBeTruthy();
   });
 

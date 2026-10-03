@@ -185,12 +185,10 @@ describe('ObservabilityPage', () => {
 
     renderPage(<ObservabilityPage {...props} />);
     await user.click(await screen.findByRole('button', { name: 'Time range' }));
-    await user.click(await screen.findByRole('menuitemradio', { name: 'Everything kept' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'All' }));
     await user.click(screen.getByRole('tab', { name: 'Logs' }));
 
-    expect(await screen.findByRole('button', { name: 'Time range' })).toHaveTextContent(
-      'Everything kept',
-    );
+    expect(await screen.findByRole('button', { name: 'Time range' })).toHaveTextContent('All');
     await vi.waitFor(
       () => {
         expect(vi.mocked(fetchLogs).mock.calls.at(-1)?.[0]).toMatchObject({ sinceMs: null });
@@ -200,16 +198,14 @@ describe('ObservabilityPage', () => {
 
     await user.click(screen.getByRole('tab', { name: 'Health' }));
 
-    expect(await screen.findByRole('button', { name: 'Time range' })).toHaveTextContent(
-      'Everything kept',
-    );
+    expect(await screen.findByRole('button', { name: 'Time range' })).toHaveTextContent('All');
   });
 
   it('opens on the view an address asked for', async () => {
     renderPage(<ObservabilityPage {...props} search={{ view: 'health' }} />);
 
     expect(screen.getByRole('tab', { name: 'Health', selected: true })).toBeInTheDocument();
-    await screen.findByText('No job has run in this time.');
+    await screen.findByText('No jobs ran in this time range.');
     expect(fetchJobStats).toHaveBeenCalled();
   });
 
@@ -240,7 +236,7 @@ describe('ObservabilityPage', () => {
 
     expect(screen.getByText('1 running').parentElement).toHaveTextContent('1 running · 3 waiting');
     expect(screen.getByRole('button', { name: /^Pause/ })).toHaveTextContent('2 at a time');
-    expect(screen.getByRole('button', { name: 'How many jobs run at once' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Concurrent jobs' })).toBeInTheDocument();
   });
 
   it('keeps the queue in reach from whichever view is open', async () => {
@@ -257,7 +253,7 @@ describe('ObservabilityPage', () => {
 
     renderPage(<ObservabilityPage {...props} monitor={reading([job()])} />);
 
-    await user.click(screen.getByRole('button', { name: 'How many jobs run at once' }));
+    await user.click(screen.getByRole('button', { name: 'Concurrent jobs' }));
     await user.click(await screen.findByRole('menuitemradio', { name: '4 at a time' }));
 
     expect(setQueueConcurrency).toHaveBeenCalledWith(4);

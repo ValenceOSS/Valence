@@ -123,7 +123,7 @@ describe('RunLibraryJobDialog', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'Reset and rebuild?' })).toBeInTheDocument();
-    expect(screen.getByText(/cannot be undone/)).toBeInTheDocument();
+    expect(screen.getByText(/can’t be undone/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Reset and rebuild on every library' })).toHaveClass(
       'bg-danger',
     );
