@@ -282,6 +282,7 @@ describe('fetchActiveSessions', () => {
         reading: null,
         isGuest: false,
         guestOf: null,
+        fromServer: null,
         accountId: null,
         clientKind: 'browser',
       },

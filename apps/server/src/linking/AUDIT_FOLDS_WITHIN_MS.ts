@@ -1,0 +1,3 @@
+const AUDIT_FOLDS_WITHIN_MS = 60_000;
+
+export { AUDIT_FOLDS_WITHIN_MS };

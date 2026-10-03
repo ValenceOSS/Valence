@@ -331,7 +331,7 @@ const OverviewPanel = ({
         <Region
           title={say('common.libraries')}
           className="sm:col-span-2 xl:col-span-2"
-          action={say('screens.adminArea.overviewPanel.manage')}
+          action={say('common.manage')}
           onAction={() => {
             onOpenPanel('libraries');
           }}

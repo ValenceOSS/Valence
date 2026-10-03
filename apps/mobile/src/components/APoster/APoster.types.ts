@@ -8,6 +8,7 @@ type APosterProps = {
   wide?: number;
   isStill?: boolean;
   detail?: string | null;
+  origin?: { initial: string; colour: string; label: string } | null;
 };
 
 export type { APosterProps };

@@ -48,6 +48,7 @@ import { PreviewMomentPicker } from '@ValenceScreens/components/PreviewMomentPic
 import { OverviewPanel } from './components/OverviewPanel/OverviewPanel';
 import { RolesPanel } from './components/RolesPanel/RolesPanel';
 import { WebhooksPanel } from './components/WebhooksPanel/WebhooksPanel';
+import { LinkedServersPanel } from './components/LinkedServersPanel/LinkedServersPanel';
 import { PluginsPanel } from './components/PluginsPanel/PluginsPanel';
 import { ImportWizard } from '@ValenceScreens/components/ImportWizard/ImportWizard';
 import { SharesPanel } from './components/SharesPanel/SharesPanel';
@@ -1270,6 +1271,10 @@ const AdminArea = ({
 
           <TabPanel value="plugins" travel={travel}>
             <PluginsPanel />
+          </TabPanel>
+
+          <TabPanel value="linking" travel={travel}>
+            <LinkedServersPanel />
           </TabPanel>
 
           <TabPanel value="imports" travel={travel}>

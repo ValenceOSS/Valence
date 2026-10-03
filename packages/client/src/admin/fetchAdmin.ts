@@ -217,6 +217,7 @@ const ActiveSessionSchema = z.object({
   profileName: z.string().nullable(),
   isGuest: z.boolean().default(false),
   guestOf: z.string().nullable().default(null),
+  fromServer: z.string().nullable().default(null),
   deviceLabel: z.string(),
   clientKind: ClientKindSchema.default('browser'),
   connectedAt: z.number(),

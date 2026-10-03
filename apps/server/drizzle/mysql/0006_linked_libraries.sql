@@ -1,0 +1,2 @@
+ALTER TABLE `library` ADD `linkedServerId` varchar(64);--> statement-breakpoint
+ALTER TABLE `library` ADD CONSTRAINT `library_linkedServerId_linked_server_id_fk` FOREIGN KEY (`linkedServerId`) REFERENCES `linked_server`(`id`) ON DELETE cascade ON UPDATE no action;

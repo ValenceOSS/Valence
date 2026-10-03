@@ -67,8 +67,10 @@ const isFor = (request: MediaRequest, title: UnstoodTitle): boolean => {
 
 /**
  * Says where each title stands for whoever is looking: in the library already, with where it is;
- * asked for, with where the request has got to; or there to be asked for. A title known only from
- * Deezer's charts is found by its name, having no MusicBrainz id to be found by.
+ * on a linked server, with which, so nobody asks for what they can already watch — though they may
+ * still want a copy here; asked for, with where the request has got to; or there to be asked for.
+ * A title known only from Deezer's charts is found by its name, having no MusicBrainz id to be
+ * found by.
  *
  * @param titles - The titles.
  * @param lookup - The library, looked into.
@@ -86,19 +88,21 @@ const standTitles = async (
       .map((title) => title.id);
   const namedOf = (kind: UnstoodTitle['kind']) =>
     titles.filter((title) => title.kind === kind && title.id.startsWith(DEEZER_ID_PREFIX));
-  const [films, series, artists, albums, artistsNamed, albumsNamed, books] = await Promise.all([
-    lookup.films(idsOf('film', false)),
-    lookup.series(idsOf('series', false)),
-    lookup.artists(idsOf('artist', false)),
-    lookup.albums(idsOf('album', false)),
-    lookup.artistsNamed(namedOf('artist').map((title) => nameKey(title.title))),
-    lookup.albumsNamed(namedOf('album').map((title) => albumKey(title.title, title.subtitle))),
-    lookup.booksNamed(
-      titles
-        .filter((title) => title.kind === 'book')
-        .map((title) => ({ key: bookKey(title.title, title.subtitle), title: title.title })),
-    ),
-  ]);
+  const [films, series, artists, albums, artistsNamed, albumsNamed, books, elsewhere] =
+    await Promise.all([
+      lookup.films(idsOf('film', false)),
+      lookup.series(idsOf('series', false)),
+      lookup.artists(idsOf('artist', false)),
+      lookup.albums(idsOf('album', false)),
+      lookup.artistsNamed(namedOf('artist').map((title) => nameKey(title.title))),
+      lookup.albumsNamed(namedOf('album').map((title) => albumKey(title.title, title.subtitle))),
+      lookup.booksNamed(
+        titles
+          .filter((title) => title.kind === 'book')
+          .map((title) => ({ key: bookKey(title.title, title.subtitle), title: title.title })),
+      ),
+      lookup.elsewhere([...idsOf('film', false), ...idsOf('series', false)]),
+    ]);
 
   const inLibrary = (title: UnstoodTitle): string | undefined => {
     const isNamed = title.id.startsWith(DEEZER_ID_PREFIX);
@@ -131,6 +135,22 @@ const standTitles = async (
           mediaId,
           requestId: request?.id ?? null,
           requestState: request?.state ?? null,
+        },
+      };
+    }
+
+    const onAnother =
+      title.kind === 'film' || title.kind === 'series' ? elsewhere.get(title.id) : undefined;
+
+    if (onAnother !== undefined) {
+      return {
+        ...title,
+        standing: {
+          status: 'linked',
+          mediaId: onAnother.mediaId,
+          requestId: request?.id ?? null,
+          requestState: request?.state ?? null,
+          fromServer: onAnother.fromServer,
         },
       };
     }

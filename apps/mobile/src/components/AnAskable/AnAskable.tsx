@@ -16,6 +16,8 @@ import { SegmentedRow } from '@ValenceMobile/components/SegmentedRow/SegmentedRo
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { TheSeasons } from '@ValenceMobile/components/AnAskable/components/TheSeasons/TheSeasons';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { askLinkedServer } from '@ValenceClient/linking/askLinkedServer';
+import { linkingQueries } from '@ValenceClient/query/linkingQueries';
 import type { AnAskableProps } from './AnAskable.types';
 import { say } from '@ValenceI18n/say';
 
@@ -59,6 +61,7 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
   const [quality, setQuality] = useState<string | null>(null);
   const [refusal, setRefusal] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const faces = useQuery(linkingQueries.faces());
   const title = asking.data;
   const heldAs =
     title !== undefined && title.standing.status === 'library' ? title.standing.mediaId : null;
@@ -161,7 +164,22 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
         </Words>
       )}
 
-      {title.standing.status === 'askable' ? (
+      {title.standing.status === 'linked' && title.standing.mediaId !== null ? (
+        <Button
+          onPress={() => {
+            if (title.standing.mediaId !== null) {
+              onOpen(kind, title.standing.mediaId);
+            }
+          }}
+        >
+          {say('common.watchOnName', {
+            name: title.standing.fromServer ?? say('common.linkedServers'),
+          })}
+        </Button>
+      ) : null}
+
+      {title.standing.status === 'askable' ||
+      (title.standing.status === 'linked' && title.standing.requestId === null) ? (
         <>
           {kind === 'series' ? (
             <TheSeasons tmdbId={Number(id)} seasons={seasons} onChange={setSeasons} />
@@ -179,12 +197,39 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
           <Button
             isBusy={isSending}
             isDisabled={needsQuality || (seasons !== null && seasons.length === 0)}
+            {...(title.standing.status === 'linked' ? { tone: 'quiet' as const } : {})}
             onPress={() => {
               void send();
             }}
           >
-            {say('common.request')}
+            {title.standing.status === 'linked' ? say('common.requestHere') : say('common.request')}
           </Button>
+
+          {(faces.data ?? [])
+            .filter((server) => server.takesRequests && server.isReachable)
+            .map((server) => (
+              <Button
+                key={server.id}
+                tone="quiet"
+                isBusy={isSending}
+                onPress={() => {
+                  setIsSending(true);
+                  void askLinkedServer(server.id, {
+                    kind,
+                    tmdbId: Number(id),
+                    ...(kind === 'series' ? { seasons } : {}),
+                  })
+                    .then((sent) => {
+                      setRefusal(sent.refusal?.message ?? null);
+                    })
+                    .finally(() => {
+                      setIsSending(false);
+                    });
+                }}
+              >
+                {say('common.askName', { name: server.name })}
+              </Button>
+            ))}
         </>
       ) : null}
 

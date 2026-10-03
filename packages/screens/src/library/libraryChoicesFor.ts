@@ -1,5 +1,7 @@
+import { libraryOptionsFor } from '@ValenceClient/library/libraryOptionsFor';
 import type { NavBarChoices } from '@ValenceUI/NavBar.types';
 import type { Library, LibraryKind } from '@ValenceContracts/schemas/Library';
+import type { LinkedServerFace } from '@ValenceContracts/schemas/LinkSharing';
 import { say } from '@ValenceI18n/say';
 
 const EVERY = 'all';
@@ -32,9 +34,12 @@ const PLACES = [
 
 /**
  * Works out, for films, programmes and books, the choice between the libraries that hold them —
- * offered only where there is more than one library to choose between.
+ * offered only where there is more than one library to choose between. Where some of them come from
+ * linked servers, the choice also says where: everything, only this server's own, or only one linked
+ * server's; and each linked library is named with the server it comes from, after this server's own.
  *
  * @param libraries - Every library there is.
+ * @param servers - The servers this one is linked with.
  * @param selectedId - The library the address names, or null for all of them.
  * @param onSelect - Told which library was chosen, or null for all of them, and the place it was
  *   chosen for — which is where choosing one takes you, from anywhere.
@@ -42,6 +47,7 @@ const PLACES = [
  */
 const libraryChoicesFor = (
   libraries: readonly Library[],
+  servers: readonly LinkedServerFace[],
   selectedId: string | null,
   onSelect: (libraryId: string | null, place: 'films' | 'shows' | 'read') => void,
 ): Partial<Record<'films' | 'shows' | 'read', NavBarChoices>> =>
@@ -53,18 +59,17 @@ const libraryChoicesFor = (
         return [];
       }
 
-      const chosen = held.find((library) => library.id === selectedId);
+      const options = libraryOptionsFor(held, servers, EVERY, everyLabel);
 
       return [
         [
           place,
           {
             label,
-            options: [
-              { id: EVERY, label: everyLabel },
-              ...held.map((library) => ({ id: library.id, label: library.name })),
-            ],
-            selectedId: chosen?.id ?? EVERY,
+            options,
+            selectedId: options.some((option) => option.id === selectedId)
+              ? (selectedId ?? EVERY)
+              : EVERY,
             onSelect: (id: string) => {
               onSelect(id === EVERY ? null : id, place);
             },

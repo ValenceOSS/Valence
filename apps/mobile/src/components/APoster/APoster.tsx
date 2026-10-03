@@ -1,4 +1,6 @@
 import { Check } from '@keyline-icons/react-native';
+import { inkFor } from '@ValenceClient/library/inkFor';
+import { LETTER_INKS } from '@ValenceNative/library/LETTER_INKS';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
@@ -41,6 +43,17 @@ const styles = StyleSheet.create({
     top: 8,
     width: 24,
   },
+  origin: {
+    alignItems: 'center',
+    borderRadius: 11,
+    bottom: 8,
+    height: 22,
+    justifyContent: 'center',
+    left: 8,
+    position: 'absolute',
+    width: 22,
+  },
+  originWords: { fontSize: 11, fontWeight: '700' },
   poster: { height: '100%', width: '100%' },
   standIn: { alignItems: 'center', justifyContent: 'center', padding: 8 },
   tile: { borderRadius: 12, overflow: 'hidden' },
@@ -67,6 +80,8 @@ const styles = StyleSheet.create({
  * @param wide - How wide to draw it, where it fills a cell rather than sitting on a shelf.
  * @param isStill - Whether it lies flat on a still from it rather than standing on its poster.
  * @param detail - A line beneath its name, such as which episode it is.
+ * @param origin - The other server it comes from, marked by that server's initial in its colour in
+ *   the bottom corner, where it does.
  */
 const APoster = ({
   title,
@@ -78,6 +93,7 @@ const APoster = ({
   isStill = false,
   wide = isStill ? STILL_WIDTH : POSTER_WIDTH,
   detail = null,
+  origin = null,
 }: APosterProps) => {
   const [isMissing, setIsMissing] = useState(false);
   const colours = useTheColours();
@@ -125,6 +141,22 @@ const APoster = ({
             <Icon of={Check} size={14} colour="#ffffff" />
           </View>
         ) : null}
+
+        {origin === null ? null : (
+          <View
+            style={[
+              styles.origin,
+              { backgroundColor: origin.colour, bottom: watched > 0 ? 14 : 8 },
+            ]}
+            accessible
+            accessibilityRole="image"
+            accessibilityLabel={origin.label}
+          >
+            <Text style={[styles.originWords, { color: LETTER_INKS[inkFor(origin.colour)] }]}>
+              {origin.initial}
+            </Text>
+          </View>
+        )}
 
         {watched > 0 && watched < 1 ? (
           <View style={styles.howFar}>

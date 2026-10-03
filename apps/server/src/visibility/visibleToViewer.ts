@@ -3,6 +3,7 @@ import type { SQL } from 'drizzle-orm';
 import { hiddenByViewer } from '@ValenceServer/visibility/hiddenByViewer';
 import { reachableByViewer } from '@ValenceServer/visibility/reachableByViewer';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
+import { fromLinkedServersOnly } from '@ValenceServer/visibility/fromLinkedServersOnly';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 /**
@@ -15,7 +16,8 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
  * Enforcement and preference are combined here and nowhere else, which is what keeps them from being
  * confused for one another everywhere else. The gate on reaching a single item by its address asks
  * only the enforcement half, so a hidden item still answers when somebody follows a link to it,
- * while a forbidden one does not.
+ * while a forbidden one does not. What comes from a server this one is no longer linked with is shown
+ * to nobody but the server itself, until they link again.
  *
  * @param db - The database the subqueries are built against.
  * @param viewer - Who is asking.
@@ -24,7 +26,11 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
 const visibleToViewer = (db: AnyValenceDatabase, viewer: Viewer): SQL | undefined => {
   const hiding = hiddenByViewer(db, viewer);
 
-  return and(reachableByViewer(db, viewer), hiding === undefined ? undefined : not(hiding));
+  return and(
+    viewer.kind === 'server' ? undefined : fromLinkedServersOnly(db, 'item'),
+    reachableByViewer(db, viewer),
+    hiding === undefined ? undefined : not(hiding),
+  );
 };
 
 export { visibleToViewer };

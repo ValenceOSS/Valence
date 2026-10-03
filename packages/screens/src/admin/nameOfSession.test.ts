@@ -21,4 +21,16 @@ describe('nameOfSession', () => {
       'Unknown viewer',
     );
   });
+
+  it('names somebody watching from a linked server with that server', () => {
+    expect(
+      nameOfSession({ isGuest: false, guestOf: null, profileName: 'Sam', fromServer: 'Films' }),
+    ).toBe('Sam from Films');
+  });
+
+  it('calls somebody from a linked server that keeps names to itself somebody from it', () => {
+    expect(
+      nameOfSession({ isGuest: false, guestOf: null, profileName: null, fromServer: 'Films' }),
+    ).toBe('Someone from Films');
+  });
 });

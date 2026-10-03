@@ -180,6 +180,7 @@ describe('profiles over HTTP', () => {
         name: profile?.name ?? '',
         colour: '#3a8ee8',
         showsWhatIamWatching: true,
+        prefersBestCopy: false,
       }),
     });
 
@@ -510,6 +511,7 @@ describe('giving a profile an account of its own', () => {
       avatar: { kind: 'initial', font: 'gilroy' },
       askStillWatchingAfter: 4,
       showsWhatIamWatching: false,
+      prefersBestCopy: false,
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
     };

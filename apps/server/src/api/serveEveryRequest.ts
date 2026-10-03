@@ -1,4 +1,5 @@
 import { allowCrossOriginClients } from '@ValenceServer/auth/allowCrossOriginClients';
+import { FEDERATION_PATH } from '@ValenceServer/linking/FEDERATION_PATH';
 import { createShareGate } from '@ValenceServer/sharing/createShareGate';
 import { createSessionGate } from '@ValenceServer/auth/createSessionGate';
 import { createBetterAuthAdminBlock } from '@ValenceServer/auth/createBetterAuthAdminBlock';
@@ -23,6 +24,9 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
     shares,
     shareSessions,
     refuseWhatIsOutOfReach,
+    peerRequests,
+    linkPeople,
+    linkPersonOf,
   } = context;
 
   app.use('*', async (context, next) => {
@@ -36,6 +40,7 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
     '/api/*',
     allowCrossOriginClients({
       trustedOrigins: trustedOrigins ?? (async () => (await settings.read()).trustedOrigins),
+      opensToEveryOrigin: (path) => path.startsWith(`${FEDERATION_PATH}/direct/`),
     }),
   );
 
@@ -44,6 +49,7 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
     createSessionGate({
       auth,
       showsFaces: async () => (await settings.read()).showsProfilesBeforeSignIn,
+      isPassedThrough: (headers) => peerRequests.has(headers),
       ...(shares === undefined || shareSessions === undefined
         ? {}
         : {
@@ -64,6 +70,10 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
   );
 
   app.use('/api/*', refuseWhatIsOutOfReach);
+
+  app.use('/api/*', async (context, next) =>
+    linkPeople.runAs(() => linkPersonOf(context.req.raw.headers), next),
+  );
 
   app.all('/api/auth/admin/*', createBetterAuthAdminBlock());
 

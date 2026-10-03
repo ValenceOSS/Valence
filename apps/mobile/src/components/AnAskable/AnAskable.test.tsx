@@ -5,6 +5,9 @@ import { askForMedia, removeMediaRequest } from '@ValenceClient/requests/fetchMe
 import { fetchSession } from '@ValenceClient/session/auth';
 import { aCatalogueTitleDetail } from '@ValenceClient/testing/aCatalogueTitleDetail';
 import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
+import { askLinkedServer } from '@ValenceClient/linking/askLinkedServer';
+import { aLinkedServerFace } from '@ValenceClient/testing/aLinkedServerFace';
+import type { LinkedServerFace } from '@ValenceContracts/schemas/LinkSharing';
 import { AnAskable } from './AnAskable';
 import type { ReactNode } from 'react';
 import type {
@@ -19,6 +22,10 @@ jest.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
   ...jest.requireActual<object>('@ValenceClient/requests/fetchMediaRequests'),
   askForMedia: jest.fn(),
   removeMediaRequest: jest.fn(),
+}));
+
+jest.mock('@ValenceClient/linking/askLinkedServer', () => ({
+  askLinkedServer: jest.fn(),
 }));
 
 jest.mock('@ValenceClient/session/auth', () => ({
@@ -49,10 +56,12 @@ const answering = ({
   standing = { status: 'askable', mediaId: null, requestId: null, requestState: null },
   requests = [],
   offered = { choices: [], forcedId: null },
+  faces = [],
 }: {
   standing?: CatalogueStanding;
   requests?: MediaRequest[];
   offered?: ProfilesOnOffer;
+  faces?: LinkedServerFace[];
 }) => {
   globalThis.fetch = jest.fn((input: RequestInfo | URL) =>
     Promise.resolve(
@@ -62,7 +71,9 @@ const answering = ({
           ? Response.json(offered)
           : theAddressOf(input).endsWith('/api/requests/media')
             ? Response.json(requests)
-            : Response.json([]),
+            : theAddressOf(input).endsWith('/api/linked-servers/faces')
+              ? Response.json({ servers: faces })
+              : Response.json([]),
     ),
   );
 };
@@ -73,6 +84,10 @@ const drawIt = async (onOpen = jest.fn()) =>
 beforeEach(() => {
   jest.mocked(askForMedia).mockReset().mockResolvedValue({ value: null, refusal: null });
   jest.mocked(removeMediaRequest).mockReset().mockResolvedValue(null);
+  jest
+    .mocked(askLinkedServer)
+    .mockReset()
+    .mockResolvedValue({ value: { title: 'Dune', isNew: true }, refusal: null });
   jest.mocked(fetchSession).mockReset().mockResolvedValue({
     id: 'someone',
     name: 'Sam',
@@ -198,5 +213,54 @@ describe('AnAskable', () => {
     await drawn.findByText('Requested');
 
     expect(drawn.queryByRole('button', { name: 'Cancel request' })).toBeNull();
+  });
+
+  it('offers to watch a title a linked server has, or to request it here anyway', async () => {
+    answering({
+      standing: {
+        status: 'linked',
+        mediaId: 'theirs',
+        requestId: null,
+        requestState: null,
+        fromServer: 'Films',
+      },
+    });
+    const onOpen = jest.fn();
+
+    const drawn = await drawIt(onOpen);
+
+    await userEvent.press(await drawn.findByRole('button', { name: 'Watch on Films' }));
+
+    expect(onOpen).toHaveBeenCalledWith('film', 'theirs');
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Request here' }));
+
+    expect(askForMedia).toHaveBeenCalledWith({ kind: 'film', tmdbId: 438631 });
+  });
+
+  it('asks a linked server that takes requests, and only one that can be reached', async () => {
+    answering({
+      faces: [
+        aLinkedServerFace({ takesRequests: true }),
+        aLinkedServerFace({
+          id: '00000000-0000-4000-8000-000000000002',
+          name: 'Away',
+          takesRequests: true,
+          isReachable: false,
+        }),
+      ],
+    });
+
+    const drawn = await drawIt();
+
+    await userEvent.press(await drawn.findByRole('button', { name: 'Ask Films' }));
+
+    await waitFor(() => {
+      expect(askLinkedServer).toHaveBeenCalledWith(aLinkedServerFace().id, {
+        kind: 'film',
+        tmdbId: 438631,
+      });
+    });
+    expect(drawn.queryByRole('button', { name: 'Ask Away' })).toBeNull();
   });
 });

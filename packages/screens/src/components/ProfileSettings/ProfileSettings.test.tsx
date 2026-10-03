@@ -15,6 +15,7 @@ const PROFILE: ViewerProfile = {
   avatar: { kind: 'initial', font: 'gilroy' },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
+  prefersBestCopy: false,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
@@ -25,6 +26,7 @@ const DRAFT: ProfileDraft = {
   avatar: PROFILE.avatar,
   askStillWatchingAfter: PROFILE.askStillWatchingAfter,
   showsWhatIamWatching: PROFILE.showsWhatIamWatching,
+  prefersBestCopy: false,
   photo: null,
 };
 
@@ -84,5 +86,15 @@ describe('ProfileSettings', () => {
     renderInAnAddress(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={vi.fn()} />);
 
     expect(screen.getByText('Show what I am playing on Discord')).toBeInTheDocument();
+  });
+
+  it('writes preferring the best copy into the draft', async () => {
+    const onDraft = vi.fn();
+
+    renderInAnAddress(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={onDraft} />);
+
+    await userEvent.click(screen.getByRole('switch', { name: 'Prefer the best copy' }));
+
+    expect(onDraft).toHaveBeenCalledWith({ prefersBestCopy: true });
   });
 });

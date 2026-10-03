@@ -1,0 +1,1 @@
+ALTER TABLE `viewer_profile` ADD `prefersBestCopy` boolean DEFAULT false NOT NULL;

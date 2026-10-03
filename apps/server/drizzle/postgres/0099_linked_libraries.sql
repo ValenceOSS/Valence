@@ -1,0 +1,2 @@
+ALTER TABLE "library" ADD COLUMN "linkedServerId" text;--> statement-breakpoint
+ALTER TABLE "library" ADD CONSTRAINT "library_linkedServerId_linked_server_id_fk" FOREIGN KEY ("linkedServerId") REFERENCES "public"."linked_server"("id") ON DELETE cascade ON UPDATE no action;

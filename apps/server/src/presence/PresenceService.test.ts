@@ -796,6 +796,7 @@ describe('createPresenceService, telling somebody who is here', () => {
       profileName: 'Dan',
       guestOf: null,
       viaShare: null,
+      fromServer: null,
       deviceLabel: 'Chrome on Mac',
       clientKind: null,
       address: '203.0.113.7',

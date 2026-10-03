@@ -1,4 +1,5 @@
 import { render, userEvent } from '@testing-library/react-native';
+import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { MediaSummarySchema } from '@ValenceContracts/schemas/Library';
@@ -30,6 +31,7 @@ describe('ACard', () => {
     const onLookAt = jest.fn();
     const drawn = await render(
       <ACard media={anEpisode} asProgramme={false} onLookAt={onLookAt} onLookAtShow={jest.fn()} />,
+      { wrapper: CacheScope },
     );
 
     await userEvent.press(drawn.getByRole('button', { name: 'Good News About Hell' }));
@@ -41,6 +43,7 @@ describe('ACard', () => {
     const onLookAtShow = jest.fn();
     const drawn = await render(
       <ACard media={anEpisode} asProgramme onLookAt={jest.fn()} onLookAtShow={onLookAtShow} />,
+      { wrapper: CacheScope },
     );
 
     await userEvent.press(drawn.getByRole('button', { name: 'Severance' }));
@@ -57,6 +60,7 @@ describe('ACard', () => {
         onLookAt={jest.fn()}
         onLookAtShow={jest.fn()}
       />,
+      { wrapper: CacheScope },
     );
 
     expect(drawn.getByLabelText('3 episodes left')).toBeTruthy();
@@ -71,6 +75,7 @@ describe('ACard', () => {
         onLookAt={jest.fn()}
         onLookAtShow={jest.fn()}
       />,
+      { wrapper: CacheScope },
     );
 
     expect(drawn.queryByLabelText('3 episodes left')).toBeNull();
@@ -86,6 +91,7 @@ describe('ACard', () => {
         onLookAt={onLookAt}
         onLookAtShow={jest.fn()}
       />,
+      { wrapper: CacheScope },
     );
 
     expect(drawn.getAllByText('Severance').length).toBeGreaterThan(0);
@@ -109,6 +115,7 @@ describe('ACard', () => {
         onLookAt={onLookAt}
         onLookAtShow={jest.fn()}
       />,
+      { wrapper: CacheScope },
     );
 
     expect(drawn.getByText('New episode')).toBeTruthy();

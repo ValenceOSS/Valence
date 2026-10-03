@@ -2,6 +2,7 @@ import { z } from '@hono/zod-openapi';
 import { checkServerVersion } from '@ValenceDatabase/checkServerVersion';
 import { SEERR_DEFAULTS } from '@ValenceContracts/schemas/SeerrLink';
 import { EMAIL_DEFAULTS } from '@ValenceContracts/schemas/EmailSettings';
+import { LINK_SETTINGS_DEFAULTS } from '@ValenceServer/linking/LinkSettings';
 import { databaseConnectionOf } from '@ValenceDatabase/databaseConnectionOf';
 import { checkDialect } from '@ValenceDatabase/checkDialect';
 import { followUpReading } from '@ValenceServer/library/followUpReading';
@@ -96,10 +97,38 @@ import {
   musicArtist,
   musicTrack,
   apikey,
+  series,
 } from '#dialect/Schema';
 import { readEnv } from '@ValenceServer/env/Env';
 import { readImportedAccounts } from '@ValenceServer/arrImport/readImportedAccounts';
 import { createDatabaseSettingsStore } from '@ValenceServer/settings/createDatabaseSettingsStore';
+import { createDatabaseLinkStore } from '@ValenceServer/linking/createDatabaseLinkStore';
+import { createDatabaseLinkSharingStore } from '@ValenceServer/linking/createDatabaseLinkSharingStore';
+import { createPeerClient } from '@ValenceServer/linking/createPeerClient';
+import { createLinkService } from '@ValenceServer/linking/createLinkService';
+import { linkSettingsOf } from '@ValenceServer/linking/linkSettingsOf';
+import { createCatalogueSync } from '@ValenceServer/linking/catalogue/createCatalogueSync';
+import { readLinkedAddress } from '@ValenceServer/linking/catalogue/readLinkedAddress';
+import { createPersonScope } from '@ValenceServer/linking/content/createPersonScope';
+import { createLinkedAsker } from '@ValenceServer/linking/content/createLinkedAsker';
+import { createLinkedPlayback } from '@ValenceServer/linking/content/createLinkedPlayback';
+import { createLinkedTitleReader } from '@ValenceServer/linking/content/createLinkedTitleReader';
+import { readLinkedBytes } from '@ValenceServer/linking/content/readLinkedBytes';
+import { createLinkedBooks } from '@ValenceServer/linking/content/createLinkedBooks';
+import { createPartyRelayHub } from '@ValenceServer/linking/parties/createPartyRelayHub';
+import { createPartyRelayClient } from '@ValenceServer/linking/parties/createPartyRelayClient';
+import { PEER_MEMBER } from '@ValenceServer/linking/parties/PEER_MEMBER';
+import { LINKED_PARTY } from '@ValenceServer/linking/parties/LINKED_PARTY';
+import { localIdOf } from '@ValenceServer/linking/catalogue/localIdOf';
+import type { PartyBinding } from '@ValenceServer/parties/handlePartyMessage';
+import type { AskedAlong } from '@ValenceContracts/schemas/LinkSharing';
+import { createLinkedSubtitles } from '@ValenceServer/linking/content/createLinkedSubtitles';
+import { createLinkedSegments } from '@ValenceServer/linking/content/createLinkedSegments';
+import { createLinkedDownloads } from '@ValenceServer/linking/content/createLinkedDownloads';
+import { linkedRenditions } from '@ValenceServer/linking/content/linkedRenditions';
+import { streamLinkedTrack } from '@ValenceServer/linking/content/streamLinkedTrack';
+import { createPeerSubjectReader } from '@ValenceServer/linking/createPeerSubjectReader';
+import { createCatalogueReader } from '@ValenceServer/linking/catalogue/createCatalogueReader';
 import { createEmailService } from '@ValenceServer/email/createEmailService';
 import { createDatabaseEmailSendStore } from '@ValenceServer/email/createDatabaseEmailSendStore';
 import { emailPasswordReset } from '@ValenceServer/email/emailPasswordReset';
@@ -220,6 +249,7 @@ import {
   PRUNE_HISTORY_JOB,
   CHECK_CATALOGUE_CONNECTIVITY_JOB,
   CHECK_TRANSCODER_JOB,
+  SYNC_LINKED_CATALOGUES_JOB,
   CHECK_REQUESTS_JOB,
   CHECK_DISK_SPACE_JOB,
   SEND_MEDIA_DIGEST_JOB,
@@ -405,6 +435,7 @@ const settings = createDatabaseSettingsStore({
     preTranscoding: PRE_TRANSCODING_DEFAULTS,
     seerr: SEERR_DEFAULTS,
     email: EMAIL_DEFAULTS,
+    linking: LINK_SETTINGS_DEFAULTS,
   },
 });
 
@@ -1109,11 +1140,22 @@ const musicServices: MusicServices = {
       },
     },
   }),
-  stream: (file, rendition, range) =>
-    rendition.kind === 'original'
+  stream: (file, rendition, range) => {
+    const linked = readLinkedAddress(file.path);
+
+    if (linked !== null) {
+      return streamLinkedTrack(linkedAsker, linked, rendition, range);
+    }
+
+    return rendition.kind === 'original'
       ? transcoder.readFile(file.path, range)
-      : transcoder.readAudioRendition(file.path, rendition.kbps, range),
+      : transcoder.readAudioRendition(file.path, rendition.kbps, range);
+  },
   readImage: async (path) => {
+    if (readLinkedAddress(path) !== null) {
+      return readLinkedBytes(linkedAsker, path);
+    }
+
     const bytes = await readFile(path).catch(() => null);
 
     return bytes === null ? null : new Uint8Array(bytes);
@@ -1211,6 +1253,7 @@ const scheduleAcrossLibraries =
     await Promise.all(
       libraries
         .filter((library) => kinds === undefined || kinds.includes(library.kind))
+        .filter((library) => readLinkedAddress(library.path) === null)
         .map((library) => run(library.id)),
     );
   };
@@ -1222,6 +1265,68 @@ const librariesAcrossProcesses = createDatabaseWorkLock({
 });
 
 const webhookSubscriptions = createDatabaseWebhookStore(db);
+
+const linkStore = createDatabaseLinkStore(db);
+
+const linkPeers = createPeerClient();
+
+const linkService = createLinkService({
+  store: linkStore,
+  settings: linkSettingsOf(settings),
+  address: env.BETTER_AUTH_URL,
+  defaultName: say('common.valence'),
+  peers: linkPeers,
+});
+
+const linkSharingStore = createDatabaseLinkSharingStore(db);
+
+const linkPeople = createPersonScope();
+
+const linkedAsker = createLinkedAsker({
+  linking: linkService,
+  sharing: linkSharingStore,
+  peers: linkPeers,
+  people: linkPeople,
+});
+
+const linkedTitleOf = createLinkedTitleReader(db);
+
+const catalogueSync = createCatalogueSync({
+  db,
+  linking: linkService,
+  links: linkStore,
+  peers: linkPeers,
+  warn: (message) => {
+    log.warn('server', message);
+  },
+});
+
+const parties = createPartyRegistry(() => randomUUID());
+
+const partyRelay = createPartyRelayHub();
+
+const partyBinding: PartyBinding = {
+  registry: parties,
+  tell: (connectionIds, payload) => {
+    partyRelay.tell(connectionIds.filter(partyRelay.isPeer), payload);
+    realtime.publish('party', payload, {
+      kind: 'connections',
+      connectionIds: connectionIds.filter((id) => !partyRelay.isPeer(id)),
+    });
+  },
+  ask: ({ party, byName, profileId }) => {
+    void askSomebodyToTheParty(party, byName, profileId);
+  },
+};
+
+const partyRelayClient = createPartyRelayClient({
+  asker: linkedAsker,
+  people: linkPeople,
+  linkedTitleOf,
+  warn: (message) => {
+    log.warn('server', message);
+  },
+});
 
 let openDeliveries: ((subscriptionId: string, payload: string) => Promise<void>) | null = null;
 
@@ -1523,6 +1628,16 @@ const jobs = createJobQueue({
         }
 
         const { libraryId, force, runId, runOf } = parsed.data;
+        const linkedFrom = (await libraryService.list(asTheServer)).find(
+          (entry) => entry.id === libraryId,
+        );
+        const linked = linkedFrom === undefined ? null : readLinkedAddress(linkedFrom.path);
+
+        if (linked !== null) {
+          await catalogueSync.syncServer(linked.serverId);
+
+          return;
+        }
 
         await runLibraryWork(SCAN_LIBRARY_JOB, libraryId, payload, async () => {
           const libraries = await libraryService.list(asTheServer);
@@ -2059,6 +2174,19 @@ const jobs = createJobQueue({
         log.info('catalogue', `catalogue connectivity: ${reachable ? 'reachable' : 'unreachable'}`);
 
         catalogueWatch.record(reachable);
+      },
+      [SYNC_LINKED_CATALOGUES_JOB]: async (jobId) => {
+        jobs.reportProgress(jobId, saying('server.jobs.phase.checking'), 0, 1);
+
+        const outcomes = await catalogueSync.syncAll();
+
+        await tellOfLinkedArrivals();
+
+        jobs.reportProgress(jobId, saying('server.jobs.phase.checking'), 1, 1);
+        log.info(
+          'jobs',
+          `linking: read ${outcomes.reduce((sum, one) => sum + one.kept, 0).toString()} shared titles from ${outcomes.length.toString()} linked servers`,
+        );
       },
       [CHECK_TRANSCODER_JOB]: async (jobId) => {
         jobs.reportProgress(jobId, saying('server.jobs.phase.checking'), 0, 1);
@@ -2676,6 +2804,78 @@ const matchArrivedRequests = async (): Promise<void> => {
   }
 };
 
+const toldElsewhere = new Set<string>();
+
+/**
+ * Tells whoever asked for a film or a series that a linked server now has it, so they can watch it
+ * from there — once for each request — leaving the request standing, since this server's own queue
+ * answers to this server's admin. Where that admin chose to, the request is dropped instead, saying
+ * which server has it.
+ */
+const tellOfLinkedArrivals = async (): Promise<void> => {
+  if (requestsClient === null) {
+    return;
+  }
+
+  const listed = await requestsClient.listRequests();
+
+  if (listed.kind !== 'answered') {
+    return;
+  }
+
+  const waiting = listed.value.filter(
+    (request) =>
+      (request.kind === 'film' || request.kind === 'series') &&
+      request.tmdbId !== null &&
+      request.items.some((item) => item.state !== 'available'),
+  );
+  const elsewhere = await arrivalLookup.elsewhere(
+    waiting.flatMap((request) => (request.tmdbId === null ? [] : [request.tmdbId.toString()])),
+  );
+  const { dropsRequestsElsewhere } = await linkService.identity();
+
+  for (const request of waiting) {
+    const found = request.tmdbId === null ? undefined : elsewhere.get(request.tmdbId.toString());
+    const key = `${request.id}\n${found?.fromServer ?? ''}`;
+
+    if (found === undefined || toldElsewhere.has(key)) {
+      continue;
+    }
+
+    toldElsewhere.add(key);
+
+    if (dropsRequestsElsewhere) {
+      await requestsClient.refuseRequest(
+        request.id,
+        say('server.main.nameHasItAlready', { name: found.fromServer }),
+      );
+    }
+
+    await notifyHousehold({
+      store: notifications,
+      event: 'requests.available',
+      title: saying('server.main.titleIsOnName', { title: request.title, name: found.fromServer }),
+      body: saying('server.main.youAskedForTitleNameHasIt', {
+        title: request.title,
+        name: found.fromServer,
+      }),
+      link: LINKS_TO_ARRIVALS[request.kind](found.mediaId),
+      vapid: await readPushKeys(),
+      only: [request.requestedBy.id],
+      onProblem: (reason) => {
+        log.error('requests', `telling ${request.requestedBy.name}: ${reason}`);
+      },
+      announce: (userIds) => {
+        realtime.publish(
+          'notifications',
+          { event: 'requests.available' },
+          { kind: 'accounts', accountIds: [...userIds] },
+        );
+      },
+    });
+  }
+};
+
 /**
  * Tells whoever asked for something that it is ready — in the app, and by push where they chose —
  * and anything subscribed.
@@ -2788,6 +2988,10 @@ const segmentProviders = [
 
 const images = createImageCache({
   directory: env.IMAGE_CACHE_DIR,
+  fetchImpl: async (url) =>
+    readLinkedAddress(url) === null
+      ? fetch(url)
+      : ((await linkedAsker.askAt(url)) ?? new Response(null, { status: 502 })),
   onProblem: (url, reason) => {
     log.warn('scanner', `artwork ${url}: ${reason.message}`);
 
@@ -2933,7 +3137,7 @@ const downloadService = createDownloadService({
     },
     keepingProfile,
   },
-  transcoder,
+  transcoder: linkedRenditions(transcoder, linkedAsker),
   capabilities: async () => transcoder.capabilities(),
   forcedAccel: async () => (await settings.read()).hardwareAccel,
 });
@@ -3268,19 +3472,90 @@ const app = createApp({
   countUsers,
   promoteToAdmin,
   library: libraryService,
-  playback: playbackService,
+  playback: createLinkedPlayback(
+    playbackService,
+    linkedTitleOf,
+    linkedAsker,
+    (deviceId, serverId, asks) => {
+      void linkSharingStore.readSharing(serverId).then((shared) => {
+        if (shared === null) {
+          return;
+        }
+
+        for (const ask of asks) {
+          if (ask.kind === 'stopped') {
+            presence.stop(deviceId, ask.reason);
+          } else if (shared.takesTheirControls && ask.kind === 'paused') {
+            presence.pause(deviceId, ask.reason);
+          } else if (shared.takesTheirControls && ask.kind === 'resumed') {
+            presence.resume(deviceId);
+          } else if (shared.takesTheirControls && ask.kind === 'message') {
+            presence.message(deviceId, ask.text);
+          }
+        }
+      });
+    },
+    async (serverId) => {
+      const shared = await linkSharingStore.readSharing(serverId);
+
+      return shared?.playsDirect === true
+        ? ((await linkStore.readServer(serverId))?.address ?? null)
+        : null;
+    },
+  ),
   maintenance,
   schedules,
-  subtitles: subtitleService,
-  segments: segmentService,
+  subtitles: createLinkedSubtitles(subtitleService, linkedTitleOf, linkedAsker),
+  segments: createLinkedSegments(segmentService, linkedTitleOf, linkedAsker),
   progress: createDatabaseWatchProgressService(db),
   history: historyService,
   webhooks: webhookSubscriptions,
+  linking: {
+    service: linkService,
+    store: linkStore,
+    sharing: linkSharingStore,
+    people: linkPeople,
+    address: env.BETTER_AUTH_URL,
+    peers: linkPeers,
+    syncServer: async (id) => {
+      const synced = await catalogueSync.syncServer(id);
+
+      await tellOfLinkedArrivals();
+
+      return synced;
+    },
+    isReachable: (id) => catalogueSync.isReachable(id),
+    takesRequests: (id) => catalogueSync.takesRequests(id),
+    ask: (serverId, route, asking) => linkedAsker.ask(serverId, route, asking),
+    parties: {
+      binding: partyBinding,
+      hub: partyRelay,
+      onAskedAlong: (serverId, ask) => tellOfBeingAskedAlong(serverId, ask),
+    },
+    subjectOf: createPeerSubjectReader(db),
+    catalogue: createCatalogueReader(db),
+    warn: (message) => {
+      log.warn('server', message);
+    },
+  },
   queueWebhookDelivery,
   notifications,
   events,
   readPushPublicKey: async () => (await readPushKeys()).publicKey,
-  downloads: downloadService,
+  downloads: createLinkedDownloads(
+    downloadService,
+    linkedTitleOf,
+    async (seriesId) => {
+      const [held] = await db
+        .select({ serverId: library.linkedServerId })
+        .from(series)
+        .innerJoin(library, eq(library.id, series.libraryId))
+        .where(eq(series.id, seriesId));
+
+      return held?.serverId ?? null;
+    },
+    (id) => catalogueSync.allowsDownloads(id),
+  ),
   reencodes: reencodeService,
   onReencodeQueued: () => {
     void jobs.enqueue(REENCODE_JOB, {}, REENCODE_JOB);
@@ -3322,12 +3597,34 @@ const app = createApp({
   profiles: profileService,
   households: householdService,
   splashscreen,
-  books: bookService,
+  books: createLinkedBooks(bookService, db, linkedAsker),
   music: musicServices,
   collections: collectionService,
   videoDevices,
   bookDevices,
-  streamBookFile: (path, range) => transcoder.readFile(path, range),
+  streamBookFile: async (path, range) => {
+    if (readLinkedAddress(path) === null) {
+      return transcoder.readFile(path, range);
+    }
+
+    const headers = new Headers();
+
+    if (range !== null) {
+      headers.set('range', range);
+    }
+
+    const answered = await linkedAsker.askAt(`${path}/audio`, { headers });
+
+    return answered?.ok === true && answered.body !== null
+      ? {
+          body: answered.body,
+          contentType: answered.headers.get('content-type') ?? 'audio/mpeg',
+          status: answered.status,
+          contentRange: answered.headers.get('content-range'),
+          contentLength: answered.headers.get('content-length'),
+        }
+      : null;
+  },
   promoteProfile: async ({ profileId, email, password }) => {
     const rows = await db
       .select({
@@ -3671,25 +3968,13 @@ for (const kind of await schedules.sync()) {
 
 await jobs.enqueue(REENCODE_JOB, {}, REENCODE_JOB);
 
-const parties = createPartyRegistry(() => randomUUID());
-
 const realtimeHandler = createRealtimeHandler({
   registry: realtime,
   newId: () => randomUUID(),
   now: () => Date.now(),
   ownsProfile: (accountId, profileId) => profileService.belongsTo(accountId, profileId),
-  party: {
-    registry: parties,
-    tell: (connectionIds, payload) => {
-      realtime.publish('party', payload, {
-        kind: 'connections',
-        connectionIds: [...connectionIds],
-      });
-    },
-    ask: ({ party, byName, profileId }) => {
-      void askSomebodyToTheParty(party, byName, profileId);
-    },
-  },
+  party: partyBinding,
+  relay: partyRelayClient,
   presence: {
     connect: (arrival) => presence.connect(arrival),
     disconnect: (clientId, socketId) => {
@@ -3728,11 +4013,108 @@ const realtimeHandler = createRealtimeHandler({
  * @param byName - Who is asking.
  * @param profileId - Which face they picked, since that is what a viewer chooses between.
  */
+/**
+ * Asks somebody from a linked server to a watch party here, by asking their server to tell them:
+ * this server knows them only by the name their server gives them, and never reaches them itself.
+ *
+ * @param party - The party they are being asked to.
+ * @param byName - Who is asking.
+ * @param member - Who they are, as the household list names somebody from a linked server.
+ */
+const askAlongElsewhere = async (
+  party: { id: string; kind: 'watch' | 'listen'; mediaId: string },
+  byName: string,
+  member: string,
+): Promise<void> => {
+  const [serverId, personId] = member.slice(PEER_MEMBER.length).split('~');
+
+  if (serverId === undefined || personId === undefined || party.kind !== 'watch') {
+    return;
+  }
+
+  const pseudonym = await linkSharingStore.pseudonymOf(serverId, personId);
+  const signed = pseudonym === null ? null : await linkService.signFor(serverId);
+
+  if (signed === null || pseudonym === null) {
+    return;
+  }
+
+  await linkPeers.passThrough(signed.address, signed.token, '/parties/asked', {
+    method: 'POST',
+    headers: new Headers({ 'content-type': 'application/json' }),
+    body: new TextEncoder().encode(
+      JSON.stringify({ pseudonym, partyId: party.id, mediaId: party.mediaId, byName }),
+    ).buffer,
+  });
+};
+
+/**
+ * Tells one of this server's people that somebody on a linked server asked them to a watch party
+ * there, the way any party invitation is told, with a link that joins it through this server.
+ *
+ * @param serverId - The linked server holding the party.
+ * @param ask - Who was asked, by their pseudonym there, to which party, of which title, by whom.
+ */
+const tellOfBeingAskedAlong = async (serverId: string, ask: AskedAlong): Promise<void> => {
+  const server = await linkStore.readServer(serverId);
+
+  for (const profile of await profileService.listEveryone()) {
+    if ((await linkService.pseudonymFor(serverId, profile.id)) !== ask.pseudonym) {
+      continue;
+    }
+
+    const accountId = await profileService.accountOf(profile.id);
+
+    if (accountId === null || server === null) {
+      return;
+    }
+
+    const mediaId = localIdOf(serverId, ask.mediaId);
+    const [found] = await db
+      .select({ title: mediaItem.title })
+      .from(mediaItem)
+      .where(eq(mediaItem.id, mediaId))
+      .limit(1);
+    const byName = say('common.nameFromServer', { name: ask.byName, server: server.name });
+
+    await notifyHousehold({
+      store: notifications,
+      event: 'party.invited',
+      title: saying('server.parties.invite.watchTitle', { name: byName }),
+      body:
+        found === undefined
+          ? saying('server.parties.invite.watching')
+          : saying('server.parties.invite.watchingTitle', { title: found.title }),
+      link: `/watch/${mediaId}?party=${encodeURIComponent(`${LINKED_PARTY}${serverId}~${ask.partyId}`)}`,
+      vapid: await readPushKeys(),
+      only: [accountId],
+      onProblem: (reason) => {
+        log.error('server', `linked party invite: ${reason}`);
+      },
+      announce: (userIds) => {
+        realtime.publish(
+          'notifications',
+          { event: 'party.invited' },
+          { kind: 'accounts', accountIds: [...userIds] },
+        );
+      },
+    });
+
+    return;
+  }
+};
+
 const askSomebodyToTheParty = async (
   party: { id: string; kind: 'watch' | 'listen'; mediaId: string },
   byName: string,
   profileId: string,
 ): Promise<void> => {
+  if (profileId.startsWith(PEER_MEMBER)) {
+    await askAlongElsewhere(party, byName, profileId);
+
+    return;
+  }
+
   const accountId = await profileService.accountOf(profileId);
 
   if (accountId === null) {

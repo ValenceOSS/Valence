@@ -1,6 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { BookRow } from './BookRow';
 import type { Book } from '@ValenceContracts/schemas/Book';
 
@@ -23,7 +24,7 @@ const A_BOOK: Book = {
 
 describe('BookRow', () => {
   it('names the row and each book in it', () => {
-    render(<BookRow title="Books" books={[A_BOOK]} onOpen={vi.fn()} />);
+    renderInAnAddress(<BookRow title="Books" books={[A_BOOK]} onOpen={vi.fn()} />);
 
     expect(screen.getByText('Books')).toBeInTheDocument();
     expect(screen.getByText('Emma')).toBeInTheDocument();
@@ -33,7 +34,7 @@ describe('BookRow', () => {
   it('keeps a series’ books apart where it is given nowhere to open a series', () => {
     const series = { name: 'Emma and More', position: 1 };
 
-    render(
+    renderInAnAddress(
       <BookRow
         title="Continue reading"
         books={[
@@ -53,7 +54,7 @@ describe('BookRow', () => {
     const onOpenSeries = vi.fn();
     const series = { name: 'Emma and More', position: 1 };
 
-    render(
+    renderInAnAddress(
       <BookRow
         title="Books"
         books={[
@@ -72,7 +73,7 @@ describe('BookRow', () => {
   });
 
   it('puts a book’s place in its series above it, on a row of one series', () => {
-    render(
+    renderInAnAddress(
       <BookRow
         title="In order"
         books={[{ ...A_BOOK, series: { name: 'Emma and More', position: 3 } }]}
@@ -86,7 +87,7 @@ describe('BookRow', () => {
   });
 
   it('says how far through a book somebody is, in place of who wrote it', () => {
-    render(
+    renderInAnAddress(
       <BookRow
         title="Continue reading"
         books={[A_BOOK]}
@@ -100,7 +101,7 @@ describe('BookRow', () => {
   });
 
   it('says how many chapters a comic has', () => {
-    render(
+    renderInAnAddress(
       <BookRow
         title="Books"
         books={[{ ...A_BOOK, layout: 'fixed', authors: null, chapterCount: 1 }]}
@@ -112,7 +113,7 @@ describe('BookRow', () => {
   });
 
   it('says a book that is only heard is an audiobook, where nobody named its author', () => {
-    render(
+    renderInAnAddress(
       <BookRow
         title="Books"
         books={[{ ...A_BOOK, layout: 'audio', authors: null }]}
@@ -126,7 +127,7 @@ describe('BookRow', () => {
   it('opens the book chosen', async () => {
     const onOpen = vi.fn();
 
-    render(<BookRow title="Books" books={[A_BOOK]} onOpen={onOpen} />);
+    renderInAnAddress(<BookRow title="Books" books={[A_BOOK]} onOpen={onOpen} />);
 
     await userEvent.click(screen.getByText('Emma'));
 

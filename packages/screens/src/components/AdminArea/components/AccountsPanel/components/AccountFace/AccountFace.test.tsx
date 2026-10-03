@@ -10,6 +10,7 @@ const PROFILE = {
   avatar: { kind: 'photo', isVideo: false, frame: null },
   askStillWatchingAfter: 0,
   showsWhatIamWatching: false,
+  prefersBestCopy: false,
   createdAt: '2026-08-01T00:00:00.000Z',
   updatedAt: '2026-08-02T00:00:00.000Z',
 } as const;

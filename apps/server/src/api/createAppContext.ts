@@ -1,5 +1,13 @@
 import { createMemoryCalendarFeedService } from '@ValenceServer/calendarFeed/createMemoryCalendarFeedService';
 import type { Asker } from '@ValenceServer/api/Asker';
+import { createLinkService } from '@ValenceServer/linking/createLinkService';
+import { createMemoryLinkStore } from '@ValenceServer/linking/createMemoryLinkStore';
+import { createPeerClient } from '@ValenceServer/linking/createPeerClient';
+import { createLinkSharingService } from '@ValenceServer/linking/createLinkSharingService';
+import { createMemoryLinkSharingStore } from '@ValenceServer/linking/createMemoryLinkSharingStore';
+import { createPeerClaims } from '@ValenceServer/linking/createPeerClaims';
+import { createPersonScope } from '@ValenceServer/linking/content/createPersonScope';
+import { linkSettingsOf } from '@ValenceServer/linking/linkSettingsOf';
 import { bodyOf } from '@ValenceI18n/bodyOf';
 import { refuseWith } from '@ValenceI18n/refuseWith';
 import type { RefusalBody } from '@ValenceI18n/RefusalBody';
@@ -258,6 +266,7 @@ const createAppContext = (options: CreateAppOptions) => {
     history,
     apiKeys = createBetterAuthApiKeyService(auth),
     webhooks = createMemoryWebhookStore(),
+    linking: linkingOptions,
     notifications = createMemoryNotificationStore(),
     readPushPublicKey = () => Promise.resolve(''),
     queueWebhookDelivery = () => Promise.resolve(),
@@ -286,6 +295,51 @@ const createAppContext = (options: CreateAppOptions) => {
     email = NO_EMAIL,
     requestPasswordReset = () => Promise.resolve(),
   } = options;
+
+  const linkStore = linkingOptions?.store ?? createMemoryLinkStore();
+  const peerClaims = createPeerClaims();
+  const peerRequests = new WeakSet<Headers>();
+  const linkPeople = linkingOptions?.people ?? createPersonScope();
+  const linkSharingStore =
+    linkingOptions?.sharing ??
+    createMemoryLinkSharingStore(async (id) => (await linkStore.readServer(id)) !== null);
+  const peers = linkingOptions?.peers ?? createPeerClient();
+  const linking =
+    linkingOptions?.service ??
+    createLinkService({
+      store: linkStore,
+      settings: linkSettingsOf(settings),
+      address: linkingOptions?.address ?? 'http://localhost:8420',
+      defaultName: linkingOptions?.defaultName ?? say('common.valence'),
+      peers,
+    });
+  const linkSharing = createLinkSharingService({
+    linking,
+    links: linkStore,
+    sharing: linkSharingStore,
+    libraries: async () =>
+      (await library.list(asTheServer))
+        .filter((shelf) => (shelf.linkedServerId ?? null) === null)
+        .map(({ id, name, kind }) => ({ id, name, kind })),
+    subjectOf:
+      linkingOptions?.subjectOf ??
+      (async (subject) => {
+        const item = subject.kind === 'item' ? await library.getMedia(subject.id) : null;
+
+        return item === null
+          ? null
+          : {
+              id: item.id,
+              title: item.title,
+              libraryId: item.libraryId,
+              certificationAge: null,
+              isNeverRated: false,
+            };
+      }),
+    claims: peerClaims,
+    peers,
+    ...(linkingOptions?.warn === undefined ? {} : { warn: linkingOptions.warn }),
+  });
 
   /**
    * Says that somebody was given or lost a role, once the change has actually stuck.
@@ -370,7 +424,9 @@ const createAppContext = (options: CreateAppOptions) => {
    * @returns Who it is for, or nothing where nobody is signed in.
    */
   const viewerOf = (headers: Headers): Promise<Viewer | null> =>
-    readViewer({ auth, permissions, ...(profiles === undefined ? {} : { profiles }) }, headers);
+    peerRequests.has(headers)
+      ? Promise.resolve(asTheServer)
+      : readViewer({ auth, permissions, ...(profiles === undefined ? {} : { profiles }) }, headers);
 
   /**
    * Whether the person asking may open a book, and — where a chapter is named — whether that chapter
@@ -714,6 +770,24 @@ const createAppContext = (options: CreateAppOptions) => {
    * @param sessionId - The session named.
    * @returns Whether the request may read it.
    */
+  /**
+   * Who on this server a request is for, as a linked server would be told: the face watching, by
+   * its name, or nobody where there is no face or no session.
+   *
+   * @param headers - The request's headers.
+   * @returns The person, or nothing.
+   */
+  const linkPersonOf = async (headers: Headers) => {
+    const account = await readAccount(headers);
+    const profileId = account === null ? null : await readProfileId(headers);
+    const face =
+      account === null || profileId === null || profiles === undefined
+        ? undefined
+        : (await profiles.list(account.id)).find((profile) => profile.id === profileId);
+
+    return face === undefined ? null : { profileId: face.id, name: face.name };
+  };
+
   const isTheSessionOfWhoeverIsAsking = async (
     headers: Headers,
     sessionId: string,
@@ -1456,6 +1530,19 @@ const createAppContext = (options: CreateAppOptions) => {
     notifications,
     readPushPublicKey,
     queueWebhookDelivery,
+    linking,
+    linkSharing,
+    peerClaims,
+    peerRequests,
+    linkPeople,
+    linkPersonOf,
+    linkCatalogue: linkingOptions?.catalogue ?? (() => Promise.resolve(null)),
+    syncLinkedServer: linkingOptions?.syncServer ?? (() => Promise.resolve(null)),
+    isLinkedServerReachable: linkingOptions?.isReachable ?? (() => true),
+    linkParties: linkingOptions?.parties ?? null,
+    linkedServerTakesRequests: linkingOptions?.takesRequests ?? (() => false),
+    linkedAsk: linkingOptions?.ask ?? (() => Promise.resolve(null)),
+    linkSharingStore,
     banAccount,
     unbanAccount,
     removeAccount,

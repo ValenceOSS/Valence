@@ -159,6 +159,33 @@ describe('upsert', () => {
     ).rejects.toThrow('could also clash on (name)');
   });
 
+  it('writes by a key where the caller vouches every other key it fills names the same row', async () => {
+    await upsert(db, KEYED, {
+      values: [{ id: 'k9', code: 'k9-code' }],
+      target: KEYED.id,
+      set: { count: 1 },
+      sameRowOn: [[KEYED.code]],
+    });
+    await upsert(db, KEYED, {
+      values: [{ id: 'k9', code: 'k9-code' }],
+      target: KEYED.id,
+      set: { count: 2 },
+      sameRowOn: [[KEYED.code]],
+    });
+
+    await expect(db.select().from(KEYED).where(eq(KEYED.id, 'k9'))).resolves.toMatchObject([
+      { code: 'k9-code', count: 2 },
+    ]);
+    await expect(
+      upsert(db, KEYED, {
+        values: [{ id: 'k10', code: 'k10-code', email: 'ten@example.com' }],
+        target: KEYED.id,
+        set: { count: 1 },
+        sameRowOn: [[KEYED.code]],
+      }),
+    ).rejects.toThrow('could also clash on (email)');
+  });
+
   it('refuses a target that is not a key of the table', async () => {
     await expect(
       upsert(db, KEYED, {

@@ -35,12 +35,16 @@ const lrcStamp = (ms: number): string => {
 /**
  * Reads whichever lyrics a tag holds, preferring lines that follow the song.
  *
+ * An unsynchronised lyrics frame comes back with no lines at all, rather than an empty list of
+ * them, whatever the library's types say, so the lines are only read where there are some.
+ *
  * @param tagged - The lyrics the tags carry.
  * @returns The lyrics as LRC or plain text, or nothing.
  */
 const lyricsFrom = (tagged: readonly ILyricsTag[] | undefined): string | null => {
-  const synced = tagged?.find((entry) =>
-    entry.syncText.some((line) => line.timestamp !== undefined),
+  const synced = tagged?.find(
+    (entry) =>
+      Array.isArray(entry.syncText) && entry.syncText.some((line) => line.timestamp !== undefined),
   );
 
   if (synced !== undefined) {

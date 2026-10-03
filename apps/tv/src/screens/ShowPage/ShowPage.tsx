@@ -28,6 +28,8 @@ import { useConfirmHiding } from '@ValenceNative/library/useConfirmHiding';
 import { joinFacts } from '@ValenceTv/library/joinFacts';
 import { useProgress } from '@ValenceTv/library/useProgress';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { useOriginOf } from '@ValenceClient/linking/useOriginOf';
+import { whereFrom } from '@ValenceClient/linking/whereFrom';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ShowDetail } from '@ValenceContracts/schemas/Show';
 import type { ShowPageProps } from './ShowPage.types';
@@ -74,6 +76,7 @@ const overviewOf = (show: ShowDetail, episode: MediaSummary): string | null =>
 const ShowPage = ({ libraryId, showId, viewerId, onOpenPerson, onPlay }: ShowPageProps) => {
   const { progress } = useProgress();
   const asked = useQuery(libraryQueries.show(libraryId, showId));
+  const originOf = useOriginOf();
   const show = asked.data ?? null;
   const seriesId = show?.seriesId ?? null;
   const hiding = useHidden(viewerId);
@@ -157,6 +160,7 @@ const ShowPage = ({ libraryId, showId, viewerId, onOpenPerson, onPlay }: ShowPag
       hasLogo={cover.data?.metadata.hasLogo ?? false}
       stillPath={artworkUrl(show.coverMediaId, 'backdrop', { isOfTitle: true })}
       facts={joinFacts([
+        whereFrom(originOf(libraryId)),
         show.year?.toString(),
         sayCount('common.count.seasons', show.seasonCount),
         typeof show.rating === 'number' ? `★ ${show.rating.toFixed(1)}` : null,

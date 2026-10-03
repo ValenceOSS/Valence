@@ -319,6 +319,13 @@ const WHAT_DELETION_REMOVES: readonly OwnedThing[] = [
     rule: 'meansNothingWithoutIt',
   },
   {
+    table: 'link_grant',
+    column: 'libraryId',
+    owner: 'library',
+    fate: 'goesWithIt',
+    rule: 'meansNothingWithoutIt',
+  },
+  {
     table: 'media_item',
     column: 'libraryId',
     owner: 'library',

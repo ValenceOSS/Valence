@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "2762f7a7-d211-4c2b-b3d8-db6ae0e6ee8a",
+  "id": "ef4db75e-7e63-4200-8181-a6e4476dc677",
   "prevId": "cd6ac863-06b6-4afa-9648-8adcb84784ab",
   "tables": {
     "account": {
@@ -996,113 +996,6 @@
           "value": "`book_chapter`.`format` in ('cbz', 'cbr', 'pdf', 'epub', 'm4b', 'm4a', 'mp3', 'aac', 'ogg', 'opus', 'flac')"
         }
       }
-    },
-    "calendar_feed": {
-      "name": "calendar_feed",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "tokenHash": {
-          "name": "tokenHash",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "sealedToken": {
-          "name": "sealedToken",
-          "type": "mediumtext",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "ownerKey": {
-          "name": "ownerKey",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "accountId": {
-          "name": "accountId",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "profileId": {
-          "name": "profileId",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "createdAt": {
-          "name": "createdAt",
-          "type": "datetime(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(current_timestamp(3))"
-        },
-        "lastReadAt": {
-          "name": "lastReadAt",
-          "type": "datetime(3)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "calendar_feed_token_idx": {
-          "name": "calendar_feed_token_idx",
-          "columns": ["tokenHash"],
-          "isUnique": true
-        },
-        "calendar_feed_owner_idx": {
-          "name": "calendar_feed_owner_idx",
-          "columns": ["ownerKey"],
-          "isUnique": true
-        },
-        "calendar_feed_account_idx": {
-          "name": "calendar_feed_account_idx",
-          "columns": ["accountId"],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "calendar_feed_accountId_user_id_fk": {
-          "name": "calendar_feed_accountId_user_id_fk",
-          "tableFrom": "calendar_feed",
-          "tableTo": "user",
-          "columnsFrom": ["accountId"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "calendar_feed_profileId_viewer_profile_id_fk": {
-          "name": "calendar_feed_profileId_viewer_profile_id_fk",
-          "tableFrom": "calendar_feed",
-          "tableTo": "viewer_profile",
-          "columnsFrom": ["profileId"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "calendar_feed_id": {
-          "name": "calendar_feed_id",
-          "columns": ["id"]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
     },
     "collection": {
       "name": "collection",
@@ -2684,6 +2577,167 @@
       },
       "uniqueConstraints": {},
       "checkConstraint": {}
+    },
+    "link_invite": {
+      "name": "link_invite",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "codeHash": {
+          "name": "codeHash",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(current_timestamp(3))"
+        },
+        "expiresAt": {
+          "name": "expiresAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "usedAt": {
+          "name": "usedAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "link_invite_code_idx": {
+          "name": "link_invite_code_idx",
+          "columns": ["codeHash"],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "link_invite_id": {
+          "name": "link_invite_id",
+          "columns": ["id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "linked_server": {
+      "name": "linked_server",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "mediumtext",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "colour": {
+          "name": "colour",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "address": {
+          "name": "address",
+          "type": "mediumtext",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "publicKey": {
+          "name": "publicKey",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "fingerprint": {
+          "name": "fingerprint",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "state": {
+          "name": "state",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "theirPairingId": {
+          "name": "theirPairingId",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(current_timestamp(3))"
+        },
+        "linkedAt": {
+          "name": "linkedAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "lastSeenAt": {
+          "name": "lastSeenAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "linked_server_fingerprint_idx": {
+          "name": "linked_server_fingerprint_idx",
+          "columns": ["fingerprint"],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "linked_server_id": {
+          "name": "linked_server_id",
+          "columns": ["id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {
+        "linked_server_state": {
+          "name": "linked_server_state",
+          "value": "`linked_server`.`state` in ('awaitingThem', 'awaitingUs', 'linked', 'refused', 'unlinkedByThem')"
+        }
+      }
     },
     "listening_progress": {
       "name": "listening_progress",

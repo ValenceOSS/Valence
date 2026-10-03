@@ -181,6 +181,21 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
         />
       </SettingRow>
 
+      <SettingRow
+        title={say('screens.accountArea.profileSettings.preferTheBestCopy')}
+        description={say('screens.accountArea.profileSettings.whereALinkedServerHasABetter')}
+      >
+        <Switch
+          label={say('screens.accountArea.profileSettings.preferTheBestCopy')}
+          isLabelHidden
+          isOn={draft?.prefersBestCopy ?? false}
+          disabled={!isReady}
+          onToggle={() => {
+            onDraft({ prefersBestCopy: !(draft?.prefersBestCopy ?? false) });
+          }}
+        />
+      </SettingRow>
+
       {canShowOnDiscord() ? (
         <SettingRow
           title={say('screens.accountArea.profileSettings.showWhatIAmPlayingOn')}
