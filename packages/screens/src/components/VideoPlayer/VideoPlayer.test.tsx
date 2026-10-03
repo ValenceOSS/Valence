@@ -1546,6 +1546,31 @@ describe('VideoPlayer', () => {
     }
   });
 
+  it('keeps something over the picture while the controls are away, so the picture is never lifted above them', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+
+    try {
+      const { container } = renderInAnAddress(
+        <VideoPlayer media={media} onClose={vi.fn()} isImmersive />,
+      );
+
+      const element = await screen.findByLabelText('Arrival');
+
+      fireEvent.play(element);
+
+      act(() => {
+        vi.advanceTimersByTime(4000);
+      });
+
+      expect(stageOf(element).className).toContain('cursor-none');
+      expect(stageOf(element)).toContainElement(
+        container.querySelector<HTMLElement>('[data-slot="picture-cover"]'),
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('says what is being watched once it has been left paused a while', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
 
@@ -1566,9 +1591,10 @@ describe('VideoPlayer', () => {
       });
 
       expect(await screen.findByText('You’re watching')).toBeInTheDocument();
-      expect(screen.getByText('Paused')).toBeInTheDocument();
 
       const stage = stageOf(screen.getByLabelText('Arrival'));
+
+      expect(stage).toContainElement(screen.getByText('Paused'));
 
       if (stage !== null) {
         fireEvent.pointerMove(stage, { clientX: 10, clientY: 10 });
