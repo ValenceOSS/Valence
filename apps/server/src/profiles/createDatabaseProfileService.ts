@@ -50,6 +50,7 @@ type ProfileRow = {
   avatarLook: ViewerProfile['avatar'] | null;
   askStillWatchingAfter: number;
   showsWhatIamWatching: boolean;
+  prefersBestCopy: boolean;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -114,6 +115,7 @@ const toProfile = (row: ProfileRow): ViewerProfile => ({
     row.askStillWatchingAfter,
   ),
   showsWhatIamWatching: row.showsWhatIamWatching,
+  prefersBestCopy: row.prefersBestCopy,
   createdAt: row.createdAt.toISOString(),
   updatedAt: row.updatedAt.toISOString(),
 });
@@ -192,6 +194,7 @@ const COLUMNS = {
   avatarLook: viewerProfile.avatarLook,
   askStillWatchingAfter: viewerProfile.askStillWatchingAfter,
   showsWhatIamWatching: viewerProfile.showsWhatIamWatching,
+  prefersBestCopy: viewerProfile.prefersBestCopy,
   createdAt: viewerProfile.createdAt,
   updatedAt: viewerProfile.updatedAt,
 };
@@ -267,6 +270,7 @@ const createDatabaseProfileService = (
       avatar: { kind: 'initial', font: 'gilroy' },
       askStillWatchingAfter: STILL_WATCHING_DEFAULT,
       showsWhatIamWatching: false,
+      prefersBestCopy: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -300,6 +304,7 @@ const createDatabaseProfileService = (
         avatar: { kind: 'initial', font: 'gilroy' },
         askStillWatchingAfter: STILL_WATCHING_DEFAULT,
         showsWhatIamWatching: false,
+        prefersBestCopy: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -318,6 +323,9 @@ const createDatabaseProfileService = (
             ...(request.showsWhatIamWatching === undefined
               ? {}
               : { showsWhatIamWatching: request.showsWhatIamWatching }),
+            ...(request.prefersBestCopy === undefined
+              ? {}
+              : { prefersBestCopy: request.prefersBestCopy }),
             name: request.name,
             colour: request.colour,
             updatedAt: new Date(),

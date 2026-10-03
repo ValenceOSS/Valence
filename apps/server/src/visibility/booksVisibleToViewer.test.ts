@@ -42,8 +42,11 @@ describe('which books a viewer can see', () => {
     expect(sql).toContain('"hidden"');
   });
 
-  it('holds nothing back from a guest, who is held to what was shared before this', () => {
-    expect(asked({ kind: 'guest', shareId: 'share-1' })).not.toContain('where');
+  it('holds back from a guest only what comes from a server no longer linked', () => {
+    const sql = asked({ kind: 'guest', shareId: 'share-1' });
+
+    expect(sql).toContain('"linked_server"');
+    expect(sql).not.toContain('"library_block"');
   });
 
   it('holds nothing back from the server itself', () => {

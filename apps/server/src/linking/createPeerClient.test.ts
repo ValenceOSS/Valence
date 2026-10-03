@@ -76,4 +76,33 @@ describe('createPeerClient', () => {
     );
     expect(fetcher.mock.calls[0]?.[1]?.headers).toMatchObject({ authorization: 'Bearer a-token' });
   });
+
+  it('reads what another server shares with this one, signed', async () => {
+    const films = { id: '00000000-0000-4000-8000-000000000001', name: 'Films', kind: 'movies' };
+    const fetcher = answering(200, { libraries: [films], allowsDownloads: true });
+
+    expect(await createPeerClient(fetcher).libraries('https://anime.example', 'a-token')).toEqual({
+      kind: 'answered',
+      answer: { libraries: [films], allowsDownloads: true, takesRequests: false },
+    });
+    expect(fetcher.mock.calls[0]?.[0]).toBe('https://anime.example/api/federation/v1/libraries');
+    expect(fetcher.mock.calls[0]?.[1]?.headers).toMatchObject({ authorization: 'Bearer a-token' });
+  });
+
+  it('reads another server’s record of this one’s people since a moment, or why it would not', async () => {
+    const fetcher = answering(200, { entries: [] });
+    const since = new Date('2026-10-02T12:00:00.000Z');
+
+    expect(
+      await createPeerClient(fetcher).activity('https://anime.example', 'a-token', since),
+    ).toEqual({ kind: 'answered', answer: [] });
+    expect(fetcher.mock.calls[0]?.[0]).toBe(
+      'https://anime.example/api/federation/v1/activity?since=2026-10-02T12%3A00%3A00.000Z',
+    );
+    expect(
+      await createPeerClient(
+        answering(403, { error: 'No.', code: 'error.linking.x', values: {} }),
+      ).activity('https://anime.example', 'a-token'),
+    ).toEqual({ kind: 'refused', code: 'error.linking.x' });
+  });
 });

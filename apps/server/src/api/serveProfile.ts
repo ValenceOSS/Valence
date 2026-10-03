@@ -68,7 +68,7 @@ const serveProfile = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
-    const { name, colour, avatar, askStillWatchingAfter, showsWhatIamWatching } =
+    const { name, colour, avatar, askStillWatchingAfter, showsWhatIamWatching, prefersBestCopy } =
       context.req.valid('json');
 
     const changed = await profiles.rename(account.id, context.req.valid('param').profileId, {
@@ -77,6 +77,7 @@ const serveProfile = (app: OpenAPIHono, context: AppContext): void => {
       ...(avatar === undefined ? {} : { avatar }),
       ...(askStillWatchingAfter === undefined ? {} : { askStillWatchingAfter }),
       ...(showsWhatIamWatching === undefined ? {} : { showsWhatIamWatching }),
+      ...(prefersBestCopy === undefined ? {} : { prefersBestCopy }),
     });
 
     if (changed) {

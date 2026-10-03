@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createApp } from '@ValenceServer/App';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { signUpForTest, makeAdministrator, TEST_ORIGIN } from '@ValenceServer/auth/signUpForTest';
@@ -10,10 +10,14 @@ import { createMemoryFavouriteService } from '@ValenceServer/favourites/createMe
 import { createMemoryRatingService } from '@ValenceServer/ratings/createMemoryRatingService';
 import { createMemorySegmentService } from '@ValenceServer/segments/createMemorySegmentService';
 import { createMemorySubtitleService } from '@ValenceServer/subtitles/createMemorySubtitleService';
-import { createLinkService } from '@ValenceServer/linking/createLinkService';
 import { createMemoryLinkStore } from '@ValenceServer/linking/createMemoryLinkStore';
+import { createMemoryLinkSharingStore } from '@ValenceServer/linking/createMemoryLinkSharingStore';
 import { createPeerClient } from '@ValenceServer/linking/createPeerClient';
+import { createLinkService } from '@ValenceServer/linking/createLinkService';
 import { linkSettingsOf } from '@ValenceServer/linking/linkSettingsOf';
+import { signAsPerson } from '@ValenceServer/linking/signAsPerson';
+import { createPartyRelayHub } from '@ValenceServer/linking/parties/createPartyRelayHub';
+import { createPartyRegistry } from '@ValenceServer/parties/createPartyRegistry';
 import {
   LinkedServerSchema,
   LinkingSchema,
@@ -21,7 +25,19 @@ import {
   ServerIdentitySchema,
 } from '@ValenceContracts/schemas/LinkedServer';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
+import {
+  AskableElsewhereSchema,
+  FederationActivityListSchema,
+  LinkedServerFacesSchema,
+  RemotePeopleSchema,
+  LinkSharingSchema,
+  TheirActivitySchema,
+  TheirLibrariesSchema,
+} from '@ValenceContracts/schemas/LinkSharing';
+import { LibrarySchema } from '@ValenceContracts/schemas/Library';
+import type { Library } from '@ValenceContracts/schemas/Library';
 import type { Permission } from '@ValenceContracts/schemas/Permission';
+import type { CreateAppOptions } from '@ValenceServer/api/CreateAppOptions';
 
 type App = ReturnType<typeof createApp>;
 
@@ -44,23 +60,49 @@ const aNetwork = () => {
       : Promise.resolve(app.request(`${url.pathname}${url.search}`, init));
   };
 
-  const serverAt = async (address: string, granted: readonly Permission[] = ['administrator']) => {
+  const serverAt = async (
+    address: string,
+    granted: readonly Permission[] = ['administrator'],
+    libraries: readonly Library[] = [],
+    extra: Partial<NonNullable<CreateAppOptions['linking']>> = {},
+  ) => {
     const { auth, settings, store } = createMemoryAuth();
     const permissions = createMemoryPermissionService();
+    const links = createMemoryLinkStore();
+    const sharing = createMemoryLinkSharingStore(
+      async (id) => (await links.readServer(id)) !== null,
+    );
+    const peers = createPeerClient(fetcher);
+    const service = createLinkService({
+      store: links,
+      settings: linkSettingsOf(settings),
+      address,
+      defaultName: new URL(address).hostname,
+      peers,
+    });
     const app = createApp({
       auth,
       settings,
       permissions,
-      linking: createLinkService({
-        store: createMemoryLinkStore(),
-        settings: linkSettingsOf(settings),
+      linking: {
+        service,
+        store: links,
+        sharing,
         address,
         defaultName: new URL(address).hostname,
-        peers: createPeerClient(fetcher),
-      }),
+        peers,
+        ask: async (serverId, route, asking) => {
+          const signed = await service.signFor(serverId);
+
+          return signed === null
+            ? null
+            : peers.passThrough(signed.address, signed.token, route, asking);
+        },
+        ...extra,
+      },
       countUsers: () => Promise.resolve(1),
       promoteToAdmin: () => Promise.resolve(null),
-      library: createMemoryLibraryService(),
+      library: createMemoryLibraryService({ libraries: [...libraries], media: [] }),
       playback: createMemoryPlaybackService(),
       segments: createMemorySegmentService(),
       subtitles: createMemorySubtitleService({}),
@@ -101,10 +143,83 @@ const aNetwork = () => {
     const linking = async () =>
       LinkingSchema.parse(await (await request('/api/linked-servers')).json());
 
-    return { app, request, linking };
+    /**
+     * Asks a linked server something at its federation address, signed as this server, or as
+     * somebody on it.
+     *
+     * @param serverId - The linked server, as this one knows it.
+     * @param route - What to ask for, under the federation address.
+     * @param method - How.
+     * @param body - What to send, if anything.
+     * @param person - Who on this server is asking, if anybody.
+     * @returns The answer.
+     */
+    const askAt = async (
+      serverId: string,
+      route: string,
+      method = 'GET',
+      body?: object,
+      person: { profileId: string; name: string } | null = null,
+    ) => {
+      const signed = await signAsPerson(service, sharing, serverId, person);
+
+      return fetcher(`${signed?.address ?? ''}/api/federation/v1${route}`, {
+        method,
+        headers: {
+          authorization: `Bearer ${signed?.token ?? ''}`,
+          ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+        },
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      });
+    };
+
+    return { app, request, linking, askAt };
   };
 
   return { serverAt };
+};
+
+const FILMS = LibrarySchema.parse({
+  id: '00000000-0000-4000-8000-0000000000f1',
+  name: 'Films',
+  kind: 'movies',
+  path: '/films',
+  itemCount: 0,
+  lastScannedAt: null,
+  defaultAudioLanguage: null,
+  filesAtOnce: null,
+});
+
+const ANIME = LibrarySchema.parse({
+  ...FILMS,
+  id: '00000000-0000-4000-8000-0000000000a1',
+  name: 'Anime',
+  kind: 'shows',
+  path: '/anime',
+});
+
+type Server = Awaited<ReturnType<ReturnType<typeof aNetwork>['serverAt']>>;
+
+/**
+ * Links two servers through their routes, the way two admins would.
+ *
+ * @param host - The server that makes the invite and approves.
+ * @param guest - The server that uses it.
+ * @returns The id each knows the other by.
+ */
+const linkThem = async (host: Server, guest: Server) => {
+  const { invite } = MadeLinkInviteSchema.parse(
+    await (await host.request('/api/linked-servers/invites', 'POST')).json(),
+  );
+  const hostAtGuest = LinkedServerSchema.parse(
+    await (await guest.request('/api/linked-servers', 'POST', { invite })).json(),
+  ).id;
+  const guestAtHost = (await host.linking()).servers[0]?.id ?? '';
+
+  await host.request(`/api/linked-servers/${guestAtHost}/approve`, 'POST');
+  await guest.request(`/api/linked-servers/${hostAtGuest}/check`, 'POST');
+
+  return { guestAtHost, hostAtGuest };
 };
 
 describe('the linked server routes', () => {
@@ -245,5 +360,361 @@ describe('the linked server routes', () => {
     expect((await films.request(`/api/linked-servers/${waiting.id}`, 'DELETE')).status).toBe(204);
     expect((await films.linking()).servers).toEqual([]);
     expect((await anime.linking()).servers[0]?.state).toBe('unlinkedByThem');
+  });
+
+  it('shares only the libraries its admin chooses with a linked server, and keeps a record', async () => {
+    const network = aNetwork();
+    const anime = await network.serverAt(
+      'https://anime.example',
+      ['administrator'],
+      [FILMS, ANIME],
+    );
+    const films = await network.serverAt('https://films.example');
+    const { guestAtHost, hostAtGuest } = await linkThem(anime, films);
+    const theirs = async () =>
+      TheirLibrariesSchema.parse(
+        await (await films.request(`/api/linked-servers/${hostAtGuest}/their-libraries`)).json(),
+      );
+
+    expect(await theirs()).toEqual({ isReachable: true, libraries: [] });
+
+    const shared = await anime.request(`/api/linked-servers/${guestAtHost}/sharing`, 'PATCH', {
+      libraryIds: [FILMS.id],
+    });
+
+    expect(LinkSharingSchema.parse(await shared.json()).libraryIds).toEqual([FILMS.id]);
+    expect(await theirs()).toEqual({
+      isReachable: true,
+      libraries: [{ id: FILMS.id, name: 'Films', kind: 'movies' }],
+    });
+
+    const record = FederationActivityListSchema.parse(
+      await (await anime.request(`/api/linked-servers/${guestAtHost}/activity`)).json(),
+    );
+
+    expect(record.entries).toEqual([
+      expect.objectContaining({ action: 'libraries', outcome: 'allowed', count: 2 }),
+    ]);
+  });
+
+  it('lets a linked server read its record of their people only where its admin allows', async () => {
+    const network = aNetwork();
+    const anime = await network.serverAt('https://anime.example');
+    const films = await network.serverAt('https://films.example');
+    const { guestAtHost, hostAtGuest } = await linkThem(anime, films);
+    const theirs = async () =>
+      TheirActivitySchema.parse(
+        await (await films.request(`/api/linked-servers/${hostAtGuest}/their-activity`)).json(),
+      );
+
+    expect((await theirs()).standing).toBe('notShown');
+
+    await anime.request(`/api/linked-servers/${guestAtHost}/sharing`, 'PATCH', {
+      showsActivity: true,
+    });
+
+    expect((await theirs()).standing).toBe('shown');
+  });
+
+  it('closes the federation address to anything not signed by a linked server', async () => {
+    const anime = await aNetwork().serverAt('https://anime.example');
+
+    for (const path of ['/libraries', '/activity', '/accounts', '/media/x']) {
+      const asked = await anime.app.request(`/api/federation/v1${path}`, {
+        headers: { authorization: 'Bearer not-a-token' },
+      });
+
+      expect(asked.status).toBe(401);
+      expect(RefusalSchema.parse(await asked.json()).code).toBe(
+        'error.linking.notSignedByALinkedServer',
+      );
+    }
+  });
+
+  it('refuses to share a library it does not have, and keeps sharing to whoever may link', async () => {
+    const network = aNetwork();
+    const anime = await network.serverAt('https://anime.example', ['administrator'], [FILMS]);
+    const films = await network.serverAt('https://films.example');
+    const { guestAtHost } = await linkThem(anime, films);
+    const nothing = await anime.request(`/api/linked-servers/${guestAtHost}/sharing`, 'PATCH', {
+      libraryIds: [ANIME.id],
+    });
+
+    expect(nothing.status).toBe(400);
+    expect(
+      (await anime.request('/api/linked-servers/00000000-0000-4000-8000-000000000000/sharing'))
+        .status,
+    ).toBe(404);
+
+    const member = await network.serverAt('https://music.example', ['streaming.view']);
+
+    expect((await member.request(`/api/linked-servers/${guestAtHost}/sharing`)).status).toBe(403);
+    expect((await member.request(`/api/linked-servers/${guestAtHost}/people`)).status).toBe(403);
+  });
+
+  it('serves only a shared library’s catalogue to a linked server', async () => {
+    const network = aNetwork();
+    const page = {
+      series: [],
+      mediaItems: [],
+      artists: [],
+      albums: [],
+      tracks: [],
+      trackArtists: [],
+      books: [],
+      chapters: [],
+      next: null,
+    };
+    const anime = await network.serverAt('https://anime.example', ['administrator'], [FILMS], {
+      catalogue: () => Promise.resolve(page),
+    });
+    const films = await network.serverAt('https://films.example');
+    const { guestAtHost, hostAtGuest } = await linkThem(anime, films);
+
+    expect((await films.askAt(hostAtGuest, `/catalogue/${FILMS.id}`)).status).toBe(403);
+
+    await anime.request(`/api/linked-servers/${guestAtHost}/sharing`, 'PATCH', {
+      libraryIds: [FILMS.id],
+    });
+
+    const read = await films.askAt(hostAtGuest, `/catalogue/${FILMS.id}`);
+
+    expect(read.status).toBe(200);
+    expect(await read.json()).toEqual(page);
+  });
+
+  it('passes a request on to its own routes only for a shared title, or a session it started', async () => {
+    const network = aNetwork();
+    const title = '00000000-0000-4000-8000-0000000000c1';
+    const anime = await network.serverAt('https://anime.example', ['administrator'], [FILMS], {
+      subjectOf: ({ id }) =>
+        Promise.resolve(
+          id === title
+            ? {
+                id,
+                title: 'Arrival',
+                libraryId: FILMS.id,
+                certificationAge: 12,
+                isNeverRated: false,
+              }
+            : null,
+        ),
+    });
+    const films = await network.serverAt('https://films.example');
+    const { guestAtHost, hostAtGuest } = await linkThem(anime, films);
+    const poster = `/api/media/${title}/image/poster`;
+
+    expect((await films.askAt(hostAtGuest, poster)).status).toBe(403);
+
+    await anime.request(`/api/linked-servers/${guestAtHost}/sharing`, 'PATCH', {
+      libraryIds: [FILMS.id],
+    });
+
+    expect((await films.askAt(hostAtGuest, poster)).status).not.toBe(403);
+    expect(
+      (await films.askAt(hostAtGuest, '/api/playback/session/not-theirs/index.m3u8')).status,
+    ).toBe(403);
+    expect(
+      (await films.askAt(hostAtGuest, '/direct', 'POST', { sessionId: 'not-theirs' })).status,
+    ).toBe(403);
+    expect((await films.askAt(hostAtGuest, '/direct', 'POST', { mediaId: title })).status).toBe(
+      200,
+    );
+    expect(
+      (await anime.app.request(`/api/federation/v1/direct/${'a'.repeat(43)}/index.m3u8`)).status,
+    ).toBe(403);
+
+    const record = FederationActivityListSchema.parse(
+      await (await anime.request(`/api/linked-servers/${guestAtHost}/activity`)).json(),
+    );
+
+    expect(record.entries.map((entry) => [entry.mediaTitle, entry.outcome])).toContainEqual([
+      'Arrival',
+      'allowed',
+    ]);
+  });
+
+  it('keeps every new limit it is given for a linked server', async () => {
+    const network = aNetwork();
+    const anime = await network.serverAt('https://anime.example');
+    const films = await network.serverAt('https://films.example');
+    const { guestAtHost } = await linkThem(anime, films);
+    const changed = await anime.request(`/api/linked-servers/${guestAtHost}/sharing`, 'PATCH', {
+      mostStreams: 2,
+      qualityCeiling: '1080p',
+      takesTheirControls: false,
+      allowsDownloads: true,
+      takesTheirRequests: true,
+      playsDirect: true,
+    });
+
+    expect(LinkSharingSchema.parse(await changed.json())).toMatchObject({
+      mostStreams: 2,
+      qualityCeiling: '1080p',
+      takesTheirControls: false,
+      allowsDownloads: true,
+      takesTheirRequests: true,
+      playsDirect: true,
+    });
+  });
+
+  it('shows anybody signed in the servers it is linked with, and asks a server to read again', async () => {
+    const network = aNetwork();
+    const anime = await network.serverAt('https://anime.example');
+    const films = await network.serverAt('https://films.example', ['administrator'], [], {
+      syncServer: (id) =>
+        Promise.resolve(
+          id === '00000000-0000-4000-8000-000000000000'
+            ? null
+            : { serverId: id, libraries: 1, kept: 4, forgotten: 0 },
+        ),
+      isReachable: () => false,
+      takesRequests: () => true,
+    });
+    const { hostAtGuest } = await linkThem(anime, films);
+    const faces = LinkedServerFacesSchema.parse(
+      await (await films.request('/api/linked-servers/faces')).json(),
+    );
+
+    expect(faces.servers).toHaveLength(1);
+    expect(faces.servers[0]).toMatchObject({
+      id: hostAtGuest,
+      name: 'anime.example',
+      isReachable: false,
+      takesRequests: true,
+    });
+    expect(
+      await (await films.request(`/api/linked-servers/${hostAtGuest}/sync`, 'POST')).json(),
+    ).toEqual({ libraries: 1, kept: 4, forgotten: 0 });
+    expect(
+      (await films.request('/api/linked-servers/00000000-0000-4000-8000-000000000000/sync', 'POST'))
+        .status,
+    ).toBe(404);
+  });
+
+  it('names the people from a linked server who can be asked along, and none it blocked', async () => {
+    const network = aNetwork();
+    const anime = await network.serverAt('https://anime.example');
+    const films = await network.serverAt('https://films.example');
+    const { guestAtHost, hostAtGuest } = await linkThem(anime, films);
+
+    await films.askAt(hostAtGuest, '/libraries', 'GET', undefined, {
+      profileId: 'sam',
+      name: 'Sam',
+    });
+
+    const askable = async () =>
+      AskableElsewhereSchema.parse(await (await anime.request('/api/linked-servers/people')).json())
+        .people;
+    const [sam] = RemotePeopleSchema.parse(
+      await (await anime.request(`/api/linked-servers/${guestAtHost}/people`)).json(),
+    ).people;
+
+    expect((await askable()).map((person) => person.name)).toEqual(['Sam from films.example']);
+
+    await anime.request(`/api/linked-servers/${guestAtHost}/people/${sam?.id ?? ''}/block`, 'PUT');
+
+    expect(await askable()).toEqual([]);
+  });
+
+  it('passes a request on to a linked server that takes them', async () => {
+    const network = aNetwork();
+    const anime = await network.serverAt('https://anime.example');
+    const films = await network.serverAt('https://films.example');
+    const { hostAtGuest } = await linkThem(anime, films);
+    const ask = () =>
+      films.request(`/api/linked-servers/${hostAtGuest}/requests`, 'POST', {
+        kind: 'film',
+        tmdbId: 603,
+      });
+    const refused = await ask();
+
+    expect(RefusalSchema.parse(await refused.json()).code).toBe('error.common.requestingIsOff');
+    expect(refused.status).toBe(503);
+
+    expect(
+      (
+        await films.request(
+          '/api/linked-servers/00000000-0000-4000-8000-000000000000/requests',
+          'POST',
+          {
+            kind: 'film',
+            tmdbId: 603,
+          },
+        )
+      ).status,
+    ).toBe(502);
+  });
+
+  it('lets somebody from a linked server join a party here on a shared title, and hear it', async () => {
+    const network = aNetwork();
+    const title = '00000000-0000-4000-8000-0000000000c1';
+    const hub = createPartyRelayHub();
+    let made = 0;
+    const registry = createPartyRegistry(() => {
+      made += 1;
+
+      return `party-${made.toString()}`;
+    });
+    const asked = vi.fn(() => Promise.resolve());
+    const anime = await network.serverAt('https://anime.example', ['administrator'], [FILMS], {
+      subjectOf: ({ id }) =>
+        Promise.resolve(
+          id === title
+            ? {
+                id,
+                title: 'Arrival',
+                libraryId: FILMS.id,
+                certificationAge: null,
+                isNeverRated: false,
+              }
+            : null,
+        ),
+      parties: {
+        hub,
+        binding: {
+          registry,
+          tell: (connectionIds, payload) => {
+            hub.tell(connectionIds.filter(hub.isPeer), payload);
+          },
+        },
+        onAskedAlong: asked,
+      },
+    });
+    const films = await network.serverAt('https://films.example');
+    const { guestAtHost, hostAtGuest } = await linkThem(anime, films);
+    const party = registry.open({
+      mediaId: title,
+      host: { connectionId: 'host-tab', accountId: 'dan', profileId: null, name: 'Dan' },
+    });
+    const join = () =>
+      films.askAt(
+        hostAtGuest,
+        '/parties/say',
+        'POST',
+        { connection: 'tab-1', message: { kind: 'partyJoin', partyId: party.id } },
+        { profileId: 'sam', name: 'Sam' },
+      );
+    const hear = async () =>
+      JSON.stringify(await (await films.askAt(hostAtGuest, '/parties/hear?wait=0')).json());
+
+    expect((await join()).status).toBe(204);
+    expect(await hear()).toContain('error.linking.thatIsNotSharedWithYourServer');
+
+    await anime.request(`/api/linked-servers/${guestAtHost}/sharing`, 'PATCH', {
+      libraryIds: [FILMS.id],
+    });
+    await join();
+
+    const heard = await hear();
+
+    expect(heard).toContain('"connection":"tab-1"');
+    expect(heard).toContain('here~tab-1');
+    expect(registry.find(party.id)?.members.map((member) => member.name)).toEqual(['Dan', 'Sam']);
+
+    const along = { pseudonym: 'kai', partyId: party.id, mediaId: title, byName: 'Dan' };
+
+    expect((await films.askAt(hostAtGuest, '/parties/asked', 'POST', along)).status).toBe(204);
+    expect(asked).toHaveBeenCalledWith(guestAtHost, along);
   });
 });

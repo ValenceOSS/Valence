@@ -8,6 +8,7 @@ import type {
   PairRequest,
   ServerIdentity,
 } from '@ValenceContracts/schemas/LinkedServer';
+import type { LinkTokenPerson, LinkTokenSigner } from './LinkTokenPerson';
 
 type InviteRefusal =
   | 'notAnInvite'
@@ -21,6 +22,12 @@ type PairRefusal = 'itself' | 'alreadyLinked' | 'inviteSpent';
 
 type LinkService = {
   identity: () => Promise<LinkIdentity>;
+  readToken: (token: string) => Promise<LinkTokenSigner | null>;
+  signFor: (
+    id: string,
+    person?: LinkTokenPerson,
+  ) => Promise<{ address: string; token: string } | null>;
+  pseudonymFor: (id: string, profileId: string) => Promise<string>;
   publicIdentity: () => Promise<ServerIdentity>;
   changeIdentity: (change: LinkIdentityChange) => Promise<LinkIdentity>;
   linking: () => Promise<Linking>;

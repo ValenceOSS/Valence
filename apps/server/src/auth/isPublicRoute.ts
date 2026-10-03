@@ -1,5 +1,5 @@
 type PublicRoute = {
-  method: 'GET' | 'POST';
+  method: 'GET' | 'POST' | 'DELETE';
   path: RegExp;
 };
 
@@ -17,10 +17,9 @@ const PUBLIC_ROUTES: readonly PublicRoute[] = [
   { method: 'POST', path: /^\/api\/password-reset$/ },
   { method: 'GET', path: /^\/api\/setup-links\/[A-Za-z0-9_-]{32,128}$/ },
   { method: 'POST', path: /^\/api\/setup-links\/[A-Za-z0-9_-]{32,128}$/ },
-  { method: 'GET', path: /^\/api\/federation\/v1\/server$/ },
-  { method: 'POST', path: /^\/api\/federation\/v1\/pair$/ },
-  { method: 'GET', path: /^\/api\/federation\/v1\/pair\/[0-9a-f-]{36}$/ },
-  { method: 'POST', path: /^\/api\/federation\/v1\/unlink$/ },
+  { method: 'GET', path: /^\/api\/federation\/v1\// },
+  { method: 'POST', path: /^\/api\/federation\/v1\// },
+  { method: 'DELETE', path: /^\/api\/federation\/v1\// },
   { method: 'GET', path: /^\/api\/openapi\.json$/ },
   { method: 'GET', path: /^\/api\/reference$/ },
   {
@@ -64,6 +63,10 @@ const FACE_ROUTES: readonly PublicRoute[] = [
  *
  * So is a plugin's webhook, which an outside service calls with no session of anybody's: the
  * address answers only to the secret it holds, which is that install's alone.
+ *
+ * Everything another Valence calls is open too, since the other server has no session here. The
+ * federation gate answers for all of it instead: it refuses whatever it does not name, and believes
+ * a request only as far as a linked server's signature on it.
  *
  * The generated avatars stay open: they are drawn from a style and a seed in the address and say
  * nothing about anybody. So does signing in as a face, which needs the identifier already and is a

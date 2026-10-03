@@ -15,6 +15,7 @@ import {
   useInviteRoute,
   withdrawInviteRoute,
 } from '@ValenceServer/routes/LinkingRoute';
+import { createLinkKeeper } from '@ValenceServer/api/createLinkKeeper';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { InviteRefusal, PairRefusal } from '@ValenceServer/linking/LinkService';
 import type { OpenAPIHono } from '@hono/zod-openapi';
@@ -55,23 +56,9 @@ const tokenOf = (header: string): string => header.slice('Bearer '.length);
  * @param context - What they are answered with.
  */
 const serveLinking = (app: OpenAPIHono, context: AppContext): void => {
-  const { linking, readAccount, requires } = context;
+  const { linking } = context;
 
-  /**
-   * Whether whoever is asking may link this server with others, and the refusal where not.
-   *
-   * @param headers - The request's headers.
-   * @returns Nothing where they may, or what to answer with.
-   */
-  const keeper = async (headers: Headers) => {
-    if ((await readAccount(headers)) === null) {
-      return { body: refuse('error.common.nobodyIsSignedIn'), status: 401 } as const;
-    }
-
-    return (await requires(headers, 'server.links'))
-      ? null
-      : ({ body: refuse('error.linking.thisAccountMayNotLinkServers'), status: 403 } as const);
-  };
+  const keeper = createLinkKeeper(context);
 
   app.openapi(serverRoute, async (context) => context.json(await linking.publicIdentity(), 200));
 

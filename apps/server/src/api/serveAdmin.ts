@@ -354,6 +354,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           profileName: entry.profileName,
           isGuest: entry.viaShare !== null,
           guestOf: entry.guestOf,
+          fromServer: entry.fromServer,
           deviceLabel: entry.deviceLabel,
           clientKind: entry.clientKind ?? 'browser',
           connectedAt: entry.connectedAt,

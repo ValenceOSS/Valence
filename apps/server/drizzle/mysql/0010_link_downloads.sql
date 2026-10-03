@@ -1,0 +1,1 @@
+ALTER TABLE `linked_server` ADD `allowsDownloads` boolean DEFAULT false NOT NULL;

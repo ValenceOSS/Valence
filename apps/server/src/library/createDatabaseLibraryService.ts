@@ -190,6 +190,7 @@ const LIBRARY_COLUMNS = {
   requestProfileId: library.requestProfileId,
   requestPath: library.requestPath,
   requestFulfilment: library.requestFulfilment,
+  linkedServerId: library.linkedServerId,
 };
 
 /**
@@ -1033,6 +1034,7 @@ const createDatabaseLibraryService = ({
         requestProfileId: row.requestProfileId,
         requestPath: row.requestPath,
         fulfilment: row.requestFulfilment,
+        linkedServerId: row.linkedServerId,
       })) satisfies Library[];
     },
 
@@ -1124,6 +1126,7 @@ const createDatabaseLibraryService = ({
         requestProfileId: row.requestProfileId,
         requestPath: row.requestPath,
         fulfilment: row.requestFulfilment,
+        linkedServerId: row.linkedServerId,
       };
     },
 

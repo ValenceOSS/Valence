@@ -164,6 +164,7 @@ const someImportServices = (
           avatar: { kind: 'initial', font: 'gilroy' },
           askStillWatchingAfter: 4,
           showsWhatIamWatching: false,
+          prefersBestCopy: false,
           createdAt: new Date(0).toISOString(),
           updatedAt: new Date(0).toISOString(),
         };

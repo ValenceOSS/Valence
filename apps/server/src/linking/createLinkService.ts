@@ -7,21 +7,24 @@ import {
 import { hashShareToken, makeShareToken } from '@ValenceServer/sharing/shareToken';
 import { createLinkTokenReader } from './createLinkTokenReader';
 import { fingerprintOf } from './fingerprintOf';
+import { makePseudonymSecret } from './makePseudonymSecret';
 import { makeServerKey } from './makeServerKey';
+import { pseudonymOf } from './pseudonymOf';
 import { readLinkInvite } from './readLinkInvite';
 import { signLinkToken } from './signLinkToken';
 import { writeLinkInvite } from './writeLinkInvite';
 import type { LinkIdentity, LinkState, LinkedServer } from '@ValenceContracts/schemas/LinkedServer';
 import type { LinkSettings } from './LinkSettings';
 import type { LinkService } from './LinkService';
-import type { LinkStore, StoredLinkedServer } from './LinkStore';
+import type { LinkStore, NewLinkedServer, StoredLinkedServer } from './LinkStore';
+import type { LinkTokenPerson } from './LinkTokenPerson';
 import type { PeerClient } from './createPeerClient';
 
 const INVITE_LASTS_MS = 24 * 60 * 60 * 1000;
 
 const DEFAULT_COLOUR = PROFILE_COLOURS[3];
 
-const GONE_STATES: readonly LinkState[] = ['refused', 'unlinkedByThem'];
+const GONE_STATES: readonly LinkState[] = ['refused', 'unlinkedByThem', 'unlinked'];
 
 const THEIR_STATE: Record<LinkState, LinkState> = {
   awaitingUs: 'awaitingThem',
@@ -29,6 +32,7 @@ const THEIR_STATE: Record<LinkState, LinkState> = {
   linked: 'linked',
   refused: 'refused',
   unlinkedByThem: 'unlinkedByThem',
+  unlinked: 'unlinkedByThem',
 };
 
 type LinkServiceOptions = {
@@ -68,6 +72,10 @@ const shownOf = (server: StoredLinkedServer): LinkedServer => ({
  * Pairing grants nothing on its own. A link only says two servers know each other's keys and that
  * both admins agreed; what each shares with the other is chosen afterwards.
  *
+ * Unlinking a linked server keeps it, marked unlinked, with everything kept from it, so what people
+ * here watched and rated of it comes back if the two link again — which picks the same record up
+ * rather than starting another. Only forgetting a server that is no longer linked removes it.
+ *
  * @param store - Where linked servers and invites are kept.
  * @param settings - Where this server's key, name, colour and address are kept.
  * @param address - Where this server is reached, until its admin says otherwise.
@@ -87,11 +95,15 @@ const createLinkService = ({
   const keys = async (): Promise<LinkSettings> => {
     const held = await settings.read();
 
-    if (held.publicKey !== '' && held.privateKey !== '') {
+    if (held.publicKey !== '' && held.privateKey !== '' && held.pseudonymSecret !== '') {
       return held;
     }
 
-    const made = { ...held, ...makeServerKey() };
+    const made = {
+      ...held,
+      ...(held.publicKey === '' || held.privateKey === '' ? makeServerKey() : {}),
+      ...(held.pseudonymSecret === '' ? { pseudonymSecret: makePseudonymSecret() } : {}),
+    };
 
     await settings.write(made);
 
@@ -110,6 +122,7 @@ const createLinkService = ({
       protocols: [LINK_PROTOCOL],
       publicKey,
       fingerprint: fingerprintOf(publicKey),
+      dropsRequestsElsewhere: held.dropsRequestsElsewhere,
     };
   };
 
@@ -120,27 +133,46 @@ const createLinkService = ({
     now: () => now().getTime(),
   });
 
-  const tokenFor = async (server: StoredLinkedServer) =>
+  const tokenFor = async (server: StoredLinkedServer, person?: LinkTokenPerson) =>
     signLinkToken({
       from: (await identity()).fingerprint,
       to: server.fingerprint,
       privateKey: (await keys()).privateKey,
+      ...(person === undefined ? {} : { person }),
     });
 
-  const forgetGone = async (fingerprint: string): Promise<'clear' | 'taken'> => {
+  const knownAs = async (fingerprint: string) => {
     const known = await store.readServerByFingerprint(fingerprint);
 
     if (known === null) {
-      return 'clear';
+      return { kind: 'new' } as const;
     }
 
-    if (!GONE_STATES.includes(known.state)) {
-      return 'taken';
+    return GONE_STATES.includes(known.state)
+      ? ({ kind: 'gone', id: known.id } as const)
+      : ({ kind: 'taken' } as const);
+  };
+
+  const keepServer = async (
+    known: Awaited<ReturnType<typeof knownAs>>,
+    server: NewLinkedServer,
+  ): Promise<StoredLinkedServer> => {
+    if (known.kind === 'gone') {
+      const revived = await store.changeServer(known.id, {
+        name: server.name,
+        colour: server.colour,
+        address: server.address,
+        state: server.state,
+        theirPairingId: server.theirPairingId,
+        linkedAt: server.state === 'linked' ? now() : null,
+      });
+
+      if (revived !== null) {
+        return revived;
+      }
     }
 
-    await store.removeServer(known.id);
-
-    return 'clear';
+    return store.addServer(server);
   };
 
   const settle = async (id: string, from: LinkState, to: LinkState) => {
@@ -160,6 +192,19 @@ const createLinkService = ({
 
   return {
     identity,
+
+    readToken,
+
+    signFor: async (id, person) => {
+      const server = await store.readServer(id);
+
+      return server?.state === 'linked'
+        ? { address: server.address, token: await tokenFor(server, person) }
+        : null;
+    },
+
+    pseudonymFor: async (id, profileId) =>
+      pseudonymOf((await keys()).pseudonymSecret, id, profileId),
 
     publicIdentity: async () => {
       const me = await identity();
@@ -181,6 +226,9 @@ const createLinkService = ({
         ...(change.name === undefined ? {} : { name: change.name }),
         ...(change.colour === undefined ? {} : { colour: change.colour }),
         ...(change.address === undefined ? {} : { address: change.address }),
+        ...(change.dropsRequestsElsewhere === undefined
+          ? {}
+          : { dropsRequestsElsewhere: change.dropsRequestsElsewhere }),
       });
 
       return identity();
@@ -221,7 +269,9 @@ const createLinkService = ({
         return { kind: 'refused', why: 'itself' };
       }
 
-      if ((await forgetGone(contents.fingerprint)) === 'taken') {
+      const known = await knownAs(contents.fingerprint);
+
+      if (known.kind === 'taken') {
         return { kind: 'refused', why: 'alreadyLinked' };
       }
 
@@ -255,7 +305,7 @@ const createLinkService = ({
         };
       }
 
-      const added = await store.addServer({
+      const added = await keepServer(known, {
         name: theirs.name,
         colour: theirs.colour,
         address: contents.address,
@@ -316,6 +366,10 @@ const createLinkService = ({
         await peers.tellUnlinked(server.address, await tokenFor(server));
       }
 
+      if (server.state === 'linked') {
+        return (await store.changeServer(id, { state: 'unlinked', linkedAt: null })) !== null;
+      }
+
       return store.removeServer(id);
     },
 
@@ -327,7 +381,9 @@ const createLinkService = ({
         return { kind: 'refused', why: 'itself' };
       }
 
-      if ((await forgetGone(fingerprint)) === 'taken') {
+      const known = await knownAs(fingerprint);
+
+      if (known.kind === 'taken') {
         return { kind: 'refused', why: 'alreadyLinked' };
       }
 
@@ -335,7 +391,7 @@ const createLinkService = ({
         return { kind: 'refused', why: 'inviteSpent' };
       }
 
-      const added = await store.addServer({
+      const added = await keepServer(known, {
         ...request.server,
         fingerprint,
         state: 'awaitingUs',
@@ -350,10 +406,10 @@ const createLinkService = ({
     },
 
     pairingState: async (pairingId, token) => {
-      const from = await readToken(token);
-      const server = from === null ? null : await store.readServer(pairingId);
+      const signer = await readToken(token);
+      const server = signer === null ? null : await store.readServer(pairingId);
 
-      if (server === null || server.fingerprint !== from) {
+      if (server === null || server.fingerprint !== signer?.from) {
         return null;
       }
 
@@ -363,8 +419,8 @@ const createLinkService = ({
     },
 
     hearUnlinked: async (token) => {
-      const from = await readToken(token);
-      const server = from === null ? null : await store.readServerByFingerprint(from);
+      const signer = await readToken(token);
+      const server = signer === null ? null : await store.readServerByFingerprint(signer.from);
 
       if (server === null) {
         return false;

@@ -6,6 +6,8 @@ const LinkSettingsSchema = z.object({
   name: z.string().default(''),
   colour: z.string().default(''),
   address: z.string().default(''),
+  pseudonymSecret: z.string().default(''),
+  dropsRequestsElsewhere: z.boolean().default(false),
 });
 
 const LINK_SETTINGS_DEFAULTS = LinkSettingsSchema.parse({});

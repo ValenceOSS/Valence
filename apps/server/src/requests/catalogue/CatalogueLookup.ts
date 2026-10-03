@@ -9,6 +9,9 @@ type CatalogueLookup = {
   artistsNamed: (nameKeys: readonly string[]) => Promise<ReadonlyMap<string, string>>;
   albumsNamed: (titleKeys: readonly string[]) => Promise<ReadonlyMap<string, string>>;
   booksNamed: (books: readonly NamedBook[]) => Promise<ReadonlyMap<string, string>>;
+  elsewhere: (
+    tmdbIds: readonly string[],
+  ) => Promise<ReadonlyMap<string, { mediaId: string; fromServer: string }>>;
 };
 
 export type { CatalogueLookup, NamedBook };

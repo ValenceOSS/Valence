@@ -29,7 +29,7 @@ describe('createLinkTokenReader', () => {
     const read = filmsReading();
     const token = await signLinkToken({ from: 'anime', to: 'films', privateKey: ANIME.privateKey });
 
-    expect(await read(token)).toBe('anime');
+    expect(await read(token)).toEqual({ from: 'anime', person: null });
     expect(await read(token)).toBeNull();
   });
 
@@ -46,6 +46,22 @@ describe('createLinkTokenReader', () => {
       await read(await signLinkToken({ from: 'music', to: 'films', privateKey: OTHER.privateKey })),
     ).toBeNull();
     expect(await read('not-a-token')).toBeNull();
+  });
+
+  it('says which of the other server’s people a token asks for, by pseudonym and name', async () => {
+    const read = filmsReading();
+    const sign = (person: { pseudonym: string; name: string | null }) =>
+      signLinkToken({ from: 'anime', to: 'films', privateKey: ANIME.privateKey, person });
+
+    expect(await read(await sign({ pseudonym: 'p1', name: 'Sam' }))).toEqual({
+      from: 'anime',
+      person: { pseudonym: 'p1', name: 'Sam' },
+    });
+    expect(await read(await sign({ pseudonym: 'p2', name: null }))).toEqual({
+      from: 'anime',
+      person: { pseudonym: 'p2', name: null },
+    });
+    expect(await read(await sign({ pseudonym: 'p'.repeat(65), name: null }))).toBeNull();
   });
 
   it('refuses a token gone stale', async () => {

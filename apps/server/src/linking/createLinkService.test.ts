@@ -1,98 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { createLinkService } from './createLinkService';
-import { createMemoryLinkStore } from './createMemoryLinkStore';
-import { LINK_SETTINGS_DEFAULTS } from './LinkSettings';
-import type { LinkService } from './LinkService';
-import type { LinkSettings } from './LinkSettings';
-import type { PeerClient } from './createPeerClient';
-
-/**
- * Settings held in memory, as the server's own would be.
- *
- * @returns Where a service keeps its key, name, colour and address.
- */
-const someSettings = () => {
-  let held: LinkSettings = LINK_SETTINGS_DEFAULTS;
-
-  return {
-    read: () => Promise.resolve(held),
-    write: (next: LinkSettings) => {
-      held = next;
-
-      return Promise.resolve();
-    },
-  };
-};
-
-/**
- * A peer client that reaches whichever service answers at an address, without a network.
- *
- * @param at - The services, by their address.
- * @returns The client.
- */
-const reaching = (at: Map<string, LinkService>): PeerClient => ({
-  identityAt: async (address) => (await at.get(address)?.publicIdentity()) ?? null,
-  pair: async (address, request) => {
-    const server = at.get(address);
-
-    if (server === undefined) {
-      return { kind: 'unreachable' };
-    }
-
-    const paired = await server.pair(request);
-
-    return paired.kind === 'paired'
-      ? { kind: 'answered', answer: paired.answer }
-      : { kind: 'refused', code: `error.linking.${paired.why}` };
-  },
-  pairingState: async (address, pairingId, token) => {
-    const server = at.get(address);
-
-    if (server === undefined) {
-      return { kind: 'unreachable' };
-    }
-
-    const answer = await server.pairingState(pairingId, token);
-
-    return answer === null
-      ? { kind: 'refused', code: 'error.linking.notSignedByALinkedServer' }
-      : { kind: 'answered', answer };
-  },
-  tellUnlinked: async (address, token) => (await at.get(address)?.hearUnlinked(token)) ?? false,
-});
-
-/**
- * Two servers that can reach each other: Anime at one address and Films at the other.
- *
- * @returns Both.
- */
-const twoServers = () => {
-  const at = new Map<string, LinkService>();
-  const peers = reaching(at);
-  const anime = createLinkService({
-    store: createMemoryLinkStore(),
-    settings: someSettings(),
-    address: 'https://anime.example',
-    defaultName: 'Anime',
-    peers,
-  });
-  const films = createLinkService({
-    store: createMemoryLinkStore(),
-    settings: someSettings(),
-    address: 'https://films.example',
-    defaultName: 'Films',
-    peers,
-  });
-
-  at.set('https://anime.example', anime);
-  at.set('https://films.example', films);
-
-  return { anime, films, at };
-};
+import { twoLinkingServers } from '@ValenceServer/testing/twoLinkingServers';
 
 describe('createLinkService', () => {
   it('makes a key once, and is known by a fingerprint of it', async () => {
-    const { anime } = twoServers();
+    const { anime } = twoLinkingServers();
     const first = await anime.identity();
     const again = await anime.identity();
 
@@ -103,7 +14,7 @@ describe('createLinkService', () => {
   });
 
   it('links two servers once the invited one’s admin approves', async () => {
-    const { anime, films } = twoServers();
+    const { anime, films } = twoLinkingServers();
     const { invite } = await anime.makeInvite();
 
     const used = await films.useInvite(invite);
@@ -125,14 +36,8 @@ describe('createLinkService', () => {
   });
 
   it('spends an invite once, so a second server cannot use it', async () => {
-    const { anime, films, at } = twoServers();
-    const third = createLinkService({
-      store: createMemoryLinkStore(),
-      settings: someSettings(),
-      address: 'https://music.example',
-      defaultName: 'Music',
-      peers: reaching(at),
-    });
+    const { anime, films, add } = twoLinkingServers();
+    const third = add('https://music.example', 'Music');
     const { invite } = await anime.makeInvite();
 
     await films.useInvite(invite);
@@ -141,7 +46,7 @@ describe('createLinkService', () => {
   });
 
   it('refuses what is not an invite, its own invite, and one whose server has changed its key', async () => {
-    const { anime, films, at } = twoServers();
+    const { anime, films, add } = twoLinkingServers();
 
     expect(await films.useInvite('nonsense')).toEqual({ kind: 'refused', why: 'notAnInvite' });
 
@@ -150,15 +55,8 @@ describe('createLinkService', () => {
     expect(await films.useInvite(own.invite)).toEqual({ kind: 'refused', why: 'itself' });
 
     const { invite } = await anime.makeInvite();
-    const impostor = createLinkService({
-      store: createMemoryLinkStore(),
-      settings: someSettings(),
-      address: 'https://anime.example',
-      defaultName: 'Not anime',
-      peers: reaching(at),
-    });
 
-    at.set('https://anime.example', impostor);
+    add('https://anime.example', 'Not anime');
 
     expect(await films.useInvite(invite)).toEqual({
       kind: 'refused',
@@ -167,7 +65,7 @@ describe('createLinkService', () => {
   });
 
   it('says a server could not be reached', async () => {
-    const { anime, films, at } = twoServers();
+    const { anime, films, at } = twoLinkingServers();
     const { invite } = await anime.makeInvite();
 
     at.delete('https://anime.example');
@@ -176,7 +74,7 @@ describe('createLinkService', () => {
   });
 
   it('will not link twice with the same server', async () => {
-    const { anime, films } = twoServers();
+    const { anime, films } = twoLinkingServers();
 
     await films.useInvite((await anime.makeInvite()).invite);
 
@@ -187,7 +85,7 @@ describe('createLinkService', () => {
   });
 
   it('tells the invited server it was refused', async () => {
-    const { anime, films } = twoServers();
+    const { anime, films } = twoLinkingServers();
     const used = await films.useInvite((await anime.makeInvite()).invite);
 
     await anime.refuse((await anime.linking()).servers[0]?.id ?? '');
@@ -195,20 +93,20 @@ describe('createLinkService', () => {
     expect((await films.check(used.kind === 'used' ? used.server.id : ''))?.state).toBe('refused');
   });
 
-  it('tells the other server on unlinking, which keeps it to show until its admin forgets it', async () => {
-    const { anime, films } = twoServers();
+  it('tells the other server on unlinking, and each keeps it to show until its admin forgets it', async () => {
+    const { anime, films } = twoLinkingServers();
     const used = await films.useInvite((await anime.makeInvite()).invite);
 
     await anime.approve((await anime.linking()).servers[0]?.id ?? '');
     await films.check(used.kind === 'used' ? used.server.id : '');
 
     expect(await films.unlink(used.kind === 'used' ? used.server.id : '')).toBe(true);
-    expect((await films.linking()).servers).toEqual([]);
+    expect((await films.linking()).servers[0]?.state).toBe('unlinked');
     expect((await anime.linking()).servers[0]?.state).toBe('unlinkedByThem');
   });
 
   it('believes nothing a server did not sign, or signed for another', async () => {
-    const { anime, films } = twoServers();
+    const { anime, films } = twoLinkingServers();
     const used = await films.useInvite((await anime.makeInvite()).invite);
     const pairingId = (await anime.linking()).servers[0]?.id ?? '';
 
@@ -218,7 +116,7 @@ describe('createLinkService', () => {
   });
 
   it('withdraws an invite, which then cannot be used', async () => {
-    const { anime, films } = twoServers();
+    const { anime, films } = twoLinkingServers();
     const made = await anime.makeInvite();
 
     expect(await anime.withdrawInvite(made.id)).toBe(true);
@@ -227,7 +125,7 @@ describe('createLinkService', () => {
   });
 
   it('changes its name, colour and address', async () => {
-    const { anime } = twoServers();
+    const { anime } = twoLinkingServers();
 
     const changed = await anime.changeIdentity({
       name: 'Kai’s Valence',
@@ -240,5 +138,22 @@ describe('createLinkService', () => {
       colour: '#e8503a',
       address: 'https://kai.example',
     });
+  });
+
+  it('signs for a linked server, as one of its people where it is asking for one', async () => {
+    const { anime, films, link } = twoLinkingServers();
+    const { filmsAtAnime, animeAtFilms } = await link();
+    const pseudonym = await films.pseudonymFor(animeAtFilms, 'sam');
+    const signed = await films.signFor(animeAtFilms, { pseudonym, name: 'Sam' });
+
+    expect(signed?.address).toBe('https://anime.example');
+    expect(await anime.readToken(signed?.token ?? '')).toEqual({
+      from: (await films.identity()).fingerprint,
+      person: { pseudonym, name: 'Sam' },
+    });
+    expect(await films.pseudonymFor(animeAtFilms, 'sam')).toBe(pseudonym);
+    expect(await films.pseudonymFor(animeAtFilms, 'kai')).not.toBe(pseudonym);
+    expect(await anime.signFor('00000000-0000-4000-8000-000000000000')).toBeNull();
+    expect(filmsAtAnime).not.toBe('');
   });
 });

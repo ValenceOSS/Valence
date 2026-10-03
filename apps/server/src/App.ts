@@ -22,6 +22,7 @@ import { serveLibraryAccess } from '@ValenceServer/api/serveLibraryAccess';
 import { serveAccount } from '@ValenceServer/api/serveAccount';
 import { serveSetupLinks } from '@ValenceServer/api/serveSetupLinks';
 import { serveLinking } from '@ValenceServer/api/serveLinking';
+import { serveLinkSharing } from '@ValenceServer/api/serveLinkSharing';
 import { servePasswordReset } from '@ValenceServer/api/servePasswordReset';
 import { serveRequests } from '@ValenceServer/api/serveRequests';
 import { serveSamples } from '@ValenceServer/api/serveSamples';
@@ -79,6 +80,7 @@ const createApp = (options: CreateAppOptions) => {
   serveLibraryAccess(app, context);
   serveSetupLinks(app, context);
   serveLinking(app, context);
+  serveLinkSharing(app, context);
   serveAccount(app, context);
   servePasswordReset(app, context);
   serveRequests(app, context);
