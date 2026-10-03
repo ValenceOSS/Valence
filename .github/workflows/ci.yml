@@ -3,10 +3,10 @@ name: CI
 # The gate every change goes through, on every push and every pull request, so a branch that cannot
 # merge says so before anybody reviews it.
 #
-# Three stages. Lint needs no build and starts at once. Build compiles every package something else
-# depends on, exactly once, and saves what turbo produced. Typecheck and every test job then restore
-# that and run against it — the `^build` each of their tasks depends on is answered from the cache
-# rather than compiled again, so nothing after the build stage rebuilds anything.
+# Two stages. Build compiles every package something else depends on, exactly once, and saves what
+# turbo produced. Lint, typecheck and every test job then restore that and run against it. The
+# `^build` each of their tasks depends on is answered from the cache rather than compiled again, so
+# nothing after the build stage rebuilds anything.
 #
 # One build job rather than one per package, deliberately. The packages form a chain — contracts,
 # then core, then client, then screens — and a job per link would wait on the link before it, paying
@@ -14,12 +14,16 @@ name: CI
 # package's build is still its own turbo task with its own block in the log; they share a runner
 # because splitting them would cost minutes to save seconds.
 #
-# Tests run one package per runner. Turbo and vitest each size their worker pool to the machine's
-# CPU count, and a GitHub-hosted runner has a handful of cores — every package at once on one box
-# oversubscribes it many times over, which is thrashing rather than parallelism. @valence/screens
-# goes further and is sharded four ways: it is the one package on jsdom rather than plain Node, and
-# its 491 files kept climbing well past where everything else, @valence/server's larger suite
-# included, had finished and stayed flat.
+# The large suites are sharded, each shard on a runner of its own: @valence/screens six ways,
+# @valence/server four and @valence/client three, with @valence/ui as a single shard in the same
+# matrix. The small packages share one runner, two at a time, because each of
+# them spends longer installing than testing and a runner apiece queued the large shards behind
+# them. Two at a time rather than all at once: turbo and vitest each size their worker pool to the
+# machine's CPU count, and every package at once on a handful of cores thrashes.
+#
+# Test results outlive the run. Turbo already caches a passing test task by its inputs, and each
+# test job keeps those results in the Actions cache and restores them next time, so a package or a
+# shard whose code and dependencies have not changed replays its last pass in seconds.
 #
 # Every job after the first sits out the changes that cannot affect it. The first job asks the
 # workspace which packages a pull request touches, counting the packages that depend on them, and
@@ -56,8 +60,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       code: ${{ steps.what.outputs.code }}
-      packages: ${{ steps.what.outputs.packages }}
-      screens: ${{ steps.what.outputs.screens }}
+      light: ${{ steps.what.outputs.light }}
+      shards: ${{ steps.what.outputs.shards }}
       rust: ${{ steps.what.outputs.rust }}
       native: ${{ steps.what.outputs.native }}
     steps:
@@ -77,84 +81,66 @@ jobs:
           if [ "$EVENT" != "pull_request" ]; then
             {
               echo 'code=true'
-              echo "packages=$testable"
-              echo 'screens=true'
               echo 'rust=true'
               echo 'native=true'
             } >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          git fetch --no-tags origin "$BASE"
-
-          affected=$(pnpm ls --filter "...[origin/$BASE]" --depth -1 --json \
-            --changed-files-ignore-pattern='**/*.md' \
-            --changed-files-ignore-pattern='.github/workflows/dev-image.yml' \
-            --changed-files-ignore-pattern='.github/workflows/nightly-image.yml' \
-            --changed-files-ignore-pattern='.github/workflows/prune-images.yml' \
-            --changed-files-ignore-pattern='.github/workflows/media-pipeline.yml' \
-            --changed-files-ignore-pattern='.github/workflows/desktop.yml' \
-            --changed-files-ignore-pattern='.github/workflows/release.yml' \
-            --changed-files-ignore-pattern='.github/workflows/release-please.yml' \
-            --changed-files-ignore-pattern='release-please-config.json' \
-            --changed-files-ignore-pattern='.release-please-manifest.json' \
-            | jq -r '.[].name')
-          echo "$affected"
-
-          if echo "$affected" | grep -qx 'valence'; then
-            {
-              echo 'code=true'
-              echo "packages=$testable"
-              echo 'screens=true'
-            } >> "$GITHUB_OUTPUT"
+            packages="$testable"
+            screens=true
           else
-            if echo "$affected" | grep -vx '@valence/transcoder' | grep -q .; then
+            git fetch --no-tags origin "$BASE"
+
+            affected=$(pnpm ls --filter "...[origin/$BASE]" --depth -1 --json \
+              --changed-files-ignore-pattern='**/*.md' \
+              --changed-files-ignore-pattern='.github/workflows/dev-image.yml' \
+              --changed-files-ignore-pattern='.github/workflows/nightly-image.yml' \
+              --changed-files-ignore-pattern='.github/workflows/prune-images.yml' \
+              --changed-files-ignore-pattern='.github/workflows/media-pipeline.yml' \
+              --changed-files-ignore-pattern='.github/workflows/desktop.yml' \
+              --changed-files-ignore-pattern='.github/workflows/release.yml' \
+              --changed-files-ignore-pattern='.github/workflows/release-please.yml' \
+              --changed-files-ignore-pattern='release-please-config.json' \
+              --changed-files-ignore-pattern='.release-please-manifest.json' \
+              | jq -r '.[].name')
+            echo "$affected"
+
+            if echo "$affected" | grep -qx 'valence'; then
               echo 'code=true' >> "$GITHUB_OUTPUT"
+              packages="$testable"
+              screens=true
             else
-              echo 'code=false' >> "$GITHUB_OUTPUT"
+              if echo "$affected" | grep -vx '@valence/transcoder' | grep -q .; then
+                echo 'code=true' >> "$GITHUB_OUTPUT"
+              else
+                echo 'code=false' >> "$GITHUB_OUTPUT"
+              fi
+              packages=$(echo "$affected" | jq -R . | jq -sc --argjson testable "$testable" '[.[] | select(. as $name | $testable | index($name))]')
+              screens=$(echo "$affected" | grep -qx '@valence/screens' && echo true || echo false)
             fi
-            echo "packages=$(echo "$affected" | jq -R . | jq -sc --argjson testable "$testable" '[.[] | select(. as $name | $testable | index($name))]')" >> "$GITHUB_OUTPUT"
-            echo "screens=$(echo "$affected" | grep -qx '@valence/screens' && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+            changed=$(git diff --name-only "origin/$BASE...HEAD")
+
+            if echo "$changed" | grep -qE '^(apps/transcoder/|apps/desktop/native/|Cargo\.(toml|lock)$|\.github/workflows/ci\.yml$)'; then
+              echo 'rust=true' >> "$GITHUB_OUTPUT"
+            else
+              echo 'rust=false' >> "$GITHUB_OUTPUT"
+            fi
+
+            if echo "$changed" | grep -qE '^(apps/desktop/native/|Cargo\.(toml|lock)$|\.github/workflows/ci\.yml$)'; then
+              echo 'native=true' >> "$GITHUB_OUTPUT"
+            else
+              echo 'native=false' >> "$GITHUB_OUTPUT"
+            fi
           fi
 
-          changed=$(git diff --name-only "origin/$BASE...HEAD")
-
-          if echo "$changed" | grep -qE '^(apps/transcoder/|apps/desktop/native/|Cargo\.(toml|lock)$|\.github/workflows/ci\.yml$)'; then
-            echo 'rust=true' >> "$GITHUB_OUTPUT"
-          else
-            echo 'rust=false' >> "$GITHUB_OUTPUT"
-          fi
-
-          if echo "$changed" | grep -qE '^(apps/desktop/native/|Cargo\.(toml|lock)$|\.github/workflows/ci\.yml$)'; then
-            echo 'native=true' >> "$GITHUB_OUTPUT"
-          else
-            echo 'native=false' >> "$GITHUB_OUTPUT"
-          fi
-
-  lint:
-    name: Lint and migration check
-    needs: changes
-    if: needs.changes.outputs.code == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: pnpm/action-setup@v6
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
-
-      - run: pnpm lint
-
-      - run: pnpm format:check
-
-      # A hand-written migration with no snapshot beside it leaves generation silent and recreating
-      # tables that already exist. See VAL-193.
-      - run: pnpm db:check
+          # The large suites, each split into the shards its size calls for, and the rest for the
+          # one runner the small packages share.
+          sharded='{"@valence/server":4,"@valence/client":3,"@valence/ui":1}'
+          {
+            echo "light=$(echo "$packages" | jq -c --argjson sharded "$sharded" '[.[] | select(. as $name | $sharded | has($name) | not)]')"
+            echo "shards=$(echo "$packages" | jq -c --argjson sharded "$sharded" --arg screens "$screens" '
+              [ (.[] | select(. as $name | $sharded | has($name)) | . as $name | range(1; $sharded[$name] + 1) | {package: $name, shard: ., of: $sharded[$name]}),
+                (if $screens == "true" then range(1; 7) | {package: "@valence/screens", shard: ., of: 6} else empty end) ]')"
+          } >> "$GITHUB_OUTPUT"
 
   build:
     name: Build shared packages
@@ -194,8 +180,10 @@ jobs:
           path: .turbo/cache
           key: turbo-build-${{ github.sha }}
 
+  # Lint and typecheck share a runner. Lint needs no build and could start sooner, but a runner of
+  # its own held a slot through the minute the test shards all want one at once.
   typecheck:
-    name: Typecheck
+    name: Lint, typecheck and migration check
     needs: [changes, build]
     runs-on: ubuntu-latest
     steps:
@@ -215,18 +203,25 @@ jobs:
           path: .turbo/cache
           key: turbo-build-${{ github.sha }}
           fail-on-cache-miss: true
+
+      - run: pnpm lint
+
+      - run: pnpm format:check
+
+      # A hand-written migration with no snapshot beside it leaves generation silent and recreating
+      # tables that already exist. See VAL-193.
+      - run: pnpm db:check
 
       - run: pnpm typecheck
 
+  # Every small package on one runner, two at a time.
   test:
-    name: Test ${{ matrix.package }}
+    name: Test the smaller packages
     needs: [changes, build]
-    if: needs.changes.outputs.packages != '[]'
+    if: needs.changes.outputs.light != '[]'
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        package: ${{ fromJSON(needs.changes.outputs.packages) }}
+    env:
+      PACKAGES: ${{ needs.changes.outputs.light }}
     steps:
       - uses: actions/checkout@v7
 
@@ -245,105 +240,84 @@ jobs:
           key: turbo-build-${{ github.sha }}
           fail-on-cache-miss: true
 
-      - run: pnpm turbo run test --filter=${{ matrix.package }}
-
-  test-screens:
-    name: Test @valence/screens (shard ${{ matrix.shard }} of 4)
-    needs: [changes, build]
-    if: needs.changes.outputs.screens == 'true'
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2, 3, 4]
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: pnpm/action-setup@v6
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
-
       - uses: actions/cache/restore@v4
         with:
-          path: .turbo/cache
-          key: turbo-build-${{ github.sha }}
-          fail-on-cache-miss: true
+          path: .turbo/test-results
+          key: turbo-tests-light-${{ github.sha }}
+          restore-keys: turbo-tests-light-
 
-      # In two steps rather than `turbo run test -- --shard=…`. Turbo folds pass-through arguments
-      # into its hash, so a test run carrying a shard argument never matches what the build job
-      # cached and rebuilt every dependency itself. Restoring the builds through turbo with no extra
-      # arguments answers every one of them from the cache; vitest then takes the shard directly.
-      - run: pnpm turbo run build --filter=@valence/screens
+      - run: cp -n .turbo/test-results/* .turbo/cache/ 2>/dev/null || true
 
-      - run: pnpm --filter @valence/screens exec vitest run --shard=${{ matrix.shard }}/4
+      - run: pnpm turbo run test --concurrency=2 $(echo "$PACKAGES" | jq -r '.[] | "--filter=" + .')
 
-  # Every test that opens a database of its own, run again on each MySQL-family engine Valence
-  # supports. The ordinary test jobs already run them on Postgres, in memory. The engine is started
-  # by hand rather than as a service container because a service cannot be given the arguments that
-  # set the server's collation, and Valence needs the binary, no-pad one each engine names
-  # differently. The scratch databases the tests make live on tmpfs and go with the runner.
-  test-engines:
-    name: Test on ${{ matrix.engine.image }}
-    needs: [changes, build]
-    if: >-
-      contains(needs.changes.outputs.packages, '@valence/server') ||
-      contains(needs.changes.outputs.packages, '@valence/requests') ||
-      contains(needs.changes.outputs.packages, '@valence/database')
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        engine:
-          - image: mysql:8.4
-            collation: utf8mb4_0900_bin
-            ready: mysqladmin ping -h 127.0.0.1 -uroot -pvalence
-          - image: mariadb:10.6
-            collation: utf8mb4_nopad_bin
-            ready: healthcheck.sh --connect --innodb_initialized
-          - image: mariadb:11.4
-            collation: utf8mb4_nopad_bin
-            ready: healthcheck.sh --connect --innodb_initialized
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: pnpm/action-setup@v6
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
-
-      - uses: actions/cache/restore@v4
-        with:
-          path: .turbo/cache
-          key: turbo-build-${{ github.sha }}
-          fail-on-cache-miss: true
-
-      - run: pnpm turbo run build --filter=@valence/server --filter=@valence/requests
-
-      - name: Start ${{ matrix.engine.image }}
+      # Only this job's own test results are kept, by the hashes turbo gave them, rather than the
+      # whole cache with every build in it.
+      - name: Keep the test results
         run: |
-          docker run -d --name engine -p 3306:3306 --tmpfs /var/lib/mysql \
-            -e MYSQL_ROOT_PASSWORD=valence -e MARIADB_ROOT_PASSWORD=valence \
-            "${{ matrix.engine.image }}" \
-            --character-set-server=utf8mb4 --collation-server=${{ matrix.engine.collation }}
-          for _ in $(seq 1 60); do
-            if docker exec engine ${{ matrix.engine.ready }} > /dev/null 2>&1; then exit 0; fi
-            sleep 2
+          rm -rf .turbo/test-results && mkdir -p .turbo/test-results
+          for hash in $(pnpm turbo run test $(echo "$PACKAGES" | jq -r '.[] | "--filter=" + .') --dry=json | jq -r '.tasks[] | select(.task == "test") | .hash'); do
+            cp .turbo/cache/"$hash"* .turbo/test-results/ 2>/dev/null || true
           done
-          docker logs engine
-          exit 1
 
-      - run: pnpm --filter @valence/database exec vitest run --config vitest.mysql.config.ts
-        env:
-          MYSQL_TEST_URL: mysql://root:valence@127.0.0.1:3306
+      - uses: actions/cache/save@v4
+        with:
+          path: .turbo/test-results
+          key: turbo-tests-light-${{ github.sha }}
+
+  # Each shard is its own turbo task, told which shard it is through VITEST_SHARD, which turbo
+  # folds into that task's hash alone. Passing the shard as an argument instead put it into the
+  # hash of every build the test depended on, and each runner rebuilt them all rather than taking
+  # them from the build job's cache.
+  test-shards:
+    name: Test ${{ matrix.package }} (${{ matrix.shard }} of ${{ matrix.of }})
+    needs: [changes, build]
+    if: needs.changes.outputs.shards != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.changes.outputs.shards) }}
+    env:
+      VITEST_SHARD: ${{ matrix.shard }}/${{ matrix.of }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: actions/cache/restore@v4
+        with:
+          path: .turbo/cache
+          key: turbo-build-${{ github.sha }}
+          fail-on-cache-miss: true
+
+      - uses: actions/cache/restore@v4
+        with:
+          path: .turbo/test-results
+          key: turbo-tests-${{ matrix.package }}-${{ matrix.shard }}-of-${{ matrix.of }}-${{ github.sha }}
+          restore-keys: turbo-tests-${{ matrix.package }}-${{ matrix.shard }}-of-${{ matrix.of }}-
+
+      - run: cp -n .turbo/test-results/* .turbo/cache/ 2>/dev/null || true
+
+      - run: pnpm turbo run test:shard --filter=${{ matrix.package }}
+
+      - name: Keep the test results
+        run: |
+          rm -rf .turbo/test-results && mkdir -p .turbo/test-results
+          for hash in $(pnpm turbo run test:shard --filter=${{ matrix.package }} --dry=json | jq -r '.tasks[] | select(.task == "test:shard") | .hash'); do
+            cp .turbo/cache/"$hash"* .turbo/test-results/ 2>/dev/null || true
+          done
+
+      - uses: actions/cache/save@v4
+        with:
+          path: .turbo/test-results
+          key: turbo-tests-${{ matrix.package }}-${{ matrix.shard }}-of-${{ matrix.of }}-${{ github.sha }}
 
   rust:
     name: Rust format, lint and test
@@ -353,43 +327,15 @@ jobs:
     # Read only, since cargo runs build scripts from every crate it builds and nothing here writes.
     permissions:
       contents: read
-    # On pull requests as well, which it did not used to be. The case for skipping them was that the
-    # pre-push hook has already run cargo clippy and cargo test on the machine the change was
-    # written on — which is true, and the machine is exactly the problem. A test reading a child's
-    # niceness through `ps` passed on every developer's macOS and failed here, where the image
-    # carries no procps, and nothing anybody could run locally would have said otherwise. The break
-    # then sat on main until somebody looked, because after the merge is the first time anything
-    # ran it.
+    # On the pull requests that touch Rust, and on every push to main. A test reading a child's
+    # niceness through `ps` once passed on every developer's macOS and failed only here, so the unit
+    # tests are worth running somewhere other than the machine they were written on.
     #
-    # On the pull requests that touch it, though, rather than on all of them. Pulling a Debian image
-    # and building the crate is minutes, and a change with no Rust in it cannot break Rust — a stack
-    # of web pull requests paid for that over and over and learnt nothing from any of it. A push to
-    # main runs it regardless, so what releases are cut from is still known to be good.
-
-    # In Debian, against the FFmpeg Valence ships, because these tests decode rather than merely
-    # calling something that does. One of them scribbles over the middle of a clip and requires the
-    # decoder to notice; Ubuntu's 6.1.1 decodes the damage without complaint and the test fails,
-    # which says nothing about Valence and everything about which FFmpeg was asked. Testing the
-    # transcoder against a build that ships to nobody answers a question nobody has.
-    #
-    # The shipped build is packaged for Debian and wants libraries Ubuntu noble does not carry, so
-    # the container is what makes running the real thing possible at all.
-    container:
-      image: debian:bookworm-slim
-    env:
-      VALENCE_FFMPEG_VERSION: 8.1.2-5.4
-      VALENCE_FFMPEG_SUITE: bookworm
-      VALENCE_FFMPEG: /usr/lib/valence-ffmpeg/ffmpeg
-      VALENCE_FFPROBE: /usr/lib/valence-ffmpeg/ffprobe
+    # The suites that drive a real FFmpeg do not run here. They took nine of this job's ten minutes,
+    # most of it encoding fixtures, and they need a Debian container with the FFmpeg Valence ships.
+    # They run in media-pipeline.yml instead, by hand before a release and once a week, and in the
+    # pre-push hook. What is left needs no FFmpeg at all, as the Windows job below already shows.
     steps:
-      # Nothing is in a slim image, including what checkout needs to clone with. The corpus tools
-      # are deliberately absent: cargo test shells out to FFmpeg and nothing else.
-      - name: Everything the image does not carry
-        run: |
-          apt-get update
-          apt-get install -y --no-install-recommends \
-            ca-certificates curl git xz-utils build-essential pkg-config
-
       # Nothing here pushes, and cargo runs build scripts from every crate in the workspace, so the
       # token is not left behind in the checkout for them to find.
       - uses: actions/checkout@v7
@@ -402,26 +348,13 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      # Before FFmpeg is fetched, so a formatting slip is not made to wait on a download.
       - run: cargo fmt --all --check
 
       - run: cargo clippy --all-targets -- -D warnings
 
-      - name: Install the FFmpeg Valence ships
-        run: |
-          curl -fsSL -o /tmp/valence-ffmpeg.deb \
-            "https://github.com/ValenceOSS/valence-ffmpeg/releases/download/v${VALENCE_FFMPEG_VERSION}/valence-ffmpeg_${VALENCE_FFMPEG_VERSION}-${VALENCE_FFMPEG_SUITE}_amd64.deb"
-          apt-get install -y --no-install-recommends /tmp/valence-ffmpeg.deb
-          "$VALENCE_FFMPEG" -version | head -1
-          # On the path as well as in the variables. The package installs beside the system's own
-          # FFmpeg rather than as it, and a slim image has none, so a test reaching for the bare
-          # name finds nothing.
-          ln -sf "$VALENCE_FFMPEG" /usr/local/bin/ffmpeg
-          ln -sf "$VALENCE_FFPROBE" /usr/local/bin/ffprobe
+      - run: cargo test --workspace --lib --bins
 
-      # The corpus is deliberately not generated here. The suites that need one look for it and skip
-      # when it is absent, and building it is the three minutes that belongs in media-pipeline.yml.
-      - run: cargo test
+      - run: cargo test -p valence-transcoder --test path_map_requests
 
   # The transcoder also runs natively on Windows, where it reaches the GPU through Direct3D 11 rather
   # than through /dev/dri (VAL-338). The Linux job cannot see a Windows-only compile error, a path

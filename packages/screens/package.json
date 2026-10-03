@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc --build",
     "test": "vitest run",
+    "test:shard": "vitest run --shard=$VITEST_SHARD",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
