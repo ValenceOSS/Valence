@@ -66,7 +66,7 @@ Libraries are filed into at the path Valence has for them, so the requests servi
 
 The requests service starts as root only long enough to become the user and group in `PUID` and `PGID`, `1000` each unless you set them, and runs as that from then on. So everything it files belongs to that user, and the browser it opens on indexers' pages has no more power than it does. Set them to the owner of your media folders, which is usually the same ids your download client runs as.
 
-Before this, the service ran as root, so folders and files it made before belong to root. If a request waits at **Filing** because the service [may not write to a folder](#it-may-not-write-to-a-folder), that section gives the steps.
+Before this, the service ran as root, so folders and files it made before belong to root. If a request waits at **Importing** because the service [may not write to a folder](#it-may-not-write-to-a-folder), that section gives the steps.
 
 ## Indexers
 
@@ -128,7 +128,7 @@ A client the admin area says [cannot be reached](#a-download-client-cannot-be-re
 
 ### Paths must line up
 
-Point each category's folder somewhere under `DOWNLOADS_PATH`. Where the client and the requests service see that folder by different names, for example the client mounting it at `/downloads` and the requests service somewhere else, tell the client's dialog both, under **Where it saves downloads**, so a finished download can be found.
+Point each category's folder somewhere under `DOWNLOADS_PATH`. Where the client and the requests service see that folder by different names, for example the client mounting it at `/downloads` and the requests service somewhere else, tell the client's dialog both, under **Download folder**, so a finished download can be found.
 
 ### Hard links
 
@@ -152,7 +152,7 @@ Press **Connect an app**, choose which it is, and give:
 
 ### Handing a library to an app
 
-A library's settings, on the **Libraries** page, have **Who fetches what is asked for**. **Valence** is how requesting has always worked. Choosing a connected app of the library's kind, Radarr for films, Sonarr for series and Lidarr for music, hands its requests over completely. Books are always Valence's own.
+A library's settings, on the **Libraries** page, have **Download requests with**. **Valence** is how requesting has always worked. Choosing a connected app of the library's kind, Radarr for films, Sonarr for series and Lidarr for music, hands its requests over completely. Books are always Valence's own.
 
 With an app chosen, also choose its **root folder**, its **quality profile**, for Lidarr its **metadata profile**, and whether it should **search as soon as it is added**. These are read from the app itself.
 
@@ -169,7 +169,7 @@ The series a request names is found in Sonarr by the TVDB id the catalogue gives
 
 ### Paths for connected apps
 
-Valence reads what the app imported, so the app's root folder must be inside the library's folder as Valence sees it. Where the app mounts that folder somewhere else, for example Radarr at `/movies` and Valence at `/media/Films`, give both in the app's dialog under **Where its library is**, and Valence maps the app's paths onto its own.
+Valence reads what the app imported, so the app's root folder must be inside the library's folder as Valence sees it. Where the app mounts that folder somewhere else, for example Radarr at `/movies` and Valence at `/media/Films`, give both in the app's dialog under **Library path**, and Valence maps the app's paths onto its own.
 
 Anything that reaches the library some other way, a file an app imported while Valence was not looking, something you copied there by hand, or a library brought over from another server, is matched too: whenever a library is scanned, anything requested that is now in it, a film or series by its catalogue id, an episode by its season and number, an album by its release group, is marked available.
 
@@ -259,7 +259,7 @@ Films and series come from the catalogue, which needs `CATALOGUE_API_KEY`. Music
 - Approving opens the request first, so its profile, library, and the seasons or record kinds it watches can be changed. Several waiting requests can be approved, or refused with one reason between them.
 - A refusal's reason is shown to whoever asked, on their own requests page.
 
-After approval, everything wanted is searched for at once. A request that finds nothing acceptable stays **wanted**, and is searched for again every six hours and on demand with **Search for what is missing**. The indexers' newest releases are read every quarter of an hour. A download that fails, or runs into trouble the **Rules** tab of **Downloads** gives up on (by default, no metadata after an hour, stalled for six hours, or on course to take more than a week), blocklists that release and the next best is fetched straight away. Anything a request gave up on is listed under **Never again**, and can be let back.
+After approval, everything wanted is searched for at once. A request that finds nothing acceptable stays **wanted**, and is searched for again every six hours and on demand with **Search for what is missing**. The indexers' newest releases are read every quarter of an hour. A download that fails, or runs into trouble the **Rules** tab of **Downloads** gives up on (by default, no metadata after an hour, stalled for six hours, or on course to take more than a week), blocklists that release and the next best is fetched straight away. Anything a request gave up on is listed under **Blocklist**, and can be let back.
 
 For how requesters see it, read [Requests](/use/requests). The `requests.made`, `requests.approved`, `requests.refused`, `requests.chosen`, `requests.filed`, `requests.available`, `requests.downloadStarted` and `requests.downloadFailed` webhooks follow a request along. See [Notifications and webhooks](/use/notifications-and-webhooks).
 
@@ -325,7 +325,7 @@ The steps below run `docker compose up -d` with the profiles in `COMPOSE_PROFILE
 
 ### It may not write to a folder
 
-The requests service runs as the user and group in `PUID` and `PGID`, and that user may not write to the library folder named in the message. The request waits at **Filing** and is filed once this is put right.
+The requests service runs as the user and group in `PUID` and `PGID`, and that user may not write to the library folder named in the message. The request waits at **Importing** and is filed once this is put right.
 
 1. Find who owns your media folder: `ls -ldn /path/to/media` shows its owner's user and group ids.
 2. Set `PUID` and `PGID` to those ids, or to `0` to run as root, and run `docker compose up -d`.
@@ -336,7 +336,7 @@ The requests service runs as the user and group in `PUID` and `PGID`, and that u
 The download client and the requests service see the download folder under different names.
 
 1. Open the client on the admin area's **Downloads** page.
-2. Under **Where it saves downloads**, give the folder as the client sees it, such as `/downloads`, and as the requests service sees it.
+2. Under **Download folder**, give the folder as the client sees it, such as `/downloads`, and as the requests service sees it.
 3. Check the client's category folders sit under `DOWNLOADS_PATH`.
 
 ### A download client cannot be reached

@@ -27,10 +27,10 @@ Which tab is open is kept in the address, so you can link straight to any of the
 
 1. Find a title on a shelf, or browse Movies, Shows, Music or Books.
 2. Open it. The dialog shows the poster, facts, cast and, for an artist, their albums.
-3. Choose **Request**. For an artist the button reads **Watch this artist**.
+3. Choose **Request**. For an artist the button reads **Request this artist**.
 4. For a series you can choose which seasons you want; leaving it alone asks for every season. For an artist you can choose which kinds of release to watch (albums, EPs, singles, live records and compilations).
 
-A title that is already in your library shows an **In your library** badge and an **Open** button instead. A title someone has already asked for shows where it stands (**Requested**, **Waiting for approval**, **Downloading**, **Arriving**, **Refused** or **Stuck**), so nobody asks twice.
+A title that is already in your library shows an **In your library** badge and an **Open** button instead. A title someone has already asked for shows where it stands (**Requested**, **Waiting for approval**, **Downloading**, **Downloading**, **Declined** or **Stalled**), so nobody asks twice.
 
 You need `requests.ask` to request films, series and books, and `requests.askMusic` to request artists and albums. Both are part of the default Member role.
 
@@ -100,7 +100,7 @@ The Overview panel checks that the requests service is answering, shows which ve
 Open **Requested** to see everything asked for, filtered by kind and by where it stands, or searched by title or by who asked.
 
 - **Approve** opens a dialog where you may change the **Quality** profile the release is judged by, and the **Library** it is filed into, before the search begins.
-- **Refuse** takes an optional reason, shown to whoever asked. Nothing is fetched, and the request can be approved later.
+- **Decline** takes an optional reason, shown to whoever asked. Nothing is fetched, and the request can be approved later.
 - Tick several requests waiting on approval to approve or refuse them together. A reason on a bulk refusal is shown to everybody who asked for one of them.
 
 Approving and refusing need `requests.approve`. Seeing everybody's requests needs `requests.viewAll` (or approve or manage). Without one of those, a person sees only their own.
@@ -121,10 +121,10 @@ Each row has an actions menu.
 
 The request detail dialog holds four tabs:
 
-- **How it is going** shows the current downloads with pause and resume.
+- **Progress** shows the current downloads with pause and resume.
 - **Releases** lists every release the indexers offered and how each was judged.
-- **What it has done** is the request's log, for finding out why something happened.
-- **Never again** is the **blocklist**: releases that failed for this request and will not be tried again. Remove an entry to allow it.
+- **History** is the request's log, for finding out why something happened.
+- **Blocklist** is the **blocklist**: releases that failed for this request and will not be tried again. Remove an entry to allow it.
 
 ### Refetch media
 
@@ -134,7 +134,7 @@ If a download fails, or runs into trouble that the **Rules** tab of the **Downlo
 
 ### Releases, quality profiles and libraries
 
-A **quality profile** decides which releases are acceptable: which resolutions and sources, how big they should be, and when a film counts as released. Profiles are managed on the **Profiles** panel and need `requests.manage`. Each library says whether it **Takes requests**, which profile its requests are judged by (by default, whichever profile names that library) and where requests are filed (by default, the library's own folder). See [Libraries](/use/libraries).
+A **quality profile** decides which releases are acceptable: which resolutions and sources, how big they should be, and when a film counts as released. Profiles are managed on the **Profiles** panel and need `requests.manage`. Each library says whether it **Accept requests**, which profile its requests are judged by (by default, whichever profile names that library) and where requests are filed (by default, the library's own folder). See [Libraries](/use/libraries).
 
 For music requests, the **Settings** panel has an option for what a request for an artist watches by default: which of an artist's records are fetched when the person asking did not say. It defaults to albums.
 
@@ -145,7 +145,7 @@ An indexer is a site Valence can search for releases. The **Indexers** panel sho
 - Add one from the catalogue of supported sites, or add a Torznab or Newznab indexer directly.
 - **Test** checks a kept indexer and reads what it can search again. You can also try an indexer before keeping it.
 - **Test all**, in the panel's corner, tests every indexer that is on, and every one Valence turned off for failing, then says which did not answer and why. It leaves alone the ones you switched off.
-- **Switch off** and **Switch on** take an indexer out of and back into rotation. **Remove** forgets it and its key.
+- **Disable** and **Enable** take an indexer out of and back into rotation. **Remove** forgets it and its key.
 
 The **Search** panel searches every enabled indexer at once, by title, mode (anything, films, series, music, books), season and episode. From a result you can send it to a download client, copy the magnet link or save the torrent or NZB file.
 

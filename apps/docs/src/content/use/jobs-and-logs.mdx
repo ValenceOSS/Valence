@@ -14,7 +14,7 @@ Open the admin area and choose **Jobs & logs** under **Activity**.
 
 The header shows how many jobs are running and waiting, and how many job runs failed in the last 24 hours. Click that count to list them. The warning at the top of the admin area counts the same failures, and clicking it opens the same list. Beside it are two controls for the whole queue.
 
-- **Jobs at once** is a slider from 1 to 16. More jobs at once finishes background work sooner and takes more of the machine while it does. Lowering it lets whatever is running finish first.
+- **Concurrent jobs** is a slider from 1 to 16. More jobs at once finishes background work sooner and takes more of the machine while it does. Lowering it lets whatever is running finish first.
 - **Pause** stops the queue picking up new work. A **Paused** badge appears while it is paused, and the button becomes **Resume**. Jobs already running finish; nothing new starts until you resume.
 
 Below sit four tabs.
@@ -75,7 +75,7 @@ The two request jobs are offered only when requesting is turned on. Webhook deli
 1. Open **Run & schedule**.
 2. Find the job. The table shows its label, its scope (a library or the whole server) and its state.
 3. Open its actions menu and choose **Run now**.
-4. For a library job, choose which libraries to run it on. For **Clear and fetch again**, also choose which parts to erase.
+4. For a library job, choose which libraries to run it on. For **Clear and refresh**, also choose which parts to erase.
 5. Confirm. Valence describes what the job does and says the action cannot be undone.
 
 The job's progress appears in the same row, with a phase and a count, and you can open a dialog to follow each item as it goes. Jobs that can take long, such as previews and segment detection, announce when they finish.
@@ -91,7 +91,7 @@ The job's progress appears in the same row, with a phase and a count, and you ca
 
 ### Stopping a job
 
-For a running job, the actions menu offers **Stop it**. What it has done so far is kept, and the rest is left undone until it is run again. A job that is only queued can be stopped the same way.
+For a running job, the actions menu offers **Stop job**. What it has done so far is kept, and the rest is left undone until it is run again. A job that is only queued can be stopped the same way.
 
 Stopping a job that makes previews or scrub images also stops the renders it had already handed to the media service, straight away. A half-made clip or sheet is thrown away rather than kept, and that file is made again the next time the job runs. A scan still starts these jobs when it finishes, so work you stop picks up again after the next scan.
 

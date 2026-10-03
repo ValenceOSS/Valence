@@ -97,7 +97,7 @@ On by default. The way in draws the household's faces so somebody signs in by pi
 
 ### Picture behind the way in
 
-An optional background drawn behind the faces on the sign in screen, with the colour of whoever is chosen washing over it. It only shows while **Show who lives here** is on, because only somebody allowed to see the faces sees it. Accepted types are JPEG, PNG, WebP, AVIF and GIF, up to 16 MB. Use the file picker to upload one and the remove action to take it away. Toasts read "Splashscreen removed." when you remove it.
+An optional background drawn behind the faces on the sign in screen, with the colour of whoever is chosen washing over it. It only shows while **Show profiles on sign-in** is on, because only somebody allowed to see the faces sees it. Accepted types are JPEG, PNG, WebP, AVIF and GIF, up to 16 MB. Use the file picker to upload one and the remove action to take it away. Toasts read "Splashscreen removed." when you remove it.
 
 ## Metadata and outside lookups
 
@@ -158,7 +158,7 @@ Re-encoding converts a media file into a smaller or more compatible one. It is t
 
 ### Starting one
 
-1. Open the **Media** panel, open the row menu on a title and choose **Re-encode**. Or open **Encoding** and press **Re-encode something**.
+1. Open the **Media** panel, open the row menu on a title and choose **Re-encode**. Or open **Encoding** and press **Re-encode a title**.
 2. Filter by library, search by title or set a minimum size in GB, then tick the files.
 3. Choose what to do.
 4. Read the estimate. Nothing starts until you press the button at the bottom, and a final confirmation repeats what will happen.
@@ -171,9 +171,9 @@ Re-encoding converts a media file into a smaller or more compatible one. It is t
 
 For Replace and Keep alongside you also choose a quality step (from 144p up to 4K, with a maximum bitrate for each) and a codec (H.264, HEVC or AV1). The **Compress the lossless audio too** option shrinks a TrueHD or DTS-HD track, which is often a large share of a remux, and narrows 7.1 to 5.1.
 
-Keep alongside also asks three more things. **Container format** keeps the original's container, or makes the copy an MP4 or an MKV; an MP4 copy leaves out subtitles, chapters and any audio an MP4 cannot hold is compressed, while the original keeps them all. **Where it is kept** is Valence's own `.valence` folder at the top of the library, or beside the original under a readable name such as `Arrival (2016) - 1080p H264.valence.mp4`. **Bitrate ceiling** holds the copy to fewer kilobits a second than the quality step allows. To make copies of a whole library automatically, overnight, use [Pre-transcoding](/use/pre-transcoding).
+Keep alongside also asks three more things. **Container format** keeps the original's container, or makes the copy an MP4 or an MKV; an MP4 copy leaves out subtitles, chapters and any audio an MP4 cannot hold is compressed, while the original keeps them all. **Save copy to** is Valence's own `.valence` folder at the top of the library, or beside the original under a readable name such as `Arrival (2016) - 1080p H264.valence.mp4`. **Bitrate ceiling** holds the copy to fewer kilobits a second than the quality step allows. To make copies of a whole library automatically, overnight, use [Pre-transcoding](/use/pre-transcoding).
 
-Copies kept alongside are listed, and can be removed, from **Kept copies** in a title's menu in **Media**. Removing one deletes its file.
+Copies kept alongside are listed, and can be removed, from **Saved copies** in a title's menu in **Media**. Removing one deletes its file.
 
 ### What Valence refuses
 
@@ -193,7 +193,7 @@ Before anything starts Valence checks each file and tells you why it will not pr
 
 ### Review, then decide
 
-When an encode finishes it does not replace anything yet. It appears under **Waiting for you** in the Encoding panel, with its size before and after. Press **Review** to compare frames from the original and the encode, then either confirm or reject it.
+When an encode finishes it does not replace anything yet. It appears under **Waiting for your review** in the Encoding panel, with its size before and after. Press **Review** to compare frames from the original and the encode, then either confirm or reject it.
 
 - Confirming keeps the new encode and removes the original: "Kept the new encode and removed the original."
 - Rejecting puts the original back in one action: "Put the original back."
@@ -203,7 +203,7 @@ Because every waiting encode holds a film and its replacement on disk, the queue
 
 ![The Encoding panel showing Waiting for you with a Review button, an Under way list with progress bars and the Already done table.](/screenshots/admin-encoding.png)
 
-An encode moves through Waiting its turn, Encoding, Checking what came out, Waiting for you and then Done. Rejected, Failed and Stopped are the other outcomes. The **Already done** table keeps the history.
+An encode moves through Waiting its turn, Encoding, Checking what came out, Waiting for you and then Done. Rejected, Failed and Stopped are the other outcomes. The **Completed** table keeps the history.
 
 ## Toasts that confirm admin actions
 

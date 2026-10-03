@@ -40,7 +40,7 @@ The path is a folder on the machine running Valence, not on the device your brow
 - It opens on the folder you have already typed, if it exists, and otherwise on the places worth starting from.
 - Only folders are listed, because a library is a folder.
 - The trail along the top jumps back to any folder on the way down. The folder you are looking at is the one that is chosen, not one of the folders inside it.
-- **Up a folder** goes one level up, and **New folder** creates a folder in the one you are viewing, so you can give a library somewhere to live without leaving the page.
+- **Parent folder** goes one level up, and **New folder** creates a folder in the one you are viewing, so you can give a library somewhere to live without leaving the page.
 - If Valence is not allowed to read a folder, the browser says so instead of listing it. The message is the server's own, and it says what to change.
 
 A library path that is not a readable directory is refused with "That path is not a readable directory."
@@ -95,7 +95,7 @@ Parasite (2019)/
   Parasite (2019) - Director's Cut.mkv
 ```
 
-The film's dialog then offers **Which version to play**. Files that merely sit in the same folder without sharing a name are separate films.
+The film's dialog then offers **Choose version**. Files that merely sit in the same folder without sharing a name are separate films.
 
 ### Extras
 
@@ -172,7 +172,7 @@ Open the actions menu next to a library:
 
 The menu at the top of the panel adds **Scan all libraries** and **Reset and rebuild**, which deletes every item in every library and reads it all again from scratch. Watch progress and marked intros go with it, and it cannot be undone.
 
-The **Last read** column reports when the library was last scanned and what changed. While work is running the **State** column shows a badge and an information button that opens a live view of what the library is doing.
+The **Last scanned** column reports when the library was last scanned and what changed. While work is running the **State** column shows a badge and an information button that opens a live view of what the library is doing.
 
 ### Automatic scans
 
@@ -182,11 +182,11 @@ A scan of every library runs daily at 03:00 by default, as a scheduled job. You 
 
 Some files should never be in a library: one that is broken and stutters every time it plays, a folder of behind the scenes clips, a copy you keep only as a backup. Leave it out, and every scan from then on passes over it as if it were not on the disk.
 
-Choose **Leave out of the library** from the actions menu of a film, an episode or a series on the **Media** page, or of any file or folder on the **Files** page. Leaving out a series leaves out its folder. You can say why, which is shown beside it later. Leaving out a folder leaves out everything inside it, and matches whole folder names, so leaving out `Extras` does not touch `Extras Archive`.
+Choose **Exclude from library** from the actions menu of a film, an episode or a series on the **Media** page, or of any file or folder on the **Files** page. Leaving out a series leaves out its folder. You can say why, which is shown beside it later. Leaving out a folder leaves out everything inside it, and matches whole folder names, so leaving out `Extras` does not touch `Extras Archive`.
 
 What Valence found there goes at the next scan, which starts straight away. Nothing is deleted from the disk.
 
-Everything left out of a library is listed at the foot of its **Library settings**, with why. **Bring back** forgets it, and the next scan reads it again as a new file.
+Everything left out of a library is listed at the foot of its **Library settings**, with why. **Restore** forgets it, and the next scan reads it again as a new file.
 
 ### Deleting a library
 
@@ -204,7 +204,7 @@ Deleting removes the library and everything Valence knows about its contents: wa
 | Quality profile for requests | Whichever profile names this library | Which quality profile releases for this library are judged by.                                                                                                                                                               |
 | Where requests are filed     | The library's own folder             | A folder of its own for fetched media, when you want it kept apart.                                                                                                                                                          |
 
-Below the settings, **Left out of this library** lists the files and folders its scans pass over, as described in [Leaving files and folders out](#leaving-files-and-folders-out).
+Below the settings, **Excluded from this library** lists the files and folders its scans pass over, as described in [Leaving files and folders out](#leaving-files-and-folders-out).
 
 The request settings are explained in [Requests](/use/requests). The count of files rendered at once is also bounded by what your hardware proves it can do, so it never exceeds the number of hardware encodes the machine can run. See [Hardware transcoding](/install/hardware-transcoding).
 
@@ -225,7 +225,7 @@ Valence uses these sources, all configured in the admin **Settings** panel and d
 | The Movie Database (the catalogue) | Titles, years, overviews, cast, artwork, logos, certificates and trailers for films and shows | A free catalogue key. Without one, titles and years come from filenames alone.                    |
 | OMDb                               | Rotten Tomatoes scores                                                                        | An optional free key. Scores fill in as titles are scanned again.                                 |
 | TheAudioDB                         | Artist photographs and music videos                                                           | An optional key. Without one, a free key is used that finds only one music video for each artist. |
-| Cover Art Archive and LRCLIB       | Album covers and song words                                                                   | None. Enabled by the **Fetch music details from the web** switch, which is off by default.        |
+| Cover Art Archive and LRCLIB       | Album covers and song words                                                                   | None. Enabled by the **Download music metadata from the web** switch, which is off by default.        |
 
 Nothing a file already carries is replaced by fetched music details, and each album, artist and song is asked about once, on the next scan.
 
@@ -245,13 +245,13 @@ Sometimes the catalogue matches a file to the wrong film or series, usually beca
 4. Choose the correct entry. For a film the correction applies to that film. For an episode it applies to every episode of the series.
 5. Valence records the correction and reads the file again. The correction is used by every later scan instead of guessing from the file name again.
 
-To undo a correction, open the picker again and press **Forget the correction**. The file is read as the catalogue finds it. You need the media override permission.
+To undo a correction, open the picker again and press **Remove correction**. The file is read as the catalogue finds it. You need the media override permission.
 
 ## Previews and artwork
 
 Hover previews are the short clips that play when you rest on a title. They are made from the film at a point a fifth of the way in by default. That guess can land on a title card or a spoiler, so you can choose the moment yourself:
 
-1. In **Media**, open the row's actions and choose **Choose the preview moment**.
+1. In **Media**, open the row's actions and choose **Choose the preview frame**.
 2. Drag the two handles along the strip of frames to set where the clip starts and ends.
 3. Save. To go back to the automatic moment, choose the automatic option in the same dialog.
 
@@ -267,7 +267,7 @@ An administrator can stop an account reaching a library at all, or set an age ce
 
 - **Age limit**: choices are No ceiling, Suitable for all, Up to 8, Up to 12, Up to 15 and Up to 18. The ceiling is compared with the certificates the catalogue supplies, read for the country chosen under **Age certificates** in Settings (default GB).
 - **Allow unrated**: items nobody has certificated are refused to an account with a ceiling unless this is on. That is deliberate: an unrated title shown to a child because a field was missing is the failure the feature exists to prevent. Music is never treated as unrated.
-- **Exceptions**: on a title's dialog, **Who may watch this** lets an administrator allow or deny a single film or series for an account. A deny always wins, an allow beats the ceiling, and otherwise the library ceiling applies.
+- **Exceptions**: on a title's dialog, **Who can watch this** lets an administrator allow or deny a single film or series for an account. A deny always wins, an allow beats the ceiling, and otherwise the library ceiling applies.
 
 Limits belong to the account, not to a profile, because anyone holding the account can pick any face on it. Give a child their own account if you want a limit that holds. Administrators and share guests are not subject to ceilings. Full detail is in [Accounts and roles](/use/accounts-and-roles).
 
