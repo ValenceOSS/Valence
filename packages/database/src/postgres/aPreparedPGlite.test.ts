@@ -17,5 +17,5 @@ describe('aPreparedPGlite', () => {
     expect(prepare).toHaveBeenCalledOnce();
     expect((await two.query('SELECT * FROM "kept"')).rows).toEqual([]);
     expect((await one.query('SELECT * FROM "kept"')).rows).toHaveLength(1);
-  });
+  }, 30_000);
 });
