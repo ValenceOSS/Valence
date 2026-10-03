@@ -4,7 +4,7 @@ description: Pair your Valence with a friend's, choose what each shares, and wat
 order: 18
 ---
 
-Linking pairs two Valence servers run by different people. Once linked, each server knows the other by a key it holds, not just by its address, and every call one makes to the other is signed. Each admin then chooses which of their libraries the other server may see, and the people on the other server can browse, watch, read and listen to them as if they were their own, join each other's watch parties and ask the other server for things it does not have yet.
+Linking pairs two Valence servers run by different people. Once linked, each server knows the other by a key it holds, not just by its address, and everything one asks of the other is signed with that key. Only the few calls that set up the pairing go without it, and they check the invite instead. Each admin then chooses which of their libraries the other server may see, and the people on the other server can browse, watch, read and listen to them as if they were their own, join each other's watch parties and ask the other server for things it does not have yet.
 
 Linking needs the `server.links` permission. Only the default Administrator role has it. See [Accounts and roles](/use/accounts-and-roles).
 
@@ -118,7 +118,7 @@ When a linked server gets something somebody here asked for, they are told it is
 
 ## Unlinking
 
-Press **Unlink** on a linked server and confirm. Both sides stop trusting each other at once: this server tells the other one, and refuses anything it signs from then on. If the other server cannot be reached, it is unlinked here anyway and finds out the next time it calls. Its libraries leave your shelves at once.
+Press **Unlink** on a linked server and confirm. This server stops trusting the other at once and refuses anything it signs from then on. It also tells the other server, which stops trusting this one as soon as it hears. If the other server cannot be reached, it is unlinked here anyway and finds out the next time it calls. Its libraries leave your shelves at once.
 
 An unlinked server is kept, as **Unlinked**, until somebody links the two again with a new invite. Then it comes back as it was, with the same sharing and the same history.
 
