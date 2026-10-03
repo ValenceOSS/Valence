@@ -9,7 +9,7 @@ import { StringsFileSchema } from '@ValenceI18n/StringsFileSchema';
 import type { StringEntry } from '@ValenceI18n/StringsFileSchema';
 import { wordsOf } from '@ValenceI18n/wordsOf';
 
-const PACKAGE = join(import.meta.dirname, '..', '..', 'packages', 'i18n');
+const PACKAGE = join(import.meta.dirname, '..');
 
 /**
  * Reads one language's strings file, or nothing for a language that has none yet.
