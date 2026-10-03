@@ -7,6 +7,11 @@ import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
+  LeaveOutRequestSchema,
+  LeftOutChangeSchema,
+  LeftOutSchema,
+} from '@ValenceContracts/schemas/LeftOut';
+import {
   LibrarySchema,
   UpdateLibraryRequestSchema,
   MediaSummarySchema,
@@ -671,6 +676,85 @@ const regeneratePreviewsRoute = createRoute({
   },
 });
 
+const LeftOut = LeftOutSchema.openapi('LeftOut');
+
+const LeftOutChange = LeftOutChangeSchema.openapi('LeftOutChange');
+
+const listLeftOutRoute = createRoute({
+  method: 'get',
+  path: '/api/libraries/{id}/left-out',
+  tags: ['Library'],
+  summary: 'List the files and folders left out of a library’s scans',
+  request: { params: z.object({ id: z.string().uuid() }) },
+  responses: {
+    200: {
+      description: 'What is left out, by path',
+      content: { 'application/json': { schema: z.array(LeftOut) } },
+    },
+    404: {
+      description: 'No such library',
+      content: { 'application/json': { schema: NotFound } },
+    },
+    403: {
+      description: 'Not allowed to change libraries',
+      content: { 'application/json': { schema: Forbidden } },
+    },
+  },
+});
+
+const leaveOutRoute = createRoute({
+  method: 'post',
+  path: '/api/libraries/{id}/left-out',
+  tags: ['Library'],
+  summary: 'Leave a file or folder out of a library, and scan it so what was there goes',
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+    body: {
+      content: { 'application/json': { schema: LeaveOutRequestSchema.openapi('LeaveOutRequest') } },
+    },
+  },
+  responses: {
+    201: {
+      description: 'It is left out, and a scan is taking it away',
+      content: { 'application/json': { schema: LeftOutChange } },
+    },
+    400: {
+      description: 'The path is not inside the library',
+      content: { 'application/json': { schema: NotFound } },
+    },
+    404: {
+      description: 'No such library',
+      content: { 'application/json': { schema: NotFound } },
+    },
+    403: {
+      description: 'Not allowed to change libraries',
+      content: { 'application/json': { schema: Forbidden } },
+    },
+  },
+});
+
+const bringBackRoute = createRoute({
+  method: 'delete',
+  path: '/api/libraries/{id}/left-out/{leftOutId}',
+  tags: ['Library'],
+  summary: 'Bring a file or folder back into a library’s scans, and scan it so it returns',
+  request: { params: z.object({ id: z.string().uuid(), leftOutId: z.string().min(1) }) },
+  responses: {
+    200: {
+      description: 'It is back, and a scan is reading it',
+      content: { 'application/json': { schema: LeftOutChange } },
+    },
+    404: {
+      description: 'Nothing like that is left out of this library',
+      content: { 'application/json': { schema: NotFound } },
+    },
+    403: {
+      description: 'Not allowed to change libraries',
+      content: { 'application/json': { schema: Forbidden } },
+    },
+  },
+});
+
 export { ScanAccepted };
 
 export {
@@ -690,6 +774,9 @@ export {
   runningScansRoute,
   correctMatchRoute,
   forgetCorrectionRoute,
+  listLeftOutRoute,
+  leaveOutRoute,
+  bringBackRoute,
   rebuildArtefactsRoute,
   deleteMediaRoute,
   deleteSeriesRoute,

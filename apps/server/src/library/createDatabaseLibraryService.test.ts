@@ -391,3 +391,105 @@ describe('createDatabaseLibraryService', { timeout: STARTING_POSTGRES_MS }, () =
     await expect(service.clearException('ada', film)).resolves.toBe(false);
   });
 });
+
+describe('leaving files out of a library', { timeout: STARTING_POSTGRES_MS }, () => {
+  /**
+   * The library of films, its files on the disk exactly as stored, so a scan has nothing to read
+   * again and only what it is told to leave out changes.
+   *
+   * @param alsoOnDisk - Files on the disk the database has not seen.
+   * @param transcoder - What reads a file, where a test watches it.
+   * @returns The service and the database under it.
+   */
+  const aLibraryOnDisk = async (alsoOnDisk: string[] = [], transcoder: Transcoder = TRANSCODER) => {
+    const { db } = await aLibrary();
+    const onDisk = [
+      ...['arrival', 'alien', 'brazil', 'alien-cut'].map((id) => `/films/${id}.mkv`),
+      ...alsoOnDisk,
+    ].map((path) => ({ path, sizeBytes: 1, modifiedAtMs: 1 }));
+    const service = createDatabaseLibraryService({
+      db,
+      files: { listFiles: () => Promise.resolve({ files: onDisk, unreadable: [] }) },
+      transcoder,
+      jobs: JOBS,
+    });
+
+    return { db, service };
+  };
+
+  it('takes a file out at the next scan, and keeps it out', async () => {
+    const { db, service } = await aLibraryOnDisk();
+
+    const left = await service.leaveOut(
+      FILMS_ID,
+      { path: '/films/brazil.mkv', note: 'The sound drifts' },
+      null,
+    );
+
+    expect(left).toMatchObject({
+      kind: 'left',
+      leftOut: { path: '/films/brazil.mkv', isFolder: false, note: 'The sound drifts' },
+    });
+
+    await service.runScan(FILMS_ID);
+
+    const stored = await db.select({ id: mediaItem.id }).from(mediaItem);
+
+    expect(stored.map((row) => row.id).sort()).toEqual(['alien', 'alien-cut', 'arrival']);
+    await expect(service.listLeftOut(FILMS_ID)).resolves.toHaveLength(1);
+  });
+
+  it('leaves everything inside a folder out, and nothing that only starts with its name', async () => {
+    const probe = vi.fn<Transcoder['probe']>(NOT_USED);
+    const { db, service } = await aLibraryOnDisk(
+      ['/films/Behind the Scenes/Making of.mkv', '/films/Behind the Scenes/Bloopers.mkv'],
+      { ...TRANSCODER, probe },
+    );
+
+    await service.leaveOut(FILMS_ID, { path: '/films/Behind the Scenes/', note: null }, null);
+    await service.leaveOut(FILMS_ID, { path: '/films/alien', note: null }, null);
+    await service.runScan(FILMS_ID);
+
+    const stored = await db.select({ id: mediaItem.id }).from(mediaItem);
+
+    expect(probe.mock.calls.flat().filter((path) => path.includes('Behind the Scenes'))).toEqual(
+      [],
+    );
+    expect(probe.mock.calls.length).toBeGreaterThan(0);
+    expect(stored.map((row) => row.id).sort()).toEqual(['alien', 'alien-cut', 'arrival', 'brazil']);
+    await expect(service.listLeftOut(FILMS_ID)).resolves.toMatchObject([
+      { path: '/films/Behind the Scenes' },
+      { path: '/films/alien' },
+    ]);
+  });
+
+  it('refuses a path outside the library, or the library itself', async () => {
+    const { service } = await aLibraryOnDisk();
+
+    await expect(
+      service.leaveOut(FILMS_ID, { path: '/elsewhere/film.mkv', note: null }, null),
+    ).resolves.toEqual({ kind: 'outside' });
+    await expect(service.leaveOut(FILMS_ID, { path: '/films', note: null }, null)).resolves.toEqual(
+      { kind: 'outside' },
+    );
+    await expect(
+      service.leaveOut(
+        '9d1b6a52-0000-4f7e-9d7b-1f3a7c2b8e11',
+        { path: '/films/a.mkv', note: null },
+        null,
+      ),
+    ).resolves.toEqual({ kind: 'noLibrary' });
+  });
+
+  it('brings a file back, so the next scan can find it again', async () => {
+    const { service } = await aLibraryOnDisk();
+    const left = await service.leaveOut(FILMS_ID, { path: '/films/brazil.mkv', note: null }, null);
+    const id = left.kind === 'left' ? left.leftOut.id : '';
+
+    await expect(service.bringBack(FILMS_ID, id)).resolves.toMatchObject({
+      leftOut: { path: '/films/brazil.mkv' },
+    });
+    await expect(service.listLeftOut(FILMS_ID)).resolves.toEqual([]);
+    await expect(service.bringBack(FILMS_ID, id)).resolves.toBeNull();
+  });
+});

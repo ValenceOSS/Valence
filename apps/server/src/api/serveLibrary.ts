@@ -16,6 +16,9 @@ import {
   runningScansRoute,
   correctMatchRoute,
   forgetCorrectionRoute,
+  listLeftOutRoute,
+  leaveOutRoute,
+  bringBackRoute,
   rebuildArtefactsRoute,
   deleteMediaRoute,
   deleteSeriesRoute,
@@ -277,6 +280,53 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     return corrected === null
       ? context.json(refuse('error.common.noSuchItem'), 404)
       : context.json(corrected, 200);
+  });
+
+  app.openapi(listLeftOutRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'library.edit'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
+    }
+
+    const leftOut = await library.listLeftOut(context.req.valid('param').id);
+
+    return leftOut === null
+      ? context.json(refuse('error.common.noSuchLibrary'), 404)
+      : context.json(leftOut, 200);
+  });
+
+  app.openapi(leaveOutRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'library.edit'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
+    }
+
+    const left = await library.leaveOut(
+      context.req.valid('param').id,
+      context.req.valid('json'),
+      (await readAccount(context.req.raw.headers))?.id ?? null,
+    );
+
+    if (left.kind === 'noLibrary') {
+      return context.json(refuse('error.common.noSuchLibrary'), 404);
+    }
+
+    if (left.kind === 'outside') {
+      return context.json(refuse('error.library.thatIsNotInsideThisLibrary'), 400);
+    }
+
+    return context.json({ leftOut: left.leftOut, jobId: left.jobId }, 201);
+  });
+
+  app.openapi(bringBackRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'library.edit'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
+    }
+
+    const { id, leftOutId } = context.req.valid('param');
+    const back = await library.bringBack(id, leftOutId);
+
+    return back === null
+      ? context.json(refuse('error.library.nothingLikeThatIsLeftOut'), 404)
+      : context.json(back, 200);
   });
 
   app.openapi(artworkChoicesRoute, async (context) => {

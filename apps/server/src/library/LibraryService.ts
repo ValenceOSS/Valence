@@ -3,6 +3,7 @@ import type { CatalogueArtwork } from '@ValenceServer/calendar/CatalogueArtwork'
 import type { CatalogueTitleRef } from '@ValenceServer/calendar/CatalogueTitleRef';
 import type { ArtworkChoices, ArtworkKind } from '@ValenceContracts/schemas/ArtworkChoice';
 import type { Said } from '@ValenceI18n/SaidSchema';
+import type { LeftOut } from '@ValenceContracts/schemas/LeftOut';
 import type {
   Library,
   LibraryFacets,
@@ -88,6 +89,13 @@ type Correction = {
   jobId: string | null;
 };
 
+type LeavingOut =
+  | { kind: 'left'; leftOut: LeftOut; jobId: string | null }
+  | { kind: 'noLibrary' }
+  | { kind: 'outside' };
+
+type BringingBack = { leftOut: LeftOut; jobId: string | null };
+
 type PreviewMomentOutcome =
   | { kind: 'set'; moment: PreviewMoment }
   | { kind: 'absent' }
@@ -148,6 +156,13 @@ type LibraryService = ShowService & {
     by: string | null,
   ) => Promise<Correction | null>;
   forgetCorrection: (mediaId: string) => Promise<Correction | null>;
+  listLeftOut: (libraryId: string) => Promise<LeftOut[] | null>;
+  leaveOut: (
+    libraryId: string,
+    asked: { path: string; note: string | null },
+    by: string | null,
+  ) => Promise<LeavingOut>;
+  bringBack: (libraryId: string, leftOutId: string) => Promise<BringingBack | null>;
   rebuildArtefacts: (mediaId: string) => Promise<{ preview: boolean; trickplay: boolean } | null>;
   setPreviewMoment: (
     mediaId: string,
@@ -193,8 +208,10 @@ export type {
   AgeCeiling,
   AgeExceptionEntry,
   AgeSubject,
+  BringingBack,
   Correction,
   CreateLibraryInput,
+  LeavingOut,
   LibraryService,
   ListItemsOptions,
   MediaDeletion,

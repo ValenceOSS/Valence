@@ -67,6 +67,8 @@ const episodeOf = ({
     },
   });
 
+const LeftOutChangeSchema = z.object({ leftOut: z.object({ id: z.string() }) });
+
 const build = (
   media: MediaDetail[] = [],
   isAdministrator = true,
@@ -568,6 +570,60 @@ describe('library routes', () => {
     const { app } = build();
 
     const response = await app.request(`${BASE}/api/media/00000000-0000-4000-8000-000000000000`);
+
+    expect(response.status).toBe(404);
+  });
+
+  it('leaves a file out of a library, lists it, and brings it back', async () => {
+    const { app } = build();
+    const LEFT_OUT = `${BASE}/api/libraries/${LIBRARY_ID}/left-out`;
+
+    const left = await app.request(LEFT_OUT, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ path: '/media/films/Broken.mkv', note: ' Stutters ' }),
+    });
+    const leftBody = await left.json();
+
+    expect(left.status).toBe(201);
+    expect(leftBody).toMatchObject({
+      leftOut: { path: '/media/films/Broken.mkv', isFolder: false, note: 'Stutters' },
+      jobId: `job-${LIBRARY_ID}`,
+    });
+
+    const listed = await app.request(LEFT_OUT);
+
+    expect(await listed.json()).toMatchObject([{ path: '/media/films/Broken.mkv' }]);
+
+    const back = await app.request(
+      `${LEFT_OUT}/${LeftOutChangeSchema.parse(leftBody).leftOut.id}`,
+      {
+        method: 'DELETE',
+      },
+    );
+
+    expect(back.status).toBe(200);
+    expect(await (await app.request(LEFT_OUT)).json()).toEqual([]);
+  });
+
+  it('refuses to leave out what is not inside the library', async () => {
+    const { app } = build();
+
+    const response = await app.request(`${BASE}/api/libraries/${LIBRARY_ID}/left-out`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ path: '/media/music/Song.flac' }),
+    });
+
+    expect(response.status).toBe(400);
+  });
+
+  it('says when there is nothing like that to bring back', async () => {
+    const { app } = build();
+
+    const response = await app.request(`${BASE}/api/libraries/${LIBRARY_ID}/left-out/nothing`, {
+      method: 'DELETE',
+    });
 
     expect(response.status).toBe(404);
   });

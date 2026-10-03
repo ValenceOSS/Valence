@@ -5,6 +5,7 @@ import type { Column, Name, SQL } from 'drizzle-orm';
 import {
   mediaItem,
   mediaItemJob,
+  mediaLeftOut,
   mediaOverride,
   mediaPreviewOverride,
   library,
@@ -20,6 +21,7 @@ import { describeQuality } from './describeQuality';
 import { groupSameFilms } from './placement/groupSameFilms';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { PreviewMoment } from '@ValenceContracts/schemas/Library';
+import type { LeftOut } from '@ValenceContracts/schemas/LeftOut';
 import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
 import { resolveSeriesKey } from './resolveSeriesKey';
 import { keptCopiesOf } from './keptCopiesOf';
@@ -30,6 +32,32 @@ import { incoming } from '@ValenceDatabase/incoming';
 import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
 import { isNotDistinctFrom } from '@ValenceDatabase/isNotDistinctFrom';
 import { upsert } from '@ValenceDatabase/upsert';
+
+const LEFT_OUT_COLUMNS = {
+  id: mediaLeftOut.id,
+  libraryId: mediaLeftOut.libraryId,
+  path: mediaLeftOut.path,
+  isFolder: mediaLeftOut.isFolder,
+  note: mediaLeftOut.note,
+  createdAt: mediaLeftOut.createdAt,
+  createdBy: mediaLeftOut.createdBy,
+};
+
+/**
+ * Turns a stored row into what is said about a path left out of a library.
+ *
+ * @param row - The row.
+ * @returns The path left out, its time written as the API writes one.
+ */
+const asLeftOut = (row: {
+  id: string;
+  libraryId: string;
+  path: string;
+  isFolder: boolean;
+  note: string | null;
+  createdAt: Date;
+  createdBy: string | null;
+}): LeftOut => ({ ...row, createdAt: row.createdAt.toISOString() });
 
 type SeriesPlacement = {
   path: string;
@@ -149,6 +177,15 @@ const createMediaStore = (
     updatedBy: string | null;
   }) => Promise<void>;
   removeOverrides: (libraryId: string, paths: string[]) => Promise<number>;
+  listLeftOut: (libraryId: string) => Promise<LeftOut[]>;
+  leaveOut: (row: {
+    libraryId: string;
+    path: string;
+    isFolder: boolean;
+    note: string | null;
+    createdBy: string | null;
+  }) => Promise<LeftOut | null>;
+  bringBack: (libraryId: string, id: string) => Promise<LeftOut | null>;
   savePreviewMoment: (row: {
     libraryId: string;
     path: string;
@@ -583,6 +620,46 @@ const createMediaStore = (
         .delete(mediaOverride)
         .where(and(eq(mediaOverride.libraryId, libraryId), inArray(mediaOverride.path, paths))),
     );
+  },
+
+  listLeftOut: async (libraryId) =>
+    (
+      await db
+        .select(LEFT_OUT_COLUMNS)
+        .from(mediaLeftOut)
+        .where(eq(mediaLeftOut.libraryId, libraryId))
+        .orderBy(mediaLeftOut.path)
+    ).map(asLeftOut),
+
+  leaveOut: async (row) => {
+    await insertUnlessPresent(db, mediaLeftOut, {
+      values: [{ id: randomUUID(), ...row }],
+      target: [mediaLeftOut.libraryId, mediaLeftOut.path],
+    });
+
+    const [kept] = await db
+      .select(LEFT_OUT_COLUMNS)
+      .from(mediaLeftOut)
+      .where(and(eq(mediaLeftOut.libraryId, row.libraryId), eq(mediaLeftOut.path, row.path)))
+      .limit(1);
+
+    return kept === undefined ? null : asLeftOut(kept);
+  },
+
+  bringBack: async (libraryId, id) => {
+    const [kept] = await db
+      .select(LEFT_OUT_COLUMNS)
+      .from(mediaLeftOut)
+      .where(and(eq(mediaLeftOut.libraryId, libraryId), eq(mediaLeftOut.id, id)))
+      .limit(1);
+
+    if (kept === undefined) {
+      return null;
+    }
+
+    await db.delete(mediaLeftOut).where(eq(mediaLeftOut.id, id));
+
+    return asLeftOut(kept);
   },
 
   savePreviewMoment: async (row) => {

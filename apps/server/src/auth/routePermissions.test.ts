@@ -250,6 +250,14 @@ describe('every gated route, asked by somebody with no permissions', () => {
   ][] = [
     ['POST', '/api/libraries', 'library.create'],
     ['PATCH', `/api/libraries/${LIBRARY_ID}`, 'library.edit'],
+    ['GET', `/api/libraries/${LIBRARY_ID}/left-out`, 'library.edit'],
+    [
+      'POST',
+      `/api/libraries/${LIBRARY_ID}/left-out`,
+      'library.edit',
+      { body: { path: '/media/films/Broken.mkv' } },
+    ],
+    ['DELETE', `/api/libraries/${LIBRARY_ID}/left-out/left-1`, 'library.edit'],
     ['POST', `/api/libraries/${LIBRARY_ID}/scan`, 'jobs.run'],
     ['GET', '/api/admin/catalogue/search', 'media.override', { query: 'query=Arrival&kind=movie' }],
     [
