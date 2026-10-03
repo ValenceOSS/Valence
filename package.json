@@ -25,7 +25,7 @@
     "prepare": "husky && pnpm --filter @valence/lint build",
     "fixtures:sync": "tsx apps/transcoder/scripts/fixtures/syncFixtures.ts",
     "ffmpeg:sync": "tsx apps/transcoder/scripts/ffmpeg/syncFfmpeg.ts",
-    "brand:render": "tsx tools/brand/renderBrand.ts",
+    "brand:render": "tsx packages/brand/src/renderBrand.ts",
     "db:check": "tsx packages/database/src/drizzle/checkDrizzleSnapshot.ts",
     "i18n:write": "tsx packages/i18n/src/writeStrings.ts"
   },

@@ -20,7 +20,7 @@ import type { Bounds } from './opaqueBounds';
 import type { BrandOutput } from './planBrandOutputs';
 import type { Restyle } from './restyleIcon';
 
-const ROOT = join(import.meta.dirname, '..', '..');
+const ROOT = join(import.meta.dirname, '..', '..', '..');
 
 const LOGO_WIDTH = 624;
 
