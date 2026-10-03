@@ -2163,6 +2163,8 @@ const ENGLISH = {
   'phone.carPlay.shelvesForTheCar.listenNow': 'Listen Now',
   'phone.carPlay.useCarPlay.openValenceOnYourIPhoneAnd':
     'Open Valence on your iPhone and sign in to play your music here.',
+  'phone.carPlay.useCarPlay.thisServerHasNoMusicLibrary':
+    'This server has no music library set up.',
   'phone.platform.installPhonePlatform.addAPasskeyFromValenceOn':
     'Add a passkey from Valence on the web.',
   'phone.platform.sendAPhoto.thatPhotoCouldNotBeSent': 'That photo could not be sent.',

@@ -65,9 +65,9 @@ public class ValenceCarPlayModule: Module {
       }
     }
 
-    Function("signedOut") { (message: String) in
+    Function("showMessage") { (message: String) in
       DispatchQueue.main.async {
-        ValenceCarPlayCentre.shared.signedOut(message)
+        ValenceCarPlayCentre.shared.showMessage(message)
       }
     }
   }
