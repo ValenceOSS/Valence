@@ -18,6 +18,7 @@ import { FulfilmentFields } from './components/FulfilmentFields/FulfilmentFields
 import { VALENCE, fulfilmentFormOf, readFulfilmentForm } from './readFulfilmentForm';
 import type { FulfilmentForm } from './readFulfilmentForm';
 import type { LibrarySettingsDialogProps } from './LibrarySettingsDialog.types';
+import { LeftOutList } from './components/LeftOutList/LeftOutList';
 import { say } from '@ValenceI18n/say';
 
 const NONE_ID = 'none';
@@ -348,6 +349,8 @@ const LibrarySettingsDialog = ({
                 </>
               )}
             </fieldset>
+
+            <LeftOutList libraryId={library.id} libraryPath={library.path} />
 
             {error === null ? null : (
               <p role="alert" className="text-sm text-danger">

@@ -2036,6 +2036,11 @@
     "context": "The label, used in several places, among them the meadow in the variants and the pixel in the variants."
   },
   {
+    "handler": "common.bringBack",
+    "text": "Bring back",
+    "context": "A button beside a file or folder left out of a library, which lets the library's scans find it again."
+  },
+  {
     "handler": "common.bringTitleBack",
     "text": "Bring {title} back",
     "context": "The label of a button, used in the hidden in the account of the phone app and in the hidden panel in the account area. {title} is filled in by the app."
@@ -3525,6 +3530,11 @@
     "handler": "common.lasts",
     "text": "Lasts",
     "context": "Text shown, used in the share sheet of the phone app and in the share dialog."
+  },
+  {
+    "handler": "common.leaveOutOfTheLibrary",
+    "text": "Leave out of the library",
+    "context": "An action on a file, a folder, a film or a series in the admin area, which makes the library's scans pass over it from then on."
   },
   {
     "handler": "common.leftToRight",
@@ -8246,6 +8256,11 @@
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveLibrary`)."
   },
   {
+    "handler": "error.library.nothingLikeThatIsLeftOut",
+    "text": "Nothing like that is left out of this library.",
+    "context": "An error the server answers with (HTTP 404) when somebody tries to bring back into a library something that was never left out of it."
+  },
+  {
     "handler": "error.library.notMatchedToTheCatalogueYet",
     "text": "This is not matched to the catalogue yet. Correct the match first.",
     "context": "An error the server answers with (HTTP 404) when an administrator asks which artwork the catalogue has for something that is not matched to it yet."
@@ -8269,6 +8284,11 @@
     "handler": "error.library.thatDoesNotLookLikeA",
     "text": "That does not look like a catalogue address or id.",
     "context": "An error the server answers with (HTTP 400) in the app on the server (from `serveLibrary`)."
+  },
+  {
+    "handler": "error.library.thatIsNotInsideThisLibrary",
+    "text": "That is not inside this library.",
+    "context": "An error the server answers with (HTTP 400) when somebody tries to leave out of a library a file or folder that is not inside it."
   },
   {
     "handler": "error.library.thatIsPastTheEndThe",
@@ -14284,6 +14304,66 @@
     "handler": "screens.adminArea.labelCouldNotBeStopped",
     "text": "{label} could not be stopped.",
     "context": "Shown in the admin area. {label} is filled in by the app."
+  },
+  {
+    "handler": "screens.adminArea.leaveOutDialog.breaksUpAnHourIn",
+    "text": "Breaks up an hour in",
+    "context": "An example of why a file is left out of a library, shown faintly in the empty field."
+  },
+  {
+    "handler": "screens.adminArea.leaveOutDialog.leaveNameOut",
+    "text": "Leave {name} out?",
+    "context": "The title of the dialog that leaves a file or folder out of a library. {name} is the file's, folder's, film's or series' name."
+  },
+  {
+    "handler": "screens.adminArea.leaveOutDialog.nameIsLeftOut",
+    "text": "{name} is left out. The next scan takes it away.",
+    "context": "Said once a file or folder is left out of a library. {name} is its name."
+  },
+  {
+    "handler": "screens.adminArea.leaveOutDialog.scansPassOverThisFile",
+    "text": "Scans pass over this file from now on, and what Valence found in it goes at the next scan. Nothing is deleted from the disk, and it can be brought back from the library’s settings.",
+    "context": "What leaving a file out of a library does, in the dialog that asks."
+  },
+  {
+    "handler": "screens.adminArea.leaveOutDialog.scansPassOverThisFolder",
+    "text": "Scans pass over this folder and everything in it from now on, and what Valence found there goes at the next scan. Nothing is deleted from the disk, and it can be brought back from the library’s settings.",
+    "context": "What leaving a folder out of a library does, in the dialog that asks."
+  },
+  {
+    "handler": "screens.adminArea.leaveOutDialog.shownBesideItInThe",
+    "text": "Optional. Shown beside it in the library’s settings, for whoever looks later.",
+    "context": "The help under the field for why a file or folder is left out of a library."
+  },
+  {
+    "handler": "screens.adminArea.leftOutList.bringPathBack",
+    "text": "Bring {path} back",
+    "context": "The name a screen reader gives the button that brings a left-out file or folder back into a library. {path} is where it is in the library."
+  },
+  {
+    "handler": "screens.adminArea.leftOutList.filesAndFoldersThisLibrarysScans",
+    "text": "Files and folders this library’s scans pass over. Bring one back and the next scan reads it again.",
+    "context": "The description under the heading of the list of files and folders left out of a library."
+  },
+  {
+    "handler": "screens.adminArea.leftOutList.leftOutOfThisLibrary",
+    "text": "Left out of this library",
+    "context": "The heading of the list of files and folders a library's scans pass over, in the library's settings."
+  },
+  {
+    "handler": "screens.adminArea.leftOutList.nothingIsLeftOut",
+    "text": "Nothing is left out. Leave out a file or folder from Media or Files.",
+    "context": "Shown in a library's settings when nothing is left out of it."
+  },
+  {
+    "handler": "screens.adminArea.leftOutList.pathIsBack",
+    "text": "{path} is back. The next scan reads it again.",
+    "context": "Said once a left-out file or folder is brought back into a library. {path} is where it is in the library."
+  },
+  {
+    "handler": "screens.adminArea.leftOutList.whatIsLeftOutCouldNot",
+    "text": "What is left out of this library could not be read.",
+    "context": "Shown in a library's settings when the list of what is left out of it could not be read."
   },
   {
     "handler": "screens.adminArea.librariesPanel.deleteLibrary",

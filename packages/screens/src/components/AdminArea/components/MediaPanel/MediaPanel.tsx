@@ -3,6 +3,7 @@ import {
   Bin as BinFilledIcon,
   ChevronRight as ChevronRightIcon,
   Copy as CopyFilledIcon,
+  EyeOff as EyeOffFilledIcon,
   Film as FilmFilledIcon,
   FolderOpen as FolderOpenIcon,
   Image as ImageFilledIcon,
@@ -12,6 +13,8 @@ import {
   Tape as TapeFilledIcon,
 } from '@keyline-icons/react/fill';
 import { useCallback, useMemo, useState } from 'react';
+import { LeaveOutDialog } from '@ValenceScreens/components/AdminArea/components/LeaveOutDialog/LeaveOutDialog';
+import type { LeaveOutTarget } from '@ValenceScreens/components/AdminArea/components/LeaveOutDialog/LeaveOutDialog.types';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -36,7 +39,7 @@ import { ShelfTable } from './components/ShelfTable/ShelfTable';
 import { describePicture } from '@ValenceClient/library/describePicture';
 import { folderOf } from './folderOf';
 import { gatherTitles } from './gatherTitles';
-import { pathInLibrary } from './pathInLibrary';
+import { pathInLibrary } from '@ValenceScreens/components/AdminArea/pathInLibrary';
 import { titleFolderOf } from './titleFolderOf';
 import { bookFolderOf } from './bookFolderOf';
 import type { ActionMenuItem } from '@ValenceUI/ActionMenu.types';
@@ -192,6 +195,7 @@ const MediaPanel = ({
     isWholeSeries: boolean;
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [leaving, setLeaving] = useState<LeaveOutTarget | null>(null);
 
   const titles = useMemo(() => gatherTitles(media), [media]);
 
@@ -327,85 +331,114 @@ const MediaPanel = ({
     [onRebuildArtefacts],
   );
 
-  const fileActions = useCallback(
-    (item: MediaSummary, name: string): ActionMenuItem[][] => [
-      [
-        ...(paths[item.id] === undefined || onOpenFolder === undefined
-          ? []
-          : [
-              {
-                id: 'show-in-files',
-                label: say('screens.adminArea.mediaPanel.showInFiles'),
-                icon: <Icon of={FolderOpenIcon} size={15} />,
-                onChoose: () => {
-                  onOpenFolder(folderOf(paths[item.id] ?? ''));
-                },
-              },
-            ]),
-        {
-          id: 'rebuild',
-          label:
-            rebuilding === item.id
-              ? say('screens.adminArea.mediaPanel.rebuilding')
-              : rebuilt.has(item.id)
-                ? say('screens.adminArea.mediaPanel.willRebuild')
-                : say('screens.adminArea.mediaPanel.rebuildPreviews'),
-          icon: <Icon of={RefreshCwFilledIcon} size={15} />,
-          isDisabled: rebuilding === item.id,
-          onChoose: () => {
-            setConfirming(item);
-          },
-        },
-        {
-          id: 'preview-moment',
-          label: say('common.chooseThePreviewMoment'),
-          icon: <Icon of={FilmFilledIcon} size={15} />,
-          onChoose: () => {
-            onChooseMoment(item);
-          },
-        },
-        ...(onReencode === undefined
-          ? []
-          : [
-              {
-                id: 'reencode',
-                label: 'Re-encode…',
-                icon: <Icon of={TapeFilledIcon} size={15} />,
-                onChoose: () => {
-                  onReencode([item]);
-                },
-              },
-            ]),
-        ...(onShowCopies === undefined
-          ? []
-          : [
-              {
-                id: 'kept-copies',
-                label: say('screens.adminArea.keptCopiesDialog.keptCopies'),
-                icon: <Icon of={CopyFilledIcon} size={15} />,
-                onChoose: () => {
-                  onShowCopies(item, name);
-                },
-              },
-            ]),
-      ],
-      ...(onDelete === undefined
+  const leaveOutItems = useCallback(
+    (path: string | undefined, name: string, isFolder: boolean): ActionMenuItem[] =>
+      path === undefined || libraryPath === null
         ? []
         : [
-            [
-              {
-                id: 'delete',
-                label: say('screens.adminArea.mediaPanel.deleteFile2'),
-                icon: <Icon of={BinFilledIcon} size={15} />,
-                isDestructive: true,
-                onChoose: () => {
-                  setCondemned({ item, name, isWholeSeries: false });
-                },
+            {
+              id: 'leave-out',
+              label: say('common.leaveOutOfTheLibrary'),
+              icon: <Icon of={EyeOffFilledIcon} size={15} />,
+              onChoose: () => {
+                setLeaving({ libraryId, libraryPath, path, name, isFolder });
               },
-            ],
-          ]),
+            },
+          ],
+    [libraryId, libraryPath],
+  );
+
+  const fileActions = useCallback(
+    (item: MediaSummary, name: string): ActionMenuItem[][] =>
+      [
+        [
+          ...(paths[item.id] === undefined || onOpenFolder === undefined
+            ? []
+            : [
+                {
+                  id: 'show-in-files',
+                  label: say('screens.adminArea.mediaPanel.showInFiles'),
+                  icon: <Icon of={FolderOpenIcon} size={15} />,
+                  onChoose: () => {
+                    onOpenFolder(folderOf(paths[item.id] ?? ''));
+                  },
+                },
+              ]),
+          {
+            id: 'rebuild',
+            label:
+              rebuilding === item.id
+                ? say('screens.adminArea.mediaPanel.rebuilding')
+                : rebuilt.has(item.id)
+                  ? say('screens.adminArea.mediaPanel.willRebuild')
+                  : say('screens.adminArea.mediaPanel.rebuildPreviews'),
+            icon: <Icon of={RefreshCwFilledIcon} size={15} />,
+            isDisabled: rebuilding === item.id,
+            onChoose: () => {
+              setConfirming(item);
+            },
+          },
+          {
+            id: 'preview-moment',
+            label: say('common.chooseThePreviewMoment'),
+            icon: <Icon of={FilmFilledIcon} size={15} />,
+            onChoose: () => {
+              onChooseMoment(item);
+            },
+          },
+          ...(onReencode === undefined
+            ? []
+            : [
+                {
+                  id: 'reencode',
+                  label: 'Re-encode…',
+                  icon: <Icon of={TapeFilledIcon} size={15} />,
+                  onChoose: () => {
+                    onReencode([item]);
+                  },
+                },
+              ]),
+          ...(onShowCopies === undefined
+            ? []
+            : [
+                {
+                  id: 'kept-copies',
+                  label: say('screens.adminArea.keptCopiesDialog.keptCopies'),
+                  icon: <Icon of={CopyFilledIcon} size={15} />,
+                  onChoose: () => {
+                    onShowCopies(item, name);
+                  },
+                },
+              ]),
+        ],
+        [
+          ...leaveOutItems(paths[item.id], name, false),
+          ...(onDelete === undefined
+            ? []
+            : [
+                {
+                  id: 'delete',
+                  label: say('screens.adminArea.mediaPanel.deleteFile2'),
+                  icon: <Icon of={BinFilledIcon} size={15} />,
+                  isDestructive: true,
+                  onChoose: () => {
+                    setCondemned({ item, name, isWholeSeries: false });
+                  },
+                },
+              ]),
+        ],
+      ].filter((group) => group.length > 0),
+    [
+      leaveOutItems,
+      onChooseMoment,
+      onDelete,
+      onOpenFolder,
+      onReencode,
+      onShowCopies,
+      paths,
+      rebuilding,
+      rebuilt,
     ],
-    [onChooseMoment, onDelete, onOpenFolder, onReencode, onShowCopies, paths, rebuilding, rebuilt],
   );
 
   const artworkAction = useCallback(
@@ -431,47 +464,49 @@ const MediaPanel = ({
   );
 
   const seriesActions = useCallback(
-    (title: MediaTitle): ActionMenuItem[][] => [
+    (title: MediaTitle): ActionMenuItem[][] =>
       [
-        {
-          id: 'wrong-match',
-          label: say('common.wrongMatch'),
-          icon: <Icon of={SearchFilledIcon} size={15} />,
-          onChoose: () => {
-            onCorrect(title.lead);
+        [
+          {
+            id: 'wrong-match',
+            label: say('common.wrongMatch'),
+            icon: <Icon of={SearchFilledIcon} size={15} />,
+            onChoose: () => {
+              onCorrect(title.lead);
+            },
           },
-        },
-        ...artworkAction(title),
-        ...(onReencode === undefined
-          ? []
-          : [
-              {
-                id: 'reencode',
-                label: say('screens.adminArea.mediaPanel.reEncodeEveryEpisode'),
-                icon: <Icon of={TapeFilledIcon} size={15} />,
-                onChoose: () => {
-                  onReencode(title.episodes);
+          ...artworkAction(title),
+          ...(onReencode === undefined
+            ? []
+            : [
+                {
+                  id: 'reencode',
+                  label: say('screens.adminArea.mediaPanel.reEncodeEveryEpisode'),
+                  icon: <Icon of={TapeFilledIcon} size={15} />,
+                  onChoose: () => {
+                    onReencode(title.episodes);
+                  },
                 },
-              },
-            ]),
-      ],
-      ...(onDelete === undefined || title.lead.seriesId === null
-        ? []
-        : [
-            [
-              {
-                id: 'delete',
-                label: say('screens.adminArea.mediaPanel.deleteSeries2'),
-                icon: <Icon of={BinFilledIcon} size={15} />,
-                isDestructive: true,
-                onChoose: () => {
-                  setCondemned({ item: title.lead, name: title.name, isWholeSeries: true });
+              ]),
+        ],
+        [
+          ...leaveOutItems(placeOf(title)?.folder, title.name, true),
+          ...(onDelete === undefined || title.lead.seriesId === null
+            ? []
+            : [
+                {
+                  id: 'delete',
+                  label: say('screens.adminArea.mediaPanel.deleteSeries2'),
+                  icon: <Icon of={BinFilledIcon} size={15} />,
+                  isDestructive: true,
+                  onChoose: () => {
+                    setCondemned({ item: title.lead, name: title.name, isWholeSeries: true });
+                  },
                 },
-              },
-            ],
-          ]),
-    ],
-    [artworkAction, onCorrect, onDelete, onReencode],
+              ]),
+        ],
+      ].filter((group) => group.length > 0),
+    [artworkAction, leaveOutItems, onCorrect, onDelete, onReencode, placeOf],
   );
 
   const actionsFor = useCallback(
@@ -753,6 +788,13 @@ const MediaPanel = ({
             </TabPanel>
           ))
         )}
+
+        <LeaveOutDialog
+          target={leaving}
+          onClose={() => {
+            setLeaving(null);
+          }}
+        />
 
         <ConfirmDialog
           isOpen={confirming !== null}
