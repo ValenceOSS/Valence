@@ -118,4 +118,51 @@ describe('PlayingTogether', () => {
     expect(watchParty.leave).toHaveBeenCalled();
     expect(onLeave).toHaveBeenCalled();
   });
+
+  it('leaves a party watching something else, such as the episode before', async () => {
+    const watchParty = aWatchPartyStateWith(jest.fn, {
+      party: aWatchParty({ mediaId: 'episode-1' }),
+    });
+
+    await render(
+      <PlayingTogether
+        watchParty={watchParty}
+        invitedTo={null}
+        mediaId="episode-2"
+        startSeconds={0}
+        carriedOn={0}
+        onLeave={jest.fn()}
+        onNext={jest.fn()}
+      />,
+    );
+
+    expect(watchParty.leave).toHaveBeenCalled();
+  });
+
+  it('leaves a party it was still joining when they leave', async () => {
+    jest.useFakeTimers();
+    const watchParty = aWatchPartyStateWith(jest.fn);
+
+    await render(
+      <PlayingTogether
+        watchParty={watchParty}
+        invitedTo="p-1"
+        mediaId="film-1"
+        startSeconds={0}
+        carriedOn={0}
+        onLeave={jest.fn()}
+        onNext={jest.fn()}
+      />,
+    );
+
+    await act(() => {
+      jest.advanceTimersByTime(WAIT_FOR_THE_ROOM_MS);
+    });
+
+    await act(() => {
+      playerAsDrawn()?.onLeave();
+    });
+
+    expect(watchParty.leave).toHaveBeenCalled();
+  });
 });

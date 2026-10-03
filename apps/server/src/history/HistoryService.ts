@@ -5,6 +5,7 @@ type Viewing = {
   mediaItemId: string;
   title: string | null;
   seriesTitle: string | null;
+  seriesId: string | null;
   startedAt: string;
   lastWatchedAt: string;
   secondsWatched: number;

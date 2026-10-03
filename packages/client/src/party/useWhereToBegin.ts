@@ -14,7 +14,8 @@ type Arriving = {
 /**
  * Where a player opening a title should start, for somebody who may be arriving into a party
  * already watching it: the party they were invited to is joined once, the room is waited for a
- * moment, and once a start has been settled for a title it stays settled, so the room moving on
+ * moment, and once a start has been settled for a title, and for the invitation it came with, it
+ * stays settled, so the room moving on
  * while the stream opens does not open it again.
  *
  * @param arriving - The party this client holds, the party they were invited to, the title, where
@@ -29,7 +30,11 @@ const useWhereToBegin = ({
   isReady,
 }: Arriving): Beginning => {
   const [hasWaitedForTheRoom, setHasWaitedForTheRoom] = useState(false);
-  const [begun, setBegun] = useState<{ mediaId: string; atSeconds: number } | null>(null);
+  const [begun, setBegun] = useState<{
+    mediaId: string;
+    invitedTo: string | null;
+    atSeconds: number;
+  } | null>(null);
   const joinedRef = useRef<string | null>(null);
   const { join } = watchParty;
 
@@ -62,7 +67,7 @@ const useWhereToBegin = ({
     return { kind: 'wait' };
   }
 
-  if (begun !== null && begun.mediaId === mediaId) {
+  if (begun !== null && begun.mediaId === mediaId && begun.invitedTo === invitedTo) {
     return { kind: 'begin', atSeconds: begun.atSeconds };
   }
 
@@ -77,7 +82,7 @@ const useWhereToBegin = ({
   });
 
   if (beginning.kind === 'begin') {
-    setBegun({ mediaId, atSeconds: beginning.atSeconds });
+    setBegun({ mediaId, invitedTo, atSeconds: beginning.atSeconds });
   }
 
   return beginning;

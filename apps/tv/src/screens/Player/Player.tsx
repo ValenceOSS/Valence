@@ -303,7 +303,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
     };
   }, [player]);
 
-  const partyPlayback = usePartyPlayback(watchParty);
+  const partyPlayback = usePartyPlayback(watchParty, mediaId);
   const party = partyPlayback ?? undefined;
   const playerOf = useCallback(() => roomPlayerOfExpo(player), [player]);
   const inStep = useFollowTheRoom({

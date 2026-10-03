@@ -7,7 +7,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { arrangeForBrowsing } from '@ValenceClient/library/arrangeForBrowsing';
 import {
@@ -48,7 +48,8 @@ const TITLES = { films: say('common.films'), shows: say('common.shows') } as con
  * A programme is one poster however many episodes it has, and a film somebody is part-way through
  * says how far. The order, and whether what has been watched is left out, are remembered for each
  * page on this television. Genre, decade and rating filters, as the web's, narrow the wall from the
- * panel down the right, and say so where they leave nothing. The page is lit by its first poster
+ * panel down the right, and say so where they leave nothing. The wall stays as it was while a new
+ * filter is read, so the panel stays open and the remote stays where it was. The page is lit by its first poster
  * once it arrives, and then by the
  * poster the remote rests on, once it has rested there a moment rather than at every step. The
  * posters are sized so six fill the width of the screen between its margins.
@@ -123,6 +124,7 @@ const CataloguePage = ({ kind, watchable, onOpen, onFeature, upTo }: CataloguePr
   const everything = useQuery({
     ...libraryQueries.everything(reaching, { kind, ...filters.asked }),
     enabled: reaching.length > 0,
+    placeholderData: keepPreviousData,
   });
 
   const room = useRoomToFill();

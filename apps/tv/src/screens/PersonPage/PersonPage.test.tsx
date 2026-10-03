@@ -91,6 +91,30 @@ describe('PersonPage', () => {
     expect(onOpen).toHaveBeenCalledWith(expect.objectContaining({ title: 'Arrival' }));
   });
 
+  it('says what could not be read, and asks again', async () => {
+    const cache = new QueryClient({
+      defaultOptions: { queries: { retry: false, staleTime: Infinity, gcTime: Infinity } },
+    });
+    const fetching = jest
+      .spyOn(global, 'fetch')
+      .mockImplementation(() => Promise.resolve(new Response('{}', { status: 500 })));
+
+    const drawn = await render(
+      <QueryClientProvider client={cache}>
+        <PersonPage personId={101} onOpen={jest.fn()} />
+      </QueryClientProvider>,
+    );
+
+    expect(await drawn.findByText('Anything about them could not be read.')).toBeTruthy();
+    expect(drawn.queryByText('Somebody')).toBeNull();
+
+    const before = fetching.mock.calls.length;
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Try again' }));
+
+    expect(fetching.mock.calls.length).toBeGreaterThan(before);
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(PersonPage.displayName).toBe('PersonPage');
   });

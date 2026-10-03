@@ -1795,6 +1795,11 @@
     "context": "The label, used in the release search panel in the admin area and in the app shell."
   },
   {
+    "handler": "common.anythingAboutThemCouldNotBeRead",
+    "text": "Anything about them could not be read.",
+    "context": "Shown where anything about them could not be read from the server, followed by a sentence about why and a button to try again."
+  },
+  {
     "handler": "common.aPIKey",
     "text": "API key",
     "context": "The label of a text field, used in the download client dialog in the admin area and in the indexer dialog in the admin area."
@@ -21909,11 +21914,6 @@
     "context": "Shown in the passkey setup."
   },
   {
-    "handler": "screens.personDialog.anythingAboutThemCouldNotBeRead",
-    "text": "Anything about them could not be read.",
-    "context": "Shown where anything about them could not be read from the server, followed by a sentence about why and a button to try again."
-  },
-  {
     "handler": "screens.personDialog.asRole",
     "text": "as {role}",
     "context": "Text shown in the person dialog. {role} is filled in by the app."
@@ -27029,6 +27029,11 @@
     "context": "Shown under the profile's name on the television app's account screen, where the server's address is not known."
   },
   {
+    "handler": "tv.account.yourDevices.nameCouldNotBeSignedOut",
+    "text": "{name} could not be signed out. It is still signed in.",
+    "context": "An alert on the television's account page when signing another device out failed."
+  },
+  {
     "handler": "tv.account.yourDevices.nameThisTelevision",
     "text": "{name} · This television",
     "context": "On the television account page, the device you are using, in the list of everywhere this account is signed in. {name} is what the device is called."
@@ -27037,6 +27042,11 @@
     "handler": "tv.account.yourDevices.noOtherDevices",
     "text": "This television is the only place this account is signed in.",
     "context": "On the television account page, under the devices heading, when no other device is signed in."
+  },
+  {
+    "handler": "tv.account.yourDevices.theOtherDevicesCouldNotBeSignedOut",
+    "text": "The other devices could not be signed out. They are still signed in.",
+    "context": "An alert on the television's account page when signing every other device out failed."
   },
   {
     "handler": "tv.account.yourNotifications.titleUnread",

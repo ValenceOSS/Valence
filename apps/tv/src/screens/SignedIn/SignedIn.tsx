@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { findNodeHandle, Linking, StyleSheet, useTVEventHandler, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, findNodeHandle, Linking, StyleSheet, useTVEventHandler, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
@@ -70,6 +70,7 @@ import type { Tab } from '@ValenceTv/navigation/Tab';
 import type { MusicItem } from '@ValenceTv/music/MusicItem';
 import type { HWEvent } from 'react-native';
 import type { SignedInProps } from './SignedIn.types';
+import { say } from '@ValenceI18n/say';
 
 const WATCHABLE = new Set(['movies', 'shows']);
 
@@ -160,8 +161,8 @@ const bookMoodOf = (book: Book): string | null => (book.hasCover ? bookCoverUrl(
  * The watch party this television may be in is held here rather than in the player, since an
  * invitation arrives with the notifications and a party outlives any one film being opened. Choosing
  * an invitation opens the film it is watching, joined, or joins a listening party and opens what is
- * playing once the host's song arrives, the music kept in step with theirs from then on; somebody put out of a party is told so
- * for a moment.
+ * playing once the host's song arrives, the music kept in step with theirs from then on; somebody put out of a party is told so —
+ * over the player where it is open, and otherwise in an alert, so it is not missed.
  *
  * When something this viewer asked for arrives, a banner slides in to say so, and Play/Pause opens
  * it; nothing is announced over the player.
@@ -396,7 +397,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
   const arrived = arrival === null ? null : readArrivalLink(arrival.link);
 
   const openByMediaId = useCallback(
-    (wanted: { kind: 'film' | 'show'; mediaId: string }) => {
+    (wanted: { kind: 'film' | 'show'; mediaId: string; seriesId?: string | null }) => {
       if (wanted.kind === 'film') {
         openFilm(wanted.mediaId);
 
@@ -405,7 +406,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
 
       void cache.fetchQuery(libraryQueries.detail(wanted.mediaId)).then((detail) => {
         if (detail !== null) {
-          openTitle(summariseDetail(detail));
+          openTitle({ ...summariseDetail(detail), seriesId: wanted.seriesId ?? null });
         }
       });
     },
@@ -596,6 +597,17 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
 
   const top = opened.at(-1);
   const isWatching = top?.kind === 'play';
+  const isPlayerUp = useRef(false);
+
+  useEffect(() => {
+    isPlayerUp.current = isWatching;
+  });
+
+  useEffect(() => {
+    if (partyNotice !== null && !isPlayerUp.current) {
+      Alert.alert(say('common.partyMenu.watchParty'), partyNotice);
+    }
+  }, [partyNotice]);
 
   useEffect(() => {
     if (isWatching) {

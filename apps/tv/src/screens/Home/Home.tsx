@@ -3,6 +3,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-nat
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
+import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { useHomeRows } from '@ValenceClient/library/useHomeRows';
 import { pickFeatured } from '@ValenceClient/library/pickFeatured';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
@@ -136,6 +137,8 @@ const HomePage = ({
   });
 
   const featured = useMemo(() => pickFeatured(sample.data ?? [], HERO_TURNS), [sample.data]);
+  const kept = useQuery(viewingQueries.favourites(viewerId));
+  const hasFavourites = (kept.data ?? []).length > 0;
 
   if (isHeldBack) {
     return <View style={styles.page} />;
@@ -149,7 +152,7 @@ const HomePage = ({
     );
   }
 
-  if (home.rails.length === 0) {
+  if (home.rails.length === 0 && !hasFavourites) {
     return (
       <View style={styles.waiting}>
         <Text style={styles.empty}>{say('tv.home.thereIsNothingToWatchHere')}</Text>
@@ -184,6 +187,18 @@ const HomePage = ({
               playRef={playRef}
             />
           )}
+
+          {home.rails.length === 0 ? (
+            <>
+              <FavouritesShelf
+                viewerId={viewerId}
+                watchable={watchable}
+                progress={progress}
+                onOpen={onOpen}
+              />
+              <CollectionShelves progress={progress} onOpen={onOpen} />
+            </>
+          ) : null}
 
           {home.rails.map((rail, at) => (
             <Fragment key={rail.id}>

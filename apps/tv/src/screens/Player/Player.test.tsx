@@ -608,14 +608,18 @@ describe('Player', () => {
 
   describe('in a watch party', () => {
     it('leaves starting to the room rather than playing on its own', async () => {
-      await draw({ watchParty: aWatchPartyStateWith(jest.fn, { party: aWatchParty() }) });
+      await draw({
+        watchParty: aWatchPartyStateWith(jest.fn, { party: aWatchParty({ mediaId: MEDIA_ID }) }),
+      });
 
       expect(mockVideo.current.replaceAsync).toHaveBeenCalled();
       expect(mockVideo.current.play).not.toHaveBeenCalled();
     });
 
     it('asks the room to pause and to move, rather than doing either itself', async () => {
-      const watchParty = aWatchPartyStateWith(jest.fn, { party: aWatchParty() });
+      const watchParty = aWatchPartyStateWith(jest.fn, {
+        party: aWatchParty({ mediaId: MEDIA_ID }),
+      });
       const { drawn } = await draw({ watchParty });
 
       await tell('sourceLoad', { duration: 3000 });
@@ -667,7 +671,7 @@ describe('Player', () => {
     it('says what somebody else in the room did', async () => {
       const { drawn } = await draw({
         watchParty: aWatchPartyStateWith(jest.fn, {
-          party: aWatchParty(),
+          party: aWatchParty({ mediaId: MEDIA_ID }),
           command: {
             sequence: 1,
             atMs: 1,

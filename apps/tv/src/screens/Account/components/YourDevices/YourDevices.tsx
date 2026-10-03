@@ -31,7 +31,8 @@ const detailOf = (device: Device): string => {
  * Everywhere this account is signed in, on its account page, so somebody can see a session they do
  * not recognise from the sofa and end it. This television is named as this one and cannot be ended
  * from here, since signing out is the button above. Ending another, or every other, is asked about
- * first, because whoever is on the other end is thrown out mid-film. The list catches the remote
+ * first, because whoever is on the other end is thrown out mid-film, and one that did not go through
+ * says so rather than leaving the device listed as if nothing had been tried. The list catches the remote
  * across the whole width of the page.
  *
  * @param onFocus - Told when the remote comes onto the list.
@@ -61,7 +62,15 @@ const YourDevices = ({ onFocus }: YourDevicesProps) => {
           text: say('common.signOut'),
           style: 'destructive',
           onPress: () => {
-            void endDevice(device.id).then(reread);
+            void endDevice(device.id).then((isEnded) => {
+              if (!isEnded) {
+                Alert.alert(say('tv.account.yourDevices.nameCouldNotBeSignedOut', { name }));
+
+                return;
+              }
+
+              void reread();
+            });
           },
         },
       ],
@@ -78,7 +87,15 @@ const YourDevices = ({ onFocus }: YourDevicesProps) => {
           text: say('common.signThemOut'),
           style: 'destructive',
           onPress: () => {
-            void endOtherDevices().then(reread);
+            void endOtherDevices().then((isEnded) => {
+              if (!isEnded) {
+                Alert.alert(say('tv.account.yourDevices.theOtherDevicesCouldNotBeSignedOut'));
+
+                return;
+              }
+
+              void reread();
+            });
           },
         },
       ],

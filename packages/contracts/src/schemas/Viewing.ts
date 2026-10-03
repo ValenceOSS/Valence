@@ -5,6 +5,7 @@ const ViewingSchema = z.object({
   mediaItemId: z.string(),
   title: z.string().nullable(),
   seriesTitle: z.string().nullable(),
+  seriesId: z.string().nullable().default(null),
   startedAt: z.string(),
   lastWatchedAt: z.string(),
   secondsWatched: z.number(),

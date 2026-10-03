@@ -92,6 +92,23 @@ describe('YourDevices', () => {
     });
   });
 
+  it('says so when a device could not be signed out', async () => {
+    jest.mocked(endDevice).mockResolvedValueOnce(false);
+    const drawn = await drawWith([
+      aDevice('here', 'Living room TV', true),
+      aDevice('phone', 'Marques’s iPhone'),
+    ]);
+
+    await userEvent.press(drawn.getByText('Sign out Marques’s iPhone'));
+    pressInTheAlert('Sign out');
+
+    await waitFor(() => {
+      expect(Alert.alert).toHaveBeenLastCalledWith(
+        'Marques’s iPhone could not be signed out. It is still signed in.',
+      );
+    });
+  });
+
   it('keeps a device signed in when somebody thinks better of it', async () => {
     const drawn = await drawWith([
       aDevice('here', 'Living room TV', true),

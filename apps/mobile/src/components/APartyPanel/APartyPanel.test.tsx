@@ -1,4 +1,4 @@
-import { render, userEvent } from '@testing-library/react-native';
+import { fireEvent, render, userEvent } from '@testing-library/react-native';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { aPartyMember } from '@ValenceClient/testing/aPartyMember';
@@ -217,5 +217,24 @@ describe('APartyPanel', () => {
 
     expect(drawn.getByText('You are in a watch party')).toBeTruthy();
     expect(drawn.queryByLabelText('Start a listening party')).toBeNull();
+  });
+
+  it('does not try a password that was never typed', async () => {
+    const watchParty = aWatchPartyStateWith(jest.fn, {
+      passwordWanted: { partyId: 'p-9', wasWrong: false },
+    });
+    const drawn = await render(
+      <APartyPanel
+        kind="watch"
+        watchParty={watchParty}
+        mediaId="film-1"
+        people={[]}
+        onClose={jest.fn()}
+      />,
+    );
+
+    await fireEvent(drawn.getByLabelText('Watch party password'), 'submitEditing');
+
+    expect(watchParty.join).not.toHaveBeenCalled();
   });
 });

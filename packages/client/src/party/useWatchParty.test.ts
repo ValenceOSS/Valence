@@ -231,6 +231,37 @@ describe('useWatchParty', () => {
     expect(result.current.party).toBeNull();
   });
 
+  it('is not put back in a party by an answer that arrives after leaving', () => {
+    const world = createWorld();
+    const { result } = renderHook(() => useWatchParty(world.client));
+
+    act(() => {
+      result.current.join('p1');
+      result.current.leave();
+    });
+
+    act(() => {
+      world.tell(party({ members: [member()] }));
+    });
+
+    expect(result.current.party).toBeNull();
+  });
+
+  it('stops asking for a password on leaving', () => {
+    const world = createWorld();
+    const { result } = renderHook(() => useWatchParty(world.client));
+
+    act(() => {
+      world.challenge('p1', false);
+    });
+
+    act(() => {
+      result.current.leave();
+    });
+
+    expect(result.current.passwordWanted).toBeNull();
+  });
+
   it('asks to open a party around what is playing', () => {
     const world = createWorld();
     const { result } = renderHook(() => useWatchParty(world.client));
