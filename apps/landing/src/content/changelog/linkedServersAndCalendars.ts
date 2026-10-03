@@ -49,6 +49,7 @@ const linkedServersAndCalendars: ChangelogEntry = {
     {
       title: 'Improvements',
       items: [
+        'Leave a broken file, or a whole folder, out of a library, with a note saying why, and bring it back from the library’s settings.',
         'Every client reads its words from one strings file, ready to be translated.',
         'Requests can be handed to Radarr, Sonarr and Lidarr, and Seerr’s can be brought in.',
         'Choose when a stalled download is given up on, and clear finished torrents out of the client.',
