@@ -341,7 +341,7 @@ jobs:
           docker logs engine
           exit 1
 
-      - run: pnpm --filter @valence/tools exec vitest run --config vitest.mysql.config.ts
+      - run: pnpm --filter @valence/database exec vitest run --config vitest.mysql.config.ts
         env:
           MYSQL_TEST_URL: mysql://root:valence@127.0.0.1:3306
 

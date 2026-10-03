@@ -6,7 +6,7 @@ import { describeSnapshotDrift } from './describeSnapshotDrift';
 import { findOutOfOrderMigrations } from './findOutOfOrderMigrations';
 import { z } from 'zod';
 
-const ROOT = join(import.meta.dirname, '..', '..');
+const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
 
 const APPS = [
   { app: 'server', dialect: 'postgres' },

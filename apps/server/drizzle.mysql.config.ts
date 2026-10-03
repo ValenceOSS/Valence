@@ -1,5 +1,5 @@
 import { defineConfig } from 'drizzle-kit';
-import { loadRootEnvironment } from '@ValenceTools/drizzle/loadRootEnvironment';
+import { loadRootEnvironment } from '@ValenceDatabase/drizzle/loadRootEnvironment';
 
 loadRootEnvironment();
 

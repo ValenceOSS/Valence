@@ -2,7 +2,7 @@ import { fileURLToPath } from 'node:url';
 import { defaultServerConditions, loadConfigFromFile } from 'vite';
 import { configDefaults, defineConfig } from 'vitest/config';
 import type { TestProjectInlineConfiguration } from 'vitest/config';
-import { findEngineTests } from './vitest/findEngineTests';
+import { findEngineTests } from './src/engineTests/findEngineTests';
 
 const MYSQL_CONDITIONS = ['mysql', ...defaultServerConditions];
 
@@ -10,7 +10,7 @@ const NODE_MYSQL_CONDITIONS = MYSQL_CONDITIONS.filter((condition) => condition !
 
 const PACKAGES = ['packages/database', 'apps/server', 'apps/requests'];
 
-const REPOSITORY = fileURLToPath(new URL('..', import.meta.url));
+const REPOSITORY = fileURLToPath(new URL('../..', import.meta.url));
 
 /**
  * Builds the project that runs one package's engine tests under the mysql condition, from the
@@ -45,7 +45,7 @@ const engineProject = async (name: string): Promise<TestProjectInlineConfigurati
 export default defineConfig({
   test: {
     fileParallelism: false,
-    globalSetup: [fileURLToPath(new URL('vitest/scratch/setup.ts', import.meta.url))],
+    globalSetup: [fileURLToPath(new URL('src/engineTests/scratch/setup.ts', import.meta.url))],
     projects: await Promise.all(PACKAGES.map(engineProject)),
   },
 });

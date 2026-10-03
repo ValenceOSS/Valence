@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
  * @param file - The environment file to read, which is the root's unless a test says otherwise.
  */
 const loadRootEnvironment = (
-  file = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '.env'),
+  file = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..', '.env'),
 ): void => {
   if (existsSync(file)) {
     process.loadEnvFile(file);

@@ -26,7 +26,7 @@
     "fixtures:sync": "tsx tools/fixtures/syncFixtures.ts",
     "ffmpeg:sync": "tsx tools/ffmpeg/syncFfmpeg.ts",
     "brand:render": "tsx tools/brand/renderBrand.ts",
-    "db:check": "tsx tools/drizzle/checkDrizzleSnapshot.ts",
+    "db:check": "tsx packages/database/src/drizzle/checkDrizzleSnapshot.ts",
     "i18n:write": "tsx tools/i18n/writeStrings.ts"
   },
   "devDependencies": {
