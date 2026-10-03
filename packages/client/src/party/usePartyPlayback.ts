@@ -8,11 +8,22 @@ import type { WatchPartyState } from '@ValenceClient/party/useWatchParty';
  * no party at all. It is the same object for as long as nothing in it changes, so a player that
  * keeps in step whenever it changes does so only when the room has moved.
  *
+ * Nor is anything followed of a party watching something else: somebody in a party who moves on
+ * to another episode is watching that alone, so the room's playing, pausing and moving cannot reach
+ * a title it is not watching.
+ *
  * @param watchParty - The party this client holds, where it holds one at all.
+ * @param mediaId - What the player is playing.
  * @returns What the player follows, or nothing.
  */
-const usePartyPlayback = (watchParty: WatchPartyState | undefined): PartyPlayback | null => {
-  const party = watchParty?.party?.kind === 'watch' ? watchParty.party : null;
+const usePartyPlayback = (
+  watchParty: WatchPartyState | undefined,
+  mediaId: string | null,
+): PartyPlayback | null => {
+  const party =
+    watchParty?.party?.kind === 'watch' && watchParty.party.mediaId === mediaId
+      ? watchParty.party
+      : null;
   const command = watchParty?.command ?? null;
   const meConnectionId = watchParty?.meConnectionId ?? null;
   const referenceSeconds = watchParty?.referenceSeconds ?? null;

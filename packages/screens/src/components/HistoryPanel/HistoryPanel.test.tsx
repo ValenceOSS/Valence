@@ -35,6 +35,7 @@ const viewing = (overrides: Partial<Viewing> = {}): Viewing => ({
   mediaItemId: 'media-1',
   title: 'Arrival',
   seriesTitle: null,
+  seriesId: null,
   startedAt: '2026-08-14T09:00:00.000Z',
   lastWatchedAt: '2026-08-14T11:00:00.000Z',
   secondsWatched: 7_200,

@@ -485,6 +485,7 @@ const ENGLISH = {
   'common.anybody': 'Anybody',
   'common.anySize': 'Any size',
   'common.anything': 'Anything',
+  'common.anythingAboutThemCouldNotBeRead': 'Anything about them could not be read.',
   'common.aPIKey': 'API key',
   'common.aPlaylistNeedsAName': 'A playlist needs a name.',
   'common.appearsOn': 'Appears on',
@@ -5499,7 +5500,6 @@ const ENGLISH = {
   'screens.passkeySetup.thatPasskeyCouldNotBeRemoved': 'That passkey could not be removed.',
   'screens.passkeySetup.thatPasskeyCouldNotBeRenamed': 'That passkey could not be renamed.',
   'screens.passkeySetup.unnamedPasskey': 'Unnamed passkey',
-  'screens.personDialog.anythingAboutThemCouldNotBeRead': 'Anything about them could not be read.',
   'screens.personDialog.asRole': 'as {role}',
   'screens.personDialog.biography': 'Biography',
   'screens.personDialog.nothingIsKnownAboutThemAnd':
@@ -6859,9 +6859,13 @@ const ENGLISH = {
   'tv.account.themeChoice.valenceOpensInThisThemeThe':
     'Valence opens in this theme the next time you open it.',
   'tv.account.watchingOnThisValence': 'Watching on this Valence',
+  'tv.account.yourDevices.nameCouldNotBeSignedOut':
+    '{name} could not be signed out. It is still signed in.',
   'tv.account.yourDevices.nameThisTelevision': '{name} · This television',
   'tv.account.yourDevices.noOtherDevices':
     'This television is the only place this account is signed in.',
+  'tv.account.yourDevices.theOtherDevicesCouldNotBeSignedOut':
+    'The other devices could not be signed out. They are still signed in.',
   'tv.account.yourNotifications.titleUnread': '{title} · New',
   'tv.account.yourRequests.yourRequests': 'Your requests',
   'tv.arrivalBanner.pressPlayToWatch': 'Press {play} to watch',

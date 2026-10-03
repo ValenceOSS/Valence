@@ -97,7 +97,9 @@ const readRoom = (
  *
  * The party is whatever the server last said it is, never what this tab believes it should be —
  * a client that applied its own commands optimistically would drift out of agreement with everybody
- * else the moment one was refused.
+ * else the moment one was refused. A party this tab is not a member of is no party of its own, so
+ * an answer to a join that arrives after it has left does not put it back in, and leaving also
+ * drops a join still waiting for the socket.
  *
  * @param client - The shared socket, injectable for tests.
  * @returns The party and the ways of acting on it.
@@ -122,7 +124,12 @@ const useWatchParty = (client: RealtimeClient = getRealtimeClient()): WatchParty
       client,
       watcher: {
         onParty: (told) => {
-          const now = told.members.length === 0 ? null : told;
+          const me = client.connectionId();
+          const isIn =
+            me === null
+              ? told.members.length > 0
+              : told.members.some((member) => member.connectionId === me);
+          const now = isIn ? told : null;
 
           toldRef.current = { ...toldRef.current, party: now };
           setParty(now);
@@ -219,6 +226,8 @@ const useWatchParty = (client: RealtimeClient = getRealtimeClient()): WatchParty
 
   const leave = useCallback(() => {
     inPartyRef.current = null;
+    waitingToJoinRef.current = null;
+    setPasswordWanted(null);
     partyRef.current?.leave();
     setParty(null);
     setCommand(null);

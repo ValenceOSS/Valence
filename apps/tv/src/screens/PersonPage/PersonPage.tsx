@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import { useQuery } from '@tanstack/react-query';
 import { describeBirthLine } from '@ValenceClient/people/describeBirthLine';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
+import { Button } from '@ValenceTv/components/Button/Button';
 import { Shelf } from '@ValenceTv/components/Shelf/Shelf';
 import { useProgress } from '@ValenceTv/library/useProgress';
 import { tokens } from '@ValenceTv/theme/tokens';
@@ -16,7 +17,9 @@ const A_FEW_LINES = 6;
 /**
  * Somebody who appears in the library, opened from a film's or a programme's cast: who they are,
  * when and where they were born, what the catalogue says of them, and a shelf each of the films,
- * programmes and episodes here they are in, each opening its page.
+ * programmes and episodes here they are in, each opening its page. Where either could not be read
+ * it says so and offers to try again, rather than drawing somebody nameless with nothing to their
+ * name.
  *
  * @param personId - Who.
  * @param onOpen - Told which film or programme was chosen.
@@ -31,6 +34,23 @@ const PersonPage = ({ personId, onOpen }: PersonPageProps) => {
     return (
       <View style={styles.waiting}>
         <ActivityIndicator size="large" color={tokens.colours.text} />
+      </View>
+    );
+  }
+
+  if ((person.isError && who === null) || (credits.isError && credits.data === undefined)) {
+    return (
+      <View style={styles.waiting}>
+        <Text style={styles.born}>{say('common.anythingAboutThemCouldNotBeRead')}</Text>
+        <Button
+          label={say('common.tryAgain')}
+          variant="secondary"
+          hasPreferredFocus
+          onPress={() => {
+            void person.refetch();
+            void credits.refetch();
+          }}
+        />
       </View>
     );
   }
@@ -81,7 +101,7 @@ PersonPage.displayName = 'PersonPage';
 const styles = StyleSheet.create({
   page: { flex: 1 },
   inside: { gap: tokens.space.md, paddingTop: tokens.space.xl, paddingBottom: tokens.space.xl },
-  waiting: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  waiting: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: tokens.space.lg },
   top: {
     flexDirection: 'row',
     gap: tokens.space.lg,

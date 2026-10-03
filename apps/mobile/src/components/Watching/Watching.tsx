@@ -369,7 +369,7 @@ const Watching = ({
   });
 
   const status = useEvent(player, 'statusChange', { status: player.status });
-  const partyPlayback = usePartyPlayback(watchParty);
+  const partyPlayback = usePartyPlayback(watchParty, mediaId);
   const party = isKept || partyPlayback === null ? undefined : partyPlayback;
   const playerOf = useCallback(() => roomPlayerOfExpo(player), [player]);
   const inStep = useFollowTheRoom({

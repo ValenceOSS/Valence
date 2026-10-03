@@ -21,12 +21,17 @@ const aNotice = (id: string, title: string, link: string | null, isRead = false)
   readAt: isRead ? new Date().toISOString() : null,
 });
 
-const drawWith = (notifications: Notification[], onOpen = jest.fn(), onJoin = jest.fn()) => {
+const drawWith = (
+  notifications: Notification[],
+  onOpen = jest.fn(),
+  onJoin = jest.fn(),
+  unread = notifications.filter((notice) => notice.readAt === null).length,
+) => {
   const cache = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Infinity, gcTime: Infinity } },
   });
 
-  cache.setQueryData(notificationQueries.inbox().queryKey, { notifications, unread: 0 });
+  cache.setQueryData(notificationQueries.inbox().queryKey, { notifications, unread });
 
   return render(
     <QueryClientProvider client={cache}>
@@ -73,6 +78,17 @@ describe('YourNotifications', () => {
 
     expect(onOpen).toHaveBeenCalledWith({ kind: 'film', mediaId: 'dune' });
     expect(markNotificationsRead).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000001');
+  });
+
+  it('offers to mark everything read where the unread are further down than it shows', async () => {
+    const drawn = await drawWith(
+      [aNotice('00000000-0000-4000-8000-000000000004', 'Arrival is here', null, true)],
+      jest.fn(),
+      jest.fn(),
+      3,
+    );
+
+    expect(drawn.getByText('Mark all read')).toBeTruthy();
   });
 
   it('joins the watch party an invitation asks them into', async () => {

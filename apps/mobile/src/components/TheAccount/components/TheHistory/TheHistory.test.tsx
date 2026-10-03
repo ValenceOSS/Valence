@@ -24,6 +24,7 @@ const ARRIVAL = {
   mediaItemId: 'arrival',
   title: 'Arrival',
   seriesTitle: null,
+  seriesId: null,
   startedAt: '2026-09-22T10:00:00.000Z',
   lastWatchedAt: '2026-09-22T12:00:00.000Z',
   secondsWatched: 3600,

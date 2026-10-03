@@ -84,7 +84,9 @@ const APartyPanel = ({ kind, watchParty, mediaId, people, onClose }: APartyPanel
           isSecret
           isLabelHidden
           onSubmit={() => {
-            watchParty.join(passwordWanted.partyId, password);
+            if (password.length > 0) {
+              watchParty.join(passwordWanted.partyId, password);
+            }
           }}
         />
         <View style={styles.actions}>

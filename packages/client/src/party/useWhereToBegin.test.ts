@@ -80,4 +80,17 @@ describe('useWhereToBegin', () => {
 
     expect(result.current).toEqual({ kind: 'begin', atSeconds: 600 });
   });
+
+  it('settles again when an invitation arrives for a title already begun', () => {
+    const watchParty = aWatchPartyState();
+    const { result, rerender } = renderHook((props: Arriving) => useWhereToBegin(props), {
+      initialProps: arriving({ watchParty }),
+    });
+
+    expect(result.current).toEqual({ kind: 'begin', atSeconds: 30 });
+
+    rerender(arriving({ watchParty, invitedTo: 'p-1' }));
+
+    expect(result.current).toEqual({ kind: 'wait' });
+  });
 });

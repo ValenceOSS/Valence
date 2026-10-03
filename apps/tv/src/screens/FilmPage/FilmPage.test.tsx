@@ -243,6 +243,28 @@ describe('FilmPage', () => {
     expect(onPlay).toHaveBeenLastCalledWith(expect.objectContaining({ id: TRAILER }), 0);
   });
 
+  it('hides the film itself, whichever cut is chosen', async () => {
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const directors = {
+      ...summariseDetail(ARRIVAL),
+      id: DIRECTORS,
+      versionLabel: "Director's Cut",
+    };
+    const drawn = await drawFilm(aCacheHolding({ film: { ...ARRIVAL, versions: [directors] } }));
+
+    await userEvent.press(drawn.getByRole('button', { name: /^Which version to play/ }));
+    await userEvent.press(drawn.getByRole('button', { name: "Director's Cut" }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Hide' }));
+
+    const buttons = jest.mocked(Alert.alert).mock.calls.at(-1)?.[2] ?? [];
+
+    buttons.find((button) => button.text === 'Hide it')?.onPress?.();
+
+    await waitFor(() => {
+      expect(setHidden).toHaveBeenCalledWith({ kind: 'item', subjectId: FILM }, true);
+    });
+  });
+
   it('offers no version choice or trailer where the library holds neither', async () => {
     const drawn = await drawFilm(aCacheHolding({}));
 

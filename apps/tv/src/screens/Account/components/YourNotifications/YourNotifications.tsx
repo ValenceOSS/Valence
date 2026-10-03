@@ -46,7 +46,7 @@ const YourNotifications = ({ onOpen, onJoin, onFocus }: YourNotificationsProps) 
   }
 
   const now = new Date();
-  const unread = notices.filter((notice) => notice.readAt === null);
+  const unread = inbox.data?.unread ?? 0;
   const reread = () => cache.invalidateQueries({ queryKey: notificationQueries.key });
 
   const choose = (notice: Notification) => {
@@ -93,7 +93,7 @@ const YourNotifications = ({ onOpen, onJoin, onFocus }: YourNotificationsProps) 
           />
         ))}
 
-        {unread.length === 0 ? null : (
+        {unread === 0 ? null : (
           <Button
             label={say('common.markAllRead')}
             variant="ghost"

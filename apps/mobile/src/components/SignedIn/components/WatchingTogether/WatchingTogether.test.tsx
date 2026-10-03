@@ -111,4 +111,63 @@ describe('WatchingTogether', () => {
     expect(watchParty.leave).toHaveBeenCalled();
     expect(onDone).toHaveBeenCalled();
   });
+
+  it('leaves a party it was still joining when they stop', async () => {
+    jest.useFakeTimers();
+    const watchParty = aWatchPartyStateWith(jest.fn);
+
+    await render(
+      <WatchingTogether
+        watchParty={watchParty}
+        invitedTo="p-1"
+        mediaId="film-1"
+        onDone={jest.fn()}
+      />,
+      { wrapper: CacheScope },
+    );
+
+    await act(() => {
+      jest.advanceTimersByTime(WAIT_FOR_THE_ROOM_MS);
+    });
+
+    await act(() => {
+      playerAsDrawn()?.onDone();
+    });
+
+    expect(watchParty.leave).toHaveBeenCalled();
+  });
+
+  it('leaves a party watching something else, such as the episode before', async () => {
+    const watchParty = aWatchPartyStateWith(jest.fn, {
+      party: aWatchParty({ mediaId: 'episode-1' }),
+    });
+
+    await render(
+      <WatchingTogether
+        watchParty={watchParty}
+        invitedTo={null}
+        mediaId="episode-2"
+        onDone={jest.fn()}
+      />,
+      { wrapper: CacheScope },
+    );
+
+    expect(watchParty.leave).toHaveBeenCalled();
+  });
+
+  it('stays in a party watching this', async () => {
+    const watchParty = aWatchPartyStateWith(jest.fn, { party: aWatchParty({ mediaId: 'film-1' }) });
+
+    await render(
+      <WatchingTogether
+        watchParty={watchParty}
+        invitedTo={null}
+        mediaId="film-1"
+        onDone={jest.fn()}
+      />,
+      { wrapper: CacheScope },
+    );
+
+    expect(watchParty.leave).not.toHaveBeenCalled();
+  });
 });

@@ -25,7 +25,7 @@ const aParty = (kind: 'watch' | 'listen'): WatchParty => aWatchParty({ kind });
 
 describe('usePartyPlayback', () => {
   it('hands a player what it follows of a party watching something', () => {
-    const { result } = renderHook(() => usePartyPlayback(aState(aParty('watch'))));
+    const { result } = renderHook(() => usePartyPlayback(aState(aParty('watch')), 'film-1'));
 
     expect(result.current).toMatchObject({
       id: 'p-1',
@@ -37,16 +37,27 @@ describe('usePartyPlayback', () => {
   });
 
   it('hands nothing for a party listening to music, or none', () => {
-    expect(renderHook(() => usePartyPlayback(aState(aParty('listen')))).result.current).toBeNull();
-    expect(renderHook(() => usePartyPlayback(aState(null))).result.current).toBeNull();
-    expect(renderHook(() => usePartyPlayback(undefined)).result.current).toBeNull();
+    expect(
+      renderHook(() => usePartyPlayback(aState(aParty('listen')), 'film-1')).result.current,
+    ).toBeNull();
+    expect(renderHook(() => usePartyPlayback(aState(null), 'film-1')).result.current).toBeNull();
+    expect(renderHook(() => usePartyPlayback(undefined, 'film-1')).result.current).toBeNull();
+  });
+
+  it('hands nothing for a party watching another title than the one playing', () => {
+    expect(
+      renderHook(() => usePartyPlayback(aState(aParty('watch')), 'another-episode')).result.current,
+    ).toBeNull();
   });
 
   it('is the same object for as long as nothing in it changes', () => {
     const state = aState(aParty('watch'));
-    const { result, rerender } = renderHook((held: WatchPartyState) => usePartyPlayback(held), {
-      initialProps: state,
-    });
+    const { result, rerender } = renderHook(
+      (held: WatchPartyState) => usePartyPlayback(held, 'film-1'),
+      {
+        initialProps: state,
+      },
+    );
     const first = result.current;
 
     rerender({ ...state });

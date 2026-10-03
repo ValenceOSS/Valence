@@ -7,18 +7,12 @@ type PartyInvitation =
   | { kind: 'listen'; partyId: string };
 
 /**
- * Which party an invitation asks somebody into, read from the link the server wrote for it — a
- * film or programme to watch together, or music to listen along to — so a client without the web's
- * addresses can open it where it belongs.
+ * Which party a link names, decoding what it carries, which throws on a malformed escape.
  *
  * @param link - The invitation's link.
  * @returns The party and what it is of, or nothing where the link is no invitation.
  */
-const readPartyInvitation = (link: string | null): PartyInvitation | null => {
-  if (link === null) {
-    return null;
-  }
-
+const readEscaped = (link: string): PartyInvitation | null => {
   const watching = TO_WATCH.exec(link);
   const [, mediaId, watchParty] = watching ?? [];
 
@@ -35,6 +29,27 @@ const readPartyInvitation = (link: string | null): PartyInvitation | null => {
   return listenParty === undefined
     ? null
     : { kind: 'listen', partyId: decodeURIComponent(listenParty) };
+};
+
+/**
+ * Which party an invitation asks somebody into, read from the link the server wrote for it — a
+ * film or programme to watch together, or music to listen along to — so a client without the web's
+ * addresses can open it where it belongs.
+ *
+ * @param link - The invitation's link.
+ * @returns The party and what it is of, or nothing where the link is no invitation, or is one so
+ *   badly escaped it cannot be read.
+ */
+const readPartyInvitation = (link: string | null): PartyInvitation | null => {
+  if (link === null) {
+    return null;
+  }
+
+  try {
+    return readEscaped(link);
+  } catch {
+    return null;
+  }
 };
 
 export type { PartyInvitation };

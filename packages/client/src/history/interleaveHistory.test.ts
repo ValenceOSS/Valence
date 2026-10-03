@@ -8,6 +8,7 @@ const watched = (id: string, at: string): Viewing => ({
   mediaItemId: `media-${id}`,
   title: id,
   seriesTitle: null,
+  seriesId: null,
   startedAt: at,
   lastWatchedAt: at,
   secondsWatched: 60,
