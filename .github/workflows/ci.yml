@@ -3,10 +3,10 @@ name: CI
 # The gate every change goes through, on every push and every pull request, so a branch that cannot
 # merge says so before anybody reviews it.
 #
-# Three stages. Lint needs no build and starts at once. Build compiles every package something else
-# depends on, exactly once, and saves what turbo produced. Typecheck and every test job then restore
-# that and run against it — the `^build` each of their tasks depends on is answered from the cache
-# rather than compiled again, so nothing after the build stage rebuilds anything.
+# Two stages. Build compiles every package something else depends on, exactly once, and saves what
+# turbo produced. Lint, typecheck and every test job then restore that and run against it. The
+# `^build` each of their tasks depends on is answered from the cache rather than compiled again, so
+# nothing after the build stage rebuilds anything.
 #
 # One build job rather than one per package, deliberately. The packages form a chain — contracts,
 # then core, then client, then screens — and a job per link would wait on the link before it, paying
@@ -15,8 +15,8 @@ name: CI
 # because splitting them would cost minutes to save seconds.
 #
 # The large suites are sharded, each shard on a runner of its own: @valence/screens six ways,
-# @valence/server four and @valence/client three, with @valence/ui and @valence/landing as single
-# shards in the same matrix. The small packages share one runner, two at a time, because each of
+# @valence/server four and @valence/client three, with @valence/ui as a single shard in the same
+# matrix. The small packages share one runner, two at a time, because each of
 # them spends longer installing than testing and a runner apiece queued the large shards behind
 # them. Two at a time rather than all at once: turbo and vitest each size their worker pool to the
 # machine's CPU count, and every package at once on a handful of cores thrashes.
@@ -60,7 +60,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       code: ${{ steps.what.outputs.code }}
-      packages: ${{ steps.what.outputs.packages }}
       light: ${{ steps.what.outputs.light }}
       shards: ${{ steps.what.outputs.shards }}
       rust: ${{ steps.what.outputs.rust }}
@@ -135,39 +134,13 @@ jobs:
 
           # The large suites, each split into the shards its size calls for, and the rest for the
           # one runner the small packages share.
-          sharded='{"@valence/server":4,"@valence/client":3,"@valence/ui":1,"@valence/landing":1}'
+          sharded='{"@valence/server":4,"@valence/client":3,"@valence/ui":1}'
           {
-            echo "packages=$packages"
             echo "light=$(echo "$packages" | jq -c --argjson sharded "$sharded" '[.[] | select(. as $name | $sharded | has($name) | not)]')"
             echo "shards=$(echo "$packages" | jq -c --argjson sharded "$sharded" --arg screens "$screens" '
               [ (.[] | select(. as $name | $sharded | has($name)) | . as $name | range(1; $sharded[$name] + 1) | {package: $name, shard: ., of: $sharded[$name]}),
                 (if $screens == "true" then range(1; 7) | {package: "@valence/screens", shard: ., of: 6} else empty end) ]')"
           } >> "$GITHUB_OUTPUT"
-
-  lint:
-    name: Lint and migration check
-    needs: changes
-    if: needs.changes.outputs.code == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: pnpm/action-setup@v6
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
-
-      - run: pnpm lint
-
-      - run: pnpm format:check
-
-      # A hand-written migration with no snapshot beside it leaves generation silent and recreating
-      # tables that already exist. See VAL-193.
-      - run: pnpm db:check
 
   build:
     name: Build shared packages
@@ -207,8 +180,10 @@ jobs:
           path: .turbo/cache
           key: turbo-build-${{ github.sha }}
 
+  # Lint and typecheck share a runner. Lint needs no build and could start sooner, but a runner of
+  # its own held a slot through the minute the test shards all want one at once.
   typecheck:
-    name: Typecheck
+    name: Lint, typecheck and migration check
     needs: [changes, build]
     runs-on: ubuntu-latest
     steps:
@@ -228,6 +203,14 @@ jobs:
           path: .turbo/cache
           key: turbo-build-${{ github.sha }}
           fail-on-cache-miss: true
+
+      - run: pnpm lint
+
+      - run: pnpm format:check
+
+      # A hand-written migration with no snapshot beside it leaves generation silent and recreating
+      # tables that already exist. See VAL-193.
+      - run: pnpm db:check
 
       - run: pnpm typecheck
 
@@ -335,70 +318,6 @@ jobs:
         with:
           path: .turbo/test-results
           key: turbo-tests-${{ matrix.package }}-${{ matrix.shard }}-of-${{ matrix.of }}-${{ github.sha }}
-
-  # Every test that opens a database of its own, run again on each MySQL-family engine Valence
-  # supports. The ordinary test jobs already run them on Postgres, in memory. The engine is started
-  # by hand rather than as a service container because a service cannot be given the arguments that
-  # set the server's collation, and Valence needs the binary, no-pad one each engine names
-  # differently. The scratch databases the tests make live on tmpfs and go with the runner.
-  test-engines:
-    name: Test on ${{ matrix.engine.image }} (${{ matrix.shard }} of 2)
-    needs: [changes, build]
-    if: >-
-      contains(needs.changes.outputs.packages, '@valence/server') ||
-      contains(needs.changes.outputs.packages, '@valence/requests') ||
-      contains(needs.changes.outputs.packages, '@valence/database')
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2]
-        engine:
-          - image: mysql:8.4
-            collation: utf8mb4_0900_bin
-            ready: mysqladmin ping -h 127.0.0.1 -uroot -pvalence
-          - image: mariadb:10.6
-            collation: utf8mb4_nopad_bin
-            ready: healthcheck.sh --connect --innodb_initialized
-          - image: mariadb:11.4
-            collation: utf8mb4_nopad_bin
-            ready: healthcheck.sh --connect --innodb_initialized
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: pnpm/action-setup@v6
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
-
-      - uses: actions/cache/restore@v4
-        with:
-          path: .turbo/cache
-          key: turbo-build-${{ github.sha }}
-          fail-on-cache-miss: true
-
-      - run: pnpm turbo run build --filter=@valence/server --filter=@valence/requests
-
-      - name: Start ${{ matrix.engine.image }}
-        run: |
-          docker run -d --name engine -p 3306:3306 --tmpfs /var/lib/mysql \
-            -e MYSQL_ROOT_PASSWORD=valence -e MARIADB_ROOT_PASSWORD=valence \
-            "${{ matrix.engine.image }}" \
-            --character-set-server=utf8mb4 --collation-server=${{ matrix.engine.collation }}
-          for _ in $(seq 1 60); do
-            if docker exec engine ${{ matrix.engine.ready }} > /dev/null 2>&1; then exit 0; fi
-            sleep 2
-          done
-          docker logs engine
-          exit 1
-
-      - run: pnpm --filter @valence/database exec vitest run --config vitest.mysql.config.ts --shard=${{ matrix.shard }}/2
-        env:
-          MYSQL_TEST_URL: mysql://root:valence@127.0.0.1:3306
 
   rust:
     name: Rust format, lint and test

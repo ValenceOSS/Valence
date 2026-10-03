@@ -13,7 +13,7 @@ Every function and every component in Valence has a test, written with Vitest an
 - The coding rules apply to tests as well. `any`, `unknown` and `as` are banned in test files too, and only the colour rule is relaxed for them. See [Coding standard](/develop/coding-standard).
 - Coverage thresholds are enforced in CI and are never lowered to make a build pass. Raising them is a pull request of its own.
 - Tests that need media fixtures skip with a message naming the command that builds the missing tier. They never silently pass.
-- Nothing in a unit test talks to a real network, a database server or a real FFmpeg. A test that needs a real database opens PGlite, Postgres in memory, and runs again on MySQL and MariaDB in CI, as [Tests on MySQL and MariaDB](#tests-on-mysql-and-mariadb) describes. The rest live in the Rust integration tests and the media pipeline workflow.
+- Nothing in a unit test talks to a real network, a database server or a real FFmpeg. A test that needs a real database opens PGlite, Postgres in memory. It can be run again on MySQL and MariaDB by hand, as [Tests on MySQL and MariaDB](#tests-on-mysql-and-mariadb) describes. The rest live in the Rust integration tests and the media pipeline workflow.
 
 ## Running tests
 
@@ -217,7 +217,7 @@ MYSQL_TEST_URL=mysql://root:valence@127.0.0.1:3308 pnpm exec vitest run --config
 
 `--project apps/server`, `apps/requests` or `packages/database` narrows the run to one package. Each run makes scratch databases for its tests and drops them when it ends. Without `MYSQL_TEST_URL` those tests fail loudly rather than skip, so a run that forgot the address cannot pass.
 
-In CI, the **Test on** job runs this config against `mysql:8.4`, `mariadb:10.6` and `mariadb:11.4`, one job per engine, while the whole suite runs on Postgres.
+CI does not run this config. It runs the whole suite on Postgres, so run this yourself after changing a query, a migration or the `mysql` dialect folder.
 
 ## Testing Rust
 
@@ -235,7 +235,7 @@ which is `cargo test`. Lint with `pnpm rust:check`, which is `cargo clippy --all
 - Tests that need FFmpeg skip rather than fail when it cannot be run.
 - Clippy denies `unwrap` and `expect` in library code. Test code opts in with an explicit `allow`.
 
-The FFmpeg you test against matters. One test scribbles over the middle of a clip and requires the decoder to notice, and Ubuntu's FFmpeg 6.1 decodes the damage without complaint. CI therefore runs the Rust job in a Debian container with the same FFmpeg build that ships. Set `VALENCE_FFMPEG` to the build `pnpm ffmpeg:sync` fetched, or your results may differ from CI's.
+The FFmpeg you test against matters. One test scribbles over the middle of a clip and requires the decoder to notice, and Ubuntu's FFmpeg 6.1 decodes the damage without complaint. The integration tests therefore run against the FFmpeg build that ships: in the media pipeline workflow, and on your machine when `VALENCE_FFMPEG` names the build `pnpm ffmpeg:sync` fetched. CI's Rust job runs formatting, clippy and the unit tests only, which need no FFmpeg.
 
 ## Fixtures and the media pipeline
 
@@ -267,7 +267,7 @@ It is separate from `ci.yml` because a Debian container, a Rust build and minute
 
 ## What CI runs
 
-`ci.yml` runs lint and `pnpm db:check`, one shared build job, typecheck, then a matrix of one test job per package (`@valence/contracts`, `core`, `plugin-sdk`, `lint`, `brand`, `transcoder`, `ui`, `client`, `server`, `requests`, `web`, `desktop` and `landing`) and a four way sharded job for `@valence/screens`. The Rust job runs only when a pull request touches `apps/transcoder`, `Cargo.toml`, `Cargo.lock` or the CI workflow itself, and always on `main`. See [Local setup](/develop/local-setup#hooks-and-ci) for the hooks that run the same checks before you push.
+`ci.yml` runs one shared build job, then lint, `pnpm db:check` and typecheck on one runner. Tests run in two kinds of job. The large suites are sharded: `@valence/screens` six ways, `@valence/server` four, `@valence/client` three, and `@valence/ui` as one. Every other package shares a single runner, two at a time. Each test job keeps its turbo test results in the Actions cache, so a package or shard whose inputs have not changed replays its last pass rather than running again. The Rust job runs only when a pull request touches `apps/transcoder`, `Cargo.toml`, `Cargo.lock` or the CI workflow itself, and always on `main`. See [Local setup](/develop/local-setup#hooks-and-ci) for the hooks that run the same checks before you push.
 
 ## Writing a good test here
 
