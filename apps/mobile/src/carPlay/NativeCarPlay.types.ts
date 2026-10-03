@@ -22,7 +22,7 @@ type NativeCarPlay = {
   setShelves: (shelves: CarShelf[], cookie: string | null) => void;
   push: (title: string, sections: CarSection[]) => void;
   showNowPlaying: () => void;
-  signedOut: (message: string) => void;
+  showMessage: (message: string) => void;
   addListener: (
     event: 'onChoose' | 'onCar',
     listener: (said: object) => void,

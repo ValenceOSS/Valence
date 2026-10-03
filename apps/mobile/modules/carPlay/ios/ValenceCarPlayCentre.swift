@@ -34,7 +34,7 @@ public final class ValenceCarPlayCentre {
   private var interface: CPInterfaceController?
   private var shelves: [ACarShelf] = []
   private var cookie: String?
-  private var isSignedIn = true
+  private var message: String?
   private var pictures: [String: UIImage] = [:]
 
   /// Told which row somebody chose, and which list it was in.
@@ -56,7 +56,7 @@ public final class ValenceCarPlayCentre {
   func setShelves(_ given: [ACarShelf], cookie sent: String?) {
     shelves = given
     cookie = sent
-    isSignedIn = true
+    message = nil
 
     guard let interface else {
       return
@@ -71,18 +71,11 @@ public final class ValenceCarPlayCentre {
     }
   }
 
-  func signedOut(_ message: String) {
-    isSignedIn = false
+  func showMessage(_ said: String) {
+    message = said
     shelves = []
 
-    guard let interface else {
-      return
-    }
-
-    let item = CPInformationItem(title: "Valence", detail: message)
-    let template = CPInformationTemplate(title: "Valence", layout: .leading, items: [item], actions: [])
-
-    interface.setRootTemplate(template, animated: false, completion: nil)
+    interface?.setRootTemplate(aMessage(said), animated: false, completion: nil)
   }
 
   func push(title: String, sections: [ACarSection]) {
@@ -112,11 +105,10 @@ public final class ValenceCarPlayCentre {
       return
     }
 
-    guard isSignedIn, !shelves.isEmpty else {
-      let item = CPInformationItem(title: "Valence", detail: "Open Valence on your iPhone to see your music here.")
-      let template = CPInformationTemplate(title: "Valence", layout: .leading, items: [item], actions: [])
+    guard message == nil, !shelves.isEmpty else {
+      let said = message ?? "Open Valence on your iPhone to see your music here."
 
-      interface.setRootTemplate(template, animated: animated, completion: nil)
+      interface.setRootTemplate(aMessage(said), animated: animated, completion: nil)
 
       return
     }
@@ -124,6 +116,16 @@ public final class ValenceCarPlayCentre {
     let tabs = CPTabBarTemplate(templates: shelves.prefix(CPTabBarTemplate.maximumTabCount).map { list(for: $0) })
 
     interface.setRootTemplate(tabs, animated: animated, completion: nil)
+  }
+
+  /// A list with nothing in it that says why, since an audio app may show only lists, grids, tabs and
+  /// Now Playing, and CarPlay throws on any other template set as the root.
+  private func aMessage(_ said: String) -> CPListTemplate {
+    let template = CPListTemplate(title: "Valence", sections: [])
+
+    template.emptyViewTitleVariants = [said]
+
+    return template
   }
 
   private func list(for shelf: ACarShelf) -> CPListTemplate {

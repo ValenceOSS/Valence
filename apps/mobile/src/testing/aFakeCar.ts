@@ -11,7 +11,7 @@ const aFakeCar = () => {
     setShelves: jest.fn<undefined, Parameters<NativeCarPlay['setShelves']>>(),
     push: jest.fn<undefined, Parameters<NativeCarPlay['push']>>(),
     showNowPlaying: jest.fn<undefined, []>(),
-    signedOut: jest.fn<undefined, [string]>(),
+    showMessage: jest.fn<undefined, [string]>(),
     addListener: jest.fn((_event: 'onChoose' | 'onCar', listener: (said: object) => void) => {
       heard.push(listener);
 

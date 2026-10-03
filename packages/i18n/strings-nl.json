@@ -9291,6 +9291,11 @@
     "context": "Shown in the use car play in the car play of the phone app."
   },
   {
+    "handler": "phone.carPlay.useCarPlay.thisServerHasNoMusicLibrary",
+    "text": "This server has no music library set up.",
+    "context": "Shown on the CarPlay screen in place of the music tabs when the server the phone is signed in to has no music library."
+  },
+  {
     "handler": "phone.platform.installPhonePlatform.addAPasskeyFromValenceOn",
     "text": "Add a passkey from Valence on the web.",
     "context": "Shown in the platform of the phone app (from `installPhonePlatform`)."
