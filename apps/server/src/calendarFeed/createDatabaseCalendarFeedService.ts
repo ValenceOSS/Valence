@@ -22,7 +22,7 @@ import type { CalendarFeedService } from '@ValenceServer/calendarFeed/CalendarFe
  * the server no longer has opens to nothing, and the link is then made afresh when next asked for.
  * Making a new link replaces the old one, which stops working at once. Each person has at most one
  * link, which the database holds to: where two requests to make the first link race, the one that
- * loses hands back the link the other stored.
+ * loses hands back the link the other stored, and so does one of two requests to replace it.
  *
  * @param db - The database.
  * @param sealingKey - The key the tokens are sealed with.
@@ -79,13 +79,40 @@ const createDatabaseCalendarFeedService = (
     };
   };
 
+  /**
+   * What somebody's link is after making one collided with another request making one at the same
+   * moment: the link that request stored, which is as new as the one that lost.
+   *
+   * @param owner - Whose link it is.
+   * @param error - Why storing the link failed.
+   * @returns The stored link, or nothing where the failure was not such a collision.
+   */
+  const storedAfterACollision = async <Failure>(
+    owner: CalendarFeedOwner,
+    error: Failure,
+  ): Promise<CalendarFeed | null> => {
+    const stored = isUniqueViolation(error) ? await read(owner) : null;
+
+    return stored === null || stored.token === null ? null : stored;
+  };
+
   const renew = async (owner: CalendarFeedOwner): Promise<CalendarFeed> => {
     const made = aNewLink(owner);
 
-    await db.transaction(async (tx) => {
-      await tx.delete(calendarFeed).where(ownedBy(owner));
-      await tx.insert(calendarFeed).values(made.row);
-    });
+    try {
+      await db.transaction(async (tx) => {
+        await tx.delete(calendarFeed).where(ownedBy(owner));
+        await tx.insert(calendarFeed).values(made.row);
+      });
+    } catch (error) {
+      const stored = await storedAfterACollision(owner, error);
+
+      if (stored === null) {
+        throw error;
+      }
+
+      return stored;
+    }
 
     return made.feed;
   };
@@ -111,9 +138,9 @@ const createDatabaseCalendarFeedService = (
 
         return made.feed;
       } catch (error) {
-        const stored = isUniqueViolation(error) ? await read(owner) : null;
+        const stored = await storedAfterACollision(owner, error);
 
-        if (stored === null || stored.token === null) {
+        if (stored === null) {
           throw error;
         }
 

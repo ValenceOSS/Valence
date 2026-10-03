@@ -112,6 +112,25 @@ describe('createDatabaseCalendarFeedService', () => {
   );
 
   it(
+    'leaves one live link when two requests replace it at once, failing neither',
+    async () => {
+      const { db, service } = await aService();
+      const first = await service.ensure(ADA);
+      const renewed = await Promise.all([service.renew(ADA), service.renew(ADA)]);
+      const rows = await db.select().from(calendarFeed).where(eq(calendarFeed.accountId, 'ada'));
+
+      expect(rows).toHaveLength(1);
+      expect(await service.resolve(first.token ?? '')).toBeNull();
+      expect(
+        (await Promise.all(renewed.map(async (feed) => service.resolve(feed.token ?? '')))).some(
+          (owner) => owner !== null,
+        ),
+      ).toBe(true);
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
     'keeps a link for a face apart from the account’s own',
     async () => {
       const { service } = await aService();
