@@ -353,43 +353,15 @@ jobs:
     # Read only, since cargo runs build scripts from every crate it builds and nothing here writes.
     permissions:
       contents: read
-    # On pull requests as well, which it did not used to be. The case for skipping them was that the
-    # pre-push hook has already run cargo clippy and cargo test on the machine the change was
-    # written on — which is true, and the machine is exactly the problem. A test reading a child's
-    # niceness through `ps` passed on every developer's macOS and failed here, where the image
-    # carries no procps, and nothing anybody could run locally would have said otherwise. The break
-    # then sat on main until somebody looked, because after the merge is the first time anything
-    # ran it.
+    # On the pull requests that touch Rust, and on every push to main. A test reading a child's
+    # niceness through `ps` once passed on every developer's macOS and failed only here, so the unit
+    # tests are worth running somewhere other than the machine they were written on.
     #
-    # On the pull requests that touch it, though, rather than on all of them. Pulling a Debian image
-    # and building the crate is minutes, and a change with no Rust in it cannot break Rust — a stack
-    # of web pull requests paid for that over and over and learnt nothing from any of it. A push to
-    # main runs it regardless, so what releases are cut from is still known to be good.
-
-    # In Debian, against the FFmpeg Valence ships, because these tests decode rather than merely
-    # calling something that does. One of them scribbles over the middle of a clip and requires the
-    # decoder to notice; Ubuntu's 6.1.1 decodes the damage without complaint and the test fails,
-    # which says nothing about Valence and everything about which FFmpeg was asked. Testing the
-    # transcoder against a build that ships to nobody answers a question nobody has.
-    #
-    # The shipped build is packaged for Debian and wants libraries Ubuntu noble does not carry, so
-    # the container is what makes running the real thing possible at all.
-    container:
-      image: debian:bookworm-slim
-    env:
-      VALENCE_FFMPEG_VERSION: 8.1.2-5.4
-      VALENCE_FFMPEG_SUITE: bookworm
-      VALENCE_FFMPEG: /usr/lib/valence-ffmpeg/ffmpeg
-      VALENCE_FFPROBE: /usr/lib/valence-ffmpeg/ffprobe
+    # The suites that drive a real FFmpeg do not run here. They took nine of this job's ten minutes,
+    # most of it encoding fixtures, and they need a Debian container with the FFmpeg Valence ships.
+    # They run in media-pipeline.yml instead, by hand before a release and once a week, and in the
+    # pre-push hook. What is left needs no FFmpeg at all, as the Windows job below already shows.
     steps:
-      # Nothing is in a slim image, including what checkout needs to clone with. The corpus tools
-      # are deliberately absent: cargo test shells out to FFmpeg and nothing else.
-      - name: Everything the image does not carry
-        run: |
-          apt-get update
-          apt-get install -y --no-install-recommends \
-            ca-certificates curl git xz-utils build-essential pkg-config
-
       # Nothing here pushes, and cargo runs build scripts from every crate in the workspace, so the
       # token is not left behind in the checkout for them to find.
       - uses: actions/checkout@v7
@@ -402,26 +374,13 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      # Before FFmpeg is fetched, so a formatting slip is not made to wait on a download.
       - run: cargo fmt --all --check
 
       - run: cargo clippy --all-targets -- -D warnings
 
-      - name: Install the FFmpeg Valence ships
-        run: |
-          curl -fsSL -o /tmp/valence-ffmpeg.deb \
-            "https://github.com/ValenceOSS/valence-ffmpeg/releases/download/v${VALENCE_FFMPEG_VERSION}/valence-ffmpeg_${VALENCE_FFMPEG_VERSION}-${VALENCE_FFMPEG_SUITE}_amd64.deb"
-          apt-get install -y --no-install-recommends /tmp/valence-ffmpeg.deb
-          "$VALENCE_FFMPEG" -version | head -1
-          # On the path as well as in the variables. The package installs beside the system's own
-          # FFmpeg rather than as it, and a slim image has none, so a test reaching for the bare
-          # name finds nothing.
-          ln -sf "$VALENCE_FFMPEG" /usr/local/bin/ffmpeg
-          ln -sf "$VALENCE_FFPROBE" /usr/local/bin/ffprobe
+      - run: cargo test --workspace --lib --bins
 
-      # The corpus is deliberately not generated here. The suites that need one look for it and skip
-      # when it is absent, and building it is the three minutes that belongs in media-pipeline.yml.
-      - run: cargo test
+      - run: cargo test -p valence-transcoder --test path_map_requests
 
   # The transcoder also runs natively on Windows, where it reaches the GPU through Direct3D 11 rather
   # than through /dev/dri (VAL-338). The Linux job cannot see a Windows-only compile error, a path
