@@ -1,4 +1,4 @@
-import ts from 'typescript';
+import ts from 'typescript6';
 import type { UiComponentDoc, UiPropDoc } from './uiCatalogue.types';
 
 type Member = { name: string; type: ts.TypeNode | undefined; isOptional: boolean };

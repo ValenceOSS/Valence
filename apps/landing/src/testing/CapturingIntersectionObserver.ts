@@ -5,6 +5,8 @@ class CapturingIntersectionObserver implements IntersectionObserver {
 
   rootMargin = '';
 
+  scrollMargin = '';
+
   thresholds: ReadonlyArray<number> = [];
 
   observed: Element[] = [];

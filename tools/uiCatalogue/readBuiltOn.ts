@@ -1,4 +1,4 @@
-import ts from 'typescript';
+import ts from 'typescript6';
 import { ANIMATION_LIBRARIES } from './ANIMATION_LIBRARIES';
 import { upstreamOf } from './upstreamOf';
 

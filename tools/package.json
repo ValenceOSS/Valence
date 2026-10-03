@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "typescript6": "npm:@typescript/typescript6@^6.0.2",
     "@valence/i18n": "workspace:*",
     "@typescript-eslint/rule-tester": "^8.70.0",
     "@typescript-eslint/utils": "^8.70.0",

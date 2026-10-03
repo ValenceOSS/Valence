@@ -76,11 +76,10 @@ const matchSourceItem = (item: SourceItem, context: MatchContext): ItemMatch => 
     byPath === null ? null : { kind: 'item', mediaItemId: byPath, by: 'path' };
 
   if (item.kind === 'movie') {
-    const byId =
-      (item.ids.tmdb === null ? null : (index.filmsByTmdb.get(item.ids.tmdb)?.[0] ?? null)) ??
-      (item.ids.imdb === null
-        ? null
-        : (index.filmsByImdb.get(item.ids.imdb.toLowerCase())?.[0] ?? null));
+    const byTmdb = item.ids.tmdb === null ? undefined : index.filmsByTmdb.get(item.ids.tmdb)?.[0];
+    const byImdb =
+      item.ids.imdb === null ? undefined : index.filmsByImdb.get(item.ids.imdb.toLowerCase())?.[0];
+    const byId = byTmdb ?? byImdb ?? null;
 
     if (byId !== null) {
       return { kind: 'item', mediaItemId: byId, by: 'id' };
