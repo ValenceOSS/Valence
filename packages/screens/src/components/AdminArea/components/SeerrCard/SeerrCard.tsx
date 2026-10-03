@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Key as KeyIcon } from '@keyline-icons/react';
+import { Key as KeyFilledIcon } from '@keyline-icons/react/fill';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { SettingList } from '@ValenceUI/SettingList';
 import { SettingRow } from '@ValenceUI/SettingRow';
@@ -103,7 +103,7 @@ const SeerrCard = ({ origin }: SeerrCardProps) => {
       actions={
         link.isEnabled ? (
           <PanelCardAction
-            icon={KeyIcon}
+            icon={KeyFilledIcon}
             isLoading={isSaving}
             onClick={() => {
               void keep(rotateSeerrKey(), say('screens.adminArea.seerrCard.madeANewKey'));

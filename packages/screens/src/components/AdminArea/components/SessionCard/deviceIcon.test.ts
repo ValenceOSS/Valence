@@ -4,7 +4,7 @@ import {
   Globe as GlobeIcon,
   Monitor as MonitorIcon,
   Smartphone as SmartphoneIcon,
-} from '@keyline-icons/react';
+} from '@keyline-icons/react/fill';
 import { describe, expect, it } from 'vitest';
 import { deviceIconFor } from './deviceIcon';
 describe('deviceIconFor', () => {

@@ -1,4 +1,4 @@
-import { Check as CheckIcon } from '@keyline-icons/react';
+import { Check as CheckIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';

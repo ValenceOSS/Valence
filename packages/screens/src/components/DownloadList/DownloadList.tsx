@@ -185,7 +185,7 @@ const DownloadList = () => {
         <section key={group.title ?? group.items[0]?.id} className="flex flex-col">
           {group.title === null ? null : (
             <header className="flex items-baseline justify-between gap-3 px-5 pb-2 pt-5">
-              <h3 className="text-xs uppercase tracking-[0.16em] text-text-muted">{group.title}</h3>
+              <h3 className="text-xs font-medium text-text-muted">{group.title}</h3>
 
               <span className="font-body text-xs text-text-muted">
                 {say('screens.downloadList.readyOfTotal', {

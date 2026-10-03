@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
+  Bin as BinIcon,
   CircleCheck as CircleCheckIcon,
   Copy as CopyIcon,
-  Plus as PlusIcon,
-  Bin as BinIcon,
-} from '@keyline-icons/react';
+  Plus as PlusFilledIcon,
+} from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { notify } from '@ValenceUI/notify';
@@ -55,7 +55,7 @@ const InviteCard = ({ invites }: InviteCardProps) => {
     <PanelCard
       title={say('screens.adminArea.linkedServersPanel.inviteAServer')}
       actions={
-        <PanelCardAction icon={PlusIcon} isLoading={isMaking} onClick={make}>
+        <PanelCardAction icon={PlusFilledIcon} isLoading={isMaking} onClick={make}>
           {say('screens.adminArea.linkedServersPanel.makeAnInvite')}
         </PanelCardAction>
       }

@@ -34,7 +34,8 @@ describe('StatStrip', () => {
       />,
     );
 
-    expect(container.querySelectorAll('dl')).toHaveLength(1);
+    expect(container.firstElementChild).toHaveClass('grid');
+    expect(container.querySelectorAll('dl')).toHaveLength(2);
     expect(screen.getAllByRole('term')).toHaveLength(2);
   });
 

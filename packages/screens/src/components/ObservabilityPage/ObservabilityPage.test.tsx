@@ -3,7 +3,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fetchJobHistory, setQueuePaused } from '@ValenceClient/admin/fetchAdmin';
+import {
+  fetchJobHistory,
+  setQueueConcurrency,
+  setQueuePaused,
+} from '@ValenceClient/admin/fetchAdmin';
 import { fetchJobRun } from '@ValenceClient/admin/fetchJobRun';
 import { fetchJobStats } from '@ValenceClient/admin/fetchJobStats';
 import { fetchLogFacets } from '@ValenceClient/admin/fetchLogFacets';
@@ -235,9 +239,8 @@ describe('ObservabilityPage', () => {
     );
 
     expect(screen.getByText('1 running').parentElement).toHaveTextContent('1 running · 3 waiting');
-    expect(screen.getByRole('button', { name: 'How many jobs run at once' })).toHaveTextContent(
-      '2 at a time',
-    );
+    expect(screen.getByRole('button', { name: /^Pause/ })).toHaveTextContent('2 at a time');
+    expect(screen.getByRole('button', { name: 'How many jobs run at once' })).toBeInTheDocument();
   });
 
   it('keeps the queue in reach from whichever view is open', async () => {
@@ -246,13 +249,24 @@ describe('ObservabilityPage', () => {
     renderPage(<ObservabilityPage {...props} monitor={reading([job()])} />);
     await user.click(screen.getByRole('tab', { name: 'Health' }));
 
-    expect(screen.getByRole('button', { name: 'Pause' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Pause/ })).toBeInTheDocument();
+  });
+
+  it('changes how many jobs run at once from beside the pause', async () => {
+    const user = userEvent.setup();
+
+    renderPage(<ObservabilityPage {...props} monitor={reading([job()])} />);
+
+    await user.click(screen.getByRole('button', { name: 'How many jobs run at once' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: '4 at a time' }));
+
+    expect(setQueueConcurrency).toHaveBeenCalledWith(4);
   });
 
   it('offers to pause the queue, and asks for it', async () => {
     renderPage(<ObservabilityPage {...props} monitor={reading([job()])} />);
 
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Pause' }));
+    await userEvent.setup().click(screen.getByRole('button', { name: /^Pause/ }));
 
     expect(setQueuePaused).toHaveBeenCalledWith(true);
   });
@@ -262,7 +276,7 @@ describe('ObservabilityPage', () => {
 
     expect(screen.getByText('Paused')).toBeInTheDocument();
 
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Resume' }));
+    await userEvent.setup().click(screen.getByRole('button', { name: /^Resume/ }));
 
     expect(setQueuePaused).toHaveBeenCalledWith(false);
   });

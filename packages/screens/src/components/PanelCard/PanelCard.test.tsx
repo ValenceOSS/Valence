@@ -1,5 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { waitForArrivals } from '@ValenceScreens/testing/waitForArrivals';
 import { PanelCard } from './PanelCard';
 
 describe('PanelCard', () => {
@@ -89,7 +90,7 @@ describe('PanelCard', () => {
       </PanelCard>,
     );
 
-    expect(screen.getByRole('heading', { name: 'Friday' })).toHaveClass('text-xs');
+    expect(screen.getByRole('heading', { name: 'Friday' })).toHaveClass('text-[0.6875rem]');
 
     rerender(
       <PanelCard title="Friday" isCompact>
@@ -97,11 +98,40 @@ describe('PanelCard', () => {
       </PanelCard>,
     );
 
-    expect(screen.getByRole('heading', { name: 'Friday' })).toHaveClass('text-[0.6875rem]');
+    expect(screen.getByRole('heading', { name: 'Friday' })).toHaveClass('text-[0.625rem]');
     expect(screen.getByRole('heading', { name: 'Friday' }).parentElement).toHaveClass('min-h-7');
   });
 
   it('sets a display name so devtools can identify it', () => {
     expect(PanelCard.displayName).toBe('PanelCard');
+  });
+
+  it('names itself in quiet capitals, as every card title does', () => {
+    render(
+      <PanelCard title="Storage">
+        <p>Inside</p>
+      </PanelCard>,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Storage' })).toHaveClass(
+      'uppercase',
+      'text-text/50',
+    );
+  });
+
+  it('rises in as it arrives, rather than being there at once', async () => {
+    render(
+      <PanelCard title="Storage">
+        <p>Inside</p>
+      </PanelCard>,
+    );
+
+    const card = screen.getByText('Inside').closest('section');
+
+    expect(card).not.toBeVisible();
+
+    await waitForArrivals();
+
+    expect(card).toBeVisible();
   });
 });

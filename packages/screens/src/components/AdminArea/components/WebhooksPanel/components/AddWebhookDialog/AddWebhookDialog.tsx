@@ -6,24 +6,20 @@ import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { TabRow } from '@ValenceUI/TabRow';
 import { Tabs } from '@ValenceUI/Tabs';
 import { useTravelDirection } from '@ValenceUI/useTravelDirection';
-import { DEFAULT_WEBHOOK_FILTERS } from '@ValenceContracts/schemas/Webhook';
+import type { FormEvent } from 'react';
+import { useZodForm } from '@ValenceClient/forms/useZodForm';
+import { Form } from '@ValenceUI/Form';
+import { A_NEW_WEBHOOK } from '@ValenceScreens/components/AdminArea/components/WebhookFields/A_NEW_WEBHOOK';
+import { paneOfFirstProblem } from '@ValenceScreens/components/AdminArea/components/WebhookFields/paneOfFirstProblem';
+import { webhookFormSchema } from '@ValenceScreens/components/AdminArea/components/WebhookFields/webhookFormSchema';
 import { WebhookFields } from '@ValenceScreens/components/AdminArea/components/WebhookFields/WebhookFields';
 import {
   WEBHOOK_PANES,
   WEBHOOK_PANE_ITEMS,
   isWebhookPane,
 } from '@ValenceScreens/components/AdminArea/components/WebhookFields/webhookPanes';
-import type { WebhookDraft } from '@ValenceScreens/components/AdminArea/components/WebhookFields/WebhookFields.types';
 import type { AddWebhookDialogProps } from './AddWebhookDialog.types';
 import { say } from '@ValenceI18n/say';
-
-const A_NEW_WEBHOOK: WebhookDraft = {
-  name: '',
-  url: '',
-  preset: 'generic',
-  events: ['job.failed'],
-  filters: DEFAULT_WEBHOOK_FILTERS,
-};
 
 /**
  * Everything needed to point the server at somewhere new: where to deliver, which events to deliver,
@@ -45,44 +41,38 @@ const AddWebhookDialog = ({
   profiles,
   hasRequests = false,
 }: AddWebhookDialogProps) => {
-  const [draft, setDraft] = useState<WebhookDraft>(A_NEW_WEBHOOK);
-  const [refusal, setRefusal] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
   const [pane, setPane] = useState<(typeof WEBHOOK_PANES)[number]>('where');
+
+  const form = useZodForm(webhookFormSchema, A_NEW_WEBHOOK, async (answers, { reset }) => {
+    const answer = await onCreate(answers);
+
+    if (answer !== null) {
+      return answer.message;
+    }
+
+    reset(A_NEW_WEBHOOK);
+    setPane('where');
+    onClose();
+
+    return null;
+  });
 
   const travel = useTravelDirection([...WEBHOOK_PANES], pane);
 
-  const isReady = draft.name.trim() !== '' && draft.url.trim() !== '' && draft.events.length > 0;
-
-  const reset = () => {
-    setDraft(A_NEW_WEBHOOK);
-    setRefusal(null);
-    setPane('where');
-  };
-
   const close = () => {
-    reset();
+    form.reset(A_NEW_WEBHOOK);
+    setPane('where');
     onClose();
   };
 
-  const save = () => {
-    setIsSaving(true);
-    setRefusal(null);
+  const send = (event: FormEvent) => {
+    const off = paneOfFirstProblem(form.values);
 
-    void onCreate({ ...draft, name: draft.name.trim(), url: draft.url.trim() })
-      .then((answer) => {
-        if (answer === null) {
-          reset();
-          onClose();
+    if (off !== null) {
+      setPane(off);
+    }
 
-          return;
-        }
-
-        setRefusal(answer.message);
-      })
-      .finally(() => {
-        setIsSaving(false);
-      });
+    form.submit(event);
   };
 
   return (
@@ -110,28 +100,35 @@ const AddWebhookDialog = ({
           }
         />
 
-        <DialogContent className="flex min-h-[34rem] flex-col gap-5">
-          <WebhookFields
-            draft={draft}
-            onChange={setDraft}
-            accounts={accounts}
-            profiles={profiles}
-            hasRequests={hasRequests}
-            travel={travel}
-          />
-        </DialogContent>
+        <Form label={say('common.createWebhook')} onSubmit={send} isDialog>
+          <DialogContent className="flex min-h-[34rem] flex-col gap-5">
+            <WebhookFields
+              draft={form.values}
+              onChange={form.assign}
+              errors={{
+                name: form.errorOf('name'),
+                url: form.errorOf('url'),
+                events: form.errorOf('events'),
+              }}
+              accounts={accounts}
+              profiles={profiles}
+              hasRequests={hasRequests}
+              travel={travel}
+            />
+          </DialogContent>
 
-        <DialogFooter
-          note={refusal}
-          dismiss={{ onChoose: close }}
-          confirm={{
-            label: isSaving
-              ? say('screens.webhooksPanel.addWebhookDialog.creating')
-              : say('common.createWebhook'),
-            onChoose: save,
-            isDisabled: !isReady || isSaving,
-          }}
-        />
+          <DialogFooter
+            note={form.problem}
+            dismiss={{ onChoose: close }}
+            confirm={{
+              label: form.isSubmitting
+                ? say('screens.webhooksPanel.addWebhookDialog.creating')
+                : say('common.createWebhook'),
+              isSubmit: true,
+              isLoading: form.isSubmitting,
+            }}
+          />
+        </Form>
       </Tabs>
     </DialogCompanion>
   );

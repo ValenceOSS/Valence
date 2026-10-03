@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ChevronsUpDown as ChevronsUpDownIcon,
   RefreshCw as RefreshCwIcon,
-} from '@keyline-icons/react';
+} from '@keyline-icons/react/fill';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -42,7 +42,7 @@ const PRIVACIES = [
 const PRIVACY: Readonly<Record<IndexerPrivacy, { label: string; tone: BadgeTone }>> = {
   public: { label: say('screens.adminArea.indexerCatalogueDialog.public'), tone: 'success' },
   'semi-private': { label: 'Semi-private', tone: 'warning' },
-  private: { label: say('screens.adminArea.indexerCatalogueDialog.private'), tone: 'accent' },
+  private: { label: say('screens.adminArea.indexerCatalogueDialog.private'), tone: 'warning' },
 };
 
 const GENERIC: readonly { id: 'torznab' | 'newznab'; name: string; description: string }[] = [
@@ -303,7 +303,7 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
         dismiss={{ onChoose: onClose }}
       >
         <Button variant="secondary" isLoading={isRefreshing} onClick={refresh}>
-          <Icon of={RefreshCwIcon} size={15} />
+          {isRefreshing ? null : <Icon of={RefreshCwIcon} size={15} />}
           {say('screens.adminArea.indexerCatalogueDialog.bringUpToDate')}
         </Button>
       </DialogFooter>

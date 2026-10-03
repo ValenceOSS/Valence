@@ -1,14 +1,16 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
-  CircleCheck as CircleCheckIcon,
   CirclePause as CirclePauseIcon,
   Clock as ClockIcon,
-  Copy as CopyIcon,
-  DoorOpen as DoorOpenIcon,
   Eye as EyeIcon,
   Headphones as HeadphonesIcon,
   UserPlus as UserPlusIcon,
 } from '@keyline-icons/react';
+import {
+  CircleCheck as CircleCheckFilledIcon,
+  Copy as CopyFilledIcon,
+  DoorOpen as DoorOpenFilledIcon,
+} from '@keyline-icons/react/fill';
 import { useEffect, useState } from 'react';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -211,7 +213,7 @@ const PartyPanel = ({
         isFlush
         actions={
           onLeave === undefined ? undefined : (
-            <PanelCardAction icon={DoorOpenIcon} onClick={onLeave}>
+            <PanelCardAction icon={DoorOpenFilledIcon} onClick={onLeave}>
               {say('common.partyPanel.leave')}
             </PanelCardAction>
           )
@@ -355,7 +357,7 @@ const PartyPanel = ({
           title={say('common.partyPanel.invite')}
           actions={
             <PanelCardAction
-              icon={hasCopied ? CircleCheckIcon : CopyIcon}
+              icon={hasCopied ? CircleCheckFilledIcon : CopyFilledIcon}
               onClick={() => {
                 void onCopyInvitation?.(invitation).then(() => {
                   setHasCopied(true);

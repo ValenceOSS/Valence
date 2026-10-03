@@ -3,14 +3,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import {
   ChevronDown as ChevronDownIcon,
-  MoreHorizontal as MoreHorizontalIcon,
+  Copy as CopyFilledIcon,
+  Download as DownloadFilledIcon,
   Radio as RadioIcon,
   RefreshCw as RefreshCwIcon,
   Terminal as TerminalIcon,
   X as XIcon,
-} from '@keyline-icons/react';
-import { Copy as CopyFilledIcon, Download as DownloadFilledIcon } from '@keyline-icons/react/fill';
-import { ActionMenu } from '@ValenceUI/ActionMenu';
+} from '@keyline-icons/react/fill';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { AppliedFilters } from '@ValenceUI/AppliedFilters';
 import { BarList } from '@ValenceUI/BarList';
@@ -47,11 +46,12 @@ import { describeLogLevel } from '@ValenceScreens/admin/describeLogLevel';
 import { LogDetailDialog } from '@ValenceScreens/components/ObservabilityPage/components/LogDetailDialog/LogDetailDialog';
 import { LogLine } from './components/LogLine/LogLine';
 import { TimeRangeMenu } from '@ValenceScreens/components/ObservabilityPage/components/TimeRangeMenu/TimeRangeMenu';
-import { LevelToggles } from './components/LevelToggles/LevelToggles';
+import { LevelToggles } from '@ValenceScreens/components/ObservabilityPage/components/LevelToggles/LevelToggles';
 import type { FilterGroup } from '@ValenceUI/FilterMenu.types';
 import type { LogView } from '@ValenceClient/admin/logView.types';
 import type { LogLevel, LogRecord, LogSort } from '@ValenceContracts/schemas/Log';
 import type { LogExplorerProps } from './LogExplorer.types';
+import { PanelCardMenu } from '@ValenceScreens/components/PanelCardMenu/PanelCardMenu';
 import { say } from '@ValenceI18n/say';
 import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
 
@@ -330,7 +330,7 @@ const LogExplorer = ({
             <li
               key={`day-${record.id}`}
               role="separator"
-              className="bg-[var(--surface-hover)] px-3 py-1 text-[0.6875rem] uppercase tracking-[0.14em] text-text-muted"
+              className="bg-[var(--surface-hover)] px-3 py-1 text-[0.6875rem] font-medium text-text-muted"
             >
               {describeLogDay(record.atMs)}
             </li>,
@@ -396,6 +396,7 @@ const LogExplorer = ({
 
         <OptionMenu
           label={say('common.order')}
+          size="sm"
           triggerShape="field"
           className="w-auto"
           groups={[
@@ -459,9 +460,8 @@ const LogExplorer = ({
           <Icon of={RefreshCwIcon} size={16} />
         </Button>
 
-        <ActionMenu
+        <PanelCardMenu
           label={say('screens.observabilityPage.logExplorer.moreAboutTheseLines')}
-          trigger={<Icon of={MoreHorizontalIcon} size={16} />}
           groups={[
             {
               items: [

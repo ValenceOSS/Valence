@@ -5,7 +5,7 @@ import {
   ChevronsUpDown as ChevronsUpDownIcon,
   Image as ImageIcon,
   TriangleAlert as TriangleAlertIcon,
-} from '@keyline-icons/react';
+} from '@keyline-icons/react/fill';
 import { useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { Badge } from '@ValenceUI/Badge';
@@ -119,7 +119,7 @@ const SettingsPanel = ({
 
   return (
     <PanelCard title={say('common.settings')} isFlush>
-      <SettingList>
+      <SettingList isInset>
         <SettingRow
           title={say('screens.adminArea.settingsPanel.hardwareAcceleration')}
           description={say(

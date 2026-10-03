@@ -1,5 +1,7 @@
-import { MoreHorizontal as MoreHorizontalIcon } from '@keyline-icons/react';
-import { Search as SearchFilledIcon } from '@keyline-icons/react/fill';
+import {
+  MoreHorizontal as MoreHorizontalIcon,
+  Search as SearchFilledIcon,
+} from '@keyline-icons/react/fill';
 import { useMemo } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { DataTable } from '@ValenceUI/DataTable';
@@ -28,6 +30,7 @@ const ShelfTable = ({ label, items, toolbar, emptyMessage, onOpenFolder }: Shelf
     () => [
       {
         id: 'title',
+        meta: { fills: true },
         header: say('common.title'),
         accessorFn: (item) => item.name,
         cell: ({ row }) => (
@@ -117,7 +120,7 @@ const ShelfTable = ({ label, items, toolbar, emptyMessage, onOpenFolder }: Shelf
       getRowId={(item) => item.id}
       pageSize={25}
       height="fills"
-      toolbar={toolbar}
+      {...(toolbar === undefined ? {} : { toolbar })}
       emptyMessage={emptyMessage}
     />
   );

@@ -8,13 +8,18 @@ import { Tabs } from '@ValenceUI/Tabs';
 import { useTravelDirection } from '@ValenceUI/useTravelDirection';
 import { useHeldWhileClosing } from '@ValenceUI/Dialog.useHeldWhileClosing';
 import { isSubscribableEvent } from '@ValenceContracts/schemas/Webhook';
+import type { FormEvent } from 'react';
+import { useZodForm } from '@ValenceClient/forms/useZodForm';
+import { Form } from '@ValenceUI/Form';
+import { A_NEW_WEBHOOK } from '@ValenceScreens/components/AdminArea/components/WebhookFields/A_NEW_WEBHOOK';
+import { paneOfFirstProblem } from '@ValenceScreens/components/AdminArea/components/WebhookFields/paneOfFirstProblem';
+import { webhookFormSchema } from '@ValenceScreens/components/AdminArea/components/WebhookFields/webhookFormSchema';
 import { WebhookFields } from '@ValenceScreens/components/AdminArea/components/WebhookFields/WebhookFields';
 import {
   WEBHOOK_PANES,
   WEBHOOK_PANE_ITEMS,
   isWebhookPane,
 } from '@ValenceScreens/components/AdminArea/components/WebhookFields/webhookPanes';
-import type { WebhookDraft } from '@ValenceScreens/components/AdminArea/components/WebhookFields/WebhookFields.types';
 import type { EditWebhookDialogProps } from './EditWebhookDialog.types';
 import { say } from '@ValenceI18n/say';
 
@@ -42,52 +47,54 @@ const EditWebhookDialog = ({
   hasRequests = false,
 }: EditWebhookDialogProps) => {
   const webhook = useHeldWhileClosing(requested, requested !== null);
-  const [draft, setDraft] = useState<WebhookDraft | null>(null);
-  const [refusal, setRefusal] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
   const [pane, setPane] = useState<(typeof WEBHOOK_PANES)[number]>('where');
+
+  const form = useZodForm(webhookFormSchema, A_NEW_WEBHOOK, async (answers) => {
+    if (webhook === null) {
+      return null;
+    }
+
+    const answer = await onSave(webhook.id, answers);
+
+    if (answer !== null) {
+      return answer.message;
+    }
+
+    onClose();
+
+    return null;
+  });
+  const { reset } = form;
 
   useEffect(() => {
     if (requested === null) {
       return;
     }
 
-    setDraft({
+    reset({
       name: requested.name,
       url: requested.url,
       preset: requested.preset,
       events: requested.events.filter(isSubscribableEvent),
       filters: requested.filters,
     });
-    setRefusal(null);
     setPane('where');
-  }, [requested]);
+  }, [requested, reset]);
 
   const travel = useTravelDirection([...WEBHOOK_PANES], pane);
 
-  if (webhook === null || draft === null) {
+  if (webhook === null) {
     return null;
   }
 
-  const isReady = draft.name.trim() !== '' && draft.url.trim() !== '' && draft.events.length > 0;
+  const send = (event: FormEvent) => {
+    const off = paneOfFirstProblem(form.values);
 
-  const save = () => {
-    setIsSaving(true);
-    setRefusal(null);
+    if (off !== null) {
+      setPane(off);
+    }
 
-    void onSave(webhook.id, { ...draft, name: draft.name.trim(), url: draft.url.trim() })
-      .then((answer) => {
-        if (answer === null) {
-          onClose();
-
-          return;
-        }
-
-        setRefusal(answer.message);
-      })
-      .finally(() => {
-        setIsSaving(false);
-      });
+    form.submit(event);
   };
 
   return (
@@ -119,28 +126,35 @@ const EditWebhookDialog = ({
           }
         />
 
-        <DialogContent className="flex min-h-[34rem] flex-col gap-5">
-          <WebhookFields
-            draft={draft}
-            onChange={setDraft}
-            accounts={accounts}
-            profiles={profiles}
-            hasRequests={hasRequests}
-            travel={travel}
-          />
-        </DialogContent>
+        <Form label={say('common.edit')} onSubmit={send} isDialog>
+          <DialogContent className="flex min-h-[34rem] flex-col gap-5">
+            <WebhookFields
+              draft={form.values}
+              onChange={form.assign}
+              errors={{
+                name: form.errorOf('name'),
+                url: form.errorOf('url'),
+                events: form.errorOf('events'),
+              }}
+              accounts={accounts}
+              profiles={profiles}
+              hasRequests={hasRequests}
+              travel={travel}
+            />
+          </DialogContent>
 
-        <DialogFooter
-          note={refusal}
-          dismiss={{ onChoose: onClose }}
-          confirm={{
-            label: isSaving
-              ? say('screens.webhooksPanel.editWebhookDialog.saving')
-              : say('common.saveChanges'),
-            onChoose: save,
-            isDisabled: !isReady || isSaving,
-          }}
-        />
+          <DialogFooter
+            note={form.problem}
+            dismiss={{ onChoose: onClose }}
+            confirm={{
+              label: form.isSubmitting
+                ? say('screens.webhooksPanel.editWebhookDialog.saving')
+                : say('common.saveChanges'),
+              isSubmit: true,
+              isLoading: form.isSubmitting,
+            }}
+          />
+        </Form>
       </Tabs>
     </DialogCompanion>
   );

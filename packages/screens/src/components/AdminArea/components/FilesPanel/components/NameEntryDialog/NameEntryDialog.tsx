@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useZodForm } from '@ValenceClient/forms/useZodForm';
+import { Form } from '@ValenceUI/Form';
+import { NameEntryFormSchema } from './NameEntryFormSchema';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -26,43 +28,35 @@ const NameEntryDialog = ({
   onClose,
   onName,
 }: NameEntryDialogProps) => {
-  const [name, setName] = useState(initialName);
-  const [problem, setProblem] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-
-  const save = () => {
-    setIsSaving(true);
-    setProblem(null);
-
-    void onName(name.trim()).then((said) => {
-      setIsSaving(false);
-      setProblem(said);
-    });
-  };
+  const form = useZodForm(NameEntryFormSchema, { name: initialName }, (answers) =>
+    onName(answers.name),
+  );
+  const isUnchanged = form.values.name.trim() === initialName;
 
   return (
     <DialogCompanion label={title} isOpen={isOpen} onClose={onClose}>
       <DialogTitle size="compact" title={title} />
 
-      <DialogContent>
-        <TextField
-          label={say('common.name')}
-          value={name}
-          onValueChange={setName}
-          hasFocusOnMount
-          {...(problem === null ? {} : { error: problem })}
-        />
-      </DialogContent>
+      <Form label={title} onSubmit={form.submit} isDialog>
+        <DialogContent>
+          <TextField
+            label={say('common.name')}
+            {...form.text('name')}
+            {...(form.problem === null ? {} : { error: form.problem })}
+            hasFocusOnMount
+          />
+        </DialogContent>
 
-      <DialogFooter
-        dismiss={{ onChoose: onClose }}
-        confirm={{
-          label: confirmLabel,
-          onChoose: save,
-          isLoading: isSaving,
-          isDisabled: name.trim() === '' || name.trim() === initialName,
-        }}
-      />
+        <DialogFooter
+          dismiss={{ onChoose: onClose }}
+          confirm={{
+            label: confirmLabel,
+            isSubmit: true,
+            isLoading: form.isSubmitting,
+            isDisabled: isUnchanged,
+          }}
+        />
+      </Form>
     </DialogCompanion>
   );
 };

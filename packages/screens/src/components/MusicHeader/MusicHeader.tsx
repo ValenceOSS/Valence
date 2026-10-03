@@ -36,7 +36,7 @@ const MusicHeader = ({ eyebrow, title, artwork, details, actions }: MusicHeaderP
         <motion.span
           variants={rises}
           transition={moves}
-          className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted"
+          className="text-xs font-semibold text-text-muted"
         >
           {eyebrow}
         </motion.span>

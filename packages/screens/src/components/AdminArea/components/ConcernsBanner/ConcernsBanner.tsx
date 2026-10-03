@@ -6,7 +6,7 @@ import {
   Info as InfoIcon,
   TriangleAlert as TriangleAlertIcon,
   X as XIcon,
-} from '@keyline-icons/react';
+} from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
 import type { ConcernTone } from '@ValenceScreens/components/AdminArea/collectConcerns';
@@ -42,7 +42,7 @@ const ConcernsBanner = ({ concerns, onOpenPanel, onDismiss }: ConcernsBannerProp
 
   return (
     <section aria-label={say('common.needsAttention')} className="valence-card-shell flex flex-col">
-      <span className="flex items-center justify-between px-2.5 pb-1.5 pt-1.5 text-[0.6875rem] uppercase tracking-[0.16em] text-text-muted">
+      <span className="flex items-center justify-between px-2.5 pb-1.5 pt-1.5 text-[0.6875rem] font-medium text-text-muted">
         <span>{say('common.needsAttention')}</span>
         <span className="tabular-nums">{concerns.length}</span>
       </span>

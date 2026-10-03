@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Send as SendIcon } from '@keyline-icons/react';
+import { Send as SendFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { Callout } from '@ValenceUI/Callout';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Link } from '@ValenceUI/Link';
-import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { SettingList } from '@ValenceUI/SettingList';
 import { SettingRow } from '@ValenceUI/SettingRow';
+import { SettingGroup } from '@ValenceUI/SettingGroup';
+import { SelectField } from '@ValenceUI/SelectField';
 import { Spinner } from '@ValenceUI/Spinner';
 import { Switch } from '@ValenceUI/Switch';
 import { TextField } from '@ValenceUI/TextField';
@@ -171,7 +172,7 @@ const EmailCard = () => {
       actions={
         isFixed ? null : (
           <PanelCardAction
-            icon={SendIcon}
+            icon={SendFilledIcon}
             onClick={() => {
               change({ ...RESEND });
               setPort(RESEND.port.toString());
@@ -215,14 +216,13 @@ const EmailCard = () => {
             </SettingRow>
           )}
 
-          <SettingRow
+          <SettingGroup
             title={say('screens.adminArea.emailCard.mailServer')}
             description={say('screens.adminArea.emailCard.theSmtpServerOfYourEmail')}
           >
-            <div className="flex w-72 max-w-full flex-col gap-2">
+            <div className="grid items-start gap-3 sm:grid-cols-[minmax(0,1fr)_7rem_10rem]">
               <TextField
-                label={say('screens.adminArea.emailCard.mailServer')}
-                size="sm"
+                label={say('common.serverAddress')}
                 placeholder={RESEND.host}
                 value={draft.host}
                 disabled={isFixed}
@@ -234,7 +234,6 @@ const EmailCard = () => {
               <TextField
                 label={say('screens.adminArea.emailCard.port')}
                 type="number"
-                size="sm"
                 min={1}
                 max={65_535}
                 value={port}
@@ -245,11 +244,9 @@ const EmailCard = () => {
                   : { error: say('screens.adminArea.emailCard.aPortFrom1To65535') })}
               />
 
-              <SegmentedRow
+              <SelectField
                 label={say('common.security')}
-                size="sm"
-                tone="accent"
-                items={SECURITY_CHOICES}
+                options={[...SECURITY_CHOICES]}
                 value={draft.security}
                 onSelect={(id) => {
                   if (isFixed) {
@@ -262,9 +259,9 @@ const EmailCard = () => {
                 }}
               />
             </div>
-          </SettingRow>
+          </SettingGroup>
 
-          <SettingRow
+          <SettingGroup
             title={say('screens.adminArea.settingsPanel.signingIn')}
             description={
               setup.hasPassword
@@ -272,10 +269,9 @@ const EmailCard = () => {
                 : say('screens.adminArea.emailCard.forResendTheUsernameIs')
             }
           >
-            <div className="flex w-72 max-w-full flex-col gap-2">
+            <div className="grid items-start gap-3 sm:grid-cols-2">
               <TextField
                 label={say('common.username')}
-                size="sm"
                 autoComplete="off"
                 value={draft.username}
                 disabled={isFixed}
@@ -287,7 +283,6 @@ const EmailCard = () => {
               <TextField
                 label={say('common.password')}
                 type="password"
-                size="sm"
                 autoComplete="new-password"
                 placeholder={
                   setup.hasPassword ? say('screens.adminArea.emailCard.savedLeaveEmptyToKeep') : ''
@@ -299,16 +294,15 @@ const EmailCard = () => {
                 }}
               />
             </div>
-          </SettingRow>
+          </SettingGroup>
 
-          <SettingRow
+          <SettingGroup
             title={say('screens.adminArea.emailCard.sendAs')}
             description={say('screens.adminArea.emailCard.theAddressMustBeOneYour')}
           >
-            <div className="flex w-72 max-w-full flex-col gap-2">
+            <div className="grid items-start gap-3 sm:grid-cols-2">
               <TextField
                 label={say('common.name')}
-                size="sm"
                 placeholder={say('common.valence')}
                 value={draft.fromName}
                 disabled={isFixed}
@@ -320,7 +314,6 @@ const EmailCard = () => {
               <TextField
                 label={say('common.address')}
                 type="email"
-                size="sm"
                 value={draft.fromAddress}
                 disabled={isFixed}
                 onValueChange={(fromAddress) => {
@@ -328,7 +321,7 @@ const EmailCard = () => {
                 }}
               />
             </div>
-          </SettingRow>
+          </SettingGroup>
 
           <SettingRow
             title={say('screens.adminArea.emailCard.emailPasswordResetLinks')}

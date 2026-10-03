@@ -7,7 +7,7 @@ describe('applyRoundness', () => {
 
     applyRoundness('round', root);
 
-    expect(root.style.getPropertyValue('--radius-scale')).toBe('1.6');
+    expect(root.style.getPropertyValue('--radius-scale')).toBe('2.2');
   });
 
   it('writes no rounding at all for the sharpest level', () => {
@@ -18,11 +18,11 @@ describe('applyRoundness', () => {
     expect(root.style.getPropertyValue('--radius-scale')).toBe('0');
   });
 
-  it('writes the scale of nothing changed for the default level', () => {
+  it('writes the stock scale for the default level', () => {
     const root = document.createElement('div');
 
     applyRoundness('default', root);
 
-    expect(root.style.getPropertyValue('--radius-scale')).toBe('1');
+    expect(root.style.getPropertyValue('--radius-scale')).toBe('1.6');
   });
 });

@@ -165,7 +165,6 @@ const PeopleStep = ({ source, onContinue, onBack }: PeopleStepProps) => {
                     />
 
                     <Button
-                      size="sm"
                       variant="secondary"
                       disabled={!/^\d{4}$/.test(pins[person.id] ?? '')}
                       onClick={() => {

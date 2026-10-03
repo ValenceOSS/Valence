@@ -14,6 +14,7 @@ import { ValenceShell } from '@ValenceScreens/components/ValenceShell/ValenceShe
 import { HomePage } from '@ValenceScreens/components/HomePage/HomePage';
 import { scrollKeyOf } from '@ValenceScreens/routes/scrollKeyOf';
 import { PageProblem } from '@ValenceScreens/components/PageProblem/PageProblem';
+import { PageNotFound } from '@ValenceScreens/components/PageNotFound/PageNotFound';
 import { say } from '@ValenceI18n/say';
 
 const SharePage = lazyRouteComponent(
@@ -244,7 +245,7 @@ const buildRouter = (title = say('common.valence')) => {
     ...BROWSABLE.map((path) =>
       createRoute({ getParentRoute: () => shell, path, component: BrowsePage, ...carries }),
     ),
-    createRoute({ getParentRoute: () => shell, path: '/$', component: HomePage, ...carries }),
+    createRoute({ getParentRoute: () => shell, path: '/$', component: PageNotFound, ...carries }),
   ];
 
   return createRouter({
@@ -264,6 +265,7 @@ const buildRouter = (title = say('common.valence')) => {
       ]),
     ]),
     defaultErrorComponent: PageProblem,
+    defaultNotFoundComponent: PageNotFound,
     scrollRestoration: true,
     getScrollRestorationKey: scrollKeyOf,
   });

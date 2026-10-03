@@ -55,7 +55,7 @@ const AccountArea = ({
     >
       <TabPanel value="profile" className="flex flex-col gap-4" travel={travel}>
         <PanelCard title={say('common.profile')} isFlush>
-          <SettingList>
+          <SettingList isInset>
             <ProfileSettings profile={profile} draft={draft} onDraft={onDraft} />
           </SettingList>
         </PanelCard>
@@ -81,7 +81,7 @@ const AccountArea = ({
 
       <TabPanel value="security" className="flex flex-col gap-4" travel={travel}>
         <PanelCard title="Sign-in" isFlush>
-          <SettingList>
+          <SettingList isInset>
             <TwoFactorSetup isEnabled={user.twoFactorEnabled === true} onChanged={onChanged} />
 
             <PasskeySetup onChanged={onChanged} />

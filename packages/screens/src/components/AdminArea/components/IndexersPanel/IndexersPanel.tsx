@@ -4,17 +4,14 @@ import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/Pane
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Download as DownloadIcon,
-  MoreHorizontal as MoreHorizontalIcon,
-  Plug as PlugIcon,
-  Plus as PlusIcon,
-  ToggleOff as ToggleOffIcon,
-  ToggleOn as ToggleOnIcon,
-} from '@keyline-icons/react';
-import {
   Bin as BinFilledIcon,
+  Download as DownloadFilledIcon,
+  MoreHorizontal as MoreHorizontalIcon,
   Pen as PenFilledIcon,
   Plug as PlugFilledIcon,
+  Plus as PlusFilledIcon,
+  ToggleOff as ToggleOffIcon,
+  ToggleOn as ToggleOnIcon,
 } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
@@ -333,7 +330,7 @@ const IndexersPanel = () => {
       actions={
         <>
           <PanelCardAction
-            icon={PlugIcon}
+            icon={PlugFilledIcon}
             isLoading={isTestingAll}
             isDisabled={toTest.length === 0 || testing.size > 0}
             onClick={testAll}
@@ -343,7 +340,7 @@ const IndexersPanel = () => {
 
           {prowlarrs.length === 0 ? null : (
             <PanelCardAction
-              icon={DownloadIcon}
+              icon={DownloadFilledIcon}
               isLoading={isImporting}
               onClick={importFromProwlarr}
             >
@@ -352,7 +349,7 @@ const IndexersPanel = () => {
           )}
 
           <PanelCardAction
-            icon={PlusIcon}
+            icon={PlusFilledIcon}
             onClick={() => {
               setIsChoosing(true);
             }}

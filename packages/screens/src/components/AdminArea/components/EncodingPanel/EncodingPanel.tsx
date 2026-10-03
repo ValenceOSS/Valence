@@ -7,7 +7,7 @@ import { Callout } from '@ValenceUI/Callout';
 import { DataTable } from '@ValenceUI/DataTable';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
-import { RefreshCw as RefreshCwIcon, Tape as TapeIcon } from '@keyline-icons/react';
+import { RefreshCw as RefreshCwFilledIcon, Tape as TapeIcon } from '@keyline-icons/react/fill';
 import { describeEncodeProgress } from '@ValenceClient/admin/describeEncodeProgress';
 import { describeReencodeState } from '@ValenceClient/admin/describeReencodeState';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
@@ -157,7 +157,7 @@ const EncodingPanel = ({
       <PanelCard
         title={say('common.waitingForYou')}
         actions={
-          <PanelCardAction icon={RefreshCwIcon} onClick={onChoose}>
+          <PanelCardAction icon={RefreshCwFilledIcon} onClick={onChoose}>
             {say('screens.adminArea.encodingPanel.reEncodeSomething')}
           </PanelCardAction>
         }

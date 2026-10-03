@@ -1,30 +1,28 @@
+import { ChevronDown as ChevronDownIcon } from '@keyline-icons/react';
 import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Check as CheckIcon,
-  ChevronRight as ChevronRightIcon,
-  MoreHorizontal as MoreHorizontalIcon,
-  Plus as PlusIcon,
-  X as XIcon,
-  RefreshCw as RefreshCwIcon,
-  Info as InfoIcon,
-} from '@keyline-icons/react';
-import {
   Bin as BinFilledIcon,
   Check as CheckFilledIcon,
+  Check as CheckIcon,
   ChevronRight as ChevronRightFilledIcon,
+  ChevronRight as ChevronRightIcon,
   Clock as ClockFilledIcon,
   HandPointerRight as HandPointerRightFilledIcon,
+  Info as InfoIcon,
+  MoreHorizontal as MoreHorizontalIcon,
+  Plus as PlusFilledIcon,
+  RefreshCw as RefreshCwFilledIcon,
   RotateCw as RotateCwFilledIcon,
   Search as SearchFilledIcon,
   X as XFilledIcon,
+  X as XIcon,
 } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Tabs } from '@ValenceUI/Tabs';
-import { TabRow } from '@ValenceUI/TabRow';
 import { TabPanel } from '@ValenceUI/TabPanel';
 import { useTravelDirection } from '@ValenceUI/useTravelDirection';
 import { cn } from '@ValenceUI/cn';
@@ -50,6 +48,8 @@ import {
 } from '@ValenceClient/requests/fetchMediaRequests';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
+import { PanelCardMenu } from '@ValenceScreens/components/PanelCardMenu/PanelCardMenu';
+import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { REQUEST_KIND_NAMES } from '@ValenceScreens/requests/REQUEST_KIND_NAMES';
 import { AskForMediaDialog } from '@ValenceScreens/components/AdminArea/components/AskForMediaDialog/AskForMediaDialog';
@@ -842,6 +842,38 @@ const MediaRequestsPanel = () => {
     ],
   );
 
+  const refetch = () => {
+    setIsSearchingMissing(true);
+    setSaid(null);
+
+    void searchMissing()
+      .then(({ value, refusal }) => {
+        setSaid(
+          value === null
+            ? {
+                text:
+                  refusal?.message ??
+                  say('screens.adminArea.mediaRequestsPanel.theSearchCouldNotStart'),
+                isProblem: true,
+              }
+            : {
+                text:
+                  value.searched === 0
+                    ? say('screens.adminArea.mediaRequestsPanel.nothingIsMissing')
+                    : sayCount(
+                        'screens.adminArea.mediaRequestsPanel.searchedAgainForCountRequests',
+                        value.searched,
+                      ),
+                isProblem: false,
+              },
+        );
+      })
+      .then(reread)
+      .finally(() => {
+        setIsSearchingMissing(false);
+      });
+  };
+
   return (
     <Tabs
       value={shelf}
@@ -856,45 +888,13 @@ const MediaRequestsPanel = () => {
     >
       <PanelCard
         title={say('common.requested')}
-        isFlush
-        below={
-          <TabRow
-            label={say('screens.adminArea.mediaRequestsPanel.whichRequests')}
-            tone="underlined"
-            size="sm"
-            value={shelf}
-            groups={[
-              {
-                items: tabs.map((one) => ({
-                  id: one,
-                  label:
-                    one === 'all'
-                      ? `${SHELF_NAMES.all} ${shown.length.toString()}`
-                      : `${SHELF_NAMES[one]} ${(byShelf.get(one) ?? []).length.toString()}`,
-                })),
-              },
-            ]}
-          />
-        }
         actions={
           <>
-            <FilterMenu
-              label={say('common.filterTheRequests')}
-              groups={filterGroups}
-              selected={filters}
-              onChange={narrowTo}
-            />
-
-            <TextField
-              label={say('common.searchTheRequests')}
-              isLabelHidden
-              size="sm"
-              type="search"
-              placeholder={say('common.aTitleOrWhoAsked')}
-              value={search}
-              onValueChange={searchFor}
-              className="w-56 max-w-full"
-            />
+            <span className="text-xs text-text-muted">
+              {say('screens.adminArea.mediaRequestsPanel.lengthWaitingOnApproval', {
+                length: awaiting.length.toString(),
+              })}
+            </span>
 
             <HoverCard
               side="bottom"
@@ -917,45 +917,7 @@ const MediaRequestsPanel = () => {
             </HoverCard>
 
             <PanelCardAction
-              icon={RefreshCwIcon}
-              isLoading={isSearchingMissing}
-              onClick={() => {
-                setIsSearchingMissing(true);
-                setSaid(null);
-
-                void searchMissing()
-                  .then(({ value, refusal }) => {
-                    setSaid(
-                      value === null
-                        ? {
-                            text:
-                              refusal?.message ??
-                              say('screens.adminArea.mediaRequestsPanel.theSearchCouldNotStart'),
-                            isProblem: true,
-                          }
-                        : {
-                            text:
-                              value.searched === 0
-                                ? say('screens.adminArea.mediaRequestsPanel.nothingIsMissing')
-                                : sayCount(
-                                    'screens.adminArea.mediaRequestsPanel.searchedAgainForCountRequests',
-                                    value.searched,
-                                  ),
-                            isProblem: false,
-                          },
-                    );
-                  })
-                  .then(reread)
-                  .finally(() => {
-                    setIsSearchingMissing(false);
-                  });
-              }}
-            >
-              {say('screens.adminArea.mediaRequestsPanel.refetchMedia')}
-            </PanelCardAction>
-
-            <PanelCardAction
-              icon={PlusIcon}
+              icon={PlusFilledIcon}
               onClick={() => {
                 setIsAsking(true);
               }}
@@ -1049,92 +1011,167 @@ const MediaRequestsPanel = () => {
           }}
         />
 
-        {said === null ? null : (
-          <p
-            role={said.isProblem ? 'alert' : 'status'}
-            className={`px-4 pt-3 text-sm ${said.isProblem ? 'text-danger' : 'text-text-muted'}`}
-          >
-            {said.text}
-          </p>
-        )}
+        <div className="flex min-h-0 flex-1 flex-col gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <TextField
+              label={say('common.searchTheRequests')}
+              isLabelHidden
+              size="sm"
+              type="search"
+              placeholder={say('common.aTitleOrWhoAsked')}
+              value={search}
+              onValueChange={searchFor}
+              className="min-w-64 flex-1"
+            />
 
-        {requests.isError ? (
-          <CouldNotRead
-            said={say('common.theRequestsCouldNotBeRead')}
-            isTryingAgain={requests.isFetching}
-            onTryAgain={() => {
-              void requests.refetch();
-            }}
-          />
-        ) : requests.isPending ? (
-          <Spinner isCentered label={say('common.readingTheRequests')} size="sm" />
-        ) : (
-          tabs.map((one) => (
-            <TabPanel key={one} value={one} travel={travel}>
-              <DataTable
-                label={say('screens.adminArea.mediaRequestsPanel.requestsSHELFNAMES', {
-                  SHELF_NAMES: SHELF_NAMES[one],
-                })}
-                columns={columns}
-                rows={one === shelf ? rows : []}
-                getRowId={(row) => row.id}
-                getSubRows={(row) => {
-                  const parts = partsOf(row);
+            <OptionMenu
+              label={say('screens.adminArea.mediaRequestsPanel.whichRequests')}
+              size="sm"
+              triggerShape="field"
+              className="w-auto"
+              groups={[
+                {
+                  name: say('screens.adminArea.mediaRequestsPanel.whichRequests'),
+                  selectedId: shelf,
+                  onSelect: (next) => {
+                    const found = tabs.find((one) => one === next);
 
-                  return parts.length === 0 ? undefined : parts;
-                }}
-                height="fills"
-                toolbar={
-                  one !== 'approve' ? undefined : (
-                    <div className="mr-auto flex flex-wrap items-center gap-3">
-                      <span className="text-sm text-text-muted">
-                        {chosenAwaiting.length === 0
-                          ? say('screens.adminArea.mediaRequestsPanel.lengthWaitingOnApproval', {
-                              length: awaiting.length.toString(),
-                            })
-                          : sayCount(
-                              'screens.adminArea.mediaRequestsPanel.countChosen',
-                              chosenAwaiting.length,
-                            )}
-                      </span>
+                    if (found !== undefined) {
+                      setChosenShelf(found);
+                      setChosen(new Set());
+                    }
+                  },
+                  options: tabs.map((one) => ({
+                    id: one,
+                    label: SHELF_NAMES[one],
+                    detail: (one === 'all' ? shown : (byShelf.get(one) ?? [])).length.toString(),
+                  })),
+                },
+              ]}
+              trigger={
+                <>
+                  <span className="truncate">{SHELF_NAMES[shelf]}</span>
+                  <Icon of={ChevronDownIcon} size={14} className="valence-chevron shrink-0" />
+                </>
+              }
+            />
 
-                      {chosenAwaiting.length === 0 ? null : (
-                        <>
-                          <Button
-                            variant="secondary"
-                            size="xs"
-                            isLoading={isDeciding}
-                            onClick={() => {
-                              decide('approve');
-                            }}
-                          >
-                            {say('screens.adminArea.mediaRequestsPanel.approveThem')}
-                          </Button>
+            <FilterMenu
+              label={say('common.filterTheRequests')}
+              groups={filterGroups}
+              selected={filters}
+              hasLabel
+              onChange={narrowTo}
+            />
 
-                          <Button
-                            variant="ghost"
-                            size="xs"
-                            disabled={isDeciding}
-                            onClick={() => {
-                              setRefusingChosen(true);
-                            }}
-                          >
-                            {say('screens.adminArea.mediaRequestsPanel.refuseThem')}
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  )
-                }
-                emptyMessage={
-                  requests.data.length === 0
-                    ? say('screens.adminArea.mediaRequestsPanel.nothingHasBeenRequestedYetRequest')
-                    : say('screens.adminArea.mediaRequestsPanel.nothingMatchesClearTheFiltersOr')
-                }
-              />
-            </TabPanel>
-          ))
-        )}
+            <PanelCardMenu
+              label={say('common.actions')}
+              groups={[
+                {
+                  items: [
+                    {
+                      id: 'refetch',
+                      label: say('screens.adminArea.mediaRequestsPanel.refetchMedia'),
+                      icon: <Icon of={RefreshCwFilledIcon} size={15} />,
+                      isDisabled: isSearchingMissing,
+                      onChoose: refetch,
+                    },
+                  ],
+                },
+              ]}
+            />
+          </div>
+
+          {said === null ? null : (
+            <p
+              role={said.isProblem ? 'alert' : 'status'}
+              className={`text-sm ${said.isProblem ? 'text-danger' : 'text-text-muted'}`}
+            >
+              {said.text}
+            </p>
+          )}
+
+          {requests.isError ? (
+            <CouldNotRead
+              said={say('common.theRequestsCouldNotBeRead')}
+              isTryingAgain={requests.isFetching}
+              onTryAgain={() => {
+                void requests.refetch();
+              }}
+            />
+          ) : requests.isPending ? (
+            <Spinner isCentered label={say('common.readingTheRequests')} size="sm" />
+          ) : (
+            tabs.map((one) => (
+              <TabPanel key={one} value={one} travel={travel}>
+                <DataTable
+                  className="m-0"
+                  label={say('screens.adminArea.mediaRequestsPanel.requestsSHELFNAMES', {
+                    SHELF_NAMES: SHELF_NAMES[one],
+                  })}
+                  columns={columns}
+                  rows={one === shelf ? rows : []}
+                  getRowId={(row) => row.id}
+                  getSubRows={(row) => {
+                    const parts = partsOf(row);
+
+                    return parts.length === 0 ? undefined : parts;
+                  }}
+                  height="fills"
+                  toolbar={
+                    one !== 'approve' ? undefined : (
+                      <div className="mr-auto flex flex-wrap items-center gap-3">
+                        <span className="text-sm text-text-muted">
+                          {chosenAwaiting.length === 0
+                            ? say('screens.adminArea.mediaRequestsPanel.lengthWaitingOnApproval', {
+                                length: awaiting.length.toString(),
+                              })
+                            : sayCount(
+                                'screens.adminArea.mediaRequestsPanel.countChosen',
+                                chosenAwaiting.length,
+                              )}
+                        </span>
+
+                        {chosenAwaiting.length === 0 ? null : (
+                          <>
+                            <Button
+                              variant="secondary"
+                              size="xs"
+                              isLoading={isDeciding}
+                              onClick={() => {
+                                decide('approve');
+                              }}
+                            >
+                              {say('screens.adminArea.mediaRequestsPanel.approveThem')}
+                            </Button>
+
+                            <Button
+                              variant="ghost"
+                              size="xs"
+                              disabled={isDeciding}
+                              onClick={() => {
+                                setRefusingChosen(true);
+                              }}
+                            >
+                              {say('screens.adminArea.mediaRequestsPanel.refuseThem')}
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    )
+                  }
+                  emptyMessage={
+                    requests.data.length === 0
+                      ? say(
+                          'screens.adminArea.mediaRequestsPanel.nothingHasBeenRequestedYetRequest',
+                        )
+                      : say('screens.adminArea.mediaRequestsPanel.nothingMatchesClearTheFiltersOr')
+                  }
+                />
+              </TabPanel>
+            ))
+          )}
+        </div>
       </PanelCard>
     </Tabs>
   );

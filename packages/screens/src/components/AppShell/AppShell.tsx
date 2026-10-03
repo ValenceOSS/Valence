@@ -51,7 +51,7 @@ import { THEME_CHOICES } from '@ValenceScreens/theme/themeChoices';
 import { useMotion } from '@ValenceClient/shell/useMotion';
 import { MOTION_CHOICES } from '@ValenceScreens/motion/motionChoices';
 import { BROWSE_SECTIONS } from './AppShell.types';
-import { BrandMark } from '@ValenceScreens/components/AppShell/components/BrandMark/BrandMark';
+import { BrandMark } from '@ValenceScreens/components/BrandMark/BrandMark';
 import { AccountFace } from '@ValenceScreens/components/AppShell/components/AccountFace/AccountFace';
 import type { ReactNode } from 'react';
 import type { IconGesture } from '@ValenceUI/AnimatedIcon.types';

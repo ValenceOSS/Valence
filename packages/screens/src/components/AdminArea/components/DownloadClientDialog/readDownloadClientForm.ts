@@ -1,10 +1,7 @@
-import { readWholeNumber } from '@ValenceCore/functions/readWholeNumber';
 import { DEFAULT_DOWNLOAD_CATEGORIES } from '@ValenceContracts/schemas/DownloadClient';
-import { LIBRARY_KINDS } from '@ValenceContracts/schemas/Library';
 import type {
   DownloadCategories,
   DownloadClient,
-  DownloadClientDraft,
   DownloadClientKind,
 } from '@ValenceContracts/schemas/DownloadClient';
 import { say } from '@ValenceI18n/say';
@@ -22,10 +19,6 @@ type DownloadClientForm = {
   priority: string;
   isEnabled: boolean;
 };
-
-type ReadDownloadClientForm =
-  | { draft: DownloadClientDraft; problem: null }
-  | { draft: null; problem: string };
 
 const CLIENT_KINDS = [
   {
@@ -107,91 +100,6 @@ const formFor = (client: DownloadClient | null): DownloadClientForm =>
         isEnabled: client.isEnabled,
       };
 
-/**
- * Reads the form into a client to keep or try, or says the first thing wrong with it in words that
- * point at the field. SABnzbd is reached with its API key; every other client with a username and
- * password, so only what the kind uses is sent.
- *
- * @param form - The form as it stands.
- * @returns The client, or what is wrong.
- */
-const readDownloadClientForm = (form: DownloadClientForm): ReadDownloadClientForm => {
-  const name = form.name.trim();
-  const url = form.url.trim();
-  const categories = {
-    movies: form.categories.movies.trim(),
-    shows: form.categories.shows.trim(),
-    music: form.categories.music.trim(),
-    books: form.categories.books.trim(),
-  };
-
-  if (name === '') {
-    return {
-      draft: null,
-      problem: say('screens.downloadClientDialog.readDownloadClientForm.giveTheClientAName'),
-    };
-  }
-
-  if (!URL.canParse(url) || !/^https?:$/.test(new URL(url).protocol)) {
-    return { draft: null, problem: say('common.theAddressNeedsToBeA') };
-  }
-
-  if (LIBRARY_KINDS.some((kind) => !/^[\w .-]+$/.test(categories[kind]))) {
-    return {
-      draft: null,
-      problem: say(
-        'screens.downloadClientDialog.readDownloadClientForm.aCategoryIsLettersNumbersSpaces',
-      ),
-    };
-  }
-
-  if (
-    new Set(LIBRARY_KINDS.map((kind) => categories[kind].toLowerCase())).size < LIBRARY_KINDS.length
-  ) {
-    return {
-      draft: null,
-      problem: say('screens.downloadClientDialog.readDownloadClientForm.eachKindNeedsACategoryOf'),
-    };
-  }
-
-  const remotePath = form.remotePath.trim();
-  const localPath = form.localPath.trim();
-
-  if ((remotePath === '') !== (localPath === '')) {
-    return {
-      draft: null,
-      problem: say(
-        'screens.downloadClientDialog.readDownloadClientForm.sayWhereTheDownloadsFolderIs',
-      ),
-    };
-  }
-
-  const priority = readWholeNumber(form.priority, 1, 50);
-
-  if (priority === null) {
-    return { draft: null, problem: say('common.priorityIsAWholeNumberFrom') };
-  }
-
-  const isSabnzbd = form.kind === 'sabnzbd';
-
-  return {
-    draft: {
-      kind: form.kind,
-      name,
-      url,
-      username: isSabnzbd ? '' : form.username.trim(),
-      password: isSabnzbd ? '' : form.password,
-      apiKey: isSabnzbd ? form.apiKey.trim() : '',
-      categories,
-      remotePath,
-      localPath,
-      priority,
-      isEnabled: form.isEnabled,
-    },
-    problem: null,
-  };
-};
-
 export type { DownloadClientForm };
 
-export { A_NEW_CLIENT, CLIENT_KINDS, choosingKind, formFor, readDownloadClientForm };
+export { A_NEW_CLIENT, CLIENT_KINDS, choosingKind, formFor };

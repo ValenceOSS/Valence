@@ -3,7 +3,7 @@ import { docsFor } from '@ValenceCore/functions/docsFor';
 import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
 import { notify } from '@ValenceUI/notify';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
-import { RefreshCw as RefreshCwIcon } from '@keyline-icons/react';
+import { RefreshCw as RefreshCwFilledIcon } from '@keyline-icons/react/fill';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Badge } from '@ValenceUI/Badge';
@@ -61,7 +61,7 @@ const RequestsPanel = () => {
       title={say('common.requests')}
       isFlush
       actions={
-        <PanelCardAction icon={RefreshCwIcon} isLoading={isChecking} onClick={checkNow}>
+        <PanelCardAction icon={RefreshCwFilledIcon} isLoading={isChecking} onClick={checkNow}>
           {say('screens.adminArea.requestsPanel.checkNow')}
         </PanelCardAction>
       }
@@ -82,7 +82,7 @@ const RequestsPanel = () => {
         />
       ) : (
         <>
-          <SettingList>
+          <SettingList isInset>
             <SettingRow
               title={say('screens.adminArea.requestsPanel.requestsService')}
               description={

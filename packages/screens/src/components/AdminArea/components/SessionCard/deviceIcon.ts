@@ -4,7 +4,7 @@ import {
   Globe as GlobeIcon,
   Monitor as MonitorIcon,
   Smartphone as SmartphoneIcon,
-} from '@keyline-icons/react';
+} from '@keyline-icons/react/fill';
 import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
 import type { IconGlyph } from '@ValenceUI/Icon.types';
 import { say } from '@ValenceI18n/say';

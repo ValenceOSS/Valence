@@ -1,4 +1,4 @@
-import { ImageX as ImageXIcon } from '@keyline-icons/react';
+import { ImageX as ImageXIcon } from '@keyline-icons/react/fill';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
 import type { MediaPosterProps } from './MediaPoster.types';

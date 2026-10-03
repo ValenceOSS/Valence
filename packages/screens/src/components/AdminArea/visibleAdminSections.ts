@@ -19,6 +19,8 @@ const REQUESTS_PANELS: readonly AdminPanelId[] = [
  */
 const visibleAdminSections = (hasRequests: boolean) =>
   ADMIN_SECTIONS.map((section) => ({
+    id: section.id,
+    isFoldedAtFirst: section.isFoldedAtFirst,
     label: section.label,
     items: section.items.filter((item) => hasRequests || !REQUESTS_PANELS.includes(item.id)),
   })).filter((section) => section.items.length > 0);

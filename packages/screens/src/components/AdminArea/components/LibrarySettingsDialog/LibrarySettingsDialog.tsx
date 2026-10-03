@@ -1,6 +1,6 @@
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { Icon } from '@ValenceUI/Icon';
-import { ChevronsUpDown as ChevronsUpDownIcon } from '@keyline-icons/react';
+import { ChevronsUpDown as ChevronsUpDownIcon } from '@keyline-icons/react/fill';
 import { useState } from 'react';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';

@@ -123,7 +123,7 @@ const ShareArea = ({
 
     return (
       <main className="flex min-h-svh flex-col items-center justify-center gap-6 px-6 py-12 text-center">
-        <span className="text-xs uppercase tracking-[0.2em] text-text-muted">
+        <span className="text-xs font-medium text-text-muted">
           {say('screens.shareArea.sharedWithYouOnName', { name })}
         </span>
 
@@ -182,7 +182,7 @@ const ShareArea = ({
 
   return (
     <main className="relative min-h-svh">
-      <span className="pointer-events-none absolute left-5 top-6 z-20 text-xs uppercase tracking-[0.2em] text-text-muted sm:left-10">
+      <span className="pointer-events-none absolute left-5 top-6 z-20 text-xs font-medium text-text-muted sm:left-10">
         {say('screens.shareArea.sharedWithYouOnName', { name })}
       </span>
 
@@ -199,7 +199,7 @@ const ShareArea = ({
         <section className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-5 pb-16 pt-8 sm:px-8">
           {intoSeasons(share.items).map((season) => (
             <div key={String(season.seasonNumber)} className="flex flex-col gap-3">
-              <h2 className="text-sm font-medium uppercase tracking-[0.18em] text-text-muted">
+              <h2 className="text-sm font-medium text-text-muted">
                 {nameSeason(season.seasonNumber)}
               </h2>
 

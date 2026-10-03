@@ -14,7 +14,7 @@ const DAY_STEP = 0.015;
 const NO_COUNTS: ReadonlyMap<string, number> = new Map();
 
 /**
- * A month of dates, Monday first, to pick a day from: the one picked filled in the accent, today
+ * A month of dates, Monday first, to pick a day from: the one picked filled in the primary colour, today
  * written in it, the days either side of the month faded, and each dotted for what comes out on it
  * where that is known.
  *
@@ -73,8 +73,8 @@ const CalendarDayGrid = ({
               <span
                 className={cn(
                   'valence-hoverable relative flex size-10 items-center justify-center rounded-full text-sm tabular-nums',
-                  isPicked ? 'bg-accent font-semibold text-accent-contrast' : '',
-                  !isPicked && isToday ? 'font-semibold text-accent' : '',
+                  isPicked ? 'bg-primary font-semibold text-primary-foreground' : '',
+                  !isPicked && isToday ? 'font-semibold text-text' : '',
                   !isPicked && !isToday && isThisMonth ? 'text-text' : '',
                   !isPicked && !isToday && !isThisMonth ? 'text-text-muted opacity-50' : '',
                 )}
@@ -86,7 +86,7 @@ const CalendarDayGrid = ({
                       key={dot}
                       className={cn(
                         'size-1 rounded-full',
-                        isPicked ? 'bg-accent-contrast' : 'bg-text-muted',
+                        isPicked ? 'bg-primary-foreground' : 'bg-text-muted',
                       )}
                     />
                   ))}

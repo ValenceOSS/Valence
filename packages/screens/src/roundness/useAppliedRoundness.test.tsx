@@ -29,7 +29,7 @@ describe('useAppliedRoundness', () => {
     renderHook(() => useAppliedRoundness(), { wrapper });
 
     await waitFor(() => {
-      expect(document.documentElement.style.getPropertyValue('--radius-scale')).toBe('1.6');
+      expect(document.documentElement.style.getPropertyValue('--radius-scale')).toBe('2.2');
     });
   });
 
@@ -42,7 +42,7 @@ describe('useAppliedRoundness', () => {
       expect(fetchAppearance).toHaveBeenCalled();
     });
 
-    expect(document.documentElement.style.getPropertyValue('--radius-scale')).toBe('1');
+    expect(document.documentElement.style.getPropertyValue('--radius-scale')).toBe('1.6');
   });
 
   it('asks the server nothing while there is no server', () => {

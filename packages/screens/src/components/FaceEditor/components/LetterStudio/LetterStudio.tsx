@@ -21,9 +21,7 @@ import { say } from '@ValenceI18n/say';
 const LetterStudio = ({ name, colour, font, onColour, onFont }: LetterStudioProps) => (
   <div className="flex flex-col gap-8">
     <section className="flex flex-col gap-3">
-      <h3 className="text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">
-        {say('common.font')}
-      </h3>
+      <h3 className="text-[0.65rem] font-medium text-text-muted">{say('common.font')}</h3>
       <div className="grid grid-cols-4 gap-3">
         {LETTER_FONTS.map((option) => {
           const look = LETTER_FONT_LOOKS[option];
@@ -51,7 +49,7 @@ const LetterStudio = ({ name, colour, font, onColour, onFont }: LetterStudioProp
                   'flex size-16 items-center justify-center rounded-full text-2xl transition-transform group-hover:scale-105',
                   inkFor(colour) === 'dark' ? 'text-letter-dark' : 'text-letter-light',
                   option === font &&
-                    'ring-2 ring-accent ring-offset-2 ring-offset-[var(--color-surface-raised)]',
+                    'ring-2 ring-primary ring-offset-2 ring-offset-[var(--color-surface-raised)]',
                 )}
               >
                 {profileInitial(name)}
@@ -68,9 +66,7 @@ const LetterStudio = ({ name, colour, font, onColour, onFont }: LetterStudioProp
     </section>
 
     <section className="flex flex-col gap-3">
-      <h3 className="text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">
-        {say('common.colour')}
-      </h3>
+      <h3 className="text-[0.65rem] font-medium text-text-muted">{say('common.colour')}</h3>
       <ColourChoice label={say('common.colour')} value={colour} onChange={onColour} />
     </section>
   </div>

@@ -5,7 +5,7 @@ import { Switch } from '@ValenceUI/Switch';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { ARR_APP_NAMES } from '@ValenceScreens/components/AdminArea/ARR_APP_NAMES';
 import { VALENCE } from '@ValenceScreens/components/AdminArea/components/LibrarySettingsDialog/readFulfilmentForm';
-import { FieldMenu } from './components/FieldMenu/FieldMenu';
+import { SelectField } from '@ValenceUI/SelectField';
 import type { FulfilmentFieldsProps } from './FulfilmentFields.types';
 import { say } from '@ValenceI18n/say';
 
@@ -28,9 +28,9 @@ const FulfilmentFields = ({ kind, apps, form, onChange }: FulfilmentFieldsProps)
 
   return (
     <div className="flex flex-col gap-3">
-      <FieldMenu
+      <SelectField
         label={say('screens.adminArea.librarySettingsDialog.whoFulfilsRequests')}
-        selectedId={form.appId}
+        value={form.appId}
         placeholder={nothingChosen}
         onSelect={(appId) => {
           onChange({
@@ -73,9 +73,9 @@ const FulfilmentFields = ({ kind, apps, form, onChange }: FulfilmentFieldsProps)
         />
       ) : (
         <>
-          <FieldMenu
+          <SelectField
             label={say('screens.adminArea.librarySettingsDialog.rootFolder')}
-            selectedId={form.rootFolderPath}
+            value={form.rootFolderPath}
             placeholder={nothingChosen}
             onSelect={(rootFolderPath) => {
               onChange({ rootFolderPath });
@@ -93,9 +93,9 @@ const FulfilmentFields = ({ kind, apps, form, onChange }: FulfilmentFieldsProps)
             }))}
           />
 
-          <FieldMenu
+          <SelectField
             label={say('screens.adminArea.librarySettingsDialog.qualityProfileInTheApp')}
-            selectedId={form.qualityProfileId}
+            value={form.qualityProfileId}
             placeholder={nothingChosen}
             onSelect={(qualityProfileId) => {
               onChange({ qualityProfileId });
@@ -107,9 +107,9 @@ const FulfilmentFields = ({ kind, apps, form, onChange }: FulfilmentFieldsProps)
           />
 
           {kind === 'lidarr' ? (
-            <FieldMenu
+            <SelectField
               label={say('screens.adminArea.librarySettingsDialog.metadataProfile')}
-              selectedId={form.metadataProfileId}
+              value={form.metadataProfileId}
               placeholder={nothingChosen}
               onSelect={(metadataProfileId) => {
                 onChange({ metadataProfileId });

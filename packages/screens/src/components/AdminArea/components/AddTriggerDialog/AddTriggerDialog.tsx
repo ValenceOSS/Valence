@@ -1,48 +1,19 @@
-import { Icon } from '@ValenceUI/Icon';
-import { ChevronsUpDown as ChevronsUpDownIcon } from '@keyline-icons/react';
-import { useState } from 'react';
+import { useZodForm } from '@ValenceClient/forms/useZodForm';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
-import { OptionMenu } from '@ValenceUI/OptionMenu';
+import { Form } from '@ValenceUI/Form';
+import { SelectField } from '@ValenceUI/SelectField';
 import { TextField } from '@ValenceUI/TextField';
 import { DAY_NAMES } from '@ValenceClient/admin/describeTrigger';
-import type { ScheduleTrigger } from '@ValenceClient/admin/fetchAdmin';
+import { AddTriggerFormSchema } from './AddTriggerFormSchema';
+import { INTERVAL_UNITS } from './INTERVAL_UNITS';
+import { TRIGGER_TYPES } from './TRIGGER_TYPES';
 import type { AddTriggerDialogProps } from './AddTriggerDialog.types';
 import { say } from '@ValenceI18n/say';
 
-const TRIGGER_TYPES = [
-  { id: 'daily', label: say('screens.adminArea.addTriggerDialog.daily') },
-  { id: 'weekly', label: say('common.weekly') },
-  { id: 'interval', label: say('screens.adminArea.addTriggerDialog.onAnInterval') },
-  { id: 'startup', label: say('common.onApplicationStartup') },
-] as const;
-type TriggerType = (typeof TRIGGER_TYPES)[number]['id'];
-
-const INTERVAL_UNITS = [
-  { id: 'minutes', label: say('screens.adminArea.addTriggerDialog.minutes') },
-  { id: 'hours', label: say('screens.adminArea.addTriggerDialog.hours') },
-] as const;
-type IntervalUnit = (typeof INTERVAL_UNITS)[number]['id'];
-
-/**
- * Reads an `HH:MM` field back into the hours and minutes a trigger is stored as.
- *
- * @param value - What the time field holds.
- * @returns The hour and minute.
- */
-const readClock = (value: string): { hour: number; minute: number } | null => {
-  const match = /^(\d{1,2}):(\d{2})$/.exec(value);
-  const hour = Number.parseInt(match?.[1] ?? '', 10);
-  const minute = Number.parseInt(match?.[2] ?? '', 10);
-
-  if (Number.isNaN(hour) || Number.isNaN(minute) || hour > 23 || minute > 59) {
-    return null;
-  }
-
-  return { hour, minute };
-};
+const DAYS = DAY_NAMES.map((name, index) => ({ id: index.toString(), label: name }));
 
 /**
  * Adds one trigger to a job: pick what kind it is — daily, weekly, on an interval, or when the server
@@ -55,150 +26,85 @@ const readClock = (value: string): { hour: number; minute: number } | null => {
  * @param isSaving - Whether a trigger is being written, which holds the dialog open and inert.
  */
 const AddTriggerDialog = ({ isOpen, onAdd, onClose, isSaving = false }: AddTriggerDialogProps) => {
-  const [type, setType] = useState<TriggerType>('daily');
-  const [time, setTime] = useState('03:00');
-  const [dayOfWeek, setDayOfWeek] = useState('0');
-  const [every, setEvery] = useState('6');
-  const [unit, setUnit] = useState<IntervalUnit>('hours');
+  const form = useZodForm(
+    AddTriggerFormSchema,
+    { type: 'daily', time: '03:00', dayOfWeek: '0', every: '6', unit: 'hours' },
+    (trigger) => {
+      onAdd(trigger);
 
-  const build = (): ScheduleTrigger | null => {
-    if (type === 'startup') {
-      return { kind: 'startup' };
-    }
-
-    if (type === 'interval') {
-      const count = Number.parseInt(every, 10);
-
-      if (Number.isNaN(count) || count < 1) {
-        return null;
-      }
-
-      if (unit === 'minutes') {
-        return count > 59 ? null : { kind: 'everyMinutes', minutes: count };
-      }
-
-      return count > 23 ? null : { kind: 'everyHours', hours: count };
-    }
-
-    const clock = readClock(time);
-
-    if (clock === null) {
       return null;
-    }
-
-    if (type === 'daily') {
-      return { kind: 'daily', hour: clock.hour, minute: clock.minute };
-    }
-
-    return {
-      kind: 'weekly',
-      dayOfWeek: Number.parseInt(dayOfWeek, 10),
-      hour: clock.hour,
-      minute: clock.minute,
-    };
-  };
-
-  const built = build();
-
-  const select = (
-    label: string,
-    selectedId: string,
-    selectedLabel: string,
-    options: { id: string; label: string }[],
-    onSelect: (id: string) => void,
-  ) => (
-    <fieldset className="flex min-w-0 flex-1 flex-col gap-1.5">
-      <legend className="text-sm font-medium text-text">{label}</legend>
-
-      <OptionMenu
-        label={label}
-        groups={[{ name: label, selectedId, onSelect, options }]}
-        trigger={
-          <>
-            <span className="truncate">{selectedLabel}</span>
-            <Icon of={ChevronsUpDownIcon} size={15} tone="muted" className="shrink-0" />
-          </>
-        }
-        triggerShape="field"
-        align="start"
-        matchTriggerWidth
-      />
-    </fieldset>
+    },
   );
+  const { type, unit } = form.values;
 
   return (
     <DialogCompanion label={say('common.addTrigger')} isOpen={isOpen} onClose={onClose}>
       <DialogTitle size="compact" title={say('common.addTrigger')} />
 
-      <DialogContent className="flex flex-col gap-5">
-        {select(
-          say('screens.adminArea.addTriggerDialog.triggerType'),
-          type,
-          TRIGGER_TYPES.find((candidate) => candidate.id === type)?.label ?? '',
-          [...TRIGGER_TYPES],
-          (id) => {
-            setType(TRIGGER_TYPES.find((candidate) => candidate.id === id)?.id ?? 'daily');
-          },
-        )}
+      <Form label={say('common.addTrigger')} onSubmit={form.submit} isDialog>
+        <DialogContent className="flex flex-col gap-5">
+          <SelectField
+            label={say('screens.adminArea.addTriggerDialog.triggerType')}
+            options={[...TRIGGER_TYPES]}
+            value={type}
+            onSelect={(id) => {
+              form.set('type', TRIGGER_TYPES.find((one) => one.id === id)?.id ?? 'daily');
+            }}
+          />
 
-        {type === 'weekly'
-          ? select(
-              say('screens.adminArea.addTriggerDialog.day'),
-              dayOfWeek,
-              DAY_NAMES[Number.parseInt(dayOfWeek, 10)] ?? '',
-              DAY_NAMES.map((name, index) => ({ id: index.toString(), label: name })),
-              setDayOfWeek,
-            )
-          : null}
-
-        {type === 'daily' || type === 'weekly' ? (
-          <TextField label={say('common.time')} type="time" value={time} onValueChange={setTime} />
-        ) : null}
-
-        {type === 'interval' ? (
-          <div className="flex items-end gap-3">
-            <TextField
-              label={say('screens.adminArea.addTriggerDialog.every')}
-              type="number"
-              min={1}
-              max={unit === 'minutes' ? 59 : 23}
-              value={every}
-              onValueChange={setEvery}
-              className="min-w-0 flex-1"
+          {type === 'weekly' ? (
+            <SelectField
+              label={say('screens.adminArea.addTriggerDialog.day')}
+              options={DAYS}
+              value={form.values.dayOfWeek}
+              onSelect={(id) => {
+                form.set('dayOfWeek', id);
+              }}
             />
+          ) : null}
 
-            {select(
-              say('screens.adminArea.addTriggerDialog.unit'),
-              unit,
-              INTERVAL_UNITS.find((candidate) => candidate.id === unit)?.label ?? '',
-              [...INTERVAL_UNITS],
-              (id) => {
-                setUnit(INTERVAL_UNITS.find((candidate) => candidate.id === id)?.id ?? 'hours');
-              },
-            )}
-          </div>
-        ) : null}
+          {type === 'daily' || type === 'weekly' ? (
+            <TextField label={say('common.time')} type="time" {...form.text('time')} />
+          ) : null}
 
-        {type === 'startup' ? (
-          <p className="text-sm text-text-muted">
-            {say('screens.adminArea.addTriggerDialog.runsOnceEveryTimeTheServer')}
-          </p>
-        ) : null}
-      </DialogContent>
+          {type === 'interval' ? (
+            <div className="grid grid-cols-2 items-start gap-3">
+              <TextField
+                label={say('screens.adminArea.addTriggerDialog.every')}
+                type="number"
+                min={1}
+                max={unit === 'minutes' ? 59 : 23}
+                {...form.text('every')}
+              />
 
-      <DialogFooter
-        dismiss={{ onChoose: onClose, isDisabled: isSaving }}
-        confirm={{
-          label: say('common.add'),
-          onChoose: () => {
-            if (built !== null) {
-              onAdd(built);
-            }
-          },
-          isDisabled: built === null || isSaving,
-          isLoading: isSaving,
-        }}
-      />
+              <SelectField
+                label={say('screens.adminArea.addTriggerDialog.unit')}
+                options={[...INTERVAL_UNITS]}
+                value={unit}
+                onSelect={(id) => {
+                  form.set('unit', INTERVAL_UNITS.find((one) => one.id === id)?.id ?? 'hours');
+                }}
+              />
+            </div>
+          ) : null}
+
+          {type === 'startup' ? (
+            <p className="font-body text-sm text-text-muted">
+              {say('screens.adminArea.addTriggerDialog.runsOnceEveryTimeTheServer')}
+            </p>
+          ) : null}
+        </DialogContent>
+
+        <DialogFooter
+          dismiss={{ onChoose: onClose, isDisabled: isSaving }}
+          confirm={{
+            label: say('common.add'),
+            isSubmit: true,
+            isDisabled: isSaving,
+            isLoading: isSaving,
+          }}
+        />
+      </Form>
     </DialogCompanion>
   );
 };

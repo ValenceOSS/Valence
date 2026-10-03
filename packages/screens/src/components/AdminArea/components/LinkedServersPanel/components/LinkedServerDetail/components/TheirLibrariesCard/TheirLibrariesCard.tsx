@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { RefreshCw as RefreshCwIcon } from '@keyline-icons/react';
+import { RefreshCw as RefreshCwFilledIcon } from '@keyline-icons/react/fill';
 import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
@@ -59,7 +59,7 @@ const TheirLibrariesCard = ({ server }: TheirLibrariesCardProps) => {
       title={title}
       isFlush
       actions={
-        <PanelCardAction icon={RefreshCwIcon} isLoading={isReading} onClick={readAgain}>
+        <PanelCardAction icon={RefreshCwFilledIcon} isLoading={isReading} onClick={readAgain}>
           {say('screens.adminArea.linkedServersPanel.readAgainNow')}
         </PanelCardAction>
       }

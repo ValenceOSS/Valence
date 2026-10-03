@@ -47,7 +47,7 @@ const ColourChoice = ({
               className={cn(
                 'size-8 rounded-full ring-1 ring-line transition-transform',
                 preset.toLowerCase() === value.toLowerCase()
-                  ? 'ring-2 ring-accent ring-offset-2 ring-offset-[var(--color-surface-raised)]'
+                  ? 'ring-2 ring-primary ring-offset-2 ring-offset-[var(--color-surface-raised)]'
                   : 'hover-hover:hover:scale-110',
               )}
               onClick={() => {
@@ -73,7 +73,7 @@ const ColourChoice = ({
               !isCompact && !isOwn && 'bg-picker-hues',
               !isCompact &&
                 isOwn &&
-                'ring-2 ring-accent ring-offset-2 ring-offset-[var(--color-surface-raised)]',
+                'ring-2 ring-primary ring-offset-2 ring-offset-[var(--color-surface-raised)]',
             )}
           >
             {isCompact || isOwn ? null : <Icon of={PaletteIcon} size={14} />}

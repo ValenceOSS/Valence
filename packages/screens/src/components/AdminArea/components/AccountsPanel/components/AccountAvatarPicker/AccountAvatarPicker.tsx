@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { Image as ImageIcon, RefreshCw as RefreshCwIcon } from '@keyline-icons/react';
+import { Image as ImageIcon, RefreshCw as RefreshCwIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { FilePicker } from '@ValenceUI/FilePicker';
 import { FormField } from '@ValenceUI/FormField';
@@ -79,7 +79,7 @@ const AccountAvatarPicker = ({ accountId, face, draft, onDraft }: AccountAvatarP
               isActive={draft.avatar.kind === 'drawn' && draft.avatar.style === style}
               className={`size-8 overflow-hidden rounded-lg bg-subtle transition-transform ${
                 draft.avatar.kind === 'drawn' && draft.avatar.style === style
-                  ? 'ring-2 ring-accent'
+                  ? 'ring-2 ring-primary'
                   : 'hover-hover:hover:scale-105'
               }`}
               onClick={() => {
@@ -126,7 +126,7 @@ const AccountAvatarPicker = ({ accountId, face, draft, onDraft }: AccountAvatarP
               style={{ backgroundColor: option }}
               className={`size-6 rounded-full transition-transform ${
                 option === draft.colour
-                  ? 'ring-2 ring-accent ring-offset-2 ring-offset-[var(--color-surface-raised)]'
+                  ? 'ring-2 ring-primary ring-offset-2 ring-offset-[var(--color-surface-raised)]'
                   : 'hover-hover:hover:scale-105'
               }`}
               onClick={() => {

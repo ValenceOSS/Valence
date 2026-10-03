@@ -31,12 +31,6 @@ const props = {
 };
 
 describe('ActivityPanel', () => {
-  it('says the list is live, since a session list nobody trusts is no use', () => {
-    render(<ActivityPanel {...props} />);
-
-    expect(screen.getByText('Live')).toBeInTheDocument();
-  });
-
   it('says when nobody has the app open', () => {
     render(<ActivityPanel {...props} />);
 

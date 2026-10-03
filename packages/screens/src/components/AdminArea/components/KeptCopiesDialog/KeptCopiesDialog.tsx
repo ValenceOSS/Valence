@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Tape as TapeIcon } from '@keyline-icons/react';
-import { Bin as BinFilledIcon } from '@keyline-icons/react/fill';
+import { Bin as BinFilledIcon, Tape as TapeIcon } from '@keyline-icons/react/fill';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';

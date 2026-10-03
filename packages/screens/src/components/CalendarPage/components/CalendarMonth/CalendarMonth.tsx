@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
-import { ChevronRight as ChevronRightIcon } from '@keyline-icons/react';
+import { ChevronRight as ChevronRightFilledIcon } from '@keyline-icons/react/fill';
 import { monthGridOf } from '@ValenceCore/functions/monthGridOf';
 import { nameTheWeekday } from '@ValenceClient/calendar/nameTheWeekday';
 import { cn } from '@ValenceUI/cn';
@@ -70,7 +70,7 @@ const CalendarMonth = ({ day, today, entries, onOpen, onOpenWeek }: CalendarMont
                 actions={
                   onIt.length > SHOWN_A_DAY ? (
                     <PanelCardAction
-                      icon={ChevronRightIcon}
+                      icon={ChevronRightFilledIcon}
                       onClick={() => {
                         onOpenWeek(date);
                       }}

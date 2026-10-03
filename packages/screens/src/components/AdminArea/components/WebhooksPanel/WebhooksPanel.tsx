@@ -1,5 +1,5 @@
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
-import { Plus as PlusIcon } from '@keyline-icons/react';
+import { Plus as PlusFilledIcon } from '@keyline-icons/react/fill';
 import { useState } from 'react';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -174,7 +174,7 @@ const WebhooksPanel = ({
         isFlush
         actions={
           <PanelCardAction
-            icon={PlusIcon}
+            icon={PlusFilledIcon}
             onClick={() => {
               setIsAdding(true);
             }}

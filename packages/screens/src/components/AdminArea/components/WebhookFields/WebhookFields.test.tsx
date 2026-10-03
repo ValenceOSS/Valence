@@ -124,7 +124,7 @@ describe('WebhookFields', () => {
     const user = userEvent.setup();
     const { onChange } = draw();
 
-    await user.click(screen.getByRole('button', { name: /ntfy/ }));
+    await user.click(screen.getByRole('radio', { name: /ntfy/ }));
 
     expect(changedTo(onChange).preset).toBe('ntfy');
   });

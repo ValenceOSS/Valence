@@ -344,8 +344,9 @@ describe('AccountsPanel', () => {
       renderInAnAddress(<AccountsPanel />);
 
       await openInvite(user);
+      await user.click(screen.getByRole('button', { name: 'Add' }));
 
-      expect(screen.getByRole('button', { name: 'Add' })).toBeDisabled();
+      expect(accountMocks.inviteAccount).not.toHaveBeenCalled();
     });
 
     it('adds somebody with only a name and hands over their setup link', async () => {
@@ -443,7 +444,8 @@ describe('AccountsPanel', () => {
       const user = userEvent.setup();
       renderInAnAddress(<AccountsPanel />);
 
-      await user.click(await screen.findByRole('button', { name: 'Waiting for setup (1)' }));
+      await user.click(await screen.findByRole('button', { name: 'Who to show' }));
+      await user.click(await screen.findByRole('menuitemradio', { name: 'Waiting for setup (1)' }));
 
       expect(screen.getByText('Alex')).toBeInTheDocument();
       expect(screen.queryByText('Sam')).not.toBeInTheDocument();

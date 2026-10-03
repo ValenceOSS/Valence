@@ -30,9 +30,7 @@ const PluginPanels = ({ on, subjectId, className }: PluginPanelsProps) => {
           className="flex flex-col gap-3"
         >
           <header className="flex items-baseline justify-between gap-3">
-            <h3 className="text-sm font-medium uppercase tracking-[0.18em] text-text-muted">
-              {panel.title}
-            </h3>
+            <h3 className="text-sm font-medium text-text-muted">{panel.title}</h3>
             <span className="text-xs text-text-muted/70">{panel.pluginName}</span>
           </header>
 

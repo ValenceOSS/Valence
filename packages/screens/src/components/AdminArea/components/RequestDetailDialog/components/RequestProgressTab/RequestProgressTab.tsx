@@ -76,7 +76,7 @@ const RequestProgressTab = ({
           aria-label={say('screens.requestDetailDialog.requestProgressTab.whatWasChosen')}
           className="flex flex-col gap-2"
         >
-          <h4 className="text-xs uppercase tracking-[0.16em] text-text-muted">
+          <h4 className="text-xs font-medium text-text-muted">
             {say('screens.requestDetailDialog.requestProgressTab.whatWasChosen')}
           </h4>
 
@@ -102,7 +102,7 @@ const RequestProgressTab = ({
         aria-label={say('screens.requestDetailDialog.requestProgressTab.whatIsComingDown')}
         className="flex flex-col gap-2"
       >
-        <h4 className="text-xs uppercase tracking-[0.16em] text-text-muted">
+        <h4 className="text-xs font-medium text-text-muted">
           {say('screens.requestDetailDialog.requestProgressTab.whatIsComingDown')}
         </h4>
 

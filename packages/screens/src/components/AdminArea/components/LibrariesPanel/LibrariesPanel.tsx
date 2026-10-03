@@ -1,10 +1,11 @@
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { Icon } from '@ValenceUI/Icon';
-import { Info as InfoIcon, MoreHorizontal as MoreHorizontalIcon } from '@keyline-icons/react';
 import {
   Bin as BinFilledIcon,
   FileArrowUp as FileArrowUpFilledIcon,
   Images as ImagesFilledIcon,
+  Info as InfoIcon,
+  MoreHorizontal as MoreHorizontalIcon,
   Plus as PlusFilledIcon,
   RefreshCw as RefreshCwFilledIcon,
   RotateCw as RotateCwFilledIcon,
@@ -31,11 +32,13 @@ import { describeSince } from '@ValenceScreens/components/AdminArea/describeSinc
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { LibrariesPanelProps } from './LibrariesPanel.types';
+import { PanelCardMenu } from '@ValenceScreens/components/PanelCardMenu/PanelCardMenu';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { FolderLink } from '@ValenceScreens/components/FolderLink/FolderLink';
 import { readingOf } from '@ValenceScreens/components/AdminArea/readingOf';
 import { workOf } from '@ValenceScreens/components/AdminArea/workOf';
 import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
+import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
 import { say } from '@ValenceI18n/say';
 import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
 
@@ -112,7 +115,9 @@ const LibrariesPanel = ({
           <span className="flex min-w-0 flex-col gap-0.5">
             <span className="flex items-center gap-2">
               <span className="truncate font-medium text-text">{row.original.name}</span>
-              <Badge size="sm">{row.original.flavour ?? row.original.kind}</Badge>
+              <Badge size="sm">
+                {row.original.flavour ?? LIBRARY_KIND_NAMES[row.original.kind].label}
+              </Badge>
             </span>
 
             <FolderLink
@@ -168,11 +173,7 @@ const LibrariesPanel = ({
           const busy = workOf(progress, row.original.id);
 
           if (busy.length === 0) {
-            return (
-              <Badge size="sm" tone="accent">
-                {say('screens.adminArea.librariesPanel.idle')}
-              </Badge>
-            );
+            return <Badge size="sm">{say('screens.adminArea.librariesPanel.idle')}</Badge>;
           }
 
           return (
@@ -292,9 +293,8 @@ const LibrariesPanel = ({
       title={say('common.libraries')}
       isFlush
       actions={
-        <ActionMenu
+        <PanelCardMenu
           label={say('screens.adminArea.librariesPanel.libraryActions')}
-          trigger={<Icon of={MoreHorizontalIcon} size={18} />}
           groups={[
             {
               items: [
@@ -344,7 +344,7 @@ const LibrariesPanel = ({
       ) : (
         <>
           {isSetupHidden || onOpenSettings === undefined || onHideSetup === undefined ? null : (
-            <div className="p-3">
+            <div className="p-3 empty:hidden">
               <AdminSetupGuide
                 hasLibrary={libraries.length > 0}
                 hasCatalogueKey={hasCatalogueKey}

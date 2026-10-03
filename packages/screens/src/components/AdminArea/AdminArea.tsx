@@ -1,6 +1,6 @@
 import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { Icon } from '@ValenceUI/Icon';
-import { TriangleAlert as TriangleAlertIcon } from '@keyline-icons/react';
+import { TriangleAlert as TriangleAlertIcon } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
@@ -85,6 +85,9 @@ import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { StatStrip } from './components/StatStrip/StatStrip';
+import { InfoRow } from '@ValenceUI/InfoRow';
+import { InfoNote } from '@ValenceUI/InfoNote';
+import type { LoadReading } from './components/OverviewPanel/components/LoadChart/LoadChart.types';
 import { ConcernsBanner } from './components/ConcernsBanner/ConcernsBanner';
 import { AdminSetupGuide } from './components/AdminSetupGuide/AdminSetupGuide';
 import {
@@ -194,7 +197,8 @@ const AdminArea = ({
   onOpenFolder,
 }: AdminAreaProps) => {
   const cache = useQueryClient();
-  const [history, setHistory] = useState<number[]>([]);
+  const [readings, setReadings] = useState<LoadReading[]>([]);
+  const history = useMemo(() => readings.map((reading) => reading.systemCpuPercent), [readings]);
   const [encoderHistory, setEncoderHistory] = useState<number[]>([]);
   const [viewingJobKind, setViewingJobKind] = useState<string | null>(initialJob ?? null);
   const [correcting, setCorrecting] = useState<MediaSummary | null>(null);
@@ -669,8 +673,18 @@ const AdminArea = ({
   useEffect(() => {
     const stop = watchMonitor((reading) => {
       cache.setQueryData(adminQueries.monitor().queryKey, reading);
-      setHistory((current) =>
-        [...current, reading.resources.systemCpuPercent].slice(-historyLength),
+      setReadings((current) =>
+        [
+          ...current,
+          {
+            atMs: Date.now(),
+            systemCpuPercent: reading.resources.systemCpuPercent,
+            loadAverage: reading.resources.loadAverage,
+            systemMemoryUsedBytes: reading.resources.systemMemoryUsedBytes,
+            systemMemoryTotalBytes: reading.resources.systemMemoryTotalBytes,
+            cpuCount: reading.resources.cpuCount,
+          },
+        ].slice(-historyLength),
       );
       setEncoderHistory((current) => {
         const encoder = reading.resources.graphics?.encoderPercent ?? null;
@@ -706,45 +720,32 @@ const AdminArea = ({
   const ffmpegLine = describeFfmpeg(overview?.transcoder.ffmpegVersion ?? null);
 
   const graphicsInfo = (
-    <dl className="flex flex-col gap-2 text-xs">
-      <div className="flex items-baseline justify-between gap-3">
-        <dt className="shrink-0 text-text-muted">{say('screens.adminArea.hardwareEncoding')}</dt>
-        <dd className="min-w-0 truncate text-text">{acceleration?.label ?? '—'}</dd>
-      </div>
-
-      <div className="flex items-baseline justify-between gap-3">
-        <dt className="shrink-0 text-text-muted">{say('screens.adminArea.hardwareChains')}</dt>
-        <dd className="min-w-0 truncate text-text">{chains?.label ?? '—'}</dd>
-      </div>
-
-      <div className="flex items-baseline justify-between gap-3">
-        <dt className="shrink-0 text-text-muted">{say('screens.adminArea.hDRConversion')}</dt>
-        <dd className="min-w-0 truncate text-text">{toneMapping?.label ?? '—'}</dd>
-      </div>
-
-      {toneMapping?.detail === null || toneMapping?.detail === undefined ? null : (
-        <dd className="text-text-muted">{toneMapping.detail}</dd>
-      )}
+    <>
+      <InfoRow label={say('screens.adminArea.hardwareEncoding')}>
+        {acceleration?.label ?? '—'}
+      </InfoRow>
+      <InfoRow label={say('screens.adminArea.hardwareChains')}>{chains?.label ?? '—'}</InfoRow>
+      <InfoRow label={say('screens.adminArea.hDRConversion')}>{toneMapping?.label ?? '—'}</InfoRow>
 
       {ffmpegLine === null ? null : (
-        <div className="flex items-baseline justify-between gap-3">
-          <dt className="shrink-0 text-text-muted">{say('screens.adminArea.transcoder')}</dt>
-          <dd className="min-w-0 text-right text-text">{ffmpegLine}</dd>
-        </div>
+        <InfoRow label={say('screens.adminArea.transcoder')}>{ffmpegLine}</InfoRow>
+      )}
+
+      {toneMapping?.detail === null || toneMapping?.detail === undefined ? null : (
+        <InfoNote>{toneMapping.detail}</InfoNote>
       )}
 
       {(resources?.graphicsNotes ?? []).length === 0 ? null : (
-        <div className="flex flex-col gap-1 border-t border-[var(--surface-line)] pt-2">
-          <dt className="text-text-muted">{say('screens.adminArea.whyThereIsNoFigure')}</dt>
-
+        <InfoNote>
+          <span className="block text-text">{say('screens.adminArea.whyThereIsNoFigure')}</span>
           {(resources?.graphicsNotes ?? []).map((note) => (
-            <dd key={note} className="text-text">
+            <span key={note} className="block">
               {note}
-            </dd>
+            </span>
           ))}
-        </div>
+        </InfoNote>
       )}
-    </dl>
+    </>
   );
 
   const concerns = collectConcerns({
@@ -807,11 +808,12 @@ const AdminArea = ({
       initial="hidden"
       animate="shown"
       exit="gone"
-      className="flex w-full flex-col gap-5 pb-2"
+      className="flex w-full flex-col gap-4"
     >
       <motion.div
         variants={revealVariants(prefersReducedMotion)}
         transition={revealTransition(prefersReducedMotion)}
+        className="empty:hidden"
       >
         {isGuideOnOverview ? (
           <div className="mb-5">
@@ -853,10 +855,7 @@ const AdminArea = ({
         />
       </motion.div>
 
-      <motion.div
-        variants={revealVariants(prefersReducedMotion)}
-        transition={revealTransition(prefersReducedMotion)}
-      >
+      <div>
         <StatStrip
           stats={[
             {
@@ -957,7 +956,7 @@ const AdminArea = ({
             },
           ]}
         />
-      </motion.div>
+      </div>
 
       {unreachable.size === 0 ? null : (
         <motion.p
@@ -980,11 +979,7 @@ const AdminArea = ({
         </motion.p>
       )}
 
-      <motion.div
-        variants={revealVariants(prefersReducedMotion)}
-        transition={revealTransition(prefersReducedMotion)}
-        className="flex flex-col gap-5"
-      >
+      <div className="flex flex-col gap-5">
         <section>
           <TabPanel value="overview" travel={travel}>
             <OverviewPanel
@@ -992,7 +987,7 @@ const AdminArea = ({
               monitor={monitor}
               libraries={libraries}
               sessions={sessions}
-              history={history}
+              readings={readings}
               onOpenPanel={showPanel}
             />
           </TabPanel>
@@ -1379,7 +1374,7 @@ const AdminArea = ({
             />
           </TabPanel>
         </section>
-      </motion.div>
+      </div>
 
       <ArtworkPicker
         subject={dressing}

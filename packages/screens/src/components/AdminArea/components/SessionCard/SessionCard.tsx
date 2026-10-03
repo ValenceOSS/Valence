@@ -8,15 +8,18 @@ import {
   MessageSquare as MessageSquareIcon,
   Monitor as MonitorIcon,
   MusicNote as MusicNoteIcon,
+  Pause as PauseFilledIcon,
+  Play as PlayFilledIcon,
   Stop as StopIcon,
-} from '@keyline-icons/react';
-import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
+} from '@keyline-icons/react/fill';
 import { useState } from 'react';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Card } from '@ValenceUI/Card';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { deviceIconFor } from './deviceIcon';
+import { brandMarksOf } from './brandMarksOf';
+import { BrandGlyph } from '@ValenceUI/BrandGlyph';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import { SessionStatsDialog } from '@ValenceScreens/components/AdminArea/components/SessionStatsDialog/SessionStatsDialog';
@@ -46,6 +49,8 @@ const SessionCard = ({
   const { playback, listening, bookListening, reading } = session;
   const book = bookListening ?? reading;
   const deviceGlyph = deviceIconFor(session.deviceLabel, session.clientKind);
+  const marks = brandMarksOf(session.deviceLabel);
+  const isBrowser = session.clientKind === 'browser';
   const [isShowingStats, setIsShowingStats] = useState(false);
 
   const heard = listening ?? bookListening;
@@ -87,6 +92,8 @@ const SessionCard = ({
           />
         ) : book !== null && book.hasCover ? (
           <img src={bookCoverUrl(book.bookId)} alt="" className="h-full w-full object-cover" />
+        ) : fallbackGlyph === MonitorIcon && marks.system !== null ? (
+          <BrandGlyph of={marks.system} size={22} className="text-text-muted" />
         ) : (
           <Icon of={fallbackGlyph} size={20} tone="muted" />
         )}
@@ -124,7 +131,11 @@ const SessionCard = ({
         </span>
 
         <span className="flex min-w-0 items-center gap-1.5 text-xs text-text-muted">
-          <Icon of={deviceGlyph} size={14} className="shrink-0" />
+          {isBrowser && marks.browser !== null ? (
+            <BrandGlyph of={marks.browser} size={13} />
+          ) : (
+            <Icon of={deviceGlyph} size={14} className="shrink-0" />
+          )}
           <span className="truncate" title={session.deviceLabel}>
             {session.deviceLabel}
           </span>

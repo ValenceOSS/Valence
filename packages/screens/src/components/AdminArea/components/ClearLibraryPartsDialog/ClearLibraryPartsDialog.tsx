@@ -85,7 +85,7 @@ const ClearLibraryPartsDialog = ({
             <LibraryPicker libraries={libraries} chosen={chosen} onChange={setChosen} />
 
             <fieldset className="flex flex-col gap-5">
-              <legend className="mb-3 text-xs uppercase tracking-[0.14em] text-text-muted">
+              <legend className="mb-3 text-xs font-medium text-text-muted">
                 {say('screens.adminArea.clearLibraryPartsDialog.whatToClear')}
               </legend>
 

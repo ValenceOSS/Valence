@@ -1,7 +1,5 @@
 import { accountHandleOf } from '@ValenceClient/accounts/accountHandleOf';
 import { useMemo, useState } from 'react';
-import { Search as SearchIcon } from '@keyline-icons/react';
-import { Icon } from '@ValenceUI/Icon';
 import { Switch } from '@ValenceUI/Switch';
 import { TextField } from '@ValenceUI/TextField';
 import { HouseholdFace } from '@ValenceScreens/components/HouseholdFace/HouseholdFace';
@@ -45,7 +43,6 @@ const RoleMembers = ({ accounts, heldIds, onToggle }: RoleMembersProps) => {
         value={search}
         onValueChange={setSearch}
         placeholder={say('common.findSomebody')}
-        icon={<Icon of={SearchIcon} size={15} />}
       />
 
       {shown.length === 0 ? (

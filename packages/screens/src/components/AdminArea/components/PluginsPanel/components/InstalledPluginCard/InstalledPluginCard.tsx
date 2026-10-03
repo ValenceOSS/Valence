@@ -4,7 +4,7 @@ import {
   Plug as PlugIcon,
   RotateCcw as RotateCcwIcon,
   Settings as SettingsIcon,
-} from '@keyline-icons/react';
+} from '@keyline-icons/react/fill';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Callout } from '@ValenceUI/Callout';

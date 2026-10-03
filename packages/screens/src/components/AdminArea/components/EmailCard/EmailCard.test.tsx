@@ -153,7 +153,8 @@ describe('EmailCard', () => {
     renderInAnAddress(<EmailCard />);
 
     expect(await screen.findByText('Set by the environment')).toBeInTheDocument();
-    expect(screen.getByLabelText('Mail server')).toBeDisabled();
+    expect(screen.getByText('Mail server')).toBeInTheDocument();
+    expect(screen.getByLabelText('Server address')).toBeDisabled();
     expect(screen.queryByRole('button', { name: /Use Resend/ })).not.toBeInTheDocument();
   });
 

@@ -179,7 +179,7 @@ const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
                       className="flex-1"
                     />
 
-                    <Button type="submit" size="sm">
+                    <Button type="submit">
                       <Icon of={CheckFilledIcon} size={16} />
                       {say('common.save')}
                     </Button>
@@ -187,7 +187,6 @@ const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
                     <Button
                       type="button"
                       variant="secondary"
-                      size="sm"
                       onClick={() => {
                         setRenamingId(null);
                       }}

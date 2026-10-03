@@ -4,12 +4,10 @@ import { readObservabilityView } from '@ValenceScreens/components/ObservabilityP
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { PanelLeft as PanelLeftIcon } from '@keyline-icons/react';
-import { Icon } from '@ValenceUI/Icon';
+import { SidebarToggle } from '@ValenceUI/SidebarToggle';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { HoverCard } from '@ValenceUI/HoverCard';
-import { Logo } from '@ValenceUI/Logo';
 import { Sidebar } from '@ValenceUI/Sidebar';
 import { Spinner } from '@ValenceUI/Spinner';
 import { Tabs } from '@ValenceUI/Tabs';
@@ -26,8 +24,18 @@ import {
   readSidebarCollapsed,
   saveSidebarCollapsed,
 } from '@ValenceScreens/navigation/sidebarCollapsePreference';
+import {
+  readSidebarFolds,
+  saveSidebarFolds,
+} from '@ValenceScreens/navigation/sidebarFoldPreference';
+import { SegmentedRow } from '@ValenceUI/SegmentedRow';
+import { useTheme } from '@ValenceClient/shell/useTheme';
+import { readTheme } from '@ValenceClient/shell/theme';
+import { THEME_CHOICES } from '@ValenceScreens/theme/themeChoices';
 import { say } from '@ValenceI18n/say';
+import { BrandMark } from '@ValenceScreens/components/BrandMark/BrandMark';
 
+const MARKS_PLACE = 'valence-admin-mark';
 /**
  * The server, as a page of its own rather than something raised over whatever was on screen. Eleven
  * sections is not a row of tabs any more — it is a sidebar, foldable the way any of them are, with
@@ -46,6 +54,8 @@ const AdminPage = () => {
   const observability = ObservabilitySearchSchema.parse(search);
   const view = readObservabilityView(observability.view, panel);
   const [isCollapsed, setIsCollapsed] = useState(readSidebarCollapsed);
+  const [folds, setFolds] = useState(readSidebarFolds);
+  const { theme, choose } = useTheme();
 
   const requesting = useQuery(requestsQueries.availability());
   const sections = visibleAdminSections(requesting.data?.isEnabled ?? false);
@@ -87,7 +97,7 @@ const AdminPage = () => {
         void go({ to: '/admin/$panel', params: { panel: next } });
       }}
     >
-      <div className="relative mt-[var(--valence-window-bar)] flex h-[calc(100dvh-var(--valence-window-bar))] overflow-hidden bg-surface">
+      <div className="relative mt-[var(--valence-window-bar)] flex h-[calc(100dvh-var(--valence-window-bar))] overflow-hidden bg-[var(--frame-back)]">
         {isCollapsed ? null : (
           <Button
             variant="bare"
@@ -102,7 +112,7 @@ const AdminPage = () => {
         )}
 
         <Sidebar
-          className="fixed bottom-0 left-0 top-[var(--valence-window-bar)] z-40 md:static md:z-auto"
+          className="fixed bottom-0 left-0 top-[var(--valence-window-bar)] z-40 bg-[var(--frame-back)] md:static md:z-auto"
           label={say('common.server')}
           brand={
             <Button
@@ -112,18 +122,25 @@ const AdminPage = () => {
               onClick={() => {
                 void go({ to: '/' });
               }}
-              className="flex items-center gap-2"
+              className="flex items-center"
             >
-              <Logo size={24} isSolid />
-              {isCollapsed ? null : (
-                <span className="font-semibold text-text">{say('common.valence')}</span>
-              )}
+              <BrandMark hasMark marksPlace={MARKS_PLACE} size="sm" />
             </Button>
           }
           groups={sections.map((section) => ({
+            id: section.id,
+            isOpen:
+              folds[section.id] ??
+              (!section.isFoldedAtFirst || section.items.some((item) => item.id === showing)),
             ...(section.label === null ? {} : { label: section.label }),
             items: section.items,
           }))}
+          onGroupOpenChange={(id, isOpen) => {
+            const next = { ...folds, [id]: isOpen };
+
+            setFolds(next);
+            saveSidebarFolds(next);
+          }}
           value={showing}
           onSelect={(next) => {
             void go({ to: '/admin/$panel', params: { panel: next } });
@@ -140,6 +157,20 @@ const AdminPage = () => {
                 isCollapsed ? 'flex-col items-center gap-2' : 'flex-col gap-2 px-1',
               )}
             >
+              {isCollapsed ? null : (
+                <SegmentedRow
+                  size="xs"
+                  tone="accent"
+                  label={say('common.theme')}
+                  value={theme}
+                  items={THEME_CHOICES}
+                  onSelect={(picked) => {
+                    choose(readTheme(picked));
+                  }}
+                  className="w-full [&>*]:flex-1 [&>*]:justify-center"
+                />
+              )}
+
               {isCollapsed || acceleration === null ? null : (
                 <HoverCard
                   side="right"
@@ -169,25 +200,27 @@ const AdminPage = () => {
           }
         />
 
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <div
+          className={cn(
+            'flex min-w-0 flex-1 flex-col overflow-hidden border-[var(--surface-line)] bg-[var(--frame-panel)] [--card-shell:var(--frame-card)]',
+            'md:my-2 md:mr-2 md:rounded-2xl md:border md:shadow-[var(--shadow-raised)]',
+            isCollapsed ? 'md:ml-2' : '',
+          )}
+        >
           {!isCollapsed ? null : (
-            <div className="flex shrink-0 items-center border-b border-[var(--surface-line)] px-4 py-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                isIconOnly
+            <div className="flex shrink-0 items-center px-4 pt-3">
+              <SidebarToggle
+                isOpen={false}
                 label={say('screens.adminPage.openTheSidebar')}
-                onClick={() => {
+                onToggle={() => {
                   setIsCollapsed(false);
                   saveSidebarCollapsed(false);
                 }}
-              >
-                <Icon of={PanelLeftIcon} size={17} />
-              </Button>
+              />
             </div>
           )}
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-4">
+          <div className="min-h-0 flex-1 overflow-y-auto p-4 lg:p-5">
             <AdminArea
               panel={showing}
               onPanel={(next, search) => {

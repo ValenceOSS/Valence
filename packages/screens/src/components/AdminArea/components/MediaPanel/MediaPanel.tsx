@@ -1,14 +1,12 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
-  ChevronRight as ChevronRightIcon,
-  FolderOpen as FolderOpenIcon,
-  MoreHorizontal as MoreHorizontalIcon,
-} from '@keyline-icons/react';
-import {
   Bin as BinFilledIcon,
+  ChevronRight as ChevronRightIcon,
   Copy as CopyFilledIcon,
   Film as FilmFilledIcon,
+  FolderOpen as FolderOpenIcon,
   Image as ImageFilledIcon,
+  MoreHorizontal as MoreHorizontalIcon,
   RefreshCw as RefreshCwFilledIcon,
   Search as SearchFilledIcon,
   Tape as TapeFilledIcon,
@@ -20,9 +18,7 @@ import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { DataTable } from '@ValenceUI/DataTable';
-import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { TabPanel } from '@ValenceUI/TabPanel';
-import { TabRow } from '@ValenceUI/TabRow';
 import { Tabs } from '@ValenceUI/Tabs';
 import { TextField } from '@ValenceUI/TextField';
 import { useTravelDirection } from '@ValenceUI/useTravelDirection';
@@ -33,6 +29,7 @@ import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 import { FolderLink } from '@ValenceScreens/components/FolderLink/FolderLink';
+import { PanelCardChoice } from '@ValenceScreens/components/PanelCardChoice/PanelCardChoice';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { MediaPoster } from './components/MediaPoster/MediaPoster';
 import { ShelfTable } from './components/ShelfTable/ShelfTable';
@@ -525,6 +522,7 @@ const MediaPanel = ({
     () => [
       {
         id: 'title',
+        meta: { fills: true },
         header: say('common.title'),
         accessorFn: (title) => title.order,
         cell: ({ row }) => {
@@ -668,34 +666,6 @@ const MediaPanel = ({
 
   const held = isShelf ? shelved.length : inLibrary.length;
   const looking = isShelf ? shelved.filter((item) => item.cover === null).length : lookingCount;
-  const summary =
-    chosen?.kind === 'music'
-      ? sayCount('common.count.albums', held)
-      : chosen?.kind === 'books'
-        ? sayCount('common.count.books', held)
-        : sayCount('common.count.titles', held);
-
-  const toolbar = (
-    <div className="flex w-full flex-wrap items-center justify-between gap-3">
-      <span className="text-sm text-text-muted">{summary}</span>
-
-      <SegmentedRow
-        label={say('screens.adminArea.mediaPanel.whichTitles')}
-        size="xs"
-        items={SHOWING.map((item) =>
-          item.id === 'look'
-            ? {
-                id: item.id,
-                label: `${isShelf ? say('screens.adminArea.mediaPanel.noCover') : say('screens.adminArea.mediaPanel.unmatched')} (${looking.toString()})`,
-              }
-            : item,
-        )}
-        value={showing}
-        onSelect={setShowing}
-      />
-    </div>
-  );
-
   const emptyMessage =
     held === 0
       ? say('screens.adminArea.mediaPanel.nothingHasBeenScannedIntoThis')
@@ -711,27 +681,39 @@ const MediaPanel = ({
         title={say('common.media')}
         isFlush
         actions={
-          <TextField
-            label={say('screens.adminArea.mediaPanel.findAProgrammeOrFilm')}
-            isLabelHidden
-            size="sm"
-            type="search"
-            placeholder={say('common.findATitle')}
-            value={search}
-            onValueChange={setSearch}
-            className="w-64 max-w-full"
-          />
-        }
-        below={
-          tabs.length < 2 ? undefined : (
-            <TabRow
-              label={say('common.whichLibrary')}
-              tone="underlined"
-              size="sm"
-              value={libraryId}
-              groups={[{ items: tabs.map((library) => ({ id: library.id, label: library.name })) }]}
+          <>
+            <PanelCardChoice
+              label={say('screens.adminArea.mediaPanel.whichTitles')}
+              options={SHOWING.map((item) =>
+                item.id === 'look'
+                  ? {
+                      id: item.id,
+                      label: `${isShelf ? say('screens.adminArea.mediaPanel.noCover') : say('screens.adminArea.mediaPanel.unmatched')} (${looking.toString()})`,
+                    }
+                  : item,
+              )}
+              value={showing}
+              onSelect={setShowing}
             />
-          )
+            {tabs.length < 2 ? null : (
+              <PanelCardChoice
+                label={say('common.whichLibrary')}
+                options={tabs.map((library) => ({ id: library.id, label: library.name }))}
+                value={libraryId}
+                onSelect={setChosenLibrary}
+              />
+            )}
+            <TextField
+              label={say('screens.adminArea.mediaPanel.findAProgrammeOrFilm')}
+              isLabelHidden
+              size="sm"
+              type="search"
+              placeholder={say('common.findATitle')}
+              value={search}
+              onValueChange={setSearch}
+              className="w-64 max-w-full"
+            />
+          </>
         }
       >
         {isUnreachable ? (
@@ -751,7 +733,6 @@ const MediaPanel = ({
                     name: library.name,
                   })}
                   items={library.id === libraryId ? shelfShown : []}
-                  toolbar={toolbar}
                   emptyMessage={emptyMessage}
                   {...(onOpenFolder === undefined ? {} : { onOpenFolder })}
                 />
@@ -766,7 +747,6 @@ const MediaPanel = ({
                   pageSize={25}
                   height="fills"
                   getSubRows={(title) => (title.parts.length === 0 ? undefined : title.parts)}
-                  toolbar={toolbar}
                   emptyMessage={emptyMessage}
                 />
               )}

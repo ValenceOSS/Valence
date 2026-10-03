@@ -28,9 +28,7 @@ const OrbStudio = ({ value, onChange }: OrbStudioProps) => {
   return (
     <div className="flex flex-col gap-8">
       <section className="flex flex-col gap-3">
-        <h3 className="text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">
-          {say('common.orb')}
-        </h3>
+        <h3 className="text-[0.65rem] font-medium text-text-muted">{say('common.orb')}</h3>
         <div className="grid grid-cols-4 gap-3 sm:grid-cols-7">
           {ORB_VARIANTS.map((one) => (
             <Button
@@ -50,7 +48,7 @@ const OrbStudio = ({ value, onChange }: OrbStudioProps) => {
                 className={cn(
                   'size-14 transition-transform duration-[var(--duration-fast)] group-hover:scale-105',
                   one.key === variant.key &&
-                    'ring-2 ring-accent ring-offset-2 ring-offset-[var(--color-surface-raised)]',
+                    'ring-2 ring-primary ring-offset-2 ring-offset-[var(--color-surface-raised)]',
                 )}
               />
               <span
@@ -91,9 +89,7 @@ const OrbStudio = ({ value, onChange }: OrbStudioProps) => {
 
       {variant.colours.length === 0 ? null : (
         <section className="flex flex-col gap-3">
-          <h3 className="text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">
-            {say('common.colours')}
-          </h3>
+          <h3 className="text-[0.65rem] font-medium text-text-muted">{say('common.colours')}</h3>
           <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
             {variant.colours.map((colour) => (
               <div key={colour.key} className="flex items-center gap-3">
@@ -117,9 +113,7 @@ const OrbStudio = ({ value, onChange }: OrbStudioProps) => {
       )}
 
       <section className="flex flex-col gap-3">
-        <h3 className="text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">
-          {say('common.settings')}
-        </h3>
+        <h3 className="text-[0.65rem] font-medium text-text-muted">{say('common.settings')}</h3>
         <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
           {variant.params.map((param) => (
             <OrbSetting

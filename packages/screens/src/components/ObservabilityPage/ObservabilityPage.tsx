@@ -15,18 +15,19 @@ import { TabRow } from '@ValenceUI/TabRow';
 import { Tabs } from '@ValenceUI/Tabs';
 import { useTravelDirection } from '@ValenceUI/useTravelDirection';
 import { OBSERVABILITY_VIEWS } from '@ValenceClient/admin/ObservabilitySearchSchema';
-import { setQueuePaused } from '@ValenceClient/admin/fetchAdmin';
+import { setQueueConcurrency, setQueuePaused } from '@ValenceClient/admin/fetchAdmin';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { useObservabilitySearch } from '@ValenceScreens/admin/useObservabilitySearch';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { JobRunner } from '@ValenceScreens/components/AdminArea/components/JobRunner/JobRunner';
 import { JobSchedulePage } from '@ValenceScreens/components/AdminArea/components/JobSchedulePage/JobSchedulePage';
-import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { JobHealth } from './components/JobHealth/JobHealth';
 import { JobHistory } from './components/JobHistory/JobHistory';
 import { JobTraceDialog } from './components/JobTraceDialog/JobTraceDialog';
 import { LogExplorer } from './components/LogExplorer/LogExplorer';
-import { QueueConcurrency } from './components/QueueConcurrency/QueueConcurrency';
+import { QUEUE_CONCURRENCY_CHOICES } from './QUEUE_CONCURRENCY_CHOICES';
+import { SplitButton } from '@ValenceUI/SplitButton';
+import { Icon } from '@ValenceUI/Icon';
 import type {
   ObservabilitySearch,
   ObservabilityView,
@@ -226,16 +227,35 @@ const ObservabilityPage = ({
                     </Badge>
                   ) : null}
 
-                  <QueueConcurrency concurrency={monitor.queue.concurrency} />
-
-                  <PanelCardAction
-                    icon={monitor.queue.paused ? PlayFilledIcon : PauseFilledIcon}
+                  <SplitButton
+                    tone="secondary"
+                    size="sm"
                     onClick={() => {
                       void setQueuePaused(!monitor.queue.paused);
                     }}
+                    choiceLabel={say(
+                      'screens.observabilityPage.queueConcurrency.howManyJobsRunAtOnce',
+                    )}
+                    choiceName={say('screens.observabilityPage.queueConcurrency.jobsAtOnce')}
+                    options={QUEUE_CONCURRENCY_CHOICES}
+                    selectedId={monitor.queue.concurrency.toString()}
+                    onSelect={(id) => {
+                      void setQueueConcurrency(Math.max(1, Number(id)));
+                    }}
+                    footer={
+                      <p className="max-w-56 text-xs font-normal leading-relaxed text-text-muted">
+                        {say(
+                          'screens.observabilityPage.queueConcurrency.moreJobsAtOnceFinishesBackground',
+                        )}
+                      </p>
+                    }
                   >
                     {monitor.queue.paused ? say('common.resume') : say('common.pause')}
-                  </PanelCardAction>
+                    <span className="text-text-muted">
+                      {`· ${monitor.queue.concurrency.toString()}${say('screens.observabilityPage.queueConcurrency.atATime')}`}
+                    </span>
+                    <Icon of={monitor.queue.paused ? PlayFilledIcon : PauseFilledIcon} size={14} />
+                  </SplitButton>
                 </>
               )}
             </>

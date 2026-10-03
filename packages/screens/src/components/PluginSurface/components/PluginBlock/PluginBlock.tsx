@@ -180,9 +180,7 @@ const PluginBlock = ({ pluginId, block, fields, onField, onAct, isActing }: Plug
       return (
         <section className="flex flex-col gap-3">
           {block.title === undefined ? null : (
-            <h4 className="text-xs font-semibold uppercase tracking-[0.14em] text-text-muted">
-              {block.title}
-            </h4>
+            <h4 className="text-xs font-semibold text-text-muted">{block.title}</h4>
           )}
 
           {block.children.map((child, at) => (
@@ -202,9 +200,7 @@ const PluginBlock = ({ pluginId, block, fields, onField, onAct, isActing }: Plug
       return (
         <section className="flex flex-col gap-1">
           {block.title === undefined ? null : (
-            <h4 className="text-xs font-semibold uppercase tracking-[0.14em] text-text-muted">
-              {block.title}
-            </h4>
+            <h4 className="text-xs font-semibold text-text-muted">{block.title}</h4>
           )}
 
           <div className="flex flex-col divide-y divide-border/50 rounded-xl border border-border/60">

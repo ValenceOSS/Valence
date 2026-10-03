@@ -1,11 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { waitForArrivals } from '@ValenceScreens/testing/waitForArrivals';
 import { A_REPORT } from '@ValenceScreens/components/ImportWizard/aMediaImportRun';
 import { ImportReportView } from './ImportReportView';
 
 describe('ImportReportView', () => {
-  it('shows how much comes across, and what each person gets', () => {
+  it('shows how much comes across, and what each person gets', async () => {
     render(<ImportReportView report={A_REPORT} />);
+
+    await waitForArrivals();
 
     expect(screen.getByLabelText('What is imported')).toHaveTextContent('9 of 10');
     expect(
@@ -16,8 +19,10 @@ describe('ImportReportView', () => {
     expect(screen.getByText('Their Plex PIN was not given, so they were left out.')).toBeVisible();
   });
 
-  it('lists what could not be matched and why, and what stays behind', () => {
+  it('lists what could not be matched and why, and what stays behind', async () => {
     render(<ImportReportView report={A_REPORT} />);
+
+    await waitForArrivals();
 
     expect(screen.getByText('A Home Movie (2019)')).toBeVisible();
     expect(screen.getByText('And 3 more.')).toBeVisible();
@@ -25,7 +30,7 @@ describe('ImportReportView', () => {
     expect(screen.queryByLabelText('What was written')).toBeNull();
   });
 
-  it('shows what was written once the import is done, and who could not be brought across', () => {
+  it('shows what was written once the import is done, and who could not be brought across', async () => {
     const [, ash] = A_REPORT.people;
 
     if (ash === undefined) {
@@ -42,6 +47,8 @@ describe('ImportReportView', () => {
         }}
       />,
     );
+
+    await waitForArrivals();
 
     expect(screen.getByLabelText('What was written')).toBeInTheDocument();
     expect(screen.getByText('Could not be imported')).toBeVisible();

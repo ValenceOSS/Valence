@@ -2,7 +2,7 @@ import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
-import { Plus as PlusIcon } from '@keyline-icons/react';
+import { Plus as PlusFilledIcon } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
@@ -237,7 +237,7 @@ const DownloadsPanel = () => {
             )}
 
             <PanelCardAction
-              icon={PlusIcon}
+              icon={PlusFilledIcon}
               onClick={() => {
                 setIsAdding(true);
               }}

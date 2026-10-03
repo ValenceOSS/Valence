@@ -1,4 +1,4 @@
-import { Plug as PlugIcon } from '@keyline-icons/react';
+import { Plug as PlugIcon } from '@keyline-icons/react/fill';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';

@@ -376,7 +376,7 @@ const RailCard = ({
 
               <div className="flex min-h-0 w-full flex-1 flex-col gap-3 px-4 pb-4 pt-4 text-left">
                 <span className="flex items-start justify-between gap-3">
-                  <span className="min-w-0 text-xs uppercase tracking-[0.16em] text-text-muted">
+                  <span className="min-w-0 text-xs font-medium text-text-muted">
                     {isSeries
                       ? show === null
                         ? null

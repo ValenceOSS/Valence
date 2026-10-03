@@ -136,7 +136,7 @@ const ImportWizard = ({ onFinished }: ImportWizardProps) => {
       aria-label={say('screens.adminArea.adminSections.import')}
     >
       <header className="flex flex-col gap-1">
-        <span className="text-xs uppercase tracking-[0.16em] text-text-muted">
+        <span className="text-xs font-medium text-text-muted">
           {say('common.stepNumberOfTotal', {
             number: (STEPS.indexOf(step) + 1).toString(),
             total: STEPS.length.toString(),

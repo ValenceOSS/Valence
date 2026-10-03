@@ -2,7 +2,7 @@ import { sayAgain } from '@ValenceI18n/sayAgain';
 import { describeSessionDelivery } from '@ValenceScreens/admin/describeSessionDelivery';
 import { nameOfSession } from '@ValenceScreens/admin/nameOfSession';
 import { Icon } from '@ValenceUI/Icon';
-import { X as XIcon } from '@keyline-icons/react';
+import { X as XIcon } from '@keyline-icons/react/fill';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogTitle } from '@ValenceUI/DialogTitle';

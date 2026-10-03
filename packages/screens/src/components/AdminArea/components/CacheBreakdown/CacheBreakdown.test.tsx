@@ -25,32 +25,6 @@ describe('CacheBreakdown', () => {
     expect(screen.getByText('12 clips')).toBeInTheDocument();
   });
 
-  it('adds the kinds up, across both services that measure them', () => {
-    render(
-      <CacheBreakdown
-        cache={CACHE}
-        artwork={{ count: 1, bytes: 20 * 1024 ** 2, atMs: Date.now() }}
-        liveSessions={1}
-        library={null}
-      />,
-    );
-
-    expect(screen.getByText(/3.5 GB of Valence's own files/)).toBeInTheDocument();
-  });
-
-  it('says when it counted, so a stale figure does not read as a live one', () => {
-    render(<CacheBreakdown cache={CACHE} artwork={null} liveSessions={1} library={null} />);
-
-    expect(screen.getByText(/counted just now/)).toBeInTheDocument();
-  });
-
-  it('says it is counting rather than showing an empty cache', () => {
-    render(<CacheBreakdown cache={null} artwork={null} liveSessions={0} library={null} />);
-
-    expect(screen.getByText('Counting what is on the disk.')).toBeInTheDocument();
-    expect(screen.getAllByText('Still counting')).toHaveLength(5);
-  });
-
   it('names every kind before any of them are known', () => {
     render(<CacheBreakdown cache={null} artwork={null} liveSessions={0} library={null} />);
 
@@ -84,6 +58,5 @@ describe('CacheBreakdown', () => {
     );
 
     expect(screen.getByText('Book pages')).toBeInTheDocument();
-    expect(screen.getByText(/2\.0 MB of Valence's own files/)).toBeInTheDocument();
   });
 });

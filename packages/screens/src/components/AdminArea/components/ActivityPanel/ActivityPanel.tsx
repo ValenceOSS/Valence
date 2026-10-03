@@ -35,15 +35,7 @@ const ActivityPanel = ({
   const watcher = sessions.find((session) => session.clientId === messaging);
 
   return (
-    <PanelCard
-      title={say('common.sessions')}
-      actions={
-        <span className="flex items-center gap-1.5 text-xs text-text-muted">
-          <span aria-hidden className="size-1.5 rounded-full bg-accent" />
-          {say('common.live')}
-        </span>
-      }
-    >
+    <PanelCard title={say('common.sessions')}>
       <div className="flex flex-col gap-4">
         {sessions.length === 0 ? (
           <p className="text-sm text-text-muted">
@@ -52,7 +44,7 @@ const ActivityPanel = ({
         ) : (
           groupSessionsByViewer(sessions).map((group) => (
             <div key={group.key} className="flex flex-col gap-2">
-              <h3 className="text-xs uppercase tracking-[0.14em] text-text-muted">{group.label}</h3>
+              <h3 className="text-xs font-medium text-text-muted">{group.label}</h3>
 
               <div className="flex flex-col gap-2">
                 {group.sessions.map((session) => (

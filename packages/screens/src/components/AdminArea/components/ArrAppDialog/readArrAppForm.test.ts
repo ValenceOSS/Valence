@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ARR_APP_NAMES } from '@ValenceScreens/components/AdminArea/ARR_APP_NAMES';
-import { arrAppFormFor, choosingArrKind, readArrAppForm } from './readArrAppForm';
+import { arrAppFormFor, choosingArrKind } from './readArrAppForm';
 
 const APP = {
   id: '3f0e8a52-7b1c-4d2e-9f3a-5b6c7d8e9f01',
@@ -52,37 +52,5 @@ describe('choosingArrKind', () => {
         ARR_APP_NAMES,
       ),
     ).toEqual({ kind: 'sonarr', name: 'Mine', url: 'https://tv.example' });
-  });
-});
-
-describe('readArrAppForm', () => {
-  const FORM = { ...arrAppFormFor(null, ARR_APP_NAMES), apiKey: ' key ' };
-
-  it('reads an app to connect', () => {
-    expect(readArrAppForm(FORM, false)).toEqual({
-      draft: {
-        kind: 'radarr',
-        name: 'Radarr',
-        url: 'http://radarr:7878',
-        apiKey: 'key',
-        remotePath: '',
-        localPath: '',
-        isEnabled: true,
-      },
-      problem: null,
-    });
-    expect(readArrAppForm({ ...FORM, apiKey: '' }, true).draft).not.toBeNull();
-  });
-
-  it('says the first thing wrong', () => {
-    expect(readArrAppForm({ ...FORM, name: ' ' }, false).problem).toBe('Give the app a name.');
-    expect(readArrAppForm({ ...FORM, url: 'radarr' }, false).problem).not.toBeNull();
-    expect(readArrAppForm({ ...FORM, url: 'ftp://radarr' }, false).problem).not.toBeNull();
-    expect(readArrAppForm({ ...FORM, apiKey: '' }, false).problem).toBe(
-      'It needs its API key, from Settings → General in the app.',
-    );
-    expect(readArrAppForm({ ...FORM, remotePath: '/movies' }, false).problem).toBe(
-      'Say where its library is both as the app sees it and as Valence does, or neither.',
-    );
   });
 });

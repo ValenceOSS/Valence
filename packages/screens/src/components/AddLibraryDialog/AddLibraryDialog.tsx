@@ -8,18 +8,27 @@ import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { TextField } from '@ValenceUI/TextField';
 import { Icon } from '@ValenceUI/Icon';
-import { Folder as FolderIcon } from '@keyline-icons/react';
+import { Folder as FolderIcon } from '@keyline-icons/react/fill';
 import { FolderBrowser } from '@ValenceScreens/components/AdminArea/components/FolderBrowser/FolderBrowser';
 import { SELECTABLE_LIBRARY_KINDS } from '@ValenceContracts/schemas/Library';
 import { LIBRARY_KIND_NAMES } from '@ValenceClient/library/LIBRARY_KIND_NAMES';
 import { LIBRARY_PRESETS } from './LIBRARY_PRESETS';
 import { createLibrary } from '@ValenceClient/library/fetchLibrary';
-import { validateAddLibraryForm } from './validateAddLibraryForm';
-import type { LibraryKind } from '@ValenceContracts/schemas/Library';
-import type { AddLibraryDialogProps, AddLibraryFormErrors } from './AddLibraryDialog.types';
+import { AddLibraryFormSchema } from './AddLibraryFormSchema';
+import { CUSTOM_PRESET } from './CUSTOM_PRESET';
+import { useZodForm } from '@ValenceClient/forms/useZodForm';
+import { Form } from '@ValenceUI/Form';
+import type { z } from 'zod';
+import type { AddLibraryDialogProps } from './AddLibraryDialog.types';
 import { say } from '@ValenceI18n/say';
 
-const CUSTOM = 'custom';
+const INITIAL: z.input<typeof AddLibraryFormSchema> = {
+  name: '',
+  preset: 'movies',
+  customKind: 'shows',
+  flavour: '',
+  path: '',
+};
 
 /**
  * Adds a library: what to call it, and the folder on the machine running Valence that holds it. Does not
@@ -33,207 +42,169 @@ const CUSTOM = 'custom';
  * @param onCreated - Called with the library once the server has made it.
  */
 const AddLibraryDialog = ({ isOpen, onClose, onCreated }: AddLibraryDialogProps) => {
-  const [name, setName] = useState('');
-  const [preset, setPreset] = useState<string>('movies');
-  const [customKind, setCustomKind] = useState<LibraryKind>('shows');
-  const [flavour, setFlavour] = useState('');
-  const [path, setPath] = useState('');
-  const [errors, setErrors] = useState<AddLibraryFormErrors>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isBrowsing, setIsBrowsing] = useState(false);
 
-  const reset = () => {
-    setName('');
-    setPreset('movies');
-    setCustomKind('shows');
-    setFlavour('');
-    setPath('');
-    setErrors({});
-    setIsBrowsing(false);
-  };
-
-  const close = () => {
-    reset();
-    onClose();
-  };
-
-  const submit = async () => {
-    const isCustom = preset === CUSTOM;
-    const found = validateAddLibraryForm({
-      name,
-      path,
-      ...(isCustom ? { flavour } : {}),
-    });
-
-    setErrors(found);
-
-    if (Object.keys(found).length > 0) {
-      return;
-    }
-
-    setIsSubmitting(true);
+  const form = useZodForm(AddLibraryFormSchema, INITIAL, async (answers, { reset }) => {
+    const isCustom = answers.preset === CUSTOM_PRESET;
+    const chosen = LIBRARY_PRESETS.find((entry) => entry.id === answers.preset);
 
     try {
-      const chosen = LIBRARY_PRESETS.find((entry) => entry.id === preset);
       const library = await createLibrary(
         isCustom
-          ? { name, kind: customKind, flavour: flavour.trim(), path }
+          ? {
+              name: answers.name,
+              kind: answers.customKind,
+              flavour: answers.flavour,
+              path: answers.path,
+            }
           : {
-              name,
+              name: answers.name,
               kind: chosen?.kind ?? 'movies',
               ...(chosen?.flavour === null || chosen === undefined
                 ? {}
                 : { flavour: chosen.flavour }),
-              path,
+              path: answers.path,
             },
       );
 
       onCreated(library);
       tellOutcome(say('common.addedName', { name: library.name }), null);
-      reset();
+      reset(INITIAL);
+      setIsBrowsing(false);
+
+      return null;
     } catch (error) {
       const said =
         error instanceof Error
           ? error.message
           : say('screens.adminArea.addLibraryDialog.theLibraryCouldNotBeAdded');
 
-      setErrors({ submit: said });
       tellOutcome('', said);
-    } finally {
-      setIsSubmitting(false);
+
+      return said;
     }
+  });
+
+  const close = () => {
+    form.reset(INITIAL);
+    setIsBrowsing(false);
+    onClose();
   };
 
   return (
     <DialogCompanion label={say('common.addALibrary')} isOpen={isOpen} onClose={close}>
       <DialogTitle size="compact" title={say('common.addALibrary')} />
 
-      <DialogContent className="flex flex-col gap-5">
-        <TextField
-          label={say('common.name')}
-          value={name}
-          onValueChange={setName}
-          {...(errors.name === undefined ? {} : { error: errors.name })}
-        />
+      <Form label={say('common.addALibrary')} onSubmit={form.submit} isDialog>
+        <DialogContent className="flex flex-col gap-5">
+          <TextField label={say('common.name')} {...form.text('name')} />
 
-        <FormField
-          label={say('screens.adminArea.addLibraryDialog.type')}
-          description={say('screens.adminArea.addLibraryDialog.whatThisLibraryHoldsWhichDecides')}
-        >
-          <div className="flex flex-wrap gap-2">
-            {[
-              ...LIBRARY_PRESETS,
-              { id: CUSTOM, label: say('screens.adminArea.addLibraryDialog.custom') },
-            ].map((entry) => (
-              <Button
-                key={entry.id}
-                size="sm"
-                variant={entry.id === preset ? 'primary' : 'secondary'}
-                aria-pressed={entry.id === preset}
-                onClick={() => {
-                  setPreset(entry.id);
-                }}
-              >
-                {entry.label}
-              </Button>
-            ))}
-          </div>
-        </FormField>
-
-        {preset === CUSTOM ? (
-          <>
-            <TextField
-              label={say('screens.adminArea.addLibraryDialog.typeName')}
-              value={flavour}
-              onValueChange={setFlavour}
-              placeholder={say('screens.adminArea.addLibraryDialog.documentaries')}
-              description={say('screens.adminArea.addLibraryDialog.whatToCallThisKindOf')}
-              {...(errors.flavour === undefined ? {} : { error: errors.flavour })}
-            />
-
-            <FormField
-              label={say('screens.adminArea.addLibraryDialog.readsLike')}
-              description={say('screens.adminArea.addLibraryDialog.whichOfTheBuiltInKinds')}
-            >
-              <div className="flex flex-wrap gap-2">
-                {SELECTABLE_LIBRARY_KINDS.map((entry) => (
-                  <Button
-                    key={entry}
-                    size="sm"
-                    variant={entry === customKind ? 'primary' : 'secondary'}
-                    aria-pressed={entry === customKind}
-                    onClick={() => {
-                      setCustomKind(entry);
-                    }}
-                  >
-                    {say('screens.adminArea.addLibraryDialog.readsLikeKINDLABELS', {
-                      KIND_LABELS: LIBRARY_KIND_NAMES[entry].toLowerCase(),
-                    })}
-                  </Button>
-                ))}
-              </div>
-            </FormField>
-          </>
-        ) : null}
-
-        <div className="flex flex-col gap-3">
-          <div className="flex items-end gap-2">
-            <div className="min-w-0 flex-1">
-              <TextField
-                label={say('screens.adminArea.addLibraryDialog.path')}
-                value={path}
-                onValueChange={setPath}
-                placeholder="/media/movies"
-                description={say('screens.adminArea.addLibraryDialog.aFolderOnTheMachineRunning')}
-                {...(errors.path === undefined ? {} : { error: errors.path })}
-              />
+          <FormField
+            label={say('screens.adminArea.addLibraryDialog.type')}
+            description={say('screens.adminArea.addLibraryDialog.whatThisLibraryHoldsWhichDecides')}
+          >
+            <div className="flex flex-wrap gap-2">
+              {[
+                ...LIBRARY_PRESETS,
+                { id: CUSTOM_PRESET, label: say('screens.adminArea.addLibraryDialog.custom') },
+              ].map((entry) => (
+                <Button
+                  key={entry.id}
+                  size="sm"
+                  variant={entry.id === form.values.preset ? 'primary' : 'secondary'}
+                  aria-pressed={entry.id === form.values.preset}
+                  onClick={() => {
+                    form.set('preset', entry.id);
+                  }}
+                >
+                  {entry.label}
+                </Button>
+              ))}
             </div>
+          </FormField>
 
-            {isBrowsing ? null : (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  setIsBrowsing(true);
-                }}
+          {form.values.preset === CUSTOM_PRESET ? (
+            <>
+              <TextField
+                label={say('screens.adminArea.addLibraryDialog.typeName')}
+                {...form.text('flavour')}
+                placeholder={say('screens.adminArea.addLibraryDialog.documentaries')}
+                description={say('screens.adminArea.addLibraryDialog.whatToCallThisKindOf')}
+              />
+
+              <FormField
+                label={say('screens.adminArea.addLibraryDialog.readsLike')}
+                description={say('screens.adminArea.addLibraryDialog.whichOfTheBuiltInKinds')}
               >
-                <Icon of={FolderIcon} size={14} />
-                {say('screens.adminArea.addLibraryDialog.browse')}
-              </Button>
-            )}
-          </div>
-
-          {isBrowsing ? (
-            <FolderBrowser
-              start={path}
-              onChoose={(chosen) => {
-                setPath(chosen);
-                setIsBrowsing(false);
-              }}
-              onCancel={() => {
-                setIsBrowsing(false);
-              }}
-            />
+                <div className="flex flex-wrap gap-2">
+                  {SELECTABLE_LIBRARY_KINDS.map((entry) => (
+                    <Button
+                      key={entry}
+                      size="sm"
+                      variant={entry === form.values.customKind ? 'primary' : 'secondary'}
+                      aria-pressed={entry === form.values.customKind}
+                      onClick={() => {
+                        form.set('customKind', entry);
+                      }}
+                    >
+                      {say('screens.adminArea.addLibraryDialog.readsLikeKINDLABELS', {
+                        KIND_LABELS: LIBRARY_KIND_NAMES[entry].toLowerCase(),
+                      })}
+                    </Button>
+                  ))}
+                </div>
+              </FormField>
+            </>
           ) : null}
-        </div>
 
-        {errors.submit === undefined ? null : (
-          <p role="alert" className="text-sm text-danger">
-            {errors.submit}
-          </p>
-        )}
-      </DialogContent>
+          <div className="flex flex-col gap-3">
+            <TextField
+              label={say('screens.adminArea.addLibraryDialog.path')}
+              {...form.text('path')}
+              placeholder="/media/movies"
+              description={say('screens.adminArea.addLibraryDialog.aFolderOnTheMachineRunning')}
+              {...(isBrowsing
+                ? {}
+                : {
+                    trailing: (
+                      <Button
+                        variant="secondary"
+                        onClick={() => {
+                          setIsBrowsing(true);
+                        }}
+                      >
+                        <Icon of={FolderIcon} size={14} />
+                        {say('screens.adminArea.addLibraryDialog.browse')}
+                      </Button>
+                    ),
+                  })}
+            />
 
-      <DialogFooter
-        dismiss={{ onChoose: close, isDisabled: isSubmitting }}
-        confirm={{
-          label: say('common.addLibrary'),
-          onChoose: () => {
-            void submit();
-          },
-          isLoading: isSubmitting,
-        }}
-      />
+            {isBrowsing ? (
+              <FolderBrowser
+                start={form.values.path}
+                onChoose={(chosen) => {
+                  form.set('path', chosen);
+                  setIsBrowsing(false);
+                }}
+                onCancel={() => {
+                  setIsBrowsing(false);
+                }}
+              />
+            ) : null}
+          </div>
+        </DialogContent>
+
+        <DialogFooter
+          note={form.problem}
+          dismiss={{ onChoose: close, isDisabled: form.isSubmitting }}
+          confirm={{
+            label: say('common.addLibrary'),
+            isSubmit: true,
+            isLoading: form.isSubmitting,
+          }}
+        />
+      </Form>
     </DialogCompanion>
   );
 };

@@ -84,15 +84,18 @@ describe('AddTriggerDialog', () => {
   });
 
   it('will not add an interval cron could not express', async () => {
+    const onAdd = vi.fn();
     const user = userEvent.setup();
-    render(build());
+    render(build({ onAdd }));
 
     await pick(user, 'Trigger type', 'On an interval');
     await pick(user, 'Unit', 'Minutes');
     await user.clear(screen.getByLabelText('Every'));
     await user.type(screen.getByLabelText('Every'), '90');
+    await user.click(screen.getByRole('button', { name: 'Add' }));
 
-    expect(screen.getByRole('button', { name: 'Add' })).toBeDisabled();
+    expect(onAdd).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toBeInTheDocument();
   });
 
   it('adds a startup trigger with nothing else to answer', async () => {
@@ -110,12 +113,15 @@ describe('AddTriggerDialog', () => {
   });
 
   it('will not add a trigger whose time has been cleared', async () => {
+    const onAdd = vi.fn();
     const user = userEvent.setup();
-    render(build());
+    render(build({ onAdd }));
 
     await user.clear(screen.getByLabelText('Time'));
+    await user.click(screen.getByRole('button', { name: 'Add' }));
 
-    expect(screen.getByRole('button', { name: 'Add' })).toBeDisabled();
+    expect(onAdd).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toBeInTheDocument();
   });
 
   it('closes when Cancel is pressed', async () => {

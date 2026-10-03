@@ -134,7 +134,7 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
           </div>
 
           <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1 p-4">
-            <span className="text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-on-scrim/75">
+            <span className="text-[0.6875rem] font-medium text-on-scrim/75">
               {say('common.share')}
             </span>
 

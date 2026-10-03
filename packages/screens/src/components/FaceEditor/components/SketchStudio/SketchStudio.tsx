@@ -161,7 +161,7 @@ const SketchStudio = ({ scene, onChange }: SketchStudioProps) => {
             isIconOnly
             label={one.label}
             isActive={tool === one.id}
-            className={cn(tool === one.id && 'ring-2 ring-accent')}
+            className={cn(tool === one.id && 'ring-2 ring-primary')}
             onClick={() => {
               setTool(one.id);
 

@@ -1,6 +1,9 @@
 import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { notify } from '@ValenceUI/notify';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useZodForm } from '@ValenceClient/forms/useZodForm';
+import { Form } from '@ValenceUI/Form';
+import { arrAppFormSchema } from './arrAppFormSchema';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -14,13 +17,23 @@ import { addArrApp, changeArrApp, tryArrApp } from '@ValenceClient/requests/fetc
 import { ARR_APP_KINDS } from '@ValenceContracts/schemas/ArrApp';
 import { ARR_APP_NAMES } from '@ValenceScreens/components/AdminArea/ARR_APP_NAMES';
 import { TryItButton } from '@ValenceScreens/components/AdminArea/components/TryItButton/TryItButton';
-import { USUAL_ADDRESSES, arrAppFormFor, choosingArrKind, readArrAppForm } from './readArrAppForm';
+import { USUAL_ADDRESSES, arrAppFormFor, choosingArrKind } from './readArrAppForm';
 import type { TryVerdict } from '@ValenceScreens/components/AdminArea/components/TryItButton/TryItButton.types';
 import type { ArrAppForm } from './readArrAppForm';
 import type { ArrAppDialogProps } from './ArrAppDialog.types';
 import { say } from '@ValenceI18n/say';
 
 const KINDS = ARR_APP_KINDS.map((kind) => ({ id: kind, label: ARR_APP_NAMES[kind] }));
+
+const ARR_APP_FORM_KEYS = [
+  'kind',
+  'name',
+  'url',
+  'apiKey',
+  'remotePath',
+  'localPath',
+  'isEnabled',
+] as const;
 
 /**
  * Connects a Radarr, Sonarr, Lidarr or Prowlarr, or changes one already connected: where it is,
@@ -36,15 +49,37 @@ const KINDS = ARR_APP_KINDS.map((kind) => ({ id: kind, label: ARR_APP_NAMES[kind
  * @param onSaved - Called with the app as kept.
  */
 const ArrAppDialog = ({ isOpen, app, onClose, onSaved }: ArrAppDialogProps) => {
-  const [form, setForm] = useState<ArrAppForm>(() => arrAppFormFor(app, ARR_APP_NAMES));
+  const schema = useMemo(() => arrAppFormSchema(app?.hasApiKey === true), [app]);
   const [shownFor, setShownFor] = useState(app);
   const [problem, setProblem] = useState<string | null>(null);
-  const [isWorking, setIsWorking] = useState(false);
   const [isTrying, setIsTrying] = useState(false);
   const [verdict, setVerdict] = useState<TryVerdict>(null);
   const [version, setVersion] = useState<string | null>(null);
   const latestTry = useRef<object | null>(null);
   const showing = useRef(app);
+
+  const form = useZodForm(schema, arrAppFormFor(app, ARR_APP_NAMES), async (draft) => {
+    setProblem(null);
+
+    const { value, refusal } = await (app === null
+      ? addArrApp(draft)
+      : changeArrApp(app.id, draft));
+
+    if (value === null) {
+      return refusal?.message ?? say('common.thatCouldNotBeSaved');
+    }
+
+    notify.worked(
+      app === null
+        ? say('common.addedName', { name: value.name })
+        : say('common.savedName', { name: value.name }),
+    );
+    onSaved(value);
+    onClose();
+
+    return null;
+  });
+  const values = form.values;
 
   useEffect(() => {
     showing.current = app;
@@ -52,38 +87,36 @@ const ArrAppDialog = ({ isOpen, app, onClose, onSaved }: ArrAppDialogProps) => {
 
   if (shownFor !== app) {
     setShownFor(app);
-    setForm(arrAppFormFor(app, ARR_APP_NAMES));
+    form.reset(arrAppFormFor(app, ARR_APP_NAMES));
     setProblem(null);
     setVerdict(null);
     setVersion(null);
-    setIsWorking(false);
     setIsTrying(false);
   }
 
   const change = (next: Partial<ArrAppForm>) => {
-    setForm((current) => ({ ...current, ...next }));
+    for (const key of ARR_APP_FORM_KEYS) {
+      const given = next[key];
+
+      if (given !== undefined) {
+        form.set(key, given);
+      }
+    }
+
     setVerdict(null);
     setProblem(null);
   };
 
-  const read = () => {
-    const outcome = readArrAppForm(form, app?.hasApiKey === true);
-
-    setProblem(outcome.problem);
-
-    return outcome.draft;
-  };
-
   const tryIt = () => {
-    const draft = read();
+    const draft = form.check();
 
     if (draft === null) {
       return;
     }
 
-    setIsWorking(true);
     setIsTrying(true);
     setVerdict(null);
+    setProblem(null);
 
     const thisTry = {};
     const isLatest = () => latestTry.current === thisTry && showing.current === app;
@@ -108,41 +141,12 @@ const ArrAppDialog = ({ isOpen, app, onClose, onSaved }: ArrAppDialogProps) => {
       })
       .finally(() => {
         if (isLatest()) {
-          setIsWorking(false);
           setIsTrying(false);
         }
       });
   };
 
-  const save = () => {
-    const draft = read();
-
-    if (draft === null) {
-      return;
-    }
-
-    setIsWorking(true);
-
-    void (app === null ? addArrApp(draft) : changeArrApp(app.id, draft))
-      .then(({ value, refusal }) => {
-        if (value === null) {
-          setProblem(refusal?.message ?? say('common.thatCouldNotBeSaved'));
-
-          return;
-        }
-
-        notify.worked(
-          app === null
-            ? say('common.addedName', { name: value.name })
-            : say('common.savedName', { name: value.name }),
-        );
-        onSaved(value);
-        onClose();
-      })
-      .finally(() => {
-        setIsWorking(false);
-      });
-  };
+  const isWorking = isTrying || form.isSubmitting;
 
   const title =
     app === null
@@ -157,129 +161,117 @@ const ArrAppDialog = ({ isOpen, app, onClose, onSaved }: ArrAppDialogProps) => {
         detail={say('screens.adminArea.arrAppDialog.keepTheAppsYouAlreadyRun')}
       />
 
-      <DialogContent className="flex flex-col gap-6">
-        <div className="flex flex-col gap-4">
-          {app === null ? (
-            <FormField label={say('screens.adminArea.arrAppDialog.app')}>
-              <SegmentedRow
-                label={say('screens.adminArea.arrAppDialog.app')}
-                size="sm"
-                items={KINDS}
-                value={form.kind}
-                onSelect={(next) => {
-                  const chosen = KINDS.find((one) => one.id === next);
-
-                  if (chosen !== undefined) {
-                    change(choosingArrKind(form, chosen.id, ARR_APP_NAMES));
-                  }
-                }}
-              />
-            </FormField>
-          ) : null}
-
-          <TextField
-            label={say('common.name')}
-            value={form.name}
-            onValueChange={(name) => {
-              change({ name });
-            }}
-            placeholder={ARR_APP_NAMES[form.kind]}
-            required
-          />
-
-          <Switch
-            label={
-              form.kind === 'prowlarr'
-                ? say('screens.adminArea.arrAppDialog.keepItsIndexersInStep')
-                : say('screens.adminArea.arrAppDialog.handItRequests')
-            }
-            isOn={form.isEnabled}
-            onToggle={() => {
-              change({ isEnabled: !form.isEnabled });
-            }}
-          />
-        </div>
-
-        <HeadedSection title={say('common.connection')}>
+      <Form label={title} onSubmit={form.submit} isDialog>
+        <DialogContent className="flex flex-col gap-6">
           <div className="flex flex-col gap-4">
+            {app === null ? (
+              <FormField label={say('screens.adminArea.arrAppDialog.app')}>
+                <SegmentedRow
+                  label={say('screens.adminArea.arrAppDialog.app')}
+                  size="sm"
+                  items={KINDS}
+                  value={values.kind}
+                  onSelect={(next) => {
+                    const chosen = KINDS.find((one) => one.id === next);
+
+                    if (chosen !== undefined) {
+                      change(choosingArrKind(values, chosen.id, ARR_APP_NAMES));
+                    }
+                  }}
+                />
+              </FormField>
+            ) : null}
+
             <TextField
-              label={say('common.address')}
-              type="url"
-              value={form.url}
-              onValueChange={(url) => {
-                change({ url });
-              }}
-              placeholder={USUAL_ADDRESSES[form.kind]}
-              description={say('screens.adminArea.arrAppDialog.whereTheRequestsServiceReachesIt')}
+              label={say('common.name')}
+              {...form.text('name')}
+              placeholder={ARR_APP_NAMES[values.kind]}
               required
             />
 
-            <TextField
-              label={say('common.aPIKey')}
-              type="password"
-              value={form.apiKey}
-              onValueChange={(apiKey) => {
-                change({ apiKey });
-              }}
-              description={
-                app?.hasApiKey === true
-                  ? say('screens.adminArea.indexerDialog.aKeyIsKeptTypeA')
-                  : say('screens.adminArea.arrAppDialog.itIsUnderSettingsGeneral')
+            <Switch
+              label={
+                values.kind === 'prowlarr'
+                  ? say('screens.adminArea.arrAppDialog.keepItsIndexersInStep')
+                  : say('screens.adminArea.arrAppDialog.handItRequests')
               }
-              autoComplete="off"
+              isOn={values.isEnabled}
+              onToggle={() => {
+                change({ isEnabled: !values.isEnabled });
+              }}
             />
           </div>
-        </HeadedSection>
 
-        {form.kind === 'prowlarr' ? null : (
-          <HeadedSection title={say('screens.adminArea.arrAppDialog.whereItsLibraryIs')}>
-            <FormField
-              label={say('screens.adminArea.arrAppDialog.mapItsFoldersOntoValences')}
-              description={say('screens.adminArea.arrAppDialog.onlyWhereTheAppAndValence')}
-            >
-              <div className="grid gap-3 sm:grid-cols-2">
-                <TextField
-                  label={say('screens.adminArea.arrAppDialog.asTheAppSeesIt')}
-                  value={form.remotePath}
-                  onValueChange={(remotePath) => {
-                    change({ remotePath });
-                  }}
-                  placeholder="/movies"
-                />
+          <HeadedSection title={say('common.connection')}>
+            <div className="flex flex-col gap-4">
+              <TextField
+                label={say('common.address')}
+                type="url"
+                {...form.text('url')}
+                placeholder={USUAL_ADDRESSES[values.kind]}
+                description={say('screens.adminArea.arrAppDialog.whereTheRequestsServiceReachesIt')}
+                required
+              />
 
-                <TextField
-                  label={say('screens.adminArea.downloadClientDialog.asValenceSeesIt')}
-                  value={form.localPath}
-                  onValueChange={(localPath) => {
-                    change({ localPath });
-                  }}
-                  placeholder="/media/Films"
-                />
-              </div>
-            </FormField>
+              <TextField
+                label={say('common.aPIKey')}
+                type="password"
+                {...form.text('apiKey')}
+                description={
+                  app?.hasApiKey === true
+                    ? say('screens.adminArea.indexerDialog.aKeyIsKeptTypeA')
+                    : say('screens.adminArea.arrAppDialog.itIsUnderSettingsGeneral')
+                }
+                autoComplete="off"
+              />
+            </div>
           </HeadedSection>
-        )}
 
-        <p role="status" className="sr-only">
-          {verdict !== 'working'
-            ? ''
-            : version === null
-              ? say('screens.adminArea.downloadClientDialog.itAnsweredAndIsWorking')
-              : say('screens.adminArea.downloadClientDialog.itAnsweredAndIsVersion', { version })}
-        </p>
-      </DialogContent>
+          {values.kind === 'prowlarr' ? null : (
+            <HeadedSection title={say('screens.adminArea.arrAppDialog.whereItsLibraryIs')}>
+              <FormField
+                label={say('screens.adminArea.arrAppDialog.mapItsFoldersOntoValences')}
+                description={say('screens.adminArea.arrAppDialog.onlyWhereTheAppAndValence')}
+              >
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <TextField
+                    label={say('screens.adminArea.arrAppDialog.asTheAppSeesIt')}
+                    {...form.text('remotePath')}
+                    placeholder="/movies"
+                  />
 
-      <DialogFooter
-        note={problem}
-        dismiss={{ onChoose: onClose }}
-        confirm={{
-          label: app === null ? say('common.connect') : say('common.save'),
-          onChoose: save,
-          isDisabled: isWorking,
-        }}
-      >
-        <TryItButton isTrying={isTrying} verdict={verdict} isDisabled={isWorking} onTry={tryIt} />
-      </DialogFooter>
+                  <TextField
+                    label={say('screens.adminArea.downloadClientDialog.asValenceSeesIt')}
+                    {...form.text('localPath')}
+                    placeholder="/media/Films"
+                  />
+                </div>
+              </FormField>
+            </HeadedSection>
+          )}
+
+          <p role="status" className="sr-only">
+            {verdict !== 'working'
+              ? ''
+              : version === null
+                ? say('screens.adminArea.downloadClientDialog.itAnsweredAndIsWorking')
+                : say('screens.adminArea.downloadClientDialog.itAnsweredAndIsVersion', { version })}
+          </p>
+        </DialogContent>
+
+        <DialogFooter
+          note={problem ?? form.problem}
+          dismiss={{ onChoose: onClose }}
+          confirm={{
+            label: app === null ? say('common.connect') : say('common.save'),
+            isSubmit: true,
+            isLoading: form.isSubmitting,
+            isDisabled: isTrying,
+          }}
+        >
+          <TryItButton isTrying={isTrying} verdict={verdict} isDisabled={isWorking} onTry={tryIt} />
+        </DialogFooter>
+      </Form>
     </DialogCompanion>
   );
 };
