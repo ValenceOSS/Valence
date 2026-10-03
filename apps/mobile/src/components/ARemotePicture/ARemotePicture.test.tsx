@@ -1,6 +1,6 @@
 import { createElement as mockCreateElement } from 'react';
 import { Image as mockNativeImage } from 'react-native';
-import { get } from '@react-native-cookies/cookies';
+import { theCookiesThisPhoneHolds } from '@ValenceMobile/platform/theCookiesThisPhoneHolds';
 import { fireEvent, render } from '@testing-library/react-native';
 import { theDrawnRoot } from '@ValenceMobile/testing/theDrawnRoot';
 import { ARemotePicture } from './ARemotePicture';
@@ -45,7 +45,7 @@ const thePicture = () => {
 
 beforeEach(() => {
   mockDrawnImage.mockClear();
-  jest.mocked(get).mockReset().mockResolvedValue({});
+  jest.mocked(theCookiesThisPhoneHolds).mockReset().mockResolvedValue(null);
 });
 
 describe('ARemotePicture', () => {
@@ -67,9 +67,7 @@ describe('ARemotePicture', () => {
   });
 
   it('sends the cookies the phone holds, since Android would not send them itself', async () => {
-    jest.mocked(get).mockResolvedValue({
-      'valence.session_token': { name: 'valence.session_token', value: 'abc' },
-    });
+    jest.mocked(theCookiesThisPhoneHolds).mockResolvedValue('valence.session_token=abc');
 
     await render(<ARemotePicture uri="http://one.local/poster" style={{ height: 90 }} />);
 
@@ -80,7 +78,7 @@ describe('ARemotePicture', () => {
   });
 
   it('holds its place without a picture until the cookies have been read', async () => {
-    jest.mocked(get).mockReturnValue(new Promise(() => undefined));
+    jest.mocked(theCookiesThisPhoneHolds).mockReturnValue(new Promise(() => undefined));
 
     await render(<ARemotePicture uri="http://one.local/poster" style={{ height: 90 }} />);
 

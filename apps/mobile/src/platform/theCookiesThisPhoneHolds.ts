@@ -1,4 +1,8 @@
-import { get } from '@react-native-cookies/cookies';
+import { requireOptionalNativeModule } from 'expo';
+
+type Cookies = {
+  cookieHeaderFor?: (address: string) => Promise<string | null>;
+};
 
 /**
  * What this phone would send to a server, as one header.
@@ -13,15 +17,15 @@ import { get } from '@react-native-cookies/cookies';
  * @returns What to send as `Cookie`, or nothing where this phone holds none for it.
  */
 const theCookiesThisPhoneHolds = async (address: string): Promise<string | null> => {
-  const held = await get(address).catch(() => null);
+  const jar = requireOptionalNativeModule<Cookies>('ValenceCookies');
 
-  if (held === null) {
+  if (jar?.cookieHeaderFor === undefined) {
     return null;
   }
 
-  const pairs = Object.values(held).map((cookie) => `${cookie.name}=${cookie.value}`);
+  const held = await jar.cookieHeaderFor(address).catch(() => null);
 
-  return pairs.length === 0 ? null : pairs.join('; ');
+  return held === null || held === '' ? null : held;
 };
 
 export { theCookiesThisPhoneHolds };

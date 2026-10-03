@@ -11,7 +11,7 @@ import {
   stopWatching,
 } from '@ValenceClient/playback/startPlaybackSession';
 import { reportWatchProgress } from '@ValenceClient/playback/watchProgress';
-import { get } from '@react-native-cookies/cookies';
+import { theCookiesThisPhoneHolds } from '@ValenceMobile/platform/theCookiesThisPhoneHolds';
 import { lockAsync, OrientationLock } from 'expo-screen-orientation';
 import { theFakePlayer } from '@ValenceMobile/testing/theFakePlayer';
 import { holdAWindowOf } from '@ValenceMobile/testing/holdAWindowOf';
@@ -79,7 +79,7 @@ beforeEach(() => {
   jest.mocked(stopWatching).mockReset().mockResolvedValue();
   jest.mocked(heartbeatPlaybackSession).mockReset().mockResolvedValue();
   jest.mocked(reportWatchProgress).mockReset().mockResolvedValue();
-  jest.mocked(get).mockReset().mockResolvedValue({});
+  jest.mocked(theCookiesThisPhoneHolds).mockReset().mockResolvedValue(null);
   jest.mocked(lockAsync).mockReset().mockResolvedValue();
   jest
     .mocked(fetchMediaDetail)
@@ -415,9 +415,7 @@ describe('Watching', () => {
   });
 
   it('hands the player this phone\u2019s session, which it would not ask for itself', async () => {
-    jest.mocked(get).mockResolvedValue({
-      'valence.session_token': { name: 'valence.session_token', value: 'abc' },
-    });
+    jest.mocked(theCookiesThisPhoneHolds).mockResolvedValue('valence.session_token=abc');
     jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
 
     const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));

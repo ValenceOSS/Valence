@@ -1,4 +1,4 @@
-import { get } from '@react-native-cookies/cookies';
+import { theCookiesThisPhoneHolds } from '@ValenceMobile/platform/theCookiesThisPhoneHolds';
 import { uploadAsync } from 'expo-file-system/legacy';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
@@ -13,7 +13,7 @@ const SERVER = 'http://192.168.1.36:8420';
 
 beforeEach(() => {
   installPlatform(aFakePlatform({ serverAddress: () => SERVER }));
-  jest.mocked(get).mockResolvedValue({ session: { name: 'session', value: 'abc' } });
+  jest.mocked(theCookiesThisPhoneHolds).mockResolvedValue('session=abc');
 });
 
 afterEach(() => {

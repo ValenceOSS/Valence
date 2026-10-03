@@ -1,38 +1,41 @@
-import { get } from '@react-native-cookies/cookies';
+import { requireOptionalNativeModule } from 'expo';
 import { theCookiesThisPhoneHolds } from './theCookiesThisPhoneHolds';
 
+jest.unmock('@ValenceMobile/platform/theCookiesThisPhoneHolds');
+
+jest.mock('expo', () => ({ requireOptionalNativeModule: jest.fn() }));
+
+const cookieHeaderFor = jest.fn<Promise<string | null>, [string]>();
+
 beforeEach(() => {
-  jest.mocked(get).mockReset();
+  cookieHeaderFor.mockReset();
+  jest.mocked(requireOptionalNativeModule).mockReturnValue({ cookieHeaderFor });
 });
 
 describe('theCookiesThisPhoneHolds', () => {
   it('hands over what it holds, as a server would be sent it', async () => {
-    jest.mocked(get).mockResolvedValue({
-      'valence.session_token': { name: 'valence.session_token', value: 'abc' },
-    });
+    cookieHeaderFor.mockResolvedValue('valence.session_token=abc');
 
     expect(await theCookiesThisPhoneHolds('https://valence.example')).toBe(
       'valence.session_token=abc',
     );
-  });
-
-  it('joins several, since a session is rarely only one', async () => {
-    jest.mocked(get).mockResolvedValue({
-      one: { name: 'one', value: '1' },
-      two: { name: 'two', value: '2' },
-    });
-
-    expect(await theCookiesThisPhoneHolds('https://valence.example')).toBe('one=1; two=2');
+    expect(cookieHeaderFor).toHaveBeenCalledWith('https://valence.example');
   });
 
   it('says it holds none rather than sending an empty header', async () => {
-    jest.mocked(get).mockResolvedValue({});
+    cookieHeaderFor.mockResolvedValue('');
 
     expect(await theCookiesThisPhoneHolds('https://valence.example')).toBeNull();
   });
 
   it('says it holds none where the jar could not be read', async () => {
-    jest.mocked(get).mockRejectedValue(new Error('no jar'));
+    cookieHeaderFor.mockRejectedValue(new Error('no jar'));
+
+    expect(await theCookiesThisPhoneHolds('https://valence.example')).toBeNull();
+  });
+
+  it('says it holds none where this build has no native code to read it with', async () => {
+    jest.mocked(requireOptionalNativeModule).mockReturnValue(null);
 
     expect(await theCookiesThisPhoneHolds('https://valence.example')).toBeNull();
   });

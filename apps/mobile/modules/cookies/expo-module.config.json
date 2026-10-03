@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["ValenceCookiesModule"]
+  },
+  "android": {
+    "modules": ["app.valence.modules.cookies.ValenceCookiesModule"]
+  }
+}

@@ -25,7 +25,6 @@ packageExtensions:
     peerDependencies:
       react-native: '*'
 patchedDependencies:
-  '@react-native-cookies/cookies': patches/@react-native-cookies__cookies.patch
   # electron-vite 5 found the last import in a built bundle with a regular expression, which took a
   # string ending in "import" for one and spliced its shims into the middle of it, so the desktop's
   # main process built empty. 6.0 parses the bundle instead; this is that change, to drop with 6.0.

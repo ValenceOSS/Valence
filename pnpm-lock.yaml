@@ -10,9 +10,6 @@ overrides:
 packageExtensionsChecksum: sha256-YehLCjWGKHJqaLm7QyryINTNuccSVKtZUOVF+zfb5yU=
 
 patchedDependencies:
-  '@react-native-cookies/cookies':
-    hash: ec064f4a202698a202758abc5b5d8deafb70ffb31585c78608d257295d731b9a
-    path: patches/@react-native-cookies__cookies.patch
   electron-vite@5.0.0:
     hash: 60e136d369686e9fbedf28afd014aeee35f6fbf0f78f7d0c277bfb63d93ecb7c
     path: patches/electron-vite@5.0.0.patch
@@ -345,9 +342,6 @@ importers:
       '@react-native-async-storage/async-storage':
         specifier: 2.2.0
         version: 2.2.0(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))
-      '@react-native-cookies/cookies':
-        specifier: ^6.2.1
-        version: 6.2.1(patch_hash=ec064f4a202698a202758abc5b5d8deafb70ffb31585c78608d257295d731b9a)(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))
       '@tanstack/react-query':
         specifier: ^5.102.8
         version: 5.102.8(react@19.3.0)
@@ -4542,12 +4536,6 @@ packages:
     peerDependencies:
       react: '*'
       react-native: '>=0.59'
-
-  '@react-native-cookies/cookies@6.2.1':
-    resolution: {integrity: sha512-D17wCA0DXJkGJIxkL74Qs9sZ3sA+c+kCoGmXVknW7bVw/W+Vv1m/7mWTNi9DLBZSRddhzYw8SU0aJapIaM/g5w==}
-    deprecated: This package is deprecated. Use @preeternal/react-native-cookie-manager or react-native-nitro-cookies instead.
-    peerDependencies:
-      react-native: '>= 0.60.2'
 
   '@react-native-tvos/config-tv@0.1.6':
     resolution: {integrity: sha512-VxMSIcro+U1EVb64pYShZsc+uE3HNGhfHppoUhTyGwx9ELQkhWvReRTOI4gpb/qeRWEcT+UbUc9Gd9Zlwm572w==}
@@ -15333,11 +15321,6 @@ snapshots:
     dependencies:
       react: 19.2.3
       react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
-
-  '@react-native-cookies/cookies@6.2.1(patch_hash=ec064f4a202698a202758abc5b5d8deafb70ffb31585c78608d257295d731b9a)(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))':
-    dependencies:
-      invariant: 2.2.4
-      react-native: 0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0)
 
   '@react-native-tvos/config-tv@0.1.6(expo@57.0.24)':
     dependencies:
