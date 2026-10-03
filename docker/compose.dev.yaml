@@ -70,7 +70,7 @@ services:
       - transcodes:/transcodes
       - ${VALENCE_MEDIA_PATH:-./media}:/media:ro
 
-  # Only with `docker compose -f compose.dev.yaml --profile requests up`, and
+  # Only with `docker compose --project-directory . -f docker/compose.dev.yaml --profile requests up`, and
   # with REQUESTS_URL=http://requests:8421 and REQUESTS_SECRET set in .env.
   requests:
     build:

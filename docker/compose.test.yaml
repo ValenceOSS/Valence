@@ -1,5 +1,5 @@
 # Throwaway databases for the engine tests, kept in memory so nothing outlives them:
-#   docker compose -f compose.test.yaml up -d --wait
+#   docker compose -f docker/compose.test.yaml up -d --wait
 # then MYSQL_TEST_URL=mysql://root:valence@127.0.0.1:<port>: 3307 for MySQL 8.4 and 3308 for
 # MariaDB 11.4. MariaDB 10.6, the oldest Valence supports, is on 3309 behind `--profile oldest`:
 # every scratch database lives in memory, and three engines at once outgrow a small Docker VM,

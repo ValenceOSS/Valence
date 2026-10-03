@@ -148,7 +148,7 @@ The file ends by declaring `db-data`, `config`, `cache` and `transcodes` as name
 
 ## Choosing a database
 
-Valence keeps its data in Postgres, MySQL or MariaDB. Postgres is the default and the recommendation, and it is what `compose.yaml` runs. For either of the others, two override files sit beside it in the repository, and you lay one over `compose.yaml` rather than editing it:
+Valence keeps its data in Postgres, MySQL or MariaDB. Postgres is the default and the recommendation, and it is what `compose.yaml` runs. For either of the others, two override files come with each release beside it, and you lay one over `compose.yaml` rather than editing it:
 
 ```bash
 docker compose -f compose.yaml -f compose.mariadb.yaml up -d

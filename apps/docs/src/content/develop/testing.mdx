@@ -195,10 +195,10 @@ Where a function needs the clock, timers, the network or a child process, it tak
 
 The ordinary suite runs every test on Postgres, through PGlite. Every test that opens a database, directly or through a test helper, runs a second time under the `mysql` condition against a real MySQL or MariaDB server, from its own Vitest config at `tools/vitest.mysql.config.ts`. It covers `packages/database`, `apps/server` and `apps/requests`.
 
-Start the engines from `compose.test.yaml`. They keep their data in memory, so nothing outlives them:
+Start the engines from `docker/compose.test.yaml`. They keep their data in memory, so nothing outlives them:
 
 ```bash
-docker compose -f compose.test.yaml up -d --wait
+docker compose -f docker/compose.test.yaml up -d --wait
 ```
 
 | Engine       | Address          | Starts                  |

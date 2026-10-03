@@ -212,16 +212,16 @@ Test the pure parts, and if you add a query with subtle SQL, read it with `toSQL
 The dev database is a Docker volume, so resetting it means removing the volume. This deletes every account, library record and job. Your media files are untouched, because Valence never writes to them.
 
 1. Stop the server so nothing is connected.
-2. Remove the containers and the named volumes of `compose.dev.yaml`, which includes the database volume `db-data`:
+2. Remove the containers and the named volumes of `docker/compose.dev.yaml`, which includes the database volume `db-data`:
 
    ```bash
-   docker compose -f compose.dev.yaml down --volumes
+   docker compose --project-directory . -f docker/compose.dev.yaml down --volumes
    ```
 
 3. Start it again:
 
    ```bash
-   docker compose -f compose.dev.yaml up -d db
+   docker compose --project-directory . -f docker/compose.dev.yaml up -d db
    ```
 
 4. Start the server. It finds no ledger table, applies every migration from the first, and first-run setup appears again in the web client.

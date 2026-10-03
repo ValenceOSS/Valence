@@ -70,7 +70,7 @@ const unpackDeb = (archive: string): void => {
   }
 };
 
-const version = pinnedFfmpegVersion(readFileSync(join(ROOT, 'Dockerfile'), 'utf8'));
+const version = pinnedFfmpegVersion(readFileSync(join(ROOT, 'docker', 'server.Dockerfile'), 'utf8'));
 
 const plan = planFfmpegDownload({
   platform: process.platform,

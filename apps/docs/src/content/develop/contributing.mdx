@@ -30,7 +30,7 @@ The short version is below. [Local setup](/develop/local-setup) has the full wal
 git clone https://github.com/ValenceOSS/Valence.git
 cd Valence
 pnpm install
-docker compose -f compose.dev.yaml up -d db
+docker compose --project-directory . -f docker/compose.dev.yaml up -d db
 pnpm ffmpeg:sync
 pnpm dev --filter=@valence/server --filter=@valence/web --filter=@valence/transcoder
 ```

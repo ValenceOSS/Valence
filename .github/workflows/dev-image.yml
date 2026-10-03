@@ -85,7 +85,7 @@ jobs:
       matrix:
         image:
           - name: valence
-            file: Dockerfile
+            file: docker/server.Dockerfile
             title: Valence
             description: A self-hosted streaming platform
           - name: valence-requests

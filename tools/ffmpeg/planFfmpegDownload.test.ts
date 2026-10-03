@@ -73,7 +73,7 @@ describe('planFfmpegDownload', () => {
   });
 
   it('asks for the same deb the image installs', () => {
-    const dockerfile = readFileSync(join(ROOT, 'Dockerfile'), 'utf8');
+    const dockerfile = readFileSync(join(ROOT, 'docker', 'server.Dockerfile'), 'utf8');
     const plan = planFfmpegDownload({ platform: 'linux', arch: 'arm64', version: VERSION });
 
     expect(plan.kind).toBe('deb');

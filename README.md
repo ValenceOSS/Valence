@@ -117,7 +117,7 @@ documentation and the interactive API reference, is at
 
 ```bash
 pnpm install
-docker compose -f compose.dev.yaml up -d db
+docker compose --project-directory . -f docker/compose.dev.yaml up -d db
 pnpm ffmpeg:sync
 pnpm dev
 ```

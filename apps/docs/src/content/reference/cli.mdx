@@ -122,8 +122,8 @@ On MySQL or MariaDB, put `-f compose.yaml -f compose.mysql.yaml` or `-f compose.
 The development file is used with `-f`:
 
 ```bash
-docker compose -f compose.dev.yaml up -d db
-docker compose -f compose.dev.yaml --profile requests up
+docker compose --project-directory . -f docker/compose.dev.yaml up -d db
+docker compose --project-directory . -f docker/compose.dev.yaml --profile requests up
 ```
 
 ## Root scripts

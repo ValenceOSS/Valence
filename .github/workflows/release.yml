@@ -134,7 +134,7 @@ jobs:
       matrix:
         image:
           - name: valence
-            file: Dockerfile
+            file: docker/server.Dockerfile
             title: Valence
             description: A self-hosted streaming platform
           - name: valence-requests
@@ -243,7 +243,9 @@ jobs:
         run: |
           mkdir -p release
           cp compose.yaml release/compose.yaml
-          cp compose.native-transcoder.yaml release/compose.native-transcoder.yaml
+          cp docker/compose.native-transcoder.yaml release/compose.native-transcoder.yaml
+          cp docker/compose.mysql.yaml release/compose.mysql.yaml
+          cp docker/compose.mariadb.yaml release/compose.mariadb.yaml
           cp .env.example release/env.example
           tar -czf release/valence-web.tar.gz -C apps/web dist
 

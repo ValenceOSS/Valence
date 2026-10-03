@@ -30,7 +30,7 @@ describe('pinnedFfmpegVersion', () => {
   it.each(['media-pipeline.yml', 'release.yml'])(
     'agrees with every version %s installs',
     (name) => {
-      const dockerfile = readFileSync(join(ROOT, 'Dockerfile'), 'utf8');
+      const dockerfile = readFileSync(join(ROOT, 'docker', 'server.Dockerfile'), 'utf8');
       const workflow = readFileSync(join(ROOT, '.github', 'workflows', name), 'utf8');
       const versions = [...workflow.matchAll(CI_VERSIONS)].map(
         (found) => found.groups?.['version'],

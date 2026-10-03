@@ -19,7 +19,7 @@ const toTheTestServer = async () => {
 
   if (server === undefined || server === '') {
     throw new Error(
-      'MYSQL_TEST_URL is not set. Bring up compose.test.yaml and point it at mysql://root:valence@127.0.0.1:3307 (MySQL) or :3308 (MariaDB).',
+      'MYSQL_TEST_URL is not set. Bring up docker/compose.test.yaml and point it at mysql://root:valence@127.0.0.1:3307 (MySQL) or :3308 (MariaDB).',
     );
   }
 

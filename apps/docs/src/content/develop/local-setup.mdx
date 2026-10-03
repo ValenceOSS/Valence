@@ -70,14 +70,14 @@ The desktop client is trusted without being listed. Its dev server is an ordinar
 pnpm ffmpeg:sync
 ```
 
-This fetches the FFmpeg build the shipped image carries (the version pinned in the `Dockerfile`), unpacks it into `.ffmpeg` at the repository root and records `VALENCE_FFMPEG` and `VALENCE_FFPROBE` in your `.env`. It never overwrites either variable if you have already set them.
+This fetches the FFmpeg build the shipped image carries (the version pinned in `docker/server.Dockerfile`), unpacks it into `.ffmpeg` at the repository root and records `VALENCE_FFMPEG` and `VALENCE_FFPROBE` in your `.env`. It never overwrites either variable if you have already set them.
 
 ## Start Postgres
 
-`compose.dev.yaml` defines a Postgres 18 service named `db` (user, password and database all `valence`, port 5432), plus a `valence` service that builds the whole image and two optional profiles. For daily development you only want the database.
+`docker/compose.dev.yaml` defines a Postgres 18 service named `db` (user, password and database all `valence`, port 5432), plus a `valence` service that builds the whole image and two optional profiles. For daily development you only want the database.
 
 ```bash
-docker compose -f compose.dev.yaml up -d db
+docker compose --project-directory . -f docker/compose.dev.yaml up -d db
 ```
 
 Data lives in a named volume, `db-data`, so it survives restarts. The optional service is `requests`, behind the `requests` profile and built from `apps/requests/Dockerfile`. You normally run the requests service from source instead, as described below.
@@ -93,10 +93,10 @@ pnpm --filter @valence/requests dev:mysql
 
 The plain `dev` scripts run the Postgres build, and a build refuses a database of the other kind, so the script has to match the address.
 
-For the tests that run on MySQL and MariaDB, `compose.test.yaml` starts throwaway engines kept in memory:
+For the tests that run on MySQL and MariaDB, `docker/compose.test.yaml` starts throwaway engines kept in memory:
 
 ```bash
-docker compose -f compose.test.yaml up -d --wait
+docker compose -f docker/compose.test.yaml up -d --wait
 ```
 
 It starts MySQL 8.4 on `127.0.0.1:3307` and MariaDB 11.4 on `127.0.0.1:3308`, and MariaDB 10.6 on `127.0.0.1:3309` with `--profile oldest`. [Testing](/develop/testing#tests-on-mysql-and-mariadb) says how to run the tests against them.

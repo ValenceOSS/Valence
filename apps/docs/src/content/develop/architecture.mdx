@@ -143,7 +143,7 @@ The design is process per plugin, brokered: a plugin runs in its own process and
 
 ## Build and release shape
 
-The `Dockerfile` has four stages. It builds the Rust binary, builds the web client and bundles the server with esbuild, then assembles a Debian runtime with Valence's own FFmpeg build, the Postgres client tools, the MariaDB client and MySQL 8.4's `mysqldump` and `mysql` (for snapshots) and the built artefacts. The server is built twice, once for Postgres and once for MySQL, and `Main.js`, `Migrate.js` and `Rollback.js` are small launchers that read `DATABASE_URL` and start the matching build. The server is bundled rather than compiled because `tsc` would emit the path aliases Node cannot resolve. The requests service has its own `Dockerfile` in `apps/requests`. See [Releasing](/develop/releasing) for how images are tagged and published.
+`docker/server.Dockerfile` has four stages. It builds the Rust binary, builds the web client and bundles the server with esbuild, then assembles a Debian runtime with Valence's own FFmpeg build, the Postgres client tools, the MariaDB client and MySQL 8.4's `mysqldump` and `mysql` (for snapshots) and the built artefacts. The server is built twice, once for Postgres and once for MySQL, and `Main.js`, `Migrate.js` and `Rollback.js` are small launchers that read `DATABASE_URL` and start the matching build. The server is bundled rather than compiled because `tsc` would emit the path aliases Node cannot resolve. The requests service has its own `Dockerfile` in `apps/requests`. See [Releasing](/develop/releasing) for how images are tagged and published.
 
 ## Where to go next
 
