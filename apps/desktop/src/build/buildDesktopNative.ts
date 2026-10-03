@@ -3,7 +3,7 @@ import { copyFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { planNativeBuild } from './planNativeBuild';
 
-const ROOT = join(import.meta.dirname, '..', '..');
+const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
 
 const OUT = join(ROOT, 'apps', 'desktop', 'dist-native');
 
