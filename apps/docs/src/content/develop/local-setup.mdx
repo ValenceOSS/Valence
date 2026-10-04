@@ -167,7 +167,7 @@ REQUESTS_SECRET=a-random-value-of-at-least-32-characters
 
 Then start `pnpm --filter @valence/requests dev`. Leave both variables empty to switch requesting off entirely, in which case Valence shows nothing about it. The optional settings (`VPN_URL`, `VPN_API_KEY`, `REQUESTS_PORT` and the indexer definition repository) are commented in `.env.example`.
 
-The requests service gets past Cloudflare's browser check with a headless Camoufox browser, which the image carries but a checkout does not. Fetch it once:
+The requests service gets past Cloudflare's browser check with a headless Camoufox browser, which the image carries but a checkout does not. This installs the same Camoufox release and uBlock Origin build the image is pinned to, and does nothing if they're already there, so run it again after pulling a change to the pins:
 
 ```bash
 pnpm --filter @valence/requests browser

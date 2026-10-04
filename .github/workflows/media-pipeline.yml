@@ -38,7 +38,7 @@ env:
 jobs:
   transcoder:
     name: Build the corpus and test the transcoder
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # In Debian rather than on the runner's Ubuntu, because the FFmpeg Valence ships is built for
     # Debian and its packages say so: the bookworm build wants libvpx7 and the trixie one wants
     # libwebp 1.5 and libx265-215, none of which Ubuntu noble carries. Bookworm is what the runtime
@@ -55,20 +55,21 @@ jobs:
             ca-certificates curl git xz-utils build-essential pkg-config \
             unzip mkvtoolnix
 
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
           cache: pnpm
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
         with:
+          toolchain: stable
           components: clippy, rustfmt
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
 
       - name: Install the FFmpeg Valence ships
         run: |
@@ -89,7 +90,7 @@ jobs:
       # A cache hit skips three minutes of encoding; a miss regenerates rather than failing, because
       # a generated fixture is reproducible from its inputs and never downloaded.
       - name: Cache the generated corpus
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: /tmp/valence-fixtures
           key: >-
@@ -117,7 +118,7 @@ jobs:
       # another run.
       - name: Keep what this architecture produced
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: fixtures-manifest-amd64
           path: fixtures.manifest.json

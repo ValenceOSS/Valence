@@ -6,7 +6,7 @@
 # (Railway among them) can be pointed at this one for this service alone,
 # leaving the root Dockerfile untouched for whoever deploys the product itself.
 
-FROM node:24-bookworm-slim AS build
+FROM node:24.21.0-bookworm-slim AS build
 WORKDIR /build
 RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
@@ -25,7 +25,7 @@ RUN pnpm --filter @valence/ui exec tsc --build --force
 RUN pnpm --filter @valence/landing exec tsc --build --force
 RUN pnpm --filter @valence/landing exec vite build
 
-FROM node:24-bookworm-slim AS runtime
+FROM node:24.21.0-bookworm-slim AS runtime
 WORKDIR /app
 RUN npm install --global serve@14.2.6
 COPY --from=build /build/apps/landing/dist ./dist

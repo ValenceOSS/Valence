@@ -4,7 +4,7 @@
 # pulls it, and Valence shows nothing about requesting until REQUESTS_URL and REQUESTS_SECRET are
 # both set. Built from the repository root, since it shares the contracts with the server.
 
-FROM node:24-bookworm-slim AS build
+FROM node:24.21.0-bookworm-slim AS build
 WORKDIR /build
 RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
@@ -32,11 +32,15 @@ RUN if grep -Eo "from ?[\"']@Valence[A-Za-z]+/[^\"']+" apps/requests/dist/*.js; 
 # after it, as 156 did. A newer release goes in once the camoufox-js pinned in package.json starts one.
 # It always passes for Firefox on Linux, which is what the traffic underneath it shows anyway, and
 # never looks up where it is, so the fonts it would need to pass for Windows or a Mac and the map of
-# addresses to places are left out.
-FROM node:24-bookworm-slim AS browser
+# addresses to places are left out. The uBlock Origin camoufox-js adds to it is pinned the same way,
+# since camoufox-js fetches whichever is newest. `pnpm --filter @valence/requests browser` reads both
+# pins from here, so development runs the same browser.
+FROM node:24.21.0-bookworm-slim AS browser
 ARG TARGETARCH
 ARG CAMOUFOX_VERSION=152.0.4
 ARG CAMOUFOX_RELEASE=beta.30
+ARG UBLOCK_ORIGIN_URL=https://addons.mozilla.org/firefox/downloads/file/5034826/ublock_origin-1.75.0.xpi
+ARG UBLOCK_ORIGIN_SHA256=5b74415860456370644bd80f16125e865b0e6c356bb5dfcfb84069967eaa5287
 RUN apt-get update \
  && apt-get install -y --no-install-recommends ca-certificates curl unzip \
  && rm -rf /var/lib/apt/lists/*
@@ -52,8 +56,14 @@ RUN case "$TARGETARCH" in \
  && rm -rf /tmp/camoufox.zip /opt/camoufox/fonts/windows /opt/camoufox/fonts/macos /opt/camoufox/GeoLite2-City.mmdb \
  && printf '{"version":"%s","release":"%s"}' "$CAMOUFOX_VERSION" "$CAMOUFOX_RELEASE" > /opt/camoufox/version.json \
  && chmod -R 755 /opt/camoufox
+RUN curl -fsSL -o /tmp/ublock-origin.xpi "$UBLOCK_ORIGIN_URL" \
+ && echo "$UBLOCK_ORIGIN_SHA256  /tmp/ublock-origin.xpi" | sha256sum -c - \
+ && mkdir -p /opt/camoufox/addons \
+ && unzip -q /tmp/ublock-origin.xpi -d /opt/camoufox/addons/UBO \
+ && rm /tmp/ublock-origin.xpi \
+ && chmod -R 755 /opt/camoufox/addons
 
-FROM node:24-bookworm-slim AS runtime
+FROM node:24.21.0-bookworm-slim AS runtime
 
 ARG VALENCE_VERSION=0.0.0
 
@@ -75,12 +85,9 @@ COPY packages/database ./packages/database
 COPY apps/requests/package.json ./apps/requests/package.json
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts --filter @valence/requests...
 
-# The browser, and the addons camoufox-js adds to it, in the image so that nothing waits on a download.
+# The browser and its addon, in the image so that nothing waits on a download.
 ENV CAMOUFOX_INSTALL_DIR=/opt/camoufox
 COPY --from=browser /opt/camoufox /opt/camoufox
-RUN cd apps/requests \
- && node --input-type=module -e "import { DefaultAddons, maybeDownloadAddons } from 'camoufox-js/dist/addons.js'; await maybeDownloadAddons(DefaultAddons)" \
- && test -f /opt/camoufox/addons/UBO/manifest.json
 
 # Camoufox opens a SQLite file every time it starts, through better-sqlite3's compiled module, and
 # the install above runs no scripts to build one. The version pinned in pnpm-workspace.yaml carries
