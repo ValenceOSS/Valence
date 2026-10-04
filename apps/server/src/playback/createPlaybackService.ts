@@ -24,6 +24,7 @@ import type { PlaybackService } from './PlaybackService';
 import type {
   Transcoder,
   TranscoderCapabilities,
+  TranscoderStreamedFile,
 } from '@ValenceServer/transcoder/TranscoderClient';
 import { saying } from '@ValenceI18n/saying';
 
@@ -106,6 +107,7 @@ type CreatePlaybackServiceOptions = {
   trickplayUrlPrefix: string;
   forcedAccel?: () => Promise<string>;
   previewQuality?: () => Promise<PreviewQuality>;
+  readFromDisk?: (path: string, range: string | null) => Promise<TranscoderStreamedFile | null>;
 };
 
 /**
@@ -127,6 +129,7 @@ const createPlaybackService = ({
   trickplayUrlPrefix,
   forcedAccel = () => Promise.resolve(''),
   previewQuality = (): Promise<PreviewQuality> => Promise.resolve('high'),
+  readFromDisk,
 }: CreatePlaybackServiceOptions): PlaybackService => {
   let cached: TranscoderCapabilities | null = null;
 
@@ -289,13 +292,16 @@ const createPlaybackService = ({
         return null;
       }
 
-      if (renditionId === null) {
-        return transcoder.readFile(found.path, range);
+      const path =
+        renditionId === null
+          ? found.path
+          : found.renditions?.find((one) => one.id === renditionId)?.path;
+
+      if (path === undefined) {
+        return null;
       }
 
-      const kept = found.renditions?.find((one) => one.id === renditionId);
-
-      return kept === undefined ? null : transcoder.readFile(kept.path, range);
+      return (await readFromDisk?.(path, range)) ?? transcoder.readFile(path, range);
     },
 
     trickplay: async (mediaId) => {

@@ -365,6 +365,7 @@ import { watchADownload } from '@ValenceServer/downloads/watchADownload';
 import { readCertificatesAgain } from '@ValenceServer/library/readCertificatesAgain';
 import { say } from '@ValenceI18n/say';
 import { settleCookieSecurity } from '@ValenceServer/settings/settleCookieSecurity';
+import { readMediaFile } from '@ValenceServer/playback/readMediaFile';
 const ChapterListSchema = z.array(
   z.object({
     title: z.string().nullable(),
@@ -3018,6 +3019,7 @@ bookPageUsage.watch();
 void bookPageUsage.refresh();
 
 const playbackService = createPlaybackService({
+  readFromDisk: readMediaFile,
   media: {
     findForPlayback: async (mediaId) => {
       const item = await libraryService.getMedia(mediaId);
