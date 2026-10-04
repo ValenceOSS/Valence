@@ -25,6 +25,11 @@
     "context": "Shown in the about (from `describeTheServer`). {version} is filled in by the app; {commit} is filled in by the app."
   },
   {
+    "handler": "client.about.someFeaturesNeedANewerServer",
+    "text": "Some features in this app need a newer server. Update the server to use them.",
+    "context": "A note under the app and server versions when the server is older than the app."
+  },
+  {
     "handler": "client.admin.changeLibraryFile.thatCouldNotBeDeleted",
     "text": "Couldn’t delete that. Try again.",
     "context": "Shown in the admin (from `changeLibraryFile`)."
@@ -1240,6 +1245,11 @@
     "context": "Shown in the use plugin surface in the plugins."
   },
   {
+    "handler": "client.query.thisAppIsNewerThanTheServer",
+    "text": "This needs a newer version of the server. Update the server to use it.",
+    "context": "Shown when an older server doesn't recognise what the app asked for, because the app is newer than the server."
+  },
+  {
     "handler": "client.requests.describeDownloadLine.underAMinuteLeft",
     "text": "Under a minute left",
     "context": "Shown in the requests (from `describeDownloadLine`)."
@@ -1715,11 +1725,6 @@
     "context": "The label of a button in the accounts panel in the admin area."
   },
   {
-    "handler": "common.alphaGain",
-    "text": "Alpha gain",
-    "context": "The label, used in several places, among them the cloud in the variants and the galaxy in the variants."
-  },
-  {
     "handler": "common.alsoOnNames",
     "text": "Also on {names}",
     "context": "On a title this server has that a linked Valence server has a copy of too. {names} are those servers."
@@ -1733,11 +1738,6 @@
     "handler": "common.anHour",
     "text": "An hour",
     "context": "The label, used in the give up rules list (from `metadataWaitChoices`) and in the give up rules list (from `stalledWaitChoices`)."
-  },
-  {
-    "handler": "common.animSpeed",
-    "text": "Animation speed",
-    "context": "The label, used in several places, among them the cloud in the variants and the orbital in the variants."
   },
   {
     "handler": "common.any",
@@ -1991,11 +1991,6 @@
     "context": "When somebody in a cast was born, on the phone and the television. {bornOn} is the date."
   },
   {
-    "handler": "common.brightness",
-    "text": "Brightness",
-    "context": "The label, used in several places, among them the meadow in the variants and the pixel in the variants."
-  },
-  {
     "handler": "common.bringBack",
     "text": "Restore",
     "context": "A button beside a file or folder left out of a library, which lets the library's scans find it again."
@@ -2044,11 +2039,6 @@
     "handler": "common.calendarViews",
     "text": "Calendar views",
     "context": "The name, read by assistive technology, of the control that switches the release calendar between its views, on the web or a phone."
-  },
-  {
-    "handler": "common.cameraDistance",
-    "text": "Camera distance",
-    "context": "The label, used in several places, among them the cloud in the variants and the galaxy in the variants."
   },
   {
     "handler": "common.cancel",
@@ -2166,11 +2156,6 @@
     "context": "The name, used in the playback (from `detectClientLabel`) and in the session card (from `deviceIcon`)."
   },
   {
-    "handler": "common.churn",
-    "text": "Churn",
-    "context": "The label, used in several places, among them the cloud in the variants and the led wall in the variants."
-  },
-  {
     "handler": "common.clear",
     "text": "Clear",
     "context": "The label of a button, used in several places, among them the filters in the library of the phone app and the up next in the music player of the phone app."
@@ -2199,21 +2184,6 @@
     "handler": "common.closeTheSidebar",
     "text": "Close the sidebar",
     "context": "The label of a button, used in the admin page and in the sidebar."
-  },
-  {
-    "handler": "common.cloud",
-    "text": "Cloud",
-    "context": "The label, used in the cloud in the variants and in the meadow in the variants."
-  },
-  {
-    "handler": "common.cloudScale",
-    "text": "Cloud scale",
-    "context": "The label, used in the cloud in the variants and in the meadow in the variants."
-  },
-  {
-    "handler": "common.clumping",
-    "text": "Clumping",
-    "context": "The label, used in the cloud in the variants and in the galaxy in the variants."
   },
   {
     "handler": "common.collection",
@@ -2296,11 +2266,6 @@
     "context": "The title, used in the library (from `groupIntoRails`) and in the library (from `homeRows`)."
   },
   {
-    "handler": "common.contrast",
-    "text": "Contrast",
-    "context": "The label, used in several places, among them the bricks in the variants and the galaxy in the variants."
-  },
-  {
     "handler": "common.copied",
     "text": "Copied",
     "context": "Shown, used in several places, among them the copyable address in the plugin settings dialog and the api key panel."
@@ -2319,11 +2284,6 @@
     "handler": "common.copyLink",
     "text": "Copy link",
     "context": "A button or menu item that copies a link: an account's setup link, or the link a calendar app subscribes to the release calendar by."
-  },
-  {
-    "handler": "common.core",
-    "text": "Core",
-    "context": "The label, used in the galaxy in the variants and in the thermal in the variants."
   },
   {
     "handler": "common.correctedTheMatch",
@@ -2691,11 +2651,6 @@
     "context": "Text shown in the plan axis in the stream stats."
   },
   {
-    "handler": "common.deep",
-    "text": "Deep",
-    "context": "The label, used in the storm in the variants and in the terminal in the variants."
-  },
-  {
     "handler": "common.default",
     "text": "Default",
     "context": "The name, used in the media requests in the requests service (from `createRequestWorker`) and in the roundness in the schemas."
@@ -2821,11 +2776,6 @@
     "context": "The title, used in several places, among them the show of the phone app (from `askHowMuchToDownload`) and the downloads of the phone app (from `askToKeepAProgrammeOnThisPhone`). {title} is filled in by the app."
   },
   {
-    "handler": "common.drift",
-    "text": "Drift",
-    "context": "The label, used in several places, among them the led wall in the variants and the terminal in the variants."
-  },
-  {
     "handler": "common.durationIn",
     "text": "{duration} in",
     "context": "How far into an episode or film somebody stopped watching, as in 12:34 in. {duration} is a time such as 12:34."
@@ -2854,11 +2804,6 @@
     "handler": "common.edge",
     "text": "Edge",
     "context": "The name, used in several places, among them the playback (from `detectClientLabel`) and the session card (from `deviceIcon`)."
-  },
-  {
-    "handler": "common.edgeSharpness",
-    "text": "Edge sharpness",
-    "context": "The label, used in the galaxy in the variants and in the plasma in the variants."
   },
   {
     "handler": "common.edit",
@@ -2984,11 +2929,6 @@
     "handler": "common.everywhere",
     "text": "Everywhere",
     "context": "In the Where filter: titles from this server and every linked server."
-  },
-  {
-    "handler": "common.exposure",
-    "text": "Exposure",
-    "context": "The label, used in several places, among them the cloud in the variants and the galaxy in the variants."
   },
   {
     "handler": "common.extras",
@@ -3186,11 +3126,6 @@
     "context": "Text shown, used in the artist story in the artist of the phone app and in the artist story in the artist view."
   },
   {
-    "handler": "common.gain",
-    "text": "Gain",
-    "context": "The label, used in the bricks in the variants and in the voxel world in the variants."
-  },
-  {
     "handler": "common.generateMissingPreviews",
     "text": "Generate missing previews",
     "context": "The label, used in the jobs on the server (from `jobDefinitions`) and in the libraries panel in the admin area."
@@ -3209,11 +3144,6 @@
     "handler": "common.getAFreeKey",
     "text": "Get a free key",
     "context": "The label of a button, used in the admin setup guide in the admin area and in the settings panel in the admin area."
-  },
-  {
-    "handler": "common.glow",
-    "text": "Glow",
-    "context": "The label, used in the orbital in the variants and in the terminal in the variants."
   },
   {
     "handler": "common.goBack",
@@ -3239,11 +3169,6 @@
     "handler": "common.goToArtist",
     "text": "Go to artist",
     "context": "The label, used in the music of the phone app (from `askAboutATrack`) and in the track menu."
-  },
-  {
-    "handler": "common.grainSize",
-    "text": "Grain size",
-    "context": "The label, used in the storm in the variants and in the thermal in the variants."
   },
   {
     "handler": "common.green",
@@ -3330,11 +3255,6 @@
     "handler": "common.inProgress",
     "text": "In progress",
     "context": "The label, used in several places, among them the status look in the status and the media requests panel in the admin area."
-  },
-  {
-    "handler": "common.inputSwell",
-    "text": "Input swell",
-    "context": "The label, used in the orbital in the variants and in the plasma in the variants."
   },
   {
     "handler": "common.install",
@@ -3437,11 +3357,6 @@
     "context": "Shown, used in the media detail dialog and in the rail card. {title} is filled in by the app."
   },
   {
-    "handler": "common.keyLight",
-    "text": "Key light",
-    "context": "The label, used in several places, among them the bricks in the variants and the led wall in the variants."
-  },
-  {
     "handler": "common.kind",
     "text": "Kind",
     "context": "Shown, used in several places, among them the webhooks on the server (from `discordEmbedFor`) and the indexer dialog in the admin area."
@@ -3485,11 +3400,6 @@
     "handler": "common.leftToRight",
     "text": "Left to right",
     "context": "Text shown, used in the reader sheet in the reader of the phone app and in the page reader."
-  },
-  {
-    "handler": "common.lens",
-    "text": "Lens",
-    "context": "The label, used in several places, among them the cloud in the variants and the galaxy in the variants."
   },
   {
     "handler": "common.letBackIn",
@@ -4357,11 +4267,6 @@
     "context": "Shown, used in the quality labels in the profiles in the requests service and in the quality names in the admin area."
   },
   {
-    "handler": "common.orb",
-    "text": "Orb",
-    "context": "A heading, used in the orb studio in the face editor and in the face editor (from `faceModes`)."
-  },
-  {
     "handler": "common.order",
     "text": "Order",
     "context": "The name, used in several places, among them the browse area and the job history in the observability page."
@@ -4400,16 +4305,6 @@
     "handler": "common.pageValue",
     "text": "Page {value}",
     "context": "Describes a picture to screen readers, used in the scrolling pages and in the spread stage. {value} is filled in by the app."
-  },
-  {
-    "handler": "common.paper",
-    "text": "Paper",
-    "context": "The label, used in several places, among them the pixel in the variants and the radar in the variants."
-  },
-  {
-    "handler": "common.paperGrain",
-    "text": "Paper grain",
-    "context": "The label, used in the radar in the variants and in the thermal in the variants."
   },
   {
     "handler": "common.partlyHere",
@@ -4885,11 +4780,6 @@
     "context": "The name of Prowlarr, the indexer manager Valence can bring indexers in from. A product name; usually left as it is."
   },
   {
-    "handler": "common.pulseDepth",
-    "text": "Pulse depth",
-    "context": "The label, used in the led wall in the variants and in the terminal in the variants."
-  },
-  {
     "handler": "common.putTheAlbumsInOrderBy",
     "text": "Sort albums by",
     "context": "The label of a segmented row, used in the albums of the phone app and in the albums view in the music page."
@@ -4923,11 +4813,6 @@
     "handler": "common.radarr",
     "text": "Radarr",
     "context": "The name of Radarr, the films app Valence can hand requests to. A product name; usually left as it is."
-  },
-  {
-    "handler": "common.radius",
-    "text": "Radius",
-    "context": "The label, used in several places, among them the bricks in the variants and the caustics in the variants."
   },
   {
     "handler": "common.raised",
@@ -5170,21 +5055,6 @@
     "context": "Text shown, used in the reader sheet in the reader of the phone app and in the page reader."
   },
   {
-    "handler": "common.rim",
-    "text": "Rim",
-    "context": "The label, used in the galaxy in the variants and in the radar in the variants."
-  },
-  {
-    "handler": "common.rimLight",
-    "text": "Rim light",
-    "context": "The label, used in several places, among them the galaxy in the variants and the pixel in the variants."
-  },
-  {
-    "handler": "common.rimSheen",
-    "text": "Rim sheen",
-    "context": "The label, used in the caustics in the variants and in the meadow in the variants."
-  },
-  {
     "handler": "common.role",
     "text": "Role",
     "context": "Shown, used in the webhooks on the server (from `discordEmbedFor`) and in the roles panel in the admin area."
@@ -5193,11 +5063,6 @@
     "handler": "common.roles",
     "text": "Roles",
     "context": "The label, used in several places, among them the admin area (from `adminSections`) and the accounts panel in the admin area."
-  },
-  {
-    "handler": "common.roll",
-    "text": "Roll",
-    "context": "The label, used in several places, among them the led wall in the variants and the pixel in the variants."
   },
   {
     "handler": "common.run",
@@ -5218,11 +5083,6 @@
     "handler": "common.sans",
     "text": "Sans",
     "context": "A caption setting, in the web player and on the phone and the television."
-  },
-  {
-    "handler": "common.saturation",
-    "text": "Saturation",
-    "context": "The label, used in several places, among them the galaxy in the variants and the meadow in the variants."
   },
   {
     "handler": "common.save",
@@ -5398,11 +5258,6 @@
     "handler": "common.shareWithTheHousehold",
     "text": "Share with the household",
     "context": "Shown, used in the playlist of the phone app and in the playlist view in the music page."
-  },
-  {
-    "handler": "common.sheen",
-    "text": "Sheen",
-    "context": "The label, used in the caustics in the variants and in the meadow in the variants."
   },
   {
     "handler": "common.show",
@@ -5583,11 +5438,6 @@
     "handler": "common.speed",
     "text": "Speed",
     "context": "Shown, used in several places, among them the choices in the listening player of the phone app and the watching of the phone app (from `theChoicesOn`)."
-  },
-  {
-    "handler": "common.spin",
-    "text": "Spin",
-    "context": "The label, used in the bricks in the variants and in the voxel world in the variants."
   },
   {
     "handler": "common.sSeasonNumberEEpisodeNumberAirDate",
@@ -6070,11 +5920,6 @@
     "context": "Shown, used in the text reader in the reader of the phone app and in the text reader."
   },
   {
-    "handler": "common.tilt",
-    "text": "Tilt",
-    "context": "The label, used in the bricks in the variants and in the voxel world in the variants."
-  },
-  {
     "handler": "common.time",
     "text": "Time",
     "context": "The label of a text field, used in the add trigger dialog in the admin area and in the time range menu in the observability page."
@@ -6083,11 +5928,6 @@
     "handler": "common.timeLeft",
     "text": "Time left",
     "context": "The name, used in the download panel of the television app and in the download queue table in the downloads panel."
-  },
-  {
-    "handler": "common.tint",
-    "text": "Tint",
-    "context": "The label, used in the galaxy in the variants and in the plasma in the variants."
   },
   {
     "handler": "common.title",
@@ -6193,11 +6033,6 @@
     "handler": "common.turnOnTwoFactor",
     "text": "Turn on two-factor authentication",
     "context": "The label of a button, used in the security in the account of the phone app and in the two factor setup."
-  },
-  {
-    "handler": "common.twinkleRate",
-    "text": "Twinkle rate",
-    "context": "The label, used in the galaxy in the variants and in the radar in the variants."
   },
   {
     "handler": "common.twoStepSignIn",
@@ -6370,11 +6205,6 @@
     "context": "The name, used in the stream stats in the player of the television app and in the admin (from `describeLogLevel`)."
   },
   {
-    "handler": "common.warp",
-    "text": "Warp",
-    "context": "The label, used in the storm in the variants and in the thermal in the variants."
-  },
-  {
     "handler": "common.watch",
     "text": "Watch",
     "context": "The label of a button, used in the ask for the password of the phone app and in the enter password of the television app."
@@ -6413,11 +6243,6 @@
     "handler": "common.watchTheVideo",
     "text": "Watch music video",
     "context": "The label of a button, used in the music feature in the music home and in the track menu."
-  },
-  {
-    "handler": "common.water",
-    "text": "Water",
-    "context": "The label, used in several places, among them the caustics in the variants and the meadow in the variants."
   },
   {
     "handler": "common.webhooks",
@@ -7975,6 +7800,11 @@
     "context": "An error the server answers with (HTTP 404), used in several places, among them the app on the server (from `serveShare`) and the sharing on the server (from `createShareGate`)."
   },
   {
+    "handler": "error.common.thisServerDoesNotHaveThatAddress",
+    "text": "This server doesn’t have that feature. If this app is newer than the server, update the server.",
+    "context": "An error the server answers with (HTTP 404) when a client asks for an API address the server doesn't have, usually because the app is newer than the server."
+  },
+  {
     "handler": "error.common.valenceIsNotAllowedToRead",
     "text": "Valence doesn’t have permission to read that folder.",
     "context": "An error the server answers with (HTTP 403), used in several places, among them the app on the server (from `serveFiles`) and the app on the server (from `serveFolder`)."
@@ -8820,6 +8650,16 @@
     "context": "The detail in the devices sheet of the phone app."
   },
   {
+    "handler": "phone.aFaceEditor.aPhotoOrAGIF",
+    "text": "A photo or a GIF from your library.",
+    "context": "The line above the photo picker in the phone's profile picture editor."
+  },
+  {
+    "handler": "phone.aFaceEditor.chooseAPhotoOrGIF",
+    "text": "Choose a photo or GIF",
+    "context": "The button in the phone's profile picture editor that opens the photo library."
+  },
+  {
     "handler": "phone.anAlbum.thatAlbumCouldNotBeRead",
     "text": "Couldn’t load that album.",
     "context": "Text shown in the album of the phone app."
@@ -9195,6 +9035,41 @@
     "context": "Text shown in the still watching of the phone app. {upNext} is filled in by the app."
   },
   {
+    "handler": "phone.theAccount.devicesDetail",
+    "text": "Devices signed in to your account",
+    "context": "The line under Devices on the phone's account page."
+  },
+  {
+    "handler": "phone.theAccount.editProfile",
+    "text": "Edit profile",
+    "context": "A button on the phone's account page under the profile's picture and name, opening the page that changes them."
+  },
+  {
+    "handler": "phone.theAccount.hiddenDetail",
+    "text": "Titles you’ve hidden from your library",
+    "context": "The line under Hidden on the phone's account page."
+  },
+  {
+    "handler": "phone.theAccount.historyDetail",
+    "text": "Everything you’ve watched and read",
+    "context": "The line under History on the phone's account page."
+  },
+  {
+    "handler": "phone.theAccount.securityDetail",
+    "text": "Password, passkeys and two-factor authentication",
+    "context": "The line under Security on the phone's account page."
+  },
+  {
+    "handler": "phone.theAccount.sharesDetail",
+    "text": "Share links you’ve created",
+    "context": "The line under Share links on the phone's account page."
+  },
+  {
+    "handler": "phone.theAccount.signInAndDevices",
+    "text": "Sign-in and devices",
+    "context": "The heading of the group on the phone's account page holding security and devices."
+  },
+  {
     "handler": "phone.theAccount.theDevices.nameThisPhone",
     "text": "{name} · This phone",
     "context": "Shown in the devices in the account of the phone app. {name} is filled in by the app."
@@ -9240,9 +9115,9 @@
     "context": "Text shown in the profile in the account of the phone app."
   },
   {
-    "handler": "phone.theAccount.theProfile.chooseAPhoto",
-    "text": "Choose a photo",
-    "context": "The label of a button in the profile in the account of the phone app."
+    "handler": "phone.theAccount.theProfile.changePicture",
+    "text": "Change picture",
+    "context": "A button under the profile picture on the phone's Edit profile page, opening the picture editor."
   },
   {
     "handler": "phone.theAccount.theProfile.thatProfileCouldNotBeRead",
@@ -9250,9 +9125,9 @@
     "context": "Text shown in the profile in the account of the phone app."
   },
   {
-    "handler": "phone.theAccount.theProfile.useMyInitial",
-    "text": "Use my initial",
-    "context": "The label of a button in the profile in the account of the phone app."
+    "handler": "phone.theAccount.theProfile.whileWatching",
+    "text": "While watching",
+    "context": "The heading of the group of playback settings on the phone's Edit profile page."
   },
   {
     "handler": "phone.theAccount.theSecurity.addedCreatedAt",
@@ -9318,6 +9193,11 @@
     "handler": "phone.theAccount.theShares.youHaveNotSharedAnythingYet",
     "text": "You haven’t shared anything yet.",
     "context": "Text shown in the shares in the account of the phone app."
+  },
+  {
+    "handler": "phone.theAccount.watchingAndSharing",
+    "text": "Watching and sharing",
+    "context": "The heading of the group on the phone's account page holding history, hidden titles and share links."
   },
   {
     "handler": "phone.theBadges.shortenedForAPhone.atmos",
@@ -18776,16 +18656,6 @@
     "context": "The label of a button in the letter studio in the face editor. {name} is filled in by the app."
   },
   {
-    "handler": "screens.faceEditor.orbStudio.asItComes",
-    "text": "As it comes",
-    "context": "The label of a button in the orb studio in the face editor."
-  },
-  {
-    "handler": "screens.faceEditor.orbStudio.useTheLabelOrb",
-    "text": "Use the {label} orb",
-    "context": "The label of a button in the orb studio in the face editor. {label} is filled in by the app."
-  },
-  {
     "handler": "screens.faceEditor.photoStudio.across",
     "text": "Horizontal position",
     "context": "The label of a slider in the photo studio in the face editor."
@@ -21440,6 +21310,11 @@
     "handler": "screens.pageProblem.describeProblem.youAreNotAllowedToSee",
     "text": "You don’t have access to this page",
     "context": "The headline in the page problem (from `describeProblem`)."
+  },
+  {
+    "handler": "screens.pageProblem.describeProblem.yourServerIsOlderThanThisApp",
+    "text": "Your server is older than this app",
+    "context": "The headline of a page that couldn't load because the server is an older version than the app and doesn't have what the page needs."
   },
   {
     "handler": "screens.pageProblem.goToTheStart",
@@ -27228,11 +27103,6 @@
     "context": "Text shown in the filter menu."
   },
   {
-    "handler": "ui.orbs.orbPrelude.precisionHighpFloatUniformVec2URes",
-    "text": "\nprecision highp float;\nuniform vec2 uRes;\nuniform float uTime;\nuniform float uAnim;\nuniform float uInput;\nuniform float uOutput;\nfloat hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123); }\nfloat noise(vec2 p) {\n  vec2 i = floor(p);\n  vec2 f = fract(p);\n  f = f * f * (3.0 - 2.0 * f);\n  return mix(\n    mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),\n    mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x),\n    f.y\n  );\n}\nfloat fbm(vec2 p) {\n  float v = 0.0;\n  float a = 0.5;\n  for (int i = 0; i < 5; i++) {\n    v += a * noise(p);\n    p = p * 2.03 + vec2(11.7, 7.3);\n    a *= 0.5;\n  }\n  return v;\n}\nvec2 orbUV() { return (2.0 * gl_FragCoord.xy - uRes) / min(uRes.x, uRes.y); }\nvec3 tanh3(vec3 x) {\n  x = clamp(x, -10.0, 10.0);\n  vec3 e = exp(2.0 * x);\n  return (e - 1.0) / (e + 1.0);\n}\n",
-    "context": "Shown in the orb prelude in the orbs."
-  },
-  {
     "handler": "ui.pageCurl.xPxYPx",
     "text": "{x}px {y}px",
     "context": "Shown in the page curl. {x} is filled in by the app; {y} is filled in by the app."
@@ -27291,1116 +27161,6 @@
     "handler": "ui.trendChart.nothingMeasuredYet",
     "text": "Nothing measured yet.",
     "context": "Text shown in the trend chart."
-  },
-  {
-    "handler": "ui.variants.bricks.blue",
-    "text": "Blue",
-    "context": "The label in the bricks in the variants."
-  },
-  {
-    "handler": "ui.variants.bricks.bricks",
-    "text": "Bricks",
-    "context": "The label in the bricks in the variants."
-  },
-  {
-    "handler": "ui.variants.bricks.colourPatches",
-    "text": "Colour patches",
-    "context": "The label in the bricks in the variants."
-  },
-  {
-    "handler": "ui.variants.bricks.defineSTEPS96Vec3LgCellFloat",
-    "text": "\n#define STEPS 96\nvec3 lgCell;\nfloat lgGap;\nvec3 lgBid;\nfloat lgOff;\nfloat lgOrient;\nmat2 lgRot(float a) {\n  float c = cos(a);\n  float s = sin(a);\n  return mat2(c, -s, s, c);\n}\nvoid lgBrick(vec3 cellIdx) {\n  lgOrient = mod(cellIdx.y, 2.0);\n  float lc = lgOrient < 0.5 ? cellIdx.x : cellIdx.z;\n  float sc = lgOrient < 0.5 ? cellIdx.z : cellIdx.x;\n  float srow = floor(sc / 2.0);\n  lgOff = floor(hash(vec2(cellIdx.y * 3.17, srow * 7.31)) * 4.0);\n  lgBid = vec3(floor((lc + lgOff) / 4.0), cellIdx.y, srow + lgOrient * 913.0);\n}\nfloat lgSolid(vec3 cc) {\n  float r = length(cc);\n  if (r >= 1.0) return 0.0;\n  if (r > 1.0 - 2.2 * lgCell.y) {\n    lgBrick(floor(cc / lgCell));\n    float blink = fract(hash(lgBid.xy * 0.173 + lgBid.z * 0.089) + uP_rebuild * 0.03);\n    if (blink < lgGap) return 0.0;\n  }\n  return 1.0;\n}\nvoid main() {\n  float glossNow = uP_gloss * (0.7 + 0.9 * uOutput);\n  float gainNow = uP_gain * (0.92 + 0.25 * uOutput);\n  float lightNow = uP_light * (1.0 + 0.3 * uInput);\n  float pitch = 2.0 / clamp(uP_studs, 8.0, 48.0);\n  lgCell = vec3(pitch, pitch * 1.2, pitch);\n  lgGap = clamp(uP_gap, 0.0, 0.9);\n  float bound = 1.0 + length(lgCell) * 0.5 + 0.001;\n  vec2 uv = orbUV() / uP_radius;\n  vec3 ro = vec3(uv * bound, 2.6);\n  vec3 rd = vec3(0.0, 0.0, -1.0);\n  mat2 tiltM = lgRot(uP_tilt);\n  mat2 spinM = lgRot(-uP_spin);\n  ro.yz = tiltM * ro.yz;\n  ro.xz = spinM * ro.xz;\n  rd.yz = tiltM * rd.yz;\n  rd.xz = spinM * rd.xz;\n  vec3 Lo = normalize(vec3(-0.5, 0.7, 0.55));\n  Lo.yz = tiltM * Lo.yz;\n  Lo.xz = spinM * Lo.xz;\n  vec3 Vo = vec3(0.0, 0.0, 1.0);\n  Vo.yz = tiltM * Vo.yz;\n  Vo.xz = spinM * Vo.xz;\n  vec3 sgn = vec3(\n    rd.x >= 0.0 ? 1.0 : -1.0,\n    rd.y >= 0.0 ? 1.0 : -1.0,\n    rd.z >= 0.0 ? 1.0 : -1.0\n  );\n  rd = normalize(sgn * max(abs(rd), vec3(1.0e-4)));\n  float b = dot(rd, ro);\n  float c = dot(ro, ro) - bound * bound;\n  float disc = b * b - c;\n  if (disc < 0.0) {\n    gl_FragColor = vec4(0.0);\n    return;\n  }\n  float sq = sqrt(disc);\n  vec3 p0 = ro + rd * (-b - sq + pitch * 0.001);\n  float tSpan = 2.0 * sq;\n  vec3 vp = floor(p0 / lgCell);\n  vec3 tDelta = lgCell / abs(rd);\n  vec3 tMax = ((vp + step(vec3(0.0), rd)) * lgCell - p0) / rd;\n  float hitF = 0.0;\n  vec3 mask = vec3(0.0, 0.0, 1.0);\n  float tCur = 0.0;\n  for (int i = 0; i < STEPS; i++) {\n    if (lgSolid((vp + 0.5) * lgCell) > 0.5) {\n      hitF = 1.0;\n      break;\n    }\n    if (tMax.x < tMax.y && tMax.x < tMax.z) {\n      tCur = tMax.x;\n      tMax.x += tDelta.x;\n      vp.x += sgn.x;\n      mask = vec3(1.0, 0.0, 0.0);\n    } else if (tMax.y < tMax.z) {\n      tCur = tMax.y;\n      tMax.y += tDelta.y;\n      vp.y += sgn.y;\n      mask = vec3(0.0, 1.0, 0.0);\n    } else {\n      tCur = tMax.z;\n      tMax.z += tDelta.z;\n      vp.z += sgn.z;\n      mask = vec3(0.0, 0.0, 1.0);\n    }\n    if (tCur > tSpan) break;\n  }\n  if (hitF < 0.5) {\n    gl_FragColor = vec4(0.0);\n    return;\n  }\n  vec3 cc = (vp + 0.5) * lgCell;\n  float r = length(cc);\n  vec3 dir = cc / max(r, 1.0e-4);\n  lgBrick(vp);\n  vec3 n = -mask * sgn;\n  vec3 hp = p0 + rd * tCur;\n  float cph = hash(lgBid.xy * 1.37 + lgBid.z * 0.91);\n  float rn = noise(dir.xy * 2.6 + 7.0) * 0.5 + noise(dir.yz * 2.6 + 13.0) * 0.5;\n  rn = clamp(0.5 + (rn - 0.5) * 2.2, 0.0, 0.999);\n  float idx = floor(clamp(mix(cph, rn, clamp(uP_patch, 0.0, 1.0)), 0.0, 0.999) * 5.0);\n  vec3 albedo = idx < 0.5 ? uC_brickA\n    : (idx < 1.5 ? uC_brickB\n    : (idx < 2.5 ? uC_brickC\n    : (idx < 3.5 ? uC_brickD : uC_brickE)));\n  albedo *= 0.93 + 0.14 * hash(lgBid.xy * 0.53 + lgBid.z * 1.7);\n  vec3 sp = hp / lgCell;\n  float lcC = lgOrient < 0.5 ? sp.x : sp.z;\n  float scC = lgOrient < 0.5 ? sp.z : sp.x;\n  float u4 = fract((lcC + lgOff) / 4.0);\n  float v2 = fract(scC / 2.0);\n  float wY = fract(sp.y);\n  float dL = min(u4, 1.0 - u4) * 4.0 * pitch;\n  float dS = min(v2, 1.0 - v2) * 2.0 * pitch;\n  float dY = min(wY, 1.0 - wY) * lgCell.y;\n  float seamD;\n  if (mask.y > 0.5) seamD = min(dL, dS);\n  else if (mask.x > 0.5) seamD = min(dY, lgOrient < 0.5 ? dS : dL);\n  else seamD = min(dY, lgOrient < 0.5 ? dL : dS);\n  float seam = (1.0 - smoothstep(0.0, 0.07 * pitch, seamD)) * clamp(uP_seam, 0.0, 1.0);\n  vec3 nEff = n;\n  float studF = 0.0;\n  float shadowF = 0.0;\n  float engrave = 0.0;\n  float studAmt = clamp(uP_stud, 0.0, 1.0);\n  if (mask.y > 0.5 && n.y > 0.5) {\n    vec2 cuv = fract(hp.xz / pitch) - 0.5;\n    float sd = length(cuv);\n    float rim = smoothstep(0.14, 0.29, sd) * (1.0 - smoothstep(0.29, 0.335, sd));\n    vec3 tiltN = normalize(vec3(cuv.x, 0.42, cuv.y));\n    nEff = normalize(mix(n, tiltN, rim * studAmt));\n    studF = 1.0 - smoothstep(0.285, 0.33, sd);\n    vec2 lxz = normalize(Lo.xz + vec2(1.0e-5));\n    float away = clamp(dot(normalize(cuv + vec2(1.0e-5)), -lxz), 0.0, 1.0);\n    shadowF = smoothstep(0.47, 0.335, sd) * (1.0 - studF) * (0.35 + 0.65 * away);\n    engrave = smoothstep(0.11, 0.135, sd) * (1.0 - smoothstep(0.155, 0.18, sd)) * studF;\n  }\n  float lam = clamp(dot(nEff, Lo), 0.0, 1.0);\n  float wrap = clamp(dot(dir, Lo) * 0.5 + 0.5, 0.0, 1.0);\n  float depthDim = mix(1.0, 0.55, clamp((1.0 - r) / (3.0 * lgCell.y), 0.0, 1.0));\n  float shade = (0.34 + 0.42 * wrap * wrap + 0.8 * lam * lightNow) * depthDim;\n  vec3 col = albedo * shade * (1.0 + 0.1 * studF);\n  col *= 1.0 - shadowF * 0.38 * studAmt;\n  col *= 1.0 - engrave * 0.14 * studAmt;\n  float bevel = smoothstep(0.05 * pitch, 0.085 * pitch, seamD)\n    * (1.0 - smoothstep(0.085 * pitch, 0.16 * pitch, seamD));\n  col += albedo * bevel * (0.18 + 0.5 * lam) * clamp(uP_seam, 0.0, 1.0);\n  col *= 1.0 - seam * 0.8;\n  float ndh = clamp(dot(nEff, normalize(Lo + Vo)), 0.0, 1.0);\n  float spec = pow(ndh, 48.0) + 0.22 * pow(ndh, 8.0);\n  col += vec3(1.0) * spec * glossNow * (1.0 - seam) * depthDim;\n  col *= gainNow;\n  col = pow(max(col, 0.0), vec3(uP_contrast));\n  gl_FragColor = vec4(col, 1.0);\n}\n",
-    "context": "Shown in the bricks in the variants."
-  },
-  {
-    "handler": "ui.variants.bricks.gloss",
-    "text": "Gloss",
-    "context": "The label in the bricks in the variants."
-  },
-  {
-    "handler": "ui.variants.bricks.missingBricks",
-    "text": "Missing bricks",
-    "context": "The label in the bricks in the variants."
-  },
-  {
-    "handler": "ui.variants.bricks.rebuildRate",
-    "text": "Rebuild rate",
-    "context": "The label in the bricks in the variants."
-  },
-  {
-    "handler": "ui.variants.bricks.seams",
-    "text": "Seams",
-    "context": "The label in the bricks in the variants."
-  },
-  {
-    "handler": "ui.variants.bricks.studRelief",
-    "text": "Stud relief",
-    "context": "The label in the bricks in the variants."
-  },
-  {
-    "handler": "ui.variants.bricks.studs",
-    "text": "Studs",
-    "context": "The label in the bricks in the variants."
-  },
-  {
-    "handler": "ui.variants.caustics.causticLight",
-    "text": "Caustic light",
-    "context": "The label in the caustics in the variants."
-  },
-  {
-    "handler": "ui.variants.caustics.caustics",
-    "text": "Caustics",
-    "context": "The label in the caustics in the variants."
-  },
-  {
-    "handler": "ui.variants.caustics.colourFringe",
-    "text": "Colour fringe",
-    "context": "The label in the caustics in the variants."
-  },
-  {
-    "handler": "ui.variants.caustics.floatCausticWarpVec2FoldVec2P",
-    "text": "\nfloat causticWarp;\nvec2 fold(vec2 p, float t) {\n  p += causticWarp        * sin(p.yx * 1.31 + vec2( t * 0.90, -t * 0.70));\n  p += causticWarp * 0.60 * sin(p.yx * 2.17 + vec2(-t * 1.30,  t * 1.10));\n  p += causticWarp * 0.35 * sin(p.yx * 3.73 + vec2( t * 1.90,  t * 1.60));\n  return p;\n}\nfloat net(vec2 p, float t) {\n  vec2 q = fold(p, t);\n  vec2 s = 1.0 - abs(sin(q));\n  vec2 l = pow(s, vec2(uP_edge));\n  return (l.x + l.y + 2.0 * l.x * l.y) * 0.25;\n}\nfloat netOn(vec3 sp, float t) {\n  vec3 w = sp * sp;\n  w *= w;\n  w /= (w.x + w.y + w.z);\n  float k = uP_scale;\n  return w.x * net(sp.yz * k, t) + w.y * net(sp.zx * k, t) + w.z * net(sp.xy * k, t);\n}\nvoid main() {\n  vec2 uv = orbUV();\n  float rd = length(uv);\n  float R = uP_radius;\n  float mask = smoothstep(0.012, -0.012, rd - R);\n  if (mask <= 0.0) {\n    gl_FragColor = vec4(0.0);\n    return;\n  }\n  vec2 pl = uv / R;\n  float z = sqrt(max(1.0 - dot(pl, pl), 0.0));\n  vec3 n = vec3(pl, z);\n  float cr = cos(uP_spin);\n  float sr = sin(uP_spin);\n  vec3 sp = vec3(n.x * cr - n.z * sr, n.y, n.x * sr + n.z * cr);\n  float t = uP_flow;\n  float surge = 0.5 - 0.5 * cos(uP_swellRate);\n  float gainNow = uP_gain * mix(1.0, 0.55 + 0.9 * surge, uP_swell) * (0.8 + 0.5 * uOutput);\n  causticWarp = uP_warp * mix(1.0, 0.8 + 0.4 * surge, uP_swell) * (1.0 + 0.35 * uInput);\n  float ds = 0.09;\n  vec3 c = vec3(netOn(sp, t + ds), netOn(sp, t), netOn(sp, t - ds));\n  float cLum = dot(c, vec3(1.0 / 3.0));\n  vec3 fringe = (c - cLum) * uP_split;\n  float lambert = clamp(dot(n, normalize(vec3(-0.45, 0.55, 0.7))), 0.0, 1.0);\n  float fres = pow(1.0 - z, 2.5);\n  vec3 col = uC_deep * (0.35 + 0.65 * uP_light * lambert);\n  col += (uC_sun * cLum + fringe) * gainNow * (0.55 + 0.45 * lambert);\n  col += uC_sheen * uP_rim * fres;\n  col = pow(max(col, vec3(0.0)), vec3(uP_contrast));\n  col = tanh3(col);\n  float a = mask;\n  gl_FragColor = vec4(max(col, vec3(0.0)) * a, a);\n}\n",
-    "context": "Shown in the caustics in the variants."
-  },
-  {
-    "handler": "ui.variants.caustics.floorLight",
-    "text": "Floor light",
-    "context": "The label in the caustics in the variants."
-  },
-  {
-    "handler": "ui.variants.caustics.lineSharpness",
-    "text": "Line sharpness",
-    "context": "The label in the caustics in the variants."
-  },
-  {
-    "handler": "ui.variants.caustics.netScale",
-    "text": "Net scale",
-    "context": "The label in the caustics in the variants."
-  },
-  {
-    "handler": "ui.variants.caustics.rippleDepth",
-    "text": "Ripple depth",
-    "context": "The label in the caustics in the variants."
-  },
-  {
-    "handler": "ui.variants.caustics.sunPower",
-    "text": "Sun power",
-    "context": "The label in the caustics in the variants."
-  },
-  {
-    "handler": "ui.variants.caustics.surgeDepth",
-    "text": "Surge depth",
-    "context": "The label in the caustics in the variants."
-  },
-  {
-    "handler": "ui.variants.caustics.surgeRate",
-    "text": "Surge rate",
-    "context": "The label in the caustics in the variants."
-  },
-  {
-    "handler": "ui.variants.caustics.toneKnee",
-    "text": "Tone knee",
-    "context": "The label in the caustics in the variants."
-  },
-  {
-    "handler": "ui.variants.caustics.waterFlow",
-    "text": "Water flow",
-    "context": "The label in the caustics in the variants."
-  },
-  {
-    "handler": "ui.variants.cloud.absorption",
-    "text": "Absorption",
-    "context": "The label in the cloud in the variants."
-  },
-  {
-    "handler": "ui.variants.cloud.ambient",
-    "text": "Ambient",
-    "context": "The label in the cloud in the variants."
-  },
-  {
-    "handler": "ui.variants.cloud.cloudRadius",
-    "text": "Cloud radius",
-    "context": "The label in the cloud in the variants."
-  },
-  {
-    "handler": "ui.variants.cloud.defineSTEPS56DefineLIGHTSTEPS",
-    "text": "\n#define STEPS 56\n#define LIGHT_STEPS 4\n#define DENSITY_OCT 4\n#define AA 1\nconst float PI = 3.14159265359;\nfloat nimbusPower;\nfloat nimbusDensity;\nfloat density(vec3 p, float animTime) {\n  float shell = 1.0 - length(p) / uP_radius;\n  if (shell <= 0.0) return 0.0;\n  vec3 q = p * uP_scale;\n  float f = 1.0;\n  for (int k = 0; k < DENSITY_OCT; k++) {\n    q += cos(q.yzx * f + animTime * uP_churn) / f;\n    f *= 1.8;\n  }\n  float n = (sin(q.x) + sin(q.y) + sin(q.z)) / 3.0 * 0.5 + 0.5;\n  float clump = smoothstep(uP_threshold, 1.0, n);\n  return clump * pow(shell, uP_edgeSoft) * nimbusDensity;\n}\nfloat phaseHG(float c, float g) {\n  float g2 = g * g;\n  return (1.0 - g2) / pow(max(1.0 + g2 - 2.0 * g * c, 0.0001), 1.5);\n}\nvec4 nimbusRender(vec2 fragCoord) {\n  float animTime = uP_speed;\n  vec2 uv = (2.0 * fragCoord - uRes) / min(uRes.x, uRes.y);\n  vec3 ro = vec3(0.0, 0.0, -uP_camDist);\n  vec3 rd = normalize(vec3(uv, uP_focal));\n  vec3 L = normalize(vec3(\n    cos(animTime * uP_lightSpin) * 0.7,\n    0.45,\n    sin(animTime * uP_lightSpin) * 0.35 + 0.65\n  ));\n  float phase = phaseHG(dot(rd, L), uP_aniso);\n  float toCentre = uP_camDist;\n  float tStart = max(toCentre - uP_radius, 0.0);\n  float span = 2.0 * uP_radius;\n  float dt = span / float(STEPS);\n  float T = 1.0;\n  vec3 scattered = vec3(0.0);\n  for (int i = 0; i < STEPS; i++) {\n    float t = tStart + (float(i) + 0.5) * dt;\n    vec3 p = ro + rd * t;\n    float dn = density(p, animTime);\n    if (dn > 0.001) {\n      float shadow = 1.0;\n      float lstep = uP_radius / float(LIGHT_STEPS);\n      for (int k = 1; k <= LIGHT_STEPS; k++) {\n        vec3 lp = p + L * (float(k) - 0.5) * lstep;\n        shadow *= exp(-density(lp, animTime) * lstep * uP_shadowAbsorb);\n      }\n      vec3 lit = mix(uC_shadow * uP_shadowLift, uC_light, shadow);\n      scattered += T * dn * dt * lit * phase * nimbusPower;\n      T *= exp(-dn * dt * uP_absorb);\n      if (T < 0.01) break;\n    }\n  }\n  float body = 1.0 - T;\n  scattered += uC_shadow * body * uP_ambient;\n  return vec4(scattered, body);\n}\nvoid main() {\n  nimbusPower = uP_power * (0.7 + 0.9 * uOutput);\n  nimbusDensity = uP_density * (1.0 + 0.35 * uInput);\n  vec4 acc = vec4(0.0);\n#if AA > 1\n  for (int mx = 0; mx < AA; mx++) {\n    for (int my = 0; my < AA; my++) {\n      vec2 offset = vec2(float(mx), float(my)) / float(AA) - 0.5;\n      acc += nimbusRender(gl_FragCoord.xy + offset);\n    }\n  }\n  acc /= float(AA * AA);\n#else\n  acc = nimbusRender(gl_FragCoord.xy);\n#endif\n  vec3 col = tanh3(acc.rgb * uP_exposure);\n  float a = clamp(acc.a * uP_alphaGain, 0.0, 1.0);\n  gl_FragColor = vec4(col, a);\n}\n",
-    "context": "Shown in the cloud in the variants."
-  },
-  {
-    "handler": "ui.variants.cloud.density",
-    "text": "Density",
-    "context": "The label in the cloud in the variants."
-  },
-  {
-    "handler": "ui.variants.cloud.edgeSoftness",
-    "text": "Edge softness",
-    "context": "The label in the cloud in the variants."
-  },
-  {
-    "handler": "ui.variants.cloud.forwardScatter",
-    "text": "Forward scatter",
-    "context": "The label in the cloud in the variants."
-  },
-  {
-    "handler": "ui.variants.cloud.lightOrbit",
-    "text": "Light orbit",
-    "context": "The label in the cloud in the variants."
-  },
-  {
-    "handler": "ui.variants.cloud.lightPower",
-    "text": "Light power",
-    "context": "The label in the cloud in the variants."
-  },
-  {
-    "handler": "ui.variants.cloud.shadowDepth",
-    "text": "Shadow depth",
-    "context": "The label in the cloud in the variants."
-  },
-  {
-    "handler": "ui.variants.cloud.shadowLift",
-    "text": "Shadow lift",
-    "context": "The label in the cloud in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.armCount",
-    "text": "Arm count",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.armFray",
-    "text": "Arm fray",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.armSharpness",
-    "text": "Arm sharpness",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.armWinding",
-    "text": "Arm winding",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.beatDepth",
-    "text": "Beat depth",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.coreBeat",
-    "text": "Core beat",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.coreDensity",
-    "text": "Core density",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.coreTightness",
-    "text": "Core tightness",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.defineSTEPS56DefineTURBOCT",
-    "text": "\n#define STEPS 56\n#define TURB_OCT 4\nfloat galDensity;\nfloat galCore;\nfloat galFalloff;\nfloat galaxy(vec3 p, float t, out float arm, out float rho) {\n  rho = length(p.xz);\n  float h = p.y;\n  float phi = rho > 1e-4 ? atan(p.z, p.x) : 0.0;\n  float lr = log(max(rho, 0.02));\n  float armPhase = phi * uP_arms - uP_wind * lr;\n  vec3 q = p * uP_turbScale;\n  float f = 1.0;\n  for (int k = 0; k < TURB_OCT; k++) {\n    q += cos(q.yzx * f + t) / f;\n    f *= 1.9;\n  }\n  float n = (sin(q.x) + sin(q.y) + sin(q.z)) / 3.0 * 0.5 + 0.5;\n  float clump = smoothstep(uP_threshold, 1.0, n);\n  arm = 0.5 + 0.5 * cos(armPhase + (n - 0.5) * uP_ragged);\n  arm = pow(arm, uP_armSharp);\n  float scaleH = uP_thick * (0.12 + rho);\n  float disc = exp(-rho * galFalloff) * exp(-abs(h) / scaleH);\n  float bulge = exp(-dot(p, p) * uP_bulge);\n  float dens = disc * (0.08 + 1.6 * arm) * (0.25 + 0.75 * clump) + bulge * galCore;\n  return dens * galDensity;\n}\nfloat starField(vec2 p, float density, float size, float twinkleT) {\n  vec2 id = floor(p);\n  vec2 f = fract(p);\n  float acc = 0.0;\n  for (int j = -1; j <= 1; j++) {\n    for (int i = -1; i <= 1; i++) {\n      vec2 o = vec2(float(i), float(j));\n      vec2 cid = id + o;\n      float h = hash(cid);\n      if (h > density) continue;\n      vec2 sp = o + vec2(hash(cid + 1.3), hash(cid + 2.7));\n      float dd = length(f - sp);\n      float tw = 0.55 + 0.45 * sin(twinkleT * (1.5 + 5.0 * hash(cid + 5.1)) + h * 40.0);\n      float sz = size * (0.5 + 1.2 * hash(cid + 8.9) * hash(cid + 8.9));\n      acc += tw * exp(-dd * dd / (sz * sz)) * (0.4 + 0.6 * h / max(density, 0.001));\n    }\n  }\n  return acc;\n}\nvec4 galaxyRender(vec2 fragCoord) {\n  vec2 uv = (2.0 * fragCoord - uRes) / min(uRes.x, uRes.y);\n  vec3 ro = vec3(0.0, 0.0, uP_camDist);\n  vec3 rd = normalize(vec3(uv, -uP_focal));\n  float t = uP_churn;\n  float spin = uP_spin;\n  float ct = cos(uP_tilt);\n  float st = sin(uP_tilt);\n  float cs = cos(spin);\n  float sn = sin(spin);\n  vec3 acc = vec3(0.0);\n  vec3 T = vec3(1.0);\n  vec3 absorb = vec3(0.7, 1.0, 1.5) * uP_absorb;\n  float z = max(uP_camDist - uP_envRadius * 1.05, 0.0);\n  float zEnd = uP_camDist + uP_envRadius * 1.05;\n  float dt = (zEnd - z) / float(STEPS);\n  z += dt * hash(fragCoord * 0.37);\n  for (int i = 0; i < STEPS; i++) {\n    vec3 p = ro + rd * z;\n    float env = 1.0 - smoothstep(uP_envRadius * 0.92, uP_envRadius, length(p));\n    if (env > 0.001) {\n      vec3 g = vec3(p.x, p.y * ct - p.z * st, p.y * st + p.z * ct);\n      g = vec3(g.x * cs - g.z * sn, g.y, g.x * sn + g.z * cs);\n      float arm = 0.0;\n      float rho = 0.0;\n      float d = galaxy(g / uP_envRadius, t, arm, rho) * env;\n      vec3 ramp = mix(uC_inner, uC_outer, smoothstep(0.12, uP_hueReach, rho));\n      float coreW = exp(-rho * rho * uP_bulge * 0.6);\n      vec3 emit = mix(ramp, uC_core, coreW) * (0.6 + 0.6 * arm);\n      acc += T * d * emit * dt;\n      T *= exp(-d * absorb * dt);\n    }\n    z += dt;\n    if (T.g < 0.004 || z > zEnd) break;\n  }\n  return vec4(acc, 1.0 - T.g);\n}\nvoid main() {\n  float wave = 0.5 + 0.5 * cos(uP_beat);\n  galDensity = uP_density * (1.0 + 0.35 * uInput);\n  galCore = uP_core * (1.0 + 0.7 * uOutput) * (1.0 + uP_pulse * wave);\n  galFalloff = uP_falloff / (1.0 + uP_breathe * wave);\n  vec4 acc = galaxyRender(gl_FragCoord.xy);\n  {\n    vec3 ro = vec3(0.0, 0.0, uP_camDist);\n    vec3 rd = normalize(vec3(orbUV(), -uP_focal));\n    float ct = cos(uP_tilt);\n    float st = sin(uP_tilt);\n    vec3 N = vec3(0.0, ct, st);\n    float denom = dot(N, rd);\n    if (abs(denom) > 1e-4) {\n      float th = -dot(N, ro) / denom;\n      vec3 q = ro + rd * th;\n      if (th > 0.0 && dot(q, q) < uP_envRadius * uP_envRadius * 0.9) {\n        vec3 g = vec3(q.x, q.y * ct - q.z * st, q.y * st + q.z * ct) / uP_envRadius;\n        float cs = cos(uP_spin);\n        float sn = sin(uP_spin);\n        vec2 gp = vec2(g.x * cs - g.z * sn, g.x * sn + g.z * cs);\n        float rho = length(gp);\n        float phi = rho > 1e-4 ? atan(gp.y, gp.x) : 0.0;\n        float armW = 0.5 + 0.5 * cos(phi * uP_arms - uP_wind * log(max(rho, 0.02)));\n        float sf = starField(gp * uP_starScale, uP_starDensity * (0.3 + 0.7 * armW), 0.12, uP_twinkle);\n        float veil = 1.0 - acc.a;\n        acc.rgb += vec3(1.0, 0.97, 0.9) * sf * uP_stars * exp(-rho * 1.5) * (0.25 + 0.75 * veil);\n      }\n    }\n  }\n  vec3 col = tanh3(acc.rgb / max(uP_exposure, 0.01));\n  col = pow(clamp(col, 0.0, 1.0), vec3(uP_contrast));\n  float lum = dot(col, vec3(0.299, 0.587, 0.114));\n  col = mix(vec3(lum), col, uP_saturation);\n  col *= uC_tint;\n  float peak = max(col.r, max(col.g, col.b));\n  float a = clamp(peak * uP_alphaGain, 0.0, 1.0);\n  col += uC_deep * uP_fill;\n  a = max(a, uP_fill);\n  vec3 mrd = normalize(vec3(orbUV(), -uP_focal));\n  float closest = length(cross(vec3(0.0, 0.0, uP_camDist), mrd));\n  float band = mix(0.35, 0.012, clamp(uP_edge, 0.0, 1.0));\n  float mask = 1.0 - smoothstep(uP_envRadius * (1.0 - band), uP_envRadius * 1.005, closest);\n  col *= mask;\n  a *= mask;\n  float fres = smoothstep(uP_envRadius * 0.7, uP_envRadius, closest);\n  col += uC_rim * uP_rim * fres * fres * mask;\n  float r2d = length(orbUV());\n  float fade = 1.0 - smoothstep(uP_edgeFade, 1.0, r2d);\n  col *= fade;\n  a *= fade;\n  gl_FragColor = vec4(col, a);\n}\n",
-    "context": "Shown in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.discBreathing",
-    "text": "Disc breathing",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.discFalloff",
-    "text": "Disc falloff",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.discThickness",
-    "text": "Disc thickness",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.discTurn",
-    "text": "Disc turn",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.dustAbsorption",
-    "text": "Dust absorption",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.envelopeRadius",
-    "text": "Envelope radius",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.galaxy",
-    "text": "Galaxy",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.gasChurn",
-    "text": "Gas churn",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.gasDensity",
-    "text": "Gas density",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.haloFalloff",
-    "text": "Halo falloff",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.hueReach",
-    "text": "Hue reach",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.innerArms",
-    "text": "Inner arms",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.night",
-    "text": "Night",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.nightFill",
-    "text": "Night fill",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.outerArms",
-    "text": "Outer arms",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.starDensity",
-    "text": "Star density",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.stars",
-    "text": "Stars",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.starScale",
-    "text": "Star scale",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.tilt0EdgeOn",
-    "text": "Tilt (0 edge-on)",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.galaxy.turbulenceScale",
-    "text": "Turbulence scale",
-    "context": "The label in the galaxy in the variants."
-  },
-  {
-    "handler": "ui.variants.ledWall.blobScale",
-    "text": "Blob scale",
-    "context": "The label in the led wall in the variants."
-  },
-  {
-    "handler": "ui.variants.ledWall.confetti",
-    "text": "Confetti",
-    "context": "The label in the led wall in the variants."
-  },
-  {
-    "handler": "ui.variants.ledWall.coverage",
-    "text": "Coverage",
-    "context": "The label in the led wall in the variants."
-  },
-  {
-    "handler": "ui.variants.ledWall.fluidity",
-    "text": "Fluidity",
-    "context": "The label in the led wall in the variants."
-  },
-  {
-    "handler": "ui.variants.ledWall.lEDWall",
-    "text": "LED wall",
-    "context": "The label in the led wall in the variants."
-  },
-  {
-    "handler": "ui.variants.ledWall.litTile",
-    "text": "Lit tile",
-    "context": "The label in the led wall in the variants."
-  },
-  {
-    "handler": "ui.variants.ledWall.panelGain",
-    "text": "Panel gain",
-    "context": "The label in the led wall in the variants."
-  },
-  {
-    "handler": "ui.variants.ledWall.tileGrid",
-    "text": "Tile grid",
-    "context": "The label in the led wall in the variants."
-  },
-  {
-    "handler": "ui.variants.ledWall.voidMainFloatCoverNowUPCoverage",
-    "text": "\nvoid main() {\n  float coverNow = uP_coverage + 0.07 * uInput;\n  float gainNow = uP_gain * (0.85 + 0.5 * uOutput);\n  float cellPx = max(min(uRes.x, uRes.y) / max(uP_cells, 8.0), 4.0);\n  vec2 cellIdx = floor(gl_FragCoord.xy / cellPx);\n  vec2 cellCentre = (cellIdx + 0.5) * cellPx;\n  vec2 g = fract(gl_FragCoord.xy / cellPx);\n  vec2 suv = (2.0 * cellCentre - uRes) / min(uRes.x, uRes.y);\n  vec2 uv = suv / uP_radius;\n  float r2 = dot(uv, uv);\n  float mask = 1.0 - step(1.0, r2);\n  float z = sqrt(max(1.0 - r2, 0.0));\n  vec3 n = vec3(uv, z);\n  float rot = uP_spin;\n  float cr = cos(rot);\n  float sr = sin(rot);\n  vec3 sp = vec3(n.x * cr - n.z * sr, n.y, n.x * sr + n.z * cr);\n  vec2 p2 = sp.xy / (abs(sp.z) + 1.2) * uP_scale * 3.0;\n  float driftT = uP_drift;\n  float churnT = uP_churn;\n  float shuffleT = uP_shuffle;\n  vec2 f1 = vec2(driftT * 0.5, -driftT * 0.35);\n  vec2 f2 = vec2(-churnT * 0.4, churnT * 0.6);\n  vec2 warp = vec2(\n    fbm(p2 * 0.9 + f2),\n    fbm(p2 * 0.9 + f2.yx + 13.7)\n  ) - 0.5;\n  float field = fbm(p2 + f1 + warp * uP_swirl * 2.4);\n  float lambert = clamp(dot(n, normalize(vec3(-0.45, 0.55, 0.7))), 0.0, 1.0);\n  float lum = smoothstep(1.0 - coverNow, 1.14 - coverNow, field\n    + 0.25 * uP_light * lambert\n    + uP_pulse * 0.3 * sin(length(uv) * 5.0 - driftT * 3.2));\n  lum *= gainNow;\n  vec2 d2 = abs(g - 0.5);\n  float d = max(d2.x, d2.y);\n  float face = 1.0 - smoothstep(0.26, 0.36, d);\n  float tile = 1.0 - smoothstep(0.42, 0.48, d);\n  float hot = 1.0 - smoothstep(0.0, 0.34, length(d2));\n  float h1 = hash(cellIdx * 1.618 + 7.3);\n  float h2 = hash(cellIdx * 2.113 + 41.7);\n  float cyc = fract(h1 + shuffleT * 0.06);\n  float promoted = step(1.0 - uP_confetti, cyc);\n  vec3 confetti = 0.5 + 0.5 * cos(6.2831 * (h2 + vec3(0.0, 0.33, 0.67)));\n  confetti = normalize(confetti + 0.05) * 1.2;\n  vec3 litCol = mix(uC_lit, confetti, promoted);\n  vec3 offCol = uC_wall * tile;\n  vec3 onCol = litCol * (face * 1.05 + hot * 0.5) * lum;\n  vec3 col = offCol + onCol;\n  col = pow(max(col, 0.0), vec3(uP_contrast));\n  float a = mask;\n  gl_FragColor = vec4(col * a, a);\n}\n",
-    "context": "Shown in the led wall in the variants."
-  },
-  {
-    "handler": "ui.variants.ledWall.wall",
-    "text": "Wall",
-    "context": "The label in the led wall in the variants."
-  },
-  {
-    "handler": "ui.variants.meadow.aerialHaze",
-    "text": "Aerial haze",
-    "context": "The label in the meadow in the variants."
-  },
-  {
-    "handler": "ui.variants.meadow.bloom",
-    "text": "Bloom",
-    "context": "The label in the meadow in the variants."
-  },
-  {
-    "handler": "ui.variants.meadow.canopy",
-    "text": "Canopy",
-    "context": "The label in the meadow in the variants."
-  },
-  {
-    "handler": "ui.variants.meadow.cloudCover",
-    "text": "Cloud cover",
-    "context": "The label in the meadow in the variants."
-  },
-  {
-    "handler": "ui.variants.meadow.defineAA2FloatDrosteHazeFloat",
-    "text": "\n#define AA 2\nfloat drosteHaze;\nfloat drosteCloud;\nfloat drosteBloom;\nfloat squareArc(vec2 q) {\n  if (abs(q.x) >= abs(q.y)) {\n    if (q.x > 0.0) return q.y + 1.0;\n    return 5.0 - q.y;\n  }\n  if (q.y > 0.0) return 3.0 - q.x;\n  return 7.0 + q.x;\n}\nvec3 drosteFlower(float h) {\n  vec3 c = uC_cloud;\n  c = mix(c, uC_bloom, step(0.52, h));\n  c = mix(c, uC_sky, step(0.86, h));\n  return c;\n}\nvec3 drosteRender(vec2 fragCoord) {\n  vec2 uv = (2.0 * fragCoord - uRes) / min(uRes.x, uRes.y);\n  float R = max(uP_radius, 0.001);\n  vec2 pl = uv / R;\n  float z = sqrt(max(1.0 - dot(pl, pl), 0.0));\n  float fall = uP_fall;\n  float drift = uP_drift;\n  float sw = uP_tilt;\n  vec2 p = pl / (z + 1.0 + uP_bulge) * uP_scale;\n  p = mat2(cos(sw), -sin(sw), sin(sw), cos(sw)) * p;\n  float m = max(max(abs(p.x), abs(p.y)), 0.002);\n  float K = max(uP_ratio, 1.05);\n  float L = log2(m) / log2(K) + fall;\n  vec2 q = p / m;\n  float sm = pow(K, fract(L));\n  vec2 P = q * sm;\n  float Yn = P.y / K;\n  float arc = squareArc(q);\n  vec3 col = mix(uC_sky * 0.72, uC_sky, clamp(Yn * 1.3, 0.0, 1.0));\n  float skyMask = smoothstep(uP_horizon - 0.3, uP_horizon + 0.2, Yn);\n  float cl = fbm(P * uP_cloudScale + vec2(drift, drift * 0.3));\n  cl = smoothstep(drosteCloud, drosteCloud + 0.16, cl);\n  col = mix(col, uC_cloud, cl * (0.2 + 0.8 * skyMask));\n  float streak = fbm(vec2(arc * uP_streakFreq, L * uP_streakRad));\n  vec3 land = mix(uC_canopy, uC_meadow, smoothstep(0.02, -0.62, Yn));\n  land *= 0.42 + 1.25 * streak;\n  float water = smoothstep(0.42, 0.16, streak) * smoothstep(0.05, -0.3, Yn);\n  land = mix(land, uC_water, water * uP_water);\n  vec2 fg = vec2(arc * uP_flowerScale, L * uP_flowerScale * 0.3);\n  vec2 fc = floor(fg);\n  vec2 ff = fract(fg) - 0.5;\n  vec2 dcv = ff - (vec2(hash(fc + 3.7), hash(fc + 19.1)) - 0.5) * 0.6;\n  float petal = smoothstep(uP_flowerSize, uP_flowerSize * 0.35, length(dcv));\n  float present = step(1.0 - drosteBloom, hash(fc + 51.3));\n  float meadow = smoothstep(0.13, -0.38, Yn);\n  land = mix(land, drosteFlower(hash(fc + 7.9)), petal * present * meadow);\n  float landMask = 1.0 - smoothstep(uP_horizon - 0.12, uP_horizon + 0.16, Yn);\n  col = mix(col, land, landMask);\n  col *= mix(1.0, uP_frameShade, fract(L));\n  float deep = 1.0 - smoothstep(0.0, uP_hazeRange, m);\n  col = mix(col, uC_sky, deep * drosteHaze);\n  col = pow(max(col, vec3(0.0)), vec3(uP_contrast)) * uP_gain;\n  float lum = dot(col, vec3(0.299, 0.587, 0.114));\n  col = mix(vec3(lum), col, uP_saturation);\n  vec3 n = vec3(pl, z);\n  float lambert = clamp(dot(n, normalize(vec3(-0.45, 0.55, 0.72))), 0.0, 1.0);\n  col *= 0.72 + uP_light * lambert;\n  float fres = 1.0 - z;\n  fres = fres * fres * fres;\n  col += uC_sheen * uP_rim * fres;\n  return col;\n}\nvoid main() {\n  drosteCloud = clamp(uP_cloudCover - 0.12 * uInput, 0.02, 0.98);\n  drosteHaze = uP_haze * (1.0 - 0.25 * uOutput);\n  drosteBloom = clamp(uP_flowerDensity * (1.0 + 0.5 * uOutput), 0.0, 1.0);\n  vec2 uv = orbUV();\n  float mask = smoothstep(0.012, -0.012, length(uv) - max(uP_radius, 0.001));\n  if (mask <= 0.0) {\n    gl_FragColor = vec4(0.0);\n    return;\n  }\n  vec3 col = vec3(0.0);\n#if AA > 1\n  for (int mx = 0; mx < AA; mx++) {\n    for (int my = 0; my < AA; my++) {\n      vec2 off = (vec2(float(mx), float(my)) + 0.5) / float(AA) - 0.5;\n      col += drosteRender(gl_FragCoord.xy + off);\n    }\n  }\n  col /= float(AA * AA);\n#else\n  col = drosteRender(gl_FragCoord.xy);\n#endif\n  float a = mask;\n  gl_FragColor = vec4(max(col, vec3(0.0)) * a, a);\n}\n",
-    "context": "Shown in the meadow in the variants."
-  },
-  {
-    "handler": "ui.variants.meadow.domeBulge",
-    "text": "Dome bulge",
-    "context": "The label in the meadow in the variants."
-  },
-  {
-    "handler": "ui.variants.meadow.fallSpeed",
-    "text": "Fall speed",
-    "context": "The label in the meadow in the variants."
-  },
-  {
-    "handler": "ui.variants.meadow.flowerDensity",
-    "text": "Flower density",
-    "context": "The label in the meadow in the variants."
-  },
-  {
-    "handler": "ui.variants.meadow.flowerScale",
-    "text": "Flower scale",
-    "context": "The label in the meadow in the variants."
-  },
-  {
-    "handler": "ui.variants.meadow.flowerSize",
-    "text": "Flower size",
-    "context": "The label in the meadow in the variants."
-  },
-  {
-    "handler": "ui.variants.meadow.frameRatio",
-    "text": "Frame ratio",
-    "context": "The label in the meadow in the variants."
-  },
-  {
-    "handler": "ui.variants.meadow.frameShading",
-    "text": "Frame shading",
-    "context": "The label in the meadow in the variants."
-  },
-  {
-    "handler": "ui.variants.meadow.frameTilt",
-    "text": "Frame tilt",
-    "context": "The label in the meadow in the variants."
-  },
-  {
-    "handler": "ui.variants.meadow.hazeReach",
-    "text": "Haze reach",
-    "context": "The label in the meadow in the variants."
-  },
-  {
-    "handler": "ui.variants.meadow.horizon",
-    "text": "Horizon",
-    "context": "The label in the meadow in the variants."
-  },
-  {
-    "handler": "ui.variants.meadow.meadow",
-    "text": "Meadow",
-    "context": "The label in the meadow in the variants."
-  },
-  {
-    "handler": "ui.variants.meadow.sky",
-    "text": "Sky",
-    "context": "The label in the meadow in the variants."
-  },
-  {
-    "handler": "ui.variants.meadow.smear",
-    "text": "Smear",
-    "context": "The label in the meadow in the variants."
-  },
-  {
-    "handler": "ui.variants.meadow.tunnelScale",
-    "text": "Tunnel scale",
-    "context": "The label in the meadow in the variants."
-  },
-  {
-    "handler": "ui.variants.meadow.wallDetail",
-    "text": "Wall detail",
-    "context": "The label in the meadow in the variants."
-  },
-  {
-    "handler": "ui.variants.meadow.weatherDrift",
-    "text": "Weather drift",
-    "context": "The label in the meadow in the variants."
-  },
-  {
-    "handler": "ui.variants.orbital.baseVisibility",
-    "text": "Base visibility",
-    "context": "The label in the orbital in the variants."
-  },
-  {
-    "handler": "ui.variants.orbital.chromaSpread",
-    "text": "Chroma spread",
-    "context": "The label in the orbital in the variants."
-  },
-  {
-    "handler": "ui.variants.orbital.constFloatPI314159265359Void",
-    "text": "\nconst float PI = 3.14159265359;\nvoid main() {\n  vec2 uv = orbUV();\n  float r2d = length(uv);\n  float R = uP_radius + uP_swell * uInput;\n  float mask = smoothstep(0.012, -0.012, r2d - R);\n  float nr = clamp(r2d / max(R, 0.001), 0.0, 1.0);\n  float z = sqrt(max(1.0 - nr * nr, 0.0));\n  float posScale = uP_posScale * (0.8 + 0.45 * uOutput + 0.2 * uInput);\n  float radialPow = uP_radialPow * (0.7 + 0.8 * uOutput);\n  float radialDecay = uP_radialDecay * (1.25 - 0.5 * uOutput);\n  float probPow = uP_probPow * (1.3 - 0.55 * uOutput);\n  float probGain = uP_probGain * (0.7 + 0.6 * uOutput + 0.5 * uInput);\n  float waveFreq = uP_waveFreq * (0.6 + 1.0 * uOutput);\n  float chromaSpread = uP_chromaSpread * (0.6 + 0.9 * uOutput + 0.5 * uInput);\n  float animTime = uP_speed;\n  float cosT = cos(animTime * uP_rotSpeed);\n  float sinT = sin(animTime * uP_rotSpeed);\n  vec3 sp = vec3(uv / max(R, 0.001), z) * posScale;\n  vec3 pos = vec3(sp.x * cosT - sp.z * sinT, sp.y, sp.x * sinT + sp.z * cosT);\n  float tilt = sin(animTime * 0.21 + 1.7) * uP_precess;\n  float cx = cos(tilt), sx = sin(tilt);\n  pos = vec3(pos.x, pos.y * cx - pos.z * sx, pos.y * sx + pos.z * cx);\n  float flowT = uP_flowSpeed;\n  float fAmp = uP_flowAmp * (0.7 + 0.6 * uOutput + 0.4 * uInput);\n  vec3 w;\n  w.x = fbm(pos.yz * uP_flowScale + vec2(flowT * 0.70, -flowT * 0.40));\n  w.y = fbm(pos.zx * uP_flowScale + vec2(-flowT * 0.55, flowT * 0.62) + 3.7);\n  w.z = fbm(pos.xy * uP_flowScale + vec2(flowT * 0.50, flowT * 0.85) + 7.1);\n  pos += (w - 0.5) * fAmp;\n  float r = length(pos) + 0.001;\n  float theta = acos(clamp(pos.y / r, -1.0, 1.0));\n  float phi = atan(pos.z, pos.x);\n  float a0 = 0.5;\n  float rho = 2.0 * r / (5.0 * a0);\n  float radial = pow(rho, radialPow) * exp(-rho / radialDecay);\n  float angular = pow(sin(theta), 3.0) * cos(phi + animTime * 0.2);\n  float psi = radial * angular;\n  float probability = psi * psi;\n  float waveN = max(1.0, floor(waveFreq + 0.5));\n  float wavePhase = phi * waveN + theta * 2.5 - animTime * 2.0;\n  probability *= (0.85 + 0.15 * sin(wavePhase));\n  float patches = fbm(pos.xy * 1.6 + vec2(flowT * 0.4, -flowT * 0.3));\n  probability *= 0.65 + 0.7 * patches;\n  probability = pow(probability, probPow) * probGain;\n  probability = clamp(probability, 0.0, 1.0);\n  float fresnel = pow(1.0 - z, 1.5);\n  float chromaOffset = phi * 2.0 + theta * 1.5 + animTime * 0.3 + probability * 3.0;\n  vec3 rainbow;\n  rainbow.r = sin(chromaOffset) * 0.5 + 0.5;\n  rainbow.g = sin(chromaOffset + chromaSpread) * 0.5 + 0.5;\n  rainbow.b = sin(chromaOffset + chromaSpread * 2.0) * 0.5 + 0.5;\n  rainbow = normalize(rainbow + 0.01) * length(rainbow);\n  float bandFreq = chromaOffset * 3.0 + fresnel * 2.4;\n  vec3 chromaticBands;\n  chromaticBands.r = sin(bandFreq) * 0.5 + 0.5;\n  chromaticBands.g = sin(bandFreq + 2.094) * 0.5 + 0.5;\n  chromaticBands.b = sin(bandFreq + 4.189) * 0.5 + 0.5;\n  vec3 glowColor = mix(rainbow, chromaticBands, 0.12);\n  glowColor = pow(glowColor, vec3(0.8));\n  vec3 darkMetal = vec3(uP_metalDark);\n  vec3 lightMetal = mix(vec3(0.9, 0.92, 0.95), glowColor, 0.7);\n  float metalGradient = smoothstep(0.0, 1.0, probability * 0.7 + fresnel * 0.3);\n  vec3 metalColor = mix(darkMetal, lightMetal, metalGradient);\n  float orbGlow = uP_glow + 0.6 * uOutput;\n  float totalGlow = (0.25 + fresnel * 0.6 + probability * 0.8) * orbGlow;\n  float glowAmount = clamp(pow(totalGlow, 0.7), 0.0, 1.0);\n  vec3 surfaceColor = mix(metalColor, glowColor, glowAmount);\n  vec3 normal = vec3(uv / max(R, 0.001), z);\n  float specular = pow(max(dot(normal, normalize(vec3(1.0, 1.0, 2.0))), 0.0), 32.0);\n  surfaceColor += mix(vec3(1.0), glowColor, 0.6) * specular * 0.4;\n  float visibility = clamp(probability * 1.2 + fresnel * 0.3 + uP_baseVis + uInput * 0.15, 0.0, 1.0);\n  float a = mask * visibility;\n  gl_FragColor = vec4(surfaceColor * a, a);\n}\n",
-    "context": "Shown in the orbital in the variants."
-  },
-  {
-    "handler": "ui.variants.orbital.flowAmount",
-    "text": "Flow amount",
-    "context": "The label in the orbital in the variants."
-  },
-  {
-    "handler": "ui.variants.orbital.flowScale",
-    "text": "Flow scale",
-    "context": "The label in the orbital in the variants."
-  },
-  {
-    "handler": "ui.variants.orbital.flowSpeed",
-    "text": "Flow speed",
-    "context": "The label in the orbital in the variants."
-  },
-  {
-    "handler": "ui.variants.orbital.metalDarkness",
-    "text": "Metal darkness",
-    "context": "The label in the orbital in the variants."
-  },
-  {
-    "handler": "ui.variants.orbital.orbital",
-    "text": "Orbital",
-    "context": "The label in the orbital in the variants."
-  },
-  {
-    "handler": "ui.variants.orbital.orbitalZoom",
-    "text": "Orbital zoom",
-    "context": "The label in the orbital in the variants."
-  },
-  {
-    "handler": "ui.variants.orbital.precession",
-    "text": "Precession",
-    "context": "The label in the orbital in the variants."
-  },
-  {
-    "handler": "ui.variants.orbital.probabilityCurve",
-    "text": "Probability curve",
-    "context": "The label in the orbital in the variants."
-  },
-  {
-    "handler": "ui.variants.orbital.probabilityGain",
-    "text": "Probability gain",
-    "context": "The label in the orbital in the variants."
-  },
-  {
-    "handler": "ui.variants.orbital.radialDecay",
-    "text": "Radial decay",
-    "context": "The label in the orbital in the variants."
-  },
-  {
-    "handler": "ui.variants.orbital.radialPower",
-    "text": "Radial power",
-    "context": "The label in the orbital in the variants."
-  },
-  {
-    "handler": "ui.variants.orbital.rotationSpeed",
-    "text": "Rotation speed",
-    "context": "The label in the orbital in the variants."
-  },
-  {
-    "handler": "ui.variants.orbital.waveFrequency",
-    "text": "Wave frequency",
-    "context": "The label in the orbital in the variants."
-  },
-  {
-    "handler": "ui.variants.pixel.floatBayer2Vec2AAFloor",
-    "text": "\nfloat bayer2(vec2 a) {\n  a = floor(a);\n  return fract(a.x / 2.0 + a.y * a.y * 0.75);\n}\nfloat bayer8(vec2 a) {\n  return bayer2(a * 0.25) * 0.0625 + bayer2(a * 0.5) * 0.25 + bayer2(a);\n}\nvoid main() {\n  float plasmaAmt = uP_plasma * (1.0 + 0.4 * uInput);\n  float gainNow = uP_gain * (0.85 + 0.5 * uOutput);\n  float cellPx = max(min(uRes.x, uRes.y) / max(uP_cells, 8.0), 1.0);\n  vec2 pix = floor(gl_FragCoord.xy / cellPx);\n  vec2 cellCentre = (pix + 0.5) * cellPx;\n  vec2 suv = (2.0 * cellCentre - uRes) / min(uRes.x, uRes.y);\n  vec2 uv = suv / uP_radius;\n  float r2 = dot(uv, uv);\n  float mask = 1.0 - step(1.0, r2);\n  float z = sqrt(max(1.0 - r2, 0.0));\n  vec3 n = vec3(uv, z);\n  float rot = uP_spin;\n  float cr = cos(rot);\n  float sr = sin(rot);\n  vec3 sp = vec3(n.x * cr - n.z * sr, n.y, n.x * sr + n.z * cr);\n  float t = uP_speed;\n  float f = uP_scale;\n  float v = sin(sp.x * f * 3.1 + t)\n    + sin((sp.y * 0.85 + sp.z * 0.4) * f * 3.6 - t * 1.3)\n    + sin((sp.x + sp.y + sp.z) * f * 2.2 + t * 0.7);\n  vec2 src = 0.55 * vec2(cos(t * 0.5), sin(t * 0.5));\n  v += sin(length(uv - src) * f * 5.0 - t * 2.2);\n  v *= 0.25;\n  float lambert = clamp(dot(n, normalize(vec3(-0.45, 0.55, 0.7))), 0.0, 1.0);\n  float fres = pow(1.0 - z, 2.0);\n  float lum = (0.5 + 0.5 * v * plasmaAmt) * (0.3 + uP_light * lambert)\n    + uP_rim * fres;\n  lum = pow(clamp(lum * gainNow, 0.0, 1.0), uP_contrast);\n  float steps = max(uP_levels - 1.0, 1.0);\n  float q = clamp(floor(lum * steps + bayer8(pix)) / steps, 0.0, 1.0);\n  vec3 col = mix(uC_ink, uC_paper, q);\n  float a = mask;\n  gl_FragColor = vec4(col * a, a);\n}\n",
-    "context": "Shown in the pixel in the variants."
-  },
-  {
-    "handler": "ui.variants.pixel.gridCells",
-    "text": "Grid cells",
-    "context": "The label in the pixel in the variants."
-  },
-  {
-    "handler": "ui.variants.pixel.toneSteps",
-    "text": "Tone steps",
-    "context": "The label in the pixel in the variants."
-  },
-  {
-    "handler": "ui.variants.pixel.waveAmount",
-    "text": "Wave amount",
-    "context": "The label in the pixel in the variants."
-  },
-  {
-    "handler": "ui.variants.pixel.waveScale",
-    "text": "Wave scale",
-    "context": "The label in the pixel in the variants."
-  },
-  {
-    "handler": "ui.variants.pixel.waveSpeed",
-    "text": "Wave speed",
-    "context": "The label in the pixel in the variants."
-  },
-  {
-    "handler": "ui.variants.plasma.arc",
-    "text": "Arc",
-    "context": "The label in the plasma in the variants."
-  },
-  {
-    "handler": "ui.variants.plasma.arcCoreSoftness",
-    "text": "Arc core softness",
-    "context": "The label in the plasma in the variants."
-  },
-  {
-    "handler": "ui.variants.plasma.arcSharpness",
-    "text": "Arc sharpness",
-    "context": "The label in the plasma in the variants."
-  },
-  {
-    "handler": "ui.variants.plasma.axisTilt",
-    "text": "Axis tilt",
-    "context": "The label in the plasma in the variants."
-  },
-  {
-    "handler": "ui.variants.plasma.bodyHaze",
-    "text": "Body haze",
-    "context": "The label in the plasma in the variants."
-  },
-  {
-    "handler": "ui.variants.plasma.coreWhitening",
-    "text": "Core whitening",
-    "context": "The label in the plasma in the variants."
-  },
-  {
-    "handler": "ui.variants.plasma.defineSTEPS64FloatIonSharpFloat",
-    "text": "\n#define STEPS 64\nfloat ionSharp;\nfloat ionWrithe;\nfloat ionCore;\nfloat ionExposure;\nfloat ionRadius;\nmat2 ionRot2(float a) {\n  float c = cos(a);\n  float s = sin(a);\n  return mat2(c, -s, s, c);\n}\nvec3 ionRender(vec2 fragCoord) {\n  float t = uP_speed;\n  float spinAng = uP_spin;\n  vec2 uv = (2.0 * fragCoord - uRes) / min(uRes.x, uRes.y);\n  vec3 ro = vec3(0.0, 0.0, uP_camDist);\n  vec3 rd = normalize(vec3(uv, -uP_focal));\n  float proj = dot(-ro, rd);\n  float b2 = dot(ro, ro) - proj * proj;\n  float half_ = sqrt(max(ionRadius * ionRadius - b2, 0.0));\n  float zNear = proj - half_;\n  float stepLen = 2.0 * half_ / float(STEPS);\n  zNear += (hash(fragCoord) - 0.5) * stepLen;\n  vec3 acc = vec3(0.0);\n  float T = 1.0;\n  for (int i = 0; i < STEPS; i++) {\n    vec3 p = ro + rd * (zNear + (float(i) + 0.5) * stepLen);\n    vec3 pr = p;\n    pr.xz = ionRot2(spinAng) * pr.xz;\n    pr.yz = ionRot2(uP_tilt) * pr.yz;\n    float r = length(pr);\n    vec3 dir = pr / max(r, 1e-4);\n    float rr = r / max(ionRadius, 1e-3);\n    float wr = ionWrithe * smoothstep(0.0, ionRadius * 0.35, r);\n    vec3 q = dir * uP_fils;\n    q += wr * vec3(\n      sin(r * uP_writheFreq        - t * 1.2 + q.y * 1.8),\n      sin(r * uP_writheFreq * 0.83 + t * 1.0 + q.z * 1.8),\n      sin(r * uP_writheFreq * 1.19 - t * 0.7 + q.x * 1.8));\n    float f1 = sin(q.x + t * 0.70)\n             + sin(q.y * 1.31 - t * 0.50)\n             + sin(q.z * 1.13 + t * 0.90);\n    float f2 = sin(q.y * 1.21 + t * 0.60 + 1.7)\n             + sin(q.z * 1.43 - t * 0.80 + 3.1)\n             + sin(q.x * 0.87 + t * 0.40 + 5.0);\n    float d2 = f1 * f1 + f2 * f2;\n    float g = 1.0 / (d2 * ionSharp + uP_soft);\n    g *= 1.0 + uP_tipGain * smoothstep(0.55, 0.95, rr);\n    float core = ionCore / (r * r * 8.0 + 0.05);\n    vec3 fCol = mix(uC_inner, uC_arc, smoothstep(0.1, 0.75, rr));\n    vec3 w = (fCol + vec3(uP_whiten) * g) * g + uC_inner * core + vec3(uP_fill);\n    w = min(w, vec3(uP_stepClamp));\n    w *= stepLen;\n    acc += T * w;\n    T *= exp(-dot(w, vec3(0.299, 0.587, 0.114)) * uP_scatter);\n    if (T < 0.004) break;\n  }\n  return acc;\n}\nvoid main() {\n  ionSharp = uP_sharp * (1.0 - 0.25 * uOutput);\n  ionWrithe = uP_writhe * (1.0 + 0.6 * uOutput);\n  ionCore = uP_coreGain * (1.0 + 1.6 * uInput + 0.4 * uOutput);\n  ionExposure = uP_exposure * (1.0 - 0.35 * uOutput);\n  ionRadius = uP_envRadius + uP_swell * uInput;\n  vec3 acc = ionRender(gl_FragCoord.xy);\n  vec3 col = tanh3(acc / max(ionExposure, 0.01));\n  col = pow(clamp(col, 0.0, 1.0), vec3(uP_contrast));\n  float lum = dot(col, vec3(0.299, 0.587, 0.114));\n  col = mix(vec3(lum), col, uP_saturation);\n  col *= uC_tint;\n  float peak = max(col.r, max(col.g, col.b));\n  float a = clamp(peak * uP_alphaGain, 0.0, 1.0);\n  vec3 mrd = normalize(vec3(orbUV(), -uP_focal));\n  float closest = length(cross(vec3(0.0, 0.0, uP_camDist), mrd));\n  float band = mix(0.35, 0.012, clamp(uP_edge, 0.0, 1.0));\n  float mask = 1.0 - smoothstep(ionRadius * (1.0 - band), ionRadius * 1.005, closest);\n  col *= mask;\n  a *= mask;\n  gl_FragColor = vec4(col, a);\n}\n",
-    "context": "Shown in the plasma in the variants."
-  },
-  {
-    "handler": "ui.variants.plasma.diffusion",
-    "text": "Diffusion",
-    "context": "The label in the plasma in the variants."
-  },
-  {
-    "handler": "ui.variants.plasma.filamentDensity",
-    "text": "Filament density",
-    "context": "The label in the plasma in the variants."
-  },
-  {
-    "handler": "ui.variants.plasma.glassFlare",
-    "text": "Glass flare",
-    "context": "The label in the plasma in the variants."
-  },
-  {
-    "handler": "ui.variants.plasma.globeRadius",
-    "text": "Globe radius",
-    "context": "The label in the plasma in the variants."
-  },
-  {
-    "handler": "ui.variants.plasma.nucleus",
-    "text": "Nucleus",
-    "context": "The label in the plasma in the variants."
-  },
-  {
-    "handler": "ui.variants.plasma.nucleusGlow",
-    "text": "Nucleus glow",
-    "context": "The label in the plasma in the variants."
-  },
-  {
-    "handler": "ui.variants.plasma.plasma",
-    "text": "Plasma",
-    "context": "The label in the plasma in the variants."
-  },
-  {
-    "handler": "ui.variants.plasma.spinRate",
-    "text": "Spin rate",
-    "context": "The label in the plasma in the variants."
-  },
-  {
-    "handler": "ui.variants.plasma.stepClamp",
-    "text": "Step clamp",
-    "context": "The label in the plasma in the variants."
-  },
-  {
-    "handler": "ui.variants.plasma.writhe",
-    "text": "Writhe",
-    "context": "The label in the plasma in the variants."
-  },
-  {
-    "handler": "ui.variants.plasma.writheFrequency",
-    "text": "Writhe frequency",
-    "context": "The label in the plasma in the variants."
-  },
-  {
-    "handler": "ui.variants.radar.bend",
-    "text": "Bend",
-    "context": "The label in the radar in the variants."
-  },
-  {
-    "handler": "ui.variants.radar.class1",
-    "text": "Class 1",
-    "context": "The label in the radar in the variants."
-  },
-  {
-    "handler": "ui.variants.radar.class2",
-    "text": "Class 2",
-    "context": "The label in the radar in the variants."
-  },
-  {
-    "handler": "ui.variants.radar.class3",
-    "text": "Class 3",
-    "context": "The label in the radar in the variants."
-  },
-  {
-    "handler": "ui.variants.radar.class4",
-    "text": "Class 4",
-    "context": "The label in the radar in the variants."
-  },
-  {
-    "handler": "ui.variants.radar.class5",
-    "text": "Class 5",
-    "context": "The label in the radar in the variants."
-  },
-  {
-    "handler": "ui.variants.radar.classDither",
-    "text": "Class dither",
-    "context": "The label in the radar in the variants."
-  },
-  {
-    "handler": "ui.variants.radar.defineVORTICES6DefineFBM3OCT",
-    "text": "\n#define VORTICES 6\n#define FBM3_OCT 4\nfloat radarLoNow;\nfloat radarDensityNow;\nfloat hash3(vec3 p) {\n  return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453123);\n}\nfloat noise3(vec3 p) {\n  vec3 i = floor(p);\n  vec3 f = fract(p);\n  f = f * f * (3.0 - 2.0 * f);\n  float n000 = hash3(i);\n  float n100 = hash3(i + vec3(1.0, 0.0, 0.0));\n  float n010 = hash3(i + vec3(0.0, 1.0, 0.0));\n  float n110 = hash3(i + vec3(1.0, 1.0, 0.0));\n  float n001 = hash3(i + vec3(0.0, 0.0, 1.0));\n  float n101 = hash3(i + vec3(1.0, 0.0, 1.0));\n  float n011 = hash3(i + vec3(0.0, 1.0, 1.0));\n  float n111 = hash3(i + vec3(1.0, 1.0, 1.0));\n  return mix(\n    mix(mix(n000, n100, f.x), mix(n010, n110, f.x), f.y),\n    mix(mix(n001, n101, f.x), mix(n011, n111, f.x), f.y),\n    f.z\n  );\n}\nfloat fbm3(vec3 p) {\n  float v = 0.0;\n  float a = 0.5;\n  for (int i = 0; i < FBM3_OCT; i++) {\n    v += a * noise3(p);\n    p = p * 2.03 + vec3(11.7, 7.3, 3.1);\n    a *= 0.5;\n  }\n  return v;\n}\nvec3 rotateAbout(vec3 v, vec3 k, float a) {\n  float c = cos(a);\n  float s = sin(a);\n  return v * c + cross(k, v) * s + k * dot(k, v) * (1.0 - c);\n}\nfloat intensity(vec3 sp, float t) {\n  vec3 q = sp;\n  for (int k = 0; k < VORTICES; k++) {\n    float fk = float(k);\n    vec3 c = normalize(vec3(\n      hash(vec2(fk * 3.7, 1.1)) - 0.5,\n      hash(vec2(fk * 5.9, 2.3)) - 0.5,\n      hash(vec2(fk * 7.1, 4.9)) - 0.5\n    ));\n    c = rotateAbout(c, vec3(0.0, 1.0, 0.0), sin(t * 0.09 + fk * 1.7) * 0.25);\n    float ang = acos(clamp(dot(q, c), -1.0, 1.0));\n    float fall = exp(-ang * ang / (uP_vortex * uP_vortex));\n    float a = uP_swirl * fall * (mod(fk, 2.0) < 0.5 ? 1.0 : -1.0);\n    q = rotateAbout(q, c, a);\n  }\n  vec3 w = vec3(noise3(q * 1.3 + 2.1), noise3(q * 1.3 + 7.3), noise3(q * 1.3 + 4.4)) - 0.5;\n  q += w * uP_warp;\n  vec3 pq = q * uP_freq + vec3(t * 0.22, -t * 0.13, t * 0.07);\n  float big = clamp((fbm3(pq) - 0.5) * 3.0 + 0.5, 0.0, 1.0);\n  float fine = clamp((fbm3(pq * 2.6 + 4.7) - 0.5) * 2.4 + 0.5, 0.0, 1.0);\n  float f = big * (0.55 + 0.45 * fine);\n  f = clamp((f - radarLoNow) / max(uP_hi - radarLoNow, 0.01), 0.0, 1.0);\n  return pow(f, uP_curve);\n}\nvoid main() {\n  radarLoNow = uP_lo - 0.08 * uInput;\n  radarDensityNow = uP_density * (1.0 + 0.5 * uOutput);\n  vec2 uv = orbUV();\n  float rd = length(uv);\n  float R = uP_radius;\n  float mask = smoothstep(0.012, -0.012, rd - R);\n  if (mask <= 0.0) {\n    gl_FragColor = vec4(0.0);\n    return;\n  }\n  vec2 pl = uv / R;\n  float r2 = dot(pl, pl);\n  float z = sqrt(max(1.0 - r2, 0.0));\n  vec3 n = vec3(pl, z);\n  float t = uP_speed;\n  vec2 st = n.xy / (1.3 + n.z) * uP_scale;\n  vec2 g = st * uP_cells;\n  vec2 cell = floor(g);\n  vec2 fr = fract(g) - 0.5;\n  vec2 v = (cell + 0.5) / uP_cells / uP_scale;\n  float vv = dot(v, v);\n  float A = vv + 1.0;\n  float B = 2.6 * vv;\n  float C = 1.69 * vv - 1.0;\n  float zc = (-B + sqrt(max(B * B - 4.0 * A * C, 0.0))) / (2.0 * A);\n  vec3 nc = vec3(v * (1.3 + zc), zc);\n  float cr = cos(uP_spin);\n  float sr = sin(uP_spin);\n  vec3 spc = vec3(nc.x * cr - nc.z * sr, nc.y, nc.x * sr + nc.z * cr);\n  float f = intensity(spc, t);\n  float h = hash(cell + 11.7);\n  float fd = clamp(f + (h - 0.5) * uP_dither, 0.0, 1.0);\n  float cls = 0.0;\n  cls += step(0.10, fd);\n  cls += step(0.26, fd);\n  cls += step(0.38, fd);\n  cls += step(0.46, fd);\n  cls += step(0.78, fd);\n  cls += step(0.94, fd);\n  float frame = floor(uTime * uP_twinkle);\n  float roll = hash(cell + vec2(frame * 3.7, -frame * 1.3));\n  float density = mix(uP_sparse, 1.0, smoothstep(0.0, 0.6, f)) * radarDensityNow;\n  float keep = step(roll, density);\n  float dsq = max(abs(fr.x), abs(fr.y));\n  float dotMask = 1.0 - smoothstep(uP_dot - 0.06, uP_dot + 0.06, dsq);\n  vec3 ink = uC_c0;\n  ink = cls > 0.5 && cls < 1.5 ? uC_c1 : ink;\n  ink = cls > 1.5 && cls < 2.5 ? uC_c2 : ink;\n  ink = cls > 2.5 && cls < 3.5 ? uC_c3 : ink;\n  ink = cls > 3.5 && cls < 4.5 ? uC_c4 : ink;\n  ink = cls > 4.5 && cls < 5.5 ? uC_c5 : ink;\n  ink = cls > 5.5 ? uC_c6 : ink;\n  vec3 col = mix(uC_paper, ink, dotMask * keep);\n  col *= 1.0 + (hash(floor(gl_FragCoord.xy / 2.0) + frame) - 0.5) * uP_grain;\n  float lambert = clamp(dot(n, normalize(vec3(-0.45, 0.55, 0.7))), 0.0, 1.0);\n  col *= 1.0 - uP_light * (1.0 - lambert);\n  float fres = pow(1.0 - z, 3.0);\n  col = mix(col, uC_c0, fres * uP_rim);\n  float a = mask;\n  gl_FragColor = vec4(max(col, vec3(0.0)) * a, a);\n}\n",
-    "context": "Shown in the radar in the variants."
-  },
-  {
-    "handler": "ui.variants.radar.dotSize",
-    "text": "Dot size",
-    "context": "The label in the radar in the variants."
-  },
-  {
-    "handler": "ui.variants.radar.fill",
-    "text": "Fill",
-    "context": "The label in the radar in the variants."
-  },
-  {
-    "handler": "ui.variants.radar.frontSpeed",
-    "text": "Front speed",
-    "context": "The label in the radar in the variants."
-  },
-  {
-    "handler": "ui.variants.radar.grid",
-    "text": "Grid",
-    "context": "The label in the radar in the variants."
-  },
-  {
-    "handler": "ui.variants.radar.gridZoom",
-    "text": "Grid zoom",
-    "context": "The label in the radar in the variants."
-  },
-  {
-    "handler": "ui.variants.radar.peakThreshold",
-    "text": "Peak threshold",
-    "context": "The label in the radar in the variants."
-  },
-  {
-    "handler": "ui.variants.radar.quiet",
-    "text": "Quiet",
-    "context": "The label in the radar in the variants."
-  },
-  {
-    "handler": "ui.variants.radar.quietDensity",
-    "text": "Quiet density",
-    "context": "The label in the radar in the variants."
-  },
-  {
-    "handler": "ui.variants.radar.quietThreshold",
-    "text": "Quiet threshold",
-    "context": "The label in the radar in the variants."
-  },
-  {
-    "handler": "ui.variants.radar.radar",
-    "text": "Radar",
-    "context": "The label in the radar in the variants."
-  },
-  {
-    "handler": "ui.variants.radar.responseCurve",
-    "text": "Response curve",
-    "context": "The label in the radar in the variants."
-  },
-  {
-    "handler": "ui.variants.radar.stormScale",
-    "text": "Storm scale",
-    "context": "The label in the radar in the variants."
-  },
-  {
-    "handler": "ui.variants.radar.swirl",
-    "text": "Swirl",
-    "context": "The label in the radar in the variants."
-  },
-  {
-    "handler": "ui.variants.radar.vortexSize",
-    "text": "Vortex size",
-    "context": "The label in the radar in the variants."
-  },
-  {
-    "handler": "ui.variants.storm.bandCount",
-    "text": "Band count",
-    "context": "The label in the storm in the variants."
-  },
-  {
-    "handler": "ui.variants.storm.bandShear",
-    "text": "Band shear",
-    "context": "The label in the storm in the variants."
-  },
-  {
-    "handler": "ui.variants.storm.constFloatPI314159265359Float",
-    "text": "\nconst float PI = 3.14159265359;\nfloat grainNoise(vec2 gpix, float frame, float seed) {\n  return hash(gpix + vec2(frame * 13.71 + seed, frame * 7.37 - seed));\n}\nvoid main() {\n  float warpNow = uP_warp * (1.0 + 0.55 * uInput);\n  float gainNow = uP_gain * (0.85 + 0.45 * uOutput);\n  vec2 uv = orbUV();\n  float rd = length(uv);\n  float R = uP_radius;\n  float mask = smoothstep(0.012, -0.012, rd - R);\n  if (mask <= 0.0) {\n    gl_FragColor = vec4(0.0);\n    return;\n  }\n  vec2 pl = uv / R;\n  float r2 = dot(pl, pl);\n  float z = sqrt(max(1.0 - r2, 0.0));\n  vec3 n = vec3(pl, z);\n  float cr = cos(uP_spin);\n  float sr = sin(uP_spin);\n  vec3 sp = vec3(n.x * cr - n.z * sr, n.y, n.x * sr + n.z * cr);\n  float t = uP_speed;\n  vec2 st = sp.xy / (1.3 + sp.z) * uP_scale;\n  st.x -= t * 0.3;\n  st.x += uP_shear * sin(sp.y * uP_bands - t * 0.45);\n  vec2 q = vec2(\n    fbm(st + vec2(0.0, t * 0.35)),\n    fbm(st + vec2(5.2, 1.3) - vec2(t * 0.28, 0.0))\n  );\n  vec2 w = vec2(\n    fbm(st + warpNow * q + vec2(1.7, 9.2) + vec2(t * 0.12, 0.0)),\n    fbm(st + warpNow * q + vec2(8.3, 2.8) - vec2(0.0, t * 0.1))\n  );\n  float f = fbm(st + uP_churn * w);\n  vec2 gpix = floor(gl_FragCoord.xy / max(uP_grainSize, 1.0));\n  float frame = floor(uTime * 48.0);\n  float g1 = grainNoise(gpix, frame, 3.1);\n  f += (g1 - 0.5) * uP_grain;\n  f = pow(clamp(f * gainNow, 0.0, 1.0), uP_contrast);\n  vec3 col = mix(uC_deep, uC_low, smoothstep(0.05, 0.35, f));\n  col = mix(col, uC_mid, smoothstep(0.35, 0.62, f));\n  col = mix(col, uC_hot, smoothstep(0.62, 0.88, f));\n  vec3 shimmer = 0.5 + 0.5 * cos(2.0 * PI * (f * 0.9 + q.x * 1.1 + t * 0.06 + vec3(0.0, 0.33, 0.67)));\n  col = mix(col, col * (0.35 + 1.9 * shimmer), uP_rainbow);\n  float ft = t * uP_flashRate;\n  float gate = step(1.0 - (0.1 + 0.5 * uOutput), hash(vec2(floor(ft), 7.7)));\n  float flashEnv = gate * exp(-fract(ft) * 6.0);\n  float high = smoothstep(0.55, 0.95, f);\n  col += uC_flash * (flashEnv * uP_flash) * (0.06 + 0.94 * high * high);\n  float lambert = clamp(dot(n, normalize(vec3(-0.45, 0.55, 0.7))), 0.0, 1.0);\n  col *= 0.35 + uP_light * lambert;\n  float fres = pow(1.0 - z, 2.5);\n  col += uC_flash * uP_rim * fres * (0.4 + 0.35 * flashEnv);\n  float g2 = grainNoise(gpix, frame, 27.9);\n  col *= 1.0 + (g2 - 0.5) * uP_filmGrain;\n  float a = mask;\n  gl_FragColor = vec4(max(col, vec3(0.0)) * a, a);\n}\n",
-    "context": "Shown in the storm in the variants."
-  },
-  {
-    "handler": "ui.variants.storm.fieldGrain",
-    "text": "Field grain",
-    "context": "The label in the storm in the variants."
-  },
-  {
-    "handler": "ui.variants.storm.filmGrain",
-    "text": "Film grain",
-    "context": "The label in the storm in the variants."
-  },
-  {
-    "handler": "ui.variants.storm.flashPower",
-    "text": "Flash power",
-    "context": "The label in the storm in the variants."
-  },
-  {
-    "handler": "ui.variants.storm.flashRate",
-    "text": "Flash rate",
-    "context": "The label in the storm in the variants."
-  },
-  {
-    "handler": "ui.variants.storm.highPressure",
-    "text": "High pressure",
-    "context": "The label in the storm in the variants."
-  },
-  {
-    "handler": "ui.variants.storm.iridescence",
-    "text": "Iridescence",
-    "context": "The label in the storm in the variants."
-  },
-  {
-    "handler": "ui.variants.storm.lightning",
-    "text": "Lightning",
-    "context": "The label in the storm in the variants."
-  },
-  {
-    "handler": "ui.variants.storm.lowPressure",
-    "text": "Low pressure",
-    "context": "The label in the storm in the variants."
-  },
-  {
-    "handler": "ui.variants.storm.midPressure",
-    "text": "Mid pressure",
-    "context": "The label in the storm in the variants."
-  },
-  {
-    "handler": "ui.variants.storm.storm",
-    "text": "Storm",
-    "context": "The label in the storm in the variants."
-  },
-  {
-    "handler": "ui.variants.storm.stormSpeed",
-    "text": "Storm speed",
-    "context": "The label in the storm in the variants."
-  },
-  {
-    "handler": "ui.variants.storm.weatherScale",
-    "text": "Weather scale",
-    "context": "The label in the storm in the variants."
-  },
-  {
-    "handler": "ui.variants.terminal.dropout",
-    "text": "Dropout",
-    "context": "The label in the terminal in the variants."
-  },
-  {
-    "handler": "ui.variants.terminal.fieldScale",
-    "text": "Field scale",
-    "context": "The label in the terminal in the variants."
-  },
-  {
-    "handler": "ui.variants.terminal.glyphDensity",
-    "text": "Glyph density",
-    "context": "The label in the terminal in the variants."
-  },
-  {
-    "handler": "ui.variants.terminal.glyphGrid",
-    "text": "Glyph grid",
-    "context": "The label in the terminal in the variants."
-  },
-  {
-    "handler": "ui.variants.terminal.phosphorGain",
-    "text": "Phosphor gain",
-    "context": "The label in the terminal in the variants."
-  },
-  {
-    "handler": "ui.variants.terminal.pulseRate",
-    "text": "Pulse rate",
-    "context": "The label in the terminal in the variants."
-  },
-  {
-    "handler": "ui.variants.terminal.rimGlow",
-    "text": "Rim glow",
-    "context": "The label in the terminal in the variants."
-  },
-  {
-    "handler": "ui.variants.terminal.terminal",
-    "text": "Terminal",
-    "context": "The label in the terminal in the variants."
-  },
-  {
-    "handler": "ui.variants.terminal.voidMainFloatDensBiasUPDensity",
-    "text": "\nvoid main() {\n  float densBias = uP_density + 0.2 * uInput;\n  float gainNow = uP_gain * (0.85 + 0.5 * uOutput);\n  float cellPx = max(min(uRes.x, uRes.y) / max(uP_cells, 8.0), 4.0);\n  vec2 cellIdx = floor(gl_FragCoord.xy / cellPx);\n  vec2 cellCentre = (cellIdx + 0.5) * cellPx;\n  vec2 g = fract(gl_FragCoord.xy / cellPx);\n  vec2 suv = (2.0 * cellCentre - uRes) / min(uRes.x, uRes.y);\n  vec2 uv = suv / uP_radius;\n  float r2 = dot(uv, uv);\n  float mask = 1.0 - step(1.0, r2);\n  float z = sqrt(max(1.0 - r2, 0.0));\n  vec3 n = vec3(uv, z);\n  float rot = uP_spin;\n  float cr = cos(rot);\n  float sr = sin(rot);\n  vec3 sp = vec3(n.x * cr - n.z * sr, n.y, n.x * sr + n.z * cr);\n  vec2 p2 = sp.xy / (abs(sp.z) + 1.2) * uP_scale * 3.0;\n  float driftT = uP_drift;\n  float scrollT = uP_scroll;\n  float t = uP_speed;\n  vec2 flow = vec2(driftT * 0.6, -driftT * 0.45 - scrollT);\n  float field = fbm(p2 + flow);\n  float lambert = clamp(dot(n, normalize(vec3(-0.45, 0.55, 0.7))), 0.0, 1.0);\n  float dens = clamp((field - 0.5) * 1.8 + densBias + 0.4 * uP_light * lambert\n    + uP_pulse * 0.35 * sin(length(uv) * 5.5 - t * 2.4), 0.0, 1.0);\n  float rowI = floor(g.y * 4.0);\n  float bar = step(0.22, fract(g.y * 4.0)) * step(fract(g.y * 4.0), 0.9);\n  float stripe = step(0.18, fract(g.x * 3.0));\n  float lit = step(rowI + 0.5, dens * 4.0 * gainNow);\n  float glyph = bar * stripe * lit;\n  vec2 superCentre = (floor(cellIdx / 2.0) * 2.0 + 1.0) * cellPx;\n  vec2 sSuv = (2.0 * superCentre - uRes) / min(uRes.x, uRes.y);\n  vec2 sUv2 = sSuv / uP_radius;\n  float sz = sqrt(max(1.0 - dot(sUv2, sUv2), 0.0));\n  vec3 ssp = vec3(sUv2.x * cr - sz * sr, sUv2.y, sUv2.x * sr + sz * cr);\n  float superField = fbm(ssp.xy / (abs(ssp.z) + 1.2) * uP_scale * 3.0 + flow);\n  float keep = step(uP_dropout, superField + 0.15 * uOutput);\n  glyph *= keep;\n  vec3 glyphCol = mix(uC_deep, uC_glow, dens);\n  glyphCol += vec3(0.7, 1.0, 0.9) * pow(dens, 3.0) * 0.35;\n  float fres = pow(1.0 - z, 2.2);\n  vec3 col = uC_deep * 0.22 + glyphCol * glyph + uC_glow * fres * uP_rim;\n  col = pow(max(col, 0.0), vec3(uP_contrast));\n  float a = mask;\n  gl_FragColor = vec4(col * a, a);\n}\n",
-    "context": "Shown in the terminal in the variants."
-  },
-  {
-    "handler": "ui.variants.thermal.cold",
-    "text": "Cold",
-    "context": "The label in the thermal in the variants."
-  },
-  {
-    "handler": "ui.variants.thermal.coldThreshold",
-    "text": "Cold threshold",
-    "context": "The label in the thermal in the variants."
-  },
-  {
-    "handler": "ui.variants.thermal.constFloatPI314159265359Float",
-    "text": "\nconst float PI = 3.14159265359;\nfloat heatGainNow;\nfloat heatJitterNow;\nfloat grainNoise(vec2 gpix, float frame, float seed) {\n  return hash(gpix + vec2(frame * 13.71 + seed, frame * 7.37 - seed));\n}\nmat2 rot2(float a) {\n  float c = cos(a);\n  float s = sin(a);\n  return mat2(c, -s, s, c);\n}\nfloat screen(vec2 uv, float a, vec2 o, float coverage, float soft) {\n  vec2 cell = rot2(a) * uv * uP_dots + o;\n  vec2 f = fract(cell) - 0.5;\n  float d = length(f);\n  float size = 0.5 * sqrt(clamp(coverage * uP_dotGain, 0.0, 1.0));\n  return 1.0 - smoothstep(size - soft, size + soft, d);\n}\nvoid main() {\n  heatGainNow = uP_gain * (1.0 + 0.6 * uOutput);\n  heatJitterNow = uP_jitter * (1.0 + 1.5 * uInput);\n  vec2 uv = orbUV();\n  float rd = length(uv);\n  float R = uP_radius;\n  float mask = smoothstep(0.012, -0.012, rd - R);\n  if (mask <= 0.0) {\n    gl_FragColor = vec4(0.0);\n    return;\n  }\n  vec2 pl = uv / R;\n  float r2 = dot(pl, pl);\n  float z = sqrt(max(1.0 - r2, 0.0));\n  vec3 n = vec3(pl, z);\n  float cr = cos(uP_spin);\n  float sr = sin(uP_spin);\n  vec3 sp = vec3(n.x * cr - n.z * sr, n.y, n.x * sr + n.z * cr);\n  float t = uP_speed;\n  vec2 st = sp.xy / (1.3 + sp.z) * uP_scale;\n  vec2 p = st * uP_freq + vec2(t * 0.11, -t * 0.07);\n  vec2 wp = st * uP_freq * 0.55 + vec2(-t * 0.05, t * 0.08);\n  vec2 warp = vec2(noise(wp + 3.1), noise(wp + 9.4)) - 0.5;\n  p += warp * uP_warp;\n  p += vec2(sin(t * 3.7), cos(t * 4.3)) * heatJitterNow;\n  float field = noise(p) * 0.62 + noise(p * 2.1 + 5.3) * 0.26 + noise(p * 4.2 + 1.7) * 0.12;\n  float heat = clamp((field - uP_lo) * heatGainNow / max(uP_hi - uP_lo, 0.01), 0.0, 1.0);\n  vec2 gpix = floor(gl_FragCoord.xy / max(uP_grainSize, 1.0));\n  float frame = floor(uTime * 48.0);\n  heat += (grainNoise(gpix, frame, 3.1) - 0.5) * uP_dither;\n  float banded = floor(heat * uP_bands + 0.5) / uP_bands;\n  heat = clamp(mix(heat, banded, uP_banding), 0.0, 1.0);\n  heat = pow(heat, uP_contrast);\n  vec3 base = mix(uC_cold, uC_cool, smoothstep(0.0, 0.3, heat));\n  base = mix(base, uC_warm, smoothstep(0.3, 0.55, heat));\n  base = mix(base, uC_hot, smoothstep(0.55, 0.78, heat));\n  base = mix(base, uC_core, smoothstep(0.78, 0.97, heat));\n  float soft = uP_dotSoft;\n  float mis = uP_misregister;\n  float cC = screen(uv, 0.035 * mis, vec2(0.22, 0.12) * mis, 1.0 - base.r, soft);\n  float cM = screen(uv, -0.03 * mis, vec2(-0.14, 0.2) * mis, 1.0 - base.g, soft);\n  float cY = screen(uv, 0.0, vec2(0.0), 1.0 - base.b, soft);\n  vec3 print = uC_paper;\n  print *= mix(vec3(1.0), vec3(0.05, 0.62, 0.92), cC * uP_ink);\n  print *= mix(vec3(1.0), vec3(0.92, 0.08, 0.48), cM * uP_ink);\n  print *= mix(vec3(1.0), vec3(0.98, 0.86, 0.02), cY * uP_ink);\n  vec3 col = mix(base, print, uP_printMix);\n  col *= 1.0 + (grainNoise(gpix, frame, 27.9) - 0.5) * uP_grain;\n  float lambert = clamp(dot(n, normalize(vec3(-0.45, 0.55, 0.7))), 0.0, 1.0);\n  col *= 1.0 - uP_light * (1.0 - lambert);\n  float fres = pow(1.0 - z, 2.5);\n  col += uC_paper * uP_rim * fres * 0.5;\n  float a = mask;\n  gl_FragColor = vec4(max(col, vec3(0.0)) * a, a);\n}\n",
-    "context": "Shown in the thermal in the variants."
-  },
-  {
-    "handler": "ui.variants.thermal.contourBands",
-    "text": "Contour bands",
-    "context": "The label in the thermal in the variants."
-  },
-  {
-    "handler": "ui.variants.thermal.contourStrength",
-    "text": "Contour strength",
-    "context": "The label in the thermal in the variants."
-  },
-  {
-    "handler": "ui.variants.thermal.cool",
-    "text": "Cool",
-    "context": "The label in the thermal in the variants."
-  },
-  {
-    "handler": "ui.variants.thermal.dither",
-    "text": "Dither",
-    "context": "The label in the thermal in the variants."
-  },
-  {
-    "handler": "ui.variants.thermal.dotGain",
-    "text": "Dot gain",
-    "context": "The label in the thermal in the variants."
-  },
-  {
-    "handler": "ui.variants.thermal.dotSoftness",
-    "text": "Dot softness",
-    "context": "The label in the thermal in the variants."
-  },
-  {
-    "handler": "ui.variants.thermal.heatGain",
-    "text": "Heat gain",
-    "context": "The label in the thermal in the variants."
-  },
-  {
-    "handler": "ui.variants.thermal.heatJitter",
-    "text": "Heat jitter",
-    "context": "The label in the thermal in the variants."
-  },
-  {
-    "handler": "ui.variants.thermal.hot",
-    "text": "Hot",
-    "context": "The label in the thermal in the variants."
-  },
-  {
-    "handler": "ui.variants.thermal.hotThreshold",
-    "text": "Hot threshold",
-    "context": "The label in the thermal in the variants."
-  },
-  {
-    "handler": "ui.variants.thermal.inkDensity",
-    "text": "Ink density",
-    "context": "The label in the thermal in the variants."
-  },
-  {
-    "handler": "ui.variants.thermal.misregistration",
-    "text": "Misregistration",
-    "context": "The label in the thermal in the variants."
-  },
-  {
-    "handler": "ui.variants.thermal.poolScale",
-    "text": "Pool scale",
-    "context": "The label in the thermal in the variants."
-  },
-  {
-    "handler": "ui.variants.thermal.printMix",
-    "text": "Print mix",
-    "context": "The label in the thermal in the variants."
-  },
-  {
-    "handler": "ui.variants.thermal.screenPitch",
-    "text": "Screen pitch",
-    "context": "The label in the thermal in the variants."
-  },
-  {
-    "handler": "ui.variants.thermal.thermal",
-    "text": "Thermal",
-    "context": "The label in the thermal in the variants."
-  },
-  {
-    "handler": "ui.variants.thermal.warm",
-    "text": "Warm",
-    "context": "The label in the thermal in the variants."
-  },
-  {
-    "handler": "ui.variants.voxelWorld.blocks",
-    "text": "Blocks",
-    "context": "The label in the voxel world in the variants."
-  },
-  {
-    "handler": "ui.variants.voxelWorld.caves",
-    "text": "Caves",
-    "context": "The label in the voxel world in the variants."
-  },
-  {
-    "handler": "ui.variants.voxelWorld.defineSTEPS160Vec3CkDriftFloat",
-    "text": "\n#define STEPS 160\nvec3 ckDrift;\nfloat ckVs;\nfloat ckMaxH;\nfloat ckSeaN;\nvec4 ckClim;\nfloat ckCherry;\nfloat ckTreeMul;\nvec3 ckTreeDir;\nfloat ckTreeH1;\nfloat ckTreeH2;\nmat2 ckRot(float a) {\n  float c = cos(a);\n  float s = sin(a);\n  return mat2(c, -s, s, c);\n}\nfloat ckN3(vec3 p) {\n  float v = (noise(p.xy) + noise(p.yz + 19.1) + noise(p.zx + 47.3)) / 3.0;\n  return clamp(0.5 + (v - 0.5) * 1.9, 0.0, 1.0);\n}\nfloat ckField(vec3 dir) {\n  vec3 q = dir * uP_scale + ckDrift;\n  return ckN3(q) * 0.65 + ckN3(q * 2.6 + 31.7) * 0.35;\n}\nfloat ckTerrain(vec3 dir) {\n  float h = 1.0 + uP_rough * max(ckField(dir) - ckSeaN, 0.0) * 1.2\n    * (1.0 + ckClim.w * 0.8);\n  float stepH = 3.0 * ckVs;\n  float hq = 1.0 + floor((h - 1.0) / stepH) * stepH;\n  return mix(h, hq, ckClim.w * 0.85);\n}\nfloat ckBiome(vec3 dir) {\n  return ckN3(dir * 1.3 + ckDrift + 57.9);\n}\nvoid ckTreeCell(vec3 dir) {\n  vec3 ad = abs(dir);\n  vec2 fuv;\n  float face;\n  if (ad.x >= ad.y && ad.x >= ad.z) {\n    fuv = dir.yz / ad.x;\n    face = dir.x > 0.0 ? 0.0 : 1.0;\n  } else if (ad.y >= ad.z) {\n    fuv = dir.xz / ad.y;\n    face = dir.y > 0.0 ? 2.0 : 3.0;\n  } else {\n    fuv = dir.xy / ad.z;\n    face = dir.z > 0.0 ? 4.0 : 5.0;\n  }\n  float grid = max(uP_blocks / 6.0, 2.0);\n  vec2 cell = floor((fuv * 0.5 + 0.5) * grid);\n  ckTreeH1 = hash(cell * 1.17 + face * 19.3);\n  ckTreeH2 = hash(cell * 0.71 + face * 7.7 + 9.3);\n  vec2 jit = vec2(hash(cell + 7.1 + face), hash(cell + 13.7 + face)) - 0.5;\n  vec2 auv = ((cell + 0.5 + jit * 0.3) / grid) * 2.0 - 1.0;\n  vec3 cp;\n  if (face < 1.5) cp = vec3(face < 0.5 ? 1.0 : -1.0, auv.x, auv.y);\n  else if (face < 3.5) cp = vec3(auv.x, face < 2.5 ? 1.0 : -1.0, auv.y);\n  else cp = vec3(auv.x, auv.y, face < 4.5 ? 1.0 : -1.0);\n  ckTreeDir = normalize(cp);\n}\nfloat ckVoxel(vec3 cc) {\n  float r = length(cc);\n  vec3 dir = cc / max(r, 1.0e-4);\n  if (r < ckMaxH) {\n    float h = ckTerrain(dir);\n    if (r < h) {\n      if (h > 1.0 + 1.5 * ckVs) {\n        float cv = ckN3(cc * (uP_scale * 1.9) + 71.3);\n        float cw = uP_cave * 0.16 * smoothstep(ckMaxH, ckMaxH - 0.45, r);\n        if (abs(cv - 0.5) < cw) return 0.0;\n      }\n      return 1.0;\n    }\n  }\n  if (r < ckMaxH + 8.0 * ckVs && uP_trees > 0.001) {\n    ckTreeCell(dir);\n    float thrMax = clamp(uP_trees, 0.0, 1.0) * 0.8;\n    if (ckTreeH1 > 1.0 - thrMax) {\n      float bioA = ckBiome(ckTreeDir);\n      float dens = bioA > 0.58 ? 1.0 : (bioA > 0.3 ? 0.25 : 0.0);\n      dens *= ckTreeMul;\n      if (ckTreeH1 > 1.0 - thrMax * dens) {\n        float fA = ckField(ckTreeDir);\n        float ha = 1.0 + uP_rough * max(fA - ckSeaN, 0.0) * 1.2;\n        if (fA > ckSeaN + 0.015 && ha < 1.0 + uP_rough * 0.42) {\n          float lat = length(cc - dot(cc, ckTreeDir) * ckTreeDir);\n          if (ckClim.z > 0.5) {\n            float spikeH = (2.0 + 6.0 * ckTreeH2 * ckTreeH2) * ckVs;\n            float w = mix(1.15, 0.3, clamp((r - ha) / spikeH, 0.0, 1.0)) * ckVs;\n            if (lat < w && r > ha - ckVs && r < ha + spikeH) return 3.0;\n          } else if (ckClim.w > 0.5) {\n            float cacH = (1.5 + 2.0 * ckTreeH2) * ckVs;\n            if (lat < 0.6 * ckVs && r > ha - ckVs && r < ha + cacH) return 3.0;\n          } else if (ckCherry > 0.5) {\n            float trunkTop = ha + (2.0 + 1.5 * ckTreeH2) * ckVs;\n            if (lat < 0.75 * ckVs && r > ha - ckVs && r < trunkTop) return 2.0;\n            vec3 dd = cc - ckTreeDir * (trunkTop + 0.6 * ckVs);\n            dd += ckTreeDir * dot(dd, ckTreeDir) * 0.8;\n            vec3 lv = floor(cc / ckVs);\n            float rag = hash(lv.xy * 0.61 + lv.z * 2.23);\n            if (length(dd) < (2.2 + 0.5 * rag) * ckVs) return 3.0;\n          } else {\n            float trunkTop = ha + (2.5 + 2.0 * ckTreeH2) * ckVs;\n            if (lat < 0.75 * ckVs && r > ha - ckVs && r < trunkTop) return 2.0;\n            vec3 dd = cc - ckTreeDir * (trunkTop + 0.7 * ckVs);\n            vec3 lv = floor(cc / ckVs);\n            float rag = hash(lv.xy * 0.61 + lv.z * 2.23);\n            if (length(dd) < (1.7 + 0.5 * rag) * ckVs) return 3.0;\n          }\n        }\n      }\n    }\n  }\n  return 0.0;\n}\nvoid main() {\n  float glowNow = uP_glow * (0.7 + 1.0 * uOutput);\n  float gainNow = uP_gain * (0.9 + 0.3 * uOutput);\n  float lightNow = uP_light * (1.0 + 0.3 * uInput);\n  ckDrift = vec3(uP_drift * 0.31, uP_drift * 0.17, -uP_drift * 0.23);\n  float t5 = fract(uP_season * 0.05) * 5.0;\n  ckClim = vec4(\n    clamp(1.0 - min(abs(t5), abs(t5 - 5.0)), 0.0, 1.0),\n    clamp(1.0 - abs(t5 - 4.0), 0.0, 1.0),\n    clamp(1.0 - abs(t5 - 2.0), 0.0, 1.0),\n    clamp(1.0 - abs(t5 - 3.0), 0.0, 1.0)\n  );\n  ckCherry = clamp(1.0 - abs(t5 - 1.0), 0.0, 1.0);\n  ckTreeMul = dot(ckClim, vec4(1.0, 0.15, 0.9, 0.3)) + ckCherry * 0.9;\n  ckVs = 2.0 / clamp(uP_blocks, 8.0, 96.0);\n  ckSeaN = 0.25 + clamp(uP_sea, 0.0, 1.0) * 0.5;\n  ckMaxH = 1.0 + uP_rough * (1.0 - ckSeaN) * 1.2 * 1.8 + 0.001;\n  float bound = ckMaxH + 8.5 * ckVs;\n  vec2 uv = orbUV() / uP_radius;\n  vec3 ro = vec3(uv * bound, 2.9);\n  vec3 rd = vec3(0.0, 0.0, -1.0);\n  mat2 tiltM = ckRot(uP_tilt);\n  mat2 spinM = ckRot(-uP_spin);\n  ro.yz = tiltM * ro.yz;\n  ro.xz = spinM * ro.xz;\n  rd.yz = tiltM * rd.yz;\n  rd.xz = spinM * rd.xz;\n  vec3 Lo = normalize(vec3(-0.5, 0.7, 0.55));\n  Lo.yz = tiltM * Lo.yz;\n  Lo.xz = spinM * Lo.xz;\n  vec3 sgn = vec3(\n    rd.x >= 0.0 ? 1.0 : -1.0,\n    rd.y >= 0.0 ? 1.0 : -1.0,\n    rd.z >= 0.0 ? 1.0 : -1.0\n  );\n  rd = normalize(sgn * max(abs(rd), vec3(1.0e-4)));\n  float b = dot(rd, ro);\n  float c = dot(ro, ro) - bound * bound;\n  float disc = b * b - c;\n  if (disc < 0.0) {\n    gl_FragColor = vec4(0.0);\n    return;\n  }\n  float sq = sqrt(disc);\n  vec3 p0 = ro + rd * (-b - sq + ckVs * 0.001);\n  float tSpan = 2.0 * sq;\n  vec3 vp = floor(p0 / ckVs);\n  vec3 tDelta = ckVs / abs(rd);\n  vec3 tMax = ((vp + step(vec3(0.0), rd)) * ckVs - p0) / rd;\n  float mat = 0.0;\n  vec3 mask = vec3(0.0, 0.0, 1.0);\n  float tCur = 0.0;\n  for (int i = 0; i < STEPS; i++) {\n    float m = ckVoxel((vp + 0.5) * ckVs);\n    if (m > 0.5) {\n      mat = m;\n      break;\n    }\n    if (tMax.x < tMax.y && tMax.x < tMax.z) {\n      tCur = tMax.x;\n      tMax.x += tDelta.x;\n      vp.x += sgn.x;\n      mask = vec3(1.0, 0.0, 0.0);\n    } else if (tMax.y < tMax.z) {\n      tCur = tMax.y;\n      tMax.y += tDelta.y;\n      vp.y += sgn.y;\n      mask = vec3(0.0, 1.0, 0.0);\n    } else {\n      tCur = tMax.z;\n      tMax.z += tDelta.z;\n      vp.z += sgn.z;\n      mask = vec3(0.0, 0.0, 1.0);\n    }\n    if (tCur > tSpan) break;\n  }\n  if (mat < 0.5) {\n    gl_FragColor = vec4(0.0);\n    return;\n  }\n  vec3 cc = (vp + 0.5) * ckVs;\n  float r = length(cc);\n  vec3 dir = cc / max(r, 1.0e-4);\n  vec3 n = -mask * sgn;\n  vec3 hp = p0 + rd * tCur;\n  vec2 vseed = vec2(dot(vp, vec3(1.0, 57.0, 113.0)), dot(vp, vec3(27.0, 7.0, 91.0)));\n  float h1 = hash(vseed * 0.013);\n  float h2 = hash(vseed * 0.029 + 5.7);\n  vec2 uvFace;\n  if (mask.x > 0.5) uvFace = hp.yz;\n  else if (mask.y > 0.5) uvFace = hp.xz;\n  else uvFace = hp.xy;\n  float grain = hash(floor(fract(uvFace / ckVs) * 4.0) * 0.37 + vseed * 0.11);\n  float texMul = mix(1.0, 0.72 + 0.55 * grain, uP_texture);\n  float lam = clamp(dot(n, Lo), 0.0, 1.0);\n  float wrap = clamp(dot(dir, Lo) * 0.5 + 0.5, 0.0, 1.0);\n  float ao = 0.55 + 0.45 * clamp(dot(n, dir) * 0.5 + 0.5, 0.0, 1.0);\n  float shade = (0.32 + 0.5 * wrap * wrap + 0.85 * lam * lightNow) * ao;\n  vec3 col;\n  if (mat < 1.5) {\n    float f = ckField(dir);\n    float h = 1.0 + uP_rough * max(f - ckSeaN, 0.0) * 1.2;\n    float depth = h - r;\n    float topF = step(depth, ckVs * 1.15);\n    vec3 snow = vec3(0.92, 0.95, 1.0);\n    float layer = hash(vec2(floor(r / (ckVs * 2.0)) * 0.371, 5.3));\n    vec3 mesaBand = layer < 0.5 ? vec3(0.74, 0.42, 0.21)\n      : (layer < 0.68 ? vec3(0.63, 0.26, 0.15)\n      : (layer < 0.8 ? vec3(0.88, 0.79, 0.67)\n      : (layer < 0.9 ? vec3(0.84, 0.65, 0.27) : vec3(0.4, 0.25, 0.18))));\n    vec3 mesaTop = mix(vec3(0.72, 0.38, 0.2), mesaBand, step(1.0 + uP_rough * 0.1, h));\n    vec3 climGrass = uC_grass * ckClim.x + uC_sand * ckClim.y\n      + snow * ckClim.z + mesaTop * ckClim.w\n      + mix(uC_grass, vec3(0.62, 0.85, 0.3), 0.6) * ckCherry;\n    vec3 climDirt = uC_dirt * (ckClim.x + ckClim.y + ckCherry)\n      + uC_dirt * vec3(0.75, 0.85, 1.05) * ckClim.z + mesaBand * ckClim.w;\n    vec3 climSand = uC_sand * (ckClim.x + ckClim.y + ckCherry)\n      + mix(uC_sand, snow, 0.9) * ckClim.z + vec3(0.72, 0.35, 0.2) * ckClim.w;\n    vec3 climWater = uC_water * (ckClim.x + ckClim.y + ckCherry)\n      + vec3(0.62, 0.82, 0.92) * ckClim.z\n      + mix(uC_water, vec3(0.42, 0.3, 0.22), 0.4) * ckClim.w;\n    if (topF > 0.5 && f < ckSeaN) {\n      float deep = clamp((ckSeaN - f) / 0.12, 0.0, 1.0) * (1.0 - 0.55 * ckClim.z);\n      vec3 wc = climWater * mix(1.3, 0.55, deep);\n      float shim = 0.85 + 0.25 * sin(uAnim * 2.5 + grain * 6.2831 + dir.x * 4.0);\n      shim = mix(shim, 1.02, ckClim.z);\n      col = wc * (0.45 + 0.55 * wrap) * shim + wc * lam * 0.35;\n    } else {\n      float dirtF = step(depth, ckVs * 2.4);\n      float up = clamp(dot(n, dir), 0.0, 1.0);\n      vec3 albedo = mix(uC_stone, climDirt, dirtF);\n      albedo = mix(albedo, uC_stone, dirtF * (1.0 - topF) * step(h2, 0.3));\n      float bio = ckBiome(dir);\n      float desertF = step(bio, 0.3);\n      albedo = mix(albedo, climGrass, topF * step(0.45, up) * (1.0 - desertF));\n      albedo = mix(albedo, climSand, desertF * dirtF);\n      albedo = mix(albedo, climDirt,\n        topF * step(1.0 + uP_rough * 0.28, h) * 0.85 * (1.0 - 0.9 * ckClim.z));\n      albedo = mix(albedo, uC_stone,\n        topF * step(1.0 + uP_rough * 0.45, h) * (1.0 - 0.85 * ckClim.z));\n      albedo = mix(albedo, climSand, topF * step(abs(f - ckSeaN - 0.017), 0.018));\n      vec3 oc = floor(cc / (2.5 * ckVs));\n      vec2 oseed = vec2(dot(oc, vec3(1.0, 57.0, 113.0)), dot(oc, vec3(27.0, 7.0, 91.0)));\n      float fleck = step(0.5, hash(floor(fract(uvFace / ckVs) * 4.0) * 0.53 + oseed * 0.19));\n      float icePatch = ckClim.z * step(hash(oseed * 0.023 + 9.1), 0.5)\n        * step(1.0 + uP_rough * 0.06, h);\n      albedo = mix(albedo, vec3(0.55, 0.7, 0.92), icePatch * (0.45 + 0.4 * fleck));\n      float veinF = (1.0 - dirtF) * step(1.0 - uP_ore, hash(oseed * 0.017)) * step(h1, 0.8);\n      float oreType = hash(oseed * 0.041 + 2.9);\n      vec3 oreHue = oreType < 0.4\n        ? uC_ore\n        : (oreType < 0.75 ? uC_ore * vec3(0.25, 0.45, 1.2) : vec3(0.16));\n      float oreLit = oreType < 0.75 ? 1.0 : 0.0;\n      albedo = mix(albedo, oreHue, veinF * (0.2 + 0.65 * fleck));\n      float twinkle = 0.55 + 0.45 * sin(uP_shuffle + hash(oseed * 0.013) * 37.0);\n      float depthDim = mix(1.0, 0.62, clamp(depth / max(uP_rough * 0.9, 0.05), 0.0, 1.0));\n      float coreR = 1.0 - uP_rough * 0.6;\n      float coreF = uP_core * smoothstep(coreR + 0.15, coreR - 0.05, r);\n      vec3 emis = oreHue * veinF * fleck * oreLit * glowNow * twinkle\n        + uC_lava * coreF * (0.9 + 0.4 * sin(uP_shuffle * 1.6 + h1 * 51.0))\n          * (0.6 + 1.4 * uOutput);\n      col = albedo * shade * depthDim + emis;\n    }\n  } else if (mat < 2.5) {\n    col = uC_dirt * 0.5 * shade;\n  } else {\n    vec3 climLeaf = uC_leaf * (ckClim.x + ckClim.y * 0.9)\n      + vec3(0.62, 0.76, 0.95) * ckClim.z\n      + mix(uC_leaf, vec3(0.45, 0.62, 0.25), 0.5) * ckClim.w\n      + vec3(0.93, 0.7, 0.82) * ckCherry;\n    col = climLeaf * shade;\n    float leafGrain = mix(0.5 + 0.9 * grain, 0.85 + 0.3 * grain, ckClim.z);\n    texMul = mix(1.0, leafGrain, uP_texture);\n  }\n  col *= texMul * gainNow;\n  col = pow(max(col, 0.0), vec3(uP_contrast));\n  gl_FragColor = vec4(col, 1.0);\n}\n",
-    "context": "Shown in the voxel world in the variants."
-  },
-  {
-    "handler": "ui.variants.voxelWorld.emberRate",
-    "text": "Ember rate",
-    "context": "The label in the voxel world in the variants."
-  },
-  {
-    "handler": "ui.variants.voxelWorld.grass",
-    "text": "Grass",
-    "context": "The label in the voxel world in the variants."
-  },
-  {
-    "handler": "ui.variants.voxelWorld.lava",
-    "text": "Lava",
-    "context": "The label in the voxel world in the variants."
-  },
-  {
-    "handler": "ui.variants.voxelWorld.leaves",
-    "text": "Leaves",
-    "context": "The label in the voxel world in the variants."
-  },
-  {
-    "handler": "ui.variants.voxelWorld.moltenCore",
-    "text": "Molten core",
-    "context": "The label in the voxel world in the variants."
-  },
-  {
-    "handler": "ui.variants.voxelWorld.mountains",
-    "text": "Mountains",
-    "context": "The label in the voxel world in the variants."
-  },
-  {
-    "handler": "ui.variants.voxelWorld.mud",
-    "text": "Mud",
-    "context": "The label in the voxel world in the variants."
-  },
-  {
-    "handler": "ui.variants.voxelWorld.ore",
-    "text": "Ore",
-    "context": "The label in the voxel world in the variants."
-  },
-  {
-    "handler": "ui.variants.voxelWorld.oreDensity",
-    "text": "Ore density",
-    "context": "The label in the voxel world in the variants."
-  },
-  {
-    "handler": "ui.variants.voxelWorld.oreGlow",
-    "text": "Ore glow",
-    "context": "The label in the voxel world in the variants."
-  },
-  {
-    "handler": "ui.variants.voxelWorld.sand",
-    "text": "Sand",
-    "context": "The label in the voxel world in the variants."
-  },
-  {
-    "handler": "ui.variants.voxelWorld.seaLevel",
-    "text": "Sea level",
-    "context": "The label in the voxel world in the variants."
-  },
-  {
-    "handler": "ui.variants.voxelWorld.seasonRate",
-    "text": "Season rate",
-    "context": "The label in the voxel world in the variants."
-  },
-  {
-    "handler": "ui.variants.voxelWorld.stone",
-    "text": "Stone",
-    "context": "The label in the voxel world in the variants."
-  },
-  {
-    "handler": "ui.variants.voxelWorld.terrainDrift",
-    "text": "Terrain drift",
-    "context": "The label in the voxel world in the variants."
-  },
-  {
-    "handler": "ui.variants.voxelWorld.terrainScale",
-    "text": "Terrain scale",
-    "context": "The label in the voxel world in the variants."
-  },
-  {
-    "handler": "ui.variants.voxelWorld.textureGrain",
-    "text": "Texture grain",
-    "context": "The label in the voxel world in the variants."
-  },
-  {
-    "handler": "ui.variants.voxelWorld.trees",
-    "text": "Trees",
-    "context": "The label in the voxel world in the variants."
-  },
-  {
-    "handler": "ui.variants.voxelWorld.voxelWorld",
-    "text": "Voxel world",
-    "context": "The label in the voxel world in the variants."
   },
   {
     "handler": "ui.watchedBar.valueWatched",
