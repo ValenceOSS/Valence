@@ -16,9 +16,22 @@ describe('isExactVersion', () => {
     expect(isExactVersion('latest')).toBe(false);
   });
 
-  it('takes a workspace package and a GitHub tag, which the lockfile holds to one commit', () => {
+  it('takes a workspace package, and a git package named by a commit or a version tag', () => {
     expect(isExactVersion('workspace:*')).toBe(true);
     expect(isExactVersion('github:castlabs/electron-releases#v44.1.0+wvcus')).toBe(true);
+    expect(
+      isExactVersion(
+        'git+https://github.com/ValenceOSS/Valence.git#a2d5be9279d750007e1117152d26a3d365a98633&path:/packages/plugin-sdk',
+      ),
+    ).toBe(true);
+  });
+
+  it('refuses a git package named by a branch, or by nothing, which follows the branch', () => {
+    expect(isExactVersion('github:ValenceOSS/Valence#main')).toBe(false);
+    expect(isExactVersion('github:ValenceOSS/Valence#feat/val-297-plugin-system&path:/x')).toBe(
+      false,
+    );
+    expect(isExactVersion('github:ValenceOSS/Valence')).toBe(false);
   });
 
   it('judges an npm alias by the version it names', () => {

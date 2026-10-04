@@ -24,9 +24,10 @@ describe('nodeImageVersions', () => {
       'FROM node:24.21.0-bookworm-slim AS web-build',
       '# FROM node:22 would be a comment',
       'FROM node:24.21.0-bookworm-slim AS runtime',
+      'FROM --platform=$BUILDPLATFORM node:latest AS tools',
     ].join('\n');
 
-    expect(nodeImageVersions(dockerfile)).toEqual(['24.21.0', '24.21.0']);
+    expect(nodeImageVersions(dockerfile)).toEqual(['24.21.0', '24.21.0', 'latest']);
   });
 
   it('names one exact Node in .nvmrc, which CI installs', () => {

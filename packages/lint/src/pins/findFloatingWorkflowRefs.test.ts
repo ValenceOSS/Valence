@@ -20,6 +20,15 @@ describe('findFloatingWorkflowRefs', () => {
     ]);
   });
 
+  it('reads an action whether or not it is quoted', () => {
+    const workflow = [
+      '  - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v7.0.1',
+      "  - uses: 'actions/checkout@v7'",
+    ].join('\n');
+
+    expect(findFloatingWorkflowRefs(workflow)).toEqual(['actions/checkout@v7']);
+  });
+
   it('leaves an action or a workflow from this repository alone', () => {
     expect(findFloatingWorkflowRefs('    uses: ./.github/workflows/desktop.yml\n')).toEqual([]);
   });
@@ -39,7 +48,7 @@ describe('findFloatingWorkflowRefs', () => {
     ]);
   });
 
-  it.each(readdirSync(WORKFLOWS).filter((name) => name.endsWith('.yml')))(
+  it.each(readdirSync(WORKFLOWS).filter((name) => /\.ya?ml$/u.test(name)))(
     'finds nothing floating in %s',
     (name) => {
       expect(findFloatingWorkflowRefs(readFileSync(join(WORKFLOWS, name), 'utf8'))).toEqual([]);

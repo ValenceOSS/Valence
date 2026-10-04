@@ -1,4 +1,4 @@
-const NODE_IMAGE = /^FROM\s+node:(?<version>[^\s-]+)/gmu;
+const NODE_IMAGE = /^FROM\s+(?:--platform=\S+\s+)?node:(?<version>[^\s-]+)/gmu;
 
 /**
  * Lists the Node versions a Dockerfile's stages are built on.

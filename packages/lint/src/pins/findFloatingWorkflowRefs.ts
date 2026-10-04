@@ -1,4 +1,4 @@
-const ACTION = /^\s*-?\s*uses:\s*(?<ref>\S+)/gmu;
+const ACTION = /^\s*-?\s*uses:\s*(?<quote>["']?)(?<ref>[^\s"']+)\k<quote>/gmu;
 
 const PINNED_ACTION = /^[^@\s]+@[0-9a-f]{40}$/u;
 

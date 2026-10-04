@@ -29,7 +29,8 @@ const installedCamoufox = (): string | null => {
  * Reads which uBlock Origin is unpacked in an addon folder, if any.
  *
  * @param folder - Where camoufox-js keeps the addon.
- * @returns The installed version, or null when there is none.
+ * @returns The installed version, or null when there is none or its manifest cannot be read, so a
+ *   broken install is replaced rather than failing every run.
  */
 const installedUblockOrigin = (folder: string): string | null => {
   const manifest = join(folder, 'manifest.json');
@@ -38,9 +39,14 @@ const installedUblockOrigin = (folder: string): string | null => {
     return null;
   }
 
-  return (
-    AddonManifestSchema.safeParse(JSON.parse(readFileSync(manifest, 'utf8'))).data?.version ?? null
-  );
+  try {
+    return (
+      AddonManifestSchema.safeParse(JSON.parse(readFileSync(manifest, 'utf8'))).data?.version ??
+      null
+    );
+  } catch {
+    return null;
+  }
 };
 
 const pin = pinnedBrowser(readFileSync(new URL('../../../Dockerfile', import.meta.url), 'utf8'));
