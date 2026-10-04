@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
-import { profileInitial } from '@ValenceContracts/schemas/ViewerProfile';
+import { profileAvatarUrl, profileInitial } from '@ValenceContracts/schemas/ViewerProfile';
 import { PICTURES_SEEN } from '@ValenceMobile/components/AFace/PICTURES_SEEN';
 import { thePictureFor } from '@ValenceMobile/components/AFace/thePictureFor';
 import { APicture } from '@ValenceMobile/components/APicture/APicture';
+import { AMovingFace } from '@ValenceMobile/components/AMovingFace/AMovingFace';
+import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { inkFor } from '@ValenceClient/library/inkFor';
 import { LETTER_INKS } from '@ValenceNative/library/LETTER_INKS';
@@ -106,6 +108,12 @@ const AFace = ({ profile, picked = null, isLarge = false, tileMotion }: AFacePro
           tileMotion,
         ]}
       >
+        {profile.avatar.kind === 'photo' && profile.avatar.isVideo && picked === null ? (
+          <View style={[styles.picture, framed(profile.avatar, side)]}>
+            <AMovingFace uri={onThisServer(profileAvatarUrl(profile))} />
+          </View>
+        ) : null}
+
         {isShowing ? null : (
           <Text
             style={[

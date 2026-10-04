@@ -14,6 +14,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { pictureOnThisServer } from '@ValenceMobile/platform/pictureOnThisServer';
 import type { MissingAlbum } from '@ValenceContracts/schemas/ArtistStory';
 import type { AnArtistStoryProps } from './AnArtistStory.types';
+import { useAlbumSample } from '@ValenceMobile/hooks/useAlbumSample';
 import { say } from '@ValenceI18n/say';
 
 const LINES_AT_FIRST = 6;
@@ -45,12 +46,23 @@ const AnArtistStory = ({ artistId, name }: AnArtistStoryProps) => {
    *
    * @param album - The album.
    */
+  const sample = useAlbumSample();
+
   const offer = (album: MissingAlbum) => {
     Alert.alert(
       say('phone.anArtist.anArtistStory.requestTitle', { title: album.title }),
       say('phone.anArtist.anArtistStory.itIsAddedToYourLibrary'),
       [
         { text: say('common.cancel'), style: 'cancel' },
+        {
+          text:
+            sample.heard === album.releaseGroupId
+              ? say('screens.askableDialog.stopTheSampleOfTitle', { title: album.title })
+              : say('screens.askableDialog.playASampleOfTitle', { title: album.title }),
+          onPress: () => {
+            void sample.toggle(album.releaseGroupId, name, album.title);
+          },
+        },
         {
           text: say('common.request'),
           onPress: () => {

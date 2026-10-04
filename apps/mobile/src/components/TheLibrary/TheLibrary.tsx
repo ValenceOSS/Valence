@@ -1,3 +1,4 @@
+import { AWrittenName } from '@ValenceMobile/components/AWrittenName/AWrittenName';
 import { Calendar, Film, Inbox, Monitor, ScanQrCode, SearchX } from '@keyline-icons/react-native';
 import {
   Film as FilmFilled,
@@ -49,8 +50,6 @@ import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
 import { useTheSideStrip } from '@ValenceMobile/hooks/useTheSideStrip';
 import { theColours } from '@ValenceMobile/theme/theColours';
 import { theVeilFor } from '@ValenceMobile/components/TheLibrary/theVeilFor';
-import { ACCOUNT_PANELS } from '@ValenceMobile/components/TheAccount/ACCOUNT_PANELS';
-import { useAccountPanels } from '@ValenceMobile/components/TheAccount/useAccountPanels';
 import { usePluginThemeInStep } from '@ValenceMobile/plugins/usePluginThemeInStep';
 import { librariesChosen } from '@ValenceClient/library/librariesChosen';
 import { libraryOptionsFor } from '@ValenceClient/library/libraryOptionsFor';
@@ -208,8 +207,6 @@ const TheLibrary = ({
   const [partsTall, setPartsTall] = useState(0);
   const [searchingFor, setSearchingFor] = useState('');
   const [downloadsFor, setDownloadsFor] = useState('');
-  const [accountShows, setAccountShows] = useState<string>(ACCOUNT_PANELS[0].id);
-  const accountPanels = useAccountPanels();
 
   usePluginThemeInStep();
   const isSearching = side === 'search';
@@ -447,7 +444,7 @@ const TheLibrary = ({
         <View style={styles.topRow}>
           <View style={styles.brand}>
             <ACarriedMark isHandedOn={false} />
-            <Words size="heading">{say('common.valence')}</Words>
+            <AWrittenName name={say('common.valence')} />
           </View>
           <View style={styles.aside}>
             {onRequested === undefined ? null : (
@@ -525,14 +522,11 @@ const TheLibrary = ({
             />
           </View>
           <View pointerEvents={side === 'account' ? 'auto' : 'none'} style={styles.searchInstead}>
-            <SegmentedRow
-              label={say('common.whatToChange')}
-              fills
-              isShown={side === 'account'}
-              items={accountPanels}
-              value={accountShows}
-              onSelect={setAccountShows}
-            />
+            {side === 'account' ? (
+              <Words size="title">
+                {say('common.account')}
+              </Words>
+            ) : null}
           </View>
         </Animated.View>
       </View>
@@ -692,8 +686,8 @@ const TheLibrary = ({
     [downloadsPage, underTheBar, downloadsScrolled, downloadsFor],
   );
   const accountShown = useMemo(
-    () => accountPage?.(underTheBar, accountScrolled, accountShows, setAccountShows),
-    [accountPage, underTheBar, accountScrolled, accountShows],
+    () => accountPage?.(underTheBar, accountScrolled),
+    [accountPage, underTheBar, accountScrolled],
   );
   const sidePages = [
     ['search', searchShown],

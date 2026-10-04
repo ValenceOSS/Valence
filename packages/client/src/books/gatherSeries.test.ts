@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { gatherSeries, inSeriesOrder } from '@ValenceScreens/reading/gatherSeries';
+import { gatherSeries, inSeriesOrder } from '@ValenceClient/books/gatherSeries';
 import { anAudiobook } from '@ValenceClient/testing/anAudiobook';
 import type { Book } from '@ValenceContracts/schemas/Book';
 

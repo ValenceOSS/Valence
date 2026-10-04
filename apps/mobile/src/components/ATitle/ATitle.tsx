@@ -6,9 +6,12 @@ import {
   Film,
   Heart,
   ListVideo,
+  Monitor,
   RotateCcw,
   Share,
 } from '@keyline-icons/react-native';
+import { useVideoDevices } from '@ValenceClient/video/useVideoDevices';
+import { APlayOnSheet } from '@ValenceMobile/components/APlayOnSheet/APlayOnSheet';
 import { describeTimeToGo } from '@ValenceCore/functions/describeTimeToGo';
 import { Heart as HeartFilled, Play as PlayFilled } from '@keyline-icons/react-native/fill';
 import { useState } from 'react';
@@ -21,6 +24,7 @@ import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { qualityBadges } from '@ValenceClient/library/qualityBadges';
 import { theVersionsOf } from '@ValenceClient/library/theVersionsOf';
 import { describeTitleDetails } from '@ValenceClient/library/describeTitleDetails';
+import { ATomatoMark } from '@ValenceMobile/components/ATomatoMark/ATomatoMark';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useHidden } from '@ValenceClient/library/useHidden';
 import { useHeldFiles } from '@ValenceClient/downloads/useHeldFiles';
@@ -69,6 +73,7 @@ const styles = StyleSheet.create({
   },
   again: { alignItems: 'center', borderRadius: 12, justifyContent: 'center' },
   detail: { gap: 2, width: '47%' },
+  detailValue: { alignItems: 'center', flexDirection: 'row', gap: 6 },
   details: { columnGap: 12, flexDirection: 'row', flexWrap: 'wrap', rowGap: 12 },
   facts: { gap: 8 },
   play: { flex: 1 },
@@ -100,6 +105,8 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
   const cache = useQueryClient();
   const held = useHeldFiles().find((file) => file.mediaId === mediaId) ?? null;
   const [sharing, setSharing] = useState<ShareSubject | null>(null);
+  const [isPlayingOn, setIsPlayingOn] = useState(false);
+  const hasTelevision = useVideoDevices().some((device) => device.kind === 'tv');
   const preparing =
     useQuery(downloadQueries.all()).data?.find(
       (download) => download.mediaId === mediaId && download.state === 'preparing',
@@ -387,6 +394,21 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
           </View>
         </Button>
 
+        {!hasTelevision ? null : (
+          <Button
+            tone="bare"
+            label={say('common.playOnTV')}
+            onPress={() => {
+              setIsPlayingOn(true);
+            }}
+          >
+            <View style={styles.action}>
+              <Icon of={Monitor} colour={colours.text} />
+              <Words size="small">{say('common.playOnTV')}</Words>
+            </View>
+          </Button>
+        )}
+
         <Button
           tone="bare"
           label={say('common.hide')}
@@ -413,6 +435,14 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
         }}
       />
 
+      <APlayOnSheet
+        media={isPlayingOn ? { id: playing, title: title.title } : null}
+        startSeconds={carryOnAt ?? 0}
+        onClose={() => {
+          setIsPlayingOn(false);
+        }}
+      />
+
       <TheStars subject={{ mediaId }} />
 
       {details.length === 0 ? null : (
@@ -422,7 +452,10 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
               <Words size="small" tone="muted">
                 {detail.label}
               </Words>
-              <Words>{detail.value}</Words>
+              <View style={styles.detailValue}>
+                {detail.tomato === undefined ? null : <ATomatoMark score={detail.tomato} />}
+                <Words>{detail.value}</Words>
+              </View>
             </View>
           ))}
         </View>

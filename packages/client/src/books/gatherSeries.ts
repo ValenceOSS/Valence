@@ -14,7 +14,7 @@ const IN_ORDER = new Intl.Collator('en', { numeric: true, sensitivity: 'base' })
  * @returns Them, in order.
  */
 const inSeriesOrder = (books: readonly Book[]): Book[] =>
-  books.toSorted(
+  [...books].sort(
     (one, other) =>
       (one.series?.position ?? Number.POSITIVE_INFINITY) -
         (other.series?.position ?? Number.POSITIVE_INFINITY) ||

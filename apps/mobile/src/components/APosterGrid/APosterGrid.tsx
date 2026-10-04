@@ -6,6 +6,7 @@ import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
 import { useGridCells } from '@ValenceMobile/hooks/useGridCells';
 import { usePullToRefresh } from '@ValenceMobile/hooks/usePullToRefresh';
 import { AnArrival } from '@ValenceMobile/components/AnArrival/AnArrival';
+import { ACardArrival } from '@ValenceMobile/components/ACardArrival/ACardArrival';
 import { BackArrow } from '@ValenceMobile/components/BackArrow/BackArrow';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
@@ -21,6 +22,8 @@ const styles = StyleSheet.create({
   row: { gap: GRID_GAP },
   whole: { flex: 1 },
 });
+
+const FIRST_SCREENFUL = 12;
 
 /**
  * A screen that is a grid of posters, under whatever heads it, drawing only the rows in view.
@@ -60,9 +63,22 @@ const APosterGrid = <Item,>({
   const { across, cell } = useGridCells(asked);
   const wasScrolled = useRef<boolean | null>(null);
 
+  const seen = useRef(new Set<string>());
+
   const renderItem = useCallback(
-    ({ item }: { item: Item }) => <AnArrival>{drawn(item, cell)}</AnArrival>,
-    [drawn, cell],
+    ({ item, index }: { item: Item; index: number }) => {
+      const key = keyOf(item);
+      const isArrived = seen.current.has(key);
+
+      return (
+        <AnArrival>
+          <ACardArrival at={index < FIRST_SCREENFUL ? index : index % across} isArrived={isArrived}>
+            {drawn(item, cell)}
+          </ACardArrival>
+        </AnArrival>
+      );
+    },
+    [drawn, cell, keyOf, across],
   );
 
   const head = useMemo(() => <View style={styles.header}>{header}</View>, [header]);

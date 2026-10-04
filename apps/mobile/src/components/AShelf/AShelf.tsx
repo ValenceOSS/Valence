@@ -1,4 +1,6 @@
+import { Children, isValidElement } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { ACardArrival } from '@ValenceMobile/components/ACardArrival/ACardArrival';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
 import { Button } from '@ValenceMobile/components/Button/Button';
@@ -44,7 +46,11 @@ const AShelf = ({ title, onSeeAll, children }: AShelfProps) => (
       style={styles.bleeding}
       contentContainerStyle={styles.row}
     >
-      {children}
+      {Children.toArray(children).map((card, at) => (
+        <ACardArrival key={isValidElement(card) && card.key !== null ? card.key : at} at={at}>
+          {card}
+        </ACardArrival>
+      ))}
     </ScrollView>
   </View>
 );

@@ -1,3 +1,7 @@
+import { householdQueries } from '@ValenceClient/query/householdQueries';
+import { ASetUpTheHousehold } from '@ValenceMobile/components/ASetUpTheHousehold/ASetUpTheHousehold';
+import { AVideoRemote } from '@ValenceMobile/components/AVideoRemote/AVideoRemote';
+import { AVideoRemoteBar } from '@ValenceMobile/components/AVideoRemoteBar/AVideoRemoteBar';
 import { CircleUser, Download, Home, Search } from '@keyline-icons/react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -57,6 +61,7 @@ import { theCodeInAScan } from '@ValenceClient/session/theCodeInAScan';
 import { scanACode } from '@ValenceMobile/platform/scanACode';
 import { ATabPage } from '@ValenceMobile/components/SignedIn/components/ATabPage/ATabPage';
 import { TheAccount } from '@ValenceMobile/components/TheAccount/TheAccount';
+import { TheAccountPage } from '@ValenceMobile/components/TheAccountPage/TheAccountPage';
 import { TheDownloads } from '@ValenceMobile/components/TheDownloads/TheDownloads';
 import { TheLibrary } from '@ValenceMobile/components/TheLibrary/TheLibrary';
 import { TheNotifications } from '@ValenceMobile/components/TheNotifications/TheNotifications';
@@ -102,6 +107,7 @@ const MUSIC_PAGES: ReadonlySet<APage['kind']> = new Set([
 
 const styles = StyleSheet.create({
   over: { ...StyleSheet.absoluteFill },
+  above: { gap: 8 },
   whole: { flex: 1 },
 });
 
@@ -199,6 +205,8 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
     };
   }, [partyNotice, forgetPartyNotice]);
   const [carriedOn, setCarriedOn] = useState(0);
+  const [isRemoteOpen, setIsRemoteOpen] = useState(false);
+  const settingUp = useQuery(householdQueries.onboarding());
   const [watchingHeld, setWatchingHeld] = useState<HeldFile | null>(null);
   const [askingAbout, setAskingAbout] = useState<MediaSummary | null>(null);
   const isPlayerUp = useRef(false);
@@ -414,17 +422,13 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   );
 
   const accountPage = useCallback(
-    (
-      header: ReactNode,
-      onScrolled: (isScrolled: boolean) => void,
-      shown: string,
-      onShow: (panel: string) => void,
-    ) => (
+    (header: ReactNode, onScrolled: (isScrolled: boolean) => void) => (
       <TheAccount
         header={header}
         onScrolled={onScrolled}
-        shown={shown}
-        onShow={onShow}
+        onOpen={(panel) => {
+          latest.get('now')?.open({ kind: 'account', panel });
+        }}
         onOut={() => {
           void signOut()
             .then(forgetThePictures)
@@ -486,6 +490,17 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
       <Screen centres>
         <ActivityIndicator />
       </Screen>
+    );
+  }
+
+  if (settingUp.data?.isOnboarded === false) {
+    return (
+      <ASetUpTheHousehold
+        household={settingUp.data.household}
+        onDone={() => {
+          void cache.invalidateQueries({ queryKey: householdQueries.key });
+        }}
+      />
     );
   }
 
@@ -572,6 +587,8 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
         return <TheNotifications onOpen={open} onJoin={join} onBack={back} />;
       case 'calendar':
         return <TheCalendar onOpen={open} onBack={back} />;
+      case 'account':
+        return <TheAccountPage panel={page.panel} onBack={back} />;
       case 'album':
         return (
           <AnAlbum
@@ -749,16 +766,35 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   const isCovered = covering !== null;
 
   const tabbed = (
-    <TheTabs
-      tabs={tabs}
-      value={part}
-      onSelect={setPart}
-      {...(onFaceAt === undefined ? {} : { onFaceAt })}
-      isFaceArriving={isFaceArriving}
-      above={<TheNowPlayingBar onOpen={openWhatIsHeard} />}
-    >
-      {showing}
-    </TheTabs>
+    <>
+      <TheTabs
+        tabs={tabs}
+        value={part}
+        onSelect={setPart}
+        {...(onFaceAt === undefined ? {} : { onFaceAt })}
+        isFaceArriving={isFaceArriving}
+        above={
+          <View style={styles.above}>
+            <AVideoRemoteBar
+              onOpen={() => {
+                setIsRemoteOpen(true);
+              }}
+            />
+            <TheNowPlayingBar onOpen={openWhatIsHeard} />
+          </View>
+        }
+      >
+        {showing}
+      </TheTabs>
+
+      <AVideoRemote
+        isOpen={isRemoteOpen}
+        onClose={() => {
+          setIsRemoteOpen(false);
+        }}
+        onPlayHere={choose}
+      />
+    </>
   );
 
   return (
