@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.3.1](https://github.com/ValenceOSS/Valence/compare/v1.3.0...v1.3.1) (2026-10-04)
+
+
+### Fixed
+
+* **repo:** carplay crashed on opening when the server had no music library ([#507](https://github.com/ValenceOSS/Valence/issues/507)) ([9317ed0](https://github.com/ValenceOSS/Valence/commit/9317ed04f794ca0fc47e469e02ffc2cfdb8959b1))
+* **web,desktop:** the player's controls didn't show over a wide film in full screen on windows ([#510](https://github.com/ValenceOSS/Valence/issues/510)) ([ac971f2](https://github.com/ValenceOSS/Valence/commit/ac971f27dd8747c7dc7833d234a505f52566ae95))
+
+
+### Build
+
+* **repo:** leave the release manifest to release-please, so the format check passes ([#508](https://github.com/ValenceOSS/Valence/issues/508)) ([cd5db9d](https://github.com/ValenceOSS/Valence/commit/cd5db9d48e11e98bc3a74b9ca0ac77a73b59ff63))
+
 ## [1.3.0](https://github.com/ValenceOSS/Valence/compare/v1.2.0...v1.3.0) (2026-10-03)
 
 
