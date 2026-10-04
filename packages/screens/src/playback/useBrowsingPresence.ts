@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
-import { isTheDesktopClient, nowWatching } from '@ValenceScreens/desktop/theDesktopShell';
+import { nowWatching } from '@ValenceScreens/desktop/theDesktopShell';
+import { theIdleStatus } from '@ValenceScreens/playback/theIdleStatus';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 /**
  * Says that somebody has Valence open, so their status stands between the things they watch.
@@ -14,28 +16,29 @@ import { isTheDesktopClient, nowWatching } from '@ValenceScreens/desktop/theDesk
  * Both go to the same place and the last one said is the one shown, so the two need no agreement
  * beyond saying the same thing about the same moment.
  *
- * Nothing is said at all where the profile did not ask for it, or in a browser, which has nothing to
- * say it to, or where nobody has signed in yet to have a profile to ask.
+ * Nothing is said at all where the profile did not ask for it, or turned browsing off, or in a
+ * browser, which has nothing to say it to, or where nobody has signed in yet to have a profile to ask.
  *
  * @param isSignedIn - Whether there is a profile to read the setting from at all.
  */
 const useBrowsingPresence = (isSignedIn: boolean): void => {
   const asked = useQuery({ ...profileQueries.watching(), enabled: isSignedIn });
   const isAllowed = isSignedIn && (asked.data?.showsWhatIamWatching ?? false);
+  const settings = asked.data?.discordPresence ?? DEFAULT_DISCORD_PRESENCE;
 
   useEffect(() => {
-    if (!isAllowed || !isTheDesktopClient()) {
-      nowWatching(null);
+    const idle = theIdleStatus(isAllowed, settings);
 
+    nowWatching(idle);
+
+    if (idle === null) {
       return;
     }
-
-    nowWatching({ kind: 'browsing' });
 
     return () => {
       nowWatching(null);
     };
-  }, [isAllowed]);
+  }, [isAllowed, settings]);
 };
 
 export { useBrowsingPresence };

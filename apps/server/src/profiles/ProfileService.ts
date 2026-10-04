@@ -1,5 +1,6 @@
 import type { Avatar, ProfileColour, ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { PictureFault } from './whatIsWrongWithThePicture';
+import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
 
 type ProfileRequest = {
   name: string;
@@ -7,6 +8,7 @@ type ProfileRequest = {
   avatar?: Avatar;
   askStillWatchingAfter?: number;
   showsWhatIamWatching?: boolean;
+  discordPresence?: DiscordPresence;
   prefersBestCopy?: boolean;
 };
 

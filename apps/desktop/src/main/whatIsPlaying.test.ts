@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { DiscordLookSchema } from '@ValenceContracts/schemas/DiscordPresence';
 import { whatIsPlaying } from './whatIsPlaying';
+
+const LOOK = DiscordLookSchema.parse({});
 
 const SAID = {
   kind: 'watching',
@@ -14,6 +17,7 @@ const SAID = {
   isPaused: false,
   artwork: null,
   party: null,
+  look: LOOK,
 };
 
 describe('whatIsPlaying', () => {
@@ -45,7 +49,27 @@ describe('whatIsPlaying', () => {
   });
 
   it('reads somebody browsing, which is a state of its own and not an absence', () => {
-    expect(whatIsPlaying({ kind: 'browsing' })).toEqual({ kind: 'browsing' });
+    expect(whatIsPlaying({ kind: 'browsing', look: LOOK })).toEqual({
+      kind: 'browsing',
+      look: LOOK,
+    });
+  });
+
+  it('reads what a page from before the settings said, drawing it the way it always was', () => {
+    const { look: _left, ...older } = SAID;
+
+    expect(whatIsPlaying(older)).toEqual(SAID);
+    expect(whatIsPlaying({ kind: 'browsing' })).toEqual({ kind: 'browsing', look: LOOK });
+  });
+
+  it('reads how the profile asked the status to look', () => {
+    const look = { ...LOOK, statusShows: 'title', logo: 'dark', time: 'elapsed' };
+
+    expect(whatIsPlaying({ ...SAID, look })).toEqual({ ...SAID, look });
+  });
+
+  it('falls back to the usual look rather than dropping the status over a look it cannot read', () => {
+    expect(whatIsPlaying({ ...SAID, look: { logo: 'sepia' } })).toEqual(SAID);
   });
 
   it('refuses a state it does not know, rather than publishing it', () => {
@@ -75,6 +99,7 @@ describe('whatIsPlaying', () => {
       isPaused: false,
       artwork: null,
       party: null,
+      look: LOOK,
     };
 
     expect(whatIsPlaying(track)).toEqual(track);

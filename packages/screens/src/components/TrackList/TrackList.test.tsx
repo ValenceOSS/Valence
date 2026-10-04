@@ -5,6 +5,7 @@ import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { aFakeMusicPlayer } from '@ValenceClient/testing/aFakeMusicPlayer';
 import { aTrack } from '@ValenceClient/testing/aTrack';
 import { TrackList } from './TrackList';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 const favourites = vi.hoisted(() => ({
   fetchFavourites: vi.fn(),
@@ -23,6 +24,7 @@ vi.mock('@ValenceClient/profiles/fetchProfiles', () => ({
         avatar: { kind: 'initial', font: 'gilroy' },
         askStillWatchingAfter: 4,
         showsWhatIamWatching: false,
+        discordPresence: DEFAULT_DISCORD_PRESENCE,
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       },

@@ -14,6 +14,10 @@ import { createMemoryProfileService } from './createMemoryProfileService';
 import { createMemoryPermissionService } from '@ValenceServer/auth/createMemoryPermissionService';
 import { makeAdministrator } from '@ValenceServer/auth/signUpForTest';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import {
+  DEFAULT_DISCORD_PRESENCE,
+  DiscordPresenceSchema,
+} from '@ValenceContracts/schemas/DiscordPresence';
 
 const BASE = 'http://localhost:8420';
 
@@ -28,6 +32,10 @@ const aPicture = async (width = 8, height = 8): Promise<Uint8Array> =>
 
 const ShowsWhatIamWatchingSchema = z.object({
   profiles: z.array(z.object({ showsWhatIamWatching: z.boolean() })),
+});
+
+const DiscordPresenceListSchema = z.object({
+  profiles: z.array(z.object({ discordPresence: DiscordPresenceSchema })),
 });
 
 const CREDENTIALS = {
@@ -193,6 +201,33 @@ describe('profiles over HTTP', () => {
     );
 
     expect(listed.profiles[0]?.showsWhatIamWatching).toBe(true);
+  });
+
+  it('remembers how somebody wants to look on Discord', async () => {
+    const { app } = build();
+    const cookie = await signedIn(app);
+    const [profile] = await read(app, cookie);
+    const chosen = { ...DEFAULT_DISCORD_PRESENCE, statusShows: 'title', sharesMusic: false };
+
+    const response = await app.request(`${BASE}/api/profiles/${profile?.id ?? ''}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json', cookie, origin: BASE },
+      body: JSON.stringify({
+        name: profile?.name ?? '',
+        colour: '#3a8ee8',
+        discordPresence: chosen,
+      }),
+    });
+
+    expect(response.status).toBe(204);
+
+    const listed = DiscordPresenceListSchema.parse(
+      await (
+        await app.request(`${BASE}/api/profiles`, { headers: { cookie, origin: BASE } })
+      ).json(),
+    );
+
+    expect(listed.profiles[0]?.discordPresence).toEqual(chosen);
   });
 
   it('changes the address of a picture when the picture changes', async () => {
@@ -511,6 +546,7 @@ describe('giving a profile an account of its own', () => {
       avatar: { kind: 'initial', font: 'gilroy' },
       askStillWatchingAfter: 4,
       showsWhatIamWatching: false,
+      discordPresence: DEFAULT_DISCORD_PRESENCE,
       prefersBestCopy: false,
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',

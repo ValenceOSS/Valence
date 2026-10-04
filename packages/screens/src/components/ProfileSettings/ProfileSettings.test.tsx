@@ -7,6 +7,7 @@ import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { ProfileSettings } from './ProfileSettings';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ProfileDraft } from './ProfileSettings.types';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 const PROFILE: ViewerProfile = {
   id: '00000000-0000-4000-8000-000000000002',
@@ -15,6 +16,7 @@ const PROFILE: ViewerProfile = {
   avatar: { kind: 'initial', font: 'gilroy' },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
+  discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
@@ -26,6 +28,7 @@ const DRAFT: ProfileDraft = {
   avatar: PROFILE.avatar,
   askStillWatchingAfter: PROFILE.askStillWatchingAfter,
   showsWhatIamWatching: PROFILE.showsWhatIamWatching,
+  discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
   photo: null,
 };
@@ -74,18 +77,12 @@ describe('ProfileSettings', () => {
     expect(ProfileSettings.displayName).toBe('ProfileSettings');
   });
 
-  it('offers no way to show Discord status outside the desktop client', () => {
-    renderInAnAddress(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={vi.fn()} />);
-
-    expect(screen.queryByText('Show what I’m playing on Discord')).not.toBeInTheDocument();
-  });
-
-  it('offers it on the desktop client, since only it can reach Discord', () => {
+  it('leaves Discord to its own panel, even in the desktop app', () => {
     installATestClient({ thisClientKind: () => 'desktop' });
 
     renderInAnAddress(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={vi.fn()} />);
 
-    expect(screen.getByText('Show what I’m playing on Discord')).toBeInTheDocument();
+    expect(screen.queryByText('Show what I’m playing on Discord')).not.toBeInTheDocument();
   });
 
   it('writes preferring the best copy into the draft', async () => {

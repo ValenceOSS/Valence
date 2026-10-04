@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { fetchWayIn } from './fetchWayIn';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 type Answer = { ok: boolean; headers: Headers; json: () => Promise<JsonValue> };
 
@@ -16,6 +17,7 @@ const PROFILE: ViewerProfile = {
   avatar: { kind: 'initial', font: 'gilroy' },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
+  discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',

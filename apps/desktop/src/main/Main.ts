@@ -13,6 +13,7 @@ import { recordMemoryUse } from '@ValenceDesktop/main/recordMemoryUse';
 import { theApplicationMenu } from '@ValenceDesktop/main/theApplicationMenu';
 import { theDockIcon } from '@ValenceDesktop/main/theDockIcon';
 import { tellDiscord } from '@ValenceDesktop/main/tellDiscord';
+import { takeTheStatusDownWithTheWindow } from '@ValenceDesktop/main/takeTheStatusDownWithTheWindow';
 import { whatIsPlaying } from '@ValenceDesktop/main/whatIsPlaying';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
@@ -336,8 +337,12 @@ const start = async (): Promise<void> => {
     }
   });
 
+  const discord = tellDiscord(app.getPath('temp'));
+
   const openAWindow = (): BrowserWindow => {
     const window = openTheWindow();
+
+    takeTheStatusDownWithTheWindow(window, discord);
 
     areControlsShown = true;
 
@@ -352,8 +357,6 @@ const start = async (): Promise<void> => {
 
     return window;
   };
-
-  const discord = tellDiscord(app.getPath('temp'));
 
   ipcMain.on(NOW_WATCHING, (_event, said: JsonValue) => {
     discord.about(whatIsPlaying(JsonValueSchema.catch(null).parse(said)));

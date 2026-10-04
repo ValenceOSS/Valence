@@ -4,6 +4,7 @@ import { aLibrary } from '@ValenceClient/testing/aLibrary';
 import { aLinkedServerFace } from '@ValenceClient/testing/aLinkedServerFace';
 import { renderHookInACache } from '@ValenceClient/testing/renderHookInACache';
 import { usePreferredCopy } from './usePreferredCopy';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 const watcher = vi.hoisted(() => ({ prefersBestCopy: true }));
 
@@ -37,6 +38,7 @@ vi.mock('@ValenceClient/profiles/fetchProfiles', () => ({
         avatar: { kind: 'initial', font: 'gilroy' },
         askStillWatchingAfter: 3,
         showsWhatIamWatching: false,
+        discordPresence: DEFAULT_DISCORD_PRESENCE,
         prefersBestCopy: watcher.prefersBestCopy,
         createdAt: '2026-08-01T00:00:00.000Z',
         updatedAt: '2026-08-01T00:00:00.000Z',

@@ -9,6 +9,7 @@ import {
 } from './fetchProfiles';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 type Answer = { ok: boolean; json: () => Promise<JsonValue> };
 
@@ -23,6 +24,7 @@ const PROFILE: ViewerProfile = {
   avatar: { kind: 'initial', font: 'gilroy' },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
+  discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
@@ -132,6 +134,23 @@ describe('saveProfile', () => {
     fetchMock.mockRejectedValue(new Error('offline'));
 
     await expect(saveProfile('abc', 'Sam', '#3ac47d')).resolves.toBe(false);
+  });
+
+  it('sends how somebody wants to look on Discord, where it was given', async () => {
+    const discordPresence = { ...DEFAULT_DISCORD_PRESENCE, logo: 'dark' as const };
+
+    await saveProfile(
+      'abc',
+      'Sam',
+      '#3ac47d',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      discordPresence,
+    );
+
+    expect(sentBody()).toEqual({ name: 'Sam', colour: '#3ac47d', discordPresence });
   });
 });
 

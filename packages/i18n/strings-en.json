@@ -18116,6 +18116,106 @@
     "context": "Text shown in the device approval."
   },
   {
+    "handler": "screens.discordPreview.browsing",
+    "text": "Browsing",
+    "context": "The label for the state where nothing is playing in the preview of the Discord status, in the desktop app's Discord settings."
+  },
+  {
+    "handler": "screens.discordPreview.listeningToWhat",
+    "text": "Listening to {what}",
+    "context": "The heading of a music status, as Discord writes it. {what} is the activity’s name, which is the artists for music in the preview of the Discord status, in the desktop app's Discord settings."
+  },
+  {
+    "handler": "screens.discordPreview.nothingShowsOnDiscord",
+    "text": "Nothing shows on Discord.",
+    "context": "Shown in place of the card when these settings would clear the status in the preview of the Discord status, in the desktop app's Discord settings."
+  },
+  {
+    "handler": "screens.discordPreview.randomisePreviewMedia",
+    "text": "Randomise preview media",
+    "context": "The label of the button that picks different sample titles for the preview in the preview of the Discord status, in the desktop app's Discord settings."
+  },
+  {
+    "handler": "screens.discordPreview.timeElapsed",
+    "text": "{time} elapsed",
+    "context": "The time shown under a status that counts up. {time} is a clock such as 12:34 in the preview of the Discord status, in the desktop app's Discord settings."
+  },
+  {
+    "handler": "screens.discordPreview.watchingWhat",
+    "text": "Watching {what}",
+    "context": "The heading of a video status, as Discord writes it. {what} is the application’s name, such as Valence in the preview of the Discord status, in the desktop app's Discord settings."
+  },
+  {
+    "handler": "screens.discordSettings.addsAButtonThatOpensThe",
+    "text": "Adds a button that opens the title on TMDB.",
+    "context": "The description of the \"TMDB button\" setting in the desktop app's Discord settings."
+  },
+  {
+    "handler": "screens.discordSettings.choosesWhatCanAppearInYour",
+    "text": "Choose what can appear in your Discord status. Titles from a library that’s turned off never appear.",
+    "context": "The description above the switches for films, shows, music and each library in the desktop app's Discord settings."
+  },
+  {
+    "handler": "screens.discordSettings.countsDownTheTimeLeftOr",
+    "text": "Counts down the time left, or up from the start.",
+    "context": "The description of the time setting in the desktop app's Discord settings."
+  },
+  {
+    "handler": "screens.discordSettings.keepsShowingWhatYouRePlaying",
+    "text": "Keeps showing what you’re playing while it’s paused.",
+    "context": "The description of the \"While paused\" setting in the desktop app's Discord settings."
+  },
+  {
+    "handler": "screens.discordSettings.showsHowManyPeopleAreWatching",
+    "text": "Shows how many people are watching or listening with you.",
+    "context": "The description of the \"Watch party size\" setting in the desktop app's Discord settings."
+  },
+  {
+    "handler": "screens.discordSettings.showsThatValenceIsOpenWhile",
+    "text": "Shows that Valence is open while nothing is playing.",
+    "context": "The description of the \"While browsing\" setting in the desktop app's Discord settings."
+  },
+  {
+    "handler": "screens.discordSettings.showsThePosterOrAlbumCover",
+    "text": "Shows the poster or album cover instead of the Valence logo.",
+    "context": "The description of the artwork setting in the desktop app's Discord settings."
+  },
+  {
+    "handler": "screens.discordSettings.showsValenceOrTheTitleOf",
+    "text": "Shows Valence or the title of what you’re playing as your Discord status.",
+    "context": "The description of the setting that chooses whether the Discord status is headed by Valence or by the title in the desktop app's Discord settings."
+  },
+  {
+    "handler": "screens.discordSettings.theValenceLogoShownOnYour",
+    "text": "The Valence logo shown on your status, in light or dark.",
+    "context": "The description of the light or dark logo setting in the desktop app's Discord settings."
+  },
+  {
+    "handler": "screens.discordSettings.timeElapsed",
+    "text": "Time elapsed",
+    "context": "The choice that makes the Discord status count up from the start, beside \"Time left\" in the desktop app's Discord settings."
+  },
+  {
+    "handler": "screens.discordSettings.tmdbButton",
+    "text": "TMDB button",
+    "context": "The title of the setting that adds a button linking to the title on TMDB in the desktop app's Discord settings."
+  },
+  {
+    "handler": "screens.discordSettings.watchPartySize",
+    "text": "Watch party size",
+    "context": "The title of the setting that shows how many people are in a watch or listening party in the desktop app's Discord settings."
+  },
+  {
+    "handler": "screens.discordSettings.whileBrowsing",
+    "text": "While browsing",
+    "context": "The title of the setting that shows on Discord that Valence is open while nothing is playing in the desktop app's Discord settings."
+  },
+  {
+    "handler": "screens.discordSettings.whilePaused",
+    "text": "While paused",
+    "context": "The title of the setting that keeps the Discord status up while something is paused in the desktop app's Discord settings."
+  },
+  {
     "handler": "screens.downloadClientDialog.readDownloadClientForm.aCategoryIsLettersNumbersSpaces",
     "text": "A category can only contain letters, numbers, spaces, dots, dashes and underscores.",
     "context": "The problem in the download client dialog (from `readDownloadClientForm`)."

@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { AccountFace } from './AccountFace';
 import type { Account } from '@ValenceContracts/schemas/Account';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 const PROFILE = {
   id: '11111111-1111-4111-8111-111111111111',
@@ -10,6 +11,7 @@ const PROFILE = {
   avatar: { kind: 'photo', isVideo: false, frame: null },
   askStillWatchingAfter: 0,
   showsWhatIamWatching: false,
+  discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
   createdAt: '2026-08-01T00:00:00.000Z',
   updatedAt: '2026-08-02T00:00:00.000Z',

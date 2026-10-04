@@ -6,6 +6,7 @@ import { HiddenPanel } from './HiddenPanel';
 import type { Hidden } from '@ValenceContracts/schemas/Hidden';
 import type { HiddenSubject } from '@ValenceClient/library/fetchHidden';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 const fetchHidden = vi.fn<() => Promise<Hidden[]>>();
 const setHidden = vi.fn<(subject: HiddenSubject, isHidden: boolean) => Promise<boolean>>();
@@ -32,6 +33,7 @@ const WATCHER: ViewerProfile = {
   avatar: { kind: 'initial', font: 'gilroy' },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
+  discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',

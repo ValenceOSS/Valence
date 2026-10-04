@@ -116,6 +116,7 @@ import { PlayOnDialog } from '@ValenceScreens/components/PlayOnDialog/PlayOnDial
 import { useVideoDevices } from '@ValenceClient/video/useVideoDevices';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 type FullscreenTarget = {
   requestFullscreen?: () => Promise<void>;
 };
@@ -1251,6 +1252,7 @@ const VideoPlayer = ({
     isPlaying,
     positionSeconds: position,
     isAllowed: whoIsWatching.data?.showsWhatIamWatching ?? false,
+    settings: whoIsWatching.data?.discordPresence ?? DEFAULT_DISCORD_PRESENCE,
     party: party === undefined ? null : { id: party.id, size: party.members },
   });
 

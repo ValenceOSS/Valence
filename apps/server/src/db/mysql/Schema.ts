@@ -18,6 +18,7 @@ import type { AnyMySqlColumn } from 'drizzle-orm/mysql-core';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
 import type { Avatar } from '@ValenceContracts/schemas/ViewerProfile';
+import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
 import { hashOf } from '@ValenceDatabase/mysql/columns/hashOf';
 import { identifier } from '@ValenceDatabase/mysql/columns/identifier';
 import { jsonColumn } from '@ValenceDatabase/mysql/columns/jsonColumn';
@@ -209,6 +210,7 @@ const viewerProfile = mysqlTable(
     avatarLook: jsonColumn('avatarLook').$type<Avatar>(),
     askStillWatchingAfter: int('askStillWatchingAfter').notNull().default(4),
     showsWhatIamWatching: boolean('showsWhatIamWatching').notNull().default(false),
+    discordPresence: jsonColumn('discordPresence').$type<DiscordPresence>(),
     prefersBestCopy: boolean('prefersBestCopy').notNull().default(false),
     createdAt: momentNow('createdAt').notNull(),
     updatedAt: momentNow('updatedAt').notNull(),

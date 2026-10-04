@@ -5,6 +5,7 @@ import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { ConfirmHiding } from './ConfirmHiding';
 import type { Hiding } from '@ValenceClient/library/useHidden';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 const fetchProfiles = vi.hoisted(() => vi.fn<() => Promise<ViewerProfile[]>>());
 
@@ -17,6 +18,7 @@ const aFace = (id: string): ViewerProfile => ({
   avatar: { kind: 'initial', font: 'gilroy' },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
+  discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',

@@ -14,6 +14,7 @@ const draftOfProfile = (profile: ViewerProfile): ProfileDraft => ({
   avatar: profile.avatar,
   askStillWatchingAfter: profile.askStillWatchingAfter,
   showsWhatIamWatching: profile.showsWhatIamWatching,
+  discordPresence: profile.discordPresence,
   prefersBestCopy: profile.prefersBestCopy,
   photo: null,
 });

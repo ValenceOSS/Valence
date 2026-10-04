@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { render } from '@testing-library/react';
 import { z } from 'zod';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 import { useDiscordPresence } from './useDiscordPresence';
 import type { DiscordPresence } from './useDiscordPresence';
 
@@ -35,7 +36,30 @@ const AN_EPISODE = {
   seasonNumber: 2,
   episodeNumber: 12,
   externalId: '1399',
+  libraryId: '00000000-0000-4000-8000-0000000000b2',
   durationSeconds: 1400,
+};
+
+const A_FILM = {
+  id: 'a-film-id',
+  title: 'A Film',
+  libraryId: '00000000-0000-4000-8000-0000000000b1',
+  durationSeconds: 6000,
+};
+
+const looks: (string | null)[] = [];
+
+const heardTheLook = (event: Event) => {
+  const read =
+    event instanceof CustomEvent
+      ? z
+          .object({ look: z.object({ statusShows: z.string() }) })
+          .nullable()
+          .catch(null)
+          .parse(event.detail)
+      : null;
+
+  looks.push(read?.look.statusShows ?? null);
 };
 
 const said = (): Watched | undefined => seen.at(-1);
@@ -58,12 +82,15 @@ const watching = (overrides: Partial<DiscordPresence> = {}) => {
 
 beforeEach(() => {
   seen.length = 0;
+  looks.length = 0;
   document.documentElement.dataset['valenceDesktop'] = 'true';
   document.addEventListener('valence:now-watching', heard);
+  document.addEventListener('valence:now-watching', heardTheLook);
 });
 
 afterEach(() => {
   document.removeEventListener('valence:now-watching', heard);
+  document.removeEventListener('valence:now-watching', heardTheLook);
   delete document.documentElement.dataset['valenceDesktop'];
 });
 
@@ -273,5 +300,46 @@ describe('useDiscordPresence', () => {
     watching({ isPlaying: false });
 
     expect(said()).toMatchObject({ isPaused: true });
+  });
+
+  describe('as the profile asked', () => {
+    it('leaves TV off where only films are shared, and films where only TV is', () => {
+      watching({ settings: { ...DEFAULT_DISCORD_PRESENCE, sharesShows: false } });
+
+      expect(said()).toBeNull();
+
+      seen.length = 0;
+      watching({ media: A_FILM, settings: { ...DEFAULT_DISCORD_PRESENCE, sharesShows: false } });
+
+      expect(said()?.title).toBe('A Film');
+
+      seen.length = 0;
+      watching({ media: A_FILM, settings: { ...DEFAULT_DISCORD_PRESENCE, sharesFilms: false } });
+
+      expect(said()).toBeNull();
+    });
+
+    it('never shows a library kept private', () => {
+      watching({
+        settings: { ...DEFAULT_DISCORD_PRESENCE, hiddenLibraryIds: [AN_EPISODE.libraryId] },
+      });
+
+      expect(said()).toBeNull();
+    });
+
+    it('takes the status off while paused, where the profile asked', () => {
+      watching({
+        isPlaying: false,
+        settings: { ...DEFAULT_DISCORD_PRESENCE, showsWhilePaused: false },
+      });
+
+      expect(said()).toBeNull();
+    });
+
+    it('sends how the status should look along with what is playing', () => {
+      watching({ settings: { ...DEFAULT_DISCORD_PRESENCE, statusShows: 'title' } });
+
+      expect(looks.at(-1)).toBe('title');
+    });
   });
 });
