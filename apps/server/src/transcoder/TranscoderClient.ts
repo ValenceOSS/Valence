@@ -318,6 +318,7 @@ type Transcoder = {
   probe: (path: string) => Promise<MediaProbe>;
   startSession: (spec: SessionSpec, deviceId?: string) => Promise<SessionResponse>;
   readSessionFile: (sessionId: string, name: string) => Promise<TranscoderStreamedFile | null>;
+  locateSessionFile?: (sessionId: string, name: string) => Promise<LocatedSessionFile | null>;
   readFile: (path: string, range: string | null) => Promise<TranscoderStreamedFile | null>;
   readAudioRendition: (
     path: string,
@@ -392,6 +393,15 @@ type TranscoderSocket = {
   onClose: (handler: () => void) => void;
   close: () => void;
 };
+
+const LocatedFilesSchema = z.object({
+  files: z.array(z.string()).min(1),
+  contentType: z.string(),
+});
+
+type LocatedSessionFile =
+  | { kind: 'located'; files: string[]; contentType: string }
+  | { kind: 'bytes'; file: TranscoderStreamedFile };
 
 type StreamFetchLike = (url: string, init?: HttpRequestInit) => Promise<StreamedResponse>;
 
@@ -700,6 +710,35 @@ const createTranscoderClient = ({
         'application/octet-stream',
       ),
 
+    locateSessionFile: async (sessionId, name) => {
+      const response = await streamFrom(
+        `${origin}/sessions/${encodeURIComponent(sessionId)}/${encodeURIComponent(name)}?locate=1`,
+      );
+
+      if (!response.ok || response.body === null) {
+        return null;
+      }
+
+      const contentType = response.headers.get('content-type') ?? 'application/octet-stream';
+
+      if (!contentType.startsWith('application/json')) {
+        return {
+          kind: 'bytes',
+          file: {
+            body: response.body,
+            contentType,
+            status: response.status,
+            contentRange: response.headers.get('content-range'),
+            contentLength: response.headers.get('content-length'),
+          },
+        };
+      }
+
+      const located = LocatedFilesSchema.safeParse(await new Response(response.body).json());
+
+      return located.success ? { kind: 'located', ...located.data } : null;
+    },
+
     readFile: async (path, range) =>
       openStream(
         `${origin}/file?path=${encodeURIComponent(path)}`,
@@ -832,6 +871,7 @@ const createTranscoderClient = ({
 };
 
 export type {
+  LocatedSessionFile,
   QueueControl,
   TranscoderWithQueueControl,
   AudioRenditionKbps,

@@ -108,6 +108,10 @@ type CreatePlaybackServiceOptions = {
   forcedAccel?: () => Promise<string>;
   previewQuality?: () => Promise<PreviewQuality>;
   readFromDisk?: (path: string, range: string | null) => Promise<TranscoderStreamedFile | null>;
+  readSessionFromDisk?: (
+    paths: readonly string[],
+    contentType: string,
+  ) => Promise<TranscoderStreamedFile | null>;
 };
 
 /**
@@ -130,6 +134,7 @@ const createPlaybackService = ({
   forcedAccel = () => Promise.resolve(''),
   previewQuality = (): Promise<PreviewQuality> => Promise.resolve('high'),
   readFromDisk,
+  readSessionFromDisk,
 }: CreatePlaybackServiceOptions): PlaybackService => {
   let cached: TranscoderCapabilities | null = null;
 
@@ -283,7 +288,26 @@ const createPlaybackService = ({
       }
     },
 
-    readSessionFile: async (sessionId, name) => transcoder.readSessionFile(sessionId, name),
+    readSessionFile: async (sessionId, name) => {
+      if (readSessionFromDisk === undefined || transcoder.locateSessionFile === undefined) {
+        return transcoder.readSessionFile(sessionId, name);
+      }
+
+      const found = await transcoder.locateSessionFile(sessionId, name);
+
+      if (found === null) {
+        return null;
+      }
+
+      if (found.kind === 'bytes') {
+        return found.file;
+      }
+
+      return (
+        (await readSessionFromDisk(found.files, found.contentType)) ??
+        transcoder.readSessionFile(sessionId, name)
+      );
+    },
 
     readDirectFile: async (mediaId, range, renditionId = null) => {
       const found = await media.findForPlayback(mediaId);
@@ -394,6 +418,6 @@ const createPlaybackService = ({
   };
 };
 
-export type { MediaLookup };
+export type { CreatePlaybackServiceOptions, MediaLookup };
 
 export { createPlaybackService };

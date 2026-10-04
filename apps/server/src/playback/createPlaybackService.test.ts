@@ -4,7 +4,7 @@ import { previewRequestFor } from '@ValenceServer/library/previewRequestFor';
 import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
 import type { DeviceProfile } from '@ValenceContracts/schemas/DeviceProfile';
 import type { SessionSpec, Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
-import type { MediaLookup } from './createPlaybackService';
+import type { CreatePlaybackServiceOptions, MediaLookup } from './createPlaybackService';
 import type { TranscodeReuse } from '@ValenceContracts/schemas/TranscodeReuse';
 import type { PreviewQuality } from '@ValenceContracts/schemas/PreviewQuality';
 
@@ -397,6 +397,7 @@ const build = (
   transcoderOverrides: Partial<Transcoder> = {},
   found: Awaited<ReturnType<MediaLookup['findForPlayback']>> | undefined = undefined,
   previewQuality: PreviewQuality | undefined = undefined,
+  fromDisk: Pick<CreatePlaybackServiceOptions, 'readSessionFromDisk'> = {},
 ) => {
   const transcoder: Transcoder = {
     ...anything(),
@@ -442,6 +443,7 @@ const build = (
       sessionUrlPrefix: '/api/playback/session',
       directUrlPrefix: '/api/media',
       trickplayUrlPrefix: '/api/trickplay',
+      ...fromDisk,
       ...(previewQuality === undefined
         ? {}
         : { previewQuality: () => Promise.resolve(previewQuality) }),
@@ -562,6 +564,76 @@ describe('the files a player asks for while it is watching', () => {
     await service.readSessionFile('session-1', 'segment-0.ts');
 
     expect(readSessionFile).toHaveBeenCalledWith('session-1', 'segment-0.ts');
+  });
+
+  it('reads a segment off the disk where the media service says where it is', async () => {
+    const onDisk = {
+      body: new Blob(['segment']).stream(),
+      contentType: 'video/mp4',
+      status: 200,
+      contentRange: null,
+      contentLength: '7',
+    };
+    const readSessionFromDisk = vi.fn(() => Promise.resolve(onDisk));
+    const readSessionFile = vi.fn(() => Promise.resolve(null));
+    const { service } = build(
+      {
+        readSessionFile,
+        locateSessionFile: () =>
+          Promise.resolve({
+            kind: 'located' as const,
+            files: ['/transcodes/s/segment_1.m4s'],
+            contentType: 'video/mp4',
+          }),
+      },
+      undefined,
+      undefined,
+      { readSessionFromDisk },
+    );
+
+    expect(await service.readSessionFile('session-1', 'segment_1.m4s')).toBe(onDisk);
+    expect(readSessionFromDisk).toHaveBeenCalledWith(['/transcodes/s/segment_1.m4s'], 'video/mp4');
+    expect(readSessionFile).not.toHaveBeenCalled();
+  });
+
+  it('passes on the bytes a media service too old to say where a segment is sent instead', async () => {
+    const sent = {
+      body: new Blob(['segment']).stream(),
+      contentType: 'video/mp4',
+      status: 200,
+      contentRange: null,
+      contentLength: '7',
+    };
+    const { service } = build(
+      { locateSessionFile: () => Promise.resolve({ kind: 'bytes' as const, file: sent }) },
+      undefined,
+      undefined,
+      { readSessionFromDisk: () => Promise.reject(new Error('not used')) },
+    );
+
+    expect(await service.readSessionFile('session-1', 'segment_1.m4s')).toBe(sent);
+  });
+
+  it('asks the media service for the bytes where the files cannot be opened here', async () => {
+    const readSessionFile = vi.fn(() => Promise.resolve(null));
+    const { service } = build(
+      {
+        readSessionFile,
+        locateSessionFile: () =>
+          Promise.resolve({
+            kind: 'located' as const,
+            files: ['/elsewhere/segment_1.m4s'],
+            contentType: 'video/mp4',
+          }),
+      },
+      undefined,
+      undefined,
+      { readSessionFromDisk: () => Promise.resolve(null) },
+    );
+
+    await service.readSessionFile('session-1', 'segment_1.m4s');
+
+    expect(readSessionFile).toHaveBeenCalledWith('session-1', 'segment_1.m4s');
   });
 
   it('reads the file itself, at the path the library holds', async () => {
