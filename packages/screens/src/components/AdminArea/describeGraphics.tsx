@@ -1,4 +1,4 @@
-import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import type { Monitor } from '@ValenceClient/admin/fetchAdmin';
 import type { Stat } from '@ValenceScreens/components/AdminArea/components/StatStrip/StatStrip.types';
 import { say } from '@ValenceI18n/say';
@@ -30,7 +30,7 @@ const describeGraphics = (
 
   if (graphics.encoderPercent !== null) {
     return {
-      value: <AnimatedNumber value={Math.round(graphics.encoderPercent)} suffix="%" />,
+      value: <FormattedNumber value={Math.round(graphics.encoderPercent)} suffix="%" />,
       fraction: graphics.encoderPercent / 100,
       detail:
         graphics.measured === 'valenceOnly'
@@ -41,7 +41,7 @@ const describeGraphics = (
 
   if (graphics.devicePercent !== null) {
     return {
-      value: <AnimatedNumber value={Math.round(graphics.devicePercent)} suffix="%" />,
+      value: <FormattedNumber value={Math.round(graphics.devicePercent)} suffix="%" />,
       fraction: graphics.devicePercent / 100,
       detail: say('screens.adminArea.describeGraphics.wholeCardNotEncoder'),
     };

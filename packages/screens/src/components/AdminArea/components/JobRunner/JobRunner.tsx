@@ -15,6 +15,7 @@ import { summariseProgress } from './summariseProgress';
 import type { JobDefinition, JobTrigger } from '@ValenceClient/admin/fetchAdmin';
 import type { JobRunnerProps } from './JobRunner.types';
 import { say } from '@ValenceI18n/say';
+import { usePageIsShown } from '@ValenceScreens/visibility/usePageIsShown';
 
 const NO_TRIGGERS: JobTrigger[] = [];
 
@@ -66,8 +67,15 @@ const JobRunner = ({
   const [watching, setWatching] = useState<JobDefinition | null>(null);
 
   const [now, setNow] = useState(() => Date.now());
+  const isShown = usePageIsShown();
 
   useEffect(() => {
+    if (!isShown) {
+      return;
+    }
+
+    setNow(Date.now());
+
     const timer = setInterval(() => {
       setNow(Date.now());
     }, TICK_MILLISECONDS);
@@ -75,7 +83,7 @@ const JobRunner = ({
     return () => {
       clearInterval(timer);
     };
-  }, []);
+  }, [isShown]);
 
   const zone = timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
 

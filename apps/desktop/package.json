@@ -14,7 +14,8 @@
     "package": "pnpm run native && electron-vite build && electron-builder",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "native": "tsx src/build/buildDesktopNative.ts"
+    "native": "tsx src/build/buildDesktopNative.ts",
+    "sweep": "tsx src/build/sweepForLeaks.ts"
   },
   "dependencies": {
     "@keyline-icons/react": "^1.0.0",
@@ -128,7 +129,7 @@
       ],
       "executableName": "valence"
     },
-    "copyright": "Copyright \u00a9 Valence contributors",
+    "copyright": "Copyright © Valence contributors",
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,

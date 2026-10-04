@@ -38,6 +38,7 @@ import type { DownloadClient } from '@ValenceContracts/schemas/DownloadClient';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { QueuedDownload } from '@ValenceContracts/schemas/DownloadQueue';
 import { say } from '@ValenceI18n/say';
+import { usePageIsShown } from '@ValenceScreens/visibility/usePageIsShown';
 
 const DOWNLOADS_TABS = ['queue', 'apps', 'clients', 'rules'] as const;
 
@@ -77,6 +78,7 @@ const DownloadsPanel = () => {
   const [removingClient, setRemovingClient] = useState<DownloadClient | null>(null);
   const [removingDownload, setRemovingDownload] = useState<QueuedDownload | null>(null);
   const [testingId, setTestingId] = useState<string | null>(null);
+  const isShown = usePageIsShown();
   const [busyId, setBusyId] = useState<string | null>(null);
   const libraries = useQuery(libraryQueries.all());
   const [problem, setProblem] = useState<string | null>(null);
@@ -84,13 +86,17 @@ const DownloadsPanel = () => {
   const hasFulfillingApps = (apps.data ?? []).some((app) => app.kind !== 'prowlarr');
   const arrQueue = useQuery(requestsQueries.arrQueue(tab === 'apps'));
 
-  useEffect(
-    () =>
-      watchDownloadQueue((next) => {
-        cache.setQueryData(requestsQueries.downloadQueue().queryKey, next);
-      }),
-    [cache],
-  );
+  useEffect(() => {
+    if (!isShown) {
+      return;
+    }
+
+    void cache.invalidateQueries({ queryKey: requestsQueries.downloadQueue().queryKey });
+
+    return watchDownloadQueue((next) => {
+      cache.setQueryData(requestsQueries.downloadQueue().queryKey, next);
+    });
+  }, [cache, isShown]);
 
   const reread = useCallback(
     () =>

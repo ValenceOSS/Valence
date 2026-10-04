@@ -10,7 +10,7 @@ import {
 } from '@keyline-icons/react/fill';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
-import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { DataTable } from '@ValenceUI/DataTable';
@@ -56,6 +56,7 @@ import { describeJobStatus } from '@ValenceScreens/status/describeJobStatus';
 import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
 import { say } from '@ValenceI18n/say';
 import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
+import { usePageIsShown } from '@ValenceScreens/visibility/usePageIsShown';
 
 const TYPING_MS = 350;
 
@@ -342,6 +343,7 @@ const JobHistoryPanel = ({
     ),
     [sort],
   );
+  const isShown = usePageIsShown();
   const traceRun = useCallback(
     (record: JobRunRecord) => {
       onTrace(record.id);
@@ -350,7 +352,13 @@ const JobHistoryPanel = ({
   );
 
   useEffect(() => {
+    if (!isShown) {
+      return;
+    }
+
     let pending: ReturnType<typeof setTimeout> | null = null;
+
+    void cache.invalidateQueries({ queryKey: [...adminQueries.key, 'jobHistory'] });
 
     const scheduleRefresh = () => {
       if (pending !== null) {
@@ -399,7 +407,7 @@ const JobHistoryPanel = ({
 
       unwatch();
     };
-  }, [cache]);
+  }, [cache, isShown]);
 
   const closeIssues = () => {
     setOpenIssuesFor(null);
@@ -570,12 +578,12 @@ const JobHistoryPanel = ({
                     fillings={{
                       done: (
                         <span className="text-text">
-                          <AnimatedNumber value={progress.processed} />
+                          <FormattedNumber value={progress.processed} />
                         </span>
                       ),
                       total: (
                         <span className="text-text">
-                          <AnimatedNumber value={progress.total} />
+                          <FormattedNumber value={progress.total} />
                         </span>
                       ),
                     }}

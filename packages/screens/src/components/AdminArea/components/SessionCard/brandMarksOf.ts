@@ -9,6 +9,12 @@ const BROWSER_MARKS: readonly { name: string; mark: BrandMarkName }[] = [
   { name: say('client.playback.detectClientLabel.safari'), mark: 'safari' },
 ];
 
+const DEVICE_MARKS: readonly { name: string; mark: BrandMarkName }[] = [
+  { name: 'iPhone', mark: 'apple' },
+  { name: 'iPad', mark: 'apple' },
+  { name: 'Apple TV', mark: 'apple' },
+];
+
 const SYSTEM_MARKS: readonly { name: string; mark: BrandMarkName }[] = [
   { name: 'iOS', mark: 'apple' },
   { name: 'macOS', mark: 'apple' },
@@ -18,7 +24,8 @@ const SYSTEM_MARKS: readonly { name: string; mark: BrandMarkName }[] = [
 
 /**
  * The marks of the browser and the system a session says it runs in, read from the words it is
- * labelled with, so a card can show them rather than a generic screen. A browser or system without
+ * labelled with, so a card can show them rather than a generic screen. A phone or a television
+ * names its model rather than its system, so an iPhone, iPad or Apple TV is known by its name. A browser or system without
  * a mark of its own — Edge, Windows, anything unrecognised — answers none, and keeps its shape.
  * Chromium is shown as Chrome, since a browser built on it names itself the same way and Chrome is
  * the one that almost always is.
@@ -30,7 +37,10 @@ const brandMarksOf = (
   deviceLabel: string,
 ): { browser: BrandMarkName | null; system: BrandMarkName | null } => ({
   browser: BROWSER_MARKS.find(({ name }) => deviceLabel.startsWith(name))?.mark ?? null,
-  system: SYSTEM_MARKS.find(({ name }) => deviceLabel.endsWith(name))?.mark ?? null,
+  system:
+    SYSTEM_MARKS.find(({ name }) => deviceLabel.endsWith(name))?.mark ??
+    DEVICE_MARKS.find(({ name }) => deviceLabel.startsWith(name))?.mark ??
+    null,
 });
 
 export { brandMarksOf };

@@ -5,7 +5,6 @@ import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { useMyPlaylists } from '@ValenceClient/music/useMyPlaylists';
 import { musicMenuFor } from '@ValenceScreens/music/musicMenuFor';
-import { RevealItem } from '@ValenceUI/RevealItem';
 import { MusicShelf } from '@ValenceScreens/components/MusicShelf/MusicShelf';
 import { useCardOrigin } from '@ValenceScreens/linking/useCardOrigin';
 import type { MusicAlbum } from '@ValenceContracts/schemas/Music';
@@ -47,9 +46,13 @@ const AlbumShelf = ({
   }
 
   return (
-    <MusicShelf heading={heading} layout={layout} action={action}>
-      {albums.map((album, at) => (
-        <RevealItem key={album.id} index={at}>
+    <MusicShelf
+      heading={heading}
+      layout={layout}
+      action={action}
+      tiles={albums.map((album) => ({
+        key: album.id,
+        tile: (
           <MusicTile
             title={album.title}
             detail={detailOf(album)}
@@ -80,9 +83,9 @@ const AlbumShelf = ({
               });
             }}
           />
-        </RevealItem>
-      ))}
-    </MusicShelf>
+        ),
+      }))}
+    />
   );
 };
 

@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 import { sayAgain } from '@ValenceI18n/sayAgain';
-import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { docsFor } from '@ValenceCore/functions/docsFor';
-import { AnimatedBytes } from '@ValenceScreens/components/AnimatedBytes/AnimatedBytes';
+import { FormattedBytes } from '@ValenceScreens/components/FormattedBytes/FormattedBytes';
 import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
 import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
 import { describeTimeLeft } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeTimeLeft';
@@ -63,7 +63,7 @@ const ArrQueueTable = ({ queue }: ArrQueueTableProps) => {
                 label={say('common.howFarTitleHasDownloaded', { title: row.original.title })}
                 value={Math.round(row.original.progress * 1000) / 10}
                 readout={
-                  <AnimatedNumber
+                  <FormattedNumber
                     value={Math.floor(row.original.progress * 100)}
                     suffix="%"
                     className="text-xs text-text"
@@ -74,13 +74,13 @@ const ArrQueueTable = ({ queue }: ArrQueueTableProps) => {
               {sizeBytes === null ? null : (
                 <span className="text-xs tabular-nums text-text-muted">
                   {leftBytes === null ? (
-                    <AnimatedBytes bytes={sizeBytes} />
+                    <FormattedBytes bytes={sizeBytes} />
                   ) : (
                     <Sentence
                       words="screens.downloadsPanel.downloadQueueTable.doneOfSize"
                       fillings={{
-                        done: <AnimatedBytes bytes={Math.max(0, sizeBytes - leftBytes)} />,
-                        size: <AnimatedBytes bytes={sizeBytes} />,
+                        done: <FormattedBytes bytes={Math.max(0, sizeBytes - leftBytes)} />,
+                        size: <FormattedBytes bytes={sizeBytes} />,
                       }}
                     />
                   )}

@@ -76,8 +76,8 @@ import { rebuildArtefacts } from '@ValenceClient/library/fetchLibrary';
 import { deleteMedia } from '@ValenceClient/library/deleteMedia';
 import { deleteSeries } from '@ValenceClient/library/deleteSeries';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
-import { AnimatedBytes } from '@ValenceScreens/components/AnimatedBytes/AnimatedBytes';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
+import { FormattedBytes } from '@ValenceScreens/components/FormattedBytes/FormattedBytes';
 import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
 import { appearanceQueries } from '@ValenceClient/query/appearanceQueries';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
@@ -126,6 +126,7 @@ import {
 import { notify } from '@ValenceUI/notify';
 import { fetchTrickplay } from '@ValenceClient/playback/fetchTrickplay';
 import { followRunningJobs } from './followRunningJobs';
+import { usePageIsShown } from '@ValenceScreens/visibility/usePageIsShown';
 import {
   failureOfAnswer,
   failureOfMissing,
@@ -164,6 +165,13 @@ const HISTORY_LENGTH = 60;
 const NO_PATHS: Readonly<Record<string, string>> = {};
 
 /**
+ * Listens for nothing, for while the page is hidden: what is running is read again once it is shown.
+ *
+ * @returns How to stop, which does nothing.
+ */
+const stayStill = (): (() => void) => () => {};
+
+/**
  * The server as the person running it sees it: the dashboard, what is being watched, the libraries
  * and what they hold, the jobs, the settings and the webhooks. Owns the polling that keeps all of it
  * current and the state that outlives any one panel, so that moving between panels neither restarts
@@ -194,6 +202,7 @@ const AdminArea = ({
   onOpenFolder,
 }: AdminAreaProps) => {
   const cache = useQueryClient();
+  const isShown = usePageIsShown();
   const [readings, setReadings] = useState<LoadReading[]>([]);
   const history = useMemo(() => readings.map((reading) => reading.systemCpuPercent), [readings]);
   const [encoderHistory, setEncoderHistory] = useState<number[]>([]);
@@ -208,7 +217,7 @@ const AdminArea = ({
     progress: scanProgress,
     isScanningAll,
     isResettingAll,
-  } = useSyncExternalStore(subscribeToScans, getScanSnapshot);
+  } = useSyncExternalStore(isShown ? subscribeToScans : stayStill, getScanSnapshot);
   const [createdWebhook, setCreatedWebhook] = useState<CreatedWebhook | null>(null);
   const [openHistoryId, setOpenHistoryId] = useState<string | null>(null);
 
@@ -644,7 +653,7 @@ const AdminArea = ({
     }
   };
 
-  useEffect(() => followRunningJobs(), []);
+  useEffect(() => (isShown ? followRunningJobs() : undefined), [isShown]);
 
   const reloadWebhooks = useCallback(
     async () => cache.invalidateQueries({ queryKey: adminQueries.webhooks().queryKey }),
@@ -659,13 +668,19 @@ const AdminArea = ({
 
   useEffect(
     () =>
-      watchActiveSessions((found) => {
-        cache.setQueryData(adminQueries.sessions().queryKey, found);
-      }),
-    [cache],
+      isShown
+        ? watchActiveSessions((found) => {
+            cache.setQueryData(adminQueries.sessions().queryKey, found);
+          })
+        : undefined,
+    [cache, isShown],
   );
 
   useEffect(() => {
+    if (!isShown) {
+      return;
+    }
+
     const stop = watchMonitor((reading) => {
       cache.setQueryData(adminQueries.monitor().queryKey, reading);
       setReadings((current) =>
@@ -689,7 +704,7 @@ const AdminArea = ({
     });
 
     return stop;
-  }, [historyLength, cache]);
+  }, [historyLength, cache, isShown]);
 
   const resources = monitor?.resources ?? null;
   const memory = memoryEnvelope(resources);
@@ -852,7 +867,7 @@ const AdminArea = ({
             {
               label: say('screens.adminArea.processor'),
               value: (
-                <AnimatedNumber value={Math.round(resources?.systemCpuPercent ?? 0)} suffix="%" />
+                <FormattedNumber value={Math.round(resources?.systemCpuPercent ?? 0)} suffix="%" />
               ),
               fraction: (resources?.systemCpuPercent ?? 0) / 100,
               detail:
@@ -862,17 +877,17 @@ const AdminArea = ({
                   <Sentence
                     counted="screens.adminArea.coresValenceNotMeasured"
                     count={resources.cpuCount}
-                    fillings={{ count: <AnimatedNumber value={resources.cpuCount} /> }}
+                    fillings={{ count: <FormattedNumber value={resources.cpuCount} /> }}
                   />
                 ) : (
                   <Sentence
                     counted="screens.adminArea.coresValenceShare"
                     count={resources.cpuCount}
                     fillings={{
-                      count: <AnimatedNumber value={resources.cpuCount} />,
+                      count: <FormattedNumber value={resources.cpuCount} />,
                       share:
                         cpuShare >= 1 ? (
-                          <AnimatedNumber value={Math.round(cpuShare)} suffix="%" />
+                          <FormattedNumber value={Math.round(cpuShare)} suffix="%" />
                         ) : (
                           describeCpuShare(cpuShare)
                         ),
@@ -882,7 +897,7 @@ const AdminArea = ({
             },
             {
               label: say('screens.adminArea.memory'),
-              value: memory === null ? '—' : <AnimatedBytes bytes={memory.usedBytes} />,
+              value: memory === null ? '—' : <FormattedBytes bytes={memory.usedBytes} />,
               fraction: memoryFraction,
               detail:
                 memory === null ? (
@@ -894,7 +909,7 @@ const AdminArea = ({
                         ? 'screens.adminArea.ofTotalAllowedValenceNotMeasured'
                         : 'screens.adminArea.ofTotalValenceNotMeasured'
                     }
-                    fillings={{ total: <AnimatedBytes bytes={memory.totalBytes} /> }}
+                    fillings={{ total: <FormattedBytes bytes={memory.totalBytes} /> }}
                   />
                 ) : (
                   <Sentence
@@ -904,8 +919,8 @@ const AdminArea = ({
                         : 'screens.adminArea.ofTotalValenceUses'
                     }
                     fillings={{
-                      total: <AnimatedBytes bytes={memory.totalBytes} />,
-                      used: <AnimatedBytes bytes={valenceMemory} />,
+                      total: <FormattedBytes bytes={memory.totalBytes} />,
+                      used: <FormattedBytes bytes={valenceMemory} />,
                     }}
                   />
                 ),
@@ -923,7 +938,7 @@ const AdminArea = ({
                 ) : (
                   <Sentence
                     words="screens.adminArea.sizeFree"
-                    fillings={{ size: <AnimatedBytes bytes={mediaDisk.availableBytes} /> }}
+                    fillings={{ size: <FormattedBytes bytes={mediaDisk.availableBytes} /> }}
                   />
                 ),
               ...(mediaDisk === null
@@ -939,7 +954,7 @@ const AdminArea = ({
                   <Sentence
                     words="screens.adminArea.ofTotalOnMount"
                     fillings={{
-                      total: <AnimatedBytes bytes={mediaDisk.totalBytes} />,
+                      total: <FormattedBytes bytes={mediaDisk.totalBytes} />,
                       mountPoint: mediaDisk.mountPoint,
                     }}
                   />

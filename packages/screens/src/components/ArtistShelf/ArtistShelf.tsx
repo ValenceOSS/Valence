@@ -5,7 +5,6 @@ import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { useMyPlaylists } from '@ValenceClient/music/useMyPlaylists';
 import { musicMenuFor } from '@ValenceScreens/music/musicMenuFor';
-import { RevealItem } from '@ValenceUI/RevealItem';
 import { MusicShelf } from '@ValenceScreens/components/MusicShelf/MusicShelf';
 import type { MusicArtist } from '@ValenceContracts/schemas/Music';
 import type { ArtistShelfProps } from './ArtistShelf.types';
@@ -45,9 +44,13 @@ const ArtistShelf = ({ heading, artists, layout = 'rail', action }: ArtistShelfP
   }
 
   return (
-    <MusicShelf heading={heading} layout={layout} action={action}>
-      {artists.map((artist, at) => (
-        <RevealItem key={artist.id} index={at}>
+    <MusicShelf
+      heading={heading}
+      layout={layout}
+      action={action}
+      tiles={artists.map((artist) => ({
+        key: artist.id,
+        tile: (
           <MusicTile
             title={artist.name}
             detail={say('common.artist')}
@@ -72,9 +75,9 @@ const ArtistShelf = ({ heading, artists, layout = 'rail', action }: ArtistShelfP
             )}
             shape="round"
           />
-        </RevealItem>
-      ))}
-    </MusicShelf>
+        ),
+      }))}
+    />
   );
 };
 

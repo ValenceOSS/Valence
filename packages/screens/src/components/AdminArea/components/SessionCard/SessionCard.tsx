@@ -6,7 +6,6 @@ import {
   Headphones as HeadphonesIcon,
   Info as InfoIcon,
   MessageSquare as MessageSquareIcon,
-  Monitor as MonitorIcon,
   MusicNote as MusicNoteIcon,
   Pause as PauseFilledIcon,
   Play as PlayFilledIcon,
@@ -73,7 +72,7 @@ const SessionCard = ({
         ? HeadphonesIcon
         : reading !== null
           ? BookOpenIcon
-          : MonitorIcon;
+          : deviceGlyph;
 
   return (
     <Card as="article" padding="sm" radius="md" className="flex w-full min-w-0 items-center gap-3">
@@ -92,7 +91,7 @@ const SessionCard = ({
           />
         ) : book !== null && book.hasCover ? (
           <img src={bookCoverUrl(book.bookId)} alt="" className="h-full w-full object-cover" />
-        ) : fallbackGlyph === MonitorIcon && marks.system !== null ? (
+        ) : fallbackGlyph === deviceGlyph && marks.system !== null ? (
           <BrandGlyph of={marks.system} size={22} className="text-text-muted" />
         ) : (
           <Icon of={fallbackGlyph} size={20} tone="muted" />

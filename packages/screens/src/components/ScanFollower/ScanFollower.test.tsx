@@ -89,4 +89,32 @@ describe('ScanFollower', () => {
 
     expect(screen.getByText('The scan failed')).toBeVisible();
   });
+
+  it('stops asking while the page is hidden, and asks again once it is shown', async () => {
+    readScanState.mockResolvedValue({
+      jobId: 'j',
+      state: 'running',
+      phase: null,
+      processed: 1,
+      total: 10,
+      item: null,
+    });
+    const shows = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+
+    render(<ScanFollower jobId="j" name="Films" onSettled={vi.fn()} />);
+    await aSecondPasses();
+    await aSecondPasses();
+
+    expect(readScanState).not.toHaveBeenCalled();
+
+    shows.mockReturnValue('visible');
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await aSecondPasses();
+
+    expect(readScanState).toHaveBeenCalledWith('j');
+
+    shows.mockRestore();
+  });
 });
