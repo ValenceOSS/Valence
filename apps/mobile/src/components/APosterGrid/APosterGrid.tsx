@@ -25,6 +25,10 @@ const styles = StyleSheet.create({
 
 const FIRST_SCREENFUL = 12;
 
+const ROWS_A_BATCH = 3;
+
+const SCREENFULS_KEPT = 5;
+
 /**
  * A screen that is a grid of posters, under whatever heads it, drawing only the rows in view.
  *
@@ -114,6 +118,9 @@ const APosterGrid = <Item,>({
       numColumns={across}
       keyExtractor={keyOf}
       renderItem={renderItem}
+      initialNumToRender={Math.ceil(FIRST_SCREENFUL / across)}
+      maxToRenderPerBatch={ROWS_A_BATCH}
+      windowSize={SCREENFULS_KEPT}
       ListHeaderComponent={head}
       {...(across > 1 ? { columnWrapperStyle: styles.row } : {})}
       contentContainerStyle={spacing}

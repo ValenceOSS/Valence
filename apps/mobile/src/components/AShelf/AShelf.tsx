@@ -1,11 +1,28 @@
 import { Children, isValidElement } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
+import type { ReactNode } from 'react';
 import { ACardArrival } from '@ValenceMobile/components/ACardArrival/ACardArrival';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import type { AShelfProps } from './AShelf.types';
 import { say } from '@ValenceI18n/say';
+
+const FIRST_CARDS = 4;
+
+const CARDS_A_BATCH = 4;
+
+const SCREENFULS_KEPT = 3;
+
+/**
+ * The key a card on a shelf is drawn under: the one it was given, or its place where it has none.
+ *
+ * @param card - The card.
+ * @param at - Where it sits on the shelf.
+ * @returns Its key.
+ */
+const keyOfCard = (card: ReactNode, at: number): string =>
+  isValidElement(card) && card.key !== null ? card.key : at.toString();
 
 const styles = StyleSheet.create({
   bleeding: { marginHorizontal: -SCREEN_EDGE },
@@ -20,6 +37,9 @@ const styles = StyleSheet.create({
  * The row runs past the page's margins to the edges of the screen, starting in line with everything
  * else and scrolling off the side, so a card cut by the edge says there is more rather than a card
  * cut by a margin looking like a mistake.
+ *
+ * Only the cards on screen and a little either side are drawn. A shelf of forty titles used to draw
+ * all forty, pictures and all, when three fit on a phone, which was most of what a home page cost.
  *
  * @param title - What the shelf is called.
  * @param onSeeAll - Told somebody wants everything the shelf only shows the start of, where it does.
@@ -40,18 +60,18 @@ const AShelf = ({ title, onSeeAll, children }: AShelfProps) => (
       )}
     </View>
 
-    <ScrollView
+    <FlatList
       horizontal
+      data={Children.toArray(children)}
+      keyExtractor={keyOfCard}
+      renderItem={({ item, index }) => <ACardArrival at={index}>{item}</ACardArrival>}
+      initialNumToRender={FIRST_CARDS}
+      maxToRenderPerBatch={CARDS_A_BATCH}
+      windowSize={SCREENFULS_KEPT}
       showsHorizontalScrollIndicator={false}
       style={styles.bleeding}
       contentContainerStyle={styles.row}
-    >
-      {Children.toArray(children).map((card, at) => (
-        <ACardArrival key={isValidElement(card) && card.key !== null ? card.key : at} at={at}>
-          {card}
-        </ACardArrival>
-      ))}
-    </ScrollView>
+    />
   </View>
 );
 
