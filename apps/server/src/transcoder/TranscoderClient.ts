@@ -394,6 +394,10 @@ type TranscoderSocket = {
   close: () => void;
 };
 
+const NOT_FOUND = 404;
+
+const NOT_READY = 503;
+
 const LocatedFilesSchema = z.object({
   files: z.array(z.string()).min(1),
   contentType: z.string(),
@@ -401,7 +405,8 @@ const LocatedFilesSchema = z.object({
 
 type LocatedSessionFile =
   | { kind: 'located'; files: string[]; contentType: string }
-  | { kind: 'bytes'; file: TranscoderStreamedFile };
+  | { kind: 'bytes'; file: TranscoderStreamedFile }
+  | { kind: 'unlocatable' };
 
 type StreamFetchLike = (url: string, init?: HttpRequestInit) => Promise<StreamedResponse>;
 
@@ -712,11 +717,15 @@ const createTranscoderClient = ({
 
     locateSessionFile: async (sessionId, name) => {
       const response = await streamFrom(
-        `${origin}/sessions/${encodeURIComponent(sessionId)}/${encodeURIComponent(name)}?locate=1`,
+        `${origin}/sessions/${encodeURIComponent(sessionId)}/${encodeURIComponent(name)}?locate=true`,
       );
 
-      if (!response.ok || response.body === null) {
+      if (response.status === NOT_FOUND || response.status === NOT_READY) {
         return null;
+      }
+
+      if (!response.ok || response.body === null) {
+        return { kind: 'unlocatable' };
       }
 
       const contentType = response.headers.get('content-type') ?? 'application/octet-stream';
@@ -736,7 +745,7 @@ const createTranscoderClient = ({
 
       const located = LocatedFilesSchema.safeParse(await new Response(response.body).json());
 
-      return located.success ? { kind: 'located', ...located.data } : null;
+      return located.success ? { kind: 'located', ...located.data } : { kind: 'unlocatable' };
     },
 
     readFile: async (path, range) =>

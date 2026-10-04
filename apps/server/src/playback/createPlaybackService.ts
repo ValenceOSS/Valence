@@ -303,6 +303,10 @@ const createPlaybackService = ({
         return found.file;
       }
 
+      if (found.kind === 'unlocatable') {
+        return transcoder.readSessionFile(sessionId, name);
+      }
+
       return (
         (await readSessionFromDisk(found.files, found.contentType)) ??
         transcoder.readSessionFile(sessionId, name)

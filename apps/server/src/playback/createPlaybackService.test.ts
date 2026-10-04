@@ -614,6 +614,23 @@ describe('the files a player asks for while it is watching', () => {
     expect(await service.readSessionFile('session-1', 'segment_1.m4s')).toBe(sent);
   });
 
+  it('asks the media service for the bytes where it cannot say where they are', async () => {
+    const readSessionFile = vi.fn(() => Promise.resolve(null));
+    const { service } = build(
+      {
+        readSessionFile,
+        locateSessionFile: () => Promise.resolve({ kind: 'unlocatable' as const }),
+      },
+      undefined,
+      undefined,
+      { readSessionFromDisk: () => Promise.reject(new Error('not used')) },
+    );
+
+    await service.readSessionFile('session-1', 'index.m3u8');
+
+    expect(readSessionFile).toHaveBeenCalledWith('session-1', 'index.m3u8');
+  });
+
   it('asks the media service for the bytes where the files cannot be opened here', async () => {
     const readSessionFile = vi.fn(() => Promise.resolve(null));
     const { service } = build(

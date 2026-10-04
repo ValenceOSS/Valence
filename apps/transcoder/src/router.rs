@@ -2458,7 +2458,7 @@ pub fn create_router(state: AppState) -> Router {
 mod tests {
     use super::{
         claim_for_a_live_job, content_type_for, is_safe_segment_name, locate, parse_range,
-        AppState, Claimed,
+        AppState, Claimed, SessionFileQuery,
     };
     use crate::render_registry::RenderRegistry;
     use std::path::{Path, PathBuf};
@@ -2719,5 +2719,30 @@ mod tests {
         let response = locate(Path::new("/tmp/transcodes/abc"), &["../secret".to_owned()]);
 
         assert_eq!(response.status(), axum::http::StatusCode::BAD_REQUEST);
+    }
+
+    #[test]
+    fn a_session_file_address_asks_to_locate_with_true_and_not_otherwise() {
+        use axum::extract::Query;
+
+        let asked: axum::http::Uri = "/sessions/a/index.m3u8?locate=true".parse().unwrap();
+        let plain: axum::http::Uri = "/sessions/a/index.m3u8".parse().unwrap();
+
+        assert!(
+            Query::<SessionFileQuery>::try_from_uri(&asked)
+                .unwrap()
+                .0
+                .locate
+        );
+        assert!(
+            !Query::<SessionFileQuery>::try_from_uri(&plain)
+                .unwrap()
+                .0
+                .locate
+        );
+
+        let numbered: axum::http::Uri = "/sessions/a/index.m3u8?locate=1".parse().unwrap();
+
+        assert!(Query::<SessionFileQuery>::try_from_uri(&numbered).is_err());
     }
 }
