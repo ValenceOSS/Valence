@@ -9,6 +9,7 @@ type WatchingProps = {
   onEnded?: () => void;
   seasons?: readonly { seasonNumber: number | null; episodes: readonly MediaSummary[] }[];
   onChooseEpisode?: (mediaId: string) => void;
+  willCarryOn?: boolean;
   kept?: HeldFile;
   watchParty?: WatchPartyState;
 };

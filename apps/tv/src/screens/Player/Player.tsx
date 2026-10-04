@@ -10,10 +10,12 @@ import { playbackQueries } from '@ValenceClient/query/playbackQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { nextEpisode } from '@ValenceClient/library/pickFeatured';
-import { showIdOf } from '@ValenceClient/library/showIdOf';
+import { useTheProgrammeOfEpisode } from '@ValenceClient/library/useTheProgrammeOfEpisode';
 import { summariseDetail } from '@ValenceClient/library/summariseDetail';
 import { decideWhatFollows } from '@ValenceClient/playback/decideWhatFollows';
 import { describeSkip, skippableAt } from '@ValenceClient/playback/fetchSegments';
+import { nextEpisodeOfferAt } from '@ValenceClient/playback/nextEpisodeOfferAt';
+import { hasReachedTheEnd } from '@ValenceClient/playback/hasReachedTheEnd';
 import { qualityStepCostsFor } from '@ValenceClient/playback/qualityStepCostsFor';
 import { qualityStepDetail } from '@ValenceClient/playback/qualityStepDetail';
 import { stepsThatSaveNothing } from '@ValenceClient/playback/stepsThatSaveNothing';
@@ -92,8 +94,6 @@ const NOTHING_READ: StreamReading = {
   frameRate: null,
   range: null,
 };
-
-const UP_NEXT_BEFORE_END = 30;
 
 const REFUSED_SIGN_IN = '-1013';
 
@@ -178,7 +178,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
     () => (detail.data === undefined || detail.data === null ? null : summariseDetail(detail.data)),
     [detail.data],
   );
-  const showId = summary === null ? null : showIdOf(summary);
+  const programme = useTheProgrammeOfEpisode(mediaId);
   const stepCosts = useMemo(
     () =>
       detail.data === undefined || detail.data === null
@@ -193,10 +193,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
         : stepsThatSaveNothing({ media: detail.data, profile: theTvsProfile() }),
     [detail.data],
   );
-  const show = useQuery({
-    ...libraryQueries.show(detail.data?.libraryId ?? null, showId),
-    enabled: showId !== null && detail.data !== undefined && detail.data !== null,
-  });
+  const show = useQuery(libraryQueries.show(programme?.libraryId ?? null, programme?.id ?? null));
 
   const episodes = useMemo(
     () =>
@@ -248,6 +245,8 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isUpNextAway, setIsUpNextAway] = useState(false);
   const [hasEnded, setHasEnded] = useState(false);
+  const [isHeldAtTheEnd, setIsHeldAtTheEnd] = useState(false);
+  const seekedToTheEnd = useRef(false);
   const [failure, setFailure] = useState<string | null>(null);
   const [status, setStatus] = useState('idle');
   const [heard, setHeard] = useState<string | null>(null);
@@ -282,6 +281,11 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
       }),
       player.addListener('playToEnd', () => {
         setHasEnded(true);
+
+        if (seekedToTheEnd.current) {
+          setIsHeldAtTheEnd(true);
+          setIsUpNextAway(false);
+        }
       }),
       player.addListener('statusChange', ({ status: now, error }) => {
         setStatus(now);
@@ -333,6 +337,20 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
 
   const moveTo = useCallback(
     (seconds: number) => {
+      seekedToTheEnd.current = following !== null && hasReachedTheEnd(seconds, at.current.duration);
+
+      if (!seekedToTheEnd.current) {
+        setHasEnded(false);
+
+        if (isHeldAtTheEnd) {
+          setIsHeldAtTheEnd(false);
+
+          if (party === undefined) {
+            player.play();
+          }
+        }
+      }
+
       if (party !== undefined) {
         party.onCommand({ kind: 'seek', atSeconds: Math.max(0, seconds) });
 
@@ -341,7 +359,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
 
       moveTheVideoTo(player, seconds);
     },
-    [party, player],
+    [party, player, following, isHeldAtTheEnd],
   );
 
   const title = detail.data?.metadata.seriesTitle ?? detail.data?.title ?? '';
@@ -552,6 +570,38 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
     scrubBy((degrees / 360) * A_TURN_SCRUBS);
   });
 
+  const skippable = skippableAt(segments.data ?? [], position);
+  const length = duration > 0 ? duration : (detail.data?.durationSeconds ?? 0);
+  const nextOffer =
+    following === null
+      ? null
+      : nextEpisodeOfferAt({
+          segments: segments.data ?? [],
+          positionSeconds: position,
+          durationSeconds: length,
+        });
+  const isOfferingNext =
+    following !== null &&
+    decided.kind !== 'nothing' &&
+    !isUpNextAway &&
+    (nextOffer !== null || hasEnded);
+  const isUpNextUp = isOfferingNext && menu === null;
+  const isInTheEnd = nextOffer !== null;
+
+  useEffect(() => {
+    if (!isInTheEnd) {
+      setIsUpNextAway(false);
+    }
+  }, [isInTheEnd]);
+
+  const stayForTheCredits = useCallback(() => {
+    setIsUpNextAway(true);
+
+    if (hasEnded && !isHeldAtTheEnd) {
+      onLeave();
+    }
+  }, [hasEnded, isHeldAtTheEnd, onLeave]);
+
   const hearRemote = useCallback(
     (event: HWEvent) => {
       if (menu !== null || event.eventType === 'menu' || event.eventType === 'back') {
@@ -560,8 +610,15 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
 
       if (event.eventType === 'playPause') {
         toggle();
-        touch();
 
+        if (!isUpNextUp) {
+          touch();
+        }
+
+        return;
+      }
+
+      if (isUpNextUp) {
         return;
       }
 
@@ -591,7 +648,18 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
 
       touch();
     },
-    [menu, isShowing, isScrubbing, toggle, touch, seekBy, scrubBy, letGo, holdScrubbing],
+    [
+      menu,
+      isShowing,
+      isScrubbing,
+      isUpNextUp,
+      toggle,
+      touch,
+      seekBy,
+      scrubBy,
+      letGo,
+      holdScrubbing,
+    ],
   );
 
   useTVEventHandler(hearRemote);
@@ -658,9 +726,11 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
             }
           : menu !== null
             ? backToSettings
-            : isShowing && isPlaying
-              ? putControlsAway
-              : onLeave,
+            : isUpNextUp
+              ? stayForTheCredits
+              : isShowing && isPlaying
+                ? putControlsAway
+                : onLeave,
   );
 
   const goNext = useCallback(
@@ -673,7 +743,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
   );
 
   useEffect(() => {
-    if (!hasEnded) {
+    if (!hasEnded || isHeldAtTheEnd) {
       return;
     }
 
@@ -682,21 +752,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
     } else if (decided.kind === 'play') {
       goNext(true);
     }
-  }, [hasEnded, decided.kind, onLeave, goNext]);
-
-  const skippable = skippableAt(segments.data ?? [], position);
-  const credits = (segments.data ?? []).find((segment) => segment.kind === 'credits');
-  const length = duration > 0 ? duration : (detail.data?.durationSeconds ?? 0);
-  const isCreditsRolling =
-    length > 0 &&
-    (credits === undefined
-      ? position >= length - UP_NEXT_BEFORE_END
-      : position >= credits.startSeconds);
-  const isOfferingNext =
-    following !== null &&
-    decided.kind !== 'nothing' &&
-    !isUpNextAway &&
-    (isCreditsRolling || hasEnded);
+  }, [hasEnded, isHeldAtTheEnd, decided.kind, onLeave, goNext]);
 
   if (session.kind === 'failed' || failure !== null) {
     return (
@@ -737,7 +793,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
         </View>
       ) : null}
 
-      {isShowing && menu === null ? (
+      {isShowing && menu === null && !isUpNextUp ? (
         <PlayerControls
           title={title}
           year={detail.data?.year ?? null}
@@ -799,16 +855,15 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
         <UpNext
           episode={following}
           isAsking={decided.kind === 'ask'}
+          offer={hasEnded ? null : nextOffer}
           onPlay={() => {
+            if (length > 0) {
+              at.current.position = length;
+            }
+
             goNext(false);
           }}
-          onStay={() => {
-            setIsUpNextAway(true);
-
-            if (hasEnded) {
-              onLeave();
-            }
-          }}
+          onStay={stayForTheCredits}
         />
       ) : null}
 

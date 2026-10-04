@@ -12,6 +12,11 @@ type TheMovingPartsProps = {
   captionStyle: CaptionStyle;
   areControlsDrawn: boolean;
   onMoveTo: (seconds: number) => void;
+  next: {
+    isCounting: boolean;
+    isHeldAtTheEnd: boolean;
+    onPlay: () => void;
+  } | null;
   controls: Omit<TheControlsProps, 'at' | 'runsFor' | 'buffered' | 'onSeek'>;
 };
 

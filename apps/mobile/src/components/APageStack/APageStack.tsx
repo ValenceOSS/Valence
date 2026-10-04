@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { Animated, PanResponder, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { IS_ON_TOP } from '@ValenceMobile/components/APageStack/IS_ON_TOP';
-import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
+import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
 import { SPRINGS } from '@ValenceMobile/theme/SPRINGS';
 import type { APageStackProps, AStackedPage } from './APageStack.types';
 

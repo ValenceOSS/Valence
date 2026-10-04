@@ -6,7 +6,7 @@ import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { thePhonesAudiobookPlayer } from '@ValenceMobile/books/thePhonesAudiobookPlayer';
 import { thePhonesMusicPlayer } from '@ValenceMobile/music/thePhonesMusicPlayer';
 import { TheNowPlayingBar } from '@ValenceMobile/components/TheNowPlayingBar/TheNowPlayingBar';
-import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
+import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
 import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
 import { useTheMusic } from '@ValenceMobile/hooks/useTheMusic';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';

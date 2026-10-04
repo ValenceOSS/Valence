@@ -37,7 +37,7 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { SegmentedRow } from '@ValenceMobile/components/SegmentedRow/SegmentedRow';
 import { Slider } from '@ValenceMobile/components/Slider/Slider';
 import { Words } from '@ValenceMobile/components/Words/Words';
-import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
+import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import type { ComponentRef } from 'react';
 import type { TextPreferences } from '@ValenceClient/books/textPreferences';

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
-import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
+import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import { EASINGS } from '@ValenceMobile/theme/EASINGS';

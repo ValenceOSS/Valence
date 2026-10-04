@@ -7,7 +7,7 @@ import { ABlur } from '@ValenceMobile/components/ABlur/ABlur';
 import { AGlassCircle } from '@ValenceMobile/components/AGlassCircle/AGlassCircle';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
 import { Words } from '@ValenceMobile/components/Words/Words';
-import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
+import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
 import { SPRINGS } from '@ValenceMobile/theme/SPRINGS';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import type { AReaderChromeProps } from './AReaderChrome.types';

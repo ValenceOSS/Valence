@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Animated } from 'react-native';
-import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
+import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
 import { SPRINGS } from '@ValenceMobile/theme/SPRINGS';
 import type { ARisingProps } from './ARising.types';
 

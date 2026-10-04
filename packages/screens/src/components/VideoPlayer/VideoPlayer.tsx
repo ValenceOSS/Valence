@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { motion, useDragControls } from 'motion/react';
+import { AnimatePresence, motion, useDragControls } from 'motion/react';
 import { gainFor } from '@ValenceCore/functions/gainFor';
 import {
   Cast as CastIcon,
@@ -46,7 +46,7 @@ import { loadCastSender, castStateOf, castStream } from '@ValenceScreens/playbac
 import { applyVolumeBoost } from '@ValenceScreens/playback/volumeBoost';
 import { hasFinePointer } from '@ValenceUI/hasFinePointer';
 import { aLeaveWorthHiding } from '@ValenceScreens/playback/aLeaveWorthHiding';
-import { hasReachedTheEnd } from '@ValenceScreens/playback/hasReachedTheEnd';
+import { hasReachedTheEnd } from '@ValenceClient/playback/hasReachedTheEnd';
 import { whatIsPlaying } from '@ValenceScreens/playback/whatIsPlaying';
 import { SKIP_SECONDS } from './components/PlayerControls/PlayerControls.types';
 import { fetchTrickplay } from '@ValenceClient/playback/fetchTrickplay';
@@ -70,6 +70,8 @@ import {
   saveQualityPreference,
 } from '@ValenceClient/playback/qualityPreference';
 import { fetchSegments, skippableAt, describeSkip } from '@ValenceClient/playback/fetchSegments';
+import { nextEpisodeOfferAt } from '@ValenceClient/playback/nextEpisodeOfferAt';
+import { nextEpisode } from '@ValenceClient/library/pickFeatured';
 import {
   reportWatchProgress,
   REPORT_EVERY_MILLISECONDS,
@@ -99,6 +101,7 @@ import type { PoppedOut } from '@ValenceScreens/playback/popOutWithCaptions';
 import type { CastState } from '@ValenceScreens/playback/castPlayback.types';
 import { describePlaying } from './describePlaying';
 import { PausedScreen } from './components/PausedScreen/PausedScreen';
+import { NextEpisodeCard } from './components/NextEpisodeCard/NextEpisodeCard';
 import type { CastContext } from '@ValenceScreens/playback/castSender.types';
 import { aKeptSession } from '@ValenceClient/downloads/aKeptSession';
 import { sourceForAFile, trickplayForAFile } from '@ValenceClient/downloads/keepingFiles';
@@ -234,7 +237,10 @@ const EMPTY_HEALTH: PlaybackHealth = {
  * @param onProgress - Called as the viewer moves through it, with where they are and how long it is.
  * @param onEnded - Called when it reaches the end of its own accord.
  * @param episodes - The rest of the season, where this is one episode of a programme.
- * @param onSelectEpisode - Called with an episode the viewer chose instead of this one.
+ * @param onSelectEpisode - Called with an episode the viewer chose instead of this one, and with the
+ *   next one when they take up the offer of it as this one ends.
+ * @param willCarryOn - Whether the next episode starts on its own when this one ends, rather than
+ *   asking first, so the offer of it counts down only when it will.
  * @param watchedFractionFor - How to ask how far through a given episode the viewer already is.
  * @param party - The watch party this viewing is part of, where it is part of one.
  * @param partyNotice - Something the party has to say, which may outlive the party itself.
@@ -252,6 +258,7 @@ const VideoPlayer = ({
   onEnded,
   episodes = [],
   onSelectEpisode,
+  willCarryOn = false,
   watchedFractionFor,
   party,
   partyNotice = null,
@@ -294,6 +301,10 @@ const VideoPlayer = ({
   const letterbox = useLetterbox(videoRef, isGlowing);
   const [isShowingStats, setIsShowingStats] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [nextHiddenFor, setNextHiddenFor] = useState<string | null>(null);
+  const [heldAtTheEndOf, setHeldAtTheEndOf] = useState<string | null>(null);
+  const seekedToTheEndRef = useRef(false);
+  const playsOnFromTheEndRef = useRef(false);
   const [health, setHealth] = useState<PlaybackHealth>(EMPTY_HEALTH);
   const [delivered, setDelivered] = useState<DeliveredFormat | null>(null);
   const [isIdle, setIsIdle] = useState(false);
@@ -1191,6 +1202,12 @@ const VideoPlayer = ({
   }, [isImmersive, isPlaying, activity, state, isMenuOpen, isShowingStats]);
 
   const duration = media.durationSeconds > 0 ? media.durationSeconds : reportedDuration;
+  const playingEpisode = episodes.find((episode) => episode.id === media.id);
+  const following =
+    playingEpisode === undefined || onSelectEpisode === undefined
+      ? null
+      : nextEpisode(episodes, playingEpisode);
+  const isHeldAtTheEnd = heldAtTheEndOf === media.id;
 
   const togglePlay = useCallback(() => {
     const element = videoRef.current;
@@ -1225,6 +1242,16 @@ const VideoPlayer = ({
         return;
       }
 
+      seekedToTheEndRef.current = following !== null && hasReachedTheEnd(seconds, duration);
+
+      if (isHeldAtTheEnd && !seekedToTheEndRef.current) {
+        setHeldAtTheEndOf(null);
+
+        if (playsOnFromTheEndRef.current && party === undefined) {
+          void element.play().catch(() => {});
+        }
+      }
+
       if (party !== undefined) {
         party.onCommand({ kind: 'seek', atSeconds: seconds });
 
@@ -1235,7 +1262,7 @@ const VideoPlayer = ({
 
       element.currentTime = seconds;
     },
-    [party],
+    [party, following, duration, isHeldAtTheEnd],
   );
 
   useNowPlaying({
@@ -1318,7 +1345,21 @@ const VideoPlayer = ({
     [detail, deviceProfile],
   );
 
-  const skippable = state === 'playing' ? skippableAt(segments, position) : null;
+  const offerHere =
+    following === null
+      ? null
+      : nextEpisodeOfferAt({ segments, positionSeconds: position, durationSeconds: duration });
+  const isInTheEnd = offerHere !== null;
+  const nextOffer =
+    state === 'playing' && (nextHiddenFor !== media.id || isHeldAtTheEnd) ? offerHere : null;
+
+  useEffect(() => {
+    if (!isInTheEnd) {
+      setNextHiddenFor(null);
+    }
+  }, [isInTheEnd]);
+  const skippable =
+    state === 'playing' && nextOffer === null ? skippableAt(segments, position) : null;
 
   const audioTracks = (keptSource === undefined ? (detail?.audioStreams ?? []) : []).map(
     (stream, position) => ({
@@ -1710,7 +1751,25 @@ const VideoPlayer = ({
 
     hasFinishedRef.current = true;
     onProgress?.(duration, duration);
+
+    if (seekedToTheEndRef.current) {
+      playsOnFromTheEndRef.current = isPlaying;
+      setHeldAtTheEndOf(media.id);
+
+      return;
+    }
+
     onEnded?.();
+  };
+
+  const playTheNext = () => {
+    if (following === null || onSelectEpisode === undefined) {
+      return;
+    }
+
+    hasFinishedRef.current = true;
+    onProgress?.(duration, duration);
+    onSelectEpisode(following);
   };
 
   const asItPlays = {
@@ -1996,15 +2055,15 @@ const VideoPlayer = ({
             </motion.div>
           ) : null}
 
-          {skippable === null ? null : (
-            <div
-              className="absolute right-6 z-10 transition-[bottom] duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none"
-              style={{
-                bottom: isBarUp
-                  ? controlsTall + CLEAR_OF_THE_EDGE + CLEAR_OF_THE_CONTROLS
-                  : CLEAR_OF_THE_EDGE,
-              }}
-            >
+          <div
+            className="absolute right-6 z-10 transition-[bottom] duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none"
+            style={{
+              bottom: isBarUp
+                ? controlsTall + CLEAR_OF_THE_EDGE + CLEAR_OF_THE_CONTROLS
+                : CLEAR_OF_THE_EDGE,
+            }}
+          >
+            {skippable === null ? null : (
               <Button
                 size="lg"
                 variant="overlay"
@@ -2016,8 +2075,23 @@ const VideoPlayer = ({
                 {describeSkip(skippable)}
                 <Icon of={SkipForwardFilledIcon} size={18} />
               </Button>
-            </div>
-          )}
+            )}
+
+            <AnimatePresence>
+              {nextOffer === null || following === null || isMenuOpen ? null : (
+                <NextEpisodeCard
+                  key={following.id}
+                  episode={following}
+                  offer={nextOffer}
+                  isCounting={willCarryOn && !isHeldAtTheEnd}
+                  onPlay={playTheNext}
+                  onWatchCredits={() => {
+                    setNextHiddenFor(media.id);
+                  }}
+                />
+              )}
+            </AnimatePresence>
+          </div>
 
           <div
             ref={controlsRef}

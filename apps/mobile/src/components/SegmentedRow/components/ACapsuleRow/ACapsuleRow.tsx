@@ -5,7 +5,7 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { hasLiquidGlass } from '@ValenceMobile/platform/hasLiquidGlass';
-import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
+import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { theColours } from '@ValenceMobile/theme/theColours';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';

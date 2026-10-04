@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { AccessibilityInfo } from 'react-native';
 
 /**
- * Whether somebody has asked their phone to cut down on motion, as the web asks the browser, so a
+ * Whether somebody has asked their phone or television to cut down on motion, as the web asks the browser, so a
  * screen can let things simply appear instead of flying into place.
  *
  * It starts by assuming motion is fine, since the answer arrives a moment after the screen does,

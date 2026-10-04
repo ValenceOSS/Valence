@@ -652,7 +652,7 @@
   {
     "handler": "client.calendar.describeCalendarEntry.sSeasonNumberEEpisodeNumberTitle",
     "text": "S{seasonNumber} E{episodeNumber} · {title}",
-    "context": "The line under a show's name on the release calendar, saying which episode airs that day. {seasonNumber} and {episodeNumber} are numbers, {title} is the episode's title."
+    "context": "Which episode something is, by season and number, then its title: the line under a show's name on the release calendar, and on the card offering the next episode in the player. {seasonNumber} and {episodeNumber} are numbers, {title} is the episode's title."
   },
   {
     "handler": "client.calendar.describeCalendarEntry.toBuyOrRent",
@@ -3952,6 +3952,11 @@
     "context": "The label of a glass circle, used in several places, among them the reader rail in the reader of the phone app and the listening player of the phone app."
   },
   {
+    "handler": "common.nextEpisode",
+    "text": "Next Episode",
+    "context": "The heading of the card offering the next episode as one ends, in the player of the web app, the phone app and the television app. Title Case, like Skip Intro."
+  },
+  {
     "handler": "common.nextFromName",
     "text": "Next from {name}",
     "context": "Shown, used in the up next in the music player of the phone app and in the queue panel in the music page. {name} is filled in by the app."
@@ -4785,6 +4790,11 @@
     "context": "The label, used in several places, among them the music of the phone app (from `askAboutATrack`) and the use ask about an album in the music of the phone app."
   },
   {
+    "handler": "common.playNextEpisode",
+    "text": "Play Next",
+    "context": "A button on the card offering the next episode as one ends, in the player of the web app, the phone app and the television app: starts the next episode now. Title Case, like Skip Intro. Not the music queue's \"Play next\"."
+  },
+  {
     "handler": "common.playOn",
     "text": "Play on",
     "context": "The title of a sheet, used in several places, among them the devices sheet of the phone app and the devices panel in the now playing of the television app."
@@ -5615,6 +5625,16 @@
     "context": "Shown, used in the video remote and in the video remote bar."
   },
   {
+    "handler": "common.startsInCountSeconds.one",
+    "text": "Starts in {count} second",
+    "context": "On the card offering the next episode as one ends, for somebody who asked for less motion: how long until it starts on its own. {count} is a number of seconds."
+  },
+  {
+    "handler": "common.startsInCountSeconds.other",
+    "text": "Starts in {count} seconds",
+    "context": "On the card offering the next episode as one ends, for somebody who asked for less motion: how long until it starts on its own. {count} is a number of seconds."
+  },
+  {
     "handler": "common.state",
     "text": "State",
     "context": "Shown, used in several places, among them the accounts panel in the admin area and the background jobs in the admin area."
@@ -6378,6 +6398,11 @@
     "handler": "common.watch",
     "text": "Watch",
     "context": "The label of a button, used in the ask for the password of the phone app and in the enter password of the television app."
+  },
+  {
+    "handler": "common.watchCredits",
+    "text": "Watch Credits",
+    "context": "A button on the card offering the next episode as one ends, in the player of the web app, the phone app and the television app: puts the card away and stays with this episode's credits. Title Case, like Skip Intro."
   },
   {
     "handler": "common.watched",
@@ -27135,16 +27160,6 @@
     "handler": "tv.player.upNext.keepWatching",
     "text": "Keep watching",
     "context": "Shown in the up next in the player of the television app."
-  },
-  {
-    "handler": "tv.player.upNext.playInLeft",
-    "text": "Play in {left}",
-    "context": "Shown in the up next in the player of the television app. {left} is filled in by the app."
-  },
-  {
-    "handler": "tv.player.upNext.sSeasonNumberEEpisodeNumber",
-    "text": "S{seasonNumber}: E{episodeNumber} · ",
-    "context": "Shown in the up next in the player of the television app. {seasonNumber} is filled in by the app; {episodeNumber} is filled in by the app."
   },
   {
     "handler": "tv.pluginPage.plugin",
