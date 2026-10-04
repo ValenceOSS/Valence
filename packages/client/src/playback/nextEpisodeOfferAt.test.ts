@@ -124,4 +124,14 @@ describe('nextEpisodeOfferAt', () => {
       nextEpisodeOfferAt({ segments: [], positionSeconds: 10, durationSeconds: Number.NaN }),
     ).toBeNull();
   });
+
+  it('offers nothing while the position is not known', () => {
+    expect(
+      nextEpisodeOfferAt({
+        segments: [],
+        positionSeconds: Number.NaN,
+        durationSeconds: HALF_AN_HOUR,
+      }),
+    ).toBeNull();
+  });
 });

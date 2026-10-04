@@ -63,7 +63,11 @@ const nextEpisodeOfferAt = ({
   positionSeconds,
   durationSeconds,
 }: OfferAsked): NextEpisodeOffer | null => {
-  if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) {
+  if (
+    !Number.isFinite(durationSeconds) ||
+    durationSeconds <= 0 ||
+    !Number.isFinite(positionSeconds)
+  ) {
     return null;
   }
 
