@@ -24,9 +24,13 @@ packageExtensions:
     peerDependencies:
       react-native: '*'
 
-# drizzle-orm is resolved once per set of optional peers it finds. better-auth brings
-# better-sqlite3 12 into the server, while the database package and the requests service would pick
-# 13, which made two drizzle-orm copies whose types don't match. Nothing here uses SQLite; one
-# version keeps one drizzle-orm.
+# drizzle-orm is resolved once per set of optional peers it finds, and better-auth, the database
+# package and the requests service would otherwise bring different versions of better-sqlite3, which
+# made two drizzle-orm copies whose types don't match. One version keeps one drizzle-orm.
+#
+# It has to be 13. The requests service's Cloudflare browser, camoufox-js, opens a SQLite file every
+# time it starts, and 13 carries its compiled module for each platform inside the package. 12 has to
+# fetch one in an install script, which pnpm skips here and the requests image skips by design, so
+# pinned to 12 the browser could not start anywhere.
 overrides:
-  better-sqlite3: 12.11.1
+  better-sqlite3: 13.0.3

@@ -26,6 +26,33 @@ RUN if grep -Eo "from ?[\"']@Valence[A-Za-z]+/[^\"']+" apps/requests/dist/*.js; 
       echo "unbundled path alias in apps/requests/dist; copy its package into the build stage" >&2; exit 1; \
     fi
 
+# The browser that gets indexers past Cloudflare's check, Camoufox, at a release chosen here rather
+# than the newest one. camoufox-js fetches the newest release it allows, and allows every one, so a
+# Camoufox release the library does not yet understand stops the browser starting in every image built
+# after it, as 156 did. A newer release goes in once the camoufox-js pinned in package.json starts one.
+# It always passes for Firefox on Linux, which is what the traffic underneath it shows anyway, and
+# never looks up where it is, so the fonts it would need to pass for Windows or a Mac and the map of
+# addresses to places are left out.
+FROM node:24-bookworm-slim AS browser
+ARG TARGETARCH
+ARG CAMOUFOX_VERSION=152.0.4
+ARG CAMOUFOX_RELEASE=beta.30
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates curl unzip \
+ && rm -rf /var/lib/apt/lists/*
+RUN case "$TARGETARCH" in \
+      amd64) arch=x86_64; sum=5720d45b894ce1770543de024c6f10d514b38be560fa2dc3226b3d8586caf672 ;; \
+      arm64) arch=arm64; sum=60447260af8bebdb0ec3f2aa72f687b879e5598367303de2e3fdbc7a5be8c124 ;; \
+      *) echo "Camoufox has no Linux build for $TARGETARCH" >&2; exit 1 ;; \
+    esac \
+ && curl -fsSL -o /tmp/camoufox.zip \
+      "https://github.com/daijro/camoufox/releases/download/v$CAMOUFOX_VERSION-$CAMOUFOX_RELEASE/camoufox-$CAMOUFOX_VERSION-$CAMOUFOX_RELEASE-lin.$arch.zip" \
+ && echo "$sum  /tmp/camoufox.zip" | sha256sum -c - \
+ && unzip -q /tmp/camoufox.zip -d /opt/camoufox \
+ && rm -rf /tmp/camoufox.zip /opt/camoufox/fonts/windows /opt/camoufox/fonts/macos /opt/camoufox/GeoLite2-City.mmdb \
+ && printf '{"version":"%s","release":"%s"}' "$CAMOUFOX_VERSION" "$CAMOUFOX_RELEASE" > /opt/camoufox/version.json \
+ && chmod -R 755 /opt/camoufox
+
 FROM node:24-bookworm-slim AS runtime
 
 ARG VALENCE_VERSION=0.0.0
@@ -48,13 +75,18 @@ COPY packages/database ./packages/database
 COPY apps/requests/package.json ./apps/requests/package.json
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts --filter @valence/requests...
 
-# The browser itself, the newest Camoufox release this version of camoufox-js supports, fetched
-# into the image so that nothing waits on a download. It always passes for Firefox on Linux, which
-# is what the traffic underneath it shows anyway, and never looks up where it is, so the fonts it
-# would need to pass for Windows or a Mac and the map of addresses to places are left out.
+# The browser, and the addons camoufox-js adds to it, in the image so that nothing waits on a download.
 ENV CAMOUFOX_INSTALL_DIR=/opt/camoufox
-RUN cd apps/requests && node node_modules/camoufox-js/dist/__main__.js fetch \
- && rm -rf /opt/camoufox/fonts/windows /opt/camoufox/fonts/macos /opt/camoufox/GeoLite2-City.mmdb
+COPY --from=browser /opt/camoufox /opt/camoufox
+RUN cd apps/requests \
+ && node --input-type=module -e "import { DefaultAddons, maybeDownloadAddons } from 'camoufox-js/dist/addons.js'; await maybeDownloadAddons(DefaultAddons)" \
+ && test -f /opt/camoufox/addons/UBO/manifest.json
+
+# Camoufox opens a SQLite file every time it starts, through better-sqlite3's compiled module, and
+# the install above runs no scripts to build one. The version pinned in pnpm-workspace.yaml carries
+# its own. Loading it here, as camoufox-js does, fails the build rather than the first Cloudflare
+# check if a version without one is ever pinned again.
+RUN node -e "const camoufox = require('node:fs').realpathSync('/app/apps/requests/node_modules/camoufox-js/package.json'); new (require('node:module').createRequire(camoufox)('better-sqlite3'))(':memory:').close()"
 
 COPY apps/requests/drizzle/postgres ./apps/requests/drizzle/postgres
 COPY apps/requests/drizzle/mysql ./apps/requests/drizzle/mysql

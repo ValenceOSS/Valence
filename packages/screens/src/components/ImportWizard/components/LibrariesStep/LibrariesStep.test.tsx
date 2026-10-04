@@ -149,7 +149,9 @@ describe('LibrariesStep', () => {
   it('shows each folder, where it is in Valence, and which libraries are already there', async () => {
     render(<LibrariesStep source={SOURCE} onContinue={vi.fn()} onBack={vi.fn()} />);
 
-    expect(await screen.findByText('/data/tv → /media/tv')).toBeVisible();
+    await waitFor(() => {
+      expect(screen.getByText('/data/tv → /media/tv')).toBeVisible();
+    });
     expect(screen.getAllByText('Already in Valence')).toHaveLength(1);
     expect(screen.getByText(/Valence doesn’t support this library type/)).toBeVisible();
   });
