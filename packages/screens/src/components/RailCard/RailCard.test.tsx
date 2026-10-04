@@ -377,7 +377,7 @@ describe('a card that stands upright', () => {
 
     expect(container.querySelector('img')).toHaveAttribute(
       'src',
-      `/api/media/${MEDIA.id}/image/poster`,
+      `/api/media/${MEDIA.id}/image/poster?size=small`,
     );
     expect(container.querySelector('.aspect-\\[2\\/3\\]')).not.toBeNull();
   });
@@ -389,7 +389,7 @@ describe('a card that stands upright', () => {
 
     expect(container.querySelector('img')).toHaveAttribute(
       'src',
-      `/api/media/${MEDIA.id}/image/poster`,
+      `/api/media/${MEDIA.id}/image/poster?size=small`,
     );
     expect(container.querySelector('.aspect-video')).toBeNull();
   });

@@ -12,6 +12,6 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
  * @returns The address, or nothing.
  */
 const theArtworkFor = (media: MediaSummary): string | null =>
-  media.hasPoster ? onThisServer(`/api/media/${media.id}/image/poster`) : null;
+  media.hasPoster ? onThisServer(`/api/media/${media.id}/image/poster?size=small`) : null;
 
 export { theArtworkFor };

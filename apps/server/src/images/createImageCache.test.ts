@@ -2,6 +2,7 @@ import type { Said } from '@ValenceI18n/SaidSchema';
 import { mkdtemp, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import sharp from 'sharp';
 import { describe, expect, it, vi } from 'vitest';
 import { createImageCache } from './createImageCache';
 import type { ImageFetcher } from './createImageCache';
@@ -197,5 +198,67 @@ describe('what the cache does with an answer it cannot use', () => {
     const { instance } = await cache(respondWith({}));
 
     await expect(instance.forget(POSTER)).resolves.toBeUndefined();
+  });
+
+  it('narrows a picture once for a grid, and keeps the narrow copy', async () => {
+    const wide = await sharp({
+      create: { width: 1000, height: 1500, channels: 3, background: '#336699' },
+    })
+      .jpeg()
+      .toBuffer();
+    const fetchImpl = vi.fn<ImageFetcher>(() =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        headers: { get: () => 'image/jpeg' },
+        arrayBuffer: () =>
+          Promise.resolve(wide.buffer.slice(wide.byteOffset, wide.byteOffset + wide.byteLength)),
+      }),
+    );
+    const { directory, instance } = await cache(fetchImpl);
+
+    const narrow = await instance.read(POSTER, 342);
+    const again = await instance.read(POSTER, 342);
+
+    expect(narrow?.contentType).toBe('image/webp');
+    expect((await sharp(Buffer.from(narrow?.body ?? new ArrayBuffer(0))).metadata()).width).toBe(
+      342,
+    );
+    expect(again?.body.byteLength).toBe(narrow?.body.byteLength);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect((await readdir(directory)).some((name) => name.endsWith('-w342'))).toBe(true);
+  });
+
+  it('serves the whole picture where it cannot be narrowed', async () => {
+    const { instance } = await cache(respondWith({}));
+
+    const image = await instance.read(POSTER, 342);
+
+    expect(image?.contentType).toBe('image/jpeg');
+    expect(image?.body.byteLength).toBe(1024);
+  });
+
+  it('forgets the narrow copy with the whole picture', async () => {
+    const wide = await sharp({
+      create: { width: 600, height: 900, channels: 3, background: '#993366' },
+    })
+      .jpeg()
+      .toBuffer();
+    const { directory, instance } = await cache(
+      vi.fn<ImageFetcher>(() =>
+        Promise.resolve({
+          ok: true,
+          status: 200,
+          headers: { get: () => 'image/jpeg' },
+          arrayBuffer: () =>
+            Promise.resolve(wide.buffer.slice(wide.byteOffset, wide.byteOffset + wide.byteLength)),
+        }),
+      ),
+    );
+
+    await instance.read(POSTER, 342);
+    await instance.forget(POSTER);
+
+    expect(await readdir(directory)).toEqual([]);
   });
 });

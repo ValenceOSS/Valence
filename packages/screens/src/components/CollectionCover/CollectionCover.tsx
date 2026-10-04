@@ -21,7 +21,7 @@ const CollectionCover = ({ collection, iconSize = 28, className }: CollectionCov
     own !== null
       ? [own]
       : (posters.length >= 4 ? posters.slice(0, 4) : posters.slice(0, 1)).map((mediaId) =>
-          artworkUrl(mediaId, 'poster'),
+          artworkUrl(mediaId, 'poster', { size: 'small' }),
         );
 
   return (

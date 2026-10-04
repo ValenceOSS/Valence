@@ -28,6 +28,7 @@ import {
 import { serve } from '@hono/node-server';
 import { createNodeWebSocket } from '@hono/node-ws';
 import { serveStatic } from '@hono/node-server/serve-static';
+import { refuseUnknownAddresses } from '@ValenceServer/api/refuseUnknownAddresses';
 import { isAppAddress } from '@ValenceServer/web/isAppAddress';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { and, asc, count, eq, gt, isNotNull, isNull, lt, lte, sql } from 'drizzle-orm';
@@ -3905,7 +3906,7 @@ const app = createApp({
   monitor: async () => withApiMemory(await transcoder.readMonitor()),
   stalledJobs: () =>
     jobHealth.stalled().map((stall) => ({ ...stall, label: labelForQueue(stall.kind) })),
-  readImage: (url) => images.read(url),
+  readImage: (url, width) => images.read(url, width),
   isTranscoderReachable: () => transcoder.isReachable(),
   transcoderAddress: env.TRANSCODER_URL,
   listRunningJobs: () => jobs.listRunning(),
@@ -4457,6 +4458,8 @@ app.get(
     };
   }),
 );
+
+refuseUnknownAddresses(app);
 
 app.use('/*', serveStatic({ root: WEB_ROOT }));
 

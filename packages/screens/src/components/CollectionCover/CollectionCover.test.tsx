@@ -31,7 +31,7 @@ describe('CollectionCover', () => {
   it('draws the first poster alone until there are four', () => {
     render(<CollectionCover collection={{ ...SAGA, coverMediaIds: ['a', 'b', 'c'] }} />);
 
-    expect(drawn()).toEqual(['/api/media/a/image/poster']);
+    expect(drawn()).toEqual(['/api/media/a/image/poster?size=small']);
   });
 
   it('draws four posters once there are four', () => {

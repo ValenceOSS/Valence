@@ -243,7 +243,7 @@ type CreateAppOptions = {
   bookPageUsage?: () => { count: number; bytes: number; atMs: number } | null;
   libraryBytes?: () => Promise<number>;
   measureStorage?: () => Promise<StorageCount>;
-  readImage?: (url: string) => Promise<{ body: ArrayBuffer; contentType: string } | null>;
+  readImage?: (url: string, width?: number) => Promise<{ body: ArrayBuffer; contentType: string } | null>;
   folderDisk?: FolderDisk;
   uploadDisk?: UploadDisk;
   uploadSessions?: UploadSessions;

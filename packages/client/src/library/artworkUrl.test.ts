@@ -21,4 +21,10 @@ describe('artworkUrl', () => {
       '/api/media/changed/image/backdrop?of=title&v=1',
     );
   });
+
+  it('asks for the small copy where a grid draws the picture', () => {
+    expect(artworkUrl('film-2', 'poster', { size: 'small' })).toBe(
+      '/api/media/film-2/image/poster?size=small',
+    );
+  });
 });
