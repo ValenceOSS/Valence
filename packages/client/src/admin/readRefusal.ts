@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { say } from '@ValenceI18n/say';
+import { isUnknownToServer } from '@ValenceClient/query/isUnknownToServer';
 
 type Refusal = { message: string } | null;
 
@@ -14,6 +15,10 @@ type Refusal = { message: string } | null;
 const readRefusal = async (response: Response): Promise<Refusal> => {
   if (response.ok) {
     return null;
+  }
+
+  if (await isUnknownToServer(response)) {
+    return { message: say('client.query.thisAppIsNewerThanTheServer') };
   }
 
   const body = await response

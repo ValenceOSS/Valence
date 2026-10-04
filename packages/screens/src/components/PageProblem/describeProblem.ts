@@ -10,6 +10,13 @@ type ProblemWords = { headline: string; reason: string };
  * @returns A headline, and the likely reason and what to do about it.
  */
 const describeProblem = (message: string | null): ProblemWords => {
+  if (message === say('client.query.thisAppIsNewerThanTheServer')) {
+    return {
+      headline: say('screens.pageProblem.describeProblem.yourServerIsOlderThanThisApp'),
+      reason: message,
+    };
+  }
+
   const said = (message ?? '').toLowerCase();
 
   if (said.includes('dynamically imported module') || said.includes('importing a module script')) {

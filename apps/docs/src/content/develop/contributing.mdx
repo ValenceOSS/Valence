@@ -98,6 +98,7 @@ pnpm --filter @valence/server test
 - **Fill in the template.** It asks what the change does, why (the problem, not the patch), and how it was tested and on what.
 - **Update documentation in the same pull request.** Docs live in the repository precisely so this is possible.
 - **Every new function and component ships with a co-located test.** See [Testing](/develop/testing).
+- **A client feature that needs a newer server checks for it.** Add a name to `SERVER_FEATURES` and ask for it with `useServerHas`, so the phone, television and desktop apps keep working on an older server. See [Server compatibility](/develop/server-compatibility).
 - **Do not lower a coverage threshold or disable a lint rule to make a build pass.** Each is its own pull request with its own justification.
 
 The pull request template checklist:
@@ -106,6 +107,7 @@ The pull request template checklist:
 - [ ] Commits follow Conventional Commits
 - [ ] Every new function and component has a co-located test
 - [ ] Documentation updated in this pull request, where behaviour changed
+- [ ] Anything a client needs from a newer server is listed in `SERVER_FEATURES` and checked with `useServerHas`
 
 ### What CI checks
 

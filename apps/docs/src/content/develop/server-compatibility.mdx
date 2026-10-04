@@ -1,0 +1,50 @@
+---
+title: Server compatibility
+description: How a newer phone, television or desktop app behaves on an older Valence server, and what to do when a change needs the server to do something new.
+order: 12
+---
+
+The web client is served by the server it talks to, so the two are always the same version. Every other client isn't. The phone and television apps update through their stores, and the desktop app updates itself. Any of them can be newer than the server it's connected to, sometimes by several releases. This page explains how a client finds out what its server can do, and what to do when your change needs something the server didn't always have.
+
+## What an older server does with a newer request
+
+Three things protect a client that's ahead of its server:
+
+| Situation                                              | What the server sends back                                                                  | What the client shows                                     |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| The client asks for an `/api` address the server lacks | A refusal with the code `error.common.thisServerDoesNotHaveThatAddress` and status 404      | "This app is newer than your server" in place of an error |
+| The server is from before that refusal existed         | A plain-text 404                                                                            | The same message: `isUnknownToServer` treats both alike   |
+| The client sends a query field the server doesn't know | The answer it would give without that field, since query fields it doesn't read are ignored | The older behaviour, with nothing broken                  |
+
+`RequestFailed` carries `isUnknownToServer`, and `describeProblem` turns it into the "Your server is older than this app" page. You don't need to handle it in a screen; it reaches the page's problem view by itself.
+
+## Features the server reports
+
+A missing address gives a clear message, but often it's better to hide the button that would lead there. For that, the server lists what it can do. `GET /api/about` answers with `features`, an array of names from `SERVER_FEATURES` in `packages/contracts/src/constants/SERVER_FEATURES.ts`. A server from before features were reported answers without the field, and the schema reads that as an empty list.
+
+In a screen, ask with `useServerHas`:
+
+```tsx
+const canPlayOnTv = useServerHas('playback.remote');
+
+return canPlayOnTv === true ? <PlayOnTvButton /> : null;
+```
+
+It returns `null` until the server has answered, then `true` or `false`. Treat `null` like `false` for anything that would fail, so a button doesn't appear and then vanish.
+
+## Adding a feature
+
+When your change adds something a client depends on, such as a new route, a new field a client can't do without, or a new realtime message:
+
+1. Add a name to `SERVER_FEATURES`. Use the area, a dot, and what it does, as in `playback.remote` or `profiles.videoPictures`. The name is permanent: once a release has shipped it, a client may be checking for it.
+2. That's all the server needs. `serveAbout` sends the whole list.
+3. In the client, wrap whatever needs it in `useServerHas`. Hide or disable the control, and where it helps, say why with `client.about.someFeaturesNeedANewerServer`.
+4. Test both sides: one with the feature in the `about` fixture, and one without.
+
+You don't need a feature for:
+
+- **A new optional query field.** An older server ignores it and gives the older answer, as the `size=small` option on artwork does.
+- **A new field in a response.** Make it optional or give it a default in the contract's schema, so a client reading an older server still parses the answer.
+- **A screen that only reads routes every supported server has.**
+
+Never remove a name from `SERVER_FEATURES` while a client still checks for it. If a feature is withdrawn, the server stops listing it, and clients hide it again.

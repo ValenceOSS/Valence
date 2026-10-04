@@ -749,8 +749,8 @@ format and the helpers.
 - **Text from elsewhere is passed on as it came.** A download client's error or a
   plugin's message goes through `sayVerbatim`, with a `null` code.
 
-- **Elements inside a sentence go in its gaps.** A link, a bold name or a number that
-  rolls fills a gap of one entry: in `packages/screens` through `Sentence`, elsewhere
+- **Elements inside a sentence go in its gaps.** A link, a bold name or a number fills
+  a gap of one entry: in `packages/screens` through `Sentence`, elsewhere
   through `sayParts` or `sayCountParts`. Never split a sentence around an element.
 
 oxlint's `valence/no-hard-coded-strings` reports string literals that read like
@@ -765,3 +765,13 @@ agent or a mode a client matches on, takes a disable comment with its reason:
 A value of a type that only code reads, such as a mode or a page's subject, is written as one
 lower-case word or in camelCase (`everyLibrary`, not `'every library'`), which the rule reads as
 code without being told.
+
+## 16. Server compatibility
+
+The phone, television and desktop apps can be newer than the server they talk to. Anything
+a client needs from a newer server is named in `SERVER_FEATURES`
+(`packages/contracts/src/constants/SERVER_FEATURES.ts`), which `/api/about` reports, and the
+client checks for it with `useServerHas` before showing it. A name is permanent once
+released. A new optional query field or a response field with a default needs no name,
+since an older server ignores the one and the schema fills in the other. The details are in
+the documentation's Server compatibility page.
