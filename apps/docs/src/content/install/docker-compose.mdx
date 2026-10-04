@@ -29,12 +29,12 @@ Each GitHub release attaches a `compose.yaml` and an `env.example` (the reposito
 
 `compose.yaml` defines four services. Only `db` and `valence` start by default. The other two use Compose profiles and start only when you ask for them.
 
-| Service    | Image                                           | Starts by default  | Purpose                                                        |
-| ---------- | ----------------------------------------------- | ------------------ | -------------------------------------------------------------- |
-| `db`       | `postgres:18-alpine`                            | Yes                | The database, unless [another is chosen](#choosing-a-database) |
-| `valence`  | `ghcr.io/marquescoding/valence:latest`          | Yes                | Server, web client and media service                           |
-| `requests` | `ghcr.io/marquescoding/valence-requests:latest` | Profile `requests` | Optional requesting service                                    |
-| `gluetun`  | `qmcgaw/gluetun:latest`                         | Profile `vpn`      | Optional VPN for a download client                             |
+| Service    | Image                                        | Starts by default  | Purpose                                                        |
+| ---------- | -------------------------------------------- | ------------------ | -------------------------------------------------------------- |
+| `db`       | `postgres:18-alpine`                         | Yes                | The database, unless [another is chosen](#choosing-a-database) |
+| `valence`  | `ghcr.io/valenceoss/valence:latest`          | Yes                | Server, web client and media service                           |
+| `requests` | `ghcr.io/valenceoss/valence-requests:latest` | Profile `requests` | Optional requesting service                                    |
+| `gluetun`  | `qmcgaw/gluetun:v3.41.3`                     | Profile `vpn`      | Optional VPN for a download client                             |
 
 ### db
 
@@ -64,7 +64,7 @@ The `${NAME:?message}` form makes Compose refuse to start with that message if t
 
 ```yaml
 valence:
-  image: ghcr.io/marquescoding/valence:latest
+  image: ghcr.io/valenceoss/valence:latest
   restart: unless-stopped
   depends_on:
     db:

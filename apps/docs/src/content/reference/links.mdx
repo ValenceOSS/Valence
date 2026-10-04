@@ -26,12 +26,12 @@ The OpenAPI document is not attached to releases, on purpose. The running server
 
 Valence publishes images to the GitHub Container Registry, named for the repository owner in lower case.
 
-| Image                                    | What it is                                                                                  |
-| :--------------------------------------- | :------------------------------------------------------------------------------------------ |
-| `ghcr.io/marquescoding/valence`          | The server, web client and media service, as `compose.yaml` names it at the time of writing |
-| `ghcr.io/marquescoding/valence-requests` | The optional requests service                                                               |
+| Image                                 | What it is                               |
+| :------------------------------------ | :--------------------------------------- |
+| `ghcr.io/valenceoss/valence`          | The server, web client and media service |
+| `ghcr.io/valenceoss/valence-requests` | The optional requests service            |
 
-The release workflow builds both images from the repository and pushes them under the owner name in lower case, so if the compose file in the release you downloaded names a different owner, use that one. Pull what your compose file names, and treat the compose file as the source of truth. The package page for the server is at [github.com/ValenceOSS/Valence/pkgs/container/valence](https://github.com/ValenceOSS/Valence/pkgs/container/valence).
+The release workflow builds both images from the repository and pushes them under the owner name in lower case. The compose files in releases up to 1.3.0 name `ghcr.io/marquescoding`, from before the repository moved to ValenceOSS. Nothing new is published there, so change those `image:` lines to `ghcr.io/valenceoss`. The package page for the server is at [github.com/ValenceOSS/Valence/pkgs/container/valence](https://github.com/ValenceOSS/Valence/pkgs/container/valence).
 
 Three kinds of tag exist, and only releases are `latest`.
 

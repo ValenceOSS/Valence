@@ -21,7 +21,7 @@ The version numbers in the table are examples of the pattern, not the current re
 `latest` never moves for a merge or a nightly build, so a server following it only changes when a release is made. That is the tag `compose.yaml` uses:
 
 ```yaml
-image: ghcr.io/marquescoding/valence:latest
+image: ghcr.io/valenceoss/valence:latest
 ```
 
 Choose one of these approaches:
@@ -30,7 +30,9 @@ Choose one of these approaches:
 - **Pin a version tag**, such as `1.0.0` or `1.0`, if you would rather choose when an upgrade happens. Edit the `image:` line, and change it deliberately when you are ready.
 - **Try something early** with a `-dev` or `-nightly` tag. Expect it to be rough. The version in a dev tag is the release being prepared, and the number in a nightly tag is the commit it was built from. Do not run a dev or nightly build against a database you are not prepared to restore.
 
-If you run the requests service, it has its own image, `ghcr.io/marquescoding/valence-requests`, which follows the same release scheme. Keep it at the same release as the server.
+If you run the requests service, it has its own image, `ghcr.io/valenceoss/valence-requests`, which follows the same release scheme. Keep it at the same release as the server.
+
+If your compose file names `ghcr.io/marquescoding/valence` or `ghcr.io/marquescoding/valence-requests`, change it to `ghcr.io/valenceoss`. The compose files in releases up to 1.3.0 still name the repository's old owner, where nothing new is published, so a server pulling from there stays on an old build however often it updates.
 
 ## The routine
 
