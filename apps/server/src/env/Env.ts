@@ -30,8 +30,8 @@ const EnvSchema = z.object({
     ),
   COOKIE_SECURE: z
     .enum(['true', 'false'])
-    .default('false')
-    .transform((value) => value === 'true'),
+    .optional()
+    .transform((value) => (value === undefined ? undefined : value === 'true')),
   TRANSCODER_URL: z.string().min(1).default('unix:/run/valence-transcoder.sock'),
   TRANSCODER_SECRET: z
     .string()

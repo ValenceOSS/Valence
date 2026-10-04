@@ -7,7 +7,7 @@ describe('readEnv', () => {
 
     expect(env.NODE_ENV).toBe('development');
     expect(env.PORT).toBe(8420);
-    expect(env.COOKIE_SECURE).toBe(false);
+    expect(env.COOKIE_SECURE).toBeUndefined();
   });
 
   it('reads the plugin catalogue from the Valence project unless told otherwise', () => {

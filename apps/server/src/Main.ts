@@ -364,6 +364,7 @@ import { keepingProfile } from '@ValenceServer/downloads/keepingProfile';
 import { watchADownload } from '@ValenceServer/downloads/watchADownload';
 import { readCertificatesAgain } from '@ValenceServer/library/readCertificatesAgain';
 import { say } from '@ValenceI18n/say';
+import { settleCookieSecurity } from '@ValenceServer/settings/settleCookieSecurity';
 const ChapterListSchema = z.array(
   z.object({
     title: z.string().nullable(),
@@ -410,7 +411,7 @@ const settings = createDatabaseSettingsStore({
   db,
   defaults: {
     trustedOrigins: env.TRUSTED_ORIGINS,
-    cookieSecure: env.COOKIE_SECURE,
+    cookieSecure: env.COOKIE_SECURE ?? false,
     setupCompletedAt: null,
     setupFlow: 'finished',
     catalogueApiKey: env.CATALOGUE_API_KEY,
@@ -485,7 +486,7 @@ const WEBHOOK_DELIVERIES_KEPT_FOR_DAYS = 7;
 const signInStore = createDatabaseSignInStore(db);
 const historyService = createDatabaseHistoryService(db);
 
-const persisted = await settings.read();
+const persisted = await settleCookieSecurity(settings, env.COOKIE_SECURE);
 
 const shareService = createDatabaseShareService(db);
 
