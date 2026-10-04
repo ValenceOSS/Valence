@@ -2,6 +2,7 @@ import { fireEvent, render, userEvent } from '@testing-library/react-native';
 import { TopBar } from '@ValenceTv/components/TopBar/TopBar';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { TopBarProps } from '@ValenceTv/components/TopBar/TopBar.types';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 const ADA: ViewerProfile = {
   id: '00000000-0000-4000-8000-000000000001',
@@ -10,6 +11,7 @@ const ADA: ViewerProfile = {
   avatar: { kind: 'initial', font: 'gilroy' },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
+  discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
   createdAt: '2026-09-23T00:00:00.000Z',
   updatedAt: '2026-09-23T00:00:00.000Z',

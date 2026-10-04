@@ -3,7 +3,9 @@ import { z } from 'zod';
 import { render, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useBrowsingPresence } from './useBrowsingPresence';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
 
 const fetchProfiles = vi.fn<() => Promise<ViewerProfile[]>>();
 const readCurrentProfile = vi.fn<() => string | null>();
@@ -16,23 +18,33 @@ vi.mock('@ValenceClient/profiles/currentProfile', () => ({
   readCurrentProfile: () => readCurrentProfile(),
 }));
 
-const KindSchema = z.object({ kind: z.string() }).nullable().catch(null);
+const KindSchema = z
+  .object({ kind: z.string(), look: z.object({ logo: z.string() }).optional() })
+  .nullable()
+  .catch(null);
 
 const seen: (string | null)[] = [];
+
+const logos: (string | null)[] = [];
 
 const heard = (event: Event) => {
   const said = event instanceof CustomEvent ? KindSchema.parse(event.detail) : null;
 
   seen.push(said === null ? null : said.kind);
+  logos.push(said?.look?.logo ?? null);
 };
 
-const aProfile = (showsWhatIamWatching: boolean): ViewerProfile => ({
+const aProfile = (
+  showsWhatIamWatching: boolean,
+  discordPresence: DiscordPresence = DEFAULT_DISCORD_PRESENCE,
+): ViewerProfile => ({
   id: 'profile-1',
   name: 'Marques',
   colour: '#8b5ce8',
   avatar: { kind: 'initial', font: 'gilroy' },
   askStillWatchingAfter: 3,
   showsWhatIamWatching,
+  discordPresence,
   prefersBestCopy: false,
   createdAt: '2026-08-01T00:00:00.000Z',
   updatedAt: '2026-08-01T00:00:00.000Z',
@@ -56,6 +68,7 @@ const draw = () => {
 
 beforeEach(() => {
   seen.length = 0;
+  logos.length = 0;
   fetchProfiles.mockReset().mockResolvedValue([aProfile(true)]);
   readCurrentProfile.mockReset().mockReturnValue('profile-1');
   document.documentElement.dataset['valenceDesktop'] = 'true';
@@ -86,6 +99,32 @@ describe('useBrowsingPresence', () => {
     });
 
     expect(seen).not.toContain('browsing');
+  });
+
+  it('says nothing between things where the profile turned browsing off', async () => {
+    fetchProfiles.mockResolvedValue([
+      aProfile(true, { ...DEFAULT_DISCORD_PRESENCE, showsBrowsing: false }),
+    ]);
+
+    draw();
+
+    await waitFor(() => {
+      expect(seen.length).toBeGreaterThan(0);
+    });
+
+    expect(seen).not.toContain('browsing');
+  });
+
+  it('sends how the profile wants the status to look along with it', async () => {
+    fetchProfiles.mockResolvedValue([
+      aProfile(true, { ...DEFAULT_DISCORD_PRESENCE, logo: 'dark' }),
+    ]);
+
+    draw();
+
+    await waitFor(() => {
+      expect(logos).toContain('dark');
+    });
   });
 
   it('says nothing in a browser, which has no window to say it to', async () => {

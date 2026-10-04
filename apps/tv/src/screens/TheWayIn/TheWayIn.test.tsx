@@ -12,6 +12,7 @@ import { TheWayIn } from '@ValenceTv/screens/TheWayIn/TheWayIn';
 import type { Leaving } from '@ValenceTv/components/Flight/Flight.types';
 import type { SessionUser } from '@ValenceContracts/schemas/Session';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 const mockStandIn = (name: string, presses: Record<string, () => void> = {}) =>
   mockCreateElement(
@@ -30,6 +31,7 @@ const mockJo: ViewerProfile = {
   avatar: { kind: 'initial', font: 'gilroy' },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
+  discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
   createdAt: '2026-09-19T00:00:00.000Z',
   updatedAt: '2026-09-19T00:00:00.000Z',

@@ -12,7 +12,6 @@ import { useMotion } from '@ValenceClient/shell/useMotion';
 import { readMotion } from '@ValenceClient/shell/motion';
 import { MOTION_CHOICES } from '@ValenceScreens/motion/motionChoices';
 import { Switch } from '@ValenceUI/Switch';
-import { canShowOnDiscord } from '@ValenceClient/discord/canShowOnDiscord';
 import { PROFILE_COLOURS } from '@ValenceContracts/schemas/ViewerProfile';
 import { STILL_WATCHING_OFF } from '@ValenceContracts/schemas/StillWatching';
 import { STILL_WATCHING_CHOICES } from '@ValenceClient/profiles/STILL_WATCHING_CHOICES';
@@ -195,23 +194,6 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
           }}
         />
       </SettingRow>
-
-      {canShowOnDiscord() ? (
-        <SettingRow
-          title={say('screens.accountArea.profileSettings.showWhatIAmPlayingOn')}
-          description={say('screens.accountArea.profileSettings.theTitleAndTheSeriesAnd')}
-        >
-          <Switch
-            label={say('screens.accountArea.profileSettings.showWhatIAmPlayingOn')}
-            isLabelHidden
-            isOn={draft?.showsWhatIamWatching ?? false}
-            disabled={!isReady}
-            onToggle={() => {
-              onDraft({ showsWhatIamWatching: !(draft?.showsWhatIamWatching ?? false) });
-            }}
-          />
-        </SettingRow>
-      ) : null}
     </>
   );
 };

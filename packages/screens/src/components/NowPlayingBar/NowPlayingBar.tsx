@@ -55,6 +55,7 @@ import type { NowPlayingBarProps } from './NowPlayingBar.types';
 import { BarButton } from '@ValenceScreens/components/BarButton/BarButton';
 import { MusicTransport } from '@ValenceScreens/components/MusicTransport/MusicTransport';
 import { say } from '@ValenceI18n/say';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 const ARRIVING: Variants = {
   hidden: { opacity: 0, y: '120%' },
@@ -108,6 +109,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
   useDiscordMusicPresence({
     playing,
     isAllowed: whoIsWatching.data?.showsWhatIamWatching ?? false,
+    settings: whoIsWatching.data?.discordPresence ?? DEFAULT_DISCORD_PRESENCE,
     party:
       listening === null ? null : { id: listening.party.id, size: listening.party.members.length },
   });

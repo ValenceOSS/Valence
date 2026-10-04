@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vitest';
+import { DiscordLookSchema } from '@ValenceContracts/schemas/DiscordPresence';
 import { aDiscordActivity } from './aDiscordActivity';
 import type { WhatIsPlaying } from './aDiscordActivity';
 
 const STARTED = 1_755_000_000_000;
 
 const OPENED = 1_754_990_000_000;
+
+const LOOK = DiscordLookSchema.parse({});
+
+const BROWSING: WhatIsPlaying = { kind: 'browsing', look: LOOK };
 
 const AN_EPISODE: WhatIsPlaying = {
   kind: 'watching',
@@ -19,6 +24,7 @@ const AN_EPISODE: WhatIsPlaying = {
   isPaused: false,
   artwork: null,
   party: null,
+  look: LOOK,
 };
 
 const A_FILM: WhatIsPlaying = {
@@ -34,6 +40,7 @@ const A_FILM: WhatIsPlaying = {
   isPaused: false,
   artwork: null,
   party: null,
+  look: LOOK,
 };
 
 const A_TRACK: WhatIsPlaying = {
@@ -45,6 +52,7 @@ const A_TRACK: WhatIsPlaying = {
   isPaused: false,
   artwork: null,
   party: null,
+  look: LOOK,
 };
 
 describe('aDiscordActivity', () => {
@@ -97,10 +105,8 @@ describe('aDiscordActivity', () => {
   });
 
   it('wears no badge while browsing either', () => {
-    expect(aDiscordActivity({ kind: 'browsing' }, OPENED)?.assets).not.toHaveProperty(
-      'small_image',
-    );
-    expect(aDiscordActivity({ kind: 'browsing' }, OPENED)?.assets).not.toHaveProperty('small_text');
+    expect(aDiscordActivity(BROWSING, OPENED)?.assets).not.toHaveProperty('small_image');
+    expect(aDiscordActivity(BROWSING, OPENED)?.assets).not.toHaveProperty('small_text');
   });
 
   it('offers a way to look a film up, pointed at the right kind of page', () => {
@@ -126,24 +132,24 @@ describe('aDiscordActivity', () => {
   });
 
   it('says somebody has Valence open when they are between things, rather than nothing at all', () => {
-    expect(aDiscordActivity({ kind: 'browsing' }, OPENED)?.details).toBe('Browsing libraries');
+    expect(aDiscordActivity(BROWSING, OPENED)?.details).toBe('Browsing libraries');
   });
 
   it('draws the logo while browsing, so the status looks like the one beside it', () => {
-    expect(aDiscordActivity({ kind: 'browsing' }, OPENED)?.assets).toMatchObject({
+    expect(aDiscordActivity(BROWSING, OPENED)?.assets).toMatchObject({
       large_image: 'valence-desktop',
       large_text: 'Valence',
     });
   });
 
   it('counts from when Valence opened while browsing, however often it is said again', () => {
-    expect(aDiscordActivity({ kind: 'browsing' }, OPENED)?.timestamps).toEqual({
+    expect(aDiscordActivity(BROWSING, OPENED)?.timestamps).toEqual({
       start: OPENED / 1000,
     });
   });
 
   it('offers no button while browsing, since there is nowhere in particular to send anybody', () => {
-    expect(aDiscordActivity({ kind: 'browsing' }, OPENED)).not.toHaveProperty('buttons');
+    expect(aDiscordActivity(BROWSING, OPENED)).not.toHaveProperty('buttons');
   });
 
   it('draws the catalogue picture where there is one, which is what somebody recognises', () => {
@@ -329,5 +335,66 @@ describe('aDiscordActivity', () => {
     expect(aDiscordActivity({ ...A_TRACK, party: { id: 'a-party', size: 2 } }, OPENED)?.state).toBe(
       'CHVRCHES & Robert Smith · with 1 other',
     );
+  });
+
+  describe('as the profile asked it to look', () => {
+    it('names the title in the member list where asked, and leaves it to Valence otherwise', () => {
+      expect(aDiscordActivity(A_FILM, OPENED)).not.toHaveProperty('status_display_type');
+      expect(
+        aDiscordActivity({ ...A_FILM, look: { ...LOOK, statusShows: 'title' } }, OPENED),
+      ).toMatchObject({ status_display_type: 2, details: 'A Film' });
+      expect(
+        aDiscordActivity({ ...A_TRACK, look: { ...LOOK, statusShows: 'title' } }, OPENED),
+      ).toMatchObject({ status_display_type: 2, details: 'How Not To Drown' });
+    });
+
+    it('draws the dark logo wherever the logo is drawn, where asked', () => {
+      const dark = { ...LOOK, logo: 'dark' as const };
+
+      expect(aDiscordActivity({ kind: 'browsing', look: dark }, OPENED)?.assets.large_image).toBe(
+        'valence-desktop-dark',
+      );
+      expect(aDiscordActivity({ ...A_TRACK, look: dark }, OPENED)?.assets).toMatchObject({
+        large_image: 'valence-desktop-dark',
+        small_image: 'valence-desktop-dark',
+      });
+    });
+
+    it('draws the logo in place of the poster where artwork is turned off', () => {
+      const poster = 'https://image.tmdb.org/t/p/w500/abc.jpg';
+
+      expect(
+        aDiscordActivity(
+          { ...A_FILM, artwork: poster, look: { ...LOOK, showsArtwork: false } },
+          OPENED,
+        )?.assets.large_image,
+      ).toBe('valence-desktop');
+    });
+
+    it('counts up from the start rather than down to the end, where asked', () => {
+      expect(
+        aDiscordActivity({ ...AN_EPISODE, look: { ...LOOK, time: 'elapsed' } }, OPENED)?.timestamps,
+      ).toEqual({ start: STARTED / 1000 });
+    });
+
+    it('leaves the TMDB button off, where asked', () => {
+      expect(
+        aDiscordActivity({ ...A_FILM, look: { ...LOOK, showsTmdbLink: false } }, OPENED),
+      ).not.toHaveProperty('buttons');
+    });
+
+    it('leaves the party out of the status, where asked', () => {
+      const activity = aDiscordActivity(
+        {
+          ...AN_EPISODE,
+          party: { id: 'party', size: 3 },
+          look: { ...LOOK, showsPartySize: false },
+        },
+        OPENED,
+      );
+
+      expect(activity).not.toHaveProperty('party');
+      expect(activity?.state).toBe('Series 2, Episode 12');
+    });
   });
 });

@@ -21,6 +21,11 @@ import {
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { ProfileService } from './ProfileService';
 import type { ProfileColour, ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import {
+  DEFAULT_DISCORD_PRESENCE,
+  DiscordPresenceSchema,
+} from '@ValenceContracts/schemas/DiscordPresence';
+import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
 import type { StoredFace } from './pickTheAccountsFace';
 import { say } from '@ValenceI18n/say';
 
@@ -50,6 +55,7 @@ type ProfileRow = {
   avatarLook: ViewerProfile['avatar'] | null;
   askStillWatchingAfter: number;
   showsWhatIamWatching: boolean;
+  discordPresence: DiscordPresence | null;
   prefersBestCopy: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -115,6 +121,9 @@ const toProfile = (row: ProfileRow): ViewerProfile => ({
     row.askStillWatchingAfter,
   ),
   showsWhatIamWatching: row.showsWhatIamWatching,
+  discordPresence: DiscordPresenceSchema.catch(DEFAULT_DISCORD_PRESENCE).parse(
+    row.discordPresence ?? {},
+  ),
   prefersBestCopy: row.prefersBestCopy,
   createdAt: row.createdAt.toISOString(),
   updatedAt: row.updatedAt.toISOString(),
@@ -194,6 +203,7 @@ const COLUMNS = {
   avatarLook: viewerProfile.avatarLook,
   askStillWatchingAfter: viewerProfile.askStillWatchingAfter,
   showsWhatIamWatching: viewerProfile.showsWhatIamWatching,
+  discordPresence: viewerProfile.discordPresence,
   prefersBestCopy: viewerProfile.prefersBestCopy,
   createdAt: viewerProfile.createdAt,
   updatedAt: viewerProfile.updatedAt,
@@ -270,6 +280,7 @@ const createDatabaseProfileService = (
       avatar: { kind: 'initial', font: 'gilroy' },
       askStillWatchingAfter: STILL_WATCHING_DEFAULT,
       showsWhatIamWatching: false,
+      discordPresence: DEFAULT_DISCORD_PRESENCE,
       prefersBestCopy: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -304,6 +315,7 @@ const createDatabaseProfileService = (
         avatar: { kind: 'initial', font: 'gilroy' },
         askStillWatchingAfter: STILL_WATCHING_DEFAULT,
         showsWhatIamWatching: false,
+        discordPresence: DEFAULT_DISCORD_PRESENCE,
         prefersBestCopy: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -323,6 +335,9 @@ const createDatabaseProfileService = (
             ...(request.showsWhatIamWatching === undefined
               ? {}
               : { showsWhatIamWatching: request.showsWhatIamWatching }),
+            ...(request.discordPresence === undefined
+              ? {}
+              : { discordPresence: request.discordPresence }),
             ...(request.prefersBestCopy === undefined
               ? {}
               : { prefersBestCopy: request.prefersBestCopy }),

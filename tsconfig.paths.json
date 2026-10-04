@@ -23,6 +23,7 @@
       "@ValenceMobile/*": ["./apps/mobile/src/*"],
       "@ValenceRatings/*": ["./packages/ui/src/assets/ratings/*"],
       "@ValenceBrands/*": ["./packages/ui/src/assets/brands/*"],
+      "@ValenceDiscordArt/*": ["./packages/ui/src/assets/discord/*"],
       "@ValenceSDK/*": ["./packages/plugin-sdk/src/*"],
       "@ValenceScreens/*": ["./packages/screens/src/*"],
       "@ValenceServer/*": ["./apps/server/src/*"],
@@ -149,6 +150,12 @@
       "@ValenceUI/Logo.types": ["./packages/ui/src/components/Logo/Logo.types.ts"],
       "@ValenceUI/MaskFrames.types": ["./packages/ui/src/functions/MaskFrames.types.ts"],
       "@ValenceUI/AgeRating": ["./packages/ui/src/components/AgeRating/AgeRating.tsx"],
+      "@ValenceUI/DiscordStatusCard": [
+        "./packages/ui/src/components/DiscordStatusCard/DiscordStatusCard.tsx"
+      ],
+      "@ValenceUI/DiscordStatusCard.types": [
+        "./packages/ui/src/components/DiscordStatusCard/DiscordStatusCard.types.ts"
+      ],
       "@ValenceUI/TomatoMark": ["./packages/ui/src/components/TomatoMark/TomatoMark.tsx"],
       "@ValenceUI/AgeRating.types": ["./packages/ui/src/components/AgeRating/AgeRating.types.ts"],
       "@ValenceUI/ArtCard": ["./packages/ui/src/components/ArtCard/ArtCard.tsx"],

@@ -2,10 +2,12 @@ import { screen } from '@testing-library/react';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Tabs } from '@ValenceUI/Tabs';
+import { installATestClient } from '@ValenceScreens/testing/installATestClient';
 import { AccountArea } from './AccountArea';
 import type { SessionUser } from '@ValenceContracts/schemas/Session';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { PluginAccountPage } from './AccountArea.types';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 const USER: SessionUser = {
   id: '00000000-0000-4000-8000-000000000001',
@@ -23,6 +25,7 @@ const PROFILE: ViewerProfile = {
   avatar: { kind: 'initial', font: 'gilroy' },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
+  discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
@@ -55,6 +58,7 @@ const drawOn = (
           avatar: PROFILE.avatar,
           askStillWatchingAfter: PROFILE.askStillWatchingAfter,
           showsWhatIamWatching: PROFILE.showsWhatIamWatching,
+          discordPresence: DEFAULT_DISCORD_PRESENCE,
           prefersBestCopy: false,
           photo: null,
         }}
@@ -133,6 +137,20 @@ describe('AccountArea', () => {
     drawOn('history');
 
     expect(screen.getByRole('heading', { name: 'Watch history', level: 3 })).toBeInTheDocument();
+  });
+
+  it('draws the Discord settings on their own panel in the desktop app', () => {
+    installATestClient({ thisClientKind: () => 'desktop' });
+
+    drawOn('discord');
+
+    expect(screen.getByText('Show what I’m playing on Discord')).toBeInTheDocument();
+  });
+
+  it('draws no Discord panel in a browser, which cannot reach Discord', () => {
+    drawOn('discord');
+
+    expect(screen.queryByText('Show what I’m playing on Discord')).not.toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

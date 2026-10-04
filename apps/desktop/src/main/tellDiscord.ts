@@ -6,9 +6,9 @@ import {
   HANDSHAKE,
   readDiscordFrames,
 } from '@ValenceDesktop/main/aDiscordFrame';
-import { aDiscordActivity } from '@ValenceDesktop/main/aDiscordActivity';
+import { aDiscordActivity } from '@ValenceClient/discord/aDiscordActivity';
 import { whereDiscordListens } from '@ValenceDesktop/main/whereDiscordListens';
-import type { WhatIsPlaying } from '@ValenceDesktop/main/aDiscordActivity';
+import type { WhatIsPlaying } from '@ValenceClient/discord/aDiscordActivity';
 
 const CLIENT_ID = '1539800715281563738';
 
@@ -32,6 +32,10 @@ type Presence = {
  * the beginning. A media player that complained about a chat application would be a worse media
  * player.
  *
+ * A status identical to the last one sent is not sent again. The page can say the same thing several
+ * times over as a setting changes, and Discord allows only a handful of changes a minute: spent on
+ * repeats, they left a status Discord was still catching up on after the last real change.
+ *
  * @param temporary - Where this machine keeps this user's temporary files, which is where Discord
  *   listens on a Mac. Passed in rather than read from the environment, which does not always carry
  *   it.
@@ -43,16 +47,26 @@ const tellDiscord = (temporary: string, openedAt = Date.now()): Presence => {
   let ready = false;
   let waiting: WhatIsPlaying | null = null;
   let arrived: Buffer = Buffer.alloc(0);
+  let lastSent: string | null = null;
 
   const send = (opcode: number, payload: object): void => {
     socket?.write(aDiscordFrame(opcode, JSON.stringify(payload)));
   };
 
   const setActivity = (playing: WhatIsPlaying | null): void => {
+    const activity = aDiscordActivity(playing, openedAt);
+    const said = JSON.stringify(activity);
+
+    if (said === lastSent) {
+      return;
+    }
+
+    lastSent = said;
+
     send(FRAME, {
       cmd: 'SET_ACTIVITY',
       nonce: `${Date.now().toString()}`,
-      args: { pid: process.pid, activity: aDiscordActivity(playing, openedAt) },
+      args: { pid: process.pid, activity },
     });
   };
 
@@ -61,6 +75,7 @@ const tellDiscord = (temporary: string, openedAt = Date.now()): Presence => {
     socket = null;
     ready = false;
     arrived = Buffer.alloc(0);
+    lastSent = null;
   };
 
   const heard = (chunk: Buffer): void => {

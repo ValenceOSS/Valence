@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import { user } from '#dialect/Schema';
 import { PROFILE_COLOURS } from '@ValenceContracts/schemas/ViewerProfile';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 import { createDatabaseProfileService } from './createDatabaseProfileService';
 
 const STARTING_POSTGRES_MS = 60_000;
@@ -25,6 +26,33 @@ const aService = async () => {
 };
 
 describe('createDatabaseProfileService', () => {
+  it(
+    'keeps how somebody wants to look on Discord, and starts everybody from the defaults',
+    async () => {
+      const service = await aService();
+      const made = await service.create('ada', { name: 'Ada', colour: COLOUR });
+
+      expect(made.discordPresence).toEqual(DEFAULT_DISCORD_PRESENCE);
+
+      const chosen = {
+        ...DEFAULT_DISCORD_PRESENCE,
+        statusShows: 'title' as const,
+        logo: 'dark' as const,
+      };
+
+      await service.rename('ada', made.id, {
+        name: 'Ada',
+        colour: COLOUR,
+        discordPresence: chosen,
+      });
+
+      const [kept] = await service.list('ada');
+
+      expect(kept?.discordPresence).toEqual(chosen);
+    },
+    STARTING_POSTGRES_MS,
+  );
+
   it(
     'renames a profile of one’s own, and not somebody else’s',
     async () => {

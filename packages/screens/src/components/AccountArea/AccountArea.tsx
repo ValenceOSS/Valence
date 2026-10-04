@@ -9,6 +9,8 @@ import { HiddenPanel } from '@ValenceScreens/components/AccountArea/components/H
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { staggerVariants } from '@ValenceUI/animations/reveal';
 import { ProfileSettings } from '@ValenceScreens/components/ProfileSettings/ProfileSettings';
+import { DiscordSettings } from '@ValenceScreens/components/DiscordSettings/DiscordSettings';
+import { canShowOnDiscord } from '@ValenceClient/discord/canShowOnDiscord';
 import { TwoFactorSetup } from '@ValenceScreens/components/TwoFactorSetup/TwoFactorSetup';
 import { PasskeySetup } from '@ValenceScreens/components/PasskeySetup/PasskeySetup';
 import { DeviceList } from '@ValenceScreens/components/AccountArea/components/DeviceList/DeviceList';
@@ -61,6 +63,11 @@ const AccountArea = ({
         </PanelCard>
       </TabPanel>
 
+      {canShowOnDiscord() ? (
+        <TabPanel value="discord" className="flex flex-col gap-4" travel={travel}>
+          <DiscordSettings draft={draft} onDraft={onDraft} />
+        </TabPanel>
+      ) : null}
       <TabPanel value="devices" travel={travel}>
         <DeviceList />
       </TabPanel>

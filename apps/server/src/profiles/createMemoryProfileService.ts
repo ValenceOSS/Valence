@@ -5,6 +5,7 @@ import { drawAvatar, isAvatarStyle } from './drawAvatar';
 import { whatIsWrongWithThePicture } from './whatIsWrongWithThePicture';
 import type { ProfileService } from './ProfileService';
 import type { Avatar, ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 type Held = { profile: ViewerProfile; userId: string; email: string; photo: Uint8Array | null };
 
@@ -50,6 +51,7 @@ const createMemoryProfileService = (
       avatar,
       askStillWatchingAfter: STILL_WATCHING_DEFAULT,
       showsWhatIamWatching: false,
+      discordPresence: DEFAULT_DISCORD_PRESENCE,
       prefersBestCopy: false,
       createdAt: stamp(),
       updatedAt: stamp(),
@@ -97,6 +99,7 @@ const createMemoryProfileService = (
         avatar: request.avatar ?? held.profile.avatar,
         askStillWatchingAfter: request.askStillWatchingAfter ?? held.profile.askStillWatchingAfter,
         showsWhatIamWatching: request.showsWhatIamWatching ?? held.profile.showsWhatIamWatching,
+        discordPresence: request.discordPresence ?? held.profile.discordPresence,
         prefersBestCopy: request.prefersBestCopy ?? held.profile.prefersBestCopy,
         updatedAt: stamp(),
       };

@@ -18,6 +18,7 @@ import type { Said } from '@ValenceI18n/SaidSchema';
 import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import type { Avatar } from '@ValenceContracts/schemas/ViewerProfile';
+import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
 
 const user = pgTable('user', {
   id: text('id').primaryKey(),
@@ -203,6 +204,7 @@ const viewerProfile = pgTable(
     avatarLook: jsonb('avatarLook').$type<Avatar>(),
     askStillWatchingAfter: integer('askStillWatchingAfter').notNull().default(4),
     showsWhatIamWatching: boolean('showsWhatIamWatching').notNull().default(false),
+    discordPresence: jsonb('discordPresence').$type<DiscordPresence>(),
     prefersBestCopy: boolean('prefersBestCopy').notNull().default(false),
     createdAt: timestamp('createdAt').notNull().defaultNow(),
     updatedAt: timestamp('updatedAt').notNull().defaultNow(),

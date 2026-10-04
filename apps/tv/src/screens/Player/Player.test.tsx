@@ -21,6 +21,7 @@ import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
 import type { ShowDetail } from '@ValenceContracts/schemas/Show';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { Session } from '@ValenceTv/playback/usePlaybackSession';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 type Heard = (event: { eventType: string; eventKeyAction?: number }) => void;
 
@@ -251,6 +252,7 @@ const aViewer = (askStillWatchingAfter: number): ViewerProfile => ({
   avatar: { kind: 'initial', font: 'gilroy' },
   askStillWatchingAfter,
   showsWhatIamWatching: false,
+  discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { render } from '@testing-library/react';
 import { z } from 'zod';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 import { useDiscordMusicPresence } from './useDiscordMusicPresence';
 import type { DiscordMusicPresence } from './useDiscordMusicPresence';
 import type { WhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
@@ -95,6 +96,21 @@ describe('useDiscordMusicPresence', () => {
 
     expect(said()?.title).toBe('How Not To Drown');
     expect(said()?.isPaused).toBe(true);
+  });
+
+  it('leaves music off where the profile only shares what it watches', () => {
+    listening({ settings: { ...DEFAULT_DISCORD_PRESENCE, sharesMusic: false } });
+
+    expect(said()).toBeNull();
+  });
+
+  it('takes the status off while paused, where the profile asked', () => {
+    listening({
+      playing: { ...A_TRACK, isPlaying: false },
+      settings: { ...DEFAULT_DISCORD_PRESENCE, showsWhilePaused: false },
+    });
+
+    expect(said()).toBeNull();
   });
 
   it('says nothing in a browser, which has no window to publish it', () => {
