@@ -1,9 +1,9 @@
 import { existsSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { maybeDownloadAddons } from 'camoufox-js/dist/addons.js';
-import { getPath, installedVerStr } from 'camoufox-js/dist/pkgman.js';
+import { getPath, installedVerStr, unzip } from 'camoufox-js/dist/pkgman.js';
 import { z } from 'zod';
 import { PinnedCamoufoxFetcher } from './PinnedCamoufoxFetcher';
+import { downloadVerified } from './downloadVerified';
 import { pinnedBrowser } from './pinnedBrowser';
 
 const AddonManifestSchema = z.object({ version: z.string() });
@@ -66,8 +66,10 @@ if (installedUblockOrigin(ublockOrigin) === pin.ublockOriginVersion) {
   say(`uBlock Origin ${pin.ublockOriginVersion} is installed.`);
 } else {
   say(`Installing uBlock Origin ${pin.ublockOriginVersion}, the build the requests image ships.`);
+  const xpi = await downloadVerified(pin.ublockOriginUrl, pin.ublockOriginSha256);
+
   rmSync(ublockOrigin, { recursive: true, force: true });
-  await maybeDownloadAddons({ UBO: pin.ublockOriginUrl });
+  await unzip(xpi, ublockOrigin, undefined, false);
 
   if (installedUblockOrigin(ublockOrigin) !== pin.ublockOriginVersion) {
     throw new Error(`uBlock Origin ${pin.ublockOriginVersion} could not be installed.`);

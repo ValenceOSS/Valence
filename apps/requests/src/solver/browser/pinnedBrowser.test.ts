@@ -9,6 +9,7 @@ const DOCKERFILE = [
   'ARG CAMOUFOX_VERSION=152.0.4',
   'ARG CAMOUFOX_RELEASE=beta.30',
   'ARG UBLOCK_ORIGIN_URL=https://addons.mozilla.org/firefox/downloads/file/5034826/ublock_origin-1.75.0.xpi',
+  'ARG UBLOCK_ORIGIN_SHA256=5b74415860456370644bd80f16125e865b0e6c356bb5dfcfb84069967eaa5287',
 ].join('\n');
 
 describe('pinnedBrowser', () => {
@@ -19,6 +20,7 @@ describe('pinnedBrowser', () => {
       ublockOriginUrl:
         'https://addons.mozilla.org/firefox/downloads/file/5034826/ublock_origin-1.75.0.xpi',
       ublockOriginVersion: '1.75.0',
+      ublockOriginSha256: '5b74415860456370644bd80f16125e865b0e6c356bb5dfcfb84069967eaa5287',
     });
   });
 

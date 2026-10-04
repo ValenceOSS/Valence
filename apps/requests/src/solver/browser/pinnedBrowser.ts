@@ -31,7 +31,7 @@ const argOf = (dockerfile: string, name: string): string => {
  * from anywhere else. Development reads the same lines, so it runs the browser the image ships.
  *
  * @param dockerfile - The contents of the requests Dockerfile.
- * @returns The pinned Camoufox release and uBlock Origin download.
+ * @returns The pinned Camoufox release, and the uBlock Origin download with its checksum.
  * @throws If a pin is missing, or the uBlock Origin download names no version.
  */
 const pinnedBrowser = (dockerfile: string): BrowserPin => {
@@ -47,6 +47,7 @@ const pinnedBrowser = (dockerfile: string): BrowserPin => {
     camoufoxRelease: argOf(dockerfile, 'CAMOUFOX_RELEASE'),
     ublockOriginUrl,
     ublockOriginVersion,
+    ublockOriginSha256: argOf(dockerfile, 'UBLOCK_ORIGIN_SHA256'),
   };
 };
 
