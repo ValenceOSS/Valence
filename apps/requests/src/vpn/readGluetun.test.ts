@@ -95,7 +95,7 @@ describe('readGluetun', () => {
     const vpn = await readGluetun({ address: 'http://gluetun:8000', apiKey: '', fetch });
 
     expect(vpn.isUp).toEqual(false);
-    expect(vpn.problem).toEqual('The tunnel is stopped');
+    expect(vpn.problem).toEqual('The VPN tunnel is stopped');
     expect(vpn.problemCode).toBe('VpnDown');
   });
 
@@ -104,7 +104,7 @@ describe('readGluetun', () => {
 
     const vpn = await readGluetun({ address: 'http://gluetun:8000', apiKey: '', fetch });
 
-    expect(vpn.problem).toEqual('gluetun refused the question; check VPN_API_KEY');
+    expect(vpn.problem).toEqual('gluetun rejected the request. Check VPN_API_KEY');
     expect(vpn.problemCode).toBe('VpnKeyRefused');
   });
 
@@ -113,7 +113,7 @@ describe('readGluetun', () => {
 
     expect(
       (await readGluetun({ address: 'http://gluetun:8000', apiKey: '', fetch })).problem,
-    ).toEqual('gluetun answered 502');
+    ).toEqual('gluetun returned 502');
   });
 
   it('reads an answer that is not a status as down', async () => {
@@ -121,7 +121,7 @@ describe('readGluetun', () => {
 
     expect(
       (await readGluetun({ address: 'http://gluetun:8000', apiKey: '', fetch })).problem,
-    ).toEqual('gluetun answered something that was not a status');
+    ).toEqual('gluetun returned a response that isn’t a status');
   });
 
   it('reads a gluetun that cannot be reached as down', async () => {
@@ -134,7 +134,7 @@ describe('readGluetun', () => {
     expect(vpn).toMatchObject({
       isConfigured: true,
       isUp: false,
-      problem: 'gluetun could not be reached at http://gluetun:8000',
+      problem: 'Couldn’t connect to gluetun at http://gluetun:8000',
       problemCode: 'VpnDown',
     });
   });

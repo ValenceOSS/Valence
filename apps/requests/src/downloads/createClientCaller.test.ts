@@ -29,7 +29,7 @@ describe('createClientCaller', () => {
     const fetch = vi.fn<ClientFetch>(() => Promise.reject(new Error('ECONNREFUSED')));
 
     await expect(createClientCaller(fetch, 'qBittorrent')('http://client')).rejects.toThrow(
-      'qBittorrent could not be reached',
+      'Couldn’t connect to qBittorrent',
     );
     await expect(createClientCaller(fetch, 'qBittorrent')('http://client')).rejects.toMatchObject({
       problemCode: 'DownloadClientUnreachable',
@@ -42,7 +42,7 @@ describe('createClientCaller', () => {
     );
 
     await expect(createClientCaller(fetch, 'SABnzbd', 3)('http://client')).rejects.toThrow(
-      'SABnzbd did not answer within 3 seconds',
+      'SABnzbd didn’t respond within 3 seconds',
     );
     await expect(createClientCaller(fetch, 'SABnzbd', 3)('http://client')).rejects.toMatchObject({
       problemCode: 'DownloadClientUnreachable',

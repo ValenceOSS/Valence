@@ -11,12 +11,12 @@ describe('describeScanKind', () => {
   });
 
   it('tells a forced read apart from an ordinary scan', () => {
-    expect(describeScanKind('rescan', 'Films')).toBe('Reading every file in Films');
+    expect(describeScanKind('rescan', 'Films')).toBe('Rescanning every file in Films');
   });
 
   it('names the re-read a correction sets off', () => {
     expect(describeScanKind('library.readAgain', 'Shows')).toBe(
-      'Reading the corrected files in Shows',
+      'Rescanning corrected files in Shows',
     );
   });
 

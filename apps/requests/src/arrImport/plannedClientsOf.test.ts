@@ -39,7 +39,7 @@ describe('plannedClientsOf', () => {
         from: ['Radarr'],
       },
     ]);
-    expect(planned[2]?.report.notes[0]?.message).toBe('Valence cannot use Deluge yet.');
+    expect(planned[2]?.report.notes[0]?.message).toBe('Valence doesn’t support Deluge yet.');
   });
 
   it('fills a masked secret in with what the admin typed', async () => {

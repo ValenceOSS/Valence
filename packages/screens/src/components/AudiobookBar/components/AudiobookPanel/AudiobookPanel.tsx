@@ -49,7 +49,7 @@ const AudiobookPanel = ({ state, player }: AudiobookPanelProps) => {
     <div className="flex w-80 max-w-[calc(100vw-3rem)] flex-col gap-4">
       <div className="flex flex-col gap-1">
         <Slider
-          label={say('screens.audiobookBar.audiobookPanel.whereTheBookIs')}
+          label={say('screens.videoRemote.whereTheFilmIsUpTo')}
           value={Math.min(position, state.durationSeconds)}
           max={Math.max(state.durationSeconds, 1)}
           step={1}
@@ -70,7 +70,7 @@ const AudiobookPanel = ({ state, player }: AudiobookPanelProps) => {
 
       <div className="flex items-center justify-between gap-2">
         <BarButton
-          label={say('common.previousChapter')}
+          label={say('common.chapterBefore')}
           glyph={SkipBackIcon}
           isDisabled={state.chapters.length === 0}
           onClick={() => {
@@ -117,7 +117,7 @@ const AudiobookPanel = ({ state, player }: AudiobookPanelProps) => {
               >
                 <Icon of={MoonIcon} size={14} />
                 {sleeping === 'off'
-                  ? say('screens.audiobookBar.audiobookPanel.sleep')
+                  ? say('common.sleepTimer')
                   : sleeping === 'endOfChapter'
                     ? say('common.endOfChapter')
                     : sayCount('common.count.minutesShort', Number(sleeping))}

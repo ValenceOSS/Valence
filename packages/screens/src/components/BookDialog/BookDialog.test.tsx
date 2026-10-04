@@ -203,7 +203,7 @@ describe('BookDialog', () => {
     const { onToggleKept, onShare } = open();
 
     await screen.findByRole('heading', { name: 'Pride and Prejudice' });
-    await userEvent.click(screen.getByRole('button', { name: /Keep/ }));
+    await userEvent.click(screen.getByRole('button', { name: /Add to favourites/ }));
     await userEvent.click(screen.getByRole('button', { name: /Share/ }));
 
     expect(onToggleKept).toHaveBeenCalledWith(A_BOOK);
@@ -213,7 +213,9 @@ describe('BookDialog', () => {
   it('says a kept book can stop being kept', async () => {
     open({ isKept: true });
 
-    expect(await screen.findByRole('button', { name: /Stop keeping/ })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: /Remove from favourites/ }),
+    ).toBeInTheDocument();
   });
 
   it('shows nothing while no book is chosen', () => {

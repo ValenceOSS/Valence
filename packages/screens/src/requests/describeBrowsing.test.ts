@@ -7,7 +7,7 @@ describe('describeBrowsing', () => {
       'Trending films',
     );
     expect(describeBrowsing({ kind: 'series', list: 'upcoming', studio: null })).toBe(
-      'Coming series',
+      'Upcoming series',
     );
     expect(
       describeBrowsing({ kind: 'film', list: 'popular', studio: '2' }, 'Walt Disney Pictures'),

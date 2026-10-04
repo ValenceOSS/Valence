@@ -683,7 +683,7 @@ const AccountsPanel = () => {
                         : [
                             {
                               id: 'revoke',
-                              label: say('screens.setupLinkSection.revokeLink'),
+                              label: say('common.withdrawIt'),
                               icon: <Icon of={CircleXFilledIcon} size={15} />,
                               onChoose: () => {
                                 hold(account.id, null);
@@ -1089,7 +1089,7 @@ const AccountsPanel = () => {
                               setConfirmingPasswordReset(true);
                             }}
                           >
-                            {say('screens.adminArea.accountsPanel.setPassword')}
+                            {say('screens.resetPasswordPage.setThePassword')}
                           </Button>
                         </div>
                       </FormField>

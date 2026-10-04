@@ -142,7 +142,7 @@ describe('ReadPage', () => {
 
     renderInAnAddress(<ReadPage />);
 
-    expect(await screen.findByText('Nothing in this book yet')).toBeInTheDocument();
+    expect(await screen.findByText('This book has no chapters yet')).toBeInTheDocument();
   });
 
   it('opens the text of a book that can be heard as well, leaving the audio out', async () => {
@@ -161,7 +161,7 @@ describe('ReadPage', () => {
 
     renderInAnAddress(<ReadPage />);
 
-    expect(await screen.findByText('Nothing in this book yet')).toBeInTheDocument();
+    expect(await screen.findByText('This book has no chapters yet')).toBeInTheDocument();
   });
 
   it('tells the server somebody is reading once the book opens', async () => {
@@ -179,7 +179,7 @@ describe('ReadPage', () => {
 
     renderInAnAddress(<ReadPage />);
 
-    await screen.findByText('Nothing in this book yet');
+    await screen.findByText('This book has no chapters yet');
 
     expect(readingReported()).toEqual([]);
   });

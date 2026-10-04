@@ -35,12 +35,14 @@ describe('planArrImport', () => {
   it('says why a plan was refused', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(() => Promise.resolve(Response.json({ error: 'Requesting is off.' }, { status: 404 }))),
+      vi.fn(() =>
+        Promise.resolve(Response.json({ error: 'Requests are turned off.' }, { status: 404 })),
+      ),
     );
 
     expect(await planArrImport(ASK)).toEqual({
       value: null,
-      refusal: { message: 'Requesting is off.' },
+      refusal: { message: 'Requests are turned off.' },
     });
   });
 });

@@ -30,14 +30,14 @@ describe('ActionMenu', () => {
       >
         <ActionMenu
           {...props}
-          groups={[{ items: [{ id: 'pin', label: 'Pin to the top', onChoose }] }]}
+          groups={[{ items: [{ id: 'pin', label: 'Pin to top', onChoose }] }]}
         />
       </div>,
     );
 
     const user = await open();
 
-    await user.click(await screen.findByRole('menuitem', { name: 'Pin to the top' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Pin to top' }));
 
     expect(onChoose).toHaveBeenCalled();
     expect(onPress).not.toHaveBeenCalled();
@@ -99,7 +99,7 @@ describe('ActionMenu', () => {
         groups={[
           {
             items: [
-              { id: 'x', label: 'File it', hint: 'Once it has downloaded.', onChoose: vi.fn() },
+              { id: 'x', label: 'File it', hint: 'When the download finishes.', onChoose: vi.fn() },
             ],
           },
         ]}
@@ -109,7 +109,7 @@ describe('ActionMenu', () => {
     await open();
 
     expect(await screen.findByRole('menuitem', { name: 'File it' })).toBeInTheDocument();
-    expect(screen.queryByText('Once it has downloaded.')).not.toBeInTheDocument();
+    expect(screen.queryByText('When the download finishes.')).not.toBeInTheDocument();
     expect(document.querySelector('[data-slot="menu-hint"]')).toBeInTheDocument();
   });
 

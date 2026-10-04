@@ -92,7 +92,7 @@ describe('useSample', () => {
 
     await act(() => result.current.toggle('x', 'Drake', 'Nothing Was the Same'));
 
-    expect(sayMock).toHaveBeenCalledWith('There is no sample of Nothing Was the Same to hear.');
+    expect(sayMock).toHaveBeenCalledWith('There’s no sample of Nothing Was the Same to play.');
     expect(played).toEqual([]);
   });
 });

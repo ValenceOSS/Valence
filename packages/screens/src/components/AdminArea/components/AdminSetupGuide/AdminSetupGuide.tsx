@@ -105,14 +105,14 @@ const AdminSetupGuide = ({
   return (
     <Card
       as="section"
-      aria-label={say('screens.adminArea.adminSetupGuide.getValenceSetUp')}
+      aria-label={say('screens.setupWizard.setUpValence')}
       padding="md"
       className="flex flex-col gap-4"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
           <h2 className="text-base font-semibold text-text">
-            {say('screens.adminArea.adminSetupGuide.getValenceSetUp')}
+            {say('screens.setupWizard.setUpValence')}
           </h2>
           <p className="text-sm text-text-muted">
             {say('screens.adminArea.adminSetupGuide.threeStepsAndYourMediaIs')}

@@ -84,12 +84,12 @@ describe('ArrAppDialog', () => {
 
     open();
 
-    expect(screen.getByText('Where its library is')).toBeInTheDocument();
+    expect(screen.getByText('Library path')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Prowlarr' }));
 
-    expect(screen.queryByText('Where its library is')).not.toBeInTheDocument();
-    expect(screen.getByRole('switch', { name: 'Keep its indexers in step' })).toBeChecked();
+    expect(screen.queryByText('Library path')).not.toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'Sync its indexers' })).toBeChecked();
   });
 
   it('says what is missing before connecting', async () => {
@@ -99,7 +99,7 @@ describe('ArrAppDialog', () => {
 
     await user.click(screen.getByRole('button', { name: 'Connect' }));
 
-    expect(await screen.findByText(/It needs its API key/)).toBeInTheDocument();
+    expect(await screen.findByText(/Enter the app’s API key/)).toBeInTheDocument();
     expect(addArrApp).not.toHaveBeenCalled();
   });
 
@@ -112,7 +112,7 @@ describe('ArrAppDialog', () => {
     await waitFor(() => {
       expect(tryArrApp).toHaveBeenCalledWith(expect.objectContaining({ apiKey: '' }), KEPT.id);
     });
-    expect(await screen.findByText('It answered, and is 5.14.')).toBeInTheDocument();
+    expect(await screen.findByText('Connected. The client is running 5.14.')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
@@ -154,7 +154,7 @@ describe('ArrAppDialog', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /^Test/ })).toBeEnabled();
     });
-    expect(screen.queryByText('It answered, and is 5.14.')).toBeNull();
+    expect(screen.queryByText('Connected. The client is running 5.14.')).toBeNull();
   });
 
   it('says why a try or a save did not go through', async () => {
@@ -163,7 +163,7 @@ describe('ArrAppDialog', () => {
     tryArrApp.mockResolvedValue({
       value: {
         isWorking: false,
-        problem: sayVerbatim('Films refused its API key'),
+        problem: sayVerbatim('Films rejected its API key'),
         problemCode: 'ArrAppKeyRefused',
         version: null,
       },
@@ -174,7 +174,7 @@ describe('ArrAppDialog', () => {
 
     await user.click(screen.getByRole('button', { name: /^Test/ }));
 
-    expect(await screen.findByText('Films refused its API key')).toBeInTheDocument();
+    expect(await screen.findByText('Films rejected its API key')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Save' }));
 

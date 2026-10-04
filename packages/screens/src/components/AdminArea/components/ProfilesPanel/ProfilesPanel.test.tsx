@@ -72,7 +72,7 @@ describe('ProfilesPanel', () => {
     await screen.findByText('HD');
 
     await waitFor(() => {
-      expect(within(rowOf('HD')).getByText('Films, A library that has gone')).toBeInTheDocument();
+      expect(within(rowOf('HD')).getByText('Films, A deleted library')).toBeInTheDocument();
     });
     expect(within(rowOf('HD')).getByText('1080p · Blu-ray')).toBeInTheDocument();
   });
@@ -100,7 +100,7 @@ describe('ProfilesPanel', () => {
 
     await user.click(screen.getByRole('button', { name: 'Add media profile' }));
 
-    expect(await screen.findByText(/Every release a search finds is judged/)).toBeInTheDocument();
+    expect(await screen.findByText(/Every release a search finds is checked/)).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
     await user.click(await screen.findByRole('button', { name: 'Actions for HD' }));
@@ -110,7 +110,7 @@ describe('ProfilesPanel', () => {
   });
 
   it('removes a profile once that is confirmed, saying why where it could not', async () => {
-    removeProfile.mockResolvedValueOnce({ message: 'Requesting is off.' });
+    removeProfile.mockResolvedValueOnce({ message: 'Requests are turned off.' });
 
     const user = userEvent.setup();
 
@@ -121,7 +121,7 @@ describe('ProfilesPanel', () => {
     await user.click(await screen.findByRole('button', { name: 'Remove' }));
 
     expect(removeProfile).toHaveBeenCalledWith(HD.id);
-    expect(await screen.findByRole('alert')).toHaveTextContent('Requesting is off.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Requests are turned off.');
 
     await user.click(screen.getByRole('button', { name: 'Actions for HD' }));
     await user.click(await screen.findByRole('menuitem', { name: /Remove/ }));
@@ -153,7 +153,7 @@ describe('ProfilesPanel', () => {
 
     renderInAnAddress(<ProfilesPanel />);
 
-    expect(screen.getByRole('status', { name: 'Reading the profiles' })).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Loading profiles' })).toBeInTheDocument();
 
     answer([]);
 

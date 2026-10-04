@@ -151,8 +151,8 @@ describe('DownloadDialog', () => {
 
     renderInAnAddress(<DownloadDialog media={MEDIA} onClose={vi.fn()} />);
 
-    expect(await screen.findByText(/will not fit/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Prepare it/ })).toBeDisabled();
+    expect(await screen.findByText(/Not enough space/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Prepare download/ })).toBeDisabled();
   });
 
   it('warns rather than refuses when it would take most of what is left', async () => {
@@ -160,8 +160,8 @@ describe('DownloadDialog', () => {
 
     renderInAnAddress(<DownloadDialog media={MEDIA} onClose={vi.fn()} />);
 
-    expect(await screen.findByText(/most of what is left/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Prepare it/ })).toBeEnabled();
+    expect(await screen.findByText(/most of the remaining space/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Prepare download/ })).toBeEnabled();
   });
 
   it('says nothing about room where the device would not say how much it has', async () => {
@@ -180,7 +180,7 @@ describe('DownloadDialog', () => {
     await actor.click(
       (await screen.findAllByRole('radio', { checked: false }))[0] ?? new HTMLElement(),
     );
-    await actor.click(screen.getByRole('button', { name: /Prepare it/ }));
+    await actor.click(screen.getByRole('button', { name: /Prepare download/ }));
 
     await waitFor(() => {
       const asking = fetchMock.mock.calls.find(([url]) =>

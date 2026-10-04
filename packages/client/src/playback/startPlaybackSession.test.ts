@@ -118,12 +118,12 @@ describe('startPlaybackSession', () => {
     fetchMock.mockResolvedValue({
       ok: false,
       status: 422,
-      json: () => Promise.resolve({ error: 'This server has no working encoder for h264.' }),
+      json: () => Promise.resolve({ error: 'This server has no working H.264 encoder.' }),
     });
 
     await expect(startPlaybackSession('media-1', profile, 'client-1')).resolves.toMatchObject({
       kind: 'failed',
-      reason: 'This server has no working encoder for h264.',
+      reason: 'This server has no working H.264 encoder.',
     });
   });
 
@@ -132,7 +132,7 @@ describe('startPlaybackSession', () => {
 
     await expect(startPlaybackSession('media-1', profile, 'client-1')).resolves.toMatchObject({
       kind: 'failed',
-      reason: 'Could not reach the server.',
+      reason: 'Couldn’t reach the server.',
     });
   });
 
@@ -164,7 +164,7 @@ describe('startPlaybackSession', () => {
 
     expect(outcome).toMatchObject({
       kind: 'failed',
-      reason: 'The server sent a response Valence could not read.',
+      reason: 'The server sent a response Valence couldn’t read.',
     });
   });
 });
@@ -278,7 +278,7 @@ describe('sendPresenceHeartbeat', () => {
 
 describe('describeWhy', () => {
   it('says nothing is being converted for direct play', () => {
-    expect(describeWhy(plan)).toEqual(['Playing without any conversion.']);
+    expect(describeWhy(plan)).toEqual(['Playing directly, without transcoding.']);
   });
 
   it('explains a video transcode', () => {

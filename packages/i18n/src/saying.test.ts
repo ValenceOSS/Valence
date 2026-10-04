@@ -8,7 +8,7 @@ describe('saying', () => {
       saying('requests.downloads.clientAnsweredStatus', { name: 'NZBGet', status: 500 }),
     ).toEqual({
       code: 'requests.downloads.clientAnsweredStatus',
-      message: 'NZBGet answered 500',
+      message: 'NZBGet returned 500',
       values: { name: 'NZBGet', status: 500 },
     });
   });

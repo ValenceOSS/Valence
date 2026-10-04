@@ -119,12 +119,12 @@ describe('fetchCorrections', () => {
   it('says it could not be changed where the refusal cannot be read', async () => {
     answerWith('no', false);
 
-    await expect(forgetBookCorrection('b1')).resolves.toBe('That could not be changed.');
+    await expect(forgetBookCorrection('b1')).resolves.toBe('Couldn’t save the change. Try again.');
   });
 
   it('says the server could not be reached', async () => {
     fetchMock.mockRejectedValue(new Error('offline'));
 
-    await expect(correctBook('b1', 123)).resolves.toBe('The server could not be reached.');
+    await expect(correctBook('b1', 123)).resolves.toBe('Couldn’t reach the server.');
   });
 });

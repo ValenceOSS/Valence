@@ -274,13 +274,13 @@ describe('the plugin routes', () => {
     );
 
     expect(elsewhere.status).toBe(422);
-    expect(await elsewhere.text()).toContain('started somewhere else');
+    expect(await elsewhere.text()).toContain('started in another browser');
     expect(elsewhere.headers.get('content-security-policy')).toContain("default-src 'none'");
 
     const turnedDown = await request('/api/plugins/oauth/callback?error=access_denied', {}, false);
 
     expect(turnedDown.status).toBe(422);
-    expect(await turnedDown.text()).toContain('turned down');
+    expect(await turnedDown.text()).toContain('was declined');
 
     service.stop();
   }, 30_000);

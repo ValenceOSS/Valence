@@ -228,7 +228,7 @@ describe('BrowseArea', () => {
 
     renderInAnAddress(<BrowseArea kind="films" onPlay={vi.fn()} onInspect={vi.fn()} />);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('could not be read');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Couldn’t load');
     expect(screen.queryByText(/Nothing here stands on its own yet/)).not.toBeInTheDocument();
   });
 
@@ -252,7 +252,7 @@ describe('BrowseArea', () => {
     await screen.findByRole('heading', { name: 'Nothing has been favourited yet' });
 
     expect(screen.queryByText(/Scan/)).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Scan it' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Scan library' })).not.toBeInTheDocument();
   });
 
   it('talks about every library on the page that reads across all of them', async () => {
@@ -274,7 +274,9 @@ describe('BrowseArea', () => {
       <BrowseArea kind="shows" onPlay={vi.fn()} onInspect={vi.fn()} onAddLibrary={vi.fn()} />,
     );
 
-    expect(await screen.findByText('Scan it, or add files to its folder.')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Scan the library, or add files to its folder.'),
+    ).toBeInTheDocument();
   });
 });
 
@@ -387,9 +389,7 @@ describe('how a page of the library is laid out', () => {
   it('still offers a choice of how large the cards are', async () => {
     renderInAnAddress(<BrowseArea kind="films" onPlay={vi.fn()} onInspect={vi.fn()} />);
 
-    expect(
-      await screen.findByRole('group', { name: 'How large the cards are' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('group', { name: 'Card size' })).toBeInTheDocument();
   });
 
   it('shows the books this viewer kept beside everything else they kept', async () => {

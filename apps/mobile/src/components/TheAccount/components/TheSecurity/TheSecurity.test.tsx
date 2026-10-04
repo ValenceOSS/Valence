@@ -22,7 +22,7 @@ describe('TheSecurity', () => {
   it('offers two-step sign in, and says where to add a passkey', async () => {
     const drawn = await render(<TheSecurity />, { wrapper: CacheScope });
 
-    expect(await drawn.findByText('Two-step sign in')).toBeTruthy();
+    expect(await drawn.findByText('Two-factor authentication')).toBeTruthy();
     expect(
       await drawn.findByText('No passkeys yet. Add one from Valence on the web.'),
     ).toBeTruthy();

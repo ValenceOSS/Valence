@@ -166,7 +166,7 @@ describe('TheLibrary', () => {
 
     const drawn = await theLibrary({ onScan });
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Sign in a television' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Sign in to a TV' }));
 
     expect(onScan).toHaveBeenCalled();
   });
@@ -189,7 +189,7 @@ describe('TheLibrary', () => {
 
     const drawn = await theLibrary();
 
-    expect(drawn.getByRole('button', { name: 'Sign in a television' })).toBeTruthy();
+    expect(drawn.getByRole('button', { name: 'Sign in to a TV' })).toBeTruthy();
     expect(drawn.queryByRole('button', { name: 'Calendar' })).toBeNull();
   });
 
@@ -257,7 +257,7 @@ describe('TheLibrary', () => {
 
     const drawn = await theLibrary();
 
-    expect(await drawn.findByText('Those could not be read.')).toBeTruthy();
+    expect(await drawn.findByText('Couldn’t load these.')).toBeTruthy();
   });
 
   it('tells whoever is listening which title somebody wants to see', async () => {
@@ -284,7 +284,7 @@ describe('TheLibrary', () => {
 
     await waitFor(() => {
       expect(
-        drawn.getAllByRole('progressbar', { name: 'How far through Arrival', value: { now: 50 } }),
+        drawn.getAllByRole('progressbar', { name: 'Progress for Arrival', value: { now: 50 } }),
       ).not.toHaveLength(0);
     });
   });
@@ -418,7 +418,7 @@ describe('TheLibrary', () => {
 
     await userEvent.press(await drawn.findByText('Films'));
 
-    expect(await drawn.findByText('You have watched everything here.')).toBeTruthy();
+    expect(await drawn.findByText('You’ve watched everything here.')).toBeTruthy();
     expect(drawn.queryByText('No films yet')).toBeNull();
   });
 
@@ -466,7 +466,7 @@ describe('TheLibrary', () => {
     const drawn = await theLibrary();
 
     await drawn.findByText('Nothing to watch yet');
-    const bar = drawn.getByRole('button', { name: 'Sign in a television' }).parent?.parent?.parent
+    const bar = drawn.getByRole('button', { name: 'Sign in to a TV' }).parent?.parent?.parent
       ?.parent;
 
     expect(bar).toHaveStyle({ paddingLeft: 0, paddingRight: 84 });

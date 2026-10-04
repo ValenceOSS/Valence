@@ -26,14 +26,14 @@ describe('describeRequestProgress', () => {
           ],
         }),
       ),
-    ).toBe('Season 1 · 2 of 3 episodes here · 1 downloading');
+    ).toBe('Season 1 · 2 of 3 episodes in the library · 1 downloading');
     expect(
       describeRequestProgress(
         aMediaRequest({ kind: 'series', seasons: [1, 2], items: [anEpisode(1, 'wanted')] }),
       ),
-    ).toBe('Seasons 1, 2 · 0 of 1 episode here');
+    ).toBe('Seasons 1, 2 · 0 of 1 episode in the library');
     expect(describeRequestProgress(aMediaRequest({ kind: 'series' }))).toBe(
-      'Every season · 0 of 0 episodes here',
+      'Every season · 0 of 0 episodes in the library',
     );
   });
 
@@ -46,7 +46,7 @@ describe('describeRequestProgress', () => {
           items: [anEpisode(1, 'available'), anEpisode(2, 'wanted'), anEpisode(3, 'waiting')],
         }),
       ),
-    ).toBe('Albums, Live · 1 of 2 albums here');
+    ).toBe('Albums, Live · 1 of 2 albums in the library');
   });
 
   it('says who an album is by', () => {

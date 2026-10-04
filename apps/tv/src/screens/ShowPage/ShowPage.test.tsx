@@ -143,7 +143,7 @@ describe('ShowPage', () => {
 
     const drawn = await drawShow(aCacheHolding(null));
 
-    expect(await drawn.findByText('This programme could not be found.')).toBeTruthy();
+    expect(await drawn.findByText('Couldn’t find this show.')).toBeTruthy();
   });
 
   it('says what the programme is and what happens in the episode to watch next', async () => {

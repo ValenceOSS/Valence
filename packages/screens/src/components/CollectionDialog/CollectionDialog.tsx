@@ -335,7 +335,7 @@ const CollectionDialog = ({
                           void dropFromCollection(collection.id, entry.id).then(refresh);
                         }}
                       >
-                        {say('common.remove')}
+                        {say('common.forget')}
                       </PanelCardAction>
                     </span>
                   ) : null}

@@ -22,8 +22,8 @@ describe('profileOf', () => {
       upgradeUntilSource: 'bluray',
     });
     expect(notes.map((note) => note.message)).toEqual([
-      'The custom format HDR judges more than release names, so it was left out.',
-      'Valence has nothing to match BR-DISK, so they were left out.',
+      'The custom format HDR checks more than release names, so it wasn’t imported.',
+      'Valence has no equivalent for BR-DISK, so they weren’t imported.',
     ]);
   });
 
@@ -41,7 +41,7 @@ describe('profileOf', () => {
       upgradeUntilSource: 'webdl',
     });
     expect(notes.map((note) => note.message)).toEqual([
-      'The release profile Anime only only holds for tagged series, so it was left out.',
+      'The release profile Anime only only applies to tagged series, so it wasn’t imported.',
     ]);
   });
 
@@ -56,8 +56,8 @@ describe('profileOf', () => {
       upgradeUntilSource: 'webdl',
     });
     expect(notes.map((note) => note.message)).toEqual([
-      'The custom format Not English judges more than release names, so it was left out.',
-      'The minimum custom format score of 10 was left out.',
+      'The custom format Not English checks more than release names, so it wasn’t imported.',
+      'The minimum custom format score of 10 wasn’t imported.',
     ]);
   });
 
@@ -77,7 +77,7 @@ describe('profileOf', () => {
 
     expect(draft).toMatchObject({ resolutions: ['1080p', '720p'], sources: ['bluray', 'hdtv'] });
     expect(notes.map((note) => note.message)).toEqual([
-      'Valence takes every allowed resolution from every allowed source, which allows a little more than before.',
+      'Valence allows every selected resolution from every selected source, which is slightly less strict than before.',
     ]);
   });
 
@@ -96,7 +96,7 @@ describe('profileOf', () => {
       upgradeUntilMusicQuality: 'flac24',
     });
     expect(notes.map((note) => note.message)).toEqual([
-      'Valence has nothing to match WAV, so they were left out.',
+      'Valence has no equivalent for WAV, so they weren’t imported.',
     ]);
   });
 
@@ -115,7 +115,7 @@ describe('profileOf', () => {
     expect(draft).not.toHaveProperty('resolutions');
     expect(draft).toMatchObject({ isUpgrading: false, upgradeUntilResolution: null });
     expect(notes.at(-1)?.message).toBe(
-      'No quality it allows matches one of Valence’s, so Valence’s defaults hold.',
+      'None of its qualities match Valence’s, so Valence’s defaults are used.',
     );
   });
 });

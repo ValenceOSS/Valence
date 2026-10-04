@@ -74,7 +74,7 @@ describe('HouseholdStep', () => {
   it('reads the household before asking about it', async () => {
     renderStep();
 
-    expect(screen.getByRole('status', { name: 'Reading the household' })).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Loading profiles' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
     expect(await screen.findByLabelText(NAME_FIELD)).toHaveValue('Dan');
   });
@@ -108,7 +108,7 @@ describe('HouseholdStep', () => {
   it('adds somebody by the name typed, with a colour of their own', async () => {
     renderStep();
 
-    const field = await screen.findByLabelText('Add somebody');
+    const field = await screen.findByLabelText('Add a profile');
 
     expect(screen.getByRole('button', { name: 'Add' })).toBeDisabled();
 
@@ -125,7 +125,7 @@ describe('HouseholdStep', () => {
   it('does not add somebody with only spaces for a name', async () => {
     renderStep();
 
-    await userEvent.type(await screen.findByLabelText('Add somebody'), '   {Enter}');
+    await userEvent.type(await screen.findByLabelText('Add a profile'), '   {Enter}');
 
     expect(createProfile).not.toHaveBeenCalled();
   });
@@ -135,14 +135,12 @@ describe('HouseholdStep', () => {
 
     renderStep();
 
-    const field = await screen.findByLabelText('Add somebody');
+    const field = await screen.findByLabelText('Add a profile');
 
     await userEvent.type(field, 'Alex');
     await userEvent.click(screen.getByRole('button', { name: 'Add' }));
 
-    expect(
-      await screen.findByText('That person could not be added. Try again.'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('Couldn’t add that profile. Try again.')).toBeInTheDocument();
     expect(field).toHaveValue('Alex');
   });
 
@@ -190,7 +188,7 @@ describe('HouseholdStep', () => {
     await screen.findByLabelText(NAME_FIELD);
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
-    expect(await screen.findByText('That name could not be saved.')).toBeInTheDocument();
+    expect(await screen.findByText('Couldn’t save that name.')).toBeInTheDocument();
     expect(onContinue).not.toHaveBeenCalled();
   });
 

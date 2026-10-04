@@ -64,7 +64,7 @@ describe('ChooseEpisodes', () => {
   it('downloads nothing until something is picked', () => {
     choosing();
 
-    expect(screen.getByRole('button', { name: 'Pick some episodes' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Select episodes' })).toBeDisabled();
   });
 
   it('says what is already here, and does not offer it again', () => {

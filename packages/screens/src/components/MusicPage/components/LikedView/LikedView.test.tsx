@@ -35,7 +35,7 @@ describe('LikedView', () => {
 
     renderInAnAddress(<LikedView />);
 
-    expect(await screen.findByText('Songs you like will be here')).toBeInTheDocument();
+    expect(await screen.findByText('Songs you like will appear here')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Play Liked Songs' })).toBeDisabled();
   });
 

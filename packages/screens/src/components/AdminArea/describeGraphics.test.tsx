@@ -4,7 +4,7 @@ import { describeGraphics } from './describeGraphics';
 
 describe('describeGraphics', () => {
   it('says there is nothing to read when no card answered', () => {
-    expect(describeGraphics(null)).toEqual({ value: '—', detail: 'No card Valence can read' });
+    expect(describeGraphics(null)).toEqual({ value: '—', detail: 'No supported GPU found' });
   });
 
   it('reports the encode block where the card names it', () => {
@@ -16,7 +16,7 @@ describe('describeGraphics', () => {
     });
 
     expect(render(<>{tile.value}</>).container).toHaveTextContent('88%');
-    expect(tile.detail).toBe('encoder, not whole card');
+    expect(tile.detail).toBe('encoder, not whole GPU');
   });
 
   it('prefers the encoder to the card, since they answer different questions', () => {
@@ -39,7 +39,7 @@ describe('describeGraphics', () => {
     });
 
     expect(render(<>{tile.value}</>).container).toHaveTextContent('41%');
-    expect(tile.detail).toBe('whole card, not encoder');
+    expect(tile.detail).toBe('whole GPU, not encoder');
   });
 
   it('never reports an unreadable encoder as an idle one', () => {
@@ -50,7 +50,7 @@ describe('describeGraphics', () => {
       measured: 'wholeMachine' as const,
     });
 
-    expect(tile.detail).toBe('whole card, not encoder');
+    expect(tile.detail).toBe('whole GPU, not encoder');
     expect(tile.detail).not.toContain('encoder ·');
   });
 
@@ -97,7 +97,7 @@ describe('describeGraphics', () => {
     });
 
     expect(tile.value).toBe('—');
-    expect(tile.detail).toBe('Nothing readable');
+    expect(tile.detail).toBe('No data');
   });
 
   it('draws the bar from the figure it decided to show', () => {
@@ -132,7 +132,7 @@ describe('describeGraphics', () => {
     });
 
     expect(render(<>{tile.value}</>).container).toHaveTextContent('62%');
-    expect(tile.detail).toBe('video engine, ours only');
+    expect(tile.detail).toBe('video engine (Valence)');
   });
 
   it('never labels our own share of an engine as the encoder block itself', () => {
@@ -143,13 +143,13 @@ describe('describeGraphics', () => {
         devicePercent: null,
         measured: 'valenceOnly' as const,
       }).detail,
-    ).not.toBe('encoder, not whole card');
+    ).not.toBe('encoder, not whole GPU');
   });
 
   it('points at the reasons when the media service gave some for having no figure', () => {
     expect(
       describeGraphics(null, ['NVIDIA: nvidia-smi is not installed in this container']).detail,
-    ).toBe('No reading, hover for why');
+    ).toBe('No data, hover for why');
     expect(
       describeGraphics(
         {
@@ -160,6 +160,6 @@ describe('describeGraphics', () => {
         },
         ['kernel: Card has no utilisation figure to report yet'],
       ).detail,
-    ).toBe('No reading, hover for why');
+    ).toBe('No data, hover for why');
   });
 });

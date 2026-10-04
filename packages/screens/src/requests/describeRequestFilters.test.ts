@@ -22,7 +22,7 @@ describe('describeRequestFilters', () => {
       aMediaRequest({ state: 'refused' }),
     ]);
 
-    expect(where?.options.map((option) => option.label)).toEqual(['Awaiting approval', 'Refused']);
+    expect(where?.options.map((option) => option.label)).toEqual(['Awaiting approval', 'Declined']);
   });
 
   it('names the libraries requests are actually for, and nothing else', () => {
@@ -49,7 +49,7 @@ describe('describeRequestFilters', () => {
 
     expect(
       groups.find((group) => group.name === 'Library')?.options.map((option) => option.label),
-    ).toEqual(['A library that has gone', 'Films']);
+    ).toEqual(['A deleted library', 'Films']);
   });
 
   it('offers who asked, once each', () => {
@@ -59,7 +59,7 @@ describe('describeRequestFilters', () => {
       aMediaRequest({ requestedBy: { id: 'dan', name: 'Dan' } }),
     ]);
 
-    expect(groups.find((group) => group.name === 'Asked by')?.options).toEqual([
+    expect(groups.find((group) => group.name === 'Requested by')?.options).toEqual([
       { id: 'who:dan', label: 'Dan' },
       { id: 'who:sam', label: 'Sam' },
     ]);
@@ -83,6 +83,6 @@ describe('describeRequestFilters', () => {
       new Map([['films', 'Films']]),
     );
 
-    expect(groups.map((group) => group.name)).toEqual(['Kind', 'Where it is']);
+    expect(groups.map((group) => group.name)).toEqual(['Kind', 'Status']);
   });
 });

@@ -149,7 +149,7 @@ const DownloadQueueTable = ({
           return (
             <span className="flex flex-col gap-1">
               <ProgressBar
-                label={say('common.howMuchOfTitleHasArrived', { title: row.original.title })}
+                label={say('common.howFarTitleHasDownloaded', { title: row.original.title })}
                 value={Math.round(row.original.progress * 1000) / 10}
                 readout={
                   <AnimatedNumber
@@ -258,7 +258,7 @@ const DownloadQueueTable = ({
                         : []),
                       {
                         id: 'remove',
-                        label: say('common.remove'),
+                        label: say('common.forget'),
                         icon: <Icon of={BinFilledIcon} size={15} />,
                         isDestructive: true,
                         onChoose: () => {

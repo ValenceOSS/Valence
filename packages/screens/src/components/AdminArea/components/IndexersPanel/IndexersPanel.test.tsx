@@ -218,7 +218,7 @@ describe('IndexersPanel', () => {
     renderInAnAddress(<IndexersPanel />);
 
     await user.click(screen.getByRole('button', { name: 'Add an indexer' }));
-    await user.type(await screen.findByRole('searchbox', { name: 'Find a site' }), 'Ru');
+    await user.type(await screen.findByRole('searchbox', { name: 'Search indexers' }), 'Ru');
     await user.click(await screen.findByText('RuTor'));
 
     expect(await screen.findByRole('dialog', { name: 'Add RuTor' })).toBeInTheDocument();
@@ -227,7 +227,7 @@ describe('IndexersPanel', () => {
 
     expect(await screen.findByRole('dialog', { name: 'Add an indexer' })).toBeInTheDocument();
     expect(screen.queryByRole('dialog', { name: 'Add RuTor' })).not.toBeInTheDocument();
-    expect(screen.getByRole('searchbox', { name: 'Find a site' })).toHaveValue('Ru');
+    expect(screen.getByRole('searchbox', { name: 'Search indexers' })).toHaveValue('Ru');
   });
 
   it('closes the catalogue without adding anything', async () => {
@@ -337,7 +337,7 @@ describe('IndexersPanel', () => {
     await user.click(screen.getByRole('button', { name: /Test all/ }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      '1 of 2 answered. Prowlarr: Timed out',
+      '1 of 2 responded. Prowlarr: Timed out',
     );
   });
 
@@ -369,7 +369,7 @@ describe('IndexersPanel', () => {
     await user.click(screen.getByRole('button', { name: /Test all/ }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      '1 of 2 answered. Prowlarr: its answer could not be read',
+      '1 of 2 responded. Prowlarr: its answer could not be read',
     );
     expect(screen.queryByLabelText(/^Testing /)).not.toBeInTheDocument();
   });
@@ -409,7 +409,7 @@ describe('IndexersPanel', () => {
     testIndexer.mockResolvedValue({
       value: {
         isWorking: false,
-        problem: sayVerbatim('The indexer refused the API key'),
+        problem: sayVerbatim('The indexer rejected the API key'),
         problemCode: null,
         capabilities: null,
         captcha: null,
@@ -424,7 +424,7 @@ describe('IndexersPanel', () => {
     await choose(user, 'Test');
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Jackett: The indexer refused the API key',
+      'Jackett: The indexer rejected the API key',
     );
   });
 
@@ -446,11 +446,14 @@ describe('IndexersPanel', () => {
 
     await choose(user, 'Test');
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Jackett: did not answer');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Jackett: no response');
   });
 
   it('says why a test could not be run at all', async () => {
-    testIndexer.mockResolvedValue({ value: null, refusal: { message: 'Requesting is off.' } });
+    testIndexer.mockResolvedValue({
+      value: null,
+      refusal: { message: 'Requests are turned off.' },
+    });
 
     const user = userEvent.setup();
 
@@ -458,7 +461,7 @@ describe('IndexersPanel', () => {
 
     await choose(user, 'Test');
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Jackett: Requesting is off.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Jackett: Requests are turned off.');
   });
 
   it('switches one off, and back on', async () => {
@@ -470,7 +473,7 @@ describe('IndexersPanel', () => {
 
     renderInAnAddress(<IndexersPanel />);
 
-    await choose(user, 'Switch off');
+    await choose(user, 'Disable');
 
     await waitFor(() => {
       expect(changeIndexer).toHaveBeenCalledWith(anIndexer().id, { isEnabled: false });
@@ -479,7 +482,7 @@ describe('IndexersPanel', () => {
     changeIndexer.mockResolvedValue({ value: null, refusal: { message: 'No such indexer.' } });
 
     await screen.findByText('Off');
-    await choose(user, 'Switch on');
+    await choose(user, 'Enable');
 
     expect(await screen.findByRole('alert')).toHaveTextContent('No such indexer.');
   });

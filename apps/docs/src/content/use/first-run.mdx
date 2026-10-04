@@ -53,7 +53,7 @@ The wizard checks these as you go, and the server checks them again.
 This step decides which addresses may sign in and how the session cookie is marked.
 
 - **Trusted origins.** Every address you use to reach Valence must be listed. The wizard starts with the addresses it detected, marks the one this browser used, offers any you removed as suggestions, and lets you add more one at a time. An entry is cut down to its origin, so `https://watch.example.com/path` becomes `https://watch.example.com`.
-- **This server is reached over HTTPS.** On automatically when you loaded the wizard over HTTPS. It marks the session cookie as secure, so sign-in will not work over plain HTTP. If you switch it on while this page was opened over plain HTTP, the wizard warns you.
+- **Valence is served over HTTPS.** On automatically when you loaded the wizard over HTTPS. It marks the session cookie as secure, so sign-in will not work over plain HTTP. If you switch it on while this page was opened over plain HTTP, the wizard warns you.
 
 Tick HTTPS only if the address people type starts with `https://`. If you run Valence behind a reverse proxy that terminates TLS, see [Reverse proxy](/install/reverse-proxy).
 
@@ -111,11 +111,11 @@ If the administrator cannot be created, the server answers with a `400` and the 
 
 ## Signing in
 
-When setup finishes, the app reloads its status from the server and shows the way in. What you see depends on the server setting **Show who lives here**, which is on by default.
+When setup finishes, the app reloads its status from the server and shows the way in. What you see depends on the server setting **Show profiles on sign-in**, which is on by default.
 
 ### With the profile picker
 
-With **Show who lives here** on, the sign-in screen is the profile picker: a wall of faces headed "Who is watching?". Pick yours, then type your password and press **Watch**. Escape steps back from a chosen face to the wall. Use the arrow keys to move between faces, and the page arrows or dots when the household has more than ten people.
+With **Show profiles on sign-in** on, the sign-in screen is the profile picker: a wall of faces headed "Who is watching?". Pick yours, then type your password and press **Watch**. Escape steps back from a chosen face to the wall. Use the arrow keys to move between faces, and the page arrows or dots when the household has more than ten people.
 
 Each face is a profile. An account can have several profiles, up to six, which lets one login serve a whole household with separate watch histories, favourites and hidden titles. Profiles are covered in [Accounts and roles](/use/accounts-and-roles).
 
@@ -123,7 +123,7 @@ If your account has two-factor authentication, a code prompt follows the passwor
 
 ### With the plain form
 
-With **Show who lives here** off, the picker is replaced by a form asking for an email and a password. This is the safer choice for a server on the public internet, because the list of names and pictures is then hidden from anyone who is not signed in. A **Theme** switch sits above either version so you can choose light or dark before signing in.
+With **Show profiles on sign-in** off, the picker is replaced by a form asking for an email and a password. This is the safer choice for a server on the public internet, because the list of names and pictures is then hidden from anyone who is not signed in. A **Theme** switch sits above either version so you can choose light or dark before signing in.
 
 ### The first administrator
 
@@ -141,10 +141,10 @@ A short welcome screen follows, and after it a tour of the main sections (Home, 
 
 ## Adding your first library
 
-If you added libraries in the setup wizard, they are already being read. Otherwise, a new server has nothing to play until it has at least one library. Open the admin area from your account menu, or go straight to `/admin`, and choose **Libraries** under **Content**. On a fresh server the page opens with a checklist called **Get Valence set up**:
+If you added libraries in the setup wizard, they are already being read. Otherwise, a new server has nothing to play until it has at least one library. Open the admin area from your account menu, or go straight to `/admin`, and choose **Libraries** under **Content**. On a fresh server the page opens with a checklist called **Set up Valence**:
 
 1. **Add a library.** A library is a folder of one kind of media: films, shows, music or books.
-2. **Add a metadata key.** Titles, artwork, years and ratings come from The Movie Database. A free key takes a minute to get: sign in there, open Settings, then API. The **Get a free key** button opens the right page, and **Enter it in Settings** takes you to the field.
+2. **Add a metadata key.** Titles, artwork, years and ratings come from The Movie Database. A free key takes a minute to get: sign in there, open Settings, then API. The **Get a free key** button opens the right page, and **Add it in Settings** takes you to the field.
 3. **Scan your libraries.** Scanning reads what is in each folder and looks it all up. Nothing can be watched until it has run.
 
 The step that is not yet done is marked **Start here**. The checklist disappears by itself once all three are complete, and **Hide** puts it away sooner if you prefer to work your own way.

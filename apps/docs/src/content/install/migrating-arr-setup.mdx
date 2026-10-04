@@ -32,13 +32,13 @@ Giving only Overseerr or Jellyseerr is often enough: it names the Radarr and Son
 
 ### Where the apps' folders are
 
-The apps usually see your media at other paths than Valence does, for example Radarr at `/movies` and Valence at `/media/Films`. Under **Where their folders are**, map each folder as the apps write it to the same folder as Valence sees it. The mappings decide which library each root folder fills, and where a download client's files are as Valence sees them. When you come from the Jellyfin, Emby or Plex import, its mappings are filled in already.
+The apps usually see your media at other paths than Valence does, for example Radarr at `/movies` and Valence at `/media/Films`. Under **Path mappings**, map each folder as the apps write it to the same folder as Valence sees it. The mappings decide which library each root folder fills, and where a download client's files are as Valence sees them. When you come from the Jellyfin, Emby or Plex import, its mappings are filled in already.
 
-A root folder that no mapping covers is matched by its folder's name alone, and marked **Matched by its folder's name only**. One that matches nothing is listed under **No library holds these folders**; add a mapping and press **Read it again**.
+A root folder that no mapping covers is matched by its folder's name alone, and marked **Matched by its folder's name only**. One that matches nothing is listed under **No library holds these folders**; add a mapping and press **Check again**.
 
 ## The plan
 
-**Read the setup** reads everything and changes nothing. It lists:
+**Check setup** reads everything and changes nothing. It lists:
 
 - each app it read, with its version, or why it could not be read;
 - each download client, indexer and quality profile, marked **Will be added**, **Already in Valence** or **Not brought across**, with anything that could only be approximated;
@@ -91,7 +91,7 @@ Each root folder is matched to the library holding it. For each library, choose:
 | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Hand requests to the app** | The default. The app is connected and the library [handed to it](/install/requesting#handing-a-library-to-an-app), with the root folder and the quality profile most of what it holds there uses. The app keeps downloading while it keeps running. |
 | **Valence downloads**        | Valence's own downloader takes over, with the clients and indexers brought in, judging releases by the profile brought in from the app. Switch the app off afterwards, or both will download.                                                       |
-| **Leave as it is**           | Nothing about the library changes.                                                                                                                                                                                                                  |
+| **Don’t change**             | Nothing about the library changes.                                                                                                                                                                                                                  |
 
 ### What was being waited for
 

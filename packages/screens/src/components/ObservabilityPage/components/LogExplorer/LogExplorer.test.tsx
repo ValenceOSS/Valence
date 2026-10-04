@@ -238,7 +238,7 @@ describe('LogExplorer', () => {
     it('says when everything has been read', async () => {
       render(draw());
 
-      expect(await screen.findByText('That is everything.')).toBeInTheDocument();
+      expect(await screen.findByText('That’s everything.')).toBeInTheDocument();
     });
   });
 
@@ -356,7 +356,7 @@ describe('LogExplorer', () => {
     render(draw());
     await screen.findByText('Could not read file a');
     await userEvent.click(screen.getByRole('button', { name: 'Time range' }));
-    await userEvent.click(await screen.findByRole('menuitemradio', { name: 'Everything kept' }));
+    await userEvent.click(await screen.findByRole('menuitemradio', { name: 'All' }));
 
     await waitFor(() => {
       expect(lastLogQuery()?.sinceMs).toBeNull();
@@ -391,7 +391,7 @@ describe('LogExplorer', () => {
     await screen.findByText('Could not read file a');
 
     const chart = screen.getByRole('img', {
-      name: 'How many events the log holds at each level over time',
+      name: 'Log events by level over time',
     });
 
     fireEvent.pointerDown(chart, { clientX: 40 });
@@ -510,12 +510,12 @@ describe('LogExplorer', () => {
 
     render(draw({ copy, download }));
     await screen.findByText('Could not read file a');
-    await userEvent.click(screen.getByRole('button', { name: 'More about these lines' }));
+    await userEvent.click(screen.getByRole('button', { name: 'More actions' }));
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Copy these lines' }));
 
     expect(copy).toHaveBeenCalledWith(expect.stringContaining('Could not read file a'));
 
-    await userEvent.click(screen.getByRole('button', { name: 'More about these lines' }));
+    await userEvent.click(screen.getByRole('button', { name: 'More actions' }));
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Download these lines' }));
 
     expect(download).toHaveBeenCalledWith(

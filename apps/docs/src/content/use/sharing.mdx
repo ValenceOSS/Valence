@@ -24,9 +24,9 @@ Sharing needs the `sharing.link` permission. The default Member, Manager and Adm
 
 1. Open the title you want to share and press its Share action. Films, episodes, series and books all have one.
 2. If you opened an episode, choose **Just this episode** or **The whole programme**. For a book the choice is **The whole book**.
-3. Under **Lasts**, pick how long it should work: **A day**, **Three days**, **A week** (the default), **A month** or **Until I withdraw it**.
-4. Under **Who can watch** (or **Who can read** for a book), pick **Anybody with the link**, **One person**, **Two people** or **Five people**.
-5. Press the button to make the link, then use **Copy the link** and send it however you like.
+3. Under **Lasts**, pick how long it should work: **A day**, **Three days**, **A week** (the default), **A month** or **Until I revoke it**.
+4. Under **Who can watch** (or **Who can read** for a book), pick **Anyone with the link**, **One person**, **Two people** or **Five people**.
+5. Press the button to make the link, then use **Copy link** and send it however you like.
 
 <Callout title="The link is shown once" tone="warning">
   The token in the link is stored only as a hash, so Valence cannot show it to you again later. If
@@ -61,7 +61,7 @@ Somebody who is already signed in to your server is not given extra rights by a 
 
 ## Managing your own links
 
-Your links are listed under **Your links** in your account area. Each row shows what the link points at, whether it covers a whole series, its standing and how many times it has been opened.
+Your links are listed under **Your share links** in your account area. Each row shows what the link points at, whether it covers a whole series, its standing and how many times it has been opened.
 
 | Standing    | Meaning                                              |
 | ----------- | ---------------------------------------------------- |
@@ -74,7 +74,7 @@ To withdraw a link, press the withdraw action on its row and confirm. It stops a
 
 ## Managing everybody's links
 
-An account with `sharing.manage` (Managers and Administrators by default) sees the **Links** panel under Activity in the admin area. It lists every link on the server, adds a **Handed out by** column and lets you withdraw anybody's.
+An account with `sharing.manage` (Managers and Administrators by default) sees the **Links** panel under Activity in the admin area. It lists every link on the server, adds a **Created by** column and lets you withdraw anybody's.
 
 When you withdraw somebody else's link, Valence confirms it with a toast reading "Withdrew the link." and sends the person who made it a notification saying which link was withdrawn and by whom. That is deliberate: a link disappearing without a word makes a shared server feel arbitrary. The guest, by contrast, is only told that the link was withdrawn, not who did it. The notification appears in the bell described in [Notifications and webhooks](/use/notifications-and-webhooks).
 
@@ -85,5 +85,5 @@ A share link is for one person or a few, watching on their own. A watch party is
 ## Security notes
 
 - Tokens are 32 random bytes, encoded to be URL safe, and are stored hashed.
-- Send a link only to people you trust with the content, and prefer an end date over **Until I withdraw it** for anything sensitive.
+- Send a link only to people you trust with the content, and prefer an end date over **Until I revoke it** for anything sensitive.
 - If your server is reachable from the internet, guests need it behind HTTPS. See [Reverse proxy](/install/reverse-proxy) and [Security](/reference/security).

@@ -64,7 +64,7 @@ describe('RequestsList', () => {
 
     renderInAnAddress(<RequestsList onAsk={vi.fn()} onOpen={vi.fn()} />);
 
-    expect(await screen.findByText('Asked by Sam · Films · 4K')).toBeInTheDocument();
+    expect(await screen.findByText('Requested by Sam · Films · 4K')).toBeInTheDocument();
   });
 
   it('says a request of your own is yours rather than naming you', async () => {
@@ -72,7 +72,7 @@ describe('RequestsList', () => {
 
     renderInAnAddress(<RequestsList onAsk={vi.fn()} onOpen={vi.fn()} />);
 
-    expect(await screen.findByText('Asked by you · Films')).toBeInTheDocument();
+    expect(await screen.findByText('Requested by you · Films')).toBeInTheDocument();
   });
 
   it('narrows the list to one person’s requests', async () => {
@@ -89,7 +89,7 @@ describe('RequestsList', () => {
     renderInAnAddress(<RequestsList onAsk={vi.fn()} onOpen={vi.fn()} />);
 
     await userEvent.type(
-      await screen.findByRole('searchbox', { name: 'Search the requests' }),
+      await screen.findByRole('searchbox', { name: 'Search requests' }),
       'arriv',
     );
 
@@ -103,7 +103,7 @@ describe('RequestsList', () => {
     renderInAnAddress(<RequestsList onAsk={vi.fn()} onOpen={vi.fn()} />);
 
     await userEvent.type(
-      await screen.findByRole('searchbox', { name: 'Search the requests' }),
+      await screen.findByRole('searchbox', { name: 'Search requests' }),
       'nothing like this',
     );
 
@@ -191,6 +191,6 @@ describe('RequestsList', () => {
 
     renderInAnAddress(<RequestsList onAsk={vi.fn()} onOpen={vi.fn()} />);
 
-    expect(await screen.findByText('Refused: There is no room for it')).toBeInTheDocument();
+    expect(await screen.findByText('Declined: There is no room for it')).toBeInTheDocument();
   });
 });

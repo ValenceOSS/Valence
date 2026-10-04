@@ -185,7 +185,10 @@ describe('IndexerDialog', () => {
   });
 
   it('says why the server refused it', async () => {
-    addIndexer.mockResolvedValue({ value: null, refusal: { message: 'That is not an indexer.' } });
+    addIndexer.mockResolvedValue({
+      value: null,
+      refusal: { message: 'That isn’t a valid indexer.' },
+    });
 
     const user = userEvent.setup();
     const { onSaved } = open();
@@ -193,7 +196,7 @@ describe('IndexerDialog', () => {
     await fillIn(user);
     await user.click(screen.getByRole('button', { name: 'Add indexer' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('That is not an indexer.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('That isn’t a valid indexer.');
     expect(onSaved).not.toHaveBeenCalled();
   });
 
@@ -207,7 +210,7 @@ describe('IndexerDialog', () => {
     await fillIn(user);
     await user.click(screen.getByRole('button', { name: 'Add indexer' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('That could not be saved.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Couldn’t save that.');
   });
 
   it('tries an indexer before it is kept, saying what it can search', async () => {
@@ -218,7 +221,7 @@ describe('IndexerDialog', () => {
     await fillIn(user);
     await user.click(screen.getByRole('button', { name: 'Test' }));
 
-    expect(await screen.findByText('It answered, and can search movie.')).toBeInTheDocument();
+    expect(await screen.findByText('Connected. Can search movie.')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Test' }).querySelector('.text-success'),
     ).not.toBeNull();
@@ -232,7 +235,7 @@ describe('IndexerDialog', () => {
     tryIndexer.mockResolvedValue({
       value: {
         isWorking: false,
-        problem: sayVerbatim('The indexer refused the API key'),
+        problem: sayVerbatim('The indexer rejected the API key'),
         problemCode: null,
         capabilities: null,
         captcha: null,
@@ -247,7 +250,7 @@ describe('IndexerDialog', () => {
     await fillIn(user);
     await user.click(screen.getByRole('button', { name: 'Test' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('The indexer refused the API key');
+    expect(await screen.findByRole('alert')).toHaveTextContent('The indexer rejected the API key');
     expect(
       screen.getByRole('button', { name: 'Test' }).querySelector('.text-danger'),
     ).not.toBeNull();
@@ -297,7 +300,7 @@ describe('IndexerDialog', () => {
 
     await fillIn(user);
     await user.click(screen.getByRole('button', { name: 'Test' }));
-    await screen.findByText('It answered, and can search by words.');
+    await screen.findByText('Connected. Supports keyword search.');
     await user.click(screen.getByRole('checkbox', { name: 'Movies' }));
 
     const tryButton = screen.getByRole('button', { name: 'Test' });
@@ -307,11 +310,11 @@ describe('IndexerDialog', () => {
     await user.type(screen.getByRole('textbox', { name: /Name/ }), 'x');
 
     expect(tryButton.querySelector('.text-success')).toBeNull();
-    expect(screen.queryByText(/It answered/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Connection succeeded/)).not.toBeInTheDocument();
   });
 
   it('says where trying it was refused altogether', async () => {
-    tryIndexer.mockResolvedValue({ value: null, refusal: { message: 'Requesting is off.' } });
+    tryIndexer.mockResolvedValue({ value: null, refusal: { message: 'Requests are turned off.' } });
 
     const user = userEvent.setup();
 
@@ -320,7 +323,7 @@ describe('IndexerDialog', () => {
     await fillIn(user);
     await user.click(screen.getByRole('button', { name: 'Test' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Requesting is off.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Requests are turned off.');
   });
 
   it('tries nothing that is not filled in properly', async () => {
@@ -338,7 +341,7 @@ describe('IndexerDialog', () => {
 
     open(KEPT);
 
-    expect(screen.getByText(/A key is kept/)).toBeInTheDocument();
+    expect(screen.getByText(/An API key is saved/)).toBeInTheDocument();
 
     await user.clear(screen.getByRole('spinbutton', { name: /Priority/ }));
     await user.type(screen.getByRole('spinbutton', { name: /Priority/ }), '3');
@@ -483,7 +486,7 @@ describe('IndexerDialog', () => {
 
       openSite(KEPT_SITE);
 
-      expect(await screen.findByText(/Kept. Type a new one to replace it/)).toBeInTheDocument();
+      expect(await screen.findByText(/Saved. Enter a new value to replace it/)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Address' })).toHaveTextContent(
         'https://rutor.is/',
       );
@@ -503,7 +506,7 @@ describe('IndexerDialog', () => {
       tryIndexer.mockResolvedValueOnce({
         value: {
           isWorking: false,
-          problem: sayVerbatim('Type the characters in the picture to log in'),
+          problem: sayVerbatim('Enter the characters in the image to log in'),
           problemCode: null,
           capabilities: null,
           captcha: { image: 'data:image/png;base64,AQID' },
@@ -518,18 +521,18 @@ describe('IndexerDialog', () => {
       await screen.findByText('A Russian tracker');
       await user.click(screen.getByRole('button', { name: 'Test' }));
 
-      expect(await screen.findByRole('img', { name: 'The characters to type' })).toHaveAttribute(
+      expect(await screen.findByRole('img', { name: 'Captcha image' })).toHaveAttribute(
         'src',
         'data:image/png;base64,AQID',
       );
 
-      await user.type(screen.getByRole('textbox', { name: 'Characters in the picture' }), 'x7k2');
+      await user.type(screen.getByRole('textbox', { name: 'Captcha text' }), 'x7k2');
       await user.click(screen.getByRole('button', { name: 'Test' }));
 
       await waitFor(() => {
         expect(tryIndexer.mock.calls.at(-1)?.[0].settings?.['CAPTCHA']).toBe('x7k2');
       });
-      expect(await screen.findByText(/It answered/)).toBeInTheDocument();
+      expect(await screen.findByText(/^Connected\./)).toBeInTheDocument();
     });
 
     it('says so when the site’s definition has left the catalogue', async () => {
@@ -538,7 +541,7 @@ describe('IndexerDialog', () => {
       openSite(KEPT_SITE);
 
       expect(
-        await screen.findByText('This site’s definition is no longer in the catalogue.'),
+        await screen.findByText('This indexer’s definition is no longer in the catalogue.'),
       ).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
     });
@@ -548,7 +551,7 @@ describe('IndexerDialog', () => {
 
       openSite();
 
-      expect(screen.getByText('Reading what this site needs…')).toBeInTheDocument();
+      expect(screen.getByText('Loading indexer settings…')).toBeInTheDocument();
     });
   });
 

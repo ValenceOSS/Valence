@@ -74,7 +74,7 @@ const DETAIL = {
  */
 const fetchRelease = (url: string) => {
   if (url === 'gone') {
-    return Promise.reject(new IndexerFailure(sayVerbatim('The site answered 410')));
+    return Promise.reject(new IndexerFailure(sayVerbatim('The site returned 410')));
   }
 
   if (url === 'broken') {
@@ -340,7 +340,7 @@ describe('createApp', () => {
 
       expect(response.status).toBe(400);
       expect(await response.json()).toMatchObject({
-        error: 'There is no definition named nope in the catalogue',
+        error: 'No definition named nope in the catalogue',
       });
     });
   });
@@ -375,11 +375,11 @@ describe('createApp', () => {
       const gone = await ask(`/api/indexers/${id}/download`, 'POST', { url: 'gone' });
 
       expect(gone.status).toBe(502);
-      expect(await gone.json()).toEqual({ error: 'The site answered 410' });
+      expect(await gone.json()).toEqual({ error: 'The site returned 410' });
       expect(
         await (await ask(`/api/indexers/${id}/download`, 'POST', { url: 'broken' })).json(),
       ).toEqual({
-        error: 'The release could not be fetched.',
+        error: 'Couldn’t download the release.',
       });
     });
 

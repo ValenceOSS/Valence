@@ -294,10 +294,10 @@ describe('runImport', { timeout: 60_000 }, () => {
 
     expect(await runImport(services, run.id, 'job')).toBe('completed');
     expect(asked.issues.map((issue) => issue.reason.code).sort()).toEqual([
+      'common.thatPlaylistCouldNotBeMade',
       'server.imports.runImport.itsMarkersCouldNotBeRead',
       'server.imports.runImport.itsMarkersCouldNotBeRead',
       'server.imports.runImport.itsMarkersCouldNotBeRead',
-      'server.imports.runImport.thePlaylistCouldNotBeMade',
     ]);
   });
 

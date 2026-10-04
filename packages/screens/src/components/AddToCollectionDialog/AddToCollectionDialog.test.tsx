@@ -67,7 +67,7 @@ describe('AddToCollectionDialog', () => {
       expect(onClose).toHaveBeenCalled();
     });
     expect(collections.addToCollection).toHaveBeenCalledWith(SAGA.id, [{ mediaItemId: 'film' }]);
-    expect(told.worked).toHaveBeenCalledWith('Hope is now in Saga.');
+    expect(told.worked).toHaveBeenCalledWith('Added Hope to Saga.');
   });
 
   it('will not add a title to a collection it is already in', async () => {
@@ -76,7 +76,7 @@ describe('AddToCollectionDialog', () => {
     );
 
     expect(await screen.findByRole('radio', { name: /Box set/ })).toBeDisabled();
-    expect(screen.getByText('Already in it')).toBeInTheDocument();
+    expect(screen.getByText('Already added')).toBeInTheDocument();
   });
 
   it('says so when it could not be added', async () => {
@@ -90,7 +90,7 @@ describe('AddToCollectionDialog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Add' }));
 
     await waitFor(() => {
-      expect(told.failed).toHaveBeenCalledWith('That could not be added to the collection.');
+      expect(told.failed).toHaveBeenCalledWith('Couldn’t add this to the collection. Try again.');
     });
   });
 

@@ -38,7 +38,7 @@ describe('PartyPasswordDialog', () => {
   it('says plainly when the last answer was wrong', () => {
     render(<PartyPasswordDialog isOpen wasWrong onJoin={vi.fn()} onClose={vi.fn()} />);
 
-    expect(screen.getByText('That is not the password for this party.')).toBeInTheDocument();
+    expect(screen.getByText('That’s not the password for this party.')).toBeInTheDocument();
   });
 
   it('says nothing about being wrong before anything has been tried', () => {

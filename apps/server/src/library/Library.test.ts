@@ -936,9 +936,9 @@ describe('deleting one item', () => {
 
   it.each([
     ['readOnly', 403, 'That disk is read-only to Valence.'],
-    ['denied', 403, 'Valence is not allowed to delete files there.'],
-    ['outside', 403, 'That file is not inside its library, so Valence will not delete it.'],
-    ['failed', 500, 'The file could not be deleted.'],
+    ['denied', 403, 'Valence doesn’t have permission to delete files there.'],
+    ['outside', 403, 'That file isn’t inside its library, so Valence won’t delete it.'],
+    ['failed', 500, 'Couldn’t delete the file.'],
   ] as const)('says why where the disk answered %s', async (kind, status, said) => {
     const { app, library } = build([detail()]);
 

@@ -44,7 +44,7 @@ describe('ReaderPanel', () => {
   it('pins itself beside the page, and lets go again', async () => {
     const { onPinnedChange } = draw();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Keep the panel beside the page' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Pin panel' }));
 
     expect(onPinnedChange).toHaveBeenCalledWith(true);
   });
@@ -52,13 +52,13 @@ describe('ReaderPanel', () => {
   it('offers to let go when pinned', () => {
     draw({ isPinned: true });
 
-    expect(screen.getByRole('button', { name: 'Let the panel go' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Unpin panel' })).toBeInTheDocument();
   });
 
   it('puts itself away', async () => {
     const { onClose } = draw();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Put the panel away' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Close panel' }));
 
     expect(onClose).toHaveBeenCalled();
   });

@@ -108,7 +108,7 @@ describe('ProfileEditor', () => {
 
     await goTo(user, 'Matching');
 
-    await user.click(screen.getByRole('button', { name: 'Out on disc' }));
+    await user.click(screen.getByRole('button', { name: 'Released on disc' }));
     await user.type(screen.getByRole('textbox', { name: 'Preferred words' }), 'HDR, Atmos');
 
     await goTo(user, 'Access');
@@ -229,7 +229,7 @@ describe('ProfileEditor', () => {
 
     expect(screen.getByRole('list', { name: 'Formats' })).toBeInTheDocument();
     expect(screen.queryByRole('list', { name: 'Resolutions' })).not.toBeInTheDocument();
-    expect(screen.getByRole('spinbutton', { name: 'Largest (MB an album)' })).toBeInTheDocument();
+    expect(screen.getByRole('spinbutton', { name: 'Maximum (MB per album)' })).toBeInTheDocument();
 
     await goTo(user, 'Access');
 
@@ -261,7 +261,7 @@ describe('ProfileEditor', () => {
     await user.click(screen.getByRole('button', { name: 'Until the resolution is' }));
     await user.click(await screen.findByRole('menuitemradio', { name: '1080p' }));
     await user.click(screen.getByRole('button', { name: 'And the source is' }));
-    await user.click(await screen.findByRole('menuitemradio', { name: 'The best there is' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Highest available' }));
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => {
@@ -307,12 +307,15 @@ describe('ProfileEditor', () => {
 
     await user.click(screen.getByRole('button', { name: 'Add profile' }));
 
-    expect(await screen.findByText('Give the profile a name.')).toBeInTheDocument();
+    expect(await screen.findByText('Enter a name for the profile.')).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'Name' })).toBeInTheDocument();
   });
 
   it('says what is wrong, or why it could not be saved', async () => {
-    addProfile.mockResolvedValueOnce({ value: null, refusal: { message: 'Requesting is off.' } });
+    addProfile.mockResolvedValueOnce({
+      value: null,
+      refusal: { message: 'Requests are turned off.' },
+    });
     addProfile.mockResolvedValueOnce({ value: null, refusal: null });
 
     const user = userEvent.setup();
@@ -321,7 +324,7 @@ describe('ProfileEditor', () => {
 
     await user.click(screen.getByRole('button', { name: 'Add profile' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Give the profile a name.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Enter a name for the profile.');
 
     await user.type(screen.getByRole('textbox', { name: 'Name' }), 'HD');
 
@@ -329,11 +332,11 @@ describe('ProfileEditor', () => {
 
     await user.click(screen.getByRole('button', { name: 'Add profile' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Requesting is off.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Requests are turned off.');
 
     await user.click(screen.getByRole('button', { name: 'Add profile' }));
 
-    expect(await screen.findByText('That could not be saved.')).toBeInTheDocument();
+    expect(await screen.findByText('Couldn’t save that.')).toBeInTheDocument();
   });
 
   it('opens afresh on another profile', () => {

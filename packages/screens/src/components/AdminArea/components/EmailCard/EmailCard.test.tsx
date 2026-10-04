@@ -53,7 +53,9 @@ describe('EmailCard', () => {
     renderInAnAddress(<EmailCard />);
 
     expect(
-      await screen.findByText(/the addresses Valence sends to and everything each email says go/),
+      await screen.findByText(
+        /recipient addresses and email contents are sent to the mail provider/,
+      ),
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'How to set up email' })).toHaveAttribute(
       'href',
@@ -111,11 +113,11 @@ describe('EmailCard', () => {
     });
     renderInAnAddress(<EmailCard />);
 
-    await userEvent.type(await screen.findByLabelText('Send a test to'), 'ada@example.com');
+    await userEvent.type(await screen.findByLabelText('Send test email to'), 'ada@example.com');
     await userEvent.click(screen.getByRole('button', { name: 'Send test email' }));
 
     expect(
-      await screen.findByText('Sent. Check the inbox of ada@example.com.'),
+      await screen.findByText('Sent. Check the inbox for ada@example.com.'),
     ).toBeInTheDocument();
     expect(sendTestEmail).toHaveBeenCalledWith('ada@example.com');
 
@@ -123,7 +125,7 @@ describe('EmailCard', () => {
 
     expect(
       await screen.findByText(
-        'The mail server at smtp.example.com refused the username or password.',
+        'The mail server at smtp.example.com rejected the username or password.',
       ),
     ).toBeInTheDocument();
   });
@@ -162,6 +164,6 @@ describe('EmailCard', () => {
     fetchEmailSetup.mockRejectedValue(new Error('offline'));
     renderInAnAddress(<EmailCard />);
 
-    expect(await screen.findByText(/The email settings could not be read\./)).toBeInTheDocument();
+    expect(await screen.findByText(/Couldn’t load email settings\./)).toBeInTheDocument();
   });
 });

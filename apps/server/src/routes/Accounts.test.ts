@@ -341,7 +341,7 @@ describe('account administration', () => {
       });
 
       expect(response.status).toBe(403);
-      expect(await response.text()).toContain('at or above your own rank');
+      expect(await response.text()).toContain('equal to or higher than yours');
     });
 
     it('refuses to ban yourself', async () => {
@@ -367,7 +367,7 @@ describe('account administration', () => {
       });
 
       expect(response.status).toBe(400);
-      expect(await response.text()).toContain('nobody able to administer');
+      expect(await response.text()).toContain('no administrators on this server');
       expect(context.banAccount).not.toHaveBeenCalled();
     });
 
@@ -405,7 +405,7 @@ describe('account administration', () => {
       const response = await context.request(`/api/admin/accounts/${OTHER}/ban`, 'DELETE');
 
       expect(response.status).toBe(403);
-      expect(await response.text()).toContain('at or above your own rank');
+      expect(await response.text()).toContain('equal to or higher than yours');
       expect(context.unbanAccount).not.toHaveBeenCalled();
     });
 
@@ -564,7 +564,7 @@ describe('account administration', () => {
       const said = await response.text();
 
       expect(response.status).toBe(500);
-      expect(said).toContain('could not be made');
+      expect(said).toContain('Couldn’t create the account');
       expect(said).not.toContain('already in use');
     });
   });

@@ -95,7 +95,7 @@ describe('CatalogueStep', () => {
     await userEvent.type(await screen.findByLabelText('Catalogue key'), 'abc123');
     await userEvent.click(screen.getByRole('button', { name: 'Save and continue' }));
 
-    expect(await screen.findByText('The catalogue key could not be saved.')).toBeInTheDocument();
+    expect(await screen.findByText('Couldn’t save the catalogue key.')).toBeInTheDocument();
     expect(onSaved).not.toHaveBeenCalled();
   });
 

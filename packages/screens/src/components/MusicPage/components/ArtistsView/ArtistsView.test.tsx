@@ -33,7 +33,7 @@ describe('ArtistsView', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Following' }));
 
-    expect(await screen.findByText('Not following anybody yet')).toBeInTheDocument();
+    expect(await screen.findByText('Not following any artists yet')).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

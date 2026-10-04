@@ -188,10 +188,7 @@ const LogLine = ({
           )}
 
           {context.length === 0 ? null : (
-            <ul
-              aria-label={say('screens.logExplorer.logLine.whereThisLineCameFrom')}
-              className="flex flex-wrap gap-1.5"
-            >
+            <ul aria-label={say('common.source')} className="flex flex-wrap gap-1.5">
               {context.map(({ key, name, value }) => (
                 <li key={key}>
                   <Button

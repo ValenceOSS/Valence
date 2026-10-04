@@ -105,7 +105,7 @@ describe('PersonPage', () => {
       </QueryClientProvider>,
     );
 
-    expect(await drawn.findByText('Anything about them could not be read.')).toBeTruthy();
+    expect(await drawn.findByText('Couldn’t load their details.')).toBeTruthy();
     expect(drawn.queryByText('Somebody')).toBeNull();
 
     const before = fetching.mock.calls.length;

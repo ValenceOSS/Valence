@@ -99,7 +99,7 @@ describe('playlistGroupFor', () => {
     );
 
     await waitFor(() => {
-      expect(notify.failed).toHaveBeenCalledWith('That playlist could not be made.');
+      expect(notify.failed).toHaveBeenCalledWith('Couldn’t create the playlist.');
     });
     expect(open).not.toHaveBeenCalled();
   });
@@ -124,7 +124,7 @@ describe('playlistGroupFor', () => {
     choose(group, `playlist-${MINE.id}`);
 
     await waitFor(() => {
-      expect(notify.failed).toHaveBeenCalledWith('That could not be added to Sunday morning.');
+      expect(notify.failed).toHaveBeenCalledWith('Couldn’t add that to Sunday morning.');
     });
   });
 
@@ -140,7 +140,7 @@ describe('playlistGroupFor', () => {
     );
 
     await waitFor(() => {
-      expect(notify.failed).toHaveBeenCalledWith('There is nothing in An empty album to add.');
+      expect(notify.failed).toHaveBeenCalledWith('An empty album has nothing to add.');
     });
     expect(createPlaylist).not.toHaveBeenCalled();
   });

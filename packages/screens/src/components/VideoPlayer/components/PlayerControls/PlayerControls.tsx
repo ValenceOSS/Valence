@@ -179,7 +179,7 @@ const PlayerControls = ({
     <div className="valence-solid flex flex-col gap-1 rounded-lg px-3 py-2 text-text sm:px-4">
       <div className="flex items-center gap-3">
         <Slider
-          label={say('common.seekThroughTitle', { title })}
+          label={say('common.moveThroughTitle', { title })}
           value={position}
           max={duration}
           onValueChange={onSeek}
@@ -617,8 +617,8 @@ const PlayerControls = ({
           variant="ghost"
           label={
             isFullscreen
-              ? say('screens.videoPlayer.playerControls.exitFullScreen')
-              : say('screens.videoPlayer.playerControls.fullScreen')
+              ? say('screens.readerChrome.leaveFullScreen')
+              : say('screens.readerChrome.fillTheScreen')
           }
           onClick={onToggleFullscreen}
           size="md"

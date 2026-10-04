@@ -52,7 +52,7 @@ const TheNotifications = ({ onOpen, onJoin, onBack }: TheNotificationsProps) => 
       [
         { text: say('common.keepThem'), style: 'cancel' },
         {
-          text: say('phone.theNotifications.clearThem'),
+          text: say('common.clearAll'),
           style: 'destructive',
           onPress: () => {
             void clearNotifications().then(reread);

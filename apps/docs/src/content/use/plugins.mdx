@@ -59,7 +59,7 @@ A plugin that connects people's accounts on another service needs you to registe
 https://<your Valence address>/api/plugins/oauth/callback
 ```
 
-The plugin's **Settings** shows this address under **Redirect address**, ready to copy.
+The plugin's **Settings** shows this address under **Redirect URL**, ready to copy.
 
 A plugin that receives webhooks lists one private address for each under **Settings** too. Give each to the service that sends it; anyone with the address can post to it, so treat it like a password. Reinstalling the plugin after removing it gives new addresses.
 
@@ -90,6 +90,6 @@ Valence keeps the version an update replaced, with what it had kept as it was at
 ## Turning a plugin off, or removing it
 
 - **The switch** on its row turns a plugin off at once. Its pages, panels and themes disappear and its scheduled work stops, but its settings, data and people's connected accounts are kept for when you turn it back on. Anybody on one of its pages, on the web, the phone or the TV, is taken back to where they came from and told why.
-- **Remove** takes the plugin away with its settings, everything it kept, every connected account, its permissions in roles, its webhook addresses and the version kept for rolling back. The dialog first lists what this particular plugin would take with it, such as how much it kept and how many people connected an account to which service, and offers **Turn it off** instead, which keeps all of that. Where a service supports it, Valence also asks that service to cancel the access people gave, so the plugin disappears from their account there too.
+- **Remove** takes the plugin away with its settings, everything it kept, every connected account, its permissions in roles, its webhook addresses and the version kept for rolling back. The dialog first lists what this particular plugin would take with it, such as how much it kept and how many people connected an account to which service, and offers **Disable plugin** instead, which keeps all of that. Where a service supports it, Valence also asks that service to cancel the access people gave, so the plugin disappears from their account there too.
 
 If a plugin keeps failing, Valence stops restarting it and says why on its row. Disabling it and turning it back on starts it afresh.

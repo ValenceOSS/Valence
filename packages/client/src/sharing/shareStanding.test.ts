@@ -26,15 +26,15 @@ describe('shareStanding', () => {
   });
 
   it('says a withdrawn link was withdrawn rather than that it is merely finished', () => {
-    expect(shareStanding(share({ isRevoked: true, isSpent: true }), NOW).label).toBe('Withdrawn');
+    expect(shareStanding(share({ isRevoked: true, isSpent: true }), NOW).label).toBe('Revoked');
   });
 
   it('tells a link that ran out apart from one that was used up', () => {
     const expired = share({ expiresAt: '2020-01-01T00:00:00.000Z', isSpent: true });
     const spent = share({ viewCap: 2, views: 2, isSpent: true });
 
-    expect(shareStanding(expired, NOW).label).toBe('Ran out');
-    expect(shareStanding(spent, NOW).label).toBe('All used up');
+    expect(shareStanding(expired, NOW).label).toBe('Expired');
+    expect(shareStanding(spent, NOW).label).toBe('Limit reached');
   });
 
   it('calls a link with an end date still ahead of it live', () => {

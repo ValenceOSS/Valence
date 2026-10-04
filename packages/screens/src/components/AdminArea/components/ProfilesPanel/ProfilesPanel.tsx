@@ -147,7 +147,7 @@ const ProfilesPanel = () => {
                   items: [
                     {
                       id: 'remove',
-                      label: say('common.remove'),
+                      label: say('common.forget'),
                       icon: <Icon of={BinFilledIcon} size={15} />,
                       isDestructive: true,
                       onChoose: () => {
@@ -219,7 +219,7 @@ const ProfilesPanel = () => {
               : say('common.removeName', { name: removing.name })
           }
           detail={say('screens.adminArea.profilesPanel.searchesCanNoLongerBeJudged')}
-          confirmLabel={say('common.remove')}
+          confirmLabel={say('common.forget')}
           isDestructive
           isOpen={removing !== null}
           onClose={() => {
@@ -259,11 +259,7 @@ const ProfilesPanel = () => {
             }}
           />
         ) : profiles.isPending ? (
-          <Spinner
-            isCentered
-            label={say('screens.adminArea.profilesPanel.readingTheProfiles')}
-            size="sm"
-          />
+          <Spinner isCentered label={say('screens.profileGate.readingWhoIsHere')} size="sm" />
         ) : (
           KINDS.map((kind) => (
             <TabPanel key={kind.id} value={kind.id}>

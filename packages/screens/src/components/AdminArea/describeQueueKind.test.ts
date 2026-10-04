@@ -9,7 +9,7 @@ describe('naming a piece of work in the queue', () => {
   it('calls the seek-bar strip scrub previews, not thumbnails', () => {
     const said = describeQueueKind('thumbnails');
 
-    expect(said).toBe('Drawing scrub previews');
+    expect(said).toBe('Generating scrub previews');
     expect(said).not.toMatch(/thumbnail/i);
   });
 
@@ -20,7 +20,7 @@ describe('naming a piece of work in the queue', () => {
   });
 
   it('names the preview clip', () => {
-    expect(describeQueueKind('preview')).toBe('Making a preview');
+    expect(describeQueueKind('preview')).toBe('Generating a preview');
   });
 
   it('shows an unfamiliar kind rather than hiding it', () => {

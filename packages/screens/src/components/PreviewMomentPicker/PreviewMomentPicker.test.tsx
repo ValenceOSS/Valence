@@ -197,7 +197,7 @@ describe('PreviewMomentPicker', () => {
 
     const { onChanged, onClose } = draw({ current: { atSeconds: 90, durationSeconds: 8 } });
 
-    await user.click(screen.getByRole('button', { name: 'Back to automatic' }));
+    await user.click(screen.getByRole('button', { name: 'Reset to automatic' }));
 
     await waitFor(() => {
       expect(asked.clearPreviewMoment).toHaveBeenCalledWith('media-1');
@@ -209,7 +209,7 @@ describe('PreviewMomentPicker', () => {
   it('offers no way back to automatic while the preview already is', () => {
     draw();
 
-    expect(screen.queryByRole('button', { name: 'Back to automatic' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Reset to automatic' })).not.toBeInTheDocument();
   });
 
   it('says why the server refused rather than closing', async () => {

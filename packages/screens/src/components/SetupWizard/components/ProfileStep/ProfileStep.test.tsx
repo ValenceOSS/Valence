@@ -43,7 +43,7 @@ describe('ProfileStep', () => {
   it('reads the profile before offering to edit it', async () => {
     renderStep();
 
-    expect(screen.getByRole('status', { name: 'Reading your profile' })).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Loading your profile' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
 
     expect(await screen.findByRole('textbox', { name: 'Display name' })).toBeInTheDocument();
@@ -75,7 +75,7 @@ describe('ProfileStep', () => {
     await screen.findByRole('textbox', { name: 'Display name' });
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Those changes were not saved.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Couldn’t save your changes.');
     expect(onContinue).not.toHaveBeenCalled();
   });
 

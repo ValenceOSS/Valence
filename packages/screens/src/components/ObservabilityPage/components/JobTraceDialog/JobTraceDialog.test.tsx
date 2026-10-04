@@ -144,7 +144,7 @@ describe('JobTraceDialog', () => {
   it('reads what it logged in order, each line with how long after the start', async () => {
     draw();
 
-    const lines = await screen.findByRole('list', { name: 'What this run logged, in order' });
+    const lines = await screen.findByRole('list', { name: 'This run’s log, in order' });
 
     expect(lines).toHaveTextContent('+400 ms');
     expect(lines).toHaveTextContent('+1 min 5 s');
@@ -224,7 +224,7 @@ describe('JobTraceDialog', () => {
     draw();
 
     expect(await screen.findByText('no such encoder')).toBeInTheDocument();
-    expect(screen.getByText('How it failed')).toBeInTheDocument();
+    expect(screen.getByText('Failure details')).toBeInTheDocument();
   });
 
   it('says how many issues were recorded', async () => {
@@ -253,7 +253,7 @@ describe('JobTraceDialog', () => {
     draw();
 
     expect(
-      await screen.findByText('This run logged nothing, or what it logged has been forgotten.'),
+      await screen.findByText('This run didn’t log anything, or its log lines have been deleted.'),
     ).toBeInTheDocument();
   });
 

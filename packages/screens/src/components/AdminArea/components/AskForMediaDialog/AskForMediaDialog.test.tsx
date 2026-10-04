@@ -135,7 +135,7 @@ describe('AskForMediaDialog', () => {
     expect(screen.queryByRole('menuitemradio', { name: 'Lossless' })).not.toBeInTheDocument();
 
     await user.click(await screen.findByRole('menuitemradio', { name: 'UHD' }));
-    await user.click(screen.getByRole('button', { name: 'Request it' }));
+    await user.click(screen.getByRole('button', { name: 'Request' }));
 
     await waitFor(() => {
       expect(onAsked).toHaveBeenCalledWith(MADE);
@@ -168,7 +168,7 @@ describe('AskForMediaDialog', () => {
     expect(screen.queryByRole('menuitemradio', { name: 'UHD' })).not.toBeInTheDocument();
 
     await user.click(await screen.findByRole('menuitemradio', { name: 'Lossless' }));
-    await user.click(screen.getByRole('button', { name: 'Request it' }));
+    await user.click(screen.getByRole('button', { name: 'Request' }));
 
     await waitFor(() => {
       expect(onAsked).toHaveBeenCalledWith(MADE);
@@ -193,9 +193,9 @@ describe('AskForMediaDialog', () => {
     await user.click(screen.getByRole('button', { name: 'Search' }));
     await user.click(await screen.findByRole('button', { name: /The Dark Side of the Moon/ }));
 
-    expect(screen.queryByRole('list', { name: 'Which releases' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Release types' })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Request it' }));
+    await user.click(screen.getByRole('button', { name: 'Request' }));
 
     await waitFor(() => {
       expect(askForMedia).toHaveBeenCalledWith({
@@ -217,13 +217,13 @@ describe('AskForMediaDialog', () => {
     await user.click(await screen.findByRole('button', { name: /Severance \(2022\)/ }));
     await user.click(await screen.findByRole('switch', { name: 'Every season' }));
 
-    expect(screen.getByRole('button', { name: 'Request it' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Request' })).toBeDisabled();
     expect(screen.getByRole('switch', { name: 'Specials' })).not.toBeChecked();
 
     await user.click(screen.getByRole('switch', { name: 'Season 1' }));
     await user.click(screen.getByRole('switch', { name: 'Season 2' }));
 
-    await user.click(screen.getByRole('button', { name: 'Request it' }));
+    await user.click(screen.getByRole('button', { name: 'Request' }));
 
     await waitFor(() => {
       expect(askForMedia).toHaveBeenCalledWith({
@@ -243,7 +243,7 @@ describe('AskForMediaDialog', () => {
     await user.type(screen.getByRole('textbox', { name: 'Search for a film' }), 'Dune');
     await user.click(screen.getByRole('button', { name: 'Search' }));
     await user.click(await screen.findByRole('button', { name: /Dune \(2021\)/ }));
-    await user.click(screen.getByRole('button', { name: 'I will pick it' }));
+    await user.click(screen.getByRole('button', { name: 'Choose manually' }));
     await user.click(screen.getByRole('button', { name: 'Find releases' }));
 
     expect(await screen.findByText(RELEASE.title)).toBeInTheDocument();
@@ -254,7 +254,7 @@ describe('AskForMediaDialog', () => {
 
     await user.click(screen.getByRole('button', { name: 'Back' }));
     await user.click(screen.getByRole('button', { name: 'Find releases' }));
-    await user.click(await screen.findByRole('button', { name: 'Fetch this' }));
+    await user.click(await screen.findByRole('button', { name: 'Download' }));
 
     await waitFor(() => {
       expect(askForMedia).toHaveBeenCalledWith(
@@ -267,16 +267,19 @@ describe('AskForMediaDialog', () => {
   it('says why releases could not be found, making nothing', async () => {
     const user = userEvent.setup();
 
-    findReleasesFor.mockResolvedValue({ value: null, refusal: { message: 'Requesting is off.' } });
+    findReleasesFor.mockResolvedValue({
+      value: null,
+      refusal: { message: 'Requests are turned off.' },
+    });
     open();
 
     await user.type(screen.getByRole('textbox', { name: 'Search for a film' }), 'Dune');
     await user.click(screen.getByRole('button', { name: 'Search' }));
     await user.click(await screen.findByRole('button', { name: /Dune \(2021\)/ }));
-    await user.click(screen.getByRole('button', { name: 'I will pick it' }));
+    await user.click(screen.getByRole('button', { name: 'Choose manually' }));
     await user.click(screen.getByRole('button', { name: 'Find releases' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Requesting is off.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Requests are turned off.');
     expect(askForMedia).not.toHaveBeenCalled();
   });
 
@@ -285,17 +288,17 @@ describe('AskForMediaDialog', () => {
 
     askForMedia.mockResolvedValue({
       value: null,
-      refusal: { message: 'There is no library of films to put it in.' },
+      refusal: { message: 'There’s no films library to put it in.' },
     });
     open();
 
     await user.type(screen.getByRole('textbox', { name: 'Search for a film' }), 'Dune');
     await user.click(screen.getByRole('button', { name: 'Search' }));
     await user.click(await screen.findByRole('button', { name: /Dune \(2021\)/ }));
-    await user.click(screen.getByRole('button', { name: 'Request it' }));
+    await user.click(screen.getByRole('button', { name: 'Request' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'There is no library of films to put it in.',
+      'There’s no films library to put it in.',
     );
 
     await user.click(screen.getByRole('button', { name: 'Choose another' }));
@@ -312,6 +315,6 @@ describe('AskForMediaDialog', () => {
     await user.type(screen.getByRole('textbox', { name: 'Search for a film' }), 'Nothing');
     await user.click(screen.getByRole('button', { name: 'Search' }));
 
-    expect(await screen.findByText('Nothing came back under that name.')).toBeInTheDocument();
+    expect(await screen.findByText('No results for that name.')).toBeInTheDocument();
   });
 });

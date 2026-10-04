@@ -30,8 +30,10 @@ describe('askOf', () => {
 
   it('says what is missing where an app has only half of what it needs, or none is given', () => {
     expect(askOf([{ ...EMPTY, url: 'http://sonarr:8989' }], [], {}, {}).problem).toBe(
-      'Give Sonarr both an address and an API key, or leave both empty.',
+      'Enter both an address and an API key for Sonarr, or leave both empty.',
     );
-    expect(askOf([EMPTY], [], {}, {}).problem).toBe('Give at least one app’s address and API key.');
+    expect(askOf([EMPTY], [], {}, {}).problem).toBe(
+      'Enter at least one app’s address and API key.',
+    );
   });
 });

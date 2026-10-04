@@ -60,7 +60,7 @@ const sentenceFor = (payload: WebhookPayload): string => {
     case 'library.scanned': {
       const said = payload.data.libraries.map((one) => {
         const counts = [
-          sayCount('common.count.added', one.added),
+          sayCount('server.jobs.phase.arrived', one.added),
           sayCount('common.count.updated', one.updated),
           sayCount('common.count.removed', one.removed),
           ...(one.failed === 0 ? [] : [sayCount('common.count.unreadable', one.failed)]),

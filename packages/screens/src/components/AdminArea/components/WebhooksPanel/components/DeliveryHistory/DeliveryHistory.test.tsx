@@ -34,21 +34,21 @@ const draw = (overrides: Partial<Parameters<typeof DeliveryHistory>[0]> = {}) =>
 const aFailure = aDelivery({
   ok: false,
   status: 503,
-  error: 'The receiver answered 503.',
+  error: 'The receiving server returned 503.',
 });
 
 describe('DeliveryHistory', () => {
   it('tells a history that has not loaded from one that is empty', () => {
     draw({ isLoading: true });
 
-    expect(screen.getByRole('status', { name: 'Reading what has been sent' })).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Loading deliveries' })).toBeInTheDocument();
     expect(screen.queryByText(/Nothing has been sent/)).not.toBeInTheDocument();
   });
 
   it('says plainly when nothing has been sent', () => {
     draw();
 
-    expect(screen.getByText('Nothing has been sent to this yet.')).toBeInTheDocument();
+    expect(screen.getByText('Nothing has been sent to this webhook yet.')).toBeInTheDocument();
   });
 
   it('shows what was sent and whether it landed', () => {
@@ -62,7 +62,7 @@ describe('DeliveryHistory', () => {
     draw({ deliveries: [aFailure] });
 
     expect(screen.getByText('Failed')).toBeInTheDocument();
-    expect(screen.getByText('The receiver answered 503.')).toBeInTheDocument();
+    expect(screen.getByText('The receiving server returned 503.')).toBeInTheDocument();
   });
 
   it('says nothing about tries when there was only one', () => {
@@ -74,14 +74,14 @@ describe('DeliveryHistory', () => {
   it('counts the tries when a receiver was briefly down', () => {
     draw({ deliveries: [aDelivery({ attempts: 3 })] });
 
-    expect(screen.getByText('3 tries')).toBeInTheDocument();
+    expect(screen.getByText('3 attempts')).toBeInTheDocument();
   });
 
   it('offers to send a failure again', async () => {
     const user = userEvent.setup();
     const { onRedeliver } = draw({ deliveries: [aFailure] });
 
-    await user.click(screen.getByRole('button', { name: 'Send again' }));
+    await user.click(screen.getByRole('button', { name: 'Resend' }));
 
     expect(onRedeliver).toHaveBeenCalledWith(aFailure.id);
   });
@@ -89,12 +89,12 @@ describe('DeliveryHistory', () => {
   it('does not offer to duplicate something a receiver already acted on', () => {
     draw({ deliveries: [aDelivery()] });
 
-    expect(screen.queryByRole('button', { name: 'Send again' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Resend' })).not.toBeInTheDocument();
   });
 
   it('will not offer a resend that the server would refuse', () => {
     draw({ deliveries: [aFailure], canRedeliver: false });
 
-    expect(screen.getByRole('button', { name: 'Send again' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Resend' })).toBeDisabled();
   });
 });

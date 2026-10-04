@@ -232,7 +232,7 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
             </p>
 
             <TextField
-              label={say('screens.shareDialog.theLink')}
+              label={say('common.shareLink')}
               value={link}
               onValueChange={() => undefined}
             />
@@ -247,7 +247,7 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
               }}
             >
               <Icon of={CopyIcon} size={16} />
-              {isCopied ? say('common.copied') : say('screens.shareDialog.copyTheLink')}
+              {isCopied ? say('common.copied') : say('common.copyLink')}
             </Button>
           </div>
         )}

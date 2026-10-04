@@ -11,7 +11,7 @@ describe('describeLibraryPart', () => {
   });
 
   it('says trailers are the catalogue’s, not trailer files on disk', () => {
-    expect(describeLibraryPart('trailers').description).toMatch(/not trailer files/);
+    expect(describeLibraryPart('trailers').description).toMatch(/not local trailer files/);
   });
 
   it('warns that age-limited profiles treat a title as unrated meanwhile', () => {

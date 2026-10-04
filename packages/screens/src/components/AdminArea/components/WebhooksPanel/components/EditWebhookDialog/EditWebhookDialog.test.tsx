@@ -182,13 +182,13 @@ describe('EditWebhookDialog', () => {
     draw({
       onSave: vi
         .fn<Saving>()
-        .mockResolvedValue({ message: 'Valence will not send deliveries to that address.' }),
+        .mockResolvedValue({ message: 'Valence won’t send webhooks to that address.' }),
     });
 
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
     expect(
-      await screen.findByText('Valence will not send deliveries to that address.'),
+      await screen.findByText('Valence won’t send webhooks to that address.'),
     ).toBeInTheDocument();
   });
 
@@ -215,6 +215,6 @@ describe('EditWebhookDialog', () => {
   it('says the secret is left alone, which is the reason to edit rather than recreate', () => {
     draw();
 
-    expect(screen.getByText(/signing secret stays as it is/)).toBeInTheDocument();
+    expect(screen.getByText(/signing secret doesn’t change/)).toBeInTheDocument();
   });
 });

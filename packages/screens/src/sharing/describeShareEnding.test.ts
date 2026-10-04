@@ -18,7 +18,7 @@ describe('describeShareEnding', () => {
   it('says somebody stopped a withdrawn link without saying who', () => {
     const told = describeShareEnding('withdrawn');
 
-    expect(told.detail).toContain('Somebody stopped it working');
+    expect(told.detail).toContain('This link was revoked');
     expect(told.detail).not.toMatch(/administrator|admin|owner/i);
   });
 
@@ -29,7 +29,7 @@ describe('describeShareEnding', () => {
 
   it('tells a guest what to do next in every case', () => {
     for (const ending of SHARE_ENDINGS) {
-      expect(describeShareEnding(ending).detail).toContain('can send another');
+      expect(describeShareEnding(ending).detail).toContain('can send a new one');
     }
   });
 });

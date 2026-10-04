@@ -67,7 +67,7 @@ const serveFolder = (app: OpenAPIHono, context: AppContext): void => {
       case 'badName':
         return context.json(refuse('error.folder.aFoldersNameIsASingle'), 400);
       case 'exists':
-        return context.json(refuse('error.folder.thereIsAlreadySomethingCalledThat'), 409);
+        return context.json(refuse('error.server.somethingOfThatNameIsAlready'), 409);
       case 'missing':
         return context.json(refuse('error.folder.thereIsNoSuchFolderTo'), 404);
       case 'readOnly':

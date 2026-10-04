@@ -25,7 +25,7 @@ describe('revokeSetupLink', () => {
     fetchMock.mockRejectedValue(new Error('offline'));
 
     await expect(revokeSetupLink('usr-1')).resolves.toEqual({
-      message: 'The server could not be reached.',
+      message: 'Couldn’t reach the server.',
     });
   });
 });

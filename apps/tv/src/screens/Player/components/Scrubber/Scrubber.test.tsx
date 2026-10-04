@@ -57,7 +57,7 @@ describe('Scrubber', () => {
   it('shows the time gone and the time left either side of the bar', async () => {
     const drawn = await draw();
 
-    expect(drawn.getByRole('button', { name: 'Scrub' })).toBeTruthy();
+    expect(drawn.getByRole('button', { name: 'Seek' })).toBeTruthy();
     expect(drawn.getByText('1:00')).toBeTruthy();
     expect(drawn.getByText('−9:00')).toBeTruthy();
   });
@@ -95,7 +95,7 @@ describe('Scrubber', () => {
     const onBlur = jest.fn();
     const onPress = jest.fn();
     const drawn = await draw({ onFocus, onBlur, onPress });
-    const bar = drawn.getByRole('button', { name: 'Scrub' });
+    const bar = drawn.getByRole('button', { name: 'Seek' });
 
     await fireEvent(bar, 'focus');
     await fireEvent(bar, 'blur');
@@ -111,7 +111,7 @@ describe('Scrubber', () => {
 
     expect(trackIn(drawn)).toHaveStyle({ height: 8 });
 
-    await fireEvent(drawn.getByRole('button', { name: 'Scrub' }), 'focus');
+    await fireEvent(drawn.getByRole('button', { name: 'Seek' }), 'focus');
 
     expect(trackIn(drawn)).toHaveStyle({ height: 14 });
   });

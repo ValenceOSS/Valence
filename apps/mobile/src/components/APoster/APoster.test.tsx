@@ -97,7 +97,7 @@ describe('APoster', () => {
     const drawn = await render(<APoster {...asDrawn(aTitle())} watched={0.6} />);
 
     expect(
-      drawn.getByRole('progressbar', { name: 'How far through Arrival', value: { now: 60 } }),
+      drawn.getByRole('progressbar', { name: 'Progress for Arrival', value: { now: 60 } }),
     ).toBeTruthy();
   });
 

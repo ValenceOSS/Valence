@@ -41,6 +41,6 @@ describe('TheLyrics', () => {
       wrapper: CacheScope,
     });
 
-    expect(await drawn.findByText('There are no words for this one.')).toBeTruthy();
+    expect(await drawn.findByText('No lyrics for this song.')).toBeTruthy();
   });
 });

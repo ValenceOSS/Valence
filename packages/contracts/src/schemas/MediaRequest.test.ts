@@ -28,14 +28,14 @@ describe('MediaRequestAskSchema', () => {
       }),
     ).toMatchObject({ kind: 'artist', releaseTypes: ['album', 'ep'] });
     expect(() => MediaRequestAskSchema.parse({ kind: 'album', tmdbId: 1 })).toThrow(
-      /MusicBrainz id/,
+      /MusicBrainz ID/,
     );
     expect(() =>
       MediaRequestAskSchema.parse({
         kind: 'film',
         musicBrainzId: '83d91898-7763-47d7-b03b-b92132375c47',
       }),
-    ).toThrow(/TMDB id/);
+    ).toThrow(/TMDB ID/);
   });
 
   it('refuses an artist watched for no kind of release', () => {

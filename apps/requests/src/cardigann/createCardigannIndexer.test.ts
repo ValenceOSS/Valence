@@ -126,13 +126,13 @@ describe('createCardigannIndexer', () => {
       }));
 
       await expect(moved.engine.search({ query: 'dune' }, [])).rejects.toThrow(
-        'The site sent the search somewhere else: https://elsewhere.example/',
+        'The site redirected the search to https://elsewhere.example/',
       );
 
       const broken = standUp(SEARCH, () => ({ status: 500 }));
 
       await expect(broken.engine.search({ query: 'dune' }, [])).rejects.toThrow(
-        'The site answered 500',
+        'The site returned 500',
       );
     });
 
@@ -231,7 +231,7 @@ ${SEARCH}`;
       const { engine } = standUp(LOGIN, site, { username: 'ada', password: 'wrong' });
 
       await expect(engine.search({ query: 'dune' }, [])).rejects.toThrow(
-        'The site refused the login: Wrong password',
+        'The site rejected the login: Wrong password',
       );
     });
 
@@ -245,7 +245,7 @@ ${SEARCH}`;
       const { engine } = standUp(LOGIN, forgetful, { username: 'ada', password: 'right' });
 
       await expect(engine.search({ query: 'dune' }, [])).rejects.toThrow(
-        'Logging in to the site did not work',
+        'Couldn’t log in to the site',
       );
     });
 
@@ -266,7 +266,7 @@ ${SEARCH}`;
       );
 
       await expect(engine.search({ query: 'dune' }, [])).rejects.toThrow(
-        'The site still asks to log in after logging in',
+        'The site still asks you to log in after logging in',
       );
       expect(asked.map((one) => new URL(one.url).pathname)).toEqual([
         '/browse.php',
@@ -281,7 +281,7 @@ ${SEARCH}`;
       );
 
       await expect(engine.login()).rejects.toThrow(
-        'The site refused the login. Check the username, password or cookie.',
+        'The site rejected the login. Check the username, password or cookie.',
       );
     });
 
@@ -296,7 +296,7 @@ ${SEARCH}`;
           : undefined,
       );
 
-      await expect(engine.login()).rejects.toThrow('The site refused the login: Banned');
+      await expect(engine.login()).rejects.toThrow('The site rejected the login: Banned');
     });
 
     it('starts from the cookies the definition names', async () => {
@@ -365,7 +365,7 @@ ${SEARCH}`;
       const { engine } = standUp(`login:\n  method: telepathy\n${SEARCH}`, () => ({ body: '' }));
 
       await expect(engine.login()).rejects.toThrow(
-        'The definition logs in with telepathy, which Valence cannot do',
+        'The definition logs in with telepathy, which Valence doesn’t support',
       );
     });
 
@@ -579,7 +579,7 @@ ${SEARCH}`;
       const { engine } = standUp(SEARCH, () => ({ body: '<html>login</html>' }));
 
       await expect(engine.download('https://site.example/dl/3')).rejects.toThrow(
-        'The site answered the download with something that is not a torrent',
+        'The site returned a download that isn’t a torrent',
       );
     });
 
@@ -637,7 +637,7 @@ ${SEARCH}`,
       const nothing = standUp(selectors, () => ({ body: '<p></p>' }));
 
       await expect(nothing.engine.download('https://site.example/details/1')).rejects.toThrow(
-        'None of the definition’s download links gave a torrent',
+        'None of the definition’s download links returned a torrent',
       );
     });
 
@@ -721,7 +721,7 @@ ${SEARCH}`;
       const missing = standUp(infohash, () => ({ body: '<p></p>' }));
 
       await expect(missing.engine.download('https://site.example/t/1')).rejects.toThrow(
-        'The release’s page did not give its info hash',
+        'The release’s page didn’t include its info hash',
       );
     });
 

@@ -90,13 +90,13 @@ describe('CalendarToolbar', () => {
   it('offers to add the calendar to a calendar app', () => {
     draw();
 
-    expect(screen.getByRole('button', { name: 'Add to Calendar' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add to calendar' })).toBeInTheDocument();
   });
 
   it('offers a way to narrow the calendar', () => {
     draw();
 
-    expect(screen.getByRole('button', { name: /Narrow the calendar/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Filter calendar/ })).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

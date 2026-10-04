@@ -109,7 +109,7 @@ describe('BooksDiscover', () => {
 
     renderInAnAddress(<BooksDiscover onAsk={vi.fn()} />);
 
-    expect(await screen.findByText('No books to ask for')).toBeInTheDocument();
+    expect(await screen.findByText('No books to request')).toBeInTheDocument();
     expect(screen.getByLabelText('Search for a book')).toBeInTheDocument();
   });
 

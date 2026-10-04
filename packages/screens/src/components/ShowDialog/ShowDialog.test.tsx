@@ -176,7 +176,7 @@ describe('ShowDialog', () => {
       renderInAnAddress(<ShowDialog show={programme} onClose={vi.fn()} onPlay={vi.fn()} />);
 
       const [menu] = await screen.findAllByRole('button', {
-        name: 'More to do with this programme',
+        name: 'More options',
       });
 
       if (menu !== undefined) {

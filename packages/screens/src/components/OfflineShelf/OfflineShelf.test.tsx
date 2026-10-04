@@ -67,7 +67,7 @@ describe('OfflineShelf', () => {
   it('says plainly when there is nothing here, and how something gets here', () => {
     draw([]);
 
-    expect(screen.getByText('Nothing is on this device')).toBeInTheDocument();
+    expect(screen.getByText('No downloads on this device')).toBeInTheDocument();
     expect(screen.getByText(/while Valence is reachable/)).toBeInTheDocument();
   });
 
@@ -92,7 +92,7 @@ describe('OfflineShelf', () => {
 
     draw([aFile({ state: 'fetching', bytes: 536_870_912 })], { onWatch });
 
-    expect(screen.getByText(/Fetching — 50%/)).toBeInTheDocument();
+    expect(screen.getByText(/Downloading — 50%/)).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: /^The Third Man/ }));
 
@@ -116,7 +116,7 @@ describe('OfflineShelf', () => {
     draw([aFile({ state: 'fetching', bytes: 10 })], { onPause });
 
     await actor.click(screen.getByRole('button', { name: 'More for The Third Man' }));
-    await actor.click(await screen.findByRole('menuitem', { name: /Stop fetching/ }));
+    await actor.click(await screen.findByRole('menuitem', { name: /Pause download/ }));
 
     expect(onPause).toHaveBeenCalledWith(expect.objectContaining({ title: 'The Third Man' }), true);
   });
@@ -128,7 +128,7 @@ describe('OfflineShelf', () => {
     draw([aFile({ state: 'paused', bytes: 10 })], { onPause });
 
     await actor.click(screen.getByRole('button', { name: 'More for The Third Man' }));
-    await actor.click(await screen.findByRole('menuitem', { name: /Carry on fetching/ }));
+    await actor.click(await screen.findByRole('menuitem', { name: /Resume download/ }));
 
     expect(onPause).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'The Third Man' }),
@@ -162,7 +162,7 @@ describe('OfflineShelf', () => {
       }),
     ]);
 
-    expect(screen.getByText('1 of 2 here')).toBeInTheDocument();
+    expect(screen.getByText('1 of 2 downloaded')).toBeInTheDocument();
   });
 
   it('says why something failed', () => {

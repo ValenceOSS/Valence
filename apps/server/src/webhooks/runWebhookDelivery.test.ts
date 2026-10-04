@@ -181,7 +181,7 @@ describe('runWebhookDelivery', () => {
 
     const [read] = await subscriptions.list();
 
-    expect(read?.lastError).toContain('could not be read');
+    expect(read?.lastError).toContain('Couldn’t read the queued event');
   });
 });
 

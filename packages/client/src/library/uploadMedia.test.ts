@@ -246,10 +246,10 @@ describe('uploadMedia, for a file larger than a piece', () => {
   });
 
   it('says what the server said where it would not begin', async () => {
-    fetchMock.mockResolvedValue(answer(409, { error: 'There is already a file called that.' }));
+    fetchMock.mockResolvedValue(answer(409, { error: 'A file with that name already exists.' }));
 
     await expect(uploadMedia('lib-1', 'Arrival.mkv', largeFile(), { pauseFor })).rejects.toThrow(
-      'There is already a file called that.',
+      'A file with that name already exists.',
     );
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });

@@ -31,14 +31,14 @@ describe('RoleMembers', () => {
 
     expect(screen.getByText('@lovelace')).toBeVisible();
     expect(screen.getByText('bo@example.com')).toBeVisible();
-    expect(screen.getByRole('switch', { name: 'Whether Bo holds this role' })).toBeChecked();
-    expect(screen.getByRole('switch', { name: 'Whether Ada holds this role' })).not.toBeChecked();
+    expect(screen.getByRole('switch', { name: 'Bo has this role' })).toBeChecked();
+    expect(screen.getByRole('switch', { name: 'Ada has this role' })).not.toBeChecked();
   });
 
   it('finds somebody by their username', async () => {
     render(<RoleMembers accounts={ACCOUNTS} heldIds={new Set()} onToggle={vi.fn()} />);
 
-    await userEvent.type(screen.getByRole('searchbox', { name: 'Find somebody' }), '@LOVE');
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Find someone' }), '@LOVE');
 
     expect(screen.getByText('Ada')).toBeVisible();
     expect(screen.queryByText('Bo')).not.toBeInTheDocument();
@@ -48,7 +48,7 @@ describe('RoleMembers', () => {
   it('finds somebody by their address or their name', async () => {
     render(<RoleMembers accounts={ACCOUNTS} heldIds={new Set()} onToggle={vi.fn()} />);
 
-    const search = screen.getByRole('searchbox', { name: 'Find somebody' });
+    const search = screen.getByRole('searchbox', { name: 'Find someone' });
 
     await userEvent.type(search, 'example.com');
 
@@ -65,9 +65,9 @@ describe('RoleMembers', () => {
   it('says when nobody matches', async () => {
     render(<RoleMembers accounts={ACCOUNTS} heldIds={new Set()} onToggle={vi.fn()} />);
 
-    await userEvent.type(screen.getByRole('searchbox', { name: 'Find somebody' }), 'zed');
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Find someone' }), 'zed');
 
-    expect(screen.getByText('Nobody here matches that.')).toBeVisible();
+    expect(screen.getByText('No one matches your search.')).toBeVisible();
   });
 
   it('flips somebody between holding the role and not', async () => {
@@ -75,7 +75,7 @@ describe('RoleMembers', () => {
 
     render(<RoleMembers accounts={ACCOUNTS} heldIds={new Set()} onToggle={onToggle} />);
 
-    await userEvent.click(screen.getByRole('switch', { name: 'Whether Cy holds this role' }));
+    await userEvent.click(screen.getByRole('switch', { name: 'Cy has this role' }));
 
     expect(onToggle).toHaveBeenCalledWith('cy');
   });

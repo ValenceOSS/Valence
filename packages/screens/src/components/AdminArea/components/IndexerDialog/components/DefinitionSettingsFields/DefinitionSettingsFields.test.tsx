@@ -117,7 +117,7 @@ describe('DefinitionSettingsFields', () => {
   it('says a kept secret is kept, rather than showing it', () => {
     draw({}, ['password']);
 
-    expect(screen.getByText(/Kept. Type a new one to replace it/)).toBeInTheDocument();
+    expect(screen.getByText(/Saved. Enter a new value to replace it/)).toBeInTheDocument();
   });
 
   it('says what changed', async () => {

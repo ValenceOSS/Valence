@@ -46,7 +46,7 @@ describe('Listening', () => {
 
     const { drawn } = await draw();
 
-    await userEvent.press(drawn.getByRole('button', { name: 'On 30 seconds' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Skip forward 30 seconds' }));
 
     expect(mockFake.player.read().bookPositionSeconds).toBe(30);
 

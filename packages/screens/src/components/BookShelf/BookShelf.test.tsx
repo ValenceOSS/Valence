@@ -54,7 +54,7 @@ describe('BookShelf', () => {
     await screen.findByRole('heading', { name: 'Nothing to read yet' });
 
     expect(screen.getByText('Ask the server admin to scan it.')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Scan it' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Scan library' })).not.toBeInTheDocument();
   });
 
   it('pushes an administrator at the two things that would fix it', async () => {
@@ -62,7 +62,7 @@ describe('BookShelf', () => {
 
     renderInAnAddress(<BookShelf onOpen={vi.fn()} onAddLibrary={manage} />);
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Scan it' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Scan library' }));
 
     expect(manage).toHaveBeenCalledTimes(1);
   });

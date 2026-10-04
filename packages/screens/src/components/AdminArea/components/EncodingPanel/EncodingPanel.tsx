@@ -95,7 +95,7 @@ const EncodingPanel = ({
       },
       {
         id: 'what',
-        header: say('screens.adminArea.encodingPanel.whatWasAskedFor'),
+        header: say('common.requested'),
         enableSorting: false,
         accessorFn: (one) => one.mode,
         cell: ({ row }) => (
@@ -219,7 +219,7 @@ const EncodingPanel = ({
         )}
       </PanelCard>
 
-      <PanelCard title={say('screens.adminArea.encodingPanel.underWay')}>
+      <PanelCard title={say('common.inProgress')}>
         {underWay.length === 0 ? (
           <p className="text-sm text-text-muted">
             {say('screens.adminArea.encodingPanel.nothingIsBeingEncoded')}

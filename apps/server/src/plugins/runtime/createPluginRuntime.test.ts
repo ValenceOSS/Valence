@@ -100,7 +100,7 @@ describe('keeping plugins running', () => {
       .fn<
         (options: CreatePluginSandboxOptions<BrokerScope>) => Promise<PluginSandbox<BrokerScope>>
       >()
-      .mockRejectedValueOnce(new Error('The plugin never called definePlugin.'))
+      .mockRejectedValueOnce(new Error('The plugin didn’t call definePlugin.'))
       .mockResolvedValueOnce(aSandbox());
     const runtime = createPluginRuntime({
       brokerFor: () => vi.fn(),
@@ -112,14 +112,14 @@ describe('keeping plugins running', () => {
 
     await expect(
       runtime.invoke({ record: RECORD, code: 'x' }, 'describe', {}, SCOPE),
-    ).rejects.toThrow('never called definePlugin');
+    ).rejects.toThrow('didn’t call definePlugin');
     await vi.waitFor(() => {
-      expect(onProblem).toHaveBeenCalledWith(RECORD.id, 'The plugin never called definePlugin.');
+      expect(onProblem).toHaveBeenCalledWith(RECORD.id, 'The plugin didn’t call definePlugin.');
     });
     expect(runtime.stateOf(RECORD.id)).toBe('failed');
     await expect(
       runtime.invoke({ record: RECORD, code: 'x' }, 'describe', {}, SCOPE),
-    ).rejects.toThrow('never called definePlugin');
+    ).rejects.toThrow('didn’t call definePlugin');
     expect(start).toHaveBeenCalledTimes(1);
 
     clock = 2000;

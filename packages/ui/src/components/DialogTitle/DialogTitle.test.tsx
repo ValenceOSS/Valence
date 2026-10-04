@@ -27,13 +27,13 @@ describe('DialogTitle', () => {
   });
 
   it('carries a row beneath, such as the tabs of the dialog', () => {
-    render(<DialogTitle title="Server" below={<nav aria-label="What to look at" />} />);
+    render(<DialogTitle title="Server" below={<nav aria-label="Sections" />} />);
 
-    expect(screen.getByRole('navigation', { name: 'What to look at' })).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: 'Sections' })).toBeInTheDocument();
   });
 
   it('stands large by default, the title and its line one above the other', () => {
-    render(<DialogTitle title="Share" detail="Anybody with the link" />);
+    render(<DialogTitle title="Share" detail="Anyone with the link" />);
 
     const title = screen.getByRole('heading', { name: 'Share' });
 

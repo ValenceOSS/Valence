@@ -67,7 +67,7 @@ describe('RequestsPanel', () => {
   it('says the service is answering, and which release it is', async () => {
     renderInAnAddress(<RequestsPanel />);
 
-    expect(await screen.findByText('Answering')).toBeInTheDocument();
+    expect(await screen.findAllByText('Online')).toHaveLength(2);
     expect(screen.getByText('0.4.0')).toBeInTheDocument();
   });
 
@@ -93,7 +93,7 @@ describe('RequestsPanel', () => {
     renderInAnAddress(<RequestsPanel />);
 
     expect(await screen.findAllByText('Not checked')).toHaveLength(3);
-    expect(screen.getByText(/Looking for it at http:\/\/requests:8421/)).toBeInTheDocument();
+    expect(screen.getByText(/Expected at http:\/\/requests:8421/)).toBeInTheDocument();
   });
 
   it('asks again on demand, and shows what it heard', async () => {
@@ -106,7 +106,7 @@ describe('RequestsPanel', () => {
     await screen.findAllByText('Not checked');
     await user.click(screen.getByRole('button', { name: 'Check now' }));
 
-    expect(await screen.findByText('Answering')).toBeInTheDocument();
+    expect(await screen.findAllByText('Online')).toHaveLength(2);
     expect(checkRequestsNow).toHaveBeenCalledTimes(1);
   });
 
@@ -117,7 +117,7 @@ describe('RequestsPanel', () => {
 
     renderInAnAddress(<RequestsPanel />);
 
-    await screen.findByText('Answering');
+    await screen.findAllByText('Online');
     await user.click(screen.getByRole('button', { name: 'Check now' }));
 
     await waitFor(() => {
@@ -164,7 +164,7 @@ describe('RequestsPanel', () => {
     renderInAnAddress(<RequestsPanel />);
 
     expect(await screen.findByText('1 failing')).toBeInTheDocument();
-    expect(screen.getByText('2 of 3 switched on. Jackett: Timed out')).toBeInTheDocument();
+    expect(screen.getByText('2 of 3 enabled. Jackett: Timed out')).toBeInTheDocument();
   });
 
   it('links one failing indexer to its own fix, and several to the general one', async () => {

@@ -258,7 +258,9 @@ describe('RolesPanel', () => {
     });
 
     it('explains a rank the server would not accept', async () => {
-      mocks.updateRole.mockResolvedValue({ message: 'That role is at or above your own.' });
+      mocks.updateRole.mockResolvedValue({
+        message: 'That role is equal to or higher than yours.',
+      });
 
       const user = userEvent.setup();
       renderInAnAddress(<RolesPanel />);
@@ -268,13 +270,15 @@ describe('RolesPanel', () => {
       await user.type(screen.getByLabelText('Rank'), '900');
       await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
-      expect(await screen.findByRole('alert')).toHaveTextContent('at or above your own');
+      expect(await screen.findByRole('alert')).toHaveTextContent('equal to or higher than yours');
     });
   });
 
   describe('refusals', () => {
     it('explains being outranked rather than reporting a failure', async () => {
-      mocks.updateRole.mockResolvedValue({ message: 'That role is at or above your own.' });
+      mocks.updateRole.mockResolvedValue({
+        message: 'That role is equal to or higher than yours.',
+      });
 
       const user = userEvent.setup();
       renderInAnAddress(<RolesPanel />);
@@ -284,12 +288,12 @@ describe('RolesPanel', () => {
       await user.click(screen.getByLabelText('Run a job'));
       await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
-      expect(await screen.findByRole('alert')).toHaveTextContent('at or above your own');
+      expect(await screen.findByRole('alert')).toHaveTextContent('equal to or higher than yours');
     });
 
     it('explains a lockout the server refused', async () => {
       mocks.deleteRole.mockResolvedValue({
-        message: 'That would leave nobody able to administer this server.',
+        message: 'That would leave no administrators on this server.',
       });
 
       const user = userEvent.setup();
@@ -297,7 +301,9 @@ describe('RolesPanel', () => {
 
       await remove(user, 'Administrator');
 
-      expect(await screen.findByRole('alert')).toHaveTextContent('nobody able to administer');
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'no administrators on this server',
+      );
     });
 
     it('says nothing when the server was happy', async () => {
@@ -325,7 +331,9 @@ describe('RolesPanel', () => {
     });
 
     it('does not read them again when the change was refused', async () => {
-      mocks.deleteRole.mockResolvedValue({ message: 'That role is at or above your own.' });
+      mocks.deleteRole.mockResolvedValue({
+        message: 'That role is equal to or higher than yours.',
+      });
 
       const user = userEvent.setup();
       renderInAnAddress(<RolesPanel />);

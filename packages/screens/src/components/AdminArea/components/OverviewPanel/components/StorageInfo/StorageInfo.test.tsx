@@ -47,7 +47,7 @@ describe('StorageInfo', () => {
 
     await user.hover(screen.getByRole('button', { name: 'About the storage Valence is using' }));
 
-    expect(await screen.findByText('Counting what is on the disk.')).toBeInTheDocument();
+    expect(await screen.findByText('Calculating disk usage.')).toBeInTheDocument();
   });
 
   it('counts the pages of books into what Valence is keeping', async () => {

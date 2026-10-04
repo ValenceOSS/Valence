@@ -64,9 +64,7 @@ describe('YourDevices', () => {
     const drawn = await drawWith([aDevice('here', 'Living room TV', true)]);
 
     expect(drawn.getByText('Living room TV · This television')).toBeTruthy();
-    expect(
-      drawn.getByText('This television is the only place this account is signed in.'),
-    ).toBeTruthy();
+    expect(drawn.getByText('This account isn’t signed in on any other device.')).toBeTruthy();
     expect(drawn.queryByText('Sign out everywhere else')).toBeNull();
   });
 
@@ -80,7 +78,7 @@ describe('YourDevices', () => {
 
     expect(Alert.alert).toHaveBeenCalledWith(
       'Sign out Marques’s iPhone?',
-      'Whoever is using it will have to sign in again.',
+      'Anyone using it will need to sign in again.',
       expect.any(Array),
     );
     expect(endDevice).not.toHaveBeenCalled();
@@ -104,7 +102,7 @@ describe('YourDevices', () => {
 
     await waitFor(() => {
       expect(Alert.alert).toHaveBeenLastCalledWith(
-        'Marques’s iPhone could not be signed out. It is still signed in.',
+        'Couldn’t sign out Marques’s iPhone. It’s still signed in.',
       );
     });
   });
@@ -129,7 +127,7 @@ describe('YourDevices', () => {
     ]);
 
     await userEvent.press(drawn.getByText('Sign out everywhere else'));
-    pressInTheAlert('Sign them out');
+    pressInTheAlert('Sign out all');
 
     await waitFor(() => {
       expect(endOtherDevices).toHaveBeenCalled();

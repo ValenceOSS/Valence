@@ -78,7 +78,7 @@ describe('checkRequestsNow', () => {
   });
 
   it('throws where the server refused', async () => {
-    answering({ error: 'Requesting is off.' }, 404);
+    answering({ error: 'Requests are turned off.' }, 404);
 
     await expect(checkRequestsNow()).rejects.toMatchObject({ status: 404 });
   });

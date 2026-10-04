@@ -61,7 +61,7 @@ describe('CalendarPage', () => {
 
     renderInAnAddress(<CalendarPage />);
 
-    expect(await screen.findByRole('status', { name: 'Reading the calendar' })).toBeInTheDocument();
+    expect(await screen.findByRole('status', { name: 'Loading calendar' })).toBeInTheDocument();
   });
 
   it('says the calendar could not be read, and offers to try again', async () => {
@@ -71,7 +71,7 @@ describe('CalendarPage', () => {
 
     renderInAnAddress(<CalendarPage />);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('The calendar could not be read');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Couldn’t load the calendar');
 
     await user.click(screen.getByRole('button', { name: 'Try again' }));
 
@@ -113,7 +113,7 @@ describe('CalendarPage', () => {
 
     renderInAnAddress(<CalendarPage />);
 
-    expect(await screen.findByText('Nothing comes out on these days')).toBeInTheDocument();
+    expect(await screen.findByText('No releases on these dates')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Coming up' })).not.toBeInTheDocument();
   });
 
@@ -124,7 +124,7 @@ describe('CalendarPage', () => {
     renderInAnAddress(<CalendarPage />);
 
     expect((await screen.findAllByText('No releases')).length).toBeGreaterThan(1);
-    expect(screen.queryByText('Nothing comes out on these days')).not.toBeInTheDocument();
+    expect(screen.queryByText('No releases on these dates')).not.toBeInTheDocument();
   });
 
   it('lists what is coming without a coming-up row above it', async () => {
@@ -237,7 +237,7 @@ describe('CalendarPage', () => {
     renderInAnAddress(<CalendarPage />);
 
     await screen.findByRole('heading', { name: 'Coming up' });
-    await user.click(screen.getByRole('button', { name: /Narrow the calendar/ }));
+    await user.click(screen.getByRole('button', { name: /Filter calendar/ }));
     await user.click(await screen.findByRole('menuitemcheckbox', { name: /Everyone/ }));
 
     expect(fetchReleaseCalendar).toHaveBeenLastCalledWith('2026-10-05', '2026-10-11', 'everyone');
@@ -249,7 +249,7 @@ describe('CalendarPage', () => {
     renderInAnAddress(<CalendarPage />);
 
     await screen.findByRole('heading', { name: 'Coming up' });
-    await user.click(screen.getByRole('button', { name: /Narrow the calendar/ }));
+    await user.click(screen.getByRole('button', { name: /Filter calendar/ }));
     await screen.findByRole('menuitemcheckbox', { name: /Films/ });
 
     expect(screen.queryByRole('menuitemcheckbox', { name: /Everyone/ })).not.toBeInTheDocument();
@@ -261,7 +261,7 @@ describe('CalendarPage', () => {
     renderInAnAddress(<CalendarPage />);
 
     await screen.findByRole('heading', { name: 'Coming up' });
-    await user.click(screen.getByRole('button', { name: /Narrow the calendar/ }));
+    await user.click(screen.getByRole('button', { name: /Filter calendar/ }));
     await user.click(await screen.findByRole('menuitemcheckbox', { name: /Films/ }));
     await user.keyboard('{Escape}');
 

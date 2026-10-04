@@ -60,7 +60,7 @@ describe('AudiobookBar', () => {
   it('pauses, and skips back fifteen seconds and on thirty', async () => {
     const { player, audio } = listening();
 
-    await userEvent.click(screen.getByRole('button', { name: 'On 30 seconds' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Skip forward 30 seconds' }));
 
     expect(player.read().bookPositionSeconds).toBe(30);
 

@@ -112,7 +112,7 @@ describe('VideoRemote', () => {
     const user = userEvent.setup();
 
     await user.click(screen.getByRole('button', { name: 'Back 10 seconds' }));
-    await user.click(screen.getByRole('button', { name: 'On 30 seconds' }));
+    await user.click(screen.getByRole('button', { name: 'Forward 30 seconds' }));
 
     expect(remote.send).toHaveBeenCalledWith({ kind: 'skip', seconds: -10 });
     expect(remote.send).toHaveBeenCalledWith({ kind: 'skip', seconds: 30 });
@@ -122,7 +122,7 @@ describe('VideoRemote', () => {
     controlling(WATCHING, 120);
     draw();
 
-    expect(screen.getByRole('slider', { name: 'Where the film is up to' })).toHaveAttribute(
+    expect(screen.getByRole('slider', { name: 'Playback position' })).toHaveAttribute(
       'aria-valuenow',
       '120',
     );
@@ -134,7 +134,7 @@ describe('VideoRemote', () => {
     controlling(WATCHING, 120);
     draw();
 
-    screen.getByRole('slider', { name: 'Where the film is up to' }).focus();
+    screen.getByRole('slider', { name: 'Playback position' }).focus();
     await userEvent.setup().keyboard('{ArrowRight}');
 
     expect(remote.send).toHaveBeenCalledWith({ kind: 'seek', positionSeconds: 121 });

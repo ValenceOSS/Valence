@@ -20,16 +20,16 @@ Open the admin area, choose **Encoding**, and find the **Pre-transcoding** card 
 | Container format                | MP4 or MKV. MP4 plays in every browser; MKV keeps subtitles and chapters.                                           | MP4                              |
 | Bitrate ceiling                 | The most video bitrate a copy may spend, in kilobits a second. Empty uses the ceiling of the quality chosen.        | Empty                            |
 | Compress the lossless audio too | Turns a TrueHD or DTS-HD track into a compressed one, and narrows 7.1 to 5.1.                                       | Off                              |
-| When to work                    | **In quiet hours**, between a start and an end hour, or **Until everything is done**, at any hour.                  | In quiet hours, 01:00 to 06:00   |
+| When to work                    | **Only during quiet hours**, between a start and an end hour, or **Until everything is done**, at any hour.         | In quiet hours, 01:00 to 06:00   |
 | Libraries                       | Every library of films and shows, including ones added later, or the ones you tick. Music and book libraries never. | Every library of films and shows |
 
-The card also shows how many copies have been made, how many are still to make, how many were passed over, what it is doing right now, and the copy being made with its progress. **Make the next copy now** starts the next copy straight away, whatever the hour. **Pause** stops the copy being made and makes no more until you press **Resume**.
+The card also shows how many copies have been made, how many are still to make, how many were passed over, what it is doing right now, and the copy being made with its progress. **Start the next copy now** starts the next copy straight away, whatever the hour. **Pause** stops the copy being made and makes no more until you press **Resume**.
 
 ## Quiet hours
 
 The quiet hours are read on the same clock as the [scheduled jobs](/use/jobs-and-logs#which-clock-a-schedule-keeps): the timezone in the server settings, then `TZ`, then the host's own. They may run past midnight, so 22:00 to 04:00 works as you would expect. A start and an end on the same hour means the whole day.
 
-When the quiet hours end, the copy being made is stopped and its half-written file deleted, so nothing runs into the day. It starts again from the beginning the next night. A copy you asked for with **Make the next copy now** is left to finish.
+When the quiet hours end, the copy being made is stopped and its half-written file deleted, so nothing runs into the day. It starts again from the beginning the next night. A copy you asked for with **Start the next copy now** is left to finish.
 
 Pre-transcoding makes one copy at a time, and only when none of its own is under way. A re-encode an administrator asked for always goes first. If somebody starts watching a film while its copy is waiting to be made, the copy waits until another time rather than failing.
 
@@ -47,7 +47,7 @@ A file whose copy was refused, for example because its folder is read only, is *
 
 ## Disk, and write access
 
-Every copy takes disk beside its original. A 1080p H.264 copy of a 4K remux is often around a tenth of its size; a copy of a file that is already 1080p is a larger share of it. The **Still to make** figure, times a typical copy, is roughly what it will need. Keep headroom: filling the disk a media server sits on stops streaming and the database with it.
+Every copy takes disk beside its original. A 1080p H.264 copy of a 4K remux is often around a tenth of its size; a copy of a file that is already 1080p is a larger share of it. The **Remaining** figure, times a typical copy, is roughly what it will need. Keep headroom: filling the disk a media server sits on stops streaming and the database with it.
 
 Valence has to be able to write to the folder each film is in. The shipped compose file mounts media read only, which is sensible, and pre-transcoding cannot work under it. See [Storage and volumes](/install/storage-and-volumes#re-encoding-and-write-access) for how to give it write access, and remember `VALENCE_WRITE_ROOTS` must include the library.
 
@@ -68,7 +68,7 @@ The name is made only from the original and what was asked for, so the same copy
 
 ## Seeing and removing copies
 
-In **Media**, open a film's or an episode's menu and choose **Kept copies**. Each copy shows what it is, how large it is and its file name. **Remove** deletes the copy and its file. Copies made by pre-transcoding and copies you kept with **Keep alongside** in the re-encode dialog are listed together.
+In **Media**, open a film's or an episode's menu and choose **Saved copies**. Each copy shows what it is, how large it is and its file name. **Remove** deletes the copy and its file. Copies made by pre-transcoding and copies you kept with **Keep alongside** in the re-encode dialog are listed together.
 
 ## How playback uses a copy
 
@@ -76,4 +76,4 @@ When somebody presses play, Valence looks at the original and every copy, and pi
 
 ## The job
 
-The **Pre-transcode the libraries** job (`library.preTranscode`) does the deciding. By default it runs every 15 minutes, and after each copy is finished; each run checks the hours, stops what should not be running and queues the next copy. The copies themselves are made by **Work through the re-encoding queue**. Both appear on the [Jobs](/use/jobs-and-logs#job-kinds) page like any other job, and the schedule can be changed there.
+The **Pre-transcode the libraries** job (`library.preTranscode`) does the deciding. By default it runs every 15 minutes, and after each copy is finished; each run checks the hours, stops what should not be running and queues the next copy. The copies themselves are made by **Process the re-encoding queue**. Both appear on the [Jobs](/use/jobs-and-logs#job-kinds) page like any other job, and the schedule can be changed there.

@@ -56,13 +56,13 @@ describe('NameEntryDialog', () => {
   it('shows why a name would not do, and keeps asking', async () => {
     const actor = userEvent.setup();
 
-    draw(vi.fn().mockResolvedValue('Something of that name is already there.'));
+    draw(vi.fn().mockResolvedValue('Something with that name already exists.'));
 
     await actor.type(screen.getByLabelText('Name'), 'x');
     await actor.click(screen.getByRole('button', { name: 'Rename' }));
 
     await waitFor(() => {
-      expect(screen.getByText('Something of that name is already there.')).toBeInTheDocument();
+      expect(screen.getByText('Something with that name already exists.')).toBeInTheDocument();
     });
     expect(screen.getByRole('dialog')).toBeInTheDocument();
   });

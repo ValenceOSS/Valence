@@ -64,7 +64,7 @@ describe('registerVideoDeviceRoutes', () => {
     const response = await build(null).app.request('/api/video/devices');
 
     expect(response.status).toBe(401);
-    expect(ErrorSchema.parse(await response.json()).error).toBe('Nobody is signed in.');
+    expect(ErrorSchema.parse(await response.json()).error).toBe('You’re not signed in.');
   });
 
   it('refuses to list devices for a guest on a shared link', async () => {

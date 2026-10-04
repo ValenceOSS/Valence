@@ -3,7 +3,7 @@ import { describeCard } from './describeCard';
 
 describe('describeCard', () => {
   it('says there is nothing to name where no card could be read', () => {
-    expect(describeCard(null)).toBe('None Valence can read');
+    expect(describeCard(null)).toBe('No supported GPU');
   });
 
   it('names a card that answered about its encoder and leaves it at that', () => {
@@ -25,7 +25,7 @@ describe('describeCard', () => {
         devicePercent: 41,
         measured: 'wholeMachine',
       }),
-    ).toBe('Apple M5 Pro · encoder not readable');
+    ).toBe('Apple M5 Pro · encoder usage unavailable');
   });
 
   it('never lets a figure covering our own work read as one covering the card', () => {
@@ -36,7 +36,7 @@ describe('describeCard', () => {
         devicePercent: null,
         measured: 'valenceOnly',
       }),
-    ).toBe("Intel UHD Graphics 770 · Valence's own work only");
+    ).toBe('Intel UHD Graphics 770 · Valence’s usage only');
   });
 
   it('names a card it has measured nothing on yet', () => {
@@ -47,6 +47,6 @@ describe('describeCard', () => {
         devicePercent: null,
         measured: 'valenceOnly',
       }),
-    ).toBe("Intel UHD Graphics 770 · Valence's own work only");
+    ).toBe('Intel UHD Graphics 770 · Valence’s usage only');
   });
 });

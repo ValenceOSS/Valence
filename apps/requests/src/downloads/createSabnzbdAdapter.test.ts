@@ -111,14 +111,14 @@ describe('createSabnzbdAdapter', () => {
   it('says the key was refused, whichever way it says so', async () => {
     await expect(
       createSabnzbdAdapter({ ...SETTINGS, apiKey: 'wrong' }, aSabnzbd({}).fetch).version(),
-    ).rejects.toThrow('SABnzbd refused the API key');
+    ).rejects.toThrow('SABnzbd rejected the API key');
 
     const forbidden = aFakeClient({
       'GET /sabnzbd/api': () => new Response('API Key Incorrect', { status: 403 }),
     });
 
     await expect(createSabnzbdAdapter(SETTINGS, forbidden.fetch).version()).rejects.toThrow(
-      'SABnzbd refused the API key',
+      'SABnzbd rejected the API key',
     );
     await expect(createSabnzbdAdapter(SETTINGS, forbidden.fetch).version()).rejects.toMatchObject({
       problemCode: 'DownloadClientLoginRefused',
@@ -127,7 +127,7 @@ describe('createSabnzbdAdapter', () => {
     const plain = aFakeClient({ 'GET /sabnzbd/api': () => new Response('API Key Required') });
 
     await expect(createSabnzbdAdapter(SETTINGS, plain.fetch).version()).rejects.toThrow(
-      'SABnzbd refused the API key',
+      'SABnzbd rejected the API key',
     );
   });
 
@@ -135,7 +135,7 @@ describe('createSabnzbdAdapter', () => {
     const page = aFakeClient({ 'GET /sabnzbd/api': () => new Response('<html>login</html>') });
 
     await expect(createSabnzbdAdapter(SETTINGS, page.fetch).version()).rejects.toThrow(
-      'answered, but not as SABnzbd',
+      'responded, but isn’t SABnzbd',
     );
 
     const refusing = aFakeClient({
@@ -149,7 +149,7 @@ describe('createSabnzbdAdapter', () => {
     const broken = aFakeClient({ 'GET /sabnzbd/api': () => new Response('', { status: 502 }) });
 
     await expect(createSabnzbdAdapter(SETTINGS, broken.fetch).version()).rejects.toThrow(
-      'SABnzbd answered 502',
+      'SABnzbd returned 502',
     );
   });
 
@@ -206,10 +206,10 @@ describe('createSabnzbdAdapter', () => {
 
     await expect(
       adapter.add({ kind: 'nzb', bytes: new Uint8Array() }, 'Dune', 'valence'),
-    ).rejects.toThrow('would not take the NZB');
+    ).rejects.toThrow('rejected the NZB');
     await expect(
       adapter.add({ kind: 'magnet', url: 'magnet:?' }, 'Dune', 'valence'),
-    ).rejects.toThrow('takes NZBs, not torrents');
+    ).rejects.toThrow('accepts NZBs, not torrents');
   });
 
   it('lists its own jobs from the queue and the history', async () => {
@@ -241,7 +241,7 @@ describe('createSabnzbdAdapter', () => {
       ['SABnzbd_nzo_2', 'processing', null],
       ['SABnzbd_nzo_4', 'done', null],
       ['SABnzbd_nzo_5', 'failed', 'Out of retention'],
-      ['SABnzbd_nzo_6', 'failed', 'SABnzbd could not finish it'],
+      ['SABnzbd_nzo_6', 'failed', 'SABnzbd couldn’t finish it'],
       ['SABnzbd_nzo_7', 'processing', null],
     ]);
     expect(listed[1]?.secondsLeft).toBeNull();

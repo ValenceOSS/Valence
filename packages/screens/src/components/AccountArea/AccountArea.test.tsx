@@ -93,13 +93,13 @@ describe('AccountArea', () => {
     const { unmount } = drawOn('profile');
 
     expect(screen.getByText('Profile picture')).toBeInTheDocument();
-    expect(screen.queryByText('Two-step sign in')).not.toBeInTheDocument();
+    expect(screen.queryByText('Two-factor authentication')).not.toBeInTheDocument();
 
     unmount();
 
     drawOn('security');
 
-    expect(screen.getByText('Two-step sign in')).toBeInTheDocument();
+    expect(screen.getByText('Two-factor authentication')).toBeInTheDocument();
     expect(screen.queryByText('Profile picture')).not.toBeInTheDocument();
   });
 

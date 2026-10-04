@@ -10,7 +10,7 @@ const LOG_RANGES: readonly LogRange[] = [
   { id: '6h', label: say('client.admin.logRanges.last6Hours'), ms: 6 * 3_600_000 },
   { id: '24h', label: say('client.admin.logRanges.last24Hours'), ms: 86_400_000 },
   { id: '7d', label: say('client.admin.logRanges.last7Days'), ms: 7 * 86_400_000 },
-  { id: 'all', label: say('client.admin.logRanges.everythingKept'), ms: null },
+  { id: 'all', label: say('common.all'), ms: null },
 ];
 
 /**

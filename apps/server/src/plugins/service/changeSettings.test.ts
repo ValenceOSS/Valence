@@ -47,8 +47,8 @@ describe('changeSettings', () => {
 
   it.each([
     [{ nothing: 'x' }, 'no setting called nothing'],
-    [{ isLoud: 'yes' }, 'Loud is the wrong kind'],
-    [{ username: true }, 'Username is the wrong kind'],
+    [{ isLoud: 'yes' }, 'Loud has the wrong type of value'],
+    [{ username: true }, 'Username has the wrong type of value'],
     [{ username: 'x'.repeat(4001) }, 'Username is too long'],
   ])('refuses %o', (changes, problem) => {
     const answer = changeSettings(MANIFEST, {}, changes, KEY);

@@ -71,9 +71,9 @@ describe('ArtworkPicker', () => {
       'aria-pressed',
       'true',
     );
-    expect(
-      screen.getByRole('button', { name: 'Use the catalogue’s own poster' }),
-    ).not.toHaveAttribute('aria-pressed');
+    expect(screen.getByRole('button', { name: 'Use the default poster' })).not.toHaveAttribute(
+      'aria-pressed',
+    );
   });
 
   it('chooses a picture for every episode and asks for it anew', async () => {
@@ -93,9 +93,7 @@ describe('ArtworkPicker', () => {
   it('goes back to the catalogue’s pick', async () => {
     inAQueryClient(<ArtworkPicker subject={SUBJECT} onClose={vi.fn()} onChanged={vi.fn()} />);
 
-    await userEvent.click(
-      await screen.findByRole('button', { name: 'Use the catalogue’s own poster' }),
-    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Use the default poster' }));
 
     await waitFor(() => {
       expect(chooseArtworkMock).toHaveBeenCalledWith('ep-1', 'poster', null);
@@ -117,18 +115,18 @@ describe('ArtworkPicker', () => {
     await screen.findByRole('button', { name: 'Use poster 1, English' });
     await userEvent.click(screen.getByRole('button', { name: 'Backdrop' }));
 
-    expect(screen.getByText('The catalogue has no backdrops for this.')).toBeInTheDocument();
+    expect(screen.getByText('No backdrops are available for this title.')).toBeInTheDocument();
   });
 
   it('passes on why nothing could be offered', async () => {
     fetchArtworkChoicesMock.mockResolvedValue({
-      problem: 'This is not matched to the catalogue yet. Correct the match first.',
+      problem: 'This isn’t matched to the catalogue yet. Fix the match first.',
     });
 
     inAQueryClient(<ArtworkPicker subject={SUBJECT} onClose={vi.fn()} onChanged={vi.fn()} />);
 
     expect(
-      await screen.findByText('This is not matched to the catalogue yet. Correct the match first.'),
+      await screen.findByText('This isn’t matched to the catalogue yet. Fix the match first.'),
     ).toBeInTheDocument();
   });
 });

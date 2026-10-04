@@ -20,25 +20,25 @@ const share = (overrides: Partial<Share> = {}): Share => ({
 
 describe('untilWhen', () => {
   it('says when a link with an end date runs out', () => {
-    expect(untilWhen(share({ expiresAt: '2099-03-04T15:30:00.000Z' }))).toMatch(/^Runs out .*2099/);
+    expect(untilWhen(share({ expiresAt: '2099-03-04T15:30:00.000Z' }))).toMatch(/^Expires .*2099/);
   });
 
   it('says a link with nothing to end it lasts until it is withdrawn', () => {
-    expect(untilWhen(share())).toBe('Until it is withdrawn');
+    expect(untilWhen(share())).toBe('Until revoked');
   });
 
   it('says an allowance is what will end a link that has one and no date', () => {
-    expect(untilWhen(share({ viewCap: 3 }))).toBe('Until it has been opened enough times');
+    expect(untilWhen(share({ viewCap: 3 }))).toBe('Until the open limit is reached');
   });
 
   it('says whoever opened a used-up link can still watch, and until when', () => {
     expect(untilWhen(share({ viewCap: 1, views: 1, isSpent: true }))).toBe(
-      'Whoever opened it can still watch',
+      'Anyone who opened it can still watch',
     );
     expect(
       untilWhen(
         share({ viewCap: 1, views: 1, isSpent: true, expiresAt: '2099-03-04T15:30:00.000Z' }),
       ),
-    ).toMatch(/^Whoever opened it can still watch until .*2099/);
+    ).toMatch(/^Anyone who opened it can still watch until .*2099/);
   });
 });

@@ -21,7 +21,7 @@ The bell offers **Mark all read** and **Clear all**. Notifications are short liv
 | A link you handed out was withdrawn | An administrator withdrew one of your [share links](/use/sharing). | The person who made the link. |
 | Something you asked for is ready    | A [request](/use/requests) you made is in the library.             | The person who asked.         |
 
-The new media digest is the job named **Tell the household about new media**, which by default runs every hour. It gathers everything imported since the last run and says it once, so a scan of four hundred files is one notification rather than four hundred. A film is named; several files are counted, with episodes grouped under their programme and songs under their albums. The first digest on a fresh server starts its window at that moment and stays silent, so installing Valence does not announce your entire library as new. See [Jobs and logs](/use/jobs-and-logs) to run or reschedule it.
+The new media digest is the job named **Notify users about new media**, which by default runs every hour. It gathers everything imported since the last run and says it once, so a scan of four hundred files is one notification rather than four hundred. A film is named; several files are counted, with episodes grouped under their programme and songs under their albums. The first digest on a fresh server starts its window at that moment and stays silent, so installing Valence does not announce your entire library as new. See [Jobs and logs](/use/jobs-and-logs) to run or reschedule it.
 
 Each person's preferences say, per kind of event, whether they want it in the app and whether they want it as a push. The defaults are in app on and push off. Preferences are stored per account and read and written through the API at `/api/notifications/preferences`, described in the [API overview](/reference/api-overview).
 
@@ -42,7 +42,7 @@ You do not configure these. Valence generates a key pair the first time it needs
 ### Turning push on for a device
 
 1. Open the notification bell.
-2. Turn on **Also send these to this device**.
+2. Turn on **Send push notifications to this device**.
 3. Accept the browser's permission prompt.
 
 Valence registers a service worker and stores the browser's endpoint against your account. Turning the switch off removes it from both the browser and the server. The switch only appears in browsers that support push, which needs a service worker, the Push API and a secure context, so plain HTTP on a LAN address will not offer it. See [Reverse proxy](/install/reverse-proxy) for serving Valence over HTTPS.
@@ -60,7 +60,7 @@ A webhook is a subscription: an address, a format and a list of events. When one
 1. Open the admin area, choose **Webhooks** and press **Create webhook**.
 2. Give it a **Name**. Only you see it.
 3. Enter the **Address** the deliveries are posted to.
-4. Choose a **Shape**: what Valence sends, so the other end understands it.
+4. Choose a **Format**: what Valence sends, so the other end understands it.
 5. Tick the events you want, grouped as The server, Requests, People, The library, Watching and Plugins.
 6. Optionally narrow it with filters, described below.
 7. Press **Create webhook**.
@@ -108,12 +108,12 @@ Filters narrow a subscription without changing its events. An empty filter means
 
 The Watching events cover films, episodes, songs and audiobooks. Songs are the one exception to an empty filter meaning everything: a song being played is only sent when **Song** is chosen under Kinds, so an album played through doesn't post every track to a channel set up to hear about films.
 
-| Filter                    | Effect                                                                                                                                                                                                        |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Accounts                  | Only events about the chosen accounts.                                                                                                                                                                        |
-| Profiles                  | Only playback and session events for the chosen profiles.                                                                                                                                                     |
-| Kinds                     | Only `media.added`, `media.removed` and playback events about the chosen media kinds.                                                                                                                         |
-| How arrivals are reported | For `media.added`: **Once per scan** (the default) sends no per item deliveries, and you get the summary through `library.scanned` instead; **One for each thing** sends one `media.added` delivery per item. |
+| Filter                    | Effect                                                                                                                                                                                                  |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Accounts                  | Only events about the chosen accounts.                                                                                                                                                                  |
+| Profiles                  | Only playback and session events for the chosen profiles.                                                                                                                                               |
+| Kinds                     | Only `media.added`, `media.removed` and playback events about the chosen media kinds.                                                                                                                   |
+| How arrivals are reported | For `media.added`: **Once per scan** (the default) sends no per item deliveries, and you get the summary through `library.scanned` instead; **One per item** sends one `media.added` delivery per item. |
 
 ### Payload format
 

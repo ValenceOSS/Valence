@@ -41,7 +41,7 @@ describe('RequestRow', () => {
       />,
     );
 
-    expect(drawn.getByText('Requested   ·   Asked for by Sam')).toBeTruthy();
+    expect(drawn.getByText('Requested   ·   Requested by Sam')).toBeTruthy();
   });
 
   it('says how a download is going while it downloads', async () => {

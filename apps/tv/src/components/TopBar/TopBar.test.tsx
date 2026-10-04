@@ -37,7 +37,7 @@ describe('TopBar', () => {
     expect(drawn.getByRole('button', { name: 'Home' })).toBeOnTheScreen();
     expect(drawn.getByRole('button', { name: 'Films' })).toBeOnTheScreen();
     expect(drawn.getByRole('button', { name: 'Shows' })).toBeOnTheScreen();
-    expect(drawn.getByRole('button', { name: "Ada's profile" })).toBeOnTheScreen();
+    expect(drawn.getByRole('button', { name: 'Ada’s profile' })).toBeOnTheScreen();
     expect(drawn.getByText('A')).toBeOnTheScreen();
   });
 
@@ -65,7 +65,7 @@ describe('TopBar', () => {
   it('has no face where nobody is watching', async () => {
     const drawn = await render(<TopBar {...aBar({ profile: null })} />);
 
-    expect(drawn.queryByRole('button', { name: "Ada's profile" })).toBeNull();
+    expect(drawn.queryByRole('button', { name: 'Ada’s profile' })).toBeNull();
   });
 
   it('opens search as the remote lands on it, and when it is pressed', async () => {
@@ -86,12 +86,12 @@ describe('TopBar', () => {
     const onChoose = jest.fn();
     const drawn = await render(<TopBar {...aBar({ onChoose })} />);
 
-    await fireEvent(drawn.getByRole('button', { name: "Ada's profile" }), 'focus');
+    await fireEvent(drawn.getByRole('button', { name: 'Ada’s profile' }), 'focus');
 
     expect(onChoose).toHaveBeenLastCalledWith('account');
 
     onChoose.mockClear();
-    await userEvent.press(drawn.getByRole('button', { name: "Ada's profile" }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Ada’s profile' }));
 
     expect(onChoose).toHaveBeenLastCalledWith('account');
   });

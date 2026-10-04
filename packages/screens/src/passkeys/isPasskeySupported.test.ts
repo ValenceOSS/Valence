@@ -55,7 +55,7 @@ describe('describePasskeyUnavailability', () => {
   it('explains an unsupported browser', () => {
     setContext({ secure: true, hasCredential: false });
 
-    expect(describePasskeyUnavailability()).toMatch(/does not support passkeys/);
+    expect(describePasskeyUnavailability()).toMatch(/doesn’t support passkeys/);
   });
 });
 
@@ -73,7 +73,7 @@ describe('a client whose pages cannot ask', () => {
     passkeysAre({ kind: 'through-a-sign-in-page', signIn: vi.fn(), addOne: vi.fn() });
 
     expect(isPasskeySupported()).toBe(true);
-    expect(describePasskeyUnavailability()).toMatch(/in your browser/);
+    expect(describePasskeyUnavailability()).toMatch(/in your web browser/);
   });
 
   it('offers nothing where it has none, and says why', () => {

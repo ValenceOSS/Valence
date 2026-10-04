@@ -43,6 +43,6 @@ describe('deleteMedia', () => {
       json: () => Promise.reject(new Error('not json')),
     });
 
-    await expect(deleteMedia('media-1')).rejects.toThrow('The file could not be deleted.');
+    await expect(deleteMedia('media-1')).rejects.toThrow('Couldn’t delete the file.');
   });
 });

@@ -260,7 +260,7 @@ describe('AShow', () => {
     );
 
     await waitFor(() => {
-      expect(drawn.getByText('That programme could not be read.')).toBeTruthy();
+      expect(drawn.getByText('Couldn’t load that series.')).toBeTruthy();
     });
   });
 

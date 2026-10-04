@@ -63,7 +63,7 @@ describe('judgeForRequest', () => {
     });
 
     expect(judged.pickedId).toBeNull();
-    expect(judged.judgements[0]?.rejections).toEqual(['It failed before: The tracker is gone']);
+    expect(judged.judgements[0]?.rejections).toEqual(['It failed previously: The tracker is gone']);
   });
 
   it('refuses what would fetch nothing, and what is no better than what is here', () => {
@@ -73,7 +73,7 @@ describe('judgeForRequest', () => {
         releases: [aRelease(BLURAY)],
         items: [aRequestItem({ state: 'downloading' })],
       }).judgements[0]?.rejections,
-    ).toEqual(['Everything it holds is here or on its way already']);
+    ).toEqual(['Everything in it is already in the library or downloading']);
 
     expect(
       judgeForRequest({
@@ -82,7 +82,7 @@ describe('judgeForRequest', () => {
         items: [aRequestItem({ state: 'available', score: 5000 })],
         isFetching: () => true,
       }).judgements[0]?.rejections,
-    ).toEqual(['It is no better than what is here already']);
+    ).toEqual(['It’s no better than what’s already in the library']);
   });
 
   it('refuses a whole run where most of what it holds is here already', () => {
@@ -110,7 +110,7 @@ describe('judgeForRequest', () => {
           ...episodes('wanted', 3, 2),
         ],
       }).judgements[0]?.rejections,
-    ).toEqual(['Only 2 of the 20 episodes it holds are wanted']);
+    ).toEqual(['Only 2 of its 20 episodes are wanted']);
 
     expect(
       judgeForRequest({

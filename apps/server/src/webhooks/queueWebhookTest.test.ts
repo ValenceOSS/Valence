@@ -52,7 +52,7 @@ describe('queueWebhookTest', () => {
   it('does not set off every other subscriber that listens for tests', async () => {
     const { subscription } = await aSubscription();
     await subscriptions.create({
-      name: 'Somebody else',
+      name: 'Someone else',
       url: 'https://elsewhere.example.com/hook',
       preset: 'generic',
       events: ['webhook.test'],

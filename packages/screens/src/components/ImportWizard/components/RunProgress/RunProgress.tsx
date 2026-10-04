@@ -14,9 +14,7 @@ import type { RunProgressProps } from './RunProgress.types';
 const RunProgress = ({ run, onCancel }: RunProgressProps) => {
   const progress = run.progress;
   const phase =
-    progress === null
-      ? say('screens.importWizard.runProgress.gettingReady')
-      : sayAgain(progress.phase);
+    progress === null ? say('screens.mediaDetailDialog.preparing') : sayAgain(progress.phase);
   const fraction =
     progress === null || progress.total === 0
       ? null

@@ -45,7 +45,7 @@ describe('QueuePanel', () => {
   it('says so when nothing plays after this song', async () => {
     const drawn = await render(<QueuePanel upcoming={[]} picks={[]} onJump={jest.fn()} />);
 
-    expect(drawn.getByText('Nothing plays after this song.')).toBeTruthy();
+    expect(drawn.getByText('Nothing is queued after this song.')).toBeTruthy();
     expect(drawn.queryAllByRole('button')).toHaveLength(0);
   });
 

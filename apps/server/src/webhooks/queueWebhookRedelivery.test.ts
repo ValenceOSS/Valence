@@ -92,7 +92,7 @@ describe('queueWebhookRedelivery', () => {
   it('will not replay one subscription delivery against another', async () => {
     const { subscriptionId, deliveryId } = await withADelivery();
     const other = await subscriptions.create({
-      name: 'Somebody else',
+      name: 'Someone else',
       url: 'https://elsewhere.example.com/hook',
       preset: 'generic',
       events: ['job.failed'],

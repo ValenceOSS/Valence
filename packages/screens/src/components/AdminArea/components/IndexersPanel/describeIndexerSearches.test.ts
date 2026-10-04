@@ -46,9 +46,7 @@ describe('describeIndexerSearches', () => {
   });
 
   it('says to test one nobody has asked', () => {
-    expect(describeIndexerSearches({ ...AN_INDEXER, capabilities: null })).toBe(
-      'Test it to find out',
-    );
+    expect(describeIndexerSearches({ ...AN_INDEXER, capabilities: null })).toBe('Test to find out');
   });
 
   it('says words where an indexer named no kinds at all', () => {

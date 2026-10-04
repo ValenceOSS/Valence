@@ -28,7 +28,7 @@ describe('resetPassword', () => {
 
     await expect(resetPassword('tok', 'x')).resolves.toEqual({
       kind: 'refused',
-      reason: 'That link has expired or was already used. Ask for a new one.',
+      reason: 'That link has expired or has already been used. Request a new one.',
     });
 
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));

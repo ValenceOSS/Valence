@@ -2,7 +2,7 @@ import type { ReencodeState } from '@ValenceContracts/schemas/Reencode';
 import { say } from '@ValenceI18n/say';
 
 const WORDS = {
-  queued: say('client.admin.describeReencodeState.waitingItsTurn'),
+  queued: say('common.queued'),
   encoding: say('common.encoding'),
   verifying: say('client.admin.describeReencodeState.checkingWhatCameOut'),
   awaitingReview: say('common.waitingForYou'),

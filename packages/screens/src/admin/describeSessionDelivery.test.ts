@@ -91,6 +91,6 @@ describe('describeSessionDelivery', () => {
   });
 
   it('carries a sentence for a dialog, not just a word for a badge', () => {
-    expect(describeSessionDelivery(playing(PLAN)).detail).toContain('untouched');
+    expect(describeSessionDelivery(playing(PLAN)).detail).toContain('unchanged');
   });
 });

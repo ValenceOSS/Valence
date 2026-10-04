@@ -216,7 +216,7 @@ const APartyPanel = ({ kind, watchParty, mediaId, people, onClose }: APartyPanel
                       watchParty.remove(member.connectionId);
                     }}
                   >
-                    <Text style={styles.textAction}>{say('common.remove')}</Text>
+                    <Text style={styles.textAction}>{say('common.forget')}</Text>
                   </Button>
                 </View>
               )}
@@ -226,7 +226,7 @@ const APartyPanel = ({ kind, watchParty, mediaId, people, onClose }: APartyPanel
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.heading}>{say('common.partyPanel.invite')}</Text>
+        <Text style={styles.heading}>{say('common.partyPanel.ask')}</Text>
         <Text style={styles.note}>{words.invitation}</Text>
         <APanelButton
           onPress={() => {

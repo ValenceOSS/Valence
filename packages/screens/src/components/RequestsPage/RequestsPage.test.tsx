@@ -81,7 +81,7 @@ describe('RequestsPage', () => {
     renderInAShell(<RequestsPage />);
 
     expect(
-      await screen.findByRole('status', { name: 'Reading what music there is to ask for' }),
+      await screen.findByRole('status', { name: 'Loading music to request' }),
     ).toBeInTheDocument();
   });
 

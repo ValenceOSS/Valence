@@ -58,7 +58,7 @@ describe('AnEpisode', () => {
 
     expect(drawn.getByText('44:00 · 11:00 in')).toBeTruthy();
     expect(drawn.getByLabelText('Resume Pilot from 11:00')).toBeTruthy();
-    expect(drawn.getByRole('progressbar', { name: 'How far through Pilot' })).toBeTruthy();
+    expect(drawn.getByRole('progressbar', { name: 'Progress for Pilot' })).toBeTruthy();
   });
 
   it('ticks an episode somebody has seen to the end, rather than drawing a full line', async () => {

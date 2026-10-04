@@ -12,7 +12,7 @@ describe('RunProgress', () => {
           progress: {
             phase: {
               code: 'server.imports.progress.buildingTheCollections',
-              message: 'Building the collections',
+              message: 'Building collections',
               values: {},
             },
             processed: 2,
@@ -23,7 +23,7 @@ describe('RunProgress', () => {
       />,
     );
 
-    expect(screen.getByLabelText('Building the collections')).toBeInTheDocument();
+    expect(screen.getByLabelText('Building collections')).toBeInTheDocument();
     expect(screen.getByText('2 of 8')).toBeVisible();
   });
 
@@ -33,7 +33,7 @@ describe('RunProgress', () => {
     render(<RunProgress run={aMediaImportRun()} onCancel={onCancel} />);
     await userEvent.click(screen.getByRole('button', { name: 'Stop' }));
 
-    expect(screen.getByLabelText('Getting ready')).toBeInTheDocument();
+    expect(screen.getByLabelText('Preparing')).toBeInTheDocument();
     expect(onCancel).toHaveBeenCalledOnce();
   });
 });

@@ -110,7 +110,7 @@ const createIndexerClient = ({ fetch, pacer, definitions, site }: CreateIndexerC
           ? saying('requests.indexers.indexerClient.theIndexerDidNotAnswerWithin', {
               timeoutSeconds: indexer.timeoutSeconds.toString(),
             })
-          : saying('requests.indexers.indexerClient.theIndexerCouldNotBeReached'),
+          : saying('requests.indexers.indexerService.theIndexerCouldNotBeAsked'),
       );
     }
 
@@ -196,7 +196,7 @@ const createIndexerClient = ({ fetch, pacer, definitions, site }: CreateIndexerC
         });
       } catch {
         throw new IndexerFailure(
-          saying('requests.indexers.indexerClient.theIndexerCouldNotBeReached'),
+          saying('requests.indexers.indexerService.theIndexerCouldNotBeAsked'),
         );
       }
 

@@ -16,7 +16,7 @@ describe('whatWindowsSaid', () => {
   it('says something plain about anything else', () => {
     expect(whatWindowsSaid(new Error('UnknownError'))).toEqual({
       kind: 'failed',
-      reason: 'Windows could not use a passkey just now.',
+      reason: 'Windows couldn’t use a passkey. Try again.',
     });
     expect(whatWindowsSaid(null)).toMatchObject({ kind: 'failed' });
   });

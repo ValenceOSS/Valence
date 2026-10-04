@@ -302,7 +302,7 @@ const LibrariesPanel = ({
                   id: 'scanAll',
                   label: isScanningAll
                     ? say('screens.adminArea.librariesPanel.scanningAllLibraries')
-                    : say('screens.adminArea.librariesPanel.scanAllLibraries'),
+                    : say('screens.adminArea.adminSetupGuide.scanAll'),
                   icon: <Icon of={RotateCwFilledIcon} size={15} />,
                   isDisabled: isBusy || isScanningAll,
                   onChoose: onScanAll,

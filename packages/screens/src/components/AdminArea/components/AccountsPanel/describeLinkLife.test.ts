@@ -5,18 +5,18 @@ const NOW = Date.UTC(2026, 9, 2);
 
 describe('describeLinkLife', () => {
   it('counts whole days left', () => {
-    expect(describeLinkLife('2026-10-08T12:00:00.000Z', NOW)).toBe('Link works for 6 more days');
+    expect(describeLinkLife('2026-10-08T12:00:00.000Z', NOW)).toBe('Link expires in 6 days');
   });
 
   it('counts hours on the last day', () => {
-    expect(describeLinkLife('2026-10-02T05:30:00.000Z', NOW)).toBe('Link works for 5 more hours');
+    expect(describeLinkLife('2026-10-02T05:30:00.000Z', NOW)).toBe('Link expires in 5 hours');
   });
 
   it('says one hour rather than none in the last hour', () => {
-    expect(describeLinkLife('2026-10-02T00:10:00.000Z', NOW)).toBe('Link works for 1 more hour');
+    expect(describeLinkLife('2026-10-02T00:10:00.000Z', NOW)).toBe('Link expires in 1 hour');
   });
 
   it('says a link has run out', () => {
-    expect(describeLinkLife('2026-10-01T00:00:00.000Z', NOW)).toBe('Link has run out');
+    expect(describeLinkLife('2026-10-01T00:00:00.000Z', NOW)).toBe('Link expired');
   });
 });

@@ -72,7 +72,7 @@ describe('createShare', () => {
   });
 
   it('answers with nothing where the server refused', async () => {
-    fetchMock.mockResolvedValue(said(403, { error: 'This account may not share.' }));
+    fetchMock.mockResolvedValue(said(403, { error: 'This account isn’t allowed to share.' }));
 
     await expect(createShare({ kind: 'item', mediaId: MADE.mediaId })).resolves.toBeNull();
   });
@@ -194,17 +194,19 @@ describe('openShare', () => {
   });
 
   it('tells a link that has run out apart from one that never existed', async () => {
-    fetchMock.mockResolvedValue(said(410, { error: 'This link has expired.', ended: 'expired' }));
+    fetchMock.mockResolvedValue(
+      said(410, { error: 'This share link has expired.', ended: 'expired' }),
+    );
 
     const gone = await openShare('a-token');
 
     expect(gone).toEqual({
       kind: 'gone',
-      reason: 'This link has expired.',
+      reason: 'This share link has expired.',
       ended: 'expired',
     });
 
-    fetchMock.mockResolvedValue(said(404, { error: 'This link does not work.' }));
+    fetchMock.mockResolvedValue(said(404, { error: 'This link isn’t valid.' }));
 
     expect((await openShare('a-token')).kind).toBe('unknown');
   });

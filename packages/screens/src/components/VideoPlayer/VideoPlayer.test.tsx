@@ -498,11 +498,11 @@ describe('VideoPlayer', () => {
   it('reports why the server refused', async () => {
     startMock.mockResolvedValue({
       kind: 'failed',
-      reason: 'This server has no working encoder for h264.',
+      reason: 'This server has no working H.264 encoder.',
     });
     renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('no working encoder');
+    expect(await screen.findByRole('alert')).toHaveTextContent('no working H.264 encoder');
   });
 
   it('does not attach an engine when the session failed', async () => {
@@ -518,21 +518,21 @@ describe('VideoPlayer', () => {
     attachMock.mockRejectedValue(new Error('no media source'));
     renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('The stream could not be played.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Couldn’t play the stream.');
   });
 
   it('blames the browser when the browser could not decode it', async () => {
     attachMock.mockRejectedValue({ category: 3, code: 3016 });
     renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('could not decode the stream');
+    expect(await screen.findByRole('alert')).toHaveTextContent('can’t decode the stream');
   });
 
   it('says the stream never arrived when the manifest could not be read', async () => {
     attachMock.mockRejectedValue({ category: 4, code: 4032 });
     renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('could not be loaded');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Couldn’t load the stream');
   });
 
   it('stops the session and tears down the engine when closed', async () => {
@@ -1073,7 +1073,7 @@ describe('VideoPlayer', () => {
     await actor.click(await screen.findByRole('button', { name: /Audio track/ }));
     await actor.click(await screen.findByRole('menuitemradio', { name: 'English · 5.1 · AC3' }));
 
-    expect(await screen.findByRole('status', { name: 'Changing the stream' })).toBeInTheDocument();
+    expect(await screen.findByRole('status', { name: 'Switching stream' })).toBeInTheDocument();
     expect(screen.queryByRole('status', { name: 'Preparing playback' })).not.toBeInTheDocument();
   });
 
@@ -1138,13 +1138,13 @@ describe('VideoPlayer', () => {
     await actor.click(await screen.findByRole('button', { name: /Audio track/ }));
     await actor.click(await screen.findByRole('menuitemradio', { name: 'English · 5.1 · AC3' }));
 
-    await screen.findByRole('status', { name: 'Changing the stream' });
+    await screen.findByRole('status', { name: 'Switching stream' });
 
     Object.defineProperty(element, 'currentTime', { configurable: true, value: 2 });
     fireEvent.timeUpdate(element);
 
     await waitFor(() => {
-      expect(screen.queryByRole('status', { name: 'Changing the stream' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('status', { name: 'Switching stream' })).not.toBeInTheDocument();
     });
   });
 
@@ -2227,7 +2227,7 @@ describe('playing on another device', () => {
     await settled();
     await user.click(await castButton());
 
-    expect(await screen.findByText(/rather than as localhost/)).toBeInTheDocument();
+    expect(await screen.findByText(/instead of localhost/)).toBeInTheDocument();
   });
 
   it('takes the note away again rather than leaving it on the picture', async () => {
@@ -2241,14 +2241,14 @@ describe('playing on another device', () => {
     await settled();
     await user.click(await castButton());
 
-    expect(await screen.findByText(/rather than as localhost/)).toBeInTheDocument();
+    expect(await screen.findByText(/instead of localhost/)).toBeInTheDocument();
 
     await act(async () => {
       vi.advanceTimersByTime(7000);
       await Promise.resolve();
     });
 
-    expect(screen.queryByText(/rather than as localhost/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/instead of localhost/)).not.toBeInTheDocument();
 
     vi.useRealTimers();
   });
@@ -2645,7 +2645,7 @@ describe('once a device has taken the stream', () => {
 
     await connected();
 
-    expect(await screen.findByText(/would not take this stream/)).toBeInTheDocument();
+    expect(await screen.findByText(/couldn’t play this stream/)).toBeInTheDocument();
   });
 });
 
@@ -3077,14 +3077,14 @@ describe('the immersive view', () => {
 
     await actor.click(screen.getByRole('button', { name: 'Immersive view' }));
 
-    expect(screen.getByRole('button', { name: 'Leave the immersive view' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Exit immersive view' })).toBeInTheDocument();
   });
 
   it('goes back to filling the page when it is left', async () => {
     const { actor } = await watching(true);
 
     await actor.click(screen.getByRole('button', { name: 'Immersive view' }));
-    await actor.click(screen.getByRole('button', { name: 'Leave the immersive view' }));
+    await actor.click(screen.getByRole('button', { name: 'Exit immersive view' }));
 
     expect(screen.getByRole('button', { name: 'Immersive view' })).toBeInTheDocument();
   });

@@ -10,19 +10,17 @@ describe('describeProblem', () => {
   });
 
   it('says the server could not be reached when a request failed outright', () => {
-    expect(describeProblem('TypeError: Failed to fetch').headline).toBe(
-      'Valence could not be reached',
-    );
+    expect(describeProblem('TypeError: Failed to fetch').headline).toBe('Can’t reach Valence');
   });
 
   it('says when somebody is not allowed', () => {
     expect(describeProblem('Request failed with status 403').headline).toBe(
-      'You are not allowed to see this page',
+      'You don’t have access to this page',
     );
   });
 
   it('says when a page could not be found', () => {
-    expect(describeProblem('404 not found').headline).toBe('This page could not be found');
+    expect(describeProblem('404 not found').headline).toBe('Page not found');
   });
 
   it('keeps the usual words for anything it does not recognise', () => {

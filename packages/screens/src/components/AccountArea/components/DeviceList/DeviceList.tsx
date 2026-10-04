@@ -49,7 +49,7 @@ const DeviceList = () => {
 
               {!row.original.isCurrent ? null : (
                 <Badge size="sm" tone="accent">
-                  {say('screens.accountArea.deviceList.thisOne')}
+                  {say('common.thisDevice')}
                 </Badge>
               )}
             </span>

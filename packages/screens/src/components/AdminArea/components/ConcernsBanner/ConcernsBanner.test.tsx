@@ -9,7 +9,7 @@ const concern = (over: Partial<Concern> = {}): Concern => ({
   id: 'transcoder-unreachable',
   tone: 'broken',
   title: 'The media service is unreachable',
-  detail: 'Nothing that needs converting will play until it is back.',
+  detail: 'Anything that needs transcoding won’t play until it’s reachable again.',
   panel: 'overview',
   ...over,
 });

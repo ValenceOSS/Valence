@@ -63,7 +63,7 @@ const describeTogetherness = (
   const [only] = apart;
 
   if (only === undefined) {
-    return { text: say('screens.partyPanel.inSync'), isTogether: true };
+    return { text: say('common.inSync'), isTogether: true };
   }
 
   if (apart.length > 1) {
@@ -341,7 +341,7 @@ const PartyPanel = ({
                           onRemove(member.connectionId);
                         }}
                       >
-                        {say('common.remove')}
+                        {say('common.forget')}
                       </Button>
                     )}
                   </span>
@@ -354,7 +354,7 @@ const PartyPanel = ({
 
       {invitation === undefined ? null : (
         <PanelCard
-          title={say('common.partyPanel.invite')}
+          title={say('common.partyPanel.ask')}
           actions={
             <PanelCardAction
               icon={hasCopied ? CircleCheckFilledIcon : CopyFilledIcon}

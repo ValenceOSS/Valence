@@ -10,8 +10,8 @@ let db: AnyDatabase;
 beforeAll(async () => {
   db = await aPlayground();
   await db.insert(PLAYGROUND).values([
-    { id: 'a', name: 'Counted a' },
-    { id: 'b', name: 'Counted b' },
+    { id: 'a', name: 'Measured a' },
+    { id: 'b', name: 'Measured b' },
   ]);
 }, 30_000);
 

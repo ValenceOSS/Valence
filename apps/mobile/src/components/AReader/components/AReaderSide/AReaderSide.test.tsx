@@ -33,11 +33,11 @@ describe('AReaderSide', () => {
     const onFit = jest.fn();
 
     await render(aSide({ onForward, onMark, onLock, onFit }));
-    await userEvent.press(screen.getByRole('button', { name: 'Turn onwards' }));
-    await userEvent.press(screen.getByRole('button', { name: 'Mark these pages' }));
-    await userEvent.press(screen.getByRole('button', { name: 'Hold the pages still' }));
+    await userEvent.press(screen.getByRole('button', { name: 'Next page' }));
+    await userEvent.press(screen.getByRole('button', { name: 'Bookmark these pages' }));
+    await userEvent.press(screen.getByRole('button', { name: 'Lock page turning' }));
     await userEvent.press(
-      screen.getByRole('button', { name: 'Showing whole pages. Fill the width instead' }),
+      screen.getByRole('button', { name: 'Fit to page. Switch to fit to width' }),
     );
 
     expect(onForward).toHaveBeenCalled();
@@ -49,13 +49,13 @@ describe('AReaderSide', () => {
   it('offers to unmark marked pages and let held ones turn', async () => {
     await render(aSide({ isMarked: true, isLocked: true }));
 
-    expect(screen.getByRole('button', { name: 'Unmark these pages' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Let the pages turn' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Remove bookmark' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Unlock page turning' })).toBeTruthy();
   });
 
   it.each([
-    ['width', 'Filling the width. Fill the height instead'],
-    ['height', 'Filling the height. Show whole pages instead'],
+    ['width', 'Fit to width. Switch to fit to height'],
+    ['height', 'Fit to height. Switch to fit to page'],
   ] as const)(
     'says the pages are %s-filled, and what pressing changes it to',
     async (fit, says) => {
@@ -69,7 +69,7 @@ describe('AReaderSide', () => {
     await render(aSide());
 
     expect(screen.getByText('42%')).toBeTruthy();
-    expect(screen.queryByText('Read on')).toBeNull();
+    expect(screen.queryByText('Read next')).toBeNull();
   });
 
   it('offers the next chapter once it is near, in place of how far through', async () => {
@@ -79,7 +79,7 @@ describe('AReaderSide', () => {
 
     expect(screen.queryByText('42%')).toBeNull();
 
-    await userEvent.press(screen.getByRole('button', { name: 'Read on: Chapter 2' }));
+    await userEvent.press(screen.getByRole('button', { name: 'Continue reading: Chapter 2' }));
 
     expect(onReadOn).toHaveBeenCalled();
   });

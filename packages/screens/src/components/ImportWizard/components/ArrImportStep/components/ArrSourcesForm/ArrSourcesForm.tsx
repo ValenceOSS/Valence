@@ -69,7 +69,7 @@ const ArrSourcesForm = ({ rows, isDisabled, onChange, onAdd, onRemove }: ArrSour
                 }}
               >
                 <Icon of={BinFilledIcon} size={14} />
-                {say('phone.theAccount.theSecurity.removeName2', { name })}
+                {say('common.forgetName', { name })}
               </Button>
             ) : null}
           </div>

@@ -28,7 +28,7 @@ const SeasonPicker = ({ seasons, value, onChange }: SeasonPickerProps) => {
       <SegmentedRow
         size="sm"
         tone="accent"
-        label={say('screens.showDialog.seasonPicker.whichSeason')}
+        label={say('common.season')}
         items={seasons.map((one) => ({
           id: idOf(one.seasonNumber),
           label: nameSeason(one.seasonNumber),
@@ -42,7 +42,7 @@ const SeasonPicker = ({ seasons, value, onChange }: SeasonPickerProps) => {
 
   return (
     <OptionMenu
-      label={say('screens.showDialog.seasonPicker.whichSeason')}
+      label={say('common.season')}
       triggerShape="field"
       align="end"
       trigger={nameSeason(value)}

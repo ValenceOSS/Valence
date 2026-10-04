@@ -53,7 +53,7 @@ const SESSION: StartedSession = {
     },
     subtitles: {
       kind: 'none',
-      reason: { code: 'ClientSupportsSource', detail: sayVerbatim('none chosen') },
+      reason: { code: 'ClientSupportsSource', detail: sayVerbatim('none selected') },
     },
   },
   warnings: [sayVerbatim('Tone mapped'), sayVerbatim('Slow disk')],
@@ -129,9 +129,9 @@ describe('StreamStats', () => {
     expect(valuesOf(drawn, 'Media id')).toEqual(['media-1']);
     expect(drawn.getByText('session-7')).toBeTruthy();
     expect(valuesOf(drawn, 'Mode')).toEqual(['transcode']);
-    expect(valuesOf(drawn, 'Reused')).toEqual(['Yes — the whole transcode was already made']);
+    expect(valuesOf(drawn, 'Reused')).toEqual(['Yes — the whole transcode was already done']);
     expect(valuesOf(drawn, 'Starts at')).toEqual(['1:15']);
-    expect(valuesOf(drawn, 'Quality asked')).toEqual(['1080p']);
+    expect(valuesOf(drawn, 'Requested quality')).toEqual(['1080p']);
     expect(valuesOf(drawn, 'Delivery')).toEqual(['HLS']);
   });
 
@@ -191,7 +191,7 @@ describe('StreamStats', () => {
     expect(valuesOf(drawn, 'Container')).toContain('remux — mkv is not played here');
     expect(valuesOf(drawn, 'Video')).toContain('transcode — too large (1920x1080 @ 8000kbps)');
     expect(valuesOf(drawn, 'Audio')).toContain('passthrough — eac3 plays as it is');
-    expect(valuesOf(drawn, 'Subtitles')).toContain('none — none chosen');
+    expect(valuesOf(drawn, 'Subtitles')).toContain('none — none selected');
     expect(valuesOf(drawn, 'From the server')).toEqual(['Tone mapped · Slow disk']);
   });
 

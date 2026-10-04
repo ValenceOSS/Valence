@@ -42,7 +42,7 @@ describe('AShareSheet', () => {
     expect(drawn.getByText('Share Dune')).toBeTruthy();
 
     await userEvent.press(drawn.getByText('A day'));
-    await userEvent.press(drawn.getByText('Make a link'));
+    await userEvent.press(drawn.getByText('Create share link'));
 
     expect(createShare).toHaveBeenCalledWith(
       expect.objectContaining({ kind: 'book', bookId: aBook().id }),
@@ -57,9 +57,9 @@ describe('AShareSheet', () => {
       { wrapper: CacheScope },
     );
 
-    await userEvent.press(drawn.getByText('Make a link'));
+    await userEvent.press(drawn.getByText('Create share link'));
 
-    expect(await drawn.findByText(/could not be shared/u)).toBeTruthy();
+    expect(await drawn.findByText(/Couldn’t create a share link/u)).toBeTruthy();
   });
 
   it('asks whether to share an episode alone or its whole programme', async () => {

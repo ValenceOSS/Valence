@@ -328,7 +328,7 @@ const PageReader = ({
                           }),
                     }))}
                     onSelect={onChapterChange}
-                    previousLabel={say('common.previousChapter')}
+                    previousLabel={say('common.chapterBefore')}
                     nextLabel={say('common.nextChapter')}
                     {...(which > 0
                       ? {
@@ -460,13 +460,13 @@ const PageReader = ({
                   </SettingRow>
 
                   <SettingRow
-                    title={say('screens.pageReader.readingDirection')}
+                    title={say('common.readingDirection')}
                     {...(book.direction === 'rightToLeft'
                       ? { description: say('screens.pageReader.rightToLeftIsHowManga') }
                       : {})}
                   >
                     <SegmentedRow
-                      label={say('screens.pageReader.readingDirection')}
+                      label={say('common.readingDirection')}
                       size="sm"
                       items={[
                         { id: 'leftToRight', label: say('common.leftToRight') },

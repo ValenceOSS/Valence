@@ -88,7 +88,7 @@ describe('TheFilters', () => {
     );
 
     await userEvent.press(drawn.getByRole('button', { name: 'Order, Title' }));
-    await fireEvent(drawn.getByLabelText('Only what you have not watched'), 'valueChange', true);
+    await fireEvent(drawn.getByLabelText('Unwatched only'), 'valueChange', true);
 
     expect(onArrange).toHaveBeenCalledWith({ order: 'title', isHidingWatched: true });
   });

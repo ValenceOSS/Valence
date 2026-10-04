@@ -16,7 +16,7 @@ describe('describeSaving', () => {
     });
 
     expect(said).toContain('Costs');
-    expect(said).toContain('transcode');
+    expect(said).toContain('transcoding');
   });
 
   it('says nothing changes where nothing does', () => {
@@ -27,6 +27,6 @@ describe('describeSaving', () => {
     const said = describeSaving({ mode: 'replace', nowBytes: 100, afterBytes: 200 });
 
     expect(said).toContain('Costs');
-    expect(said).not.toContain('transcode');
+    expect(said).not.toContain('transcoding');
   });
 });

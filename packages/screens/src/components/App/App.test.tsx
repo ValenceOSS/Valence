@@ -311,7 +311,7 @@ describe('App routing', () => {
 
     await arrive();
 
-    expect(await screen.findByText('Who is watching?')).toBeInTheDocument();
+    expect(await screen.findByText('Who’s watching?')).toBeInTheDocument();
   });
 
   it('shows the library shell when signed in', async () => {
@@ -344,7 +344,7 @@ describe('App routing', () => {
 
     await arrive();
     await actor.click(await screen.findByRole('button', { name: 'Account' }));
-    await actor.click(await screen.findByRole('menuitem', { name: 'My Account' }));
+    await actor.click(await screen.findByRole('menuitem', { name: 'My account' }));
 
     expect(await screen.findByRole('heading', { name: 'Operator' })).toBeInTheDocument();
   });
@@ -354,7 +354,7 @@ describe('App routing', () => {
     renderTheApp();
 
     expect(
-      await screen.findByRole('heading', { name: 'Valence is not reachable' }),
+      await screen.findByRole('heading', { name: 'Can’t connect to Valence' }),
     ).toBeInTheDocument();
   });
 
@@ -366,9 +366,9 @@ describe('App routing', () => {
     );
     renderTheApp();
 
-    await screen.findByRole('heading', { name: 'Valence is not reachable' });
+    await screen.findByRole('heading', { name: 'Can’t connect to Valence' });
 
-    expect(screen.queryByText('Who is watching?')).not.toBeInTheDocument();
+    expect(screen.queryByText('Who’s watching?')).not.toBeInTheDocument();
   });
 
   it('signs out and returns to the wall of faces', async () => {
@@ -378,7 +378,7 @@ describe('App routing', () => {
 
     await arrive();
     await actor.click(await screen.findByRole('button', { name: 'Account' }));
-    await actor.click(await screen.findByRole('menuitem', { name: 'My Account' }));
+    await actor.click(await screen.findByRole('menuitem', { name: 'My account' }));
     await screen.findByText('admin@valence.test');
 
     serverState({ setup: setupComplete, session: null });
@@ -389,7 +389,7 @@ describe('App routing', () => {
     );
     await arrive();
 
-    expect(await screen.findByText('Who is watching?')).toBeInTheDocument();
+    expect(await screen.findByText('Who’s watching?')).toBeInTheDocument();
   });
 
   it('opens an item for a look rather than playing it straight away', async () => {
@@ -728,7 +728,7 @@ describe('App routing', () => {
     const rail = await screen.findByRole('region', { name: 'Recently added' });
 
     await actor.click(within(rail).getByRole('button', { name: /Arrival/ }));
-    const [more] = await screen.findAllByRole('button', { name: 'More to do with this' });
+    const [more] = await screen.findAllByRole('button', { name: 'More actions' });
 
     if (more !== undefined) {
       await actor.click(more);

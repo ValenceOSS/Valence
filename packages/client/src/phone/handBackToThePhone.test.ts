@@ -48,7 +48,7 @@ describe('handBackToThePhone', () => {
   });
 
   it('answers with nothing where the server refused', async () => {
-    fetchMock.mockResolvedValue(Response.json({ error: 'Nobody is signed in.' }, { status: 401 }));
+    fetchMock.mockResolvedValue(Response.json({ error: 'You’re not signed in.' }, { status: 401 }));
 
     expect(await handBackToThePhone(CHALLENGE)).toBeNull();
   });

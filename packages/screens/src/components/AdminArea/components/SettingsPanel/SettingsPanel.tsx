@@ -435,7 +435,7 @@ const SettingsPanel = ({
                   });
                 }}
               >
-                {say('common.remove')}
+                {say('common.forget')}
               </Button>
             )}
           </SettingRow>

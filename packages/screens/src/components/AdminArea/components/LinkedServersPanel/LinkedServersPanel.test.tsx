@@ -62,7 +62,7 @@ describe('LinkedServersPanel', () => {
       </QueryClientProvider>,
     );
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Linked servers could not be read.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Couldn’t load linked servers.');
   });
 
   it('shows this server as it was saved once it is read again, rather than as it was typed', async () => {

@@ -7,10 +7,10 @@ describe('askBeforeActing', () => {
       choices?.find((choice) => choice.text === 'Continue')?.onPress?.();
     });
 
-    await expect(askBeforeActing('Forget every show?')).resolves.toBe(true);
+    await expect(askBeforeActing('Remove every show?')).resolves.toBe(true);
     expect(alert).toHaveBeenCalledWith(
       'Are you sure?',
-      'Forget every show?',
+      'Remove every show?',
       expect.any(Array),
       expect.any(Object),
     );
@@ -21,7 +21,7 @@ describe('askBeforeActing', () => {
       choices?.find((choice) => choice.text === 'Cancel')?.onPress?.();
     });
 
-    await expect(askBeforeActing('Forget every show?')).resolves.toBe(false);
+    await expect(askBeforeActing('Remove every show?')).resolves.toBe(false);
   });
 
   it('does not go ahead when the alert is dismissed', async () => {
@@ -29,6 +29,6 @@ describe('askBeforeActing', () => {
       options?.onDismiss?.();
     });
 
-    await expect(askBeforeActing('Forget every show?')).resolves.toBe(false);
+    await expect(askBeforeActing('Remove every show?')).resolves.toBe(false);
   });
 });

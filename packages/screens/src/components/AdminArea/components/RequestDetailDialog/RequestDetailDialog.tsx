@@ -25,9 +25,9 @@ import type { RequestDetailDialogProps, RequestDetailTab } from './RequestDetail
 import { say } from '@ValenceI18n/say';
 
 const TABS: readonly { id: RequestDetailTab; label: string }[] = [
-  { id: 'going', label: say('screens.adminArea.requestDetailDialog.howItIsGoing') },
+  { id: 'going', label: say('common.progress') },
   { id: 'releases', label: say('common.releases') },
-  { id: 'history', label: say('common.whatItHasDone') },
+  { id: 'history', label: say('common.history') },
   { id: 'blocked', label: say('screens.adminArea.requestDetailDialog.neverAgain') },
 ];
 

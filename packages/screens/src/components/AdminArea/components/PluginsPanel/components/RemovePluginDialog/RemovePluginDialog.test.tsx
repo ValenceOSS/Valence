@@ -38,15 +38,15 @@ describe('RemovePluginDialog', () => {
       />,
     );
 
-    expect(await screen.findByText('4.0 KB it kept is deleted.')).toBeInTheDocument();
+    expect(await screen.findByText('4.0 KB of plugin data is deleted.')).toBeInTheDocument();
     expect(
       screen.getByText(
-        '1 account connected to AniList is forgotten, and AniList is asked to cancel access.',
+        '1 account connected to AniList is disconnected, and AniList is asked to revoke access.',
       ),
     ).toBeInTheDocument();
     expect(fetchPluginRemoval).toHaveBeenCalledWith('anilist');
 
-    await userEvent.click(screen.getByRole('button', { name: 'Turn it off' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Disable plugin' }));
     await userEvent.click(screen.getByRole('button', { name: 'Remove it' }));
 
     expect(onTurnOff).toHaveBeenCalledOnce();
@@ -67,9 +67,9 @@ describe('RemovePluginDialog', () => {
     );
 
     expect(
-      await screen.findByText('It kept nothing, and nobody connected an account to it.'),
+      await screen.findByText('It has no saved data and no connected accounts.'),
     ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Turn it off' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Disable plugin' })).not.toBeInTheDocument();
   });
 
   it('still lets a plugin go when what it kept cannot be read', async () => {
@@ -85,7 +85,7 @@ describe('RemovePluginDialog', () => {
       />,
     );
 
-    expect(await screen.findByText(/could not say what it kept/u)).toBeInTheDocument();
+    expect(await screen.findByText(/couldn’t list the plugin’s saved data/u)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Remove it' })).toBeEnabled();
   });
 });

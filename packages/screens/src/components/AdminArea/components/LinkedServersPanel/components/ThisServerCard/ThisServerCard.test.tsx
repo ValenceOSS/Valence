@@ -55,7 +55,7 @@ describe('ThisServerCard', () => {
     renderInAnAddress(<ThisServerCard identity={IDENTITY} />);
 
     await userEvent.click(
-      screen.getByRole('switch', { name: 'Drop requests a linked server has' }),
+      screen.getByRole('switch', { name: 'Remove requests a linked server already has' }),
     );
 
     await waitFor(() => {

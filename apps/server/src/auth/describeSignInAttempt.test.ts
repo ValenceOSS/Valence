@@ -44,8 +44,8 @@ describe('describeSignInAttempt', () => {
       attempted({ statusCode: 401, identifier: 'nobody@example.com' }),
     );
 
-    expect(wrongPassword?.data).toMatchObject({ reason: 'those details were not accepted.' });
-    expect(noSuchAccount?.data).toMatchObject({ reason: 'those details were not accepted.' });
+    expect(wrongPassword?.data).toMatchObject({ reason: 'those details weren’t accepted.' });
+    expect(noSuchAccount?.data).toMatchObject({ reason: 'those details weren’t accepted.' });
   });
 
   it('says nothing about a request that was not a sign-in', () => {
@@ -80,6 +80,6 @@ describe('describeSignInAttempt', () => {
     const occurrence = describeSignInAttempt(attempted({ statusCode: 401, identifier: null }));
 
     expect(occurrence?.event).toBe('auth.failed');
-    expect(occurrence?.data).toMatchObject({ identifier: 'somebody who gave no address' });
+    expect(occurrence?.data).toMatchObject({ identifier: 'someone who didn’t give an address' });
   });
 });

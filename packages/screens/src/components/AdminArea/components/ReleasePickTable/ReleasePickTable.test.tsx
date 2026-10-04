@@ -58,7 +58,7 @@ describe('ReleasePickTable', () => {
 
     expect(screen.getByText('Jackett: 1 in 0.9s')).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Fetch this' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Download' }));
 
     expect(onPick).toHaveBeenCalledWith(RELEASE);
   });
@@ -74,7 +74,7 @@ describe('ReleasePickTable', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: 'Fetch this' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Download' })).toBeDisabled();
 
     rerender(
       <ReleasePickTable

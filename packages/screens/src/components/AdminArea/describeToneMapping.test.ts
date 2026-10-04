@@ -5,7 +5,7 @@ describe('describeToneMapping', () => {
   it('names the filters the card proved rather than the one behind them', () => {
     const mapper = describeToneMapping('libplacebo', ['tonemap_vaapi', 'vpp_qsv']);
 
-    expect(mapper.label).toBe('tonemap_vaapi, vpp_qsv on the device');
+    expect(mapper.label).toBe('tonemap_vaapi, vpp_qsv on the GPU');
   });
 
   it('warns about nothing where the card converts and software stands behind it', () => {
@@ -29,8 +29,8 @@ describe('describeToneMapping', () => {
   it('says what a card with no software behind it cannot cover', () => {
     const mapper = describeToneMapping('unavailable', ['tonemap_videotoolbox']);
 
-    expect(mapper.label).toBe('tonemap_videotoolbox on the device');
-    expect(mapper.detail).toContain('passed through untouched');
+    expect(mapper.label).toBe('tonemap_videotoolbox on the GPU');
+    expect(mapper.detail).toContain('plays without tone mapping');
   });
 
   it('tells the two machines Valence is built and shipped on apart', () => {

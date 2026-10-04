@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { useMountArrival } from '@ValenceScreens/motion/useMountArrival';
+import { fadeVariants, stillTransition } from '@ValenceUI/animations/reveal';
 import { Info as InfoIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { HoverCard } from '@ValenceUI/HoverCard';
@@ -27,12 +27,17 @@ const COLUMN_CLASSES: Record<number, string> = {
  * @param stats - The figures to show, in the order they should read.
  */
 const StatStrip = ({ stats }: StatStripProps) => {
-  const arrivalOf = useMountArrival(stats.length);
-
   return (
     <div className={`grid grid-cols-2 gap-3 ${COLUMN_CLASSES[stats.length] ?? 'lg:grid-cols-4'}`}>
-      {stats.map((stat, at) => (
-        <motion.dl key={stat.label} {...arrivalOf(at)} className="min-w-0">
+      {stats.map((stat) => (
+        <motion.dl
+          key={stat.label}
+          variants={fadeVariants}
+          initial="hidden"
+          animate="shown"
+          transition={stillTransition}
+          className="min-w-0"
+        >
           <StatTile
             label={stat.label}
             value={stat.value}

@@ -10,10 +10,10 @@ describe('describeCodecTrade', () => {
   });
 
   it('says what the older codec buys, which is that everything plays it', () => {
-    expect(describeCodecTrade('h264')).toContain('everything');
+    expect(describeCodecTrade('h264')).toContain('every device');
   });
 
   it('names the bill as well as the saving for the newest one', () => {
-    expect(describeCodecTrade('av1')).toContain('every play');
+    expect(describeCodecTrade('av1')).toContain('every time it plays');
   });
 });

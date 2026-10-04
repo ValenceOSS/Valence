@@ -173,7 +173,7 @@ const FOUND: ReleaseSearchOutcome = {
       indexerName: 'Flaky',
       found: 0,
       tookMs: 30000,
-      problem: sayVerbatim('The indexer did not answer within 30 seconds'),
+      problem: sayVerbatim('The indexer didn’t respond within 30 seconds'),
       problemCode: null,
     },
   ],
@@ -277,7 +277,7 @@ describe('ReleaseSearchPanel', () => {
 
     expect(await screen.findByText('Jackett: 2 in 1.2s')).toBeInTheDocument();
     expect(
-      screen.getByText('Flaky: The indexer did not answer within 30 seconds'),
+      screen.getByText('Flaky: The indexer didn’t respond within 30 seconds'),
     ).toBeInTheDocument();
   });
 
@@ -343,12 +343,12 @@ describe('ReleaseSearchPanel', () => {
     await user.click(
       await screen.findByRole('button', { name: 'Actions for Dune.Part.Two.2024.2160p' }),
     );
-    await user.click(await screen.findByRole('menuitem', { name: /Copy the magnet link/ }));
+    await user.click(await screen.findByRole('menuitem', { name: /Copy magnet link/ }));
 
     await waitFor(async () => {
       expect(await navigator.clipboard.readText()).toBe('magnet:?xt=urn:btih:abc');
     });
-    expect(await screen.findByText('The magnet link has been copied.')).toBeInTheDocument();
+    expect(await screen.findByText('Copied the magnet link.')).toBeInTheDocument();
   });
 
   it('saves a release fetched through Valence', async () => {
@@ -360,7 +360,7 @@ describe('ReleaseSearchPanel', () => {
     await user.click(
       await screen.findByRole('button', { name: 'Actions for Dune.Part.Two.2024.2160p' }),
     );
-    await user.click(await screen.findByRole('menuitem', { name: /Save the torrent/ }));
+    await user.click(await screen.findByRole('menuitem', { name: /Save torrent file/ }));
 
     expect(await screen.findByText('Saved Dune.Part.Two.2024.2160p.')).toBeInTheDocument();
     expect(fetchRelease).toHaveBeenCalledWith(JACKETT, 'http://jackett/dl/1');
@@ -381,16 +381,16 @@ describe('ReleaseSearchPanel', () => {
     await user.click(
       await screen.findByRole('button', { name: 'Actions for Dune.Part.Two.2024.NZB' }),
     );
-    await user.click(await screen.findByRole('menuitem', { name: /Save the NZB/ }));
+    await user.click(await screen.findByRole('menuitem', { name: /Save NZB file/ }));
 
     expect(
-      await screen.findByText('That release is a magnet link, which has been copied.'),
+      await screen.findByText('That release is a magnet link, so it was copied to the clipboard.'),
     ).toBeInTheDocument();
     expect(await navigator.clipboard.readText()).toBe('magnet:?xt=urn:btih:zzz');
   });
 
   it('says why a release could not be saved', async () => {
-    fetchRelease.mockResolvedValue({ value: null, refusal: { message: 'The site answered 410' } });
+    fetchRelease.mockResolvedValue({ value: null, refusal: { message: 'The site returned 410' } });
 
     const user = userEvent.setup();
 
@@ -400,15 +400,15 @@ describe('ReleaseSearchPanel', () => {
     await user.click(
       await screen.findByRole('button', { name: 'Actions for Dune.Part.Two.2024.2160p' }),
     );
-    await user.click(await screen.findByRole('menuitem', { name: /Save the torrent/ }));
+    await user.click(await screen.findByRole('menuitem', { name: /Save torrent file/ }));
 
-    expect(await screen.findByText('The site answered 410')).toBeInTheDocument();
+    expect(await screen.findByText('The site returned 410')).toBeInTheDocument();
 
     fetchRelease.mockResolvedValue({ value: null, refusal: null });
     await user.click(screen.getByRole('button', { name: 'Actions for Dune.Part.Two.2024.2160p' }));
-    await user.click(await screen.findByRole('menuitem', { name: /Save the torrent/ }));
+    await user.click(await screen.findByRole('menuitem', { name: /Save torrent file/ }));
 
-    expect(await screen.findByText('The torrent could not be fetched.')).toBeInTheDocument();
+    expect(await screen.findByText('Couldn’t download the torrent.')).toBeInTheDocument();
   });
 
   it('sends a release to the first torrent client that is on', async () => {
@@ -492,10 +492,10 @@ describe('ReleaseSearchPanel', () => {
           'Dune.Part.Two.2024.1080p.BluRay',
           1100,
           [],
-          ['1080p, the first choice', 'Blu-ray, the first choice'],
+          ['1080p, the first preference', 'Blu-ray, the first preference'],
         ),
-        aJudgement('Dune.Part.Two.2024.720p.WEB', 900, [], ['720p, the second choice']),
-        aJudgement('Dune.Part.Two.2024.2160p', 0, ['2160p is not one this profile takes'], []),
+        aJudgement('Dune.Part.Two.2024.720p.WEB', 900, [], ['720p, the second preference']),
+        aJudgement('Dune.Part.Two.2024.2160p', 0, ['2160p isn’t allowed by this profile'], []),
       ],
       pickedId: 'Dune.Part.Two.2024.1080p.BluRay',
     });
@@ -504,7 +504,7 @@ describe('ReleaseSearchPanel', () => {
 
     renderInAnAddress(<ReleaseSearchPanel />);
 
-    await user.click(screen.getByRole('button', { name: 'Judge against' }));
+    await user.click(screen.getByRole('button', { name: 'Score against' }));
     await user.click(await screen.findByRole('menuitemradio', { name: 'HD' }));
     await user.type(screen.getByRole('spinbutton', { name: /Running time/ }), '166');
     await searchFor(user, 'dune');
@@ -514,10 +514,10 @@ describe('ReleaseSearchPanel', () => {
     const rows = screen.getAllByRole('row').map((row) => row.textContent);
 
     expect(rows[1]).toContain('Dune.Part.Two.2024.1080p.BluRay');
-    expect(rows[1]).toContain('1080p, the first choice. Blu-ray, the first choice');
+    expect(rows[1]).toContain('1080p, the first preference. Blu-ray, the first preference');
     expect(rows[2]).toContain('Scores 900');
-    expect(rows[3]).toContain('Refused');
-    expect(rows[3]).toContain('2160p is not one this profile takes');
+    expect(rows[3]).toContain('Declined');
+    expect(rows[3]).toContain('2160p isn’t allowed by this profile');
     expect(searchReleases).toHaveBeenCalledWith({
       query: 'dune',
       mode: 'search',
@@ -531,7 +531,7 @@ describe('ReleaseSearchPanel', () => {
 
     renderInAnAddress(<ReleaseSearchPanel />);
 
-    await user.click(screen.getByRole('button', { name: 'Judge against' }));
+    await user.click(screen.getByRole('button', { name: 'Score against' }));
     await user.click(await screen.findByRole('menuitemradio', { name: 'HD' }));
     await searchFor(user, 'dune');
 
@@ -543,15 +543,15 @@ describe('ReleaseSearchPanel', () => {
       });
     });
 
-    await user.click(screen.getByRole('button', { name: 'Judge against' }));
+    await user.click(screen.getByRole('button', { name: 'Score against' }));
     await user.click(await screen.findByRole('menuitemradio', { name: 'Lossless' }));
 
     expect(screen.queryByRole('spinbutton', { name: /Running time/ })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Judge against' }));
+    await user.click(screen.getByRole('button', { name: 'Score against' }));
     await user.click(await screen.findByRole('menuitemradio', { name: 'No profile' }));
 
-    expect(screen.getByRole('button', { name: 'Judge against' })).toHaveTextContent('No profile');
+    expect(screen.getByRole('button', { name: 'Score against' })).toHaveTextContent('No profile');
   });
 
   it('offers only the profiles that judge what is being searched for', async () => {
@@ -559,14 +559,14 @@ describe('ReleaseSearchPanel', () => {
 
     renderInAnAddress(<ReleaseSearchPanel />);
 
-    await user.click(screen.getByRole('button', { name: 'Judge against' }));
+    await user.click(screen.getByRole('button', { name: 'Score against' }));
     await user.click(await screen.findByRole('menuitemradio', { name: 'Lossless' }));
 
     await user.click(screen.getByRole('button', { name: 'Films' }));
 
-    expect(screen.getByRole('button', { name: 'Judge against' })).toHaveTextContent('No profile');
+    expect(screen.getByRole('button', { name: 'Score against' })).toHaveTextContent('No profile');
 
-    await user.click(screen.getByRole('button', { name: 'Judge against' }));
+    await user.click(screen.getByRole('button', { name: 'Score against' }));
 
     expect(await screen.findByRole('menuitemradio', { name: 'HD' })).toBeInTheDocument();
     expect(screen.queryByRole('menuitemradio', { name: 'Lossless' })).not.toBeInTheDocument();
@@ -577,11 +577,11 @@ describe('ReleaseSearchPanel', () => {
 
     renderInAnAddress(<ReleaseSearchPanel />);
 
-    await user.click(screen.getByRole('button', { name: 'Judge against' }));
+    await user.click(screen.getByRole('button', { name: 'Score against' }));
     await user.click(await screen.findByRole('menuitemradio', { name: 'HD' }));
 
     await user.click(screen.getByRole('button', { name: 'Books' }));
-    await user.click(screen.getByRole('button', { name: 'Judge against' }));
+    await user.click(screen.getByRole('button', { name: 'Score against' }));
 
     expect(await screen.findByRole('menuitemradio', { name: 'No profile' })).toBeInTheDocument();
     expect(screen.queryByRole('menuitemradio', { name: 'HD' })).not.toBeInTheDocument();
@@ -590,7 +590,7 @@ describe('ReleaseSearchPanel', () => {
   it('says why a release could not be sent', async () => {
     sendRelease.mockResolvedValueOnce({
       value: null,
-      refusal: { message: 'qBittorrent could not be reached' },
+      refusal: { message: 'Couldn’t connect to qBittorrent' },
     });
     sendRelease.mockResolvedValueOnce({ value: null, refusal: null });
 
@@ -601,8 +601,8 @@ describe('ReleaseSearchPanel', () => {
     await searchFor(user, 'dune');
 
     for (const said of [
-      'qBittorrent could not be reached',
-      'Dune.Part.Two.2024.2160p could not be sent.',
+      'Couldn’t connect to qBittorrent',
+      'Couldn’t send Dune.Part.Two.2024.2160p.',
     ]) {
       await user.click(
         await screen.findByRole('button', { name: 'Actions for Dune.Part.Two.2024.2160p' }),
@@ -664,7 +664,7 @@ describe('ReleaseSearchPanel', () => {
 
     await searchFor(user, 'dune');
 
-    expect(await screen.findByText(/No indexer is switched on/)).toBeInTheDocument();
+    expect(await screen.findByText(/No indexers are enabled/)).toBeInTheDocument();
   });
 
   it('says so when nothing was found', async () => {

@@ -134,7 +134,7 @@ describe('WebhookFields', () => {
     const { onChange } = draw();
 
     await openPane(user, 'Who');
-    await user.click(screen.getByRole('button', { name: 'One for each thing' }));
+    await user.click(screen.getByRole('button', { name: 'One per item' }));
 
     expect(changedTo(onChange).filters.mediaAdded).toBe('perItem');
   });
@@ -211,8 +211,8 @@ describe('WebhookFields', () => {
     draw();
     await openPane(user, 'Events');
 
-    expect(screen.getByRole('switch', { name: 'Sign-in refused' })).toHaveAccessibleDescription(
-      /Rate-limited attempts are refused/,
+    expect(screen.getByRole('switch', { name: 'Sign-in rejected' })).toHaveAccessibleDescription(
+      /Rate-limited attempts are blocked/,
     );
   });
 });

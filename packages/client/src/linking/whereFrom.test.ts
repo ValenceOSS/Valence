@@ -12,7 +12,7 @@ describe('whereFrom', () => {
 
   it('says the server cannot be reached, where it cannot', () => {
     expect(whereFrom({ name: 'Films', label: 'From Films', isReachable: false })).toBe(
-      'Films cannot be reached right now. Its titles can be browsed, but not played until it is back.',
+      'Films can’t be reached right now. You can browse its titles, but you can’t play them until it’s back online.',
     );
   });
 });

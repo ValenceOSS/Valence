@@ -125,10 +125,7 @@ describe('MusicLibrary', () => {
     renderInAnAddress(<MusicLibrary />);
 
     await screen.findByRole('button', { name: /Sunday morning/ });
-    await userEvent.type(
-      screen.getByRole('searchbox', { name: 'Find in your library' }),
-      'arcadia',
-    );
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Search your library' }), 'arcadia');
 
     expect(screen.queryByRole('button', { name: /Sunday morning/ })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Even In Arcadia/ })).toBeInTheDocument();

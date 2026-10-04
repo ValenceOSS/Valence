@@ -60,7 +60,7 @@ const ArrQueueTable = ({ queue }: ArrQueueTableProps) => {
           return (
             <span className="flex flex-col gap-1">
               <ProgressBar
-                label={say('common.howMuchOfTitleHasArrived', { title: row.original.title })}
+                label={say('common.howFarTitleHasDownloaded', { title: row.original.title })}
                 value={Math.round(row.original.progress * 1000) / 10}
                 readout={
                   <AnimatedNumber

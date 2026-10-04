@@ -39,10 +39,10 @@ describe('fetchArtworkChoices', () => {
   });
 
   it('passes on the server’s own words when it refuses', async () => {
-    answering(404, { error: 'This is not matched to the catalogue yet. Correct the match first.' });
+    answering(404, { error: 'This isn’t matched to the catalogue yet. Fix the match first.' });
 
     expect(await fetchArtworkChoices('stray')).toEqual({
-      problem: 'This is not matched to the catalogue yet. Correct the match first.',
+      problem: 'This isn’t matched to the catalogue yet. Fix the match first.',
     });
   });
 
@@ -53,7 +53,7 @@ describe('fetchArtworkChoices', () => {
     );
 
     expect(await fetchArtworkChoices('film-1')).toEqual({
-      problem: 'The server could not be reached.',
+      problem: 'Couldn’t reach the server.',
     });
   });
 });

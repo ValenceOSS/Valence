@@ -37,9 +37,9 @@ describe('FulfilmentFields', () => {
 
     draw();
 
-    expect(screen.getByLabelText('Reading the app’s folders and profiles…')).toBeInTheDocument();
+    expect(screen.getByLabelText('Loading the app’s folders and profiles…')).toBeInTheDocument();
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'The app’s folders and profiles could not be read.',
+      'Couldn’t load the app’s folders and profiles.',
     );
   });
 

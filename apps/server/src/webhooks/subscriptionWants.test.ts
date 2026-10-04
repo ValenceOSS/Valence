@@ -48,7 +48,7 @@ const aRefusal: WebhookOccurrence = {
     identifier: 'ada@example.com',
     deviceLabel: 'Chrome on macOS',
     address: null,
-    reason: 'those details were not accepted.',
+    reason: 'those details weren’t accepted.',
   },
 };
 

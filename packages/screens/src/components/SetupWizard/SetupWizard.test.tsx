@@ -176,7 +176,7 @@ const renderWizard = (props: Partial<SetupWizardProps> = {}) =>
   });
 
 const reachAccess = async (email = '') => {
-  await userEvent.click(screen.getByRole('button', { name: 'Make your account' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Create your account' }));
   await userEvent.type(await screen.findByLabelText('Name'), '  Operator  ');
   await userEvent.type(screen.getByLabelText('Username'), 'operator');
 
@@ -185,7 +185,7 @@ const reachAccess = async (email = '') => {
   }
 
   await userEvent.type(screen.getByLabelText('Password'), 'a-long-enough-password');
-  await userEvent.type(screen.getByLabelText('Type it again'), 'a-long-enough-password');
+  await userEvent.type(screen.getByLabelText('Confirm password'), 'a-long-enough-password');
   await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
   await screen.findByRole('button', { name: 'Create my account' });
 };
@@ -222,14 +222,14 @@ describe('SetupWizard', () => {
   it('walks from the welcome to the account and back again', async () => {
     renderWizard();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Make your account' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Create your account' }));
 
     expect(await screen.findByRole('heading', { name: 'Your account' })).toBeInTheDocument();
     expect(currentStep()).toHaveTextContent('Your account');
 
     await userEvent.click(screen.getByRole('button', { name: 'Back' }));
 
-    expect(await screen.findByRole('button', { name: 'Make your account' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Create your account' })).toBeInTheDocument();
   });
 
   it('keeps what was typed into the account when coming back to it', async () => {
@@ -247,14 +247,12 @@ describe('SetupWizard', () => {
     await reachAccess();
 
     expect(
-      screen.getByRole('button', { name: 'Stop trusting http://192.168.1.40:8420' }),
+      screen.getByRole('button', { name: 'Remove http://192.168.1.40:8420' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Stop trusting http://192.168.1.40:5173' }),
+      screen.getByRole('button', { name: 'Remove http://192.168.1.40:5173' }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('switch', { name: 'This server is reached over HTTPS' }),
-    ).not.toBeChecked();
+    expect(screen.getByRole('switch', { name: 'Valence is served over HTTPS' })).not.toBeChecked();
   });
 
   it('turns secure cookies on for a server reached over HTTPS', async () => {
@@ -264,7 +262,7 @@ describe('SetupWizard', () => {
 
     await reachAccess();
 
-    expect(screen.getByRole('switch', { name: 'This server is reached over HTTPS' })).toBeChecked();
+    expect(screen.getByRole('switch', { name: 'Valence is served over HTTPS' })).toBeChecked();
   });
 
   it('makes the administrator from what was typed, with no address where none was given', async () => {
@@ -286,12 +284,8 @@ describe('SetupWizard', () => {
     renderWizard();
 
     await reachAccess('admin@valence.test');
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Stop trusting http://192.168.1.40:5173' }),
-    );
-    await userEvent.click(
-      screen.getByRole('switch', { name: 'This server is reached over HTTPS' }),
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'Remove http://192.168.1.40:5173' }));
+    await userEvent.click(screen.getByRole('switch', { name: 'Valence is served over HTTPS' }));
     await userEvent.click(screen.getByRole('button', { name: 'Create my account' }));
 
     await waitFor(() => {
@@ -358,7 +352,7 @@ describe('SetupWizard', () => {
     await createAccount();
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Setup could not be completed. Check the details and try again.',
+      'Couldn’t complete setup. Check the details and try again.',
     );
   });
 
@@ -409,7 +403,7 @@ describe('SetupWizard', () => {
     expect(screen.getByText('A catalogue key for titles and artwork')).toBeInTheDocument();
     expect(screen.getByText('2 libraries')).toBeInTheDocument();
     expect(screen.getByText('Imported from your old server')).toBeInTheDocument();
-    expect(screen.queryByText('Start Valence again')).not.toBeInTheDocument();
+    expect(screen.queryByText('Restart Valence')).not.toBeInTheDocument();
   });
 
   it('says a skipped catalogue key and a needed restart at the end', async () => {
@@ -428,10 +422,10 @@ describe('SetupWizard', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Import done' }));
 
     expect(
-      await screen.findByText('No catalogue key yet: add one in Settings when you are ready'),
+      await screen.findByText('No catalogue key yet: add one in Settings when you’re ready'),
     ).toBeInTheDocument();
     expect(screen.getByText('No libraries yet: add them in Settings')).toBeInTheDocument();
-    expect(screen.getByText('Start Valence again')).toBeInTheDocument();
+    expect(screen.getByText('Restart Valence')).toBeInTheDocument();
   });
 
   it('closes the setup flow and the household onboarding before opening Valence', async () => {

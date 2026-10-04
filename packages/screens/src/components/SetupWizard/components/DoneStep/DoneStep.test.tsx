@@ -41,7 +41,7 @@ describe('DoneStep', () => {
     renderDone({ hasCatalogueKey: false, libraryCount: 0, imported: 'fresh' });
 
     expect(
-      screen.getByText('No catalogue key yet: add one in Settings when you are ready'),
+      screen.getByText('No catalogue key yet: add one in Settings when you’re ready'),
     ).toBeInTheDocument();
     expect(screen.getByText('No libraries yet: add them in Settings')).toBeInTheDocument();
     expect(screen.getByText('Started fresh, with nothing imported')).toBeInTheDocument();
@@ -73,12 +73,12 @@ describe('DoneStep', () => {
   it('warns that the HTTPS choice needs Valence started again, only where it does', () => {
     const { unmount } = renderDone({ restartRequired: true });
 
-    expect(screen.getByText('Start Valence again')).toBeInTheDocument();
+    expect(screen.getByText('Restart Valence')).toBeInTheDocument();
 
     unmount();
     renderDone();
 
-    expect(screen.queryByText('Start Valence again')).not.toBeInTheDocument();
+    expect(screen.queryByText('Restart Valence')).not.toBeInTheDocument();
   });
 
   it('opens Valence once they say they are ready', async () => {

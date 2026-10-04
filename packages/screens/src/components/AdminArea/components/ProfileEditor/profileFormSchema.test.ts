@@ -81,14 +81,14 @@ describe('profileFormSchema', () => {
   });
 
   it.each<[Partial<ProfileForm>, string]>([
-    [{ name: ' ' }, 'Give the profile a name.'],
+    [{ name: ' ' }, 'Enter a name for the profile.'],
     [{ resolutions: [] }, 'Allow at least one resolution.'],
     [{ kind: 'music', musicQualities: [] }, 'Allow at least one format.'],
-    [{ kind: 'music', smallestMb: 'lots' }, 'A size is a number of megabytes.'],
-    [{ kind: 'music', largestMb: '0' }, 'A size is a number of megabytes.'],
+    [{ kind: 'music', smallestMb: 'lots' }, 'Enter sizes in megabytes.'],
+    [{ kind: 'music', largestMb: '0' }, 'Enter sizes in megabytes.'],
     [
       { kind: 'music', smallestMb: '900', largestMb: '800' },
-      'The largest size has to be more than the smallest.',
+      'The largest size must be more than the smallest.',
     ],
   ])('says what is wrong with %o', (change, problem) => {
     expect(read({ ...FILLED, ...change })).toEqual({

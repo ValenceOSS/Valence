@@ -12,7 +12,7 @@ describe('whatTheFilesSay', () => {
         FOUR_K,
       ),
     ).toEqual(
-      'Its file, Spider-Man.Brand.New.Day.2026.V3.1080p.TELESYNC.x264-DKS_rxl1.mp4, is 1080p, which this profile does not take',
+      'Its file, Spider-Man.Brand.New.Day.2026.V3.1080p.TELESYNC.x264-DKS_rxl1.mp4, is 1080p, which this profile doesn’t allow',
     );
   });
 

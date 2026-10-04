@@ -39,7 +39,7 @@ describe('FaceEditor', () => {
     );
 
     await userEvent.click(screen.getByRole('button', { name: 'Set it in Manrope' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Use this face' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Use this picture' }));
 
     await waitFor(() => {
       expect(onUse).toHaveBeenCalledWith({
@@ -71,6 +71,6 @@ describe('FaceEditor', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Photo' }));
 
-    expect(screen.getByRole('button', { name: 'Use this face' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Use this picture' })).toBeDisabled();
   });
 });

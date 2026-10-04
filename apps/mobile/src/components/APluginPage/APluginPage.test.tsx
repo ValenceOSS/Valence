@@ -25,8 +25,8 @@ const page = SurfaceSchema.parse({
     },
     {
       type: 'button',
-      label: 'Forget everything',
-      action: { id: 'forget', confirm: 'Forget every show?' },
+      label: 'Clear all history',
+      action: { id: 'forget', confirm: 'Remove every show?' },
     },
   ],
 });
@@ -50,12 +50,12 @@ describe('APluginPage', () => {
       wrapper: CacheScope,
     });
 
-    await userEvent.press(await drawn.findByText('Forget everything'));
+    await userEvent.press(await drawn.findByText('Clear all history'));
 
     expect(await drawn.findByText('Connected as dan.')).toBeTruthy();
     expect(actOnPluginSurface).toHaveBeenCalledWith(
       { kind: 'page', pluginId: 'anilist', pageId: 'tracking' },
-      { action: { id: 'forget', confirm: 'Forget every show?' }, fields: {} },
+      { action: { id: 'forget', confirm: 'Remove every show?' }, fields: {} },
     );
   });
 
@@ -87,20 +87,22 @@ describe('APluginPage', () => {
       wrapper: CacheScope,
     });
 
-    await userEvent.press(await drawn.findByText('Forget everything'));
+    await userEvent.press(await drawn.findByText('Clear all history'));
 
     expect(actOnPluginSurface).not.toHaveBeenCalled();
   });
 
   it('says so in its own words where a press fails', async () => {
-    jest.mocked(actOnPluginSurface).mockRejectedValue(new Error('The plugin could not do that.'));
+    jest
+      .mocked(actOnPluginSurface)
+      .mockRejectedValue(new Error('The plugin couldn’t complete that action.'));
     const drawn = await render(<APluginPage pluginId="anilist" pageId="tracking" />, {
       wrapper: CacheScope,
     });
 
     await userEvent.press(await drawn.findByText('Connect AniList'));
 
-    expect(await drawn.findByText('The plugin could not do that.')).toBeTruthy();
+    expect(await drawn.findByText('The plugin couldn’t complete that action.')).toBeTruthy();
   });
 
   it('offers to try again where the page cannot be read', async () => {

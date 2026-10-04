@@ -448,7 +448,7 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
                       follow({ part: entry.part, anchor: entry.anchor });
                     }
                   }}
-                  previousLabel={say('common.previousChapter')}
+                  previousLabel={say('common.chapterBefore')}
                   nextLabel={say('common.nextChapter')}
                   {...(current !== null && current > 0
                     ? {
@@ -546,7 +546,7 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
         footer={
           <>
             <Slider
-              label={say('screens.textReader.howFarThroughTheBook')}
+              label={say('screens.bookDialog.howFarThrough')}
               tone="overlay"
               value={dragged ?? Math.round(fraction * SLIDER_STEPS)}
               max={SLIDER_STEPS}

@@ -74,7 +74,7 @@ describe('PartyPanel', () => {
     expect(screen.getByText(/1 listening/)).toBeInTheDocument();
     expect(screen.getByText('Listening')).toBeInTheDocument();
     expect(screen.getByText('Not listening')).toBeInTheDocument();
-    expect(screen.getByText(/listening along/)).toBeInTheDocument();
+    expect(screen.getByText(/listen along/)).toBeInTheDocument();
   });
 
   it('marks which one is you', () => {
@@ -86,19 +86,23 @@ describe('PartyPanel', () => {
   it('says who is keeping time', () => {
     render(<PartyPanel party={party()} meConnectionId="dan" />);
 
-    expect(screen.getByText('Keeping time')).toBeInTheDocument();
+    expect(screen.getByText('Sync leader')).toBeInTheDocument();
   });
 
   it('draws nobody on a timeline until it knows how long the title is', () => {
     render(<PartyPanel party={party()} meConnectionId="dan" />);
 
-    expect(screen.queryByRole('group', { name: 'Where everybody is' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('group', { name: 'Each member’s position in the party' }),
+    ).not.toBeInTheDocument();
   });
 
   it('puts everybody on one timeline, each saying who they are and where', () => {
     render(<PartyPanel party={party()} meConnectionId="dan" durationSeconds={6000} />);
 
-    expect(screen.getByRole('group', { name: 'Where everybody is' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('group', { name: 'Each member’s position in the party' }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'Dan, at 1:40' })).toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'Sam, at 1:40' })).toBeInTheDocument();
     expect(screen.getByText('1:40:00')).toBeInTheDocument();
@@ -132,7 +136,7 @@ describe('PartyPanel', () => {
 
     render(<PartyPanel party={drifted} meConnectionId="dan" durationSeconds={6000} />);
 
-    expect(screen.getByText('2 out of step')).toBeInTheDocument();
+    expect(screen.getByText('2 out of sync')).toBeInTheDocument();
   });
 
   it('does not count somebody who is not watching as out of step', () => {
@@ -201,7 +205,7 @@ describe('PartyPanel', () => {
     const onSetRole = vi.fn();
 
     render(<PartyPanel party={party()} meConnectionId="dan" onSetRole={onSetRole} />);
-    await actor.click(screen.getByRole('button', { name: 'Make a co-host' }));
+    await actor.click(screen.getByRole('button', { name: 'Make co-host' }));
 
     expect(onSetRole).toHaveBeenCalledWith('sam', 'coHost');
   });
@@ -231,7 +235,7 @@ describe('PartyPanel', () => {
   it('explains why skipping is the one worth withholding', () => {
     render(<PartyPanel party={party()} meConnectionId="dan" onLoosen={vi.fn()} />);
 
-    expect(screen.getByText(/throws everybody across the film/)).toBeInTheDocument();
+    expect(screen.getByText(/moves everyone to a different point in the film/)).toBeInTheDocument();
   });
 
   it('offers a way out', async () => {
@@ -263,7 +267,7 @@ describe('PartyPanel', () => {
       <PartyPanel party={party()} meConnectionId="dan" invitation="https://valence.local/x" />,
     );
 
-    expect(screen.getByText(/puts them in this party/)).toBeInTheDocument();
+    expect(screen.getByText(/adds them to this party/)).toBeInTheDocument();
   });
 
   it('copies the link when asked', async () => {
@@ -415,7 +419,7 @@ describe('PartyPanel', () => {
         onAsk={onAsk}
       />,
     );
-    await actor.click(screen.getByRole('button', { name: 'Ask Kit along' }));
+    await actor.click(screen.getByRole('button', { name: 'Invite Kit' }));
 
     expect(onAsk).toHaveBeenCalledWith('profile-kit');
   });
@@ -449,9 +453,9 @@ describe('PartyPanel', () => {
         onAsk={vi.fn()}
       />,
     );
-    await actor.click(screen.getByRole('button', { name: 'Ask Kit along' }));
+    await actor.click(screen.getByRole('button', { name: 'Invite Kit' }));
 
-    expect(screen.getByRole('button', { name: 'Ask Kit along' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Invite Kit' })).toBeDisabled();
   });
 
   it('does not offer a guest the asking, a notification being done to somebody', () => {

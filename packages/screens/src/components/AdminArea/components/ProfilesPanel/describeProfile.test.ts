@@ -30,6 +30,6 @@ describe('describeProfile', () => {
         upgradeUntilSource: 'bluray',
       }).upgrades,
     ).toBe('Until 1080p Blu-ray');
-    expect(describeProfile({ ...HD, isUpgrading: true }).upgrades).toBe('To the best there is');
+    expect(describeProfile({ ...HD, isUpgrading: true }).upgrades).toBe('To the best available');
   });
 });

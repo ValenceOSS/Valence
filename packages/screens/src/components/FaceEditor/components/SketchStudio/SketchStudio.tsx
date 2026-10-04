@@ -240,7 +240,7 @@ const SketchStudio = ({ scene, onChange }: SketchStudioProps) => {
               />
               <ColourChoice
                 isCompact
-                label={say('screens.faceEditor.sketchStudio.colourOfTheWords')}
+                label={say('common.textColour')}
                 value={colour}
                 onChange={setColour}
               />
@@ -414,7 +414,7 @@ const SketchStudio = ({ scene, onChange }: SketchStudioProps) => {
             {chosen.kind === 'text' ? (
               <ColourChoice
                 isCompact
-                label={say('screens.faceEditor.sketchStudio.colourOfTheWords')}
+                label={say('common.textColour')}
                 value={chosen.colour}
                 onChange={(hex) => {
                   change(selected, (item) =>

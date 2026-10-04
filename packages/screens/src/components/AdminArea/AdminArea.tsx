@@ -2,7 +2,7 @@ import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { Icon } from '@ValenceUI/Icon';
 import { TriangleAlert as TriangleAlertIcon } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
-import { motion, useReducedMotionConfig } from 'motion/react';
+import { motion } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { TabPanel } from '@ValenceUI/TabPanel';
 import { SettingsPanel } from './components/SettingsPanel/SettingsPanel';
@@ -61,7 +61,7 @@ import {
   testWebhook,
 } from '@ValenceClient/admin/fetchWebhooks';
 import { AccountsPanel } from './components/AccountsPanel/AccountsPanel';
-import { revealVariants, revealTransition, staggerVariants } from '@ValenceUI/animations/reveal';
+import { fadeVariants, groupVariants, stillTransition } from '@ValenceUI/animations/reveal';
 import {
   watchMonitor,
   watchActiveSessions,
@@ -141,7 +141,6 @@ import type {
 } from '@ValenceContracts/schemas/Reencode';
 import type { JobSchedules, ScheduleTrigger } from '@ValenceClient/admin/fetchAdmin';
 import type { CreatedWebhook } from '@ValenceClient/admin/fetchWebhooks';
-import { useTravelDirection } from '@ValenceUI/useTravelDirection';
 import { ADMIN_PANELS } from '@ValenceScreens/components/AdminArea/adminSections';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { RequestsPanel } from './components/RequestsPanel/RequestsPanel';
@@ -161,8 +160,6 @@ const NO_ALBUMS: MusicAlbum[] = [];
 
 const NO_BOOKS: Book[] = [];
 const HISTORY_LENGTH = 60;
-
-const PANEL_ORDER = ADMIN_PANELS.map((one) => one.id);
 
 const NO_PATHS: Readonly<Record<string, string>> = {};
 
@@ -221,8 +218,6 @@ const AdminArea = ({
   const [reviewing, setReviewing] = useState<Reencode | null>(null);
   const [reencodeEstimate, setReencodeEstimate] = useState<ReencodeEstimate | null>(null);
   const [isWeighingReencode, setIsWeighingReencode] = useState(false);
-  const prefersReducedMotion = useReducedMotionConfig();
-  const travel = useTravelDirection(PANEL_ORDER, panel);
 
   const askedOverview = useQuery(adminQueries.overview());
   const askedLibraries = useQuery(libraryQueries.all());
@@ -804,17 +799,13 @@ const AdminArea = ({
 
   return (
     <motion.div
-      variants={staggerVariants}
+      variants={groupVariants}
       initial="hidden"
       animate="shown"
       exit="gone"
       className="flex w-full flex-col gap-4"
     >
-      <motion.div
-        variants={revealVariants(prefersReducedMotion)}
-        transition={revealTransition(prefersReducedMotion)}
-        className="empty:hidden"
-      >
+      <motion.div variants={fadeVariants} transition={stillTransition} className="empty:hidden">
         {isGuideOnOverview ? (
           <div className="mb-5">
             <AdminSetupGuide
@@ -961,8 +952,8 @@ const AdminArea = ({
       {unreachable.size === 0 ? null : (
         <motion.p
           role="alert"
-          variants={revealVariants(prefersReducedMotion)}
-          transition={revealTransition(prefersReducedMotion)}
+          variants={fadeVariants}
+          transition={stillTransition}
           className="flex flex-wrap items-center gap-3 rounded-xl border border-danger/40 bg-danger/10 px-5 py-4 font-body text-sm text-text"
         >
           <Icon of={TriangleAlertIcon} size={18} tone="danger" className="shrink-0" />
@@ -981,7 +972,7 @@ const AdminArea = ({
 
       <div className="flex flex-col gap-5">
         <section>
-          <TabPanel value="overview" travel={travel}>
+          <TabPanel value="overview">
             <OverviewPanel
               overview={overview}
               monitor={monitor}
@@ -992,7 +983,7 @@ const AdminArea = ({
             />
           </TabPanel>
 
-          <TabPanel value="activity" travel={travel}>
+          <TabPanel value="activity">
             <ActivityPanel
               sessions={sessions}
               busyClientId={busyClientId}
@@ -1009,7 +1000,7 @@ const AdminArea = ({
             />
           </TabPanel>
 
-          <TabPanel value="libraries" travel={travel}>
+          <TabPanel value="libraries">
             <LibrariesPanel
               libraries={libraries}
               profiles={askedProfiles.data ?? []}
@@ -1045,7 +1036,7 @@ const AdminArea = ({
             />
           </TabPanel>
 
-          <TabPanel value="media" travel={travel}>
+          <TabPanel value="media">
             <MediaPanel
               isUnreachable={unreachable.has('media')}
               libraries={libraries}
@@ -1136,7 +1127,7 @@ const AdminArea = ({
             />
           </TabPanel>
 
-          <TabPanel value="files" travel={travel}>
+          <TabPanel value="files">
             <FilesPanel
               libraries={libraries}
               mayDelete={mayDeleteMedia}
@@ -1151,7 +1142,7 @@ const AdminArea = ({
             />
           </TabPanel>
 
-          <TabPanel value="encoding" travel={travel}>
+          <TabPanel value="encoding">
             <div className="flex flex-col gap-5">
               <PreTranscodingCard libraries={libraries} />
 
@@ -1181,7 +1172,7 @@ const AdminArea = ({
 
           {hasRequests ? (
             <>
-              <TabPanel value="requests" travel={travel}>
+              <TabPanel value="requests">
                 <div className="flex flex-col gap-5">
                   <RequestsPanel />
 
@@ -1191,37 +1182,37 @@ const AdminArea = ({
                 </div>
               </TabPanel>
 
-              <TabPanel value="indexers" travel={travel}>
+              <TabPanel value="indexers">
                 <IndexersPanel />
               </TabPanel>
 
-              <TabPanel value="search" travel={travel}>
+              <TabPanel value="search">
                 <ReleaseSearchPanel />
               </TabPanel>
 
-              <TabPanel value="requested" travel={travel}>
+              <TabPanel value="requested">
                 <MediaRequestsPanel />
               </TabPanel>
 
-              <TabPanel value="profiles" travel={travel}>
+              <TabPanel value="profiles">
                 <ProfilesPanel />
               </TabPanel>
 
-              <TabPanel value="downloads" travel={travel}>
+              <TabPanel value="downloads">
                 <DownloadsPanel />
               </TabPanel>
             </>
           ) : null}
 
-          <TabPanel value="accounts" travel={travel}>
+          <TabPanel value="accounts">
             <AccountsPanel />
           </TabPanel>
 
-          <TabPanel value="roles" travel={travel}>
+          <TabPanel value="roles">
             <RolesPanel />
           </TabPanel>
 
-          <TabPanel value="settings" travel={travel}>
+          <TabPanel value="settings">
             <div className="flex flex-col gap-5">
               <SettingsPanel
                 overview={overview}
@@ -1260,23 +1251,23 @@ const AdminArea = ({
             </div>
           </TabPanel>
 
-          <TabPanel value="shares" travel={travel}>
+          <TabPanel value="shares">
             <SharesPanel />
           </TabPanel>
 
-          <TabPanel value="plugins" travel={travel}>
+          <TabPanel value="plugins">
             <PluginsPanel />
           </TabPanel>
 
-          <TabPanel value="linking" travel={travel}>
+          <TabPanel value="linking">
             <LinkedServersPanel />
           </TabPanel>
 
-          <TabPanel value="imports" travel={travel}>
+          <TabPanel value="imports">
             <ImportWizard />
           </TabPanel>
 
-          <TabPanel value="webhooks" travel={travel}>
+          <TabPanel value="webhooks">
             <WebhooksPanel
               webhooks={webhooks}
               accounts={webhookAccounts}
@@ -1348,7 +1339,7 @@ const AdminArea = ({
             />
           </TabPanel>
 
-          <TabPanel value="jobs" travel={travel}>
+          <TabPanel value="jobs">
             <ObservabilityPage
               {...(observability === undefined ? {} : { search: observability })}
               {...(onObservabilityChange === undefined

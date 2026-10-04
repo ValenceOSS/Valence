@@ -122,7 +122,7 @@ describe('connecting an outside account to a plugin', () => {
     expect(await oauth.finish({ state: 'made-up', code: 'c', browser: 'browser-1' })).toMatchObject(
       {
         ok: false,
-        problem: 'That connection had expired. Try again.',
+        problem: 'That connection expired. Try again.',
       },
     );
 
@@ -137,11 +137,11 @@ describe('connecting an outside account to a plugin', () => {
 
     expect(await oauth.finish({ state: other, code: 'c', browser: 'browser-2' })).toMatchObject({
       ok: false,
-      problem: 'That connection was started somewhere else.',
+      problem: 'That connection was started in another browser. Start it again here.',
     });
     expect(await oauth.finish({ state: other, code: 'c', browser: 'browser-1' })).toMatchObject({
       ok: false,
-      problem: 'That connection had expired. Try again.',
+      problem: 'That connection expired. Try again.',
     });
   });
 
@@ -154,7 +154,7 @@ describe('connecting an outside account to a plugin', () => {
         code: 'c',
         browser: 'browser-1',
       }),
-    ).toMatchObject({ ok: false, problem: 'AniList did not accept the connection.' });
+    ).toMatchObject({ ok: false, problem: 'AniList didn’t accept the connection. Try again.' });
 
     const nonsense = build([{ status: 200, text: 'not json' }]);
 

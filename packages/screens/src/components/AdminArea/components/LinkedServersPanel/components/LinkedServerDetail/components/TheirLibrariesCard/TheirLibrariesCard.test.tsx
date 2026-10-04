@@ -46,7 +46,7 @@ describe('TheirLibrariesCard', () => {
     renderInAnAddress(<TheirLibrariesCard server={FILMS} />);
 
     expect(
-      await screen.findByText('Films shares nothing with this server yet.'),
+      await screen.findByText('Films isn’t sharing anything with this server yet.'),
     ).toBeInTheDocument();
   });
 
@@ -55,13 +55,13 @@ describe('TheirLibrariesCard', () => {
 
     renderInAnAddress(<TheirLibrariesCard server={FILMS} />);
 
-    expect(await screen.findByText('Films could not be reached.')).toBeInTheDocument();
+    expect(await screen.findByText('Couldn’t reach Films.')).toBeInTheDocument();
   });
 
   it('reads it all again now', async () => {
     renderInAnAddress(<TheirLibrariesCard server={FILMS} />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Read again now' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Sync now' }));
 
     await waitFor(() => {
       expect(syncLinkedServer).toHaveBeenCalledWith(FILMS.id);

@@ -123,7 +123,7 @@ describe('FilmPage', () => {
 
     const drawn = await drawFilm(aCacheHolding({ isFound: false }));
 
-    expect(await drawn.findByText('This film could not be found.')).toBeTruthy();
+    expect(await drawn.findByText('Couldn’t find this film.')).toBeTruthy();
   });
 
   it('says everything about the film beside its picture', async () => {
@@ -232,7 +232,7 @@ describe('FilmPage', () => {
       onPlay,
     );
 
-    await userEvent.press(drawn.getByRole('button', { name: /^Which version to play/ }));
+    await userEvent.press(drawn.getByRole('button', { name: /^Choose version/ }));
     await userEvent.press(drawn.getByRole('button', { name: "Director's Cut" }));
     await userEvent.press(drawn.getByRole('button', { name: 'Play' }));
 
@@ -252,7 +252,7 @@ describe('FilmPage', () => {
     };
     const drawn = await drawFilm(aCacheHolding({ film: { ...ARRIVAL, versions: [directors] } }));
 
-    await userEvent.press(drawn.getByRole('button', { name: /^Which version to play/ }));
+    await userEvent.press(drawn.getByRole('button', { name: /^Choose version/ }));
     await userEvent.press(drawn.getByRole('button', { name: "Director's Cut" }));
     await userEvent.press(drawn.getByRole('button', { name: 'Hide' }));
 
@@ -268,7 +268,7 @@ describe('FilmPage', () => {
   it('offers no version choice or trailer where the library holds neither', async () => {
     const drawn = await drawFilm(aCacheHolding({}));
 
-    expect(drawn.queryByRole('button', { name: /^Which version to play/ })).toBeNull();
+    expect(drawn.queryByRole('button', { name: /^Choose version/ })).toBeNull();
     expect(drawn.queryByRole('button', { name: 'Trailer' })).toBeNull();
   });
 
@@ -305,6 +305,6 @@ describe('FilmPage', () => {
 
     const drawn = await drawFilm(cache);
 
-    expect(drawn.getByText(/Films cannot be reached right now/u)).toBeTruthy();
+    expect(drawn.getByText(/Films can’t be reached right now/u)).toBeTruthy();
   });
 });

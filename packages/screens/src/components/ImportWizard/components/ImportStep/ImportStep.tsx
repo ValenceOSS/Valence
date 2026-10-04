@@ -71,7 +71,7 @@ const ImportStep = ({ started, onFinished }: ImportStepProps) => {
             });
           }}
         >
-          {say('screens.importWizard.importStep.carryOn')}
+          {say('common.resume')}
         </Button>
       </div>
     </div>

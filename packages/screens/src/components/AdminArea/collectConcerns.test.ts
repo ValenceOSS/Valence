@@ -240,7 +240,9 @@ describe('collectConcerns', () => {
         }),
       });
 
-      expect(concerns[0]?.detail).toBe('Nothing that needs converting will play until it is back.');
+      expect(concerns[0]?.detail).toBe(
+        'Anything that needs transcoding won’t play until it’s reachable again.',
+      );
     });
 
     it('reports a job that failed in the last day', () => {
@@ -396,7 +398,7 @@ describe('collectConcerns', () => {
 
       const stalled = concerns.find((concern) => concern.id === 'stalled-jobs');
 
-      expect(stalled?.title).toBe('Scan for changes has never once succeeded');
+      expect(stalled?.title).toBe('Scan for changes has never succeeded');
       expect(stalled?.tone).toBe('broken');
       expect(stalled?.panel).toBe('jobs');
     });
@@ -489,7 +491,7 @@ describe('collectConcerns', () => {
       });
 
       expect(concerns.map((concern) => concern.title)).toContain(
-        'Valence is nearly at the memory it is allowed',
+        'Valence is nearly at its memory limit',
       );
     });
 
@@ -591,7 +593,7 @@ describe('collectConcerns', () => {
       });
 
       expect(concerns.find((concern) => concern.id === 'encoder')?.detail).toContain(
-        'fall back to the processor',
+        'the next transcode will run on the CPU',
       );
     });
   });
@@ -666,7 +668,7 @@ describe('collectConcerns', () => {
       });
 
       expect(concerns.find((concern) => concern.id === 'cpu')?.detail).toContain(
-        'Valence is using 95% of the machine, so this is its own work',
+        'Valence is using 95% of the CPU, so this load is its own',
       );
     });
 
@@ -681,7 +683,7 @@ describe('collectConcerns', () => {
       });
 
       expect(concerns.find((concern) => concern.id === 'cpu')?.detail).toContain(
-        'so most of this is something else on the box',
+        'so most of this load is from other processes on the server',
       );
     });
 
@@ -693,7 +695,7 @@ describe('collectConcerns', () => {
       });
 
       expect(concerns.find((concern) => concern.id === 'cpu')?.detail).toBe(
-        'Playback that needs converting may stutter while it lasts.',
+        'Transcoded playback may stutter until this clears.',
       );
     });
   });
@@ -702,7 +704,7 @@ describe('collectConcerns', () => {
     it('reports one running out of buffer, by name', () => {
       const concerns = collectConcerns({ ...healthy, sessions: [streaming(0.5)] });
 
-      expect(concerns[0]?.title).toBe('Dan is running out of buffer');
+      expect(concerns[0]?.title).toBe('Dan’s stream is running out of buffer');
     });
 
     it('counts several rather than naming them all', () => {
@@ -772,7 +774,7 @@ describe('collectConcerns', () => {
 
     const artefacts = concerns.find((concern) => concern.id === 'artefacts');
 
-    expect(artefacts?.title).toBe('Previews and thumbnails are not being kept');
+    expect(artefacts?.title).toBe('Previews and thumbnails won’t be saved');
     expect(artefacts?.detail).toContain('/transcodes');
     expect(artefacts?.detail).toContain('VALENCE_ARTEFACT_DIR');
   });
@@ -869,11 +871,11 @@ describe('collectConcerns', () => {
     it('says why when the VPN is down', () => {
       const concerns = collectConcerns({
         ...healthy,
-        requests: answering(aVpn(false, 'The tunnel is stopped')),
+        requests: answering(aVpn(false, 'The VPN tunnel is stopped')),
       });
 
       expect(concerns).toEqual([
-        expect.objectContaining({ id: 'requests-vpn', detail: 'The tunnel is stopped' }),
+        expect.objectContaining({ id: 'requests-vpn', detail: 'The VPN tunnel is stopped' }),
       ]);
       expect(concerns[0]?.help).toBe(
         'https://docs.getvalence.app/install/requesting#gluetun-refuses-the-key',
@@ -884,7 +886,7 @@ describe('collectConcerns', () => {
       const concerns = collectConcerns({ ...healthy, requests: answering(aVpn(false)) });
 
       expect(concerns[0]?.detail).toBe(
-        'The requests service cannot reach the tunnel it downloads through.',
+        'The requests service can’t reach the VPN tunnel it downloads through.',
       );
       expect(concerns[0]?.help).toBe(
         'https://docs.getvalence.app/install/requesting#the-vpn-is-down',

@@ -10,7 +10,7 @@ import {
 describe('failureOfAnswer', () => {
   it('is nothing where it worked, and says something where it did not', () => {
     expect(failureOfAnswer(true)).toBeNull();
-    expect(failureOfAnswer(false)).toBe('That could not be done.');
+    expect(failureOfAnswer(false)).toBe('Something went wrong. Try again.');
     expect(failureOfAnswer(false, 'No such stream.')).toBe('No such stream.');
   });
 });
@@ -25,7 +25,7 @@ describe('failureOfRefusal', () => {
 describe('failureOfMissing', () => {
   it('is nothing where something was made, and says something where nothing was', () => {
     expect(failureOfMissing({ id: 1 })).toBeNull();
-    expect(failureOfMissing(null)).toBe('That could not be done.');
+    expect(failureOfMissing(null)).toBe('Something went wrong. Try again.');
     expect(failureOfMissing(null, 'It would not start.')).toBe('It would not start.');
   });
 });

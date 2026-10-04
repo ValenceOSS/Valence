@@ -58,7 +58,7 @@ describe('describeKeeping', () => {
 
   it('promises that a paused transfer has not been thrown away', () => {
     expect(describeKeeping(aFile({ state: 'paused', bytes: 536_870_912 }))).toBe(
-      'Paused at 50%. What is here is kept.',
+      'Paused at 50%. What’s downloaded so far is saved.',
     );
   });
 
@@ -70,7 +70,7 @@ describe('describeKeeping', () => {
 
   it('says something rather than nothing where a failure had no reason attached', () => {
     expect(describeKeeping(aFile({ state: 'failed', failure: null }))).toContain(
-      'could not be fetched',
+      'Couldn’t download that',
     );
   });
 });

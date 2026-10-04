@@ -100,7 +100,7 @@ describe('handlePartyMessage', () => {
 
     world.say({ kind: 'partyJoin', partyId: 'nothing' }, someone('sam', 'Sam'));
 
-    expect(world.answers).toEqual([{ kind: 'refused', why: 'That party is not running.' }]);
+    expect(world.answers).toEqual([{ kind: 'refused', why: 'That party isn’t running.' }]);
   });
 
   it('refuses somebody acting on a party they are not in', () => {
@@ -111,7 +111,7 @@ describe('handlePartyMessage', () => {
       someone('sam', 'Sam'),
     );
 
-    expect(world.answers).toEqual([{ kind: 'refused', why: 'You are not in a party.' }]);
+    expect(world.answers).toEqual([{ kind: 'refused', why: 'You’re not in a party.' }]);
   });
 
   it('passes a command on with who issued it', () => {
@@ -300,7 +300,7 @@ describe('handlePartyMessage', () => {
 
     expect(world.answers.at(-1)).toEqual({
       kind: 'refused',
-      why: 'The host has removed you from that party.',
+      why: 'The host removed you from the party.',
     });
   });
 

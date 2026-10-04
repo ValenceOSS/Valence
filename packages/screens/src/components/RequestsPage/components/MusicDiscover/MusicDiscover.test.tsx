@@ -80,7 +80,7 @@ describe('MusicDiscover', () => {
 
     renderInAnAddress(<MusicDiscover onAsk={vi.fn()} />);
 
-    expect(await screen.findByText('No music to ask for')).toBeInTheDocument();
+    expect(await screen.findByText('No music to request')).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

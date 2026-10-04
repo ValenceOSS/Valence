@@ -323,7 +323,7 @@ const PreTranscodingCard = ({ libraries }: PreTranscodingCardProps) => {
           </SettingRow>
 
           <SettingRow
-            title={say('screens.adminArea.preTranscodingCard.whenToWork')}
+            title={say('screens.observabilityPage.schedule')}
             description={
               draft.schedule === 'window'
                 ? say('screens.adminArea.preTranscodingCard.onlyBetweenTheseHoursOnThe', {
@@ -334,7 +334,7 @@ const PreTranscodingCard = ({ libraries }: PreTranscodingCardProps) => {
           >
             <div className="flex flex-col items-end gap-2">
               <SegmentedRow
-                label={say('screens.adminArea.preTranscodingCard.whenToWork')}
+                label={say('screens.observabilityPage.schedule')}
                 size="sm"
                 tone="accent"
                 items={SCHEDULE_CHOICES}

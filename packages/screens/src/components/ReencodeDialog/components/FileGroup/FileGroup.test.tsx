@@ -77,7 +77,7 @@ describe('FileGroup', () => {
   it('opens to them', async () => {
     render(<FileGroup {...props} group={programme} />);
 
-    await userEvent.click(screen.getByRole('button', { name: /Show what Pluribus is made of/ }));
+    await userEvent.click(screen.getByRole('button', { name: /Expand Pluribus/ }));
 
     expect(screen.getByRole('checkbox', { name: /Grace/ })).toBeInTheDocument();
   });
@@ -85,7 +85,7 @@ describe('FileGroup', () => {
   it('names an episode by its number, so two called the same are told apart', async () => {
     render(<FileGroup {...props} group={programme} />);
 
-    await userEvent.click(screen.getByRole('button', { name: /Show what Pluribus is made of/ }));
+    await userEvent.click(screen.getByRole('button', { name: /Expand Pluribus/ }));
 
     expect(screen.getByRole('checkbox', { name: /S1E2 · Grace/ })).toBeInTheDocument();
   });

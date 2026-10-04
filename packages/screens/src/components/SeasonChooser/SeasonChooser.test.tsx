@@ -47,7 +47,7 @@ describe('SeasonChooser', () => {
 
     expect(await screen.findByText('Season 1')).toBeInTheDocument();
     expect(within(rowOf('Season 1')).getByText('In the library')).toBeInTheDocument();
-    expect(within(rowOf('Season 2')).getByText('Partly here')).toBeInTheDocument();
+    expect(within(rowOf('Season 2')).getByText('Partially available')).toBeInTheDocument();
     expect(within(rowOf('Season 3')).getByText('Requested')).toBeInTheDocument();
     expect(within(rowOf('Season 4')).getByText('Not requested')).toBeInTheDocument();
   });
@@ -57,7 +57,7 @@ describe('SeasonChooser', () => {
 
     renderInAnAddress(<SeasonChooser tmdbId={95396} seasons={null} onChange={onChange} />);
 
-    expect(await screen.findByText('Every season, and any that come later.')).toBeInTheDocument();
+    expect(await screen.findByText('All seasons, including future ones.')).toBeInTheDocument();
     expect(screen.getByRole('switch', { name: 'Season 1' })).toBeChecked();
 
     await userEvent.click(screen.getByRole('switch', { name: 'Specials' }));
@@ -97,7 +97,7 @@ describe('SeasonChooser', () => {
   it('says when nothing is taken yet', async () => {
     renderInAnAddress(<SeasonChooser tmdbId={95396} seasons={[]} onChange={vi.fn()} />);
 
-    expect(await screen.findByText('No season is taken yet.')).toBeInTheDocument();
+    expect(await screen.findByText('No seasons selected yet.')).toBeInTheDocument();
   });
 
   it('keeps a switch the same element as what is taken changes, so its animation runs', async () => {

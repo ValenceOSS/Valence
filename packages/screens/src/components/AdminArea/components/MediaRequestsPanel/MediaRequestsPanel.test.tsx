@@ -140,7 +140,9 @@ describe('MediaRequestsPanel', () => {
       within(rowOf('Severance')).getByText('Severance.S01E01.1080p.WEB-DL'),
     ).toBeInTheDocument();
     expect(
-      within(rowOf('Severance')).getByText('Season 1 · 0 of 1 episode here · 1 downloading'),
+      within(rowOf('Severance')).getByText(
+        'Season 1 · 0 of 1 episode in the library · 1 downloading',
+      ),
     ).toBeInTheDocument();
   });
 
@@ -164,12 +166,12 @@ describe('MediaRequestsPanel', () => {
     renderInAnAddress(<MediaRequestsPanel />);
 
     await screen.findByText('Dune');
-    await user.type(screen.getByRole('searchbox', { name: 'Search the requests' }), 'sever');
+    await user.type(screen.getByRole('searchbox', { name: 'Search requests' }), 'sever');
 
     expect(screen.queryByText('Dune')).not.toBeInTheDocument();
     expect(screen.getByText('Severance')).toBeInTheDocument();
 
-    await user.type(screen.getByRole('searchbox', { name: 'Search the requests' }), 'zzz');
+    await user.type(screen.getByRole('searchbox', { name: 'Search requests' }), 'zzz');
 
     expect(screen.getByText(/Nothing matches/)).toBeInTheDocument();
   });
@@ -200,11 +202,11 @@ describe('MediaRequestsPanel', () => {
 
     await screen.findByText('Dune');
     await chooseShelf(user, /^To approve/);
-    await user.click(await screen.findByRole('checkbox', { name: 'Choose Dune' }));
+    await user.click(await screen.findByRole('checkbox', { name: 'Select Dune' }));
 
-    expect(screen.getByText('1 chosen')).toBeInTheDocument();
+    expect(screen.getByText('1 selected')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Approve them' }));
+    await user.click(screen.getByRole('button', { name: 'Approve selected' }));
 
     await waitFor(() => {
       expect(decideMediaRequests).toHaveBeenCalledWith([DUNE.id], 'approve', '');
@@ -224,15 +226,15 @@ describe('MediaRequestsPanel', () => {
 
     await screen.findByText('Dune');
     await chooseShelf(user, /^To approve/);
-    await user.click(await screen.findByRole('checkbox', { name: 'Choose Dune' }));
-    await user.type(screen.getByRole('searchbox', { name: 'Search the requests' }), 'sever');
+    await user.click(await screen.findByRole('checkbox', { name: 'Select Dune' }));
+    await user.type(screen.getByRole('searchbox', { name: 'Search requests' }), 'sever');
     await user.click(
-      await screen.findByRole('checkbox', { name: 'Choose all 1 waiting on approval' }),
+      await screen.findByRole('checkbox', { name: 'Select all 1 awaiting approval' }),
     );
 
-    expect(screen.getByText('1 chosen')).toBeInTheDocument();
+    expect(screen.getByText('1 selected')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Approve them' }));
+    await user.click(screen.getByRole('button', { name: 'Approve selected' }));
 
     await waitFor(() => {
       expect(decideMediaRequests).toHaveBeenCalledWith([SEVERANCE.id], 'approve', '');
@@ -252,14 +254,14 @@ describe('MediaRequestsPanel', () => {
     await screen.findByText('Dune');
     await chooseShelf(user, /^To approve/);
     await user.click(
-      await screen.findByRole('checkbox', { name: 'Choose all 2 waiting on approval' }),
+      await screen.findByRole('checkbox', { name: 'Select all 2 awaiting approval' }),
     );
 
-    expect(screen.getByText('2 chosen')).toBeInTheDocument();
+    expect(screen.getByText('2 selected')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Refuse them' }));
+    await user.click(screen.getByRole('button', { name: 'Decline selected' }));
     await user.type(await screen.findByRole('textbox', { name: 'Why' }), 'No room');
-    await user.click(screen.getByRole('button', { name: 'Refuse' }));
+    await user.click(screen.getByRole('button', { name: 'Decline' }));
 
     await waitFor(() => {
       expect(decideMediaRequests).toHaveBeenCalledWith(
@@ -277,7 +279,7 @@ describe('MediaRequestsPanel', () => {
     fetchMediaRequests.mockResolvedValue([aMediaRequest({ isPickedByHand: true })]);
     renderInAnAddress(<MediaRequestsPanel />);
 
-    await choose(user, 'Dune', /Fetch the best by itself/);
+    await choose(user, 'Dune', /Download the best release automatically/);
 
     await waitFor(() => {
       expect(changeMediaRequest).toHaveBeenCalledWith(DUNE.id, { isPickedByHand: false });
@@ -333,13 +335,13 @@ describe('MediaRequestsPanel', () => {
     fetchMediaRequests.mockResolvedValue([aMediaRequest()]);
     retryMediaRequest.mockResolvedValue({
       value: null,
-      refusal: { message: 'Requesting is off.' },
+      refusal: { message: 'Requests are turned off.' },
     });
     renderInAnAddress(<MediaRequestsPanel />);
 
     await choose(user, 'Dune', /Search again now/);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Requesting is off.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Requests are turned off.');
   });
 
   it('opens the dialogs to refuse, to pick a release, and to ask for something', async () => {
@@ -347,12 +349,12 @@ describe('MediaRequestsPanel', () => {
 
     renderInAnAddress(<MediaRequestsPanel />);
 
-    await choose(user, 'Dune', /Refuse/);
-    expect(await screen.findByText('Refuse Dune?')).toBeInTheDocument();
+    await choose(user, 'Dune', /Decline/);
+    expect(await screen.findByText('Decline Dune?')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
 
     await chooseShelf(user, /^All/);
-    await choose(user, 'Severance', /Pick a release/);
+    await choose(user, 'Severance', /Choose a release/);
     expect(await screen.findByRole('tab', { name: 'Releases' })).toHaveAttribute(
       'aria-selected',
       'true',
@@ -370,7 +372,7 @@ describe('MediaRequestsPanel', () => {
         problemCode: null,
       },
     ]);
-    await choose(user, 'Dune', /See what it has done/);
+    await choose(user, 'Dune', /View activity/);
     expect(await screen.findByText('Searched for it.')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Close' }));
 
@@ -411,9 +413,9 @@ describe('MediaRequestsPanel', () => {
       expect(decideMediaRequests).toHaveBeenCalledWith([DUNE.id], 'approve');
     });
 
-    await user.click(screen.getByRole('button', { name: 'Refuse Dune' }));
+    await user.click(screen.getByRole('button', { name: 'Decline Dune' }));
 
-    expect(await screen.findByText('Refuse Dune?')).toBeInTheDocument();
+    expect(await screen.findByText('Decline Dune?')).toBeInTheDocument();
   });
 
   it('opens a series onto its episodes, each with where it is', async () => {
@@ -423,7 +425,7 @@ describe('MediaRequestsPanel', () => {
 
     await screen.findByText('Dune');
     await chooseShelf(user, /^In progress/);
-    await user.click(await screen.findByRole('button', { name: 'Show what Severance is made of' }));
+    await user.click(await screen.findByRole('button', { name: 'Expand Severance' }));
 
     const episode = screen.getByRole('row', { name: /S1 E1/ });
 
@@ -459,7 +461,7 @@ describe('MediaRequestsPanel', () => {
 
     renderInAnAddress(<MediaRequestsPanel />);
 
-    await user.click(await screen.findByRole('button', { name: 'Show what Severance is made of' }));
+    await user.click(await screen.findByRole('button', { name: 'Expand Severance' }));
 
     const seasonTwo = screen.getByRole('row', { name: /Season 2/ });
 
@@ -479,8 +481,8 @@ describe('MediaRequestsPanel', () => {
 
     renderInAnAddress(<MediaRequestsPanel />);
 
-    await choose(user, 'Dune', /Forget/);
-    await user.click(await screen.findByRole('button', { name: 'Forget' }));
+    await choose(user, 'Dune', /Remove/);
+    await user.click(await screen.findByRole('button', { name: 'Remove' }));
 
     await waitFor(() => {
       expect(removeMediaRequest).toHaveBeenCalledWith(DUNE.id);
@@ -502,9 +504,12 @@ describe('MediaRequestsPanel', () => {
     await refetch(user);
     expect(await screen.findByText('Nothing is missing.')).toBeInTheDocument();
 
-    searchMissing.mockResolvedValue({ value: null, refusal: { message: 'Requesting is off.' } });
+    searchMissing.mockResolvedValue({
+      value: null,
+      refusal: { message: 'Requests are turned off.' },
+    });
     await refetch(user);
-    expect(await screen.findByRole('alert')).toHaveTextContent('Requesting is off.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Requests are turned off.');
   });
 
   it('says it could not read the requests, and what to do while there are none', async () => {

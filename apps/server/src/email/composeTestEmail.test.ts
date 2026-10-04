@@ -7,7 +7,7 @@ describe('composeTestEmail', () => {
       subject: 'Email from Valence works',
       heading: 'Email from Valence works',
       paragraphs: [
-        'This is the test sent from Settings on Home. If you can read it, Valence can send email.',
+        'This is a test email sent from Settings on Home. If you can read it, Valence can send email.',
       ],
       action: null,
       afterAction: [],

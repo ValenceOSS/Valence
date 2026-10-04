@@ -64,7 +64,7 @@ describe('createNzbgetAdapter', () => {
   it('says the password was wrong', async () => {
     await expect(
       createNzbgetAdapter({ ...SETTINGS, password: 'no' }, anNzbget({}).fetch).version(),
-    ).rejects.toThrow('NZBGet refused the username or password');
+    ).rejects.toThrow('NZBGet rejected the username or password');
     await expect(
       createNzbgetAdapter({ ...SETTINGS, password: 'no' }, anNzbget({}).fetch).version(),
     ).rejects.toMatchObject({ problemCode: 'DownloadClientLoginRefused' });
@@ -78,13 +78,13 @@ describe('createNzbgetAdapter', () => {
     const page = aFakeClient({ 'POST /jsonrpc': () => new Response('<html>') });
 
     await expect(createNzbgetAdapter(SETTINGS, page.fetch).version()).rejects.toThrow(
-      'answered, but not as NZBGet',
+      'responded, but isn’t NZBGet',
     );
 
     const broken = aFakeClient({ 'POST /jsonrpc': () => new Response('', { status: 500 }) });
 
     await expect(createNzbgetAdapter(SETTINGS, broken.fetch).version()).rejects.toThrow(
-      'NZBGet answered 500',
+      'NZBGet returned 500',
     );
   });
 
@@ -110,10 +110,10 @@ describe('createNzbgetAdapter', () => {
 
     await expect(
       adapter.add({ kind: 'nzb', bytes: new Uint8Array() }, 'Dune', 'valence'),
-    ).rejects.toThrow('would not take the NZB');
+    ).rejects.toThrow('rejected the NZB');
     await expect(
       adapter.add({ kind: 'torrent', bytes: new Uint8Array() }, 'Dune', 'valence'),
-    ).rejects.toThrow('takes NZBs, not torrents');
+    ).rejects.toThrow('accepts NZBs, not torrents');
   });
 
   it('lists its own jobs from the queue and the history', async () => {
@@ -184,10 +184,10 @@ describe('createNzbgetAdapter', () => {
       ['8', 'processing', null],
       ['10', 'paused', null],
       ['1', 'done', null],
-      ['2', 'failed', 'NZBGet could not finish it (FAILURE/PAR)'],
+      ['2', 'failed', 'NZBGet couldn’t finish it (FAILURE/PAR)'],
       ['3', 'done', 'NZBGet finished it with a warning (WARNING/SCRIPT)'],
       ['4', 'failed', 'It was deleted in NZBGet'],
-      ['5', 'failed', 'NZBGet dropped it as a duplicate'],
+      ['5', 'failed', 'NZBGet removed it as a duplicate'],
     ]);
     expect(listed[2]?.progress).toBe(0);
     expect(listed[4]?.doneBytes).toBeNull();

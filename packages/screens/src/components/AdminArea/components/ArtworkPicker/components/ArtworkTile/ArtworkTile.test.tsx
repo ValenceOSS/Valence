@@ -42,7 +42,7 @@ describe('ArtworkTile', () => {
     render(
       <ArtworkTile
         kind="logo"
-        label="Use the catalogue’s own logo"
+        label="Use the default logo"
         previewUrl={null}
         note="Automatic"
         isChosen={false}
@@ -51,7 +51,7 @@ describe('ArtworkTile', () => {
       />,
     );
 
-    expect(screen.getByText('The catalogue’s pick')).toBeInTheDocument();
+    expect(screen.getByText('Catalogue default')).toBeInTheDocument();
   });
 
   it('is told when it is chosen, and shows it is working', async () => {
@@ -72,6 +72,6 @@ describe('ArtworkTile', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Use backdrop 1, No text' }));
 
     expect(onChoose).toHaveBeenCalled();
-    expect(screen.getByRole('status', { name: 'Choosing this picture' })).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Saving this artwork' })).toBeInTheDocument();
   });
 });

@@ -50,10 +50,10 @@ describe('EpisodeCard', () => {
 
   it('says what happens in it where the catalogue says', async () => {
     const drawn = await render(
-      <EpisodeCard episode={EPISODE} overview="Carmy takes over the shop." onPress={jest.fn()} />,
+      <EpisodeCard episode={EPISODE} overview="Carmy accepts over the shop." onPress={jest.fn()} />,
     );
 
-    expect(drawn.getByText('Carmy takes over the shop.')).toBeTruthy();
+    expect(drawn.getByText('Carmy accepts over the shop.')).toBeTruthy();
   });
 
   it('says it has been watched once it has', async () => {

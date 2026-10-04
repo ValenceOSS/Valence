@@ -50,7 +50,7 @@ describe('PhoneSignIn', () => {
 
     expect(await drawn.findByText('WDJB-MJHT')).toBeTruthy();
     expect(drawn.getByText('192.168.1.10:8420/device')).toBeTruthy();
-    expect(drawn.getByLabelText("A code to scan with your phone's camera")).toBeTruthy();
+    expect(drawn.getByLabelText('A QR code to scan with your phone’s camera')).toBeTruthy();
   });
 
   it('puts only the address in the code to scan, never the code to enter', async () => {
@@ -59,7 +59,7 @@ describe('PhoneSignIn', () => {
     const drawn = await render(<PhoneSignIn onSignedIn={jest.fn()} />);
 
     expect(
-      await drawn.findByLabelText("A code to scan with your phone's camera"),
+      await drawn.findByLabelText('A QR code to scan with your phone’s camera'),
     ).toHaveTextContent('http://192.168.1.10:8420/device');
   });
 
@@ -84,7 +84,7 @@ describe('PhoneSignIn', () => {
 
     const drawn = await render(<PhoneSignIn onSignedIn={jest.fn()} />);
 
-    expect(await drawn.findByText('That phone said no.')).toBeTruthy();
+    expect(await drawn.findByText('The sign-in was declined on your phone.')).toBeTruthy();
     await waitFor(() => {
       expect(startDeviceGrant).toHaveBeenCalledTimes(2);
     });
@@ -95,17 +95,17 @@ describe('PhoneSignIn', () => {
 
     const drawn = await render(<PhoneSignIn onSignedIn={jest.fn()} />);
 
-    expect(await drawn.findByText('That code ran out. Here is a new one.')).toBeTruthy();
+    expect(await drawn.findByText('That code expired. Here’s a new one.')).toBeTruthy();
   });
 
   it('says why asking failed', async () => {
     jest
       .mocked(askWhetherTheDeviceMayIn)
-      .mockResolvedValueOnce({ kind: 'failed', reason: 'Valence could not be reached.' });
+      .mockResolvedValueOnce({ kind: 'failed', reason: 'Couldn’t reach the Valence server.' });
 
     const drawn = await render(<PhoneSignIn onSignedIn={jest.fn()} />);
 
-    expect(await drawn.findByText('Valence could not be reached.')).toBeTruthy();
+    expect(await drawn.findByText('Couldn’t reach the Valence server.')).toBeTruthy();
   });
 
   it('says so when the server will not start a sign-in', async () => {
@@ -113,7 +113,7 @@ describe('PhoneSignIn', () => {
 
     const drawn = await render(<PhoneSignIn onSignedIn={jest.fn()} />);
 
-    expect(await drawn.findByText('This Valence would not start a sign-in.')).toBeTruthy();
+    expect(await drawn.findByText('This server couldn’t start a sign-in.')).toBeTruthy();
     expect(askWhetherTheDeviceMayIn).not.toHaveBeenCalled();
   });
 

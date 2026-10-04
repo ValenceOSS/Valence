@@ -40,6 +40,6 @@ describe('ADevicesSheet', () => {
       wrapper: CacheScope,
     });
 
-    expect(await drawn.findByText(/No other Valence is open/u)).toBeTruthy();
+    expect(await drawn.findByText(/Valence isn’t open on any other device/u)).toBeTruthy();
   });
 });

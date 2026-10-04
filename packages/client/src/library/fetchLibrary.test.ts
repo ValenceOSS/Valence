@@ -501,7 +501,7 @@ describe('saying what a file actually is', () => {
     fetchMock.mockResolvedValue({ ok: false, status: 500, json: () => Promise.resolve(null) });
 
     await expect(correctMatch('media-1', '329', 'movie')).resolves.toEqual({
-      problem: 'The server answered 500.',
+      problem: 'The server responded with 500.',
     });
   });
 
@@ -509,7 +509,7 @@ describe('saying what a file actually is', () => {
     fetchMock.mockRejectedValue(new Error('offline'));
 
     await expect(correctMatch('media-1', '329', 'movie')).resolves.toEqual({
-      problem: 'The server could not be reached.',
+      problem: 'Couldn’t reach the server.',
     });
   });
 });
@@ -589,7 +589,7 @@ describe('choosing where a preview clip comes from', () => {
     fetchMock.mockResolvedValue({ ok: false, status: 500, json: () => Promise.resolve(null) });
 
     await expect(setPreviewMoment('media-1', { atSeconds: 754 })).resolves.toEqual({
-      problem: 'The server answered 500.',
+      problem: 'The server responded with 500.',
     });
   });
 
@@ -597,7 +597,7 @@ describe('choosing where a preview clip comes from', () => {
     fetchMock.mockRejectedValue(new Error('offline'));
 
     await expect(setPreviewMoment('media-1', { atSeconds: 754 })).resolves.toEqual({
-      problem: 'The server could not be reached.',
+      problem: 'Couldn’t reach the server.',
     });
   });
 });
@@ -644,12 +644,12 @@ describe('when the server refuses to add or change a library', () => {
     fetchMock.mockResolvedValue({
       ok: false,
       status: 400,
-      json: () => Promise.resolve({ error: 'That path is not a readable directory.' }),
+      json: () => Promise.resolve({ error: 'That path isn’t a readable folder.' }),
     });
 
     await expect(
       createLibrary({ name: 'Films', kind: 'movies', path: '/nowhere' }),
-    ).rejects.toThrow('That path is not a readable directory.');
+    ).rejects.toThrow('That path isn’t a readable folder.');
   });
 
   it('raises the status when a refusal to add one explains nothing', async () => {
@@ -694,7 +694,7 @@ describe('when a refusal is not even JSON', () => {
     unreadable();
 
     await expect(correctMatch(library.id, 'tt0001')).resolves.toEqual({
-      problem: 'The server answered 502.',
+      problem: 'The server responded with 502.',
     });
   });
 

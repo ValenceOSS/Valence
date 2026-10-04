@@ -125,7 +125,7 @@ describe('AddWebhookDialog', () => {
 
     await fillIn(user);
     await openPane(user, 'Who');
-    await user.click(screen.getByRole('button', { name: 'One for each thing' }));
+    await user.click(screen.getByRole('button', { name: 'One per item' }));
     await user.click(screen.getByRole('button', { name: 'Create webhook' }));
 
     expect(filtersSent(onCreate)).toMatchObject({ mediaAdded: 'perItem' });
@@ -161,14 +161,14 @@ describe('AddWebhookDialog', () => {
     draw({
       onCreate: vi
         .fn()
-        .mockResolvedValue({ message: 'Valence will not send deliveries to that address.' }),
+        .mockResolvedValue({ message: 'Valence won’t send webhooks to that address.' }),
     });
 
     await fillIn(user);
     await user.click(screen.getByRole('button', { name: 'Create webhook' }));
 
     expect(
-      await screen.findByText('Valence will not send deliveries to that address.'),
+      await screen.findByText('Valence won’t send webhooks to that address.'),
     ).toBeInTheDocument();
   });
 

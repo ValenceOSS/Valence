@@ -8,7 +8,7 @@ describe('describeQualityMeaning', () => {
   });
 
   it('anchors a rung to a screen rather than to an adjective', () => {
-    expect(describeQualityMeaning('720p')).toMatch(/phone or a tablet/);
+    expect(describeQualityMeaning('720p')).toMatch(/phone or tablet/);
   });
 
   it('has something to say about every rung on offer', () => {

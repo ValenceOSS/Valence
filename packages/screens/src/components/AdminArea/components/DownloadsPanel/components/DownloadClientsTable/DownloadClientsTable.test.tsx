@@ -94,14 +94,14 @@ describe('DownloadClientsTable', () => {
       {
         ...READING,
         isReachable: false,
-        problem: sayVerbatim('Seedbox could not be reached'),
+        problem: sayVerbatim('Couldn’t connect to Seedbox'),
         problemCode: null,
       },
     ]);
 
     const seedbox = within(rowOf('Seedbox'));
 
-    expect(seedbox.getByText('Seedbox could not be reached')).toBeInTheDocument();
+    expect(seedbox.getByText('Couldn’t connect to Seedbox')).toBeInTheDocument();
     expect(seedbox.getByText('—')).toBeInTheDocument();
   });
 
@@ -124,7 +124,7 @@ describe('DownloadClientsTable', () => {
     for (const [item, handler] of [
       [/Change/, handlers.onChange],
       [/Test/, handlers.onTest],
-      [/Switch off/, handlers.onSwitch],
+      [/Disable/, handlers.onSwitch],
       [/Remove/, handlers.onRemove],
     ] as const) {
       await user.click(screen.getByRole('button', { name: 'Actions for Seedbox' }));
@@ -135,7 +135,7 @@ describe('DownloadClientsTable', () => {
 
     await user.click(screen.getByRole('button', { name: 'Actions for Usenet' }));
 
-    expect(await screen.findByRole('menuitem', { name: /Switch on/ })).toBeInTheDocument();
+    expect(await screen.findByRole('menuitem', { name: /Enable/ })).toBeInTheDocument();
   });
 
   it('says what to add while there are none', () => {

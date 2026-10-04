@@ -73,7 +73,7 @@ describe('setting a household up', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
-    expect(await screen.findByText('That name could not be saved.')).toBeInTheDocument();
+    expect(await screen.findByText('Couldn’t save that name.')).toBeInTheDocument();
   });
 
   it('lets somebody past the picture without choosing one', async () => {
@@ -85,7 +85,7 @@ describe('setting a household up', () => {
   });
 
   it('says what was wrong with a picture it would not take', async () => {
-    uploadHouseholdPhoto.mockResolvedValue('A picture has to be 6 MB or smaller.');
+    uploadHouseholdPhoto.mockResolvedValue('The picture must be 6 MB or smaller.');
 
     renderSetup(<HouseholdOnboarding household={HOUSEHOLD} onDone={vi.fn()} />);
 
@@ -97,7 +97,7 @@ describe('setting a household up', () => {
       new File(['bytes'], 'face.png', { type: 'image/png' }),
     );
 
-    expect(await screen.findByText('A picture has to be 6 MB or smaller.')).toBeInTheDocument();
+    expect(await screen.findByText('The picture must be 6 MB or smaller.')).toBeInTheDocument();
   });
 
   it('records nothing as finished until the last step is pressed', async () => {

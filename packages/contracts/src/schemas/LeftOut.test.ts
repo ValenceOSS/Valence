@@ -8,12 +8,12 @@ describe('LeftOut', () => {
       libraryId: 'library-1',
       path: '/media/films/Broken (2019).mkv',
       isFolder: false,
-      note: 'Breaks up an hour in',
+      note: 'Corrupted after the first hour',
       createdAt: '2026-10-03T12:00:00.000Z',
       createdBy: 'account-1',
     });
 
-    expect(read.note).toBe('Breaks up an hour in');
+    expect(read.note).toBe('Corrupted after the first hour');
   });
 
   it('asks for a path, and takes a note only where one was written', () => {

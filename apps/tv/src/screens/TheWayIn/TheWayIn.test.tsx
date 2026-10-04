@@ -65,7 +65,7 @@ jest.mock('@ValenceTv/screens/ChooseServer/ChooseServer', () => ({
     couldNotReach?: string;
   }) =>
     mockStandIn(couldNotReach === undefined ? 'Which server' : `Could not reach ${couldNotReach}`, {
-      'Choose a server': () => {
+      'Select a server': () => {
         onChosen('http://valence.local:8420');
       },
     }),
@@ -81,8 +81,8 @@ jest.mock('@ValenceTv/screens/WhoIsWatching/WhoIsWatching', () => ({
     onSignedIn: () => void;
     onChangeServer: () => void;
   }) =>
-    mockStandIn('Who is watching', {
-      'Pick Jo': () => {
+    mockStandIn('Who’s watching', {
+      'Select Jo': () => {
         onChoose(mockJo, { face: mockSpot, mark: mockSpot });
       },
       'Phone approved': onSignedIn,
@@ -165,9 +165,9 @@ describe('TheWayIn', () => {
     expect(drawn.getByText('Which server')).toBeTruthy();
     expect(fetchSession).not.toHaveBeenCalled();
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Choose a server' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Select a server' }));
 
-    expect(await drawn.findByText('Who is watching')).toBeTruthy();
+    expect(await drawn.findByText('Who’s watching')).toBeTruthy();
     expect(serverAddress()).toBe('http://valence.local:8420');
   });
 
@@ -201,14 +201,14 @@ describe('TheWayIn', () => {
 
     const drawn = await drawTheWayIn();
 
-    await userEvent.press(await drawn.findByRole('button', { name: 'Pick Jo' }));
+    await userEvent.press(await drawn.findByRole('button', { name: 'Select Jo' }));
 
     expect(drawn.getByText('Password for Jo')).toBeTruthy();
     expect(drawn.getAllByText('In flight')).toHaveLength(2);
 
     await userEvent.press(drawn.getByRole('button', { name: 'Someone else' }));
 
-    expect(drawn.getByText('Who is watching')).toBeTruthy();
+    expect(drawn.getByText('Who’s watching')).toBeTruthy();
   });
 
   it('lets the face and mark land where the password screen says they are', async () => {
@@ -216,7 +216,7 @@ describe('TheWayIn', () => {
 
     const drawn = await drawTheWayIn();
 
-    await userEvent.press(await drawn.findByRole('button', { name: 'Pick Jo' }));
+    await userEvent.press(await drawn.findByRole('button', { name: 'Select Jo' }));
     await userEvent.press(drawn.getByRole('button', { name: 'Say where the face and mark are' }));
 
     for (const landing of drawn.getAllByRole('button', { name: 'Land' })) {
@@ -231,7 +231,7 @@ describe('TheWayIn', () => {
 
     const drawn = await drawTheWayIn();
 
-    await userEvent.press(await drawn.findByRole('button', { name: 'Pick Jo' }));
+    await userEvent.press(await drawn.findByRole('button', { name: 'Select Jo' }));
     jest.mocked(fetchSession).mockResolvedValue(MARQUES);
     await userEvent.press(drawn.getByRole('button', { name: 'Password right' }));
 

@@ -41,16 +41,16 @@ describe('InviteCard', () => {
   it('shows a new invite the once, to copy', async () => {
     renderInAnAddress(<InviteCard invites={[]} />);
 
-    await userEvent.click(screen.getByRole('button', { name: /Make an invite/u }));
+    await userEvent.click(screen.getByRole('button', { name: /Create invite/u }));
 
     expect(await screen.findByLabelText('The invite')).toHaveTextContent('valence-link:abc');
-    expect(screen.getByText('Copy it now. It is not shown again.')).toBeInTheDocument();
+    expect(screen.getByText('Copy it now. It won’t be shown again.')).toBeInTheDocument();
   });
 
   it('withdraws an open invite', async () => {
     renderInAnAddress(<InviteCard invites={[AN_INVITE]} />);
 
-    await userEvent.click(screen.getByRole('button', { name: /^Withdraw the invite made/u }));
+    await userEvent.click(screen.getByRole('button', { name: /^Revoke the invite created/u }));
 
     await waitFor(() => {
       expect(withdrawLinkInvite).toHaveBeenCalledWith(AN_INVITE.id);
@@ -63,12 +63,12 @@ describe('InviteCard', () => {
     vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new Error('not allowed'));
     renderInAnAddress(<InviteCard invites={[]} />);
 
-    await actor.click(screen.getByRole('button', { name: /Make an invite/u }));
+    await actor.click(screen.getByRole('button', { name: /Create invite/u }));
     await actor.click(await screen.findByRole('button', { name: 'Copy' }));
 
     await waitFor(() => {
       expect(notify.failed).toHaveBeenCalledWith(
-        'The invite couldn’t be copied. Select it and copy it by hand, since it is not shown again.',
+        'Couldn’t copy the invite. Select it and copy it manually, because it won’t be shown again.',
       );
     });
     expect(screen.queryByText('Copied')).toBeNull();

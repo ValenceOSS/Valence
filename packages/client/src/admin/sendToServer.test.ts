@@ -51,7 +51,7 @@ describe('sendToServer', () => {
 
     await expect(sendToServer('/api/thing', { method: 'GET' }, Shape)).resolves.toEqual({
       kind: 'refused',
-      refusal: { message: 'The server could not be reached.' },
+      refusal: { message: 'Couldn’t reach the server.' },
     });
   });
 });

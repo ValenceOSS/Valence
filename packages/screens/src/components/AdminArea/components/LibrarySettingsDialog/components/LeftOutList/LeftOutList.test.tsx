@@ -53,12 +53,12 @@ describe('LeftOutList', () => {
     draw();
 
     await user.click(
-      await screen.findByRole('button', { name: 'Bring Broken (2019)/Broken.mkv back' }),
+      await screen.findByRole('button', { name: 'Include Broken (2019)/Broken.mkv again' }),
     );
 
     expect(bringBackMock).toHaveBeenCalledWith('library-1', 'left-1');
     await waitFor(() => {
-      expect(screen.getByText(/Nothing is left out/)).toBeInTheDocument();
+      expect(screen.getByText(/Nothing is excluded/)).toBeInTheDocument();
     });
   });
 
@@ -66,14 +66,14 @@ describe('LeftOutList', () => {
     fetchLeftOutMock.mockResolvedValue([]);
     draw();
 
-    expect(await screen.findByText(/Leave out a file or folder from Media or Files/)).toBeVisible();
+    expect(await screen.findByText(/Exclude a file or folder from Media or Files/)).toBeVisible();
   });
 
   it('says the list could not be read rather than that it is empty', async () => {
     fetchLeftOutMock.mockRejectedValue(new Error('offline'));
     draw();
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('could not be read');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Couldn’t load');
   });
 
   it('sets a display name so devtools can identify it', () => {

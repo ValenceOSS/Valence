@@ -42,7 +42,7 @@ const describeRequestFilters = (
       })),
     },
     {
-      name: say('screens.requests.describeRequestFilters.whereItIs'),
+      name: say('common.status'),
       options: sorted(requests.map((request) => describeRequestBadge(request).label)).map(
         (label) => ({ id: `state:${label}`, label }),
       ),

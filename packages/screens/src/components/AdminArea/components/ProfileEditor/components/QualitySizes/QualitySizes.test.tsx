@@ -57,7 +57,7 @@ describe('QualitySizes', () => {
 
     render(<QualitySizes resolutions={[]} sources={[]} sizes={[]} onChange={onChange} />);
 
-    expect(screen.getByText(/Tick a resolution and a source/)).toBeInTheDocument();
+    expect(screen.getByText(/Select a resolution and a source/)).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: /recommended sizes/ }));
 

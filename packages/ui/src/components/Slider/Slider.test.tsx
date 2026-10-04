@@ -331,26 +331,18 @@ describe('the preview that follows the pointer', () => {
 
   it('cannot be moved while somebody else is in charge of its value', () => {
     render(
-      <Slider label="Where the song is" value={10} max={100} isDisabled onValueChange={vi.fn()} />,
+      <Slider label="Song position" value={10} max={100} isDisabled onValueChange={vi.fn()} />,
     );
 
-    expect(screen.getByRole('slider', { name: 'Where the song is' })).toHaveAttribute(
-      'data-disabled',
-    );
+    expect(screen.getByRole('slider', { name: 'Song position' })).toHaveAttribute('data-disabled');
   });
 
   it('keeps its handle out of sight until the track is pointed at, where asked', () => {
     render(
-      <Slider
-        label="Where the song is"
-        value={10}
-        max={100}
-        revealsThumb
-        onValueChange={vi.fn()}
-      />,
+      <Slider label="Song position" value={10} max={100} revealsThumb onValueChange={vi.fn()} />,
     );
 
-    expect(screen.getByRole('slider', { name: 'Where the song is' })).toHaveClass(
+    expect(screen.getByRole('slider', { name: 'Song position' })).toHaveClass(
       'hover-hover:opacity-0',
       'hover-hover:group-hover/slider:opacity-100',
     );
@@ -361,7 +353,7 @@ describe('the preview that follows the pointer', () => {
 
     render(
       <Slider
-        label="Where the song is"
+        label="Song position"
         value={10}
         max={100}
         onValueChange={vi.fn()}
@@ -369,7 +361,7 @@ describe('the preview that follows the pointer', () => {
       />,
     );
 
-    screen.getByRole('slider', { name: 'Where the song is' }).focus();
+    screen.getByRole('slider', { name: 'Song position' }).focus();
     await userEvent.keyboard('{ArrowRight}');
 
     expect(onValueCommit).toHaveBeenCalledWith(11);

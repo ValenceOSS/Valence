@@ -455,7 +455,7 @@ const chooseLibraryAction = async (
 };
 
 const goTo = async (actor: ReturnType<typeof userEvent.setup>, section: string) => {
-  const bar = await screen.findByRole('tablist', { name: 'What to look at' });
+  const bar = await screen.findByRole('tablist', { name: 'Sections' });
 
   await actor.click(within(bar).getByRole('tab', { name: section }));
 };
@@ -507,7 +507,7 @@ const TheAdmin = ({
           ...(section.label === null ? {} : { label: section.label }),
           items: section.items,
         }))}
-        label="What to look at"
+        label="Sections"
         value={showing}
       />
 
@@ -533,7 +533,7 @@ describe('AdminArea', () => {
     renderInAnAddress(<TheAdmin />);
 
     expect(await screen.findByText('41%')).toBeInTheDocument();
-    expect(await screen.findByText('whole card, not encoder')).toBeInTheDocument();
+    expect(await screen.findByText('whole GPU, not encoder')).toBeInTheDocument();
   });
 
   it('says nothing is readable when a card answers with neither figure', async () => {
@@ -557,7 +557,7 @@ describe('AdminArea', () => {
       },
     });
 
-    expect(await screen.findByText('Nothing readable')).toBeInTheDocument();
+    expect(await screen.findByText('No data')).toBeInTheDocument();
   });
 
   it('reports room left on the disk the library is on, not on the one Valence boots from', async () => {
@@ -653,7 +653,7 @@ describe('AdminArea', () => {
           publicAddress: null,
           country: null,
           checkedAt: '2026-09-19T12:00:00.000Z',
-          problem: sayVerbatim('The tunnel is stopped'),
+          problem: sayVerbatim('The VPN tunnel is stopped'),
         },
         indexers: { total: 0, enabled: 0, failing: [] },
       },
@@ -683,7 +683,7 @@ describe('AdminArea', () => {
       renderInAnAddress(<TheAdmin panel="requests" />);
 
       expect(await screen.findByText('Requests service')).toBeInTheDocument();
-      expect(await screen.findByText('Answering')).toBeInTheDocument();
+      expect(await screen.findByText('Online')).toBeInTheDocument();
     });
 
     it('opens on the indexers where the address names them', async () => {
@@ -708,7 +708,7 @@ describe('AdminArea', () => {
   it('draws no requests panel where requesting is off', async () => {
     renderInAnAddress(<TheAdmin panel="requests" />);
 
-    await screen.findByText('Processor');
+    await screen.findByText('CPU');
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith('/api/requests/availability', expect.anything());
     });
@@ -986,13 +986,13 @@ describe('AdminArea', () => {
   it('draws something rather than nothing before the server has answered', () => {
     renderInAnAddress(<TheAdmin />);
 
-    expect(screen.getByText('Processor')).toBeInTheDocument();
+    expect(screen.getByText('CPU')).toBeInTheDocument();
   });
 
   it('says nobody has the app open when nobody does', async () => {
     renderInAnAddress(<TheAdmin panel="activity" />);
 
-    expect(await screen.findByText('Nobody has the app open right now.')).toBeInTheDocument();
+    expect(await screen.findByText('No one is using the app right now.')).toBeInTheDocument();
   });
 
   it('lists a stream in progress', async () => {
@@ -1423,7 +1423,7 @@ describe('AdminArea', () => {
     it('lays out what a server needs on the overview, starting with what is missing', async () => {
       renderInAnAddress(<TheAdmin />);
 
-      const guide = await screen.findByRole('region', { name: 'Get Valence set up' });
+      const guide = await screen.findByRole('region', { name: 'Set up Valence' });
 
       expect(within(guide).getByText('Add a metadata key').closest('li')).toHaveAttribute(
         'aria-current',
@@ -1434,9 +1434,9 @@ describe('AdminArea', () => {
     it('does not repeat in the banner what the guide already says', async () => {
       renderInAnAddress(<TheAdmin />);
 
-      await screen.findByRole('region', { name: 'Get Valence set up' });
+      await screen.findByRole('region', { name: 'Set up Valence' });
 
-      expect(screen.queryByText('No metadata catalogue key is set')).not.toBeInTheDocument();
+      expect(screen.queryByText('No metadata API key is set')).not.toBeInTheDocument();
     });
 
     it('takes a server with nothing on it to the libraries page, once', async () => {
@@ -1462,7 +1462,7 @@ describe('AdminArea', () => {
 
       renderInAnAddress(<TheAdmin onPanel={onPanel} />);
 
-      await screen.findByRole('region', { name: 'Get Valence set up' });
+      await screen.findByRole('region', { name: 'Set up Valence' });
 
       expect(onPanel).not.toHaveBeenCalled();
     });
@@ -1475,7 +1475,7 @@ describe('AdminArea', () => {
 
       renderInAnAddress(<TheAdmin panel="libraries" />);
 
-      const guide = await screen.findByRole('region', { name: 'Get Valence set up' });
+      const guide = await screen.findByRole('region', { name: 'Set up Valence' });
 
       await actor.click(within(guide).getByRole('button', { name: 'Add library' }));
 
@@ -1487,7 +1487,7 @@ describe('AdminArea', () => {
 
       renderInAnAddress(<TheAdmin />);
 
-      await actor.click(await screen.findByRole('button', { name: 'Enter it in Settings' }));
+      await actor.click(await screen.findByRole('button', { name: 'Add it in Settings' }));
 
       expect(await screen.findByLabelText('Catalogue key')).toBeInTheDocument();
     });
@@ -1499,7 +1499,7 @@ describe('AdminArea', () => {
 
       await actor.click(await screen.findByRole('button', { name: 'Hide' }));
 
-      expect(screen.queryByRole('region', { name: 'Get Valence set up' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('region', { name: 'Set up Valence' })).not.toBeInTheDocument();
       expect(window.localStorage.getItem('valence.setupGuideHidden')).toBe('true');
     });
 
@@ -1525,7 +1525,7 @@ describe('AdminArea', () => {
       renderInAnAddress(<TheAdmin />);
 
       expect(await screen.findByText('42%')).toBeInTheDocument();
-      expect(screen.queryByRole('region', { name: 'Get Valence set up' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('region', { name: 'Set up Valence' })).not.toBeInTheDocument();
     });
   });
 

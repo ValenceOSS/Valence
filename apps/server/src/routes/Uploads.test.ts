@@ -173,7 +173,8 @@ describe('uploading media over HTTP', () => {
 
     expect(response.status).toBe(403);
     expect(await response.json()).toMatchObject({
-      error: 'That disk is read-only to Valence. Give it read-write access to upload media there.',
+      error:
+        'That disk is read-only to Valence. Give Valence read-write access to upload media there.',
     });
   });
 

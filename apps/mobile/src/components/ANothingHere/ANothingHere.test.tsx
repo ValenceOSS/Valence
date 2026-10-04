@@ -13,8 +13,8 @@ describe('ANothingHere', () => {
   });
 
   it('says only what is missing where there is nothing more to say', async () => {
-    const drawn = await render(<ANothingHere of={Film} title="Nothing new" />);
+    const drawn = await render(<ANothingHere of={Film} title="No new notifications" />);
 
-    expect(drawn.getByText('Nothing new')).toBeTruthy();
+    expect(drawn.getByText('No new notifications')).toBeTruthy();
   });
 });

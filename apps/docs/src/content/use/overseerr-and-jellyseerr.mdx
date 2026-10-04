@@ -19,8 +19,8 @@ Nothing changes on the Overseerr or Jellyseerr side. Its users, its approvals an
 
 1. Open the admin area and choose **Requests**.
 2. Find the **Overseerr and Jellyseerr** card, below the requests service.
-3. Turn on **Answer Overseerr and Jellyseerr**. Valence makes an API key the first time.
-4. Under **Ask as**, choose the account the requests are made as. Until you do, whatever Overseerr or Jellyseerr sends is turned away.
+3. Turn on **Accept requests from Overseerr and Jellyseerr**. Valence makes an API key the first time.
+4. Under **Request as**, choose the account the requests are made as. Until you do, whatever Overseerr or Jellyseerr sends is turned away.
 
 The card then shows three things to copy: the **API key**, the **Radarr server** address and the **Sonarr server** address. Under each address it spells out the hostname, port, whether to use SSL and the URL base, which are the fields Overseerr's and Jellyseerr's dialogs ask for. They are worked out from the address you opened the admin area at. If Overseerr or Jellyseerr reaches Valence by another name, such as a Docker service name, use that hostname and port instead and keep the URL base as it is.
 
@@ -29,7 +29,7 @@ The card then shows three things to copy: the **API key**, the **Radarr server**
 | Radarr | `/arr/radarr` | Films  |
 | Sonarr | `/arr/sonarr` | Series |
 
-**Make a new key** replaces the key at once. The old one stops working, so paste the new one into both servers in Overseerr or Jellyseerr straight away.
+**Regenerate API key** replaces the key at once. The old one stops working, so paste the new one into both servers in Overseerr or Jellyseerr straight away.
 
 ## Add Valence as a Radarr server
 
@@ -42,7 +42,7 @@ In Overseerr or Jellyseerr, open **Settings**, then **Services**, and choose **A
 5. **API Key**: the key from the card.
 6. **URL Base**: `/arr/radarr`.
 7. Press **Test**. It should say it connected, and fill in the lists below.
-8. **Quality Profile**: **Whatever the library uses** leaves the choice to the library, the same as asking in Valence. Any other entry is one of Valence's quality profiles.
+8. **Quality Profile**: **Library default** leaves the choice to the library, the same as asking in Valence. Any other entry is one of Valence's quality profiles.
 9. **Root Folder**: the film library to file into.
 10. **Minimum Availability**: anything. Valence decides when to look for a film itself.
 11. Tick **Enable Scan**, so Overseerr or Jellyseerr reads back where each film has got to.
@@ -95,6 +95,6 @@ They read only what is asked for in Valence: refused requests are left out, and 
 | **Test** fails with a 401                                                 | The API key is not the current one. Copy it from the card again; making a new key retires the old one.                                                                     |
 | **Test** fails with a 404                                                 | Answering Overseerr and Jellyseerr is turned off, or the URL base is wrong. It is `/arr/radarr` or `/arr/sonarr`, without anything after it.                               |
 | **Test** fails with a 503                                                 | Requesting is off. See [Requesting](/install/requesting).                                                                                                                  |
-| Requests fail with "Choose the account…"                                  | No account is chosen under **Ask as**.                                                                                                                                     |
+| Requests fail with "Choose the account…"                                  | No account is chosen under **Request as**.                                                                                                                                 |
 | A series fails with "The catalogue knows no series…"                      | The catalogue has no series under the TVDB id Overseerr or Jellyseerr sent, or no catalogue key is set.                                                                    |
 | **Test** works from Valence's own address but not through a reverse proxy | The proxy has to pass `/arr` through to Valence, as it does `/api`. A proxy that forwards only some paths needs `/arr` added. See [Reverse proxy](/install/reverse-proxy). |

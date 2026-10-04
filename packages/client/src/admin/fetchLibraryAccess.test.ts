@@ -115,7 +115,7 @@ describe('changing who may see what', () => {
       it('says the server could not be reached', async () => {
         fetchMock.mockRejectedValue(new Error('offline'));
 
-        await expect(run()).resolves.toEqual({ message: 'The server could not be reached.' });
+        await expect(run()).resolves.toEqual({ message: 'Couldn’t reach the server.' });
       });
     });
   }

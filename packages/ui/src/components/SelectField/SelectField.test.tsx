@@ -22,12 +22,12 @@ describe('SelectField', () => {
         label="Library"
         options={OPTIONS}
         value=""
-        placeholder="Choose a library"
+        placeholder="Select a library"
         onSelect={vi.fn()}
       />,
     );
 
-    expect(screen.getByRole('button', { name: 'Library' })).toHaveTextContent('Choose a library');
+    expect(screen.getByRole('button', { name: 'Library' })).toHaveTextContent('Select a library');
   });
 
   it('is told the choice somebody makes', async () => {
@@ -47,7 +47,7 @@ describe('SelectField', () => {
       <SelectField
         label="Interval"
         description="How often it runs."
-        error="Choose how often."
+        error="Select how often."
         options={OPTIONS}
         value="none"
         onSelect={vi.fn()}
@@ -55,7 +55,7 @@ describe('SelectField', () => {
     );
 
     expect(screen.getByText('How often it runs.')).toBeInTheDocument();
-    expect(screen.getByRole('alert')).toHaveTextContent('Choose how often.');
+    expect(screen.getByRole('alert')).toHaveTextContent('Select how often.');
   });
 
   it('keeps its name for a screen reader while hiding it from sight', () => {

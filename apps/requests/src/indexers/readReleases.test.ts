@@ -161,7 +161,7 @@ describe('readReleases', () => {
 
   it('refuses an answer that is not a feed', () => {
     expect(() => readReleases(readIndexerXml('<caps/>'), JACKETT)).toThrow(
-      'The indexer answered a search with something that was not results',
+      'The indexer’s response to a search wasn’t a list of results',
     );
   });
 });

@@ -72,7 +72,7 @@ describe('APartyPanel', () => {
       />,
     );
 
-    await userEvent.press(drawn.getByText('Make a co-host'));
+    await userEvent.press(drawn.getByText('Make co-host'));
     await userEvent.press(drawn.getByLabelText('Remove Jo from the party'));
 
     expect(watchParty.setRole).toHaveBeenCalledWith('them', 'coHost');
@@ -97,14 +97,14 @@ describe('APartyPanel', () => {
       />,
     );
 
-    await userEvent.press(drawn.getByLabelText('Share the invitation'));
-    await userEvent.press(drawn.getByLabelText('Ask Kim along'));
+    await userEvent.press(drawn.getByLabelText('Share invite link'));
+    await userEvent.press(drawn.getByLabelText('Invite Kim'));
 
     expect(share).toHaveBeenCalledWith(
       expect.objectContaining({ url: 'https://valence.home/watch/film-1?party=p-1' }),
     );
     expect(watchParty.ask).toHaveBeenCalledWith('kim');
-    expect(drawn.queryByLabelText('Ask Jo along')).toBeNull();
+    expect(drawn.queryByLabelText('Invite Jo')).toBeNull();
   });
 
   it('asks for the password a party wants before it can be joined', async () => {
@@ -160,7 +160,7 @@ describe('APartyPanel', () => {
 
     expect(
       silent.getByText(
-        'Play something, then start a party and send the link to anybody with an account here.',
+        'Play something, then start a party and send the link to anyone with an account on this server.',
       ),
     ).toBeTruthy();
 
@@ -197,7 +197,7 @@ describe('APartyPanel', () => {
 
     expect(drawn.getByText('1 listening')).toBeTruthy();
 
-    await userEvent.press(drawn.getByLabelText('Share the invitation'));
+    await userEvent.press(drawn.getByLabelText('Share invite link'));
 
     expect(share).toHaveBeenCalledWith(
       expect.objectContaining({ url: 'https://valence.home/music?party=p-1' }),
@@ -215,7 +215,7 @@ describe('APartyPanel', () => {
       />,
     );
 
-    expect(drawn.getByText('You are in a watch party')).toBeTruthy();
+    expect(drawn.getByText('You’re in a watch party')).toBeTruthy();
     expect(drawn.queryByLabelText('Start a listening party')).toBeNull();
   });
 

@@ -71,7 +71,7 @@ const TheHidden = () => {
         })}
       </AGroup>
 
-      <AGroup title={say('phone.theAccount.theHidden.titlesAndProgrammes')}>
+      <AGroup title={say('common.filmsAndSeries')}>
         {titles.length === 0 ? (
           <View style={styles.row}>
             <Words tone="muted">{say('phone.theAccount.theHidden.nothingHidden')}</Words>

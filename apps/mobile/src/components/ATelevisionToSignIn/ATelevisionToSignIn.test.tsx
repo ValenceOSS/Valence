@@ -19,7 +19,7 @@ describe('ATelevisionToSignIn', () => {
       { wrapper: CacheScope },
     );
 
-    expect(await drawn.findByText('Yes, that is mine')).toBeTruthy();
+    expect(await drawn.findByText('Yes, this was me')).toBeTruthy();
     expect(readDeviceRequest).toHaveBeenCalledWith('ABCD1234');
 
     await userEvent.press(drawn.getByRole('button', { name: 'Back' }));

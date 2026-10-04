@@ -35,7 +35,7 @@ describe('PermissionEditor', () => {
 
     expect(screen.getByText('From AniList')).toBeInTheDocument();
     expect(screen.getByText('From Playlist import')).toBeInTheDocument();
-    expect(screen.getByText('Lets somebody use this part of Playlist import.')).toBeInTheDocument();
+    expect(screen.getByText('Lets someone use this part of Playlist import.')).toBeInTheDocument();
     expect(screen.getByRole('switch', { name: 'Sync lists' })).toBeChecked();
 
     await userEvent.click(screen.getByRole('switch', { name: 'Import playlists' }));
@@ -61,6 +61,6 @@ describe('PermissionEditor', () => {
     await userEvent.clear(screen.getByRole('searchbox', { name: 'Search permissions' }));
     await userEvent.type(screen.getByRole('searchbox', { name: 'Search permissions' }), 'zzzz');
 
-    expect(screen.getByText('Nothing here matches that.')).toBeInTheDocument();
+    expect(screen.getByText('Nothing matches your search.')).toBeInTheDocument();
   });
 });

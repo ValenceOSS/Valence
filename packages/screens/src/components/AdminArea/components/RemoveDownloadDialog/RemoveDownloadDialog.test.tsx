@@ -37,13 +37,13 @@ describe('RemoveDownloadDialog', () => {
 
     render(<RemoveDownloadDialog download={DUNE} onClose={vi.fn()} onConfirm={onConfirm} />);
 
-    expect(screen.getByText(/taken out of qBittorrent/)).toBeInTheDocument();
+    expect(screen.getByText(/removed from qBittorrent/)).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Remove' }));
 
     expect(onConfirm).toHaveBeenLastCalledWith(false);
 
-    await user.click(screen.getByRole('checkbox', { name: 'Delete what it downloaded as well' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Also delete downloaded files' }));
     await user.click(screen.getByRole('button', { name: 'Remove' }));
 
     expect(onConfirm).toHaveBeenLastCalledWith(true);
@@ -63,7 +63,7 @@ describe('RemoveDownloadDialog', () => {
     );
 
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
-    expect(screen.getByText(/NZBGet keeps what it has finished with/)).toBeInTheDocument();
+    expect(screen.getByText(/NZBGet doesn’t delete finished downloads/)).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Remove' }));
 
@@ -77,7 +77,7 @@ describe('RemoveDownloadDialog', () => {
       <RemoveDownloadDialog download={DUNE} onClose={vi.fn()} onConfirm={onConfirm} />,
     );
 
-    await user.click(screen.getByRole('checkbox', { name: 'Delete what it downloaded as well' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Also delete downloaded files' }));
 
     rerender(
       <RemoveDownloadDialog
@@ -88,7 +88,7 @@ describe('RemoveDownloadDialog', () => {
     );
 
     expect(
-      screen.getByRole('checkbox', { name: 'Delete what it downloaded as well' }),
+      screen.getByRole('checkbox', { name: 'Also delete downloaded files' }),
     ).not.toBeChecked();
   });
 

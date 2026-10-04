@@ -76,7 +76,7 @@ describe('JobHealth', () => {
 
     await screen.findByText('Scan for changes');
 
-    const table = screen.getByRole('table', { name: 'How each kind of job has gone' });
+    const table = screen.getByRole('table', { name: 'Results by job type' });
 
     expect(within(table).getByText('Scan for changes')).toBeInTheDocument();
     expect(within(table).getByText('Rematch')).toBeInTheDocument();
@@ -89,7 +89,7 @@ describe('JobHealth', () => {
 
     await screen.findByText('Scan for changes');
 
-    const table = screen.getByRole('table', { name: 'How each kind of job has gone' });
+    const table = screen.getByRole('table', { name: 'Results by job type' });
 
     expect(table).toHaveTextContent('1.4 s');
     expect(table).toHaveTextContent('2 min 5 s');
@@ -101,7 +101,7 @@ describe('JobHealth', () => {
 
     await screen.findByText('Scan for changes');
 
-    const strip = screen.getByLabelText('How the jobs are doing overall');
+    const strip = screen.getByLabelText('Overall job health');
 
     expect(within(strip).getByText('110')).toBeInTheDocument();
     expect(within(strip).getByText('3')).toBeInTheDocument();
@@ -134,7 +134,7 @@ describe('JobHealth', () => {
 
     draw();
 
-    expect(await screen.findByText('No job has run in this time.')).toBeInTheDocument();
+    expect(await screen.findByText('No jobs ran in this time range.')).toBeInTheDocument();
   });
 
   it('draws no cards, being laid flat on the page', async () => {

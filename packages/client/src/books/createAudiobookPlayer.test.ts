@@ -302,7 +302,7 @@ describe('createAudiobookPlayer', () => {
 
     expect(player.read()).toMatchObject({
       isPlaying: false,
-      problem: 'That track would not play.',
+      problem: 'Couldn’t play that track.',
     });
   });
 

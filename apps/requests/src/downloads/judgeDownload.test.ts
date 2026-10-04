@@ -61,7 +61,7 @@ describe('judgeDownload', () => {
     expect(judgeDownload(stuck, at(4 * MINUTE), RULES).isDoomed).toBe(false);
     expect(judgeDownload(stuck, at(6 * MINUTE), RULES)).toEqual({
       isDoomed: true,
-      reason: 'It never got its file list, so it never started',
+      reason: 'It never received its file list, so it never started',
     });
   });
 
@@ -71,7 +71,7 @@ describe('judgeDownload', () => {
     expect(judgeDownload(stuck, at(4 * MINUTE), RULES).isDoomed).toBe(false);
     expect(judgeDownload(stuck, at(5 * MINUTE), RULES)).toEqual({
       isDoomed: true,
-      reason: 'It never got its file list, so it never started',
+      reason: 'It never received its file list, so it never started',
     });
   });
 
@@ -91,7 +91,7 @@ describe('judgeDownload', () => {
     expect(judgeDownload(stalled, at(HOUR), RULES).isDoomed).toBe(false);
     expect(judgeDownload(stalled, at(7 * HOUR), RULES)).toEqual({
       isDoomed: true,
-      reason: 'It stalled, with nobody to fetch it from',
+      reason: 'It stalled with no seeders',
     });
   });
 
@@ -100,7 +100,7 @@ describe('judgeDownload', () => {
     const judged = judgeDownload(crawling, at(HOUR), RULES);
 
     expect(judged.isDoomed).toEqual(true);
-    expect(judged.reason).toEqual('At the rate it is going it would take another 42 days');
+    expect(judged.reason).toEqual('At the current speed it would take another 42 days');
   });
 
   it('spares one that has nearly arrived, however slowly it is going now', () => {
@@ -147,6 +147,6 @@ describe('judgeDownload', () => {
         ...RULES,
         wouldTakeLongerThanMs: HOUR,
       }).reason,
-    ).toEqual('At the rate it is going it would take another 1 hour');
+    ).toEqual('At the current speed it would take another 1 hour');
   });
 });

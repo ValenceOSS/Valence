@@ -79,7 +79,7 @@ describe('PluginSurfaceView', () => {
       blocks: [
         {
           type: 'button',
-          label: 'Forget everything',
+          label: 'Clear all history',
           tone: 'danger',
           action: { id: 'reset', confirm: 'This forgets your lists.' },
         },
@@ -89,7 +89,7 @@ describe('PluginSurfaceView', () => {
 
     renderInAnAddress(<PluginSurfaceView place={PLACE} />);
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Forget everything' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Clear all history' }));
 
     const dialog = screen.getByRole('dialog');
 
@@ -99,9 +99,9 @@ describe('PluginSurfaceView', () => {
 
     expect(actOnPluginSurface).not.toHaveBeenCalled();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Forget everything' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Clear all history' }));
     await userEvent.click(
-      within(screen.getByRole('dialog')).getByRole('button', { name: 'Go ahead' }),
+      within(screen.getByRole('dialog')).getByRole('button', { name: 'Continue' }),
     );
 
     await waitFor(() => {
@@ -139,7 +139,7 @@ describe('PluginSurfaceView', () => {
 
     renderInAnAddress(<PluginSurfaceView place={PLACE} />);
 
-    expect(await screen.findByText('This plugin could not draw its page')).toBeInTheDocument();
+    expect(await screen.findByText('This plugin couldn’t load its page')).toBeInTheDocument();
 
     fetchPluginSurface.mockResolvedValue({ blocks: [{ type: 'text', text: 'Back again' }] });
     await userEvent.click(screen.getByRole('button', { name: 'Try again' }));

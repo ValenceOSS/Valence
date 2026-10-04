@@ -156,7 +156,7 @@ describe('createMemoryShareService', () => {
 
     await shares.create('nobody-on-record', { kind: 'item', mediaId: FILM });
 
-    expect((await shares.listEverybody())[0]?.createdByName).toBe('Somebody');
+    expect((await shares.listEverybody())[0]?.createdByName).toBe('Someone');
   });
 
   it('withdraws anybody’s link, and says whose it was so they can be told', async () => {

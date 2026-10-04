@@ -50,7 +50,7 @@ describe('ApiKeyPanel', () => {
 
     render(<ApiKeyPanel />);
 
-    expect(await screen.findByText(/not allowed to hold API keys/)).toBeInTheDocument();
+    expect(await screen.findByText(/isn’t allowed to create API keys/)).toBeInTheDocument();
   });
 
   it('says there are none rather than showing an empty list', async () => {
@@ -119,7 +119,7 @@ describe('ApiKeyPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Create key' }));
 
     expect(await screen.findByText('valence_secret')).toBeInTheDocument();
-    expect(screen.getByText(/will not be shown again/)).toBeInTheDocument();
+    expect(screen.getByText(/won’t be shown again/)).toBeInTheDocument();
   });
 
   it('refuses to make one with no name, rather than making an unnamed key', async () => {
@@ -139,7 +139,7 @@ describe('ApiKeyPanel', () => {
 
     render(<ApiKeyPanel />);
 
-    await user.click(await screen.findByRole('switch', { name: 'Turn Home Assistant off' }));
+    await user.click(await screen.findByRole('switch', { name: 'Disable Home Assistant' }));
 
     expect(enableMock).toHaveBeenCalledWith('key-1', false);
   });
@@ -151,7 +151,7 @@ describe('ApiKeyPanel', () => {
 
     render(<ApiKeyPanel />);
 
-    await user.click(await screen.findByRole('switch', { name: 'Turn Home Assistant on' }));
+    await user.click(await screen.findByRole('switch', { name: 'Enable Home Assistant' }));
 
     expect(enableMock).toHaveBeenCalledWith('key-1', true);
   });

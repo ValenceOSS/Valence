@@ -45,7 +45,7 @@ describe('InstalledPluginCard', () => {
     await userEvent.click(screen.getByRole('button', { name: /Settings/u }));
     await userEvent.click(screen.getByRole('button', { name: 'Roll back to 0.9.0' }));
     await userEvent.click(screen.getByRole('button', { name: /Remove/u }));
-    await userEvent.click(screen.getByRole('switch', { name: 'Turn AniList off' }));
+    await userEvent.click(screen.getByRole('switch', { name: 'Disable AniList' }));
 
     expect(said.onUpdate).toHaveBeenCalled();
     expect(said.onOpenPage).toHaveBeenCalledWith({ pageId: 'log', title: 'Sync log' });

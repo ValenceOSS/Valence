@@ -67,7 +67,7 @@ const SessionMessageDialog = ({ watcher, isOpen, onSend, onClose }: SessionMessa
         <DialogContent>
           <div className="flex flex-col gap-2">
             <TextField
-              label={say('screens.adminArea.sessionMessageDialog.whatToTellThem')}
+              label={say('screens.adminArea.sessionCard.message')}
               {...form.text('text')}
               placeholder={say('screens.adminArea.sessionMessageDialog.restartingInFiveMinutes')}
               hasFocusOnMount

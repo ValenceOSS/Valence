@@ -85,7 +85,7 @@ describe('negotiatePlayback', () => {
 
     expect(plan.container).toMatchObject({ kind: 'remux', target: 'ts' });
     expect(plan.container.reason.detail.message).toBe(
-      'Client does not play hevc with this sound in the mkv container',
+      'Client doesn’t support hevc with this audio in the mkv container',
     );
     expect(plan.video.kind).toBe('passthrough');
     expect(plan.audio.kind).toBe('passthrough');
@@ -645,7 +645,7 @@ describe('negotiatePlayback', () => {
   it('says why they are off, rather than reading as a file with no subtitles', () => {
     const plan = negotiatePlayback(withPgs(), profile);
 
-    expect(plan.subtitles.reason.detail.message).toContain('asked for');
+    expect(plan.subtitles.reason.detail.message).toContain('No subtitles selected');
   });
 
   it('still burns in a forced track, which is meant to be read either way', () => {

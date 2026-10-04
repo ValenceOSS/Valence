@@ -110,6 +110,6 @@ describe('BookPage', () => {
   it('says so where the book has nothing to listen to', async () => {
     const { drawn } = await draw({ found: { ...detail, chapters: [] } });
 
-    expect(drawn.getByText('This book has nothing to listen to.')).toBeTruthy();
+    expect(drawn.getByText('This book has no audio.')).toBeTruthy();
   });
 });

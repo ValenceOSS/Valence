@@ -131,7 +131,7 @@ describe('summariseNewMedia', () => {
     );
 
     expect(summary).toEqual({
-      title: 'Something new to listen to',
+      title: 'New music',
       body: '15 songs — Even In Arcadia',
       link: '/music?listen=album:a1',
     });
@@ -140,7 +140,7 @@ describe('summariseNewMedia', () => {
   it('says only that something is new when songs arrive with films', () => {
     const summary = summariseNewMedia([film('f1', 'Arrival'), song('s1', 'a1', 'Even In Arcadia')]);
 
-    expect(summary?.title).toEqual('Something new');
+    expect(summary?.title).toEqual('New in your library');
     expect(summary?.body).toEqual('1 film and 1 song — Even In Arcadia and Arrival');
     expect(summary?.link).toBeNull();
   });

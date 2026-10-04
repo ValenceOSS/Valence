@@ -86,25 +86,21 @@ describe('LogLine', () => {
     draw({ isExpanded: true });
 
     expect(screen.getByText('at readFile()')).toBeInTheDocument();
-    expect(screen.getByRole('list', { name: 'Where this line came from' })).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /^Narrow the log to Job job-abcdef123/ }),
-    ).toBeVisible();
+    expect(screen.getByRole('list', { name: 'Source' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Filter log by Job job-abcdef123/ })).toBeVisible();
   });
 
   it('shows neither while closed', () => {
     draw();
 
     expect(screen.queryByText('at readFile()')).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('list', { name: 'Where this line came from' }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Source' })).not.toBeInTheDocument();
   });
 
   it('narrows the log to an identifier pressed in the open line', async () => {
     const { onFilter } = draw({ isExpanded: true });
 
-    await userEvent.click(screen.getByRole('button', { name: /Narrow the log to Library lib-1/ }));
+    await userEvent.click(screen.getByRole('button', { name: /Filter log by Library lib-1/ }));
 
     expect(onFilter).toHaveBeenCalledWith('library:lib-1');
   });
@@ -147,9 +143,7 @@ describe('LogLine', () => {
     expect(await screen.findByRole('menuitem', { name: 'Only error lines' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Only scanner' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Job job-abcd…' })).toBeInTheDocument();
-    expect(
-      screen.getByRole('menuitem', { name: 'Kind of job Scan for changes' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Job type Scan for changes' })).toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: /^Media/ })).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('menuitem', { name: 'Only scanner' }));

@@ -98,13 +98,8 @@ const RequestProgressTab = ({
         </section>
       )}
 
-      <section
-        aria-label={say('screens.requestDetailDialog.requestProgressTab.whatIsComingDown')}
-        className="flex flex-col gap-2"
-      >
-        <h4 className="text-xs font-medium text-text-muted">
-          {say('screens.requestDetailDialog.requestProgressTab.whatIsComingDown')}
-        </h4>
+      <section aria-label={say('common.downloading')} className="flex flex-col gap-2">
+        <h4 className="text-xs font-medium text-text-muted">{say('common.downloading')}</h4>
 
         {queue.isPending ? (
           <Spinner isCentered label={say('common.readingTheDownloads')} size="sm" />

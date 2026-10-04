@@ -73,7 +73,7 @@ describe('LyricsPanel', () => {
 
     render(<LyricsPanel />);
 
-    expect(screen.getByLabelText('Reading the lyrics')).toBeInTheDocument();
+    expect(screen.getByLabelText('Loading lyrics')).toBeInTheDocument();
   });
 
   it('says plainly when no lyrics were found', () => {

@@ -88,9 +88,9 @@ describe('SharingCard', () => {
   });
 
   it.each([
-    ['Take their requests', { takesTheirRequests: true }],
-    ['Play straight from them', { playsDirect: true }],
-    ['Let them keep titles offline', { allowsDownloads: true }],
+    ['Accept their requests', { takesTheirRequests: true }],
+    ['Stream directly from their server', { playsDirect: true }],
+    ['Allow downloads', { allowsDownloads: true }],
     ['Let their admin pause and message your people', { takesTheirControls: false }],
   ])('switches %s', async (name, change) => {
     renderInAnAddress(<SharingCard server={FILMS} thisServer="Anime" />);
@@ -107,6 +107,6 @@ describe('SharingCard', () => {
 
     renderInAnAddress(<SharingCard server={FILMS} thisServer="Anime" />);
 
-    expect(await screen.findByText(/That could not be read\./u)).toBeInTheDocument();
+    expect(await screen.findByText(/Couldn’t load that\./u)).toBeInTheDocument();
   });
 });

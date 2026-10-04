@@ -62,8 +62,8 @@ describe('AdminSetupGuide', () => {
     const props = draw({ hasLibrary: true });
     const user = userEvent.setup();
 
-    await user.click(screen.getByRole('button', { name: 'Enter it in Settings' }));
-    await user.click(screen.getByRole('button', { name: 'Scan all' }));
+    await user.click(screen.getByRole('button', { name: 'Add it in Settings' }));
+    await user.click(screen.getByRole('button', { name: 'Scan all libraries' }));
 
     expect(props.onOpenSettings).toHaveBeenCalledTimes(1);
     expect(props.onScanAll).toHaveBeenCalledTimes(1);
@@ -80,7 +80,7 @@ describe('AdminSetupGuide', () => {
   it('cannot scan before there is anything to scan', () => {
     draw();
 
-    expect(screen.getByRole('button', { name: 'Scan all' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Scan all libraries' })).toBeDisabled();
   });
 
   it('opens the page where a catalogue key is made, without handing over the app', async () => {
@@ -109,7 +109,7 @@ describe('AdminSetupGuide', () => {
   it('draws nothing once everything is done', () => {
     draw({ hasLibrary: true, hasCatalogueKey: true, hasScanned: true });
 
-    expect(screen.queryByLabelText('Get Valence set up')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Set up Valence')).not.toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

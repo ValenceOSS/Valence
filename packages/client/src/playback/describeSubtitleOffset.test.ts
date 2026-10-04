@@ -3,7 +3,7 @@ import { describeSubtitleOffset } from './describeSubtitleOffset';
 
 describe('describeSubtitleOffset', () => {
   it('says subtitles that have not been moved are in time', () => {
-    expect(describeSubtitleOffset(0)).toBe('In time');
+    expect(describeSubtitleOffset(0)).toBe('In sync');
   });
 
   it('signs a nudge later', () => {

@@ -8,7 +8,7 @@ describe('RecentEmails', () => {
   it('says nothing has been sent yet', () => {
     render(<RecentEmails sends={[]} now={NOW} />);
 
-    expect(screen.getByText('Nothing has been sent yet.')).toBeInTheDocument();
+    expect(screen.getByText('No emails sent yet.')).toBeInTheDocument();
   });
 
   it('lists what went and what failed, with why', () => {

@@ -54,7 +54,7 @@ describe('askWhichPlaylist', () => {
     await new Promise(setImmediate);
 
     expect(addToPlaylist).not.toHaveBeenCalled();
-    expect(alerted).toHaveBeenCalledWith('There is nothing in Blue to add.');
+    expect(alerted).toHaveBeenCalledWith('Blue has nothing to add.');
   });
 
   it('reads nothing when the sheet is cancelled', async () => {

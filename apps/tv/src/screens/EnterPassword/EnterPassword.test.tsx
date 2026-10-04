@@ -103,14 +103,14 @@ describe('EnterPassword', () => {
   it('says why a password was refused', async () => {
     jest
       .mocked(signInAsProfile)
-      .mockResolvedValue({ kind: 'refused', reason: 'That password is not right.' });
+      .mockResolvedValue({ kind: 'refused', reason: 'Incorrect password.' });
     const onSignedIn = jest.fn();
     const drawn = await drawEnterPassword({ onSignedIn });
 
     await typeInto('Password', 'wrong', drawn);
     await userEvent.press(drawn.getByRole('button', { name: 'Watch' }));
 
-    expect(await drawn.findByText('That password is not right.')).toBeTruthy();
+    expect(await drawn.findByText('Incorrect password.')).toBeTruthy();
     expect(onSignedIn).not.toHaveBeenCalled();
   });
 
@@ -123,11 +123,9 @@ describe('EnterPassword', () => {
     await typeInto('Password', 'hunter2', drawn);
     await userEvent.press(drawn.getByRole('button', { name: 'Watch' }));
 
-    expect(
-      await drawn.findByRole('button', { name: 'The code from your authenticator' }),
-    ).toBeTruthy();
+    expect(await drawn.findByRole('button', { name: 'Authenticator code' })).toBeTruthy();
 
-    await typeInto('The code from your authenticator', '123456', drawn);
+    await typeInto('Authenticator code', '123456', drawn);
     await userEvent.press(drawn.getByRole('button', { name: 'Watch' }));
 
     expect(verifyTotp).toHaveBeenCalledWith('123456');
@@ -142,7 +140,7 @@ describe('EnterPassword', () => {
 
     await typeInto('Password', 'hunter2', drawn);
     await userEvent.press(drawn.getByRole('button', { name: 'Watch' }));
-    await drawn.findByRole('button', { name: 'The code from your authenticator' });
+    await drawn.findByRole('button', { name: 'Authenticator code' });
 
     expect(drawn.queryByText('hunter2')).toBeNull();
     expect(drawn.queryByDisplayValue('hunter2')).toBeNull();
@@ -155,17 +153,17 @@ describe('EnterPassword', () => {
 
     await typeInto('Password', 'hunter2', drawn);
     await userEvent.press(drawn.getByRole('button', { name: 'Watch' }));
-    await drawn.findByRole('button', { name: 'The code from your authenticator' });
-    await typeInto('The code from your authenticator', '000000', drawn);
+    await drawn.findByRole('button', { name: 'Authenticator code' });
+    await typeInto('Authenticator code', '000000', drawn);
     await userEvent.press(drawn.getByRole('button', { name: 'Watch' }));
 
-    expect(await drawn.findByText('That code is not right.')).toBeTruthy();
+    expect(await drawn.findByText('That code is incorrect.')).toBeTruthy();
   });
 
   it('offers signing in from a phone beside the password', async () => {
     const drawn = await drawEnterPassword();
 
-    expect(drawn.getByText('Use your phone')).toBeTruthy();
+    expect(drawn.getByText('Sign in with your phone')).toBeTruthy();
     expect(await drawn.findByText('WDJB-MJHT')).toBeTruthy();
     expect(drawn.getAllByLabelText('Password').length).toBeGreaterThan(0);
   });

@@ -119,7 +119,7 @@ describe('SettingsPanel', () => {
       />,
     );
 
-    expect(screen.getByText(/come from filenames alone/)).toBeInTheDocument();
+    expect(screen.getByText(/taken from filenames only/)).toBeInTheDocument();
   });
 
   it('says a key is set without showing it', () => {
@@ -477,7 +477,7 @@ describe('whose age certificates to read', () => {
       />,
     );
 
-    expect(screen.getByText(/A 15 and an R are not the same thing/i)).toBeInTheDocument();
+    expect(screen.getByText(/A 15 and an R aren’t the same/i)).toBeInTheDocument();
   });
 
   it('promises it will not rescan, which is the whole reason every country is kept', () => {
@@ -494,7 +494,7 @@ describe('whose age certificates to read', () => {
       />,
     );
 
-    expect(screen.getByText(/reads them again rather than rescanning/i)).toBeInTheDocument();
+    expect(screen.getByText(/doesn’t require a rescan/i)).toBeInTheDocument();
   });
 
   it('writes the country chosen, and tells whoever is listening', async () => {
@@ -540,7 +540,7 @@ describe('whose age certificates to read', () => {
     );
 
     expect(
-      screen.getByRole('switch', { name: 'Fetch trailers from the catalogue' }),
+      screen.getByRole('switch', { name: 'Show trailers from the catalogue' }),
     ).not.toBeChecked();
   });
 
@@ -562,9 +562,7 @@ describe('whose age certificates to read', () => {
       />,
     );
 
-    await userEvent.click(
-      screen.getByRole('switch', { name: 'Fetch trailers from the catalogue' }),
-    );
+    await userEvent.click(screen.getByRole('switch', { name: 'Show trailers from the catalogue' }));
 
     expect(saveFetchesCatalogueTrailers).toHaveBeenCalledWith(true);
     expect(onCatalogueTrailersSaved).toHaveBeenCalled();
@@ -586,7 +584,7 @@ describe('whose age certificates to read', () => {
       />,
     );
 
-    const switched = screen.getByRole('switch', { name: 'Fetch trailers from the catalogue' });
+    const switched = screen.getByRole('switch', { name: 'Show trailers from the catalogue' });
 
     await userEvent.click(switched);
 
@@ -618,20 +616,22 @@ describe('whose age certificates to read', () => {
     it('says it only shows where the faces are shown', () => {
       renderWith(null);
 
-      expect(screen.getByText(/shows while Show who lives here is on/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/only visible while Show profiles on sign-in is on/),
+      ).toBeInTheDocument();
     });
 
     it('offers nothing to remove before a picture is chosen', () => {
       renderWith(null);
 
       expect(screen.queryByRole('button', { name: 'Remove' })).not.toBeInTheDocument();
-      expect(screen.queryByAltText('The picture behind the way in')).not.toBeInTheDocument();
+      expect(screen.queryByAltText('The sign-in background image')).not.toBeInTheDocument();
     });
 
     it('shows the picture chosen', () => {
       renderWith('/api/splashscreen?v=a.jpg');
 
-      expect(screen.getByAltText('The picture behind the way in')).toHaveAttribute(
+      expect(screen.getByAltText('The sign-in background image')).toHaveAttribute(
         'src',
         '/api/splashscreen?v=a.jpg',
       );
@@ -648,7 +648,7 @@ describe('whose age certificates to read', () => {
       await userEvent.upload(screen.getByLabelText(/Choose a picture/), picture);
 
       expect(saveSplashscreen).toHaveBeenCalledWith(picture);
-      expect(await screen.findByAltText('The picture behind the way in')).toHaveAttribute(
+      expect(await screen.findByAltText('The sign-in background image')).toHaveAttribute(
         'src',
         '/api/splashscreen?v=b.jpg',
       );
@@ -658,7 +658,7 @@ describe('whose age certificates to read', () => {
     it('says why the server would not take a picture', async () => {
       const onSplashscreenSaved = vi.fn();
 
-      saveSplashscreen.mockResolvedValue({ problem: 'A picture has to be 16 MB or smaller.' });
+      saveSplashscreen.mockResolvedValue({ problem: 'The picture must be 16 MB or smaller.' });
 
       renderWith(null, onSplashscreenSaved);
 
@@ -668,7 +668,7 @@ describe('whose age certificates to read', () => {
       );
 
       expect(await screen.findByRole('alert')).toHaveTextContent(
-        'A picture has to be 16 MB or smaller.',
+        'The picture must be 16 MB or smaller.',
       );
       expect(onSplashscreenSaved).not.toHaveBeenCalled();
     });
@@ -683,7 +683,7 @@ describe('whose age certificates to read', () => {
       await userEvent.click(screen.getByRole('button', { name: 'Remove' }));
 
       await waitFor(() => {
-        expect(screen.queryByAltText('The picture behind the way in')).not.toBeInTheDocument();
+        expect(screen.queryByAltText('The sign-in background image')).not.toBeInTheDocument();
       });
       expect(onSplashscreenSaved).toHaveBeenCalled();
     });
@@ -695,8 +695,8 @@ describe('whose age certificates to read', () => {
 
       await userEvent.click(screen.getByRole('button', { name: 'Remove' }));
 
-      expect(await screen.findByRole('alert')).toHaveTextContent('could not be removed');
-      expect(screen.getByAltText('The picture behind the way in')).toBeInTheDocument();
+      expect(await screen.findByRole('alert')).toHaveTextContent('Couldn’t remove the image');
+      expect(screen.getByAltText('The sign-in background image')).toBeInTheDocument();
     });
   });
 
@@ -717,7 +717,7 @@ describe('whose age certificates to read', () => {
       />,
     );
 
-    const toggle = screen.getByRole('switch', { name: 'Fetch music details from the web' });
+    const toggle = screen.getByRole('switch', { name: 'Download music metadata from the web' });
 
     expect(toggle).toHaveAttribute('aria-checked', 'false');
 
@@ -746,7 +746,7 @@ describe('whose age certificates to read', () => {
     expect(screen.getByText(/looked up with the free key/)).toBeInTheDocument();
 
     await userEvent.type(screen.getByLabelText('TheAudioDB key'), 'my-key');
-    await userEvent.click(screen.getByRole('button', { name: 'Save the TheAudioDB key' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save TheAudioDB key' }));
 
     expect(saveAudioDbKey).toHaveBeenCalledWith('my-key');
   });
@@ -770,7 +770,7 @@ describe('whose age certificates to read', () => {
     expect(screen.getByText(/adds each title’s Rotten Tomatoes score/)).toBeInTheDocument();
 
     await userEvent.type(screen.getByLabelText('OMDb key'), 'omdb-key');
-    await userEvent.click(screen.getByRole('button', { name: 'Save the OMDb key' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save OMDb key' }));
 
     expect(saveOmdbKey).toHaveBeenCalledWith('omdb-key');
     await waitFor(() => {
@@ -792,7 +792,7 @@ describe('whose age certificates to read', () => {
       />,
     );
 
-    expect(screen.getByText(/Scores fill in as titles are scanned again/)).toBeInTheDocument();
+    expect(screen.getByText(/Scores appear as titles are rescanned/)).toBeInTheDocument();
   });
 
   it('opens the page a free OMDb key is made on', async () => {

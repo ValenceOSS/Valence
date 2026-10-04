@@ -210,12 +210,12 @@ describe('createLidarrHandOff', () => {
 
     await expect(
       handOff.place({ ...ALBUM_REQUEST, musicBrainzId: null }, [], HAND_OFF),
-    ).rejects.toThrow('It has no MusicBrainz id to hand over.');
+    ).rejects.toThrow('It has no MusicBrainz ID to send to Lidarr.');
     await expect(handOff.place(ALBUM_REQUEST, [], HAND_OFF)).rejects.toThrow(
-      'Lidarr cannot find it by its MusicBrainz id.',
+      'Lidarr can’t find it by its MusicBrainz ID.',
     );
     await expect(handOff.place(ARTIST_REQUEST, [], HAND_OFF)).rejects.toThrow(
-      'Lidarr cannot find it by its MusicBrainz id.',
+      'Lidarr can’t find it by its MusicBrainz ID.',
     );
   });
 

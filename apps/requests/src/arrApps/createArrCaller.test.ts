@@ -96,13 +96,13 @@ describe('createArrCaller', () => {
     await expect(
       createArrCaller(refused, anArrApp()).read('/system/status', ArrStatusSchema),
     ).rejects.toMatchObject({
-      message: 'Radarr could not be reached',
+      message: 'Couldn’t connect to Radarr',
       problemCode: 'ArrAppUnreachable',
     });
     await expect(
       createArrCaller(late, anArrApp(), 3).read('/system/status', ArrStatusSchema),
     ).rejects.toMatchObject({
-      message: 'Radarr did not answer within 3 seconds',
+      message: 'Radarr didn’t respond within 3 seconds',
       problemCode: 'ArrAppUnreachable',
     });
   });
@@ -113,7 +113,7 @@ describe('createArrCaller', () => {
     await expect(
       createArrCaller(arr.fetch, anArrApp()).read('/system/status', ArrStatusSchema),
     ).rejects.toMatchObject({
-      message: 'Radarr refused its API key',
+      message: 'Radarr rejected its API key',
       problemCode: 'ArrAppKeyRefused',
     });
   });
@@ -138,15 +138,15 @@ describe('createArrCaller', () => {
     const caller = createArrCaller(arr.fetch, anArrApp());
 
     await expect(caller.send('POST', '/movie', {}, ArrStatusSchema)).rejects.toMatchObject({
-      message: 'Radarr answered with HTTP 400: This movie has already been added',
+      message: 'Radarr returned HTTP 400: This movie has already been added',
       status: 400,
     });
     await expect(caller.read('/movie/9', ArrStatusSchema)).rejects.toMatchObject({
-      message: 'Radarr answered with HTTP 404: NotFound',
+      message: 'Radarr returned HTTP 404: NotFound',
       status: 404,
     });
     await expect(caller.read('/queue', ArrStatusSchema)).rejects.toMatchObject({
-      message: 'Radarr answered with HTTP 500',
+      message: 'Radarr returned HTTP 500',
       status: 500,
     });
   });
@@ -157,7 +157,7 @@ describe('createArrCaller', () => {
     await expect(
       createArrCaller(fetch, anArrApp()).read('/system/status', ArrStatusSchema),
     ).rejects.toMatchObject({
-      message: 'Radarr answered, but not in a shape Valence can read',
+      message: 'Radarr sent a response Valence can’t read',
       problemCode: null,
     });
   });

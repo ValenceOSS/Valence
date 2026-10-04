@@ -36,8 +36,8 @@ beforeEach(() => {
  */
 const signOut = async (user: ReturnType<typeof userEvent.setup>, name: string) => {
   await user.click(await screen.findByRole('button', { name: `Actions for ${name}` }));
-  await user.click(await screen.findByRole('menuitem', { name: /Sign this out/ }));
-  await user.click(await screen.findByRole('button', { name: 'Sign it out' }));
+  await user.click(await screen.findByRole('menuitem', { name: /Sign out this device/ }));
+  await user.click(await screen.findByRole('button', { name: 'Sign out device' }));
 };
 
 describe('DeviceList', () => {
@@ -58,14 +58,14 @@ describe('DeviceList', () => {
 
     render(<DeviceList />);
 
-    expect(await screen.findByText('This one')).toBeInTheDocument();
+    expect(await screen.findByText('This device')).toBeInTheDocument();
   });
 
   it('offers no way to sign out of the page you are signing things out from', async () => {
     fetchDevices.mockResolvedValue([device({ isCurrent: true })]);
 
     render(<DeviceList />);
-    await screen.findByText('This one');
+    await screen.findByText('This device');
 
     expect(screen.queryByRole('button', { name: 'Sign out' })).not.toBeInTheDocument();
   });
@@ -88,7 +88,7 @@ describe('DeviceList', () => {
     fetchDevices.mockResolvedValue([device({ isCurrent: true })]);
 
     render(<DeviceList />);
-    await screen.findByText('This one');
+    await screen.findByText('This device');
 
     expect(
       screen.queryByRole('button', { name: /Sign out everywhere else/ }),
@@ -102,7 +102,7 @@ describe('DeviceList', () => {
 
     render(<DeviceList />);
     await user.click(await screen.findByRole('button', { name: /Sign out everywhere else/ }));
-    await user.click(await screen.findByRole('button', { name: 'Sign them out' }));
+    await user.click(await screen.findByRole('button', { name: 'Sign out all' }));
 
     expect(endOtherDevices).toHaveBeenCalled();
   });
@@ -125,7 +125,7 @@ describe('DeviceList', () => {
   it('says so plainly when it has nothing to show', async () => {
     render(<DeviceList />);
 
-    expect(await screen.findByText(/Nothing is signed in/)).toBeInTheDocument();
+    expect(await screen.findByText(/No signed-in devices were found/)).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

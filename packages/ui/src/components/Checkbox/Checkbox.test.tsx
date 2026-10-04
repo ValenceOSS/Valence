@@ -44,16 +44,16 @@ describe('Checkbox', () => {
 describe('Checkbox, with a qualification beneath it', () => {
   it('shows a description without putting it in the label', () => {
     render(
-      <Checkbox label="A sign-in was refused" description="Rate limiting refuses some first." />,
+      <Checkbox label="A sign-in was blocked" description="Rate limiting refuses some first." />,
     );
 
-    expect(screen.getByRole('checkbox', { name: 'A sign-in was refused' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'A sign-in was blocked' })).toBeInTheDocument();
     expect(screen.getByText('Rate limiting refuses some first.')).toBeInTheDocument();
   });
 
   it('points the checkbox at its description, so it is read out with it', () => {
     render(
-      <Checkbox label="A sign-in was refused" description="Rate limiting refuses some first." />,
+      <Checkbox label="A sign-in was blocked" description="Rate limiting refuses some first." />,
     );
 
     expect(screen.getByRole('checkbox')).toHaveAccessibleDescription(
@@ -94,19 +94,19 @@ describe('Checkbox standing for several things at once', () => {
   });
 
   it('keeps its label for whoever reads it out, where the label is hidden', () => {
-    render(<Checkbox label="Choose Dune" isLabelHidden />);
+    render(<Checkbox label="Select Dune" isLabelHidden />);
 
-    expect(screen.getByRole('checkbox', { name: 'Choose Dune' })).toBeInTheDocument();
-    expect(screen.getByText('Choose Dune')).toHaveClass('sr-only');
+    expect(screen.getByRole('checkbox', { name: 'Select Dune' })).toBeInTheDocument();
+    expect(screen.getByText('Select Dune')).toHaveClass('sr-only');
   });
 
   it('hides its label but keeps its description on show when it has one', () => {
-    render(<Checkbox label="Choose Dune" description="Asked for by Sam" isLabelHidden />);
+    render(<Checkbox label="Select Dune" description="Requested by Sam" isLabelHidden />);
 
     expect(
-      screen.getByRole('checkbox', { name: 'Choose Dune', description: 'Asked for by Sam' }),
+      screen.getByRole('checkbox', { name: 'Select Dune', description: 'Requested by Sam' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('Choose Dune')).toHaveClass('sr-only');
-    expect(screen.getByText('Asked for by Sam')).not.toHaveClass('sr-only');
+    expect(screen.getByText('Select Dune')).toHaveClass('sr-only');
+    expect(screen.getByText('Requested by Sam')).not.toHaveClass('sr-only');
   });
 });

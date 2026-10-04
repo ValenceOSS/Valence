@@ -4,9 +4,9 @@ import { serviceNotice } from './serviceNotice';
 
 describe('serviceNotice', () => {
   it('is a surface every client can draw', () => {
-    expect(SurfaceSchema.parse(serviceNotice('Counter is not answering', 'Try again.'))).toEqual({
+    expect(SurfaceSchema.parse(serviceNotice('Counter isn’t responding', 'Try again.'))).toEqual({
       blocks: [
-        { type: 'notice', tone: 'warning', title: 'Counter is not answering', text: 'Try again.' },
+        { type: 'notice', tone: 'warning', title: 'Counter isn’t responding', text: 'Try again.' },
       ],
     });
   });

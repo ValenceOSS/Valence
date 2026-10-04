@@ -61,7 +61,7 @@ const judged = (releaseId: string, score: number, rejections: string[] = []): Ju
   score,
   isRejected: rejections.length > 0,
   rejections: rejections.map(sayVerbatim),
-  reasons: [sayVerbatim('1080p, the first choice')],
+  reasons: [sayVerbatim('1080p, the first preference')],
 });
 
 describe('releaseColumns', () => {
@@ -72,7 +72,7 @@ describe('releaseColumns', () => {
         columns={releaseColumns({
           judged: new Map([
             ['Dune.BluRay', judged('Dune.BluRay', 2200)],
-            ['Dune.CAM', judged('Dune.CAM', 0, ['A camera copy is not one this profile takes'])],
+            ['Dune.CAM', judged('Dune.CAM', 0, ['A camera copy isn’t allowed by this profile'])],
             ['Dune.WEB', judged('Dune.WEB', 2100)],
           ]),
           pickedId: 'Dune.BluRay',
@@ -93,9 +93,9 @@ describe('releaseColumns', () => {
     );
 
     expect(screen.getByText('Picked · 2200')).toBeInTheDocument();
-    expect(screen.getByText('Refused')).toBeInTheDocument();
+    expect(screen.getByText('Declined')).toBeInTheDocument();
     expect(screen.getByText('Scores 2100')).toBeInTheDocument();
-    expect(screen.getByText('A camera copy is not one this profile takes')).toBeInTheDocument();
+    expect(screen.getByText('A camera copy isn’t allowed by this profile')).toBeInTheDocument();
     expect(screen.getByText('40 grabs')).toBeInTheDocument();
     expect(screen.getByText('12 / 3')).toBeInTheDocument();
   });

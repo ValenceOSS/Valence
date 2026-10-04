@@ -44,7 +44,7 @@ describe('ImportStep', () => {
       <ImportStep started={aMediaImportRun({ state: 'importing' })} onFinished={onFinished} />,
     );
 
-    expect(screen.getByLabelText('Getting ready')).toBeInTheDocument();
+    expect(screen.getByLabelText('Preparing')).toBeInTheDocument();
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1000);
@@ -71,7 +71,7 @@ describe('ImportStep', () => {
 
     expect(await screen.findByText('The import stopped.')).toBeVisible();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Carry on' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Resume' }));
 
     expect(startMediaImport).toHaveBeenCalledWith('run');
     expect(await screen.findByRole('button', { name: 'Stop' })).toBeVisible();

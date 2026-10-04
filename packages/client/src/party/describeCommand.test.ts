@@ -29,7 +29,7 @@ describe('describeCommand', () => {
 
   it('says when somebody put something else on', () => {
     expect(describeCommand(issued({ kind: 'changeWhatIsPlaying', mediaId: 'other' }), 'sam')).toBe(
-      'Dan put something else on',
+      'Dan changed what’s playing',
     );
   });
 

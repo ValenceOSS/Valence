@@ -18,15 +18,13 @@ describe('PageProblem', () => {
   it('says the rest of Valence is still running, since it is', () => {
     render(<PageProblem />);
 
-    expect(screen.getByText(/rest of Valence is still running/)).toBeInTheDocument();
+    expect(screen.getByText(/rest of Valence is still working/)).toBeInTheDocument();
   });
 
   it('says why, by what kind of failure it was, and shows what the failure said', () => {
     render(<PageProblem error={new Error('TypeError: Failed to fetch')} />);
 
-    expect(
-      screen.getByRole('heading', { name: 'Valence could not be reached' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Can’t reach Valence' })).toBeInTheDocument();
     expect(screen.getByText('TypeError: Failed to fetch')).toBeInTheDocument();
   });
 
@@ -38,7 +36,7 @@ describe('PageProblem', () => {
 
     render(<PageProblem />);
 
-    await actor.click(screen.getByRole('button', { name: 'Go to the start' }));
+    await actor.click(screen.getByRole('button', { name: 'Go to home page' }));
 
     expect(assign).toHaveBeenCalledWith('/');
   });

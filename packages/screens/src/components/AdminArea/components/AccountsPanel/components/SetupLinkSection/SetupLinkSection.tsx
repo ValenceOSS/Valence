@@ -181,7 +181,7 @@ const SetupLinkSection = ({
                 setIsConfirmingRevoke(true);
               }}
             >
-              {say('screens.setupLinkSection.revokeLink')}
+              {say('common.withdrawIt')}
             </Button>
           )}
         </div>
@@ -196,7 +196,7 @@ const SetupLinkSection = ({
       <ConfirmDialog
         title={say('screens.setupLinkSection.revokeThisLink')}
         detail={say('screens.setupLinkSection.theLinkStopsWorkingAtOnce', { name: account.name })}
-        confirmLabel={say('screens.setupLinkSection.revokeLink')}
+        confirmLabel={say('common.withdrawIt')}
         isDestructive
         isOpen={isConfirmingRevoke}
         onClose={() => {

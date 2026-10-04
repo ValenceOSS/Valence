@@ -33,7 +33,7 @@ describe('TheBookText', () => {
       aPart('<p>See <a href="#valence-part-3:note">note 1</a>.</p>', onLink),
     );
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Follow the link to note 1' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Open link to note 1' }));
 
     expect(onLink).toHaveBeenCalledWith('#valence-part-3:note');
   });

@@ -52,7 +52,7 @@ describe('AccountStanding', () => {
     );
 
     expect(screen.getByText('Waiting for setup')).toBeVisible();
-    expect(screen.getByText('Link works for 6 more days')).toBeVisible();
+    expect(screen.getByText('Link expires in 6 days')).toBeVisible();
   });
 
   it('leaves the detail out when asked to', () => {
@@ -68,7 +68,7 @@ describe('AccountStanding', () => {
     );
 
     expect(screen.getByText('Waiting for setup')).toBeVisible();
-    expect(screen.queryByText(/Link works for/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Link expires after/)).not.toBeInTheDocument();
   });
 
   it('says a setup link has run out', () => {

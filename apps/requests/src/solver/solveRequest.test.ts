@@ -102,7 +102,7 @@ describe('solveRequest', () => {
           return Promise.resolve();
         },
       }),
-    ).rejects.toThrow('Timed out getting past the site’s browser check');
+    ).rejects.toThrow('Timed out waiting to pass the site’s browser check');
   });
 
   it('gives up at once on a site that refuses the address outright', async () => {
@@ -113,7 +113,7 @@ describe('solveRequest', () => {
         deadline: Date.now() + 60_000,
         wait,
       }),
-    ).rejects.toThrow('refuses this address outright');
+    ).rejects.toThrow('blocks this IP address');
 
     await expect(
       solveRequest({
@@ -122,7 +122,7 @@ describe('solveRequest', () => {
         deadline: Date.now() + 60_000,
         wait,
       }),
-    ).rejects.toThrow('refuses this address outright');
+    ).rejects.toThrow('blocks this IP address');
   });
 
   it('goes through the check again where the request itself meets it', async () => {
@@ -154,7 +154,7 @@ describe('solveRequest', () => {
 
     await expect(
       solveRequest({ page, request: A_GET, deadline: Date.now() + 60_000, wait }),
-    ).rejects.toThrow('would not let the request through');
+    ).rejects.toThrow('browser check blocked the request');
   });
 
   it('names the kind of each failure, so the admin area can link to what explains it', async () => {

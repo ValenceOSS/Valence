@@ -86,11 +86,11 @@ describe('ImportWizard', () => {
 
     expect(await screen.findByText('Step 1 of 7')).toBeVisible();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Carry on with this one' }));
-    expect(screen.getByRole('heading', { name: 'Who to import' })).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: 'Continue with this server' }));
+    expect(screen.getByRole('heading', { name: 'Users to import' })).toBeVisible();
 
     await userEvent.click(await screen.findByRole('button', { name: 'Continue' }));
-    expect(screen.getByRole('heading', { name: 'Libraries first' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Libraries', level: 2 })).toBeVisible();
 
     await userEvent.click(await screen.findByRole('button', { name: 'Continue' }));
     expect(screen.getByRole('heading', { name: 'What will be imported' })).toBeVisible();
@@ -99,7 +99,7 @@ describe('ImportWizard', () => {
     expect(await screen.findByText('requesting')).toBeVisible();
 
     await userEvent.click(screen.getByRole('button', { name: 'skip-arr' }));
-    expect(screen.getByRole('heading', { name: 'Hand out the setup links' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Share setup links' })).toBeVisible();
 
     await userEvent.click(await screen.findByRole('button', { name: 'Done' }));
 
@@ -110,12 +110,14 @@ describe('ImportWizard', () => {
   it('goes back a step at a time', async () => {
     renderInAnAddress(<ImportWizard />);
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Carry on with this one' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Continue with this server' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Continue' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Back' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Back' }));
 
-    expect(screen.getByRole('heading', { name: 'Where is everything coming from?' })).toBeVisible();
+    expect(
+      screen.getByRole('heading', { name: 'Which server are you importing from?' }),
+    ).toBeVisible();
   });
 
   it('goes straight back to an import that is still running', async () => {
@@ -129,7 +131,7 @@ describe('ImportWizard', () => {
     });
     renderInAnAddress(<ImportWizard />);
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Carry on with this one' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Continue with this server' }));
 
     expect(screen.getByRole('heading', { name: 'Importing' })).toBeVisible();
   });
@@ -137,10 +139,10 @@ describe('ImportWizard', () => {
   it('says why it could not read what is connected', async () => {
     fetchImportStatus.mockResolvedValue({
       kind: 'refused',
-      refusal: { message: 'That is for administrators.' },
+      refusal: { message: 'Only administrators can do that.' },
     });
     renderInAnAddress(<ImportWizard />);
 
-    expect(await screen.findByText(/That is for administrators\./)).toBeVisible();
+    expect(await screen.findByText(/Only administrators can do that\./)).toBeVisible();
   });
 });

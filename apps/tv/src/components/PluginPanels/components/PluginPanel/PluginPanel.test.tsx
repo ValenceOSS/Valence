@@ -45,7 +45,7 @@ describe('PluginPanel', () => {
 
     await userEvent.press(await drawn.findByText('Connect AniList'));
 
-    expect(await drawn.findByText('Connect on your phone')).toBeTruthy();
+    expect(await drawn.findByText('Sign in on your phone')).toBeTruthy();
     expect(drawn.queryByText('Connect AniList')).toBeNull();
   });
 

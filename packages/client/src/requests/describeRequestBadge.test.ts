@@ -34,7 +34,7 @@ describe('describeRequestBadge', () => {
       'Awaiting approval',
     );
     expect(describeRequestBadge(aMediaRequest({ state: 'waiting' }), BEFORE_RELEASE).detail).toBe(
-      'Held until 3 Dec 2021, when its quality profile says it is out.',
+      'Waiting until 3 Dec 2021, when its quality profile considers it released.',
     );
     expect(
       describeRequestBadge(aMediaRequest({ state: 'waiting', releaseDate: null }), TODAY).label,
@@ -73,7 +73,7 @@ describe('describeRequestBadge', () => {
       );
 
       expect(badge.label).toBe('Waiting to be added');
-      expect(badge.detail).toMatch(/added to the library by hand/);
+      expect(badge.detail).toMatch(/added to the library manually/);
     }
   });
 
@@ -110,12 +110,12 @@ describe('describeRequestBadge', () => {
       describeRequestBadge(
         aMediaRequest({ state: 'refused', refusedBecause: sayVerbatim('No room') }),
       ),
-    ).toEqual({ label: 'Refused', tone: 'danger', detail: 'No room' });
+    ).toEqual({ label: 'Declined', tone: 'danger', detail: 'No room' });
     expect(describeRequestBadge(aMediaRequest()).detail).toBe(
       'Searched for again every few hours.',
     );
     expect(describeRequestBadge(aMediaRequest({ isPickedByHand: true })).detail).toBe(
-      'Waiting for a release to be picked by hand.',
+      'Waiting for a release to be chosen manually.',
     );
     expect(
       describeRequestBadge(
@@ -144,7 +144,7 @@ describe('describeRequestBadge', () => {
         }),
       ),
     ).toMatchObject({
-      label: 'Filing',
+      label: 'Importing',
       help: 'https://docs.getvalence.app/install/requesting#it-may-not-write-to-a-folder',
     });
     expect(
@@ -166,6 +166,6 @@ describe('describeRequestBadge', () => {
       (['searching', 'chosen', 'filing', 'filed', 'available'] as const).map(
         (state) => describeRequestBadge(aMediaRequest({ state })).label,
       ),
-    ).toEqual(['Searching', 'Release chosen', 'Filing', 'Filed', 'Done']);
+    ).toEqual(['Searching', 'Release selected', 'Importing', 'Imported', 'Done']);
   });
 });

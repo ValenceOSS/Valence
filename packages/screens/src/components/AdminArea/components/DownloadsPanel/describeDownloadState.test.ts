@@ -41,11 +41,11 @@ describe('describeDownloadState', () => {
 
   it('says why a download stalled, or what stalling means for its kind', () => {
     expect(describeDownloadState({ ...A_DOWNLOAD, state: 'stalled' }).detail).toBe(
-      'Nobody is sending it.',
+      'No peers are sending it.',
     );
     expect(
       describeDownloadState({ ...A_DOWNLOAD, state: 'stalled', protocol: 'usenet' }).detail,
-    ).toBe('Nothing is arriving.');
+    ).toBe('No data is being received.');
     expect(
       describeDownloadState({
         ...A_DOWNLOAD,
@@ -60,12 +60,12 @@ describe('describeDownloadState', () => {
     expect(describeDownloadState({ ...A_DOWNLOAD, state: 'metadata', seeds: 3 })).toEqual({
       label: 'Fetching metadata',
       tone: 'busy',
-      detail: 'Learning what files it holds.',
+      detail: 'Fetching the file list.',
     });
     expect(describeDownloadState({ ...A_DOWNLOAD, state: 'metadata', seeds: 0 })).toEqual({
       label: 'Fetching metadata',
       tone: 'warning',
-      detail: 'Nobody is sharing it yet.',
+      detail: 'No seeders yet.',
     });
   });
 
@@ -103,19 +103,19 @@ describe('describeDownloadState', () => {
     ).toEqual({
       label: 'Done',
       tone: 'success',
-      detail: 'Filed into /media/Films/The Matrix (1999).',
+      detail: 'Imported into /media/Films/The Matrix (1999).',
     });
     expect(
       describeDownloadState({
         ...A_DOWNLOAD,
         state: 'done',
-        filingProblem: sayVerbatim('qBittorrent has not said where it put the download'),
+        filingProblem: sayVerbatim('qBittorrent hasn’t reported where it saved the download'),
         filingProblemCode: null,
       }),
     ).toEqual({
-      label: 'Not filed',
+      label: 'Not imported',
       tone: 'warning',
-      detail: 'qBittorrent has not said where it put the download',
+      detail: 'qBittorrent hasn’t reported where it saved the download',
       help: null,
     });
     expect(

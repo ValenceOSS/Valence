@@ -122,7 +122,7 @@ describe('describeDefinition', () => {
       },
     ]);
     expect(detail?.settings[6]?.detail).toContain('Cookie header');
-    expect(detail?.settings[7]?.detail).toContain('a browser of its own');
+    expect(detail?.settings[7]?.detail).toContain('with its own browser');
     expect(detail?.settings[8]).toEqual({
       name: 'quality',
       kind: 'text',

@@ -198,13 +198,13 @@ describe('changing what a server allows', () => {
 
         const refusal = await run();
 
-        expect(refusal?.message).toContain('could not be done');
+        expect(refusal?.message).toContain('Couldn’t do that');
       });
 
       it('says the server could not be reached rather than blaming the request', async () => {
         unreachable();
 
-        await expect(run()).resolves.toEqual({ message: 'The server could not be reached.' });
+        await expect(run()).resolves.toEqual({ message: 'Couldn’t reach the server.' });
       });
     });
   }

@@ -48,7 +48,7 @@ const ReleasePickTable = ({
                 onPick(row.original);
               }}
             >
-              {say('screens.adminArea.releasePickTable.fetchThis')}
+              {say('common.download')}
             </Button>
           </span>
         ),

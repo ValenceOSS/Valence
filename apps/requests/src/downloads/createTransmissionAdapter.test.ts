@@ -107,7 +107,7 @@ describe('createTransmissionAdapter', () => {
 
     expect(asked).toHaveLength(1);
     await expect(createTransmissionAdapter(SETTINGS, fetch).version()).rejects.toThrow(
-      'Transmission refused the username or password',
+      'Transmission rejected the username or password',
     );
     await expect(createTransmissionAdapter(SETTINGS, fetch).version()).rejects.toMatchObject({
       problemCode: 'DownloadClientLoginRefused',
@@ -124,7 +124,7 @@ describe('createTransmissionAdapter', () => {
     });
 
     await expect(createTransmissionAdapter(SETTINGS, broken.fetch).version()).rejects.toThrow(
-      'Transmission answered 500',
+      'Transmission returned 500',
     );
   });
 
@@ -174,7 +174,7 @@ describe('createTransmissionAdapter', () => {
         'Dune',
         'valence',
       ),
-    ).rejects.toThrow('takes torrents, not NZBs');
+    ).rejects.toThrow('accepts torrents, not NZBs');
   });
 
   it('lists only the torrents with its label, reading what each is doing', async () => {

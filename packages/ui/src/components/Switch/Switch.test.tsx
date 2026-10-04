@@ -114,7 +114,7 @@ describe('Switch', () => {
       <>
         <p id="note">Rate-limited attempts are refused before they reach this.</p>
         <Switch
-          label="Sign-in refused"
+          label="Sign-in rejected"
           isLabelHidden
           isOn={false}
           onToggle={vi.fn()}
@@ -123,7 +123,7 @@ describe('Switch', () => {
       </>,
     );
 
-    expect(screen.getByRole('switch', { name: 'Sign-in refused' })).toHaveAccessibleDescription(
+    expect(screen.getByRole('switch', { name: 'Sign-in rejected' })).toHaveAccessibleDescription(
       'Rate-limited attempts are refused before they reach this.',
     );
   });

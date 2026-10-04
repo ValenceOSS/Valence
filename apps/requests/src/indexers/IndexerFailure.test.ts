@@ -4,9 +4,9 @@ import { IndexerFailure } from './IndexerFailure';
 
 describe('IndexerFailure', () => {
   it('carries the reason as its message', () => {
-    const failure = new IndexerFailure(sayVerbatim('The indexer refused the API key'));
+    const failure = new IndexerFailure(sayVerbatim('The indexer rejected the API key'));
 
-    expect(failure.message).toBe('The indexer refused the API key');
+    expect(failure.message).toBe('The indexer rejected the API key');
     expect(failure.name).toBe('IndexerFailure');
     expect(failure).toBeInstanceOf(Error);
   });

@@ -242,7 +242,7 @@ const SearchArea = ({
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <SegmentedRow
-              label={say('screens.searchArea.whatToSearch')}
+              label={say('common.whatToLookFor')}
               size="sm"
               items={KINDS}
               value={kind}

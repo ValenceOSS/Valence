@@ -15,7 +15,7 @@ The **Linked servers** panel is in the admin area.
 The first card says how other servers see yours: a name, a colour, the address they reach it at, and its fingerprint.
 
 - **Name and colour.** Shown on the other server wherever your server appears. Change them and press **Save**.
-- **Where other servers reach it.** The address the other server calls. It has to be reachable from there, so a `localhost` address only works for two servers on the same machine. Behind a reverse proxy, use the public `https://` address.
+- **Public address.** The address the other server calls. It has to be reachable from there, so a `localhost` address only works for two servers on the same machine. Behind a reverse proxy, use the public `https://` address.
 - **Fingerprint.** A short code worked out from this server's key. It never changes unless the key does, and it is how an admin checks they are linking with the server they think they are.
 
 The key is made the first time the server starts and is kept in its settings. Nothing about it is sent anywhere until you link.
@@ -24,11 +24,11 @@ The key is made the first time the server starts and is kept in its settings. No
 
 Linking takes one admin on each side.
 
-1. On the first server, press **Make an invite** under **Invite a server**. Copy the invite. It is shown once, works once and runs out after a day.
+1. On the first server, press **Create invite** under **Invite a server**. Copy the invite. It is shown once, works once and runs out after a day.
 2. Send it to the other admin however you like.
 3. On the second server, paste it under **Link to a server** and press **Link**. The second server reaches the first, checks that the server answering has the fingerprint written in the invite, and asks to link.
-4. Back on the first server, the request appears in the list as **Asking to link**, with the other server's name and fingerprint. Check the fingerprint with the other admin, then approve it, or refuse it.
-5. The second server shows **Waiting for them** until it hears the answer. It checks on its own every so often while the panel is open, and **Check again** asks at once.
+4. Back on the first server, the request appears in the list as **Link request received**, with the other server's name and fingerprint. Check the fingerprint with the other admin, then approve it, or refuse it.
+5. The second server shows **Awaiting their approval** until it hears the answer. It checks on its own every so often while the panel is open, and **Check again** asks at once.
 
 Withdraw an invite you no longer want from the list of open invites. Somebody holding it can no longer use it.
 
@@ -58,7 +58,7 @@ Linking shares nothing on its own. Press **Manage** on a linked server to choose
 - **Libraries.** Press a library to share it, and again to stop. A server that is shared nothing sees nothing.
 - **Age limit.** The highest certificate that server's people may reach, chosen the same way as an account's. Under a limit, things nobody certificated are refused unless you press **Allow unrated**. Music is never treated as unrated.
 - **Send your people’s names.** On by default. Off, the other server sees “Someone from” and your server's name instead of who is watching. Either way it never learns who they are here: each person is known to it by a code made for that server alone, which it cannot work back from and which another server would see differently.
-- **Show them their record.** Lets the other admin read your record of what their people asked for, so both of you can see why something was refused. Off by default.
+- **Share their request history.** Lets the other admin read your record of what their people asked for, so both of you can see why something was refused. Off by default.
 
 Sharing is one way. What the other server shares with you is its admin's choice, and is listed under **What … shares with you**.
 
@@ -66,7 +66,7 @@ Your server's own limits still apply on top. A person who cannot reach a library
 
 ## People from a linked server
 
-**People from …** lists everyone from that server who has asked yours for anything, by name where their server sends it, with when they were last seen. **Block** turns one person away without unlinking the whole server, and **Let back in** undoes it.
+**People from …** lists everyone from that server who has asked yours for anything, by name where their server sends it, with when they were last seen. **Block** turns one person away without unlinking the whole server, and **Unban** undoes it.
 
 ## The record
 
@@ -80,13 +80,13 @@ Every request a linked server makes is checked as it arrives, and **What … ask
 | Blocked       | The person it asked for is blocked.                                 |
 | Too often     | The server, or one of its people, asked too many times in a minute. |
 
-**Their record of your people** shows the other server's record of your people, where its admin shows it to you.
+**Their request history for your people** shows the other server's record of your people, where its admin shows it to you.
 
 ## Streams, quality and control
 
 Under **Manage**, a linked server also has limits on how it plays from yours.
 
-- **Streams at once.** How many of that server's people may watch from yours at the same time. One more is turned away with a message saying so, until somebody stops.
+- **Simultaneous streams.** How many of that server's people may watch from yours at the same time. One more is turned away with a message saying so, until somebody stops.
 - **Highest quality.** The best that server's people are sent, whatever they ask for. Your server transcodes down to it under its own transcoding limits.
 - **Let their admin pause and message your people.** For the other direction: whether that server's admin may pause somebody here who is watching from it, or send them a message. Stopping a stream needs no leave, since the stream is theirs.
 
@@ -94,27 +94,27 @@ Somebody watching from a linked server shows on your **Now playing** with the na
 
 ## Watching what a linked server shares
 
-What another server shares with yours appears in your own libraries, read from that server every 15 minutes. **Read again now** under **What … shares with you** reads it at once. Each card from another server carries that server's colour and initial, and the title's page says where it is **From**.
+What another server shares with yours appears in your own libraries, read from that server every 15 minutes. **Sync now** under **What … shares with you** reads it at once. Each card from another server carries that server's colour and initial, and the title's page says where it is **From**.
 
 - **Where.** Every library has a **Where** filter: everything, only this server, or one linked server.
 - **Playing.** Films, series, books, comics and music play the way your own do. Your server asks the other server for the stream and passes it on, so players only ever talk to your server, and progress, ratings and history are kept here.
-- **Play straight from them.** On, players fetch that server's titles from it directly instead of through yours. Turn it on when your people watch away from home and your server's upload is the slower link. Their player needs to reach the other server's address for this to work.
+- **Stream directly from their server.** On, players fetch that server's titles from it directly instead of through yours. Turn it on when your people watch away from home and your server's upload is the slower link. Their player needs to reach the other server's address for this to work.
 - **The same title on both.** A film or episode your server already has is not shown twice. The other server's copy becomes another version of yours, named with its picture and its server, and the page says **Also on …**. Yours stays the one played unless somebody picks the other.
-- **Prefer the best copy.** In a profile's settings. Where a linked server has a clearly better copy and can be reached, that one plays instead.
+- **Prefer the best version.** In a profile's settings. Where a linked server has a clearly better copy and can be reached, that one plays instead.
 - **When it is away.** A server that cannot be reached keeps its titles on the shelves, saying it cannot be reached right now. They play again once it is back.
-- **Keeping titles offline.** Downloading a title from another server needs that server's admin to turn on **Let them keep titles offline**. Only the original can be kept, since your server does not have the file to make a smaller copy from.
+- **Keeping titles offline.** Downloading a title from another server needs that server's admin to turn on **Allow downloads**. Only the original can be kept, since your server does not have the file to make a smaller copy from.
 
 ## Watch parties across servers
 
-A watch party started on one server can be joined by people on a linked one. **Ask** in a party lists the people from linked servers who have watched from yours, as "… from …", next to your own. The person asked is told on their own server and joins from there. Play, pause and seeking stay in step on both sides.
+A watch party started on one server can be joined by people on a linked one. **Invite** in a party lists the people from linked servers who have watched from yours, as "… from …", next to your own. The person asked is told on their own server and joins from there. Play, pause and seeking stay in step on both sides.
 
 ## Requests across servers
 
 When you search for something to request and a linked server already has it, the result says **On …**, with **Watch on …** to watch it from there now, and **Request here** to ask your own server anyway.
 
-Where a linked server's admin turns on **Take their requests** for yours, **Ask …** sends the request to that server. It joins their queue named with your server, for their admin to approve, as usual. That server needs requesting set up itself.
+Where a linked server's admin turns on **Accept their requests** for yours, **Ask …** sends the request to that server. It joins their queue named with your server, for their admin to approve, as usual. That server needs requesting set up itself.
 
-When a linked server gets something somebody here asked for, they are told it is there. **Drop requests a linked server has**, on the **This server** card, also drops the request here.
+When a linked server gets something somebody here asked for, they are told it is there. **Remove requests a linked server already has**, on the **This server** card, also drops the request here.
 
 ## Unlinking
 
@@ -122,18 +122,18 @@ Press **Unlink** on a linked server and confirm. This server stops trusting the 
 
 An unlinked server is kept, as **Unlinked**, until somebody links the two again with a new invite. Then it comes back as it was, with the same sharing and the same history.
 
-**Forget** removes it for good, with everything people here watched, rated or kept from it.
+**Remove** removes it for good, with everything people here watched, rated or kept from it.
 
 ## When it does not work
 
-| Message                                                             | What to do                                                                                                  |
-| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| That server could not be reached.                                   | The address in the invite has to be reachable from this server. Check its **Where other servers reach it**. |
-| The server at that address is not the one that made the invite.     | Something else answered at that address. Check with the other admin before trying again.                    |
-| That invite has been used, withdrawn or has run out.                | Ask for a new one.                                                                                          |
-| That invite is from this server.                                    | Paste it on the other server instead.                                                                       |
-| Your server is already playing as many streams from here as it may. | That server's limit on streams at once is reached. Stop one first, or ask its admin to raise it.            |
-| That server takes no requests from yours.                           | Its admin has not turned on **Take their requests** for your server.                                        |
+| Message                                                             | What to do                                                                                       |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| That server could not be reached.                                   | The address in the invite has to be reachable from this server. Check its **Public address**.    |
+| The server at that address is not the one that made the invite.     | Something else answered at that address. Check with the other admin before trying again.         |
+| That invite has been used, withdrawn or has run out.                | Ask for a new one.                                                                               |
+| That invite is from this server.                                    | Paste it on the other server instead.                                                            |
+| Your server is already playing as many streams from here as it may. | That server's limit on streams at once is reached. Stop one first, or ask its admin to raise it. |
+| That server takes no requests from yours.                           | Its admin has not turned on **Accept their requests** for your server.                           |
 
 ## Security notes
 
@@ -141,5 +141,5 @@ An unlinked server is kept, as **Unlinked**, until somebody links the two again 
 - Invite codes are stored only as a hash.
 - Servers talk to each other at `/api/federation/v1`. Those routes need no account, since the other server has none. Apart from pairing, every request there needs a token from a linked server, and anything not deliberately opened to a linked server is refused, whatever the token says.
 - A linked server may make 1,200 requests a minute, and 300 for any one of its people.
-- With **Play straight from them**, players fetch a stream with a ticket made for that one stream, which runs out after six hours and opens nothing else.
+- With **Stream directly from their server**, players fetch a stream with a ticket made for that one stream, which runs out after six hours and opens nothing else.
 - Two servers on the internet need to reach each other over HTTPS. See [Reverse proxy](/install/reverse-proxy) and [Security](/reference/security).

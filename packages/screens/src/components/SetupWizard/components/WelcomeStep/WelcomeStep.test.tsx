@@ -8,7 +8,7 @@ describe('WelcomeStep', () => {
     render(<WelcomeStep onBegin={vi.fn()} />);
 
     expect(screen.getByRole('heading', { name: 'Set up Valence' })).toBeInTheDocument();
-    expect(screen.getByText(/Nobody has an account on this server yet/)).toBeInTheDocument();
+    expect(screen.getByText(/No one has an account on this server yet/)).toBeInTheDocument();
   });
 
   it('goes on to the account when asked', async () => {
@@ -16,7 +16,7 @@ describe('WelcomeStep', () => {
 
     render(<WelcomeStep onBegin={onBegin} />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Make your account' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Create your account' }));
 
     expect(onBegin).toHaveBeenCalledOnce();
   });

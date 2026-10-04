@@ -55,7 +55,7 @@ const serverWith = (
     if (input.includes('/everyone')) {
       return Promise.resolve(
         everyone === 'refused'
-          ? new Response(JSON.stringify({ error: 'Nobody is signed in.' }), {
+          ? new Response(JSON.stringify({ error: 'You’re not signed in.' }), {
               status: 401,
               headers: { 'content-type': 'application/json' },
             })
@@ -111,7 +111,7 @@ describe('ProfileGate', () => {
   it('opens on the wordmark before it asks anything', () => {
     renderInAnAddress(<ProfileGate onSignedIn={vi.fn()} />);
 
-    expect(screen.queryByText('Who is watching?')).not.toBeInTheDocument();
+    expect(screen.queryByText('Who’s watching?')).not.toBeInTheDocument();
   });
 
   it('asks who is watching once the wordmark has moved aside', async () => {
@@ -119,7 +119,7 @@ describe('ProfileGate', () => {
 
     await arrive();
 
-    expect(screen.getByText('Who is watching?')).toBeInTheDocument();
+    expect(screen.getByText('Who’s watching?')).toBeInTheDocument();
   });
 
   it('shows everybody who could sign in', async () => {
@@ -159,7 +159,7 @@ describe('ProfileGate', () => {
 
       expect(screen.getByLabelText('Username or email')).toBeInTheDocument();
       expect(screen.getByLabelText('Password')).toBeInTheDocument();
-      expect(screen.queryByText('Who is watching?')).not.toBeInTheDocument();
+      expect(screen.queryByText('Who’s watching?')).not.toBeInTheDocument();
     });
 
     it('does not sit on the spinner, which is what a refusal used to look like', async () => {
@@ -169,7 +169,7 @@ describe('ProfileGate', () => {
 
       await arrive();
 
-      expect(screen.queryByText('Reading who is here')).not.toBeInTheDocument();
+      expect(screen.queryByText('Loading profiles')).not.toBeInTheDocument();
     });
 
     it('signs in with the address and password', async () => {
@@ -287,7 +287,7 @@ describe('ProfileGate', () => {
     await actor.type(screen.getByLabelText('Password'), 'wrong');
     await actor.click(screen.getByRole('button', { name: /Login/ }));
 
-    expect(await screen.findByText('That password is not right.')).toBeInTheDocument();
+    expect(await screen.findByText('Incorrect password.')).toBeInTheDocument();
   });
 
   it('will not send an empty password', async () => {
@@ -308,7 +308,7 @@ describe('ProfileGate', () => {
 
     expect(screen.getByLabelText('Password')).toBeInTheDocument();
     expect(screen.getByText('Sam')).toBeInTheDocument();
-    expect(screen.queryByText('Who is watching?')).not.toBeInTheDocument();
+    expect(screen.queryByText('Who’s watching?')).not.toBeInTheDocument();
   });
 
   it('moves to another profile it is told of, while it stays open', async () => {
@@ -330,7 +330,7 @@ describe('ProfileGate', () => {
 
     await arrive();
 
-    expect(screen.getByText('Who is watching?')).toBeInTheDocument();
+    expect(screen.getByText('Who’s watching?')).toBeInTheDocument();
   });
 
   it('goes back to the wall when somebody picked the wrong person', async () => {
@@ -340,9 +340,9 @@ describe('ProfileGate', () => {
 
     await arrive();
     await actor.click(screen.getByRole('button', { name: /Marques/ }));
-    await actor.click(screen.getByRole('button', { name: 'Somebody else' }));
+    await actor.click(screen.getByRole('button', { name: 'Someone else' }));
 
-    expect(screen.getByText('Who is watching?')).toBeInTheDocument();
+    expect(screen.getByText('Who’s watching?')).toBeInTheDocument();
   });
 
   it('goes back on escape, which is what everybody tries', async () => {
@@ -354,7 +354,7 @@ describe('ProfileGate', () => {
     await actor.click(screen.getByRole('button', { name: /Marques/ }));
     await actor.keyboard('{Escape}');
 
-    expect(screen.getByText('Who is watching?')).toBeInTheDocument();
+    expect(screen.getByText('Who’s watching?')).toBeInTheDocument();
   });
 
   it('pages a household too large to show at once', async () => {
@@ -581,7 +581,7 @@ describe('opened from the phone app, leading with a passkey', () => {
     await actor.click(screen.getByRole('button', { name: 'Other ways to sign in' }));
     await arrive();
 
-    expect(screen.getByText('Who is watching?')).toBeInTheDocument();
+    expect(screen.getByText('Who’s watching?')).toBeInTheDocument();
   });
 
   it('says nothing of a passkey refused after somebody moved on to another way in', async () => {
@@ -607,7 +607,7 @@ describe('opened from the phone app, leading with a passkey', () => {
     await arrive();
 
     expect(screen.queryByText('Too late.')).not.toBeInTheDocument();
-    expect(screen.getByText('Who is watching?')).toBeInTheDocument();
+    expect(screen.getByText('Who’s watching?')).toBeInTheDocument();
   });
 
   it('still lets somebody in under strict mode, which sets it up twice', async () => {
@@ -660,7 +660,7 @@ describe('opened from the phone app, leading with a passkey', () => {
     await arrive();
 
     expect(screen.queryByText('Sign in to the app')).not.toBeInTheDocument();
-    expect(screen.getByText('Who is watching?')).toBeInTheDocument();
+    expect(screen.getByText('Who’s watching?')).toBeInTheDocument();
   });
 });
 

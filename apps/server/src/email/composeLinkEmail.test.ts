@@ -14,7 +14,7 @@ describe('composeLinkEmail', () => {
 
     expect(email.subject).toBe('Your account on Home');
     expect(email.heading).toBe('Welcome, Ada');
-    expect(email.paragraphs.join(' ')).toContain('Home has made you an account');
+    expect(email.paragraphs.join(' ')).toContain('Home has created an account for you');
     expect(email.action).toEqual({ label: 'Set up your account', url: LINK.url });
     expect(email.afterAction).toEqual(['The link works once, until 9 October 2026 at 14:05 UTC.']);
   });
@@ -24,6 +24,6 @@ describe('composeLinkEmail', () => {
 
     expect(email.subject).toBe('Reset your password on Home');
     expect(email.action?.label).toBe('Choose a new password');
-    expect(email.afterAction.join(' ')).toContain('If you did not ask for this');
+    expect(email.afterAction.join(' ')).toContain('If you didn’t ask for this');
   });
 });

@@ -135,7 +135,7 @@ const CatalogueGrid = ({ browsing, filters = {}, onAsk }: CatalogueGridProps) =>
 
       <div ref={setEnd} className="flex justify-center">
         {isFetchingNextPage ? (
-          <Spinner label={say('screens.requestsPage.catalogueGrid.readingMore')} />
+          <Spinner label={say('screens.libraryBrowser.findingMoreToWatch')} />
         ) : null}
       </div>
     </div>

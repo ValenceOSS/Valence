@@ -64,7 +64,7 @@ describe('MusicTransport', () => {
 
     render(<MusicTransport state={player.read()} shown={SHOWN} player={player} />);
 
-    screen.getByRole('slider', { name: 'Where the song is' }).focus();
+    screen.getByRole('slider', { name: 'Song position' }).focus();
     await userEvent.keyboard('{ArrowRight}');
 
     expect(player.seek).toHaveBeenCalledTimes(1);

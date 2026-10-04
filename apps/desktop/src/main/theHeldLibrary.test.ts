@@ -488,7 +488,7 @@ describe('theHeldLibrary', () => {
 
     const [held] = await library.all();
 
-    expect([held?.state, held?.failure]).toEqual(['failed', 'The server answered 503.']);
+    expect([held?.state, held?.failure]).toEqual(['failed', 'The server responded with 503.']);
   });
 
   it('refuses to invent a server that was never chosen', async () => {
@@ -499,7 +499,10 @@ describe('theHeldLibrary', () => {
 
     const [held] = await library.all();
 
-    expect([held?.state, held?.failure]).toEqual(['failed', 'No Valence has been chosen yet.']);
+    expect([held?.state, held?.failure]).toEqual([
+      'failed',
+      'No Valence server has been selected yet.',
+    ]);
   });
 
   it('picks an interrupted transfer back up, and leaves a paused one paused', async () => {

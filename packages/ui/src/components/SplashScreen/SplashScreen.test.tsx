@@ -35,9 +35,9 @@ describe('SplashScreen', () => {
   });
 
   it('leaves the mark out where a bar already shows one, so it is not drawn twice', () => {
-    render(<SplashScreen label="Reading your library" hasMark={false} />);
+    render(<SplashScreen label="Loading your library" hasMark={false} />);
 
-    expect(screen.getByRole('status', { name: 'Reading your library' })).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Loading your library' })).toBeInTheDocument();
     expect(screen.queryByLabelText('Valence')).not.toBeInTheDocument();
   });
 

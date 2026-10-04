@@ -25,7 +25,7 @@ const describePlaylist = (playlist: PlaylistSummary): string =>
       : playlist.owner === null
         ? say('screens.playlistShelf.byARemovedProfile')
         : say('screens.playlistShelf.byOwner', { owner: playlist.owner.name }),
-    sayCount('common.count.things', playlist.entryCount),
+    sayCount('common.count.items', playlist.entryCount),
   ]
     .filter((part) => part !== null)
     .join(' · ');

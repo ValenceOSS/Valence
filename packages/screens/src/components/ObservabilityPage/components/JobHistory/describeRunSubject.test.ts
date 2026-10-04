@@ -44,7 +44,7 @@ describe('describeRunSubject', () => {
 
   it('says so for a library that has since been removed, rather than showing its code', () => {
     expect(describeRunSubject(MOVIES.id, [], 'library.scan')).toEqual({
-      name: 'A library that has been removed',
+      name: 'A deleted library',
       library: null,
     });
   });

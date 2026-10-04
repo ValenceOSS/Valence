@@ -107,7 +107,7 @@ describe('ListeningPartyPanel', () => {
       watchParty: { ...aShell().watchParty, party: { ...PARTY, kind: 'watch' } },
     });
 
-    expect(screen.getByText('You are in a watch party')).toBeInTheDocument();
+    expect(screen.getByText('You’re in a watch party')).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

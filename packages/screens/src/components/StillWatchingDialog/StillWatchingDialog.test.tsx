@@ -27,7 +27,7 @@ describe('StillWatchingDialog', () => {
   it('promises nothing will be marked as watched unless they say so', () => {
     render(<StillWatchingDialog {...props} />);
 
-    expect(screen.getByText(/nothing marked as watched/)).toBeInTheDocument();
+    expect(screen.getByText(/be marked as watched until you confirm/)).toBeInTheDocument();
   });
 
   it('says how long is left rather than closing without warning', () => {

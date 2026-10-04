@@ -98,7 +98,7 @@ const STOCKED_ONLY: ReadonlySet<ShellSection> = new Set(['shows', 'films', 'read
 
 const SURPRISE_LABELS: Record<LibraryKind, string> = {
   movies: say('common.aFilm2'),
-  shows: say('screens.appShell.aProgramme'),
+  shows: say('common.aSeries2'),
   music: say('screens.appShell.somethingToListenTo'),
   books: say('screens.appShell.somethingToRead'),
 };

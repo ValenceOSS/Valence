@@ -56,7 +56,7 @@ describe('LinkedServerList', () => {
       />,
     );
 
-    expect(screen.getByText('Asking to link')).toBeInTheDocument();
+    expect(screen.getByText('Link request received')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Approve' }));
 
@@ -113,12 +113,12 @@ describe('LinkedServerList', () => {
       />,
     );
 
-    await userEvent.click(screen.getByRole('button', { name: 'Forget' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Remove' }));
 
     expect(unlinkServer).not.toHaveBeenCalled();
-    expect(await screen.findByText('Forget Films?')).toBeInTheDocument();
+    expect(await screen.findByText('Remove Films?')).toBeInTheDocument();
 
-    const confirm = screen.getAllByRole('button', { name: 'Forget' }).at(-1);
+    const confirm = screen.getAllByRole('button', { name: 'Remove' }).at(-1);
 
     if (confirm === undefined) {
       throw new Error('There was no button to confirm with.');
@@ -141,7 +141,7 @@ describe('LinkedServerList', () => {
     );
 
     expect(screen.getByText('Unlinked')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Forget' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remove' })).toBeInTheDocument();
   });
 
   it('opens a linked server to manage, and closes it again', async () => {

@@ -232,7 +232,7 @@ const ReencodeDialog = ({
 
           {libraries.length < 2 ? null : (
             <SegmentedRow
-              label={say('screens.reencodeDialog.whichLibraryToLookIn')}
+              label={say('common.library')}
               size="sm"
               items={libraries.map((one) => ({ id: one.id, label: one.name }))}
               value={looking ?? ''}
@@ -501,7 +501,7 @@ const ReencodeDialog = ({
         isBusy={isStarting}
         title={sayCount('screens.reencodeDialog.reEncodeCountFiles', acceptedCount)}
         detail={say('screens.reencodeDialog.eachOriginalIsKeptUntilYou')}
-        confirmLabel={say('screens.reencodeDialog.queueThem')}
+        confirmLabel={say('common.addToQueue')}
         onClose={() => {
           setIsConfirming(false);
         }}

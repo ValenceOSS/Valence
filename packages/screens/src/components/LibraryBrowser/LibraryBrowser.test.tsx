@@ -136,7 +136,7 @@ describe('LibraryBrowser', () => {
     fetchLibrariesMock.mockReturnValue(new Promise(() => undefined));
     draw(<LibraryBrowser onPlay={vi.fn()} />);
 
-    expect(screen.getByRole('status', { name: 'Reading your library' })).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Loading your library' })).toBeInTheDocument();
   });
 
   it('opens on what was added most recently, even where there is only one thing', async () => {
@@ -504,7 +504,7 @@ describe('LibraryBrowser', () => {
 
     draw(<LibraryBrowser onPlay={vi.fn()} onAddLibrary={manage} />);
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Scan it' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Scan library' }));
 
     expect(manage).toHaveBeenCalledTimes(1);
   });
@@ -513,7 +513,7 @@ describe('LibraryBrowser', () => {
     fetchLibrariesMock.mockRejectedValue(new Error('offline'));
     draw(<LibraryBrowser onPlay={vi.fn()} />);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('could not be read');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Couldn’t load');
   });
 
   it('never says the page is empty before every library has answered', async () => {
@@ -666,7 +666,7 @@ describe('LibraryBrowser', () => {
   it('holds up nothing of its own while somebody else is holding the screen for it', () => {
     draw(<LibraryBrowser onPlay={vi.fn()} onReading={vi.fn()} />);
 
-    expect(screen.queryByRole('status', { name: 'Reading your library' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('status', { name: 'Loading your library' })).not.toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

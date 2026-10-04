@@ -43,7 +43,7 @@ describe('PasskeyFirst', () => {
     drawIt({ problem: 'That key is not for this account.', name: 'Flux' });
 
     expect(screen.getByText('That key is not for this account.')).toBeInTheDocument();
-    expect(screen.getByText(/the passkey you sign in to Flux with/)).toBeInTheDocument();
+    expect(screen.getByText(/Use your Flux passkey/)).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

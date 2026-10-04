@@ -52,7 +52,7 @@ describe('judgeRelease', () => {
       true,
     );
 
-    expect(judged.rejections).toEqual(['It is a video, not a book']);
+    expect(judged.rejections).toEqual(['It’s a video, not a book']);
   });
 
   it('still refuses a book with a banned word, or that nobody seeds', () => {
@@ -65,7 +65,7 @@ describe('judgeRelease', () => {
       true,
     );
 
-    expect(judged.rejections).toEqual(['It has “sample”, which is banned', 'Nobody is seeding it']);
+    expect(judged.rejections).toEqual(['It has “sample”, which is banned', 'No one is seeding it']);
   });
 
   it('scores a release by how far up its resolution and source come, and says so', () => {
@@ -74,21 +74,21 @@ describe('judgeRelease', () => {
       score: 2000 + 400,
       isRejected: false,
       rejections: [],
-      reasons: ['1080p, the first choice', 'Blu-ray, the second choice'],
+      reasons: ['1080p, the first preference', 'Blu-ray, the second preference'],
     });
     expect(judge('Dune.2021.720p.WEB-DL.x264-GRP').score).toBe(1000 + 300);
   });
 
   it('refuses a resolution or source the profile does not take, or a name without a resolution', () => {
     expect(judge('Dune.2021.2160p.BluRay.x265-GRP').rejections).toEqual([
-      '2160p is not one this profile takes',
+      '2160p isn’t allowed by this profile',
     ]);
     expect(judge('Dune.2021.1080p.HDCAM.x264-GRP').rejections).toEqual([
-      'A cinema recording is not one this profile takes',
+      'A cinema recording isn’t allowed by this profile',
     ]);
     expect(judge('Dune.2021.BluRay.x264-GRP')).toMatchObject({
       isRejected: true,
-      rejections: ['It does not say its resolution'],
+      rejections: ['Its name doesn’t say its resolution'],
     });
   });
 
@@ -105,7 +105,7 @@ describe('judgeRelease', () => {
     });
 
     expect(judge('Dune.2021.1080p.DVDRip.x264-GRP', profile).reasons).toContainEqual(
-      'DVD, the number 6 choice',
+      'DVD, preference number 6',
     );
   });
 
@@ -115,7 +115,7 @@ describe('judgeRelease', () => {
     expect(judge('Dune.2021.1080p.3D.BluRay.x264-GRP', profile).rejections).toEqual([
       'It has “x264”, which is banned',
       'It has “/\\b3d\\b/”, which is banned',
-      'It has none of the words it must: HDR, DV',
+      'It has none of the required words: HDR, DV',
     ]);
     expect(judge('Dune.2021.1080p.BluRay.HDR.x265-GRP', profile).isRejected).toBe(false);
   });
@@ -129,7 +129,7 @@ describe('judgeRelease', () => {
     expect(liked.reasons).toContainEqual('It has “Atmos” (+10)');
     expect(liked.reasons).toContainEqual('It has “FLUX” (+10)');
     expect(judge('Dune.2021.PROPER.1080p.BluRay.x264-GRP').reasons).toContainEqual(
-      'A proper, a better release of the same thing (+5)',
+      'A proper, an improved release of the same content (+5)',
     );
     expect(judge('Dune.2021.REPACK.1080p.BluRay.x264-GRP').score).toBe(2000 + 400 + 5);
   });
@@ -179,7 +179,7 @@ describe('judgeRelease', () => {
 
   it('refuses a torrent nobody seeds, but not an NZB', () => {
     expect(judge('Dune.2021.1080p.BluRay.x264-GRP', aProfile(), { seeders: 0 }).rejections).toEqual(
-      ['Nobody is seeding it'],
+      ['No one is seeding it'],
     );
     expect(
       judge('Dune.2021.1080p.BluRay.x264-GRP', aProfile(), { protocol: 'usenet', seeders: 0 })
@@ -192,14 +192,14 @@ describe('judgeRelease', () => {
     const film = 'Dune.2021.1080p.BluRay.x264-GRP';
 
     expect(judge(film, profile, { sizeBytes: 10 * GB }).reasons).toContainEqual(
-      'Its size is not judged without a running time',
+      'Its size can’t be checked without a runtime',
     );
     expect(judge(film, profile, { sizeBytes: 10 * GB }, 120).isRejected).toBe(false);
     expect(judge(film, profile, { sizeBytes: 20 * GB }, 120).rejections).toEqual([
-      'At 10,240 MB an hour it is larger than this profile takes, 8,000',
+      'At 10,240 MB an hour it’s larger than this profile’s limit of 8,000',
     ]);
     expect(judge(film, profile, { sizeBytes: 1 * GB }, 120).rejections).toEqual([
-      'At 512 MB an hour it is smaller than this profile takes, 1,000',
+      'At 512 MB an hour it’s smaller than this profile’s minimum of 1,000',
     ]);
   });
 
@@ -212,12 +212,12 @@ describe('judgeRelease', () => {
     expect(
       judge('Dune.2021.1080p.WEB-DL.x264-GRP', profile, { sizeBytes: 10 * GB }, 120).rejections,
     ).toEqual([
-      'At 5,120 MB an hour it is larger than this profile takes for 1080p from a web download, 4,000',
+      'At 5,120 MB an hour it’s larger than this profile’s limit for 1080p from a web download, 4,000',
     ]);
     expect(
       judge('Dune.2021.1080p.WEB-DL.x264-GRP', profile, { sizeBytes: 1 * GB }, 120).rejections,
     ).toEqual([
-      'At 512 MB an hour it is smaller than this profile takes for 1080p from a web download, 750',
+      'At 512 MB an hour it’s smaller than this profile’s minimum for 1080p from a web download, 750',
     ]);
     expect(
       judge('Dune.2021.1080p.BluRay.x264-GRP', profile, { sizeBytes: 10 * GB }, 120).isRejected,
@@ -241,7 +241,7 @@ describe('judgeRelease', () => {
     );
     expect(
       judge('Show.S01.1080p.WEB-DL.x264-GRP', profile, { sizeBytes: 90 * GB }, 60, 10).rejections,
-    ).toEqual(['At 9,216 MB an hour it is larger than this profile takes, 3,000']);
+    ).toEqual(['At 9,216 MB an hour it’s larger than this profile’s limit of 3,000']);
   });
 
   it('leaves a pack unjudged by size where nobody says what it holds', () => {
@@ -249,7 +249,7 @@ describe('judgeRelease', () => {
 
     expect(
       judge('Show.S01.1080p.WEB-DL.x264-GRP', profile, { sizeBytes: 40 * GB }, 60).reasons,
-    ).toContainEqual('Its size is not judged without knowing what it holds');
+    ).toContainEqual('Its size can’t be checked without knowing what it contains');
   });
 
   it('judges nothing by size where there are no limits, or no size', () => {
@@ -271,17 +271,17 @@ describe('judgeRelease', () => {
 
     expect(judge('Daft Punk - Discovery (2001) [FLAC]', profile)).toMatchObject({
       score: 2000,
-      reasons: ['FLAC, the first choice'],
+      reasons: ['FLAC, the first preference'],
     });
     expect(judge('Daft Punk - Discovery (2001) [MP3 V0]', profile).rejections).toEqual([
-      'MP3 at V0 is not one this profile takes',
+      'MP3 at V0 isn’t allowed by this profile',
     ]);
     expect(judge('Daft Punk - Discovery (2001)', profile).rejections).toEqual([
-      'It does not say how it was encoded',
+      'Its name doesn’t say how it was encoded',
     ]);
     expect(
       judge('Daft Punk - Discovery (2001) [FLAC]', profile, { sizeBytes: 3 * GB }).rejections,
-    ).toEqual(['At 3,072 MB it is larger than this profile takes, 2,000']);
+    ).toEqual(['At 3,072 MB it’s larger than this profile’s limit of 2,000']);
   });
 
   it('refuses a video for music, whatever its sound', () => {
@@ -290,6 +290,6 @@ describe('judgeRelease', () => {
     expect(
       judge('[MCLR] Porter Robinson & Madeon - Shelter (1080p Hi10 BD FLAC2.0)', profile)
         .rejections,
-    ).toEqual(['It is a video, not music']);
+    ).toEqual(['It’s a video, not music']);
   });
 });

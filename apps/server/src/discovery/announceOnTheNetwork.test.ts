@@ -97,7 +97,7 @@ describe('announceOnTheNetwork', () => {
     heard.failWith(new Error('no multicast route'));
 
     expect(warn).toHaveBeenCalledWith(
-      'Could not announce this server on the network: no multicast route',
+      'Couldn’t announce this server on the network: no multicast route',
     );
   });
 

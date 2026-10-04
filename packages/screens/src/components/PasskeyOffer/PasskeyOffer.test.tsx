@@ -39,7 +39,7 @@ describe('PasskeyOffer', () => {
 
     expect(registerPasskey).toHaveBeenCalledWith('Laptop');
     expect(
-      await screen.findByText('That is set. You can sign in with it from now on.'),
+      await screen.findByText('Passkey added. You can sign in with it from now on.'),
     ).toBeVisible();
     expect(onMade).toHaveBeenCalledOnce();
   });
@@ -52,7 +52,7 @@ describe('PasskeyOffer', () => {
 
     expect(registerPasskey).toHaveBeenCalledWith('This device');
     expect(
-      await screen.findByText('That is set. You can sign in with it from now on.'),
+      await screen.findByText('Passkey added. You can sign in with it from now on.'),
     ).toBeVisible();
   });
 

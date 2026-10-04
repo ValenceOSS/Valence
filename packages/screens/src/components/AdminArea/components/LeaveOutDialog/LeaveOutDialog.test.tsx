@@ -31,9 +31,9 @@ describe('LeaveOutDialog', () => {
   it('asks about the file it names, shown from inside its library', () => {
     open(FILE);
 
-    expect(screen.getByText('Leave Broken out?')).toBeInTheDocument();
+    expect(screen.getByText('Exclude Broken?')).toBeInTheDocument();
     expect(screen.getByText('Broken (2019)/Broken.mkv')).toBeInTheDocument();
-    expect(screen.getByText(/Nothing is deleted from the disk/)).toBeInTheDocument();
+    expect(screen.getByText(/Nothing is deleted from disk/)).toBeInTheDocument();
   });
 
   it('says a folder takes everything in it along', () => {
@@ -50,7 +50,7 @@ describe('LeaveOutDialog', () => {
     const { onClose } = open(FILE);
 
     await user.type(screen.getByLabelText('Why'), 'Stutters');
-    await user.click(screen.getByRole('button', { name: 'Leave it out' }));
+    await user.click(screen.getByRole('button', { name: 'Don’t import' }));
 
     await waitFor(() => {
       expect(onClose).toHaveBeenCalled();
@@ -64,7 +64,7 @@ describe('LeaveOutDialog', () => {
     leaveOutMock.mockResolvedValue({ leftOut: {}, jobId: null });
     open(FILE);
 
-    await user.click(screen.getByRole('button', { name: 'Leave it out' }));
+    await user.click(screen.getByRole('button', { name: 'Don’t import' }));
 
     await waitFor(() => {
       expect(leaveOutMock).toHaveBeenCalledWith('library-1', FILE.path, null);
@@ -74,13 +74,13 @@ describe('LeaveOutDialog', () => {
   it('says why the server refused, and stays open', async () => {
     const user = userEvent.setup();
 
-    leaveOutMock.mockRejectedValue(new Error('That is not inside this library.'));
+    leaveOutMock.mockRejectedValue(new Error('That isn’t inside this library.'));
 
     const { onClose } = open(FILE);
 
-    await user.click(screen.getByRole('button', { name: 'Leave it out' }));
+    await user.click(screen.getByRole('button', { name: 'Don’t import' }));
 
-    expect(await screen.findByText('That is not inside this library.')).toBeInTheDocument();
+    expect(await screen.findByText('That isn’t inside this library.')).toBeInTheDocument();
     expect(onClose).not.toHaveBeenCalled();
   });
 

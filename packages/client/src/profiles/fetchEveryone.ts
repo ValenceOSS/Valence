@@ -50,7 +50,7 @@ const signInAsProfile = async (
   }
 
   if (!response.ok) {
-    return { kind: 'refused', reason: say('common.thatPasswordIsNotRight') };
+    return { kind: 'refused', reason: say('common.thatIsNotYourPassword') };
   }
 
   const body = await response.text().catch(() => '');

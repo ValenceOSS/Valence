@@ -106,7 +106,7 @@ const PlaylistDialog = ({ isOpen, onClose, playlist, onSaved }: PlaylistDialogPr
         <TextField
           label={say('common.description')}
           value={description}
-          placeholder={say('common.whatItIsFor')}
+          placeholder={say('common.description')}
           onValueChange={setDescription}
         />
 
@@ -126,7 +126,7 @@ const PlaylistDialog = ({ isOpen, onClose, playlist, onSaved }: PlaylistDialogPr
       <DialogFooter
         dismiss={{ onChoose: onClose }}
         confirm={{
-          label: isNew ? say('common.makeIt') : say('common.save'),
+          label: isNew ? say('common.create') : say('common.save'),
           onChoose: () => {
             void save();
           },

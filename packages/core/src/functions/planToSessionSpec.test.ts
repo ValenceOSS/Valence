@@ -294,7 +294,7 @@ describe('planToSessionSpec', () => {
 
     expect(outcome).toMatchObject({ kind: 'ok', spec: { subtitles: { kind: 'none' } } });
     expect(outcome.kind === 'ok' && outcome.warnings[0]?.message).toMatch(
-      /cannot burn in text subtitles/,
+      /can’t burn in text subtitles/,
     );
   });
 

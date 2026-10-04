@@ -160,13 +160,13 @@ describe('Catalogue', () => {
   it('says there are no films when the library has none', async () => {
     const drawn = await drawCatalogue('films', []);
 
-    expect(drawn.getByText('There are no films here yet.')).toBeTruthy();
+    expect(drawn.getByText('No films yet.')).toBeTruthy();
   });
 
   it('says there are no shows when the library has none', async () => {
     const drawn = await drawCatalogue('shows', []);
 
-    expect(drawn.getByText('There are no shows here yet.')).toBeTruthy();
+    expect(drawn.getByText('No shows yet.')).toBeTruthy();
   });
 
   it('draws nothing to choose while the library is still being read', async () => {
@@ -273,12 +273,12 @@ describe('Catalogue', () => {
   it('leaves out what has been watched while asked to, and says so when that is everything', async () => {
     const drawn = await drawCatalogue('films', [FIRST_IN, LAST_IN], {}, [FINISHED(LAST_IN.id)]);
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Only what you have not watched' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Unwatched only' }));
 
     expect(posters(drawn, ['First In', 'Last In'])).toEqual(['First In']);
     expect(readBrowseArrangement('films').isHidingWatched).toBe(true);
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Only what you have not watched' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Unwatched only' }));
 
     expect(posters(drawn, ['First In', 'Last In'])).toEqual(['Last In', 'First In']);
   });
@@ -288,9 +288,9 @@ describe('Catalogue', () => {
 
     const drawn = await drawCatalogue('films', [FIRST_IN], {}, [FINISHED(FIRST_IN.id)]);
 
-    expect(drawn.getByText('You have watched everything here.')).toBeTruthy();
-    expect(drawn.queryByText('There are no films here yet.')).toBeNull();
-    expect(drawn.getByRole('button', { name: 'Only what you have not watched' })).toBeTruthy();
+    expect(drawn.getByText('You’ve watched everything here.')).toBeTruthy();
+    expect(drawn.queryByText('No films yet.')).toBeNull();
+    expect(drawn.getByRole('button', { name: 'Unwatched only' })).toBeTruthy();
   });
 
   it('narrows the wall by a genre chosen from the panel, and says where nothing is left', async () => {

@@ -13,7 +13,7 @@ describe('saidBySandbox', () => {
   it('says in Valence’s words what a plugin never said itself', () => {
     expect(saidBySandbox({ kind: 'failed' }).message).toBe('The plugin failed.');
     expect(saidBySandbox({ kind: 'neverDefined' }).message).toBe(
-      'The plugin never called definePlugin.',
+      'The plugin didn’t call definePlugin.',
     );
     expect(saidBySandbox({ kind: 'notLoaded' }).message).toBe('The plugin is not loaded.');
   });

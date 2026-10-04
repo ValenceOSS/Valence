@@ -73,7 +73,7 @@ const TheSecurity = () => {
       setIsWorking(false);
 
       if (!isOff) {
-        setRefusal(say('common.thatPasswordIsNotRight'));
+        setRefusal(say('common.thatIsNotYourPassword'));
 
         return;
       }
@@ -89,7 +89,7 @@ const TheSecurity = () => {
     setIsWorking(false);
 
     if (enrolled === null) {
-      setRefusal(say('common.thatPasswordIsNotRight'));
+      setRefusal(say('common.thatIsNotYourPassword'));
 
       return;
     }
@@ -275,7 +275,7 @@ const TheSecurity = () => {
 
               <Button
                 tone="bare"
-                label={say('phone.theAccount.theSecurity.removeName2', { name })}
+                label={say('common.forgetName', { name })}
                 onPress={() => {
                   Alert.alert(
                     say('common.removeName', { name }),

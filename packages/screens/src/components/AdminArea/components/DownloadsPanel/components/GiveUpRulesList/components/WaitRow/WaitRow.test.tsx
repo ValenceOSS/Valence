@@ -18,7 +18,7 @@ const drawn = (value: number | null) => {
   render(
     <WaitRow
       title="Stalled"
-      description="Nobody is sending it."
+      description="No peers are sending it."
       choices={CHOICES}
       value={value}
       unit="hours"

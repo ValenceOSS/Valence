@@ -18,7 +18,7 @@ describe('Phone', () => {
     const drawn = await render(<Phone />);
 
     await waitFor(() => {
-      expect(drawn.getByText('Where is your Valence?')).toBeTruthy();
+      expect(drawn.getByText('Connect to your server')).toBeTruthy();
     });
   });
 
@@ -28,7 +28,7 @@ describe('Phone', () => {
     const drawn = await render(<Phone />);
 
     await waitFor(() => {
-      expect(drawn.getByText('Who is watching?')).toBeTruthy();
+      expect(drawn.getByText('Who’s watching?')).toBeTruthy();
     });
   });
 });

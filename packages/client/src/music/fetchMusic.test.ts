@@ -79,7 +79,7 @@ describe('fetchMusic', () => {
   });
 
   it('still fails on a refusal that is not about lyrics being missing', async () => {
-    answerWith({ error: 'Nobody is signed in.' }, false, 401);
+    answerWith({ error: 'You’re not signed in.' }, false, 401);
 
     await expect(fetchLyrics('t')).rejects.toThrow();
   });

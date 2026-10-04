@@ -98,7 +98,7 @@ describe('the official plugin catalogue', () => {
           [`${URL_OF}.sig`]: signed(bytes, STRANGER.privateKey),
         }).client.read()
       ).problem,
-    ).toEqual('The plugin catalogue is not signed by the Valence project.');
+    ).toEqual('The plugin catalogue isn’t signed by the Valence project.');
     expect(
       (
         await build({
@@ -106,9 +106,9 @@ describe('the official plugin catalogue', () => {
           [`${URL_OF}.sig`]: new TextEncoder().encode('!!'),
         }).client.read()
       ).problem,
-    ).toEqual('The plugin catalogue is not signed by the Valence project.');
+    ).toEqual('The plugin catalogue isn’t signed by the Valence project.');
     expect((await build({ [URL_OF]: bytes }).client.read()).problem).toEqual(
-      'The plugin catalogue could not be reached.',
+      'Couldn’t reach the plugin catalogue.',
     );
   });
 
@@ -118,11 +118,11 @@ describe('the official plugin catalogue', () => {
 
     expect(
       (await build({ [URL_OF]: junk, [`${URL_OF}.sig`]: signed(junk) }).client.read()).problem,
-    ).toEqual('The plugin catalogue could not be read.');
+    ).toEqual('Couldn’t read the plugin catalogue.');
     expect(
       (await build({ [URL_OF]: notJson, [`${URL_OF}.sig`]: signed(notJson) }).client.read())
         .problem,
-    ).toEqual('The plugin catalogue could not be read.');
+    ).toEqual('Couldn’t read the plugin catalogue.');
   });
 
   it('fetches a package only when it hashes and is signed as the catalogue says', async () => {
@@ -131,16 +131,16 @@ describe('the official plugin catalogue', () => {
 
     expect(await client.fetchPackage(good)).toEqual({ bytes: PACKAGE });
     expect(await client.fetchPackage({ ...good, sha256: 'b'.repeat(64) })).toEqual({
-      problem: 'Anime tracking is not the package the catalogue describes.',
+      problem: 'Anime tracking doesn’t match the package the catalogue describes.',
     });
     expect(await client.fetchPackage(entry(STRANGER.privateKey))).toEqual({
-      problem: 'Anime tracking is not signed by the key the catalogue names.',
+      problem: 'Anime tracking isn’t signed by the key listed in the catalogue.',
     });
     expect(await client.fetchPackage({ ...good, keyId: 'someone-else' })).toEqual({
-      problem: 'Anime tracking is not signed by the key the catalogue names.',
+      problem: 'Anime tracking isn’t signed by the key listed in the catalogue.',
     });
     expect(await build({}).client.fetchPackage(good)).toEqual({
-      problem: 'Anime tracking could not be downloaded.',
+      problem: 'Couldn’t download Anime tracking.',
     });
   });
 });

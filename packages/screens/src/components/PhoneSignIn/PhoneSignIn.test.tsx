@@ -88,7 +88,7 @@ describe('handing a sign-in back to the phone', () => {
 
     expect(
       await screen.findByText(
-        'That did not work. Try again, or close this and sign in from the app again.',
+        'Sign-in failed. Try again, or close this page and sign in from the app again.',
       ),
     ).toBeInTheDocument();
   });

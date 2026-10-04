@@ -194,7 +194,7 @@ describe('TextReader', () => {
     open();
 
     await screen.findByText('It is a truth universally acknowledged.');
-    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Show panel' }));
     await userEvent.click(screen.getByRole('button', { name: 'Next chapter' }));
 
     expect(await screen.findByText('Mr. Bennet was among the earliest.')).toBeInTheDocument();
@@ -212,7 +212,7 @@ describe('TextReader', () => {
     open();
 
     await screen.findByText('It is a truth universally acknowledged.');
-    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Show panel' }));
     await userEvent.click(screen.getByRole('button', { name: 'Sepia' }));
 
     expect(held.get('valence.reader.text')).toContain('"page":"sepia"');
@@ -232,7 +232,7 @@ describe('TextReader', () => {
 
     open();
 
-    expect(await screen.findByText('This book could not be opened')).toBeInTheDocument();
+    expect(await screen.findByText('Couldn’t open this book')).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

@@ -206,10 +206,10 @@ const PartyPanel = ({ kind, watchParty, mediaId, people, onLeave }: PartyPanelPr
         );
       })}
 
-      <Text style={styles.heading}>{say('common.partyPanel.invite')}</Text>
+      <Text style={styles.heading}>{say('common.partyPanel.ask')}</Text>
       <Text style={styles.note}>{words.invitation}</Text>
       <View style={styles.code}>
-        <QrCode value={invitation} size={INVITATION_SIZE} label={say('common.partyPanel.invite')} />
+        <QrCode value={invitation} size={INVITATION_SIZE} label={say('common.partyPanel.ask')} />
       </View>
 
       {!mayAsk || elsewhere.length === 0 ? null : (

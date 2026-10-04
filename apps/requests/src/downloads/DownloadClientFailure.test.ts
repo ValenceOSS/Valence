@@ -14,7 +14,7 @@ describe('DownloadClientFailure', () => {
   it('carries what kind of problem it is, where it is one there is help for', () => {
     expect(
       new DownloadClientFailure(
-        sayVerbatim('qBittorrent refused the username or password'),
+        sayVerbatim('qBittorrent rejected the username or password'),
         'DownloadClientLoginRefused',
       ).problemCode,
     ).toBe('DownloadClientLoginRefused');

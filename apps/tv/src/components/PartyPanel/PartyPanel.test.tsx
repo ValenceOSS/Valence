@@ -71,7 +71,7 @@ describe('PartyPanel', () => {
       />,
     );
 
-    await userEvent.press(drawn.getByRole('button', { name: /^Make a co-host/u }));
+    await userEvent.press(drawn.getByRole('button', { name: /^Make co-host/u }));
     await userEvent.press(drawn.getByRole('button', { name: /^Remove Jo from the party/u }));
     await userEvent.press(drawn.getByRole('button', { name: /^Everyone can skip around/u }));
 
@@ -95,10 +95,10 @@ describe('PartyPanel', () => {
       />,
     );
 
-    await userEvent.press(drawn.getByRole('button', { name: /^Ask Kim along/u }));
+    await userEvent.press(drawn.getByRole('button', { name: /^Invite Kim/u }));
 
     expect(watchParty.ask).toHaveBeenCalledWith('kim');
-    expect(drawn.queryByRole('button', { name: /^Ask Jo along/u })).toBeNull();
+    expect(drawn.queryByRole('button', { name: /^Invite Jo/u })).toBeNull();
   });
 
   it('asks for the password a party wants before it can be joined', async () => {
@@ -115,7 +115,7 @@ describe('PartyPanel', () => {
       />,
     );
 
-    expect(drawn.getByText('That is not the password for this party.')).toBeTruthy();
+    expect(drawn.getByText('That’s not the password for this party.')).toBeTruthy();
 
     const typing = drawn.getAllByLabelText('Watch party password').at(-1);
 
@@ -162,7 +162,7 @@ describe('PartyPanel', () => {
 
     expect(
       silent.getByText(
-        'Play something, then start a party and send the link to anybody with an account here.',
+        'Play something, then start a party and send the link to anyone with an account on this server.',
       ),
     ).toBeTruthy();
 
@@ -209,6 +209,6 @@ describe('PartyPanel', () => {
       />,
     );
 
-    expect(drawn.getByText('You are in a watch party')).toBeTruthy();
+    expect(drawn.getByText('You’re in a watch party')).toBeTruthy();
   });
 });

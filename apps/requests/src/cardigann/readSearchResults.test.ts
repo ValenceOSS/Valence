@@ -407,7 +407,7 @@ describe('readSearchResults', () => {
     it('fails on an answer that is not JSON, or has no rows where it must', () => {
       expect(() => answer(JSON_SITE, '<html>')).toThrow(IndexerFailure);
       expect(() => answer(JSON_SITE, JSON.stringify({ data: { movie_count: 1 } }))).toThrow(
-        'The site answered a search without the rows its definition expects',
+        'The site’s search results are missing the rows its definition expects',
       );
     });
 

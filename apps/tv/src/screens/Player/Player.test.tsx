@@ -413,7 +413,7 @@ describe('Player', () => {
 
       await tell('statusChange', { status: 'error', error: { message: 'Bad stream' } });
 
-      expect(drawn.getByText('This could not be played. (Bad stream)')).toBeTruthy();
+      expect(drawn.getByText('Couldn’t play this. (Bad stream)')).toBeTruthy();
     });
 
     it('says the sign-in may have run out when the server turned the television away', async () => {
@@ -423,7 +423,7 @@ describe('Player', () => {
 
       expect(
         drawn.getByText(
-          'This Valence turned the television away. Its sign-in may have run out, so go back and sign in again.',
+          'The server rejected this TV. Your session may have expired, so go back and sign in again.',
         ),
       ).toBeTruthy();
     });
@@ -433,7 +433,7 @@ describe('Player', () => {
 
       await tell('statusChange', { status: 'error', error: null });
 
-      expect(drawn.getByText('This could not be played. (the player gave no reason)')).toBeTruthy();
+      expect(drawn.getByText('Couldn’t play this. The player didn’t give a reason.')).toBeTruthy();
     });
 
     it('pays no heed to an error while it is still switching streams', async () => {
@@ -443,7 +443,7 @@ describe('Player', () => {
 
       await tell('statusChange', { status: 'error', error: { message: 'Bad stream' } });
 
-      expect(drawn.queryByText('This could not be played. (Bad stream)')).toBeNull();
+      expect(drawn.queryByText('Couldn’t play this. (Bad stream)')).toBeNull();
     });
   });
 
@@ -762,7 +762,7 @@ describe('Player', () => {
       const { drawn } = await draw();
 
       await playingAt(100);
-      await fireEvent(drawn.getByRole('button', { name: 'Scrub' }), 'focus');
+      await fireEvent(drawn.getByRole('button', { name: 'Seek' }), 'focus');
       await press('right');
       await press('right');
 
@@ -773,7 +773,7 @@ describe('Player', () => {
 
       expect(drawn.getAllByText('1:50')).toHaveLength(2);
 
-      await userEvent.press(drawn.getByRole('button', { name: 'Scrub' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Seek' }));
 
       expect(mockVideo.current.currentTime).toBe(110);
     });
@@ -783,7 +783,7 @@ describe('Player', () => {
 
       await playingAt(100);
 
-      const bar = drawn.getByRole('button', { name: 'Scrub' });
+      const bar = drawn.getByRole('button', { name: 'Seek' });
 
       await fireEvent(bar, 'focus');
       await press('right');
@@ -798,7 +798,7 @@ describe('Player', () => {
       const { drawn } = await draw();
 
       await playingAt(4, 3000);
-      await fireEvent(drawn.getByRole('button', { name: 'Scrub' }), 'focus');
+      await fireEvent(drawn.getByRole('button', { name: 'Seek' }), 'focus');
       await press('left');
 
       expect(drawn.getAllByText('0:00')).toHaveLength(2);
@@ -808,7 +808,7 @@ describe('Player', () => {
       const { drawn } = await draw();
 
       await playingAt(100);
-      await fireEvent(drawn.getByRole('button', { name: 'Scrub' }), 'focus');
+      await fireEvent(drawn.getByRole('button', { name: 'Seek' }), 'focus');
 
       expect(mockRing.isListening).toBe(true);
 
@@ -832,7 +832,7 @@ describe('Player', () => {
         const { drawn } = await draw();
 
         await playingAt(100);
-        await fireEvent(drawn.getByRole('button', { name: 'Scrub' }), 'focus');
+        await fireEvent(drawn.getByRole('button', { name: 'Seek' }), 'focus');
         await press('longRight', 0);
         await act(() => {
           jest.advanceTimersByTime(300);
@@ -972,7 +972,7 @@ describe('Player', () => {
       expect(drawn.getByText('Please enjoy each fact equally.')).toBeTruthy();
 
       await userEvent.press(drawn.getByRole('button', { name: 'Settings' }));
-      await userEvent.press(drawn.getByRole('button', { name: 'Subtitle timing, In time' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Subtitle timing, In sync' }));
       await userEvent.press(drawn.getByRole('button', { name: '+0.50s' }));
 
       expect(drawn.queryByText('Please enjoy each fact equally.')).toBeNull();
@@ -1118,7 +1118,7 @@ describe('Player', () => {
 
       await tell('sourceLoad', { duration: 3000 });
       await tell('timeUpdate', { currentTime: 2990 });
-      await userEvent.press(drawn.getByRole('button', { name: 'Stay' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Cancel' }));
 
       expect(drawn.queryByText('S1: E3 · In Perpetuity')).toBeNull();
       expect(onLeave).not.toHaveBeenCalled();
@@ -1141,7 +1141,7 @@ describe('Player', () => {
       const { drawn, onLeave } = await draw({ show: SHOW, carriedOn: 2, viewer: aViewer(2) });
 
       await tell('playToEnd', {});
-      await userEvent.press(drawn.getByRole('button', { name: 'Stay' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Cancel' }));
 
       expect(onLeave).toHaveBeenCalledTimes(1);
     });

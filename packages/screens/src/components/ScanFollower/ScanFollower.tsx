@@ -73,7 +73,7 @@ const ScanFollower = ({ jobId, name, onSettled }: ScanFollowerProps) => {
           ? say('screens.importWizard.scanFollower.scanned')
           : seen.state === 'failed'
             ? say('screens.importWizard.scanFollower.theScanFailed')
-            : (seen.phase ?? say('client.admin.describeReencodeState.waitingItsTurn'))}
+            : (seen.phase ?? say('common.queued'))}
       </span>
 
       <ProgressBar

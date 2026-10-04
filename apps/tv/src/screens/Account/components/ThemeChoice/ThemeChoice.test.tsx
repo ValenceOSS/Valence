@@ -26,7 +26,7 @@ describe('ThemeChoice', () => {
 
     expect(chosenPluginTheme()).toBe('night-sky/midnight');
     expect(keptPluginTheme('night-sky/midnight')?.dark?.surface).toBe('#0b0d12');
-    expect(drawn.getByText('Valence opens in this theme the next time you open it.')).toBeTruthy();
+    expect(drawn.getByText('This theme is applied the next time you open Valence.')).toBeTruthy();
 
     await userEvent.press(drawn.getByText('Valence'));
 

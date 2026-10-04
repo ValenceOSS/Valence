@@ -109,7 +109,7 @@ const AReaderSide = ({
       <View style={styles.buttons}>
         <AGlassCircle
           of={isRightToLeft ? ArrowLeft : ArrowRight}
-          label={say('phone.aReader.aReaderSide.turnOnwards')}
+          label={say('common.nextPage')}
           onPress={onForward}
           ink={ink}
         />

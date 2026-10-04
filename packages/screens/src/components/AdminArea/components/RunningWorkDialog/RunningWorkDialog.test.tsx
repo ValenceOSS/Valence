@@ -71,7 +71,7 @@ describe('RunningWorkDialog', () => {
     );
 
     expect(screen.getByText('Stopping')).toBeInTheDocument();
-    expect(screen.getByText(/Finishing what it has already started/)).toBeInTheDocument();
+    expect(screen.getByText(/Finishing the current task, then it will stop/)).toBeInTheDocument();
   });
 
   it('counts what is running and what is waiting', () => {
@@ -99,7 +99,7 @@ describe('RunningWorkDialog', () => {
       />,
     );
 
-    expect(screen.getByText('Nothing in the queue is tied to it yet.')).toBeInTheDocument();
+    expect(screen.getByText('Nothing is queued for it yet.')).toBeInTheDocument();
   });
 
   it('shows how far along the job says it is', () => {

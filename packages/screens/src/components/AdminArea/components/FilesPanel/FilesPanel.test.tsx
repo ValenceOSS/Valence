@@ -133,9 +133,9 @@ describe('FilesPanel', () => {
     await openFilms(actor);
 
     await actor.click(screen.getByRole('button', { name: 'Actions for Arrival (2016)' }));
-    await actor.click(screen.getByRole('menuitem', { name: 'Leave out of the library' }));
+    await actor.click(screen.getByRole('menuitem', { name: 'Exclude from library' }));
 
-    expect(await screen.findByText('Leave Arrival (2016) out?')).toBeInTheDocument();
+    expect(await screen.findByText('Exclude Arrival (2016)?')).toBeInTheDocument();
     expect(screen.getByText(/this folder and everything in it/)).toBeInTheDocument();
   });
 
@@ -147,7 +147,7 @@ describe('FilesPanel', () => {
 
     await actor.click(screen.getByRole('button', { name: 'Actions for Arrival.mkv' }));
 
-    expect(screen.getByRole('menuitem', { name: 'Leave out of the library' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Exclude from library' })).toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: /Delete/ })).toBeNull();
   });
 
@@ -165,7 +165,7 @@ describe('FilesPanel', () => {
     draw();
     await openFilms(actor);
 
-    const trail = screen.getByRole('navigation', { name: 'Where you are' });
+    const trail = screen.getByRole('navigation', { name: 'Current folder' });
 
     expect(within(trail).getByRole('button', { name: 'Films' })).toBeInTheDocument();
     expect(screen.getByText('In the catalogue')).toBeInTheDocument();
@@ -254,7 +254,7 @@ describe('FilesPanel', () => {
     });
     draw();
     await openFilms(actor);
-    await actor.type(screen.getByLabelText('Find a file or folder'), 'arr');
+    await actor.type(screen.getByLabelText('Search files and folders'), 'arr');
 
     expect(await screen.findByText('/media/films/Arrival (2016)/Arrival.mkv')).toBeInTheDocument();
     expect(searchLibraryFilesMock).toHaveBeenLastCalledWith('arr', '/media/films');

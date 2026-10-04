@@ -8,7 +8,7 @@ describe('sayAgain', () => {
   it('says a known code in this app’s own words', () => {
     expect(
       sayAgain({ code: 'error.common.nobodyIsSignedIn', message: 'Stale words', values: {} }),
-    ).toBe('Nobody is signed in.');
+    ).toBe('You’re not signed in.');
   });
 
   it('shows the server’s English for a code this app does not know', () => {

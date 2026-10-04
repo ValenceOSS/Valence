@@ -66,7 +66,7 @@ describe('HiddenPanel', () => {
   it('says anything here can be brought back', async () => {
     draw();
 
-    expect(await screen.findByText(/Anything here can be brought back/i)).toBeInTheDocument();
+    expect(await screen.findByText(/You can unhide anything here/i)).toBeInTheDocument();
   });
 
   it('names each thing that has been hidden', async () => {
@@ -95,7 +95,7 @@ describe('HiddenPanel', () => {
 
     draw();
 
-    expect(await screen.findByRole('button', { name: 'Bring Arrival back' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Unhide Arrival' })).toBeInTheDocument();
   });
 
   it('brings one back when asked, naming what it is bringing back', async () => {
@@ -107,7 +107,7 @@ describe('HiddenPanel', () => {
 
     draw();
 
-    await user.click(await screen.findByRole('button', { name: 'Bring Curb back' }));
+    await user.click(await screen.findByRole('button', { name: 'Unhide Curb' }));
 
     await waitFor(() => {
       expect(setHidden).toHaveBeenCalledWith({ kind: 'series', subjectId: 'series-1' }, false);
@@ -122,7 +122,7 @@ describe('HiddenPanel', () => {
 
     draw();
 
-    await user.click(await screen.findByRole('button', { name: 'Bring Arrival back' }));
+    await user.click(await screen.findByRole('button', { name: 'Unhide Arrival' }));
 
     await waitFor(() => {
       expect(screen.queryByText('Arrival')).not.toBeInTheDocument();
@@ -132,7 +132,7 @@ describe('HiddenPanel', () => {
   it('explains how something gets here when nothing has', async () => {
     draw();
 
-    expect(await screen.findByText(/You have not hidden anything/i)).toBeInTheDocument();
+    expect(await screen.findByText(/You haven’t hidden anything/i)).toBeInTheDocument();
   });
 
   it('says so when the list could not be read', async () => {
@@ -140,7 +140,7 @@ describe('HiddenPanel', () => {
 
     draw();
 
-    expect(await screen.findByText(/What you have hidden/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Couldn’t load your hidden items/i)).toBeInTheDocument();
   });
 });
 
@@ -149,10 +149,10 @@ describe('hiding a whole library', () => {
     draw();
 
     expect(
-      await screen.findByRole('button', { name: 'Hide the whole Shows library' }),
+      await screen.findByRole('button', { name: 'Hide the Shows library' }),
     ).toBeInTheDocument();
     expect(
-      await screen.findByRole('button', { name: 'Hide the whole Films library' }),
+      await screen.findByRole('button', { name: 'Hide the Films library' }),
     ).toBeInTheDocument();
   });
 
@@ -160,7 +160,7 @@ describe('hiding a whole library', () => {
     draw();
 
     expect(
-      await screen.findByText(/never watches television hides one thing/i),
+      await screen.findByText(/If you never watch TV, hide that library here/i),
     ).toBeInTheDocument();
   });
 
@@ -169,10 +169,10 @@ describe('hiding a whole library', () => {
 
     draw();
 
-    await user.click(await screen.findByRole('button', { name: 'Hide the whole Shows library' }));
+    await user.click(await screen.findByRole('button', { name: 'Hide the Shows library' }));
 
     expect(await screen.findByText('Hide Shows?')).toBeInTheDocument();
-    expect(await screen.findByText(/Everything in it disappears/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Everything in it is hidden/i)).toBeInTheDocument();
   });
 
   it('hides it once somebody agrees', async () => {
@@ -180,7 +180,7 @@ describe('hiding a whole library', () => {
 
     draw();
 
-    await user.click(await screen.findByRole('button', { name: 'Hide the whole Shows library' }));
+    await user.click(await screen.findByRole('button', { name: 'Hide the Shows library' }));
     await user.click(await screen.findByRole('button', { name: 'Hide it' }));
 
     await waitFor(() => {
@@ -197,7 +197,7 @@ describe('hiding a whole library', () => {
 
     draw();
 
-    await user.click(await screen.findByRole('button', { name: 'Bring the Shows library back' }));
+    await user.click(await screen.findByRole('button', { name: 'Show the Shows library again' }));
 
     await waitFor(() => {
       expect(setHidden).toHaveBeenCalledWith({ kind: 'library', subjectId: 'library-1' }, false);

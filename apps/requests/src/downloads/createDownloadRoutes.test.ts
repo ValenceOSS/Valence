@@ -211,7 +211,7 @@ describe('createDownloadRoutes', () => {
       const { ask, queue } = theRoutes();
 
       queue.send.mockResolvedValueOnce({
-        refused: sayVerbatim('No torrent client is set up and switched on'),
+        refused: sayVerbatim('No torrent client is set up and turned on'),
         problemCode: null,
       });
 
@@ -219,7 +219,7 @@ describe('createDownloadRoutes', () => {
 
       expect(refused.status).toBe(400);
       expect(await refused.json()).toEqual({
-        error: 'No torrent client is set up and switched on',
+        error: 'No torrent client is set up and turned on',
         problemCode: null,
       });
       expect((await ask('/downloads', 'POST', { title: 'Dune' })).status).toBe(400);
@@ -247,7 +247,7 @@ describe('createDownloadRoutes', () => {
       expect((await ask('/downloads/other', 'DELETE')).status).toBe(404);
 
       queue.remove.mockResolvedValueOnce({
-        refused: sayVerbatim('qBittorrent could not be reached'),
+        refused: sayVerbatim('Couldn’t connect to qBittorrent'),
       });
 
       expect((await ask(`/downloads/${DOWNLOAD.id}`, 'DELETE')).status).toBe(400);

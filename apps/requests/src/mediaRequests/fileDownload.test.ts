@@ -215,12 +215,12 @@ describe('fileDownload', () => {
 
         return found.resolution === '2160p'
           ? null
-          : sayVerbatim('It is 1080p, which this profile does not take');
+          : sayVerbatim('It’s 1080p, which this profile doesn’t allow');
       },
     );
 
     expect(seen).toEqual([expect.objectContaining({ resolution: '1080p', source: 'webdl' })]);
-    expect(refused.get('film')).toEqual('It is 1080p, which this profile does not take');
+    expect(refused.get('film')).toEqual('It’s 1080p, which this profile doesn’t allow');
     expect(filed.has('film')).toBe(false);
     expect(await readdir(join(library, 'Film (2026)'))).toEqual([]);
   });

@@ -50,13 +50,13 @@ describe('HouseholdPicturePicker', () => {
   it('says what was wrong with a picture it would not take, and keeps the old one', async () => {
     const onPicked = vi.fn();
 
-    uploadHouseholdPhoto.mockResolvedValue('A picture has to be 6 MB or smaller.');
+    uploadHouseholdPhoto.mockResolvedValue('The picture must be 6 MB or smaller.');
     render(<HouseholdPicturePicker household={HOUSEHOLD} picture={null} onPicked={onPicked} />);
 
     await userEvent.upload(screen.getByLabelText(/Choose a picture/), PICTURE);
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'A picture has to be 6 MB or smaller.',
+      'The picture must be 6 MB or smaller.',
     );
     expect(onPicked).not.toHaveBeenCalled();
   });

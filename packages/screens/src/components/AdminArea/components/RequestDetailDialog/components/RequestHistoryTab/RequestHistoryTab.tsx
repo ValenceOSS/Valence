@@ -54,7 +54,7 @@ const RequestHistoryTab = ({ request }: RequestHistoryTabProps) => {
   }
 
   return (
-    <ol aria-label={say('common.whatItHasDone')} className="flex flex-col gap-2">
+    <ol aria-label={say('common.history')} className="flex flex-col gap-2">
       {said.data.map((line) => (
         <li key={line.id} className="flex gap-3 text-sm">
           <time dateTime={line.at} className="shrink-0 tabular-nums text-xs text-text-muted">

@@ -46,8 +46,8 @@ describe('EncodingPanel', () => {
 
     await waitForArrivals();
 
-    expect(screen.getByText('Nothing is waiting')).toBeVisible();
-    expect(screen.getByText(/discarded on a timer/)).toBeVisible();
+    expect(screen.getByText('Nothing to review')).toBeVisible();
+    expect(screen.getByText(/Nothing is deleted automatically/)).toBeVisible();
   });
 
   it('lists what is waiting for somebody to judge it', async () => {
@@ -149,7 +149,7 @@ describe('EncodingPanel', () => {
 
     render(<EncodingPanel {...props} onChoose={onChoose} />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Re-encode something' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Re-encode a title' }));
 
     expect(onChoose).toHaveBeenCalled();
   });
@@ -172,6 +172,6 @@ describe('EncodingPanel', () => {
 
     await waitForArrivals();
 
-    expect(screen.getByText(/not the same as it being/)).toBeVisible();
+    expect(screen.getByText(/It may not be empty/)).toBeVisible();
   });
 });

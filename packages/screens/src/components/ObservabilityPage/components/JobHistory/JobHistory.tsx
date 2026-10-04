@@ -650,7 +650,7 @@ const JobHistoryPanel = ({
                     },
                     {
                       id: 'logs',
-                      label: say('screens.observabilityPage.jobHistory.viewLogs'),
+                      label: say('common.readTheLogs'),
                       onChoose: () => {
                         onViewLogs(row.original.id);
                       },

@@ -19,7 +19,9 @@ describe('JobSchedulePage', () => {
   it('says the job only runs when pressed while it has no triggers', () => {
     render(build());
 
-    expect(screen.getByText('No triggers. This only runs when you press Run.')).toBeInTheDocument();
+    expect(
+      screen.getByText('No triggers. This job only runs when you select Run.'),
+    ).toBeInTheDocument();
   });
 
   it('lists every trigger in words rather than in its stored shape', () => {
@@ -27,7 +29,7 @@ describe('JobSchedulePage', () => {
 
     expect(screen.getByText('Daily at 03:00')).toBeInTheDocument();
     expect(screen.getByText('On application startup')).toBeInTheDocument();
-    expect(screen.queryByText('No triggers. This only runs when you press Run.')).toBeNull();
+    expect(screen.queryByText('No triggers. This job only runs when you select Run.')).toBeNull();
   });
 
   it('reports the trigger removed when its remove button is pressed', async () => {

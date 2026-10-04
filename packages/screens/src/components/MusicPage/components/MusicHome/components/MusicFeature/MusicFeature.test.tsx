@@ -94,7 +94,7 @@ describe('MusicFeature', () => {
 
     renderInAnAddress(<MusicFeature newest={NEWEST} player={player} />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Watch the video' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Watch music video' }));
 
     expect(player.pause).toHaveBeenCalled();
     expect(renderHook(() => useMusicVideo()).result.current).toEqual({

@@ -29,15 +29,15 @@ describe('describePermission', () => {
     ];
 
     expect(said.map((one) => one.title)).toEqual([
-      'Talk to other websites',
+      'Connect to other websites',
       'Read your library',
-      'See what people have watched',
-      'Change what people have watched',
-      'Ask for new titles',
-      'See playlists',
-      'Make and change playlists',
-      'Keep its own notes',
-      'Connect to other accounts',
+      'View watch history',
+      'Change watch history',
+      'Make requests',
+      'View playlists',
+      'Create and edit playlists',
+      'Store its own data',
+      'Connect to external accounts',
       'Send notifications',
     ]);
     expect(said[0]?.detail).toContain('graphql.anilist.co, anilist.co');

@@ -131,7 +131,10 @@ describe('signInWithUsernameOrEmail', () => {
 
     const outcome = await signInWithUsernameOrEmail('operator@valence.test', 'a-password');
 
-    expect(outcome).toStrictEqual({ kind: 'refused', reason: 'Valence could not be reached.' });
+    expect(outcome).toStrictEqual({
+      kind: 'refused',
+      reason: 'Couldn’t reach the Valence server.',
+    });
   });
 });
 
@@ -457,16 +460,16 @@ describe('confirming it is you', () => {
 
   it('says why it did not', async () => {
     fetchMock
-      .mockResolvedValueOnce(said({ message: 'That is not your password.' }, 400))
+      .mockResolvedValueOnce(said({ message: 'Incorrect password.' }, 400))
       .mockResolvedValueOnce(said({ message: 'Too many requests.' }, 429));
 
     await expect(confirmItIsYou('wrong')).resolves.toEqual({
       kind: 'failed',
-      reason: 'That is not your password.',
+      reason: 'Incorrect password.',
     });
     await expect(confirmItIsYou('wrong')).resolves.toEqual({
       kind: 'failed',
-      reason: 'Too many tries. Wait a minute and try again.',
+      reason: 'Too many attempts. Wait a minute and try again.',
     });
   });
 });

@@ -34,7 +34,7 @@ describe('RefuseRequestDialog', () => {
     expect(screen.getByText('Shown to Sam.')).toBeInTheDocument();
 
     await user.type(screen.getByRole('textbox', { name: 'Why' }), 'No room');
-    await user.click(screen.getByRole('button', { name: 'Refuse' }));
+    await user.click(screen.getByRole('button', { name: 'Decline' }));
 
     await waitFor(() => {
       expect(handlers.onRefused).toHaveBeenCalledWith(REFUSED);
@@ -51,7 +51,7 @@ describe('RefuseRequestDialog', () => {
       <RefuseRequestDialog request={aMediaRequest()} onClose={vi.fn()} onRefused={vi.fn()} />,
     );
 
-    await user.click(screen.getByRole('button', { name: 'Refuse' }));
+    await user.click(screen.getByRole('button', { name: 'Decline' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Not yours');
   });

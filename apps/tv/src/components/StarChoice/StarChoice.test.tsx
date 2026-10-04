@@ -26,7 +26,7 @@ describe('StarChoice', () => {
     const onChoose = jest.fn();
     const drawn = await render(<StarChoice title="Dune" given={3} onChoose={onChoose} />);
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Take my rating back' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Remove my rating' }));
 
     expect(onChoose).toHaveBeenCalledWith(null);
   });

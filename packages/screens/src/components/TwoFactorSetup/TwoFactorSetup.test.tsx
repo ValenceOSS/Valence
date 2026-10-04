@@ -90,7 +90,7 @@ describe('TwoFactorSetup when disabled', () => {
     await screen.findByRole('img', { name: 'Two-factor setup QR code' });
 
     await actor.type(screen.getByLabelText('Authenticator code'), '12');
-    await actor.click(screen.getByRole('button', { name: 'Turn on two-factor' }));
+    await actor.click(screen.getByRole('button', { name: 'Turn on two-factor authentication' }));
 
     expect(verifyTotp).not.toHaveBeenCalled();
     expect(screen.getByRole('alert')).toHaveTextContent('6 digits');
@@ -105,7 +105,7 @@ describe('TwoFactorSetup when disabled', () => {
     await screen.findByRole('img', { name: 'Two-factor setup QR code' });
 
     await actor.type(screen.getByLabelText('Authenticator code'), '123456');
-    await actor.click(screen.getByRole('button', { name: 'Turn on two-factor' }));
+    await actor.click(screen.getByRole('button', { name: 'Turn on two-factor authentication' }));
 
     await waitFor(() => {
       expect(verifyTotp).toHaveBeenCalledWith('123456');
@@ -123,9 +123,9 @@ describe('TwoFactorSetup when disabled', () => {
 
     verifyTotp.mockResolvedValue(false);
     await actor.type(screen.getByLabelText('Authenticator code'), '123456');
-    await actor.click(screen.getByRole('button', { name: 'Turn on two-factor' }));
+    await actor.click(screen.getByRole('button', { name: 'Turn on two-factor authentication' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('not valid');
+    expect(await screen.findByRole('alert')).toHaveTextContent('isn’t valid');
     expect(onChanged).not.toHaveBeenCalled();
   });
 });

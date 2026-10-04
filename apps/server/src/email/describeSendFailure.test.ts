@@ -16,7 +16,7 @@ describe('describeSendFailure', () => {
     expect(
       describeSendFailure(mailError('connect ECONNREFUSED', { code: 'ESOCKET' }), 'smtp.x').message,
     ).toBe(
-      'Valence could not reach the mail server at smtp.x. Check its address, port and encryption.',
+      'Valence couldn’t reach the mail server at smtp.x. Check its address, port and encryption.',
     );
     expect(describeSendFailure(mailError('t', { code: 'ETIMEDOUT' }), 'smtp.x').code).toBe(
       'server.email.describeSendFailure.couldNotReachTheMailServer',
@@ -26,7 +26,7 @@ describe('describeSendFailure', () => {
   it('says the sign-in was refused', () => {
     expect(
       describeSendFailure(mailError('Invalid login', { code: 'EAUTH' }), 'smtp.x').message,
-    ).toBe('The mail server at smtp.x refused the username or password.');
+    ).toBe('The mail server at smtp.x rejected the username or password.');
   });
 
   it('passes on what the server answered, in its own words', () => {
@@ -44,7 +44,7 @@ describe('describeSendFailure', () => {
       'The mail server refused the email: boom',
     );
     expect(describeSendFailure(new Error(''), 'smtp.x').message).toBe(
-      'The mail server did not take the email.',
+      'The mail server didn’t accept the email.',
     );
   });
 });

@@ -164,7 +164,7 @@ describe('PlaylistView', () => {
 
     renderInAnAddress(<PlaylistView playlistId={PLAYLIST_ID} />);
 
-    expect(await screen.findByText('A removed profile')).toBeInTheDocument();
+    expect(await screen.findByText('A deleted profile')).toBeInTheDocument();
   });
 
   it('says what a playlist lost with the library it came from', async () => {
@@ -172,9 +172,11 @@ describe('PlaylistView', () => {
 
     renderInAnAddress(<PlaylistView playlistId={PLAYLIST_ID} />);
 
-    expect(await screen.findByText('· 2 things no longer in the library')).toBeInTheDocument();
+    expect(await screen.findByText('· 2 items no longer in the library')).toBeInTheDocument();
     expect(
-      screen.getByText('2 things that were in this playlist went with the library they came from.'),
+      screen.getByText(
+        '2 items in this playlist were removed along with the library they came from.',
+      ),
     ).toBeInTheDocument();
   });
 
@@ -192,7 +194,7 @@ describe('PlaylistView', () => {
     renderInAnAddress(<PlaylistView playlistId={PLAYLIST_ID} />);
 
     await userEvent.click(
-      await screen.findByRole('button', { name: 'Remove what is gone from Sunday morning' }),
+      await screen.findByRole('button', { name: 'Remove unavailable items from Sunday morning' }),
     );
 
     await waitFor(() => {
@@ -213,7 +215,7 @@ describe('PlaylistView', () => {
 
     expect(await screen.findByText('No longer in the library')).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Remove what is gone from Sunday morning' }),
+      screen.queryByRole('button', { name: 'Remove unavailable items from Sunday morning' }),
     ).not.toBeInTheDocument();
   });
 
@@ -227,7 +229,7 @@ describe('PlaylistView', () => {
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Delete playlist' }));
 
     expect(
-      await screen.findByText(/belonged to a profile that has been removed/),
+      await screen.findByText(/belonged to a profile that has been deleted/),
     ).toBeInTheDocument();
   });
 
@@ -249,7 +251,7 @@ describe('PlaylistView', () => {
 
     renderInAnAddress(<PlaylistView playlistId={PLAYLIST_ID} />);
 
-    expect(await screen.findByText('A removed profile')).toBeInTheDocument();
+    expect(await screen.findByText('A deleted profile')).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'More for Sunday morning' }),
     ).not.toBeInTheDocument();

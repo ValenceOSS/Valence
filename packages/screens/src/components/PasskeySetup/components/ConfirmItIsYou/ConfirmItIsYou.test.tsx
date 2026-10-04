@@ -28,13 +28,13 @@ describe('ConfirmItIsYou', () => {
   it('says why where it was not confirmed, and stays', async () => {
     const onConfirmed = vi.fn();
 
-    confirmItIsYouMock.mockResolvedValue({ kind: 'failed', reason: 'That is not your password.' });
+    confirmItIsYouMock.mockResolvedValue({ kind: 'failed', reason: 'Incorrect password.' });
     render(<ConfirmItIsYou onConfirmed={onConfirmed} />);
 
     await userEvent.type(screen.getByLabelText('Password'), 'wrong');
     await userEvent.click(screen.getByRole('button', { name: 'Confirm' }));
 
-    expect(await screen.findByText('That is not your password.')).toBeInTheDocument();
+    expect(await screen.findByText('Incorrect password.')).toBeInTheDocument();
     expect(onConfirmed).not.toHaveBeenCalled();
   });
 

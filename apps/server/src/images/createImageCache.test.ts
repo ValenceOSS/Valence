@@ -96,7 +96,7 @@ describe('createImageCache', () => {
 
     await expect(instance.read(POSTER)).resolves.toBeNull();
     expect(onProblem).toHaveBeenCalledWith(POSTER, expect.anything());
-    expect(onProblem.mock.calls[0]?.[1].message).toContain('not an image');
+    expect(onProblem.mock.calls[0]?.[1].message).toContain('isn’t an image');
   });
 
   it('refuses something that is a film rather than a poster, and says how big', async () => {
@@ -106,7 +106,7 @@ describe('createImageCache', () => {
     await expect(instance.read(POSTER)).resolves.toBeNull();
     expect(onProblem).toHaveBeenCalledWith(
       POSTER,
-      'That image is 40MB, which is too large to be artwork.',
+      'That image is 40MB, which is too large for artwork.',
     );
   });
 

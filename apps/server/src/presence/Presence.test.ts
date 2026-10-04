@@ -209,7 +209,7 @@ describe('presence over HTTP', () => {
     const { app, presence, store } = build();
     const mine = await signedIn(app);
     const theirs = await signedIn(app, {
-      name: 'Somebody else',
+      name: 'Someone else',
       email: 'else@valence.local',
       password: 'a-long-enough-password',
     });
@@ -251,7 +251,7 @@ describe('presence over HTTP', () => {
     const { app, presence, store } = build();
     const mine = await signedIn(app);
     const theirs = await signedIn(app, {
-      name: 'Somebody else',
+      name: 'Someone else',
       email: 'else@valence.local',
       password: 'a-long-enough-password',
     });
@@ -279,7 +279,7 @@ describe('presence over HTTP', () => {
     const { app, presence, store } = build();
     const mine = await signedIn(app);
     const theirs = await signedIn(app, {
-      name: 'Somebody else',
+      name: 'Someone else',
       email: 'else@valence.local',
       password: 'a-long-enough-password',
     });

@@ -152,7 +152,7 @@ const editRoles = async (user: ReturnType<typeof userEvent.setup>) => {
   await edit(user, 'Roles');
 
   await waitFor(() => {
-    expect(screen.getByRole('switch', { name: 'Whether Dan holds Member' })).toBeChecked();
+    expect(screen.getByRole('switch', { name: 'Give Dan the Member role' })).toBeChecked();
   });
 };
 
@@ -232,7 +232,7 @@ describe('AccountsPanel', () => {
 
     renderInAnAddress(<AccountsPanel />);
 
-    expect(await screen.findByText('Nobody has an account yet.')).toBeInTheDocument();
+    expect(await screen.findByText('There are no accounts yet.')).toBeInTheDocument();
   });
 
   it('asks the server for nobody until somebody is picked', async () => {
@@ -318,7 +318,7 @@ describe('AccountsPanel', () => {
       const user = userEvent.setup();
       renderInAnAddress(<AccountsPanel />);
 
-      await choose(user, 'Dan', /Let back in/);
+      await choose(user, 'Dan', /Unban/);
 
       expect(accountMocks.unbanAccount).toHaveBeenCalledWith('usr_1');
       expect(accountMocks.banAccount).not.toHaveBeenCalled();
@@ -326,7 +326,7 @@ describe('AccountsPanel', () => {
 
     it('explains a refusal rather than reporting a failure', async () => {
       accountMocks.banAccount.mockResolvedValue({
-        message: 'That would leave nobody able to administer this server.',
+        message: 'That would leave no administrators on this server.',
       });
 
       const user = userEvent.setup();
@@ -334,7 +334,9 @@ describe('AccountsPanel', () => {
 
       await confirm(user, 'Dan', /^Ban$/, 'Ban');
 
-      expect(await screen.findByRole('alert')).toHaveTextContent('nobody able to administer');
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'That would leave no administrators',
+      );
     });
   });
 
@@ -387,9 +389,9 @@ describe('AccountsPanel', () => {
 
       expect(accountMocks.inviteAccount).toHaveBeenCalledTimes(1);
 
-      answer({ kind: 'refused', refusal: { message: 'That address is already in use.' } });
+      answer({ kind: 'refused', refusal: { message: 'That email address is already in use.' } });
 
-      expect(await screen.findByText('That address is already in use.')).toBeInTheDocument();
+      expect(await screen.findByText('That email address is already in use.')).toBeInTheDocument();
     });
 
     it('keeps the link it just made to copy again from the list', async () => {
@@ -444,7 +446,7 @@ describe('AccountsPanel', () => {
       const user = userEvent.setup();
       renderInAnAddress(<AccountsPanel />);
 
-      await user.click(await screen.findByRole('button', { name: 'Who to show' }));
+      await user.click(await screen.findByRole('button', { name: 'Filter accounts' }));
       await user.click(await screen.findByRole('menuitemradio', { name: 'Waiting for setup (1)' }));
 
       expect(screen.getByText('Alex')).toBeInTheDocument();
@@ -530,7 +532,7 @@ describe('AccountsPanel', () => {
 
     it('explains a refusal', async () => {
       accountMocks.removeAccount.mockResolvedValue({
-        message: 'You cannot do that to your own account.',
+        message: 'You can’t do that to your own account.',
       });
 
       const user = userEvent.setup();
@@ -579,9 +581,9 @@ describe('AccountsPanel', () => {
 
       await editRoles(user);
 
-      expect(screen.getByRole('switch', { name: 'Whether Dan holds Member' })).toBeChecked();
+      expect(screen.getByRole('switch', { name: 'Give Dan the Member role' })).toBeChecked();
       expect(
-        screen.getByRole('switch', { name: 'Whether Dan holds Administrator' }),
+        screen.getByRole('switch', { name: 'Give Dan the Administrator role' }),
       ).not.toBeChecked();
     });
 
@@ -590,7 +592,7 @@ describe('AccountsPanel', () => {
       renderInAnAddress(<AccountsPanel />);
 
       await editRoles(user);
-      await user.click(screen.getByRole('switch', { name: 'Whether Dan holds Administrator' }));
+      await user.click(screen.getByRole('switch', { name: 'Give Dan the Administrator role' }));
       await save(user);
 
       await waitFor(() => {
@@ -603,7 +605,7 @@ describe('AccountsPanel', () => {
       renderInAnAddress(<AccountsPanel />);
 
       await editRoles(user);
-      await user.click(screen.getByRole('switch', { name: 'Whether Dan holds Member' }));
+      await user.click(screen.getByRole('switch', { name: 'Give Dan the Member role' }));
       await save(user);
 
       await waitFor(() => {
@@ -616,7 +618,7 @@ describe('AccountsPanel', () => {
       renderInAnAddress(<AccountsPanel />);
 
       await editRoles(user);
-      await user.click(screen.getByRole('switch', { name: 'Whether Dan holds Administrator' }));
+      await user.click(screen.getByRole('switch', { name: 'Give Dan the Administrator role' }));
 
       expect(mocks.assignRole).not.toHaveBeenCalled();
     });
@@ -626,7 +628,7 @@ describe('AccountsPanel', () => {
       renderInAnAddress(<AccountsPanel />);
 
       await editRoles(user);
-      await user.click(screen.getByRole('switch', { name: 'Whether Dan holds Administrator' }));
+      await user.click(screen.getByRole('switch', { name: 'Give Dan the Administrator role' }));
       await save(user);
 
       await waitFor(() => {
@@ -637,31 +639,35 @@ describe('AccountsPanel', () => {
 
   describe('refusals', () => {
     it('explains one rather than reporting a failure', async () => {
-      mocks.assignRole.mockResolvedValue({ message: 'That role is at or above your own.' });
-
-      const user = userEvent.setup();
-      renderInAnAddress(<AccountsPanel />);
-
-      await editRoles(user);
-      await user.click(screen.getByRole('switch', { name: 'Whether Dan holds Administrator' }));
-      await save(user);
-
-      expect(await screen.findByRole('alert')).toHaveTextContent('at or above your own');
-    });
-
-    it('explains a lockout the server refused', async () => {
-      mocks.removeRole.mockResolvedValue({
-        message: 'That would leave nobody able to administer this server.',
+      mocks.assignRole.mockResolvedValue({
+        message: 'That role is equal to or higher than yours.',
       });
 
       const user = userEvent.setup();
       renderInAnAddress(<AccountsPanel />);
 
       await editRoles(user);
-      await user.click(screen.getByRole('switch', { name: 'Whether Dan holds Member' }));
+      await user.click(screen.getByRole('switch', { name: 'Give Dan the Administrator role' }));
       await save(user);
 
-      expect(await screen.findByRole('alert')).toHaveTextContent('nobody able to administer');
+      expect(await screen.findByRole('alert')).toHaveTextContent('equal to or higher than yours');
+    });
+
+    it('explains a lockout the server refused', async () => {
+      mocks.removeRole.mockResolvedValue({
+        message: 'That would leave no administrators on this server.',
+      });
+
+      const user = userEvent.setup();
+      renderInAnAddress(<AccountsPanel />);
+
+      await editRoles(user);
+      await user.click(screen.getByRole('switch', { name: 'Give Dan the Member role' }));
+      await save(user);
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'That would leave no administrators',
+      );
     });
 
     it('says nothing when the server was happy', async () => {
@@ -669,7 +675,7 @@ describe('AccountsPanel', () => {
       renderInAnAddress(<AccountsPanel />);
 
       await editRoles(user);
-      await user.click(screen.getByRole('switch', { name: 'Whether Dan holds Administrator' }));
+      await user.click(screen.getByRole('switch', { name: 'Give Dan the Administrator role' }));
       await save(user);
 
       await waitFor(() => {
@@ -716,11 +722,11 @@ describe('which libraries an account may see', () => {
 
     await edit(user, 'Libraries');
 
-    expect(await screen.findByRole('button', { name: /Keep Films from Dan/ })).toHaveAttribute(
+    expect(await screen.findByRole('button', { name: /Hide Films from Dan/ })).toHaveAttribute(
       'aria-pressed',
       'true',
     );
-    expect(screen.getByRole('button', { name: /Keep Shows from Dan/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Hide Shows from Dan/ })).toBeInTheDocument();
   });
 
   it('says plainly that an untouched account sees everything', async () => {
@@ -730,7 +736,9 @@ describe('which libraries an account may see', () => {
 
     await edit(user, 'Libraries');
 
-    expect(await screen.findByText(/Everything, until you say otherwise/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Everything is allowed until you change it/i),
+    ).toBeInTheDocument();
   });
 
   it('takes one away when asked', async () => {
@@ -739,7 +747,7 @@ describe('which libraries an account may see', () => {
     renderInAnAddress(<AccountsPanel />);
 
     await edit(user, 'Libraries');
-    await user.click(await screen.findByRole('button', { name: /Keep Films from Dan/ }));
+    await user.click(await screen.findByRole('button', { name: /Hide Films from Dan/ }));
     await save(user);
 
     await waitFor(() => {
@@ -758,7 +766,7 @@ describe('which libraries an account may see', () => {
     renderInAnAddress(<AccountsPanel />);
 
     await edit(user, 'Libraries');
-    await user.click(await screen.findByRole('button', { name: /Let Dan see Films/ }));
+    await user.click(await screen.findByRole('button', { name: /Give Dan access to Films/ }));
     await save(user);
 
     await waitFor(() => {
@@ -778,7 +786,7 @@ describe('which libraries an account may see', () => {
 
     await edit(user, 'Libraries');
 
-    expect(await screen.findByText(/can reach nothing at all/i)).toBeInTheDocument();
+    expect(await screen.findByText(/can’t access any library/i)).toBeInTheDocument();
   });
 
   it('says nothing of the sort while they can still reach one', async () => {
@@ -787,9 +795,9 @@ describe('which libraries an account may see', () => {
     renderInAnAddress(<AccountsPanel />);
 
     await edit(user, 'Libraries');
-    await screen.findByRole('button', { name: /Keep Films from Dan/ });
+    await screen.findByRole('button', { name: /Hide Films from Dan/ });
 
-    expect(screen.queryByText(/can reach nothing at all/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/can’t access any library/i)).not.toBeInTheDocument();
   });
 
   it('copes with a server that has no libraries yet', async () => {
@@ -836,7 +844,7 @@ describe('the age an account is limited to', () => {
 
     await edit(user, 'Libraries');
 
-    expect(await screen.findByText('No ceiling')).toBeInTheDocument();
+    expect(await screen.findByText('No age limit')).toBeInTheDocument();
   });
 
   it('sets one for that library alone', async () => {
@@ -845,7 +853,9 @@ describe('the age an account is limited to', () => {
     renderInAnAddress(<AccountsPanel />);
 
     await edit(user, 'Libraries');
-    await user.click(await screen.findByRole('button', { name: /Age limit in Films for Dan/ }));
+    await user.click(
+      await screen.findByRole('button', { name: /Age rating limit in Films for Dan/ }),
+    );
     await user.click(await screen.findByRole('menuitemradio', { name: /Up to 12/ }));
     await save(user);
 
@@ -867,8 +877,10 @@ describe('the age an account is limited to', () => {
     renderInAnAddress(<AccountsPanel />);
 
     await edit(user, 'Libraries');
-    await user.click(await screen.findByRole('button', { name: /Age limit in Films for Dan/ }));
-    await user.click(await screen.findByRole('menuitemradio', { name: /No ceiling/ }));
+    await user.click(
+      await screen.findByRole('button', { name: /Age rating limit in Films for Dan/ }),
+    );
+    await user.click(await screen.findByRole('menuitemradio', { name: /No age limit/ }));
     await save(user);
 
     await waitFor(() => {
@@ -882,9 +894,9 @@ describe('the age an account is limited to', () => {
     renderInAnAddress(<AccountsPanel />);
 
     await edit(user, 'Libraries');
-    await screen.findByText('No ceiling');
+    await screen.findByText('No age limit');
 
-    expect(screen.queryByRole('button', { name: /Allow uncertificated/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Allow unrated titles/ })).not.toBeInTheDocument();
   });
 
   it('turns the unrated escape on without losing the ceiling', async () => {
@@ -897,7 +909,7 @@ describe('the age an account is limited to', () => {
     renderInAnAddress(<AccountsPanel />);
 
     await edit(user, 'Libraries');
-    await user.click(await screen.findByRole('button', { name: /Allow uncertificated/ }));
+    await user.click(await screen.findByRole('button', { name: /Allow unrated titles/ }));
     await save(user);
 
     await waitFor(() => {
@@ -919,8 +931,8 @@ describe('the age an account is limited to', () => {
 
     await edit(user, 'Libraries');
 
-    expect(await screen.findByText(/every face on it/i)).toBeInTheDocument();
-    expect(await screen.findByText(/give the child an account of their own/i)).toBeInTheDocument();
+    expect(await screen.findByText(/including every profile on it/i)).toBeInTheDocument();
+    expect(await screen.findByText(/give the child their own account/i)).toBeInTheDocument();
   });
 
   it('says nothing of the sort while no limit is set', async () => {
@@ -929,8 +941,8 @@ describe('the age an account is limited to', () => {
     renderInAnAddress(<AccountsPanel />);
 
     await edit(user, 'Libraries');
-    await screen.findByText('No ceiling');
+    await screen.findByText('No age limit');
 
-    expect(screen.queryByText(/every face on it/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/including every profile on it/i)).not.toBeInTheDocument();
   });
 });

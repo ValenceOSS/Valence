@@ -222,7 +222,7 @@ const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
                         }}
                       >
                         <Icon of={BinIcon} size={16} />
-                        {say('common.remove')}
+                        {say('common.forget')}
                       </Button>
                     </span>
                   </>
