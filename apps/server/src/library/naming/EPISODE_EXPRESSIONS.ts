@@ -46,7 +46,7 @@ const EPISODE_EXPRESSIONS: readonly EpisodeExpression[] = [
     ...PLAIN,
     isNamed: true,
     pattern:
-      /.*[\\/]?.*?(\[.*?\])+.*?(?<seriesname>[-\p{L}\p{M}\p{Nd}\p{Pc}\s]+?)[\s_]*-[\s_]*(?<epnumber>[0-9]+).*$/diu,
+      /^(?:[^[]*\[[^\]]*\])+.*?(?<seriesname>[-\p{L}\p{M}\p{Nd}\p{Pc}\s]+?)[\s_]*-[\s_]*(?<epnumber>[0-9]+).*$/diu,
   },
   {
     ...PLAIN,

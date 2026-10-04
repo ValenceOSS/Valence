@@ -192,7 +192,13 @@ const placeEpisodes = (paths: readonly string[], root: string): Map<string, Plac
   for (const path of episodes) {
     const { folder } = pathParts(path);
 
-    byFolder.set(folder, [...(byFolder.get(folder) ?? []), path]);
+    const held = byFolder.get(folder);
+
+    if (held === undefined) {
+      byFolder.set(folder, [path]);
+    } else {
+      held.push(path);
+    }
   }
 
   for (const held of byFolder.values()) {
@@ -202,7 +208,13 @@ const placeEpisodes = (paths: readonly string[], root: string): Map<string, Plac
       const key = episodeKeyOf(path);
 
       if (key !== null) {
-        byKey.set(key.toLowerCase(), [...(byKey.get(key.toLowerCase()) ?? []), path]);
+        const same = byKey.get(key.toLowerCase());
+
+        if (same === undefined) {
+          byKey.set(key.toLowerCase(), [path]);
+        } else {
+          same.push(path);
+        }
       }
     }
 

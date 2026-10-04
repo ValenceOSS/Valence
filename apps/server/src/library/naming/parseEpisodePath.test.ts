@@ -216,4 +216,22 @@ describe('parseEpisodePath', () => {
   it('does not read a picture size as a season and an episode', () => {
     expect(parseEpisodePath('Series Special (1920x1080).mkv').isSuccess).toBe(false);
   });
+
+  it('reads a name carrying many bracketed tags without stalling', () => {
+    const tags = Array.from({ length: 40 }, (_, at) => `[Tag${at.toString()} 1080p]`).join(' ');
+    const started = performance.now();
+
+    parseEpisodePath(`/media/anime/Some Show (2020)/[Group] Some Show ${tags}.mkv`);
+
+    expect(performance.now() - started).toBeLessThan(250);
+  });
+
+  it('reads the series and episode after the last bracketed tag before them', () => {
+    const read = parseEpisodePath(
+      '/media/anime/[Erai-raws] Show/[A][B] Show Name - 05 [1080p].mkv',
+    );
+
+    expect(read.seriesName?.trim()).toBe('Show Name');
+    expect(read.episodeNumber).toBe(5);
+  });
 });
