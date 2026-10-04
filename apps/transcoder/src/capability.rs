@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use tokio::process::Command;
 
-use crate::transcode_plan::{DeviceFilters, HardwareAccel, ToneMapping};
+use crate::transcode_plan::{DeviceFilters, HardwareAccel, Platform, ToneMapping};
 
 /// An encoder Valence may use, and the acceleration it belongs to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1200,27 +1200,25 @@ fn verified_accels(encoders: &[VerifiedEncoder]) -> Vec<HardwareAccel> {
     accels
 }
 
-/// Writes what would not run to the log, once per fault rather than once per
-/// encoder.
+/// Writes what would not run to the log, once per backend rather than once
+/// per encoder, as information rather than as a warning.
 ///
-/// This is the whole of what is said about a rejected encoder now. It used to
-/// be listed on the admin overview as well, under the encoders that did work,
-/// and on a machine doing nothing wrong that read as a fault report: an Intel
-/// host with no NVIDIA card in it is not failing when NVENC will not open, and
-/// three lines saying so sat above the graphics card that was working
-/// perfectly. Somebody who wants to know reads the log; somebody looking at
-/// the overview wanted to know whether the machine was all right.
+/// None of it is a fault on a machine doing nothing wrong: an AMD host with no
+/// NVIDIA card is not failing when NVENC will not open, and a card without an
+/// AV1 encoder is not failing when `av1_vaapi` will not. Five warnings saying
+/// so at every start read as a broken server to the people running one, above
+/// a graphics card that was working. A hardware encode that fails while
+/// somebody is watching is still a warning, from the session that tried it.
 ///
-/// A backend that proved nothing failed for one reason and failed at it three
-/// or four times, so it gets one line. A backend that did prove itself and
-/// then refused a codec is the other case, and keeps its own line — there the
-/// machine can do the work and something specific stopped it.
+/// A backend that proved nothing gets one line. A backend that proved itself
+/// and then refused a codec keeps a line per encoder, since there the card can
+/// do the work and something specific stopped it.
 fn report_rejections(rejected: &[RejectedEncoder], verified: &[HardwareAccel]) {
     let mut spoken: Vec<HardwareAccel> = Vec::new();
 
     for entry in rejected {
         if verified.contains(&entry.accel) {
-            tracing::warn!(
+            tracing::info!(
                 target: "capability",
                 "{} would not run — {}",
                 entry.encoder,
@@ -1236,11 +1234,35 @@ fn report_rejections(rejected: &[RejectedEncoder], verified: &[HardwareAccel]) {
 
         spoken.push(entry.accel);
 
-        tracing::warn!(
+        tracing::info!(
             target: "capability",
             "{} is not available on this machine — {}",
             entry.accel.word(),
             entry.reason
+        );
+    }
+}
+
+/// Writes the hardware encoders that proved themselves to the log, or that
+/// there are none, so the log says what this machine will encode with as well
+/// as what it will not.
+fn report_hardware(encoders: &[VerifiedEncoder]) {
+    let working: Vec<&str> = encoders
+        .iter()
+        .filter(|encoder| encoder.accel != HardwareAccel::None)
+        .map(|encoder| encoder.encoder.as_str())
+        .collect();
+
+    if working.is_empty() {
+        tracing::info!(
+            target: "capability",
+            "no hardware encoder works on this machine, so video is encoded in software"
+        );
+    } else {
+        tracing::info!(
+            target: "capability",
+            "hardware encoders that work: {}",
+            working.join(", ")
         );
     }
 }
@@ -1264,7 +1286,9 @@ async fn detect_capabilities_uncached(ffmpeg: &str, device: &str) -> Capabilitie
     let mut rejected = Vec::new();
 
     for candidate in ENCODER_CANDIDATES {
-        if !listed.iter().any(|name| name == candidate.encoder) {
+        if !listed.iter().any(|name| name == candidate.encoder)
+            || !candidate.accel.runs_on(Platform::CURRENT)
+        {
             continue;
         }
 
@@ -1287,6 +1311,7 @@ async fn detect_capabilities_uncached(ffmpeg: &str, device: &str) -> Capabilitie
     let hardware_accels = verified_accels(&encoders);
 
     report_rejections(&rejected, &hardware_accels);
+    report_hardware(&encoders);
 
     let filters = match Command::new(ffmpeg)
         .args(["-hide_banner", "-filters"])
