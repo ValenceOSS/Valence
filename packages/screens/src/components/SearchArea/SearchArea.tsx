@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Search as SearchIcon } from '@keyline-icons/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
@@ -297,7 +297,7 @@ const SearchArea = ({
                 <Sentence
                   counted="common.count.results"
                   count={howMany}
-                  fillings={{ count: <AnimatedNumber value={howMany} /> }}
+                  fillings={{ count: <FormattedNumber value={howMany} /> }}
                 />
               )}
             </span>

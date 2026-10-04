@@ -3,7 +3,7 @@ import { AnimatedIcon } from '@ValenceUI/AnimatedIcon';
 import { Icon } from '@ValenceUI/Icon';
 import { Reveal } from '@ValenceUI/Reveal';
 import { RevealItem } from '@ValenceUI/RevealItem';
-import { AnimatedNumberDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/AnimatedNumberDemo';
+import { FormattedNumberDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/FormattedNumberDemo';
 import { HoverHighlightDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/HoverHighlightDemo';
 import { MoodBackgroundDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/MoodBackgroundDemo';
 import { SlidingMarkDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/SlidingMarkDemo';
@@ -58,10 +58,10 @@ const MOTION_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
       render: () => <SlidingMarkDemo />,
     },
   ],
-  AnimatedNumber: [
+  FormattedNumber: [
     {
       title: 'Rolls between values',
-      render: () => <AnimatedNumberDemo />,
+      render: () => <FormattedNumberDemo />,
     },
   ],
   MoodBackground: [

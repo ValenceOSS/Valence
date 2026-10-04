@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { AnimatedNumberDemo } from './AnimatedNumberDemo';
+import { FormattedNumberDemo } from './FormattedNumberDemo';
 
-describe('AnimatedNumberDemo', () => {
+describe('FormattedNumberDemo', () => {
   it('steps the count', async () => {
-    render(<AnimatedNumberDemo />);
+    render(<FormattedNumberDemo />);
 
     await userEvent.click(screen.getByRole('button', { name: 'One more' }));
 
@@ -13,6 +13,6 @@ describe('AnimatedNumberDemo', () => {
   });
 
   it('sets a display name so devtools can identify it', () => {
-    expect(AnimatedNumberDemo.displayName).toBe('AnimatedNumberDemo');
+    expect(FormattedNumberDemo.displayName).toBe('FormattedNumberDemo');
   });
 });

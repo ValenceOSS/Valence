@@ -10,7 +10,7 @@ import {
   Terminal as TerminalIcon,
   X as XIcon,
 } from '@keyline-icons/react/fill';
-import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { AppliedFilters } from '@ValenceUI/AppliedFilters';
 import { BarList } from '@ValenceUI/BarList';
 import { Button } from '@ValenceUI/Button';
@@ -597,8 +597,8 @@ const LogExplorer = ({
               <Sentence
                 words="screens.observabilityPage.logExplorer.showingShownOfTotal"
                 fillings={{
-                  shown: <AnimatedNumber value={records.length} />,
-                  total: <AnimatedNumber value={total} />,
+                  shown: <FormattedNumber value={records.length} />,
+                  total: <FormattedNumber value={total} />,
                 }}
               />
             </span>

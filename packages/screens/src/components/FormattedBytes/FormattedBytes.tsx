@@ -1,21 +1,21 @@
-import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { sizeOfBytes } from '@ValenceCore/functions/sizeOfBytes';
-import type { AnimatedBytesProps } from './AnimatedBytes.types';
+import type { FormattedBytesProps } from './FormattedBytes.types';
 
 /**
- * A size that rolls to its new value, written the way every other size in Valence is — `1.4 GB`,
- * `356 MB` — with the number rolling and its unit standing still beside it.
+ * A size written the way every other size in Valence is — `1.4 GB`, `356 MB` — with its digits set
+ * to one width, so a size that updates does not shift the words around it.
  *
  * @param bytes - The size.
  * @param prefix - Text written straight before the number, such as an arrow.
  * @param suffix - Text written straight after the unit, such as ` free`.
  * @param className - Extra classes for the caller's own layout.
  */
-const AnimatedBytes = ({ bytes, prefix, suffix = '', className }: AnimatedBytesProps) => {
+const FormattedBytes = ({ bytes, prefix, suffix = '', className }: FormattedBytesProps) => {
   const { value, unit, decimals } = sizeOfBytes(bytes);
 
   return (
-    <AnimatedNumber
+    <FormattedNumber
       value={value}
       format={{ minimumFractionDigits: decimals, maximumFractionDigits: decimals }}
       suffix={` ${unit}${suffix}`}
@@ -25,6 +25,6 @@ const AnimatedBytes = ({ bytes, prefix, suffix = '', className }: AnimatedBytesP
   );
 };
 
-AnimatedBytes.displayName = 'AnimatedBytes';
+FormattedBytes.displayName = 'FormattedBytes';
 
-export { AnimatedBytes };
+export { FormattedBytes };

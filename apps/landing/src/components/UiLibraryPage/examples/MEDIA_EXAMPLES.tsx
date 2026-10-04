@@ -5,11 +5,8 @@ import { Icon } from '@ValenceUI/Icon';
 import { Logo } from '@ValenceUI/Logo';
 import { MediaCard } from '@ValenceUI/MediaCard';
 import { NavBar } from '@ValenceUI/NavBar';
-import { Orb } from '@ValenceUI/Orb';
 import { QrCode } from '@ValenceUI/QrCode';
 import { Rail } from '@ValenceUI/Rail';
-import { ORBITAL } from '@ValenceUI/orbs/variants/ORBITAL';
-import { PLASMA } from '@ValenceUI/orbs/variants/PLASMA';
 import { VideoSurfaceDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/VideoSurfaceDemo';
 import { EmbeddedVideo } from '@ValenceUI/EmbeddedVideo';
 import { ReaderVignette } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/ReaderVignette/ReaderVignette';
@@ -145,17 +142,6 @@ const MEDIA_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
             <Icon key={tone} of={Star} size={22} tone={tone} label={tone} />
           ))}
           <Icon of={Heart} whenActive={Heart} isActive size={22} label="Active" />
-        </div>
-      ),
-    },
-  ],
-  Orb: [
-    {
-      title: 'Variants, held still',
-      render: () => (
-        <div className="flex items-center gap-4">
-          <Orb variant={ORBITAL} isStill label="Orbital" className="size-20" />
-          <Orb variant={PLASMA} isStill label="Plasma" className="size-20" />
         </div>
       ),
     },

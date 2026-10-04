@@ -3,7 +3,7 @@ import { sayAgain } from '@ValenceI18n/sayAgain';
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
-import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
@@ -187,8 +187,8 @@ const ObservabilityPage = ({
                   '—'
                 ) : (
                   <>
-                    <AnimatedNumber value={monitor.queue.running} suffix=" running" /> ·{' '}
-                    <AnimatedNumber value={monitor.queue.queued} suffix=" waiting" />
+                    <FormattedNumber value={monitor.queue.running} suffix=" running" /> ·{' '}
+                    <FormattedNumber value={monitor.queue.queued} suffix=" waiting" />
                     {failures === 0 ? null : (
                       <>
                         {' '}
@@ -210,7 +210,7 @@ const ObservabilityPage = ({
                           }}
                         >
                           <span className="text-xs text-danger">
-                            <AnimatedNumber value={failures} suffix=" failed" />
+                            <FormattedNumber value={failures} suffix=" failed" />
                           </span>
                         </Button>
                       </>

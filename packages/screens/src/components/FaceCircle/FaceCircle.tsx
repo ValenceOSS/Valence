@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import { cn } from '@ValenceUI/cn';
-import { Orb } from '@ValenceUI/Orb';
 import { SketchPicture } from '@ValenceScreens/components/SketchPicture/SketchPicture';
-import { ORB_VARIANTS } from '@ValenceUI/orbs/ORB_VARIANTS';
 import { profileInitial } from '@ValenceContracts/schemas/ViewerProfile';
 import { framedPicture } from '@ValenceScreens/library/framedPicture';
 import { LETTER_FONT_LOOKS } from '@ValenceScreens/library/LETTER_FONT_LOOKS';
@@ -11,7 +9,7 @@ import type { FaceCircleProps } from './FaceCircle.types';
 
 /**
  * Draws a name, a colour and an avatar as a circle — a photograph sat in its frame, a drawn
- * avatar, an orb moving live, or an initial — and shows a picture being uploaded before the server
+ * avatar, the picture an orb was saved as, or an initial — and shows a picture being uploaded before the server
  * has taken it, so choosing one feels immediate.
  *
  * A picture the server cannot produce falls back to the initial. Whatever is being drawn says it
@@ -68,8 +66,6 @@ const FaceCircle = ({
       : pending?.type.startsWith('video/') === true;
   const address = chosen ?? source;
   const showsPicture = chosen !== null || (avatar.kind !== 'initial' && !isMissing);
-  const orb =
-    avatar.kind === 'orb' ? ORB_VARIANTS.find((variant) => variant.key === avatar.orb) : undefined;
   const frame = chosen === null && avatar.kind === 'photo' ? framedPicture(avatar.frame) : {};
   const letter = avatar.kind === 'initial' ? LETTER_FONT_LOOKS[avatar.font] : null;
 
@@ -87,13 +83,7 @@ const FaceCircle = ({
         className,
       )}
     >
-      {orb !== undefined && avatar.kind === 'orb' ? (
-        <Orb
-          variant={orb}
-          look={{ params: avatar.params, colours: avatar.colours }}
-          className="h-full w-full"
-        />
-      ) : avatar.kind === 'sketch' ? (
+      {avatar.kind === 'sketch' ? (
         <SketchPicture scene={avatar.scene} className="h-full w-full" />
       ) : !showsPicture ? (
         profileInitial(name)

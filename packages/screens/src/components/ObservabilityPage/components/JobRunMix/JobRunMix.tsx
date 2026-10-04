@@ -1,4 +1,4 @@
-import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { cn } from '@ValenceUI/cn';
 import type { JobRunMixProps } from './JobRunMix.types';
 import { Fragment } from 'react';
@@ -73,7 +73,7 @@ const JobRunMix = ({ running, completed, failed, stopped }: JobRunMixProps) => {
             sayCountParts('screens.observabilityPage.jobRunMix.countRunningNow', running, {
               count: (
                 <span className="text-lg font-semibold tabular-nums text-text">
-                  <AnimatedNumber value={running} />
+                  <FormattedNumber value={running} />
                 </span>
               ),
             }),
@@ -92,7 +92,7 @@ const JobRunMix = ({ running, completed, failed, stopped }: JobRunMixProps) => {
                       segment.id === 'failed' && failed > 0 ? 'text-danger' : 'text-text',
                     )}
                   >
-                    <AnimatedNumber value={counts[segment.id]} />
+                    <FormattedNumber value={counts[segment.id]} />
                   </span>
                 ),
               }),
@@ -106,7 +106,7 @@ const JobRunMix = ({ running, completed, failed, stopped }: JobRunMixProps) => {
               sayParts('screens.observabilityPage.jobRunMix.succeededPercent', {
                 percent: (
                   <span className="text-lg font-semibold tabular-nums text-text">
-                    <AnimatedNumber value={succeeded} suffix="%" />
+                    <FormattedNumber value={succeeded} suffix="%" />
                   </span>
                 ),
               }),

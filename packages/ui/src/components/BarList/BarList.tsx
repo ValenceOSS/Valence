@@ -1,4 +1,4 @@
-import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import type { BarListProps } from './BarList.types';
@@ -58,7 +58,7 @@ const BarList = ({
                     )}
                   </span>
                   <span className="tabular-nums text-text-muted">
-                    <AnimatedNumber value={item.value} />
+                    <FormattedNumber value={item.value} />
                   </span>
                 </span>
 

@@ -13,7 +13,7 @@ import {
   stillTransition,
 } from '@ValenceUI/animations/reveal';
 import { usePagedScroller } from '@ValenceUI/usePagedScroller';
-import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import type { RailProps } from './Rail.types';
@@ -130,7 +130,7 @@ const Rail = ({
           {count === undefined ? null : (
             <>
               {' '}
-              <AnimatedNumber value={count} className="text-sm font-normal text-text-muted/70" />
+              <FormattedNumber value={count} className="text-sm font-normal text-text-muted/70" />
             </>
           )}
         </h2>

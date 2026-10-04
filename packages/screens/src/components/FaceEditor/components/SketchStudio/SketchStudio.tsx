@@ -21,8 +21,8 @@ import { ColourChoice } from '@ValenceScreens/components/ColourChoice/ColourChoi
 import { SKETCH_TOOLS } from '@ValenceScreens/components/FaceEditor/components/SketchStudio/SKETCH_TOOLS';
 import { LETTER_FONT_LOOKS } from '@ValenceScreens/library/LETTER_FONT_LOOKS';
 import { drawScene } from '@ValenceScreens/library/sketch/drawScene';
-import { itemAt } from '@ValenceScreens/library/sketch/itemAt';
-import { STICKERS } from '@ValenceScreens/library/sketch/STICKERS';
+import { itemAt } from '@ValenceClient/sketch/itemAt';
+import { STICKERS } from '@ValenceClient/sketch/STICKERS';
 import type { LetterFont } from '@ValenceContracts/schemas/LetterFont';
 import type { SketchItem, SketchScene, SketchStroke } from '@ValenceContracts/schemas/SketchScene';
 import type { SketchStudioProps, SketchTool } from './SketchStudio.types';

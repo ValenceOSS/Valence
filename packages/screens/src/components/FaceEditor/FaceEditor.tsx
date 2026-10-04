@@ -4,22 +4,17 @@ import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
-import { ORB_VARIANTS } from '@ValenceUI/orbs/ORB_VARIANTS';
-import { orbLoop } from '@ValenceUI/orbs/orbLoop';
-import { orbPicture } from '@ValenceUI/orbs/orbPicture';
 import { PROFILE_COLOURS, profileAvatarUrl } from '@ValenceContracts/schemas/ViewerProfile';
 import { DrawnStudio } from '@ValenceScreens/components/FaceEditor/components/DrawnStudio/DrawnStudio';
 import { FacePreviews } from '@ValenceScreens/components/FaceEditor/components/FacePreviews/FacePreviews';
 import { LetterStudio } from '@ValenceScreens/components/FaceEditor/components/LetterStudio/LetterStudio';
-import { OrbStudio } from '@ValenceScreens/components/FaceEditor/components/OrbStudio/OrbStudio';
 import { PhotoStudio } from '@ValenceScreens/components/FaceEditor/components/PhotoStudio/PhotoStudio';
 import { SketchStudio } from '@ValenceScreens/components/FaceEditor/components/SketchStudio/SketchStudio';
 import { sketchPicture } from '@ValenceScreens/library/sketch/sketchPicture';
-import { FACE_MODES } from '@ValenceScreens/components/FaceEditor/faceModes';
+import { FACE_MODES } from '@ValenceClient/profiles/FACE_MODES';
 import type { Avatar, PhotoFrame, ProfileColour } from '@ValenceContracts/schemas/ViewerProfile';
 import type { LetterFont } from '@ValenceContracts/schemas/LetterFont';
 import type { DrawnStyle } from '@ValenceScreens/components/FaceEditor/components/DrawnStudio/DrawnStudio.types';
-import type { OrbChoice } from '@ValenceScreens/components/FaceEditor/components/OrbStudio/OrbStudio.types';
 import type { SketchScene } from '@ValenceContracts/schemas/SketchScene';
 import type { FaceEditorProps } from './FaceEditor.types';
 import { say } from '@ValenceI18n/say';
@@ -30,25 +25,24 @@ const UNFRAMED: PhotoFrame = { zoom: 1, x: 0, y: 0 };
 
 /**
  * Where making a face begins: the kind of face somebody has now, so opening the editor shows what
- * they already have rather than a blank slate.
+ * they already have rather than a blank slate. An orb, which can no longer be made, is the picture
+ * it was saved as, so it opens on the photo studio.
  *
  * @param avatar - The face they have.
  */
-const modeOf = (avatar: Avatar): Mode => avatar.kind;
+const modeOf = (avatar: Avatar): Mode => (avatar.kind === 'orb' ? 'photo' : avatar.kind);
 
 /**
- * Making somebody's face, of whichever kind they like — an orb they have coloured and tuned, a
- * picture of their own sat where they want it in the circle, a drawing of their own, a drawn
- * character, or their initial — with
+ * Making somebody's face, of whichever kind they like — a picture of their own sat where they want
+ * it in the circle, a drawing of their own, a drawn character, or their initial — with
  * the face shown large as it changes and at the sizes Valence draws it.
  *
  * Every kind remembers what was done to it while the editor is open, so trying another kind and
  * coming back loses nothing. Nothing is saved from here: using a face hands it to the profile's
  * own draft, which is saved with everything else about the profile.
  *
- * An orb is handed over with a few seconds of itself moving, looped as a GIF, and a drawing with a
- * still of itself, taken as each is used, because the phone and the television draw pictures rather
- * than shaders. An orb the browser cannot film is handed over as a still instead.
+ * A drawing is handed over with a still of itself, taken as it is used, because the phone and the
+ * television draw pictures rather than a scene.
  *
  * @param isOpen - Whether the editor is showing.
  * @param onClose - Told it was put away without using anything.
@@ -58,11 +52,6 @@ const modeOf = (avatar: Avatar): Mode => avatar.kind;
  */
 const FaceEditor = ({ isOpen, onClose, profile, start, onUse }: FaceEditorProps) => {
   const [mode, setMode] = useState<Mode>(modeOf(start.avatar));
-  const [orb, setOrb] = useState<OrbChoice>(
-    start.avatar.kind === 'orb'
-      ? { orb: start.avatar.orb, params: start.avatar.params, colours: start.avatar.colours }
-      : { orb: ORB_VARIANTS[0]?.key ?? 'orbital', params: {}, colours: {} },
-  );
   const [photo, setPhoto] = useState<File | null>(
     start.avatar.kind === 'photo' ? start.photo : null,
   );
@@ -103,48 +92,31 @@ const FaceEditor = ({ isOpen, onClose, profile, start, onUse }: FaceEditorProps)
       : photo.type.startsWith('video/');
 
   const avatar: Avatar =
-    mode === 'orb'
-      ? { kind: 'orb', ...orb }
-      : mode === 'photo'
-        ? { kind: 'photo', isVideo: photoIsVideo, frame }
-        : mode === 'sketch'
-          ? { kind: 'sketch', scene }
-          : mode === 'drawn'
-            ? { kind: 'drawn', ...drawn }
-            : { kind: 'initial', font };
+    mode === 'photo'
+      ? { kind: 'photo', isVideo: photoIsVideo, frame }
+      : mode === 'sketch'
+        ? { kind: 'sketch', scene }
+        : mode === 'drawn'
+          ? { kind: 'drawn', ...drawn }
+          : { kind: 'initial', font };
 
   const canUse = mode !== 'photo' || photo !== null || hadPhoto;
 
   const handOver = async () => {
-    if (mode !== 'orb' && mode !== 'sketch') {
+    if (mode !== 'sketch') {
       onUse({ avatar, photo: mode === 'photo' ? photo : null, colour });
 
       return;
     }
 
-    const variant = ORB_VARIANTS.find((one) => one.key === orb.orb);
-
     setIsUsing(true);
 
-    const moving = mode === 'orb' && variant !== undefined ? await orbLoop(variant, orb) : null;
-    const still =
-      moving !== null
-        ? null
-        : mode === 'sketch'
-          ? await sketchPicture(scene)
-          : variant === undefined
-            ? null
-            : await orbPicture(variant, orb);
+    const still = await sketchPicture(scene);
 
     setIsUsing(false);
     onUse({
       avatar,
-      photo:
-        moving !== null
-          ? new File([moving], 'orb.gif', { type: 'image/gif' })
-          : still === null
-            ? null
-            : new File([still], `${mode}.png`, { type: 'image/png' }),
+      photo: still === null ? null : new File([still], 'sketch.png', { type: 'image/png' }),
       colour,
     });
   };
@@ -188,8 +160,6 @@ const FaceEditor = ({ isOpen, onClose, profile, start, onUse }: FaceEditorProps)
                 }
               }}
             />
-
-            {mode === 'orb' ? <OrbStudio value={orb} onChange={setOrb} /> : null}
 
             {mode === 'photo' ? (
               <PhotoStudio

@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Minus, Plus } from '@keyline-icons/react';
-import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 
 /**
- * A count that rolls from one value to the next as it is stepped up and down.
+ * A count written in the reader's own format, stepped up and down.
  */
-const AnimatedNumberDemo = () => {
+const FormattedNumberDemo = () => {
   const [count, setCount] = useState(128);
 
   return (
@@ -23,7 +23,7 @@ const AnimatedNumberDemo = () => {
         <Icon of={Minus} size={16} />
       </Button>
 
-      <AnimatedNumber value={count} suffix=" films" className="text-2xl font-semibold text-text" />
+      <FormattedNumber value={count} suffix=" films" className="text-2xl font-semibold text-text" />
 
       <Button
         variant="secondary"
@@ -39,6 +39,6 @@ const AnimatedNumberDemo = () => {
   );
 };
 
-AnimatedNumberDemo.displayName = 'AnimatedNumberDemo';
+FormattedNumberDemo.displayName = 'FormattedNumberDemo';
 
-export { AnimatedNumberDemo };
+export { FormattedNumberDemo };

@@ -4,7 +4,7 @@ import { FilterMenu } from '@ValenceUI/FilterMenu';
 import { TextField } from '@ValenceUI/TextField';
 import type { FilterGroup } from '@ValenceUI/FilterMenu.types';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
 import { StatStrip } from '@ValenceUI/StatStrip';
@@ -30,7 +30,7 @@ const showRate = (rate: number | null) =>
   rate === null ? (
     '—'
   ) : (
-    <AnimatedNumber
+    <FormattedNumber
       value={Math.floor(rate * 1000) / 10}
       suffix="%"
       format={{ maximumFractionDigits: 1 }}
@@ -130,11 +130,11 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
         accessorFn: (kind) => kind.runs,
         cell: ({ row }) => (
           <span className="tabular-nums text-text-muted">
-            <AnimatedNumber value={row.original.runs} />
+            <FormattedNumber value={row.original.runs} />
             {row.original.running > 0 ? (
               <>
                 {' ('}
-                <AnimatedNumber value={row.original.running} suffix=" running" />
+                <FormattedNumber value={row.original.running} suffix=" running" />
                 {')'}
               </>
             ) : null}
@@ -151,7 +151,7 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
               row.original.failed > 0 ? 'tabular-nums text-danger' : 'tabular-nums text-text-muted'
             }
           >
-            <AnimatedNumber value={row.original.failed} />
+            <FormattedNumber value={row.original.failed} />
           </span>
         ),
       },
@@ -222,7 +222,7 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
           {
             id: 'runs',
             label: say('screens.observabilityPage.jobHealth.runs'),
-            value: <AnimatedNumber value={totals.runs} />,
+            value: <FormattedNumber value={totals.runs} />,
           },
           {
             id: 'rate',
@@ -234,7 +234,7 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
           {
             id: 'failed',
             label: say('common.failed'),
-            value: <AnimatedNumber value={totals.failed} />,
+            value: <FormattedNumber value={totals.failed} />,
             isAlarming: totals.failed > 0,
           },
           {
