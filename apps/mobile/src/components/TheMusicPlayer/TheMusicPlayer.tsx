@@ -44,7 +44,7 @@ import { TheUpNext } from '@ValenceMobile/components/TheMusicPlayer/components/T
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheMusic } from '@ValenceMobile/hooks/useTheMusic';
 import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
-import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
+import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { SPRINGS } from '@ValenceMobile/theme/SPRINGS';
 import { EASINGS } from '@ValenceMobile/theme/EASINGS';

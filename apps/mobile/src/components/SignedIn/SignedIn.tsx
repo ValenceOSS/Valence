@@ -68,7 +68,7 @@ import { UnderThePlayer } from '@ValenceMobile/components/SignedIn/components/Un
 import { APageStack } from '@ValenceMobile/components/APageStack/APageStack';
 import { pageInTheLibrary } from '@ValenceMobile/components/SignedIn/pageInTheLibrary';
 import { pageToAskAbout } from '@ValenceMobile/components/SignedIn/pageToAskAbout';
-import { useTheProgrammeOfEpisode } from '@ValenceMobile/hooks/useTheProgrammeOfEpisode';
+import { useTheProgrammeOfEpisode } from '@ValenceClient/library/useTheProgrammeOfEpisode';
 import { Watching } from '@ValenceMobile/components/Watching/Watching';
 import { WatchingTogether } from '@ValenceMobile/components/SignedIn/components/WatchingTogether/WatchingTogether';
 import { useTellTheServerWhatIsHeld } from '@ValenceClient/downloads/useTellTheServerWhatIsHeld';
@@ -356,13 +356,18 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
     void cache.invalidateQueries({ queryKey: viewingQueries.progress().queryKey });
   };
 
-  const whenItEnds = () => {
+  const whatFollows = () => {
     const playing = episodes.find((episode) => episode.id === watching?.mediaId) ?? null;
-    const decided = decideWhatFollows({
+
+    return decideWhatFollows({
       following: playing === null ? null : nextEpisode(episodes, playing),
       carriedOn,
       askAfter: watcher.data?.askStillWatchingAfter ?? STILL_WATCHING_OFF,
     });
+  };
+
+  const whenItEnds = () => {
+    const decided = whatFollows();
 
     if (decided.kind === 'nothing') {
       stopWatchingIt();
@@ -740,6 +745,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
         startSeconds={watching.startSeconds}
         onDone={stopWatchingIt}
         onEnded={whenItEnds}
+        willCarryOn={whatFollows().kind === 'play'}
         seasons={series.data?.seasons ?? []}
         onChooseEpisode={(chosen) => {
           choose(chosen, resumeFor(byMediaId(watched.data ?? []), chosen) ?? 0);

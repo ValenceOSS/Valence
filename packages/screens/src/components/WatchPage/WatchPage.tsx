@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { SplashScreen } from '@ValenceUI/SplashScreen';
 import { VideoPlayer } from '@ValenceScreens/components/VideoPlayer/VideoPlayer';
@@ -46,7 +46,7 @@ const WatchPage = () => {
   const prefersReducedMotion = useReducedMotionConfig();
 
   const markedAtRef = useRef(0);
-  const carriedOnRef = useRef(0);
+  const [carriedOn, setCarriedOn] = useState(0);
   const carriedOnToRef = useRef<string | null>(null);
 
   const playing = place.playing === null ? null : (known.get(place.playing) ?? null);
@@ -65,12 +65,20 @@ const WatchPage = () => {
   }, [place.playing, readProgress]);
 
   useEffect(() => {
-    carriedOnRef.current = countCarriedOn({
-      nowPlaying: place.playing,
-      carriedOnTo: carriedOnToRef.current,
-      carriedOn: carriedOnRef.current,
-    });
+    setCarriedOn((was) =>
+      countCarriedOn({
+        nowPlaying: place.playing,
+        carriedOnTo: carriedOnToRef.current,
+        carriedOn: was,
+      }),
+    );
   }, [place.playing]);
+
+  const decided = decideWhatFollows({
+    following: playing === null ? null : nextEpisode(season, playing),
+    carriedOn,
+    askAfter: watcher?.askStillWatchingAfter ?? STILL_WATCHING_OFF,
+  });
 
   const partyPlayback = usePartyPlayback(watchParty, playing?.id ?? null);
   const found = playing === null ? undefined : progress.get(playing.id);
@@ -151,6 +159,7 @@ const WatchPage = () => {
         onSelectEpisode={(episode) => {
           go({ playing: episode.id });
         }}
+        willCarryOn={decided.kind === 'play'}
         watchedFractionFor={(mediaId) => {
           const held = progress.get(mediaId);
 
@@ -174,12 +183,6 @@ const WatchPage = () => {
           });
         }}
         onEnded={() => {
-          const decided = decideWhatFollows({
-            following: nextEpisode(season, playing),
-            carriedOn: carriedOnRef.current,
-            askAfter: watcher?.askStillWatchingAfter ?? STILL_WATCHING_OFF,
-          });
-
           if (decided.kind === 'nothing') {
             go({ playing: null, inspecting: playing.id });
 
@@ -192,7 +195,7 @@ const WatchPage = () => {
             return;
           }
 
-          carriedOnRef.current += 1;
+          setCarriedOn(carriedOn + 1);
           carriedOnToRef.current = decided.episode.id;
           go({ playing: decided.episode.id, inspecting: null });
         }}

@@ -14,6 +14,13 @@ const AN_INTRO: MediaSegment = {
   source: 'manual',
 };
 
+const CREDITS: MediaSegment = {
+  kind: 'credits',
+  startSeconds: 1700,
+  endSeconds: 1800,
+  source: 'imported',
+};
+
 const controls = (): TheMovingPartsProps['controls'] => ({
   fade: new Animated.Value(1),
   title: 'A Film',
@@ -31,10 +38,12 @@ const Playing = ({
   segments = [],
   areControlsDrawn = false,
   onMoveTo = jest.fn(),
+  next = null,
 }: {
   segments?: MediaSegment[];
   areControlsDrawn?: boolean;
   onMoveTo?: (seconds: number) => void;
+  next?: TheMovingPartsProps['next'];
 }) => {
   const player = useVideoPlayer({ uri: '/film' });
 
@@ -47,6 +56,7 @@ const Playing = ({
       captionStyle={DEFAULT_CAPTION_STYLE}
       areControlsDrawn={areControlsDrawn}
       onMoveTo={onMoveTo}
+      next={next}
       controls={controls()}
     />
   );
@@ -83,6 +93,110 @@ describe('TheMovingParts', () => {
     await userEvent.press(drawn.getByLabelText('Skip Intro'));
 
     expect(onMoveTo).toHaveBeenCalledWith(500);
+  });
+
+  it('offers the next episode in place of skipping credits that run to the end', async () => {
+    theFakePlayer.currentTime = 1702;
+    theFakePlayer.duration = 1800;
+    const onPlay = jest.fn();
+
+    const drawn = await render(
+      <Playing segments={[CREDITS]} next={{ isCounting: true, isHeldAtTheEnd: false, onPlay }} />,
+    );
+
+    expect(drawn.queryByLabelText('Skip Credits')).toBeNull();
+
+    await userEvent.press(drawn.getByText('Play Next'));
+
+    expect(onPlay).toHaveBeenCalled();
+  });
+
+  it('skips the credits again for somebody staying for them', async () => {
+    theFakePlayer.currentTime = 1702;
+    theFakePlayer.duration = 1800;
+
+    const drawn = await render(
+      <Playing
+        segments={[CREDITS]}
+        next={{ isCounting: true, isHeldAtTheEnd: false, onPlay: jest.fn() }}
+      />,
+    );
+
+    await userEvent.press(drawn.getByText('Watch Credits'));
+
+    expect(drawn.queryByText('Play Next')).toBeNull();
+    expect(drawn.getByLabelText('Skip Credits')).toBeTruthy();
+  });
+
+  it('offers the next episode again when held at the end, even after staying for the credits', async () => {
+    theFakePlayer.currentTime = 1702;
+    theFakePlayer.duration = 1800;
+
+    const drawn = await render(
+      <Playing
+        segments={[CREDITS]}
+        next={{ isCounting: true, isHeldAtTheEnd: false, onPlay: jest.fn() }}
+      />,
+    );
+
+    await userEvent.press(drawn.getByText('Watch Credits'));
+
+    expect(drawn.queryByText('Play Next')).toBeNull();
+
+    theFakePlayer.currentTime = 1800;
+    await drawn.rerender(
+      <Playing
+        segments={[CREDITS]}
+        next={{ isCounting: false, isHeldAtTheEnd: true, onPlay: jest.fn() }}
+      />,
+    );
+
+    expect(drawn.getByText('Play Next')).toBeTruthy();
+  });
+
+  it('offers the next episode again after somebody who stayed for the credits goes back and returns', async () => {
+    theFakePlayer.currentTime = 1702;
+    theFakePlayer.duration = 1800;
+
+    const drawn = await render(
+      <Playing
+        segments={[CREDITS]}
+        next={{ isCounting: true, isHeldAtTheEnd: false, onPlay: jest.fn() }}
+      />,
+    );
+
+    await userEvent.press(drawn.getByText('Watch Credits'));
+
+    expect(drawn.queryByText('Play Next')).toBeNull();
+
+    await act(() => {
+      theFakePlayer.say('timeUpdate', {
+        currentTime: 1000,
+        bufferedPosition: 1100,
+        currentLiveTimestamp: null,
+        currentOffsetFromLive: null,
+      });
+    });
+    await act(() => {
+      theFakePlayer.say('timeUpdate', {
+        currentTime: 1702,
+        bufferedPosition: 1750,
+        currentLiveTimestamp: null,
+        currentOffsetFromLive: null,
+      });
+    });
+
+    expect(drawn.getByText('Play Next')).toBeTruthy();
+  });
+
+  it('keeps skipping the credits where there is no next episode', async () => {
+    theFakePlayer.currentTime = 1702;
+    theFakePlayer.duration = 1800;
+
+    const drawn = await render(<Playing segments={[CREDITS]} />);
+
+    expect(drawn.getByLabelText('Skip Credits')).toBeTruthy();
+    expect(drawn.queryByText('Play Next')).toBeNull();
   });
 
   it('draws the controls only when asked to', async () => {

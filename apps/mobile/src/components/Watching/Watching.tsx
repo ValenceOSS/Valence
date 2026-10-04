@@ -35,6 +35,8 @@ import {
 import { thePhonesProfile } from '@ValenceMobile/playback/thePhonesProfile';
 import { spatialiseEvenStereo } from '@ValenceMobile/playback/spatialiseEvenStereo';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
+import { nextEpisode } from '@ValenceClient/library/pickFeatured';
+import { hasReachedTheEnd } from '@ValenceClient/playback/hasReachedTheEnd';
 import { theCookiesThisPhoneHolds } from '@ValenceMobile/platform/theCookiesThisPhoneHolds';
 import { turnThisPhoneSideways } from '@ValenceMobile/platform/turnThisPhoneSideways';
 import { Button } from '@ValenceMobile/components/Button/Button';
@@ -181,7 +183,10 @@ const styles = StyleSheet.create({
  * @param onDone - Told they have stopped watching.
  * @param onEnded - Told the film has played to its end, so whoever opened it can decide what follows.
  * @param seasons - The programme's seasons, where this is an episode of one, to offer the others.
- * @param onChooseEpisode - Told which other episode somebody picked.
+ * @param onChooseEpisode - Told which other episode somebody picked, or the next one, taken from the
+ *   offer of it as this one ends.
+ * @param willCarryOn - Whether the next episode starts on its own when this one ends, rather than
+ *   asking first, so the offer of it counts down only when it will.
  * @param kept - A copy this phone keeps, played straight from the file with nothing asked of the
  * server: named from what was kept, scrubbed with the thumbnails kept beside it, resumed from where
  * it was left on this phone, and remembered there until the server can be told.
@@ -197,6 +202,7 @@ const Watching = ({
   onEnded,
   seasons = NO_SEASONS,
   onChooseEpisode,
+  willCarryOn = false,
   kept,
   watchParty,
 }: WatchingProps) => {
@@ -407,8 +413,30 @@ const Watching = ({
     };
   }, [heard]);
 
+  const following = useMemo(() => {
+    const all = seasons.flatMap((season) => season.episodes);
+    const playing = all.find((episode) => episode.id === mediaId);
+
+    return playing === undefined || onChooseEpisode === undefined
+      ? null
+      : nextEpisode(all, playing);
+  }, [seasons, mediaId, onChooseEpisode]);
+
+  const seekedToTheEnd = useRef(false);
+  const [isHeldAtTheEnd, setIsHeldAtTheEnd] = useState(false);
+
   const moveTo = useCallback(
     (seconds: number) => {
+      seekedToTheEnd.current = following !== null && hasReachedTheEnd(seconds, player.duration);
+
+      if (isHeldAtTheEnd && !seekedToTheEnd.current) {
+        setIsHeldAtTheEnd(false);
+
+        if (party === undefined) {
+          player.play();
+        }
+      }
+
       if (party !== undefined) {
         party.onCommand({ kind: 'seek', atSeconds: Math.max(0, seconds) });
 
@@ -417,7 +445,7 @@ const Watching = ({
 
       player.seekBy(seconds - player.currentTime);
     },
-    [party, player],
+    [party, player, following, isHeldAtTheEnd],
   );
 
   const moving = useEvent(player, 'playingChange', { isPlaying: player.playing });
@@ -425,6 +453,16 @@ const Watching = ({
 
   useEventListener(player, 'playToEnd', () => {
     if (source === null || !(player.duration > 0)) {
+      return;
+    }
+
+    if (seekedToTheEnd.current) {
+      whereTheyGotTo.current = {
+        positionSeconds: player.duration,
+        durationSeconds: player.duration,
+      };
+      setIsHeldAtTheEnd(true);
+
       return;
     }
 
@@ -776,6 +814,28 @@ const Watching = ({
           keepThemUp();
           moveTo(seconds);
         }}
+        next={
+          following === null ||
+          onChooseEpisode === undefined ||
+          isChoosing ||
+          isPickingAnEpisode ||
+          isPartying
+            ? null
+            : {
+                isCounting: willCarryOn && !isHeldAtTheEnd,
+                isHeldAtTheEnd,
+                onPlay: () => {
+                  if (player.duration > 0) {
+                    whereTheyGotTo.current = {
+                      positionSeconds: player.duration,
+                      durationSeconds: player.duration,
+                    };
+                  }
+
+                  onChooseEpisode(following.id);
+                },
+              }
+        }
         controls={{
           fade,
           title: called?.name ?? '',

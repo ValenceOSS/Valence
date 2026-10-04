@@ -22,6 +22,8 @@ const mockPalette = {
   'surface-active': '#2c2c2c',
 };
 
+Object.assign(mockView.prototype, { requestTVFocus: () => undefined });
+
 jest.mock('expo-constants', () => ({
   __esModule: true,
   default: { expoConfig: { extra: { palette: mockPalette } }, deviceName: 'Living Room' },

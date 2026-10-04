@@ -1,7 +1,6 @@
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, userEvent } from '@testing-library/react-native';
-import { showIdOf } from '@ValenceClient/library/showIdOf';
 import { summariseDetail } from '@ValenceClient/library/summariseDetail';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
@@ -160,7 +159,7 @@ const NEXT_EPISODE: MediaSummary = {
 };
 
 const SHOW: ShowDetail = {
-  id: 'severance',
+  id: 'catalogue-95396',
   libraryId: LIBRARY_ID,
   title: 'Severance',
   seasonCount: 1,
@@ -283,9 +282,13 @@ const draw = async (setup: Setup = {}) => {
   cache.setQueryData(playbackQueries.subtitleTracks(MEDIA_ID).queryKey, setup.tracks ?? []);
   cache.setQueryData(playbackQueries.trickplay(MEDIA_ID).queryKey, null);
   cache.setQueryData(
-    libraryQueries.show(LIBRARY_ID, showIdOf(summariseDetail(detail))).queryKey,
-    setup.show ?? null,
+    libraryQueries.shows(LIBRARY_ID).queryKey,
+    setup.show === undefined || setup.show === null ? [] : [setup.show],
   );
+
+  if (setup.show !== undefined && setup.show !== null) {
+    cache.setQueryData(libraryQueries.show(LIBRARY_ID, setup.show.id).queryKey, setup.show);
+  }
 
   for (const [trackId, cues] of Object.entries(setup.cues ?? {})) {
     cache.setQueryData(playbackQueries.cues(MEDIA_ID, trackId).queryKey, cues);
@@ -1079,12 +1082,12 @@ describe('Player', () => {
       await tell('sourceLoad', { duration: 3000 });
       await tell('timeUpdate', { currentTime: 2700 });
 
-      expect(drawn.queryByText('S1: E3 · In Perpetuity')).toBeNull();
+      expect(drawn.queryByText('S1 E3 · In Perpetuity')).toBeNull();
 
       await tell('timeUpdate', { currentTime: 2850 });
 
-      expect(drawn.getByText('Up next')).toBeTruthy();
-      expect(drawn.getByText('S1: E3 · In Perpetuity')).toBeTruthy();
+      expect(drawn.getByText('Next Episode')).toBeTruthy();
+      expect(drawn.getByText('S1 E3 · In Perpetuity')).toBeTruthy();
       expect(drawn.queryByRole('button', { name: 'Skip Credits' })).toBeNull();
     });
 
@@ -1094,7 +1097,7 @@ describe('Player', () => {
       await tell('sourceLoad', { duration: 3000 });
       await tell('timeUpdate', { currentTime: 2975 });
 
-      expect(drawn.getByText('S1: E3 · In Perpetuity')).toBeTruthy();
+      expect(drawn.getByText('S1 E3 · In Perpetuity')).toBeTruthy();
     });
 
     it('plays it on its own at the end, counting one more followed on', async () => {
@@ -1105,14 +1108,31 @@ describe('Player', () => {
       expect(onNext).toHaveBeenCalledWith(NEXT_EPISODE, 2);
     });
 
-    it('starts the count of episodes followed on untouched again when Play is pressed', async () => {
+    it('starts the count of episodes followed on untouched again when Play Next is pressed', async () => {
       const { drawn, onNext } = await draw({ show: SHOW, carriedOn: 1 });
 
       await tell('sourceLoad', { duration: 3000 });
       await tell('timeUpdate', { currentTime: 2990 });
-      await userEvent.press(drawn.getByRole('button', { name: /^Play in/ }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Play Next' }));
 
       expect(onNext).toHaveBeenCalledWith(NEXT_EPISODE, 0);
+    });
+
+    it('counts this episode finished when the next is started during its credits', async () => {
+      const { drawn } = await draw({
+        show: SHOW,
+        segments: [{ kind: 'credits', startSeconds: 2700, endSeconds: 3000, source: 'manual' }],
+      });
+
+      await tell('sourceLoad', { duration: 3000 });
+      await tell('timeUpdate', { currentTime: 2750 });
+      await userEvent.press(drawn.getByRole('button', { name: 'Play Next' }));
+      await drawn.unmount();
+
+      expect(mockReport).toHaveBeenCalledWith(
+        MEDIA_ID,
+        expect.objectContaining({ positionSeconds: 3000, isFinished: true }),
+      );
     });
 
     it('stays with the credits when asked while they are still rolling', async () => {
@@ -1120,10 +1140,72 @@ describe('Player', () => {
 
       await tell('sourceLoad', { duration: 3000 });
       await tell('timeUpdate', { currentTime: 2990 });
-      await userEvent.press(drawn.getByRole('button', { name: 'Cancel' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Watch Credits' }));
 
-      expect(drawn.queryByText('S1: E3 · In Perpetuity')).toBeNull();
+      expect(drawn.queryByText('S1 E3 · In Perpetuity')).toBeNull();
       expect(onLeave).not.toHaveBeenCalled();
+    });
+
+    it('holds at the end for somebody who moved there by hand, rather than carrying on', async () => {
+      const { drawn, onNext, onLeave } = await draw({ show: SHOW });
+
+      await tell('sourceLoad', { duration: 3000 });
+      await tell('timeUpdate', { currentTime: 2995 });
+      await userEvent.press(drawn.getByRole('button', { name: 'Watch Credits' }));
+
+      const [, forward] = drawn.getAllByRole('button', { name: '10s' });
+
+      if (forward === undefined) {
+        throw new Error('The skip buttons were not drawn.');
+      }
+
+      await userEvent.press(forward);
+      await tell('playToEnd', {});
+
+      expect(onNext).not.toHaveBeenCalled();
+      expect(onLeave).not.toHaveBeenCalled();
+      expect(drawn.getByRole('button', { name: 'Play Next' })).toBeTruthy();
+    });
+
+    it('keeps the controls away while the card shows, and leaves left and right to it', async () => {
+      const { drawn } = await draw({ show: SHOW });
+
+      await playingAt(2990);
+
+      const before = mockVideo.current.currentTime;
+
+      expect(drawn.queryByRole('button', { name: 'Settings' })).toBeNull();
+
+      await press('right');
+      await press('left');
+
+      expect(mockVideo.current.currentTime).toBe(before);
+      expect(drawn.queryByRole('button', { name: 'Settings' })).toBeNull();
+      expect(drawn.getByRole('button', { name: 'Play Next' })).toBeTruthy();
+    });
+
+    it('offers the card again after somebody who put it away goes back and returns', async () => {
+      const { drawn } = await draw({ show: SHOW });
+
+      await playingAt(2990);
+      await menu();
+
+      expect(drawn.queryByRole('button', { name: 'Play Next' })).toBeNull();
+
+      await tell('timeUpdate', { currentTime: 2000 });
+      await tell('timeUpdate', { currentTime: 2990 });
+
+      expect(drawn.getByRole('button', { name: 'Play Next' })).toBeTruthy();
+    });
+
+    it('puts the card away with the Menu button, rather than leaving the episode', async () => {
+      const { drawn, onLeave } = await draw({ show: SHOW });
+
+      await playingAt(2990);
+      await menu();
+
+      expect(onLeave).not.toHaveBeenCalled();
+      expect(drawn.queryByRole('button', { name: 'Play Next' })).toBeNull();
     });
 
     it('asks whether anybody is still there once enough have followed on untouched, and waits', async () => {

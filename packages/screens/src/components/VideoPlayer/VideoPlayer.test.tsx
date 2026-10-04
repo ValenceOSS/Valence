@@ -3095,3 +3095,224 @@ describe('the immersive view', () => {
     expect(screen.queryByRole('button', { name: 'Immersive view' })).not.toBeInTheDocument();
   });
 });
+
+describe('VideoPlayer, as an episode ends', () => {
+  const anEpisode = (id: string, title: string, episodeNumber: number) => ({
+    id,
+    title,
+    durationSeconds: 1800,
+    libraryId: 'lib',
+    year: null,
+    width: 1920,
+    height: 1080,
+    videoCodec: 'h264',
+    videoRange: 'SDR' as const,
+    addedAt: '2026-01-01T00:00:00.000Z',
+    hasPoster: false,
+    hasBackdrop: false,
+    hasLogo: false,
+    seriesId: 'show',
+    seriesTitle: 'A Show',
+    seasonNumber: 1,
+    episodeNumber,
+  });
+
+  const first = anEpisode('episode-1', 'First Episode', 1);
+  const second = anEpisode('episode-2', 'Second Episode', 2);
+
+  const rollCredits = () => {
+    segmentsMock.mockResolvedValue([
+      { kind: 'credits', startSeconds: 1700, endSeconds: 1800, source: 'imported' },
+    ]);
+  };
+
+  const reach = async (seconds: number) => {
+    const element = await screen.findByLabelText('First Episode');
+    await settled();
+
+    Object.defineProperty(element, 'currentTime', { configurable: true, value: seconds });
+    fireEvent.timeUpdate(element);
+  };
+
+  it('offers the next episode instead of skipping credits that run to the end', async () => {
+    rollCredits();
+    renderInAnAddress(
+      <VideoPlayer
+        media={first}
+        onClose={vi.fn()}
+        episodes={[first, second]}
+        onSelectEpisode={vi.fn()}
+        willCarryOn
+      />,
+    );
+
+    await reach(1650);
+
+    expect(screen.queryByRole('button', { name: 'Play Next' })).not.toBeInTheDocument();
+
+    await reach(1702);
+
+    expect(await screen.findByRole('button', { name: 'Play Next' })).toBeInTheDocument();
+    expect(screen.getByText('S1 E2 · Second Episode')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Skip Credits/ })).not.toBeInTheDocument();
+  });
+
+  it('marks this episode watched and starts the next when the offer is taken', async () => {
+    const actor = userEvent.setup();
+    const onProgress = vi.fn();
+    const onSelectEpisode = vi.fn();
+    rollCredits();
+    renderInAnAddress(
+      <VideoPlayer
+        media={first}
+        onClose={vi.fn()}
+        episodes={[first, second]}
+        onSelectEpisode={onSelectEpisode}
+        onProgress={onProgress}
+        willCarryOn
+      />,
+    );
+
+    await reach(1702);
+    await actor.click(await screen.findByRole('button', { name: 'Play Next' }));
+
+    expect(onProgress).toHaveBeenLastCalledWith(1800, 1800);
+    expect(onSelectEpisode).toHaveBeenCalledWith(second);
+  });
+
+  it('holds at the end with the next episode offered, for somebody who moved there by hand', async () => {
+    const actor = userEvent.setup();
+    const onEnded = vi.fn();
+    const onProgress = vi.fn();
+    rollCredits();
+    renderInAnAddress(
+      <VideoPlayer
+        media={first}
+        onClose={vi.fn()}
+        episodes={[first, second]}
+        onSelectEpisode={vi.fn()}
+        onEnded={onEnded}
+        onProgress={onProgress}
+        willCarryOn
+      />,
+    );
+
+    const element = await screen.findByLabelText('First Episode');
+    seekableTo(element, 1800);
+    await settled();
+
+    Object.defineProperty(element, 'currentTime', {
+      configurable: true,
+      writable: true,
+      value: 1702,
+    });
+    fireEvent.timeUpdate(element);
+
+    await actor.click(await screen.findByRole('button', { name: 'Watch Credits' }));
+    await actor.click(await screen.findByRole('button', { name: /Skip Credits/ }));
+    fireEvent.timeUpdate(element);
+
+    expect(onEnded).not.toHaveBeenCalled();
+    expect(onProgress).toHaveBeenLastCalledWith(1800, 1800);
+    expect(await screen.findByRole('button', { name: 'Play Next' })).toBeInTheDocument();
+  });
+
+  it('carries on at the end for somebody who played into it', async () => {
+    const onEnded = vi.fn();
+    renderInAnAddress(
+      <VideoPlayer
+        media={first}
+        onClose={vi.fn()}
+        episodes={[first, second]}
+        onSelectEpisode={vi.fn()}
+        onEnded={onEnded}
+        willCarryOn
+      />,
+    );
+
+    await reach(1800);
+
+    expect(onEnded).toHaveBeenCalledOnce();
+  });
+
+  it('offers it again after somebody who stayed for the credits goes back and returns', async () => {
+    const actor = userEvent.setup();
+    rollCredits();
+    renderInAnAddress(
+      <VideoPlayer
+        media={first}
+        onClose={vi.fn()}
+        episodes={[first, second]}
+        onSelectEpisode={vi.fn()}
+      />,
+    );
+
+    await reach(1702);
+    await actor.click(await screen.findByRole('button', { name: 'Watch Credits' }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: 'Play Next' })).not.toBeInTheDocument();
+    });
+
+    await reach(1000);
+    await reach(1702);
+
+    expect(await screen.findByRole('button', { name: 'Play Next' })).toBeInTheDocument();
+  });
+
+  it('offers it near the end of an episode with nothing marked', async () => {
+    renderInAnAddress(
+      <VideoPlayer
+        media={first}
+        onClose={vi.fn()}
+        episodes={[first, second]}
+        onSelectEpisode={vi.fn()}
+      />,
+    );
+
+    await reach(1771);
+
+    expect(await screen.findByRole('button', { name: 'Play Next' })).toBeInTheDocument();
+  });
+
+  it('keeps skipping the credits of the last episode, with nothing to offer after it', async () => {
+    rollCredits();
+    renderInAnAddress(
+      <VideoPlayer
+        media={second}
+        onClose={vi.fn()}
+        episodes={[first, second]}
+        onSelectEpisode={vi.fn()}
+      />,
+    );
+
+    const element = await screen.findByLabelText('Second Episode');
+    await settled();
+
+    Object.defineProperty(element, 'currentTime', { configurable: true, value: 1702 });
+    fireEvent.timeUpdate(element);
+
+    expect(await screen.findByRole('button', { name: /Skip Credits/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Play Next' })).not.toBeInTheDocument();
+  });
+
+  it('puts the offer away for somebody staying for the credits', async () => {
+    const actor = userEvent.setup();
+    rollCredits();
+    renderInAnAddress(
+      <VideoPlayer
+        media={first}
+        onClose={vi.fn()}
+        episodes={[first, second]}
+        onSelectEpisode={vi.fn()}
+      />,
+    );
+
+    await reach(1702);
+    await actor.click(await screen.findByRole('button', { name: 'Watch Credits' }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: 'Play Next' })).not.toBeInTheDocument();
+    });
+  });
+});

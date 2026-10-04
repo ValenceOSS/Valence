@@ -3,7 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAShell } from '@ValenceScreens/testing/renderInAShell';
 import { aShell } from '@ValenceClient/testing/aShell';
 import { WatchPage } from './WatchPage';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 import type { VideoPlayerProps } from '@ValenceScreens/components/VideoPlayer/VideoPlayer.types';
+import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 
 const drawn = vi.hoisted((): { player: VideoPlayerProps | null } => ({ player: null }));
 
@@ -186,6 +188,52 @@ describe('WatchPage', () => {
     expect(reportProgress).toHaveBeenCalledWith(
       expect.objectContaining({ mediaId: ARRIVAL.id, positionSeconds: 30 }),
     );
+  });
+
+  it('counts down to the next episode only while it will start without asking', async () => {
+    const episode = (id: string, episodeNumber: number) => ({
+      ...ARRIVAL,
+      id,
+      title: `Episode ${episodeNumber.toString()}`,
+      durationSeconds: 1800,
+      seriesId: 'b7a1c2d3-0000-4000-8000-000000000001',
+      seriesTitle: 'A Show',
+      seasonNumber: 1,
+      episodeNumber,
+    });
+    const first = episode('a1a1a1a1-0000-4000-8000-000000000001', 1);
+    const second = episode('a1a1a1a1-0000-4000-8000-000000000002', 2);
+    const third = episode('a1a1a1a1-0000-4000-8000-000000000003', 3);
+    const watcher: ViewerProfile = {
+      id: '00000000-0000-4000-8000-000000000002',
+      name: 'Viewer',
+      colour: '#3a8ee8',
+      avatar: { kind: 'initial', font: 'gilroy' },
+      askStillWatchingAfter: 1,
+      showsWhatIamWatching: false,
+      discordPresence: DEFAULT_DISCORD_PRESENCE,
+      prefersBestCopy: false,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    };
+    window.history.replaceState(null, '', `/watch/${first.id}`);
+
+    renderInAShell(<WatchPage />, {
+      known: new Map([first, second, third].map((one) => [one.id, one])),
+      watcher,
+    });
+
+    expect(drawn.player?.willCarryOn).toBe(true);
+
+    act(() => {
+      drawn.player?.onEnded?.();
+    });
+
+    await vi.waitFor(() => {
+      expect(drawn.player?.media.id).toBe(second.id);
+    });
+
+    expect(drawn.player?.willCarryOn).toBe(false);
   });
 
   it('goes back to what it was playing when the player is closed', async () => {

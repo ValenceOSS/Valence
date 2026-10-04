@@ -3,7 +3,7 @@ import { Animated, useWindowDimensions, View } from 'react-native';
 import { ACarriedMark } from '@ValenceMobile/components/ACarriedMark/ACarriedMark';
 import { useNotingTheMark } from '@ValenceMobile/components/ACarriedMark/useNotingTheMark';
 import { TheMark } from '@ValenceMobile/components/TheMark/TheMark';
-import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
+import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
 import { SPRINGS } from '@ValenceMobile/theme/SPRINGS';
 import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { ComponentRef } from 'react';
