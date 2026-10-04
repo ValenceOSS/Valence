@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { LetterFontSchema } from './LetterFont';
 import { SketchSceneSchema } from './SketchScene';
 import { HowOftenToAskSchema, StillWatchingSchema } from './StillWatching';
+import { DEFAULT_DISCORD_PRESENCE, DiscordPresenceSchema } from './DiscordPresence';
 
 const PROFILE_COLOURS = [
   '#e8503a',
@@ -72,6 +73,7 @@ const ViewerProfileSchema = z.object({
   avatar: AvatarSchema,
   askStillWatchingAfter: StillWatchingSchema,
   showsWhatIamWatching: z.boolean().default(false),
+  discordPresence: DiscordPresenceSchema.default(DEFAULT_DISCORD_PRESENCE),
   prefersBestCopy: z.boolean().default(false),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -83,6 +85,7 @@ const ViewerProfileRequestSchema = z.object({
   avatar: AvatarSchema.optional(),
   askStillWatchingAfter: HowOftenToAskSchema.optional(),
   showsWhatIamWatching: z.boolean().optional(),
+  discordPresence: DiscordPresenceSchema.optional(),
   prefersBestCopy: z.boolean().optional(),
 });
 

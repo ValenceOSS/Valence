@@ -1,11 +1,14 @@
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
+import type { DiscordLook } from '@ValenceContracts/schemas/DiscordPresence';
 
 const WATCHING = 3;
 
 const LISTENING = 2;
 
-const LOGO = 'valence-desktop';
+const LOGOS = { light: 'valence-desktop', dark: 'valence-desktop-dark' } as const;
+
+const SHOWS_THE_DETAILS = 2;
 
 const VALENCE = say('common.valence');
 
@@ -33,6 +36,7 @@ type WhatIsPlaying =
       isPaused: boolean;
       artwork: string | null;
       party: { id: string; size: number } | null;
+      look: DiscordLook;
     }
   | {
       kind: 'listening';
@@ -43,12 +47,14 @@ type WhatIsPlaying =
       isPaused: boolean;
       artwork: string | null;
       party: { id: string; size: number } | null;
+      look: DiscordLook;
     }
-  | { kind: 'browsing' };
+  | { kind: 'browsing'; look: DiscordLook };
 
 type DiscordActivity = {
   type: number;
   name?: string;
+  status_display_type?: number;
   details: string;
   state?: string;
   timestamps?: { start: number; end?: number };
@@ -232,7 +238,14 @@ const theTracksArtworkFor = (artwork: string | null): string | undefined => {
  * artist's own picture would be — Discord draws the header from the activity's own name where one is
  * given, and the honest header for a song is who is singing it, not which application is playing it.
  *
- * @param playing - What is happening, or nothing where the status should come down.
+ * How it looks is the profile's choice, sent with every status. The logo can be the light or the
+ * dark one, the poster can be left off for the logo, the clock can count up from the start rather
+ * than down to the end, the TMDB button and the party's size can be left off, and the status in the
+ * member list can name the title instead of Valence: Discord shows whichever field
+ * `status_display_type` points at, and the title is the details line.
+ *
+ * @param playing - What is happening and how it should look, or nothing where the status should come
+ *   down.
  * @param openedAt - When Valence opened, in milliseconds, which browsing counts from.
  * @returns The activity to send, or nothing to clear it.
  */
@@ -244,12 +257,15 @@ const aDiscordActivity = (
     return null;
   }
 
+  const { look } = playing;
+  const logo = LOGOS[look.logo];
+
   if (playing.kind === 'browsing') {
     return {
       type: WATCHING,
       details: BROWSING,
       timestamps: { start: Math.floor(openedAt / A_SECOND) },
-      assets: { large_image: LOGO, large_text: VALENCE },
+      assets: { large_image: logo, large_text: VALENCE },
     };
   }
 
@@ -258,35 +274,41 @@ const aDiscordActivity = (
     : {
         timestamps: {
           start: Math.floor(playing.startedAt / A_SECOND),
-          ...(playing.endsAt === null ? {} : { end: Math.floor(playing.endsAt / A_SECOND) }),
+          ...(playing.endsAt === null || look.time === 'elapsed'
+            ? {}
+            : { end: Math.floor(playing.endsAt / A_SECOND) }),
         },
       };
+  const company = look.showsPartySize ? playing.party : null;
   const party: Pick<DiscordActivity, 'party'> =
-    playing.party === null
-      ? {}
-      : { party: { id: playing.party.id, size: [playing.party.size, playing.party.size] } };
+    company === null ? {} : { party: { id: company.id, size: [company.size, company.size] } };
+  const shown = look.statusShows === 'title' ? { status_display_type: SHOWS_THE_DETAILS } : {};
 
   if (playing.kind === 'listening') {
     const artists = theArtistsIn(playing.artists);
-    const state = theStateLine(artists, playing.party, playing.isPaused);
+    const state = theStateLine(artists, company, playing.isPaused);
 
     return {
       type: LISTENING,
       ...(artists === null ? {} : { name: artists }),
+      ...shown,
       details: playing.title,
       ...(state === undefined ? {} : { state }),
       ...timestamps,
       assets: {
-        large_image: theTracksArtworkFor(playing.artwork) ?? LOGO,
+        large_image: (look.showsArtwork ? theTracksArtworkFor(playing.artwork) : undefined) ?? logo,
         large_text: VALENCE,
-        small_image: LOGO,
+        small_image: logo,
         small_text: theBadgeTextFor(playing.isPaused),
       },
       ...party,
     };
   }
 
-  const assets = { large_image: theArtworkFor(playing.artwork) ?? LOGO, large_text: VALENCE };
+  const assets = {
+    large_image: (look.showsArtwork ? theArtworkFor(playing.artwork) : undefined) ?? logo,
+    large_text: VALENCE,
+  };
 
   const episode =
     typeof playing.season === 'number' && typeof playing.episode === 'number'
@@ -297,7 +319,7 @@ const aDiscordActivity = (
       : null;
 
   const tmdb =
-    playing.tmdbId === null
+    playing.tmdbId === null || !look.showsTmdbLink
       ? null
       : {
           label: say('desktop.main.aDiscordActivity.viewOnTMDB'),
@@ -305,10 +327,11 @@ const aDiscordActivity = (
         };
 
   const line = playing.series === null ? null : (episode ?? playing.title);
-  const state = theStateLine(line, playing.party, playing.isPaused);
+  const state = theStateLine(line, company, playing.isPaused);
 
   return {
     type: WATCHING,
+    ...shown,
     details: playing.series ?? playing.title,
     ...(state === undefined ? {} : { state }),
     ...timestamps,

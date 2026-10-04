@@ -5,10 +5,12 @@ import { renderInAShell } from '@ValenceScreens/testing/renderInAShell';
 import { signOut } from '@ValenceClient/session/auth';
 import { notify } from '@ValenceUI/notify';
 import { somePluginContributions } from '@ValenceClient/testing/somePluginContributions';
+import { installATestClient } from '@ValenceScreens/testing/installATestClient';
 import { AccountDialog } from './AccountDialog';
 import type * as Auth from '@ValenceClient/session/auth';
 import type * as Notify from '@ValenceUI/notify';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 vi.mock('@ValenceScreens/components/AccountArea/AccountArea', () => ({
   AccountArea: () => <p>The panels</p>,
@@ -59,6 +61,7 @@ const PROFILE: ViewerProfile = {
   avatar: { kind: 'initial', font: 'gilroy' },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
+  discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
@@ -176,6 +179,30 @@ describe('what can actually be saved', () => {
     draw('profile');
 
     expect(await screen.findByRole('button', { name: 'Save' })).toBeInTheDocument();
+  });
+
+  it('offers Save on Discord too, whose settings are part of the same draft', async () => {
+    installATestClient({ thisClientKind: () => 'desktop' });
+
+    draw('discord');
+
+    expect(await screen.findByRole('button', { name: 'Save' })).toBeInTheDocument();
+  });
+
+  it('offers the Discord panel only in the desktop app, which is all that can reach Discord', async () => {
+    draw('profile');
+
+    await screen.findByText('The panels');
+
+    expect(screen.queryByRole('tab', { name: 'Discord' })).not.toBeInTheDocument();
+  });
+
+  it('offers it in the desktop app', async () => {
+    installATestClient({ thisClientKind: () => 'desktop' });
+
+    draw('profile');
+
+    expect(await screen.findByRole('tab', { name: 'Discord' })).toBeInTheDocument();
   });
 
   it.each(['devices', 'links', 'history', 'hidden'])(

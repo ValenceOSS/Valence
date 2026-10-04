@@ -5,6 +5,7 @@ import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { TheWayIn } from './TheWayIn';
 import type { ReactNode } from 'react';
 import type { WayIn } from '@ValenceClient/profiles/fetchWayIn';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 const A_FACE: WayIn['profiles'][number] = {
   id: '176acd29-9b53-4193-831d-291bc7a9d4eb',
@@ -13,6 +14,7 @@ const A_FACE: WayIn['profiles'][number] = {
   avatar: { kind: 'initial', font: 'gilroy' },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
+  discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',

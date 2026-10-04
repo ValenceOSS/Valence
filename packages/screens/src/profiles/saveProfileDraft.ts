@@ -23,6 +23,7 @@ const saveProfileDraft = async (profile: ViewerProfile, draft: ProfileDraft): Pr
       draft.askStillWatchingAfter,
       draft.showsWhatIamWatching,
       draft.prefersBestCopy,
+      draft.discordPresence,
     )
   );
 };

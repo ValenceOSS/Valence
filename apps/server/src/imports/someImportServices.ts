@@ -13,6 +13,7 @@ import { aSourceToImport } from './aSourceToImport';
 import { createDatabaseImportStore } from './createDatabaseImportStore';
 import type { ImportServices } from './ImportServices';
 import type { SourceReader } from './SourceReader';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 type FakePlaylist = {
   id: string;
@@ -164,6 +165,7 @@ const someImportServices = (
           avatar: { kind: 'initial', font: 'gilroy' },
           askStillWatchingAfter: 4,
           showsWhatIamWatching: false,
+          discordPresence: DEFAULT_DISCORD_PRESENCE,
           prefersBestCopy: false,
           createdAt: new Date(0).toISOString(),
           updatedAt: new Date(0).toISOString(),

@@ -17,6 +17,7 @@ import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { AccountArea } from '@ValenceScreens/components/AccountArea/AccountArea';
 import { BuildInfoFooter } from '@ValenceScreens/components/AccountDialog/components/BuildInfoFooter/BuildInfoFooter';
 import { ACCOUNT_PANELS } from '@ValenceScreens/components/AccountArea/accountPanels';
+import { canShowOnDiscord } from '@ValenceClient/discord/canShowOnDiscord';
 import { pluginAccountPages } from '@ValenceScreens/components/AccountArea/pluginAccountPages';
 import { pluginQueries } from '@ValenceClient/query/pluginQueries';
 import { usePluginWithdrawn } from '@ValenceClient/plugins/usePluginWithdrawn';
@@ -79,6 +80,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
       draft.askStillWatchingAfter !== profile.askStillWatchingAfter ||
       draft.showsWhatIamWatching !== profile.showsWhatIamWatching ||
       draft.prefersBestCopy !== profile.prefersBestCopy ||
+      JSON.stringify(draft.discordPresence) !== JSON.stringify(profile.discordPresence) ||
       JSON.stringify(draft.avatar) !== JSON.stringify(profile.avatar));
 
   const save = async () => {
@@ -105,7 +107,8 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
 
   const contributions = useQuery({ ...pluginQueries.contributions(), enabled: panel !== null });
   const pluginPages = pluginAccountPages(contributions.data);
-  const panels: readonly { id: string; label: string }[] = [...ACCOUNT_PANELS, ...pluginPages];
+  const ownPanels = ACCOUNT_PANELS.filter((one) => one.id !== 'discord' || canShowOnDiscord());
+  const panels: readonly { id: string; label: string }[] = [...ownPanels, ...pluginPages];
 
   const showing = panels.find((one) => one.id === panel)?.id ?? 'profile';
   const showingPlugin = pluginPages.find((page) => page.id === panel) ?? null;
@@ -150,7 +153,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
               tone="underlined"
               size="sm"
               groups={[
-                { items: ACCOUNT_PANELS },
+                { items: ownPanels },
                 ...(pluginPages.length === 0
                   ? []
                   : [{ label: say('common.plugins'), items: pluginPages }]),
@@ -205,7 +208,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
                 {say('common.signOut')}
               </Button>
 
-              {showing !== 'profile' ? null : (
+              {showing !== 'profile' && showing !== 'discord' ? null : (
                 <Button
                   variant="confirm"
                   isLoading={isSaving}

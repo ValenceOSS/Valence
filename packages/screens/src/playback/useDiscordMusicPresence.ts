@@ -1,15 +1,19 @@
 import { useEffect, useRef } from 'react';
 import { isTheDesktopClient, nowWatching } from '@ValenceScreens/desktop/theDesktopShell';
 import { theTracksArtworkUrl } from '@ValenceScreens/music/theTracksArtworkUrl';
+import { theListeningStatus } from '@ValenceScreens/playback/theListeningStatus';
+import { theIdleStatus } from '@ValenceScreens/playback/theIdleStatus';
+import { mayShowOnDiscord } from '@ValenceScreens/playback/mayShowOnDiscord';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 import type { WhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
-
-const A_SECOND = 1000;
+import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
 
 const REFRESHED_EVERY = 15;
 
 type DiscordMusicPresence = {
   playing: WhatIsPlaying | null;
   isAllowed: boolean;
+  settings?: DiscordPresence;
   party?: { id: string; size: number } | null;
 };
 
@@ -25,12 +29,15 @@ type DiscordMusicPresence = {
  * freezing it; and nothing is said at all outside the desktop client or where the profile did not
  * ask for it.
  *
- * @param presence - What is playing, whether this profile wants it published, and the listening
- *   party it is playing in, where there is one.
+ * Music can be left off by the profile, and so can a pause; either falls back to the idle status.
+ *
+ * @param presence - What is playing, whether this profile wants it published, how they want it
+ *   shown, and the listening party it is playing in, where there is one.
  */
 const useDiscordMusicPresence = ({
   playing,
   isAllowed,
+  settings = DEFAULT_DISCORD_PRESENCE,
   party = null,
 }: DiscordMusicPresence): void => {
   const trackId = playing?.trackId ?? null;
@@ -42,7 +49,11 @@ const useDiscordMusicPresence = ({
   const positionSeconds = playing?.positionSeconds ?? 0;
   const artwork =
     playing === null ? null : theTracksArtworkUrl(playing.albumId, playing.hasArtwork);
-  const shouldSay = isAllowed && isTheDesktopClient() && playing !== null;
+  const shouldSay =
+    isAllowed &&
+    isTheDesktopClient() &&
+    playing !== null &&
+    mayShowOnDiscord({ kind: 'track', isPlaying }, settings);
   const position = useRef(positionSeconds);
   const artists = useRef(artistNames);
   const refresh = Math.round(positionSeconds / REFRESHED_EVERY);
@@ -57,34 +68,34 @@ const useDiscordMusicPresence = ({
 
   useEffect(
     () => () => {
-      nowWatching(isAllowed && isTheDesktopClient() ? { kind: 'browsing' } : null);
+      nowWatching(theIdleStatus(isAllowed, settings));
     },
-    [isAllowed],
+    [isAllowed, settings],
   );
 
   useEffect(() => {
     if (!shouldSay) {
-      nowWatching(isAllowed && isTheDesktopClient() ? { kind: 'browsing' } : null);
+      nowWatching(theIdleStatus(isAllowed, settings));
 
       return;
     }
 
-    const at = Math.max(Math.round(position.current), 0);
-    const startedAt = Date.now() - at * A_SECOND;
-    const runs = durationSeconds > 0 ? Math.round(durationSeconds) : null;
-
-    nowWatching({
-      kind: 'listening',
-      title,
-      artists: artists.current,
-      startedAt,
-      endsAt: runs === null ? null : startedAt + runs * A_SECOND,
-      isPaused: !isPlaying,
-      artwork,
-      party,
-    });
+    nowWatching(
+      theListeningStatus({
+        title,
+        artists: artists.current,
+        durationSeconds,
+        positionSeconds: position.current,
+        isPlaying,
+        artwork,
+        party,
+        settings,
+        now: Date.now(),
+      }),
+    );
   }, [
     shouldSay,
+    settings,
     trackId,
     isPlaying,
     title,

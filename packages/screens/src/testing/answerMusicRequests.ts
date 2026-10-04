@@ -1,5 +1,6 @@
 import { vi } from 'vitest';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 type Answer = JsonValue | { status: number; body: JsonValue };
 
@@ -10,6 +11,7 @@ const PROFILE = {
   avatar: { kind: 'initial', font: 'gilroy' },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
+  discordPresence: DEFAULT_DISCORD_PRESENCE,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 };

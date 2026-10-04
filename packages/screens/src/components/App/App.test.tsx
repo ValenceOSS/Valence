@@ -6,6 +6,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { loadEveryPage } from '@ValenceScreens/testing/loadEveryPage';
 import { JsonValueSchema, type JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type { RealtimeEvent } from '@ValenceContracts/schemas/Realtime';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 const RECENTLY = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
@@ -222,6 +223,7 @@ const serverState = (options: {
               avatar: { kind: 'initial', font: 'gilroy' },
               askStillWatchingAfter: 4,
               showsWhatIamWatching: false,
+              discordPresence: DEFAULT_DISCORD_PRESENCE,
               createdAt: '2026-01-01T00:00:00.000Z',
               updatedAt: '2026-01-01T00:00:00.000Z',
             },

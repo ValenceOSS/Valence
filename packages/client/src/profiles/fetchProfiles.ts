@@ -1,6 +1,7 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { ViewerProfileListSchema } from '@ValenceContracts/schemas/ViewerProfile';
 import type { Avatar, ProfileColour, ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
 
 /**
  * The profiles on this account, each with their own history, favourites and watch progress.
@@ -42,6 +43,7 @@ const createProfile = async (
  * @param askStillWatchingAfter - How many episodes to play before asking whether they are still there.
  * @param showsWhatIamWatching - Whether others are shown what they are watching.
  * @param prefersBestCopy - Whether they would rather be played the best copy of a title, wherever it is.
+ * @param discordPresence - How their status looks on Discord, from the desktop app.
  * @returns Whether the change was written.
  */
 const saveProfile = async (
@@ -52,6 +54,7 @@ const saveProfile = async (
   askStillWatchingAfter?: number,
   showsWhatIamWatching?: boolean,
   prefersBestCopy?: boolean,
+  discordPresence?: DiscordPresence,
 ): Promise<boolean> => {
   const response = await fetch(`/api/profiles/${profileId}`, {
     method: 'PATCH',
@@ -63,6 +66,7 @@ const saveProfile = async (
       ...(askStillWatchingAfter === undefined ? {} : { askStillWatchingAfter }),
       ...(showsWhatIamWatching === undefined ? {} : { showsWhatIamWatching }),
       ...(prefersBestCopy === undefined ? {} : { prefersBestCopy }),
+      ...(discordPresence === undefined ? {} : { discordPresence }),
     }),
   }).catch(() => null);
 

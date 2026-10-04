@@ -1,8 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { isTheDesktopClient, nowWatching } from '@ValenceScreens/desktop/theDesktopShell';
+import { theWatchingStatus } from '@ValenceScreens/playback/theWatchingStatus';
+import { theIdleStatus } from '@ValenceScreens/playback/theIdleStatus';
+import { mayShowOnDiscord } from '@ValenceScreens/playback/mayShowOnDiscord';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
-
-const A_SECOND = 1000;
+import type { DiscordPresence as DiscordSettings } from '@ValenceContracts/schemas/DiscordPresence';
 
 const REFRESHED_EVERY = 15;
 
@@ -11,7 +14,7 @@ type DiscordPresence = {
     Partial<
       Pick<
         MediaSummary,
-        'seriesTitle' | 'seasonNumber' | 'episodeNumber' | 'externalId' | 'posterUrl'
+        'seriesTitle' | 'seasonNumber' | 'episodeNumber' | 'externalId' | 'posterUrl' | 'libraryId'
       >
     > & {
       durationSeconds?: number;
@@ -19,6 +22,7 @@ type DiscordPresence = {
   isPlaying: boolean;
   positionSeconds: number;
   isAllowed: boolean;
+  settings?: DiscordSettings;
   party?: { id: string; size: number } | null;
 };
 
@@ -54,13 +58,19 @@ type DiscordPresence = {
  * Every fifteen seconds it is said again anyway, which is what keeps a seek from leaving Discord
  * counting to a time that has stopped being true.
  *
- * @param presence - What is playing, whether it is, and whether this profile wants it published.
+ * What may be shown is the profile's to say: films or TV can be left off, a library kept private,
+ * and a pause left off the status. Whatever is left off falls back to the idle status, the same as
+ * leaving the player.
+ *
+ * @param presence - What is playing, whether it is, whether this profile wants it published, and
+ *   how they want it shown.
  */
 const useDiscordPresence = ({
   media,
   isPlaying,
   positionSeconds,
   isAllowed,
+  settings = DEFAULT_DISCORD_PRESENCE,
   party = null,
 }: DiscordPresence): void => {
   const {
@@ -71,9 +81,21 @@ const useDiscordPresence = ({
     episodeNumber,
     externalId,
     posterUrl,
+    libraryId,
     durationSeconds,
   } = media;
-  const shouldSay = isAllowed && isTheDesktopClient();
+  const isSeries = typeof seriesTitle === 'string' && seriesTitle !== '';
+  const shouldSay =
+    isAllowed &&
+    isTheDesktopClient() &&
+    mayShowOnDiscord(
+      {
+        kind: isSeries ? 'episode' : 'film',
+        isPlaying,
+        ...(libraryId === undefined ? {} : { libraryId }),
+      },
+      settings,
+    );
   const position = useRef(positionSeconds);
   const refresh = Math.round(positionSeconds / REFRESHED_EVERY);
 
@@ -83,41 +105,40 @@ const useDiscordPresence = ({
 
   useEffect(
     () => () => {
-      nowWatching(isAllowed && isTheDesktopClient() ? { kind: 'browsing' } : null);
+      nowWatching(theIdleStatus(isAllowed, settings));
     },
-    [isAllowed],
+    [isAllowed, settings],
   );
 
   useEffect(() => {
     if (!shouldSay) {
-      nowWatching(isAllowed && isTheDesktopClient() ? { kind: 'browsing' } : null);
+      nowWatching(theIdleStatus(isAllowed, settings));
 
       return;
     }
 
-    const at = Math.max(Math.round(position.current), 0);
-    const startedAt = Date.now() - at * A_SECOND;
-    const runs =
-      typeof durationSeconds === 'number' && durationSeconds > 0
-        ? Math.round(durationSeconds)
-        : null;
-
-    nowWatching({
-      kind: 'watching',
-      title,
-      series: typeof seriesTitle === 'string' && seriesTitle !== '' ? seriesTitle : null,
-      season: typeof seasonNumber === 'number' ? seasonNumber : null,
-      episode: typeof episodeNumber === 'number' ? episodeNumber : null,
-      startedAt,
-      endsAt: runs === null ? null : startedAt + runs * A_SECOND,
-      tmdbId: typeof externalId === 'string' && externalId !== '' ? externalId : null,
-      isSeries: typeof seriesTitle === 'string' && seriesTitle !== '',
-      isPaused: !isPlaying,
-      artwork: typeof posterUrl === 'string' && posterUrl !== '' ? posterUrl : null,
-      party,
-    });
+    nowWatching(
+      theWatchingStatus({
+        media: {
+          title,
+          ...(seriesTitle === undefined ? {} : { seriesTitle }),
+          ...(seasonNumber === undefined ? {} : { seasonNumber }),
+          ...(episodeNumber === undefined ? {} : { episodeNumber }),
+          ...(externalId === undefined ? {} : { externalId }),
+          ...(posterUrl === undefined ? {} : { posterUrl }),
+          ...(durationSeconds === undefined ? {} : { durationSeconds }),
+        },
+        positionSeconds: position.current,
+        isPlaying,
+        party,
+        settings,
+        now: Date.now(),
+      }),
+    );
   }, [
     shouldSay,
+    settings,
+    isSeries,
     isPlaying,
     id,
     title,

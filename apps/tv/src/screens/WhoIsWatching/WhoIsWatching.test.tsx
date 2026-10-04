@@ -4,6 +4,7 @@ import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { rememberServerAddress } from '@ValenceClient/session/serverAddress';
 import { WhoIsWatching } from '@ValenceTv/screens/WhoIsWatching/WhoIsWatching';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 jest.mock('@ValenceClient/session/auth', () => ({
   fetchSession: () => new Promise(() => undefined),
@@ -30,6 +31,7 @@ const aProfile = (id: string, name: string): ViewerProfile => ({
   avatar: { kind: 'initial', font: 'gilroy' },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
+  discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
   createdAt: '2026-09-19T00:00:00.000Z',
   updatedAt: '2026-09-19T00:00:00.000Z',

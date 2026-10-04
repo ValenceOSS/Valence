@@ -1,4 +1,5 @@
 import type { Avatar, ProfileColour, ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
 
 type ProfileDraft = {
   name: string;
@@ -6,6 +7,7 @@ type ProfileDraft = {
   avatar: Avatar;
   askStillWatchingAfter: number;
   showsWhatIamWatching: boolean;
+  discordPresence: DiscordPresence;
   prefersBestCopy: boolean;
   photo: File | null;
 };

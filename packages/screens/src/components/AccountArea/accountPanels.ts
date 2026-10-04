@@ -2,6 +2,7 @@ import { say } from '@ValenceI18n/say';
 
 const ACCOUNT_PANELS = [
   { id: 'profile', label: say('common.profile') },
+  { id: 'discord', label: say('screens.adminArea.webhookFields.discord') },
   { id: 'security', label: say('common.security') },
   { id: 'devices', label: say('common.devices') },
   { id: 'links', label: say('common.links') },

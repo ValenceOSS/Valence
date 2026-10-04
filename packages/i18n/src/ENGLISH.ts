@@ -4582,6 +4582,34 @@ const ENGLISH = {
     'Done. Your TV will be signed in shortly — you can close this.',
   'screens.deviceApproval.turnedDownNothingWasSignedIn':
     'Denied. The TV wasn’t signed in, and the code on its screen no longer works.',
+  'screens.discordPreview.browsing': 'Browsing',
+  'screens.discordPreview.listeningToWhat': 'Listening to {what}',
+  'screens.discordPreview.nothingShowsOnDiscord': 'Nothing shows on Discord.',
+  'screens.discordPreview.randomisePreviewMedia': 'Randomise preview media',
+  'screens.discordPreview.timeElapsed': '{time} elapsed',
+  'screens.discordPreview.watchingWhat': 'Watching {what}',
+  'screens.discordSettings.addsAButtonThatOpensThe': 'Adds a button that opens the title on TMDB.',
+  'screens.discordSettings.choosesWhatCanAppearInYour':
+    'Choose what can appear in your Discord status. Titles from a library that’s turned off never appear.',
+  'screens.discordSettings.countsDownTheTimeLeftOr':
+    'Counts down the time left, or up from the start.',
+  'screens.discordSettings.keepsShowingWhatYouRePlaying':
+    'Keeps showing what you’re playing while it’s paused.',
+  'screens.discordSettings.showsHowManyPeopleAreWatching':
+    'Shows how many people are watching or listening with you.',
+  'screens.discordSettings.showsThatValenceIsOpenWhile':
+    'Shows that Valence is open while nothing is playing.',
+  'screens.discordSettings.showsThePosterOrAlbumCover':
+    'Shows the poster or album cover instead of the Valence logo.',
+  'screens.discordSettings.showsValenceOrTheTitleOf':
+    'Shows Valence or the title of what you’re playing as your Discord status.',
+  'screens.discordSettings.theValenceLogoShownOnYour':
+    'The Valence logo shown on your status, in light or dark.',
+  'screens.discordSettings.timeElapsed': 'Time elapsed',
+  'screens.discordSettings.tmdbButton': 'TMDB button',
+  'screens.discordSettings.watchPartySize': 'Watch party size',
+  'screens.discordSettings.whileBrowsing': 'While browsing',
+  'screens.discordSettings.whilePaused': 'While paused',
   'screens.downloadClientDialog.readDownloadClientForm.aCategoryIsLettersNumbersSpaces':
     'A category can only contain letters, numbers, spaces, dots, dashes and underscores.',
   'screens.downloadClientDialog.readDownloadClientForm.eachKindNeedsACategoryOf':

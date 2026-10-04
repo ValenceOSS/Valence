@@ -13,6 +13,7 @@ import type * as CurrentProfile from '@ValenceClient/profiles/currentProfile';
 import type * as FetchProfiles from '@ValenceClient/profiles/fetchProfiles';
 import { aLibrary } from '@ValenceClient/testing/aLibrary';
 import { aLinkedServerFace } from '@ValenceClient/testing/aLinkedServerFace';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 const motion = vi.hoisted(() => ({ isReduced: false }));
 
@@ -56,6 +57,7 @@ vi.mock('@ValenceClient/profiles/fetchProfiles', async (importOriginal) => ({
         avatar: { kind: 'initial', font: 'gilroy' },
         askStillWatchingAfter: 3,
         showsWhatIamWatching: false,
+        discordPresence: DEFAULT_DISCORD_PRESENCE,
         prefersBestCopy: watcher.prefersBestCopy,
         createdAt: '2026-08-01T00:00:00.000Z',
         updatedAt: '2026-08-01T00:00:00.000Z',

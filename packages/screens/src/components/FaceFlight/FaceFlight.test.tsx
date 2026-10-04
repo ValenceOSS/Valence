@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type * as Motion from 'motion/react';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { FaceFlight } from './FaceFlight';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 const motion = vi.hoisted((): { isReduced: boolean; moves: Record<string, number>[] } => ({
   isReduced: false,
@@ -37,6 +38,7 @@ const PROFILE: ViewerProfile = {
   avatar: { kind: 'initial', font: 'gilroy' },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
+  discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',

@@ -7,6 +7,7 @@ import type * as FetchProfiles from '@ValenceClient/profiles/fetchProfiles';
 import type { Household, Onboarding } from '@ValenceContracts/schemas/Household';
 import type { ProfileColour, ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { HouseholdStepProps } from './HouseholdStep.types';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 const HOUSEHOLD: Household = {
   name: 'Dan',
@@ -22,6 +23,7 @@ const aProfile = (id: string, name: string): ViewerProfile => ({
   avatar: { kind: 'initial', font: 'gilroy' },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
+  discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',

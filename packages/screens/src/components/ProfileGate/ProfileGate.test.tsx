@@ -9,6 +9,7 @@ import { authenticateWithPasskey, signInWithUsernameOrEmail } from '@ValenceClie
 import { isPasskeySupported } from '@ValenceScreens/passkeys/isPasskeySupported';
 import { chosenTheme } from '@ValenceClient/shell/theme';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 const profileOf = (name: string, at: number): ViewerProfile => ({
   id: `00000000-0000-4000-8000-${at.toString().padStart(12, '0')}`,
@@ -17,6 +18,7 @@ const profileOf = (name: string, at: number): ViewerProfile => ({
   avatar: { kind: 'initial', font: 'gilroy' },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
+  discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',

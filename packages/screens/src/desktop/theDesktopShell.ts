@@ -1,4 +1,5 @@
 import { signOut } from '@ValenceClient/session/auth';
+import type { DiscordLook } from '@ValenceContracts/schemas/DiscordPresence';
 
 const MARK = 'valenceDesktop';
 
@@ -19,6 +20,7 @@ type WhatIsBeingWatched = {
   isPaused: boolean;
   artwork: string | null;
   party: { id: string; size: number } | null;
+  look: DiscordLook;
 };
 
 type WhatIsBeingListened = {
@@ -30,9 +32,13 @@ type WhatIsBeingListened = {
   isPaused: boolean;
   artwork: string | null;
   party: { id: string; size: number } | null;
+  look: DiscordLook;
 };
 
-type WhatIsBeingDone = WhatIsBeingWatched | WhatIsBeingListened | { kind: 'browsing' };
+type WhatIsBeingDone =
+  | WhatIsBeingWatched
+  | WhatIsBeingListened
+  | { kind: 'browsing'; look: DiscordLook };
 
 /**
  * Whether these pages are being shown inside Valence's own window rather than a browser.

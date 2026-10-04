@@ -1,5 +1,8 @@
 import { z } from 'zod';
+import { DiscordLookSchema } from '@ValenceContracts/schemas/DiscordPresence';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
+
+const LookSchema = DiscordLookSchema.catch(DiscordLookSchema.parse({}));
 
 const WhatIsPlayingSchema = z.discriminatedUnion('kind', [
   z.object({
@@ -21,6 +24,7 @@ const WhatIsPlayingSchema = z.discriminatedUnion('kind', [
       .object({ id: z.string().min(1).max(100), size: z.number().int().min(1).max(100) })
       .nullable()
       .catch(null),
+    look: LookSchema,
   }),
   z.object({
     kind: z.literal('listening'),
@@ -34,8 +38,9 @@ const WhatIsPlayingSchema = z.discriminatedUnion('kind', [
       .object({ id: z.string().min(1).max(100), size: z.number().int().min(1).max(100) })
       .nullable()
       .catch(null),
+    look: LookSchema,
   }),
-  z.object({ kind: z.literal('browsing') }),
+  z.object({ kind: z.literal('browsing'), look: LookSchema }),
 ]);
 
 /**
