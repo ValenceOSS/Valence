@@ -24,10 +24,10 @@
     "valence-plugin": "tsx src/cli/valencePlugin.ts"
   },
   "dependencies": {
-    "zod": "^4.6.4"
+    "zod": "4.6.4"
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "^4.1.11",
-    "vitest": "^4.1.11"
+    "@vitest/coverage-v8": "4.1.11",
+    "vitest": "4.1.11"
   }
 }

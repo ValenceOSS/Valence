@@ -57,7 +57,7 @@ jobs:
   # belong to other pipelines, reads as touching the workspace itself, and that runs everything.
   changes:
     name: Detect changed areas
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       code: ${{ steps.what.outputs.code }}
       light: ${{ steps.what.outputs.light }}
@@ -65,11 +65,11 @@ jobs:
       rust: ${{ steps.what.outputs.rust }}
       native: ${{ steps.what.outputs.native }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
 
       - id: what
         env:
@@ -146,13 +146,13 @@ jobs:
     name: Build shared packages
     needs: changes
     if: needs.changes.outputs.code == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
           cache: pnpm
@@ -175,7 +175,7 @@ jobs:
 
       # Keyed on the commit rather than on source hashes: this cache only has to outlive the jobs in
       # this one run, every one of which wants exactly what this commit built.
-      - uses: actions/cache/save@v4
+      - uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: .turbo/cache
           key: turbo-build-${{ github.sha }}
@@ -185,20 +185,20 @@ jobs:
   typecheck:
     name: Lint, typecheck and migration check
     needs: [changes, build]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
 
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: .turbo/cache
           key: turbo-build-${{ github.sha }}
@@ -219,28 +219,28 @@ jobs:
     name: Test the smaller packages
     needs: [changes, build]
     if: needs.changes.outputs.light != '[]'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       PACKAGES: ${{ needs.changes.outputs.light }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
 
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: .turbo/cache
           key: turbo-build-${{ github.sha }}
           fail-on-cache-miss: true
 
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: .turbo/test-results
           key: turbo-tests-light-${{ github.sha }}
@@ -259,7 +259,7 @@ jobs:
             cp .turbo/cache/"$hash"* .turbo/test-results/ 2>/dev/null || true
           done
 
-      - uses: actions/cache/save@v4
+      - uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: .turbo/test-results
           key: turbo-tests-light-${{ github.sha }}
@@ -272,7 +272,7 @@ jobs:
     name: Test ${{ matrix.package }} (${{ matrix.shard }} of ${{ matrix.of }})
     needs: [changes, build]
     if: needs.changes.outputs.shards != '[]'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -280,24 +280,24 @@ jobs:
     env:
       VITEST_SHARD: ${{ matrix.shard }}/${{ matrix.of }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
 
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: .turbo/cache
           key: turbo-build-${{ github.sha }}
           fail-on-cache-miss: true
 
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: .turbo/test-results
           key: turbo-tests-${{ matrix.package }}-${{ matrix.shard }}-of-${{ matrix.of }}-${{ github.sha }}
@@ -314,14 +314,14 @@ jobs:
             cp .turbo/cache/"$hash"* .turbo/test-results/ 2>/dev/null || true
           done
 
-      - uses: actions/cache/save@v4
+      - uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: .turbo/test-results
           key: turbo-tests-${{ matrix.package }}-${{ matrix.shard }}-of-${{ matrix.of }}-${{ github.sha }}
 
   rust:
     name: Rust format, lint and test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: changes
     if: needs.changes.outputs.rust == 'true'
     # Read only, since cargo runs build scripts from every crate it builds and nothing here writes.
@@ -338,15 +338,16 @@ jobs:
     steps:
       # Nothing here pushes, and cargo runs build scripts from every crate in the workspace, so the
       # token is not left behind in the checkout for them to find.
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
         with:
+          toolchain: stable
           components: clippy, rustfmt
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
 
       - run: cargo fmt --all --check
 
@@ -363,21 +364,22 @@ jobs:
   # FFmpeg stay on Linux: there is no Valence FFmpeg for this runner to fetch from a package.
   transcoder-windows:
     name: Transcoder on Windows
-    runs-on: windows-latest
+    runs-on: windows-2025-vs2026
     needs: changes
     if: needs.changes.outputs.rust == 'true'
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
         with:
+          toolchain: stable
           components: clippy
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
 
       - run: cargo clippy -p valence-transcoder --all-targets -- -D warnings
 
@@ -388,7 +390,7 @@ jobs:
   # requests that touch it.
   desktop-native:
     name: Desktop native module on Windows
-    runs-on: windows-latest
+    runs-on: windows-2025-vs2026
     needs: changes
     if: needs.changes.outputs.native == 'true'
     permissions:
@@ -396,15 +398,16 @@ jobs:
     steps:
       # Nothing here pushes, and cargo runs build scripts from every crate it builds, so the token
       # is not left behind in the checkout for them to find.
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
         with:
+          toolchain: stable
           components: clippy
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
 
       - run: cargo clippy -p valence-desktop-native --all-targets -- -D warnings
 

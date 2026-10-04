@@ -37,14 +37,14 @@ concurrency:
 jobs:
   prune:
     name: Prune old commit images
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     permissions:
       packages: write
 
     steps:
       - name: Delete sha images older than the cut-off
-        uses: snok/container-retention-policy@v3.1.0
+        uses: snok/container-retention-policy@d3bdcf5ce9b05f685154e4a16c39233b245e3d53 # v3.1.0
         with:
           account: ${{ github.repository_owner }}
           # The workflow's own token rather than a personal one, so this needs no secret to exist.
