@@ -2,6 +2,7 @@
 import { parseArgs } from 'node:util';
 import { z } from 'zod';
 import { judgeSweep } from './judgeSweep';
+import { IDLE_ROUTES } from './IDLE_ROUTES';
 import { planSweepRoutes } from './planSweepRoutes';
 import type { SweepSample } from './SweepSample';
 
@@ -50,6 +51,8 @@ const MUTE_EVERY_VIDEO = `(() => {
 
 const HOVER_MS = 1200;
 
+const IDLE_SAMPLE_MS = 30_000;
+
 const PLAY_MS = 8000;
 
 const MetricsSchema = z.object({
@@ -66,6 +69,7 @@ const { values } = parseArgs({
     passes: { type: 'string', default: '5' },
     origin: { type: 'string', default: 'valence://app' },
     only: { type: 'string', default: '' },
+    'idle-minutes': { type: 'string', default: '2' },
   },
 });
 
@@ -133,7 +137,15 @@ const connect = async (port: string) => {
  * end and back, leaving and coming back, then collecting garbage and
  * measuring the heap, the DOM nodes and the listeners. A route whose numbers keep climbing pass
  * after pass leaks. The reader opens on the first book and the player on the first film, which
- * plays muted for a few seconds each pass. `--only` keeps to a comma-separated list of routes. Start the app with `VALENCE_DEBUG_PORT=9222`, signed in, before running this.
+ * plays muted for a few seconds each pass. `--only` keeps to a comma-separated list of routes.
+ *
+ * Then each page that updates itself is left alone for `--idle-minutes` and measured every thirty
+ * seconds, since what the ticket saw was the admin overview left open, not visited over and over.
+ *
+ * The window has to be on screen throughout. A hidden window draws nothing, so the browser never
+ * cancels the animations of elements replaced while it is hidden and they stay alive: a hidden
+ * sweep reports leaks the app does not have, and stops rather than do that. Start the app with
+ * `VALENCE_DEBUG_PORT=9222`, signed in, before running this.
  */
 const sweep = async (): Promise<void> => {
   const { send, close } = await connect(values.port);
@@ -150,6 +162,27 @@ const sweep = async (): Promise<void> => {
     EvaluatedSchema.parse(
       await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }),
     ).result.value;
+  const measure = async (route: string, pass: number) => {
+    if ((await evaluate('document.visibilityState')) !== 'visible') {
+      close();
+      throw new Error(
+        'The window is hidden, so this sweep would report leaks the app does not have. Bring it on screen and run it again.',
+      );
+    }
+
+    await send('HeapProfiler.collectGarbage');
+
+    const { metrics } = MetricsSchema.parse(await send('Performance.getMetrics'));
+    const metric = (name: string) => metrics.find((one) => one.name === name)?.value ?? 0;
+
+    samples.push({
+      route,
+      pass,
+      heapMb: metric('JSHeapUsedSize') / MB,
+      nodes: metric('Nodes'),
+      listeners: metric('JSEventListeners'),
+    });
+  };
   const hoverTheCards = async () => {
     for (const [x, y] of PointsSchema.parse(await evaluate(CARDS_IN_VIEW))) {
       await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y });
@@ -181,18 +214,18 @@ const sweep = async (): Promise<void> => {
 
       await open(route === '/' ? '/search' : '/');
       await open(route);
-      await send('HeapProfiler.collectGarbage');
+      await measure(route, pass);
+    }
+  }
 
-      const { metrics } = MetricsSchema.parse(await send('Performance.getMetrics'));
-      const metric = (name: string) => metrics.find((one) => one.name === name)?.value ?? 0;
+  const idleSamples = Math.round((Number(values['idle-minutes']) * 60_000) / IDLE_SAMPLE_MS);
 
-      samples.push({
-        route,
-        pass,
-        heapMb: metric('JSHeapUsedSize') / MB,
-        nodes: metric('Nodes'),
-        listeners: metric('JSEventListeners'),
-      });
+  for (const route of idleSamples === 0 ? [] : IDLE_ROUTES) {
+    await open(route);
+
+    for (let sample = 1; sample <= idleSamples + 1; sample += 1) {
+      await measure(`${route} left open`, sample);
+      await pause(IDLE_SAMPLE_MS);
     }
   }
 
@@ -202,7 +235,7 @@ const sweep = async (): Promise<void> => {
 
   for (const found of findings) {
     process.stdout.write(
-      `${found.isLeaking ? 'LEAKS' : 'ok   '} ${found.route.padEnd(20)} heap ${found.heapGrowthMb.toFixed(1)} MB, nodes ${found.nodeGrowth.toString()}, listeners ${found.listenerGrowth.toString()}\n`,
+      `${found.isLeaking ? 'LEAKS' : 'ok   '} ${found.route.padEnd(26)} heap ${found.heapGrowthMb.toFixed(1)} MB, nodes ${found.nodeGrowth.toString()}, listeners ${found.listenerGrowth.toString()}\n`,
     );
   }
 
