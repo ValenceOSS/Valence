@@ -108,11 +108,11 @@ Filters narrow a subscription without changing its events. An empty filter means
 
 The Watching events cover films, episodes, songs and audiobooks. Songs are the one exception to an empty filter meaning everything: a song being played is only sent when **Song** is chosen under Kinds, so an album played through doesn't post every track to a channel set up to hear about films.
 
-| Filter                    | Effect                                                                                                                                                                                                        |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Accounts                  | Only events about the chosen accounts.                                                                                                                                                                        |
-| Profiles                  | Only playback and session events for the chosen profiles.                                                                                                                                                     |
-| Kinds                     | Only `media.added`, `media.removed` and playback events about the chosen media kinds.                                                                                                                         |
+| Filter                    | Effect                                                                                                                                                                                                  |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Accounts                  | Only events about the chosen accounts.                                                                                                                                                                  |
+| Profiles                  | Only playback and session events for the chosen profiles.                                                                                                                                               |
+| Kinds                     | Only `media.added`, `media.removed` and playback events about the chosen media kinds.                                                                                                                   |
 | How arrivals are reported | For `media.added`: **Once per scan** (the default) sends no per item deliveries, and you get the summary through `library.scanned` instead; **One per item** sends one `media.added` delivery per item. |
 
 ### Payload format
