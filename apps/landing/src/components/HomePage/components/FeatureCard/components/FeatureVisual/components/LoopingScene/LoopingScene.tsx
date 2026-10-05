@@ -32,10 +32,14 @@ const LoopingScene = ({ scene, frames, width, height, still, className }: Loopin
       return;
     }
 
-    if (isInView) {
-      playing.play();
-    } else {
+    if (!isInView) {
       playing.pause();
+
+      return;
+    }
+
+    if (!playing.isPlaying()) {
+      playing.play();
     }
   }, [isInView, isStill]);
 
@@ -49,6 +53,7 @@ const LoopingScene = ({ scene, frames, width, height, still, className }: Loopin
         compositionWidth={width}
         compositionHeight={height}
         initialFrame={isStill ? still : 0}
+        autoPlay={!isStill}
         loop
         controls={false}
         clickToPlay={false}
