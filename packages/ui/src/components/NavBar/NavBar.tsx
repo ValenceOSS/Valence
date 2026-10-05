@@ -251,7 +251,7 @@ const NavBar = ({
                           'relative z-10 flex overflow-hidden',
                           OPENS,
                           isCurrent
-                            ? 'md:-mx-0.5 md:w-[22px] md:px-0.5 md:opacity-100'
+                            ? 'md:-mx-0.5 md:w-[1.375rem] md:px-0.5 md:opacity-100'
                             : 'md:-ml-2 md:w-0 md:opacity-0',
                         )}
                       >
