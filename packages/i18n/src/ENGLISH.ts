@@ -6279,6 +6279,8 @@ const ENGLISH = {
   'server.email.renderEmail.ifTheButtonDoesNotWork':
     'If the button doesn’t work, copy this link into your browser:',
   'server.email.renderEmail.sentByValenceAt': 'Sent by Valence at {server}.',
+  'server.env.theDevelopmentSecretInProduction':
+    'BETTER_AUTH_SECRET is still the development default, which anybody can read. Set it to a long random value of your own before running Valence in production.',
   'server.events.webhookEventBus.anEventCouldNotBePublished': 'Couldn’t publish an event.',
   'server.images.imageCache.thatIsNotAnImageContentType': 'That isn’t an image: {contentType}.',
   'server.images.imageCache.theCatalogueAnsweredStatus': 'The catalogue returned {status}.',

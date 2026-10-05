@@ -24901,6 +24901,11 @@
     "context": "In an email Valence sends: the last line. {server} is the server's name or address."
   },
   {
+    "handler": "server.env.theDevelopmentSecretInProduction",
+    "text": "BETTER_AUTH_SECRET is still the development default, which anybody can read. Set it to a long random value of your own before running Valence in production.",
+    "context": "Shown in the server log when it refuses to start (from `readEnv`). BETTER_AUTH_SECRET is the name of a setting and is not translated."
+  },
+  {
     "handler": "server.events.webhookEventBus.anEventCouldNotBePublished",
     "text": "Couldn’t publish an event.",
     "context": "Shown in the events on the server (from `createWebhookEventBus`)."

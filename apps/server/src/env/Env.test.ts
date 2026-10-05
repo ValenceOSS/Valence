@@ -53,6 +53,13 @@ describe('readEnv', () => {
     expect(() => readEnv({ PORT: 'http' })).toThrow();
   });
 
+  it('refuses to run in production on the development secret, which anybody can read', () => {
+    expect(() => readEnv({ NODE_ENV: 'production' })).toThrow();
+    expect(readEnv({ NODE_ENV: 'production', BETTER_AUTH_SECRET: 'a'.repeat(32) }).NODE_ENV).toBe(
+      'production',
+    );
+  });
+
   it('rejects an unknown NODE_ENV', () => {
     expect(() => readEnv({ NODE_ENV: 'staging' })).toThrow();
   });
