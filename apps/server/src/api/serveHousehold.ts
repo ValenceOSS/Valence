@@ -12,6 +12,7 @@ import { drawAvatar, isAvatarStyle } from '@ValenceServer/profiles/drawAvatar';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
+import { realEmailOf } from '@ValenceContracts/functions/realEmailOf';
 
 /**
  * Registers the household endpoints.
@@ -219,11 +220,13 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.household.aPasswordIsRequired'), 400);
     }
 
-    const email = await profiles.findSignInEmail(context.req.param('profileId'));
+    const account = await profiles.findSignIn(context.req.param('profileId'));
 
-    if (email === null) {
+    if (account === null) {
       return context.json(refuse('error.common.noSuchProfile'), 404);
     }
+
+    const byUsername = realEmailOf(account.email) === null && account.username !== null;
 
     const forwarded = new Headers(context.req.raw.headers);
 
@@ -231,11 +234,21 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     forwarded.delete('content-length');
 
     return auth.handler(
-      new Request(new URL('/api/auth/sign-in/email', context.req.url), {
-        method: 'POST',
-        headers: forwarded,
-        body: JSON.stringify({ email, password: parsed.data.password }),
-      }),
+      new Request(
+        new URL(
+          byUsername ? '/api/auth/sign-in/username' : '/api/auth/sign-in/email',
+          context.req.url,
+        ),
+        {
+          method: 'POST',
+          headers: forwarded,
+          body: JSON.stringify(
+            byUsername
+              ? { username: account.username, password: parsed.data.password }
+              : { email: account.email, password: parsed.data.password },
+          ),
+        },
+      ),
     );
   });
 

@@ -7,7 +7,13 @@ import type { ProfileService } from './ProfileService';
 import type { Avatar, ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
-type Held = { profile: ViewerProfile; userId: string; email: string; photo: Uint8Array | null };
+type Held = {
+  profile: ViewerProfile;
+  userId: string;
+  email: string;
+  username?: string;
+  photo: Uint8Array | null;
+};
 
 type MemoryState = Held[];
 
@@ -167,7 +173,13 @@ const createMemoryProfileService = (
         state.map((held) => held.profile).sort((one, other) => one.name.localeCompare(other.name)),
       ),
 
-    findSignInEmail: (profileId) => Promise.resolve(find(profileId)?.email ?? null),
+    findSignIn: (profileId) => {
+      const held = find(profileId);
+
+      return Promise.resolve(
+        held === undefined ? null : { email: held.email, username: held.username ?? null },
+      );
+    },
 
     accountOf: (profileId) => Promise.resolve(find(profileId)?.userId ?? null),
 
