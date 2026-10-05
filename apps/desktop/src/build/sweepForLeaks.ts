@@ -53,6 +53,28 @@ const HOVER_MS = 1200;
 
 const IDLE_SAMPLE_MS = 30_000;
 
+const PARTY_STEP_MS = 3000;
+
+/**
+ * A page script that presses the first button whose label, or failing that whose words, begins
+ * with the given text.
+ *
+ * @param text - What the button says.
+ * @returns The script, which answers whether it found one.
+ */
+const pressing = (text: string): string =>
+  `(() => { const button = [...document.querySelectorAll('button')].find((each) => (each.getAttribute('aria-label') ?? each.textContent ?? '').trim().startsWith(${JSON.stringify(text)})); button?.click(); return button !== undefined; })()`;
+
+const NUDGE_THE_FILM = `(async () => {
+  const film = document.querySelector('video');
+  if (film === null) return false;
+  film.pause();
+  await new Promise((done) => setTimeout(done, 1000));
+  await film.play().catch(() => undefined);
+  film.currentTime += 30;
+  return true;
+})()`;
+
 const PLAY_MS = 8000;
 
 const MetricsSchema = z.object({
@@ -137,7 +159,9 @@ const connect = async (port: string) => {
  * end and back, leaving and coming back, then collecting garbage and
  * measuring the heap, the DOM nodes and the listeners. A route whose numbers keep climbing pass
  * after pass leaks. The reader opens on the first book and the player on the first film, which
- * plays muted for a few seconds each pass. `--only` keeps to a comma-separated list of routes.
+ * plays muted for a few seconds each pass. The film is then watched as a party: started, paused,
+ * resumed and skipped ahead so the party sends its commands, and left. `--only` keeps to a
+ * comma-separated list of routes, `party` naming the party pass.
  *
  * Then each page that updates itself is left alone for `--idle-minutes` and measured every thirty
  * seconds, since what the ticket saw was the admin overview left open, not visited over and over.
@@ -192,9 +216,18 @@ const sweep = async (): Promise<void> => {
     await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1, y: 1 });
   };
   const chosen = values.only.split(',').filter((route) => route !== '');
-  const routes = planSweepRoutes(FoundSchema.parse(await evaluate(FIND_A_BOOK_AND_A_FILM))).filter(
+  const found = FoundSchema.parse(await evaluate(FIND_A_BOOK_AND_A_FILM));
+  const routes = planSweepRoutes(found).filter(
     (route) => chosen.length === 0 || chosen.includes(route),
   );
+  const press = async (text: string) => {
+    if ((await evaluate(pressing(text))) !== true) {
+      close();
+      throw new Error(`No button saying “${text}” was there to press.`);
+    }
+
+    await pause(PARTY_STEP_MS);
+  };
 
   await evaluate(MUTE_EVERY_VIDEO);
   await send('Performance.enable');
@@ -218,6 +251,21 @@ const sweep = async (): Promise<void> => {
     }
   }
 
+  const partyFilm = chosen.length === 0 || chosen.includes('party') ? found.film : null;
+
+  for (let pass = 1; partyFilm !== null && pass <= passes; pass += 1) {
+    await open(`/watch/${partyFilm}`);
+    await pause(PLAY_MS);
+    await press('Watch party');
+    await press('Start a watch party');
+    await evaluate(NUDGE_THE_FILM);
+    await pause(PLAY_MS);
+    await press('Watch party');
+    await press('Leave');
+    await open('/');
+    await measure(`/watch/${partyFilm} in a party`, pass);
+  }
+
   const idleSamples = Math.round((Number(values['idle-minutes']) * 60_000) / IDLE_SAMPLE_MS);
 
   for (const route of idleSamples === 0 ? [] : IDLE_ROUTES) {
@@ -235,7 +283,7 @@ const sweep = async (): Promise<void> => {
 
   for (const found of findings) {
     process.stdout.write(
-      `${found.isLeaking ? 'LEAKS' : 'ok   '} ${found.route.padEnd(26)} heap ${found.heapGrowthMb.toFixed(1)} MB, nodes ${found.nodeGrowth.toString()}, listeners ${found.listenerGrowth.toString()}\n`,
+      `${found.isLeaking ? 'LEAKS' : 'ok   '} ${found.route.padEnd(30)} heap ${found.heapGrowthMb.toFixed(1)} MB, nodes ${found.nodeGrowth.toString()}, listeners ${found.listenerGrowth.toString()}\n`,
     );
   }
 
