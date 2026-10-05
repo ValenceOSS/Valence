@@ -18,6 +18,7 @@ import { SharePanel } from '@ValenceScreens/components/AccountArea/components/Sh
 import { PluginSurfaceView } from '@ValenceScreens/components/PluginSurfaceView/PluginSurfaceView';
 import type { AccountAreaProps, PluginAccountPage } from './AccountArea.types';
 import { say } from '@ValenceI18n/say';
+import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 
 const PANEL_ORDER: readonly string[] = ACCOUNT_PANELS.map((one) => one.id);
 
@@ -45,6 +46,7 @@ const AccountArea = ({
   onChanged,
   pluginPages = NO_PAGES,
 }: AccountAreaProps) => {
+  const { isDemo } = useWhatIMayDo();
   const travel = useTravelDirection([...PANEL_ORDER, ...pluginPages.map((page) => page.id)], panel);
 
   return (
@@ -87,13 +89,15 @@ const AccountArea = ({
       </TabPanel>
 
       <TabPanel value="security" className="flex flex-col gap-4" travel={travel}>
-        <PanelCard title="Sign-in" isFlush>
-          <SettingList isInset>
-            <TwoFactorSetup isEnabled={user.twoFactorEnabled === true} onChanged={onChanged} />
+        {isDemo ? null : (
+          <PanelCard title="Sign-in" isFlush>
+            <SettingList isInset>
+              <TwoFactorSetup isEnabled={user.twoFactorEnabled === true} onChanged={onChanged} />
 
-            <PasskeySetup onChanged={onChanged} />
-          </SettingList>
-        </PanelCard>
+              <PasskeySetup onChanged={onChanged} />
+            </SettingList>
+          </PanelCard>
+        )}
 
         <PanelCard title={say('screens.accountArea.aPIKeys')} isFlush>
           <ApiKeyPanel />

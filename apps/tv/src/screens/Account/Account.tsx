@@ -30,7 +30,7 @@ import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
  * along that row reaches them. Beneath them are what this viewer has lately watched, the pages
  * plugins on this server add to an account, each opening on its own, everywhere the account is
  * signed in, and any themes those plugins offer. Its foot names this build and the server's, as
- * the desktop app's account dialog does. On a shared demo account it says so beneath the server.
+ * the desktop app's account dialog does. On a shared demo account it says so beneath the server, and leaves out where it is signed in.
  *
  * @param user - Who is signed in.
  * @param onChangeServer - Told when somebody wants a different Valence.
@@ -124,7 +124,7 @@ const AccountPage = ({
 
       <PluginPages onOpen={onOpenPluginPage} onFocus={upToBar.leave} />
 
-      <YourDevices onFocus={upToBar.leave} />
+      {isDemo ? null : <YourDevices onFocus={upToBar.leave} />}
 
       <ThemeChoice onFocus={upToBar.leave} />
 

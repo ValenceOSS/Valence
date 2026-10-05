@@ -83,24 +83,26 @@ const TheAccount = ({ onOut, onElsewhere, onOpen, header, onScrolled }: TheAccou
         </View>
       )}
 
-      <AGroup title={say('phone.theAccount.signInAndDevices')}>
-        <AnAccountRow
-          icon={ShieldCheck}
-          says={say('common.security')}
-          detail={say('phone.theAccount.securityDetail')}
-          onPress={() => {
-            onOpen('security');
-          }}
-        />
-        <AnAccountRow
-          icon={Smartphone}
-          says={say('common.devices')}
-          detail={say('phone.theAccount.devicesDetail')}
-          onPress={() => {
-            onOpen('devices');
-          }}
-        />
-      </AGroup>
+      {isDemo ? null : (
+        <AGroup title={say('phone.theAccount.signInAndDevices')}>
+          <AnAccountRow
+            icon={ShieldCheck}
+            says={say('common.security')}
+            detail={say('phone.theAccount.securityDetail')}
+            onPress={() => {
+              onOpen('security');
+            }}
+          />
+          <AnAccountRow
+            icon={Smartphone}
+            says={say('common.devices')}
+            detail={say('phone.theAccount.devicesDetail')}
+            onPress={() => {
+              onOpen('devices');
+            }}
+          />
+        </AGroup>
+      )}
 
       <AGroup title={say('phone.theAccount.watchingAndSharing')}>
         <AnAccountRow
