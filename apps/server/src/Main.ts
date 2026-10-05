@@ -3466,6 +3466,7 @@ const app = createApp({
   uploadSessions: createDatabaseUploadSessions(db),
   version: env.VALENCE_VERSION,
   commit: env.VALENCE_COMMIT,
+  demoAccounts: env.DEMO_ACCOUNTS,
   trustedOrigins: trustedOriginsFor({
     configured: env.TRUSTED_ORIGINS,
     port: env.PORT,

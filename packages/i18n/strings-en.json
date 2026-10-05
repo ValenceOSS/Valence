@@ -5245,6 +5245,11 @@
     "context": "The label of a button, used in several places, among them the book of the phone app and the show of the phone app."
   },
   {
+    "handler": "common.sharedDemo",
+    "text": "Shared demo",
+    "context": "A short label, shown on every client, marking that whoever is signed in is using the public demo account that many visitors share."
+  },
+  {
     "handler": "common.sharedLinks",
     "text": "Share links",
     "context": "The title of a group, used in the shares in the account of the phone app and in the shares panel in the admin area."
@@ -5893,6 +5898,11 @@
     "handler": "common.thisDevice",
     "text": "This device",
     "context": "Shown, used in several places, among them the household onboarding and the devices panel in the music page."
+  },
+  {
+    "handler": "common.thisIsASharedDemoAccount",
+    "text": "This is a shared demo account. Some settings are switched off, and anything you change is reset regularly.",
+    "context": "A quiet notice shown on every client to whoever is signed in to the public demo account, which many visitors use at once and which is put back to how it started every so often."
   },
   {
     "handler": "common.thisItem",
@@ -7548,6 +7558,11 @@
     "handler": "error.account.thatUsernameIsAlreadyInUse",
     "text": "That username is already in use.",
     "context": "An error the server answers with (HTTP 400) when adding an account, editing one, or setting one up with a username somebody else holds."
+  },
+  {
+    "handler": "error.account.theDemoAccountCannotDoThat",
+    "text": "The shared demo account can’t do that.",
+    "context": "An error the server answers with (HTTP 403) when somebody signed in to the public demo account tries something switched off there: signing devices out, adding or removing profiles, renaming the household or handing out share links."
   },
   {
     "handler": "error.admin.noSuchJobIsWaiting",

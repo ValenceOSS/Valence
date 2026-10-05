@@ -1,6 +1,5 @@
 import { listMyPermissionsRoute } from '@ValenceServer/routes/PermissionRoute';
 import { ADMINISTRATOR } from '@ValenceContracts/schemas/Permission';
-import { narrowToKey } from '@ValenceServer/auth/narrowToKey';
 import { readSessionOnce } from '@ValenceServer/auth/readSessionOnce';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
@@ -13,7 +12,7 @@ import { refuse } from '@ValenceI18n/refuse';
  * @param context - What they are answered with.
  */
 const servePermission = (app: OpenAPIHono, context: AppContext): void => {
-  const { auth, permissions, apiKeys } = context;
+  const { auth, grantsOf, isOnTheDemo } = context;
 
   app.openapi(listMyPermissionsRoute, async (context) => {
     const headers = context.req.raw.headers;
@@ -23,14 +22,16 @@ const servePermission = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
-    const resolved = await permissions.resolve(session.user.id);
+    const held = await grantsOf(headers);
 
-    const held =
-      headers.get('x-api-key') === null
-        ? resolved
-        : narrowToKey(resolved, await apiKeys.restrictionFor(headers, session.session.id));
-
-    return context.json({ permissions: [...held], isAdministrator: held.has(ADMINISTRATOR) }, 200);
+    return context.json(
+      {
+        permissions: [...held],
+        isAdministrator: held.has(ADMINISTRATOR),
+        isDemo: await isOnTheDemo(headers),
+      },
+      200,
+    );
   });
 };
 

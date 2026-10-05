@@ -105,6 +105,7 @@ type CreateAppOptions = {
   version?: string;
   commit?: string | undefined;
   trustedOrigins?: () => Promise<readonly string[]>;
+  demoAccounts?: readonly string[];
   countUsers: () => Promise<number>;
   promoteToAdmin: (email: string) => Promise<string | null>;
   library: LibraryService;

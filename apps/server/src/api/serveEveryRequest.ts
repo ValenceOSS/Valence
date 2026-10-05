@@ -5,6 +5,7 @@ import { createSessionGate } from '@ValenceServer/auth/createSessionGate';
 import { createBetterAuthAdminBlock } from '@ValenceServer/auth/createBetterAuthAdminBlock';
 import { createOneTimeTokenBlock } from '@ValenceServer/auth/createOneTimeTokenBlock';
 import { createNoEmailBlock } from '@ValenceServer/auth/createNoEmailBlock';
+import { blockOnTheDemo } from '@ValenceServer/demo/blockOnTheDemo';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 
@@ -74,6 +75,8 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
   app.use('/api/*', async (context, next) =>
     linkPeople.runAs(() => linkPersonOf(context.req.raw.headers), next),
   );
+
+  blockOnTheDemo(app, context.isOnTheDemo);
 
   app.all('/api/auth/admin/*', createBetterAuthAdminBlock());
 

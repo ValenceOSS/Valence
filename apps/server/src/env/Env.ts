@@ -19,6 +19,15 @@ const EnvSchema = z.object({
   BACKUPS_KEPT: z.coerce.number().int().positive().default(3),
   BETTER_AUTH_SECRET: z.string().min(32).default('development-secret-change-me-in-production'),
   BETTER_AUTH_URL: z.string().url().default('http://localhost:8420'),
+  DEMO_ACCOUNTS: z
+    .string()
+    .default('')
+    .transform((value) =>
+      value
+        .split(',')
+        .map((username) => username.trim().toLowerCase())
+        .filter((username) => username.length > 0),
+    ),
   TRUSTED_ORIGINS: z
     .string()
     .default('http://localhost:5173')

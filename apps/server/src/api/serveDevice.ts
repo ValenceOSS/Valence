@@ -16,7 +16,7 @@ import { refuse } from '@ValenceI18n/refuse';
  * @param context - What they are answered with.
  */
 const serveDevice = (app: OpenAPIHono, context: AppContext): void => {
-  const { auth, monitor, requires } = context;
+  const { auth, monitor, requires, isOnTheDemo } = context;
 
   app.openapi(listDevicesRoute, async (context) => {
     const headers = context.req.raw.headers;
@@ -26,7 +26,10 @@ const serveDevice = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
-    const held = await auth.api.listSessions({ headers }).catch(() => []);
+    const listed = await auth.api.listSessions({ headers }).catch(() => []);
+    const held = (await isOnTheDemo(headers))
+      ? listed.filter((one) => one.token === session.session.token)
+      : listed;
 
     return context.json(
       {

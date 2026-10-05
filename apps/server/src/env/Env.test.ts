@@ -10,6 +10,11 @@ describe('readEnv', () => {
     expect(env.COOKIE_SECURE).toBeUndefined();
   });
 
+  it('reads the shared demo accounts by username, ignoring case and spacing', () => {
+    expect(readEnv({}).DEMO_ACCOUNTS).toEqual([]);
+    expect(readEnv({ DEMO_ACCOUNTS: ' Demo, guest ,' }).DEMO_ACCOUNTS).toEqual(['demo', 'guest']);
+  });
+
   it('reads the plugin catalogue from the Valence project unless told otherwise', () => {
     expect(readEnv({}).VALENCE_PLUGIN_CATALOGUE_URL).toBe(
       'https://valenceoss.github.io/valence-plugins/catalogue.json',
