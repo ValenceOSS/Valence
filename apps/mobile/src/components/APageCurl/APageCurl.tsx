@@ -1,11 +1,14 @@
 import { requireNativeView } from 'expo';
+import { APageTurner } from '@ValenceMobile/components/APageTurner/APageTurner';
+import { drawsNatively } from '@ValenceMobile/platform/drawsNatively';
 import type { APageCurlProps, NativePageCurlProps } from './APageCurl.types';
 
 const TheBook = requireNativeView<NativePageCurlProps>('ValencePageCurl');
 
 /**
  * Pages that turn as a printed book's do, curling from whichever corner the finger took hold of,
- * drawn by the system's own page curl.
+ * drawn by the system's own page curl. A phone with no page curl, which is every Android phone,
+ * turns them by a swipe instead, handed the same and saying the same back.
  *
  * @param pages - The address of every page's picture, in the book's order.
  * @param page - The page to show.
@@ -21,17 +24,20 @@ const TheBook = requireNativeView<NativePageCurlProps>('ValencePageCurl');
  * @param onPaper - Told the colour round the edge of the page showing, as `#rrggbb`.
  * @param style - Where it sits.
  */
-const APageCurl = ({ onTurn, onPaper, ...rest }: APageCurlProps) => (
-  <TheBook
-    {...rest}
-    onTurn={(event) => {
-      onTurn(event.nativeEvent.page);
-    }}
-    onPaper={(event) => {
-      onPaper(event.nativeEvent.colour);
-    }}
-  />
-);
+const APageCurl = ({ onTurn, onPaper, ...rest }: APageCurlProps) =>
+  drawsNatively() ? (
+    <TheBook
+      {...rest}
+      onTurn={(event) => {
+        onTurn(event.nativeEvent.page);
+      }}
+      onPaper={(event) => {
+        onPaper(event.nativeEvent.colour);
+      }}
+    />
+  ) : (
+    <APageTurner {...rest} onTurn={onTurn} onPaper={onPaper} />
+  );
 
 APageCurl.displayName = 'APageCurl';
 
