@@ -9,7 +9,9 @@ describe('describeTheServer', () => {
   });
 
   it('names only the release of a server that could not read its commit', () => {
-    expect(describeTheServer({ version: '1.2.0', commit: 'unknown', features: [] })).toBe('Server 1.2.0');
+    expect(describeTheServer({ version: '1.2.0', commit: 'unknown', features: [] })).toBe(
+      'Server 1.2.0',
+    );
   });
 
   it('names only the commit of a server older than the release being asked', () => {

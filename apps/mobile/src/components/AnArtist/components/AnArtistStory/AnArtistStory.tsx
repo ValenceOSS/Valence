@@ -41,13 +41,13 @@ const AnArtistStory = ({ artistId, name }: AnArtistStoryProps) => {
   const bio = story.data?.bio ?? null;
   const missing = mayRequest ? (story.data?.missing ?? []) : [];
 
+  const sample = useAlbumSample();
+
   /**
    * Asks, once somebody says so, for an album the library does not have.
    *
    * @param album - The album.
    */
-  const sample = useAlbumSample();
-
   const offer = (album: MissingAlbum) => {
     Alert.alert(
       say('phone.anArtist.anArtistStory.requestTitle', { title: album.title }),

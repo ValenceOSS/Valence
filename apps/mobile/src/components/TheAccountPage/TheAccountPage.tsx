@@ -4,6 +4,7 @@ import { pluginQueries } from '@ValenceClient/query/pluginQueries';
 import { usePluginWithdrawn } from '@ValenceClient/plugins/usePluginWithdrawn';
 import { saidWhenWithdrawn } from '@ValenceClient/plugins/saidWhenWithdrawn';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
+import { Words } from '@ValenceMobile/components/Words/Words';
 import { TheDevices } from '@ValenceMobile/components/TheAccount/components/TheDevices/TheDevices';
 import { TheHidden } from '@ValenceMobile/components/TheAccount/components/TheHidden/TheHidden';
 import { TheHistory } from '@ValenceMobile/components/TheAccount/components/TheHistory/TheHistory';
@@ -17,7 +18,8 @@ import type { TheAccountPageProps } from './TheAccountPage.types';
 import { say } from '@ValenceI18n/say';
 
 /**
- * One part of the account on a page of its own, opened from the account tab, with a way back to it.
+ * One part of the account on a page of its own, opened from the account tab, with a way back to it
+ * and its name at its head, since a page with no artwork above it has no bar to name it in.
  * A plugin's page goes back by itself, saying why, when an administrator turns the plugin off or
  * removes it while it is open.
  *
@@ -40,6 +42,8 @@ const TheAccountPage = ({ panel, onBack }: TheAccountPageProps) => {
 
   return (
     <Screen scrolls title={title} onBack={onBack}>
+      <Words size="title">{title}</Words>
+
       {pluginPage !== null ? (
         <APluginPage key={panel} pluginId={pluginPage.pluginId} pageId={pluginPage.pageId} />
       ) : panel === 'security' ? (

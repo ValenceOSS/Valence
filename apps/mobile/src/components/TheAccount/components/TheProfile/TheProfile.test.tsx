@@ -33,6 +33,8 @@ describe('TheProfile', () => {
       aProfile().colour,
       aProfile().avatar,
       aProfile().askStillWatchingAfter,
+      undefined,
+      aProfile().prefersBestCopy,
     );
   });
 });

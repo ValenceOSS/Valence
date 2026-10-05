@@ -522,11 +522,7 @@ const TheLibrary = ({
             />
           </View>
           <View pointerEvents={side === 'account' ? 'auto' : 'none'} style={styles.searchInstead}>
-            {side === 'account' ? (
-              <Words size="title">
-                {say('common.account')}
-              </Words>
-            ) : null}
+            {side === 'account' ? <Words size="title">{say('common.account')}</Words> : null}
           </View>
         </Animated.View>
       </View>

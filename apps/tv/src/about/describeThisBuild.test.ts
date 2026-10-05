@@ -14,7 +14,7 @@ describe('describeThisBuild', () => {
       extra: { build: { version: '1.4.0', commit: 'abc1234' } },
     });
 
-    expect(describeThisBuild({ version: '1.4.0', commit: 'def5678' })).toBe(
+    expect(describeThisBuild({ version: '1.4.0', commit: 'def5678', features: [] })).toBe(
       `Valence 1.4.0 (abc1234) · tvOS ${String(Platform.Version)} · Server 1.4.0 (def5678)`,
     );
   });

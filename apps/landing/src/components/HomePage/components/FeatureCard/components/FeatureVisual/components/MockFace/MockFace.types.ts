@@ -1,4 +1,3 @@
-
 type MockFaceProps = {
   name: string;
   tone?: string;

@@ -620,7 +620,11 @@ const MediaPanel = ({
                 </span>
               ) : title.kind === 'season' || title.kind === 'version' ? null : (
                 <MediaPoster
-                  src={title.posterFrom === null ? null : artworkUrl(title.posterFrom, 'poster', { size: 'small' })}
+                  src={
+                    title.posterFrom === null
+                      ? null
+                      : artworkUrl(title.posterFrom, 'poster', { size: 'small' })
+                  }
                 />
               )}
 

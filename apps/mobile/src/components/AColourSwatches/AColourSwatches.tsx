@@ -26,7 +26,11 @@ const AColourSwatches = ({ value, options, onChoose }: AColourSwatchesProps) => 
   const colours = useTheColours();
 
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.row}
+    >
       {options.map((option) => (
         <Button
           key={option}

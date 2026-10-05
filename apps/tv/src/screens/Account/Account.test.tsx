@@ -45,7 +45,7 @@ const aCache = ({ mayRequest }: { mayRequest: boolean }): QueryClient => {
   });
 
   cache.setQueryData(profileQueries.watching().queryKey, JO);
-  cache.setQueryData(aboutQueries.server().queryKey, { commit: 'abc123' });
+  cache.setQueryData(aboutQueries.server().queryKey, { commit: 'abc123', features: [] });
   cache.setQueryData(requestsQueries.availability().queryKey, { isEnabled: mayRequest });
   cache.setQueryData(sessionQueries.permissions().queryKey, {
     permissions: ['requests.ask'],

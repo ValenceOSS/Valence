@@ -48,11 +48,7 @@ const HouseholdVignette = () => (
               face.isPicked ? 'delay-200 acted:scale-110 acted:ring-2' : '',
             )}
           >
-            <MockFace
-              name={face.name}
-              {...(face.tone === undefined ? {} : { tone: face.tone })}
-              className="size-12 text-lg shadow-lg"
-            />
+            <MockFace name={face.name} tone={face.tone} className="size-12 text-lg shadow-lg" />
           </span>
           <span className="text-xs text-text">{face.name}</span>
         </span>
