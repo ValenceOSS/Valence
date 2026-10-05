@@ -93,7 +93,7 @@ describe('a shared demo account', () => {
     }
   });
 
-  it('sees only the device it is asking from, not where every other visitor is signed in', async () => {
+  it('sees none of the devices visitors are signed in on, nor better-auth’s list of them', async () => {
     const asTheDemo = await signedInAs('demo', ['demo']);
     const asSomebody = await signedInAs('visitor', ['demo']);
 
@@ -101,7 +101,7 @@ describe('a shared demo account', () => {
       DevicesSchema.parse(await (await ask('GET', '/api/account/devices')).json()).devices;
 
     expect(await read(asSomebody)).toHaveLength(2);
-    expect(await read(asTheDemo)).toEqual([expect.objectContaining({ isCurrent: true })]);
+    expect((await asTheDemo('GET', '/api/account/devices')).status).toBe(403);
     expect((await asTheDemo('GET', '/api/auth/list-sessions')).status).toBe(403);
   });
 });

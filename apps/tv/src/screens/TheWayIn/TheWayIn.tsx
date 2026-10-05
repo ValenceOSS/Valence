@@ -21,6 +21,7 @@ import mark from '@ValenceTv/assets/valence-mark.png';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { useThisAppIsTurnedOff } from '@ValenceClient/about/useThisAppIsTurnedOff';
 import { Button } from '@ValenceTv/components/Button/Button';
+import { say } from '@ValenceI18n/say';
 import type { Leaving, Spot } from '@ValenceTv/components/Flight/Flight.types';
 
 const SPLASH_LINGERS_MS = 700;

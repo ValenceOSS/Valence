@@ -97,7 +97,7 @@ const EnterPassword = ({
     void signInAsProfile(profile.id, '').then((answer) =>
       settle(answer.kind === 'signedIn', answer.kind === 'refused' ? answer.reason : ''),
     );
-  });
+  }, [isDemoServer]);
 
   const confirmCode = async () => {
     if (code === '' || isAsking) {

@@ -37,10 +37,9 @@ describe('blockOnTheDemo', () => {
     }
   });
 
-  it('still lets the demo account read its devices and change its own profile', async () => {
+  it('still lets the demo account change its own profile and read the household', async () => {
     const app = anApp(true);
 
-    expect((await ask(app, 'GET', '/api/account/devices')).status).toBe(200);
     expect((await ask(app, 'PATCH', '/api/profiles/p1')).status).toBe(200);
     expect((await ask(app, 'GET', '/api/account')).status).toBe(200);
   });

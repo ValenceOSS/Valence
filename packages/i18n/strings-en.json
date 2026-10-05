@@ -19070,6 +19070,11 @@
     "context": "The label of a page dots in the hero."
   },
   {
+    "handler": "screens.historyKeysFor.alt",
+    "text": "Alt",
+    "context": "The name of the Alt key on a Windows or Linux keyboard, shown on a key cap in the tooltip of the desktop app's back and forward arrows. Keep it as the key is labelled on keyboards in the language."
+  },
+  {
     "handler": "screens.historyPanel.nothingYetWhatYouWatchAnd",
     "text": "Nothing yet. What you watch and read appears here, and only you can see it.",
     "context": "Text shown in the history panel."

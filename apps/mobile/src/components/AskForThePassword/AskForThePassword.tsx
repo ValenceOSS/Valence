@@ -91,13 +91,6 @@ const AskForThePassword = ({
     setRefusal(outcome.reason);
   };
 
-  useEffect(() => {
-    if (isDemoServer && !hasWalkedIn.current) {
-      hasWalkedIn.current = true;
-      void tryIt();
-    }
-  });
-
   const askForAReset = async () => {
     const server = platformInUse().serverAddress();
 
@@ -140,6 +133,13 @@ const AskForThePassword = ({
       onBack({ x, y, width, height });
     });
   };
+
+  useEffect(() => {
+    if (isDemoServer && !hasWalkedIn.current) {
+      hasWalkedIn.current = true;
+      void tryIt();
+    }
+  }, [isDemoServer]);
 
   if (wantsCode) {
     return (
