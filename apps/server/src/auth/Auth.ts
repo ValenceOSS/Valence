@@ -26,6 +26,7 @@ import { MINIMUM_PASSWORD_LENGTH } from '@ValenceContracts/constants/MINIMUM_PAS
 import { PASSWORD_RESET_LIFETIME_SECONDS } from '@ValenceServer/auth/PASSWORD_RESET_LIFETIME_SECONDS';
 import { MINIMUM_USERNAME_LENGTH } from '@ValenceContracts/constants/MINIMUM_USERNAME_LENGTH';
 import { MAXIMUM_USERNAME_LENGTH } from '@ValenceContracts/constants/MAXIMUM_USERNAME_LENGTH';
+import { signInTheDemo } from '@ValenceServer/auth/signInTheDemo';
 import type { SettingsStore } from '@ValenceServer/settings/ServerSettings';
 
 type AuthDatabase = DBAdapter | DBAdapterInstance;
@@ -164,6 +165,7 @@ const createAuth = ({
       passkey({ rpName: VALENCE_APP_NAME }),
       confirmItIsYou(),
       finishSetup(),
+      signInTheDemo(),
       deviceAuthorization({ expiresIn: '10m', interval: '5s' }),
       bearerWithoutACookie(),
       jwt(),

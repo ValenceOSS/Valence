@@ -224,17 +224,30 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.noSuchProfile'), 404);
     }
 
+    const profileId = context.req.param('profileId');
+    const account = await profiles.findSignIn(profileId);
+
+    if (account === null) {
+      return context.json(refuse('error.common.noSuchProfile'), 404);
+    }
+
+    const userId = isDemoAccount(account, demoAccounts)
+      ? await profiles.accountOf(profileId)
+      : null;
+
+    if (userId !== null) {
+      return auth.api.signInTheDemo({
+        body: { userId },
+        headers: context.req.raw.headers,
+        asResponse: true,
+      });
+    }
+
     const body = await context.req.text().catch(() => '');
     const parsed = SignInBodySchema.safeParse(JsonValueSchema.parse(JSON.parse(body || 'null')));
 
     if (!parsed.success) {
       return context.json(refuse('error.household.aPasswordIsRequired'), 400);
-    }
-
-    const account = await profiles.findSignIn(context.req.param('profileId'));
-
-    if (account === null) {
-      return context.json(refuse('error.common.noSuchProfile'), 404);
     }
 
     const byUsername = realEmailOf(account.email) === null && account.username !== null;

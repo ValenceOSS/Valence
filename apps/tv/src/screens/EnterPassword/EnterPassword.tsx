@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { signInAsProfile } from '@ValenceClient/profiles/fetchEveryone';
@@ -13,6 +13,7 @@ import { useReportSpot } from '@ValenceTv/layout/useReportSpot';
 import mark from '@ValenceTv/assets/valence-mark.png';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { EnterPasswordProps } from './EnterPassword.types';
+import { useIsDemoServer } from '@ValenceClient/about/useIsDemoServer';
 import { say } from '@ValenceI18n/say';
 
 /**
@@ -36,6 +37,8 @@ const EnterPassword = ({
   onFaceAt,
   onMarkAt,
 }: EnterPasswordProps) => {
+  const isDemoServer = useIsDemoServer();
+  const hasWalkedIn = useRef(false);
   const { ref: holdFace, onLayout: faceLaidOut, whereNow: whereFaceIs } = useReportSpot(onFaceAt);
   const { ref: holdMark, onLayout: markLaidOut, whereNow: whereMarkIs } = useReportSpot(onMarkAt);
   const [password, setPassword] = useState('');
@@ -83,6 +86,18 @@ const EnterPassword = ({
 
     await settle(answer.kind === 'signedIn', answer.kind === 'refused' ? answer.reason : '');
   };
+
+  useEffect(() => {
+    if (!isDemoServer || hasWalkedIn.current) {
+      return;
+    }
+
+    hasWalkedIn.current = true;
+    setIsAsking(true);
+    void signInAsProfile(profile.id, '').then((answer) =>
+      settle(answer.kind === 'signedIn', answer.kind === 'refused' ? answer.reason : ''),
+    );
+  });
 
   const confirmCode = async () => {
     if (code === '' || isAsking) {

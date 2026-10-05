@@ -577,6 +577,11 @@ const ProfileGate = ({
                           setHasLeftWall(true);
                           setChosen(profile);
                           setProblem(null);
+
+                          if (isDemoServer) {
+                            setIsSubmitting(true);
+                            void signInAsProfile(profile.id, '').then(settle);
+                          }
                         }}
                         {...(prefersReducedMotion === true
                           ? {}
