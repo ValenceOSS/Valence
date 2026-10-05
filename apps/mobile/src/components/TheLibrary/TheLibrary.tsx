@@ -63,6 +63,7 @@ import type { Arrangement } from '@ValenceClient/library/browseArrangementPrefer
 import type { TheLibraryProps } from './TheLibrary.types';
 import { say } from '@ValenceI18n/say';
 import { useStockedKinds } from '@ValenceClient/library/useStockedKinds';
+import { AChoiceMenu } from '@ValenceMobile/components/AChoiceMenu/AChoiceMenu';
 
 const EVERY = 'every';
 
@@ -569,7 +570,7 @@ const TheLibrary = ({
             ) : null}
 
             {ofThisKind.length > 1 ? (
-              <SegmentedRow
+              <AChoiceMenu
                 label={say('common.whichLibrary')}
                 items={libraryOptionsFor(ofThisKind, faces.data ?? [], EVERY, say('common.all'))}
                 value={chosen}

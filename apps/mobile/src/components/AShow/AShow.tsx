@@ -31,7 +31,6 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { APluginPanels } from '@ValenceMobile/components/APluginPanels/APluginPanels';
-import { SegmentedRow } from '@ValenceMobile/components/SegmentedRow/SegmentedRow';
 import { TheStars } from '@ValenceMobile/components/TheStars/TheStars';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { AShareSheet } from '@ValenceMobile/components/AShareSheet/AShareSheet';
@@ -44,6 +43,7 @@ import type { AShowProps } from './AShow.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 import { ABadgeRow } from '@ValenceMobile/components/ABadgeRow/ABadgeRow';
+import { AChoiceMenu } from '@ValenceMobile/components/AChoiceMenu/AChoiceMenu';
 
 const OTHER = 'other';
 
@@ -339,7 +339,7 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
 
           {laid.choices.length > 1 ? (
             <View style={styles.seasons}>
-              <SegmentedRow
+              <AChoiceMenu
                 label={say('common.season')}
                 items={laid.choices.map((choice) => ({
                   id: choice.seasonNumber === null ? OTHER : choice.seasonNumber.toString(),

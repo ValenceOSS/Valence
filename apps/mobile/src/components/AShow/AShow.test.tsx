@@ -177,10 +177,10 @@ describe('AShow', () => {
     );
 
     await waitFor(() => {
-      expect(drawn.getByLabelText('Season 2')).toBeTruthy();
+      expect(drawn.getByText('Season 2')).toBeTruthy();
     });
 
-    await userEvent.press(drawn.getByLabelText('Season 2'));
+    await userEvent.press(drawn.getByText('Season 2'));
 
     expect(drawn.getByText('1. Hello, Ms. Cobel')).toBeTruthy();
   });

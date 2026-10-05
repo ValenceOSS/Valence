@@ -5,11 +5,17 @@ import mockAsyncStorage from '@react-native-async-storage/async-storage/jest/asy
 import {
   createContext as mockCreateContext,
   createElement as mockCreateElement,
+  useContext as mockUseContext,
   useEffect as mockUseEffect,
   useState as mockUseState,
 } from 'react';
 import type { ReactNode } from 'react';
-import { Image as mockNativeImage } from 'react-native';
+import {
+  Image as mockNativeImage,
+  Pressable as mockPressable,
+  Text as mockText,
+  View as mockView,
+} from 'react-native';
 import type { ImageStyle, StyleProp } from 'react-native';
 
 jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
@@ -108,6 +114,44 @@ jest.mock('expo-image', () => ({
       clearDiskCache: jest.fn(() => Promise.resolve(true)),
     },
   ),
+}));
+
+const mockPickedContext = mockCreateContext<(chosen: string | number) => void>(() => undefined);
+
+jest.mock('@expo/ui/swift-ui', () => ({
+  Host: (props: { children?: ReactNode }) => props.children ?? null,
+  Picker: (props: {
+    label?: string;
+    onSelectionChange?: (chosen: string | number) => void;
+    children?: ReactNode;
+  }) =>
+    mockCreateElement(
+      mockPickedContext.Provider,
+      { value: props.onSelectionChange ?? (() => undefined) },
+      mockCreateElement(mockView, { accessibilityLabel: props.label }, props.children),
+    ),
+  Text: (props: { children?: ReactNode; modifiers?: readonly { tag?: string | number }[] }) => {
+    const pick = mockUseContext(mockPickedContext);
+
+    return mockCreateElement(
+      mockPressable,
+      {
+        onPress: () => {
+          const chosen = props.modifiers?.find((one) => one.tag !== undefined)?.tag;
+
+          if (chosen !== undefined) {
+            pick(chosen);
+          }
+        },
+      },
+      mockCreateElement(mockText, null, props.children),
+    );
+  },
+}));
+
+jest.mock('@expo/ui/swift-ui/modifiers', () => ({
+  pickerStyle: () => ({}),
+  tag: (value: string | number) => ({ tag: value }),
 }));
 
 jest.mock('expo-video', () => ({
