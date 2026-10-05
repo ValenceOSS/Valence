@@ -144,7 +144,8 @@ const ValenceShell = () => {
   const keptBooks = useFavourites(watching, 'books');
   const rate = useRate(watching);
   const hiding = useHidden(watching);
-  const { mayAdminister } = useWhatIMayDo();
+  const { may, mayAdminister } = useWhatIMayDo();
+  const mayShare = may('sharing.link');
   const mayRequest = useMayRequest();
   const leave = useSignOut();
 
@@ -371,9 +372,13 @@ const ValenceShell = () => {
     >
       <ShowDialog
         show={openShow}
-        onShare={(show) => {
-          setSharing({ kind: 'series', seriesId: show.seriesId ?? '', title: show.title });
-        }}
+        {...(mayShare
+          ? {
+              onShare: (show) => {
+                setSharing({ kind: 'series', seriesId: show.seriesId ?? '', title: show.title });
+              },
+            }
+          : {})}
         onClose={() => {
           go({ show: null });
         }}
@@ -471,9 +476,13 @@ const ValenceShell = () => {
           setOpenRole(member.role);
           go({ person: member.personId ?? null });
         }}
-        onShare={(media) => {
-          setSharing({ kind: 'item', media });
-        }}
+        {...(mayShare
+          ? {
+              onShare: (media) => {
+                setSharing({ kind: 'item', media });
+              },
+            }
+          : {})}
         {...(hasTelevision
           ? {
               onPlayOn: (media: MediaSummary, startSeconds: number) => {
@@ -543,9 +552,13 @@ const ValenceShell = () => {
         onRate={(book, stars) => {
           rate({ bookId: book.id }, stars);
         }}
-        onShare={(book) => {
-          setSharing({ kind: 'book', book });
-        }}
+        {...(mayShare
+          ? {
+              onShare: (book) => {
+                setSharing({ kind: 'book', book });
+              },
+            }
+          : {})}
       />
 
       <AccountDialog

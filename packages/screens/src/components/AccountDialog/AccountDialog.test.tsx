@@ -17,9 +17,10 @@ vi.mock('@ValenceScreens/components/AccountArea/AccountArea', () => ({
 }));
 
 const mayAdminister = vi.hoisted(() => vi.fn<() => boolean>());
+const isDemo = vi.hoisted(() => vi.fn<() => boolean>());
 
 vi.mock('@ValenceClient/session/useWhatIMayDo', () => ({
-  useWhatIMayDo: () => ({ may: () => false, mayAdminister: mayAdminister() }),
+  useWhatIMayDo: () => ({ may: () => false, mayAdminister: mayAdminister(), isDemo: isDemo() }),
 }));
 
 vi.mock('@ValenceClient/session/auth', async (importOriginal) => ({
@@ -89,6 +90,7 @@ beforeEach(() => {
   vi.stubGlobal('fetch', fetchMock);
   ended.mockReset();
   mayAdminister.mockReset().mockReturnValue(false);
+  isDemo.mockReset().mockReturnValue(false);
   vi.mocked(notify.failed).mockReset();
 });
 
@@ -167,6 +169,26 @@ describe('AccountDialog', () => {
 
     expect(await screen.findByRole('heading', { name: 'Marques' })).toBeInTheDocument();
     expect(screen.queryByText('admin')).not.toBeInTheDocument();
+  });
+
+  it('tells whoever is on a shared demo account that it is one', async () => {
+    isDemo.mockReturnValue(true);
+
+    draw();
+
+    expect(await screen.findByText('Shared demo')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'This is a shared demo account. Some settings are switched off, and anything you change is reset regularly.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('says nothing of a demo to any other account', async () => {
+    draw();
+
+    expect(await screen.findByRole('heading', { name: 'Marques' })).toBeInTheDocument();
+    expect(screen.queryByText('Shared demo')).not.toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

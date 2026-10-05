@@ -28,6 +28,26 @@ describe('useWhatIMayDo', () => {
     });
   });
 
+  it('says a shared demo account is one, and that any other account is not', async () => {
+    fetchMyPermissions.mockResolvedValue({ permissions: [], isAdministrator: false, isDemo: true });
+
+    const { result } = renderHookInACache(() => useWhatIMayDo());
+
+    await waitFor(() => {
+      expect(result.current.isDemo).toBe(true);
+    });
+  });
+
+  it('takes an older server that never says as not being a demo', async () => {
+    const { result } = renderHookInACache(() => useWhatIMayDo());
+
+    await waitFor(() => {
+      expect(fetchMyPermissions).toHaveBeenCalled();
+    });
+
+    expect(result.current.isDemo).toBe(false);
+  });
+
   it('says a viewer may not', async () => {
     const { result } = renderHookInACache(() => useWhatIMayDo());
 

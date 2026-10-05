@@ -89,7 +89,7 @@ const A_SHOW = {
   episodeCount: 1,
   latestAddedAt: '2026-08-10T00:00:00.000Z',
   coverMediaId: '9c858901-8a57-4791-81fe-4c455b099bc9',
-  seriesId: null,
+  seriesId: '5d3e2c1b-0a9f-4e8d-9c7b-6a5f4e3d2c1b',
 };
 
 const A_COLLECTION = {
@@ -110,11 +110,13 @@ const ok = (body: object | null) =>
   });
 
 let mayAdminister = true;
+let mayShare = false;
 
 beforeEach(() => {
   window.history.replaceState(null, '', '/');
   fetchMock.mockReset();
   mayAdminister = true;
+  mayShare = false;
   turnPushOn.mockClear();
   turnPushOff.mockClear();
 
@@ -156,7 +158,10 @@ beforeEach(() => {
     if (input === '/api/account/permissions') {
       return Promise.resolve(
         ok({
-          permissions: mayAdminister ? ['administrator'] : [],
+          permissions: [
+            ...(mayAdminister ? ['administrator'] : []),
+            ...(mayShare ? ['sharing.link'] : []),
+          ],
           isAdministrator: mayAdminister,
         }),
       );
@@ -326,6 +331,29 @@ describe('ValenceShell', () => {
     renderTheApp();
 
     expect(await screen.findByRole('dialog', { name: /Severance/ })).toBeInTheDocument();
+  });
+
+  it('offers to share a programme to an account that may hand out links', async () => {
+    mayShare = true;
+    window.history.replaceState(null, '', '/?show=severance');
+
+    renderTheApp();
+
+    const dialog = await screen.findByRole('dialog', { name: /Severance/ });
+
+    expect(await within(dialog).findByRole('button', { name: 'Share' })).toBeInTheDocument();
+  });
+
+  it('offers no way to share to an account that may not, such as a shared demo', async () => {
+    mayAdminister = false;
+    window.history.replaceState(null, '', '/?show=severance');
+
+    renderTheApp();
+
+    const dialog = await screen.findByRole('dialog', { name: /Severance/ });
+
+    expect(await within(dialog).findByRole('heading', { name: /Severance/ })).toBeInTheDocument();
+    expect(within(dialog).queryByRole('button', { name: 'Share' })).not.toBeInTheDocument();
   });
 
   it('takes the programme out of the address when its dialog is closed', async () => {

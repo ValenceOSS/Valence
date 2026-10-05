@@ -15,18 +15,21 @@ import { saidWhen } from '@ValenceClient/format/saidWhen';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Device } from '@ValenceClient/account/fetchDevices';
 import { say } from '@ValenceI18n/say';
+import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * Everywhere this account is signed in — each device, when it was last used, and a way to end it.
  * This session is marked as this one so nobody ends it by accident, and there is one gesture for
- * ending every other at once.
+ * ending every other at once. A shared demo account sees where it is signed in but ends nothing, since
+ * the devices it would end are other visitors'.
  */
 const DeviceList = () => {
   const [devices, setDevices] = useState<Device[] | null>(null);
   const [isWorking, setIsWorking] = useState(false);
   const [ending, setEnding] = useState<Device | null>(null);
   const [isEndingRest, setIsEndingRest] = useState(false);
+  const { isDemo } = useWhatIMayDo();
 
   const read = useCallback(() => {
     void fetchDevices().then(setDevices);
@@ -70,37 +73,41 @@ const DeviceList = () => {
           </span>
         ),
       },
-      {
-        id: 'act',
-        header: '',
-        enableSorting: false,
-        cell: ({ row }) =>
-          row.original.isCurrent ? null : (
-            <span className="flex justify-end">
-              <ActionMenu
-                label={say('common.actionsForName', { name: sayAgain(row.original.name) })}
-                trigger={<Icon of={MoreHorizontalIcon} size={16} />}
-                groups={[
-                  {
-                    items: [
-                      {
-                        id: 'end',
-                        label: say('common.signThisOut'),
-                        icon: <Icon of={DoorOpenFilledIcon} size={15} />,
-                        isDestructive: true,
-                        onChoose: () => {
-                          setEnding(row.original);
+      ...(isDemo
+        ? []
+        : [
+            {
+              id: 'act',
+              header: '',
+              enableSorting: false,
+              cell: ({ row }) =>
+                row.original.isCurrent ? null : (
+                  <span className="flex justify-end">
+                    <ActionMenu
+                      label={say('common.actionsForName', { name: sayAgain(row.original.name) })}
+                      trigger={<Icon of={MoreHorizontalIcon} size={16} />}
+                      groups={[
+                        {
+                          items: [
+                            {
+                              id: 'end',
+                              label: say('common.signThisOut'),
+                              icon: <Icon of={DoorOpenFilledIcon} size={15} />,
+                              isDestructive: true,
+                              onChoose: () => {
+                                setEnding(row.original);
+                              },
+                            },
+                          ],
                         },
-                      },
-                    ],
-                  },
-                ]}
-              />
-            </span>
-          ),
-      },
+                      ]}
+                    />
+                  </span>
+                ),
+            } satisfies DataTableColumn<Device>,
+          ]),
     ],
-    [],
+    [isDemo],
   );
 
   return (
@@ -108,7 +115,7 @@ const DeviceList = () => {
       title={say('common.devices')}
       isFlush
       actions={
-        elsewhere.length === 0 ? undefined : (
+        elsewhere.length === 0 || isDemo ? undefined : (
           <PanelCardAction
             icon={DoorOpenFilledIcon}
             onClick={() => {
