@@ -22,6 +22,7 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import mark from '@ValenceTv/assets/valence-mark.png';
 import { PhoneSignIn } from '@ValenceTv/components/PhoneSignIn/PhoneSignIn';
 import type { WhoIsWatchingProps } from './WhoIsWatching.types';
+import { useIsDemoServer } from '@ValenceClient/about/useIsDemoServer';
 import { say } from '@ValenceI18n/say';
 
 const FACE_SIZE = 200;
@@ -48,6 +49,7 @@ const STAGGERED = 8;
  * @param onChangeServer - Told when somebody wants a different Valence.
  */
 const WhoIsWatching = ({ onChoose, onSignedIn, onChangeServer }: WhoIsWatchingProps) => {
+  const isDemoServer = useIsDemoServer();
   const wayIn = useQuery(sessionQueries.wayIn());
   const profiles = wayIn.data?.profiles ?? [];
   const isHidden = wayIn.isSuccess && profiles.length === 0;
@@ -67,6 +69,7 @@ const WhoIsWatching = ({ onChoose, onSignedIn, onChangeServer }: WhoIsWatchingPr
           <Text style={styles.title}>
             {isHidden ? say('common.signInWithYourPhone') : say('common.whoIsWatching')}
           </Text>
+          {isDemoServer ? <Text style={styles.demo}>{say('common.demoMode')}</Text> : null}
         </View>
       </FadeIn>
 
@@ -159,6 +162,15 @@ const styles = StyleSheet.create({
     fontSize: tokens.type.hero,
     fontWeight: '700',
     textAlign: 'center',
+  },
+  demo: {
+    color: tokens.colours.muted,
+    fontSize: tokens.type.small,
+    fontWeight: '600',
+    letterSpacing: 1,
+    marginTop: tokens.space.sm,
+    textAlign: 'center',
+    textTransform: 'uppercase',
   },
   problem: { color: tokens.colours.muted, fontSize: tokens.type.body, textAlign: 'center' },
   faces: { flexGrow: 0 },

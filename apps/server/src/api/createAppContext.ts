@@ -1598,6 +1598,7 @@ const createAppContext = (options: CreateAppOptions) => {
     requires,
     grantsOf,
     isOnTheDemo,
+    demoAccounts,
     viewerOf,
     bookInReach,
     isOutOfReach,

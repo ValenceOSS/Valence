@@ -676,6 +676,7 @@ const ENGLISH = {
   'common.deleteName': 'Delete {name}?',
   'common.deletePlaylist': 'Delete playlist',
   'common.deleteTitle': 'Delete {title}?',
+  'common.demoMode': 'Demo mode',
   'common.description': 'Description',
   'common.descriptionThisCannotBeUndone': '{description} This can’t be undone.',
   'common.details': 'Details',

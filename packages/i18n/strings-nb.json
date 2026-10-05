@@ -2716,6 +2716,11 @@
     "context": "Shown, used in the download list and in the offline shelf. {title} is filled in by the app."
   },
   {
+    "handler": "common.demoMode",
+    "text": "Demo mode",
+    "context": "A short badge on the sign-in screen of every client, saying the server is a public demo whose shared account anybody may use and which is reset regularly."
+  },
+  {
     "handler": "common.description",
     "text": "Description",
     "context": "The label of a text field, used in the playlist details of the phone app and in the playlist dialog."

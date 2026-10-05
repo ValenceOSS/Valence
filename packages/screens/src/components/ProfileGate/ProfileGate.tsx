@@ -45,6 +45,8 @@ import { authenticateWithPasskey, signInWithUsernameOrEmail } from '@ValenceClie
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { PasskeyFirst } from './components/PasskeyFirst/PasskeyFirst';
 import type { ProfileGateProps } from './ProfileGate.types';
+import { Badge } from '@ValenceUI/Badge';
+import { useIsDemoServer } from '@ValenceClient/about/useIsDemoServer';
 import { say } from '@ValenceI18n/say';
 
 const OURS = 'valence';
@@ -114,6 +116,7 @@ const ProfileGate = ({
   leadsWithPasskey = false,
   startsAs = null,
 }: ProfileGateProps) => {
+  const isDemoServer = useIsDemoServer();
   const [isHandingOver, setIsHandingOver] = useState(false);
   const asking = useQuery(sessionQueries.wayIn());
   const everyone = asking.data?.profiles ?? null;
@@ -523,6 +526,8 @@ const ProfileGate = ({
               >
                 {say('common.whoIsWatching')}
               </motion.h1>
+
+              {isDemoServer ? <Badge size="sm">{say('common.demoMode')}</Badge> : null}
 
               <motion.div
                 variants={revealVariants(prefersReducedMotion)}

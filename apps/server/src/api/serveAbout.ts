@@ -10,11 +10,16 @@ import type { OpenAPIHono } from '@hono/zod-openapi';
  * @param context - What they are answered with.
  */
 const serveAbout = (app: OpenAPIHono, context: AppContext): void => {
-  const { SERVER_VERSION, SERVER_COMMIT } = context;
+  const { SERVER_VERSION, SERVER_COMMIT, demoAccounts } = context;
 
   app.openapi(aboutRoute, (asked) =>
     asked.json(
-      { version: SERVER_VERSION, commit: SERVER_COMMIT, features: [...SERVER_FEATURES] },
+      {
+        version: SERVER_VERSION,
+        commit: SERVER_COMMIT,
+        features: [...SERVER_FEATURES],
+        ...(demoAccounts.length > 0 ? { isDemo: true } : {}),
+      },
       200,
     ),
   );

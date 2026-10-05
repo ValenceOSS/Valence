@@ -13,6 +13,7 @@ import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
 import { realEmailOf } from '@ValenceContracts/functions/realEmailOf';
+import { isDemoAccount } from '@ValenceServer/demo/isDemoAccount';
 
 /**
  * Registers the household endpoints.
@@ -25,6 +26,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     auth,
     settings,
     profiles,
+    demoAccounts,
     households,
     splashscreen,
     tooBigToRead,
@@ -158,12 +160,21 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.get('/api/profiles/everyone', async (context) => {
-    const everyone = await profiles?.listEveryone();
+    const everyone = (await profiles?.listEveryone()) ?? [];
+    const shown =
+      demoAccounts.length === 0 || profiles === undefined
+        ? everyone
+        : (
+            await Promise.all(
+              everyone.map(async (profile) => {
+                const account = await profiles.findSignIn(profile.id);
 
-    return context.json(
-      { profiles: everyone ?? [], splashscreen: await splashscreen.address() },
-      200,
-    );
+                return account !== null && isDemoAccount(account, demoAccounts) ? [profile] : [];
+              }),
+            )
+          ).flat();
+
+    return context.json({ profiles: shown, splashscreen: await splashscreen.address() }, 200);
   });
 
   app.get('/api/splashscreen', async (context) => {
