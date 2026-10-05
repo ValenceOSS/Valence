@@ -26,6 +26,10 @@ const buttonStyles = cva(
         link: 'bg-transparent text-foreground underline-offset-4 hover:underline',
         discord: `${FLAT} border-transparent bg-[#5865f2] text-accent-contrast hover:brightness-110`,
         subtle: 'bg-transparent text-text-muted hover:text-text',
+        windowControl:
+          'flex items-center justify-center bg-transparent text-foreground hover:bg-[var(--surface-hover)] active:bg-[var(--surface-active)]',
+        windowClose:
+          'flex items-center justify-center bg-transparent text-foreground hover:bg-danger hover:text-destructive-foreground active:bg-danger/85',
         row: 'flex w-full rounded-md bg-transparent text-left text-foreground transition-colors duration-[var(--duration-fast)] hover:bg-[var(--surface-hover)]',
         bare: '',
       },
@@ -91,6 +95,11 @@ const buttonStyles = cva(
         class: 'hover-hover:hover:scale-100 active:scale-100',
       },
       { variant: ['ghost', 'link', 'overlay'], class: 'shadow-none' },
+      {
+        variant: ['windowControl', 'windowClose'],
+        class:
+          'rounded-none shadow-none hover-hover:hover:scale-100 active:translate-y-0 active:scale-100',
+      },
     ],
     defaultVariants: {
       variant: 'primary',

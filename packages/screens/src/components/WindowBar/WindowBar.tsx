@@ -3,31 +3,31 @@ import { HistoryArrows } from '@ValenceUI/HistoryArrows';
 import { Icon } from '@ValenceUI/Icon';
 import { Download as DownloadIcon, Question as QuestionIcon } from '@keyline-icons/react/fill';
 import { NotificationBell } from '@ValenceScreens/components/NotificationBell/NotificationBell';
+import { cn } from '@ValenceUI/cn';
+import { WindowControls } from './components/WindowControls/WindowControls';
 import type { WindowBarProps } from './WindowBar.types';
 import { say } from '@ValenceI18n/say';
 
 /**
  * The strip a frameless window draws along its own top, where the system would otherwise put one.
  *
- * Every desktop platform needs somewhere to pick the window up by. Windows and Linux draw their own
- * minimise, maximise and close over the top right, transparent, so this shows through behind them.
- * macOS draws its traffic lights over the top left the same way. On macOS the strip is the height of
- * the band the lights sit in, and what it carries follows on from them at the same pitch, so the row
- * reads as one.
+ * Every desktop platform needs somewhere to pick the window up by. On Windows and Linux this draws
+ * minimise, maximise and close itself, at the far right. macOS draws its traffic lights over the top
+ * left, and there the strip is the height of the band the lights sit in, and what it carries follows
+ * on from them at the same pitch, so the row reads as one.
  *
  * At the top left, clear of the traffic lights, are back and forward through the window's history,
  * joined as one control, with an arrow dimmed where there is nowhere to go that way and the keys for
  * each named once the pointer rests on it. At the top right are the inbox, the question mark that
  * opens the Valence docs in the browser, and the update once there is one — a green arrow to fetch a
  * release that has been found, how far one being fetched has got, and the arrow again to try a
- * failed one. On Windows and Linux a rule stands between them and the system's own controls, and
- * `--valence-window-bar-clearance` leaves room for those.
+ * failed one. Where the window's own controls are drawn, a rule stands between them and those.
  *
  * Everything that answers a press is marked `no-drag`, so a press reaches it rather than moving the
  * window — the rest of the strip is for picking the window up by.
  *
  * While a film plays it takes no room at all: the film runs to the top of the window, and this and
- * the system's own controls come and go over it with the player's controls.
+ * the window's controls come and go over it with the player's controls.
  *
  * @param update - Where an update has got to, or nothing where there is none.
  * @param onUpdate - Told to fetch the update and restart into it.
@@ -35,11 +35,15 @@ import { say } from '@ValenceI18n/say';
  * @param keys - The keys that go back and forward, for the arrows to name.
  * @param inbox - The inbox, where somebody is signed in to have one.
  * @param onHelp - Told to open the Valence docs.
+ * @param frame - Minimise, maximise and close, where this draws them rather than the system.
  */
-const WindowBar = ({ update, onUpdate, ways, keys, inbox, onHelp }: WindowBarProps) => (
+const WindowBar = ({ update, onUpdate, ways, keys, inbox, onHelp, frame }: WindowBarProps) => (
   <div
     data-slot="window-bar"
-    className="fixed inset-x-0 top-0 z-[60] flex h-[var(--valence-window-bar-height)] items-center justify-between border-b border-[var(--surface-line)] bg-[color-mix(in_oklab,var(--color-surface-raised)_88%,var(--color-surface))] pr-[var(--valence-window-bar-clearance)] pl-[var(--valence-window-bar-lead)] text-on-scrim [-webkit-app-region:drag]"
+    className={cn(
+      'fixed inset-x-0 top-0 z-[60] flex h-[var(--valence-window-bar-height)] items-center justify-between border-b border-[var(--surface-line)] bg-[color-mix(in_oklab,var(--color-surface-raised)_88%,var(--color-surface))] pl-[var(--valence-window-bar-lead)] text-on-scrim [-webkit-app-region:drag]',
+      frame === undefined ? 'pr-[var(--valence-window-bar-clearance)]' : null,
+    )}
   >
     {ways === undefined ? (
       <span />
@@ -56,7 +60,7 @@ const WindowBar = ({ update, onUpdate, ways, keys, inbox, onHelp }: WindowBarPro
       />
     )}
 
-    <div className="flex items-center gap-1 [-webkit-app-region:no-drag]">
+    <div className="flex items-center gap-1 self-stretch [-webkit-app-region:no-drag]">
       {inbox === undefined ? null : <NotificationBell {...inbox} isInTheWindowBar />}
 
       {onHelp === undefined ? null : (
@@ -97,11 +101,14 @@ const WindowBar = ({ update, onUpdate, ways, keys, inbox, onHelp }: WindowBarPro
         </Button>
       )}
 
-      <span
-        data-slot="window-bar-rule"
-        aria-hidden
-        className="hidden h-4 w-px bg-[var(--surface-line)]"
-      />
+      {frame === undefined ? null : (
+        <WindowControls
+          isMaximised={frame.isMaximised}
+          onMinimise={frame.minimise}
+          onMaximise={frame.maximise}
+          onClose={frame.close}
+        />
+      )}
     </div>
   </div>
 );

@@ -8,6 +8,7 @@ import type { Platform, Reachability } from '@ValenceClient/platform/Platform.ty
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { NearbyValence } from '@ValenceContracts/schemas/NearbyValence';
 import type { DesktopUpdate } from '@ValenceContracts/schemas/DesktopUpdate';
+import type { WindowFrame } from '@ValenceContracts/schemas/WindowFrame';
 import userEvent from '@testing-library/user-event';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import '@ValenceDesktop/TheWindow.types';
@@ -78,6 +79,13 @@ const theWindowOffers = (found: string[], nearby: NearbyValence[] = []): void =>
       electron: '33.0.0',
       chrome: '130.0.0',
     },
+    frame: {
+      now: () => ({ isMaximised: false, isFullScreen: false }),
+      whenChanged: () => () => {},
+      minimise: () => {},
+      maximise: () => {},
+      close: () => {},
+    },
     notifications: { setBadge: () => {} },
     passkeys: {
       way: 'page',
@@ -132,6 +140,7 @@ beforeEach(() => {
 afterEach(() => {
   forgetPlatform();
   delete document.documentElement.dataset['theme'];
+  delete document.documentElement.dataset['valencePlatform'];
 });
 
 describe('Desktop', () => {
@@ -344,5 +353,55 @@ describe('Desktop', () => {
     });
 
     expect(asking()).toBeNull();
+  });
+
+  it('draws minimise, maximise and close on Windows, and closes the window from them', async () => {
+    document.documentElement.dataset['valencePlatform'] = 'win32';
+    const close = vi.fn();
+    window.valence.frame.close = close;
+    aClient();
+
+    render(<Desktop />, { wrapper: CacheScope });
+
+    expect(screen.getByRole('button', { name: 'Minimise' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Maximise' })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+    expect(close).toHaveBeenCalledOnce();
+  });
+
+  it('leaves them to macOS, which draws its own traffic lights', () => {
+    document.documentElement.dataset['valencePlatform'] = 'darwin';
+    aClient();
+
+    render(<Desktop />, { wrapper: CacheScope });
+
+    expect(screen.queryByRole('button', { name: 'Minimise' })).not.toBeInTheDocument();
+  });
+
+  it('turns maximise into restore as the window is maximised, and takes them away in full screen', () => {
+    document.documentElement.dataset['valencePlatform'] = 'win32';
+    let tell: (frame: WindowFrame) => void = () => undefined;
+    window.valence.frame.whenChanged = (listener) => {
+      tell = listener;
+
+      return () => undefined;
+    };
+    aClient();
+
+    render(<Desktop />, { wrapper: CacheScope });
+
+    act(() => {
+      tell({ isMaximised: true, isFullScreen: false });
+    });
+
+    expect(screen.getByRole('button', { name: 'Restore down' })).toBeInTheDocument();
+
+    act(() => {
+      tell({ isMaximised: true, isFullScreen: true });
+    });
+
+    expect(screen.queryByRole('button', { name: 'Minimise' })).not.toBeInTheDocument();
   });
 });

@@ -62,6 +62,7 @@ import { WHAT_VERSION_THIS_IS } from '@ValenceDesktop/main/aboutChannels';
 import { SET_UNREAD_BADGE } from '@ValenceDesktop/main/notificationChannels';
 import { SHOW_THE_WINDOW_CONTROLS } from '@ValenceDesktop/main/windowChannels';
 import { showTheWindowControls } from '@ValenceDesktop/main/showTheWindowControls';
+import { answerAboutTheFrame } from '@ValenceDesktop/main/answerAboutTheFrame';
 import { z } from 'zod';
 import { say } from '@ValenceI18n/say';
 
@@ -347,6 +348,8 @@ const start = async (): Promise<void> => {
     areControlsShown = true;
 
     theWindowsOwnMenu(window, changeServer);
+
+    answerAboutTheFrame(window);
 
     const showWhatWasAskedFor = (): void => {
       showTheWindowControls(window, areControlsShown, process.platform);

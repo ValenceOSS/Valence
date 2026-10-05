@@ -1,6 +1,7 @@
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type { NearbyValence } from '@ValenceContracts/schemas/NearbyValence';
 import type { DesktopUpdate } from '@ValenceContracts/schemas/DesktopUpdate';
+import type { WindowFrame } from '@ValenceContracts/schemas/WindowFrame';
 import type { PasskeyCreationOptions } from '@ValenceContracts/schemas/PasskeyCreationOptions';
 import type { PasskeyRequestOptions } from '@ValenceContracts/schemas/PasskeyRequestOptions';
 import type { AskReply } from '@ValenceDesktop/main/AskReply';
@@ -40,6 +41,14 @@ type UpdateChecks = {
   download: () => void;
 };
 
+type FrameControls = {
+  now: () => WindowFrame;
+  whenChanged: (listener: (frame: WindowFrame) => void) => () => void;
+  minimise: () => void;
+  maximise: () => void;
+  close: () => void;
+};
+
 type AboutTheBuild = {
   version: string;
   commit: string;
@@ -69,6 +78,7 @@ declare global {
       reach: Reach;
       update: UpdateChecks;
       about: AboutTheBuild;
+      frame: FrameControls;
       notifications: DesktopNotifications;
       passkeys: DesktopPasskeys;
       servers?: ServersFound;
@@ -81,6 +91,7 @@ export type {
   DesktopNotifications,
   DesktopPasskeys,
   FilesHeld,
+  FrameControls,
   Preferences,
   Reach,
   ServersFound,

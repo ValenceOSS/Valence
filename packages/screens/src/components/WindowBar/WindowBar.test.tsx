@@ -132,4 +132,30 @@ describe('WindowBar', () => {
 
     expect(screen.getByRole('button', { name: 'Notifications' })).toHaveTextContent('2');
   });
+
+  it('draws minimise, maximise and close at the far right where it is given the frame', async () => {
+    const user = userEvent.setup();
+    const frame = { isMaximised: false, minimise: vi.fn(), maximise: vi.fn(), close: vi.fn() };
+    const { container } = render(<WindowBar frame={frame} />);
+
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+
+    expect(frame.close).toHaveBeenCalledOnce();
+    expect(screen.getByRole('button', { name: 'Minimise' })).toBeInTheDocument();
+    expect(container.querySelector('[data-slot="window-controls"]')?.parentElement).toHaveClass(
+      '[-webkit-app-region:no-drag]',
+    );
+    expect(container.querySelector('[data-slot="window-bar"]')).not.toHaveClass(
+      'pr-[var(--valence-window-bar-clearance)]',
+    );
+  });
+
+  it('leaves the window’s controls to the system where it is not given the frame', () => {
+    const { container } = render(<WindowBar />);
+
+    expect(container.querySelector('[data-slot="window-controls"]')).not.toBeInTheDocument();
+    expect(container.querySelector('[data-slot="window-bar"]')).toHaveClass(
+      'pr-[var(--valence-window-bar-clearance)]',
+    );
+  });
 });

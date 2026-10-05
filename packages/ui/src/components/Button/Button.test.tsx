@@ -134,6 +134,26 @@ describe('Button', () => {
     );
   });
 
+  it('draws a window control as a flat block lit under the pointer, and close in red', () => {
+    render(
+      <>
+        <Button variant="windowControl" label="Minimise" />
+        <Button variant="windowClose" label="Close" />
+      </>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Minimise' })).toHaveClass(
+      'rounded-none',
+      'hover:bg-[var(--surface-hover)]',
+      'active:scale-100',
+    );
+    expect(screen.getByRole('button', { name: 'Close' })).toHaveClass(
+      'rounded-none',
+      'hover:bg-danger',
+      'hover:text-destructive-foreground',
+    );
+  });
+
   it('fills the main action in the primary colour and the dangerous one in its own', () => {
     render(
       <>
