@@ -134,6 +134,64 @@ describe('homeRows', () => {
     expect(rows.every((row) => row.items.some((item) => item.id === 'shared'))).toBe(true);
   });
 
+  it('offers a film under one category only, the first that has it', () => {
+    const both = media('avengers');
+    const rows = homeRows(
+      input({
+        genres: [
+          { genre: 'Action', items: [both, ...many('action', 4)] },
+          { genre: 'Adventure', items: [both, ...many('adventure', 4)] },
+        ],
+      }),
+    );
+
+    expect(rows.map((row) => row.items.some((item) => item.id === 'avengers'))).toEqual([
+      true,
+      false,
+    ]);
+  });
+
+  it('still lets a film stand in a row at the top and in its category', () => {
+    const both = media('avengers');
+    const rows = homeRows(
+      input({
+        recent: [both],
+        genres: [{ genre: 'Action', items: [both, ...many('action', 4)] }],
+      }),
+    );
+
+    expect(rows.every((row) => row.items.some((item) => item.id === 'avengers'))).toBe(true);
+  });
+
+  it('drops a category its repeats leave too thin, and keeps its titles free for the next', () => {
+    const shared = many('shared', 4);
+    const rows = homeRows(
+      input({
+        genres: [
+          { genre: 'Action', items: shared },
+          { genre: 'Adventure', items: [...shared, media('only-adventure')] },
+          { genre: 'Fantasy', items: [media('only-adventure'), ...many('fantasy', 3)] },
+        ],
+      }),
+    );
+
+    expect(rows.map((row) => row.id)).toEqual(['genre:Action', 'genre:Fantasy']);
+    expect(rows[1]?.items.map((item) => item.id)).toContain('only-adventure');
+  });
+
+  it('carries the rule on through the decades and the rows after them', () => {
+    const film = media('film');
+    const rows = homeRows(
+      input({
+        genres: [{ genre: 'Drama', items: [film, ...many('drama', 3)] }],
+        decades: [{ decade: 2020, items: [film, ...many('new', 4)] }],
+        more: [{ id: 'more:0', title: 'Drama A–Z', items: [film, ...many('again', 4)] }],
+      }),
+    );
+
+    expect(rows.filter((row) => row.items.some((item) => item.id === 'film'))).toHaveLength(1);
+  });
+
   it('shows a thing once within a row', () => {
     const repeated = media('repeated');
     const [recent] = homeRows(input({ recent: [repeated, repeated, ...many('recent', 3)] }));
