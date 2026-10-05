@@ -23,6 +23,7 @@ const PLAYLIST = {
   owner: { profileId: '00000000-0000-4000-8000-000000000002', name: 'Sam', colour: '#fff' },
   entryCount: 1,
   lostCount: 0,
+  missingCount: 0,
   durationSeconds: 201,
   artworkAlbumIds: [],
   hasOwnArtwork: false,
@@ -41,6 +42,7 @@ beforeEach(() => {
             id: '00000000-0000-4000-8000-00000000e001',
             position: 1024,
             addedAt: '',
+            missing: null,
             item: {
               id: aTrack(1).id,
               kind: 'song',

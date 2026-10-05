@@ -44,8 +44,24 @@ describe('summaryOf', () => {
       updateAvailable: '1.3.0',
     });
     expect(summary.settings).toEqual([
-      { id: 'username', label: 'Username', kind: 'text', help: null, value: 'ada', isSet: true },
-      { id: 'token', label: 'Token', kind: 'secret', help: null, value: null, isSet: true },
+      {
+        id: 'username',
+        label: 'Username',
+        kind: 'text',
+        help: null,
+        link: null,
+        value: 'ada',
+        isSet: true,
+      },
+      {
+        id: 'token',
+        label: 'Token',
+        kind: 'secret',
+        help: null,
+        link: null,
+        value: null,
+        isSet: true,
+      },
     ]);
   });
 });

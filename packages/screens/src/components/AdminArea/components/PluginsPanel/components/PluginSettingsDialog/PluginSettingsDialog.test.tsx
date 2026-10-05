@@ -43,6 +43,24 @@ describe('PluginSettingsDialog', () => {
     });
   });
 
+  it('links a setting to where its value comes from, under its help', () => {
+    renderInAnAddress(
+      <PluginSettingsDialog
+        plugin={aPlugin()}
+        redirectUri={null}
+        onClose={vi.fn()}
+        onSaved={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Create an app with the redirect address.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'example.com/apps' })).toHaveAttribute(
+      'href',
+      'https://example.com/apps',
+    );
+    expect(screen.getAllByRole('link')).toHaveLength(1);
+  });
+
   it('sends a secret somebody typed', async () => {
     renderInAnAddress(
       <PluginSettingsDialog

@@ -41,7 +41,7 @@ const ChooseQualityDialog = ({
     onClose={onClose}
   >
     <DialogTitle
-      title={say('screens.askableDialog.chooseQualityDialog.requestTitle', { title })}
+      title={say('common.requestTitle', { title })}
       detail={say('screens.askableDialog.chooseQualityDialog.wellFetchTheBestReleaseThat')}
     />
 

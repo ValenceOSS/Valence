@@ -26,6 +26,7 @@ import {
   liftMediaBlockRoute,
   mediaRequestBlocklistRoute,
   catalogueSearchRoute,
+  missingAlbumsRoute,
   catalogueTitleRoute,
   requestProgressRoute,
   addQualityProfileRoute,
@@ -81,6 +82,7 @@ import { seasonsOf } from '@ValenceContracts/functions/seasonsOf';
 import { describeCatalogueTitle } from '@ValenceServer/requests/catalogue/describeCatalogueTitle';
 import { discoverShelves } from '@ValenceServer/requests/catalogue/discoverShelves';
 import { standTitles } from '@ValenceServer/requests/catalogue/standTitles';
+import { titleOfMusicHit } from '@ValenceServer/requests/catalogue/titleOfMusicHit';
 import { progressOf } from '@ValenceServer/requests/progressOf';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
@@ -100,6 +102,8 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     requestsClient,
     describeForRequest,
     searchMusicCatalogue,
+    missingAlbums,
+    viewerOf,
     discovery,
     NOT_STOOD,
     requires,
@@ -426,6 +430,66 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     const found = await findInCatalogue(query, kind);
 
     return context.json(await standTitles(found, discovery.lookup, await everyRequest()), 200);
+  });
+
+  app.openapi(missingAlbumsRoute, async (context) => {
+    const { headers } = context.req.raw;
+
+    if (requestsClient === null) {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const viewer = await viewerOf(headers);
+
+    if (
+      missingAlbums === null ||
+      viewer?.kind !== 'account' ||
+      !(await whatMayBeAsked(headers)).music
+    ) {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    const match = await missingAlbums.match(viewer, context.req.valid('param').playlistId);
+
+    if (match === null) {
+      return context.json(refuse('error.music.noSuchPlaylist'), 404);
+    }
+
+    const hits = new Map(
+      match.albums.flatMap((album) =>
+        album.hit === undefined || album.hit === null
+          ? []
+          : [[album.hit.musicBrainzId, album.hit] as const],
+      ),
+    );
+    const stood = new Map(
+      (
+        await standTitles(
+          [...hits.values()].map(titleOfMusicHit),
+          discovery.lookup,
+          hits.size === 0 ? [] : await everyRequest(),
+        )
+      ).map((title) => [title.id, title] as const),
+    );
+
+    return context.json(
+      {
+        isMatching: match.isMatching,
+        albums: match.albums.map((album) => ({
+          key: album.key,
+          title: album.song.album ?? album.song.title,
+          artist: album.song.artist,
+          coverUrl: album.song.coverUrl,
+          songCount: album.songCount,
+          isMatched: album.hit !== undefined,
+          found:
+            album.hit === undefined || album.hit === null
+              ? null
+              : (stood.get(album.hit.musicBrainzId) ?? null),
+        })),
+      },
+      200,
+    );
   });
 
   app.openapi(catalogueTitleRoute, async (context) => {

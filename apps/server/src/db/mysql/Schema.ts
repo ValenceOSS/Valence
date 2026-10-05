@@ -1187,6 +1187,10 @@ const playlistEntry = mysqlTable(
       .notNull()
       .references(() => playlist.id, { onDelete: 'cascade' }),
     mediaItemId: identifier('mediaItemId').references(() => mediaItem.id, { onDelete: 'set null' }),
+    missingTitle: mediumtext('missingTitle'),
+    missingArtist: mediumtext('missingArtist'),
+    missingAlbum: mediumtext('missingAlbum'),
+    missingReleaseId: identifier('missingReleaseId'),
     position: double('position').notNull(),
     addedAt: momentNow('addedAt').notNull(),
   },

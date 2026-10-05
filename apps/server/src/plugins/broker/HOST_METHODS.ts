@@ -23,6 +23,7 @@ const HOST_METHODS = [
   'viewing.markUnwatched',
   'requests.searchCatalogue',
   'requests.create',
+  'requests.missingAlbums',
   'playlists.list',
   'playlists.create',
   'playlists.add',

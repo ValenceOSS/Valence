@@ -19,6 +19,10 @@ import type {
   RequestProgress,
 } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
+import { MissingAlbumsSchema } from '@ValenceContracts/schemas/MissingAlbums';
+import type { MissingAlbums } from '@ValenceContracts/schemas/MissingAlbums';
+import { sendToRequests } from '@ValenceClient/requests/sendToRequests';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Reads the shelves of things to ask for: what is trending, popular and coming, each saying
@@ -102,11 +106,34 @@ const fetchAskable = (kind: MediaRequestKind, id: string): Promise<CatalogueTitl
 const fetchRequestProgress = (): Promise<RequestProgress[]> =>
   readFromServer('/api/requests/progress', z.array(RequestProgressSchema));
 
+/**
+ * Starts finding the albums of a playlist's missing songs, or joins the search under way, and says
+ * how far it has got.
+ *
+ * @param playlistId - The playlist.
+ * @returns Each album, found, not found, or still being looked for.
+ */
+const findMissingAlbums = async (playlistId: string): Promise<MissingAlbums> => {
+  const sent = await sendToRequests(
+    `/api/requests/missing-albums/${encodeURIComponent(playlistId)}`,
+    'POST',
+    undefined,
+    async (response) => MissingAlbumsSchema.parse(await response.json()),
+  );
+
+  if (sent.value === null) {
+    throw new Error(sent.refusal?.message ?? say('common.theServerCouldNotBeReached'));
+  }
+
+  return sent.value;
+};
+
 export {
   fetchAskable,
   fetchCatalogueBrowse,
   fetchCatalogueGenres,
   fetchDiscover,
   fetchRequestProgress,
+  findMissingAlbums,
   searchAskable,
 };

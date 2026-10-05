@@ -66,7 +66,9 @@ const MusicViewShown = ({ view }: { view: MusicView }) => {
   }
 
   if (view.kind === 'playlist') {
-    return <PlaylistView playlistId={view.id} />;
+    return (
+      <PlaylistView playlistId={view.id} isRequestingMissing={view.isRequestingMissing === true} />
+    );
   }
 
   if (view.kind === 'liked') {

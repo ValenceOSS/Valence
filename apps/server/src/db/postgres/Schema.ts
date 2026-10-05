@@ -1206,6 +1206,10 @@ const playlistEntry = pgTable(
       .notNull()
       .references(() => playlist.id, { onDelete: 'cascade' }),
     mediaItemId: text('mediaItemId').references(() => mediaItem.id, { onDelete: 'set null' }),
+    missingTitle: text('missingTitle'),
+    missingArtist: text('missingArtist'),
+    missingAlbum: text('missingAlbum'),
+    missingReleaseId: text('missingReleaseId'),
     position: doublePrecision('position').notNull(),
     addedAt: timestamp('addedAt').notNull().defaultNow(),
   },

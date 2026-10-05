@@ -70,6 +70,7 @@ const PLAYLIST: PlaylistSummary = {
   owner: { profileId: '00000000-0000-4000-8000-000000000001', name: 'Dan', colour: '#3a8ee8' },
   entryCount: 0,
   lostCount: 0,
+  missingCount: 0,
   durationSeconds: 0,
   artworkAlbumIds: [],
   hasOwnArtwork: false,
@@ -133,6 +134,8 @@ const fakeMusic = () => {
     pictures: {
       cover: vi.fn(() => Promise.resolve(null)),
       artistPicture: vi.fn(() => Promise.resolve(null)),
+      namedCover: vi.fn(() => Promise.resolve(null)),
+      releaseCover: vi.fn(() => Promise.resolve(null)),
     },
     corrections: {
       search: vi.fn(() => Promise.resolve([])),

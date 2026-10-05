@@ -71,6 +71,7 @@ import type {
   RequestCatalogue,
   VideoRequestKind,
 } from '@ValenceContracts/schemas/MediaRequest';
+import type { MissingAlbumMatcher } from '@ValenceServer/requests/missingAlbums/MissingAlbumMatcher';
 import type { Discovery } from '@ValenceServer/requests/catalogue/Discovery';
 import type { LogStore } from '@ValenceServer/logging/Logger';
 import type { JobHistoryStore } from '@ValenceServer/jobs/createJobHistoryStore';
@@ -268,6 +269,7 @@ type CreateAppOptions = {
   ) => Promise<RequestCatalogue | null>;
   describeBookForRequest?: (openLibraryId: number) => Promise<RequestCatalogue | null>;
   searchMusicCatalogue?: (query: string, kind: MusicRequestKind) => Promise<MusicCatalogueHit[]>;
+  missingAlbums?: MissingAlbumMatcher;
   discovery?: Discovery;
   realtime?: RealtimePublisher;
   logs?: LogStore;

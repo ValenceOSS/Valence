@@ -622,6 +622,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
         return (
           <APlaylist
             playlistId={page.playlistId}
+            isRequestingMissing={page.isRequestingMissing === true}
             onAlbum={toAlbum}
             onArtist={toArtist}
             onBack={back}

@@ -76,12 +76,29 @@ const ARGS = {
   'viewing.markUnwatched': z.tuple([Id, Id]),
   'requests.searchCatalogue': z.tuple([z.string().min(1).max(200), CatalogueKind]),
   'requests.create': z.tuple([Id, z.object({ catalogueId: Id, kind: CatalogueKind })]),
+  'requests.missingAlbums': z.tuple([Id, Id]),
   'playlists.list': z.tuple([Id]),
   'playlists.create': z.tuple([
     Id,
     z.object({ name: z.string().min(1).max(100), description: z.string().max(500).optional() }),
   ]),
-  'playlists.add': z.tuple([Id, Id, z.array(Id).max(500)]),
+  'playlists.add': z.tuple([
+    Id,
+    Id,
+    z
+      .array(
+        z.union([
+          Id,
+          z.object({
+            title: z.string().trim().min(1).max(300),
+            artist: z.string().trim().min(1).max(300),
+            album: z.string().trim().min(1).max(300).nullish(),
+            releaseId: z.string().uuid().nullish(),
+          }),
+        ]),
+      )
+      .max(500),
+  ]),
   'playlists.read': z.tuple([Id, Id]),
   'playlists.drop': z.tuple([Id, Id, Id]),
   'music.findTrack': z.tuple([
@@ -186,9 +203,16 @@ const createPluginBroker = ({
       case 'log.info':
       case 'log.warn':
       case 'log.error': {
-        const [message] = ARGS[method].parse(args);
+        const [message, ...details] = ARGS[method].parse(args);
+        const about = details
+          .flatMap((detail) => Object.entries(detail))
+          .map(([name, value]) => `${name}=${String(value)}`)
+          .join(' ');
 
-        log(method === 'log.info' ? 'info' : method === 'log.warn' ? 'warn' : 'error', message);
+        log(
+          method === 'log.info' ? 'info' : method === 'log.warn' ? 'warn' : 'error',
+          about === '' ? message : `${message} (${about})`,
+        );
 
         return null;
       }
@@ -389,6 +413,16 @@ const createPluginBroker = ({
 
         return host.requests.create(profileId, hit);
       }
+      case 'requests.missingAlbums': {
+        needs('requests');
+        needs('playlists');
+
+        const [profileId, playlistId] = ARGS[method].parse(args);
+
+        await actsFor(profileId, scope);
+
+        return host.requests.missingAlbums(profileId, playlistId);
+      }
       case 'playlists.list': {
         needs('playlists');
 
@@ -413,10 +447,23 @@ const createPluginBroker = ({
       case 'playlists.add': {
         needs('playlists', 'write');
 
-        const [profileId, playlistId, mediaIds] = ARGS[method].parse(args);
+        const [profileId, playlistId, items] = ARGS[method].parse(args);
 
         await actsFor(profileId, scope);
-        await host.playlists.add(profileId, playlistId, mediaIds);
+        await host.playlists.add(
+          profileId,
+          playlistId,
+          items.map((item) =>
+            typeof item === 'string'
+              ? item
+              : {
+                  title: item.title,
+                  artist: item.artist,
+                  album: item.album ?? null,
+                  releaseId: item.releaseId ?? null,
+                },
+          ),
+        );
 
         return null;
       }

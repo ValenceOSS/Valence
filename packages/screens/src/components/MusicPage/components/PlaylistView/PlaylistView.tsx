@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { PluginPanels } from '@ValenceScreens/components/PluginPanels/PluginPanels';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  Download as DownloadIcon,
   ImagePlus as ImagePlusIcon,
   ListMusic as ListMusicIcon,
   MoreHorizontal as MoreHorizontalIcon,
@@ -39,15 +40,22 @@ import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { MusicHeader } from '@ValenceScreens/components/MusicHeader/MusicHeader';
 import { PlaylistCover } from '@ValenceScreens/components/PlaylistCover/PlaylistCover';
 import { PlaylistDialog } from '@ValenceScreens/components/PlaylistDialog/PlaylistDialog';
+import { MissingSongDialog } from '@ValenceScreens/components/MissingSongDialog/MissingSongDialog';
+import { RequestMissingSongsDialog } from '@ValenceScreens/components/RequestMissingSongsDialog/RequestMissingSongsDialog';
 import { TrackList } from '@ValenceScreens/components/TrackList/TrackList';
+import type { TrackListMissingSong } from '@ValenceScreens/components/TrackList/TrackList.types';
+import { useMayRequestMusic } from '@ValenceClient/requests/useMayRequestMusic';
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { nameOfOwner } from '@ValenceScreens/music/nameOfOwner';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
+import { usePlace } from '@ValenceScreens/navigation/usePlace';
+import { writeMusicView } from '@ValenceClient/music/musicView';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { whereAnEntryLands } from '@ValenceClient/music/whereAnEntryLands';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
+import type { PlaylistMissingSong } from '@ValenceContracts/schemas/Playlist';
 import type { PlaylistViewProps } from './PlaylistView.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
@@ -59,20 +67,28 @@ import { sayCount } from '@ValenceI18n/sayCount';
  * renamed, given a cover of its own or its songs' covers back, shared with the household or made
  * private again, told its order matters, reordered a
  * song at a time and emptied a song at a time. Anything in it that is not music — a film for a film
- * night — is listed below the songs, since this player only plays songs.
+ * night — is listed below the songs, since this player only plays songs. A song it holds that the
+ * library does not have yet is drawn in its place among them, with a way to request its album, and
+ * every such song's album can be requested at once.
  *
  * @param playlistId - The playlist.
+ * @param isRequestingMissing - Whether to open on requesting its missing songs, as the notice that
+ *   their albums were found does.
  */
-const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
+const PlaylistView = ({ playlistId, isRequestingMissing = false }: PlaylistViewProps) => {
   const cache = useQueryClient();
   const asked = useQuery(musicQueries.playlist(playlistId));
   const { open } = useMusicNavigation();
+  const { replace } = usePlace();
   const { player } = useMusicPlayer();
   const [isEditing, setIsEditing] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
   const { may } = useWhatIMayDo();
   const detail = asked.data;
   const [isSendingCover, setIsSendingCover] = useState(false);
+  const [askingAbout, setAskingAbout] = useState<PlaylistMissingSong | null>(null);
+  const [isAskingForMissing, setIsAskingForMissing] = useState(false);
+  const mayRequestMusic = useMayRequestMusic();
   const firstCover = detail?.playlist.artworkAlbumIds[0];
   const ownCover = detail === undefined ? null : playlistArtworkUrl(detail.playlist);
   useLightTheMusic(ownCover ?? (firstCover === undefined ? null : albumArtworkUrl(firstCover)));
@@ -114,7 +130,37 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
   const others = entries.flatMap((entry) =>
     entry.item === null || entry.item.track !== null ? [] : [{ id: entry.id, item: entry.item }],
   );
-  const lost = entries.filter((entry) => entry.item === null);
+  const lost = entries.filter((entry) => entry.item === null && entry.missing === null);
+  const missing: TrackListMissingSong[] = [];
+
+  for (const entry of entries) {
+    const song = entry.missing;
+
+    if (song !== null) {
+      missing.push({
+        key: entry.id,
+        before: songs.filter((each) => each.entry.position < entry.position).length,
+        title: song.title,
+        artist: song.artist,
+        album: song.album,
+        coverUrl: song.coverUrl,
+        ...(mayRequestMusic
+          ? {
+              onChoose: () => {
+                setAskingAbout(song);
+              },
+            }
+          : {}),
+        ...(playlist.isMine
+          ? {
+              onRemove: () => {
+                void dropFromPlaylist(playlist.id, entry.id).then(refresh);
+              },
+            }
+          : {}),
+      });
+    }
+  }
   const mayClearAbandoned = playlist.owner === null && may('account.profiles');
   const source = { kind: 'playlist' as const, id: playlist.id, name: playlist.name };
   const options = { source, isOrdered: playlist.isOrdered };
@@ -146,13 +192,16 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
               ·{' '}
               {sayCount(
                 others.length === 0 ? 'common.count.songs' : 'common.count.items',
-                entries.length - lost.length,
+                entries.length - lost.length - missing.length,
               )}
             </span>
             <span>· {formatDuration(playlist.durationSeconds)}</span>
             {playlist.isOrdered ? (
               <span>{say('screens.musicPage.playlistView.inOrder')}</span>
             ) : null}
+            {missing.length === 0 ? null : (
+              <span>· {sayCount('common.count.songsNotInYourLibrary', missing.length)}</span>
+            )}
             {lost.length === 0 ? null : (
               <span>
                 ·{' '}
@@ -192,6 +241,20 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
             >
               <Icon of={ShuffleIcon} size={22} />
             </Button>
+
+            {mayRequestMusic && missing.length > 0 ? (
+              <Button
+                variant="ghost"
+                size="md"
+                isIconOnly
+                label={say('common.requestMissingSongs')}
+                onClick={() => {
+                  setIsAskingForMissing(true);
+                }}
+              >
+                <Icon of={DownloadIcon} size={22} />
+              </Button>
+            ) : null}
 
             {playlist.isMine ? (
               <FilePicker
@@ -310,6 +373,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
           <TrackList
             label={playlist.name}
             tracks={tracks}
+            missing={missing}
             showsArtwork
             onPlay={(index) => {
               player.play(tracks, index, options);
@@ -449,6 +513,31 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
       ) : null}
 
       <PluginPanels on="playlist" subjectId={playlistId} className="px-3 pb-8 pt-6" />
+
+      {mayRequestMusic ? (
+        <RequestMissingSongsDialog
+          playlistId={playlist.id}
+          name={playlist.name}
+          isOpen={isAskingForMissing || isRequestingMissing}
+          onClose={() => {
+            setIsAskingForMissing(false);
+
+            if (isRequestingMissing) {
+              replace({
+                section: 'music',
+                listen: writeMusicView({ kind: 'playlist', id: playlistId }),
+              });
+            }
+          }}
+        />
+      ) : null}
+
+      <MissingSongDialog
+        song={askingAbout}
+        onClose={() => {
+          setAskingAbout(null);
+        }}
+      />
     </article>
   );
 };

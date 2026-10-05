@@ -18,6 +18,7 @@ const aPlaylist = (overrides: Partial<PlaylistSummary> = {}): PlaylistSummary =>
     owner: null,
     entryCount: 3,
     lostCount: 0,
+    missingCount: 0,
     durationSeconds: 600,
     artworkAlbumIds: [],
     hasOwnArtwork: false,

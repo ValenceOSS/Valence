@@ -2,7 +2,7 @@ type MusicView =
   | { kind: 'home' }
   | { kind: 'album'; id: string }
   | { kind: 'artist'; id: string }
-  | { kind: 'playlist'; id: string }
+  | { kind: 'playlist'; id: string; isRequestingMissing?: boolean }
   | { kind: 'liked' }
   | { kind: 'albums' }
   | { kind: 'artists' }
@@ -12,12 +12,15 @@ type MusicView =
 
 const HOME: MusicView = { kind: 'home' };
 
+const REQUESTING = ':request';
+
 /**
  * Reads which part of the music section an address is showing.
  *
  * One value in the address carries it — "album:…", "artist:…", "search:…" — so every page of the
  * section can be linked to, bookmarked and gone back to, without the router needing a path for
- * each of them.
+ * each of them. A playlist's ends ":request" where its missing songs are being requested, which is
+ * where the notice that their albums were found leads.
  *
  * @param listen - The value in the address, where there is one.
  * @returns The view.
@@ -43,6 +46,10 @@ const readMusicView = (listen: string | null): MusicView => {
 
   if (kind === 'search') {
     return { kind: 'search', query: rest };
+  }
+
+  if (kind === 'playlist' && rest.endsWith(REQUESTING) && rest !== REQUESTING) {
+    return { kind, id: rest.slice(0, -REQUESTING.length), isRequestingMissing: true };
   }
 
   if ((kind === 'album' || kind === 'artist' || kind === 'playlist') && rest !== '') {
@@ -75,6 +82,10 @@ const writeMusicView = (view: MusicView): string | null => {
 
   if (view.kind === 'search') {
     return `search:${view.query}`;
+  }
+
+  if (view.kind === 'playlist' && view.isRequestingMissing === true) {
+    return `playlist:${view.id}${REQUESTING}`;
   }
 
   return `${view.kind}:${view.id}`;

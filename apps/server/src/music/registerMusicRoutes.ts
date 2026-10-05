@@ -271,6 +271,46 @@ const registerMusicRoutes = (
         });
   });
 
+  app.get('/api/music/catalogue/release-covers/:releaseId', async (context) => {
+    if ((await viewerOf(context.req.raw.headers)) === null) {
+      return context.json(NOBODY, 401);
+    }
+
+    const title = context.req.query('title');
+    const artist = context.req.query('artist');
+    const picture = await music.pictures.releaseCover(
+      context.req.param('releaseId'),
+      title === undefined || artist === undefined ? null : { title, artist },
+    );
+
+    return picture === null
+      ? context.json(refuse('error.music.noCoverWasFoundForThat'), 404)
+      : context.body(picture.body, 200, {
+          'content-type': picture.contentType,
+          'cache-control': 'private, max-age=604800',
+        });
+  });
+
+  app.get('/api/music/catalogue/named-covers', async (context) => {
+    if ((await viewerOf(context.req.raw.headers)) === null) {
+      return context.json(NOBODY, 401);
+    }
+
+    const title = context.req.query('title') ?? '';
+    const artist = context.req.query('artist') ?? '';
+    const picture =
+      title.trim() === '' || artist.trim() === ''
+        ? null
+        : await music.pictures.namedCover({ title, artist });
+
+    return picture === null
+      ? context.json(refuse('error.music.noCoverWasFoundForThat'), 404)
+      : context.body(picture.body, 200, {
+          'content-type': picture.contentType,
+          'cache-control': 'private, max-age=604800',
+        });
+  });
+
   app.get('/api/music/catalogue/artists/picture', async (context) => {
     if ((await viewerOf(context.req.raw.headers)) === null) {
       return context.json(NOBODY, 401);

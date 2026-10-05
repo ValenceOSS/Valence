@@ -1,5 +1,6 @@
 import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
+import { MissingAlbumsSchema } from '@ValenceContracts/schemas/MissingAlbums';
 import {
   RequestsAvailabilitySchema,
   RequestsOverviewSchema,
@@ -990,6 +991,29 @@ const catalogueSearchRoute = createRoute({
   }),
 });
 
+const missingAlbumsRoute = createRoute({
+  method: 'post',
+  path: '/api/requests/missing-albums/{playlistId}',
+  tags: ['Requests'],
+  summary: 'Find the albums of a playlist’s missing songs, to ask for',
+  description:
+    'Starts finding the albums the songs a playlist holds but the library does not have are on, or joins the search already under way, and says how far it has got. It carries on after the person has gone, and tells them when it is done where it took a while.',
+  request: {
+    params: z.object({
+      playlistId: z
+        .string()
+        .uuid()
+        .openapi({ param: { name: 'playlistId', in: 'path' } }),
+    }),
+  },
+  responses: requestFailures({
+    200: {
+      description: 'Each album, found, not found, or still being looked for',
+      content: { 'application/json': { schema: MissingAlbumsSchema } },
+    },
+  }),
+});
+
 const catalogueTitleRoute = createRoute({
   method: 'get',
   path: '/api/requests/catalogue/title/{kind}/{id}',
@@ -1245,6 +1269,7 @@ export {
   catalogueGenresRoute,
   catalogueBrowseRoute,
   catalogueSearchRoute,
+  missingAlbumsRoute,
   catalogueTitleRoute,
   requestProgressRoute,
   addQualityProfileRoute,

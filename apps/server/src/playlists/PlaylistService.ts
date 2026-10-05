@@ -1,6 +1,7 @@
 import type {
   CreatePlaylist,
   PlaylistDetail,
+  PlaylistMissingSong,
   PlaylistSummary,
   UpdatePlaylist,
 } from '@ValenceContracts/schemas/Playlist';
@@ -25,7 +26,7 @@ type PlaylistService = {
   add: (
     viewer: Viewer,
     playlistId: string,
-    mediaItemIds: readonly string[],
+    items: readonly (string | PlaylistMissingSong)[],
   ) => Promise<number | null>;
   move: (
     viewer: Viewer,

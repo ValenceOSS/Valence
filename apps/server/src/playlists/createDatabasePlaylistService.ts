@@ -1,14 +1,29 @@
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
-import { and, asc, desc, eq, gt, inArray, isNull, max, or, sql } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gt,
+  inArray,
+  isNotNull,
+  isNull,
+  max,
+  or,
+  sql,
+} from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
 import { countAffected } from '@ValenceDatabase/countAffected';
 import {
   library,
   mediaItem,
   musicAlbum,
+  musicArtist,
   musicTrack,
+  musicTrackArtist,
   playlist,
   playlistEntry,
   viewerProfile,
@@ -16,6 +31,8 @@ import {
 import { librariesVisibleToViewer } from '@ValenceServer/visibility/librariesVisibleToViewer';
 import { visibleToViewer } from '@ValenceServer/visibility/visibleToViewer';
 import { STEP, positionBetween } from './positionBetween';
+import { isTheTrackNamed } from '@ValenceServer/music/isTheTrackNamed';
+import { missingCoverUrl } from '@ValenceServer/music/web/missingCoverUrl';
 import { ARTWORK_LIMITS } from '@ValenceServer/playlists/ARTWORK_LIMITS';
 import {
   contentTypeFor,
@@ -24,12 +41,22 @@ import {
 } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { MediaKind } from '@ValenceContracts/schemas/MediaKind';
-import type { PlaylistEntry, PlaylistSummary } from '@ValenceContracts/schemas/Playlist';
+import type {
+  PlaylistEntry,
+  PlaylistMissingSong,
+  PlaylistSummary,
+} from '@ValenceContracts/schemas/Playlist';
 import type { MusicService } from '@ValenceServer/music/MusicService';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import type { PlaylistService } from './PlaylistService';
 
 const ARTWORK_TILES = 4;
+
+const MISSING_LOOKED_FOR_AT_ONCE = 50;
+
+const LOOKS_AGAIN_AFTER_MS = 5 * 60 * 1000;
+
+const CHECKS_THE_LIBRARY_EVERY_MS = 30 * 1000;
 
 /**
  * The profile a viewer is acting as, where they are acting as one.
@@ -71,15 +98,23 @@ const kindOf = (libraryKind: string, seriesTitle: string | null): MediaKind => {
  * A playlist's owner may give it a cover of its own, kept as a file beside the other uploaded
  * pictures and checked the way a face is; without one it is drawn from its songs' albums.
  *
+ * A song a playlist holds that the library does not have yet is filled in when its owner reads the
+ * playlist and the library has it — looked for again only once the library's songs, their files or
+ * the playlist's missing ones have changed, or a few minutes have passed for a change the files do
+ * not show, such as a correction. A playlist being watched is read every moment, so the library is
+ * checked for changes at most every half minute.
+ *
  * @param db - The database.
  * @param music - Where a song entry is read out as a full track.
  * @param artworkDirectory - Where the covers people upload for their playlists are kept.
+ * @param now - The time, for a test.
  * @returns The service.
  */
 const createDatabasePlaylistService = (
   db: AnyValenceDatabase,
   music: MusicService,
   artworkDirectory: string,
+  now: () => number = () => Date.now(),
 ): PlaylistService => {
   const entryVisible = (viewer: Viewer): SQL | undefined =>
     and(visibleToViewer(db, viewer), librariesVisibleToViewer(db, viewer));
@@ -163,10 +198,17 @@ const createDatabasePlaylistService = (
     const tallied = new Map(tallies.map((row) => [row.playlistId, row]));
     const tiled = new Map<string, string[]>();
 
-    const losses = await db
+    const absences = await db
       .select({
         playlistId: playlistEntry.playlistId,
-        lostCount: sql<number>`count(*)`.mapWith(Number),
+        lostCount:
+          sql<number>`sum(case when ${playlistEntry.missingTitle} is null then 1 else 0 end)`.mapWith(
+            Number,
+          ),
+        missingCount:
+          sql<number>`sum(case when ${playlistEntry.missingTitle} is null then 0 else 1 end)`.mapWith(
+            Number,
+          ),
       })
       .from(playlistEntry)
       .where(
@@ -180,7 +222,7 @@ const createDatabasePlaylistService = (
       )
       .groupBy(playlistEntry.playlistId);
 
-    const lost = new Map(losses.map((row) => [row.playlistId, row.lostCount]));
+    const absent = new Map(absences.map((row) => [row.playlistId, row]));
 
     for (const tile of tiles) {
       const held = tiled.get(tile.playlistId) ?? [];
@@ -202,7 +244,8 @@ const createDatabasePlaylistService = (
           ? null
           : { profileId: row.profileId, name: row.ownerName, colour: row.ownerColour },
       entryCount: tallied.get(row.id)?.entryCount ?? 0,
-      lostCount: lost.get(row.id) ?? 0,
+      lostCount: absent.get(row.id)?.lostCount ?? 0,
+      missingCount: absent.get(row.id)?.missingCount ?? 0,
       durationSeconds: tallied.get(row.id)?.durationSeconds ?? 0,
       artworkAlbumIds: tiled.get(row.id) ?? [],
       hasOwnArtwork: row.artworkPath !== null,
@@ -243,22 +286,20 @@ const createDatabasePlaylistService = (
   const append = async (
     viewer: Viewer,
     playlistId: string,
-    mediaItemIds: readonly string[],
+    items: readonly (string | PlaylistMissingSong)[],
   ): Promise<number> => {
-    const wanted = [...new Set(mediaItemIds)];
-
-    if (wanted.length === 0) {
-      return 0;
-    }
-
-    const allowed = await db
-      .select({ id: mediaItem.id })
-      .from(mediaItem)
-      .innerJoin(library, eq(library.id, mediaItem.libraryId))
-      .where(and(inArray(mediaItem.id, wanted), entryVisible(viewer)));
+    const asked = [...new Set(items.filter((item) => typeof item === 'string'))];
+    const allowed =
+      asked.length === 0
+        ? []
+        : await db
+            .select({ id: mediaItem.id })
+            .from(mediaItem)
+            .innerJoin(library, eq(library.id, mediaItem.libraryId))
+            .where(and(inArray(mediaItem.id, asked), entryVisible(viewer)));
 
     const known = new Set(allowed.map((row) => row.id));
-    const kept = mediaItemIds.filter((id) => known.has(id));
+    const kept = items.filter((item) => typeof item !== 'string' || known.has(item));
 
     if (kept.length === 0) {
       return 0;
@@ -272,17 +313,129 @@ const createDatabasePlaylistService = (
     const from = last?.position ?? 0;
 
     await db.insert(playlistEntry).values(
-      kept.map((id, at) => ({
+      kept.map((item, at) => ({
         id: randomUUID(),
         playlistId,
-        mediaItemId: id,
         position: from + STEP * (at + 1),
+        ...(typeof item === 'string'
+          ? { mediaItemId: item }
+          : {
+              missingTitle: item.title,
+              missingArtist: item.artist,
+              missingAlbum: item.album,
+              missingReleaseId: item.releaseId,
+            }),
       })),
     );
 
     await touch(playlistId);
 
     return kept.length;
+  };
+
+  const lastLooked = new Map<
+    string,
+    { waiting: string; songs: string; checkedAt: number; lookedAt: number }
+  >();
+
+  const fillMissing = async (viewer: Viewer, playlistId: string): Promise<void> => {
+    const waiting = await db
+      .select({
+        id: playlistEntry.id,
+        title: playlistEntry.missingTitle,
+        artist: playlistEntry.missingArtist,
+        album: playlistEntry.missingAlbum,
+      })
+      .from(playlistEntry)
+      .where(
+        and(
+          eq(playlistEntry.playlistId, playlistId),
+          isNull(playlistEntry.mediaItemId),
+          isNotNull(playlistEntry.missingTitle),
+        ),
+      );
+
+    if (waiting.length === 0) {
+      lastLooked.delete(playlistId);
+
+      return;
+    }
+
+    const waitingFor = waiting.map((entry) => entry.id).join(':');
+    const last = lastLooked.get(playlistId);
+    const same = last?.waiting === waitingFor ? last : undefined;
+
+    if (same !== undefined && now() - same.checkedAt < CHECKS_THE_LIBRARY_EVERY_MS) {
+      return;
+    }
+
+    const [tracks] = await db
+      .select({ count: count(), newest: max(mediaItem.modifiedAtMs) })
+      .from(musicTrack)
+      .innerJoin(mediaItem, eq(mediaItem.id, musicTrack.mediaItemId));
+    const songsNow = `${(tracks?.count ?? 0).toString()}:${(tracks?.newest ?? 0).toString()}`;
+
+    if (
+      same !== undefined &&
+      same.songs === songsNow &&
+      now() - same.lookedAt < LOOKS_AGAIN_AFTER_MS
+    ) {
+      lastLooked.set(playlistId, { ...same, checkedAt: now() });
+
+      return;
+    }
+
+    for (let at = 0; at < waiting.length; at += MISSING_LOOKED_FOR_AT_ONCE) {
+      const looking = waiting.slice(at, at + MISSING_LOOKED_FOR_AT_ONCE);
+      const found = await db
+        .select({
+          id: mediaItem.id,
+          title: mediaItem.title,
+          artist: musicArtist.name,
+          album: musicAlbum.title,
+        })
+        .from(mediaItem)
+        .innerJoin(library, eq(library.id, mediaItem.libraryId))
+        .innerJoin(musicTrack, eq(musicTrack.mediaItemId, mediaItem.id))
+        .innerJoin(musicAlbum, eq(musicAlbum.id, musicTrack.albumId))
+        .innerJoin(musicTrackArtist, eq(musicTrackArtist.mediaItemId, mediaItem.id))
+        .innerJoin(musicArtist, eq(musicArtist.id, musicTrackArtist.artistId))
+        .where(
+          and(
+            entryVisible(viewer),
+            or(...looking.map((entry) => isTheTrackNamed(entry.title ?? '', entry.artist ?? ''))),
+          ),
+        );
+
+      for (const entry of looking) {
+        const same = (left: string | null, right: string | null) =>
+          left !== null && right !== null && left.toLowerCase() === right.toLowerCase();
+        const candidates = found.filter(
+          (track) => same(track.title, entry.title) && same(track.artist, entry.artist),
+        );
+        const chosen = candidates.find((track) => same(track.album, entry.album)) ?? candidates[0];
+
+        if (chosen !== undefined) {
+          await db
+            .update(playlistEntry)
+            .set({
+              mediaItemId: chosen.id,
+              missingTitle: null,
+              missingArtist: null,
+              missingAlbum: null,
+              missingReleaseId: null,
+            })
+            .where(eq(playlistEntry.id, entry.id));
+        }
+      }
+    }
+
+    lastLooked.set(playlistId, {
+      waiting: waitingFor,
+      songs: songsNow,
+      checkedAt: now(),
+      lookedAt: now(),
+    });
   };
 
   const spaceOut = async (playlistId: string): Promise<void> => {
@@ -304,6 +457,10 @@ const createDatabasePlaylistService = (
     list: (viewer) => summarise(viewer, undefined),
 
     read: async (viewer, playlistId) => {
+      if (await owned(viewer, playlistId)) {
+        await fillMissing(viewer, playlistId);
+      }
+
       const [summary] = await summarise(viewer, eq(playlist.id, playlistId));
 
       if (summary === undefined) {
@@ -321,6 +478,10 @@ const createDatabasePlaylistService = (
           seriesTitle: mediaItem.seriesTitle,
           durationSeconds: mediaItem.durationSeconds,
           libraryKind: library.kind,
+          missingTitle: playlistEntry.missingTitle,
+          missingArtist: playlistEntry.missingArtist,
+          missingAlbum: playlistEntry.missingAlbum,
+          missingReleaseId: playlistEntry.missingReleaseId,
         })
         .from(playlistEntry)
         .leftJoin(mediaItem, eq(mediaItem.id, playlistEntry.mediaItemId))
@@ -353,6 +514,20 @@ const createDatabasePlaylistService = (
             position: row.position,
             addedAt: row.addedAt.toISOString(),
             item: null,
+            missing:
+              row.mediaItemId === null && row.missingTitle !== null && row.missingArtist !== null
+                ? {
+                    title: row.missingTitle,
+                    artist: row.missingArtist,
+                    album: row.missingAlbum,
+                    releaseId: row.missingReleaseId,
+                    coverUrl: missingCoverUrl({
+                      releaseId: row.missingReleaseId,
+                      title: row.missingAlbum ?? row.missingTitle,
+                      artist: row.missingArtist,
+                    }),
+                  }
+                : null,
           };
         }
 
@@ -378,6 +553,7 @@ const createDatabasePlaylistService = (
             durationSeconds: row.durationSeconds,
             track,
           },
+          missing: null,
         };
       });
 
@@ -442,8 +618,8 @@ const createDatabasePlaylistService = (
       return true;
     },
 
-    add: async (viewer, playlistId, mediaItemIds) =>
-      (await owned(viewer, playlistId)) ? append(viewer, playlistId, mediaItemIds) : null,
+    add: async (viewer, playlistId, items) =>
+      (await owned(viewer, playlistId)) ? append(viewer, playlistId, items) : null,
 
     move: async (viewer, playlistId, entryId, afterEntryId) => {
       if (!(await owned(viewer, playlistId))) {

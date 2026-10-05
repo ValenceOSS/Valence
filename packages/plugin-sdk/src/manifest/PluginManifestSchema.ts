@@ -49,6 +49,7 @@ const PluginManifestSchema = z
           label: z.string().min(1).max(60),
           kind: z.enum(['text', 'secret', 'toggle']),
           help: z.string().max(200).optional(),
+          link: z.object({ label: z.string().min(1).max(60), url: HttpsUrlSchema }).optional(),
         }),
       )
       .max(16)

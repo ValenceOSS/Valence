@@ -28,6 +28,7 @@ const aPluginHostForTest = (): PluginHost => ({
   requests: {
     searchCatalogue: vi.fn(() => Promise.resolve([])),
     create: vi.fn(() => Promise.resolve({ status: 'made' as const })),
+    missingAlbums: vi.fn(() => Promise.resolve({ isMatching: false, albums: [] })),
   },
   playlists: {
     list: vi.fn(() => Promise.resolve([{ id: 'pl1', name: 'Mine' }])),
@@ -37,7 +38,7 @@ const aPluginHostForTest = (): PluginHost => ({
       Promise.resolve({
         id: playlistId,
         name: 'Mine',
-        entries: [{ entryId: 'e1', mediaId: 'm1' }],
+        entries: [{ entryId: 'e1', mediaId: 'm1', missing: null }],
       }),
     ),
     drop: vi.fn(() => Promise.resolve()),

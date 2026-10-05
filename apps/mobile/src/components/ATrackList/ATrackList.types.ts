@@ -1,6 +1,16 @@
 import type { QueueSource } from '@ValenceClient/music/playQueue';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
 
+type ATrackListMissingSong = {
+  key: string;
+  before: number;
+  title: string;
+  artist: string;
+  coverUrl: string | null;
+  onChoose?: (() => void) | undefined;
+  onRemove?: (() => void) | undefined;
+};
+
 type ATrackListProps = {
   tracks: readonly MusicTrack[];
   source: QueueSource;
@@ -13,6 +23,7 @@ type ATrackListProps = {
     onRemove: (at: number) => void;
     onMove: (from: number, to: number) => void;
   };
+  missing?: readonly ATrackListMissingSong[];
 };
 
-export type { ATrackListProps };
+export type { ATrackListMissingSong, ATrackListProps };

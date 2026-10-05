@@ -21,6 +21,7 @@ const aPlaylist = (n: number, isMine: boolean): PlaylistSummary => ({
   owner: null,
   entryCount: 0,
   lostCount: 0,
+  missingCount: 0,
   durationSeconds: 0,
   artworkAlbumIds: [],
   hasOwnArtwork: false,

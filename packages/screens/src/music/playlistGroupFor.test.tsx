@@ -24,6 +24,7 @@ const MINE: PlaylistSummary = {
   owner: { profileId: '00000000-0000-4000-8000-000000000001', name: 'Dan', colour: '#3a8ee8' },
   entryCount: 3,
   lostCount: 0,
+  missingCount: 0,
   durationSeconds: 600,
   artworkAlbumIds: [],
   hasOwnArtwork: false,

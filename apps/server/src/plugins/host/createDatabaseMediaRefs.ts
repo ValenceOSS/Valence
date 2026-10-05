@@ -13,6 +13,7 @@ import {
 import { AUDIOBOOK_FORMATS } from '@ValenceContracts/schemas/Book';
 import { containsInsensitively } from '@ValenceDatabase/containsInsensitively';
 import { likeLiterally } from '@ValenceDatabase/likeLiterally';
+import { isTheTrackNamed } from '@ValenceServer/music/isTheTrackNamed';
 import type { MediaRef } from '@ValenceSDK/host/ValenceHost';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { PluginHost } from '@ValenceServer/plugins/broker/PluginHost';
@@ -370,12 +371,7 @@ const createDatabaseMediaRefs = (
         .innerJoin(musicAlbum, eq(musicAlbum.id, musicTrack.albumId))
         .innerJoin(musicTrackArtist, eq(musicTrackArtist.mediaItemId, mediaItem.id))
         .innerJoin(musicArtist, eq(musicArtist.id, musicTrackArtist.artistId))
-        .where(
-          and(
-            containsInsensitively(mediaItem.title, likeLiterally(track.title)),
-            containsInsensitively(musicArtist.name, likeLiterally(track.artist)),
-          ),
-        )
+        .where(isTheTrackNamed(track.title, track.artist))
         .limit(MOST_FOUND);
       const onAlbum =
         track.album === null

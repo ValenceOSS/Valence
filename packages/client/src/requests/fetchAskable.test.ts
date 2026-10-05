@@ -5,6 +5,7 @@ import {
   fetchCatalogueGenres,
   fetchDiscover,
   fetchRequestProgress,
+  findMissingAlbums,
   searchAskable,
 } from './fetchAskable';
 
@@ -114,6 +115,29 @@ describe('fetchAskable', () => {
     expect(asked.mock.calls[0]?.[0]).toBe(
       '/api/requests/catalogue/search?query=dune+%26+more&kind=film',
     );
+  });
+
+  it('starts or joins the search for a playlist’s missing albums', async () => {
+    const asked = answering({ isMatching: true, albums: [] });
+
+    expect(await findMissingAlbums('00000000-0000-4000-8000-00000000d0d0')).toEqual({
+      isMatching: true,
+      albums: [],
+    });
+    expect(asked.mock.calls[0]?.[0]).toBe(
+      '/api/requests/missing-albums/00000000-0000-4000-8000-00000000d0d0',
+    );
+    expect(asked.mock.calls[0]?.[1]).toMatchObject({ method: 'POST' });
+  });
+
+  it('fails where the search for missing albums is refused', async () => {
+    const refused = answering({});
+
+    refused.mockImplementation(() =>
+      Promise.resolve(Response.json({ error: 'No such playlist.' }, { status: 404 })),
+    );
+
+    await expect(findMissingAlbums('gone')).rejects.toThrow('No such playlist.');
   });
 
   it('reads a title’s page by its kind and id', async () => {

@@ -1,15 +1,16 @@
-import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
+import { Fragment, useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { View } from 'react-native';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
+import { AMissingSong } from '@ValenceMobile/components/ATrackList/components/AMissingSong/AMissingSong';
 import { ATrackRow } from '@ValenceMobile/components/ATrackRow/ATrackRow';
 import { useTheMusic } from '@ValenceMobile/hooks/useTheMusic';
 import { askAboutATrack } from '@ValenceMobile/music/askAboutATrack';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
-import type { ATrackListProps } from './ATrackList.types';
+import type { ATrackListMissingSong, ATrackListProps } from './ATrackList.types';
 
 /**
  * A list of tracks, any of which plays the list from there, as the web's track lists do: an
@@ -26,6 +27,8 @@ import type { ATrackListProps } from './ATrackList.types';
  * @param onArtist - Told to open an artist.
  * @param onPlaylist - Told to open a playlist made from a track's menu, where there is somewhere to.
  * @param editing - What moving or taking out a track does, for a playlist of somebody's own.
+ * @param missing - Songs the list holds that the library does not have yet, each drawn in its place
+ *   before the track it comes before.
  */
 const ATrackList = ({
   tracks,
@@ -36,6 +39,7 @@ const ATrackList = ({
   onArtist,
   onPlaylist,
   editing,
+  missing = [],
 }: ATrackListProps) => {
   const { player, state } = useTheMusic();
   const favourites = useFavourites(useWatchingProfile());
@@ -123,25 +127,40 @@ const ATrackList = ({
     [player, cache],
   );
 
+  const missingSong = (song: ATrackListMissingSong) => (
+    <AMissingSong
+      key={song.key}
+      title={song.title}
+      artist={song.artist}
+      hasCover={!isAnAlbum}
+      coverUrl={song.coverUrl}
+      onChoose={song.onChoose}
+      onRemove={song.onRemove}
+    />
+  );
+
   return (
     <View>
       {tracks.map((track, at) => (
-        <ATrackRow
-          key={`${track.id}:${at.toString()}`}
-          track={track}
-          at={at}
-          number={isAnAlbum ? (track.trackNumber ?? at + 1) : null}
-          artwork={
-            isAnAlbum || !track.album.hasArtwork
-              ? null
-              : onThisServer(albumArtworkUrl(track.album.id))
-          }
-          isCurrent={currentId === track.id}
-          isLiked={favourites.isKept(track.id)}
-          onPlay={play}
-          onMenu={askAbout}
-        />
+        <Fragment key={`${track.id}:${at.toString()}`}>
+          {missing.filter((song) => song.before === at).map(missingSong)}
+          <ATrackRow
+            track={track}
+            at={at}
+            number={isAnAlbum ? (track.trackNumber ?? at + 1) : null}
+            artwork={
+              isAnAlbum || !track.album.hasArtwork
+                ? null
+                : onThisServer(albumArtworkUrl(track.album.id))
+            }
+            isCurrent={currentId === track.id}
+            isLiked={favourites.isKept(track.id)}
+            onPlay={play}
+            onMenu={askAbout}
+          />
+        </Fragment>
       ))}
+      {missing.filter((song) => song.before >= tracks.length).map(missingSong)}
     </View>
   );
 };

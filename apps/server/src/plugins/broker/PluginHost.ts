@@ -1,6 +1,7 @@
 import type {
   CatalogueHit,
   MediaRef,
+  MissingSong,
   PlaylistContents,
   ProgressEntry,
 } from '@ValenceSDK/host/ValenceHost';
@@ -26,6 +27,10 @@ type PluginHost = {
       profileId: string,
       hit: Pick<CatalogueHit, 'catalogueId' | 'kind'>,
     ) => Promise<{ status: 'made' | 'already' | 'refused' }>;
+    missingAlbums: (
+      profileId: string,
+      playlistId: string,
+    ) => Promise<{ isMatching: boolean; albums: CatalogueHit[] } | null>;
   };
   playlists: {
     list: (profileId: string) => Promise<{ id: string; name: string }[]>;
@@ -33,7 +38,11 @@ type PluginHost = {
       profileId: string,
       playlist: { name: string; description: string | null },
     ) => Promise<{ id: string }>;
-    add: (profileId: string, playlistId: string, mediaIds: readonly string[]) => Promise<void>;
+    add: (
+      profileId: string,
+      playlistId: string,
+      items: readonly (string | MissingSong)[],
+    ) => Promise<void>;
     read: (profileId: string, playlistId: string) => Promise<PlaylistContents | null>;
     drop: (profileId: string, playlistId: string, entryId: string) => Promise<void>;
   };
