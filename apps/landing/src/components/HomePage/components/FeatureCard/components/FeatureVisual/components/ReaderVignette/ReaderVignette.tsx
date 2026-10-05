@@ -7,7 +7,14 @@ import { ReaderScene } from '@ValenceLanding/components/HomePage/components/Feat
  */
 const ReaderVignette = () => (
   <div className="valence-card-shell w-full max-w-[var(--vignette-width)] shadow-[var(--shadow-lifted)]">
-    <LoopingScene scene={ReaderScene} frames={240} width={440} height={275} still={100} />
+    <LoopingScene
+      scene={ReaderScene}
+      frames={240}
+      width={423}
+      height={264}
+      still={100}
+      startsAt={50}
+    />
   </div>
 );
 

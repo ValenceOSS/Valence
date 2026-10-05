@@ -5,7 +5,7 @@ body {
   -webkit-user-select: text;
 }
 
-@custom-variant acted (&:where(.group:is(:hover, :focus-within) *));
+@custom-variant acted (&:where([data-acted] *));
 
 @property --color-pink {
   syntax: '<color>';

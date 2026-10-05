@@ -9,9 +9,10 @@ const DevicesVignette = () => (
   <LoopingScene
     scene={DevicesScene}
     frames={240}
-    width={460}
-    height={236}
+    width={423}
+    height={262}
     still={180}
+    startsAt={0}
     className="w-full max-w-[var(--vignette-width)]"
   />
 );

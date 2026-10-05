@@ -7,7 +7,14 @@ import { HdrScene } from '@ValenceLanding/components/HomePage/components/Feature
  */
 const HdrVignette = () => (
   <div className="valence-card-shell w-full max-w-[var(--vignette-width)] shadow-[var(--shadow-lifted)]">
-    <LoopingScene scene={HdrScene} frames={240} width={416} height={234} still={100} />
+    <LoopingScene
+      scene={HdrScene}
+      frames={240}
+      width={323}
+      height={182}
+      still={100}
+      startsAt={90}
+    />
   </div>
 );
 

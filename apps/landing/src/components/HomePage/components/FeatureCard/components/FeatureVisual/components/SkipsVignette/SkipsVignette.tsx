@@ -7,7 +7,14 @@ import { SkipsScene } from '@ValenceLanding/components/HomePage/components/Featu
  */
 const SkipsVignette = () => (
   <div className="valence-card-shell w-full max-w-[var(--vignette-width)] shadow-[var(--shadow-lifted)]">
-    <LoopingScene scene={SkipsScene} frames={240} width={416} height={234} still={60} />
+    <LoopingScene
+      scene={SkipsScene}
+      frames={240}
+      width={323}
+      height={182}
+      still={60}
+      startsAt={160}
+    />
   </div>
 );
 

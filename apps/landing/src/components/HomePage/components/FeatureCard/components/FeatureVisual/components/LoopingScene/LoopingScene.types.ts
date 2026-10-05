@@ -6,6 +6,7 @@ type LoopingSceneProps = {
   width: number;
   height: number;
   still: number;
+  startsAt?: number;
   className?: string;
 };
 

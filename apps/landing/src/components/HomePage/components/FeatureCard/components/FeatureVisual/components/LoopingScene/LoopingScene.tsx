@@ -20,13 +20,22 @@ const FPS = 30;
  * @param width - How wide the scene is drawn before it is scaled.
  * @param height - How tall the scene is drawn before it is scaled.
  * @param still - The frame shown to somebody who asked for less motion.
+ * @param startsAt - The frame it starts from, so cards side by side are not all in step.
  * @param className - Extra classes for the card's own layout.
  */
-const LoopingScene = ({ scene, frames, width, height, still, className }: LoopingSceneProps) => {
+const LoopingScene = ({
+  scene,
+  frames,
+  width,
+  height,
+  still,
+  startsAt = 0,
+  className,
+}: LoopingSceneProps) => {
   const holder = useRef<HTMLDivElement>(null);
   const isInView = useInView(holder, { amount: 0.2 });
   const isStill = useReducedMotionConfig() === true;
-  const [frame, setFrame] = useState(isStill ? still : 0);
+  const [frame, setFrame] = useState(isStill ? still : startsAt % frames);
   const startedAt = useRef<number | null>(null);
   const shownFrame = useRef(frame);
 
@@ -60,7 +69,7 @@ const LoopingScene = ({ scene, frames, width, height, still, className }: Loopin
   }, [isInView, isStill, frames]);
 
   return (
-    <div ref={holder} className={className}>
+    <div ref={holder} className={className} data-scene-frame="">
       <Thumbnail
         component={scene}
         durationInFrames={frames}
