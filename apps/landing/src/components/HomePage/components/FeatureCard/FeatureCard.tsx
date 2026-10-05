@@ -64,7 +64,7 @@ const FeatureCard = ({ feature, index, figure, shape = 'square' }: FeatureCardPr
     <RevealItem
       index={index}
       className={cn(
-        'valence-surface valence-surface--flat list-none overflow-hidden rounded-3xl',
+        'valence-surface valence-surface--flat valence-feature-card list-none overflow-hidden rounded-3xl',
         SPANS[shape],
       )}
     >
