@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Host } from '@expo/ui/swift-ui';
 import { requireNativeView } from 'expo';
 import { View } from 'react-native';
+import { drawsNatively } from '@ValenceMobile/platform/drawsNatively';
+import { APageColumn } from './components/APageColumn/APageColumn';
 import type { APageScrubberProps, NativePageScrubberProps } from './APageScrubber.types';
 
 const TheColumn = requireNativeView<NativePageScrubberProps>('ValencePageScrubber', 'PageScrubber');
@@ -12,7 +14,8 @@ const TheColumn = requireNativeView<NativePageScrubberProps>('ValencePageScrubbe
  * It springs along as the book turns, and a drag or a tap on it turns the book.
  *
  * Being SwiftUI, it is laid inside a host that carries SwiftUI views into React Native's, and told
- * the room it has, which is measured here since SwiftUI inside the host is offered none.
+ * the room it has, which is measured here since SwiftUI inside the host is offered none. A phone
+ * with no SwiftUI, which is every Android phone, draws the same column in React Native instead.
  *
  * @param pictures - A small picture of every page.
  * @param page - The page showing.
@@ -22,6 +25,10 @@ const TheColumn = requireNativeView<NativePageScrubberProps>('ValencePageScrubbe
  */
 const APageScrubber = ({ onPage, style, ...rest }: APageScrubberProps) => {
   const [room, setRoom] = useState({ height: 0, width: 0 });
+
+  if (!drawsNatively()) {
+    return <APageColumn {...rest} onPage={onPage} style={style} />;
+  }
 
   return (
     <View
