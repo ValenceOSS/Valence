@@ -120,13 +120,13 @@ const DevicesScene = () => {
 
       <SceneCursor
         path={[
-          { at: 0, x: 74, y: 96 },
-          { at: 24, x: 74, y: 96 },
+          { at: 0, x: 74, y: 84 },
+          { at: 24, x: 74, y: 84 },
           { at: 60, x: 60, y: 56 },
           { at: FINDS_IT_DIRECT, x: 62, y: 57 },
           { at: FINDS_IT_DIRECT + 36, x: 58, y: 34 },
           { at: 200, x: 58, y: 34 },
-          { at: 239, x: 74, y: 96 },
+          { at: 239, x: 74, y: 84 },
         ]}
       />
     </AbsoluteFill>

@@ -133,8 +133,8 @@ const SkipsScene = () => {
 
       <SceneCursor
         path={[
-          { at: 0, x: 46, y: 92 },
-          { at: 40, x: 46, y: 92 },
+          { at: 0, x: 46, y: 82 },
+          { at: 40, x: 46, y: 82 },
           { at: REACHES_AT, x: 82, y: 62 },
           { at: PRESSED_AT, x: 82, y: 62, isPressing: true },
           { at: 130, x: 82, y: 62 },
@@ -147,7 +147,7 @@ const SkipsScene = () => {
             holdsUntil: LETS_GO_AT,
           },
           { at: LETS_GO_AT, x: playheadX, y: BAR_DOWN },
-          { at: 239, x: 46, y: 92 },
+          { at: 239, x: 46, y: 82 },
         ]}
       />
     </AbsoluteFill>

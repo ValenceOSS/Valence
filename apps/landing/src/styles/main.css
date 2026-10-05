@@ -35,7 +35,12 @@ body {
 }
 
 .group:is(:hover, :focus-within) .valence-iso__plane {
-  transform: rotateX(10deg) rotateY(-12deg) translateY(-4px) scale(0.93);
+  transform: rotateX(calc(var(--tilt-y, 0.83) * 12deg)) rotateY(calc(var(--tilt-x, 0.86) * -14deg))
+    translateY(-4px) scale(0.93);
+}
+
+.group:hover .valence-iso__plane {
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (max-width: 639px) {
