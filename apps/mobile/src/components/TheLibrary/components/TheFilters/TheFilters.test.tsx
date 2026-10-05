@@ -1,4 +1,7 @@
 import { fireEvent, render, userEvent } from '@testing-library/react-native';
+import { chooseFromTheMenu } from '@ValenceMobile/testing/chooseFromTheMenu';
+import { theMenu } from '@ValenceMobile/testing/theMenu';
+import { theMenuChoices } from '@ValenceMobile/testing/theMenuChoices';
 import { TheFilters } from './TheFilters';
 
 const GROUPS = [
@@ -66,10 +69,10 @@ describe('TheFilters', () => {
       />,
     );
 
-    expect(drawn.queryByText('Release date')).toBeNull();
+    expect(() => theMenu('Order')).toThrow();
 
     await userEvent.press(drawn.getByRole('button', { name: 'Order, Recently added' }));
-    await userEvent.press(drawn.getByText('Release date'));
+    await chooseFromTheMenu('Order', 'released');
 
     expect(onArrange).toHaveBeenCalledWith({ order: 'released', isHidingWatched: false });
   });
@@ -112,6 +115,6 @@ describe('TheFilters', () => {
     await userEvent.press(drawn.getByRole('button', { name: 'Order, Recently added' }));
 
     expect(drawn.queryByText('Comedy')).toBeNull();
-    expect(drawn.getByText('Release date')).toBeTruthy();
+    expect(theMenuChoices('Order')).toContain('Release date');
   });
 });

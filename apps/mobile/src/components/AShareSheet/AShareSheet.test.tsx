@@ -4,6 +4,7 @@ import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { createShare } from '@ValenceClient/sharing/fetchShares';
 import { aBook } from '@ValenceMobile/testing/aBook';
+import { chooseFromTheMenu } from '@ValenceMobile/testing/chooseFromTheMenu';
 import { AShareSheet } from './AShareSheet';
 
 jest.mock('@ValenceClient/sharing/fetchShares', () => ({
@@ -41,7 +42,7 @@ describe('AShareSheet', () => {
 
     expect(drawn.getByText('Share Dune')).toBeTruthy();
 
-    await userEvent.press(drawn.getByText('A day'));
+    await chooseFromTheMenu('Link expires after', '1');
     await userEvent.press(drawn.getByText('Create share link'));
 
     expect(createShare).toHaveBeenCalledWith(

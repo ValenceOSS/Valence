@@ -1,4 +1,7 @@
-import { render, userEvent } from '@testing-library/react-native';
+import { render } from '@testing-library/react-native';
+import { chooseFromTheMenu } from '@ValenceMobile/testing/chooseFromTheMenu';
+import { theMenu } from '@ValenceMobile/testing/theMenu';
+import { theMenuChoices } from '@ValenceMobile/testing/theMenuChoices';
 import { AChoiceMenu } from './AChoiceMenu';
 
 const LASTS = [
@@ -8,24 +11,35 @@ const LASTS = [
 ] as const;
 
 describe('AChoiceMenu', () => {
-  it('offers every choice, however many there are', async () => {
-    const drawn = await render(
+  it('offers every choice, however many there are, showing the one chosen', async () => {
+    await render(
       <AChoiceMenu label="Link works for" items={LASTS} value="week" onSelect={jest.fn()} />,
     );
 
-    expect(drawn.getByLabelText('Link works for')).toBeTruthy();
-    expect(drawn.getByText('Until I stop it')).toBeTruthy();
+    expect(theMenuChoices('Link works for')).toEqual(['A day', 'A week', 'Until I stop it']);
+    expect(theMenu('Link works for').props.selection).toBe('week');
   });
 
   it('says which was chosen', async () => {
     const onSelect = jest.fn();
-    const drawn = await render(
+    await render(
       <AChoiceMenu label="Link works for" items={LASTS} value="week" onSelect={onSelect} />,
     );
 
-    await userEvent.press(drawn.getByText('A day'));
+    await chooseFromTheMenu('Link works for', 'day');
 
     expect(onSelect).toHaveBeenCalledWith('day');
+  });
+
+  it('ignores a choice it never offered', async () => {
+    const onSelect = jest.fn();
+    await render(
+      <AChoiceMenu label="Link works for" items={LASTS} value="week" onSelect={onSelect} />,
+    );
+
+    await chooseFromTheMenu('Link works for', 'year');
+
+    expect(onSelect).not.toHaveBeenCalled();
   });
 
   it('sets a display name so devtools can identify it', () => {

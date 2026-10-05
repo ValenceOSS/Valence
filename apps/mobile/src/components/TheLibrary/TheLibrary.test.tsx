@@ -11,6 +11,8 @@ import {
 } from '@ValenceClient/library/browseArrangementPreference';
 import { fetchSession } from '@ValenceClient/session/auth';
 import { useTheSideStrip } from '@ValenceMobile/hooks/useTheSideStrip';
+import { chooseFromTheMenu } from '@ValenceMobile/testing/chooseFromTheMenu';
+import { theMenuChoices } from '@ValenceMobile/testing/theMenuChoices';
 import { TheLibrary } from './TheLibrary';
 import type { TheLibraryProps } from './TheLibrary.types';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -232,7 +234,10 @@ describe('TheLibrary', () => {
     const drawn = await theLibrary();
 
     await userEvent.press(await drawn.findByText('Films'));
-    await userEvent.press(await drawn.findByText('Classics'));
+    await waitFor(() => {
+      expect(theMenuChoices('Which library')).toContain('Classics');
+    });
+    await chooseFromTheMenu('Which library', 'two');
 
     await waitFor(() => {
       expect(fetchLibraryItems).toHaveBeenLastCalledWith('two', expect.anything());
@@ -393,7 +398,7 @@ describe('TheLibrary', () => {
 
     await userEvent.press(await drawn.findByText('Shows'));
     await userEvent.press(await drawn.findByRole('button', { name: 'Order, Recently added' }));
-    await userEvent.press(drawn.getByText('Title'));
+    await chooseFromTheMenu('Order', 'title');
 
     await waitFor(() => {
       expect(postersOf(drawn, ['Long Running', 'Already Over'])).toEqual([
