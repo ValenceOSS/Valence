@@ -227,7 +227,7 @@ describe('TheLibrary', () => {
     jest
       .mocked(fetchLibraries)
       .mockResolvedValue([aLibrary('one', 'Films'), aLibrary('two', 'Classics')]);
-    jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [], total: 0 });
+    jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [aTitle('Arrival')], total: 1 });
 
     const drawn = await theLibrary();
 
@@ -239,16 +239,17 @@ describe('TheLibrary', () => {
     });
   });
 
-  it('says a library is empty rather than showing nothing at all', async () => {
+  it('offers no section for a library with nothing in it yet', async () => {
     jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [], total: 0 });
 
     const drawn = await theLibrary();
 
-    await userEvent.press(await drawn.findByText('Films'));
+    await waitFor(() => {
+      expect(fetchLibraryItems).toHaveBeenCalled();
+    });
 
-    expect(await drawn.findByText('No films yet')).toBeTruthy();
-    expect(drawn.getByText('Ask the server admin to scan it.')).toBeTruthy();
+    expect(drawn.queryByText('Films')).toBeNull();
   });
 
   it('says so where the libraries could not be read', async () => {

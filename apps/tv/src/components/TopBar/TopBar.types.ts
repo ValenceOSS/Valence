@@ -12,6 +12,8 @@ type TopBarProps = {
   isArriving: boolean;
   onFaceAt: (at: Spot) => void;
   onMarkAt: (at: Spot) => void;
+  hasFilms: boolean;
+  hasShows: boolean;
   hasMusic: boolean;
   hasBooks: boolean;
 };

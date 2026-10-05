@@ -15,15 +15,17 @@ import type { Tab } from '@ValenceTv/navigation/Tab';
 import type { TopBarProps } from './TopBar.types';
 import { say } from '@ValenceI18n/say';
 
-const TABS: readonly { id: Tab; label: string; icon: typeof Home }[] = [
-  { id: 'home', label: say('common.home'), icon: Home },
-  { id: 'films', label: say('common.films'), icon: Film },
-  { id: 'shows', label: say('common.shows'), icon: Monitor },
-];
+type TopTab = { id: Tab; label: string; icon: typeof Home };
 
-const MUSIC: (typeof TABS)[number] = { id: 'music', label: say('common.music'), icon: MusicNote };
+const HOME: TopTab = { id: 'home', label: say('common.home'), icon: Home };
 
-const BOOKS: (typeof TABS)[number] = { id: 'books', label: say('common.books'), icon: Headphones };
+const FILMS: TopTab = { id: 'films', label: say('common.films'), icon: Film };
+
+const SHOWS: TopTab = { id: 'shows', label: say('common.shows'), icon: Monitor };
+
+const MUSIC: TopTab = { id: 'music', label: say('common.music'), icon: MusicNote };
+
+const BOOKS: TopTab = { id: 'books', label: say('common.books'), icon: Headphones };
 
 const MARK = { width: 54, height: 40 };
 
@@ -50,6 +52,8 @@ const ROUND_SIZE = 60;
  *   drawn here.
  * @param onFaceAt - Told where the face sits, for it to fly to as somebody signs in.
  * @param onMarkAt - Told where Valence's mark sits, for it to fly to as somebody signs in.
+ * @param hasFilms - Whether there are films to watch, which adds their part to the capsule.
+ * @param hasShows - Whether there are programmes to watch, which adds their part to the capsule.
  * @param hasMusic - Whether there is music to listen to, which adds its part to the capsule.
  * @param hasBooks - Whether there are audiobooks to listen to, which adds their part to the capsule.
  */
@@ -62,12 +66,20 @@ const TopBar = ({
   isArriving,
   onFaceAt,
   onMarkAt,
+  hasFilms,
+  hasShows,
   hasMusic,
   hasBooks,
 }: TopBarProps) => {
   const tabs = useMemo(
-    () => [...TABS, ...(hasMusic ? [MUSIC] : []), ...(hasBooks ? [BOOKS] : [])],
-    [hasMusic, hasBooks],
+    () => [
+      HOME,
+      ...(hasFilms ? [FILMS] : []),
+      ...(hasShows ? [SHOWS] : []),
+      ...(hasMusic ? [MUSIC] : []),
+      ...(hasBooks ? [BOOKS] : []),
+    ],
+    [hasFilms, hasShows, hasMusic, hasBooks],
   );
   const { ref: holdFace, onLayout: faceLaidOut } = useReportSpot(onFaceAt);
   const { ref: holdMark, onLayout: markLaidOut } = useReportSpot(onMarkAt);

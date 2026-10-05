@@ -71,6 +71,7 @@ import type { MusicItem } from '@ValenceTv/music/MusicItem';
 import type { HWEvent } from 'react-native';
 import type { SignedInProps } from './SignedIn.types';
 import { say } from '@ValenceI18n/say';
+import { useStockedKinds } from '@ValenceClient/library/useStockedKinds';
 
 const WATCHABLE = new Set(['movies', 'shows']);
 
@@ -257,6 +258,9 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     [libraries.data],
   );
 
+  const stock = useStockedKinds();
+  const hasFilms = stock?.films !== false;
+  const hasShows = stock?.shows !== false;
   const hasMusicLibrary = useMemo(
     () => (libraries.data ?? []).some((one) => one.kind === 'music'),
     [libraries.data],
@@ -277,10 +281,15 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
   }, []);
 
   useEffect(() => {
-    if ((!hasMusic && tab === 'music') || (!hasBooks && tab === 'books')) {
+    if (
+      (!hasMusic && tab === 'music') ||
+      (!hasBooks && tab === 'books') ||
+      (!hasFilms && tab === 'films') ||
+      (!hasShows && tab === 'shows')
+    ) {
       setTab('home');
     }
-  }, [hasMusic, hasBooks, tab]);
+  }, [hasMusic, hasBooks, hasFilms, hasShows, tab]);
 
   const open = useCallback((place: Place) => {
     setOpened((was) => [...was, place]);
@@ -747,6 +756,8 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
           isArriving={isArriving}
           onFaceAt={onFaceAt}
           onMarkAt={onMarkAt}
+          hasFilms={hasFilms}
+          hasShows={hasShows}
           hasMusic={hasMusic}
           hasBooks={hasBooks}
         />

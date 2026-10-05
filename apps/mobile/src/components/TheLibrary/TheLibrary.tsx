@@ -62,6 +62,7 @@ import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { Arrangement } from '@ValenceClient/library/browseArrangementPreference';
 import type { TheLibraryProps } from './TheLibrary.types';
 import { say } from '@ValenceI18n/say';
+import { useStockedKinds } from '@ValenceClient/library/useStockedKinds';
 
 const EVERY = 'every';
 
@@ -330,6 +331,7 @@ const TheLibrary = ({
       watchable: [...filmLibraries, ...programmeLibraries].map((library) => library.id),
     };
   }, [libraries.data]);
+  const stock = useStockedKinds();
   const drawsItsOwn = part === 'home' || part === 'music' || part === 'books';
   const ofThisKind = useMemo(
     () => (part === 'films' ? films : part === 'shows' ? programmes : NO_LIBRARIES),
@@ -341,12 +343,16 @@ const TheLibrary = ({
   const isFiltered = filters.selected.size > 0;
   const parts = [
     { id: 'home', label: say('common.home'), icon: HomeFilled },
-    ...(films.length > 0 ? [{ id: 'films', label: say('common.films'), icon: FilmFilled }] : []),
-    ...(programmes.length > 0
+    ...(films.length > 0 && stock?.films !== false
+      ? [{ id: 'films', label: say('common.films'), icon: FilmFilled }]
+      : []),
+    ...(programmes.length > 0 && stock?.shows !== false
       ? [{ id: 'shows', label: say('common.shows'), icon: MonitorFilled }]
       : []),
-    ...(hasMusic ? [{ id: 'music', label: say('common.music'), icon: MusicNoteFilled }] : []),
-    ...(bookLibraries.length > 0
+    ...(hasMusic && stock?.music !== false
+      ? [{ id: 'music', label: say('common.music'), icon: MusicNoteFilled }]
+      : []),
+    ...(bookLibraries.length > 0 && stock?.books !== false
       ? [{ id: 'books', label: say('common.books'), icon: BookOpenFilled }]
       : []),
   ];
