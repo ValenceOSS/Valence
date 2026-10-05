@@ -130,6 +130,22 @@ describe('createMissingAlbumMatcher', () => {
     expect(find.mock.calls[1]?.[0]).toEqual([expect.objectContaining({ title: 'Glue' })]);
   });
 
+  it('starts afresh when an album gains a missing song, asking only about what is new', async () => {
+    const { held, matcher, find, finish } = build([missing('Apricots', 'Isles')]);
+
+    await matcher.match(VIEWER, PLAYLIST_ID);
+    await finish();
+    held.songs = [missing('Apricots', 'Isles'), missing('Atlas', 'Isles')];
+
+    const again = await matcher.match(VIEWER, PLAYLIST_ID);
+
+    expect(again?.albums.map((album) => [album.songCount, album.hit?.title])).toEqual([
+      [2, 'Isles'],
+    ]);
+    expect(again?.isMatching).toBe(false);
+    expect(find).toHaveBeenCalledOnce();
+  });
+
   it('is done at once where every album is already known', async () => {
     const { held, matcher, find, finish } = build([missing('Apricots', 'Isles')]);
 

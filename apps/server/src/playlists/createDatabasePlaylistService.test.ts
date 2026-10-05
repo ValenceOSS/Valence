@@ -188,6 +188,30 @@ describe('createDatabasePlaylistService', { timeout: STARTING_POSTGRES_MS }, () 
     expect(read?.playlist.missingCount).toBe(0);
   });
 
+  it('looks again when a song in the library is retagged to the one missing', async () => {
+    const { db, viewer, playlists, id } = await aPlaylist();
+
+    await playlists.add(viewer, id, [
+      { title: 'Renamed Later', artist: 'Low', album: null, releaseId: null },
+    ]);
+    await playlists.read(viewer, id);
+
+    const [song] = await db
+      .select({ id: mediaItem.id })
+      .from(mediaItem)
+      .where(eq(mediaItem.libraryId, 'music'))
+      .limit(1);
+
+    await db
+      .update(mediaItem)
+      .set({ title: 'Renamed Later', modifiedAtMs: Date.now() })
+      .where(eq(mediaItem.id, song?.id ?? ''));
+
+    const read = await playlists.read(viewer, id);
+
+    expect(read?.playlist.missingCount).toBe(0);
+  });
+
   it('leaves a missing song missing when somebody else reads the playlist', async () => {
     const { viewer, playlists, store, artist, bare, id } = await aPlaylist();
 

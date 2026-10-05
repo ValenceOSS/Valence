@@ -3952,6 +3952,10 @@ const app = createApp({
     playlists: musicServices.playlists,
     find: (songs) => findAlbumsOfSongs(musicWeb, songs),
     onDone: (viewer, playlist, tally) => {
+      if (tally.found === 0) {
+        return;
+      }
+
       void (async () => {
         await notifyHousehold({
           store: notifications,

@@ -146,7 +146,9 @@ const createMissingAlbumMatcher = ({
     const grouped = albumsOfMissingSongs(
       read.entries.flatMap((entry) => (entry.missing === null ? [] : [entry.missing])),
     );
-    const keys = grouped.map((album) => album.key).join('\n');
+    const keys = grouped
+      .map((album) => `${album.key}\u0000${album.songCount.toString()}`)
+      .join('\n');
     const runKey = `${viewer.profileId ?? viewer.accountId}:${playlistId}`;
     const running = runs.get(runKey);
 
