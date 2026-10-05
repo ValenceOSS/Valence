@@ -5,6 +5,7 @@ type SliderTone = 'default' | 'overlay' | 'glass';
 type SliderProps = {
   label: string;
   value: number;
+  min?: number;
   max: number;
   step?: number;
   onValueChange: (value: number) => void;

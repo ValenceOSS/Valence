@@ -45,6 +45,8 @@ import { authenticateWithPasskey, signInWithUsernameOrEmail } from '@ValenceClie
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { PasskeyFirst } from './components/PasskeyFirst/PasskeyFirst';
 import type { ProfileGateProps } from './ProfileGate.types';
+import { Badge } from '@ValenceUI/Badge';
+import { useIsDemoServer } from '@ValenceClient/about/useIsDemoServer';
 import { say } from '@ValenceI18n/say';
 
 const OURS = 'valence';
@@ -114,6 +116,8 @@ const ProfileGate = ({
   leadsWithPasskey = false,
   startsAs = null,
 }: ProfileGateProps) => {
+  const isDemoServer = useIsDemoServer();
+  const [isNaming, setIsNaming] = useState(false);
   const [isHandingOver, setIsHandingOver] = useState(false);
   const asking = useQuery(sessionQueries.wayIn());
   const everyone = asking.data?.profiles ?? null;
@@ -422,7 +426,7 @@ const ProfileGate = ({
         )}
       </motion.p>
 
-      {!isTitleOver ? null : asking.isError ? (
+      {!isTitleOver ? null : asking.isError || isNaming ? (
         <div className="flex w-full max-w-sm flex-col items-center gap-6">
           <motion.h1
             initial={{ opacity: 0, y: prefersReducedMotion === true ? 0 : 8 }}
@@ -524,6 +528,8 @@ const ProfileGate = ({
                 {say('common.whoIsWatching')}
               </motion.h1>
 
+              {isDemoServer ? <Badge size="sm">{say('common.demoMode')}</Badge> : null}
+
               <motion.div
                 variants={revealVariants(prefersReducedMotion)}
                 transition={revealTransition(prefersReducedMotion)}
@@ -571,6 +577,11 @@ const ProfileGate = ({
                           setHasLeftWall(true);
                           setChosen(profile);
                           setProblem(null);
+
+                          if (isDemoServer) {
+                            setIsSubmitting(true);
+                            void signInAsProfile(profile.id, '').then(settle);
+                          }
                         }}
                         {...(prefersReducedMotion === true
                           ? {}
@@ -620,6 +631,18 @@ const ProfileGate = ({
                   }}
                 />
               </motion.div>
+
+              {!isDemoServer ? null : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setIsNaming(true);
+                  }}
+                >
+                  {say('screens.profileGate.signInWithAUsername')}
+                </Button>
+              )}
 
               {everyone.length !== 0 ? null : (
                 <motion.p

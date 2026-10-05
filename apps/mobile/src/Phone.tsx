@@ -15,6 +15,7 @@ import { TheFirstScreenWatch } from '@ValenceMobile/components/ASplash/component
 import { TheFlyingMark } from '@ValenceMobile/components/TheFlyingMark/TheFlyingMark';
 import { TheChosenAppearance } from '@ValenceMobile/components/TheChosenAppearance/TheChosenAppearance';
 import { TheHousehold } from '@ValenceMobile/components/TheHousehold/TheHousehold';
+import { IfThisAppIsOn } from '@ValenceMobile/components/IfThisAppIsOn/IfThisAppIsOn';
 import { WhereIsYourValence } from '@ValenceMobile/components/WhereIsYourValence/WhereIsYourValence';
 
 const answers = buildQueryClient();
@@ -90,11 +91,17 @@ const Phone = () => {
                 }}
               />
             ) : (
-              <TheHousehold
+              <IfThisAppIsOn
                 onElsewhere={() => {
                   setIsAsking(true);
                 }}
-              />
+              >
+                <TheHousehold
+                  onElsewhere={() => {
+                    setIsAsking(true);
+                  }}
+                />
+              </IfThisAppIsOn>
             )}
             <TheFlyingMark />
             <TheChosenAppearance />

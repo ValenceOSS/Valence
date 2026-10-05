@@ -19,6 +19,7 @@ import { theServersOrigin } from '@ValenceTv/platform/theServersOrigin';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { AccountProps } from './Account.types';
 import { say } from '@ValenceI18n/say';
+import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 
 /**
  * Who is watching on this television and which Valence it is, with the two ways out: signing out,
@@ -29,7 +30,7 @@ import { say } from '@ValenceI18n/say';
  * along that row reaches them. Beneath them are what this viewer has lately watched, the pages
  * plugins on this server add to an account, each opening on its own, everywhere the account is
  * signed in, and any themes those plugins offer. Its foot names this build and the server's, as
- * the desktop app's account dialog does.
+ * the desktop app's account dialog does. On a shared demo account it says so beneath the server, and leaves out where it is signed in.
  *
  * @param user - Who is signed in.
  * @param onChangeServer - Told when somebody wants a different Valence.
@@ -58,6 +59,7 @@ const AccountPage = ({
   const profile = watching.data ?? null;
   const server = useQuery(aboutQueries.server());
   const mayRequest = useMayRequest();
+  const { isDemo } = useWhatIMayDo();
   const origin = theServersOrigin();
 
   return (
@@ -70,6 +72,8 @@ const AccountPage = ({
           ? say('tv.account.watchingOnThisValence')
           : say('common.watchingOnAddress', { address: origin })}
       </Text>
+
+      {isDemo ? <Text style={styles.server}>{say('common.thisIsASharedDemoAccount')}</Text> : null}
 
       <TVFocusGuideView autoFocus style={styles.catches}>
         <View style={styles.actions}>
@@ -120,7 +124,7 @@ const AccountPage = ({
 
       <PluginPages onOpen={onOpenPluginPage} onFocus={upToBar.leave} />
 
-      <YourDevices onFocus={upToBar.leave} />
+      {isDemo ? null : <YourDevices onFocus={upToBar.leave} />}
 
       <ThemeChoice onFocus={upToBar.leave} />
 

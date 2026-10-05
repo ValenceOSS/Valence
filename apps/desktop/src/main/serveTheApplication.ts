@@ -5,6 +5,7 @@ import { theServerAddress } from '@ValenceDesktop/main/theServerAddress';
 import { aHeldFile } from '@ValenceDesktop/main/aHeldFile';
 import { stitchTheRest } from '@ValenceDesktop/main/stitchTheRest';
 import type { ServerReach } from '@ValenceDesktop/main/theServerReach';
+import { CLIENT_KIND_HEADER } from '@ValenceContracts/constants/CLIENT_KIND_HEADER';
 import { say } from '@ValenceI18n/say';
 
 const SCHEME = 'valence';
@@ -197,6 +198,9 @@ const untilLetGo = (answer: Response, letGo: () => void): Response => {
  * own scheme, serves only this client's own bundle, and is the only route to the server. The page
  * could not have got here another way.
  *
+ * It says which app is asking as well, so a server whose administrator has turned the desktop app
+ * off can say so.
+ *
  * @param from - The headers the page sent.
  * @param origin - The server being asked.
  * @returns What to send onward.
@@ -205,7 +209,12 @@ const askingAs = (from: Headers, origin: string): Record<string, string> => {
   const carried = worthCarrying(from);
   const range = aSliceOf(carried['range']);
 
-  return { ...carried, ...(range === undefined ? {} : { range }), origin };
+  return {
+    ...carried,
+    ...(range === undefined ? {} : { range }),
+    origin,
+    [CLIENT_KIND_HEADER]: 'desktop',
+  };
 };
 
 /**

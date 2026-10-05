@@ -4,7 +4,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { endDevice, endOtherDevices } from '@ValenceClient/account/fetchDevices';
 import type { Device } from '@ValenceClient/account/fetchDevices';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { YourDevices } from '@ValenceTv/screens/Account/components/YourDevices/YourDevices';
+
+jest.mock('@ValenceClient/session/auth', () => ({
+  fetchSession: () => new Promise(() => undefined),
+}));
 
 jest.mock('@ValenceClient/account/fetchDevices', () => ({
   fetchDevices: jest.fn(() => new Promise(() => undefined)),
@@ -21,19 +26,24 @@ const aDevice = (id: string, name: string, isCurrent = false): Device => ({
   isCurrent,
 });
 
-const aCacheHolding = (devices: Device[]): QueryClient => {
+const aCacheHolding = (devices: Device[], isDemo = false): QueryClient => {
   const cache = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Infinity, gcTime: Infinity } },
   });
 
   cache.setQueryData(['account', 'devices'], devices);
+  cache.setQueryData(sessionQueries.permissions().queryKey, {
+    permissions: [],
+    isAdministrator: false,
+    isDemo,
+  });
 
   return cache;
 };
 
-const drawWith = (devices: Device[]) =>
+const drawWith = (devices: Device[], isDemo = false) =>
   render(
-    <QueryClientProvider client={aCacheHolding(devices)}>
+    <QueryClientProvider client={aCacheHolding(devices, isDemo)}>
       <YourDevices onFocus={jest.fn()} />
     </QueryClientProvider>,
   );
@@ -132,6 +142,16 @@ describe('YourDevices', () => {
     await waitFor(() => {
       expect(endOtherDevices).toHaveBeenCalled();
     });
+  });
+
+  it('ends nothing on a shared demo account', async () => {
+    const drawn = await drawWith(
+      [aDevice('here', 'Apple TV', true), aDevice('phone', 'iPhone')],
+      true,
+    );
+
+    expect(drawn.queryByRole('button', { name: /Sign out/ })).toBeNull();
+    expect(drawn.getByText(/Apple TV/)).toBeTruthy();
   });
 
   it('draws nothing until the devices are read', async () => {

@@ -27,6 +27,23 @@ describe('toCueCss', () => {
     expect(css).toContain('color: rgba(255, 255, 255, 1);');
   });
 
+  it('draws the weight chosen, medium unless told otherwise', () => {
+    expect(toCueCss(DEFAULT_CAPTION_STYLE)).toContain('font-weight: 500;');
+    expect(toCueCss({ ...DEFAULT_CAPTION_STYLE, fontWeight: 'light' })).toContain(
+      'font-weight: 300;',
+    );
+  });
+
+  it('draws small capitals in the plain face, and every other font as itself', () => {
+    expect(toCueCss({ ...DEFAULT_CAPTION_STYLE, fontFamily: 'smallCapitals' })).toContain(
+      'font-variant: small-caps;',
+    );
+    expect(toCueCss({ ...DEFAULT_CAPTION_STYLE, fontFamily: 'typewriter' })).toContain(
+      '"Courier New"',
+    );
+    expect(toCueCss(DEFAULT_CAPTION_STYLE)).toContain('font-variant: normal;');
+  });
+
   it('carries background opacity separately from background colour', () => {
     const css = toCueCss({ ...DEFAULT_CAPTION_STYLE, backgroundOpacity: 0 });
 

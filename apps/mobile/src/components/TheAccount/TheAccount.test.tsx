@@ -1,4 +1,4 @@
-import { render, userEvent } from '@testing-library/react-native';
+import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
@@ -8,12 +8,15 @@ import { fetchPluginContributions } from '@ValenceClient/plugins/fetchPluginCont
 import { somePluginContributions } from '@ValenceClient/testing/somePluginContributions';
 import { fetchProfiles } from '@ValenceClient/profiles/fetchProfiles';
 import { aProfile } from '@ValenceMobile/testing/aProfile';
+import { fetchMyPermissions } from '@ValenceClient/session/fetchMyPermissions';
 import { TheAccount } from './TheAccount';
 
 jest.mock('@ValenceClient/session/auth', () => ({
   ...jest.requireActual<object>('@ValenceClient/session/auth'),
   fetchSession: jest.fn(),
 }));
+
+jest.mock('@ValenceClient/session/fetchMyPermissions');
 
 jest.mock('@ValenceClient/plugins/fetchPluginContributions', () => ({
   fetchPluginContributions: jest.fn(),
@@ -29,6 +32,7 @@ beforeEach(() => {
   jest.mocked(fetchSession).mockResolvedValue(aSessionUser({ username: 'dan' }));
   jest.mocked(fetchPluginContributions).mockResolvedValue(somePluginContributions());
   jest.mocked(fetchProfiles).mockResolvedValue([aProfile({ name: 'Dan' })]);
+  jest.mocked(fetchMyPermissions).mockResolvedValue({ permissions: [], isAdministrator: false });
 });
 
 /**
@@ -103,6 +107,31 @@ describe('TheAccount', () => {
 
     expect(onElsewhere).toHaveBeenCalled();
     expect(onOut).toHaveBeenCalled();
+  });
+
+  it('tells whoever is on a shared demo account that it is one', async () => {
+    jest
+      .mocked(fetchMyPermissions)
+      .mockResolvedValue({ permissions: [], isAdministrator: false, isDemo: true });
+
+    const drawn = await theAccount();
+
+    expect(
+      await drawn.findByText(
+        'This is a shared demo account. Some settings are switched off, and anything you change is reset regularly.',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('says nothing of a demo to any other account', async () => {
+    const drawn = await theAccount();
+
+    expect(await drawn.findByText('Dan')).toBeTruthy();
+    await waitFor(() => {
+      expect(fetchMyPermissions).toHaveBeenCalled();
+    });
+
+    expect(drawn.queryByText(/shared demo account/)).toBeNull();
   });
 
   it('sets a display name so devtools can identify it', () => {

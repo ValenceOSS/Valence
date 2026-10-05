@@ -181,6 +181,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           previewQuality: current.previewQuality,
           certificationRegion: current.certificationRegion,
           showsProfilesBeforeSignIn: current.showsProfilesBeforeSignIn,
+          allowedApps: current.allowedApps,
           fetchesCatalogueTrailers: current.fetchesCatalogueTrailers,
           fetchesMusicDetails: current.fetchesMusicDetails,
           requestReleaseTypes: current.requestReleaseTypes,
@@ -231,6 +232,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
       ...(patch.certificationRegion === undefined
         ? {}
         : { certificationRegion: patch.certificationRegion.toUpperCase() }),
+      ...(patch.allowedApps === undefined ? {} : { allowedApps: patch.allowedApps }),
       ...(patch.showsProfilesBeforeSignIn === undefined
         ? {}
         : { showsProfilesBeforeSignIn: patch.showsProfilesBeforeSignIn }),
@@ -274,6 +276,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         previewQuality: updated.previewQuality,
         certificationRegion: updated.certificationRegion,
         showsProfilesBeforeSignIn: updated.showsProfilesBeforeSignIn,
+        allowedApps: updated.allowedApps,
         fetchesCatalogueTrailers: updated.fetchesCatalogueTrailers,
         fetchesMusicDetails: updated.fetchesMusicDetails,
         requestReleaseTypes: updated.requestReleaseTypes,

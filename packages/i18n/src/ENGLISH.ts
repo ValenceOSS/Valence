@@ -263,6 +263,12 @@ const ENGLISH = {
   'client.playback.fetchSegments.skipCredits': 'Skip Credits',
   'client.playback.fetchSegments.skipIntro': 'Skip Intro',
   'client.playback.fetchSegments.skipRecap': 'Skip Recap',
+  'client.playback.nameCaptionFont.condensed': 'Condensed',
+  'client.playback.nameCaptionFont.script': 'Script',
+  'client.playback.nameCaptionFont.smallCapitals': 'Small capitals',
+  'client.playback.nameCaptionFont.typewriter': 'Typewriter',
+  'client.playback.nameCaptionWeight.bold': 'Bold',
+  'client.playback.nameCaptionWeight.regular': 'Regular',
   'client.playback.qualityStepDetail.costNoSmallerThanTheOriginal':
     '{cost} · no smaller than the original',
   'client.playback.qualityStepDetail.noSmallerThanTheOriginal': 'no smaller than the original',
@@ -683,6 +689,7 @@ const ENGLISH = {
   'common.deleteName': 'Delete {name}?',
   'common.deletePlaylist': 'Delete playlist',
   'common.deleteTitle': 'Delete {title}?',
+  'common.demoMode': 'Demo mode',
   'common.description': 'Description',
   'common.descriptionThisCannotBeUndone': '{description} This can’t be undone.',
   'common.details': 'Details',
@@ -785,6 +792,8 @@ const ENGLISH = {
   'common.goToAlbum': 'Go to album',
   'common.goToArtist': 'Go to artist',
   'common.green': 'Green',
+  'common.heavy': 'Heavy',
+  'common.help': 'Help',
   'common.here': 'Here',
   'common.hidden': 'Hidden',
   'common.hiddenHiddenAt': 'Hidden {hiddenAt}',
@@ -1232,6 +1241,7 @@ const ENGLISH = {
   'common.setUp': 'Set up',
   'common.shadow': 'Shadow',
   'common.share': 'Share',
+  'common.sharedDemo': 'Shared demo',
   'common.sharedLinks': 'Share links',
   'common.sharedWithYou': 'Shared with you',
   'common.shareLink': 'Share link',
@@ -1368,8 +1378,11 @@ const ENGLISH = {
   'common.theWholeProgramme': 'The whole programme',
   'common.thingsYouHaveTakenOutOf':
     'Titles you’ve hidden from browsing. You can unhide anything here.',
+  'common.thisAppIsTurnedOffHere': 'This app is turned off here',
   'common.thisCollectionCouldNotBeRead': 'Couldn’t load this collection.',
   'common.thisDevice': 'This device',
+  'common.thisIsASharedDemoAccount':
+    'This is a shared demo account. Some settings are switched off, and anything you change is reset regularly.',
   'common.thisItem': 'This item',
   'common.thisLinkNoLongerWorks': 'This link no longer works.',
   'common.thisServer': 'This server',
@@ -1450,6 +1463,7 @@ const ENGLISH = {
   'common.webhooks': 'Webhooks',
   'common.week': 'Week',
   'common.weekly': 'Weekly',
+  'common.weight': 'Weight',
   'common.welcomeToName': 'Welcome to {name}',
   'common.whatItHasDoneCouldNotBeRead': 'Couldn’t load the history.',
   'common.whatThereIsToAskFor': 'Available to request',
@@ -1467,6 +1481,8 @@ const ENGLISH = {
   'common.white': 'White',
   'common.whoCanUseIt': 'Who can use it',
   'common.whoeverIsUsingItWillHaveToSignIn': 'Anyone using it will need to sign in again.',
+  'common.whoeverRunsThisServerHasTurned':
+    'Whoever runs this server has turned this app off. Valence still works in a web browser.',
   'common.whoIsWatching': 'Who’s watching?',
   'common.wholeLibraries': 'Whole libraries',
   'common.wholeSeries': 'Whole series',
@@ -1786,6 +1802,7 @@ const ENGLISH = {
     'Passkeys need a secure connection. Open Valence over HTTPS or on localhost to use one.',
   'desktop.preload.preload.thisAppDidNotAnswerAbout':
     'The app didn’t respond to the passkey request.',
+  'error.access.thisAppIsTurnedOff': 'This server has turned this app off.',
   'error.account.accountAdministrationIsAtApiAdmin': 'Manage accounts at /api/admin/accounts.',
   'error.account.noSuchAccount': 'No such account.',
   'error.account.setupLinksAreNotSentByEmail':
@@ -1794,6 +1811,7 @@ const ENGLISH = {
   'error.account.thatAddressCannotBeUsed': 'That email address can’t be used.',
   'error.account.thatAddressIsAlreadyInUse': 'That email address is already in use.',
   'error.account.thatUsernameIsAlreadyInUse': 'That username is already in use.',
+  'error.account.theDemoAccountCannotDoThat': 'The shared demo account can’t do that.',
   'error.admin.noSuchJobIsWaiting': 'No such queued job.',
   'error.admin.noSuchJobKind': 'No such job type.',
   'error.admin.noSuchJobKindOrOne': 'No such job type, or it can’t be scheduled.',
@@ -2056,9 +2074,12 @@ const ENGLISH = {
     'No such delivery, or the subscription was deleted or turned off.',
   'error.webhook.noSuchSubscription': 'No such subscription.',
   'error.webhook.noSuchSubscriptionOrItIs': 'No such subscription, or it’s turned off.',
+  'native.captionTextStyle.avenirNextCondensed': 'Avenir Next Condensed',
   'native.captionTextStyle.chalkboardSE': 'Chalkboard SE',
+  'native.captionTextStyle.courierNew': 'Courier New',
   'native.captionTextStyle.georgia': 'Georgia',
   'native.captionTextStyle.menlo': 'Menlo',
+  'native.captionTextStyle.snellRoundhand': 'Snell Roundhand',
   'phone.aBook.aChapterToHear.listenFromTitle': 'Listen from {title}',
   'phone.aBook.audiobookChapters': 'Audiobook chapters',
   'phone.aBook.pagePage': 'Page {page}',
@@ -4219,6 +4240,9 @@ const ENGLISH = {
     'A key is set. Entering a new one replaces it. Scores appear as titles are rescanned.',
   'screens.adminArea.settingsPanel.aKeyIsSetEnteringA2':
     'A key is set. Entering a new one replaces it.',
+  'screens.adminArea.settingsPanel.alwaysOnItIsHowThis':
+    'Always on. It is how this page is reached.',
+  'screens.adminArea.settingsPanel.appsSaved': 'Saved which apps may connect.',
   'screens.adminArea.settingsPanel.backend': 'Backend',
   'screens.adminArea.settingsPanel.catalogueKey': 'Catalogue key',
   'screens.adminArea.settingsPanel.catalogueKeySaved': 'Catalogue key saved.',
@@ -4282,14 +4306,18 @@ const ENGLISH = {
   'screens.adminArea.settingsPanel.splashscreenRemoved': 'Splashscreen removed.',
   'screens.adminArea.settingsPanel.splashscreenSaved': 'Splashscreen saved.',
   'screens.adminArea.settingsPanel.standard': 'Standard',
+  'screens.adminArea.settingsPanel.theAppsCouldNotBeSaved':
+    "Which apps may connect couldn't be saved.",
   'screens.adminArea.settingsPanel.theAudioDBKey': 'TheAudioDB key',
   'screens.adminArea.settingsPanel.theAudioDBKeySaved': 'TheAudioDB key saved.',
   'screens.adminArea.settingsPanel.theCatalogueKeyCouldNotBe': 'Couldn’t save the catalogue key.',
   'screens.adminArea.settingsPanel.theCertificationRegionCouldNotBe':
     'Couldn’t save the certification region.',
+  'screens.adminArea.settingsPanel.theDesktopApp': 'Desktop app',
   'screens.adminArea.settingsPanel.theMusicDetailsSettingCouldNot':
     'Couldn’t save the music metadata setting.',
   'screens.adminArea.settingsPanel.theOMDbKeyCouldNotBe': 'Couldn’t save the OMDb key.',
+  'screens.adminArea.settingsPanel.thePhoneApp': 'Phone app',
   'screens.adminArea.settingsPanel.thePictureBehindTheWayIn': 'The sign-in background image',
   'screens.adminArea.settingsPanel.thePictureCouldNotBeRemoved':
     'Couldn’t remove the image. Try again.',
@@ -4297,10 +4325,18 @@ const ENGLISH = {
   'screens.adminArea.settingsPanel.theSignInScreenCouldNot': 'Couldn’t change the sign-in screen.',
   'screens.adminArea.settingsPanel.theSplashscreenCouldNotBeRemoved':
     'Couldn’t remove the splashscreen.',
+  'screens.adminArea.settingsPanel.theTelevisionApp': 'Television app',
   'screens.adminArea.settingsPanel.theTheAudioDBKeyCouldNotBe': 'Couldn’t save the TheAudioDB key.',
   'screens.adminArea.settingsPanel.theTrailerSettingCouldNotBe':
     'Couldn’t save the trailer setting.',
+  'screens.adminArea.settingsPanel.theWeb': 'Web',
   'screens.adminArea.settingsPanel.trailerSettingSaved': 'Trailer setting saved.',
+  'screens.adminArea.settingsPanel.valenceForAppleTvAndAndroid':
+    'Valence for Apple TV and Android TV.',
+  'screens.adminArea.settingsPanel.valenceForIPhoneAndAndroid':
+    'Valence for iPhone and Android phones.',
+  'screens.adminArea.settingsPanel.valenceForMacWindowsAndLinux':
+    'Valence for Mac, Windows and Linux.',
   'screens.adminArea.settingsPanel.valencePicksWhicheverBackendTheMachine':
     'Valence uses whichever backend passes its hardware check. Choose one to force it, even if its encoder failed the check — useful when the check is wrong and the GPU clearly works.',
   'screens.adminArea.settingsPanel.whatARequestForAnArtist':
@@ -4466,7 +4502,6 @@ const ENGLISH = {
   'screens.app.loadingInitialTitle': 'Loading {initialTitle}',
   'screens.appShell.admin': 'Admin',
   'screens.appShell.chooseSomethingAtRandom': 'Choose something at random',
-  'screens.appShell.help': 'Help',
   'screens.appShell.myAccount': 'My account',
   'screens.appShell.myRequests': 'My requests',
   'screens.appShell.randomiser': 'Randomiser',
@@ -4793,6 +4828,7 @@ const ENGLISH = {
   'screens.gridSizeChooser.smallCardsMoreOfThem': 'Small cards, more per row',
   'screens.hero.featured': 'Featured',
   'screens.hero.featuredItems': 'Featured items',
+  'screens.historyKeysFor.alt': 'Alt',
   'screens.historyPanel.nothingYetWhatYouWatchAnd':
     'Nothing yet. What you watch and read appears here, and only you can see it.',
   'screens.historyPanel.readingYourHistory': 'Loading your history',
@@ -5556,6 +5592,7 @@ const ENGLISH = {
     'Use your {name} passkey to sign in to the app.',
   'screens.profileGate.readingWhoIsHere': 'Loading profiles',
   'screens.profileGate.signIn': 'Sign in',
+  'screens.profileGate.signInWithAUsername': 'Sign in with a username',
   'screens.profilesPanel.describeProfile.no': 'No',
   'screens.profilesPanel.describeProfile.toTheBestThereIs': 'To the best available',
   'screens.profilesPanel.describeProfile.untilUntil': 'Until {until}',
@@ -6027,7 +6064,6 @@ const ENGLISH = {
   'screens.videoPlayer.captionSettings.captionPreview': 'Caption preview',
   'screens.videoPlayer.captionSettings.captionSize': 'Caption size',
   'screens.videoPlayer.captionSettings.captionTextColour': 'Caption text colour',
-  'screens.videoPlayer.captionSettings.heavy': 'Heavy',
   'screens.videoPlayer.captionSettings.outlineThickness': 'Outline thickness',
   'screens.videoPlayer.captionSettings.resetToDefaults': 'Reset to defaults',
   'screens.videoPlayer.captionSettings.theQuickBrownFox': 'The quick brown fox',
@@ -6130,6 +6166,8 @@ const ENGLISH = {
   'screens.welcomeToValence.householdIsReadyEverythingElseCan':
     '{household} is ready. You can change everything else whenever you like.',
   'screens.welcomeToValence.startWatching': 'Start watching',
+  'screens.windowBar.goForward': 'Go forward',
+  'screens.windowBar.reload': 'Reload',
   'screens.windowBar.retryUpdate': 'Retry update',
   'screens.windowBar.updatingPercent': 'Updating {percent}%',
   'server.account.device.android': 'Valence on Android',

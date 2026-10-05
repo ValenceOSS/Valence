@@ -7,6 +7,7 @@ import { createMemoryJobScheduleService } from './createMemoryJobScheduleService
 import { createMemorySettingsStore } from '@ValenceServer/settings/createMemorySettingsStore';
 import { DEFAULT_JOB_TRIGGERS, jobDefinitionsFor } from './jobDefinitions';
 import { seedDefaultJobTriggers } from './seedDefaultJobTriggers';
+import { EVERY_APP_ALLOWED } from '@ValenceContracts/schemas/AllowedApps';
 import type { ServerSettings } from '@ValenceServer/settings/ServerSettings';
 
 const SETTINGS: ServerSettings = {
@@ -18,6 +19,7 @@ const SETTINGS: ServerSettings = {
   hardwareAccel: '',
   previewQuality: 'high' as const,
   showsProfilesBeforeSignIn: false,
+  allowedApps: EVERY_APP_ALLOWED,
   seededJobTriggerKinds: [],
   seededRoleNames: [],
   pushPublicKey: '',

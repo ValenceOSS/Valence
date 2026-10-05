@@ -5,6 +5,7 @@ type PublicRoute = {
 
 const PUBLIC_ROUTES: readonly PublicRoute[] = [
   { method: 'GET', path: /^\/api\/health$/ },
+  { method: 'GET', path: /^\/api\/about$/ },
   { method: 'GET', path: /^\/api\/setup\/status$/ },
   { method: 'GET', path: /^\/api\/appearance$/ },
   { method: 'POST', path: /^\/api\/setup$/ },

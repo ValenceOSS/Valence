@@ -21,7 +21,7 @@ const MyPermissionsAnswer = z.object({
 
 const PATH = '/api/account/permissions';
 
-const build = () => {
+const build = (demoAccounts: readonly string[] = []) => {
   const { auth, settings, store } = createMemoryAuth();
   const permissions = createMemoryPermissionService();
 
@@ -29,6 +29,7 @@ const build = () => {
     auth,
     settings,
     permissions,
+    demoAccounts,
     countUsers: () => Promise.resolve(1),
     promoteToAdmin: () => Promise.resolve(null),
     library: createMemoryLibraryService(),
@@ -213,5 +214,52 @@ describe('GET /api/account/permissions', () => {
     });
 
     expect(MyPermissionsAnswer.parse(await after.json()).isAdministrator).toBe(true);
+  });
+});
+
+describe('GET /api/account/permissions on a shared demo account', () => {
+  const askAsTheDemo = async (demoAccounts: readonly string[]) => {
+    const context = build(demoAccounts);
+    const signedUp = await context.app.request(`${TEST_ORIGIN}/api/auth/sign-up/email`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', origin: TEST_ORIGIN },
+      body: JSON.stringify({
+        name: 'Demo',
+        email: 'demo@example.com',
+        password: 'a demo password',
+        username: 'demo',
+      }),
+    });
+    const cookie = signedUp.headers.getSetCookie()[0]?.split(';')[0] ?? '';
+    const role = await context.permissions.createRole({
+      name: 'Viewer',
+      position: 200,
+      color: null,
+      permissions: ['sharing.link', 'sharing.party'],
+    });
+
+    await context.permissions.assignRole(context.store.user[0]?.id ?? '', role.id);
+
+    const response = await context.app.request(`${TEST_ORIGIN}${PATH}`, {
+      headers: { cookie, origin: TEST_ORIGIN },
+    });
+
+    return z
+      .object({ permissions: z.array(z.string()), isDemo: z.boolean() })
+      .parse(await response.json());
+  };
+
+  it('says it is the demo, and withholds handing out share links whatever its role grants', async () => {
+    expect(await askAsTheDemo(['demo'])).toStrictEqual({
+      permissions: ['sharing.party'],
+      isDemo: true,
+    });
+  });
+
+  it('leaves an account the server does not name as a demo exactly as its roles say', async () => {
+    expect(await askAsTheDemo(['somebody-else'])).toStrictEqual({
+      permissions: ['sharing.link', 'sharing.party'],
+      isDemo: false,
+    });
   });
 });

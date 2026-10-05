@@ -18,6 +18,8 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheServer } from '@ValenceMobile/hooks/useTheServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { TheWayInProps } from './TheWayIn.types';
+import { ABadge } from '@ValenceMobile/components/ABadge/ABadge';
+import { useIsDemoServer } from '@ValenceClient/about/useIsDemoServer';
 import { say } from '@ValenceI18n/say';
 
 const MARK_HIGH = 40;
@@ -67,6 +69,7 @@ const TheWayIn = ({
   onElsewhere,
   onDownloads,
 }: TheWayInProps) => {
+  const isDemoServer = useIsDemoServer();
   const asking = useQuery(sessionQueries.wayIn());
   const server = useQuery(aboutQueries.server());
   const build = describeTheBuild(theBuildInfo(), server.data ?? null);
@@ -134,6 +137,8 @@ const TheWayIn = ({
             <ARising after={after} turn={1} isArrived={isReturning}>
               <Words size="title">{say('common.whoIsWatching')}</Words>
             </ARising>
+
+            {isDemoServer ? <ABadge>{say('common.demoMode')}</ABadge> : null}
 
             {asking.isPending ? <ActivityIndicator color={colours.textMuted} /> : null}
 

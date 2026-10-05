@@ -34,6 +34,7 @@ import type { ReadingProgress } from '@ValenceContracts/schemas/Book';
 import { AChapterToHear } from './components/AChapterToHear/AChapterToHear';
 import type { ABookProps } from './ABook.types';
 import { say } from '@ValenceI18n/say';
+import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { sayCount } from '@ValenceI18n/sayCount';
 
 const COVER = 128;
@@ -105,6 +106,7 @@ const howFarInto = (read: ReadingProgress | undefined, pageCount: number | null)
  */
 const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
   const colours = useTheColours();
+  const mayShare = useWhatIMayDo().may('sharing.link');
   const read = useQuery(bookQueries.one(bookId));
   const progress = useQuery(bookQueries.progress(bookId));
   const reading = useQuery(bookQueries.reading());
@@ -207,16 +209,18 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
 
       {hasAudio && ordered.length > 0 ? listen : null}
 
-      <Button
-        tone="ghost"
-        icon={Share}
-        isWide
-        onPress={() => {
-          setSharing({ kind: 'book', book });
-        }}
-      >
-        {say('common.share')}
-      </Button>
+      {mayShare ? (
+        <Button
+          tone="ghost"
+          icon={Share}
+          isWide
+          onPress={() => {
+            setSharing({ kind: 'book', book });
+          }}
+        >
+          {say('common.share')}
+        </Button>
+      ) : null}
 
       {where === null ? null : (
         <Words tone="muted" isCentred>

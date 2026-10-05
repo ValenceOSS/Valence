@@ -1,6 +1,6 @@
 import { ChevronLeft } from '@keyline-icons/react-native';
 import { Play as PlayFilled } from '@keyline-icons/react-native/fill';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
@@ -18,6 +18,7 @@ import { UseAPasskey } from '@ValenceMobile/components/UseAPasskey/UseAPasskey';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useArrivingFrom } from '@ValenceMobile/hooks/useArrivingFrom';
 import type { AskForThePasswordProps } from './AskForThePassword.types';
+import { useIsDemoServer } from '@ValenceClient/about/useIsDemoServer';
 import { say } from '@ValenceI18n/say';
 
 const NAMED_AFTER = 100;
@@ -64,6 +65,8 @@ const AskForThePassword = ({
   const [isTrying, setIsTrying] = useState(false);
   const [wantsCode, setWantsCode] = useState(false);
   const [reset, setReset] = useState<'idle' | 'asking' | 'sent' | 'failed'>('idle');
+  const isDemoServer = useIsDemoServer();
+  const hasWalkedIn = useRef(false);
 
   const tryIt = async () => {
     setIsTrying(true);
@@ -130,6 +133,19 @@ const AskForThePassword = ({
       onBack({ x, y, width, height });
     });
   };
+
+  const latestTry = useRef(tryIt);
+
+  useEffect(() => {
+    latestTry.current = tryIt;
+  });
+
+  useEffect(() => {
+    if (isDemoServer && !hasWalkedIn.current) {
+      hasWalkedIn.current = true;
+      void latestTry.current();
+    }
+  }, [isDemoServer]);
 
   if (wantsCode) {
     return (

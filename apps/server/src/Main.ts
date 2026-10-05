@@ -368,6 +368,7 @@ import { readCertificatesAgain } from '@ValenceServer/library/readCertificatesAg
 import { say } from '@ValenceI18n/say';
 import { settleCookieSecurity } from '@ValenceServer/settings/settleCookieSecurity';
 import { readMediaFile } from '@ValenceServer/playback/readMediaFile';
+import { EVERY_APP_ALLOWED } from '@ValenceContracts/schemas/AllowedApps';
 import { readSessionFiles } from '@ValenceServer/playback/readSessionFiles';
 const ChapterListSchema = z.array(
   z.object({
@@ -422,6 +423,7 @@ const settings = createDatabaseSettingsStore({
     hardwareAccel: '',
     previewQuality: 'high',
     showsProfilesBeforeSignIn: true,
+    allowedApps: EVERY_APP_ALLOWED,
     seededJobTriggerKinds: [],
     seededRoleNames: [],
     pushPublicKey: '',
@@ -3490,6 +3492,7 @@ const app = createApp({
   uploadSessions: createDatabaseUploadSessions(db),
   version: env.VALENCE_VERSION,
   commit: env.VALENCE_COMMIT,
+  demoAccounts: env.DEMO_ACCOUNTS,
   trustedOrigins: trustedOriginsFor({
     configured: env.TRUSTED_ORIGINS,
     port: env.PORT,

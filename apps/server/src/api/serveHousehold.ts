@@ -12,6 +12,8 @@ import { drawAvatar, isAvatarStyle } from '@ValenceServer/profiles/drawAvatar';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
+import { realEmailOf } from '@ValenceContracts/functions/realEmailOf';
+import { isDemoAccount } from '@ValenceServer/demo/isDemoAccount';
 
 /**
  * Registers the household endpoints.
@@ -24,6 +26,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     auth,
     settings,
     profiles,
+    demoAccounts,
     households,
     splashscreen,
     tooBigToRead,
@@ -157,12 +160,21 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.get('/api/profiles/everyone', async (context) => {
-    const everyone = await profiles?.listEveryone();
+    const everyone = (await profiles?.listEveryone()) ?? [];
+    const shown =
+      demoAccounts.length === 0 || profiles === undefined
+        ? everyone
+        : (
+            await Promise.all(
+              everyone.map(async (profile) => {
+                const account = await profiles.findSignIn(profile.id);
 
-    return context.json(
-      { profiles: everyone ?? [], splashscreen: await splashscreen.address() },
-      200,
-    );
+                return account !== null && isDemoAccount(account, demoAccounts) ? [profile] : [];
+              }),
+            )
+          ).flat();
+
+    return context.json({ profiles: shown, splashscreen: await splashscreen.address() }, 200);
   });
 
   app.get('/api/splashscreen', async (context) => {
@@ -215,15 +227,34 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     const body = await context.req.text().catch(() => '');
     const parsed = SignInBodySchema.safeParse(JsonValueSchema.parse(JSON.parse(body || 'null')));
 
+    if (!parsed.success && demoAccounts.length === 0) {
+      return context.json(refuse('error.household.aPasswordIsRequired'), 400);
+    }
+
+    const profileId = context.req.param('profileId');
+    const account = await profiles.findSignIn(profileId);
+
+    if (account === null) {
+      return context.json(refuse('error.common.noSuchProfile'), 404);
+    }
+
+    const userId = isDemoAccount(account, demoAccounts)
+      ? await profiles.accountOf(profileId)
+      : null;
+
+    if (userId !== null) {
+      return auth.api.signInTheDemo({
+        body: { userId },
+        headers: context.req.raw.headers,
+        asResponse: true,
+      });
+    }
+
     if (!parsed.success) {
       return context.json(refuse('error.household.aPasswordIsRequired'), 400);
     }
 
-    const email = await profiles.findSignInEmail(context.req.param('profileId'));
-
-    if (email === null) {
-      return context.json(refuse('error.common.noSuchProfile'), 404);
-    }
+    const byUsername = realEmailOf(account.email) === null && account.username !== null;
 
     const forwarded = new Headers(context.req.raw.headers);
 
@@ -231,11 +262,21 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     forwarded.delete('content-length');
 
     return auth.handler(
-      new Request(new URL('/api/auth/sign-in/email', context.req.url), {
-        method: 'POST',
-        headers: forwarded,
-        body: JSON.stringify({ email, password: parsed.data.password }),
-      }),
+      new Request(
+        new URL(
+          byUsername ? '/api/auth/sign-in/username' : '/api/auth/sign-in/email',
+          context.req.url,
+        ),
+        {
+          method: 'POST',
+          headers: forwarded,
+          body: JSON.stringify(
+            byUsername
+              ? { username: account.username, password: parsed.data.password }
+              : { email: account.email, password: parsed.data.password },
+          ),
+        },
+      ),
     );
   });
 

@@ -89,7 +89,7 @@ const build = (
  */
 const signedIn = async (
   app: ReturnType<typeof build>['app'],
-  credentials = CREDENTIALS,
+  credentials: typeof CREDENTIALS & { username?: string } = CREDENTIALS,
 ): Promise<string> => {
   const response = await app.request(`${BASE}/api/auth/sign-up/email`, {
     method: 'POST',
@@ -450,6 +450,32 @@ describe('profiles over HTTP', () => {
     const [profile] = await read(app, cookie);
 
     named(profiles, profile?.id ?? '');
+
+    const response = await app.request(`${BASE}/api/profiles/${profile?.id ?? ''}/sign-in`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', origin: BASE },
+      body: JSON.stringify({ password: CREDENTIALS.password }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.headers.getSetCookie().join(' ')).toContain('session_token');
+  });
+
+  it('signs in a face whose account has no email address, by its username', async () => {
+    const { app, profiles } = build();
+    const cookie = await signedIn(app, {
+      name: 'Demo',
+      email: 'demo@valence.local',
+      password: CREDENTIALS.password,
+      username: 'demo',
+    });
+    const [profile] = await read(app, cookie);
+    const held = profiles.state.find((candidate) => candidate.profile.id === profile?.id);
+
+    if (held !== undefined) {
+      held.email = 'vbaeSWZfa2p9FT9eWgMzAsgzTqPHlojI@no-email.invalid';
+      held.username = 'demo';
+    }
 
     const response = await app.request(`${BASE}/api/profiles/${profile?.id ?? ''}/sign-in`, {
       method: 'POST',

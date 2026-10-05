@@ -9,9 +9,19 @@ import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { NearbyValence } from '@ValenceContracts/schemas/NearbyValence';
 import type { DesktopUpdate } from '@ValenceContracts/schemas/DesktopUpdate';
 import userEvent from '@testing-library/user-event';
+import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import '@ValenceDesktop/TheWindow.types';
 
-vi.mock('@ValenceScreens/routes/buildRouter', () => ({ buildRouter: () => ({}) }));
+vi.mock('@ValenceScreens/routes/buildRouter', () => ({
+  buildRouter: () => ({
+    history: {
+      location: { state: { __TSR_index: 0 } },
+      subscribe: () => () => undefined,
+      back: () => undefined,
+      forward: () => undefined,
+    },
+  }),
+}));
 
 vi.mock('@tanstack/react-router', () => ({
   RouterProvider: () => <div data-testid="the-application" />,
@@ -129,7 +139,7 @@ describe('Desktop', () => {
     theWindowOffers(['http://localhost:8420']);
     aClient();
 
-    render(<Desktop />);
+    render(<Desktop />, { wrapper: CacheScope });
 
     expect(asking()).not.toBeNull();
     expect(screen.getByRole('button', { name: 'localhost:8420' })).toBeInTheDocument();
@@ -143,7 +153,7 @@ describe('Desktop', () => {
     theWindowOffers([], [{ address: 'http://192.168.1.224:8420', name: 'Valence on media-box' }]);
     aClient();
 
-    render(<Desktop />);
+    render(<Desktop />, { wrapper: CacheScope });
 
     expect(screen.getByRole('button', { name: /Valence on media-box/u })).toBeInTheDocument();
 
@@ -160,7 +170,7 @@ describe('Desktop', () => {
     rememberServerAddress('https://demo.getvalence.app');
     rememberServerAddress(null);
 
-    render(<Desktop />);
+    render(<Desktop />, { wrapper: CacheScope });
 
     expect(screen.getByRole('button', { name: 'demo.getvalence.app' })).toBeInTheDocument();
   });
@@ -174,7 +184,7 @@ describe('Desktop', () => {
       }),
     });
 
-    render(<Desktop />);
+    render(<Desktop />, { wrapper: CacheScope });
 
     expect(
       screen.getByText('Valence 1.2.0 (2ae1bc1) · arm64 · Electron 33.0.0 · Chromium 130.0.0'),
@@ -184,7 +194,7 @@ describe('Desktop', () => {
   it('asks for an address where nothing was found on this machine', () => {
     aClient();
 
-    render(<Desktop />);
+    render(<Desktop />, { wrapper: CacheScope });
 
     expect(asking()).not.toBeNull();
     expect(screen.queryByText('Found on this machine')).toBeNull();
@@ -194,7 +204,7 @@ describe('Desktop', () => {
   it('asks on a fresh install even where nothing is answering, rather than drawing an empty shelf', async () => {
     aClient({ reachability: unreachable });
 
-    render(<Desktop />);
+    render(<Desktop />, { wrapper: CacheScope });
 
     await waitFor(() => {
       expect(asking()).not.toBeNull();
@@ -206,7 +216,7 @@ describe('Desktop', () => {
   it('draws the application once a server has been chosen and is answering', async () => {
     aClient({}, 'http://valence.example');
 
-    render(<Desktop />);
+    render(<Desktop />, { wrapper: CacheScope });
 
     await waitFor(() => {
       expect(screen.getByTestId('the-application')).toBeInTheDocument();
@@ -219,7 +229,7 @@ describe('Desktop', () => {
     aClient({}, 'http://valence.example');
     window.valence.update.now = () => ({ kind: 'available', version: '1.2.0' });
 
-    render(<Desktop />);
+    render(<Desktop />, { wrapper: CacheScope });
 
     expect(await screen.findByRole('heading', { name: 'Update Valence?' })).toBeInTheDocument();
   });
@@ -230,7 +240,7 @@ describe('Desktop', () => {
     window.valence.update.now = () => ({ kind: 'available', version: '1.2.0' });
     window.valence.update.download = download;
 
-    render(<Desktop />);
+    render(<Desktop />, { wrapper: CacheScope });
 
     expect(await screen.findByRole('heading', { name: 'Update Valence?' })).toBeInTheDocument();
 
@@ -243,11 +253,11 @@ describe('Desktop', () => {
     aClient({}, 'http://valence.example');
     window.valence.update.now = () => ({ kind: 'available', version: '1.2.0' });
 
-    const { unmount } = render(<Desktop />);
+    const { unmount } = render(<Desktop />, { wrapper: CacheScope });
 
     await userEvent.click(await screen.findByRole('button', { name: 'Not now' }));
     unmount();
-    render(<Desktop />);
+    render(<Desktop />, { wrapper: CacheScope });
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Update to 1.2.0' })).toBeInTheDocument();
@@ -262,7 +272,7 @@ describe('Desktop', () => {
     window.valence.update.now = () => ({ kind: 'available', version: '1.2.0' });
 
     try {
-      render(<Desktop />);
+      render(<Desktop />, { wrapper: CacheScope });
 
       await screen.findByRole('button', { name: 'Update to 1.2.0' });
 
@@ -287,7 +297,7 @@ describe('Desktop', () => {
       return () => undefined;
     };
 
-    render(<Desktop />);
+    render(<Desktop />, { wrapper: CacheScope });
 
     act(() => {
       tell({ kind: 'downloading', version: '1.2.0', percent: 45 });
@@ -299,7 +309,7 @@ describe('Desktop', () => {
   it('asks again where the chosen server stopped answering and nothing is on this device', async () => {
     aClient({ reachability: unreachable }, 'http://valence.example');
 
-    render(<Desktop />);
+    render(<Desktop />, { wrapper: CacheScope });
 
     await waitFor(() => {
       expect(asking()).not.toBeNull();
@@ -316,7 +326,7 @@ describe('Desktop', () => {
   it('draws the screen it owns in the theme somebody chose, not the one the machine prefers', () => {
     aClient({}, null, 'dark');
 
-    render(<Desktop />);
+    render(<Desktop />, { wrapper: CacheScope });
 
     expect([asking() === null, document.documentElement.dataset['theme']]).toEqual([false, 'dark']);
   });
@@ -327,7 +337,7 @@ describe('Desktop', () => {
       'http://valence.example',
     );
 
-    render(<Desktop />);
+    render(<Desktop />, { wrapper: CacheScope });
 
     await waitFor(() => {
       expect(screen.getByTestId('the-application')).toBeInTheDocument();

@@ -5,6 +5,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DeviceList } from './DeviceList';
 import type { Device } from '@ValenceClient/account/fetchDevices';
 
+const isDemo = vi.hoisted(() => vi.fn<() => boolean>());
+
+vi.mock('@ValenceClient/session/useWhatIMayDo', () => ({
+  useWhatIMayDo: () => ({ may: () => true, mayAdminister: false, isDemo: isDemo() }),
+}));
+
 const fetchDevices = vi.fn<() => Promise<Device[]>>();
 const endDevice = vi.fn<(deviceId: string) => Promise<boolean>>();
 const endOtherDevices = vi.fn<() => Promise<boolean>>();
@@ -26,6 +32,7 @@ const device = (overrides: Partial<Device> = {}): Device => ({
 });
 
 beforeEach(() => {
+  isDemo.mockReset().mockReturnValue(false);
   fetchDevices.mockReset().mockResolvedValue([]);
   endDevice.mockReset().mockResolvedValue(true);
   endOtherDevices.mockReset().mockResolvedValue(true);
@@ -92,6 +99,22 @@ describe('DeviceList', () => {
 
     expect(
       screen.queryByRole('button', { name: /Sign out everywhere else/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('lists the devices of a shared demo account but signs none of them out', async () => {
+    isDemo.mockReturnValue(true);
+    fetchDevices.mockResolvedValue([device({ isCurrent: true }), device({ id: 'session-2' })]);
+
+    render(<DeviceList />);
+
+    expect(await screen.findByText('This device')).toBeInTheDocument();
+    expect(screen.getAllByText('Chrome on macOS')).toHaveLength(2);
+    expect(
+      screen.queryByRole('button', { name: /Sign out everywhere else/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Actions for Chrome on macOS' }),
     ).not.toBeInTheDocument();
   });
 

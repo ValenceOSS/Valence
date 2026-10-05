@@ -45,6 +45,8 @@ import { createBetterAuthApiKeyService } from '@ValenceServer/auth/createBetterA
 import { createMemoryWebhookStore } from '@ValenceServer/webhooks/createMemoryWebhookStore';
 import { createMemoryNotificationStore } from '@ValenceServer/notifications/createMemoryNotificationStore';
 import { narrowToKey } from '@ValenceServer/auth/narrowToKey';
+import { isDemoAccount } from '@ValenceServer/demo/isDemoAccount';
+import { withholdFromTheDemo } from '@ValenceServer/demo/withholdFromTheDemo';
 import { readSessionOnce } from '@ValenceServer/auth/readSessionOnce';
 import type { WebhookOccurrence } from '@ValenceServer/events/EventBus';
 import { MediaRequestAskSchema } from '@ValenceContracts/schemas/MediaRequest';
@@ -207,6 +209,7 @@ const createAppContext = (options: CreateAppOptions) => {
     version: SERVER_VERSION = '0.0.0',
     commit: givenCommit,
     trustedOrigins,
+    demoAccounts = [],
     countUsers,
     promoteToAdmin,
     library,
@@ -369,8 +372,9 @@ const createAppContext = (options: CreateAppOptions) => {
   };
 
   /**
-   * Everything whoever is asking may do, including what plugins registered, narrowed to what an API
-   * key was restricted to where they are asking with one.
+   * Everything whoever is asking may do, including what plugins registered, less what a shared demo
+   * account may never do, and narrowed to what an API key was restricted to where they are asking
+   * with one.
    */
   const grantsOf = async (headers: Headers): Promise<ReadonlySet<GrantedPermission>> => {
     const session = await readSessionOnce(auth, headers);
@@ -379,7 +383,10 @@ const createAppContext = (options: CreateAppOptions) => {
       return new Set();
     }
 
-    const held = await permissions.resolve(session.user.id);
+    const resolved = await permissions.resolve(session.user.id);
+    const held = isDemoAccount(session.user, demoAccounts)
+      ? withholdFromTheDemo(resolved)
+      : resolved;
 
     if (headers.get('x-api-key') === null) {
       return held;
@@ -393,6 +400,15 @@ const createAppContext = (options: CreateAppOptions) => {
    */
   const requires = async (headers: Headers, permission: Permission): Promise<boolean> =>
     (await grantsOf(headers)).has(permission);
+
+  /**
+   * Whether whoever is asking is signed in to one of the shared demo accounts named in DEMO_ACCOUNTS.
+   */
+  const isOnTheDemo = async (headers: Headers): Promise<boolean> => {
+    const session = await readSessionOnce(auth, headers);
+
+    return session !== null && isDemoAccount(session.user, demoAccounts);
+  };
 
   /**
    * Somebody asking, as whatever the request carries says: its session, narrowed by any key.
@@ -1582,6 +1598,8 @@ const createAppContext = (options: CreateAppOptions) => {
     sayRoleChanged,
     requires,
     grantsOf,
+    isOnTheDemo,
+    demoAccounts,
     viewerOf,
     bookInReach,
     isOutOfReach,

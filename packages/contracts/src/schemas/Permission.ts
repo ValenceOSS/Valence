@@ -86,6 +86,7 @@ const RoleSchema = z.object({
 const MyPermissionsSchema = z.object({
   permissions: z.array(GrantedPermissionSchema),
   isAdministrator: z.boolean(),
+  isDemo: z.boolean().optional(),
 });
 
 type Permission = (typeof PERMISSIONS)[number];

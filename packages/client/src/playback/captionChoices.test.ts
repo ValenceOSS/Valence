@@ -19,10 +19,11 @@ const theSet = (id: string) => {
 };
 
 describe('captionChoices', () => {
-  it('offers size, font, colour, background, how solid it is and edge, in that order', () => {
+  it('offers size, font, weight, colour, background, how solid it is and edge, in that order', () => {
     expect(captionChoices(DEFAULT_CAPTION_STYLE).map((set) => set.heading)).toEqual([
       'Size',
       'Font',
+      'Weight',
       'Text colour',
       'Background',
       'Background opacity',
@@ -38,13 +39,52 @@ describe('captionChoices', () => {
 
   it('names sizes and how solid a background is as percentages', () => {
     expect(theSet('size').choices.map((choice) => choice.label)).toEqual([
+      '50%',
       '75%',
       '100%',
       '125%',
       '150%',
       '200%',
+      '250%',
+      '300%',
+      '400%',
+      '500%',
     ]);
     expect(theSet('backgroundOpacity').choices.at(-1)?.label).toBe('100%');
+  });
+
+  it('offers a size chosen elsewhere among the steps, so it reads as chosen here too', () => {
+    const sizes = captionChoices({ ...DEFAULT_CAPTION_STYLE, fontScale: 135 }).find(
+      (set) => set.id === 'size',
+    );
+
+    expect(sizes?.chosen).toBe('135');
+    expect(sizes?.choices.map((choice) => choice.id)).toContain('135');
+  });
+
+  it('offers eight fonts and five weights, medium unless chosen otherwise', () => {
+    expect(theSet('font').choices.map((choice) => choice.label)).toEqual([
+      'Sans',
+      'Serif',
+      'Mono',
+      'Typewriter',
+      'Casual',
+      'Script',
+      'Small capitals',
+      'Condensed',
+    ]);
+    expect(theSet('weight').choices.map((choice) => choice.label)).toEqual([
+      'Light',
+      'Regular',
+      'Medium',
+      'Bold',
+      'Heavy',
+    ]);
+    expect(theSet('weight').chosen).toBe('medium');
+    expect(theSet('weight').choose('heavy')).toEqual({
+      ...DEFAULT_CAPTION_STYLE,
+      fontWeight: 'heavy',
+    });
   });
 
   it('changes only the part chosen, keeping the rest of the style', () => {

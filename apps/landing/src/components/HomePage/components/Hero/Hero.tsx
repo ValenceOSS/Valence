@@ -20,6 +20,7 @@ import { Icon } from '@ValenceUI/Icon';
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
+import { DEMO_URL } from '@ValenceLanding/content/DEMO_URL';
 import { latestRelease } from '@ValenceLanding/content/downloads/latestRelease';
 import { DeviceStage } from './components/DeviceStage/DeviceStage';
 import rawReleases from 'virtual:changelog';
@@ -164,6 +165,18 @@ const Hero = () => {
                 }}
               >
                 Read the docs
+              </Button>
+            </motion.span>
+
+            <motion.span className="flex" {...popArrival(BUTTONS_LEAD + BUTTON_STEP * 2, isStill)}>
+              <Button
+                variant="overlay"
+                size="xl"
+                onClick={() => {
+                  window.location.assign(DEMO_URL);
+                }}
+              >
+                Try the demo
               </Button>
             </motion.span>
           </motion.div>

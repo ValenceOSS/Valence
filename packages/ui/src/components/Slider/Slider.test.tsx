@@ -124,6 +124,21 @@ describe('Slider', () => {
     expect(onSeek).toHaveBeenCalledWith(31);
   });
 
+  it('starts its track wherever it is told to, and goes no lower', async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(<Slider label="Seek" value={10} min={10} max={500} step={5} onValueChange={onChange} />);
+
+    expect(slider()).toHaveAttribute('aria-valuemin', '10');
+
+    slider().focus();
+    await user.keyboard('{ArrowLeft}');
+    await user.keyboard('{ArrowRight}');
+
+    expect(onChange).toHaveBeenCalledWith(15);
+    expect(onChange).not.toHaveBeenCalledWith(5);
+  });
+
   it('cannot be dragged before the duration is known', () => {
     render(<Slider label="Seek" value={0} max={0} onValueChange={vi.fn()} />);
 

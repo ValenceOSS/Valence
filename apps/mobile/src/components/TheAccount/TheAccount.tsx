@@ -27,6 +27,7 @@ import { useAccountPanels } from '@ValenceMobile/components/TheAccount/useAccoun
 import { ACCOUNT_PANELS } from '@ValenceMobile/components/TheAccount/ACCOUNT_PANELS';
 import type { TheAccountProps } from './TheAccount.types';
 import { say } from '@ValenceI18n/say';
+import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 
 const styles = StyleSheet.create({
   about: { alignItems: 'center', gap: 4 },
@@ -50,6 +51,7 @@ const TheAccount = ({ onOut, onElsewhere, onOpen, header, onScrolled }: TheAccou
   const watching = useQuery(profileQueries.watching());
   const server = useQuery(aboutQueries.server());
   const reportsFeatures = useServerHas('server.reportsFeatures');
+  const { isDemo } = useWhatIMayDo();
   const panels = useAccountPanels();
   const pluginPanels = panels.filter((panel) =>
     ACCOUNT_PANELS.every((ours) => ours.id !== panel.id),
@@ -81,24 +83,26 @@ const TheAccount = ({ onOut, onElsewhere, onOpen, header, onScrolled }: TheAccou
         </View>
       )}
 
-      <AGroup title={say('phone.theAccount.signInAndDevices')}>
-        <AnAccountRow
-          icon={ShieldCheck}
-          says={say('common.security')}
-          detail={say('phone.theAccount.securityDetail')}
-          onPress={() => {
-            onOpen('security');
-          }}
-        />
-        <AnAccountRow
-          icon={Smartphone}
-          says={say('common.devices')}
-          detail={say('phone.theAccount.devicesDetail')}
-          onPress={() => {
-            onOpen('devices');
-          }}
-        />
-      </AGroup>
+      {isDemo ? null : (
+        <AGroup title={say('phone.theAccount.signInAndDevices')}>
+          <AnAccountRow
+            icon={ShieldCheck}
+            says={say('common.security')}
+            detail={say('phone.theAccount.securityDetail')}
+            onPress={() => {
+              onOpen('security');
+            }}
+          />
+          <AnAccountRow
+            icon={Smartphone}
+            says={say('common.devices')}
+            detail={say('phone.theAccount.devicesDetail')}
+            onPress={() => {
+              onOpen('devices');
+            }}
+          />
+        </AGroup>
+      )}
 
       <AGroup title={say('phone.theAccount.watchingAndSharing')}>
         <AnAccountRow
@@ -155,6 +159,12 @@ const TheAccount = ({ onOut, onElsewhere, onOpen, header, onScrolled }: TheAccou
       </View>
 
       <View style={styles.about}>
+        {isDemo ? (
+          <Words size="small" tone="muted">
+            {say('common.thisIsASharedDemoAccount')}
+          </Words>
+        ) : null}
+
         {address === null ? null : (
           <Words size="small" tone="muted">
             {say('common.watchingOnAddress', { address })}

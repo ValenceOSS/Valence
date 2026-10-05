@@ -960,6 +960,36 @@
     "context": "Shown in the playback (from `fetchSegments`)."
   },
   {
+    "handler": "client.playback.nameCaptionFont.condensed",
+    "text": "Condensed",
+    "context": "A caption font: narrow lettering that fits more on a line. Offered among the caption fonts in subtitle settings."
+  },
+  {
+    "handler": "client.playback.nameCaptionFont.script",
+    "text": "Script",
+    "context": "A caption font: flowing handwriting. Offered among the caption fonts in subtitle settings."
+  },
+  {
+    "handler": "client.playback.nameCaptionFont.smallCapitals",
+    "text": "Small capitals",
+    "context": "A caption font: plain lettering with the lower-case letters drawn as small capitals. Offered among the caption fonts in subtitle settings."
+  },
+  {
+    "handler": "client.playback.nameCaptionFont.typewriter",
+    "text": "Typewriter",
+    "context": "A caption font: a typewriter face, every letter the same width with serifs. Offered among the caption fonts in subtitle settings."
+  },
+  {
+    "handler": "client.playback.nameCaptionWeight.bold",
+    "text": "Bold",
+    "context": "How heavy caption lettering is drawn: bold. One of the weights offered in subtitle settings."
+  },
+  {
+    "handler": "client.playback.nameCaptionWeight.regular",
+    "text": "Regular",
+    "context": "How heavy caption lettering is drawn: ordinary text weight. One of the weights offered in subtitle settings."
+  },
+  {
     "handler": "client.playback.qualityStepDetail.costNoSmallerThanTheOriginal",
     "text": "{cost} · no smaller than the original",
     "context": "The line beside a smaller video quality that would save nothing. {cost} is what it costs, such as up to 8.0 Mbps · ~4.2 GB."
@@ -2741,6 +2771,11 @@
     "context": "Shown, used in the download list and in the offline shelf. {title} is filled in by the app."
   },
   {
+    "handler": "common.demoMode",
+    "text": "Demo mode",
+    "context": "A short badge on the sign-in screen of every client, saying the server is a public demo whose shared account anybody may use and which is reset regularly."
+  },
+  {
     "handler": "common.description",
     "text": "Description",
     "context": "The label of a text field, used in the playlist details of the phone app and in the playlist dialog."
@@ -3229,6 +3264,16 @@
     "handler": "common.green",
     "text": "Green",
     "context": "The label, used in the bricks in the variants and in the tokens (from `captionColours`)."
+  },
+  {
+    "handler": "common.heavy",
+    "text": "Heavy",
+    "context": "The heaviest of a range, used in subtitle settings for both the thickest caption outline and the heaviest caption lettering."
+  },
+  {
+    "handler": "common.help",
+    "text": "Help",
+    "context": "The label of what opens Valence’s help and documentation in the browser: an item in the account menu, and the question mark in the desktop app’s window bar."
   },
   { "handler": "common.here", "text": "Here", "context": "The detail in the nav bar." },
   {
@@ -5335,6 +5380,11 @@
     "context": "The label of a button, used in several places, among them the book of the phone app and the show of the phone app."
   },
   {
+    "handler": "common.sharedDemo",
+    "text": "Shared demo",
+    "context": "A short label, shown on every client, marking that whoever is signed in is using the public demo account that many visitors share."
+  },
+  {
     "handler": "common.sharedLinks",
     "text": "Share links",
     "context": "The title of a group, used in the shares in the account of the phone app and in the shares panel in the admin area."
@@ -5980,6 +6030,11 @@
     "context": "Text shown, used in the hidden in the account of the phone app and in the hidden panel in the account area."
   },
   {
+    "handler": "common.thisAppIsTurnedOffHere",
+    "text": "This app is turned off here",
+    "context": "The heading of the screen a Valence app shows instead of signing in, when the administrator of the server it was pointed at has turned that app off."
+  },
+  {
     "handler": "common.thisCollectionCouldNotBeRead",
     "text": "Couldn’t load this collection.",
     "context": "Shown on a collection's page when it could not be read from the server."
@@ -5988,6 +6043,11 @@
     "handler": "common.thisDevice",
     "text": "This device",
     "context": "Shown, used in several places, among them the household onboarding and the devices panel in the music page."
+  },
+  {
+    "handler": "common.thisIsASharedDemoAccount",
+    "text": "This is a shared demo account. Some settings are switched off, and anything you change is reset regularly.",
+    "context": "A quiet notice shown on every client to whoever is signed in to the public demo account, which many visitors use at once and which is put back to how it started every so often."
   },
   {
     "handler": "common.thisItem",
@@ -6385,6 +6445,11 @@
     "context": "Shown, used in the admin (from `describeTrigger`) and in the add trigger dialog in the admin area."
   },
   {
+    "handler": "common.weight",
+    "text": "Weight",
+    "context": "The heading of the subtitle setting for how heavy, from light to heavy, caption lettering is drawn."
+  },
+  {
     "handler": "common.welcomeToName",
     "text": "Welcome to {name}",
     "context": "A heading, used in the welcome to valence and in the welcome tour. {name} is filled in by the app."
@@ -6468,6 +6533,11 @@
     "handler": "common.whoeverIsUsingItWillHaveToSignIn",
     "text": "Anyone using it will need to sign in again.",
     "context": "A message in an alert in the devices in the account of the phone and television apps."
+  },
+  {
+    "handler": "common.whoeverRunsThisServerHasTurned",
+    "text": "Whoever runs this server has turned this app off. Valence still works in a web browser.",
+    "context": "The explanation beneath the heading of the screen a turned-off Valence app shows, pointing to the web, which can never be turned off."
   },
   {
     "handler": "common.whoIsWatching",
@@ -7625,6 +7695,11 @@
     "context": "The reason in the preload in the preload of the desktop app."
   },
   {
+    "handler": "error.access.thisAppIsTurnedOff",
+    "text": "This server has turned this app off.",
+    "context": "An error the server answers with (HTTP 403) when a request comes from a Valence app — the desktop, phone or television app — that the server's administrator has turned off."
+  },
+  {
     "handler": "error.account.accountAdministrationIsAtApiAdmin",
     "text": "Manage accounts at /api/admin/accounts.",
     "context": "An error the server answers with (HTTP 404) in the auth on the server (from `createBetterAuthAdminBlock`)."
@@ -7658,6 +7733,11 @@
     "handler": "error.account.thatUsernameIsAlreadyInUse",
     "text": "That username is already in use.",
     "context": "An error the server answers with (HTTP 400) when adding an account, editing one, or setting one up with a username somebody else holds."
+  },
+  {
+    "handler": "error.account.theDemoAccountCannotDoThat",
+    "text": "The shared demo account can’t do that.",
+    "context": "An error the server answers with (HTTP 403) when somebody signed in to the public demo account tries something switched off there: signing devices out, adding or removing profiles, renaming the household or handing out share links."
   },
   {
     "handler": "error.admin.noSuchJobIsWaiting",
@@ -8735,9 +8815,19 @@
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveWebhook`)."
   },
   {
+    "handler": "native.captionTextStyle.avenirNextCondensed",
+    "text": "Avenir Next Condensed",
+    "context": "The name of a font installed on Apple devices, asked for by name to draw the Condensed caption font. Normally left as it is, since it names the font."
+  },
+  {
     "handler": "native.captionTextStyle.chalkboardSE",
     "text": "Chalkboard SE",
     "context": "The name of a font installed on Apple phones and televisions, which captions are drawn in. It is the font’s own name, asked for by the system, and is not translated."
+  },
+  {
+    "handler": "native.captionTextStyle.courierNew",
+    "text": "Courier New",
+    "context": "The name of a font installed on Apple devices, asked for by name to draw the Typewriter caption font. Normally left as it is, since it names the font."
   },
   {
     "handler": "native.captionTextStyle.georgia",
@@ -8748,6 +8838,11 @@
     "handler": "native.captionTextStyle.menlo",
     "text": "Menlo",
     "context": "The name of a font installed on Apple phones and televisions, which captions are drawn in. It is the font’s own name, asked for by the system, and is not translated."
+  },
+  {
+    "handler": "native.captionTextStyle.snellRoundhand",
+    "text": "Snell Roundhand",
+    "context": "The name of a font installed on Apple devices, asked for by name to draw the Script caption font. Normally left as it is, since it names the font."
   },
   {
     "handler": "phone.aBook.aChapterToHear.listenFromTitle",
@@ -16755,6 +16850,16 @@
     "context": "Shown in the settings panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.settingsPanel.alwaysOnItIsHowThis",
+    "text": "Always on. It is how this page is reached.",
+    "context": "The explanation beside the web's switch, which is on and cannot be turned off, among the admin settings saying which Valence apps may connect."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.appsSaved",
+    "text": "Saved which apps may connect.",
+    "context": "A confirmation after an administrator turned a Valence app on or off for this server."
+  },
+  {
     "handler": "screens.adminArea.settingsPanel.backend",
     "text": "Backend",
     "context": "The name in the settings panel in the admin area."
@@ -17000,6 +17105,11 @@
     "context": "The label in the settings panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.settingsPanel.theAppsCouldNotBeSaved",
+    "text": "Which apps may connect couldn't be saved.",
+    "context": "An error after an administrator's change to which Valence apps may connect to this server didn't save."
+  },
+  {
     "handler": "screens.adminArea.settingsPanel.theAudioDBKey",
     "text": "TheAudioDB key",
     "context": "The label of a text field in the settings panel in the admin area."
@@ -17020,6 +17130,11 @@
     "context": "Shown in the settings panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.settingsPanel.theDesktopApp",
+    "text": "Desktop app",
+    "context": "An admin setting's title: whether the Valence desktop app may connect to this server."
+  },
+  {
     "handler": "screens.adminArea.settingsPanel.theMusicDetailsSettingCouldNot",
     "text": "Couldn’t save the music metadata setting.",
     "context": "Shown in the settings panel in the admin area."
@@ -17028,6 +17143,11 @@
     "handler": "screens.adminArea.settingsPanel.theOMDbKeyCouldNotBe",
     "text": "Couldn’t save the OMDb key.",
     "context": "Shown in the settings panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.thePhoneApp",
+    "text": "Phone app",
+    "context": "An admin setting's title: whether the Valence phone app may connect to this server."
   },
   {
     "handler": "screens.adminArea.settingsPanel.thePictureBehindTheWayIn",
@@ -17055,6 +17175,11 @@
     "context": "Shown in the settings panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.settingsPanel.theTelevisionApp",
+    "text": "Television app",
+    "context": "An admin setting's title: whether the Valence television app may connect to this server."
+  },
+  {
     "handler": "screens.adminArea.settingsPanel.theTheAudioDBKeyCouldNotBe",
     "text": "Couldn’t save the TheAudioDB key.",
     "context": "Shown in the settings panel in the admin area."
@@ -17065,9 +17190,29 @@
     "context": "Shown in the settings panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.settingsPanel.theWeb",
+    "text": "Web",
+    "context": "The first of the rows in the admin settings that say which Valence apps may connect to the server: Valence in a web browser, which cannot be turned off."
+  },
+  {
     "handler": "screens.adminArea.settingsPanel.trailerSettingSaved",
     "text": "Trailer setting saved.",
     "context": "Shown in the settings panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.valenceForAppleTvAndAndroid",
+    "text": "Valence for Apple TV and Android TV.",
+    "context": "The explanation beside the admin switch for whether the television app may connect to this server."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.valenceForIPhoneAndAndroid",
+    "text": "Valence for iPhone and Android phones.",
+    "context": "The explanation beside the admin switch for whether the phone app may connect to this server."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.valenceForMacWindowsAndLinux",
+    "text": "Valence for Mac, Windows and Linux.",
+    "context": "The explanation beside the admin switch for whether the desktop app may connect to this server."
   },
   {
     "handler": "screens.adminArea.settingsPanel.valencePicksWhicheverBackendTheMachine",
@@ -17699,7 +17844,6 @@
     "text": "Choose something at random",
     "context": "The label of a action menu in the app shell."
   },
-  { "handler": "screens.appShell.help", "text": "Help", "context": "The label in the app shell." },
   {
     "handler": "screens.appShell.myAccount",
     "text": "My account",
@@ -19019,6 +19163,11 @@
     "handler": "screens.hero.featuredItems",
     "text": "Featured items",
     "context": "The label of a page dots in the hero."
+  },
+  {
+    "handler": "screens.historyKeysFor.alt",
+    "text": "Alt",
+    "context": "The name of the Alt key on a Windows or Linux keyboard, shown on a key cap in the tooltip of the desktop app's back and forward arrows. Keep it as the key is labelled on keyboards in the language."
   },
   {
     "handler": "screens.historyPanel.nothingYetWhatYouWatchAnd",
@@ -22117,6 +22266,11 @@
     "context": "Text shown in the profile gate."
   },
   {
+    "handler": "screens.profileGate.signInWithAUsername",
+    "text": "Sign in with a username",
+    "context": "A button under the faces on a public demo's sign-in screen, where only the shared demo account's face is offered, for anybody else — the server's administrator — to sign in by name and password instead."
+  },
+  {
     "handler": "screens.profilesPanel.describeProfile.no",
     "text": "No",
     "context": "Shown in the profiles panel (from `describeProfile`)."
@@ -23917,11 +24071,6 @@
     "context": "The label of a swatch row in the caption settings in the video player."
   },
   {
-    "handler": "screens.videoPlayer.captionSettings.heavy",
-    "text": "Heavy",
-    "context": "Shown in the caption settings in the video player."
-  },
-  {
     "handler": "screens.videoPlayer.captionSettings.outlineThickness",
     "text": "Outline thickness",
     "context": "The label of a caption field in the caption settings in the video player."
@@ -24345,6 +24494,16 @@
     "handler": "screens.welcomeToValence.startWatching",
     "text": "Start watching",
     "context": "The label of a button in the welcome to valence."
+  },
+  {
+    "handler": "screens.windowBar.goForward",
+    "text": "Go forward",
+    "context": "The label of the arrow at the top of the desktop app's window that moves forward again to the page somebody went back from, like a browser's forward button."
+  },
+  {
+    "handler": "screens.windowBar.reload",
+    "text": "Reload",
+    "context": "The label of the button at the top of the desktop app's window that reloads the page showing, like a browser's refresh button."
   },
   {
     "handler": "screens.windowBar.retryUpdate",

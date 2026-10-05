@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { createMemorySettingsStore } from '@ValenceServer/settings/createMemorySettingsStore';
 import { createMemoryPermissionService } from './createMemoryPermissionService';
 import { seedDefaultRoles } from './seedDefaultRoles';
+import { EVERY_APP_ALLOWED } from '@ValenceContracts/schemas/AllowedApps';
 import type { SeedableAccount } from './seedDefaultRoles';
 
 const emptySettings = () =>
@@ -18,6 +19,7 @@ const emptySettings = () =>
     hardwareAccel: '',
     previewQuality: 'high' as const,
     showsProfilesBeforeSignIn: false,
+    allowedApps: EVERY_APP_ALLOWED,
     seededJobTriggerKinds: [],
     seededRoleNames: [],
     pushPublicKey: '',

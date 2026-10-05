@@ -9,6 +9,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { SignInATelevision } from '@ValenceMobile/components/TheAccount/components/TheDevices/components/SignInATelevision/SignInATelevision';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { say } from '@ValenceI18n/say';
+import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 
 const DEVICES = ['account', 'devices'] as const;
 
@@ -27,11 +28,13 @@ const styles = StyleSheet.create({
  * A television to sign in from here, everywhere this account is signed in, and a way to end any of
  * it but this phone.
  *
- * Ending one is asked about first, because the person on the other end is thrown out mid-film.
+ * Ending one is asked about first, because the person on the other end is thrown out mid-film. A
+ * shared demo account ends nothing, since the devices it would end are other visitors'.
  */
 const TheDevices = () => {
   const cache = useQueryClient();
   const colours = useTheColours();
+  const { isDemo } = useWhatIMayDo();
   const devices = useQuery({ queryKey: DEVICES, queryFn: fetchDevices });
   const elsewhere = (devices.data ?? []).filter((device) => !device.isCurrent);
 
@@ -111,7 +114,7 @@ const TheDevices = () => {
                 </Words>
               </View>
 
-              {device.isCurrent ? null : (
+              {device.isCurrent || isDemo ? null : (
                 <Button
                   tone="quiet"
                   label={say('common.signOutNamed', {
@@ -128,7 +131,7 @@ const TheDevices = () => {
           );
         })}
 
-        {elsewhere.length === 0 ? null : (
+        {elsewhere.length === 0 || isDemo ? null : (
           <Button tone="ghost" isWide isDestructive onPress={endTheRest}>
             {say('common.signOutEverywhereElse')}
           </Button>

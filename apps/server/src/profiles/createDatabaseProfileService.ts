@@ -421,15 +421,15 @@ const createDatabaseProfileService = (
       return rows[0]?.userId ?? null;
     },
 
-    findSignInEmail: async (profileId) => {
+    findSignIn: async (profileId) => {
       const rows = await db
-        .select({ email: user.email })
+        .select({ email: user.email, username: user.username })
         .from(viewerProfile)
         .innerJoin(user, eq(user.id, viewerProfile.userId))
         .where(eq(viewerProfile.id, profileId))
         .limit(1);
 
-      return rows[0]?.email ?? null;
+      return rows[0] ?? null;
     },
 
     readAvatar: async (profileId) => {

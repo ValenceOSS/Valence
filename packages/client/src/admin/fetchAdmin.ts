@@ -33,6 +33,8 @@ import type { RealtimeClient } from '@ValenceClient/realtime/createRealtimeClien
 import type { ScanJob } from '@ValenceClient/library/fetchLibrary';
 import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
 import { say } from '@ValenceI18n/say';
+import { AllowedAppsSchema } from '@ValenceContracts/schemas/AllowedApps';
+import type { AllowedApps } from '@ValenceContracts/schemas/AllowedApps';
 import { ToneMappingSchema } from '@ValenceContracts/schemas/ToneMapping';
 
 const AdminUserSchema = z.object({
@@ -54,6 +56,7 @@ const AdminOverviewSchema = z.object({
     hardwareAccel: z.string().default(''),
     previewQuality: PreviewQualitySchema.default('high'),
     showsProfilesBeforeSignIn: z.boolean().default(false),
+    allowedApps: AllowedAppsSchema.optional(),
     fetchesCatalogueTrailers: z.boolean().default(false),
     fetchesMusicDetails: z.boolean().default(false),
     requestReleaseTypes: ReleaseTypesSchema.default(['album']),
@@ -961,6 +964,24 @@ const removeSplashscreen = async (): Promise<boolean> => {
   return response !== null && response.ok;
 };
 
+/**
+ * Sets which Valence apps may connect to this server. The web is not among them, since it is how
+ * this is set.
+ *
+ * @param allowedApps - Whether the desktop, phone and television apps may each connect.
+ * @returns Whether it was saved.
+ */
+const saveAllowedApps = async (allowedApps: AllowedApps): Promise<boolean> => {
+  const response = await fetch('/api/admin/settings', {
+    method: 'PATCH',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ allowedApps }),
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
 const saveShowsProfilesBeforeSignIn = async (
   showsProfilesBeforeSignIn: boolean,
 ): Promise<boolean> => {
@@ -1102,6 +1123,7 @@ export {
   saveRoundness,
   saveCertificationRegion,
   saveKeepsDownloadsForDays,
+  saveAllowedApps,
   saveShowsProfilesBeforeSignIn,
   saveFetchesCatalogueTrailers,
   saveFetchesMusicDetails,

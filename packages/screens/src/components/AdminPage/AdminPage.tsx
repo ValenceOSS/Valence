@@ -33,6 +33,7 @@ import { useTheme } from '@ValenceClient/shell/useTheme';
 import { readTheme } from '@ValenceClient/shell/theme';
 import { THEME_CHOICES } from '@ValenceScreens/theme/themeChoices';
 import { say } from '@ValenceI18n/say';
+import { useWindowBarOnTheFrame } from '@ValenceScreens/desktop/useWindowBarOnTheFrame';
 import { BrandMark } from '@ValenceScreens/components/BrandMark/BrandMark';
 
 const MARKS_PLACE = 'valence-admin-mark';
@@ -46,6 +47,7 @@ const MARKS_PLACE = 'valence-admin-mark';
  * on every page load.
  */
 const AdminPage = () => {
+  useWindowBarOnTheFrame();
   const go = useNavigate();
   const { panel } = useParams({ strict: false });
   const search = useSearch({ strict: false });

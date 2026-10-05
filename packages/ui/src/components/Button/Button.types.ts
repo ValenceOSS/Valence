@@ -29,6 +29,7 @@ type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className'> & 
   isIconOnly?: boolean;
   isActive?: boolean;
   hasTooltip?: boolean;
+  shortcut?: readonly string[];
   tooltipDelayMilliseconds?: number;
   className?: string;
 };

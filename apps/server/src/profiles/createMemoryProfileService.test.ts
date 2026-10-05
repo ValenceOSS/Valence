@@ -214,13 +214,13 @@ describe('createMemoryProfileService', () => {
     const profiles = createMemoryProfileService();
     const made = await profiles.create('marques', REQUEST);
 
-    await expect(profiles.findSignInEmail(made.id)).resolves.toContain('marques');
+    expect((await profiles.findSignIn(made.id))?.email).toContain('marques');
   });
 
   it('knows no address for a face that does not exist', async () => {
     const profiles = createMemoryProfileService();
 
-    await expect(profiles.findSignInEmail('nobody')).resolves.toBeNull();
+    await expect(profiles.findSignIn('nobody')).resolves.toBeNull();
   });
 
   it('has nothing to remove for a profile that is not there', async () => {

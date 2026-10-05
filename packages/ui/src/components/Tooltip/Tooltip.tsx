@@ -44,6 +44,7 @@ const POPUP_MOTION = [
  * use with confidence.
  *
  * @param label - What the control does.
+ * @param keys - The keys that do the same from the keyboard, drawn one to a cap after the name.
  * @param children - The control being named.
  * @param side - Which side of the control to appear on.
  * @param isDisabled - Whether to say nothing at all, for a control whose name is already written.
@@ -57,6 +58,7 @@ const POPUP_MOTION = [
  */
 const Tooltip = ({
   label,
+  keys,
   children,
   side = 'top',
   isDisabled = false,
@@ -97,7 +99,23 @@ const Tooltip = ({
             POPUP_MOTION,
           )}
         >
-          {label}
+          {keys === undefined ? (
+            label
+          ) : (
+            <span className="flex flex-col items-center gap-1.5">
+              {label}
+              <span className="flex gap-1">
+                {keys.map((key) => (
+                  <kbd
+                    key={key}
+                    className="min-w-5 rounded-[0.3rem] bg-surface/15 px-1.5 py-0.5 text-center font-body text-[0.6875rem] leading-4"
+                  >
+                    {key}
+                  </kbd>
+                ))}
+              </span>
+            </span>
+          )}
         </RadixTooltip.Content>
       </RadixTooltip.Portal>
     </RadixTooltip.Root>

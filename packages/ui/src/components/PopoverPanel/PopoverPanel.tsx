@@ -22,8 +22,8 @@ import type { PopoverPanelProps } from './PopoverPanel.types';
  * @param isDisabled - Whether it can be opened at all.
  * @param isBare - Whether the surrounding chrome already draws the hover, so this must not draw a
  * second one.
- * @param triggerLook - An icon square that is lit when pointed at, or a button of the standard kind
- *   with room for a word beside its icon.
+ * @param triggerLook - An icon square that is lit when pointed at, a smaller one for a strip as
+ *   thin as a window bar, or a button of the standard kind with room for a word beside its icon.
  * @param tone - Whether it sits on the page or over film, where the page's colours say nothing.
  * @param className - Extra classes for the caller's own layout.
  */
@@ -58,7 +58,8 @@ const PopoverPanel = ({
             triggerLook === 'button'
               ? buttonStyles({ variant: 'glossy', size: 'sm' })
               : cn(
-                  'inline-flex size-10 shrink-0 items-center justify-center rounded-md',
+                  'inline-flex shrink-0 items-center justify-center rounded-md',
+                  triggerLook === 'smallIcon' ? 'size-6' : 'size-10',
                   'text-current outline-none',
                   'transition-colors duration-[var(--duration-instant)] ease-[var(--ease-out)]',
                   'motion-reduce:transition-none',

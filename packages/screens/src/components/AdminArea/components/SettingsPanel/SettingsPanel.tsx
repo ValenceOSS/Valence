@@ -23,6 +23,7 @@ import {
   saveHardwareAccel,
   savePreviewQuality,
   saveRoundness,
+  saveAllowedApps,
   saveShowsProfilesBeforeSignIn,
   saveFetchesCatalogueTrailers,
   saveFetchesMusicDetails,
@@ -54,6 +55,8 @@ import { downloadKeepingChoices } from '@ValenceScreens/components/AdminArea/dow
 import { ReleaseTypeChooser } from '@ValenceScreens/components/ReleaseTypeChooser/ReleaseTypeChooser';
 import type { ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 import { say } from '@ValenceI18n/say';
+import { EVERY_APP_ALLOWED } from '@ValenceContracts/schemas/AllowedApps';
+import type { AllowedApps } from '@ValenceContracts/schemas/AllowedApps';
 import { sayCount } from '@ValenceI18n/sayCount';
 
 const ROUNDNESS_CHOICES = ROUNDNESS_LEVELS.map((level) => ({
@@ -61,6 +64,23 @@ const ROUNDNESS_CHOICES = ROUNDNESS_LEVELS.map((level) => ({
   label: ROUNDNESS_LABELS[level],
 }));
 
+const APPS = [
+  {
+    id: 'desktop',
+    title: say('screens.adminArea.settingsPanel.theDesktopApp'),
+    description: say('screens.adminArea.settingsPanel.valenceForMacWindowsAndLinux'),
+  },
+  {
+    id: 'phone',
+    title: say('screens.adminArea.settingsPanel.thePhoneApp'),
+    description: say('screens.adminArea.settingsPanel.valenceForIPhoneAndAndroid'),
+  },
+  {
+    id: 'tv',
+    title: say('screens.adminArea.settingsPanel.theTelevisionApp'),
+    description: say('screens.adminArea.settingsPanel.valenceForAppleTvAndAndroid'),
+  },
+] as const;
 /**
  * What this server is configured with and who may sign into it: the metadata catalogue key, which
  * encoder transcodes use, how good the hover previews are, and the accounts on the server. Each setting says what it means in
@@ -101,6 +121,9 @@ const SettingsPanel = ({
   );
   const [showsFaces, setShowsFaces] = useState(
     overview?.settings.showsProfilesBeforeSignIn ?? true,
+  );
+  const [allowedApps, setAllowedApps] = useState<AllowedApps>(
+    overview?.settings.allowedApps ?? EVERY_APP_ALLOWED,
   );
   const [fetchesTrailers, setFetchesTrailers] = useState(
     overview?.settings.fetchesCatalogueTrailers ?? false,
@@ -355,6 +378,49 @@ const SettingsPanel = ({
             }}
           />
         </SettingRow>
+
+        <SettingRow
+          title={say('screens.adminArea.settingsPanel.theWeb')}
+          description={say('screens.adminArea.settingsPanel.alwaysOnItIsHowThis')}
+        >
+          <Switch
+            label={say('screens.adminArea.settingsPanel.theWeb')}
+            isLabelHidden
+            isOn
+            disabled
+            onToggle={() => undefined}
+          />
+        </SettingRow>
+
+        {APPS.map((app) => (
+          <SettingRow key={app.id} title={app.title} description={app.description}>
+            <Switch
+              label={app.title}
+              isLabelHidden
+              isOn={allowedApps[app.id]}
+              onToggle={() => {
+                const was = allowedApps;
+                const next = { ...allowedApps, [app.id]: !allowedApps[app.id] };
+
+                setAllowedApps(next);
+
+                void saveAllowedApps(next).then((saved) => {
+                  tellOutcome(
+                    say('screens.adminArea.settingsPanel.appsSaved'),
+                    failureOfAnswer(
+                      saved,
+                      say('screens.adminArea.settingsPanel.theAppsCouldNotBeSaved'),
+                    ),
+                  );
+
+                  if (!saved) {
+                    setAllowedApps(was);
+                  }
+                });
+              }}
+            />
+          </SettingRow>
+        ))}
 
         <div>
           <SettingRow

@@ -7,6 +7,7 @@ import { aLibrary } from '@ValenceClient/testing/aLibrary';
 import { aLinkedServerFace } from '@ValenceClient/testing/aLinkedServerFace';
 import { fetchWatchProgress } from '@ValenceClient/playback/watchProgress';
 import { markWatched } from '@ValenceClient/playback/markWatched';
+import { fetchMyPermissions } from '@ValenceClient/session/fetchMyPermissions';
 import { ATitle } from './ATitle';
 import { MediaDetailSchema } from '@ValenceContracts/schemas/Library';
 import type { ReactNode } from 'react';
@@ -14,6 +15,7 @@ import type { MediaDetail } from '@ValenceContracts/schemas/Library';
 
 jest.mock('@ValenceClient/library/fetchLibrary');
 jest.mock('@ValenceClient/linking/fetchLinkedServerFaces');
+jest.mock('@ValenceClient/session/fetchMyPermissions');
 jest.mock('@ValenceClient/playback/markWatched', () => ({ markWatched: jest.fn() }));
 jest.mock('@ValenceClient/playback/watchProgress', () => ({
   ...jest.requireActual<object>('@ValenceClient/playback/watchProgress'),
@@ -70,6 +72,10 @@ beforeEach(() => {
   jest.mocked(fetchLibraries).mockReset().mockResolvedValue([]);
   jest.mocked(fetchLinkedServerFaces).mockReset().mockResolvedValue([]);
   jest.mocked(fetchWatchProgress).mockReset().mockResolvedValue([]);
+  jest
+    .mocked(fetchMyPermissions)
+    .mockReset()
+    .mockResolvedValue({ permissions: ['sharing.link'], isAdministrator: false });
 });
 
 describe('ATitle', () => {
@@ -91,6 +97,52 @@ describe('ATitle', () => {
     await waitFor(() => {
       expect(drawn.getAllByText('Arrival').length).toBeGreaterThan(0);
     });
+  });
+
+  it('offers to share it to an account that may hand out links', async () => {
+    jest.mocked(fetchMediaDetail).mockResolvedValue(detailOf());
+
+    const drawn = await render(
+      around(
+        <ATitle
+          mediaId="one"
+          onWatch={jest.fn()}
+          onLookAtPerson={jest.fn()}
+          onLookAtShow={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
+    );
+
+    expect(await drawn.findByRole('button', { name: 'Share' })).toBeTruthy();
+  });
+
+  it('offers no way to share to an account that may not, such as a shared demo', async () => {
+    jest
+      .mocked(fetchMyPermissions)
+      .mockResolvedValue({ permissions: [], isAdministrator: false, isDemo: true });
+    jest.mocked(fetchMediaDetail).mockResolvedValue(detailOf());
+
+    const drawn = await render(
+      around(
+        <ATitle
+          mediaId="one"
+          onWatch={jest.fn()}
+          onLookAtPerson={jest.fn()}
+          onLookAtShow={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
+    );
+
+    await waitFor(() => {
+      expect(fetchMyPermissions).toHaveBeenCalled();
+    });
+    await waitFor(() => {
+      expect(drawn.getAllByText('Arrival').length).toBeGreaterThan(0);
+    });
+
+    expect(drawn.queryByRole('button', { name: 'Share' })).toBeNull();
   });
 
   it('says how long it runs', async () => {

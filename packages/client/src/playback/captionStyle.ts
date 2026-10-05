@@ -1,9 +1,13 @@
 import { z } from 'zod';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
+import { CAPTION_FONTS } from '@ValenceClient/playback/CAPTION_FONTS';
+import { CAPTION_WEIGHTS } from '@ValenceClient/playback/CAPTION_WEIGHTS';
+import { CAPTION_SIZES } from '@ValenceClient/playback/CAPTION_SIZES';
 
 const CaptionStyleSchema = z.object({
-  fontFamily: z.enum(['sans', 'serif', 'mono', 'casual']).default('sans'),
-  fontScale: z.number().min(50).max(300).default(100),
+  fontFamily: z.enum(CAPTION_FONTS).default('sans'),
+  fontScale: z.number().min(CAPTION_SIZES.smallest).max(CAPTION_SIZES.largest).default(100),
+  fontWeight: z.enum(CAPTION_WEIGHTS).default('medium'),
   color: z.string().default('#ffffff'),
   opacity: z.number().min(0.1).max(1).default(1),
   backgroundColor: z.string().default('#000000'),

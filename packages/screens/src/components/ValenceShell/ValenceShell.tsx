@@ -19,16 +19,8 @@ import { StillWatchingDialog } from '@ValenceScreens/components/StillWatchingDia
 import { NotificationBell } from '@ValenceScreens/components/NotificationBell/NotificationBell';
 import { ProfileFace } from '@ValenceScreens/components/ProfileFace/ProfileFace';
 import { useDeviceNotifications } from '@ValenceScreens/notifications/useDeviceNotifications';
-import {
-  clearNotifications,
-  markNotificationsRead,
-} from '@ValenceClient/notifications/fetchNotifications';
-import {
-  canReceivePush,
-  subscribeToPush,
-  unsubscribeFromPush,
-} from '@ValenceScreens/notifications/subscribeToPush';
-import { notificationQueries } from '@ValenceClient/query/notificationQueries';
+import { useTheInbox } from '@ValenceScreens/notifications/useTheInbox';
+import { isTheDesktopClient } from '@ValenceScreens/desktop/theDesktopShell';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { failureOfThrown } from '@ValenceScreens/admin/failureOf';
@@ -57,7 +49,6 @@ import { useMusicLights } from '@ValenceScreens/music/musicLights';
 import { AskableDialog } from '@ValenceScreens/components/AskableDialog/AskableDialog';
 import { placeOfArrival } from '@ValenceScreens/requests/placeOfArrival';
 import type { ShellSection } from '@ValenceScreens/components/AppShell/AppShell.types';
-import type { Inbox } from '@ValenceClient/notifications/fetchNotifications';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import { AudiobookBar } from '@ValenceScreens/components/AudiobookBar/AudiobookBar';
 import { BookDialog } from '@ValenceScreens/components/BookDialog/BookDialog';
@@ -73,8 +64,6 @@ import { writeMusicView } from '@ValenceClient/music/musicView';
 import { libraryChoicesFor } from '@ValenceScreens/library/libraryChoicesFor';
 import { requestsChoicesFor } from '@ValenceScreens/requests/requestsChoicesFor';
 import { useStockedKinds } from '@ValenceClient/library/useStockedKinds';
-
-const NOTHING_WAITING = { notifications: [], unread: 0 };
 
 /**
  * The chrome every section sits inside: the dock, the bell, the mood behind it, and the dialogs that
@@ -144,7 +133,8 @@ const ValenceShell = () => {
   const keptBooks = useFavourites(watching, 'books');
   const rate = useRate(watching);
   const hiding = useHidden(watching);
-  const { mayAdminister } = useWhatIMayDo();
+  const { may, mayAdminister } = useWhatIMayDo();
+  const mayShare = may('sharing.link');
   const mayRequest = useMayRequest();
   const leave = useSignOut();
 
@@ -152,25 +142,17 @@ const ValenceShell = () => {
   const [openRole, setOpenRole] = useState<string | null>(null);
   const [sharing, setSharing] = useState<ShareSubject | null>(null);
   const [deciding, setDeciding] = useState<MediaSummary | null>(null);
-  const [pushChoice, setPushChoice] = useState<boolean | null>(null);
-
-  const held = useQuery(notificationQueries.inbox());
-  const inbox = held.data ?? NOTHING_WAITING;
+  const bell = useTheInbox();
 
   useDeviceNotifications({
-    notifications: inbox.notifications,
-    unread: inbox.unread,
+    notifications: bell.notifications,
+    unread: bell.unread,
     onOpen: (link) => {
       if (link !== null) {
         window.location.assign(link);
       }
     },
   });
-
-  const howToPush = useQuery(notificationQueries.settings());
-  const pushKey = howToPush.data?.pushPublicKey ?? '';
-
-  const isPushOn = pushChoice ?? howToPush.data?.preferences.some((one) => one.push) ?? false;
 
   const libraries = useQuery(libraryQueries.all());
 
@@ -306,58 +288,7 @@ const ValenceShell = () => {
       onOpenMyRequests={() => {
         go({ section: 'requests', requestsView: 'mine' });
       }}
-      notifications={
-        <NotificationBell
-          notifications={inbox.notifications}
-          unread={inbox.unread}
-          {...(pushKey === '' || !canReceivePush()
-            ? {}
-            : {
-                push: {
-                  isOn: isPushOn,
-                  onToggle: () => {
-                    void (
-                      isPushOn ? unsubscribeFromPush().then(() => false) : subscribeToPush(pushKey)
-                    ).then(setPushChoice);
-                  },
-                },
-              })}
-          onOpen={() => {
-            void cache.invalidateQueries({ queryKey: notificationQueries.key });
-          }}
-          onRead={(id) => {
-            void markNotificationsRead(id).then((unread) => {
-              cache.setQueryData(
-                notificationQueries.inbox().queryKey,
-                (waiting: Inbox | undefined) =>
-                  waiting === undefined
-                    ? waiting
-                    : {
-                        unread,
-                        notifications: waiting.notifications.map((one) =>
-                          one.id === id && one.readAt === null
-                            ? { ...one, readAt: new Date().toISOString() }
-                            : one,
-                        ),
-                      },
-              );
-            });
-          }}
-          onReadAll={() => {
-            void markNotificationsRead().then(() =>
-              cache.invalidateQueries({ queryKey: notificationQueries.key }),
-            );
-          }}
-          onClearAll={() => {
-            void clearNotifications().then(() =>
-              cache.invalidateQueries({ queryKey: notificationQueries.key }),
-            );
-          }}
-          onFollow={(link) => {
-            window.location.assign(link);
-          }}
-        />
-      }
+      notifications={isTheDesktopClient() ? undefined : <NotificationBell {...bell} />}
       onSurprise={surprise}
       onSignOut={() => {
         void leave();
@@ -371,9 +302,13 @@ const ValenceShell = () => {
     >
       <ShowDialog
         show={openShow}
-        onShare={(show) => {
-          setSharing({ kind: 'series', seriesId: show.seriesId ?? '', title: show.title });
-        }}
+        {...(mayShare
+          ? {
+              onShare: (show) => {
+                setSharing({ kind: 'series', seriesId: show.seriesId ?? '', title: show.title });
+              },
+            }
+          : {})}
         onClose={() => {
           go({ show: null });
         }}
@@ -471,9 +406,13 @@ const ValenceShell = () => {
           setOpenRole(member.role);
           go({ person: member.personId ?? null });
         }}
-        onShare={(media) => {
-          setSharing({ kind: 'item', media });
-        }}
+        {...(mayShare
+          ? {
+              onShare: (media) => {
+                setSharing({ kind: 'item', media });
+              },
+            }
+          : {})}
         {...(hasTelevision
           ? {
               onPlayOn: (media: MediaSummary, startSeconds: number) => {
@@ -543,9 +482,13 @@ const ValenceShell = () => {
         onRate={(book, stars) => {
           rate({ bookId: book.id }, stars);
         }}
-        onShare={(book) => {
-          setSharing({ kind: 'book', book });
-        }}
+        {...(mayShare
+          ? {
+              onShare: (book) => {
+                setSharing({ kind: 'book', book });
+              },
+            }
+          : {})}
       />
 
       <AccountDialog

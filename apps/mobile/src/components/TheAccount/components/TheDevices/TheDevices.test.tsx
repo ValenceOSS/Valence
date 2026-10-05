@@ -5,9 +5,11 @@ import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { Alert } from 'react-native';
 import { endDevice, fetchDevices } from '@ValenceClient/account/fetchDevices';
+import { fetchMyPermissions } from '@ValenceClient/session/fetchMyPermissions';
 import { TheDevices } from './TheDevices';
 
 jest.mock('@ValenceClient/account/fetchDevices');
+jest.mock('@ValenceClient/session/fetchMyPermissions');
 
 const aDevice = (id: string, name: string, isCurrent: boolean) => ({
   id,
@@ -20,6 +22,7 @@ const aDevice = (id: string, name: string, isCurrent: boolean) => ({
 
 beforeEach(() => {
   installPlatform(aFakePlatform());
+  jest.mocked(fetchMyPermissions).mockResolvedValue({ permissions: [], isAdministrator: false });
 });
 
 describe('TheDevices', () => {
@@ -45,5 +48,24 @@ describe('TheDevices', () => {
     });
 
     expect(endDevice).toHaveBeenCalledWith('tv');
+  });
+
+  it('lists where a shared demo account is signed in, but signs none of it out', async () => {
+    jest
+      .mocked(fetchMyPermissions)
+      .mockResolvedValue({ permissions: [], isAdministrator: false, isDemo: true });
+    jest
+      .mocked(fetchDevices)
+      .mockResolvedValue([
+        aDevice('here', 'This iPhone', true),
+        aDevice('tv', 'Living room', false),
+      ]);
+    const drawn = await render(<TheDevices />, { wrapper: CacheScope });
+
+    expect(await drawn.findByText('Living room')).toBeTruthy();
+    await act(() => Promise.resolve());
+
+    expect(drawn.queryByRole('button', { name: 'Sign out Living room' })).toBeNull();
+    expect(drawn.queryByText('Sign out everywhere else')).toBeNull();
   });
 });

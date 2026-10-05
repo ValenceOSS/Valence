@@ -57,7 +57,7 @@ import { say } from '@ValenceI18n/say';
  */
 const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
   const { user, refresh } = useShell();
-  const { mayAdminister } = useWhatIMayDo();
+  const { mayAdminister, isDemo } = useWhatIMayDo();
   const cache = useQueryClient();
   const leave = useSignOut();
 
@@ -107,7 +107,9 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
 
   const contributions = useQuery({ ...pluginQueries.contributions(), enabled: panel !== null });
   const pluginPages = pluginAccountPages(contributions.data);
-  const ownPanels = ACCOUNT_PANELS.filter((one) => one.id !== 'discord' || canShowOnDiscord());
+  const ownPanels = ACCOUNT_PANELS.filter(
+    (one) => (one.id !== 'discord' || canShowOnDiscord()) && (one.id !== 'devices' || !isDemo),
+  );
   const panels: readonly { id: string; label: string }[] = [...ownPanels, ...pluginPages];
 
   const showing = panels.find((one) => one.id === panel)?.id ?? 'profile';
@@ -166,6 +168,8 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
         >
           {mayAdminister ? <Badge size="sm">{say('screens.accountDialog.admin')}</Badge> : null}
 
+          {isDemo ? <Badge size="sm">{say('common.sharedDemo')}</Badge> : null}
+
           <Button
             variant="ghost"
             size="sm"
@@ -178,6 +182,10 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
         </DialogTitle>
 
         <DialogContent>
+          {isDemo ? (
+            <p className="mb-4 text-sm text-text-muted">{say('common.thisIsASharedDemoAccount')}</p>
+          ) : null}
+
           <AccountArea
             user={user}
             panel={showing}

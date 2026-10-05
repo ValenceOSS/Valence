@@ -5,12 +5,23 @@ describe('captionTextStyle', () => {
   it('draws the defaults as white lettering on a dark box with an outline', () => {
     expect(captionTextStyle(DEFAULT_CAPTION_STYLE, 20)).toEqual({
       fontSize: 20,
+      fontWeight: '500',
       color: 'rgba(255, 255, 255, 1)',
       backgroundColor: 'rgba(0, 0, 0, 0.75)',
       textShadowColor: 'rgba(0, 0, 0, 0.9)',
       textShadowOffset: { width: 0, height: 0 },
       textShadowRadius: 1.5,
     });
+  });
+
+  it('draws the weight chosen, and small capitals as a variant of the plain face', () => {
+    expect(captionTextStyle({ ...DEFAULT_CAPTION_STYLE, fontWeight: 'heavy' }, 20).fontWeight).toBe(
+      '900',
+    );
+    expect(
+      captionTextStyle({ ...DEFAULT_CAPTION_STYLE, fontFamily: 'smallCapitals' }, 20),
+    ).toMatchObject({ fontVariant: ['small-caps'] });
+    expect(captionTextStyle(DEFAULT_CAPTION_STYLE, 20).fontVariant).toBeUndefined();
   });
 
   it('scales the client’s own size rather than fixing one', () => {

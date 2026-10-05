@@ -43,6 +43,7 @@ const FILL_CLASSES: Record<SliderTone, string> = {
  *
  * @param label - What is being chosen, read out to anybody who cannot see the track.
  * @param value - Where the handle sits now.
+ * @param min - The smallest value the track reaches, nothing unless said.
  * @param max - The largest value the track reaches.
  * @param step - How far each press of an arrow key moves it.
  * @param onValueChange - Told the new value as the handle moves.
@@ -65,6 +66,7 @@ const FILL_CLASSES: Record<SliderTone, string> = {
 const Slider = ({
   label,
   value,
+  min = 0,
   max,
   step = 1,
   onValueChange,
@@ -137,7 +139,7 @@ const Slider = ({
     (clientX: number) => {
       const element = trackRef.current;
 
-      if (element === null || max <= 0) {
+      if (element === null || max <= min) {
         return;
       }
 
@@ -152,16 +154,16 @@ const Slider = ({
       const half = (previewRef.current?.offsetWidth ?? 0) / 2;
       const left = Math.min(Math.max(ratio * box.width, half), Math.max(box.width - half, half));
 
-      setHover({ value: ratio * max, ratio, left });
+      setHover({ value: min + ratio * (max - min), ratio, left });
     },
-    [max],
+    [min, max],
   );
 
   const handle = (
     <RadixSlider.Thumb
       asChild
       aria-label={label}
-      aria-disabled={max <= 0}
+      aria-disabled={max <= min}
       onPointerEnter={() => {
         setIsOnHandle(true);
       }}
@@ -210,10 +212,10 @@ const Slider = ({
 
       <RadixSlider.Root
         value={[value]}
-        min={0}
-        max={max <= 0 ? 1 : max}
+        min={min}
+        max={max <= min ? min + 1 : max}
         step={step}
-        disabled={isDisabled || max <= 0}
+        disabled={isDisabled || max <= min}
         data-slot="slider"
         className="group/slider flex w-full touch-none items-center py-2 select-none data-[disabled]:opacity-50"
         onValueChange={(next) => {

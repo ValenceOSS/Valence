@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
@@ -19,6 +19,9 @@ import { SignedIn } from '@ValenceTv/screens/SignedIn/SignedIn';
 import { tokens } from '@ValenceTv/theme/tokens';
 import mark from '@ValenceTv/assets/valence-mark.png';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import { useThisAppIsTurnedOff } from '@ValenceClient/about/useThisAppIsTurnedOff';
+import { Button } from '@ValenceTv/components/Button/Button';
+import { say } from '@ValenceI18n/say';
 import type { Leaving, Spot } from '@ValenceTv/components/Flight/Flight.types';
 
 const SPLASH_LINGERS_MS = 700;
@@ -49,6 +52,7 @@ type Step = { kind: 'faces' } | { kind: 'password'; profile: ViewerProfile };
 const TheWayIn = () => {
   const cache = useQueryClient();
   const [server, setServer] = useState(serverAddress);
+  const isTurnedOff = useThisAppIsTurnedOff(server !== null);
   const [step, setStep] = useState<Step>({ kind: 'faces' });
   const [flights, setFlights] = useState<Flights | null>(null);
   const [hasLingered, setHasLingered] = useState(false);
@@ -138,6 +142,21 @@ const TheWayIn = () => {
             setServer(address);
           }}
         />
+      );
+    }
+
+    if (isTurnedOff) {
+      return (
+        <View style={[styles.waiting, styles.turnedOff]}>
+          <Text style={styles.headline}>{say('common.thisAppIsTurnedOffHere')}</Text>
+          <Text style={styles.reason}>{say('common.whoeverRunsThisServerHasTurned')}</Text>
+          <Button
+            label={say('common.useADifferentServer')}
+            variant="secondary"
+            hasPreferredFocus
+            onPress={changeServer}
+          />
+        </View>
       );
     }
 
@@ -253,6 +272,14 @@ const styles = StyleSheet.create({
     backgroundColor: tokens.colours.canvas,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  turnedOff: { gap: tokens.space.md, paddingHorizontal: tokens.space.edge },
+  headline: { color: tokens.colours.text, fontSize: tokens.type.title, fontWeight: '700' },
+  reason: {
+    color: tokens.colours.muted,
+    fontSize: tokens.type.body,
+    marginBottom: tokens.space.md,
+    textAlign: 'center',
   },
 });
 
