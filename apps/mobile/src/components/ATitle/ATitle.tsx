@@ -59,6 +59,7 @@ import type { ShareSubject } from '@ValenceClient/sharing/newShareFor.types';
 import type { ATitleProps } from './ATitle.types';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 import { say } from '@ValenceI18n/say';
+import { ABadgeRow } from '@ValenceMobile/components/ABadgeRow/ABadgeRow';
 
 const PLAY_HEIGHT = 46;
 
@@ -176,8 +177,10 @@ const ATitle = ({
     metadata.rating === null || metadata.rating === undefined
       ? null
       : `★ ${metadata.rating.toFixed(1)}`,
-    (metadata.genres ?? []).length === 0 ? null : (metadata.genres ?? []).slice(0, 2).join(', '),
   ].filter((fact) => fact !== null);
+  const genres = (metadata.genres ?? [])
+    .slice(0, 3)
+    .map((genre) => ({ label: genre, tone: 'solid' as const }));
   const details = describeTitleDetails(metadata);
   const tagline = seriesTitle === null ? (metadata.tagline ?? null) : null;
   const overview = metadata.overview ?? null;
@@ -219,6 +222,7 @@ const ATitle = ({
               : null
           }
         />
+        <ABadgeRow badges={genres} />
       </View>
 
       {tagline === null && overview === null ? null : (

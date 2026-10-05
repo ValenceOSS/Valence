@@ -43,6 +43,7 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { AShowProps } from './AShow.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { ABadgeRow } from '@ValenceMobile/components/ABadgeRow/ABadgeRow';
 
 const OTHER = 'other';
 
@@ -193,10 +194,14 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
     show.year === null || show.year === undefined ? null : show.year.toString(),
     sayCount('common.count.seasons', show.seasonCount),
     show.rating === null || show.rating === undefined ? null : `★ ${show.rating.toFixed(1)}`,
-    (show.genres ?? []).length === 0 ? null : (show.genres ?? []).slice(0, 2).join(', '),
-    show.status === null || show.status === undefined || show.status === '' ? null : show.status,
-    isWatchedThrough ? say('common.watched') : null,
   ].filter((fact) => fact !== null);
+  const badges = [
+    ...(isWatchedThrough ? [{ label: say('common.watched'), tone: 'accent' as const }] : []),
+    ...(show.status === null || show.status === undefined || show.status === ''
+      ? []
+      : [{ label: show.status }]),
+    ...(show.genres ?? []).slice(0, 3).map((genre) => ({ label: genre, tone: 'solid' as const })),
+  ];
 
   return (
     <Screen
@@ -213,6 +218,8 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
       }
     >
       <Words tone="muted">{facts.join(' · ')}</Words>
+
+      <ABadgeRow badges={badges} />
 
       {next === null ? null : (
         <Words tone="accent">
