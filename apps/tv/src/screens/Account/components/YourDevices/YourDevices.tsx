@@ -7,6 +7,7 @@ import { Button } from '@ValenceTv/components/Button/Button';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { YourDevicesProps } from './YourDevices.types';
 import { say } from '@ValenceI18n/say';
+import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { sayAgain } from '@ValenceI18n/sayAgain';
 
 const DEVICES = ['account', 'devices'] as const;
@@ -33,13 +34,15 @@ const detailOf = (device: Device): string => {
  * from here, since signing out is the button above. Ending another, or every other, is asked about
  * first, because whoever is on the other end is thrown out mid-film, and one that did not go through
  * says so rather than leaving the device listed as if nothing had been tried. The list catches the remote
- * across the whole width of the page.
+ * across the whole width of the page. A shared demo account ends nothing, and the server lists it
+ * no device but this one.
  *
  * @param onFocus - Told when the remote comes onto the list.
  */
 const YourDevices = ({ onFocus }: YourDevicesProps) => {
   const cache = useQueryClient();
   const devices = useQuery({ queryKey: DEVICES, queryFn: fetchDevices });
+  const { isDemo } = useWhatIMayDo();
 
   if (devices.data === undefined) {
     return null;
@@ -115,7 +118,7 @@ const YourDevices = ({ onFocus }: YourDevicesProps) => {
         </View>
       )}
 
-      {elsewhere.length === 0 ? (
+      {elsewhere.length === 0 || isDemo ? (
         <Text style={styles.detail}>{say('tv.account.yourDevices.noOtherDevices')}</Text>
       ) : (
         <TVFocusGuideView autoFocus style={styles.list}>

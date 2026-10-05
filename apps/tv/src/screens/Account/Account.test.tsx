@@ -39,7 +39,13 @@ const JO: ViewerProfile = {
   updatedAt: '2026-09-19T00:00:00.000Z',
 };
 
-const aCache = ({ mayRequest }: { mayRequest: boolean }): QueryClient => {
+const aCache = ({
+  mayRequest,
+  isDemo = false,
+}: {
+  mayRequest: boolean;
+  isDemo?: boolean;
+}): QueryClient => {
   const cache = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Infinity, gcTime: Infinity } },
   });
@@ -50,6 +56,7 @@ const aCache = ({ mayRequest }: { mayRequest: boolean }): QueryClient => {
   cache.setQueryData(sessionQueries.permissions().queryKey, {
     permissions: ['requests.ask'],
     isAdministrator: false,
+    isDemo,
   });
   cache.setQueryData(requestsQueries.mediaRequests().queryKey, []);
   cache.setQueryData(sessionQueries.who().queryKey, USER);
@@ -97,6 +104,20 @@ describe('Account', () => {
     expect(drawn.getByText('Jo')).toBeTruthy();
     expect(drawn.getByText('Watching on this server')).toBeTruthy();
     expect(drawn.getByText(/Server abc123/)).toBeTruthy();
+  });
+
+  it('tells whoever is on a shared demo account that it is one', async () => {
+    const demo = await drawAccount(aCache({ mayRequest: false, isDemo: true }));
+
+    expect(
+      demo.getByText(
+        'This is a shared demo account. Some settings are switched off, and anything you change is reset regularly.',
+      ),
+    ).toBeTruthy();
+
+    const other = await drawAccount(aCache({ mayRequest: false }));
+
+    expect(other.queryByText(/shared demo account/)).toBeNull();
   });
 
   it('offers every request only to somebody who may ask for things', async () => {
