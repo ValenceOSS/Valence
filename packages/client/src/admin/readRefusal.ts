@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { say } from '@ValenceI18n/say';
 import { isUnknownToServer } from '@ValenceClient/query/isUnknownToServer';
+import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 
 type Refusal = { message: string } | null;
 
@@ -17,20 +18,21 @@ const readRefusal = async (response: Response): Promise<Refusal> => {
     return null;
   }
 
-  if (await isUnknownToServer(response)) {
+  const body = await response
+    .json()
+    .then((value) => JsonValueSchema.parse(value))
+    .catch(() => undefined);
+
+  if (isUnknownToServer(response.status, body)) {
     return { message: say('client.query.thisAppIsNewerThanTheServer') };
   }
 
-  const body = await response
-    .json()
-    .then((value) => z.object({ error: z.string() }).safeParse(value))
-    .catch(() => null);
+  const refused = z.object({ error: z.string() }).safeParse(body);
 
   return {
-    message:
-      body?.success === true
-        ? body.data.error
-        : say('client.admin.readRefusal.thatCouldNotBeDoneTry'),
+    message: refused.success
+      ? refused.data.error
+      : say('client.admin.readRefusal.thatCouldNotBeDoneTry'),
   };
 };
 

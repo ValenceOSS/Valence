@@ -1,4 +1,3 @@
-import { theCookiesThisPhoneHolds } from '@ValenceMobile/platform/theCookiesThisPhoneHolds';
 import { thePhonesSocket } from './thePhonesSocket';
 import { THE_SERVER_ADDRESS } from './THE_SERVER_ADDRESS';
 import type { DeviceStore } from '@ValenceClient/platform/Platform.types';
@@ -65,7 +64,6 @@ beforeEach(() => {
   handlers.onMessage.mockClear();
   handlers.onClose.mockClear();
   Object.defineProperty(globalThis, 'WebSocket', { configurable: true, value: ASocket });
-  jest.mocked(theCookiesThisPhoneHolds).mockReset().mockResolvedValue(null);
 });
 
 const onceItHasAsked = async () => {
@@ -132,28 +130,23 @@ describe('thePhonesSocket', () => {
     expect(ASocket.latest?.sent).toEqual([]);
   });
 
-  it('opens it with this phone\u2019s session on it, which a socket does not carry by itself', async () => {
-    jest.mocked(theCookiesThisPhoneHolds).mockResolvedValue('valence.session_token=abc');
-
+  it('leaves the session to the socket itself, rather than sending the cookie a second time', () => {
     thePhonesSocket(aStore('http://one.local:8420'))(handlers);
-    await onceItHasAsked();
-
-    expect(ASocket.latest?.options).toEqual({ headers: { Cookie: 'valence.session_token=abc' } });
-  });
-
-  it('opens anyway where this phone holds no session to send', async () => {
-    thePhonesSocket(aStore('http://one.local:8420'))(handlers);
-    await onceItHasAsked();
 
     expect(ASocket.latest?.options).toBeUndefined();
   });
 
-  it('opens nothing at all where it was closed before the jar answered', async () => {
+  it('opens at once, waiting on nothing', () => {
+    thePhonesSocket(aStore('http://one.local:8420'))(handlers);
+
+    expect(opened).toEqual(['ws://one.local:8420/api/realtime']);
+  });
+
+  it('closes the socket when it is put away', () => {
     const link = thePhonesSocket(aStore('http://one.local:8420'))(handlers);
 
     link.close();
-    await onceItHasAsked();
 
-    expect(opened).toEqual([]);
+    expect(ASocket.latest?.closed).toBe(true);
   });
 });

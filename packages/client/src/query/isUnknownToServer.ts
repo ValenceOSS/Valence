@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 
 const UNKNOWN_ADDRESS = 'error.common.thisServerDoesNotHaveThatAddress';
 
@@ -7,26 +8,27 @@ const NOT_FOUND = 404;
 const CodedSchema = z.object({ code: z.string().nullish() });
 
 /**
- * Whether a failed response means the server doesn't have the address at all, rather than that the
- * thing asked for is missing. Newer servers say so with a refusal code. Older ones answer an unknown
- * address with a plain-text 404, while every route they do have refuses in JSON. Reads a copy of the
- * response, so the body is still there for the caller.
+ * Whether a failed answer means the server doesn't have the address at all, rather than that the
+ * thing asked for is missing. A newer server says so with a refusal code. An older one answers an
+ * address it doesn't have with a plain-text 404, while every route it does have refuses in JSON, so
+ * a 404 with no JSON body is the same answer from before the code existed.
  *
- * @param response - The failed response.
+ * @param status - The answer's status.
+ * @param body - Its body as JSON, or undefined where it was not JSON.
  * @returns True when the app is asking for something this server doesn't have.
  */
-const isUnknownToServer = async (response: Response): Promise<boolean> => {
-  if (response.status !== NOT_FOUND) {
+const isUnknownToServer = (status: number, body: JsonValue | undefined): boolean => {
+  if (status !== NOT_FOUND) {
     return false;
   }
 
-  const coded = await response
-    .clone()
-    .json()
-    .then((value) => CodedSchema.safeParse(value))
-    .catch(() => null);
+  if (body === undefined) {
+    return true;
+  }
 
-  return coded === null || !coded.success || coded.data.code === UNKNOWN_ADDRESS;
+  const coded = CodedSchema.safeParse(body);
+
+  return coded.success && coded.data.code === UNKNOWN_ADDRESS;
 };
 
 export { isUnknownToServer };

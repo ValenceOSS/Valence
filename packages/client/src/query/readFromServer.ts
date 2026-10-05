@@ -33,7 +33,12 @@ const readFromServer = async <Value>(
   });
 
   if (!response.ok) {
-    throw new RequestFailed(path, response.status, await isUnknownToServer(response));
+    const refusal = await response
+      .json()
+      .then((value) => JsonValueSchema.parse(value))
+      .catch(() => undefined);
+
+    throw new RequestFailed(path, response.status, isUnknownToServer(response.status, refusal));
   }
 
   const body = JsonValueSchema.parse(await response.json());
