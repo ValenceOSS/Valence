@@ -2700,15 +2700,16 @@ mod tests {
             "segment_00004.m4s".to_owned(),
             "segment_00005.m4s".to_owned(),
         ];
-        let response = locate(Path::new("/tmp/transcodes/abc"), &names);
+        let directory = Path::new("/tmp/transcodes/abc");
+        let response = locate(directory, &names);
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let read: serde_json::Value = serde_json::from_slice(&body).unwrap();
 
         assert_eq!(
             read["files"],
             serde_json::json!([
-                "/tmp/transcodes/abc/segment_00004.m4s",
-                "/tmp/transcodes/abc/segment_00005.m4s"
+                directory.join("segment_00004.m4s").to_string_lossy(),
+                directory.join("segment_00005.m4s").to_string_lossy()
             ])
         );
         assert_eq!(read["contentType"], "video/mp4");
