@@ -56,6 +56,7 @@ const askables = vi.hoisted(() => ({
   fetchCatalogueGenres: vi.fn(),
   fetchDiscover: vi.fn(),
   fetchRequestProgress: vi.fn(),
+  findMissingAlbums: vi.fn(() => Promise.resolve({ isMatching: false, albums: [] })),
   searchAskable: vi.fn(),
 }));
 
@@ -273,6 +274,7 @@ describe('requestsQueries', () => {
     await cache.fetchQuery(requestsQueries.catalogueGenres('film'));
     await cache.fetchQuery(requestsQueries.askableSearch('dune', 'film'));
     await cache.fetchQuery(requestsQueries.askable('film', '1'));
+    await cache.fetchQuery(requestsQueries.missingAlbums('playlist-1'));
     await cache.fetchQuery(requestsQueries.requestProgress());
 
     const browse = requestsQueries.catalogueBrowse(browsing, true, { genre: '18' });
@@ -286,6 +288,7 @@ describe('requestsQueries', () => {
     expect(askables.fetchCatalogueGenres).toHaveBeenCalledWith('film');
     expect(askables.searchAskable).toHaveBeenCalledWith('dune', 'film');
     expect(askables.fetchAskable).toHaveBeenCalledWith('film', '1');
+    expect(askables.findMissingAlbums).toHaveBeenCalledWith('playlist-1');
     expect(askables.fetchRequestProgress).toHaveBeenCalledOnce();
     expect(askables.fetchCatalogueBrowse).toHaveBeenCalledWith(browsing, 1, { genre: '18' });
     expect(browse.getNextPageParam({ page: 1, hasMore: true, titles: [] }, [], 1, [])).toBe(2);
@@ -296,5 +299,6 @@ describe('requestsQueries', () => {
     expect(requestsQueries.requestBlocklist(null).enabled).toBe(false);
     expect(requestsQueries.askableSearch(' ', 'film').enabled).toBe(false);
     expect(requestsQueries.askable('film', null).enabled).toBe(false);
+    expect(requestsQueries.missingAlbums('playlist-1', false).enabled).toBe(false);
   });
 });

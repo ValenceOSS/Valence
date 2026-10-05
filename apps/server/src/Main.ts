@@ -162,6 +162,8 @@ import type { DeezerCharts } from '@ValenceServer/requests/deezer/readDeezerChar
 import type { CatalogueStudio } from '@ValenceContracts/schemas/CatalogueTitle';
 import { describeAlbumForRequest } from '@ValenceServer/requests/musicBrainz/describeAlbumForRequest';
 import { describeArtistForRequest } from '@ValenceServer/requests/musicBrainz/describeArtistForRequest';
+import { findAlbumsOfSongs } from '@ValenceServer/requests/musicBrainz/findAlbumsOfSongs';
+import { createMissingAlbumMatcher } from '@ValenceServer/requests/missingAlbums/createMissingAlbumMatcher';
 import { searchMusicCatalogue } from '@ValenceServer/requests/musicBrainz/searchMusicCatalogue';
 import type {
   MediaRequestKind,
@@ -721,7 +723,8 @@ const describeViewing = async (viewing: PresenceViewing): Promise<ViewingData | 
 };
 
 /**
- * Fills out what a device was playing when it played a song, in the shape a viewing is told in.
+ * Fills out what a device was playing when it played a song, in the shape a viewing is told in. The
+ * song is read from the music library, since the lookup a viewing is described with leaves songs out.
  *
  * @param play - The song, and the device it played on.
  * @returns The listening as a subscriber reads it, or nothing where the song has since gone.
@@ -730,23 +733,44 @@ const describeListening = async ({
   device,
   report,
 }: Play<MusicNowPlaying>): Promise<ViewingData | null> => {
+  const [track] = await musicLibrary.listTracks(asTheServer, [report.trackId]);
+
+  if (track === undefined) {
+    return null;
+  }
+
   const listening = listeningFor(
     report,
     await musicLibrary.readTrackFile(asTheServer, report.trackId),
   );
+  const shelf = (await libraryService.list(asTheServer)).find((one) => one.id === track.libraryId);
 
-  return describeViewing({
+  return {
     accountId: device.accountId,
+    accountName: await nameOfAccount(device.accountId),
     profileId: device.profileId,
     profileName: device.profileName,
+    item: {
+      itemId: track.id,
+      kind: 'song',
+      title: track.title,
+      seriesTitle: null,
+      seasonNumber: null,
+      episodeNumber: null,
+      year: null,
+      posterUrl: null,
+      libraryId: track.libraryId,
+      libraryName: shelf?.name ?? say('common.aLibrary'),
+      overview: null,
+      durationSeconds: track.durationSeconds,
+      genres: [],
+      rating: null,
+      quality: null,
+    },
     deviceLabel: device.deviceLabel,
-    clientKind: device.clientKind ?? 'browser',
-    mediaId: report.trackId,
     // oxlint-disable-next-line valence/no-hard-coded-strings -- a playback mode a subscriber matches on, not words a person reads
     mode: listening.delivery === 'encoded' ? 'Transcode' : 'DirectPlay',
-    positionSeconds: null,
-    durationSeconds: null,
-  });
+  };
 };
 
 /**
@@ -3924,6 +3948,35 @@ const app = createApp({
   describeMusicForRequest,
   describeBookForRequest: describeBook,
   searchMusicCatalogue: (query, kind) => searchMusicCatalogue(musicWeb, query, kind),
+  missingAlbums: createMissingAlbumMatcher({
+    playlists: musicServices.playlists,
+    find: (songs) => findAlbumsOfSongs(musicWeb, songs),
+    onDone: (viewer, playlist, tally) => {
+      void (async () => {
+        await notifyHousehold({
+          store: notifications,
+          event: 'requests.albumsFound',
+          title: saying('server.main.albumsForNameAreReadyToRequest', { name: playlist.name }),
+          body: sayingCount('server.main.count.foundAlbumsOfAll', tally.found, {
+            albums: tally.albums,
+          }),
+          link: `/music?listen=playlist:${playlist.id}:request`,
+          vapid: await readPushKeys(),
+          only: [viewer.accountId],
+          onProblem: (reason) => {
+            log.warn('requests', `saying a playlist's albums were found: ${reason}`);
+          },
+          announce: (userIds) => {
+            realtime.publish(
+              'notifications',
+              { event: 'requests.albumsFound' },
+              { kind: 'accounts', accountIds: [...userIds] },
+            );
+          },
+        });
+      })();
+    },
+  }),
   discovery,
   searchCatalogue: (query, kind) => catalogueProvider.search?.(query, kind) ?? Promise.resolve([]),
   seriesOfTvdbId: (tvdbId) => catalogueProvider.seriesOfTvdbId?.(tvdbId) ?? Promise.resolve(null),

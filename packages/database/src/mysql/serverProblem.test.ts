@@ -35,7 +35,7 @@ describe('serverProblem', () => {
     expect(
       serverProblem({ version: '8.4.11', collation: 'utf8mb4_0900_ai_ci', database: 'valence' }),
     ).toBe(
-      'The database valence compares text as utf8mb4_0900_ai_ci, and Valence needs utf8mb4_0900_bin. Before Valence first starts, run: ALTER DATABASE `valence` CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_bin;',
+      'The database valence uses the utf8mb4_0900_ai_ci collation, and Valence needs utf8mb4_0900_bin. Before starting Valence for the first time, run: ALTER DATABASE `valence` CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_bin;',
     );
   });
 

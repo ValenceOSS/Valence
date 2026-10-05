@@ -73,6 +73,7 @@ const PLAYLIST: PlaylistSummary = {
   owner: null,
   entryCount: 0,
   lostCount: 0,
+  missingCount: 0,
   durationSeconds: 0,
   artworkAlbumIds: [],
   hasOwnArtwork: false,
@@ -207,6 +208,7 @@ describe('MusicCollection', () => {
           id: `00000000-0000-4000-8000-${(900 + at).toString().padStart(12, '0')}`,
           position: at,
           addedAt: '2026-01-01T00:00:00.000Z',
+          missing: null,
           item: {
             id: track.id,
             kind: 'song' as const,

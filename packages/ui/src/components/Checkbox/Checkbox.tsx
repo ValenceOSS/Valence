@@ -9,7 +9,8 @@ import type { CheckboxProps } from './Checkbox.types';
  * A labelled checkbox, for a choice that is part of a form rather than one that takes effect at
  * once — a switch is the control for that. Built on the headless primitive, which supplies the
  * keyboard interaction and the ARIA wiring that are expensive to get right and dangerous to get
- * wrong.
+ * wrong. The box and its words are one label, so pressing the words ticks it, as a browser's own
+ * checkbox does.
  *
  * @param label - What ticking it means.
  * @param isLabelHidden - Whether the label is only read out, for a box whose row already says what
@@ -34,18 +35,22 @@ const Checkbox = ({
   onCheckedChange,
   className,
 }: CheckboxProps) => {
+  const boxId = useId();
   const labelId = useId();
   const describedId = useId();
 
   return (
-    <span
+    <label
+      htmlFor={boxId}
       className={cn(
         'inline-flex gap-2 text-text',
         description === undefined ? 'items-center' : 'items-start',
+        disabled ? 'cursor-not-allowed' : 'cursor-pointer',
         className,
       )}
     >
       <RadixCheckbox.Root
+        id={boxId}
         {...(isMixed
           ? { checked: 'indeterminate' as const }
           : checked === undefined
@@ -86,7 +91,7 @@ const Checkbox = ({
           </span>
         </span>
       )}
-    </span>
+    </label>
   );
 };
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { Form } from '@ValenceUI/Form';
+import { Link } from '@ValenceUI/Link';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { Switch } from '@ValenceUI/Switch';
@@ -15,7 +16,8 @@ import { say } from '@ValenceI18n/say';
 /**
  * A plugin's settings, such as the keys it signs in to another service with. A secret is never shown
  * again once saved: its field starts empty, says whether one is set, and only what is typed into it
- * is sent, so leaving it alone keeps what the server holds.
+ * is sent, so leaving it alone keeps what the server holds. A setting whose help names where its
+ * value comes from links there, under the help, so it can be opened rather than typed in.
  *
  * @param plugin - The plugin, or nothing while the dialog is shut.
  * @param redirectUri - Where outside services send somebody back to after they connect an account,
@@ -116,6 +118,12 @@ const PluginSettingsDialog = ({
 
               {plugin.settings.map((setting) => {
                 const value = values[setting.id];
+                const link =
+                  setting.link === null ? null : (
+                    <Link href={setting.link.url} className="self-start text-xs">
+                      {setting.link.label}
+                    </Link>
+                  );
 
                 return setting.kind === 'toggle' ? (
                   <div key={setting.id} className="flex flex-col gap-1">
@@ -130,26 +138,32 @@ const PluginSettingsDialog = ({
                     {setting.help === null ? null : (
                       <span className="text-xs text-text-muted">{setting.help}</span>
                     )}
+
+                    {link}
                   </div>
                 ) : (
-                  <TextField
-                    key={setting.id}
-                    label={setting.label}
-                    type={setting.kind === 'secret' ? 'password' : 'text'}
-                    autoComplete={setting.kind === 'secret' ? 'new-password' : 'off'}
-                    value={typeof value === 'string' ? value : ''}
-                    {...(setting.kind === 'secret' && setting.isSet
-                      ? {
-                          placeholder: say(
-                            'screens.pluginsPanel.pluginSettingsDialog.savedTypeToReplaceIt',
-                          ),
-                        }
-                      : {})}
-                    {...(setting.help === null ? {} : { description: setting.help })}
-                    onValueChange={(next) => {
-                      setValues((was) => ({ ...was, [setting.id]: next }));
-                    }}
-                  />
+                  <div key={setting.id} className="flex flex-col gap-1">
+                    <TextField
+                      label={setting.label}
+                      type={setting.kind === 'secret' ? 'password' : 'text'}
+                      autoComplete={setting.kind === 'secret' ? 'new-password' : 'off'}
+                      value={typeof value === 'string' ? value : ''}
+                      {...(setting.kind === 'secret' && setting.isSet
+                        ? {
+                            placeholder: say(
+                              'screens.pluginsPanel.pluginSettingsDialog.savedTypeToReplaceIt',
+                            ),
+                          }
+                        : {})}
+                      {...(setting.help === null ? {} : { description: setting.help })}
+                      {...(link === null ? {} : { descriptionPlacement: 'below' as const })}
+                      onValueChange={(next) => {
+                        setValues((was) => ({ ...was, [setting.id]: next }));
+                      }}
+                    />
+
+                    {link}
+                  </div>
                 );
               })}
             </DialogContent>

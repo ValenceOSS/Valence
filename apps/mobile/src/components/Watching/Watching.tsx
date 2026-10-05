@@ -16,6 +16,7 @@ import {
 } from '@ValenceClient/downloads/keepingFiles';
 import { rememberWatchedOffline, watchedOffline } from '@ValenceClient/offline/watchedOffline';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
+import { holdWatching } from '@ValenceClient/playback/holdWatching';
 import { onPresenceEvent } from '@ValenceClient/presence/presenceEvents';
 import { nameSeason } from '@ValenceClient/library/nameSeason';
 import { howLongItRuns } from '@ValenceMobile/components/ATitle/howLongItRuns';
@@ -26,7 +27,6 @@ import {
   sendPresenceHeartbeat,
   startPlaybackSession,
   stopPlaybackSession,
-  stopWatching,
 } from '@ValenceClient/playback/startPlaybackSession';
 import {
   REPORT_EVERY_MILLISECONDS,
@@ -307,6 +307,7 @@ const Watching = ({
 
     let started: string | null = null;
     let leftAlready = false;
+    const letGo = holdWatching(clientId);
 
     setSource(null);
 
@@ -364,7 +365,7 @@ const Watching = ({
         void stopPlaybackSession(started, clientId);
       }
 
-      void stopWatching(clientId);
+      letGo();
     };
   }, [mediaId, asking, clientId, isKept]);
 

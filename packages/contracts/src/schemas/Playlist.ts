@@ -18,6 +18,7 @@ const PlaylistSummarySchema = z.object({
   owner: PlaylistOwnerSchema.nullable(),
   entryCount: z.number().int().nonnegative(),
   lostCount: z.number().int().nonnegative(),
+  missingCount: z.number().int().nonnegative(),
   durationSeconds: z.number().nonnegative(),
   artworkAlbumIds: z.array(z.string().uuid()).max(4),
   hasOwnArtwork: z.boolean(),
@@ -33,11 +34,23 @@ const PlaylistItemSchema = z.object({
   track: MusicTrackSchema.nullable(),
 });
 
+const PlaylistMissingSongSchema = z.object({
+  title: z.string().trim().min(1).max(300),
+  artist: z.string().trim().min(1).max(300),
+  album: z.string().trim().min(1).max(300).nullable(),
+  releaseId: z.string().uuid().nullable(),
+});
+
+const PlaylistMissingEntrySchema = PlaylistMissingSongSchema.extend({
+  coverUrl: z.string().nullable(),
+});
+
 const PlaylistEntrySchema = z.object({
   id: z.string().uuid(),
   position: z.number(),
   addedAt: z.string(),
   item: PlaylistItemSchema.nullable(),
+  missing: PlaylistMissingEntrySchema.nullable(),
 });
 
 const PlaylistDetailSchema = z.object({
@@ -72,6 +85,8 @@ const MovePlaylistEntrySchema = z.object({
 type PlaylistOwner = z.infer<typeof PlaylistOwnerSchema>;
 type PlaylistSummary = z.infer<typeof PlaylistSummarySchema>;
 type PlaylistEntry = z.infer<typeof PlaylistEntrySchema>;
+type PlaylistMissingSong = z.infer<typeof PlaylistMissingSongSchema>;
+type PlaylistMissingEntry = z.infer<typeof PlaylistMissingEntrySchema>;
 type PlaylistDetail = z.infer<typeof PlaylistDetailSchema>;
 type CreatePlaylist = z.infer<typeof CreatePlaylistSchema>;
 type UpdatePlaylist = z.infer<typeof UpdatePlaylistSchema>;
@@ -80,6 +95,8 @@ export type {
   CreatePlaylist,
   PlaylistDetail,
   PlaylistEntry,
+  PlaylistMissingEntry,
+  PlaylistMissingSong,
   PlaylistOwner,
   PlaylistSummary,
   UpdatePlaylist,
@@ -93,6 +110,7 @@ export {
   PlaylistEntrySchema,
   PlaylistItemSchema,
   PlaylistListSchema,
+  PlaylistMissingSongSchema,
   PlaylistOwnerSchema,
   PlaylistSummarySchema,
   UpdatePlaylistSchema,

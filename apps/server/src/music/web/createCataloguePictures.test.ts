@@ -86,6 +86,32 @@ describe('createCataloguePictures', () => {
     expect(findAppleAlbumCoverUrl).not.toHaveBeenCalled();
   });
 
+  it('reads a release’s small cover from the archive, and its name’s from Apple otherwise', async () => {
+    const release = 'https://coverartarchive.org/release/rel-1/front-250';
+    const { found } = await pictures([release, 'https://apple/cover.jpg']);
+
+    expect(said(await found.releaseCover('rel-1', { title: 'Isles', artist: 'Bicep' }))).toBe(
+      release,
+    );
+    expect(findAppleAlbumCoverUrl).not.toHaveBeenCalled();
+    expect(said(await found.releaseCover('rel-2', { title: 'Isles', artist: 'Bicep' }))).toBe(
+      'https://apple/cover.jpg',
+    );
+    expect(await found.releaseCover('rel-3', null)).toBeNull();
+  });
+
+  it('reads the cover of a record known only by its name from Apple’s catalogue', async () => {
+    const { found } = await pictures(['https://apple/cover.jpg']);
+
+    expect(said(await found.namedCover({ title: 'Isles', artist: 'Bicep' }))).toBe(
+      'https://apple/cover.jpg',
+    );
+    expect(findAppleAlbumCoverUrl).toHaveBeenCalledWith(expect.anything(), {
+      title: 'Isles',
+      artistName: 'Bicep',
+    });
+  });
+
   it('remembers where a cover was found, so it is not looked for again', async () => {
     const { found, readImage } = await pictures(['https://apple/cover.jpg']);
     const hint = { title: 'Intimacy', artist: 'Bloc Party' };

@@ -14,6 +14,7 @@ import {
 import { fetchDownloadQueue } from '@ValenceClient/requests/fetchDownloadQueue';
 import { fetchGiveUpRules } from '@ValenceClient/requests/fetchGiveUpRules';
 import { fetchSeerrLink } from '@ValenceClient/requests/fetchSeerrLink';
+import { askAgainWhileMatching } from '@ValenceClient/requests/askAgainWhileMatching';
 import { fetchProfiles, fetchProfilesOnOffer } from '@ValenceClient/requests/fetchProfiles';
 import {
   fetchRequestBlocklist,
@@ -28,6 +29,7 @@ import {
   fetchCatalogueGenres,
   fetchDiscover,
   fetchRequestProgress,
+  findMissingAlbums,
   searchAskable,
 } from '@ValenceClient/requests/fetchAskable';
 import type { CatalogueBrowse, CatalogueFilters } from '@ValenceContracts/schemas/CatalogueTitle';
@@ -348,6 +350,23 @@ const askableSearch = (query: string, kind: MediaRequestKind, isEnabled = true) 
   });
 
 /**
+ * The albums of a playlist's missing songs, to ask for them: starting the search where it is not
+ * under way, and asked again every moment and a half while it is, so each album fills in as the
+ * server finds it.
+ *
+ * @param playlistId - The playlist.
+ * @param isEnabled - Whether to ask at all, which nothing shut needs.
+ * @returns The query.
+ */
+const missingAlbums = (playlistId: string, isEnabled = true) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'missingAlbums', playlistId],
+    queryFn: () => findMissingAlbums(playlistId),
+    enabled: isEnabled,
+    refetchInterval: ({ state }) => askAgainWhileMatching(state.data),
+  });
+
+/**
  * One title that can be asked for, as its page shows it.
  *
  * @param kind - What kind of title it is.
@@ -451,6 +470,7 @@ const requestsQueries = {
   catalogueBrowse,
   catalogueGenres,
   askableSearch,
+  missingAlbums,
   askable,
   requestProgress,
   seerrLink,

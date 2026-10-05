@@ -49,7 +49,7 @@ const aPlaylist = async () => {
     mediaItemIds: ['film', ...songs.map((song) => song.id)],
   });
 
-  return { db, viewer, playlists, id: made?.id ?? '', covered };
+  return { db, viewer, playlists, store, artist, bare, id: made?.id ?? '', covered };
 };
 
 describe('createDatabasePlaylistService', { timeout: STARTING_POSTGRES_MS }, () => {
@@ -62,6 +62,7 @@ describe('createDatabasePlaylistService', { timeout: STARTING_POSTGRES_MS }, () 
       id,
       entryCount: 3,
       lostCount: 0,
+      missingCount: 0,
       durationSeconds: 5400 + 240 + 240,
       artworkAlbumIds: [covered],
     });
@@ -74,7 +75,12 @@ describe('createDatabasePlaylistService', { timeout: STARTING_POSTGRES_MS }, () 
 
     const [summary] = await playlists.list(viewer);
 
-    expect(summary).toMatchObject({ entryCount: 2, lostCount: 1, durationSeconds: 480 });
+    expect(summary).toMatchObject({
+      entryCount: 2,
+      lostCount: 1,
+      missingCount: 0,
+      durationSeconds: 480,
+    });
   });
 
   it('says whether there was an entry to drop', async () => {
@@ -84,5 +90,104 @@ describe('createDatabasePlaylistService', { timeout: STARTING_POSTGRES_MS }, () 
 
     await expect(playlists.drop(viewer, id, entryId)).resolves.toBe(true);
     await expect(playlists.drop(viewer, id, entryId)).resolves.toBe(false);
+  });
+
+  it('keeps a song the library does not have in its place, counted apart from what has gone', async () => {
+    const { db, viewer, playlists, id } = await aPlaylist();
+
+    await playlists.add(viewer, id, [
+      { title: 'Nowhere Yet', artist: 'Low', album: null, releaseId: null },
+      {
+        title: 'Far Off',
+        artist: 'Low',
+        album: 'Distant',
+        releaseId: '959621bf-6536-4f37-a60d-148168d98700',
+      },
+    ]);
+    await db.delete(mediaItem).where(eq(mediaItem.id, 'film'));
+
+    const [summary] = await playlists.list(viewer);
+    const read = await playlists.read(viewer, id);
+
+    expect(summary).toMatchObject({ entryCount: 2, lostCount: 1, missingCount: 2 });
+    expect(read?.entries.map((entry) => [entry.item?.title ?? null, entry.missing])).toEqual([
+      [null, null],
+      ['A Song', null],
+      ['A Song', null],
+      [
+        null,
+        {
+          title: 'Nowhere Yet',
+          artist: 'Low',
+          album: null,
+          releaseId: null,
+          coverUrl: '/api/music/catalogue/named-covers?title=Nowhere+Yet&artist=Low',
+        },
+      ],
+      [
+        null,
+        {
+          title: 'Far Off',
+          artist: 'Low',
+          album: 'Distant',
+          releaseId: '959621bf-6536-4f37-a60d-148168d98700',
+          coverUrl:
+            '/api/music/catalogue/release-covers/959621bf-6536-4f37-a60d-148168d98700?title=Distant&artist=Low',
+        },
+      ],
+    ]);
+  });
+
+  it('fills a missing song in where it stands once the library has it, for its owner', async () => {
+    const { viewer, playlists, store, artist, bare, id } = await aPlaylist();
+
+    await playlists.add(viewer, id, [
+      { title: 'later arrival', artist: 'LOW', album: 'Bare', releaseId: null },
+      { title: 'Still Away', artist: 'Low', album: null, releaseId: null },
+    ]);
+    await store.keepTrack(
+      aTrackRow({
+        albumId: bare,
+        artistIds: [artist.id],
+        path: '/music/c',
+        title: 'Later Arrival',
+      }),
+    );
+
+    const read = await playlists.read(viewer, id);
+
+    expect(read?.entries.map((entry) => entry.item?.title ?? entry.missing?.title)).toEqual([
+      'A Film',
+      'A Song',
+      'A Song',
+      'Later Arrival',
+      'Still Away',
+    ]);
+    expect(read?.playlist.missingCount).toBe(1);
+  });
+
+  it('leaves a missing song missing when somebody else reads the playlist', async () => {
+    const { viewer, playlists, store, artist, bare, id } = await aPlaylist();
+
+    await playlists.add(viewer, id, [
+      { title: 'Later Arrival', artist: 'Low', album: null, releaseId: null },
+    ]);
+    await playlists.update(viewer, id, { isShared: true });
+    await store.keepTrack(
+      aTrackRow({
+        albumId: bare,
+        artistIds: [artist.id],
+        path: '/music/c',
+        title: 'Later Arrival',
+      }),
+    );
+
+    const read = await playlists.read({ ...viewer, profileId: 'sam' }, id);
+
+    expect(read?.entries.at(-1)?.missing).toMatchObject({
+      title: 'Later Arrival',
+      artist: 'Low',
+      album: null,
+    });
   });
 });

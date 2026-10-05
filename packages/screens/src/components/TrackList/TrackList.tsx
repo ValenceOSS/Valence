@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { Reorder } from 'motion/react';
 import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
@@ -17,7 +17,9 @@ import { TrackMenu } from '@ValenceScreens/components/TrackMenu/TrackMenu';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { KeepHeart } from '@ValenceScreens/components/KeepHeart/KeepHeart';
-import type { TrackListProps } from './TrackList.types';
+import { MissingSongRow } from '@ValenceScreens/components/TrackList/components/MissingSongRow/MissingSongRow';
+import { trackRowColumns } from '@ValenceScreens/components/TrackList/trackRowColumns';
+import type { TrackListMissingSong, TrackListProps } from './TrackList.types';
 import { say } from '@ValenceI18n/say';
 
 /**
@@ -39,7 +41,9 @@ import { say } from '@ValenceI18n/say';
  * @param onRemove - Takes a song out, where this is a playlist of yours.
  * @param onMove - Moves a song one place up or down, where this is a playlist of yours.
  * @param onReorder - Told a song was dragged from one place to another, where this is a playlist of
- *   yours; the rows can only be dragged where it is given.
+ *   yours; the rows can only be dragged where it is given, and while no song is missing from it.
+ * @param missing - Songs the list holds that the library does not have yet, each drawn in its place
+ *   before the song it comes before.
  */
 const TrackList = ({
   label,
@@ -51,6 +55,7 @@ const TrackList = ({
   onRemove,
   onMove,
   onReorder,
+  missing = [],
 }: TrackListProps) => {
   const { state, player } = useMusicPlayer();
   const { open } = useMusicNavigation();
@@ -61,6 +66,21 @@ const TrackList = ({
   const draggedRef = useRef<number | null>(null);
 
   const tracksKey = tracks.map((track) => track.id).join(',');
+  const isDraggable = onReorder !== undefined && missing.length === 0;
+  const missingRow = (song: TrackListMissingSong) => (
+    <MissingSongRow
+      key={song.key}
+      number={song.before + missing.indexOf(song) + 1}
+      coverUrl={song.coverUrl}
+      title={song.title}
+      artist={song.artist}
+      album={song.album}
+      showsAlbum={showsAlbum}
+      showsArtwork={showsArtwork}
+      onChoose={song.onChoose}
+      onRemove={song.onRemove}
+    />
+  );
 
   useEffect(() => {
     setOrder(tracksKey === '' ? [] : tracksKey.split(',').map((_, index) => index));
@@ -88,205 +108,209 @@ const TrackList = ({
           const position = order.indexOf(index);
           const isCurrent = track.id === playingId;
           const isLiked = favourites.isKept(track.id);
-          const number = numbering === 'track' ? (track.trackNumber ?? position + 1) : position + 1;
+          const number =
+            numbering === 'track'
+              ? (track.trackNumber ?? position + 1)
+              : position + 1 + missing.filter((song) => song.before <= index).length;
 
           return (
-            <Reorder.Item
-              key={index}
-              as="li"
-              value={index}
-              dragListener={onReorder !== undefined}
-              data-highlight
-              onDragStart={() => {
-                draggedRef.current = index;
-              }}
-              onDragEnd={() => {
-                const from = draggedRef.current;
+            <Fragment key={index}>
+              {missing.filter((song) => song.before === index).map(missingRow)}
+              <Reorder.Item
+                as="li"
+                value={index}
+                dragListener={isDraggable}
+                data-highlight
+                onDragStart={() => {
+                  draggedRef.current = index;
+                }}
+                onDragEnd={() => {
+                  const from = draggedRef.current;
 
-                draggedRef.current = null;
+                  draggedRef.current = null;
 
-                if (from !== null && onReorder !== undefined) {
-                  onReorder(from, order.indexOf(from));
-                }
-              }}
-              className={cn(
-                'group relative grid items-center gap-3 rounded-md px-3 py-1.5',
-                onReorder === undefined ? '' : 'cursor-grab active:cursor-grabbing',
-                showsAlbum
-                  ? 'grid-cols-[2rem_minmax(0,1fr)_auto_3rem_auto] md:grid-cols-[2rem_minmax(0,1.4fr)_minmax(0,1fr)_auto_3rem_auto]'
-                  : 'grid-cols-[2rem_minmax(0,1fr)_auto_3rem_auto]',
-              )}
-              onDoubleClick={() => {
-                onPlay(index);
-              }}
-            >
-              <span className="relative flex size-8 items-center justify-center text-sm tabular-nums text-text-muted">
-                <span
-                  className={cn(
-                    'group-hover:opacity-0 group-has-[:focus-visible]:opacity-0',
-                    isCurrent ? 'text-text' : '',
-                  )}
-                >
-                  {isCurrent && state.isPlaying ? (
-                    <Equaliser label={say('common.playing')} />
-                  ) : (
-                    number.toString()
-                  )}
+                  if (from !== null && onReorder !== undefined) {
+                    onReorder(from, order.indexOf(from));
+                  }
+                }}
+                className={cn(
+                  'group relative grid items-center gap-3 rounded-md px-3 py-1.5',
+                  isDraggable ? 'cursor-grab active:cursor-grabbing' : '',
+                  trackRowColumns(showsAlbum),
+                )}
+                onDoubleClick={() => {
+                  onPlay(index);
+                }}
+              >
+                <span className="relative flex size-8 items-center justify-center text-sm tabular-nums text-text-muted">
+                  <span
+                    className={cn(
+                      'group-hover:opacity-0 group-has-[:focus-visible]:opacity-0',
+                      isCurrent ? 'text-text' : '',
+                    )}
+                  >
+                    {isCurrent && state.isPlaying ? (
+                      <Equaliser label={say('common.playing')} />
+                    ) : (
+                      number.toString()
+                    )}
+                  </span>
+
+                  <Button
+                    variant="bare"
+                    size="none"
+                    isIconOnly
+                    label={
+                      isCurrent && state.isPlaying
+                        ? say('common.pauseTitle', { title: track.title })
+                        : say('common.playTitle', { title: track.title })
+                    }
+                    hasTooltip={false}
+                    className="absolute inset-0 flex items-center justify-center text-text opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                    onClick={() => {
+                      if (isCurrent && state.isPlaying) {
+                        player.pause();
+
+                        return;
+                      }
+
+                      onPlay(index);
+                    }}
+                  >
+                    <Icon
+                      of={isCurrent && state.isPlaying ? PauseFilledIcon : PlayFilledIcon}
+                      size={16}
+                    />
+                  </Button>
                 </span>
+
+                <span className="flex min-w-0 items-center gap-3">
+                  {showsArtwork ? (
+                    <MusicArtwork
+                      src={track.album.hasArtwork ? albumArtworkUrl(track.album.id) : null}
+                      label={track.album.title}
+                      className="size-10"
+                    />
+                  ) : null}
+
+                  <span className="flex min-w-0 flex-col">
+                    <Button
+                      variant="bare"
+                      size="none"
+                      hasTooltip={false}
+                      className={cn(
+                        'truncate text-left text-[0.9375rem]',
+                        isCurrent ? 'font-bold text-text' : 'font-medium text-text',
+                      )}
+                      onClick={() => {
+                        onPlay(index);
+                      }}
+                    >
+                      {track.title}
+                    </Button>
+
+                    <span className="flex min-w-0 flex-wrap items-center gap-x-1 text-[0.8125rem] text-text-muted">
+                      {track.isExplicit ? <ExplicitMark className="mr-0.5" /> : null}
+
+                      {track.isLossless ? (
+                        <span className="mr-1 rounded-xs bg-hover px-1 text-[0.625rem] font-semibold uppercase tracking-wide">
+                          {say('common.lossless')}
+                        </span>
+                      ) : null}
+
+                      {track.artists.map((artist, at) => (
+                        <span key={artist.id} className="truncate">
+                          <Button
+                            variant="subtle"
+                            size="none"
+                            hasTooltip={false}
+                            onClick={() => {
+                              open({ kind: 'artist', id: artist.id });
+                            }}
+                          >
+                            {artist.name}
+                          </Button>
+                          {at < track.artists.length - 1 ? ',' : ''}
+                        </span>
+                      ))}
+                    </span>
+                  </span>
+                </span>
+
+                {showsAlbum ? (
+                  <span className="hidden min-w-0 truncate text-[0.8125rem] text-text-muted md:block">
+                    <Button
+                      variant="subtle"
+                      size="none"
+                      hasTooltip={false}
+                      className="truncate"
+                      onClick={() => {
+                        open({ kind: 'album', id: track.album.id });
+                      }}
+                    >
+                      {track.album.title}
+                    </Button>
+                  </span>
+                ) : null}
 
                 <Button
                   variant="bare"
                   size="none"
                   isIconOnly
+                  isActive={isLiked}
                   label={
-                    isCurrent && state.isPlaying
-                      ? say('common.pauseTitle', { title: track.title })
-                      : say('common.playTitle', { title: track.title })
+                    isLiked
+                      ? say('common.unlikeTitle', { title: track.title })
+                      : say('common.likeTitle', { title: track.title })
                   }
                   hasTooltip={false}
-                  className="absolute inset-0 flex items-center justify-center text-text opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                  className={cn(
+                    'transition-opacity',
+                    isLiked
+                      ? 'text-text'
+                      : 'text-text-muted opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
+                  )}
                   onClick={() => {
-                    if (isCurrent && state.isPlaying) {
-                      player.pause();
-
-                      return;
-                    }
-
-                    onPlay(index);
+                    favourites.toggle(track.id);
                   }}
                 >
-                  <Icon
-                    of={isCurrent && state.isPlaying ? PauseFilledIcon : PlayFilledIcon}
-                    size={16}
-                  />
+                  <KeepHeart isKept={isLiked} size={16} />
                 </Button>
-              </span>
 
-              <span className="flex min-w-0 items-center gap-3">
-                {showsArtwork ? (
-                  <MusicArtwork
-                    src={track.album.hasArtwork ? albumArtworkUrl(track.album.id) : null}
-                    label={track.album.title}
-                    className="size-10"
-                  />
-                ) : null}
-
-                <span className="flex min-w-0 flex-col">
-                  <Button
-                    variant="bare"
-                    size="none"
-                    hasTooltip={false}
-                    className={cn(
-                      'truncate text-left text-[0.9375rem]',
-                      isCurrent ? 'font-bold text-text' : 'font-medium text-text',
-                    )}
-                    onClick={() => {
-                      onPlay(index);
-                    }}
-                  >
-                    {track.title}
-                  </Button>
-
-                  <span className="flex min-w-0 flex-wrap items-center gap-x-1 text-[0.8125rem] text-text-muted">
-                    {track.isExplicit ? <ExplicitMark className="mr-0.5" /> : null}
-
-                    {track.isLossless ? (
-                      <span className="mr-1 rounded-xs bg-hover px-1 text-[0.625rem] font-semibold uppercase tracking-wide">
-                        {say('common.lossless')}
-                      </span>
-                    ) : null}
-
-                    {track.artists.map((artist, at) => (
-                      <span key={artist.id} className="truncate">
-                        <Button
-                          variant="subtle"
-                          size="none"
-                          hasTooltip={false}
-                          onClick={() => {
-                            open({ kind: 'artist', id: artist.id });
-                          }}
-                        >
-                          {artist.name}
-                        </Button>
-                        {at < track.artists.length - 1 ? ',' : ''}
-                      </span>
-                    ))}
-                  </span>
+                <span className="text-right text-sm tabular-nums text-text-muted">
+                  {formatDuration(track.durationSeconds)}
                 </span>
-              </span>
 
-              {showsAlbum ? (
-                <span className="hidden min-w-0 truncate text-[0.8125rem] text-text-muted md:block">
-                  <Button
-                    variant="subtle"
-                    size="none"
-                    hasTooltip={false}
-                    className="truncate"
-                    onClick={() => {
-                      open({ kind: 'album', id: track.album.id });
-                    }}
-                  >
-                    {track.album.title}
-                  </Button>
-                </span>
-              ) : null}
-
-              <Button
-                variant="bare"
-                size="none"
-                isIconOnly
-                isActive={isLiked}
-                label={
-                  isLiked
-                    ? say('common.unlikeTitle', { title: track.title })
-                    : say('common.likeTitle', { title: track.title })
-                }
-                hasTooltip={false}
-                className={cn(
-                  'transition-opacity',
-                  isLiked
-                    ? 'text-text'
-                    : 'text-text-muted opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
-                )}
-                onClick={() => {
-                  favourites.toggle(track.id);
-                }}
-              >
-                <KeepHeart isKept={isLiked} size={16} />
-              </Button>
-
-              <span className="text-right text-sm tabular-nums text-text-muted">
-                {formatDuration(track.durationSeconds)}
-              </span>
-
-              <TrackMenu
-                track={track}
-                className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100"
-                {...(onRemove === undefined
-                  ? {}
-                  : {
-                      onRemove: () => {
-                        onRemove(index);
-                      },
-                    })}
-                {...(onMove === undefined || position === 0
-                  ? {}
-                  : {
-                      onMoveUp: () => {
-                        onMove(index, 'up');
-                      },
-                    })}
-                {...(onMove === undefined || position === tracks.length - 1
-                  ? {}
-                  : {
-                      onMoveDown: () => {
-                        onMove(index, 'down');
-                      },
-                    })}
-              />
-            </Reorder.Item>
+                <TrackMenu
+                  track={track}
+                  className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100"
+                  {...(onRemove === undefined
+                    ? {}
+                    : {
+                        onRemove: () => {
+                          onRemove(index);
+                        },
+                      })}
+                  {...(onMove === undefined || position === 0
+                    ? {}
+                    : {
+                        onMoveUp: () => {
+                          onMove(index, 'up');
+                        },
+                      })}
+                  {...(onMove === undefined || position === tracks.length - 1
+                    ? {}
+                    : {
+                        onMoveDown: () => {
+                          onMove(index, 'down');
+                        },
+                      })}
+                />
+              </Reorder.Item>
+            </Fragment>
           );
         })}
+        {missing.filter((song) => song.before >= tracks.length).map(missingRow)}
       </Reorder.Group>
     </div>
   );

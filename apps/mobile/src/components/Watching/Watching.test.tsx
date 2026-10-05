@@ -277,7 +277,9 @@ describe('Watching', () => {
 
     await drawn.unmount();
 
-    expect(stopWatching).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(stopWatching).toHaveBeenCalled();
+    });
   });
 
   it('asks the server to begin where they left off', async () => {

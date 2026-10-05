@@ -63,12 +63,12 @@ describe('the plugin broker', () => {
     await expect(ask('log.info', [42])).rejects.toThrow('could not read');
   });
 
-  it('reads settings and writes logs without any permission', async () => {
+  it('reads settings and writes logs without any permission, with what each log is about', async () => {
     const { ask, log } = build([]);
 
     expect(await ask('settings.read', [])).toEqual({ clientId: 'abc' });
     expect(await ask('log.warn', ['careful', { count: 1 }])).toBeNull();
-    expect(log).toHaveBeenCalledWith('warn', 'careful');
+    expect(log).toHaveBeenCalledWith('warn', 'careful (count=1)');
     await ask('log.info', ['hello']);
     await ask('log.error', ['oops']);
     expect(log).toHaveBeenCalledWith('info', 'hello');
@@ -281,6 +281,26 @@ describe('the plugin broker', () => {
     ).rejects.toThrow('person using it');
   });
 
+  it('finds a playlist’s missing albums only with both the requests and playlists permissions', async () => {
+    const requestsOnly = build([{ kind: 'requests', access: 'create' }]);
+
+    await expect(requestsOnly.ask('requests.missingAlbums', ['p1', 'pl1'])).rejects.toThrow(
+      'playlists',
+    );
+
+    const { ask, host } = build([
+      { kind: 'requests', access: 'create' },
+      { kind: 'playlists', access: 'read' },
+    ]);
+
+    expect(await ask('requests.missingAlbums', ['p1', 'pl1'])).toEqual({
+      isMatching: false,
+      albums: [],
+    });
+    expect(host.requests.missingAlbums).toHaveBeenCalledWith('p1', 'pl1');
+    await expect(ask('requests.missingAlbums', ['p2', 'pl1'])).rejects.toThrow('person using it');
+  });
+
   it('reads playlists with read, and makes and fills them only with write', async () => {
     const reader = build([{ kind: 'playlists', access: 'read' }]);
 
@@ -288,7 +308,7 @@ describe('the plugin broker', () => {
     expect(await reader.ask('playlists.read', ['p1', 'pl1'])).toEqual({
       id: 'pl1',
       name: 'Mine',
-      entries: [{ entryId: 'e1', mediaId: 'm1' }],
+      entries: [{ entryId: 'e1', mediaId: 'm1', missing: null }],
     });
     await expect(reader.ask('playlists.create', ['p1', { name: 'New' }])).rejects.toThrow(
       'not write',
@@ -313,6 +333,23 @@ describe('the plugin broker', () => {
       description: null,
     });
     expect(writer.host.playlists.add).toHaveBeenCalledWith('p1', 'pl2', ['t1', 't2']);
+    await writer.ask('playlists.add', [
+      'p1',
+      'pl2',
+      [
+        't1',
+        { title: ' Low Tide ', artist: 'Mara Quill' },
+        { title: 'X', artist: 'Y', album: 'Z' },
+      ],
+    ]);
+    expect(writer.host.playlists.add).toHaveBeenLastCalledWith('p1', 'pl2', [
+      't1',
+      { title: 'Low Tide', artist: 'Mara Quill', album: null, releaseId: null },
+      { title: 'X', artist: 'Y', album: 'Z', releaseId: null },
+    ]);
+    await expect(
+      writer.ask('playlists.add', ['p1', 'pl2', [{ title: '', artist: 'Mara Quill' }]]),
+    ).rejects.toThrow('could not read');
     expect(await writer.ask('playlists.drop', ['p1', 'pl2', 'e1'])).toBeNull();
     expect(writer.host.playlists.drop).toHaveBeenCalledWith('p1', 'pl2', 'e1');
   });

@@ -86,7 +86,12 @@ const aMusic = () =>
       playingOn: vi.fn(() => null),
       order: vi.fn(() => false),
     },
-    pictures: { cover: vi.fn(nothing), artistPicture: vi.fn(nothing) },
+    pictures: {
+      cover: vi.fn(nothing),
+      artistPicture: vi.fn(nothing),
+      namedCover: vi.fn(nothing),
+      releaseCover: vi.fn(nothing),
+    },
     corrections: {
       search: vi.fn(() =>
         Promise.resolve([

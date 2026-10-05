@@ -17,6 +17,7 @@ const PLAYLIST: PlaylistSummary = {
   owner: null,
   entryCount: 0,
   lostCount: 0,
+  missingCount: 0,
   durationSeconds: 0,
   artworkAlbumIds: [],
   hasOwnArtwork: false,
@@ -50,8 +51,21 @@ const build = () => {
           ? {
               playlist: PLAYLIST,
               entries: [
-                { id: 'e1', position: 1, addedAt: PLAYLIST.updatedAt, item: A_SONG },
-                { id: 'e2', position: 2, addedAt: PLAYLIST.updatedAt, item: null },
+                { id: 'e1', position: 1, addedAt: PLAYLIST.updatedAt, item: A_SONG, missing: null },
+                { id: 'e2', position: 2, addedAt: PLAYLIST.updatedAt, item: null, missing: null },
+                {
+                  id: 'e3',
+                  position: 3,
+                  addedAt: PLAYLIST.updatedAt,
+                  item: null,
+                  missing: {
+                    title: 'Low Tide',
+                    artist: 'Mara Quill',
+                    album: null,
+                    releaseId: null,
+                    coverUrl: null,
+                  },
+                },
               ],
             }
           : null,
@@ -135,6 +149,22 @@ describe('what Valence does when a plugin asks', () => {
     await expect(host.playlists.list('gone')).rejects.toThrow('no such profile');
   });
 
+  it('adds songs the library does not have yet beside ones it does, in order', async () => {
+    const { host, playlists } = build();
+
+    await host.playlists.add('p1', PLAYLIST.id, [
+      'm1',
+      { title: 'Low Tide', artist: 'Mara Quill' },
+      { title: 'Paper Kites', artist: 'Odell Finch', album: 'Paper Kites', releaseId: null },
+    ]);
+
+    expect(playlists.add).toHaveBeenCalledWith(expect.anything(), PLAYLIST.id, [
+      'm1',
+      { title: 'Low Tide', artist: 'Mara Quill', album: null, releaseId: null },
+      { title: 'Paper Kites', artist: 'Odell Finch', album: 'Paper Kites', releaseId: null },
+    ]);
+  });
+
   it('reads what a playlist holds, and drops one entry from it', async () => {
     const { host } = build();
 
@@ -142,8 +172,13 @@ describe('what Valence does when a plugin asks', () => {
       id: PLAYLIST.id,
       name: 'Imported',
       entries: [
-        { entryId: 'e1', mediaId: 'm1' },
-        { entryId: 'e2', mediaId: null },
+        { entryId: 'e1', mediaId: 'm1', missing: null },
+        { entryId: 'e2', mediaId: null, missing: null },
+        {
+          entryId: 'e3',
+          mediaId: null,
+          missing: { title: 'Low Tide', artist: 'Mara Quill', album: null, releaseId: null },
+        },
       ],
     });
     await expect(host.playlists.read('p1', 'not-theirs')).resolves.toBeNull();

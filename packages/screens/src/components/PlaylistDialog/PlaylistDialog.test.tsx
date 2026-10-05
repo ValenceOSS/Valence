@@ -22,6 +22,7 @@ const SUMMARY = {
   owner: { profileId: 'p', name: 'Dan', colour: '#fff' },
   entryCount: 0,
   lostCount: 0,
+  missingCount: 0,
   durationSeconds: 0,
   artworkAlbumIds: [],
   hasOwnArtwork: false,

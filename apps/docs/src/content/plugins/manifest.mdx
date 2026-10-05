@@ -45,7 +45,7 @@ A manifest is the `manifest.json` at the root of a plugin. It says what the plug
 | `id`              | Yes       | 3 to 64 characters, lower case, starting with a letter, then letters, digits and hyphens. It never changes once published.       |
 | `name`            | Yes       | 1 to 60 characters                                                                                                               |
 | `version`         | Yes       | A full semver version such as `1.4.0` or `2.0.0-beta.1`                                                                          |
-| `apiVersion`      | Yes       | The plugin API versions it works with, as `1`, `1.0`, `^1.0` or `~1.2.0`. The current API is `1.1.0`.                            |
+| `apiVersion`      | Yes       | The plugin API versions it works with, as `1`, `1.0`, `^1.0` or `~1.2.0`. The current API is `1.2.0`.                            |
 | `author`          | Yes       | `name`, 1 to 80 characters, and an optional `url`                                                                                |
 | `description`     | Yes       | 1 to 500 characters, shown before anyone installs it                                                                             |
 | `homepage`        | No        | An `https` address                                                                                                               |
@@ -87,7 +87,23 @@ Settings are values an administrator types in when installing or configuring the
 | `id`    | Starts with a lower case letter, then up to 39 letters and digits, such as `clientId` |
 | `label` | 1 to 60 characters                                                                    |
 | `kind`  | `text`, `secret` or `toggle`                                                          |
-| `help`  | Up to 200 characters, shown under the field                                           |
+| `help`  | Up to 200 characters, shown with the field                                            |
+| `link`  | A `label` of 1 to 60 characters and an `https` `url`, shown under the help as a link  |
+
+Give a setting a `link` when its help says where the value comes from, so an administrator can open
+that page from the settings rather than typing the address in:
+
+```json
+{
+  "id": "apiKey",
+  "label": "API key",
+  "kind": "secret",
+  "help": "Create an API key in your account's developer settings.",
+  "link": { "label": "Developer settings", "url": "https://service.example/settings/developer" }
+}
+```
+
+A server older than the field shows the help without the link.
 
 A `secret` setting is stored encrypted and never sent back to any app. Your plugin reads settings with `valence.settings.read()`.
 

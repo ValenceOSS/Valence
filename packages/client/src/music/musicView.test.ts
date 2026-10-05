@@ -14,11 +14,21 @@ describe('musicView', () => {
     { kind: 'album', id: ID },
     { kind: 'artist', id: ID },
     { kind: 'playlist', id: ID },
+    { kind: 'playlist', id: ID, isRequestingMissing: true },
     { kind: 'liked' },
     { kind: 'lyrics' },
     { kind: 'search', query: 'sleep token' },
   ])('reads back what it wrote for $kind', (view) => {
     expect(readMusicView(writeMusicView(view))).toEqual(view);
+  });
+
+  it('leads to a playlist with its missing songs being requested', () => {
+    expect(readMusicView(`playlist:${ID}:request`)).toEqual({
+      kind: 'playlist',
+      id: ID,
+      isRequestingMissing: true,
+    });
+    expect(readMusicView('playlist::request')).toEqual({ kind: 'playlist', id: ':request' });
   });
 
   it('writes nothing for the front page', () => {

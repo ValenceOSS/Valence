@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
+import { holdWatching } from '@ValenceClient/playback/holdWatching';
 import {
   heartbeatPlaybackSession,
   sendPresenceHeartbeat,
   startPlaybackSession,
   stopPlaybackSession,
-  stopWatching,
 } from '@ValenceClient/playback/startPlaybackSession';
 import { onTheServer } from '@ValenceTv/platform/theServersOrigin';
 import { signedHeaders } from '@ValenceTv/platform/theSessionToken';
@@ -61,6 +61,7 @@ const usePlaybackSession = (
 
   useEffect(() => {
     const clientId = platformInUse().thisClientId();
+    const letGo = holdWatching(clientId);
     let isAbandoned = false;
     let sessionId: string | null = null;
     const timers: ReturnType<typeof setInterval>[] = [];
@@ -133,7 +134,7 @@ const usePlaybackSession = (
         void stopPlaybackSession(sessionId, clientId);
       }
 
-      void stopWatching(clientId);
+      letGo();
     };
   }, [mediaId, startSeconds, audioStreamIndex, requestedQuality]);
 

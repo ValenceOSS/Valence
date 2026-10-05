@@ -53,6 +53,7 @@ const aPlaylist = (change: Partial<PlaylistSummary> = {}): PlaylistSummary => ({
   owner: { profileId: '00000000-0000-4000-8000-0000000000aa', name: 'Marques', colour: '#3a8ee8' },
   entryCount: 3,
   lostCount: 0,
+  missingCount: 0,
   durationSeconds: 600,
   artworkAlbumIds: [],
   hasOwnArtwork: false,
@@ -64,6 +65,7 @@ const anEntry = (n: number, track: ReturnType<typeof aTrack> | null, isGone = fa
   id: `00000000-0000-4000-8000-${(900 + n).toString().padStart(12, '0')}`,
   position: n,
   addedAt: '2026-01-01T00:00:00.000Z',
+  missing: null,
   item: isGone
     ? null
     : {

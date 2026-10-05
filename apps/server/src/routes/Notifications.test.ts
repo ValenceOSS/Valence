@@ -182,6 +182,7 @@ describe('the notification routes', () => {
       { event: 'sharing.withdrawn', inApp: true, push: false },
       { event: 'requests.available', inApp: true, push: false },
       { event: 'downloads.ready', inApp: true, push: false },
+      { event: 'requests.albumsFound', inApp: true, push: false },
       { event: 'plugins.message', inApp: true, push: false },
     ]);
   });

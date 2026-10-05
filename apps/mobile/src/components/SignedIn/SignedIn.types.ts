@@ -23,7 +23,7 @@ type APage =
   | { kind: 'calendar' }
   | { kind: 'album'; albumId: string }
   | { kind: 'artist'; artistId: string }
-  | { kind: 'playlist'; playlistId: string }
+  | { kind: 'playlist'; playlistId: string; isRequestingMissing?: boolean }
   | { kind: 'liked' }
   | { kind: 'albums' }
   | { kind: 'artists' }

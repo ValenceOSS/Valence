@@ -1,6 +1,8 @@
 import { app, BrowserWindow, shell } from 'electron';
 import { join } from 'node:path';
+import { aServerPageFor } from '@ValenceDesktop/main/aServerPageFor';
 import { opensOutside } from '@ValenceDesktop/main/opensOutside';
+import { theServerAddress } from '@ValenceDesktop/main/theServerAddress';
 
 const WIDTH = 1280;
 
@@ -36,6 +38,10 @@ const CONTROLS = { color: '#00000000', symbolColor: '#ffffff', height: 32 };
  * A page asking for a new window is a link somewhere outside Valence, such as its documentation,
  * and goes to the system's own browser rather than to a bare window of this one.
  *
+ * A page of the server's own that the window is sent to, such as where a plugin connects somebody's
+ * account elsewhere, opens in their browser too, since it may go on to another site this window
+ * cannot follow.
+ *
  * @returns The window.
  */
 const openTheWindow = (): BrowserWindow => {
@@ -64,6 +70,15 @@ const openTheWindow = (): BrowserWindow => {
     }
 
     return { action: 'deny' };
+  });
+
+  window.webContents.on('will-navigate', (event, url) => {
+    const page = aServerPageFor(url, theServerAddress());
+
+    if (page !== null) {
+      event.preventDefault();
+      void shell.openExternal(page);
+    }
   });
 
   window.once('ready-to-show', () => {

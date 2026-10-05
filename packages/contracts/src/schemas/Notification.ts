@@ -7,6 +7,7 @@ const NOTIFICATION_EVENTS = [
   'sharing.withdrawn',
   'requests.available',
   'downloads.ready',
+  'requests.albumsFound',
   'plugins.message',
 ] as const;
 

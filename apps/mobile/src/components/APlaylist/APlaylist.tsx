@@ -1,4 +1,4 @@
-import { ListMusic, MoreHorizontal } from '@keyline-icons/react-native';
+import { Download, ListMusic, MoreHorizontal } from '@keyline-icons/react-native';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActionSheetIOS, ActivityIndicator, Alert } from 'react-native';
@@ -17,6 +17,10 @@ import {
 import { whereAnEntryLands } from '@ValenceClient/music/whereAnEntryLands';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
+import { requestsQueries } from '@ValenceClient/query/requestsQueries';
+import { useMayRequestMusic } from '@ValenceClient/requests/useMayRequestMusic';
+import { requestTheAlbumOf } from '@ValenceMobile/music/requestTheAlbumOf';
+import type { ATrackListMissingSong } from '@ValenceMobile/components/ATrackList/ATrackList.types';
 import { AMoodBackground } from '@ValenceMobile/components/AMoodBackground/AMoodBackground';
 import { AMusicHead } from '@ValenceMobile/components/AMusicHead/AMusicHead';
 import { ATrackList } from '@ValenceMobile/components/ATrackList/ATrackList';
@@ -30,6 +34,7 @@ import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { ANothingHere } from '@ValenceMobile/components/ANothingHere/ANothingHere';
 import { APlaylistDetails } from '@ValenceMobile/components/APlaylistDetails/APlaylistDetails';
+import { ARequestMissingSongs } from '@ValenceMobile/components/ARequestMissingSongs/ARequestMissingSongs';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { coverAlbumsOf } from '@ValenceClient/music/coverAlbumsOf';
 import { sendAPhoto } from '@ValenceMobile/platform/sendAPhoto';
@@ -46,16 +51,26 @@ import { sayCount } from '@ValenceI18n/sayCount';
  *
  * One of somebody's own can be changed from here as on the web: shared with the household or kept
  * to themselves, renamed or re-described, deleted after asking, and each track moved up or down or
- * taken out from its menu.
+ * taken out from its menu. Where songs in it are not in the library yet, whoever may ask for music
+ * can request all their albums at once.
  *
  * @param playlistId - Which playlist.
+ * @param isRequestingMissing - Whether to open on requesting its missing songs, as the notice that
+ *   their albums were found does.
  * @param onAlbum - Told to open an album.
  * @param onArtist - Told to open an artist.
  * @param onBack - Told somebody is done with it.
  */
-const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) => {
+const APlaylist = ({
+  playlistId,
+  isRequestingMissing = false,
+  onAlbum,
+  onArtist,
+  onBack,
+}: APlaylistProps) => {
   const colours = useTheColours();
   const cache = useQueryClient();
+  const mayRequestMusic = useMayRequestMusic();
   const read = useQuery(musicQueries.playlist(playlistId));
   const player = thePhonesMusicPlayer();
   const coverAlbumId = read.data?.playlist.artworkAlbumIds[0] ?? null;
@@ -68,6 +83,7 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
         : onThisServer(albumArtworkUrl(coverAlbumId)),
   );
   const [isEditing, setIsEditing] = useState(false);
+  const [isAskingForMissing, setIsAskingForMissing] = useState(isRequestingMissing);
 
   const refresh = () => cache.invalidateQueries({ queryKey: musicQueries.key });
 
@@ -95,6 +111,40 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
   );
   const tracks = songs.map((song) => song.track);
   const entryIds = songs.map((song) => song.entryId);
+  const missing: ATrackListMissingSong[] = entries.flatMap((entry) => {
+    const song = entry.missing;
+
+    return song === null
+      ? []
+      : [
+          {
+            key: entry.id,
+            before: entries.filter(
+              (each) =>
+                each.item !== null && each.item.track !== null && each.position < entry.position,
+            ).length,
+            title: song.title,
+            artist: song.artist,
+            coverUrl: song.coverUrl === null ? null : onThisServer(song.coverUrl),
+            ...(mayRequestMusic
+              ? {
+                  onChoose: () => {
+                    void requestTheAlbumOf(song, () => {
+                      void cache.invalidateQueries({ queryKey: requestsQueries.key });
+                    });
+                  },
+                }
+              : {}),
+            ...(playlist.isMine
+              ? {
+                  onRemove: () => {
+                    void dropFromPlaylist(playlist.id, entry.id).then(refresh);
+                  },
+                }
+              : {}),
+          },
+        ];
+  });
 
   const chooseACover = async () => {
     const chosen = await launchImageLibraryAsync({
@@ -197,6 +247,7 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
   const detail = [
     playlist.isMine || playlist.owner === null ? null : playlist.owner.name,
     sayCount('common.count.songs', tracks.length),
+    missing.length === 0 ? null : sayCount('common.count.songsNotInYourLibrary', missing.length),
     howLongItRuns(playlist.durationSeconds),
   ].filter((part) => part !== null);
 
@@ -236,9 +287,21 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
             {say('common.more')}
           </Button>
         ) : null}
+
+        {mayRequestMusic && missing.length > 0 ? (
+          <Button
+            tone="ghost"
+            icon={Download}
+            onPress={() => {
+              setIsAskingForMissing(true);
+            }}
+          >
+            {say('common.requestMissingSongs')}
+          </Button>
+        ) : null}
       </AMusicHead>
 
-      {tracks.length === 0 ? (
+      {tracks.length === 0 && missing.length === 0 ? (
         <ANothingHere
           of={ListMusic}
           title={say('common.nothingInThisPlaylistYet')}
@@ -251,6 +314,7 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
           isOrdered={playlist.isOrdered}
           onAlbum={onAlbum}
           onArtist={onArtist}
+          missing={missing}
           {...(playlist.isMine
             ? {
                 editing: {
@@ -289,6 +353,18 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
           void refresh();
         }}
       />
+      {mayRequestMusic ? (
+        <ARequestMissingSongs
+          playlistId={playlist.id}
+          isOpen={isAskingForMissing}
+          onClose={() => {
+            setIsAskingForMissing(false);
+          }}
+          onRequested={() => {
+            void cache.invalidateQueries({ queryKey: requestsQueries.key });
+          }}
+        />
+      ) : null}
       <APluginPanels on="playlist" subjectId={playlistId} />
     </Screen>
   );

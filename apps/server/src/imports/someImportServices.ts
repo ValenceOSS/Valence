@@ -39,6 +39,7 @@ const summaryOf = (playlist: FakePlaylist): PlaylistSummary => ({
   owner: null,
   entryCount: playlist.entries.length,
   lostCount: 0,
+  missingCount: 0,
   durationSeconds: 0,
   artworkAlbumIds: [],
   hasOwnArtwork: false,
@@ -207,12 +208,14 @@ const someImportServices = (
                   position: 0,
                   addedAt: new Date(0).toISOString(),
                   item: null,
+                  missing: null,
                 })),
               },
         );
       },
-      add: (_viewer, playlistId, mediaItemIds) => {
+      add: (_viewer, playlistId, items) => {
         const playlist = asked.playlists.get(playlistId);
+        const mediaItemIds = items.filter((item) => typeof item === 'string');
 
         playlist?.entries.push(
           ...mediaItemIds.map((mediaItemId) => ({ id: randomUUID(), mediaItemId })),

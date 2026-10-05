@@ -107,6 +107,7 @@ import { aKeptSession } from '@ValenceClient/downloads/aKeptSession';
 import { sourceForAFile, trickplayForAFile } from '@ValenceClient/downloads/keepingFiles';
 import { useOfflineMode } from '@ValenceClient/offline/useOfflineMode';
 import { isOfflineNow } from '@ValenceClient/offline/isOfflineNow';
+import { holdWatching } from '@ValenceClient/playback/holdWatching';
 import type { StartedSession } from '@ValenceClient/playback/startPlaybackSession';
 import type { MediaDetail } from '@ValenceContracts/schemas/Library';
 import { subtitleCuesUrl } from '@ValenceClient/playback/fetchSubtitleCues';
@@ -966,14 +967,7 @@ const VideoPlayer = ({
     void sendPresenceHeartbeat(platformInUse().thisClientId(), isPlaying);
   }, [isPlaying, session]);
 
-  useEffect(
-    () => () => {
-      if (!isOfflineNow()) {
-        void stopWatching(platformInUse().thisClientId());
-      }
-    },
-    [],
-  );
+  useEffect(() => holdWatching(platformInUse().thisClientId(), () => !isOfflineNow()), []);
 
   useEffect(() => {
     let abandoned = false;

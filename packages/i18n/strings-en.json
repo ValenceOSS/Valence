@@ -1820,6 +1820,11 @@
     "context": "Shown, used in several places, among them the artist of the phone app and the music of the television app (from `artistItem`)."
   },
   {
+    "handler": "common.artistNotInYourLibrary",
+    "text": "{artist} · Not in your library",
+    "context": "Under a song in a playlist that the library does not have yet, on the web and the phone: who it is by, and that it is missing. {artist} is the artist."
+  },
+  {
     "handler": "common.artists",
     "text": "Artists",
     "context": "The title, used in several places, among them the car play of the phone app (from `shelvesForTheCar`) and the artists of the phone app."
@@ -2306,6 +2311,26 @@
     "context": "How many albums there are, such as in a music library. {count} is the number."
   },
   {
+    "handler": "common.count.albumsCouldNotBeRequested.one",
+    "text": "{count} album couldn’t be requested",
+    "context": "A notice after a playlist's missing songs were requested, on the web and the phone, when some of the requests were refused. {count} is how many albums were refused."
+  },
+  {
+    "handler": "common.count.albumsCouldNotBeRequested.other",
+    "text": "{count} albums couldn’t be requested",
+    "context": "A notice after a playlist's missing songs were requested, on the web and the phone, when some of the requests were refused. {count} is how many albums were refused."
+  },
+  {
+    "handler": "common.count.albumsRequested.one",
+    "text": "{count} album requested",
+    "context": "A notice after a playlist's missing songs were requested, on the web and the phone. {count} is how many albums were requested."
+  },
+  {
+    "handler": "common.count.albumsRequested.other",
+    "text": "{count} albums requested",
+    "context": "A notice after a playlist's missing songs were requested, on the web and the phone. {count} is how many albums were requested."
+  },
+  {
     "handler": "common.count.books.one",
     "text": "{count} book",
     "context": "How many books there are, such as in a book library. {count} is the number."
@@ -2486,6 +2511,16 @@
     "context": "How many files a library scan found gone."
   },
   {
+    "handler": "common.count.requestAlbums.one",
+    "text": "Request {count} album",
+    "context": "The button that requests the albums ticked in the window for requesting a playlist's missing songs, on the web and the phone. {count} is how many are ticked."
+  },
+  {
+    "handler": "common.count.requestAlbums.other",
+    "text": "Request {count} albums",
+    "context": "The button that requests the albums ticked in the window for requesting a playlist's missing songs, on the web and the phone. {count} is how many are ticked."
+  },
+  {
     "handler": "common.count.results.one",
     "text": "{count} result",
     "context": "How many results a search found."
@@ -2526,6 +2561,16 @@
     "context": "How many songs, such as in a notification about what arrived in the library. {count} is the number."
   },
   {
+    "handler": "common.count.songsNotInYourLibrary.one",
+    "text": "{count} song not in your library",
+    "context": "Among the details at the top of a playlist, on the web and the phone: how many of its songs the library does not have yet. {count} is how many."
+  },
+  {
+    "handler": "common.count.songsNotInYourLibrary.other",
+    "text": "{count} songs not in your library",
+    "context": "Among the details at the top of a playlist, on the web and the phone: how many of its songs the library does not have yet. {count} is how many."
+  },
+  {
     "handler": "common.count.stars.one",
     "text": "{count} star",
     "context": "How many stars a rating gives, on the phone and the television. {count} is how many."
@@ -2534,6 +2579,16 @@
     "handler": "common.count.stars.other",
     "text": "{count} stars",
     "context": "How many stars a rating gives, on the phone and the television. {count} is how many."
+  },
+  {
+    "handler": "common.count.stillLookingForAlbums.one",
+    "text": "Still looking for {count} album. You can close this and come back to it.",
+    "context": "Beside the buttons of the window for requesting a playlist's missing songs, on the web and the phone, while the server is still finding some albums; the search carries on if the window is closed, and a notification says when a long one is done. {count} is how many are left to find."
+  },
+  {
+    "handler": "common.count.stillLookingForAlbums.other",
+    "text": "Still looking for {count} albums. You can close this and come back to it.",
+    "context": "Beside the buttons of the window for requesting a playlist's missing songs, on the web and the phone, while the server is still finding some albums; the search carries on if the window is closed, and a notification says when a long one is done. {count} is how many are left to find."
   },
   {
     "handler": "common.count.times.one",
@@ -3887,6 +3942,11 @@
     "context": "The title of a nothing here, used in the albums of the phone app and in the albums view in the music page."
   },
   {
+    "handler": "common.noAlbumWasFoundForIt",
+    "text": "No album was found for it in the catalogue.",
+    "context": "Shown, on the web and the phone, when the catalogue has no album for a missing song."
+  },
+  {
     "handler": "common.noArtistsYet",
     "text": "No artists yet",
     "context": "The title of a nothing here, used in the artists of the phone app and in the artists view in the music page."
@@ -3980,6 +4040,11 @@
     "handler": "common.notFollowingAnybodyYet",
     "text": "Not following any artists yet",
     "context": "The title of a nothing here, used in the artists of the phone app and in the artists view in the music page."
+  },
+  {
+    "handler": "common.notFound",
+    "text": "Not found",
+    "context": "Beside an album in the window for requesting a playlist's missing songs, on the web and the phone, when the catalogue has no album matching the song."
   },
   {
     "handler": "common.nothingAbove",
@@ -5025,14 +5090,39 @@
     "context": "Button asking for a copy of a title on this server, though a linked server already has it."
   },
   {
+    "handler": "common.requestItsAlbum",
+    "text": "Request its album",
+    "context": "The title of what finds the album of a song the library does not have, on the web and the phone, and the menu item that opens it."
+  },
+  {
     "handler": "common.requestMedia",
     "text": "Request media",
     "context": "The title of a dialog title, used in the ask for media dialog in the admin area and in the media requests panel in the admin area."
   },
   {
+    "handler": "common.requestMissingSongs",
+    "text": "Request missing songs",
+    "context": "On a playlist, on the web and the phone: a button that requests the albums of every song in the playlist that the library does not have yet, and the title of the window it opens."
+  },
+  {
     "handler": "common.requests",
     "text": "Requests",
     "context": "The label, used in several places, among them the requests page of the television app and the admin (from `groupPermissions`)."
+  },
+  {
+    "handler": "common.requestsTheAlbumsTheMissingSongsAreOn",
+    "text": "Requests the albums that the songs not in your library are on. Untick any you don’t want.",
+    "context": "Under the title of the window for requesting a playlist's missing songs, on the web and the phone."
+  },
+  {
+    "handler": "common.requestTheAlbumTitleIsOn",
+    "text": "Request the album {title} is on",
+    "context": "The label of a song in a playlist that the library does not have yet, on the web and the phone, which opens a way to request its album. {title} is the song."
+  },
+  {
+    "handler": "common.requestTitle",
+    "text": "Request {title}",
+    "context": "Asking for something by name, on the web: the title of the window that asks which quality to request a title at, and the label of the tick beside an album in the window for requesting a playlist's missing songs, read out by screen readers. {title} is the title or album."
   },
   {
     "handler": "common.resetAndRebuild",
@@ -5810,6 +5900,11 @@
     "context": "Text shown, used in the theme choice of the phone app and in the theme choice in the account of the television app."
   },
   {
+    "handler": "common.theMissingAlbumsCouldNotBeFound",
+    "text": "The albums couldn’t be looked for.",
+    "context": "In the window for requesting a playlist's missing songs, on the web and the phone, when the server could not be asked to find them."
+  },
+  {
     "handler": "common.theOrderMatters",
     "text": "The order matters",
     "context": "The label of a toggle, used in the playlist details of the phone app and in the playlist dialog."
@@ -5950,6 +6045,11 @@
     "context": "Shown, used in several places, among them the stream stats in the player of the television app and the encoding panel in the admin area."
   },
   {
+    "handler": "common.titleByArtistIsNotInYourLibrary",
+    "text": "{title} by {artist} isn’t in your library. Choose the album it’s on to request it.",
+    "context": "The text above the albums found for a missing song, on the web and the phone. {title} is the song and {artist} who it is by."
+  },
+  {
     "handler": "common.titleCountEpisodes.one",
     "text": "{title} — {count} episode",
     "context": "Beneath the title of the dialog for downloading a programme to this device. {title} is the programme's name; {count} is how many episodes."
@@ -5958,6 +6058,11 @@
     "handler": "common.titleCountEpisodes.other",
     "text": "{title} — {count} episodes",
     "context": "Beneath the title of the dialog for downloading a programme to this device. {title} is the programme's name; {count} is how many episodes."
+  },
+  {
+    "handler": "common.titleIsRequested",
+    "text": "{title} requested",
+    "context": "A message in an alert in the artist story in the artist of the phone app. {title} is filled in by the app. Also said by the phone once a missing song's album is requested from a playlist."
   },
   {
     "handler": "common.titleTheTrailer",
@@ -6453,6 +6558,11 @@
     "handler": "common.yesThatIsMine",
     "text": "Yes, this was me",
     "context": "The label of a button, used in the sign in a television in the devices of the phone app and in the device approval."
+  },
+  {
+    "handler": "common.youCanFollowItUnderSearch",
+    "text": "You can track it in Search, under Requested.",
+    "context": "A message in an alert in the artist story in the artist of the phone app. Also said by the phone once a missing song's album is requested from a playlist."
   },
   {
     "handler": "common.youHaveWatchedEverythingHere",
@@ -8693,16 +8803,6 @@
     "handler": "phone.anArtist.anArtistStory.requestTitle",
     "text": "Request {title}?",
     "context": "A message in an alert in the artist story in the artist of the phone app. {title} is filled in by the app."
-  },
-  {
-    "handler": "phone.anArtist.anArtistStory.titleIsRequested",
-    "text": "{title} requested",
-    "context": "A message in an alert in the artist story in the artist of the phone app. {title} is filled in by the app."
-  },
-  {
-    "handler": "phone.anArtist.anArtistStory.youCanFollowItUnderSearch",
-    "text": "You can track it in Search, under Requested.",
-    "context": "A message in an alert in the artist story in the artist of the phone app."
   },
   {
     "handler": "phone.anArtist.showAll",
@@ -17656,11 +17756,6 @@
     "context": "Toast after asking a linked Valence server to get a title."
   },
   {
-    "handler": "screens.askableDialog.chooseQualityDialog.requestTitle",
-    "text": "Request {title}",
-    "context": "The title of a dialog title in the choose quality dialog in the askable dialog. {title} is filled in by the app."
-  },
-  {
     "handler": "screens.askableDialog.chooseQualityDialog.wellFetchTheBestReleaseThat",
     "text": "We’ll download the best release that matches.",
     "context": "The detail of a dialog title in the choose quality dialog in the askable dialog."
@@ -20270,6 +20365,11 @@
     "handler": "screens.mediaPreview.turnSoundOn",
     "text": "Turn sound on",
     "context": "Shown in the media preview."
+  },
+  {
+    "handler": "screens.missingSongDialog.lookingForItsAlbum",
+    "text": "Looking for its album",
+    "context": "Read out while the dialog that finds a missing song's album is searching the catalogue."
   },
   {
     "handler": "screens.motion.motionChoices.full",
@@ -25377,6 +25477,11 @@
     "context": "Shown in the main on the server. {added} is filled in by the app; {updated} is filled in by the app; {removed} is filled in by the app."
   },
   {
+    "handler": "server.main.albumsForNameAreReadyToRequest",
+    "text": "Albums for {name} are ready to request",
+    "context": "The title of a notification, once the server has finished finding the albums of a playlist's missing songs, which took a while. {name} is the playlist."
+  },
+  {
     "handler": "server.main.aLinkYouHandedOutWas",
     "text": "A share link you created was revoked",
     "context": "The title in the main on the server."
@@ -25395,6 +25500,16 @@
     "handler": "server.main.byNameWithdrewYourLinkToTitle",
     "text": "{byName} revoked your share link for {title}. Anyone watching through it has been stopped.",
     "context": "The body in the main on the server. {byName} is filled in by the app; {title} is filled in by the app."
+  },
+  {
+    "handler": "server.main.count.foundAlbumsOfAll.one",
+    "text": "Found {count} of {albums} album. Open the playlist to request them.",
+    "context": "The body of a notification, once the server has finished finding the albums of a playlist's missing songs. {count} is how many albums were found; {albums} is how many it looked for."
+  },
+  {
+    "handler": "server.main.count.foundAlbumsOfAll.other",
+    "text": "Found {count} of {albums} albums. Open the playlist to request them.",
+    "context": "The body of a notification, once the server has finished finding the albums of a playlist's missing songs. {count} is how many albums were found; {albums} is how many it looked for."
   },
   {
     "handler": "server.main.doneBroughtUpToDate",

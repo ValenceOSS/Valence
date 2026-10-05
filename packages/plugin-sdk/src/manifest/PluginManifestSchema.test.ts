@@ -126,6 +126,29 @@ describe('PluginManifestSchema', () => {
     expect(problems).toEqual(['auth.anilist.co is used by AniList but not listed under network']);
   });
 
+  it('keeps a setting’s link to where its value comes from, which must be https', () => {
+    const link = { label: 'example.com/apps', url: 'https://example.com/apps' };
+    const manifest = PluginManifestSchema.parse(
+      aManifest({ settings: [{ id: 'clientId', label: 'Client id', kind: 'text', link }] }),
+    );
+
+    expect(manifest.settings[0]?.link).toEqual(link);
+    expect(
+      problemsOf(
+        aManifest({
+          settings: [
+            {
+              id: 'clientId',
+              label: 'Client id',
+              kind: 'text',
+              link: { label: 'Apps', url: 'http://example.com/apps' },
+            },
+          ],
+        }),
+      ),
+    ).not.toEqual([]);
+  });
+
   it('insists that an account provider’s settings are declared', () => {
     const problems = problemsOf(
       aManifest({

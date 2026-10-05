@@ -26,6 +26,27 @@ describe('Checkbox', () => {
     expect(onCheckedChange).toHaveBeenCalledWith(true);
   });
 
+  it('ticks when its words are pressed, not only its box, and once', async () => {
+    const onCheckedChange = vi.fn();
+    const user = userEvent.setup();
+    render(<Checkbox label="Burn in subtitles" onCheckedChange={onCheckedChange} />);
+
+    await user.click(screen.getByText('Burn in subtitles'));
+
+    expect(onCheckedChange).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('checkbox', { name: 'Burn in subtitles' })).toBeChecked();
+  });
+
+  it('ignores its words being pressed when disabled', async () => {
+    const onCheckedChange = vi.fn();
+    const user = userEvent.setup();
+    render(<Checkbox label="Burn in subtitles" disabled onCheckedChange={onCheckedChange} />);
+
+    await user.click(screen.getByText('Burn in subtitles'));
+
+    expect(onCheckedChange).not.toHaveBeenCalled();
+  });
+
   it('does not report a change when disabled', async () => {
     const onCheckedChange = vi.fn();
     const user = userEvent.setup();

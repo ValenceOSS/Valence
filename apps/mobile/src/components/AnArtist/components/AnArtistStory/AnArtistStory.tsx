@@ -80,8 +80,8 @@ const AnArtistStory = ({ artistId, name }: AnArtistStoryProps) => {
 
               void cache.invalidateQueries({ queryKey: requestsQueries.key });
               Alert.alert(
-                say('phone.anArtist.anArtistStory.titleIsRequested', { title: album.title }),
-                say('phone.anArtist.anArtistStory.youCanFollowItUnderSearch'),
+                say('common.titleIsRequested', { title: album.title }),
+                say('common.youCanFollowItUnderSearch'),
               );
             });
           },

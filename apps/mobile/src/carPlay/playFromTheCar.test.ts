@@ -29,6 +29,7 @@ const aFullCache = () => {
         id: '00000000-0000-4000-8000-0000000000e1',
         position: 0,
         addedAt: '2026-09-01T00:00:00.000Z',
+        missing: null,
         item: {
           id: aTrack(4).id,
           kind: 'song',
@@ -42,6 +43,7 @@ const aFullCache = () => {
         id: '00000000-0000-4000-8000-0000000000e2',
         position: 1,
         addedAt: '2026-09-01T00:00:00.000Z',
+        missing: null,
         item: null,
       },
     ],

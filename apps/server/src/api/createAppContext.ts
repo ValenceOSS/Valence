@@ -58,6 +58,8 @@ import type {
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { bookAsTitle } from '@ValenceServer/requests/catalogue/discoverShelves';
 import { standTitles } from '@ValenceServer/requests/catalogue/standTitles';
+import { titleOfMusicHit } from '@ValenceServer/requests/catalogue/titleOfMusicHit';
+import { missingAlbumsForPlugins } from '@ValenceServer/requests/missingAlbums/missingAlbumsForPlugins';
 import type { UnstoodTitle } from '@ValenceServer/requests/catalogue/UnstoodTitle';
 import type { PluginHost } from '@ValenceServer/plugins/broker/PluginHost';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
@@ -261,6 +263,7 @@ const createAppContext = (options: CreateAppOptions) => {
     describeMusicForRequest = () => Promise.resolve(null),
     describeBookForRequest = () => Promise.resolve(null),
     searchMusicCatalogue = () => Promise.resolve([]),
+    missingAlbums = null,
     discovery = NO_DISCOVERY,
     permissions = createMemoryPermissionService(),
     history,
@@ -1338,15 +1341,7 @@ const createAppContext = (options: CreateAppOptions) => {
     isBookRequest(kind)
       ? (await discovery.searchBooks(query)).map(bookAsTitle)
       : isMusicRequest(kind)
-        ? (await searchMusicCatalogue(query, kind)).map((hit) => ({
-            kind: hit.kind,
-            id: hit.musicBrainzId,
-            title: hit.title,
-            subtitle: hit.artist ?? hit.disambiguation,
-            year: hit.year,
-            overview: null,
-            posterUrl: hit.coverUrl,
-          }))
+        ? (await searchMusicCatalogue(query, kind)).map(titleOfMusicHit)
         : (await searchCatalogue(query, kind === 'film' ? 'movie' : 'tv')).map((match) => ({
             kind,
             id: match.externalId,
@@ -1448,6 +1443,11 @@ const createAppContext = (options: CreateAppOptions) => {
 
       return { status: answer.value.isNew ? 'made' : 'already' };
     },
+    missingAlbums: missingAlbumsForPlugins({
+      accountOf: async (profileId) => (await profiles?.accountOf(profileId)) ?? null,
+      matcher: missingAlbums,
+      stand: async (titles) => standTitles(titles, discovery.lookup, await everyRequest()),
+    }),
   };
 
   const phoneHandBacks = createPhoneHandBacks();
@@ -1522,6 +1522,7 @@ const createAppContext = (options: CreateAppOptions) => {
     describeMusicForRequest,
     describeBookForRequest,
     searchMusicCatalogue,
+    missingAlbums,
     discovery,
     permissions,
     history,

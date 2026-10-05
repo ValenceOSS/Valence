@@ -1,3 +1,3 @@
-const PLUGIN_API_VERSION = '1.1.0';
+const PLUGIN_API_VERSION = '1.2.0';
 
 export { PLUGIN_API_VERSION };

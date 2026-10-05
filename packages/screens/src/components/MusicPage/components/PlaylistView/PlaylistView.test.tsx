@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
@@ -11,11 +11,13 @@ vi.mock('@ValenceClient/music/theMusicPlayer', () => ({
   theMusicPlayer: () => fake.player,
 }));
 
-const held = vi.hoisted(() => ({ profiles: false }));
+const held = vi.hoisted(() => ({ profiles: false, music: false }));
 
 vi.mock('@ValenceClient/session/useWhatIMayDo', () => ({
   useWhatIMayDo: () => ({
-    may: (permission: string) => permission === 'account.profiles' && held.profiles,
+    may: (permission: string) =>
+      (permission === 'account.profiles' && held.profiles) ||
+      (permission === 'requests.askMusic' && held.music),
     mayAdminister: held.profiles,
     isLoading: false,
   }),
@@ -35,6 +37,7 @@ const summary = (overrides = {}) => ({
   owner: { profileId: '00000000-0000-4000-8000-000000000001', name: 'Dan', colour: '#3a8ee8' },
   entryCount: 3,
   lostCount: 0,
+  missingCount: 0,
   durationSeconds: 7600,
   artworkAlbumIds: [],
   hasOwnArtwork: false,
@@ -50,6 +53,7 @@ const entry = (
   id: `00000000-0000-4000-8000-0000000e${n.toString().padStart(4, '0')}`,
   position: n * 1024,
   addedAt: '2026-09-18T00:00:00.000Z',
+  missing: null,
   item: {
     id: track?.id ?? `00000000-0000-4000-8000-0000000f${n.toString().padStart(4, '0')}`,
     kind: track === null ? 'movie' : 'song',
@@ -64,6 +68,15 @@ const lostEntry = (n: number) => ({
   id: `00000000-0000-4000-8000-0000000e${n.toString().padStart(4, '0')}`,
   position: n * 1024,
   addedAt: '2026-09-18T00:00:00.000Z',
+  missing: null,
+  item: null,
+});
+
+const missingEntry = (n: number, title: string) => ({
+  id: `00000000-0000-4000-8000-0000000e${n.toString().padStart(4, '0')}`,
+  position: n * 1024,
+  addedAt: '2026-09-18T00:00:00.000Z',
+  missing: { title, artist: 'Mara Quill', album: 'Coastal', releaseId: null, coverUrl: null },
   item: null,
 });
 
@@ -73,10 +86,16 @@ let requests = answerMusicRequests();
 
 const serve = (
   playlist = summary(),
-  entries: (ReturnType<typeof entry> | ReturnType<typeof lostEntry>)[] = ENTRIES,
+  entries: (
+    | ReturnType<typeof entry>
+    | ReturnType<typeof lostEntry>
+    | ReturnType<typeof missingEntry>
+  )[] = ENTRIES,
 ) => {
   requests = answerMusicRequests({
     [`/api/playlists/${PLAYLIST_ID}`]: { playlist, entries },
+    '/api/requests/availability': { isEnabled: true },
+    '/api/requests/catalogue/search': [],
   });
   vi.stubGlobal('fetch', requests);
 };
@@ -84,6 +103,7 @@ const serve = (
 beforeEach(() => {
   fake = aFakeMusicPlayer();
   held.profiles = false;
+  held.music = false;
   serve();
 });
 
@@ -259,5 +279,67 @@ describe('PlaylistView', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(PlaylistView.displayName).toBe('PlaylistView');
+  });
+
+  it('draws a song the library does not have in its place among the songs, counted apart', async () => {
+    serve(summary({ missingCount: 1 }), [
+      entry(1, aTrack(1)),
+      missingEntry(2, 'Low Tide'),
+      entry(3, aTrack(2)),
+    ]);
+    renderInAnAddress(<PlaylistView playlistId={PLAYLIST_ID} />);
+
+    const list = await screen.findByRole('list', { name: 'Sunday morning' });
+    const rows = within(list).getAllByRole('listitem');
+
+    expect(
+      rows.map((row) => within(row).queryByText(/^(Track \d|Low Tide)$/u)?.textContent),
+    ).toEqual(['Track 1', 'Low Tide', 'Track 2']);
+    expect(screen.getByText('· 1 song not in your library')).toBeInTheDocument();
+    expect(screen.getByText('Mara Quill · Not in your library')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Request the album Low Tide is on' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('offers somebody who may ask for music to request its album', async () => {
+    held.music = true;
+    serve(summary({ missingCount: 1 }), [entry(1, aTrack(1)), missingEntry(2, 'Low Tide')]);
+    renderInAnAddress(<PlaylistView playlistId={PLAYLIST_ID} />);
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Request the album Low Tide is on' }),
+    );
+
+    expect(await screen.findByRole('dialog', { name: 'Request its album' })).toBeInTheDocument();
+  });
+
+  it('offers to request every missing song’s album at once, only to somebody who may', async () => {
+    serve(summary({ missingCount: 1 }), [entry(1, aTrack(1)), missingEntry(2, 'Low Tide')]);
+
+    const { unmount } = renderInAnAddress(<PlaylistView playlistId={PLAYLIST_ID} />);
+
+    await screen.findByText('Low Tide');
+
+    expect(screen.queryByRole('button', { name: 'Request missing songs' })).not.toBeInTheDocument();
+
+    unmount();
+    held.music = true;
+    renderInAnAddress(<PlaylistView playlistId={PLAYLIST_ID} />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Request missing songs' }));
+
+    expect(
+      await screen.findByRole('dialog', { name: 'Request missing songs' }),
+    ).toBeInTheDocument();
+  });
+  it('opens on requesting its missing songs where the notice that their albums were found leads', async () => {
+    held.music = true;
+    serve(summary({ missingCount: 1 }), [entry(1, aTrack(1)), missingEntry(2, 'Low Tide')]);
+    renderInAnAddress(<PlaylistView playlistId={PLAYLIST_ID} isRequestingMissing />);
+
+    expect(
+      await screen.findByRole('dialog', { name: 'Request missing songs' }),
+    ).toBeInTheDocument();
   });
 });

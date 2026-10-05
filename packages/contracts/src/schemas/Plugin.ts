@@ -13,6 +13,7 @@ const PluginSettingSchema = z.object({
   label: z.string(),
   kind: z.enum(['text', 'secret', 'toggle']),
   help: z.string().nullable(),
+  link: z.object({ label: z.string(), url: z.string() }).nullable(),
   value: z.union([z.string(), z.boolean()]).nullable(),
   isSet: z.boolean(),
 });

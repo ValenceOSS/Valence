@@ -27,6 +27,11 @@ type CataloguePictures = {
     hint: { title: string; artist: string } | null,
   ) => Promise<CataloguePicture | null>;
   artistPicture: (name: string, coverOf: string | null) => Promise<CataloguePicture | null>;
+  namedCover: (named: { title: string; artist: string }) => Promise<CataloguePicture | null>;
+  releaseCover: (
+    releaseId: string,
+    named: { title: string; artist: string } | null,
+  ) => Promise<CataloguePicture | null>;
 };
 
 /**
@@ -34,7 +39,9 @@ type CataloguePictures = {
  * found once, kept on this server's disk, and served from there to everybody after.
  *
  * A cover is taken from the Cover Art Archive, and from Apple's catalogue where the archive has
- * none; an artist's face from Deezer, or their public Apple Music page, or else the cover of their newest
+ * none, or for a record known only by its name and artist, such as one a playlist names that the
+ * library does not have; a single release's small cover from the archive by its id, falling back
+ * on its name; an artist's face from Deezer, or their public Apple Music page, or else the cover of their newest
  * record. Neither needs a key. Where each picture came from is remembered beside it, and so is
  * finding nothing, for a week, so a search that turns up the same records again asks nobody.
  * Asking twice at once for a picture not yet found finds it once.
@@ -122,8 +129,25 @@ const createCataloguePictures = ({
     return address === null ? null : readImage(address);
   };
 
+  const namedCover: CataloguePictures['namedCover'] = async ({ title, artist }) => {
+    const address = await whereIs(
+      `named-cover:${artist.toLowerCase()}\n${title.toLowerCase()}`,
+      async () => readable(await findAppleAlbumCoverUrl(web, { title, artistName: artist })),
+    );
+
+    return address === null ? null : readImage(address);
+  };
+
   return {
     cover,
+    namedCover,
+    releaseCover: async (releaseId, named) => {
+      const address = await whereIs(`release-cover:${releaseId}`, async () =>
+        readable(`https://coverartarchive.org/release/${encodeURIComponent(releaseId)}/front-250`),
+      );
+
+      return address === null ? (named === null ? null : namedCover(named)) : readImage(address);
+    },
     artistPicture: async (name, coverOf) => {
       const address = await whereIs(
         `artist:${nameKey(name)}`,

@@ -33,6 +33,7 @@ import type {
   RequestCatalogue,
   VideoRequestKind,
 } from '@ValenceContracts/schemas/MediaRequest';
+import type { MissingAlbumMatcher } from '@ValenceServer/requests/missingAlbums/MissingAlbumMatcher';
 import type { EventBus } from '@ValenceServer/events/EventBus';
 import type { Discovery } from '@ValenceServer/requests/catalogue/Discovery';
 import { NO_DISCOVERY } from '@ValenceServer/requests/catalogue/NO_DISCOVERY';
@@ -193,6 +194,7 @@ const build = async ({
   describeMusicForRequest,
   describeBookForRequest,
   searchMusicCatalogue,
+  missingAlbums,
   discovery,
   libraries = [FILMS],
 }: {
@@ -208,6 +210,7 @@ const build = async ({
   ) => Promise<RequestCatalogue | null>;
   describeBookForRequest?: (openLibraryId: number) => Promise<RequestCatalogue | null>;
   searchMusicCatalogue?: (query: string, kind: MusicRequestKind) => Promise<MusicCatalogueHit[]>;
+  missingAlbums?: MissingAlbumMatcher;
   discovery?: Discovery;
   libraries?: Library[];
 }) => {
@@ -246,6 +249,7 @@ const build = async ({
     ...(describeMusicForRequest === undefined ? {} : { describeMusicForRequest }),
     ...(describeBookForRequest === undefined ? {} : { describeBookForRequest }),
     ...(searchMusicCatalogue === undefined ? {} : { searchMusicCatalogue }),
+    ...(missingAlbums === undefined ? {} : { missingAlbums }),
     ...(discovery === undefined ? {} : { discovery }),
     playback: createMemoryPlaybackService(),
     segments: createMemorySegmentService(),
@@ -1496,6 +1500,81 @@ describe('requests for films and series, through the server', () => {
     expect(
       (await nobody.ask('/api/requests/catalogue/music?query=pink%20floyd&kind=artist')).status,
     ).toBe(403);
+  });
+
+  it('finds the albums of a playlist’s missing songs, standing against the requests, for whoever may ask', async () => {
+    const hit: MusicCatalogueHit = {
+      kind: 'album',
+      musicBrainzId: 'fa402a46-b4b1-40d6-8d3b-b051550eb687',
+      title: 'Isles',
+      artist: 'Bicep',
+      disambiguation: null,
+      type: 'album',
+      year: 2021,
+      coverUrl: null,
+    };
+    const song = (title: string, album: string) => ({
+      title,
+      artist: 'Bicep',
+      album,
+      releaseId: null,
+      coverUrl: `/cover/${album}`,
+    });
+    const playlistId = '00000000-0000-4000-8000-00000000d0d0';
+    const matched: MissingAlbumMatcher['match'] = vi.fn((_viewer, asked: string) =>
+      Promise.resolve(
+        asked === playlistId
+          ? {
+              isMatching: true,
+              albums: [
+                { key: 'a', song: song('Apricots', 'Isles'), songCount: 2, hit },
+                { key: 'b', song: song('Nowhere', 'Unknown'), songCount: 1, hit: null },
+                { key: 'c', song: song('Glue', 'Bicep'), songCount: 1, hit: undefined },
+              ],
+            }
+          : null,
+      ),
+    );
+    const missingAlbums: MissingAlbumMatcher = { match: matched, settle: matched };
+    const asking = await build({
+      isOn: true,
+      granted: ['requests.askMusic'],
+      missingAlbums,
+    });
+
+    const found = await asking.ask(`/api/requests/missing-albums/${playlistId}`, 'POST');
+
+    expect(found.status).toBe(200);
+    expect(await found.json()).toMatchObject({
+      isMatching: true,
+      albums: [
+        {
+          key: 'a',
+          title: 'Isles',
+          artist: 'Bicep',
+          coverUrl: '/cover/Isles',
+          songCount: 2,
+          isMatched: true,
+          found: { id: hit.musicBrainzId, subtitle: 'Bicep', standing: { status: 'askable' } },
+        },
+        { key: 'b', isMatched: true, found: null },
+        { key: 'c', isMatched: false, found: null },
+      ],
+    });
+    expect(
+      (
+        await asking.ask(
+          '/api/requests/missing-albums/00000000-0000-4000-8000-00000000ffff',
+          'POST',
+        )
+      ).status,
+    ).toBe(404);
+
+    const nobody = await build({ isOn: true, missingAlbums });
+
+    expect((await nobody.ask(`/api/requests/missing-albums/${playlistId}`, 'POST')).status).toBe(
+      403,
+    );
   });
 
   it('says where each season stands against what has already been asked', async () => {

@@ -31,6 +31,7 @@ const summaryOf = (
       label: setting.label,
       kind: setting.kind,
       help: setting.help ?? null,
+      link: setting.link ?? null,
       value: setting.kind === 'secret' || value === undefined ? null : value,
       isSet: value !== undefined,
     };

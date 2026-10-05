@@ -212,10 +212,11 @@ type ProgressEntry = {
 
 ### requests
 
-| Method                                  | Returns                                                 | Permission |
-| --------------------------------------- | ------------------------------------------------------- | ---------- |
-| `requests.searchCatalogue(query, kind)` | `Promise<CatalogueHit[]>`                               | `requests` |
-| `requests.create(profileId, hit)`       | `Promise<{ status: 'made' \| 'already' \| 'refused' }>` | `requests` |
+| Method                                          | Returns                                                            | Permission                 |
+| ----------------------------------------------- | ------------------------------------------------------------------ | -------------------------- |
+| `requests.searchCatalogue(query, kind)`         | `Promise<CatalogueHit[]>`                                          | `requests`                 |
+| `requests.create(profileId, hit)`               | `Promise<{ status: 'made' \| 'already' \| 'refused' }>`            | `requests`                 |
+| `requests.missingAlbums(profileId, playlistId)` | `Promise<{ isMatching: boolean; albums: CatalogueHit[] } \| null>` | `requests` and `playlists` |
 
 ```ts
 type CatalogueHit = {
@@ -231,25 +232,36 @@ type CatalogueHit = {
 
 `create` takes `{ catalogueId, kind }` from a hit. `already` means it is in the library or already asked for; `refused` means the person may not ask for that kind of thing.
 
+`missingAlbums` finds the albums of the songs a playlist holds that the library does not have yet — the same search the playlist's Request missing songs button runs, matching only the exact album — and gives each one found as a hit to pass to `create`. It waits up to 15 seconds for the search; where it is not done by then, `isMatching` is true and `albums` holds what was found so far, and asking again later carries on where it left off. It is `null` for a playlist the person cannot read. Added in API 1.2.0.
+
 ### playlists
 
 | Method                                                | Returns                                   | Permission         |
 | ----------------------------------------------------- | ----------------------------------------- | ------------------ |
 | `playlists.list(profileId)`                           | `Promise<{ id: string; name: string }[]>` | `playlists`        |
 | `playlists.create(profileId, { name, description? })` | `Promise<{ id: string }>`                 | `playlists: write` |
-| `playlists.add(profileId, playlistId, mediaIds)`      | `Promise<void>`                           | `playlists: write` |
+| `playlists.add(profileId, playlistId, items)`         | `Promise<void>`                           | `playlists: write` |
 | `playlists.read(profileId, playlistId)`               | `Promise<PlaylistContents \| null>`       | `playlists`        |
 | `playlists.drop(profileId, playlistId, entryId)`      | `Promise<void>`                           | `playlists: write` |
 
 ```ts
+type MissingSong = {
+  title: string;
+  artist: string;
+  album?: string | null;
+  releaseId?: string | null;
+};
+
 type PlaylistContents = {
   id: string;
   name: string;
-  entries: { entryId: string; mediaId: string | null }[];
+  entries: { entryId: string; mediaId: string | null; missing: MissingSong | null }[];
 };
 ```
 
-`read` gives a playlist's entries in order, or `null` where it is not one of theirs. An entry's `mediaId` is `null` where the thing it named has left the library. `drop` takes one entry out by its `entryId`, so a playlist holding the same song twice loses only the one named. Both are new in plugin API 1.1.
+`add` puts its items at the end of the playlist, in order. An item is a media id, or a song the library does not have yet, named by its title and artist and, where known, its album and the MusicBrainz release it is on, whose cover is then shown beside it. A missing song keeps its place in the playlist and is shown there as not in the library, with a way to ask for its album. Once the library has a song of that title by that artist, Valence puts it in that place. Missing songs are new in plugin API 1.2, so a plugin that adds them declares `"apiVersion": "^1.2"`.
+
+`read` gives a playlist's entries in order, or `null` where it is not one of theirs. An entry's `mediaId` is `null` where the thing it named has left the library, or where it is a song still missing, which `missing` then names. `drop` takes one entry out by its `entryId`, so a playlist holding the same song twice loses only the one named. Both are new in plugin API 1.1.
 
 ### music
 

@@ -1,10 +1,9 @@
 import { z } from 'zod';
-import { creditedArtistOf } from '@ValenceServer/requests/musicBrainz/creditedArtistOf';
-import { calendarDateOf } from '@ValenceServer/requests/musicBrainz/calendarDateOf';
+import { albumHitOf } from '@ValenceServer/requests/musicBrainz/albumHitOf';
+import { escapedForMusicBrainz } from '@ValenceServer/requests/musicBrainz/escapedForMusicBrainz';
 import { MusicBrainzReleaseGroupSchema } from '@ValenceServer/requests/musicBrainz/MusicBrainzReleaseGroupSchema';
-import { releaseGroupCoverUrl } from '@ValenceServer/requests/musicBrainz/releaseGroupCoverUrl';
 import { artistPictureUrl } from '@ValenceServer/requests/musicBrainz/artistPictureUrl';
-import { releaseTypeOf } from '@ValenceServer/requests/musicBrainz/releaseTypeOf';
+import { yearOfDate } from '@ValenceServer/requests/musicBrainz/yearOfDate';
 import type { MusicCatalogueHit, MusicRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 import type { MusicWeb } from '@ValenceServer/music/web/createMusicWeb';
 
@@ -33,27 +32,6 @@ const ReleaseGroupsSchema = z.object({
 });
 
 /**
- * Words a person typed, made safe to hand MusicBrainz's search, whose query language reads
- * brackets, colons, quotation marks and the like as its own.
- *
- * @param words - What was typed.
- * @returns It escaped.
- */
-const escaped = (words: string): string => words.replace(/[+\-&|!(){}[\]^"~*?:\\/]/g, '\\$&');
-
-/**
- * The year a MusicBrainz date falls in.
- *
- * @param date - The date, however much of it MusicBrainz gives.
- * @returns The year, or null where it gives none.
- */
-const yearOf = (date: string | null): number | null => {
-  const day = date === null ? null : calendarDateOf(date);
-
-  return day === null ? null : Number(day.slice(0, 4));
-};
-
-/**
  * Searches MusicBrainz for artists or albums to ask for, best matches first: an artist with what
  * tells them apart from others of the name, the year they began and their picture, or an album
  * with its artist, its kind, the year it came out and its cover.
@@ -75,7 +53,7 @@ const searchMusicCatalogue = async (
   }
 
   const found = await web.json(
-    `https://musicbrainz.org/ws/2/${kind === 'artist' ? 'artist' : 'release-group'}/?query=${encodeURIComponent(escaped(words))}&fmt=json&limit=${MOST_HITS.toString()}`,
+    `https://musicbrainz.org/ws/2/${kind === 'artist' ? 'artist' : 'release-group'}/?query=${encodeURIComponent(escapedForMusicBrainz(words))}&fmt=json&limit=${MOST_HITS.toString()}`,
   );
 
   if (kind === 'artist') {
@@ -93,7 +71,7 @@ const searchMusicCatalogue = async (
                   artist: null,
                   disambiguation: artist.disambiguation === '' ? null : artist.disambiguation,
                   type: null,
-                  year: yearOf(artist['life-span'].begin),
+                  year: yearOfDate(artist['life-span'].begin),
                   coverUrl: artistPictureUrl(artist.name),
                 },
               ],
@@ -104,25 +82,7 @@ const searchMusicCatalogue = async (
   const read = ReleaseGroupsSchema.safeParse(found);
 
   return read.success
-    ? read.data['release-groups'].flatMap((group) =>
-        group === null
-          ? []
-          : [
-              {
-                kind: 'album' as const,
-                musicBrainzId: group.id,
-                title: group.title,
-                artist: creditedArtistOf(group),
-                disambiguation: group.disambiguation === '' ? null : group.disambiguation,
-                type: releaseTypeOf(group['primary-type'], group['secondary-types']),
-                year: yearOf(group['first-release-date']),
-                coverUrl: releaseGroupCoverUrl(group.id, {
-                  title: group.title,
-                  artist: creditedArtistOf(group),
-                }),
-              },
-            ],
-      )
+    ? read.data['release-groups'].flatMap((group) => (group === null ? [] : [albumHitOf(group)]))
     : [];
 };
 

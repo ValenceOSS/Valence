@@ -115,8 +115,21 @@ const createPluginHost = ({
 
         return { id: made.id };
       },
-      add: async (profileId, playlistId, mediaIds) => {
-        const added = await playlists.add(await viewerFor(profileId), playlistId, mediaIds);
+      add: async (profileId, playlistId, items) => {
+        const added = await playlists.add(
+          await viewerFor(profileId),
+          playlistId,
+          items.map((item) =>
+            typeof item === 'string'
+              ? item
+              : {
+                  title: item.title,
+                  artist: item.artist,
+                  album: item.album ?? null,
+                  releaseId: item.releaseId ?? null,
+                },
+          ),
+        );
 
         if (added === null) {
           throw new Error('There is no such playlist of theirs.');
@@ -133,6 +146,15 @@ const createPluginHost = ({
               entries: found.entries.map((entry) => ({
                 entryId: entry.id,
                 mediaId: entry.item?.id ?? null,
+                missing:
+                  entry.missing === null
+                    ? null
+                    : {
+                        title: entry.missing.title,
+                        artist: entry.missing.artist,
+                        album: entry.missing.album,
+                        releaseId: entry.missing.releaseId,
+                      },
               })),
             };
       },

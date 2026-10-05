@@ -12,7 +12,8 @@ import { say } from '@ValenceI18n/say';
  * A plugin's page or panel on the web, read from the server and kept current as somebody uses it,
  * through the same hook the phone and the television use. A press the plugin asked to have confirmed
  * is confirmed in Valence's own dialog; an address the server answers with, such as where to connect
- * an account, is opened in this window, and it is only ever an address on this server. A plugin that
+ * an account, is opened in this window, or by the desktop app in somebody's browser, and it is only
+ * ever an address on this server. A plugin that
  * cannot draw, or a press that did not work, is said in Valence's words.
  *
  * @param place - Which page or panel.

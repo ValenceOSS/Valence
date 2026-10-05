@@ -13,6 +13,7 @@ const PLAYLIST: PlaylistSummary = {
   owner: null,
   entryCount: 4,
   lostCount: 0,
+  missingCount: 0,
   durationSeconds: 900,
   artworkAlbumIds: [COVER],
   hasOwnArtwork: false,
