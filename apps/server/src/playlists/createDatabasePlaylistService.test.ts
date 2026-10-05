@@ -43,13 +43,19 @@ const aPlaylist = async () => {
     .select({ id: mediaItem.id })
     .from(mediaItem)
     .where(eq(mediaItem.libraryId, 'music'));
-  const playlists = createDatabasePlaylistService(db, createDatabaseMusicService(db), '/artwork');
+  const clock = { now: 0 };
+  const playlists = createDatabasePlaylistService(
+    db,
+    createDatabaseMusicService(db),
+    '/artwork',
+    () => clock.now,
+  );
   const made = await playlists.create(viewer, {
     name: 'Evening',
     mediaItemIds: ['film', ...songs.map((song) => song.id)],
   });
 
-  return { db, viewer, playlists, store, artist, bare, id: made?.id ?? '', covered };
+  return { db, viewer, playlists, store, artist, bare, id: made?.id ?? '', covered, clock };
 };
 
 describe('createDatabasePlaylistService', { timeout: STARTING_POSTGRES_MS }, () => {
@@ -166,8 +172,8 @@ describe('createDatabasePlaylistService', { timeout: STARTING_POSTGRES_MS }, () 
     expect(read?.playlist.missingCount).toBe(1);
   });
 
-  it('looks for missing songs again only once the library has changed', async () => {
-    const { viewer, playlists, store, artist, bare, id } = await aPlaylist();
+  it('looks for missing songs again once the library has changed, checking every half minute', async () => {
+    const { viewer, playlists, store, artist, bare, id, clock } = await aPlaylist();
 
     await playlists.add(viewer, id, [
       { title: 'Later Arrival', artist: 'Low', album: null, releaseId: null },
@@ -182,6 +188,10 @@ describe('createDatabasePlaylistService', { timeout: STARTING_POSTGRES_MS }, () 
       }),
     );
 
+    expect((await playlists.read(viewer, id))?.playlist.missingCount).toBe(1);
+
+    clock.now += 31_000;
+
     const read = await playlists.read(viewer, id);
 
     expect(read?.entries.at(-1)?.item?.title).toBe('Later Arrival');
@@ -189,7 +199,7 @@ describe('createDatabasePlaylistService', { timeout: STARTING_POSTGRES_MS }, () 
   });
 
   it('looks again when a song in the library is retagged to the one missing', async () => {
-    const { db, viewer, playlists, id } = await aPlaylist();
+    const { db, viewer, playlists, id, clock } = await aPlaylist();
 
     await playlists.add(viewer, id, [
       { title: 'Renamed Later', artist: 'Low', album: null, releaseId: null },
@@ -206,6 +216,8 @@ describe('createDatabasePlaylistService', { timeout: STARTING_POSTGRES_MS }, () 
       .update(mediaItem)
       .set({ title: 'Renamed Later', modifiedAtMs: Date.now() })
       .where(eq(mediaItem.id, song?.id ?? ''));
+
+    clock.now += 31_000;
 
     const read = await playlists.read(viewer, id);
 

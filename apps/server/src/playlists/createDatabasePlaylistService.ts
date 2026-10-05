@@ -56,6 +56,8 @@ const MISSING_LOOKED_FOR_AT_ONCE = 50;
 
 const LOOKS_AGAIN_AFTER_MS = 5 * 60 * 1000;
 
+const CHECKS_THE_LIBRARY_EVERY_MS = 30 * 1000;
+
 /**
  * The profile a viewer is acting as, where they are acting as one.
  *
@@ -99,17 +101,20 @@ const kindOf = (libraryKind: string, seriesTitle: string | null): MediaKind => {
  * A song a playlist holds that the library does not have yet is filled in when its owner reads the
  * playlist and the library has it — looked for again only once the library's songs, their files or
  * the playlist's missing ones have changed, or a few minutes have passed for a change the files do
- * not show, such as a correction, since a playlist being watched is read every moment.
+ * not show, such as a correction. A playlist being watched is read every moment, so the library is
+ * checked for changes at most every half minute.
  *
  * @param db - The database.
  * @param music - Where a song entry is read out as a full track.
  * @param artworkDirectory - Where the covers people upload for their playlists are kept.
+ * @param now - The time, for a test.
  * @returns The service.
  */
 const createDatabasePlaylistService = (
   db: AnyValenceDatabase,
   music: MusicService,
   artworkDirectory: string,
+  now: () => number = () => Date.now(),
 ): PlaylistService => {
   const entryVisible = (viewer: Viewer): SQL | undefined =>
     and(visibleToViewer(db, viewer), librariesVisibleToViewer(db, viewer));
@@ -328,7 +333,10 @@ const createDatabasePlaylistService = (
     return kept.length;
   };
 
-  const lastLooked = new Map<string, { mark: string; at: number }>();
+  const lastLooked = new Map<
+    string,
+    { waiting: string; songs: string; checkedAt: number; lookedAt: number }
+  >();
 
   const fillMissing = async (viewer: Viewer, playlistId: string): Promise<void> => {
     const waiting = await db
@@ -353,18 +361,27 @@ const createDatabasePlaylistService = (
       return;
     }
 
+    const waitingFor = waiting.map((entry) => entry.id).join(':');
+    const last = lastLooked.get(playlistId);
+    const same = last?.waiting === waitingFor ? last : undefined;
+
+    if (same !== undefined && now() - same.checkedAt < CHECKS_THE_LIBRARY_EVERY_MS) {
+      return;
+    }
+
     const [tracks] = await db
       .select({ count: count(), newest: max(mediaItem.modifiedAtMs) })
       .from(musicTrack)
       .innerJoin(mediaItem, eq(mediaItem.id, musicTrack.mediaItemId));
-    const mark = [
-      tracks?.count ?? 0,
-      tracks?.newest ?? 0,
-      ...waiting.map((entry) => entry.id),
-    ].join(':');
-    const last = lastLooked.get(playlistId);
+    const songsNow = `${(tracks?.count ?? 0).toString()}:${(tracks?.newest ?? 0).toString()}`;
 
-    if (last?.mark === mark && Date.now() - last.at < LOOKS_AGAIN_AFTER_MS) {
+    if (
+      same !== undefined &&
+      same.songs === songsNow &&
+      now() - same.lookedAt < LOOKS_AGAIN_AFTER_MS
+    ) {
+      lastLooked.set(playlistId, { ...same, checkedAt: now() });
+
       return;
     }
 
@@ -413,7 +430,12 @@ const createDatabasePlaylistService = (
       }
     }
 
-    lastLooked.set(playlistId, { mark, at: Date.now() });
+    lastLooked.set(playlistId, {
+      waiting: waitingFor,
+      songs: songsNow,
+      checkedAt: now(),
+      lookedAt: now(),
+    });
   };
 
   const spaceOut = async (playlistId: string): Promise<void> => {
