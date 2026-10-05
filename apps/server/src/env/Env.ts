@@ -40,6 +40,15 @@ const EnvSchema = z.object({
         .map((origin) => origin.trim())
         .filter((origin) => origin.length > 0),
     ),
+  TRUSTED_PROXIES: z
+    .string()
+    .default('127.0.0.0/8, ::1, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, fc00::/7')
+    .transform((value) =>
+      value
+        .split(',')
+        .map((range) => range.trim())
+        .filter((range) => range.length > 0),
+    ),
   COOKIE_SECURE: z
     .enum(['true', 'false'])
     .optional()

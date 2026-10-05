@@ -209,6 +209,7 @@ const createAppContext = (options: CreateAppOptions) => {
     version: SERVER_VERSION = '0.0.0',
     commit: givenCommit,
     trustedOrigins,
+    callerOf,
     demoAccounts = [],
     countUsers,
     promoteToAdmin,
@@ -1482,6 +1483,7 @@ const createAppContext = (options: CreateAppOptions) => {
         ? commitThisIsRunning()
         : givenCommit.slice(0, 7),
     trustedOrigins,
+    callerOf,
     countUsers,
     promoteToAdmin,
     library,

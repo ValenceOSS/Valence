@@ -174,6 +174,8 @@ import type {
 import { getConnInfo } from '@hono/node-server/conninfo';
 import type { Context } from 'hono';
 import { readCallerAddress } from '@ValenceServer/web/readCallerAddress';
+import { clientAddressOf } from '@ValenceServer/web/clientAddressOf';
+import { trustedProxyCheck } from '@ValenceServer/web/trustedProxyCheck';
 import { createSessionWatch } from '@ValenceServer/presence/createSessionWatch';
 import type { PresenceSession, PresenceViewing } from '@ValenceServer/presence/PresenceService';
 import type { Play } from '@ValenceServer/devices/createPlayTracker';
@@ -3484,7 +3486,15 @@ const importService = createImportService({
   },
 });
 
+const isTrustedProxy = trustedProxyCheck(env.TRUSTED_PROXIES);
+
 const app = createApp({
+  callerOf: (context) =>
+    clientAddressOf({
+      headers: context.req.raw.headers,
+      socketAddress: socketAddressOf(context),
+      isTrustedProxy,
+    }),
   imports: importService,
   plugins: startPlugins,
   auth,

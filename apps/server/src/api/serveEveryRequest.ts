@@ -1,3 +1,4 @@
+import { withCaller } from '@ValenceServer/web/withCaller';
 import { allowCrossOriginClients } from '@ValenceServer/auth/allowCrossOriginClients';
 import { FEDERATION_PATH } from '@ValenceServer/linking/FEDERATION_PATH';
 import { createShareGate } from '@ValenceServer/sharing/createShareGate';
@@ -30,6 +31,7 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
     peerRequests,
     linkPeople,
     linkPersonOf,
+    callerOf,
   } = context;
 
   app.use('*', async (context, next) => {
@@ -91,7 +93,9 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
 
   app.use('/api/auth/*', createNoEmailBlock());
 
-  app.on(['GET', 'POST'], '/api/auth/*', (context) => auth.handler(context.req.raw));
+  app.on(['GET', 'POST'], '/api/auth/*', async (context) =>
+    auth.handler(await withCaller(context.req.raw, callerOf?.(context) ?? null)),
+  );
 };
 
 export { serveEveryRequest };
