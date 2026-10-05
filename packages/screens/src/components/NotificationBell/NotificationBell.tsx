@@ -3,6 +3,7 @@ import { Icon } from '@ValenceUI/Icon';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import {
   Bell as BellFilledIcon,
+  Inbox as InboxFilledIcon,
   Bin as BinFilledIcon,
   CircleCheck as CircleCheckFilledIcon,
 } from '@keyline-icons/react/fill';
@@ -32,6 +33,8 @@ const COUNTED_UP_TO = 9;
  * @param onReadAll - Told to mark everything read.
  * @param onClearAll - Told to take everything off the bell, which is different from having read it.
  * @param onFollow - Told where a notification leads, when one is pressed.
+ * @param isInTheWindowBar - Whether it sits in the desktop's window bar, where it is an inbox the
+ *   size of the bar's other icons rather than the dock's bell.
  */
 const NotificationBell = ({
   notifications,
@@ -42,6 +45,7 @@ const NotificationBell = ({
   onReadAll,
   onClearAll,
   onFollow,
+  isInTheWindowBar = false,
 }: NotificationBellProps) => {
   const now = useTicking(A_CAPTION_AGES_EVERY);
 
@@ -50,18 +54,36 @@ const NotificationBell = ({
       label={say('common.notifications')}
       side="bottom"
       align="center"
-      isBare
+      isBare={!isInTheWindowBar}
+      triggerLook={isInTheWindowBar ? 'smallIcon' : 'icon'}
       onOpenChange={(isOpen) => {
         if (isOpen) {
           onOpen();
         }
       }}
       trigger={
-        <span className="relative flex size-9 items-center justify-center">
-          <Icon of={BellFilledIcon} size={20} />
+        <span
+          className={
+            isInTheWindowBar
+              ? 'relative flex size-6 items-center justify-center'
+              : 'relative flex size-9 items-center justify-center'
+          }
+        >
+          <Icon
+            of={isInTheWindowBar ? InboxFilledIcon : BellFilledIcon}
+            size={isInTheWindowBar ? 15 : 20}
+          />
 
           {unread === 0 ? null : (
-            <Badge tone="accent" size="sm" className="absolute -right-1 -top-1">
+            <Badge
+              tone="accent"
+              size="sm"
+              className={
+                isInTheWindowBar
+                  ? 'absolute -right-2 -top-1.5 scale-75'
+                  : 'absolute -right-1 -top-1'
+              }
+            >
               <FormattedNumber
                 value={Math.min(unread, COUNTED_UP_TO)}
                 {...(unread > COUNTED_UP_TO ? { suffix: '+' } : {})}

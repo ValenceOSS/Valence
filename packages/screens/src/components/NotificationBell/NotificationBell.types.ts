@@ -9,6 +9,7 @@ type NotificationBellProps = {
   onReadAll: () => void;
   onClearAll: () => void;
   onFollow: (link: string) => void;
+  isInTheWindowBar?: boolean;
 };
 
 export type { NotificationBellProps };

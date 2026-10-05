@@ -28,6 +28,7 @@ import { say } from '@ValenceI18n/say';
  * @param isIconOnly - Whether it is a glyph and nothing else, which makes it square rather than wide.
  * @param isActive - Whether what it does is currently in force, said as well as shown.
  * @param hasTooltip - Whether resting a pointer on it shows the label.
+ * @param shortcut - The keys that press it from the keyboard, shown under the label in its tooltip.
  * @param tooltipDelayMilliseconds - How long a pointer rests before the label appears.
  * @param className - Extra classes for the caller's own layout.
  */
@@ -41,6 +42,7 @@ const Button = ({
   isIconOnly = false,
   isActive = false,
   hasTooltip = true,
+  shortcut,
   tooltipDelayMilliseconds,
   label,
   className,
@@ -90,6 +92,7 @@ const Button = ({
   ) : (
     <Tooltip
       label={label}
+      {...(shortcut === undefined ? {} : { keys: shortcut })}
       {...(tooltipDelayMilliseconds === undefined
         ? {}
         : { delayMilliseconds: tooltipDelayMilliseconds })}

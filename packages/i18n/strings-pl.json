@@ -3210,6 +3210,11 @@
     "text": "Heavy",
     "context": "The heaviest of a range, used in subtitle settings for both the thickest caption outline and the heaviest caption lettering."
   },
+  {
+    "handler": "common.help",
+    "text": "Help",
+    "context": "The label of what opens Valence’s help and documentation in the browser: an item in the account menu, and the question mark in the desktop app’s window bar."
+  },
   { "handler": "common.here", "text": "Here", "context": "The detail in the nav bar." },
   {
     "handler": "common.hidden",
@@ -17669,7 +17674,6 @@
     "text": "Choose something at random",
     "context": "The label of a action menu in the app shell."
   },
-  { "handler": "screens.appShell.help", "text": "Help", "context": "The label in the app shell." },
   {
     "handler": "screens.appShell.myAccount",
     "text": "My account",
@@ -24310,6 +24314,16 @@
     "handler": "screens.welcomeToValence.startWatching",
     "text": "Start watching",
     "context": "The label of a button in the welcome to valence."
+  },
+  {
+    "handler": "screens.windowBar.goForward",
+    "text": "Go forward",
+    "context": "The label of the arrow at the top of the desktop app's window that moves forward again to the page somebody went back from, like a browser's forward button."
+  },
+  {
+    "handler": "screens.windowBar.reload",
+    "text": "Reload",
+    "context": "The label of the button at the top of the desktop app's window that reloads the page showing, like a browser's refresh button."
   },
   {
     "handler": "screens.windowBar.retryUpdate",

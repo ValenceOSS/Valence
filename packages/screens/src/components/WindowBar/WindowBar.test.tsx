@@ -61,6 +61,75 @@ describe('WindowBar', () => {
   it('lets a press reach the button rather than moving the window', () => {
     render(<WindowBar update={{ kind: 'available', version: '1.2.0' }} />);
 
-    expect(screen.getByRole('button')).toHaveClass('[-webkit-app-region:no-drag]');
+    expect(screen.getByRole('button').parentElement).toHaveClass('[-webkit-app-region:no-drag]');
+  });
+
+  it('goes back and forward through the window’s history, dimming a way that leads nowhere', async () => {
+    const user = userEvent.setup();
+    const ways = { canGoBack: true, canGoForward: false, back: vi.fn(), forward: vi.fn() };
+
+    render(<WindowBar ways={ways} />);
+
+    const back = screen.getByRole('button', { name: 'Go back' });
+    const forward = screen.getByRole('button', { name: 'Go forward' });
+
+    expect(back).toBeEnabled();
+    expect(forward).toBeDisabled();
+    expect(forward).toHaveClass('disabled:opacity-50');
+
+    await user.click(back);
+
+    expect(ways.back).toHaveBeenCalledOnce();
+    expect(back.parentElement).toHaveClass('[-webkit-app-region:no-drag]');
+  });
+
+  it('opens the docs from its question mark', async () => {
+    const user = userEvent.setup();
+    const onHelp = vi.fn();
+
+    render(<WindowBar onHelp={onHelp} />);
+
+    await user.click(screen.getByRole('button', { name: 'Help' }));
+
+    expect(onHelp).toHaveBeenCalledOnce();
+  });
+
+  it('draws a release it has found as a green arrow, and a failed one as a red one', () => {
+    const { rerender } = render(<WindowBar update={{ kind: 'available', version: '1.2.0' }} />);
+
+    expect(screen.getByRole('button', { name: 'Update to 1.2.0' })).toHaveClass('text-success');
+
+    rerender(<WindowBar update={{ kind: 'failed', version: '1.2.0' }} />);
+
+    expect(screen.getByRole('button', { name: 'Retry update' })).toHaveClass('text-danger');
+  });
+
+  it('names the keys for each way through the history', async () => {
+    const user = userEvent.setup();
+    const ways = { canGoBack: true, canGoForward: true, back: vi.fn(), forward: vi.fn() };
+
+    render(<WindowBar ways={ways} keys={{ back: ['⌘', '['], forward: ['⌘', ']'] }} />);
+
+    await user.hover(screen.getByRole('button', { name: 'Go back' }));
+
+    expect(await screen.findByText('[')).toBeInTheDocument();
+  });
+
+  it('holds the inbox where somebody has one', () => {
+    render(
+      <WindowBar
+        inbox={{
+          notifications: [],
+          unread: 2,
+          onOpen: vi.fn(),
+          onRead: vi.fn(),
+          onReadAll: vi.fn(),
+          onClearAll: vi.fn(),
+          onFollow: vi.fn(),
+        }}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Notifications' })).toHaveTextContent('2');
   });
 });

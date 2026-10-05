@@ -1,9 +1,16 @@
 import { useEffect, useState } from 'react';
 import { RouterProvider } from '@tanstack/react-router';
+import { useQuery } from '@tanstack/react-query';
 import { buildRouter } from '@ValenceScreens/routes/buildRouter';
 import { ConnectToServer } from '@ValenceScreens/components/ConnectToServer/ConnectToServer';
 import { useAppliedTheme } from '@ValenceScreens/theme/useAppliedTheme';
 import { WindowBar } from '@ValenceScreens/components/WindowBar/WindowBar';
+import { useHistoryWays } from '@ValenceScreens/desktop/useHistoryWays';
+import { useHistoryKeys } from '@ValenceScreens/desktop/useHistoryKeys';
+import { historyKeysFor } from '@ValenceScreens/desktop/historyKeysFor';
+import { useTheInbox } from '@ValenceScreens/notifications/useTheInbox';
+import { sessionQueries } from '@ValenceClient/query/sessionQueries';
+import { DOCS_ADDRESS } from '@ValenceContracts/constants/DOCS_ADDRESS';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { useIsWatching } from '@ValenceScreens/playback/useIsWatching';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
@@ -37,8 +44,9 @@ const ASKED_ABOUT = 'valence.update.askedAbout';
  * else's, and signing in is an ordinary request rather than a negotiation between two origins.
  *
  * The strip along the top is this client's too, and for the same reason: a browser gives a window
- * somewhere to be picked up by and a frameless one has nowhere. It draws nothing and lies over the
- * page rather than above it, so no screen pays height for a bar it never sees.
+ * somewhere to be picked up by and a frameless one has nowhere. It lies over the page rather than
+ * above it, so no screen pays height for a bar it never sees, and once a server has been chosen it
+ * carries back and forward, by button and by key, and the inbox the dock would otherwise hold.
  *
  * A new release is offered rather than fetched. Somebody is asked once per version whether they want
  * it — never while a film has the window, since the question can wait for the credits — and the
@@ -88,6 +96,8 @@ const Desktop = () => {
   const [askedAbout, setAskedAbout] = useState(() => platformInUse().store.read(ASKED_ABOUT));
   const isWatching = useIsWatching();
   const isLost = useServerIsLost();
+  const ways = useHistoryWays(router.history);
+  const platform = document.documentElement.dataset['valencePlatform'];
 
   useAppliedTheme();
 
@@ -111,6 +121,11 @@ const Desktop = () => {
   const isAsking = update.kind === 'available' && update.version !== askedAbout && !isWatching;
 
   const chosen = server === null || server === '' ? null : server;
+  const isInside = chosen !== null && !isLost;
+  const who = useQuery({ ...sessionQueries.who(), enabled: isInside });
+  const inbox = useTheInbox(isInside && who.data !== null && who.data !== undefined);
+
+  useHistoryKeys(ways, platform);
 
   return (
     <>
@@ -118,6 +133,11 @@ const Desktop = () => {
         update={update}
         onUpdate={() => {
           window.valence.update.download();
+        }}
+        {...(isInside ? { ways, keys: historyKeysFor(platform) } : {})}
+        {...(isInside && who.data !== null && who.data !== undefined ? { inbox } : {})}
+        onHelp={() => {
+          window.open(DOCS_ADDRESS, '_blank', 'noopener,noreferrer');
         }}
       />
 

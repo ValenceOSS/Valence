@@ -484,11 +484,18 @@ body {
 
 :root {
   --valence-window-bar: 0px;
+  --valence-window-bar-height: 2rem;
   --valence-window-bar-clearance: 0.5rem;
+  --valence-window-bar-lead: 0.5rem;
 }
 
 :root[data-valence-desktop='true'] {
-  --valence-window-bar: 2rem;
+  --valence-window-bar: var(--valence-window-bar-height);
+}
+
+:root[data-valence-platform='darwin'] {
+  --valence-window-bar-height: 2.375rem;
+  --valence-window-bar-lead: 4.875rem;
 }
 
 :root[data-valence-platform='win32'],
@@ -512,6 +519,16 @@ body {
 [data-valence-desktop='true'][data-valence-way-in] [data-slot='window-bar'] {
   background: transparent;
   border-color: transparent;
+}
+
+:root[data-valence-platform='win32'] [data-slot='window-bar-rule'],
+:root[data-valence-platform='linux'] [data-slot='window-bar-rule'] {
+  display: block;
+  margin-left: 0.25rem;
+}
+
+[data-valence-desktop='true'][data-valence-on-the-frame] [data-slot='window-bar'] {
+  background: var(--frame-back);
 }
 
 [data-valence-desktop='true'][data-valence-watching] [data-slot='window-bar'] {

@@ -120,6 +120,10 @@
       ],
       "@ValenceUI/FilePicker": ["./packages/ui/src/components/FilePicker/FilePicker.tsx"],
       "@ValenceUI/GlassPanel": ["./packages/ui/src/components/GlassPanel/GlassPanel.tsx"],
+      "@ValenceUI/HistoryArrows": ["./packages/ui/src/components/HistoryArrows/HistoryArrows.tsx"],
+      "@ValenceUI/HistoryArrows.types": [
+        "./packages/ui/src/components/HistoryArrows/HistoryArrows.types.ts"
+      ],
       "@ValenceUI/HoverCard": ["./packages/ui/src/components/HoverCard/HoverCard.tsx"],
       "@ValenceUI/HoverCard.types": ["./packages/ui/src/components/HoverCard/HoverCard.types.ts"],
       "@ValenceUI/HoverHighlight": [

@@ -196,6 +196,19 @@ describe('ValenceShell', () => {
     expect(await screen.findByRole('button', { name: /Notifications/ })).toBeInTheDocument();
   });
 
+  it('leaves the bell to the window bar in the desktop app, which holds the inbox there', async () => {
+    document.documentElement.dataset['valenceDesktop'] = 'true';
+
+    try {
+      renderTheApp();
+
+      expect(await screen.findByRole('navigation', { name: 'Sections' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Notifications/ })).not.toBeInTheDocument();
+    } finally {
+      delete document.documentElement.dataset['valenceDesktop'];
+    }
+  });
+
   it('offers the admin page to an administrator, from the menu on their face', async () => {
     const actor = userEvent.setup();
 

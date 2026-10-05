@@ -460,7 +460,7 @@ const AppShell = ({
                   : []),
                 {
                   id: 'help',
-                  label: say('screens.appShell.help'),
+                  label: say('common.help'),
                   icon: <Icon of={QuestionFilledIcon} size={16} />,
                   onChoose: () => {
                     window.open(HELP_ADDRESS, '_blank', 'noopener,noreferrer');
