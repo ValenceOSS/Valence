@@ -126,7 +126,7 @@ describe('AShow', () => {
     );
 
     await waitFor(() => {
-      expect(drawn.getByText('Good News About Hell')).toBeTruthy();
+      expect(drawn.getByText('1. Good News About Hell')).toBeTruthy();
     });
 
     expect(drawn.queryByText('Season 1')).toBeNull();
@@ -157,7 +157,7 @@ describe('AShow', () => {
     );
 
     await waitFor(() => {
-      expect(drawn.getByText('Hello, Ms. Cobel')).toBeTruthy();
+      expect(drawn.getByText('1. Hello, Ms. Cobel')).toBeTruthy();
     });
   });
 
@@ -182,7 +182,7 @@ describe('AShow', () => {
 
     await userEvent.press(drawn.getByLabelText('Season 2'));
 
-    expect(drawn.getByText('Hello, Ms. Cobel')).toBeTruthy();
+    expect(drawn.getByText('1. Hello, Ms. Cobel')).toBeTruthy();
   });
 
   it('plays an episode from where they left it', async () => {

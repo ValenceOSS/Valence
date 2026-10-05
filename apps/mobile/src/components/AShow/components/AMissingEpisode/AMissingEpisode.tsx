@@ -8,11 +8,11 @@ import { EPISODE_STILL } from '@ValenceMobile/components/AShow/components/EPISOD
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { AMissingEpisodeProps } from './AMissingEpisode.types';
 import { say } from '@ValenceI18n/say';
+import { numberedEpisodeTitle } from '@ValenceCore/functions/numberedEpisodeTitle';
 
 const styles = StyleSheet.create({
   facts: { flex: 1, gap: 4 },
   faded: { height: '100%', opacity: 0.4, position: 'absolute', width: '100%' },
-  number: { alignItems: 'center', width: 24 },
   row: { alignItems: 'center', flexDirection: 'row', gap: 12, paddingVertical: 12 },
 });
 
@@ -31,12 +31,6 @@ const AMissingEpisode = ({ at, title, stillUrl, airs }: AMissingEpisodeProps) =>
 
   return (
     <View style={styles.row}>
-      <View style={styles.number}>
-        <Words size="small" tone="muted">
-          {at}
-        </Words>
-      </View>
-
       <View
         style={[
           EPISODE_STILL,
@@ -61,7 +55,9 @@ const AMissingEpisode = ({ at, title, stillUrl, airs }: AMissingEpisodeProps) =>
 
       <View style={styles.facts}>
         <Words lines={1} tone="muted">
-          {title ?? say('phone.aShow.aMissingEpisode.episodeAt', { at: at.toString() })}
+          {title === null
+            ? say('phone.aShow.aMissingEpisode.episodeAt', { at: at.toString() })
+            : numberedEpisodeTitle(title, at)}
         </Words>
         <Words size="small" tone="muted">
           {airs === ''

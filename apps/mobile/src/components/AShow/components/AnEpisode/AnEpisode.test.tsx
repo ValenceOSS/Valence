@@ -31,16 +31,15 @@ const anEpisode = (overrides: Partial<AnEpisodeProps> = {}) =>
   );
 
 describe('AnEpisode', () => {
-  it('says which episode it is first, since that is what people look for', async () => {
+  it('says which episode it is before its name, as the web does', async () => {
     const drawn = await anEpisode();
 
-    expect(drawn.getByText('1')).toBeTruthy();
+    expect(drawn.getByText('1. Pilot')).toBeTruthy();
   });
 
-  it('says what it is called, how long it runs and when it aired', async () => {
+  it('says how long it runs and when it aired', async () => {
     const drawn = await anEpisode({ airs: 'Aired 11 Jan 2024' });
 
-    expect(drawn.getByText('Pilot')).toBeTruthy();
     expect(drawn.getByText('44:00 · Aired 11 Jan 2024')).toBeTruthy();
   });
 
@@ -80,6 +79,6 @@ describe('AnEpisode', () => {
   it('manages an episode nobody numbered', async () => {
     const drawn = await anEpisode({ episode: { ...THE_PILOT, episodeNumber: null } });
 
-    expect(drawn.getByText('—')).toBeTruthy();
+    expect(drawn.getByText('Pilot')).toBeTruthy();
   });
 });

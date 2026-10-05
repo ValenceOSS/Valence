@@ -13,14 +13,13 @@ import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import type { AnEpisodeProps } from './AnEpisode.types';
-import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 import { say } from '@ValenceI18n/say';
+import { numberedEpisodeTitle } from '@ValenceCore/functions/numberedEpisodeTitle';
 
 const styles = StyleSheet.create({
   about: { padding: 10 },
   facts: { flex: 1, gap: 4 },
   howFar: { bottom: 0, left: 0, position: 'absolute', right: 0 },
-  number: { alignItems: 'center', width: 24 },
   picture: { height: '100%', width: '100%' },
   play: { flex: 1 },
   row: { alignItems: 'center', flexDirection: 'row', gap: 12, paddingVertical: 12 },
@@ -38,7 +37,8 @@ const styles = StyleSheet.create({
 });
 
 /**
- * One episode in a programme's list, drawn as the web's row is: its number, its still, its name,
+ * One episode in a programme's list, drawn as the web's row is: its still, its name with its number
+ * before it,
  * how long it runs, when it aired and how far in somebody is — a line across the still while they
  * are part way, a tick once they are through. Pressing it plays it, from where they left it; the
  * button beside it opens its own page.
@@ -80,14 +80,6 @@ const AnEpisode = ({
           onPress={onWatch}
         >
           <View style={styles.row}>
-            <View style={styles.number}>
-              <Words size="small" tone="muted">
-                {episode.episodeNumber === null || episode.episodeNumber === undefined
-                  ? '—'
-                  : describeEpisodeNumbers(episode.episodeNumber, episode.episodeNumberEnd)}
-              </Words>
-            </View>
-
             <View
               style={[
                 EPISODE_STILL,
@@ -126,7 +118,13 @@ const AnEpisode = ({
             </View>
 
             <View style={styles.facts}>
-              <Words lines={1}>{episode.title}</Words>
+              <Words lines={1}>
+                {numberedEpisodeTitle(
+                  episode.title,
+                  episode.episodeNumber,
+                  episode.episodeNumberEnd,
+                )}
+              </Words>
               <Words size="small" tone="muted">
                 {[
                   formatDuration(episode.durationSeconds),
