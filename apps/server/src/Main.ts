@@ -3957,8 +3957,8 @@ const app = createApp({
           store: notifications,
           event: 'requests.albumsFound',
           title: saying('server.main.albumsForNameAreReadyToRequest', { name: playlist.name }),
-          body: sayingCount('server.main.count.foundAlbumsOfAll', tally.found, {
-            albums: tally.albums,
+          body: sayingCount('server.main.count.foundAlbumsOfAll', tally.albums, {
+            found: tally.found,
           }),
           link: `/music?listen=playlist:${playlist.id}:request`,
           vapid: await readPushKeys(),

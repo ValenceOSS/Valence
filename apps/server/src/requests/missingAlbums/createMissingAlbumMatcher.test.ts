@@ -181,6 +181,24 @@ describe('createMissingAlbumMatcher', () => {
     expect(await matcher.settle(VIEWER, 'not-theirs', 5)).toBeNull();
   });
 
+  it('remembers nothing from a search that failed, so the next run asks again', async () => {
+    const find = vi
+      .fn<(songs: readonly PlaylistMissingSong[]) => Promise<(MusicCatalogueHit | null)[]>>()
+      .mockRejectedValueOnce(new Error('unreachable'))
+      .mockResolvedValue([hitFor('Isles')]);
+    const held = { time: 0 };
+    const matcher = createMissingAlbumMatcher({
+      playlists: { read: () => Promise.resolve(detailOf([missing('Apricots', 'Isles')])) },
+      find,
+      onDone: vi.fn(),
+      now: () => held.time,
+    });
+
+    expect((await matcher.settle(VIEWER, PLAYLIST_ID, 1000))?.albums[0]?.hit).toBeNull();
+    expect((await matcher.settle(VIEWER, PLAYLIST_ID, 1000))?.albums[0]?.hit?.title).toBe('Isles');
+    expect(find).toHaveBeenCalledTimes(2);
+  });
+
   it('finds nothing for a playlist the person cannot read', async () => {
     expect(await build([]).matcher.match(VIEWER, 'not-theirs')).toBeNull();
   });

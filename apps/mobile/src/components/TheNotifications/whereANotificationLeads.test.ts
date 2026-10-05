@@ -33,6 +33,11 @@ describe('whereANotificationLeads', () => {
     expect(whereANotificationLeads('/music?listen=liked')).toBeNull();
   });
 
+  it('leads nowhere from a link it cannot read', () => {
+    expect(whereANotificationLeads('/music?listen=playlist%E0%A4%A')).toBeNull();
+    expect(whereANotificationLeads('/?item=%E0%A4%A')).toBeNull();
+  });
+
   it('leads nowhere from a link that is not one of these', () => {
     expect(whereANotificationLeads(null)).toBeNull();
     expect(whereANotificationLeads('/admin')).toBeNull();

@@ -41,6 +41,26 @@ describe('holdWatching', () => {
     expect(stopWatching).toHaveBeenCalledExactlyOnceWith('device-b');
   });
 
+  it('leaves the choice to the last of several players to let go', () => {
+    const first = holdWatching('device-d', () => true);
+    const second = holdWatching('device-d', () => false);
+
+    first();
+    second();
+    vi.runAllTimers();
+
+    expect(stopWatching).not.toHaveBeenCalled();
+
+    const third = holdWatching('device-d', () => false);
+    const fourth = holdWatching('device-d', () => true);
+
+    third();
+    fourth();
+    vi.runAllTimers();
+
+    expect(stopWatching).toHaveBeenCalledExactlyOnceWith('device-d');
+  });
+
   it('lets go once however often it is released, and not at all when told not to', () => {
     const release = holdWatching('device-c', () => false);
 

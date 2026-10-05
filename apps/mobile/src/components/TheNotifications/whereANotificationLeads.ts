@@ -17,7 +17,7 @@ const A_MUSIC_VIEW = /[?&]listen=([^&#]+)/u;
  * @param link - The link the notification carries.
  * @returns The page it leads to, or null.
  */
-const whereANotificationLeads = (
+const readLead = (
   link: string | null,
 ):
   | { kind: 'title'; mediaId: string }
@@ -63,6 +63,21 @@ const whereANotificationLeads = (
   return programme === undefined
     ? null
     : { kind: 'series', seriesId: decodeURIComponent(programme) };
+};
+
+/**
+ * Where a notification's link leads, or nowhere where it cannot be read, such as an address with a
+ * broken escape in it.
+ *
+ * @param link - The link the notification carries.
+ * @returns The page it leads to, or null.
+ */
+const whereANotificationLeads = (link: string | null): ReturnType<typeof readLead> => {
+  try {
+    return readLead(link);
+  } catch {
+    return null;
+  }
 };
 
 export { whereANotificationLeads };

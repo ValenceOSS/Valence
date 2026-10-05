@@ -1348,7 +1348,7 @@ const ENGLISH = {
     'Your current link stops working immediately, and any calendar app subscribed to it will need the new one.',
   'common.theme': 'Theme',
   'common.themesFromPlugins': 'Themes from plugins',
-  'common.theMissingAlbumsCouldNotBeFound': 'The albums couldn’t be looked for.',
+  'common.theMissingAlbumsCouldNotBeFound': 'Couldn’t search for the albums.',
   'common.theOrderMatters': 'The order matters',
   'common.thePluginCatalogueCouldNotBe': 'Couldn’t reach the plugin catalogue.',
   'common.theProfileItsReleasesAreJudged':
@@ -6457,9 +6457,9 @@ const ENGLISH = {
   'server.main.byNameWithdrewYourLinkToTitle':
     '{byName} revoked your share link for {title}. Anyone watching through it has been stopped.',
   'server.main.count.foundAlbumsOfAll.one':
-    'Found {count} of {albums} album. Open the playlist to request them.',
+    'Found {found} of {count} album. Open the playlist to request it.',
   'server.main.count.foundAlbumsOfAll.other':
-    'Found {count} of {albums} albums. Open the playlist to request them.',
+    'Found {found} of {count} albums. Open the playlist to request them.',
   'server.main.doneBroughtUpToDate': '{done} updated',
   'server.main.doneOfTotalLookedUp': '{done} of {total} looked up',
   'server.main.nameHasItAlready': '{name} already has it.',

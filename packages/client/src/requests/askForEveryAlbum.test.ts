@@ -7,7 +7,9 @@ const askForMedia = vi.hoisted(() =>
     Promise.resolve(
       asked.musicBrainzId === 'b'
         ? { value: null, refusal: { message: 'No.' } }
-        : { value: { id: asked.musicBrainzId }, refusal: { message: '' } },
+        : asked.musicBrainzId === 'x'
+          ? Promise.reject(new Error('unreadable'))
+          : { value: { id: asked.musicBrainzId }, refusal: { message: '' } },
     ),
   ),
 );
@@ -29,6 +31,10 @@ describe('askForEveryAlbum', () => {
       { kind: 'album', musicBrainzId: 'b', profileId: 'profile-1' },
       { kind: 'album', musicBrainzId: 'c', profileId: 'profile-1' },
     ]);
+  });
+
+  it('counts an album whose answer could not be read as refused, and carries on', async () => {
+    expect(await askForEveryAlbum(['x', 'a'], null)).toEqual({ asked: 1, refused: 1 });
   });
 
   it('leaves the quality to the library where none was chosen', async () => {

@@ -5901,7 +5901,7 @@
   },
   {
     "handler": "common.theMissingAlbumsCouldNotBeFound",
-    "text": "The albums couldn’t be looked for.",
+    "text": "Couldn’t search for the albums.",
     "context": "In the window for requesting a playlist's missing songs, on the web and the phone, when the server could not be asked to find them."
   },
   {
@@ -25503,13 +25503,13 @@
   },
   {
     "handler": "server.main.count.foundAlbumsOfAll.one",
-    "text": "Found {count} of {albums} album. Open the playlist to request them.",
-    "context": "The body of a notification, once the server has finished finding the albums of a playlist's missing songs. {count} is how many albums were found; {albums} is how many it looked for."
+    "text": "Found {found} of {count} album. Open the playlist to request it.",
+    "context": "The body of a notification, once the server has finished finding the albums of a playlist's missing songs. {count} is how many albums it looked for, which decides the plural; {found} is how many it found."
   },
   {
     "handler": "server.main.count.foundAlbumsOfAll.other",
-    "text": "Found {count} of {albums} albums. Open the playlist to request them.",
-    "context": "The body of a notification, once the server has finished finding the albums of a playlist's missing songs. {count} is how many albums were found; {albums} is how many it looked for."
+    "text": "Found {found} of {count} albums. Open the playlist to request them.",
+    "context": "The body of a notification, once the server has finished finding the albums of a playlist's missing songs. {count} is how many albums it looked for, which decides the plural; {found} is how many it found."
   },
   {
     "handler": "server.main.doneBroughtUpToDate",

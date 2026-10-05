@@ -166,6 +166,28 @@ describe('createDatabasePlaylistService', { timeout: STARTING_POSTGRES_MS }, () 
     expect(read?.playlist.missingCount).toBe(1);
   });
 
+  it('looks for missing songs again only once the library has changed', async () => {
+    const { viewer, playlists, store, artist, bare, id } = await aPlaylist();
+
+    await playlists.add(viewer, id, [
+      { title: 'Later Arrival', artist: 'Low', album: null, releaseId: null },
+    ]);
+    await playlists.read(viewer, id);
+    await store.keepTrack(
+      aTrackRow({
+        albumId: bare,
+        artistIds: [artist.id],
+        path: '/music/c',
+        title: 'Later Arrival',
+      }),
+    );
+
+    const read = await playlists.read(viewer, id);
+
+    expect(read?.entries.at(-1)?.item?.title).toBe('Later Arrival');
+    expect(read?.playlist.missingCount).toBe(0);
+  });
+
   it('leaves a missing song missing when somebody else reads the playlist', async () => {
     const { viewer, playlists, store, artist, bare, id } = await aPlaylist();
 

@@ -6,7 +6,8 @@ import { askForMedia } from '@ValenceClient/requests/fetchMediaRequests';
  *
  * @param musicBrainzIds - Each album's release group, asked for once however often it is given.
  * @param profileId - The quality chosen, or nothing for the one the library asks at.
- * @returns How many were asked for, and how many were refused.
+ * @returns How many were asked for, and how many were refused or could not be sent; it never fails,
+ *   so whatever is waiting on it is always let go.
  */
 const askForEveryAlbum = async (
   musicBrainzIds: readonly string[],
@@ -20,9 +21,9 @@ const askForEveryAlbum = async (
       kind: 'album',
       musicBrainzId,
       ...(profileId === null ? {} : { profileId }),
-    });
+    }).catch(() => null);
 
-    if (sent.value === null) {
+    if (sent === null || sent.value === null) {
       refused += 1;
     } else {
       asked += 1;

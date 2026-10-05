@@ -1,7 +1,20 @@
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
-import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, max, or, sql } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gt,
+  inArray,
+  isNotNull,
+  isNull,
+  max,
+  or,
+  sql,
+} from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
 import { countAffected } from '@ValenceDatabase/countAffected';
 import {
@@ -80,6 +93,10 @@ const kindOf = (libraryKind: string, seriesTitle: string | null): MediaKind => {
  *
  * A playlist's owner may give it a cover of its own, kept as a file beside the other uploaded
  * pictures and checked the way a face is; without one it is drawn from its songs' albums.
+ *
+ * A song a playlist holds that the library does not have yet is filled in when its owner reads the
+ * playlist and the library has it — looked for again only once the library's songs or the
+ * playlist's missing ones have changed, since a playlist being watched is read every moment.
  *
  * @param db - The database.
  * @param music - Where a song entry is read out as a full track.
@@ -308,6 +325,8 @@ const createDatabasePlaylistService = (
     return kept.length;
   };
 
+  const lastLooked = new Map<string, string>();
+
   const fillMissing = async (viewer: Viewer, playlistId: string): Promise<void> => {
     const waiting = await db
       .select({
@@ -324,6 +343,21 @@ const createDatabasePlaylistService = (
           isNotNull(playlistEntry.missingTitle),
         ),
       );
+
+    if (waiting.length === 0) {
+      lastLooked.delete(playlistId);
+
+      return;
+    }
+
+    const [tracks] = await db.select({ count: count() }).from(musicTrack);
+    const looked = `${(tracks?.count ?? 0).toString()}:${waiting.map((entry) => entry.id).join(',')}`;
+
+    if (lastLooked.get(playlistId) === looked) {
+      return;
+    }
+
+    lastLooked.set(playlistId, looked);
 
     for (let at = 0; at < waiting.length; at += MISSING_LOOKED_FOR_AT_ONCE) {
       const looking = waiting.slice(at, at + MISSING_LOOKED_FOR_AT_ONCE);

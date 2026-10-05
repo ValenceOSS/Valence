@@ -14,6 +14,7 @@ type Run = {
   isMatching: boolean;
   albums: MatchedAlbum[];
   finishedAt: number | null;
+  hasFailed: boolean;
   done: Promise<void>;
 };
 
@@ -31,7 +32,8 @@ const MOST_KNOWN = 20_000;
  * Finds the albums of playlists' missing songs in the background, so the person asking need not
  * wait on the page: one run for each person's playlist, joined rather than started again while it
  * is under way, and started afresh only when what is missing has changed. Every album found is
- * remembered for a day — one not found for an hour, in case MusicBrainz was only unreachable — so a
+ * remembered for a day — one not found for an hour, in case MusicBrainz was only unreachable, and
+ * none from a search that failed outright — so a
  * run over a playlist looked at before, or next week's version of it, asks only about what is new.
  * A run that takes long enough for the person to have gone elsewhere says when it is done, and one
  * can be waited on for a while, for a caller with nobody watching it, such as a plugin.
@@ -100,14 +102,19 @@ const createMissingAlbumMatcher = ({
   ) => {
     const startedAt = now();
     const asking = run.albums.filter((album) => album.hit === undefined);
-    const hits = await find(asking.map((album) => album.song)).catch(() => asking.map(() => null));
+    const hits = await find(asking.map((album) => album.song)).catch(() => null);
 
     asking.forEach((album, at) => {
-      const hit = hits[at] ?? null;
+      const hit = hits?.[at] ?? null;
 
-      remember(album.key, hit);
+      if (hits !== null) {
+        remember(album.key, hit);
+      }
+
       album.hit = hit;
     });
+
+    run.hasFailed = hits === null;
 
     run.isMatching = false;
     run.finishedAt = now();
@@ -143,7 +150,10 @@ const createMissingAlbumMatcher = ({
     const runKey = `${viewer.profileId ?? viewer.accountId}:${playlistId}`;
     const running = runs.get(runKey);
 
-    if (running !== undefined && (running.isMatching || running.keys === keys)) {
+    if (
+      running !== undefined &&
+      (running.isMatching || (running.keys === keys && !running.hasFailed))
+    ) {
       return running;
     }
 
@@ -153,6 +163,7 @@ const createMissingAlbumMatcher = ({
       isMatching: albums.some((album) => album.hit === undefined),
       albums,
       finishedAt: null,
+      hasFailed: false,
       done: Promise.resolve(),
     };
 
