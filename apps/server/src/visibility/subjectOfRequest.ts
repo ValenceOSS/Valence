@@ -1,17 +1,17 @@
+import { canonicalIdOf } from '@ValenceServer/visibility/canonicalIdOf';
+
 type Subject =
   | { kind: 'item'; mediaId: string }
   | { kind: 'series'; seriesId: string }
   | { kind: 'none' };
 
-const ID = '[0-9a-fA-F-]{36}';
-
 const ITEM_ROUTES: readonly RegExp[] = [
-  new RegExp(`^/api/media/(${ID})(/.*)?$`),
-  new RegExp(`^/api/playback/(${ID})(/.*)?$`),
-  new RegExp(`^/api/music/tracks/(${ID})(/.*)?$`),
+  /^\/api\/media\/([^/]+)(\/.*)?$/,
+  /^\/api\/playback\/([^/]+)(\/.*)?$/,
+  /^\/api\/music\/tracks\/([^/]+)(\/.*)?$/,
 ];
 
-const SERIES_ROUTES: readonly RegExp[] = [new RegExp(`^/api/series/(${ID})(/.*)?$`)];
+const SERIES_ROUTES: readonly RegExp[] = [/^\/api\/series\/([^/]+)(\/.*)?$/];
 
 /**
  * Which item or programme, if any, a request is about, read from its address alone.
@@ -26,7 +26,9 @@ const SERIES_ROUTES: readonly RegExp[] = [new RegExp(`^/api/series/(${ID})(/.*)?
  * An identifier is matched by shape, which is what keeps `/api/playback/session/...` and
  * `/api/playback/trickplay/...` out of this: those name an artefact rather than an item, and neither
  * `session` nor `trickplay` looks like an identifier. They are reached only by an address handed out
- * by a route that did pass through here.
+ * by a route that did pass through here. Every spelling of an identifier the database accepts is
+ * read as the item it reaches, in its usual spelling, so writing one without its hyphens or in braces
+ * does not walk past the judgement and still reach the item.
  *
  * @param path - The address being asked for.
  * @returns What it is about, or nothing where it is about no particular thing.
@@ -36,7 +38,11 @@ const subjectOfRequest = (path: string): Subject => {
     const found = route.exec(path);
 
     if (found?.[1] !== undefined) {
-      return { kind: 'item', mediaId: found[1] };
+      const mediaId = canonicalIdOf(found[1]);
+
+      if (mediaId !== null) {
+        return { kind: 'item', mediaId };
+      }
     }
   }
 
@@ -44,7 +50,11 @@ const subjectOfRequest = (path: string): Subject => {
     const found = route.exec(path);
 
     if (found?.[1] !== undefined) {
-      return { kind: 'series', seriesId: found[1] };
+      const seriesId = canonicalIdOf(found[1]);
+
+      if (seriesId !== null) {
+        return { kind: 'series', seriesId };
+      }
     }
   }
 
