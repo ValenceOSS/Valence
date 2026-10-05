@@ -7,6 +7,8 @@ import { createOneTimeTokenBlock } from '@ValenceServer/auth/createOneTimeTokenB
 import { createNoEmailBlock } from '@ValenceServer/auth/createNoEmailBlock';
 import { blockOnTheDemo } from '@ValenceServer/demo/blockOnTheDemo';
 import type { AppContext } from '@ValenceServer/api/AppContext';
+import { createAppGate } from '@ValenceServer/access/createAppGate';
+import { closedAppsIn } from '@ValenceServer/access/closedAppsIn';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 
 /**
@@ -68,6 +70,11 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
             }),
           }),
     }),
+  );
+
+  app.use(
+    '/api/*',
+    createAppGate(async () => closedAppsIn((await settings.read()).allowedApps)),
   );
 
   app.use('/api/*', refuseWhatIsOutOfReach);

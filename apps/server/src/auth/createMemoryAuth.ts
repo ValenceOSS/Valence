@@ -8,6 +8,7 @@ import type { ValenceAuth } from './Auth';
 import { readEnv } from '@ValenceServer/env/Env';
 import type { Env } from '@ValenceServer/env/Env';
 import { createMemorySettingsStore } from '@ValenceServer/settings/createMemorySettingsStore';
+import { EVERY_APP_ALLOWED } from '@ValenceContracts/schemas/AllowedApps';
 import type { SettingsStore } from '@ValenceServer/settings/ServerSettings';
 
 const TEST_SECRET = 'valence-test-secret-value-at-least-32-chars';
@@ -83,6 +84,7 @@ const createMemoryAuth = (
     hardwareAccel: '',
     previewQuality: 'high',
     showsProfilesBeforeSignIn: true,
+    allowedApps: EVERY_APP_ALLOWED,
     seededJobTriggerKinds: [],
     seededRoleNames: [],
     pushPublicKey: '',

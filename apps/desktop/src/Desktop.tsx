@@ -25,6 +25,10 @@ import { describeTheBuild } from '@ValenceClient/about/describeTheBuild';
 import type { NearbyValence } from '@ValenceContracts/schemas/NearbyValence';
 import { useServerIsLost } from '@ValenceClient/offline/useServerIsLost';
 import '@ValenceDesktop/TheWindow.types';
+import { useThisAppIsTurnedOff } from '@ValenceClient/about/useThisAppIsTurnedOff';
+import { ProblemCard } from '@ValenceScreens/components/ProblemCard/ProblemCard';
+import { Button } from '@ValenceUI/Button';
+import { Ban as BanIcon } from '@keyline-icons/react';
 import { say } from '@ValenceI18n/say';
 
 const router = buildRouter(say('common.valence'));
@@ -52,6 +56,9 @@ const ASKED_ABOUT = 'valence.update.askedAbout';
  * it — never while a film has the window, since the question can wait for the credits — and the
  * strip keeps a way to fetch it for anybody who said not now. Saying yes, in either place, fetches
  * it and restarts into it.
+ *
+ * Where the server's administrator has turned the desktop app off, it says so in place of the
+ * application, with the way to choose another server.
  *
  * The one screen this client owns is the first one: which Valence is yours. It has to be ours, because
  * until it is answered there is no server to ask anything of. Nothing else is drawn until it is
@@ -122,6 +129,7 @@ const Desktop = () => {
 
   const chosen = server === null || server === '' ? null : server;
   const isInside = chosen !== null && !isLost;
+  const isTurnedOff = useThisAppIsTurnedOff(isInside);
   const who = useQuery({ ...sessionQueries.who(), enabled: isInside });
   const inbox = useTheInbox(isInside && who.data !== null && who.data !== undefined);
 
@@ -177,6 +185,22 @@ const Desktop = () => {
             rememberServerAddress(address);
             setServer(address);
           }}
+        />
+      ) : isTurnedOff ? (
+        <ProblemCard
+          icon={BanIcon}
+          headline={say('common.thisAppIsTurnedOffHere')}
+          reason={say('common.whoeverRunsThisServerHasTurned')}
+          actions={
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setServer(null);
+              }}
+            >
+              {say('common.useADifferentServer')}
+            </Button>
+          }
         />
       ) : (
         <RouterProvider router={router} />

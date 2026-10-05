@@ -36,6 +36,7 @@ import {
 } from '@ValenceContracts/schemas/ResourceSample';
 import { SessionMessageSchema } from '@ValenceContracts/schemas/SessionMessage';
 import { ScanAccepted } from './LibraryRoute';
+import { AllowedAppsSchema } from '@ValenceContracts/schemas/AllowedApps';
 import { ToneMappingSchema } from '@ValenceContracts/schemas/ToneMapping';
 
 const AdminError = RefusalSchema.openapi('AdminError');
@@ -61,6 +62,7 @@ const AdminSettingsSchema = z
     previewQuality: z.enum(PREVIEW_QUALITIES),
     certificationRegion: z.string().length(2),
     showsProfilesBeforeSignIn: z.boolean(),
+    allowedApps: AllowedAppsSchema,
     fetchesCatalogueTrailers: z.boolean(),
     fetchesMusicDetails: z.boolean(),
     requestReleaseTypes: ReleaseTypesSchema,
@@ -146,6 +148,7 @@ const AdminSettingsRequestSchema = z
     previewQuality: z.enum(PREVIEW_QUALITIES).optional(),
     certificationRegion: z.string().length(2).optional(),
     showsProfilesBeforeSignIn: z.boolean().optional(),
+    allowedApps: AllowedAppsSchema.optional(),
     fetchesCatalogueTrailers: z.boolean().optional(),
     fetchesMusicDetails: z.boolean().optional(),
     requestReleaseTypes: ReleaseTypesSchema.optional(),

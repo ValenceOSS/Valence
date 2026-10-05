@@ -1,6 +1,7 @@
 import { theServerThisPhoneWatches } from '@ValenceMobile/platform/theServerThisPhoneWatches';
 import { appUserAgent } from '@ValenceCore/functions/appUserAgent';
 import { describeThisPhone } from '@ValenceMobile/platform/describeThisPhone';
+import { CLIENT_KIND_HEADER } from '@ValenceContracts/constants/CLIENT_KIND_HEADER';
 import type { DeviceStore } from '@ValenceClient/platform/Platform.types';
 
 /**
@@ -43,6 +44,7 @@ const giveThisPhoneAnOrigin = (store: DeviceStore): void => {
       if (input.url.startsWith(address)) {
         input.headers.set('origin', address);
         input.headers.set('user-agent', appUserAgent(describeThisPhone()));
+        input.headers.set(CLIENT_KIND_HEADER, 'phone');
       }
 
       return asked(input, init);
@@ -59,6 +61,7 @@ const giveThisPhoneAnOrigin = (store: DeviceStore): void => {
 
     headers.set('origin', address);
     headers.set('user-agent', appUserAgent(describeThisPhone()));
+    headers.set(CLIENT_KIND_HEADER, 'phone');
 
     return asked(whole, { ...init, headers });
   };

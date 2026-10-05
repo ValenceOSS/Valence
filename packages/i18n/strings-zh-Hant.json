@@ -5935,6 +5935,11 @@
     "context": "Text shown, used in the hidden in the account of the phone app and in the hidden panel in the account area."
   },
   {
+    "handler": "common.thisAppIsTurnedOffHere",
+    "text": "This app is turned off here",
+    "context": "The heading of the screen a Valence app shows instead of signing in, when the administrator of the server it was pointed at has turned that app off."
+  },
+  {
     "handler": "common.thisCollectionCouldNotBeRead",
     "text": "Couldn’t load this collection.",
     "context": "Shown on a collection's page when it could not be read from the server."
@@ -6423,6 +6428,11 @@
     "handler": "common.whoeverIsUsingItWillHaveToSignIn",
     "text": "Anyone using it will need to sign in again.",
     "context": "A message in an alert in the devices in the account of the phone and television apps."
+  },
+  {
+    "handler": "common.whoeverRunsThisServerHasTurned",
+    "text": "Whoever runs this server has turned this app off. Valence still works in a web browser.",
+    "context": "The explanation beneath the heading of the screen a turned-off Valence app shows, pointing to the web, which can never be turned off."
   },
   {
     "handler": "common.whoIsWatching",
@@ -7573,6 +7583,11 @@
     "handler": "desktop.preload.preload.thisAppDidNotAnswerAbout",
     "text": "The app didn’t respond to the passkey request.",
     "context": "The reason in the preload in the preload of the desktop app."
+  },
+  {
+    "handler": "error.access.thisAppIsTurnedOff",
+    "text": "This server has turned this app off.",
+    "context": "An error the server answers with (HTTP 403) when a request comes from a Valence app — the desktop, phone or television app — that the server's administrator has turned off."
   },
   {
     "handler": "error.account.accountAdministrationIsAtApiAdmin",
@@ -16735,6 +16750,16 @@
     "context": "Shown in the settings panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.settingsPanel.alwaysOnItIsHowThis",
+    "text": "Always on. It is how this page is reached.",
+    "context": "The explanation beside the web's switch, which is on and cannot be turned off, among the admin settings saying which Valence apps may connect."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.appsSaved",
+    "text": "Saved which apps may connect.",
+    "context": "A confirmation after an administrator turned a Valence app on or off for this server."
+  },
+  {
     "handler": "screens.adminArea.settingsPanel.backend",
     "text": "Backend",
     "context": "The name in the settings panel in the admin area."
@@ -16980,6 +17005,11 @@
     "context": "The label in the settings panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.settingsPanel.theAppsCouldNotBeSaved",
+    "text": "Which apps may connect couldn't be saved.",
+    "context": "An error after an administrator's change to which Valence apps may connect to this server didn't save."
+  },
+  {
     "handler": "screens.adminArea.settingsPanel.theAudioDBKey",
     "text": "TheAudioDB key",
     "context": "The label of a text field in the settings panel in the admin area."
@@ -17000,6 +17030,11 @@
     "context": "Shown in the settings panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.settingsPanel.theDesktopApp",
+    "text": "Desktop app",
+    "context": "An admin setting's title: whether the Valence desktop app may connect to this server."
+  },
+  {
     "handler": "screens.adminArea.settingsPanel.theMusicDetailsSettingCouldNot",
     "text": "Couldn’t save the music metadata setting.",
     "context": "Shown in the settings panel in the admin area."
@@ -17008,6 +17043,11 @@
     "handler": "screens.adminArea.settingsPanel.theOMDbKeyCouldNotBe",
     "text": "Couldn’t save the OMDb key.",
     "context": "Shown in the settings panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.thePhoneApp",
+    "text": "Phone app",
+    "context": "An admin setting's title: whether the Valence phone app may connect to this server."
   },
   {
     "handler": "screens.adminArea.settingsPanel.thePictureBehindTheWayIn",
@@ -17035,6 +17075,11 @@
     "context": "Shown in the settings panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.settingsPanel.theTelevisionApp",
+    "text": "Television app",
+    "context": "An admin setting's title: whether the Valence television app may connect to this server."
+  },
+  {
     "handler": "screens.adminArea.settingsPanel.theTheAudioDBKeyCouldNotBe",
     "text": "Couldn’t save the TheAudioDB key.",
     "context": "Shown in the settings panel in the admin area."
@@ -17045,9 +17090,29 @@
     "context": "Shown in the settings panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.settingsPanel.theWeb",
+    "text": "Web",
+    "context": "The first of the rows in the admin settings that say which Valence apps may connect to the server: Valence in a web browser, which cannot be turned off."
+  },
+  {
     "handler": "screens.adminArea.settingsPanel.trailerSettingSaved",
     "text": "Trailer setting saved.",
     "context": "Shown in the settings panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.valenceForAppleTvAndAndroid",
+    "text": "Valence for Apple TV and Android TV.",
+    "context": "The explanation beside the admin switch for whether the television app may connect to this server."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.valenceForIPhoneAndAndroid",
+    "text": "Valence for iPhone and Android phones.",
+    "context": "The explanation beside the admin switch for whether the phone app may connect to this server."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.valenceForMacWindowsAndLinux",
+    "text": "Valence for Mac, Windows and Linux.",
+    "context": "The explanation beside the admin switch for whether the desktop app may connect to this server."
   },
   {
     "handler": "screens.adminArea.settingsPanel.valencePicksWhicheverBackendTheMachine",

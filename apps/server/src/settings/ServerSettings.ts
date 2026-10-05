@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { AllowedAppsSchema, EVERY_APP_ALLOWED } from '@ValenceContracts/schemas/AllowedApps';
 import { PreviewQualitySchema } from '@ValenceContracts/schemas/PreviewQuality';
 import { RoundnessSchema } from '@ValenceContracts/schemas/Roundness';
 import { ReleaseTypesSchema } from '@ValenceContracts/schemas/MediaRequest';
@@ -19,6 +20,7 @@ const ServerSettingsSchema = z.object({
   hardwareAccel: z.string().default(''),
   previewQuality: PreviewQualitySchema.default('high'),
   showsProfilesBeforeSignIn: z.boolean().default(true),
+  allowedApps: AllowedAppsSchema.default(EVERY_APP_ALLOWED),
   seededJobTriggerKinds: z.array(z.string()).default([]),
   seededRoleNames: z.array(z.string()).default([]),
   pushPublicKey: z.string().default(''),

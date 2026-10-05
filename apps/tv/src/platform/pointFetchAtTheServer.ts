@@ -3,6 +3,7 @@ import { signedHeaders } from '@ValenceTv/platform/theSessionToken';
 import { theServersOrigin } from '@ValenceTv/platform/theServersOrigin';
 import { describeThisTv } from '@ValenceTv/platform/describeThisTv';
 import { appUserAgent } from '@ValenceCore/functions/appUserAgent';
+import { CLIENT_KIND_HEADER } from '@ValenceContracts/constants/CLIENT_KIND_HEADER';
 import Constants from 'expo-constants';
 
 const OURS = '/api/';
@@ -54,6 +55,7 @@ const withTheSession = (given: HeadersInit | undefined): Headers => {
   }
 
   headers.set('user-agent', appUserAgent(describeThisTv(Constants.deviceName ?? null)));
+  headers.set(CLIENT_KIND_HEADER, 'tv');
 
   return headers;
 };
