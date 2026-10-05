@@ -93,13 +93,9 @@ vi.mock('@ValenceClient/collections/fetchCollections', () => ({
   updateCollection: vi.fn(),
 }));
 
-const scrubs = vi.hoisted(() => ({ areBuilt: true }));
-
 vi.mock('@ValenceClient/playback/fetchTrickplay', async (importOriginal) => ({
   ...(await importOriginal<typeof FetchTrickplay>()),
-  fetchTrickplay: vi.fn(() =>
-    Promise.resolve(scrubs.areBuilt ? { thumbnails: [], width: 320, height: 180 } : null),
-  ),
+  fetchTrickplay: vi.fn(() => Promise.resolve({ thumbnails: [], width: 320, height: 180 })),
 }));
 
 const preview = vi.hoisted(() => ({
@@ -184,7 +180,6 @@ afterEach(() => {
   motion.isReduced = false;
   permissions.mayOverride = false;
   permissions.mayEditLibraries = false;
-  scrubs.areBuilt = true;
   watcher.prefersBestCopy = false;
 });
 
@@ -260,21 +255,8 @@ describe('collections', () => {
 });
 
 describe('choosing where the preview is cut from', () => {
-  it('offers it to somebody allowed to correct media', async () => {
+  it('is left to the admin area, even for somebody allowed to correct media', async () => {
     permissions.mayOverride = true;
-
-    renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
-
-    await openTheMenu();
-
-    expect(
-      await screen.findByRole('menuitem', { name: 'Choose the preview frame' }),
-    ).toBeInTheDocument();
-  });
-
-  it('keeps it away until the scrub previews have been built', async () => {
-    permissions.mayOverride = true;
-    scrubs.areBuilt = false;
 
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
@@ -282,34 +264,7 @@ describe('choosing where the preview is cut from', () => {
     await openTheMenu();
     await screen.findByRole('menuitem', { name: /Download/ });
 
-    expect(
-      screen.queryByRole('menuitem', { name: 'Choose the preview frame' }),
-    ).not.toBeInTheDocument();
-  });
-
-  it('keeps it from every other viewer', async () => {
-    renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
-
-    await screen.findByRole('heading', { name: 'Arrival' });
-    await openTheMenu();
-    await screen.findByRole('menuitem', { name: /Download/ });
-
-    expect(
-      screen.queryByRole('menuitem', { name: 'Choose the preview frame' }),
-    ).not.toBeInTheDocument();
-  });
-
-  it('opens the picker for this item', async () => {
-    permissions.mayOverride = true;
-
-    renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
-
-    await openTheMenu();
-    await userEvent
-      .setup()
-      .click(await screen.findByRole('menuitem', { name: 'Choose the preview frame' }));
-
-    expect(await screen.findByRole('dialog', { name: 'Choose the preview frame' })).toBeVisible();
+    expect(screen.queryByRole('menuitem', { name: /preview/u })).not.toBeInTheDocument();
   });
 });
 
