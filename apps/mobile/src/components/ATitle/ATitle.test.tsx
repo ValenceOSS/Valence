@@ -1,3 +1,4 @@
+import { ActionSheetIOS } from 'react-native';
 import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fetchLibraries, fetchMediaDetail } from '@ValenceClient/library/fetchLibrary';
@@ -5,6 +6,7 @@ import { fetchLinkedServerFaces } from '@ValenceClient/linking/fetchLinkedServer
 import { aLibrary } from '@ValenceClient/testing/aLibrary';
 import { aLinkedServerFace } from '@ValenceClient/testing/aLinkedServerFace';
 import { fetchWatchProgress } from '@ValenceClient/playback/watchProgress';
+import { markWatched } from '@ValenceClient/playback/markWatched';
 import { ATitle } from './ATitle';
 import { MediaDetailSchema } from '@ValenceContracts/schemas/Library';
 import type { ReactNode } from 'react';
@@ -12,6 +14,7 @@ import type { MediaDetail } from '@ValenceContracts/schemas/Library';
 
 jest.mock('@ValenceClient/library/fetchLibrary');
 jest.mock('@ValenceClient/linking/fetchLinkedServerFaces');
+jest.mock('@ValenceClient/playback/markWatched', () => ({ markWatched: jest.fn() }));
 jest.mock('@ValenceClient/playback/watchProgress', () => ({
   ...jest.requireActual<object>('@ValenceClient/playback/watchProgress'),
   fetchWatchProgress: jest.fn(),
@@ -318,5 +321,63 @@ describe('ATitle', () => {
     );
 
     expect(await drawn.findByText('From Films')).toBeTruthy();
+  });
+
+  it('marks it watched from the menu beside Play', async () => {
+    jest.mocked(fetchMediaDetail).mockResolvedValue(detailOf());
+    jest.mocked(markWatched).mockResolvedValue();
+    const sheet = jest
+      .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
+      .mockImplementation((_options, picked) => {
+        picked(0);
+      });
+
+    const drawn = await render(
+      around(
+        <ATitle
+          mediaId="one"
+          onWatch={jest.fn()}
+          onLookAtPerson={jest.fn()}
+          onLookAtShow={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
+    );
+
+    await userEvent.press(await drawn.findByLabelText('More'));
+
+    const [asked] = sheet.mock.calls[0] ?? [];
+    const [marked, isWatched] = jest.mocked(markWatched).mock.calls[0] ?? [];
+
+    expect(asked?.options).toEqual([`Mark ${detailOf().title} as watched`, 'Hide', 'Cancel']);
+    expect(marked?.map((item) => item.id)).toEqual([detailOf().id]);
+    expect(isWatched).toBe(true);
+  });
+
+  it('starts a watch party on it, where the phone can', async () => {
+    jest.mocked(fetchMediaDetail).mockResolvedValue(detailOf());
+    jest
+      .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
+      .mockImplementation((_options, picked) => {
+        picked(1);
+      });
+    const onStartParty = jest.fn();
+
+    const drawn = await render(
+      around(
+        <ATitle
+          mediaId="one"
+          onWatch={jest.fn()}
+          onLookAtPerson={jest.fn()}
+          onLookAtShow={jest.fn()}
+          onBack={jest.fn()}
+          onStartParty={onStartParty}
+        />,
+      ),
+    );
+
+    await userEvent.press(await drawn.findByLabelText('More'));
+
+    expect(onStartParty).toHaveBeenCalledWith('one', 0);
   });
 });

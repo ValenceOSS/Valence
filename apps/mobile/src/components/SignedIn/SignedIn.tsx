@@ -522,6 +522,10 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
             }}
             onLookAtShow={lookAtShow}
             onBack={back}
+            onStartParty={(partyMediaId, startSeconds) => {
+              watchParty.open(partyMediaId);
+              choose(partyMediaId, startSeconds);
+            }}
           />
         );
       case 'show':

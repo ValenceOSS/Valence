@@ -2,11 +2,10 @@ import {
   ChevronsUpDown,
   CircleCheck,
   Download,
-  EyeOff,
   Film,
   Heart,
   ListVideo,
-  Monitor,
+  MoreHorizontal,
   RotateCcw,
   Share,
 } from '@keyline-icons/react-native';
@@ -21,6 +20,8 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
+import { markWatched } from '@ValenceClient/playback/markWatched';
+import { askAboutATitle } from '@ValenceMobile/components/ATitle/askAboutATitle';
 import { qualityBadges } from '@ValenceClient/library/qualityBadges';
 import { theVersionsOf } from '@ValenceClient/library/theVersionsOf';
 import { describeTitleDetails } from '@ValenceClient/library/describeTitleDetails';
@@ -94,8 +95,16 @@ const styles = StyleSheet.create({
  * @param onLookAtPerson - Told whose page to open.
  * @param onLookAtShow - Told to open a programme.
  * @param onBack - Told somebody is done with it.
+ * @param onStartParty - Told to start a watch party on what is about to play, where this phone can.
  */
-const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATitleProps) => {
+const ATitle = ({
+  mediaId,
+  onWatch,
+  onLookAtPerson,
+  onLookAtShow,
+  onBack,
+  onStartParty,
+}: ATitleProps) => {
   const asking = useQuery(libraryQueries.detail(mediaId));
   const watched = useQuery(viewingQueries.progress());
   const colours = useTheColours();
@@ -121,6 +130,8 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
   const preferred = usePreferredCopy(title, copies);
   const playing = version ?? preferred ?? mediaId;
   const playingElsewhere = copies.find((copy) => copy.id === playing);
+  const isWatched =
+    (watched.data ?? []).find((entry) => entry.mediaId === mediaId)?.isFinished === true;
   const carryOnAt = resumeFor(
     byMediaId(watched.data ?? []),
     playingElsewhere !== undefined && originOf(playingElsewhere.libraryId) !== null
@@ -394,36 +405,58 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
           </View>
         </Button>
 
-        {!hasTelevision ? null : (
-          <Button
-            tone="bare"
-            label={say('common.playOnTV')}
-            onPress={() => {
-              setIsPlayingOn(true);
-            }}
-          >
-            <View style={styles.action}>
-              <Icon of={Monitor} colour={colours.text} />
-              <Words size="small">{say('common.playOnTV')}</Words>
-            </View>
-          </Button>
-        )}
-
         <Button
           tone="bare"
-          label={say('common.hide')}
+          label={say('common.more')}
           onPress={() => {
-            hiding.ask({
-              id: title.id,
-              title: title.title,
-              seriesId: null,
-              seriesTitle,
-            });
+            askAboutATitle(title.title, [
+              {
+                label: isWatched
+                  ? say('common.markTitleAsUnwatched', { title: title.title })
+                  : say('common.markTitleAsWatched', { title: title.title }),
+                onChoose: () => {
+                  void markWatched([title], !isWatched)
+                    .then(async () =>
+                      Promise.all([
+                        cache.invalidateQueries({ queryKey: viewingQueries.progress().queryKey }),
+                        cache.invalidateQueries({ queryKey: libraryQueries.key }),
+                      ]),
+                    )
+                    .catch(() => null);
+                },
+              },
+              ...(onStartParty === undefined
+                ? []
+                : [
+                    {
+                      label: say('screens.mediaDetailDialog.watchTogether'),
+                      onChoose: () => {
+                        onStartParty(playing, carryOnAt ?? 0);
+                      },
+                    },
+                  ]),
+              ...(hasTelevision
+                ? [
+                    {
+                      label: say('common.playOnTV'),
+                      onChoose: () => {
+                        setIsPlayingOn(true);
+                      },
+                    },
+                  ]
+                : []),
+              {
+                label: say('common.hide'),
+                onChoose: () => {
+                  hiding.ask({ id: title.id, title: title.title, seriesId: null, seriesTitle });
+                },
+              },
+            ]);
           }}
         >
           <View style={styles.action}>
-            <Icon of={EyeOff} colour={colours.text} />
-            <Words size="small">{say('common.hide')}</Words>
+            <Icon of={MoreHorizontal} colour={colours.text} />
+            <Words size="small">{say('common.more')}</Words>
           </View>
         </Button>
       </View>
