@@ -16,14 +16,14 @@
   },
   "dependencies": {
     "@valence/i18n": "workspace:*",
-    "drizzle-orm": "^0.45.2",
-    "mysql2": "^3.24.5",
-    "zod": "^4.6.4"
+    "drizzle-orm": "0.45.2",
+    "mysql2": "3.24.5",
+    "zod": "4.6.4"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "^0.5.8",
-    "@vitest/coverage-v8": "^4.1.11",
-    "vite": "^8.3.0",
-    "vitest": "^4.1.11"
+    "@electric-sql/pglite": "0.5.8",
+    "@vitest/coverage-v8": "4.1.11",
+    "vite": "8.3.0",
+    "vitest": "4.1.11"
   }
 }

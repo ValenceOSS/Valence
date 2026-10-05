@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import { Words } from '@ValenceMobile/components/Words/Words';
-import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
+import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
 import { SPRINGS } from '@ValenceMobile/theme/SPRINGS';
 import type { AWrittenNameProps } from './AWrittenName.types';
 

@@ -1,7 +1,7 @@
 import { useContext, useMemo } from 'react';
 import { Animated, View } from 'react-native';
 import { ARRIVING } from '@ValenceMobile/components/AnArrival/ARRIVING';
-import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
+import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
 import type { AnArrivalProps } from './AnArrival.types';
 
 const COMES_FROM = 40;

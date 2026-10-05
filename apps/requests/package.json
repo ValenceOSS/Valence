@@ -11,7 +11,7 @@
   },
   "scripts": {
     "dev": "tsx watch --env-file-if-exists=../../.env src/Main.ts",
-    "browser": "camoufox-js fetch",
+    "browser": "tsx src/solver/browser/fetchBrowser.ts",
     "build": "tsc --build",
     "start": "node dist/Main.js",
     "test": "vitest run",
@@ -26,33 +26,33 @@
     "dev:mysql": "tsx watch --conditions=mysql --env-file-if-exists=../../.env src/Main.ts"
   },
   "dependencies": {
-    "@hono/node-server": "^1.19.17",
+    "@hono/node-server": "1.19.17",
     "@valence/contracts": "workspace:*",
     "@valence/core": "workspace:*",
     "@valence/database": "workspace:*",
     "@valence/i18n": "workspace:*",
     "camoufox-js": "0.12.0",
-    "cheerio": "^1.2.0",
-    "domhandler": "^5.0.3",
-    "drizzle-orm": "^0.45.2",
-    "entities": "^8.1.0",
-    "fast-xml-parser": "^5.11.1",
-    "hono": "^4.13.7",
-    "iconv-lite": "^0.7.3",
-    "music-metadata": "^11.15.0",
-    "mysql2": "^3.24.5",
-    "pg": "^8.23.0",
+    "cheerio": "1.2.0",
+    "domhandler": "5.0.3",
+    "drizzle-orm": "0.45.2",
+    "entities": "8.1.0",
+    "fast-xml-parser": "5.11.1",
+    "hono": "4.13.7",
+    "iconv-lite": "0.7.3",
+    "music-metadata": "11.15.0",
+    "mysql2": "3.24.5",
+    "pg": "8.23.0",
     "playwright-core": "1.60.0",
-    "yaml": "^2.9.1",
-    "zod": "^4.6.4"
+    "yaml": "2.9.1",
+    "zod": "4.6.4"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "^0.5.8",
-    "@types/pg": "^8.23.1",
-    "@vitest/coverage-v8": "^4.1.11",
-    "drizzle-kit": "^0.31.10",
-    "esbuild": "^0.28.2",
-    "tsx": "^4.23.13",
-    "vitest": "^4.1.11"
+    "@electric-sql/pglite": "0.5.8",
+    "@types/pg": "8.23.1",
+    "@vitest/coverage-v8": "4.1.11",
+    "drizzle-kit": "0.31.10",
+    "esbuild": "0.28.2",
+    "tsx": "4.23.13",
+    "vitest": "4.1.11"
   }
 }

@@ -12,9 +12,9 @@
     "@valence/i18n": "workspace:*"
   },
   "devDependencies": {
-    "@testing-library/react-native": "^14.0.1",
-    "@types/jest": "^30.0.0",
-    "@types/react": "~19.2.4"
+    "@testing-library/react-native": "14.0.1",
+    "@types/jest": "30.0.0",
+    "@types/react": "19.2.18"
   },
   "peerDependencies": {
     "@tanstack/react-query": "^5.0.0",

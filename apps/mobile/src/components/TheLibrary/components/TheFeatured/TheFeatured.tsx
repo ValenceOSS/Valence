@@ -11,7 +11,7 @@ import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
 import { AFeature } from '@ValenceMobile/components/TheLibrary/components/TheFeatured/components/AFeature/AFeature';
 import { TheDots } from '@ValenceMobile/components/TheLibrary/components/TheFeatured/components/TheDots/TheDots';
 import { useTheSideStrip } from '@ValenceMobile/hooks/useTheSideStrip';
-import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
+import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
 import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { TheFeaturedProps } from './TheFeatured.types';
 

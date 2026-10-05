@@ -7,14 +7,14 @@
 # looking washed out or missing its subtitles. Pinning the build is why
 # FFmpeg is driven as a child process rather than linked.
 
-FROM rust:1.98-bookworm AS transcoder-build
+FROM rust:1-bookworm AS transcoder-build
 WORKDIR /build
 COPY Cargo.toml Cargo.lock rustfmt.toml ./
 COPY apps/transcoder ./apps/transcoder
 COPY apps/desktop/native ./apps/desktop/native
 RUN cargo build --release --bin valence-transcoder
 
-FROM node:24-bookworm-slim AS web-build
+FROM node:24.21.0-bookworm-slim AS web-build
 WORKDIR /build
 RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
@@ -34,7 +34,7 @@ RUN pnpm --filter @valence/web build
 # ordinary way.
 RUN pnpm --filter @valence/server bundle
 
-FROM node:24-bookworm-slim AS runtime
+FROM node:24.21.0-bookworm-slim AS runtime
 
 # Flux's own FFmpeg, at a version Flux chose, rather than whatever the base
 # image happens to ship. Debian has no 8.x at all, and packages none of Intel's
@@ -90,7 +90,7 @@ RUN apt-get update \
 # columns and MySQL then refuses to load them back. Oracle packages no MySQL client for Debian on
 # arm64, so the two tools are taken from the official image, which is built for both and whose
 # binaries need nothing bookworm does not already have.
-COPY --from=mysql:8.4 /usr/bin/mysqldump /usr/bin/mysql /usr/local/bin/
+COPY --from=mysql:8.4.11 /usr/bin/mysqldump /usr/bin/mysql /usr/local/bin/
 
 ADD https://github.com/ValenceOSS/valence-ffmpeg/releases/download/v${VALENCE_FFMPEG_VERSION}/valence-ffmpeg_${VALENCE_FFMPEG_VERSION}-bookworm_${TARGETARCH}.deb /tmp/valence-ffmpeg.deb
 

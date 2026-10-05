@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { lyricStanding } from '@ValenceClient/music/lyricStanding';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { ALyricLine } from '@ValenceMobile/components/TheMusicPlayer/components/TheLyrics/components/ALyricLine/ALyricLine';
-import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
+import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
 import type { ComponentRef } from 'react';
 import type { TheSungLinesProps } from './TheSungLines.types';
 import { say } from '@ValenceI18n/say';

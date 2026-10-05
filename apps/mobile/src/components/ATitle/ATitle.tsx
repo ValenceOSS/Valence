@@ -48,7 +48,7 @@ import { howLongItRuns } from '@ValenceMobile/components/ATitle/howLongItRuns';
 import { askWhichVersion } from '@ValenceMobile/components/ATitle/askWhichVersion';
 import { useConfirmHiding } from '@ValenceNative/library/useConfirmHiding';
 import { askToKeepOnThisPhone } from '@ValenceMobile/downloads/askToKeepOnThisPhone';
-import { useTheProgrammeOfEpisode } from '@ValenceMobile/hooks/useTheProgrammeOfEpisode';
+import { useTheProgrammeOfEpisode } from '@ValenceClient/library/useTheProgrammeOfEpisode';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';

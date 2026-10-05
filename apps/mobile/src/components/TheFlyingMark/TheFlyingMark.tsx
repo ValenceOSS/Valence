@@ -2,7 +2,7 @@ import { useContext, useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import { THE_MARKS_PLACE } from '@ValenceMobile/components/ACarriedMark/THE_MARKS_PLACE';
 import { TheMark } from '@ValenceMobile/components/TheMark/TheMark';
-import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
+import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
 import type { ARectOnScreen } from '@ValenceMobile/hooks/useArrivingFrom.types';
 import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 

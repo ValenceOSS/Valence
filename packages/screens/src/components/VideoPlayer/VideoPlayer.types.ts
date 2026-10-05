@@ -24,6 +24,7 @@ type VideoPlayerProps = {
   onStopped?: () => void;
   episodes?: MediaSummary[];
   onSelectEpisode?: (episode: MediaSummary) => void;
+  willCarryOn?: boolean;
   watchedFractionFor?: (mediaId: string) => number | undefined;
   party?: PartyPlayback;
   partyNotice?: string | null;

@@ -777,6 +777,62 @@ describe('Watching', () => {
     });
   });
 
+  it('holds at the end with the next episode offered, for somebody who moved there by hand', async () => {
+    const episode = (id: string, episodeNumber: number) => ({
+      id,
+      libraryId: 'lib',
+      title: `Episode ${episodeNumber.toString()}`,
+      year: null,
+      durationSeconds: 1800,
+      width: 1920,
+      height: 1080,
+      videoCodec: 'h264',
+      videoRange: 'SDR',
+      addedAt: '2026-01-01T00:00:00.000Z',
+      hasPoster: false,
+      hasBackdrop: false,
+      hasLogo: false,
+      seriesId: 'show',
+      seriesTitle: 'A Show',
+      seasonNumber: 1,
+      episodeNumber,
+    });
+    jest
+      .mocked(fetchSegments)
+      .mockResolvedValue([
+        { kind: 'credits', startSeconds: 1700, endSeconds: 1800, source: 'manual' as const },
+      ]);
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+    theFakePlayer.currentTime = 1702;
+    theFakePlayer.duration = 1800;
+
+    const onEnded = jest.fn();
+    const drawn = await render(
+      around(
+        <Watching
+          mediaId="episode-1"
+          onDone={jest.fn()}
+          onEnded={onEnded}
+          seasons={[
+            { seasonNumber: 1, episodes: [episode('episode-1', 1), episode('episode-2', 2)] },
+          ]}
+          onChooseEpisode={jest.fn()}
+          willCarryOn
+        />,
+      ),
+    );
+
+    await userEvent.press(await drawn.findByText('Watch Credits'));
+    await userEvent.press(drawn.getByLabelText('Skip Credits'));
+
+    await act(() => {
+      theFakePlayer.say('playToEnd', { isPlaying: false });
+    });
+
+    expect(onEnded).not.toHaveBeenCalled();
+    expect(drawn.getByText('Play Next')).toBeTruthy();
+  });
+
   it('offers nothing where a film has nothing marked', async () => {
     jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
 

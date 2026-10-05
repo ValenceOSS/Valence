@@ -49,7 +49,7 @@ services:
     # the stack's own network.
 
   valence:
-    image: ghcr.io/marquescoding/valence:latest
+    image: ghcr.io/valenceoss/valence:latest
     restart: unless-stopped
     depends_on:
       db:
@@ -169,7 +169,7 @@ services:
   # then files what arrives into the library — which is why it, unlike Valence,
   # mounts the media folder writable.
   requests:
-    image: ghcr.io/marquescoding/valence-requests:latest
+    image: ghcr.io/valenceoss/valence-requests:latest
     profiles: [requests]
     restart: unless-stopped
     # The browser it gets past Cloudflare's check with keeps its pages in shared
@@ -232,7 +232,7 @@ services:
   # and publish the client's web port here rather than on the client. The
   # provider settings are gluetun's own — see its wiki for yours.
   gluetun:
-    image: qmcgaw/gluetun:latest
+    image: qmcgaw/gluetun:v3.41.3
     profiles: [vpn]
     restart: unless-stopped
     cap_add:

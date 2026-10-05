@@ -15,12 +15,15 @@ onlyBuiltDependencies:
   - electron-winstaller
   - esbuild
 
-# react-native-tvos adds its television types to the module named react-native, looked up from
-# inside its own package. With the phone's react-native beside it in the workspace, that found the
-# phone's copy and the television lost its types. As a peer, the name is the television's own
-# react-native, which is react-native-tvos.
+# A package that looks up the module named react-native from inside itself finds whichever copy
+# pnpm happened to hoist, the phone's or the television's. As a peer, the name is the app's own
+# react-native. react-native-tvos adds its television types to it, and the jest preset loads its
+# test setup and mocks from it.
 packageExtensions:
   react-native-tvos:
+    peerDependencies:
+      react-native: '*'
+  '@react-native/jest-preset':
     peerDependencies:
       react-native: '*'
 
