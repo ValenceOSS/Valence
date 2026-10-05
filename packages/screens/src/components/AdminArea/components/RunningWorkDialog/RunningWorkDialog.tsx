@@ -1,7 +1,7 @@
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { runQueuedJobNow } from '@ValenceClient/admin/fetchAdmin';
-import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
@@ -90,8 +90,8 @@ const RunningWorkDialog = ({ title, isOpen, progress, tasks, onClose }: RunningW
             say('screens.adminArea.runningWorkDialog.nothingInTheQueueIsTied')
           ) : (
             <>
-              <AnimatedNumber value={running} suffix=" running" /> ·{' '}
-              <AnimatedNumber value={waiting + notYetQueued} suffix=" waiting" />
+              <FormattedNumber value={running} suffix=" running" /> ·{' '}
+              <FormattedNumber value={waiting + notYetQueued} suffix=" waiting" />
             </>
           )
         }
@@ -129,7 +129,7 @@ const RunningWorkDialog = ({ title, isOpen, progress, tasks, onClose }: RunningW
               {notYetQueued === 0 ? null : (
                 <li className="flex items-center gap-3 py-3">
                   <span className="min-w-0 flex-1 text-sm text-text-muted">
-                    <AnimatedNumber
+                    <FormattedNumber
                       value={notYetQueued}
                       suffix={say('screens.adminArea.runningWorkDialog.moreNotStartedYet')}
                     />

@@ -1,4 +1,4 @@
-import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { cn } from '@ValenceUI/cn';
 import { describeDownloadProgress } from '@ValenceScreens/components/RequestsPage/components/RequestsList/describeDownloadProgress';
 import type { DownloadProgressReadoutProps } from './DownloadProgressReadout.types';
@@ -15,7 +15,7 @@ const DownloadProgressReadout = ({ progress, className }: DownloadProgressReadou
 
   return (
     <span className={cn('text-xs tabular-nums', className)}>
-      <AnimatedNumber value={Math.floor(progress.progress * 100)} suffix="%" />
+      <FormattedNumber value={Math.floor(progress.progress * 100)} suffix="%" />
       {facts === null ? null : <> · {facts}</>}
     </span>
   );

@@ -14,4 +14,17 @@ describe('formatMoney', () => {
   it('says a small amount in full', () => {
     expect(formatMoney(500)).toBe('$500');
   });
+
+  it('says a round amount without a decimal, which the phone used to add', () => {
+    expect(formatMoney(40_000_000)).toBe('$40M');
+    expect(formatMoney(118_133_252)).toBe('$118.1M');
+  });
+
+  it('shortens thousands as well', () => {
+    expect(formatMoney(950_000)).toBe('$950K');
+  });
+
+  it('keeps the sign of a loss', () => {
+    expect(formatMoney(-2_500_000)).toBe('-$2.5M');
+  });
 });

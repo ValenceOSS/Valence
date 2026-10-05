@@ -1,4 +1,4 @@
-import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Button } from '@ValenceUI/Button';
 import { Skeleton } from '@ValenceUI/Skeleton';
 import { describeLogLevel } from '@ValenceScreens/admin/describeLogLevel';
@@ -44,7 +44,7 @@ const LevelToggles = ({ histogram, levels, isReading, onToggle }: LevelTogglesPr
           fillings={{
             count: (
               <span className="text-lg font-semibold tabular-nums text-text">
-                <AnimatedNumber value={events} />
+                <FormattedNumber value={events} />
               </span>
             ),
           }}
@@ -77,7 +77,7 @@ const LevelToggles = ({ histogram, levels, isReading, onToggle }: LevelTogglesPr
                 />
                 {look.label}
                 <span className="tabular-nums text-text-muted">
-                  <AnimatedNumber value={count} />
+                  <FormattedNumber value={count} />
                 </span>
               </Button>
             </li>

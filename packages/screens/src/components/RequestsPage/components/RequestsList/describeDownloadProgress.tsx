@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 import type { ReactNode } from 'react';
-import { AnimatedBytes } from '@ValenceScreens/components/AnimatedBytes/AnimatedBytes';
+import { FormattedBytes } from '@ValenceScreens/components/FormattedBytes/FormattedBytes';
 import { describeTimeLeft } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeTimeLeft';
 import type { RequestProgress } from '@ValenceContracts/schemas/CatalogueTitle';
 import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
@@ -18,13 +18,13 @@ const describeDownloadProgress = (progress: RequestProgress): ReactNode => {
   if (progress.sizeBytes !== null) {
     parts.push(
       progress.doneBytes === null ? (
-        <AnimatedBytes bytes={progress.sizeBytes} />
+        <FormattedBytes bytes={progress.sizeBytes} />
       ) : (
         <Sentence
           words="common.doneOfTotal"
           fillings={{
-            done: <AnimatedBytes bytes={progress.doneBytes} />,
-            total: <AnimatedBytes bytes={progress.sizeBytes} />,
+            done: <FormattedBytes bytes={progress.doneBytes} />,
+            total: <FormattedBytes bytes={progress.sizeBytes} />,
           }}
         />
       ),
@@ -32,7 +32,7 @@ const describeDownloadProgress = (progress: RequestProgress): ReactNode => {
   }
 
   if (progress.downloadBytesPerSecond !== null && progress.downloadBytesPerSecond !== 0) {
-    parts.push(<AnimatedBytes bytes={progress.downloadBytesPerSecond} suffix="/s" />);
+    parts.push(<FormattedBytes bytes={progress.downloadBytesPerSecond} suffix="/s" />);
   }
 
   if (progress.secondsLeft !== null) {

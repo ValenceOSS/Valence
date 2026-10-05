@@ -2,13 +2,15 @@ import {
   ChevronsUpDown,
   CircleCheck,
   Download,
-  EyeOff,
   Film,
   Heart,
   ListVideo,
+  MoreHorizontal,
   RotateCcw,
   Share,
 } from '@keyline-icons/react-native';
+import { useVideoDevices } from '@ValenceClient/video/useVideoDevices';
+import { APlayOnSheet } from '@ValenceMobile/components/APlayOnSheet/APlayOnSheet';
 import { describeTimeToGo } from '@ValenceCore/functions/describeTimeToGo';
 import { Heart as HeartFilled, Play as PlayFilled } from '@keyline-icons/react-native/fill';
 import { useState } from 'react';
@@ -18,9 +20,12 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
+import { markWatched } from '@ValenceClient/playback/markWatched';
+import { askAboutATitle } from '@ValenceMobile/components/ATitle/askAboutATitle';
 import { qualityBadges } from '@ValenceClient/library/qualityBadges';
 import { theVersionsOf } from '@ValenceClient/library/theVersionsOf';
 import { describeTitleDetails } from '@ValenceClient/library/describeTitleDetails';
+import { ATomatoMark } from '@ValenceMobile/components/ATomatoMark/ATomatoMark';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useHidden } from '@ValenceClient/library/useHidden';
 import { useHeldFiles } from '@ValenceClient/downloads/useHeldFiles';
@@ -54,6 +59,7 @@ import type { ShareSubject } from '@ValenceClient/sharing/newShareFor.types';
 import type { ATitleProps } from './ATitle.types';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 import { say } from '@ValenceI18n/say';
+import { ABadgeRow } from '@ValenceMobile/components/ABadgeRow/ABadgeRow';
 
 const PLAY_HEIGHT = 46;
 
@@ -69,6 +75,7 @@ const styles = StyleSheet.create({
   },
   again: { alignItems: 'center', borderRadius: 12, justifyContent: 'center' },
   detail: { gap: 2, width: '47%' },
+  detailValue: { alignItems: 'center', flexDirection: 'row', gap: 6 },
   details: { columnGap: 12, flexDirection: 'row', flexWrap: 'wrap', rowGap: 12 },
   facts: { gap: 8 },
   play: { flex: 1 },
@@ -89,8 +96,16 @@ const styles = StyleSheet.create({
  * @param onLookAtPerson - Told whose page to open.
  * @param onLookAtShow - Told to open a programme.
  * @param onBack - Told somebody is done with it.
+ * @param onStartParty - Told to start a watch party on what is about to play, where this phone can.
  */
-const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATitleProps) => {
+const ATitle = ({
+  mediaId,
+  onWatch,
+  onLookAtPerson,
+  onLookAtShow,
+  onBack,
+  onStartParty,
+}: ATitleProps) => {
   const asking = useQuery(libraryQueries.detail(mediaId));
   const watched = useQuery(viewingQueries.progress());
   const colours = useTheColours();
@@ -100,6 +115,8 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
   const cache = useQueryClient();
   const held = useHeldFiles().find((file) => file.mediaId === mediaId) ?? null;
   const [sharing, setSharing] = useState<ShareSubject | null>(null);
+  const [isPlayingOn, setIsPlayingOn] = useState(false);
+  const hasTelevision = useVideoDevices().some((device) => device.kind === 'tv');
   const preparing =
     useQuery(downloadQueries.all()).data?.find(
       (download) => download.mediaId === mediaId && download.state === 'preparing',
@@ -114,6 +131,8 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
   const preferred = usePreferredCopy(title, copies);
   const playing = version ?? preferred ?? mediaId;
   const playingElsewhere = copies.find((copy) => copy.id === playing);
+  const isWatched =
+    (watched.data ?? []).find((entry) => entry.mediaId === mediaId)?.isFinished === true;
   const carryOnAt = resumeFor(
     byMediaId(watched.data ?? []),
     playingElsewhere !== undefined && originOf(playingElsewhere.libraryId) !== null
@@ -158,8 +177,10 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
     metadata.rating === null || metadata.rating === undefined
       ? null
       : `★ ${metadata.rating.toFixed(1)}`,
-    (metadata.genres ?? []).length === 0 ? null : (metadata.genres ?? []).slice(0, 2).join(', '),
   ].filter((fact) => fact !== null);
+  const genres = (metadata.genres ?? [])
+    .slice(0, 3)
+    .map((genre) => ({ label: genre, tone: 'solid' as const }));
   const details = describeTitleDetails(metadata);
   const tagline = seriesTitle === null ? (metadata.tagline ?? null) : null;
   const overview = metadata.overview ?? null;
@@ -201,6 +222,7 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
               : null
           }
         />
+        <ABadgeRow badges={genres} />
       </View>
 
       {tagline === null && overview === null ? null : (
@@ -389,19 +411,56 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
 
         <Button
           tone="bare"
-          label={say('common.hide')}
+          label={say('common.more')}
           onPress={() => {
-            hiding.ask({
-              id: title.id,
-              title: title.title,
-              seriesId: null,
-              seriesTitle,
-            });
+            askAboutATitle(title.title, [
+              {
+                label: isWatched
+                  ? say('common.markTitleAsUnwatched', { title: title.title })
+                  : say('common.markTitleAsWatched', { title: title.title }),
+                onChoose: () => {
+                  void markWatched([title], !isWatched)
+                    .then(async () =>
+                      Promise.all([
+                        cache.invalidateQueries({ queryKey: viewingQueries.progress().queryKey }),
+                        cache.invalidateQueries({ queryKey: libraryQueries.key }),
+                      ]),
+                    )
+                    .catch(() => null);
+                },
+              },
+              ...(onStartParty === undefined
+                ? []
+                : [
+                    {
+                      label: say('screens.mediaDetailDialog.watchTogether'),
+                      onChoose: () => {
+                        onStartParty(playing, carryOnAt ?? 0);
+                      },
+                    },
+                  ]),
+              ...(hasTelevision
+                ? [
+                    {
+                      label: say('common.playOnTV'),
+                      onChoose: () => {
+                        setIsPlayingOn(true);
+                      },
+                    },
+                  ]
+                : []),
+              {
+                label: say('common.hide'),
+                onChoose: () => {
+                  hiding.ask({ id: title.id, title: title.title, seriesId: null, seriesTitle });
+                },
+              },
+            ]);
           }}
         >
           <View style={styles.action}>
-            <Icon of={EyeOff} colour={colours.text} />
-            <Words size="small">{say('common.hide')}</Words>
+            <Icon of={MoreHorizontal} colour={colours.text} />
+            <Words size="small">{say('common.more')}</Words>
           </View>
         </Button>
       </View>
@@ -410,6 +469,14 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
         subject={sharing}
         onClose={() => {
           setSharing(null);
+        }}
+      />
+
+      <APlayOnSheet
+        media={isPlayingOn ? { id: playing, title: title.title } : null}
+        startSeconds={carryOnAt ?? 0}
+        onClose={() => {
+          setIsPlayingOn(false);
         }}
       />
 
@@ -422,7 +489,10 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
               <Words size="small" tone="muted">
                 {detail.label}
               </Words>
-              <Words>{detail.value}</Words>
+              <View style={styles.detailValue}>
+                {detail.tomato === undefined ? null : <ATomatoMark score={detail.tomato} />}
+                <Words>{detail.value}</Words>
+              </View>
             </View>
           ))}
         </View>

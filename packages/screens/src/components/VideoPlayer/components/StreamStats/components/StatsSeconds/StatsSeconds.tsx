@@ -1,4 +1,4 @@
-import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import type { StatsSecondsProps } from './StatsSeconds.types';
 
 /**
@@ -8,7 +8,7 @@ import type { StatsSecondsProps } from './StatsSeconds.types';
  * @param value - The number of seconds.
  */
 const StatsSeconds = ({ value }: StatsSecondsProps) => (
-  <AnimatedNumber
+  <FormattedNumber
     value={value}
     format={{ minimumFractionDigits: 1, maximumFractionDigits: 1 }}
     suffix="s"

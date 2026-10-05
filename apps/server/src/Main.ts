@@ -28,6 +28,7 @@ import {
 import { serve } from '@hono/node-server';
 import { createNodeWebSocket } from '@hono/node-ws';
 import { serveStatic } from '@hono/node-server/serve-static';
+import { refuseUnknownAddresses } from '@ValenceServer/api/refuseUnknownAddresses';
 import { isAppAddress } from '@ValenceServer/web/isAppAddress';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { and, asc, count, eq, gt, isNotNull, isNull, lt, lte, sql } from 'drizzle-orm';
@@ -363,6 +364,9 @@ import { keepingProfile } from '@ValenceServer/downloads/keepingProfile';
 import { watchADownload } from '@ValenceServer/downloads/watchADownload';
 import { readCertificatesAgain } from '@ValenceServer/library/readCertificatesAgain';
 import { say } from '@ValenceI18n/say';
+import { settleCookieSecurity } from '@ValenceServer/settings/settleCookieSecurity';
+import { readMediaFile } from '@ValenceServer/playback/readMediaFile';
+import { readSessionFiles } from '@ValenceServer/playback/readSessionFiles';
 const ChapterListSchema = z.array(
   z.object({
     title: z.string().nullable(),
@@ -409,7 +413,7 @@ const settings = createDatabaseSettingsStore({
   db,
   defaults: {
     trustedOrigins: env.TRUSTED_ORIGINS,
-    cookieSecure: env.COOKIE_SECURE,
+    cookieSecure: env.COOKIE_SECURE ?? false,
     setupCompletedAt: null,
     setupFlow: 'finished',
     catalogueApiKey: env.CATALOGUE_API_KEY,
@@ -484,7 +488,7 @@ const WEBHOOK_DELIVERIES_KEPT_FOR_DAYS = 7;
 const signInStore = createDatabaseSignInStore(db);
 const historyService = createDatabaseHistoryService(db);
 
-const persisted = await settings.read();
+const persisted = await settleCookieSecurity(settings, env.COOKIE_SECURE);
 
 const shareService = createDatabaseShareService(db);
 
@@ -3016,6 +3020,8 @@ bookPageUsage.watch();
 void bookPageUsage.refresh();
 
 const playbackService = createPlaybackService({
+  readFromDisk: readMediaFile,
+  readSessionFromDisk: readSessionFiles,
   media: {
     findForPlayback: async (mediaId) => {
       const item = await libraryService.getMedia(mediaId);
@@ -3905,7 +3911,7 @@ const app = createApp({
   monitor: async () => withApiMemory(await transcoder.readMonitor()),
   stalledJobs: () =>
     jobHealth.stalled().map((stall) => ({ ...stall, label: labelForQueue(stall.kind) })),
-  readImage: (url) => images.read(url),
+  readImage: (url, width) => images.read(url, width),
   isTranscoderReachable: () => transcoder.isReachable(),
   transcoderAddress: env.TRANSCODER_URL,
   listRunningJobs: () => jobs.listRunning(),
@@ -4457,6 +4463,8 @@ app.get(
     };
   }),
 );
+
+refuseUnknownAddresses(app);
 
 app.use('/*', serveStatic({ root: WEB_ROOT }));
 

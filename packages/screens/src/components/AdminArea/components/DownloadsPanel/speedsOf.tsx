@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { AnimatedBytes } from '@ValenceScreens/components/AnimatedBytes/AnimatedBytes';
+import { FormattedBytes } from '@ValenceScreens/components/FormattedBytes/FormattedBytes';
 
 /**
  * How fast something is coming down and going up, each on its own, leaving out a direction there is
@@ -11,8 +11,8 @@ import { AnimatedBytes } from '@ValenceScreens/components/AnimatedBytes/Animated
  *   neither is known.
  */
 const speedsOf = (down: number | null, up: number | null): ReactNode[] => [
-  ...(down === null ? [] : [<AnimatedBytes key="down" bytes={down} prefix="↓ " suffix="/s" />]),
-  ...(up === null ? [] : [<AnimatedBytes key="up" bytes={up} prefix="↑ " suffix="/s" />]),
+  ...(down === null ? [] : [<FormattedBytes key="down" bytes={down} prefix="↓ " suffix="/s" />]),
+  ...(up === null ? [] : [<FormattedBytes key="up" bytes={up} prefix="↑ " suffix="/s" />]),
 ];
 
 export { speedsOf };

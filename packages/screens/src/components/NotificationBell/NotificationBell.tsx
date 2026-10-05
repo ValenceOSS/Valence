@@ -1,6 +1,6 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { Icon } from '@ValenceUI/Icon';
-import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import {
   Bell as BellFilledIcon,
   Bin as BinFilledIcon,
@@ -62,7 +62,7 @@ const NotificationBell = ({
 
           {unread === 0 ? null : (
             <Badge tone="accent" size="sm" className="absolute -right-1 -top-1">
-              <AnimatedNumber
+              <FormattedNumber
                 value={Math.min(unread, COUNTED_UP_TO)}
                 {...(unread > COUNTED_UP_TO ? { suffix: '+' } : {})}
               />

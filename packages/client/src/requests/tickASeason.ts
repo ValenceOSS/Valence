@@ -19,7 +19,7 @@ const tickASeason = (
     ? ticked.filter((one) => one !== season)
     : [...ticked, season];
 
-  return next.length === listed.length ? null : next.toSorted((left, right) => left - right);
+  return next.length === listed.length ? null : [...next].sort((left, right) => left - right);
 };
 
 export { tickASeason };

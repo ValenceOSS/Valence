@@ -1,14 +1,13 @@
-import { Alert } from 'react-native';
-import { render, userEvent, waitFor } from '@testing-library/react-native';
+import { render, userEvent } from '@testing-library/react-native';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { fetchSession } from '@ValenceClient/session/auth';
 import { aSessionUser } from '@ValenceMobile/testing/aSessionUser';
-import { fetchPluginSurface } from '@ValenceClient/plugins/fetchPluginSurface';
-import { SurfaceSchema } from '@ValenceSDK/surface/SurfaceSchema';
 import { fetchPluginContributions } from '@ValenceClient/plugins/fetchPluginContributions';
 import { somePluginContributions } from '@ValenceClient/testing/somePluginContributions';
+import { fetchProfiles } from '@ValenceClient/profiles/fetchProfiles';
+import { aProfile } from '@ValenceMobile/testing/aProfile';
 import { TheAccount } from './TheAccount';
 
 jest.mock('@ValenceClient/session/auth', () => ({
@@ -16,102 +15,97 @@ jest.mock('@ValenceClient/session/auth', () => ({
   fetchSession: jest.fn(),
 }));
 
-jest.mock('@ValenceClient/plugins/fetchPluginSurface', () => ({ fetchPluginSurface: jest.fn() }));
 jest.mock('@ValenceClient/plugins/fetchPluginContributions', () => ({
   fetchPluginContributions: jest.fn(),
 }));
 
-const mockWithdrawn: {
-  pluginId: string | null;
-  tell: (change: { pluginId: string; change: 'disabled' | 'removed' }) => void;
-} = { pluginId: null, tell: () => undefined };
-
-jest.mock('@ValenceClient/plugins/usePluginWithdrawn', () => ({
-  usePluginWithdrawn: (
-    pluginId: string | null,
-    onWithdrawn: (change: { pluginId: string; change: 'disabled' | 'removed' }) => void,
-  ) => {
-    mockWithdrawn.pluginId = pluginId;
-    mockWithdrawn.tell = onWithdrawn;
-  },
+jest.mock('@ValenceClient/profiles/fetchProfiles', () => ({
+  ...jest.requireActual<object>('@ValenceClient/profiles/fetchProfiles'),
+  fetchProfiles: jest.fn(),
 }));
 
 beforeEach(() => {
   installPlatform(aFakePlatform());
-  jest.mocked(fetchSession).mockResolvedValue(aSessionUser());
+  jest.mocked(fetchSession).mockResolvedValue(aSessionUser({ username: 'dan' }));
   jest.mocked(fetchPluginContributions).mockResolvedValue(somePluginContributions());
+  jest.mocked(fetchProfiles).mockResolvedValue([aProfile({ name: 'Dan' })]);
 });
 
+/**
+ * Draws the account tab with nothing listening but what the test hands it.
+ *
+ * @param handlers - What to tell when somebody leaves or opens a page.
+ * @returns What was drawn.
+ */
+const theAccount = async (
+  handlers: Partial<{
+    onOut: () => void;
+    onElsewhere: () => void;
+    onOpen: (panel: string) => void;
+  }> = {},
+) =>
+  render(
+    <TheAccount
+      onOut={handlers.onOut ?? jest.fn()}
+      onElsewhere={handlers.onElsewhere ?? jest.fn()}
+      onOpen={handlers.onOpen ?? jest.fn()}
+    />,
+    { wrapper: CacheScope },
+  );
+
 describe('TheAccount', () => {
-  it('says whose account it is, offers each part of it, and signs out', async () => {
-    const onOut = jest.fn();
-    const drawn = await render(<TheAccount onOut={onOut} onElsewhere={jest.fn()} />, {
-      wrapper: CacheScope,
-    });
+  it('names whose account it is, without the username or the email address', async () => {
+    const drawn = await theAccount();
 
-    expect(await drawn.findByText('dan@example.com')).toBeTruthy();
-    expect(drawn.getByText('Share links')).toBeTruthy();
-
-    await userEvent.press(drawn.getByText('Sign out'));
-
-    expect(onOut).toHaveBeenCalled();
-  });
-
-  it('names the account by its username where it has one, rather than its address', async () => {
-    jest.mocked(fetchSession).mockResolvedValue(aSessionUser({ username: 'dan' }));
-    const drawn = await render(<TheAccount onOut={jest.fn()} onElsewhere={jest.fn()} />, {
-      wrapper: CacheScope,
-    });
-
-    expect(await drawn.findByText('@dan')).toBeTruthy();
+    expect(await drawn.findByText('Dan')).toBeTruthy();
+    expect(drawn.getByText('Edit profile')).toBeTruthy();
+    expect(drawn.queryByText('@dan')).toBeNull();
     expect(drawn.queryByText('dan@example.com')).toBeNull();
   });
 
-  it('draws a plugin’s page where its tab is the one shown', async () => {
-    jest
-      .mocked(fetchPluginSurface)
-      .mockResolvedValue(
-        SurfaceSchema.parse({ blocks: [{ type: 'text', text: 'Connect your AniList.' }] }),
-      );
-    const drawn = await render(
-      <TheAccount onOut={jest.fn()} onElsewhere={jest.fn()} shown="plugin:anilist:tracking" />,
-      { wrapper: CacheScope },
-    );
+  it('opens each part of the account on a page of its own', async () => {
+    const onOpen = jest.fn<void, [string]>();
+    const drawn = await theAccount({ onOpen });
 
-    expect(await drawn.findByText('Connect your AniList.')).toBeTruthy();
-    expect(fetchPluginSurface).toHaveBeenCalledWith({
-      kind: 'page',
-      pluginId: 'anilist',
-      pageId: 'tracking',
-    });
+    await userEvent.press(await drawn.findByText('Edit profile'));
+    await userEvent.press(drawn.getByText('Security'));
+    await userEvent.press(drawn.getByText('Devices'));
+    await userEvent.press(drawn.getByText('History'));
+    await userEvent.press(drawn.getByText('Hidden'));
+    await userEvent.press(drawn.getByText('Share links'));
+
+    expect(onOpen.mock.calls.map(([panel]) => panel)).toEqual([
+      'profile',
+      'security',
+      'devices',
+      'history',
+      'hidden',
+      'shares',
+    ]);
   });
 
-  it('goes back to the profile, and says why, when an administrator turns the plugin off', async () => {
-    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
-    const onShow = jest.fn();
+  it('offers the pages plugins add, and opens them by their plugin and page', async () => {
+    const onOpen = jest.fn();
+    const drawn = await theAccount({ onOpen });
 
-    jest
-      .mocked(fetchPluginSurface)
-      .mockResolvedValue(SurfaceSchema.parse({ blocks: [{ type: 'divider' }] }));
-    const drawn = await render(
-      <TheAccount
-        onOut={jest.fn()}
-        onElsewhere={jest.fn()}
-        shown="plugin:anilist:tracking"
-        onShow={onShow}
-      />,
-      { wrapper: CacheScope },
-    );
+    await userEvent.press(await drawn.findByText('Anime tracking'));
 
-    expect(drawn.toJSON()).not.toBeNull();
+    expect(onOpen).toHaveBeenCalledWith('plugin:anilist:tracking');
+  });
 
-    await waitFor(() => {
-      mockWithdrawn.tell({ pluginId: 'anilist', change: 'removed' });
+  it('signs out, or moves to a different server', async () => {
+    const onOut = jest.fn();
+    const onElsewhere = jest.fn();
+    const drawn = await theAccount({ onOut, onElsewhere });
 
-      expect(alert).toHaveBeenLastCalledWith('AniList was removed by an administrator.');
-    });
+    await userEvent.press(await drawn.findByText('Use a different server'));
+    await userEvent.press(drawn.getByText('Sign out'));
 
-    expect(onShow).toHaveBeenCalledWith('profile');
-    expect(alert).toHaveBeenCalledWith('AniList was removed by an administrator.');
+    expect(onElsewhere).toHaveBeenCalled();
+    expect(onOut).toHaveBeenCalled();
+  });
+
+  it('sets a display name so devtools can identify it', () => {
+    expect(TheAccount.displayName).toBe('TheAccount');
   });
 });

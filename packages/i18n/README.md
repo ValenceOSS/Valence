@@ -100,11 +100,11 @@ Log lines and webhook payloads stay in English. They use `.message` or `say`, ne
 ### Sentences with elements in them
 
 In `packages/screens`, a sentence whose gap holds an element, such as a link or a number that
-rolls, is drawn with `Sentence`:
+updates, is drawn with `Sentence`:
 
 ```tsx
-<Sentence words="common.doneOfTotal" fillings={{ done: <AnimatedBytes bytes={done} />, total }} />
-<Sentence counted="common.count.items" count={n} fillings={{ count: <AnimatedNumber value={n} /> }} />
+<Sentence words="common.doneOfTotal" fillings={{ done: <FormattedBytes bytes={done} />, total }} />
+<Sentence counted="common.count.items" count={n} fillings={{ count: <FormattedNumber value={n} /> }} />
 ```
 
 The phone and TV clients map `sayParts` or `sayCountParts` into keyed fragments the same way.

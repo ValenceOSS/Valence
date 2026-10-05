@@ -1,5 +1,3 @@
-import { ORBITAL } from '@ValenceUI/orbs/variants/ORBITAL';
-import { MEADOW } from '@ValenceUI/orbs/variants/MEADOW';
 import { cn } from '@ValenceUI/cn';
 import { ACTING } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/ACTING';
 import { MockFace } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/MockFace/MockFace';
@@ -7,22 +5,19 @@ import { MockFace } from '@ValenceLanding/components/HomePage/components/Feature
 const FACES = [
   {
     name: 'Maya',
-    orb: ORBITAL,
-    tone: undefined,
+    tone: 'bg-accent',
     fan: 'acted:-translate-x-2 acted:-rotate-3',
     isPicked: false,
   },
   {
     name: 'Jonah',
-    orb: undefined,
     tone: 'bg-success',
     fan: 'acted:-translate-x-1 acted:-translate-y-2',
     isPicked: true,
   },
-  { name: 'Ruth', orb: MEADOW, tone: undefined, fan: 'acted:translate-x-1', isPicked: false },
+  { name: 'Ruth', tone: 'bg-busy', fan: 'acted:translate-x-1', isPicked: false },
   {
     name: 'Kids',
-    orb: undefined,
     tone: 'bg-danger',
     fan: 'acted:translate-x-2 acted:rotate-3',
     isPicked: false,
@@ -53,12 +48,7 @@ const HouseholdVignette = () => (
               face.isPicked ? 'delay-200 acted:scale-110 acted:ring-2' : '',
             )}
           >
-            <MockFace
-              name={face.name}
-              {...(face.orb === undefined ? {} : { orb: face.orb })}
-              {...(face.tone === undefined ? {} : { tone: face.tone })}
-              className="size-12 text-lg shadow-lg"
-            />
+            <MockFace name={face.name} tone={face.tone} className="size-12 text-lg shadow-lg" />
           </span>
           <span className="text-xs text-text">{face.name}</span>
         </span>

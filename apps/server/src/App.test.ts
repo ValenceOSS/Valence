@@ -69,6 +69,33 @@ describe('createApp', () => {
     expect(await response.json()).toMatchObject({ status: 'ok', transcoderReachable: true });
   });
 
+  it('answers within a second, as degraded, while the media service is slow to reply', async () => {
+    const { auth, settings } = createMemoryAuth();
+    const slow = createApp({
+      auth,
+      settings,
+      countUsers: () => Promise.resolve(1),
+      promoteToAdmin: () => Promise.resolve(null),
+      library: createMemoryLibraryService(),
+      subtitles: createMemorySubtitleService(),
+      segments: createMemorySegmentService(),
+      progress: createMemoryWatchProgressService(),
+      favourites: createMemoryFavouriteService(),
+      ratings: createMemoryRatingService(),
+      playback: createMemoryPlaybackService(),
+      isTranscoderReachable: () => new Promise<boolean>(() => {}),
+    });
+    const started = performance.now();
+
+    const response = await slow.request('/api/health');
+
+    expect(performance.now() - started).toBeLessThan(2000);
+    expect(await response.json()).toMatchObject({
+      status: 'degraded',
+      transcoderReachable: false,
+    });
+  });
+
   it('serves an OpenAPI 3.1 document', async () => {
     const response = await app.request('/api/openapi.json');
     const body = await response.json();

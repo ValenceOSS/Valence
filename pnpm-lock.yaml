@@ -7,7 +7,7 @@ settings:
 overrides:
   better-sqlite3: 13.0.3
 
-packageExtensionsChecksum: sha256-YehLCjWGKHJqaLm7QyryINTNuccSVKtZUOVF+zfb5yU=
+packageExtensionsChecksum: sha256-daeow0RbvsNSfXgFeWt5IjB1z9nAowZ5ANJJJUWas+8=
 
 importers:
 
@@ -409,7 +409,7 @@ importers:
     devDependencies:
       '@react-native/jest-preset':
         specifier: 0.88.0-rc.1
-        version: 0.88.0-rc.1(@babel/core@7.29.7)(react@19.3.0)
+        version: 0.88.0-rc.1(@babel/core@7.29.7)(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0)
       '@testing-library/react-native':
         specifier: 14.0.1
         version: 14.0.1(jest@30.5.2(@types/node@24.13.4))(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0)(test-renderer@1.3.0(@types/react@19.2.18)(react@19.3.0))
@@ -424,7 +424,7 @@ importers:
         version: 30.5.2(@types/node@24.13.4)
       jest-expo:
         specifier: 58.0.3
-        version: 58.0.3(@babel/core@7.29.7)(@react-native/jest-preset@0.88.0-rc.1(@babel/core@7.29.7)(react@19.3.0))(expo@58.0.0-preview.7)(jest@30.5.2(@types/node@24.13.4))(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0)
+        version: 58.0.3(@babel/core@7.29.7)(@react-native/jest-preset@0.88.0-rc.1(@babel/core@7.29.7)(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0))(expo@58.0.0-preview.7)(jest@30.5.2(@types/node@24.13.4))(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0)
       react-test-renderer:
         specifier: 19.3.0
         version: 19.3.0(react@19.3.0)
@@ -715,7 +715,7 @@ importers:
         version: 19.2.3
       react-native:
         specifier: npm:react-native-tvos@0.86.3-0
-        version: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
+        version: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
       react-native-svg:
         specifier: 15.15.4
         version: 15.15.4(react-native-tvos@0.86.3-0)(react@19.2.3)
@@ -746,7 +746,7 @@ importers:
         version: 30.5.2(@types/node@24.13.4)
       jest-expo:
         specifier: 57.0.5
-        version: 57.0.5(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(expo@57.0.24)(jest@30.5.2(@types/node@24.13.4))(react-native-tvos@0.86.3-0)(react@19.2.3)
+        version: 57.0.5(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(expo@57.0.24)(jest@30.5.2(@types/node@24.13.4))(react-native-tvos@0.86.3-0)(react@19.2.3)
       react-test-renderer:
         specifier: 19.2.3
         version: 19.2.3(react@19.2.3)
@@ -1132,9 +1132,6 @@ importers:
       '@keyline-icons/react':
         specifier: 1.0.0
         version: 1.0.0(react@19.3.0)
-      '@number-flow/react':
-        specifier: 0.6.2
-        version: 0.6.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@radix-ui/react-avatar':
         specifier: 1.2.6
         version: 1.2.6(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -3590,12 +3587,6 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@number-flow/react@0.6.2':
-    resolution: {integrity: sha512-WjZuV4aA+vhRCgCF+adGLgFVVAJ8vdvq6EchRT2FiBIgElTXtDOA3YgkcMr9UHpvpS9v4H70AB5wZv0D9jc3QA==}
-    peerDependencies:
-      react: ^18 || ^19
-      react-dom: ^18 || ^19
-
   '@opentelemetry/api@1.9.0':
     resolution: {integrity: sha512-3giAOQvZiH5F9bMlMiv8+GSPMeqg0dbaeo58/0SlA9sxSqZhnUtxzX9/2FzyhS9sWQf5S0GJE0AKBrFqjpeYcg==}
     engines: {node: '>=8.0.0'}
@@ -4691,12 +4682,14 @@ packages:
     engines: {node: '>= 20.19.4'}
     peerDependencies:
       react: ^19.2.3
+      react-native: '*'
 
   '@react-native/jest-preset@0.88.0-rc.1':
     resolution: {integrity: sha512-Ncz2WOHgOISWhrNISW2yvCVWJe4HilnhoaFVLAuucOsVxYv7SWMMtlkBEbmagNJpks9BAaDElsvGdp8elJG1bg==}
     engines: {node: '>= 22.13.0'}
     peerDependencies:
       react: ^19.2.3
+      react-native: '*'
 
   '@react-native/js-polyfills@0.86.3':
     resolution: {integrity: sha512-eYIJ0es967+tePBFQDnl/gidVFxLns3fnbiK6rxscQrGodvuUO6hwxpQnfNynJ8MjbbndImXihXjcnJdc7SzJg==}
@@ -7511,9 +7504,6 @@ packages:
     engines: {node: '>=6.0'}
     hasBin: true
 
-  esm-env@1.2.2:
-    resolution: {integrity: sha512-Epxrv+Nr/CaL4ZcFGPJIYLWFom+YeV1DqMLHJoEd9SYRxNbaFruBwfEX/kkHUJf55j2+TUbmDcmuilbP1TmXHA==}
-
   esprima@4.0.1:
     resolution: {integrity: sha512-eGuFFw7Upda+g4p+QHvnW0RyTX/SVeJBDM/gCtMARO0cLuT2HcEKnTPvhjV6aGeqrCB/sbNop0Kszm0jsaWU4A==}
     engines: {node: '>=4'}
@@ -9814,9 +9804,6 @@ packages:
 
   nullthrows@1.1.1:
     resolution: {integrity: sha512-2vPPEi+Z7WqML2jZYddDIfy5Dqb0r2fze2zTxNNknZaFpVHU3mFB3R+DWeJWGVx0ecvttSGlJTI+WG+8Z4cDWw==}
-
-  number-flow@0.6.2:
-    resolution: {integrity: sha512-MCnImG4Q5vPwhSXnov56nOuyyKn6LC+Qd7II1UiKc+ACRtug5iAtn0+CwXNxM38AC5lSowEY+oYEtZX2qMnUyw==}
 
   nwsapi@2.2.28:
     resolution: {integrity: sha512-IlVB7OS7qrOsVYlpnFIkETjMwT9jwvmocJmmM+GZU/PAB3uGi9Ezd7vcWhWBUnSc0ya4ppmQITOyP1ez9gg8cg==}
@@ -13245,7 +13232,7 @@ snapshots:
       ws: 8.21.3
       zod: 3.25.76
     optionalDependencies:
-      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
+      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
     transitivePeerDependencies:
       - '@expo/dom-webview'
       - '@expo/metro-runtime'
@@ -13428,7 +13415,7 @@ snapshots:
       chalk: 4.1.2
     optionalDependencies:
       react: 19.2.3
-      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
+      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
 
   '@expo/devtools@58.0.1(expo@58.0.0-preview.7)(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0)':
     dependencies:
@@ -13442,7 +13429,7 @@ snapshots:
     dependencies:
       expo: 57.0.24(@babel/core@7.29.7)(@expo/dom-webview@57.0.1)(react-dom@19.3.0(react@19.2.3))(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@7.0.2)
       react: 19.2.3
-      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
+      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
 
   '@expo/dom-webview@57.0.1(expo@58.0.0-preview.7)(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0)':
     dependencies:
@@ -13576,7 +13563,7 @@ snapshots:
       anser: 1.4.10
       expo: 57.0.24(@babel/core@7.29.7)(@expo/dom-webview@57.0.1)(react-dom@19.3.0(react@19.2.3))(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@7.0.2)
       react: 19.2.3
-      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
+      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
       stacktrace-parser: 0.1.11
 
   '@expo/log-box@58.0.5(@expo/dom-webview@57.0.1)(expo@58.0.0-preview.7)(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0)':
@@ -14393,7 +14380,7 @@ snapshots:
   '@keyline-icons/react-native@1.1.0(react-native-svg@15.15.4(react-native-tvos@0.86.3-0)(react@19.2.3))(react-native-tvos@0.86.3-0)(react@19.2.3)':
     dependencies:
       react: 19.2.3
-      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
+      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
       react-native-svg: 15.15.4(react-native-tvos@0.86.3-0)(react@19.2.3)
 
   '@keyline-icons/react-native@1.1.0(react-native-svg@15.15.5(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0)':
@@ -14552,13 +14539,6 @@ snapshots:
 
   '@noxcturnal/noxcturnal-win32-x64-msvc@0.1.1':
     optional: true
-
-  '@number-flow/react@0.6.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
-    dependencies:
-      esm-env: 1.2.2
-      number-flow: 0.6.2
-      react: 19.3.0
-      react-dom: 19.3.0(react@19.3.0)
 
   '@opentelemetry/api@1.9.0': {}
 
@@ -15377,7 +15357,7 @@ snapshots:
   '@react-native-community/netinfo@12.0.1(react-native-tvos@0.86.3-0)(react@19.2.3)':
     dependencies:
       react: 19.2.3
-      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
+      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
 
   '@react-native-tvos/config-tv@0.1.6(expo@57.0.24)':
     dependencies:
@@ -15390,7 +15370,7 @@ snapshots:
       invariant: 2.2.4
       nullthrows: 1.1.1
       react: 19.2.3
-      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
+      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
     optionalDependencies:
       '@types/react': 19.2.18
 
@@ -15578,25 +15558,27 @@ snapshots:
 
   '@react-native/gradle-plugin@0.88.0-rc.1': {}
 
-  '@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3)':
+  '@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react-native-tvos@0.86.3-0)(react@19.2.3)':
     dependencies:
       '@jest/create-cache-key-function': 29.7.0
       '@react-native/js-polyfills': 0.86.3
       babel-jest: 29.7.0(@babel/core@7.29.7)
       jest-environment-node: 29.7.0
       react: 19.2.3
+      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
       regenerator-runtime: 0.13.11
     transitivePeerDependencies:
       - '@babel/core'
       - supports-color
 
-  '@react-native/jest-preset@0.88.0-rc.1(@babel/core@7.29.7)(react@19.3.0)':
+  '@react-native/jest-preset@0.88.0-rc.1(@babel/core@7.29.7)(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0)':
     dependencies:
       '@jest/create-cache-key-function': 29.7.0
       '@react-native/js-polyfills': 0.88.0-rc.1
       babel-jest: 29.7.0(@babel/core@7.29.7)
       jest-environment-node: 29.7.0
       react: 19.3.0
+      react-native: 0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0)
       regenerator-runtime: 0.13.11
     transitivePeerDependencies:
       - '@babel/core'
@@ -16436,7 +16418,7 @@ snapshots:
       picocolors: 1.1.1
       pretty-format: 30.5.1
       react: 19.2.3
-      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
+      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
       redent: 3.0.0
       test-renderer: 1.3.0(@types/react@19.2.18)(react@19.2.3)
     optionalDependencies:
@@ -18547,8 +18529,6 @@ snapshots:
     optionalDependencies:
       source-map: 0.6.1
 
-  esm-env@1.2.2: {}
-
   esprima@4.0.1: {}
 
   estraverse@5.3.0: {}
@@ -18641,7 +18621,7 @@ snapshots:
       expo: 57.0.24(@babel/core@7.29.7)(@expo/dom-webview@57.0.1)(react-dom@19.3.0(react@19.2.3))(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@7.0.2)
       expo-constants: 57.0.19(expo@57.0.24)(react-native-tvos@0.86.3-0)
       react: 19.2.3
-      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
+      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -18652,7 +18632,7 @@ snapshots:
       expo: 57.0.24(@babel/core@7.29.7)(@expo/dom-webview@57.0.1)(react-dom@19.3.0(react@19.2.3))(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@7.0.2)
       expo-constants: 58.0.7(expo@57.0.24)(react-native-tvos@0.86.3-0)(typescript@7.0.2)
       react: 19.2.3
-      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
+      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -18673,7 +18653,7 @@ snapshots:
       expo: 57.0.24(@babel/core@7.29.7)(@expo/dom-webview@57.0.1)(react-dom@19.3.0(react@19.2.3))(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@7.0.2)
       expo-asset: 58.0.7(expo@57.0.24)(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@7.0.2)
       react: 19.2.3
-      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
+      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
 
   expo-build-properties@58.0.7(expo@58.0.0-preview.7):
     dependencies:
@@ -18686,7 +18666,7 @@ snapshots:
     dependencies:
       '@expo/env': 2.4.3
       expo: 57.0.24(@babel/core@7.29.7)(@expo/dom-webview@57.0.1)(react-dom@19.3.0(react@19.2.3))(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@7.0.2)
-      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
+      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
     transitivePeerDependencies:
       - supports-color
 
@@ -18695,7 +18675,7 @@ snapshots:
       '@expo/env': 2.5.0
       '@expo/require-utils': 58.0.1(typescript@7.0.2)
       expo: 57.0.24(@babel/core@7.29.7)(@expo/dom-webview@57.0.1)(react-dom@19.3.0(react@19.2.3))(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@7.0.2)
-      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
+      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -18726,7 +18706,7 @@ snapshots:
   expo-file-system@57.0.7(expo@57.0.24)(react-native-tvos@0.86.3-0):
     dependencies:
       expo: 57.0.24(@babel/core@7.29.7)(@expo/dom-webview@57.0.1)(react-dom@19.3.0(react@19.2.3))(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@7.0.2)
-      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
+      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
 
   expo-file-system@58.0.2(expo@58.0.0-preview.7)(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0)):
     dependencies:
@@ -18738,7 +18718,7 @@ snapshots:
       expo: 57.0.24(@babel/core@7.29.7)(@expo/dom-webview@57.0.1)(react-dom@19.3.0(react@19.2.3))(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@7.0.2)
       fontfaceobserver: 2.3.0
       react: 19.2.3
-      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
+      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
 
   expo-font@58.0.2(expo@58.0.0-preview.7)(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0):
     dependencies:
@@ -18759,7 +18739,7 @@ snapshots:
     dependencies:
       expo: 57.0.24(@babel/core@7.29.7)(@expo/dom-webview@57.0.1)(react-dom@19.3.0(react@19.2.3))(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@7.0.2)
       react: 19.2.3
-      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
+      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
       sf-symbols-typescript: 2.2.0
 
   expo-image@58.0.6(expo@58.0.0-preview.7)(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0):
@@ -18783,7 +18763,7 @@ snapshots:
     dependencies:
       expo: 57.0.24(@babel/core@7.29.7)(@expo/dom-webview@57.0.1)(react-dom@19.3.0(react@19.2.3))(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@7.0.2)
       react: 19.2.3
-      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
+      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
 
   expo-modules-autolinking@57.0.13(typescript@7.0.2):
     dependencies:
@@ -18811,7 +18791,7 @@ snapshots:
       expo-modules-jsi: 57.1.0(react-native-tvos@0.86.3-0)
       invariant: 2.2.4
       react: 19.2.3
-      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
+      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
 
   expo-modules-core@58.0.7(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0):
     dependencies:
@@ -18823,7 +18803,7 @@ snapshots:
 
   expo-modules-jsi@57.1.0(react-native-tvos@0.86.3-0):
     dependencies:
-      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
+      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
 
   expo-modules-jsi@58.0.4(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0)):
     dependencies:
@@ -18857,7 +18837,7 @@ snapshots:
     dependencies:
       expo: 57.0.24(@babel/core@7.29.7)(@expo/dom-webview@57.0.1)(react-dom@19.3.0(react@19.2.3))(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@7.0.2)
       react: 19.2.3
-      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
+      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
 
   expo-video@58.0.3(expo@58.0.0-preview.7)(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0):
     dependencies:
@@ -18888,7 +18868,7 @@ snapshots:
       expo-modules-core: 57.0.18(react-native-tvos@0.86.3-0)(react@19.2.3)
       pretty-format: 29.7.0
       react: 19.2.3
-      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
+      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
       react-refresh: 0.14.2
       whatwg-url-minimum: 0.1.2
     optionalDependencies:
@@ -19930,11 +19910,11 @@ snapshots:
       jest-util: 30.5.1
       jest-validate: 30.5.1
 
-  jest-expo@57.0.5(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(expo@57.0.24)(jest@30.5.2(@types/node@24.13.4))(react-native-tvos@0.86.3-0)(react@19.2.3):
+  jest-expo@57.0.5(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(expo@57.0.24)(jest@30.5.2(@types/node@24.13.4))(react-native-tvos@0.86.3-0)(react@19.2.3):
     dependencies:
       '@jest/create-cache-key-function': 29.7.0
       '@jest/globals': 29.7.0
-      '@react-native/jest-preset': 0.86.3(@babel/core@7.29.7)(react@19.2.3)
+      '@react-native/jest-preset': 0.86.3(@babel/core@7.29.7)(react-native-tvos@0.86.3-0)(react@19.2.3)
       babel-jest: 29.7.0(@babel/core@7.29.7)
       jest-environment-jsdom: 29.7.0
       jest-snapshot: 29.7.0
@@ -19942,7 +19922,7 @@ snapshots:
       jest-watch-typeahead: 2.2.1(jest@30.5.2(@types/node@24.13.4))
       json5: 2.2.3
       lodash: 4.18.1
-      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
+      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
       react-test-renderer: 19.2.3(react@19.2.3)
       server-only: 0.0.1
       stacktrace-js: 2.0.2
@@ -19957,11 +19937,11 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  jest-expo@58.0.3(@babel/core@7.29.7)(@react-native/jest-preset@0.88.0-rc.1(@babel/core@7.29.7)(react@19.3.0))(expo@58.0.0-preview.7)(jest@30.5.2(@types/node@24.13.4))(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0):
+  jest-expo@58.0.3(@babel/core@7.29.7)(@react-native/jest-preset@0.88.0-rc.1(@babel/core@7.29.7)(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0))(expo@58.0.0-preview.7)(jest@30.5.2(@types/node@24.13.4))(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0):
     dependencies:
       '@jest/create-cache-key-function': 29.7.0
       '@jest/globals': 29.7.0
-      '@react-native/jest-preset': 0.88.0-rc.1(@babel/core@7.29.7)(react@19.3.0)
+      '@react-native/jest-preset': 0.88.0-rc.1(@babel/core@7.29.7)(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0)
       babel-jest: 29.7.0(@babel/core@7.29.7)
       jest-environment-jsdom: 29.7.0
       jest-snapshot: 29.7.0
@@ -21863,10 +21843,6 @@ snapshots:
 
   nullthrows@1.1.1: {}
 
-  number-flow@0.6.2:
-    dependencies:
-      esm-env: 1.2.2
-
   nwsapi@2.2.28: {}
 
   ob1@0.84.5:
@@ -22362,7 +22338,7 @@ snapshots:
       css-select: 5.2.2
       css-tree: 1.1.3
       react: 19.2.3
-      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
+      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
       warn-once: 0.1.1
 
   react-native-svg@15.15.5(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0):
@@ -22372,7 +22348,7 @@ snapshots:
       react: 19.3.0
       react-native: 0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0)
 
-  react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3):
+  react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3):
     dependencies:
       '@react-native-tvos/virtualized-lists': 0.86.3-0(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
       '@react-native/assets-registry': 0.86.3
@@ -22398,7 +22374,7 @@ snapshots:
       promise: 8.3.0
       react: 19.2.3
       react-devtools-core: 6.1.5
-      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
+      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
       react-refresh: 0.14.2
       regenerator-runtime: 0.13.11
       scheduler: 0.27.0
@@ -22409,7 +22385,7 @@ snapshots:
       ws: 7.5.13
       yargs: 17.7.3
     optionalDependencies:
-      '@react-native/jest-preset': 0.86.3(@babel/core@7.29.7)(react@19.2.3)
+      '@react-native/jest-preset': 0.86.3(@babel/core@7.29.7)(react-native-tvos@0.86.3-0)(react@19.2.3)
       '@types/react': 19.2.18
     transitivePeerDependencies:
       - '@babel/core'

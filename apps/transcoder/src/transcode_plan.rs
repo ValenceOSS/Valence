@@ -59,6 +59,15 @@ impl HardwareAccel {
         }
     }
 
+    /// Whether this backend can run on a platform at all, so a machine is not
+    /// asked to prove one that has no pipeline there. `AMF` runs on Windows
+    /// only: on Linux AMD goes through `VAAPI`, and AMF there would need the
+    /// closed `amdgpu-pro` driver.
+    #[must_use]
+    pub fn runs_on(self, platform: Platform) -> bool {
+        !(self == Self::Amf && platform == Platform::Unix)
+    }
+
     /// The `-hwaccel` value `FFmpeg` expects, if any.
     #[must_use]
     pub fn ffmpeg_flag(self) -> Option<&'static str> {
@@ -5862,5 +5871,12 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
         let read: SessionSpec = serde_json::from_value(payload).expect("reads");
 
         assert_eq!(read.track, Track::Both);
+    }
+
+    #[test]
+    fn amf_runs_on_windows_only() {
+        assert!(HardwareAccel::Amf.runs_on(Platform::Windows));
+        assert!(!HardwareAccel::Amf.runs_on(Platform::Unix));
+        assert!(HardwareAccel::Vaapi.runs_on(Platform::Unix));
     }
 }

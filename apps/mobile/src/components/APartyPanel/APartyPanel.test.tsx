@@ -5,6 +5,7 @@ import { aPartyMember } from '@ValenceClient/testing/aPartyMember';
 import { aWatchParty } from '@ValenceClient/testing/aWatchParty';
 import { aWatchPartyStateWith } from '@ValenceClient/testing/aWatchPartyStateWith';
 import { Share } from 'react-native';
+import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { APartyPanel } from './APartyPanel';
 
 const HOSTING = aWatchParty({
@@ -37,6 +38,7 @@ describe('APartyPanel', () => {
         people={[]}
         onClose={jest.fn()}
       />,
+      { wrapper: CacheScope },
     );
 
     await userEvent.press(drawn.getByLabelText('Start a watch party'));
@@ -53,6 +55,7 @@ describe('APartyPanel', () => {
         people={[]}
         onClose={jest.fn()}
       />,
+      { wrapper: CacheScope },
     );
 
     expect(drawn.getByText('Sam (you)')).toBeTruthy();
@@ -70,6 +73,7 @@ describe('APartyPanel', () => {
         people={[]}
         onClose={jest.fn()}
       />,
+      { wrapper: CacheScope },
     );
 
     await userEvent.press(drawn.getByText('Make co-host'));
@@ -95,6 +99,7 @@ describe('APartyPanel', () => {
         ]}
         onClose={jest.fn()}
       />,
+      { wrapper: CacheScope },
     );
 
     await userEvent.press(drawn.getByLabelText('Share invite link'));
@@ -119,6 +124,7 @@ describe('APartyPanel', () => {
         people={[]}
         onClose={jest.fn()}
       />,
+      { wrapper: CacheScope },
     );
 
     await userEvent.type(drawn.getByLabelText('Watch party password'), 'popcorn');
@@ -138,6 +144,7 @@ describe('APartyPanel', () => {
         people={[]}
         onClose={onClose}
       />,
+      { wrapper: CacheScope },
     );
 
     await userEvent.press(drawn.getByLabelText('Leave'));
@@ -156,6 +163,7 @@ describe('APartyPanel', () => {
         people={[]}
         onClose={jest.fn()}
       />,
+      { wrapper: CacheScope },
     );
 
     expect(
@@ -172,6 +180,7 @@ describe('APartyPanel', () => {
         people={[]}
         onClose={jest.fn()}
       />,
+      { wrapper: CacheScope },
     );
 
     await userEvent.press(playing.getByLabelText('Start a listening party'));
@@ -193,6 +202,7 @@ describe('APartyPanel', () => {
         people={[]}
         onClose={jest.fn()}
       />,
+      { wrapper: CacheScope },
     );
 
     expect(drawn.getByText('1 listening')).toBeTruthy();
@@ -213,6 +223,7 @@ describe('APartyPanel', () => {
         people={[]}
         onClose={jest.fn()}
       />,
+      { wrapper: CacheScope },
     );
 
     expect(drawn.getByText('You’re in a watch party')).toBeTruthy();
@@ -231,6 +242,7 @@ describe('APartyPanel', () => {
         people={[]}
         onClose={jest.fn()}
       />,
+      { wrapper: CacheScope },
     );
 
     await fireEvent(drawn.getByLabelText('Watch party password'), 'submitEditing');

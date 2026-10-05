@@ -76,7 +76,7 @@ const createMemoryAuth = (
 
   const settings = createMemorySettingsStore({
     trustedOrigins: env.TRUSTED_ORIGINS,
-    cookieSecure: env.COOKIE_SECURE,
+    cookieSecure: env.COOKIE_SECURE ?? false,
     setupCompletedAt: null,
     setupFlow: 'finished',
     catalogueApiKey: '',
@@ -110,7 +110,7 @@ const createMemoryAuth = (
     env,
     database: memoryAdapter(store),
     settings,
-    cookieSecure: env.COOKIE_SECURE,
+    cookieSecure: env.COOKIE_SECURE ?? false,
     onUserCreated: (userId) => {
       profiles.push(userId);
 

@@ -5,7 +5,6 @@ import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { useMyPlaylists } from '@ValenceClient/music/useMyPlaylists';
 import { musicMenuFor } from '@ValenceScreens/music/musicMenuFor';
-import { RevealItem } from '@ValenceUI/RevealItem';
 import { MusicShelf } from '@ValenceScreens/components/MusicShelf/MusicShelf';
 import type { PlaylistSummary } from '@ValenceContracts/schemas/Playlist';
 import type { PlaylistShelfProps } from './PlaylistShelf.types';
@@ -56,51 +55,53 @@ const PlaylistShelf = ({
   }
 
   return (
-    <MusicShelf heading={heading} layout={layout} action={action}>
-      {leading === undefined ? null : (
-        <RevealItem index={0}>
-          <MusicTile {...leading} />
-        </RevealItem>
-      )}
-      {playlists.map((playlist, at) => (
-        <RevealItem key={playlist.id} index={at + (leading === undefined ? 0 : 1)}>
-          <MusicTile
-            title={playlist.name}
-            detail={describePlaylist(playlist)}
-            artwork={
-              <PlaylistCover
-                name={playlist.name}
-                albumIds={playlist.artworkAlbumIds}
-                artwork={playlistArtworkUrl(playlist)}
-                className="w-full"
-              />
-            }
-            onOpen={() => {
-              open({ kind: 'playlist', id: playlist.id });
-            }}
-            menu={musicMenuFor(
-              { kind: 'playlist', id: playlist.id },
-              playlist.name,
-              player,
-              open,
-              addingTo,
-            )}
-            onPlay={() => {
-              void fetchPlaylist(playlist.id).then((read) => {
-                const tracks = read.entries.flatMap((entry) =>
-                  entry.item === null || entry.item.track === null ? [] : [entry.item.track],
-                );
+    <MusicShelf
+      heading={heading}
+      layout={layout}
+      action={action}
+      tiles={[
+        ...(leading === undefined ? [] : [{ key: 'leading', tile: <MusicTile {...leading} /> }]),
+        ...playlists.map((playlist) => ({
+          key: playlist.id,
+          tile: (
+            <MusicTile
+              title={playlist.name}
+              detail={describePlaylist(playlist)}
+              artwork={
+                <PlaylistCover
+                  name={playlist.name}
+                  albumIds={playlist.artworkAlbumIds}
+                  artwork={playlistArtworkUrl(playlist)}
+                  className="w-full"
+                />
+              }
+              onOpen={() => {
+                open({ kind: 'playlist', id: playlist.id });
+              }}
+              menu={musicMenuFor(
+                { kind: 'playlist', id: playlist.id },
+                playlist.name,
+                player,
+                open,
+                addingTo,
+              )}
+              onPlay={() => {
+                void fetchPlaylist(playlist.id).then((read) => {
+                  const tracks = read.entries.flatMap((entry) =>
+                    entry.item === null || entry.item.track === null ? [] : [entry.item.track],
+                  );
 
-                player.play(tracks, 0, {
-                  source: { kind: 'playlist', id: playlist.id, name: playlist.name },
-                  isOrdered: playlist.isOrdered,
+                  player.play(tracks, 0, {
+                    source: { kind: 'playlist', id: playlist.id, name: playlist.name },
+                    isOrdered: playlist.isOrdered,
+                  });
                 });
-              });
-            }}
-          />
-        </RevealItem>
-      ))}
-    </MusicShelf>
+              }}
+            />
+          ),
+        })),
+      ]}
+    />
   );
 };
 

@@ -1,5 +1,5 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
-import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Icon } from '@ValenceUI/Icon';
 import { X as XIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
@@ -118,7 +118,7 @@ const StreamStats = ({
               label: say('common.bitrate'),
               value:
                 delivered === null || delivered.bitrateKbps === null ? null : (
-                  <AnimatedNumber value={delivered.bitrateKbps} suffix=" kbps" />
+                  <FormattedNumber value={delivered.bitrateKbps} suffix=" kbps" />
                 ),
             },
             { label: say('common.position'), value: formatDuration(health.positionSeconds) },
@@ -248,8 +248,8 @@ const StreamStats = ({
               value={
                 health.droppedFrames === null || health.decodedFrames === null ? null : (
                   <>
-                    <AnimatedNumber value={health.droppedFrames} /> /{' '}
-                    <AnimatedNumber value={health.decodedFrames} />
+                    <FormattedNumber value={health.droppedFrames} /> /{' '}
+                    <FormattedNumber value={health.decodedFrames} />
                   </>
                 )
               }
@@ -284,7 +284,7 @@ const StreamStats = ({
 
         {party === undefined ? null : (
           <StatsCard name="Watch party">
-            <StatsFact name="Watching" value={<AnimatedNumber value={party.members} />} />
+            <StatsFact name="Watching" value={<FormattedNumber value={party.members} />} />
             <StatsFact
               name="Room"
               value={party.isHeld ? 'held' : party.isPlaying ? 'playing' : 'paused'}
@@ -311,7 +311,7 @@ const StreamStats = ({
             />
             <StatsFact
               name="Clock jitter"
-              value={<AnimatedNumber value={Math.round(party.jitterMs)} suffix="ms" />}
+              value={<FormattedNumber value={Math.round(party.jitterMs)} suffix="ms" />}
             />
           </StatsCard>
         )}

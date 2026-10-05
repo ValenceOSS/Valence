@@ -29,12 +29,7 @@ type TheLibraryProps = {
     onScrolled: (isScrolled: boolean) => void,
     searchingFor: string,
   ) => ReactNode;
-  accountPage?: (
-    header: ReactNode,
-    onScrolled: (isScrolled: boolean) => void,
-    shown: string,
-    onShow: (panel: string) => void,
-  ) => ReactNode;
+  accountPage?: (header: ReactNode, onScrolled: (isScrolled: boolean) => void) => ReactNode;
 };
 
 export type { TheLibraryProps };

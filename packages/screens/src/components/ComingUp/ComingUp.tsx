@@ -40,7 +40,7 @@ const ComingUp = ({ onOpenShow }: ComingUpProps) => {
               episodeNumber: episode.episodeNumber.toString(),
               airDate: describeAirDate(episode.airDate, today),
             })}
-            imageUrl={artworkUrl(show.coverMediaId, 'poster')}
+            imageUrl={artworkUrl(show.coverMediaId, 'poster', { size: 'small' })}
             onSelect={() => {
               onOpenShow(show.seriesId ?? show.id);
             }}

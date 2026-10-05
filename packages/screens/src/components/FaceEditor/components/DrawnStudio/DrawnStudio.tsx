@@ -1,19 +1,11 @@
 import { Shuffle as ShuffleIcon } from '@keyline-icons/react';
+import { AVATAR_STYLE_NAMES } from '@ValenceClient/profiles/AVATAR_STYLE_NAMES';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
 import { AVATAR_STYLES } from '@ValenceContracts/schemas/ViewerProfile';
 import type { DrawnStudioProps } from './DrawnStudio.types';
 import { say } from '@ValenceI18n/say';
-
-const STYLE_NAMES: Record<(typeof AVATAR_STYLES)[number], string> = {
-  adventurer: say('screens.faceEditor.drawnStudio.adventurer'),
-  lorelei: say('screens.faceEditor.drawnStudio.lorelei'),
-  notionists: say('screens.faceEditor.drawnStudio.notionists'),
-  bottts: say('screens.faceEditor.drawnStudio.bottts'),
-  funEmoji: say('screens.faceEditor.drawnStudio.funEmoji'),
-  thumbs: say('screens.faceEditor.drawnStudio.thumbs'),
-};
 
 /**
  * A drawn face: which style it is drawn in, and a shuffle that draws a different face in that
@@ -36,7 +28,7 @@ const DrawnStudio = ({ style, seed, onChange }: DrawnStudioProps) => (
             variant="bare"
             size="none"
             label={say('screens.faceEditor.drawnStudio.drawItInTheSTYLENAMES', {
-              STYLE_NAMES: STYLE_NAMES[one],
+              STYLE_NAMES: AVATAR_STYLE_NAMES[one],
             })}
             hasTooltip={false}
             isActive={one === style}
@@ -55,7 +47,7 @@ const DrawnStudio = ({ style, seed, onChange }: DrawnStudioProps) => (
               )}
             />
             <span className={cn('text-[0.7rem]', one === style ? 'text-text' : 'text-text-muted')}>
-              {STYLE_NAMES[one]}
+              {AVATAR_STYLE_NAMES[one]}
             </span>
           </Button>
         ))}

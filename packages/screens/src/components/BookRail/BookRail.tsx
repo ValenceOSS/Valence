@@ -6,7 +6,7 @@ import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { BookRow } from '@ValenceScreens/components/BookRow/BookRow';
 import { SeriesDialog } from '@ValenceScreens/components/SeriesDialog/SeriesDialog';
-import type { BookSeries } from '@ValenceScreens/reading/gatherSeries';
+import type { BookSeries } from '@ValenceClient/books/gatherSeries';
 import type { BookRailProps } from './BookRail.types';
 import { say } from '@ValenceI18n/say';
 

@@ -14,6 +14,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import type { AShareSheetProps } from './AShareSheet.types';
 import { say } from '@ValenceI18n/say';
+import { AChoiceMenu } from '@ValenceMobile/components/AChoiceMenu/AChoiceMenu';
 
 const WHAT = [
   { id: 'item', label: say('common.justThisEpisode') },
@@ -111,7 +112,7 @@ const AShareSheet = ({ subject, onClose }: AShareSheetProps) => {
 
           <View style={styles.choice}>
             <Words size="heading">{say('common.lasts')}</Words>
-            <SegmentedRow
+            <AChoiceMenu
               label={say('common.linkWorksFor')}
               items={SHARE_LASTS}
               value={lasts}
@@ -121,7 +122,7 @@ const AShareSheet = ({ subject, onClose }: AShareSheetProps) => {
 
           <View style={styles.choice}>
             <Words size="heading">{say('phone.aShareSheet.whoCanOpenIt')}</Words>
-            <SegmentedRow
+            <AChoiceMenu
               label={say('phone.aShareSheet.howManyPeopleCanOpenIt')}
               items={SHARE_CAPS}
               value={cap}

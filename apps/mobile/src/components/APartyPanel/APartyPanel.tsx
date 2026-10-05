@@ -1,5 +1,6 @@
 import { Share, StyleSheet, Text, View } from 'react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { APanelButton } from '@ValenceMobile/components/APanelButton/APanelButton';
@@ -7,6 +8,11 @@ import { TextField } from '@ValenceMobile/components/TextField/TextField';
 import { Toggle } from '@ValenceMobile/components/Toggle/Toggle';
 import { SIDE_PANEL } from '@ValenceMobile/components/ASidePanel/SIDE_PANEL';
 import { ASidePanel } from '@ValenceMobile/components/ASidePanel/ASidePanel';
+import { ASharedTimeline } from '@ValenceMobile/components/ASharedTimeline/ASharedTimeline';
+import { libraryQueries } from '@ValenceClient/query/libraryQueries';
+import { whereTheRoomIs } from '@ValenceCore/functions/whereTheRoomIs';
+import { formatDuration } from '@ValenceCore/functions/formatDuration';
+import { profileInitial } from '@ValenceContracts/schemas/ViewerProfile';
 import { describeDrift } from '@ValenceClient/party/describeDrift';
 import { invitationTo } from '@ValenceClient/party/invitationTo';
 import { listeningInvitationTo } from '@ValenceClient/party/listeningInvitationTo';
@@ -55,6 +61,19 @@ const APartyPanel = ({ kind, watchParty, mediaId, people, onClose }: APartyPanel
   const [asked, setAsked] = useState<readonly string[]>([]);
   const { meConnectionId, waitingFor, passwordWanted } = watchParty;
   const party = watchParty.party?.kind === kind ? watchParty.party : null;
+  const title = useQuery(libraryQueries.detail(kind === 'watch' ? (party?.mediaId ?? null) : null));
+  const durationSeconds = title.data?.durationSeconds ?? 0;
+  const [atMs, setAtMs] = useState(() => Date.now());
+
+  useEffect(() => {
+    const ticking = setInterval(() => {
+      setAtMs(Date.now());
+    }, 1000);
+
+    return () => {
+      clearInterval(ticking);
+    };
+  }, []);
   const words = PARTY_WORDS[kind];
   const panel = (children: ReactNode) => (
     <ASidePanel
@@ -166,6 +185,26 @@ const APartyPanel = ({ kind, watchParty, mediaId, people, onClose }: APartyPanel
               ? say('common.partyPanel.waitingForNameToCatchUp', { name: waitingFor[0] ?? '' })
               : sayCount('common.partyPanel.waitingForPeopleToCatchUp', waitingFor.length)}
           </Text>
+        )}
+
+        {timekeeper === undefined || durationSeconds <= 0 ? null : (
+          <ASharedTimeline
+            label={say('screens.partyPanel.whereEverybodyIs')}
+            durationSeconds={durationSeconds}
+            filledSeconds={whereTheRoomIs(timekeeper, atMs)}
+            elapsed={formatDuration(Math.min(whereTheRoomIs(timekeeper, atMs), durationSeconds))}
+            total={formatDuration(durationSeconds)}
+            people={party.members.map((member) => ({
+              id: member.connectionId,
+              atSeconds: whereTheRoomIs(member, atMs),
+              initial: profileInitial(member.name),
+              label: say('screens.partyPanel.nameAtPosition', {
+                name: member.name,
+                position: formatDuration(Math.min(whereTheRoomIs(member, atMs), durationSeconds)),
+              }),
+              isTimekeeper: member.connectionId === party.timekeeperId,
+            }))}
+          />
         )}
 
         {party.members.map((member) => {

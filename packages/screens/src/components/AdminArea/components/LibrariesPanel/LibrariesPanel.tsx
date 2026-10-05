@@ -18,7 +18,7 @@ import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { notify } from '@ValenceUI/notify';
 import { deleteLibrary } from '@ValenceClient/library/fetchLibrary';
-import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
 import { Button } from '@ValenceUI/Button';
@@ -137,7 +137,7 @@ const LibrariesPanel = ({
             <Sentence
               counted="common.count.items"
               count={row.original.itemCount}
-              fillings={{ count: <AnimatedNumber value={row.original.itemCount} /> }}
+              fillings={{ count: <FormattedNumber value={row.original.itemCount} /> }}
             />
           </span>
         ),

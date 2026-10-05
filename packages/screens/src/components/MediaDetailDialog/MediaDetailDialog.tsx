@@ -7,7 +7,6 @@ import {
   ChevronLeft as ChevronLeftIcon,
   Download as DownloadIcon,
   EyeOff as EyeOffIcon,
-  Film as FilmIcon,
   Info as InfoIcon,
   Layers as LayersIcon,
   Share as ShareIcon,
@@ -44,12 +43,10 @@ import { DialogHeadlinePart } from '@ValenceScreens/components/DialogHeadlinePar
 import { editionOptionsOf } from '@ValenceClient/library/editionOptionsOf';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useHasScrubPreviews } from '@ValenceScreens/playback/useHasScrubPreviews';
+import { useQuery } from '@tanstack/react-query';
 import { useHeldWhileLeaving } from '@ValenceClient/shell/useHeldWhileLeaving';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
-import { PreviewMomentPicker } from '@ValenceScreens/components/PreviewMomentPicker/PreviewMomentPicker';
 import { MediaPreview } from '@ValenceScreens/components/MediaPreview/MediaPreview';
 import { MediaFacts } from '@ValenceScreens/components/MediaFacts/MediaFacts';
 import { TitleBadges } from '@ValenceScreens/components/TitleBadges/TitleBadges';
@@ -132,11 +129,8 @@ const MediaDetailDialog = ({
   const { mark: pastTheArtwork, hasPassed: hasScrolledPast } = useHasScrolledPast();
   const [isDownloading, setIsDownloading] = useState(false);
   const [isWatchingTrailer, setIsWatchingTrailer] = useState(false);
-  const [isChoosingMoment, setIsChoosingMoment] = useState(false);
   const [isCollecting, setIsCollecting] = useState(false);
   const { may } = useWhatIMayDo();
-  const hasScrubPreviews = useHasScrubPreviews(media?.id ?? null, may('media.override'));
-  const cache = useQueryClient();
 
   const prepared = useQuery({ ...downloadQueries.all(), enabled: canKeepFiles() });
 
@@ -660,18 +654,6 @@ const MediaDetailDialog = ({
                   },
                 ]
               : []),
-            ...(may('media.override') && hasScrubPreviews
-              ? [
-                  {
-                    id: 'preview-moment',
-                    label: say('common.chooseThePreviewMoment'),
-                    icon: <Icon of={FilmIcon} size={18} />,
-                    onChoose: () => {
-                      setIsChoosingMoment(true);
-                    },
-                  },
-                ]
-              : []),
           ]}
         />
       </DialogFooter>
@@ -706,20 +688,6 @@ const MediaDetailDialog = ({
         title={shown.seriesTitle ?? shown.title}
         onClose={() => {
           setIsCollecting(false);
-        }}
-      />
-
-      <PreviewMomentPicker
-        mediaId={shown.id}
-        title={shown.title}
-        durationSeconds={detail?.durationSeconds ?? shown.durationSeconds}
-        current={detail?.previewMoment ?? null}
-        isOpen={isChoosingMoment}
-        onClose={() => {
-          setIsChoosingMoment(false);
-        }}
-        onChanged={() => {
-          void cache.invalidateQueries({ queryKey: libraryQueries.detail(shown.id).queryKey });
         }}
       />
     </Dialog>

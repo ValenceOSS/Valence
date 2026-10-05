@@ -283,7 +283,9 @@ const RailCard = ({
       : undefined;
 
   const restingUrl =
-    shape === 'poster' && media.hasPoster ? artworkUrl(media.id, 'poster') : wideUrl;
+    shape === 'poster' && media.hasPoster
+      ? artworkUrl(media.id, 'poster', { size: 'small' })
+      : wideUrl;
 
   return (
     <div

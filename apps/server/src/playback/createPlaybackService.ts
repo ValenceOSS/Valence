@@ -24,6 +24,7 @@ import type { PlaybackService } from './PlaybackService';
 import type {
   Transcoder,
   TranscoderCapabilities,
+  TranscoderStreamedFile,
 } from '@ValenceServer/transcoder/TranscoderClient';
 import { saying } from '@ValenceI18n/saying';
 
@@ -106,6 +107,11 @@ type CreatePlaybackServiceOptions = {
   trickplayUrlPrefix: string;
   forcedAccel?: () => Promise<string>;
   previewQuality?: () => Promise<PreviewQuality>;
+  readFromDisk?: (path: string, range: string | null) => Promise<TranscoderStreamedFile | null>;
+  readSessionFromDisk?: (
+    paths: readonly string[],
+    contentType: string,
+  ) => Promise<TranscoderStreamedFile | null>;
 };
 
 /**
@@ -127,6 +133,8 @@ const createPlaybackService = ({
   trickplayUrlPrefix,
   forcedAccel = () => Promise.resolve(''),
   previewQuality = (): Promise<PreviewQuality> => Promise.resolve('high'),
+  readFromDisk,
+  readSessionFromDisk,
 }: CreatePlaybackServiceOptions): PlaybackService => {
   let cached: TranscoderCapabilities | null = null;
 
@@ -280,7 +288,30 @@ const createPlaybackService = ({
       }
     },
 
-    readSessionFile: async (sessionId, name) => transcoder.readSessionFile(sessionId, name),
+    readSessionFile: async (sessionId, name) => {
+      if (readSessionFromDisk === undefined || transcoder.locateSessionFile === undefined) {
+        return transcoder.readSessionFile(sessionId, name);
+      }
+
+      const found = await transcoder.locateSessionFile(sessionId, name);
+
+      if (found === null) {
+        return null;
+      }
+
+      if (found.kind === 'bytes') {
+        return found.file;
+      }
+
+      if (found.kind === 'unlocatable') {
+        return transcoder.readSessionFile(sessionId, name);
+      }
+
+      return (
+        (await readSessionFromDisk(found.files, found.contentType)) ??
+        transcoder.readSessionFile(sessionId, name)
+      );
+    },
 
     readDirectFile: async (mediaId, range, renditionId = null) => {
       const found = await media.findForPlayback(mediaId);
@@ -289,13 +320,16 @@ const createPlaybackService = ({
         return null;
       }
 
-      if (renditionId === null) {
-        return transcoder.readFile(found.path, range);
+      const path =
+        renditionId === null
+          ? found.path
+          : found.renditions?.find((one) => one.id === renditionId)?.path;
+
+      if (path === undefined) {
+        return null;
       }
 
-      const kept = found.renditions?.find((one) => one.id === renditionId);
-
-      return kept === undefined ? null : transcoder.readFile(kept.path, range);
+      return (await readFromDisk?.(path, range)) ?? transcoder.readFile(path, range);
     },
 
     trickplay: async (mediaId) => {
@@ -388,6 +422,6 @@ const createPlaybackService = ({
   };
 };
 
-export type { MediaLookup };
+export type { CreatePlaybackServiceOptions, MediaLookup };
 
 export { createPlaybackService };

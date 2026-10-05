@@ -31,7 +31,7 @@ const PluginMedia = ({ mediaId }: PluginMediaProps) => {
     <MediaCard
       title={media.metadata.seriesTitle ?? media.title}
       subtitle={typeof media.year === 'number' ? media.year.toString() : ''}
-      imageUrl={artworkUrl(media.id, 'poster')}
+      imageUrl={artworkUrl(media.id, 'poster', { size: 'small' })}
       shape="poster"
       className="w-32"
       onSelect={() => {

@@ -10,7 +10,7 @@ import {
   Play as PlayFilledIcon,
 } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
-import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
 import { HoverCard } from '@ValenceUI/HoverCard';
@@ -18,7 +18,7 @@ import { Icon } from '@ValenceUI/Icon';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { Spinner } from '@ValenceUI/Spinner';
 import { Tooltip } from '@ValenceUI/Tooltip';
-import { AnimatedBytes } from '@ValenceScreens/components/AnimatedBytes/AnimatedBytes';
+import { FormattedBytes } from '@ValenceScreens/components/FormattedBytes/FormattedBytes';
 import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
 import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
 import { describeDownloadState } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeDownloadState';
@@ -41,17 +41,17 @@ const PAUSABLE = new Set(['queued', 'metadata', 'downloading', 'stalled']);
  */
 const describeArrived = (download: QueuedDownload): ReactNode => {
   if (download.sizeBytes === null) {
-    return download.doneBytes === null ? null : <AnimatedBytes bytes={download.doneBytes} />;
+    return download.doneBytes === null ? null : <FormattedBytes bytes={download.doneBytes} />;
   }
 
   return download.doneBytes === null || download.state === 'done' ? (
-    <AnimatedBytes bytes={download.sizeBytes} />
+    <FormattedBytes bytes={download.sizeBytes} />
   ) : (
     <Sentence
       words="screens.downloadsPanel.downloadQueueTable.doneOfSize"
       fillings={{
-        done: <AnimatedBytes bytes={download.doneBytes} />,
-        size: <AnimatedBytes bytes={download.sizeBytes} />,
+        done: <FormattedBytes bytes={download.doneBytes} />,
+        size: <FormattedBytes bytes={download.sizeBytes} />,
       }}
     />
   );
@@ -152,7 +152,7 @@ const DownloadQueueTable = ({
                 label={say('common.howFarTitleHasDownloaded', { title: row.original.title })}
                 value={Math.round(row.original.progress * 1000) / 10}
                 readout={
-                  <AnimatedNumber
+                  <FormattedNumber
                     value={Math.floor(row.original.progress * 100)}
                     suffix="%"
                     className="text-xs text-text"
@@ -197,12 +197,12 @@ const DownloadQueueTable = ({
               row.original.seeds === null && row.original.peers === null
                 ? []
                 : [
-                    <AnimatedNumber
+                    <FormattedNumber
                       key="seeding"
                       value={row.original.seeds ?? 0}
                       suffix=" seeding"
                     />,
-                    <AnimatedNumber
+                    <FormattedNumber
                       key="fetching"
                       value={row.original.peers ?? 0}
                       suffix=" fetching"

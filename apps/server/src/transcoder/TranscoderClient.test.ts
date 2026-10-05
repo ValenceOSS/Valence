@@ -863,3 +863,91 @@ describe('the transcoder monitor socket', () => {
     expect(socketState.made[0]?.dispatcher).toBeDefined();
   });
 });
+
+describe('locating a session file', () => {
+  it('reads where a session file is, where the media service says so', async () => {
+    const client = createTranscoderClient({
+      baseUrl: 'http://127.0.0.1:8477',
+      streamFetchImpl: () =>
+        Promise.resolve({
+          ok: true,
+          status: 200,
+          headers: { get: () => 'application/json' },
+          body: new Blob([
+            JSON.stringify({ files: ['/t/segment_1.m4s'], contentType: 'video/mp4' }),
+          ]).stream(),
+        }),
+    });
+
+    expect(await client.locateSessionFile?.('session-1', 'segment_1.m4s')).toEqual({
+      kind: 'located',
+      files: ['/t/segment_1.m4s'],
+      contentType: 'video/mp4',
+    });
+  });
+
+  it('keeps the bytes an older media service sends in place of where they are', async () => {
+    const client = createTranscoderClient({
+      baseUrl: 'http://127.0.0.1:8477',
+      streamFetchImpl: () =>
+        Promise.resolve({
+          ok: true,
+          status: 200,
+          headers: { get: (name: string) => (name === 'content-type' ? 'video/mp4' : null) },
+          body: new Blob([new Uint8Array(8)]).stream(),
+        }),
+    });
+
+    expect((await client.locateSessionFile?.('session-1', 'segment_1.m4s'))?.kind).toBe('bytes');
+  });
+
+  it('asks with locate=true, which the media service reads as asking where', async () => {
+    const asked: string[] = [];
+    const client = createTranscoderClient({
+      baseUrl: 'http://127.0.0.1:8477',
+      streamFetchImpl: (url) => {
+        asked.push(url);
+
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          headers: { get: () => 'application/json' },
+          body: new Blob([
+            JSON.stringify({ files: ['/t/a.m4s'], contentType: 'video/mp4' }),
+          ]).stream(),
+        });
+      },
+    });
+
+    await client.locateSessionFile?.('session-1', 'index.m3u8');
+
+    expect(asked[0]).toBe('http://127.0.0.1:8477/sessions/session-1/index.m3u8?locate=true');
+  });
+
+  it('says a file cannot be located where the media service refuses the question', async () => {
+    const client = createTranscoderClient({
+      baseUrl: 'http://127.0.0.1:8477',
+      streamFetchImpl: () =>
+        Promise.resolve({
+          ok: false,
+          status: 400,
+          headers: { get: () => 'text/plain' },
+          body: new Blob(['Failed to deserialize query string']).stream(),
+        }),
+    });
+
+    expect(await client.locateSessionFile?.('session-1', 'index.m3u8')).toEqual({
+      kind: 'unlocatable',
+    });
+  });
+
+  it('says nothing is there where the media service has no such session or segment yet', async () => {
+    const client = createTranscoderClient({
+      baseUrl: 'http://127.0.0.1:8477',
+      streamFetchImpl: () =>
+        Promise.resolve({ ok: false, status: 404, headers: { get: () => null }, body: null }),
+    });
+
+    expect(await client.locateSessionFile?.('session-1', 'index.m3u8')).toBeNull();
+  });
+});

@@ -14,7 +14,8 @@
     "package": "pnpm run native && electron-vite build && electron-builder",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "native": "tsx src/build/buildDesktopNative.ts"
+    "native": "tsx src/build/buildDesktopNative.ts",
+    "sweep": "tsx src/build/sweepForLeaks.ts"
   },
   "dependencies": {
     "@keyline-icons/react": "1.0.0",

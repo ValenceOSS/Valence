@@ -89,6 +89,9 @@ Full detail in the standards document. The ones that most often surprise people:
 - **No raw `<button>`, `<input>`, `<svg>`** and friends outside `packages/ui`.
   Icons come from Hugeicons' free stroke set, drawn through `@ValenceUI/Icon`.
 - **Every function and component ships with a co-located test.**
+- **A client feature that needs a newer server checks for it.** Name it in
+  `SERVER_FEATURES` and ask with `useServerHas`: the phone, television and
+  desktop apps can be newer than the server they're connected to.
 
 Where these map onto lint rules they are enforced by oxlint and husky.
 The rest are upheld in review against

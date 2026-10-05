@@ -1,10 +1,9 @@
 import { cn } from '@ValenceUI/cn';
 import fresh from '@ValenceRatings/rotten-tomatoes-fresh.png';
 import rotten from '@ValenceRatings/rotten-tomatoes-rotten.png';
+import { isFreshTomato } from '@ValenceCore/functions/isFreshTomato';
 import type { TomatoMarkProps } from './TomatoMark.types';
 import { say } from '@ValenceI18n/say';
-
-const FRESH_FROM = 60;
 
 /**
  * The mark Rotten Tomatoes shows beside a critics' score: a tomato where the critics were mostly
@@ -14,7 +13,7 @@ const FRESH_FROM = 60;
  * @param className - Extra classes for the caller's own layout, including its size.
  */
 const TomatoMark = ({ score, className }: TomatoMarkProps) => {
-  const isFresh = score >= FRESH_FROM;
+  const isFresh = isFreshTomato(score);
 
   return (
     <img

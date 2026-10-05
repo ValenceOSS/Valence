@@ -13,8 +13,8 @@ import { Button } from '@ValenceUI/Button';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { WatchedBar } from '@ValenceUI/WatchedBar';
 import type { EpisodeRowProps } from './EpisodeRow.types';
-import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 import { say } from '@ValenceI18n/say';
+import { numberedEpisodeTitle } from '@ValenceCore/functions/numberedEpisodeTitle';
 
 /**
  * One episode in a list of them: its number, its name, how long it runs, what it is about, and how
@@ -87,9 +87,7 @@ const EpisodeRow = ({
 
       <span className="flex min-w-0 flex-col gap-1">
         <span className="truncate text-sm font-medium text-text">
-          {episode.episodeNumber === null || episode.episodeNumber === undefined
-            ? episode.title
-            : `${describeEpisodeNumbers(episode.episodeNumber, episode.episodeNumberEnd)}. ${episode.title}`}
+          {numberedEpisodeTitle(episode.title, episode.episodeNumber, episode.episodeNumberEnd)}
         </span>
         <span className="font-body text-xs text-text-muted">
           {formatDuration(episode.durationSeconds)}

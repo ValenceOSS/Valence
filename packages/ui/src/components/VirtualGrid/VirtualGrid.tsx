@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { useWindowVirtualizer } from '@tanstack/react-virtual';
+import { useVirtualizer, useWindowVirtualizer } from '@tanstack/react-virtual';
 import { cn } from '@ValenceUI/cn';
 import { columnsIn } from '@ValenceUI/columnsIn';
+import { scrollMarginIn } from '@ValenceUI/scrollMarginIn';
+import { scrollerAbove } from '@ValenceUI/scrollerAbove';
 import type { VirtualGridProps } from './VirtualGrid.types';
 
 const OVERSCAN_ROWS = 2;
@@ -12,8 +14,9 @@ const OVERSCAN_ROWS = 2;
  *
  * It measures rather than guesses: how wide it is decides how many fit across, and each row is
  * measured as it is drawn, so a row of cards whose titles wrap to two lines pushes the rest down by
- * exactly as much as it should. It rides the window's own scroll, since that is what the pages
- * scroll and what the browser puts back where it was.
+ * exactly as much as it should. It rides whatever scrolls it: the window on most pages, which is
+ * what the browser puts back where it was, or the panel it sits in where that panel scrolls by
+ * itself, as the music page's does.
  *
  * @param count - How many things there are.
  * @param children - Draws the thing at an index.
@@ -35,6 +38,7 @@ const VirtualGrid = ({
   const laneRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
   const [scrollMargin, setScrollMargin] = useState(0);
+  const [scroller, setScroller] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
     const lane = laneRef.current;
@@ -43,8 +47,12 @@ const VirtualGrid = ({
       return;
     }
 
+    const above = scrollerAbove(lane);
+    const scrolledBy = above === document.documentElement ? null : above;
+
+    setScroller(scrolledBy);
     setWidth(lane.clientWidth);
-    setScrollMargin(lane.offsetTop);
+    setScrollMargin(scrollMarginIn(lane, scrolledBy));
 
     if (typeof ResizeObserver === 'undefined') {
       return;
@@ -52,7 +60,7 @@ const VirtualGrid = ({
 
     const watching = new ResizeObserver(([entry]) => {
       setWidth(entry?.contentRect.width ?? lane.clientWidth);
-      setScrollMargin(lane.offsetTop);
+      setScrollMargin(scrollMarginIn(lane, scrolledBy));
     });
 
     watching.observe(lane);
@@ -65,12 +73,19 @@ const VirtualGrid = ({
   const columns = columnsIn(width, leastCardWidth, gap);
   const rows = Math.ceil(count / columns);
 
-  const virtualiser = useWindowVirtualizer({
+  const sizing = {
     count: rows,
     estimateSize: () => rowHeight + gap,
     overscan: OVERSCAN_ROWS,
     scrollMargin,
+  };
+  const inWindow = useWindowVirtualizer({ ...sizing, enabled: scroller === null });
+  const inPanel = useVirtualizer({
+    ...sizing,
+    getScrollElement: () => scroller,
+    enabled: scroller !== null,
   });
+  const virtualiser = scroller === null ? inWindow : inPanel;
 
   return (
     <div ref={laneRef} className={cn('relative w-full', className)} aria-label={label}>

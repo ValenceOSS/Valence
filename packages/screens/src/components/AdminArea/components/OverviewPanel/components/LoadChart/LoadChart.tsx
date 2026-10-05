@@ -1,4 +1,4 @@
-import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { TrendChart } from '@ValenceUI/TrendChart';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { describeReadingTime } from '@ValenceClient/admin/describeReadingTime';
@@ -43,23 +43,23 @@ const LoadChart = ({ readings, range }: LoadChartProps) => {
           {latest === null ? (
             '—'
           ) : (
-            <AnimatedNumber value={Math.round(latest.systemCpuPercent)} suffix="%" />
+            <FormattedNumber value={Math.round(latest.systemCpuPercent)} suffix="%" />
           )}
         </LoadFigure>
 
         <LoadFigure label={say('screens.adminArea.overviewPanel.loadFigures.average')}>
-          {latest === null ? '—' : <AnimatedNumber value={Math.round(average)} suffix="%" />}
+          {latest === null ? '—' : <FormattedNumber value={Math.round(average)} suffix="%" />}
         </LoadFigure>
 
         <LoadFigure label={say('common.peak')}>
-          {latest === null ? '—' : <AnimatedNumber value={Math.round(peak)} suffix="%" />}
+          {latest === null ? '—' : <FormattedNumber value={Math.round(peak)} suffix="%" />}
         </LoadFigure>
 
         <LoadFigure label={say('screens.adminArea.overviewPanel.loadFigures.loadAverage')}>
           {latest === null ? (
             '—'
           ) : (
-            <AnimatedNumber
+            <FormattedNumber
               value={latest.loadAverage}
               format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }}
             />

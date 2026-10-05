@@ -11,8 +11,8 @@ const ABSENT = 404;
  * Only a 404 is treated that way, and only for an address naming one thing: asking for a film by an
  * identifier the library no longer has is a question with a true answer, and a screen that lands on
  * such an address should say the item has gone rather than that it could not read the library.
- * Everything else — a refusal, a server that is down, a body that will not parse — throws exactly as
- * it does everywhere else.
+ * Everything else — a refusal, a server that is down, a body that will not parse, or a server too old
+ * to have the address at all — throws exactly as it does everywhere else.
  *
  * @param path - What to ask for.
  * @param schema - The shape the answer must be in.
@@ -27,7 +27,7 @@ const readFromServerOrAbsent = async <Value>(
   try {
     return await readFromServer(path, schema, headers);
   } catch (error) {
-    if (error instanceof RequestFailed && error.status === ABSENT) {
+    if (error instanceof RequestFailed && error.status === ABSENT && !error.isUnknownToServer) {
       return null;
     }
 

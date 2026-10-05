@@ -2,7 +2,7 @@ import { Rail } from '@ValenceUI/Rail';
 import { MediaCard } from '@ValenceUI/MediaCard';
 import { RevealItem } from '@ValenceUI/RevealItem';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
-import { gatherSeries } from '@ValenceScreens/reading/gatherSeries';
+import { gatherSeries } from '@ValenceClient/books/gatherSeries';
 import { useCardOrigin } from '@ValenceScreens/linking/useCardOrigin';
 import type { Book } from '@ValenceContracts/schemas/Book';
 import type { BookRowProps } from './BookRow.types';

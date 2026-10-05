@@ -1,5 +1,5 @@
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import userEvent from '@testing-library/user-event';
 import type { ObservabilitySearch } from '@ValenceClient/admin/ObservabilitySearchSchema';
@@ -605,6 +605,34 @@ describe('AdminArea', () => {
     monitorArrives({ ...MONITOR, resources: { ...MONITOR.resources, systemCpuPercent: 91 } });
 
     expect(screen.queryAllByText('91%')).toHaveLength(0);
+  });
+
+  it('stops following the machine while the page is hidden, and follows it again once shown', async () => {
+    const shows = vi.spyOn(document, 'visibilityState', 'get');
+
+    renderInAnAddress(<TheAdmin />);
+
+    await waitFor(() => {
+      expect(screen.getByText('42%')).toBeInTheDocument();
+    });
+
+    shows.mockReturnValue('hidden');
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    monitorArrives({ ...MONITOR, resources: { ...MONITOR.resources, systemCpuPercent: 91 } });
+
+    expect(screen.queryAllByText('91%')).toHaveLength(0);
+
+    shows.mockReturnValue('visible');
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    monitorArrives({ ...MONITOR, resources: { ...MONITOR.resources, systemCpuPercent: 77 } });
+
+    expect((await screen.findAllByText('77%')).length).toBeGreaterThan(0);
+
+    shows.mockRestore();
   });
 
   it('shows what the media service is working on', async () => {

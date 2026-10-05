@@ -12,19 +12,27 @@ type Artwork = 'poster' | 'backdrop' | 'logo';
  *
  * @param mediaId - The title, or the episode or cover standing for it.
  * @param kind - Which picture.
- * @param options - Whether the title's own picture is wanted rather than this file's.
+ * A grid asks for the small copy, which the server narrows once and keeps; a server too old to know
+ * the option sends the whole picture instead, which still draws.
+ *
+ * @param options - Whether the title's own picture is wanted rather than this file's, and whether
+ *   the small copy will do.
  * @returns The path it is served from.
  */
 const artworkUrl = (
   mediaId: string,
   kind: Artwork,
-  options: { isOfTitle?: boolean } = {},
+  options: { isOfTitle?: boolean; size?: 'small' } = {},
 ): string => {
   const query = new URLSearchParams();
   const revision = artworkRevisions.of(mediaId);
 
   if (options.isOfTitle === true) {
     query.set('of', 'title');
+  }
+
+  if (options.size !== undefined) {
+    query.set('size', options.size);
   }
 
   if (revision > 0) {

@@ -63,7 +63,7 @@ const seasonsOf = (
     const kept = seasons.get(episode.season);
     const aired = [kept?.firstAired ?? null, episode.airDate]
       .filter((date) => date !== null)
-      .toSorted()[0];
+      .sort()[0];
 
     seasons.set(episode.season, {
       season: episode.season,
@@ -82,7 +82,7 @@ const seasonsOf = (
         held.get(season.season) ?? 0,
       ),
     }))
-    .toSorted((left, right) => left.season - right.season);
+    .sort((left, right) => left.season - right.season);
 };
 
 export type { Asked };

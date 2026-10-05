@@ -1,7 +1,7 @@
 import { Check as CheckIcon, Filter as FilterIcon } from '@keyline-icons/react';
 import { Filter as FilterFilledIcon } from '@keyline-icons/react/fill';
 import * as RadixMenu from '@radix-ui/react-dropdown-menu';
-import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
@@ -46,7 +46,7 @@ const FilterMenu = ({ label, groups, selected, hasLabel = false, onChange }: Fil
             {say('common.filters')}
             {selected.size === 0 ? null : (
               <Badge tone="solid" size="sm">
-                <AnimatedNumber value={selected.size} />
+                <FormattedNumber value={selected.size} />
               </Badge>
             )}
           </Button>
@@ -62,7 +62,7 @@ const FilterMenu = ({ label, groups, selected, hasLabel = false, onChange }: Fil
 
               {selected.size === 0 ? null : (
                 <Badge tone="solid" size="sm" className="absolute -right-2.5 -top-2.5">
-                  <AnimatedNumber value={selected.size} />
+                  <FormattedNumber value={selected.size} />
                 </Badge>
               )}
             </span>

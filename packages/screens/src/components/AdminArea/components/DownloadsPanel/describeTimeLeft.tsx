@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 import type { ReactNode } from 'react';
-import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { partsOfTimeLeft } from '@ValenceCore/functions/partsOfTimeLeft';
 import { say } from '@ValenceI18n/say';
 
@@ -21,7 +21,7 @@ const describeTimeLeft = (seconds: number): ReactNode => {
   return parts.map((part, at) => (
     <Fragment key={part.unit}>
       {at === 0 ? null : ' '}
-      <AnimatedNumber value={part.value} suffix={` ${part.unit}`} />
+      <FormattedNumber value={part.value} suffix={` ${part.unit}`} />
     </Fragment>
   ));
 };

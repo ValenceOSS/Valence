@@ -17,7 +17,7 @@ const nextAirDate = (request: MediaRequest): string | null =>
   request.items
     .filter((item) => item.state === 'waiting' && item.airDate !== null)
     .map((item) => item.airDate ?? '')
-    .toSorted()[0] ?? null;
+    .sort()[0] ?? null;
 
 /**
  * Whether a film, episode or album has come out, by the same rule the worker uses to promote it:

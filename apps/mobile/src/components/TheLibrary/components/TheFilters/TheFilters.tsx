@@ -9,6 +9,7 @@ import { Toggle } from '@ValenceMobile/components/Toggle/Toggle';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import type { TheFiltersProps } from './TheFilters.types';
 import { say } from '@ValenceI18n/say';
+import { AChoiceMenu } from '@ValenceMobile/components/AChoiceMenu/AChoiceMenu';
 
 const styles = StyleSheet.create({
   group: { gap: 8 },
@@ -89,7 +90,7 @@ const TheFilters = ({
 
       {open === 'order' ? (
         <>
-          <SegmentedRow
+          <AChoiceMenu
             label={say('common.order')}
             items={BrowseOrderSchema.options.map((order) => ({
               id: order,

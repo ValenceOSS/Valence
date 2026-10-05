@@ -167,6 +167,23 @@ pub struct ProbeRequest {
     pub path: String,
 }
 
+/// Asks a session file's request to answer with where the file is rather
+/// than with its bytes.
+#[derive(Debug, Default, Deserialize)]
+pub struct SessionFileQuery {
+    #[serde(default)]
+    pub locate: bool,
+}
+
+/// Where the files that answer a session request are, in the order to send
+/// them, and what they are.
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LocatedFiles {
+    pub files: Vec<String>,
+    pub content_type: String,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct FileQuery {
     #[serde(deserialize_with = "crate::path_map::deserialize")]
@@ -995,6 +1012,7 @@ async fn write_replacing(path: &Path, contents: &[u8]) -> std::io::Result<()> {
 async fn session_file(
     State(state): State<AppState>,
     AxumPath((id, name)): AxumPath<(String, String)>,
+    Query(query): Query<SessionFileQuery>,
     headers: HeaderMap,
 ) -> Response {
     let companion = state.registry.companion_of(&id).await;
@@ -1062,13 +1080,48 @@ async fn session_file(
             .reached(&id, names.first().map_or(name.as_str(), String::as_str))
             .await;
 
+        if query.locate {
+            return locate(&directory, &names);
+        }
+
         return match names.as_slice() {
             [only] => serve_file(&directory, only, requested_range(&headers)).await,
             several => serve_group(&directory, several).await,
         };
     }
 
+    if query.locate {
+        return locate(&directory, std::slice::from_ref(&name));
+    }
+
     serve_file(&directory, &name, requested_range(&headers)).await
+}
+
+/// Answers a session request with where its files are, once they are ready,
+/// rather than with their bytes.
+///
+/// The server and this service usually share a disk, and on a slow processor
+/// passing a segment's bytes through the server's socket and streams cost most
+/// of its speed: a remux's large segments arrived slower than they played. The
+/// server reads the files itself, and this keeps deciding when a segment is
+/// ready and which files make it, which is the part only it knows.
+fn locate(directory: &Path, names: &[String]) -> Response {
+    if names.iter().any(|name| !is_safe_segment_name(name)) {
+        return error(StatusCode::BAD_REQUEST, "Invalid segment name.");
+    }
+
+    let content_type = names
+        .first()
+        .map_or("application/octet-stream", |name| content_type_for(name));
+
+    Json(LocatedFiles {
+        files: names
+            .iter()
+            .map(|name| directory.join(name).to_string_lossy().into_owned())
+            .collect(),
+        content_type: content_type.to_owned(),
+    })
+    .into_response()
 }
 
 /// Makes the short clip a library page plays.
@@ -2404,8 +2457,8 @@ pub fn create_router(state: AppState) -> Router {
 #[cfg(test)]
 mod tests {
     use super::{
-        claim_for_a_live_job, content_type_for, is_safe_segment_name, parse_range, AppState,
-        Claimed,
+        claim_for_a_live_job, content_type_for, is_safe_segment_name, locate, parse_range,
+        AppState, Claimed, SessionFileQuery,
     };
     use crate::render_registry::RenderRegistry;
     use std::path::{Path, PathBuf};
@@ -2637,5 +2690,60 @@ mod tests {
             !renders.is_claimed("abc").await,
             "the claim is let go, so nothing is left drawing it"
         );
+    }
+
+    #[tokio::test]
+    async fn locate_names_the_files_of_a_segment_in_order() {
+        use http_body_util::BodyExt as _;
+
+        let names = vec![
+            "segment_00004.m4s".to_owned(),
+            "segment_00005.m4s".to_owned(),
+        ];
+        let directory = Path::new("/tmp/transcodes/abc");
+        let response = locate(directory, &names);
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let read: serde_json::Value = serde_json::from_slice(&body).unwrap();
+
+        assert_eq!(
+            read["files"],
+            serde_json::json!([
+                directory.join("segment_00004.m4s").to_string_lossy(),
+                directory.join("segment_00005.m4s").to_string_lossy()
+            ])
+        );
+        assert_eq!(read["contentType"], "video/mp4");
+    }
+
+    #[test]
+    fn locate_refuses_a_name_that_climbs_out_of_the_session() {
+        let response = locate(Path::new("/tmp/transcodes/abc"), &["../secret".to_owned()]);
+
+        assert_eq!(response.status(), axum::http::StatusCode::BAD_REQUEST);
+    }
+
+    #[test]
+    fn a_session_file_address_asks_to_locate_with_true_and_not_otherwise() {
+        use axum::extract::Query;
+
+        let asked: axum::http::Uri = "/sessions/a/index.m3u8?locate=true".parse().unwrap();
+        let plain: axum::http::Uri = "/sessions/a/index.m3u8".parse().unwrap();
+
+        assert!(
+            Query::<SessionFileQuery>::try_from_uri(&asked)
+                .unwrap()
+                .0
+                .locate
+        );
+        assert!(
+            !Query::<SessionFileQuery>::try_from_uri(&plain)
+                .unwrap()
+                .0
+                .locate
+        );
+
+        let numbered: axum::http::Uri = "/sessions/a/index.m3u8?locate=1".parse().unwrap();
+
+        assert!(Query::<SessionFileQuery>::try_from_uri(&numbered).is_err());
     }
 }

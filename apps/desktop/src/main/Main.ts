@@ -8,6 +8,8 @@ import {
   NOW_WATCHING,
 } from '@ValenceDesktop/main/preferenceChannels';
 import { openTheWindow } from '@ValenceDesktop/main/openTheWindow';
+import { openTheDebuggingPort } from '@ValenceDesktop/main/openTheDebuggingPort';
+import { recordMemoryUse } from '@ValenceDesktop/main/recordMemoryUse';
 import { theApplicationMenu } from '@ValenceDesktop/main/theApplicationMenu';
 import { theDockIcon } from '@ValenceDesktop/main/theDockIcon';
 import { tellDiscord } from '@ValenceDesktop/main/tellDiscord';
@@ -100,6 +102,8 @@ keepThisClientsFilesWhereTheyAre();
 
 claimTheScheme();
 
+openTheDebuggingPort();
+
 let theWindow: BrowserWindow | null = null;
 
 let stopLooking: (() => void) | null = null;
@@ -187,6 +191,7 @@ const carryWhatThisMachineRemembers = (): void => {
 const start = async (): Promise<void> => {
   await app.whenReady();
 
+  recordMemoryUse();
   carryWhatThisMachineRemembers();
 
   const held = theHeldFolder(app.getPath('userData'));

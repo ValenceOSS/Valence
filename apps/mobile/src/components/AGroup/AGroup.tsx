@@ -45,7 +45,7 @@ const AGroup = ({ children, title }: AGroupProps) => {
         <Text style={[styles.title, { color: colours.textMuted }]}>{title}</Text>
       )}
 
-      <View style={[styles.face, { backgroundColor: isDark ? '#2b2b2b' : colours.surface }]}>
+      <View style={[styles.face, { backgroundColor: isDark ? '#272727' : colours.surface }]}>
         {rows.map((row, at) => (
           <Fragment key={at}>
             {at === 0 ? null : <View style={[styles.line, { backgroundColor: colours.border }]} />}

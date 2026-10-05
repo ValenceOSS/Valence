@@ -5,6 +5,8 @@ import { fetchWatchProgress } from '@ValenceClient/playback/watchProgress';
 import { MediaSummarySchema } from '@ValenceContracts/schemas/Library';
 import { ShowDetailSchema } from '@ValenceContracts/schemas/Show';
 import { markWatched } from '@ValenceClient/playback/markWatched';
+import { chooseFromTheMenu } from '@ValenceMobile/testing/chooseFromTheMenu';
+import { theMenuChoices } from '@ValenceMobile/testing/theMenuChoices';
 import { AShow } from './AShow';
 import type { ReactNode } from 'react';
 
@@ -89,7 +91,7 @@ describe('AShow', () => {
   it('offers its seasons where there is more than one', async () => {
     jest.mocked(fetchShow).mockResolvedValue(TWO_SEASONS);
 
-    const drawn = await render(
+    await render(
       around(
         <AShow
           libraryId="l"
@@ -102,7 +104,7 @@ describe('AShow', () => {
     );
 
     await waitFor(() => {
-      expect(drawn.getByText('Season 2')).toBeTruthy();
+      expect(theMenuChoices('Season')).toEqual(['Season 1', 'Season 2']);
     });
   });
 
@@ -126,7 +128,7 @@ describe('AShow', () => {
     );
 
     await waitFor(() => {
-      expect(drawn.getByText('Good News About Hell')).toBeTruthy();
+      expect(drawn.getByText('1. Good News About Hell')).toBeTruthy();
     });
 
     expect(drawn.queryByText('Season 1')).toBeNull();
@@ -157,7 +159,7 @@ describe('AShow', () => {
     );
 
     await waitFor(() => {
-      expect(drawn.getByText('Hello, Ms. Cobel')).toBeTruthy();
+      expect(drawn.getByText('1. Hello, Ms. Cobel')).toBeTruthy();
     });
   });
 
@@ -177,12 +179,12 @@ describe('AShow', () => {
     );
 
     await waitFor(() => {
-      expect(drawn.getByLabelText('Season 2')).toBeTruthy();
+      expect(theMenuChoices('Season')).toContain('Season 2');
     });
 
-    await userEvent.press(drawn.getByLabelText('Season 2'));
+    await chooseFromTheMenu('Season', '2');
 
-    expect(drawn.getByText('Hello, Ms. Cobel')).toBeTruthy();
+    expect(drawn.getByText('1. Hello, Ms. Cobel')).toBeTruthy();
   });
 
   it('plays an episode from where they left it', async () => {

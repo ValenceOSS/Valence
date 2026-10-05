@@ -15,6 +15,11 @@ const FADES_OUT_OVER = 48;
 
 const NOTHING_COMING: readonly { at: number; track: MusicTrack }[] = [];
 
+const QUEUE_FIRST = 12;
+
+const QUEUE_A_BATCH = 10;
+
+const SCREENFULS_KEPT = 5;
 const styles = StyleSheet.create({
   head: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   list: { paddingBottom: FADES_OUT_OVER, paddingTop: FADES_IN_OVER },
@@ -121,6 +126,9 @@ const TheUpNext = () => {
         <FlatList
           data={coming}
           keyExtractor={({ at, track }) => `${track.id}:${at.toString()}`}
+          initialNumToRender={QUEUE_FIRST}
+          maxToRenderPerBatch={QUEUE_A_BATCH}
+          windowSize={SCREENFULS_KEPT}
           renderItem={({ item }) => (
             <AComingTrack
               track={item.track}

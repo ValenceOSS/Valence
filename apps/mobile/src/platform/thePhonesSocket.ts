@@ -2,7 +2,6 @@ import { z } from 'zod';
 import type { Connect } from '@ValenceClient/realtime/createRealtimeClient';
 import type { DeviceStore } from '@ValenceClient/platform/Platform.types';
 import { theServerThisPhoneWatches } from '@ValenceMobile/platform/theServerThisPhoneWatches';
-import { theCookiesThisPhoneHolds } from '@ValenceMobile/platform/theCookiesThisPhoneHolds';
 
 const PATH = '/api/realtime';
 
@@ -15,13 +14,10 @@ const SpokenSchema = z.object({ data: z.string() });
  * refuses a plain connection, and one reached over plain HTTP has no TLS to offer, so guessing
  * either way breaks half the installations.
  *
- * It is opened with this phone's session on it. A socket built here does not consult the jar the
- * system keeps, so without this the server is asked to open a realtime connection by nobody it
- * recognises — and presence, which is that connection, never learns this phone exists.
- *
- * Reading the jar is asking the system a question, so the socket is built once it has answered.
- * Whoever opened it is handed something to send on immediately, and anything said before there is
- * a socket to say it on is dropped, as it is on any connection that has not opened yet.
+ * The phone's session goes with it without being handed over here. React Native's socket reads the
+ * cookies `fetch` keeps by itself and adds any header it is given on top, so passing the session
+ * cookie again sent it twice, which the server read as one broken session and refused. That kept
+ * the phone out of presence, and so out of the dashboard's sessions.
  *
  * @param store - Where the phone keeps which server it watches.
  * @returns How to open the socket.
@@ -30,52 +26,36 @@ const thePhonesSocket =
   (store: DeviceStore): Connect =>
   (handlers) => {
     const address = theServerThisPhoneWatches(store) ?? '';
-    let socket: WebSocket | null = null;
-    let closedBeforeItOpened = false;
+    const socket = new WebSocket(`${address.replace(/^http/u, 'ws')}${PATH}`);
 
-    void theCookiesThisPhoneHolds(address).then((cookie) => {
-      if (closedBeforeItOpened) {
-        return;
+    socket.onopen = () => {
+      handlers.onOpen();
+    };
+
+    socket.onmessage = (event) => {
+      const spoken = SpokenSchema.safeParse(event);
+
+      if (spoken.success) {
+        handlers.onMessage(spoken.data.data);
       }
+    };
 
-      const opened = new WebSocket(
-        `${address.replace(/^http/u, 'ws')}${PATH}`,
-        undefined,
-        cookie === null ? undefined : { headers: { Cookie: cookie } },
-      );
+    socket.onclose = () => {
+      handlers.onClose();
+    };
 
-      socket = opened;
-
-      opened.onopen = () => {
-        handlers.onOpen();
-      };
-
-      opened.onmessage = (event) => {
-        const spoken = SpokenSchema.safeParse(event);
-
-        if (spoken.success) {
-          handlers.onMessage(spoken.data.data);
-        }
-      };
-
-      opened.onclose = () => {
-        handlers.onClose();
-      };
-
-      opened.onerror = () => {
-        opened.close();
-      };
-    });
+    socket.onerror = () => {
+      socket.close();
+    };
 
     return {
       send: (raw) => {
-        if (socket?.readyState === WebSocket.OPEN) {
+        if (socket.readyState === WebSocket.OPEN) {
           socket.send(raw);
         }
       },
       close: () => {
-        closedBeforeItOpened = true;
-        socket?.close();
+        socket.close();
       },
     };
   };

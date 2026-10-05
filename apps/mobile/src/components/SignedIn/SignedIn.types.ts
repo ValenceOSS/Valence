@@ -31,6 +31,7 @@ type APage =
   | { kind: 'book'; bookId: string }
   | { kind: 'reading'; bookId: string; chapterId: string | null; isFromTheStart: boolean }
   | { kind: 'playing' }
-  | { kind: 'listening' };
+  | { kind: 'listening' }
+  | { kind: 'account'; panel: string };
 
 export type { APage, SignedInProps };

@@ -7,7 +7,7 @@ import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@ValenceUI/Badge';
 import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
-import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { cn } from '@ValenceUI/cn';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
@@ -203,7 +203,7 @@ const OverviewPanel = ({
               ) : (
                 <Sentence
                   words="screens.adminArea.overviewPanel.nothingRunningWaiting"
-                  fillings={{ waiting: <AnimatedNumber value={waiting} /> }}
+                  fillings={{ waiting: <FormattedNumber value={waiting} /> }}
                 />
               )}
             </p>
@@ -259,7 +259,7 @@ const OverviewPanel = ({
                     <Sentence
                       counted="common.count.items"
                       count={library.itemCount}
-                      fillings={{ count: <AnimatedNumber value={library.itemCount} /> }}
+                      fillings={{ count: <FormattedNumber value={library.itemCount} /> }}
                     />
                   </span>
                 </li>

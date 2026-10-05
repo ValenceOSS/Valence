@@ -18,6 +18,10 @@ const mediaImageRoute = createRoute({
         description:
           'Asks for the title’s own picture rather than this file’s: a programme’s chosen backdrop in place of an episode still',
       }),
+      size: z.enum(['small']).optional().openapi({
+        description:
+          'Asks for the picture narrowed for a grid, as WebP, rather than whole; a server that does not know it sends the whole picture',
+      }),
     }),
   },
   responses: {

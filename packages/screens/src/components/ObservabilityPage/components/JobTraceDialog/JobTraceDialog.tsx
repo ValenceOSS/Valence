@@ -1,7 +1,7 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Callout } from '@ValenceUI/Callout';
@@ -220,7 +220,7 @@ const JobTraceDialog = ({
                       {say('screens.observabilityPage.jobTraceDialog.linesLogged')}
                     </dt>
                     <dd className={FACT_VALUE}>
-                      <AnimatedNumber value={askedLines.data?.total ?? 0} />
+                      <FormattedNumber value={askedLines.data?.total ?? 0} />
                     </dd>
                   </div>
                 </dl>
@@ -235,8 +235,8 @@ const JobTraceDialog = ({
                       <Sentence
                         words="common.doneOfTotal"
                         fillings={{
-                          done: <AnimatedNumber value={progress.processed} />,
-                          total: <AnimatedNumber value={progress.total} />,
+                          done: <FormattedNumber value={progress.processed} />,
+                          total: <FormattedNumber value={progress.total} />,
                         }}
                       />
                     </span>
@@ -317,8 +317,8 @@ const JobTraceDialog = ({
                 <Sentence
                   words="screens.observabilityPage.logExplorer.showingShownOfTotal"
                   fillings={{
-                    shown: <AnimatedNumber value={shownLines.length} />,
-                    total: <AnimatedNumber value={askedLines.data?.total ?? 0} />,
+                    shown: <FormattedNumber value={shownLines.length} />,
+                    total: <FormattedNumber value={askedLines.data?.total ?? 0} />,
                   }}
                 />
               </span>

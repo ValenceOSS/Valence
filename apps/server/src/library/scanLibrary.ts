@@ -18,6 +18,7 @@ import type { ExternalIds } from './naming/ExternalIds.types';
 import type { MediaProbe, Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
 import type { ExtraKind, ScanResult } from '@ValenceContracts/schemas/Library';
 import { saying } from '@ValenceI18n/saying';
+import { seriesFolderUnder } from './placement/seriesFolderUnder';
 
 type ScannedFile = {
   path: string;
@@ -354,13 +355,15 @@ const scanLibrary = async ({
   const probeVersion = await readProbeVersion(transcoder);
   const corrections = (await store.listOverrides?.(libraryId)) ?? [];
 
+  const scope = isPartial && kind === 'shows' ? seriesFolderUnder(root, within) : null;
+  const isInScope = (path: string): boolean => scope === null || path.startsWith(`${scope}/`);
   const placed = placeInLibrary(
     kind,
     [
       ...new Set([
         ...listed.map((file) => file.path),
-        ...stored.map((item) => item.path),
-        ...corrections.map((one) => one.path),
+        ...stored.map((item) => item.path).filter(isInScope),
+        ...corrections.map((one) => one.path).filter(isInScope),
       ]),
     ],
     root,

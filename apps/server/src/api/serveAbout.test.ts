@@ -11,6 +11,7 @@ import { createMemoryRatingService } from '@ValenceServer/ratings/createMemoryRa
 import { createMemorySegmentService } from '@ValenceServer/segments/createMemorySegmentService';
 import { createMemorySubtitleService } from '@ValenceServer/subtitles/createMemorySubtitleService';
 import { AboutSchema } from '@ValenceContracts/schemas/About';
+import { SERVER_FEATURES } from '@ValenceContracts/constants/SERVER_FEATURES';
 
 /**
  * A server started as an image starts it: told which release and which commit it is.
@@ -48,7 +49,14 @@ describe('GET /api/about', () => {
     await expect(askAbout('e68dd3525b1a2c3d4e5f60718293a4b5c6d7e8f9')).resolves.toEqual({
       version: '1.2.0',
       commit: 'e68dd35',
+      features: [...SERVER_FEATURES],
     });
+  });
+
+  it('lists what this server can do, so a newer app can tell what it may ask for', async () => {
+    const about = await askAbout();
+
+    expect(about.features).toContain('server.reportsFeatures');
   });
 
   it('reads the commit off the checkout where it was not told one', async () => {

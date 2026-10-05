@@ -1,3 +1,4 @@
+import { AWrittenName } from '@ValenceMobile/components/AWrittenName/AWrittenName';
 import { Calendar, Film, Inbox, Monitor, ScanQrCode, SearchX } from '@keyline-icons/react-native';
 import {
   Film as FilmFilled,
@@ -49,8 +50,6 @@ import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
 import { useTheSideStrip } from '@ValenceMobile/hooks/useTheSideStrip';
 import { theColours } from '@ValenceMobile/theme/theColours';
 import { theVeilFor } from '@ValenceMobile/components/TheLibrary/theVeilFor';
-import { ACCOUNT_PANELS } from '@ValenceMobile/components/TheAccount/ACCOUNT_PANELS';
-import { useAccountPanels } from '@ValenceMobile/components/TheAccount/useAccountPanels';
 import { usePluginThemeInStep } from '@ValenceMobile/plugins/usePluginThemeInStep';
 import { librariesChosen } from '@ValenceClient/library/librariesChosen';
 import { libraryOptionsFor } from '@ValenceClient/library/libraryOptionsFor';
@@ -63,6 +62,8 @@ import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { Arrangement } from '@ValenceClient/library/browseArrangementPreference';
 import type { TheLibraryProps } from './TheLibrary.types';
 import { say } from '@ValenceI18n/say';
+import { useStockedKinds } from '@ValenceClient/library/useStockedKinds';
+import { AChoiceMenu } from '@ValenceMobile/components/AChoiceMenu/AChoiceMenu';
 
 const EVERY = 'every';
 
@@ -208,8 +209,6 @@ const TheLibrary = ({
   const [partsTall, setPartsTall] = useState(0);
   const [searchingFor, setSearchingFor] = useState('');
   const [downloadsFor, setDownloadsFor] = useState('');
-  const [accountShows, setAccountShows] = useState<string>(ACCOUNT_PANELS[0].id);
-  const accountPanels = useAccountPanels();
 
   usePluginThemeInStep();
   const isSearching = side === 'search';
@@ -333,6 +332,7 @@ const TheLibrary = ({
       watchable: [...filmLibraries, ...programmeLibraries].map((library) => library.id),
     };
   }, [libraries.data]);
+  const stock = useStockedKinds();
   const drawsItsOwn = part === 'home' || part === 'music' || part === 'books';
   const ofThisKind = useMemo(
     () => (part === 'films' ? films : part === 'shows' ? programmes : NO_LIBRARIES),
@@ -344,12 +344,16 @@ const TheLibrary = ({
   const isFiltered = filters.selected.size > 0;
   const parts = [
     { id: 'home', label: say('common.home'), icon: HomeFilled },
-    ...(films.length > 0 ? [{ id: 'films', label: say('common.films'), icon: FilmFilled }] : []),
-    ...(programmes.length > 0
+    ...(films.length > 0 && stock?.films !== false
+      ? [{ id: 'films', label: say('common.films'), icon: FilmFilled }]
+      : []),
+    ...(programmes.length > 0 && stock?.shows !== false
       ? [{ id: 'shows', label: say('common.shows'), icon: MonitorFilled }]
       : []),
-    ...(hasMusic ? [{ id: 'music', label: say('common.music'), icon: MusicNoteFilled }] : []),
-    ...(bookLibraries.length > 0
+    ...(hasMusic && stock?.music !== false
+      ? [{ id: 'music', label: say('common.music'), icon: MusicNoteFilled }]
+      : []),
+    ...(bookLibraries.length > 0 && stock?.books !== false
       ? [{ id: 'books', label: say('common.books'), icon: BookOpenFilled }]
       : []),
   ];
@@ -447,7 +451,7 @@ const TheLibrary = ({
         <View style={styles.topRow}>
           <View style={styles.brand}>
             <ACarriedMark isHandedOn={false} />
-            <Words size="heading">{say('common.valence')}</Words>
+            <AWrittenName name={say('common.valence')} />
           </View>
           <View style={styles.aside}>
             {onRequested === undefined ? null : (
@@ -525,14 +529,7 @@ const TheLibrary = ({
             />
           </View>
           <View pointerEvents={side === 'account' ? 'auto' : 'none'} style={styles.searchInstead}>
-            <SegmentedRow
-              label={say('common.whatToChange')}
-              fills
-              isShown={side === 'account'}
-              items={accountPanels}
-              value={accountShows}
-              onSelect={setAccountShows}
-            />
+            {side === 'account' ? <Words size="title">{say('common.account')}</Words> : null}
           </View>
         </Animated.View>
       </View>
@@ -573,7 +570,7 @@ const TheLibrary = ({
             ) : null}
 
             {ofThisKind.length > 1 ? (
-              <SegmentedRow
+              <AChoiceMenu
                 label={say('common.whichLibrary')}
                 items={libraryOptionsFor(ofThisKind, faces.data ?? [], EVERY, say('common.all'))}
                 value={chosen}
@@ -692,8 +689,8 @@ const TheLibrary = ({
     [downloadsPage, underTheBar, downloadsScrolled, downloadsFor],
   );
   const accountShown = useMemo(
-    () => accountPage?.(underTheBar, accountScrolled, accountShows, setAccountShows),
-    [accountPage, underTheBar, accountScrolled, accountShows],
+    () => accountPage?.(underTheBar, accountScrolled),
+    [accountPage, underTheBar, accountScrolled],
   );
   const sidePages = [
     ['search', searchShown],

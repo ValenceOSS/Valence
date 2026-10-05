@@ -4,6 +4,7 @@ import { readScanState } from '@ValenceClient/library/fetchLibrary';
 import { say } from '@ValenceI18n/say';
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import type { ScanFollowerProps } from './ScanFollower.types';
+import { usePageIsShown } from '@ValenceScreens/visibility/usePageIsShown';
 
 type Seen = {
   state: string;
@@ -31,11 +32,16 @@ const ScanFollower = ({ jobId, name, onSettled }: ScanFollowerProps) => {
     total: null,
   });
   const isSettled = SETTLED.has(seen.state);
+  const isShown = usePageIsShown();
 
   useEffect(() => {
     if (isSettled) {
       onSettled(jobId);
 
+      return undefined;
+    }
+
+    if (!isShown) {
       return undefined;
     }
 
@@ -59,7 +65,7 @@ const ScanFollower = ({ jobId, name, onSettled }: ScanFollowerProps) => {
       isLive = false;
       clearInterval(timer);
     };
-  }, [jobId, isSettled, onSettled]);
+  }, [jobId, isSettled, onSettled, isShown]);
 
   const fraction =
     seen.processed === null || seen.total === null || seen.total === 0

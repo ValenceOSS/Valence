@@ -26,12 +26,22 @@ const aBar = (overrides: Partial<TopBarProps> = {}): TopBarProps => ({
   isArriving: false,
   onFaceAt: jest.fn(),
   onMarkAt: jest.fn(),
+  hasFilms: true,
+  hasShows: true,
   hasMusic: false,
   hasBooks: false,
   ...overrides,
 });
 
 describe('TopBar', () => {
+  it('offers films and programmes only where the server has some', async () => {
+    const drawn = await render(<TopBar {...aBar({ hasFilms: false, hasShows: false })} />);
+
+    expect(drawn.getByRole('button', { name: 'Home' })).toBeOnTheScreen();
+    expect(drawn.queryByRole('button', { name: 'Films' })).toBeNull();
+    expect(drawn.queryByRole('button', { name: 'Shows' })).toBeNull();
+  });
+
   it('holds search, the parts there are and the face of whoever is watching', async () => {
     const drawn = await render(<TopBar {...aBar()} />);
 

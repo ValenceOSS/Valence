@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { cn } from '@ValenceUI/cn';
 import { splitElapsed } from '@ValenceClient/admin/splitElapsed';
 import type { ElapsedTimeProps } from './ElapsedTime.types';
@@ -16,7 +16,7 @@ const ElapsedTime = ({ ms, className }: ElapsedTimeProps) => (
     {splitElapsed(ms).map((part, at) => (
       <Fragment key={part.unit}>
         {at === 0 ? '' : ' '}
-        <AnimatedNumber
+        <FormattedNumber
           value={part.value}
           suffix={` ${part.unit}`}
           {...(part.isFractional ? { format: { maximumFractionDigits: 1 } } : {})}

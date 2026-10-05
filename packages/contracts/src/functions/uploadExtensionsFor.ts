@@ -15,11 +15,11 @@ const uploadExtensionsFor = (kind: LibraryKind): readonly string[] => {
   switch (kind) {
     case 'movies':
     case 'shows':
-      return [...VIDEO_FILE_EXTENSIONS, ...TEXT_SUBTITLE_EXTENSIONS].toSorted();
+      return [...VIDEO_FILE_EXTENSIONS, ...TEXT_SUBTITLE_EXTENSIONS].sort();
     case 'music':
-      return [...AUDIO_FILE_EXTENSIONS].toSorted();
+      return [...AUDIO_FILE_EXTENSIONS].sort();
     case 'books':
-      return [...BOOK_FILE_FORMATS.keys()].toSorted();
+      return [...BOOK_FILE_FORMATS.keys()].sort();
   }
 };
 

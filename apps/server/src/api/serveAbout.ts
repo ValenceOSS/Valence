@@ -1,4 +1,5 @@
 import { aboutRoute } from '@ValenceServer/routes/AboutRoute';
+import { SERVER_FEATURES } from '@ValenceContracts/constants/SERVER_FEATURES';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 
@@ -12,7 +13,10 @@ const serveAbout = (app: OpenAPIHono, context: AppContext): void => {
   const { SERVER_VERSION, SERVER_COMMIT } = context;
 
   app.openapi(aboutRoute, (asked) =>
-    asked.json({ version: SERVER_VERSION, commit: SERVER_COMMIT }, 200),
+    asked.json(
+      { version: SERVER_VERSION, commit: SERVER_COMMIT, features: [...SERVER_FEATURES] },
+      200,
+    ),
   );
 };
 

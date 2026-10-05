@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@ValenceUI/Link';
 import { ReadMore } from '@ValenceUI/ReadMore';
-import { RevealItem } from '@ValenceUI/RevealItem';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { RELEASE_TYPE_NAMES } from '@ValenceClient/requests/RELEASE_TYPE_NAMES';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
@@ -63,9 +62,11 @@ const ArtistStory = ({ artistId, name }: ArtistStoryProps) => {
       )}
 
       {!mayRequest || missing.length === 0 ? null : (
-        <MusicShelf heading={say('common.moreFromName', { name })}>
-          {missing.map((album, at) => (
-            <RevealItem key={album.releaseGroupId} index={at}>
+        <MusicShelf
+          heading={say('common.moreFromName', { name })}
+          tiles={missing.map((album) => ({
+            key: album.releaseGroupId,
+            tile: (
               <MusicTile
                 title={album.title}
                 detail={[
@@ -82,9 +83,9 @@ const ArtistStory = ({ artistId, name }: ArtistStoryProps) => {
                   go({ asking: askingOf({ kind: 'album', id: album.releaseGroupId }) });
                 }}
               />
-            </RevealItem>
-          ))}
-        </MusicShelf>
+            ),
+          }))}
+        />
       )}
     </>
   );

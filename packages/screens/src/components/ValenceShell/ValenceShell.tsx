@@ -72,6 +72,7 @@ import { useSurprise } from '@ValenceScreens/library/useSurprise';
 import { writeMusicView } from '@ValenceClient/music/musicView';
 import { libraryChoicesFor } from '@ValenceScreens/library/libraryChoicesFor';
 import { requestsChoicesFor } from '@ValenceScreens/requests/requestsChoicesFor';
+import { useStockedKinds } from '@ValenceClient/library/useStockedKinds';
 
 const NOTHING_WAITING = { notifications: [], unread: 0 };
 
@@ -197,33 +198,17 @@ const ValenceShell = () => {
     [place.requestsView, go],
   );
 
-  const watchableIds = useMemo(
-    () =>
-      (libraries.data ?? [])
-        .filter((one) => one.kind === 'movies' || one.kind === 'shows')
-        .map((one) => one.id),
-    [libraries.data],
-  );
+  const stock = useStockedKinds();
 
-  const anyFilm = useQuery({
-    ...libraryQueries.across(watchableIds, { kind: 'films', limit: 1 }),
-    enabled: watchableIds.length > 0,
-  });
-
-  const isStockKnown = libraries.data !== undefined && !anyFilm.isLoading;
-
-  const stocked: ShellSection[] = [
-    ...((anyFilm.data ?? []).length > 0 ? (['films'] as const) : []),
-    ...((libraries.data ?? []).some((one) => one.kind === 'shows' && one.itemCount > 0)
-      ? (['shows'] as const)
-      : []),
-    ...((libraries.data ?? []).some((one) => one.kind === 'books' && one.itemCount > 0)
-      ? (['read'] as const)
-      : []),
-    ...((libraries.data ?? []).some((one) => one.kind === 'music' && one.itemCount > 0)
-      ? (['music'] as const)
-      : []),
-  ];
+  const stocked: ShellSection[] =
+    stock === null
+      ? []
+      : [
+          ...(stock.films ? (['films'] as const) : []),
+          ...(stock.shows ? (['shows'] as const) : []),
+          ...(stock.books ? (['read'] as const) : []),
+          ...(stock.music ? (['music'] as const) : []),
+        ];
 
   const inspecting = place.inspecting === null ? null : (known.get(place.inspecting) ?? null);
   const seasonMates = useSeasonMates(inspecting, [...known.values()]);
@@ -313,7 +298,7 @@ const ValenceShell = () => {
       libraryChoices={libraryChoices}
       requestsChoices={requestsChoices}
       {...(libraries.data === undefined ? {} : { libraryKinds })}
-      {...(isStockKnown ? { stocked } : {})}
+      {...(stock === null ? {} : { stocked })}
       mayRequest={mayRequest}
       onOpenFavourites={() => {
         go({ section: 'favourites' });
