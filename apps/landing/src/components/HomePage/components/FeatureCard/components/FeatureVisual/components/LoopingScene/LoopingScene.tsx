@@ -1,7 +1,6 @@
-import { useEffect, useRef } from 'react';
-import { Player } from '@remotion/player';
+import { useEffect, useRef, useState } from 'react';
+import { Thumbnail } from '@remotion/player';
 import { useInView, useReducedMotionConfig } from 'motion/react';
-import type { PlayerRef } from '@remotion/player';
 import type { LoopingSceneProps } from './LoopingScene.types';
 
 const FPS = 30;
@@ -12,6 +11,10 @@ const FPS = 30;
  * fixed size and scaled to its card, so it reads the same however wide the card is. For somebody
  * who asked for less motion it is one telling frame of it, held still.
  *
+ * The scene is drawn a frame at a time from a clock of its own rather than by a player, because a
+ * player that starts itself is autoplay to a browser, and a browser that blocks autoplay left every
+ * card on its first, empty frame.
+ *
  * @param scene - The scene, drawn from the frame it is on.
  * @param frames - How long one time round is, at thirty frames a second.
  * @param width - How wide the scene is drawn before it is scaled.
@@ -21,42 +24,50 @@ const FPS = 30;
  */
 const LoopingScene = ({ scene, frames, width, height, still, className }: LoopingSceneProps) => {
   const holder = useRef<HTMLDivElement>(null);
-  const player = useRef<PlayerRef>(null);
-  const isInView = useInView(holder, { amount: 0.4 });
+  const isInView = useInView(holder, { amount: 0.2 });
   const isStill = useReducedMotionConfig() === true;
-  const hasBeenSeen = useRef(false);
+  const [frame, setFrame] = useState(isStill ? still : 0);
+  const startedAt = useRef<number | null>(null);
+  const shownFrame = useRef(frame);
 
   useEffect(() => {
-    const playing = player.current;
+    if (isStill || !isInView) {
+      startedAt.current = null;
 
-    if (playing === null || isStill) {
       return;
     }
 
-    if (isInView) {
-      hasBeenSeen.current = true;
-      playing.play();
-    } else if (hasBeenSeen.current) {
-      playing.pause();
-    }
-  }, [isInView, isStill]);
+    let request = 0;
+
+    const tick = (now: number) => {
+      startedAt.current ??= now - (shownFrame.current / FPS) * 1000;
+
+      const next = Math.floor(((now - startedAt.current) / 1000) * FPS) % frames;
+
+      if (next !== shownFrame.current) {
+        shownFrame.current = next;
+        setFrame(next);
+      }
+
+      request = requestAnimationFrame(tick);
+    };
+
+    request = requestAnimationFrame(tick);
+
+    return () => {
+      cancelAnimationFrame(request);
+    };
+  }, [isInView, isStill, frames]);
 
   return (
     <div ref={holder} className={className}>
-      <Player
-        ref={player}
+      <Thumbnail
         component={scene}
         durationInFrames={frames}
         fps={FPS}
         compositionWidth={width}
         compositionHeight={height}
-        initialFrame={isStill ? still : 0}
-        autoPlay={!isStill}
-        loop
-        controls={false}
-        clickToPlay={false}
-        doubleClickToFullscreen={false}
-        spaceKeyToPlayOrPause={false}
+        frameToDisplay={isStill ? still : frame}
         style={{ width: '100%' }}
       />
     </div>
