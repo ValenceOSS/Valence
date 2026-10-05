@@ -59,6 +59,7 @@ import type { ShareSubject } from '@ValenceClient/sharing/newShareFor.types';
 import type { ATitleProps } from './ATitle.types';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 import { say } from '@ValenceI18n/say';
+import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { ABadgeRow } from '@ValenceMobile/components/ABadgeRow/ABadgeRow';
 
 const PLAY_HEIGHT = 46;
@@ -109,6 +110,7 @@ const ATitle = ({
   const asking = useQuery(libraryQueries.detail(mediaId));
   const watched = useQuery(viewingQueries.progress());
   const colours = useTheColours();
+  const mayShare = useWhatIMayDo().may('sharing.link');
   const watching = useWatchingProfile();
   const favourites = useFavourites(watching);
   const hiding = useHidden(watching);
@@ -388,26 +390,28 @@ const ATitle = ({
           </View>
         </Button>
 
-        <Button
-          tone="bare"
-          label={say('common.share')}
-          onPress={() => {
-            setSharing({
-              kind: 'item',
-              media: {
-                id: title.id,
-                title: title.title,
-                seriesId: programme?.seriesId ?? null,
-                seriesTitle,
-              },
-            });
-          }}
-        >
-          <View style={styles.action}>
-            <Icon of={Share} colour={colours.text} />
-            <Words size="small">{say('common.share')}</Words>
-          </View>
-        </Button>
+        {mayShare ? (
+          <Button
+            tone="bare"
+            label={say('common.share')}
+            onPress={() => {
+              setSharing({
+                kind: 'item',
+                media: {
+                  id: title.id,
+                  title: title.title,
+                  seriesId: programme?.seriesId ?? null,
+                  seriesTitle,
+                },
+              });
+            }}
+          >
+            <View style={styles.action}>
+              <Icon of={Share} colour={colours.text} />
+              <Words size="small">{say('common.share')}</Words>
+            </View>
+          </Button>
+        ) : null}
 
         <Button
           tone="bare"

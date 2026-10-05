@@ -41,6 +41,7 @@ import type { ShareSubject } from '@ValenceClient/sharing/newShareFor.types';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { AShowProps } from './AShow.types';
 import { say } from '@ValenceI18n/say';
+import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { sayCount } from '@ValenceI18n/sayCount';
 import { ABadgeRow } from '@ValenceMobile/components/ABadgeRow/ABadgeRow';
 import { AChoiceMenu } from '@ValenceMobile/components/AChoiceMenu/AChoiceMenu';
@@ -81,6 +82,7 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
   const [sharing, setSharing] = useState<ShareSubject | null>(null);
   const watched = useQuery(viewingQueries.progress());
   const colours = useTheColours();
+  const mayShare = useWhatIMayDo().may('sharing.link');
   const watching = useWatchingProfile();
   const hiding = useHidden(watching);
   const [chosen, setChosen] = useState<number | null | undefined>(undefined);
@@ -290,7 +292,7 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
           </Button>
         )}
 
-        {seriesId === null ? null : (
+        {seriesId === null || !mayShare ? null : (
           <Button
             tone="bare"
             label={say('common.share')}
