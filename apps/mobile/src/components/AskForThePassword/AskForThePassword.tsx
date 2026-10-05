@@ -139,7 +139,7 @@ const AskForThePassword = ({
       hasWalkedIn.current = true;
       void tryIt();
     }
-  }, [isDemoServer]);
+  }, [isDemoServer, tryIt]);
 
   if (wantsCode) {
     return (
