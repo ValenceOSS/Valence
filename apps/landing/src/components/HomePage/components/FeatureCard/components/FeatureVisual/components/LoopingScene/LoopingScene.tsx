@@ -24,6 +24,7 @@ const LoopingScene = ({ scene, frames, width, height, still, className }: Loopin
   const player = useRef<PlayerRef>(null);
   const isInView = useInView(holder, { amount: 0.4 });
   const isStill = useReducedMotionConfig() === true;
+  const hasBeenSeen = useRef(false);
 
   useEffect(() => {
     const playing = player.current;
@@ -32,14 +33,11 @@ const LoopingScene = ({ scene, frames, width, height, still, className }: Loopin
       return;
     }
 
-    if (!isInView) {
-      playing.pause();
-
-      return;
-    }
-
-    if (!playing.isPlaying()) {
+    if (isInView) {
+      hasBeenSeen.current = true;
       playing.play();
+    } else if (hasBeenSeen.current) {
+      playing.pause();
     }
   }, [isInView, isStill]);
 
