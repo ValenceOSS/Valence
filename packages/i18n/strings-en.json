@@ -22096,6 +22096,11 @@
     "context": "Text shown in the profile gate."
   },
   {
+    "handler": "screens.profileGate.signInWithAUsername",
+    "text": "Sign in with a username",
+    "context": "A button under the faces on a public demo's sign-in screen, where only the shared demo account's face is offered, for anybody else — the server's administrator — to sign in by name and password instead."
+  },
+  {
     "handler": "screens.profilesPanel.describeProfile.no",
     "text": "No",
     "context": "Shown in the profiles panel (from `describeProfile`)."

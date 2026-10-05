@@ -5549,6 +5549,7 @@ const ENGLISH = {
     'Use your {name} passkey to sign in to the app.',
   'screens.profileGate.readingWhoIsHere': 'Loading profiles',
   'screens.profileGate.signIn': 'Sign in',
+  'screens.profileGate.signInWithAUsername': 'Sign in with a username',
   'screens.profilesPanel.describeProfile.no': 'No',
   'screens.profilesPanel.describeProfile.toTheBestThereIs': 'To the best available',
   'screens.profilesPanel.describeProfile.untilUntil': 'Until {until}',

@@ -117,6 +117,7 @@ const ProfileGate = ({
   startsAs = null,
 }: ProfileGateProps) => {
   const isDemoServer = useIsDemoServer();
+  const [isNaming, setIsNaming] = useState(false);
   const [isHandingOver, setIsHandingOver] = useState(false);
   const asking = useQuery(sessionQueries.wayIn());
   const everyone = asking.data?.profiles ?? null;
@@ -425,7 +426,7 @@ const ProfileGate = ({
         )}
       </motion.p>
 
-      {!isTitleOver ? null : asking.isError ? (
+      {!isTitleOver ? null : asking.isError || isNaming ? (
         <div className="flex w-full max-w-sm flex-col items-center gap-6">
           <motion.h1
             initial={{ opacity: 0, y: prefersReducedMotion === true ? 0 : 8 }}
@@ -625,6 +626,18 @@ const ProfileGate = ({
                   }}
                 />
               </motion.div>
+
+              {!isDemoServer ? null : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setIsNaming(true);
+                  }}
+                >
+                  {say('screens.profileGate.signInWithAUsername')}
+                </Button>
+              )}
 
               {everyone.length !== 0 ? null : (
                 <motion.p
