@@ -1860,6 +1860,7 @@ const ENGLISH = {
   'error.common.thatIsForWhoeverSetsUp': 'Only the requests administrator can do that.',
   'error.common.thatIsNotInsideALibrary': 'That isn’t inside a library.',
   'error.common.thatIsNotYourDevice': 'That isn’t your device.',
+  'error.common.thatRequestIsTooLarge': 'That request is too large.',
   'error.common.thatTrackCouldNotBeRead': 'Couldn’t read that track.',
   'error.common.thatWouldLeaveNobodyAbleTo': 'That would leave no administrators on this server.',
   'error.common.theAccountCouldNotBeMade':

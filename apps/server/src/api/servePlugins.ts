@@ -1,3 +1,4 @@
+import { bodyLimit } from 'hono/body-limit';
 import { saidFrom } from '@ValenceI18n/saidFrom';
 import { refuseWith } from '@ValenceI18n/refuseWith';
 import { PACKAGE_LIMITS } from '@ValenceSDK/package/PACKAGE_LIMITS';
@@ -245,6 +246,14 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
       ? context.json(refuseWith(changed.refused), 422)
       : context.json(changed, 200);
   });
+
+  app.use(
+    '/api/plugins/:id/hooks/*',
+    bodyLimit({
+      maxSize: MOST_WEBHOOK_BYTES,
+      onError: (context) => context.json(refuse('error.plugins.thatMessageIsTooLarge'), 413),
+    }),
+  );
 
   app.openapi(receiveWebhookRoute, async (context) => {
     const { id, hook, secret } = context.req.valid('param');

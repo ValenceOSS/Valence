@@ -1,0 +1,3 @@
+const SMALL_BODY_BYTES = 1024 * 1024;
+
+export { SMALL_BODY_BYTES };

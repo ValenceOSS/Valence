@@ -1,3 +1,7 @@
+import { isPublicRoute } from '@ValenceServer/auth/isPublicRoute';
+import { bodyLimit } from 'hono/body-limit';
+import { refuse } from '@ValenceI18n/refuse';
+import { SMALL_BODY_BYTES } from '@ValenceServer/api/SMALL_BODY_BYTES';
 import { withCaller } from '@ValenceServer/web/withCaller';
 import { allowCrossOriginClients } from '@ValenceServer/auth/allowCrossOriginClients';
 import { FEDERATION_PATH } from '@ValenceServer/linking/FEDERATION_PATH';
@@ -83,6 +87,15 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
 
   app.use('/api/*', async (context, next) =>
     linkPeople.runAs(() => linkPersonOf(context.req.raw.headers), next),
+  );
+
+  const smallBody = bodyLimit({
+    maxSize: SMALL_BODY_BYTES,
+    onError: (context) => context.json(refuse('error.common.thatRequestIsTooLarge'), 413),
+  });
+
+  app.use('/api/*', async (context, next) =>
+    isPublicRoute(context.req.method, context.req.path, true) ? smallBody(context, next) : next(),
   );
 
   blockOnTheDemo(app, context.isOnTheDemo);

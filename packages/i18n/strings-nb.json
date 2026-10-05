@@ -7975,6 +7975,11 @@
     "context": "An error the server answers with (HTTP 403), used in the app on the server (from `servePlayback`) and in the app on the server (from `servePresence`)."
   },
   {
+    "handler": "error.common.thatRequestIsTooLarge",
+    "text": "That request is too large.",
+    "context": "An error the server answers with (HTTP 413) when somebody sends far more than a sign-in or a webhook could need (from `serveEveryRequest`)."
+  },
+  {
     "handler": "error.common.thatTrackCouldNotBeRead",
     "text": "Couldn’t read that track.",
     "context": "An error the server answers with (HTTP 404), used in the books on the server (from `registerListeningRoutes`) and in the music on the server (from `registerMusicRoutes`)."
