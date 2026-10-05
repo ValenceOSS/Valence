@@ -87,6 +87,12 @@ const EnterPassword = ({
     await settle(answer.kind === 'signedIn', answer.kind === 'refused' ? answer.reason : '');
   };
 
+  const latestSettle = useRef(settle);
+
+  useEffect(() => {
+    latestSettle.current = settle;
+  });
+
   useEffect(() => {
     if (!isDemoServer || hasWalkedIn.current) {
       return;
@@ -95,7 +101,12 @@ const EnterPassword = ({
     hasWalkedIn.current = true;
     setIsAsking(true);
     void signInAsProfile(profile.id, '').then((answer) =>
-);
+      latestSettle.current(
+        answer.kind === 'signedIn',
+        answer.kind === 'refused' ? answer.reason : '',
+      ),
+    );
+  }, [isDemoServer, profile.id]);
 
   const confirmCode = async () => {
     if (code === '' || isAsking) {

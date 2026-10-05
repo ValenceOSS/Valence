@@ -134,12 +134,18 @@ const AskForThePassword = ({
     });
   };
 
+  const latestTry = useRef(tryIt);
+
+  useEffect(() => {
+    latestTry.current = tryIt;
+  });
+
   useEffect(() => {
     if (isDemoServer && !hasWalkedIn.current) {
       hasWalkedIn.current = true;
-      void tryIt();
+      void latestTry.current();
     }
-  }, [isDemoServer, tryIt]);
+  }, [isDemoServer]);
 
   if (wantsCode) {
     return (
