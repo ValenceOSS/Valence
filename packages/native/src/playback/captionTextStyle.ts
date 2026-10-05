@@ -2,10 +2,13 @@ import { Platform } from 'react-native';
 import { withOpacity } from '@ValenceClient/playback/captionStyle';
 import type { CaptionStyle } from '@ValenceClient/playback/captionStyle';
 import { say } from '@ValenceI18n/say';
+import { CAPTION_WEIGHT_VALUES } from '@ValenceClient/playback/CAPTION_WEIGHT_VALUES';
 
 type CaptionTextStyle = {
   fontFamily?: string;
   fontSize: number;
+  fontWeight: (typeof CAPTION_WEIGHT_VALUES)[keyof typeof CAPTION_WEIGHT_VALUES];
+  fontVariant?: 'small-caps'[];
   color: string;
   backgroundColor: string;
   textShadowColor?: string;
@@ -39,8 +42,16 @@ const familyOf = (font: CaptionStyle['fontFamily']): string | undefined => {
       return isApple ? say('native.captionTextStyle.georgia') : 'serif';
     case 'mono':
       return isApple ? say('native.captionTextStyle.menlo') : 'monospace';
+    case 'typewriter':
+      return isApple ? say('native.captionTextStyle.courierNew') : 'serif-monospace';
     case 'casual':
       return isApple ? say('native.captionTextStyle.chalkboardSE') : 'casual';
+    case 'script':
+      return isApple ? say('native.captionTextStyle.snellRoundhand') : 'cursive';
+    case 'smallCapitals':
+      return undefined;
+    case 'condensed':
+      return isApple ? say('native.captionTextStyle.avenirNextCondensed') : 'sans-serif-condensed';
   }
 };
 
@@ -93,6 +104,8 @@ const captionTextStyle = (style: CaptionStyle, fontSize: number): CaptionTextSty
   return {
     ...(fontFamily === undefined ? {} : { fontFamily }),
     fontSize: (fontSize * style.fontScale) / 100,
+    fontWeight: CAPTION_WEIGHT_VALUES[style.fontWeight],
+    ...(style.fontFamily === 'smallCapitals' ? { fontVariant: ['small-caps'] } : {}),
     color: withOpacity(style.color, style.opacity),
     backgroundColor: withOpacity(style.backgroundColor, style.backgroundOpacity),
     ...edgeOf(style),

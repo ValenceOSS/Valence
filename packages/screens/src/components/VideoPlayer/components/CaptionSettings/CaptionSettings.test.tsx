@@ -41,17 +41,21 @@ describe('CaptionSettings', () => {
     screen.getByRole('slider', { name: 'Caption size' }).focus();
     await user.keyboard('{ArrowRight}');
 
-    expect(props.onChange).toHaveBeenCalledWith(expect.objectContaining({ fontScale: 110 }));
+    expect(props.onChange).toHaveBeenCalledWith(expect.objectContaining({ fontScale: 105 }));
   });
 
-  it('never shrinks captions below what is readable', async () => {
+  it('sizes captions anywhere from a tenth to five times their usual size', async () => {
     const user = userEvent.setup();
     const props = draw({ style: { ...DEFAULT_CAPTION_STYLE, fontScale: 50 } });
+    const size = screen.getByRole('slider', { name: 'Caption size' });
 
-    screen.getByRole('slider', { name: 'Caption size' }).focus();
+    expect(size).toHaveAttribute('aria-valuemin', '10');
+    expect(size).toHaveAttribute('aria-valuemax', '500');
+
+    size.focus();
     await user.keyboard('{ArrowLeft}');
 
-    expect(props.onChange).toHaveBeenCalledWith(expect.objectContaining({ fontScale: 50 }));
+    expect(props.onChange).toHaveBeenCalledWith(expect.objectContaining({ fontScale: 45 }));
   });
 
   it('reports a change of background opacity as a fraction', async () => {
@@ -70,9 +74,21 @@ describe('CaptionSettings', () => {
     const user = userEvent.setup();
     const props = draw();
 
-    await user.click(screen.getByRole('button', { name: 'Mono' }));
+    await user.click(screen.getByRole('button', { name: 'Caption font' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Typewriter' }));
 
-    expect(props.onChange).toHaveBeenCalledWith(expect.objectContaining({ fontFamily: 'mono' }));
+    expect(props.onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ fontFamily: 'typewriter' }),
+    );
+  });
+
+  it('reports a change of weight', async () => {
+    const user = userEvent.setup();
+    const props = draw();
+
+    await user.click(screen.getByRole('button', { name: 'Bold' }));
+
+    expect(props.onChange).toHaveBeenCalledWith(expect.objectContaining({ fontWeight: 'bold' }));
   });
 
   it('reports a change of edge treatment', async () => {
@@ -94,14 +110,14 @@ describe('CaptionSettings', () => {
 
   it('names the outline thickness in words and reports a change of it', async () => {
     const user = userEvent.setup();
-    const props = draw({ style: { ...DEFAULT_CAPTION_STYLE, outlineThickness: 2 } });
+    const props = draw({ style: { ...DEFAULT_CAPTION_STYLE, outlineThickness: 3 } });
 
-    expect(screen.getByText('Medium')).toBeInTheDocument();
+    expect(screen.getByText('Thick')).toBeInTheDocument();
 
     screen.getByRole('slider', { name: 'Caption outline thickness' }).focus();
     await user.keyboard('{ArrowRight}');
 
-    expect(props.onChange).toHaveBeenCalledWith(expect.objectContaining({ outlineThickness: 3 }));
+    expect(props.onChange).toHaveBeenCalledWith(expect.objectContaining({ outlineThickness: 4 }));
   });
 
   it('separates the text colour from the background colour', async () => {

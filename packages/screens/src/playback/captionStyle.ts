@@ -1,12 +1,19 @@
 import { withOpacity } from '@ValenceClient/playback/captionStyle';
 import type { CaptionStyle } from '@ValenceClient/playback/captionStyle';
 import { say } from '@ValenceI18n/say';
+import { CAPTION_WEIGHT_VALUES } from '@ValenceClient/playback/CAPTION_WEIGHT_VALUES';
+
+const SANS = 'system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
 
 const FONT_FAMILIES = {
-  sans: 'system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+  sans: SANS,
   serif: say('common.georgiaTimesNewRomanSerif'),
   mono: 'ui-monospace, "SF Mono", Menlo, Consolas, monospace',
+  typewriter: '"Courier New", Courier, "Nimbus Mono PS", monospace',
   casual: say('screens.playback.captionStyle.comicSansMSChalkboardSECursive'),
+  script: '"Snell Roundhand", "Segoe Script", "Brush Script MT", cursive',
+  smallCapitals: SANS,
+  condensed: '"Arial Narrow", "Roboto Condensed", "Avenir Next Condensed", sans-serif',
 } as const;
 
 /**
@@ -65,6 +72,8 @@ const em = (value: number): string => `${(Math.round(value * 1000) / 1000).toStr
 type CueDeclarations = {
   fontFamily: string;
   fontSize: string;
+  fontWeight: string;
+  fontVariant: string;
   color: string;
   backgroundColor: string;
   textShadow: string;
@@ -79,6 +88,8 @@ type CueDeclarations = {
 const toCueDeclarations = (style: CaptionStyle): CueDeclarations => ({
   fontFamily: FONT_FAMILIES[style.fontFamily],
   fontSize: `${style.fontScale.toString()}%`,
+  fontWeight: CAPTION_WEIGHT_VALUES[style.fontWeight],
+  fontVariant: style.fontFamily === 'smallCapitals' ? 'small-caps' : 'normal',
   color: withOpacity(style.color, style.opacity),
   backgroundColor: withOpacity(style.backgroundColor, style.backgroundOpacity),
   textShadow: edgeStyle(style.edgeStyle, style.opacity, style.outlineThickness),
@@ -97,6 +108,8 @@ const toCueCss = (style: CaptionStyle): string => {
   return [
     `font-family: ${declarations.fontFamily};`,
     `font-size: ${declarations.fontSize};`,
+    `font-weight: ${declarations.fontWeight};`,
+    `font-variant: ${declarations.fontVariant};`,
     `color: ${declarations.color};`,
     `background-color: ${declarations.backgroundColor};`,
     `text-shadow: ${declarations.textShadow};`,

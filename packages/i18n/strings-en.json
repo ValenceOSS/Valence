@@ -960,6 +960,36 @@
     "context": "Shown in the playback (from `fetchSegments`)."
   },
   {
+    "handler": "client.playback.nameCaptionFont.condensed",
+    "text": "Condensed",
+    "context": "A caption font: narrow lettering that fits more on a line. Offered among the caption fonts in subtitle settings."
+  },
+  {
+    "handler": "client.playback.nameCaptionFont.script",
+    "text": "Script",
+    "context": "A caption font: flowing handwriting. Offered among the caption fonts in subtitle settings."
+  },
+  {
+    "handler": "client.playback.nameCaptionFont.smallCapitals",
+    "text": "Small capitals",
+    "context": "A caption font: plain lettering with the lower-case letters drawn as small capitals. Offered among the caption fonts in subtitle settings."
+  },
+  {
+    "handler": "client.playback.nameCaptionFont.typewriter",
+    "text": "Typewriter",
+    "context": "A caption font: a typewriter face, every letter the same width with serifs. Offered among the caption fonts in subtitle settings."
+  },
+  {
+    "handler": "client.playback.nameCaptionWeight.bold",
+    "text": "Bold",
+    "context": "How heavy caption lettering is drawn: bold. One of the weights offered in subtitle settings."
+  },
+  {
+    "handler": "client.playback.nameCaptionWeight.regular",
+    "text": "Regular",
+    "context": "How heavy caption lettering is drawn: ordinary text weight. One of the weights offered in subtitle settings."
+  },
+  {
     "handler": "client.playback.qualityStepDetail.costNoSmallerThanTheOriginal",
     "text": "{cost} · no smaller than the original",
     "context": "The line beside a smaller video quality that would save nothing. {cost} is what it costs, such as up to 8.0 Mbps · ~4.2 GB."
@@ -3174,6 +3204,11 @@
     "handler": "common.green",
     "text": "Green",
     "context": "The label, used in the bricks in the variants and in the tokens (from `captionColours`)."
+  },
+  {
+    "handler": "common.heavy",
+    "text": "Heavy",
+    "context": "The heaviest of a range, used in subtitle settings for both the thickest caption outline and the heaviest caption lettering."
   },
   { "handler": "common.here", "text": "Here", "context": "The detail in the nav bar." },
   {
@@ -6290,6 +6325,11 @@
     "context": "Shown, used in the admin (from `describeTrigger`) and in the add trigger dialog in the admin area."
   },
   {
+    "handler": "common.weight",
+    "text": "Weight",
+    "context": "The heading of the subtitle setting for how heavy, from light to heavy, caption lettering is drawn."
+  },
+  {
     "handler": "common.welcomeToName",
     "text": "Welcome to {name}",
     "context": "A heading, used in the welcome to valence and in the welcome tour. {name} is filled in by the app."
@@ -8640,9 +8680,19 @@
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveWebhook`)."
   },
   {
+    "handler": "native.captionTextStyle.avenirNextCondensed",
+    "text": "Avenir Next Condensed",
+    "context": "The name of a font installed on Apple devices, asked for by name to draw the Condensed caption font. Normally left as it is, since it names the font."
+  },
+  {
     "handler": "native.captionTextStyle.chalkboardSE",
     "text": "Chalkboard SE",
     "context": "The name of a font installed on Apple phones and televisions, which captions are drawn in. It is the font’s own name, asked for by the system, and is not translated."
+  },
+  {
+    "handler": "native.captionTextStyle.courierNew",
+    "text": "Courier New",
+    "context": "The name of a font installed on Apple devices, asked for by name to draw the Typewriter caption font. Normally left as it is, since it names the font."
   },
   {
     "handler": "native.captionTextStyle.georgia",
@@ -8653,6 +8703,11 @@
     "handler": "native.captionTextStyle.menlo",
     "text": "Menlo",
     "context": "The name of a font installed on Apple phones and televisions, which captions are drawn in. It is the font’s own name, asked for by the system, and is not translated."
+  },
+  {
+    "handler": "native.captionTextStyle.snellRoundhand",
+    "text": "Snell Roundhand",
+    "context": "The name of a font installed on Apple devices, asked for by name to draw the Script caption font. Normally left as it is, since it names the font."
   },
   {
     "handler": "phone.aBook.aChapterToHear.listenFromTitle",
@@ -23830,11 +23885,6 @@
     "handler": "screens.videoPlayer.captionSettings.captionTextColour",
     "text": "Caption text colour",
     "context": "The label of a swatch row in the caption settings in the video player."
-  },
-  {
-    "handler": "screens.videoPlayer.captionSettings.heavy",
-    "text": "Heavy",
-    "context": "Shown in the caption settings in the video player."
   },
   {
     "handler": "screens.videoPlayer.captionSettings.outlineThickness",

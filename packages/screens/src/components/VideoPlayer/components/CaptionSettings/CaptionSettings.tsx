@@ -4,24 +4,27 @@ import { Button } from '@ValenceUI/Button';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Slider } from '@ValenceUI/Slider';
 import { SwatchRow } from '@ValenceUI/SwatchRow';
+import { SelectField } from '@ValenceUI/SelectField';
+import { CAPTION_FONTS } from '@ValenceClient/playback/CAPTION_FONTS';
+import { CAPTION_WEIGHTS } from '@ValenceClient/playback/CAPTION_WEIGHTS';
+import { CAPTION_SIZES } from '@ValenceClient/playback/CAPTION_SIZES';
+import { nameCaptionFont } from '@ValenceClient/playback/nameCaptionFont';
+import { nameCaptionWeight } from '@ValenceClient/playback/nameCaptionWeight';
 import { CAPTION_COLOURS } from '@ValenceCore/tokens/CAPTION_COLOURS';
 import { CaptionField } from './components/CaptionField/CaptionField';
 import { toCueDeclarations } from '@ValenceScreens/playback/captionStyle';
 import type { CaptionSettingsProps } from './CaptionSettings.types';
 import { say } from '@ValenceI18n/say';
 
-const FONTS = [
-  { id: 'sans', label: say('common.sans') },
-  { id: 'serif', label: say('common.serif') },
-  { id: 'mono', label: say('common.mono') },
-  { id: 'casual', label: say('common.casual') },
-] as const;
+const FONTS = CAPTION_FONTS.map((font) => ({ id: font, label: nameCaptionFont(font) }));
+
+const WEIGHTS = CAPTION_WEIGHTS.map((weight) => ({ id: weight, label: nameCaptionWeight(weight) }));
 
 const OUTLINE_NAMES = [
   say('screens.videoPlayer.captionSettings.thin'),
   say('common.medium'),
   say('screens.videoPlayer.captionSettings.thick'),
-  say('screens.videoPlayer.captionSettings.heavy'),
+  say('common.heavy'),
 ] as const;
 
 const EDGES = [
@@ -41,8 +44,8 @@ const colourName = (id: string): string =>
   CAPTION_COLOURS.find((colour) => colour.id === id)?.label ?? id;
 
 /**
- * Lets the person reading the captions decide how they look — font, size, colour, background and
- * edge, and how thick an outline is — with a sample drawn above in the style being chosen, every choice taking effect on the video
+ * Lets the person reading the captions decide how they look — font, size, weight, colour,
+ * background and edge, and how thick an outline is — with a sample drawn above in the style being chosen, every choice taking effect on the video
  * behind the panel as it is made, and a way back to the defaults for anyone who has made it worse.
  *
  * @param style - How captions are drawn at the moment.
@@ -69,14 +72,33 @@ const CaptionSettings = ({ style, onChange, onReset }: CaptionSettingsProps) => 
 
     <div className="flex flex-col gap-5 px-2">
       <CaptionField label={say('common.font')}>
-        <SegmentedRow
+        <SelectField
           label={say('screens.videoPlayer.captionSettings.captionFont')}
+          isLabelHidden
           size="sm"
-          fills
-          items={FONTS}
+          options={FONTS}
           value={style.fontFamily}
           onSelect={(id) => {
-            onChange({ ...style, fontFamily: FONTS.find((font) => font.id === id)?.id ?? 'sans' });
+            onChange({
+              ...style,
+              fontFamily: CAPTION_FONTS.find((font) => font === id) ?? style.fontFamily,
+            });
+          }}
+        />
+      </CaptionField>
+
+      <CaptionField label={say('common.weight')}>
+        <SegmentedRow
+          label={say('common.weight')}
+          size="sm"
+          fills
+          items={WEIGHTS}
+          value={style.fontWeight}
+          onSelect={(id) => {
+            onChange({
+              ...style,
+              fontWeight: CAPTION_WEIGHTS.find((weight) => weight === id) ?? style.fontWeight,
+            });
           }}
         />
       </CaptionField>
@@ -86,10 +108,11 @@ const CaptionSettings = ({ style, onChange, onReset }: CaptionSettingsProps) => 
           label={say('screens.videoPlayer.captionSettings.captionSize')}
           tone="glass"
           value={style.fontScale}
-          max={300}
-          step={10}
+          min={CAPTION_SIZES.smallest}
+          max={CAPTION_SIZES.largest}
+          step={5}
           onValueChange={(value) => {
-            onChange({ ...style, fontScale: Math.max(50, value) });
+            onChange({ ...style, fontScale: value });
           }}
         />
       </CaptionField>

@@ -8,7 +8,6 @@ const READS_AT = 19;
 const styles = StyleSheet.create({
   line: {
     borderRadius: 6,
-    fontWeight: '500',
     overflow: 'hidden',
     paddingHorizontal: 8,
     paddingVertical: 3,
