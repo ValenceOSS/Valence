@@ -69,7 +69,7 @@ const SkipsScene = () => {
   const jumped = spring({ frame: frame - JUMPS_AT, fps, config: { damping: 18, stiffness: 120 } });
   const draggedBack = interpolate(frame, [TAKES_HOLD_AT, LETS_GO_AT], [0, 1], {
     ...clamp,
-    easing: Easing.inOut(Easing.cubic),
+    easing: Easing.inOut((at) => Easing.cubic(at)),
   });
   const progress =
     frame < JUMPS_AT

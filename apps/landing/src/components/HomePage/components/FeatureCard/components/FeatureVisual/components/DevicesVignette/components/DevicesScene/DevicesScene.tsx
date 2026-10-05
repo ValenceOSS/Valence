@@ -43,7 +43,7 @@ const DevicesScene = () => {
   const clamp = { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' } as const;
   const converted = interpolate(frame, [CONVERTS_FROM, CONVERTS_TO], [0, 1], {
     ...clamp,
-    easing: Easing.inOut(Easing.cubic),
+    easing: Easing.inOut((at) => Easing.cubic(at)),
   });
   const isDirect = frame >= FINDS_IT_DIRECT && frame < NEXT_EPISODE_FROM;
   const pop = spring({

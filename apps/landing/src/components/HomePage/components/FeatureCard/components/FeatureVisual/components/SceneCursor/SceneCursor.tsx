@@ -22,7 +22,7 @@ const PRESS_FRAMES = 7;
 const SceneCursor = ({ path, look = 'pointer' }: SceneCursorProps) => {
   const frame = useCurrentFrame();
   const frames = path.map((stop) => stop.at);
-  const easing = Easing.inOut(Easing.cubic);
+  const easing = Easing.inOut((at) => Easing.cubic(at));
   const x = interpolate(
     frame,
     frames,
@@ -52,7 +52,7 @@ const SceneCursor = ({ path, look = 'pointer' }: SceneCursorProps) => {
 
   return (
     <span
-      className="pointer-events-none absolute z-20 text-on-scrim [filter:drop-shadow(0_0_0.6px_rgb(0_0_0))_drop-shadow(0_0_0.6px_rgb(0_0_0))_drop-shadow(0_2px_3px_rgb(0_0_0/0.5))]"
+      className="pointer-events-none absolute z-20 text-on-scrim [filter:drop-shadow(0_0_0.6px_var(--color-shade))_drop-shadow(0_0_0.6px_var(--color-shade))_drop-shadow(0_2px_3px_color-mix(in_oklab,var(--color-shade)_50%,transparent))]"
       style={{
         left: `${x.toString()}%`,
         top: `${y.toString()}%`,

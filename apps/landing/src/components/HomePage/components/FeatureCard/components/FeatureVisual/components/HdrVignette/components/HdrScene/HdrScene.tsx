@@ -15,7 +15,7 @@ const LINE_AT = [50, 50, 14, 14, 86, 50, 50] as const;
 const HdrScene = () => {
   const frame = useCurrentFrame();
   const line = interpolate(frame, [...SWEEP], [...LINE_AT], {
-    easing: Easing.inOut(Easing.cubic),
+    easing: Easing.inOut((at) => Easing.cubic(at)),
     extrapolateRight: 'clamp',
   });
   const glow = 0.5 + 0.5 * Math.sin((frame / 240) * Math.PI * 4);
@@ -34,7 +34,7 @@ const HdrScene = () => {
         style={{ left: `${line.toString()}%` }}
       />
       <span
-        className="absolute top-[58%] flex size-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-on-scrim/70 bg-shade/60 text-on-scrim shadow-[0_2px_8px_rgb(0_0_0/0.4)] backdrop-blur-sm"
+        className="absolute top-[58%] flex size-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-on-scrim/70 bg-shade/60 text-on-scrim shadow-[0_2px_8px_color-mix(in_oklab,var(--color-shade)_40%,transparent)] backdrop-blur-sm"
         style={{ left: `${line.toString()}%` }}
       >
         <Icon of={ChevronsLeftRightIcon} size={14} />

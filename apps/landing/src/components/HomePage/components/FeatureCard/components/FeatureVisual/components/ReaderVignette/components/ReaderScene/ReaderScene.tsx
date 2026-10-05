@@ -74,14 +74,14 @@ const ReaderScene = () => {
       ? 0
       : frame < turning.at + leaves
         ? interpolate(frame, [turning.at, turning.at + leaves], [0, -turning.by], {
-            easing: Easing.in(Easing.quad),
+            easing: Easing.in((at) => Easing.quad(at)),
           })
         : interpolate(
             frame,
             [turning.at + leaves, turning.at + leaves + arrives],
             [turning.by, 0],
             {
-              easing: Easing.out(Easing.cubic),
+              easing: Easing.out((at) => Easing.cubic(at)),
             },
           );
   const [left, right] = SPREADS[turned] ?? SPREADS[0];
