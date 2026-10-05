@@ -27,8 +27,8 @@ const PICTURES: Record<FeatureCardShape, string> = {
  *
  * It is a rounded card of its own, set apart from its neighbours, and its picture stands on an
  * isometric plane inside it, so the product reads as an object on the page rather than a flat
- * screenshot. Pointed at, a soft light follows the pointer across it and its
- * picture acts the feature out. In a group of four, two are drawn wide, the words beside
+ * screenshot. Pointed at, a soft light follows the pointer across it and the plane leans towards
+ * wherever the pointer is, easing back flat once it leaves. In a group of four, two are drawn wide, the words beside
  * the picture rather than beneath it.
  *
  * @param feature - What it is and why it matters.
@@ -51,12 +51,27 @@ const FeatureCard = ({ feature, index, figure, shape = 'square' }: FeatureCardPr
 
       cell.style.setProperty('--spot-x', `${(event.clientX - box.left).toString()}px`);
       cell.style.setProperty('--spot-y', `${(event.clientY - box.top).toString()}px`);
+      cell.style.setProperty(
+        '--tilt-x',
+        (((event.clientX - box.left) / box.width) * 2 - 1).toFixed(3),
+      );
+      cell.style.setProperty(
+        '--tilt-y',
+        (((event.clientY - box.top) / box.height) * 2 - 1).toFixed(3),
+      );
+    };
+
+    const settle = () => {
+      cell.style.removeProperty('--tilt-x');
+      cell.style.removeProperty('--tilt-y');
     };
 
     cell.addEventListener('pointermove', follow);
+    cell.addEventListener('pointerleave', settle);
 
     return () => {
       cell.removeEventListener('pointermove', follow);
+      cell.removeEventListener('pointerleave', settle);
     };
   }, []);
 
@@ -64,7 +79,7 @@ const FeatureCard = ({ feature, index, figure, shape = 'square' }: FeatureCardPr
     <RevealItem
       index={index}
       className={cn(
-        'valence-surface valence-surface--flat list-none overflow-hidden rounded-3xl',
+        'valence-surface valence-surface--flat valence-feature-card list-none overflow-hidden rounded-3xl',
         SPANS[shape],
       )}
     >

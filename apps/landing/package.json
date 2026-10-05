@@ -15,6 +15,7 @@
   "dependencies": {
     "@keyline-icons/react": "1.0.0",
     "@paper-design/shaders-react": "0.0.80",
+    "@remotion/player": "4.0.533",
     "@tabler/icons-react": "3.46.0",
     "@tanstack/react-router": "1.170.36",
     "@valence/ui": "workspace:*",
@@ -23,6 +24,7 @@
     "react-dom": "19.3.0",
     "react-markdown": "10.1.0",
     "remark-gfm": "4.0.1",
+    "remotion": "4.0.533",
     "serve": "14.2.6",
     "zod": "4.6.4"
   },

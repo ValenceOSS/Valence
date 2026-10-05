@@ -258,6 +258,9 @@ importers:
       '@paper-design/shaders-react':
         specifier: 0.0.80
         version: 0.0.80(@types/react@19.3.0)(react@19.3.0)
+      '@remotion/player':
+        specifier: 4.0.533
+        version: 4.0.533(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@tabler/icons-react':
         specifier: 3.46.0
         version: 3.46.0(react@19.3.0)
@@ -282,6 +285,9 @@ importers:
       remark-gfm:
         specifier: 4.0.1
         version: 4.0.1
+      remotion:
+        specifier: 4.0.533
+        version: 4.0.533(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       serve:
         specifier: 14.2.6
         version: 14.2.6
@@ -4740,6 +4746,12 @@ packages:
         optional: true
       react-redux:
         optional: true
+
+  '@remotion/player@4.0.533':
+    resolution: {integrity: sha512-fZaoSO7K99W8FRwMxUdz2g+bouPVYvliHoNtUPYjdRG7AZYQalOQWnhOqFNnZkZPKjhVBzzmruID6P8V5fDjYA==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
 
   '@replit/codemirror-css-color-picker@6.3.0':
     resolution: {integrity: sha512-19biDANghUm7Fz7L1SNMIhK48tagaWuCOHj4oPPxc7hxPGkTVY2lU/jVZ8tsbTKQPVG7BO2CBDzs7CBwb20t4A==}
@@ -10480,6 +10492,12 @@ packages:
   remark-stringify@11.0.0:
     resolution: {integrity: sha512-1OSmLd3awB/t8qdoEOMazZkNsfVTeY4fTsgzcQFdXNq8ToTN4ZGwrMnlda4K6smTFKD+GRV6O48i6Z4iKgPPpw==}
 
+  remotion@4.0.533:
+    resolution: {integrity: sha512-M3XIFxeZ6tp+P5UMw2tb9wkMbjMrFN6BPgWFWSzeWAP1/aKWz331Wf4vGiOrz+NIq9xVX6G6dwRDQqDQbaxm2A==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+
   require-directory@2.1.1:
     resolution: {integrity: sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==}
     engines: {node: '>=0.10.0'}
@@ -15623,6 +15641,12 @@ snapshots:
     optionalDependencies:
       react: 19.3.0
       react-redux: 9.3.0(@types/react@19.3.0)(react@19.3.0)(redux@5.0.1)
+
+  '@remotion/player@4.0.533(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
+    dependencies:
+      react: 19.3.0
+      react-dom: 19.3.0(react@19.3.0)
+      remotion: 4.0.533(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
 
   '@replit/codemirror-css-color-picker@6.3.0(@codemirror/language@6.12.4)(@codemirror/state@6.7.5)(@codemirror/view@6.43.12)':
     dependencies:
@@ -22773,6 +22797,11 @@ snapshots:
       '@types/mdast': 4.0.4
       mdast-util-to-markdown: 2.1.2
       unified: 11.0.5
+
+  remotion@4.0.533(react-dom@19.3.0(react@19.3.0))(react@19.3.0):
+    dependencies:
+      react: 19.3.0
+      react-dom: 19.3.0(react@19.3.0)
 
   require-directory@2.1.1: {}
 

@@ -5,12 +5,16 @@ body {
   -webkit-user-select: text;
 }
 
-@custom-variant acted (&:where(.group:is(:hover, :focus-within) *));
+@custom-variant acted (&:where([data-acted] *));
 
 @property --color-pink {
   syntax: '<color>';
   inherits: true;
   initial-value: oklch(0.66 0.21 5);
+}
+
+.valence-feature-card {
+  background: var(--frame-back);
 }
 
 .valence-iso {
@@ -22,9 +26,6 @@ body {
 }
 
 .valence-iso__plane {
-  --iso-edge: color-mix(in oklab, var(--color-surface-raised) 60%, black);
-  --iso-ground: color-mix(in oklab, black 40%, transparent);
-
   display: flex;
   width: 100%;
   justify-content: center;
@@ -33,25 +34,13 @@ body {
   transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.valence-iso__plane > * {
-  box-shadow:
-    0 0 0 transparent,
-    0 0 0 transparent,
-    0 0 0 transparent,
-    0 10px 24px -18px var(--iso-ground);
-  transition: box-shadow 0.5s ease-out;
-}
-
 .group:is(:hover, :focus-within) .valence-iso__plane {
-  transform: rotateX(10deg) rotateY(-12deg) translateY(-4px) scale(0.93);
+  transform: rotateX(calc(var(--tilt-y, 0.83) * 12deg)) rotateY(calc(var(--tilt-x, 0.86) * -14deg))
+    translateY(-4px) scale(0.93);
 }
 
-.group:is(:hover, :focus-within) .valence-iso__plane > * {
-  box-shadow:
-    1px 1px 0 var(--iso-edge),
-    2px 2px 0 var(--iso-edge),
-    3px 3px 0 var(--iso-edge),
-    0 22px 36px -18px var(--iso-ground);
+.group:hover .valence-iso__plane {
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (max-width: 639px) {
