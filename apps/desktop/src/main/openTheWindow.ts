@@ -2,6 +2,7 @@ import { app, BrowserWindow, shell } from 'electron';
 import { join } from 'node:path';
 import { aServerPageFor } from '@ValenceDesktop/main/aServerPageFor';
 import { opensOutside } from '@ValenceDesktop/main/opensOutside';
+import { staysInTheApplication } from '@ValenceDesktop/main/staysInTheApplication';
 import { theServerAddress } from '@ValenceDesktop/main/theServerAddress';
 
 const WIDTH = 1280;
@@ -42,6 +43,10 @@ const CONTROLS = { color: '#00000000', symbolColor: '#ffffff', height: 32 };
  * account elsewhere, opens in their browser too, since it may go on to another site this window
  * cannot follow.
  *
+ * Anywhere else the window is sent is refused, and a web page among them opens in the browser
+ * instead, so the window only ever holds the application and the preload script is only ever
+ * handed to it.
+ *
  * @returns The window.
  */
 const openTheWindow = (): BrowserWindow => {
@@ -78,6 +83,16 @@ const openTheWindow = (): BrowserWindow => {
     if (page !== null) {
       event.preventDefault();
       void shell.openExternal(page);
+
+      return;
+    }
+
+    if (!staysInTheApplication(url)) {
+      event.preventDefault();
+
+      if (opensOutside(url)) {
+        void shell.openExternal(url);
+      }
     }
   });
 
