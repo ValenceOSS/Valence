@@ -22,9 +22,6 @@ body {
 }
 
 .valence-iso__plane {
-  --iso-edge: color-mix(in oklab, var(--color-surface-raised) 60%, black);
-  --iso-ground: color-mix(in oklab, black 40%, transparent);
-
   display: flex;
   width: 100%;
   justify-content: center;
@@ -33,25 +30,8 @@ body {
   transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.valence-iso__plane > * {
-  box-shadow:
-    0 0 0 transparent,
-    0 0 0 transparent,
-    0 0 0 transparent,
-    0 10px 24px -18px var(--iso-ground);
-  transition: box-shadow 0.5s ease-out;
-}
-
 .group:is(:hover, :focus-within) .valence-iso__plane {
   transform: rotateX(10deg) rotateY(-12deg) translateY(-4px) scale(0.93);
-}
-
-.group:is(:hover, :focus-within) .valence-iso__plane > * {
-  box-shadow:
-    1px 1px 0 var(--iso-edge),
-    2px 2px 0 var(--iso-edge),
-    3px 3px 0 var(--iso-edge),
-    0 22px 36px -18px var(--iso-ground);
 }
 
 @media (max-width: 639px) {

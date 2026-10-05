@@ -13,6 +13,7 @@ import {
 } from 'remotion';
 import { Badge } from '@ValenceUI/Badge';
 import { Icon } from '@ValenceUI/Icon';
+import { SceneCursor } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/SceneCursor/SceneCursor';
 import { MockPanel } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/MockPanel/MockPanel';
 
 const DEVICES = [
@@ -21,97 +22,113 @@ const DEVICES = [
   { icon: LaptopIcon, name: 'Study laptop', source: 'AV1 1080p · Opus 5.1' },
 ] as const;
 
-const ARRIVES_EVERY = 9;
+const CONVERTS_FROM = 20;
 
-const CONVERTS_FROM = 40;
+const CONVERTS_TO = 104;
 
-const CONVERTS_TO = 120;
+const FINDS_IT_DIRECT = 116;
 
-const FINDS_IT_DIRECT = 132;
+const NEXT_EPISODE_FROM = 204;
 
-const LEAVES_FROM = 216;
+const NEXT_EPISODE_TO = 222;
 
 /**
- * Three devices arriving one after another to watch at once, the phone being converted for until it
- * turns out to take the file as it is, when its badge goes from Converting to Direct.
+ * Three devices watching at once, the phone being converted for until it turns out to take the file
+ * as it is, when its badge goes from Converting to Direct — and then, as its next episode starts,
+ * being asked about again, which is where it began, so it goes round without a seam.
  */
 const DevicesScene = () => {
   const frame = useCurrentFrame();
-  const { fps, durationInFrames } = useVideoConfig();
-  const leaving = interpolate(frame, [LEAVES_FROM, durationInFrames - 1], [1, 0], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
-  });
+  const { fps } = useVideoConfig();
+  const clamp = { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' } as const;
   const converted = interpolate(frame, [CONVERTS_FROM, CONVERTS_TO], [0, 1], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
+    ...clamp,
     easing: Easing.inOut(Easing.cubic),
   });
-  const isDirect = frame >= FINDS_IT_DIRECT;
+  const isDirect = frame >= FINDS_IT_DIRECT && frame < NEXT_EPISODE_FROM;
   const pop = spring({
     frame: frame - FINDS_IT_DIRECT,
     fps,
     config: { damping: 12, stiffness: 180 },
   });
+  const restarting = interpolate(
+    frame,
+    [NEXT_EPISODE_FROM, (NEXT_EPISODE_FROM + NEXT_EPISODE_TO) / 2, NEXT_EPISODE_TO],
+    [1, 0, 1],
+    clamp,
+  );
 
   return (
-    <AbsoluteFill style={{ opacity: leaving, justifyContent: 'center' }}>
+    <AbsoluteFill style={{ justifyContent: 'center' }}>
       <MockPanel title="Playing now" isFlush>
         <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
           {DEVICES.map((device, at) => {
-            const arrived = spring({
-              frame: frame - at * ARRIVES_EVERY,
-              fps,
-              config: { damping: 16, stiffness: 140 },
-            });
             const isPhone = at === 1;
 
             return (
-              <li
-                key={device.name}
-                className="flex items-center gap-3 px-3 py-2.5"
-                style={{
-                  opacity: arrived,
-                  transform: `translateY(${interpolate(arrived, [0, 1], [10, 0]).toString()}px)`,
-                }}
-              >
+              <li key={device.name} className="flex items-center gap-3 px-3 py-2.5">
                 <span className="flex aspect-video w-12 shrink-0 items-center justify-center rounded-sm bg-[var(--surface-hover)]">
                   <Icon of={device.icon} size={16} tone="muted" />
                 </span>
 
                 <span className="flex min-w-0 flex-1 flex-col gap-1">
                   <span className="truncate text-sm font-medium text-text">{device.name}</span>
-                  <span className="truncate text-xs text-text-muted">
+                  <span
+                    className="truncate text-xs text-text-muted"
+                    style={isPhone ? { opacity: restarting } : {}}
+                  >
                     {isPhone && isDirect ? 'HEVC 1080p, played as it is' : device.source}
                   </span>
-                  {isPhone && !isDirect ? (
-                    <span className="relative h-0.5 w-full overflow-hidden rounded-full bg-[var(--surface-hover)]">
+                  {isPhone ? (
+                    <span
+                      className="relative h-0.5 w-full overflow-hidden rounded-full bg-[var(--surface-hover)]"
+                      style={{ opacity: isDirect ? 0 : 1 }}
+                    >
                       <span
                         className="absolute inset-y-0 left-0 rounded-full bg-accent"
-                        style={{ width: `${(converted * 100).toString()}%` }}
+                        style={{
+                          width: `${(frame >= NEXT_EPISODE_FROM ? 0 : converted * 100).toString()}%`,
+                        }}
                       />
                     </span>
                   ) : null}
                 </span>
 
-                {isPhone && !isDirect ? (
-                  <Badge size="sm" tone="accent">
-                    Converting
-                  </Badge>
-                ) : (
-                  <span
-                    style={isPhone ? { transform: `scale(${(0.85 + 0.15 * pop).toString()})` } : {}}
-                  >
-                    <Badge size="sm" tone="success">
-                      Direct
+                <span style={isPhone ? { opacity: restarting } : {}}>
+                  {isPhone && !isDirect ? (
+                    <Badge size="sm" tone="accent">
+                      Converting
                     </Badge>
-                  </span>
-                )}
+                  ) : (
+                    <span
+                      className="inline-flex"
+                      style={
+                        isPhone ? { transform: `scale(${(0.85 + 0.15 * pop).toString()})` } : {}
+                      }
+                    >
+                      <Badge size="sm" tone="success">
+                        Direct
+                      </Badge>
+                    </span>
+                  )}
+                </span>
               </li>
             );
           })}
         </ul>
       </MockPanel>
+
+      <SceneCursor
+        path={[
+          { at: 0, x: 74, y: 96 },
+          { at: 24, x: 74, y: 96 },
+          { at: 60, x: 60, y: 56 },
+          { at: FINDS_IT_DIRECT, x: 62, y: 57 },
+          { at: FINDS_IT_DIRECT + 36, x: 58, y: 34 },
+          { at: 200, x: 58, y: 34 },
+          { at: 239, x: 74, y: 96 },
+        ]}
+      />
     </AbsoluteFill>
   );
 };
