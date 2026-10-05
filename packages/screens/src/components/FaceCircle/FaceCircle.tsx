@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { cn } from '@ValenceUI/cn';
-import { SketchPicture } from '@ValenceScreens/components/SketchPicture/SketchPicture';
 import { profileInitial } from '@ValenceContracts/schemas/ViewerProfile';
 import { framedPicture } from '@ValenceScreens/library/framedPicture';
 import { LETTER_FONT_LOOKS } from '@ValenceScreens/library/LETTER_FONT_LOOKS';
@@ -9,7 +8,7 @@ import type { FaceCircleProps } from './FaceCircle.types';
 
 /**
  * Draws a name, a colour and an avatar as a circle — a photograph sat in its frame, a drawn
- * avatar, the picture an orb was saved as, or an initial — and shows a picture being uploaded before the server
+ * avatar, the picture an orb or a drawing was saved as, or an initial — and shows a picture being uploaded before the server
  * has taken it, so choosing one feels immediate.
  *
  * A picture the server cannot produce falls back to the initial. Whatever is being drawn says it
@@ -83,9 +82,7 @@ const FaceCircle = ({
         className,
       )}
     >
-      {avatar.kind === 'sketch' ? (
-        <SketchPicture scene={avatar.scene} className="h-full w-full" />
-      ) : !showsPicture ? (
+      {!showsPicture ? (
         profileInitial(name)
       ) : isMoving ? (
         <video

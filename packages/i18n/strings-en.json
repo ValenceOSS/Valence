@@ -3247,11 +3247,6 @@
     "context": "The label, used in several places, among them the admin area (from `adminSections`) and the indexers panel in the admin area."
   },
   {
-    "handler": "common.ink",
-    "text": "Ink",
-    "context": "The label of a colour choice, used in the sketch studio in the face editor and in the pixel in the variants."
-  },
-  {
     "handler": "common.inProgress",
     "text": "In progress",
     "context": "The label, used in several places, among them the status look in the status and the media requests panel in the admin area."
@@ -18706,11 +18701,6 @@
     "context": "The label in the face editor (from `faceModes`)."
   },
   {
-    "handler": "screens.faceEditor.faceModes.draw",
-    "text": "Draw",
-    "context": "The label in the face editor (from `faceModes`)."
-  },
-  {
     "handler": "screens.faceEditor.faceModes.letter",
     "text": "Letter",
     "context": "The label in the face editor (from `faceModes`)."
@@ -18789,66 +18779,6 @@
     "handler": "screens.faceEditor.photoStudio.yourCurrentPicture",
     "text": "Your current picture",
     "context": "Shown in the photo studio in the face editor."
-  },
-  {
-    "handler": "screens.faceEditor.sketchStudio.addASticker",
-    "text": "Add a sticker",
-    "context": "The label of a popover panel in the sketch studio in the face editor."
-  },
-  {
-    "handler": "screens.faceEditor.sketchStudio.addSticker",
-    "text": "Add {sticker}",
-    "context": "The label of a button in the sketch studio in the face editor. {sticker} is filled in by the app."
-  },
-  {
-    "handler": "screens.faceEditor.sketchStudio.addWords",
-    "text": "Add text",
-    "context": "The label of a popover panel in the sketch studio in the face editor."
-  },
-  {
-    "handler": "screens.faceEditor.sketchStudio.drawOnTheBoardAddWords",
-    "text": "Draw on the board. Add text and stickers from the toolbar, then move them with the arrow.",
-    "context": "Shown in the sketch studio in the face editor."
-  },
-  {
-    "handler": "screens.faceEditor.sketchStudio.pressAWordOrASticker",
-    "text": "Select text or a sticker to move it, then resize and rotate it here.",
-    "context": "Shown in the sketch studio in the face editor."
-  },
-  {
-    "handler": "screens.faceEditor.sketchStudio.putItOn",
-    "text": "Put it on",
-    "context": "The label of a button in the sketch studio in the face editor."
-  },
-  {
-    "handler": "screens.faceEditor.sketchStudio.redo",
-    "text": "Redo",
-    "context": "The label of a button in the sketch studio in the face editor."
-  },
-  {
-    "handler": "screens.faceEditor.sketchStudio.saySomething",
-    "text": "Say something",
-    "context": "Shown in an empty text field until something is typed in the sketch studio in the face editor."
-  },
-  {
-    "handler": "screens.faceEditor.sketchStudio.takeItOff",
-    "text": "Take it off",
-    "context": "The label of a button in the sketch studio in the face editor."
-  },
-  {
-    "handler": "screens.faceEditor.sketchStudio.undo",
-    "text": "Undo",
-    "context": "The label of a button in the sketch studio in the face editor."
-  },
-  {
-    "handler": "screens.faceEditor.sketchStudio.wordsToAdd",
-    "text": "Text to add",
-    "context": "The label of a text field in the sketch studio in the face editor."
-  },
-  {
-    "handler": "screens.faceEditor.sketchStudio.yourDrawing",
-    "text": "Your drawing",
-    "context": "Read aloud by screen readers as the name in the sketch studio in the face editor."
   },
   {
     "handler": "screens.faceEditor.useThisFace",
@@ -23640,31 +23570,6 @@
     "handler": "screens.showDialog.theEpisodesCouldNotBeRead",
     "text": "Couldn’t load the episodes.",
     "context": "Shown where the episodes could not be read from the server, followed by a sentence about why and a button to try again."
-  },
-  {
-    "handler": "screens.sketch.drawScene.appleColorEmojiSegoeUIEmoji",
-    "text": "'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif",
-    "context": "Shown in the sketch (from `drawScene`)."
-  },
-  {
-    "handler": "screens.sketchStudio.sketchTools.eraser",
-    "text": "Eraser",
-    "context": "The label in the sketch tools in the sketch studio."
-  },
-  {
-    "handler": "screens.sketchStudio.sketchTools.marker",
-    "text": "Marker",
-    "context": "The label in the sketch tools in the sketch studio."
-  },
-  {
-    "handler": "screens.sketchStudio.sketchTools.pen",
-    "text": "Pen",
-    "context": "The label in the sketch tools in the sketch studio."
-  },
-  {
-    "handler": "screens.sketchStudio.sketchTools.pencil",
-    "text": "Pencil",
-    "context": "The label in the sketch tools in the sketch studio."
   },
   {
     "handler": "screens.stillWatchingDialog.titleIsUpNextNothingWill",

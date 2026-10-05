@@ -31,8 +31,7 @@ const styles = StyleSheet.create({
  * playback behaves for it.
  *
  * Every change is a draft until Save, as on the web, so nobody sharing the server sees half of one.
- * A picture chosen in the editor that has a file, a photo or a sketch, is sent before
- * the rest is saved.
+ * A photo chosen in the editor is sent before the rest is saved.
  */
 const TheProfile = () => {
   const cache = useQueryClient();

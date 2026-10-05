@@ -4,18 +4,15 @@ import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
-import { PROFILE_COLOURS, profileAvatarUrl } from '@ValenceContracts/schemas/ViewerProfile';
+import { profileAvatarUrl } from '@ValenceContracts/schemas/ViewerProfile';
 import { DrawnStudio } from '@ValenceScreens/components/FaceEditor/components/DrawnStudio/DrawnStudio';
 import { FacePreviews } from '@ValenceScreens/components/FaceEditor/components/FacePreviews/FacePreviews';
 import { LetterStudio } from '@ValenceScreens/components/FaceEditor/components/LetterStudio/LetterStudio';
 import { PhotoStudio } from '@ValenceScreens/components/FaceEditor/components/PhotoStudio/PhotoStudio';
-import { SketchStudio } from '@ValenceScreens/components/FaceEditor/components/SketchStudio/SketchStudio';
-import { sketchPicture } from '@ValenceScreens/library/sketch/sketchPicture';
 import { FACE_MODES } from '@ValenceClient/profiles/FACE_MODES';
 import type { Avatar, PhotoFrame, ProfileColour } from '@ValenceContracts/schemas/ViewerProfile';
 import type { LetterFont } from '@ValenceContracts/schemas/LetterFont';
 import type { DrawnStyle } from '@ValenceScreens/components/FaceEditor/components/DrawnStudio/DrawnStudio.types';
-import type { SketchScene } from '@ValenceContracts/schemas/SketchScene';
 import type { FaceEditorProps } from './FaceEditor.types';
 import { say } from '@ValenceI18n/say';
 
@@ -25,24 +22,22 @@ const UNFRAMED: PhotoFrame = { zoom: 1, x: 0, y: 0 };
 
 /**
  * Where making a face begins: the kind of face somebody has now, so opening the editor shows what
- * they already have rather than a blank slate. An orb, which can no longer be made, is the picture
- * it was saved as, so it opens on the photo studio.
+ * they already have rather than a blank slate. An orb or a drawing, which can no longer be made, is
+ * the picture it was saved as, so it opens on the photo studio.
  *
  * @param avatar - The face they have.
  */
-const modeOf = (avatar: Avatar): Mode => (avatar.kind === 'orb' ? 'photo' : avatar.kind);
+const modeOf = (avatar: Avatar): Mode =>
+  avatar.kind === 'orb' || avatar.kind === 'sketch' ? 'photo' : avatar.kind;
 
 /**
  * Making somebody's face, of whichever kind they like — a picture of their own sat where they want
- * it in the circle, a drawing of their own, a drawn character, or their initial — with
+ * it in the circle, a drawn character, or their initial — with
  * the face shown large as it changes and at the sizes Valence draws it.
  *
  * Every kind remembers what was done to it while the editor is open, so trying another kind and
  * coming back loses nothing. Nothing is saved from here: using a face hands it to the profile's
  * own draft, which is saved with everything else about the profile.
- *
- * A drawing is handed over with a still of itself, taken as it is used, because the phone and the
- * television draw pictures rather than a scene.
  *
  * @param isOpen - Whether the editor is showing.
  * @param onClose - Told it was put away without using anything.
@@ -67,12 +62,6 @@ const FaceEditor = ({ isOpen, onClose, profile, start, onUse }: FaceEditorProps)
   const [font, setFont] = useState<LetterFont>(
     start.avatar.kind === 'initial' ? start.avatar.font : 'gilroy',
   );
-  const [scene, setScene] = useState<SketchScene>(
-    start.avatar.kind === 'sketch'
-      ? start.avatar.scene
-      : { background: PROFILE_COLOURS[16], items: [] },
-  );
-  const [isUsing, setIsUsing] = useState(false);
 
   const wasOpen = useRef(isOpen);
 
@@ -94,31 +83,14 @@ const FaceEditor = ({ isOpen, onClose, profile, start, onUse }: FaceEditorProps)
   const avatar: Avatar =
     mode === 'photo'
       ? { kind: 'photo', isVideo: photoIsVideo, frame }
-      : mode === 'sketch'
-        ? { kind: 'sketch', scene }
-        : mode === 'drawn'
-          ? { kind: 'drawn', ...drawn }
-          : { kind: 'initial', font };
+      : mode === 'drawn'
+        ? { kind: 'drawn', ...drawn }
+        : { kind: 'initial', font };
 
   const canUse = mode !== 'photo' || photo !== null || hadPhoto;
 
-  const handOver = async () => {
-    if (mode !== 'sketch') {
-      onUse({ avatar, photo: mode === 'photo' ? photo : null, colour });
-
-      return;
-    }
-
-    setIsUsing(true);
-
-    const still = await sketchPicture(scene);
-
-    setIsUsing(false);
-    onUse({
-      avatar,
-      photo: still === null ? null : new File([still], 'sketch.png', { type: 'image/png' }),
-      colour,
-    });
+  const handOver = () => {
+    onUse({ avatar, photo: mode === 'photo' ? photo : null, colour });
   };
 
   return (
@@ -174,8 +146,6 @@ const FaceEditor = ({ isOpen, onClose, profile, start, onUse }: FaceEditorProps)
               />
             ) : null}
 
-            {mode === 'sketch' ? <SketchStudio scene={scene} onChange={setScene} /> : null}
-
             {mode === 'drawn' ? <DrawnStudio {...drawn} onChange={setDrawn} /> : null}
 
             {mode === 'initial' ? (
@@ -196,10 +166,7 @@ const FaceEditor = ({ isOpen, onClose, profile, start, onUse }: FaceEditorProps)
         confirm={{
           label: say('screens.faceEditor.useThisFace'),
           isDisabled: !canUse,
-          isLoading: isUsing,
-          onChoose: () => {
-            void handOver();
-          },
+          onChoose: handOver,
         }}
       />
     </Dialog>
