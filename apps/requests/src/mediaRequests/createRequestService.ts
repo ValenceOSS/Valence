@@ -55,7 +55,7 @@ const IN_FLIGHT = new Set<RequestItemRecord['state']>([
   'filing',
 ]);
 
-const GONE_FROM_THE_LIBRARY = saying('requests.mediaRequests.requestService.goneFromTheLibrary');
+const GONE_FROM_THE_LIBRARY = saying('common.noLongerInTheLibrary');
 
 /**
  * Seasons asked for by two requests for the same series: every season where either asked for every

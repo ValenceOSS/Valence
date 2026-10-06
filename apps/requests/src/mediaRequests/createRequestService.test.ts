@@ -434,9 +434,7 @@ describe('createRequestService', () => {
     const left = await service.left(request.id, null);
 
     expect(left).toMatchObject({ state: 'failed', mediaId: null });
-    expect(left?.items[0]?.problem?.code).toBe(
-      'requests.mediaRequests.requestService.goneFromTheLibrary',
-    );
+    expect(left?.items[0]?.problem?.code).toBe('common.noLongerInTheLibrary');
     expect((await service.retry(request.id))?.items[0]).toMatchObject({ state: 'wanted' });
     expect(await service.left('missing', null)).toBeNull();
   });
