@@ -58,18 +58,22 @@ const FeatureCard = ({ feature, index }: FeatureCardProps) => {
     <RevealItem index={index} className="list-none bg-[var(--frame-back)]">
       <article
         ref={cellRef}
-        className={cn('group relative isolate flex h-full flex-col gap-6 p-7 sm:p-9')}
+        className={cn('group relative isolate flex h-full flex-col gap-7 p-5 sm:p-6')}
       >
         <span
           aria-hidden
           className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(22rem_circle_at_var(--spot-x,50%)_var(--spot-y,50%),var(--surface-hover),transparent_70%)] opacity-0 transition-opacity duration-300 motion-reduce:transition-none acted:opacity-100"
         />
 
-        <div className="h-64 min-h-0">
+        <div className="relative isolate -mx-2 h-60 min-h-0 overflow-hidden rounded-2xl bg-surface ring-1 ring-border/50 sm:-mx-3">
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(60%_70%_at_50%_100%,color-mix(in_oklab,var(--color-accent)_14%,transparent),transparent)]"
+          />
           <FeatureVisual kind={feature.visual} />
         </div>
 
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 px-2 pb-3 sm:px-3">
           <h3 className="text-balance text-2xl font-semibold leading-tight tracking-[-0.02em] lg:text-[1.75rem] text-text">
             {feature.title}
           </h3>

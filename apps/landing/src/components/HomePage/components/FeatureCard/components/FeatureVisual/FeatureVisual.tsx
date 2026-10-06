@@ -60,7 +60,7 @@ const FeatureVisual = ({ kind }: FeatureVisualProps) => {
       aria-hidden
       {...(isTouchable ? {} : { inert: true })}
       className={cn(
-        'relative flex h-full select-none items-center-safe justify-center overflow-hidden [--vignette-width:28rem] mask-b-from-80%',
+        'relative flex h-full select-none items-center-safe justify-center overflow-hidden p-5 [--vignette-width:28rem] mask-b-from-85%',
         isTouchable ? '' : 'pointer-events-none',
       )}
     >
