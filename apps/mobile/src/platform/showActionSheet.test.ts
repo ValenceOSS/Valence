@@ -31,7 +31,7 @@ describe('showActionSheet', () => {
 
   it('asks in the system’s list dialog on Android, and says what was picked', async () => {
     Platform.OS = 'android';
-    const ask = jest.fn(async () => 0);
+    const ask = jest.fn(() => Promise.resolve(0));
     jest.mocked(requireOptionalNativeModule).mockReturnValue({ ask });
     const onPicked = jest.fn();
 
@@ -45,7 +45,7 @@ describe('showActionSheet', () => {
 
   it('says the cancel choice where the dialog was dismissed', async () => {
     Platform.OS = 'android';
-    jest.mocked(requireOptionalNativeModule).mockReturnValue({ ask: async () => null });
+    jest.mocked(requireOptionalNativeModule).mockReturnValue({ ask: () => Promise.resolve(null) });
     const onPicked = jest.fn();
 
     showActionSheet(SHEET, onPicked);

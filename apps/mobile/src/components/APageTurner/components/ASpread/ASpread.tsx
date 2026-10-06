@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Animated, PanResponder, Pressable, View } from 'react-native';
 import type { GestureResponderEvent } from 'react-native';
 import { ALeaf } from './components/ALeaf/ALeaf';
@@ -38,74 +38,81 @@ const apartOf = (event: GestureResponderEvent): number => {
  * @param onZoomed - Told whether the spread is drawn closer than its own size.
  */
 const ASpread = ({ leaves, fit, breadth, tall, isRightToLeft, onTap, onZoomed }: ASpreadProps) => {
-  const scale = useRef(new Animated.Value(1)).current;
-  const shift = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
-  const held = useRef({ zoom: 1, x: 0, y: 0, apart: 0, fromZoom: 1, fromX: 0, fromY: 0 });
-  const latestOnZoomed = useRef(onZoomed);
+  const [scale] = useState(() => new Animated.Value(1));
+  const [shift] = useState(() => new Animated.ValueXY({ x: 0, y: 0 }));
+  const [held] = useState(() => ({
+    zoom: 1,
+    x: 0,
+    y: 0,
+    apart: 0,
+    fromZoom: 1,
+    fromX: 0,
+    fromY: 0,
+  }));
+  const [latest] = useState(() => new Map([['now', { onZoomed, breadth, tall }]]));
 
   useEffect(() => {
-    latestOnZoomed.current = onZoomed;
+    latest.set('now', { onZoomed, breadth, tall });
   });
 
-  const responder = useMemo(
-    () =>
-      PanResponder.create({
-        onMoveShouldSetPanResponderCapture: (event) =>
-          event.nativeEvent.touches.length === 2 || held.current.zoom > 1,
-        onPanResponderGrant: (event) => {
-          const now = held.current;
+  const [responder] = useState(() =>
+    PanResponder.create({
+      onMoveShouldSetPanResponderCapture: (event) =>
+        event.nativeEvent.touches.length === 2 || held.zoom > 1,
+      onPanResponderGrant: (event) => {
+        const now = held;
 
-          now.apart = apartOf(event);
-          now.fromZoom = now.zoom;
-          now.fromX = now.x;
-          now.fromY = now.y;
-        },
-        onPanResponderMove: (event, gesture) => {
-          const now = held.current;
+        now.apart = apartOf(event);
+        now.fromZoom = now.zoom;
+        now.fromX = now.x;
+        now.fromY = now.y;
+      },
+      onPanResponderMove: (event, gesture) => {
+        const now = held;
 
-          if (event.nativeEvent.touches.length === 2) {
-            const apart = apartOf(event);
+        if (event.nativeEvent.touches.length === 2) {
+          const apart = apartOf(event);
 
-            if (now.apart === 0) {
-              now.apart = apart;
-              now.fromZoom = now.zoom;
+          if (now.apart === 0) {
+            now.apart = apart;
+            now.fromZoom = now.zoom;
 
-              return;
-            }
-
-            now.zoom = Math.min(MOST_ZOOM, Math.max(1, (now.fromZoom * apart) / now.apart));
-            scale.setValue(now.zoom);
+            return;
           }
 
-          if (now.zoom > 1) {
-            const roomAcross = (breadth * (now.zoom - 1)) / 2;
-            const roomDown = (tall * (now.zoom - 1)) / 2;
+          now.zoom = Math.min(MOST_ZOOM, Math.max(1, (now.fromZoom * apart) / now.apart));
+          scale.setValue(now.zoom);
+        }
 
-            now.x = Math.min(roomAcross, Math.max(-roomAcross, now.fromX + gesture.dx));
-            now.y = Math.min(roomDown, Math.max(-roomDown, now.fromY + gesture.dy));
-            shift.setValue({ x: now.x, y: now.y });
-          }
-        },
-        onPanResponderTerminationRequest: () => false,
-        onPanResponderRelease: () => {
-          const now = held.current;
+        if (now.zoom > 1) {
+          const { breadth: wide, tall: high } = latest.get('now') ?? { breadth, tall };
+          const roomAcross = (wide * (now.zoom - 1)) / 2;
+          const roomDown = (high * (now.zoom - 1)) / 2;
 
-          now.apart = 0;
+          now.x = Math.min(roomAcross, Math.max(-roomAcross, now.fromX + gesture.dx));
+          now.y = Math.min(roomDown, Math.max(-roomDown, now.fromY + gesture.dy));
+          shift.setValue({ x: now.x, y: now.y });
+        }
+      },
+      onPanResponderTerminationRequest: () => false,
+      onPanResponderRelease: () => {
+        const now = held;
 
-          if (now.zoom < LET_GO_BELOW) {
-            now.zoom = 1;
-            now.x = 0;
-            now.y = 0;
-            Animated.parallel([
-              Animated.spring(scale, { toValue: 1, useNativeDriver: true }),
-              Animated.spring(shift, { toValue: { x: 0, y: 0 }, useNativeDriver: true }),
-            ]).start();
-          }
+        now.apart = 0;
 
-          latestOnZoomed.current(now.zoom > 1);
-        },
-      }),
-    [breadth, tall, scale, shift],
+        if (now.zoom < LET_GO_BELOW) {
+          now.zoom = 1;
+          now.x = 0;
+          now.y = 0;
+          Animated.parallel([
+            Animated.spring(scale, { toValue: 1, useNativeDriver: true }),
+            Animated.spring(shift, { toValue: { x: 0, y: 0 }, useNativeDriver: true }),
+          ]).start();
+        }
+
+        latest.get('now')?.onZoomed(now.zoom > 1);
+      },
+    }),
   );
 
   const leaf = breadth / Math.max(1, leaves.length);

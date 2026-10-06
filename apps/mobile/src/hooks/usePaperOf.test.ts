@@ -5,7 +5,7 @@ import { usePaperOf } from './usePaperOf';
 jest.mock('expo', () => ({ requireOptionalNativeModule: jest.fn(() => null) }));
 
 jest.mock('@ValenceMobile/platform/theCookiesThisPhoneHolds', () => ({
-  theCookiesThisPhoneHolds: jest.fn(async () => 'session=abc'),
+  theCookiesThisPhoneHolds: jest.fn(() => Promise.resolve('session=abc')),
 }));
 
 describe('usePaperOf', () => {
@@ -22,7 +22,7 @@ describe('usePaperOf', () => {
   });
 
   it('reads the paper off the edge of the page, signed in as this phone is', async () => {
-    const readEdge = jest.fn(async () => '#f4ecd8');
+    const readEdge = jest.fn(() => Promise.resolve('#f4ecd8'));
     jest.mocked(requireOptionalNativeModule).mockReturnValue({ readEdge });
 
     const { result } = await renderHook(() => usePaperOf('http://one.local/page/2'));
@@ -34,7 +34,9 @@ describe('usePaperOf', () => {
   });
 
   it('ignores an answer that is not a colour', async () => {
-    jest.mocked(requireOptionalNativeModule).mockReturnValue({ readEdge: async () => 'paper' });
+    jest
+      .mocked(requireOptionalNativeModule)
+      .mockReturnValue({ readEdge: () => Promise.resolve('paper') });
 
     const { result } = await renderHook(() => usePaperOf('http://one.local/page/3'));
 

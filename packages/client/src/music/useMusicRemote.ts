@@ -97,7 +97,7 @@ const useMusicRemote = (player: MusicPlayer = theMusicPlayer()): void => {
     if (device !== undefined) {
       player.follow({ clientId: device.clientId, label: device.label });
     }
-  }, [devices.data, isIdle, player]);
+  }, [devices.data, isIdle, player, remoteId]);
 
   useEffect(() => {
     const stopObeying = onPresenceEvent((event) => {

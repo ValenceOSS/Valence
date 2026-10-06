@@ -36,7 +36,7 @@ const AMarquee = ({ children }: AMarqueeProps) => {
       Animated.timing(along, {
         toValue,
         duration: (over / POINTS_A_SECOND) * 1000,
-        easing: (at) => Easing.inOut(Easing.quad)(at),
+        easing: (at) => Easing.inOut((t) => Easing.quad(t))(at),
         useNativeDriver: true,
       });
     const loop = Animated.loop(

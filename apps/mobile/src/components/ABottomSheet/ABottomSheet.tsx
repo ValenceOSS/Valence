@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Animated,
   Modal,
@@ -64,10 +64,10 @@ const ABottomSheet = ({ isOpen, label, title, onClose, children }: ABottomSheetP
   const [isShowing, setIsShowing] = useState(isOpen);
   const [lowered] = useState(() => new Animated.Value(height));
   const [dimmed] = useState(() => new Animated.Value(0));
-  const latestOnClose = useRef(onClose);
+  const [latest] = useState(() => new Map([['onClose', onClose]]));
 
   useEffect(() => {
-    latestOnClose.current = onClose;
+    latest.set('onClose', onClose);
   });
 
   useEffect(() => {
@@ -111,7 +111,7 @@ const ABottomSheet = ({ isOpen, label, title, onClose, children }: ABottomSheetP
       },
       onPanResponderRelease: (_, gesture) => {
         if (gesture.dy > LETS_GO_PAST || gesture.vy > LETS_GO_FASTER_THAN) {
-          latestOnClose.current();
+          latest.get('onClose')?.();
 
           return;
         }

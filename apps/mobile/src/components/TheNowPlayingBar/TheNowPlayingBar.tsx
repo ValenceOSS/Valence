@@ -119,7 +119,7 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
   const after = moved === null ? null : currentOf(moved);
   const before = queue === null || queue.at === 0 ? null : currentOf(previousIn(queue));
   const [stripWidth, setStripWidth] = useState(0);
-  const swiped = useRef(false);
+  const [swiped] = useState(() => new Set<'now'>());
   const trackId = track?.id ?? null;
   const lastTrack = useRef(trackId);
   const tint = tintOf(
@@ -186,8 +186,8 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
 
     lastTrack.current = trackId;
 
-    if (swiped.current || isStill || stripWidth === 0) {
-      swiped.current = false;
+    if (swiped.has('now') || isStill || stripWidth === 0) {
+      swiped.delete('now');
       shift.setValue(0);
 
       return;
@@ -195,7 +195,7 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
 
     shift.setValue(stripWidth);
     Animated.spring(shift, { ...SPRINGS.liquid, toValue: 0, useNativeDriver: true }).start();
-  }, [trackId, isStill, stripWidth, shift]);
+  }, [trackId, isStill, stripWidth, shift, swiped]);
 
   const [swipe] = useState(() =>
     PanResponder.create({
@@ -268,11 +268,11 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
             duration: GOES_OFF_MS,
             useNativeDriver: true,
           }).start(() => {
-            swiped.current = true;
+            swiped.add('now');
             moveOn();
             setTimeout(() => {
-              if (swiped.current) {
-                swiped.current = false;
+              if (swiped.has('now')) {
+                swiped.delete('now');
                 Animated.spring(shift, {
                   ...SPRINGS.liquid,
                   toValue: 0,

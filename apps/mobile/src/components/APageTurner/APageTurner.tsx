@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ComponentRef } from 'react';
 import { FlatList, View } from 'react-native';
 import { groupHolding, spreadsFor } from '@ValenceClient/books/spreadsFor';
 import { usePaperOf } from '@ValenceMobile/hooks/usePaperOf';
@@ -75,7 +76,7 @@ const APageTurner = ({
 }: APageTurnerProps) => {
   const [room, setRoom] = useState({ height: 0, width: 0 });
   const [isZoomed, setIsZoomed] = useState(false);
-  const whole = useRef<View>(null);
+  const whole = useRef<ComponentRef<typeof View>>(null);
   const left = useRef(0);
   const list = useRef<FlatList<readonly number[]>>(null);
   const spreads = useMemo(

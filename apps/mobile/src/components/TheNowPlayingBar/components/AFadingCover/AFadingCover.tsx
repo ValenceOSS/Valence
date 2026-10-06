@@ -22,7 +22,10 @@ const styles = StyleSheet.create({
 const AFadingCover = ({ uri }: AFadingCoverProps) => {
   const colours = useTheColours();
   const isStill = usePrefersStillness();
-  const [shown, setShown] = useState({ under: null as string | null, over: uri });
+  const [shown, setShown] = useState<{ under: string | null; over: string | null }>({
+    under: null,
+    over: uri,
+  });
   const [over] = useState(() => new Animated.Value(1));
 
   useEffect(() => {

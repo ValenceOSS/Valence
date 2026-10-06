@@ -15,6 +15,7 @@ import type { AppContext } from '@ValenceServer/api/AppContext';
 import { createAppGate } from '@ValenceServer/access/createAppGate';
 import { closedAppsIn } from '@ValenceServer/access/closedAppsIn';
 import type { OpenAPIHono } from '@hono/zod-openapi';
+import type { MiddlewareHandler } from 'hono';
 
 /**
  * Registers what every request passes through before any endpoint answers it — the headers, the checks on who may reach what, and the sign-in service's own paths.
@@ -94,9 +95,10 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
     onError: (context) => context.json(refuse('error.common.thatRequestIsTooLarge'), 413),
   });
 
-  app.use('/api/*', async (context, next) =>
-    isPublicRoute(context.req.method, context.req.path, true) ? smallBody(context, next) : next(),
-  );
+  const smallWhereOpen: MiddlewareHandler = async (context, next) =>
+    isPublicRoute(context.req.method, context.req.path, true) ? smallBody(context, next) : next();
+
+  app.use('/api/*', smallWhereOpen);
 
   blockOnTheDemo(app, context.isOnTheDemo);
 

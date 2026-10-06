@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import type { ComponentRef } from 'react';
 import { Animated, Pressable, StyleSheet, View } from 'react-native';
 import type { ScrollView } from 'react-native';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
@@ -42,8 +43,8 @@ const APageColumn = ({ pictures, page, ink, onPage, style }: APageColumnProps) =
   const high = Math.round(across * 1.42);
   const step = high + GAP;
   const margin = Math.max((room.height - step) / 2, 0);
-  const scrolled = useRef(new Animated.Value(0)).current;
-  const list = useRef<ScrollView>(null);
+  const [scrolled] = useState(() => new Animated.Value(0));
+  const list = useRef<ComponentRef<typeof ScrollView>>(null);
   const isHeld = useRef(false);
   const centred = useRef(page);
 
