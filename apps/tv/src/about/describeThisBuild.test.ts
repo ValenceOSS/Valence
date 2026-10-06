@@ -1,5 +1,4 @@
 import Constants from 'expo-constants';
-import { Platform } from 'react-native';
 import { describeThisBuild } from '@ValenceTv/about/describeThisBuild';
 
 afterEach(() => {
@@ -14,9 +13,9 @@ describe('describeThisBuild', () => {
       extra: { build: { version: '1.4.0', commit: 'abc1234' } },
     });
 
-    expect(describeThisBuild({ version: '1.4.0', commit: 'def5678', features: [] })).toBe(
-      `Valence 1.4.0 (abc1234) · tvOS ${String(Platform.Version)} · Server 1.4.0 (def5678)`,
-    );
+    expect(
+      describeThisBuild({ version: '1.4.0', commit: 'def5678', features: [] }, 'ios', '26.0'),
+    ).toBe('Valence 1.4.0 (abc1234) · tvOS 26.0 · Server 1.4.0 (def5678)');
   });
 
   it('names Android by its API level', () => {
@@ -24,6 +23,6 @@ describe('describeThisBuild', () => {
   });
 
   it('leaves out what it does not know', () => {
-    expect(describeThisBuild(null)).toBe(`tvOS ${String(Platform.Version)}`);
+    expect(describeThisBuild(null, 'ios', '26.0')).toBe('tvOS 26.0');
   });
 });

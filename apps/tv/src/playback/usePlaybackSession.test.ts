@@ -8,6 +8,7 @@ import {
   stopWatching,
 } from '@ValenceClient/playback/startPlaybackSession';
 import { rememberServerAddress } from '@ValenceClient/session/serverAddress';
+import { theKindOfTv } from '@ValenceTv/platform/theKindOfTv';
 import { keepTheSessionToken } from '@ValenceTv/platform/theSessionToken';
 import { usePlaybackSession } from '@ValenceTv/playback/usePlaybackSession';
 import type { StartOutcome, StartedSession } from '@ValenceClient/playback/startPlaybackSession';
@@ -74,7 +75,7 @@ describe('usePlaybackSession', () => {
     expect(result.current).toEqual({ kind: 'starting' });
     expect(startPlaybackSession).toHaveBeenCalledWith(
       MEDIA,
-      expect.objectContaining({ name: 'Apple TV' }),
+      expect.objectContaining({ name: theKindOfTv() }),
       'client-1',
       90,
       2,

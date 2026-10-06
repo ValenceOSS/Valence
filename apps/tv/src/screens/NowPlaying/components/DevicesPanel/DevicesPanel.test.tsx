@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, userEvent } from '@testing-library/react-native';
+import { Platform } from 'react-native';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { aTrack } from '@ValenceClient/testing/aTrack';
 import { DevicesPanel } from '@ValenceTv/screens/NowPlaying/components/DevicesPanel/DevicesPanel';
@@ -91,8 +92,24 @@ const draw = (
 };
 
 describe('DevicesPanel', () => {
+  const was = Platform.OS;
+
   beforeEach(() => {
     global.fetch = jest.fn(() => new Promise<Response>(() => undefined));
+    Platform.OS = 'ios';
+  });
+
+  afterEach(() => {
+    Platform.OS = was;
+  });
+
+  it('calls this television an Android TV on one', async () => {
+    Platform.OS = 'android';
+    aPlayer({ current: aTrack(1) });
+
+    const drawn = await draw(DEVICES);
+
+    expect(drawn.getByRole('button', { name: 'This Android TV · playing here' })).toBeTruthy();
   });
 
   it('lists this television as playing here, then every other device and what it is doing', async () => {

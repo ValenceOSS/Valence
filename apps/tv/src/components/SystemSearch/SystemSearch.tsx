@@ -4,8 +4,7 @@ import { z } from 'zod';
 import { TypedSearch } from './components/TypedSearch/TypedSearch';
 import type { NativeSearchProps, SystemSearchProps } from './SystemSearch.types';
 
-const NativeSearch =
-  Platform.OS === 'android' ? null : requireNativeView<NativeSearchProps>('ValenceSearch');
+const NativeSearch = requireNativeView<NativeSearchProps>('ValenceSearch');
 
 const TypedSchema = z.object({ text: z.string() });
 
@@ -37,7 +36,7 @@ const SystemSearch = ({
   upTo,
   children,
 }: SystemSearchProps) =>
-  NativeSearch === null ? (
+  Platform.OS === 'android' ? (
     <TypedSearch
       placeholder={placeholder}
       onChangeText={onChangeText}

@@ -35,6 +35,8 @@ describe('useRemote', () => {
   });
 
   it('passes on what the Siri Remote says as it is', async () => {
+    Platform.OS = 'ios';
+
     const hear = jest.fn();
 
     await renderHook(() => {

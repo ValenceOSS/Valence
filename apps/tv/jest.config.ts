@@ -46,8 +46,7 @@ const whatNeedsCompiling = (): string[] =>
       : pattern,
   );
 
-const config: Config = {
-  preset: 'jest-expo/ios',
+const EACH_TELEVISION: Config = {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'mjs', 'json', 'node'],
   transform: {
     '^.+\\.[jt]sx?$': ['babel-jest', { presets: ['babel-preset-expo'] }],
@@ -72,6 +71,13 @@ const config: Config = {
     '<rootDir>/../../packages/native/src/**/*.test.tsx',
   ],
   testTimeout: 20_000,
+};
+
+const config: Config = {
+  projects: [
+    { ...EACH_TELEVISION, displayName: 'tvOS', preset: 'jest-expo/ios' },
+    { ...EACH_TELEVISION, displayName: 'Android TV', preset: 'jest-expo/android' },
+  ],
   coverageReporters: ['text', 'json-summary'],
   collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.types.ts', '!src/testing/**'],
 };

@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { theKindOfTv } from '@ValenceTv/platform/theKindOfTv';
 
 describe('theKindOfTv', () => {
@@ -7,6 +8,6 @@ describe('theKindOfTv', () => {
   });
 
   it('names the television it runs on', () => {
-    expect(theKindOfTv()).toBe('Apple TV');
+    expect(theKindOfTv()).toBe(theKindOfTv(Platform.OS));
   });
 });

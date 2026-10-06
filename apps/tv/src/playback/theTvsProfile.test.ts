@@ -2,7 +2,7 @@ import { theTvsProfile } from '@ValenceTv/playback/theTvsProfile';
 
 describe('theTvsProfile', () => {
   it('describes an Apple TV that plays 4K HEVC and H.264 with Dolby sound', () => {
-    const profile = theTvsProfile();
+    const profile = theTvsProfile('ios');
 
     expect(profile.name).toBe('Apple TV');
     expect(profile.maxWidth).toBe(3840);
@@ -63,7 +63,7 @@ describe('theTvsProfile', () => {
   });
 
   it('asks for HLS in H.264 and AAC for anything it cannot open whole', () => {
-    expect(theTvsProfile().transcodingProfiles).toEqual([
+    expect(theTvsProfile('ios').transcodingProfiles).toEqual([
       expect.objectContaining({
         container: 'mp4',
         videoCodec: 'h264',
