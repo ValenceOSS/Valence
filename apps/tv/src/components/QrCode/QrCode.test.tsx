@@ -1,8 +1,9 @@
+import { PixelRatio } from 'react-native';
 import { render } from '@testing-library/react-native';
 import { z } from 'zod';
 import { QrCode } from '@ValenceTv/components/QrCode/QrCode';
 
-const SquareSchema = z.object({ backgroundColor: z.string() });
+const SquareSchema = z.object({ backgroundColor: z.string(), width: z.number() });
 
 type Drawn = Awaited<ReturnType<typeof render>>;
 
@@ -39,6 +40,17 @@ describe('QrCode', () => {
     expect(drawn.getByLabelText('Sign in on your phone')).toHaveStyle({ width: 300, height: 300 });
     expect(squares.length).toBeGreaterThan(20);
     expect(squares.every((row) => row.length === squares.length)).toBe(true);
+  });
+
+  it('draws every square a whole number of pixels wide, so no seam shows between them', async () => {
+    const drawn = await render(
+      <QrCode value="https://valence.example/link" size={360} label="Sign in on your phone" />,
+    );
+    const row = drawn.getByLabelText('Sign in on your phone').children[0];
+    const first = typeof row === 'string' ? undefined : row?.children[0];
+    const { width } = SquareSchema.parse(typeof first === 'string' ? {} : first?.props.style);
+
+    expect(Number.isInteger(PixelRatio.getPixelSizeForLayoutSize(width))).toBe(true);
   });
 
   it('leaves a quiet light border around the code', async () => {

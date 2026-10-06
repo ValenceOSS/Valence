@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
     padding: tokens.space.sm,
     borderRadius: tokens.radii.lg,
   },
-  focused: { backgroundColor: '#ffffff' },
+  focused: { backgroundColor: '#ffffff', borderRadius: tokens.radii.lg },
   poster: {
     borderRadius: tokens.radii.sm,
     overflow: 'hidden',

@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, TVFocusGuideView, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Search } from '@keyline-icons/react-native';
@@ -56,6 +56,9 @@ const ROUND_SIZE = 60;
  * @param hasShows - Whether there are programmes to watch, which adds their part to the capsule.
  * @param hasMusic - Whether there is music to listen to, which adds its part to the capsule.
  * @param hasBooks - Whether there are audiobooks to listen to, which adds their part to the capsule.
+ * @param rightOfTheBar - What sits to the right of the bar — the song or book playing — for pressing
+ *   right from the face to go to; with nothing there the remote stays on the face, rather than
+ *   dropping onto whatever on the page below lies furthest right.
  */
 const TopBar = ({
   current,
@@ -70,7 +73,9 @@ const TopBar = ({
   hasShows,
   hasMusic,
   hasBooks,
+  rightOfTheBar,
 }: TopBarProps) => {
+  const [face, setFace] = useState<View | null>(null);
   const tabs = useMemo(
     () => [
       HOME,
@@ -92,6 +97,7 @@ const TopBar = ({
   const faceRef = useCallback(
     (element: View | null) => {
       itemRef('account', element);
+      setFace(element);
     },
     [itemRef],
   );
@@ -149,6 +155,7 @@ const TopBar = ({
           {profile === null ? null : (
             <Focusable
               ref={faceRef}
+              nextFocusRight={rightOfTheBar ?? face}
               label={say('tv.topBar.nameSProfile', { name: profile.name })}
               scale={1.08}
               onFocus={() => {
@@ -201,8 +208,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  current: { backgroundColor: 'rgba(255,255,255,0.16)' },
-  focused: { backgroundColor: '#ffffff' },
+  current: { backgroundColor: 'rgba(255,255,255,0.16)', borderRadius: ROUND_SIZE / 2 },
+  focused: { backgroundColor: '#ffffff', borderRadius: ROUND_SIZE / 2 },
   face: { paddingHorizontal: 4 },
   hidden: { opacity: 0 },
 });

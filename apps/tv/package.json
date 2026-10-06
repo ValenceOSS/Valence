@@ -6,7 +6,9 @@
   "scripts": {
     "start": "EXPO_TV=1 expo start",
     "prebuild": "EXPO_TV=1 REACT_NATIVE_NODE_MODULES_DIR=$PWD/node_modules expo prebuild --platform ios --clean",
+    "prebuild:android": "EXPO_TV=1 REACT_NATIVE_NODE_MODULES_DIR=$PWD/node_modules expo prebuild --platform android --clean",
     "tvos": "EXPO_TV=1 REACT_NATIVE_NODE_MODULES_DIR=$PWD/node_modules expo run:ios",
+    "android": "EXPO_TV=1 REACT_NATIVE_NODE_MODULES_DIR=$PWD/node_modules expo run:android",
     "test": "jest",
     "typecheck": "tsc --noEmit"
   },
@@ -19,6 +21,7 @@
     "@valence/contracts": "workspace:*",
     "@valence/core": "workspace:*",
     "expo": "57.0.24",
+    "expo-asset": "57.0.18",
     "expo-audio": "57.0.5",
     "expo-constants": "57.0.19",
     "expo-crypto": "57.0.3",

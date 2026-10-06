@@ -1,20 +1,79 @@
-import { render } from '@testing-library/react-native';
-import { Animated } from 'react-native';
+import { act, render } from '@testing-library/react-native';
+import { Animated, View } from 'react-native';
 import { PageDot } from '@ValenceTv/components/PageDots/components/PageDot/PageDot';
 
-describe('PageDot', () => {
-  it('is a small dot for a turn that is not now', async () => {
-    const drawn = await render(<PageDot isCurrent={false} fill={new Animated.Value(0)} />);
+type Drawn = Awaited<ReturnType<typeof render>>;
 
-    expect(drawn.root).toHaveStyle({ width: 12, height: 12 });
-    expect(drawn.root?.children).toHaveLength(0);
+/**
+ * The left round end of the dot drawn, whose place says where the dot begins.
+ *
+ * @param drawn - What was drawn.
+ * @returns The left end.
+ */
+const leftEndOf = (drawn: Drawn) => drawn.getByTestId('row').children[1];
+
+/**
+ * The right round end of the dot drawn, whose place says where the dot ends.
+ *
+ * @param drawn - What was drawn.
+ * @returns The right end.
+ */
+const rightEndOf = (drawn: Drawn) => drawn.getByTestId('row').children[2];
+
+const runsInJavaScript = Animated.timing;
+
+describe('PageDot', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest
+      .spyOn(Animated, 'timing')
+      .mockImplementation((value, config) =>
+        runsInJavaScript(value, { ...config, useNativeDriver: false }),
+      );
   });
 
-  it('is a longer pill that fills as the turn now runs', async () => {
-    const drawn = await render(<PageDot isCurrent fill={new Animated.Value(0.5)} />);
-    const [filled] = drawn.root?.children ?? [];
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
 
-    expect(drawn.root).toHaveStyle({ width: 56 });
-    expect(filled).toHaveStyle({ transform: [{ scaleX: 0.5 }] });
+  it('is a small dot for a turn that is not now, and a longer pill for the turn now', async () => {
+    const dot = await render(
+      <View testID="row">
+        <PageDot at={0} current={1} />
+      </View>,
+    );
+    const pill = await render(
+      <View testID="row">
+        <PageDot at={1} current={1} />
+      </View>,
+    );
+
+    expect(leftEndOf(dot)).toHaveStyle({ width: 12, height: 12, transform: [{ translateX: 0 }] });
+    expect(rightEndOf(dot)).toHaveStyle({ transform: [{ translateX: 0 }] });
+    expect(rightEndOf(pill)).toHaveStyle({ transform: [{ translateX: 64 }] });
+  });
+
+  it('eases into a pill as its turn comes', async () => {
+    const drawn = await render(
+      <View testID="row">
+        <PageDot at={1} current={0} />
+      </View>,
+    );
+
+    expect(leftEndOf(drawn)).toHaveStyle({ transform: [{ translateX: 64 }] });
+
+    await drawn.rerender(
+      <View testID="row">
+        <PageDot at={1} current={1} />
+      </View>,
+    );
+
+    await act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+
+    expect(leftEndOf(drawn)).toHaveStyle({ transform: [{ translateX: 20 }] });
+    expect(rightEndOf(drawn)).toHaveStyle({ transform: [{ translateX: 64 }] });
   });
 });

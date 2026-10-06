@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, useTVEventHandler, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useRemote } from '@ValenceTv/remote/useRemote';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { moveTheVideoTo } from '@ValenceTv/playback/moveTheVideoTo';
@@ -217,6 +218,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
   const [audio, setAudio] = useState<number | undefined>(undefined);
   const [startFrom, setStartFrom] = useState(startSeconds);
   const [chosenSubtitles, setChosenSubtitles] = useState<string | null>(null);
+  const [cameFrom, setCameFrom] = useState<string | null>(null);
   const [menu, setMenu] = useState<
     | 'settings'
     | 'subtitles'
@@ -441,8 +443,9 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
     () => (tracks.data ?? []).filter((track) => track.delivery === 'text'),
     [tracks.data],
   );
+  const sentAudio = session.kind === 'ready' ? session.started.plan.audio.streamIndex : null;
   const chosenAudio =
-    detail.data?.audioStreams.find((stream) => stream.index === audio) ??
+    detail.data?.audioStreams.find((stream) => stream.index === (audio ?? sentAudio)) ??
     detail.data?.audioStreams.find((stream) => stream.isDefault) ??
     detail.data?.audioStreams[0];
   const subtitles = chosenSubtitles ?? defaultTrackId(textTracks, chosenAudio?.language ?? null);
@@ -638,11 +641,11 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
         return;
       }
 
-      if (!isShowing && event.eventType === 'left') {
+      if (event.eventType === 'rewind' || (!isShowing && event.eventType === 'left')) {
         seekBy(-SKIPS_BY);
       }
 
-      if (!isShowing && event.eventType === 'right') {
+      if (event.eventType === 'fastForward' || (!isShowing && event.eventType === 'right')) {
         seekBy(SKIPS_BY);
       }
 
@@ -662,7 +665,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
     ],
   );
 
-  useTVEventHandler(hearRemote);
+  useRemote(hearRemote);
 
   useEffect(() => {
     playTheVideoAt(player, speed);
@@ -945,7 +948,10 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
               value: isShowingStats ? say('common.on') : say('common.off'),
             },
           ]}
+          cameFrom={cameFrom}
           onOpen={(id) => {
+            setCameFrom(id);
+
             if (id === 'stats') {
               setIsShowingStats((was) => !was);
               closeMenu();
@@ -1008,8 +1014,11 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
             label: set.heading,
             value: set.choices.find((choice) => choice.id === set.chosen)?.label ?? set.chosen,
           }))}
+          cameFrom={cameFrom}
           onOpen={(id) => {
             const set = captionChoices(captions.style).find((one) => one.id === id);
+
+            setCameFrom(id);
 
             if (set !== undefined) {
               setMenu(`caption:${set.id}`);

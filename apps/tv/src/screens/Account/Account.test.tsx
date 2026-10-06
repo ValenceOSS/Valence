@@ -70,7 +70,6 @@ const drawAccount = (
     onChangeServer?: () => void;
     onRequests?: () => void;
     onCalendar?: () => void;
-    onOpenPluginPage?: (page: { pluginId: string; pageId: string }) => void;
   } = {},
 ) =>
   render(
@@ -81,7 +80,6 @@ const drawAccount = (
         onRequests={told.onRequests ?? jest.fn()}
         onCalendar={told.onCalendar ?? jest.fn()}
         onOpenRequest={jest.fn()}
-        onOpenPluginPage={told.onOpenPluginPage ?? jest.fn()}
         onOpenNamed={jest.fn()}
         onJoin={jest.fn()}
         upTo={null}
@@ -161,16 +159,13 @@ describe('Account', () => {
     expect(onChangeServer).toHaveBeenCalledTimes(1);
   });
 
-  it('opens a page a plugin adds to the account', async () => {
-    const onOpenPluginPage = jest.fn();
+  it('leaves the pages plugins add to an account to the web and the phone', async () => {
     const cache = aCache({ mayRequest: false });
 
     cache.setQueryData(pluginQueries.contributions().queryKey, somePluginContributions());
-    const drawn = await drawAccount(cache, { onOpenPluginPage });
+    const drawn = await drawAccount(cache);
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Anime tracking, AniList' }));
-
-    expect(onOpenPluginPage).toHaveBeenCalledWith({ pluginId: 'anilist', pageId: 'tracking' });
+    expect(drawn.queryByRole('button', { name: 'Anime tracking, AniList' })).toBeNull();
   });
 
   it('signs this television out and forgets what it knew', async () => {

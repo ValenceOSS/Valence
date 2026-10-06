@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
     paddingVertical: tokens.space.sm,
     borderRadius: tokens.radii.lg,
   },
-  focused: { backgroundColor: '#ffffff' },
+  focused: { backgroundColor: '#ffffff', borderRadius: tokens.radii.lg },
   tick: { width: 36, alignItems: 'center' },
   label: { flex: 1, fontSize: tokens.type.body, fontWeight: '600' },
   detail: { fontSize: tokens.type.small, fontVariant: ['tabular-nums'] },

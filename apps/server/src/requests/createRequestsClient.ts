@@ -69,6 +69,7 @@ import type {
   MediaRequestAdded,
   MediaRequestArrivals,
   MediaRequestArrived,
+  MediaRequestDeparture,
   MediaRequestDraft,
   MediaRequestRevision,
   MissingSearch,
@@ -558,6 +559,12 @@ const createRequestsClient = ({
         method: 'POST',
         body: arrivals,
       }),
+
+    requestLeft: (
+      id: string,
+      departure: MediaRequestDeparture,
+    ): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/left`, readRequest, { method: 'POST', body: departure }),
 
     listArrApps: (): Promise<RequestsAnswer<ArrApp[]>> =>
       call('/api/arr-apps', (body) => z.array(ArrAppSchema).parse(body)),

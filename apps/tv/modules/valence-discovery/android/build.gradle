@@ -1,0 +1,15 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'app.valence.tv'
+version = '1.0.0'
+
+android {
+  namespace "app.valence.tv.discovery"
+  defaultConfig {
+    versionCode 1
+    versionName "1.0.0"
+  }
+}

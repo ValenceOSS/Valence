@@ -139,7 +139,6 @@ const MusicPage = ({ onOpen, onFeature, upTo }: MusicProps) => {
                 key={`${item.kind}:${item.id}`}
                 item={item}
                 width={width}
-                hasPreferredFocus={at === 0}
                 onPress={onOpen}
                 onFocus={(on) => {
                   restOn(on);

@@ -8,7 +8,6 @@ type MusicShortcutProps = {
   onPress: (item: MusicItem) => void;
   onFocus?: (item: MusicItem) => void;
   ref?: Ref<View> | undefined;
-  hasPreferredFocus?: boolean;
 };
 
 export type { MusicShortcutProps };

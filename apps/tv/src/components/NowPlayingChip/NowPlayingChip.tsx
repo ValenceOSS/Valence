@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     paddingRight: tokens.space.md,
     borderRadius: tokens.radii.round,
   },
-  focused: { backgroundColor: '#ffffff' },
+  focused: { backgroundColor: '#ffffff', borderRadius: tokens.radii.round },
   cover: {
     width: COVER,
     height: COVER,

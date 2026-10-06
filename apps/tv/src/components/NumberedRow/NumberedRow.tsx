@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     paddingVertical: tokens.space.sm,
     borderRadius: tokens.radii.lg,
   },
-  focused: { backgroundColor: '#ffffff' },
+  focused: { backgroundColor: '#ffffff', borderRadius: tokens.radii.lg },
   place: { width: 48, alignItems: 'center' },
   number: { fontSize: tokens.type.body, fontVariant: ['tabular-nums'] },
   words: { flex: 2, gap: 2 },

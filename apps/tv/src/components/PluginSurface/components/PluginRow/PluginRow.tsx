@@ -17,7 +17,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   detail: { fontSize: tokens.type.small },
-  focused: { backgroundColor: tokens.colours.text },
+  focused: { backgroundColor: tokens.colours.text, borderRadius: tokens.radii.lg },
   label: { fontSize: tokens.type.body },
   picture: { borderRadius: tokens.radii.sm, height: PICTURE, width: PICTURE },
   row: {

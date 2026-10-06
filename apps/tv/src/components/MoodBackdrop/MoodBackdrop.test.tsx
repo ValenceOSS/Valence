@@ -1,4 +1,5 @@
 import { render } from '@testing-library/react-native';
+import { Platform } from 'react-native';
 import { z } from 'zod';
 import { MoodBackdrop } from '@ValenceTv/components/MoodBackdrop/MoodBackdrop';
 
@@ -12,6 +13,16 @@ const picturesIn = (drawn: Drawn): string[] =>
   );
 
 describe('MoodBackdrop', () => {
+  const was = Platform.OS;
+
+  beforeEach(() => {
+    Platform.OS = 'ios';
+  });
+
+  afterEach(() => {
+    Platform.OS = was;
+  });
+
   it('lights the page with the picture showing', async () => {
     const drawn = await render(<MoodBackdrop path="/api/media/1/image/backdrop" />);
 

@@ -1,6 +1,6 @@
 import { createElement as mockCreateElement } from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
-import { Text, View as mockView } from 'react-native';
+import { Platform, Text, View as mockView } from 'react-native';
 import { SystemSearch } from '@ValenceTv/components/SystemSearch/SystemSearch';
 import type { ReactNode } from 'react';
 
@@ -11,6 +11,34 @@ jest.mock('expo', () => ({
 }));
 
 describe('SystemSearch', () => {
+  const was = Platform.OS;
+
+  beforeEach(() => {
+    Platform.OS = 'ios';
+  });
+
+  afterEach(() => {
+    Platform.OS = was;
+  });
+
+  it('draws a search box above the results on Android TV, which has no search screen of its own', async () => {
+    Platform.OS = 'android';
+
+    const drawn = await render(
+      <SystemSearch
+        placeholder="Search"
+        onChangeText={jest.fn()}
+        onResultsLayout={jest.fn()}
+        upTo={null}
+      >
+        <Text>A result</Text>
+      </SystemSearch>,
+    );
+
+    expect(drawn.getByPlaceholderText('Search')).toBeOnTheScreen();
+    expect(drawn.getByText('A result')).toBeOnTheScreen();
+  });
+
   it('draws the results beneath the keyboard', async () => {
     const drawn = await render(
       <SystemSearch

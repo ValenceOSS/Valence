@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     paddingVertical: tokens.space.sm,
     borderRadius: tokens.radii.sm,
   },
-  focused: { backgroundColor: '#ffffff' },
+  focused: { backgroundColor: '#ffffff', borderRadius: tokens.radii.sm },
   disabled: { opacity: 0.5 },
   label: { flex: 1, fontSize: tokens.type.body, fontWeight: '500' },
   detail: { flexShrink: 1, fontSize: tokens.type.small },

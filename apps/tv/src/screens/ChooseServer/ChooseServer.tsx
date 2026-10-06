@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Clock, Plus, Server } from '@keyline-icons/react-native';
@@ -7,6 +7,9 @@ import { recentServerAddresses } from '@ValenceClient/session/serverAddress';
 import { Button } from '@ValenceTv/components/Button/Button';
 import { TextField } from '@ValenceTv/components/TextField/TextField';
 import { isAValence } from '@ValenceTv/native/isAValence';
+import { whichTv } from '@ValenceTv/native/whichTv';
+import type { TvKind } from '@ValenceTv/platform/TvKind';
+import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
 import { listenForValences } from '@ValenceTv/native/listenForValences';
 import { FadeIn } from '@ValenceTv/components/FadeIn/FadeIn';
 import { WayInBackdrop } from '@ValenceTv/components/WayInBackdrop/WayInBackdrop';
@@ -20,6 +23,24 @@ import { say } from '@ValenceI18n/say';
 const MARK = { width: 110, height: 80 };
 
 const STAGGER_MS = 70;
+
+const WITH_A_SCHEME = /^[a-z][a-z0-9+.-]*:\/\//iu;
+
+/**
+ * What the screen asks, naming the kind of television it asks on.
+ *
+ * @param kind - Which kind of television this is.
+ * @returns The question.
+ */
+const whichServerFor = (kind: TvKind): string => {
+  if (kind === 'fireTv') {
+    return say('tv.chooseServer.chooseTheServerThisFireTV');
+  }
+
+  return kind === 'androidTv'
+    ? say('tv.chooseServer.chooseTheServerThisAndroidTV')
+    : say('tv.chooseServer.chooseTheServerThisAppleTV');
+};
 
 /**
  * An address as somebody would say it, without the part a browser adds for them.
@@ -57,21 +78,28 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
 
   useEffect(() => listenForValences(setNearby), []);
 
-  const tryAddress = async (address: string) => {
+  const backToTheServers = useCallback(() => {
+    setIsTyping(false);
+    setProblem(null);
+  }, []);
+
+  useMenuButton(isTyping ? backToTheServers : null);
+
+  const tryAddress = async (addresses: readonly string[]) => {
     setIsAsking(true);
     setProblem(null);
 
-    const answered = await isAValence(address);
+    for (const address of addresses) {
+      if (await isAValence(address)) {
+        setIsAsking(false);
+        onChosen(address);
 
-    setIsAsking(false);
-
-    if (!answered) {
-      setProblem(say('common.nothingAnsweredAtAddressCheckThe', { address }));
-
-      return;
+        return;
+      }
     }
 
-    onChosen(address);
+    setIsAsking(false);
+    setProblem(say('common.nothingAnsweredAtAddressCheckThe', { address: addresses[0] ?? '' }));
   };
 
   const connect = () => {
@@ -83,7 +111,11 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
       return;
     }
 
-    void tryAddress(read.address);
+    void tryAddress(
+      WITH_A_SCHEME.test(typed.trim())
+        ? [read.address]
+        : [read.address, read.address.replace(/^https:/, 'http:')],
+    );
   };
 
   const heard = new Set(nearby.map((one) => one.address));
@@ -97,7 +129,7 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
         <View style={styles.top}>
           <Image source={mark} style={MARK} contentFit="contain" />
           <Text style={styles.title}>{say('common.whichValenceIsYours')}</Text>
-          <Text style={styles.lead}>{say('tv.chooseServer.chooseTheServerThisAppleTV')}</Text>
+          <Text style={styles.lead}>{whichServerFor(whichTv())}</Text>
         </View>
       </FadeIn>
 
@@ -131,10 +163,7 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
                   label={say('common.back')}
                   variant="secondary"
                   isWide
-                  onPress={() => {
-                    setIsTyping(false);
-                    setProblem(null);
-                  }}
+                  onPress={backToTheServers}
                 />
               </View>
             </View>
@@ -176,7 +205,7 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
                   isDisabled={isAsking}
                   hasPreferredFocus={nearby.length === 0 && index === 0}
                   onPress={() => {
-                    void tryAddress(address);
+                    void tryAddress([address]);
                   }}
                 />
               </FadeIn>

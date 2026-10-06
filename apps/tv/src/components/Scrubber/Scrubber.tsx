@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
-import { StyleSheet, Text, useTVEventHandler, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { useRemote } from '@ValenceTv/remote/useRemote';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { useRemoteRing } from '@ValenceTv/remote/useRemoteRing';
@@ -56,7 +57,7 @@ const Scrubber = ({ position, duration, onSeek, onFocus, ref }: ScrubberProps) =
     [isFocused, moveBy],
   );
 
-  useTVEventHandler(hear);
+  useRemote(hear);
   useRemoteRing(isFocused, (degrees) => {
     moveBy((degrees / 360) * A_TURN_MOVES);
   });

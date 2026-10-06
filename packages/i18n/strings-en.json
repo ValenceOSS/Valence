@@ -1765,6 +1765,11 @@
     "context": "The label, used in several places, among them the share lasts in the sharing and the give up rules list (from `slowWaitChoices`)."
   },
   {
+    "handler": "common.androidTV",
+    "text": "Android TV",
+    "context": "The name of the kind of television, shown in the platform of the television app (from `describeThisTv`) and in the playback of the television app (from `theTvsProfile`)."
+  },
+  {
     "handler": "common.anHour",
     "text": "An hour",
     "context": "The label, used in the give up rules list (from `metadataWaitChoices`) and in the give up rules list (from `stalledWaitChoices`)."
@@ -3164,6 +3169,11 @@
     "handler": "common.firefox",
     "text": "Firefox",
     "context": "The name, used in the playback (from `detectClientLabel`) and in the session card (from `deviceIcon`)."
+  },
+  {
+    "handler": "common.fireTV",
+    "text": "Fire TV",
+    "context": "The name of the kind of television, shown in the platform of the television app (from `describeThisTv`) and in the playback of the television app (from `theTvsProfile`)."
   },
   {
     "handler": "common.follow",
@@ -26936,6 +26946,11 @@
     "context": "A webhook message about a problem, followed by a link to the page that explains how to fix it. {sentence} is the message; {docs} is the link."
   },
   {
+    "handler": "tv.about.describeThisBuild.androidApiLevel",
+    "text": "Android API {level}",
+    "context": "Shown in the about of the television app on an Android TV (from `describeThisBuild`), naming the Android version by its API level. {level} is filled in by the app."
+  },
+  {
     "handler": "tv.about.describeThisBuild.valenceVersionCommit",
     "text": "Valence {version} ({commit})",
     "context": "Shown in the about of the television app (from `describeThisBuild`). {version} is filled in by the app; {commit} is filled in by the app."
@@ -26949,11 +26964,6 @@
     "handler": "tv.account.chooseAnotherProfile",
     "text": "Choose another profile",
     "context": "The detail of a button in the account of the television app."
-  },
-  {
-    "handler": "tv.account.pluginPages.fromYourPlugins",
-    "text": "From your plugins",
-    "context": "Text shown in the plugin pages in the account of the television app."
   },
   {
     "handler": "tv.account.themeChoice.valenceOpensInThisThemeThe",
@@ -27061,9 +27071,19 @@
     "context": "Shown in the catalogue of the television app."
   },
   {
+    "handler": "tv.chooseServer.chooseTheServerThisAndroidTV",
+    "text": "Choose the server this Android TV connects to.",
+    "context": "Text shown in the choose server of the television app, on an Android TV."
+  },
+  {
     "handler": "tv.chooseServer.chooseTheServerThisAppleTV",
     "text": "Choose the server this Apple TV connects to.",
     "context": "Text shown in the choose server of the television app."
+  },
+  {
+    "handler": "tv.chooseServer.chooseTheServerThisFireTV",
+    "text": "Choose the server this Fire TV connects to.",
+    "context": "Text shown in the choose server of the television app, on an Android TV."
   },
   {
     "handler": "tv.chooseServer.found1ValenceOnYourNetwork",
@@ -27191,6 +27211,16 @@
     "context": "A row in the television app's list of other devices, for one playing something. {device} is the device's name and {title} what it is playing."
   },
   {
+    "handler": "tv.nowPlaying.devicesPanel.thisAndroidTV",
+    "text": "This Android TV",
+    "context": "Shown in the devices panel in the now playing of the television app, on an Android TV."
+  },
+  {
+    "handler": "tv.nowPlaying.devicesPanel.thisAndroidTVPlayingHere",
+    "text": "This Android TV · playing here",
+    "context": "Shown in the devices panel in the now playing of the television app, on an Android TV."
+  },
+  {
     "handler": "tv.nowPlaying.devicesPanel.thisAppleTV",
     "text": "This Apple TV",
     "context": "Shown in the devices panel in the now playing of the television app."
@@ -27199,6 +27229,16 @@
     "handler": "tv.nowPlaying.devicesPanel.thisAppleTVPlayingHere",
     "text": "This Apple TV · playing here",
     "context": "Shown in the devices panel in the now playing of the television app."
+  },
+  {
+    "handler": "tv.nowPlaying.devicesPanel.thisFireTV",
+    "text": "This Fire TV",
+    "context": "Shown in the devices panel in the now playing of the television app, on an Android TV."
+  },
+  {
+    "handler": "tv.nowPlaying.devicesPanel.thisFireTVPlayingHere",
+    "text": "This Fire TV · playing here",
+    "context": "Shown in the devices panel in the now playing of the television app, on an Android TV."
   },
   {
     "handler": "tv.nowPlaying.hideTheWords",
@@ -27269,6 +27309,11 @@
     "handler": "tv.placeOfEpisode.sValueEValue2",
     "text": "S{value}: E{value2}",
     "context": "An episode’s place in its programme on the television, on its programme’s page and in the player. {value} is the season; {value2} is the episode’s number."
+  },
+  {
+    "handler": "tv.platform.describeThisTv.androidTvEmulator",
+    "text": "Android TV Emulator",
+    "context": "What an Android TV emulator is called in the list of devices and sessions (from `describeThisTv`), in place of the name the emulator gives itself."
   },
   {
     "handler": "tv.platform.installTvPlatform.aTelevisionIsSignedInFrom",
@@ -27389,16 +27434,6 @@
     "handler": "tv.player.upNext.keepWatching",
     "text": "Keep watching",
     "context": "Shown in the up next in the player of the television app."
-  },
-  {
-    "handler": "tv.pluginPage.plugin",
-    "text": "Plugin",
-    "context": "Shown in the plugin page of the television app."
-  },
-  {
-    "handler": "tv.pluginPage.thisPageCouldNotBeRead",
-    "text": "Couldn’t load this page.",
-    "context": "Text shown in the plugin page of the television app."
   },
   {
     "handler": "tv.rating.rateIt",

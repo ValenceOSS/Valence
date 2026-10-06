@@ -1,8 +1,6 @@
-import type { Animated } from 'react-native';
-
 type PageDotProps = {
-  isCurrent: boolean;
-  fill: Animated.Value;
+  at: number;
+  current: number;
 };
 
 export type { PageDotProps };

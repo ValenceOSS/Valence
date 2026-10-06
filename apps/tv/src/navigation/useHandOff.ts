@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react';
-import { useTVEventHandler } from 'react-native';
+import { useRemote } from '@ValenceTv/remote/useRemote';
 import type { HWEvent, View } from 'react-native';
 
 const SAME_PRESS_MS = 150;
@@ -42,7 +42,7 @@ const useHandOff = (
     [heading, target],
   );
 
-  useTVEventHandler(hear);
+  useRemote(hear);
 
   const arrive = useCallback(() => {
     if (!isOnEdge.current) {

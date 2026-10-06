@@ -703,9 +703,12 @@ importers:
       expo:
         specifier: 57.0.24
         version: 57.0.24(@babel/core@7.29.7)(@expo/dom-webview@57.0.1)(react-dom@19.3.0(react@19.2.3))(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@7.0.2)
+      expo-asset:
+        specifier: 57.0.18
+        version: 57.0.18(expo@57.0.24)(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@7.0.2)
       expo-audio:
         specifier: 57.0.5
-        version: 57.0.5(expo-asset@58.0.7(expo@57.0.24)(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@7.0.2))(expo@57.0.24)(react-native-tvos@0.86.3-0)(react@19.2.3)
+        version: 57.0.5(expo-asset@57.0.18(expo@57.0.24)(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@7.0.2))(expo@57.0.24)(react-native-tvos@0.86.3-0)(react@19.2.3)
       expo-constants:
         specifier: 57.0.19
         version: 57.0.19(expo@57.0.24)(react-native-tvos@0.86.3-0)
@@ -18926,17 +18929,6 @@ snapshots:
       - supports-color
       - typescript
 
-  expo-asset@58.0.7(expo@57.0.24)(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@7.0.2):
-    dependencies:
-      '@expo/image-utils': 0.12.1(typescript@7.0.2)
-      expo: 57.0.24(@babel/core@7.29.7)(@expo/dom-webview@57.0.1)(react-dom@19.3.0(react@19.2.3))(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@7.0.2)
-      expo-constants: 58.0.7(expo@57.0.24)(react-native-tvos@0.86.3-0)(typescript@7.0.2)
-      react: 19.2.3
-      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
-
   expo-asset@58.0.7(expo@58.0.0-preview.7)(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0)(typescript@7.0.2):
     dependencies:
       '@expo/image-utils': 0.12.1(typescript@7.0.2)
@@ -18948,10 +18940,10 @@ snapshots:
       - supports-color
       - typescript
 
-  expo-audio@57.0.5(expo-asset@58.0.7(expo@57.0.24)(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@7.0.2))(expo@57.0.24)(react-native-tvos@0.86.3-0)(react@19.2.3):
+  expo-audio@57.0.5(expo-asset@57.0.18(expo@57.0.24)(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@7.0.2))(expo@57.0.24)(react-native-tvos@0.86.3-0)(react@19.2.3):
     dependencies:
       expo: 57.0.24(@babel/core@7.29.7)(@expo/dom-webview@57.0.1)(react-dom@19.3.0(react@19.2.3))(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@7.0.2)
-      expo-asset: 58.0.7(expo@57.0.24)(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@7.0.2)
+      expo-asset: 57.0.18(expo@57.0.24)(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@7.0.2)
       react: 19.2.3
       react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
 
@@ -18969,16 +18961,6 @@ snapshots:
       react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
     transitivePeerDependencies:
       - supports-color
-
-  expo-constants@58.0.7(expo@57.0.24)(react-native-tvos@0.86.3-0)(typescript@7.0.2):
-    dependencies:
-      '@expo/env': 2.5.0
-      '@expo/require-utils': 58.0.1(typescript@7.0.2)
-      expo: 57.0.24(@babel/core@7.29.7)(@expo/dom-webview@57.0.1)(react-dom@19.3.0(react@19.2.3))(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@7.0.2)
-      react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
 
   expo-constants@58.0.7(expo@58.0.0-preview.7)(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(typescript@7.0.2):
     dependencies:

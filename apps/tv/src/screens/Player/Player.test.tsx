@@ -588,6 +588,20 @@ describe('Player', () => {
       expect(mockVideo.current.play).toHaveBeenCalledTimes(2);
     });
 
+    it('skips ten seconds with a remote’s rewind and fast-forward keys, whatever is showing', async () => {
+      await draw();
+
+      await playingAt(100);
+      mockVideo.current.currentTime = 100;
+      await press('rewind');
+
+      expect(mockVideo.current.currentTime).toBe(90);
+
+      await press('fastForward');
+
+      expect(mockVideo.current.currentTime).toBe(110);
+    });
+
     it('leaves left and right to move between the controls while they are up', async () => {
       await draw();
 
@@ -856,6 +870,22 @@ describe('Player', () => {
   });
 
   describe('the settings', () => {
+    it('name the sound track the server is sending, not the file’s own first choice', async () => {
+      mockSession.current = {
+        ...READY,
+        started: {
+          ...STARTED,
+          plan: { ...STARTED.plan, audio: { ...STARTED.plan.audio, streamIndex: 2 } },
+        },
+      };
+
+      const { drawn } = await draw();
+
+      await userEvent.press(drawn.getByRole('button', { name: 'Settings' }));
+
+      expect(drawn.getByRole('button', { name: 'Audio, Français · Stereo · AAC' })).toBeTruthy();
+    });
+
     it('list each setting with what it is set to now', async () => {
       const { drawn } = await draw();
 

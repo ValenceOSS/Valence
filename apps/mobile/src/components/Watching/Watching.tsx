@@ -210,6 +210,7 @@ const Watching = ({
   const [source, setSource] = useState<VideoSource | null>(null);
   const [seekTo, setSeekTo] = useState(0);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sentAudio, setSentAudio] = useState<number | null>(null);
   const [refusal, setRefusal] = useState<string | null>(null);
   const whereTheyGotTo = useRef<{ positionSeconds: number; durationSeconds: number } | null>(null);
   const picture = useRef<VideoViewRef | null>(null);
@@ -327,6 +328,7 @@ const Watching = ({
       }
 
       started = outcome.session.sessionId;
+      setSentAudio(outcome.session.plan.audio.streamIndex);
 
       if (leftAlready) {
         void stopPlaybackSession(started, clientId);
@@ -706,7 +708,7 @@ const Watching = ({
         onSubtitle: readInstead,
         media: isKept ? null : (title.data ?? null),
         profile: thePhonesProfile(),
-        chosenAudio: asking.audioStreamIndex ?? null,
+        chosenAudio: asking.audioStreamIndex ?? sentAudio,
         chosenQuality: asking.requestedQuality ?? 'original',
         onAudio: (audioStreamIndex) => {
           askAgain({ audioStreamIndex });
@@ -728,6 +730,7 @@ const Watching = ({
       reading,
       readInstead,
       asking.audioStreamIndex,
+      sentAudio,
       asking.requestedQuality,
       askAgain,
       rate,

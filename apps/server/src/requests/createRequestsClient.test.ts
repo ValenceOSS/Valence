@@ -267,6 +267,17 @@ describe('createRequestsClient', () => {
         '{"mediaId":"dune","episodes":null,"albums":null}',
       );
     });
+
+    it('tells the service a request’s item left the library, or became another', async () => {
+      const { client, fetch } = aClient(400, { error: 'No', code: null, values: {} });
+
+      expect(await client.requestLeft(AN_APP.id, { mediaId: null })).toMatchObject({
+        kind: 'refused',
+        status: 400,
+      });
+      expect(fetch.mock.calls[0]?.[0]).toBe(`http://requests:8421/api/requests/${AN_APP.id}/left`);
+      expect(fetch.mock.calls[0]?.[1].body).toBe('{"mediaId":null}');
+    });
   });
 
   describe('indexers and searching', () => {

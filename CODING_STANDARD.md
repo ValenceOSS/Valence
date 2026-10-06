@@ -78,7 +78,7 @@ The cost is a third language to read, so the boundary is kept narrow:
 
 **Kotlin is permitted inside the local native modules of an Android client —
 `apps/<client>/modules/<module>/android/` — and nowhere else.** Today that means
-`apps/mobile`. What the Swift of a module does on an iPhone is, on Android, only
+`apps/mobile` and `apps/tv`. What the Swift of a module does on an iPhone is, on Android, only
 reachable from Kotlin: finding a server announced on the network is
 `NsdManager`, music that plays on with the screen locked and answers its
 controls is a media session in a foreground service, and the media volume is

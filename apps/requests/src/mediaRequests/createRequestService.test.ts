@@ -409,6 +409,36 @@ describe('createRequestService', () => {
     expect(await service.retry('missing')).toBeNull();
   });
 
+  it('follows a request’s item to another the library found it as', async () => {
+    const { service, items } = aService();
+    const { request } = await service.add({ ...DUNE, isApproved: true });
+    const [item] = await items.list();
+
+    await items.update(item?.id ?? '', { state: 'filed' });
+    await service.arrived(request.id, 'media-1');
+
+    expect(await service.left(request.id, 'media-2')).toMatchObject({
+      state: 'available',
+      mediaId: 'media-2',
+    });
+  });
+
+  it('shows what left the library as failed, so nothing fetches it again unasked', async () => {
+    const { service, items } = aService();
+    const { request } = await service.add({ ...DUNE, isApproved: true });
+    const [item] = await items.list();
+
+    await items.update(item?.id ?? '', { state: 'filed' });
+    await service.arrived(request.id, 'media-1');
+
+    const left = await service.left(request.id, null);
+
+    expect(left).toMatchObject({ state: 'failed', mediaId: null });
+    expect(left?.items[0]?.problem?.code).toBe('common.noLongerInTheLibrary');
+    expect((await service.retry(request.id))?.items[0]).toMatchObject({ state: 'wanted' });
+    expect(await service.left('missing', null)).toBeNull();
+  });
+
   it('marks what the library holds arrived, however it got there, and only once', async () => {
     const { service, items } = aService();
     const { request } = await service.add({ ...SEVERANCE, seasons: [1, 2] });

@@ -1,5 +1,5 @@
 import { createElement as mockCreateElement } from 'react';
-import { Image as mockNativeImage } from 'react-native';
+import { Image as mockNativeImage, Platform } from 'react-native';
 import { render } from '@testing-library/react-native';
 import { rememberServerAddress } from '@ValenceClient/session/serverAddress';
 import { CoverGlow } from '@ValenceTv/components/CoverGlow/CoverGlow';
@@ -25,6 +25,12 @@ jest.mock('expo-image', () => ({
 }));
 
 describe('CoverGlow', () => {
+  const was = Platform.OS;
+
+  afterEach(() => {
+    Platform.OS = was;
+  });
+
   beforeEach(() => {
     mockDrawnImage.mockClear();
     rememberServerAddress('https://valence.test');
@@ -32,6 +38,8 @@ describe('CoverGlow', () => {
   });
 
   it('washes the screen in the blurred cover of what is playing', async () => {
+    Platform.OS = 'ios';
+
     const drawn = await render(<CoverGlow path="/api/music/albums/1/artwork" />);
 
     expect(

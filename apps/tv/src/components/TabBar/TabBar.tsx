@@ -1,16 +1,16 @@
-import { useMemo, useState } from 'react';
-import { LayoutAnimation, StyleSheet, Text, TVFocusGuideView, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, StyleSheet, Text, TVFocusGuideView, View } from 'react-native';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { Icon } from '@ValenceTv/components/Icon/Icon';
+import { StretchPill } from '@ValenceTv/components/StretchPill/StretchPill';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { TabBarProps } from './TabBar.types';
 
 const ICON_SIZE = 28;
 
-const SLIDES = {
-  duration: 380,
-  update: { type: LayoutAnimation.Types.spring, springDamping: 0.78 },
-};
+const SLIDES = { stiffness: 182, damping: 21, mass: 1, useNativeDriver: true };
+
+const QUIET = 0.16;
 
 type Place = { x: number; y: number; width: number; height: number };
 
@@ -22,7 +22,8 @@ type Place = { x: number; y: number; width: number; height: number };
  * without a press — because that is how every other tab bar on the television behaves. One pill sits
  * behind the tabs and springs from tab to tab as the remote moves, as the web's does, lit white while
  * the remote is in the row and a quiet fill once it has gone down into the page; the tabs themselves
- * only change colour.
+ * only change colour. The pill moves by transforms alone, since Android does not animate a change of
+ * layout.
  *
  * Coming up into the row lands on the tab showing rather than whichever is nearest, so moving up
  * from the page never changes it by accident.
@@ -44,6 +45,9 @@ const TabBar = <Tab extends string>({
 }: TabBarProps<Tab>) => {
   const [places, setPlaces] = useState<ReadonlyMap<Tab, Place>>(new Map());
   const [isInRow, setIsInRow] = useState(false);
+  const [pillX] = useState(() => new Animated.Value(0));
+  const [pillWidth] = useState(() => new Animated.Value(0));
+  const isPlaced = useRef(false);
 
   const refs = useMemo(
     () =>
@@ -60,17 +64,35 @@ const TabBar = <Tab extends string>({
 
   const at = places.get(current);
 
+  useEffect(() => {
+    if (at === undefined) {
+      return;
+    }
+
+    if (!isPlaced.current) {
+      isPlaced.current = true;
+      pillX.setValue(at.x);
+      pillWidth.setValue(at.width);
+
+      return;
+    }
+
+    Animated.parallel([
+      Animated.spring(pillX, { ...SLIDES, toValue: at.x }),
+      Animated.spring(pillWidth, { ...SLIDES, toValue: at.width }),
+    ]).start();
+  }, [at, pillX, pillWidth]);
+
   return (
     <TVFocusGuideView autoFocus style={styles.bar}>
       {at === undefined ? null : (
         <View
           pointerEvents="none"
-          style={[
-            styles.mark,
-            { left: at.x, top: at.y, width: at.width, height: at.height },
-            isInRow ? styles.markLit : styles.markQuiet,
-          ]}
-        />
+          needsOffscreenAlphaCompositing
+          style={[styles.mark, { top: at.y, height: at.height, opacity: isInRow ? 1 : QUIET }]}
+        >
+          <StretchPill x={pillX} width={pillWidth} height={at.height} colour="#ffffff" />
+        </View>
       )}
 
       {tabs.map((tab) => (
@@ -103,8 +125,6 @@ const TabBar = <Tab extends string>({
             hasPreferredFocus={isStartingHere && tab.id === current}
             scale={1}
             onFocus={() => {
-              LayoutAnimation.configureNext(SLIDES);
-
               if (tab.id !== current) {
                 onChoose(tab.id);
               }
@@ -159,9 +179,7 @@ const styles = StyleSheet.create({
     paddingVertical: tokens.space.sm - 4,
     borderRadius: tokens.radii.round,
   },
-  mark: { position: 'absolute', borderRadius: tokens.radii.round },
-  markQuiet: { backgroundColor: 'rgba(255,255,255,0.16)' },
-  markLit: { backgroundColor: '#ffffff' },
+  mark: { position: 'absolute', left: 0, right: 0 },
   label: { fontSize: tokens.type.body - 2, fontWeight: '500' },
   labelCurrent: { fontWeight: '600' },
 });

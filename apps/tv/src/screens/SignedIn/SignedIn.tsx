@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, findNodeHandle, Linking, StyleSheet, useTVEventHandler, View } from 'react-native';
+import { Alert, findNodeHandle, Linking, StyleSheet, View } from 'react-native';
+import { useRemote } from '@ValenceTv/remote/useRemote';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
@@ -35,6 +36,7 @@ import { NowPlayingChip } from '@ValenceTv/components/NowPlayingChip/NowPlayingC
 import { TopBar } from '@ValenceTv/components/TopBar/TopBar';
 import { useHandOff } from '@ValenceTv/navigation/useHandOff';
 import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
+import { isBackHomeFirst } from '@ValenceTv/navigation/isBackHomeFirst';
 import { readOpeningLink } from '@ValenceTv/navigation/readOpeningLink';
 import { readArrivalLink } from '@ValenceTv/notifications/readArrivalLink';
 import { useArrivals } from '@ValenceTv/notifications/useArrivals';
@@ -54,7 +56,6 @@ import { RequestsPage } from '@ValenceTv/screens/RequestsPage/RequestsPage';
 import { CalendarPage } from '@ValenceTv/screens/CalendarPage/CalendarPage';
 import { findAShow } from '@ValenceClient/library/findAShow';
 import { calendarQueries } from '@ValenceClient/query/calendarQueries';
-import { PluginPage } from '@ValenceTv/screens/PluginPage/PluginPage';
 import { Search } from '@ValenceTv/screens/Search/Search';
 import { ShowPage } from '@ValenceTv/screens/ShowPage/ShowPage';
 import { PersonPage } from '@ValenceTv/screens/PersonPage/PersonPage';
@@ -212,6 +213,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     search: null,
   });
   const [items, setItems] = useState<ReadonlyMap<Tab, View>>(new Map());
+  const [playingChip, setPlayingChip] = useState<View | null>(null);
   const [heroPlay, setHeroPlay] = useState<View | null>(null);
   const downFromBar = useHandOff('down', tab === 'home' ? heroPlay : null);
 
@@ -347,7 +349,12 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     ]);
   }, []);
 
-  useMenuButton(opened.length === 0 ? null : back);
+  const goHome = useCallback(() => {
+    choose('home');
+    homeTab?.requestTVFocus();
+  }, [choose, homeTab]);
+
+  useMenuButton(opened.length > 0 ? back : isBackHomeFirst(tab) ? goHome : null);
 
   const openTitle = useCallback(
     (media: MediaSummary) => {
@@ -384,13 +391,6 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
   const openCalendar = useCallback(() => {
     open({ kind: 'calendar', mood: null });
   }, [open]);
-
-  const openPluginPage = useCallback(
-    (page: { pluginId: string; pageId: string }) => {
-      open({ kind: 'pluginPage', pluginId: page.pluginId, pageId: page.pageId, mood: null });
-    },
-    [open],
-  );
 
   const openRequest = useCallback(
     (request: MediaRequest) => {
@@ -646,7 +646,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     [isWatching, arrival, heard],
   );
 
-  useTVEventHandler(hearPlayPause);
+  useRemote(hearPlayPause);
   const faceMood =
     watching.data === undefined || watching.data === null ? null : profileAvatarUrl(watching.data);
   const pageOnTop = opened.findLast((place) => place.kind !== 'play');
@@ -709,7 +709,6 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
                         onRequests={openRequests}
                         onCalendar={openCalendar}
                         onOpenRequest={openRequest}
-                        onOpenPluginPage={openPluginPage}
                         onOpenNamed={openByMediaId}
                         onJoin={join}
                         upTo={items.get('account') ?? null}
@@ -760,6 +759,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
           hasShows={hasShows}
           hasMusic={hasMusic}
           hasBooks={hasBooks}
+          rightOfTheBar={playingChip}
         />
       </FocusFence>
 
@@ -848,17 +848,6 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
         </View>
       ) : null}
 
-      {top?.kind === 'pluginPage' ? (
-        <View style={styles.over}>
-          <PluginPage
-            key={`${top.pluginId}:${top.pageId}`}
-            pluginId={top.pluginId}
-            pageId={top.pageId}
-            onGone={back}
-          />
-        </View>
-      ) : null}
-
       {top?.kind === 'play' ? (
         <View style={[styles.over, styles.dark]}>
           <PlayingTogether
@@ -877,6 +866,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
       {isWatching || top?.kind === 'nowPlaying' || top?.kind === 'listening' ? null : (
         <View style={styles.playing}>
           <NowPlayingChip
+            ref={setPlayingChip}
             onOpen={(which) => {
               if (which === 'book') {
                 if (top === undefined && hasBooks) {

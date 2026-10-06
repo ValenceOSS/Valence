@@ -9,6 +9,10 @@ describe('withAlpha', () => {
     expect(withAlpha('rgba(1,2,3,0.5)', 1)).toBe('rgba(1, 2, 3, 1)');
   });
 
+  it('makes an rgb colour read from a picture as opaque as asked', () => {
+    expect(withAlpha('rgb(200, 80, 40)', 0.5)).toBe('rgba(200, 80, 40, 0.5)');
+  });
+
   it('makes a hex colour from a plugin theme as opaque as asked', () => {
     expect(withAlpha('#3a8ee8', 0.5)).toBe('rgba(58, 142, 232, 0.5)');
   });

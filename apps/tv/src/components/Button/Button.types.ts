@@ -31,6 +31,7 @@ type ButtonProps = {
   isIconOnly?: boolean;
   iconSize?: number;
   hasPreferredFocus?: boolean;
+  isRingHidden?: boolean;
 };
 
 export type { ButtonProps, ButtonSize, ButtonVariant };

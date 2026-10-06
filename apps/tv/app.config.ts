@@ -4,6 +4,10 @@ import { readValencePalette } from './plugins/readValencePalette.ts';
 import { readTheBuild } from './plugins/readTheBuild.ts';
 import { withTopShelf } from './plugins/withTopShelf.ts';
 import { withLaunchScreen } from './plugins/withLaunchScreen.ts';
+import { withPlainHttpToServers } from './plugins/withPlainHttpToServers.ts';
+import { withTelevisionSizedScreen } from './plugins/withTelevisionSizedScreen.ts';
+import { withoutTheSystemFocusHighlight } from './plugins/withoutTheSystemFocusHighlight.ts';
+import { withoutRequiringWifi } from './plugins/withoutRequiringWifi.ts';
 
 const build = readTheBuild();
 
@@ -25,13 +29,19 @@ const config: ExpoConfig = {
       },
     },
   },
-  android: { allowBackup: false },
+  android: {
+    package: 'app.valence.tv',
+    allowBackup: false,
+  },
   extra: { palette: readValencePalette(), build },
   plugins: [
     [
       '@react-native-tvos/config-tv',
       {
         isTV: true,
+        androidTVRequired: false,
+        androidTVBanner: './assets/android-tv/banner.png',
+        androidTVIcon: './assets/android-tv/icon.png',
         appleTVImages: {
           icon: './assets/tv-icons/icon.png',
           iconSmall: './assets/tv-icons/iconSmall.png',
@@ -45,8 +55,14 @@ const config: ExpoConfig = {
     ],
     'expo-secure-store',
     'expo-video',
-    ['expo-audio', { enableBackgroundPlayback: true }],
+    ['expo-audio', { enableBackgroundPlayback: true, recordAudioAndroid: false }],
   ],
 };
 
-export default withLaunchScreen(withTopShelf(withTheSceneLifecycle(config)));
+export default withoutRequiringWifi(
+  withoutTheSystemFocusHighlight(
+    withTelevisionSizedScreen(
+      withPlainHttpToServers(withLaunchScreen(withTopShelf(withTheSceneLifecycle(config)))),
+    ),
+  ),
+);

@@ -8,6 +8,7 @@ type SettingsMenuProps = {
   title?: string;
   settings: readonly Setting[];
   onOpen: (id: string) => void;
+  cameFrom?: string | null;
 };
 
 export type { Setting, SettingsMenuProps };

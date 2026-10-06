@@ -63,7 +63,7 @@ describe('planBrandOutputs', () => {
   it('draws every Apple TV icon and top shelf at the size tvOS asks for', () => {
     expect(
       outputs.flatMap((output) =>
-        output.kind === 'banner' && output.to.startsWith('apps/tv')
+        output.kind === 'banner' && output.to.startsWith('apps/tv/assets/tv-icons')
           ? [[output.to, output.width, output.height]]
           : [],
       ),
@@ -97,6 +97,19 @@ describe('planBrandOutputs', () => {
       ['apps/mobile/assets/icon/android-icon.png', 1024, 1024, 'both'],
       ['apps/mobile/assets/icon/android-icon-foreground.png', 1024, 1024, 'logo'],
       ['apps/mobile/assets/icon/android-icon-background.png', 1024, 1024, 'background'],
+    ]);
+  });
+
+  it('gives Android TV its launcher banner and icon, the mark on the background as the Apple TV has it', () => {
+    expect(
+      outputs.flatMap((output) =>
+        output.kind === 'banner' && output.to.startsWith('apps/tv/assets/android-tv')
+          ? [[output.to, output.width, output.height, output.layers]]
+          : [],
+      ),
+    ).toEqual([
+      ['apps/tv/assets/android-tv/banner.png', 640, 360, 'both'],
+      ['apps/tv/assets/android-tv/icon.png', 512, 512, 'both'],
     ]);
   });
 });

@@ -1,4 +1,5 @@
-import { render, userEvent, waitFor } from '@testing-library/react-native';
+import { act, render, userEvent, waitFor } from '@testing-library/react-native';
+import { BackHandler, TVEventControl } from 'react-native';
 import { rememberServerAddress } from '@ValenceClient/session/serverAddress';
 import { isAValence } from '@ValenceTv/native/isAValence';
 import { ChooseServer } from '@ValenceTv/screens/ChooseServer/ChooseServer';
@@ -96,6 +97,39 @@ describe('ChooseServer', () => {
     });
   });
 
+  it('falls back to plain http for an address typed without one, as a server at home often is', async () => {
+    jest
+      .mocked(isAValence)
+      .mockImplementation((address) => Promise.resolve(address.startsWith('http:')));
+    const onChosen = jest.fn();
+    const drawn = await render(<ChooseServer onChosen={onChosen} />);
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Another address, Enter address' }));
+    await userEvent.type(drawn.getByPlaceholderText('192.168.1.10:8420'), '10.0.2.2:8420');
+    await userEvent.press(drawn.getByRole('button', { name: 'Connect' }));
+
+    await waitFor(() => {
+      expect(onChosen).toHaveBeenCalledWith('http://10.0.2.2:8420');
+    });
+    expect(isAValence).toHaveBeenCalledWith('https://10.0.2.2:8420');
+  });
+
+  it('asks only the scheme typed, where one is', async () => {
+    jest.mocked(isAValence).mockResolvedValue(false);
+    const drawn = await render(<ChooseServer onChosen={jest.fn()} />);
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Another address, Enter address' }));
+    await userEvent.type(drawn.getByPlaceholderText('192.168.1.10:8420'), 'https://valence.home');
+    await userEvent.press(drawn.getByRole('button', { name: 'Connect' }));
+
+    expect(
+      await drawn.findByText(
+        'Couldn’t connect to https://valence.home. Check the address and make sure Valence is running.',
+      ),
+    ).toBeTruthy();
+    expect(isAValence).toHaveBeenCalledTimes(1);
+  });
+
   it('says what is wrong with an address that cannot be one', async () => {
     const drawn = await render(<ChooseServer onChosen={jest.fn()} />);
 
@@ -113,6 +147,30 @@ describe('ChooseServer', () => {
     await userEvent.press(drawn.getByRole('button', { name: 'Back' }));
 
     expect(drawn.getByRole('button', { name: 'Another address, Enter address' })).toBeTruthy();
+  });
+
+  it('goes back to the row of servers with the remote’s back button, rather than leaving', async () => {
+    const pressed: { back: Parameters<typeof BackHandler.addEventListener>[1] | null } = {
+      back: null,
+    };
+
+    jest.spyOn(TVEventControl, 'enableTVMenuKey').mockImplementation(() => undefined);
+    jest.spyOn(TVEventControl, 'disableTVMenuKey').mockImplementation(() => undefined);
+    jest.spyOn(BackHandler, 'addEventListener').mockImplementation((_type, handler) => {
+      pressed.back = handler;
+
+      return { remove: jest.fn() };
+    });
+
+    const drawn = await render(<ChooseServer onChosen={jest.fn()} />);
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Another address, Enter address' }));
+    await act(() => {
+      expect(pressed.back?.({ type: 'hardwareBackPress', timeStamp: 0 })).toBe(true);
+    });
+
+    expect(drawn.getByRole('button', { name: 'Another address, Enter address' })).toBeTruthy();
+    jest.restoreAllMocks();
   });
 
   it('starts at the box, with the address that stopped answering, where nothing was used before', async () => {

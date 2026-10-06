@@ -24,15 +24,17 @@ describe('PageDots', () => {
     jest.restoreAllMocks();
   });
 
-  it('draws a dot for each turn, with the current one long', async () => {
+  it('draws a dot for each turn, with the current one long and filling', async () => {
     const drawn = await render(
       <PageDots count={4} current={1} turnMs={8000} isRunning={false} onTurnDone={jest.fn()} />,
     );
-    const dots = dotsOf(drawn);
+    const [dots, filling] = dotsOf(drawn);
+    const parts = typeof dots === 'string' ? [] : (dots?.children ?? []);
 
-    expect(dots).toHaveLength(4);
-    expect(dots[0]).toHaveStyle({ width: 12 });
-    expect(dots[1]).toHaveStyle({ width: 56 });
+    expect(drawn.root).toHaveStyle({ width: 3 * 20 + 56, height: 12 });
+    expect(parts).toHaveLength(4 * 3);
+    expect(dots).toHaveStyle({ opacity: 0.35 });
+    expect(filling).toHaveStyle({ left: 20, width: 56 });
   });
 
   it('says when the turn has run out', async () => {

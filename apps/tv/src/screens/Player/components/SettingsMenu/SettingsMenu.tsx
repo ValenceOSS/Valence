@@ -16,37 +16,48 @@ import { say } from '@ValenceI18n/say';
  * @param title - What the settings are of, where they are not the player's own.
  * @param settings - The settings there are, each with what it is set to now.
  * @param onOpen - Told which setting was chosen, to show its choices.
+ * @param cameFrom - The setting whose choices were just closed, for the remote to come back to, rather
+ *   than the first.
  */
-const SettingsMenu = ({ title = say('common.settings'), settings, onOpen }: SettingsMenuProps) => (
-  <SidePanel title={title}>
-    {settings.map((setting, at) => (
-      <Focusable
-        key={setting.id}
-        label={`${setting.label}, ${setting.value}`}
-        scale={1}
-        hasPreferredFocus={at === 0}
-        onPress={() => {
-          onOpen(setting.id);
-        }}
-      >
-        {(isFocused) => {
-          const ink = isFocused ? tokens.colours.onWhite : tokens.colours.text;
-          const quiet = isFocused ? tokens.colours.onWhite : tokens.colours.muted;
+const SettingsMenu = ({
+  title = say('common.settings'),
+  settings,
+  onOpen,
+  cameFrom = null,
+}: SettingsMenuProps) => {
+  const startsAt = settings.some((setting) => setting.id === cameFrom) ? cameFrom : settings[0]?.id;
 
-          return (
-            <View style={[styles.row, isFocused && styles.focused]}>
-              <Text style={[styles.label, { color: ink }]}>{setting.label}</Text>
-              <Text numberOfLines={1} style={[styles.value, { color: quiet }]}>
-                {setting.value}
-              </Text>
-              <Icon of={ChevronRight} size={26} colour={quiet} />
-            </View>
-          );
-        }}
-      </Focusable>
-    ))}
-  </SidePanel>
-);
+  return (
+    <SidePanel title={title}>
+      {settings.map((setting) => (
+        <Focusable
+          key={setting.id}
+          label={`${setting.label}, ${setting.value}`}
+          scale={1}
+          hasPreferredFocus={setting.id === startsAt}
+          onPress={() => {
+            onOpen(setting.id);
+          }}
+        >
+          {(isFocused) => {
+            const ink = isFocused ? tokens.colours.onWhite : tokens.colours.text;
+            const quiet = isFocused ? tokens.colours.onWhite : tokens.colours.muted;
+
+            return (
+              <View style={[styles.row, isFocused && styles.focused]}>
+                <Text style={[styles.label, { color: ink }]}>{setting.label}</Text>
+                <Text numberOfLines={1} style={[styles.value, { color: quiet }]}>
+                  {setting.value}
+                </Text>
+                <Icon of={ChevronRight} size={26} colour={quiet} />
+              </View>
+            );
+          }}
+        </Focusable>
+      ))}
+    </SidePanel>
+  );
+};
 
 SettingsMenu.displayName = 'SettingsMenu';
 
@@ -59,7 +70,7 @@ const styles = StyleSheet.create({
     paddingVertical: tokens.space.sm,
     borderRadius: tokens.radii.lg,
   },
-  focused: { backgroundColor: '#ffffff' },
+  focused: { backgroundColor: '#ffffff', borderRadius: tokens.radii.lg },
   label: { fontSize: tokens.type.body, fontWeight: '600' },
   value: { flex: 1, textAlign: 'right', fontSize: tokens.type.body },
 });

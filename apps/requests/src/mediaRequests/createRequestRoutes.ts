@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import {
   MediaRequestArrivalSchema,
+  MediaRequestDepartureSchema,
   MediaRequestArrivalsSchema,
   MediaRequestDraftSchema,
   MediaRequestPickSchema,
@@ -128,6 +129,14 @@ const createRequestRoutes = ({ service, log, worker }: CreateRequestRoutesOption
     return arrival === null
       ? context.json(refuse('error.requests.sayWhichItemItBecame'), 400)
       : answer(await service.arrived(context.req.param('id'), arrival.mediaId));
+  });
+
+  routes.post('/requests/:id/left', async (context) => {
+    const departure = await readBody(context.req.raw, MediaRequestDepartureSchema);
+
+    return departure === null
+      ? context.json(refuse('error.requests.sayWhichItemItBecame'), 400)
+      : answer(await service.left(context.req.param('id'), departure.mediaId));
   });
 
   routes.post('/requests/:id/arrivals', async (context) => {
