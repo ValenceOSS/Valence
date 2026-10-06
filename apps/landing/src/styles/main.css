@@ -12,6 +12,10 @@
   --color-phone-floor: #0a0d16;
 }
 
+:root {
+  --release-bar: 37px;
+}
+
 @keyframes valence-band-run {
   to {
     transform: translateX(-50%);

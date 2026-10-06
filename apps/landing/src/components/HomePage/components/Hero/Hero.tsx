@@ -62,7 +62,7 @@ const Hero = () => {
 
   return (
     <section className="relative px-2 pt-2 sm:px-3 sm:pt-3">
-      <div className="relative isolate overflow-hidden rounded-[2rem] bg-aurora sm:rounded-[2.5rem]">
+      <div className="relative isolate flex min-h-[calc(100svh-var(--release-bar)-1rem)] flex-col overflow-hidden rounded-[2rem] bg-aurora pb-[calc(var(--app-peek)+1.5rem)] [--app-peek:min(30vw,8rem)] sm:min-h-[calc(100svh-var(--release-bar)-1.5rem)] sm:rounded-[2.5rem] sm:[--app-peek:min(14vw,9.5rem)]">
         <FoldGradient
           colors={[...AURORA.colours]}
           bgColor={AURORA.back}
@@ -209,11 +209,9 @@ const Hero = () => {
             ))}
           </motion.p>
         </motion.div>
-
-        <div aria-hidden className="h-[min(48vw,24rem)] sm:h-[min(30vw,30rem)]" />
       </div>
 
-      <div className="relative z-10 -mt-[calc(min(48vw,24rem)-3rem)] px-4 sm:-mt-[calc(min(30vw,30rem)-3rem)] sm:px-10">
+      <div className="relative z-10 -mt-[min(30vw,8rem)] px-4 sm:-mt-[min(14vw,9.5rem)] sm:px-10">
         <DeviceStage />
       </div>
 
