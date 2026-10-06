@@ -182,7 +182,7 @@ const Hero = () => {
                 className="block -rotate-3 whitespace-nowrap pr-6 text-right font-hand text-2xl leading-none text-on-scrim/85"
                 {...popArrival(BUTTONS_LEAD + 0.4, isStill)}
               >
-                free, and always will be
+                open sourced, and always will be
               </motion.span>
               <Doodle
                 of="arrowCurl"
