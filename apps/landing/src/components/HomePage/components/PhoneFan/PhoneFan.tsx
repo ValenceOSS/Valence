@@ -14,9 +14,9 @@ const OPEN_ENOUGH = 0.97;
 
 const PHONES = [
   { label: 'Music home', turn: -16, lift: 70, spread: -2, finish: 'silver' },
-  { label: 'An album', turn: -8, lift: 26, spread: -1, finish: 'orange' },
-  { label: 'Now playing', turn: 0, lift: 0, spread: 0, finish: 'blue' },
-  { label: 'Your library', turn: 8, lift: 26, spread: 1, finish: 'orange' },
+  { label: 'An album', turn: -8, lift: 26, spread: -1, finish: 'blue' },
+  { label: 'Now playing', turn: 0, lift: 0, spread: 0, finish: 'orange' },
+  { label: 'Your library', turn: 8, lift: 26, spread: 1, finish: 'blue' },
   { label: 'A book', turn: 16, lift: 70, spread: 2, finish: 'silver' },
 ] as const;
 
