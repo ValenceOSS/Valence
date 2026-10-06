@@ -331,6 +331,7 @@
       "@ValenceUI/useSlidingHighlight": ["./packages/ui/src/functions/useSlidingHighlight.ts"],
       "@ValenceUI/isOverDialogs": ["./packages/ui/src/functions/isOverDialogs.ts"],
       "@ValenceUI/useFitWidth": ["./packages/ui/src/functions/useFitWidth.ts"],
+      "@ValenceUI/useReached": ["./packages/ui/src/functions/useReached.ts"],
       "@ValenceUI/placeFaces": ["./packages/ui/src/functions/placeFaces.ts"],
       "@ValenceWeb/*": ["./apps/web/src/*"]
     }

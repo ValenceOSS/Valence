@@ -1,7 +1,9 @@
+import { useRef } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { IconChecklist, IconShieldLockFilled, IconSignature } from '@tabler/icons-react';
 import { Button } from '@ValenceUI/Button';
-import { revealItemVariants } from '@ValenceUI/animations/reveal';
+import { groupVariants, revealItemVariants } from '@ValenceUI/animations/reveal';
+import { useReached } from '@ValenceUI/useReached';
 import { GetStarted } from '@ValenceLanding/components/HomePage/components/GetStarted/GetStarted';
 import { PageHero } from '@ValenceLanding/components/PageHero/PageHero';
 import { SectionCard } from '@ValenceLanding/components/SectionCard/SectionCard';
@@ -45,6 +47,8 @@ const SECTION_TITLE = 'text-2xl font-semibold tracking-tight text-text';
  */
 const PluginsPage = ({ plugins = OFFICIAL }: PluginsPageProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
+  const promisesRef = useRef<HTMLUListElement>(null);
+  const arePromisesReached = useReached(promisesRef, { margin: '-60px' });
 
   return (
     <>
@@ -91,22 +95,24 @@ const PluginsPage = ({ plugins = OFFICIAL }: PluginsPageProps) => {
               What keeps a plugin safe
             </h2>
 
-            <ul className="grid gap-4 sm:grid-cols-3">
+            <motion.ul
+              ref={promisesRef}
+              initial="hidden"
+              animate={arePromisesReached ? 'shown' : 'hidden'}
+              variants={groupVariants}
+              className="grid gap-4 sm:grid-cols-3"
+            >
               {PROMISES.map((promise, index) => (
                 <motion.li
                   key={promise.title}
                   custom={index}
-                  initial="hidden"
-                  whileInView="shown"
-                  animate="hidden"
-                  viewport={{ margin: '-60px' }}
                   variants={revealItemVariants(prefersReducedMotion)}
                   className="list-none"
                 >
                   <PromiseCard title={promise.title} text={promise.text} glyph={promise.glyph} />
                 </motion.li>
               ))}
-            </ul>
+            </motion.ul>
           </section>
 
           <section aria-labelledby="official-plugins" className="flex flex-col gap-6">

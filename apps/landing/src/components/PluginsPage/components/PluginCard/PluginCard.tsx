@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import {
   IconBooks,
@@ -7,6 +8,7 @@ import {
   IconPlusFilled,
   IconUserCircle,
 } from '@tabler/icons-react';
+import { useReached } from '@ValenceUI/useReached';
 import { Badge } from '@ValenceUI/Badge';
 import { revealItemVariants } from '@ValenceUI/animations/reveal';
 import { summarisePermissions } from '@ValenceLanding/content/plugins/summarisePermissions';
@@ -35,15 +37,16 @@ const SUMMARY_GLYPHS: Record<PermissionSummary['kind'], typeof IconBooks> = {
  */
 const PluginCard = ({ plugin, index }: PluginCardProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
+  const cardRef = useRef<HTMLLIElement>(null);
+  const isCardReached = useReached(cardRef, { margin: '-60px' });
   const summaries = summarisePermissions(plugin.permissions);
 
   return (
     <motion.li
       custom={index}
+      ref={cardRef}
       initial="hidden"
-      whileInView="shown"
-      animate="hidden"
-      viewport={{ margin: '-60px' }}
+      animate={isCardReached ? 'shown' : 'hidden'}
       variants={revealItemVariants(prefersReducedMotion)}
       className="valence-surface valence-surface--flat flex h-full list-none flex-col gap-5 rounded-3xl p-6 sm:p-7"
     >

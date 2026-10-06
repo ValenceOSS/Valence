@@ -1,4 +1,6 @@
+import { useRef } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
+import { useReached } from '@ValenceUI/useReached';
 import { revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
 import { Doodle } from '@ValenceUI/Doodle';
 import { FEATURE_GROUPS } from '@ValenceLanding/content/features';
@@ -10,6 +12,8 @@ import { FeatureGroupGrid } from './components/FeatureGroupGrid/FeatureGroupGrid
  */
 const FeatureBento = () => {
   const prefersReducedMotion = useReducedMotionConfig();
+  const headingRef = useRef<HTMLDivElement>(null);
+  const isHeadingReached = useReached(headingRef, { margin: '-80px' });
 
   return (
     <section
@@ -17,10 +21,9 @@ const FeatureBento = () => {
       className="mx-auto max-w-6xl px-5 py-24 sm:px-10 xl:max-w-7xl 2xl:max-w-[96rem]"
     >
       <motion.div
+        ref={headingRef}
         initial="hidden"
-        whileInView="shown"
-        animate="hidden"
-        viewport={{ margin: '-80px' }}
+        animate={isHeadingReached ? 'shown' : 'hidden'}
         variants={revealVariants(prefersReducedMotion)}
         transition={revealTransition(prefersReducedMotion, 'bouncy')}
         className="mb-14 grid gap-4 lg:grid-cols-2 lg:items-end lg:gap-16"

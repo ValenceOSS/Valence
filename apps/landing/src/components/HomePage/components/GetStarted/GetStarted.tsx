@@ -1,5 +1,7 @@
+import { useRef } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { IconArrowRight } from '@tabler/icons-react';
+import { useReached } from '@ValenceUI/useReached';
 import { revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
@@ -25,6 +27,8 @@ const ROWS = Array.from(
  */
 const GetStarted = () => {
   const prefersReducedMotion = useReducedMotionConfig();
+  const cardRef = useRef<HTMLDivElement>(null);
+  const isCardReached = useReached(cardRef, { margin: '-80px' });
 
   return (
     <section
@@ -33,10 +37,9 @@ const GetStarted = () => {
       className="scroll-mt-24 px-2 pt-2 sm:px-3 sm:pt-3"
     >
       <motion.div
+        ref={cardRef}
         initial="hidden"
-        whileInView="shown"
-        animate="hidden"
-        viewport={{ margin: '-80px' }}
+        animate={isCardReached ? 'shown' : 'hidden'}
         variants={revealVariants(prefersReducedMotion)}
         transition={revealTransition(prefersReducedMotion, 'bouncy')}
         className="relative isolate overflow-hidden rounded-[2rem] bg-accent text-accent-contrast sm:rounded-[2.5rem]"

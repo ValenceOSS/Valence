@@ -1,4 +1,6 @@
+import { useRef } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
+import { useReached } from '@ValenceUI/useReached';
 import { groupVariants, revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
 import { cn } from '@ValenceUI/cn';
 import { FeatureCard } from '@ValenceLanding/components/HomePage/components/FeatureCard/FeatureCard';
@@ -15,15 +17,18 @@ import type { FeatureGroupGridProps } from './FeatureGroupGrid.types';
  */
 const FeatureGroupGrid = ({ group, number }: FeatureGroupGridProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
+  const headingRef = useRef<HTMLElement>(null);
+  const isHeadingReached = useReached(headingRef, { margin: '-80px' });
+  const gridRef = useRef<HTMLUListElement>(null);
+  const isGridReached = useReached(gridRef, { margin: '-80px' });
   const isFour = group.features.length === 4;
 
   return (
     <section aria-label={group.title} className="flex flex-col gap-8">
       <motion.header
+        ref={headingRef}
         initial="hidden"
-        whileInView="shown"
-        animate="hidden"
-        viewport={{ margin: '-80px' }}
+        animate={isHeadingReached ? 'shown' : 'hidden'}
         variants={revealVariants(prefersReducedMotion)}
         transition={revealTransition(prefersReducedMotion, 'bouncy')}
         className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between sm:gap-10"
@@ -39,10 +44,9 @@ const FeatureGroupGrid = ({ group, number }: FeatureGroupGridProps) => {
 
       <div className="overflow-hidden">
         <motion.ul
+          ref={gridRef}
           initial="hidden"
-          whileInView="shown"
-          animate="hidden"
-          viewport={{ margin: '-80px' }}
+          animate={isGridReached ? 'shown' : 'hidden'}
           variants={groupVariants}
           className={cn(
             '-mb-px -mr-px grid grid-cols-1 sm:grid-cols-2',

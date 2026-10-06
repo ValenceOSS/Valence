@@ -1,8 +1,10 @@
+import { useRef } from 'react';
 import { Link } from '@tanstack/react-router';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { ArrowRight as ArrowRightIcon } from '@keyline-icons/react';
 import { groupVariants, revealItemVariants } from '@ValenceUI/animations/reveal';
 import { Icon } from '@ValenceUI/Icon';
+import { useReached } from '@ValenceUI/useReached';
 import { cn } from '@ValenceUI/cn';
 import { CHANGELOG } from '@ValenceLanding/content/changelog/CHANGELOG';
 import { describeReleaseDate } from '@ValenceLanding/content/changelog/describeReleaseDate';
@@ -17,6 +19,8 @@ const SHOWN = 4;
 const LatestReleases = () => {
   const prefersReducedMotion = useReducedMotionConfig();
   const releases = CHANGELOG.slice(0, SHOWN);
+  const listRef = useRef<HTMLOListElement>(null);
+  const isListReached = useReached(listRef, { margin: '-80px' });
 
   return (
     <section
@@ -26,10 +30,9 @@ const LatestReleases = () => {
       <h2 className="text-4xl font-semibold tracking-tight text-text lg:text-6xl">Changelog</h2>
 
       <motion.ol
+        ref={listRef}
         initial="hidden"
-        whileInView="shown"
-        animate="hidden"
-        viewport={{ margin: '-80px' }}
+        animate={isListReached ? 'shown' : 'hidden'}
         variants={groupVariants}
         className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8"
       >

@@ -1,11 +1,12 @@
 import { useRef } from 'react';
-import { motion, useInView, useReducedMotionConfig } from 'motion/react';
+import { motion, useReducedMotionConfig } from 'motion/react';
 import arrowCurl from '@ValenceDoodles/arrow-curl.svg';
 import arrowDown from '@ValenceDoodles/arrow-down.svg';
 import circle from '@ValenceDoodles/circle.svg';
 import sparks from '@ValenceDoodles/sparks.svg';
 import underline from '@ValenceDoodles/underline.svg';
 import { cn } from '@ValenceUI/cn';
+import { useReached } from '@ValenceUI/useReached';
 import type { DoodleName, DoodleProps } from './Doodle.types';
 
 const MARKS: Readonly<Record<DoodleName, { file: string; sweep: string }>> = {
@@ -29,7 +30,8 @@ const DRAWS_FOR_SECONDS = 0.9;
 
 /**
  * A hand-drawn mark beside the words it points at — a ring round a word, an arrow towards a note, a
- * line beneath — which draws itself in each time it is scrolled into view, as a pen would.
+ * line beneath — which draws itself in as it is scrolled to, as a pen would, and is rubbed out
+ * only when the page is scrolled back up past it.
  *
  * The mark is a file referenced by its address and painted through as a mask, so it takes the
  * colour of the text around it and no SVG is inlined; a second mask sweeps along it to draw it in.
@@ -44,7 +46,7 @@ const DRAWS_FOR_SECONDS = 0.9;
  */
 const Doodle = ({ of, delay = 0, isShown = true, className }: DoodleProps) => {
   const held = useRef<HTMLSpanElement>(null);
-  const isSeen = useInView(held, { amount: 0.6 });
+  const isSeen = useReached(held, { amount: 0.6 });
   const isStill = useReducedMotionConfig() === true;
   const { file, sweep } = MARKS[of];
   const masks = `url("${file}"), ${sweep}`;
