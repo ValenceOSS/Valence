@@ -65,7 +65,7 @@ const FeatureCard = ({ feature, index }: FeatureCardProps) => {
           className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(22rem_circle_at_var(--spot-x,50%)_var(--spot-y,50%),var(--surface-hover),transparent_70%)] opacity-0 transition-opacity duration-300 motion-reduce:transition-none acted:opacity-100"
         />
 
-        <div className="relative isolate -mx-2 h-60 min-h-0 overflow-hidden rounded-2xl bg-surface ring-1 ring-border/50 sm:-mx-3">
+        <div className="relative isolate -mx-2 h-60 min-h-0 overflow-hidden rounded-2xl bg-surface-raised ring-1 ring-border/50 sm:-mx-3">
           <span
             aria-hidden
             className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(60%_70%_at_50%_100%,color-mix(in_oklab,var(--color-accent)_14%,transparent),transparent)]"

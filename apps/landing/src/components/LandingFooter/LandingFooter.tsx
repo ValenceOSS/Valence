@@ -76,7 +76,7 @@ const LandingFooter = () => {
 
   return (
     <footer className="pb-2 sm:pb-3">
-      <SectionCard isRaised>
+      <SectionCard>
         <div className="mx-auto grid max-w-6xl gap-12 px-5 pt-20 sm:px-10 lg:grid-cols-[1.4fr_repeat(4,1fr)] xl:max-w-7xl">
           <div className="flex flex-col gap-5">
             <Link to="/" className="flex items-center gap-3">

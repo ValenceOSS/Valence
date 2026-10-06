@@ -15,7 +15,7 @@ const HomePage = () => (
   <>
     <Hero />
 
-    <SectionCard isRaised>
+    <SectionCard>
       <DataOwnershipStatement />
     </SectionCard>
 
@@ -23,7 +23,7 @@ const HomePage = () => (
       <FeatureBento />
     </SectionCard>
 
-    <SectionCard isRaised>
+    <SectionCard>
       <PhoneFan />
     </SectionCard>
 
