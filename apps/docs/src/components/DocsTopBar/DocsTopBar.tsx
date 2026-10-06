@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { motion, useReducedMotionConfig, useScroll, useTransform } from 'motion/react';
-import { Menu as MenuIcon } from '@keyline-icons/react';
+import { Menu as MenuIcon } from '@keyline-icons/react/fill';
 import { IconBrandDiscordFilled, IconBrandGithubFilled } from '@tabler/icons-react';
 import { Button } from '@ValenceUI/Button';
 import { Drawer } from '@ValenceUI/Drawer';

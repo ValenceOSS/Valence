@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { Search as SearchIcon } from '@keyline-icons/react';
+import { Search as SearchIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { CommandPalette } from '@ValenceUI/CommandPalette';
 import { Icon } from '@ValenceUI/Icon';

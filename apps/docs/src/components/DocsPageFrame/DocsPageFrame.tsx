@@ -6,7 +6,8 @@ import type { DocsPageFrameProps } from './DocsPageFrame.types';
 
 /**
  * What a page of the documentation sits on: a rounded card below the bar, with the list of every
- * page in a panel of its own down the side on a wide screen and the page itself beside it.
+ * page in a panel of its own running the card's whole height on a wide screen, the list staying in
+ * view as the page scrolls, and the page itself beside it.
  *
  * @param isWide - Whether the page takes the whole card, as the API reference does, with no list.
  * @param children - The page.
@@ -21,8 +22,10 @@ const DocsPageFrame = ({ isWide = false, children }: DocsPageFrameProps) => (
         )}
       >
         {isWide ? null : (
-          <aside className="sticky top-24 hidden h-[calc(100svh-6.75rem)] self-start overflow-y-auto rounded-2xl border border-border/60 bg-surface-raised lg:block">
-            <DocsNav sections={NAVIGATION} />
+          <aside className="hidden rounded-2xl border border-border/60 bg-surface-raised lg:block">
+            <div className="sticky top-20 max-h-[calc(100svh-5rem)] overflow-y-auto">
+              <DocsNav sections={NAVIGATION} />
+            </div>
           </aside>
         )}
 

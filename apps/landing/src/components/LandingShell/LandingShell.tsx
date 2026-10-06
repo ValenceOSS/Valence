@@ -1,8 +1,9 @@
-import { useRouterState } from '@tanstack/react-router';
+import { Link, useRouterState } from '@tanstack/react-router';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { ReleaseBar } from '@ValenceLanding/components/ReleaseBar/ReleaseBar';
 import { LandingNav } from '@ValenceLanding/components/LandingNav/LandingNav';
-import { LandingFooter } from '@ValenceLanding/components/LandingFooter/LandingFooter';
+import { SiteFooter } from '@ValenceUI/SiteFooter';
+import type { InSiteLinkProps } from '@ValenceUI/SiteFooter.types';
 import { HomePage } from '@ValenceLanding/components/HomePage/HomePage';
 import { ChangelogPage } from '@ValenceLanding/components/ChangelogPage/ChangelogPage';
 import { PluginsPage } from '@ValenceLanding/components/PluginsPage/PluginsPage';
@@ -13,6 +14,17 @@ import { PageProblem } from '@ValenceLanding/components/PageProblem/PageProblem'
 import { UiLibraryPage } from '@ValenceLanding/components/UiLibraryPage/UiLibraryPage';
 import type { ComponentType } from 'react';
 import { pageVariants } from './pageVariants';
+
+/**
+ * Links the footer to one of this site's own pages without reloading it.
+ *
+ * @param props - Where to, how it looks and what it says.
+ */
+const LandingLink = ({ to, className, children }: InSiteLinkProps) => (
+  <Link to={to} className={className}>
+    {children}
+  </Link>
+);
 
 const PAGES: Record<string, ComponentType> = {
   '/': HomePage,
@@ -64,7 +76,7 @@ const LandingShell = () => {
         </motion.main>
       </AnimatePresence>
 
-      <LandingFooter />
+      <SiteFooter here="landing" InSiteLink={LandingLink} />
     </div>
   );
 };

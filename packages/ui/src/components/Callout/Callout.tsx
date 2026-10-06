@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { Info as InfoIcon, TriangleAlert as TriangleAlertIcon } from '@keyline-icons/react';
+import { Info as InfoIcon, TriangleAlert as TriangleAlertIcon } from '@keyline-icons/react/fill';
 import { cn } from '@ValenceUI/cn';
 import type { CalloutProps, CalloutTone } from './Callout.types';
 

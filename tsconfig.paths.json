@@ -307,6 +307,8 @@
       "@ValenceUI/FoldGradient.types": ["./packages/ui/src/components/FoldGradient/FoldGradient.types.ts"],
       "@ValenceUI/AuroraBackdrop": ["./packages/ui/src/components/AuroraBackdrop/AuroraBackdrop.tsx"],
       "@ValenceUI/SectionCard": ["./packages/ui/src/components/SectionCard/SectionCard.tsx"],
+      "@ValenceUI/SiteFooter": ["./packages/ui/src/components/SiteFooter/SiteFooter.tsx"],
+      "@ValenceUI/SiteFooter.types": ["./packages/ui/src/components/SiteFooter/SiteFooter.types.ts"],
       "@ValenceUI/SectionCard.types": ["./packages/ui/src/components/SectionCard/SectionCard.types.ts"],
       "@ValenceUI/PageHero": ["./packages/ui/src/components/PageHero/PageHero.tsx"],
       "@ValenceUI/PageHero.types": ["./packages/ui/src/components/PageHero/PageHero.types.ts"],

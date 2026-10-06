@@ -1,7 +1,7 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { useRef } from 'react';
-import { ArrowRight as ArrowRightIcon } from '@keyline-icons/react';
+import { ArrowRight as ArrowRightIcon } from '@keyline-icons/react/fill';
 import { groupVariants, revealItemVariants } from '@ValenceUI/animations/reveal';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';

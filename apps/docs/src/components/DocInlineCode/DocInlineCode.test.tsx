@@ -3,15 +3,21 @@ import { describe, expect, it } from 'vitest';
 import { DocInlineCode } from '@ValenceDocs/components/DocInlineCode/DocInlineCode';
 
 describe('DocInlineCode', () => {
-  it('boxes code inside a sentence', () => {
+  it('draws code inside a sentence as a badge', () => {
     render(<DocInlineCode>PORT</DocInlineCode>);
 
-    expect(screen.getByText('PORT')).toHaveClass('bg-surface-raised');
+    const code = screen.getByText('PORT');
+
+    expect(code.tagName).toBe('CODE');
+    expect(code.parentElement).toHaveClass('mx-0.5');
   });
 
   it('leaves the code inside a block to the block', () => {
     render(<DocInlineCode className="hljs language-ts">let x</DocInlineCode>);
 
-    expect(screen.getByText('let x')).not.toHaveClass('bg-surface-raised');
+    const code = screen.getByText('let x');
+
+    expect(code).toHaveClass('hljs');
+    expect(code.parentElement).not.toHaveClass('mx-0.5');
   });
 });

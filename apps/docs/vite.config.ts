@@ -13,9 +13,16 @@ import rehypeSlug from 'rehype-slug';
 import remarkFrontmatter from 'remark-frontmatter';
 import remarkGfm from 'remark-gfm';
 import remarkMdxFrontmatter from 'remark-mdx-frontmatter';
+import bash from 'highlight.js/lib/languages/bash';
 import dockerfile from 'highlight.js/lib/languages/dockerfile';
+import dos from 'highlight.js/lib/languages/dos';
 import http from 'highlight.js/lib/languages/http';
+import ini from 'highlight.js/lib/languages/ini';
+import json from 'highlight.js/lib/languages/json';
 import nginx from 'highlight.js/lib/languages/nginx';
+import powershell from 'highlight.js/lib/languages/powershell';
+import typescript from 'highlight.js/lib/languages/typescript';
+import yaml from 'highlight.js/lib/languages/yaml';
 
 /**
  * Compiles the pages under `src/content` from MDX, with tables, heading anchors, highlighted code
@@ -30,7 +37,25 @@ const documentation = () => ({
     remarkPlugins: [remarkGfm, remarkFrontmatter, [remarkMdxFrontmatter, { name: 'frontmatter' }]],
     rehypePlugins: [
       rehypeSlug,
-      [rehypeHighlight, { languages: { dockerfile, http, nginx }, detect: false }],
+      [
+        rehypeHighlight,
+        {
+          languages: {
+            bash,
+            dockerfile,
+            dos,
+            http,
+            ini,
+            json,
+            nginx,
+            powershell,
+            typescript,
+            yaml,
+          },
+          aliases: { bash: ['sh'], ini: ['env'], dos: ['bat'], typescript: ['ts', 'tsx'] },
+          detect: false,
+        },
+      ],
     ],
   }),
 });

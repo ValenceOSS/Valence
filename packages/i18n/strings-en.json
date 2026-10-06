@@ -27632,6 +27632,146 @@
     "context": "The label of a button in the rail. {title} is filled in by the app."
   },
   {
+    "handler": "ui.siteFooter.backToTop",
+    "text": "Back to top",
+    "context": "A button at the foot of the page that scrolls back to the top."
+  },
+  {
+    "handler": "ui.siteFooter.builtWith",
+    "text": "Built with",
+    "context": "The heading over the links to the tools Valence is made with, in the website footer."
+  },
+  {
+    "handler": "ui.siteFooter.changelog",
+    "text": "Changelog",
+    "context": "A footer link to the list of releases."
+  },
+  {
+    "handler": "ui.siteFooter.community",
+    "text": "Community",
+    "context": "The heading over the links to the project and its people, in the website footer."
+  },
+  {
+    "handler": "ui.siteFooter.copyright",
+    "text": "© {year} The Valence contributors",
+    "context": "The copyright line at the foot of the website. {year} is the current year."
+  },
+  {
+    "handler": "ui.siteFooter.deployingIt",
+    "text": "Deploying it",
+    "context": "A footer link to the documentation page about running Valence with its compose file."
+  },
+  {
+    "handler": "ui.siteFooter.discord",
+    "text": "Discord",
+    "context": "A footer link to the community chat on Discord. A product name; keep it as it is."
+  },
+  {
+    "handler": "ui.siteFooter.docs",
+    "text": "Docs",
+    "context": "A footer link to the documentation."
+  },
+  {
+    "handler": "ui.siteFooter.ffmpeg",
+    "text": "FFmpeg",
+    "context": "A footer link to a media tool. A product name; keep it as it is."
+  },
+  {
+    "handler": "ui.siteFooter.getStarted",
+    "text": "Get started",
+    "context": "The heading over the links for setting Valence up, in the website footer."
+  },
+  {
+    "handler": "ui.siteFooter.gitHub",
+    "text": "GitHub",
+    "context": "A footer link to the source code on GitHub. A product name; keep it as it is."
+  },
+  {
+    "handler": "ui.siteFooter.home",
+    "text": "Home",
+    "context": "A footer link to the front page of the website."
+  },
+  {
+    "handler": "ui.siteFooter.hono",
+    "text": "Hono",
+    "context": "A footer link to a programming library. A product name; keep it as it is."
+  },
+  {
+    "handler": "ui.siteFooter.joinTheDiscord",
+    "text": "Join the Discord",
+    "context": "The label of an icon button in the footer that opens the community chat."
+  },
+  {
+    "handler": "ui.siteFooter.navigate",
+    "text": "Navigate",
+    "context": "The heading over the links to the main pages, in the footer of the website and the documentation."
+  },
+  {
+    "handler": "ui.siteFooter.plugins",
+    "text": "Plugins",
+    "context": "A footer link to the plugins page."
+  },
+  {
+    "handler": "ui.siteFooter.privacy",
+    "text": "Privacy",
+    "context": "A footer link to the privacy notice."
+  },
+  {
+    "handler": "ui.siteFooter.quickStart",
+    "text": "Quick start",
+    "context": "A footer link to the quick start guide in the documentation."
+  },
+  {
+    "handler": "ui.siteFooter.react",
+    "text": "React",
+    "context": "A footer link to a programming library. A product name; keep it as it is."
+  },
+  {
+    "handler": "ui.siteFooter.reportAVulnerability",
+    "text": "Report a vulnerability",
+    "context": "A footer link for reporting a security problem privately."
+  },
+  {
+    "handler": "ui.siteFooter.rust",
+    "text": "Rust",
+    "context": "A footer link to a programming language. A product name; keep it as it is."
+  },
+  {
+    "handler": "ui.siteFooter.setUpWithAi",
+    "text": "Set up with AI",
+    "context": "A footer link to the documentation page about setting Valence up with an AI assistant."
+  },
+  {
+    "handler": "ui.siteFooter.terms",
+    "text": "Terms",
+    "context": "A footer link to the terms of use."
+  },
+  {
+    "handler": "ui.siteFooter.typeScript",
+    "text": "TypeScript",
+    "context": "A footer link to a programming language. A product name; keep it as it is."
+  },
+  {
+    "handler": "ui.siteFooter.uiLibrary",
+    "text": "UI library",
+    "context": "A footer link to the page showing every interface component."
+  },
+  {
+    "handler": "ui.siteFooter.valence",
+    "text": "Valence",
+    "context": "The product name drawn large across the foot of the page as decoration. Keep it as it is."
+  },
+  {
+    "handler": "ui.siteFooter.viewTheSourceOnGitHub",
+    "text": "View the source on GitHub",
+    "context": "The label of an icon button in the footer that opens the source code."
+  },
+  {
+    "handler": "ui.siteFooter.whatValenceIs",
+    "text": "A streaming platform you run on your own server, for every screen in the house. Free and open source, MIT licensed.",
+    "context": "The short description of Valence under its name in the website footer."
+  },
+  {
     "handler": "ui.timeBars.dragAcrossTheBarsToZoom",
     "text": "Drag across the bars to zoom in",
     "context": "Text shown in the time bars."

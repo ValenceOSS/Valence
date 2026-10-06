@@ -1,16 +1,18 @@
+import { Badge } from '@ValenceUI/Badge';
 import type { HTMLAttributes } from 'react';
 
 /**
- * Draws a piece of code inside a sentence, and leaves the code inside a block to the block.
+ * Draws a piece of code inside a sentence as a badge, and leaves the code inside a block to the
+ * block.
  *
  * @param className - The class the build gave code it highlighted, which marks it as a block's.
  * @param children - The code.
  */
 const DocInlineCode = ({ className, children }: HTMLAttributes<HTMLElement>) =>
   className === undefined ? (
-    <code className="rounded-md bg-surface-raised px-1.5 py-0.5 font-mono text-[0.9em] text-text">
-      {children}
-    </code>
+    <Badge tone="quiet" className="mx-0.5 align-baseline">
+      <code className="font-mono text-[0.95em]">{children}</code>
+    </Badge>
   ) : (
     <code className={className}>{children}</code>
   );

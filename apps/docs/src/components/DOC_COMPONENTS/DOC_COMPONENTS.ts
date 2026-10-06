@@ -1,4 +1,4 @@
-import { Callout } from '@ValenceUI/Callout';
+import { DocCallout } from '@ValenceDocs/components/DocCallout/DocCallout';
 import { DocCode } from '@ValenceDocs/components/DocCode/DocCode';
 import { DocImage } from '@ValenceDocs/components/DocImage/DocImage';
 import { DocInlineCode } from '@ValenceDocs/components/DocInlineCode/DocInlineCode';
@@ -30,7 +30,7 @@ const DOC_COMPONENTS = {
   code: DocInlineCode,
   img: DocImage,
   table: DocTable,
-  Callout,
+  Callout: DocCallout,
 };
 
 export { DOC_COMPONENTS };
