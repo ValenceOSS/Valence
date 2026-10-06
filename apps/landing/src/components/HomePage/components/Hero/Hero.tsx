@@ -157,7 +157,7 @@ const Hero = () => {
           <motion.p
             variants={revealVariants(prefersReducedMotion)}
             transition={revealTransition(prefersReducedMotion, 'bouncy')}
-            className={cn('max-w-xl text-lg text-on-scrim/75 sm:text-xl', LEGIBLE)}
+            className={cn('max-w-2xl text-balance text-lg text-on-scrim/75 sm:text-xl', LEGIBLE)}
           >
             A streaming platform you run on your own server, for films, programmes, music and books.{' '}
             <strong className="font-semibold text-on-scrim">
@@ -165,7 +165,7 @@ const Hero = () => {
             </strong>
           </motion.p>
 
-          <div className="relative flex flex-wrap items-center justify-center gap-3 pt-2">
+          <div className="relative flex flex-wrap items-center justify-center gap-3 pt-6">
             <motion.span className="flex" {...popArrival(BUTTONS_LEAD, isStill)}>
               <SplitButton
                 tone="confirm"
@@ -187,10 +187,10 @@ const Hero = () => {
 
             <span
               aria-hidden
-              className="pointer-events-none absolute bottom-1/2 right-full hidden w-48 translate-y-5 pr-2 lg:block"
+              className="pointer-events-none absolute bottom-1/2 right-full hidden translate-y-5 pr-2 lg:block"
             >
               <motion.span
-                className="block -rotate-6 pr-10 text-right font-hand text-2xl leading-none text-on-scrim/85"
+                className="block -rotate-3 whitespace-nowrap pr-6 text-right font-hand text-2xl leading-none text-on-scrim/85"
                 {...popArrival(BUTTONS_LEAD + 0.4, isStill)}
               >
                 free, and always will be
