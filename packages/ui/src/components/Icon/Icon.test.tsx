@@ -46,6 +46,22 @@ describe('Icon', () => {
     expect(glyphOf(container)).toHaveAttribute('height', '2rem');
   });
 
+  it('holds its lines at the weight asked for, whatever size it is drawn at', () => {
+    const { container: small } = render(<Icon of={HomeIcon} size={12} weight={1.5} />);
+    const { container: large } = render(<Icon of={HomeIcon} size={24} weight={1.5} />);
+
+    expect([
+      glyphOf(small).getAttribute('stroke-width'),
+      glyphOf(large).getAttribute('stroke-width'),
+    ]).toEqual(['3', '1.5']);
+  });
+
+  it('keeps the set’s own lines where no weight is asked for', () => {
+    const { container } = render(<Icon of={HomeIcon} size={12} />);
+
+    expect(glyphOf(container)).toHaveAttribute('stroke-width', '2');
+  });
+
   it('draws at the size of body text where no size is asked for', () => {
     const { container } = render(<Icon of={HomeIcon} />);
 

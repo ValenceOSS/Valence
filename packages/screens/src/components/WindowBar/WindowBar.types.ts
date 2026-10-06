@@ -8,6 +8,13 @@ type WindowBarWays = {
   forward: () => void;
 };
 
+type WindowBarFrame = {
+  isMaximised: boolean;
+  minimise: () => void;
+  maximise: () => void;
+  close: () => void;
+};
+
 type WindowBarProps = {
   update?: DesktopUpdate;
   onUpdate?: () => void;
@@ -15,6 +22,7 @@ type WindowBarProps = {
   keys?: { back: readonly string[]; forward: readonly string[] };
   inbox?: NotificationBellProps;
   onHelp?: () => void;
+  frame?: WindowBarFrame;
 };
 
-export type { WindowBarProps, WindowBarWays };
+export type { WindowBarFrame, WindowBarProps, WindowBarWays };

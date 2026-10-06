@@ -14,8 +14,6 @@ const MINIMUM_HEIGHT = 560;
 
 const IS_MAC = process.platform === 'darwin';
 
-const CONTROLS = { color: '#00000000', symbolColor: '#ffffff', height: 32 };
-
 /**
  * Opens the one window this client is, and puts the application in it.
  *
@@ -26,8 +24,8 @@ const CONTROLS = { color: '#00000000', symbolColor: '#ffffff', height: 32 };
  *
  * The frame is hidden so the window reads as an application rather than as a browser. On macOS the
  * traffic lights are inset to clear the bar the application draws along its top. Elsewhere there is
- * no menu bar, and the system's own minimise, maximise and close are laid over the top right of the
- * page, drawn clear so the header shows through behind them.
+ * no menu bar, and minimise, maximise and close are drawn by the page in that bar rather than laid
+ * over it by the system, so they look like the rest of it and keep their place at any size.
  *
  * The developer tools are shut in an installed build, shortcut and menu alike. Leaving only the menu
  * item out would leave `F12` and `Ctrl+Shift+I` opening them, so the window refuses them itself.
@@ -53,7 +51,6 @@ const openTheWindow = (): BrowserWindow => {
     minHeight: MINIMUM_HEIGHT,
     show: false,
     titleBarStyle: IS_MAC ? 'hiddenInset' : 'hidden',
-    ...(IS_MAC ? {} : { titleBarOverlay: CONTROLS }),
     backgroundColor: '#000000',
     webPreferences: {
       nodeIntegration: false,

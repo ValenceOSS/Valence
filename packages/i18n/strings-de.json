@@ -24501,9 +24501,24 @@
     "context": "The label of the arrow at the top of the desktop app's window that moves forward again to the page somebody went back from, like a browser's forward button."
   },
   {
+    "handler": "screens.windowBar.maximise",
+    "text": "Maximise",
+    "context": "The label of the button at the top right of the desktop app's window on Windows and Linux that makes the window fill the screen, like the system's own maximise button."
+  },
+  {
+    "handler": "screens.windowBar.minimise",
+    "text": "Minimise",
+    "context": "The label of the button at the top right of the desktop app's window on Windows and Linux that hides the window to the taskbar, like the system's own minimise button."
+  },
+  {
     "handler": "screens.windowBar.reload",
     "text": "Reload",
     "context": "The label of the button at the top of the desktop app's window that reloads the page showing, like a browser's refresh button."
+  },
+  {
+    "handler": "screens.windowBar.restoreDown",
+    "text": "Restore down",
+    "context": "The label of the button at the top right of the desktop app's window on Windows and Linux that returns a maximised window to its earlier size, like the system’s own restore down button."
   },
   {
     "handler": "screens.windowBar.retryUpdate",
