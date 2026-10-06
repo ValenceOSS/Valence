@@ -805,6 +805,21 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
         return;
       }
 
+      const { queue: had } = state;
+      const stepped =
+        had === null
+          ? null
+          : ([nextIn(had, true), had.at > 0 ? previousIn(had) : null].find(
+              (moved) => moved !== null && currentOf(moved)?.id === nowPlaying.trackId,
+            ) ?? null);
+
+      if (stepped !== null) {
+        mirroredQueue = key;
+        change({ queue: stepped, current: currentOf(stepped) });
+
+        return;
+      }
+
       mirroredQueue = key;
 
       void fetchTracks(ids).then((tracks) => {
