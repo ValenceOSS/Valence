@@ -56,8 +56,16 @@ const styles = StyleSheet.create({
  * @param mediaId - What is playing, which a new party gathers around, or nothing yet.
  * @param people - Everybody with an account here, to be asked along.
  * @param onClose - Told they are done with it.
+ * @param isOpen - Whether a listening party's sheet is out, so it can slide away when put away.
  */
-const APartyPanel = ({ kind, watchParty, mediaId, people, onClose }: APartyPanelProps) => {
+const APartyPanel = ({
+  kind,
+  watchParty,
+  mediaId,
+  people,
+  onClose,
+  isOpen = true,
+}: APartyPanelProps) => {
   const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [asked, setAsked] = useState<readonly string[]>([]);
@@ -79,7 +87,7 @@ const APartyPanel = ({ kind, watchParty, mediaId, people, onClose }: APartyPanel
   const words = PARTY_WORDS[kind];
   const panel = (children: ReactNode) =>
     kind === 'listen' ? (
-      <ABottomSheet isOpen label={words.title} title={words.title} onClose={onClose}>
+      <ABottomSheet isOpen={isOpen} label={words.title} title={words.title} onClose={onClose}>
         {children}
       </ABottomSheet>
     ) : (
