@@ -1,24 +1,33 @@
-import { Outlet } from '@tanstack/react-router';
-import { NAVIGATION } from '@ValenceDocs/content/NAVIGATION';
-import { DocsNav } from '@ValenceDocs/components/DocsNav/DocsNav';
+import { Link, Outlet } from '@tanstack/react-router';
+import { SiteFooter } from '@ValenceUI/SiteFooter';
+import type { InSiteLinkProps } from '@ValenceUI/SiteFooter.types';
 import { DocsTopBar } from '@ValenceDocs/components/DocsTopBar/DocsTopBar';
 
 /**
- * The frame every page sits in: the top bar, the list of pages beside it and the page itself.
+ * Links the footer to one of the documentation's own pages without reloading it.
+ *
+ * @param props - Where to, how it looks and what it says.
+ */
+const DocsLink = ({ to, className, children }: InSiteLinkProps) => (
+  <Link to={to} className={className}>
+    {children}
+  </Link>
+);
+
+/**
+ * The frame every page sits in: the bar floating across the top, and the page beneath it on the
+ * darker grey every Valence site shares, its parts laid out as cards, and the footer every
+ * Valence site closes on.
  */
 const DocsShell = () => (
-  <div className="min-h-dvh bg-surface text-text">
+  <div className="flex min-h-dvh flex-col overflow-x-clip bg-[var(--frame-back)] text-text">
     <DocsTopBar />
 
-    <div className="mx-auto flex max-w-[96rem]">
-      <aside className="sticky top-14 hidden h-[calc(100dvh-3.5rem)] w-72 shrink-0 overflow-y-auto border-r border-border lg:block">
-        <DocsNav sections={NAVIGATION} />
-      </aside>
+    <main className="flex-1">
+      <Outlet />
+    </main>
 
-      <main className="min-w-0 flex-1">
-        <Outlet />
-      </main>
-    </div>
+    <SiteFooter here="docs" InSiteLink={DocsLink} />
   </div>
 );
 

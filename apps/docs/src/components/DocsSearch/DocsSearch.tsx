@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { Search as SearchIcon } from '@keyline-icons/react';
+import { Search as SearchIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { CommandPalette } from '@ValenceUI/CommandPalette';
 import { Icon } from '@ValenceUI/Icon';
@@ -111,9 +111,8 @@ const DocsSearch = ({ pages, sources }: DocsSearchProps) => {
   return (
     <>
       <Button
-        variant="subtle"
+        variant="secondary"
         size="sm"
-        isPill
         label="Search the documentation"
         className="w-full max-w-md justify-between gap-3 text-text-muted"
         onClick={() => {

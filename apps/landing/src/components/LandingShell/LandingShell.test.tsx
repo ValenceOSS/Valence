@@ -1,11 +1,7 @@
 import { screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { renderWithRoutes } from '@ValenceLanding/testing/renderWithRoutes';
 import { LandingShell } from './LandingShell';
-
-vi.mock('@paper-design/shaders-react', () => ({
-  ShaderMount: () => <div data-testid="shader-mount" />,
-}));
 
 describe('LandingShell', () => {
   it('draws the nav and the footer around the page', async () => {
@@ -18,7 +14,9 @@ describe('LandingShell', () => {
   it('draws whichever page the address names', async () => {
     await renderWithRoutes(LandingShell, '/changelog');
 
-    expect(await screen.findByRole('heading', { name: 'Changelog' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'What is new in Valence' }),
+    ).toBeInTheDocument();
   });
 
   it('draws a release on a page of its own', async () => {
@@ -30,7 +28,12 @@ describe('LandingShell', () => {
   it('draws the plugins page', async () => {
     await renderWithRoutes(LandingShell, '/plugins');
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Plugins' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'Add to Valence without handing over the keys',
+      }),
+    ).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

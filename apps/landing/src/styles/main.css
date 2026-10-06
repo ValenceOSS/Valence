@@ -1,4 +1,41 @@
 @import '@valence/ui/src/styles/valence.css';
+@import '@valence/ui/src/styles/showcase.css';
+
+@theme {
+  --color-phone-edge: #0b0b0d;
+  --color-phone-glass: #16233f;
+  --color-phone-floor: #0a0d16;
+}
+
+:root {
+  --release-bar: 37px;
+}
+
+@keyframes valence-band-run {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.valence-band-run {
+  animation: valence-band-run 32s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='full']) .valence-band-run {
+    animation: none;
+  }
+}
+
+:root[data-motion='reduced'] .valence-band-run {
+  animation: none;
+}
+
+.valence-outline-text {
+  -webkit-text-fill-color: var(--frame-back);
+  -webkit-text-stroke: 3px currentColor;
+  paint-order: stroke fill;
+}
 
 body {
   user-select: text;
@@ -68,4 +105,9 @@ body {
 
 :root[data-motion='reduced'] .group:is(:hover, :focus-within) .valence-iso__plane {
   transform: scale(0.95);
+}
+
+html,
+body {
+  overflow-x: clip;
 }

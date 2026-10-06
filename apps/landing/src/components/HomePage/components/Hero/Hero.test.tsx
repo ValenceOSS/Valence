@@ -32,26 +32,29 @@ describe('Hero', () => {
     expect(scrollIntoView).toHaveBeenCalledOnce();
   });
 
-  it('offers the docs beside it', () => {
+  it('offers the docs and the demo from the arrow beside the way to start', async () => {
+    const user = userEvent.setup();
+
     render(<Hero />);
 
-    expect(screen.getByRole('button', { name: 'Read the docs' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Other ways to start' }));
+
+    expect(await screen.findByText('Read the docs')).toBeInTheDocument();
+    expect(screen.getByText('Try the demo')).toBeInTheDocument();
   });
 
-  it('names every kind of screen it runs on', () => {
+  it('names everything it runs on', () => {
     render(<Hero />);
 
-    for (const platform of [
-      'Any browser',
-      'iPhone',
-      'iPad',
-      'Android',
-      'Mac',
-      'Windows',
-      'Linux',
-    ]) {
-      expect(screen.getByText(platform)).toBeInTheDocument();
+    for (const platform of ['Docker', 'Apple', 'Android', 'Windows', 'Linux']) {
+      expect(screen.getByRole('img', { name: platform })).toBeInTheDocument();
     }
+  });
+
+  it('says it is open source, and always will be', () => {
+    render(<Hero />);
+
+    expect(screen.getByText('open sourced, and always will be')).toBeInTheDocument();
   });
 
   it('shows the web app itself beside the pitch', () => {

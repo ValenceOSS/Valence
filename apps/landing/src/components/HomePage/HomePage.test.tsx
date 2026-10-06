@@ -1,27 +1,24 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { screen } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+import { renderWithRoutes } from '@ValenceLanding/testing/renderWithRoutes';
 import { HomePage } from './HomePage';
 
-vi.mock('@paper-design/shaders-react', () => ({
-  ShaderMount: () => <div data-testid="shader-mount" />,
-}));
-
 describe('HomePage', () => {
-  it('opens with the hero', () => {
-    render(<HomePage />);
+  it('opens with the hero', async () => {
+    await renderWithRoutes(HomePage);
 
     expect(screen.getByRole('heading', { name: /Your films and programmes/ })).toBeInTheDocument();
   });
 
-  it('draws every feature group', () => {
-    render(<HomePage />);
+  it('draws every feature group', async () => {
+    await renderWithRoutes(HomePage);
 
     expect(screen.getByRole('region', { name: 'Viewing' })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Platform' })).toBeInTheDocument();
   });
 
-  it('shows the app itself within the hero', () => {
-    render(<HomePage />);
+  it('shows the app itself within the hero', async () => {
+    await renderWithRoutes(HomePage);
 
     expect(
       screen.getByRole('img', {
@@ -30,16 +27,17 @@ describe('HomePage', () => {
     ).toHaveAttribute('src', '/devices/web.jpg');
   });
 
-  it('makes a statement about who the data belongs to', () => {
-    render(<HomePage />);
+  it('makes a statement about who the data belongs to', async () => {
+    await renderWithRoutes(HomePage);
 
     expect(screen.getByRole('region', { name: 'On your data' })).toBeInTheDocument();
   });
 
-  it('draws the comparison table', () => {
-    render(<HomePage />);
+  it('shows the newest releases, and ends asking whether you are ready', async () => {
+    await renderWithRoutes(HomePage);
 
-    expect(screen.getByRole('region', { name: 'How it compares' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Changelog' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Get started' })).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

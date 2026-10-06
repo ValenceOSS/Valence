@@ -19,7 +19,12 @@ describe('PluginsPage', () => {
       />,
     );
 
-    expect(screen.getByRole('heading', { level: 1, name: 'Plugins' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: 'Add to Valence without handing over the keys',
+      }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Runs on your server' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Signed' })).toBeInTheDocument();
     expect(screen.getByRole('list', { name: 'Official plugins' })).toBeInTheDocument();

@@ -21,6 +21,7 @@
       "@ValenceMobile/*": ["./apps/mobile/src/*"],
       "@ValenceRatings/*": ["./packages/ui/src/assets/ratings/*"],
       "@ValenceBrands/*": ["./packages/ui/src/assets/brands/*"],
+      "@ValenceDoodles/*": ["./packages/ui/src/assets/doodles/*"],
       "@ValenceDiscordArt/*": ["./packages/ui/src/assets/discord/*"],
       "@ValenceSDK/*": ["./packages/plugin-sdk/src/*"],
       "@ValenceScreens/*": ["./packages/screens/src/*"],
@@ -132,6 +133,8 @@
       "@ValenceUI/HoverHighlight.types": [
         "./packages/ui/src/components/HoverHighlight/HoverHighlight.types.ts"
       ],
+      "@ValenceUI/Doodle": ["./packages/ui/src/components/Doodle/Doodle.tsx"],
+      "@ValenceUI/Doodle.types": ["./packages/ui/src/components/Doodle/Doodle.types.ts"],
       "@ValenceUI/BrandGlyph": ["./packages/ui/src/components/BrandGlyph/BrandGlyph.tsx"],
       "@ValenceUI/BrandGlyph.types": [
         "./packages/ui/src/components/BrandGlyph/BrandGlyph.types.ts"
@@ -298,6 +301,17 @@
       "@ValenceUI/tokens/roleColours": ["./packages/ui/src/tokens/roleColours.ts"],
       "@ValenceUI/tokens/rail": ["./packages/ui/src/tokens/rail.ts"],
       "@ValenceUI/tokens/segmented": ["./packages/ui/src/tokens/segmented.ts"],
+      "@ValenceUI/tokens/AURORA": ["./packages/ui/src/tokens/AURORA.ts"],
+      "@ValenceUI/tokens/LIT_TEXT": ["./packages/ui/src/tokens/LIT_TEXT.ts"],
+      "@ValenceUI/FoldGradient": ["./packages/ui/src/components/FoldGradient/FoldGradient.tsx"],
+      "@ValenceUI/FoldGradient.types": ["./packages/ui/src/components/FoldGradient/FoldGradient.types.ts"],
+      "@ValenceUI/AuroraBackdrop": ["./packages/ui/src/components/AuroraBackdrop/AuroraBackdrop.tsx"],
+      "@ValenceUI/SectionCard": ["./packages/ui/src/components/SectionCard/SectionCard.tsx"],
+      "@ValenceUI/SiteFooter": ["./packages/ui/src/components/SiteFooter/SiteFooter.tsx"],
+      "@ValenceUI/SiteFooter.types": ["./packages/ui/src/components/SiteFooter/SiteFooter.types.ts"],
+      "@ValenceUI/SectionCard.types": ["./packages/ui/src/components/SectionCard/SectionCard.types.ts"],
+      "@ValenceUI/PageHero": ["./packages/ui/src/components/PageHero/PageHero.tsx"],
+      "@ValenceUI/PageHero.types": ["./packages/ui/src/components/PageHero/PageHero.types.ts"],
       "@ValenceUI/tokens/underlined": ["./packages/ui/src/tokens/underlined.ts"],
       "@ValenceUI/animations/reveal": ["./packages/ui/src/animations/reveal.ts"],
       "@ValenceUI/VirtualGrid": ["./packages/ui/src/components/VirtualGrid/VirtualGrid.tsx"],
@@ -328,6 +342,7 @@
       "@ValenceUI/useSlidingHighlight": ["./packages/ui/src/functions/useSlidingHighlight.ts"],
       "@ValenceUI/isOverDialogs": ["./packages/ui/src/functions/isOverDialogs.ts"],
       "@ValenceUI/useFitWidth": ["./packages/ui/src/functions/useFitWidth.ts"],
+      "@ValenceUI/useReached": ["./packages/ui/src/functions/useReached.ts"],
       "@ValenceUI/placeFaces": ["./packages/ui/src/functions/placeFaces.ts"],
       "@ValenceWeb/*": ["./apps/web/src/*"]
     }

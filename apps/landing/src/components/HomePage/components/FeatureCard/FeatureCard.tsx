@@ -2,41 +2,20 @@ import { useEffect, useRef } from 'react';
 import { RevealItem } from '@ValenceUI/RevealItem';
 import { cn } from '@ValenceUI/cn';
 import { FeatureVisual } from './components/FeatureVisual/FeatureVisual';
-import type { FeatureCardProps, FeatureCardShape } from './FeatureCard.types';
-
-const FIGURE = 'font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-text-muted/70';
-
-const SPANS: Record<FeatureCardShape, string> = {
-  square: '',
-  wide: 'sm:col-span-2',
-};
-
-const LAYOUTS: Record<FeatureCardShape, string> = {
-  square: 'flex-col',
-  wide: 'flex-col lg:flex-row-reverse lg:gap-10',
-};
-
-const PICTURES: Record<FeatureCardShape, string> = {
-  square: 'h-80',
-  wide: 'h-60 lg:h-auto lg:min-h-72 lg:w-[58%] lg:shrink-0',
-};
+import type { FeatureCardProps } from './FeatureCard.types';
 
 /**
- * One feature in a ruled grid of them, the way a figure sits in a paper: its number, a working
- * piece of the product doing what the feature says, and the words for it beneath or beside.
+ * One feature in a ruled grid of them, its cell sharing its edges with its neighbours: a working
+ * piece of the product doing what the feature says, and its name large beneath with a line about
+ * it.
  *
- * It is a rounded card of its own, set apart from its neighbours, and its picture stands on an
- * isometric plane inside it, so the product reads as an object on the page rather than a flat
- * screenshot. Pointed at, a soft light follows the pointer across it and the plane leans towards
- * wherever the pointer is, easing back flat once it leaves. In a group of four, two are drawn wide, the words beside
- * the picture rather than beneath it.
+ * Pointed at, a soft light follows the pointer across the cell and the piece of the product leans
+ * towards wherever the pointer is, easing back flat once it leaves.
  *
  * @param feature - What it is and why it matters.
  * @param index - Where it sits in the grid, so it arrives in order.
- * @param figure - Its number, as a figure in the page is numbered.
- * @param shape - How much of the grid it takes: one cell, or two side by side.
  */
-const FeatureCard = ({ feature, index, figure, shape = 'square' }: FeatureCardProps) => {
+const FeatureCard = ({ feature, index }: FeatureCardProps) => {
   const cellRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -78,54 +57,31 @@ const FeatureCard = ({ feature, index, figure, shape = 'square' }: FeatureCardPr
   return (
     <RevealItem
       index={index}
-      className={cn(
-        'valence-surface valence-surface--flat valence-feature-card list-none overflow-hidden rounded-3xl',
-        SPANS[shape],
-      )}
+      className="relative list-none bg-[var(--frame-back)] before:absolute before:inset-x-0 before:bottom-0 before:h-px before:bg-linear-to-r before:from-border/0 before:via-border before:to-border/0 after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-linear-to-b after:from-border/0 after:via-border after:to-border/0"
     >
       <article
         ref={cellRef}
-        className={cn('group relative isolate flex h-full gap-6 p-6 sm:p-8', LAYOUTS[shape])}
+        className={cn('group relative isolate flex h-full flex-col gap-7 p-5 sm:p-6')}
       >
         <span
           aria-hidden
           className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(22rem_circle_at_var(--spot-x,50%)_var(--spot-y,50%),var(--surface-hover),transparent_70%)] opacity-0 transition-opacity duration-300 motion-reduce:transition-none acted:opacity-100"
         />
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-0 -z-10 opacity-0 shadow-[inset_0_0_0_1px_var(--surface-line)] transition-opacity duration-300 motion-reduce:transition-none acted:opacity-100"
-        />
 
-        <div className={cn('flex flex-col gap-4', PICTURES[shape])}>
-          <span className={cn(FIGURE, shape === 'wide' ? 'lg:hidden' : '')}>Fig {figure}</span>
-
-          <div className="min-h-0 flex-1">
-            <FeatureVisual kind={feature.visual} />
-          </div>
+        <div className="relative isolate -mx-2 h-72 min-h-0 overflow-hidden rounded-2xl bg-surface-raised ring-1 ring-border/50 sm:-mx-3">
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(60%_70%_at_50%_100%,color-mix(in_oklab,var(--color-accent)_14%,transparent),transparent)]"
+          />
+          <FeatureVisual kind={feature.visual} />
         </div>
 
-        <div
-          className={cn(
-            'flex flex-col gap-2',
-            shape === 'wide' ? 'lg:flex-1 lg:justify-between lg:py-1' : '',
-          )}
-        >
-          {shape === 'wide' ? (
-            <span className={cn(FIGURE, 'hidden lg:block')}>Fig {figure}</span>
-          ) : null}
+        <div className="flex flex-col gap-3 px-2 pb-3 sm:px-3">
+          <h3 className="text-balance text-2xl font-semibold leading-tight tracking-[-0.02em] lg:text-[1.75rem] text-text">
+            {feature.title}
+          </h3>
 
-          <span className="flex flex-col gap-2">
-            <h3
-              className={cn(
-                'text-balance font-semibold tracking-tight text-text',
-                shape === 'square' ? 'text-lg' : 'text-xl lg:text-2xl',
-              )}
-            >
-              {feature.title}
-            </h3>
-
-            <p className="text-sm leading-relaxed text-text-muted">{feature.detail}</p>
-          </span>
+          <p className="text-[0.9375rem] leading-relaxed text-text-muted">{feature.detail}</p>
         </div>
       </article>
     </RevealItem>

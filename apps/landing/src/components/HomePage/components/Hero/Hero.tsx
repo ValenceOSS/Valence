@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import {
   letterArrival,
@@ -6,206 +7,216 @@ import {
   revealVariants,
   staggerVariants,
 } from '@ValenceUI/animations/reveal';
-import { PRESS_MOTION } from '@ValenceUI/animations/motion';
-import { Link } from '@tanstack/react-router';
-import {
-  ArrowRight as ArrowRightIcon,
-  Globe as GlobeIcon,
-  Laptop as LaptopIcon,
-  Monitor as MonitorIcon,
-  Smartphone as SmartphoneIcon,
-  Tablet as TabletIcon,
-} from '@keyline-icons/react/fill';
-import { Icon } from '@ValenceUI/Icon';
-import { Button } from '@ValenceUI/Button';
+import { IconBrandWindowsFilled } from '@tabler/icons-react';
+import { SplitButton } from '@ValenceUI/SplitButton';
+import { BrandGlyph } from '@ValenceUI/BrandGlyph';
+import { Tooltip } from '@ValenceUI/Tooltip';
+import { Doodle } from '@ValenceUI/Doodle';
 import { cn } from '@ValenceUI/cn';
+import { AuroraBackdrop } from '@ValenceUI/AuroraBackdrop';
+import { LIT_TEXT } from '@ValenceUI/tokens/LIT_TEXT';
 import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
 import { DEMO_URL } from '@ValenceLanding/content/DEMO_URL';
-import { latestRelease } from '@ValenceLanding/content/downloads/latestRelease';
 import { DeviceStage } from './components/DeviceStage/DeviceStage';
-import rawReleases from 'virtual:changelog';
-
-const LATEST = latestRelease(rawReleases);
+import { ValenceBand } from './components/ValenceBand/ValenceBand';
 
 const PLATFORMS = [
-  { label: 'Any browser', icon: GlobeIcon },
-  { label: 'iPhone', icon: SmartphoneIcon },
-  { label: 'iPad', icon: TabletIcon },
-  { label: 'Android', icon: SmartphoneIcon },
-  { label: 'Mac', icon: LaptopIcon },
-  { label: 'Windows', icon: MonitorIcon },
-  { label: 'Linux', icon: MonitorIcon },
+  { label: 'Docker', mark: 'docker' },
+  { label: 'Apple', mark: 'apple' },
+  { label: 'Android', mark: 'android' },
+  { label: 'Windows', mark: null },
+  { label: 'Linux', mark: 'linux' },
 ] as const;
 
 const LEGIBLE = 'drop-shadow-[var(--shadow-legible)]';
+
+const BEFORE = ['Your', 'films', 'and', 'programmes,', 'on'];
+
+const ACCENT = 'every screen';
+
+const AFTER = ['in', 'the', 'house'];
 
 const HEADLINE = 'Your films and programmes, on every screen in the house.';
 
 const HEADLINE_LEAD = 0.2;
 
-const WORD_STEP = 0.045;
+const WORD_STEP = 0.05;
 
-const BUTTONS_LEAD = 0.55;
+const BUTTONS_LEAD = 0.7;
 
-const BUTTON_STEP = 0.07;
+const STARTS = [
+  {
+    id: 'install',
+    label: 'Get started',
+    detail: 'Run it on your own server',
+    go: (isStill: boolean) => {
+      document
+        .getElementById('download')
+        ?.scrollIntoView({ behavior: isStill ? 'auto' : 'smooth' });
+    },
+  },
+  {
+    id: 'docs',
+    label: 'Read the docs',
+    detail: 'The quick start, step by step',
+    go: () => {
+      window.location.assign(`${DOCS_URL}/start/quick-start`);
+    },
+  },
+  {
+    id: 'demo',
+    label: 'Try the demo',
+    detail: 'A server already running, to look round',
+    go: () => {
+      window.location.assign(DEMO_URL);
+    },
+  },
+] as const;
 
 /**
- * The first thing anybody sees: the release that is out, what Valence is in one line, where to go
- * next, and the app itself rather than a description of it. It lands as the app does: the heading
- * writes itself in a word at a time, and the buttons pop up after it. Its own shader background lives in `LandingShell` instead of
- * here, so it isn't torn down and rebuilt every time this mounts.
+ * The first thing anybody sees: a dark card washed with slow blue light, what Valence is in one
+ * line with the words that matter most written softer and underlined by hand, one way to start, and
+ * beneath it the app itself, tipped back on the table, which lays itself flat as the page scrolls —
+ * hanging over the foot of the card, with a band of Valence's name running past in front of its foot.
+ *
+ * The heading is lit from below, grey rising to white inside a white edge, and writes itself in
+ * a word at a time, the line draws itself under its words once the heading has landed, and the
+ * way to start pops up after it with a note pointing at it, above the marks of what it runs on. The way to start is the download unless the docs or the demo are chosen
+ * from its arrow, and pressing it does whichever is chosen.
  */
 const Hero = () => {
   const prefersReducedMotion = useReducedMotionConfig();
   const isStill = prefersReducedMotion === true;
+  const words = [...BEFORE, ACCENT, ...AFTER];
+  const [startId, setStartId] = useState<string>(STARTS[0].id);
+  const start = STARTS.find((one) => one.id === startId) ?? STARTS[0];
 
   return (
-    <section className="relative overflow-hidden pb-16 pt-32 sm:pt-40 lg:flex lg:min-h-svh lg:items-center lg:pb-24 lg:pt-28">
-      <div className="mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-12 px-5 sm:px-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-8 xl:max-w-7xl">
+    <section className="relative px-2 pt-2 [--app-peek:min(30vw,8rem)] sm:px-3 sm:pt-3 sm:[--app-peek:min(22rem,max(min(14vw,9.5rem),calc(100svh-var(--release-bar)-44rem)))]">
+      <div className="relative isolate flex min-h-[calc(100svh-var(--release-bar)-1rem)] flex-col overflow-hidden rounded-[2rem] bg-aurora pb-[calc(var(--app-peek)+1.5rem)] sm:min-h-[calc(100svh-var(--release-bar)-1.5rem)] sm:rounded-[2.5rem]">
+        <AuroraBackdrop />
+
         <motion.div
           variants={staggerVariants}
           initial="hidden"
           animate="shown"
-          className="relative z-10 flex flex-col items-start gap-5 text-left"
+          className="relative flex flex-col items-center gap-5 px-5 pt-32 text-center sm:pt-40"
         >
-          {LATEST === null ? null : (
-            <motion.div
-              variants={revealVariants(prefersReducedMotion)}
-              transition={revealTransition(prefersReducedMotion, 'bouncy')}
-            >
-              <Link
-                to="/changelog"
-                className={cn(
-                  'valence-glass--film group inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm text-on-scrim/80 hover:text-on-scrim',
-                  PRESS_MOTION,
-                )}
-              >
-                <span className="font-semibold text-on-scrim">{LATEST.version}</span>
-                <span>is out</span>
-                <span aria-hidden className="h-3.5 w-px bg-on-scrim/30" />
-                <span className="inline-flex items-center gap-1">
-                  See what&rsquo;s new
-                  <Icon
-                    of={ArrowRightIcon}
-                    size={14}
-                    className="transition-transform duration-[var(--duration-fast)] group-hover:translate-x-0.5"
-                  />
-                </span>
-              </Link>
-            </motion.div>
-          )}
-
           <motion.p
             variants={revealVariants(prefersReducedMotion)}
             transition={revealTransition(prefersReducedMotion, 'bouncy')}
-            className={cn(
-              'text-sm font-semibold uppercase tracking-[0.16em] text-on-scrim/80 lg:text-base',
-              LEGIBLE,
-            )}
+            className={cn('font-mono text-xs uppercase tracking-[0.2em] text-on-scrim/75', LEGIBLE)}
           >
-            Self-hosted. Open source. Yours.
+            Self-hosted &middot; Open source &middot; Yours
           </motion.p>
 
-          <motion.h1
-            variants={revealVariants(prefersReducedMotion)}
-            transition={revealTransition(prefersReducedMotion, 'heavy')}
+          <h1
             className={cn(
-              'max-w-[18ch] text-[clamp(2.5rem,6.5vw,4.25rem)] lg:text-[clamp(3rem,4.4vw,4.75rem)] font-semibold leading-[1.03] tracking-[-0.035em] text-on-scrim',
+              'max-w-[16ch] text-balance text-[clamp(2.5rem,6vw,4.75rem)] font-semibold leading-[0.95] tracking-[-0.035em] text-on-scrim',
               LEGIBLE,
             )}
           >
             <span className="sr-only">{HEADLINE}</span>
-            {HEADLINE.split(' ').map((word, at) => (
+            {words.map((word, at) => (
               <span key={`${word}-${at.toString()}`} aria-hidden>
                 {at === 0 ? null : ' '}
                 <motion.span
-                  className="inline-block"
+                  className={cn(
+                    'inline-block',
+                    LIT_TEXT,
+                    word === ACCENT
+                      ? 'relative font-accent font-normal italic tracking-normal'
+                      : '',
+                  )}
                   {...letterArrival(HEADLINE_LEAD + at * WORD_STEP, isStill)}
                 >
                   {word}
+                  {word === ACCENT ? (
+                    <Doodle
+                      of="underline"
+                      delay={HEADLINE_LEAD + words.length * WORD_STEP + 0.2}
+                      className="absolute -bottom-[0.12em] left-[2%] h-[0.22em] w-[96%] text-accent"
+                    />
+                  ) : null}
                 </motion.span>
               </span>
             ))}
-          </motion.h1>
+          </h1>
 
           <motion.p
             variants={revealVariants(prefersReducedMotion)}
             transition={revealTransition(prefersReducedMotion, 'bouncy')}
-            className={cn('max-w-xl text-lg text-on-scrim/75 lg:text-xl', LEGIBLE)}
+            className={cn('max-w-2xl text-balance text-lg text-on-scrim/75 sm:text-xl', LEGIBLE)}
           >
-            A streaming platform you run on your own server.{' '}
-            <strong className="font-bold text-on-scrim">We do not run servers for users.</strong>
+            A streaming platform you run on your own server, for films, programmes, music and books.{' '}
+            <strong className="font-semibold text-on-scrim">
+              We do not run servers for users.
+            </strong>
           </motion.p>
 
-          <motion.div
-            variants={revealVariants(prefersReducedMotion)}
-            transition={revealTransition(prefersReducedMotion, 'bouncy')}
-            className="flex flex-wrap items-center gap-3 pt-2 lg:gap-4"
-          >
+          <div className="relative flex flex-wrap items-center justify-center gap-3 pt-12">
             <motion.span className="flex" {...popArrival(BUTTONS_LEAD, isStill)}>
-              <Button
-                variant="confirm"
-                size="xl"
+              <SplitButton
+                tone="confirm"
+                size="lg"
+                choiceLabel="Other ways to start"
+                choiceName="Start by"
+                options={STARTS.map(({ id, label, detail }) => ({ id, label, detail }))}
+                selectedId={start.id}
+                onSelect={(id) => {
+                  setStartId(id);
+                }}
                 onClick={() => {
-                  document.getElementById('download')?.scrollIntoView({
-                    behavior: prefersReducedMotion === true ? 'auto' : 'smooth',
-                  });
+                  start.go(isStill);
                 }}
               >
-                Get started
-              </Button>
+                {start.label}
+              </SplitButton>
             </motion.span>
 
-            <motion.span className="flex" {...popArrival(BUTTONS_LEAD + BUTTON_STEP, isStill)}>
-              <Button
-                variant="overlay"
-                size="xl"
-                onClick={() => {
-                  window.location.assign(`${DOCS_URL}/start/quick-start`);
-                }}
+            <span
+              aria-hidden
+              className="pointer-events-none absolute bottom-1/2 right-full hidden translate-y-7 pr-2 lg:block"
+            >
+              <motion.span
+                className="block -rotate-3 whitespace-nowrap pr-6 text-right font-hand text-2xl leading-none text-on-scrim/85"
+                {...popArrival(BUTTONS_LEAD + 0.4, isStill)}
               >
-                Read the docs
-              </Button>
-            </motion.span>
-
-            <motion.span className="flex" {...popArrival(BUTTONS_LEAD + BUTTON_STEP * 2, isStill)}>
-              <Button
-                variant="overlay"
-                size="xl"
-                onClick={() => {
-                  window.location.assign(DEMO_URL);
-                }}
-              >
-                Try the demo
-              </Button>
-            </motion.span>
-          </motion.div>
+                open sourced, and always will be
+              </motion.span>
+              <Doodle
+                of="arrowCurl"
+                delay={BUTTONS_LEAD + 0.8}
+                className="ml-auto mt-1 h-8 w-20 text-on-scrim/70"
+              />
+            </span>
+          </div>
 
           <motion.p
             variants={revealVariants(prefersReducedMotion)}
             transition={revealTransition(prefersReducedMotion, 'bouncy')}
-            className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-3 text-sm text-on-scrim/60"
+            className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 pt-3 text-sm text-on-scrim/60"
           >
-            <span>Runs on</span>
-            {PLATFORMS.map(({ label, icon }) => (
-              <span key={label} className="inline-flex items-center gap-1.5 text-on-scrim/80">
-                <Icon of={icon} size={15} />
-                {label}
-              </span>
+            {PLATFORMS.map(({ label, mark }) => (
+              <Tooltip key={label} label={label}>
+                <span className="inline-flex text-on-scrim/80 transition-colors hover:text-on-scrim">
+                  {mark === null ? (
+                    <IconBrandWindowsFilled size={20} aria-label={label} role="img" />
+                  ) : (
+                    <BrandGlyph of={mark} size={20} label={label} />
+                  )}
+                </span>
+              </Tooltip>
             ))}
           </motion.p>
         </motion.div>
-
-        <motion.div
-          variants={revealVariants(prefersReducedMotion)}
-          initial="hidden"
-          animate="shown"
-          transition={revealTransition(prefersReducedMotion, 'heavy')}
-          className="w-full lg:-mr-[18%] lg:w-[118%]"
-        >
-          <DeviceStage />
-        </motion.div>
       </div>
+
+      <div className="relative z-10 -mt-[var(--app-peek)] px-4 sm:px-10">
+        <DeviceStage />
+      </div>
+
+      <ValenceBand className="z-20 -mt-[1.8vw] xl:-mt-7" />
     </section>
   );
 };

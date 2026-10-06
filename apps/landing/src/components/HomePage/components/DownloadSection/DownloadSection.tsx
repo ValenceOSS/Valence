@@ -15,6 +15,7 @@ import { PRESS_MOTION } from '@ValenceUI/animations/motion';
 import { Button } from '@ValenceUI/Button';
 import { Link as TextLink } from '@ValenceUI/Link';
 import { cn } from '@ValenceUI/cn';
+import { Doodle } from '@ValenceUI/Doodle';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
 import { describeReleaseDate } from '@ValenceLanding/content/changelog/describeReleaseDate';
@@ -62,7 +63,6 @@ const DownloadSection = () => {
       eyebrow="Phones"
       title="Valence for iPhone and Android"
       glyph={IconDeviceMobileFilled}
-      focus="50% 20%"
       index={isOnAPhone ? 0 : 2}
       isLit={isOnAPhone}
       className="lg:col-span-2"
@@ -87,22 +87,32 @@ const DownloadSection = () => {
     <section
       id="download"
       aria-label="Download"
-      className="mx-auto max-w-6xl scroll-mt-24 px-5 py-16 sm:px-10 xl:max-w-7xl"
+      className="mx-auto max-w-6xl scroll-mt-24 px-5 py-24 sm:px-10 xl:max-w-7xl"
     >
       <motion.div
         initial="hidden"
         whileInView="shown"
-        viewport={{ once: true, margin: '-80px' }}
+        animate="hidden"
+        viewport={{ margin: '-80px' }}
         variants={revealVariants(prefersReducedMotion)}
         transition={revealTransition(prefersReducedMotion, 'bouncy')}
-        className="flex flex-col gap-10"
+        className="flex flex-col gap-14"
       >
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="flex flex-col gap-2">
-            <h2 className="text-3xl font-semibold tracking-tight text-text lg:text-4xl">
-              Get Valence
+        <div className="grid gap-6 lg:grid-cols-2 lg:items-end lg:gap-16">
+          <div className="flex flex-col gap-4">
+            <h2 className="max-w-xl text-balance text-4xl font-semibold tracking-tight text-text lg:text-6xl">
+              Get Valence on{' '}
+              <span className="relative inline-block font-accent font-normal italic tracking-normal">
+                your own
+                <Doodle
+                  of="underline"
+                  delay={0.3}
+                  className="absolute -bottom-3 left-0 h-4 w-full text-accent"
+                />
+              </span>{' '}
+              server.
             </h2>
-            <p className="max-w-xl text-text-muted">
+            <p className="max-w-md text-balance text-lg text-text-muted">
               A server you run, and an app for every screen that watches from it.
             </p>
           </div>
@@ -111,7 +121,7 @@ const DownloadSection = () => {
             <Link
               to="/changelog"
               className={cn(
-                'group inline-flex items-center gap-2 self-start rounded-full border border-border/60 px-3 py-1.5 text-sm text-text-muted hover:text-text sm:self-auto',
+                'group inline-flex items-center gap-2 self-start rounded-full border border-border/60 px-3 py-1.5 text-sm text-text-muted hover:text-text lg:self-end lg:justify-self-end',
                 PRESS_MOTION,
               )}
             >
@@ -137,7 +147,6 @@ const DownloadSection = () => {
             eyebrow="Desktop"
             title={lead === null ? 'Choose your computer' : `Valence for ${lead.system}`}
             glyph={LeadGlyph ?? IconDeviceDesktopFilled}
-            focus="30% 35%"
             index={isOnAPhone ? 1 : 0}
             isLit={!isOnAPhone && lead !== null}
           >
@@ -192,7 +201,6 @@ const DownloadSection = () => {
             eyebrow="Your server"
             title="One compose file"
             glyph={IconBrandDocker}
-            focus="75% 40%"
             index={isOnAPhone ? 2 : 1}
           >
             <p className="max-w-md text-sm leading-relaxed text-text-muted">

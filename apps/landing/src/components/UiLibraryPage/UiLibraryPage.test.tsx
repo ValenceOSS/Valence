@@ -9,7 +9,10 @@ describe('UiLibraryPage', () => {
     await renderWithRoutes(UiLibraryPage, '/ui');
 
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'UI library' }),
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'The parts every Valence app is built from',
+      }),
     ).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: /Buttons/ }).length).toBeGreaterThan(0);
   });

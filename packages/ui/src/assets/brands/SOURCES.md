@@ -1,7 +1,7 @@
 # Brand marks
 
 The marks of the browsers and systems a session can be watched on, so the admin can say at a
-glance what a session is running in. Each is one file from
+glance what a session is running in, and of the places the project lives, for the sites' footer. Each is one file from
 [Simple Icons](https://simpleicons.org) 16.33.0, which releases them under
 [CC0 1.0](https://github.com/simple-icons/simple-icons/blob/develop/LICENSE.md). They are kept as
 files and drawn through a CSS mask by `BrandGlyph`, so no SVG is ever inlined.
@@ -11,7 +11,10 @@ files and drawn through a CSS mask by `BrandGlyph`, so no SVG is ever inlined.
 | `android.svg`        | Android       |
 | `apple.svg`          | Apple         |
 | `brave.svg`          | Brave         |
+| `discord.svg`        | Discord       |
+| `docker.svg`         | Docker        |
 | `firefoxbrowser.svg` | Firefox       |
+| `github.svg`         | GitHub        |
 | `googlechrome.svg`   | Google Chrome |
 | `linux.svg`          | Linux         |
 | `opera.svg`          | Opera         |

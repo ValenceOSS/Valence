@@ -1,0 +1,29 @@
+import { render, screen } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+import { ValenceRun } from './ValenceRun';
+
+describe('ValenceRun', () => {
+  it('writes the name twice as many times as it repeats, so the loop never shows its seam', () => {
+    render(<ValenceRun repeats={3} />);
+
+    expect(screen.getAllByText('Valence')).toHaveLength(6);
+  });
+
+  it('runs the other way when asked, and starts partway along', () => {
+    const { container } = render(<ValenceRun isBackwards startsAt={2} />);
+    const run = container.firstElementChild;
+
+    expect(run).toHaveClass('[animation-direction:reverse]', 'leading-none');
+    expect(run?.getAttribute('style')).toMatch(/margin-left:\s*-2em/u);
+  });
+
+  it('is hidden from screen readers', () => {
+    const { container } = render(<ValenceRun />);
+
+    expect(container.firstElementChild).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('sets a display name so devtools can identify it', () => {
+    expect(ValenceRun.displayName).toBe('ValenceRun');
+  });
+});

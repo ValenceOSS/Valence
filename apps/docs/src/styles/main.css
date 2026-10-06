@@ -1,4 +1,5 @@
 @import '@valence/ui/src/styles/valence.css';
+@import '@valence/ui/src/styles/showcase.css';
 
 body {
   user-select: text;

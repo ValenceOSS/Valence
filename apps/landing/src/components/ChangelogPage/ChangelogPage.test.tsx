@@ -8,7 +8,9 @@ describe('ChangelogPage', () => {
   it('lists every release, each leading to its own page', async () => {
     await renderWithRoutes(ChangelogPage, '/changelog');
 
-    expect(await screen.findByRole('heading', { name: 'Changelog' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'What is new in Valence' }),
+    ).toBeInTheDocument();
 
     for (const entry of CHANGELOG) {
       expect(screen.getByRole('link', { name: entry.title })).toHaveAttribute(

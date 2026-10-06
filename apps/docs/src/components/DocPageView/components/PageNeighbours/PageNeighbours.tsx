@@ -1,5 +1,8 @@
 import { Link } from '@tanstack/react-router';
-import { ArrowLeft as ArrowLeftIcon, ArrowRight as ArrowRightIcon } from '@keyline-icons/react';
+import {
+  ArrowLeft as ArrowLeftIcon,
+  ArrowRight as ArrowRightIcon,
+} from '@keyline-icons/react/fill';
 import { Icon } from '@ValenceUI/Icon';
 import type { Neighbours } from '@ValenceDocs/content/findNeighbours';
 

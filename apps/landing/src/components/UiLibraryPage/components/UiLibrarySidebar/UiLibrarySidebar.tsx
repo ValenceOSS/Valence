@@ -6,8 +6,8 @@ import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
 import type { UiLibrarySidebarProps } from './UiLibrarySidebar.types';
 
 /**
- * The list down the side of the UI library: a search box, then every component under the group it
- * belongs to, with one highlight that slides from name to name under the pointer as the app's own
+ * The list down the side of the UI library: a search field like the app's own, which stays at
+ * the top as the list scrolls, then every component under the group it belongs to, with one highlight that slides from name to name under the pointer as the app's own
  * sidebar does, and the component being looked at marked as the current page.
  *
  * @param groups - The components to list, already grouped and narrowed.
@@ -27,16 +27,17 @@ const UiLibrarySidebar = ({
 
   return (
     <nav aria-label="Components" className="flex flex-col gap-4">
-      <TextField
-        label="Find a component"
-        isLabelHidden
-        isPill
-        type="search"
-        size="sm"
-        placeholder="Find a component"
-        value={query}
-        onValueChange={onQueryChange}
-      />
+      <div className="sticky -top-3 z-20 -mx-3 -mt-3 bg-surface-raised p-3 pb-2">
+        <TextField
+          label="Find a component"
+          isLabelHidden
+          type="search"
+          size="md"
+          placeholder="Find a component"
+          value={query}
+          onValueChange={onQueryChange}
+        />
+      </div>
 
       <div
         ref={containerRef}
@@ -63,6 +64,7 @@ const UiLibrarySidebar = ({
                 <Link
                   key={doc.name}
                   to="/ui/$component"
+                  resetScroll={false}
                   params={{ component: doc.name.toLowerCase() }}
                   data-highlight={doc.name}
                   aria-current={isHere ? 'page' : undefined}

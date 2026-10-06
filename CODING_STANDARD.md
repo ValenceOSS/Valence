@@ -596,8 +596,8 @@ or confirm button, so the action that matters reads heavier than the ones around
 **No raw SVG anywhere in the codebase.** No inline `<svg>` elements, no
 `.svg` imported as a component, no SVG strings.
 
-The sole exception is brand assets, which are files referenced by URL and never
-inlined into JSX:
+The exceptions are brand assets and doodles, which are files referenced by URL and
+never inlined into JSX:
 
 - Valence's own logo, wordmark and favicon, in `packages/ui/assets/brand/`.
 - The marks of the browsers and systems a session runs in, which the icon set
@@ -606,6 +606,11 @@ inlined into JSX:
   `SOURCES.md`, and only `BrandGlyph` draws them — through a CSS mask, so they
   take the colour of the text around them like any icon. A brand with no mark
   there keeps a generic shape rather than borrowing one that is not its own.
+- The hand-drawn marks the landing site points at things with — a ring round a
+  word, an arrow, a line beneath — which the icon set does not draw either. They
+  are Valence's own, single files in `packages/ui/src/assets/doodles/` listed in
+  its `SOURCES.md`, and only `Doodle` draws them, through the same CSS mask, with
+  a second mask swept along each so it draws itself in.
 
 ---
 

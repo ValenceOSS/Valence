@@ -15,7 +15,7 @@ describe('DocsTopBar', () => {
     expect(await screen.findByRole('link', { name: 'Valence Docs' })).toHaveAttribute('href', '/');
   });
 
-  it('opens the code and the Discord in new tabs, drawn alike', async () => {
+  it('opens the code and the Discord in new tabs, the Discord in its own colour', async () => {
     const open = vi.spyOn(window, 'open').mockReturnValue(null);
     const user = userEvent.setup();
 
@@ -24,7 +24,7 @@ describe('DocsTopBar', () => {
     const github = await screen.findByRole('button', { name: 'View the source on GitHub' });
     const discord = screen.getByRole('button', { name: 'Join the Discord' });
 
-    expect(discord.className).toBe(github.className);
+    expect(discord.className).not.toBe(github.className);
 
     await user.click(github);
     await user.click(discord);

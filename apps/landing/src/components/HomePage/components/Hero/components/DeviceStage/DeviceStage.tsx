@@ -1,31 +1,46 @@
 import { useRef } from 'react';
 import { motion, useReducedMotionConfig, useScroll, useTransform } from 'motion/react';
+import { PhoneFrame } from '@ValenceLanding/components/HomePage/components/PhoneFan/components/PhoneFrame/PhoneFrame';
 import { DeviceFrame } from '@ValenceLanding/components/HomePage/components/Hero/components/DeviceFrame/DeviceFrame';
 
 /**
- * The web app itself, large and turned slightly away towards the right of the page, running off
- * its edge and fading into it at the foot. Scrolling turns it to face the reader; whoever asked for
- * stillness sees it at rest.
+ * The web app itself, large and centred, tipped back away from the reader as though propped on a
+ * table with a phone stood at either corner, and all of it laying itself flat to face them as the
+ * page is scrolled, so the first scroll turns the picture into the thing. Whoever asked for
+ * stillness sees it flat already.
  */
 const DeviceStage = () => {
   const stageRef = useRef<HTMLDivElement>(null);
-  const prefersReducedMotion = useReducedMotionConfig();
-  const isStill = prefersReducedMotion === true;
-  const { scrollYProgress } = useScroll({ target: stageRef, offset: ['start end', 'end start'] });
+  const isStill = useReducedMotionConfig() === true;
+  const { scrollYProgress } = useScroll({
+    target: stageRef,
+    offset: ['start end', 'center center'],
+  });
 
-  const tilt = useTransform(scrollYProgress, [0.2, 0.6], isStill ? [0, 0] : [6, 0]);
-  const turn = useTransform(scrollYProgress, [0.2, 0.6], isStill ? [0, 0] : [-12, -4]);
+  const tip = useTransform(scrollYProgress, [0.12, 0.6], isStill ? [0, 0] : [32, 0]);
+  const scale = useTransform(scrollYProgress, [0.12, 0.6], isStill ? [1, 1] : [0.86, 1]);
+  const rise = useTransform(scrollYProgress, [0.12, 0.6], isStill ? ['0%', '0%'] : ['-22%', '0%']);
 
   return (
-    <div ref={stageRef} className="relative w-full [perspective:2000px]">
-      <motion.div
-        style={{ rotateX: tilt, rotateY: turn }}
-        className="origin-left [mask-image:linear-gradient(to_bottom,black_70%,transparent),linear-gradient(to_right,black_80%,transparent)] [mask-composite:intersect]"
-      >
+    <div ref={stageRef} className="relative mx-auto w-full max-w-6xl [perspective:1800px]">
+      <motion.div style={{ rotateX: tip, scale, y: rise }} className="relative origin-bottom">
+        <PhoneFrame
+          label="Now playing"
+          src="/phones/playing.jpg"
+          finish="silver"
+          className="absolute -bottom-[3%] -left-[9%] z-10 hidden w-[15%] -rotate-6 lg:block"
+        />
+        <PhoneFrame
+          label="Home"
+          src="/phones/home.jpg"
+          finish="blue"
+          className="absolute -bottom-[3%] -right-[9%] z-10 hidden w-[15%] rotate-6 lg:block"
+        />
         <DeviceFrame
           shape="browser"
           src="/devices/web.jpg"
           alt="The Valence web app's home page, with a film in the featured row"
+          className="ring-on-scrim/15"
         />
       </motion.div>
     </div>

@@ -1,6 +1,7 @@
+import { createElement } from 'react';
 import '@testing-library/jest-dom/vitest';
 import { configure } from '@testing-library/react';
-import { afterEach } from 'vitest';
+import { afterEach, vi } from 'vitest';
 import { tidyAfterATest } from './src/testing/tidyAfterATest';
 import { MotionGlobalConfig } from 'motion/react';
 
@@ -53,6 +54,11 @@ if (!('IntersectionObserver' in globalThis)) {
 window.scrollTo = () => undefined;
 
 MotionGlobalConfig.skipAnimations = true;
+
+vi.mock('@ValenceUI/FoldGradient', () => ({
+  FoldGradient: ({ className }: { className?: string }) =>
+    createElement('div', { 'data-testid': 'shader-mount', className }),
+}));
 
 afterEach(tidyAfterATest);
 

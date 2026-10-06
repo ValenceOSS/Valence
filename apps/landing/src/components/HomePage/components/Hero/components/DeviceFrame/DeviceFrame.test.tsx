@@ -9,10 +9,11 @@ describe('DeviceFrame', () => {
     );
 
     const picture = screen.getByRole('img', { name: 'The web app' });
+    const rim = picture.parentElement;
 
     expect(picture).toHaveAttribute('src', '/devices/web.jpg');
-    expect(picture).toHaveAttribute('data-shape', 'browser');
-    expect(picture).toHaveClass('w-1/2');
+    expect(rim).toHaveAttribute('data-shape', 'browser');
+    expect(rim).toHaveClass('valence-glass', 'w-1/2');
   });
 
   it('sets a display name so devtools can identify it', () => {
