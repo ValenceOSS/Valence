@@ -9,7 +9,13 @@ import {
 import type { WindowControlsProps } from './WindowControls.types';
 import { say } from '@ValenceI18n/say';
 
-const GLYPH = 14;
+const MINIMISE_GLYPH = 14;
+
+const MAXIMISE_GLYPH = 10;
+
+const RESTORE_GLYPH = 9;
+
+const CLOSE_GLYPH = 14;
 
 const BLOCK = 'w-[2.875rem] self-stretch';
 
@@ -17,7 +23,8 @@ const BLOCK = 'w-[2.875rem] self-stretch';
  * Minimise, maximise and close, drawn by the page at the right of the window bar on Windows and
  * Linux, where the system would otherwise lay its own over the top. Each is a flat block the height
  * of the bar, lit under the pointer, and close lights red, as the system's own do. Maximise turns
- * into restore while the window fills the screen.
+ * into restore while the window fills the screen. Each glyph is sized to stand as wide as the others,
+ * since the square and the pair of squares fill far more of the icon set's grid than the cross does.
  *
  * @param isMaximised - Whether the window fills the screen, which turns maximise into restore.
  * @param onMinimise - Told to minimise the window.
@@ -35,7 +42,7 @@ const WindowControls = ({ isMaximised, onMinimise, onMaximise, onClose }: Window
       onClick={onMinimise}
       className={BLOCK}
     >
-      <Icon of={MinimiseIcon} size={GLYPH} />
+      <Icon of={MinimiseIcon} size={MINIMISE_GLYPH} />
     </Button>
 
     <Button
@@ -45,7 +52,10 @@ const WindowControls = ({ isMaximised, onMinimise, onMaximise, onClose }: Window
       onClick={onMaximise}
       className={BLOCK}
     >
-      <Icon of={isMaximised ? RestoreIcon : MaximiseIcon} size={GLYPH} />
+      <Icon
+        of={isMaximised ? RestoreIcon : MaximiseIcon}
+        size={isMaximised ? RESTORE_GLYPH : MAXIMISE_GLYPH}
+      />
     </Button>
 
     <Button
@@ -55,7 +65,7 @@ const WindowControls = ({ isMaximised, onMinimise, onMaximise, onClose }: Window
       onClick={onClose}
       className={BLOCK}
     >
-      <Icon of={CloseIcon} size={GLYPH} />
+      <Icon of={CloseIcon} size={CLOSE_GLYPH} />
     </Button>
   </div>
 );

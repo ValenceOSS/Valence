@@ -36,4 +36,21 @@ describe('WindowControls', () => {
     expect(screen.getByRole('button', { name: 'Close' })).toHaveClass('hover:bg-danger');
     expect(screen.getByRole('button', { name: 'Minimise' })).not.toHaveClass('hover:bg-danger');
   });
+
+  it('draws the square smaller than the cross, since it fills more of its grid, so the three stand as wide', () => {
+    const { rerender } = render(<WindowControls isMaximised={false} {...handlers()} />);
+
+    const widthOf = (name: string) =>
+      screen.getByRole('button', { name }).querySelector('svg')?.getAttribute('width');
+
+    expect([widthOf('Minimise'), widthOf('Maximise'), widthOf('Close')]).toEqual([
+      '0.875rem',
+      '0.625rem',
+      '0.875rem',
+    ]);
+
+    rerender(<WindowControls isMaximised {...handlers()} />);
+
+    expect(widthOf('Restore down')).toBe('0.5625rem');
+  });
 });

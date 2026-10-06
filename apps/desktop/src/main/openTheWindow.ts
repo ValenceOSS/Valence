@@ -24,8 +24,9 @@ const IS_MAC = process.platform === 'darwin';
  *
  * The frame is hidden so the window reads as an application rather than as a browser. On macOS the
  * traffic lights are inset to clear the bar the application draws along its top. Elsewhere there is
- * no menu bar, and minimise, maximise and close are drawn by the page in that bar rather than laid
- * over it by the system, so they look like the rest of it and keep their place at any size.
+ * no frame at all and no menu bar, and minimise, maximise and close are drawn by the page in that bar.
+ * A hidden title bar there would keep the system's own controls in the corner, unseen but still
+ * answering the pointer, so they would take every press meant for the page's.
  *
  * The developer tools are shut in an installed build, shortcut and menu alike. Leaving only the menu
  * item out would leave `F12` and `Ctrl+Shift+I` opening them, so the window refuses them itself.
@@ -50,7 +51,7 @@ const openTheWindow = (): BrowserWindow => {
     minWidth: MINIMUM_WIDTH,
     minHeight: MINIMUM_HEIGHT,
     show: false,
-    titleBarStyle: IS_MAC ? 'hiddenInset' : 'hidden',
+    ...(IS_MAC ? { titleBarStyle: 'hiddenInset' } : { frame: false }),
     backgroundColor: '#000000',
     webPreferences: {
       nodeIntegration: false,
