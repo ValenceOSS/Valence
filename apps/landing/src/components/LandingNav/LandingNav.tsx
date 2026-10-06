@@ -28,7 +28,9 @@ import repository from 'virtual:github-stars';
 const NAV_LINK = 'text-sm font-semibold transition-colors';
 
 const LINKS = [
+  { to: '/', label: 'Home' },
   { to: '/changelog', label: 'Changelog' },
+  { to: null, label: 'Docs' },
   { to: '/plugins', label: 'Plugins' },
   { to: '/ui', label: 'UI' },
   { to: '/privacy', label: 'Privacy' },
@@ -103,7 +105,10 @@ const LandingNav = () => {
     setIsCondensed(value > CONDENSED_PAST);
   });
 
-  const isHome = useRouterState({ select: (state) => state.location.pathname }) === '/';
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const isHome = pathname === '/';
+  const isOn = (to: string | null) =>
+    to !== null && (to === '/' ? isHome : pathname === to || pathname.startsWith(`${to}/`));
   const theme = useSiteTheme();
   const isFloating = prefersReducedMotion !== true && !isCondensed;
 
@@ -153,21 +158,34 @@ const LandingNav = () => {
         </Link>
 
         <div className="relative z-10 hidden items-center gap-6 sm:flex">
-          <motion.span className="flex" {...popArrival(LINKS_LEAD, isStill)}>
-            <a href={DOCS_URL} className={cn(NAV_LINK, 'text-text-muted hover:text-text')}>
-              Docs
-            </a>
-          </motion.span>
-
           {LINKS.map((link, at) => (
             <motion.span
-              key={link.to}
-              className="flex"
-              {...popArrival(LINKS_LEAD + (at + 1) * STEP, isStill)}
+              key={link.label}
+              className="relative flex"
+              {...popArrival(LINKS_LEAD + at * STEP, isStill)}
             >
-              <Link to={link.to} className={cn(NAV_LINK, 'text-text-muted hover:text-text')}>
-                {link.label}
-              </Link>
+              {isOn(link.to) ? (
+                <motion.span
+                  layoutId="landing-nav-current"
+                  transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+                  className="absolute -inset-x-3 -inset-y-1.5 -z-10 rounded-lg bg-text/10"
+                />
+              ) : null}
+              {link.to === null ? (
+                <a href={DOCS_URL} className={cn(NAV_LINK, 'text-text-muted hover:text-text')}>
+                  {link.label}
+                </a>
+              ) : (
+                <Link
+                  to={link.to}
+                  className={cn(
+                    NAV_LINK,
+                    isOn(link.to) ? 'text-text' : 'text-text-muted hover:text-text',
+                  )}
+                >
+                  {link.label}
+                </Link>
+              )}
             </motion.span>
           ))}
         </div>
@@ -214,22 +232,17 @@ const LandingNav = () => {
             trigger={<IconMenu2Filled size={18} />}
             groups={[
               {
-                items: [
-                  {
-                    id: 'docs',
-                    label: 'Docs',
-                    onChoose: () => {
+                items: LINKS.map((link) => ({
+                  id: link.label,
+                  label: link.label,
+                  onChoose: () => {
+                    if (link.to === null) {
                       window.location.assign(DOCS_URL);
-                    },
-                  },
-                  ...LINKS.map((link) => ({
-                    id: link.to,
-                    label: link.label,
-                    onChoose: () => {
+                    } else {
                       void navigate({ to: link.to });
-                    },
-                  })),
-                ],
+                    }
+                  },
+                })),
               },
               {
                 items: SOCIAL_LINKS.map((social) => ({

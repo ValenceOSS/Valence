@@ -18,10 +18,10 @@ const ROWS = Array.from(
 );
 
 /**
- * The last word on the home page: a blue card the width of the hero asking whether the reader is
- * ready, with the way to install it and the way to look round the demo first, beside rows of
- * Valence's name in white running diagonally to fill the rest of it, blurred where they pass
- * behind the words.
+ * The last word on a page: a blue card the width of the page's opening one asking whether the
+ * reader is ready, with the way to install it and the way to look round the demo first, beside
+ * rows of Valence's name in white running diagonally to fill the rest of it, blurred where they
+ * pass behind the words.
  */
 const GetStarted = () => {
   const prefersReducedMotion = useReducedMotionConfig();
