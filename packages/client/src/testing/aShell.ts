@@ -30,8 +30,6 @@ const aShell = (instead: Partial<Shell> = {}): Shell => ({
   forgetReported: () => {},
   startOverride: null,
   setStartOverride: () => undefined,
-  moodLights: [],
-  setMoodLights: () => undefined,
   askingAbout: null,
   setAskingAbout: () => undefined,
   watchParty: {

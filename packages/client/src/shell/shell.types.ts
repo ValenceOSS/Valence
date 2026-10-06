@@ -5,11 +5,6 @@ import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { Askable } from '@ValenceClient/party/whoCanBeAsked';
 import type { WatchPartyState } from '@ValenceClient/party/useWatchParty';
 
-type MoodLight = {
-  color: string;
-  at?: string;
-};
-
 type StartOverride = { mediaId: string; seconds: number } | null;
 
 type Shell = {
@@ -26,8 +21,6 @@ type Shell = {
   forgetReported: (mediaIds: readonly string[]) => void;
   startOverride: StartOverride;
   setStartOverride: (asked: StartOverride) => void;
-  moodLights: MoodLight[];
-  setMoodLights: (lights: MoodLight[]) => void;
   askingAbout: MediaSummary | null;
   setAskingAbout: (media: MediaSummary | null) => void;
   watchParty: WatchPartyState;
@@ -36,4 +29,4 @@ type Shell = {
   isHoldingTheScreen: boolean;
 };
 
-export type { MoodLight, Shell, StartOverride };
+export type { Shell, StartOverride };

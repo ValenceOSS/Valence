@@ -1,14 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
 
-const { fetch, handle } = vi.hoisted(() => ({
+const { fetch, handle, registerSchemesAsPrivileged } = vi.hoisted(() => ({
   fetch: vi.fn<(url: string, init?: RequestInit) => Promise<Response>>(),
   handle: vi.fn<(scheme: string, handler: (request: Request) => Promise<Response>) => void>(),
+  registerSchemesAsPrivileged:
+    vi.fn<(schemes: { scheme: string; privileges: Record<string, boolean> }[]) => void>(),
 }));
 
 vi.mock('electron', () => ({
   app: { getAppPath: () => '/app' },
   net: { fetch },
-  protocol: { handle, registerSchemesAsPrivileged: vi.fn() },
+  protocol: { handle, registerSchemesAsPrivileged },
 }));
 
 vi.mock('@ValenceDesktop/main/theServerAddress', () => ({
@@ -18,6 +20,7 @@ vi.mock('@ValenceDesktop/main/theServerAddress', () => ({
 const {
   POLICY,
   aSliceOf,
+  claimTheScheme,
   askingAs,
   untilLetGo,
   serveTheApplication,
@@ -26,6 +29,17 @@ const {
 } = await import('./serveTheApplication');
 
 const SERVER = 'http://localhost:8420';
+
+describe('claimTheScheme', () => {
+  it('claims a standard, secure scheme that keeps a code cache, so script is not compiled afresh every launch', () => {
+    claimTheScheme();
+
+    const [schemes] = registerSchemesAsPrivileged.mock.calls[0] ?? [[]];
+
+    expect(schemes[0]?.scheme).toBe('valence');
+    expect(schemes[0]?.privileges).toMatchObject({ standard: true, secure: true, codeCache: true });
+  });
+});
 
 describe('worthCarrying', () => {
   it('passes on what the page meant', () => {

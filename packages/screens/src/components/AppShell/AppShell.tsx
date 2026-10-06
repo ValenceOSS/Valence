@@ -173,7 +173,8 @@ const SECTION_LABELS: Record<ShellSection, string> = {
  * @param dock - What stays along the foot of every section, such as the music playing. It is kept
  *   apart from the page, which arrives afresh with each section, so it is there throughout rather
  *   than arriving again with every page.
- * @param moodLights - The colours to light the page with.
+ * @param background - What lights the page from behind, which is the house's own lights where
+ *   nothing is given.
  * @param isAdministrator - Whether to offer the admin section at all.
  * @param isDownloadsOpen - Whether the downloads dialog is raised.
  * @param onOpenDownloads - Told to raise the downloads dialog.
@@ -211,7 +212,7 @@ const AppShell = ({
   dock,
   isFitted = false,
   hasMark = true,
-  moodLights = [],
+  background = <MoodBackground />,
   isAdministrator = false,
   isAccountOpen,
   onOpenAccount,
@@ -539,7 +540,7 @@ const AppShell = ({
         isFitted ? 'h-[calc(100svh-var(--valence-window-bar))] overflow-clip' : '',
       )}
     >
-      <MoodBackground lights={moodLights} />
+      {background}
 
       <div>
         <NavBar

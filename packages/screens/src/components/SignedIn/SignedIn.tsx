@@ -16,6 +16,7 @@ import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { useWatchParty } from '@ValenceClient/party/useWatchParty';
+import { setHomeLights } from '@ValenceScreens/library/homeLights';
 import { PARTY_NOTICE_LINGERS_MS } from '@ValenceClient/party/PARTY_NOTICE_LINGERS_MS';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { householdQueries } from '@ValenceClient/query/householdQueries';
@@ -34,7 +35,6 @@ import { useBrowsingPresence } from '@ValenceScreens/playback/useBrowsingPresenc
 import { useTellTheServerWhatIsHeld } from '@ValenceClient/downloads/useTellTheServerWhatIsHeld';
 import { useFetchWhatThisDeviceAsked } from '@ValenceClient/downloads/useFetchWhatThisDeviceAsked';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
-import type { MoodLight } from '@ValenceUI/MoodBackground.types';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 import type { StartOverride } from '@ValenceClient/shell/shell.types';
 import { useMusicRemote } from '@ValenceClient/music/useMusicRemote';
@@ -86,8 +86,14 @@ const SignedIn = ({ title }: SignedInProps) => {
   const [known, setKnown] = useState(new Map<string, MediaSummary>());
   const [reported, setReported] = useState(new Map<string, WatchProgress>());
   const [startOverride, setStartOverride] = useState<StartOverride>(null);
-  const [moodLights, setMoodLights] = useState<MoodLight[]>([]);
   const [askingAbout, setAskingAbout] = useState<MediaSummary | null>(null);
+
+  useEffect(
+    () => () => {
+      setHomeLights([]);
+    },
+    [],
+  );
 
   const watchParty = useWatchParty(user === null ? aDormantRealtimeClient() : getRealtimeClient());
 
@@ -352,8 +358,6 @@ const SignedIn = ({ title }: SignedInProps) => {
             forgetReported,
             startOverride,
             setStartOverride,
-            moodLights,
-            setMoodLights,
             askingAbout,
             setAskingAbout,
             watchParty,
@@ -374,7 +378,6 @@ const SignedIn = ({ title }: SignedInProps) => {
       readProgress,
       forgetReported,
       startOverride,
-      moodLights,
       askingAbout,
       watchParty,
       refresh,
