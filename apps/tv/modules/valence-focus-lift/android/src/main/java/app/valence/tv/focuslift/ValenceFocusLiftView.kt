@@ -19,7 +19,8 @@ private const val RAISED_DP = 12f
  *
  * The lift is a scale on the view as drawn, so the frame React Native lays out is never changed
  * beneath it, and it is raised above its neighbours while lifted so a grown card is not drawn under
- * the one beside it. A shadow, where asked for, is cast from the top of what it holds down to the
+ * the one beside it. What it holds may draw past its edges — a button's focus ring sits just outside
+ * the button, as on tvOS — so nothing it holds is clipped to its box. A shadow, where asked for, is cast from the top of what it holds down to the
  * given height, so a card's picture casts it and not the words beneath. A row in a list grows from
  * its left edge rather than its middle, so its words stay in line with the rows around it.
  */
@@ -52,6 +53,7 @@ class ValenceFocusLiftView(context: Context, appContext: AppContext) : ExpoView(
 
   init {
     clipChildren = false
+    clipToPadding = false
     outlineProvider = object : ViewOutlineProvider() {
       override fun getOutline(view: View, outline: Outline) {
         val height = (shadowHeight * density).toInt().coerceAtMost(view.height)
