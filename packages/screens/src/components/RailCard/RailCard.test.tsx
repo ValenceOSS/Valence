@@ -179,13 +179,11 @@ describe('RailCard', () => {
 
     vi.stubGlobal(
       'fetch',
-      vi
-        .fn()
-        .mockResolvedValue({
-          ok: true,
-          status: 200,
-          json: () => Promise.resolve(show('2025-01-17')),
-        }),
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(show('2025-01-17')),
+      }),
     );
 
     const { unmount } = renderInAnAddress(
@@ -206,13 +204,11 @@ describe('RailCard', () => {
     unmount();
     vi.stubGlobal(
       'fetch',
-      vi
-        .fn()
-        .mockResolvedValue({
-          ok: true,
-          status: 200,
-          json: () => Promise.resolve(show('2099-01-01')),
-        }),
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(show('2099-01-01')),
+      }),
     );
 
     renderInAnAddress(

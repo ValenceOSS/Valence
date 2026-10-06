@@ -28,9 +28,10 @@ describe('shieldTheAnswer', () => {
       'sandbox',
     );
     expect(
-      shielded({ 'content-type': 'image/svg+xml', 'content-security-policy': "default-src 'none'" }).get(
-        'Content-Security-Policy',
-      ),
+      shielded({
+        'content-type': 'image/svg+xml',
+        'content-security-policy': "default-src 'none'",
+      }).get('Content-Security-Policy'),
     ).toBe("default-src 'none'");
     expect(shielded({ 'content-type': 'text/html' }).has('Content-Security-Policy')).toBe(false);
   });

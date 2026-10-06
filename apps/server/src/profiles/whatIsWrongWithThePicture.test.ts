@@ -107,7 +107,9 @@ describe('what is wrong with a picture', () => {
       '<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"><rect width="8" height="8"/></svg>',
     );
     const jpeg = new Uint8Array(
-      await sharp({ create: { width: 8, height: 8, channels: 3, background: { r: 0, g: 0, b: 0 } } })
+      await sharp({
+        create: { width: 8, height: 8, channels: 3, background: { r: 0, g: 0, b: 0 } },
+      })
         .jpeg()
         .toBuffer(),
     );
@@ -115,9 +117,9 @@ describe('what is wrong with a picture', () => {
     await expect(
       whatIsWrongWithThePicture({ body: drawing, contentType: 'image/png' }),
     ).resolves.toBe('notAPicture');
-    await expect(
-      whatIsWrongWithThePicture({ body: jpeg, contentType: 'image/png' }),
-    ).resolves.toBe('notAPicture');
+    await expect(whatIsWrongWithThePicture({ body: jpeg, contentType: 'image/png' })).resolves.toBe(
+      'notAPicture',
+    );
     await expect(
       whatIsWrongWithThePicture({ body: jpeg, contentType: 'image/jpeg' }),
     ).resolves.toBeNull();
