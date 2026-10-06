@@ -13,6 +13,7 @@ import { LISTENING_CHOICES } from '@ValenceClient/books/LISTENING_CHOICES';
 import { useWhatIsHeard } from '@ValenceClient/books/useWhatIsHeard';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { AGlass } from '@ValenceMobile/components/AGlass/AGlass';
+import { AMiniProgress } from './components/AMiniProgress/AMiniProgress';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
@@ -62,6 +63,8 @@ const styles = StyleSheet.create({
     paddingLeft: (HIGH - ART) / 2,
     paddingRight: 14,
   },
+  flush: { paddingLeft: 0, paddingRight: 0 },
+  room: { height: HIGH },
   said: { flex: 1, gap: 1 },
 });
 
@@ -80,8 +83,9 @@ const styles = StyleSheet.create({
  * Draws nothing while nothing is playing.
  *
  * @param onOpen - Told which is being heard when somebody wants the whole player.
+ * @param isRoomOnly - Whether to keep only the room the bar takes, for a player drawn over it.
  */
-const TheNowPlayingBar = ({ onOpen }: TheNowPlayingBarProps) => {
+const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps) => {
   const colours = useTheColours();
   const { player, state } = useTheMusic();
   const book = useTheBook();
@@ -164,6 +168,10 @@ const TheNowPlayingBar = ({ onOpen }: TheNowPlayingBarProps) => {
     [slid, across],
   );
 
+  if (isRoomOnly) {
+    return isBook || track !== null ? <View style={styles.room} /> : null;
+  }
+
   if (isBook) {
     return (
       <Animated.View style={[styles.row, moving]} {...swipe.panHandlers}>
@@ -177,7 +185,7 @@ const TheNowPlayingBar = ({ onOpen }: TheNowPlayingBarProps) => {
               onOpen('book');
             }}
           >
-            <View style={[styles.row, { paddingHorizontal: 0 }]}>
+            <View style={[styles.row, styles.flush]}>
               <View style={[styles.art, styles.cover, { backgroundColor: colours.surfaceRaised }]}>
                 {listening.hasCover ? (
                   <ARemotePicture
@@ -194,6 +202,10 @@ const TheNowPlayingBar = ({ onOpen }: TheNowPlayingBarProps) => {
                 <Words size="small" tone="muted" lines={1}>
                   {listening.authors?.join(', ') ?? ''}
                 </Words>
+                <AMiniProgress
+                  positionSeconds={book.state.bookPositionSeconds}
+                  durationSeconds={book.state.durationSeconds}
+                />
               </View>
             </View>
           </Button>
@@ -248,7 +260,7 @@ const TheNowPlayingBar = ({ onOpen }: TheNowPlayingBarProps) => {
             onOpen('music');
           }}
         >
-          <View style={[styles.row, { paddingHorizontal: 0 }]}>
+          <View style={[styles.row, styles.flush]}>
             <View style={[styles.art, { backgroundColor: colours.surfaceRaised }]}>
               {track.album.hasArtwork ? (
                 <ARemotePicture
@@ -267,6 +279,10 @@ const TheNowPlayingBar = ({ onOpen }: TheNowPlayingBarProps) => {
                   ? track.artists.map((artist) => artist.name).join(', ')
                   : say('common.playingOnLabel', { label: state.remote.label })}
               </Words>
+              <AMiniProgress
+                positionSeconds={shown?.positionSeconds ?? 0}
+                durationSeconds={shown?.durationSeconds ?? track.durationSeconds}
+              />
             </View>
           </View>
         </Button>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { SafeAreaInsetsContext, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@ValenceMobile/components/Button/Button';
@@ -37,6 +37,8 @@ const styles = StyleSheet.create({
  * @param children - The part showing.
  * @param above - What sits just above the tabs whichever part is showing — what music is playing.
  * @param onFaceAt - Told where on screen the tab drawn as a face shows it, for a face to fly to.
+ * @param onBarHeight - Told how much of the foot of the screen the tabs take up, for what floats
+ *   above them.
  * @param isFaceArriving - Whether a face is flying in to that tab, which leaves its place empty till then.
  */
 const TheTabs = ({
@@ -47,12 +49,22 @@ const TheTabs = ({
   above,
   onFaceAt,
   isFaceArriving = false,
+  onBarHeight,
 }: TheTabsProps) => {
   const colours = useTheColours();
   const room = useSafeAreaInsets();
   const [barHeight, setBarHeight] = useState(room.bottom + A_GUESS_AT_THE_BAR);
   const [aboveHigh, setAboveHigh] = useState(0);
   const clearOfAbove = aboveHigh > 0 ? aboveHigh + ABOVE_THE_BAR : 0;
+  const latestOnBarHeight = useRef(onBarHeight);
+
+  useEffect(() => {
+    latestOnBarHeight.current = onBarHeight;
+  });
+
+  useEffect(() => {
+    latestOnBarHeight.current?.(barHeight);
+  }, [barHeight]);
 
   if (Platform.OS === 'android' || hasLiquidGlass()) {
     return (

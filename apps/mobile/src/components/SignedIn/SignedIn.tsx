@@ -206,6 +206,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   }, [partyNotice, forgetPartyNotice]);
   const [carriedOn, setCarriedOn] = useState(0);
   const [isRemoteOpen, setIsRemoteOpen] = useState(false);
+  const [tabsHigh, setTabsHigh] = useState(0);
   const settingUp = useQuery(householdQueries.onboarding());
   const [watchingHeld, setWatchingHeld] = useState<HeldFile | null>(null);
   const [askingAbout, setAskingAbout] = useState<MediaSummary | null>(null);
@@ -784,6 +785,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
         onSelect={setPart}
         {...(onFaceAt === undefined ? {} : { onFaceAt })}
         isFaceArriving={isFaceArriving}
+        onBarHeight={setTabsHigh}
         above={
           <View style={styles.above}>
             <AVideoRemoteBar
@@ -791,7 +793,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
                 setIsRemoteOpen(true);
               }}
             />
-            <TheNowPlayingBar onOpen={openWhatIsHeard} />
+            <TheNowPlayingBar onOpen={openWhatIsHeard} isRoomOnly />
           </View>
         }
       >
@@ -843,7 +845,8 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
         <TheMusicRemote />
         <TheAudiobookRemote />
         <TheFloatingPlayer
-          isShown={MUSIC_PAGES.has(pages.at(-1)?.kind ?? 'playing')}
+          isShown={pages.length === 0 || MUSIC_PAGES.has(pages.at(-1)?.kind ?? 'playing')}
+          liftedBy={pages.length === 0 ? tabsHigh : 0}
           onOpen={openWhatIsHeard}
         />
       </View>

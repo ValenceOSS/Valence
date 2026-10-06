@@ -24,17 +24,21 @@ const styles = StyleSheet.create({
 });
 
 /**
- * What music or book is playing, kept at the foot of a page of the music library the way it sits
- * above the tabs on the library itself, so somebody browsing albums can see and stop what is playing without
- * going back. It rises into place when such a page is on top and sinks off the foot of the screen
- * when one is not — moved, never faded, since the glass it sits on draws wrongly while it fades.
+ * What music or book is playing: above the tabs on the library itself, and at the foot of a page of
+ * the music library, so somebody browsing albums can see and stop what is playing without going
+ * back. It is the one player for both, so moving between the tabs and an album slides it between
+ * the two places rather than putting it away and drawing it again. It rises into place when either
+ * is on top and sinks off the foot of the screen when neither is — moved, never faded, since the
+ * glass it sits on draws wrongly while it fades.
  * It reads the colours of the cover of what is playing ahead of time, so the whole player rises
  * already lit in them rather than changing colour on the way up.
  *
- * @param isShown - Whether a page of the music library is on top.
+ * @param isShown - Whether the tabs or a page of the music library is on top.
+ * @param liftedBy - How much of the foot of the screen the tabs take up, where they are on top, to
+ *   sit above them; nothing where a page of the music library is.
  * @param onOpen - Told which is being heard when somebody wants the whole player.
  */
-const TheFloatingPlayer = ({ isShown, onOpen }: TheFloatingPlayerProps) => {
+const TheFloatingPlayer = ({ isShown, liftedBy, onOpen }: TheFloatingPlayerProps) => {
   const room = useSafeAreaInsets();
   const isStill = usePrefersStillness();
   const { state } = useTheMusic();
@@ -48,6 +52,8 @@ const TheFloatingPlayer = ({ isShown, onOpen }: TheFloatingPlayerProps) => {
   );
   const isUp = isShown && heard !== null;
   const [shown] = useState(() => new Animated.Value(isUp ? 1 : 0));
+  const raise = liftedBy > 0 ? liftedBy - room.bottom : 0;
+  const [lift] = useState(() => new Animated.Value(raise));
   const rising = useMemo(
     () =>
       shown.interpolate({
@@ -67,6 +73,16 @@ const TheFloatingPlayer = ({ isShown, onOpen }: TheFloatingPlayerProps) => {
     Animated.spring(shown, { ...MOVES, toValue: isUp ? 1 : 0 }).start();
   }, [isUp, isStill, shown]);
 
+  useEffect(() => {
+    if (isStill) {
+      lift.setValue(raise);
+
+      return;
+    }
+
+    Animated.spring(lift, { ...MOVES, toValue: raise }).start();
+  }, [raise, isStill, lift]);
+
   return (
     <Animated.View
       pointerEvents={isUp ? 'box-none' : 'none'}
@@ -74,7 +90,7 @@ const TheFloatingPlayer = ({ isShown, onOpen }: TheFloatingPlayerProps) => {
         styles.place,
         {
           bottom: room.bottom + ABOVE_THE_EDGE,
-          transform: [{ translateY: rising }],
+          transform: [{ translateY: Animated.subtract(rising, lift) }],
         },
       ]}
     >
