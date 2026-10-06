@@ -14,8 +14,8 @@ private const val REMEMBERED = 24
  * of its own, or hands it straight to the first thing on the page. tvOS puts it back where it was
  * before: on the button that opened the panel, or the card the page was opened from. So the views
  * that have had the remote are remembered, newest last, and when the remote is let go, or Android
- * hands it on by itself rather than because a key moved it, the newest of them still on the screen
- * takes it back.
+ * hands it on by itself rather than because a key moved it, or a page is put in place of another
+ * and nothing has the remote at all, the newest of them still on the screen takes it back.
  */
 object FocusComesBack {
   /**
@@ -47,6 +47,16 @@ object FocusComesBack {
         root.findFocus()?.let { remember(held, it) }
       }
     }
+
+    root.viewTreeObserver.addOnGlobalLayoutListener {
+      if (root.hasWindowFocus() && root.findFocus() == null) {
+        root.post {
+          if (root.findFocus() == null) {
+            giveBack(root, held)
+          }
+        }
+      }
+    }
   }
 
   /** Puts a view at the newest end of the ones that have had the remote. */
@@ -60,16 +70,27 @@ object FocusComesBack {
   }
 
   /**
-   * Puts the remote on the newest view that had it and is still on the screen, where the remote is
-   * now nowhere or somewhere Android chose for it.
+   * Puts the remote on the newest view that had it and can still take it, where the remote is now
+   * nowhere or somewhere Android chose for it; and where none can, as on a page that has just
+   * opened, on the first thing on the screen that can, as tvOS always has the remote somewhere.
    */
   private fun giveBack(root: View, held: ArrayDeque<WeakReference<View>>) {
-    val back = held.reversed().firstNotNullOfOrNull { remembered ->
-      remembered.get()?.takeIf { it.isAttachedToWindow && it.isShown && it.isFocusable }
-    } ?: return
+    val now = root.findFocus()
 
-    if (root.findFocus() !== back) {
-      back.requestFocus()
+    for (remembered in held.reversed()) {
+      val view = remembered.get() ?: continue
+
+      if (view === now) {
+        return
+      }
+
+      if (view.isAttachedToWindow && view.isShown && view.isFocusable && view.requestFocus()) {
+        return
+      }
+    }
+
+    if (now == null) {
+      root.requestFocus()
     }
   }
 }
