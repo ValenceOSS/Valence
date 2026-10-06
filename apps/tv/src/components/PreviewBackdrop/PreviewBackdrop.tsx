@@ -6,6 +6,7 @@ import { Artwork } from '@ValenceTv/components/Artwork/Artwork';
 import { onTheServer } from '@ValenceTv/platform/theServersOrigin';
 import { signedHeaders } from '@ValenceTv/platform/theSessionToken';
 import type { PreviewBackdropProps } from './PreviewBackdrop.types';
+import { videoFill } from '@ValenceTv/theme/videoFill';
 
 const SETTLES_MS = 2500;
 
@@ -103,7 +104,7 @@ const PreviewBackdrop = ({ mediaId, stillPath, isPlaying, style }: PreviewBackdr
           nativeControls={false}
           contentFit="cover"
           surfaceType="textureView"
-          style={StyleSheet.absoluteFill}
+          style={videoFill}
         />
       </Animated.View>
     </View>

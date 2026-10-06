@@ -1,0 +1,36 @@
+diff --git a/build/VideoPlayer.web.js b/build/VideoPlayer.web.js
+index 46dfa8353eab9ab89ca0ff591b0235114185bc33..ca4eb5e48eb864d54847b5b52c13170b71916516 100644
+--- a/build/VideoPlayer.web.js
++++ b/build/VideoPlayer.web.js
+@@ -193,6 +193,10 @@ export default class VideoPlayerWeb extends globalThis.expo.SharedObject {
+             video.muted = this._muted;
+             video.playbackRate = this._playbackRate;
+         }
++        const uri = getSourceUri(this.src);
++        if (uri && !video.getAttribute('src')) {
++            video.setAttribute('src', uri);
++        }
+         this._mountedVideos.add(video);
+         this._addListeners(video);
+         this._synchronizeWithFirstVideo(video);
+diff --git a/build/VideoView.web.js b/build/VideoView.web.js
+index a1e7f89bf5de34af5d36d3993c1baaa1a772393f..7e38fbaf1bff26b3dd1ecf3d0b89c74afd248324 100644
+--- a/build/VideoView.web.js
++++ b/build/VideoView.web.js
+@@ -1,7 +1,6 @@
+ import { jsx as _jsx } from "react/jsx-runtime";
+ import React, { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+ import { StyleSheet } from 'react-native';
+-import { getSourceUri } from './VideoPlayer.web';
+ function createAudioContext() {
+     return typeof window !== 'undefined' ? new window.AudioContext() : null;
+ }
+@@ -233,7 +232,7 @@ export const VideoView = forwardRef((props, ref) => {
+                 hasToSetupAudioContext.current = props.useAudioNodePlayback ?? false;
+                 maybeSetupAudioContext();
+             }
+-        }, disablePictureInPicture: !props.allowsPictureInPicture, playsInline: props.playsInline, src: getSourceUri(props.player?.src) ?? undefined }));
++        }, disablePictureInPicture: !props.allowsPictureInPicture, playsInline: props.playsInline }));
+ });
+ export default VideoView;
+ //# sourceMappingURL=VideoView.web.js.map

@@ -66,6 +66,7 @@ import { useCaptionStyle } from '@ValenceClient/playback/useCaptionStyle';
 import { SUBTITLE_NUDGES } from '@ValenceClient/playback/SUBTITLE_NUDGES';
 import { describeSubtitleOffset } from '@ValenceClient/playback/describeSubtitleOffset';
 import { say } from '@ValenceI18n/say';
+import { videoFill } from '@ValenceTv/theme/videoFill';
 
 const HIDES_AFTER_MS = 5000;
 
@@ -778,7 +779,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
         pointerEvents="none"
         nativeControls={false}
         contentFit="contain"
-        style={StyleSheet.absoluteFill}
+        style={videoFill}
       />
 
       {subtitles === SUBTITLES_OFF ? null : (
