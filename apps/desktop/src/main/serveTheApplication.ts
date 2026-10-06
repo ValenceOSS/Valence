@@ -68,7 +68,9 @@ const TYPES = new Map([
  * Has to happen before the application is ready, which is why it is separate from everything else
  * here. The scheme is declared standard and secure so that a page on it behaves like a page on
  * https: it may hold a service worker, it may use the fetch API, and nothing in it is treated as a
- * local file with a local file's restrictions.
+ * local file with a local file's restrictions. It keeps a code cache as https does, so the script
+ * behind each page is compiled once and kept across launches rather than compiled again the first
+ * time the page is opened after every launch.
  */
 const claimTheScheme = (): void => {
   protocol.registerSchemesAsPrivileged([
@@ -80,6 +82,7 @@ const claimTheScheme = (): void => {
         supportFetchAPI: true,
         corsEnabled: true,
         stream: true,
+        codeCache: true,
       },
     },
   ]);

@@ -25,7 +25,8 @@ const MIN_PEAK = 110;
 /**
  * Reads the colours that stand for an image, by drawing it very small and looking at what is left —
  * one for each cell of a grid laid over it, four across and three down, so the page is lit by what
- * is where in the picture rather than by a handful of averages. Shrinking averages the picture for us, which is both cheaper and steadier than sampling a
+ * is where in the picture rather than by a handful of averages. The small picture is read back once
+ * and cut into the cells here, since every read back from the canvas waits on the drawing behind it. Shrinking averages the picture for us, which is both cheaper and steadier than sampling a
  * full-size one. Answers with nothing where the image cannot be read at all, which a canvas tainted
  * by another origin cannot.
  *
@@ -49,25 +50,30 @@ const readLights = (source: CanvasImageSource): MoodLight[] => {
 
     const lights: MoodLight[] = [];
 
+    const whole = context.getImageData(0, 0, READ_AT, READ_AT).data;
+
     for (const zone of ZONES) {
       const [left, top, width, height] = zone.from;
-      const patch = context.getImageData(
-        Math.floor(left * READ_AT),
-        Math.floor(top * READ_AT),
-        Math.max(1, Math.floor(width * READ_AT)),
-        Math.max(1, Math.floor(height * READ_AT)),
-      ).data;
+      const fromX = Math.floor(left * READ_AT);
+      const fromY = Math.floor(top * READ_AT);
+      const across = Math.max(1, Math.floor(width * READ_AT));
+      const down = Math.max(1, Math.floor(height * READ_AT));
 
       let red = 0;
       let green = 0;
       let blue = 0;
       let counted = 0;
 
-      for (let at = 0; at < patch.length; at += 4) {
-        red += patch[at] ?? 0;
-        green += patch[at + 1] ?? 0;
-        blue += patch[at + 2] ?? 0;
-        counted += 1;
+      for (let y = fromY; y < fromY + down; y += 1) {
+        for (let x = fromX; x < fromX + across; x += 1) {
+          const at = (y * READ_AT + x) * 4;
+          const isInside = x < READ_AT && y < READ_AT;
+
+          red += isInside ? (whole[at] ?? 0) : 0;
+          green += isInside ? (whole[at + 1] ?? 0) : 0;
+          blue += isInside ? (whole[at + 2] ?? 0) : 0;
+          counted += 1;
+        }
       }
 
       if (counted === 0) {

@@ -1,7 +1,8 @@
-import { screen } from '@testing-library/react';
+import { act, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAShell } from '@ValenceScreens/testing/renderInAShell';
+import { setHomeLights, useHomeLights } from '@ValenceScreens/library/homeLights';
 import { HomePage } from './HomePage';
 import type { LibraryBrowserProps } from '@ValenceScreens/components/LibraryBrowser/LibraryBrowser.types';
 
@@ -62,13 +63,19 @@ describe('HomePage', () => {
   });
 
   it('lights the page from what the hero is showing', () => {
-    const setMoodLights = vi.fn();
+    const lit = renderHook(() => useHomeLights());
 
-    renderInAShell(<HomePage />, { setMoodLights });
+    renderInAShell(<HomePage />);
 
-    drawn.props?.onPalette?.([{ color: 'rgb(1 2 3)' }]);
+    act(() => {
+      drawn.props?.onPalette?.([{ color: 'rgb(1 2 3)' }]);
+    });
 
-    expect(setMoodLights).toHaveBeenCalled();
+    expect(lit.result.current).toEqual([{ color: 'rgb(1 2 3)' }]);
+
+    act(() => {
+      setHomeLights([]);
+    });
   });
 
   it('remembers where something was started from, so the player picks it up there', async () => {

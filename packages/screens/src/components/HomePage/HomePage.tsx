@@ -3,6 +3,7 @@ import { LibraryBrowser } from '@ValenceScreens/components/LibraryBrowser/Librar
 import { showIdOf } from '@ValenceClient/library/showIdOf';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import { useShell } from '@ValenceClient/shell/useShell';
+import { setHomeLights } from '@ValenceScreens/library/homeLights';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 import { useHidden } from '@ValenceClient/library/useHidden';
@@ -13,7 +14,7 @@ import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
  * The front of the server: a hero drawn from every library, and the rows of everything to watch.
  */
 const HomePage = () => {
-  const { title, rememberItems, setStartOverride, setMoodLights, holdTheScreen } = useShell();
+  const { title, rememberItems, setStartOverride, holdTheScreen } = useShell();
   const { place, go } = usePlace();
   const navigate = useNavigate();
   const watching = useWatchingProfile();
@@ -48,7 +49,7 @@ const HomePage = () => {
         onItemsLoaded={rememberItems}
         onReading={holdTheScreen}
         hasHero
-        onPalette={setMoodLights}
+        onPalette={setHomeLights}
         onOpenShow={(media) => {
           const series = showIdOf(media);
 

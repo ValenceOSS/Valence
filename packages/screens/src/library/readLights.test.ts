@@ -2,26 +2,32 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { readLights, READ_AT, ZONES } from './readLights';
 
 /**
- * A canvas that answers with a picture divided into quarters.
+ * A canvas holding a picture divided into quarters, red, green, blue and white, that answers for
+ * any part of it pixel by pixel, as a canvas does.
  */
 const painted = () => {
-  const patch = (left: number, top: number, width: number, height: number) => {
-    const colour =
-      left < READ_AT / 2 && top < READ_AT / 2
-        ? [220, 30, 30]
-        : left >= READ_AT / 2 && top < READ_AT / 2
-          ? [30, 200, 30]
-          : left < READ_AT / 2
-            ? [30, 30, 220]
-            : [240, 240, 240];
+  const colourAt = (x: number, y: number) =>
+    x < READ_AT / 2 && y < READ_AT / 2
+      ? [220, 30, 30]
+      : x >= READ_AT / 2 && y < READ_AT / 2
+        ? [30, 200, 30]
+        : x < READ_AT / 2
+          ? [30, 30, 220]
+          : [240, 240, 240];
 
+  const patch = (left: number, top: number, width: number, height: number) => {
     const data = new Uint8ClampedArray(width * height * 4);
 
-    for (let at = 0; at < data.length; at += 4) {
-      data[at] = colour[0] ?? 0;
-      data[at + 1] = colour[1] ?? 0;
-      data[at + 2] = colour[2] ?? 0;
-      data[at + 3] = 255;
+    for (let row = 0; row < height; row += 1) {
+      for (let column = 0; column < width; column += 1) {
+        const colour = colourAt(left + column, top + row);
+        const at = (row * width + column) * 4;
+
+        data[at] = colour[0] ?? 0;
+        data[at + 1] = colour[1] ?? 0;
+        data[at + 2] = colour[2] ?? 0;
+        data[at + 3] = 255;
+      }
     }
 
     return { data, width, height, colorSpace: 'srgb' as const };
@@ -70,6 +76,34 @@ describe('readLights', () => {
 
     expect(lights[0]?.at).toBe(ZONES[0]?.at);
     expect(lights[1]?.at).toBe(ZONES[1]?.at);
+  });
+
+  it('reads every corner of the picture in its own colour', () => {
+    withCanvas(() => painted());
+
+    const lights = readLights(document.createElement('img'));
+    const hue = (at: number) => {
+      const [red = 0, green = 0, blue = 0] = (lights[at]?.color.match(/\d+/g) ?? []).map(Number);
+
+      return red > 200 && green > 200 && blue > 200
+        ? 'white'
+        : red > green && red > blue
+          ? 'red'
+          : green > blue
+            ? 'green'
+            : 'blue';
+    };
+
+    expect([hue(0), hue(3), hue(8), hue(11)]).toEqual(['red', 'green', 'blue', 'white']);
+  });
+
+  it('reads the picture back once, however many parts it is cut into', () => {
+    const canvas = painted();
+
+    withCanvas(() => canvas);
+    readLights(document.createElement('img'));
+
+    expect(canvas.getImageData).toHaveBeenCalledOnce();
   });
 
   it('says a red corner is red rather than grey', () => {

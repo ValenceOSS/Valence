@@ -45,7 +45,7 @@ import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import type { ShowSummary } from '@ValenceContracts/schemas/Show';
 import { ImmersiveMusic } from '@ValenceScreens/components/ImmersiveMusic/ImmersiveMusic';
 import { NowPlayingBar } from '@ValenceScreens/components/NowPlayingBar/NowPlayingBar';
-import { useMusicLights } from '@ValenceScreens/music/musicLights';
+import { ShellMood } from './components/ShellMood/ShellMood';
 import { AskableDialog } from '@ValenceScreens/components/AskableDialog/AskableDialog';
 import { placeOfArrival } from '@ValenceScreens/requests/placeOfArrival';
 import type { ShellSection } from '@ValenceScreens/components/AppShell/AppShell.types';
@@ -73,7 +73,6 @@ import { useStockedKinds } from '@ValenceClient/library/useStockedKinds';
 const ValenceShell = () => {
   const cache = useQueryClient();
   const { place, go, replace } = usePlace();
-  const musicLights = useMusicLights();
   const navigate = useNavigate();
   const [sendingToTv, setSendingToTv] = useState<{ media: MediaSummary; seconds: number } | null>(
     null,
@@ -96,7 +95,6 @@ const ValenceShell = () => {
     rememberItems,
     progress,
     forgetReported,
-    moodLights,
     setStartOverride,
     askingAbout,
     setAskingAbout,
@@ -272,9 +270,7 @@ const ValenceShell = () => {
       onOpenSearch={() => {
         go({ section: 'search' });
       }}
-      moodLights={
-        place.section === 'home' ? moodLights : place.section === 'music' ? [...musicLights] : []
-      }
+      background={<ShellMood section={place.section} />}
       isAdministrator={mayAdminister}
       hasMark={!isHoldingTheScreen}
       libraryChoices={libraryChoices}
