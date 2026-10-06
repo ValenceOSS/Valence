@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect } from 'react';
 import { Spinner } from '@ValenceUI/Spinner';
+import { DocsPageFrame } from '@ValenceDocs/components/DocsPageFrame/DocsPageFrame';
 
 const ApiReference = lazy(() =>
   import('@ValenceDocs/components/ApiReferencePage/components/ApiReference/ApiReference').then(
@@ -9,7 +10,7 @@ const ApiReference = lazy(() =>
 
 /**
  * The API reference, loaded only when somebody opens it because the viewer is larger than the rest
- * of the site put together.
+ * of the site put together. It takes the whole card, with no list of pages beside it.
  */
 const ApiReferencePage = () => {
   useEffect(() => {
@@ -17,15 +18,17 @@ const ApiReferencePage = () => {
   }, []);
 
   return (
-    <Suspense
-      fallback={
-        <div className="flex justify-center py-24">
-          <Spinner label="Loading the API reference" />
-        </div>
-      }
-    >
-      <ApiReference />
-    </Suspense>
+    <DocsPageFrame isWide>
+      <Suspense
+        fallback={
+          <div className="flex justify-center py-24">
+            <Spinner label="Loading the API reference" />
+          </div>
+        }
+      >
+        <ApiReference />
+      </Suspense>
+    </DocsPageFrame>
   );
 };
 

@@ -111,9 +111,8 @@ const DocsSearch = ({ pages, sources }: DocsSearchProps) => {
   return (
     <>
       <Button
-        variant="subtle"
+        variant="secondary"
         size="sm"
-        isPill
         label="Search the documentation"
         className="w-full max-w-md justify-between gap-3 text-text-muted"
         onClick={() => {
