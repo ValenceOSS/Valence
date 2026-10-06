@@ -1,13 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  Animated,
-  Easing,
-  StyleSheet,
-  Text,
-  TVFocusGuideView,
-  useTVEventHandler,
-  View,
-} from 'react-native';
+import { Animated, Easing, StyleSheet, Text, TVFocusGuideView, View } from 'react-native';
+import { useRemote } from '@ValenceTv/remote/useRemote';
 import type { HWEvent } from 'react-native';
 import { SkipForward, X } from '@keyline-icons/react-native';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
@@ -104,7 +97,7 @@ const UpNext = ({ episode, isAsking, offer, onPlay, onStay }: UpNextProps) => {
     [sendTheRemote, reclaim],
   );
 
-  useTVEventHandler(hearRemote);
+  useRemote(hearRemote);
 
   const loseTheRemote = useCallback(
     (button: 'play' | 'credits') => {

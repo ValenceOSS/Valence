@@ -588,6 +588,20 @@ describe('Player', () => {
       expect(mockVideo.current.play).toHaveBeenCalledTimes(2);
     });
 
+    it('skips ten seconds with a remote’s rewind and fast-forward keys, whatever is showing', async () => {
+      await draw();
+
+      await playingAt(100);
+      mockVideo.current.currentTime = 100;
+      await press('rewind');
+
+      expect(mockVideo.current.currentTime).toBe(90);
+
+      await press('fastForward');
+
+      expect(mockVideo.current.currentTime).toBe(110);
+    });
+
     it('leaves left and right to move between the controls while they are up', async () => {
       await draw();
 

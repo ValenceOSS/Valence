@@ -4,10 +4,10 @@ import {
   StyleSheet,
   Text,
   TVFocusGuideView,
-  useTVEventHandler,
   useWindowDimensions,
   View,
 } from 'react-native';
+import { useRemote } from '@ValenceTv/remote/useRemote';
 import { useQuery } from '@tanstack/react-query';
 import {
   Cast,
@@ -217,7 +217,7 @@ const NowPlaying = ({ onEmpty, onBack, watchParty }: NowPlayingProps) => {
     [touch],
   );
 
-  useTVEventHandler(hear);
+  useRemote(hear);
 
   const closePanel = useCallback(() => {
     setPanel(null);

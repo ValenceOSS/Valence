@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, findNodeHandle, Linking, StyleSheet, useTVEventHandler, View } from 'react-native';
+import { Alert, findNodeHandle, Linking, StyleSheet, View } from 'react-native';
+import { useRemote } from '@ValenceTv/remote/useRemote';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
@@ -646,7 +647,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     [isWatching, arrival, heard],
   );
 
-  useTVEventHandler(hearPlayPause);
+  useRemote(hearPlayPause);
   const faceMood =
     watching.data === undefined || watching.data === null ? null : profileAvatarUrl(watching.data);
   const pageOnTop = opened.findLast((place) => place.kind !== 'play');

@@ -1,6 +1,7 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { Fragment, useCallback, useEffect, useState } from 'react';
-import { Animated, StyleSheet, Text, useTVEventHandler, View } from 'react-native';
+import { Animated, StyleSheet, Text, View } from 'react-native';
+import { useRemote } from '@ValenceTv/remote/useRemote';
 import { Play } from '@keyline-icons/react-native/fill';
 import { Artwork } from '@ValenceTv/components/Artwork/Artwork';
 import { Icon } from '@ValenceTv/components/Icon/Icon';
@@ -56,7 +57,7 @@ const ArrivalBanner = ({ arrival, picture, onWatch, onDismiss }: ArrivalBannerPr
     [onWatch, onDismiss],
   );
 
-  useTVEventHandler(hear);
+  useRemote(hear);
 
   return (
     <Animated.View

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, useTVEventHandler, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useRemote } from '@ValenceTv/remote/useRemote';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { moveTheVideoTo } from '@ValenceTv/playback/moveTheVideoTo';
@@ -638,11 +639,11 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
         return;
       }
 
-      if (!isShowing && event.eventType === 'left') {
+      if (event.eventType === 'rewind' || (!isShowing && event.eventType === 'left')) {
         seekBy(-SKIPS_BY);
       }
 
-      if (!isShowing && event.eventType === 'right') {
+      if (event.eventType === 'fastForward' || (!isShowing && event.eventType === 'right')) {
         seekBy(SKIPS_BY);
       }
 
@@ -662,7 +663,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
     ],
   );
 
-  useTVEventHandler(hearRemote);
+  useRemote(hearRemote);
 
   useEffect(() => {
     playTheVideoAt(player, speed);
