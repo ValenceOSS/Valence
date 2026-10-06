@@ -23,7 +23,7 @@ const AuroraBackdrop = () => {
         ribbon={0.17}
         ribbonWidth={1}
         className="absolute inset-0 -z-10 h-full w-full opacity-80"
-        speed={isStill ? 0 : 0.6}
+        speed={isStill ? 0 : 1}
       />
       <div
         aria-hidden
