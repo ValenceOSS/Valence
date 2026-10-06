@@ -1,0 +1,46 @@
+diff --git a/dist/cjs/modules/useElementLayout/index.js b/dist/cjs/modules/useElementLayout/index.js
+index f30287042926a3e682df6fd34fb2c13f5bf38e73..2e664a804c2e53241271c9c086ac1586122ed158 100644
+--- a/dist/cjs/modules/useElementLayout/index.js
++++ b/dist/cjs/modules/useElementLayout/index.js
+@@ -71,7 +71,9 @@ function useElementLayout(ref, onLayout) {
+   }, [ref, onLayout]);
+ 
+   // Observing is done in a separate effect to avoid this effect running
+-  // when 'onLayout' changes.
++  // when 'onLayout' changes, but it runs again when a view that had no
++  // 'onLayout' is given one, or it would never be observed.
++  var hasOnLayout = typeof onLayout === 'function';
+   (0, _useLayoutEffect.default)(() => {
+     var node = ref.current;
+     if (node != null && observer != null) {
+@@ -86,6 +88,6 @@ function useElementLayout(ref, onLayout) {
+         observer.unobserve(node);
+       }
+     };
+-  }, [ref, observer]);
++  }, [ref, observer, hasOnLayout]);
+ }
+ module.exports = exports.default;
+\ No newline at end of file
+diff --git a/dist/modules/useElementLayout/index.js b/dist/modules/useElementLayout/index.js
+index cd75e40a824821325baccaee6482af5ef0663839..9b04dd851170e0dfad7fbac9974e68803ceeaeda 100644
+--- a/dist/modules/useElementLayout/index.js
++++ b/dist/modules/useElementLayout/index.js
+@@ -66,7 +66,9 @@ export default function useElementLayout(ref, onLayout) {
+   }, [ref, onLayout]);
+ 
+   // Observing is done in a separate effect to avoid this effect running
+-  // when 'onLayout' changes.
++  // when 'onLayout' changes, but it runs again when a view that had no
++  // 'onLayout' is given one, or it would never be observed.
++  var hasOnLayout = typeof onLayout === 'function';
+   useLayoutEffect(() => {
+     var node = ref.current;
+     if (node != null && observer != null) {
+@@ -81,5 +83,5 @@ export default function useElementLayout(ref, onLayout) {
+         observer.unobserve(node);
+       }
+     };
+-  }, [ref, observer]);
++  }, [ref, observer, hasOnLayout]);
+ }

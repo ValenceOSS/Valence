@@ -26,3 +26,4 @@ expo-env.d.ts
 *.mobileprovision
 *.keystore
 *.jks
+web-dist/

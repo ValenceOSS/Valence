@@ -1,11 +1,4 @@
-import {
-  ActivityIndicator,
-  FlatList,
-  StyleSheet,
-  Text,
-  TVFocusGuideView,
-  View,
-} from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import { useRef } from 'react';
 import { Image } from 'expo-image';
 import { useQuery } from '@tanstack/react-query';
@@ -24,6 +17,8 @@ import { PhoneSignIn } from '@ValenceTv/components/PhoneSignIn/PhoneSignIn';
 import type { WhoIsWatchingProps } from './WhoIsWatching.types';
 import { useIsDemoServer } from '@ValenceClient/about/useIsDemoServer';
 import { say } from '@ValenceI18n/say';
+import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
+import { canChangeServer } from '@ValenceTv/platform/canChangeServer';
 
 const FACE_SIZE = 200;
 
@@ -126,15 +121,17 @@ const WhoIsWatching = ({ onChoose, onSignedIn, onChangeServer }: WhoIsWatchingPr
         />
       )}
 
-      <FadeIn isFilling={false} delayMs={STAGGER_MS * STAGGERED}>
-        <TVFocusGuideView autoFocus style={styles.actions}>
-          <Button
-            label={say('common.useADifferentServer')}
-            variant="ghost"
-            onPress={onChangeServer}
-          />
-        </TVFocusGuideView>
-      </FadeIn>
+      {canChangeServer() ? (
+        <FadeIn isFilling={false} delayMs={STAGGER_MS * STAGGERED}>
+          <FocusGuide isRemembering style={styles.actions}>
+            <Button
+              label={say('common.useADifferentServer')}
+              variant="ghost"
+              onPress={onChangeServer}
+            />
+          </FocusGuide>
+        </FadeIn>
+      ) : null}
 
       <Text style={styles.footer}>
         {origin === null

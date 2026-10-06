@@ -15,18 +15,6 @@ onlyBuiltDependencies:
   - electron-winstaller
   - esbuild
 
-# A package that looks up the module named react-native from inside itself finds whichever copy
-# pnpm happened to hoist, the phone's or the television's. As a peer, the name is the app's own
-# react-native. react-native-tvos adds its television types to it, and the jest preset loads its
-# test setup and mocks from it.
-packageExtensions:
-  react-native-tvos:
-    peerDependencies:
-      react-native: '*'
-  '@react-native/jest-preset':
-    peerDependencies:
-      react-native: '*'
-
 # drizzle-orm is resolved once per set of optional peers it finds, and better-auth, the database
 # package and the requests service would otherwise bring different versions of better-sqlite3, which
 # made two drizzle-orm copies whose types don't match. One version keeps one drizzle-orm.
@@ -36,10 +24,10 @@ packageExtensions:
 # fetch one in an install script, which pnpm skips here and the requests image skips by design, so
 # pinned to 12 the browser could not start anywhere.
 overrides:
-  better-sqlite3: 13.0.3
   # Patched releases of what other packages bring in, held within the major each one asks for, until
   # those packages ask for them themselves (VAL-353).
   '@dicebear/initials': 9.4.3
+  better-sqlite3: 13.0.3
   brace-expansion@1: 1.1.20
   brace-expansion@5: 5.0.11
   compression: 1.8.2
@@ -47,3 +35,17 @@ overrides:
   shell-quote@1: ^1.11.0
   source-map-js: 1.2.2
   undici@7: ^7.29.1
+
+# A package that looks up the module named react-native from inside itself finds whichever copy
+# pnpm happened to hoist, the phone's or the television's. As a peer, the name is the app's own
+# react-native. react-native-tvos adds its television types to it, and the jest preset loads its
+# test setup and mocks from it.
+packageExtensions:
+  '@react-native/jest-preset':
+    peerDependencies:
+      react-native: '*'
+  react-native-tvos:
+    peerDependencies:
+      react-native: '*'
+patchedDependencies:
+  react-native-web@0.21.3: patches/react-native-web@0.21.3.patch

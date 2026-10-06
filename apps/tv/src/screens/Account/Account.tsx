@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { ScrollView, StyleSheet, Text, TVFocusGuideView, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { aboutQueries } from '@ValenceClient/query/aboutQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
@@ -19,6 +19,8 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import type { AccountProps } from './Account.types';
 import { say } from '@ValenceI18n/say';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
+import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
+import { canChangeServer } from '@ValenceTv/platform/canChangeServer';
 
 /**
  * Who is watching on this television and which Valence it is, with the two ways out: signing out,
@@ -72,7 +74,7 @@ const AccountPage = ({
 
       {isDemo ? <Text style={styles.server}>{say('common.thisIsASharedDemoAccount')}</Text> : null}
 
-      <TVFocusGuideView autoFocus style={styles.catches}>
+      <FocusGuide isRemembering style={styles.catches}>
         <View style={styles.actions}>
           <Button
             label={say('common.signOut')}
@@ -104,14 +106,16 @@ const AccountPage = ({
               onPress={onRequests}
             />
           ) : null}
-          <Button
-            label={say('common.useADifferentServer')}
-            variant="ghost"
-            onFocus={upToBar.leave}
-            onPress={onChangeServer}
-          />
+          {canChangeServer() ? (
+            <Button
+              label={say('common.useADifferentServer')}
+              variant="ghost"
+              onFocus={upToBar.leave}
+              onPress={onChangeServer}
+            />
+          ) : null}
         </View>
-      </TVFocusGuideView>
+      </FocusGuide>
 
       <YourNotifications onOpen={onOpenNamed} onJoin={onJoin} onFocus={upToBar.leave} />
 
