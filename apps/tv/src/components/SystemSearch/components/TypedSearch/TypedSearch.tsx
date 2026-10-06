@@ -6,8 +6,9 @@ import type { SystemSearchProps } from '@ValenceTv/components/SystemSearch/Syste
 /**
  * Search where the television has no search screen of its own for an app to put its results in, as
  * on Android TV: a search box across the top — pressing it brings up the television's keyboard, with
- * its voice typing — and the results beneath, measured for however much room they are left. The box
- * takes the remote first, as a system's search screen does.
+ * its voice typing — and the results beneath, measured for however much room they are left. As on
+ * tvOS, opening search leaves the remote where it was, on the bar, until somebody presses down into
+ * the box.
  *
  * @param placeholder - What the search box says while empty.
  * @param onChangeText - Told what has been typed, each time it changes.
@@ -26,7 +27,6 @@ const TypedSearch = ({
         label={placeholder}
         value=""
         placeholder={placeholder}
-        hasPreferredFocus
         onChange={onChangeText}
         onSubmit={() => undefined}
       />

@@ -17,21 +17,12 @@ const HEIGHT = 96;
  * @param onPress - Told when it is chosen.
  * @param onFocus - Told when the remote lands on it.
  * @param ref - Handed the shortcut, for the remote to be sent to it.
- * @param hasPreferredFocus - Whether the remote starts here.
  */
-const MusicShortcutPanel = ({
-  item,
-  width,
-  onPress,
-  onFocus,
-  ref,
-  hasPreferredFocus = false,
-}: MusicShortcutProps) => (
+const MusicShortcutPanel = ({ item, width, onPress, onFocus, ref }: MusicShortcutProps) => (
   <Focusable
     ref={ref}
     label={item.title}
     scale={1.04}
-    hasPreferredFocus={hasPreferredFocus}
     onPress={() => {
       onPress(item);
     }}
