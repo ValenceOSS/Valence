@@ -9700,6 +9700,11 @@
     "context": "A message in an alert in the notifications of the phone app."
   },
   {
+    "handler": "phone.theNowPlayingBar.titleByArtists",
+    "text": "{title} · {artists}",
+    "context": "The one line the now-playing bar above the tabs says what is playing in. {title} is the song and {artists} its artists, separated by commas."
+  },
+  {
     "handler": "phone.theSearch.asked.nothingAskedForYet",
     "text": "You haven’t requested anything yet.",
     "context": "Text shown in the asked in the search of the phone app."

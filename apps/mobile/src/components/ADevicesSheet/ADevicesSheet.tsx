@@ -102,7 +102,7 @@ const ADevicesSheet = ({ isOpen, onClose }: ADevicesSheetProps) => {
   };
 
   return (
-    <ABottomSheet isOpen={isOpen} title={say('common.playOn')} onClose={onClose}>
+    <ABottomSheet isOpen={isOpen} label={say('common.playOn')} onClose={onClose}>
       <View style={styles.whole}>
         <View style={[styles.current, { backgroundColor: withAlpha(colours.text, 0.08) }]}>
           <View style={styles.currentSaid}>

@@ -3,10 +3,9 @@ import {
   FastForward as FastForwardFilled,
   Pause as PauseFilled,
   Play as PlayFilled,
-  SkipForward as SkipForwardFilled,
 } from '@keyline-icons/react-native/fill';
 import { useEffect, useMemo, useState } from 'react';
-import { Animated, PanResponder, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Animated, PanResponder, Platform, StyleSheet, View } from 'react-native';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import { LISTENING_CHOICES } from '@ValenceClient/books/LISTENING_CHOICES';
@@ -16,6 +15,10 @@ import { AGlass } from '@ValenceMobile/components/AGlass/AGlass';
 import { ADevicesSheet } from '@ValenceMobile/components/ADevicesSheet/ADevicesSheet';
 import { ABookProgress } from './components/ABookProgress/ABookProgress';
 import { ASongProgress } from './components/ASongProgress/ASongProgress';
+import { ASwipedTitle } from './components/ASwipedTitle/ASwipedTitle';
+import { tintOf } from './tintOf';
+import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
+import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
@@ -36,9 +39,11 @@ const HIGH = 60;
 
 const ART_ROUND = 14;
 
-const GOES_PAST = 0.35;
+const GOES_PAST = 36;
 
-const GOES_FASTER_THAN = 0.8;
+const GOES_OFF_BY = 96;
+
+const GOES_FASTER_THAN = 0.6;
 
 const GOES_OFF_MS = 180;
 
@@ -95,20 +100,23 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
   const shown = useWhatIsPlaying(state);
   const isPlaying = shown?.isPlaying ?? state.isPlaying;
   const track = state.current;
+  const tint = tintOf(
+    usePictureLights(
+      track !== null && track.album.hasArtwork
+        ? onThisServer(albumArtworkUrl(track.album.id))
+        : null,
+    ),
+  );
   const listening = book.state.book;
-  const across = useWindowDimensions().width;
   const isBook = heard === 'book' && listening !== null;
   const isPaused = isBook ? !book.state.isPlaying : track !== null && !isPlaying;
   const [slid] = useState(() => new Animated.Value(0));
   const [isChoosingDevice, setIsChoosingDevice] = useState(false);
-  const [latest] = useState(
-    () => new Map<'now', { isPaused: boolean; across: number; letGo: () => void }>(),
-  );
+  const [latest] = useState(() => new Map<'now', { isPaused: boolean; letGo: () => void }>());
 
   useEffect(() => {
     latest.set('now', {
       isPaused,
-      across,
       letGo: isBook
         ? () => {
             book.player.close();
@@ -123,10 +131,10 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
     PanResponder.create({
       onMoveShouldSetPanResponderCapture: (_, gesture) =>
         latest.get('now')?.isPaused === true &&
-        Math.abs(gesture.dx) > 10 &&
-        Math.abs(gesture.dx) > Math.abs(gesture.dy) * 2,
+        gesture.dy > 10 &&
+        gesture.dy > Math.abs(gesture.dx) * 2,
       onPanResponderMove: (_, gesture) => {
-        slid.setValue(gesture.dx);
+        slid.setValue(Math.max(0, gesture.dy));
       },
       onPanResponderRelease: (_, gesture) => {
         const now = latest.get('now');
@@ -135,9 +143,8 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
           return;
         }
 
-        const { across: wide, letGo } = now;
-        const isGoing =
-          Math.abs(gesture.dx) > wide * GOES_PAST || Math.abs(gesture.vx) > GOES_FASTER_THAN;
+        const { letGo } = now;
+        const isGoing = gesture.dy > GOES_PAST || gesture.vy > GOES_FASTER_THAN;
 
         if (!isGoing) {
           Animated.spring(slid, BACK).start();
@@ -146,7 +153,7 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
         }
 
         Animated.timing(slid, {
-          toValue: (gesture.dx === 0 ? Math.sign(gesture.vx) : Math.sign(gesture.dx)) * wide,
+          toValue: GOES_OFF_BY,
           duration: GOES_OFF_MS,
           useNativeDriver: true,
         }).start(() => {
@@ -162,13 +169,13 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
   const moving = useMemo(
     () => ({
       opacity: slid.interpolate({
-        inputRange: [-across, 0, across],
-        outputRange: [0, 1, 0],
+        inputRange: [0, GOES_OFF_BY],
+        outputRange: [1, 0],
         extrapolate: 'clamp',
       }),
-      transform: [{ translateX: slid }],
+      transform: [{ translateY: slid }],
     }),
-    [slid, across],
+    [slid],
   );
 
   if (isRoomOnly) {
@@ -250,7 +257,12 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
 
   return (
     <Animated.View style={[styles.row, moving]} {...swipe.panHandlers}>
-      <AGlass roundness={HIGH / 2} />
+      <AGlass
+        roundness={HIGH / 2}
+        {...(tint === null
+          ? {}
+          : { tint: Platform.OS === 'ios' ? withAlpha(tint, 0.55) : withAlpha(tint, 0.96) })}
+      />
 
       <View style={styles.opens}>
         <Button
@@ -273,12 +285,19 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
             </View>
 
             <View style={styles.said}>
-              <Words lines={1}>{track.title}</Words>
-              <Words size="small" tone="muted" lines={1}>
-                {state.remote === null
-                  ? track.artists.map((artist) => artist.name).join(', ')
-                  : say('common.playingOnLabel', { label: state.remote.label })}
-              </Words>
+              <ASwipedTitle onNext={() => player.next()} onPrevious={() => player.previous()}>
+                <Words lines={1}>
+                  {say('phone.theNowPlayingBar.titleByArtists', {
+                    title: track.title,
+                    artists: track.artists.map((artist) => artist.name).join(', '),
+                  })}
+                </Words>
+                {state.remote === null ? null : (
+                  <Words size="small" tone="accent" lines={1}>
+                    {state.remote.label}
+                  </Words>
+                )}
+              </ASwipedTitle>
               <ASongProgress />
             </View>
           </View>
@@ -315,12 +334,6 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
       >
         <View style={styles.button}>
           <Icon of={isPlaying ? PauseFilled : PlayFilled} size={24} colour={colours.text} />
-        </View>
-      </Button>
-
-      <Button tone="bare" label={say('common.next')} onPress={() => player.next()}>
-        <View style={styles.button}>
-          <Icon of={SkipForwardFilled} size={24} colour={colours.text} />
         </View>
       </Button>
     </Animated.View>

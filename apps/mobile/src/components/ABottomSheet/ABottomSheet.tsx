@@ -51,11 +51,12 @@ const styles = StyleSheet.create({
  * way or flicking it; let go short of that and it springs back.
  *
  * @param isOpen - Whether it is out.
- * @param title - What it is for.
+ * @param label - What it is for, for anybody who cannot see it.
+ * @param title - What it says at its top, where it says anything.
  * @param onClose - Told to put it away.
  * @param children - What it holds.
  */
-const ABottomSheet = ({ isOpen, title, onClose, children }: ABottomSheetProps) => {
+const ABottomSheet = ({ isOpen, label, title, onClose, children }: ABottomSheetProps) => {
   const colours = useTheColours();
   const room = useSafeAreaInsets();
   const isStill = usePrefersStillness();
@@ -137,6 +138,8 @@ const ABottomSheet = ({ isOpen, title, onClose, children }: ABottomSheetProps) =
         />
       </Animated.View>
       <Animated.View
+        accessibilityViewIsModal
+        accessibilityLabel={label}
         style={[
           styles.sheet,
           {
@@ -153,11 +156,13 @@ const ABottomSheet = ({ isOpen, title, onClose, children }: ABottomSheetProps) =
           <View style={styles.grip}>
             <View style={[styles.handle, { backgroundColor: withAlpha(colours.text, 0.28) }]} />
           </View>
-          <View style={styles.title}>
-            <Words size="heading" lines={1}>
-              {title}
-            </Words>
-          </View>
+          {title === undefined ? null : (
+            <View style={styles.title}>
+              <Words size="heading" lines={1}>
+                {title}
+              </Words>
+            </View>
+          )}
         </View>
         {children}
       </Animated.View>
