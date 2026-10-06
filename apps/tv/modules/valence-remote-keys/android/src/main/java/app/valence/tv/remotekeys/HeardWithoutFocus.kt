@@ -57,8 +57,6 @@ private val MEDIA_KEYS = setOf(
  *
  * A keyboard's Escape — a keyboard plugged into the television, or the computer's running an
  * emulator — goes back, as the remote's Back button does.
- *
- * Whatever an arrow scrolls glides there, as tvOS's lists do; see [ScrollsGlide].
  */
 object HeardWithoutFocus {
   /**
@@ -102,22 +100,12 @@ object HeardWithoutFocus {
         return true
       }
 
-      val direction = ARROWS[event.keyCode]
-
-      return if (direction != null && event.action == KeyEvent.ACTION_DOWN) {
-        ScrollsGlide.around(window.decorView, event.repeatCount > 0) { handOn(event, root, direction) }
-      } else {
-        handOn(event, root, direction)
-      }
-    }
-
-    /** Hands a key on to React Native's root where nothing has focus, and then to the window. */
-    private fun handOn(event: KeyEvent, root: ReactRootView?, direction: Int?): Boolean {
       if (window.currentFocus == null) {
         root?.dispatchKeyEvent(event)
       }
 
       val was = window.currentFocus
+      val direction = ARROWS[event.keyCode]
       val next =
         if (was != null && direction != null && event.action == KeyEvent.ACTION_DOWN) {
           was.focusSearch(direction)?.takeIf { it !== was && !isInsideTheListOf(was, it) && !isTrapped(was, it, direction) }
@@ -130,7 +118,11 @@ object HeardWithoutFocus {
         val wouldGo = was.focusSearch(direction)
 
         if (wouldGo != null && wouldGo !== was && !isBeside(was, wouldGo, direction)) {
-          besideOf(was, direction)?.requestFocus(direction)
+          val beside = besideOf(was, direction)
+
+          ScrollsGlide.around(window.decorView, event.repeatCount > 0) {
+            beside?.requestFocus(direction) == true
+          }
 
           return true
         }

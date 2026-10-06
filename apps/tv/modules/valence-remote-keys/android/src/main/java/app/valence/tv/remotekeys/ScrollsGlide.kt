@@ -16,24 +16,26 @@ private const val GLIDE_MS = 320L
 private const val HELD_GLIDE_MS = 140L
 
 /**
- * Glides a list or a page to what the remote moved onto, as tvOS does, rather than jumping there.
+ * Glides a list or a page to where the remote is moved by hand, rather than jumping there.
  *
- * Android scrolls a list to the view that takes focus in the same instant, while tvOS eases it
- * there. So the scroll positions are noted before a press, and any list the press moved is put back
- * and eased to where Android sent it, along the same path. A glide still going when the next press
- * comes is finished at once, so the next press is measured from where the list really is, and a
- * held button glides each step more quickly.
+ * Android eases a list along when an arrow carries the remote to something out of sight, but where
+ * the remote is moved straight onto a view instead, React Native scrolls the list to it in the same
+ * instant. So around such a move the scroll positions are noted, and any list it moved is put back
+ * and eased to where it was sent. A glide still going when the next move comes is finished at once,
+ * so the next is measured from where the list really is, and a held button glides more quickly.
+ * Only a move Android is not easing itself may go through here, or the two would pull against
+ * each other.
  */
 object ScrollsGlide {
   private val gliding = WeakHashMap<View, ValueAnimator>()
 
   /**
-   * Runs a press, gliding whatever it scrolled.
+   * Moves the remote, gliding whatever the move scrolled.
    *
    * @param root The window's top view, inside which every list lies.
    * @param isHeld Whether the button is being held, repeating.
-   * @param press What the press does.
-   * @returns What the press returned.
+   * @param press The move.
+   * @returns What the move returned.
    */
   fun around(root: View, isHeld: Boolean, press: () -> Boolean): Boolean {
     for (running in gliding.values.toList()) {
