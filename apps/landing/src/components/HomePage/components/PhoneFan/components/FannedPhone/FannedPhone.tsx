@@ -26,7 +26,11 @@ const FannedPhone = ({ phone, opened }: FannedPhoneProps) => {
         isMiddle ? 'z-20 scale-110' : Math.abs(phone.spread) === 1 ? 'z-10' : 'z-0',
       )}
     >
-      <PhoneFrame label={phone.label} {...(phone.src === undefined ? {} : { src: phone.src })} />
+      <PhoneFrame
+        label={phone.label}
+        finish={phone.finish}
+        {...(phone.src === undefined ? {} : { src: phone.src })}
+      />
     </motion.div>
   );
 };

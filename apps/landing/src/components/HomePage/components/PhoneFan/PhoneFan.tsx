@@ -13,11 +13,11 @@ import { FannedPhone } from './components/FannedPhone/FannedPhone';
 const OPEN_ENOUGH = 0.97;
 
 const PHONES = [
-  { label: 'Music home', turn: -16, lift: 70, spread: -2 },
-  { label: 'An album', turn: -8, lift: 26, spread: -1 },
-  { label: 'Now playing', turn: 0, lift: 0, spread: 0 },
-  { label: 'Your library', turn: 8, lift: 26, spread: 1 },
-  { label: 'A book', turn: 16, lift: 70, spread: 2 },
+  { label: 'Music home', turn: -16, lift: 70, spread: -2, finish: 'silver' },
+  { label: 'An album', turn: -8, lift: 26, spread: -1, finish: 'orange' },
+  { label: 'Now playing', turn: 0, lift: 0, spread: 0, finish: 'blue' },
+  { label: 'Your library', turn: 8, lift: 26, spread: 1, finish: 'orange' },
+  { label: 'A book', turn: 16, lift: 70, spread: 2, finish: 'silver' },
 ] as const;
 
 /**

@@ -12,9 +12,10 @@ const SCREEN =
  *
  * @param label - Which part of the app the screen shows, read out in place of the picture.
  * @param src - The screenshot, where there is one yet.
+ * @param finish - Which colour of iPhone it is.
  * @param className - Its size and place in the fan, which the fan decides.
  */
-const PhoneFrame = ({ label, src, className }: PhoneFrameProps) => (
+const PhoneFrame = ({ label, src, finish = 'silver', className }: PhoneFrameProps) => (
   <figure className={cn('relative aspect-[448/916] drop-shadow-[var(--shadow-cast)]', className)}>
     {src === undefined ? (
       <div
@@ -44,7 +45,7 @@ const PhoneFrame = ({ label, src, className }: PhoneFrameProps) => (
     )}
 
     <img
-      src="/devices/iphone.png"
+      src={`/devices/iphone-${finish}.png`}
       alt=""
       draggable={false}
       className="pointer-events-none relative block h-full w-full select-none"
