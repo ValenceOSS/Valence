@@ -8,6 +8,8 @@ import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import type { MusicPlayer } from '@ValenceClient/music/createMusicPlayer';
 
+const FRESH_FOR_MS = 45_000;
+
 /**
  * Lets this person's other devices drive this one, and keeps the list of them fresh.
  *
@@ -21,7 +23,8 @@ import type { MusicPlayer } from '@ValenceClient/music/createMusicPlayer';
  * A window with nothing of its own playing follows another of this person's devices the moment
  * that one is playing, whether it already was when the window opened or starts later, as a music
  * app does: what it plays is shown at once and can be driven from here, without anything being sent
- * to it until somebody does.
+ * to it until somebody does. Only a device that has said so lately is followed, since one that went
+ * quiet may have stopped without saying.
  *
  * @param player - The player commands go to, which is the window's own unless a test says otherwise.
  */
@@ -49,7 +52,10 @@ const useMusicRemote = (player: MusicPlayer = theMusicPlayer()): void => {
 
     const here = platformInUse().thisClientId();
     const playing = devices.data.find(
-      (device) => device.clientId !== here && device.nowPlaying?.isPlaying === true,
+      (device) =>
+        device.clientId !== here &&
+        device.nowPlaying?.isPlaying === true &&
+        Date.now() - device.nowPlaying.reportedAtMs < FRESH_FOR_MS,
     );
 
     if (playing !== undefined) {

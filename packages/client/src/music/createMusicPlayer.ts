@@ -756,6 +756,7 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
       }
 
       audio.pause();
+      report(null);
       mirrored = null;
       mirroredQueue = '';
       change({ remote: device, isPlaying: false });
