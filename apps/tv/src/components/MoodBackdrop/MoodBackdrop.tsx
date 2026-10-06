@@ -1,16 +1,12 @@
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { onTheServer } from '@ValenceTv/platform/theServersOrigin';
-import { signedHeadersFor } from '@ValenceTv/platform/theSessionToken';
+import { PictureWash } from '@ValenceTv/components/PictureWash/PictureWash';
 import { tokens } from '@ValenceTv/theme/tokens';
 import { withAlpha } from '@ValenceTv/theme/withAlpha';
 import type { MoodBackdropProps } from './MoodBackdrop.types';
 
 const BLUR = 90;
-
-const CROSSFADES_MS = 900;
 
 /**
  * The light behind every page: whatever is showing, blurred past recognition and dimmed, so the whole
@@ -24,15 +20,7 @@ const CROSSFADES_MS = 900;
  */
 const MoodLight = ({ path }: MoodBackdropProps) => (
   <View style={[StyleSheet.absoluteFill, styles.surface]} pointerEvents="none">
-    {path === null ? null : (
-      <Image
-        source={{ uri: onTheServer(path), headers: signedHeadersFor(path) }}
-        style={[StyleSheet.absoluteFill, styles.light]}
-        contentFit="cover"
-        blurRadius={BLUR}
-        transition={{ duration: CROSSFADES_MS, effect: 'cross-dissolve' }}
-      />
-    )}
+    {path === null ? null : <PictureWash path={path} blur={BLUR} style={styles.light} />}
 
     <LinearGradient
       colors={[withAlpha(tokens.colours.canvas, 0.35), tokens.colours.canvas]}

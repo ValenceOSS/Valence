@@ -1,14 +1,10 @@
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Image } from 'expo-image';
-import { onTheServer } from '@ValenceTv/platform/theServersOrigin';
-import { signedHeadersFor } from '@ValenceTv/platform/theSessionToken';
+import { PictureWash } from '@ValenceTv/components/PictureWash/PictureWash';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { CoverGlowProps } from './CoverGlow.types';
 
 const BLUR = 70;
-
-const CROSSFADES_MS = 900;
 
 /**
  * The whole screen washed in the colours of what is playing, as the television's music apps light
@@ -19,16 +15,7 @@ const CROSSFADES_MS = 900;
  */
 const CoverGlowLight = ({ path }: CoverGlowProps) => (
   <View style={[StyleSheet.absoluteFill, styles.surface]} pointerEvents="none">
-    {path === null ? null : (
-      <Image
-        source={{ uri: onTheServer(path), headers: signedHeadersFor(path) }}
-        style={[StyleSheet.absoluteFill, styles.cover]}
-        contentFit="cover"
-        blurRadius={BLUR}
-        cachePolicy="memory-disk"
-        transition={{ duration: CROSSFADES_MS, effect: 'cross-dissolve' }}
-      />
-    )}
+    {path === null ? null : <PictureWash path={path} blur={BLUR} style={styles.cover} />}
 
     <View style={[StyleSheet.absoluteFill, styles.shade]} />
   </View>

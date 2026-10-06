@@ -1,12 +1,13 @@
-const AN_RGBA = /^rgba\((\d+),\s*(\d+),\s*(\d+),\s*[\d.]+\)$/u;
+const AN_RGBA = /^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)$/u;
 
 const A_HEX = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/iu;
 
 /**
  * One of the palette's colours made translucent, the way ValenceUI writes `bg-accent/15`. The
- * palette's own colours are `rgba()`, and a plugin theme's are `#rrggbb`; both are understood.
+ * palette's own colours are `rgba()`, a plugin theme's are `#rrggbb`, and a picture's lights are
+ * `rgb()`; all three are understood.
  *
- * @param colour - A palette colour, as `rgba()` or `#rrggbb`.
+ * @param colour - A colour, as `rgba()`, `rgb()` or `#rrggbb`.
  * @param alpha - How opaque, from 0 to 1.
  * @returns The colour at that opacity, or the colour as it was where it is neither.
  */
