@@ -49,6 +49,8 @@ import type { ResourceSampleRange } from '@ValenceContracts/schemas/ResourceSamp
 import { fetchExceptionsOn, fetchLibraryAccess } from '@ValenceClient/admin/fetchLibraryAccess';
 
 const MOST_ALBUMS_LISTED = 500;
+const EVERY_FILE_KEPT_FOR_MS = 5 * 60_000;
+
 const ADMIN = ['admin'] as const;
 
 const WATCHED_EVERY_MS = 5000;
@@ -452,7 +454,8 @@ const books = (libraryIds: readonly string[]) =>
  * Every file on the server, one entry per file rather than per thing: every episode and every
  * version of a film is its own file on its own disk, which is what re-encoding and the media panel
  * both work from. The panel gathers episodes under their series and versions under their film
- * itself.
+ * itself. It is a page a library at a time across every library, so it is kept for five minutes
+ * rather than read again each time the panel opens; whatever changes the files says so.
  *
  * @param libraryIds - The libraries to read, which is all of them.
  * @returns The query.
@@ -466,6 +469,7 @@ const everyFile = (libraryIds: readonly string[]) =>
       return shelves.flat();
     },
     enabled: libraryIds.length > 0,
+    staleTime: EVERY_FILE_KEPT_FOR_MS,
   });
 
 /**
@@ -522,6 +526,7 @@ const mediaPaths = (libraryIds: readonly string[]) =>
         Record<string, string>
       >((all, one) => ({ ...all, ...one }), {}),
     enabled: libraryIds.length > 0,
+    staleTime: EVERY_FILE_KEPT_FOR_MS,
   });
 
 /**

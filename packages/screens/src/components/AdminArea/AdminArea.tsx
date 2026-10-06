@@ -248,15 +248,27 @@ const AdminArea = ({
 
   const libraries = useMemo(() => askedLibraries.data ?? [], [askedLibraries.data]);
 
-  const askedAlbums = useQuery(adminQueries.albums());
-  const askedBooks = useQuery(
-    adminQueries.books(
-      libraries.filter((library) => library.kind === 'books').map((library) => library.id),
-    ),
+  const libraryIds = useMemo(() => libraries.map((library) => library.id), [libraries]);
+  const bookLibraryIds = useMemo(
+    () => libraries.filter((library) => library.kind === 'books').map((library) => library.id),
+    [libraries],
   );
-  const askedEveryFileKey = adminQueries.everyFile(libraries.map((library) => library.id)).queryKey;
-  const askedEveryFile = useQuery(adminQueries.everyFile(libraries.map((library) => library.id)));
-  const askedMediaPaths = useQuery(adminQueries.mediaPaths(libraries.map((library) => library.id)));
+  const isMediaShowing = panel === 'media' || isChoosingReencode;
+
+  const askedAlbums = useQuery({ ...adminQueries.albums(), enabled: isMediaShowing });
+  const askedBooks = useQuery({
+    ...adminQueries.books(bookLibraryIds),
+    enabled: isMediaShowing && bookLibraryIds.length > 0,
+  });
+  const askedEveryFileKey = adminQueries.everyFile(libraryIds).queryKey;
+  const askedEveryFile = useQuery({
+    ...adminQueries.everyFile(libraryIds),
+    enabled: isMediaShowing && libraryIds.length > 0,
+  });
+  const askedMediaPaths = useQuery({
+    ...adminQueries.mediaPaths(libraryIds),
+    enabled: isMediaShowing && libraryIds.length > 0,
+  });
   const askedReencodes = useQuery(adminQueries.reencodes());
 
   const askedPermissions = useQuery(sessionQueries.permissions());
