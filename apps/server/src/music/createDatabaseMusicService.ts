@@ -496,6 +496,7 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
         .select({
           id: mediaItem.id,
           albumId: musicTrack.albumId,
+          hasArtwork: sql<boolean>`${musicAlbum.artworkPath} is not null`,
           year: musicAlbum.year,
           genres: musicAlbum.genres,
         })
@@ -528,6 +529,7 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
       return songs.map((song) => ({
         id: song.id,
         albumId: song.albumId,
+        hasArtwork: song.hasArtwork,
         year: song.year,
         genres: NamesSchema.parse(song.genres),
         artists: byTrack.get(song.id) ?? [],

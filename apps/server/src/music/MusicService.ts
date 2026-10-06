@@ -31,6 +31,7 @@ type TrackFile = {
 type CatalogueSong = {
   id: string;
   albumId: string;
+  hasArtwork: boolean;
   year: number | null;
   genres: readonly string[];
   artists: readonly { id: string; name: string }[];

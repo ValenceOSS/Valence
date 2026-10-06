@@ -257,7 +257,13 @@ const buildMixes = ({ songs, lately, overTheYear, liked, nowMs, seed }: MixMater
   return mixes.map((mix) => ({
     ...mix,
     coverAlbumIds: [
-      ...new Set(mix.trackIds.flatMap((trackId) => byId.get(trackId)?.albumId ?? [])),
+      ...new Set(
+        mix.trackIds.flatMap((trackId) => {
+          const song = byId.get(trackId);
+
+          return song === undefined || !song.hasArtwork ? [] : [song.albumId];
+        }),
+      ),
     ].slice(0, 4),
   }));
 };
