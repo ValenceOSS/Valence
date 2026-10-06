@@ -6,7 +6,9 @@
   "scripts": {
     "start": "EXPO_TV=1 expo start",
     "prebuild": "EXPO_TV=1 REACT_NATIVE_NODE_MODULES_DIR=$PWD/node_modules expo prebuild --platform ios --clean",
+    "prebuild:android": "EXPO_TV=1 REACT_NATIVE_NODE_MODULES_DIR=$PWD/node_modules expo prebuild --platform android --clean",
     "tvos": "EXPO_TV=1 REACT_NATIVE_NODE_MODULES_DIR=$PWD/node_modules expo run:ios",
+    "android": "EXPO_TV=1 REACT_NATIVE_NODE_MODULES_DIR=$PWD/node_modules expo run:android",
     "test": "jest",
     "typecheck": "tsc --noEmit"
   },
