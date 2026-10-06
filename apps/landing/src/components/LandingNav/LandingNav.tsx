@@ -39,7 +39,7 @@ const GITHUB_URL = 'https://github.com/MarquesCoding/Valence';
 
 const DISCORD_URL = 'https://discord.gg/uTtcAHMy9N';
 
-const SOCIAL_BUTTON = 'hidden items-center gap-2 rounded-2xl sm:inline-flex';
+const SOCIAL_BUTTON = 'hidden items-center gap-2 sm:inline-flex';
 
 const SOCIAL_LINKS = [
   { href: GITHUB_URL, icon: IconBrandGithubFilled, label: 'View the source on GitHub' },
@@ -174,7 +174,7 @@ const LandingNav = () => {
 
         <div className="relative z-10 col-start-3 flex items-center gap-2 justify-self-end">
           <motion.span className="flex" {...popArrival(SOCIAL_LEAD - STEP, isStill)}>
-            <ThemeToggle className="rounded-2xl" />
+            <ThemeToggle />
           </motion.span>
 
           <motion.span className="hidden sm:flex" {...popArrival(SOCIAL_LEAD, isStill)}>

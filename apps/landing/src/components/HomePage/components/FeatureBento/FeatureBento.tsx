@@ -17,7 +17,7 @@ const FeatureBento = () => {
   return (
     <section
       aria-label="What Valence does"
-      className="mx-auto max-w-6xl px-5 py-24 sm:px-10 xl:max-w-7xl"
+      className="mx-auto max-w-6xl px-5 py-24 sm:px-10 xl:max-w-7xl 2xl:max-w-[96rem]"
     >
       <motion.div
         initial="hidden"
@@ -50,7 +50,7 @@ const FeatureBento = () => {
         whileInView="shown"
         viewport={{ once: true, margin: '-80px' }}
         variants={groupVariants}
-        className="grid grid-cols-1 gap-px overflow-hidden bg-border sm:grid-cols-2 lg:grid-cols-3"
+        className="grid grid-cols-1 gap-px overflow-hidden bg-border sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4"
       >
         {features.map((feature, index) => (
           <FeatureCard key={feature.title} feature={feature} index={index} />
