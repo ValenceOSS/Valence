@@ -74,89 +74,96 @@ const LandingFooter = () => {
   const isStill = useReducedMotionConfig() === true;
 
   return (
-    <footer className="overflow-hidden border-t border-border/60 bg-surface [--frame-back:var(--color-surface)]">
-      <div className="mx-auto grid max-w-6xl gap-12 px-5 pt-20 sm:px-10 lg:grid-cols-[1.4fr_repeat(4,1fr)] xl:max-w-7xl">
-        <div className="flex flex-col gap-5">
-          <Link to="/" className="flex items-center gap-3">
-            <Logo size={34} isSolid />
-            <span className="text-3xl font-semibold tracking-tight text-text">Valence</span>
-          </Link>
+    <footer className="px-2 pb-2 sm:px-3 sm:pb-3">
+      <div className="overflow-hidden rounded-[2rem] border border-border/60 bg-surface [--frame-back:var(--color-surface)] sm:rounded-[2.5rem]">
+        <div className="mx-auto grid max-w-6xl gap-12 px-5 pt-20 sm:px-10 lg:grid-cols-[1.4fr_repeat(4,1fr)] xl:max-w-7xl">
+          <div className="flex flex-col gap-5">
+            <Link to="/" className="flex items-center gap-3">
+              <Logo size={34} isSolid />
+              <span className="text-3xl font-semibold tracking-tight text-text">Valence</span>
+            </Link>
 
-          <p className="max-w-xs text-[0.9375rem] leading-relaxed text-text-muted">
-            A streaming platform you run on your own server, for every screen in the house. Free and
-            open source, MIT licensed.
-          </p>
+            <p className="max-w-xs text-[0.9375rem] leading-relaxed text-text-muted">
+              A streaming platform you run on your own server, for every screen in the house. Free
+              and open source, MIT licensed.
+            </p>
 
-          <div className="flex items-center gap-3">
-            {SOCIAL_LINKS.map((social) => (
-              <a
-                key={social.href}
-                href={social.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={social.label}
-                className="text-text-muted transition-colors hover:text-text"
-              >
-                <social.icon size={20} />
-              </a>
-            ))}
+            <div className="flex items-center gap-3">
+              {SOCIAL_LINKS.map((social) => (
+                <a
+                  key={social.href}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={social.label}
+                  className="text-text-muted transition-colors hover:text-text"
+                >
+                  <social.icon size={20} />
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {GROUPS.map((group) => (
+            <nav key={group.title} aria-label={group.title} className="flex flex-col gap-4">
+              <p className={HEADING}>{group.title}</p>
+
+              <ul className="flex flex-col gap-3">
+                {group.links.map((link) => (
+                  <li key={link.label}>
+                    {'to' in link ? (
+                      <Link to={link.to} className={LINK}>
+                        {link.label}
+                      </Link>
+                    ) : (
+                      <a
+                        href={link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={LINK}
+                      >
+                        {link.label}
+                      </a>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ))}
+        </div>
+
+        <div className="mx-auto mt-16 max-w-6xl px-5 sm:px-10 xl:max-w-7xl">
+          <div className="flex items-center justify-between gap-4 border-t border-border/60 py-6">
+            <p className="font-mono text-xs text-text-muted/70">
+              &copy; {YEAR} The Valence contributors
+            </p>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              className="font-mono text-xs"
+              onClick={() => {
+                window.scrollTo({ top: 0, behavior: isStill ? 'auto' : 'smooth' });
+              }}
+            >
+              Back to top
+              <Icon of={ArrowUpIcon} size={14} />
+            </Button>
           </div>
         </div>
 
-        {GROUPS.map((group) => (
-          <nav key={group.title} aria-label={group.title} className="flex flex-col gap-4">
-            <p className={HEADING}>{group.title}</p>
-
-            <ul className="flex flex-col gap-3">
-              {group.links.map((link) => (
-                <li key={link.label}>
-                  {'to' in link ? (
-                    <Link to={link.to} className={LINK}>
-                      {link.label}
-                    </Link>
-                  ) : (
-                    <a href={link.href} target="_blank" rel="noopener noreferrer" className={LINK}>
-                      {link.label}
-                    </a>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </nav>
-        ))}
-      </div>
-
-      <div className="mx-auto mt-16 max-w-6xl px-5 sm:px-10 xl:max-w-7xl">
-        <div className="flex items-center justify-between gap-4 border-t border-border/60 py-6">
-          <p className="font-mono text-xs text-text-muted/70">
-            &copy; {YEAR} The Valence contributors
+        <div
+          aria-hidden
+          className={cn(
+            'relative h-[13vw] overflow-hidden xl:h-[12rem]',
+            '[mask-image:linear-gradient(to_bottom,black_15%,transparent)]',
+            '[-webkit-mask-image:linear-gradient(to_bottom,black_15%,transparent)]',
+          )}
+        >
+          <p className="absolute inset-x-0 top-0 select-none whitespace-nowrap bg-linear-to-r from-text/0 via-text/70 to-text/0 bg-clip-text text-center text-[22vw] font-bold leading-none tracking-tighter text-transparent xl:text-[20rem]">
+            Valence
           </p>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            className="font-mono text-xs"
-            onClick={() => {
-              window.scrollTo({ top: 0, behavior: isStill ? 'auto' : 'smooth' });
-            }}
-          >
-            Back to top
-            <Icon of={ArrowUpIcon} size={14} />
-          </Button>
         </div>
-      </div>
-
-      <div
-        aria-hidden
-        className={cn(
-          'relative h-[13vw] overflow-hidden xl:h-[12rem]',
-          '[mask-image:linear-gradient(to_bottom,black_15%,transparent)]',
-          '[-webkit-mask-image:linear-gradient(to_bottom,black_15%,transparent)]',
-        )}
-      >
-        <p className="absolute inset-x-0 top-0 select-none whitespace-nowrap bg-linear-to-r from-text/0 via-text/70 to-text/0 bg-clip-text text-center text-[22vw] font-bold leading-none tracking-tighter text-transparent xl:text-[20rem]">
-          Valence
-        </p>
       </div>
     </footer>
   );
