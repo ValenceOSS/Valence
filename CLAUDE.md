@@ -44,7 +44,9 @@ reference, not a substitute for reading it.
    Every other control composes one of those; there is no `IconButton`. oxlint
    enforces it.
 9. **No raw SVG anywhere.** Icons come from `@keyline-icons/react` and are
-   drawn by `@ValenceUI/Icon`, never by the renderer directly.
+   drawn by `@ValenceUI/Icon`, never by the renderer directly. Brand marks and
+   the landing site's hand-drawn doodles are files, drawn only by `BrandGlyph`
+   and `Doodle` through a CSS mask.
 10. **Every function and component has a co-located Vitest test** — except
     `apps/mobile`, which uses `jest-expo` for the same reason it exists.
 11. **Conventional Commits.**
