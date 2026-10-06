@@ -26,8 +26,8 @@ const STOPS = [
     icon: HomeIcon,
     activeIcon: HomeFilledIcon,
     says: 'What to carry on with, what is new, and something picked out for tonight.',
-    src: '/devices/web.jpg',
-    alt: 'The home page, with a film featured across the top',
+    src: '/tour/home.jpg',
+    alt: 'The home page, with Past Lives featured across the top and a button to carry on from where it was left',
   },
   {
     id: 'library',
@@ -35,8 +35,8 @@ const STOPS = [
     icon: FilmIcon,
     activeIcon: FilmFilledIcon,
     says: 'Every film and series on the server, with its artwork, cast and where you left off.',
-    src: '/hero-2.jpeg',
-    alt: 'Rows of films to carry on watching, picked out and recently added',
+    src: '/tour/library.jpg',
+    alt: 'Every film on the server as a grid of posters, with how far each has been watched beneath it',
   },
   {
     id: 'music',
@@ -44,8 +44,8 @@ const STOPS = [
     icon: MusicNoteIcon,
     activeIcon: MusicNoteFilledIcon,
     says: 'Albums, artists, lyrics and mixes made from what you play, with the player along the foot.',
-    src: '/changelog/music-requests-and-households.png',
-    alt: 'An album, its tracks beneath its cover and the player along the foot',
+    src: '/tour/music.jpg',
+    alt: 'An album with its tracks beneath its cover, the library down the side and the player along the foot',
   },
   {
     id: 'books',
@@ -53,8 +53,8 @@ const STOPS = [
     icon: BookOpenIcon,
     activeIcon: BookOpenFilledIcon,
     says: 'Books to read and audiobooks to listen to, each remembering the page you were on.',
-    src: '/changelog/phones-and-audiobooks-books.png',
-    alt: 'A shelf of books and audiobooks',
+    src: '/tour/books.jpg',
+    alt: 'A shelf of books, each with its cover',
   },
   {
     id: 'server',
@@ -62,8 +62,8 @@ const STOPS = [
     icon: ServerIcon,
     activeIcon: ServerFilledIcon,
     says: 'How the machine is doing, who is watching, and the jobs it is getting on with.',
-    src: '/hero-3.jpeg',
-    alt: 'The server overview, with the processor, memory, storage and streams',
+    src: '/tour/server.jpg',
+    alt: 'The server overview, with the processor, memory, storage, load over the week and who is listening now',
   },
 ] as const;
 
