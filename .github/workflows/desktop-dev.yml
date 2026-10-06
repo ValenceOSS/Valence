@@ -98,6 +98,15 @@ jobs:
           merge-multiple: true
           path: release
 
+      # The tag is moved first, so the notes are written up to this build. GitHub writes them up to
+      # wherever the tag already stands, and written before it moved they stopped one build short.
+      # It is moved before anything is uploaded too, so the release never names one commit while
+      # holding another's installers for longer than the upload takes.
+      - name: Point the channel at this commit
+        run: |
+          git tag -f "$CHANNEL" "$GITHUB_SHA"
+          git push -f origin "refs/tags/$CHANNEL"
+
       - name: Write the notes
         run: |
           last="v$(jq -r '.["."]' .release-please-manifest.json)"
@@ -115,16 +124,12 @@ jobs:
             echo "${merged}"
           } > notes.md
 
-      # The tag is moved before anything is uploaded, so the release never names one commit while
-      # holding another's installers for longer than the upload takes.
-      - name: Point the channel at this commit
+      - name: Say what this build holds
         run: |
           if gh release view "$CHANNEL" > /dev/null 2>&1; then
-            git tag -f "$CHANNEL" "$GITHUB_SHA"
-            git push -f origin "refs/tags/$CHANNEL"
             gh release edit "$CHANNEL" --prerelease --title "Development build" --notes-file notes.md
           else
-            gh release create "$CHANNEL" --prerelease --target "$GITHUB_SHA" \
+            gh release create "$CHANNEL" --prerelease --verify-tag \
               --title "Development build" --notes-file notes.md
           fi
 
@@ -132,12 +137,12 @@ jobs:
       # finds either the last build whole or this one whole. Each of dev.yml and the rest goes up
       # under a name of its own and is renamed over the last one only once it is all there, since
       # replacing it in place deletes the old one first and a failed upload would leave the channel
-      # with nothing to read. The last build's installers go once nothing names them.
+      # with nothing to read.
       #
-      # Earlier builds' blockmaps stay for a month. An app updating fetches the blockmap of the build
-      # it is running as well as the new one's, to download only what changed, and without its own it
-      # downloads the whole installer. A month keeps the release well inside GitHub's limit on how
-      # many files one release can hold.
+      # Everything of the last build goes once nothing names it, its blockmaps included, so the
+      # release only ever holds the build it names. An app updating from a build whose blockmap is
+      # gone downloads the whole installer rather than only what changed, which is the price of a
+      # release anybody can read at a glance.
       - name: Hang the build on it
         run: |
           find release -type f ! -name '*.yml' -print0 | xargs -0 gh release upload "$CHANNEL" --clobber
@@ -165,18 +170,10 @@ jobs:
           done
 
           ls release > kept.txt
-          cutoff="$(date -u -d '30 days ago' +%Y-%m-%dT%H:%M:%SZ)"
-          gh api "repos/$GITHUB_REPOSITORY/releases/tags/$CHANNEL" \
-            -q '.assets[] | [.name, .created_at] | @tsv' | while IFS=$'\t' read -r asset made; do
-            if grep -qxF "$asset" kept.txt; then
-              continue
+          gh release view "$CHANNEL" --json assets -q '.assets[].name' | while read -r asset; do
+            if ! grep -qxF "$asset" kept.txt; then
+              gh release delete-asset "$CHANNEL" "$asset" -y
             fi
-
-            if [[ "$asset" == *.blockmap && "$made" > "$cutoff" ]]; then
-              continue
-            fi
-
-            gh release delete-asset "$CHANNEL" "$asset" -y
           done
 
       - name: Say where it went
