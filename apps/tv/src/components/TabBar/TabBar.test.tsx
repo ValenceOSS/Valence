@@ -1,4 +1,5 @@
-import { fireEvent, render, userEvent } from '@testing-library/react-native';
+import { act, fireEvent, render, userEvent } from '@testing-library/react-native';
+import { Animated } from 'react-native';
 import { Film, Home } from '@keyline-icons/react-native/fill';
 import { TabBar } from '@ValenceTv/components/TabBar/TabBar';
 
@@ -87,15 +88,49 @@ describe('TabBar', () => {
       nativeEvent: { layout: { x: 120, y: 0, width: 140, height: 60 } },
     });
 
-    expect(pillOf(drawn)).toHaveStyle({
-      left: 120,
-      width: 140,
-      backgroundColor: 'rgba(255,255,255,0.16)',
-    });
+    const pill = pillOf(drawn);
+    const [, leftEnd, rightEnd] = typeof pill === 'string' ? [] : (pill?.children ?? []);
+
+    expect(pill).toHaveStyle({ height: 60, opacity: 0.16 });
+    expect(leftEnd).toHaveStyle({ backgroundColor: '#ffffff', transform: [{ translateX: 120 }] });
+    expect(rightEnd).toHaveStyle({ transform: [{ translateX: 200 }] });
 
     await fireEvent(drawn.getByRole('button', { name: 'Films' }), 'focus');
 
-    expect(pillOf(drawn)).toHaveStyle({ backgroundColor: '#ffffff' });
+    expect(pillOf(drawn)).toHaveStyle({ opacity: 1 });
+  });
+
+  it('springs the pill to the tab showing next, without laying anything out again', async () => {
+    const springsInJavaScript = Animated.spring;
+
+    jest.useFakeTimers();
+    jest
+      .spyOn(Animated, 'spring')
+      .mockImplementation((value, config) =>
+        springsInJavaScript(value, { ...config, useNativeDriver: false }),
+      );
+
+    const drawn = await render(<TabBar tabs={TABS} current="home" onChoose={jest.fn()} />);
+
+    await fireEvent(drawn.getByRole('button', { name: 'Home' }), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 120, height: 60 } },
+    });
+    await fireEvent(drawn.getByRole('button', { name: 'Films' }), 'layout', {
+      nativeEvent: { layout: { x: 120, y: 0, width: 140, height: 60 } },
+    });
+    await drawn.rerender(<TabBar tabs={TABS} current="films" onChoose={jest.fn()} />);
+
+    await act(() => {
+      jest.advanceTimersByTime(2000);
+    });
+
+    const pill = pillOf(drawn);
+    const [, leftEnd] = typeof pill === 'string' ? [] : (pill?.children ?? []);
+
+    expect(leftEnd).toHaveStyle({ transform: [{ translateX: 120 }] });
+
+    jest.useRealTimers();
+    jest.restoreAllMocks();
   });
 
   it('writes the tab the remote is on in dark ink', async () => {
