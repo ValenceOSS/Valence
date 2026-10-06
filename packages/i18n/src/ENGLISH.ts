@@ -1749,10 +1749,6 @@ const ENGLISH = {
     'DATABASE_URL must start with postgres://, mysql:// or mariadb://, not {protocol}//. Valence supports Postgres, MySQL and MariaDB only, not MongoDB.',
   'database.wrongCollation':
     'The database {database} uses the {collation} collation, and Valence needs {needed}. Before starting Valence for the first time, run: ALTER DATABASE `{database}` CHARACTER SET utf8mb4 COLLATE {needed};',
-  'desktop.desktop.update': 'Update',
-  'desktop.desktop.updateValence': 'Update Valence?',
-  'desktop.desktop.valenceVersionIsOutItDownloads':
-    'Valence {version} is available. It downloads in the background, then Valence restarts to install it.',
   'desktop.main.aDiscordActivity.browsingLibraries': 'Browsing libraries',
   'desktop.main.aDiscordActivity.pausedLine': 'Paused — {line}',
   'desktop.main.aDiscordActivity.seriesSeasonEpisodeEpisode': 'Series {season}, Episode {episode}',

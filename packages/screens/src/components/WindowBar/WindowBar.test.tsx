@@ -48,6 +48,12 @@ describe('WindowBar', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
+  it('fills a bar beneath the words as the download goes', () => {
+    render(<WindowBar update={{ kind: 'downloading', version: '1.2.0', percent: 45 }} />);
+
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '45');
+  });
+
   it('offers to try again after a download failed', async () => {
     const user = userEvent.setup();
     const onUpdate = vi.fn();

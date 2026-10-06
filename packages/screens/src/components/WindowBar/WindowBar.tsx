@@ -1,6 +1,7 @@
 import { Button } from '@ValenceUI/Button';
 import { HistoryArrows } from '@ValenceUI/HistoryArrows';
 import { Icon } from '@ValenceUI/Icon';
+import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { Download as DownloadIcon, Question as QuestionIcon } from '@keyline-icons/react/fill';
 import { NotificationBell } from '@ValenceScreens/components/NotificationBell/NotificationBell';
 import { cn } from '@ValenceUI/cn';
@@ -20,8 +21,10 @@ import { say } from '@ValenceI18n/say';
  * joined as one control, with an arrow dimmed where there is nowhere to go that way and the keys for
  * each named once the pointer rests on it. At the top right are the inbox, the question mark that
  * opens the Valence docs in the browser, and the update once there is one — a green arrow to fetch a
- * release that has been found, how far one being fetched has got, and the arrow again to try a
- * failed one. Where the window's own controls are drawn, a rule stands between them and those.
+ * release that has been found, how far one being fetched has got, in words with a bar filling
+ * beneath them, and the arrow again to try a failed one. Nothing else asks about a release: the
+ * arrow is there for whoever wants it and costs nobody else anything. Where the window's own
+ * controls are drawn, a rule stands between them and those.
  *
  * Everything that answers a press is marked `no-drag`, so a press reaches it rather than moving the
  * window — the rest of the strip is for picking the window up by.
@@ -77,9 +80,18 @@ const WindowBar = ({ update, onUpdate, ways, keys, inbox, onHelp, frame }: Windo
       )}
 
       {update === undefined || update.kind === 'none' ? null : update.kind === 'downloading' ? (
-        <span role="status" className="px-1 text-[0.6875rem] uppercase tracking-wide opacity-70">
-          {say('screens.windowBar.updatingPercent', { percent: update.percent.toString() })}
-        </span>
+        <div role="status" className="flex min-w-[5.75rem] flex-col gap-1 px-1">
+          <span className="text-[0.6875rem] uppercase leading-none tracking-wide tabular-nums opacity-70">
+            {say('screens.windowBar.updatingPercent', { percent: update.percent.toString() })}
+          </span>
+
+          <ProgressBar
+            label={say('screens.windowBar.updatingPercent', { percent: update.percent.toString() })}
+            value={update.percent}
+            isFull
+            isThin
+          />
+        </div>
       ) : (
         <Button
           variant="ghost"

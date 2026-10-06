@@ -7515,21 +7515,6 @@
     "context": "Printed when Valence starts against a MySQL or MariaDB database in the wrong collation. {database} is its name, {collation} the one it has and {needed} the one Valence needs."
   },
   {
-    "handler": "desktop.desktop.update",
-    "text": "Update",
-    "context": "The confirm label of a confirm dialog in the desktop of the desktop app."
-  },
-  {
-    "handler": "desktop.desktop.updateValence",
-    "text": "Update Valence?",
-    "context": "The title of a confirm dialog in the desktop of the desktop app."
-  },
-  {
-    "handler": "desktop.desktop.valenceVersionIsOutItDownloads",
-    "text": "Valence {version} is available. It downloads in the background, then Valence restarts to install it.",
-    "context": "Shown in the desktop of the desktop app. {version} is filled in by the app."
-  },
-  {
     "handler": "desktop.main.aDiscordActivity.browsingLibraries",
     "text": "Browsing libraries",
     "context": "Shown in the main of the desktop app (from `aDiscordActivity`)."
