@@ -6,6 +6,7 @@ import { withTopShelf } from './plugins/withTopShelf.ts';
 import { withLaunchScreen } from './plugins/withLaunchScreen.ts';
 import { withPlainHttpToServers } from './plugins/withPlainHttpToServers.ts';
 import { withTelevisionSizedScreen } from './plugins/withTelevisionSizedScreen.ts';
+import { withoutTheSystemFocusHighlight } from './plugins/withoutTheSystemFocusHighlight.ts';
 
 const build = readTheBuild();
 
@@ -56,6 +57,8 @@ const config: ExpoConfig = {
   ],
 };
 
-export default withTelevisionSizedScreen(
-  withPlainHttpToServers(withLaunchScreen(withTopShelf(withTheSceneLifecycle(config)))),
+export default withoutTheSystemFocusHighlight(
+  withTelevisionSizedScreen(
+    withPlainHttpToServers(withLaunchScreen(withTopShelf(withTheSceneLifecycle(config)))),
+  ),
 );
