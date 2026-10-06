@@ -26,13 +26,22 @@
   animation: valence-band-run 32s linear infinite;
 }
 
+.valence-drift {
+  animation: valence-band-run 46s linear infinite;
+}
+
+.valence-drift--back {
+  animation-direction: reverse;
+  animation-duration: 54s;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  :root:not([data-motion='full']) .valence-band-run {
+  :root:not([data-motion='full']) :is(.valence-band-run, .valence-drift) {
     animation: none;
   }
 }
 
-:root[data-motion='reduced'] .valence-band-run {
+:root[data-motion='reduced'] :is(.valence-band-run, .valence-drift) {
   animation: none;
 }
 
