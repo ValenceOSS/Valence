@@ -18,7 +18,7 @@ import {
   fetchSeriesDownloadOffer,
 } from '@ValenceClient/downloads/fetchDownloads';
 import { downloadQueries } from '@ValenceClient/query/downloadQueries';
-import { detectFromBrowser } from '@ValenceScreens/playback/detectDeviceProfile';
+import { detectFromBrowser } from '@ValenceClient/playback/detectFromBrowser';
 import { readFreeSpace } from '@ValenceScreens/downloads/readFreeSpace';
 import type { DownloadQuality } from '@ValenceContracts/schemas/Download';
 import type { DownloadDialogProps } from './DownloadDialog.types';
@@ -81,8 +81,15 @@ const DownloadDialog = ({ media, series = null, onClose }: DownloadDialogProps) 
     queryKey: ['downloads', 'offer', series?.id ?? media?.id ?? '', series?.mediaIds ?? null],
     queryFn: () =>
       series === null
-        ? fetchDownloadOffer(media?.id ?? '', detectFromBrowser())
-        : fetchSeriesDownloadOffer(series.id, detectFromBrowser(), series.mediaIds),
+        ? fetchDownloadOffer(
+            media?.id ?? '',
+            detectFromBrowser(window, document.createElement('video')),
+          )
+        : fetchSeriesDownloadOffer(
+            series.id,
+            detectFromBrowser(window, document.createElement('video')),
+            series.mediaIds,
+          ),
     enabled: isOpen,
   });
 
