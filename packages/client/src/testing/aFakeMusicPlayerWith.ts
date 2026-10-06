@@ -58,6 +58,7 @@ const aFakeMusicPlayerWith = (
     moveInQueue: spy(),
     setQuality: spy(),
     stop: spy(),
+    follow: spy(),
     leave: spy(),
     playOn: spy(),
     playHere: spy(),

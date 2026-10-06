@@ -1,7 +1,31 @@
 import { describe, expect, it } from 'vitest';
-import { MusicCommandSchema, MusicNowPlayingSchema, PlaybackEventSchema } from './MusicRemote';
+import {
+  MusicCommandSchema,
+  MusicDeviceSchema,
+  MusicNowPlayingSchema,
+  PlaybackEventSchema,
+} from './MusicRemote';
 
 describe('MusicRemote', () => {
+  it('reads a device from an older server as one of no known kind or age', () => {
+    expect(
+      MusicDeviceSchema.parse({ clientId: 'laptop', label: 'MacBook', nowPlaying: null }),
+    ).toEqual({
+      clientId: 'laptop',
+      label: 'MacBook',
+      nowPlaying: null,
+      clientKind: null,
+      ageMs: null,
+    });
+  });
+
+  it('reads how long ago a device reported, and nothing for an age that cannot be', () => {
+    const device = { clientId: 'laptop', label: 'MacBook', nowPlaying: null, clientKind: null };
+
+    expect(MusicDeviceSchema.parse({ ...device, ageMs: 1_200 }).ageMs).toBe(1_200);
+    expect(MusicDeviceSchema.parse({ ...device, ageMs: -5 }).ageMs).toBeNull();
+  });
+
   it('reads a command to take over what is playing', () => {
     const command = {
       kind: 'play',

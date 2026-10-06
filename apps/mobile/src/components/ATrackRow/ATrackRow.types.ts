@@ -6,6 +6,7 @@ type ATrackRowProps = {
   number: number | null;
   artwork: string | null;
   isCurrent: boolean;
+  isPlaying?: boolean;
   isLiked: boolean;
   onPlay: (at: number) => void;
   onMenu: (at: number) => void;

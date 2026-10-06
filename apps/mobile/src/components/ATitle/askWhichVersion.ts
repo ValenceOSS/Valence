@@ -1,4 +1,4 @@
-import { ActionSheetIOS } from 'react-native';
+import { showActionSheet } from '@ValenceMobile/platform/showActionSheet';
 import { say } from '@ValenceI18n/say';
 
 /**
@@ -12,7 +12,7 @@ const askWhichVersion = (
   versions: readonly { id: string; label: string }[],
   onChoose: (id: string) => void,
 ): void => {
-  ActionSheetIOS.showActionSheetWithOptions(
+  showActionSheet(
     {
       title: say('common.whichVersionToPlay'),
       options: [...versions.map((one) => one.label), say('common.cancel')],

@@ -25,6 +25,7 @@ type APage =
   | { kind: 'artist'; artistId: string }
   | { kind: 'playlist'; playlistId: string; isRequestingMissing?: boolean }
   | { kind: 'liked' }
+  | { kind: 'mix'; mixId: string }
   | { kind: 'albums' }
   | { kind: 'artists' }
   | { kind: 'television'; code: string; askedFrom: string | null }

@@ -305,6 +305,13 @@ const WHAT_DELETION_REMOVES: readonly OwnedThing[] = [
     rule: 'isDerived',
   },
   {
+    table: 'music_play',
+    column: 'profileId',
+    owner: 'profile',
+    fate: 'goesWithIt',
+    rule: 'isPersonal',
+  },
+  {
     table: 'favourite_artist',
     column: 'profileId',
     owner: 'profile',

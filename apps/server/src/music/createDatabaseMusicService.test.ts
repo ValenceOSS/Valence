@@ -156,4 +156,21 @@ describe('createDatabaseMusicService', { timeout: STARTING_POSTGRES_MS }, () => 
 
     expect(liked.map((track) => track.id)).toEqual([seed, kin]);
   });
+
+  it('lists every song that may be heard, with its album’s year, genres and cover, and who made it', async () => {
+    const { viewer, music, low, newest, seed } = await aShelf();
+
+    const songs = await music.listCatalogue(viewer);
+    const white = songs.find((song) => song.id === seed);
+
+    expect(songs).toHaveLength(5);
+    expect(white).toEqual({
+      id: seed,
+      albumId: newest,
+      hasArtwork: true,
+      year: 2021,
+      genres: ['slowcore'],
+      artists: [{ id: low, name: 'Low' }],
+    });
+  });
 });

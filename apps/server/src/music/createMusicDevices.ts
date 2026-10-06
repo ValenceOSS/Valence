@@ -64,7 +64,9 @@ const createMusicDevices = ({ presence, onChanged, plays }: MusicDevicesOptions)
       devices.owned(listener).map((entry) => ({
         clientId: entry.clientId,
         label: entry.deviceLabel,
+        clientKind: entry.clientKind ?? null,
         nowPlaying: devices.reportOf(entry.clientId),
+        ageMs: devices.ageOf(entry.clientId),
       })),
 
     report: devices.report,

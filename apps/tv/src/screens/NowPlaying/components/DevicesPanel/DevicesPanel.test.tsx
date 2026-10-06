@@ -48,14 +48,28 @@ const playing = (title: string, isPlaying: boolean): MusicNowPlaying => ({
 const THIS_TELEVISION: MusicDevice = {
   clientId: 'client-1',
   label: 'Living Room',
+  clientKind: null,
+  ageMs: null,
   nowPlaying: null,
 };
 
 const DEVICES: MusicDevice[] = [
   THIS_TELEVISION,
-  { clientId: 'phone', label: 'Marques iPhone', nowPlaying: playing('Caramel', true) },
-  { clientId: 'laptop', label: 'Studio MacBook', nowPlaying: null },
-  { clientId: 'screen', label: 'Office', nowPlaying: playing('Emergence', false) },
+  {
+    clientId: 'phone',
+    label: 'Marques iPhone',
+    clientKind: null,
+    ageMs: null,
+    nowPlaying: playing('Caramel', true),
+  },
+  { clientId: 'laptop', label: 'Studio MacBook', clientKind: null, ageMs: null, nowPlaying: null },
+  {
+    clientId: 'screen',
+    label: 'Office',
+    clientKind: null,
+    ageMs: null,
+    nowPlaying: playing('Emergence', false),
+  },
 ];
 
 const SHOWN: WhatIsPlaying = {

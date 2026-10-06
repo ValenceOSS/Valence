@@ -18,7 +18,6 @@ import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
 import { THE_FIRST_SCREEN_IS_READY } from '@ValenceMobile/components/ASplash/THE_FIRST_SCREEN_IS_READY';
 import { TheFeatured } from '@ValenceMobile/components/TheLibrary/components/TheFeatured/TheFeatured';
 import { AHomeShelf } from '@ValenceMobile/components/TheLibrary/components/TheHome/components/AHomeShelf/AHomeShelf';
-import { usePullToRefresh } from '@ValenceMobile/hooks/usePullToRefresh';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import type { ComingUp } from '@ValenceContracts/schemas/Show';
@@ -93,7 +92,6 @@ const TheHomePage = ({
 }: TheHomeProps) => {
   const colours = useTheColours();
   const room = useSafeAreaInsets();
-  const pulling = usePullToRefresh();
   const who = useQuery(sessionQueries.who());
   const watched = useQuery(viewingQueries.progress());
   const progress = useMemo(() => byMediaId(watched.data ?? []), [watched.data]);
@@ -281,7 +279,6 @@ const TheHomePage = ({
       contentContainerStyle={spacing}
       style={styles.whole}
       keyboardShouldPersistTaps="handled"
-      refreshControl={pulling}
     />
   );
 };

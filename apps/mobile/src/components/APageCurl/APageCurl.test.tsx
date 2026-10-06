@@ -1,6 +1,14 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { theDrawnRoot } from '@ValenceMobile/testing/theDrawnRoot';
+import { APageTurner } from '@ValenceMobile/components/APageTurner/APageTurner';
+import { drawsNatively } from '@ValenceMobile/platform/drawsNatively';
 import { APageCurl } from './APageCurl';
+
+jest.mock('@ValenceMobile/platform/drawsNatively', () => ({ drawsNatively: jest.fn(() => true) }));
+
+jest.mock('@ValenceMobile/components/APageTurner/APageTurner', () => ({
+  APageTurner: jest.fn(() => null),
+}));
 
 const PAGES = ['http://one.local:8420/page/1', 'http://one.local:8420/page/2'];
 
@@ -52,5 +60,20 @@ describe('APageCurl', () => {
     await fireEvent(theDrawnRoot(), 'paper', { nativeEvent: { colour: '#f4ecd8' } });
 
     expect(onPaper).toHaveBeenCalledWith('#f4ecd8');
+  });
+});
+
+describe('APageCurl on a phone with no page curl', () => {
+  it('turns the pages by a swipe instead, handed the same', async () => {
+    jest.mocked(drawsNatively).mockReturnValueOnce(false);
+
+    await aBook();
+
+    expect(jest.mocked(APageTurner).mock.calls[0]?.[0]).toMatchObject({
+      pages: PAGES,
+      page: 1,
+      paper: '#101010',
+      fit: 'both',
+    });
   });
 });

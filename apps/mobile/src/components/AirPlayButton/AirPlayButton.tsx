@@ -23,12 +23,25 @@ const styles = StyleSheet.create({
  *
  * @param isOverPicture - Whether it sits over a film, where it is drawn white and bare like every
  *   other control over the picture, whatever the theme.
+ * @param fills - The room to fill, bare, where it is the whole of a larger tile drawn around it, so
+ *   a press anywhere on the tile opens the list.
  */
-const AirPlayButton = ({ isOverPicture = false }: AirPlayButtonProps) => {
+const AirPlayButton = ({ isOverPicture = false, fills }: AirPlayButtonProps) => {
   const colours = useTheColours();
 
   if (!drawsNatively()) {
     return null;
+  }
+
+  if (fills !== undefined) {
+    return (
+      <ThePicker
+        colour={colours.text}
+        activeColour={colours.accentContrast}
+        style={fills}
+        accessibilityLabel={say('common.playOnAnotherDevice')}
+      />
+    );
   }
 
   return (

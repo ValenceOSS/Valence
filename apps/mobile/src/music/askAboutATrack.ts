@@ -1,4 +1,4 @@
-import { ActionSheetIOS } from 'react-native';
+import { showActionSheet } from '@ValenceMobile/platform/showActionSheet';
 import { askWhichPlaylist } from '@ValenceMobile/music/askWhichPlaylist';
 import type { AskAboutATrack } from './askAboutATrack.types';
 import { say } from '@ValenceI18n/say';
@@ -57,7 +57,7 @@ const askAboutATrack = ({
         ]),
   ];
 
-  ActionSheetIOS.showActionSheetWithOptions(
+  showActionSheet(
     {
       title: track.title,
       options: [...choices.map((choice) => choice.label), say('common.cancel')],

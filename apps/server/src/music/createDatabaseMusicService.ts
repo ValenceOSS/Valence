@@ -491,6 +491,51 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
       );
     },
 
+    listCatalogue: async (viewer) => {
+      const songs = await db
+        .select({
+          id: mediaItem.id,
+          albumId: musicTrack.albumId,
+          hasArtwork: sql<boolean>`${musicAlbum.artworkPath} is not null`,
+          year: musicAlbum.year,
+          genres: musicAlbum.genres,
+        })
+        .from(musicTrack)
+        .innerJoin(mediaItem, eq(mediaItem.id, musicTrack.mediaItemId))
+        .innerJoin(musicAlbum, eq(musicAlbum.id, musicTrack.albumId))
+        .innerJoin(library, eq(library.id, mediaItem.libraryId))
+        .where(trackVisible(viewer));
+      const credits = await db
+        .select({
+          mediaItemId: musicTrackArtist.mediaItemId,
+          id: musicArtist.id,
+          name: musicArtist.name,
+        })
+        .from(musicTrackArtist)
+        .innerJoin(musicArtist, eq(musicArtist.id, musicTrackArtist.artistId))
+        .innerJoin(mediaItem, eq(mediaItem.id, musicTrackArtist.mediaItemId))
+        .innerJoin(library, eq(library.id, mediaItem.libraryId))
+        .where(trackVisible(viewer))
+        .orderBy(asc(musicTrackArtist.position));
+      const byTrack = new Map<string, { id: string; name: string }[]>();
+
+      for (const credit of credits) {
+        byTrack.set(credit.mediaItemId, [
+          ...(byTrack.get(credit.mediaItemId) ?? []),
+          { id: credit.id, name: credit.name },
+        ]);
+      }
+
+      return songs.map((song) => ({
+        id: song.id,
+        albumId: song.albumId,
+        hasArtwork: song.hasArtwork,
+        year: song.year,
+        genres: NamesSchema.parse(song.genres),
+        artists: byTrack.get(song.id) ?? [],
+      }));
+    },
+
     listPicks: async (viewer, seedIds, limit) => {
       const seeds = [...seedIds];
       const profileId = profileOf(viewer);

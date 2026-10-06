@@ -71,6 +71,34 @@ describe('MusicHome', () => {
     expect(within(yours).getByRole('button', { name: /^Sunday morning/ })).toBeInTheDocument();
   });
 
+  it('puts the mixes made for this profile today above everything else', async () => {
+    vi.stubGlobal(
+      'fetch',
+      answerMusicRequests({
+        '/api/music/albums': { albums: [ALBUM] },
+        '/api/music/artists': { artists: [] },
+        '/api/music/mixes': {
+          mixes: [
+            {
+              id: 'genre-rock',
+              kind: 'genre',
+              title: 'Rock Mix',
+              detail: 'Rock from your library',
+              trackCount: 20,
+              coverAlbumIds: [],
+            },
+          ],
+        },
+      }),
+    );
+
+    renderInAnAddress(<MusicHome />);
+
+    const made = await screen.findByRole('region', { name: 'Made for you' });
+
+    expect(within(made).getByRole('button', { name: /^Rock Mix/ })).toBeInTheDocument();
+  });
+
   it('shows what was added lately', async () => {
     renderInAnAddress(<MusicHome />);
 

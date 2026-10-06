@@ -8,6 +8,7 @@ type APartyPanelProps = {
   mediaId: string | null;
   people: readonly Askable[];
   onClose: () => void;
+  isOpen?: boolean;
 };
 
 export type { APartyPanelProps };

@@ -1160,6 +1160,24 @@ const favouriteArtist = mysqlTable(
   ],
 );
 
+const musicPlay = mysqlTable(
+  'music_play',
+  {
+    id: identifier('id').primaryKey(),
+    profileId: identifier('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    trackId: identifier('trackId')
+      .notNull()
+      .references(() => musicTrack.mediaItemId, { onDelete: 'cascade' }),
+    playedAt: momentNow('playedAt').notNull(),
+  },
+  (table) => [
+    index('music_play_recent_idx').on(table.profileId, table.playedAt),
+    index('music_play_track_idx').on(table.profileId, table.trackId),
+  ],
+);
+
 const playlist = mysqlTable(
   'playlist',
   {
@@ -1839,6 +1857,7 @@ export {
   musicTrack,
   musicTrackArtist,
   favouriteArtist,
+  musicPlay,
   playlist,
   playlistEntry,
   collection,

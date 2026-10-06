@@ -11,10 +11,27 @@ import type {
 /**
  * Reads every open copy of Valence this profile has, and what each is playing.
  *
+ * When each device last said what it was playing is put on this device's own clock, from how long
+ * ago the server heard it, rather than taken as the other device wrote it: two devices' clocks are
+ * rarely set the same, and a second between them put the song a second out wherever it was shown.
+ *
+ * @param now - This device's clock.
  * @returns The devices.
  */
-const fetchMusicDevices = async (): Promise<MusicDevice[]> =>
-  (await readFromServer('/api/music/devices', MusicDeviceListSchema, profileHeaders())).devices;
+const fetchMusicDevices = async (now: () => number = Date.now): Promise<MusicDevice[]> => {
+  const { devices } = await readFromServer(
+    '/api/music/devices',
+    MusicDeviceListSchema,
+    profileHeaders(),
+  );
+  const heard = now();
+
+  return devices.map((device) =>
+    device.nowPlaying === null || device.ageMs === null
+      ? device
+      : { ...device, nowPlaying: { ...device.nowPlaying, reportedAtMs: heard - device.ageMs } },
+  );
+};
 
 /**
  * Says what this device is playing, so this profile's other devices can show and control it.

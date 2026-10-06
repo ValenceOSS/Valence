@@ -3,7 +3,7 @@ import {
   Bin as BinFilledIcon,
   ChevronDown as ChevronDownFilledIcon,
   ChevronUp as ChevronUpFilledIcon,
-  ListOrdered as ListOrderedFilledIcon,
+  ListMusic as QueueFilledIcon,
   Record as RecordFilledIcon,
   SkipForward as SkipForwardFilledIcon,
   User as UserFilledIcon,
@@ -61,7 +61,7 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
             {
               id: 'queue',
               label: say('common.addToQueue'),
-              icon: <Icon of={ListOrderedFilledIcon} size={16} />,
+              icon: <Icon of={QueueFilledIcon} size={16} />,
               onChoose: () => {
                 player.addToQueue([track]);
                 notify.say(say('screens.trackMenu.addedTitleToTheQueue', { title: track.title }));

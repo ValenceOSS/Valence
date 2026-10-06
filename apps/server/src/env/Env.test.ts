@@ -53,6 +53,21 @@ describe('readEnv', () => {
     expect(() => readEnv({ PORT: 'http' })).toThrow();
   });
 
+  it('refuses to run in production on the development secret, which anybody can read', () => {
+    expect(() => readEnv({ NODE_ENV: 'production' })).toThrow();
+    expect(readEnv({ NODE_ENV: 'production', BETTER_AUTH_SECRET: 'a'.repeat(32) }).NODE_ENV).toBe(
+      'production',
+    );
+  });
+
+  it('trusts the proxies on this machine and the private networks unless told otherwise', () => {
+    expect(readEnv({}).TRUSTED_PROXIES).toContain('127.0.0.0/8');
+    expect(readEnv({ TRUSTED_PROXIES: ' 10.1.2.3, fd00::/8 ,' }).TRUSTED_PROXIES).toEqual([
+      '10.1.2.3',
+      'fd00::/8',
+    ]);
+  });
+
   it('rejects an unknown NODE_ENV', () => {
     expect(() => readEnv({ NODE_ENV: 'staging' })).toThrow();
   });

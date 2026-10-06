@@ -35,7 +35,7 @@ describe('RemoveDownloadDialog', () => {
     const onConfirm = vi.fn();
     const user = userEvent.setup();
 
-    render(<RemoveDownloadDialog download={DUNE} onClose={vi.fn()} onConfirm={onConfirm} />);
+    render(<RemoveDownloadDialog downloads={[DUNE]} onClose={vi.fn()} onConfirm={onConfirm} />);
 
     expect(screen.getByText(/removed from qBittorrent/)).toBeInTheDocument();
 
@@ -55,7 +55,7 @@ describe('RemoveDownloadDialog', () => {
 
     render(
       <RemoveDownloadDialog
-        download={{ ...DUNE, clientName: 'NZBGet' }}
+        downloads={[{ ...DUNE, clientName: 'NZBGet' }]}
         keepsFinishedFiles
         onClose={vi.fn()}
         onConfirm={onConfirm}
@@ -74,14 +74,14 @@ describe('RemoveDownloadDialog', () => {
     const user = userEvent.setup();
     const onConfirm = vi.fn();
     const { rerender } = render(
-      <RemoveDownloadDialog download={DUNE} onClose={vi.fn()} onConfirm={onConfirm} />,
+      <RemoveDownloadDialog downloads={[DUNE]} onClose={vi.fn()} onConfirm={onConfirm} />,
     );
 
     await user.click(screen.getByRole('checkbox', { name: 'Also delete downloaded files' }));
 
     rerender(
       <RemoveDownloadDialog
-        download={{ ...DUNE, id: '0f8fad5b-d9cb-469f-a165-70867728950f', title: 'Heat' }}
+        downloads={[{ ...DUNE, id: '0f8fad5b-d9cb-469f-a165-70867728950f', title: 'Heat' }]}
         onClose={vi.fn()}
         onConfirm={onConfirm}
       />,
@@ -95,19 +95,39 @@ describe('RemoveDownloadDialog', () => {
   it('can be closed without removing anything', async () => {
     const onClose = vi.fn();
 
-    render(<RemoveDownloadDialog download={DUNE} onClose={onClose} onConfirm={vi.fn()} />);
+    render(<RemoveDownloadDialog downloads={[DUNE]} onClose={onClose} onConfirm={vi.fn()} />);
     await userEvent.setup().click(screen.getByRole('button', { name: 'Cancel' }));
 
     expect(onClose).toHaveBeenCalled();
   });
 
   it('shows nothing while nothing is being removed', () => {
-    render(<RemoveDownloadDialog download={null} onClose={vi.fn()} onConfirm={vi.fn()} />);
+    render(<RemoveDownloadDialog downloads={[]} onClose={vi.fn()} onConfirm={vi.fn()} />);
 
     expect(screen.queryByRole('button', { name: 'Remove' })).not.toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {
     expect(RemoveDownloadDialog.displayName).toBe('RemoveDownloadDialog');
+  });
+
+  it('removes several downloads together, asking once whether what they downloaded goes too', async () => {
+    const onConfirm = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <RemoveDownloadDialog
+        downloads={[DUNE, { ...DUNE, id: '0f8fad5b-d9cb-469f-a165-70867728950f', title: 'Heat' }]}
+        onClose={vi.fn()}
+        onConfirm={onConfirm}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Remove 2 downloads' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('checkbox', { name: 'Also delete downloaded files' }));
+    await user.click(screen.getByRole('button', { name: 'Remove' }));
+
+    expect(onConfirm).toHaveBeenCalledWith(true);
   });
 });

@@ -1,5 +1,6 @@
 import { formatWebhookBody } from './formatWebhookBody';
 import { isSafeWebhookUrl } from './isSafeWebhookUrl';
+import { resolvesSafely } from './resolvesSafely';
 import { signWebhookPayload, WEBHOOK_SIGNATURE_HEADER } from './signWebhookPayload';
 import type { WebhookPayload, WebhookPreset } from '@ValenceContracts/schemas/Webhook';
 import { say } from '@ValenceI18n/say';
@@ -31,8 +32,10 @@ type WebhookAttempt = {
 /**
  * Sends one event to one subscriber and reports how it went, without throwing — a subscriber being
  * down is an ordinary thing that has to be recorded and retried rather than an error. Refuses
- * outright to send anywhere the address checks reject, and gives up on anything too slow to answer,
- * so that one unresponsive endpoint cannot hold a worker open.
+ * outright to send anywhere the address checks reject, whether as written or as its name resolves,
+ * follows no redirect — a redirect is an answer that did not arrive, not a new address to send to —
+ * and gives up on anything too slow to answer, so that one unresponsive endpoint cannot hold a worker
+ * open.
  *
  * @param target Where to send it, and what to sign it with.
  * @param payload The event being delivered.
@@ -52,7 +55,11 @@ const deliverWebhook = async (
   const call: WebhookFetcher =
     fetchImpl ??
     (async (url, init) => {
-      const response = await fetch(url, init);
+      if (!(await resolvesSafely(url))) {
+        throw new Error(say('error.common.valenceWillNotSendDeliveriesTo'));
+      }
+
+      const response = await fetch(url, { ...init, redirect: 'manual' });
 
       return { ok: response.ok, status: response.status };
     });

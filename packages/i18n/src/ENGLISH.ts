@@ -614,6 +614,8 @@ const ENGLISH = {
   'common.count.days.other': '{count} days',
   'common.count.downloading.one': '{count} downloading',
   'common.count.downloading.other': '{count} downloading',
+  'common.count.downloads.one': '{count} download',
+  'common.count.downloads.other': '{count} downloads',
   'common.count.editions.one': '{count} edition',
   'common.count.editions.other': '{count} editions',
   'common.count.episodes.one': '{count} episode',
@@ -650,6 +652,8 @@ const ENGLISH = {
   'common.count.seasons.other': '{count} seasons',
   'common.count.seconds.one': '{count} second',
   'common.count.seconds.other': '{count} seconds',
+  'common.count.selected.one': '{count} selected',
+  'common.count.selected.other': '{count} selected',
   'common.count.songs.one': '{count} song',
   'common.count.songs.other': '{count} songs',
   'common.count.songsNotInYourLibrary.one': '{count} song not in your library',
@@ -884,6 +888,7 @@ const ENGLISH = {
   'common.lyrics': 'Lyrics',
   'common.lyricsForTitle': 'Lyrics for {title}',
   'common.madeCreatedAt': 'Created {createdAt}',
+  'common.madeForYou': 'Made for you',
   'common.makeALink': 'Create share link',
   'common.makeANewCalendarLink': 'Create a new calendar link?',
   'common.makeANewLink': 'Create new link',
@@ -896,6 +901,7 @@ const ENGLISH = {
   'common.markTitleAsWatched': 'Mark {title} as watched',
   'common.media': 'Media',
   'common.medium': 'Medium',
+  'common.mixByValence': 'Made by Valence',
   'common.mode': 'Mode',
   'common.mono': 'Mono',
   'common.month': 'Month',
@@ -1231,6 +1237,7 @@ const ENGLISH = {
   'common.sections': 'Sections',
   'common.security': 'Security',
   'common.seeAll': 'See all',
+  'common.selectTitle': 'Select {title}',
   'common.sepia': 'Sepia',
   'common.series': 'Series',
   'common.serif': 'Serif',
@@ -1857,6 +1864,7 @@ const ENGLISH = {
   'error.common.thatIsForWhoeverSetsUp': 'Only the requests administrator can do that.',
   'error.common.thatIsNotInsideALibrary': 'That isn’t inside a library.',
   'error.common.thatIsNotYourDevice': 'That isn’t your device.',
+  'error.common.thatRequestIsTooLarge': 'That request is too large.',
   'error.common.thatTrackCouldNotBeRead': 'Couldn’t read that track.',
   'error.common.thatWouldLeaveNobodyAbleTo': 'That would leave no administrators on this server.',
   'error.common.theAccountCouldNotBeMade':
@@ -1973,6 +1981,7 @@ const ENGLISH = {
   'error.music.thatPlaylistHasNoCoverOf': 'That playlist has no cover of its own.',
   'error.music.thatPlaylistIsNotYoursTo': 'You can’t edit that playlist because it isn’t yours.',
   'error.music.thatPlaylistIsNotYoursTo2': 'You can’t delete that playlist because it isn’t yours.',
+  'error.music.thereIsNoSuchMixToday': 'There’s no such mix today.',
   'error.person.theCatalogueKnowsNobodyByThat': 'The catalogue has no person with that ID.',
   'error.phone.aPhoneSignsInAtApi': 'Phones sign in at /api/phone.',
   'error.phone.thatSignInHasExpiredTry': 'That sign-in has expired. Try again.',
@@ -2083,9 +2092,12 @@ const ENGLISH = {
   'phone.aBook.audiobookChapters': 'Audiobook chapters',
   'phone.aBook.pagePage': 'Page {page}',
   'phone.aBook.pagePageOfPageCount': 'Page {page} of {pageCount}',
+  'phone.aDevicesSheet.airPlayAndBluetooth': 'AirPlay & Bluetooth',
+  'phone.aDevicesSheet.bluetooth': 'Bluetooth',
   'phone.aDevicesSheet.noOtherValenceIsOpenOn':
     'Valence isn’t open on any other device with this profile. Open Valence on a computer, TV or another phone and it’ll appear here.',
   'phone.aDevicesSheet.thisIPhone': 'This iPhone',
+  'phone.aDevicesSheet.thisPhone': 'This phone',
   'phone.aFaceEditor.aPhotoOrAGIF': 'A photo or a GIF from your library.',
   'phone.aFaceEditor.chooseAPhotoOrGIF': 'Choose a photo or GIF',
   'phone.anAlbum.thatAlbumCouldNotBeRead': 'Couldn’t load that album.',
@@ -2164,6 +2176,9 @@ const ENGLISH = {
     'Open Valence on your iPhone and sign in to play your music here.',
   'phone.carPlay.useCarPlay.thisServerHasNoMusicLibrary':
     'This server has no music library set up.',
+  'phone.platform.describeThisPhone.anEmulator': 'Emulator',
+  'phone.platform.describeThisPhone.aPhone': 'Phone',
+  'phone.platform.describeThisPhone.nameOnAndroid': '{name} on Android',
   'phone.platform.installPhonePlatform.addAPasskeyFromValenceOn':
     'Add a passkey from Valence on the web.',
   'phone.platform.sendAPhoto.thatPhotoCouldNotBeSent': 'Couldn’t upload that photo.',
@@ -2280,6 +2295,7 @@ const ENGLISH = {
   'phone.theNotifications.clearEveryNotification': 'Clear all notifications?',
   'phone.theNotifications.nothingNew': 'No new notifications',
   'phone.theNotifications.theyAreGoneForGood': 'They’ll be deleted permanently.',
+  'phone.theNowPlayingBar.byArtists': ' · {artists}',
   'phone.theSearch.asked.nothingAskedForYet': 'You haven’t requested anything yet.',
   'phone.theSearch.everythingInEveryLibrary': 'Search all libraries.',
   'phone.theSearch.theResults.nothingCalledAskedInTheLibrary':
@@ -3257,12 +3273,18 @@ const ENGLISH = {
   'screens.adminArea.downloadsPanel.nameProblem': '{name}: {problem}',
   'screens.adminArea.downloadsPanel.nothingWillBeSentToIt':
     'No more downloads will be sent to it, and Valence stops tracking the ones it already sent. Downloads in progress continue in the client.',
+  'screens.adminArea.downloadsPanel.pausedCount.one': 'Paused {count} download.',
+  'screens.adminArea.downloadsPanel.pausedCount.other': 'Paused {count} downloads.',
   'screens.adminArea.downloadsPanel.pausedTitle': 'Paused {title}.',
   'screens.adminArea.downloadsPanel.readingTheConnectedAppsQueues':
     'Loading connected apps’ queues…',
   'screens.adminArea.downloadsPanel.readingTheDownloadClients': 'Loading download clients',
+  'screens.adminArea.downloadsPanel.removedCount.one': 'Removed {count} download.',
+  'screens.adminArea.downloadsPanel.removedCount.other': 'Removed {count} downloads.',
   'screens.adminArea.downloadsPanel.removedTitle': 'Removed {title}.',
   'screens.adminArea.downloadsPanel.removeThisClient': 'Remove this client?',
+  'screens.adminArea.downloadsPanel.resumedCount.one': 'Resumed {count} download.',
+  'screens.adminArea.downloadsPanel.resumedCount.other': 'Resumed {count} downloads.',
   'screens.adminArea.downloadsPanel.resumedTitle': 'Resumed {title}.',
   'screens.adminArea.downloadsPanel.rules': 'Rules',
   'screens.adminArea.downloadsPanel.theConnectedAppsQueuesCouldNot':
@@ -3270,6 +3292,7 @@ const ENGLISH = {
   'screens.adminArea.downloadsPanel.theDownloadClientsCouldNotBeRead':
     'Couldn’t load download clients.',
   'screens.adminArea.downloadsPanel.theDownloadsCouldNotBeRead': 'Couldn’t load downloads.',
+  'screens.adminArea.downloadsPanel.untickThem': 'Clear selection',
   'screens.adminArea.downloadsPanel.whatToShowAboutDownloads': 'Download views',
   'screens.adminArea.emailCard.aPasswordIsSavedLeaveIt':
     'A password is saved. Leave the field empty to keep it, or type a new one to replace it.',
@@ -3770,11 +3793,8 @@ const ENGLISH = {
   'screens.adminArea.mediaRequestsPanel.approveTitle': 'Approve {title}',
   'screens.adminArea.mediaRequestsPanel.chooseAllLengthWaitingOnApproval':
     'Select all {length} awaiting approval',
-  'screens.adminArea.mediaRequestsPanel.chooseTitle': 'Select {title}',
   'screens.adminArea.mediaRequestsPanel.countApproved.one': '{count} approved.',
   'screens.adminArea.mediaRequestsPanel.countApproved.other': '{count} approved.',
-  'screens.adminArea.mediaRequestsPanel.countChosen.one': '{count} selected',
-  'screens.adminArea.mediaRequestsPanel.countChosen.other': '{count} selected',
   'screens.adminArea.mediaRequestsPanel.countRefused.one': '{count} declined.',
   'screens.adminArea.mediaRequestsPanel.countRefused.other': '{count} declined.',
   'screens.adminArea.mediaRequestsPanel.dateRequested': 'Date requested',
@@ -4094,9 +4114,13 @@ const ENGLISH = {
     'It’s removed from {name}, and Valence stops tracking it.',
   'screens.adminArea.removeDownloadDialog.nameKeepsWhatItHasFinished':
     '{name} doesn’t delete finished downloads, so their files stay where they are.',
+  'screens.adminArea.removeDownloadDialog.removeCountDownloads.one': 'Remove {count} download',
+  'screens.adminArea.removeDownloadDialog.removeCountDownloads.other': 'Remove {count} downloads',
   'screens.adminArea.removeDownloadDialog.removeThisDownload': 'Remove this download?',
   'screens.adminArea.removeDownloadDialog.theClientKeepsWhatItHasFinished':
     'This download client doesn’t delete finished downloads, so their files stay where they are.',
+  'screens.adminArea.removeDownloadDialog.theyAreTakenOutOfTheirClients':
+    'They’re removed from their download clients, and Valence stops tracking them.',
   'screens.adminArea.requestDetailDialog.aRequest': 'A request',
   'screens.adminArea.requestDetailDialog.neverAgain': 'Blocklist',
   'screens.adminArea.requestDetailDialog.rEQUESTKINDNAMESRequestedByName':
@@ -4739,6 +4763,7 @@ const ENGLISH = {
     'No download clients yet. Add qBittorrent or Transmission for torrents, or SABnzbd or NZBGet for Usenet, so Valence can send releases to them.',
   'screens.downloadsPanel.downloadQueueTable.againBesideWhatWasFiledBefore':
     'Again, beside what was filed before.',
+  'screens.downloadsPanel.downloadQueueTable.chooseEveryDownload': 'Select every download',
   'screens.downloadsPanel.downloadQueueTable.doneOfSize': '{done} of {size}',
   'screens.downloadsPanel.downloadQueueTable.fileIntoName': 'Import into {name}',
   'screens.downloadsPanel.downloadQueueTable.nothingHasBeenSentToA':
@@ -6281,6 +6306,8 @@ const ENGLISH = {
   'server.email.renderEmail.ifTheButtonDoesNotWork':
     'If the button doesn’t work, copy this link into your browser:',
   'server.email.renderEmail.sentByValenceAt': 'Sent by Valence at {server}.',
+  'server.env.theDevelopmentSecretInProduction':
+    'BETTER_AUTH_SECRET is still the development default, which anybody can read. Set it to a long random value of your own before running Valence in production.',
   'server.events.webhookEventBus.anEventCouldNotBePublished': 'Couldn’t publish an event.',
   'server.images.imageCache.thatIsNotAnImageContentType': 'That isn’t an image: {contentType}.',
   'server.images.imageCache.theCatalogueAnsweredStatus': 'The catalogue returned {status}.',
@@ -6518,6 +6545,15 @@ const ENGLISH = {
   'server.music.couldNotKeepTrack': 'The file was read but couldn’t be saved: {reason}',
   'server.music.couldNotReadTrack': 'Couldn’t read this file as a track.',
   'server.music.couldNotReadTrackBecause': 'Couldn’t read this file as a track: {reason}',
+  'server.music.mixes.dailyMix': 'Daily Mix {number}',
+  'server.music.mixes.decadeMix': '{decade}s Mix',
+  'server.music.mixes.decadeMixDetail': 'Music from the {decade}s',
+  'server.music.mixes.genreMix': '{genre} Mix',
+  'server.music.mixes.genreMixDetail': '{genre} from your library',
+  'server.music.mixes.onRepeat': 'On Repeat',
+  'server.music.mixes.onRepeatDetail': 'Your most played songs of the last 30 days',
+  'server.music.mixes.rediscover': 'Rediscover',
+  'server.music.mixes.rediscoverDetail': 'Songs you played a lot and haven’t heard lately',
   'server.music.musicDevices.anAdministrator': 'An administrator',
   'server.notifications.digestBody': '{counts} — {names}',
   'server.notifications.notifyHousehold.theHouseholdCouldNotBeTold':

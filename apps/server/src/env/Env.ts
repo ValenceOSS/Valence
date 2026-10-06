@@ -1,6 +1,9 @@
 import { z } from 'zod';
 import { DATABASE_ENV } from '@ValenceDatabase/DATABASE_ENV';
 import { defaultMediaJobs } from '@ValenceServer/env/defaultMediaJobs';
+import { say } from '@ValenceI18n/say';
+
+const DEVELOPMENT_SECRET = 'development-secret-change-me-in-production';
 
 const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -17,7 +20,7 @@ const EnvSchema = z.object({
     .transform((value) => value === 'true'),
   BACKUP_DIR: z.string().min(1).default('/config/backups'),
   BACKUPS_KEPT: z.coerce.number().int().positive().default(3),
-  BETTER_AUTH_SECRET: z.string().min(32).default('development-secret-change-me-in-production'),
+  BETTER_AUTH_SECRET: z.string().min(32).default(DEVELOPMENT_SECRET),
   BETTER_AUTH_URL: z.string().url().default('http://localhost:8420'),
   DEMO_ACCOUNTS: z
     .string()
@@ -36,6 +39,15 @@ const EnvSchema = z.object({
         .split(',')
         .map((origin) => origin.trim())
         .filter((origin) => origin.length > 0),
+    ),
+  TRUSTED_PROXIES: z
+    .string()
+    .default('127.0.0.0/8, ::1, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, fc00::/7')
+    .transform((value) =>
+      value
+        .split(',')
+        .map((range) => range.trim())
+        .filter((range) => range.length > 0),
     ),
   COOKIE_SECURE: z
     .enum(['true', 'false'])
@@ -82,10 +94,22 @@ type Env = z.infer<typeof EnvSchema>;
  * Reads the process environment into a checked configuration, so a server that is misconfigured
  * fails at startup with a message naming the variable rather than at midnight with a type error.
  *
+ * A production server still holding the development secret is refused outright. That secret is
+ * written here for anybody to read, and everything sealed or signed with it — sessions, plugin
+ * credentials, calendar feed addresses — would be as open as the source.
+ *
  * @param source - The process environment.
  * @returns The configuration, validated.
  */
-const readEnv = (source: NodeJS.ProcessEnv): Env => EnvSchema.parse(source);
+const readEnv = (source: NodeJS.ProcessEnv): Env => {
+  const env = EnvSchema.parse(source);
+
+  if (env.NODE_ENV === 'production' && env.BETTER_AUTH_SECRET === DEVELOPMENT_SECRET) {
+    throw new Error(say('server.env.theDevelopmentSecretInProduction'));
+  }
+
+  return env;
+};
 
 export type { Env };
 

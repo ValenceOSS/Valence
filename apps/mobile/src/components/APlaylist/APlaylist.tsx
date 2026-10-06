@@ -1,7 +1,8 @@
+import { showActionSheet } from '@ValenceMobile/platform/showActionSheet';
 import { Download, ListMusic, MoreHorizontal } from '@keyline-icons/react-native';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ActionSheetIOS, ActivityIndicator, Alert } from 'react-native';
+import { ActivityIndicator, Alert } from 'react-native';
 import {
   UIImagePickerPreferredAssetRepresentationMode,
   launchImageLibraryAsync,
@@ -231,7 +232,7 @@ const APlaylist = ({
       },
     ];
 
-    ActionSheetIOS.showActionSheetWithOptions(
+    showActionSheet(
       {
         title: playlist.name,
         options: [...choices.map((choice) => choice.label), say('common.cancel')],

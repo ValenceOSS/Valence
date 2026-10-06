@@ -354,7 +354,15 @@ describe('NowPlaying', () => {
   it('opens the devices to play on, and hands the music to the one chosen', async () => {
     const { player } = aPlayer({ current: SONG, queue: QUEUE });
     const drawn = await draw({
-      devices: [{ clientId: 'phone', label: 'Marques iPhone', nowPlaying: null }],
+      devices: [
+        {
+          clientId: 'phone',
+          label: 'Marques iPhone',
+          clientKind: null,
+          ageMs: null,
+          nowPlaying: null,
+        },
+      ],
     });
 
     await userEvent.press(drawn.getByRole('button', { name: 'Play on another device' }));
@@ -376,6 +384,8 @@ describe('NowPlaying', () => {
         {
           clientId: 'phone',
           label: 'Marques iPhone',
+          clientKind: null,
+          ageMs: null,
           nowPlaying: {
             trackId: aTrack(4).id,
             title: 'The Summoning',

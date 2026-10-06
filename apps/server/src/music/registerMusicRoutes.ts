@@ -12,6 +12,7 @@ import {
   listArtistsRoute,
   listDevicesRoute,
   listLikedRoute,
+  listMixesRoute,
   listPicksRoute,
   listPlaylistsRoute,
   listTracksRoute,
@@ -21,6 +22,7 @@ import {
   readArtistImageRoute,
   readArtistRoute,
   readLyricsRoute,
+  readMixRoute,
   readPlaylistRoute,
   removePlaylistRoute,
   reportNowPlayingRoute,
@@ -227,6 +229,48 @@ const registerMusicRoutes = (
     }
 
     return context.json({ tracks: await music.library.listLiked(viewer) }, 200);
+  });
+
+  app.openapi(listMixesRoute, async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json(NOBODY, 401);
+    }
+
+    const mixes = (await music.mixes?.list(viewer)) ?? [];
+
+    return context.json(
+      {
+        mixes: mixes.map(({ trackIds, ...mix }) => ({ ...mix, trackCount: trackIds.length })),
+      },
+      200,
+    );
+  });
+
+  app.openapi(readMixRoute, async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json(NOBODY, 401);
+    }
+
+    const mix = (await music.mixes?.read(viewer, context.req.valid('param').mixId)) ?? null;
+
+    if (mix === null) {
+      return context.json(refuse('error.music.thereIsNoSuchMixToday'), 404);
+    }
+
+    const { trackIds, ...rest } = mix;
+
+    return context.json(
+      {
+        ...rest,
+        trackCount: trackIds.length,
+        tracks: await music.library.listTracks(viewer, trackIds),
+      },
+      200,
+    );
   });
 
   app.get('/api/music/artists/:artistId/story', async (context) => {

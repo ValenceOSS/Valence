@@ -6,7 +6,7 @@ import type { MusicView } from '@ValenceClient/music/musicView';
  * wherever it is listed.
  *
  * An album is playing whenever the song playing is on it, however that song came to be playing; an
- * artist, a playlist or the liked songs only when that is what the queue was started from, since a
+ * artist, a playlist, a mix or the liked songs only when that is what the queue was started from, since a
  * song belongs to many of those at once.
  *
  * @param view - The page.
@@ -29,6 +29,10 @@ const isPlayingFrom = (
 
   if (view.kind === 'liked') {
     return source.kind === 'liked';
+  }
+
+  if (view.kind === 'mix') {
+    return source.kind === 'tracks' && source.id === view.id;
   }
 
   return (

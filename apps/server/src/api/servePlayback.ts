@@ -1,3 +1,4 @@
+import { canonicalIdOf } from '@ValenceServer/visibility/canonicalIdOf';
 import { refuseWith } from '@ValenceI18n/refuseWith';
 import type { PreviewRead } from '@ValenceServer/playback/PlaybackService';
 import {
@@ -187,8 +188,14 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.get('/api/media/:mediaId/preview', async (context) => {
+    const mediaId = context.req.param('mediaId');
+
+    if (canonicalIdOf(mediaId) !== mediaId) {
+      return context.json(refuse('error.common.noSuchItem'), 404);
+    }
+
     const read = await playback
-      .readPreview(context.req.param('mediaId'), context.req.header('range') ?? null)
+      .readPreview(mediaId, context.req.header('range') ?? null)
       .catch((): PreviewRead => ({ kind: 'absent' }));
 
     if (read.kind === 'pending') {

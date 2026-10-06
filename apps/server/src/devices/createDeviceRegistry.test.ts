@@ -85,6 +85,23 @@ describe('createDeviceRegistry', () => {
     expect(registry.reportOf('laptop')).toBeNull();
   });
 
+  it('says how long ago a device last reported, by its own clock, and nothing once it stops', () => {
+    let at = 10_000;
+    const { presence } = presenceWith([entry('laptop', 'me')]);
+    const registry = createDeviceRegistry<string>({ presence, now: () => at });
+
+    expect(registry.ageOf('laptop')).toBeNull();
+
+    registry.report(ME, 'laptop', 'watching Arrival');
+    at = 12_500;
+
+    expect(registry.ageOf('laptop')).toBe(2_500);
+
+    registry.report(ME, 'laptop', null);
+
+    expect(registry.ageOf('laptop')).toBeNull();
+  });
+
   it('will not take a report for a device that is not the person’s', () => {
     const onChanged = vi.fn();
     const { presence } = presenceWith([entry('theirs', 'them')]);

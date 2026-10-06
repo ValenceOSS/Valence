@@ -25,6 +25,7 @@ type TheTabsProps = {
   above?: ReactNode;
   onFaceAt?: (at: ARectOnScreen) => void;
   isFaceArriving?: boolean;
+  onBarHeight?: (height: number) => void;
 };
 
 export type { ATab, ATabFace, TheTabsProps };

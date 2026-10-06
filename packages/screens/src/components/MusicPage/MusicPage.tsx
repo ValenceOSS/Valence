@@ -25,6 +25,7 @@ import { ArtistsView } from './components/ArtistsView/ArtistsView';
 import { DevicesPanel } from './components/DevicesPanel/DevicesPanel';
 import { LikedView } from './components/LikedView/LikedView';
 import { ListeningPartyPanel } from './components/ListeningPartyPanel/ListeningPartyPanel';
+import { MixView } from './components/MixView/MixView';
 import { LyricsView } from './components/LyricsView/LyricsView';
 import { LyricsPanel } from './components/LyricsPanel/LyricsPanel';
 import { MusicHome } from './components/MusicHome/MusicHome';
@@ -73,6 +74,10 @@ const MusicViewShown = ({ view }: { view: MusicView }) => {
 
   if (view.kind === 'liked') {
     return <LikedView />;
+  }
+
+  if (view.kind === 'mix') {
+    return <MixView mixId={view.id} />;
   }
 
   if (view.kind === 'albums') {

@@ -1,5 +1,6 @@
 type AirPlayButtonProps = {
   isOverPicture?: boolean;
+  fills?: { height: number; width: number };
 };
 
 type NativeAirPlayProps = {

@@ -60,6 +60,7 @@ const config: ExpoConfig = {
       backgroundColor: '#0088FF',
     },
     permissions: ['ACCESS_NETWORK_STATE', 'ACCESS_WIFI_STATE'],
+    allowBackup: false,
   },
   extra: { eas: { projectId: '11620f0a-1d3a-449d-9812-2afe80b14ecc' } },
   plugins: [

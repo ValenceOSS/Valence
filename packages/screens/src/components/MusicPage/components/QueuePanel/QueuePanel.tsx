@@ -1,4 +1,4 @@
-import { ListOrdered as ListOrderedIcon, X as XIcon } from '@keyline-icons/react';
+import { ListMusic as QueueIcon, X as XIcon } from '@keyline-icons/react';
 import { Sparkle as SparkleFilledIcon } from '@keyline-icons/react/fill';
 import { useEffect, useRef, useState } from 'react';
 import { Reorder } from 'motion/react';
@@ -82,7 +82,7 @@ const QueuePanel = () => {
   if (queue === null || current === null) {
     return (
       <NothingHere
-        of={ListOrderedIcon}
+        of={QueueIcon}
         title={say('screens.musicPage.queuePanel.nothingQueued')}
         detail={say('screens.musicPage.queuePanel.playSomethingAndWhatComesNext')}
       />

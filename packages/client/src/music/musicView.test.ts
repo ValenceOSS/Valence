@@ -16,6 +16,7 @@ describe('musicView', () => {
     { kind: 'playlist', id: ID },
     { kind: 'playlist', id: ID, isRequestingMissing: true },
     { kind: 'liked' },
+    { kind: 'mix', id: 'decade-2020' },
     { kind: 'lyrics' },
     { kind: 'search', query: 'sleep token' },
   ])('reads back what it wrote for $kind', (view) => {

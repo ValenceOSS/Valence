@@ -21,6 +21,7 @@ import { liquidSpring } from '@ValenceUI/animations/reveal';
 import { hasFinePointer } from '@ValenceUI/hasFinePointer';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { useQuery } from '@tanstack/react-query';
+import { isWatchedThrough } from '@ValenceClient/library/isWatchedThrough';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { showSlug } from '@ValenceCore/functions/showSlug';
 import { MediaPreview } from '@ValenceScreens/components/MediaPreview/MediaPreview';
@@ -89,7 +90,9 @@ const fitInside = (top: number, height: number): number => {
  * beside the one that plays it, the rest fold into a menu rather than running off its edge.
  *
  * @param media - The item to draw.
- * @param watchedFraction - How far through it this viewer is.
+ * @param watchedFraction - How far through it this viewer is. A card for a whole programme leaves
+ *   its episode's out, and is ticked only once the programme is watched through, every season that
+ *   has aired included.
  * @param unwatchedCount - For a card that stands for a programme, how many of its episodes this
  *   viewer has still to watch.
  * @param onPlay - Told to start it, and where from.
@@ -168,13 +171,20 @@ const RailCard = ({
     enabled: anchor !== null && !isSeries,
   });
 
+  const mayBeSeenThrough = isSeries && unwatchedCount === 0;
+
   const asking = useQuery({
     ...libraryQueries.show(media.libraryId, named === '' ? null : named),
-    enabled: anchor !== null && isSeries,
+    enabled: isSeries && (anchor !== null || mayBeSeenThrough),
   });
 
   const detail = asked.data ?? null;
   const show = asking.data ?? null;
+  const isSeenThrough =
+    mayBeSeenThrough &&
+    show !== null &&
+    isWatchedThrough(show, () => true, new Date().toISOString().slice(0, 10));
+  const shownFraction = isSeries ? (isSeenThrough ? 1 : undefined) : watchedFraction;
 
   const told = isSeries ? null : (detail?.metadata.overview ?? null);
 
@@ -308,7 +318,7 @@ const RailCard = ({
           {...(wideUrl === undefined ? {} : { imageUrl: wideUrl })}
           {...(media.hasLogo ? { logoUrl: artworkUrl(media.id, 'logo') } : {})}
           {...(flag === undefined ? {} : { flag })}
-          {...(watchedFraction === undefined ? {} : { watchedFraction })}
+          {...(shownFraction === undefined ? {} : { watchedFraction: shownFraction })}
           onSelect={inspect}
           className="w-full"
         />
@@ -320,7 +330,7 @@ const RailCard = ({
           title={media.seriesTitle ?? media.title}
           subtitle={<MediaFacts media={media} hasEpisode={!isSeries} />}
           shape={shape}
-          {...(watchedFraction === undefined ? {} : { watchedFraction })}
+          {...(shownFraction === undefined ? {} : { watchedFraction: shownFraction })}
           {...(unwatchedCount === undefined
             ? {}
             : {
@@ -387,7 +397,7 @@ const RailCard = ({
                               ? null
                               : sayCount('common.count.seasons', show.seasonCount),
                             sayCount('common.count.episodes', show.episodeCount),
-                            unwatchedCount === undefined
+                            unwatchedCount === undefined || (unwatchedCount === 0 && !isSeenThrough)
                               ? null
                               : unwatchedCount === 0
                                 ? say('screens.railCard.allWatched')

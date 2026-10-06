@@ -30,6 +30,7 @@ const config: ExpoConfig = {
   },
   android: {
     package: 'app.valence.tv',
+    allowBackup: false,
   },
   extra: { palette: readValencePalette(), build },
   plugins: [
