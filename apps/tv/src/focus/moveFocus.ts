@@ -45,6 +45,9 @@ const throughGuides = (from: HTMLElement, to: HTMLElement): HTMLElement => {
  * nearest place that way, staying inside any panel that holds the remote that way, going where a
  * place says pressing that way should go, and back into a remembering guide where it was last.
  *
+ * The page is scrolled to the place before it is focused, so a screen that scrolls itself on focus,
+ * as the front page does back to its top for the hero, has the last word.
+ *
  * @param direction - The way to move.
  * @param within - The page, the document's own unless a test says otherwise.
  * @returns Whether the remote moved.
@@ -80,8 +83,8 @@ const moveFocus = (direction: Direction, within: Document = document): boolean =
 
   const landing = throughGuides(from, next);
 
-  landing.focus({ preventScroll: true });
   landing.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+  landing.focus({ preventScroll: true });
 
   return true;
 };
