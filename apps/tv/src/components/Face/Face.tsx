@@ -33,7 +33,7 @@ const Face = ({ profile, size, isFocused = false, isRound = false }: FaceProps) 
       ) : (
         <Image
           source={{ uri: onTheServer(profileAvatarUrl(profile)), headers: signedHeaders() }}
-          style={ring}
+          style={[StyleSheet.absoluteFill, { borderRadius: ring.borderRadius }]}
           contentFit="cover"
           onError={() => {
             setIsMissing(true);
@@ -47,7 +47,7 @@ const Face = ({ profile, size, isFocused = false, isRound = false }: FaceProps) 
 Face.displayName = 'Face';
 
 const styles = StyleSheet.create({
-  face: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  face: { alignItems: 'center', justifyContent: 'center' },
   focused: { borderWidth: 6, borderColor: tokens.colours.text },
   initial: { color: tokens.colours.onAccent, fontWeight: '700' },
 });
