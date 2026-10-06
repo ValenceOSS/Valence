@@ -63,7 +63,7 @@ describe('MixView', () => {
 
     renderInAnAddress(<MixView mixId="decade-1950" />);
 
-    expect(await screen.findByText('There’s no such mix today.')).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent('There’s no such mix today.');
   });
 
   it('sets a display name so devtools can identify it', () => {
