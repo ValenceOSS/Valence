@@ -78,7 +78,7 @@ const STARTS = [
  * The first thing anybody sees: a dark card washed with slow blue light, what Valence is in one
  * line with the words that matter most written softer and underlined by hand, one way to start, and
  * beneath it the app itself, tipped back on the table, which lays itself flat as the page scrolls —
- * hanging over the foot of the card and across a band of Valence's name running past beneath it.
+ * hanging over the foot of the card, with a band of Valence's name running past in front of its foot.
  *
  * The heading is lit from below, grey rising to white inside a white edge, and writes itself in
  * a word at a time, the line draws itself under its words once the heading has landed, and the
@@ -233,7 +233,7 @@ const Hero = () => {
         <DeviceStage />
       </div>
 
-      <ValenceBand className="-mt-[1.8vw] xl:-mt-7" />
+      <ValenceBand className="z-20 -mt-[1.8vw] xl:-mt-7" />
     </section>
   );
 };
