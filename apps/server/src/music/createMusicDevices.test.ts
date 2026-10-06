@@ -75,8 +75,8 @@ describe('createMusicDevices', () => {
     ]);
 
     expect(createMusicDevices({ presence }).list(ME)).toEqual([
-      { clientId: 'laptop', label: 'MacBook', nowPlaying: null },
-      { clientId: 'phone', label: 'iPhone', nowPlaying: null },
+      { clientId: 'laptop', label: 'MacBook', clientKind: null, nowPlaying: null, ageMs: null },
+      { clientId: 'phone', label: 'iPhone', clientKind: null, nowPlaying: null, ageMs: null },
     ]);
   });
 
@@ -86,6 +86,7 @@ describe('createMusicDevices', () => {
 
     expect(devices.report(ME, 'laptop', NOW_PLAYING)).toBe(true);
     expect(devices.list(ME)[0]?.nowPlaying).toEqual(NOW_PLAYING);
+    expect(devices.list(ME)[0]?.ageMs).toEqual(expect.any(Number));
   });
 
   it('tells of each song a device starts and stops playing', () => {

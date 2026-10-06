@@ -10,6 +10,7 @@ const songsBy = (artist: string, genre: string, year: number, count: number): Ca
   Array.from({ length: count }, (_, at) => ({
     id: `${artist}-${at.toString()}`,
     albumId: `${artist}-album`,
+    hasArtwork: true,
     year,
     genres: [genre],
     artists: [{ id: artist, name: artist.toUpperCase() }],
@@ -90,5 +91,17 @@ describe('buildMixes', () => {
     const lately = [{ trackId: 'drake-1', plays: 9, lastPlayedAtMs: NOW - DAY_MS }];
 
     expect(build({ lately }).some((mix) => mix.id === 'on-repeat')).toBe(false);
+  });
+
+  it('makes a cover only of the albums that have artwork', () => {
+    const songs = [
+      ...SONGS,
+      ...songsBy('bare', 'Metal', 2023, 25).map((song) => ({ ...song, hasArtwork: false })),
+    ];
+
+    const covers = build({ songs }).flatMap((mix) => mix.coverAlbumIds);
+
+    expect(covers).toContain('sleep-album');
+    expect(covers).not.toContain('bare-album');
   });
 });

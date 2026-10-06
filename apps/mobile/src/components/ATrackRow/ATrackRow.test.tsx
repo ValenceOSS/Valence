@@ -35,4 +35,11 @@ describe('ATrackRow', () => {
 
     expect(drawn.getByText('3')).toBeTruthy();
   });
+
+  it('marks the song playing in place of its number', async () => {
+    const drawn = await render(aRow({ isCurrent: true, isPlaying: true }));
+
+    expect(drawn.getByLabelText('Playing')).toBeTruthy();
+    expect(drawn.queryByText('3')).toBeNull();
+  });
 });

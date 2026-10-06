@@ -10,14 +10,19 @@ const music = vi.hoisted(() => ({
 
 const playlists = vi.hoisted(() => ({ fetchPlaylist: vi.fn() }));
 
+const mixes = vi.hoisted(() => ({ fetchMix: vi.fn() }));
+
 vi.mock('@ValenceClient/music/fetchMusic', () => music);
 
 vi.mock('@ValenceClient/music/fetchPlaylists', () => playlists);
+
+vi.mock('@ValenceClient/music/fetchMixes', () => mixes);
 
 beforeEach(() => {
   music.fetchAlbum.mockResolvedValue({ tracks: [aTrack(1)] });
   music.fetchArtist.mockResolvedValue({ popular: [aTrack(2)] });
   music.fetchLiked.mockResolvedValue([aTrack(3)]);
+  mixes.fetchMix.mockResolvedValue({ tracks: [aTrack(5)] });
   playlists.fetchPlaylist.mockResolvedValue({
     playlist: { isOrdered: true },
     entries: [{ item: { track: aTrack(4) } }, { item: { track: null } }],
@@ -44,6 +49,14 @@ describe('tracksFor', () => {
 
     expect(found?.tracks).toEqual([aTrack(4)]);
     expect(found?.isOrdered).toBe(true);
+  });
+
+  it('plays a mix made for this profile, saying it came from that mix', async () => {
+    expect(await tracksFor({ kind: 'mix', id: 'decade-2020' }, '2020s Mix')).toEqual({
+      tracks: [aTrack(5)],
+      source: { kind: 'tracks', id: 'decade-2020', name: '2020s Mix' },
+      isOrdered: false,
+    });
   });
 
   it('plays everything liked', async () => {

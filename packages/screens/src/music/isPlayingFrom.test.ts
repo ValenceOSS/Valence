@@ -5,7 +5,7 @@ import { isPlayingFrom } from './isPlayingFrom';
 
 const SONG = aTrack(1);
 
-const from = (kind: 'playlist' | 'artist' | 'liked', id: string | null) => ({
+const from = (kind: 'playlist' | 'artist' | 'liked' | 'tracks', id: string | null) => ({
   current: SONG,
   queue: startQueue([SONG], 0, { source: { kind, id, name: 'x' } }),
 });
@@ -23,6 +23,15 @@ describe('isPlayingFrom', () => {
 
   it('marks the liked songs when they were started', () => {
     expect(isPlayingFrom({ kind: 'liked' }, from('liked', null))).toBe(true);
+  });
+
+  it('marks the mix the queue was started from', () => {
+    expect(isPlayingFrom({ kind: 'mix', id: 'decade-2020' }, from('tracks', 'decade-2020'))).toBe(
+      true,
+    );
+    expect(isPlayingFrom({ kind: 'mix', id: 'decade-2010' }, from('tracks', 'decade-2020'))).toBe(
+      false,
+    );
   });
 
   it('marks nothing while nothing plays', () => {

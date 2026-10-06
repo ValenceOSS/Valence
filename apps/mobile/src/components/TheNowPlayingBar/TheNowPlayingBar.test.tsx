@@ -42,6 +42,17 @@ describe('TheNowPlayingBar', () => {
     expect(onOpen).toHaveBeenCalledWith('music');
   });
 
+  it('names the artists under the song playing here, and offers somewhere else to play it', async () => {
+    await act(() => {
+      thePhonesMusicPlayer().play([aTrack(2)], 0);
+    });
+    const drawn = await render(<TheNowPlayingBar onOpen={jest.fn()} />, { wrapper: CacheScope });
+
+    expect(drawn.getByText('Track 2')).toBeTruthy();
+    expect(drawn.getAllByText('Sleep Token').length).toBeGreaterThan(0);
+    expect(drawn.getByRole('button', { name: 'Play on another device' })).toBeTruthy();
+  });
+
   it('shows the book being heard instead, going on thirty seconds and opening its player', async () => {
     const { book, chapters } = anAudiobook();
 

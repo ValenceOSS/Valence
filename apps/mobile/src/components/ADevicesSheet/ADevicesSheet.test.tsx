@@ -19,7 +19,15 @@ describe('ADevicesSheet', () => {
   it('offers this phone and every other Valence open, and hands the music over to one', async () => {
     jest
       .mocked(fetchMusicDevices)
-      .mockResolvedValue([{ clientId: 'living-room', label: 'Living room', nowPlaying: null }]);
+      .mockResolvedValue([
+        {
+          clientId: 'living-room',
+          label: 'Living room',
+          clientKind: null,
+          nowPlaying: null,
+          ageMs: null,
+        },
+      ]);
     const handing = jest
       .spyOn(thePhonesMusicPlayer(), 'playOn')
       .mockImplementation(() => undefined);

@@ -15,6 +15,7 @@ import type { PlaylistSummary } from '@ValenceContracts/schemas/Playlist';
 import type { MusicService } from './MusicService';
 import type { MusicServices } from './MusicServices';
 import type { PlaylistService } from '@ValenceServer/playlists/PlaylistService';
+import type { Mix } from './mixes/Mix';
 
 const BASE = 'http://localhost:8420';
 
@@ -75,6 +76,15 @@ const PLAYLIST: PlaylistSummary = {
   artworkAlbumIds: [],
   hasOwnArtwork: false,
   updatedAt: '2026-09-18T00:00:00.000Z',
+};
+
+const MIX: Mix = {
+  id: 'decade-2020',
+  kind: 'decade',
+  title: '2020s Mix',
+  detail: 'Music from the 2020s',
+  trackIds: [TRACK_ID],
+  coverAlbumIds: [ALBUM_ID],
 };
 
 const fakeMusic = () => {
@@ -156,6 +166,11 @@ const fakeMusic = () => {
       }),
     ),
     readImage: vi.fn(() => Promise.resolve(new Uint8Array([1, 2, 3]))),
+    mixes: {
+      list: vi.fn(() => Promise.resolve([MIX])),
+      read: vi.fn((_viewer, mixId: string) => Promise.resolve(mixId === MIX.id ? MIX : null)),
+      forget: vi.fn(),
+    },
   } satisfies MusicServices;
 
   return music;
@@ -389,6 +404,41 @@ describe('the music routes', () => {
       PLAYLIST_ID,
       true,
     );
+  });
+
+  it('list the mixes made for the profile listening, saying how many songs each has', async () => {
+    const me = await listening(context);
+
+    const response = await me.ask('/api/music/mixes');
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      mixes: [
+        {
+          id: 'decade-2020',
+          kind: 'decade',
+          title: '2020s Mix',
+          detail: 'Music from the 2020s',
+          trackCount: 1,
+          coverAlbumIds: [ALBUM_ID],
+        },
+      ],
+    });
+  });
+
+  it('read a mix with its songs, and say when there is no such mix today', async () => {
+    const me = await listening(context);
+
+    const found = await me.ask('/api/music/mixes/decade-2020');
+
+    expect(found.status).toBe(200);
+    expect(await found.json()).toMatchObject({ id: 'decade-2020', tracks: [TRACK] });
+    expect(context.music.library.listTracks).toHaveBeenCalledWith(expect.anything(), [TRACK_ID]);
+    expect((await me.ask('/api/music/mixes/decade-1950')).status).toBe(404);
+  });
+
+  it('keep mixes to somebody signed in', async () => {
+    expect((await context.app.request(`${BASE}/api/music/mixes`)).status).toBe(401);
   });
 
   it('refuse a command for a device that is not the listener’s', async () => {
