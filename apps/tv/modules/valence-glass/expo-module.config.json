@@ -1,9 +1,6 @@
 {
-  "platforms": ["apple", "android"],
+  "platforms": ["apple"],
   "apple": {
     "modules": ["ValenceGlassModule"]
-  },
-  "android": {
-    "modules": ["app.valence.tv.glass.ValenceGlassModule"]
   }
 }
