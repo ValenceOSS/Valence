@@ -818,3 +818,19 @@ describe('deleting a library', () => {
     expect((await remove(app)).status).toBe(404);
   });
 });
+
+describe('what somebody who has not signed in may send', () => {
+  it.each([
+    ['a sign-in', '/api/auth/sign-in/email'],
+    ['a profile’s sign-in', '/api/profiles/3f2504e0-4f89-41d3-9a0c-0305e82c3301/sign-in'],
+    ['a password reset', '/api/password-reset'],
+  ])('turns away %s far larger than one could need, before holding it', async (_what, path) => {
+    const response = await app.request(path, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', origin: TEST_ORIGIN },
+      body: JSON.stringify({ email: 'a@b.test', password: 'x'.repeat(2 * 1024 * 1024) }),
+    });
+
+    expect(response.status).toBe(413);
+  });
+});

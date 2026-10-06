@@ -1,4 +1,4 @@
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { requireNativeView } from 'expo';
 import { drawsNatively } from '@ValenceMobile/platform/drawsNatively';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
@@ -39,8 +39,10 @@ const AGlass = ({ roundness, tint, isShown = true }: AGlassProps) => {
       style={[
         FILLS,
         {
-          backgroundColor: tint ?? withAlpha(colours.surfaceRaised, 0.92),
+          backgroundColor: tint ?? withAlpha(colours.surfaceRaised, 0.98),
+          borderColor: withAlpha(colours.text, 0.1),
           borderRadius: roundness,
+          borderWidth: StyleSheet.hairlineWidth,
           opacity: isShown ? 1 : 0,
         },
       ]}

@@ -56,6 +56,7 @@ import { RAIL } from '@ValenceUI/tokens/rail';
 import { DialogSection } from '@ValenceScreens/components/DialogSection/DialogSection';
 import { SlidingList } from '@ValenceScreens/components/SlidingList/SlidingList';
 import { ChooseEpisodes } from './components/ChooseEpisodes/ChooseEpisodes';
+import { isWatchedThrough } from '@ValenceClient/library/isWatchedThrough';
 import { laySeasonsOut } from '@ValenceClient/library/laySeasonsOut';
 import { describeAirDate } from '@ValenceCore/functions/describeAirDate';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -180,12 +181,10 @@ const ShowDialog = ({
   const isSeasonWatched =
     shownEpisodes.length > 0 && shownEpisodes.every((episode) => isFinished?.(episode.id) === true);
 
-  const heldEpisodes = seasons.flatMap((one) => one.episodes);
-
-  const isWatchedThrough =
+  const isSeenThrough =
     watchedFractionFor !== undefined &&
-    heldEpisodes.length > 0 &&
-    heldEpisodes.every((episode) => (watchedFractionFor(episode.id) ?? 0) >= 1);
+    detail !== null &&
+    isWatchedThrough(detail, (mediaId) => (watchedFractionFor(mediaId) ?? 0) >= 1, today);
 
   return (
     <Dialog label={shown.title} isOpen={show !== null} onClose={onClose} size="stage">
@@ -235,7 +234,7 @@ const ShowDialog = ({
                     ].join(' · ')}
               </span>
 
-              {isWatchedThrough ? (
+              {isSeenThrough ? (
                 <Badge tone="success" size="sm">
                   {say('common.watched')}
                 </Badge>

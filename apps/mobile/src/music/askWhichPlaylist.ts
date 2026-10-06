@@ -1,4 +1,5 @@
-import { ActionSheetIOS, Alert } from 'react-native';
+import { showActionSheet } from '@ValenceMobile/platform/showActionSheet';
+import { Alert } from 'react-native';
 import { addToPlaylist, createPlaylist } from '@ValenceClient/music/fetchPlaylists';
 import type { PlaylistSummary } from '@ValenceContracts/schemas/Playlist';
 import { say } from '@ValenceI18n/say';
@@ -22,7 +23,7 @@ const askWhichPlaylist = (
   onChanged: () => void,
   onPlaylist: ((playlistId: string) => void) | undefined,
 ): void => {
-  ActionSheetIOS.showActionSheetWithOptions(
+  showActionSheet(
     {
       title: say('common.addToPlaylist'),
       options: [

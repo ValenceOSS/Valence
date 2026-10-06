@@ -103,6 +103,7 @@ type MusicPlayer = {
   stop: () => void;
   leave: () => void;
   playOn: (device: RemoteDevice) => void;
+  follow: (device: RemoteDevice) => void;
   playHere: (positionSeconds: number, isPlaying: boolean) => void;
   obey: (command: MusicCommand) => void;
   mirror: (nowPlaying: MusicNowPlaying) => void;
@@ -749,6 +750,22 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
       change({ remote: device, isPlaying: false });
     },
 
+    follow: (device) => {
+      if (state.remote?.clientId === device.clientId) {
+        return;
+      }
+
+      if (state.remote === null && (state.isPlaying || state.isLoading)) {
+        return;
+      }
+
+      audio.pause();
+      report(null);
+      mirrored = null;
+      mirroredQueue = '';
+      change({ remote: device, isPlaying: false });
+    },
+
     playHere: (positionSeconds, isPlaying) => {
       const { remote, queue } = state;
 
@@ -760,8 +777,14 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
       mirroredQueue = '';
       change({ remote: null });
 
-      if (queue !== null) {
-        load(queue, positionSeconds, isPlaying);
+      const here =
+        queue ??
+        (state.current === null
+          ? null
+          : startQueue([state.current], 0, { repeat: 'off', source: null, random }));
+
+      if (here !== null) {
+        load(here, positionSeconds, isPlaying);
       }
     },
 
@@ -783,6 +806,21 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
       const key = ids.join(',');
 
       if (key === mirroredQueue) {
+        return;
+      }
+
+      const { queue: had } = state;
+      const stepped =
+        had === null
+          ? null
+          : ([nextIn(had, true), had.at > 0 ? previousIn(had) : null].find(
+              (moved) => moved !== null && currentOf(moved)?.id === nowPlaying.trackId,
+            ) ?? null);
+
+      if (stepped !== null) {
+        mirroredQueue = key;
+        change({ queue: stepped, current: currentOf(stepped) });
+
         return;
       }
 
@@ -824,8 +862,8 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
 
       if (sent.kind === 'stop') {
         audio.pause();
-        change({ queue: null, current: null, isPlaying: false, positionSeconds: 0 });
-        tell(true);
+        report(null);
+        change({ isPlaying: false });
 
         return;
       }

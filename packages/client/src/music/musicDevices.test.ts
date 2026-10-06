@@ -27,8 +27,40 @@ describe('musicDevices', () => {
     answerWith({ devices: [{ clientId: 'phone', label: 'iPhone', nowPlaying: null }] });
 
     await expect(fetchMusicDevices()).resolves.toEqual([
-      { clientId: 'phone', label: 'iPhone', nowPlaying: null },
+      { clientId: 'phone', label: 'iPhone', nowPlaying: null, clientKind: null, ageMs: null },
     ]);
+  });
+
+  it('dates what a device is playing by this device’s clock, from how long ago it was heard', async () => {
+    answerWith({
+      devices: [
+        {
+          clientId: 'phone',
+          label: 'iPhone',
+          clientKind: null,
+          ageMs: 1_500,
+          nowPlaying: {
+            trackId: '00000000-0000-4000-8000-000000000001',
+            title: 'Caramel',
+            artists: ['Sleep Token'],
+            albumId: '00000000-0000-4000-8000-000000000002',
+            hasArtwork: true,
+            positionSeconds: 12,
+            durationSeconds: 290,
+            isPlaying: true,
+            volume: 0.4,
+            isMuted: false,
+            quality: 'lossless',
+            upNext: [],
+            reportedAtMs: 1,
+          },
+        },
+      ],
+    });
+
+    const [phone] = await fetchMusicDevices(() => 50_000);
+
+    expect(phone?.nowPlaying?.reportedAtMs).toBe(48_500);
   });
 
   it('reports what this device is playing, as this device', async () => {

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import type { MusicPlayerState, RemoteDevice } from '@ValenceClient/music/createMusicPlayer';
+import type { AudioQuality } from '@ValenceContracts/schemas/Music';
 
 type ShownArtist = { id: string | null; name: string };
 
@@ -17,6 +18,7 @@ type WhatIsPlaying = {
   isPlaying: boolean;
   isLoading: boolean;
   volume: number;
+  quality?: AudioQuality | null;
   remote: RemoteDevice | null;
 };
 
@@ -74,6 +76,7 @@ const useWhatIsPlaying = (
             isPlaying: false,
             isLoading: true,
             volume: state.volume,
+            quality: null,
             remote,
           };
     }
@@ -95,6 +98,7 @@ const useWhatIsPlaying = (
       isPlaying: reported.isPlaying,
       isLoading: false,
       volume: state.volume,
+      quality: reported.quality,
       remote,
     };
   }
@@ -113,6 +117,7 @@ const useWhatIsPlaying = (
         isPlaying: state.isPlaying,
         isLoading: state.isLoading,
         volume: state.volume,
+        quality: state.playingQuality ?? state.quality,
         remote: null,
       };
 };

@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 import { SafeAreaInsetsContext, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
+import { AFloatingTabs } from '@ValenceMobile/components/TheTabs/components/AFloatingTabs/AFloatingTabs';
 import { ATabFace } from '@ValenceMobile/components/TheTabs/components/ATabFace/ATabFace';
-import { SystemTabBar } from '@ValenceMobile/components/SystemTabBar/SystemTabBar';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { hasLiquidGlass } from '@ValenceMobile/platform/hasLiquidGlass';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
@@ -18,7 +18,6 @@ const styles = StyleSheet.create({
   above: { left: 12, position: 'absolute', right: 12 },
   bar: { borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', paddingTop: 8 },
   beforeTheBar: { paddingHorizontal: 12 },
-  system: { bottom: 0, left: 0, position: 'absolute', right: 0 },
   tab: { alignItems: 'center', gap: 3, paddingVertical: 2 },
   leftOut: { opacity: 0 },
   whole: { flex: 1 },
@@ -27,11 +26,10 @@ const styles = StyleSheet.create({
 /**
  * The part of the app showing, with the tabs that move between the parts along the bottom.
  *
- * Where the phone has liquid glass the tabs are the system's own bar, floating over the screen with
- * the lens that can be held and slid between them, and the screen runs on underneath with room at
- * its foot to scroll clear. Anywhere older they are a bar of our own beneath it. Anything kept above
- * the tabs is given room the same way, so the screen scrolls clear of that too, and is only spaced
- * off the tabs while it shows anything.
+ * On a phone with liquid glass, and on every Android phone, the tabs are a bar of our own floating
+ * over the screen — laid on the glass where there is glass — and the screen runs on underneath with
+ * room at its foot to scroll clear. An older iPhone has a strip of our own beneath the screen. Anything kept above the tabs is given room the same way, so the screen
+ * scrolls clear of that too, and is only spaced off the tabs while it shows anything.
  *
  * @param tabs - The parts there are.
  * @param value - Which one is showing.
@@ -39,6 +37,8 @@ const styles = StyleSheet.create({
  * @param children - The part showing.
  * @param above - What sits just above the tabs whichever part is showing — what music is playing.
  * @param onFaceAt - Told where on screen the tab drawn as a face shows it, for a face to fly to.
+ * @param onBarHeight - Told how much of the foot of the screen the tabs take up, for what floats
+ *   above them.
  * @param isFaceArriving - Whether a face is flying in to that tab, which leaves its place empty till then.
  */
 const TheTabs = ({
@@ -49,20 +49,37 @@ const TheTabs = ({
   above,
   onFaceAt,
   isFaceArriving = false,
+  onBarHeight,
 }: TheTabsProps) => {
   const colours = useTheColours();
   const room = useSafeAreaInsets();
   const [barHeight, setBarHeight] = useState(room.bottom + A_GUESS_AT_THE_BAR);
   const [aboveHigh, setAboveHigh] = useState(0);
   const clearOfAbove = aboveHigh > 0 ? aboveHigh + ABOVE_THE_BAR : 0;
+  const latestOnBarHeight = useRef(onBarHeight);
 
-  if (hasLiquidGlass()) {
+  useEffect(() => {
+    latestOnBarHeight.current = onBarHeight;
+  });
+
+  useEffect(() => {
+    latestOnBarHeight.current?.(barHeight);
+  }, [barHeight]);
+
+  if (Platform.OS === 'android' || hasLiquidGlass()) {
     return (
-      <View style={styles.whole}>
+      <View style={[styles.whole, { backgroundColor: colours.surface }]}>
         <SafeAreaInsetsContext.Provider value={{ ...room, bottom: barHeight + clearOfAbove }}>
           {children}
         </SafeAreaInsetsContext.Provider>
-
+        <AFloatingTabs
+          tabs={tabs}
+          value={value}
+          onSelect={onSelect}
+          onMeasure={setBarHeight}
+          isFaceArriving={isFaceArriving}
+          {...(onFaceAt === undefined ? {} : { onFaceAt })}
+        />
         {above === undefined ? null : (
           <View
             style={[styles.above, { bottom: barHeight + ABOVE_THE_BAR }]}
@@ -73,28 +90,6 @@ const TheTabs = ({
             {above}
           </View>
         )}
-
-        <SystemTabBar
-          tabs={tabs.map((tab) => ({
-            id: tab.id,
-            title: tab.label,
-            symbol: tab.symbol,
-            ...(tab.face === undefined
-              ? {}
-              : {
-                  picture: tab.face.picture?.uri ?? null,
-                  backdrop: tab.face.backdrop,
-                  initial: tab.face.initial,
-                }),
-          }))}
-          selected={value}
-          accent={colours.accent}
-          onSelect={onSelect}
-          onMeasure={setBarHeight}
-          isFaceHidden={isFaceArriving}
-          {...(onFaceAt === undefined ? {} : { onFaceAt })}
-          style={[styles.system, { height: barHeight }]}
-        />
       </View>
     );
   }

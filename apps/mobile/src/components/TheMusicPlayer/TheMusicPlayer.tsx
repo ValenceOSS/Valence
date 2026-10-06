@@ -1,5 +1,5 @@
 import {
-  Cast,
+  LaptopSmartphone,
   Heart,
   ListMusic,
   Mic,
@@ -16,11 +16,10 @@ import {
   SkipForward as SkipForwardFilled,
 } from '@keyline-icons/react-native/fill';
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
-import { Alert, Animated, PanResponder, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Animated, PanResponder, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { howTheFileSounds } from '@ValenceClient/music/howTheFileSounds';
-import { whatTheFileHolds } from '@ValenceClient/music/whatTheFileHolds';
 import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
@@ -28,6 +27,8 @@ import { useListeningParty } from '@ValenceClient/party/listeningParty';
 import { listenerControls } from '@ValenceClient/party/listenerControls';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { useQuery } from '@tanstack/react-query';
+import { AQualitySheet } from '@ValenceMobile/components/AQualitySheet/AQualitySheet';
+import { describeAudioQuality } from '@ValenceClient/music/describeAudioQuality';
 import { APartyPanel } from '@ValenceMobile/components/APartyPanel/APartyPanel';
 import { ALitCircle } from '@ValenceMobile/components/ALitCircle/ALitCircle';
 import { ADevicesSheet } from '@ValenceMobile/components/ADevicesSheet/ADevicesSheet';
@@ -146,6 +147,7 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack, watchParty }: TheMusicPlaye
   const isPlaying = whatIsPlaying?.isPlaying ?? state.isPlaying;
   const [isChoosingDevice, setIsChoosingDevice] = useState(false);
   const [isPartying, setIsPartying] = useState(false);
+  const [isChoosingQuality, setIsChoosingQuality] = useState(false);
   const listening = useListeningParty();
   const controls = listenerControls(
     listening,
@@ -641,21 +643,23 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack, watchParty }: TheMusicPlaye
 
         <View style={styles.foot}>
           <ThePlaceInTheSong title={track.title} onSeek={seek} isFixed={!controls.maySeek}>
-            {sounds === null ? null : (
-              <Button
-                tone="bare"
-                label={say('phone.theMusicPlayer.soundsWhatItIs', { sounds })}
-                onPress={() => {
-                  Alert.alert(sounds, whatTheFileHolds(track));
-                }}
-              >
-                <View style={[styles.badge, { borderColor: withAlpha(colours.text, 0.35) }]}>
-                  <Words size="small" tone="muted">
-                    {sounds}
-                  </Words>
-                </View>
-              </Button>
-            )}
+            <Button
+              tone="bare"
+              label={say('common.quality')}
+              isDisabled={state.remote !== null}
+              onPress={() => {
+                setIsChoosingQuality(true);
+              }}
+            >
+              <View style={[styles.badge, { borderColor: withAlpha(colours.text, 0.35) }]}>
+                <Words size="small" tone="muted">
+                  {state.remote === null
+                    ? (sounds ??
+                      describeAudioQuality(state.playingQuality ?? state.quality, track).label)
+                    : describeAudioQuality(whatIsPlaying?.quality ?? state.quality, track).label}
+                </Words>
+              </View>
+            </Button>
           </ThePlaceInTheSong>
 
           <View style={styles.controls}>
@@ -751,7 +755,7 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack, watchParty }: TheMusicPlaye
                 setIsChoosingDevice(true);
               }}
             >
-              <ALitCircle of={Cast} size={20} isLit={state.remote !== null} />
+              <ALitCircle of={LaptopSmartphone} size={20} isLit={state.remote !== null} />
             </Button>
 
             {watchParty === undefined ? null : (
@@ -796,8 +800,16 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack, watchParty }: TheMusicPlaye
         </View>
       </Screen>
 
-      {watchParty !== undefined && isPartying ? (
+      <AQualitySheet
+        isOpen={isChoosingQuality}
+        onClose={() => {
+          setIsChoosingQuality(false);
+        }}
+      />
+
+      {watchParty === undefined ? null : (
         <APartyPanel
+          isOpen={isPartying}
           kind="listen"
           watchParty={watchParty}
           mediaId={track.id}
@@ -806,7 +818,7 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack, watchParty }: TheMusicPlaye
             setIsPartying(false);
           }}
         />
-      ) : null}
+      )}
     </View>
   );
 };

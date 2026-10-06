@@ -61,6 +61,9 @@ const fakeAudio = () => {
   return { audio, fire };
 };
 
+const upNextOf = (queue: { tracks: MusicTrack[]; order: number[]; at: number } | null) =>
+  queue === null ? [] : queue.order.slice(queue.at).map((index) => queue.tracks[index]);
+
 const build = (overrides: Partial<MusicPlayerDeps> = {}, kept: Partial<MusicPreferences> = {}) => {
   const { audio, fire } = fakeAudio();
   const saved: Partial<MusicPreferences>[] = [];
@@ -468,7 +471,24 @@ describe('createMusicPlayer', () => {
         },
         { timeout: 5_000 },
       );
-      expect(player.read().queue?.tracks).toEqual([THREE[1], THREE[2]]);
+      expect(upNextOf(player.read().queue)).toEqual([THREE[1], THREE[2]]);
+    });
+
+    it('steps along its own queue where the other device moved one song, asking for nothing', () => {
+      const fetchTracks = vi.fn(() => Promise.resolve(THREE));
+      const { player } = build({ fetchTracks });
+
+      player.play(THREE, 0);
+      player.playOn({ clientId: 'phone', label: 'iPhone' });
+      player.mirror(reportFrom());
+
+      expect(player.read().current).toBe(THREE[1]);
+      expect(fetchTracks).not.toHaveBeenCalled();
+
+      player.mirror(reportFrom({ trackId: THREE[0]?.id ?? '', upNext: [THREE[1]?.id ?? ''] }));
+
+      expect(player.read().current).toBe(THREE[0]);
+      expect(fetchTracks).not.toHaveBeenCalled();
     });
 
     it('takes on the other device’s volume and mute', () => {
@@ -587,6 +607,77 @@ describe('createMusicPlayer', () => {
     });
   });
 
+  describe('following another device that starts playing', () => {
+    it('follows a device while nothing plays here, withdrawing what it said it was playing', () => {
+      const { player, deps } = build();
+
+      player.follow({ clientId: 'phone', label: 'iPhone' });
+
+      expect(player.read().remote).toEqual({ clientId: 'phone', label: 'iPhone' });
+      expect(deps.report).toHaveBeenLastCalledWith(null);
+    });
+
+    it('does not follow while its own music plays or loads', () => {
+      const { player } = build();
+
+      player.play(THREE, 0);
+      player.follow({ clientId: 'phone', label: 'iPhone' });
+
+      expect(player.read().remote).toBeNull();
+    });
+
+    it('moves on to whichever device starts next, while following one', () => {
+      const { player } = build();
+
+      player.follow({ clientId: 'phone', label: 'iPhone' });
+      player.follow({ clientId: 'tv', label: 'Living room' });
+
+      expect(player.read().remote).toEqual({ clientId: 'tv', label: 'Living room' });
+    });
+
+    it('lets go of everything once the device it follows has gone', () => {
+      const { player } = build();
+
+      player.play(THREE, 0);
+      player.playOn({ clientId: 'phone', label: 'iPhone' });
+      player.leave();
+
+      expect(player.read()).toMatchObject({ remote: null, current: null, queue: null });
+    });
+
+    it('plays here the song showing, even with no queue of its own', () => {
+      const { player, audio } = build();
+
+      player.follow({ clientId: 'phone', label: 'iPhone' });
+      player.mirror({
+        trackId: THREE[1]?.id ?? '',
+        title: 'Track 2',
+        artists: ['Sleep Token'],
+        albumId: THREE[1]?.album.id ?? '',
+        hasArtwork: true,
+        positionSeconds: 30,
+        durationSeconds: 200,
+        isPlaying: true,
+        volume: 0.35,
+        isMuted: false,
+        quality: 'lossless',
+        upNext: [],
+        reportedAtMs: 1000,
+      });
+
+      return vi
+        .waitFor(() => {
+          expect(player.read().current).toBe(THREE[1]);
+        })
+        .then(() => {
+          player.playHere(30, true);
+
+          expect(player.read().remote).toBeNull();
+          expect(audio.src).toContain(THREE[1]?.id ?? 'missing');
+        });
+    });
+  });
+
   describe('being told what to do by another device', () => {
     it('plays what it is handed, from where it was', async () => {
       const { player, audio, fire } = build();
@@ -670,13 +761,15 @@ describe('createMusicPlayer', () => {
       expect(player.read().current).toBe(THREE[2]);
     });
 
-    it('stops when told to, leaving nothing queued', () => {
-      const { player } = build();
+    it('stops when another device takes the music, keeping its song showing till it follows', () => {
+      const { player, deps } = build();
 
       player.play(THREE, 0);
       player.obey({ kind: 'stop' });
 
-      expect(player.read().current).toBeNull();
+      expect(player.read().isPlaying).toBe(false);
+      expect(player.read().current).toBe(THREE[0]);
+      expect(deps.report).toHaveBeenLastCalledWith(null);
     });
   });
 

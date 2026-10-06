@@ -14,12 +14,14 @@ type DeviceRegistryOptions<Report> = {
   presence: Pick<PresenceService, 'list' | 'tell' | 'watch'>;
   onChanged?: (accountId: string) => void;
   onReport?: (device: PresenceEntry, report: Report | null) => void;
+  now?: () => number;
 };
 
 type DeviceRegistry<Report> = {
   owned: (owner: DeviceOwner) => PresenceEntry[];
   report: (owner: DeviceOwner, clientId: string, report: Report | null) => boolean;
   reportOf: (clientId: string) => Report | null;
+  ageOf: (clientId: string) => number | null;
   tell: (
     owner: DeviceOwner,
     fromClientId: string,
@@ -48,8 +50,10 @@ const createDeviceRegistry = <Report>({
   presence,
   onChanged,
   onReport,
+  now = Date.now,
 }: DeviceRegistryOptions<Report>): DeviceRegistry<Report> => {
   const reports = new Map<string, Report>();
+  const heardAt = new Map<string, number>();
   const reporters = new Map<string, PresenceEntry>();
   let known = new Map(presence.list().map((entry) => [entry.clientId, entry.accountId]));
 
@@ -72,6 +76,7 @@ const createDeviceRegistry = <Report>({
 
         reports.delete(clientId);
         reporters.delete(clientId);
+        heardAt.delete(clientId);
 
         if (reporter !== undefined) {
           onReport?.(reporter, null);
@@ -109,9 +114,11 @@ const createDeviceRegistry = <Report>({
       if (report === null) {
         reports.delete(clientId);
         reporters.delete(clientId);
+        heardAt.delete(clientId);
       } else {
         reports.set(clientId, report);
         reporters.set(clientId, device);
+        heardAt.set(clientId, now());
       }
 
       onReport?.(device, report);
@@ -122,6 +129,12 @@ const createDeviceRegistry = <Report>({
     },
 
     reportOf: (clientId) => reports.get(clientId) ?? null,
+
+    ageOf: (clientId) => {
+      const at = heardAt.get(clientId);
+
+      return at === undefined ? null : Math.max(0, now() - at);
+    },
 
     tell: (owner, fromClientId, toClientId, event) => {
       const devices = owned(owner);

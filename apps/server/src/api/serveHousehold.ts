@@ -1,3 +1,4 @@
+import { withCaller } from '@ValenceServer/web/withCaller';
 import { bodyOf } from '@ValenceI18n/bodyOf';
 import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
 import { HOUSEHOLD_LIMITS } from '@ValenceServer/household/HouseholdPicture';
@@ -34,6 +35,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     requires,
     announceProfiles,
     readAccount,
+    callerOf,
   } = context;
 
   app.openapi(readOnboardingRoute, async (context) => {
@@ -262,20 +264,23 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     forwarded.delete('content-length');
 
     return auth.handler(
-      new Request(
-        new URL(
-          byUsername ? '/api/auth/sign-in/username' : '/api/auth/sign-in/email',
-          context.req.url,
-        ),
-        {
-          method: 'POST',
-          headers: forwarded,
-          body: JSON.stringify(
-            byUsername
-              ? { username: account.username, password: parsed.data.password }
-              : { email: account.email, password: parsed.data.password },
+      await withCaller(
+        new Request(
+          new URL(
+            byUsername ? '/api/auth/sign-in/username' : '/api/auth/sign-in/email',
+            context.req.url,
           ),
-        },
+          {
+            method: 'POST',
+            headers: forwarded,
+            body: JSON.stringify(
+              byUsername
+                ? { username: account.username, password: parsed.data.password }
+                : { email: account.email, password: parsed.data.password },
+            ),
+          },
+        ),
+        callerOf?.(context) ?? null,
       ),
     );
   });

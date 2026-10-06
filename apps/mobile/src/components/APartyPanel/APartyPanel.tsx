@@ -8,6 +8,7 @@ import { TextField } from '@ValenceMobile/components/TextField/TextField';
 import { Toggle } from '@ValenceMobile/components/Toggle/Toggle';
 import { SIDE_PANEL } from '@ValenceMobile/components/ASidePanel/SIDE_PANEL';
 import { ASidePanel } from '@ValenceMobile/components/ASidePanel/ASidePanel';
+import { ABottomSheet } from '@ValenceMobile/components/ABottomSheet/ABottomSheet';
 import { ASharedTimeline } from '@ValenceMobile/components/ASharedTimeline/ASharedTimeline';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { whereTheRoomIs } from '@ValenceCore/functions/whereTheRoomIs';
@@ -47,15 +48,24 @@ const styles = StyleSheet.create({
  * invitation to send through the phone's own share sheet, the household to ask along, and — for
  * whoever runs it — who may do what, who is put out, and its password. Where a party asks this
  * phone for its password, that is asked here. A listening party is not offered to somebody already
- * in a watch party, since nobody can be in two at once.
+ * in a watch party, since nobody can be in two at once. A watch party sits beside the film; a
+ * listening party rises from the foot only as far as it needs, as picking a device does.
  *
  * @param kind - Which kind of party this is about.
  * @param watchParty - The party this phone holds.
  * @param mediaId - What is playing, which a new party gathers around, or nothing yet.
  * @param people - Everybody with an account here, to be asked along.
  * @param onClose - Told they are done with it.
+ * @param isOpen - Whether a listening party's sheet is out, so it can slide away when put away.
  */
-const APartyPanel = ({ kind, watchParty, mediaId, people, onClose }: APartyPanelProps) => {
+const APartyPanel = ({
+  kind,
+  watchParty,
+  mediaId,
+  people,
+  onClose,
+  isOpen = true,
+}: APartyPanelProps) => {
   const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [asked, setAsked] = useState<readonly string[]>([]);
@@ -75,15 +85,20 @@ const APartyPanel = ({ kind, watchParty, mediaId, people, onClose }: APartyPanel
     };
   }, []);
   const words = PARTY_WORDS[kind];
-  const panel = (children: ReactNode) => (
-    <ASidePanel
-      title={words.title}
-      closeLabel={say('common.partyPanel.closeTheParty')}
-      onClose={onClose}
-    >
-      {children}
-    </ASidePanel>
-  );
+  const panel = (children: ReactNode) =>
+    kind === 'listen' ? (
+      <ABottomSheet isOpen={isOpen} label={words.title} title={words.title} onClose={onClose}>
+        {children}
+      </ABottomSheet>
+    ) : (
+      <ASidePanel
+        title={words.title}
+        closeLabel={say('common.partyPanel.closeTheParty')}
+        onClose={onClose}
+      >
+        {children}
+      </ASidePanel>
+    );
 
   if (passwordWanted !== null) {
     return panel(

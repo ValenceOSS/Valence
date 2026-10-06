@@ -6,6 +6,7 @@ import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemote
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
+import { AEqualiser } from '@ValenceMobile/components/AEqualiser/AEqualiser';
 import { asAClock } from '@ValenceMobile/components/Watching/asAClock';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { ATrackRowProps } from './ATrackRow.types';
@@ -14,6 +15,12 @@ import { say } from '@ValenceI18n/say';
 const ART = 44;
 
 const styles = StyleSheet.create({
+  over: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    borderRadius: 6,
+    justifyContent: 'center',
+  },
   art: { borderRadius: 6, height: ART, width: ART },
   explicit: { borderRadius: 3, borderWidth: 1, paddingHorizontal: 3 },
   lead: { alignItems: 'center', justifyContent: 'center', minWidth: 24 },
@@ -35,7 +42,9 @@ const styles = StyleSheet.create({
  * @param at - Its place in the list, handed back when it is pressed.
  * @param number - Its number on its album, where the list is an album's.
  * @param artwork - Its album's cover, where the list mixes albums.
- * @param isCurrent - Whether it is the one playing.
+ * @param isCurrent - Whether it is the song now playing, which is marked by moving bars in place of
+ *   its number, or over its cover.
+ * @param isPlaying - Whether that song is playing rather than paused, which keeps the bars still.
  * @param isLiked - Whether it is liked.
  * @param onPlay - Told to play from its place.
  * @param onMenu - Told to offer what else can be done with the track at its place.
@@ -46,6 +55,7 @@ const OneTrack = ({
   number,
   artwork,
   isCurrent,
+  isPlaying = false,
   isLiked,
   onPlay,
   onMenu,
@@ -65,16 +75,35 @@ const OneTrack = ({
           <View style={styles.side}>
             {artwork === null ? (
               <View style={styles.lead}>
-                <Words size="small" tone={isCurrent ? 'accent' : 'muted'}>
-                  {number === null ? '' : number.toString()}
-                </Words>
+                {isCurrent ? (
+                  <AEqualiser
+                    label={say('common.playing')}
+                    isMoving={isPlaying}
+                    colour={colours.accent}
+                  />
+                ) : (
+                  <Words size="small" tone="muted">
+                    {number === null ? '' : number.toString()}
+                  </Words>
+                )}
               </View>
             ) : (
-              <ARemotePicture style={styles.art} uri={artwork} />
+              <View>
+                <ARemotePicture style={styles.art} uri={artwork} />
+                {isCurrent ? (
+                  <View style={[StyleSheet.absoluteFill, styles.over]}>
+                    <AEqualiser
+                      label={say('common.playing')}
+                      isMoving={isPlaying}
+                      colour="#ffffff"
+                    />
+                  </View>
+                ) : null}
+              </View>
             )}
 
             <View style={styles.said}>
-              <Words lines={1} isStrong={isCurrent}>
+              <Words lines={1} isStrong={isCurrent} {...(isCurrent ? { tone: 'accent' } : {})}>
                 {track.title}
               </Words>
               <View style={styles.side}>

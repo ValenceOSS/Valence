@@ -1,4 +1,4 @@
-import { ActionSheetIOS } from 'react-native';
+import { showActionSheet } from '@ValenceMobile/platform/showActionSheet';
 import { say } from '@ValenceI18n/say';
 
 /**
@@ -12,7 +12,7 @@ const askAboutATitle = (
   title: string,
   actions: readonly { label: string; onChoose: () => void }[],
 ): void => {
-  ActionSheetIOS.showActionSheetWithOptions(
+  showActionSheet(
     {
       title,
       options: [...actions.map((one) => one.label), say('common.cancel')],

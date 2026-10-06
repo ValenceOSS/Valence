@@ -27,7 +27,11 @@ jest.mock('react-native-safe-area-context', () => {
   };
 });
 
-jest.mock('expo-device', () => ({ deviceName: "Dan's iPhone", modelName: 'iPhone' }));
+jest.mock('expo-device', () => ({
+  deviceName: "Dan's iPhone",
+  modelName: 'iPhone',
+  isDevice: true,
+}));
 
 jest.mock('expo-network', () => ({
   getNetworkStateAsync: () => Promise.resolve({ isConnected: true, isInternetReachable: true }),

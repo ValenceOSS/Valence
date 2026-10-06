@@ -42,6 +42,7 @@ import { StillWatching } from '@ValenceMobile/components/StillWatching/StillWatc
 import { AnAlbum } from '@ValenceMobile/components/AnAlbum/AnAlbum';
 import { AnArtist } from '@ValenceMobile/components/AnArtist/AnArtist';
 import { APlaylist } from '@ValenceMobile/components/APlaylist/APlaylist';
+import { AMix } from '@ValenceMobile/components/AMix/AMix';
 import { TheLikedSongs } from '@ValenceMobile/components/TheLikedSongs/TheLikedSongs';
 import { TheMusicRemote } from '@ValenceMobile/components/TheMusicRemote/TheMusicRemote';
 import { TheAudiobookRemote } from '@ValenceMobile/components/TheAudiobookRemote/TheAudiobookRemote';
@@ -101,6 +102,7 @@ const MUSIC_PAGES: ReadonlySet<APage['kind']> = new Set([
   'artist',
   'playlist',
   'liked',
+  'mix',
   'albums',
   'artists',
 ]);
@@ -206,6 +208,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   }, [partyNotice, forgetPartyNotice]);
   const [carriedOn, setCarriedOn] = useState(0);
   const [isRemoteOpen, setIsRemoteOpen] = useState(false);
+  const [tabsHigh, setTabsHigh] = useState(0);
   const settingUp = useQuery(householdQueries.onboarding());
   const [watchingHeld, setWatchingHeld] = useState<HeldFile | null>(null);
   const [askingAbout, setAskingAbout] = useState<MediaSummary | null>(null);
@@ -663,6 +666,16 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
             onBack={back}
           />
         );
+      case 'mix':
+        return (
+          <AMix
+            mixId={page.mixId}
+            onAlbum={toAlbum}
+            onArtist={toArtist}
+            onPlaylist={toPlaylist}
+            onBack={back}
+          />
+        );
       case 'playing':
         return (
           <TheMusicPlayer
@@ -715,6 +728,9 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
           }}
           onLiked={() => {
             open({ kind: 'liked' });
+          }}
+          onMix={(mixId) => {
+            open({ kind: 'mix', mixId });
           }}
           onAllAlbums={() => {
             open({ kind: 'albums' });
@@ -784,6 +800,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
         onSelect={setPart}
         {...(onFaceAt === undefined ? {} : { onFaceAt })}
         isFaceArriving={isFaceArriving}
+        onBarHeight={setTabsHigh}
         above={
           <View style={styles.above}>
             <AVideoRemoteBar
@@ -791,7 +808,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
                 setIsRemoteOpen(true);
               }}
             />
-            <TheNowPlayingBar onOpen={openWhatIsHeard} />
+            <TheNowPlayingBar onOpen={openWhatIsHeard} isRoomOnly />
           </View>
         }
       >
@@ -843,7 +860,8 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
         <TheMusicRemote />
         <TheAudiobookRemote />
         <TheFloatingPlayer
-          isShown={MUSIC_PAGES.has(pages.at(-1)?.kind ?? 'playing')}
+          isShown={pages.length === 0 || MUSIC_PAGES.has(pages.at(-1)?.kind ?? 'playing')}
+          liftedBy={pages.length === 0 ? tabsHigh : 0}
           onOpen={openWhatIsHeard}
         />
       </View>

@@ -4,7 +4,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GRID_GAP } from '@ValenceMobile/components/APosterGrid/GRID_GAP';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
 import { useGridCells } from '@ValenceMobile/hooks/useGridCells';
-import { usePullToRefresh } from '@ValenceMobile/hooks/usePullToRefresh';
 import { AnArrival } from '@ValenceMobile/components/AnArrival/AnArrival';
 import { ACardArrival } from '@ValenceMobile/components/ACardArrival/ACardArrival';
 import { BackArrow } from '@ValenceMobile/components/BackArrow/BackArrow';
@@ -62,7 +61,6 @@ const APosterGrid = <Item,>({
   onBack,
 }: APosterGridProps<Item>) => {
   const room = useSafeAreaInsets();
-  const pulling = usePullToRefresh();
   const colours = useTheColours();
   const { across, cell } = useGridCells(asked);
   const wasScrolled = useRef<boolean | null>(null);
@@ -126,7 +124,6 @@ const APosterGrid = <Item,>({
       contentContainerStyle={spacing}
       style={styles.whole}
       keyboardShouldPersistTaps="handled"
-      refreshControl={pulling}
       scrollEventThrottle={16}
       onScroll={onScroll}
       {...(onNearTheEnd === undefined

@@ -1,3 +1,4 @@
+import type { Context } from 'hono';
 import type { CalendarFeedService } from '@ValenceServer/calendarFeed/CalendarFeedService';
 import type { PasswordResetAsk } from '@ValenceContracts/schemas/PasswordResetRequest';
 import type { ImportService } from '@ValenceServer/imports/createImportService';
@@ -106,6 +107,7 @@ type CreateAppOptions = {
   version?: string;
   commit?: string | undefined;
   trustedOrigins?: () => Promise<readonly string[]>;
+  callerOf?: (context: Context) => string | null;
   demoAccounts?: readonly string[];
   countUsers: () => Promise<number>;
   promoteToAdmin: (email: string) => Promise<string | null>;

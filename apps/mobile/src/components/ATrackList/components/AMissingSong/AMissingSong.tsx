@@ -1,6 +1,7 @@
+import { showActionSheet } from '@ValenceMobile/platform/showActionSheet';
 import { Download, MoreHorizontal } from '@keyline-icons/react-native';
 import { useState } from 'react';
-import { ActionSheetIOS, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
@@ -121,7 +122,7 @@ const AMissingSong = ({
           tone="bare"
           label={say('common.moreForTitle', { title })}
           onPress={() => {
-            ActionSheetIOS.showActionSheetWithOptions(
+            showActionSheet(
               {
                 title,
                 options: [...choices.map((choice) => choice.label), say('common.cancel')],

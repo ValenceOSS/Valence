@@ -25,7 +25,7 @@ describe('TheFloatingPlayer', () => {
     await act(() => {
       thePhonesMusicPlayer().play([aTrack(1)], 0);
     });
-    const drawn = await render(<TheFloatingPlayer isShown onOpen={jest.fn()} />, {
+    const drawn = await render(<TheFloatingPlayer isShown liftedBy={0} onOpen={jest.fn()} />, {
       wrapper: CacheScope,
     });
 
@@ -40,7 +40,7 @@ describe('TheFloatingPlayer', () => {
     await act(() => {
       mockFake.player.open(book, tracksOf(chapters), null);
     });
-    const drawn = await render(<TheFloatingPlayer isShown onOpen={jest.fn()} />, {
+    const drawn = await render(<TheFloatingPlayer isShown liftedBy={0} onOpen={jest.fn()} />, {
       wrapper: CacheScope,
     });
 

@@ -118,6 +118,7 @@ const theLibrary = (overrides: Partial<TheLibraryProps> = {}) =>
       onPlaylist={jest.fn()}
       onCollection={jest.fn()}
       onLiked={jest.fn()}
+      onMix={jest.fn()}
       onAllAlbums={jest.fn()}
       onAllArtists={jest.fn()}
       onBook={jest.fn()}

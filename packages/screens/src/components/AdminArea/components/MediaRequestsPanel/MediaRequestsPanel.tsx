@@ -550,7 +550,7 @@ const MediaRequestsPanel = () => {
               cell: ({ row }: { row: { original: RequestRow } }) =>
                 row.original.kind === 'request' ? (
                   <Checkbox
-                    label={say('screens.adminArea.mediaRequestsPanel.chooseTitle', {
+                    label={say('common.selectTitle', {
                       title: row.original.request.title,
                     })}
                     isLabelHidden
@@ -1126,10 +1126,7 @@ const MediaRequestsPanel = () => {
                             ? say('screens.adminArea.mediaRequestsPanel.lengthWaitingOnApproval', {
                                 length: awaiting.length.toString(),
                               })
-                            : sayCount(
-                                'screens.adminArea.mediaRequestsPanel.countChosen',
-                                chosenAwaiting.length,
-                              )}
+                            : sayCount('common.count.selected', chosenAwaiting.length)}
                         </span>
 
                         {chosenAwaiting.length === 0 ? null : (

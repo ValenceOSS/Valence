@@ -1,5 +1,6 @@
 import { fetchAlbum, fetchArtist, fetchLiked } from '@ValenceClient/music/fetchMusic';
 import { fetchPlaylist } from '@ValenceClient/music/fetchPlaylists';
+import { fetchMix } from '@ValenceClient/music/fetchMixes';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
 import type { QueueSource } from '@ValenceClient/music/playQueue';
 import type { MusicView } from '@ValenceClient/music/musicView';
@@ -12,7 +13,7 @@ type Playable = {
 
 /**
  * The songs a page of the music section would play, fetched without opening it: an album's songs
- * in order, a playlist's, an artist's most played, or everything somebody likes.
+ * in order, a playlist's, an artist's most played, a mix made for them, or everything somebody likes.
  *
  * @param view - The page.
  * @param name - What the page is called, for saying where the music came from.
@@ -51,6 +52,16 @@ const tracksFor = async (view: MusicView, name: string): Promise<Playable | null
     return {
       tracks: await fetchLiked(),
       source: { kind: 'liked', id: null, name },
+      isOrdered: false,
+    };
+  }
+
+  if (view.kind === 'mix') {
+    const read = await fetchMix(view.id);
+
+    return {
+      tracks: read.tracks,
+      source: { kind: 'tracks', id: view.id, name },
       isOrdered: false,
     };
   }

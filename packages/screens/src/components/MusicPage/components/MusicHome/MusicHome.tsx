@@ -6,6 +6,7 @@ import { Skeleton } from '@ValenceUI/Skeleton';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { AlbumShelf } from '@ValenceScreens/components/AlbumShelf/AlbumShelf';
 import { ArtistShelf } from '@ValenceScreens/components/ArtistShelf/ArtistShelf';
+import { MixShelf } from '@ValenceScreens/components/MixShelf/MixShelf';
 import { PlaylistShelf } from '@ValenceScreens/components/PlaylistShelf/PlaylistShelf';
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { useLikedSongsTile } from '@ValenceScreens/music/useLikedSongsTile';
@@ -20,7 +21,7 @@ const ARTISTS = 18;
 
 /**
  * The front of the music section: whatever is playing, large, then rails of what somebody goes back
- * to — their playlists with their liked songs at the front, what was added lately, the artists in
+ * to — the mixes Valence made for them today, their playlists with their liked songs at the front, what was added lately, the artists in
  * the library, and what the rest of the household has shared — each paging sideways the way the
  * film rows do, and each with a way through to the whole of it.
  */
@@ -30,6 +31,7 @@ const MusicHome = () => {
   const albums = useQuery(musicQueries.albums('recent'));
   const artists = useQuery(musicQueries.artists());
   const playlists = useQuery(musicQueries.playlists());
+  const mixes = useQuery(musicQueries.mixes());
   const mine = (playlists.data ?? []).filter((playlist) => playlist.isMine);
   const shared = (playlists.data ?? []).filter((playlist) => !playlist.isMine);
 
@@ -76,6 +78,8 @@ const MusicHome = () => {
   return (
     <div className="flex flex-col gap-12 pb-12">
       <MusicFeature newest={recent[0] ?? null} />
+
+      <MixShelf mixes={mixes.data ?? []} />
 
       <PlaylistShelf
         heading={say('common.yourPlaylists')}

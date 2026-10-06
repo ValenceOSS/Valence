@@ -48,8 +48,26 @@ describe('what a request is about', () => {
     });
   });
 
+  it.each([
+    ['without its hyphens', ITEM.replaceAll('-', '')],
+    ['in braces', `{${ITEM}}`],
+    ['in capitals', ITEM.toUpperCase()],
+  ])(
+    'names the item behind an identifier written %s, which the database also finds',
+    (_what, id) => {
+      expect(subjectOfRequest(`/api/media/${id}/preview`)).toEqual({ kind: 'item', mediaId: ITEM });
+    },
+  );
+
   it('names the programme behind a series address', () => {
     expect(subjectOfRequest(`/api/series/${SERIES}/rating`)).toEqual({
+      kind: 'series',
+      seriesId: SERIES,
+    });
+  });
+
+  it('names the programme behind a series identifier written without its hyphens', () => {
+    expect(subjectOfRequest(`/api/series/${SERIES.replaceAll('-', '')}/rating`)).toEqual({
       kind: 'series',
       seriesId: SERIES,
     });

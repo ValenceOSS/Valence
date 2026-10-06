@@ -1,10 +1,7 @@
 import { MusicNote } from '@keyline-icons/react-native';
-import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { Button } from '@ValenceMobile/components/Button/Button';
-import { ACoverGrid } from '@ValenceMobile/components/ACoverGrid/ACoverGrid';
-import { Icon } from '@ValenceMobile/components/Icon/Icon';
+import { AMusicArt } from '@ValenceMobile/components/AMusicArt/AMusicArt';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { AMusicTileProps } from './AMusicTile.types';
@@ -13,7 +10,6 @@ const SIDE = 148;
 
 const styles = StyleSheet.create({
   art: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  fills: { height: '100%', width: '100%' },
   said: { gap: 2 },
   whole: { gap: 8 },
 });
@@ -47,7 +43,6 @@ const AMusicTile = ({
   onLongPress,
 }: AMusicTileProps) => {
   const colours = useTheColours();
-  const [isMissing, setIsMissing] = useState(false);
 
   return (
     <Button
@@ -68,19 +63,12 @@ const AMusicTile = ({
             },
           ]}
         >
-          {albumIds !== undefined ? (
-            <ACoverGrid albumIds={albumIds} standIn={standIn} iconSize={40} />
-          ) : artwork === null || isMissing ? (
-            <Icon of={standIn} size={40} colour={colours.textMuted} />
-          ) : (
-            <ARemotePicture
-              style={styles.fills}
-              uri={artwork}
-              onMissing={() => {
-                setIsMissing(true);
-              }}
-            />
-          )}
+          <AMusicArt
+            artwork={artwork}
+            {...(albumIds === undefined ? {} : { albumIds })}
+            standIn={standIn}
+            iconSize={40}
+          />
         </View>
 
         <View style={styles.said}>

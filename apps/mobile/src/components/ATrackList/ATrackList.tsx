@@ -8,6 +8,7 @@ import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 import { AMissingSong } from '@ValenceMobile/components/ATrackList/components/AMissingSong/AMissingSong';
 import { ATrackRow } from '@ValenceMobile/components/ATrackRow/ATrackRow';
 import { useTheMusic } from '@ValenceMobile/hooks/useTheMusic';
+import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 import { askAboutATrack } from '@ValenceMobile/music/askAboutATrack';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import type { ATrackListMissingSong, ATrackListProps } from './ATrackList.types';
@@ -47,6 +48,7 @@ const ATrackList = ({
   const playlists = useQuery(musicQueries.playlists()).data;
   const mine = useMemo(() => (playlists ?? []).filter((playlist) => playlist.isMine), [playlists]);
   const currentId = state.current?.id ?? null;
+  const isPlaying = useWhatIsPlaying(state)?.isPlaying ?? state.isPlaying;
   const latest = useRef({
     tracks,
     source,
@@ -154,6 +156,7 @@ const ATrackList = ({
                 : onThisServer(albumArtworkUrl(track.album.id))
             }
             isCurrent={currentId === track.id}
+            isPlaying={currentId === track.id && isPlaying}
             isLiked={favourites.isKept(track.id)}
             onPlay={play}
             onMenu={askAbout}

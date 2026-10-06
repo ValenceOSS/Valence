@@ -4,6 +4,7 @@ import { z } from 'zod';
 import type { DBAdapter, DBAdapterInstance } from 'better-auth';
 import type { SignInAttempt } from '@ValenceServer/auth/describeSignInAttempt';
 import { readCallerAddress } from '@ValenceServer/web/readCallerAddress';
+import { CALLER_HEADER } from '@ValenceServer/web/CALLER_HEADER';
 import { setSessionCookie } from 'better-auth/cookies';
 import { bearerWithoutACookie } from '@ValenceServer/auth/bearerWithoutACookie';
 import { confirmItIsYou } from '@ValenceServer/auth/confirmItIsYou';
@@ -97,6 +98,7 @@ const createAuth = ({
     },
     advanced: {
       useSecureCookies: cookieSecure,
+      ipAddress: { ipAddressHeaders: [CALLER_HEADER] },
       defaultCookieAttributes: {
         sameSite: 'lax',
         secure: cookieSecure,
@@ -149,7 +151,8 @@ const createAuth = ({
           address:
             context.headers === undefined
               ? null
-              : readCallerAddress({ headers: context.headers, socketAddress: null }),
+              : (context.headers.get(CALLER_HEADER) ??
+                readCallerAddress({ headers: context.headers, socketAddress: null })),
         });
 
         await Promise.resolve();

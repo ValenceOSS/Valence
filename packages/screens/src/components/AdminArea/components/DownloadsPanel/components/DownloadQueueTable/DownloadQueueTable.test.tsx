@@ -198,6 +198,61 @@ describe('DownloadQueueTable', () => {
     expect(screen.getByText(/Send a release from Search/)).toBeInTheDocument();
   });
 
+  it('ticks a download, or every one of them, where several can be chosen', async () => {
+    const dune = aDownload();
+    const heat = aDownload({ id: '0f8fad5b-d9cb-469f-a165-70867728950f', title: 'Heat' });
+    const onChosenChange = vi.fn();
+
+    renderInAnAddress(
+      <DownloadQueueTable
+        downloads={[dune, heat]}
+        libraries={[]}
+        busyId={null}
+        chosen={new Set([dune.id])}
+        onChosenChange={onChosenChange}
+        onPause={vi.fn()}
+        onResume={vi.fn()}
+        onRemove={vi.fn()}
+        onFile={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('checkbox', { name: 'Select Dune' })).toBeChecked();
+
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Select Heat' }));
+
+    expect(onChosenChange).toHaveBeenLastCalledWith(new Set([dune.id, heat.id]));
+
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Select every download' }));
+
+    expect(onChosenChange).toHaveBeenLastCalledWith(new Set([dune.id, heat.id]));
+  });
+
+  it('offers no ticks where nothing can be chosen', () => {
+    show([aDownload()]);
+
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  });
+
+  it('waits on every download being acted on together', () => {
+    const heat = aDownload({ id: '0f8fad5b-d9cb-469f-a165-70867728950f', title: 'Heat' });
+
+    renderInAnAddress(
+      <DownloadQueueTable
+        downloads={[aDownload(), heat]}
+        libraries={[]}
+        busyId={null}
+        busyIds={new Set([aDownload().id, heat.id])}
+        onPause={vi.fn()}
+        onResume={vi.fn()}
+        onRemove={vi.fn()}
+        onFile={vi.fn()}
+      />,
+    );
+
+    expect(screen.getAllByRole('status', { name: /Working on/ })).toHaveLength(2);
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(DownloadQueueTable.displayName).toBe('DownloadQueueTable');
   });

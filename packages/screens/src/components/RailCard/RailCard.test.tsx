@@ -152,6 +152,87 @@ describe('RailCard', () => {
     expect(screen.queryByRole('img', { name: /left/ })).not.toBeInTheDocument();
   });
 
+  it('ticks a programme only once every season that has aired is watched, not its first alone', async () => {
+    const episode = { ...MEDIA, seriesTitle: 'Severance', seasonNumber: 1, episodeNumber: 1 };
+    const show = (secondAirsOn: string) => ({
+      id: 'severance',
+      libraryId: MEDIA.libraryId,
+      title: 'Severance',
+      seasonCount: 1,
+      episodeCount: 1,
+      latestAddedAt: MEDIA.addedAt,
+      coverMediaId: MEDIA.id,
+      seasons: [{ seasonNumber: 1, episodes: [episode] }],
+      shape: [
+        {
+          seasonNumber: 1,
+          episodeCount: 1,
+          episodes: [{ episodeNumber: 1, title: 'One', airDate: '2022-02-18' }],
+        },
+        {
+          seasonNumber: 2,
+          episodeCount: 1,
+          episodes: [{ episodeNumber: 1, title: 'Two', airDate: secondAirsOn }],
+        },
+      ],
+    });
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(show('2025-01-17')),
+      }),
+    );
+
+    const { unmount } = renderInAnAddress(
+      <RailCard
+        media={episode}
+        isSeries
+        unwatchedCount={0}
+        watchedFraction={1}
+        onPlay={vi.fn()}
+        onInspect={vi.fn()}
+      />,
+    );
+
+    await flush();
+
+    expect(screen.queryByRole('img', { name: 'Watched' })).not.toBeInTheDocument();
+
+    unmount();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(show('2099-01-01')),
+      }),
+    );
+
+    renderInAnAddress(
+      <RailCard media={episode} isSeries unwatchedCount={0} onPlay={vi.fn()} onInspect={vi.fn()} />,
+    );
+
+    expect(await screen.findByRole('img', { name: 'Watched' })).toBeInTheDocument();
+  });
+
+  it('never ticks a programme for the episode that stands for it', () => {
+    renderInAnAddress(
+      <RailCard
+        media={MEDIA}
+        isSeries
+        unwatchedCount={3}
+        watchedFraction={1}
+        onPlay={vi.fn()}
+        onInspect={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole('img', { name: 'Watched' })).not.toBeInTheDocument();
+  });
+
   it('reads nothing aloud in writing over the clip, since a preview carries no subtitles', async () => {
     const { container } = renderInAnAddress(
       <RailCard media={MEDIA} onPlay={vi.fn()} onInspect={vi.fn()} />,

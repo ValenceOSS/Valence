@@ -3,7 +3,7 @@ import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Plus as PlusFilledIcon } from '@keyline-icons/react/fill';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -31,6 +31,8 @@ import { DownloadClientDialog } from '@ValenceScreens/components/AdminArea/compo
 import { RemoveDownloadDialog } from '@ValenceScreens/components/AdminArea/components/RemoveDownloadDialog/RemoveDownloadDialog';
 import { DownloadClientsTable } from './components/DownloadClientsTable/DownloadClientsTable';
 import { DownloadQueueTable } from './components/DownloadQueueTable/DownloadQueueTable';
+import { ChosenDownloadsBar } from './components/ChosenDownloadsBar/ChosenDownloadsBar';
+import { PAUSABLE_STATES } from './PAUSABLE_STATES';
 import { ArrQueueTable } from './components/ArrQueueTable/ArrQueueTable';
 import { GiveUpRulesList } from './components/GiveUpRulesList/GiveUpRulesList';
 import { describeSpeeds } from './describeSpeeds';
@@ -38,11 +40,14 @@ import type { DownloadClient } from '@ValenceContracts/schemas/DownloadClient';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { QueuedDownload } from '@ValenceContracts/schemas/DownloadQueue';
 import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 import { usePageIsShown } from '@ValenceScreens/visibility/usePageIsShown';
 
 const DOWNLOADS_TABS = ['queue', 'apps', 'clients', 'rules'] as const;
 
 const NO_LIBRARIES: readonly Library[] = [];
+
+const NO_DOWNLOADS: readonly QueuedDownload[] = [];
 
 type DownloadsTab = (typeof DOWNLOADS_TABS)[number];
 
@@ -76,7 +81,9 @@ const DownloadsPanel = () => {
   const [editing, setEditing] = useState<DownloadClient | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [removingClient, setRemovingClient] = useState<DownloadClient | null>(null);
-  const [removingDownload, setRemovingDownload] = useState<QueuedDownload | null>(null);
+  const [removing, setRemoving] = useState<readonly QueuedDownload[]>(NO_DOWNLOADS);
+  const [chosenIds, setChosenIds] = useState<ReadonlySet<string>>(new Set());
+  const [busyIds, setBusyIds] = useState<ReadonlySet<string>>(new Set());
   const [testingId, setTestingId] = useState<string | null>(null);
   const isShown = usePageIsShown();
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -124,6 +131,34 @@ const DownloadsPanel = () => {
         .then(reread)
         .finally(() => {
           setBusyId(null);
+        });
+    },
+    [reread],
+  );
+
+  const actOnMany = useCallback(
+    (
+      downloads: readonly QueuedDownload[],
+      doing: (id: string) => Promise<{ refusal: { message: string } | null }>,
+      done: string,
+    ) => {
+      if (downloads.length === 0) {
+        return;
+      }
+
+      setBusyIds(new Set(downloads.map((download) => download.id)));
+      setProblem(null);
+
+      void Promise.all(downloads.map((download) => doing(download.id)))
+        .then((answers) => {
+          const refusal = answers.find((answer) => answer.refusal !== null)?.refusal ?? null;
+
+          tellOutcome(done, failureOfRefusal(refusal));
+          setProblem(refusal?.message ?? null);
+        })
+        .then(reread)
+        .finally(() => {
+          setBusyIds(new Set());
         });
     },
     [reread],
@@ -222,7 +257,18 @@ const DownloadsPanel = () => {
             ? reachable.reduce((sum, reading) => sum + (reading.uploadBytesPerSecond ?? 0), 0)
             : null,
         );
-  const removingKind = readings.find((reading) => reading.id === removingDownload?.clientId)?.kind;
+  const downloads = queue.data?.downloads ?? NO_DOWNLOADS;
+  const chosen = useMemo(
+    () => downloads.filter((download) => chosenIds.has(download.id)),
+    [downloads, chosenIds],
+  );
+  const keepsFinishedFiles =
+    removing.length > 0 &&
+    removing.every(
+      (download) =>
+        download.state === 'done' &&
+        readings.find((reading) => reading.id === download.clientId)?.kind === 'nzbget',
+    );
 
   return (
     <Tabs
@@ -318,23 +364,33 @@ const DownloadsPanel = () => {
         />
 
         <RemoveDownloadDialog
-          download={removingDownload}
-          keepsFinishedFiles={removingKind === 'nzbget' && removingDownload?.state === 'done'}
+          downloads={removing}
+          keepsFinishedFiles={keepsFinishedFiles}
           onClose={() => {
-            setRemovingDownload(null);
+            setRemoving(NO_DOWNLOADS);
           }}
           onConfirm={(deleteData) => {
-            const gone = removingDownload;
+            const gone = removing;
+            const [one] = gone;
 
-            setRemovingDownload(null);
+            setRemoving(NO_DOWNLOADS);
 
-            if (gone !== null) {
+            if (gone.length === 1 && one !== undefined) {
               act(
-                gone,
+                one,
                 async (id) => ({ refusal: await removeQueuedDownload(id, deleteData) }),
-                say('screens.adminArea.downloadsPanel.removedTitle', { title: gone.title }),
+                say('screens.adminArea.downloadsPanel.removedTitle', { title: one.title }),
               );
+
+              return;
             }
+
+            setChosenIds(new Set());
+            actOnMany(
+              gone,
+              async (id) => ({ refusal: await removeQueuedDownload(id, deleteData) }),
+              sayCount('screens.adminArea.downloadsPanel.removedCount', gone.length),
+            );
           }}
         />
 
@@ -361,10 +417,48 @@ const DownloadsPanel = () => {
               downloads={queue.data.downloads}
               libraries={libraries.data ?? NO_LIBRARIES}
               busyId={busyId}
+              busyIds={busyIds}
+              chosen={chosenIds}
+              onChosenChange={setChosenIds}
+              toolbar={
+                <ChosenDownloadsBar
+                  total={downloads.length}
+                  chosen={chosen}
+                  isBusy={busyIds.size > 0}
+                  onPause={() => {
+                    const pausing = chosen.filter((download) =>
+                      PAUSABLE_STATES.has(download.state),
+                    );
+
+                    actOnMany(
+                      pausing,
+                      pauseQueuedDownload,
+                      sayCount('screens.adminArea.downloadsPanel.pausedCount', pausing.length),
+                    );
+                  }}
+                  onResume={() => {
+                    const resuming = chosen.filter((download) => download.state === 'paused');
+
+                    actOnMany(
+                      resuming,
+                      resumeQueuedDownload,
+                      sayCount('screens.adminArea.downloadsPanel.resumedCount', resuming.length),
+                    );
+                  }}
+                  onRemove={() => {
+                    setRemoving(chosen);
+                  }}
+                  onClear={() => {
+                    setChosenIds(new Set());
+                  }}
+                />
+              }
               onFile={file}
               onPause={pause}
               onResume={resume}
-              onRemove={setRemovingDownload}
+              onRemove={(download) => {
+                setRemoving([download]);
+              }}
             />
           )}
         </TabPanel>

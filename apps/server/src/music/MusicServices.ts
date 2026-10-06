@@ -1,6 +1,7 @@
 import type { TranscoderStreamedFile } from '@ValenceServer/transcoder/TranscoderClient';
 import type { PlaylistService } from '@ValenceServer/playlists/PlaylistService';
 import type { MusicDevices } from './createMusicDevices';
+import type { Mixes } from './mixes/createMixes';
 import type { MusicService, TrackFile } from './MusicService';
 import type { Rendition } from './renditionFor';
 import type { CataloguePictures } from './web/createCataloguePictures';
@@ -11,6 +12,7 @@ type MusicServices = {
   library: MusicService;
   playlists: PlaylistService;
   devices: MusicDevices;
+  mixes?: Mixes;
   pictures: CataloguePictures;
   corrections: AlbumCorrections;
   stories: ArtistStories;

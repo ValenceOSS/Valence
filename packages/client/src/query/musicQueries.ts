@@ -12,6 +12,7 @@ import {
 } from '@ValenceClient/music/fetchMusic';
 import { fetchPlaylist, fetchPlaylists } from '@ValenceClient/music/fetchPlaylists';
 import { fetchMusicDevices } from '@ValenceClient/music/musicDevices';
+import { fetchMix, fetchMixes } from '@ValenceClient/music/fetchMixes';
 import type { AlbumOrder } from '@ValenceClient/music/fetchMusic';
 
 const STORY_KEPT_MS = 60 * 60 * 1000;
@@ -141,7 +142,30 @@ const playlist = (playlistId: string) =>
  *
  * @returns The query.
  */
-const devices = () => queryOptions({ queryKey: [...MUSIC, 'devices'], queryFn: fetchMusicDevices });
+const devices = () =>
+  queryOptions({ queryKey: [...MUSIC, 'devices'], queryFn: () => fetchMusicDevices() });
+
+/**
+ * The mixes Valence has made for this profile today, which change once a day.
+ *
+ * @returns The query.
+ */
+const mixes = () =>
+  queryOptions({ queryKey: [...MUSIC, 'mixes'], queryFn: fetchMixes, staleTime: 15 * 60_000 });
+
+/**
+ * One of today's mixes, with its songs. Not retried: a mix that is not there today is an answer.
+ *
+ * @param mixId - Which mix.
+ * @returns The query.
+ */
+const mix = (mixId: string) =>
+  queryOptions({
+    queryKey: [...MUSIC, 'mixes', mixId],
+    queryFn: () => fetchMix(mixId),
+    staleTime: 15 * 60_000,
+    retry: false,
+  });
 
 const musicQueries = {
   album,
@@ -153,6 +177,8 @@ const musicQueries = {
   key: MUSIC,
   liked,
   lyrics,
+  mix,
+  mixes,
   playlist,
   playlists,
   playlistsKey: PLAYLISTS,

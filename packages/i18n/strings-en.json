@@ -2401,6 +2401,16 @@
     "context": "How many parts of a request are downloading now."
   },
   {
+    "handler": "common.count.downloads.one",
+    "text": "{count} download",
+    "context": "How many downloads there are. {count} is the number."
+  },
+  {
+    "handler": "common.count.downloads.other",
+    "text": "{count} downloads",
+    "context": "How many downloads there are. {count} is the number."
+  },
+  {
     "handler": "common.count.editions.one",
     "text": "{count} edition",
     "context": "How many editions (separate files of the same film or episode) a title has, in the admin's media table. {count} is the number."
@@ -2579,6 +2589,16 @@
     "handler": "common.count.seconds.other",
     "text": "{count} seconds",
     "context": "A number of seconds, such as how far a double tap skips."
+  },
+  {
+    "handler": "common.count.selected.one",
+    "text": "{count} selected",
+    "context": "How many rows of an admin table are ticked, beside what can be done to them all. {count} is the number."
+  },
+  {
+    "handler": "common.count.selected.other",
+    "text": "{count} selected",
+    "context": "How many rows of an admin table are ticked, beside what can be done to them all. {count} is the number."
   },
   {
     "handler": "common.count.songs.one",
@@ -3697,6 +3717,11 @@
     "context": "Text shown, used in the share panel in the account area and in the shares panel in the admin area. {createdAt} is filled in by the app."
   },
   {
+    "handler": "common.madeForYou",
+    "text": "Made for you",
+    "context": "The heading of the shelf of mixes Valence makes for each profile, on the music home."
+  },
+  {
     "handler": "common.makeALink",
     "text": "Create share link",
     "context": "The label of a button, used in the share sheet of the phone app and in the share dialog."
@@ -3755,6 +3780,11 @@
     "handler": "common.medium",
     "text": "Medium",
     "context": "Shown, used in several places, among them the text reader in the reader of the phone app and the text reader."
+  },
+  {
+    "handler": "common.mixByValence",
+    "text": "Made by Valence",
+    "context": "Says that a mix was made by Valence rather than by a person, beneath its name on the page for the mix."
   },
   {
     "handler": "common.mode",
@@ -5323,6 +5353,11 @@
     "handler": "common.seeAll",
     "text": "See all",
     "context": "The label of a button, used in the shelf of the phone app and in the music home in the music page."
+  },
+  {
+    "handler": "common.selectTitle",
+    "text": "Select {title}",
+    "context": "The tick box beside one row of an admin table, read aloud, such as a request or a download. {title} is its name."
   },
   {
     "handler": "common.sepia",
@@ -7960,6 +7995,11 @@
     "context": "An error the server answers with (HTTP 403), used in the app on the server (from `servePlayback`) and in the app on the server (from `servePresence`)."
   },
   {
+    "handler": "error.common.thatRequestIsTooLarge",
+    "text": "That request is too large.",
+    "context": "An error the server answers with (HTTP 413) when somebody sends far more than a sign-in or a webhook could need (from `serveEveryRequest`)."
+  },
+  {
     "handler": "error.common.thatTrackCouldNotBeRead",
     "text": "Couldn’t read that track.",
     "context": "An error the server answers with (HTTP 404), used in the books on the server (from `registerListeningRoutes`) and in the music on the server (from `registerMusicRoutes`)."
@@ -8410,6 +8450,11 @@
     "context": "An error the server answers with (HTTP 404) in the music on the server (from `registerMusicRoutes`)."
   },
   {
+    "handler": "error.music.thereIsNoSuchMixToday",
+    "text": "There’s no such mix today.",
+    "context": "An error the server answers with (HTTP 404) when a mix Valence makes is asked for that was not made today (from registerMusicRoutes)."
+  },
+  {
     "handler": "error.person.theCatalogueKnowsNobodyByThat",
     "text": "The catalogue has no person with that ID.",
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `servePerson`)."
@@ -8855,6 +8900,16 @@
     "context": "Shown in the book of the phone app. {page} is filled in by the app; {pageCount} is filled in by the app."
   },
   {
+    "handler": "phone.aDevicesSheet.airPlayAndBluetooth",
+    "text": "AirPlay & Bluetooth",
+    "context": "A tile at the foot of the sheet that picks where music plays, on an iPhone; pressing it opens the system list of AirPlay and Bluetooth speakers."
+  },
+  {
+    "handler": "phone.aDevicesSheet.bluetooth",
+    "text": "Bluetooth",
+    "context": "A tile at the foot of the sheet that picks where music plays, on Android; pressing it opens the phone Bluetooth settings."
+  },
+  {
     "handler": "phone.aDevicesSheet.noOtherValenceIsOpenOn",
     "text": "Valence isn’t open on any other device with this profile. Open Valence on a computer, TV or another phone and it’ll appear here.",
     "context": "Text shown in the devices sheet of the phone app."
@@ -8863,6 +8918,11 @@
     "handler": "phone.aDevicesSheet.thisIPhone",
     "text": "This iPhone",
     "context": "The detail in the devices sheet of the phone app."
+  },
+  {
+    "handler": "phone.aDevicesSheet.thisPhone",
+    "text": "This phone",
+    "context": "The name of the Android phone in the sheet that picks where music plays, as \"This iPhone\" names an iPhone."
   },
   {
     "handler": "phone.aFaceEditor.aPhotoOrAGIF",
@@ -9203,6 +9263,21 @@
     "handler": "phone.carPlay.useCarPlay.thisServerHasNoMusicLibrary",
     "text": "This server has no music library set up.",
     "context": "Shown on the CarPlay screen in place of the music tabs when the server the phone is signed in to has no music library."
+  },
+  {
+    "handler": "phone.platform.describeThisPhone.anEmulator",
+    "text": "Emulator",
+    "context": "The name an Android emulator is given in the sessions list on the admin page, in place of the build code it reports for a model."
+  },
+  {
+    "handler": "phone.platform.describeThisPhone.aPhone",
+    "text": "Phone",
+    "context": "The name an Android phone is given in the sessions list on the admin page when it reports no name or model of its own."
+  },
+  {
+    "handler": "phone.platform.describeThisPhone.nameOnAndroid",
+    "text": "{name} on Android",
+    "context": "How an Android phone is named in the sessions list on the admin page, as a browser is named with the system it runs on (\"Chrome on macOS\"). {name} is the phone's own name or model, such as Pixel 10 Pro. Keep Android as the last word: the list reads it to choose a logo."
   },
   {
     "handler": "phone.platform.installPhonePlatform.addAPasskeyFromValenceOn",
@@ -9653,6 +9728,11 @@
     "handler": "phone.theNotifications.theyAreGoneForGood",
     "text": "They’ll be deleted permanently.",
     "context": "A message in an alert in the notifications of the phone app."
+  },
+  {
+    "handler": "phone.theNowPlayingBar.byArtists",
+    "text": " · {artists}",
+    "context": "Follows the name of the song in the now-playing bar above the tabs, on the same line and drawn quieter. {artists} is the song's artists, separated by commas. Keep the space before the dot."
   },
   {
     "handler": "phone.theSearch.asked.nothingAskedForYet",
@@ -13080,6 +13160,16 @@
     "context": "The detail of a confirm dialog in the downloads panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.downloadsPanel.pausedCount.one",
+    "text": "Paused {count} download.",
+    "context": "A short message once ticked downloads are paused. In the downloads queue in the admin area, where several downloads can be ticked and acted on together. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.downloadsPanel.pausedCount.other",
+    "text": "Paused {count} downloads.",
+    "context": "A short message once ticked downloads are paused. In the downloads queue in the admin area, where several downloads can be ticked and acted on together. {count} is how many."
+  },
+  {
     "handler": "screens.adminArea.downloadsPanel.pausedTitle",
     "text": "Paused {title}.",
     "context": "A short message shown once something is done in the downloads panel in the admin area. {title} is filled in by the app."
@@ -13095,6 +13185,16 @@
     "context": "The label of a spinner in the downloads panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.downloadsPanel.removedCount.one",
+    "text": "Removed {count} download.",
+    "context": "A short message once ticked downloads are removed. In the downloads queue in the admin area, where several downloads can be ticked and acted on together. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.downloadsPanel.removedCount.other",
+    "text": "Removed {count} downloads.",
+    "context": "A short message once ticked downloads are removed. In the downloads queue in the admin area, where several downloads can be ticked and acted on together. {count} is how many."
+  },
+  {
     "handler": "screens.adminArea.downloadsPanel.removedTitle",
     "text": "Removed {title}.",
     "context": "A short message shown once something is done in the downloads panel in the admin area. {title} is filled in by the app."
@@ -13103,6 +13203,16 @@
     "handler": "screens.adminArea.downloadsPanel.removeThisClient",
     "text": "Remove this client?",
     "context": "The title of the dialog that removes a download client, while it has none to name."
+  },
+  {
+    "handler": "screens.adminArea.downloadsPanel.resumedCount.one",
+    "text": "Resumed {count} download.",
+    "context": "A short message once ticked downloads are resumed. In the downloads queue in the admin area, where several downloads can be ticked and acted on together. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.downloadsPanel.resumedCount.other",
+    "text": "Resumed {count} downloads.",
+    "context": "A short message once ticked downloads are resumed. In the downloads queue in the admin area, where several downloads can be ticked and acted on together. {count} is how many."
   },
   {
     "handler": "screens.adminArea.downloadsPanel.resumedTitle",
@@ -13128,6 +13238,11 @@
     "handler": "screens.adminArea.downloadsPanel.theDownloadsCouldNotBeRead",
     "text": "Couldn’t load downloads.",
     "context": "Shown where the downloads could not be read from the server, followed by a sentence about why and a button to try again."
+  },
+  {
+    "handler": "screens.adminArea.downloadsPanel.untickThem",
+    "text": "Clear selection",
+    "context": "The button that unticks every ticked download. In the downloads queue in the admin area, where several downloads can be ticked and acted on together."
   },
   {
     "handler": "screens.adminArea.downloadsPanel.whatToShowAboutDownloads",
@@ -15025,11 +15140,6 @@
     "context": "The label of a checkbox in the media requests panel in the admin area. {length} is filled in by the app."
   },
   {
-    "handler": "screens.adminArea.mediaRequestsPanel.chooseTitle",
-    "text": "Select {title}",
-    "context": "The label of a checkbox in the media requests panel in the admin area. {title} is filled in by the app."
-  },
-  {
     "handler": "screens.adminArea.mediaRequestsPanel.countApproved.one",
     "text": "{count} approved.",
     "context": "Said after the admin approves several requests at once, in the admin's requests table. {count} is how many were approved."
@@ -15038,16 +15148,6 @@
     "handler": "screens.adminArea.mediaRequestsPanel.countApproved.other",
     "text": "{count} approved.",
     "context": "Said after the admin approves several requests at once, in the admin's requests table. {count} is how many were approved."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.countChosen.one",
-    "text": "{count} selected",
-    "context": "Beside the approve and refuse buttons in the admin's requests table, how many waiting requests are ticked. {count} is the number."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.countChosen.other",
-    "text": "{count} selected",
-    "context": "Beside the approve and refuse buttons in the admin's requests table, how many waiting requests are ticked. {count} is the number."
   },
   {
     "handler": "screens.adminArea.mediaRequestsPanel.countRefused.one",
@@ -16285,6 +16385,16 @@
     "context": "Shown when removing a download from a client that always keeps finished files. {name} is the download client's name, such as NZBGet."
   },
   {
+    "handler": "screens.adminArea.removeDownloadDialog.removeCountDownloads.one",
+    "text": "Remove {count} download",
+    "context": "The title of the dialog confirming that ticked downloads are removed. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.removeDownloadDialog.removeCountDownloads.other",
+    "text": "Remove {count} downloads",
+    "context": "The title of the dialog confirming that ticked downloads are removed. {count} is how many."
+  },
+  {
     "handler": "screens.adminArea.removeDownloadDialog.removeThisDownload",
     "text": "Remove this download?",
     "context": "The title of the dialog confirming a download is taken out of its download client, before it knows which download."
@@ -16293,6 +16403,11 @@
     "handler": "screens.adminArea.removeDownloadDialog.theClientKeepsWhatItHasFinished",
     "text": "This download client doesn’t delete finished downloads, so their files stay where they are.",
     "context": "Shown when removing a download from a client that always keeps finished files, before it knows which client."
+  },
+  {
+    "handler": "screens.adminArea.removeDownloadDialog.theyAreTakenOutOfTheirClients",
+    "text": "They’re removed from their download clients, and Valence stops tracking them.",
+    "context": "Explains removing several ticked downloads at once, in the dialog confirming it."
   },
   {
     "handler": "screens.adminArea.requestDetailDialog.aRequest",
@@ -18793,6 +18908,11 @@
     "handler": "screens.downloadsPanel.downloadQueueTable.againBesideWhatWasFiledBefore",
     "text": "Again, beside what was filed before.",
     "context": "Shown in the download queue table in the downloads panel."
+  },
+  {
+    "handler": "screens.downloadsPanel.downloadQueueTable.chooseEveryDownload",
+    "text": "Select every download",
+    "context": "The tick box at the head of the downloads queue that ticks every download. In the downloads queue in the admin area, where several downloads can be ticked and acted on together."
   },
   {
     "handler": "screens.downloadsPanel.downloadQueueTable.doneOfSize",
@@ -24906,6 +25026,11 @@
     "context": "In an email Valence sends: the last line. {server} is the server's name or address."
   },
   {
+    "handler": "server.env.theDevelopmentSecretInProduction",
+    "text": "BETTER_AUTH_SECRET is still the development default, which anybody can read. Set it to a long random value of your own before running Valence in production.",
+    "context": "Shown in the server log when it refuses to start (from `readEnv`). BETTER_AUTH_SECRET is the name of a setting and is not translated."
+  },
+  {
     "handler": "server.events.webhookEventBus.anEventCouldNotBePublished",
     "text": "Couldn’t publish an event.",
     "context": "Shown in the events on the server (from `createWebhookEventBus`)."
@@ -25749,6 +25874,51 @@
     "handler": "server.music.couldNotReadTrackBecause",
     "text": "Couldn’t read this file as a track: {reason}",
     "context": "Why a music file was skipped while scanning, with the reader's own reason. Shown with the scan's issues on the admin area's jobs page."
+  },
+  {
+    "handler": "server.music.mixes.dailyMix",
+    "text": "Daily Mix {number}",
+    "context": "A mix Valence makes for each profile from its music, shown on the music home under Made for you. The name of one of up to four daily mixes, each a cluster of artists the profile plays together. {number} is 1 to 4."
+  },
+  {
+    "handler": "server.music.mixes.decadeMix",
+    "text": "{decade}s Mix",
+    "context": "A mix Valence makes for each profile from its music, shown on the music home under Made for you. The name of a mix of one decade. {decade} is the decade as a year, such as 2010, so it reads 2010s."
+  },
+  {
+    "handler": "server.music.mixes.decadeMixDetail",
+    "text": "Music from the {decade}s",
+    "context": "A mix Valence makes for each profile from its music, shown on the music home under Made for you. What a decade mix holds, beneath its name. {decade} is the decade as a year, such as 2010."
+  },
+  {
+    "handler": "server.music.mixes.genreMix",
+    "text": "{genre} Mix",
+    "context": "A mix Valence makes for each profile from its music, shown on the music home under Made for you. The name of a mix of one genre. {genre} is the genre as the library files it, such as Rock."
+  },
+  {
+    "handler": "server.music.mixes.genreMixDetail",
+    "text": "{genre} from your library",
+    "context": "A mix Valence makes for each profile from its music, shown on the music home under Made for you. What a genre mix holds, beneath its name. {genre} is the genre."
+  },
+  {
+    "handler": "server.music.mixes.onRepeat",
+    "text": "On Repeat",
+    "context": "A mix Valence makes for each profile from its music, shown on the music home under Made for you. The name of the mix of the songs played most in the last 30 days."
+  },
+  {
+    "handler": "server.music.mixes.onRepeatDetail",
+    "text": "Your most played songs of the last 30 days",
+    "context": "A mix Valence makes for each profile from its music, shown on the music home under Made for you. What the On Repeat mix holds, beneath its name."
+  },
+  {
+    "handler": "server.music.mixes.rediscover",
+    "text": "Rediscover",
+    "context": "A mix Valence makes for each profile from its music, shown on the music home under Made for you. The name of the mix of songs played a lot in the past and not lately."
+  },
+  {
+    "handler": "server.music.mixes.rediscoverDetail",
+    "text": "Songs you played a lot and haven’t heard lately",
+    "context": "A mix Valence makes for each profile from its music, shown on the music home under Made for you. What the Rediscover mix holds, beneath its name."
   },
   {
     "handler": "server.music.musicDevices.anAdministrator",

@@ -1,5 +1,6 @@
+import { showActionSheet } from '@ValenceMobile/platform/showActionSheet';
 import { useCallback, useMemo } from 'react';
-import { ActionSheetIOS, Alert, FlatList, StyleSheet, View } from 'react-native';
+import { Alert, FlatList, StyleSheet, View } from 'react-native';
 import { upcomingIn } from '@ValenceClient/music/playQueue';
 import { AFadedEdge } from '@ValenceMobile/components/AFadedEdge/AFadedEdge';
 import { Button } from '@ValenceMobile/components/Button/Button';
@@ -63,7 +64,7 @@ const TheUpNext = () => {
         },
       ];
 
-      ActionSheetIOS.showActionSheetWithOptions(
+      showActionSheet(
         {
           title,
           options: [...choices.map((choice) => choice.label), say('common.cancel')],

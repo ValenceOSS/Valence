@@ -174,6 +174,10 @@ import type {
 import { getConnInfo } from '@hono/node-server/conninfo';
 import type { Context } from 'hono';
 import { readCallerAddress } from '@ValenceServer/web/readCallerAddress';
+import { createDatabaseMusicPlays } from '@ValenceServer/music/mixes/createDatabaseMusicPlays';
+import { createMixes } from '@ValenceServer/music/mixes/createMixes';
+import { clientAddressOf } from '@ValenceServer/web/clientAddressOf';
+import { trustedProxyCheck } from '@ValenceServer/web/trustedProxyCheck';
 import { createSessionWatch } from '@ValenceServer/presence/createSessionWatch';
 import type { PresenceSession, PresenceViewing } from '@ValenceServer/presence/PresenceService';
 import type { Play } from '@ValenceServer/devices/createPlayTracker';
@@ -1125,8 +1129,13 @@ const cataloguePictureCache = createImageCache({
   directory: join(env.IMAGE_CACHE_DIR, 'music-catalogue', 'pictures'),
 });
 
+const musicPlays = createDatabaseMusicPlays(db);
+
+const PLAY_COUNTS_AFTER_SECONDS = 30;
+
 const musicServices: MusicServices = {
   library: musicLibrary,
+  mixes: createMixes({ music: musicLibrary, plays: musicPlays }),
   stories: createArtistStories(musicWeb),
   corrections: createAlbumCorrections({ store: musicStore, web: musicWeb, artwork: musicArtwork }),
   pictures: createCataloguePictures({
@@ -1161,6 +1170,15 @@ const musicServices: MusicServices = {
         });
       },
       onStopped: (play, reached) => {
+        const { profileId } = play.device;
+        const heardEnough =
+          reached.positionSeconds >=
+          Math.min(PLAY_COUNTS_AFTER_SECONDS, reached.durationSeconds / 2);
+
+        if (profileId !== null && heardEnough) {
+          void musicPlays.record(profileId, play.report.trackId).catch(() => undefined);
+        }
+
         inTurnPerDevice(play.device.clientId, async () => {
           const described = await describeListening(play);
 
@@ -3484,7 +3502,15 @@ const importService = createImportService({
   },
 });
 
+const isTrustedProxy = trustedProxyCheck(env.TRUSTED_PROXIES);
+
 const app = createApp({
+  callerOf: (context) =>
+    clientAddressOf({
+      headers: context.req.raw.headers,
+      socketAddress: socketAddressOf(context),
+      isTrustedProxy,
+    }),
   imports: importService,
   plugins: startPlugins,
   auth,

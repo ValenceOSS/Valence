@@ -25,6 +25,7 @@ const config: ExpoConfig = {
       },
     },
   },
+  android: { allowBackup: false },
   extra: { palette: readValencePalette(), build },
   plugins: [
     [

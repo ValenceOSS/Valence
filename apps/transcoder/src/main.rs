@@ -264,6 +264,46 @@ fn read_secret() -> Option<String> {
     }
 }
 
+/// Whether a listener may open without a secret.
+///
+/// The service reads any file it is pointed at, so a network address anybody
+/// else can reach is refused unguarded: everything on that network could read
+/// the machine's files through it. Loopback is let through, where only this
+/// machine can call, and a unix socket always is, since the filesystem guards
+/// it.
+///
+/// # Errors
+///
+/// Names the address and the setting that would guard it.
+fn may_listen_unguarded(target: &ListenTarget, secret: Option<&str>) -> Result<(), String> {
+    let ListenTarget::Address(address) = target else {
+        return Ok(());
+    };
+
+    if secret.is_some() {
+        return Ok(());
+    }
+
+    let host = address
+        .rsplit_once(':')
+        .map_or(address.as_str(), |(host, _)| host)
+        .trim_start_matches('[')
+        .trim_end_matches(']');
+    let is_loopback = host.eq_ignore_ascii_case("localhost")
+        || host
+            .parse::<std::net::IpAddr>()
+            .is_ok_and(|ip| ip.is_loopback());
+
+    if is_loopback {
+        Ok(())
+    } else {
+        Err(format!(
+            "refusing to listen on {address} without a secret: anything that reaches it could read this machine's files. Set {} or listen on 127.0.0.1",
+            shared_secret::VARIABLE
+        ))
+    }
+}
+
 async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
     let journal = valence_transcoder::monitor::Journal::new();
 
@@ -295,6 +335,12 @@ async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
     }
 
     let secret = read_secret();
+    let target = listen_target(&from_env);
+
+    if let Err(reason) = may_listen_unguarded(&target, secret.as_deref()) {
+        eprintln!("{reason}");
+        std::process::exit(1);
+    }
 
     let state = AppState {
         registry: registry.clone(),
@@ -326,7 +372,7 @@ async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
     spawn_reaper(registry.clone());
     spawn_sweeper(registry.clone());
 
-    let result = match listen_target(&from_env) {
+    let result = match target {
         ListenTarget::Address(address) => {
             tracing::info!(target: "service", "listening on {address}");
 
@@ -551,8 +597,8 @@ async fn main() {
 #[cfg(test)]
 mod tests {
     use super::{
-        background_width, chosen_tool, listen_target, socket_from_url, ListenTarget,
-        DEFAULT_SOCKET, MEASURED_CEILING,
+        background_width, chosen_tool, listen_target, may_listen_unguarded, socket_from_url,
+        ListenTarget, DEFAULT_SOCKET, MEASURED_CEILING,
     };
 
     fn reading(pairs: &[(&str, &str)]) -> impl Fn(&str) -> Option<String> {
@@ -714,5 +760,35 @@ mod tests {
     fn takes_the_operators_number_as_it_is() {
         assert_eq!(background_width(Some(6), 2), 6);
         assert_eq!(background_width(Some(1), 8), 1);
+    }
+
+    #[test]
+    fn refuses_a_network_address_without_a_secret() {
+        let open = ListenTarget::Address("0.0.0.0:8422".to_owned());
+
+        assert!(may_listen_unguarded(&open, None).is_err());
+        assert!(may_listen_unguarded(&open, Some("a-secret-of-thirty-two-characters!!")).is_ok());
+        assert!(
+            may_listen_unguarded(&ListenTarget::Address("192.168.1.40:8422".to_owned()), None)
+                .is_err()
+        );
+        assert!(
+            may_listen_unguarded(&ListenTarget::Address("[::]:8422".to_owned()), None).is_err()
+        );
+    }
+
+    #[test]
+    fn lets_loopback_and_a_socket_open_without_one() {
+        for address in ["127.0.0.1:8422", "localhost:8422", "[::1]:8422"] {
+            assert!(
+                may_listen_unguarded(&ListenTarget::Address(address.to_owned()), None).is_ok(),
+                "{address}"
+            );
+        }
+
+        assert!(
+            may_listen_unguarded(&ListenTarget::Socket("/tmp/valence.sock".to_owned()), None)
+                .is_ok()
+        );
     }
 }

@@ -1,4 +1,4 @@
-import { Modal, ScrollView, StyleSheet, View } from 'react-native';
+import { Modal, Platform, ScrollView, StatusBar, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
@@ -57,7 +57,13 @@ const ASheet = ({
       onRequestClose={onClose}
     >
       <View style={[styles.whole, { backgroundColor: colours.surface }]}>
-        <View style={[styles.head, sides]}>
+        <View
+          style={[
+            styles.head,
+            sides,
+            Platform.OS === 'android' ? { paddingTop: (StatusBar.currentHeight ?? 0) + 8 } : null,
+          ]}
+        >
           <View style={styles.title}>
             <Words size="heading" lines={1}>
               {title}

@@ -3,6 +3,7 @@ import {
   CircleCheck as CircleCheckFilled,
   Play as PlayFilled,
 } from '@keyline-icons/react-native/fill';
+import { isWatchedThrough } from '@ValenceClient/library/isWatchedThrough';
 import { markWatched } from '@ValenceClient/playback/markWatched';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -188,7 +189,7 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
 
     await keep(way.mediaIds ?? held.map((episode) => episode.id));
   };
-  const isWatchedThrough = held.length > 0 && held.every((episode) => fractionOf(episode.id) >= 1);
+  const isSeenThrough = isWatchedThrough(show, (mediaId) => fractionOf(mediaId) >= 1, today);
   const trailer = (show.extras ?? []).find((extra) => extra.extraKind === 'trailer') ?? null;
   const trailerKey = show.trailerKey ?? null;
   const next = show.nextEpisode ?? null;
@@ -198,7 +199,7 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
     show.rating === null || show.rating === undefined ? null : `★ ${show.rating.toFixed(1)}`,
   ].filter((fact) => fact !== null);
   const badges = [
-    ...(isWatchedThrough ? [{ label: say('common.watched'), tone: 'accent' as const }] : []),
+    ...(isSeenThrough ? [{ label: say('common.watched'), tone: 'accent' as const }] : []),
     ...(show.status === null || show.status === undefined || show.status === ''
       ? []
       : [{ label: show.status }]),

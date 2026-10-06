@@ -1,7 +1,7 @@
 import type { QueuedDownload } from '@ValenceContracts/schemas/DownloadQueue';
 
 type RemoveDownloadDialogProps = {
-  download: QueuedDownload | null;
+  downloads: readonly QueuedDownload[];
   keepsFinishedFiles?: boolean;
   onClose: () => void;
   onConfirm: (deleteData: boolean) => void;
