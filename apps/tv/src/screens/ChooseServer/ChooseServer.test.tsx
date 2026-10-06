@@ -1,4 +1,5 @@
-import { render, userEvent, waitFor } from '@testing-library/react-native';
+import { act, render, userEvent, waitFor } from '@testing-library/react-native';
+import { BackHandler, TVEventControl } from 'react-native';
 import { rememberServerAddress } from '@ValenceClient/session/serverAddress';
 import { isAValence } from '@ValenceTv/native/isAValence';
 import { ChooseServer } from '@ValenceTv/screens/ChooseServer/ChooseServer';
@@ -146,6 +147,30 @@ describe('ChooseServer', () => {
     await userEvent.press(drawn.getByRole('button', { name: 'Back' }));
 
     expect(drawn.getByRole('button', { name: 'Another address, Enter address' })).toBeTruthy();
+  });
+
+  it('goes back to the row of servers with the remote’s back button, rather than leaving', async () => {
+    const pressed: { back: Parameters<typeof BackHandler.addEventListener>[1] | null } = {
+      back: null,
+    };
+
+    jest.spyOn(TVEventControl, 'enableTVMenuKey').mockImplementation(() => undefined);
+    jest.spyOn(TVEventControl, 'disableTVMenuKey').mockImplementation(() => undefined);
+    jest.spyOn(BackHandler, 'addEventListener').mockImplementation((_type, handler) => {
+      pressed.back = handler;
+
+      return { remove: jest.fn() };
+    });
+
+    const drawn = await render(<ChooseServer onChosen={jest.fn()} />);
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Another address, Enter address' }));
+    await act(() => {
+      expect(pressed.back?.({ type: 'hardwareBackPress', timeStamp: 0 })).toBe(true);
+    });
+
+    expect(drawn.getByRole('button', { name: 'Another address, Enter address' })).toBeTruthy();
+    jest.restoreAllMocks();
   });
 
   it('starts at the box, with the address that stopped answering, where nothing was used before', async () => {

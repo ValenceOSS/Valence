@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Clock, Plus, Server } from '@keyline-icons/react-native';
@@ -7,6 +7,7 @@ import { recentServerAddresses } from '@ValenceClient/session/serverAddress';
 import { Button } from '@ValenceTv/components/Button/Button';
 import { TextField } from '@ValenceTv/components/TextField/TextField';
 import { isAValence } from '@ValenceTv/native/isAValence';
+import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
 import { listenForValences } from '@ValenceTv/native/listenForValences';
 import { FadeIn } from '@ValenceTv/components/FadeIn/FadeIn';
 import { WayInBackdrop } from '@ValenceTv/components/WayInBackdrop/WayInBackdrop';
@@ -58,6 +59,13 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
   const [isTyping, setIsTyping] = useState(couldNotReach !== undefined && recent.length === 0);
 
   useEffect(() => listenForValences(setNearby), []);
+
+  const backToTheServers = useCallback(() => {
+    setIsTyping(false);
+    setProblem(null);
+  }, []);
+
+  useMenuButton(isTyping ? backToTheServers : null);
 
   const tryAddress = async (addresses: readonly string[]) => {
     setIsAsking(true);
@@ -141,10 +149,7 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
                   label={say('common.back')}
                   variant="secondary"
                   isWide
-                  onPress={() => {
-                    setIsTyping(false);
-                    setProblem(null);
-                  }}
+                  onPress={backToTheServers}
                 />
               </View>
             </View>
