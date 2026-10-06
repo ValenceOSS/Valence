@@ -23,6 +23,13 @@ const JOINED_LOOKS = {
     FLIPS,
     'border-l-0 before:bg-[var(--surface-line)] data-[state=open]:bg-[var(--surface-active)]',
   ),
+  raised: cn(
+    buttonStyles({ variant: 'raised', size: 'lg', isIconOnly: true, shape: 'joinsPrevious' }),
+    JOINED_SIZE,
+    DIVIDER,
+    FLIPS,
+    'border-l-0 shadow-none before:bg-[var(--surface-line)] data-[state=open]:brightness-125',
+  ),
 } as const;
 
 export { JOINED_LOOKS };

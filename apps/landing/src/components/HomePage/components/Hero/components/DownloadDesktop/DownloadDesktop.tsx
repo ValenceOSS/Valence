@@ -31,7 +31,7 @@ const DownloadDesktop = ({ release, platform }: DownloadDesktopProps) => {
 
   return (
     <SplitButton
-      tone="secondary"
+      tone="raised"
       size="lg"
       choiceLabel="Other computers"
       choiceName="Download for"
