@@ -29,11 +29,11 @@ const PLATFORMS = [
 
 const LEGIBLE = 'drop-shadow-[var(--shadow-legible)]';
 
-const BEFORE = ['Your', 'films', 'and'];
+const BEFORE = ['Your', 'films', 'and', 'programmes,', 'on'];
 
-const ACCENT = 'programmes,';
+const ACCENT = 'every screen';
 
-const AFTER = ['on', 'every', 'screen', 'in', 'the', 'house'];
+const AFTER = ['in', 'the', 'house'];
 
 const HEADLINE = 'Your films and programmes, on every screen in the house.';
 
@@ -47,12 +47,12 @@ const BUTTON_STEP = 0.07;
 
 /**
  * The first thing anybody sees: a dark card washed with slow blue light, what Valence is in one
- * line with its one soft word ringed by hand, where to go next, and beneath it the app itself,
+ * line with the words that matter most written softer and underlined by hand, where to go next, and beneath it the app itself,
  * tipped back on the table, which lays itself flat as the page scrolls — hanging over the foot of
  * the card and across a band of Valence's name running past beneath it.
  *
- * The heading writes itself in a word at a time, the ring draws itself round its word once the
- * heading has landed, and the buttons pop up after it with a note pointing at them, over the list of
+ * The heading writes itself in a word at a time, the line draws itself under its words once the
+ * heading has landed, and the buttons pop up after it with a note pointing at the first, over the list of
  * what it runs on.
  */
 const Hero = () => {
@@ -113,9 +113,9 @@ const Hero = () => {
                   {word}
                   {word === ACCENT ? (
                     <Doodle
-                      of="circle"
+                      of="underline"
                       delay={HEADLINE_LEAD + words.length * WORD_STEP + 0.2}
-                      className="absolute -inset-x-[12%] -inset-y-[18%] text-accent"
+                      className="absolute -bottom-[0.12em] left-[2%] h-[0.22em] w-[96%] text-accent"
                     />
                   ) : null}
                 </motion.span>
@@ -175,19 +175,19 @@ const Hero = () => {
 
             <span
               aria-hidden
-              className="pointer-events-none absolute left-full top-1/2 hidden w-44 -translate-y-1/2 pl-3 lg:block"
+              className="pointer-events-none absolute right-full top-1/2 hidden w-48 -translate-y-1/2 pr-4 lg:block"
             >
-              <Doodle
-                of="arrowCurl"
-                delay={BUTTONS_LEAD + 0.5}
-                className="h-8 w-20 -scale-x-100 text-on-scrim/70"
-              />
               <motion.span
-                className="block -rotate-6 pl-6 pt-1 font-hand text-2xl leading-none text-on-scrim/85"
-                {...popArrival(BUTTONS_LEAD + 1, isStill)}
+                className="block -rotate-6 pr-8 text-right font-hand text-2xl leading-none text-on-scrim/85"
+                {...popArrival(BUTTONS_LEAD + 0.4, isStill)}
               >
                 free, and always will be
               </motion.span>
+              <Doodle
+                of="arrowCurl"
+                delay={BUTTONS_LEAD + 0.8}
+                className="ml-auto mt-1 h-8 w-20 rotate-12 text-on-scrim/70"
+              />
             </span>
           </div>
 
