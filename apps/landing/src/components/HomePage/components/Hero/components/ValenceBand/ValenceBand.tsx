@@ -12,11 +12,11 @@ const ValenceBand = ({ className }: ValenceBandProps) => (
   <div
     aria-hidden
     className={cn(
-      'relative -mx-2 overflow-hidden bg-accent pb-2 text-accent-contrast sm:-mx-3',
+      'relative -mx-2 overflow-hidden bg-accent text-accent-contrast sm:-mx-3',
       className,
     )}
   >
-    <ValenceRun className="pt-[4vw] text-[clamp(3rem,8vw,7rem)] xl:pt-[3.5rem]" />
+    <ValenceRun isLit className="py-[1.8vw] text-[clamp(3rem,8vw,7rem)] xl:py-7" />
   </div>
 );
 

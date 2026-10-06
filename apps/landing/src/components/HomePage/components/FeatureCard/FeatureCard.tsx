@@ -55,7 +55,10 @@ const FeatureCard = ({ feature, index }: FeatureCardProps) => {
   }, []);
 
   return (
-    <RevealItem index={index} className="list-none bg-[var(--frame-back)]">
+    <RevealItem
+      index={index}
+      className="relative list-none bg-[var(--frame-back)] before:absolute before:inset-x-0 before:bottom-0 before:h-px before:bg-linear-to-r before:from-border/0 before:via-border before:to-border/0 after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-linear-to-b after:from-border/0 after:via-border after:to-border/0"
+    >
       <article
         ref={cellRef}
         className={cn('group relative isolate flex h-full flex-col gap-7 p-5 sm:p-6')}

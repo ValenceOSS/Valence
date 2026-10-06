@@ -14,6 +14,7 @@ import { Tooltip } from '@ValenceUI/Tooltip';
 import { Doodle } from '@ValenceUI/Doodle';
 import { cn } from '@ValenceUI/cn';
 import { FoldGradient } from '@ValenceLanding/components/FoldGradient/FoldGradient';
+import { LIT_TEXT } from '@ValenceLanding/components/HomePage/LIT_TEXT';
 import { AURORA } from '@ValenceLanding/tokens/AURORA';
 import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
 import { DEMO_URL } from '@ValenceLanding/content/DEMO_URL';
@@ -138,7 +139,8 @@ const Hero = () => {
                 {at === 0 ? null : ' '}
                 <motion.span
                   className={cn(
-                    'inline-block bg-linear-to-b from-on-scrim/50 via-on-scrim/85 to-on-scrim bg-clip-text pb-[0.1em] -mb-[0.1em] text-transparent [-webkit-text-stroke:1px_var(--color-on-scrim)]',
+                    'inline-block',
+                    LIT_TEXT,
                     word === ACCENT
                       ? 'relative font-accent font-normal italic tracking-normal'
                       : '',
@@ -231,7 +233,7 @@ const Hero = () => {
         <DeviceStage />
       </div>
 
-      <ValenceBand className="-mt-[4vw] xl:-mt-[3.5rem]" />
+      <ValenceBand className="-mt-[1.8vw] xl:-mt-7" />
     </section>
   );
 };

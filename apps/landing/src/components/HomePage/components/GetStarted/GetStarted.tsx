@@ -2,6 +2,8 @@ import { motion, useReducedMotionConfig } from 'motion/react';
 import { IconArrowRight } from '@tabler/icons-react';
 import { revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
 import { Button } from '@ValenceUI/Button';
+import { cn } from '@ValenceUI/cn';
+import { LIT_TEXT } from '@ValenceLanding/components/HomePage/LIT_TEXT';
 import { ValenceRun } from '@ValenceLanding/components/ValenceRun/ValenceRun';
 import { DEMO_URL } from '@ValenceLanding/content/DEMO_URL';
 import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
@@ -53,7 +55,7 @@ const GetStarted = () => {
         <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-16 px-6 py-20 sm:px-10 sm:py-28 xl:max-w-7xl">
           <div className="flex flex-col items-start gap-8">
             <h2 className="max-w-[12ch] text-balance text-[clamp(3rem,8vw,7rem)] font-bold leading-[0.92] tracking-[-0.045em]">
-              Ready to get started?
+              <span className={cn('box-decoration-clone', LIT_TEXT)}>Ready to get started?</span>
             </h2>
             <p className="max-w-lg text-balance text-lg text-accent-contrast/85 sm:text-xl">
               Valence is free and open source. Put it on your own server in a few minutes, or look

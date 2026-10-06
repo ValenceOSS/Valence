@@ -54,7 +54,7 @@ const FeatureBento = () => {
           whileInView="shown"
           viewport={{ once: true, margin: '-80px' }}
           variants={groupVariants}
-          className="grid grid-cols-1 gap-px overflow-hidden bg-border"
+          className="grid grid-cols-1"
         >
           <MoreFeatures index={0} />
         </motion.ul>

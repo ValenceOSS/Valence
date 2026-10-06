@@ -36,22 +36,24 @@ const FeatureGroupGrid = ({ group, number }: FeatureGroupGridProps) => {
         <p className="max-w-md text-balance text-text-muted sm:text-right">{group.detail}</p>
       </motion.header>
 
-      <motion.ul
-        initial="hidden"
-        whileInView="shown"
-        viewport={{ once: true, margin: '-80px' }}
-        variants={groupVariants}
-        className={cn(
-          'grid grid-cols-1 gap-px overflow-hidden bg-border sm:grid-cols-2',
-          isFour
-            ? '2xl:grid-cols-4'
-            : 'lg:grid-cols-3 sm:[&>*:last-child]:col-span-2 lg:[&>*:last-child]:col-span-1',
-        )}
-      >
-        {group.features.map((feature, index) => (
-          <FeatureCard key={feature.title} feature={feature} index={index} />
-        ))}
-      </motion.ul>
+      <div className="overflow-hidden">
+        <motion.ul
+          initial="hidden"
+          whileInView="shown"
+          viewport={{ once: true, margin: '-80px' }}
+          variants={groupVariants}
+          className={cn(
+            '-mb-px -mr-px grid grid-cols-1 sm:grid-cols-2',
+            isFour
+              ? '2xl:grid-cols-4'
+              : 'lg:grid-cols-3 sm:[&>*:last-child]:col-span-2 lg:[&>*:last-child]:col-span-1',
+          )}
+        >
+          {group.features.map((feature, index) => (
+            <FeatureCard key={feature.title} feature={feature} index={index} />
+          ))}
+        </motion.ul>
+      </div>
     </section>
   );
 };
