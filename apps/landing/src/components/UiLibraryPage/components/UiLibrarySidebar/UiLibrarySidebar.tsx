@@ -65,6 +65,7 @@ const UiLibrarySidebar = ({
                 <Link
                   key={doc.name}
                   to="/ui/$component"
+                  resetScroll={false}
                   params={{ component: doc.name.toLowerCase() }}
                   data-highlight={doc.name}
                   aria-current={isHere ? 'page' : undefined}

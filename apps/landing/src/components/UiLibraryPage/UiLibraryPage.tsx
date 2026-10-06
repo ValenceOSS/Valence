@@ -138,6 +138,7 @@ const UiLibraryPage = () => {
                         <li key={each.name}>
                           <Link
                             to="/ui/$component"
+                            resetScroll={false}
                             params={{ component: (each.components[0]?.name ?? '').toLowerCase() }}
                             className="flex h-full flex-col gap-3 rounded-2xl border border-border/60 bg-surface-raised p-5 transition-colors hover:border-accent/50"
                           >
