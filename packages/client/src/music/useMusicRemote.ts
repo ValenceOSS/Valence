@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { onPresenceEvent } from '@ValenceClient/presence/presenceEvents';
 import { watchMusicDevices } from '@ValenceClient/music/watchMusicDevices';
@@ -21,10 +21,12 @@ const FRESH_FOR_MS = 45_000;
  * whatever this window last had.
  *
  * A window with nothing of its own playing follows another of this person's devices the moment
- * that one is playing, whether it already was when the window opened or starts later, as a music
- * app does: what it plays is shown at once and can be driven from here, without anything being sent
- * to it until somebody does. Only a device that has said so lately is followed, since one that went
- * quiet may have stopped without saying.
+ * that one starts playing, or one already was when the window opened, as a music app does: what it
+ * plays is shown at once and can be driven from here, without anything being sent to it until
+ * somebody does. It follows a device starting, never one carrying on — the device it has just
+ * taken the music from is still saying it plays for a moment, and following that would hand the
+ * music straight back. Only a device that has said so lately counts, since one that went quiet may
+ * have stopped without saying.
  *
  * @param player - The player commands go to, which is the window's own unless a test says otherwise.
  */
@@ -34,6 +36,7 @@ const useMusicRemote = (player: MusicPlayer = theMusicPlayer()): void => {
   const remoteId = state.remote?.clientId ?? null;
   const isIdle = remoteId === null && !state.isPlaying && !state.isLoading;
   const devices = useQuery({ ...musicQueries.devices(), enabled: remoteId !== null || isIdle });
+  const seenPlaying = useRef<ReadonlySet<string> | null>(null);
   const reported =
     remoteId === null
       ? null
@@ -46,20 +49,34 @@ const useMusicRemote = (player: MusicPlayer = theMusicPlayer()): void => {
   }, [reported, player]);
 
   useEffect(() => {
-    if (!isIdle || devices.data === undefined) {
+    if (devices.data === undefined) {
       return;
     }
 
     const here = platformInUse().thisClientId();
-    const playing = devices.data.find(
-      (device) =>
-        device.clientId !== here &&
-        device.nowPlaying?.isPlaying === true &&
-        Date.now() - device.nowPlaying.reportedAtMs < FRESH_FOR_MS,
+    const playingNow = new Set(
+      devices.data
+        .filter(
+          (device) =>
+            device.clientId !== here &&
+            device.nowPlaying?.isPlaying === true &&
+            Date.now() - device.nowPlaying.reportedAtMs < FRESH_FOR_MS,
+        )
+        .map((device) => device.clientId),
     );
+    const wasPlaying = seenPlaying.current;
 
-    if (playing !== undefined) {
-      player.follow({ clientId: playing.clientId, label: playing.label });
+    seenPlaying.current = playingNow;
+
+    if (!isIdle) {
+      return;
+    }
+
+    const started = [...playingNow].find((clientId) => wasPlaying?.has(clientId) !== true);
+    const device = devices.data.find((one) => one.clientId === started);
+
+    if (device !== undefined) {
+      player.follow({ clientId: device.clientId, label: device.label });
     }
   }, [devices.data, isIdle, player]);
 
