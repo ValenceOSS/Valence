@@ -37,20 +37,46 @@ describe('WindowControls', () => {
     expect(screen.getByRole('button', { name: 'Minimise' })).not.toHaveClass('hover:bg-danger');
   });
 
-  it('draws the square smaller than the cross, since it fills more of its grid, so the three stand as wide', () => {
+  it('draws the square smaller than the cross, since it fills more of its grid, and holds each size against the button’s own', () => {
     const { rerender } = render(<WindowControls isMaximised={false} {...handlers()} />);
 
     const widthOf = (name: string) =>
       screen.getByRole('button', { name }).querySelector('svg')?.getAttribute('width');
 
+    const sizeClassOf = (name: string) =>
+      [...(screen.getByRole('button', { name }).querySelector('svg')?.classList ?? [])].find(
+        (style) => style.startsWith('size-'),
+      );
+
     expect([widthOf('Minimise'), widthOf('Maximise'), widthOf('Close')]).toEqual([
-      '0.875rem',
-      '0.625rem',
-      '0.875rem',
+      '0.8125rem',
+      '0.6875rem',
+      '1.0625rem',
     ]);
 
     rerender(<WindowControls isMaximised {...handlers()} />);
 
-    expect(widthOf('Restore down')).toBe('0.5625rem');
+    expect(widthOf('Restore down')).toBe('0.625rem');
+    expect(['Minimise', 'Restore down', 'Close'].map(sizeClassOf)).toEqual([
+      'size-[0.8125rem]',
+      'size-2.5',
+      'size-[1.0625rem]',
+    ]);
+  });
+
+  it('draws every glyph with one weight of line, though each is a different size', () => {
+    render(<WindowControls isMaximised={false} {...handlers()} />);
+
+    const drawnWeight = (name: string) => {
+      const glyph = screen.getByRole('button', { name }).querySelector('svg');
+
+      return (
+        (Number(glyph?.getAttribute('stroke-width')) *
+          Number.parseFloat(glyph?.getAttribute('width') ?? '')) /
+        24
+      ).toFixed(3);
+    };
+
+    expect(new Set(['Minimise', 'Maximise', 'Close'].map(drawnWeight)).size).toBe(1);
   });
 });

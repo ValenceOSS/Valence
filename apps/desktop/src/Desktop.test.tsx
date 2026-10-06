@@ -355,7 +355,7 @@ describe('Desktop', () => {
     expect(asking()).toBeNull();
   });
 
-  it('draws minimise, maximise and close on Windows, and closes the window from them', async () => {
+  it('draws minimise, maximise and close on Windows, and closes the window from them with nothing the bridge would have to copy', async () => {
     document.documentElement.dataset['valencePlatform'] = 'win32';
     const close = vi.fn();
     window.valence.frame.close = close;
@@ -368,7 +368,7 @@ describe('Desktop', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Close' }));
 
-    expect(close).toHaveBeenCalledOnce();
+    expect(close.mock.calls).toEqual([[]]);
   });
 
   it('leaves them to macOS, which draws its own traffic lights', () => {

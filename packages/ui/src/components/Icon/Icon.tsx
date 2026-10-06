@@ -13,6 +13,8 @@ const TONES: Readonly<Record<IconTone, string>> = {
 
 const BASE_TEXT_PX = 16;
 
+const GRID = 24;
+
 /**
  * Every glyph in Valence, drawn from one set through one component.
  *
@@ -29,6 +31,9 @@ const BASE_TEXT_PX = 16;
  * @param isActive - Whether the thing it stands for is on.
  * @param size - How large it is, in pixels at the base text size. It is drawn in rem, so it grows
  *   with the text on a large screen rather than staying the size it was drawn for a small one.
+ * @param weight - How thick its lines are, in pixels at the base text size, held the same whatever
+ *   size it is drawn at. Without one the lines are the set's own, which thicken and thin with the
+ *   icon, so two icons drawn at different sizes to stand the same width draw different lines.
  * @param tone - The colour it is drawn in, where it is not the colour of the text around it.
  * @param className - Extra classes for the caller's own layout.
  * @param label - What it means, where nothing beside it says; without one it is hidden from
@@ -39,6 +44,7 @@ const Icon = ({
   whenActive: InForce,
   isActive = false,
   size = 18,
+  weight,
   tone = 'inherit',
   className,
   label,
@@ -48,6 +54,7 @@ const Icon = ({
   return (
     <Glyph
       size={`${(size / BASE_TEXT_PX).toString()}rem`}
+      {...(weight === undefined ? {} : { strokeWidth: (weight * GRID) / size })}
       className={cn('valence-icon', TONES[tone], className)}
       {...(label === undefined
         ? { 'aria-hidden': true }

@@ -158,9 +158,15 @@ const Desktop = () => {
           : {
               frame: {
                 isMaximised: frame.isMaximised,
-                minimise: window.valence.frame.minimise,
-                maximise: window.valence.frame.maximise,
-                close: window.valence.frame.close,
+                minimise: () => {
+                  window.valence.frame.minimise();
+                },
+                maximise: () => {
+                  window.valence.frame.maximise();
+                },
+                close: () => {
+                  window.valence.frame.close();
+                },
               },
             })}
       />
