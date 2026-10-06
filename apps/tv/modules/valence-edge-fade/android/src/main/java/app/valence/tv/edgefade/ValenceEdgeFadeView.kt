@@ -60,4 +60,15 @@ class ValenceEdgeFadeView(context: Context, appContext: AppContext) : ExpoView(c
     canvas.drawRect(0f, 0f, w, h, mask)
     canvas.restoreToCount(kept)
   }
+
+  /** Takes the size React Native measured, rather than measuring what it holds as a row would. */
+  override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+    setMeasuredDimension(
+      MeasureSpec.getSize(widthMeasureSpec),
+      MeasureSpec.getSize(heightMeasureSpec),
+    )
+  }
+
+  /** Leaves what it holds where React Native put it, rather than laying it out in a row. */
+  override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) = Unit
 }
