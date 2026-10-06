@@ -33,7 +33,7 @@ const DocPageView = ({ page }: DocPageViewProps) => {
 
   return (
     <DocsPageFrame>
-      <div className="flex gap-12 px-2 py-2 sm:px-6 lg:px-10">
+      <div className="mx-auto flex max-w-6xl gap-12 px-2 py-6 sm:px-6 sm:py-8 lg:px-10">
         <article className="min-w-0 max-w-3xl flex-1">
           <Reveal key={`${page.path}-header`}>
             <Badge>{page.sectionTitle}</Badge>

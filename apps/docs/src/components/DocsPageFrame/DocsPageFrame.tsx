@@ -16,12 +16,12 @@ const DocsPageFrame = ({ isWide = false, children }: DocsPageFrameProps) => (
     <SectionCard>
       <div
         className={cn(
-          'mx-auto grid w-full max-w-[96rem] gap-8 px-4 py-8 sm:px-6 sm:py-10',
+          'grid w-full gap-8 px-3 py-3 sm:px-4 sm:py-4',
           isWide ? '' : 'lg:grid-cols-[17rem_minmax(0,1fr)]',
         )}
       >
         {isWide ? null : (
-          <aside className="sticky top-24 hidden h-[calc(100svh-7.75rem)] self-start overflow-y-auto rounded-2xl border border-border/60 bg-surface-raised lg:block">
+          <aside className="sticky top-24 hidden h-[calc(100svh-6.75rem)] self-start overflow-y-auto rounded-2xl border border-border/60 bg-surface-raised lg:block">
             <DocsNav sections={NAVIGATION} />
           </aside>
         )}
