@@ -1,18 +1,17 @@
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { groupVariants, revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
 import { Doodle } from '@ValenceUI/Doodle';
-import { FeatureCard } from '@ValenceLanding/components/HomePage/components/FeatureCard/FeatureCard';
 import { FEATURE_GROUPS } from '@ValenceLanding/content/features';
+import { FeatureGroupGrid } from './components/FeatureGroupGrid/FeatureGroupGrid';
 import { MoreFeatures } from './components/MoreFeatures/MoreFeatures';
 
 /**
- * Everything Valence does, in one ruled grid rather than a section apiece: cells three to a row,
- * sharing their edges, each with a working piece of the product and its name, and the last saying
- * there is more and where to find it. They arrive one after another as they scroll in.
+ * Everything Valence does, under one heading and split into its groups, each a ruled grid of cells
+ * sharing their edges with a working piece of the product and its name, and a last cell after them
+ * all saying there is more and where to find it.
  */
 const FeatureBento = () => {
   const prefersReducedMotion = useReducedMotionConfig();
-  const features = FEATURE_GROUPS.flatMap((group) => group.features);
 
   return (
     <section
@@ -45,18 +44,21 @@ const FeatureBento = () => {
         </p>
       </motion.div>
 
-      <motion.ul
-        initial="hidden"
-        whileInView="shown"
-        viewport={{ once: true, margin: '-80px' }}
-        variants={groupVariants}
-        className="grid grid-cols-1 gap-px overflow-hidden bg-border sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4"
-      >
-        {features.map((feature, index) => (
-          <FeatureCard key={feature.title} feature={feature} index={index} />
+      <div className="flex flex-col gap-20">
+        {FEATURE_GROUPS.map((group, at) => (
+          <FeatureGroupGrid key={group.title} group={group} number={at + 1} />
         ))}
-        <MoreFeatures index={features.length} />
-      </motion.ul>
+
+        <motion.ul
+          initial="hidden"
+          whileInView="shown"
+          viewport={{ once: true, margin: '-80px' }}
+          variants={groupVariants}
+          className="grid grid-cols-1 gap-px overflow-hidden bg-border"
+        >
+          <MoreFeatures index={0} />
+        </motion.ul>
+      </div>
     </section>
   );
 };

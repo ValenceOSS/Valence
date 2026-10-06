@@ -23,14 +23,14 @@ const ROWS = [
 const LINK = 'font-semibold text-accent underline underline-offset-4 hover:text-text';
 
 /**
- * The last cell of the feature grid, which says there is more than the grid has room for — the
+ * The cell after every feature group, which says there is more than the grid has room for — the
  * names of some of it drifting past in rows going opposite ways — and where to read about it or ask
  * for what is missing.
  *
- * @param index - Where it sits in the grid, so it arrives last.
+ * @param index - Where it sits in its row, which times its arrival.
  */
 const MoreFeatures = ({ index }: MoreFeaturesProps) => (
-  <RevealItem index={index} className="list-none bg-[var(--frame-back)] 2xl:col-span-3">
+  <RevealItem index={index} className="list-none bg-[var(--frame-back)]">
     <article className="flex h-full flex-col gap-6 p-7 sm:p-9">
       <div
         aria-hidden
