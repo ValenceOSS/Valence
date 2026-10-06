@@ -68,6 +68,17 @@ describe('ProgressBar', () => {
     expect(screen.getByRole('progressbar')).not.toHaveClass('w-20');
   });
 
+  it('draws a thinner bar where it is told to, for a small space', () => {
+    const { rerender } = render(<ProgressBar label="Updating" value={50} />);
+
+    expect(screen.getByRole('progressbar')).toHaveClass('h-1.5');
+
+    rerender(<ProgressBar label="Updating" value={50} isThin />);
+
+    expect(screen.getByRole('progressbar')).toHaveClass('h-1');
+    expect(screen.getByRole('progressbar')).not.toHaveClass('h-1.5');
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(ProgressBar.displayName).toBe('ProgressBar');
   });

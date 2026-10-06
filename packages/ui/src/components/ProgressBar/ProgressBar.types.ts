@@ -7,6 +7,7 @@ type ProgressBarProps = {
   children?: ReactNode;
   readout?: ReactNode;
   isFull?: boolean;
+  isThin?: boolean;
   className?: string;
 };
 
