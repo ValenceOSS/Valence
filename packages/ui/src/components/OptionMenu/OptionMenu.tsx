@@ -105,17 +105,19 @@ const OptionMenu = ({
             ? JOINED_LOOKS.confirm
             : triggerShape === 'secondaryJoined'
               ? JOINED_LOOKS.secondary
-              : triggerShape === 'field'
-                ? cn(
-                    'w-full justify-between gap-2 rounded-md px-2.5 text-[0.8125rem] font-medium',
-                    size === 'sm' ? 'h-7' : 'h-8',
-                    'border border-[var(--surface-line)] bg-[var(--surface-hover)] text-text',
-                    'hover:bg-[var(--surface-active)]',
-                  )
-                : cn(
-                    'size-8 justify-center rounded-md',
-                    'hover:bg-[var(--surface-hover)] data-[state=open]:bg-[var(--surface-active)]',
-                  ),
+              : triggerShape === 'raisedJoined'
+                ? JOINED_LOOKS.raised
+                : triggerShape === 'field'
+                  ? cn(
+                      'w-full justify-between gap-2 rounded-md px-2.5 text-[0.8125rem] font-medium',
+                      size === 'sm' ? 'h-7' : 'h-8',
+                      'border border-[var(--surface-line)] bg-[var(--surface-hover)] text-text',
+                      'hover:bg-[var(--surface-active)]',
+                    )
+                  : cn(
+                      'size-8 justify-center rounded-md',
+                      'hover:bg-[var(--surface-hover)] data-[state=open]:bg-[var(--surface-active)]',
+                    ),
           className,
         )}
       >
