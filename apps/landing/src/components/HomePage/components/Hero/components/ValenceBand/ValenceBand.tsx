@@ -16,7 +16,7 @@ const ValenceBand = ({ className }: ValenceBandProps) => (
       className,
     )}
   >
-    <ValenceRun isLit className="py-[1.8vw] text-[clamp(3rem,8vw,7rem)] xl:py-7" />
+    <ValenceRun className="py-[1.8vw] text-[clamp(3rem,8vw,7rem)] xl:py-7" />
   </div>
 );
 

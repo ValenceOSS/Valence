@@ -1,5 +1,4 @@
 import { cn } from '@ValenceUI/cn';
-import { LIT_TEXT } from '@ValenceLanding/components/HomePage/LIT_TEXT';
 import type { ValenceRunProps } from './ValenceRun.types';
 
 const RUNS = 8;
@@ -11,24 +10,13 @@ const RUNS = 8;
  * @param isBackwards - Whether it runs the other way.
  * @param startsAt - How far into the line it starts, in ems, so rows set one above another can
  *   be staggered.
- * @param isLit - Whether the name is lit from below inside a white edge, as the headings are.
  * @param className - Its size and spacing, which the caller decides.
  */
-const ValenceRun = ({
-  isBackwards = false,
-  startsAt = 0,
-  isLit = false,
-  className,
-}: ValenceRunProps) => {
+const ValenceRun = ({ isBackwards = false, startsAt = 0, className }: ValenceRunProps) => {
   const run = Array.from({ length: RUNS }, (_, at) => (
     <span key={at.toString()} className="flex shrink-0 items-center gap-[0.35em] pr-[0.35em]">
-      <span className={isLit ? LIT_TEXT : ''}>Valence</span>
-      <span
-        className={cn(
-          'inline-block size-[0.22em] rounded-full',
-          isLit ? 'bg-on-scrim' : 'bg-current',
-        )}
-      />
+      <span>Valence</span>
+      <span className="inline-block size-[0.22em] rounded-full bg-current" />
     </span>
   ));
 
