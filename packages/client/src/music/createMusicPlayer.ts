@@ -751,7 +751,7 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
     },
 
     follow: (device) => {
-      if (state.remote !== null || state.isPlaying) {
+      if (state.remote !== null || state.isPlaying || state.isLoading) {
         return;
       }
 

@@ -32,7 +32,7 @@ const useMusicRemote = (player: MusicPlayer = theMusicPlayer()): void => {
   const cache = useQueryClient();
   const { state } = useMusicPlayer(player);
   const remoteId = state.remote?.clientId ?? null;
-  const isIdle = remoteId === null && !state.isPlaying;
+  const isIdle = remoteId === null && !state.isPlaying && !state.isLoading;
   const devices = useQuery({ ...musicQueries.devices(), enabled: remoteId !== null || isIdle });
   const reported =
     remoteId === null
