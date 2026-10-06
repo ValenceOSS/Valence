@@ -2,8 +2,8 @@ import { motion } from 'motion/react';
 import { groupVariants } from '@ValenceUI/animations/reveal';
 import { ChangelogSummary } from '@ValenceLanding/components/ChangelogPage/components/ChangelogSummary/ChangelogSummary';
 import { GetStarted } from '@ValenceLanding/components/HomePage/components/GetStarted/GetStarted';
-import { PageHero } from '@ValenceLanding/components/PageHero/PageHero';
-import { SectionCard } from '@ValenceLanding/components/SectionCard/SectionCard';
+import { PageHero } from '@ValenceUI/PageHero';
+import { SectionCard } from '@ValenceUI/SectionCard';
 import { CHANGELOG } from '@ValenceLanding/content/changelog/CHANGELOG';
 
 /**

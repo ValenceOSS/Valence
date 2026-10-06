@@ -1,5 +1,5 @@
 import { Button } from '@ValenceUI/Button';
-import { PageHero } from '@ValenceLanding/components/PageHero/PageHero';
+import { PageHero } from '@ValenceUI/PageHero';
 
 /**
  * What is shown where a page has failed, instead of the whole site going white: the opening card

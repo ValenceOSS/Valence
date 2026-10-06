@@ -1,12 +1,13 @@
 import { act, render, screen } from '@testing-library/react';
 import { useRef } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type * as Motion from 'motion/react';
 import { useReached } from './useReached';
 
 const inView = vi.hoisted(() => ({ isInView: false }));
 
 vi.mock('motion/react', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('motion/react')>()),
+  ...(await importOriginal<typeof Motion>()),
   useInView: () => inView.isInView,
 }));
 

@@ -1,5 +1,5 @@
-import { PageHero } from '@ValenceLanding/components/PageHero/PageHero';
-import { SectionCard } from '@ValenceLanding/components/SectionCard/SectionCard';
+import { PageHero } from '@ValenceUI/PageHero';
+import { SectionCard } from '@ValenceUI/SectionCard';
 import type { ProsePageProps } from './ProsePage.types';
 
 /**

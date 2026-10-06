@@ -1,3 +1,4 @@
+// oxlint-disable-next-line valence/no-hard-coded-strings -- GLSL source the GPU compiles, not words anyone reads
 export const fragmentShader = `#version 300 es
 precision mediump float;
 

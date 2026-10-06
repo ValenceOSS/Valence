@@ -1,6 +1,6 @@
 import { useReducedMotionConfig } from 'motion/react';
-import { FoldGradient } from '@ValenceLanding/components/FoldGradient/FoldGradient';
-import { AURORA } from '@ValenceLanding/tokens/AURORA';
+import { FoldGradient } from '@ValenceUI/FoldGradient';
+import { AURORA } from '@ValenceUI/tokens/AURORA';
 
 /**
  * The slow ribbons of blue light behind a page's opening card, darkening towards its edges so the

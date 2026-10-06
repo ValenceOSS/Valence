@@ -5,7 +5,7 @@ import { useReached } from '@ValenceUI/useReached';
 import { revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
-import { LIT_TEXT } from '@ValenceLanding/components/HomePage/LIT_TEXT';
+import { LIT_TEXT } from '@ValenceUI/tokens/LIT_TEXT';
 import { ValenceRun } from '@ValenceLanding/components/ValenceRun/ValenceRun';
 import { DEMO_URL } from '@ValenceLanding/content/DEMO_URL';
 import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';

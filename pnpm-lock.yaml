@@ -260,18 +260,9 @@ importers:
 
   apps/landing:
     dependencies:
-      '@fontsource/caveat':
-        specifier: 5.3.0
-        version: 5.3.0
-      '@fontsource/instrument-serif':
-        specifier: 5.3.0
-        version: 5.3.0
       '@keyline-icons/react':
         specifier: 1.0.0
         version: 1.0.0(react@19.3.0)
-      '@paper-design/shaders-react':
-        specifier: 0.0.80
-        version: 0.0.80(@types/react@19.3.0)(react@19.3.0)
       '@remotion/player':
         specifier: 4.0.533
         version: 4.0.533(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -1152,9 +1143,18 @@ importers:
 
   packages/ui:
     dependencies:
+      '@fontsource/caveat':
+        specifier: 5.3.0
+        version: 5.3.0
+      '@fontsource/instrument-serif':
+        specifier: 5.3.0
+        version: 5.3.0
       '@keyline-icons/react':
         specifier: 1.0.0
         version: 1.0.0(react@19.3.0)
+      '@paper-design/shaders-react':
+        specifier: 0.0.80
+        version: 0.0.80(@types/react@19.3.0)(react@19.3.0)
       '@radix-ui/react-avatar':
         specifier: 1.2.6
         version: 1.2.6(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)

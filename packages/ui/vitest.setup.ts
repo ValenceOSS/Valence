@@ -1,6 +1,7 @@
+import { createElement } from 'react';
 import '@testing-library/jest-dom/vitest';
 import { configure } from '@testing-library/react';
-import { afterEach } from 'vitest';
+import { afterEach, vi } from 'vitest';
 import { tidyAfterATest } from './src/testing/tidyAfterATest';
 import { MotionGlobalConfig } from 'motion/react';
 
@@ -116,6 +117,11 @@ if (!('PointerEvent' in globalThis)) {
     value: MouseEvent,
   });
 }
+
+vi.mock('@paper-design/shaders-react', () => ({
+  ShaderMount: ({ className }: { className?: string }) =>
+    createElement('div', { 'data-testid': 'shader-mount', className }),
+}));
 
 afterEach(tidyAfterATest);
 

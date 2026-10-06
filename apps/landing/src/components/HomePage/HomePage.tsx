@@ -4,7 +4,7 @@ import { FeatureBento } from '@ValenceLanding/components/HomePage/components/Fea
 import { PhoneFan } from '@ValenceLanding/components/HomePage/components/PhoneFan/PhoneFan';
 import { AppTour } from '@ValenceLanding/components/HomePage/components/AppTour/AppTour';
 import { LatestReleases } from '@ValenceLanding/components/HomePage/components/LatestReleases/LatestReleases';
-import { SectionCard } from '@ValenceLanding/components/SectionCard/SectionCard';
+import { SectionCard } from '@ValenceUI/SectionCard';
 import { GetStarted } from '@ValenceLanding/components/HomePage/components/GetStarted/GetStarted';
 
 /**

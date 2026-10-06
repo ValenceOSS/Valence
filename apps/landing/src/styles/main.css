@@ -1,12 +1,7 @@
 @import '@valence/ui/src/styles/valence.css';
-@import '@fontsource/instrument-serif/400.css';
-@import '@fontsource/instrument-serif/400-italic.css';
-@import '@fontsource/caveat/500.css';
+@import '@valence/ui/src/styles/showcase.css';
 
 @theme {
-  --font-accent: 'Instrument Serif', ui-serif, Georgia, serif;
-  --font-hand: 'Caveat', ui-rounded, cursive;
-  --color-aurora: #03060f;
   --color-phone-edge: #0b0b0d;
   --color-phone-glass: #16233f;
   --color-phone-floor: #0a0d16;

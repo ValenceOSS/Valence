@@ -2,8 +2,8 @@ import { motion, useReducedMotionConfig } from 'motion/react';
 import { revealTransition, revealVariants, staggerVariants } from '@ValenceUI/animations/reveal';
 import { Doodle } from '@ValenceUI/Doodle';
 import { cn } from '@ValenceUI/cn';
-import { AuroraBackdrop } from '@ValenceLanding/components/AuroraBackdrop/AuroraBackdrop';
-import { LIT_TEXT } from '@ValenceLanding/components/HomePage/LIT_TEXT';
+import { AuroraBackdrop } from '@ValenceUI/AuroraBackdrop';
+import { LIT_TEXT } from '@ValenceUI/tokens/LIT_TEXT';
 import type { PageHeroProps } from './PageHero.types';
 
 /**

@@ -5,7 +5,7 @@ import { IconBrandDiscordFilled, IconBrandGithubFilled } from '@tabler/icons-rea
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { Logo } from '@ValenceUI/Logo';
-import { SectionCard } from '@ValenceLanding/components/SectionCard/SectionCard';
+import { SectionCard } from '@ValenceUI/SectionCard';
 import { cn } from '@ValenceUI/cn';
 import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
 import { GITHUB_URL } from '@ValenceLanding/content/GITHUB_URL';

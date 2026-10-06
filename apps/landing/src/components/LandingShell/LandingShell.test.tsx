@@ -1,11 +1,7 @@
 import { screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { renderWithRoutes } from '@ValenceLanding/testing/renderWithRoutes';
 import { LandingShell } from './LandingShell';
-
-vi.mock('@paper-design/shaders-react', () => ({
-  ShaderMount: () => <div data-testid="shader-mount" />,
-}));
 
 describe('LandingShell', () => {
   it('draws the nav and the footer around the page', async () => {

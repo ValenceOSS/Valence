@@ -53,8 +53,8 @@ if (!('IntersectionObserver' in globalThis)) {
 
 MotionGlobalConfig.skipAnimations = true;
 
-vi.mock('@paper-design/shaders-react', () => ({
-  ShaderMount: ({ className }: { className?: string }) =>
+vi.mock('@ValenceUI/FoldGradient', () => ({
+  FoldGradient: ({ className }: { className?: string }) =>
     createElement('div', { 'data-testid': 'shader-mount', className }),
 }));
 
