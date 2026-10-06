@@ -30,7 +30,9 @@ beforeEach(() => {
   jest.mocked(fetchLibraryItems).mockReset().mockResolvedValue({ items: [], total: 0 });
   globalThis.fetch = jest
     .fn()
-    .mockResolvedValue(new Response(JSON.stringify({ profiles: [], splashscreen: null })));
+    .mockImplementation(() =>
+      Promise.resolve(new Response(JSON.stringify({ profiles: [], splashscreen: null }))),
+    );
 });
 
 afterEach(() => {
