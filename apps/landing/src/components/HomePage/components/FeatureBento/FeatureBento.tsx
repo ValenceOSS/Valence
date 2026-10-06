@@ -1,14 +1,12 @@
 import { motion, useReducedMotionConfig } from 'motion/react';
-import { groupVariants, revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
+import { revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
 import { Doodle } from '@ValenceUI/Doodle';
 import { FEATURE_GROUPS } from '@ValenceLanding/content/features';
 import { FeatureGroupGrid } from './components/FeatureGroupGrid/FeatureGroupGrid';
-import { MoreFeatures } from './components/MoreFeatures/MoreFeatures';
 
 /**
  * Everything Valence does, under one heading and split into its groups, each a ruled grid of cells
- * sharing their edges with a working piece of the product and its name, and a last cell after them
- * all saying there is more and where to find it.
+ * sharing their edges with a working piece of the product and its name.
  */
 const FeatureBento = () => {
   const prefersReducedMotion = useReducedMotionConfig();
@@ -48,16 +46,6 @@ const FeatureBento = () => {
         {FEATURE_GROUPS.map((group, at) => (
           <FeatureGroupGrid key={group.title} group={group} number={at + 1} />
         ))}
-
-        <motion.ul
-          initial="hidden"
-          whileInView="shown"
-          viewport={{ once: true, margin: '-80px' }}
-          variants={groupVariants}
-          className="grid grid-cols-1"
-        >
-          <MoreFeatures index={0} />
-        </motion.ul>
       </div>
     </section>
   );
