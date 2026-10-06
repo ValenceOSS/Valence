@@ -2,7 +2,6 @@ import { useRouterState } from '@tanstack/react-router';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
 import { ReleaseBar } from '@ValenceLanding/components/ReleaseBar/ReleaseBar';
-import { ScrollWaves } from '@ValenceLanding/components/ScrollWaves/ScrollWaves';
 import { LandingNav } from '@ValenceLanding/components/LandingNav/LandingNav';
 import { LandingFooter } from '@ValenceLanding/components/LandingFooter/LandingFooter';
 import { HomePage } from '@ValenceLanding/components/HomePage/HomePage';
@@ -51,8 +50,6 @@ const LandingShell = () => {
       <ReleaseBar />
 
       <LandingNav />
-
-      <ScrollWaves />
 
       <AnimatePresence mode="wait">
         <motion.main

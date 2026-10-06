@@ -23,11 +23,11 @@ const ValenceBand = ({ className }: ValenceBandProps) => {
     <div
       aria-hidden
       className={cn(
-        'relative -mx-2 overflow-hidden bg-accent text-accent-contrast dark:bg-text dark:text-surface sm:-mx-3',
+        'relative -mx-2 overflow-hidden bg-accent pb-2 text-accent-contrast dark:bg-text dark:text-surface sm:-mx-3',
         className,
       )}
     >
-      <div className="valence-band-run flex w-max select-none py-[1.2vw] text-[clamp(3rem,8vw,7rem)] font-bold uppercase leading-none tracking-[-0.02em] xl:py-4">
+      <div className="valence-band-run flex w-max select-none pt-[4vw] text-[clamp(3rem,8vw,7rem)] font-bold uppercase leading-none tracking-[-0.02em] xl:pt-[3.5rem]">
         {run}
         {run}
       </div>

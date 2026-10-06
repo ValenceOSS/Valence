@@ -74,7 +74,7 @@ const LandingFooter = () => {
   const isStill = useReducedMotionConfig() === true;
 
   return (
-    <footer className="overflow-hidden border-t border-border/60">
+    <footer className="overflow-hidden border-t border-border/60 bg-surface [--frame-back:var(--color-surface)]">
       <div className="mx-auto grid max-w-6xl gap-12 px-5 pt-20 sm:px-10 lg:grid-cols-[1.4fr_repeat(4,1fr)] xl:max-w-7xl">
         <div className="flex flex-col gap-5">
           <Link to="/" className="flex items-center gap-3">

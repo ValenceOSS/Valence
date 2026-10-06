@@ -12,4 +12,3 @@ mask by `Doodle`, which also sweeps a second mask along it so it draws itself in
 | `circle.svg`     | A ring drawn round a word                           |
 | `sparks.svg`     | Three short strokes of emphasis                     |
 | `underline.svg`  | A wavering line beneath a word                      |
-| `wave.svg`       | One turn of a wave crest, to repeat along a surface |
