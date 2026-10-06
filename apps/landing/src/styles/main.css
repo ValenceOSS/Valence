@@ -111,3 +111,8 @@ body {
 :root[data-motion='reduced'] .group:is(:hover, :focus-within) .valence-iso__plane {
   transform: scale(0.95);
 }
+
+html,
+body {
+  overflow-x: clip;
+}
