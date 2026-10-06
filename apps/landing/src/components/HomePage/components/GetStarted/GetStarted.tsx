@@ -9,7 +9,7 @@ import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
 /**
  * The last word on the home page: a blue card the width of the hero asking whether the reader is
  * ready, with the way to install it and the way to look round the demo first, beside Valence's
- * mark inside a slowly turning ring of ticks.
+ * mark drawn in outline and laid back isometrically.
  */
 const GetStarted = () => {
   const prefersReducedMotion = useReducedMotionConfig();
@@ -62,12 +62,14 @@ const GetStarted = () => {
 
           <div
             aria-hidden
-            className="relative hidden size-80 place-items-center justify-self-end lg:grid"
+            className="hidden justify-self-end opacity-80 [perspective:1600px] lg:block"
           >
-            <span className="valence-tick-ring absolute inset-0 text-accent-contrast/70" />
-            <span className="grid size-48 place-items-center rounded-full border-[10px] border-accent-contrast">
-              <Logo size={88} isSolid />
-            </span>
+            <Logo
+              size={220}
+              isSolid
+              src="/valence-logo-outline.svg"
+              className="[transform:rotateX(55deg)_rotateZ(-45deg)]"
+            />
           </div>
         </div>
       </motion.div>
