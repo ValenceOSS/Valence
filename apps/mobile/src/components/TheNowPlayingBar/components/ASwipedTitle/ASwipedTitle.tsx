@@ -13,7 +13,7 @@ const GOES_OFF_MS = 140;
 const OFF_BY = 220;
 
 const styles = StyleSheet.create({
-  whole: { flex: 1, overflow: 'hidden' },
+  whole: { alignSelf: 'stretch', overflow: 'hidden' },
 });
 
 /**
