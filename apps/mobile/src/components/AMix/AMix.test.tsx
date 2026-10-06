@@ -6,10 +6,11 @@ import { fetchMix } from '@ValenceClient/music/fetchMixes';
 import { aTrack } from '@ValenceClient/testing/aTrack';
 import { thePhonesMusicPlayer } from '@ValenceMobile/music/thePhonesMusicPlayer';
 import { AMix } from './AMix';
+import type { MusicMix } from '@ValenceContracts/schemas/MusicMix';
 
 jest.mock('@ValenceClient/music/fetchMixes');
 
-const MIX = {
+const MIX: MusicMix = {
   id: 'decade-2020',
   kind: 'decade',
   title: '2020s Mix',
@@ -17,7 +18,7 @@ const MIX = {
   trackCount: 2,
   coverAlbumIds: [],
   tracks: [aTrack(1), aTrack(2)],
-} as const;
+};
 
 beforeEach(() => {
   installPlatform(aFakePlatform());
@@ -25,7 +26,7 @@ beforeEach(() => {
 
 describe('AMix', () => {
   it('lists a mix’s songs under its name, made by Valence', async () => {
-    jest.mocked(fetchMix).mockResolvedValue({ ...MIX, tracks: [...MIX.tracks] });
+    jest.mocked(fetchMix).mockResolvedValue(MIX);
     const drawn = await render(
       <AMix mixId="decade-2020" onAlbum={jest.fn()} onArtist={jest.fn()} onBack={jest.fn()} />,
       { wrapper: CacheScope },
@@ -38,7 +39,7 @@ describe('AMix', () => {
   });
 
   it('plays the mix from its first song, saying it came from the mix', async () => {
-    jest.mocked(fetchMix).mockResolvedValue({ ...MIX, tracks: [...MIX.tracks] });
+    jest.mocked(fetchMix).mockResolvedValue(MIX);
     const playing = jest.spyOn(thePhonesMusicPlayer(), 'play').mockImplementation(() => undefined);
     const drawn = await render(
       <AMix mixId="decade-2020" onAlbum={jest.fn()} onArtist={jest.fn()} onBack={jest.fn()} />,

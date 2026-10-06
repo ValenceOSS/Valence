@@ -6,6 +6,7 @@ import { aFakeMusicPlayer } from '@ValenceClient/testing/aFakeMusicPlayer';
 import { aTrack } from '@ValenceClient/testing/aTrack';
 import { answerMusicRequests } from '@ValenceScreens/testing/answerMusicRequests';
 import { MixShelf } from './MixShelf';
+import type { MusicMixSummary } from '@ValenceContracts/schemas/MusicMix';
 
 vi.mock('@ValenceClient/music/theMusicPlayer', () => ({
   theMusicPlayer: () => fake.player,
@@ -13,14 +14,14 @@ vi.mock('@ValenceClient/music/theMusicPlayer', () => ({
 
 let fake = aFakeMusicPlayer();
 
-const MIX = {
+const MIX: MusicMixSummary = {
   id: 'decade-2020',
   kind: 'decade',
   title: '2020s Mix',
   detail: 'Music from the 2020s',
   trackCount: 1,
   coverAlbumIds: [],
-} as const;
+};
 
 beforeEach(() => {
   fake = aFakeMusicPlayer();
