@@ -405,17 +405,17 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
 
     return state.remote === null ? (
       <>
-        <AMarquee>
+        <AMarquee key={`title-${song.id}`}>
           <Words lines={1}>{song.title}</Words>
         </AMarquee>
-        <AMarquee>
+        <AMarquee key={`artists-${song.id}`}>
           <Words size="small" tone="muted" lines={1}>
             {artists}
           </Words>
         </AMarquee>
       </>
     ) : (
-      <AMarquee>
+      <AMarquee key={`both-${song.id}`}>
         <Words lines={1}>
           {song.title}
           <Words tone="muted">{say('phone.theNowPlayingBar.byArtists', { artists })}</Words>
