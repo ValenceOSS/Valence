@@ -1,3 +1,4 @@
+import { GITHUB_URL } from '@ValenceLanding/content/GITHUB_URL';
 import { ProsePage } from '@ValenceLanding/components/ProsePage/ProsePage';
 
 const SECTION = 'flex flex-col gap-3';
@@ -41,7 +42,7 @@ const PrivacyPage = () => (
       <p>
         Open an issue on{' '}
         <a
-          href="https://github.com/MarquesCoding/Valence"
+          href={GITHUB_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="text-text underline underline-offset-4"

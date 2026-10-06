@@ -8,10 +8,9 @@ import { Logo } from '@ValenceUI/Logo';
 import { SectionCard } from '@ValenceLanding/components/SectionCard/SectionCard';
 import { cn } from '@ValenceUI/cn';
 import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
+import { GITHUB_URL } from '@ValenceLanding/content/GITHUB_URL';
 
 const YEAR = new Date().getFullYear();
-
-const GITHUB_URL = 'https://github.com/MarquesCoding/Valence';
 
 const DISCORD_URL = 'https://discord.gg/uTtcAHMy9N';
 

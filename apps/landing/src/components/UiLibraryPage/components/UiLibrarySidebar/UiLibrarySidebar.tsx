@@ -1,4 +1,6 @@
 import { Link } from '@tanstack/react-router';
+import { Search as SearchIcon } from '@keyline-icons/react';
+import { Icon } from '@ValenceUI/Icon';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { TextField } from '@ValenceUI/TextField';
 import { cn } from '@ValenceUI/cn';
@@ -6,8 +8,8 @@ import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
 import type { UiLibrarySidebarProps } from './UiLibrarySidebar.types';
 
 /**
- * The list down the side of the UI library: a search box, then every component under the group it
- * belongs to, with one highlight that slides from name to name under the pointer as the app's own
+ * The list down the side of the UI library: a search field like the app's own, then every
+ * component under the group it belongs to, with one highlight that slides from name to name under the pointer as the app's own
  * sidebar does, and the component being looked at marked as the current page.
  *
  * @param groups - The components to list, already grouped and narrowed.
@@ -30,9 +32,9 @@ const UiLibrarySidebar = ({
       <TextField
         label="Find a component"
         isLabelHidden
-        isPill
         type="search"
-        size="sm"
+        size="md"
+        icon={<Icon of={SearchIcon} size={16} />}
         placeholder="Find a component"
         value={query}
         onValueChange={onQueryChange}

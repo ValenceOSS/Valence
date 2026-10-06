@@ -20,6 +20,7 @@ import { letterArrival, popArrival } from '@ValenceUI/animations/reveal';
 import { cn } from '@ValenceUI/cn';
 import { readStarCount } from '@ValenceLanding/content/githubStars';
 import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
+import { GITHUB_URL } from '@ValenceLanding/content/GITHUB_URL';
 import { ThemeToggle } from '@ValenceLanding/components/LandingNav/components/ThemeToggle/ThemeToggle';
 import { useSiteTheme } from '@ValenceLanding/components/LandingNav/components/ThemeToggle/useSiteTheme';
 import { RELEASE_BAR_PX } from '@ValenceLanding/components/ReleaseBar/RELEASE_BAR_PX';
@@ -36,8 +37,6 @@ const LINKS = [
   { to: '/privacy', label: 'Privacy' },
   { to: '/terms', label: 'Terms' },
 ] as const;
-
-const GITHUB_URL = 'https://github.com/MarquesCoding/Valence';
 
 const DISCORD_URL = 'https://discord.gg/uTtcAHMy9N';
 
