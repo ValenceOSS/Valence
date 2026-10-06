@@ -6,6 +6,7 @@ type TheMusicProps = {
   onArtist: (artistId: string) => void;
   onPlaylist: (playlistId: string) => void;
   onLiked: () => void;
+  onMix: (mixId: string) => void;
   onAllAlbums: () => void;
   onAllArtists: () => void;
   onScrolled?: (isScrolled: boolean) => void;

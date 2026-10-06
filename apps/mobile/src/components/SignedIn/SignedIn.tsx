@@ -42,6 +42,7 @@ import { StillWatching } from '@ValenceMobile/components/StillWatching/StillWatc
 import { AnAlbum } from '@ValenceMobile/components/AnAlbum/AnAlbum';
 import { AnArtist } from '@ValenceMobile/components/AnArtist/AnArtist';
 import { APlaylist } from '@ValenceMobile/components/APlaylist/APlaylist';
+import { AMix } from '@ValenceMobile/components/AMix/AMix';
 import { TheLikedSongs } from '@ValenceMobile/components/TheLikedSongs/TheLikedSongs';
 import { TheMusicRemote } from '@ValenceMobile/components/TheMusicRemote/TheMusicRemote';
 import { TheAudiobookRemote } from '@ValenceMobile/components/TheAudiobookRemote/TheAudiobookRemote';
@@ -101,6 +102,7 @@ const MUSIC_PAGES: ReadonlySet<APage['kind']> = new Set([
   'artist',
   'playlist',
   'liked',
+  'mix',
   'albums',
   'artists',
 ]);
@@ -664,6 +666,16 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
             onBack={back}
           />
         );
+      case 'mix':
+        return (
+          <AMix
+            mixId={page.mixId}
+            onAlbum={toAlbum}
+            onArtist={toArtist}
+            onPlaylist={toPlaylist}
+            onBack={back}
+          />
+        );
       case 'playing':
         return (
           <TheMusicPlayer
@@ -716,6 +728,9 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
           }}
           onLiked={() => {
             open({ kind: 'liked' });
+          }}
+          onMix={(mixId) => {
+            open({ kind: 'mix', mixId });
           }}
           onAllAlbums={() => {
             open({ kind: 'albums' });

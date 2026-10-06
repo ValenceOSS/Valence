@@ -1,4 +1,4 @@
-import { Heart, ListMusic, MusicNote, Plus, User } from '@keyline-icons/react-native';
+import { Heart, ListMusic, MusicNote, Plus, Sparkles, User } from '@keyline-icons/react-native';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
@@ -44,7 +44,8 @@ const styles = StyleSheet.create({
  * The music part of the library, laid out as a music app's home is: a row of filters to narrow it
  * to playlists, albums or artists; at the top of everything, a grid of the few things to go straight
  * back to — the songs this profile has liked, its own playlists, the artists it follows and what was
- * added last — two to a row; and beneath, shelves of large artwork for what was added most recently,
+ * added last — two to a row; and beneath, shelves of the mixes Valence made for it today and of large
+ * artwork for what was added most recently,
  * the playlists, the artists and the playlists others have shared.
  *
  * @param header - What sits above it, which the library draws.
@@ -54,6 +55,7 @@ const styles = StyleSheet.create({
  * @param onAllAlbums - Told somebody wants every album, not only the latest.
  * @param onAllArtists - Told somebody wants every artist, not only the first few.
  * @param onLiked - Told to open the songs this profile has liked.
+ * @param onMix - Told to open a mix Valence made.
  * @param onScrolled - Told whether it has been scrolled from its top.
  */
 const TheMusic = ({
@@ -62,6 +64,7 @@ const TheMusic = ({
   onArtist,
   onPlaylist,
   onLiked,
+  onMix,
   onAllAlbums,
   onAllArtists,
   onScrolled,
@@ -75,6 +78,7 @@ const TheMusic = ({
   const artists = useQuery(musicQueries.artists());
   const playlists = useQuery(musicQueries.playlists());
   const liked = useQuery(musicQueries.liked());
+  const mixes = useQuery(musicQueries.mixes());
   const mine = (playlists.data ?? []).filter((playlist) => playlist.isMine);
   const shared = (playlists.data ?? []).filter((playlist) => !playlist.isMine);
   const recent = albums.data ?? [];
@@ -206,6 +210,25 @@ const TheMusic = ({
             detail={say('common.onceAMusicLibraryHasBeen3')}
           />
         ) : null}
+
+        {(mixes.data ?? []).length === 0 || !shows('playlists') ? null : (
+          <AShelf title={say('common.madeForYou')}>
+            {(mixes.data ?? []).map((mix) => (
+              <AMusicTile
+                key={mix.id}
+                side={BIG}
+                title={mix.title}
+                detail={mix.detail}
+                artwork={null}
+                albumIds={mix.coverAlbumIds}
+                standIn={Sparkles}
+                onPress={() => {
+                  onMix(mix.id);
+                }}
+              />
+            ))}
+          </AShelf>
+        )}
 
         {shows('playlists') ? (
           <AShelf title={say('common.yourPlaylists')}>

@@ -162,6 +162,7 @@ const styles = StyleSheet.create({
  * @param onPlaylist - Told to open a playlist.
  * @param onCollection - Told to open a collection.
  * @param onLiked - Told to open the songs this profile has liked.
+ * @param onMix - Told to open a mix Valence made.
  * @param onAllAlbums - Told somebody wants every album.
  * @param onAllArtists - Told somebody wants every artist.
  * @param onBook - Told to open a book.
@@ -186,6 +187,7 @@ const TheLibrary = ({
   onPlaylist,
   onCollection,
   onLiked,
+  onMix,
   onAllAlbums,
   onAllArtists,
   onBook,
@@ -758,6 +760,7 @@ const TheLibrary = ({
             onArtist={onArtist}
             onPlaylist={onPlaylist}
             onLiked={onLiked}
+            onMix={onMix}
             onAllAlbums={onAllAlbums}
             onAllArtists={onAllArtists}
             onScrolled={partScrolled}
