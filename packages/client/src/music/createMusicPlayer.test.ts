@@ -670,13 +670,15 @@ describe('createMusicPlayer', () => {
       expect(player.read().current).toBe(THREE[2]);
     });
 
-    it('stops when told to, leaving nothing queued', () => {
-      const { player } = build();
+    it('stops when another device takes the music, keeping its song showing till it follows', () => {
+      const { player, deps } = build();
 
       player.play(THREE, 0);
       player.obey({ kind: 'stop' });
 
-      expect(player.read().current).toBeNull();
+      expect(player.read().isPlaying).toBe(false);
+      expect(player.read().current).toBe(THREE[0]);
+      expect(deps.report).toHaveBeenLastCalledWith(null);
     });
   });
 

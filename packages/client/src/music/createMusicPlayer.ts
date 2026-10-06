@@ -843,8 +843,8 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
 
       if (sent.kind === 'stop') {
         audio.pause();
-        change({ queue: null, current: null, isPlaying: false, positionSeconds: 0 });
-        tell(true);
+        report(null);
+        change({ isPlaying: false });
 
         return;
       }
