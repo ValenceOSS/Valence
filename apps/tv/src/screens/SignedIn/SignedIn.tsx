@@ -36,6 +36,7 @@ import { NowPlayingChip } from '@ValenceTv/components/NowPlayingChip/NowPlayingC
 import { TopBar } from '@ValenceTv/components/TopBar/TopBar';
 import { useHandOff } from '@ValenceTv/navigation/useHandOff';
 import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
+import { isBackHomeFirst } from '@ValenceTv/navigation/isBackHomeFirst';
 import { readOpeningLink } from '@ValenceTv/navigation/readOpeningLink';
 import { readArrivalLink } from '@ValenceTv/notifications/readArrivalLink';
 import { useArrivals } from '@ValenceTv/notifications/useArrivals';
@@ -348,7 +349,12 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     ]);
   }, []);
 
-  useMenuButton(opened.length === 0 ? null : back);
+  const goHome = useCallback(() => {
+    choose('home');
+    homeTab?.requestTVFocus();
+  }, [choose, homeTab]);
+
+  useMenuButton(opened.length > 0 ? back : isBackHomeFirst(tab) ? goHome : null);
 
   const openTitle = useCallback(
     (media: MediaSummary) => {
