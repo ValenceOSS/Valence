@@ -1,6 +1,7 @@
 package app.valence.tv.remotekeys
 
 import android.app.Activity
+import android.graphics.Rect
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
@@ -47,6 +48,10 @@ private val MEDIA_KEYS = setOf(
  * half a screen, letting the remote leave only once it has reached its end, so leaving it can take
  * two presses or more. tvOS moves the remote at once. So where a list takes an arrow and the remote
  * has not moved, though there was somewhere for it to go, it is moved there.
+ *
+ * Left and right move only to something level with what has the remote, as on tvOS: Android would
+ * otherwise carry the remote from the end of a row to whatever lies furthest that way anywhere on the
+ * screen, up into the bar or down into another row. Where nothing level is there, the remote stays.
  *
  * A keyboard's Escape — a keyboard plugged into the television, or the computer's running an
  * emulator — goes back, as the remote's Back button does.
@@ -106,6 +111,15 @@ object HeardWithoutFocus {
           null
         }
       val isTaken = within.dispatchKeyEvent(event)
+      val isSideways = direction == View.FOCUS_LEFT || direction == View.FOCUS_RIGHT
+
+      if (!isTaken && isSideways && was != null && window.currentFocus === was) {
+        val wouldGo = was.focusSearch(direction)
+
+        if (wouldGo != null && wouldGo !== was && !isLevel(was, wouldGo)) {
+          return true
+        }
+      }
 
       if (isTaken && next != null && direction != null && window.currentFocus === was) {
         next.requestFocus(direction)
@@ -135,6 +149,17 @@ object HeardWithoutFocus {
       }
 
       return false
+    }
+
+    /** Whether two views share any of the screen's height, so moving between them is moving level. */
+    private fun isLevel(one: View, other: View): Boolean {
+      val first = Rect()
+      val second = Rect()
+
+      one.getGlobalVisibleRect(first)
+      other.getGlobalVisibleRect(second)
+
+      return first.top < second.bottom && second.top < first.bottom
     }
 
     /** Whether a view lies in the same scrolling list as the one the remote is on. */
