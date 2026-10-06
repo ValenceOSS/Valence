@@ -7,16 +7,15 @@ import type { FeatureCardProps } from './FeatureCard.types';
 /**
  * One feature in a ruled grid of them, its cell sharing its edges with its neighbours: a working
  * piece of the product doing what the feature says, and its name large beneath with a line about
- * it. One cell in a stretch is filled with the accent, so the grid has a place for the eye to land.
+ * it.
  *
  * Pointed at, a soft light follows the pointer across the cell and the piece of the product leans
  * towards wherever the pointer is, easing back flat once it leaves.
  *
  * @param feature - What it is and why it matters.
  * @param index - Where it sits in the grid, so it arrives in order.
- * @param isLit - Whether it is the accent cell of its stretch.
  */
-const FeatureCard = ({ feature, index, isLit = false }: FeatureCardProps) => {
+const FeatureCard = ({ feature, index }: FeatureCardProps) => {
   const cellRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -56,7 +55,7 @@ const FeatureCard = ({ feature, index, isLit = false }: FeatureCardProps) => {
   }, []);
 
   return (
-    <RevealItem index={index} className={cn('list-none', isLit ? 'bg-accent' : 'bg-surface')}>
+    <RevealItem index={index} className="list-none bg-surface">
       <article
         ref={cellRef}
         className={cn('group relative isolate flex h-full flex-col gap-6 p-7 sm:p-9')}
@@ -71,23 +70,11 @@ const FeatureCard = ({ feature, index, isLit = false }: FeatureCardProps) => {
         </div>
 
         <div className="flex flex-col gap-3">
-          <h3
-            className={cn(
-              'text-balance text-2xl font-semibold leading-tight tracking-[-0.02em] lg:text-[1.75rem]',
-              isLit ? 'text-accent-contrast' : 'text-text',
-            )}
-          >
+          <h3 className="text-balance text-2xl font-semibold leading-tight tracking-[-0.02em] lg:text-[1.75rem] text-text">
             {feature.title}
           </h3>
 
-          <p
-            className={cn(
-              'text-[0.9375rem] leading-relaxed',
-              isLit ? 'text-accent-contrast/80' : 'text-text-muted',
-            )}
-          >
-            {feature.detail}
-          </p>
+          <p className="text-[0.9375rem] leading-relaxed text-text-muted">{feature.detail}</p>
         </div>
       </article>
     </RevealItem>
