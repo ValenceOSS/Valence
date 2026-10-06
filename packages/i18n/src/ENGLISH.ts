@@ -2021,6 +2021,8 @@ const ENGLISH = {
   'error.server.aFolderCannotBeMovedInto': 'A folder can’t be moved into itself.',
   'error.server.aNameIsOnePlainName': 'Names can’t contain slashes or start or end with a space.',
   'error.server.noLibraryOfKind': 'There’s no {kind} library to put it in.',
+  'error.server.noQualityHereIsAvailableTo':
+    'None of the qualities here are available to you, so this can’t be requested.',
   'error.server.somethingOfThatNameIsAlready': 'Something with that name already exists.',
   'error.server.thatDiskIsReadOnlyTo':
     'That disk is read-only to Valence. Give Valence read-write access to delete media there.',

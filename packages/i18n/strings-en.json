@@ -8625,6 +8625,11 @@
     "context": "An error the server answers with (HTTP 400) in the app on the server (from `createAppContext`). {kind} is filled in by the app."
   },
   {
+    "handler": "error.server.noQualityHereIsAvailableTo",
+    "text": "None of the qualities here are available to you, so this can’t be requested.",
+    "context": "An error the server answers with (HTTP 403) in the app on the server (from `createAppContext`), when every quality profile for the library is kept to other people."
+  },
+  {
     "handler": "error.server.somethingOfThatNameIsAlready",
     "text": "Something with that name already exists.",
     "context": "An error the server answers with (HTTP 409) in the app on the server (from `createAppContext`)."
