@@ -46,6 +46,7 @@ type PlayerControlsProps = {
   onAudioChange: (streamIndex: number) => void;
   onQualityChange: (quality: QualityPreference) => void;
   episodes?: MediaSummary[];
+  following?: MediaSummary | null;
   playingId: string;
   onSelectEpisode?: (episode: MediaSummary) => void;
   watchedFractionFor?: (mediaId: string) => number | undefined;
