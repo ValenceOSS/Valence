@@ -33,6 +33,9 @@ private val MEDIA_KEYS = setOf(
  * be answered twice — by the screen, and by the player's own media session — and the two would
  * cancel out. So while the app is in front its media keys go to React Native and stop there, as the
  * Siri Remote's do; with the app behind, the system hands them to the media session as before.
+ *
+ * A keyboard's Escape — a keyboard plugged into the television, or the computer's running an
+ * emulator — goes back, as the remote's Back button does.
  */
 object HeardWithoutFocus {
   /**
@@ -54,7 +57,20 @@ object HeardWithoutFocus {
     private val within: Window.Callback,
     private val window: Window,
   ) : Window.Callback by within {
-    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+    override fun dispatchKeyEvent(pressed: KeyEvent): Boolean {
+      val event =
+        if (pressed.keyCode == KeyEvent.KEYCODE_ESCAPE) {
+          KeyEvent(
+            pressed.downTime,
+            pressed.eventTime,
+            pressed.action,
+            KeyEvent.KEYCODE_BACK,
+            pressed.repeatCount,
+            pressed.metaState,
+          )
+        } else {
+          pressed
+        }
       val root = rootIn(window.decorView)
 
       if (root != null && event.keyCode in MEDIA_KEYS) {
