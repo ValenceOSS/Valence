@@ -22,7 +22,9 @@ const mockPalette = {
   'surface-active': '#2c2c2c',
 };
 
-Object.assign(mockView.prototype, { requestTVFocus: () => undefined });
+if (typeof mockView.prototype === 'object') {
+  Object.assign(mockView.prototype, { requestTVFocus: () => undefined });
+}
 
 jest.mock('expo-constants', () => ({
   __esModule: true,
