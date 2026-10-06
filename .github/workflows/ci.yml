@@ -96,6 +96,8 @@ jobs:
               --changed-files-ignore-pattern='.github/workflows/prune-images.yml' \
               --changed-files-ignore-pattern='.github/workflows/media-pipeline.yml' \
               --changed-files-ignore-pattern='.github/workflows/desktop.yml' \
+              --changed-files-ignore-pattern='.github/workflows/desktop-dev.yml' \
+              --changed-files-ignore-pattern='.github/workflows/next-version.yml' \
               --changed-files-ignore-pattern='.github/workflows/release.yml' \
               --changed-files-ignore-pattern='.github/workflows/release-please.yml' \
               --changed-files-ignore-pattern='release-please-config.json' \

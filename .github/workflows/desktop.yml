@@ -8,8 +8,8 @@ name: Desktop app
 # a release and when somebody starts it, and on nothing else: three runners, one of them a macOS one,
 # is not a cost every pull request should carry.
 #
-# It builds; it does not publish. release.yml takes what it produced and hangs it on the release, so
-# the one place that writes to a release stays the one that already does.
+# It builds; it does not publish. release.yml takes what it produced and hangs it on the release, and
+# desktop-dev.yml hangs a dev channel build on the dev channel's.
 #
 # What it hands over is more than the installers. The desktop app updates itself with
 # electron-updater, which finds a new version by reading latest.yml, latest-mac.yml or
@@ -46,6 +46,10 @@ on:
         description: Which of Windows, macOS and Linux to build, separated by commas, or empty for all three
         required: false
         default: ''
+      dev_version:
+        description: A dev channel version to stamp on it, such as 1.4.0-dev.12, or empty for none
+        required: false
+        default: ''
   workflow_call:
     inputs:
       tag:
@@ -60,6 +64,11 @@ on:
         default: ''
       platforms:
         description: Which of Windows, macOS and Linux to build, separated by commas, or empty for all three
+        required: false
+        type: string
+        default: ''
+      dev_version:
+        description: A dev channel version to stamp on it, such as 1.4.0-dev.12, or empty for none
         required: false
         type: string
         default: ''
@@ -99,7 +108,8 @@ jobs:
               "files": [
                 "apps/desktop/release/Valence-Setup-*.exe",
                 "apps/desktop/release/Valence-Setup-*.exe.blockmap",
-                "apps/desktop/release/latest.yml"
+                "apps/desktop/release/latest.yml",
+                "apps/desktop/release/dev.yml"
               ]
             },
             {
@@ -113,7 +123,8 @@ jobs:
                 "apps/desktop/release/Valence-*.dmg.blockmap",
                 "apps/desktop/release/Valence-*-mac.zip",
                 "apps/desktop/release/Valence-*-mac.zip.blockmap",
-                "apps/desktop/release/latest-mac.yml"
+                "apps/desktop/release/latest-mac.yml",
+                "apps/desktop/release/dev-mac.yml"
               ]
             },
             {
@@ -124,7 +135,8 @@ jobs:
               "also": "",
               "files": [
                 "apps/desktop/release/Valence-*.AppImage",
-                "apps/desktop/release/latest-linux.yml"
+                "apps/desktop/release/latest-linux.yml",
+                "apps/desktop/release/dev-linux.yml"
               ]
             }
           ]
@@ -169,17 +181,28 @@ jobs:
       # written into packages. The installer is named for the release it belongs to, so the version
       # is written into this checkout's copy before it is built. Not passed as a builder flag: a
       # dotted `-c.extraMetadata.version` is split apart on the way through PowerShell.
+      #
+      # A dev channel build is pointed at the dev channel's own release rather than at the newest
+      # release, and its version names the channel, so the builder writes dev.yml beside it rather
+      # than latest.yml and the app it builds asks for that. The updater only takes what is newer
+      # than what it is running, which is why desktop-dev.yml counts its builds up rather than
+      # naming them after a commit.
       - name: Stamp the release's version on it
         shell: bash
         working-directory: apps/desktop
         run: |
           if [ -n "$TAG" ]; then
             npm pkg set version="${TAG#v}"
+          elif [ -n "$DEV_VERSION" ]; then
+            npm pkg set version="$DEV_VERSION"
+            npm pkg set --json "build.publish={\"provider\":\"generic\",\"url\":\"https://github.com/${REPO}/releases/download/desktop-dev\",\"channel\":\"dev\"}"
           else
             npm pkg set version="0.0.0-dev"
           fi
         env:
           TAG: ${{ inputs.tag }}
+          DEV_VERSION: ${{ inputs.dev_version }}
+          REPO: ${{ github.repository }}
 
       - run: pnpm --filter @valence/desktop exec electron-vite build
 

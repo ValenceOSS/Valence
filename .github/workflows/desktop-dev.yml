@@ -1,0 +1,145 @@
+name: Desktop dev channel
+
+# Builds the desktop app from main every time something is merged, and hangs it on the dev channel's
+# release, so a desktop app installed from there updates itself to whatever has just landed — the
+# desktop app's equivalent of the `dev` image.
+#
+# The channel is one release, tagged `desktop-dev` and marked as a prerelease, which this replaces
+# the contents of on every build: the installers, and the dev.yml, dev-mac.yml and dev-linux.yml the
+# app reads to find them. A dev build is stamped with the dev channel's address when it is built
+# (see desktop.yml), so it follows this release and nothing else; a released build follows the
+# newest release, which a prerelease never is. Nothing else in the repository answers to a tag that
+# does not start with `v`, so moving this one starts nothing.
+#
+# A build is named for the release it is on the way to and counted up from there: `1.4.0-dev.12`.
+# The count is what lets one dev build see the next as newer, which a commit hash cannot say, and
+# naming it for the next release keeps it ahead of the last one. The commit it was built from is in
+# the app's About, and at the top of the release.
+#
+# The release's notes are GitHub's own, written from the pull requests merged since the last
+# release, as a release's are: everything the next release would carry so far.
+#
+# Skipped for a push that changes only what the app does not contain, as dev-image.yml is.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'apps/docs/**'
+      - 'apps/landing/**'
+      - 'apps/server/**'
+      - 'apps/requests/**'
+      - 'apps/transcoder/**'
+      - 'apps/mobile/**'
+      - 'apps/tv/**'
+      - '**/*.md'
+      - '.github/workflows/dev-image.yml'
+      - '.github/workflows/nightly-image.yml'
+      - '.github/workflows/prune-images.yml'
+      - '.github/workflows/media-pipeline.yml'
+      - '.github/workflows/phone-testflight.yml'
+      - '.github/workflows/release.yml'
+      - '.github/workflows/release-please.yml'
+      - 'release-please-config.json'
+      - '.release-please-manifest.json'
+  workflow_dispatch:
+
+concurrency:
+  group: desktop-dev
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    name: Work out the next version
+    uses: ./.github/workflows/next-version.yml
+    permissions:
+      contents: read
+      pull-requests: read
+
+  desktop:
+    name: Desktop app
+    needs: version
+    uses: ./.github/workflows/desktop.yml
+    secrets: inherit
+    with:
+      ref: ${{ github.sha }}
+      dev_version: ${{ needs.version.outputs.next }}-dev.${{ github.run_number }}
+
+  # Only main is published, so starting this by hand from a branch builds the installers without
+  # moving everybody on the dev channel onto that branch.
+  publish:
+    name: Publish to the dev channel
+    needs: [version, desktop]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CHANNEL: desktop-dev
+      VERSION: ${{ needs.version.outputs.next }}-dev.${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: valence-desktop-*
+          merge-multiple: true
+          path: release
+
+      - name: Write the notes
+        run: |
+          last="v$(jq -r '.["."]' .release-please-manifest.json)"
+          merged="$(gh api -X POST "repos/$GITHUB_REPOSITORY/releases/generate-notes" \
+            -f tag_name="$CHANNEL" \
+            -f target_commitish="$GITHUB_SHA" \
+            -f previous_tag_name="$last" \
+            -q .body)"
+
+          {
+            echo "**Valence ${VERSION}, a development build of main at \`${GITHUB_SHA::7}\`.** Not a release: it can break, and it updates itself to the next build of main."
+            echo
+            echo "Install it once from here and it keeps itself up to date. Go back to releases by installing the latest release over it."
+            echo
+            echo "${merged}"
+          } > notes.md
+
+      # The tag is moved before anything is uploaded, so the release never names one commit while
+      # holding another's installers for longer than the upload takes.
+      - name: Point the channel at this commit
+        run: |
+          if gh release view "$CHANNEL" > /dev/null 2>&1; then
+            git tag -f "$CHANNEL" "$GITHUB_SHA"
+            git push -f origin "refs/tags/$CHANNEL"
+            gh release edit "$CHANNEL" --prerelease --title "Development build" --notes-file notes.md
+          else
+            gh release create "$CHANNEL" --prerelease --target "$GITHUB_SHA" \
+              --title "Development build" --notes-file notes.md
+          fi
+
+      # The installers first and what points at them last, so an app that checks while this runs
+      # finds either the last build whole or this one whole. The last build's installers go once
+      # nothing names them.
+      - name: Hang the build on it
+        run: |
+          find release -type f ! -name '*.yml' -print0 | xargs -0 gh release upload "$CHANNEL" --clobber
+          gh release upload "$CHANNEL" release/*.yml --clobber
+
+          ls release > kept.txt
+          gh release view "$CHANNEL" --json assets -q '.assets[].name' | while read -r asset; do
+            if ! grep -qxF "$asset" kept.txt; then
+              gh release delete-asset "$CHANNEL" "$asset" -y
+            fi
+          done
+
+      - name: Say where it went
+        run: |
+          {
+            echo "### Published ${VERSION} to the dev channel"
+            echo
+            echo "https://github.com/${GITHUB_REPOSITORY}/releases/tag/${CHANNEL}"
+          } >> "$GITHUB_STEP_SUMMARY"
