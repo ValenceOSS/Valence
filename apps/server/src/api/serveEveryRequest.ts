@@ -1,6 +1,7 @@
 import { isPublicRoute } from '@ValenceServer/auth/isPublicRoute';
 import { bodyLimit } from 'hono/body-limit';
 import { refuse } from '@ValenceI18n/refuse';
+import { shieldTheAnswer } from '@ValenceServer/api/shieldTheAnswer';
 import { SMALL_BODY_BYTES } from '@ValenceServer/api/SMALL_BODY_BYTES';
 import { withCaller } from '@ValenceServer/web/withCaller';
 import { allowCrossOriginClients } from '@ValenceServer/auth/allowCrossOriginClients';
@@ -42,8 +43,7 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
   app.use('*', async (context, next) => {
     await next();
 
-    context.res.headers.set('Referrer-Policy', 'no-referrer');
-    context.res.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    shieldTheAnswer(context.res.headers);
   });
 
   app.use(
