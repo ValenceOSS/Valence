@@ -47,7 +47,7 @@ const PhoneFan = () => {
 
       <div
         ref={stageRef}
-        className="relative mx-auto flex h-[34rem] max-w-6xl items-start justify-center sm:h-[40rem]"
+        className="relative mx-auto flex h-[30rem] max-w-6xl items-start justify-center sm:h-[36rem]"
       >
         {PHONES.map((phone) => (
           <FannedPhone key={phone.label} phone={phone} opened={opened} />
@@ -55,7 +55,7 @@ const PhoneFan = () => {
 
         <span
           aria-hidden
-          className="pointer-events-none absolute right-[6%] top-[2%] hidden w-48 lg:block"
+          className="pointer-events-none absolute -top-16 right-0 hidden w-52 lg:block xl:-right-6"
         >
           <span className="block rotate-6 font-hand text-2xl leading-none text-text-muted">
             the same queue, on every phone

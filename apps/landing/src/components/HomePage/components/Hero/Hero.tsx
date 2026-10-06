@@ -69,7 +69,7 @@ const Hero = () => {
           variants={staggerVariants}
           initial="hidden"
           animate="shown"
-          className="relative flex flex-col items-center gap-6 px-5 pt-20 text-center sm:pt-28"
+          className="relative flex flex-col items-center gap-5 px-5 pt-14 text-center sm:pt-20"
         >
           <motion.p
             variants={revealVariants(prefersReducedMotion)}
@@ -81,7 +81,7 @@ const Hero = () => {
 
           <h1
             className={cn(
-              'max-w-[16ch] text-balance text-[clamp(2.75rem,7vw,5.5rem)] font-semibold leading-[1.02] tracking-[-0.035em] text-on-scrim',
+              'max-w-[16ch] text-balance text-[clamp(2.5rem,6vw,4.75rem)] font-semibold leading-[1.02] tracking-[-0.035em] text-on-scrim',
               LEGIBLE,
             )}
           >
@@ -180,10 +180,10 @@ const Hero = () => {
           </div>
         </motion.div>
 
-        <div aria-hidden className="h-[42vw] max-h-[38rem] sm:h-[33vw]" />
+        <div aria-hidden className="h-[min(48vw,24rem)] sm:h-[min(30vw,30rem)]" />
       </div>
 
-      <div className="relative z-10 -mt-[30vw] px-4 sm:-mt-[22vw] sm:px-10 xl:-mt-[26rem]">
+      <div className="relative z-10 -mt-[calc(min(48vw,24rem)-3rem)] px-4 sm:-mt-[calc(min(30vw,30rem)-3rem)] sm:px-10">
         <DeviceStage />
       </div>
 

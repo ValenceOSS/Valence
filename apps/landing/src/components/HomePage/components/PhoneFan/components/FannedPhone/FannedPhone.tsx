@@ -22,7 +22,7 @@ const FannedPhone = ({ phone, opened }: FannedPhoneProps) => {
     <motion.div
       style={{ x, rotate, y }}
       className={cn(
-        'absolute top-0 w-[11rem] origin-bottom sm:w-[14rem] lg:w-[15.5rem]',
+        'absolute top-0 w-[10rem] origin-bottom sm:w-[12.5rem] lg:w-[13.5rem]',
         isMiddle ? 'z-20 scale-110' : Math.abs(phone.spread) === 1 ? 'z-10' : 'z-0',
       )}
     >

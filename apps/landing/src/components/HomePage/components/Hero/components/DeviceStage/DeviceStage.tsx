@@ -17,7 +17,7 @@ const DeviceStage = () => {
 
   const tip = useTransform(scrollYProgress, [0.25, 1], isStill ? [0, 0] : [32, 0]);
   const scale = useTransform(scrollYProgress, [0.25, 1], isStill ? [1, 1] : [0.86, 1]);
-  const rise = useTransform(scrollYProgress, [0.25, 1], isStill ? [0, 0] : [-40, 0]);
+  const rise = useTransform(scrollYProgress, [0.25, 1], isStill ? ['0%', '0%'] : ['-22%', '0%']);
 
   return (
     <div ref={stageRef} className="relative mx-auto w-full max-w-6xl [perspective:1800px]">

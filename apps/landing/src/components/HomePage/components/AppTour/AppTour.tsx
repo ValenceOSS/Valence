@@ -92,9 +92,9 @@ const AppTour = () => {
           />
           <span
             aria-hidden
-            className="pointer-events-none absolute -right-28 -top-10 hidden w-28 lg:block"
+            className="pointer-events-none absolute left-full top-1/2 ml-5 hidden w-36 -translate-y-1/2 lg:block"
           >
-            <span className="block rotate-12 font-hand text-xl leading-none text-text-muted">
+            <span className="block -rotate-6 font-hand text-xl leading-none text-text-muted">
               real screenshots
             </span>
             <Doodle of="sparks" delay={0.3} className="ml-4 mt-1 h-6 w-8 text-accent" />
