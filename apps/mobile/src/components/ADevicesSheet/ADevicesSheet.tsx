@@ -13,7 +13,7 @@ import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { AirPlayButton } from '@ValenceMobile/components/AirPlayButton/AirPlayButton';
-import { ASheet } from '@ValenceMobile/components/ASheet/ASheet';
+import { ABottomSheet } from '@ValenceMobile/components/ABottomSheet/ABottomSheet';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
@@ -102,7 +102,7 @@ const ADevicesSheet = ({ isOpen, onClose }: ADevicesSheetProps) => {
   };
 
   return (
-    <ASheet isOpen={isOpen} title={say('common.playOn')} onClose={onClose}>
+    <ABottomSheet isOpen={isOpen} title={say('common.playOn')} onClose={onClose}>
       <View style={styles.whole}>
         <View style={[styles.current, { backgroundColor: withAlpha(colours.text, 0.08) }]}>
           <View style={styles.currentSaid}>
@@ -205,7 +205,7 @@ const ADevicesSheet = ({ isOpen, onClose }: ADevicesSheetProps) => {
           </Button>
         )}
       </View>
-    </ASheet>
+    </ABottomSheet>
   );
 };
 
