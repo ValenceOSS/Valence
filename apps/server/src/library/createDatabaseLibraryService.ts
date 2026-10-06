@@ -25,6 +25,7 @@ import {
   sql,
 } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
+import { truth } from '@ValenceDatabase/truth';
 import { containsInsensitively } from '@ValenceDatabase/containsInsensitively';
 import { countAffected } from '@ValenceDatabase/countAffected';
 import { floorDivided } from '@ValenceDatabase/floorDivided';
@@ -1755,7 +1756,7 @@ const createDatabaseLibraryService = ({
       };
 
       const rows = await db
-        .select({ reachable: sql<boolean>`coalesce(${reachableByViewer(db, asThem)}, true)` })
+        .select({ reachable: truth(sql`coalesce(${reachableByViewer(db, asThem)}, true)`) })
         .from(mediaItem)
         .where(eq(mediaItem.id, mediaId))
         .limit(1);
@@ -1772,7 +1773,7 @@ const createDatabaseLibraryService = ({
       };
 
       const rows = await db
-        .select({ reachable: sql<boolean>`coalesce(${reachableByViewer(db, asThem)}, true)` })
+        .select({ reachable: truth(sql`coalesce(${reachableByViewer(db, asThem)}, true)`) })
         .from(mediaItem)
         .where(eq(mediaItem.seriesId, seriesId));
 

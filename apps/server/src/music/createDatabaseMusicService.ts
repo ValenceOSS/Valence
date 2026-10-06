@@ -97,11 +97,11 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
     isExplicit: musicTrack.isExplicit,
     bitDepth: musicTrack.bitDepth,
     sampleRate: musicTrack.sampleRate,
-    hasLyrics: sql<boolean>`${musicTrack.lyrics} is not null`,
+    hasLyrics: truth(sql`${musicTrack.lyrics} is not null`),
     videoKey: musicTrack.videoKey,
     albumId: musicAlbum.id,
     albumTitle: musicAlbum.title,
-    albumHasArtwork: sql<boolean>`${musicAlbum.artworkPath} is not null`,
+    albumHasArtwork: truth(sql`${musicAlbum.artworkPath} is not null`),
   };
 
   type TrackRow = {
@@ -214,7 +214,7 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
     year: musicAlbum.year,
     genres: musicAlbum.genres,
     isCompilation: musicAlbum.isCompilation,
-    hasArtwork: sql<boolean>`${musicAlbum.artworkPath} is not null`,
+    hasArtwork: truth(sql`${musicAlbum.artworkPath} is not null`),
     addedAt: musicAlbum.addedAt,
     artistId: musicArtist.id,
     artistName: musicArtist.name,
@@ -287,7 +287,7 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
         id: musicArtist.id,
         libraryId: musicArtist.libraryId,
         name: musicArtist.name,
-        hasImage: sql<boolean>`${musicArtist.imagePath} is not null`,
+        hasImage: truth(sql`${musicArtist.imagePath} is not null`),
         albumCount:
           sql<number>`(select count(*) from ${musicAlbum} where ${musicAlbum.artistId} = ${musicArtist.id})`.mapWith(
             Number,
@@ -301,7 +301,7 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
         >`(select ${musicAlbum.id} from ${musicAlbum} where ${musicAlbum.artistId} = ${musicArtist.id} and ${musicAlbum.artworkPath} is not null order by ${nullsLast(musicAlbum.year, 'desc')} limit 1)`,
         isFavourite:
           profileId === null
-            ? sql<boolean>`false`
+            ? truth(sql`false`)
             : truth(
                 sql`exists (select 1 from ${favouriteArtist} where ${favouriteArtist.artistId} = ${musicArtist.id} and ${favouriteArtist.profileId} = ${profileId})`,
               ),
@@ -496,7 +496,7 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
         .select({
           id: mediaItem.id,
           albumId: musicTrack.albumId,
-          hasArtwork: sql<boolean>`${musicAlbum.artworkPath} is not null`,
+          hasArtwork: truth(sql`${musicAlbum.artworkPath} is not null`),
           year: musicAlbum.year,
           genres: musicAlbum.genres,
         })

@@ -1,6 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
-import { library, mediaItem, rating, series, user, viewerProfile } from '#dialect/Schema';
+import {
+  library,
+  libraryBlock,
+  mediaItem,
+  rating,
+  series,
+  user,
+  viewerProfile,
+} from '#dialect/Schema';
 import { createDatabaseLibraryService } from './createDatabaseLibraryService';
 import type { JobQueue } from '@ValenceServer/jobs/JobQueue';
 import type { Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
@@ -281,6 +289,31 @@ describe('the release calendar', { timeout: STARTING_POSTGRES_MS }, () => {
 });
 
 describe('createDatabaseLibraryService', { timeout: STARTING_POSTGRES_MS }, () => {
+  it('puts a film or a series out of an account’s reach only where its library is blocked', async () => {
+    const { db, service } = await aLibrary();
+
+    await db.insert(mediaItem).values(
+      aFilm('pilot', 'Pilot', {
+        libraryId: SHOWS_ID,
+        path: '/shows/pilot.mkv',
+        seriesId: 'a-show',
+        seasonNumber: 1,
+        episodeNumber: 1,
+      }),
+    );
+
+    expect(await service.isOutOfReach('ada', 'arrival')).toBe(false);
+    expect(await service.isSeriesOutOfReach('ada', 'a-show')).toBe(false);
+
+    await db.insert(libraryBlock).values([
+      { userId: 'ada', libraryId: FILMS_ID },
+      { userId: 'ada', libraryId: SHOWS_ID },
+    ]);
+
+    expect(await service.isOutOfReach('ada', 'arrival')).toBe(true);
+    expect(await service.isSeriesOutOfReach('ada', 'a-show')).toBe(true);
+  });
+
   it('counts the films in a library once each, whatever versions they come in', async () => {
     const { service } = await aLibrary();
 
