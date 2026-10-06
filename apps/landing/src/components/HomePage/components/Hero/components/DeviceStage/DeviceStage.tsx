@@ -26,11 +26,13 @@ const DeviceStage = () => {
       <motion.div style={{ rotateX: tip, scale, y: rise }} className="relative origin-bottom">
         <PhoneFrame
           label="Now playing"
+          src="/phones/playing.jpg"
           finish="silver"
           className="absolute -bottom-[3%] -left-[9%] z-10 hidden w-[15%] -rotate-6 lg:block"
         />
         <PhoneFrame
-          label="Your library"
+          label="Home"
+          src="/phones/home.jpg"
           finish="blue"
           className="absolute -bottom-[3%] -right-[9%] z-10 hidden w-[15%] rotate-6 lg:block"
         />

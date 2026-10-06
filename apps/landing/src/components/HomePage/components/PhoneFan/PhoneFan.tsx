@@ -3,11 +3,25 @@ import { useReducedMotionConfig, useScroll, useTransform } from 'motion/react';
 import { FannedPhone } from './components/FannedPhone/FannedPhone';
 
 const PHONES = [
-  { label: 'Music home', turn: -16, lift: 70, spread: -2, finish: 'blue' },
-  { label: 'An album', turn: -8, lift: 26, spread: -1, finish: 'silver' },
-  { label: 'Now playing', turn: 0, lift: 0, spread: 0, finish: 'blue' },
-  { label: 'Your library', turn: 8, lift: 26, spread: 1, finish: 'silver' },
-  { label: 'A book', turn: 16, lift: 70, spread: 2, finish: 'blue' },
+  {
+    label: 'Music home',
+    turn: -16,
+    lift: 70,
+    spread: -2,
+    finish: 'blue',
+    src: '/phones/music.jpg',
+  },
+  { label: 'An album', turn: -8, lift: 26, spread: -1, finish: 'silver', src: '/phones/album.jpg' },
+  { label: 'Now playing', turn: 0, lift: 0, spread: 0, finish: 'blue', src: '/phones/playing.jpg' },
+  {
+    label: 'Your library',
+    turn: 8,
+    lift: 26,
+    spread: 1,
+    finish: 'silver',
+    src: '/phones/films.jpg',
+  },
+  { label: 'A book', turn: 16, lift: 70, spread: 2, finish: 'blue', src: '/phones/books.jpg' },
 ] as const;
 
 /**
