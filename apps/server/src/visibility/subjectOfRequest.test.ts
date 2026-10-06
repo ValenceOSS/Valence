@@ -52,9 +52,12 @@ describe('what a request is about', () => {
     ['without its hyphens', ITEM.replaceAll('-', '')],
     ['in braces', `{${ITEM}}`],
     ['in capitals', ITEM.toUpperCase()],
-  ])('names the item behind an identifier written %s, which the database also finds', (_what, id) => {
-    expect(subjectOfRequest(`/api/media/${id}/preview`)).toEqual({ kind: 'item', mediaId: ITEM });
-  });
+  ])(
+    'names the item behind an identifier written %s, which the database also finds',
+    (_what, id) => {
+      expect(subjectOfRequest(`/api/media/${id}/preview`)).toEqual({ kind: 'item', mediaId: ITEM });
+    },
+  );
 
   it('names the programme behind a series address', () => {
     expect(subjectOfRequest(`/api/series/${SERIES}/rating`)).toEqual({
