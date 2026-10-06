@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
     paddingVertical: tokens.space.sm,
     borderRadius: tokens.radii.lg,
   },
-  focused: { backgroundColor: '#ffffff' },
+  focused: { backgroundColor: '#ffffff', borderRadius: tokens.radii.lg },
   label: { fontSize: tokens.type.body, fontWeight: '600' },
   value: { flex: 1, textAlign: 'right', fontSize: tokens.type.body },
 });
