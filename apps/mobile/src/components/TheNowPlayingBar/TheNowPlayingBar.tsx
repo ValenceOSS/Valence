@@ -1,10 +1,11 @@
-import { BookOpen, LaptopSmartphone, MusicNote, Volume } from '@keyline-icons/react-native';
+import { BookOpen, LaptopSmartphone, Volume } from '@keyline-icons/react-native';
 import {
   FastForward as FastForwardFilled,
   Pause as PauseFilled,
   Play as PlayFilled,
+  LaptopSmartphone as LaptopSmartphoneFilled,
 } from '@keyline-icons/react-native/fill';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, PanResponder, Platform, StyleSheet, View } from 'react-native';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
@@ -17,6 +18,9 @@ import { ABookProgress } from './components/ABookProgress/ABookProgress';
 import { ASongProgress } from './components/ASongProgress/ASongProgress';
 import { AMarquee } from '@ValenceMobile/components/AMarquee/AMarquee';
 import { ASwipedTitle } from './components/ASwipedTitle/ASwipedTitle';
+import { AFadingCover } from './components/AFadingCover/AFadingCover';
+import { currentOf, nextIn, previousIn } from '@ValenceClient/music/playQueue';
+import type { MusicTrack } from '@ValenceContracts/schemas/Music';
 import { tintOf } from './tintOf';
 import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
@@ -39,7 +43,9 @@ const ART = 42;
 
 const HIGH = 60;
 
-const ART_ROUND = 14;
+const ART_ROUND = 8;
+
+const ROUND = 16;
 
 const GOES_PAST = 36;
 
@@ -47,7 +53,7 @@ const TURNS_PAST = 48;
 
 const TURNS_FASTER_THAN = 0.5;
 
-const TURNED_BY = 220;
+const GIVES_UP_MS = 2500;
 
 const GOES_OFF_BY = 96;
 
@@ -75,13 +81,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     height: HIGH,
-    paddingLeft: (HIGH - ART) / 2,
-    paddingRight: 14,
+    paddingHorizontal: 10,
   },
-  flush: { paddingLeft: 0, paddingRight: 0 },
+  flush: { paddingHorizontal: 0 },
   room: { height: HIGH },
   device: { alignItems: 'center', flexDirection: 'row', gap: 4 },
-  foot: { bottom: 4, left: 18, position: 'absolute', right: 18 },
   said: { flex: 1, gap: 1 },
 });
 
@@ -110,6 +114,14 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
   const shown = useWhatIsPlaying(state);
   const isPlaying = shown?.isPlaying ?? state.isPlaying;
   const track = state.current;
+  const queue = state.queue;
+  const moved = queue === null ? null : nextIn(queue, true);
+  const after = moved === null ? null : currentOf(moved);
+  const before = queue === null || queue.at === 0 ? null : currentOf(previousIn(queue));
+  const [stripWidth, setStripWidth] = useState(0);
+  const swiped = useRef(false);
+  const trackId = track?.id ?? null;
+  const lastTrack = useRef(trackId);
   const tint = tintOf(
     usePictureLights(
       track !== null && track.album.hasArtwork
@@ -131,6 +143,9 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
           isPaused: boolean;
           isBook: boolean;
           isStill: boolean;
+          width: number;
+          hasNext: boolean;
+          hasPrevious: boolean;
           letGo: () => void;
           next: () => void;
           previous: () => void;
@@ -145,6 +160,9 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
       isPaused,
       isBook,
       isStill,
+      width: stripWidth,
+      hasNext: after !== null,
+      hasPrevious: before !== null,
       next: () => {
         player.next();
       },
@@ -160,6 +178,24 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
           },
     });
   });
+
+  useEffect(() => {
+    if (trackId === lastTrack.current) {
+      return;
+    }
+
+    lastTrack.current = trackId;
+
+    if (swiped.current || isStill || stripWidth === 0) {
+      swiped.current = false;
+      shift.setValue(0);
+
+      return;
+    }
+
+    shift.setValue(stripWidth);
+    Animated.spring(shift, { ...SPRINGS.liquid, toValue: 0, useNativeDriver: true }).start();
+  }, [trackId, isStill, stripWidth, shift]);
 
   const [swipe] = useState(() =>
     PanResponder.create({
@@ -206,7 +242,9 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
                 ? 1
                 : 0;
 
-          if (toward === 0) {
+          const isPossible = toward < 0 ? now.hasNext : now.hasPrevious;
+
+          if (toward === 0 || now.width === 0 || !isPossible) {
             Animated.spring(shift, {
               ...SPRINGS.liquid,
               toValue: 0,
@@ -226,17 +264,22 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
           }
 
           Animated.timing(shift, {
-            toValue: toward * TURNED_BY,
+            toValue: toward * now.width,
             duration: GOES_OFF_MS,
             useNativeDriver: true,
           }).start(() => {
+            swiped.current = true;
             moveOn();
-            shift.setValue(-toward * TURNED_BY);
-            Animated.spring(shift, {
-              ...SPRINGS.liquid,
-              toValue: 0,
-              useNativeDriver: true,
-            }).start();
+            setTimeout(() => {
+              if (swiped.current) {
+                swiped.current = false;
+                Animated.spring(shift, {
+                  ...SPRINGS.liquid,
+                  toValue: 0,
+                  useNativeDriver: true,
+                }).start();
+              }
+            }, GIVES_UP_MS);
           });
 
           return;
@@ -284,11 +327,7 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
   if (isBook) {
     return (
       <Animated.View style={[styles.row, moving]} {...swipe.panHandlers}>
-        <AGlass roundness={HIGH / 2} />
-
-        <View pointerEvents="none" style={styles.foot}>
-          <ABookProgress />
-        </View>
+        <AGlass roundness={ROUND} />
 
         <View style={styles.opens}>
           <Button
@@ -315,6 +354,7 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
                 <Words size="small" tone="muted" lines={1}>
                   {listening.authors?.join(', ') ?? ''}
                 </Words>
+                <ABookProgress />
               </View>
             </View>
           </Button>
@@ -353,6 +393,37 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
     );
   }
 
+  /**
+   * A song as the bar writes it: its name over its artists playing here, or both on one line playing
+   * on another device, where the device takes the second line.
+   *
+   * @param song - The song.
+   * @returns How it is written.
+   */
+  const wordsOf = (song: MusicTrack) => {
+    const artists = song.artists.map((artist) => artist.name).join(', ');
+
+    return state.remote === null ? (
+      <>
+        <AMarquee>
+          <Words lines={1}>{song.title}</Words>
+        </AMarquee>
+        <AMarquee>
+          <Words size="small" tone="muted" lines={1}>
+            {artists}
+          </Words>
+        </AMarquee>
+      </>
+    ) : (
+      <AMarquee>
+        <Words lines={1}>
+          {song.title}
+          <Words tone="muted">{say('phone.theNowPlayingBar.byArtists', { artists })}</Words>
+        </Words>
+      </AMarquee>
+    );
+  };
+
   if (track === null) {
     return null;
   }
@@ -360,15 +431,11 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
   return (
     <Animated.View style={[styles.row, moving]} {...swipe.panHandlers}>
       <AGlass
-        roundness={HIGH / 2}
+        roundness={ROUND}
         {...(tint === null
           ? {}
           : { tint: Platform.OS === 'ios' ? withAlpha(tint, 0.55) : withAlpha(tint, 0.96) })}
       />
-
-      <View pointerEvents="none" style={styles.foot}>
-        <ASongProgress />
-      </View>
 
       <View style={styles.opens}>
         <Button
@@ -380,50 +447,28 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
         >
           <View style={[styles.row, styles.flush]}>
             <View style={[styles.art, { backgroundColor: colours.surfaceRaised }]}>
-              {track.album.hasArtwork ? (
-                <ARemotePicture
-                  style={styles.fills}
-                  uri={onThisServer(albumArtworkUrl(track.album.id))}
-                />
-              ) : (
-                <Icon of={MusicNote} size={20} colour={colours.textMuted} />
-              )}
+              <AFadingCover
+                uri={track.album.hasArtwork ? onThisServer(albumArtworkUrl(track.album.id)) : null}
+              />
             </View>
 
             <View style={styles.said}>
-              <ASwipedTitle shift={shift} by={TURNED_BY}>
-                {state.remote === null ? (
-                  <>
-                    <AMarquee>
-                      <Words lines={1}>{track.title}</Words>
-                    </AMarquee>
-                    <AMarquee>
-                      <Words size="small" tone="muted" lines={1}>
-                        {track.artists.map((artist) => artist.name).join(', ')}
-                      </Words>
-                    </AMarquee>
-                  </>
-                ) : (
-                  <>
-                    <AMarquee>
-                      <Words lines={1}>
-                        {track.title}
-                        <Words tone="muted">
-                          {say('phone.theNowPlayingBar.byArtists', {
-                            artists: track.artists.map((artist) => artist.name).join(', '),
-                          })}
-                        </Words>
-                      </Words>
-                    </AMarquee>
-                    <View style={styles.device}>
-                      <Icon of={Volume} size={14} colour={colours.accent} />
-                      <Words size="small" tone="accent" lines={1}>
-                        {state.remote.label}
-                      </Words>
-                    </View>
-                  </>
-                )}
-              </ASwipedTitle>
+              <ASwipedTitle
+                shift={shift}
+                onWidth={setStripWidth}
+                previous={before === null ? null : wordsOf(before)}
+                current={wordsOf(track)}
+                next={after === null ? null : wordsOf(after)}
+              />
+              {state.remote === null ? null : (
+                <View style={styles.device}>
+                  <Icon of={Volume} size={14} colour={colours.accent} />
+                  <Words size="small" tone="accent" lines={1}>
+                    {state.remote.label}
+                  </Words>
+                </View>
+              )}
+              <ASongProgress />
             </View>
           </View>
         </Button>
@@ -438,7 +483,7 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
       >
         <View style={styles.button}>
           <Icon
-            of={LaptopSmartphone}
+            of={state.remote === null ? LaptopSmartphone : LaptopSmartphoneFilled}
             size={22}
             colour={state.remote === null ? colours.text : colours.accent}
           />

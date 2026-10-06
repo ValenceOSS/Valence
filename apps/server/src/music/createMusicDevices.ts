@@ -66,6 +66,7 @@ const createMusicDevices = ({ presence, onChanged, plays }: MusicDevicesOptions)
         label: entry.deviceLabel,
         clientKind: entry.clientKind ?? null,
         nowPlaying: devices.reportOf(entry.clientId),
+        ageMs: devices.ageOf(entry.clientId),
       })),
 
     report: devices.report,

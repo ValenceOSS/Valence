@@ -4,7 +4,7 @@ import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import type { AMiniProgressProps } from './AMiniProgress.types';
 
 const styles = StyleSheet.create({
-  track: { borderRadius: 2, height: 3, overflow: 'hidden' },
+  track: { borderRadius: 2, height: 3, marginTop: 5, overflow: 'hidden' },
   played: { borderRadius: 2, height: 3 },
 });
 

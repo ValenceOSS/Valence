@@ -39,6 +39,7 @@ const MusicDeviceSchema = z.object({
   label: z.string(),
   clientKind: ClientKindSchema.nullable().catch(null).default(null),
   nowPlaying: MusicNowPlayingSchema.nullable(),
+  ageMs: z.number().nonnegative().nullable().catch(null).default(null),
 });
 
 const MusicDeviceListSchema = z.object({ devices: z.array(MusicDeviceSchema) });

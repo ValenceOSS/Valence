@@ -3,8 +3,10 @@ import type { Animated } from 'react-native';
 
 type ASwipedTitleProps = {
   shift: Animated.Value;
-  by: number;
-  children: ReactNode;
+  previous: ReactNode;
+  current: ReactNode;
+  next: ReactNode;
+  onWidth: (width: number) => void;
 };
 
 export type { ASwipedTitleProps };

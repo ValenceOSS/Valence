@@ -141,7 +141,8 @@ const playlist = (playlistId: string) =>
  *
  * @returns The query.
  */
-const devices = () => queryOptions({ queryKey: [...MUSIC, 'devices'], queryFn: fetchMusicDevices });
+const devices = () =>
+  queryOptions({ queryKey: [...MUSIC, 'devices'], queryFn: () => fetchMusicDevices() });
 
 const musicQueries = {
   album,
