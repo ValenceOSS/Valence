@@ -43,10 +43,6 @@ on:
       - '.release-please-manifest.json'
   workflow_dispatch:
 
-concurrency:
-  group: desktop-dev
-  cancel-in-progress: true
-
 permissions:
   contents: read
 
@@ -58,9 +54,16 @@ jobs:
       contents: read
       pull-requests: read
 
+  # A newer merge makes a build under way pointless, so it cancels it. Publishing is never
+  # cancelled: it moves the tag and replaces the files one at a time, and stopping it partway would
+  # leave the channel naming a build it no longer holds. A publish that is running finishes, and the
+  # next waits for it.
   desktop:
     name: Desktop app
     needs: version
+    concurrency:
+      group: desktop-dev-build
+      cancel-in-progress: true
     uses: ./.github/workflows/desktop.yml
     secrets: inherit
     with:
@@ -73,6 +76,9 @@ jobs:
     name: Publish to the dev channel
     needs: [version, desktop]
     if: github.ref == 'refs/heads/main'
+    concurrency:
+      group: desktop-dev-publish
+      cancel-in-progress: false
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -124,16 +130,29 @@ jobs:
       # The installers first and what points at them last, so an app that checks while this runs
       # finds either the last build whole or this one whole. The last build's installers go once
       # nothing names them.
+      #
+      # Earlier builds' blockmaps stay for a month. An app updating fetches the blockmap of the build
+      # it is running as well as the new one's, to download only what changed, and without its own it
+      # downloads the whole installer. A month keeps the release well inside GitHub's limit on how
+      # many files one release can hold.
       - name: Hang the build on it
         run: |
           find release -type f ! -name '*.yml' -print0 | xargs -0 gh release upload "$CHANNEL" --clobber
           gh release upload "$CHANNEL" release/*.yml --clobber
 
           ls release > kept.txt
-          gh release view "$CHANNEL" --json assets -q '.assets[].name' | while read -r asset; do
-            if ! grep -qxF "$asset" kept.txt; then
-              gh release delete-asset "$CHANNEL" "$asset" -y
+          cutoff="$(date -u -d '30 days ago' +%Y-%m-%dT%H:%M:%SZ)"
+          gh api "repos/$GITHUB_REPOSITORY/releases/tags/$CHANNEL" \
+            -q '.assets[] | [.name, .created_at] | @tsv' | while IFS=$'\t' read -r asset made; do
+            if grep -qxF "$asset" kept.txt; then
+              continue
             fi
+
+            if [[ "$asset" == *.blockmap && "$made" > "$cutoff" ]]; then
+              continue
+            fi
+
+            gh release delete-asset "$CHANNEL" "$asset" -y
           done
 
       - name: Say where it went

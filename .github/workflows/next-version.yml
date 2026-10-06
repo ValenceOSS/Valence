@@ -34,10 +34,17 @@ jobs:
       # honest answer, including when a commit asked for a particular number with `Release-As`. Where
       # there is no such pull request the next patch after the last release stands in: a name that
       # says "on the way to something after the last release", which is all a dev build needs to say.
+      # Only release-please's own pull request counts, from this repository into main, since a fork
+      # can open one from a branch of the same name and would otherwise choose the version.
       - name: Read the release being prepared
         id: next
         run: |
-          title="$(gh pr list --repo "${REPO}" --head "${BRANCH}" --state open --json title --jq '.[0].title // ""')"
+          title="$(
+            gh pr list --repo "${REPO}" --head "${BRANCH}" --base main --state open \
+              --json headRefName,isCrossRepository,title |
+              jq -r --arg branch "${BRANCH}" \
+                'map(select(.headRefName == $branch and .isCrossRepository == false))[0].title // ""'
+          )"
           next="$(echo "${title}" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)"
 
           if [ -z "${next}" ]; then
