@@ -1,6 +1,6 @@
 import {
-  Laptop as LaptopIcon,
-  ListOrdered as ListOrderedIcon,
+  LaptopSmartphone as DevicesIcon,
+  ListMusic as QueueIcon,
   Mic as MicIcon,
   MoreHorizontal as MoreHorizontalIcon,
   Users as UsersIcon,
@@ -9,8 +9,8 @@ import {
   VolumeX as VolumeXIcon,
 } from '@keyline-icons/react';
 import {
-  Laptop as LaptopFilledIcon,
-  ListOrdered as ListOrderedFilledIcon,
+  LaptopSmartphone as DevicesFilledIcon,
+  ListMusic as QueueFilledIcon,
   Mic as MicFilledIcon,
   Users as UsersFilledIcon,
 } from '@keyline-icons/react/fill';
@@ -289,7 +289,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                       {
                         id: 'queue',
                         label: say('common.queue'),
-                        icon: <Icon of={ListOrderedFilledIcon} size={16} />,
+                        icon: <Icon of={QueueFilledIcon} size={16} />,
                         onChoose: () => {
                           togglePanel('queue');
                         },
@@ -305,7 +305,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                       {
                         id: 'devices',
                         label: say('common.playOnAnotherDevice'),
-                        icon: <Icon of={LaptopFilledIcon} size={16} />,
+                        icon: <Icon of={DevicesFilledIcon} size={16} />,
                         onChoose: () => {
                           togglePanel('devices');
                         },
@@ -343,8 +343,8 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
 
                 <BarButton
                   label={say('common.queue')}
-                  glyph={ListOrderedIcon}
-                  litGlyph={ListOrderedFilledIcon}
+                  glyph={QueueIcon}
+                  litGlyph={QueueFilledIcon}
                   isLit={panel === 'queue'}
                   onClick={() => {
                     togglePanel('queue');
@@ -363,8 +363,8 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
 
                 <BarButton
                   label={say('common.playOnAnotherDevice')}
-                  glyph={LaptopIcon}
-                  litGlyph={LaptopFilledIcon}
+                  glyph={DevicesIcon}
+                  litGlyph={DevicesFilledIcon}
                   isLit={panel === 'devices' || shown.remote !== null}
                   onClick={() => {
                     togglePanel('devices');
@@ -461,7 +461,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                   className="overflow-hidden"
                 >
                   <div className="flex items-center justify-end gap-2 bg-on-scrim px-4 py-1 text-xs font-semibold text-shade">
-                    <Icon of={LaptopIcon} size={14} />
+                    <Icon of={DevicesIcon} size={14} />
                     {say('common.playingOnLabel', { label: shown.remote.label })}
                   </div>
                 </motion.div>
