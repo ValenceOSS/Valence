@@ -3,32 +3,17 @@ import { groupVariants, revealTransition, revealVariants } from '@ValenceUI/anim
 import { Doodle } from '@ValenceUI/Doodle';
 import { FeatureCard } from '@ValenceLanding/components/HomePage/components/FeatureCard/FeatureCard';
 import { FEATURE_GROUPS } from '@ValenceLanding/content/features';
-import type { FeatureCardShape } from '@ValenceLanding/components/HomePage/components/FeatureCard/FeatureCard.types';
-
-const ROW_PATTERN: readonly FeatureCardShape[] = [
-  'half',
-  'half',
-  'third',
-  'third',
-  'third',
-  'full',
-];
+import { MoreFeatures } from './components/MoreFeatures/MoreFeatures';
 
 /**
- * Everything Valence does, in one grid rather than a section apiece: two cards side by side, three
- * beneath them, then one right across, and round again, so the page reads as one piece of work
- * rather than a stack of chapters. Each card says which part of Valence it belongs to beside its
- * number, and they arrive one after another as they scroll into view.
+ * Everything Valence does, in one ruled grid rather than a section apiece: cells three to a row,
+ * sharing their edges, under a heavier rule across the top, each with its mark, a working piece of
+ * the product and its name; one cell in six is turned dark so the eye has somewhere to land, and the
+ * last says there is more and where to find it. They arrive one after another as they scroll in.
  */
 const FeatureBento = () => {
   const prefersReducedMotion = useReducedMotionConfig();
-  const features = FEATURE_GROUPS.flatMap((group, groupAt) =>
-    group.features.map((feature, featureAt) => ({
-      feature,
-      group: group.title,
-      figure: `${(groupAt + 1).toString()}.${(featureAt + 1).toString()}`,
-    })),
-  );
+  const features = FEATURE_GROUPS.flatMap((group) => group.features);
 
   return (
     <section
@@ -66,18 +51,17 @@ const FeatureBento = () => {
         whileInView="shown"
         viewport={{ once: true, margin: '-80px' }}
         variants={groupVariants}
-        className="grid grid-flow-row-dense grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6"
+        className="grid grid-cols-1 gap-px overflow-hidden border-t-2 border-text bg-border sm:grid-cols-2 lg:grid-cols-3"
       >
-        {features.map(({ feature, group, figure }, index) => (
+        {features.map((feature, index) => (
           <FeatureCard
             key={feature.title}
             feature={feature}
             index={index}
-            figure={figure}
-            group={group}
-            shape={ROW_PATTERN[index % ROW_PATTERN.length] ?? 'third'}
+            isLit={index % 6 === 3}
           />
         ))}
+        <MoreFeatures index={features.length} />
       </motion.ul>
     </section>
   );

@@ -165,7 +165,7 @@ const Hero = () => {
             </strong>
           </motion.p>
 
-          <div className="relative flex flex-wrap items-center justify-center gap-3 pt-6">
+          <div className="relative flex flex-wrap items-center justify-center gap-3 pt-12">
             <motion.span className="flex" {...popArrival(BUTTONS_LEAD, isStill)}>
               <SplitButton
                 tone="confirm"
@@ -187,7 +187,7 @@ const Hero = () => {
 
             <span
               aria-hidden
-              className="pointer-events-none absolute bottom-1/2 right-full hidden translate-y-5 pr-2 lg:block"
+              className="pointer-events-none absolute bottom-1/2 right-full hidden translate-y-7 pr-2 lg:block"
             >
               <motion.span
                 className="block -rotate-3 whitespace-nowrap pr-6 text-right font-hand text-2xl leading-none text-on-scrim/85"
