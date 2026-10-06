@@ -18,12 +18,15 @@ FROM node:24.21.0-bookworm-slim AS web-build
 WORKDIR /build
 RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY patches ./patches
 COPY tsconfig.base.json tsconfig.json tsconfig.paths.json ./
 COPY packages ./packages
 COPY apps/web ./apps/web
+COPY apps/tv ./apps/tv
 COPY apps/server ./apps/server
 RUN pnpm install --frozen-lockfile
 RUN pnpm --filter @valence/web build
+RUN pnpm --filter @valence/tv build:web
 
 # Bundled rather than compiled. `tsc` emits the import specifiers it was given,
 # and this repository's are TypeScript path aliases pointing at other packages'
@@ -111,12 +114,14 @@ WORKDIR /app
 RUN corepack enable
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY patches ./patches
 COPY packages ./packages
 COPY apps/server ./apps/server
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 
 COPY --from=transcoder-build /build/target/release/valence-transcoder /usr/local/bin/valence-transcoder
 COPY --from=web-build /build/apps/web/dist ./apps/web/dist
+COPY --from=web-build /build/apps/tv/web-dist ./apps/tv/web-dist
 COPY --from=web-build /build/apps/server/dist ./apps/server/dist
 
 # /media is mounted read-only by compose. Flux never writes to a user's

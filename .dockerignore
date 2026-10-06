@@ -9,3 +9,7 @@ target
 docs
 *.md
 !README.md
+**/web-dist
+apps/tv/ios
+apps/tv/android
+apps/tv/modules/*/android/build

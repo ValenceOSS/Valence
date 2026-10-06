@@ -28,6 +28,7 @@ import {
 import { serve } from '@hono/node-server';
 import { createNodeWebSocket } from '@hono/node-ws';
 import { serveStatic } from '@hono/node-server/serve-static';
+import { serveTheTvLayout } from '@ValenceServer/web/serveTheTvLayout';
 import { refuseUnknownAddresses } from '@ValenceServer/api/refuseUnknownAddresses';
 import { isAppAddress } from '@ValenceServer/web/isAppAddress';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
@@ -4475,6 +4476,11 @@ if (requestsClient !== null) {
 
 const WEB_ROOT = relative(process.cwd(), fileURLToPath(new URL('../../web/dist', import.meta.url)));
 
+const TV_ROOT = relative(
+  process.cwd(),
+  fileURLToPath(new URL('../../tv/web-dist', import.meta.url)),
+);
+
 const nodeWebSocket = createNodeWebSocket({ app });
 
 /**
@@ -4590,6 +4596,8 @@ app.get(
 );
 
 refuseUnknownAddresses(app);
+
+app.use('*', serveTheTvLayout(TV_ROOT));
 
 app.use('/*', serveStatic({ root: WEB_ROOT }));
 
