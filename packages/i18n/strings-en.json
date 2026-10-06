@@ -27296,6 +27296,11 @@
     "context": "An episode’s place in its programme on the television, on its programme’s page and in the player. {value} is the season; {value2} is the episode’s number."
   },
   {
+    "handler": "tv.platform.describeThisTv.androidTvEmulator",
+    "text": "Android TV Emulator",
+    "context": "What an Android TV emulator is called in the list of devices and sessions (from `describeThisTv`), in place of the name the emulator gives itself."
+  },
+  {
     "handler": "tv.platform.installTvPlatform.aTelevisionIsSignedInFrom",
     "text": "Passkeys aren’t available on TV. Sign in with your phone instead.",
     "context": "Shown in the platform of the television app (from `installTvPlatform`)."

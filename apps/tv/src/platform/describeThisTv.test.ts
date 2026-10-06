@@ -10,4 +10,8 @@ describe('describeThisTv', () => {
     expect(describeThisTv(null)).toBe(theKindOfTv());
     expect(describeThisTv('   ')).toBe(theKindOfTv());
   });
+
+  it('calls an Android emulator one, rather than by its build’s name', () => {
+    expect(describeThisTv('sdk_google_atv64_arm64', true)).toBe('Android TV Emulator');
+  });
 });

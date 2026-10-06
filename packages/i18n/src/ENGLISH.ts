@@ -6910,6 +6910,7 @@ const ENGLISH = {
   'tv.phoneSignIn.thatPhoneSaidNo': 'The sign-in was declined on your phone.',
   'tv.phoneSignIn.thisValenceWouldNotStartA': 'This server couldn’t start a sign-in.',
   'tv.placeOfEpisode.sValueEValue2': 'S{value}: E{value2}',
+  'tv.platform.describeThisTv.androidTvEmulator': 'Android TV Emulator',
   'tv.platform.installTvPlatform.aTelevisionIsSignedInFrom':
     'Passkeys aren’t available on TV. Sign in with your phone instead.',
   'tv.player.playerControls.nextEpisode': 'Next episode',
