@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { signInAsProfile } from '@ValenceClient/profiles/fetchEveryone';
 import { verifyTotp } from '@ValenceClient/session/auth';
@@ -46,14 +47,18 @@ const JO: ViewerProfile = {
 
 const drawEnterPassword = (told: { onSignedIn?: () => void; onBack?: () => void } = {}) =>
   render(
-    <EnterPassword
-      profile={JO}
-      onSignedIn={told.onSignedIn ?? jest.fn()}
-      onBack={told.onBack ?? jest.fn()}
-      isArriving={false}
-      onFaceAt={jest.fn()}
-      onMarkAt={jest.fn()}
-    />,
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
+      <EnterPassword
+        profile={JO}
+        onSignedIn={told.onSignedIn ?? jest.fn()}
+        onBack={told.onBack ?? jest.fn()}
+        isArriving={false}
+        onFaceAt={jest.fn()}
+        onMarkAt={jest.fn()}
+      />
+    </QueryClientProvider>,
   );
 
 const typeInto = async (
