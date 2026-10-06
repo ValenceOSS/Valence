@@ -751,7 +751,11 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
     },
 
     follow: (device) => {
-      if (state.remote !== null || state.isPlaying || state.isLoading) {
+      if (state.remote?.clientId === device.clientId) {
+        return;
+      }
+
+      if (state.remote === null && (state.isPlaying || state.isLoading)) {
         return;
       }
 

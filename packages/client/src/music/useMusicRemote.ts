@@ -21,7 +21,9 @@ const FRESH_FOR_MS = 45_000;
  * whatever this window last had.
  *
  * A window with nothing of its own playing follows another of this person's devices the moment
- * that one starts playing, or one already was when the window opened, as a music app does: what it
+ * that one starts playing, or one already was when the window opened, as a music app does — and a
+ * window already following one moves on to whichever starts playing next, since the music has moved
+ * there: what it
  * plays is shown at once and can be driven from here, without anything being sent to it until
  * somebody does. It follows a device starting, never one carrying on — the device it has just
  * taken the music from is still saying it plays for a moment, and following that would hand the
@@ -83,11 +85,13 @@ const useMusicRemote = (player: MusicPlayer = theMusicPlayer()): void => {
 
     seenPlaying.current = playingNow;
 
-    if (!isIdle) {
+    if (!isIdle && remoteId === null) {
       return;
     }
 
-    const started = [...playingNow].find((clientId) => wasPlaying?.has(clientId) !== true);
+    const started = [...playingNow].find(
+      (clientId) => clientId !== remoteId && wasPlaying?.has(clientId) !== true,
+    );
     const device = devices.data.find((one) => one.clientId === started);
 
     if (device !== undefined) {
