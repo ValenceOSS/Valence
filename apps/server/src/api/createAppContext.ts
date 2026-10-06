@@ -1072,20 +1072,12 @@ const createAppContext = (options: CreateAppOptions) => {
   const ASKERS: readonly Permission[] = ['requests.ask', 'requests.askMusic'];
 
   /**
-   * The quality profiles somebody may ask with, and the one they are given no say over.
+   * The library a request of a kind would be filed into: the one asked for, or else the first of
+   * that kind that takes requests.
    *
-   * Whoever manages requesting is neither gated nor forced. The locks and the default toggle narrow
-   * what the house may ask for, and somebody who can edit the profiles is not the house — forcing
-   * them would only mean editing a profile to make one request and editing it back.
-   *
-   * A book is offered nothing. Books are never searched for by themselves — they are marked as
-   * added by hand — so no profile ever judges one, and offering a quality would be asking a
-   * question that changes nothing. The permission check above still runs, so refusing somebody who
-   * may not ask still happens before anything else is worked out.
-   *
-   * @param headers - What the asking carried.
-   * @param kind - Whether the request is for music or for video.
-   * @returns What to offer them, or why it could not be worked out.
+   * @param kind - What is being asked for.
+   * @param libraryId - The library asked for, where one was.
+   * @returns The library, or nothing where none of that kind takes requests.
    */
   const libraryForRequest = async (kind: MediaRequestKind, libraryId?: string) => {
     const wanted = libraryKindOf(kind);
@@ -1098,7 +1090,27 @@ const createAppContext = (options: CreateAppOptions) => {
       : libraries.find((entry) => entry.id === libraryId);
   };
 
-  const profilesFor = async (
+  /**
+   * The quality profiles somebody may ask with, and the one they are given no say over, as whole
+   * profiles, beside every profile that would fit the request whoever asked and the library it would
+   * be filed into.
+   *
+   * Whoever manages requesting is neither gated nor forced. The locks and the default toggle narrow
+   * what the house may ask for, and somebody who can edit the profiles is not the house — forcing
+   * them would only mean editing a profile to make one request and editing it back.
+   *
+   * A book is offered nothing. Books are never searched for by themselves — they are marked as
+   * added by hand — so no profile ever judges one, and offering a quality would be asking a
+   * question that changes nothing. The permission check above still runs, so refusing somebody who
+   * may not ask still happens before anything else is worked out.
+   *
+   * @param who - Who is asking.
+   * @param kind - What is being asked for.
+   * @param libraryId - The library asked for, where one was.
+   * @param allowed - The permissions that let somebody reach the profiles at all.
+   * @returns What to offer them, or why it could not be worked out.
+   */
+  const offerFor = async (
     who: Headers | Asker,
     kind: MediaRequestKind,
     libraryId: string | undefined,
@@ -1116,27 +1128,24 @@ const createAppContext = (options: CreateAppOptions) => {
       return { kind: 'refused' as const, status: 403 as const, ...NOT_YOURS };
     }
 
+    const into = await libraryForRequest(kind, libraryId);
+
     if (isBookRequest(kind)) {
-      return { kind: 'answered' as const, value: { choices: [], forcedId: null } };
+      return {
+        kind: 'answered' as const,
+        value: { choices: [], forcedId: null, fitting: [], into, isManaging: false },
+      };
     }
 
-    const asChoice = (profile: QualityProfile) => ({
-      id: profile.id,
-      name: profile.name,
-      kind: profile.kind,
-    });
     const profileKind = isMusicRequest(kind) ? 'music' : 'video';
-    const into = (await libraryForRequest(kind, libraryId))?.id ?? null;
+    const fitting = answer.value.filter(
+      (profile) => profile.kind === profileKind && isForLibrary(profile, into?.id ?? null),
+    );
 
     if (await asker.holds('requests.manage')) {
       return {
         kind: 'answered' as const,
-        value: {
-          choices: answer.value
-            .filter((profile) => profile.kind === profileKind && isForLibrary(profile, into))
-            .map(asChoice),
-          forcedId: null,
-        },
+        value: { choices: fitting, forcedId: null, fitting, into, isManaging: true },
       };
     }
 
@@ -1145,12 +1154,41 @@ const createAppContext = (options: CreateAppOptions) => {
       answer.value,
       profileKind,
       { accountId: account.id, roleIds: held.map((role) => role.id) },
-      into,
+      into?.id ?? null,
     );
 
     return {
       kind: 'answered' as const,
-      value: { choices: offered.choices.map(asChoice), forcedId: offered.forcedId },
+      value: { ...offered, fitting, into, isManaging: false },
+    };
+  };
+
+  /**
+   * The quality profiles somebody may ask with, and the one they are given no say over, as the
+   * profiles route says them: each by its id, its name and its kind.
+   *
+   * @param who - Who is asking.
+   * @param kind - What is being asked for.
+   * @param libraryId - The library asked for, where one was.
+   * @returns What to offer them, or why it could not be worked out.
+   */
+  const profilesFor = async (who: Headers | Asker, kind: MediaRequestKind, libraryId?: string) => {
+    const offered = await offerFor(who, kind, libraryId);
+
+    if (offered.kind !== 'answered') {
+      return offered;
+    }
+
+    return {
+      kind: 'answered' as const,
+      value: {
+        choices: offered.value.choices.map((profile: QualityProfile) => ({
+          id: profile.id,
+          name: profile.name,
+          kind: profile.kind,
+        })),
+        forcedId: offered.value.forcedId,
+      },
     };
   };
 
@@ -1176,8 +1214,16 @@ const createAppContext = (options: CreateAppOptions) => {
 
   /**
    * The quality profile a request is to be judged by, once the locks and the default have had their
-   * say: the one the server forces, the one the asker chose where it is theirs to choose, or none,
-   * which leaves the library's own.
+   * say: the one the server forces, the one the asker chose where it is theirs to choose, or, where
+   * they chose none, one of theirs chosen for them.
+   *
+   * Choosing none is what a client does when there is only one quality to offer, so it is not a way
+   * round the locks: left unnamed, the request would be judged by whichever profile fits the library
+   * first, locked or not. So the library's own profile is used where it is theirs, then theirs that
+   * is written for that library, then their first. Where profiles fit but none is theirs the ask is
+   * refused rather than handed to one of somebody else's. Where no profile fits at all, none is named
+   * and requesting carries on as it does on a server with no profiles. Whoever manages requesting is
+   * left to the library's own, as they are never gated.
    *
    * Run before anything is drafted, because working out what a request would look like reveals what
    * libraries take requests, and somebody who may not ask should not learn that from being refused.
@@ -1196,7 +1242,7 @@ const createAppContext = (options: CreateAppOptions) => {
     | ({ kind: 'refused'; status: 400 | 403 | 404 | 502 } & RefusalBody)
   > => {
     const isMusic = isMusicRequest(asked.kind);
-    const offered = await profilesFor(who, asked.kind, asked.libraryId, [
+    const offered = await offerFor(who, asked.kind, asked.libraryId, [
       isMusic ? 'requests.askMusic' : 'requests.ask',
       ...APPROVERS,
     ]);
@@ -1209,7 +1255,7 @@ const createAppContext = (options: CreateAppOptions) => {
       return { kind: 'chosen', profileId: undefined };
     }
 
-    const { choices, forcedId } = offered.value;
+    const { choices, forcedId, fitting, into, isManaging } = offered.value;
 
     if (forcedId !== null) {
       return asked.profileId === undefined || asked.profileId === forcedId
@@ -1229,7 +1275,18 @@ const createAppContext = (options: CreateAppOptions) => {
       };
     }
 
-    return { kind: 'chosen', profileId: asked.profileId };
+    if (asked.profileId !== undefined || isManaging || fitting.length === 0) {
+      return { kind: 'chosen', profileId: asked.profileId };
+    }
+
+    const chosenForThem =
+      choices.find((profile) => profile.id === into?.requestProfileId) ??
+      choices.find((profile) => into !== undefined && profile.libraryIds.includes(into.id)) ??
+      choices[0];
+
+    return chosenForThem === undefined
+      ? { kind: 'refused', status: 403, ...refuse('error.server.noQualityHereIsAvailableTo') }
+      : { kind: 'chosen', profileId: chosenForThem.id };
   };
 
   type Drafted =
