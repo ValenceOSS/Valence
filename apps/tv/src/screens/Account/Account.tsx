@@ -9,7 +9,6 @@ import { useMayRequest } from '@ValenceTv/requests/useMayRequest';
 import { signOutHere } from '@ValenceTv/session/signOutHere';
 import { YourRequests } from '@ValenceTv/screens/Account/components/YourRequests/YourRequests';
 import { ThemeChoice } from '@ValenceTv/screens/Account/components/ThemeChoice/ThemeChoice';
-import { PluginPages } from '@ValenceTv/screens/Account/components/PluginPages/PluginPages';
 import { YourDevices } from '@ValenceTv/screens/Account/components/YourDevices/YourDevices';
 import { YourNotifications } from '@ValenceTv/screens/Account/components/YourNotifications/YourNotifications';
 import { YourHistory } from '@ValenceTv/screens/Account/components/YourHistory/YourHistory';
@@ -37,7 +36,6 @@ import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
  * @param onRequests - Told when somebody wants to see what has been asked for.
  * @param onCalendar - Told when somebody wants to see what comes out when.
  * @param onOpenRequest - Told which of their own requests somebody chose from the row of them.
- * @param onOpenPluginPage - Told which plugin page somebody chose.
  * @param onOpenNamed - Told which film or programme a chosen notification or viewing names.
  * @param onJoin - Told which party a chosen invitation asks them into.
  * @param upTo - The face in the bar this page belongs under, which pressing up from the top goes to.
@@ -48,7 +46,6 @@ const AccountPage = ({
   onRequests,
   onCalendar,
   onOpenRequest,
-  onOpenPluginPage,
   onOpenNamed,
   onJoin,
   upTo,
@@ -121,8 +118,6 @@ const AccountPage = ({
       {mayRequest ? <YourRequests onOpen={onOpenRequest} onFocus={upToBar.leave} /> : null}
 
       <YourHistory onOpen={onOpenNamed} onFocus={upToBar.leave} />
-
-      <PluginPages onOpen={onOpenPluginPage} onFocus={upToBar.leave} />
 
       {isDemo ? null : <YourDevices onFocus={upToBar.leave} />}
 

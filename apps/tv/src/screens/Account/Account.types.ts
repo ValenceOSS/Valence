@@ -9,7 +9,6 @@ type AccountProps = {
   onRequests: () => void;
   onCalendar: () => void;
   onOpenRequest: (request: MediaRequest) => void;
-  onOpenPluginPage: (page: { pluginId: string; pageId: string }) => void;
   onOpenNamed: (wanted: {
     kind: 'film' | 'show';
     mediaId: string;

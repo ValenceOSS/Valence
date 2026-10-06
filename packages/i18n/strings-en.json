@@ -26961,11 +26961,6 @@
     "context": "The detail of a button in the account of the television app."
   },
   {
-    "handler": "tv.account.pluginPages.fromYourPlugins",
-    "text": "From your plugins",
-    "context": "Text shown in the plugin pages in the account of the television app."
-  },
-  {
     "handler": "tv.account.themeChoice.valenceOpensInThisThemeThe",
     "text": "This theme is applied the next time you open Valence.",
     "context": "Text shown in the theme choice in the account of the television app."
@@ -27419,16 +27414,6 @@
     "handler": "tv.player.upNext.keepWatching",
     "text": "Keep watching",
     "context": "Shown in the up next in the player of the television app."
-  },
-  {
-    "handler": "tv.pluginPage.plugin",
-    "text": "Plugin",
-    "context": "Shown in the plugin page of the television app."
-  },
-  {
-    "handler": "tv.pluginPage.thisPageCouldNotBeRead",
-    "text": "Couldn’t load this page.",
-    "context": "Text shown in the plugin page of the television app."
   },
   {
     "handler": "tv.rating.rateIt",

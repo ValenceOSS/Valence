@@ -55,7 +55,6 @@ import { RequestsPage } from '@ValenceTv/screens/RequestsPage/RequestsPage';
 import { CalendarPage } from '@ValenceTv/screens/CalendarPage/CalendarPage';
 import { findAShow } from '@ValenceClient/library/findAShow';
 import { calendarQueries } from '@ValenceClient/query/calendarQueries';
-import { PluginPage } from '@ValenceTv/screens/PluginPage/PluginPage';
 import { Search } from '@ValenceTv/screens/Search/Search';
 import { ShowPage } from '@ValenceTv/screens/ShowPage/ShowPage';
 import { PersonPage } from '@ValenceTv/screens/PersonPage/PersonPage';
@@ -387,13 +386,6 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     open({ kind: 'calendar', mood: null });
   }, [open]);
 
-  const openPluginPage = useCallback(
-    (page: { pluginId: string; pageId: string }) => {
-      open({ kind: 'pluginPage', pluginId: page.pluginId, pageId: page.pageId, mood: null });
-    },
-    [open],
-  );
-
   const openRequest = useCallback(
     (request: MediaRequest) => {
       if ((request.kind === 'film' || request.kind === 'series') && request.tmdbId !== null) {
@@ -711,7 +703,6 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
                         onRequests={openRequests}
                         onCalendar={openCalendar}
                         onOpenRequest={openRequest}
-                        onOpenPluginPage={openPluginPage}
                         onOpenNamed={openByMediaId}
                         onJoin={join}
                         upTo={items.get('account') ?? null}
@@ -848,17 +839,6 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
       {top?.kind === 'requests' ? (
         <View style={styles.over}>
           <RequestsPage onOpen={openRequest} onLight={lightTheTop} />
-        </View>
-      ) : null}
-
-      {top?.kind === 'pluginPage' ? (
-        <View style={styles.over}>
-          <PluginPage
-            key={`${top.pluginId}:${top.pageId}`}
-            pluginId={top.pluginId}
-            pageId={top.pageId}
-            onGone={back}
-          />
         </View>
       ) : null}
 

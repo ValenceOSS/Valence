@@ -6838,7 +6838,6 @@ const ENGLISH = {
   'tv.about.describeThisBuild.valenceVersionCommit': 'Valence {version} ({commit})',
   'tv.account.allRequests': 'All requests',
   'tv.account.chooseAnotherProfile': 'Choose another profile',
-  'tv.account.pluginPages.fromYourPlugins': 'From your plugins',
   'tv.account.themeChoice.valenceOpensInThisThemeThe':
     'This theme is applied the next time you open Valence.',
   'tv.account.watchingOnThisValence': 'Watching on this server',
@@ -6937,8 +6936,6 @@ const ENGLISH = {
   'tv.player.thisValenceTurnedTheTelevisionAway':
     'The server rejected this TV. Your session may have expired, so go back and sign in again.',
   'tv.player.upNext.keepWatching': 'Keep watching',
-  'tv.pluginPage.plugin': 'Plugin',
-  'tv.pluginPage.thisPageCouldNotBeRead': 'Couldn’t load this page.',
   'tv.rating.rateIt': 'Rate it',
   'tv.rating.takeTheRatingBack': 'Remove my rating',
   'tv.requestsPage.findSomethingInSearchAndRequest':
