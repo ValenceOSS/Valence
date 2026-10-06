@@ -101,7 +101,7 @@ object HeardWithoutFocus {
       val direction = ARROWS[event.keyCode]
       val next =
         if (was != null && direction != null && event.action == KeyEvent.ACTION_DOWN) {
-          was.focusSearch(direction)?.takeIf { it !== was && !isInsideTheListOf(was, it) }
+          was.focusSearch(direction)?.takeIf { it !== was && !isInsideTheListOf(was, it) && !isTrapped(was, it, direction) }
         } else {
           null
         }
@@ -112,6 +112,29 @@ object HeardWithoutFocus {
       }
 
       return isTaken
+    }
+
+    /**
+     * Whether a panel around the remote keeps it in — one set to hold the remote until it closes —
+     * and the other view lies outside it. Such a panel answers a search for where the remote goes
+     * next only from among what it holds.
+     */
+    private fun isTrapped(focused: View, other: View, direction: Int): Boolean {
+      var at = focused.parent
+
+      while (at is ViewGroup) {
+        if (!holds(at, other)) {
+          val kept = at.focusSearch(focused, direction)
+
+          if (kept == null || holds(at, kept)) {
+            return true
+          }
+        }
+
+        at = at.parent
+      }
+
+      return false
     }
 
     /** Whether a view lies in the same scrolling list as the one the remote is on. */

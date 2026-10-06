@@ -9,11 +9,13 @@ private const val REMEMBERED = 24
 /**
  * Hands the remote back to what last had it when whatever has it now goes away, as tvOS does.
  *
- * Android lets go of the remote when the view holding it is taken off the screen — a panel closing,
- * a page gone back from — and nothing has it until a key is pressed, when Android picks something of
- * its own. tvOS puts it back where it was before: on the button that opened the panel, or the card
- * the page was opened from. So the views that have had the remote are remembered, newest last, and
- * when the remote is let go the newest of them still on the screen takes it back.
+ * When the view holding the remote is taken off the screen — a panel closing, a page gone back from
+ * — Android either lets go of the remote altogether, until a key is pressed and it picks something
+ * of its own, or hands it straight to the first thing on the page. tvOS puts it back where it was
+ * before: on the button that opened the panel, or the card the page was opened from. So the views
+ * that have had the remote are remembered, newest last, and when the remote is let go, or Android
+ * hands it on by itself rather than because a key moved it, the newest of them still on the screen
+ * takes it back.
  */
 object FocusComesBack {
   /**
@@ -25,32 +27,49 @@ object FocusComesBack {
     val root = activity.window?.decorView ?: return
     val held = ArrayDeque<WeakReference<View>>()
 
-    root.viewTreeObserver.addOnGlobalFocusChangeListener { _, now ->
-      if (now != null) {
-        held.removeAll { it.get() == null || it.get() === now }
-        held.addLast(WeakReference(now))
-
-        while (held.size > REMEMBERED) {
-          held.removeFirst()
-        }
-
-        return@addOnGlobalFocusChangeListener
+    root.viewTreeObserver.addOnGlobalFocusChangeListener { was, now ->
+      if (now != null && was != null) {
+        remember(held, now)
       }
 
-      root.post { giveBack(root, held) }
+      root.post {
+        val isGone = was != null && !was.isAttachedToWindow
+        val isAndroidsPick = now != null && (was == null || isGone) && root.findFocus() === now
+
+        if (now == null || isAndroidsPick) {
+          if (isGone) {
+            held.removeAll { it.get() === now }
+          }
+
+          giveBack(root, held)
+        }
+
+        root.findFocus()?.let { remember(held, it) }
+      }
     }
   }
 
-  /** Puts the remote on the newest view that had it and is still on the screen, if nothing has it. */
-  private fun giveBack(root: View, held: ArrayDeque<WeakReference<View>>) {
-    if (root.findFocus() != null) {
-      return
-    }
+  /** Puts a view at the newest end of the ones that have had the remote. */
+  private fun remember(held: ArrayDeque<WeakReference<View>>, view: View) {
+    held.removeAll { it.get() == null || it.get() === view }
+    held.addLast(WeakReference(view))
 
+    while (held.size > REMEMBERED) {
+      held.removeFirst()
+    }
+  }
+
+  /**
+   * Puts the remote on the newest view that had it and is still on the screen, where the remote is
+   * now nowhere or somewhere Android chose for it.
+   */
+  private fun giveBack(root: View, held: ArrayDeque<WeakReference<View>>) {
     val back = held.reversed().firstNotNullOfOrNull { remembered ->
       remembered.get()?.takeIf { it.isAttachedToWindow && it.isShown && it.isFocusable }
-    }
+    } ?: return
 
-    back?.requestFocus()
+    if (root.findFocus() !== back) {
+      back.requestFocus()
+    }
   }
 }
