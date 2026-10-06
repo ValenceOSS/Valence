@@ -88,6 +88,7 @@ const fakeMusic = () => {
     listTracks: vi.fn(() => Promise.resolve([TRACK])),
     listLiked: vi.fn(() => Promise.resolve([])),
     listPicks: vi.fn(() => Promise.resolve([TRACK])),
+    listCatalogue: vi.fn(() => Promise.resolve([])),
     search: vi.fn(() => Promise.resolve({ tracks: [TRACK], albums: [], artists: [] })),
     readLyrics: vi.fn(() =>
       Promise.resolve({ isSynced: true, lines: [{ atMs: 1000, text: 'Words' }] }),

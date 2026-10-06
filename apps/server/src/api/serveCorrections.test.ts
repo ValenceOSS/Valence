@@ -58,6 +58,7 @@ const aMusic = () =>
       listTracks: vi.fn(none),
       listLiked: vi.fn(none),
       listPicks: vi.fn(none),
+      listCatalogue: vi.fn(() => Promise.resolve([])),
       search: vi.fn(() => Promise.resolve({ tracks: [], albums: [], artists: [] })),
       readLyrics: vi.fn(nothing),
       readTrackFile: vi.fn(nothing),

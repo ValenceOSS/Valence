@@ -3697,6 +3697,11 @@
     "context": "Text shown, used in the share panel in the account area and in the shares panel in the admin area. {createdAt} is filled in by the app."
   },
   {
+    "handler": "common.madeForYou",
+    "text": "Made for you",
+    "context": "The heading of the shelf of mixes Valence makes for each profile, on the music home."
+  },
+  {
     "handler": "common.makeALink",
     "text": "Create share link",
     "context": "The label of a button, used in the share sheet of the phone app and in the share dialog."
@@ -3755,6 +3760,11 @@
     "handler": "common.medium",
     "text": "Medium",
     "context": "Shown, used in several places, among them the text reader in the reader of the phone app and the text reader."
+  },
+  {
+    "handler": "common.mixByValence",
+    "text": "Made by Valence",
+    "context": "Says that a mix was made by Valence rather than by a person, beneath its name on the page for the mix."
   },
   {
     "handler": "common.mode",
@@ -8428,6 +8438,11 @@
     "handler": "error.music.thatPlaylistIsNotYoursTo2",
     "text": "You can’t delete that playlist because it isn’t yours.",
     "context": "An error the server answers with (HTTP 404) in the music on the server (from `registerMusicRoutes`)."
+  },
+  {
+    "handler": "error.music.thereIsNoSuchMixToday",
+    "text": "There’s no such mix today.",
+    "context": "An error the server answers with (HTTP 404) when a mix Valence makes is asked for that was not made today (from registerMusicRoutes)."
   },
   {
     "handler": "error.person.theCatalogueKnowsNobodyByThat",
@@ -25789,6 +25804,51 @@
     "handler": "server.music.couldNotReadTrackBecause",
     "text": "Couldn’t read this file as a track: {reason}",
     "context": "Why a music file was skipped while scanning, with the reader's own reason. Shown with the scan's issues on the admin area's jobs page."
+  },
+  {
+    "handler": "server.music.mixes.dailyMix",
+    "text": "Daily Mix {number}",
+    "context": "A mix Valence makes for each profile from its music, shown on the music home under Made for you. The name of one of up to four daily mixes, each a cluster of artists the profile plays together. {number} is 1 to 4."
+  },
+  {
+    "handler": "server.music.mixes.decadeMix",
+    "text": "{decade}s Mix",
+    "context": "A mix Valence makes for each profile from its music, shown on the music home under Made for you. The name of a mix of one decade. {decade} is the decade as a year, such as 2010, so it reads 2010s."
+  },
+  {
+    "handler": "server.music.mixes.decadeMixDetail",
+    "text": "Music from the {decade}s",
+    "context": "A mix Valence makes for each profile from its music, shown on the music home under Made for you. What a decade mix holds, beneath its name. {decade} is the decade as a year, such as 2010."
+  },
+  {
+    "handler": "server.music.mixes.genreMix",
+    "text": "{genre} Mix",
+    "context": "A mix Valence makes for each profile from its music, shown on the music home under Made for you. The name of a mix of one genre. {genre} is the genre as the library files it, such as Rock."
+  },
+  {
+    "handler": "server.music.mixes.genreMixDetail",
+    "text": "{genre} from your library",
+    "context": "A mix Valence makes for each profile from its music, shown on the music home under Made for you. What a genre mix holds, beneath its name. {genre} is the genre."
+  },
+  {
+    "handler": "server.music.mixes.onRepeat",
+    "text": "On Repeat",
+    "context": "A mix Valence makes for each profile from its music, shown on the music home under Made for you. The name of the mix of the songs played most in the last 30 days."
+  },
+  {
+    "handler": "server.music.mixes.onRepeatDetail",
+    "text": "Your most played songs of the last 30 days",
+    "context": "A mix Valence makes for each profile from its music, shown on the music home under Made for you. What the On Repeat mix holds, beneath its name."
+  },
+  {
+    "handler": "server.music.mixes.rediscover",
+    "text": "Rediscover",
+    "context": "A mix Valence makes for each profile from its music, shown on the music home under Made for you. The name of the mix of songs played a lot in the past and not lately."
+  },
+  {
+    "handler": "server.music.mixes.rediscoverDetail",
+    "text": "Songs you played a lot and haven’t heard lately",
+    "context": "A mix Valence makes for each profile from its music, shown on the music home under Made for you. What the Rediscover mix holds, beneath its name."
   },
   {
     "handler": "server.music.musicDevices.anAdministrator",

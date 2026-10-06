@@ -1179,6 +1179,24 @@ const favouriteArtist = pgTable(
   ],
 );
 
+const musicPlay = pgTable(
+  'music_play',
+  {
+    id: text('id').primaryKey(),
+    profileId: text('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    trackId: text('trackId')
+      .notNull()
+      .references(() => musicTrack.mediaItemId, { onDelete: 'cascade' }),
+    playedAt: timestamp('playedAt').notNull().defaultNow(),
+  },
+  (table) => [
+    index('music_play_recent_idx').on(table.profileId, table.playedAt),
+    index('music_play_track_idx').on(table.profileId, table.trackId),
+  ],
+);
+
 const playlist = pgTable(
   'playlist',
   {
@@ -1855,6 +1873,7 @@ export {
   musicTrack,
   musicTrackArtist,
   favouriteArtist,
+  musicPlay,
   playlist,
   playlistEntry,
   collection,

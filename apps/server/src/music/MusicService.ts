@@ -28,6 +28,14 @@ type TrackFile = {
   bitrateKbps: number | null;
 };
 
+type CatalogueSong = {
+  id: string;
+  albumId: string;
+  year: number | null;
+  genres: readonly string[];
+  artists: readonly { id: string; name: string }[];
+};
+
 type MusicSearch = {
   tracks: MusicTrack[];
   albums: MusicAlbum[];
@@ -42,6 +50,7 @@ type MusicService = {
   listTracks: (viewer: Viewer, ids: readonly string[]) => Promise<MusicTrack[]>;
   listLiked: (viewer: Viewer) => Promise<MusicTrack[]>;
   listPicks: (viewer: Viewer, seedIds: readonly string[], limit: number) => Promise<MusicTrack[]>;
+  listCatalogue: (viewer: Viewer) => Promise<CatalogueSong[]>;
   search: (viewer: Viewer, query: string) => Promise<MusicSearch>;
   readLyrics: (viewer: Viewer, trackId: string) => Promise<Lyrics | null>;
   readTrackFile: (viewer: Viewer, trackId: string) => Promise<TrackFile | null>;
@@ -53,6 +62,7 @@ type MusicService = {
 
 export type {
   AlbumOrder,
+  CatalogueSong,
   ListAlbumsOptions,
   ListArtistsOptions,
   MusicSearch,

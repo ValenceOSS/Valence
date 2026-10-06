@@ -10,6 +10,7 @@ import {
   MusicTrackListSchema,
 } from '@ValenceContracts/schemas/Music';
 import { MusicSearchSchema } from '@ValenceContracts/schemas/MusicSearch';
+import { MusicMixListSchema, MusicMixSchema } from '@ValenceContracts/schemas/MusicMix';
 import {
   MusicDeviceListSchema,
   ReportNowPlayingSchema,
@@ -195,6 +196,32 @@ const listLikedRoute = createRoute({
   },
 });
 
+const listMixesRoute = createRoute({
+  method: 'get',
+  path: '/api/music/mixes',
+  tags: ['Music'],
+  summary: 'The mixes Valence has made for this profile today',
+  description:
+    'Daily mixes of the artists this profile plays together, what it has had on repeat this month, what it played a lot and has not lately, and a mix for each genre and decade there is plenty of. They are made once a day.',
+  responses: {
+    200: json('The mixes, the personal ones first', MusicMixListSchema.openapi('MusicMixList')),
+    401: json('Not signed in', MusicError),
+  },
+});
+
+const readMixRoute = createRoute({
+  method: 'get',
+  path: '/api/music/mixes/{mixId}',
+  tags: ['Music'],
+  summary: 'One of the mixes Valence has made for this profile, with its songs',
+  request: { params: z.object({ mixId: z.string().min(1).max(120) }) },
+  responses: {
+    200: json('The mix', MusicMixSchema.openapi('MusicMix')),
+    401: json('Not signed in', MusicError),
+    404: json('No such mix today', MusicError),
+  },
+});
+
 const searchMusicRoute = createRoute({
   method: 'get',
   path: '/api/music/search',
@@ -373,6 +400,7 @@ export {
   listArtistsRoute,
   listDevicesRoute,
   listLikedRoute,
+  listMixesRoute,
   listPicksRoute,
   listPlaylistsRoute,
   listTracksRoute,
@@ -382,6 +410,7 @@ export {
   readArtistImageRoute,
   readArtistRoute,
   readLyricsRoute,
+  readMixRoute,
   readPlaylistRoute,
   removePlaylistRoute,
   reportNowPlayingRoute,
