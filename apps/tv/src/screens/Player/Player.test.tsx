@@ -870,6 +870,22 @@ describe('Player', () => {
   });
 
   describe('the settings', () => {
+    it('name the sound track the server is sending, not the file’s own first choice', async () => {
+      mockSession.current = {
+        ...READY,
+        started: {
+          ...STARTED,
+          plan: { ...STARTED.plan, audio: { ...STARTED.plan.audio, streamIndex: 2 } },
+        },
+      };
+
+      const { drawn } = await draw();
+
+      await userEvent.press(drawn.getByRole('button', { name: 'Settings' }));
+
+      expect(drawn.getByRole('button', { name: 'Audio, Français · Stereo · AAC' })).toBeTruthy();
+    });
+
     it('list each setting with what it is set to now', async () => {
       const { drawn } = await draw();
 

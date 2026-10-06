@@ -442,8 +442,9 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
     () => (tracks.data ?? []).filter((track) => track.delivery === 'text'),
     [tracks.data],
   );
+  const sentAudio = session.kind === 'ready' ? session.started.plan.audio.streamIndex : null;
   const chosenAudio =
-    detail.data?.audioStreams.find((stream) => stream.index === audio) ??
+    detail.data?.audioStreams.find((stream) => stream.index === (audio ?? sentAudio)) ??
     detail.data?.audioStreams.find((stream) => stream.isDefault) ??
     detail.data?.audioStreams[0];
   const subtitles = chosenSubtitles ?? defaultTrackId(textTracks, chosenAudio?.language ?? null);
