@@ -27,6 +27,7 @@ on:
       - '.github/workflows/nightly-image.yml'
       - '.github/workflows/prune-images.yml'
       - '.github/workflows/media-pipeline.yml'
+      - '.github/workflows/desktop-dev.yml'
       - '.github/workflows/release.yml'
       - '.github/workflows/release-please.yml'
       - 'release-please-config.json'
@@ -39,40 +40,10 @@ concurrency:
 jobs:
   version:
     name: Work out the next version
-    runs-on: ubuntu-24.04
-
+    uses: ./.github/workflows/next-version.yml
     permissions:
       contents: read
       pull-requests: read
-
-    outputs:
-      next: ${{ steps.next.outputs.next }}
-
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      # The release that is being worked towards. Release-please keeps a pull request open for it, and
-      # its title names the version it has decided on — `chore(main): release 1.0.0` — which is the
-      # honest answer, including when a commit asked for a particular number with `Release-As`. Where
-      # there is no such pull request the next patch after the last release stands in: a name that
-      # says "on the way to something after the last release", which is all a dev image needs to say.
-      - name: Read the release being prepared
-        id: next
-        run: |
-          title="$(gh pr list --repo "${REPO}" --head "${BRANCH}" --state open --json title --jq '.[0].title // ""')"
-          next="$(echo "${title}" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)"
-
-          if [ -z "${next}" ]; then
-            last="$(jq -r '.["."]' .release-please-manifest.json)"
-            IFS=. read -r major minor patch <<< "${last}"
-            next="${major}.${minor}.$((patch + 1))"
-          fi
-
-          echo "next=${next}" >> "$GITHUB_OUTPUT"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-          BRANCH: release-please--branches--main--components--valence
 
   image:
     name: Image (${{ matrix.image.name }})

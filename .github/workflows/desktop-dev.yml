@@ -1,0 +1,188 @@
+name: Desktop dev channel
+
+# Builds the desktop app from main every time something is merged, and hangs it on the dev channel's
+# release, so a desktop app installed from there updates itself to whatever has just landed — the
+# desktop app's equivalent of the `dev` image.
+#
+# The channel is one release, tagged `desktop-dev` and marked as a prerelease, which this replaces
+# the contents of on every build: the installers, and the dev.yml, dev-mac.yml and dev-linux.yml the
+# app reads to find them. A dev build is stamped with the dev channel's address when it is built
+# (see desktop.yml), so it follows this release and nothing else; a released build follows the
+# newest release, which a prerelease never is. Nothing else in the repository answers to a tag that
+# does not start with `v`, so moving this one starts nothing.
+#
+# A build is named for the release it is on the way to and counted up from there: `1.4.0-dev.12`.
+# The count is what lets one dev build see the next as newer, which a commit hash cannot say, and
+# naming it for the next release keeps it ahead of the last one. The commit it was built from is in
+# the app's About, and at the top of the release.
+#
+# The release's notes are GitHub's own, written from the pull requests merged since the last
+# release, as a release's are: everything the next release would carry so far.
+#
+# Skipped for a push that changes only what the app does not contain, as dev-image.yml is.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'apps/docs/**'
+      - 'apps/landing/**'
+      - 'apps/server/**'
+      - 'apps/requests/**'
+      - 'apps/transcoder/**'
+      - 'apps/mobile/**'
+      - 'apps/tv/**'
+      - '**/*.md'
+      - '.github/workflows/dev-image.yml'
+      - '.github/workflows/nightly-image.yml'
+      - '.github/workflows/prune-images.yml'
+      - '.github/workflows/media-pipeline.yml'
+      - '.github/workflows/phone-testflight.yml'
+      - '.github/workflows/release.yml'
+      - '.github/workflows/release-please.yml'
+      - 'release-please-config.json'
+      - '.release-please-manifest.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    name: Work out the next version
+    uses: ./.github/workflows/next-version.yml
+    permissions:
+      contents: read
+      pull-requests: read
+
+  # A newer merge makes a build under way pointless, so it cancels it, and a build started by hand
+  # from a branch cancels only builds of that branch. Publishing is never
+  # cancelled: it moves the tag and replaces the files one at a time, and stopping it partway would
+  # leave the channel naming a build it no longer holds. A publish that is running finishes, and the
+  # next waits for it.
+  desktop:
+    name: Desktop app
+    needs: version
+    concurrency:
+      group: desktop-dev-build-${{ github.ref }}
+      cancel-in-progress: true
+    uses: ./.github/workflows/desktop.yml
+    secrets: inherit
+    with:
+      ref: ${{ github.sha }}
+      dev_version: ${{ needs.version.outputs.next }}-dev.${{ github.run_number }}
+
+  # Only main is published, so starting this by hand from a branch builds the installers without
+  # moving everybody on the dev channel onto that branch.
+  publish:
+    name: Publish to the dev channel
+    needs: [version, desktop]
+    if: github.ref == 'refs/heads/main'
+    concurrency:
+      group: desktop-dev-publish
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CHANNEL: desktop-dev
+      VERSION: ${{ needs.version.outputs.next }}-dev.${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: valence-desktop-*
+          merge-multiple: true
+          path: release
+
+      - name: Write the notes
+        run: |
+          last="v$(jq -r '.["."]' .release-please-manifest.json)"
+          merged="$(gh api -X POST "repos/$GITHUB_REPOSITORY/releases/generate-notes" \
+            -f tag_name="$CHANNEL" \
+            -f target_commitish="$GITHUB_SHA" \
+            -f previous_tag_name="$last" \
+            -q .body)"
+
+          {
+            echo "**Valence ${VERSION}, a development build of main at \`${GITHUB_SHA::7}\`.** Not a release: it can break, and it updates itself to the next build of main."
+            echo
+            echo "Install it once from here and it keeps itself up to date. Go back to releases by installing the latest release over it."
+            echo
+            echo "${merged}"
+          } > notes.md
+
+      # The tag is moved before anything is uploaded, so the release never names one commit while
+      # holding another's installers for longer than the upload takes.
+      - name: Point the channel at this commit
+        run: |
+          if gh release view "$CHANNEL" > /dev/null 2>&1; then
+            git tag -f "$CHANNEL" "$GITHUB_SHA"
+            git push -f origin "refs/tags/$CHANNEL"
+            gh release edit "$CHANNEL" --prerelease --title "Development build" --notes-file notes.md
+          else
+            gh release create "$CHANNEL" --prerelease --target "$GITHUB_SHA" \
+              --title "Development build" --notes-file notes.md
+          fi
+
+      # The installers first and what points at them last, so an app that checks while this runs
+      # finds either the last build whole or this one whole. Each of dev.yml and the rest goes up
+      # under a name of its own and is renamed over the last one only once it is all there, since
+      # replacing it in place deletes the old one first and a failed upload would leave the channel
+      # with nothing to read. The last build's installers go once nothing names them.
+      #
+      # Earlier builds' blockmaps stay for a month. An app updating fetches the blockmap of the build
+      # it is running as well as the new one's, to download only what changed, and without its own it
+      # downloads the whole installer. A month keeps the release well inside GitHub's limit on how
+      # many files one release can hold.
+      - name: Hang the build on it
+        run: |
+          find release -type f ! -name '*.yml' -print0 | xargs -0 gh release upload "$CHANNEL" --clobber
+
+          mkdir staged
+          assets="repos/$GITHUB_REPOSITORY/releases/tags/$CHANNEL"
+          for feed in release/*.yml; do
+            name="$(basename "$feed")"
+            cp "$feed" "staged/$name.next"
+            gh release upload "$CHANNEL" "staged/$name.next" --clobber
+
+            next="$(gh api "$assets" -q ".assets[] | select(.name == \"$name.next\") | .id")"
+            was="$(gh api "$assets" -q ".assets[] | select(.name == \"$name\") | .id")"
+
+            if [ -z "$next" ]; then
+              echo "The staged $name.next is not on the release, so $name is left as it was." >&2
+              exit 1
+            fi
+
+            if [ -n "$was" ]; then
+              gh api -X DELETE "repos/$GITHUB_REPOSITORY/releases/assets/$was"
+            fi
+
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/releases/assets/$next" -f name="$name" > /dev/null
+          done
+
+          ls release > kept.txt
+          cutoff="$(date -u -d '30 days ago' +%Y-%m-%dT%H:%M:%SZ)"
+          gh api "repos/$GITHUB_REPOSITORY/releases/tags/$CHANNEL" \
+            -q '.assets[] | [.name, .created_at] | @tsv' | while IFS=$'\t' read -r asset made; do
+            if grep -qxF "$asset" kept.txt; then
+              continue
+            fi
+
+            if [[ "$asset" == *.blockmap && "$made" > "$cutoff" ]]; then
+              continue
+            fi
+
+            gh release delete-asset "$CHANNEL" "$asset" -y
+          done
+
+      - name: Say where it went
+        run: |
+          {
+            echo "### Published ${VERSION} to the dev channel"
+            echo
+            echo "https://github.com/${GITHUB_REPOSITORY}/releases/tag/${CHANNEL}"
+          } >> "$GITHUB_STEP_SUMMARY"
