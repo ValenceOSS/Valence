@@ -48,7 +48,7 @@ const GetStarted = () => {
           <div className="absolute left-1/2 top-1/2 flex w-max -translate-x-1/2 -translate-y-1/2 -rotate-[38deg] flex-col gap-4">
             {ROWS.map((startsAt, at) => (
               <div key={at} className="overflow-hidden text-5xl text-accent-contrast">
-                <ValenceRun isBackwards={at % 2 === 1} startsAt={startsAt} />
+                <ValenceRun isBackwards={at % 2 === 1} startsAt={startsAt} repeats={20} />
               </div>
             ))}
           </div>

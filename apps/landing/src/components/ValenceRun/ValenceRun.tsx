@@ -1,8 +1,6 @@
 import { cn } from '@ValenceUI/cn';
 import type { ValenceRunProps } from './ValenceRun.types';
 
-const RUNS = 8;
-
 /**
  * Valence's name over and over, set apart by dots, running sideways for ever: two identical halves
  * end to end so the loop never shows its seam. Whoever asked for stillness sees it stopped.
@@ -10,10 +8,17 @@ const RUNS = 8;
  * @param isBackwards - Whether it runs the other way.
  * @param startsAt - How far into the line it starts, in ems, so rows set one above another can
  *   be staggered.
+ * @param repeats - How many times the name is written in each half, enough to outlast the space it
+ *   runs across.
  * @param className - Its size and spacing, which the caller decides.
  */
-const ValenceRun = ({ isBackwards = false, startsAt = 0, className }: ValenceRunProps) => {
-  const run = Array.from({ length: RUNS }, (_, at) => (
+const ValenceRun = ({
+  isBackwards = false,
+  startsAt = 0,
+  repeats = 8,
+  className,
+}: ValenceRunProps) => {
+  const run = Array.from({ length: repeats }, (_, at) => (
     <span key={at.toString()} className="flex shrink-0 items-center gap-[0.35em] pr-[0.35em]">
       <span>Valence</span>
       <span className="inline-block size-[0.22em] rounded-full bg-current" />
