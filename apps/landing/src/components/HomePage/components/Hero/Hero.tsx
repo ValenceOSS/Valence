@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import {
   letterArrival,
@@ -7,7 +8,7 @@ import {
   staggerVariants,
 } from '@ValenceUI/animations/reveal';
 import { IconBrandWindowsFilled } from '@tabler/icons-react';
-import { Button } from '@ValenceUI/Button';
+import { SplitButton } from '@ValenceUI/SplitButton';
 import { BrandGlyph } from '@ValenceUI/BrandGlyph';
 import { Tooltip } from '@ValenceUI/Tooltip';
 import { Doodle } from '@ValenceUI/Doodle';
@@ -43,22 +44,52 @@ const WORD_STEP = 0.05;
 
 const BUTTONS_LEAD = 0.7;
 
-const BUTTON_STEP = 0.07;
+const STARTS = [
+  {
+    id: 'install',
+    label: 'Get started',
+    detail: 'Run it on your own server',
+    go: (isStill: boolean) => {
+      document
+        .getElementById('download')
+        ?.scrollIntoView({ behavior: isStill ? 'auto' : 'smooth' });
+    },
+  },
+  {
+    id: 'docs',
+    label: 'Read the docs',
+    detail: 'The quick start, step by step',
+    go: () => {
+      window.location.assign(`${DOCS_URL}/start/quick-start`);
+    },
+  },
+  {
+    id: 'demo',
+    label: 'Try the demo',
+    detail: 'A server already running, to look round',
+    go: () => {
+      window.location.assign(DEMO_URL);
+    },
+  },
+] as const;
 
 /**
  * The first thing anybody sees: a dark card washed with slow blue light, what Valence is in one
- * line with the words that matter most written softer and underlined by hand, where to go next, and beneath it the app itself,
- * tipped back on the table, which lays itself flat as the page scrolls — hanging over the foot of
- * the card and across a band of Valence's name running past beneath it.
+ * line with the words that matter most written softer and underlined by hand, one way to start, and
+ * beneath it the app itself, tipped back on the table, which lays itself flat as the page scrolls —
+ * hanging over the foot of the card and across a band of Valence's name running past beneath it.
  *
  * The heading writes itself in a word at a time, the line draws itself under its words once the
- * heading has landed, and the buttons pop up after it with a note pointing at the first, over the list of
- * what it runs on.
+ * heading has landed, and the way to start pops up after it with a note pointing at it, above the
+ * marks of what it runs on. The way to start is the download unless the docs or the demo are chosen
+ * from its arrow, and pressing it does whichever is chosen.
  */
 const Hero = () => {
   const prefersReducedMotion = useReducedMotionConfig();
   const isStill = prefersReducedMotion === true;
   const words = [...BEFORE, ACCENT, ...AFTER];
+  const [startId, setStartId] = useState<string>(STARTS[0].id);
+  const start = STARTS.find((one) => one.id === startId) ?? STARTS[0];
 
   return (
     <section className="relative px-2 pt-2 sm:px-3 sm:pt-3">
@@ -136,49 +167,30 @@ const Hero = () => {
 
           <div className="relative flex flex-wrap items-center justify-center gap-3 pt-2">
             <motion.span className="flex" {...popArrival(BUTTONS_LEAD, isStill)}>
-              <Button
-                variant="confirm"
-                size="xl"
+              <SplitButton
+                tone="confirm"
+                size="lg"
+                choiceLabel="Other ways to start"
+                choiceName="Start by"
+                options={STARTS.map(({ id, label, detail }) => ({ id, label, detail }))}
+                selectedId={start.id}
+                onSelect={(id) => {
+                  setStartId(id);
+                }}
                 onClick={() => {
-                  document.getElementById('download')?.scrollIntoView({
-                    behavior: isStill ? 'auto' : 'smooth',
-                  });
+                  start.go(isStill);
                 }}
               >
-                Get started
-              </Button>
-            </motion.span>
-
-            <motion.span className="flex" {...popArrival(BUTTONS_LEAD + BUTTON_STEP, isStill)}>
-              <Button
-                variant="overlay"
-                size="xl"
-                onClick={() => {
-                  window.location.assign(`${DOCS_URL}/start/quick-start`);
-                }}
-              >
-                Read the docs
-              </Button>
-            </motion.span>
-
-            <motion.span className="flex" {...popArrival(BUTTONS_LEAD + BUTTON_STEP * 2, isStill)}>
-              <Button
-                variant="overlay"
-                size="xl"
-                onClick={() => {
-                  window.location.assign(DEMO_URL);
-                }}
-              >
-                Try the demo
-              </Button>
+                {start.label}
+              </SplitButton>
             </motion.span>
 
             <span
               aria-hidden
-              className="pointer-events-none absolute right-full top-1/2 hidden w-48 -translate-y-1/2 pr-4 lg:block"
+              className="pointer-events-none absolute bottom-1/2 right-full hidden w-48 translate-y-5 pr-2 lg:block"
             >
               <motion.span
-                className="block -rotate-6 pr-8 text-right font-hand text-2xl leading-none text-on-scrim/85"
+                className="block -rotate-6 pr-10 text-right font-hand text-2xl leading-none text-on-scrim/85"
                 {...popArrival(BUTTONS_LEAD + 0.4, isStill)}
               >
                 free, and always will be
@@ -186,7 +198,7 @@ const Hero = () => {
               <Doodle
                 of="arrowCurl"
                 delay={BUTTONS_LEAD + 0.8}
-                className="ml-auto mt-1 h-8 w-20 rotate-12 text-on-scrim/70"
+                className="ml-auto mt-1 h-8 w-20 text-on-scrim/70"
               />
             </span>
           </div>
