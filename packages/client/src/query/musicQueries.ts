@@ -154,7 +154,7 @@ const mixes = () =>
   queryOptions({ queryKey: [...MUSIC, 'mixes'], queryFn: fetchMixes, staleTime: 15 * 60_000 });
 
 /**
- * One of today's mixes, with its songs.
+ * One of today's mixes, with its songs. Not retried: a mix that is not there today is an answer.
  *
  * @param mixId - Which mix.
  * @returns The query.
@@ -164,6 +164,7 @@ const mix = (mixId: string) =>
     queryKey: [...MUSIC, 'mixes', mixId],
     queryFn: () => fetchMix(mixId),
     staleTime: 15 * 60_000,
+    retry: false,
   });
 
 const musicQueries = {
