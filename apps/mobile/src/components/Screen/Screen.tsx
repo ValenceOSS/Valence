@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { usePullToRefresh } from '@ValenceMobile/hooks/usePullToRefresh';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
 import { BackArrow } from '@ValenceMobile/components/BackArrow/BackArrow';
@@ -66,7 +65,6 @@ const Screen = ({
 }: ScreenProps) => {
   const colours = useTheColours();
   const room = useSafeAreaInsets();
-  const pulling = usePullToRefresh();
   const [scrolled] = useState(() => new Animated.Value(0));
   const [headTall, setHeadTall] = useState(0);
   const [isPast, setIsPast] = useState(false);
@@ -146,7 +144,6 @@ const Screen = ({
           ? [styles.inside, spacing, centres && styles.centredScrolling]
           : { paddingBottom: spacing.paddingBottom }
       }
-      refreshControl={pulling}
     >
       {head === undefined ? (
         children
