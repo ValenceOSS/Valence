@@ -1,18 +1,6 @@
-import { useRef, useState } from 'react';
-import {
-  motion,
-  useInView,
-  useMotionValueEvent,
-  useReducedMotionConfig,
-  useScroll,
-  useTransform,
-} from 'motion/react';
-import { Doodle } from '@ValenceUI/Doodle';
+import { useRef } from 'react';
+import { useReducedMotionConfig, useScroll, useTransform } from 'motion/react';
 import { FannedPhone } from './components/FannedPhone/FannedPhone';
-
-const OPEN_ENOUGH = 0.7;
-
-const PASSED_BACK = 0.05;
 
 const PHONES = [
   { label: 'Music home', turn: -16, lift: 70, spread: -2, finish: 'blue' },
@@ -25,9 +13,8 @@ const PHONES = [
 /**
  * The phone app, as a hand of cards: five phones fanned out from the one in the middle, each showing
  * a different part of it, over the words for where Valence goes drawn as an outline behind them. They
- * open out from a stack as the section scrolls into view, and once they are mostly open a note is
- * written beside them with an arrow drawn down to the nearest, which stays until the section has been
- * scrolled back past; whoever asked for stillness sees them open, note and all.
+ * open out from a stack as the section scrolls into view; whoever asked for stillness sees them
+ * open.
  */
 const PhoneFan = () => {
   const stageRef = useRef<HTMLDivElement>(null);
@@ -37,18 +24,6 @@ const PhoneFan = () => {
     offset: ['start end', 'center center'],
   });
   const opened = useTransform(scrollYProgress, [0.15, 0.85], isStill ? [1, 1] : [0, 1]);
-  const [isFanned, setIsFanned] = useState(isStill);
-
-  const isOnScreen = useInView(stageRef, { amount: 0.6 });
-
-  useMotionValueEvent(opened, 'change', (value) => {
-    if (isOnScreen && value >= OPEN_ENOUGH) {
-      setIsFanned(true);
-    } else if (!isStill && value < PASSED_BACK) {
-      setIsFanned(false);
-    }
-  });
-
   return (
     <section aria-label="Valence on a phone" className="relative isolate overflow-hidden py-28">
       <p
@@ -76,26 +51,6 @@ const PhoneFan = () => {
         {PHONES.map((phone) => (
           <FannedPhone key={phone.label} phone={phone} opened={opened} />
         ))}
-
-        <span
-          aria-hidden
-          className="pointer-events-none absolute -top-16 right-0 hidden w-52 lg:block xl:-right-6"
-        >
-          <motion.span
-            className="block rotate-6 font-hand text-2xl leading-none text-text-muted"
-            initial={{ opacity: 0, y: 6 }}
-            animate={isFanned ? { opacity: 1, y: 0 } : { opacity: 0, y: 6 }}
-            transition={{ duration: isStill ? 0 : 0.25 }}
-          >
-            the same queue, on every phone
-          </motion.span>
-          <Doodle
-            of="arrowDown"
-            delay={0.1}
-            isShown={isFanned}
-            className="ml-6 mt-2 h-20 w-10 -rotate-12 text-accent"
-          />
-        </span>
       </div>
     </section>
   );
