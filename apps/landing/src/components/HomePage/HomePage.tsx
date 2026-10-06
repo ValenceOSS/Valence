@@ -3,11 +3,12 @@ import { DataOwnershipStatement } from '@ValenceLanding/components/HomePage/comp
 import { FeatureBento } from '@ValenceLanding/components/HomePage/components/FeatureBento/FeatureBento';
 import { PhoneFan } from '@ValenceLanding/components/HomePage/components/PhoneFan/PhoneFan';
 import { AppTour } from '@ValenceLanding/components/HomePage/components/AppTour/AppTour';
-import { DownloadSection } from '@ValenceLanding/components/HomePage/components/DownloadSection/DownloadSection';
+import { GetStarted } from '@ValenceLanding/components/HomePage/components/GetStarted/GetStarted';
 
 /**
  * getvalence.app itself: the app laying itself flat under what Valence is, why it is yours, all it
- * does in one grid, the phone app fanned out, a walk round the app, and where to get it.
+ * does in its groups, the phone app fanned out, a walk round the app, and a last card asking
+ * whether you are ready.
  */
 const HomePage = () => (
   <>
@@ -21,7 +22,7 @@ const HomePage = () => (
 
     <AppTour />
 
-    <DownloadSection />
+    <GetStarted />
   </>
 );
 

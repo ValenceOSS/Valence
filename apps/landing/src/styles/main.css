@@ -30,18 +30,37 @@
   animation: valence-band-run 46s linear infinite;
 }
 
+.valence-tick-ring {
+  border-radius: 9999px;
+  background: repeating-conic-gradient(currentColor 0 0.9deg, transparent 0.9deg 5deg);
+  mask-image: radial-gradient(
+    closest-side,
+    transparent 86%,
+    black 87%,
+    black 100%,
+    transparent 100%
+  );
+  animation: valence-tick-turn 60s linear infinite;
+}
+
+@keyframes valence-tick-turn {
+  to {
+    rotate: 1turn;
+  }
+}
+
 .valence-drift--back {
   animation-direction: reverse;
   animation-duration: 54s;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :root:not([data-motion='full']) :is(.valence-band-run, .valence-drift) {
+  :root:not([data-motion='full']) :is(.valence-band-run, .valence-drift, .valence-tick-ring) {
     animation: none;
   }
 }
 
-:root[data-motion='reduced'] :is(.valence-band-run, .valence-drift) {
+:root[data-motion='reduced'] :is(.valence-band-run, .valence-drift, .valence-tick-ring) {
   animation: none;
 }
 
