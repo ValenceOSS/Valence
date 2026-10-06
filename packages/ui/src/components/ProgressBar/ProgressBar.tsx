@@ -13,6 +13,8 @@ import type { ProgressBarProps } from './ProgressBar.types';
  * @param children - Anything to draw beneath the bar, such as what is being worked on now.
  * @param readout - The figure to show beside the bar, where a caller wants one of its own.
  * @param isFull - Whether the bar takes the whole width it is given, rather than its own short length.
+ * @param isThin - Whether the bar is drawn thinner, for a small space such as the window bar, where
+ *   the usual bar is heavier than the words beside it.
  * @param className - Extra classes for the caller's own layout.
  */
 const ProgressBar = ({
@@ -22,6 +24,7 @@ const ProgressBar = ({
   children,
   readout,
   isFull = false,
+  isThin = false,
   className,
 }: ProgressBarProps) => (
   <div className={cn('flex items-center gap-2', isFull ? 'w-full' : 'shrink-0', className)}>
@@ -33,7 +36,8 @@ const ProgressBar = ({
       aria-label={label}
       data-slot="progress"
       className={cn(
-        'block h-1.5 overflow-hidden rounded-full bg-track',
+        'block overflow-hidden rounded-full bg-track',
+        isThin ? 'h-1' : 'h-1.5',
         isFull ? 'w-full' : 'w-20 shrink-0',
       )}
     >

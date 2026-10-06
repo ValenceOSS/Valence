@@ -17,6 +17,14 @@ describe('WindowBar', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
+  it('stays usable over a dialog, so a press reaches it rather than closing the dialog', () => {
+    const { container } = render(<WindowBar />);
+
+    expect(container.querySelector('[data-slot="window-bar"]')).toHaveAttribute(
+      'data-over-dialogs',
+    );
+  });
+
   it('takes hold of the window it is laid over', () => {
     const { container } = render(<WindowBar />);
 
@@ -46,6 +54,12 @@ describe('WindowBar', () => {
 
     expect(screen.getByRole('status')).toHaveTextContent('Updating 45%');
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('fills a bar beneath the words as the download goes', () => {
+    render(<WindowBar update={{ kind: 'downloading', version: '1.2.0', percent: 45 }} />);
+
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '45');
   });
 
   it('offers to try again after a download failed', async () => {
@@ -131,5 +145,31 @@ describe('WindowBar', () => {
     );
 
     expect(screen.getByRole('button', { name: 'Notifications' })).toHaveTextContent('2');
+  });
+
+  it('draws minimise, maximise and close at the far right where it is given the frame', async () => {
+    const user = userEvent.setup();
+    const frame = { isMaximised: false, minimise: vi.fn(), maximise: vi.fn(), close: vi.fn() };
+    const { container } = render(<WindowBar frame={frame} />);
+
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+
+    expect(frame.close).toHaveBeenCalledOnce();
+    expect(screen.getByRole('button', { name: 'Minimise' })).toBeInTheDocument();
+    expect(container.querySelector('[data-slot="window-controls"]')?.parentElement).toHaveClass(
+      '[-webkit-app-region:no-drag]',
+    );
+    expect(container.querySelector('[data-slot="window-bar"]')).not.toHaveClass(
+      'pr-[var(--valence-window-bar-clearance)]',
+    );
+  });
+
+  it('leaves the window’s controls to the system where it is not given the frame', () => {
+    const { container } = render(<WindowBar />);
+
+    expect(container.querySelector('[data-slot="window-controls"]')).not.toBeInTheDocument();
+    expect(container.querySelector('[data-slot="window-bar"]')).toHaveClass(
+      'pr-[var(--valence-window-bar-clearance)]',
+    );
   });
 });

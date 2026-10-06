@@ -498,9 +498,8 @@ body {
   --valence-window-bar-lead: 4.875rem;
 }
 
-:root[data-valence-platform='win32'],
-:root[data-valence-platform='linux'] {
-  --valence-window-bar-clearance: 9rem;
+[data-over-dialogs] {
+  pointer-events: auto;
 }
 
 .valence-below-the-bar {
@@ -521,12 +520,6 @@ body {
   border-color: transparent;
 }
 
-:root[data-valence-platform='win32'] [data-slot='window-bar-rule'],
-:root[data-valence-platform='linux'] [data-slot='window-bar-rule'] {
-  display: block;
-  margin-left: 0.25rem;
-}
-
 [data-valence-desktop='true'][data-valence-on-the-frame] [data-slot='window-bar'] {
   background: var(--frame-back);
 }
@@ -539,6 +532,16 @@ body {
 
 [data-valence-desktop='true'][data-valence-watching='hidden'] [data-slot='window-bar'] {
   opacity: 0;
+}
+
+[data-valence-desktop='true'][data-valence-watching] [data-slot='window-controls'] {
+  transition: visibility 0s;
+}
+
+[data-valence-desktop='true'][data-valence-watching='hidden'] [data-slot='window-controls'] {
+  pointer-events: none;
+  visibility: hidden;
+  transition: visibility 0s linear var(--duration-base);
 }
 
 [data-valence-desktop='true']:has(:fullscreen) [data-slot='window-bar'] {

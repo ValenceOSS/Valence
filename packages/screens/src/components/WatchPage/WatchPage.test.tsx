@@ -236,6 +236,39 @@ describe('WatchPage', () => {
     expect(drawn.player?.willCarryOn).toBe(false);
   });
 
+  it('plays on from the last episode of a season into the first of the next', async () => {
+    const episode = (id: string, seasonNumber: number, episodeNumber: number) => ({
+      ...ARRIVAL,
+      id,
+      title: `Season ${seasonNumber.toString()} episode ${episodeNumber.toString()}`,
+      durationSeconds: 1800,
+      seriesId: 'b7a1c2d3-0000-4000-8000-000000000001',
+      seriesTitle: 'A Show',
+      seasonNumber,
+      episodeNumber,
+    });
+    const finale = episode('a1a1a1a1-0000-4000-8000-000000000010', 3, 12);
+    const opener = episode('a1a1a1a1-0000-4000-8000-000000000011', 4, 1);
+
+    window.history.replaceState(null, '', `/watch/${finale.id}`);
+
+    renderInAShell(<WatchPage />, {
+      known: new Map([finale, opener].map((one) => [one.id, one])),
+    });
+
+    await vi.waitFor(() => {
+      expect(drawn.player?.following?.id).toBe(opener.id);
+    });
+
+    act(() => {
+      drawn.player?.onEnded?.();
+    });
+
+    await vi.waitFor(() => {
+      expect(drawn.player?.media.id).toBe(opener.id);
+    });
+  });
+
   it('goes back to what it was playing when the player is closed', async () => {
     renderInAShell(<WatchPage />, { known });
 

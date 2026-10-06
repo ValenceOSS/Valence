@@ -3275,6 +3275,36 @@ describe('VideoPlayer, as an episode ends', () => {
     expect(await screen.findByRole('button', { name: 'Play Next' })).toBeInTheDocument();
   });
 
+  it('offers the first episode of the next season as the credits of a season’s last roll', async () => {
+    const opener = { ...anEpisode('episode-9', 'A New Start', 1), seasonNumber: 2 };
+    const onSelectEpisode = vi.fn();
+    const actor = userEvent.setup();
+
+    rollCredits();
+    renderInAnAddress(
+      <VideoPlayer
+        media={second}
+        onClose={vi.fn()}
+        episodes={[first, second]}
+        following={opener}
+        onSelectEpisode={onSelectEpisode}
+        willCarryOn
+      />,
+    );
+
+    const element = await screen.findByLabelText('Second Episode');
+    await settled();
+
+    Object.defineProperty(element, 'currentTime', { configurable: true, value: 1702 });
+    fireEvent.timeUpdate(element);
+
+    expect(await screen.findByText('S2 E1 · A New Start')).toBeInTheDocument();
+
+    await actor.click(screen.getByRole('button', { name: 'Play Next' }));
+
+    expect(onSelectEpisode).toHaveBeenCalledWith(opener);
+  });
+
   it('keeps skipping the credits of the last episode, with nothing to offer after it', async () => {
     rollCredits();
     renderInAnAddress(

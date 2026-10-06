@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { chosenTheme } from '@ValenceClient/shell/theme';
 import { chosenMotion } from '@ValenceClient/shell/motion';
+import { MoodBackground } from '@ValenceUI/MoodBackground';
 import { AppShell } from './AppShell';
 
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
@@ -297,8 +298,10 @@ describe('AppShell', () => {
     expect(screen.getByRole('button', { name: 'Account' })).not.toHaveTextContent('Marques');
   });
 
-  it('lights the page with the colour of what is being shown', () => {
-    const { view } = draw({ moodLights: [{ color: '#5a3c8c', at: '20% 30%' }] });
+  it('lights the page from behind with whatever it is given', () => {
+    const { view } = draw({
+      background: <MoodBackground lights={[{ color: '#5a3c8c', at: '20% 30%' }]} />,
+    });
 
     const bloom = view.container.querySelector<HTMLElement>('.valence-bloom');
 

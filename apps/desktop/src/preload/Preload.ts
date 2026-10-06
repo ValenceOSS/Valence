@@ -39,7 +39,15 @@ import { DesktopUpdateSchema } from '@ValenceContracts/schemas/DesktopUpdate';
 import { keepTheLatest } from '@ValenceDesktop/preload/keepTheLatest';
 import { WHAT_VERSION_THIS_IS } from '@ValenceDesktop/main/aboutChannels';
 import { SET_UNREAD_BADGE } from '@ValenceDesktop/main/notificationChannels';
-import { SHOW_THE_WINDOW_CONTROLS } from '@ValenceDesktop/main/windowChannels';
+import {
+  CLOSE_THE_WINDOW,
+  FRAME_CHANGED,
+  MAXIMISE_THE_WINDOW,
+  MINIMISE_THE_WINDOW,
+  SHOW_THE_WINDOW_CONTROLS,
+  WHAT_THE_FRAME_IS,
+} from '@ValenceDesktop/main/windowChannels';
+import { WindowFrameSchema } from '@ValenceContracts/schemas/WindowFrame';
 import {
   ADD_ONE_IN_THE_BROWSER,
   ASK_FOR_A_PASSKEY,
@@ -77,6 +85,20 @@ ipcRenderer.on(UPDATE_CHANGED, (_event: IpcRendererEvent, said: JsonValue) => {
 
   if (parsed.success) {
     theUpdate.set(parsed.data);
+  }
+});
+
+const UNFRAMED = { isMaximised: false, isFullScreen: false } as const;
+
+const theFrame = keepTheLatest(
+  WindowFrameSchema.catch(UNFRAMED).parse(ipcRenderer.sendSync(WHAT_THE_FRAME_IS)),
+);
+
+ipcRenderer.on(FRAME_CHANGED, (_event: IpcRendererEvent, said: JsonValue) => {
+  const parsed = WindowFrameSchema.safeParse(said);
+
+  if (parsed.success) {
+    theFrame.set(parsed.data);
   }
 });
 
@@ -166,6 +188,19 @@ contextBridge.exposeInMainWorld('valence', {
     arch: process.arch,
     electron: process.versions.electron,
     chrome: process.versions.chrome,
+  },
+  frame: {
+    now: theFrame.now,
+    whenChanged: theFrame.whenChanged,
+    minimise: () => {
+      ipcRenderer.send(MINIMISE_THE_WINDOW);
+    },
+    maximise: () => {
+      ipcRenderer.send(MAXIMISE_THE_WINDOW);
+    },
+    close: () => {
+      ipcRenderer.send(CLOSE_THE_WINDOW);
+    },
   },
   notifications: {
     setBadge: (count: number) => {

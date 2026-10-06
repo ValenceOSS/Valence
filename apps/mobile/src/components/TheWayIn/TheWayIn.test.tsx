@@ -29,7 +29,9 @@ const around = (children: ReactNode) => (
 const answering = (body: WayIn, ok = true) => {
   globalThis.fetch = jest
     .fn()
-    .mockResolvedValue(new Response(JSON.stringify(body), { status: ok ? 200 : 500 }));
+    .mockImplementation(() =>
+      Promise.resolve(new Response(JSON.stringify(body), { status: ok ? 200 : 500 })),
+    );
 };
 
 beforeEach(() => {

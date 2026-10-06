@@ -5,6 +5,7 @@ import { cn } from '@ValenceUI/cn';
 import { usePortalContainer } from '@ValenceUI/usePortalContainer';
 import { useRoomBeside } from '@ValenceUI/useRoomBeside';
 import { coverPage } from '@ValenceUI/pageCover';
+import { isOverDialogs } from '@ValenceUI/isOverDialogs';
 import { companionContext } from './companionContext';
 import type { CompanionSlot } from './companionContext';
 import { useHeldWhileClosing } from './useHeldWhileClosing';
@@ -143,6 +144,9 @@ const SIZE_CLASSES: Record<DialogSize, string> = {
  * underneath the fullscreen element, so a dialog raised over the player would otherwise open where
  * nobody could see it.
  *
+ * Chrome marked as staying over dialogs, such as the desktop's window bar, stays usable while one is
+ * open: a press there reaches what was pressed rather than closing the dialog.
+ *
  * @param label - What the dialog is, read out on opening.
  * @param isOpen - Whether it is showing.
  * @param onClose - Told when it was dismissed, by the overlay, the escape key or a close button.
@@ -223,6 +227,11 @@ const Dialog = ({ label, isOpen, onClose, children, size = 'default', className 
           onOpenAutoFocus={(event) => {
             event.preventDefault();
             panelRef.current?.focus();
+          }}
+          onInteractOutside={(event) => {
+            if (isOverDialogs(event.target)) {
+              event.preventDefault();
+            }
           }}
           data-slot="dialog-content"
           className={cn(

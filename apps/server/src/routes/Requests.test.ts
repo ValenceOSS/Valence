@@ -2750,6 +2750,99 @@ describe('requests for films and series, through the server', () => {
       expect((await offered(ask, 'series')).choices.map((one) => one.name)).toEqual(['Anything']);
     });
 
+    it('chooses one of theirs for a request naming no quality, never one kept to somebody else', async () => {
+      PROFILES.push(aProfile(UHD, '4K', { roleIds: ['some-other-role'] }), aProfile(HD, 'HD'));
+
+      const { ask } = await asking();
+
+      expect(
+        (await ask('/api/requests/media', 'POST', { kind: 'film', tmdbId: 438631 })).status,
+      ).toBe(201);
+      expect(JSON.parse(bodySentTo('/api/requests'))).toMatchObject({ profileId: HD });
+    });
+
+    it('gives a request naming no quality the library’s own profile, where that one is theirs', async () => {
+      PROFILES.push(aProfile(HD, 'HD'), aProfile(UHD, '4K'));
+
+      const { ask } = await build({
+        isOn: true,
+        granted: ['requests.ask'],
+        service: aWillingKeeper,
+        describeForRequest: () => Promise.resolve(DUNE),
+        libraries: [{ ...FILMS, requestProfileId: UHD }],
+      });
+
+      sent.length = 0;
+
+      expect(
+        (await ask('/api/requests/media', 'POST', { kind: 'film', tmdbId: 438631 })).status,
+      ).toBe(201);
+      expect(JSON.parse(bodySentTo('/api/requests'))).toMatchObject({ profileId: UHD });
+    });
+
+    it('passes over the library’s own profile where it is kept to somebody else', async () => {
+      PROFILES.push(aProfile(UHD, '4K', { roleIds: ['some-other-role'] }), aProfile(HD, 'HD'));
+
+      const { ask } = await build({
+        isOn: true,
+        granted: ['requests.ask'],
+        service: aWillingKeeper,
+        describeForRequest: () => Promise.resolve(DUNE),
+        libraries: [{ ...FILMS, requestProfileId: UHD }],
+      });
+
+      sent.length = 0;
+
+      expect(
+        (await ask('/api/requests/media', 'POST', { kind: 'film', tmdbId: 438631 })).status,
+      ).toBe(201);
+      expect(JSON.parse(bodySentTo('/api/requests'))).toMatchObject({ profileId: HD });
+    });
+
+    it('prefers theirs written for the library over theirs written for every library', async () => {
+      PROFILES.push(aProfile(HD, 'Anything'), aProfile(UHD, 'Films', { libraryIds: [FILMS.id] }));
+
+      const { ask } = await asking();
+
+      expect(
+        (await ask('/api/requests/media', 'POST', { kind: 'film', tmdbId: 438631 })).status,
+      ).toBe(201);
+      expect(JSON.parse(bodySentTo('/api/requests'))).toMatchObject({ profileId: UHD });
+    });
+
+    it('refuses a request naming no quality where every quality is kept to somebody else', async () => {
+      PROFILES.push(aProfile(UHD, '4K', { roleIds: ['some-other-role'] }));
+
+      const { ask } = await asking();
+      const refused = await ask('/api/requests/media', 'POST', { kind: 'film', tmdbId: 438631 });
+
+      expect(refused.status).toBe(403);
+      expect(await refused.json()).toMatchObject({
+        error: 'None of the qualities here are available to you, so this can’t be requested.',
+      });
+      expect(sent.some(({ url }) => url.endsWith('/api/requests'))).toBe(false);
+    });
+
+    it('names no quality where no profile fits, as on a server with none', async () => {
+      const { ask } = await asking();
+
+      expect(
+        (await ask('/api/requests/media', 'POST', { kind: 'film', tmdbId: 438631 })).status,
+      ).toBe(201);
+      expect(JSON.parse(bodySentTo('/api/requests'))).toMatchObject({ profileId: null });
+    });
+
+    it('leaves whoever manages requesting to the library’s own when they name no quality', async () => {
+      PROFILES.push(aProfile(UHD, '4K', { roleIds: ['some-other-role'] }), aProfile(HD, 'HD'));
+
+      const { ask } = await asking(['requests.manage', 'requests.ask']);
+
+      expect(
+        (await ask('/api/requests/media', 'POST', { kind: 'film', tmdbId: 438631 })).status,
+      ).toBe(201);
+      expect(JSON.parse(bodySentTo('/api/requests'))).toMatchObject({ profileId: null });
+    });
+
     it('refuses to say what is on offer to somebody who may not ask at all', async () => {
       const { ask } = await build({ isOn: true, granted: [], service: aWillingKeeper });
 

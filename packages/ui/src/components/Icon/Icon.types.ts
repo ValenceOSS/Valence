@@ -10,6 +10,7 @@ type IconProps = {
   whenActive?: IconGlyph;
   isActive?: boolean;
   size?: number;
+  weight?: number;
   tone?: IconTone;
   className?: string;
   label?: string;

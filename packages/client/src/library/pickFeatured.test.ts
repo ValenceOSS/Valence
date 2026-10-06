@@ -203,10 +203,37 @@ describe('nextEpisode', () => {
     expect(nextEpisode([episodeOf('Show', 1, 1), last], last)).toBeNull();
   });
 
-  it('does not run on into the next season, which would be worse than stopping', () => {
-    const finale = episodeOf('Show', 1, 2);
+  it('runs on from the end of a season into the first episode of the next', () => {
+    const finale = episodeOf('Show', 3, 12);
 
-    expect(nextEpisode([finale, episodeOf('Show', 2, 1)], finale)).toBeNull();
+    expect(
+      nextEpisode(
+        [episodeOf('Show', 4, 2), episodeOf('Show', 3, 11), finale, episodeOf('Show', 4, 1)],
+        finale,
+      )?.title,
+    ).toBe('Show S4E1');
+  });
+
+  it('runs on to the next season the library has, past one it does not', () => {
+    const finale = episodeOf('Show', 1, 8);
+
+    expect(nextEpisode([finale, episodeOf('Show', 3, 1)], finale)?.title).toBe('Show S3E1');
+  });
+
+  it('starts the next season at the first episode the library has of it', () => {
+    const finale = episodeOf('Show', 1, 8);
+
+    expect(
+      nextEpisode([finale, episodeOf('Show', 2, 5), episodeOf('Show', 2, 3)], finale)?.title,
+    ).toBe('Show S2E3');
+  });
+
+  it('never runs on out of the specials, nor into them', () => {
+    const special = episodeOf('Show', 0, 2);
+    const finale = episodeOf('Show', 2, 10);
+
+    expect(nextEpisode([special, episodeOf('Show', 1, 1)], special)).toBeNull();
+    expect(nextEpisode([finale, episodeOf('Show', 0, 1)], finale)).toBeNull();
   });
 
   it('does not run on into another show', () => {

@@ -55,6 +55,7 @@ const NotificationBell = ({
       side="bottom"
       align="center"
       isBare={!isInTheWindowBar}
+      isOverDialogs={isInTheWindowBar}
       triggerLook={isInTheWindowBar ? 'smallIcon' : 'icon'}
       onOpenChange={(isOpen) => {
         if (isOpen) {

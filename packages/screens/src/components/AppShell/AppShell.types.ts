@@ -1,4 +1,3 @@
-import type { MoodLight } from '@ValenceUI/MoodBackground.types';
 import type { NavBarChoices } from '@ValenceUI/NavBar.types';
 import type { ReactNode } from 'react';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
@@ -32,7 +31,7 @@ type AppShellProps = {
   children: ReactNode;
   dock?: ReactNode;
   isFitted?: boolean;
-  moodLights?: MoodLight[];
+  background?: ReactNode;
   isAdministrator?: boolean;
   avatar?: ReactNode;
   accountName?: string;

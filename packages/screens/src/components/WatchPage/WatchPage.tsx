@@ -11,6 +11,7 @@ import { countCarriedOn } from '@ValenceClient/playback/countCarriedOn';
 import { decideWhatFollows } from '@ValenceClient/playback/decideWhatFollows';
 import { nextEpisode } from '@ValenceClient/library/pickFeatured';
 import { useSeasonMates } from '@ValenceScreens/library/useSeasonMates';
+import { useShowEpisodes } from '@ValenceScreens/library/useShowEpisodes';
 import { watchedFraction, FINISHED_WITHIN_SECONDS } from '@ValenceContracts/schemas/WatchProgress';
 import { STILL_WATCHING_OFF } from '@ValenceContracts/schemas/StillWatching';
 import { HOME } from '@ValenceClient/navigation/readLocation';
@@ -51,6 +52,7 @@ const WatchPage = () => {
 
   const playing = place.playing === null ? null : (known.get(place.playing) ?? null);
   const seasonMates = useSeasonMates(playing, [...known.values()]);
+  const showEpisodes = useShowEpisodes(playing, [...known.values()]);
   const season =
     playing === null || playing.seriesTitle === null || playing.seriesTitle === undefined
       ? []
@@ -74,8 +76,9 @@ const WatchPage = () => {
     );
   }, [place.playing]);
 
+  const following = playing === null ? null : nextEpisode(showEpisodes, playing);
   const decided = decideWhatFollows({
-    following: playing === null ? null : nextEpisode(season, playing),
+    following,
     carriedOn,
     askAfter: watcher?.askStillWatchingAfter ?? STILL_WATCHING_OFF,
   });
@@ -156,6 +159,7 @@ const WatchPage = () => {
         )}
         {...(partyPlayback === null ? {} : { party: partyPlayback })}
         episodes={season}
+        following={following}
         onSelectEpisode={(episode) => {
           go({ playing: episode.id });
         }}

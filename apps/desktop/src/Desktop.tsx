@@ -11,10 +11,8 @@ import { historyKeysFor } from '@ValenceScreens/desktop/historyKeysFor';
 import { useTheInbox } from '@ValenceScreens/notifications/useTheInbox';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { DOCS_ADDRESS } from '@ValenceContracts/constants/DOCS_ADDRESS';
-import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
-import { useIsWatching } from '@ValenceScreens/playback/useIsWatching';
-import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import type { DesktopUpdate } from '@ValenceContracts/schemas/DesktopUpdate';
+import type { WindowFrame } from '@ValenceContracts/schemas/WindowFrame';
 import {
   recentServerAddresses,
   rememberServerAddress,
@@ -33,8 +31,6 @@ import { say } from '@ValenceI18n/say';
 
 const router = buildRouter(say('common.valence'));
 
-const ASKED_ABOUT = 'valence.update.askedAbout';
-
 /**
  * Valence, drawn by this client rather than fetched from a server as pages.
  *
@@ -50,12 +46,14 @@ const ASKED_ABOUT = 'valence.update.askedAbout';
  * The strip along the top is this client's too, and for the same reason: a browser gives a window
  * somewhere to be picked up by and a frameless one has nowhere. It lies over the page rather than
  * above it, so no screen pays height for a bar it never sees, and once a server has been chosen it
- * carries back and forward, by button and by key, and the inbox the dock would otherwise hold.
+ * carries back and forward, by button and by key, and the inbox the dock would otherwise hold. On
+ * Windows and Linux it carries minimise, maximise and close too, except in full screen, where a
+ * window has none.
  *
- * A new release is offered rather than fetched. Somebody is asked once per version whether they want
- * it — never while a film has the window, since the question can wait for the credits — and the
- * strip keeps a way to fetch it for anybody who said not now. Saying yes, in either place, fetches
- * it and restarts into it.
+ * A new release is offered rather than fetched, and offered quietly: the strip shows a green arrow
+ * and nothing asks. Somebody who wants it presses the arrow, which fetches it and restarts into it,
+ * and somebody who does not can leave it there. A question raised as the window opens, or the
+ * moment a release is found, stood between them and whatever they had come to do.
  *
  * Where the server's administrator has turned the desktop app off, it says so in place of the
  * application, with the way to choose another server.
@@ -100,8 +98,7 @@ const Desktop = () => {
   );
   const [recent] = useState(recentServerAddresses);
   const [update, setUpdate] = useState<DesktopUpdate>(() => window.valence.update.now());
-  const [askedAbout, setAskedAbout] = useState(() => platformInUse().store.read(ASKED_ABOUT));
-  const isWatching = useIsWatching();
+  const [frame, setFrame] = useState<WindowFrame>(() => window.valence.frame.now());
   const isLost = useServerIsLost();
   const ways = useHistoryWays(router.history);
   const platform = document.documentElement.dataset['valencePlatform'];
@@ -120,12 +117,7 @@ const Desktop = () => {
 
   useEffect(() => window.valence.update.whenChanged(setUpdate), []);
 
-  const answered = (version: string): void => {
-    platformInUse().store.write(ASKED_ABOUT, version);
-    setAskedAbout(version);
-  };
-
-  const isAsking = update.kind === 'available' && update.version !== askedAbout && !isWatching;
+  useEffect(() => window.valence.frame.whenChanged(setFrame), []);
 
   const chosen = server === null || server === '' ? null : server;
   const isInside = chosen !== null && !isLost;
@@ -147,30 +139,22 @@ const Desktop = () => {
         onHelp={() => {
           window.open(DOCS_ADDRESS, '_blank', 'noopener,noreferrer');
         }}
-      />
-
-      <ConfirmDialog
-        title={say('desktop.desktop.updateValence')}
-        detail={
-          update.kind === 'available'
-            ? say('desktop.desktop.valenceVersionIsOutItDownloads', { version: update.version })
-            : ''
-        }
-        confirmLabel={say('desktop.desktop.update')}
-        dismissLabel={say('common.notNow')}
-        isOpen={isAsking}
-        onClose={() => {
-          if (update.kind === 'available') {
-            answered(update.version);
-          }
-        }}
-        onConfirm={() => {
-          if (update.kind === 'available') {
-            answered(update.version);
-          }
-
-          window.valence.update.download();
-        }}
+        {...(platform === 'darwin' || frame.isFullScreen
+          ? {}
+          : {
+              frame: {
+                isMaximised: frame.isMaximised,
+                minimise: () => {
+                  window.valence.frame.minimise();
+                },
+                maximise: () => {
+                  window.valence.frame.maximise();
+                },
+                close: () => {
+                  window.valence.frame.close();
+                },
+              },
+            })}
       />
 
       {chosen === null || isLost ? (

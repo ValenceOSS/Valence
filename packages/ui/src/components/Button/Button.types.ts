@@ -14,6 +14,8 @@ type ButtonVariant =
   | 'subtle'
   | 'discord'
   | 'row'
+  | 'windowControl'
+  | 'windowClose'
   | 'bare';
 
 type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'none';

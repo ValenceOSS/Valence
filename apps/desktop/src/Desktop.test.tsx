@@ -8,6 +8,7 @@ import type { Platform, Reachability } from '@ValenceClient/platform/Platform.ty
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { NearbyValence } from '@ValenceContracts/schemas/NearbyValence';
 import type { DesktopUpdate } from '@ValenceContracts/schemas/DesktopUpdate';
+import type { WindowFrame } from '@ValenceContracts/schemas/WindowFrame';
 import userEvent from '@testing-library/user-event';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import '@ValenceDesktop/TheWindow.types';
@@ -78,6 +79,13 @@ const theWindowOffers = (found: string[], nearby: NearbyValence[] = []): void =>
       electron: '33.0.0',
       chrome: '130.0.0',
     },
+    frame: {
+      now: () => ({ isMaximised: false, isFullScreen: false }),
+      whenChanged: () => () => {},
+      minimise: () => {},
+      maximise: () => {},
+      close: () => {},
+    },
     notifications: { setBadge: () => {} },
     passkeys: {
       way: 'page',
@@ -132,6 +140,7 @@ beforeEach(() => {
 afterEach(() => {
   forgetPlatform();
   delete document.documentElement.dataset['theme'];
+  delete document.documentElement.dataset['valencePlatform'];
 });
 
 describe('Desktop', () => {
@@ -231,10 +240,21 @@ describe('Desktop', () => {
 
     render(<Desktop />, { wrapper: CacheScope });
 
-    expect(await screen.findByRole('heading', { name: 'Update Valence?' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Update to 1.2.0' })).toBeInTheDocument();
   });
 
-  it('asks whether to update, and fetches the release on yes', async () => {
+  it('offers a release with the arrow alone, and asks nothing', async () => {
+    aClient({}, 'http://valence.example');
+    window.valence.update.now = () => ({ kind: 'available', version: '1.2.0' });
+
+    render(<Desktop />, { wrapper: CacheScope });
+
+    await screen.findByRole('button', { name: 'Update to 1.2.0' });
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('fetches the release when the arrow is pressed', async () => {
     aClient({}, 'http://valence.example');
     const download = vi.fn();
     window.valence.update.now = () => ({ kind: 'available', version: '1.2.0' });
@@ -242,50 +262,9 @@ describe('Desktop', () => {
 
     render(<Desktop />, { wrapper: CacheScope });
 
-    expect(await screen.findByRole('heading', { name: 'Update Valence?' })).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole('button', { name: 'Update' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Update to 1.2.0' }));
 
     expect(download).toHaveBeenCalledOnce();
-  });
-
-  it('does not ask again about a version somebody put off', async () => {
-    aClient({}, 'http://valence.example');
-    window.valence.update.now = () => ({ kind: 'available', version: '1.2.0' });
-
-    const { unmount } = render(<Desktop />, { wrapper: CacheScope });
-
-    await userEvent.click(await screen.findByRole('button', { name: 'Not now' }));
-    unmount();
-    render(<Desktop />, { wrapper: CacheScope });
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Update to 1.2.0' })).toBeInTheDocument();
-    });
-
-    expect(screen.queryByRole('heading', { name: 'Update Valence?' })).not.toBeInTheDocument();
-  });
-
-  it('holds the question while a film has the window', async () => {
-    aClient({}, 'http://valence.example');
-    document.documentElement.dataset['valenceWatching'] = 'shown';
-    window.valence.update.now = () => ({ kind: 'available', version: '1.2.0' });
-
-    try {
-      render(<Desktop />, { wrapper: CacheScope });
-
-      await screen.findByRole('button', { name: 'Update to 1.2.0' });
-
-      expect(screen.queryByRole('heading', { name: 'Update Valence?' })).not.toBeInTheDocument();
-
-      act(() => {
-        delete document.documentElement.dataset['valenceWatching'];
-      });
-
-      expect(await screen.findByRole('heading', { name: 'Update Valence?' })).toBeInTheDocument();
-    } finally {
-      delete document.documentElement.dataset['valenceWatching'];
-    }
   });
 
   it('follows a download the window was told about after it opened', async () => {
@@ -344,5 +323,55 @@ describe('Desktop', () => {
     });
 
     expect(asking()).toBeNull();
+  });
+
+  it('draws minimise, maximise and close on Windows, and closes the window from them with nothing the bridge would have to copy', async () => {
+    document.documentElement.dataset['valencePlatform'] = 'win32';
+    const close = vi.fn();
+    window.valence.frame.close = close;
+    aClient();
+
+    render(<Desktop />, { wrapper: CacheScope });
+
+    expect(screen.getByRole('button', { name: 'Minimise' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Maximise' })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+    expect(close.mock.calls).toEqual([[]]);
+  });
+
+  it('leaves them to macOS, which draws its own traffic lights', () => {
+    document.documentElement.dataset['valencePlatform'] = 'darwin';
+    aClient();
+
+    render(<Desktop />, { wrapper: CacheScope });
+
+    expect(screen.queryByRole('button', { name: 'Minimise' })).not.toBeInTheDocument();
+  });
+
+  it('turns maximise into restore as the window is maximised, and takes them away in full screen', () => {
+    document.documentElement.dataset['valencePlatform'] = 'win32';
+    let tell: (frame: WindowFrame) => void = () => undefined;
+    window.valence.frame.whenChanged = (listener) => {
+      tell = listener;
+
+      return () => undefined;
+    };
+    aClient();
+
+    render(<Desktop />, { wrapper: CacheScope });
+
+    act(() => {
+      tell({ isMaximised: true, isFullScreen: false });
+    });
+
+    expect(screen.getByRole('button', { name: 'Restore down' })).toBeInTheDocument();
+
+    act(() => {
+      tell({ isMaximised: true, isFullScreen: true });
+    });
+
+    expect(screen.queryByRole('button', { name: 'Minimise' })).not.toBeInTheDocument();
   });
 });

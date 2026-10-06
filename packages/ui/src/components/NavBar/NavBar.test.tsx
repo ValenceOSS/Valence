@@ -121,7 +121,7 @@ describe('NavBar', () => {
     expect(screen.queryByRole('button', { name: /Which/ })).not.toBeInTheDocument();
   });
 
-  it('gives the icon of the place somebody is on room to draw, so its stroke is not cut off', () => {
+  it('gives the icon of the place somebody is on room to draw at any text size, so its stroke is not cut off', () => {
     const { container } = render(
       <NavBar
         {...props}
@@ -131,7 +131,7 @@ describe('NavBar', () => {
 
     expect(
       container.querySelector('[data-testid="glyph"]')?.closest('span.overflow-hidden'),
-    ).toHaveClass('md:w-[22px]', 'md:px-0.5');
+    ).toHaveClass('md:w-[1.375rem]', 'md:px-0.5');
   });
 
   it('runs along the top of the window rather than floating at its foot', () => {

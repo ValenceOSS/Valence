@@ -7525,21 +7525,6 @@
     "context": "Printed when Valence starts against a MySQL or MariaDB database in the wrong collation. {database} is its name, {collation} the one it has and {needed} the one Valence needs."
   },
   {
-    "handler": "desktop.desktop.update",
-    "text": "Update",
-    "context": "The confirm label of a confirm dialog in the desktop of the desktop app."
-  },
-  {
-    "handler": "desktop.desktop.updateValence",
-    "text": "Update Valence?",
-    "context": "The title of a confirm dialog in the desktop of the desktop app."
-  },
-  {
-    "handler": "desktop.desktop.valenceVersionIsOutItDownloads",
-    "text": "Valence {version} is available. It downloads in the background, then Valence restarts to install it.",
-    "context": "Shown in the desktop of the desktop app. {version} is filled in by the app."
-  },
-  {
     "handler": "desktop.main.aDiscordActivity.browsingLibraries",
     "text": "Browsing libraries",
     "context": "Shown in the main of the desktop app (from `aDiscordActivity`)."
@@ -8643,6 +8628,11 @@
     "handler": "error.server.noLibraryOfKind",
     "text": "There’s no {kind} library to put it in.",
     "context": "An error the server answers with (HTTP 400) in the app on the server (from `createAppContext`). {kind} is filled in by the app."
+  },
+  {
+    "handler": "error.server.noQualityHereIsAvailableTo",
+    "text": "None of the qualities here are available to you, so this can’t be requested.",
+    "context": "An error the server answers with (HTTP 403) in the app on the server (from `createAppContext`), when every quality profile for the library is kept to other people."
   },
   {
     "handler": "error.server.somethingOfThatNameIsAlready",
@@ -24556,9 +24546,24 @@
     "context": "The label of the arrow at the top of the desktop app's window that moves forward again to the page somebody went back from, like a browser's forward button."
   },
   {
+    "handler": "screens.windowBar.maximise",
+    "text": "Maximise",
+    "context": "The label of the button at the top right of the desktop app's window on Windows and Linux that makes the window fill the screen, like the system's own maximise button."
+  },
+  {
+    "handler": "screens.windowBar.minimise",
+    "text": "Minimise",
+    "context": "The label of the button at the top right of the desktop app's window on Windows and Linux that hides the window to the taskbar, like the system's own minimise button."
+  },
+  {
     "handler": "screens.windowBar.reload",
     "text": "Reload",
     "context": "The label of the button at the top of the desktop app's window that reloads the page showing, like a browser's refresh button."
+  },
+  {
+    "handler": "screens.windowBar.restoreDown",
+    "text": "Restore down",
+    "context": "The label of the button at the top right of the desktop app's window on Windows and Linux that returns a maximised window to its earlier size, like the system’s own restore down button."
   },
   {
     "handler": "screens.windowBar.retryUpdate",
