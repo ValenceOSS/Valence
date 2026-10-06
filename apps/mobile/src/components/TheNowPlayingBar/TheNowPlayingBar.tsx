@@ -1,4 +1,4 @@
-import { BookOpen, MusicNote } from '@keyline-icons/react-native';
+import { BookOpen, LaptopSmartphone, MusicNote } from '@keyline-icons/react-native';
 import {
   FastForward as FastForwardFilled,
   Pause as PauseFilled,
@@ -13,7 +13,9 @@ import { LISTENING_CHOICES } from '@ValenceClient/books/LISTENING_CHOICES';
 import { useWhatIsHeard } from '@ValenceClient/books/useWhatIsHeard';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { AGlass } from '@ValenceMobile/components/AGlass/AGlass';
-import { AMiniProgress } from './components/AMiniProgress/AMiniProgress';
+import { ADevicesSheet } from '@ValenceMobile/components/ADevicesSheet/ADevicesSheet';
+import { ABookProgress } from './components/ABookProgress/ABookProgress';
+import { ASongProgress } from './components/ASongProgress/ASongProgress';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
@@ -98,6 +100,7 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
   const isBook = heard === 'book' && listening !== null;
   const isPaused = isBook ? !book.state.isPlaying : track !== null && !isPlaying;
   const [slid] = useState(() => new Animated.Value(0));
+  const [isChoosingDevice, setIsChoosingDevice] = useState(false);
   const [latest] = useState(
     () => new Map<'now', { isPaused: boolean; across: number; letGo: () => void }>(),
   );
@@ -202,10 +205,7 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
                 <Words size="small" tone="muted" lines={1}>
                   {listening.authors?.join(', ') ?? ''}
                 </Words>
-                <AMiniProgress
-                  positionSeconds={book.state.bookPositionSeconds}
-                  durationSeconds={book.state.durationSeconds}
-                />
+                <ABookProgress />
               </View>
             </View>
           </Button>
@@ -279,14 +279,34 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
                   ? track.artists.map((artist) => artist.name).join(', ')
                   : say('common.playingOnLabel', { label: state.remote.label })}
               </Words>
-              <AMiniProgress
-                positionSeconds={shown?.positionSeconds ?? 0}
-                durationSeconds={shown?.durationSeconds ?? track.durationSeconds}
-              />
+              <ASongProgress />
             </View>
           </View>
         </Button>
       </View>
+
+      <Button
+        tone="bare"
+        label={say('common.playOnAnotherDevice')}
+        onPress={() => {
+          setIsChoosingDevice(true);
+        }}
+      >
+        <View style={styles.button}>
+          <Icon
+            of={LaptopSmartphone}
+            size={22}
+            colour={state.remote === null ? colours.text : colours.accent}
+          />
+        </View>
+      </Button>
+
+      <ADevicesSheet
+        isOpen={isChoosingDevice}
+        onClose={() => {
+          setIsChoosingDevice(false);
+        }}
+      />
 
       <Button
         tone="bare"

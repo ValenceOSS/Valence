@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { AudioQualitySchema } from './Music';
+import { ClientKindSchema } from './ClientKind';
 
 const MusicNowPlayingSchema = z.object({
   trackId: z.string().uuid(),
@@ -36,6 +37,7 @@ const ListeningSessionSchema = z.object({
 const MusicDeviceSchema = z.object({
   clientId: z.string().min(1),
   label: z.string(),
+  clientKind: ClientKindSchema.nullable().catch(null).default(null),
   nowPlaying: MusicNowPlayingSchema.nullable(),
 });
 

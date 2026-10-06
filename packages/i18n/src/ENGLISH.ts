@@ -2085,9 +2085,12 @@ const ENGLISH = {
   'phone.aBook.audiobookChapters': 'Audiobook chapters',
   'phone.aBook.pagePage': 'Page {page}',
   'phone.aBook.pagePageOfPageCount': 'Page {page} of {pageCount}',
+  'phone.aDevicesSheet.airPlayAndBluetooth': 'AirPlay & Bluetooth',
+  'phone.aDevicesSheet.bluetooth': 'Bluetooth',
   'phone.aDevicesSheet.noOtherValenceIsOpenOn':
     'Valence isn’t open on any other device with this profile. Open Valence on a computer, TV or another phone and it’ll appear here.',
   'phone.aDevicesSheet.thisIPhone': 'This iPhone',
+  'phone.aDevicesSheet.thisPhone': 'This phone',
   'phone.aFaceEditor.aPhotoOrAGIF': 'A photo or a GIF from your library.',
   'phone.aFaceEditor.chooseAPhotoOrGIF': 'Choose a photo or GIF',
   'phone.anAlbum.thatAlbumCouldNotBeRead': 'Couldn’t load that album.',

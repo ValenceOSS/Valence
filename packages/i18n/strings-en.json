@@ -8870,6 +8870,16 @@
     "context": "Shown in the book of the phone app. {page} is filled in by the app; {pageCount} is filled in by the app."
   },
   {
+    "handler": "phone.aDevicesSheet.airPlayAndBluetooth",
+    "text": "AirPlay & Bluetooth",
+    "context": "A tile at the foot of the sheet that picks where music plays, on an iPhone; pressing it opens the system list of AirPlay and Bluetooth speakers."
+  },
+  {
+    "handler": "phone.aDevicesSheet.bluetooth",
+    "text": "Bluetooth",
+    "context": "A tile at the foot of the sheet that picks where music plays, on Android; pressing it opens the phone Bluetooth settings."
+  },
+  {
     "handler": "phone.aDevicesSheet.noOtherValenceIsOpenOn",
     "text": "Valence isn’t open on any other device with this profile. Open Valence on a computer, TV or another phone and it’ll appear here.",
     "context": "Text shown in the devices sheet of the phone app."
@@ -8878,6 +8888,11 @@
     "handler": "phone.aDevicesSheet.thisIPhone",
     "text": "This iPhone",
     "context": "The detail in the devices sheet of the phone app."
+  },
+  {
+    "handler": "phone.aDevicesSheet.thisPhone",
+    "text": "This phone",
+    "context": "The name of the Android phone in the sheet that picks where music plays, as \"This iPhone\" names an iPhone."
   },
   {
     "handler": "phone.aFaceEditor.aPhotoOrAGIF",
