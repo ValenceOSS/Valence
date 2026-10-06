@@ -6,12 +6,13 @@ import { ValenceRun } from '@ValenceLanding/components/ValenceRun/ValenceRun';
 import { DEMO_URL } from '@ValenceLanding/content/DEMO_URL';
 import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
 
-const STRIPS = [0, 1, 2, 3, 4, 5, 6] as const;
+const ROWS = Array.from({ length: 16 }, (_, at) => at);
 
 /**
  * The last word on the home page: a blue card the width of the hero asking whether the reader is
- * ready, with the way to install it and the way to look round the demo first, beside strips of
- * Valence's name running diagonally across it, blurred where they pass behind the words.
+ * ready, with the way to install it and the way to look round the demo first, beside rows of
+ * Valence's name in white running diagonally to fill the rest of it, blurred where they pass
+ * behind the words.
  */
 const GetStarted = () => {
   const prefersReducedMotion = useReducedMotionConfig();
@@ -34,9 +35,9 @@ const GetStarted = () => {
           aria-hidden
           className="absolute inset-y-0 left-[46%] right-0 hidden overflow-hidden lg:block"
         >
-          <div className="absolute left-[-10%] top-1/2 flex w-[160%] -translate-y-1/2 -rotate-[38deg] flex-col gap-3">
-            {STRIPS.map((at) => (
-              <div key={at} className="overflow-hidden bg-accent-contrast py-3 text-accent">
+          <div className="absolute left-[-60%] top-1/2 flex w-[260%] -translate-y-1/2 -rotate-[38deg] flex-col gap-4">
+            {ROWS.map((at) => (
+              <div key={at} className="overflow-hidden text-accent-contrast">
                 <ValenceRun isBackwards={at % 2 === 1} className="text-5xl" />
               </div>
             ))}
