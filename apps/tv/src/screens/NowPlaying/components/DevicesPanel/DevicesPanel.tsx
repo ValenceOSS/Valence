@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, TVFocusGuideView, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { Check, Laptop, Monitor, Smartphone } from '@keyline-icons/react-native';
 import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
@@ -13,6 +13,7 @@ import type { TvKind } from '@ValenceTv/platform/TvKind';
 import type { KeylineIcon } from '@ValenceTv/components/Icon/Icon.types';
 import type { DevicesPanelProps } from './DevicesPanel.types';
 import { say } from '@ValenceI18n/say';
+import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
 
 const WIDTH = 820;
 
@@ -84,7 +85,7 @@ const DevicesPanel = ({ shown, onChosen }: DevicesPanelProps) => {
   const thisTv = thisTvFor(kind);
 
   return (
-    <TVFocusGuideView style={styles.panel} trapFocusLeft trapFocusRight trapFocusUp trapFocusDown>
+    <FocusGuide style={styles.panel} trapsLeft trapsRight trapsUp trapsDown>
       <FadeIn>
         <Text style={styles.title}>{say('common.playOn')}</Text>
 
@@ -141,7 +142,7 @@ const DevicesPanel = ({ shown, onChosen }: DevicesPanelProps) => {
           )}
         </ScrollView>
       </FadeIn>
-    </TVFocusGuideView>
+    </FocusGuide>
   );
 };
 

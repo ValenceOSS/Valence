@@ -1,4 +1,4 @@
-import { Alert, StyleSheet, Text, TVFocusGuideView, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { endDevice, endOtherDevices, fetchDevices } from '@ValenceClient/account/fetchDevices';
 import type { Device } from '@ValenceClient/account/fetchDevices';
@@ -9,6 +9,7 @@ import type { YourDevicesProps } from './YourDevices.types';
 import { say } from '@ValenceI18n/say';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { sayAgain } from '@ValenceI18n/sayAgain';
+import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
 
 const DEVICES = ['account', 'devices'] as const;
 
@@ -121,7 +122,7 @@ const YourDevices = ({ onFocus }: YourDevicesProps) => {
       {elsewhere.length === 0 || isDemo ? (
         <Text style={styles.detail}>{say('tv.account.yourDevices.noOtherDevices')}</Text>
       ) : (
-        <TVFocusGuideView autoFocus style={styles.list}>
+        <FocusGuide isRemembering style={styles.list}>
           {elsewhere.map((device) => (
             <Button
               key={device.id}
@@ -142,7 +143,7 @@ const YourDevices = ({ onFocus }: YourDevicesProps) => {
             onFocus={onFocus}
             onPress={endTheRest}
           />
-        </TVFocusGuideView>
+        </FocusGuide>
       )}
     </View>
   );

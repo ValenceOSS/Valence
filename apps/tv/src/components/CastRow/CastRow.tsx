@@ -1,10 +1,11 @@
-import { FlatList, StyleSheet, Text, TVFocusGuideView, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { canOpenPerson } from '@ValenceContracts/schemas/Person';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { CastRowProps } from './CastRow.types';
 import { say } from '@ValenceI18n/say';
+import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
 
 const PORTRAIT = 132;
 
@@ -30,7 +31,7 @@ const CastRow = ({ cast, onOpen }: CastRowProps) => {
     <View style={styles.section}>
       <Text style={styles.heading}>{say('common.cast')}</Text>
 
-      <TVFocusGuideView autoFocus>
+      <FocusGuide isRemembering>
         <FlatList
           horizontal
           data={shown}
@@ -69,7 +70,7 @@ const CastRow = ({ cast, onOpen }: CastRowProps) => {
             </Focusable>
           )}
         />
-      </TVFocusGuideView>
+      </FocusGuide>
     </View>
   );
 };

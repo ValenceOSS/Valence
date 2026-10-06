@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, TVFocusGuideView, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useQuery } from '@tanstack/react-query';
 import { Info } from '@keyline-icons/react-native';
@@ -23,6 +23,7 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import { withAlpha } from '@ValenceTv/theme/withAlpha';
 import type { HeroProps } from './Hero.types';
 import { say } from '@ValenceI18n/say';
+import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
 
 const TAKES_TURNS_MS = 20_000;
 
@@ -160,8 +161,8 @@ const Hero = ({
           </View>
         </FadeIn>
 
-        <TVFocusGuideView
-          autoFocus
+        <FocusGuide
+          isRemembering
           style={[styles.actions, { width: screen.width - tokens.space.edge }]}
         >
           <Button
@@ -203,7 +204,7 @@ const Hero = ({
               onInspect(media);
             }}
           />
-        </TVFocusGuideView>
+        </FocusGuide>
       </View>
 
       {items.length > 1 ? (

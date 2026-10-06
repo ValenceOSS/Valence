@@ -4,7 +4,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TVFocusGuideView,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -21,6 +20,7 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import type { Book } from '@ValenceContracts/schemas/Book';
 import type { BooksProps } from './Books.types';
 import { say } from '@ValenceI18n/say';
+import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
 
 const ACROSS = 6;
 
@@ -145,7 +145,7 @@ const BooksPage = ({ libraryIds, onOpen, onFeature, upTo }: BooksProps) => {
           <View style={styles.every}>
             <Text style={styles.title}>{say('tv.books.everyAudiobook')}</Text>
 
-            <TVFocusGuideView autoFocus style={styles.grid}>
+            <FocusGuide isRemembering style={styles.grid}>
               {books.map((book, at) => (
                 <BookTile
                   key={book.id}
@@ -164,7 +164,7 @@ const BooksPage = ({ libraryIds, onOpen, onFeature, upTo }: BooksProps) => {
                   }}
                 />
               ))}
-            </TVFocusGuideView>
+            </FocusGuide>
           </View>
         </ScrollView>
       )}

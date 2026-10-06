@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Pressable } from 'react-native';
 import { LiftOnFocus } from '@ValenceTv/components/LiftOnFocus/LiftOnFocus';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { useFocusHints } from '@ValenceTv/components/Focusable/hooks/useFocusHints/useFocusHints';
 import type { FocusableProps } from './Focusable.types';
 
 /**
@@ -54,6 +55,11 @@ const Focusable = ({
   const [isFocused, setIsFocused] = useState(false);
   const [hasHadFocus, setHasHadFocus] = useState(false);
   const isDrawnByFocus = typeof children === 'function';
+  const { ref: pressableRef, hints } = useFocusHints(
+    ref,
+    hasPreferredFocus && !hasHadFocus,
+    nextFocusRight,
+  );
 
   return (
     <LiftOnFocus
@@ -64,15 +70,14 @@ const Focusable = ({
       style={style}
     >
       <Pressable
-        ref={ref}
+        ref={pressableRef}
         accessibilityRole="button"
         accessibilityLabel={label}
-        hasTVPreferredFocus={hasPreferredFocus && !hasHadFocus}
         disabled={isDisabled}
         focusable={!isDisabled}
         onPress={onPress}
+        {...hints}
         {...(onHold === undefined ? {} : { onLongPress: onHold })}
-        {...(nextFocusRight === undefined ? {} : { nextFocusRight })}
         onFocus={() => {
           if (isDrawnByFocus) {
             setIsFocused(true);

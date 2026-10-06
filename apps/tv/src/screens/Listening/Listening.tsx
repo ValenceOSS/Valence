@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Text, TVFocusGuideView, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { ChevronLeft, Gauge, List, Moon } from '@keyline-icons/react-native';
 import {
   FastForward,
@@ -35,6 +35,7 @@ import type { ListeningPanel } from '@ValenceClient/books/listeningChoices';
 import type { ListeningProps } from './Listening.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
 
 const COVER = { width: 400, height: 600 };
 
@@ -188,7 +189,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
             </View>
           </View>
 
-          <TVFocusGuideView autoFocus style={[styles.side, { width: CONTROLS }]}>
+          <FocusGuide isRemembering style={[styles.side, { width: CONTROLS }]}>
             <View style={styles.names}>
               <Text numberOfLines={2} style={styles.chapter}>
                 {chapter?.title ?? book.title}
@@ -310,7 +311,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
                 }}
               />
             </View>
-          </TVFocusGuideView>
+          </FocusGuide>
         </View>
       </FocusFence>
 

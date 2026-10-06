@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, StyleSheet, Text, TVFocusGuideView, View } from 'react-native';
+import { Animated, StyleSheet, Text, View } from 'react-native';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { Icon } from '@ValenceTv/components/Icon/Icon';
 import { StretchPill } from '@ValenceTv/components/StretchPill/StretchPill';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { TabBarProps } from './TabBar.types';
+import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
 
 const ICON_SIZE = 28;
 
@@ -84,7 +85,7 @@ const TabBar = <Tab extends string>({
   }, [at, pillX, pillWidth]);
 
   return (
-    <TVFocusGuideView autoFocus style={styles.bar}>
+    <FocusGuide isRemembering style={styles.bar}>
       {at === undefined ? null : (
         <View
           pointerEvents="none"
@@ -163,7 +164,7 @@ const TabBar = <Tab extends string>({
           </Focusable>
         </View>
       ))}
-    </TVFocusGuideView>
+    </FocusGuide>
   );
 };
 

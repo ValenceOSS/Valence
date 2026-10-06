@@ -1,15 +1,9 @@
-import {
-  FlatList,
-  StyleSheet,
-  Text,
-  TVFocusGuideView,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { FlatList, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { CatalogueCard } from '@ValenceTv/components/CatalogueCard/CatalogueCard';
 import { cardSizes } from '@ValenceTv/components/MediaCard/cardSizes';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { CatalogueShelfProps } from './CatalogueShelf.types';
+import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
 
 /**
  * A named row of films and shows from the film database, for the remote to move along — what is
@@ -30,7 +24,7 @@ const CatalogueShelf = ({ title, titles, onOpen }: CatalogueShelfProps) => {
     <View style={styles.shelf}>
       <Text style={styles.title}>{title}</Text>
 
-      <TVFocusGuideView autoFocus>
+      <FocusGuide isRemembering>
         <FlatList
           horizontal
           initialNumToRender={inView}
@@ -44,7 +38,7 @@ const CatalogueShelf = ({ title, titles, onOpen }: CatalogueShelfProps) => {
           style={styles.row}
           renderItem={({ item }) => <CatalogueCard title={item} onPress={onOpen} />}
         />
-      </TVFocusGuideView>
+      </FocusGuide>
     </View>
   );
 };

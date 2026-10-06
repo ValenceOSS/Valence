@@ -1,10 +1,11 @@
-import { FlatList, StyleSheet, Text, TVFocusGuideView, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { Check } from '@keyline-icons/react-native/fill';
 import { FadeIn } from '@ValenceTv/components/FadeIn/FadeIn';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { Icon } from '@ValenceTv/components/Icon/Icon';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { ChoicePanelProps } from './ChoicePanel.types';
+import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
 
 const WIDTH = 720;
 
@@ -26,7 +27,7 @@ const ChoicePanel = ({ title, choices, onChoose }: ChoicePanelProps) => {
   );
 
   return (
-    <TVFocusGuideView style={styles.panel} trapFocusLeft trapFocusRight trapFocusUp trapFocusDown>
+    <FocusGuide style={styles.panel} trapsLeft trapsRight trapsUp trapsDown>
       <FadeIn>
         <Text style={styles.title}>{title}</Text>
 
@@ -69,7 +70,7 @@ const ChoicePanel = ({ title, choices, onChoose }: ChoicePanelProps) => {
           )}
         />
       </FadeIn>
-    </TVFocusGuideView>
+    </FocusGuide>
   );
 };
 

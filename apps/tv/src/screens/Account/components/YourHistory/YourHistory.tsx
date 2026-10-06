@@ -1,4 +1,4 @@
-import { StyleSheet, Text, TVFocusGuideView, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { describeWhen } from '@ValenceClient/history/describeWhen';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
@@ -7,6 +7,7 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import type { Viewing } from '@ValenceContracts/schemas/Viewing';
 import type { YourHistoryProps } from './YourHistory.types';
 import { say } from '@ValenceI18n/say';
+import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
 
 const AT_MOST = 10;
 
@@ -43,7 +44,7 @@ const YourHistory = ({ onOpen, onFocus }: YourHistoryProps) => {
     <View style={styles.section}>
       <Text style={styles.heading}>{say('common.watchHistory')}</Text>
 
-      <TVFocusGuideView autoFocus style={styles.list}>
+      <FocusGuide isRemembering style={styles.list}>
         {viewings.map((viewing) => (
           <Button
             key={viewing.id}
@@ -66,7 +67,7 @@ const YourHistory = ({ onOpen, onFocus }: YourHistoryProps) => {
             }}
           />
         ))}
-      </TVFocusGuideView>
+      </FocusGuide>
     </View>
   );
 };

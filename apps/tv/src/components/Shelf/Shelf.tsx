@@ -1,17 +1,11 @@
 import { memo } from 'react';
-import {
-  FlatList,
-  StyleSheet,
-  Text,
-  TVFocusGuideView,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { FlatList, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { MediaCard } from '@ValenceTv/components/MediaCard/MediaCard';
 import { cardSizes } from '@ValenceTv/components/MediaCard/cardSizes';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { ShelfProps } from './Shelf.types';
+import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
 
 /**
  * Whether a shelf would be drawn the same: the same titles in the same order, and everything else it
@@ -73,7 +67,7 @@ const ShelfRow = ({
     <View style={styles.shelf}>
       <Text style={styles.title}>{title}</Text>
 
-      <TVFocusGuideView autoFocus>
+      <FocusGuide isRemembering>
         <FlatList
           horizontal
           initialNumToRender={inView}
@@ -101,7 +95,7 @@ const ShelfRow = ({
             );
           }}
         />
-      </TVFocusGuideView>
+      </FocusGuide>
     </View>
   );
 };

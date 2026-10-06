@@ -4,7 +4,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TVFocusGuideView,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -22,6 +21,7 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import type { MusicItem } from '@ValenceTv/music/MusicItem';
 import type { MusicProps } from './Music.types';
 import { say } from '@ValenceI18n/say';
+import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
 
 const ACROSS = 4;
 
@@ -133,7 +133,7 @@ const MusicPage = ({ onOpen, onFeature, upTo }: MusicProps) => {
           contentContainerStyle={styles.inside}
           showsVerticalScrollIndicator={false}
         >
-          <TVFocusGuideView autoFocus style={styles.grid}>
+          <FocusGuide isRemembering style={styles.grid}>
             {shortcuts.map((item, at) => (
               <MusicShortcut
                 key={`${item.kind}:${item.id}`}
@@ -151,7 +151,7 @@ const MusicPage = ({ onOpen, onFeature, upTo }: MusicProps) => {
                 }}
               />
             ))}
-          </TVFocusGuideView>
+          </FocusGuide>
 
           {recent.length === 0 ? null : (
             <MusicShelf

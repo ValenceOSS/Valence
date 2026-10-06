@@ -1,6 +1,7 @@
 import { useCallback, useRef } from 'react';
 import { useRemote } from '@ValenceTv/remote/useRemote';
 import type { HWEvent, View } from 'react-native';
+import { giveFocusTo } from '@ValenceTv/navigation/giveFocusTo';
 
 const SAME_PRESS_MS = 150;
 
@@ -36,7 +37,7 @@ const useHandOff = (
         Date.now() - arrivedAt.current > SAME_PRESS_MS
       ) {
         isOnEdge.current = false;
-        target.requestTVFocus();
+        giveFocusTo(target);
       }
     },
     [heading, target],

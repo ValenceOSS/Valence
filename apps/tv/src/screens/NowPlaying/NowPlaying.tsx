@@ -1,12 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  Animated,
-  StyleSheet,
-  Text,
-  TVFocusGuideView,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { Animated, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useRemote } from '@ValenceTv/remote/useRemote';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -52,6 +45,7 @@ import { shuffleModeOf } from '@ValenceClient/music/shuffleModeOf';
 import type { HWEvent } from 'react-native';
 import type { NowPlayingProps } from './NowPlaying.types';
 import { say } from '@ValenceI18n/say';
+import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
 
 const SHUFFLE_LABELS = {
   off: say('common.shuffle'),
@@ -286,7 +280,7 @@ const NowPlaying = ({ onEmpty, onBack, watchParty }: NowPlayingProps) => {
           />
         </Animated.View>
 
-        <TVFocusGuideView autoFocus style={[styles.side, !isBesideWords && styles.alone]}>
+        <FocusGuide isRemembering style={[styles.side, !isBesideWords && styles.alone]}>
           <Animated.View
             style={[
               styles.lead,
@@ -498,10 +492,10 @@ const NowPlaying = ({ onEmpty, onBack, watchParty }: NowPlayingProps) => {
               )}
             </View>
           </Animated.View>
-        </TVFocusGuideView>
+        </FocusGuide>
 
         {isBesideWords ? (
-          <TVFocusGuideView autoFocus style={styles.words}>
+          <FocusGuide isRemembering style={styles.words}>
             <FadeIn key={trackId}>
               <LyricLines
                 lyrics={words}
@@ -509,7 +503,7 @@ const NowPlaying = ({ onEmpty, onBack, watchParty }: NowPlayingProps) => {
                 onSeek={controls.seek}
               />
             </FadeIn>
-          </TVFocusGuideView>
+          </FocusGuide>
         ) : null}
       </FocusFence>
 

@@ -1,4 +1,4 @@
-import { StyleSheet, Text, TVFocusGuideView, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { describeWhen } from '@ValenceClient/history/describeWhen';
 import { markNotificationsRead } from '@ValenceClient/notifications/fetchNotifications';
@@ -11,6 +11,7 @@ import type { Notification } from '@ValenceContracts/schemas/Notification';
 import type { YourNotificationsProps } from './YourNotifications.types';
 import { say } from '@ValenceI18n/say';
 import { sayAgain } from '@ValenceI18n/sayAgain';
+import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
 
 const AT_MOST = 8;
 
@@ -72,7 +73,7 @@ const YourNotifications = ({ onOpen, onJoin, onFocus }: YourNotificationsProps) 
     <View style={styles.section}>
       <Text style={styles.heading}>{say('common.notifications')}</Text>
 
-      <TVFocusGuideView autoFocus style={styles.list}>
+      <FocusGuide isRemembering style={styles.list}>
         {notices.map((notice) => (
           <Button
             key={notice.id}
@@ -103,7 +104,7 @@ const YourNotifications = ({ onOpen, onJoin, onFocus }: YourNotificationsProps) 
             }}
           />
         )}
-      </TVFocusGuideView>
+      </FocusGuide>
     </View>
   );
 };

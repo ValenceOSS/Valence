@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { StyleSheet, TVFocusGuideView, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Search } from '@keyline-icons/react-native';
 import { Film, Headphones, Home, Monitor, MusicNote } from '@keyline-icons/react-native/fill';
@@ -14,6 +14,7 @@ import mark from '@ValenceTv/assets/valence-mark.png';
 import type { Tab } from '@ValenceTv/navigation/Tab';
 import type { TopBarProps } from './TopBar.types';
 import { say } from '@ValenceI18n/say';
+import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
 
 type TopTab = { id: Tab; label: string; icon: typeof Home };
 
@@ -114,7 +115,7 @@ const TopBar = ({
       </View>
 
       <Glass cornerRadius={tokens.radii.round} style={styles.glass}>
-        <TVFocusGuideView autoFocus style={styles.capsule}>
+        <FocusGuide isRemembering style={styles.capsule}>
           <Focusable
             ref={searchRef}
             label={say('common.search')}
@@ -177,7 +178,7 @@ const TopBar = ({
               )}
             </Focusable>
           )}
-        </TVFocusGuideView>
+        </FocusGuide>
       </Glass>
     </View>
   );
