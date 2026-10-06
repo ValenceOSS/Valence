@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { and, eq, inArray, isNotNull, isNull, notExists, sql } from 'drizzle-orm';
+import { truth } from '@ValenceDatabase/truth';
 import {
   library,
   mediaItem,
@@ -465,7 +466,7 @@ const createDatabaseMusicStore = (
       .select({
         id: musicArtist.id,
         name: musicArtist.name,
-        hasImage: sql<boolean>`${musicArtist.imagePath} is not null`,
+        hasImage: truth(sql`${musicArtist.imagePath} is not null`),
       })
       .from(musicArtist)
       .where(
