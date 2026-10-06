@@ -1,7 +1,5 @@
 import { requireOptionalNativeModule } from 'expo';
-import { artworkUrl } from '@ValenceClient/library/artworkUrl';
-import { showIdOf } from '@ValenceClient/library/showIdOf';
-import { onTheServer } from '@ValenceTv/platform/theServersOrigin';
+import { shelfEntryOf } from '@ValenceTv/platform/shelfEntryOf';
 import { signedHeaders } from '@ValenceTv/platform/theSessionToken';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
@@ -25,12 +23,7 @@ const putOnTheTopShelf = (titles: readonly MediaSummary[]): void => {
   const entries = titles
     .filter((media) => media.hasBackdrop)
     .slice(0, SHELVED)
-    .map((media) => ({
-      id: media.id,
-      title: media.seriesTitle ?? media.title,
-      kind: showIdOf(media) === null ? 'film' : 'show',
-      imageUrl: onTheServer(artworkUrl(media.id, 'backdrop')),
-    }));
+    .map(shelfEntryOf);
 
   void shelf?.publish(entries, signedHeaders()).catch(() => undefined);
 };

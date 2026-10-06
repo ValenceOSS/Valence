@@ -14,6 +14,7 @@ import { FavouritesShelf } from '@ValenceTv/components/FavouritesShelf/Favourite
 import { useProgress } from '@ValenceTv/library/useProgress';
 import { useRoomToFill } from '@ValenceTv/layout/useRoomToFill';
 import { putOnTheTopShelf } from '@ValenceTv/platform/putOnTheTopShelf';
+import { putOnWatchNext } from '@ValenceTv/platform/putOnWatchNext';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { HomeProps } from './Home.types';
@@ -125,7 +126,9 @@ const HomePage = ({
   );
 
   const arrivals = home.rails.find((rail) => rail.id === 'recent')?.items;
+  const resuming = home.rails.find((rail) => rail.id === RESUMING)?.items;
   const shelved = useRef('');
+  const nextUp = useRef('');
 
   useEffect(() => {
     const ids = (arrivals ?? []).map((media) => media.id).join();
@@ -133,6 +136,15 @@ const HomePage = ({
     if (arrivals !== undefined && arrivals.length > 0 && ids !== shelved.current) {
       shelved.current = ids;
       putOnTheTopShelf(arrivals);
+    }
+
+    const partWay = (resuming ?? [])
+      .map((media) => `${media.id}@${String(progress.get(media.id)?.positionSeconds ?? 0)}`)
+      .join();
+
+    if (resuming !== undefined && partWay !== nextUp.current) {
+      nextUp.current = partWay;
+      putOnWatchNext(resuming, progress);
     }
   });
 
