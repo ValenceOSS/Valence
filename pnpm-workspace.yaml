@@ -37,3 +37,13 @@ packageExtensions:
 # pinned to 12 the browser could not start anywhere.
 overrides:
   better-sqlite3: 13.0.3
+  # Patched releases of what other packages bring in, held within the major each one asks for, until
+  # those packages ask for them themselves (VAL-353).
+  '@dicebear/initials': 9.4.3
+  brace-expansion@1: 1.1.20
+  brace-expansion@5: 5.0.11
+  compression: 1.8.2
+  fast-uri@3: 3.1.8
+  shell-quote@1: ^1.11.0
+  source-map-js: 1.2.2
+  undici@7: ^7.29.1
