@@ -1,36 +1,66 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
+import {
+  BookOpen as BookOpenIcon,
+  Film as FilmIcon,
+  Home as HomeIcon,
+  MusicNote as MusicNoteIcon,
+  Server as ServerIcon,
+} from '@keyline-icons/react';
+import {
+  BookOpen as BookOpenFilledIcon,
+  Film as FilmFilledIcon,
+  Home as HomeFilledIcon,
+  MusicNote as MusicNoteFilledIcon,
+  Server as ServerFilledIcon,
+} from '@keyline-icons/react/fill';
 import { Doodle } from '@ValenceUI/Doodle';
-import { SegmentedRow } from '@ValenceUI/SegmentedRow';
+import { Icon } from '@ValenceUI/Icon';
+import { NavBar } from '@ValenceUI/NavBar';
 
 const STOPS = [
   {
     id: 'home',
     label: 'Home',
+    icon: HomeIcon,
+    activeIcon: HomeFilledIcon,
+    says: 'What to carry on with, what is new, and something picked out for tonight.',
     src: '/devices/web.jpg',
     alt: 'The home page, with a film featured across the top',
   },
   {
     id: 'library',
     label: 'Library',
+    icon: FilmIcon,
+    activeIcon: FilmFilledIcon,
+    says: 'Every film and series on the server, with its artwork, cast and where you left off.',
     src: '/hero-2.jpeg',
     alt: 'Rows of films to carry on watching, picked out and recently added',
   },
   {
     id: 'music',
     label: 'Music',
+    icon: MusicNoteIcon,
+    activeIcon: MusicNoteFilledIcon,
+    says: 'Albums, artists, lyrics and mixes made from what you play, with the player along the foot.',
     src: '/changelog/music-requests-and-households.png',
     alt: 'An album, its tracks beneath its cover and the player along the foot',
   },
   {
     id: 'books',
     label: 'Books',
+    icon: BookOpenIcon,
+    activeIcon: BookOpenFilledIcon,
+    says: 'Books to read and audiobooks to listen to, each remembering the page you were on.',
     src: '/changelog/phones-and-audiobooks-books.png',
     alt: 'A shelf of books and audiobooks',
   },
   {
     id: 'server',
     label: 'Server',
+    icon: ServerIcon,
+    activeIcon: ServerFilledIcon,
+    says: 'How the machine is doing, who is watching, and the jobs it is getting on with.',
     src: '/hero-3.jpeg',
     alt: 'The server overview, with the processor, memory, storage and streams',
   },
@@ -39,9 +69,10 @@ const STOPS = [
 const STAYS_FOR_MS = 5000;
 
 /**
- * A walk round the app itself: one window, and a row of the places in it — home, the library, music,
- * books, the server — which fades from one real screenshot to the next, by itself every few seconds
- * or straight away when one is chosen. Whoever asked for stillness sees it change only when they
+ * A walk round the app itself: a line about it, then the app's own bar of places — home, the
+ * library, music, books, the server, each with its icon — over one window, which fades from one real
+ * screenshot to the next with a line saying what that place is for, by itself every few seconds or
+ * straight away when one is chosen. Whoever asked for stillness sees it change only when they
  * choose.
  */
 const AppTour = () => {
@@ -73,24 +104,47 @@ const AppTour = () => {
       aria-label="A look round the app"
       className="mx-auto max-w-6xl px-5 py-24 sm:px-10 xl:max-w-7xl"
     >
-      <div className="mb-10 flex flex-col items-center gap-5 text-center">
+      <div className="mb-8 flex flex-col items-center gap-5 text-center">
         <h2 className="max-w-2xl text-balance text-4xl font-semibold tracking-tight text-text lg:text-5xl">
           One app for everything you{' '}
           <span className="font-accent font-normal italic tracking-normal">own</span>.
         </h2>
 
-        <div className="relative">
-          <SegmentedRow
-            label="Parts of the app"
-            size="md"
-            items={STOPS}
-            value={showing}
-            onSelect={(id) => {
-              setIsTouched(true);
-              setShowing(id);
-            }}
-          />
-        </div>
+        <p className="max-w-2xl text-balance text-lg text-text-muted">
+          Films, series, music and books in one place, from the same server, with the admin pages
+          that run it a click away.
+        </p>
+      </div>
+
+      <NavBar
+        className="relative z-10 mb-4"
+        solidity={0}
+        items={STOPS.map((stop) => ({
+          id: stop.id,
+          label: stop.label,
+          icon: <Icon of={stop.icon} size={18} />,
+          activeIcon: <Icon of={stop.activeIcon} size={18} />,
+        }))}
+        selectedId={showing}
+        onSelect={(id) => {
+          setIsTouched(true);
+          setShowing(id);
+        }}
+      />
+
+      <div className="mb-8 grid min-h-[1.75rem] place-items-center text-center">
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.p
+            key={shown.id}
+            initial={{ opacity: 0, y: isStill ? 0 : 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: isStill ? 0 : -6 }}
+            transition={{ duration: isStill ? 0 : 0.3 }}
+            className="max-w-xl text-balance text-text-muted"
+          >
+            {shown.says}
+          </motion.p>
+        </AnimatePresence>
       </div>
 
       <div className="relative">
