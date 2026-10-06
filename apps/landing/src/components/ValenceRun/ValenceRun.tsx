@@ -8,9 +8,11 @@ const RUNS = 8;
  * end to end so the loop never shows its seam. Whoever asked for stillness sees it stopped.
  *
  * @param isBackwards - Whether it runs the other way.
+ * @param startsAt - How far into the line it starts, in ems, so rows set one above another can
+ *   be staggered.
  * @param className - Its size and spacing, which the caller decides.
  */
-const ValenceRun = ({ isBackwards = false, className }: ValenceRunProps) => {
+const ValenceRun = ({ isBackwards = false, startsAt = 0, className }: ValenceRunProps) => {
   const run = Array.from({ length: RUNS }, (_, at) => (
     <span key={at.toString()} className="flex shrink-0 items-center gap-[0.35em] pr-[0.35em]">
       <span>Valence</span>
@@ -21,6 +23,7 @@ const ValenceRun = ({ isBackwards = false, className }: ValenceRunProps) => {
   return (
     <div
       aria-hidden
+      style={{ marginLeft: `${(-startsAt).toString()}em` }}
       className={cn(
         'valence-band-run flex w-max select-none font-bold uppercase leading-none tracking-[-0.02em]',
         isBackwards ? '[animation-direction:reverse]' : '',

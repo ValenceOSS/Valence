@@ -1,5 +1,6 @@
 type ValenceRunProps = {
   isBackwards?: boolean;
+  startsAt?: number;
   className?: string;
 };
 

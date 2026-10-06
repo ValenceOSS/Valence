@@ -6,7 +6,9 @@ import { ValenceRun } from '@ValenceLanding/components/ValenceRun/ValenceRun';
 import { DEMO_URL } from '@ValenceLanding/content/DEMO_URL';
 import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
 
-const ROWS = Array.from({ length: 16 }, (_, at) => at);
+const STARTS = [
+  0, 3.4, 1.1, 4.7, 2.2, 0.6, 3.9, 1.8, 5.1, 2.9, 0.2, 4.2, 1.5, 3.1, 0.9, 4.9,
+] as const;
 
 /**
  * The last word on the home page: a blue card the width of the hero asking whether the reader is
@@ -36,9 +38,9 @@ const GetStarted = () => {
           className="absolute inset-y-0 left-[46%] right-0 hidden overflow-hidden lg:block"
         >
           <div className="absolute left-[-60%] top-1/2 flex w-[260%] -translate-y-1/2 -rotate-[38deg] flex-col gap-4">
-            {ROWS.map((at) => (
-              <div key={at} className="overflow-hidden text-accent-contrast">
-                <ValenceRun isBackwards={at % 2 === 1} className="text-5xl" />
+            {STARTS.map((startsAt, at) => (
+              <div key={at} className="overflow-hidden text-5xl text-accent-contrast">
+                <ValenceRun isBackwards={at % 2 === 1} startsAt={startsAt} />
               </div>
             ))}
           </div>
