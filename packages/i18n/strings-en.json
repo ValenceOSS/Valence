@@ -2591,6 +2591,16 @@
     "context": "A number of seconds, such as how far a double tap skips."
   },
   {
+    "handler": "common.count.selected.one",
+    "text": "{count} selected",
+    "context": "How many rows of an admin table are ticked, beside what can be done to them all. {count} is the number."
+  },
+  {
+    "handler": "common.count.selected.other",
+    "text": "{count} selected",
+    "context": "How many rows of an admin table are ticked, beside what can be done to them all. {count} is the number."
+  },
+  {
     "handler": "common.count.songs.one",
     "text": "{count} song",
     "context": "How many songs, such as in a notification about what arrived in the library. {count} is the number."
@@ -5343,6 +5353,11 @@
     "handler": "common.seeAll",
     "text": "See all",
     "context": "The label of a button, used in the shelf of the phone app and in the music home in the music page."
+  },
+  {
+    "handler": "common.selectTitle",
+    "text": "Select {title}",
+    "context": "The tick box beside one row of an admin table, read aloud, such as a request or a download. {title} is its name."
   },
   {
     "handler": "common.sepia",
@@ -13125,16 +13140,6 @@
     "context": "The label in the downloads panel in the admin area."
   },
   {
-    "handler": "screens.adminArea.downloadsPanel.countChosen.one",
-    "text": "{count} selected",
-    "context": "How many downloads are ticked, beside what can be done to them. In the downloads queue in the admin area, where several downloads can be ticked and acted on together. {count} is the number."
-  },
-  {
-    "handler": "screens.adminArea.downloadsPanel.countChosen.other",
-    "text": "{count} selected",
-    "context": "How many downloads are ticked, beside what can be done to them. In the downloads queue in the admin area, where several downloads can be ticked and acted on together. {count} is the number."
-  },
-  {
     "handler": "screens.adminArea.downloadsPanel.filedTitle",
     "text": "Imported {title}.",
     "context": "A short message shown once something is done in the downloads panel in the admin area. {title} is filled in by the app."
@@ -15135,11 +15140,6 @@
     "context": "The label of a checkbox in the media requests panel in the admin area. {length} is filled in by the app."
   },
   {
-    "handler": "screens.adminArea.mediaRequestsPanel.chooseTitle",
-    "text": "Select {title}",
-    "context": "The label of a checkbox in the media requests panel in the admin area. {title} is filled in by the app."
-  },
-  {
     "handler": "screens.adminArea.mediaRequestsPanel.countApproved.one",
     "text": "{count} approved.",
     "context": "Said after the admin approves several requests at once, in the admin's requests table. {count} is how many were approved."
@@ -15148,16 +15148,6 @@
     "handler": "screens.adminArea.mediaRequestsPanel.countApproved.other",
     "text": "{count} approved.",
     "context": "Said after the admin approves several requests at once, in the admin's requests table. {count} is how many were approved."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.countChosen.one",
-    "text": "{count} selected",
-    "context": "Beside the approve and refuse buttons in the admin's requests table, how many waiting requests are ticked. {count} is the number."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.countChosen.other",
-    "text": "{count} selected",
-    "context": "Beside the approve and refuse buttons in the admin's requests table, how many waiting requests are ticked. {count} is the number."
   },
   {
     "handler": "screens.adminArea.mediaRequestsPanel.countRefused.one",
@@ -18923,11 +18913,6 @@
     "handler": "screens.downloadsPanel.downloadQueueTable.chooseEveryDownload",
     "text": "Select every download",
     "context": "The tick box at the head of the downloads queue that ticks every download. In the downloads queue in the admin area, where several downloads can be ticked and acted on together."
-  },
-  {
-    "handler": "screens.downloadsPanel.downloadQueueTable.chooseTitle",
-    "text": "Select {title}",
-    "context": "The tick box beside one download, read aloud. In the downloads queue in the admin area, where several downloads can be ticked and acted on together. {title} is the release's name."
   },
   {
     "handler": "screens.downloadsPanel.downloadQueueTable.doneOfSize",

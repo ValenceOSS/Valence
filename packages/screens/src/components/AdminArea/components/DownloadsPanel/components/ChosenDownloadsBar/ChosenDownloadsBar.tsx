@@ -40,7 +40,7 @@ const ChosenDownloadsBar = ({
       <span className="text-sm text-text-muted">
         {chosen.length === 0
           ? sayCount('common.count.downloads', total)
-          : sayCount('screens.adminArea.downloadsPanel.countChosen', chosen.length)}
+          : sayCount('common.count.selected', chosen.length)}
       </span>
 
       {chosen.length === 0 ? null : (

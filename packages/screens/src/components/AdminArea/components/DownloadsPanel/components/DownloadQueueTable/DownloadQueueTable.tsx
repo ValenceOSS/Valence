@@ -114,7 +114,7 @@ const DownloadQueueTable = ({
               meta: { shrinks: true },
               cell: ({ row }: { row: { original: QueuedDownload } }) => (
                 <Checkbox
-                  label={say('screens.downloadsPanel.downloadQueueTable.chooseTitle', {
+                  label={say('common.selectTitle', {
                     title: row.original.title,
                   })}
                   isLabelHidden
