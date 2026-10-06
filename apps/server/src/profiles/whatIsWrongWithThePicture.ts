@@ -8,6 +8,14 @@ const ACCEPTED: Record<string, string> = {
   'image/gif': '.gif',
 };
 
+const READ_AS: Record<string, string> = {
+  'image/jpeg': 'jpeg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'image/avif': 'heif',
+  'image/gif': 'gif',
+};
+
 const MOST_BYTES = 6 * 1024 * 1024;
 
 const MOST_PIXELS_AN_EDGE = 4096;
@@ -77,6 +85,10 @@ const whatIsWrongWithThePicture = async (
 
   if (measured === null) {
     return 'unreadable';
+  }
+
+  if (measured.format !== READ_AS[photo.contentType]) {
+    return 'notAPicture';
   }
 
   const { width, height } = measured;
