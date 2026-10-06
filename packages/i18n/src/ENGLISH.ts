@@ -2166,6 +2166,9 @@ const ENGLISH = {
     'Open Valence on your iPhone and sign in to play your music here.',
   'phone.carPlay.useCarPlay.thisServerHasNoMusicLibrary':
     'This server has no music library set up.',
+  'phone.platform.describeThisPhone.anEmulator': 'Emulator',
+  'phone.platform.describeThisPhone.aPhone': 'Phone',
+  'phone.platform.describeThisPhone.nameOnAndroid': '{name} on Android',
   'phone.platform.installPhonePlatform.addAPasskeyFromValenceOn':
     'Add a passkey from Valence on the web.',
   'phone.platform.sendAPhoto.thatPhotoCouldNotBeSent': 'Couldn’t upload that photo.',

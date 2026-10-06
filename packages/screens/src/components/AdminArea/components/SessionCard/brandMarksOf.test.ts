@@ -15,6 +15,11 @@ describe('brandMarksOf', () => {
     expect(brandMarksOf('Opera on Android').browser).toBe('opera');
   });
 
+  it('reads the Android an Android phone says it runs, whatever the phone is called', () => {
+    expect(brandMarksOf('Pixel 10 Pro on Android')).toEqual({ browser: null, system: 'android' });
+    expect(brandMarksOf('Emulator on Android').system).toBe('android');
+  });
+
   it('answers no mark for a browser or system without one of its own', () => {
     expect(brandMarksOf('Edge on Windows')).toEqual({ browser: null, system: null });
   });

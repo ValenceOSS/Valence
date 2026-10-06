@@ -9220,6 +9220,21 @@
     "context": "Shown on the CarPlay screen in place of the music tabs when the server the phone is signed in to has no music library."
   },
   {
+    "handler": "phone.platform.describeThisPhone.anEmulator",
+    "text": "Emulator",
+    "context": "The name an Android emulator is given in the sessions list on the admin page, in place of the build code it reports for a model."
+  },
+  {
+    "handler": "phone.platform.describeThisPhone.aPhone",
+    "text": "Phone",
+    "context": "The name an Android phone is given in the sessions list on the admin page when it reports no name or model of its own."
+  },
+  {
+    "handler": "phone.platform.describeThisPhone.nameOnAndroid",
+    "text": "{name} on Android",
+    "context": "How an Android phone is named in the sessions list on the admin page, as a browser is named with the system it runs on (\"Chrome on macOS\"). {name} is the phone's own name or model, such as Pixel 10 Pro. Keep Android as the last word: the list reads it to choose a logo."
+  },
+  {
     "handler": "phone.platform.installPhonePlatform.addAPasskeyFromValenceOn",
     "text": "Add a passkey from Valence on the web.",
     "context": "Shown in the platform of the phone app (from `installPhonePlatform`)."
