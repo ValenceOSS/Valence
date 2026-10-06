@@ -6,7 +6,7 @@ import android.os.Bundle
 import expo.modules.core.interfaces.Package
 import expo.modules.core.interfaces.ReactActivityLifecycleListener
 
-/** Has the television's window hear the remote even while nothing in it has the remote's focus. */
+/** Has the television's window hear the remote even while nothing in it has the remote's focus, and keeps the remote off lists. */
 class ValenceRemoteKeysPackage : Package {
   override fun createReactActivityLifecycleListeners(
     activityContext: Context,
@@ -15,6 +15,7 @@ class ValenceRemoteKeysPackage : Package {
       object : ReactActivityLifecycleListener {
         override fun onCreate(activity: Activity, savedInstanceState: Bundle?) {
           HeardWithoutFocus.keep(activity)
+          ScrollsPassFocusOn.keep(activity)
         }
       },
     )
