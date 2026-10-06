@@ -773,8 +773,14 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
       mirroredQueue = '';
       change({ remote: null });
 
-      if (queue !== null) {
-        load(queue, positionSeconds, isPlaying);
+      const here =
+        queue ??
+        (state.current === null
+          ? null
+          : startQueue([state.current], 0, { repeat: 'off', source: null, random }));
+
+      if (here !== null) {
+        load(here, positionSeconds, isPlaying);
       }
     },
 
