@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { forgetPageCovers, isPageCovered } from '@ValenceUI/pageCover';
 import { Dialog } from './Dialog';
@@ -59,6 +59,34 @@ describe('Dialog', () => {
     await user.keyboard('{Escape}');
 
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it('stays open for a press on chrome that stays over dialogs, and closes for one anywhere else', async () => {
+    const onClose = vi.fn();
+    const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
+
+    render(
+      <>
+        <div data-over-dialogs>
+          <span>Back</span>
+        </div>
+        <span>Elsewhere</span>
+        <Dialog label="Arrival" isOpen onClose={onClose}>
+          <p>Details</p>
+        </Dialog>
+      </>,
+    );
+
+    await new Promise((settled) => {
+      setTimeout(settled, 0);
+    });
+    await user.click(screen.getByText('Back'));
+
+    expect(onClose).not.toHaveBeenCalled();
+
+    await user.click(screen.getByText('Elsewhere'));
+
+    expect(onClose).toHaveBeenCalledOnce();
   });
 
   it('puts its overlay at the same height as its panel, so the last dialog opened is on top', () => {

@@ -25,6 +25,8 @@ import type { PopoverPanelProps } from './PopoverPanel.types';
  * @param triggerLook - An icon square that is lit when pointed at, a smaller one for a strip as
  *   thin as a window bar, or a button of the standard kind with room for a word beside its icon.
  * @param tone - Whether it sits on the page or over film, where the page's colours say nothing.
+ * @param isOverDialogs - Whether it opens from chrome that stays usable over a dialog, such as the
+ *   desktop's window bar, so a press inside it does not close the dialog either.
  * @param className - Extra classes for the caller's own layout.
  */
 const PopoverPanel = ({
@@ -40,6 +42,7 @@ const PopoverPanel = ({
   isBare = false,
   triggerLook = 'icon',
   tone = 'default',
+  isOverDialogs = false,
   className,
 }: PopoverPanelProps) => {
   const portalContainer = usePortalContainer();
@@ -83,6 +86,7 @@ const PopoverPanel = ({
           align={align}
           collisionPadding={12}
           data-slot="popover-content"
+          {...(isOverDialogs ? { 'data-over-dialogs': '' } : {})}
           className={cn(
             'z-50 flex max-h-[70vh] flex-col overflow-hidden rounded-lg p-3 text-text',
             tone === 'overlay' ? 'valence-glass valence-glass--film' : 'valence-float',
