@@ -7,6 +7,7 @@ import { withLaunchScreen } from './plugins/withLaunchScreen.ts';
 import { withPlainHttpToServers } from './plugins/withPlainHttpToServers.ts';
 import { withTelevisionSizedScreen } from './plugins/withTelevisionSizedScreen.ts';
 import { withoutTheSystemFocusHighlight } from './plugins/withoutTheSystemFocusHighlight.ts';
+import { withoutRequiringWifi } from './plugins/withoutRequiringWifi.ts';
 
 const build = readTheBuild();
 
@@ -38,7 +39,7 @@ const config: ExpoConfig = {
       '@react-native-tvos/config-tv',
       {
         isTV: true,
-        androidTVRequired: true,
+        androidTVRequired: false,
         androidTVBanner: './assets/android-tv/banner.png',
         androidTVIcon: './assets/android-tv/icon.png',
         appleTVImages: {
@@ -54,12 +55,14 @@ const config: ExpoConfig = {
     ],
     'expo-secure-store',
     'expo-video',
-    ['expo-audio', { enableBackgroundPlayback: true }],
+    ['expo-audio', { enableBackgroundPlayback: true, recordAudioAndroid: false }],
   ],
 };
 
-export default withoutTheSystemFocusHighlight(
-  withTelevisionSizedScreen(
-    withPlainHttpToServers(withLaunchScreen(withTopShelf(withTheSceneLifecycle(config)))),
+export default withoutRequiringWifi(
+  withoutTheSystemFocusHighlight(
+    withTelevisionSizedScreen(
+      withPlainHttpToServers(withLaunchScreen(withTopShelf(withTheSceneLifecycle(config)))),
+    ),
   ),
 );

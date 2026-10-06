@@ -3,6 +3,8 @@ import { DeviceProfileSchema } from '@ValenceContracts/schemas/DeviceProfile';
 import type { DeviceProfile } from '@ValenceContracts/schemas/DeviceProfile';
 import { say } from '@ValenceI18n/say';
 import { whatThisTvPlays } from '@ValenceTv/native/whatThisTvPlays';
+import { theKindOfTv } from '@ValenceTv/platform/theKindOfTv';
+import { whichTv } from '@ValenceTv/native/whichTv';
 import type { TvDecoders } from '@ValenceTv/playback/TvDecodersSchema';
 
 const VIDEO = ['h264', 'hevc'];
@@ -87,7 +89,7 @@ const anAndroidTvsProfile = (plays: TvDecoders | null): DeviceProfile => {
 
   return DeviceProfileSchema.parse({
     schemaVersion: 1,
-    name: say('common.androidTV'),
+    name: theKindOfTv(whichTv('android')),
     maxWidth: Math.max(screen.width, FULL_HD.width),
     maxHeight: Math.max(screen.height, FULL_HD.height),
     maxAudioChannels: 8,

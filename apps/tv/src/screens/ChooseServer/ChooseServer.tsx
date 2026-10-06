@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Clock, Plus, Server } from '@keyline-icons/react-native';
 import { readServerAddress } from '@ValenceClient/session/readServerAddress';
@@ -7,6 +7,8 @@ import { recentServerAddresses } from '@ValenceClient/session/serverAddress';
 import { Button } from '@ValenceTv/components/Button/Button';
 import { TextField } from '@ValenceTv/components/TextField/TextField';
 import { isAValence } from '@ValenceTv/native/isAValence';
+import { whichTv } from '@ValenceTv/native/whichTv';
+import type { TvKind } from '@ValenceTv/platform/TvKind';
 import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
 import { listenForValences } from '@ValenceTv/native/listenForValences';
 import { FadeIn } from '@ValenceTv/components/FadeIn/FadeIn';
@@ -23,6 +25,22 @@ const MARK = { width: 110, height: 80 };
 const STAGGER_MS = 70;
 
 const WITH_A_SCHEME = /^[a-z][a-z0-9+.-]*:\/\//iu;
+
+/**
+ * What the screen asks, naming the kind of television it asks on.
+ *
+ * @param kind - Which kind of television this is.
+ * @returns The question.
+ */
+const whichServerFor = (kind: TvKind): string => {
+  if (kind === 'fireTv') {
+    return say('tv.chooseServer.chooseTheServerThisFireTV');
+  }
+
+  return kind === 'androidTv'
+    ? say('tv.chooseServer.chooseTheServerThisAndroidTV')
+    : say('tv.chooseServer.chooseTheServerThisAppleTV');
+};
 
 /**
  * An address as somebody would say it, without the part a browser adds for them.
@@ -111,11 +129,7 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
         <View style={styles.top}>
           <Image source={mark} style={MARK} contentFit="contain" />
           <Text style={styles.title}>{say('common.whichValenceIsYours')}</Text>
-          <Text style={styles.lead}>
-            {Platform.OS === 'android'
-              ? say('tv.chooseServer.chooseTheServerThisAndroidTV')
-              : say('tv.chooseServer.chooseTheServerThisAppleTV')}
-          </Text>
+          <Text style={styles.lead}>{whichServerFor(whichTv())}</Text>
         </View>
       </FadeIn>
 

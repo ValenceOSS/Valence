@@ -1,4 +1,4 @@
-import { Platform, ScrollView, StyleSheet, Text, TVFocusGuideView, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TVFocusGuideView, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { Check, Laptop, Monitor, Smartphone } from '@keyline-icons/react-native';
 import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
@@ -8,11 +8,45 @@ import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { ActionRow } from '@ValenceTv/components/ActionRow/ActionRow';
 import { FadeIn } from '@ValenceTv/components/FadeIn/FadeIn';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { whichTv } from '@ValenceTv/native/whichTv';
+import type { TvKind } from '@ValenceTv/platform/TvKind';
 import type { KeylineIcon } from '@ValenceTv/components/Icon/Icon.types';
 import type { DevicesPanelProps } from './DevicesPanel.types';
 import { say } from '@ValenceI18n/say';
 
 const WIDTH = 820;
+
+/**
+ * This television as the list of places to play names it.
+ *
+ * @param kind - Which kind of television this is.
+ * @returns Its name in the list.
+ */
+const thisTvFor = (kind: TvKind): string => {
+  if (kind === 'fireTv') {
+    return say('tv.nowPlaying.devicesPanel.thisFireTV');
+  }
+
+  return kind === 'androidTv'
+    ? say('tv.nowPlaying.devicesPanel.thisAndroidTV')
+    : say('tv.nowPlaying.devicesPanel.thisAppleTV');
+};
+
+/**
+ * This television as the list of places to play names it while the music plays on it.
+ *
+ * @param kind - Which kind of television this is.
+ * @returns Its name in the list.
+ */
+const thisTvPlayingHereFor = (kind: TvKind): string => {
+  if (kind === 'fireTv') {
+    return say('tv.nowPlaying.devicesPanel.thisFireTVPlayingHere');
+  }
+
+  return kind === 'androidTv'
+    ? say('tv.nowPlaying.devicesPanel.thisAndroidTVPlayingHere')
+    : say('tv.nowPlaying.devicesPanel.thisAppleTVPlayingHere');
+};
 
 /**
  * The picture that says what kind of device a name is, as the web picks it.
@@ -45,13 +79,9 @@ const DevicesPanel = ({ shown, onChosen }: DevicesPanelProps) => {
   const thisDevice = platformInUse().thisClientId();
   const others = (asked.data ?? []).filter((device) => device.clientId !== thisDevice);
   const { remote } = state;
-  const isAndroid = Platform.OS === 'android';
-  const thisTvPlayingHere = isAndroid
-    ? say('tv.nowPlaying.devicesPanel.thisAndroidTVPlayingHere')
-    : say('tv.nowPlaying.devicesPanel.thisAppleTVPlayingHere');
-  const thisTv = isAndroid
-    ? say('tv.nowPlaying.devicesPanel.thisAndroidTV')
-    : say('tv.nowPlaying.devicesPanel.thisAppleTV');
+  const kind = whichTv();
+  const thisTvPlayingHere = thisTvPlayingHereFor(kind);
+  const thisTv = thisTvFor(kind);
 
   return (
     <TVFocusGuideView style={styles.panel} trapFocusLeft trapFocusRight trapFocusUp trapFocusDown>

@@ -3171,6 +3171,11 @@
     "context": "The name, used in the playback (from `detectClientLabel`) and in the session card (from `deviceIcon`)."
   },
   {
+    "handler": "common.fireTV",
+    "text": "Fire TV",
+    "context": "The name of the kind of television, shown in the platform of the television app (from `describeThisTv`) and in the playback of the television app (from `theTvsProfile`)."
+  },
+  {
     "handler": "common.follow",
     "text": "Follow",
     "context": "Shown, used in the artist of the phone app and in the artist view in the music page."
@@ -27081,6 +27086,11 @@
     "context": "Text shown in the choose server of the television app."
   },
   {
+    "handler": "tv.chooseServer.chooseTheServerThisFireTV",
+    "text": "Choose the server this Fire TV connects to.",
+    "context": "Text shown in the choose server of the television app, on an Android TV."
+  },
+  {
     "handler": "tv.chooseServer.found1ValenceOnYourNetwork",
     "text": "Found 1 Valence server on your network",
     "context": "Shown in the choose server of the television app."
@@ -27224,6 +27234,16 @@
     "handler": "tv.nowPlaying.devicesPanel.thisAppleTVPlayingHere",
     "text": "This Apple TV · playing here",
     "context": "Shown in the devices panel in the now playing of the television app."
+  },
+  {
+    "handler": "tv.nowPlaying.devicesPanel.thisFireTV",
+    "text": "This Fire TV",
+    "context": "Shown in the devices panel in the now playing of the television app, on an Android TV."
+  },
+  {
+    "handler": "tv.nowPlaying.devicesPanel.thisFireTVPlayingHere",
+    "text": "This Fire TV · playing here",
+    "context": "Shown in the devices panel in the now playing of the television app, on an Android TV."
   },
   {
     "handler": "tv.nowPlaying.hideTheWords",

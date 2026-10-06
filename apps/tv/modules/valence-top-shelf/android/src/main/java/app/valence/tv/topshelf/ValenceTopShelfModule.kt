@@ -7,6 +7,8 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.media.tv.TvContract
 import android.net.Uri
+import android.os.Build
+import androidx.annotation.RequiresApi
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 import expo.modules.kotlin.records.Field
@@ -22,6 +24,8 @@ private const val KEPT = "valence-top-shelf"
 private const val CHANNEL = "channel"
 
 private const val LOGO_SIZE = 320
+
+private const val FIRE_TV = "amazon.hardware.fire_tv"
 
 /** A title for the home screen, as JavaScript hands it over. */
 class ShelfEntry : Record {
@@ -51,13 +55,20 @@ class WatchingEntry : Record {
  * the home screen reads it through the shelf's own read-only provider, since the home screen cannot
  * sign in to the server itself. Each time, what was there before is cleared and the rows written
  * again, so a title that has gone, or been finished, leaves the home screen too.
+ *
+ * A Fire TV's home screen shows an app's rows only once Amazon has certified it, and an Android TV
+ * older than Android 8 has neither row, so on either nothing is written.
  */
 class ValenceTopShelfModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("ValenceTopShelf")
 
     AsyncFunction("publish") { entries: List<ShelfEntry>, headers: Map<String, String> ->
-      val context = appContext.reactContext ?: return@AsyncFunction
+      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+        return@AsyncFunction
+      }
+
+      val context = appContext.reactContext?.takeUnless { isFireTv(it) } ?: return@AsyncFunction
       val channel = channelOf(context) ?: return@AsyncFunction
 
       context.contentResolver.delete(TvContract.buildPreviewProgramsUriForChannel(channel), null, null)
@@ -82,7 +93,11 @@ class ValenceTopShelfModule : Module() {
     }
 
     AsyncFunction("continueWatching") { entries: List<WatchingEntry>, headers: Map<String, String> ->
-      val context = appContext.reactContext ?: return@AsyncFunction
+      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+        return@AsyncFunction
+      }
+
+      val context = appContext.reactContext?.takeUnless { isFireTv(it) } ?: return@AsyncFunction
 
       context.contentResolver.delete(TvContract.WatchNextPrograms.CONTENT_URI, null, null)
 
@@ -118,7 +133,11 @@ class ValenceTopShelfModule : Module() {
     }
   }
 
+  /** Whether this is a Fire TV, whose home screen takes no rows from an app Amazon has not certified. */
+  private fun isFireTv(context: Context): Boolean = context.packageManager.hasSystemFeature(FIRE_TV)
+
   /** Valence's own row on the home screen, made the first time it is asked for, or nothing where the television keeps no rows. */
+  @RequiresApi(Build.VERSION_CODES.O)
   private fun channelOf(context: Context): Long? {
     val kept = context.getSharedPreferences(KEPT, Context.MODE_PRIVATE)
     val known = kept.getLong(CHANNEL, -1L)
