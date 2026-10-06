@@ -90,32 +90,39 @@ const AppTour = () => {
               setShowing(id);
             }}
           />
-          <span
-            aria-hidden
-            className="pointer-events-none absolute left-full top-1/2 ml-5 hidden w-36 -translate-y-1/2 lg:block"
-          >
-            <span className="block -rotate-6 font-hand text-xl leading-none text-text-muted">
-              real screenshots
-            </span>
-            <Doodle of="sparks" delay={0.3} className="ml-4 mt-1 h-6 w-8 text-accent" />
-          </span>
         </div>
       </div>
 
-      <div className="relative aspect-[16/9] overflow-hidden rounded-2xl bg-shade shadow-[var(--shadow-cast)] ring-1 ring-border/60 sm:rounded-3xl">
-        <AnimatePresence initial={false}>
-          <motion.img
-            key={shown.id}
-            src={shown.src}
-            alt={shown.alt}
-            draggable={false}
-            initial={{ opacity: 0, scale: isStill ? 1 : 1.02 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: isStill ? 0 : 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute inset-0 h-full w-full select-none object-cover object-top"
+      <div className="relative">
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -right-4 -top-14 z-10 hidden w-40 lg:block xl:-right-16"
+        >
+          <span className="block rotate-6 font-hand text-2xl leading-none text-text-muted">
+            real screenshots
+          </span>
+          <Doodle
+            of="sparks"
+            delay={0.3}
+            className="ml-auto mr-6 mt-1 h-6 w-8 rotate-12 text-accent"
           />
-        </AnimatePresence>
+        </span>
+
+        <div className="relative aspect-[16/9] overflow-hidden rounded-2xl bg-shade shadow-[var(--shadow-cast)] ring-1 ring-border/60 sm:rounded-3xl">
+          <AnimatePresence initial={false}>
+            <motion.img
+              key={shown.id}
+              src={shown.src}
+              alt={shown.alt}
+              draggable={false}
+              initial={{ opacity: 0, scale: isStill ? 1 : 1.02 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: isStill ? 0 : 0.6, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute inset-0 h-full w-full select-none object-cover object-top"
+            />
+          </AnimatePresence>
+        </div>
       </div>
     </section>
   );

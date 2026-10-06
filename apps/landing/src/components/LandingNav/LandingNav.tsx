@@ -116,7 +116,7 @@ const LandingNav = () => {
         aria-label="Valence"
         {...(prefersReducedMotion === true ? {} : { style: { maxWidth, marginTop } })}
         className={cn(
-          'relative flex w-full min-w-fit items-center justify-between gap-6 px-2 py-2',
+          'relative grid w-full min-w-fit grid-cols-[1fr_auto_1fr] items-center gap-6 px-2 py-2',
           prefersReducedMotion === true
             ? 'mt-1.5 max-w-6xl border-b border-border/60 bg-surface/85 backdrop-blur-md'
             : '',
@@ -131,7 +131,7 @@ const LandingNav = () => {
           />
         )}
 
-        <Link to="/" className="relative z-10 flex items-center gap-2.5">
+        <Link to="/" className="relative z-10 flex items-center gap-2.5 justify-self-start">
           <motion.span className="flex" {...popArrival(0, isStill)}>
             <Logo size={24} isSolid />
           </motion.span>
@@ -172,7 +172,7 @@ const LandingNav = () => {
           ))}
         </div>
 
-        <div className="relative z-10 flex items-center gap-2">
+        <div className="relative z-10 col-start-3 flex items-center gap-2 justify-self-end">
           <motion.span className="flex" {...popArrival(SOCIAL_LEAD - STEP, isStill)}>
             <ThemeToggle className="rounded-2xl" />
           </motion.span>

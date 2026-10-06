@@ -38,9 +38,11 @@ const DRAWS_FOR_SECONDS = 0.9;
  *
  * @param of - Which mark.
  * @param delay - How long after it comes into view it starts drawing, in seconds.
+ * @param isShown - Whether it may be drawn yet, for a mark that waits on something else on the page
+ *   as well as on being seen.
  * @param className - Its size and place, which the caller decides.
  */
-const Doodle = ({ of, delay = 0, className }: DoodleProps) => {
+const Doodle = ({ of, delay = 0, isShown = true, className }: DoodleProps) => {
   const held = useRef<HTMLSpanElement>(null);
   const isSeen = useInView(held, { once: true, amount: 0.6 });
   const isStill = useReducedMotionConfig() === true;
@@ -53,7 +55,7 @@ const Doodle = ({ of, delay = 0, className }: DoodleProps) => {
       aria-hidden
       className={cn('pointer-events-none block bg-current', className)}
       initial={{ '--drawn': isStill ? '100%' : '0%' }}
-      animate={{ '--drawn': isStill || isSeen ? '100%' : '0%' }}
+      animate={{ '--drawn': isStill || (isSeen && isShown) ? '100%' : '0%' }}
       transition={{ duration: isStill ? 0 : DRAWS_FOR_SECONDS, delay, ease: [0.65, 0, 0.35, 1] }}
       style={{
         maskImage: masks,
