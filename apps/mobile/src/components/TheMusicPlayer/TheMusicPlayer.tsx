@@ -1,5 +1,5 @@
 import {
-  Cast,
+  LaptopSmartphone,
   Heart,
   ListMusic,
   Mic,
@@ -751,7 +751,7 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack, watchParty }: TheMusicPlaye
                 setIsChoosingDevice(true);
               }}
             >
-              <ALitCircle of={Cast} size={20} isLit={state.remote !== null} />
+              <ALitCircle of={LaptopSmartphone} size={20} isLit={state.remote !== null} />
             </Button>
 
             {watchParty === undefined ? null : (

@@ -103,6 +103,7 @@ type MusicPlayer = {
   stop: () => void;
   leave: () => void;
   playOn: (device: RemoteDevice) => void;
+  follow: (device: RemoteDevice) => void;
   playHere: (positionSeconds: number, isPlaying: boolean) => void;
   obey: (command: MusicCommand) => void;
   mirror: (nowPlaying: MusicNowPlaying) => void;
@@ -744,6 +745,16 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
 
       audio.pause();
       report(null);
+      mirrored = null;
+      mirroredQueue = '';
+      change({ remote: device, isPlaying: false });
+    },
+
+    follow: (device) => {
+      if (state.remote !== null || state.current !== null) {
+        return;
+      }
+
       mirrored = null;
       mirroredQueue = '';
       change({ remote: device, isPlaying: false });

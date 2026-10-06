@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
+import type { Animated } from 'react-native';
 
 type ASwipedTitleProps = {
-  onNext: () => void;
-  onPrevious: () => void;
+  shift: Animated.Value;
+  by: number;
   children: ReactNode;
 };
 

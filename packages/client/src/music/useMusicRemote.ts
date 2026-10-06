@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { onPresenceEvent } from '@ValenceClient/presence/presenceEvents';
 import { watchMusicDevices } from '@ValenceClient/music/watchMusicDevices';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
+import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import type { MusicPlayer } from '@ValenceClient/music/createMusicPlayer';
 
@@ -17,13 +18,22 @@ import type { MusicPlayer } from '@ValenceClient/music/createMusicPlayer';
  * its volume — is mirrored here, so the queue and the volume shown are that device's rather than
  * whatever this window last had.
  *
+ * A window that opens with nothing of its own playing, while another of this person's devices is
+ * playing, follows that device from the start, as a music app does: what it plays is shown at once
+ * and can be driven from here, without anything being sent to it until somebody does.
+ *
  * @param player - The player commands go to, which is the window's own unless a test says otherwise.
  */
 const useMusicRemote = (player: MusicPlayer = theMusicPlayer()): void => {
   const cache = useQueryClient();
   const { state } = useMusicPlayer(player);
   const remoteId = state.remote?.clientId ?? null;
-  const devices = useQuery({ ...musicQueries.devices(), enabled: remoteId !== null });
+  const isIdle = remoteId === null && state.current === null;
+  const hasLooked = useRef(false);
+  const devices = useQuery({
+    ...musicQueries.devices(),
+    enabled: remoteId !== null || (isIdle && !hasLooked.current),
+  });
   const reported =
     remoteId === null
       ? null
@@ -34,6 +44,23 @@ const useMusicRemote = (player: MusicPlayer = theMusicPlayer()): void => {
       player.mirror(reported);
     }
   }, [reported, player]);
+
+  useEffect(() => {
+    if (hasLooked.current || devices.data === undefined) {
+      return;
+    }
+
+    hasLooked.current = true;
+
+    const here = platformInUse().thisClientId();
+    const playing = devices.data.find(
+      (device) => device.clientId !== here && device.nowPlaying?.isPlaying === true,
+    );
+
+    if (isIdle && playing !== undefined) {
+      player.follow({ clientId: playing.clientId, label: playing.label });
+    }
+  }, [devices.data, isIdle, player]);
 
   useEffect(() => {
     const stopObeying = onPresenceEvent((event) => {

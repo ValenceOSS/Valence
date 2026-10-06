@@ -15,6 +15,7 @@ import { AGlass } from '@ValenceMobile/components/AGlass/AGlass';
 import { ADevicesSheet } from '@ValenceMobile/components/ADevicesSheet/ADevicesSheet';
 import { ABookProgress } from './components/ABookProgress/ABookProgress';
 import { ASongProgress } from './components/ASongProgress/ASongProgress';
+import { AMarquee } from '@ValenceMobile/components/AMarquee/AMarquee';
 import { ASwipedTitle } from './components/ASwipedTitle/ASwipedTitle';
 import { tintOf } from './tintOf';
 import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
@@ -30,6 +31,7 @@ import { useTheMusic } from '@ValenceMobile/hooks/useTheMusic';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { SPRINGS } from '@ValenceMobile/theme/SPRINGS';
+import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
 import type { TheNowPlayingBarProps } from './TheNowPlayingBar.types';
 import { say } from '@ValenceI18n/say';
 
@@ -40,6 +42,12 @@ const HIGH = 60;
 const ART_ROUND = 14;
 
 const GOES_PAST = 36;
+
+const TURNS_PAST = 48;
+
+const TURNS_FASTER_THAN = 0.5;
+
+const TURNED_BY = 220;
 
 const GOES_OFF_BY = 96;
 
@@ -73,7 +81,7 @@ const styles = StyleSheet.create({
   flush: { paddingLeft: 0, paddingRight: 0 },
   room: { height: HIGH },
   device: { alignItems: 'center', flexDirection: 'row', gap: 4 },
-  foot: { bottom: 5, left: HIGH / 2, position: 'absolute', right: HIGH / 2 },
+  foot: { bottom: 4, left: 18, position: 'absolute', right: 18 },
   said: { flex: 1, gap: 1 },
 });
 
@@ -111,14 +119,38 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
   );
   const listening = book.state.book;
   const isBook = heard === 'book' && listening !== null;
+  const isStill = usePrefersStillness();
   const isPaused = isBook ? !book.state.isPlaying : track !== null && !isPlaying;
   const [slid] = useState(() => new Animated.Value(0));
   const [isChoosingDevice, setIsChoosingDevice] = useState(false);
-  const [latest] = useState(() => new Map<'now', { isPaused: boolean; letGo: () => void }>());
+  const [latest] = useState(
+    () =>
+      new Map<
+        'now',
+        {
+          isPaused: boolean;
+          isBook: boolean;
+          isStill: boolean;
+          letGo: () => void;
+          next: () => void;
+          previous: () => void;
+        }
+      >(),
+  );
+  const [shift] = useState(() => new Animated.Value(0));
+  const [way] = useState(() => new Map<'now', 'skip' | 'dismiss'>());
 
   useEffect(() => {
     latest.set('now', {
       isPaused,
+      isBook,
+      isStill,
+      next: () => {
+        player.next();
+      },
+      previous: () => {
+        player.previous();
+      },
       letGo: isBook
         ? () => {
             book.player.close();
@@ -131,12 +163,33 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
 
   const [swipe] = useState(() =>
     PanResponder.create({
-      onMoveShouldSetPanResponderCapture: (_, gesture) =>
-        latest.get('now')?.isPaused === true &&
-        gesture.dy > 10 &&
-        gesture.dy > Math.abs(gesture.dx) * 2,
+      onMoveShouldSetPanResponderCapture: (_, gesture) => {
+        const now = latest.get('now');
+        const isSideways =
+          Math.abs(gesture.dx) > 10 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 2;
+        const isDown = gesture.dy > 10 && gesture.dy > Math.abs(gesture.dx) * 2;
+
+        if (isSideways && now?.isBook === false) {
+          way.set('now', 'skip');
+
+          return true;
+        }
+
+        if (isDown && now?.isPaused === true) {
+          way.set('now', 'dismiss');
+
+          return true;
+        }
+
+        return false;
+      },
+      onPanResponderTerminationRequest: () => false,
       onPanResponderMove: (_, gesture) => {
-        slid.setValue(Math.max(0, gesture.dy));
+        if (way.get('now') === 'skip') {
+          shift.setValue(gesture.dx);
+        } else {
+          slid.setValue(Math.max(0, gesture.dy));
+        }
       },
       onPanResponderRelease: (_, gesture) => {
         const now = latest.get('now');
@@ -145,7 +198,50 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
           return;
         }
 
-        const { letGo } = now;
+        if (way.get('now') === 'skip') {
+          const toward =
+            gesture.dx < -TURNS_PAST || gesture.vx < -TURNS_FASTER_THAN
+              ? -1
+              : gesture.dx > TURNS_PAST || gesture.vx > TURNS_FASTER_THAN
+                ? 1
+                : 0;
+
+          if (toward === 0) {
+            Animated.spring(shift, {
+              ...SPRINGS.liquid,
+              toValue: 0,
+              useNativeDriver: true,
+            }).start();
+
+            return;
+          }
+
+          const moveOn = toward < 0 ? now.next : now.previous;
+
+          if (now.isStill) {
+            shift.setValue(0);
+            moveOn();
+
+            return;
+          }
+
+          Animated.timing(shift, {
+            toValue: toward * TURNED_BY,
+            duration: GOES_OFF_MS,
+            useNativeDriver: true,
+          }).start(() => {
+            moveOn();
+            shift.setValue(-toward * TURNED_BY);
+            Animated.spring(shift, {
+              ...SPRINGS.liquid,
+              toValue: 0,
+              useNativeDriver: true,
+            }).start();
+          });
+
+          return;
+        }
+
         const isGoing = gesture.dy > GOES_PAST || gesture.vy > GOES_FASTER_THAN;
 
         if (!isGoing) {
@@ -159,11 +255,12 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
           duration: GOES_OFF_MS,
           useNativeDriver: true,
         }).start(() => {
-          letGo();
+          now.letGo();
           slid.setValue(0);
         });
       },
       onPanResponderTerminate: () => {
+        Animated.spring(shift, { ...SPRINGS.liquid, toValue: 0, useNativeDriver: true }).start();
         Animated.spring(slid, BACK).start();
       },
     }),
@@ -294,22 +391,37 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
             </View>
 
             <View style={styles.said}>
-              <ASwipedTitle onNext={() => player.next()} onPrevious={() => player.previous()}>
-                <Words lines={1}>
-                  {track.title}
-                  <Words tone="muted">
-                    {say('phone.theNowPlayingBar.byArtists', {
-                      artists: track.artists.map((artist) => artist.name).join(', '),
-                    })}
-                  </Words>
-                </Words>
-                {state.remote === null ? null : (
-                  <View style={styles.device}>
-                    <Icon of={Volume} size={14} colour={colours.accent} />
-                    <Words size="small" tone="accent" lines={1}>
-                      {state.remote.label}
-                    </Words>
-                  </View>
+              <ASwipedTitle shift={shift} by={TURNED_BY}>
+                {state.remote === null ? (
+                  <>
+                    <AMarquee>
+                      <Words lines={1}>{track.title}</Words>
+                    </AMarquee>
+                    <AMarquee>
+                      <Words size="small" tone="muted" lines={1}>
+                        {track.artists.map((artist) => artist.name).join(', ')}
+                      </Words>
+                    </AMarquee>
+                  </>
+                ) : (
+                  <>
+                    <AMarquee>
+                      <Words lines={1}>
+                        {track.title}
+                        <Words tone="muted">
+                          {say('phone.theNowPlayingBar.byArtists', {
+                            artists: track.artists.map((artist) => artist.name).join(', '),
+                          })}
+                        </Words>
+                      </Words>
+                    </AMarquee>
+                    <View style={styles.device}>
+                      <Icon of={Volume} size={14} colour={colours.accent} />
+                      <Words size="small" tone="accent" lines={1}>
+                        {state.remote.label}
+                      </Words>
+                    </View>
+                  </>
                 )}
               </ASwipedTitle>
             </View>
