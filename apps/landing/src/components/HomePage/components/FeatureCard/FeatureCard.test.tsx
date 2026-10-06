@@ -9,33 +9,34 @@ const FEATURE = {
 } as const;
 
 describe('FeatureCard', () => {
-  it('names the feature, says why it matters and numbers it as a figure', () => {
+  it('names the feature and says why it matters', () => {
     render(
       <ul>
-        <FeatureCard feature={FEATURE} index={0} figure="5.1" />
+        <FeatureCard feature={FEATURE} index={0} />
       </ul>,
     );
 
     expect(screen.getByRole('heading', { name: 'One image' })).toBeInTheDocument();
     expect(screen.getByText('Everything in one place.')).toBeInTheDocument();
-    expect(screen.getByText('Fig 5.1')).toBeInTheDocument();
   });
 
-  it('draws a wide feature across two cells, with a larger title', () => {
+  it('sits in a cell of the grid, ruled off from the cells beside it', () => {
     render(
       <ul>
-        <FeatureCard feature={FEATURE} index={0} figure="1.1" shape="wide" />
+        <FeatureCard feature={FEATURE} index={0} />
       </ul>,
     );
 
-    expect(screen.getByRole('heading', { name: 'One image' })).toHaveClass('text-xl');
-    expect(screen.getByRole('listitem')).toHaveClass('sm:col-span-2');
+    expect(screen.getByRole('listitem')).toHaveClass(
+      'before:bg-linear-to-r',
+      'after:bg-linear-to-b',
+    );
   });
 
   it('follows the pointer with its light', () => {
     render(
       <ul>
-        <FeatureCard feature={FEATURE} index={0} figure="1.1" />
+        <FeatureCard feature={FEATURE} index={0} />
       </ul>,
     );
 

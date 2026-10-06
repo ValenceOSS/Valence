@@ -25,7 +25,10 @@ describe('ChangelogEntryPage', () => {
 
     expect(around).toHaveTextContent('Newer · v1.1.0');
     expect(around).toHaveTextContent('Older · v0.3.0');
-    expect(screen.getByRole('link', { name: 'Changelog' })).toHaveAttribute('href', '/changelog');
+    expect(screen.getByRole('link', { name: 'Every release' })).toHaveAttribute(
+      'href',
+      '/changelog',
+    );
   });
 
   it('has nothing newer to lead to from the newest release', async () => {

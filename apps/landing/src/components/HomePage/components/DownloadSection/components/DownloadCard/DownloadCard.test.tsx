@@ -10,7 +10,6 @@ describe('DownloadCard', () => {
         eyebrow="Your server"
         title="One compose file"
         glyph={IconBrandDocker}
-        focus="75% 40%"
         index={1}
       >
         <p>Start it.</p>
@@ -24,26 +23,14 @@ describe('DownloadCard', () => {
     expect(screen.getByText('Start it.')).toBeInTheDocument();
   });
 
-  it('draws its strip of the header picture lazily, sized, at the part asked for', () => {
-    const { container } = render(
-      <DownloadCard
-        eyebrow="Phones"
-        title="Phones"
-        glyph={IconBrandDocker}
-        focus="50% 20%"
-        index={0}
-      >
+  it('lifts the one this visitor most likely came for', () => {
+    render(
+      <DownloadCard eyebrow="Phones" title="Phones" glyph={IconBrandDocker} index={0} isLit>
         <span />
       </DownloadCard>,
     );
 
-    const picture = container.querySelector('img');
-
-    expect(picture).toHaveAttribute('src', '/downloads-header.jpg');
-    expect(picture).toHaveAttribute('loading', 'lazy');
-    expect(picture).toHaveAttribute('decoding', 'async');
-    expect(picture).toHaveAttribute('width', '2000');
-    expect(picture).toHaveStyle({ objectPosition: '50% 20%' });
+    expect(screen.getByRole('article', { name: 'Phones' })).toHaveClass('ring-1');
   });
 
   it('sets a display name so devtools can identify it', () => {

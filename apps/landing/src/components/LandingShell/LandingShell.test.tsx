@@ -18,7 +18,9 @@ describe('LandingShell', () => {
   it('draws whichever page the address names', async () => {
     await renderWithRoutes(LandingShell, '/changelog');
 
-    expect(await screen.findByRole('heading', { name: 'Changelog' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'What is new in Valence' }),
+    ).toBeInTheDocument();
   });
 
   it('draws a release on a page of its own', async () => {
@@ -30,7 +32,12 @@ describe('LandingShell', () => {
   it('draws the plugins page', async () => {
     await renderWithRoutes(LandingShell, '/plugins');
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Plugins' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'Add to Valence without handing over the keys',
+      }),
+    ).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {
