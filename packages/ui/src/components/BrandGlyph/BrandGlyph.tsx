@@ -1,6 +1,7 @@
 import android from '@ValenceBrands/android.svg';
 import apple from '@ValenceBrands/apple.svg';
 import brave from '@ValenceBrands/brave.svg';
+import docker from '@ValenceBrands/docker.svg';
 import chrome from '@ValenceBrands/googlechrome.svg';
 import firefox from '@ValenceBrands/firefoxbrowser.svg';
 import linux from '@ValenceBrands/linux.svg';
@@ -15,6 +16,7 @@ const MARKS: Readonly<Record<BrandMarkName, string>> = {
   apple,
   brave,
   chrome,
+  docker,
   firefox,
   linux,
   opera,

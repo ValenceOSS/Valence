@@ -3,6 +3,7 @@ type BrandMarkName =
   | 'apple'
   | 'brave'
   | 'chrome'
+  | 'docker'
   | 'firefox'
   | 'linux'
   | 'opera'

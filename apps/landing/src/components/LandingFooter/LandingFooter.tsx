@@ -5,6 +5,7 @@ import { IconBrandDiscordFilled, IconBrandGithubFilled } from '@tabler/icons-rea
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { Logo } from '@ValenceUI/Logo';
+import { cn } from '@ValenceUI/cn';
 import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
 
 const YEAR = new Date().getFullYear();
@@ -65,8 +66,9 @@ const LINK = 'text-[0.9375rem] text-text-muted transition-colors hover:text-text
 
 /**
  * The close of every page, and a generous one: what Valence is, the way to everywhere else on the
- * site and beyond it, what it is built with, and its name drawn as an outline across the foot of the
- * page, cut off by the edge of the window, as a sign-off rather than a link.
+ * site and beyond it, what it is built with, and  its name drawn large across the foot of the
+ * page in a light that fades in from the sides and away to nothing at the foot, as a sign-off
+ * rather than a link.
  */
 const LandingFooter = () => {
   const isStill = useReducedMotionConfig() === true;
@@ -124,29 +126,35 @@ const LandingFooter = () => {
         ))}
       </div>
 
-      <div className="mx-auto mt-16 flex max-w-6xl items-center justify-between gap-4 border-t border-border/60 px-5 py-6 sm:px-10 xl:max-w-7xl">
-        <p className="font-mono text-xs text-text-muted/70">
-          &copy; {YEAR} The Valence contributors
-        </p>
+      <div className="mx-auto mt-16 max-w-6xl px-5 sm:px-10 xl:max-w-7xl">
+        <div className="flex items-center justify-between gap-4 border-t border-border/60 py-6">
+          <p className="font-mono text-xs text-text-muted/70">
+            &copy; {YEAR} The Valence contributors
+          </p>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          className="font-mono text-xs"
-          onClick={() => {
-            window.scrollTo({ top: 0, behavior: isStill ? 'auto' : 'smooth' });
-          }}
-        >
-          Back to top
-          <Icon of={ArrowUpIcon} size={14} />
-        </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="font-mono text-xs"
+            onClick={() => {
+              window.scrollTo({ top: 0, behavior: isStill ? 'auto' : 'smooth' });
+            }}
+          >
+            Back to top
+            <Icon of={ArrowUpIcon} size={14} />
+          </Button>
+        </div>
       </div>
 
       <div
         aria-hidden
-        className="mx-auto h-[14vw] max-w-7xl select-none overflow-hidden px-5 sm:px-10"
+        className={cn(
+          'relative h-[13vw] overflow-hidden xl:h-[12rem]',
+          '[mask-image:linear-gradient(to_bottom,black_15%,transparent)]',
+          '[-webkit-mask-image:linear-gradient(to_bottom,black_15%,transparent)]',
+        )}
       >
-        <p className="valence-outline-text text-center text-[23vw] font-semibold leading-[0.8] tracking-[-0.04em] text-text/25 xl:text-[18rem]">
+        <p className="absolute inset-x-0 top-0 select-none whitespace-nowrap bg-linear-to-r from-text/0 via-text/70 to-text/0 bg-clip-text text-center text-[22vw] font-bold leading-none tracking-tighter text-transparent xl:text-[20rem]">
           Valence
         </p>
       </div>

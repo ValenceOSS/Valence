@@ -6,7 +6,10 @@ import {
   revealVariants,
   staggerVariants,
 } from '@ValenceUI/animations/reveal';
+import { IconBrandWindowsFilled } from '@tabler/icons-react';
 import { Button } from '@ValenceUI/Button';
+import { BrandGlyph } from '@ValenceUI/BrandGlyph';
+import { Tooltip } from '@ValenceUI/Tooltip';
 import { Doodle } from '@ValenceUI/Doodle';
 import { cn } from '@ValenceUI/cn';
 import { FoldGradient } from '@ValenceLanding/components/FoldGradient/FoldGradient';
@@ -15,6 +18,14 @@ import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
 import { DEMO_URL } from '@ValenceLanding/content/DEMO_URL';
 import { DeviceStage } from './components/DeviceStage/DeviceStage';
 import { ValenceBand } from './components/ValenceBand/ValenceBand';
+
+const PLATFORMS = [
+  { label: 'Docker', mark: 'docker' },
+  { label: 'Apple', mark: 'apple' },
+  { label: 'Android', mark: 'android' },
+  { label: 'Windows', mark: null },
+  { label: 'Linux', mark: 'linux' },
+] as const;
 
 const LEGIBLE = 'drop-shadow-[var(--shadow-legible)]';
 
@@ -41,7 +52,8 @@ const BUTTON_STEP = 0.07;
  * the card and across a band of Valence's name running past beneath it.
  *
  * The heading writes itself in a word at a time, the ring draws itself round its word once the
- * heading has landed, and the buttons pop up after it with a note pointing at the first.
+ * heading has landed, and the buttons pop up after it with a note pointing at them, over the list of
+ * what it runs on.
  */
 const Hero = () => {
   const prefersReducedMotion = useReducedMotionConfig();
@@ -69,7 +81,7 @@ const Hero = () => {
           variants={staggerVariants}
           initial="hidden"
           animate="shown"
-          className="relative flex flex-col items-center gap-5 px-5 pt-14 text-center sm:pt-20"
+          className="relative flex flex-col items-center gap-5 px-5 pt-24 text-center sm:pt-28"
         >
           <motion.p
             variants={revealVariants(prefersReducedMotion)}
@@ -178,6 +190,24 @@ const Hero = () => {
               </motion.span>
             </span>
           </div>
+
+          <motion.p
+            variants={revealVariants(prefersReducedMotion)}
+            transition={revealTransition(prefersReducedMotion, 'bouncy')}
+            className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 pt-3 text-sm text-on-scrim/60"
+          >
+            {PLATFORMS.map(({ label, mark }) => (
+              <Tooltip key={label} label={label}>
+                <span className="inline-flex text-on-scrim/80 transition-colors hover:text-on-scrim">
+                  {mark === null ? (
+                    <IconBrandWindowsFilled size={20} aria-label={label} role="img" />
+                  ) : (
+                    <BrandGlyph of={mark} size={20} label={label} />
+                  )}
+                </span>
+              </Tooltip>
+            ))}
+          </motion.p>
         </motion.div>
 
         <div aria-hidden className="h-[min(48vw,24rem)] sm:h-[min(30vw,30rem)]" />
@@ -187,7 +217,7 @@ const Hero = () => {
         <DeviceStage />
       </div>
 
-      <ValenceBand className="-mt-[9vw] xl:-mt-[8rem]" />
+      <ValenceBand className="-mt-[4vw] xl:-mt-[3.5rem]" />
     </section>
   );
 };

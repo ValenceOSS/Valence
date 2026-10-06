@@ -1,8 +1,14 @@
+import { useState } from 'react';
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
-import { motion, useReducedMotionConfig } from 'motion/react';
+import {
+  motion,
+  useMotionValueEvent,
+  useReducedMotionConfig,
+  useScroll,
+  useTransform,
+} from 'motion/react';
 import {
   IconBrandDiscordFilled,
-  IconArrowRight,
   IconBrandGithubFilled,
   IconMenu2Filled,
   IconStarFilled,
@@ -15,6 +21,8 @@ import { cn } from '@ValenceUI/cn';
 import { readStarCount } from '@ValenceLanding/content/githubStars';
 import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
 import { ThemeToggle } from '@ValenceLanding/components/LandingNav/components/ThemeToggle/ThemeToggle';
+import { useSiteTheme } from '@ValenceLanding/components/LandingNav/components/ThemeToggle/useSiteTheme';
+import { RELEASE_BAR_PX } from '@ValenceLanding/components/ReleaseBar/RELEASE_BAR_PX';
 import repository from 'virtual:github-stars';
 
 const NAV_LINK = 'text-sm font-semibold transition-colors';
@@ -23,6 +31,8 @@ const LINKS = [
   { to: '/changelog', label: 'Changelog' },
   { to: '/plugins', label: 'Plugins' },
   { to: '/ui', label: 'UI' },
+  { to: '/privacy', label: 'Privacy' },
+  { to: '/terms', label: 'Terms' },
 ] as const;
 
 const GITHUB_URL = 'https://github.com/MarquesCoding/Valence';
@@ -55,44 +65,80 @@ const SOCIAL_LEAD = 0.42;
 
 const STEP = 0.05;
 
+const NAV_DROP_PX = 16;
+
+const SHRINK_OVER_PIXELS = 140;
+
+const CONDENSED_PAST = 0.6;
+
 /**
- * The bar every page carries, held to the top of the window as the page scrolls under it: the mark,
- * the way to the other pages, and the way out to the code and the download. As the page opens the
- * mark pops in, its name writes itself in beside it, and the links and buttons pop up one after
- * another, as the app's own bar arrives.
+ * The bar every page carries: the mark, the way to the other pages, and the way out to the code —
+ * riding over the hero just beneath the line about the newest release, rising into its place as that
+ * line scrolls away, and drawing itself into a condensed pill once it has
+ * scrolled clear of it. As the page opens the mark pops in, its name writes itself in beside it, and
+ * the links and buttons pop up one after another, as the app's own bar arrives.
  */
 const LandingNav = () => {
   const prefersReducedMotion = useReducedMotionConfig();
   const isStill = prefersReducedMotion === true;
   const navigate = useNavigate();
+  const { scrollY } = useScroll();
+  const progress = useTransform(scrollY, [0, SHRINK_OVER_PIXELS], [0, 1], { clamp: true });
+  const belowTheBar = useTransform(
+    scrollY,
+    [0, RELEASE_BAR_PX],
+    [RELEASE_BAR_PX + NAV_DROP_PX, 0],
+    {
+      clamp: true,
+    },
+  );
+
+  const maxWidth = useTransform(progress, [0, 1], ['72rem', '46rem']);
+  const marginTop = useTransform(progress, [0, 1], ['0.375rem', '1.125rem']);
+  const backdropRadius = useTransform(progress, [0, 1], ['0px', '1rem']);
+
+  const [isCondensed, setIsCondensed] = useState(false);
+
+  useMotionValueEvent(progress, 'change', (value) => {
+    setIsCondensed(value > CONDENSED_PAST);
+  });
+
   const isHome = useRouterState({ select: (state) => state.location.pathname }) === '/';
-
-  const getValence = () => {
-    if (isHome) {
-      document
-        .getElementById('download')
-        ?.scrollIntoView({ behavior: isStill ? 'auto' : 'smooth' });
-
-      return;
-    }
-
-    void navigate({ to: '/', hash: 'download' });
-  };
+  const theme = useSiteTheme();
+  const isFloating = prefersReducedMotion !== true && !isCondensed;
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border/60 bg-surface/85 backdrop-blur-md">
-      <nav
+    <motion.header
+      style={{ top: belowTheBar }}
+      className="fixed inset-x-0 top-0 z-20 flex justify-center px-4 sm:px-6"
+    >
+      <motion.nav
         aria-label="Valence"
-        className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-6 px-5 sm:px-10 xl:max-w-7xl"
+        {...(prefersReducedMotion === true ? {} : { style: { maxWidth, marginTop } })}
+        className={cn(
+          'relative flex w-full min-w-fit items-center justify-between gap-6 px-2 py-2',
+          prefersReducedMotion === true
+            ? 'mt-1.5 max-w-6xl border-b border-border/60 bg-surface/85 backdrop-blur-md'
+            : '',
+          isFloating && isHome ? 'valence-glass--film' : '',
+        )}
       >
-        <Link to="/" className="flex items-center gap-2.5">
+        {prefersReducedMotion === true ? null : (
+          <motion.span
+            aria-hidden
+            style={{ opacity: progress, borderRadius: backdropRadius }}
+            className="pointer-events-none absolute inset-0 border border-border/60 bg-surface/85 shadow-[var(--shadow-overlay)] backdrop-blur-md"
+          />
+        )}
+
+        <Link to="/" className="relative z-10 flex items-center gap-2.5">
           <motion.span className="flex" {...popArrival(0, isStill)}>
-            <Logo size={26} isSolid />
+            <Logo size={24} isSolid />
           </motion.span>
           <span className="sr-only">{WORDMARK}</span>
           <span
             aria-hidden
-            className="flex whitespace-pre text-lg font-semibold tracking-tight text-text"
+            className="flex whitespace-pre text-base font-semibold tracking-tight text-text"
           >
             {[...WORDMARK].map((letter, at) => (
               <motion.span
@@ -106,7 +152,7 @@ const LandingNav = () => {
           </span>
         </Link>
 
-        <div className="hidden items-center gap-8 md:flex">
+        <div className="relative z-10 hidden items-center gap-6 sm:flex">
           <motion.span className="flex" {...popArrival(LINKS_LEAD, isStill)}>
             <a href={DOCS_URL} className={cn(NAV_LINK, 'text-text-muted hover:text-text')}>
               Docs
@@ -119,25 +165,21 @@ const LandingNav = () => {
               className="flex"
               {...popArrival(LINKS_LEAD + (at + 1) * STEP, isStill)}
             >
-              <Link
-                to={link.to}
-                className={cn(NAV_LINK, 'text-text-muted hover:text-text')}
-                activeProps={{ className: 'text-text' }}
-              >
+              <Link to={link.to} className={cn(NAV_LINK, 'text-text-muted hover:text-text')}>
                 {link.label}
               </Link>
             </motion.span>
           ))}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="relative z-10 flex items-center gap-2">
           <motion.span className="flex" {...popArrival(SOCIAL_LEAD - STEP, isStill)}>
             <ThemeToggle className="rounded-2xl" />
           </motion.span>
 
           <motion.span className="hidden sm:flex" {...popArrival(SOCIAL_LEAD, isStill)}>
             <Button
-              variant="secondary"
+              variant={theme === 'dark' ? 'secondary' : 'confirm'}
               size="sm"
               label="View the source on GitHub"
               className={SOCIAL_BUTTON}
@@ -155,36 +197,24 @@ const LandingNav = () => {
             <Button
               variant="discord"
               size="sm"
-              isIconOnly
               label="Join the Discord"
-              className="rounded-2xl"
+              className={SOCIAL_BUTTON}
               onClick={() => {
                 window.open(DISCORD_URL, '_blank', 'noopener,noreferrer');
               }}
             >
               <IconBrandDiscordFilled size={16} />
-            </Button>
-          </motion.span>
-
-          <motion.span className="hidden sm:flex" {...popArrival(SOCIAL_LEAD + STEP * 2, isStill)}>
-            <Button variant="confirm" size="sm" className="rounded-2xl" onClick={getValence}>
-              Get Valence
-              <IconArrowRight size={15} />
+              <span>Discord</span>
             </Button>
           </motion.span>
 
           <ActionMenu
             label="Navigation"
-            className="md:hidden"
+            className="sm:hidden"
             trigger={<IconMenu2Filled size={18} />}
             groups={[
               {
                 items: [
-                  {
-                    id: 'get',
-                    label: 'Get Valence',
-                    onChoose: getValence,
-                  },
                   {
                     id: 'docs',
                     label: 'Docs',
@@ -214,8 +244,8 @@ const LandingNav = () => {
             ]}
           />
         </div>
-      </nav>
-    </header>
+      </motion.nav>
+    </motion.header>
   );
 };
 

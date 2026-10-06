@@ -11,6 +11,7 @@ files and drawn through a CSS mask by `BrandGlyph`, so no SVG is ever inlined.
 | `android.svg`        | Android       |
 | `apple.svg`          | Apple         |
 | `brave.svg`          | Brave         |
+| `docker.svg`         | Docker        |
 | `firefoxbrowser.svg` | Firefox       |
 | `googlechrome.svg`   | Google Chrome |
 | `linux.svg`          | Linux         |
