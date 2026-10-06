@@ -5,7 +5,16 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.Window
+import android.widget.HorizontalScrollView
+import android.widget.ScrollView
 import com.facebook.react.ReactRootView
+
+private val ARROWS = mapOf(
+  KeyEvent.KEYCODE_DPAD_UP to View.FOCUS_UP,
+  KeyEvent.KEYCODE_DPAD_DOWN to View.FOCUS_DOWN,
+  KeyEvent.KEYCODE_DPAD_LEFT to View.FOCUS_LEFT,
+  KeyEvent.KEYCODE_DPAD_RIGHT to View.FOCUS_RIGHT,
+)
 
 private val MEDIA_KEYS = setOf(
   KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,
@@ -33,6 +42,11 @@ private val MEDIA_KEYS = setOf(
  * be answered twice — by the screen, and by the player's own media session — and the two would
  * cancel out. So while the app is in front its media keys go to React Native and stop there, as the
  * Siri Remote's do; with the app behind, the system hands them to the media session as before.
+ *
+ * A list that scrolls takes an arrow pressed towards something outside it and scrolls itself by
+ * half a screen, letting the remote leave only once it has reached its end, so leaving it can take
+ * two presses or more. tvOS moves the remote at once. So where a list takes an arrow and the remote
+ * has not moved, though there was somewhere for it to go, it is moved there.
  *
  * A keyboard's Escape — a keyboard plugged into the television, or the computer's running an
  * emulator — goes back, as the remote's Back button does.
@@ -83,7 +97,51 @@ object HeardWithoutFocus {
         root?.dispatchKeyEvent(event)
       }
 
-      return within.dispatchKeyEvent(event)
+      val was = window.currentFocus
+      val direction = ARROWS[event.keyCode]
+      val next =
+        if (was != null && direction != null && event.action == KeyEvent.ACTION_DOWN) {
+          was.focusSearch(direction)?.takeIf { it !== was && !isInsideTheListOf(was, it) }
+        } else {
+          null
+        }
+      val isTaken = within.dispatchKeyEvent(event)
+
+      if (isTaken && next != null && direction != null && window.currentFocus === was) {
+        next.requestFocus(direction)
+      }
+
+      return isTaken
+    }
+
+    /** Whether a view lies in the same scrolling list as the one the remote is on. */
+    private fun isInsideTheListOf(focused: View, other: View): Boolean {
+      var at = focused.parent
+
+      while (at is View) {
+        if (at is ScrollView || at is HorizontalScrollView) {
+          return holds(at, other)
+        }
+
+        at = at.parent
+      }
+
+      return true
+    }
+
+    /** Whether a view is inside another. */
+    private fun holds(outer: View, inner: View): Boolean {
+      var at: Any? = inner
+
+      while (at is View) {
+        if (at === outer) {
+          return true
+        }
+
+        at = at.parent
+      }
+
+      return false
     }
   }
 
