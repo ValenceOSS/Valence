@@ -27,6 +27,16 @@ beforeEach(() => {
   jest.mocked(fetchMixes).mockResolvedValue([]);
 });
 
+const theFirst = <T,>(found: T[]): T => {
+  const [first] = found;
+
+  if (first === undefined) {
+    throw new Error('Nothing was found.');
+  }
+
+  return first;
+};
+
 describe('TheMusic', () => {
   it('offers liked songs, this profile’s playlists, and what was added lately', async () => {
     const onLiked = jest.fn();
@@ -46,9 +56,10 @@ describe('TheMusic', () => {
       { wrapper: CacheScope },
     );
 
-    await userEvent.press(await drawn.findByText('Road trip'));
-    await userEvent.press(drawn.getByText('Liked songs'));
-    await userEvent.press(drawn.getByText('Even In Arcadia'));
+    await drawn.findAllByText('Road trip');
+    await userEvent.press(theFirst(drawn.getAllByText('Road trip')));
+    await userEvent.press(theFirst(drawn.getAllByText('Liked songs')));
+    await userEvent.press(theFirst(drawn.getAllByText('Even In Arcadia')));
 
     expect(onPlaylist).toHaveBeenCalledWith(aPlaylist().id);
     expect(onLiked).toHaveBeenCalled();

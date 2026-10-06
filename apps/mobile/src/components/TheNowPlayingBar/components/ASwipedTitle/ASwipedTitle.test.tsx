@@ -31,8 +31,8 @@ describe('ASwipedTitle', () => {
     });
 
     expect(onWidth).toHaveBeenCalledWith(240);
-    expect(drawn.getByText('Before').parent?.parent).toHaveStyle({ left: -240, width: 240 });
-    expect(drawn.getByText('After').parent?.parent).toHaveStyle({ left: 240, width: 240 });
+    expect(drawn.getByText('Before').parent).toHaveStyle({ left: -240, width: 240 });
+    expect(drawn.getByText('After').parent).toHaveStyle({ left: 240, width: 240 });
   });
 
   it('sets a display name so devtools can identify it', () => {

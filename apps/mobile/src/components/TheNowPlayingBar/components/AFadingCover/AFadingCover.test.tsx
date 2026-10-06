@@ -1,4 +1,5 @@
 import { render } from '@testing-library/react-native';
+import { View } from 'react-native';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { theDrawnRoot } from '@ValenceMobile/testing/theDrawnRoot';
@@ -16,16 +17,28 @@ afterEach(() => {
 
 describe('AFadingCover', () => {
   it('draws the song’s cover alone to begin with', async () => {
-    await render(<AFadingCover uri="http://one.local/a.jpg" />);
+    await render(
+      <View>
+        <AFadingCover uri="http://one.local/a.jpg" />
+      </View>,
+    );
 
     expect(theCovers()).toHaveLength(1);
     expect(theCovers()[0]).toHaveProp('source', { uri: 'http://one.local/a.jpg' });
   });
 
   it('lays a new song’s cover over the old one, to bring it in', async () => {
-    const drawn = await render(<AFadingCover uri="http://one.local/a.jpg" />);
+    const drawn = await render(
+      <View>
+        <AFadingCover uri="http://one.local/a.jpg" />
+      </View>,
+    );
 
-    await drawn.rerender(<AFadingCover uri="http://one.local/b.jpg" />);
+    await drawn.rerender(
+      <View>
+        <AFadingCover uri="http://one.local/b.jpg" />
+      </View>,
+    );
 
     expect(theCovers()).toHaveLength(2);
     expect(theCovers()[0]).toHaveProp('source', { uri: 'http://one.local/a.jpg' });
@@ -33,7 +46,11 @@ describe('AFadingCover', () => {
   });
 
   it('draws a note where the song has no cover', async () => {
-    await render(<AFadingCover uri={null} />);
+    await render(
+      <View>
+        <AFadingCover uri={null} />
+      </View>,
+    );
 
     expect(theCovers()).toHaveLength(0);
   });

@@ -1,5 +1,6 @@
 import { MusicNote } from '@keyline-icons/react-native';
-import { fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { View } from 'react-native';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { theDrawnRoot } from '@ValenceMobile/testing/theDrawnRoot';
@@ -17,32 +18,50 @@ afterEach(() => {
 
 describe('AMusicArt', () => {
   it('draws the picture it is given', async () => {
-    await render(<AMusicArt artwork="http://one.local/a.jpg" standIn={MusicNote} iconSize={22} />);
+    await render(
+      <View>
+        <AMusicArt artwork="http://one.local/a.jpg" standIn={MusicNote} iconSize={22} />
+      </View>,
+    );
 
-    expect(thePictures()[0]).toHaveProp('source', { uri: 'http://one.local/a.jpg' });
+    await waitFor(() => {
+      expect(thePictures()[0]).toHaveProp('source', { uri: 'http://one.local/a.jpg' });
+    });
   });
 
   it('makes a cover of its albums where it is a collection of songs', async () => {
     await render(
-      <AMusicArt
-        artwork={null}
-        albumIds={['a', 'b', 'c', 'd']}
-        standIn={MusicNote}
-        iconSize={22}
-      />,
+      <View>
+        <AMusicArt
+          artwork={null}
+          albumIds={['a', 'b', 'c', 'd']}
+          standIn={MusicNote}
+          iconSize={22}
+        />
+      </View>,
     );
 
-    expect(thePictures()).toHaveLength(4);
+    await waitFor(() => {
+      expect(thePictures()).toHaveLength(4);
+    });
   });
 
   it('draws the stand-in where there is no picture, or it cannot be read', async () => {
-    await render(<AMusicArt artwork="http://one.local/a.jpg" standIn={MusicNote} iconSize={22} />);
+    await render(
+      <View>
+        <AMusicArt artwork="http://one.local/a.jpg" standIn={MusicNote} iconSize={22} />
+      </View>,
+    );
 
-    const [picture] = thePictures();
+    const picture = await waitFor(() => {
+      const [drawn] = thePictures();
 
-    if (picture === undefined) {
-      throw new Error('No picture was drawn.');
-    }
+      if (drawn === undefined) {
+        throw new Error('No picture was drawn.');
+      }
+
+      return drawn;
+    });
 
     await fireEvent(picture, 'error');
 
