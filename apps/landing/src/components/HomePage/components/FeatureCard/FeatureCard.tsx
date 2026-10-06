@@ -7,18 +7,21 @@ import type { FeatureCardProps, FeatureCardShape } from './FeatureCard.types';
 const FIGURE = 'font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-text-muted/70';
 
 const SPANS: Record<FeatureCardShape, string> = {
-  square: '',
-  wide: 'sm:col-span-2',
+  half: 'lg:col-span-3',
+  third: 'lg:col-span-2',
+  full: 'sm:col-span-2 lg:col-span-6',
 };
 
 const LAYOUTS: Record<FeatureCardShape, string> = {
-  square: 'flex-col',
-  wide: 'flex-col lg:flex-row-reverse lg:gap-10',
+  half: 'flex-col',
+  third: 'flex-col',
+  full: 'flex-col lg:flex-row-reverse lg:gap-10',
 };
 
 const PICTURES: Record<FeatureCardShape, string> = {
-  square: 'h-80',
-  wide: 'h-60 lg:h-auto lg:min-h-72 lg:w-[58%] lg:shrink-0',
+  half: 'h-80',
+  third: 'h-72',
+  full: 'h-60 lg:h-auto lg:min-h-72 lg:w-[58%] lg:shrink-0',
 };
 
 /**
@@ -28,15 +31,16 @@ const PICTURES: Record<FeatureCardShape, string> = {
  * It is a rounded card of its own, set apart from its neighbours, and its picture stands on an
  * isometric plane inside it, so the product reads as an object on the page rather than a flat
  * screenshot. Pointed at, a soft light follows the pointer across it and the plane leans towards
- * wherever the pointer is, easing back flat once it leaves. In a group of four, two are drawn wide, the words beside
- * the picture rather than beneath it.
+ * wherever the pointer is, easing back flat once it leaves.
  *
  * @param feature - What it is and why it matters.
  * @param index - Where it sits in the grid, so it arrives in order.
  * @param figure - Its number, as a figure in the page is numbered.
- * @param shape - How much of the grid it takes: one cell, or two side by side.
+ * @param group - What kind of feature it is, such as Viewing, said beside its number.
+ * @param shape - How much of a row of the grid it takes: half, a third, or all of it, with the
+ *   words beside the picture rather than beneath it.
  */
-const FeatureCard = ({ feature, index, figure, shape = 'square' }: FeatureCardProps) => {
+const FeatureCard = ({ feature, index, figure, group, shape = 'third' }: FeatureCardProps) => {
   const cellRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -97,7 +101,9 @@ const FeatureCard = ({ feature, index, figure, shape = 'square' }: FeatureCardPr
         />
 
         <div className={cn('flex flex-col gap-4', PICTURES[shape])}>
-          <span className={cn(FIGURE, shape === 'wide' ? 'lg:hidden' : '')}>Fig {figure}</span>
+          <span className={cn(FIGURE, shape === 'full' ? 'lg:hidden' : '')}>
+            Fig {figure} &middot; {group}
+          </span>
 
           <div className="min-h-0 flex-1">
             <FeatureVisual kind={feature.visual} />
@@ -107,18 +113,20 @@ const FeatureCard = ({ feature, index, figure, shape = 'square' }: FeatureCardPr
         <div
           className={cn(
             'flex flex-col gap-2',
-            shape === 'wide' ? 'lg:flex-1 lg:justify-between lg:py-1' : '',
+            shape === 'full' ? 'lg:flex-1 lg:justify-between lg:py-1' : '',
           )}
         >
-          {shape === 'wide' ? (
-            <span className={cn(FIGURE, 'hidden lg:block')}>Fig {figure}</span>
+          {shape === 'full' ? (
+            <span className={cn(FIGURE, 'hidden lg:block')}>
+              Fig {figure} &middot; {group}
+            </span>
           ) : null}
 
           <span className="flex flex-col gap-2">
             <h3
               className={cn(
                 'text-balance font-semibold tracking-tight text-text',
-                shape === 'square' ? 'text-lg' : 'text-xl lg:text-2xl',
+                shape === 'third' ? 'text-lg' : 'text-xl lg:text-2xl',
               )}
             >
               {feature.title}

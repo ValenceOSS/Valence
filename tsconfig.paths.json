@@ -21,6 +21,7 @@
       "@ValenceMobile/*": ["./apps/mobile/src/*"],
       "@ValenceRatings/*": ["./packages/ui/src/assets/ratings/*"],
       "@ValenceBrands/*": ["./packages/ui/src/assets/brands/*"],
+      "@ValenceDoodles/*": ["./packages/ui/src/assets/doodles/*"],
       "@ValenceDiscordArt/*": ["./packages/ui/src/assets/discord/*"],
       "@ValenceSDK/*": ["./packages/plugin-sdk/src/*"],
       "@ValenceScreens/*": ["./packages/screens/src/*"],
@@ -132,6 +133,8 @@
       "@ValenceUI/HoverHighlight.types": [
         "./packages/ui/src/components/HoverHighlight/HoverHighlight.types.ts"
       ],
+      "@ValenceUI/Doodle": ["./packages/ui/src/components/Doodle/Doodle.tsx"],
+      "@ValenceUI/Doodle.types": ["./packages/ui/src/components/Doodle/Doodle.types.ts"],
       "@ValenceUI/BrandGlyph": ["./packages/ui/src/components/BrandGlyph/BrandGlyph.tsx"],
       "@ValenceUI/BrandGlyph.types": [
         "./packages/ui/src/components/BrandGlyph/BrandGlyph.types.ts"

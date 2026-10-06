@@ -1,8 +1,7 @@
 import { useRouterState } from '@tanstack/react-router';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
-import { cn } from '@ValenceUI/cn';
-import { FoldGradient } from '@ValenceLanding/components/FoldGradient/FoldGradient';
+import { ReleaseBar } from '@ValenceLanding/components/ReleaseBar/ReleaseBar';
 import { LandingNav } from '@ValenceLanding/components/LandingNav/LandingNav';
 import { LandingFooter } from '@ValenceLanding/components/LandingFooter/LandingFooter';
 import { HomePage } from '@ValenceLanding/components/HomePage/HomePage';
@@ -25,9 +24,8 @@ const PAGES: Record<string, ComponentType> = {
 };
 
 /**
- * What every page on getvalence.app sits inside: the nav, the footer, the hero's own shader — held
- * here rather than inside the hero itself, so leaving and returning to the home page never rebuilds
- * its WebGL context — and a reveal between one page and the next.
+ * What every page on getvalence.app sits inside: the line about the newest release, the nav, the
+ * footer, and a reveal between one page and the next.
  *
  * The page shown is looked up here and rendered directly rather than through `Outlet`. `Outlet`
  * stays subscribed to the router's current match even while `AnimatePresence` is still playing its
@@ -38,7 +36,6 @@ const PAGES: Record<string, ComponentType> = {
 const LandingShell = () => {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const prefersReducedMotion = useReducedMotionConfig();
-  const isHome = pathname === '/';
   const isUiLibrary = pathname.startsWith('/ui/');
   const Page =
     PAGES[pathname] ??
@@ -50,19 +47,7 @@ const LandingShell = () => {
 
   return (
     <div className="relative z-0 flex min-h-dvh flex-col bg-surface text-text">
-      <div
-        aria-hidden
-        className={cn(
-          'absolute inset-x-0 top-0 -z-10 h-svh overflow-hidden bg-shade transition-opacity duration-500',
-          isHome ? 'opacity-100' : 'opacity-0',
-        )}
-      >
-        <FoldGradient
-          className="h-full w-full opacity-60"
-          speed={isHome && prefersReducedMotion !== true ? 1 : 0}
-        />
-        <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-shade" />
-      </div>
+      <ReleaseBar />
 
       <LandingNav />
 

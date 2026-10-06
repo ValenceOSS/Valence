@@ -1,12 +1,15 @@
 import { Hero } from '@ValenceLanding/components/HomePage/components/Hero/Hero';
 import { DataOwnershipStatement } from '@ValenceLanding/components/HomePage/components/DataOwnershipStatement/DataOwnershipStatement';
-import { FeatureSection } from '@ValenceLanding/components/HomePage/components/FeatureSection/FeatureSection';
+import { FeatureBento } from '@ValenceLanding/components/HomePage/components/FeatureBento/FeatureBento';
+import { PhoneFan } from '@ValenceLanding/components/HomePage/components/PhoneFan/PhoneFan';
+import { AppTour } from '@ValenceLanding/components/HomePage/components/AppTour/AppTour';
 import { ComparisonTable } from '@ValenceLanding/components/HomePage/components/ComparisonTable/ComparisonTable';
 import { DownloadSection } from '@ValenceLanding/components/HomePage/components/DownloadSection/DownloadSection';
-import { FEATURE_GROUPS } from '@ValenceLanding/content/features';
 
 /**
- * getvalence.app itself: what Valence is, what it does, how it compares, and where to get it.
+ * getvalence.app itself: the app laying itself flat under what Valence is, why it is yours, all it
+ * does in one grid, the phone app fanned out, a walk round the app, how it compares, and where to
+ * get it.
  */
 const HomePage = () => (
   <>
@@ -14,9 +17,11 @@ const HomePage = () => (
 
     <DataOwnershipStatement />
 
-    {FEATURE_GROUPS.map((group, at) => (
-      <FeatureSection key={group.title} group={group} number={at + 1} />
-    ))}
+    <FeatureBento />
+
+    <PhoneFan />
+
+    <AppTour />
 
     <ComparisonTable />
 
