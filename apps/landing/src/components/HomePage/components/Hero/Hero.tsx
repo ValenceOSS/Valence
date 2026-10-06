@@ -116,7 +116,7 @@ const Hero = () => {
           variants={staggerVariants}
           initial="hidden"
           animate="shown"
-          className="relative flex flex-col items-center gap-5 px-5 pt-24 text-center sm:pt-28"
+          className="relative flex flex-col items-center gap-5 px-5 pt-32 text-center sm:pt-40"
         >
           <motion.p
             variants={revealVariants(prefersReducedMotion)}

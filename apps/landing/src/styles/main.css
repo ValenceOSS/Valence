@@ -30,18 +30,33 @@
   animation: valence-band-run 46s linear infinite;
 }
 
+.valence-wave-run {
+  animation: valence-wave-run 1.4s linear infinite;
+}
+
+@keyframes valence-wave-run {
+  to {
+    mask-position:
+      1rem 0,
+      0 100%;
+    -webkit-mask-position:
+      1rem 0,
+      0 100%;
+  }
+}
+
 .valence-drift--back {
   animation-direction: reverse;
   animation-duration: 54s;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :root:not([data-motion='full']) :is(.valence-band-run, .valence-drift) {
+  :root:not([data-motion='full']) :is(.valence-band-run, .valence-drift, .valence-wave-run) {
     animation: none;
   }
 }
 
-:root[data-motion='reduced'] :is(.valence-band-run, .valence-drift) {
+:root[data-motion='reduced'] :is(.valence-band-run, .valence-drift, .valence-wave-run) {
   animation: none;
 }
 
