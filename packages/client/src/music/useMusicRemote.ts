@@ -28,6 +28,9 @@ const FRESH_FOR_MS = 45_000;
  * music straight back. Only a device that has said so lately counts, since one that went quiet may
  * have stopped without saying.
  *
+ * And a window following a device that goes away — closed, or gone from the network — lets the
+ * music go with it, so nothing is left showing as playing on a device that is no longer there.
+ *
  * @param player - The player commands go to, which is the window's own unless a test says otherwise.
  */
 const useMusicRemote = (player: MusicPlayer = theMusicPlayer()): void => {
@@ -47,6 +50,18 @@ const useMusicRemote = (player: MusicPlayer = theMusicPlayer()): void => {
       player.mirror(reported);
     }
   }, [reported, player]);
+
+  const isGone =
+    remoteId !== null &&
+    devices.isSuccess &&
+    !devices.isFetching &&
+    devices.data.every((device) => device.clientId !== remoteId);
+
+  useEffect(() => {
+    if (isGone) {
+      player.leave();
+    }
+  }, [isGone, player]);
 
   useEffect(() => {
     if (devices.data === undefined) {
