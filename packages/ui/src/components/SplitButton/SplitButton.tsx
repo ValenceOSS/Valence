@@ -5,6 +5,12 @@ import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { cn } from '@ValenceUI/cn';
 import type { SplitButtonProps } from './SplitButton.types';
 
+const JOINED_SHAPES = {
+  confirm: 'confirmJoined',
+  secondary: 'secondaryJoined',
+  raised: 'raisedJoined',
+} as const;
+
 /**
  * One large action with a choice of what it acts on behind an arrow at its end: Play, with which
  * edition of a film it plays chosen from the arrow. The two read as one control split by a hairline,
@@ -36,14 +42,24 @@ const SplitButton = ({
   className,
 }: SplitButtonProps) => (
   <div className={cn('inline-flex min-w-0', className)}>
-    <Button variant={tone} size={size} joins="next" className="min-w-0 flex-1" onClick={onClick}>
+    <Button
+      variant={tone}
+      size={size}
+      joins="next"
+      className={cn(
+        'min-w-0 flex-1',
+        tone === 'confirm' ? '' : 'border-r-0',
+        tone === 'raised' ? 'shadow-none' : '',
+      )}
+      onClick={onClick}
+    >
       {children}
     </Button>
 
     <OptionMenu
       label={choiceLabel}
       trigger={<Icon of={ChevronDownIcon} size={size === 'sm' ? 14 : 16} />}
-      triggerShape={tone === 'confirm' ? 'confirmJoined' : 'secondaryJoined'}
+      triggerShape={JOINED_SHAPES[tone]}
       align="end"
       groups={[{ name: choiceName, options, selectedId, onSelect }]}
       {...(size === 'sm' ? { className: 'size-7 before:inset-y-1.5' } : {})}

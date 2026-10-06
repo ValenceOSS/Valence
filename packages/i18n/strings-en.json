@@ -27632,11 +27632,6 @@
     "context": "The label of a button in the rail. {title} is filled in by the app."
   },
   {
-    "handler": "ui.siteFooter.backToTop",
-    "text": "Back to top",
-    "context": "A button at the foot of the page that scrolls back to the top."
-  },
-  {
     "handler": "ui.siteFooter.builtWith",
     "text": "Built with",
     "context": "The heading over the links to the tools Valence is made with, in the website footer."
@@ -27662,11 +27657,6 @@
     "context": "A footer link to the documentation page about running Valence with its compose file."
   },
   {
-    "handler": "ui.siteFooter.discord",
-    "text": "Discord",
-    "context": "A footer link to the community chat on Discord. A product name; keep it as it is."
-  },
-  {
     "handler": "ui.siteFooter.docs",
     "text": "Docs",
     "context": "A footer link to the documentation."
@@ -27687,11 +27677,6 @@
     "context": "A footer link to the source code on GitHub. A product name; keep it as it is."
   },
   {
-    "handler": "ui.siteFooter.home",
-    "text": "Home",
-    "context": "A footer link to the front page of the website."
-  },
-  {
     "handler": "ui.siteFooter.hono",
     "text": "Hono",
     "context": "A footer link to a programming library. A product name; keep it as it is."
@@ -27705,16 +27690,6 @@
     "handler": "ui.siteFooter.navigate",
     "text": "Navigate",
     "context": "The heading over the links to the main pages, in the footer of the website and the documentation."
-  },
-  {
-    "handler": "ui.siteFooter.plugins",
-    "text": "Plugins",
-    "context": "A footer link to the plugins page."
-  },
-  {
-    "handler": "ui.siteFooter.privacy",
-    "text": "Privacy",
-    "context": "A footer link to the privacy notice."
   },
   {
     "handler": "ui.siteFooter.quickStart",
@@ -27755,11 +27730,6 @@
     "handler": "ui.siteFooter.uiLibrary",
     "text": "UI library",
     "context": "A footer link to the page showing every interface component."
-  },
-  {
-    "handler": "ui.siteFooter.valence",
-    "text": "Valence",
-    "context": "The product name drawn large across the foot of the page as decoration. Keep it as it is."
   },
   {
     "handler": "ui.siteFooter.viewTheSourceOnGitHub",

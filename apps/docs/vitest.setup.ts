@@ -1,8 +1,8 @@
-import { createElement } from 'react';
 import '@testing-library/jest-dom/vitest';
 import { configure } from '@testing-library/react';
-import { afterEach, vi } from 'vitest';
+import { afterEach } from 'vitest';
 import { tidyAfterATest } from './src/testing/tidyAfterATest';
+import '@valence/ui/src/testing/stubTheLight';
 import { MotionGlobalConfig } from 'motion/react';
 
 class LayoutlessResizeObserver implements ResizeObserver {
@@ -54,11 +54,6 @@ if (!('IntersectionObserver' in globalThis)) {
 window.scrollTo = () => undefined;
 
 MotionGlobalConfig.skipAnimations = true;
-
-vi.mock('@ValenceUI/FoldGradient', () => ({
-  FoldGradient: ({ className }: { className?: string }) =>
-    createElement('div', { 'data-testid': 'shader-mount', className }),
-}));
 
 afterEach(tidyAfterATest);
 

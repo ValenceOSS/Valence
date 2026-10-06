@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { MenuOption } from '@ValenceUI/OptionMenu.types';
 
-type SplitButtonTone = 'confirm' | 'secondary';
+type SplitButtonTone = 'confirm' | 'secondary' | 'raised';
 
 type SplitButtonProps = {
   children: ReactNode;
