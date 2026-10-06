@@ -49,9 +49,11 @@ private val MEDIA_KEYS = setOf(
  * two presses or more. tvOS moves the remote at once. So where a list takes an arrow and the remote
  * has not moved, though there was somewhere for it to go, it is moved there.
  *
- * Left and right move only to something level with what has the remote, as on tvOS: Android would
- * otherwise carry the remote from the end of a row to whatever lies furthest that way anywhere on the
- * screen, up into the bar or down into another row. Where nothing level is there, the remote stays.
+ * Left and right move only to something level with what has the remote and wholly to that side of
+ * it, as on tvOS: Android would otherwise carry the remote from the end of a row to whatever lies
+ * furthest that way anywhere on the screen, up into the bar or down into another row, and from the
+ * middle of a row scrolled up beneath the bar into the bar itself, which it counts as beside
+ * whatever lies under it. Where nothing level is there, the remote stays.
  *
  * A keyboard's Escape — a keyboard plugged into the television, or the computer's running an
  * emulator — goes back, as the remote's Back button does.
@@ -122,8 +124,19 @@ object HeardWithoutFocus {
         } else {
           null
         }
-      val isTaken = within.dispatchKeyEvent(event)
       val isSideways = direction == View.FOCUS_LEFT || direction == View.FOCUS_RIGHT
+
+      if (isSideways && was != null && direction != null && event.action == KeyEvent.ACTION_DOWN) {
+        val wouldGo = was.focusSearch(direction)
+
+        if (wouldGo != null && wouldGo !== was && !isBeside(was, wouldGo, direction)) {
+          besideOf(was, direction)?.requestFocus(direction)
+
+          return true
+        }
+      }
+
+      val isTaken = within.dispatchKeyEvent(event)
 
       if (!isTaken && isSideways && was != null && window.currentFocus === was) {
         val wouldGo = was.focusSearch(direction)
@@ -161,6 +174,58 @@ object HeardWithoutFocus {
       }
 
       return false
+    }
+
+    /**
+     * The nearest thing the remote can land on that lies wholly to one side of the view it is on and
+     * level with it, outside any panel that keeps the remote in.
+     */
+    private fun besideOf(focused: View, direction: Int): View? {
+      val top = focused.rootView as? ViewGroup ?: return null
+      val from = rectIn(top, focused)
+      val found = ArrayList<View>()
+
+      top.addFocusables(found, direction)
+
+      return found
+        .filter {
+          it !== focused &&
+            it.isShown &&
+            !holds(it, focused) &&
+            isBeside(focused, it, direction) &&
+            isLevel(focused, it)
+        }
+        .sortedBy {
+          val to = rectIn(top, it)
+          val across = if (direction == View.FOCUS_RIGHT) to.left - from.right else from.left - to.right
+          val off = to.centerY() - from.centerY()
+
+          13L * across * across + off.toLong() * off
+        }
+        .firstOrNull { !isTrapped(focused, it, direction) }
+    }
+
+    /**
+     * Whether one view lies wholly to the given side of another. Android counts a wide target as
+     * beside a view where it only begins further along, such as the bar laid over a row scrolled up
+     * beneath it, and would carry the remote up into it from the middle of the row.
+     */
+    private fun isBeside(focused: View, other: View, direction: Int): Boolean {
+      val top = focused.rootView as? ViewGroup ?: return true
+      val from = rectIn(top, focused)
+      val to = rectIn(top, other)
+
+      return if (direction == View.FOCUS_RIGHT) to.left >= from.right - 1 else to.right <= from.left + 1
+    }
+
+    /** Where a view is laid out within the window's top view, as Android's own focus search reads it. */
+    private fun rectIn(top: ViewGroup, view: View): Rect {
+      val rect = Rect()
+
+      view.getDrawingRect(rect)
+      top.offsetDescendantRectToMyCoords(view, rect)
+
+      return rect
     }
 
     /** Whether two views share any of the screen's height, so moving between them is moving level. */
