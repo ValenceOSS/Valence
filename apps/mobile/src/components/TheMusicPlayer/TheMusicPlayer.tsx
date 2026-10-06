@@ -646,14 +646,17 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack, watchParty }: TheMusicPlaye
             <Button
               tone="bare"
               label={say('common.quality')}
+              isDisabled={state.remote !== null}
               onPress={() => {
                 setIsChoosingQuality(true);
               }}
             >
               <View style={[styles.badge, { borderColor: withAlpha(colours.text, 0.35) }]}>
                 <Words size="small" tone="muted">
-                  {sounds ??
-                    describeAudioQuality(state.playingQuality ?? state.quality, track).label}
+                  {state.remote === null
+                    ? (sounds ??
+                      describeAudioQuality(state.playingQuality ?? state.quality, track).label)
+                    : describeAudioQuality(whatIsPlaying?.quality ?? state.quality, track).label}
                 </Words>
               </View>
             </Button>
