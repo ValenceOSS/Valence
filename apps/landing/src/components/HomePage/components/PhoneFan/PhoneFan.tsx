@@ -4,24 +4,24 @@ import { FannedPhone } from './components/FannedPhone/FannedPhone';
 
 const PHONES = [
   {
-    label: 'Music home',
+    label: 'Your books',
     turn: -16,
     lift: 70,
     spread: -2,
     finish: 'blue',
+    src: '/phones/books.jpg',
+  },
+  {
+    label: 'Music home',
+    turn: -8,
+    lift: 26,
+    spread: -1,
+    finish: 'silver',
     src: '/phones/music.jpg',
   },
-  { label: 'An album', turn: -8, lift: 26, spread: -1, finish: 'silver', src: '/phones/album.jpg' },
   { label: 'Now playing', turn: 0, lift: 0, spread: 0, finish: 'blue', src: '/phones/playing.jpg' },
-  {
-    label: 'Your library',
-    turn: 8,
-    lift: 26,
-    spread: 1,
-    finish: 'silver',
-    src: '/phones/films.jpg',
-  },
-  { label: 'A book', turn: 16, lift: 70, spread: 2, finish: 'blue', src: '/phones/books.jpg' },
+  { label: 'Home', turn: 8, lift: 26, spread: 1, finish: 'silver', src: '/phones/home.jpg' },
+  { label: 'Your films', turn: 16, lift: 70, spread: 2, finish: 'blue', src: '/phones/films.jpg' },
 ] as const;
 
 /**
@@ -47,7 +47,7 @@ const PhoneFan = () => {
         Every screen
       </p>
 
-      <div className="relative mx-auto mb-14 flex max-w-2xl flex-col items-center gap-4 px-5 text-center">
+      <div className="relative mx-auto mb-20 flex max-w-2xl flex-col lg:mb-24 xl:mb-28 items-center gap-4 px-5 text-center">
         <h2 className="text-balance text-4xl font-semibold tracking-tight text-text lg:text-5xl">
           In your pocket, on{' '}
           <span className="font-accent font-normal italic tracking-normal">your</span> server.
@@ -60,7 +60,7 @@ const PhoneFan = () => {
 
       <div
         ref={stageRef}
-        className="relative mx-auto flex h-[30rem] max-w-6xl items-start justify-center sm:h-[36rem]"
+        className="relative mx-auto flex h-[30rem] max-w-7xl items-start justify-center sm:h-[37rem] lg:h-[43rem] xl:h-[48rem]"
       >
         {PHONES.map((phone) => (
           <FannedPhone key={phone.label} phone={phone} opened={opened} />

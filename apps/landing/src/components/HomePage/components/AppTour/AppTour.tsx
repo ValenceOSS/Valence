@@ -147,7 +147,7 @@ const AppTour = () => {
         }}
       />
 
-      <div className="mb-8 grid min-h-[1.75rem] place-items-center text-center">
+      <div className="mb-8 grid h-[4.75rem] place-items-center sm:h-[3.5rem] text-center">
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.p
             key={shown.id}
