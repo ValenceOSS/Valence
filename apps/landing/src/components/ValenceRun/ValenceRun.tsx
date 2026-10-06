@@ -25,9 +25,10 @@ const ValenceRun = ({ isBackwards = false, startsAt = 0, className }: ValenceRun
       aria-hidden
       style={{ marginLeft: `${(-startsAt).toString()}em` }}
       className={cn(
-        'valence-band-run flex w-max select-none font-bold uppercase leading-none tracking-[-0.02em]',
+        'valence-band-run flex w-max select-none font-bold uppercase tracking-[-0.02em]',
         isBackwards ? '[animation-direction:reverse]' : '',
         className,
+        'leading-none',
       )}
     >
       {run}

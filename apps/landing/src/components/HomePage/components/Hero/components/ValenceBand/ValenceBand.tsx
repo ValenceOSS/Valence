@@ -4,7 +4,7 @@ import type { ValenceBandProps } from './ValenceBand.types';
 
 /**
  * A band right across the page with Valence's name running past along it, which the app in the
- * hero hangs over: the accent blue with white letters in the light, and pale in the dark.
+ * hero hangs over: the accent blue with white letters.
  *
  * @param className - Its place on the page, which the hero decides.
  */
@@ -12,7 +12,7 @@ const ValenceBand = ({ className }: ValenceBandProps) => (
   <div
     aria-hidden
     className={cn(
-      'relative -mx-2 overflow-hidden bg-accent pb-2 text-accent-contrast dark:bg-text dark:text-surface sm:-mx-3',
+      'relative -mx-2 overflow-hidden bg-accent pb-2 text-accent-contrast sm:-mx-3',
       className,
     )}
   >
