@@ -530,8 +530,14 @@ body {
   opacity: 0;
 }
 
+[data-valence-desktop='true'][data-valence-watching] [data-slot='window-controls'] {
+  transition: visibility 0s;
+}
+
 [data-valence-desktop='true'][data-valence-watching='hidden'] [data-slot='window-controls'] {
   pointer-events: none;
+  visibility: hidden;
+  transition: visibility 0s linear var(--duration-base);
 }
 
 [data-valence-desktop='true']:has(:fullscreen) [data-slot='window-bar'] {
