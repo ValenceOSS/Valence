@@ -17,6 +17,14 @@ describe('WindowBar', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
+  it('stays usable over a dialog, so a press reaches it rather than closing the dialog', () => {
+    const { container } = render(<WindowBar />);
+
+    expect(container.querySelector('[data-slot="window-bar"]')).toHaveAttribute(
+      'data-over-dialogs',
+    );
+  });
+
   it('takes hold of the window it is laid over', () => {
     const { container } = render(<WindowBar />);
 

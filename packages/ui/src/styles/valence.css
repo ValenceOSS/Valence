@@ -498,6 +498,10 @@ body {
   --valence-window-bar-lead: 4.875rem;
 }
 
+[data-over-dialogs] {
+  pointer-events: auto;
+}
+
 .valence-below-the-bar {
   position: fixed;
   inset: var(--valence-window-bar) 0 0 0;

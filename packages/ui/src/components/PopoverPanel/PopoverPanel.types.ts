@@ -13,6 +13,7 @@ type PopoverPanelProps = {
   isBare?: boolean;
   triggerLook?: 'icon' | 'smallIcon' | 'button';
   tone?: 'default' | 'overlay';
+  isOverDialogs?: boolean;
   className?: string;
 };
 

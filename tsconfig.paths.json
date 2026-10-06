@@ -326,6 +326,7 @@
       "@ValenceUI/useCurlTurn": ["./packages/ui/src/functions/useCurlTurn.ts"],
       "@ValenceUI/windowBarHeight": ["./packages/ui/src/functions/windowBarHeight.ts"],
       "@ValenceUI/useSlidingHighlight": ["./packages/ui/src/functions/useSlidingHighlight.ts"],
+      "@ValenceUI/isOverDialogs": ["./packages/ui/src/functions/isOverDialogs.ts"],
       "@ValenceUI/useFitWidth": ["./packages/ui/src/functions/useFitWidth.ts"],
       "@ValenceUI/placeFaces": ["./packages/ui/src/functions/placeFaces.ts"],
       "@ValenceWeb/*": ["./apps/web/src/*"]

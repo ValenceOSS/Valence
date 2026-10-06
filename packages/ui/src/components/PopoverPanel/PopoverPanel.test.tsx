@@ -43,6 +43,18 @@ describe('PopoverPanel', () => {
     expect(await screen.findByRole('heading', { name: 'Season 1' })).toBeInTheDocument();
   });
 
+  it('marks its panel as staying over dialogs where it opens from chrome that does', async () => {
+    const user = userEvent.setup();
+
+    draw({ isOverDialogs: true });
+
+    await user.click(screen.getByRole('button', { name: 'Episodes' }));
+
+    expect(
+      (await screen.findByText('Season one')).closest('[data-slot="popover-content"]'),
+    ).toHaveAttribute('data-over-dialogs');
+  });
+
   it('opens nothing while it is disabled', async () => {
     const actor = userEvent.setup();
 
