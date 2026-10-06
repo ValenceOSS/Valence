@@ -7,8 +7,8 @@ import { MoreFeatures } from './components/MoreFeatures/MoreFeatures';
 
 /**
  * Everything Valence does, in one ruled grid rather than a section apiece: cells three to a row,
- * sharing their edges, under a heavier rule across the top, each with its mark, a working piece of
- * the product and its name; one cell in six is turned dark so the eye has somewhere to land, and the
+ * sharing their edges, under a heavier rule across the top, each with a working piece of the product
+ * and its name; one cell in six is filled with the accent so the eye has somewhere to land, and the
  * last says there is more and where to find it. They arrive one after another as they scroll in.
  */
 const FeatureBento = () => {

@@ -1,5 +1,3 @@
-import { Plus as PlusIcon } from '@keyline-icons/react';
-import { Icon } from '@ValenceUI/Icon';
 import { RevealItem } from '@ValenceUI/RevealItem';
 import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
 import type { MoreFeaturesProps } from './MoreFeatures.types';
@@ -17,10 +15,6 @@ const LINK = 'font-semibold text-accent underline underline-offset-4 hover:text-
 const MoreFeatures = ({ index }: MoreFeaturesProps) => (
   <RevealItem index={index} className="list-none bg-surface">
     <article className="flex h-full flex-col gap-6 p-7 sm:p-9">
-      <span className="flex size-12 items-center justify-center rounded-xl border border-text/70 text-text">
-        <Icon of={PlusIcon} size={20} />
-      </span>
-
       <div className="mt-auto flex flex-col gap-3">
         <h3 className="text-balance text-2xl font-semibold leading-tight tracking-[-0.02em] text-text lg:text-[1.75rem]">
           And a great deal more
