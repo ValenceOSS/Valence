@@ -201,8 +201,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  current: { backgroundColor: 'rgba(255,255,255,0.16)' },
-  focused: { backgroundColor: '#ffffff' },
+  current: { backgroundColor: 'rgba(255,255,255,0.16)', borderRadius: ROUND_SIZE / 2 },
+  focused: { backgroundColor: '#ffffff', borderRadius: ROUND_SIZE / 2 },
   face: { paddingHorizontal: 4 },
   hidden: { opacity: 0 },
 });
