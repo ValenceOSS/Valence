@@ -580,6 +580,18 @@ describe('PlayerControls', () => {
       expect(screen.queryByRole('button', { name: /^Next episode/ })).not.toBeInTheDocument();
     });
 
+    it('offers the episode it is given after the last of the season, as at a season’s end', async () => {
+      const user = userEvent.setup();
+      const onSelectEpisode = vi.fn();
+      const opener = { ...anEpisode('media-9', 1, 'A New Start'), seasonNumber: 2 };
+
+      draw({ episodes: SEASON, playingId: 'media-2', following: opener, onSelectEpisode });
+
+      await user.click(screen.getByRole('button', { name: 'Next episode: 1. A New Start' }));
+
+      expect(onSelectEpisode).toHaveBeenCalledWith(opener);
+    });
+
     it('offers nothing for a film', () => {
       draw({ episodes: [], playingId: 'media-1', onSelectEpisode: vi.fn() });
 

@@ -132,10 +132,10 @@ const styles = StyleSheet.create({
  * Coming out of the player throws away what was known about how far through everything is, because
  * the thing they just watched is the one entry that is now wrong.
  *
- * When an episode plays to its end the next one in its season follows on its own, as it does on
- * the browser client, until as many have followed as this profile allows — then it asks first, and
- * asks instead of playing rather than over the top of something already started. Choosing an
- * episode by hand starts that count again.
+ * When an episode plays to its end the next one follows on its own, running on into the next
+ * season at the end of one, as it does on the browser client, until as many have followed as this
+ * profile allows — then it asks first, and asks instead of playing rather than over the top of
+ * something already started. Choosing an episode by hand starts that count again.
  *
  * It joins presence as soon as somebody is through, which is what puts this phone in the list of
  * open sessions an operator watches and what carries an instruction to stop or pause back to it.

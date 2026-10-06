@@ -238,6 +238,8 @@ const EMPTY_HEALTH: PlaybackHealth = {
  * @param onProgress - Called as the viewer moves through it, with where they are and how long it is.
  * @param onEnded - Called when it reaches the end of its own accord.
  * @param episodes - The rest of the season, where this is one episode of a programme.
+ * @param following - The episode that plays after this one, where the caller knows better than the
+ *   season does, as it does at a season's end; worked out from the season where not given.
  * @param onSelectEpisode - Called with an episode the viewer chose instead of this one, and with the
  *   next one when they take up the offer of it as this one ends.
  * @param willCarryOn - Whether the next episode starts on its own when this one ends, rather than
@@ -258,6 +260,7 @@ const VideoPlayer = ({
   onProgress,
   onEnded,
   episodes = [],
+  following: givenFollowing,
   onSelectEpisode,
   willCarryOn = false,
   watchedFractionFor,
@@ -1198,9 +1201,13 @@ const VideoPlayer = ({
   const duration = media.durationSeconds > 0 ? media.durationSeconds : reportedDuration;
   const playingEpisode = episodes.find((episode) => episode.id === media.id);
   const following =
-    playingEpisode === undefined || onSelectEpisode === undefined
+    onSelectEpisode === undefined
       ? null
-      : nextEpisode(episodes, playingEpisode);
+      : givenFollowing !== undefined
+        ? givenFollowing
+        : playingEpisode === undefined
+          ? null
+          : nextEpisode(episodes, playingEpisode);
   const isHeldAtTheEnd = heldAtTheEndOf === media.id;
 
   const togglePlay = useCallback(() => {
@@ -2105,6 +2112,7 @@ const VideoPlayer = ({
               title={media.title}
               playingId={media.id}
               episodes={episodes}
+              following={following}
               {...(onSelectEpisode === undefined ? {} : { onSelectEpisode })}
               {...(watchedFractionFor === undefined ? {} : { watchedFractionFor })}
               isPlaying={isPlaying}
