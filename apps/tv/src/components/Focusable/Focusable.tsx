@@ -30,6 +30,8 @@ import type { FocusableProps } from './Focusable.types';
  * @param isDisabled - Whether it can be landed on at all.
  * @param scale - How far it lifts when focused.
  * @param isAnchoredLeft - Whether it lifts from its left edge, as a row in a list does.
+ * @param nextFocusRight - Where pressing right goes, where it should not be left to the television
+ *   to find: another element, or this one to stay put.
  * @param style - How it is laid out.
  * @param ref - Handed the pressable element, for something that has to send the remote to it.
  */
@@ -46,6 +48,7 @@ const Focusable = ({
   isDisabled = false,
   scale = tokens.FOCUS_SCALE,
   isAnchoredLeft = false,
+  nextFocusRight,
   style,
 }: FocusableProps) => {
   const [isFocused, setIsFocused] = useState(false);
@@ -69,6 +72,7 @@ const Focusable = ({
         focusable={!isDisabled}
         onPress={onPress}
         {...(onHold === undefined ? {} : { onLongPress: onHold })}
+        {...(nextFocusRight === undefined ? {} : { nextFocusRight })}
         onFocus={() => {
           if (isDrawnByFocus) {
             setIsFocused(true);

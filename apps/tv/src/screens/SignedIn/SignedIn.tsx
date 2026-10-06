@@ -213,6 +213,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     search: null,
   });
   const [items, setItems] = useState<ReadonlyMap<Tab, View>>(new Map());
+  const [playingChip, setPlayingChip] = useState<View | null>(null);
   const [heroPlay, setHeroPlay] = useState<View | null>(null);
   const downFromBar = useHandOff('down', tab === 'home' ? heroPlay : null);
 
@@ -761,6 +762,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
           hasShows={hasShows}
           hasMusic={hasMusic}
           hasBooks={hasBooks}
+          rightOfTheBar={playingChip}
         />
       </FocusFence>
 
@@ -878,6 +880,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
       {isWatching || top?.kind === 'nowPlaying' || top?.kind === 'listening' ? null : (
         <View style={styles.playing}>
           <NowPlayingChip
+            ref={setPlayingChip}
             onOpen={(which) => {
               if (which === 'book') {
                 if (top === undefined && hasBooks) {

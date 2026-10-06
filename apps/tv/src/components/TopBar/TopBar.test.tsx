@@ -30,6 +30,7 @@ const aBar = (overrides: Partial<TopBarProps> = {}): TopBarProps => ({
   hasShows: true,
   hasMusic: false,
   hasBooks: false,
+  rightOfTheBar: null,
   ...overrides,
 });
 
