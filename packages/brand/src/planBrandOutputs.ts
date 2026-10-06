@@ -97,6 +97,8 @@ const planBrandOutputs = (): BrandOutput[] => {
     tv('topShelf2x', 3840, 1440, TOP_SHELF_LOGO_SHARE),
     tv('topShelfWide', 2320, 720, TOP_SHELF_LOGO_SHARE),
     tv('topShelfWide2x', 4640, 1440, TOP_SHELF_LOGO_SHARE),
+    banner('apps/tv/assets/android-tv/banner.png', 640, 360, APP_ICON_LOGO_SHARE),
+    banner('apps/tv/assets/android-tv/icon.png', 512, 512, ANDROID_ICON_LOGO_SHARE),
     banner('apps/mobile/assets/icon/android-icon.png', 1024, 1024, ANDROID_ICON_LOGO_SHARE),
     banner(
       'apps/mobile/assets/icon/android-icon-foreground.png',
