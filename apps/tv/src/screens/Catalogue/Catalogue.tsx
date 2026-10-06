@@ -132,7 +132,7 @@ const CataloguePage = ({ kind, watchable, onOpen, onFeature, upTo }: CataloguePr
   const cardWidth = Math.floor(
     (screen.width - tokens.space.edge * 2 - tokens.space.md * (ACROSS - 1)) / ACROSS,
   );
-  const upToBar = useHandOff('up', upTo);
+  const upToBar = useHandOff('up', isFiltering || isChoosingWhere ? null : upTo);
 
   const isFinished = useCallback(
     (mediaId: string) => progress.get(mediaId)?.isFinished === true,
