@@ -18,7 +18,13 @@ import { LIT_TEXT } from '@ValenceUI/tokens/LIT_TEXT';
 import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
 import { DEMO_URL } from '@ValenceLanding/content/DEMO_URL';
 import { DeviceStage } from './components/DeviceStage/DeviceStage';
+import { DownloadDesktop } from './components/DownloadDesktop/DownloadDesktop';
+import { detectPlatform } from '@ValenceLanding/content/downloads/detectPlatform';
+import { latestRelease } from '@ValenceLanding/content/downloads/latestRelease';
+import rawReleases from 'virtual:changelog';
 import { ValenceBand } from './components/ValenceBand/ValenceBand';
+
+const LATEST = latestRelease(rawReleases);
 
 const PLATFORMS = [
   { label: 'Docker', mark: 'docker' },
@@ -81,14 +87,17 @@ const STARTS = [
  *
  * The heading is lit from below, grey rising to white inside a white edge, and writes itself in
  * a word at a time, the line draws itself under its words once the heading has landed, and the
- * way to start pops up after it with a note pointing at it, above the marks of what it runs on. The way to start is the download unless the docs or the demo are chosen
- * from its arrow, and pressing it does whichever is chosen.
+ * way to start pops up after it with a note pointing at it, beside the way to download the desktop
+ * app for the computer the page is open on, above the marks of what it runs on. The way to start is
+ * the install guide unless the docs or the demo are chosen from its arrow, and pressing it does
+ * whichever is chosen.
  */
 const Hero = () => {
   const prefersReducedMotion = useReducedMotionConfig();
   const isStill = prefersReducedMotion === true;
   const words = [...BEFORE, ACCENT, ...AFTER];
   const [startId, setStartId] = useState<string>(STARTS[0].id);
+  const [platform] = useState(() => detectPlatform(navigator));
   const start = STARTS.find((one) => one.id === startId) ?? STARTS[0];
 
   return (
@@ -172,6 +181,10 @@ const Hero = () => {
               >
                 {start.label}
               </SplitButton>
+            </motion.span>
+
+            <motion.span className="flex" {...popArrival(BUTTONS_LEAD + 0.1, isStill)}>
+              <DownloadDesktop release={LATEST} platform={platform} />
             </motion.span>
 
             <span

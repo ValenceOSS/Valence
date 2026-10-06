@@ -4,10 +4,10 @@ import type { LatestRelease } from './latestRelease';
 import type { Platform } from './Platform';
 
 const CHOICES = [
-  { id: 'macAppleSilicon', system: 'macOS', detail: 'Apple silicon' },
-  { id: 'macIntel', system: 'macOS', detail: 'Intel' },
-  { id: 'windows', system: 'Windows', detail: '64-bit installer' },
-  { id: 'linux', system: 'Linux', detail: 'AppImage' },
+  { id: 'macAppleSilicon', system: 'macOS', detail: 'Apple silicon · arm64' },
+  { id: 'macIntel', system: 'macOS', detail: 'Intel · x64' },
+  { id: 'windows', system: 'Windows', detail: 'Installer · x64' },
+  { id: 'linux', system: 'Linux', detail: 'AppImage · x64' },
 ] as const;
 
 const LEADS: Readonly<Partial<Record<Platform, DownloadChoice['id']>>> = {

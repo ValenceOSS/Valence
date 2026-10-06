@@ -32,10 +32,10 @@ const GROUPS: readonly { title: SiteFooterString; links: readonly FooterLink[] }
   {
     title: 'ui.siteFooter.navigate',
     links: [
-      { site: 'landing', path: '/', label: 'ui.siteFooter.home' },
+      { site: 'landing', path: '/', label: 'common.home' },
       { site: 'docs', path: '/', label: 'ui.siteFooter.docs' },
       { site: 'landing', path: '/changelog', label: 'ui.siteFooter.changelog' },
-      { site: 'landing', path: '/plugins', label: 'ui.siteFooter.plugins' },
+      { site: 'landing', path: '/plugins', label: 'common.plugins' },
       { site: 'landing', path: '/ui', label: 'ui.siteFooter.uiLibrary' },
     ],
   },
@@ -51,12 +51,16 @@ const GROUPS: readonly { title: SiteFooterString; links: readonly FooterLink[] }
     title: 'ui.siteFooter.community',
     links: [
       { href: GITHUB_URL, label: 'ui.siteFooter.gitHub' },
-      { href: DISCORD_URL, label: 'ui.siteFooter.discord' },
+      { href: DISCORD_URL, label: 'screens.adminArea.webhookFields.discord' },
       {
         href: `${GITHUB_URL}/security/advisories/new`,
         label: 'ui.siteFooter.reportAVulnerability',
       },
-      { site: 'landing', path: '/privacy', label: 'ui.siteFooter.privacy' },
+      {
+        site: 'landing',
+        path: '/privacy',
+        label: 'screens.adminArea.indexerCatalogueDialog.privacy',
+      },
       { site: 'landing', path: '/terms', label: 'ui.siteFooter.terms' },
     ],
   },
@@ -118,7 +122,7 @@ const SiteFooter = ({ here, InSiteLink }: SiteFooterProps) => {
             <span className="flex items-center gap-3">
               <Logo size={34} isSolid />
               <span className="text-3xl font-semibold tracking-tight text-text">
-                {say('ui.siteFooter.valence')}
+                {say('common.valence')}
               </span>
             </span>
 
@@ -183,7 +187,7 @@ const SiteFooter = ({ here, InSiteLink }: SiteFooterProps) => {
                 window.scrollTo({ top: 0, behavior: isStill ? 'auto' : 'smooth' });
               }}
             >
-              {say('ui.siteFooter.backToTop')}
+              {say('ui.backToTop.backToTop')}
               <Icon of={ArrowUpIcon} size={14} />
             </Button>
           </div>
@@ -198,7 +202,7 @@ const SiteFooter = ({ here, InSiteLink }: SiteFooterProps) => {
           )}
         >
           <p className="absolute inset-x-0 top-0 select-none whitespace-nowrap bg-linear-to-r from-text/0 via-text/70 to-text/0 bg-clip-text text-center text-[22vw] font-bold leading-none tracking-tighter text-transparent xl:text-[20rem]">
-            {say('ui.siteFooter.valence')}
+            {say('common.valence')}
           </p>
         </div>
       </SectionCard>
