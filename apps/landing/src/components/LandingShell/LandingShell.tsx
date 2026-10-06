@@ -1,6 +1,5 @@
 import { useRouterState } from '@tanstack/react-router';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
-import { revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
 import { ReleaseBar } from '@ValenceLanding/components/ReleaseBar/ReleaseBar';
 import { LandingNav } from '@ValenceLanding/components/LandingNav/LandingNav';
 import { LandingFooter } from '@ValenceLanding/components/LandingFooter/LandingFooter';
@@ -13,6 +12,7 @@ import { TermsPage } from '@ValenceLanding/components/TermsPage/TermsPage';
 import { PageProblem } from '@ValenceLanding/components/PageProblem/PageProblem';
 import { UiLibraryPage } from '@ValenceLanding/components/UiLibraryPage/UiLibraryPage';
 import type { ComponentType } from 'react';
+import { pageVariants } from './pageVariants';
 
 const PAGES: Record<string, ComponentType> = {
   '/': HomePage,
@@ -25,7 +25,7 @@ const PAGES: Record<string, ComponentType> = {
 
 /**
  * What every page on getvalence.app sits inside: the line about the newest release, the nav, the
- * footer, and a reveal between one page and the next.
+ * footer, and one page blurring away as the next rises into focus.
  *
  * The page shown is looked up here and rendered directly rather than through `Outlet`. `Outlet`
  * stays subscribed to the router's current match even while `AnimatePresence` is still playing its
@@ -54,11 +54,10 @@ const LandingShell = () => {
       <AnimatePresence mode="wait">
         <motion.main
           key={isUiLibrary ? '/ui' : pathname}
-          variants={revealVariants(prefersReducedMotion)}
+          variants={pageVariants(prefersReducedMotion === true)}
           initial="hidden"
           animate="shown"
           exit="gone"
-          transition={revealTransition(prefersReducedMotion, 'heavy')}
           className="flex-1"
         >
           <Page />

@@ -12,6 +12,11 @@ const STARTS = [
   0, 3.4, 1.1, 4.7, 2.2, 0.6, 3.9, 1.8, 5.1, 2.9, 0.2, 4.2, 1.5, 3.1, 0.9, 4.9,
 ] as const;
 
+const ROWS = Array.from(
+  { length: 32 },
+  (_, at) => ((STARTS[at % STARTS.length] ?? 0) + Math.floor(at / STARTS.length) * 2.7) % 5.6,
+);
+
 /**
  * The last word on the home page: a blue card the width of the hero asking whether the reader is
  * ready, with the way to install it and the way to look round the demo first, beside rows of
@@ -37,10 +42,10 @@ const GetStarted = () => {
       >
         <div
           aria-hidden
-          className="absolute inset-y-0 left-[46%] right-0 hidden overflow-hidden lg:block"
+          className="absolute inset-y-0 left-[calc(50%-2rem)] right-0 hidden overflow-hidden lg:block"
         >
-          <div className="absolute left-[-60%] top-1/2 flex w-[260%] -translate-y-1/2 -rotate-[38deg] flex-col gap-4">
-            {STARTS.map((startsAt, at) => (
+          <div className="absolute left-1/2 top-1/2 flex w-max -translate-x-1/2 -translate-y-1/2 -rotate-[38deg] flex-col gap-4">
+            {ROWS.map((startsAt, at) => (
               <div key={at} className="overflow-hidden text-5xl text-accent-contrast">
                 <ValenceRun isBackwards={at % 2 === 1} startsAt={startsAt} />
               </div>
@@ -49,7 +54,7 @@ const GetStarted = () => {
         </div>
         <div
           aria-hidden
-          className="absolute inset-y-0 left-[40%] hidden w-[16%] bg-accent/20 backdrop-blur-xl [mask-image:linear-gradient(to_right,transparent,black_35%,black_65%,transparent)] lg:block"
+          className="absolute inset-y-0 left-[calc(50%-7rem)] hidden w-[12rem] bg-accent/20 backdrop-blur-xl [mask-image:linear-gradient(to_right,transparent,black_35%,black_65%,transparent)] lg:block"
         />
 
         <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-16 px-6 py-20 sm:px-10 sm:py-28 xl:max-w-7xl">

@@ -13,9 +13,8 @@ import { BrandGlyph } from '@ValenceUI/BrandGlyph';
 import { Tooltip } from '@ValenceUI/Tooltip';
 import { Doodle } from '@ValenceUI/Doodle';
 import { cn } from '@ValenceUI/cn';
-import { FoldGradient } from '@ValenceLanding/components/FoldGradient/FoldGradient';
+import { AuroraBackdrop } from '@ValenceLanding/components/AuroraBackdrop/AuroraBackdrop';
 import { LIT_TEXT } from '@ValenceLanding/components/HomePage/LIT_TEXT';
-import { AURORA } from '@ValenceLanding/tokens/AURORA';
 import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
 import { DEMO_URL } from '@ValenceLanding/content/DEMO_URL';
 import { DeviceStage } from './components/DeviceStage/DeviceStage';
@@ -93,25 +92,9 @@ const Hero = () => {
   const start = STARTS.find((one) => one.id === startId) ?? STARTS[0];
 
   return (
-    <section className="relative px-2 pt-2 [--app-peek:min(30vw,8rem)] sm:px-3 sm:pt-3 sm:[--app-peek:max(min(14vw,9.5rem),calc(100svh-var(--release-bar)-44rem))]">
+    <section className="relative px-2 pt-2 [--app-peek:min(30vw,8rem)] sm:px-3 sm:pt-3 sm:[--app-peek:min(22rem,max(min(14vw,9.5rem),calc(100svh-var(--release-bar)-44rem)))]">
       <div className="relative isolate flex min-h-[calc(100svh-var(--release-bar)-1rem)] flex-col overflow-hidden rounded-[2rem] bg-aurora pb-[calc(var(--app-peek)+1.5rem)] sm:min-h-[calc(100svh-var(--release-bar)-1.5rem)] sm:rounded-[2.5rem]">
-        <FoldGradient
-          colors={[...AURORA.colours]}
-          bgColor={AURORA.back}
-          shadowColor={AURORA.shadow}
-          softness={0.9}
-          saturation={1.1}
-          rotation={52}
-          zoom={7}
-          ribbon={0.17}
-          ribbonWidth={1}
-          className="absolute inset-0 -z-10 h-full w-full opacity-80"
-          speed={isStill ? 0 : 0.6}
-        />
-        <div
-          aria-hidden
-          className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,transparent_30%,var(--color-aurora)_85%)]"
-        />
+        <AuroraBackdrop />
 
         <motion.div
           variants={staggerVariants}
