@@ -218,6 +218,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
   const [audio, setAudio] = useState<number | undefined>(undefined);
   const [startFrom, setStartFrom] = useState(startSeconds);
   const [chosenSubtitles, setChosenSubtitles] = useState<string | null>(null);
+  const [cameFrom, setCameFrom] = useState<string | null>(null);
   const [menu, setMenu] = useState<
     | 'settings'
     | 'subtitles'
@@ -947,7 +948,10 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
               value: isShowingStats ? say('common.on') : say('common.off'),
             },
           ]}
+          cameFrom={cameFrom}
           onOpen={(id) => {
+            setCameFrom(id);
+
             if (id === 'stats') {
               setIsShowingStats((was) => !was);
               closeMenu();
@@ -1010,8 +1014,11 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
             label: set.heading,
             value: set.choices.find((choice) => choice.id === set.chosen)?.label ?? set.chosen,
           }))}
+          cameFrom={cameFrom}
           onOpen={(id) => {
             const set = captionChoices(captions.style).find((one) => one.id === id);
+
+            setCameFrom(id);
 
             if (set !== undefined) {
               setMenu(`caption:${set.id}`);

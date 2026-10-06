@@ -50,4 +50,19 @@ describe('SettingsMenu', () => {
       false,
     );
   });
+
+  it('starts the remote back on the setting whose choices were just closed', async () => {
+    const drawn = await render(
+      <SettingsMenu settings={SETTINGS} onOpen={jest.fn()} cameFrom="speed" />,
+    );
+
+    expect(drawn.getByRole('button', { name: 'Speed, Normal' })).toHaveProp(
+      'hasTVPreferredFocus',
+      true,
+    );
+    expect(drawn.getByRole('button', { name: 'Quality, Original' })).toHaveProp(
+      'hasTVPreferredFocus',
+      false,
+    );
+  });
 });
