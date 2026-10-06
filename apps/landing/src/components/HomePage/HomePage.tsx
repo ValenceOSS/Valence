@@ -3,24 +3,33 @@ import { DataOwnershipStatement } from '@ValenceLanding/components/HomePage/comp
 import { FeatureBento } from '@ValenceLanding/components/HomePage/components/FeatureBento/FeatureBento';
 import { PhoneFan } from '@ValenceLanding/components/HomePage/components/PhoneFan/PhoneFan';
 import { AppTour } from '@ValenceLanding/components/HomePage/components/AppTour/AppTour';
+import { SectionCard } from '@ValenceLanding/components/SectionCard/SectionCard';
 import { GetStarted } from '@ValenceLanding/components/HomePage/components/GetStarted/GetStarted';
 
 /**
  * getvalence.app itself: the app laying itself flat under what Valence is, why it is yours, all it
  * does in its groups, the phone app fanned out, a walk round the app, and a last card asking
- * whether you are ready.
+ * whether you are ready, each on a rounded card of its own.
  */
 const HomePage = () => (
   <>
     <Hero />
 
-    <DataOwnershipStatement />
+    <SectionCard isRaised>
+      <DataOwnershipStatement />
+    </SectionCard>
 
-    <FeatureBento />
+    <SectionCard>
+      <FeatureBento />
+    </SectionCard>
 
-    <PhoneFan />
+    <SectionCard isRaised>
+      <PhoneFan />
+    </SectionCard>
 
-    <AppTour />
+    <SectionCard>
+      <AppTour />
+    </SectionCard>
 
     <GetStarted />
   </>

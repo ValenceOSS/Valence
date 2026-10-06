@@ -46,10 +46,7 @@ const PhoneFan = () => {
   });
 
   return (
-    <section
-      aria-label="Valence on a phone"
-      className="relative isolate overflow-hidden bg-surface py-28 [--frame-back:var(--color-surface)]"
-    >
+    <section aria-label="Valence on a phone" className="relative isolate overflow-hidden py-28">
       <p
         aria-hidden
         className="valence-outline-text pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 select-none whitespace-nowrap text-center text-[11vw] font-bold uppercase leading-none tracking-[-0.03em] text-text/20"

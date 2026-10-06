@@ -18,7 +18,7 @@ const GetStarted = () => {
     <section
       id="download"
       aria-label="Get started"
-      className="scroll-mt-24 px-2 pb-2 pt-24 sm:px-3 sm:pb-3"
+      className="scroll-mt-24 px-2 pt-2 sm:px-3 sm:pt-3"
     >
       <motion.div
         initial="hidden"
