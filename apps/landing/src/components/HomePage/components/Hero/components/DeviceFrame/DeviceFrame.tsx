@@ -2,8 +2,9 @@ import { cn } from '@ValenceUI/cn';
 import type { DeviceFrameProps } from './DeviceFrame.types';
 
 /**
- * A screenshot of the web app, rounded as a window's contents are, lifted off the page on a shadow
- * and a hairline edge rather than dressed in a browser drawn around it.
+ * A screenshot of the web app, held in a rim of glass the way the app's own dialogs are: a few
+ * pixels of frosted, tinted border with a hairline edge, blurring whatever is behind it, and the
+ * picture rounded inside it, lifted off the page on a shadow.
  *
  * @param src - The screenshot.
  * @param alt - What it shows, for anybody who cannot see it.
@@ -11,17 +12,21 @@ import type { DeviceFrameProps } from './DeviceFrame.types';
  * @param className - Extra classes for the caller's own layout.
  */
 const DeviceFrame = ({ src, alt, shape, className }: DeviceFrameProps) => (
-  <img
-    src={src}
-    alt={alt}
-    loading="eager"
-    draggable={false}
+  <div
     data-shape={shape}
     className={cn(
-      'block w-full select-none rounded-xl shadow-[var(--shadow-cast)] ring-1 ring-on-scrim/10 sm:rounded-2xl',
+      'valence-glass valence-glass--film rounded-[1rem] p-1.5 shadow-[var(--shadow-cast)] sm:rounded-[1.6rem] sm:p-2',
       className,
     )}
-  />
+  >
+    <img
+      src={src}
+      alt={alt}
+      loading="eager"
+      draggable={false}
+      className="block w-full select-none rounded-[0.65rem] sm:rounded-2xl"
+    />
+  </div>
 );
 
 DeviceFrame.displayName = 'DeviceFrame';
