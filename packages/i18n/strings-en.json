@@ -2043,7 +2043,7 @@
   {
     "handler": "common.browser",
     "text": "Browser",
-    "context": "Shown, used in the playback (from `detectClientLabel`) and in the playback (from `detectDeviceProfile`)."
+    "context": "Shown, used in the playback (from `detectClientLabel`) and in the playback (from `detectFromBrowser`)."
   },
   {
     "handler": "common.byAuthor",
@@ -3530,6 +3530,11 @@
     "handler": "common.letBackIn",
     "text": "Unban",
     "context": "Shown in the accounts panel in the admin area."
+  },
+  {
+    "handler": "common.lgTV",
+    "text": "LG TV",
+    "context": "The name of the kind of television, for an LG television showing the TV layout in its browser; shown in the platform of the television app (from `describeThisTv`) and in the playback of the television app (from `theTvsProfile`)."
   },
   {
     "handler": "common.libraries",
@@ -5260,6 +5265,11 @@
     "context": "The label, used in the installed plugin card in the plugins panel and in the status (from `describeJobStatus`)."
   },
   {
+    "handler": "common.samsungTV",
+    "text": "Samsung TV",
+    "context": "The name of the kind of television, for a Samsung television showing the TV layout in its browser; shown in the platform of the television app (from `describeThisTv`) and in the playback of the television app (from `theTvsProfile`)."
+  },
+  {
     "handler": "common.sans",
     "text": "Sans",
     "context": "A caption setting, in the web player and on the phone and the television."
@@ -5568,6 +5578,11 @@
     "handler": "common.smartShuffle",
     "text": "Smart shuffle",
     "context": "Shown, used in several places, among them the music player of the phone app and the coming track in the up next of the phone app."
+  },
+  {
+    "handler": "common.smartTV",
+    "text": "Smart TV",
+    "context": "The name of the kind of television, for another maker's television showing the TV layout in its browser; shown in the platform of the television app (from `describeThisTv`) and in the playback of the television app (from `theTvsProfile`)."
   },
   {
     "handler": "common.softwareOnly",
@@ -27086,6 +27101,11 @@
     "context": "Text shown in the choose server of the television app, on an Android TV."
   },
   {
+    "handler": "tv.chooseServer.chooseTheServerThisTV",
+    "text": "Choose the server this TV connects to.",
+    "context": "Text shown in the choose server of the television app, on a television showing the TV layout in its browser."
+  },
+  {
     "handler": "tv.chooseServer.found1ValenceOnYourNetwork",
     "text": "Found 1 Valence server on your network",
     "context": "Shown in the choose server of the television app."
@@ -27239,6 +27259,16 @@
     "handler": "tv.nowPlaying.devicesPanel.thisFireTVPlayingHere",
     "text": "This Fire TV · playing here",
     "context": "Shown in the devices panel in the now playing of the television app, on an Android TV."
+  },
+  {
+    "handler": "tv.nowPlaying.devicesPanel.thisTV",
+    "text": "This TV",
+    "context": "Shown in the devices panel in the now playing of the television app, on a television showing the TV layout in its browser."
+  },
+  {
+    "handler": "tv.nowPlaying.devicesPanel.thisTVPlayingHere",
+    "text": "This TV · playing here",
+    "context": "Shown in the devices panel in the now playing of the television app, on a television showing the TV layout in its browser."
   },
   {
     "handler": "tv.nowPlaying.hideTheWords",

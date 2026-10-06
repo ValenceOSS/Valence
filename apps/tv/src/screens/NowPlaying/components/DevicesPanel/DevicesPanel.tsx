@@ -17,21 +17,31 @@ import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
 
 const WIDTH = 820;
 
+const THIS_TV: Record<TvKind, () => string> = {
+  appleTv: () => say('tv.nowPlaying.devicesPanel.thisAppleTV'),
+  androidTv: () => say('tv.nowPlaying.devicesPanel.thisAndroidTV'),
+  fireTv: () => say('tv.nowPlaying.devicesPanel.thisFireTV'),
+  lgTv: () => say('tv.nowPlaying.devicesPanel.thisTV'),
+  samsungTv: () => say('tv.nowPlaying.devicesPanel.thisTV'),
+  smartTv: () => say('tv.nowPlaying.devicesPanel.thisTV'),
+};
+
+const THIS_TV_PLAYING_HERE: Record<TvKind, () => string> = {
+  appleTv: () => say('tv.nowPlaying.devicesPanel.thisAppleTVPlayingHere'),
+  androidTv: () => say('tv.nowPlaying.devicesPanel.thisAndroidTVPlayingHere'),
+  fireTv: () => say('tv.nowPlaying.devicesPanel.thisFireTVPlayingHere'),
+  lgTv: () => say('tv.nowPlaying.devicesPanel.thisTVPlayingHere'),
+  samsungTv: () => say('tv.nowPlaying.devicesPanel.thisTVPlayingHere'),
+  smartTv: () => say('tv.nowPlaying.devicesPanel.thisTVPlayingHere'),
+};
+
 /**
  * This television as the list of places to play names it.
  *
  * @param kind - Which kind of television this is.
  * @returns Its name in the list.
  */
-const thisTvFor = (kind: TvKind): string => {
-  if (kind === 'fireTv') {
-    return say('tv.nowPlaying.devicesPanel.thisFireTV');
-  }
-
-  return kind === 'androidTv'
-    ? say('tv.nowPlaying.devicesPanel.thisAndroidTV')
-    : say('tv.nowPlaying.devicesPanel.thisAppleTV');
-};
+const thisTvFor = (kind: TvKind): string => THIS_TV[kind]();
 
 /**
  * This television as the list of places to play names it while the music plays on it.
@@ -39,15 +49,7 @@ const thisTvFor = (kind: TvKind): string => {
  * @param kind - Which kind of television this is.
  * @returns Its name in the list.
  */
-const thisTvPlayingHereFor = (kind: TvKind): string => {
-  if (kind === 'fireTv') {
-    return say('tv.nowPlaying.devicesPanel.thisFireTVPlayingHere');
-  }
-
-  return kind === 'androidTv'
-    ? say('tv.nowPlaying.devicesPanel.thisAndroidTVPlayingHere')
-    : say('tv.nowPlaying.devicesPanel.thisAppleTVPlayingHere');
-};
+const thisTvPlayingHereFor = (kind: TvKind): string => THIS_TV_PLAYING_HERE[kind]();
 
 /**
  * The picture that says what kind of device a name is, as the web picks it.

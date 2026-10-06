@@ -1,3 +1,5 @@
-type TvKind = 'appleTv' | 'androidTv' | 'fireTv';
+import type { TvBrowser } from '@ValenceCore/functions/TvBrowser';
+
+type TvKind = 'appleTv' | 'androidTv' | 'fireTv' | TvBrowser;
 
 export type { TvKind };
