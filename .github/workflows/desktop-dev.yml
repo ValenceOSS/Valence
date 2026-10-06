@@ -152,6 +152,11 @@ jobs:
             next="$(gh api "$assets" -q ".assets[] | select(.name == \"$name.next\") | .id")"
             was="$(gh api "$assets" -q ".assets[] | select(.name == \"$name\") | .id")"
 
+            if [ -z "$next" ]; then
+              echo "The staged $name.next is not on the release, so $name is left as it was." >&2
+              exit 1
+            fi
+
             if [ -n "$was" ]; then
               gh api -X DELETE "repos/$GITHUB_REPOSITORY/releases/assets/$was"
             fi
