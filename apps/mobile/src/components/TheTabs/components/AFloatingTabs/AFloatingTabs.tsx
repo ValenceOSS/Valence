@@ -118,7 +118,7 @@ const AFloatingTabs = ({
             isGlass
               ? null
               : {
-                  backgroundColor: withAlpha(colours.surfaceRaised, 0.94),
+                  backgroundColor: withAlpha(colours.surfaceRaised, 0.98),
                   borderColor: withAlpha(colours.text, 0.1),
                   borderWidth: StyleSheet.hairlineWidth,
                 },

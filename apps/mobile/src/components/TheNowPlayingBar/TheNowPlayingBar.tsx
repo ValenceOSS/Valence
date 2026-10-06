@@ -31,6 +31,8 @@ const ART = 42;
 
 const HIGH = 60;
 
+const ART_ROUND = 14;
+
 const GOES_PAST = 0.35;
 
 const GOES_FASTER_THAN = 0.8;
@@ -42,7 +44,7 @@ const BACK = { ...SPRINGS.liquid, toValue: 0, useNativeDriver: true } as const;
 const styles = StyleSheet.create({
   art: {
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: ART_ROUND,
     height: ART,
     justifyContent: 'center',
     overflow: 'hidden',
@@ -52,7 +54,14 @@ const styles = StyleSheet.create({
   button: { padding: 8 },
   fills: { height: '100%', width: '100%' },
   opens: { flex: 1 },
-  row: { alignItems: 'center', flexDirection: 'row', gap: 12, height: HIGH, paddingHorizontal: 10 },
+  row: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+    height: HIGH,
+    paddingLeft: (HIGH - ART) / 2,
+    paddingRight: 14,
+  },
   said: { flex: 1, gap: 1 },
 });
 
@@ -158,7 +167,7 @@ const TheNowPlayingBar = ({ onOpen }: TheNowPlayingBarProps) => {
   if (isBook) {
     return (
       <Animated.View style={[styles.row, moving]} {...swipe.panHandlers}>
-        <AGlass roundness={16} />
+        <AGlass roundness={HIGH / 2} />
 
         <View style={styles.opens}>
           <Button
@@ -229,7 +238,7 @@ const TheNowPlayingBar = ({ onOpen }: TheNowPlayingBarProps) => {
 
   return (
     <Animated.View style={[styles.row, moving]} {...swipe.panHandlers}>
-      <AGlass roundness={16} />
+      <AGlass roundness={HIGH / 2} />
 
       <View style={styles.opens}>
         <Button
