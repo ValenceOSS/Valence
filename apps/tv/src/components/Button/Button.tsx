@@ -57,6 +57,8 @@ const TEXT: Record<ButtonSize, number> = { md: 26, lg: 28, xl: 32 };
  * @param isIconOnly - Whether it shows its icon alone, as a round button, its words still read out.
  * @param iconSize - How large its icon is, where it should not follow the size of its words.
  * @param hasPreferredFocus - Whether the remote starts here.
+ * @param isRingHidden - Whether to leave off the ring while the remote is on it, for a button that
+ *   stays on screen while the controls around it have faded away.
  * @param ref - Handed the pressable element, for something that has to send the remote to it.
  */
 const Button = ({
@@ -75,6 +77,7 @@ const Button = ({
   isIconOnly = false,
   iconSize,
   hasPreferredFocus = false,
+  isRingHidden = false,
   ref,
 }: ButtonProps) => {
   const look = LOOKS[variant];
@@ -101,7 +104,7 @@ const Button = ({
               styles.ring,
               {
                 borderRadius: corner + RING_GAP + tokens.FOCUS_RING,
-                borderColor: isFocused ? '#ffffff' : 'transparent',
+                borderColor: isFocused && !isRingHidden ? '#ffffff' : 'transparent',
               },
             ]}
           >

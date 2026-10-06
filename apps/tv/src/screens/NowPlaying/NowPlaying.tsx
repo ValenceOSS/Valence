@@ -85,8 +85,9 @@ const HEART = 72;
  * What is playing, filling the screen as the television's own music app fills it: the whole screen
  * lit by the song's cover, the cover itself with the song's name and who sings it, how far through
  * it is, and the controls — shuffle, back, play, on, repeat, and beneath them the words, what plays
- * next and the devices to play on. Beside the name is a heart for liking it, and beneath it how the
- * song is being heard — lossless, and how finely, or the encode it has been sent as.
+ * next and the devices to play on. Beside the name is a heart for liking it, which stays as the
+ * controls fade though its ring goes with them, and beneath it how the song is being heard —
+ * lossless, and how finely, or the encode it has been sent as.
  *
  * Where the song has words they fill the right of the screen, timed to the song where they can be;
  * without them, or with them turned off, the cover sits in the middle on its own. Left alone a few
@@ -345,6 +346,7 @@ const NowPlaying = ({ onEmpty, onBack, watchParty }: NowPlayingProps) => {
                     size="md"
                     isIconOnly
                     iconSize={34}
+                    isRingHidden={isResting}
                     ref={setHeart}
                     onFocus={atTheHeart}
                     onPress={() => {
