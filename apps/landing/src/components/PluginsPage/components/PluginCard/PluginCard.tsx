@@ -42,7 +42,8 @@ const PluginCard = ({ plugin, index }: PluginCardProps) => {
       custom={index}
       initial="hidden"
       whileInView="shown"
-      viewport={{ once: true, margin: '-60px' }}
+      animate="hidden"
+      viewport={{ margin: '-60px' }}
       variants={revealItemVariants(prefersReducedMotion)}
       className="valence-surface valence-surface--flat flex h-full list-none flex-col gap-5 rounded-3xl p-6 sm:p-7"
     >

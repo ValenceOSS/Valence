@@ -42,6 +42,8 @@ const PhoneFan = () => {
   useMotionValueEvent(opened, 'change', (value) => {
     if (isOnScreen && value >= OPEN_ENOUGH) {
       setIsFanned(true);
+    } else if (!isStill && value < OPEN_ENOUGH) {
+      setIsFanned(false);
     }
   });
 

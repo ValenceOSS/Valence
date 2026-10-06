@@ -19,7 +19,8 @@ const FeatureBento = () => {
       <motion.div
         initial="hidden"
         whileInView="shown"
-        viewport={{ once: true, margin: '-80px' }}
+        animate="hidden"
+        viewport={{ margin: '-80px' }}
         variants={revealVariants(prefersReducedMotion)}
         transition={revealTransition(prefersReducedMotion, 'bouncy')}
         className="mb-14 grid gap-4 lg:grid-cols-2 lg:items-end lg:gap-16"

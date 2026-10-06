@@ -92,7 +92,8 @@ const DownloadSection = () => {
       <motion.div
         initial="hidden"
         whileInView="shown"
-        viewport={{ once: true, margin: '-80px' }}
+        animate="hidden"
+        viewport={{ margin: '-80px' }}
         variants={revealVariants(prefersReducedMotion)}
         transition={revealTransition(prefersReducedMotion, 'bouncy')}
         className="flex flex-col gap-14"

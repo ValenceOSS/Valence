@@ -98,7 +98,8 @@ const PluginsPage = ({ plugins = OFFICIAL }: PluginsPageProps) => {
                   custom={index}
                   initial="hidden"
                   whileInView="shown"
-                  viewport={{ once: true, margin: '-60px' }}
+                  animate="hidden"
+                  viewport={{ margin: '-60px' }}
                   variants={revealItemVariants(prefersReducedMotion)}
                   className="list-none"
                 >

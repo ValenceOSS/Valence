@@ -22,7 +22,8 @@ const FeatureGroupGrid = ({ group, number }: FeatureGroupGridProps) => {
       <motion.header
         initial="hidden"
         whileInView="shown"
-        viewport={{ once: true, margin: '-80px' }}
+        animate="hidden"
+        viewport={{ margin: '-80px' }}
         variants={revealVariants(prefersReducedMotion)}
         transition={revealTransition(prefersReducedMotion, 'bouncy')}
         className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between sm:gap-10"
@@ -40,7 +41,8 @@ const FeatureGroupGrid = ({ group, number }: FeatureGroupGridProps) => {
         <motion.ul
           initial="hidden"
           whileInView="shown"
-          viewport={{ once: true, margin: '-80px' }}
+          animate="hidden"
+          viewport={{ margin: '-80px' }}
           variants={groupVariants}
           className={cn(
             '-mb-px -mr-px grid grid-cols-1 sm:grid-cols-2',

@@ -35,7 +35,8 @@ const GetStarted = () => {
       <motion.div
         initial="hidden"
         whileInView="shown"
-        viewport={{ once: true, margin: '-80px' }}
+        animate="hidden"
+        viewport={{ margin: '-80px' }}
         variants={revealVariants(prefersReducedMotion)}
         transition={revealTransition(prefersReducedMotion, 'bouncy')}
         className="relative isolate overflow-hidden rounded-[2rem] bg-accent text-accent-contrast sm:rounded-[2.5rem]"

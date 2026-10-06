@@ -29,7 +29,7 @@ const DRAWS_FOR_SECONDS = 0.9;
 
 /**
  * A hand-drawn mark beside the words it points at — a ring round a word, an arrow towards a note, a
- * line beneath — which draws itself in the first time it is scrolled into view, as a pen would.
+ * line beneath — which draws itself in each time it is scrolled into view, as a pen would.
  *
  * The mark is a file referenced by its address and painted through as a mask, so it takes the
  * colour of the text around it and no SVG is inlined; a second mask sweeps along it to draw it in.
@@ -44,7 +44,7 @@ const DRAWS_FOR_SECONDS = 0.9;
  */
 const Doodle = ({ of, delay = 0, isShown = true, className }: DoodleProps) => {
   const held = useRef<HTMLSpanElement>(null);
-  const isSeen = useInView(held, { once: true, amount: 0.6 });
+  const isSeen = useInView(held, { amount: 0.6 });
   const isStill = useReducedMotionConfig() === true;
   const { file, sweep } = MARKS[of];
   const masks = `url("${file}"), ${sweep}`;

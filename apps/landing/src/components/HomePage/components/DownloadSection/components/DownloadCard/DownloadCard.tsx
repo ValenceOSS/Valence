@@ -32,7 +32,8 @@ const DownloadCard = ({
       custom={index}
       initial="hidden"
       whileInView="shown"
-      viewport={{ once: true, margin: '-60px' }}
+      animate="hidden"
+      viewport={{ margin: '-60px' }}
       variants={revealItemVariants(prefersReducedMotion)}
       className={cn(
         'valence-surface valence-surface--flat valence-feature-card flex flex-col overflow-hidden rounded-3xl',
