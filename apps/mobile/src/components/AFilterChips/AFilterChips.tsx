@@ -7,7 +7,7 @@ import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import type { AFilterChipsProps } from './AFilterChips.types';
 
 const styles = StyleSheet.create({
-  chip: { borderRadius: 999, height: 36, justifyContent: 'center', paddingHorizontal: 16 },
+  chip: { borderRadius: 18, height: 36, justifyContent: 'center', paddingHorizontal: 16 },
   row: { gap: 8, paddingHorizontal: SCREEN_EDGE },
 });
 

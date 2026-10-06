@@ -6,7 +6,7 @@ import type { ALitCircleProps } from './ALitCircle.types';
 const ROOM = 18;
 
 const styles = StyleSheet.create({
-  round: { alignItems: 'center', borderRadius: 999, justifyContent: 'center' },
+  round: { alignItems: 'center', justifyContent: 'center' },
 });
 
 /**
@@ -26,7 +26,7 @@ const ALitCircle = ({ of, size, isLit }: ALitCircleProps) => {
     <View
       style={[
         styles.round,
-        { height: across, width: across },
+        { borderRadius: across / 2, height: across, width: across },
         isLit ? { backgroundColor: colours.accent } : null,
       ]}
     >
