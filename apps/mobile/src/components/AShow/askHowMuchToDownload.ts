@@ -1,4 +1,4 @@
-import { ActionSheetIOS } from 'react-native';
+import { showActionSheet } from '@ValenceMobile/platform/showActionSheet';
 import type { AWayToDownload } from '@ValenceClient/downloads/waysToDownloadAProgramme.types';
 import { say } from '@ValenceI18n/say';
 
@@ -15,7 +15,7 @@ const askHowMuchToDownload = async (
   ways: readonly AWayToDownload[],
 ): Promise<AWayToDownload | null> => {
   const chosen = await new Promise<number>((settle) => {
-    ActionSheetIOS.showActionSheetWithOptions(
+    showActionSheet(
       {
         title: say('common.downloadTitle', { title }),
         options: [...ways.map((way) => way.label), say('common.cancel')],

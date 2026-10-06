@@ -1,4 +1,5 @@
-import { ActionSheetIOS, Alert } from 'react-native';
+import { showActionSheet } from '@ValenceMobile/platform/showActionSheet';
+import { Alert } from 'react-native';
 import { searchAskable } from '@ValenceClient/requests/fetchAskable';
 import { askForMedia } from '@ValenceClient/requests/fetchMediaRequests';
 import { describeStanding } from '@ValenceClient/requests/describeStanding';
@@ -31,7 +32,7 @@ const requestTheAlbumOf = async (
     return;
   }
 
-  ActionSheetIOS.showActionSheetWithOptions(
+  showActionSheet(
     {
       title: say('common.requestItsAlbum'),
       message: say('common.titleByArtistIsNotInYourLibrary', {

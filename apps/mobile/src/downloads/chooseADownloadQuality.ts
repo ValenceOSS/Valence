@@ -1,4 +1,4 @@
-import { ActionSheetIOS } from 'react-native';
+import { showActionSheet } from '@ValenceMobile/platform/showActionSheet';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import type { DownloadOffer } from '@ValenceClient/downloads/fetchDownloads';
 import type { DownloadQuality } from '@ValenceContracts/schemas/Download';
@@ -19,7 +19,7 @@ const chooseADownloadQuality = async (
   message?: string,
 ): Promise<DownloadQuality | null> => {
   const chosen = await new Promise<number>((settle) => {
-    ActionSheetIOS.showActionSheetWithOptions(
+    showActionSheet(
       {
         title,
         ...(message === undefined ? {} : { message }),
