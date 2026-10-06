@@ -2288,7 +2288,7 @@ const ENGLISH = {
   'phone.theNotifications.clearEveryNotification': 'Clear all notifications?',
   'phone.theNotifications.nothingNew': 'No new notifications',
   'phone.theNotifications.theyAreGoneForGood': 'They’ll be deleted permanently.',
-  'phone.theNowPlayingBar.titleByArtists': '{title} · {artists}',
+  'phone.theNowPlayingBar.byArtists': ' · {artists}',
   'phone.theSearch.asked.nothingAskedForYet': 'You haven’t requested anything yet.',
   'phone.theSearch.everythingInEveryLibrary': 'Search all libraries.',
   'phone.theSearch.theResults.nothingCalledAskedInTheLibrary':

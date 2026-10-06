@@ -9700,9 +9700,9 @@
     "context": "A message in an alert in the notifications of the phone app."
   },
   {
-    "handler": "phone.theNowPlayingBar.titleByArtists",
-    "text": "{title} · {artists}",
-    "context": "The one line the now-playing bar above the tabs says what is playing in. {title} is the song and {artists} its artists, separated by commas."
+    "handler": "phone.theNowPlayingBar.byArtists",
+    "text": " · {artists}",
+    "context": "Follows the name of the song in the now-playing bar above the tabs, on the same line and drawn quieter. {artists} is the song's artists, separated by commas. Keep the space before the dot."
   },
   {
     "handler": "phone.theSearch.asked.nothingAskedForYet",

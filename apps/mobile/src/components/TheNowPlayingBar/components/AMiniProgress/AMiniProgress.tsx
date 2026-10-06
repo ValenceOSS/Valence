@@ -4,13 +4,13 @@ import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import type { AMiniProgressProps } from './AMiniProgress.types';
 
 const styles = StyleSheet.create({
-  track: { borderRadius: 2, height: 3, marginTop: 5, overflow: 'hidden' },
+  track: { borderRadius: 2, height: 3, overflow: 'hidden' },
   played: { borderRadius: 2, height: 3 },
 });
 
 /**
- * How far through what is playing it has got, as a thin line under its name: no times, since the
- * whole player has those and this is only a glance.
+ * How far through what is playing it has got, as a thin line: no times, since the whole player has
+ * those and this is only a glance.
  *
  * @param positionSeconds - How far in it is.
  * @param durationSeconds - How long it is, or nothing where that is not known.

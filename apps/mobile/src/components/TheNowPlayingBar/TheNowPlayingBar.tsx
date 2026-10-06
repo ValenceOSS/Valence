@@ -1,4 +1,4 @@
-import { BookOpen, LaptopSmartphone, MusicNote } from '@keyline-icons/react-native';
+import { BookOpen, LaptopSmartphone, MusicNote, Volume } from '@keyline-icons/react-native';
 import {
   FastForward as FastForwardFilled,
   Pause as PauseFilled,
@@ -72,6 +72,8 @@ const styles = StyleSheet.create({
   },
   flush: { paddingLeft: 0, paddingRight: 0 },
   room: { height: HIGH },
+  device: { alignItems: 'center', flexDirection: 'row', gap: 4 },
+  foot: { bottom: 5, left: HIGH / 2, position: 'absolute', right: HIGH / 2 },
   said: { flex: 1, gap: 1 },
 });
 
@@ -187,6 +189,10 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
       <Animated.View style={[styles.row, moving]} {...swipe.panHandlers}>
         <AGlass roundness={HIGH / 2} />
 
+        <View pointerEvents="none" style={styles.foot}>
+          <ABookProgress />
+        </View>
+
         <View style={styles.opens}>
           <Button
             tone="bare"
@@ -212,7 +218,6 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
                 <Words size="small" tone="muted" lines={1}>
                   {listening.authors?.join(', ') ?? ''}
                 </Words>
-                <ABookProgress />
               </View>
             </View>
           </Button>
@@ -264,6 +269,10 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
           : { tint: Platform.OS === 'ios' ? withAlpha(tint, 0.55) : withAlpha(tint, 0.96) })}
       />
 
+      <View pointerEvents="none" style={styles.foot}>
+        <ASongProgress />
+      </View>
+
       <View style={styles.opens}>
         <Button
           tone="bare"
@@ -287,18 +296,22 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
             <View style={styles.said}>
               <ASwipedTitle onNext={() => player.next()} onPrevious={() => player.previous()}>
                 <Words lines={1}>
-                  {say('phone.theNowPlayingBar.titleByArtists', {
-                    title: track.title,
-                    artists: track.artists.map((artist) => artist.name).join(', '),
-                  })}
+                  {track.title}
+                  <Words tone="muted">
+                    {say('phone.theNowPlayingBar.byArtists', {
+                      artists: track.artists.map((artist) => artist.name).join(', '),
+                    })}
+                  </Words>
                 </Words>
                 {state.remote === null ? null : (
-                  <Words size="small" tone="accent" lines={1}>
-                    {state.remote.label}
-                  </Words>
+                  <View style={styles.device}>
+                    <Icon of={Volume} size={14} colour={colours.accent} />
+                    <Words size="small" tone="accent" lines={1}>
+                      {state.remote.label}
+                    </Words>
+                  </View>
                 )}
               </ASwipedTitle>
-              <ASongProgress />
             </View>
           </View>
         </Button>
