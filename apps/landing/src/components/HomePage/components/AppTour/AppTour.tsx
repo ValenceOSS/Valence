@@ -17,6 +17,7 @@ import {
 import { Doodle } from '@ValenceUI/Doodle';
 import { Icon } from '@ValenceUI/Icon';
 import { NavBar } from '@ValenceUI/NavBar';
+import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 
 const STOPS = [
   {
@@ -70,9 +71,10 @@ const STAYS_FOR_MS = 5000;
 
 /**
  * A walk round the app itself: a line about it, then the app's own bar of places — home, the
- * library, music, books, the server, each with its icon — over one window, which fades from one real
- * screenshot to the next with a line saying what that place is for, by itself every few seconds or
- * straight away when one is chosen. Whoever asked for stillness sees it change only when they
+ * library, music, books, the server, each with its icon, or a plain row of them on a phone, where
+ * the app's bar folds into a menu — over one window in a rim of glass, which fades from one real screenshot to the
+ * next with a line saying what that place is for, by itself every few seconds or straight away
+ * when one is chosen. Whoever asked for stillness sees it change only when they
  * choose.
  */
 const AppTour = () => {
@@ -116,8 +118,21 @@ const AppTour = () => {
         </p>
       </div>
 
+      <div className="mb-4 flex justify-center md:hidden">
+        <SegmentedRow
+          label="Parts of the app"
+          size="md"
+          items={STOPS}
+          value={showing}
+          onSelect={(id) => {
+            setIsTouched(true);
+            setShowing(id);
+          }}
+        />
+      </div>
+
       <NavBar
-        className="relative z-10 mb-4"
+        className="relative z-10 mb-4 hidden md:block"
         solidity={0}
         items={STOPS.map((stop) => ({
           id: stop.id,
@@ -162,20 +177,22 @@ const AppTour = () => {
           />
         </span>
 
-        <div className="relative aspect-[16/9] overflow-hidden rounded-2xl bg-shade shadow-[var(--shadow-cast)] ring-1 ring-border/60 sm:rounded-3xl">
-          <AnimatePresence initial={false}>
-            <motion.img
-              key={shown.id}
-              src={shown.src}
-              alt={shown.alt}
-              draggable={false}
-              initial={{ opacity: 0, scale: isStill ? 1 : 1.02 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: isStill ? 0 : 0.6, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute inset-0 h-full w-full select-none object-cover object-top"
-            />
-          </AnimatePresence>
+        <div className="valence-glass valence-glass--film rounded-[1rem] p-1.5 shadow-[var(--shadow-cast)] sm:rounded-[1.6rem] sm:p-2">
+          <div className="relative aspect-[16/9] overflow-hidden rounded-[0.7rem] bg-shade sm:rounded-[1.1rem]">
+            <AnimatePresence initial={false}>
+              <motion.img
+                key={shown.id}
+                src={shown.src}
+                alt={shown.alt}
+                draggable={false}
+                initial={{ opacity: 0, scale: isStill ? 1 : 1.02 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: isStill ? 0 : 0.6, ease: [0.22, 1, 0.36, 1] }}
+                className="absolute inset-0 h-full w-full select-none object-cover object-top"
+              />
+            </AnimatePresence>
+          </div>
         </div>
       </div>
     </section>
