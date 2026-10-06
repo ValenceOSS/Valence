@@ -22,7 +22,9 @@ describe('ABottomSheet', () => {
       </ABottomSheet>,
     );
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Close' }));
+    await userEvent.press(
+      drawn.getByRole('button', { name: 'Close', includeHiddenElements: true }),
+    );
 
     expect(onClose).toHaveBeenCalled();
   });
