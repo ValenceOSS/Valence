@@ -54,7 +54,8 @@ jobs:
       contents: read
       pull-requests: read
 
-  # A newer merge makes a build under way pointless, so it cancels it. Publishing is never
+  # A newer merge makes a build under way pointless, so it cancels it, and a build started by hand
+  # from a branch cancels only builds of that branch. Publishing is never
   # cancelled: it moves the tag and replaces the files one at a time, and stopping it partway would
   # leave the channel naming a build it no longer holds. A publish that is running finishes, and the
   # next waits for it.
@@ -62,7 +63,7 @@ jobs:
     name: Desktop app
     needs: version
     concurrency:
-      group: desktop-dev-build
+      group: desktop-dev-build-${{ github.ref }}
       cancel-in-progress: true
     uses: ./.github/workflows/desktop.yml
     secrets: inherit
@@ -128,8 +129,10 @@ jobs:
           fi
 
       # The installers first and what points at them last, so an app that checks while this runs
-      # finds either the last build whole or this one whole. The last build's installers go once
-      # nothing names them.
+      # finds either the last build whole or this one whole. Each of dev.yml and the rest goes up
+      # under a name of its own and is renamed over the last one only once it is all there, since
+      # replacing it in place deletes the old one first and a failed upload would leave the channel
+      # with nothing to read. The last build's installers go once nothing names them.
       #
       # Earlier builds' blockmaps stay for a month. An app updating fetches the blockmap of the build
       # it is running as well as the new one's, to download only what changed, and without its own it
@@ -138,7 +141,23 @@ jobs:
       - name: Hang the build on it
         run: |
           find release -type f ! -name '*.yml' -print0 | xargs -0 gh release upload "$CHANNEL" --clobber
-          gh release upload "$CHANNEL" release/*.yml --clobber
+
+          mkdir staged
+          assets="repos/$GITHUB_REPOSITORY/releases/tags/$CHANNEL"
+          for feed in release/*.yml; do
+            name="$(basename "$feed")"
+            cp "$feed" "staged/$name.next"
+            gh release upload "$CHANNEL" "staged/$name.next" --clobber
+
+            next="$(gh api "$assets" -q ".assets[] | select(.name == \"$name.next\") | .id")"
+            was="$(gh api "$assets" -q ".assets[] | select(.name == \"$name\") | .id")"
+
+            if [ -n "$was" ]; then
+              gh api -X DELETE "repos/$GITHUB_REPOSITORY/releases/assets/$was"
+            fi
+
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/releases/assets/$next" -f name="$name" > /dev/null
+          done
 
           ls release > kept.txt
           cutoff="$(date -u -d '30 days ago' +%Y-%m-%dT%H:%M:%SZ)"
