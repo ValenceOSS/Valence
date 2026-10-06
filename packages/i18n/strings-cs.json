@@ -2401,6 +2401,16 @@
     "context": "How many parts of a request are downloading now."
   },
   {
+    "handler": "common.count.downloads.one",
+    "text": "{count} download",
+    "context": "How many downloads there are. {count} is the number."
+  },
+  {
+    "handler": "common.count.downloads.other",
+    "text": "{count} downloads",
+    "context": "How many downloads there are. {count} is the number."
+  },
+  {
     "handler": "common.count.editions.one",
     "text": "{count} edition",
     "context": "How many editions (separate files of the same film or episode) a title has, in the admin's media table. {count} is the number."
@@ -13115,6 +13125,16 @@
     "context": "The label in the downloads panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.downloadsPanel.countChosen.one",
+    "text": "{count} selected",
+    "context": "How many downloads are ticked, beside what can be done to them. In the downloads queue in the admin area, where several downloads can be ticked and acted on together. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.downloadsPanel.countChosen.other",
+    "text": "{count} selected",
+    "context": "How many downloads are ticked, beside what can be done to them. In the downloads queue in the admin area, where several downloads can be ticked and acted on together. {count} is the number."
+  },
+  {
     "handler": "screens.adminArea.downloadsPanel.filedTitle",
     "text": "Imported {title}.",
     "context": "A short message shown once something is done in the downloads panel in the admin area. {title} is filled in by the app."
@@ -13135,6 +13155,16 @@
     "context": "The detail of a confirm dialog in the downloads panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.downloadsPanel.pausedCount.one",
+    "text": "Paused {count} download.",
+    "context": "A short message once ticked downloads are paused. In the downloads queue in the admin area, where several downloads can be ticked and acted on together. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.downloadsPanel.pausedCount.other",
+    "text": "Paused {count} downloads.",
+    "context": "A short message once ticked downloads are paused. In the downloads queue in the admin area, where several downloads can be ticked and acted on together. {count} is how many."
+  },
+  {
     "handler": "screens.adminArea.downloadsPanel.pausedTitle",
     "text": "Paused {title}.",
     "context": "A short message shown once something is done in the downloads panel in the admin area. {title} is filled in by the app."
@@ -13150,6 +13180,16 @@
     "context": "The label of a spinner in the downloads panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.downloadsPanel.removedCount.one",
+    "text": "Removed {count} download.",
+    "context": "A short message once ticked downloads are removed. In the downloads queue in the admin area, where several downloads can be ticked and acted on together. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.downloadsPanel.removedCount.other",
+    "text": "Removed {count} downloads.",
+    "context": "A short message once ticked downloads are removed. In the downloads queue in the admin area, where several downloads can be ticked and acted on together. {count} is how many."
+  },
+  {
     "handler": "screens.adminArea.downloadsPanel.removedTitle",
     "text": "Removed {title}.",
     "context": "A short message shown once something is done in the downloads panel in the admin area. {title} is filled in by the app."
@@ -13158,6 +13198,16 @@
     "handler": "screens.adminArea.downloadsPanel.removeThisClient",
     "text": "Remove this client?",
     "context": "The title of the dialog that removes a download client, while it has none to name."
+  },
+  {
+    "handler": "screens.adminArea.downloadsPanel.resumedCount.one",
+    "text": "Resumed {count} download.",
+    "context": "A short message once ticked downloads are resumed. In the downloads queue in the admin area, where several downloads can be ticked and acted on together. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.downloadsPanel.resumedCount.other",
+    "text": "Resumed {count} downloads.",
+    "context": "A short message once ticked downloads are resumed. In the downloads queue in the admin area, where several downloads can be ticked and acted on together. {count} is how many."
   },
   {
     "handler": "screens.adminArea.downloadsPanel.resumedTitle",
@@ -13183,6 +13233,11 @@
     "handler": "screens.adminArea.downloadsPanel.theDownloadsCouldNotBeRead",
     "text": "Couldn’t load downloads.",
     "context": "Shown where the downloads could not be read from the server, followed by a sentence about why and a button to try again."
+  },
+  {
+    "handler": "screens.adminArea.downloadsPanel.untickThem",
+    "text": "Clear selection",
+    "context": "The button that unticks every ticked download. In the downloads queue in the admin area, where several downloads can be ticked and acted on together."
   },
   {
     "handler": "screens.adminArea.downloadsPanel.whatToShowAboutDownloads",
@@ -16340,6 +16395,16 @@
     "context": "Shown when removing a download from a client that always keeps finished files. {name} is the download client's name, such as NZBGet."
   },
   {
+    "handler": "screens.adminArea.removeDownloadDialog.removeCountDownloads.one",
+    "text": "Remove {count} download",
+    "context": "The title of the dialog confirming that ticked downloads are removed. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.removeDownloadDialog.removeCountDownloads.other",
+    "text": "Remove {count} downloads",
+    "context": "The title of the dialog confirming that ticked downloads are removed. {count} is how many."
+  },
+  {
     "handler": "screens.adminArea.removeDownloadDialog.removeThisDownload",
     "text": "Remove this download?",
     "context": "The title of the dialog confirming a download is taken out of its download client, before it knows which download."
@@ -16348,6 +16413,11 @@
     "handler": "screens.adminArea.removeDownloadDialog.theClientKeepsWhatItHasFinished",
     "text": "This download client doesn’t delete finished downloads, so their files stay where they are.",
     "context": "Shown when removing a download from a client that always keeps finished files, before it knows which client."
+  },
+  {
+    "handler": "screens.adminArea.removeDownloadDialog.theyAreTakenOutOfTheirClients",
+    "text": "They’re removed from their download clients, and Valence stops tracking them.",
+    "context": "Explains removing several ticked downloads at once, in the dialog confirming it."
   },
   {
     "handler": "screens.adminArea.requestDetailDialog.aRequest",
@@ -18848,6 +18918,16 @@
     "handler": "screens.downloadsPanel.downloadQueueTable.againBesideWhatWasFiledBefore",
     "text": "Again, beside what was filed before.",
     "context": "Shown in the download queue table in the downloads panel."
+  },
+  {
+    "handler": "screens.downloadsPanel.downloadQueueTable.chooseEveryDownload",
+    "text": "Select every download",
+    "context": "The tick box at the head of the downloads queue that ticks every download. In the downloads queue in the admin area, where several downloads can be ticked and acted on together."
+  },
+  {
+    "handler": "screens.downloadsPanel.downloadQueueTable.chooseTitle",
+    "text": "Select {title}",
+    "context": "The tick box beside one download, read aloud. In the downloads queue in the admin area, where several downloads can be ticked and acted on together. {title} is the release's name."
   },
   {
     "handler": "screens.downloadsPanel.downloadQueueTable.doneOfSize",

@@ -613,6 +613,8 @@ const ENGLISH = {
   'common.count.days.other': '{count} days',
   'common.count.downloading.one': '{count} downloading',
   'common.count.downloading.other': '{count} downloading',
+  'common.count.downloads.one': '{count} download',
+  'common.count.downloads.other': '{count} downloads',
   'common.count.editions.one': '{count} edition',
   'common.count.editions.other': '{count} editions',
   'common.count.episodes.one': '{count} episode',
@@ -3262,17 +3264,25 @@ const ENGLISH = {
   'screens.adminArea.downloadKeepingChoices.threeMonths': 'Three months',
   'screens.adminArea.downloadKeepingChoices.untilDeleted': 'Until deleted',
   'screens.adminArea.downloadsPanel.clients': 'Clients',
+  'screens.adminArea.downloadsPanel.countChosen.one': '{count} selected',
+  'screens.adminArea.downloadsPanel.countChosen.other': '{count} selected',
   'screens.adminArea.downloadsPanel.filedTitle': 'Imported {title}.',
   'screens.adminArea.downloadsPanel.nameDidNotAnswer': '{name}: no response',
   'screens.adminArea.downloadsPanel.nameProblem': '{name}: {problem}',
   'screens.adminArea.downloadsPanel.nothingWillBeSentToIt':
     'No more downloads will be sent to it, and Valence stops tracking the ones it already sent. Downloads in progress continue in the client.',
+  'screens.adminArea.downloadsPanel.pausedCount.one': 'Paused {count} download.',
+  'screens.adminArea.downloadsPanel.pausedCount.other': 'Paused {count} downloads.',
   'screens.adminArea.downloadsPanel.pausedTitle': 'Paused {title}.',
   'screens.adminArea.downloadsPanel.readingTheConnectedAppsQueues':
     'Loading connected apps’ queues…',
   'screens.adminArea.downloadsPanel.readingTheDownloadClients': 'Loading download clients',
+  'screens.adminArea.downloadsPanel.removedCount.one': 'Removed {count} download.',
+  'screens.adminArea.downloadsPanel.removedCount.other': 'Removed {count} downloads.',
   'screens.adminArea.downloadsPanel.removedTitle': 'Removed {title}.',
   'screens.adminArea.downloadsPanel.removeThisClient': 'Remove this client?',
+  'screens.adminArea.downloadsPanel.resumedCount.one': 'Resumed {count} download.',
+  'screens.adminArea.downloadsPanel.resumedCount.other': 'Resumed {count} downloads.',
   'screens.adminArea.downloadsPanel.resumedTitle': 'Resumed {title}.',
   'screens.adminArea.downloadsPanel.rules': 'Rules',
   'screens.adminArea.downloadsPanel.theConnectedAppsQueuesCouldNot':
@@ -3280,6 +3290,7 @@ const ENGLISH = {
   'screens.adminArea.downloadsPanel.theDownloadClientsCouldNotBeRead':
     'Couldn’t load download clients.',
   'screens.adminArea.downloadsPanel.theDownloadsCouldNotBeRead': 'Couldn’t load downloads.',
+  'screens.adminArea.downloadsPanel.untickThem': 'Clear selection',
   'screens.adminArea.downloadsPanel.whatToShowAboutDownloads': 'Download views',
   'screens.adminArea.emailCard.aPasswordIsSavedLeaveIt':
     'A password is saved. Leave the field empty to keep it, or type a new one to replace it.',
@@ -4104,9 +4115,13 @@ const ENGLISH = {
     'It’s removed from {name}, and Valence stops tracking it.',
   'screens.adminArea.removeDownloadDialog.nameKeepsWhatItHasFinished':
     '{name} doesn’t delete finished downloads, so their files stay where they are.',
+  'screens.adminArea.removeDownloadDialog.removeCountDownloads.one': 'Remove {count} download',
+  'screens.adminArea.removeDownloadDialog.removeCountDownloads.other': 'Remove {count} downloads',
   'screens.adminArea.removeDownloadDialog.removeThisDownload': 'Remove this download?',
   'screens.adminArea.removeDownloadDialog.theClientKeepsWhatItHasFinished':
     'This download client doesn’t delete finished downloads, so their files stay where they are.',
+  'screens.adminArea.removeDownloadDialog.theyAreTakenOutOfTheirClients':
+    'They’re removed from their download clients, and Valence stops tracking them.',
   'screens.adminArea.requestDetailDialog.aRequest': 'A request',
   'screens.adminArea.requestDetailDialog.neverAgain': 'Blocklist',
   'screens.adminArea.requestDetailDialog.rEQUESTKINDNAMESRequestedByName':
@@ -4749,6 +4764,8 @@ const ENGLISH = {
     'No download clients yet. Add qBittorrent or Transmission for torrents, or SABnzbd or NZBGet for Usenet, so Valence can send releases to them.',
   'screens.downloadsPanel.downloadQueueTable.againBesideWhatWasFiledBefore':
     'Again, beside what was filed before.',
+  'screens.downloadsPanel.downloadQueueTable.chooseEveryDownload': 'Select every download',
+  'screens.downloadsPanel.downloadQueueTable.chooseTitle': 'Select {title}',
   'screens.downloadsPanel.downloadQueueTable.doneOfSize': '{done} of {size}',
   'screens.downloadsPanel.downloadQueueTable.fileIntoName': 'Import into {name}',
   'screens.downloadsPanel.downloadQueueTable.nothingHasBeenSentToA':

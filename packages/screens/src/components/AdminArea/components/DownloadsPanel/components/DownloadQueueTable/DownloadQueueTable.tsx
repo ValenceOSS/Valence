@@ -10,6 +10,7 @@ import {
   Play as PlayFilledIcon,
 } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
+import { Checkbox } from '@ValenceUI/Checkbox';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
@@ -23,14 +24,13 @@ import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
 import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
 import { describeDownloadState } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeDownloadState';
 import { ReadoutLines } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/components/ReadoutLines/ReadoutLines';
+import { PAUSABLE_STATES } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/PAUSABLE_STATES';
 import { speedsOf } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/speedsOf';
 import { describeTimeLeft } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeTimeLeft';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { QueuedDownload } from '@ValenceContracts/schemas/DownloadQueue';
 import type { DownloadQueueTableProps } from './DownloadQueueTable.types';
 import { say } from '@ValenceI18n/say';
-
-const PAUSABLE = new Set(['queued', 'metadata', 'downloading', 'stalled']);
 
 /**
  * Says how much of a download has arrived, in the size it is going to be.
@@ -60,11 +60,15 @@ const describeArrived = (download: QueuedDownload): ReactNode => {
 /**
  * Every download Valence has sent, newest first: what it is and where it went, how it is doing, how
  * much has arrived and how fast, how long is left, who it is coming from, and what can be done to
- * it — pausing, resuming and removing.
+ * it — pausing, resuming and removing, one at a time or, where they can be ticked, several at once.
  *
  * @param downloads - The downloads.
  * @param libraries - The libraries a film or series can be filed into.
  * @param busyId - The download being acted on, whose actions wait until it is done.
+ * @param busyIds - Several being acted on at once, where a choice of them is.
+ * @param chosen - The downloads ticked, where several can be chosen to act on together.
+ * @param onChosenChange - Told which are ticked now; without it, nothing can be ticked.
+ * @param toolbar - What sits above the table, such as what to do to the ones ticked.
  * @param onFile - Called to file a download into a library.
  * @param onPause - Called to pause a download.
  * @param onResume - Called to resume one.
@@ -76,6 +80,10 @@ const DownloadQueueTable = ({
   downloads,
   libraries,
   busyId,
+  busyIds,
+  chosen,
+  onChosenChange,
+  toolbar,
   onFile,
   onPause,
   onResume,
@@ -84,6 +92,48 @@ const DownloadQueueTable = ({
 }: DownloadQueueTableProps) => {
   const columns = useMemo<DataTableColumn<QueuedDownload>[]>(
     () => [
+      ...(onChosenChange === undefined
+        ? []
+        : [
+            {
+              id: 'chosen',
+              header: () => (
+                <Checkbox
+                  label={say('screens.downloadsPanel.downloadQueueTable.chooseEveryDownload')}
+                  isLabelHidden
+                  checked={downloads.length > 0 && (chosen?.size ?? 0) === downloads.length}
+                  isMixed={(chosen?.size ?? 0) > 0 && (chosen?.size ?? 0) < downloads.length}
+                  onCheckedChange={(isChosen) => {
+                    onChosenChange(
+                      isChosen ? new Set(downloads.map((download) => download.id)) : new Set(),
+                    );
+                  }}
+                />
+              ),
+              enableSorting: false,
+              meta: { shrinks: true },
+              cell: ({ row }: { row: { original: QueuedDownload } }) => (
+                <Checkbox
+                  label={say('screens.downloadsPanel.downloadQueueTable.chooseTitle', {
+                    title: row.original.title,
+                  })}
+                  isLabelHidden
+                  checked={chosen?.has(row.original.id) === true}
+                  onCheckedChange={(isChosen) => {
+                    const next = new Set(chosen);
+
+                    if (isChosen) {
+                      next.add(row.original.id);
+                    } else {
+                      next.delete(row.original.id);
+                    }
+
+                    onChosenChange(next);
+                  }}
+                />
+              ),
+            } satisfies DataTableColumn<QueuedDownload>,
+          ]),
       {
         id: 'title',
         header: say('common.release'),
@@ -217,7 +267,7 @@ const DownloadQueueTable = ({
         header: '',
         enableSorting: false,
         cell: ({ row }) =>
-          busyId === row.original.id ? (
+          busyId === row.original.id || busyIds?.has(row.original.id) === true ? (
             <span className="flex justify-end">
               <Spinner
                 size="sm"
@@ -232,7 +282,7 @@ const DownloadQueueTable = ({
                 groups={[
                   {
                     items: [
-                      ...(PAUSABLE.has(row.original.state)
+                      ...(PAUSABLE_STATES.has(row.original.state)
                         ? [
                             {
                               id: 'pause',
@@ -297,7 +347,18 @@ const DownloadQueueTable = ({
           ),
       },
     ],
-    [busyId, libraries, onFile, onPause, onResume, onRemove],
+    [
+      busyId,
+      busyIds,
+      chosen,
+      downloads,
+      libraries,
+      onChosenChange,
+      onFile,
+      onPause,
+      onResume,
+      onRemove,
+    ],
   );
 
   return (
@@ -307,6 +368,7 @@ const DownloadQueueTable = ({
       columns={columns}
       rows={[...downloads]}
       getRowId={(download) => download.id}
+      {...(toolbar === undefined ? {} : { toolbar })}
       emptyMessage={say('screens.downloadsPanel.downloadQueueTable.nothingHasBeenSentToA')}
     />
   );
