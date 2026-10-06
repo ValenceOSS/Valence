@@ -1,4 +1,5 @@
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import { saying } from '@ValenceI18n/saying';
 import { randomUUID } from 'node:crypto';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
@@ -54,6 +55,8 @@ const IN_FLIGHT = new Set<RequestItemRecord['state']>([
   'filing',
 ]);
 
+const GONE_FROM_THE_LIBRARY = saying('requests.mediaRequests.requestService.goneFromTheLibrary');
+
 /**
  * Seasons asked for by two requests for the same series: every season where either asked for every
  * one, and otherwise both lists together.
@@ -83,7 +86,7 @@ const bothReleaseTypes = (kept: ReleaseType[] | null, asked: ReleaseType[]): Rel
  * already made for the same title; approving and refusing; changing what it asks for; bringing it up
  * to date with the catalogue; trying again what failed; and marking it arrived once the server has
  * found it in the library, whether filed by Valence, imported by a connected app or put there by
- * hand.
+ * hand, and following it when the library loses it again.
  *
  * Whatever changes what there is to fetch is said, so whatever fetches can get on with it.
  *
@@ -399,6 +402,27 @@ const createRequestService = ({
           : await changed(id, { mediaId: arrivals.mediaId });
 
       return shownNow === null ? null : { request: shownNow, newlyAvailable: arriving.length };
+    },
+
+    left: async (id: string, mediaId: string | null): Promise<MediaRequest | null> => {
+      if (mediaId !== null) {
+        return changed(id, { mediaId });
+      }
+
+      const at = now().toISOString();
+
+      for (const item of await itemsOf(id)) {
+        if (item.state === 'available') {
+          await items.update(item.id, {
+            state: 'failed',
+            problem: GONE_FROM_THE_LIBRARY,
+            problemCode: null,
+            updatedAt: at,
+          });
+        }
+      }
+
+      return changed(id, { mediaId: null });
     },
 
     remove: async (id: string): Promise<boolean> => {

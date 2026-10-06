@@ -2536,6 +2536,7 @@ const ENGLISH = {
     'That release doesn’t contain any album this request is waiting for',
   'requests.mediaRequests.releaseHoldsNoEpisodeWaited':
     'That release doesn’t contain any episode this request is waiting for',
+  'requests.mediaRequests.requestService.goneFromTheLibrary': 'No longer in the library',
   'requests.mediaRequests.requestWorker.amongTheNewestReleasesSaid':
     'Among the newest releases, {said}.',
   'requests.mediaRequests.requestWorker.choseTitleTheBestOfForIt':

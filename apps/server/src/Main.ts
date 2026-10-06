@@ -154,6 +154,8 @@ import { createDatabaseRequestedAlbumStore } from '@ValenceServer/requests/album
 import { tieRequestedAlbum } from '@ValenceServer/requests/albums/tieRequestedAlbum';
 import { createDatabaseHeldEpisodes } from '@ValenceServer/requests/arrivals/createDatabaseHeldEpisodes';
 import { matchArrivals } from '@ValenceServer/requests/arrivals/matchArrivals';
+import { matchDepartures } from '@ValenceServer/requests/arrivals/matchDepartures';
+import { createDatabaseLibraryHolds } from '@ValenceServer/requests/arrivals/createDatabaseLibraryHolds';
 import { createDatabaseCatalogueLookup } from '@ValenceServer/requests/catalogue/createDatabaseCatalogueLookup';
 import { findOnMusicBrainz } from '@ValenceServer/requests/deezer/findOnMusicBrainz';
 import { readDeezerCharts } from '@ValenceServer/requests/deezer/readDeezerCharts';
@@ -1733,6 +1735,7 @@ const jobs = createJobQueue({
               });
             },
           });
+          await matchDepartedRequests();
           await matchArrivedRequests();
         });
       },
@@ -1822,6 +1825,8 @@ const jobs = createJobQueue({
         if (requestsClient === null) {
           return;
         }
+
+        await matchDepartedRequests();
 
         const followed = await requestsClient.followedRequests();
 
@@ -2849,6 +2854,40 @@ const matchArrivedRequests = async (): Promise<void> => {
 
     if (arrived.kind === 'answered' && arrived.value.newlyAvailable > 0) {
       await tellOfArrival(request, arrivals.mediaId, arrived.value.request.requestedBy);
+    }
+  }
+};
+
+const libraryHolds = createDatabaseLibraryHolds(db);
+
+/**
+ * Follows every request whose film, series or album has left the library under the id it arrived
+ * as: to the item a scan found it as instead, or, where the library holds it no more, back to
+ * failed, so nobody is sent to something that is not there and nothing fetches it again unasked.
+ */
+const matchDepartedRequests = async (): Promise<void> => {
+  if (requestsClient === null) {
+    return;
+  }
+
+  const listed = await requestsClient.listRequests();
+
+  if (listed.kind !== 'answered') {
+    return;
+  }
+
+  for (const { request, mediaId } of await matchDepartures({
+    requests: listed.value,
+    held: libraryHolds,
+    lookup: arrivalLookup,
+  })) {
+    const left = await requestsClient.requestLeft(request.id, { mediaId });
+
+    if (left.kind !== 'answered') {
+      log.warn(
+        'requests',
+        `${request.title} left the library, but the requests service was not told`,
+      );
     }
   }
 };

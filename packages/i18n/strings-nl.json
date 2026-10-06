@@ -10525,6 +10525,11 @@
     "context": "Why a release picked by hand for a series request was not sent: nothing in it is an episode the request still wants. Shown when picking a release by hand for a request."
   },
   {
+    "handler": "requests.mediaRequests.requestService.goneFromTheLibrary",
+    "text": "No longer in the library",
+    "context": "The problem shown on a request whose film, series or album was in the library and has since been removed from it (from `createRequestService`)."
+  },
+  {
     "handler": "requests.mediaRequests.requestWorker.amongTheNewestReleasesSaid",
     "text": "Among the newest releases, {said}.",
     "context": "Shown in the media requests in the requests service (from `createRequestWorker`). {said} is filled in by the app."

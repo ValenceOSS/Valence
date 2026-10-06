@@ -260,6 +260,8 @@ const RequestCatalogueUpdateSchema = z.object({
 
 const MediaRequestArrivalSchema = z.object({ mediaId: z.string().min(1) });
 
+const MediaRequestDepartureSchema = z.object({ mediaId: z.string().min(1).nullable() });
+
 const HeldEpisodeSchema = z.object({
   season: z.number().int().nonnegative(),
   episode: z.number().int().nonnegative(),
@@ -346,6 +348,7 @@ type FollowedRequest = z.infer<typeof FollowedRequestSchema>;
 type HeldEpisode = z.infer<typeof HeldEpisodeSchema>;
 type MediaRequestArrivals = z.input<typeof MediaRequestArrivalsSchema>;
 type MediaRequestArrived = z.infer<typeof MediaRequestArrivedSchema>;
+type MediaRequestDeparture = z.infer<typeof MediaRequestDepartureSchema>;
 type MissingSearch = z.infer<typeof MissingSearchSchema>;
 type RequestLogEntry = z.infer<typeof RequestLogEntrySchema>;
 type CatalogueSeason = z.infer<typeof CatalogueSeasonSchema>;
@@ -363,6 +366,7 @@ export type {
   MediaRequest,
   MediaRequestArrivals,
   MediaRequestArrived,
+  MediaRequestDeparture,
   MediaRequestAdded,
   MediaRequestAsk,
   MediaRequestChange,
@@ -408,6 +412,7 @@ export {
   MediaRequestArrivalSchema,
   MediaRequestArrivalsSchema,
   MediaRequestArrivedSchema,
+  MediaRequestDepartureSchema,
   MediaRequestAskSchema,
   MediaRequestChangeSchema,
   MediaRequestDecidedSchema,
