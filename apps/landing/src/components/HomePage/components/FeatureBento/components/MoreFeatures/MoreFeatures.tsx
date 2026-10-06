@@ -8,15 +8,7 @@ const DISCORD_URL = 'https://discord.gg/uTtcAHMy9N';
 
 const ROWS = [
   ['Collections', 'Ratings', 'Requests', 'Music', 'Lyrics', 'Audiobooks', 'Chapters'],
-  [
-    'Subtitles',
-    'Trickplay',
-    'Listening parties',
-    'Playlists',
-    'Mixes',
-    'Calendars',
-    'Age limits',
-  ],
+  ['Subtitles', 'Trickplay', 'Listening parties', 'Playlists', 'Mixes', 'Calendars', 'Age limits'],
   [
     'Linked servers',
     'Two-factor',
@@ -38,7 +30,7 @@ const LINK = 'font-semibold text-accent underline underline-offset-4 hover:text-
  * @param index - Where it sits in the grid, so it arrives last.
  */
 const MoreFeatures = ({ index }: MoreFeaturesProps) => (
-  <RevealItem index={index} className="list-none bg-surface">
+  <RevealItem index={index} className="list-none bg-[var(--frame-back)]">
     <article className="flex h-full flex-col gap-6 p-7 sm:p-9">
       <div
         aria-hidden

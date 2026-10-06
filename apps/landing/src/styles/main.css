@@ -46,7 +46,7 @@
 }
 
 .valence-outline-text {
-  -webkit-text-fill-color: var(--color-surface);
+  -webkit-text-fill-color: var(--frame-back);
   -webkit-text-stroke: 3px currentColor;
   paint-order: stroke fill;
 }

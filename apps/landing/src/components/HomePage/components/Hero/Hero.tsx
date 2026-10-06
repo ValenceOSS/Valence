@@ -77,11 +77,11 @@ const STARTS = [
  * The first thing anybody sees: a dark card washed with slow blue light, what Valence is in one
  * line with the words that matter most written softer and underlined by hand, one way to start, and
  * beneath it the app itself, tipped back on the table, which lays itself flat as the page scrolls —
- * hanging over the foot of the card and across a band of Valence's name running past beneath it.
+ * hanging over the foot of the card, with a band of Valence's name running behind its middle.
  *
- * The heading writes itself in a word at a time, the line draws itself under its words once the
- * heading has landed, and the way to start pops up after it with a note pointing at it, above the
- * marks of what it runs on. The way to start is the download unless the docs or the demo are chosen
+ * The heading is lit from below, grey rising to white inside a white edge, and writes itself in
+ * a word at a time, the line draws itself under its words once the heading has landed, and the
+ * way to start pops up after it with a note pointing at it, above the marks of what it runs on. The way to start is the download unless the docs or the demo are chosen
  * from its arrow, and pressing it does whichever is chosen.
  */
 const Hero = () => {
@@ -92,14 +92,18 @@ const Hero = () => {
   const start = STARTS.find((one) => one.id === startId) ?? STARTS[0];
 
   return (
-    <section className="relative px-2 pt-2 sm:px-3 sm:pt-3">
-      <div className="relative isolate flex min-h-[calc(100svh-var(--release-bar)-1rem)] flex-col overflow-hidden rounded-[2rem] bg-aurora pb-[calc(var(--app-peek)+1.5rem)] [--app-peek:min(30vw,8rem)] sm:min-h-[calc(100svh-var(--release-bar)-1.5rem)] sm:rounded-[2.5rem] sm:[--app-peek:min(14vw,9.5rem)]">
+    <section className="relative px-2 pt-2 [--app-peek:min(30vw,8rem)] sm:px-3 sm:pt-3 sm:[--app-peek:max(min(14vw,9.5rem),calc(100svh-var(--release-bar)-44rem))]">
+      <div className="relative isolate flex min-h-[calc(100svh-var(--release-bar)-1rem)] flex-col overflow-hidden rounded-[2rem] bg-aurora pb-[calc(var(--app-peek)+1.5rem)] sm:min-h-[calc(100svh-var(--release-bar)-1.5rem)] sm:rounded-[2.5rem]">
         <FoldGradient
           colors={[...AURORA.colours]}
           bgColor={AURORA.back}
           shadowColor={AURORA.shadow}
-          rotation={38}
+          softness={0.9}
+          saturation={1.1}
+          rotation={52}
           zoom={7}
+          ribbon={0.17}
+          ribbonWidth={1}
           className="absolute inset-0 -z-10 h-full w-full opacity-80"
           speed={isStill ? 0 : 0.6}
         />
@@ -124,7 +128,7 @@ const Hero = () => {
 
           <h1
             className={cn(
-              'max-w-[16ch] text-balance text-[clamp(2.5rem,6vw,4.75rem)] font-semibold leading-[1.02] tracking-[-0.035em] text-on-scrim',
+              'max-w-[16ch] text-balance text-[clamp(2.5rem,6vw,4.75rem)] font-semibold leading-[0.95] tracking-[-0.035em] text-on-scrim',
               LEGIBLE,
             )}
           >
@@ -134,7 +138,7 @@ const Hero = () => {
                 {at === 0 ? null : ' '}
                 <motion.span
                   className={cn(
-                    'inline-block',
+                    'inline-block bg-linear-to-b from-on-scrim/50 via-on-scrim/85 to-on-scrim bg-clip-text pb-[0.1em] -mb-[0.1em] text-transparent [-webkit-text-stroke:1px_var(--color-on-scrim)]',
                     word === ACCENT
                       ? 'relative font-accent font-normal italic tracking-normal'
                       : '',
@@ -223,11 +227,10 @@ const Hero = () => {
         </motion.div>
       </div>
 
-      <div className="relative z-10 -mt-[min(30vw,8rem)] px-4 sm:-mt-[min(14vw,9.5rem)] sm:px-10">
+      <div className="relative z-10 -mt-[var(--app-peek)] px-4 sm:px-10">
+        <ValenceBand className="absolute inset-x-0 top-1/2 -z-10 -translate-y-1/2" />
         <DeviceStage />
       </div>
-
-      <ValenceBand className="-mt-[4vw] xl:-mt-[3.5rem]" />
     </section>
   );
 };

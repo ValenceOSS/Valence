@@ -17,12 +17,12 @@ const ReleaseBar = () =>
       to="/changelog/$slug"
       params={{ slug: NEWEST.slug }}
       style={{ height: RELEASE_BAR_PX }}
-      className="group relative z-30 flex items-center gap-4 overflow-hidden border-b border-border/60 bg-surface px-5 font-mono text-xs text-text-muted hover:text-text sm:px-10"
+      className="group relative z-30 flex items-center gap-4 overflow-hidden border-b border-border/60 bg-surface px-5 text-[0.8125rem] font-light text-text-muted hover:text-text sm:px-10"
     >
-      <span className="shrink-0 font-semibold text-accent">New release</span>
-      <span className="shrink-0 font-semibold text-text">{NEWEST.version}</span>
+      <span className="shrink-0 font-medium text-accent">New release</span>
+      <span className="shrink-0 font-medium text-text">{NEWEST.version}</span>
       <span className="hidden min-w-0 flex-1 truncate md:block">{NEWEST.title}</span>
-      <span className="ml-auto inline-flex shrink-0 items-center gap-1.5 text-text">
+      <span className="ml-auto inline-flex shrink-0 items-center gap-1.5 font-medium text-text">
         Read the changelog
         <Icon
           of={ArrowRightIcon}

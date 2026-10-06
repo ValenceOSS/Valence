@@ -46,7 +46,7 @@ const LandingShell = () => {
         : PageProblem);
 
   return (
-    <div className="relative z-0 flex min-h-dvh flex-col bg-surface text-text">
+    <div className="relative z-0 flex min-h-dvh flex-col bg-[var(--frame-back)] text-text">
       <ReleaseBar />
 
       <LandingNav />
