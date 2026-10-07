@@ -1,5 +1,54 @@
 # Changelog
 
+## [1.4.0](https://github.com/ValenceOSS/Valence/compare/v1.3.0...v1.4.0) (2026-10-07)
+
+
+### Added
+
+* **desktop,server,web:** choose how your discord status looks, with a preview of it (val-350) ([#513](https://github.com/ValenceOSS/Valence/issues/513)) ([e06b3e5](https://github.com/ValenceOSS/Valence/commit/e06b3e541c9f2fd43ead074442a99d3856629449))
+* **desktop:** a dev channel that updates itself to the latest build of main ([#523](https://github.com/ValenceOSS/Valence/issues/523)) ([d55bcb8](https://github.com/ValenceOSS/Valence/commit/d55bcb836f4f0828f1c851530645fb6d78a86d90))
+* **desktop:** valence draws its own minimise, maximise and close on windows and linux ([#522](https://github.com/ValenceOSS/Valence/issues/522)) ([b84066c](https://github.com/ValenceOSS/Valence/commit/b84066cbfedc9460d7fbd88d5023d1e94747d82a))
+* **landing,ui,repo:** redesign the landing site onto rounded cards, with new screenshots ([#533](https://github.com/ValenceOSS/Valence/issues/533)) ([65f73fd](https://github.com/ValenceOSS/Valence/commit/65f73fd7ca49e263ac20efc32318a8b7e173b328))
+* **landing,ui:** download desktop button, and fixes for main's failing checks ([#534](https://github.com/ValenceOSS/Valence/issues/534)) ([ac2d53c](https://github.com/ValenceOSS/Valence/commit/ac2d53cd3dbeca8523961ca6c35fc14ba424a29c))
+* **landing:** the feature cards are looping scenes acted out by a pointer ([#520](https://github.com/ValenceOSS/Valence/issues/520)) ([ed41340](https://github.com/ValenceOSS/Valence/commit/ed413400b0ab5643b931551b179598f3e587e2d1))
+* **repo:** demo mode, choosing which apps may connect, caption weight and fonts, and the desktop window bar ([#518](https://github.com/ValenceOSS/Valence/issues/518)) ([b22013d](https://github.com/ValenceOSS/Valence/commit/b22013d090c571e78d54c25ae1258a39b870ccc1))
+* **repo:** phone parity, server feature reports, memory fixes and the scan that froze the server ([#512](https://github.com/ValenceOSS/Valence/issues/512)) ([53e5a4f](https://github.com/ValenceOSS/Valence/commit/53e5a4ff1206e3a2216f4cceda335a73ce48b0a2))
+* **repo:** security sweep, android parity, the phone's music player and sync, and mixes (val-353) ([#525](https://github.com/ValenceOSS/Valence/issues/525)) ([4fbf0df](https://github.com/ValenceOSS/Valence/commit/4fbf0df125cc479d2331976e1f1b44f1d2caaa94))
+* **tv:** android tv and fire tv, from the same app as the apple tv (val-284) ([#530](https://github.com/ValenceOSS/Valence/issues/530)) ([2dfb8fe](https://github.com/ValenceOSS/Valence/commit/2dfb8fe9bbd1d1bf883b17c54899805d573532c6))
+* **web,desktop,tv,i18n,repo:** offer the next episode in a card as the credits roll (val-349) ([#517](https://github.com/ValenceOSS/Valence/issues/517)) ([5179f50](https://github.com/ValenceOSS/Valence/commit/5179f50622ad9ab887cec6dd2c8bcb46bb96e626))
+* **web,server,plugin-sdk,repo:** playlists show missing songs, and request their albums in one go ([#519](https://github.com/ValenceOSS/Valence/issues/519)) ([7bb84cb](https://github.com/ValenceOSS/Valence/commit/7bb84cb2b47123dfa4f979440edd79bd8a34cae9))
+
+
+### Fixed
+
+* **desktop:** a new release is offered by the arrow alone, and its download shows a bar ([#527](https://github.com/ValenceOSS/Valence/issues/527)) ([08a5d18](https://github.com/ValenceOSS/Valence/commit/08a5d182ef513eae63f124020c451d3a858d8766))
+* **desktop:** the dev channel's notes include the build they describe, and it holds that build alone ([09f80be](https://github.com/ValenceOSS/Valence/commit/09f80be84878761ac9672ff269a104983910efb8))
+* **desktop:** the window bar answers a press while a dialog is open ([#529](https://github.com/ValenceOSS/Valence/issues/529)) ([960bc95](https://github.com/ValenceOSS/Valence/commit/960bc95e78d878cd572c156107698a0aba8abe63))
+* **repo,docs:** compose pulled valence from the old registry, which stopped at a september build ([#515](https://github.com/ValenceOSS/Valence/issues/515)) ([2ce75f5](https://github.com/ValenceOSS/Valence/commit/2ce75f59602df95358a7e52b479d4432e594fb56))
+* **repo:** carplay crashed on opening when the server had no music library ([#507](https://github.com/ValenceOSS/Valence/issues/507)) ([9317ed0](https://github.com/ValenceOSS/Valence/commit/9317ed04f794ca0fc47e469e02ffc2cfdb8959b1))
+* **repo:** the last episode of a season offers the first of the next one ([#528](https://github.com/ValenceOSS/Valence/issues/528)) ([efeb91b](https://github.com/ValenceOSS/Valence/commit/efeb91bb1ae9265c38ed9e5d57a1d17d60948e46))
+* **repo:** the phone and television way-in tests pass again ([#521](https://github.com/ValenceOSS/Valence/issues/521)) ([6176c9d](https://github.com/ValenceOSS/Valence/commit/6176c9d3551180a7e07c1633aeb19538102e5f4a))
+* **repo:** the phone app closed at launch, from an expo-image newer than the rest of expo ([#511](https://github.com/ValenceOSS/Valence/issues/511)) ([b24c2e5](https://github.com/ValenceOSS/Valence/commit/b24c2e58fde1bfe522886688356bd1a1bea7bf57))
+* **requests,repo,web:** the cloudflare browser didn't start, from a better-sqlite3 pin and camoufox 156 ([#514](https://github.com/ValenceOSS/Valence/issues/514)) ([38661ff](https://github.com/ValenceOSS/Valence/commit/38661ff4642323d5b38feb1eff07aef9e77f14ba))
+* **server:** a request naming no quality could be given one kept to somebody else ([#524](https://github.com/ValenceOSS/Valence/issues/524)) ([52f7921](https://github.com/ValenceOSS/Valence/commit/52f79219681ae2d04f3f863dc6aab10521e4b418))
+* **server:** read the music service's and blocked libraries' yes-or-no answers on mysql and mariadb ([#532](https://github.com/ValenceOSS/Valence/issues/532)) ([88941c3](https://github.com/ValenceOSS/Valence/commit/88941c37daaf42010dd26819d704159cb589478d))
+* **web,desktop:** the player's controls didn't show over a wide film in full screen on windows ([#510](https://github.com/ValenceOSS/Valence/issues/510)) ([ac971f2](https://github.com/ValenceOSS/Valence/commit/ac971f27dd8747c7dc7833d234a505f52566ae95))
+
+
+### Faster
+
+* **desktop:** the home page stops redrawing every card while its trailer plays ([#526](https://github.com/ValenceOSS/Valence/issues/526)) ([33ce7da](https://github.com/ValenceOSS/Valence/commit/33ce7dae1116efe59e120e1b73f28637c1b0802f))
+
+
+### Documentation
+
+* **landing:** the changelog for 1.4.0 ([#537](https://github.com/ValenceOSS/Valence/issues/537)) ([9d428da](https://github.com/ValenceOSS/Valence/commit/9d428da3e4b78320ff7e78f8b53437afa6a49663))
+
+
+### Build
+
+* **repo:** leave the release manifest to release-please, so the format check passes ([#508](https://github.com/ValenceOSS/Valence/issues/508)) ([cd5db9d](https://github.com/ValenceOSS/Valence/commit/cd5db9d48e11e98bc3a74b9ca0ac77a73b59ff63))
+
 ## [1.3.0](https://github.com/ValenceOSS/Valence/compare/v1.2.0...v1.3.0) (2026-10-03)
 
 
