@@ -4,6 +4,7 @@ import { app, net, protocol } from 'electron';
 import { theServerAddress } from '@ValenceDesktop/main/theServerAddress';
 import { aHeldFile } from '@ValenceDesktop/main/aHeldFile';
 import { stitchTheRest } from '@ValenceDesktop/main/stitchTheRest';
+import { VIDEO_HOSTS } from '@ValenceDesktop/main/nameValenceToTheVideoHost';
 import type { ServerReach } from '@ValenceDesktop/main/theServerReach';
 import { CLIENT_KIND_HEADER } from '@ValenceContracts/constants/CLIENT_KIND_HEADER';
 import { say } from '@ValenceI18n/say';
@@ -24,6 +25,7 @@ const CARRIED = ['accept', 'content-type', 'range', 'x-valence-profile', 'author
 
 /**
  * Writes the policy a page of this client is held to, allowing these sources of script beyond its own.
+ * The one thing a page may frame is the video host's player, which is how a catalogue trailer plays.
  *
  * @param scripts - Where else script may come from.
  * @returns The policy, as the header carries it.
@@ -38,7 +40,7 @@ const policyAllowing = (scripts: readonly string[]): string =>
     "font-src 'self' data:",
     "connect-src 'self' ws: wss:",
     "object-src 'none'",
-    "frame-src 'none'",
+    ['frame-src', ...VIDEO_HOSTS.map((host) => `https://${host}`)].join(' '),
     "base-uri 'self'",
     "form-action 'none'",
   ].join('; ');
