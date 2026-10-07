@@ -19,14 +19,20 @@ const { theNativeModule, whereTheNativeModuleIs } = await import('./theNativeMod
 
 describe('whereTheNativeModuleIs', () => {
   it('reads it from beside the archive in a build, since it cannot be loaded from inside one', () => {
-    expect(whereTheNativeModuleIs('/Applications/Valence.app/Contents/Resources/app.asar')).toBe(
-      '/Applications/Valence.app/Contents/Resources/app.asar.unpacked/dist-native/valence.node',
+    expect(whereTheNativeModuleIs('/opt/Valence/resources/app.asar', 'x64')).toBe(
+      '/opt/Valence/resources/app.asar.unpacked/dist-native/valence-x64.node',
     );
   });
 
   it('reads it from the app itself out of one', () => {
-    expect(whereTheNativeModuleIs('/work/apps/desktop')).toBe(
-      '/work/apps/desktop/dist-native/valence.node',
+    expect(whereTheNativeModuleIs('/work/apps/desktop', 'x64')).toBe(
+      '/work/apps/desktop/dist-native/valence-x64.node',
+    );
+  });
+
+  it("reads the module built for this machine's processor, since a Windows build carries both", () => {
+    expect(whereTheNativeModuleIs('/opt/Valence/resources/app.asar', 'arm64')).toBe(
+      '/opt/Valence/resources/app.asar.unpacked/dist-native/valence-arm64.node',
     );
   });
 });
@@ -40,6 +46,6 @@ describe('theNativeModule', () => {
     expect(theNativeModule()).toEqual({});
     expect(theNativeModule()).toEqual({});
     expect(loadIt).toHaveBeenCalledTimes(1);
-    expect(loadIt).toHaveBeenCalledWith('/app/dist-native/valence.node');
+    expect(loadIt).toHaveBeenCalledWith(`/app/dist-native/valence-${process.arch}.node`);
   });
 });

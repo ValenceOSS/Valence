@@ -5,7 +5,7 @@ name: Desktop app
 # A workflow of its own, called by release.yml, because it needs a different operating system and
 # so that it can be run by hand to prove the app still packages without cutting a release. To build
 # only some platforms, for trying a branch out, start desktop-test-build.yml instead. It runs on
-# a release and when somebody starts it, and on nothing else: three runners, one of them a macOS one,
+# a release and when somebody starts it, and on nothing else: four runners, one of them a macOS one,
 # is not a cost every pull request should carry.
 #
 # It builds; it does not publish. release.yml takes what it produced and hangs it on the release, and
@@ -13,7 +13,7 @@ name: Desktop app
 #
 # What it hands over is more than the installers. The desktop app updates itself with
 # electron-updater, which finds a new version by reading latest.yml, latest-mac.yml or
-# latest-linux.yml off the release, downloads the file named there, and uses the .blockmap beside
+# latest-linux.yml (latest-linux-arm64.yml on ARM64) off the release, downloads the file named there, and uses the .blockmap beside
 # it to fetch only what changed. On macOS what it installs is the .zip rather than the .dmg. Without
 # those, a release looks like no release at all to every copy already installed.
 #
@@ -84,6 +84,17 @@ jobs:
   # Which platforms to build: all three for a release or a run started here, and whichever were
   # ticked for a test build started from desktop-test-build.yml. A matrix cannot be trimmed by an
   # input directly, so the rows are written out here and the ones asked for handed to the build.
+  #
+  # Linux is two rows, each on a runner of its own processor: an AppImage holds one architecture,
+  # and building ARM64 natively is quicker and surer than under emulation. electron-builder names
+  # each one's update feed for its processor, latest-linux.yml and latest-linux-arm64.yml, and the
+  # updater reads the one for the machine it is on.
+  #
+  # Windows is one row building both, an installer each: the updater finds a Windows update in
+  # latest.yml whatever the processor, so the two must be listed in one, which only one build
+  # writes. It picks the installer whose name carries its own processor, which is why both are
+  # named for theirs. The ARM64 app is packaged on the x64 runner, and its native module is
+  # cross-compiled there.
   platforms:
     name: Choose the platforms
     runs-on: ubuntu-24.04
@@ -96,15 +107,18 @@ jobs:
         run: |
           include=$(jq -c --arg asked "$ASKED" '
             ($asked | split(",") | map(select(. != ""))) as $wanted
-            | [.[] | select($asked == "" or (.name as $name | $wanted | index($name)))
+            | [.[] | select($asked == "" or (.platform as $platform | $wanted | index($platform)))
                    | .files |= join("\n")]' <<'ROWS'
           [
             {
               "name": "Windows",
+              "artefact": "Windows",
+              "platform": "Windows",
               "runner": "windows-2025-vs2026",
-              "flags": "--win --x64",
-              "installer": "apps/desktop/release/Valence-Setup-*.exe",
-              "also": "",
+              "flags": "--win --x64 --arm64",
+              "native": "--arch=x64 --arch=arm64",
+              "installer": "apps/desktop/release/Valence-Setup-*-x64.exe",
+              "also": "apps/desktop/release/Valence-Setup-*-arm64.exe",
               "files": [
                 "apps/desktop/release/Valence-Setup-*.exe",
                 "apps/desktop/release/Valence-Setup-*.exe.blockmap",
@@ -114,8 +128,11 @@ jobs:
             },
             {
               "name": "macOS",
+              "artefact": "macOS",
+              "platform": "macOS",
               "runner": "macos-26",
               "flags": "--mac --arm64 --x64",
+              "native": "",
               "installer": "apps/desktop/release/Valence-*-arm64.dmg",
               "also": "apps/desktop/release/Valence-*-x64.dmg",
               "files": [
@@ -129,14 +146,32 @@ jobs:
             },
             {
               "name": "Linux",
+              "artefact": "Linux",
+              "platform": "Linux",
               "runner": "ubuntu-24.04",
               "flags": "--linux --x64",
-              "installer": "apps/desktop/release/Valence-*.AppImage",
+              "native": "",
+              "installer": "apps/desktop/release/Valence-*-x86_64.AppImage",
               "also": "",
               "files": [
-                "apps/desktop/release/Valence-*.AppImage",
+                "apps/desktop/release/Valence-*-x86_64.AppImage",
                 "apps/desktop/release/latest-linux.yml",
                 "apps/desktop/release/dev-linux.yml"
+              ]
+            },
+            {
+              "name": "Linux ARM64",
+              "artefact": "Linux-ARM64",
+              "platform": "Linux",
+              "runner": "ubuntu-24.04-arm",
+              "flags": "--linux --arm64",
+              "native": "",
+              "installer": "apps/desktop/release/Valence-*-arm64.AppImage",
+              "also": "",
+              "files": [
+                "apps/desktop/release/Valence-*-arm64.AppImage",
+                "apps/desktop/release/latest-linux-arm64.yml",
+                "apps/desktop/release/dev-linux-arm64.yml"
               ]
             }
           ]
@@ -209,13 +244,14 @@ jobs:
       # The part of the app written in Rust, which asks Windows for a passkey. A Mac and Linux sign in
       # with one in the browser, so they build nothing and need no toolchain.
       - uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
-        if: matrix.name == 'Windows'
+        if: matrix.native != ''
         with:
           toolchain: stable
+          targets: x86_64-pc-windows-msvc,aarch64-pc-windows-msvc
 
       - name: Build the native module
-        if: matrix.name == 'Windows'
-        run: pnpm --filter @valence/desktop run native
+        if: matrix.native != ''
+        run: pnpm --filter @valence/desktop run native ${{ matrix.native }}
 
       # The certificate goes into a keychain of this job's own, made and unlocked here, where the
       # builder finds the Developer ID in it. The builder can make one itself from the certificate,
@@ -294,6 +330,6 @@ jobs:
       - name: Hand over everything, for the release
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: valence-desktop-${{ matrix.name }}
+          name: valence-desktop-${{ matrix.artefact }}
           path: ${{ matrix.files }}
           if-no-files-found: error

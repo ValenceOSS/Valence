@@ -111,7 +111,8 @@
         {
           "target": "nsis",
           "arch": [
-            "x64"
+            "x64",
+            "arm64"
           ]
         }
       ]
@@ -123,7 +124,8 @@
         {
           "target": "AppImage",
           "arch": [
-            "x64"
+            "x64",
+            "arm64"
           ]
         }
       ],
@@ -133,13 +135,14 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "artifactName": "Valence-Setup-${version}.${ext}"
+      "artifactName": "Valence-Setup-${version}-${arch}.${ext}",
+      "buildUniversalInstaller": false
     },
     "dmg": {
       "artifactName": "Valence-${version}-${arch}.${ext}"
     },
     "appImage": {
-      "artifactName": "Valence-${version}.${ext}"
+      "artifactName": "Valence-${version}-${arch}.${ext}"
     }
   }
 }

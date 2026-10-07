@@ -5,7 +5,7 @@ name: Desktop dev channel
 # desktop app's equivalent of the `dev` image.
 #
 # The channel is one release, tagged `desktop-dev` and marked as a prerelease, which this replaces
-# the contents of on every build: the installers, and the dev.yml, dev-mac.yml and dev-linux.yml the
+# the contents of on every build: the installers, and the dev.yml, dev-mac.yml and dev-linux*.yml the
 # app reads to find them. A dev build is stamped with the dev channel's address when it is built
 # (see desktop.yml), so it follows this release and nothing else; a released build follows the
 # newest release, which a prerelease never is. Nothing else in the repository answers to a tag that
