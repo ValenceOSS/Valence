@@ -516,54 +516,92 @@ describe('formatWebhookBody', () => {
       said({
         ...anEnvelope,
         event: 'requests.made',
-        data: { title: 'Dune', kind: 'film', requestedBy: 'Sam' },
+        data: { title: 'Dune', kind: 'film', requestedBy: 'Sam', request: null },
       }),
     ).toBe('Sam requested the film Dune.');
     expect(
       said({
         ...anEnvelope,
         event: 'requests.approved',
-        data: { title: 'Dune', approvedBy: null },
+        data: { title: 'Dune', approvedBy: null, request: null },
       }),
     ).toBe('Dune was approved as requested.');
     expect(
       said({
         ...anEnvelope,
         event: 'requests.approved',
-        data: { title: 'Dune', approvedBy: 'Alex' },
+        data: { title: 'Dune', approvedBy: 'Alex', request: null },
       }),
     ).toBe('Alex approved Dune.');
     expect(
-      said({ ...anEnvelope, event: 'requests.refused', data: { title: 'Dune', reason: null } }),
+      said({
+        ...anEnvelope,
+        event: 'requests.refused',
+        data: { title: 'Dune', reason: null, request: null },
+      }),
     ).toBe('Dune was declined.');
     expect(
       said({
         ...anEnvelope,
         event: 'requests.refused',
-        data: { title: 'Dune', reason: 'No room' },
+        data: { title: 'Dune', reason: 'No room', request: null },
       }),
     ).toBe('Dune was declined — No room');
     expect(
       said({
         ...anEnvelope,
         event: 'requests.chosen',
-        data: { title: 'Dune', release: 'Dune.2021.1080p.WEB-DL' },
+        data: { title: 'Dune', release: 'Dune.2021.1080p.WEB-DL', request: null },
       }),
     ).toBe('Dune.2021.1080p.WEB-DL was selected for Dune.');
     expect(
       said({
         ...anEnvelope,
         event: 'requests.filed',
-        data: { title: 'Dune', folder: '/media/Films/Dune (2021)' },
+        data: { title: 'Dune', folder: '/media/Films/Dune (2021)', request: null },
       }),
     ).toBe('Dune was moved to /media/Films/Dune (2021).');
     expect(
       said({
         ...anEnvelope,
         event: 'requests.available',
-        data: { title: 'Dune', requestedBy: 'Sam', mediaId: 'media-1' },
+        data: { title: 'Dune', requestedBy: 'Sam', mediaId: 'media-1', request: null },
       }),
     ).toBe('Dune is ready to watch, as requested by Sam.');
+  });
+});
+
+describe('formatWebhookBody, a request that is ready', () => {
+  const aRequest = {
+    id: 'request-1',
+    kind: 'album' as const,
+    title: 'An Album',
+    artistName: 'An Artist',
+    year: 2022,
+    overview: null,
+    posterUrl: null,
+    requestedBy: 'Dan',
+    seasons: null,
+    state: 'available' as const,
+  };
+
+  const ready = (kind: 'film' | 'album' | 'artist' | 'book') =>
+    formatWebhookBody('ntfy', {
+      ...anEnvelope,
+      event: 'requests.available',
+      data: {
+        title: 'An Album',
+        requestedBy: 'Dan',
+        mediaId: 'media-1',
+        request: { ...aRequest, kind },
+      },
+    }).body;
+
+  it('is ready to listen to where it is music, to read where it is a book, and to watch otherwise', () => {
+    expect(ready('album')).toBe('An Album is ready to listen to, as requested by Dan.');
+    expect(ready('artist')).toBe('An Album is ready to listen to, as requested by Dan.');
+    expect(ready('book')).toBe('An Album is ready to read, as requested by Dan.');
+    expect(ready('film')).toBe('An Album is ready to watch, as requested by Dan.');
   });
 });
 

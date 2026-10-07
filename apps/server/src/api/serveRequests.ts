@@ -87,6 +87,7 @@ import { progressOf } from '@ValenceServer/requests/progressOf';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
+import { webhookRequestOf } from '@ValenceServer/webhooks/webhookRequestOf';
 
 /**
  * Registers the requests endpoints.
@@ -644,7 +645,11 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     sayOfRequest({
       event: 'requests.approved',
-      data: { title: answer.value.title, approvedBy: session?.user.name ?? null },
+      data: {
+        title: answer.value.title,
+        approvedBy: session?.user.name ?? null,
+        request: webhookRequestOf(answer.value),
+      },
     });
 
     return context.json(answer.value, 200);
@@ -664,7 +669,11 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     sayOfRequest({
       event: 'requests.refused',
-      data: { title: answer.value.title, reason: answer.value.refusedBecause?.message ?? null },
+      data: {
+        title: answer.value.title,
+        reason: answer.value.refusedBecause?.message ?? null,
+        request: webhookRequestOf(answer.value),
+      },
     });
 
     return context.json(answer.value, 200);

@@ -186,10 +186,19 @@ const sentenceFor = (payload: WebhookPayload): string => {
     }
 
     case 'requests.available': {
-      return say('server.webhooks.formatWebhookBody.titleIsReadyToWatchAs', {
-        title: payload.data.title,
-        requestedBy: payload.data.requestedBy,
-      });
+      const ready = { title: payload.data.title, requestedBy: payload.data.requestedBy };
+
+      switch (payload.data.request?.kind) {
+        case 'artist':
+        case 'album':
+          return say('server.webhooks.formatWebhookBody.titleIsReadyToListenToAsRequested', ready);
+        case 'book':
+          return say('server.webhooks.formatWebhookBody.titleIsReadyToReadAsRequested', ready);
+        case 'film':
+        case 'series':
+        case undefined:
+          return say('server.webhooks.formatWebhookBody.titleIsReadyToWatchAs', ready);
+      }
     }
 
     case 'requests.vpnUp': {
