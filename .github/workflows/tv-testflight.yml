@@ -1,0 +1,138 @@
+name: Apple TV app to TestFlight
+
+# Builds the television app for tvOS on one of GitHub's macOS runners and uploads it to TestFlight.
+#
+# Started by hand only, as the phone's is: a macOS runner bills at roughly ten times a Linux one, and
+# a TestFlight build is something somebody decides to send.
+#
+# The television app has no project on Expo's cloud, so this builds it with Xcode alone: the native
+# project is generated from app.config.ts, archived, and exported straight to App Store Connect.
+# Signing is left to Xcode, which fetches or makes the distribution certificate and the profiles for
+# the app and its Top Shelf extension through the App Store Connect API key, so no certificate has to
+# be kept here.
+#
+# The version is the one release-please last set unless one is given, and the build number is this
+# workflow's run number, which only ever counts up, so two builds of one version never share one.
+#
+# Secrets it needs, under Settings → Secrets and variables → Actions:
+#   ASC_KEY_ID      the App Store Connect API key's Key ID, as the phone uses; the key must have the
+#                   Admin role for Xcode to manage signing with it
+#   ASC_ISSUER_ID   the Issuer ID shown above the list of API keys
+#   ASC_API_KEY_P8  the whole contents of the key's AuthKey_<Key ID>.p8 file
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch or commit to build, where it should not be the one this is started from
+        required: false
+        default: ''
+      version:
+        description: Version to give the build, such as 1.3.0; release-please's current one when left empty
+        required: false
+        default: ''
+
+concurrency:
+  group: tv-testflight
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  TEAM_ID: DG952Y4Q43
+
+jobs:
+  testflight:
+    name: Build and send to TestFlight
+    runs-on: macos-26
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Use Xcode 26.6
+        run: sudo xcode-select -s /Applications/Xcode_26.6.app
+
+      - name: Put the App Store Connect key in place
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          printf '%s' "$ASC_API_KEY_P8" > ~/.appstoreconnect/private_keys/AuthKey_"$ASC_KEY_ID".p8
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+
+      - name: Generate the native project
+        shell: bash
+        working-directory: apps/tv
+        run: |
+          version="${VERSION:-$(jq -r '."."' "$GITHUB_WORKSPACE/.release-please-manifest.json")}"
+          echo "VALENCE_VERSION=$version" >> "$GITHUB_ENV"
+          pnpm run prebuild
+        env:
+          VERSION: ${{ inputs.version }}
+
+      # Both the app and its Top Shelf extension take the build number from the project, so it is
+      # set once there.
+      - name: Archive
+        shell: bash
+        working-directory: apps/tv/ios
+        run: >
+          xcodebuild archive
+          -workspace Valence.xcworkspace -scheme Valence -configuration Release
+          -destination 'generic/platform=tvOS'
+          -archivePath "$RUNNER_TEMP/Valence.xcarchive"
+          -allowProvisioningUpdates
+          -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_"$ASC_KEY_ID".p8
+          -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+          DEVELOPMENT_TEAM="$TEAM_ID" CODE_SIGN_STYLE=Automatic
+          CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" MARKETING_VERSION="$VALENCE_VERSION"
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+
+      - name: Send to TestFlight
+        shell: bash
+        run: |
+          cat > "$RUNNER_TEMP/export.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+            <dict>
+              <key>method</key><string>app-store-connect</string>
+              <key>destination</key><string>upload</string>
+              <key>teamID</key><string>$TEAM_ID</string>
+              <key>signingStyle</key><string>automatic</string>
+              <key>manageAppVersionAndBuildNumber</key><false/>
+            </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/Valence.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/export.plist" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_"$ASC_KEY_ID".p8 \
+            -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+
+      # Kept for a few days, so a build that Apple turns down can be looked at.
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: valence-tvos-archive
+          path: ${{ runner.temp }}/Valence.xcarchive
+          if-no-files-found: ignore
+          retention-days: 7
