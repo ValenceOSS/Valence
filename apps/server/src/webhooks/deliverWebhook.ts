@@ -23,6 +23,8 @@ type WebhookTarget = {
   secret: string;
 };
 
+type WebhookDestination = WebhookTarget & { iconUrl: string | null };
+
 type WebhookAttempt = {
   ok: boolean;
   status: number | null;
@@ -37,13 +39,13 @@ type WebhookAttempt = {
  * and gives up on anything too slow to answer, so that one unresponsive endpoint cannot hold a worker
  * open.
  *
- * @param target Where to send it, and what to sign it with.
+ * @param target Where to send it, what to sign it with, and where Valence's mark can be fetched.
  * @param payload The event being delivered.
  * @param fetchImpl How to make the request, so a test need not open a socket.
  * @param timeoutMilliseconds How long to wait for an answer.
  */
 const deliverWebhook = async (
-  target: WebhookTarget,
+  target: WebhookDestination,
   payload: WebhookPayload,
   fetchImpl?: WebhookFetcher,
   timeoutMilliseconds: number = WEBHOOK_TIMEOUT_MILLISECONDS,
@@ -64,7 +66,7 @@ const deliverWebhook = async (
       return { ok: response.ok, status: response.status };
     });
 
-  const { body, contentType } = formatWebhookBody(target.preset, payload);
+  const { body, contentType } = formatWebhookBody(target.preset, payload, target.iconUrl);
 
   try {
     const response = await call(target.url, {
@@ -101,4 +103,4 @@ const deliverWebhook = async (
 
 export { deliverWebhook };
 
-export type { WebhookAttempt, WebhookFetcher, WebhookTarget };
+export type { WebhookAttempt, WebhookDestination, WebhookFetcher, WebhookTarget };

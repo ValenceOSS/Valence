@@ -8,6 +8,7 @@ type RunWebhookDeliveryOptions = {
   subscriptions: WebhookStore;
   subscriptionId: string;
   payload: string;
+  iconUrl: string | null;
   fetchImpl?: WebhookFetcher;
 };
 
@@ -17,12 +18,14 @@ type RunWebhookDeliveryOptions = {
  * @param subscriptions Where subscriptions are kept.
  * @param subscriptionId Who this delivery is for.
  * @param payload The envelope as it was queued.
+ * @param iconUrl Where a receiver can fetch Valence's mark to show beside the message, if anywhere.
  * @param fetchImpl How to make the request, so a test need not open a socket.
  */
 const runWebhookDelivery = async ({
   subscriptions,
   subscriptionId,
   payload,
+  iconUrl,
   fetchImpl,
 }: RunWebhookDeliveryOptions): Promise<boolean> => {
   const target = await subscriptions.readTarget(subscriptionId);
@@ -43,7 +46,7 @@ const runWebhookDelivery = async ({
     return true;
   }
 
-  const attempt = await deliverWebhook(target, read.data, fetchImpl);
+  const attempt = await deliverWebhook({ ...target, iconUrl }, read.data, fetchImpl);
 
   await subscriptions.recordAttempt(subscriptionId, attempt);
   await subscriptions.recordDelivery(

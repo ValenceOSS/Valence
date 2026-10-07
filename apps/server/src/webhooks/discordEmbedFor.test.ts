@@ -140,12 +140,15 @@ describe('discordEmbedFor', () => {
       embed({
         ...anEnvelope,
         event: 'requests.available',
-        data: { title: 'Dune', requestedBy: 'Sam', mediaId: 'media-1' },
+        data: { title: 'Dune', requestedBy: 'Sam', mediaId: 'media-1', request: null },
       }).color,
     ).toBe(embed({ ...anEnvelope, event: 'transcoder.reachable', data: {} }).color);
     expect(
-      embed({ ...anEnvelope, event: 'requests.refused', data: { title: 'Dune', reason: null } })
-        .color,
+      embed({
+        ...anEnvelope,
+        event: 'requests.refused',
+        data: { title: 'Dune', reason: null, request: null },
+      }).color,
     ).toBe(embed({ ...anEnvelope, event: 'webhook.test', data: {} }).color);
   });
 
@@ -220,6 +223,9 @@ describe('discordEmbedFor', () => {
     expect(embed({ ...anEnvelope, event: 'playback.started', data: listening }).description).toBe(
       'Ada started listening',
     );
+    expect(
+      embed({ ...anEnvelope, event: 'playback.started', data: listening }).fields,
+    ).toContainEqual({ name: 'Playing', value: 'Direct play', inline: true });
     expect(
       embed({
         ...anEnvelope,
@@ -654,5 +660,144 @@ describe('discordEmbedFor, somebody opening and closing Valence', () => {
     expect(
       embed({ ...anEnvelope, event: 'session.started', data: aSession }).thumbnail,
     ).toBeUndefined();
+  });
+});
+
+describe('discordEmbedFor, a request as Seerr draws one', () => {
+  const aRequest = {
+    id: 'request-1',
+    kind: 'film' as const,
+    title: 'Dune',
+    artistName: null,
+    year: 2021,
+    overview: 'A noble family becomes embroiled in a war for control over a desert planet.',
+    posterUrl: 'https://image.tmdb.org/t/p/w500/dune.jpg',
+    requestedBy: 'Jess',
+    seasons: null,
+    state: 'available' as const,
+  };
+
+  const valueOf = (drawn: ReturnType<typeof embed>, name: string) =>
+    drawn.fields.find((one) => one.name === name)?.value;
+
+  it('says what became of which request, with its summary, poster, asker and status', () => {
+    const drawn = embed({
+      ...anEnvelope,
+      event: 'requests.available',
+      data: { title: 'Dune', requestedBy: 'Jess', mediaId: 'media-1', request: aRequest },
+    });
+
+    expect(drawn.title).toBe('Film request now available: Dune (2021)');
+    expect(drawn.description).toBe(aRequest.overview);
+    expect(drawn.thumbnail).toEqual({ url: aRequest.posterUrl });
+    expect(valueOf(drawn, 'Requested by')).toBe('Jess');
+    expect(valueOf(drawn, 'Status')).toBe('Available');
+  });
+
+  it('names the seasons of a series, and the artist of an album', () => {
+    const series = embed({
+      ...anEnvelope,
+      event: 'requests.available',
+      data: {
+        title: 'Carrie',
+        requestedBy: 'Jess',
+        mediaId: 'media-2',
+        request: { ...aRequest, kind: 'series', title: 'Carrie', seasons: [1, 2] },
+      },
+    });
+    const album = embed({
+      ...anEnvelope,
+      event: 'requests.available',
+      data: {
+        title: 'An Album',
+        requestedBy: 'Dan',
+        mediaId: 'media-3',
+        request: { ...aRequest, kind: 'album', title: 'An Album', artistName: 'An Artist' },
+      },
+    });
+
+    expect(series.title).toBe('Series request now available: Carrie (2021)');
+    expect(valueOf(series, 'Seasons')).toBe('1, 2');
+    expect(album.title).toBe('Album request now available: An Album (2021)');
+    expect(valueOf(album, 'Artist')).toBe('An Artist');
+    expect(valueOf(album, 'Seasons')).toBeUndefined();
+  });
+
+  it('tells a request waiting for approval from one approved as it was made', () => {
+    const waiting = embed({
+      ...anEnvelope,
+      event: 'requests.made',
+      data: {
+        title: 'Dune',
+        kind: 'film',
+        requestedBy: 'Jess',
+        request: { ...aRequest, state: 'awaitingApproval' },
+      },
+    });
+    const automatic = embed({
+      ...anEnvelope,
+      event: 'requests.approved',
+      data: { title: 'Dune', approvedBy: null, request: { ...aRequest, state: 'wanted' } },
+    });
+    const byHand = embed({
+      ...anEnvelope,
+      event: 'requests.approved',
+      data: { title: 'Dune', approvedBy: 'Dan', request: { ...aRequest, state: 'wanted' } },
+    });
+
+    expect(waiting.title).toBe('Film request pending approval: Dune (2021)');
+    expect(valueOf(waiting, 'Status')).toBe('Waiting for approval');
+    expect(automatic.title).toBe('Film request automatically approved: Dune (2021)');
+    expect(byHand.title).toBe('Film request approved: Dune (2021)');
+    expect(valueOf(byHand, 'Approved by')).toBe('Dan');
+  });
+
+  it('gives a declined request its reason, in the colour of bad news', () => {
+    const declined = embed({
+      ...anEnvelope,
+      event: 'requests.refused',
+      data: { title: 'Dune', reason: 'No room', request: { ...aRequest, state: 'refused' } },
+    });
+
+    expect(declined.title).toBe('Film request declined: Dune (2021)');
+    expect(valueOf(declined, 'Reason')).toBe('No room');
+    expect(declined.color).toBe(
+      embed({ ...anEnvelope, event: 'transcoder.unreachable', data: { reason: 'x' } }).color,
+    );
+  });
+
+  it('leaves out the year of a title that has none', () => {
+    expect(
+      embed({
+        ...anEnvelope,
+        event: 'requests.filed',
+        data: {
+          title: 'Dune',
+          folder: '/media/Films/Dune',
+          request: { ...aRequest, year: null, state: 'filed' },
+        },
+      }).title,
+    ).toBe('Film request imported: Dune');
+  });
+});
+
+describe('discordEmbedFor, with Valence’s mark', () => {
+  it('shows the mark beside Valence’s name where there is somewhere to fetch it from', () => {
+    expect(
+      discordEmbedFor(anArrival, 'a sentence', 'https://valence.example.com/icon.png').author,
+    ).toEqual({ name: 'Valence', icon_url: 'https://valence.example.com/icon.png' });
+    expect(discordEmbedFor(anArrival, 'a sentence').author).toEqual({ name: 'Valence' });
+  });
+});
+
+describe('discordEmbedFor, a disk running out of room', () => {
+  it('says how much is free of all of it, in one field', () => {
+    const drawn = embed({
+      ...anEnvelope,
+      event: 'disk.low',
+      data: { mountPoint: '/media', availableBytes: 40_000_000_000, totalBytes: 8_000_000_000_000 },
+    });
+
+    expect(drawn.fields).toEqual([{ name: 'Free', value: '37 GB of 7.3 TB', inline: true }]);
   });
 });

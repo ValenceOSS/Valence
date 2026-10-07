@@ -26531,6 +26531,11 @@
     "context": "The last line of a Discord message listing what arrived in a library, when it is too long to name everything. {count} is how many more arrived."
   },
   {
+    "handler": "server.webhooks.discordEmbedFor.approvedBy",
+    "text": "Approved by",
+    "context": "The label of a field in a Discord webhook about an approved request, naming who approved it (from `discordEmbedFor`)."
+  },
+  {
     "handler": "server.webhooks.discordEmbedFor.arrivedInLibraryName",
     "text": "Added to {libraryName}",
     "context": "Shown in the webhooks on the server (from `discordEmbedFor`). {libraryName} is filled in by the app."
@@ -26546,9 +26551,24 @@
     "context": "Shown in the webhooks on the server (from `discordEmbedFor`)."
   },
   {
+    "handler": "server.webhooks.discordEmbedFor.directPlay",
+    "text": "Direct play",
+    "context": "How a session is played, in a Discord webhook's field about something starting: the original file, unchanged (from `discordEmbedFor`)."
+  },
+  {
+    "handler": "server.webhooks.discordEmbedFor.directStream",
+    "text": "Direct stream",
+    "context": "How a session is played, in a Discord webhook's field about something starting: the original picture with its sound converted (from `discordEmbedFor`)."
+  },
+  {
     "handler": "server.webhooks.discordEmbedFor.free",
     "text": "Free",
     "context": "Shown in the webhooks on the server (from `discordEmbedFor`)."
+  },
+  {
+    "handler": "server.webhooks.discordEmbedFor.freeOfTotal",
+    "text": "{free} of {total}",
+    "context": "A Discord webhook's field about a disk running out of room, saying how much is left of all of it (from `discordEmbedFor`). {free} and {total} are sizes, such as 37 GB and 7.3 TB."
   },
   {
     "handler": "server.webhooks.discordEmbedFor.from",
@@ -26574,6 +26594,46 @@
     "handler": "server.webhooks.discordEmbedFor.howToFixIt",
     "text": "How to fix it",
     "context": "Shown in the webhooks on the server (from `discordEmbedFor`)."
+  },
+  {
+    "handler": "server.webhooks.discordEmbedFor.kindRequestApprovedTitle",
+    "text": "{kind} request approved: {title}",
+    "context": "A Discord webhook's title for a request, as Seerr titles its own (from `discordEmbedFor`). {kind} is the kind of thing asked for, Film, Series, Artist, Album or Book; {title} is its title, with its year where it has one."
+  },
+  {
+    "handler": "server.webhooks.discordEmbedFor.kindRequestAutomaticallyApprovedTitle",
+    "text": "{kind} request automatically approved: {title}",
+    "context": "A Discord webhook's title for a request, as Seerr titles its own (from `discordEmbedFor`). {kind} is the kind of thing asked for, Film, Series, Artist, Album or Book; {title} is its title, with its year where it has one."
+  },
+  {
+    "handler": "server.webhooks.discordEmbedFor.kindRequestDeclinedTitle",
+    "text": "{kind} request declined: {title}",
+    "context": "A Discord webhook's title for a request, as Seerr titles its own (from `discordEmbedFor`). {kind} is the kind of thing asked for, Film, Series, Artist, Album or Book; {title} is its title, with its year where it has one."
+  },
+  {
+    "handler": "server.webhooks.discordEmbedFor.kindRequestDownloadingTitle",
+    "text": "{kind} request downloading: {title}",
+    "context": "A Discord webhook's title for a request, as Seerr titles its own (from `discordEmbedFor`). {kind} is the kind of thing asked for, Film, Series, Artist, Album or Book; {title} is its title, with its year where it has one."
+  },
+  {
+    "handler": "server.webhooks.discordEmbedFor.kindRequestImportedTitle",
+    "text": "{kind} request imported: {title}",
+    "context": "A Discord webhook's title for a request, as Seerr titles its own (from `discordEmbedFor`). {kind} is the kind of thing asked for, Film, Series, Artist, Album or Book; {title} is its title, with its year where it has one."
+  },
+  {
+    "handler": "server.webhooks.discordEmbedFor.kindRequestMadeTitle",
+    "text": "{kind} request made: {title}",
+    "context": "A Discord webhook's title for a request, as Seerr titles its own (from `discordEmbedFor`). {kind} is the kind of thing asked for, Film, Series, Artist, Album or Book; {title} is its title, with its year where it has one."
+  },
+  {
+    "handler": "server.webhooks.discordEmbedFor.kindRequestNowAvailableTitle",
+    "text": "{kind} request now available: {title}",
+    "context": "A Discord webhook's title for a request, as Seerr titles its own (from `discordEmbedFor`). {kind} is the kind of thing asked for, Film, Series, Artist, Album or Book; {title} is its title, with its year where it has one."
+  },
+  {
+    "handler": "server.webhooks.discordEmbedFor.kindRequestPendingApprovalTitle",
+    "text": "{kind} request pending approval: {title}",
+    "context": "A Discord webhook's title for a request, as Seerr titles its own (from `discordEmbedFor`). {kind} is the kind of thing asked for, Film, Series, Artist, Album or Book; {title} is its title, with its year where it has one."
   },
   {
     "handler": "server.webhooks.discordEmbedFor.labelFailed",
@@ -26636,9 +26696,9 @@
     "context": "Shown in the webhooks on the server (from `discordEmbedFor`). {libraryName} is filled in by the app."
   },
   {
-    "handler": "server.webhooks.discordEmbedFor.of",
-    "text": "Of",
-    "context": "Shown in the webhooks on the server (from `discordEmbedFor`)."
+    "handler": "server.webhooks.discordEmbedFor.reason",
+    "text": "Reason",
+    "context": "The label of a field in a Discord webhook about a declined request, saying why (from `discordEmbedFor`)."
   },
   {
     "handler": "server.webhooks.discordEmbedFor.removed",
@@ -26874,6 +26934,16 @@
     "handler": "server.webhooks.formatWebhookBody.titleFailedInClientProblem",
     "text": "{title} failed in {client} — {problem}",
     "context": "Shown in the webhooks on the server (from `formatWebhookBody`). {title} is filled in by the app; {client} is filled in by the app; {problem} is filled in by the app."
+  },
+  {
+    "handler": "server.webhooks.formatWebhookBody.titleIsReadyToListenToAsRequested",
+    "text": "{title} is ready to listen to, as requested by {requestedBy}.",
+    "context": "A webhook's message once requested music is in the library (from `formatWebhookBody`). {title} is the artist or album; {requestedBy} is who asked."
+  },
+  {
+    "handler": "server.webhooks.formatWebhookBody.titleIsReadyToReadAsRequested",
+    "text": "{title} is ready to read, as requested by {requestedBy}.",
+    "context": "A webhook's message once a requested book is in the library (from `formatWebhookBody`). {title} is the book; {requestedBy} is who asked."
   },
   {
     "handler": "server.webhooks.formatWebhookBody.titleIsReadyToWatchAs",

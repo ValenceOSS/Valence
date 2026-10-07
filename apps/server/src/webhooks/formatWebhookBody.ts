@@ -186,10 +186,19 @@ const sentenceFor = (payload: WebhookPayload): string => {
     }
 
     case 'requests.available': {
-      return say('server.webhooks.formatWebhookBody.titleIsReadyToWatchAs', {
-        title: payload.data.title,
-        requestedBy: payload.data.requestedBy,
-      });
+      const ready = { title: payload.data.title, requestedBy: payload.data.requestedBy };
+
+      switch (payload.data.request?.kind) {
+        case 'artist':
+        case 'album':
+          return say('server.webhooks.formatWebhookBody.titleIsReadyToListenToAsRequested', ready);
+        case 'book':
+          return say('server.webhooks.formatWebhookBody.titleIsReadyToReadAsRequested', ready);
+        case 'film':
+        case 'series':
+        case undefined:
+          return say('server.webhooks.formatWebhookBody.titleIsReadyToWatchAs', ready);
+      }
     }
 
     case 'requests.vpnUp': {
@@ -377,8 +386,13 @@ const withHowToFix = (sentence: string, docs: string | null): string =>
  *
  * @param preset The shape this subscriber expects.
  * @param payload The event being delivered.
+ * @param iconUrl Where the receiver can fetch Valence's mark to show beside the message, if anywhere.
  */
-const formatWebhookBody = (preset: WebhookPreset, payload: WebhookPayload): WebhookRequestBody => {
+const formatWebhookBody = (
+  preset: WebhookPreset,
+  payload: WebhookPayload,
+  iconUrl: string | null = null,
+): WebhookRequestBody => {
   switch (preset) {
     case 'generic': {
       return { body: JSON.stringify(payload), contentType: 'application/json' };
@@ -386,7 +400,7 @@ const formatWebhookBody = (preset: WebhookPreset, payload: WebhookPayload): Webh
 
     case 'discord': {
       return {
-        body: JSON.stringify({ embeds: [discordEmbedFor(payload, sentenceFor(payload))] }),
+        body: JSON.stringify({ embeds: [discordEmbedFor(payload, sentenceFor(payload), iconUrl)] }),
         contentType: 'application/json',
       };
     }

@@ -75,11 +75,11 @@ The signing secret is then shown once, in a highlighted card. Copy it and give i
 
 ### Shapes
 
-| Shape   | What is sent                                                                        |
-| ------- | ----------------------------------------------------------------------------------- |
-| generic | Valence's own envelope as JSON, sent as `application/json`. Build against this one. |
-| discord | A message with an embed, for a Discord channel webhook URL.                         |
-| ntfy    | The event written as one plain text sentence, for an ntfy topic.                    |
+| Shape   | What is sent                                                                                                                                                                              |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| generic | Valence's own envelope as JSON, sent as `application/json`. Build against this one.                                                                                                       |
+| discord | A message with an embed, for a Discord channel webhook URL. Where `BETTER_AUTH_URL` is https, Valence's mark is shown beside its name, fetched by Discord from your server's `/icon.png`. |
+| ntfy    | The event written as one plain text sentence, for an ntfy topic.                                                                                                                          |
 
 ### Events
 
@@ -100,6 +100,7 @@ Some notes worth knowing:
 - `requests.indexerFailing` is sent after three failures in a row. Five turn the indexer off.
 - `auth.failed` does not include attempts that were rate limited, because those are refused before Valence sees them.
 - The Requests group only appears where the requests service is set up. See [Requests](/use/requests).
+- `requests.made`, `requests.approved`, `requests.refused`, `requests.chosen`, `requests.filed` and `requests.available` carry the request they are about, so a Discord message shows it the way Seerr's do: what happened to which request in the title (such as "Film request now available: Dune (2021)"), the title's summary, its poster, who asked, where the request has got to, and the seasons or the artist where there are some. A request made and approved at once sends both events; subscribe to only one of them to get a single message.
 - `plugin.event` names the plugin, the event and its title, with whatever detail the plugin sent. Only plugins given the permission to tell your webhooks things can send one. See [plugins](/use/plugins).
 
 ### Filters
@@ -137,6 +138,8 @@ The generic shape posts this envelope as the request body:
 ```
 
 `version` is the payload version, currently `1`. `id` is unique per event, so a receiver can ignore one it has already seen. `data` depends on `event`, and the full schema for each is in the API reference under [/api](/api).
+
+The request events above add a `request` object to `data`: its `id`, `kind` (`film`, `series`, `artist`, `album` or `book`), `title`, `artistName`, `year`, `overview`, `posterUrl`, `requestedBy`, the requested `seasons` and its `state`. It is `null` where an event is about something nobody requested, such as a release imported by hand.
 
 ### Signing
 

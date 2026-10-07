@@ -80,6 +80,7 @@ import type { GrantedPermission, Permission } from '@ValenceContracts/schemas/Pe
 import type { CreateAppOptions } from '@ValenceServer/api/CreateAppOptions';
 import { refuse } from '@ValenceI18n/refuse';
 import { say } from '@ValenceI18n/say';
+import { webhookRequestOf } from '@ValenceServer/webhooks/webhookRequestOf';
 
 const SHARE_JOINER = 'valence_share_joiner';
 
@@ -1437,14 +1438,19 @@ const createAppContext = (options: CreateAppOptions) => {
     if (isNew) {
       sayOfRequest({
         event: 'requests.made',
-        data: { title: request.title, kind: request.kind, requestedBy: request.requestedBy.name },
+        data: {
+          title: request.title,
+          kind: request.kind,
+          requestedBy: request.requestedBy.name,
+          request: webhookRequestOf(request),
+        },
       });
     }
 
     if (isApproved && (isNew || request.approval === 'approved')) {
       sayOfRequest({
         event: 'requests.approved',
-        data: { title: request.title, approvedBy: null },
+        data: { title: request.title, approvedBy: null, request: webhookRequestOf(request) },
       });
     }
   };

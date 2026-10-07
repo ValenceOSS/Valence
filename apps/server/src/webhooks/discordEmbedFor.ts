@@ -4,8 +4,11 @@ import { describeSpan } from './describeSpan';
 import { isListenedTo } from './isListenedTo';
 import { nameOfItem } from './nameOfItem';
 import { nameOfViewer } from './nameOfViewer';
+import { describeRequestState } from './describeRequestState';
 import { MEDIA_KIND_LABELS } from '@ValenceContracts/schemas/MediaKind';
-import type { WebhookPayload } from '@ValenceContracts/schemas/Webhook';
+import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
+import type { PlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
+import type { WebhookPayload, WebhookRequest } from '@ValenceContracts/schemas/Webhook';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 
@@ -43,7 +46,7 @@ type DiscordEmbed = {
   title: string;
   description: string;
   color: number;
-  author: { name: string };
+  author: { name: string; icon_url?: string };
   timestamp: string;
   fields: DiscordField[];
   thumbnail?: { url: string };
@@ -102,6 +105,21 @@ const GENRES_SHOWN = 4;
 const ratingOf = (rating: number | null): string | null =>
   rating === null || rating <= 0 ? null : `${rating.toFixed(1)}/10`;
 
+const PLAYED: Record<PlaybackMode, () => string> = {
+  DirectPlay: () => say('server.webhooks.discordEmbedFor.directPlay'),
+  DirectStream: () => say('server.webhooks.discordEmbedFor.directStream'),
+  Remux: () => say('common.remux'),
+  Transcode: () => say('common.transcode'),
+};
+
+const REQUEST_KINDS: Record<MediaRequestKind, () => string> = {
+  film: () => say('common.film'),
+  series: () => say('common.series'),
+  artist: () => say('common.artist'),
+  album: () => say('common.album'),
+  book: () => say('common.book'),
+};
+
 type EmbedParts = {
   title: string;
   description: string;
@@ -117,10 +135,127 @@ type EmbedParts = {
  * @param sentence - The plain rendering, used where an event has nothing richer to say.
  * @returns The parts of the embed.
  */
-const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
-  const field = (name: string, value: string | null, inline = true): DiscordField | null =>
-    value === null || value === '' ? null : { name, value, inline };
+const field = (name: string, value: string | null, inline = true): DiscordField | null =>
+  value === null || value === '' ? null : { name, value, inline };
 
+type RequestEmbed = {
+  headline:
+    | 'server.webhooks.discordEmbedFor.kindRequestPendingApprovalTitle'
+    | 'server.webhooks.discordEmbedFor.kindRequestMadeTitle'
+    | 'server.webhooks.discordEmbedFor.kindRequestAutomaticallyApprovedTitle'
+    | 'server.webhooks.discordEmbedFor.kindRequestApprovedTitle'
+    | 'server.webhooks.discordEmbedFor.kindRequestDeclinedTitle'
+    | 'server.webhooks.discordEmbedFor.kindRequestDownloadingTitle'
+    | 'server.webhooks.discordEmbedFor.kindRequestImportedTitle'
+    | 'server.webhooks.discordEmbedFor.kindRequestNowAvailableTitle';
+  colour: number;
+  fields: (DiscordField | null)[];
+};
+
+/**
+ * A request's event drawn as Seerr draws one: what happened to which request in the title, the
+ * title's summary beneath, its poster beside, and who asked and where it has got to as fields.
+ *
+ * @param request - The request.
+ * @param embed - What happened, its colour, and anything the event adds.
+ * @returns The embed's parts.
+ */
+const requestPartsFor = (request: WebhookRequest, embed: RequestEmbed): EmbedParts => {
+  const title =
+    request.year === null
+      ? request.title
+      : say('screens.importWizard.importReportView.titleYear', {
+          title: request.title,
+          year: request.year.toString(),
+        });
+
+  return {
+    title: say(embed.headline, { kind: REQUEST_KINDS[request.kind](), title }),
+    description: request.overview ?? '',
+    colour: embed.colour,
+    posterUrl: request.posterUrl,
+    fields: [
+      field(say('screens.requests.describeRequestFilters.askedBy'), request.requestedBy),
+      field(say('common.status'), describeRequestState(request.state)),
+      field(
+        say('screens.seasonChooser.seasons'),
+        request.kind === 'series' && request.seasons !== null ? request.seasons.join(', ') : null,
+      ),
+      field(say('common.artist'), request.artistName),
+      ...embed.fields,
+    ],
+  };
+};
+
+/**
+ * How a request's event is drawn, where it carries the request.
+ *
+ * @param payload - The event.
+ * @returns The embed's parts, or nothing for an event about no request.
+ */
+const requestEventPartsFor = (payload: WebhookPayload): EmbedParts | null => {
+  if (payload.event === 'requests.made' && payload.data.request !== null) {
+    const { request } = payload.data;
+    const isWaiting = request.state === 'awaitingApproval';
+
+    return requestPartsFor(request, {
+      headline: isWaiting
+        ? 'server.webhooks.discordEmbedFor.kindRequestPendingApprovalTitle'
+        : 'server.webhooks.discordEmbedFor.kindRequestMadeTitle',
+      colour: isWaiting ? COLOURS.auth : COLOURS.quiet,
+      fields: [],
+    });
+  }
+
+  if (payload.event === 'requests.approved' && payload.data.request !== null) {
+    const { request, approvedBy } = payload.data;
+
+    return requestPartsFor(request, {
+      headline:
+        approvedBy === null
+          ? 'server.webhooks.discordEmbedFor.kindRequestAutomaticallyApprovedTitle'
+          : 'server.webhooks.discordEmbedFor.kindRequestApprovedTitle',
+      colour: COLOURS.quiet,
+      fields: [field(say('server.webhooks.discordEmbedFor.approvedBy'), approvedBy)],
+    });
+  }
+
+  if (payload.event === 'requests.refused' && payload.data.request !== null) {
+    return requestPartsFor(payload.data.request, {
+      headline: 'server.webhooks.discordEmbedFor.kindRequestDeclinedTitle',
+      colour: COLOURS.failure,
+      fields: [field(say('server.webhooks.discordEmbedFor.reason'), payload.data.reason, false)],
+    });
+  }
+
+  if (payload.event === 'requests.chosen' && payload.data.request !== null) {
+    return requestPartsFor(payload.data.request, {
+      headline: 'server.webhooks.discordEmbedFor.kindRequestDownloadingTitle',
+      colour: COLOURS.viewing,
+      fields: [field(say('common.release'), payload.data.release, false)],
+    });
+  }
+
+  if (payload.event === 'requests.filed' && payload.data.request !== null) {
+    return requestPartsFor(payload.data.request, {
+      headline: 'server.webhooks.discordEmbedFor.kindRequestImportedTitle',
+      colour: COLOURS.viewing,
+      fields: [],
+    });
+  }
+
+  if (payload.event === 'requests.available' && payload.data.request !== null) {
+    return requestPartsFor(payload.data.request, {
+      headline: 'server.webhooks.discordEmbedFor.kindRequestNowAvailableTitle',
+      colour: COLOURS.arrival,
+      fields: [],
+    });
+  }
+
+  return null;
+};
+
+const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
   switch (payload.event) {
     case 'media.added':
     case 'media.removed': {
@@ -169,7 +304,7 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
         posterUrl: payload.data.item.posterUrl,
         fields: [
           field(say('common.device'), payload.data.deviceLabel),
-          field(say('common.playing'), payload.data.mode),
+          field(say('common.playing'), PLAYED[payload.data.mode]()),
           field(say('common.quality'), payload.data.item.quality),
           field(
             say('server.webhooks.discordEmbedFor.runtime'),
@@ -363,9 +498,11 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
         fields: [
           field(
             say('server.webhooks.discordEmbedFor.free'),
-            formatBytes(payload.data.availableBytes),
+            say('server.webhooks.discordEmbedFor.freeOfTotal', {
+              free: formatBytes(payload.data.availableBytes),
+              total: formatBytes(payload.data.totalBytes),
+            }),
           ),
-          field(say('server.webhooks.discordEmbedFor.of'), formatBytes(payload.data.totalBytes)),
         ],
       };
     }
@@ -468,10 +605,15 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
  *
  * @param payload - What happened.
  * @param sentence - The plain rendering, for events with nothing richer to say.
+ * @param iconUrl - Where Discord can fetch Valence's mark to show beside its name, if anywhere.
  * @returns The embed.
  */
-const discordEmbedFor = (payload: WebhookPayload, sentence: string): DiscordEmbed => {
-  const parts = partsFor(payload, sentence);
+const discordEmbedFor = (
+  payload: WebhookPayload,
+  sentence: string,
+  iconUrl: string | null = null,
+): DiscordEmbed => {
+  const parts = requestEventPartsFor(payload) ?? partsFor(payload, sentence);
 
   const fields = parts.fields
     .filter((one): one is DiscordField => one !== null)
@@ -497,7 +639,7 @@ const discordEmbedFor = (payload: WebhookPayload, sentence: string): DiscordEmbe
     title,
     description,
     color: parts.colour,
-    author: { name: AUTHOR },
+    author: iconUrl === null ? { name: AUTHOR } : { name: AUTHOR, icon_url: iconUrl },
     timestamp: payload.occurredAt,
     fields,
     ...(parts.posterUrl === null ||

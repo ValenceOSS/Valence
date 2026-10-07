@@ -6725,15 +6725,31 @@ const ENGLISH = {
   'server.webhooks.deliverWebhook.theReceiverAnsweredStatus':
     'The receiving server returned {status}.',
   'server.webhooks.discordEmbedFor.andMore': '…and {count} more',
+  'server.webhooks.discordEmbedFor.approvedBy': 'Approved by',
   'server.webhooks.discordEmbedFor.arrivedInLibraryName': 'Added to {libraryName}',
   'server.webhooks.discordEmbedFor.aSignInWasRefused': 'A sign-in was blocked',
   'server.webhooks.discordEmbedFor.attempts': 'Attempts',
+  'server.webhooks.discordEmbedFor.directPlay': 'Direct play',
+  'server.webhooks.discordEmbedFor.directStream': 'Direct stream',
   'server.webhooks.discordEmbedFor.free': 'Free',
+  'server.webhooks.discordEmbedFor.freeOfTotal': '{free} of {total}',
   'server.webhooks.discordEmbedFor.from': 'From',
   'server.webhooks.discordEmbedFor.genres': 'Genres',
   'server.webhooks.discordEmbedFor.given': 'Given',
   'server.webhooks.discordEmbedFor.guestOf': 'Guest of',
   'server.webhooks.discordEmbedFor.howToFixIt': 'How to fix it',
+  'server.webhooks.discordEmbedFor.kindRequestApprovedTitle': '{kind} request approved: {title}',
+  'server.webhooks.discordEmbedFor.kindRequestAutomaticallyApprovedTitle':
+    '{kind} request automatically approved: {title}',
+  'server.webhooks.discordEmbedFor.kindRequestDeclinedTitle': '{kind} request declined: {title}',
+  'server.webhooks.discordEmbedFor.kindRequestDownloadingTitle':
+    '{kind} request downloading: {title}',
+  'server.webhooks.discordEmbedFor.kindRequestImportedTitle': '{kind} request imported: {title}',
+  'server.webhooks.discordEmbedFor.kindRequestMadeTitle': '{kind} request made: {title}',
+  'server.webhooks.discordEmbedFor.kindRequestNowAvailableTitle':
+    '{kind} request now available: {title}',
+  'server.webhooks.discordEmbedFor.kindRequestPendingApprovalTitle':
+    '{kind} request pending approval: {title}',
   'server.webhooks.discordEmbedFor.labelFailed': '{label} failed',
   'server.webhooks.discordEmbedFor.labelFinished': '{label} finished',
   'server.webhooks.discordEmbedFor.labelKeepsFailing': '{label} keeps failing',
@@ -6749,7 +6765,7 @@ const ENGLISH = {
   'server.webhooks.discordEmbedFor.nameSignedIn': '{name} signed in',
   'server.webhooks.discordEmbedFor.nameSRolesChanged': '{name}’s roles changed',
   'server.webhooks.discordEmbedFor.noLongerInLibraryName': 'Removed from {libraryName}',
-  'server.webhooks.discordEmbedFor.of': 'Of',
+  'server.webhooks.discordEmbedFor.reason': 'Reason',
   'server.webhooks.discordEmbedFor.removed': 'Removed',
   'server.webhooks.discordEmbedFor.runtime': 'Runtime',
   'server.webhooks.discordEmbedFor.stayed': 'Stayed',
@@ -6817,6 +6833,10 @@ const ENGLISH = {
     'The transcoder is responding again. No action needed.',
   'server.webhooks.formatWebhookBody.titleFailedInClientProblem':
     '{title} failed in {client} — {problem}',
+  'server.webhooks.formatWebhookBody.titleIsReadyToListenToAsRequested':
+    '{title} is ready to listen to, as requested by {requestedBy}.',
+  'server.webhooks.formatWebhookBody.titleIsReadyToReadAsRequested':
+    '{title} is ready to read, as requested by {requestedBy}.',
   'server.webhooks.formatWebhookBody.titleIsReadyToWatchAs':
     '{title} is ready to watch, as requested by {requestedBy}.',
   'server.webhooks.formatWebhookBody.titleWasApprovedAsItWas': '{title} was approved as requested.',

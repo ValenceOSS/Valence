@@ -169,6 +169,7 @@ import { findAlbumsOfSongs } from '@ValenceServer/requests/musicBrainz/findAlbum
 import { createMissingAlbumMatcher } from '@ValenceServer/requests/missingAlbums/createMissingAlbumMatcher';
 import { searchMusicCatalogue } from '@ValenceServer/requests/musicBrainz/searchMusicCatalogue';
 import type {
+  MediaRequest,
   MediaRequestKind,
   MusicRequestKind,
   RequestCatalogue,
@@ -186,7 +187,9 @@ import type { PresenceSession, PresenceViewing } from '@ValenceServer/presence/P
 import type { Play } from '@ValenceServer/devices/createPlayTracker';
 import type { MusicNowPlaying } from '@ValenceContracts/schemas/MusicRemote';
 import type { NowListening } from '@ValenceContracts/schemas/BookRemote';
-import type { WebhookPayload } from '@ValenceContracts/schemas/Webhook';
+import type { WebhookPayload, WebhookRequest } from '@ValenceContracts/schemas/Webhook';
+import { webhookRequestOf } from '@ValenceServer/webhooks/webhookRequestOf';
+import { webhookIconOf } from '@ValenceServer/webhooks/webhookIconOf';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 
 type ViewingData = Extract<WebhookPayload, { event: 'playback.started' }>['data'];
@@ -2411,6 +2414,7 @@ const jobs = createJobQueue({
           subscriptions: webhookSubscriptions,
           subscriptionId: parsed.data.subscriptionId,
           payload: parsed.data.payload,
+          iconUrl: webhookIconOf(env.BETTER_AUTH_URL),
         });
 
         if (!delivered) {
@@ -2788,6 +2792,19 @@ const discovery: Discovery = {
   lookup: createDatabaseCatalogueLookup(db),
 };
 
+/**
+ * What a webhook says about the request an event belongs to, read from the requests service, or
+ * nothing where it cannot be read.
+ *
+ * @param requestId - The request.
+ * @returns It, as webhooks carry it.
+ */
+const webhookRequestFor = async (requestId: string): Promise<WebhookRequest | null> => {
+  const found = await requestsClient?.findRequest(requestId);
+
+  return found?.kind === 'answered' ? webhookRequestOf(found.value) : null;
+};
+
 const LINKS_TO_ARRIVALS: Record<MediaRequestKind, (mediaId: string) => string> = {
   film: (mediaId) => `/?item=${mediaId}`,
   series: (mediaId) => `/?show=${mediaId}`,
@@ -2821,7 +2838,7 @@ const sayARequestArrived = async (
   }
 
   if (arrived.value.newlyAvailable > 0) {
-    await tellOfArrival(filed, mediaId, arrived.value.request.requestedBy);
+    await tellOfArrival(arrived.value.request, mediaId);
   }
 };
 
@@ -2854,7 +2871,7 @@ const matchArrivedRequests = async (): Promise<void> => {
     const arrived = await requestsClient.requestArrivedInLibrary(request.id, arrivals);
 
     if (arrived.kind === 'answered' && arrived.value.newlyAvailable > 0) {
-      await tellOfArrival(request, arrivals.mediaId, arrived.value.request.requestedBy);
+      await tellOfArrival(arrived.value.request, arrivals.mediaId);
     }
   }
 };
@@ -2969,21 +2986,23 @@ const tellOfLinkedArrivals = async (): Promise<void> => {
  * Tells whoever asked for something that it is ready — in the app, and by push where they chose —
  * and anything subscribed.
  *
- * @param filed - The request.
+ * @param filed - The request, as it stands now it has arrived.
  * @param mediaId - The film, the series, or the album the library found.
- * @param requestedBy - Who asked.
  */
-const tellOfArrival = async (
-  filed: { kind: MediaRequestKind; title: string },
-  mediaId: string,
-  requestedBy: { id: string; name: string },
-): Promise<void> => {
+const tellOfArrival = async (filed: MediaRequest, mediaId: string): Promise<void> => {
+  const { requestedBy } = filed;
+
   log.info('requests', `${filed.title} is in the library, as ${requestedBy.name} asked`);
   realtime.publish('requests', { changed: true }, { kind: 'everyone' });
 
   await events.publish({
     event: 'requests.available',
-    data: { title: filed.title, requestedBy: requestedBy.name, mediaId },
+    data: {
+      title: filed.title,
+      requestedBy: requestedBy.name,
+      mediaId,
+      request: webhookRequestOf(filed),
+    },
   });
   await notifyHousehold({
     store: notifications,
@@ -4409,10 +4428,12 @@ if (requestsClient !== null) {
         case 'chosen': {
           log.info('requests', `chose ${event.releaseTitle} for ${event.title}`);
 
-          void events.publish({
-            event: 'requests.chosen',
-            data: { title: event.title, release: event.releaseTitle },
-          });
+          void webhookRequestFor(event.requestId).then((request) =>
+            events.publish({
+              event: 'requests.chosen',
+              data: { title: event.title, release: event.releaseTitle, request },
+            }),
+          );
 
           return;
         }
@@ -4420,10 +4441,12 @@ if (requestsClient !== null) {
         case 'filed': {
           log.info('requests', `filed ${event.title} into ${event.folder}`);
 
-          void events.publish({
-            event: 'requests.filed',
-            data: { title: event.title, folder: event.folder },
-          });
+          void webhookRequestFor(event.requestId).then((request) =>
+            events.publish({
+              event: 'requests.filed',
+              data: { title: event.title, folder: event.folder, request },
+            }),
+          );
           void jobs.enqueue(SCAN_REQUEST_FOLDER_JOB, {
             libraryId: event.libraryId,
             folder: event.folder,
@@ -4444,7 +4467,7 @@ if (requestsClient !== null) {
 
           void events.publish({
             event: 'requests.filed',
-            data: { title: event.title, folder: event.folder },
+            data: { title: event.title, folder: event.folder, request: null },
           });
           void jobs.enqueue(SCAN_REQUEST_FOLDER_JOB, {
             libraryId: event.libraryId,

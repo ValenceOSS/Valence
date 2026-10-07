@@ -34,7 +34,7 @@ import type {
   VideoRequestKind,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type { MissingAlbumMatcher } from '@ValenceServer/requests/missingAlbums/MissingAlbumMatcher';
-import type { EventBus } from '@ValenceServer/events/EventBus';
+import type { EventBus, WebhookOccurrence } from '@ValenceServer/events/EventBus';
 import type { Discovery } from '@ValenceServer/requests/catalogue/Discovery';
 import { NO_DISCOVERY } from '@ValenceServer/requests/catalogue/NO_DISCOVERY';
 
@@ -1317,7 +1317,9 @@ describe('requests for films and series, through the server', () => {
   };
 
   it('asks for a film in the films library, as whoever is signed in, approved where they may', async () => {
-    const published = vi.fn(() => Promise.resolve());
+    const published = vi.fn<(occurrence: WebhookOccurrence) => Promise<void>>(() =>
+      Promise.resolve(),
+    );
     const { ask, accountId } = await build({
       isOn: true,
       granted: ['requests.ask', 'requests.autoApprove'],
@@ -1338,13 +1340,18 @@ describe('requests for films and series, through the server', () => {
       requestedBy: { id: accountId },
       catalogue: { title: 'Dune' },
     });
-    expect(published).toHaveBeenCalledWith({
-      event: 'requests.made',
-      data: { title: 'Dune', kind: 'film', requestedBy: 'Someone' },
+    const said = published.mock.calls.map(([occurrence]) => occurrence);
+
+    expect(said.find((one) => one.event === 'requests.made')).toMatchObject({
+      data: {
+        title: 'Dune',
+        kind: 'film',
+        requestedBy: 'Someone',
+        request: { title: 'Dune', kind: 'film', requestedBy: 'Someone' },
+      },
     });
-    expect(published).toHaveBeenCalledWith({
-      event: 'requests.approved',
-      data: { title: 'Dune', approvedBy: null },
+    expect(said.find((one) => one.event === 'requests.approved')).toMatchObject({
+      data: { title: 'Dune', approvedBy: null, request: { title: 'Dune', kind: 'film' } },
     });
   });
 
@@ -1796,7 +1803,9 @@ describe('requests for films and series, through the server', () => {
   });
 
   it('approves and refuses for whoever approves, saying so', async () => {
-    const published = vi.fn(() => Promise.resolve());
+    const published = vi.fn<(occurrence: WebhookOccurrence) => Promise<void>>(() =>
+      Promise.resolve(),
+    );
     const { ask } = await build({
       isOn: true,
       granted: ['requests.approve'],
@@ -1808,13 +1817,13 @@ describe('requests for films and series, through the server', () => {
     expect(
       (await ask(`/api/requests/media/${REQUEST.id}/refuse`, 'POST', { reason: 'No room' })).status,
     ).toBe(200);
-    expect(published).toHaveBeenCalledWith({
-      event: 'requests.approved',
-      data: { title: 'Dune', approvedBy: 'Marques' },
+    const said = published.mock.calls.map(([occurrence]) => occurrence);
+
+    expect(said.find((one) => one.event === 'requests.approved')).toMatchObject({
+      data: { title: 'Dune', approvedBy: 'Marques', request: { title: 'Dune' } },
     });
-    expect(published).toHaveBeenCalledWith({
-      event: 'requests.refused',
-      data: { title: 'Dune', reason: 'No room' },
+    expect(said.find((one) => one.event === 'requests.refused')).toMatchObject({
+      data: { title: 'Dune', reason: 'No room', request: { title: 'Dune' } },
     });
     expect((await ask(`/api/requests/media/${REQUEST.id}/retry`, 'POST')).status).toBe(403);
   });

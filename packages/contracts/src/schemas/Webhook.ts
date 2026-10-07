@@ -1,5 +1,8 @@
 import { z } from 'zod';
-import { MediaRequestKindSchema } from '@ValenceContracts/schemas/MediaRequest';
+import {
+  MediaRequestKindSchema,
+  MediaRequestStateSchema,
+} from '@ValenceContracts/schemas/MediaRequest';
 import { MediaKindSchema } from './MediaKind';
 import { PLAYBACK_MODES } from '@ValenceContracts/functions/describePlaybackMode';
 import { say } from '@ValenceI18n/say';
@@ -210,6 +213,23 @@ type WebhookFilters = z.infer<typeof WebhookFiltersSchema>;
 
 const DEFAULT_WEBHOOK_FILTERS = WebhookFiltersSchema.parse({});
 
+const WebhookRequestSchema = z.object({
+  id: z.string(),
+  kind: MediaRequestKindSchema,
+  title: z.string(),
+  artistName: z.string().nullable(),
+  year: z.number().int().nullable(),
+  overview: z.string().nullable(),
+  posterUrl: z.string().nullable(),
+  requestedBy: z.string(),
+  seasons: z.array(z.number().int().nonnegative()).nullable(),
+  state: MediaRequestStateSchema,
+});
+
+type WebhookRequest = z.infer<typeof WebhookRequestSchema>;
+
+const WITH_THE_REQUEST = { request: WebhookRequestSchema.nullable().default(null) };
+
 const WebhookEnvelopeSchema = {
   version: z.literal(WEBHOOK_PAYLOAD_VERSION),
   id: z.string().uuid(),
@@ -405,32 +425,38 @@ const WebhookPayloadSchema = z.discriminatedUnion('event', [
       title: z.string(),
       kind: MediaRequestKindSchema,
       requestedBy: z.string(),
+      ...WITH_THE_REQUEST,
     }),
   }),
   z.object({
     ...WebhookEnvelopeSchema,
     event: z.literal('requests.approved'),
-    data: z.object({ title: z.string(), approvedBy: z.string().nullable() }),
+    data: z.object({ title: z.string(), approvedBy: z.string().nullable(), ...WITH_THE_REQUEST }),
   }),
   z.object({
     ...WebhookEnvelopeSchema,
     event: z.literal('requests.refused'),
-    data: z.object({ title: z.string(), reason: z.string().nullable() }),
+    data: z.object({ title: z.string(), reason: z.string().nullable(), ...WITH_THE_REQUEST }),
   }),
   z.object({
     ...WebhookEnvelopeSchema,
     event: z.literal('requests.chosen'),
-    data: z.object({ title: z.string(), release: z.string() }),
+    data: z.object({ title: z.string(), release: z.string(), ...WITH_THE_REQUEST }),
   }),
   z.object({
     ...WebhookEnvelopeSchema,
     event: z.literal('requests.filed'),
-    data: z.object({ title: z.string(), folder: z.string() }),
+    data: z.object({ title: z.string(), folder: z.string(), ...WITH_THE_REQUEST }),
   }),
   z.object({
     ...WebhookEnvelopeSchema,
     event: z.literal('requests.available'),
-    data: z.object({ title: z.string(), requestedBy: z.string(), mediaId: z.string() }),
+    data: z.object({
+      title: z.string(),
+      requestedBy: z.string(),
+      mediaId: z.string(),
+      ...WITH_THE_REQUEST,
+    }),
   }),
   z.object({
     ...WebhookEnvelopeSchema,
@@ -594,6 +620,7 @@ export {
   WebhookJobDataSchema,
   WebhookPayloadSchema,
   WebhookSessionSchema,
+  WebhookRequestSchema,
   ArrivedTitleSchema,
   ScannedLibrarySchema,
   WebhookPresetSchema,
@@ -602,6 +629,7 @@ export {
 
 export type {
   ArrivedTitle,
+  WebhookRequest,
   ScannedLibrary,
   WebhookSubscribableEvent,
   WebhookEventGroup,
