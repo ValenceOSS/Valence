@@ -8,6 +8,7 @@ FROM node:24.21.0-bookworm-slim AS build
 WORKDIR /build
 RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY patches ./patches
 COPY tsconfig.base.json tsconfig.json tsconfig.paths.json ./
 COPY packages/contracts ./packages/contracts
 COPY packages/core ./packages/core
@@ -78,6 +79,7 @@ WORKDIR /app
 RUN corepack enable
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY patches ./patches
 COPY packages/contracts ./packages/contracts
 COPY packages/core ./packages/core
 COPY packages/i18n ./packages/i18n
