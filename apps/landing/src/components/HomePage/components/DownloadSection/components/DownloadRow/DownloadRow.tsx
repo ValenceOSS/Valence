@@ -1,9 +1,9 @@
 import {
   IconBrandAppleFilled,
   IconBrandWindowsFilled,
-  IconDeviceDesktopFilled,
   IconDownloadFilled,
 } from '@tabler/icons-react';
+import { LinuxMark } from '@ValenceLanding/components/HomePage/components/DownloadSection/components/LinuxMark/LinuxMark';
 import { Button } from '@ValenceUI/Button';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import type { DownloadRowProps } from './DownloadRow.types';
@@ -12,7 +12,7 @@ const ICONS = {
   macAppleSilicon: IconBrandAppleFilled,
   macIntel: IconBrandAppleFilled,
   windows: IconBrandWindowsFilled,
-  linux: IconDeviceDesktopFilled,
+  linux: LinuxMark,
 } as const;
 
 /**

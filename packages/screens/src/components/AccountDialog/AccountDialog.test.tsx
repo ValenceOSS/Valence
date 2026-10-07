@@ -6,11 +6,14 @@ import { signOut } from '@ValenceClient/session/auth';
 import { notify } from '@ValenceUI/notify';
 import { somePluginContributions } from '@ValenceClient/testing/somePluginContributions';
 import { installATestClient } from '@ValenceScreens/testing/installATestClient';
+import { chooseTheLayout } from '@ValenceClient/platform/chooseTheLayout';
 import { AccountDialog } from './AccountDialog';
 import type * as Auth from '@ValenceClient/session/auth';
 import type * as Notify from '@ValenceUI/notify';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
+
+vi.mock('@ValenceClient/platform/chooseTheLayout', () => ({ chooseTheLayout: vi.fn() }));
 
 vi.mock('@ValenceScreens/components/AccountArea/AccountArea', () => ({
   AccountArea: () => <p>The panels</p>,
@@ -96,6 +99,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe('AccountDialog', () => {
@@ -267,5 +271,28 @@ describe('what can actually be saved', () => {
     draw('security');
 
     expect(withdrawn.pluginId).toBeNull();
+  });
+});
+
+describe('the way back to the TV layout', () => {
+  it('is offered in a television’s browser, and switches to it', async () => {
+    const actor = userEvent.setup();
+
+    vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue(
+      'Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 Chrome/87.0.4280.88',
+    );
+    draw();
+
+    await actor.click(await screen.findByRole('button', { name: 'Use the TV layout' }));
+
+    expect(chooseTheLayout).toHaveBeenCalledWith('tv', document);
+  });
+
+  it('is not offered in any other browser', async () => {
+    draw();
+
+    await screen.findByRole('button', { name: 'Sign out' });
+
+    expect(screen.queryByRole('button', { name: 'Use the TV layout' })).not.toBeInTheDocument();
   });
 });

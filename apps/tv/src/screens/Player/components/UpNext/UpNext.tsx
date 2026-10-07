@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Easing, StyleSheet, Text, TVFocusGuideView, View } from 'react-native';
+import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import { useRemote } from '@ValenceTv/remote/useRemote';
 import type { HWEvent } from 'react-native';
 import { SkipForward, X } from '@keyline-icons/react-native';
@@ -12,6 +12,8 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import type { UpNextProps } from './UpNext.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
+import { giveFocusTo } from '@ValenceTv/navigation/giveFocusTo';
 
 const STILL = { width: 560, height: 315 };
 
@@ -55,7 +57,7 @@ const UpNext = ({ episode, isAsking, offer, onPlay, onStay }: UpNextProps) => {
   const reclaiming = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const sendTheRemote = useCallback(() => {
-    (wanted.current === 'play' ? playRef : creditsRef).current?.requestTVFocus();
+    giveFocusTo((wanted.current === 'play' ? playRef : creditsRef).current);
   }, []);
 
   const reclaim = useCallback(() => {
@@ -152,7 +154,7 @@ const UpNext = ({ episode, isAsking, offer, onPlay, onStay }: UpNextProps) => {
         },
       ]}
     >
-      <TVFocusGuideView trapFocusLeft trapFocusRight trapFocusUp trapFocusDown>
+      <FocusGuide trapsLeft trapsRight trapsUp trapsDown>
         <View style={[STILL, styles.still]}>
           <Artwork
             path={episode.hasBackdrop ? artworkUrl(episode.id, 'backdrop') : null}
@@ -224,7 +226,7 @@ const UpNext = ({ episode, isAsking, offer, onPlay, onStay }: UpNextProps) => {
             />
           </View>
         </View>
-      </TVFocusGuideView>
+      </FocusGuide>
     </Animated.View>
   );
 };

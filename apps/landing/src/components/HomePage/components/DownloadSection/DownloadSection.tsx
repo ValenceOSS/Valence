@@ -10,6 +10,7 @@ import {
   IconDeviceDesktopFilled,
   IconDeviceMobileFilled,
 } from '@tabler/icons-react';
+import { LinuxMark } from '@ValenceLanding/components/HomePage/components/DownloadSection/components/LinuxMark/LinuxMark';
 import { revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
 import { PRESS_MOTION } from '@ValenceUI/animations/motion';
 import { Button } from '@ValenceUI/Button';
@@ -35,7 +36,7 @@ const LEAD_GLYPHS = {
   macAppleSilicon: IconBrandAppleFilled,
   macIntel: IconBrandAppleFilled,
   windows: IconBrandWindowsFilled,
-  linux: IconDeviceDesktopFilled,
+  linux: LinuxMark,
 } as const;
 
 const DOC_LINK =

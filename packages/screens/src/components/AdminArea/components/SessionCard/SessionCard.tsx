@@ -23,7 +23,15 @@ import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import { SessionStatsDialog } from '@ValenceScreens/components/AdminArea/components/SessionStatsDialog/SessionStatsDialog';
 import type { SessionCardProps } from './SessionCard.types';
+import type { BrandMarkName } from '@ValenceUI/BrandGlyph.types';
 import { say } from '@ValenceI18n/say';
+
+const WORDMARK_SIZES: Partial<Record<BrandMarkName, number>> = {
+  lg: 44,
+  samsung: 72,
+  toshiba: 72,
+  hitachi: 72,
+};
 
 /**
  * One open session: who has it, on what device, what they are watching, hearing or reading, how far through they are, and
@@ -92,7 +100,11 @@ const SessionCard = ({
         ) : book !== null && book.hasCover ? (
           <img src={bookCoverUrl(book.bookId)} alt="" className="h-full w-full object-cover" />
         ) : fallbackGlyph === deviceGlyph && marks.system !== null ? (
-          <BrandGlyph of={marks.system} size={22} className="text-text-muted" />
+          <BrandGlyph
+            of={marks.system}
+            size={WORDMARK_SIZES[marks.system] ?? 22}
+            className="text-text-muted"
+          />
         ) : (
           <Icon of={fallbackGlyph} size={20} tone="muted" />
         )}

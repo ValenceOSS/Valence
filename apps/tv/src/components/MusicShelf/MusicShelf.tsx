@@ -1,8 +1,9 @@
 import { memo } from 'react';
-import { FlatList, StyleSheet, Text, TVFocusGuideView, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { MusicTile } from '@ValenceTv/components/MusicTile/MusicTile';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { MusicShelfProps } from './MusicShelf.types';
+import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
 
 const IN_VIEW = 8;
 
@@ -19,7 +20,7 @@ const MusicShelfRow = ({ title, items, onOpen, onFocus }: MusicShelfProps) => (
   <View style={styles.shelf}>
     <Text style={styles.title}>{title}</Text>
 
-    <TVFocusGuideView autoFocus>
+    <FocusGuide isRemembering>
       <FlatList
         horizontal
         initialNumToRender={IN_VIEW}
@@ -35,7 +36,7 @@ const MusicShelfRow = ({ title, items, onOpen, onFocus }: MusicShelfProps) => (
           <MusicTile item={item} onPress={onOpen} {...(onFocus === undefined ? {} : { onFocus })} />
         )}
       />
-    </TVFocusGuideView>
+    </FocusGuide>
   </View>
 );
 

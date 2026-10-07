@@ -1,8 +1,9 @@
 import { memo } from 'react';
-import { FlatList, StyleSheet, Text, TVFocusGuideView, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { BookTile } from '@ValenceTv/components/BookTile/BookTile';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { BookShelfProps } from './BookShelf.types';
+import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
 
 const IN_VIEW = 8;
 
@@ -19,7 +20,7 @@ const BookShelfRow = ({ title, books, onOpen, onFocus }: BookShelfProps) => (
   <View style={styles.shelf}>
     <Text style={styles.title}>{title}</Text>
 
-    <TVFocusGuideView autoFocus>
+    <FocusGuide isRemembering>
       <FlatList
         horizontal
         initialNumToRender={IN_VIEW}
@@ -41,7 +42,7 @@ const BookShelfRow = ({ title, books, onOpen, onFocus }: BookShelfProps) => (
           />
         )}
       />
-    </TVFocusGuideView>
+    </FocusGuide>
   </View>
 );
 

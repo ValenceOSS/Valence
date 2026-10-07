@@ -4,7 +4,8 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
-import { rememberServerAddress, serverAddress } from '@ValenceClient/session/serverAddress';
+import { rememberServerAddress } from '@ValenceClient/session/serverAddress';
+import { theServersOrigin } from '@ValenceTv/platform/theServersOrigin';
 import { theSessionToken } from '@ValenceTv/platform/theSessionToken';
 import { holdTheSession } from '@ValenceTv/session/holdTheSession';
 import { signOutHere } from '@ValenceTv/session/signOutHere';
@@ -51,7 +52,7 @@ type Step = { kind: 'faces' } | { kind: 'password'; profile: ViewerProfile };
  */
 const TheWayIn = () => {
   const cache = useQueryClient();
-  const [server, setServer] = useState(serverAddress);
+  const [server, setServer] = useState(theServersOrigin);
   const isTurnedOff = useThisAppIsTurnedOff(server !== null);
   const [step, setStep] = useState<Step>({ kind: 'faces' });
   const [flights, setFlights] = useState<Flights | null>(null);

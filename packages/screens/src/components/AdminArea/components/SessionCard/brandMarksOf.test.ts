@@ -20,7 +20,26 @@ describe('brandMarksOf', () => {
     expect(brandMarksOf('Emulator on Android').system).toBe('android');
   });
 
-  it('answers no mark for a browser or system without one of its own', () => {
-    expect(brandMarksOf('Edge on Windows')).toEqual({ browser: null, system: null });
+  it('knows an LG or Samsung television showing the TV layout by its maker’s mark', () => {
+    expect(brandMarksOf('LG TV')).toEqual({ browser: null, system: 'lg' });
+    expect(brandMarksOf('Samsung TV')).toEqual({ browser: null, system: 'samsung' });
+  });
+
+  it('knows another maker’s television by its mark, where there is one', () => {
+    expect(brandMarksOf('Toshiba TV').system).toBe('toshiba');
+    expect(brandMarksOf('Hisense TV').system).toBeNull();
+    expect(brandMarksOf('Sharp TV').system).toBeNull();
+  });
+
+  it('answers no mark for an Xbox, whose maker asked for its marks to go', () => {
+    expect(brandMarksOf('Xbox')).toEqual({ browser: null, system: null });
+  });
+
+  it('knows Windows by its mark', () => {
+    expect(brandMarksOf('Chromium on Windows')).toEqual({ browser: 'chrome', system: 'windows' });
+  });
+
+  it('answers no mark for a browser without one of its own', () => {
+    expect(brandMarksOf('Edge on Windows')).toEqual({ browser: null, system: 'windows' });
   });
 });

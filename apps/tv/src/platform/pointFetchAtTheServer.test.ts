@@ -118,4 +118,32 @@ describe('pointFetchAtTheServer', () => {
       expect(input.headers.get('origin')).toBe('http://valence.local:3000');
     }
   });
+
+  it('sends a request for another site as it was made, without the session', async () => {
+    const sent = jest.fn<Promise<Response>, [string | URL | Request, RequestInit | undefined]>(() =>
+      Promise.resolve(new Response('{}')),
+    );
+
+    globalThis.fetch = sent;
+    rememberServerAddress('http://valence.local:3000');
+    keepTheSessionToken('secret');
+    pointFetchAtTheServer();
+
+    await fetch('https://images.example/poster.jpg');
+    await fetch('http://valence.local:3000.example/api/profiles');
+    await fetch(new Request('https://images.example/backdrop.jpg'));
+
+    const headersOf = (call: number): Headers => {
+      const [input, init] = sent.mock.calls[call] ?? [];
+
+      return input instanceof Request ? input.headers : new Headers(init?.headers);
+    };
+
+    expect(sent.mock.calls[0]?.[0]).toBe('https://images.example/poster.jpg');
+
+    for (const call of [0, 1, 2]) {
+      expect(headersOf(call).get('authorization')).toBeNull();
+      expect(headersOf(call).get('x-valence-client-kind')).toBeNull();
+    }
+  });
 });

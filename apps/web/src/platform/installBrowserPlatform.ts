@@ -2,7 +2,7 @@ import { detectClientKind } from '@ValenceClient/playback/detectClientKind';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { theBrowserAudio } from '@ValenceScreens/music/theBrowserAudio';
 import { theBrowsersListeningAudio } from '@ValenceScreens/listening/theBrowsersListeningAudio';
-import { theBrowsersStore } from '@ValenceWeb/platform/browserStore';
+import { theBrowsersStore } from '@ValenceClient/platform/theBrowsersStore';
 import { describeThisBrowser } from '@ValenceWeb/platform/describeThisBrowser';
 import { noFilesAreKept } from '@ValenceClient/platform/noFilesAreKept';
 import { thisTabsId } from '@ValenceWeb/platform/thisTabsId';
@@ -20,7 +20,7 @@ import { openRealtimeSocket } from '@ValenceWeb/realtime/openRealtimeSocket';
  */
 const installBrowserPlatform = (): void => {
   installPlatform({
-    store: theBrowsersStore(),
+    store: theBrowsersStore(() => window.localStorage),
     serverAddress: () => null,
     describeThisClient: describeThisBrowser,
     thisClientId: thisTabsId,

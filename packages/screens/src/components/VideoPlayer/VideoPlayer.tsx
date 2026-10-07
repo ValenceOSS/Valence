@@ -16,7 +16,7 @@ import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { VideoSurface } from '@ValenceUI/VideoSurface';
 import { SubtitleCues } from '@ValenceScreens/components/SubtitleCues/SubtitleCues';
 import { isTheDesktopClient } from '@ValenceScreens/desktop/theDesktopShell';
-import { detectFromBrowser } from '@ValenceScreens/playback/detectDeviceProfile';
+import { detectFromBrowser } from '@ValenceClient/playback/detectFromBrowser';
 import { qualityStepCostsFor } from '@ValenceClient/playback/qualityStepCostsFor';
 import { stepsThatSaveNothing } from '@ValenceClient/playback/stepsThatSaveNothing';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
@@ -293,7 +293,15 @@ const VideoPlayer = ({
   const [reportedDuration, setReportedDuration] = useState(0);
   const [trickplay, setTrickplay] = useState<Trickplay | null>(null);
   const [detail, setDetail] = useState<MediaDetail | null>(null);
-  const deviceProfile = useMemo(() => detectFromBrowser(platformInUse().describeThisClient()), []);
+  const deviceProfile = useMemo(
+    () =>
+      detectFromBrowser(
+        window,
+        document.createElement('video'),
+        platformInUse().describeThisClient(),
+      ),
+    [],
+  );
   const [volume, setVolume] = useState(() => readPlaybackPreferences().volume);
   const [boost, setBoost] = useState(() => readPlaybackPreferences().boost);
   const [isMuted, setIsMuted] = useState(() => readPlaybackPreferences().isMuted);

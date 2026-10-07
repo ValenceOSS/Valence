@@ -87,4 +87,6 @@ const resolveRequest: Resolve = (context, moduleName, platform) => {
   return context.resolveRequest(context, moduleName, platform);
 };
 
-export default { ...config, resolver: { ...config.resolver, resolveRequest } };
+const assetExts = (config.resolver?.assetExts ?? []).filter((extension) => extension !== 'zip');
+
+export default { ...config, resolver: { ...config.resolver, assetExts, resolveRequest } };

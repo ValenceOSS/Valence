@@ -1,12 +1,6 @@
 import { useRef } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TVFocusGuideView,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useTheScreen } from '@ValenceTv/platform/useTheScreen';
 import { Artwork } from '@ValenceTv/components/Artwork/Artwork';
 import { Badges } from '@ValenceTv/components/Badges/Badges';
 import { EdgeFade } from '@ValenceTv/components/EdgeFade/EdgeFade';
@@ -15,6 +9,7 @@ import { PreviewBackdrop } from '@ValenceTv/components/PreviewBackdrop/PreviewBa
 import { TitleLockup } from '@ValenceTv/components/TitleLockup/TitleLockup';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { TitleSpreadProps } from './TitleSpread.types';
+import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
 
 const COLUMN = 760;
 
@@ -61,7 +56,7 @@ const TitleSpread = ({
   children,
   below,
 }: TitleSpreadProps) => {
-  const screen = useWindowDimensions();
+  const screen = useTheScreen();
   const page = useRef<ScrollView>(null);
   const picture = {
     width: screen.width * PICTURE_SHARE,
@@ -120,15 +115,15 @@ const TitleSpread = ({
               </View>
             )}
 
-            <TVFocusGuideView
-              autoFocus
-              onFocusCapture={() => {
+            <FocusGuide
+              isRemembering
+              onFocusInside={() => {
                 page.current?.scrollTo({ y: 0, animated: true });
               }}
               style={[styles.actions, { width: screen.width - tokens.space.edge }]}
             >
               {children}
-            </TVFocusGuideView>
+            </FocusGuide>
           </View>
         </View>
 

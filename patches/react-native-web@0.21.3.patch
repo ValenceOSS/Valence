@@ -1,0 +1,73 @@
+diff --git a/dist/cjs/exports/Text/index.js b/dist/cjs/exports/Text/index.js
+index 1d03735..8411b58 100644
+--- a/dist/cjs/exports/Text/index.js
++++ b/dist/cjs/exports/Text/index.js
+@@ -181,7 +181,7 @@ var styles = _StyleSheet.default.create({
+   textMultiLine: {
+     display: '-webkit-box',
+     maxWidth: '100%',
+-    overflow: 'clip',
++    overflow: 'hidden',
+     textOverflow: 'ellipsis',
+     WebkitBoxOrient: 'vertical'
+   },
+diff --git a/dist/cjs/modules/useElementLayout/index.js b/dist/cjs/modules/useElementLayout/index.js
+index f302870..2e664a8 100644
+--- a/dist/cjs/modules/useElementLayout/index.js
++++ b/dist/cjs/modules/useElementLayout/index.js
+@@ -71,7 +71,9 @@ function useElementLayout(ref, onLayout) {
+   }, [ref, onLayout]);
+ 
+   // Observing is done in a separate effect to avoid this effect running
+-  // when 'onLayout' changes.
++  // when 'onLayout' changes, but it runs again when a view that had no
++  // 'onLayout' is given one, or it would never be observed.
++  var hasOnLayout = typeof onLayout === 'function';
+   (0, _useLayoutEffect.default)(() => {
+     var node = ref.current;
+     if (node != null && observer != null) {
+@@ -86,6 +88,6 @@ function useElementLayout(ref, onLayout) {
+         observer.unobserve(node);
+       }
+     };
+-  }, [ref, observer]);
++  }, [ref, observer, hasOnLayout]);
+ }
+ module.exports = exports.default;
+\ No newline at end of file
+diff --git a/dist/exports/Text/index.js b/dist/exports/Text/index.js
+index 1076f55..4130386 100644
+--- a/dist/exports/Text/index.js
++++ b/dist/exports/Text/index.js
+@@ -176,7 +176,7 @@ var styles = StyleSheet.create({
+   textMultiLine: {
+     display: '-webkit-box',
+     maxWidth: '100%',
+-    overflow: 'clip',
++    overflow: 'hidden',
+     textOverflow: 'ellipsis',
+     WebkitBoxOrient: 'vertical'
+   },
+diff --git a/dist/modules/useElementLayout/index.js b/dist/modules/useElementLayout/index.js
+index cd75e40..9b04dd8 100644
+--- a/dist/modules/useElementLayout/index.js
++++ b/dist/modules/useElementLayout/index.js
+@@ -66,7 +66,9 @@ export default function useElementLayout(ref, onLayout) {
+   }, [ref, onLayout]);
+ 
+   // Observing is done in a separate effect to avoid this effect running
+-  // when 'onLayout' changes.
++  // when 'onLayout' changes, but it runs again when a view that had no
++  // 'onLayout' is given one, or it would never be observed.
++  var hasOnLayout = typeof onLayout === 'function';
+   useLayoutEffect(() => {
+     var node = ref.current;
+     if (node != null && observer != null) {
+@@ -81,5 +83,5 @@ export default function useElementLayout(ref, onLayout) {
+         observer.unobserve(node);
+       }
+     };
+-  }, [ref, observer]);
++  }, [ref, observer, hasOnLayout]);
+ }
+\ No newline at end of file

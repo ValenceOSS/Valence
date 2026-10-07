@@ -1,4 +1,4 @@
-import { StyleSheet, TVFocusGuideView, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Check } from '@keyline-icons/react-native/fill';
 import { BrowseOrderSchema } from '@ValenceClient/library/BrowseOrder';
 import { nameBrowseOrder } from '@ValenceClient/library/nameBrowseOrder';
@@ -6,6 +6,7 @@ import { Button } from '@ValenceTv/components/Button/Button';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { ArrangementRowProps } from './ArrangementRow.types';
 import { say } from '@ValenceI18n/say';
+import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
 
 /**
  * The web's order, its filters and its choice to leave out what has been watched, as a row of pills
@@ -29,7 +30,7 @@ const ArrangementRow = ({
   onFilters,
   where,
 }: ArrangementRowProps) => (
-  <TVFocusGuideView autoFocus style={styles.row}>
+  <FocusGuide isRemembering style={styles.row}>
     <View style={styles.orders}>
       {BrowseOrderSchema.options.map((order) => (
         <Button
@@ -80,7 +81,7 @@ const ArrangementRow = ({
         }}
       />
     </View>
-  </TVFocusGuideView>
+  </FocusGuide>
 );
 
 ArrangementRow.displayName = 'ArrangementRow';

@@ -24,6 +24,16 @@ const MARK = { width: 110, height: 80 };
 
 const STAGGER_MS = 70;
 
+const WHICH_SERVER: Record<TvKind, () => string> = {
+  appleTv: () => say('tv.chooseServer.chooseTheServerThisAppleTV'),
+  androidTv: () => say('tv.chooseServer.chooseTheServerThisAndroidTV'),
+  fireTv: () => say('tv.chooseServer.chooseTheServerThisFireTV'),
+  lgTv: () => say('tv.chooseServer.chooseTheServerThisTV'),
+  samsungTv: () => say('tv.chooseServer.chooseTheServerThisTV'),
+  xbox: () => say('tv.chooseServer.chooseTheServerThisXbox'),
+  smartTv: () => say('tv.chooseServer.chooseTheServerThisTV'),
+};
+
 const WITH_A_SCHEME = /^[a-z][a-z0-9+.-]*:\/\//iu;
 
 /**
@@ -32,15 +42,7 @@ const WITH_A_SCHEME = /^[a-z][a-z0-9+.-]*:\/\//iu;
  * @param kind - Which kind of television this is.
  * @returns The question.
  */
-const whichServerFor = (kind: TvKind): string => {
-  if (kind === 'fireTv') {
-    return say('tv.chooseServer.chooseTheServerThisFireTV');
-  }
-
-  return kind === 'androidTv'
-    ? say('tv.chooseServer.chooseTheServerThisAndroidTV')
-    : say('tv.chooseServer.chooseTheServerThisAppleTV');
-};
+const whichServerFor = (kind: TvKind): string => WHICH_SERVER[kind]();
 
 /**
  * An address as somebody would say it, without the part a browser adds for them.

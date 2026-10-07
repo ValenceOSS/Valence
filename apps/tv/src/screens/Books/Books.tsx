@@ -1,13 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TVFocusGuideView,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useTheScreen } from '@ValenceTv/platform/useTheScreen';
 import { useQuery } from '@tanstack/react-query';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import { stillListening } from '@ValenceClient/books/stillListening';
@@ -21,6 +14,7 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import type { Book } from '@ValenceContracts/schemas/Book';
 import type { BooksProps } from './Books.types';
 import { say } from '@ValenceI18n/say';
+import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
 
 const ACROSS = 6;
 
@@ -54,7 +48,7 @@ const moodOf = (book: Book | null): string | null =>
 const BooksPage = ({ libraryIds, onOpen, onFeature, upTo }: BooksProps) => {
   const { books, isPending } = useAudiobooks(libraryIds);
   const listening = useQuery(bookQueries.listening());
-  const screen = useWindowDimensions();
+  const screen = useTheScreen();
   const room = useRoomToFill();
   const upToBar = useHandOff('up', upTo);
   const [featured, setFeatured] = useState<Book | null>(null);
@@ -145,7 +139,7 @@ const BooksPage = ({ libraryIds, onOpen, onFeature, upTo }: BooksProps) => {
           <View style={styles.every}>
             <Text style={styles.title}>{say('tv.books.everyAudiobook')}</Text>
 
-            <TVFocusGuideView autoFocus style={styles.grid}>
+            <FocusGuide isRemembering style={styles.grid}>
               {books.map((book, at) => (
                 <BookTile
                   key={book.id}
@@ -164,7 +158,7 @@ const BooksPage = ({ libraryIds, onOpen, onFeature, upTo }: BooksProps) => {
                   }}
                 />
               ))}
-            </TVFocusGuideView>
+            </FocusGuide>
           </View>
         </ScrollView>
       )}

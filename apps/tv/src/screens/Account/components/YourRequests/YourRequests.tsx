@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { FlatList, StyleSheet, Text, TVFocusGuideView, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
@@ -8,6 +8,7 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import { RequestCard } from '@ValenceTv/screens/Account/components/RequestCard/RequestCard';
 import type { YourRequestsProps } from './YourRequests.types';
 import { say } from '@ValenceI18n/say';
+import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
 
 const WATCHABLE_KINDS = new Set(['film', 'series']);
 
@@ -48,7 +49,7 @@ const YourRequests = ({ onOpen, onFocus }: YourRequestsProps) => {
     <View style={styles.section}>
       <Text style={styles.heading}>{say('tv.account.yourRequests.yourRequests')}</Text>
 
-      <TVFocusGuideView autoFocus>
+      <FocusGuide isRemembering>
         <FlatList
           horizontal
           data={mine}
@@ -65,7 +66,7 @@ const YourRequests = ({ onOpen, onFocus }: YourRequestsProps) => {
             />
           )}
         />
-      </TVFocusGuideView>
+      </FocusGuide>
     </View>
   );
 };

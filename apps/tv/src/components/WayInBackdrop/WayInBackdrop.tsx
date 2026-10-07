@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Animated, Easing, Image, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Animated, Easing, Image, StyleSheet, View } from 'react-native';
+import { useTheScreen } from '@ValenceTv/platform/useTheScreen';
 import { LinearGradient } from 'expo-linear-gradient';
 import { tokens } from '@ValenceTv/theme/tokens';
 import { withAlpha } from '@ValenceTv/theme/withAlpha';
@@ -49,7 +50,7 @@ const BLOOMS = ROWS.flatMap((row, down) =>
  * @param tint - The colour of whoever is signing in, where one has been picked.
  */
 const WayInBackdrop = ({ tint = null }: WayInBackdropProps) => {
-  const screen = useWindowDimensions();
+  const screen = useTheScreen();
   const [drifts] = useState(() => BLOOMS.map(() => new Animated.Value(0)));
 
   useEffect(() => {

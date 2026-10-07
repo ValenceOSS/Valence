@@ -1,7 +1,6 @@
-import { Platform, View } from 'react-native';
+import { Platform } from 'react-native';
 import { requireNativeView } from 'expo';
-import { tokens } from '@ValenceTv/theme/tokens';
-import { withAlpha } from '@ValenceTv/theme/withAlpha';
+import { FlatGlass } from '@ValenceTv/components/Glass/components/FlatGlass/FlatGlass';
 import type { GlassProps } from './Glass.types';
 
 const NativeGlass = requireNativeView<GlassProps>('ValenceGlass');
@@ -18,14 +17,9 @@ const NativeGlass = requireNativeView<GlassProps>('ValenceGlass');
  */
 const Glass = ({ cornerRadius, style, children }: GlassProps) =>
   Platform.OS === 'android' ? (
-    <View
-      style={[
-        { backgroundColor: withAlpha(tokens.colours.raised, 0.92), borderRadius: cornerRadius },
-        style,
-      ]}
-    >
+    <FlatGlass cornerRadius={cornerRadius} style={style}>
       {children}
-    </View>
+    </FlatGlass>
   ) : (
     <NativeGlass cornerRadius={cornerRadius} style={style}>
       {children}

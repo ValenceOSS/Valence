@@ -1,8 +1,6 @@
 import { DeviceProfileSchema } from '@ValenceContracts/schemas/DeviceProfile';
 import type { DeviceProfile } from '@ValenceContracts/schemas/DeviceProfile';
-import { say } from '@ValenceI18n/say';
-
-type CodecProbe = (mimeType: string) => boolean;
+import type { CodecProbe } from '@ValenceClient/playback/CodecProbe';
 
 type DetectDeviceProfileOptions = {
   isTypeSupported: CodecProbe;
@@ -285,75 +283,4 @@ const detectDeviceProfile = ({
   });
 };
 
-type MediaQuerySource = {
-  matchMedia?: (query: string) => { matches: boolean };
-};
-
-type AudioOutputSource = {
-  AudioContext?: new () => {
-    destination: { maxChannelCount: number };
-    close: () => Promise<void>;
-  };
-};
-
-/**
- * Asks the current output device how many channels it accepts, which is the only part of an audio
- * profile a browser will answer.
- *
- * It describes the device rather than the browser, so it is read once when the profile is built and
- * goes stale the moment somebody plugs in headphones or connects a receiver. That is a worse answer
- * than renegotiating on every device change and a far better one than the two this used to assume.
- *
- * @returns What the output accepts, never fewer than two.
- */
-const channelsTheOutputAccepts = (): number => {
-  const source: AudioOutputSource = window;
-
-  if (source.AudioContext === undefined) {
-    return STEREO;
-  }
-
-  try {
-    const context = new source.AudioContext();
-    const accepted = context.destination.maxChannelCount;
-
-    void context.close();
-
-    return accepted;
-  } catch {
-    return STEREO;
-  }
-};
-
-/**
- * Asks the browser which containers, codecs and ranges it can actually play, by testing each rather
- * than by reading its name.
- *
- * @param name - What to call this device in the session list.
- * @returns What this browser can play.
- */
-const detectFromBrowser = (name = say('common.browser')): DeviceProfile => {
-  const isTypeSupported: CodecProbe =
-    'MediaSource' in window && typeof window.MediaSource.isTypeSupported === 'function'
-      ? (mimeType) => window.MediaSource.isTypeSupported(mimeType)
-      : () => false;
-
-  const probe = document.createElement('video');
-
-  const canPlayFile: CodecProbe = (mimeType) => probe.canPlayType(mimeType) !== '';
-
-  const queries: MediaQuerySource = window;
-
-  return detectDeviceProfile({
-    isTypeSupported,
-    canPlayFile,
-    platform: window.navigator.platform,
-    supportsHdr: queries.matchMedia?.('(dynamic-range: high)').matches ?? false,
-    screenWidth: Math.round(window.screen.width * window.devicePixelRatio),
-    screenHeight: Math.round(window.screen.height * window.devicePixelRatio),
-    name,
-    maxAudioChannels: channelsTheOutputAccepts(),
-  });
-};
-
-export { detectDeviceProfile, detectFromBrowser };
+export { detectDeviceProfile };

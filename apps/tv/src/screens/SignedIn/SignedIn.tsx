@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, findNodeHandle, Linking, StyleSheet, View } from 'react-native';
+import { Alert, Linking, StyleSheet, View } from 'react-native';
 import { useRemote } from '@ValenceTv/remote/useRemote';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
@@ -73,6 +73,8 @@ import type { HWEvent } from 'react-native';
 import type { SignedInProps } from './SignedIn.types';
 import { say } from '@ValenceI18n/say';
 import { useStockedKinds } from '@ValenceClient/library/useStockedKinds';
+import { giveFocusTo } from '@ValenceTv/navigation/giveFocusTo';
+import { nativeTagOf } from '@ValenceTv/navigation/nativeTagOf';
 
 const WATCHABLE = new Set(['movies', 'shows']);
 
@@ -248,10 +250,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
 
   const homeTab = items.get('home') ?? null;
   const searchPill = items.get('search') ?? null;
-  const searchTag = useMemo(
-    () => (searchPill === null ? null : findNodeHandle(searchPill)),
-    [searchPill],
-  );
+  const searchTag = useMemo(() => nativeTagOf(searchPill), [searchPill]);
   const libraries = useQuery(libraryQueries.all());
   const watching = useQuery(profileQueries.watching());
 
@@ -351,7 +350,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
 
   const goHome = useCallback(() => {
     choose('home');
-    homeTab?.requestTVFocus();
+    giveFocusTo(homeTab);
   }, [choose, homeTab]);
 
   useMenuButton(opened.length > 0 ? back : isBackHomeFirst(tab) ? goHome : null);

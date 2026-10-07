@@ -2043,7 +2043,7 @@
   {
     "handler": "common.browser",
     "text": "Browser",
-    "context": "Shown, used in the playback (from `detectClientLabel`) and in the playback (from `detectDeviceProfile`)."
+    "context": "Shown, used in the playback (from `detectClientLabel`) and in the playback (from `detectFromBrowser`)."
   },
   {
     "handler": "common.byAuthor",
@@ -3532,6 +3532,11 @@
     "context": "Shown in the accounts panel in the admin area."
   },
   {
+    "handler": "common.lgTV",
+    "text": "LG TV",
+    "context": "The name of the kind of television, for an LG television showing the TV layout in its browser; shown in the platform of the television app (from `describeThisTv`) and in the playback of the television app (from `theTvsProfile`)."
+  },
+  {
     "handler": "common.libraries",
     "text": "Libraries",
     "context": "Shown, used in several places, among them the webhooks on the server (from `discordEmbedFor`) and the admin (from `groupPermissions`)."
@@ -3745,6 +3750,11 @@
     "handler": "common.makeANewLink",
     "text": "Create new link",
     "context": "The button, and the confirm button, that replace somebody's calendar link with a new one, stopping the old one."
+  },
+  {
+    "handler": "common.makerTV",
+    "text": "{maker} TV",
+    "context": "The name of a television showing the TV layout in its browser, after the company that made it, such as Hisense TV or Philips TV; {maker} is the maker's name as the television gives it. Shown in the platform of the television app (from `describeThisTv`) and in the session cards an admin reads (from `brandMarksOf`)."
   },
   {
     "handler": "common.manage",
@@ -5260,6 +5270,11 @@
     "context": "The label, used in the installed plugin card in the plugins panel and in the status (from `describeJobStatus`)."
   },
   {
+    "handler": "common.samsungTV",
+    "text": "Samsung TV",
+    "context": "The name of the kind of television, for a Samsung television showing the TV layout in its browser; shown in the platform of the television app (from `describeThisTv`) and in the playback of the television app (from `theTvsProfile`)."
+  },
+  {
     "handler": "common.sans",
     "text": "Sans",
     "context": "A caption setting, in the web player and on the phone and the television."
@@ -5568,6 +5583,11 @@
     "handler": "common.smartShuffle",
     "text": "Smart shuffle",
     "context": "Shown, used in several places, among them the music player of the phone app and the coming track in the up next of the phone app."
+  },
+  {
+    "handler": "common.smartTV",
+    "text": "Smart TV",
+    "context": "The name of the kind of television, for another maker's television showing the TV layout in its browser; shown in the platform of the television app (from `describeThisTv`) and in the playback of the television app (from `theTvsProfile`)."
   },
   {
     "handler": "common.softwareOnly",
@@ -6658,6 +6678,11 @@
     "handler": "common.wrongMatch",
     "text": "Wrong match?",
     "context": "The label, used in the media panel in the admin area and in the shelf table in the media panel."
+  },
+  {
+    "handler": "common.xbox",
+    "text": "Xbox",
+    "context": "The name of the kind of device, for an Xbox showing the TV layout in its Edge browser; shown in the platform of the television app (from `describeThisTv`) and in the playback of the television app (from `theTvsProfile`)."
   },
   {
     "handler": "common.year",
@@ -11103,6 +11128,11 @@
     "handler": "screens.accountDialog.admin",
     "text": "admin",
     "context": "Text shown in the account dialog."
+  },
+  {
+    "handler": "screens.accountDialog.useTheTvLayout",
+    "text": "Use the TV layout",
+    "context": "Button in the footer of the account dialog, shown only in a television's browser; switches that browser to Valence's TV layout."
   },
   {
     "handler": "screens.accountDialog.yourAccount",
@@ -26971,6 +27001,11 @@
     "context": "Text shown in the theme choice in the account of the television app."
   },
   {
+    "handler": "tv.account.useTheDesktopLayout",
+    "text": "Use the desktop layout",
+    "context": "Button on the account page of the television app, shown only in a television's browser; switches that browser to the web app's layout."
+  },
+  {
     "handler": "tv.account.watchingOnThisValence",
     "text": "Watching on this server",
     "context": "Shown under the profile's name on the television app's account screen, where the server's address is not known."
@@ -27086,6 +27121,16 @@
     "context": "Text shown in the choose server of the television app, on an Android TV."
   },
   {
+    "handler": "tv.chooseServer.chooseTheServerThisTV",
+    "text": "Choose the server this TV connects to.",
+    "context": "Text shown in the choose server of the television app, on a television showing the TV layout in its browser."
+  },
+  {
+    "handler": "tv.chooseServer.chooseTheServerThisXbox",
+    "text": "Choose the server this Xbox connects to.",
+    "context": "Text shown in the choose server of the television app, on an Xbox showing the TV layout in its browser."
+  },
+  {
     "handler": "tv.chooseServer.found1ValenceOnYourNetwork",
     "text": "Found 1 Valence server on your network",
     "context": "Shown in the choose server of the television app."
@@ -27119,6 +27164,11 @@
     "handler": "tv.chooseServer.valenceAtCouldNotReachCouldNotBe",
     "text": "Couldn’t reach the Valence server at {couldNotReach}.",
     "context": "Shown in the choose server of the television app. {couldNotReach} is filled in by the app."
+  },
+  {
+    "handler": "tv.controllerHint.holdMenuThenChooseGameControls",
+    "text": "To use your controller, hold the Menu button, then choose Use game controls.",
+    "context": "Shown along the bottom of the television app on an Xbox, until the controller is heard. Edge on an Xbox starts with the controller moving a pointer; holding Menu opens Edge's menu, and \"Use game controls\" is the name of Edge's own option there, so it should match what Edge calls it."
   },
   {
     "handler": "tv.enterPassword.or",
@@ -27239,6 +27289,26 @@
     "handler": "tv.nowPlaying.devicesPanel.thisFireTVPlayingHere",
     "text": "This Fire TV · playing here",
     "context": "Shown in the devices panel in the now playing of the television app, on an Android TV."
+  },
+  {
+    "handler": "tv.nowPlaying.devicesPanel.thisTV",
+    "text": "This TV",
+    "context": "Shown in the devices panel in the now playing of the television app, on a television showing the TV layout in its browser."
+  },
+  {
+    "handler": "tv.nowPlaying.devicesPanel.thisTVPlayingHere",
+    "text": "This TV · playing here",
+    "context": "Shown in the devices panel in the now playing of the television app, on a television showing the TV layout in its browser."
+  },
+  {
+    "handler": "tv.nowPlaying.devicesPanel.thisXbox",
+    "text": "This Xbox",
+    "context": "Shown in the devices panel in the now playing of the television app, on an Xbox showing the TV layout in its browser."
+  },
+  {
+    "handler": "tv.nowPlaying.devicesPanel.thisXboxPlayingHere",
+    "text": "This Xbox · playing here",
+    "context": "Shown in the devices panel in the now playing of the television app, on an Xbox showing the TV layout in its browser."
   },
   {
     "handler": "tv.nowPlaying.hideTheWords",

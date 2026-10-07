@@ -31,6 +31,8 @@ import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import type { ProfileDraft } from '@ValenceScreens/components/ProfileSettings/ProfileSettings.types';
 import type { AccountDialogProps } from './AccountDialog.types';
 import { say } from '@ValenceI18n/say';
+import { tvBrowserOf } from '@ValenceCore/functions/tvBrowserOf';
+import { chooseTheLayout } from '@ValenceClient/platform/chooseTheLayout';
 
 /**
  * Somebody's own account, raised over whatever they were looking at rather than taking them
@@ -206,6 +208,17 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
             <BuildInfoFooter />
 
             <div className="ml-auto flex gap-3">
+              {tvBrowserOf(window.navigator.userAgent) === null ? null : (
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    chooseTheLayout('tv', document);
+                  }}
+                >
+                  {say('screens.accountDialog.useTheTvLayout')}
+                </Button>
+              )}
+
               <Button
                 variant="danger"
                 onClick={() => {

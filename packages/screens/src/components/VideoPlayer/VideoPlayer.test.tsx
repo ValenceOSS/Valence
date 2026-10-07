@@ -84,7 +84,7 @@ vi.mock('@ValenceScreens/playback/castPlayback', async () => {
   };
 });
 
-vi.mock('@ValenceScreens/playback/detectDeviceProfile', () => ({
+vi.mock('@ValenceClient/playback/detectFromBrowser', () => ({
   detectFromBrowser: () => ({ name: 'Browser' }),
 }));
 

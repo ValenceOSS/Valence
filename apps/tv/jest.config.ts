@@ -73,10 +73,33 @@ const EACH_TELEVISION: Config = {
   testTimeout: 20_000,
 };
 
+const ONLY_IN_A_BROWSER = ['\\.web\\.test\\.tsx?$'];
+
 const config: Config = {
   projects: [
-    { ...EACH_TELEVISION, displayName: 'tvOS', preset: 'jest-expo/ios' },
-    { ...EACH_TELEVISION, displayName: 'Android TV', preset: 'jest-expo/android' },
+    {
+      ...EACH_TELEVISION,
+      displayName: 'tvOS',
+      preset: 'jest-expo/ios',
+      testPathIgnorePatterns: ONLY_IN_A_BROWSER,
+    },
+    {
+      ...EACH_TELEVISION,
+      displayName: 'Android TV',
+      preset: 'jest-expo/android',
+      testPathIgnorePatterns: ONLY_IN_A_BROWSER,
+    },
+    {
+      ...EACH_TELEVISION,
+      displayName: 'TV browser',
+      preset: 'jest-expo/web',
+      moduleNameMapper: {
+        ...EACH_TELEVISION.moduleNameMapper,
+        '^react-native$': '<rootDir>/node_modules/react-native-web',
+        '^react-native/(.*)$': '<rootDir>/node_modules/react-native-web/$1',
+      },
+      testMatch: ['<rootDir>/src/**/*.web.test.ts', '<rootDir>/src/**/*.web.test.tsx'],
+    },
   ],
   coverageReporters: ['text', 'json-summary'],
   collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.types.ts', '!src/testing/**'],

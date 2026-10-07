@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, TVFocusGuideView, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { Check, Laptop, Monitor, Smartphone } from '@keyline-icons/react-native';
 import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
@@ -13,8 +13,29 @@ import type { TvKind } from '@ValenceTv/platform/TvKind';
 import type { KeylineIcon } from '@ValenceTv/components/Icon/Icon.types';
 import type { DevicesPanelProps } from './DevicesPanel.types';
 import { say } from '@ValenceI18n/say';
+import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
 
 const WIDTH = 820;
+
+const THIS_TV: Record<TvKind, () => string> = {
+  appleTv: () => say('tv.nowPlaying.devicesPanel.thisAppleTV'),
+  androidTv: () => say('tv.nowPlaying.devicesPanel.thisAndroidTV'),
+  fireTv: () => say('tv.nowPlaying.devicesPanel.thisFireTV'),
+  lgTv: () => say('tv.nowPlaying.devicesPanel.thisTV'),
+  samsungTv: () => say('tv.nowPlaying.devicesPanel.thisTV'),
+  xbox: () => say('tv.nowPlaying.devicesPanel.thisXbox'),
+  smartTv: () => say('tv.nowPlaying.devicesPanel.thisTV'),
+};
+
+const THIS_TV_PLAYING_HERE: Record<TvKind, () => string> = {
+  appleTv: () => say('tv.nowPlaying.devicesPanel.thisAppleTVPlayingHere'),
+  androidTv: () => say('tv.nowPlaying.devicesPanel.thisAndroidTVPlayingHere'),
+  fireTv: () => say('tv.nowPlaying.devicesPanel.thisFireTVPlayingHere'),
+  lgTv: () => say('tv.nowPlaying.devicesPanel.thisTVPlayingHere'),
+  samsungTv: () => say('tv.nowPlaying.devicesPanel.thisTVPlayingHere'),
+  xbox: () => say('tv.nowPlaying.devicesPanel.thisXboxPlayingHere'),
+  smartTv: () => say('tv.nowPlaying.devicesPanel.thisTVPlayingHere'),
+};
 
 /**
  * This television as the list of places to play names it.
@@ -22,15 +43,7 @@ const WIDTH = 820;
  * @param kind - Which kind of television this is.
  * @returns Its name in the list.
  */
-const thisTvFor = (kind: TvKind): string => {
-  if (kind === 'fireTv') {
-    return say('tv.nowPlaying.devicesPanel.thisFireTV');
-  }
-
-  return kind === 'androidTv'
-    ? say('tv.nowPlaying.devicesPanel.thisAndroidTV')
-    : say('tv.nowPlaying.devicesPanel.thisAppleTV');
-};
+const thisTvFor = (kind: TvKind): string => THIS_TV[kind]();
 
 /**
  * This television as the list of places to play names it while the music plays on it.
@@ -38,15 +51,7 @@ const thisTvFor = (kind: TvKind): string => {
  * @param kind - Which kind of television this is.
  * @returns Its name in the list.
  */
-const thisTvPlayingHereFor = (kind: TvKind): string => {
-  if (kind === 'fireTv') {
-    return say('tv.nowPlaying.devicesPanel.thisFireTVPlayingHere');
-  }
-
-  return kind === 'androidTv'
-    ? say('tv.nowPlaying.devicesPanel.thisAndroidTVPlayingHere')
-    : say('tv.nowPlaying.devicesPanel.thisAppleTVPlayingHere');
-};
+const thisTvPlayingHereFor = (kind: TvKind): string => THIS_TV_PLAYING_HERE[kind]();
 
 /**
  * The picture that says what kind of device a name is, as the web picks it.
@@ -84,7 +89,7 @@ const DevicesPanel = ({ shown, onChosen }: DevicesPanelProps) => {
   const thisTv = thisTvFor(kind);
 
   return (
-    <TVFocusGuideView style={styles.panel} trapFocusLeft trapFocusRight trapFocusUp trapFocusDown>
+    <FocusGuide style={styles.panel} trapsLeft trapsRight trapsUp trapsDown>
       <FadeIn>
         <Text style={styles.title}>{say('common.playOn')}</Text>
 
@@ -141,7 +146,7 @@ const DevicesPanel = ({ shown, onChosen }: DevicesPanelProps) => {
           )}
         </ScrollView>
       </FadeIn>
-    </TVFocusGuideView>
+    </FocusGuide>
   );
 };
 

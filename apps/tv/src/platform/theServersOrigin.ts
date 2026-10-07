@@ -1,15 +1,17 @@
 import { serverAddress } from '@ValenceClient/session/serverAddress';
+import { pageOrigin } from '@ValenceTv/platform/pageOrigin';
 
 /**
  * Which Valence this television watches, or nothing before it has been told.
  *
- * A browser never asks, because its pages came from the server. A television has no origin of its
- * own, so the address is something it is told once and keeps; until then there is nowhere to send a
- * request, and the screen that asks is the only thing drawn.
+ * A browser never asks, because its pages came from the server, and neither does a television's
+ * browser shown the TV layout. A television app has no origin of its own, so the address is
+ * something it is told once and keeps; until then there is nowhere to send a request, and the screen
+ * that asks is the only thing drawn.
  *
  * @returns The origin every request, stream and socket is put on, or nothing.
  */
-const theServersOrigin = (): string | null => serverAddress();
+const theServersOrigin = (): string | null => serverAddress() ?? pageOrigin();
 
 /**
  * Puts a path the server answered with — a poster, a stream — back on the server it came from.

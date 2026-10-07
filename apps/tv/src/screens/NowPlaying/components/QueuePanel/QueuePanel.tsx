@@ -1,9 +1,10 @@
-import { FlatList, StyleSheet, Text, TVFocusGuideView } from 'react-native';
+import { FlatList, StyleSheet, Text } from 'react-native';
 import { FadeIn } from '@ValenceTv/components/FadeIn/FadeIn';
 import { TrackRow } from '@ValenceTv/components/TrackRow/TrackRow';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { QueuePanelProps } from './QueuePanel.types';
 import { say } from '@ValenceI18n/say';
+import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
 
 const WIDTH = 820;
 
@@ -17,7 +18,7 @@ const WIDTH = 820;
  * @param onJump - Told where in the order the chosen song sits.
  */
 const QueuePanel = ({ upcoming, picks, onJump }: QueuePanelProps) => (
-  <TVFocusGuideView style={styles.panel} trapFocusLeft trapFocusRight trapFocusUp trapFocusDown>
+  <FocusGuide style={styles.panel} trapsLeft trapsRight trapsUp trapsDown>
     <FadeIn>
       <Text style={styles.title}>{say('common.upNext')}</Text>
 
@@ -46,7 +47,7 @@ const QueuePanel = ({ upcoming, picks, onJump }: QueuePanelProps) => (
         />
       )}
     </FadeIn>
-  </TVFocusGuideView>
+  </FocusGuide>
 );
 
 QueuePanel.displayName = 'QueuePanel';

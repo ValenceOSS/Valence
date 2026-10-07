@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { DeviceProfileSchema } from '@ValenceContracts/schemas/DeviceProfile';
-import { detectDeviceProfile, detectFromBrowser } from './detectDeviceProfile';
+import { detectDeviceProfile } from '@ValenceClient/playback/detectDeviceProfile';
 
 const supporting =
   (...supported: string[]) =>
@@ -25,10 +25,6 @@ const build = (
     name: 'Browser',
     ...overrides,
   });
-
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
 
 describe('detectDeviceProfile', () => {
   it('produces a profile the server contract accepts', () => {
@@ -137,13 +133,6 @@ describe('detectDeviceProfile', () => {
 
   it('carries the client name through', () => {
     expect(build(supporting('avc1'), { name: 'Living room' }).name).toBe('Living room');
-  });
-
-  it('reports no HDR rather than failing in a browser without media queries', () => {
-    vi.stubGlobal('matchMedia', undefined);
-
-    expect(() => detectFromBrowser()).not.toThrow();
-    expect(detectFromBrowser().supportedVideoRanges).toEqual(['SDR']);
   });
 
   describe('the limits a browser can actually be asked about', () => {
@@ -267,62 +256,6 @@ describe('how many channels the profile claims', () => {
 
   it('claims a whole number of channels, since half a channel is not a thing', () => {
     expect(build(supporting('avc1', 'mp4a'), { maxAudioChannels: 7.5 }).maxAudioChannels).toBe(7);
-  });
-});
-
-describe('asking the browser how many channels the output takes', () => {
-  const anOutputAccepting = (maxChannelCount: number) => {
-    const close = vi.fn(() => Promise.resolve());
-
-    vi.stubGlobal(
-      'AudioContext',
-      class {
-        destination = { maxChannelCount };
-        close = close;
-      },
-    );
-
-    return { close };
-  };
-
-  it('reports what the device says it takes', () => {
-    anOutputAccepting(8);
-
-    expect(detectFromBrowser().maxAudioChannels).toBe(8);
-  });
-
-  it('lets go of the context it opened to ask', () => {
-    const { close } = anOutputAccepting(6);
-
-    detectFromBrowser();
-
-    expect(close).toHaveBeenCalledOnce();
-  });
-
-  it('falls back to stereo on a browser with no audio context at all', () => {
-    vi.stubGlobal('AudioContext', undefined);
-
-    expect(detectFromBrowser().maxAudioChannels).toBe(2);
-  });
-
-  it('falls back to stereo rather than throwing where opening one fails', () => {
-    vi.stubGlobal(
-      'AudioContext',
-      class {
-        constructor() {
-          throw new Error('no audio device');
-        }
-      },
-    );
-
-    expect(() => detectFromBrowser()).not.toThrow();
-    expect(detectFromBrowser().maxAudioChannels).toBe(2);
-  });
-
-  it('falls back to stereo where the device answers with nothing usable', () => {
-    anOutputAccepting(Number.NaN);
-
-    expect(detectFromBrowser().maxAudioChannels).toBe(2);
   });
 });
 

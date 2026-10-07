@@ -18,6 +18,7 @@ const config: ExpoConfig = {
   scheme: 'valence',
   version: build.version === 'unknown' ? '0.0.0' : build.version,
   userInterfaceStyle: 'dark',
+  experiments: { baseUrl: '/tv' },
   ios: {
     bundleIdentifier: 'app.valence.ios',
     infoPlist: {
