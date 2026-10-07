@@ -16,6 +16,9 @@ const SAMSUNG_AS_IT_SAYS =
 const SAMSUNG_2020 =
   'Mozilla/5.0 (SMART-TV; LINUX; Tizen 5.5) AppleWebKit/537.36 (KHTML, like Gecko) 69.0.3497.106.1/5.5 TV Safari/537.36';
 
+const XBOX =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; Xbox; Xbox Series X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0';
+
 const DESKTOP =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36';
 
@@ -23,6 +26,10 @@ describe('isATvBrowser', () => {
   it('shows the TV layout to an LG or Samsung browser on Chromium 84 or later', () => {
     expect(isATvBrowser(LG_2022)).toBe(true);
     expect(isATvBrowser(SAMSUNG_2021)).toBe(true);
+  });
+
+  it('shows it to an Xbox’s Edge too', () => {
+    expect(isATvBrowser(XBOX)).toBe(true);
   });
 
   it('reads the Chromium version Samsung gives without naming Chromium', () => {

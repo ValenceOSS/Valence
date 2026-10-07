@@ -23,6 +23,7 @@ const THIS_TV: Record<TvKind, () => string> = {
   fireTv: () => say('tv.nowPlaying.devicesPanel.thisFireTV'),
   lgTv: () => say('tv.nowPlaying.devicesPanel.thisTV'),
   samsungTv: () => say('tv.nowPlaying.devicesPanel.thisTV'),
+  xbox: () => say('tv.nowPlaying.devicesPanel.thisXbox'),
   smartTv: () => say('tv.nowPlaying.devicesPanel.thisTV'),
 };
 
@@ -32,6 +33,7 @@ const THIS_TV_PLAYING_HERE: Record<TvKind, () => string> = {
   fireTv: () => say('tv.nowPlaying.devicesPanel.thisFireTVPlayingHere'),
   lgTv: () => say('tv.nowPlaying.devicesPanel.thisTVPlayingHere'),
   samsungTv: () => say('tv.nowPlaying.devicesPanel.thisTVPlayingHere'),
+  xbox: () => say('tv.nowPlaying.devicesPanel.thisXboxPlayingHere'),
   smartTv: () => say('tv.nowPlaying.devicesPanel.thisTVPlayingHere'),
 };
 

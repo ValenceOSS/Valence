@@ -7,6 +7,9 @@ const LG =
 const SAMSUNG =
   'Mozilla/5.0 (SMART-TV; LINUX; Tizen 6.0) AppleWebKit/537.36 (KHTML, like Gecko) 85.0.4183.93/6.0 TV Safari/537.36';
 
+const XBOX =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; Xbox; Xbox Series X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0';
+
 const ANOTHER =
   'Mozilla/5.0 (Linux; SmartTV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36';
 
@@ -20,6 +23,10 @@ describe('tvBrowserOf', () => {
 
   it('knows Samsung’s browser', () => {
     expect(tvBrowserOf(SAMSUNG)).toBe('samsungTv');
+  });
+
+  it('knows an Xbox’s browser, which runs Edge', () => {
+    expect(tvBrowserOf(XBOX)).toBe('xbox');
   });
 
   it('calls another maker’s television browser a smart TV', () => {

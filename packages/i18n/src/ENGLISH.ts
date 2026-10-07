@@ -1510,6 +1510,7 @@ const ENGLISH = {
   'common.working': 'Working',
   'common.workingOnTitle': 'Working on {title}',
   'common.wrongMatch': 'Wrong match?',
+  'common.xbox': 'Xbox',
   'common.year': 'Year',
   'common.yellow': 'Yellow',
   'common.yesThatIsMine': 'Yes, this was me',
@@ -6872,6 +6873,7 @@ const ENGLISH = {
   'tv.chooseServer.chooseTheServerThisAppleTV': 'Choose the server this Apple TV connects to.',
   'tv.chooseServer.chooseTheServerThisFireTV': 'Choose the server this Fire TV connects to.',
   'tv.chooseServer.chooseTheServerThisTV': 'Choose the server this TV connects to.',
+  'tv.chooseServer.chooseTheServerThisXbox': 'Choose the server this Xbox connects to.',
   'tv.chooseServer.found1ValenceOnYourNetwork': 'Found 1 Valence server on your network',
   'tv.chooseServer.foundLengthOnYourNetwork': 'Found {length} servers on your network',
   'tv.chooseServer.lookingForIt': 'Connecting…',
@@ -6880,6 +6882,8 @@ const ENGLISH = {
   'tv.chooseServer.usedBefore': 'Recent servers',
   'tv.chooseServer.valenceAtCouldNotReachCouldNotBe':
     'Couldn’t reach the Valence server at {couldNotReach}.',
+  'tv.controllerHint.holdMenuThenChooseGameControls':
+    'To use your controller, hold the Menu button, then choose Use game controls.',
   'tv.enterPassword.or': 'or',
   'tv.enterPassword.signingIn': 'Signing in…',
   'tv.enterPassword.thatCodeIsNotRight': 'That code is incorrect.',
@@ -6906,6 +6910,8 @@ const ENGLISH = {
   'tv.nowPlaying.devicesPanel.thisFireTVPlayingHere': 'This Fire TV · playing here',
   'tv.nowPlaying.devicesPanel.thisTV': 'This TV',
   'tv.nowPlaying.devicesPanel.thisTVPlayingHere': 'This TV · playing here',
+  'tv.nowPlaying.devicesPanel.thisXbox': 'This Xbox',
+  'tv.nowPlaying.devicesPanel.thisXboxPlayingHere': 'This Xbox · playing here',
   'tv.nowPlaying.hideTheWords': 'Hide lyrics',
   'tv.nowPlaying.queuePanel.nothingPlaysAfterThisSong': 'Nothing is queued after this song.',
   'tv.nowPlaying.repeat': 'Repeat',

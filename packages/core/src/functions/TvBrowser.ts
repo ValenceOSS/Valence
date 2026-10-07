@@ -1,3 +1,3 @@
-type TvBrowser = 'lgTv' | 'samsungTv' | 'smartTv';
+type TvBrowser = 'lgTv' | 'samsungTv' | 'xbox' | 'smartTv';
 
 export type { TvBrowser };

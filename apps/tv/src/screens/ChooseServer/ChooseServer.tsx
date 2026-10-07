@@ -30,6 +30,7 @@ const WHICH_SERVER: Record<TvKind, () => string> = {
   fireTv: () => say('tv.chooseServer.chooseTheServerThisFireTV'),
   lgTv: () => say('tv.chooseServer.chooseTheServerThisTV'),
   samsungTv: () => say('tv.chooseServer.chooseTheServerThisTV'),
+  xbox: () => say('tv.chooseServer.chooseTheServerThisXbox'),
   smartTv: () => say('tv.chooseServer.chooseTheServerThisTV'),
 };
 

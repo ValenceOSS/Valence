@@ -6675,6 +6675,11 @@
     "context": "The label, used in the media panel in the admin area and in the shelf table in the media panel."
   },
   {
+    "handler": "common.xbox",
+    "text": "Xbox",
+    "context": "The name of the kind of device, for an Xbox showing the TV layout in its Edge browser; shown in the platform of the television app (from `describeThisTv`) and in the playback of the television app (from `theTvsProfile`)."
+  },
+  {
     "handler": "common.year",
     "text": "Year",
     "context": "The label, used in the albums of the phone app and in the albums view in the music page."
@@ -27116,6 +27121,11 @@
     "context": "Text shown in the choose server of the television app, on a television showing the TV layout in its browser."
   },
   {
+    "handler": "tv.chooseServer.chooseTheServerThisXbox",
+    "text": "Choose the server this Xbox connects to.",
+    "context": "Text shown in the choose server of the television app, on an Xbox showing the TV layout in its browser."
+  },
+  {
     "handler": "tv.chooseServer.found1ValenceOnYourNetwork",
     "text": "Found 1 Valence server on your network",
     "context": "Shown in the choose server of the television app."
@@ -27149,6 +27159,11 @@
     "handler": "tv.chooseServer.valenceAtCouldNotReachCouldNotBe",
     "text": "Couldn’t reach the Valence server at {couldNotReach}.",
     "context": "Shown in the choose server of the television app. {couldNotReach} is filled in by the app."
+  },
+  {
+    "handler": "tv.controllerHint.holdMenuThenChooseGameControls",
+    "text": "To use your controller, hold the Menu button, then choose Use game controls.",
+    "context": "Shown along the bottom of the television app on an Xbox, until the controller is heard. Edge on an Xbox starts with the controller moving a pointer; holding Menu opens Edge's menu, and \"Use game controls\" is the name of Edge's own option there, so it should match what Edge calls it."
   },
   {
     "handler": "tv.enterPassword.or",
@@ -27279,6 +27294,16 @@
     "handler": "tv.nowPlaying.devicesPanel.thisTVPlayingHere",
     "text": "This TV · playing here",
     "context": "Shown in the devices panel in the now playing of the television app, on a television showing the TV layout in its browser."
+  },
+  {
+    "handler": "tv.nowPlaying.devicesPanel.thisXbox",
+    "text": "This Xbox",
+    "context": "Shown in the devices panel in the now playing of the television app, on an Xbox showing the TV layout in its browser."
+  },
+  {
+    "handler": "tv.nowPlaying.devicesPanel.thisXboxPlayingHere",
+    "text": "This Xbox · playing here",
+    "context": "Shown in the devices panel in the now playing of the television app, on an Xbox showing the TV layout in its browser."
   },
   {
     "handler": "tv.nowPlaying.hideTheWords",

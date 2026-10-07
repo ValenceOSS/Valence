@@ -8,12 +8,13 @@ const NAMES: Record<TvKind, () => string> = {
   fireTv: () => say('common.fireTV'),
   lgTv: () => say('common.lgTV'),
   samsungTv: () => say('common.samsungTV'),
+  xbox: () => say('common.xbox'),
   smartTv: () => say('common.smartTV'),
 };
 
 /**
  * What kind of television this is, as a person would name the box: an Apple TV, a Fire TV, an
- * Android TV, or an LG, Samsung or other smart TV whose browser shows the TV layout.
+ * Android TV, or an LG, Samsung or other smart TV, or an Xbox, whose browser shows the TV layout.
  *
  * @param kind - Which kind it is, which is this television's own unless a test says otherwise.
  * @returns The kind of television.
