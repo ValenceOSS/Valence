@@ -44,4 +44,19 @@ describe('useRemote in a browser', () => {
 
     expect(hear).not.toHaveBeenCalled();
   });
+
+  it('takes Backspace for Back, except from whatever is typing into a field', () => {
+    const hear = jest.fn();
+    const field = document.createElement('input');
+
+    render(<Listening hear={hear} />);
+    key('keydown', 'Backspace');
+    document.body.append(field);
+    field.focus();
+    key('keydown', 'Backspace');
+    field.remove();
+
+    expect(hear).toHaveBeenCalledTimes(1);
+    expect(hear).toHaveBeenCalledWith({ eventType: 'back', eventKeyAction: 0 });
+  });
 });

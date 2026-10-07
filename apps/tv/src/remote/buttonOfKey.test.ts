@@ -18,4 +18,9 @@ describe('buttonOfKey', () => {
   it('says nothing of a key that is not the remote’s', () => {
     expect(buttonOfKey('a', 65)).toBeNull();
   });
+
+  it('takes Backspace for Back, as Hisense’s VIDAA and Titan OS send it', () => {
+    expect(buttonOfKey('Backspace', 8)).toBe('back');
+    expect(buttonOfKey('', 8)).toBe('back');
+  });
 });

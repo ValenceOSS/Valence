@@ -18,7 +18,10 @@ const listenForBack = (page: Document): void => {
 
   isListening = true;
   page.addEventListener('keydown', (event) => {
-    const isTyping = page.activeElement instanceof HTMLInputElement && event.key === 'Backspace';
+    const isTyping =
+      (page.activeElement instanceof HTMLInputElement ||
+        page.activeElement instanceof HTMLTextAreaElement) &&
+      event.key === 'Backspace';
     const back = backPresses[backPresses.length - 1];
 
     if (isTyping || back === undefined || buttonOfKey(event.key, event.keyCode) !== 'back') {

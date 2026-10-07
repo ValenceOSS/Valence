@@ -12,12 +12,14 @@ const BY_NAME: Record<string, string> = {
   MediaTrackPrevious: 'rewind',
   MediaTrackNext: 'fastForward',
   Escape: 'back',
+  Backspace: 'back',
   GoBack: 'back',
   BrowserBack: 'back',
 };
 
 const BY_CODE: Record<number, string> = {
   13: 'select',
+  8: 'back',
   19: 'playPause',
   412: 'rewind',
   413: 'playPause',
@@ -26,12 +28,14 @@ const BY_CODE: Record<number, string> = {
   461: 'back',
   10009: 'back',
   10252: 'playPause',
+  179: 'playPause',
 };
 
 /**
  * Which of the remote's buttons a key is, named as the Siri Remote's are, for the keys a
  * television's browser sends: by name where it gives one, and by the code LG and Samsung give their
- * remote's buttons where it does not.
+ * remote's buttons where it does not. Hisense's VIDAA and Titan OS send Back as Backspace, so it is
+ * Back here; whatever is typing into a field keeps it for itself.
  *
  * @param key - The key's name, as the browser gives it.
  * @param code - The key's code, as the browser gives it.

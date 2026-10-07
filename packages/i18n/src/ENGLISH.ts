@@ -894,6 +894,7 @@ const ENGLISH = {
   'common.makeALink': 'Create share link',
   'common.makeANewCalendarLink': 'Create a new calendar link?',
   'common.makeANewLink': 'Create new link',
+  'common.makerTV': '{maker} TV',
   'common.manage': 'Manage',
   'common.margins': 'Margins',
   'common.markAllRead': 'Mark all read',

@@ -25,8 +25,12 @@ const useRemote: typeof onTheTelevision = (hear) => {
     const held = new Set<string>();
     const down = (event: KeyboardEvent) => {
       const button = buttonOfKey(event.key, event.keyCode);
+      const isTyping =
+        event.key === 'Backspace' &&
+        (document.activeElement instanceof HTMLInputElement ||
+          document.activeElement instanceof HTMLTextAreaElement);
 
-      if (button === null) {
+      if (button === null || isTyping) {
         return;
       }
 

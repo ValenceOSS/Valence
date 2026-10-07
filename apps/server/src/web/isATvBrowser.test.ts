@@ -19,6 +19,15 @@ const SAMSUNG_2020 =
 const XBOX =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64; Xbox; Xbox Series X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0';
 
+const VIDAA_2023 =
+  'Mozilla/5.0 (X11; Linux armv7l) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.5563.146 Odin/111.5563.5.1 Safari/537.36 Model/VIDAA-MTK9603 VIDAA/9.0(Hisense;SmartTV;65A60LXVT;MTK9603/V0000.09.01W.P0714;UHD;65A6N;)';
+
+const TITAN_2025 =
+  'Mozilla/5.0 (Linux armv7l) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.4147.62 Safari/537.36 OPR/46.0.2207.0 OMI/4.24, TV_NT72690_2025_4K /0.1.2 (Philips, 55PUS8500, wired) CE-HTML/1.0 NETTV/4.6.0.8 SignOn/2.0 SmartTvA/5.0.0 TitanOS/3.0 en Ginga';
+
+const VESTEL_2020 =
+  'Mozilla/5.0 (Linux) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36 OPR/46.0.2207.0 OMI/4.20.5.61.LIMA.148 Model/Vestel-MB181 HbbTV/1.5.1 (+DRM; JVC; MB181; 1.48.12.1; _TV__2020; ) SmartTvA/3.0.0';
+
 const DESKTOP =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36';
 
@@ -30,6 +39,15 @@ describe('isATvBrowser', () => {
 
   it('shows it to an Xbox’s Edge too', () => {
     expect(isATvBrowser(XBOX)).toBe(true);
+  });
+
+  it('shows it to Hisense’s VIDAA and Titan OS on a Chromium new enough', () => {
+    expect(isATvBrowser(VIDAA_2023)).toBe(true);
+    expect(isATvBrowser(TITAN_2025)).toBe(true);
+  });
+
+  it('leaves a Vestel-made set on an older Chromium on the web app', () => {
+    expect(isATvBrowser(VESTEL_2020)).toBe(false);
   });
 
   it('reads the Chromium version Samsung gives without naming Chromium', () => {

@@ -3752,6 +3752,11 @@
     "context": "The button, and the confirm button, that replace somebody's calendar link with a new one, stopping the old one."
   },
   {
+    "handler": "common.makerTV",
+    "text": "{maker} TV",
+    "context": "The name of a television showing the TV layout in its browser, after the company that made it, such as Hisense TV or Philips TV; {maker} is the maker's name as the television gives it. Shown in the platform of the television app (from `describeThisTv`) and in the session cards an admin reads (from `brandMarksOf`)."
+  },
+  {
     "handler": "common.manage",
     "text": "Manage",
     "context": "Shown in the overview panel in the admin area."
