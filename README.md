@@ -4,6 +4,10 @@
 
 <img src="assets/valence-icon.png" alt="Valence" width="112" />
 
+<br/>
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/N3S428DF40)
+
 # Valence
 
 **A self hosted streaming platform for your own library.**
