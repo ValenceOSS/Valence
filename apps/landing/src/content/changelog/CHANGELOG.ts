@@ -6,10 +6,12 @@ import { patchedImages } from './patchedImages';
 import { phonesAndAudiobooks } from './phonesAndAudiobooks';
 import { steadierTests } from './steadierTests';
 import { subtitlesAndTheSite } from './subtitlesAndTheSite';
+import { televisionEverywhere } from './televisionEverywhere';
 import { theFirstRelease } from './theFirstRelease';
 import type { ChangelogEntry } from './ChangelogEntry';
 
 const CHANGELOG: readonly ChangelogEntry[] = [
+  televisionEverywhere,
   linkedServersAndCalendars,
   facesAndArtCards,
   steadierTests,
