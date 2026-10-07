@@ -17,7 +17,11 @@ const styles = StyleSheet.create({
   group: { gap: tokens.space.sm },
   heading: { color: tokens.colours.text, fontSize: tokens.type.heading, fontWeight: '600' },
   line: { backgroundColor: tokens.colours.line, height: 2 },
-  picture: { aspectRatio: 16 / 9, borderRadius: tokens.radii.lg, width: tokens.ACTION_WIDTH },
+  picture: {
+    borderRadius: tokens.radii.lg,
+    width: tokens.ACTION_WIDTH,
+    height: (tokens.ACTION_WIDTH * 9) / 16,
+  },
   progress: { gap: tokens.space.xs, width: tokens.ACTION_WIDTH },
   small: { color: tokens.colours.muted, fontSize: tokens.type.small },
   text: { fontSize: tokens.type.body },

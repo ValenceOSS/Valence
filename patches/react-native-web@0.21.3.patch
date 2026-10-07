@@ -1,5 +1,18 @@
+diff --git a/dist/cjs/exports/Text/index.js b/dist/cjs/exports/Text/index.js
+index 1d03735..8411b58 100644
+--- a/dist/cjs/exports/Text/index.js
++++ b/dist/cjs/exports/Text/index.js
+@@ -181,7 +181,7 @@ var styles = _StyleSheet.default.create({
+   textMultiLine: {
+     display: '-webkit-box',
+     maxWidth: '100%',
+-    overflow: 'clip',
++    overflow: 'hidden',
+     textOverflow: 'ellipsis',
+     WebkitBoxOrient: 'vertical'
+   },
 diff --git a/dist/cjs/modules/useElementLayout/index.js b/dist/cjs/modules/useElementLayout/index.js
-index f30287042926a3e682df6fd34fb2c13f5bf38e73..2e664a804c2e53241271c9c086ac1586122ed158 100644
+index f302870..2e664a8 100644
 --- a/dist/cjs/modules/useElementLayout/index.js
 +++ b/dist/cjs/modules/useElementLayout/index.js
 @@ -71,7 +71,9 @@ function useElementLayout(ref, onLayout) {
@@ -22,8 +35,21 @@ index f30287042926a3e682df6fd34fb2c13f5bf38e73..2e664a804c2e53241271c9c086ac1586
  }
  module.exports = exports.default;
 \ No newline at end of file
+diff --git a/dist/exports/Text/index.js b/dist/exports/Text/index.js
+index 1076f55..4130386 100644
+--- a/dist/exports/Text/index.js
++++ b/dist/exports/Text/index.js
+@@ -176,7 +176,7 @@ var styles = StyleSheet.create({
+   textMultiLine: {
+     display: '-webkit-box',
+     maxWidth: '100%',
+-    overflow: 'clip',
++    overflow: 'hidden',
+     textOverflow: 'ellipsis',
+     WebkitBoxOrient: 'vertical'
+   },
 diff --git a/dist/modules/useElementLayout/index.js b/dist/modules/useElementLayout/index.js
-index cd75e40a824821325baccaee6482af5ef0663839..9b04dd851170e0dfad7fbac9974e68803ceeaeda 100644
+index cd75e40..9b04dd8 100644
 --- a/dist/modules/useElementLayout/index.js
 +++ b/dist/modules/useElementLayout/index.js
 @@ -66,7 +66,9 @@ export default function useElementLayout(ref, onLayout) {
@@ -44,3 +70,4 @@ index cd75e40a824821325baccaee6482af5ef0663839..9b04dd851170e0dfad7fbac9974e6880
 -  }, [ref, observer]);
 +  }, [ref, observer, hasOnLayout]);
  }
+\ No newline at end of file
