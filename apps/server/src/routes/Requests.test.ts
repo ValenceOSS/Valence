@@ -2421,89 +2421,97 @@ describe('requests for films and series, through the server', () => {
     );
   });
 
-  it('says how the downloads a viewer’s own requests wait on are going', async () => {
-    const DOWNLOAD = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
-    let owner = '';
-    const { ask, accountId } = await build({
-      isOn: true,
-      granted: ['requests.ask'],
-      service: (url) =>
-        url.endsWith('/api/downloads')
-          ? Response.json({
-              clients: [],
-              checkedAt: null,
-              downloads: [
-                {
-                  id: DOWNLOAD,
-                  clientId: '0f8fad5b-d9cb-469f-a165-70867728950e',
-                  clientName: 'qBittorrent',
-                  protocol: 'torrent',
-                  libraryKind: 'movies',
-                  title: 'Dune',
-                  indexerName: null,
-                  state: 'downloading',
-                  problem: null,
-                  problemCode: null,
-                  progress: 0.5,
-                  sizeBytes: 100,
-                  doneBytes: 50,
-                  downloadBytesPerSecond: 10,
-                  uploadBytesPerSecond: null,
-                  secondsLeft: 5,
-                  seeds: null,
-                  peers: null,
-                  sentAt: '2026-09-19T00:00:00.000Z',
-                  finishedAt: null,
-                },
-              ],
-            })
-          : Response.json([
-              {
-                ...REQUEST,
-                requestedBy: { id: owner, name: 'Me' },
-                items: [
+  it.each([
+    { granted: ['requests.ask'] as const, seesOthers: false },
+    { granted: ['requests.ask', 'requests.viewAll'] as const, seesOthers: true },
+  ])(
+    'says how the downloads requests wait on are going, everybody’s where $granted may see them',
+    async ({ granted, seesOthers }) => {
+      const DOWNLOAD = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
+      let owner = '';
+      const { ask, accountId } = await build({
+        isOn: true,
+        granted: [...granted],
+        service: (url) =>
+          url.endsWith('/api/downloads')
+            ? Response.json({
+                clients: [],
+                checkedAt: null,
+                downloads: [
                   {
-                    id: '1c6a7e2b-3d4f-4a5b-9c8d-7e6f5a4b3c2d',
-                    musicBrainzId: null,
-                    season: null,
-                    episode: null,
+                    id: DOWNLOAD,
+                    clientId: '0f8fad5b-d9cb-469f-a165-70867728950e',
+                    clientName: 'qBittorrent',
+                    protocol: 'torrent',
+                    libraryKind: 'movies',
                     title: 'Dune',
-                    airDate: null,
+                    indexerName: null,
                     state: 'downloading',
                     problem: null,
                     problemCode: null,
-                    releaseTitle: 'Dune',
-                    downloadId: DOWNLOAD,
-                    filePath: null,
-                    score: null,
-                    downloadedBytes: null,
-                    downloadSeconds: null,
-                    lastSearchedAt: null,
-                    updatedAt: '2026-09-19T00:00:00.000Z',
+                    progress: 0.5,
+                    sizeBytes: 100,
+                    doneBytes: 50,
+                    downloadBytesPerSecond: 10,
+                    uploadBytesPerSecond: null,
+                    secondsLeft: 5,
+                    seeds: null,
+                    peers: null,
+                    sentAt: '2026-09-19T00:00:00.000Z',
+                    finishedAt: null,
                   },
                 ],
-              },
-            ]),
-    });
+              })
+            : Response.json([
+                {
+                  ...REQUEST,
+                  requestedBy: { id: owner, name: 'Me' },
+                  items: [
+                    {
+                      id: '1c6a7e2b-3d4f-4a5b-9c8d-7e6f5a4b3c2d',
+                      musicBrainzId: null,
+                      season: null,
+                      episode: null,
+                      title: 'Dune',
+                      airDate: null,
+                      state: 'downloading',
+                      problem: null,
+                      problemCode: null,
+                      releaseTitle: 'Dune',
+                      downloadId: DOWNLOAD,
+                      filePath: null,
+                      score: null,
+                      downloadedBytes: null,
+                      downloadSeconds: null,
+                      lastSearchedAt: null,
+                      updatedAt: '2026-09-19T00:00:00.000Z',
+                    },
+                  ],
+                },
+              ]),
+      });
 
-    owner = accountId;
+      const going = [
+        {
+          downloadId: DOWNLOAD,
+          state: 'downloading',
+          progress: 0.5,
+          sizeBytes: 100,
+          doneBytes: 50,
+          downloadBytesPerSecond: 10,
+          secondsLeft: 5,
+        },
+      ];
 
-    expect(await (await ask('/api/requests/progress')).json()).toEqual([
-      {
-        downloadId: DOWNLOAD,
-        state: 'downloading',
-        progress: 0.5,
-        sizeBytes: 100,
-        doneBytes: 50,
-        downloadBytesPerSecond: 10,
-        secondsLeft: 5,
-      },
-    ]);
+      owner = accountId;
 
-    owner = 'someone-else';
+      expect(await (await ask('/api/requests/progress')).json()).toEqual(going);
 
-    expect(await (await ask('/api/requests/progress')).json()).toEqual([]);
-  });
+      owner = 'someone-else';
+
+      expect(await (await ask('/api/requests/progress')).json()).toEqual(seesOthers ? going : []);
+    },
+  );
 
   it('lets somebody cancel their own request until it is in the library, with its downloads', async () => {
     let owner = '';
