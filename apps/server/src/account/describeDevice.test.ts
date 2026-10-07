@@ -42,6 +42,27 @@ describe('describeDevice', () => {
     expect(said.message.length).toBeLessThanOrEqual(40);
   });
 
+  it('names a television’s own browser as the television, not as the browsers it claims to be', () => {
+    expect(
+      describeDevice(
+        'Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 (KHTML, like Gecko) Chr0me/94.0.4606.128 Safari/537.36 WebAppManager',
+      ).message,
+    ).toBe('LG TV');
+    expect(
+      describeDevice(
+        'Mozilla/5.0 (SMART-TV; LINUX; Tizen 7.0) AppleWebKit/537.36 (KHTML, like Gecko) 94.0.4606.31/7.0 TV Safari/537.36',
+      ).message,
+    ).toBe('Samsung TV');
+    expect(
+      describeDevice(
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; Xbox; Xbox Series X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
+      ).message,
+    ).toBe('Xbox');
+    expect(
+      describeDevice('Chrome/111.0 Odin/111 VIDAA/9.0(Hisense;SmartTV;65A60LXVT;MTK9603;)').message,
+    ).toBe('Hisense TV');
+  });
+
   it('names Valence’s own apps by the device they say they are on', () => {
     expect(describeDevice("Valence (Dan's iPhone)")).toEqual("Valence on Dan's iPhone");
     expect(describeDevice('Valence (Living Room)')).toEqual('Valence on Living Room');
