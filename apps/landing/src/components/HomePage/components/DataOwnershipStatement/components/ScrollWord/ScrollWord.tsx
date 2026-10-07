@@ -8,11 +8,9 @@ const REGULAR_WEIGHT = 400;
 
 const BOLD_WEIGHT = 700;
 
-const LOGO_SIZE_PX = 26;
+const LOGO_WRAPPER_WIDTH_EM = 0.9;
 
-const LOGO_WRAPPER_WIDTH_PX = 36;
-
-const LOGO_GAP_PX = 6;
+const LOGO_GAP_EM = 0.15;
 
 const HASH_WIDTH_EM = 0.6;
 
@@ -61,13 +59,13 @@ const greyToward =
  * space — a hidden character, the mark before a word — that should open up rather than sit
  * reserved from the start.
  *
- * @param sizePx - The size to grow to, in pixels.
+ * @param sizeEm - The size to grow to, in ems.
  * @returns A function `useTransform` can call with the reveal value.
  */
-const growPx =
-  (sizePx: number) =>
+const growEm =
+  (sizeEm: number) =>
   (value: number): string =>
-    `${(value * sizePx).toString()}px`;
+    `${(value * sizeEm).toString()}em`;
 
 /**
  * One word of a statement that fills in as the page is scrolled past it, dim until its place in the
@@ -97,19 +95,19 @@ const ScrollWord = ({ children, index, total, progress, annotation }: ScrollWord
   const hashWidth = useTransform(reveal, (value) => `${(value * HASH_WIDTH_EM).toString()}em`);
   const emphasisBackground = useTransform(reveal, fadeInOver('var(--color-accent)', 0.15));
   const emphasisDecoration = useTransform(reveal, fadeInOver('var(--color-accent)', 1));
-  const logoWidth = useTransform(reveal, growPx(LOGO_WRAPPER_WIDTH_PX));
-  const logoMarginRight = useTransform(reveal, growPx(LOGO_GAP_PX));
+  const logoWidth = useTransform(reveal, growEm(LOGO_WRAPPER_WIDTH_EM));
+  const logoMarginRight = useTransform(reveal, growEm(LOGO_GAP_EM));
 
   if (annotation === 'tag') {
     return (
       <motion.span style={{ opacity }} className="text-text">
         <motion.span
           style={{ backgroundColor: tagBackground, color: tagColour, fontWeight }}
-          className="mx-0.5 rounded-md px-2 py-0.5 font-mono text-[0.85em]"
+          className="mx-0.5 rounded-md px-2 py-0.5 font-mono text-[0.85em] max-lg:font-bold!"
         >
           <motion.span
             style={{ width: hashWidth, opacity: reveal }}
-            className="inline-block overflow-hidden align-bottom"
+            className="inline-block overflow-hidden align-bottom max-lg:w-[0.6em]!"
           >
             #
           </motion.span>
@@ -130,13 +128,13 @@ const ScrollWord = ({ children, index, total, progress, annotation }: ScrollWord
             textDecorationColor: emphasisDecoration,
             fontWeight,
           }}
-          className="mx-0.5 rounded-md px-1.5 underline decoration-2 underline-offset-4"
+          className="mx-0.5 rounded-md px-1.5 underline decoration-2 underline-offset-4 max-lg:font-bold!"
         >
           <motion.span
             style={{ width: logoWidth, marginRight: logoMarginRight, opacity: reveal }}
-            className="inline-flex align-middle overflow-hidden"
+            className="inline-flex items-center align-middle overflow-hidden max-lg:mr-[0.15em]! max-lg:w-[0.9em]!"
           >
-            <Logo size={LOGO_SIZE_PX} />
+            <Logo className="h-[0.6em]" />
           </motion.span>
           {core}
         </motion.span>

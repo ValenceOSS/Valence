@@ -22,14 +22,14 @@ describe('SiteCursor', () => {
   it('hides the system pointer and draws its own where the mouse moves', () => {
     vi.stubGlobal('matchMedia', pointing(true));
 
-    const { container } = render(<SiteCursor />);
+    render(<SiteCursor />);
 
     expect(document.documentElement).toHaveClass('valence-cursor-none');
-    expect(container.querySelector('[aria-hidden]')).toBeNull();
+    expect(document.body.querySelector('.origin-top-left')).toBeNull();
 
     fireEvent.pointerMove(window, { pointerType: 'mouse', clientX: 40, clientY: 60 });
 
-    expect(container.querySelector('[aria-hidden]')).not.toBeNull();
+    expect(document.body.querySelector('.origin-top-left')).not.toBeNull();
   });
 
   it('gives the system pointer back when it goes', () => {
@@ -45,12 +45,23 @@ describe('SiteCursor', () => {
   it('leaves touch screens alone', () => {
     vi.stubGlobal('matchMedia', pointing(false));
 
-    const { container } = render(<SiteCursor />);
+    render(<SiteCursor />);
 
     fireEvent.pointerMove(window, { pointerType: 'mouse', clientX: 40, clientY: 60 });
 
     expect(document.documentElement).not.toHaveClass('valence-cursor-none');
-    expect(container.querySelector('[aria-hidden]')).toBeNull();
+    expect(document.body.querySelector('.origin-top-left')).toBeNull();
+  });
+
+  it('draws itself on the body, outside whatever layer holds it, so menus cannot cover it', () => {
+    vi.stubGlobal('matchMedia', pointing(true));
+
+    const { container } = render(<SiteCursor />);
+
+    fireEvent.pointerMove(window, { pointerType: 'mouse', clientX: 40, clientY: 60 });
+
+    expect(container.querySelector('.origin-top-left')).toBeNull();
+    expect(document.body.querySelector('.origin-top-left')?.parentElement).toBe(document.body);
   });
 
   it('sets a display name so devtools can identify it', () => {

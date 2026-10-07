@@ -1,6 +1,8 @@
 import { useRef } from 'react';
 import { useReducedMotionConfig, useScroll, useSpring } from 'motion/react';
 import { cn } from '@ValenceUI/cn';
+import { ShieldCheck as PrivacyIcon } from '@keyline-icons/react/duotone';
+import { ByTheWay } from '@ValenceLanding/components/HomePage/components/ByTheWay/ByTheWay';
 import { ScrollWord } from './components/ScrollWord/ScrollWord';
 import type { ScrollWordAnnotation } from './components/ScrollWord/ScrollWord.types';
 
@@ -66,7 +68,8 @@ const STATEMENT_CLASSES =
  * changes that line's own width, and a line still free to wrap would occasionally shove a word onto
  * the next one mid-animation. Held to one line each, from the width the layout was designed for
  * upward, that can't happen — only the phone-width fallback still wraps, where the animation moves
- * less text around to begin with.
+ * less text around to begin with. A note in the corner of the held screen adds what is true of the
+ * server itself.
  */
 const DataOwnershipStatement = () => {
   const prefersReducedMotion = useReducedMotionConfig();
@@ -91,29 +94,41 @@ const DataOwnershipStatement = () => {
 
   return (
     <section aria-label="On your data" ref={containerRef} className="relative min-h-[200vh]">
-      <p className={cn('sticky top-0 flex h-svh items-center justify-center', STATEMENT_CLASSES)}>
-        <span>
-          {LINES.map((line) => (
-            <span key={line.startIndex} className="block lg:whitespace-nowrap">
-              {line.words.map((word, offset) => {
-                const index = line.startIndex + offset;
+      <div className="sticky top-0 h-svh">
+        <p className={cn('flex h-full items-center justify-center', STATEMENT_CLASSES)}>
+          <span>
+            {LINES.map((line) => (
+              <span key={line.startIndex} className="block lg:whitespace-nowrap">
+                {line.words.map((word, offset) => {
+                  const index = line.startIndex + offset;
 
-                return (
-                  <ScrollWord
-                    key={`${word.text}-${index.toString()}`}
-                    index={index}
-                    total={WORDS.length}
-                    progress={smoothProgress}
-                    {...(word.annotation === undefined ? {} : { annotation: word.annotation })}
-                  >
-                    {word.text}
-                  </ScrollWord>
-                );
-              })}
-            </span>
-          ))}
-        </span>
-      </p>
+                  return (
+                    <ScrollWord
+                      key={`${word.text}-${index.toString()}`}
+                      index={index}
+                      total={WORDS.length}
+                      progress={smoothProgress}
+                      {...(word.annotation === undefined ? {} : { annotation: word.annotation })}
+                    >
+                      {word.text}
+                    </ScrollWord>
+                  );
+                })}
+              </span>
+            ))}
+          </span>
+        </p>
+
+        <ByTheWay
+          lead="Did you know..."
+          drawing={PrivacyIcon}
+          isRightAligned
+          className="right-[7%] top-[14%] hidden w-72 min-[1400px]:block"
+        >
+          You never sign up with us, and Valence sends us nothing. Your server only talks to what
+          you turn on.
+        </ByTheWay>
+      </div>
     </section>
   );
 };

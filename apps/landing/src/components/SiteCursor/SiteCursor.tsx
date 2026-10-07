@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useMotionValue, useReducedMotionConfig } from 'motion/react';
 import { Cursor as CursorIcon, CursorClick as CursorClickIcon } from '@keyline-icons/react/fill';
 import { Icon } from '@ValenceUI/Icon';
@@ -12,7 +13,8 @@ const HIDES_THE_SYSTEM_POINTER = 'valence-cursor-none';
  * The page's own pointer, drawn in place of the system one wherever a mouse is used: the same arrow
  * the scenes on the page are acted out with, sitting exactly where the real pointer is, pressing in
  * while the button is held, and popping in when the mouse comes onto the page and away when it
- * leaves. Touch screens and pens keep what they have.
+ * leaves. It is drawn straight onto the page's body, over the menus that open there too. Touch
+ * screens and pens keep what they have.
  */
 const SiteCursor = () => {
   const isStill = useReducedMotionConfig() === true;
@@ -75,7 +77,7 @@ const SiteCursor = () => {
     };
   }, [x, y]);
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {isShown ? (
         <motion.span
@@ -86,14 +88,15 @@ const SiteCursor = () => {
           exit={{ scale: 0, opacity: 0 }}
           transition={isStill ? { duration: 0 } : { type: 'spring', stiffness: 600, damping: 30 }}
           className={cn(
-            'pointer-events-none fixed left-0 top-0 z-[100] origin-top-left',
+            'pointer-events-none fixed left-0 top-0 z-[1000] origin-top-left',
             POINTER_LOOK,
           )}
         >
           <Icon of={isPressing ? CursorClickIcon : CursorIcon} size={20} />
         </motion.span>
       ) : null}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 };
 

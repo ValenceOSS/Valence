@@ -4,7 +4,7 @@ import { revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
 import { useReached } from '@ValenceUI/useReached';
 import { VideoSurface } from '@ValenceUI/VideoSurface';
 import { DuoFrame } from './components/DuoFrame/DuoFrame';
-import { Monitor as TelevisionIcon } from '@keyline-icons/react/duotone';
+import { Airplay as TelevisionIcon } from '@keyline-icons/react/duotone';
 import { ByTheWay } from '@ValenceLanding/components/HomePage/components/ByTheWay/ByTheWay';
 
 const OPEN = {
@@ -49,12 +49,6 @@ const DuoShowcase = () => {
       aria-label="Valence on the iPhone Duo"
       className="relative isolate overflow-hidden py-24"
     >
-      <ByTheWay
-        drawing={TelevisionIcon}
-        className="right-[2%] top-[50%] hidden w-56 min-[1400px]:block"
-      >
-        The same server plays on Apple TV, Android TV and Fire TV too.
-      </ByTheWay>
       <motion.div
         ref={headingRef}
         initial="hidden"
@@ -75,16 +69,28 @@ const DuoShowcase = () => {
       </motion.div>
 
       <div ref={stageRef} className="mx-auto flex max-w-5xl justify-center px-5">
-        <DuoFrame {...OPEN} className="w-[78%]">
-          <VideoSurface
-            label="A comic open on the unfolded iPhone Duo as two pages, turning over with a page curl"
-            src="/duo/page-turn.mp4"
-            poster="/duo/page-turn-poster.webp"
-            videoRef={filmRef}
-            loops
-            className="h-full object-cover"
-          />
-        </DuoFrame>
+        <div className="relative w-[78%]">
+          <ByTheWay
+            lead="Fun fact..."
+            drawing={TelevisionIcon}
+            footnote="*TV models from before 2025 (Android)"
+            isRightAligned
+            className="right-full top-[6%] mr-10 hidden w-56 min-[1400px]:block"
+          >
+            The same server plays on Apple TV, Android TV and Fire TV* too.
+          </ByTheWay>
+
+          <DuoFrame {...OPEN} className="w-full">
+            <VideoSurface
+              label="A comic open on the unfolded iPhone Duo as two pages, turning over with a page curl"
+              src="/duo/page-turn.mp4"
+              poster="/duo/page-turn-poster.webp"
+              videoRef={filmRef}
+              loops
+              className="h-full object-cover"
+            />
+          </DuoFrame>
+        </div>
       </div>
     </section>
   );

@@ -42,7 +42,11 @@ const PhoneFan = () => {
   const opened = useTransform(scrollYProgress, [0.15, 0.85], isStill ? [1, 1] : [0, 1]);
   return (
     <section aria-label="Valence on a phone" className="relative isolate overflow-hidden py-28">
-      <ByTheWay drawing={LanguageIcon} className="left-[5%] top-44 hidden xl:block">
+      <ByTheWay
+        lead="By the way..."
+        drawing={LanguageIcon}
+        className="left-[5%] top-44 hidden xl:block"
+      >
         The phone app speaks 23 languages, right to left included.
       </ByTheWay>
       <p
