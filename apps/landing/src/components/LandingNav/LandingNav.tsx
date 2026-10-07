@@ -24,6 +24,8 @@ import { GITHUB_URL } from '@ValenceLanding/content/GITHUB_URL';
 import { ThemeToggle } from '@ValenceLanding/components/LandingNav/components/ThemeToggle/ThemeToggle';
 import { useSiteTheme } from '@ValenceLanding/components/LandingNav/components/ThemeToggle/useSiteTheme';
 import { RELEASE_BAR_PX } from '@ValenceLanding/components/ReleaseBar/RELEASE_BAR_PX';
+import { DockedBand } from '@ValenceLanding/components/LandingNav/components/DockedBand/DockedBand';
+import { VALENCE_BAND_ID } from '@ValenceLanding/components/HomePage/components/Hero/components/ValenceBand/VALENCE_BAND_ID';
 import repository from 'virtual:github-stars';
 
 const NAV_LINK = 'text-sm font-semibold transition-colors';
@@ -104,6 +106,14 @@ const LandingNav = () => {
     setIsCondensed(value > CONDENSED_PAST);
   });
 
+  const [isBandGone, setIsBandGone] = useState(false);
+
+  useMotionValueEvent(scrollY, 'change', () => {
+    const band = document.getElementById(VALENCE_BAND_ID);
+
+    setIsBandGone(band !== null && band.getBoundingClientRect().bottom < 0);
+  });
+
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const isHome = pathname === '/';
   const isOn = (to: string | null) =>
@@ -114,8 +124,10 @@ const LandingNav = () => {
   return (
     <motion.header
       style={{ top: belowTheBar }}
-      className="fixed inset-x-0 top-0 z-40 flex justify-center px-4 sm:px-6"
+      className="fixed inset-x-0 top-0 z-40 flex flex-col items-center px-4 sm:px-6"
     >
+      <DockedBand isShown={isBandGone && isHome} />
+
       <motion.nav
         aria-label="Valence"
         {...(prefersReducedMotion === true ? {} : { style: { maxWidth, marginTop } })}

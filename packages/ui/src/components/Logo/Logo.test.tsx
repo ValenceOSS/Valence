@@ -117,6 +117,14 @@ describe('Logo', () => {
     expect(container.innerHTML).not.toContain('animate-');
   });
 
+  it('takes the colour of the text it is set in, where it is asked to', () => {
+    const { container } = render(<Logo isCurrentColour isAnimated />);
+
+    expect(container.innerHTML).toContain('bg-current');
+    expect(container.innerHTML).not.toContain('conic-gradient');
+    expect(container.innerHTML).not.toContain('animate-');
+  });
+
   it('holds still where nobody is waiting on it', () => {
     const { container } = render(<Logo />);
 

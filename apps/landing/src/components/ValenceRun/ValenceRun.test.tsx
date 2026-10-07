@@ -17,6 +17,20 @@ describe('ValenceRun', () => {
     expect(run?.getAttribute('style')).toMatch(/margin-left:\s*-2em/u);
   });
 
+  it('sets each name apart with the mark, in the colour of the words', () => {
+    const { container } = render(<ValenceRun repeats={2} />);
+
+    expect(container.querySelectorAll('.bg-current')).toHaveLength(4);
+  });
+
+  it('holds still where it is told to, and takes as long a loop as it is given', () => {
+    const { container } = render(<ValenceRun isRunning={false} loopSeconds={160} />);
+    const style = container.firstElementChild?.getAttribute('style') ?? '';
+
+    expect(style).toMatch(/animation-play-state:\s*paused/u);
+    expect(style).toMatch(/animation-duration:\s*160s/u);
+  });
+
   it('is hidden from screen readers', () => {
     const { container } = render(<ValenceRun />);
 

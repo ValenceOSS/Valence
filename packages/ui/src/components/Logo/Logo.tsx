@@ -36,6 +36,8 @@ const BASE_TEXT_PX = 16;
  * @param isSolid - Whether the mark is one flat ink, the colour of the words around it, rather
  *   than lit by the brand gradient — for a bar where everything beside it is drawn flat, and a
  *   coloured mark would read as the one thing on it asking to be looked at.
+ * @param isCurrentColour - Whether the mark is one flat ink in the colour of the text it is set
+ *   in, rather than the theme's own text colour — for a mark set among words on a coloured band.
  * @param size - How tall the mark is, in pixels at the base text size — drawn in rem, so it grows
  *   with the text on a large screen; its width follows from its own proportions, since
  *   this mark is wider than it is tall and a square box would sit it in a letterbox with dead space
@@ -53,6 +55,7 @@ const Logo = ({
   hasEdge = false,
   isAnimated = false,
   isSolid = false,
+  isCurrentColour = false,
   label,
   className,
   src = MARK,
@@ -97,11 +100,13 @@ const Logo = ({
         <span className={isDotted ? 'valence-logo-dots' : 'absolute inset-0 overflow-hidden'}>
           <span
             className={cn(
-              isSolid
-                ? 'absolute inset-0 bg-text'
-                : 'absolute -inset-1/2 bg-[conic-gradient(from_140deg,var(--color-text),var(--color-text)_25%,var(--color-accent)_55%,var(--color-text)_85%,var(--color-text))]',
+              isCurrentColour
+                ? 'absolute inset-0 bg-current'
+                : isSolid
+                  ? 'absolute inset-0 bg-text'
+                  : 'absolute -inset-1/2 bg-[conic-gradient(from_140deg,var(--color-text),var(--color-text)_25%,var(--color-accent)_55%,var(--color-text)_85%,var(--color-text))]',
               isDotted ? 'opacity-60' : '',
-              isAnimated && !isDotted && !isSolid
+              isAnimated && !isDotted && !isSolid && !isCurrentColour
                 ? 'animate-[spin_7s_linear_infinite] motion-reduce:animate-none'
                 : '',
             )}
