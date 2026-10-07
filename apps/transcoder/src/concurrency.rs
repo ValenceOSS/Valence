@@ -7,7 +7,7 @@ use tokio::task::JoinSet;
 use tokio::time::timeout;
 
 use crate::capability::VerifiedEncoder;
-use crate::transcode_plan::HardwareAccel;
+use crate::transcode_plan::{media_foundation_arguments, HardwareAccel};
 
 /// The size a probe encodes at.
 ///
@@ -59,10 +59,9 @@ fn session_arguments(accel: HardwareAccel, encoder: &str, device: &str) -> Vec<S
         chain,
         "-c:v".to_owned(),
         encoder.to_owned(),
-        "-f".to_owned(),
-        "null".to_owned(),
-        "-".to_owned(),
     ]);
+    arguments.extend(media_foundation_arguments(encoder));
+    arguments.extend(["-f".to_owned(), "null".to_owned(), "-".to_owned()]);
 
     arguments
 }

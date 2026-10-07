@@ -27,7 +27,8 @@ use crate::media::VideoRange;
 use crate::render_registry::{Claim, RenderRegistry};
 use crate::steps_aside::steps_aside;
 use crate::transcode_plan::{
-    tone_map_filter, HardwareAccel, HardwarePipeline, ToneMapping, NO_EMBEDDED_CAPTIONS,
+    high_profile, media_foundation_arguments, system_memory_format, tone_map_filter, HardwareAccel,
+    HardwarePipeline, ToneMapping, NO_EMBEDDED_CAPTIONS,
 };
 
 /// The file a preview is written to.
@@ -637,18 +638,29 @@ pub fn preview_arguments(
             "-crf".to_owned(),
             request.quality.crf().to_owned(),
         ]),
-        PreviewEncoder::Hardware(name) => arguments.extend([
-            "-c:v".to_owned(),
-            name.clone(),
-            "-b:v".to_owned(),
-            format!("{}k", request.quality.hardware_bitrate_kbps()),
-        ]),
+        PreviewEncoder::Hardware(name) => {
+            arguments.extend([
+                "-c:v".to_owned(),
+                name.clone(),
+                "-b:v".to_owned(),
+                format!("{}k", request.quality.hardware_bitrate_kbps()),
+            ]);
+            arguments.extend(media_foundation_arguments(name));
+        }
     }
 
-    arguments.extend(["-profile:v".to_owned(), "high".to_owned()]);
+    let drawn_by = match encoder {
+        PreviewEncoder::Hardware(name) => name.as_str(),
+        PreviewEncoder::Software => "libx264",
+    };
+
+    arguments.extend(["-profile:v".to_owned(), high_profile(drawn_by).to_owned()]);
 
     if !encodes_from_device {
-        arguments.extend(["-pix_fmt".to_owned(), "yuv420p".to_owned()]);
+        arguments.extend([
+            "-pix_fmt".to_owned(),
+            system_memory_format(drawn_by).to_owned(),
+        ]);
     }
 
     arguments.extend([
@@ -1527,6 +1539,39 @@ mod tests {
         assert!(arguments
             .windows(2)
             .any(|pair| pair == ["-pix_fmt", "yuv420p"]));
+    }
+
+    /// `h264_mf` has no name for High and opens on nothing but `nv12`.
+    #[test]
+    fn asks_media_foundation_for_high_in_nv12_on_the_card() {
+        let arguments = preview_arguments(
+            &request(),
+            600,
+            Source {
+                range: VideoRange::Sdr,
+                range_base: VideoRange::Sdr,
+                bit_depth: Some(8),
+                size: Some((1920, 1080)),
+                bars: None,
+            },
+            ToneMapping::Zscale,
+            &PreviewEncoder::Hardware("h264_mf".to_owned()),
+            Some((HardwareAccel::MediaFoundation, "/dev/dri/renderD128")),
+            Path::new("/cache/preview.mp4"),
+        );
+
+        assert!(arguments
+            .windows(2)
+            .any(|pair| pair == ["-hw_encoding", "1"]));
+        assert!(arguments
+            .windows(2)
+            .any(|pair| pair == ["-profile:v", "100"]));
+        assert!(!arguments
+            .windows(2)
+            .any(|pair| pair == ["-profile:v", "high"]));
+        assert!(arguments
+            .windows(2)
+            .any(|pair| pair == ["-pix_fmt", "nv12"]));
     }
 
     #[test]

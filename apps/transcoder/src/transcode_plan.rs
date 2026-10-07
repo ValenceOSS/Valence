@@ -17,13 +17,14 @@ pub enum HardwareAccel {
     Amf,
     VideoToolbox,
     Rkmpp,
+    MediaFoundation,
 }
 
 /// Which side of the line a machine is on, as far as a hardware pipeline cares.
 ///
-/// The backends split along this line and no other. On Windows, `QSV` and `AMF` sit on Direct3D 11,
-/// which every vendor's driver there provides; everywhere else `QSV` sits on `VAAPI` and `AMF` has
-/// no pipeline at all. Passed in rather than read inside, so a test on a Mac can ask what a Windows
+/// The backends split along this line and no other. On Windows, `QSV`, `AMF` and Media Foundation sit
+/// on Direct3D 11, which every vendor's driver there provides; everywhere else `QSV` sits on `VAAPI`
+/// and the other two have no pipeline at all. Passed in rather than read inside, so a test on a Mac can ask what a Windows
 /// machine would run (VAL-338).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Platform {
@@ -56,16 +57,17 @@ impl HardwareAccel {
             Self::Amf => "AMF",
             Self::VideoToolbox => "VideoToolbox",
             Self::Rkmpp => "RKMPP",
+            Self::MediaFoundation => "Media Foundation",
         }
     }
 
     /// Whether this backend can run on a platform at all, so a machine is not
     /// asked to prove one that has no pipeline there. `AMF` runs on Windows
     /// only: on Linux AMD goes through `VAAPI`, and AMF there would need the
-    /// closed `amdgpu-pro` driver.
+    /// closed `amdgpu-pro` driver. Media Foundation is Windows' own.
     #[must_use]
     pub fn runs_on(self, platform: Platform) -> bool {
-        !(self == Self::Amf && platform == Platform::Unix)
+        !(matches!(self, Self::Amf | Self::MediaFoundation) && platform == Platform::Unix)
     }
 
     /// The `-hwaccel` value `FFmpeg` expects, if any.
@@ -76,7 +78,7 @@ impl HardwareAccel {
             Self::Vaapi => Some("vaapi"),
             Self::Qsv => Some("qsv"),
             Self::Nvenc => Some("cuda"),
-            Self::Amf => Some("d3d11va"),
+            Self::Amf | Self::MediaFoundation => Some("d3d11va"),
             Self::VideoToolbox => Some("videotoolbox"),
             Self::Rkmpp => Some("rkmpp"),
         }
@@ -726,9 +728,13 @@ pub fn scale_filter(max_width: u32, max_height: u32) -> String {
 /// question is asked of the codec rather than of the machine because it is a
 /// fact about the format, and the machine has already been asked everything
 /// else.
+///
+/// Media Foundation's are the exception: `FFmpeg` hands them eight bit frames and nothing wider,
+/// whatever the codec.
 #[must_use]
 pub fn takes_ten_bit(encoder: &str) -> bool {
-    encoder.starts_with("hevc") || encoder.starts_with("av1") || encoder.starts_with("vp9")
+    !MEDIA_FOUNDATION_ENCODERS.contains(&encoder)
+        && (encoder.starts_with("hevc") || encoder.starts_with("av1") || encoder.starts_with("vp9"))
 }
 
 /// The software encoder that replaces a hardware one on fallback.
@@ -1366,6 +1372,15 @@ impl HardwareAccel {
     /// colour conversion would both have to run after the mapping rather than before it, which is
     /// where [`device_chain`] puts one, so HDR is converted in software on both.
     ///
+    /// Media Foundation is how a Windows on Arm machine reaches its Qualcomm GPU, which has no
+    /// `QSV`, `AMF` or `NVENC` to offer (VAL-355). It decodes on Direct3D 11 like the other two,
+    /// scales with `scale_d3d11`, Direct3D 11's own video processor, and hands `h264_mf` the
+    /// Direct3D 11 frames it takes, eight bit only. The encoder takes `nv12` in system memory as
+    /// readily, so a chain that comes down for a subtitle is not uploaded again, and a preview comes
+    /// down to be encoded from there as on `VideoToolbox`. **No Windows on Arm machine
+    /// has run it**, on the same terms as `AMF`: a wrong value aborts the transcode, software takes
+    /// over, and the rejection is reported.
+    ///
     /// `Rkmpp` decodes to `drm_prime` and scales with `scale_rkrga`, the RGA 2D
     /// block that `--enable-rkrga` is in the build for. **No Rockchip board has
     /// ever run this.** It is here because the alternative was worse: Valence ships
@@ -1387,7 +1402,8 @@ impl HardwareAccel {
             (Self::Vaapi, _) => Some(VAAPI),
             (Self::Amf, Platform::Windows) => Some(AMF_ON_WINDOWS),
             (Self::Rkmpp, _) => Some(RKMPP),
-            (Self::None, _) | (Self::Amf, Platform::Unix) => None,
+            (Self::MediaFoundation, Platform::Windows) => Some(MEDIA_FOUNDATION),
+            (Self::None, _) | (Self::Amf | Self::MediaFoundation, Platform::Unix) => None,
         }
     }
 
@@ -1475,7 +1491,8 @@ impl HardwareAccel {
     /// On Windows the same holds with Direct3D 11 in place of `VAAPI`, and the render node means
     /// nothing. The adapter is chosen by vendor instead, so a machine with an Intel iGPU beside an
     /// NVIDIA card opens the Intel one for `QSV` and an AMD machine the AMD one for `AMF`, whatever
-    /// order Windows lists them in.
+    /// order Windows lists them in. Media Foundation takes the default adapter: it is the backend of
+    /// a machine with one GPU and no other backend, and a machine with more than one has another.
     #[must_use]
     pub fn device_arguments_on(self, platform: Platform, device: &str) -> Vec<String> {
         match (self, platform) {
@@ -1490,6 +1507,12 @@ impl HardwareAccel {
             (Self::Amf, Platform::Windows) => vec![
                 "-init_hw_device".to_owned(),
                 format!("d3d11va=dx:,vendor_id={AMD}"),
+                "-filter_hw_device".to_owned(),
+                "dx".to_owned(),
+            ],
+            (Self::MediaFoundation, Platform::Windows) => vec![
+                "-init_hw_device".to_owned(),
+                "d3d11va=dx".to_owned(),
                 "-filter_hw_device".to_owned(),
                 "dx".to_owned(),
             ],
@@ -1679,6 +1702,26 @@ const AMF_ON_WINDOWS: HardwarePipeline = HardwarePipeline {
     skips_unreferenced_frames: false,
 };
 
+/// The pipeline for Media Foundation under Windows, over Direct3D 11.
+const MEDIA_FOUNDATION: HardwarePipeline = HardwarePipeline {
+    output_format: "d3d11",
+    scaler: "scale_d3d11",
+    download_format: "nv12",
+    wide_download_format: "p010le",
+    overlay: None,
+    overlay_format: "bgra",
+    overlay_upload: "hwupload",
+    decodes_with: "d3d11va",
+    decoded_format: "d3d11",
+    maps_onto_device: None,
+    tone_map: None,
+    encodes_from_device: false,
+    narrows_to_eight_bit: Some("format=nv12"),
+    upload: "hwupload",
+    takes_device_frames: false,
+    skips_unreferenced_frames: false,
+};
+
 /// The pipeline for `RKMPP` on a Rockchip board.
 const RKMPP: HardwarePipeline = HardwarePipeline {
     output_format: "drm_prime",
@@ -1840,6 +1883,61 @@ pub fn forced_idr_arguments(encoder: &str) -> Vec<String> {
     }
 
     Vec::new()
+}
+
+/// The Media Foundation encoders, which are told to use the graphics card.
+const MEDIA_FOUNDATION_ENCODERS: [&str; 3] = ["h264_mf", "hevc_mf", "av1_mf"];
+
+/// What a Media Foundation encoder has to be told that every other encoder works out for itself.
+///
+/// Media Foundation offers Microsoft's own software encoders behind the same names as the card's,
+/// and `h264_mf` takes whichever it is given unless `-hw_encoding` says otherwise. Without it a
+/// machine with no hardware encoder at all, the GitHub runner included, verifies `h264_mf` and
+/// reports a hardware backend that is the CPU wearing a different name, slower than `libx264`.
+/// With it, the probe fails there and software is what the machine is said to have.
+///
+/// `h264_mf` also asks for Baseline unless given a profile, and takes it only as a number, since it
+/// has no profile names of its own: 100 is High, what every other encoder here is asked for.
+#[must_use]
+pub fn media_foundation_arguments(encoder: &str) -> Vec<String> {
+    if !MEDIA_FOUNDATION_ENCODERS.contains(&encoder) {
+        return Vec::new();
+    }
+
+    let mut arguments = vec!["-hw_encoding".to_owned(), "1".to_owned()];
+
+    if encoder == "h264_mf" {
+        arguments.extend(["-profile:v".to_owned(), H264_HIGH_PROFILE.to_owned()]);
+    }
+
+    arguments
+}
+
+/// H.264's High profile as a number, for an encoder that has no name for it.
+const H264_HIGH_PROFILE: &str = "100";
+
+/// How to name H.264's High profile to this encoder.
+#[must_use]
+pub fn high_profile(encoder: &str) -> &'static str {
+    if MEDIA_FOUNDATION_ENCODERS.contains(&encoder) {
+        return H264_HIGH_PROFILE;
+    }
+
+    "high"
+}
+
+/// The format frames in system memory are handed to this encoder in.
+///
+/// `yuv420p` everywhere but Media Foundation, whose hardware encoders take `nv12` and nothing
+/// else: `FFmpeg` passes the format straight to the card's encoder and fails to open it on any
+/// other.
+#[must_use]
+pub fn system_memory_format(encoder: &str) -> &'static str {
+    if MEDIA_FOUNDATION_ENCODERS.contains(&encoder) {
+        return "nv12";
+    }
+
+    "yuv420p"
 }
 
 #[must_use]
@@ -2140,6 +2238,7 @@ impl TranscodePlan {
             } => {
                 args.push("-c:v".into());
                 args.push(encoder.clone());
+                args.extend(media_foundation_arguments(encoder));
                 args.extend(rate_control_arguments(encoder, *max_bitrate_kbps));
                 args.extend(forced_idr_arguments(encoder));
                 args.extend(
@@ -2206,6 +2305,11 @@ impl TranscodePlan {
                         }
                         FrameRoute::InSoftware => {}
                     }
+                }
+
+                if MEDIA_FOUNDATION_ENCODERS.contains(&encoder.as_str()) {
+                    args.push("-pix_fmt".into());
+                    args.push(system_memory_format(encoder).into());
                 }
 
                 let chain = video_filter_chain(
@@ -2737,12 +2841,13 @@ impl TranscodePlan {
 #[cfg(test)]
 mod tests {
     use super::{
-        composited_graph, filter_name, filter_names, fitted_size, force_key_frames_argument,
-        forced_idr_arguments, frame_route, keeps_frames_on_the_gpu, rate_control_arguments,
-        software_equivalent, takes_ten_bit, tone_map_format, AudioAction, AudioCarry,
-        DeviceFilters, FrameRoute, HardwareAccel, Platform, SegmentContainer, SegmentStart,
-        SessionSpec, SubtitleAction, ToneMapping, Track, TrackCarry, TranscodePlan, VideoAction,
-        DEFAULT_DEVICE, TEXT_OVERLAY_FPS,
+        composited_graph, device_chain, filter_name, filter_names, fitted_size,
+        force_key_frames_argument, forced_idr_arguments, frame_route, high_profile,
+        keeps_frames_on_the_gpu, media_foundation_arguments, rate_control_arguments,
+        software_equivalent, system_memory_format, takes_ten_bit, tone_map_format, AudioAction,
+        AudioCarry, DeviceFilters, FrameRoute, HardwareAccel, Platform, SegmentContainer,
+        SegmentStart, SessionSpec, SubtitleAction, ToneMapping, Track, TrackCarry, TranscodePlan,
+        VideoAction, DEFAULT_DEVICE, TEXT_OVERLAY_FPS,
     };
     use crate::media::{ColourMetadata, VideoRange};
 
@@ -4368,6 +4473,8 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
         assert!(!takes_ten_bit("h264_qsv"));
         assert!(!takes_ten_bit("h264_vaapi"));
         assert!(!takes_ten_bit("libx264"));
+        assert!(!takes_ten_bit("hevc_mf"));
+        assert!(!takes_ten_bit("av1_mf"));
     }
 
     /// The QSV decoders hang an Intel iGPU, and Jellyfin never uses them: its
@@ -4559,6 +4666,103 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
             HardwareAccel::Amf.device_arguments_on(Platform::Unix, DEFAULT_DEVICE),
             Vec::<String>::new()
         );
+    }
+
+    /// A Windows on Arm machine has one GPU and no vendor to ask Direct3D for.
+    #[test]
+    fn opens_the_default_adapter_for_media_foundation_on_windows() {
+        let args =
+            HardwareAccel::MediaFoundation.device_arguments_on(Platform::Windows, DEFAULT_DEVICE);
+
+        assert_eq!(
+            args,
+            ["-init_hw_device", "d3d11va=dx", "-filter_hw_device", "dx"]
+        );
+    }
+
+    #[test]
+    fn decodes_and_scales_on_direct3d_for_media_foundation_on_windows() {
+        let pipeline = HardwareAccel::MediaFoundation
+            .pipeline_on(Platform::Windows)
+            .expect("media foundation has a pipeline on windows");
+
+        assert_eq!(pipeline.decodes_with, "d3d11va");
+        assert_eq!(pipeline.decoded_format, "d3d11");
+        assert_eq!(pipeline.scaler, "scale_d3d11");
+        assert_eq!(pipeline.overlay, None);
+        assert_eq!(pipeline.tone_map, None);
+        assert_eq!(
+            device_chain(pipeline, None, 1280, 532, true),
+            "scale_d3d11=w=1280:h=532:format=nv12"
+        );
+    }
+
+    /// `h264_mf` reads system memory too, so nothing is uploaded back for it and a preview comes
+    /// down to be encoded from there.
+    #[test]
+    fn hands_media_foundation_system_memory_as_it_comes() {
+        let pipeline = HardwareAccel::MediaFoundation
+            .pipeline_on(Platform::Windows)
+            .expect("media foundation has a pipeline on windows");
+
+        assert!(!pipeline.encodes_from_device);
+        assert!(!pipeline.takes_device_frames);
+    }
+
+    #[test]
+    fn gives_media_foundation_no_pipeline_off_windows() {
+        assert_eq!(
+            HardwareAccel::MediaFoundation.pipeline_on(Platform::Unix),
+            None
+        );
+        assert_eq!(
+            HardwareAccel::MediaFoundation.device_arguments_on(Platform::Unix, DEFAULT_DEVICE),
+            Vec::<String>::new()
+        );
+    }
+
+    #[test]
+    fn keeps_media_foundation_on_the_card_and_on_high() {
+        assert_eq!(
+            media_foundation_arguments("h264_mf"),
+            ["-hw_encoding", "1", "-profile:v", "100"]
+        );
+        assert_eq!(media_foundation_arguments("hevc_mf"), ["-hw_encoding", "1"]);
+        assert_eq!(media_foundation_arguments("av1_mf"), ["-hw_encoding", "1"]);
+        assert_eq!(media_foundation_arguments("h264_amf"), Vec::<String>::new());
+        assert_eq!(media_foundation_arguments("libx264"), Vec::<String>::new());
+    }
+
+    #[test]
+    fn names_the_high_profile_by_number_only_for_media_foundation() {
+        assert_eq!(high_profile("h264_mf"), "100");
+        assert_eq!(high_profile("h264_nvenc"), "high");
+        assert_eq!(high_profile("libx264"), "high");
+    }
+
+    #[test]
+    fn hands_media_foundation_nv12_in_system_memory() {
+        assert_eq!(system_memory_format("h264_mf"), "nv12");
+        assert_eq!(system_memory_format("h264_videotoolbox"), "yuv420p");
+        assert_eq!(system_memory_format("libx264"), "yuv420p");
+    }
+
+    /// The software chain ends on `yuv420p`, which the card's encoder will not open on.
+    #[test]
+    fn converts_a_software_chain_to_nv12_for_media_foundation() {
+        let args = plan(encoding("h264_mf")).to_ffmpeg_args();
+
+        assert!(args.windows(2).any(|pair| pair == ["-c:v", "h264_mf"]));
+        assert!(args.windows(2).any(|pair| pair == ["-hw_encoding", "1"]));
+        assert!(args.windows(2).any(|pair| pair == ["-pix_fmt", "nv12"]));
+    }
+
+    #[test]
+    fn names_no_pixel_format_for_any_other_encoder() {
+        let args = plan(encoding("libx264")).to_ffmpeg_args();
+
+        assert!(!args.iter().any(|argument| argument == "-pix_fmt"));
+        assert!(!args.iter().any(|argument| argument == "-hw_encoding"));
     }
 
     #[test]
@@ -5878,5 +6082,25 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
         assert!(HardwareAccel::Amf.runs_on(Platform::Windows));
         assert!(!HardwareAccel::Amf.runs_on(Platform::Unix));
         assert!(HardwareAccel::Vaapi.runs_on(Platform::Unix));
+    }
+
+    #[test]
+    fn media_foundation_runs_on_windows_only() {
+        assert!(HardwareAccel::MediaFoundation.runs_on(Platform::Windows));
+        assert!(!HardwareAccel::MediaFoundation.runs_on(Platform::Unix));
+    }
+
+    /// The name the server sends and stores, which has to stay the one word it always was.
+    #[test]
+    fn names_media_foundation_on_the_wire() {
+        assert_eq!(
+            serde_json::to_value(HardwareAccel::MediaFoundation).expect("writes"),
+            serde_json::json!("mediafoundation")
+        );
+        assert_eq!(HardwareAccel::MediaFoundation.word(), "Media Foundation");
+        assert_eq!(
+            HardwareAccel::MediaFoundation.ffmpeg_flag(),
+            Some("d3d11va")
+        );
     }
 }

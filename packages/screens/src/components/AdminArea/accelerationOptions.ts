@@ -33,6 +33,11 @@ const accelerationOptions = [
     detail: say('screens.adminArea.accelerationOptions.rockchip'),
   },
   {
+    id: 'mediafoundation',
+    label: say('screens.adminArea.accelerationOptions.mediaFoundation'),
+    detail: say('screens.adminArea.accelerationOptions.qualcommOnWindows'),
+  },
+  {
     id: 'none',
     label: say('common.softwareOnly'),
     detail: say('screens.adminArea.accelerationOptions.neverUseTheHardware'),
