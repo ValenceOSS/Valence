@@ -1,10 +1,11 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { getCookie } from 'hono/cookie';
+import { getCookie, setCookie } from 'hono/cookie';
 import { createMiddleware } from 'hono/factory';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { isAppAddress } from '@ValenceServer/web/isAppAddress';
 import { LAYOUT_COOKIE } from '@ValenceCore/functions/LAYOUT_COOKIE';
+import { LAYOUT_COOKIE_SECONDS } from '@ValenceCore/functions/LAYOUT_COOKIE_SECONDS';
 import { layoutFor } from '@ValenceServer/web/layoutFor';
 
 const PREFIX = '/tv';
@@ -15,6 +16,9 @@ const PREFIX = '/tv';
  * own files from beneath `/tv`. Answers vary by browser and by the layout somebody chose, so a cache
  * between the two never hands one to the other. Where this server was built without the TV layout,
  * every browser is shown the web app.
+ *
+ * `?layout=tv` or `?layout=web` on any page chooses the layout as the button in each does, so a
+ * television left on a layout that will not draw can be brought back by typing an address.
  *
  * @param root - Where the TV layout's built files are.
  * @returns The middleware.
@@ -49,7 +53,19 @@ const serveTheTvLayout = (root: string) => {
 
     context.header('Vary', 'User-Agent, Cookie');
 
-    if (layoutFor(context.req.header('user-agent'), getCookie(context, LAYOUT_COOKIE)) === 'tv') {
+    const asked = context.req.query('layout');
+
+    if (asked === 'tv' || asked === 'web') {
+      setCookie(context, LAYOUT_COOKIE, asked, {
+        path: '/',
+        maxAge: LAYOUT_COOKIE_SECONDS,
+        sameSite: 'Lax',
+      });
+    }
+
+    const chosen = asked === 'tv' || asked === 'web' ? asked : getCookie(context, LAYOUT_COOKIE);
+
+    if (layoutFor(context.req.header('user-agent'), chosen) === 'tv') {
       return serveStatic({ path: page })(context, next);
     }
 

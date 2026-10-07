@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing } from 'react-native';
 import { PAGE_DOT } from '@ValenceTv/components/PageDots/PAGE_DOT';
+import { useKeepsStill } from '@ValenceTv/platform/useKeepsStill';
 import { placeOfDot } from '@ValenceTv/components/PageDots/placeOfDot';
 import { StretchPill } from '@ValenceTv/components/StretchPill/StretchPill';
 import type { PageDotProps } from './PageDot.types';
@@ -28,9 +29,12 @@ const PageDot = ({ at, current }: PageDotProps) => {
   const [x] = useState(() => new Animated.Value(toX));
   const [width] = useState(() => new Animated.Value(toWidth));
   const isFirst = useRef(true);
+  const isStill = useKeepsStill();
 
   useEffect(() => {
-    if (isFirst.current) {
+    if (isFirst.current || isStill) {
+      x.setValue(toX);
+      width.setValue(toWidth);
       isFirst.current = false;
 
       return;
@@ -40,7 +44,7 @@ const PageDot = ({ at, current }: PageDotProps) => {
       Animated.timing(x, { ...HANDS_OVER, toValue: toX }),
       Animated.timing(width, { ...HANDS_OVER, toValue: toWidth }),
     ]).start();
-  }, [toX, toWidth, x, width]);
+  }, [isStill, toX, toWidth, x, width]);
 
   return <StretchPill x={x} width={width} height={PAGE_DOT.size} colour="#ffffff" />;
 };

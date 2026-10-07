@@ -2,9 +2,9 @@ import { PLACEHOLDER } from '@ValenceClient/session/askTheServer';
 import { signedHeaders } from '@ValenceTv/platform/theSessionToken';
 import { theServersOrigin } from '@ValenceTv/platform/theServersOrigin';
 import { describeThisTv } from '@ValenceTv/platform/describeThisTv';
+import { theTvsOwnName } from '@ValenceTv/platform/theTvsOwnName';
 import { appUserAgent } from '@ValenceCore/functions/appUserAgent';
 import { CLIENT_KIND_HEADER } from '@ValenceContracts/constants/CLIENT_KIND_HEADER';
-import Constants from 'expo-constants';
 
 const OURS = '/api/';
 
@@ -69,7 +69,7 @@ const withTheSession = (given: HeadersInit | undefined): Headers => {
     headers.set('origin', origin);
   }
 
-  headers.set('user-agent', appUserAgent(describeThisTv(Constants.deviceName ?? null)));
+  headers.set('user-agent', appUserAgent(describeThisTv(theTvsOwnName())));
   headers.set(CLIENT_KIND_HEADER, 'tv');
 
   return headers;

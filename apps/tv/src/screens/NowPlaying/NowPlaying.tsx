@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { useTheScreen } from '@ValenceTv/platform/useTheScreen';
+import { useKeepsStill } from '@ValenceTv/platform/useKeepsStill';
 import { useRemote } from '@ValenceTv/remote/useRemote';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -156,15 +157,22 @@ const NowPlaying = ({ onEmpty, onBack, watchParty }: NowPlayingProps) => {
   const screen = useTheScreen();
   const [fade] = useState(() => new Animated.Value(1));
   const [arrival] = useState(() => new Animated.Value(1));
+  const isStill = useKeepsStill();
 
   useEffect(() => {
+    if (isStill) {
+      arrival.setValue(1);
+
+      return;
+    }
+
     arrival.setValue(0);
     Animated.timing(arrival, {
       toValue: 1,
       duration: CHANGES_MS,
       useNativeDriver: true,
     }).start();
-  }, [trackId, arrival]);
+  }, [trackId, arrival, isStill]);
 
   const words = lyrics.data ?? null;
   const hasWords = words !== null && words.lines.length > 0;
@@ -197,12 +205,18 @@ const NowPlaying = ({ onEmpty, onBack, watchParty }: NowPlayingProps) => {
   }, [isPlaying, panel, touchedAt]);
 
   useEffect(() => {
+    if (isStill) {
+      fade.setValue(isResting ? 0 : 1);
+
+      return;
+    }
+
     Animated.timing(fade, {
       toValue: isResting ? 0 : 1,
       duration: FADES_MS,
       useNativeDriver: true,
     }).start();
-  }, [fade, isResting]);
+  }, [fade, isResting, isStill]);
 
   const hear = useCallback(
     (event: HWEvent) => {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Animated, Easing, Image, StyleSheet, View } from 'react-native';
 import { useTheScreen } from '@ValenceTv/platform/useTheScreen';
+import { useKeepsStill } from '@ValenceTv/platform/useKeepsStill';
 import { LinearGradient } from 'expo-linear-gradient';
 import { tokens } from '@ValenceTv/theme/tokens';
 import { withAlpha } from '@ValenceTv/theme/withAlpha';
@@ -52,8 +53,13 @@ const BLOOMS = ROWS.flatMap((row, down) =>
 const WayInBackdrop = ({ tint = null }: WayInBackdropProps) => {
   const screen = useTheScreen();
   const [drifts] = useState(() => BLOOMS.map(() => new Animated.Value(0)));
+  const isStill = useKeepsStill();
 
   useEffect(() => {
+    if (isStill) {
+      return;
+    }
+
     const going = drifts.map((drifting, at) =>
       Animated.loop(
         Animated.sequence([
@@ -82,7 +88,7 @@ const WayInBackdrop = ({ tint = null }: WayInBackdropProps) => {
         loop.stop();
       }
     };
-  }, [drifts]);
+  }, [drifts, isStill]);
 
   const width = screen.width * REACH.across;
   const height = screen.height * REACH.down;

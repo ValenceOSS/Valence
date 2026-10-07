@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
+import { useKeepsStill } from '@ValenceTv/platform/useKeepsStill';
 import { readPreviewState } from '@ValenceClient/playback/readPreviewState';
 import { Artwork } from '@ValenceTv/components/Artwork/Artwork';
 import { onTheServer } from '@ValenceTv/platform/theServersOrigin';
@@ -26,7 +27,7 @@ const FADES_OUT_MS = 200;
  * The system's player takes focus on a television, and would pull the remote into an invisible
  * picture behind the buttons; nothing here can be touched, so it never can. On Android it draws into
  * a texture rather than a surface of its own, since a surface sits outside the views and neither
- * fades in nor melts at the edges with them.
+ * fades in nor melts at the edges with them. A television that keeps still shows the still alone.
  *
  * @param mediaId - The title.
  * @param stillPath - Its still, shown until the preview is playing.
@@ -36,6 +37,7 @@ const FADES_OUT_MS = 200;
 const PreviewBackdrop = ({ mediaId, stillPath, isPlaying, style }: PreviewBackdropProps) => {
   const [shown] = useState(() => new Animated.Value(0));
   const isLoaded = useRef(false);
+  const isStill = useKeepsStill();
   const player = useVideoPlayer(null, (made) => {
     made.muted = true;
     made.loop = true;
@@ -56,7 +58,7 @@ const PreviewBackdrop = ({ mediaId, stillPath, isPlaying, style }: PreviewBackdr
   }, [player, shown]);
 
   useEffect(() => {
-    if (!isPlaying) {
+    if (!isPlaying || isStill) {
       player.pause();
 
       return;
@@ -91,7 +93,7 @@ const PreviewBackdrop = ({ mediaId, stillPath, isPlaying, style }: PreviewBackdr
       isAbandoned = true;
       clearTimeout(timer);
     };
-  }, [isPlaying, mediaId, player]);
+  }, [isPlaying, isStill, mediaId, player]);
 
   return (
     <View style={[styles.frame, style]} pointerEvents="none" collapsable={false}>

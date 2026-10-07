@@ -1,6 +1,9 @@
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { saying } from '@ValenceI18n/saying';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import { tvBrowserOf } from '@ValenceCore/functions/tvBrowserOf';
+import { tvMakerOf } from '@ValenceCore/functions/tvMakerOf';
+import type { TvBrowser } from '@ValenceCore/functions/TvBrowser';
 /* oxlint-disable valence/no-hard-coded-strings -- browsers' and systems' own names, and the marks their user agents carry */
 const BROWSERS = [
   { named: 'Edge', marks: ['Edg/'] },
@@ -22,6 +25,17 @@ const SYSTEMS = [
 
 const KEPT = 40;
 
+const TELEVISIONS: Record<TvBrowser, (userAgent: string) => Said> = {
+  lgTv: () => saying('common.lgTV'),
+  samsungTv: () => saying('common.samsungTV'),
+  xbox: () => saying('common.xbox'),
+  smartTv: (userAgent) => {
+    const maker = tvMakerOf(userAgent);
+
+    return maker === null ? saying('common.smartTV') : saying('common.makerTV', { maker });
+  },
+};
+
 const OUR_APP = /^Valence \((?<device>[^)]+)\)/u;
 
 /**
@@ -31,7 +45,9 @@ const OUR_APP = /^Valence \((?<device>[^)]+)\)/u;
  *
  * Valence's own apps are named as themselves: the phone and the television say which device they are
  * on, the desktop app is a browser underneath and is told apart by the runtime it carries, and an app
- * from before they said so is at least named as Valence rather than as its networking library.
+ * from before they said so is at least named as Valence rather than as its networking library. A
+ * television's own browser is named as the television, since its user agent claims to be several
+ * browsers and LG's spells Chrome "Chr0me", which would leave it called Safari.
  *
  * @param userAgent - What the browser sent, if it sent anything.
  * @returns The browser and system, as a person would say them.
@@ -42,6 +58,12 @@ const describeDevice = (userAgent: string | null | undefined): Said => {
 
   if (app !== undefined) {
     return saying('server.account.device.valenceOn', { device: app });
+  }
+
+  const television = tvBrowserOf(said);
+
+  if (television !== null) {
+    return TELEVISIONS[television](said);
   }
 
   const browser = BROWSERS.find((candidate) =>

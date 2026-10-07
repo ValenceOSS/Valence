@@ -46,7 +46,9 @@ const throughGuides = (from: HTMLElement, to: HTMLElement): HTMLElement => {
  * place says pressing that way should go, and back into a remembering guide where it was last.
  *
  * The page is scrolled to the place before it is focused, so a screen that scrolls itself on focus,
- * as the front page does back to its top for the hero, has the last word.
+ * as the front page does back to its top for the hero, has the last word. It jumps rather than
+ * glides: this only runs in a television's browser, which keeps still, and a smooth scroll there
+ * stuttered on every press.
  *
  * @param direction - The way to move.
  * @param within - The page, the document's own unless a test says otherwise.
@@ -83,7 +85,7 @@ const moveFocus = (direction: Direction, within: Document = document): boolean =
 
   const landing = throughGuides(from, next);
 
-  landing.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+  landing.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
   landing.focus({ preventScroll: true });
 
   return true;

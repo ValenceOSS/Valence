@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { listenToTheSound } from '@ValenceTv/music/listenToTheSound';
 import { soundBands } from '@ValenceTv/music/soundBands';
+import { useKeepsStill } from '@ValenceTv/platform/useKeepsStill';
 import type { PlayingBarsProps } from './PlayingBars.types';
 
 const BARS = [
@@ -41,8 +42,19 @@ const PlayingBars = ({ isPlaying, colour, size = 28 }: PlayingBarsProps) => {
   const levels = useRef(BARS.map(() => RESTS_AT));
   const peaks = useRef(BARS.map(() => 0));
   const heardAt = useRef(0);
+  const isStill = useKeepsStill();
 
   useEffect(() => {
+    if (isStill) {
+      heights.forEach((height, at) => {
+        const bar = BARS[at] ?? BARS[0];
+
+        height.setValue(isPlaying ? (bar.lowest + bar.highest) / 2 : RESTS_AT);
+      });
+
+      return;
+    }
+
     if (!isPlaying) {
       const settling = Animated.parallel(
         heights.map((height) =>
@@ -120,7 +132,7 @@ const PlayingBars = ({ isPlaying, colour, size = 28 }: PlayingBarsProps) => {
       stopListening();
       beating.stop();
     };
-  }, [isPlaying, heights]);
+  }, [isPlaying, isStill, heights]);
 
   const width = Math.max(Math.round(size / 7), 2);
 

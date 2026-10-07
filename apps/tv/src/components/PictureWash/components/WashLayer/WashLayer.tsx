@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import { withAlpha } from '@ValenceTv/theme/withAlpha';
+import { useKeepsStill } from '@ValenceTv/platform/useKeepsStill';
 import type { WashLayerProps } from './WashLayer.types';
 
 const STRENGTH_BY_ROW = [0.75, 0.6, 0.5] as const;
@@ -17,11 +18,18 @@ const CROSSFADES_MS = 900;
  * @param isArriving - Whether it fades in, rather than being there already.
  */
 const WashLayer = ({ lights, isArriving }: WashLayerProps) => {
-  const [shown] = useState(() => new Animated.Value(isArriving ? 0 : 1));
+  const isStill = useKeepsStill();
+  const [shown] = useState(() => new Animated.Value(isArriving && !isStill ? 0 : 1));
 
   useEffect(() => {
+    if (isStill) {
+      shown.setValue(1);
+
+      return;
+    }
+
     Animated.timing(shown, { toValue: 1, duration: CROSSFADES_MS, useNativeDriver: true }).start();
-  }, [shown]);
+  }, [isStill, shown]);
 
   return (
     <Animated.View style={[StyleSheet.absoluteFill, { opacity: shown }]}>

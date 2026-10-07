@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
+import { useKeepsStill } from '@ValenceTv/platform/useKeepsStill';
 import { Icon } from '@ValenceTv/components/Icon/Icon';
 import { StretchPill } from '@ValenceTv/components/StretchPill/StretchPill';
 import { tokens } from '@ValenceTv/theme/tokens';
@@ -49,6 +50,7 @@ const TabBar = <Tab extends string>({
   const [pillX] = useState(() => new Animated.Value(0));
   const [pillWidth] = useState(() => new Animated.Value(0));
   const isPlaced = useRef(false);
+  const isStill = useKeepsStill();
 
   const refs = useMemo(
     () =>
@@ -70,7 +72,7 @@ const TabBar = <Tab extends string>({
       return;
     }
 
-    if (!isPlaced.current) {
+    if (!isPlaced.current || isStill) {
       isPlaced.current = true;
       pillX.setValue(at.x);
       pillWidth.setValue(at.width);
@@ -82,7 +84,7 @@ const TabBar = <Tab extends string>({
       Animated.spring(pillX, { ...SLIDES, toValue: at.x }),
       Animated.spring(pillWidth, { ...SLIDES, toValue: at.width }),
     ]).start();
-  }, [at, pillX, pillWidth]);
+  }, [at, isStill, pillX, pillWidth]);
 
   return (
     <FocusGuide isRemembering style={styles.bar}>

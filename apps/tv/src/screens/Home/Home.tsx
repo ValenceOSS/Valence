@@ -8,6 +8,7 @@ import { useHomeRows } from '@ValenceClient/library/useHomeRows';
 import { pickFeatured } from '@ValenceClient/library/pickFeatured';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { Hero } from '@ValenceTv/components/Hero/Hero';
+import { useKeepsStill } from '@ValenceTv/platform/useKeepsStill';
 import { Shelf } from '@ValenceTv/components/Shelf/Shelf';
 import { CollectionShelves } from '@ValenceTv/components/CollectionShelves/CollectionShelves';
 import { FavouritesShelf } from '@ValenceTv/components/FavouritesShelf/FavouritesShelf';
@@ -86,10 +87,11 @@ const HomePage = ({
   const room = useRoomToFill();
   const list = useRef<ScrollView>(null);
   const isAsking = useRef(false);
+  const isStill = useKeepsStill();
 
   const showTheTop = useCallback(() => {
-    list.current?.scrollTo({ y: 0, animated: true });
-  }, []);
+    list.current?.scrollTo({ y: 0, animated: !isStill });
+  }, [isStill]);
 
   const resume = useCallback(
     (media: MediaSummary) => {

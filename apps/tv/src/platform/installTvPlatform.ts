@@ -1,7 +1,7 @@
-import Constants from 'expo-constants';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { noFilesAreKept } from '@ValenceClient/platform/noFilesAreKept';
 import { describeThisTv } from '@ValenceTv/platform/describeThisTv';
+import { theTvsOwnName } from '@ValenceTv/platform/theTvsOwnName';
 import { pointFetchAtTheServer } from '@ValenceTv/platform/pointFetchAtTheServer';
 import { theTvsReach } from '@ValenceTv/platform/theTvsReach';
 import { theTvsSocket } from '@ValenceTv/platform/theTvsSocket';
@@ -27,7 +27,7 @@ const installTvPlatform = (): void => {
   installPlatform({
     store: theTvsStore(),
     serverAddress: theServersOrigin,
-    describeThisClient: () => describeThisTv(Constants.deviceName ?? null),
+    describeThisClient: () => describeThisTv(theTvsOwnName()),
     thisClientId: thisTvsId,
     thisClientKind: () => 'tv',
     canKeepFiles: () => false,

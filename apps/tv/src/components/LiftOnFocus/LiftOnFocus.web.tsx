@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Animated, Easing, StyleSheet } from 'react-native';
 import { useDrawnElement } from '@ValenceTv/web/useDrawnElement';
+import { useKeepsStill } from '@ValenceTv/platform/useKeepsStill';
 import type { LiftOnFocusProps } from './LiftOnFocus.types';
 
 const LIFT_MS = 200;
@@ -28,6 +29,7 @@ const LiftOnFocus = ({
 }: LiftOnFocusProps) => {
   const [element, drawn] = useDrawnElement();
   const [lift] = useState(() => new Animated.Value(0));
+  const isStill = useKeepsStill();
 
   useEffect(() => {
     if (element === null) {
@@ -40,6 +42,12 @@ const LiftOnFocus = ({
      * @param to - Nought for resting, one for lifted.
      */
     const ease = (to: number) => {
+      if (isStill) {
+        lift.setValue(to);
+
+        return;
+      }
+
       Animated.timing(lift, {
         toValue: to,
         duration: LIFT_MS,
@@ -63,7 +71,7 @@ const LiftOnFocus = ({
       element.removeEventListener('focusin', landed);
       element.removeEventListener('focusout', left);
     };
-  }, [element, lift]);
+  }, [element, isStill, lift]);
 
   return (
     <Animated.View

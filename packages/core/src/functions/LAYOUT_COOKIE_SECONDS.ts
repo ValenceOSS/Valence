@@ -1,0 +1,3 @@
+const LAYOUT_COOKIE_SECONDS = 365 * 24 * 60 * 60;
+
+export { LAYOUT_COOKIE_SECONDS };

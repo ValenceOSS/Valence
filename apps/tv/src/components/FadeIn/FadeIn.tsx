@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Animated, StyleSheet } from 'react-native';
+import { useKeepsStill } from '@ValenceTv/platform/useKeepsStill';
 import type { FadeInProps } from './FadeIn.types';
 
 const ARRIVES_MS = 320;
@@ -22,10 +23,17 @@ const STARTS_AT = 0.1;
  * @param delayMs - How long to wait before fading in, so a row of things can arrive one after another.
  */
 const FadeIn = ({ children, isFilling = true, isShown = true, delayMs = 0 }: FadeInProps) => {
-  const [shown] = useState(() => new Animated.Value(STARTS_AT));
+  const isStill = useKeepsStill();
+  const [shown] = useState(() => new Animated.Value(isStill ? 1 : STARTS_AT));
 
   useEffect(() => {
     if (!isShown) {
+      return;
+    }
+
+    if (isStill) {
+      shown.setValue(1);
+
       return;
     }
 
@@ -36,7 +44,7 @@ const FadeIn = ({ children, isFilling = true, isShown = true, delayMs = 0 }: Fad
       delay: delayMs,
       useNativeDriver: true,
     }).start();
-  }, [shown, isShown, delayMs]);
+  }, [shown, isShown, isStill, delayMs]);
 
   return (
     <Animated.View

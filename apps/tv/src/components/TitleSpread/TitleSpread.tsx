@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTheScreen } from '@ValenceTv/platform/useTheScreen';
+import { useKeepsStill } from '@ValenceTv/platform/useKeepsStill';
 import { Artwork } from '@ValenceTv/components/Artwork/Artwork';
 import { Badges } from '@ValenceTv/components/Badges/Badges';
 import { EdgeFade } from '@ValenceTv/components/EdgeFade/EdgeFade';
@@ -57,6 +58,7 @@ const TitleSpread = ({
   below,
 }: TitleSpreadProps) => {
   const screen = useTheScreen();
+  const isStill = useKeepsStill();
   const page = useRef<ScrollView>(null);
   const picture = {
     width: screen.width * PICTURE_SHARE,
@@ -118,7 +120,7 @@ const TitleSpread = ({
             <FocusGuide
               isRemembering
               onFocusInside={() => {
-                page.current?.scrollTo({ y: 0, animated: true });
+                page.current?.scrollTo({ y: 0, animated: !isStill });
               }}
               style={[styles.actions, { width: screen.width - tokens.space.edge }]}
             >
