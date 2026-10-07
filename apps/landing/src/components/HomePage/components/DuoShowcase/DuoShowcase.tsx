@@ -74,7 +74,6 @@ const DuoShowcase = () => {
             lead="Fun fact..."
             drawing={TelevisionIcon}
             footnote="*TV models from before 2025 (Android)"
-            isRightAligned
             className="right-full top-[6%] mr-10 hidden w-56 min-[1400px]:block"
           >
             Your library plays on Apple TV, Android TV and Fire TV* too, with an app for each.
