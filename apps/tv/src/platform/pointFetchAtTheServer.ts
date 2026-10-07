@@ -30,6 +30,21 @@ const atTheServer = (asked: string): string => {
 };
 
 /**
+ * Whether an address is on the server this television watches, the only place its session, its
+ * name and its origin may be sent. A picture from the film database, or anything else a page asks
+ * another site for, goes as it was asked for. A host that merely begins with the server's name is
+ * another site.
+ *
+ * @param address - The address, after it has been put on the server.
+ * @returns Whether it is the server's.
+ */
+const isOnTheServer = (address: string): boolean => {
+  const origin = theServersOrigin();
+
+  return origin !== null && (address === origin || address.startsWith(`${origin}/`));
+};
+
+/**
  * Adds this television's session to a request's headers, unless the request already says who it is,
  * and says the request comes from the server's own origin, as a page the server served would. The
  * sign-in library refuses anything that changes a session — signing out, above all — without an
@@ -62,7 +77,8 @@ const withTheSession = (given: HeadersInit | undefined): Headers => {
 
 /**
  * Puts a shim in front of the global `fetch`, once, on the way up, which aims every request the
- * application makes at the server and signs it as this television.
+ * application makes at the server and signs it as this television — and only those: a request for
+ * anywhere else is sent as it was made, so the session never leaves for another site.
  *
  * The global is replaced rather than a client handed down because the application reaches for
  * `fetch` itself: a reader is a plain function called from a query, with nothing to inject into. A
@@ -76,10 +92,16 @@ const pointFetchAtTheServer = (): void => {
     if (input instanceof Request) {
       const aimed = new Request(atTheServer(input.url), input);
 
-      return send(new Request(aimed, { headers: withTheSession(aimed.headers) }), init);
+      return isOnTheServer(aimed.url)
+        ? send(new Request(aimed, { headers: withTheSession(aimed.headers) }), init)
+        : send(aimed, init);
     }
 
-    return send(atTheServer(String(input)), { ...init, headers: withTheSession(init?.headers) });
+    const address = atTheServer(String(input));
+
+    return isOnTheServer(address)
+      ? send(address, { ...init, headers: withTheSession(init?.headers) })
+      : send(address, init);
   };
 };
 
