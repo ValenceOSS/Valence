@@ -12,7 +12,6 @@ import linux from '@ValenceBrands/linux.svg';
 import opera from '@ValenceBrands/opera.svg';
 import safari from '@ValenceBrands/safari.svg';
 import samsung from '@ValenceBrands/samsung.svg';
-import sharp from '@ValenceBrands/sharp.svg';
 import toshiba from '@ValenceBrands/toshiba.svg';
 import vivaldi from '@ValenceBrands/vivaldi.svg';
 import windows from '@ValenceBrands/windows.svg';
@@ -34,7 +33,6 @@ const MARKS: Readonly<Record<BrandMarkName, string>> = {
   opera,
   safari,
   samsung,
-  sharp,
   toshiba,
   vivaldi,
   windows,

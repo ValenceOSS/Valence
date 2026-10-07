@@ -23,7 +23,6 @@ files and drawn through a CSS mask by `BrandGlyph`, so no SVG is ever inlined.
 | `opera.svg`          | Opera         |
 | `safari.svg`         | Safari        |
 | `samsung.svg`        | Samsung       |
-| `sharp.svg`          | Sharp         |
 | `toshiba.svg`        | Toshiba       |
 | `vivaldi.svg`        | Vivaldi       |
 | `windows.svg`        | Windows       |
@@ -31,8 +30,8 @@ files and drawn through a CSS mask by `BrandGlyph`, so no SVG is ever inlined.
 Simple Icons no longer carries Microsoft's marks, at Microsoft's request, so `windows.svg` is the
 filled `brand-windows` from [Tabler Icons](https://tabler.io/icons) 3.46.0, released under the
 [MIT licence](https://github.com/tabler/tabler-icons/blob/main/LICENSE), the mark the landing page
-already shows for its Windows download. Edge, ChromeOS, an Xbox,
-and Hisense, Philips and JVC televisions, which Simple Icons has no marks for, keep a generic
-shape. A browser
-that says only that it is built on Chromium is shown with Chrome's mark: its user agent cannot be
-told apart from Chrome's, and Chrome is the one it almost always is.
+already shows for its Windows download. Edge, ChromeOS, an Xbox, and Hisense, Philips, JVC and
+Sharp televisions keep a generic shape: Simple Icons has no marks for them, and its `sharp` is an
+image library, not the television maker. A browser that says only that it is built on Chromium is
+shown with Chrome's mark: its user agent cannot be told apart from Chrome's, and Chrome is the one
+it almost always is.

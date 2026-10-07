@@ -572,4 +572,28 @@ describe('SessionCard', () => {
       expect(screen.queryByRole('button', { name: 'Stream stats' })).not.toBeInTheDocument();
     });
   });
+
+  it('draws a maker’s wordmark wider than a square mark, so it can be read', () => {
+    const drawn = (deviceLabel: string) => {
+      const { container, unmount } = render(
+        <SessionCard
+          session={{ ...IDLE_SESSION, deviceLabel, clientKind: 'tv' }}
+          isBusy={false}
+          onStop={vi.fn()}
+          onPause={vi.fn()}
+          onResume={vi.fn()}
+          onMessage={vi.fn()}
+        />,
+      );
+      const width = container.querySelector<HTMLElement>('[style*="mask"]')?.style.width;
+
+      unmount();
+
+      return width;
+    };
+
+    expect(drawn('Samsung TV')).toBe('4.5rem');
+    expect(drawn('LG TV')).toBe('2.75rem');
+    expect(drawn('Apple TV')).toBe('1.375rem');
+  });
 });

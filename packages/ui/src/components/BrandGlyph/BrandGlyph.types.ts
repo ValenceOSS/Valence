@@ -13,7 +13,6 @@ type BrandMarkName =
   | 'opera'
   | 'safari'
   | 'samsung'
-  | 'sharp'
   | 'toshiba'
   | 'vivaldi'
   | 'windows';

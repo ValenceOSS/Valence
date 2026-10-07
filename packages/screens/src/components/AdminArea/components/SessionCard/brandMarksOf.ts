@@ -20,7 +20,6 @@ const DEVICE_MARKS: readonly { name: string; mark: BrandMarkName }[] = [
 
 const MAKER_MARKS: Readonly<Record<string, BrandMarkName>> = {
   Hitachi: 'hitachi',
-  Sharp: 'sharp',
   Toshiba: 'toshiba',
 };
 
@@ -36,7 +35,7 @@ const SYSTEM_MARKS: readonly { name: string; mark: BrandMarkName }[] = [
  * The marks of the browser and the system a session says it runs in, read from the words it is
  * labelled with, so a card can show them rather than a generic screen. A phone or a television
  * names its model rather than its system, so an iPhone, iPad or Apple TV is known by its name, and
- * an LG, Samsung, Toshiba, Sharp or Hitachi television showing the TV layout in its browser by its
+ * an LG, Samsung, Toshiba or Hitachi television showing the TV layout in its browser by its
  * maker's. A
  * browser or system without a mark of its own — Edge, anything unrecognised — answers none, and
  * keeps its shape.
