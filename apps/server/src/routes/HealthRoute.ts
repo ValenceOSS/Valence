@@ -3,7 +3,7 @@ import { createRoute, z } from '@hono/zod-openapi';
 const HealthResponseSchema = z
   .object({
     status: z.enum(['ok', 'degraded']),
-    version: z.string(),
+    version: z.string().optional(),
     transcoderReachable: z.boolean(),
   })
   .openapi('HealthResponse');

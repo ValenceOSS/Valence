@@ -17,9 +17,10 @@ import { SERVER_FEATURES } from '@ValenceContracts/constants/SERVER_FEATURES';
  * A server started as an image starts it: told which release and which commit it is.
  *
  * @param commit - The commit it was built from, where it was told one.
+ * @param isSignedIn - Whether whoever asks is signed in.
  * @returns What it says about itself.
  */
-const askAbout = async (commit?: string) => {
+const askAbout = async (commit?: string, isSignedIn = true) => {
   const { auth, settings } = createMemoryAuth();
   const app = createApp({
     auth,
@@ -39,7 +40,10 @@ const askAbout = async (commit?: string) => {
   });
 
   const cookie = await signUpForTest(app);
-  const answer = await app.request(`${TEST_ORIGIN}/api/about`, { headers: { cookie } });
+  const answer = await app.request(
+    `${TEST_ORIGIN}/api/about`,
+    isSignedIn ? { headers: { cookie } } : {},
+  );
 
   return AboutSchema.parse(await answer.json());
 };
@@ -64,5 +68,13 @@ describe('GET /api/about', () => {
 
     expect(about.version).toBe('1.2.0');
     expect(about.commit).toMatch(/^([0-9a-f]{7,}|unknown)$/);
+  });
+
+  it('keeps its release and commit from somebody not signed in, and still says what it can do', async () => {
+    const about = await askAbout('e68dd3525b1a2c3d4e5f60718293a4b5c6d7e8f9', false);
+
+    expect(about.version).toBeUndefined();
+    expect(about.commit).toBeUndefined();
+    expect(about.features).toContain('server.reportsFeatures');
   });
 });

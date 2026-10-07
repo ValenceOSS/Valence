@@ -112,7 +112,7 @@ const createApp = (options: CreateAppOptions) => {
   serveArrEmulation(app, context, options);
   serveArrImport(app, context, options);
   serveImports(app, context, options);
-  serveReference(app, context);
+  serveReference(app);
 
   return app;
 };

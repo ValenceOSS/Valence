@@ -1,7 +1,7 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { z } from 'zod';
 
-const HealthSchema = z.object({ version: z.string() });
+const HealthSchema = z.object({ version: z.string().optional() });
 
 const LOCAL = 'local.dev';
 
@@ -19,10 +19,15 @@ const describeVersion = (reported: string): string =>
 
 /**
  * Which version of Valence this is, as the server reports it — worth having in the interface so that a
- * problem can be reported against a version rather than against "the latest".
+ * problem can be reported against a version rather than against "the latest". The server tells it
+ * only to somebody signed in, and answers nothing to anybody else.
+ *
+ * @returns The version, or nothing where the server did not say.
  */
-const readVersion = async (): Promise<string> => {
-  return describeVersion((await readFromServer('/api/health', HealthSchema)).version);
+const readVersion = async (): Promise<string | null> => {
+  const { version } = await readFromServer('/api/health', HealthSchema);
+
+  return version === undefined ? null : describeVersion(version);
 };
 
 export { readVersion, describeVersion, LOCAL };

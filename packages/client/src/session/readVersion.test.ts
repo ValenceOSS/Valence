@@ -67,8 +67,14 @@ describe('readVersion', () => {
   });
 
   it('says so when the answer is not the shape it was promised', async () => {
-    answerWith({ nothing: true });
+    answerWith({ version: 4 });
 
     await expect(readVersion()).rejects.toThrow();
+  });
+
+  it('says nothing where the server keeps its version from somebody not signed in', async () => {
+    answerWith({ status: 'ok', transcoderReachable: true });
+
+    await expect(readVersion()).resolves.toBeNull();
   });
 });
