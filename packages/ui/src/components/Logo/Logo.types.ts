@@ -4,6 +4,7 @@ type LogoProps = {
   hasEdge?: boolean;
   isAnimated?: boolean;
   isSolid?: boolean;
+  isCurrentColour?: boolean;
   label?: string;
   className?: string;
   src?: string;

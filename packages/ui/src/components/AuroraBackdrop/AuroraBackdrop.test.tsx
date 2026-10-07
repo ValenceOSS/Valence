@@ -1,12 +1,24 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { AuroraBackdrop } from './AuroraBackdrop';
+
+afterEach(() => {
+  delete document.documentElement.dataset.graphics;
+});
 
 describe('AuroraBackdrop', () => {
   it('draws the moving light behind whatever holds it', () => {
     render(<AuroraBackdrop />);
 
     expect(screen.getByTestId('shader-mount')).toHaveClass('absolute', 'inset-0', '-z-10');
+  });
+
+  it('leaves the light out where the page is drawn without a graphics card', () => {
+    document.documentElement.dataset.graphics = 'software';
+
+    render(<AuroraBackdrop />);
+
+    expect(screen.queryByTestId('shader-mount')).toBeNull();
   });
 
   it('sets a display name so devtools can identify it', () => {
