@@ -20,6 +20,15 @@ describe('DuoShowcase', () => {
     expect(film).toHaveProperty('muted', true);
   });
 
+  it('stands the folded Duo in front, with the same book on its outer screen', () => {
+    render(<DuoShowcase />);
+
+    expect(screen.getByAltText(/folded iPhone Duo's outer screen/)).toHaveAttribute(
+      'src',
+      '/duo/folded-reader.webp',
+    );
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(DuoShowcase.displayName).toBe('DuoShowcase');
   });

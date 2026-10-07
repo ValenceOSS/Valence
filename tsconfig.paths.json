@@ -335,6 +335,8 @@
       "@ValenceUI/useRoomBelow": ["./packages/ui/src/functions/useRoomBelow.ts"],
       "@ValenceUI/useTravelDirection": ["./packages/ui/src/functions/useTravelDirection.ts"],
       "@ValenceUI/hasFinePointer": ["./packages/ui/src/functions/hasFinePointer.ts"],
+      "@ValenceUI/askForWebGlRenderer": ["./packages/ui/src/functions/askForWebGlRenderer.ts"],
+      "@ValenceUI/hasHardwareGraphics": ["./packages/ui/src/functions/hasHardwareGraphics.ts"],
       "@ValenceUI/useRoomBeside": ["./packages/ui/src/functions/useRoomBeside.ts"],
       "@ValenceUI/notify": ["./packages/ui/src/functions/notify.ts"],
       "@ValenceUI/readMaskFrames": ["./packages/ui/src/functions/readMaskFrames.ts"],

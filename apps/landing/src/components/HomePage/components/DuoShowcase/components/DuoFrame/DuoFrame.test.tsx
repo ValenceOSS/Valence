@@ -9,7 +9,7 @@ describe('DuoFrame', () => {
         frame="/duo/frame-open.webp"
         width={1000}
         height={500}
-        screen={{ left: 100, top: 50, width: 800, height: 400 }}
+        screen={{ left: 100, top: 50, width: 800, height: 400, radius: 40 }}
       >
         <p>On screen</p>
       </DuoFrame>,
@@ -20,6 +20,23 @@ describe('DuoFrame', () => {
     expect(container.firstElementChild).toHaveStyle({ aspectRatio: '1000 / 500' });
     expect(screenArea).toHaveStyle({ left: '10%', top: '10%', width: '80%', height: '80%' });
     expect(container.querySelector('img')).toHaveAttribute('src', '/duo/frame-open.webp');
+  });
+
+  it('keeps the corners on the hinge side as square as the hinge is', () => {
+    render(
+      <DuoFrame
+        frame="/duo/frame-folded.webp"
+        width={1000}
+        height={500}
+        screen={{ left: 100, top: 50, width: 800, height: 400, radius: 80, hingeRadius: 8 }}
+      >
+        <p>Folded</p>
+      </DuoFrame>,
+    );
+
+    const corners = screen.getByText('Folded').parentElement?.style.borderRadius ?? '';
+
+    expect(corners.startsWith('1% 10% 10% 1%')).toBe(true);
   });
 
   it('sets a display name so devtools can identify it', () => {

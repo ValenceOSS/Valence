@@ -1,6 +1,8 @@
 import { useRef } from 'react';
 import { useReducedMotionConfig, useScroll, useTransform } from 'motion/react';
 import { FannedPhone } from './components/FannedPhone/FannedPhone';
+import { Language as LanguageIcon } from '@keyline-icons/react/duotone';
+import { ByTheWay } from '@ValenceLanding/components/HomePage/components/ByTheWay/ByTheWay';
 
 const PHONES = [
   {
@@ -40,6 +42,13 @@ const PhoneFan = () => {
   const opened = useTransform(scrollYProgress, [0.15, 0.85], isStill ? [1, 1] : [0, 1]);
   return (
     <section aria-label="Valence on a phone" className="relative isolate overflow-hidden py-28">
+      <ByTheWay
+        lead="By the way..."
+        drawing={LanguageIcon}
+        className="left-[5%] top-44 hidden xl:block"
+      >
+        The phone app speaks 23 languages, right to left included.
+      </ByTheWay>
       <p
         aria-hidden
         className="valence-outline-text pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 select-none whitespace-nowrap text-center text-[11vw] font-bold uppercase leading-none tracking-[-0.03em] text-text/20"

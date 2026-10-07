@@ -4,18 +4,29 @@ import { revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
 import { useReached } from '@ValenceUI/useReached';
 import { VideoSurface } from '@ValenceUI/VideoSurface';
 import { DuoFrame } from './components/DuoFrame/DuoFrame';
+import { Airplay as TelevisionIcon } from '@keyline-icons/react/duotone';
+import { ByTheWay } from '@ValenceLanding/components/HomePage/components/ByTheWay/ByTheWay';
 
 const OPEN = {
   frame: '/duo/frame-open.webp',
-  width: 1356,
-  height: 880,
-  screen: { left: 208, top: 110, width: 940, height: 661 },
+  width: 1323,
+  height: 993,
+  screen: { left: 49, top: 67, width: 1225, height: 859, radius: 28 },
+};
+
+const FOLDED = {
+  frame: '/duo/frame-folded.webp',
+  width: 1563,
+  height: 1173,
+  screen: { left: 425, top: 64, width: 731, height: 1045, radius: 90, hingeRadius: 8 },
 };
 
 /**
- * The iPhone Duo opened out, centred, on a book laid out as two pages with its controls in the strip
- * down the side, turning over with the page curl in a short film that loops. The film plays only while it is on screen, and whoever asked for
- * stillness sees its first frame instead.
+ * The iPhone Duo twice over, side by side: opened out, on a book laid out as two pages with its
+ * controls in the strip down the side, turning over with the page curl in a short film that loops;
+ * and folded beside it, with the same book on its outer screen. The two are drawn at the same scale
+ * and stand on the same line, so the folded one is as tall as the open one, as it is in the hand. The
+ * film plays only while it is on screen, and whoever asked for stillness sees its first frame instead.
  */
 const DuoShowcase = () => {
   const prefersReducedMotion = useReducedMotionConfig();
@@ -67,16 +78,38 @@ const DuoShowcase = () => {
       </motion.div>
 
       <div ref={stageRef} className="mx-auto flex max-w-5xl justify-center px-5">
-        <DuoFrame {...OPEN} className="w-full">
-          <VideoSurface
-            label="A comic open on the unfolded iPhone Duo as two pages, turning over with a page curl"
-            src="/duo/page-turn.mp4"
-            poster="/duo/page-turn-poster.webp"
-            videoRef={filmRef}
-            loops
-            className="h-full object-cover"
-          />
-        </DuoFrame>
+        <div className="relative w-full">
+          <ByTheWay
+            lead="Fun fact..."
+            drawing={TelevisionIcon}
+            footnote="*TV models from before 2025 (Android)"
+            className="right-full top-[6%] mr-10 hidden w-56 min-[1600px]:block"
+          >
+            Your library plays on Apple TV, Android TV and Fire TV* too, with an app for each.
+          </ByTheWay>
+
+          <div className="relative aspect-[2014/909]">
+            <DuoFrame {...OPEN} className="absolute -left-[1.24%] -top-[4.4%] w-[65.7%]">
+              <VideoSurface
+                label="A comic open on the unfolded iPhone Duo as two pages, turning over with a page curl"
+                src="/duo/page-turn.mp4"
+                poster="/duo/page-turn-poster.webp"
+                videoRef={filmRef}
+                loops
+                className="h-full object-cover"
+              />
+            </DuoFrame>
+
+            <DuoFrame {...FOLDED} className="absolute -top-[4.38%] left-[50.74%] w-[65.7%]">
+              <img
+                src="/duo/folded-reader.webp"
+                alt="The same comic's cover on the folded iPhone Duo's outer screen"
+                draggable={false}
+                className="h-full w-full object-cover"
+              />
+            </DuoFrame>
+          </div>
+        </div>
       </div>
     </section>
   );

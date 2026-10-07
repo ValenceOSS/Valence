@@ -6,6 +6,8 @@ import {
 } from '@keyline-icons/react/fill';
 import { Easing, interpolate, useCurrentFrame } from 'remotion';
 import { Icon } from '@ValenceUI/Icon';
+import { cn } from '@ValenceUI/cn';
+import { POINTER_LOOK } from '@ValenceLanding/components/SiteCursor/POINTER_LOOK';
 import type { SceneCursorProps } from './SceneCursor.types';
 
 const PRESS_FRAMES = 7;
@@ -52,7 +54,7 @@ const SceneCursor = ({ path, look = 'pointer' }: SceneCursorProps) => {
 
   return (
     <span
-      className="pointer-events-none absolute z-20 text-on-scrim [filter:drop-shadow(0_0_0.6px_var(--color-shade))_drop-shadow(0_0_0.6px_var(--color-shade))_drop-shadow(0_2px_3px_color-mix(in_oklab,var(--color-shade)_50%,transparent))]"
+      className={cn('pointer-events-none absolute z-20', POINTER_LOOK)}
       style={{
         left: `${x.toString()}%`,
         top: `${y.toString()}%`,
