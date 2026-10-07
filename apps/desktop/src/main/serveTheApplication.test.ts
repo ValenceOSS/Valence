@@ -207,6 +207,12 @@ describe('the policy a page is held to', () => {
     expect(POLICY).toContain("script-src 'self' valence://www.gstatic.com;");
   });
 
+  it('frames the video host’s player, which is what a catalogue trailer plays in, and nothing else', () => {
+    expect(POLICY).toContain(
+      'frame-src https://www.youtube-nocookie.com https://youtube-nocookie.com https://www.youtube.com https://youtube.com;',
+    );
+  });
+
   it('holds a page from Vite to the same rules as a release', () => {
     const page = underThePolicy(
       new Response('<html></html>', { headers: { 'content-type': 'text/html; charset=utf-8' } }),

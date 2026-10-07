@@ -1,9 +1,9 @@
-const VIDEO_HOSTS = new Set([
+const VIDEO_HOSTS = [
   'www.youtube-nocookie.com',
   'youtube-nocookie.com',
   'www.youtube.com',
   'youtube.com',
-]);
+];
 
 const AS = 'https://getvalence.app';
 
@@ -16,7 +16,7 @@ const AS = 'https://getvalence.app';
 const isAVideoHost = (url: string): boolean => {
   const asked = URL.parse(url);
 
-  return asked !== null && VIDEO_HOSTS.has(asked.host);
+  return asked !== null && VIDEO_HOSTS.includes(asked.host);
 };
 
 /**
@@ -44,4 +44,4 @@ const nameValenceToTheVideoHost = (headers: Record<string, string>): Record<stri
   Referer: `${AS}/`,
 });
 
-export { isAVideoHost, nameValenceToTheVideoHost };
+export { VIDEO_HOSTS, isAVideoHost, nameValenceToTheVideoHost };
