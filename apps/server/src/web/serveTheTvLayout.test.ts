@@ -8,6 +8,9 @@ import { serveTheTvLayout } from './serveTheTvLayout';
 const LG =
   'Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36';
 
+const LG_2025 =
+  'Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 (KHTML, like Gecko) Chr0me/120.0.6099.270 Safari/537.36';
+
 /**
  * A server with a TV layout built into a folder of its own, and the web app behind it.
  *
@@ -58,9 +61,34 @@ describe('serveTheTvLayout', () => {
     ).toContain('the tv layout');
     expect(
       await (
-        await app.request('/', { headers: { 'user-agent': LG, cookie: 'valence-layout=web' } })
+        await app.request('/', {
+          headers: { 'user-agent': LG_2025, cookie: 'valence-layout=web' },
+        })
       ).text(),
     ).toBe('the web app');
+  });
+
+  it('keeps a television too old for the web app on the TV layout, whatever was chosen', async () => {
+    const answer = await aServer().request('/', {
+      headers: { 'user-agent': LG, cookie: 'valence-layout=web' },
+    });
+
+    expect(await answer.text()).toContain('the tv layout');
+  });
+
+  it('chooses the layout an address asks for, and keeps it', async () => {
+    const app = aServer();
+    const toTv = await app.request('/?layout=tv', {
+      headers: { 'user-agent': LG_2025, cookie: 'valence-layout=web' },
+    });
+
+    expect(await toTv.text()).toContain('the tv layout');
+    expect(toTv.headers.get('set-cookie')).toContain('valence-layout=tv');
+
+    const toWeb = await app.request('/?layout=web', { headers: { 'user-agent': LG_2025 } });
+
+    expect(await toWeb.text()).toBe('the web app');
+    expect(toWeb.headers.get('set-cookie')).toContain('valence-layout=web');
   });
 
   it('leaves the API alone', async () => {
