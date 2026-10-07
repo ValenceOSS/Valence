@@ -7,9 +7,11 @@ type BrandMarkName =
   | 'docker'
   | 'firefox'
   | 'github'
+  | 'lg'
   | 'linux'
   | 'opera'
   | 'safari'
+  | 'samsung'
   | 'vivaldi';
 
 type BrandGlyphProps = {

@@ -20,6 +20,15 @@ describe('brandMarksOf', () => {
     expect(brandMarksOf('Emulator on Android').system).toBe('android');
   });
 
+  it('knows an LG or Samsung television showing the TV layout by its maker’s mark', () => {
+    expect(brandMarksOf('LG TV')).toEqual({ browser: null, system: 'lg' });
+    expect(brandMarksOf('Samsung TV')).toEqual({ browser: null, system: 'samsung' });
+  });
+
+  it('answers no mark for an Xbox, whose maker asked for its marks to go', () => {
+    expect(brandMarksOf('Xbox')).toEqual({ browser: null, system: null });
+  });
+
   it('answers no mark for a browser or system without one of its own', () => {
     expect(brandMarksOf('Edge on Windows')).toEqual({ browser: null, system: null });
   });

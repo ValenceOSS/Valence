@@ -14,6 +14,8 @@ const DEVICE_MARKS: readonly { name: string; mark: BrandMarkName }[] = [
   { name: 'iPad', mark: 'apple' },
   // oxlint-disable-next-line valence/no-hard-coded-strings -- a model name the television app reports, matched rather than shown
   { name: 'Apple TV', mark: 'apple' },
+  { name: say('common.lgTV'), mark: 'lg' },
+  { name: say('common.samsungTV'), mark: 'samsung' },
 ];
 
 const SYSTEM_MARKS: readonly { name: string; mark: BrandMarkName }[] = [
@@ -26,7 +28,8 @@ const SYSTEM_MARKS: readonly { name: string; mark: BrandMarkName }[] = [
 /**
  * The marks of the browser and the system a session says it runs in, read from the words it is
  * labelled with, so a card can show them rather than a generic screen. A phone or a television
- * names its model rather than its system, so an iPhone, iPad or Apple TV is known by its name. A
+ * names its model rather than its system, so an iPhone, iPad or Apple TV is known by its name, and
+ * an LG or Samsung television showing the TV layout in its browser by its maker's. A
  * browser or system without a mark of its own — Edge, Windows, anything unrecognised — answers none, and keeps its shape.
  * Chromium is shown as Chrome, since a browser built on it names itself the same way and Chrome is
  * the one that almost always is.
