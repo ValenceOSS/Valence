@@ -53,7 +53,7 @@ const withTopShelf: ConfigPlugin = (config) => {
       return asked;
     }
 
-    const bundleId = `${asked.ios?.bundleIdentifier ?? 'app.valence.tv'}.topshelf`;
+    const bundleId = `${asked.ios?.bundleIdentifier ?? 'app.valence.ios'}.topshelf`;
     const target = project.addTarget(TARGET, 'app_extension', TARGET, bundleId);
     const group = project.addPbxGroup([...FILES], TARGET, TARGET);
     const root = project.getFirstProject().firstProject.mainGroup;

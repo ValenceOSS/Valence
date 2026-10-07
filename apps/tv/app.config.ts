@@ -19,7 +19,7 @@ const config: ExpoConfig = {
   version: build.version === 'unknown' ? '0.0.0' : build.version,
   userInterfaceStyle: 'dark',
   ios: {
-    bundleIdentifier: 'app.valence.tv',
+    bundleIdentifier: 'app.valence.ios',
     infoPlist: {
       NSLocalNetworkUsageDescription:
         'Valence looks on your network for the Valence servers there, so you can pick yours instead of typing its address.',
@@ -45,7 +45,7 @@ const config: ExpoConfig = {
             appExtensions: [
               {
                 targetName: 'TopShelf',
-                bundleIdentifier: 'app.valence.tv.topshelf',
+                bundleIdentifier: 'app.valence.ios.topshelf',
                 entitlements: { 'com.apple.security.application-groups': ['group.app.valence.tv'] },
               },
             ],
