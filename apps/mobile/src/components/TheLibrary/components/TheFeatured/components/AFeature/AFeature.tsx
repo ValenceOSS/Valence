@@ -144,7 +144,7 @@ const AFeature = ({
 
   useEffect(() => {
     if (!isShowing) {
-      Animated.parallel([
+      const leaving = Animated.parallel([
         Animated.timing(arriving, {
           toValue: ARRIVES_FROM,
           duration: LEAVES_OVER,
@@ -159,13 +159,17 @@ const AFeature = ({
             useNativeDriver: true,
           }),
         ),
-      ]).start();
+      ]);
 
-      return;
+      leaving.start();
+
+      return () => {
+        leaving.stop();
+      };
     }
 
     setIsTelling(true);
-    Animated.parallel([
+    const coming = Animated.parallel([
       Animated.timing(arriving, {
         toValue: 1,
         duration: ARRIVES_OVER,
@@ -183,23 +187,27 @@ const AFeature = ({
           }),
         ),
       ),
-    ]).start();
+    ]);
 
+    coming.start();
     telling.setValue(1);
 
+    const fold = Animated.timing(telling, {
+      toValue: 0,
+      duration: FOLDS_OVER,
+      easing: EASINGS.inOutCubic,
+      useNativeDriver: false,
+    });
     const folding = setTimeout(() => {
-      Animated.timing(telling, {
-        toValue: 0,
-        duration: FOLDS_OVER,
-        easing: EASINGS.inOutCubic,
-        useNativeDriver: false,
-      }).start(() => {
+      fold.start(() => {
         setIsTelling(false);
       });
     }, TELL_FOR);
 
     return () => {
       clearTimeout(folding);
+      coming.stop();
+      fold.stop();
     };
   }, [isShowing, media.id, arriving, rising, telling]);
 
