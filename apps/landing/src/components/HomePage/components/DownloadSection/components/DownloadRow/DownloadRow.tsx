@@ -12,7 +12,9 @@ const ICONS = {
   macAppleSilicon: IconBrandAppleFilled,
   macIntel: IconBrandAppleFilled,
   windows: IconBrandWindowsFilled,
+  windowsArm: IconBrandWindowsFilled,
   linux: LinuxMark,
+  linuxArm: LinuxMark,
 } as const;
 
 /**

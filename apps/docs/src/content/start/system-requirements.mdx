@@ -28,7 +28,7 @@ Two facts come from the repository and are not recommendations:
 
 Hardware transcoding is optional. Without a GPU everything still works, and anything that cannot be direct played is converted on the processor instead, which is slower and uses more of it.
 
-The Valence Settings page offers these encoders: VAAPI (Intel and AMD on Linux), QuickSync (Intel), NVENC (NVIDIA), AMF (AMD, needs the proprietary driver), VideoToolbox (Apple), and RKMPP (Rockchip). Which ones work inside a container depends on your host and how you pass the device through. The compose file only ships the `/dev/dri` mapping used by Intel and AMD. Read [Hardware transcoding](/install/hardware-transcoding) before you buy hardware for it.
+The Valence Settings page offers these encoders: VAAPI (Intel and AMD on Linux), QuickSync (Intel), NVENC (NVIDIA), AMF (AMD, needs the proprietary driver), VideoToolbox (Apple), RKMPP (Rockchip), and Media Foundation (Qualcomm on Windows on Arm). Which ones work inside a container depends on your host and how you pass the device through. The compose file only ships the `/dev/dri` mapping used by Intel and AMD. Read [Hardware transcoding](/install/hardware-transcoding) before you buy hardware for it.
 
 ## Operating system
 

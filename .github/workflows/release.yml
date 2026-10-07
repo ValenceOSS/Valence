@@ -312,13 +312,26 @@ jobs:
   # The transcoder for Windows, which runs natively there for the same reason as on a Mac: inside
   # Docker Desktop only NVIDIA's encoder is reachable, and natively QSV, AMF and NVENC all are
   # (VAL-338). One folder holding the transcoder and valence-ffmpeg's portable build, which it
-  # finds beside itself as ffmpeg.exe and ffprobe.exe.
+  # finds beside itself as ffmpeg.exe and ffprobe.exe, for x64 and for Windows on Arm.
   transcoder-windows:
-    name: Transcoder for Windows
+    name: Transcoder for Windows (${{ matrix.arch }})
     needs: [verify, verify-rust, image, artefacts]
-    runs-on: windows-2025-vs2026
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - arch: x64
+            runner: windows-2025-vs2026
+            ffmpeg: win64
+          # Built natively on an ARM64 runner and packed with valence-ffmpeg's ARM64 build, so Windows
+          # on Arm transcodes at full speed and reaches its Qualcomm GPU through Media Foundation,
+          # neither of which the x64 build can do under emulation (VAL-355).
+          - arch: arm64
+            runner: windows-11-arm
+            ffmpeg: winarm64
     env:
       VALENCE_FFMPEG_VERSION: 8.1.2-5.4
     defaults:
@@ -336,28 +349,33 @@ jobs:
 
       - run: cargo build --release -p valence-transcoder
 
+      # Run as well as packed: the transcoder starting, and FFmpeg reporting its version, is the proof
+      # that both are this runner's architecture rather than something emulation happened to run.
       - name: Pack it with its FFmpeg
+        env:
+          ARCH: ${{ matrix.arch }}
+          FFMPEG_TARGET: ${{ matrix.ffmpeg }}
         run: |
           folder=pack/valence-transcoder
           mkdir -p "$folder" release
           cp target/release/valence-transcoder.exe "$folder/"
           curl -fsSL -o ffmpeg.zip \
-            "https://github.com/ValenceOSS/valence-ffmpeg/releases/download/v${VALENCE_FFMPEG_VERSION}/valence-ffmpeg_${VALENCE_FFMPEG_VERSION}_portable_win64-clang-gpl.zip"
+            "https://github.com/ValenceOSS/valence-ffmpeg/releases/download/v${VALENCE_FFMPEG_VERSION}/valence-ffmpeg_${VALENCE_FFMPEG_VERSION}_portable_${FFMPEG_TARGET}-clang-gpl.zip"
           unzip -j ffmpeg.zip ffmpeg.exe ffprobe.exe -d "$folder"
           "$folder/valence-transcoder.exe"
           "$folder/ffmpeg.exe" -version | head -1
-          (cd pack && 7z a -tzip ../release/valence-transcoder-windows-x64.zip valence-transcoder)
+          (cd pack && 7z a -tzip "../release/valence-transcoder-windows-${ARCH}.zip" valence-transcoder)
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: valence-transcoder-windows
+          name: valence-transcoder-windows-${{ matrix.arch }}
           path: release/
           if-no-files-found: error
 
   # The desktop app's installers, built by the workflow that owns that and attached below. A job that
   # calls a workflow rather than a step, so its artefacts are this run's like any other job's.
   #
-  # Last, after every check and every other build has passed. Three runners, one of them a macOS one,
+  # Last, after every check and every other build has passed. Four runners, one of them a macOS one,
   # are the most expensive thing a release does and there is no point starting them for a release that
   # is already going to fail.
   desktop:
@@ -396,7 +414,8 @@ jobs:
 
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: valence-transcoder-windows
+          pattern: valence-transcoder-windows-*
+          merge-multiple: true
           path: release
 
       # The release already exists: release-please created it and tagged it. What it cannot write

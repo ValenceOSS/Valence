@@ -41,6 +41,33 @@ describe('latestRelease', () => {
     expect(latest?.installers.linux?.name).toBe('Valence-1.1.2.AppImage');
   });
 
+  it('tells the x64 and ARM64 builds of Windows and Linux apart by name', () => {
+    const latest = latestRelease([
+      release('v1.4.0', [
+        'Valence-Setup-1.4.0-x64.exe',
+        'Valence-Setup-1.4.0-arm64.exe',
+        'Valence-1.4.0-x86_64.AppImage',
+        'Valence-1.4.0-arm64.AppImage',
+      ]),
+    ]);
+
+    expect(latest?.installers.windows?.name).toBe('Valence-Setup-1.4.0-x64.exe');
+    expect(latest?.installers.windowsArm?.name).toBe('Valence-Setup-1.4.0-arm64.exe');
+    expect(latest?.installers.linux?.name).toBe('Valence-1.4.0-x86_64.AppImage');
+    expect(latest?.installers.linuxArm?.name).toBe('Valence-1.4.0-arm64.AppImage');
+  });
+
+  it('has no ARM64 builds to offer from a release before there were any', () => {
+    const latest = latestRelease([
+      release('v1.3.0', ['Valence-Setup-1.3.0.exe', 'Valence-1.3.0.AppImage']),
+    ]);
+
+    expect(latest?.installers.windows?.name).toBe('Valence-Setup-1.3.0.exe');
+    expect(latest?.installers.windowsArm).toBeNull();
+    expect(latest?.installers.linux?.name).toBe('Valence-1.3.0.AppImage');
+    expect(latest?.installers.linuxArm).toBeNull();
+  });
+
   it('takes the installers from the newest release that carries any', () => {
     const latest = latestRelease([
       release('v1.1.3', []),

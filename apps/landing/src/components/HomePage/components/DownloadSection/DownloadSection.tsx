@@ -36,7 +36,9 @@ const LEAD_GLYPHS = {
   macAppleSilicon: IconBrandAppleFilled,
   macIntel: IconBrandAppleFilled,
   windows: IconBrandWindowsFilled,
+  windowsArm: IconBrandWindowsFilled,
   linux: LinuxMark,
+  linuxArm: LinuxMark,
 } as const;
 
 const DOC_LINK =

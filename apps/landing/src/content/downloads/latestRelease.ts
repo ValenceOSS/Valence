@@ -22,15 +22,19 @@ type LatestRelease = {
     macAppleSilicon: Installer | null;
     macIntel: Installer | null;
     windows: Installer | null;
+    windowsArm: Installer | null;
     linux: Installer | null;
+    linuxArm: Installer | null;
   };
 };
 
 const INSTALLERS = {
   macAppleSilicon: /-arm64\.dmg$/u,
   macIntel: /-x64\.dmg$/u,
-  windows: /^Valence-Setup-.*\.exe$/u,
-  linux: /\.AppImage$/u,
+  windows: /^Valence-Setup-[\d.]+(?:-x64)?\.exe$/u,
+  windowsArm: /^Valence-Setup-[\d.]+-arm64\.exe$/u,
+  linux: /^Valence-[\d.]+(?:-x86_64)?\.AppImage$/u,
+  linuxArm: /^Valence-[\d.]+-arm64\.AppImage$/u,
 } as const;
 
 /**
@@ -39,7 +43,8 @@ const INSTALLERS = {
  * the server may carry none of its own.
  *
  * Each installer is found by the name the desktop build gives it, so a release that is missing one
- * platform offers the others rather than nothing.
+ * platform offers the others rather than nothing. Windows and Linux installers were named without
+ * their processor until there was an ARM64 one beside them, so a name without one is x64.
  *
  * @param raw - The releases, exactly as GitHub's API returns them.
  * @returns The latest release and where to download it, or nothing where no release could be read.
@@ -76,7 +81,9 @@ const latestRelease = (raw: GithubReleaseJson[]): LatestRelease | null => {
       macAppleSilicon: find(INSTALLERS.macAppleSilicon),
       macIntel: find(INSTALLERS.macIntel),
       windows: find(INSTALLERS.windows),
+      windowsArm: find(INSTALLERS.windowsArm),
       linux: find(INSTALLERS.linux),
+      linuxArm: find(INSTALLERS.linuxArm),
     },
   };
 };

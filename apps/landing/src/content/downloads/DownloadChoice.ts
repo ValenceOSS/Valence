@@ -1,5 +1,5 @@
 type DownloadChoice = {
-  id: 'macAppleSilicon' | 'macIntel' | 'windows' | 'linux';
+  id: 'macAppleSilicon' | 'macIntel' | 'windows' | 'windowsArm' | 'linux' | 'linuxArm';
   system: string;
   detail: string;
   url: string;

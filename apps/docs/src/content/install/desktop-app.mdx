@@ -10,11 +10,13 @@ The desktop app is an Electron application that gives Valence a window of its ow
 
 Each release attaches the desktop app for the three platforms on the [releases page](https://github.com/ValenceOSS/Valence/releases).
 
-| Platform | File                                                          | Notes                                                          |
-| :------- | :------------------------------------------------------------ | :------------------------------------------------------------- |
-| Windows  | `Valence-Setup-<version>.exe`                                 | 64 bit. An installer that lets you choose where to install it. |
-| macOS    | `Valence-<version>-arm64.dmg` and `Valence-<version>-x64.dmg` | `arm64` for Apple silicon, `x64` for Intel.                    |
-| Linux    | `Valence-<version>.AppImage`                                  | 64 bit. Mark it executable, then run it.                       |
+| Platform | File                                                                       | Notes                                                                                                       |
+| :------- | :------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------- |
+| Windows  | `Valence-Setup-<version>-x64.exe` and `Valence-Setup-<version>-arm64.exe`  | `x64` for Intel and AMD PCs, `arm64` for Windows on Arm. An installer that lets you choose where to put it. |
+| macOS    | `Valence-<version>-arm64.dmg` and `Valence-<version>-x64.dmg`              | `arm64` for Apple silicon, `x64` for Intel.                                                                 |
+| Linux    | `Valence-<version>-x86_64.AppImage` and `Valence-<version>-arm64.AppImage` | `x86_64` for Intel and AMD, `arm64` for ARM64. Mark it executable, then run it.                             |
+
+Each updates itself to the next release for the same processor. A Windows on Arm PC that has the `x64` app, which runs there under emulation, keeps updating to `x64`: install the `arm64` one over it to switch. Older releases have only the `x64` builds for Windows and Linux, named without the processor.
 
 <Callout title="The apps are not signed yet" tone="warning">
   There are no code signing certificates, so Windows SmartScreen may warn that the publisher is

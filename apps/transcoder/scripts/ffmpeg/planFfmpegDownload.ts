@@ -12,6 +12,11 @@ const MAC_TARGETS: Record<string, string> = {
   x64: 'mac64',
 };
 
+const WINDOWS_TARGETS: Record<string, string> = {
+  x64: 'win64',
+  arm64: 'winarm64',
+};
+
 type FfmpegDownload =
   | { kind: 'tarball'; url: string; fileName: string }
   | { kind: 'zip'; url: string; fileName: string }
@@ -36,6 +41,9 @@ type PlanFfmpegDownloadOptions = {
  * and was measured on a 2015 MacBook Pro before being offered — the patched VideoToolbox filters
  * run on Iris Pro, which is a generation before Intel had HEVC at all and the oldest thing anybody
  * would reasonably retire into a media server.
+ *
+ * Both Windows architectures are published too, and Windows on Arm takes its own rather than the x64
+ * one under emulation, which would run slower and could not reach the machine's encoder.
  *
  * @param options - What this machine is, and which version is pinned.
  * @returns Where to fetch the artefact, or the reason there is none to fetch.
@@ -76,14 +84,16 @@ const planFfmpegDownload = ({
   }
 
   if (platform === 'win32') {
-    if (arch !== 'x64') {
+    const target = WINDOWS_TARGETS[arch];
+
+    if (target === undefined) {
       return {
         kind: 'unsupported',
-        message: `valence-ffmpeg publishes x64 for Windows, and this machine is ${arch}.`,
+        message: `valence-ffmpeg publishes x64 and ARM64 for Windows, and this machine is ${arch}.`,
       };
     }
 
-    const fileName = `valence-ffmpeg_${version}_portable_win64-clang-gpl.zip`;
+    const fileName = `valence-ffmpeg_${version}_portable_${target}-clang-gpl.zip`;
 
     return { kind: 'zip', url: `${RELEASES}/v${version}/${fileName}`, fileName };
   }

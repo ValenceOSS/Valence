@@ -18,7 +18,9 @@ const RELEASE: LatestRelease = {
     macAppleSilicon: installer('Valence-1.3.0-arm64.dmg'),
     macIntel: installer('Valence-1.3.0-x64.dmg'),
     windows: installer('Valence-Setup-1.3.0.exe'),
+    windowsArm: null,
     linux: installer('Valence-1.3.0.AppImage'),
+    linuxArm: null,
   },
 };
 
