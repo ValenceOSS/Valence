@@ -127,6 +127,13 @@
       "when": 1791298956791,
       "tag": "0017_music_play",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1791407137180,
+      "tag": "0018_grant_members_every_request",
+      "breakpoints": true
     }
   ]
 }

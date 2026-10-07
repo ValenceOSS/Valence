@@ -778,6 +778,13 @@
       "when": 1791298956040,
       "tag": "0110_music_play",
       "breakpoints": true
+    },
+    {
+      "idx": 111,
+      "version": "7",
+      "when": 1791407136643,
+      "tag": "0111_grant_members_every_request",
+      "breakpoints": true
     }
   ]
 }

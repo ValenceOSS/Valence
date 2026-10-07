@@ -166,6 +166,17 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       : context.json(overview, 200);
   });
 
+  /**
+   * Whether whoever is asking may see everybody's requests, rather than only their own.
+   *
+   * @param headers - The request's headers, which carry who is asking.
+   * @returns Whether they see every request.
+   */
+  const seesEveryRequest = async (headers: Headers): Promise<boolean> =>
+    (await Promise.all(SEES_EVERY_REQUEST.map((permission) => requires(headers, permission)))).some(
+      Boolean,
+    );
+
   app.openapi(listMediaRequestsRoute, async (context) => {
     const { headers } = context.req.raw;
     const session = await readSessionOnce(auth, headers);
@@ -178,9 +189,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(bodyOf(answer), answer.status);
     }
 
-    const seesAll = (
-      await Promise.all(SEES_EVERY_REQUEST.map((permission) => requires(headers, permission)))
-    ).some(Boolean);
+    const seesAll = await seesEveryRequest(headers);
 
     return context.json(
       seesAll
@@ -519,6 +528,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
   app.openapi(requestProgressRoute, async (context) => {
     const { headers } = context.req.raw;
     const session = await readSessionOnce(auth, headers);
+    const seesAll = await seesEveryRequest(headers);
     const answer = await throughRequests(
       headers,
       async (client) => {
@@ -533,7 +543,9 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
         return {
           kind: 'answered' as const,
           value: progressOf(
-            listed.value.filter((request) => request.requestedBy.id === session?.user.id),
+            seesAll
+              ? listed.value
+              : listed.value.filter((request) => request.requestedBy.id === session?.user.id),
             queue.kind === 'answered' ? queue.value.downloads : [],
           ),
         };
