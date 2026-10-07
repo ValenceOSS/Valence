@@ -20,20 +20,29 @@ const LEADS: Readonly<Partial<Record<Platform, DownloadChoice['id']>>> = {
   linux: 'linux',
 };
 
+const ARM_LEADS: Readonly<Partial<Record<Platform, DownloadChoice['id']>>> = {
+  mac: 'macAppleSilicon',
+  windows: 'windowsArm',
+  linux: 'linuxArm',
+};
+
 /**
  * The desktop downloads to offer, the one for the visitor's own computer first and the rest after
  * it. A download the release does not carry leads to the release's page instead, so every choice
  * still goes somewhere, except the ARM64 builds of Windows and Linux, which releases before them do
- * not have and which are left out rather than promised. A phone or an unknown computer leads with nothing, since no desktop build is
- * the obvious one.
+ * not have and which are left out rather than promised. An ARM computer leads with its own build
+ * where the release has one, and with the x64 one where it does not. A phone or an unknown computer
+ * leads with nothing, since no desktop build is the obvious one.
  *
  * @param release - The latest release, or nothing where none could be read.
  * @param platform - What the visitor is on.
+ * @param isArm - Whether the visitor's computer has an ARM processor.
  * @returns The download to lead with, if any, and the others.
  */
 const downloadChoicesFor = (
   release: LatestRelease | null,
   platform: Platform,
+  isArm = false,
 ): { lead: DownloadChoice | null; others: DownloadChoice[] } => {
   const choices: DownloadChoice[] = CHOICES.flatMap((choice) => {
     const installer = release?.installers[choice.id] ?? null;
@@ -51,8 +60,9 @@ const downloadChoicesFor = (
       },
     ];
   });
-  const leading = LEADS[platform];
-  const lead = choices.find((choice) => choice.id === leading) ?? null;
+  const leadFor = (leading: DownloadChoice['id'] | undefined): DownloadChoice | null =>
+    choices.find((choice) => choice.id === leading) ?? null;
+  const lead = (isArm ? leadFor(ARM_LEADS[platform]) : null) ?? leadFor(LEADS[platform]);
 
   return { lead, others: choices.filter((choice) => choice !== lead) };
 };

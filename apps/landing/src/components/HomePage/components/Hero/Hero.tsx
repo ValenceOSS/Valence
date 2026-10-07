@@ -20,6 +20,7 @@ import { DEMO_URL } from '@ValenceLanding/content/DEMO_URL';
 import { DeviceStage } from './components/DeviceStage/DeviceStage';
 import { DownloadDesktop } from './components/DownloadDesktop/DownloadDesktop';
 import { detectPlatform } from '@ValenceLanding/content/downloads/detectPlatform';
+import { useIsArm } from '@ValenceLanding/content/downloads/useIsArm';
 import { latestRelease } from '@ValenceLanding/content/downloads/latestRelease';
 import rawReleases from 'virtual:changelog';
 import { ValenceBand } from './components/ValenceBand/ValenceBand';
@@ -98,6 +99,7 @@ const Hero = () => {
   const words = [...BEFORE, ACCENT, ...AFTER];
   const [startId, setStartId] = useState<string>(STARTS[0].id);
   const [platform] = useState(() => detectPlatform(navigator));
+  const isArm = useIsArm();
   const start = STARTS.find((one) => one.id === startId) ?? STARTS[0];
 
   return (
@@ -184,7 +186,7 @@ const Hero = () => {
             </motion.span>
 
             <motion.span className="flex" {...popArrival(BUTTONS_LEAD + 0.1, isStill)}>
-              <DownloadDesktop release={LATEST} platform={platform} />
+              <DownloadDesktop release={LATEST} platform={platform} isArm={isArm} />
             </motion.span>
 
             <span

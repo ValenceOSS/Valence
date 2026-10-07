@@ -18,12 +18,14 @@ const FALLBACK: DownloadChoice['id'] = 'windows';
  * @param release - The newest release, whose installers are offered; with none, every choice leads
  *   to the releases page.
  * @param platform - What the page is open on.
+ * @param isArm - Whether the computer has an ARM processor, which it leads with the build for.
  */
-const DownloadDesktop = ({ release, platform }: DownloadDesktopProps) => {
-  const { lead, others } = downloadChoicesFor(release, platform);
+const DownloadDesktop = ({ release, platform, isArm }: DownloadDesktopProps) => {
+  const { lead, others } = downloadChoicesFor(release, platform, isArm);
   const choices = lead === null ? others : [lead, ...others];
-  const [chosenId, setChosenId] = useState<string>(lead?.id ?? FALLBACK);
-  const chosen = choices.find((choice) => choice.id === chosenId) ?? choices[0];
+  const [chosenId, setChosenId] = useState<string | null>(null);
+  const chosen =
+    choices.find((choice) => choice.id === (chosenId ?? lead?.id ?? FALLBACK)) ?? choices[0];
 
   if (chosen === undefined) {
     return null;

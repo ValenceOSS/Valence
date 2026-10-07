@@ -36,7 +36,7 @@ describe('DownloadDesktop', () => {
 
     const user = userEvent.setup();
 
-    render(<DownloadDesktop release={RELEASE} platform="windows" />);
+    render(<DownloadDesktop release={RELEASE} platform="windows" isArm={false} />);
 
     await user.click(screen.getByRole('button', { name: /Download Desktop/ }));
 
@@ -46,7 +46,7 @@ describe('DownloadDesktop', () => {
   it('lists every installer, with its processor, behind the arrow', async () => {
     const user = userEvent.setup();
 
-    render(<DownloadDesktop release={RELEASE} platform="mac" />);
+    render(<DownloadDesktop release={RELEASE} platform="mac" isArm={false} />);
 
     await user.click(screen.getByRole('button', { name: 'Other computers' }));
 
@@ -54,6 +54,26 @@ describe('DownloadDesktop', () => {
     expect(screen.getByText(/Intel · x64/)).toBeInTheDocument();
     expect(screen.getByText(/Installer · x64/)).toBeInTheDocument();
     expect(screen.getByText(/AppImage · x64/)).toBeInTheDocument();
+  });
+
+  it('downloads the ARM64 installer on a Windows on Arm PC, once the browser has said so', async () => {
+    const assign = vi.fn();
+
+    vi.stubGlobal('location', { ...window.location, assign });
+
+    const user = userEvent.setup();
+    const release = {
+      ...RELEASE,
+      installers: { ...RELEASE.installers, windowsArm: installer('Valence-Setup-1.4.0-arm64.exe') },
+    };
+    const { rerender } = render(
+      <DownloadDesktop release={release} platform="windows" isArm={false} />,
+    );
+
+    rerender(<DownloadDesktop release={release} platform="windows" isArm />);
+    await user.click(screen.getByRole('button', { name: /Download Desktop/ }));
+
+    expect(assign).toHaveBeenCalledWith('https://example.com/Valence-Setup-1.4.0-arm64.exe');
   });
 
   it('sets a display name so devtools can identify it', () => {
