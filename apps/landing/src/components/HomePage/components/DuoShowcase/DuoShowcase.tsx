@@ -77,7 +77,7 @@ const DuoShowcase = () => {
             isRightAligned
             className="right-full top-[6%] mr-10 hidden w-56 min-[1400px]:block"
           >
-            The same server plays on Apple TV, Android TV and Fire TV* too.
+            Your library plays on Apple TV, Android TV and Fire TV* too, with an app for each.
           </ByTheWay>
 
           <DuoFrame {...OPEN} className="w-full">
