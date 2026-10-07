@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { AudioQualitySchema } from './Music';
 import { ClientKindSchema } from './ClientKind';
+import { nullWhereUnreadable } from '@ValenceContracts/functions/nullWhereUnreadable';
 
 const MusicNowPlayingSchema = z.object({
   trackId: z.string().uuid(),
@@ -37,9 +38,9 @@ const ListeningSessionSchema = z.object({
 const MusicDeviceSchema = z.object({
   clientId: z.string().min(1),
   label: z.string(),
-  clientKind: ClientKindSchema.nullable().catch(null).default(null),
+  clientKind: nullWhereUnreadable(ClientKindSchema).default(null),
   nowPlaying: MusicNowPlayingSchema.nullable(),
-  ageMs: z.number().nonnegative().nullable().catch(null).default(null),
+  ageMs: nullWhereUnreadable(z.number().nonnegative()).default(null),
 });
 
 const MusicDeviceListSchema = z.object({ devices: z.array(MusicDeviceSchema) });

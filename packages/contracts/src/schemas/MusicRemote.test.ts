@@ -26,6 +26,12 @@ describe('MusicRemote', () => {
     expect(MusicDeviceSchema.parse({ ...device, ageMs: -5 }).ageMs).toBeNull();
   });
 
+  it('reads a device of a kind this app has never heard of as one of no known kind', () => {
+    const device = { clientId: 'fridge', label: 'Kitchen', nowPlaying: null, ageMs: 0 };
+
+    expect(MusicDeviceSchema.parse({ ...device, clientKind: 'fridge' }).clientKind).toBeNull();
+  });
+
   it('reads a command to take over what is playing', () => {
     const command = {
       kind: 'play',
