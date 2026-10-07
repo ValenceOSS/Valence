@@ -1,6 +1,7 @@
 import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { renderWithRoutes } from '@ValenceLanding/testing/renderWithRoutes';
+import { CHANGELOG } from '@ValenceLanding/content/changelog/CHANGELOG';
 import { ChangelogEntryPage } from './ChangelogEntryPage';
 
 describe('ChangelogEntryPage', () => {
@@ -32,12 +33,14 @@ describe('ChangelogEntryPage', () => {
   });
 
   it('has nothing newer to lead to from the newest release', async () => {
-    await renderWithRoutes(ChangelogEntryPage, '/changelog/linked-servers-and-calendars');
+    const [newest, older] = CHANGELOG;
+
+    await renderWithRoutes(ChangelogEntryPage, `/changelog/${newest?.slug ?? ''}`);
 
     const around = await screen.findByRole('navigation', { name: 'Other releases' });
 
     expect(around).not.toHaveTextContent('Newer');
-    expect(around).toHaveTextContent('Older · v1.2.0');
+    expect(around).toHaveTextContent(`Older · ${older?.version ?? ''}`);
   });
 
   it('says the page is not there for a release that does not exist', async () => {
