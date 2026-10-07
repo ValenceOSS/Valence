@@ -3,7 +3,7 @@ import { WEBHOOK_PAYLOAD_VERSION } from '@ValenceContracts/schemas/Webhook';
 import { deliverWebhook } from './deliverWebhook';
 import { signWebhookPayload, WEBHOOK_SIGNATURE_HEADER } from './signWebhookPayload';
 import type { WebhookPayload } from '@ValenceContracts/schemas/Webhook';
-import type { WebhookFetcher, WebhookTarget } from './deliverWebhook';
+import type { WebhookDestination, WebhookFetcher } from './deliverWebhook';
 import type { Mock } from 'vitest';
 
 const aPayload: WebhookPayload = {
@@ -21,7 +21,8 @@ const aPayload: WebhookPayload = {
   },
 };
 
-const aTarget: WebhookTarget = {
+const aTarget: WebhookDestination = {
+  iconUrl: null,
   url: 'https://example.com/hook',
   preset: 'generic',
   secret: 'whsec_1',

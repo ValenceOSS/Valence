@@ -777,3 +777,12 @@ describe('discordEmbedFor, a request as Seerr draws one', () => {
     ).toBe('Film request imported: Dune');
   });
 });
+
+describe('discordEmbedFor, with Valence’s mark', () => {
+  it('shows the mark beside Valence’s name where there is somewhere to fetch it from', () => {
+    expect(
+      discordEmbedFor(anArrival, 'a sentence', 'https://valence.example.com/icon.png').author,
+    ).toEqual({ name: 'Valence', icon_url: 'https://valence.example.com/icon.png' });
+    expect(discordEmbedFor(anArrival, 'a sentence').author).toEqual({ name: 'Valence' });
+  });
+});

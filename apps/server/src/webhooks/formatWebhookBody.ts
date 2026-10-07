@@ -386,8 +386,13 @@ const withHowToFix = (sentence: string, docs: string | null): string =>
  *
  * @param preset The shape this subscriber expects.
  * @param payload The event being delivered.
+ * @param iconUrl Where the receiver can fetch Valence's mark to show beside the message, if anywhere.
  */
-const formatWebhookBody = (preset: WebhookPreset, payload: WebhookPayload): WebhookRequestBody => {
+const formatWebhookBody = (
+  preset: WebhookPreset,
+  payload: WebhookPayload,
+  iconUrl: string | null = null,
+): WebhookRequestBody => {
   switch (preset) {
     case 'generic': {
       return { body: JSON.stringify(payload), contentType: 'application/json' };
@@ -395,7 +400,7 @@ const formatWebhookBody = (preset: WebhookPreset, payload: WebhookPayload): Webh
 
     case 'discord': {
       return {
-        body: JSON.stringify({ embeds: [discordEmbedFor(payload, sentenceFor(payload))] }),
+        body: JSON.stringify({ embeds: [discordEmbedFor(payload, sentenceFor(payload), iconUrl)] }),
         contentType: 'application/json',
       };
     }

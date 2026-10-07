@@ -57,6 +57,7 @@ describe('runWebhookDelivery', () => {
       subscriptions,
       subscriptionId: subscription.id,
       payload: anEnvelope,
+      iconUrl: null,
       fetchImpl,
     });
 
@@ -71,6 +72,7 @@ describe('runWebhookDelivery', () => {
       subscriptions,
       subscriptionId: subscription.id,
       payload: anEnvelope,
+      iconUrl: null,
       fetchImpl: answering(503),
     });
 
@@ -84,6 +86,7 @@ describe('runWebhookDelivery', () => {
       subscriptions,
       subscriptionId: subscription.id,
       payload: anEnvelope,
+      iconUrl: null,
       fetchImpl: answering(503),
     });
 
@@ -103,6 +106,7 @@ describe('runWebhookDelivery', () => {
       subscriptions,
       subscriptionId: subscription.id,
       payload: anEnvelope,
+      iconUrl: null,
       fetchImpl,
     });
 
@@ -120,6 +124,7 @@ describe('runWebhookDelivery', () => {
       subscriptions,
       subscriptionId: subscription.id,
       payload: anEnvelope,
+      iconUrl: null,
       fetchImpl,
     });
 
@@ -134,6 +139,7 @@ describe('runWebhookDelivery', () => {
       subscriptions,
       subscriptionId: subscription.id,
       payload: anEnvelope,
+      iconUrl: null,
       fetchImpl: answering(200),
     });
 
@@ -149,6 +155,7 @@ describe('runWebhookDelivery', () => {
       subscriptions,
       subscriptionId: subscription.id,
       payload: anEnvelope,
+      iconUrl: null,
       fetchImpl: answering(503),
     });
 
@@ -156,6 +163,7 @@ describe('runWebhookDelivery', () => {
       subscriptions,
       subscriptionId: subscription.id,
       payload: anEnvelope,
+      iconUrl: null,
       fetchImpl: answering(200),
     });
 
@@ -173,6 +181,7 @@ describe('runWebhookDelivery', () => {
       subscriptions,
       subscriptionId: subscription.id,
       payload: JSON.stringify({ version: 99, event: 'nothing.happened' }),
+      iconUrl: null,
       fetchImpl,
     });
 
@@ -222,6 +231,7 @@ describe('runWebhookDelivery, redelivering a Discord message', () => {
       subscriptions,
       subscriptionId: subscription.id,
       payload: anArrival,
+      iconUrl: null,
       fetchImpl,
     });
 
@@ -238,6 +248,7 @@ describe('runWebhookDelivery, redelivering a Discord message', () => {
       subscriptions,
       subscriptionId: subscription.id,
       payload: anArrival,
+      iconUrl: null,
       fetchImpl: answering(204),
     });
 
@@ -258,6 +269,7 @@ describe('runWebhookDelivery, redelivering a Discord message', () => {
       subscriptions,
       subscriptionId: subscription.id,
       payload: anArrival,
+      iconUrl: null,
       fetchImpl: first,
     });
 
@@ -265,6 +277,7 @@ describe('runWebhookDelivery, redelivering a Discord message', () => {
       subscriptions,
       subscriptionId: subscription.id,
       payload: anArrival,
+      iconUrl: null,
       fetchImpl: second,
     });
 

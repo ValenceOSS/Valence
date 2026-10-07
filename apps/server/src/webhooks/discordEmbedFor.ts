@@ -45,7 +45,7 @@ type DiscordEmbed = {
   title: string;
   description: string;
   color: number;
-  author: { name: string };
+  author: { name: string; icon_url?: string };
   timestamp: string;
   fields: DiscordField[];
   thumbnail?: { url: string };
@@ -595,9 +595,14 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
  *
  * @param payload - What happened.
  * @param sentence - The plain rendering, for events with nothing richer to say.
+ * @param iconUrl - Where Discord can fetch Valence's mark to show beside its name, if anywhere.
  * @returns The embed.
  */
-const discordEmbedFor = (payload: WebhookPayload, sentence: string): DiscordEmbed => {
+const discordEmbedFor = (
+  payload: WebhookPayload,
+  sentence: string,
+  iconUrl: string | null = null,
+): DiscordEmbed => {
   const parts = requestEventPartsFor(payload) ?? partsFor(payload, sentence);
 
   const fields = parts.fields
@@ -624,7 +629,7 @@ const discordEmbedFor = (payload: WebhookPayload, sentence: string): DiscordEmbe
     title,
     description,
     color: parts.colour,
-    author: { name: AUTHOR },
+    author: iconUrl === null ? { name: AUTHOR } : { name: AUTHOR, icon_url: iconUrl },
     timestamp: payload.occurredAt,
     fields,
     ...(parts.posterUrl === null ||
