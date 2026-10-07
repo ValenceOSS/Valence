@@ -2708,6 +2708,7 @@ const ENGLISH = {
     'You haven’t created any share links. Share something from its page to create one.',
   'screens.accountArea.sharePanel.yourLinks': 'Your share links',
   'screens.accountDialog.admin': 'admin',
+  'screens.accountDialog.useTheTvLayout': 'Use the TV layout',
   'screens.accountDialog.yourAccount': 'Your account',
   'screens.accountsPanel.accountAvatarPicker.aPhotographOneOfTheDrawn':
     'A photo, an illustrated avatar, or the first letter of their name.',
@@ -6844,6 +6845,7 @@ const ENGLISH = {
   'tv.account.chooseAnotherProfile': 'Choose another profile',
   'tv.account.themeChoice.valenceOpensInThisThemeThe':
     'This theme is applied the next time you open Valence.',
+  'tv.account.useTheDesktopLayout': 'Use the desktop layout',
   'tv.account.watchingOnThisValence': 'Watching on this server',
   'tv.account.yourDevices.nameCouldNotBeSignedOut':
     'Couldn’t sign out {name}. It’s still signed in.',

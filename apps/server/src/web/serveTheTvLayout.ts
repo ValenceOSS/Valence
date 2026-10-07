@@ -4,7 +4,7 @@ import { getCookie } from 'hono/cookie';
 import { createMiddleware } from 'hono/factory';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { isAppAddress } from '@ValenceServer/web/isAppAddress';
-import { LAYOUT_COOKIE } from '@ValenceServer/web/LAYOUT_COOKIE';
+import { LAYOUT_COOKIE } from '@ValenceCore/functions/LAYOUT_COOKIE';
 import { layoutFor } from '@ValenceServer/web/layoutFor';
 
 const PREFIX = '/tv';

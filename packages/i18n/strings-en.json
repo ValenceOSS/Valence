@@ -11120,6 +11120,11 @@
     "context": "Text shown in the account dialog."
   },
   {
+    "handler": "screens.accountDialog.useTheTvLayout",
+    "text": "Use the TV layout",
+    "context": "Button in the footer of the account dialog, shown only in a television's browser; switches that browser to Valence's TV layout."
+  },
+  {
     "handler": "screens.accountDialog.yourAccount",
     "text": "Your account",
     "context": "The label of a dialog in the account dialog."
@@ -26984,6 +26989,11 @@
     "handler": "tv.account.themeChoice.valenceOpensInThisThemeThe",
     "text": "This theme is applied the next time you open Valence.",
     "context": "Text shown in the theme choice in the account of the television app."
+  },
+  {
+    "handler": "tv.account.useTheDesktopLayout",
+    "text": "Use the desktop layout",
+    "context": "Button on the account page of the television app, shown only in a television's browser; switches that browser to the web app's layout."
   },
   {
     "handler": "tv.account.watchingOnThisValence",

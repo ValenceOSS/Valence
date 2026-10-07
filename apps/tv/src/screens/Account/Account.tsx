@@ -21,6 +21,7 @@ import { say } from '@ValenceI18n/say';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
 import { canChangeServer } from '@ValenceTv/platform/canChangeServer';
+import { toTheDesktopLayout } from '@ValenceTv/platform/toTheDesktopLayout';
 
 /**
  * Who is watching on this television and which Valence it is, with the two ways out: signing out,
@@ -60,6 +61,7 @@ const AccountPage = ({
   const mayRequest = useMayRequest();
   const { isDemo } = useWhatIMayDo();
   const origin = theServersOrigin();
+  const toDesktop = toTheDesktopLayout();
 
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.screen}>
@@ -114,6 +116,14 @@ const AccountPage = ({
               onPress={onChangeServer}
             />
           ) : null}
+          {toDesktop === null ? null : (
+            <Button
+              label={say('tv.account.useTheDesktopLayout')}
+              variant="ghost"
+              onFocus={upToBar.leave}
+              onPress={toDesktop}
+            />
+          )}
         </View>
       </FocusGuide>
 

@@ -1,3 +1,4 @@
+import type { Layout } from '@ValenceCore/functions/Layout';
 import { isATvBrowser } from '@ValenceServer/web/isATvBrowser';
 
 /**
@@ -8,7 +9,7 @@ import { isATvBrowser } from '@ValenceServer/web/isATvBrowser';
  * @param chosen - The layout somebody chose on this browser, from its cookie.
  * @returns The layout.
  */
-const layoutFor = (userAgent: string | undefined, chosen: string | undefined): 'tv' | 'web' => {
+const layoutFor = (userAgent: string | undefined, chosen: string | undefined): Layout => {
   if (chosen === 'tv' || chosen === 'web') {
     return chosen;
   }
