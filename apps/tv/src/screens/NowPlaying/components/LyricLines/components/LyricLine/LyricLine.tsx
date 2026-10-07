@@ -2,6 +2,7 @@ import { memo, useEffect, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { useKeepsStill } from '@ValenceTv/platform/useKeepsStill';
 import type { LyricLineProps } from './LyricLine.types';
 
 const SETTLES_MS = 420;
@@ -36,14 +37,21 @@ const LyricLineText = ({ text, distance, canSeek, onPress, onFocus, onLayout }: 
       ? SUNG
       : Math.max((distance > 0 ? NEXT : JUST_GONE) - (Math.abs(distance) - 1) * DIMS_BY, FAINTEST);
   const [shown] = useState(() => new Animated.Value(target));
+  const isStill = useKeepsStill();
 
   useEffect(() => {
+    if (isStill) {
+      shown.setValue(target);
+
+      return;
+    }
+
     Animated.timing(shown, {
       toValue: target,
       duration: SETTLES_MS,
       useNativeDriver: true,
     }).start();
-  }, [shown, target]);
+  }, [isStill, shown, target]);
 
   return (
     <View

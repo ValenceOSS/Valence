@@ -1,4 +1,5 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
+import { useKeepsStill } from '@ValenceTv/platform/useKeepsStill';
 import { Fragment, useCallback, useEffect, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { useRemote } from '@ValenceTv/remote/useRemote';
@@ -29,23 +30,35 @@ const PICTURE = { width: 200, height: 112 };
  */
 const ArrivalBanner = ({ arrival, picture, onWatch, onDismiss }: ArrivalBannerProps) => {
   const [shown] = useState(() => new Animated.Value(0));
+  const isStill = useKeepsStill();
 
   const leave = useCallback(() => {
+    if (isStill) {
+      shown.setValue(0);
+      onDismiss();
+
+      return;
+    }
+
     Animated.timing(shown, { toValue: 0, duration: SLIDES_MS, useNativeDriver: true }).start(() => {
       onDismiss();
     });
-  }, [shown, onDismiss]);
+  }, [isStill, shown, onDismiss]);
 
   useEffect(() => {
-    shown.setValue(0);
-    Animated.timing(shown, { toValue: 1, duration: SLIDES_MS, useNativeDriver: true }).start();
+    if (isStill) {
+      shown.setValue(1);
+    } else {
+      shown.setValue(0);
+      Animated.timing(shown, { toValue: 1, duration: SLIDES_MS, useNativeDriver: true }).start();
+    }
 
     const timer = setTimeout(leave, STAYS_MS);
 
     return () => {
       clearTimeout(timer);
     };
-  }, [arrival.id, shown, leave]);
+  }, [arrival.id, isStill, shown, leave]);
 
   const hear = useCallback(
     (event: HWEvent) => {

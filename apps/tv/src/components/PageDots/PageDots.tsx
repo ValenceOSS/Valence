@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { PageDot } from '@ValenceTv/components/PageDots/components/PageDot/PageDot';
+import { useKeepsStill } from '@ValenceTv/platform/useKeepsStill';
 import { PAGE_DOT } from '@ValenceTv/components/PageDots/PAGE_DOT';
 import { placeOfDot } from '@ValenceTv/components/PageDots/placeOfDot';
 import type { PageDotsProps } from './PageDots.types';
@@ -23,6 +24,7 @@ import type { PageDotsProps } from './PageDots.types';
 const PageDots = ({ count, current, turnMs, isRunning, onTurnDone }: PageDotsProps) => {
   const [fill] = useState(() => new Animated.Value(0));
   const done = useRef(onTurnDone);
+  const isStill = useKeepsStill();
 
   useEffect(() => {
     done.current = onTurnDone;
@@ -33,6 +35,20 @@ const PageDots = ({ count, current, turnMs, isRunning, onTurnDone }: PageDotsPro
   }, [current, fill]);
 
   useEffect(() => {
+    if (isStill) {
+      if (!isRunning) {
+        return;
+      }
+
+      const turning = setTimeout(() => {
+        done.current();
+      }, turnMs);
+
+      return () => {
+        clearTimeout(turning);
+      };
+    }
+
     if (!isRunning) {
       fill.stopAnimation();
 
@@ -60,7 +76,7 @@ const PageDots = ({ count, current, turnMs, isRunning, onTurnDone }: PageDotsPro
     return () => {
       running?.stop();
     };
-  }, [current, isRunning, fill, turnMs]);
+  }, [current, isRunning, isStill, fill, turnMs]);
 
   const last = placeOfDot(count - 1, current);
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Animated, Easing, StyleSheet } from 'react-native';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { useKeepsStill } from '@ValenceTv/platform/useKeepsStill';
 import mark from '@ValenceTv/assets/valence-mark.png';
 import type { SplashProps } from './Splash.types';
 
@@ -22,8 +23,13 @@ const LEAVES_MS = 520;
 const Splash = ({ isDone, onGone }: SplashProps) => {
   const [breath] = useState(() => new Animated.Value(0));
   const [leaving] = useState(() => new Animated.Value(0));
+  const isStill = useKeepsStill();
 
   useEffect(() => {
+    if (isStill) {
+      return;
+    }
+
     const breathing = Animated.loop(
       Animated.sequence([
         Animated.timing(breath, {
@@ -46,10 +52,16 @@ const Splash = ({ isDone, onGone }: SplashProps) => {
     return () => {
       breathing.stop();
     };
-  }, [breath]);
+  }, [breath, isStill]);
 
   useEffect(() => {
     if (!isDone) {
+      return;
+    }
+
+    if (isStill) {
+      onGone();
+
       return;
     }
 
@@ -61,7 +73,7 @@ const Splash = ({ isDone, onGone }: SplashProps) => {
     }).start(() => {
       onGone();
     });
-  }, [isDone, leaving, onGone]);
+  }, [isDone, isStill, leaving, onGone]);
 
   return (
     <Animated.View

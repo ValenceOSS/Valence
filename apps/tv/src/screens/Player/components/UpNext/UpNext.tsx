@@ -5,7 +5,7 @@ import type { HWEvent } from 'react-native';
 import { SkipForward, X } from '@keyline-icons/react-native';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { nameTheNextEpisode } from '@ValenceClient/playback/nameTheNextEpisode';
-import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
+import { useKeepsStill } from '@ValenceTv/platform/useKeepsStill';
 import { Artwork } from '@ValenceTv/components/Artwork/Artwork';
 import { Button } from '@ValenceTv/components/Button/Button';
 import { tokens } from '@ValenceTv/theme/tokens';
@@ -47,7 +47,7 @@ const RECLAIMS_AFTER_MS = 120;
  * to the one it was last on.
  */
 const UpNext = ({ episode, isAsking, offer, onPlay, onStay }: UpNextProps) => {
-  const isStill = usePrefersStillness();
+  const isStill = useKeepsStill();
   const isCounting = !isAsking && offer !== null;
   const [arriving] = useState(() => new Animated.Value(STARTS_AT));
   const playRef = useRef<View>(null);

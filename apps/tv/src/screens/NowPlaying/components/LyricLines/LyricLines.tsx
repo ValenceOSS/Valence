@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import { lyricLineAt } from '@ValenceClient/music/lyricLineAt';
 import { EdgeFade } from '@ValenceTv/components/EdgeFade/EdgeFade';
+import { useKeepsStill } from '@ValenceTv/platform/useKeepsStill';
 import { tokens } from '@ValenceTv/theme/tokens';
 import { GapDots } from './components/GapDots/GapDots';
 import { LyricLine } from './components/LyricLine/LyricLine';
@@ -75,6 +76,7 @@ const LyricLines = ({ lyrics, positionMs, onSeek }: LyricLinesProps) => {
   const places = useRef(new Map<number, { top: number; height: number }>());
   const [measured, setMeasured] = useState(0);
   const [lift] = useState(() => new Animated.Value(0));
+  const isStill = useKeepsStill();
 
   useEffect(() => {
     if (browsed === null) {
@@ -99,14 +101,22 @@ const LyricLines = ({ lyrics, positionMs, onSeek }: LyricLinesProps) => {
       return;
     }
 
+    const lifted = -(place.top + place.height / 2 - room * SUNG_AT);
+
+    if (isStill) {
+      lift.setValue(lifted);
+
+      return;
+    }
+
     Animated.spring(lift, {
-      toValue: -(place.top + place.height / 2 - room * SUNG_AT),
+      toValue: lifted,
       damping: 26,
       stiffness: 120,
       mass: 1,
       useNativeDriver: true,
     }).start();
-  }, [followed, room, measured, lift]);
+  }, [followed, room, measured, lift, isStill]);
 
   const measure = useCallback((at: number, top: number, height: number) => {
     places.current.set(at, { top, height });

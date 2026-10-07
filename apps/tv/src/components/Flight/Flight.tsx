@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Animated, Easing, StyleSheet } from 'react-native';
+import { useKeepsStill } from '@ValenceTv/platform/useKeepsStill';
 import type { FlightProps } from './Flight.types';
 
 const FLIES_MS = 450;
@@ -23,8 +24,15 @@ const GIVES_UP_MS = 1500;
  */
 const Flight = ({ from, to, onLanded, children }: FlightProps) => {
   const [flown] = useState(() => new Animated.Value(0));
+  const isStill = useKeepsStill();
 
   useEffect(() => {
+    if (isStill) {
+      onLanded();
+
+      return;
+    }
+
     if (to === null) {
       const givingUp = setTimeout(onLanded, GIVES_UP_MS);
 
@@ -41,7 +49,7 @@ const Flight = ({ from, to, onLanded, children }: FlightProps) => {
     }).start(() => {
       onLanded();
     });
-  }, [to, flown, onLanded]);
+  }, [to, flown, isStill, onLanded]);
 
   const across = to === null ? 0 : to.x + to.width / 2 - (from.x + from.width / 2);
   const down = to === null ? 0 : to.y + to.height / 2 - (from.y + from.height / 2);
