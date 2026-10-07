@@ -1,17 +1,15 @@
 import { useEffect, useState } from 'react';
 import { cn } from '@ValenceUI/cn';
-import { isDarkInk } from '@ValenceScreens/library/isDarkInk';
 import type { TitleLogoProps } from './TitleLogo.types';
 
 /**
- * A title as its designer lettered it, drawn over artwork.
+ * A title as its designer lettered it, drawn over artwork exactly as the catalogue gives it, as the
+ * phone and the television draw it. It fades in once it has loaded rather than appearing a piece at
+ * a time.
  *
- * The catalogue's logos are drawn for every kind of ground, and some are black lettering meant for a
- * light poster — laid over a darkened frame they all but vanish. So each is looked at once it has
- * arrived, and one whose lettering is dark is drawn in white instead: the shape the designer gave
- * it, in the one colour that always reads over a picture. Coloured and light logos are left exactly
- * as they are. It stays hidden until it has been looked at, so a black logo is never seen before it
- * turns white.
+ * Logos lettered in black used to be turned white here so they would read over a darkened frame,
+ * but that turned every coloured part of them white too, a studio's red box among them; a logo that
+ * does not read over its artwork is better chosen again than repainted.
  *
  * @param src - Where the logo is served from.
  * @param alt - The title, for anybody who cannot see it.
@@ -19,10 +17,10 @@ import type { TitleLogoProps } from './TitleLogo.types';
  * @param onError - Told when the logo cannot be loaded, so the caller can set the title in type.
  */
 const TitleLogo = ({ src, alt, className, onError }: TitleLogoProps) => {
-  const [ink, setInk] = useState<'unread' | 'dark' | 'light'>('unread');
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    setInk('unread');
+    setIsLoaded(false);
   }, [src]);
 
   return (
@@ -32,11 +30,10 @@ const TitleLogo = ({ src, alt, className, onError }: TitleLogoProps) => {
       className={cn(
         className,
         'transition-opacity duration-[var(--duration-base)] ease-[var(--ease-out)]',
-        ink === 'unread' ? 'opacity-0' : 'opacity-100',
-        ink === 'dark' ? 'brightness-0 invert' : '',
+        isLoaded ? 'opacity-100' : 'opacity-0',
       )}
-      onLoad={(event) => {
-        setInk(isDarkInk(event.currentTarget) ? 'dark' : 'light');
+      onLoad={() => {
+        setIsLoaded(true);
       }}
       {...(onError === undefined ? {} : { onError })}
     />
