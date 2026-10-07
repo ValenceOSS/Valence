@@ -26551,9 +26551,24 @@
     "context": "Shown in the webhooks on the server (from `discordEmbedFor`)."
   },
   {
+    "handler": "server.webhooks.discordEmbedFor.directPlay",
+    "text": "Direct play",
+    "context": "How a session is played, in a Discord webhook's field about something starting: the original file, unchanged (from `discordEmbedFor`)."
+  },
+  {
+    "handler": "server.webhooks.discordEmbedFor.directStream",
+    "text": "Direct stream",
+    "context": "How a session is played, in a Discord webhook's field about something starting: the original picture with its sound converted (from `discordEmbedFor`)."
+  },
+  {
     "handler": "server.webhooks.discordEmbedFor.free",
     "text": "Free",
     "context": "Shown in the webhooks on the server (from `discordEmbedFor`)."
+  },
+  {
+    "handler": "server.webhooks.discordEmbedFor.freeOfTotal",
+    "text": "{free} of {total}",
+    "context": "A Discord webhook's field about a disk running out of room, saying how much is left of all of it (from `discordEmbedFor`). {free} and {total} are sizes, such as 37 GB and 7.3 TB."
   },
   {
     "handler": "server.webhooks.discordEmbedFor.from",
@@ -26679,11 +26694,6 @@
     "handler": "server.webhooks.discordEmbedFor.noLongerInLibraryName",
     "text": "Removed from {libraryName}",
     "context": "Shown in the webhooks on the server (from `discordEmbedFor`). {libraryName} is filled in by the app."
-  },
-  {
-    "handler": "server.webhooks.discordEmbedFor.of",
-    "text": "Of",
-    "context": "Shown in the webhooks on the server (from `discordEmbedFor`)."
   },
   {
     "handler": "server.webhooks.discordEmbedFor.reason",

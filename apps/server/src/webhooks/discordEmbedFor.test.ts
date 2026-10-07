@@ -224,6 +224,9 @@ describe('discordEmbedFor', () => {
       'Ada started listening',
     );
     expect(
+      embed({ ...anEnvelope, event: 'playback.started', data: listening }).fields,
+    ).toContainEqual({ name: 'Playing', value: 'Direct play', inline: true });
+    expect(
       embed({
         ...anEnvelope,
         event: 'playback.stopped',
@@ -784,5 +787,17 @@ describe('discordEmbedFor, with Valence’s mark', () => {
       discordEmbedFor(anArrival, 'a sentence', 'https://valence.example.com/icon.png').author,
     ).toEqual({ name: 'Valence', icon_url: 'https://valence.example.com/icon.png' });
     expect(discordEmbedFor(anArrival, 'a sentence').author).toEqual({ name: 'Valence' });
+  });
+});
+
+describe('discordEmbedFor, a disk running out of room', () => {
+  it('says how much is free of all of it, in one field', () => {
+    const drawn = embed({
+      ...anEnvelope,
+      event: 'disk.low',
+      data: { mountPoint: '/media', availableBytes: 40_000_000_000, totalBytes: 8_000_000_000_000 },
+    });
+
+    expect(drawn.fields).toEqual([{ name: 'Free', value: '37 GB of 7.3 TB', inline: true }]);
   });
 });

@@ -7,6 +7,7 @@ import { nameOfViewer } from './nameOfViewer';
 import { describeRequestState } from './describeRequestState';
 import { MEDIA_KIND_LABELS } from '@ValenceContracts/schemas/MediaKind';
 import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
+import type { PlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
 import type { WebhookPayload, WebhookRequest } from '@ValenceContracts/schemas/Webhook';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
@@ -103,6 +104,13 @@ const GENRES_SHOWN = 4;
  */
 const ratingOf = (rating: number | null): string | null =>
   rating === null || rating <= 0 ? null : `${rating.toFixed(1)}/10`;
+
+const PLAYED: Record<PlaybackMode, () => string> = {
+  DirectPlay: () => say('server.webhooks.discordEmbedFor.directPlay'),
+  DirectStream: () => say('server.webhooks.discordEmbedFor.directStream'),
+  Remux: () => say('common.remux'),
+  Transcode: () => say('common.transcode'),
+};
 
 const REQUEST_KINDS: Record<MediaRequestKind, () => string> = {
   film: () => say('common.film'),
@@ -296,7 +304,7 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
         posterUrl: payload.data.item.posterUrl,
         fields: [
           field(say('common.device'), payload.data.deviceLabel),
-          field(say('common.playing'), payload.data.mode),
+          field(say('common.playing'), PLAYED[payload.data.mode]()),
           field(say('common.quality'), payload.data.item.quality),
           field(
             say('server.webhooks.discordEmbedFor.runtime'),
@@ -490,9 +498,11 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
         fields: [
           field(
             say('server.webhooks.discordEmbedFor.free'),
-            formatBytes(payload.data.availableBytes),
+            say('server.webhooks.discordEmbedFor.freeOfTotal', {
+              free: formatBytes(payload.data.availableBytes),
+              total: formatBytes(payload.data.totalBytes),
+            }),
           ),
-          field(say('server.webhooks.discordEmbedFor.of'), formatBytes(payload.data.totalBytes)),
         ],
       };
     }
