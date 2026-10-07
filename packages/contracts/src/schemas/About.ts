@@ -3,7 +3,7 @@ import { ClientKindSchema } from './ClientKind';
 
 const AboutSchema = z.object({
   version: z.string().optional(),
-  commit: z.string(),
+  commit: z.string().optional(),
   features: z.array(z.string()).default([]),
   isDemo: z.boolean().optional(),
   closedApps: z.array(ClientKindSchema).optional(),

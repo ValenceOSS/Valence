@@ -96,6 +96,18 @@ describe('createApp', () => {
     });
   });
 
+  it('keeps which release it runs from somebody not signed in', async () => {
+    const answer = await app.request('/api/health');
+
+    expect(await answer.json()).not.toHaveProperty('version');
+  });
+
+  it('tells somebody signed in which release it runs', async () => {
+    const answer = await signedInApp(app).request(`${TEST_ORIGIN}/api/health`);
+
+    expect(await answer.json()).toHaveProperty('version');
+  });
+
   it('serves an OpenAPI 3.1 document', async () => {
     const response = await app.request('/api/openapi.json');
     const body = await response.json();

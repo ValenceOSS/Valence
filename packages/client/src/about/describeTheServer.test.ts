@@ -22,4 +22,8 @@ describe('describeTheServer', () => {
     expect(describeTheServer({ commit: 'unknown', features: [] })).toBeNull();
     expect(describeTheServer(null)).toBeNull();
   });
+
+  it('says nothing where the server keeps its build from somebody not signed in', () => {
+    expect(describeTheServer({ features: ['server.reportsFeatures'] })).toBeNull();
+  });
 });

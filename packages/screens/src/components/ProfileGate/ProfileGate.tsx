@@ -795,7 +795,8 @@ const ProfileGate = ({
         transition={{ duration: 0.4 }}
         className="absolute bottom-8 text-xs tracking-[0.2em] text-text-muted/60"
       >
-        © {name} · {version ?? '…'}
+        © {name}
+        {version === null ? null : <> · {version}</>}
       </motion.p>
     </main>
   );

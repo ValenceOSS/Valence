@@ -24,19 +24,26 @@ const notInTime = (): Promise<false> =>
  * five seconds, and waiting as long as that on a transcoder busy encoding made a server that was
  * answering everything else look unhealthy.
  *
+ * Which release it runs is said only to somebody signed in. Anybody can ask whether a server is up,
+ * and a release named to anybody who asks tells whoever is looking for servers still running one
+ * with a known flaw exactly which to try.
+ *
  * @param app - The application to register them on.
  * @param context - What they are answered with.
  */
 const serveHealth = (app: OpenAPIHono, context: AppContext): void => {
-  const { SERVER_VERSION, isTranscoderReachable } = context;
+  const { SERVER_VERSION, isTranscoderReachable, askerOf } = context;
 
-  app.openapi(healthRoute, async (context) => {
-    const transcoderReachable = await Promise.race([isTranscoderReachable(), notInTime()]);
+  app.openapi(healthRoute, async (asked) => {
+    const [transcoderReachable, account] = await Promise.all([
+      Promise.race([isTranscoderReachable(), notInTime()]),
+      askerOf(asked.req.raw.headers).account(),
+    ]);
 
-    return context.json(
+    return asked.json(
       {
         status: transcoderReachable ? ('ok' as const) : ('degraded' as const),
-        version: SERVER_VERSION,
+        ...(account === null ? {} : { version: SERVER_VERSION }),
         transcoderReachable,
       },
       200,
