@@ -14,11 +14,12 @@ const build = readTheBuild();
 const config: ExpoConfig = {
   name: 'Valence',
   slug: 'valence-tv',
+  owner: 'valence-oss',
   scheme: 'valence',
   version: build.version === 'unknown' ? '0.0.0' : build.version,
   userInterfaceStyle: 'dark',
   ios: {
-    bundleIdentifier: 'app.valence.tv',
+    bundleIdentifier: 'app.valence.ios',
     infoPlist: {
       NSLocalNetworkUsageDescription:
         'Valence looks on your network for the Valence servers there, so you can pick yours instead of typing its address.',
@@ -33,7 +34,26 @@ const config: ExpoConfig = {
     package: 'app.valence.tv',
     allowBackup: false,
   },
-  extra: { palette: readValencePalette(), build },
+  extra: {
+    palette: readValencePalette(),
+    build,
+    eas: {
+      projectId: '9221bbf1-0a41-470f-86a9-e25af77f0bda',
+      build: {
+        experimental: {
+          ios: {
+            appExtensions: [
+              {
+                targetName: 'TopShelf',
+                bundleIdentifier: 'app.valence.ios.topshelf',
+                entitlements: { 'com.apple.security.application-groups': ['group.app.valence.tv'] },
+              },
+            ],
+          },
+        },
+      },
+    },
+  },
   plugins: [
     [
       '@react-native-tvos/config-tv',
