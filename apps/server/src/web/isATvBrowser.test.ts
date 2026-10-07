@@ -28,6 +28,9 @@ const TITAN_2025 =
 const VESTEL_2020 =
   'Mozilla/5.0 (Linux) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36 OPR/46.0.2207.0 OMI/4.20.5.61.LIMA.148 Model/Vestel-MB181 HbbTV/1.5.1 (+DRM; JVC; MB181; 1.48.12.1; _TV__2020; ) SmartTvA/3.0.0';
 
+const LG_BROWSER_2022 =
+  'Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 (KHTML, like Gecko) Chr0me/94.0.4606.128 Safari/537.36 LG Browser/8.00.00(LGE; 65UR80006LJ; 03.31.60; 0x00000001; DTV_W23A); webOS.TV-2022';
+
 const DESKTOP =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36';
 
@@ -48,6 +51,10 @@ describe('isATvBrowser', () => {
 
   it('leaves a Vestel-made set on an older Chromium on the web app', () => {
     expect(isATvBrowser(VESTEL_2020)).toBe(false);
+  });
+
+  it('reads the version LG’s own browser gives, spelling Chrome with a zero', () => {
+    expect(isATvBrowser(LG_BROWSER_2022)).toBe(true);
   });
 
   it('reads the Chromium version Samsung gives without naming Chromium', () => {

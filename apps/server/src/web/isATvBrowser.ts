@@ -1,6 +1,6 @@
 import { tvBrowserOf } from '@ValenceCore/functions/tvBrowserOf';
 
-const CHROMIUM = /\bChrome\/(\d+)|\b(\d+)(?:\.\d+){3,4}\/[\d.]+ TV\b/;
+const CHROMIUM = /\bChr[o0]me\/(\d+)|\b(\d+)(?:\.\d+){3,4}\/[\d.]+ TV\b/;
 
 const OLDEST_CHROMIUM = 84;
 
@@ -8,8 +8,8 @@ const OLDEST_CHROMIUM = 84;
  * Whether a browser is a television's own, new enough to run the TV layout: LG's, Samsung's, an
  * Xbox's or another maker's, on a Chromium from 84 on, the first to lay out with gaps between
  * items, which the TV layout uses everywhere. An older television's browser is treated as any other
- * browser. Samsung's gives its Chromium's version without naming Chromium, as "85.0.4183.93/6.5
- * TV", so that is read too.
+ * browser. LG's own browser spells Chrome with a zero, as "Chr0me/94", and Samsung's gives its
+ * Chromium's version without naming Chromium, as "85.0.4183.93/6.5 TV", so both are read too.
  *
  * @param userAgent - What the browser says it is.
  * @returns Whether it should be shown the TV layout.
