@@ -22,10 +22,10 @@ const FOLDED = {
 };
 
 /**
- * The iPhone Duo twice over: opened out, on a book laid out as two pages with its controls in the
- * strip down the side, turning over with the page curl in a short film that loops; and folded,
- * standing in front of it at the bottom right with the same book on its outer screen. The two are
- * drawn at the same scale, so the folded one is as tall as the open one, as it is in the hand. The
+ * The iPhone Duo twice over, side by side: opened out, on a book laid out as two pages with its
+ * controls in the strip down the side, turning over with the page curl in a short film that loops;
+ * and folded beside it, with the same book on its outer screen. The two are drawn at the same scale
+ * and stand on the same line, so the folded one is as tall as the open one, as it is in the hand. The
  * film plays only while it is on screen, and whoever asked for stillness sees its first frame instead.
  */
 const DuoShowcase = () => {
@@ -78,18 +78,18 @@ const DuoShowcase = () => {
       </motion.div>
 
       <div ref={stageRef} className="mx-auto flex max-w-5xl justify-center px-5">
-        <div className="relative w-[86%]">
+        <div className="relative w-full">
           <ByTheWay
             lead="Fun fact..."
             drawing={TelevisionIcon}
             footnote="*TV models from before 2025 (Android)"
-            className="right-full top-[6%] mr-10 hidden w-56 min-[1400px]:block"
+            className="right-full top-[6%] mr-10 hidden w-56 min-[1600px]:block"
           >
             Your library plays on Apple TV, Android TV and Fire TV* too, with an app for each.
           </ByTheWay>
 
-          <div className="relative aspect-[100/72] translate-x-[4%]">
-            <DuoFrame {...OPEN} className="absolute left-0 top-0 w-[74%]">
+          <div className="relative aspect-[2014/909]">
+            <DuoFrame {...OPEN} className="absolute -left-[1.24%] -top-[4.4%] w-[65.7%]">
               <VideoSurface
                 label="A comic open on the unfolded iPhone Duo as two pages, turning over with a page curl"
                 src="/duo/page-turn.mp4"
@@ -100,7 +100,7 @@ const DuoShowcase = () => {
               />
             </DuoFrame>
 
-            <DuoFrame {...FOLDED} className="absolute left-[34%] top-[22.7%] w-[74%]">
+            <DuoFrame {...FOLDED} className="absolute -top-[4.38%] left-[50.74%] w-[65.7%]">
               <img
                 src="/duo/folded-reader.webp"
                 alt="The same comic's cover on the folded iPhone Duo's outer screen"
