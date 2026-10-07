@@ -6,11 +6,14 @@ import discord from '@ValenceBrands/discord.svg';
 import docker from '@ValenceBrands/docker.svg';
 import firefox from '@ValenceBrands/firefoxbrowser.svg';
 import github from '@ValenceBrands/github.svg';
+import hitachi from '@ValenceBrands/hitachi.svg';
 import lg from '@ValenceBrands/lg.svg';
 import linux from '@ValenceBrands/linux.svg';
 import opera from '@ValenceBrands/opera.svg';
 import safari from '@ValenceBrands/safari.svg';
 import samsung from '@ValenceBrands/samsung.svg';
+import sharp from '@ValenceBrands/sharp.svg';
+import toshiba from '@ValenceBrands/toshiba.svg';
 import vivaldi from '@ValenceBrands/vivaldi.svg';
 import windows from '@ValenceBrands/windows.svg';
 import { cn } from '@ValenceUI/cn';
@@ -25,11 +28,14 @@ const MARKS: Readonly<Record<BrandMarkName, string>> = {
   docker,
   firefox,
   github,
+  hitachi,
   lg,
   linux,
   opera,
   safari,
   samsung,
+  sharp,
+  toshiba,
   vivaldi,
   windows,
 };

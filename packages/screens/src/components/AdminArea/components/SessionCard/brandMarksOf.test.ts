@@ -25,6 +25,11 @@ describe('brandMarksOf', () => {
     expect(brandMarksOf('Samsung TV')).toEqual({ browser: null, system: 'samsung' });
   });
 
+  it('knows another maker’s television by its mark, where there is one', () => {
+    expect(brandMarksOf('Toshiba TV').system).toBe('toshiba');
+    expect(brandMarksOf('Hisense TV').system).toBeNull();
+  });
+
   it('answers no mark for an Xbox, whose maker asked for its marks to go', () => {
     expect(brandMarksOf('Xbox')).toEqual({ browser: null, system: null });
   });

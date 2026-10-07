@@ -7,11 +7,14 @@ type BrandMarkName =
   | 'docker'
   | 'firefox'
   | 'github'
+  | 'hitachi'
   | 'lg'
   | 'linux'
   | 'opera'
   | 'safari'
   | 'samsung'
+  | 'sharp'
+  | 'toshiba'
   | 'vivaldi'
   | 'windows';
 
