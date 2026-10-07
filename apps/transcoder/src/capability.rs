@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
 use tokio::process::Command;
 
-use crate::transcode_plan::{DeviceFilters, HardwareAccel, Platform, ToneMapping};
+use crate::transcode_plan::{
+    media_foundation_arguments, DeviceFilters, HardwareAccel, Platform, ToneMapping,
+};
 
 /// An encoder Valence may use, and the acceleration it belongs to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -23,7 +25,13 @@ pub struct EncoderCandidate {
 /// frame had to come off the device to reach it. There is no `mjpeg_nvenc` or
 /// `mjpeg_amf`: NVIDIA and AMD have no JPEG encoder here, and Jellyfin's own
 /// map lists the same four and no more. Those two fall to software, as they do
-/// there.
+/// there, and so does Media Foundation, which has no JPEG encoder either.
+///
+/// Media Foundation comes after every other hardware backend. It is what a
+/// Windows on Arm machine's Qualcomm GPU encodes through and the only backend
+/// there (VAL-355), while on an x64 PC it is a second door onto a card that
+/// `QSV`, `AMF` or `NVENC` drives better, so it is chosen only where none of
+/// them is.
 ///
 /// On Intel, `VAAPI` is listed before `QSV`, and the order is the whole of what
 /// picks a backend for a machine that was left on automatic. It was put that
@@ -119,6 +127,21 @@ pub const ENCODER_CANDIDATES: &[EncoderCandidate] = &[
         codec: "hevc",
         encoder: "hevc_rkmpp",
         accel: HardwareAccel::Rkmpp,
+    },
+    EncoderCandidate {
+        codec: "h264",
+        encoder: "h264_mf",
+        accel: HardwareAccel::MediaFoundation,
+    },
+    EncoderCandidate {
+        codec: "hevc",
+        encoder: "hevc_mf",
+        accel: HardwareAccel::MediaFoundation,
+    },
+    EncoderCandidate {
+        codec: "av1",
+        encoder: "av1_mf",
+        accel: HardwareAccel::MediaFoundation,
     },
     EncoderCandidate {
         codec: "mjpeg",
@@ -577,12 +600,13 @@ pub fn parse_listed_encoders(output: &str) -> Vec<String> {
 /// Checked against the build rather than assumed, because which of these exist
 /// depends on how `FFmpeg` was compiled and on its version: `scale_vt` arrived
 /// in 7.0, and some builds ship `scale_npp` in place of `scale_cuda`.
-pub const HARDWARE_SCALERS: [&str; 5] = [
+pub const HARDWARE_SCALERS: [&str; 6] = [
     "scale_vt",
     "scale_cuda",
     "vpp_qsv",
     "scale_vaapi",
     "vpp_amf",
+    "scale_d3d11",
 ];
 
 /// The smallest picture the encoders Valence drives are known to accept.
@@ -644,13 +668,9 @@ pub fn probe_arguments(candidate: &EncoderCandidate, device: &str) -> Vec<String
         arguments.push("format=nv12,hwupload".to_owned());
     }
 
-    arguments.extend([
-        "-c:v".to_owned(),
-        candidate.encoder.to_owned(),
-        "-f".to_owned(),
-        "null".to_owned(),
-        "-".to_owned(),
-    ]);
+    arguments.extend(["-c:v".to_owned(), candidate.encoder.to_owned()]);
+    arguments.extend(media_foundation_arguments(candidate.encoder));
+    arguments.extend(["-f".to_owned(), "null".to_owned(), "-".to_owned()]);
 
     arguments
 }
@@ -1795,6 +1815,39 @@ mod tests {
         assert!(arguments
             .windows(2)
             .any(|pair| pair == ["-c:v", "hevc_qsv"]));
+    }
+
+    /// Media Foundation would otherwise prove Microsoft's software encoder and call it the card.
+    #[test]
+    fn holds_a_media_foundation_probe_to_the_card() {
+        let arguments = probe_arguments(
+            &candidate("h264_mf", HardwareAccel::MediaFoundation),
+            DEFAULT_DEVICE,
+        );
+
+        assert!(arguments
+            .windows(4)
+            .any(|four| four == ["-c:v", "h264_mf", "-hw_encoding", "1"]));
+        assert_eq!(arguments.last().map(String::as_str), Some("-"));
+    }
+
+    #[test]
+    fn prefers_every_other_backend_to_media_foundation() {
+        let last_other = ENCODER_CANDIDATES
+            .iter()
+            .rposition(|found| {
+                !matches!(
+                    found.accel,
+                    HardwareAccel::None | HardwareAccel::MediaFoundation
+                ) && found.codec != "mjpeg"
+            })
+            .expect("other backends");
+        let first_media_foundation = ENCODER_CANDIDATES
+            .iter()
+            .position(|found| found.accel == HardwareAccel::MediaFoundation)
+            .expect("media foundation");
+
+        assert!(first_media_foundation > last_other);
     }
 
     #[test]

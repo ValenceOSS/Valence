@@ -4,7 +4,9 @@ use serde::{Deserialize, Serialize};
 use tokio::process::Command;
 
 use crate::capability::{complaint, VerifiedEncoder};
-use crate::transcode_plan::{HardwareAccel, HardwarePipeline};
+use crate::transcode_plan::{
+    media_foundation_arguments, system_memory_format, HardwareAccel, HardwarePipeline,
+};
 
 /// The size a probe frame is drawn at.
 ///
@@ -205,13 +207,17 @@ pub fn chain_probe_arguments(
     ]);
 
     arguments.extend(["-c:v".to_owned(), encoder.to_owned()]);
+    arguments.extend(media_foundation_arguments(encoder));
 
     let encodes_from_device = accel
         .pipeline()
         .is_some_and(|pipeline| pipeline.encodes_from_device);
 
     if shape == ChainShape::Preview && !encodes_from_device {
-        arguments.extend(["-pix_fmt".to_owned(), "yuv420p".to_owned()]);
+        arguments.extend([
+            "-pix_fmt".to_owned(),
+            system_memory_format(encoder).to_owned(),
+        ]);
     }
 
     arguments.extend(["-f".to_owned(), "null".to_owned(), "-".to_owned()]);

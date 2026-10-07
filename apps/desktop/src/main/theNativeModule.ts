@@ -44,13 +44,15 @@ let loaded: NativeModule | null = null;
  * Where the native module is, in a build and out of one.
  *
  * A native module cannot be loaded from inside an archive, so a build unpacks it beside the archive
- * the rest of the application is in, and it is read from there.
+ * the rest of the application is in, and it is read from there. There is one per processor, since a
+ * Windows build carries both the x64 and the ARM64 module, and this machine's is the one it loads.
  *
  * @param appPath - Where the application is.
+ * @param arch - This machine's processor, as Node names it.
  * @returns The module's path.
  */
-const whereTheNativeModuleIs = (appPath: string): string =>
-  join(appPath.replace(/app\.asar$/u, 'app.asar.unpacked'), 'dist-native', 'valence.node');
+const whereTheNativeModuleIs = (appPath: string, arch: string): string =>
+  join(appPath.replace(/app\.asar$/u, 'app.asar.unpacked'), 'dist-native', `valence-${arch}.node`);
 
 /**
  * The part of this client written in Rust, which asks Windows for what Electron cannot: a passkey,
@@ -67,7 +69,7 @@ const theNativeModule = (): NativeModule => {
   if (loaded === null) {
     try {
       loaded = NativeSchema.parse(
-        createRequire(import.meta.url)(whereTheNativeModuleIs(app.getAppPath())),
+        createRequire(import.meta.url)(whereTheNativeModuleIs(app.getAppPath(), process.arch)),
       );
     } catch {
       loaded = {};

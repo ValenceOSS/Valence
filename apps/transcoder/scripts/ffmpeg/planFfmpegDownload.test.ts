@@ -60,8 +60,18 @@ describe('planFfmpegDownload', () => {
     });
   });
 
-  it('says why Windows on Arm has nothing to fetch', () => {
+  it('takes the ARM64 portable zip on Windows on Arm, rather than the x64 one under emulation', () => {
     const plan = planFfmpegDownload({ platform: 'win32', arch: 'arm64', version: VERSION });
+
+    expect(plan).toStrictEqual({
+      kind: 'zip',
+      fileName: `valence-ffmpeg_${VERSION}_portable_winarm64-clang-gpl.zip`,
+      url: `https://github.com/ValenceOSS/valence-ffmpeg/releases/download/v${VERSION}/valence-ffmpeg_${VERSION}_portable_winarm64-clang-gpl.zip`,
+    });
+  });
+
+  it('says why 32-bit Windows has nothing to fetch', () => {
+    const plan = planFfmpegDownload({ platform: 'win32', arch: 'ia32', version: VERSION });
 
     expect(plan).toMatchObject({ kind: 'unsupported' });
   });

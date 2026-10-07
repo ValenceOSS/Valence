@@ -1,21 +1,22 @@
 ---
 title: Hardware transcoding on Windows
-description: Run Valence's transcoder natively on Windows so it can use Intel QuickSync, AMD AMF or NVIDIA NVENC, with everything else in Docker as usual.
+description: Run Valence's transcoder natively on Windows so it can use Intel QuickSync, AMD AMF, NVIDIA NVENC or, on Windows on Arm, Media Foundation, with everything else in Docker as usual.
 order: 5
 ---
 
 On Windows, Valence runs as the usual Docker stack under Docker Desktop, but a container there reaches very little of the graphics card. Docker Desktop runs containers inside WSL 2, which offers no `/dev/dri` for Intel or AMD, and only NVIDIA's driver passes its encoder through.
 
-So on Windows the transcoder, the one part of Valence that needs the hardware, runs natively, and everything else stays in Docker. Running natively, it reaches Intel QuickSync, AMD AMF and NVIDIA NVENC through the same drivers every Windows application uses. The server reaches it at `host.docker.internal`, and nothing else about the stack changes.
+So on Windows the transcoder, the one part of Valence that needs the hardware, runs natively, and everything else stays in Docker. Running natively, it reaches Intel QuickSync, AMD AMF and NVIDIA NVENC through the same drivers every Windows application uses, and on Windows on Arm the Qualcomm GPU through Media Foundation. The server reaches it at `host.docker.internal`, and nothing else about the stack changes.
 
-It needs a 64-bit Windows 10 or 11 PC with a current graphics driver from Intel, AMD or NVIDIA, and the [Docker Compose](/install/docker-compose) stack set up first.
+It needs a 64-bit Windows 10 or 11 PC with a current graphics driver from Intel, AMD or NVIDIA, or a Windows 11 PC on Arm, such as a Snapdragon X laptop, and the [Docker Compose](/install/docker-compose) stack set up first.
 
 ## Install the transcoder
 
-Each release carries the transcoder for Windows, packed with the FFmpeg build it was checked against. In PowerShell, download it and unpack it into your user folder:
+Each release carries the transcoder for Windows, packed with the FFmpeg build it was checked against: `valence-transcoder-windows-x64.zip` for Intel and AMD PCs, and `valence-transcoder-windows-arm64.zip` for Windows on Arm. Take the one for your processor. The `x64` one runs on Windows on Arm too, under emulation, but slower and without the hardware encoder. In PowerShell, this downloads the right one and unpacks it into your user folder:
 
 ```powershell
-Invoke-WebRequest https://github.com/ValenceOSS/Valence/releases/latest/download/valence-transcoder-windows-x64.zip -OutFile "$env:TEMP\valence-transcoder.zip"
+$arch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") { "arm64" } else { "x64" }
+Invoke-WebRequest "https://github.com/ValenceOSS/Valence/releases/latest/download/valence-transcoder-windows-$arch.zip" -OutFile "$env:TEMP\valence-transcoder.zip"
 Expand-Archive "$env:TEMP\valence-transcoder.zip" -DestinationPath $env:USERPROFILE -Force
 Get-ChildItem "$env:USERPROFILE\valence-transcoder" | Unblock-File
 ```
@@ -25,10 +26,10 @@ That leaves a `valence-transcoder` folder in your user folder, holding `valence-
 Check that it can see the hardware:
 
 ```powershell
-& "$env:USERPROFILE\valence-transcoder\valence-transcoder.exe" capabilities | Select-String "_qsv|_amf|_nvenc"
+& "$env:USERPROFILE\valence-transcoder\valence-transcoder.exe" capabilities | Select-String "_qsv|_amf|_nvenc|_mf"
 ```
 
-It should list the encoders for your card: `h264_qsv` and `hevc_qsv` on Intel, `h264_amf` and `hevc_amf` on AMD, `h264_nvenc` and `hevc_nvenc` on NVIDIA. Keep the transcoder on the same version as the Valence image: when you update one, update the other.
+It should list the encoders for your card: `h264_qsv` and `hevc_qsv` on Intel, `h264_amf` and `hevc_amf` on AMD, `h264_nvenc` and `hevc_nvenc` on NVIDIA, and `h264_mf`, with `hevc_mf` where the GPU encodes HEVC, on Windows on Arm. Keep the transcoder on the same version as the Valence image: when you update one, update the other.
 
 ## Tell it where your files are
 
@@ -135,11 +136,23 @@ If something else on the PC already uses port 8422, choose another in `start.cmd
 
 ## Check that it works
 
-1. Open **Settings** and find the **Hardware acceleration** card. With **Automatic** selected it should name `QSV`, `AMF` or `NVENC`.
+1. Open **Settings** and find the **Hardware acceleration** card. With **Automatic** selected it should name `QSV`, `AMF`, `NVENC` or, on Windows on Arm, `Media Foundation`.
 2. Play something that needs a transcode and open **Sessions**. The session names its mode, and `transcoder.log` names the encoder, such as `h264_qsv`.
 3. Restart the PC, sign in, and play it again. The transcoder should have come back on its own.
 
 On an Intel or AMD machine, HDR films are converted to SDR on the processor for now, while the picture is still encoded on the card. On NVIDIA they are converted on the card, as on Linux, once the startup check has proved `tonemap_cuda` runs.
+
+## Windows on Arm
+
+A Windows on Arm PC, such as a Snapdragon X laptop, has none of QuickSync, AMF or NVENC. Its GPU encodes through Media Foundation, the video interface Windows itself provides, and the `arm64` transcoder uses it there:
+
+- **Decoding and scaling** run on the GPU through Direct3D 11, as on an Intel or AMD PC.
+- **Encoding** uses `h264_mf`, and `hevc_mf` where the GPU has an HEVC encoder. The transcoder only uses the GPU's own encoder: on a machine without one it says Software only, rather than counting Windows' software encoder as hardware.
+- **HDR** films are converted to SDR on the processor, and encoded on the GPU in eight bits.
+- **Subtitles** that are burned in are drawn on the processor, and the picture is still encoded on the GPU.
+- **Previews** are scaled on the processor and encoded on the GPU. **Thumbnail sheets** are drawn on the processor, as on AMD and NVIDIA.
+
+Media Foundation is the last choice on **Automatic**, so on an Intel, AMD or NVIDIA PC the vendor's own encoder is still the one used.
 
 ## Troubleshooting
 
@@ -151,4 +164,5 @@ On an Intel or AMD machine, HDR films are converted to SDR on the processor for 
 | The log cannot open files on a network share                                        | The task has no access to shares. Register it with your password, as above.                                                                                                    |
 | Windows says it protected your PC when the transcoder starts                        | The files are still marked as downloaded. Run the `Unblock-File` line above.                                                                                                   |
 | Settings says Software only                                                         | The transcoder could not open the card. Run the `capabilities` check above, update the graphics driver, and read the log.                                                      |
+| Transcoding is slow on a Windows on Arm PC                                          | The `x64` transcoder is running under emulation, without the GPU. Install `valence-transcoder-windows-arm64.zip` over it.                                                      |
 | A machine with two cards uses the wrong one                                         | QuickSync always opens the Intel card and AMF the AMD one. To use NVIDIA on a machine that also has Intel graphics, choose **NVENC** in Hardware acceleration.                 |

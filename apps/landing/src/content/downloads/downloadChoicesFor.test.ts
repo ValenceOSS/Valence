@@ -19,7 +19,9 @@ const RELEASE: LatestRelease = {
       url: 'https://example.test/setup.exe',
       sizeBytes: 200,
     },
+    windowsArm: null,
     linux: null,
+    linuxArm: null,
   },
 };
 
@@ -43,6 +45,67 @@ describe('downloadChoicesFor', () => {
     expect(linux?.url).toBe(RELEASES_URL);
     expect(linux?.fileName).toBeNull();
     expect(linux?.sizeBytes).toBeNull();
+  });
+
+  it('offers the ARM64 builds beside the x64 ones where the release carries them', () => {
+    const { lead, others } = downloadChoicesFor(
+      {
+        ...RELEASE,
+        installers: {
+          ...RELEASE.installers,
+          windowsArm: {
+            name: 'Valence-Setup-1.4.0-arm64.exe',
+            url: 'https://example.test/setup-arm64.exe',
+            sizeBytes: 210,
+          },
+          linuxArm: {
+            name: 'Valence-1.4.0-arm64.AppImage',
+            url: 'https://example.test/arm64.AppImage',
+            sizeBytes: 220,
+          },
+        },
+      },
+      'windows',
+    );
+
+    expect(lead?.id).toBe('windows');
+    expect(others.map((choice) => choice.id)).toEqual([
+      'macAppleSilicon',
+      'macIntel',
+      'windowsArm',
+      'linux',
+      'linuxArm',
+    ]);
+    expect(others.find((choice) => choice.id === 'windowsArm')?.detail).toBe('Installer · arm64');
+  });
+
+  it('leads an ARM computer with its own build where the release carries one', () => {
+    const release: LatestRelease = {
+      ...RELEASE,
+      installers: {
+        ...RELEASE.installers,
+        windowsArm: {
+          name: 'Valence-Setup-1.4.0-arm64.exe',
+          url: 'https://example.test/setup-arm64.exe',
+          sizeBytes: 210,
+        },
+      },
+    };
+    const { lead, others } = downloadChoicesFor(release, 'windows', true);
+
+    expect(lead?.id).toBe('windowsArm');
+    expect(others.map((choice) => choice.id)).toContain('windows');
+  });
+
+  it('leads an ARM computer with the x64 build where the release has no ARM64 one', () => {
+    expect(downloadChoicesFor(RELEASE, 'windows', true).lead?.id).toBe('windows');
+  });
+
+  it('leaves out an ARM64 build the release does not carry, rather than promising it', () => {
+    const { others } = downloadChoicesFor(RELEASE, 'windows');
+
+    expect(others.some((choice) => choice.id === 'windowsArm')).toBe(false);
+    expect(others.some((choice) => choice.id === 'linuxArm')).toBe(false);
   });
 
   it('leads with nothing on a phone, or where no release could be read', () => {

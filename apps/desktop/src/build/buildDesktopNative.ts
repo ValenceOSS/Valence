@@ -34,22 +34,30 @@ const run = (command: string, args: string[]): void => {
 
 const isOptional = process.argv.includes('--optional');
 
+const askedFor = process.argv.flatMap((arg) =>
+  arg.startsWith('--arch=') ? [arg.slice('--arch='.length)] : [],
+);
+
+const archs = askedFor.length > 0 ? askedFor : [process.arch];
+
 const hasCargo = spawnSync('cargo', ['--version'], { stdio: 'ignore' }).error === undefined;
 
-const plan = planNativeBuild(process.platform);
+for (const arch of archs) {
+  const plan = planNativeBuild(process.platform, arch);
 
-if (plan.kind === 'none') {
-  say('Nothing native to build on this machine.');
-} else if (!hasCargo && isOptional) {
-  say(
-    'cargo was not found, so the desktop app starts without its native module and cannot use passkeys.',
-  );
-} else {
-  run('cargo', plan.args);
-  mkdirSync(OUT, { recursive: true });
+  if (plan.kind === 'none') {
+    say(`Nothing native to build on this machine for ${arch}.`);
+  } else if (!hasCargo && isOptional) {
+    say(
+      'cargo was not found, so the desktop app starts without its native module and cannot use passkeys.',
+    );
+  } else {
+    run('cargo', plan.args);
+    mkdirSync(OUT, { recursive: true });
 
-  const out = join(OUT, 'valence.node');
+    const out = join(OUT, plan.module);
 
-  copyFileSync(join(ROOT, plan.library), out);
-  say(`Built ${out}.`);
+    copyFileSync(join(ROOT, plan.library), out);
+    say(`Built ${out}.`);
+  }
 }

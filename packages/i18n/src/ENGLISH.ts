@@ -2781,9 +2781,11 @@ const ENGLISH = {
   'screens.adminArea.accelerationOptions.apple': 'Apple',
   'screens.adminArea.accelerationOptions.intel': 'Intel',
   'screens.adminArea.accelerationOptions.intelAndAMDOnLinux': 'Intel and AMD on Linux',
+  'screens.adminArea.accelerationOptions.mediaFoundation': 'Media Foundation',
   'screens.adminArea.accelerationOptions.neverUseTheHardware': 'Never use hardware acceleration',
   'screens.adminArea.accelerationOptions.nVENC': 'NVENC',
   'screens.adminArea.accelerationOptions.nVIDIA': 'NVIDIA',
+  'screens.adminArea.accelerationOptions.qualcommOnWindows': 'Qualcomm on Windows on Arm',
   'screens.adminArea.accelerationOptions.rKMPP': 'RKMPP',
   'screens.adminArea.accelerationOptions.rockchip': 'Rockchip',
   'screens.adminArea.accelerationOptions.useWhicheverTheMachineProvesIt':

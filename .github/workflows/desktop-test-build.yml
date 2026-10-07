@@ -2,7 +2,7 @@ name: Desktop test build
 
 # Builds the desktop app for whichever platforms are ticked, from any branch, for trying a change out
 # on the machine it is for. The build itself is desktop.yml's, so a test build is packaged exactly as
-# a release is; this only chooses what to build, so nobody waits on three runners for one installer.
+# a release is; this only chooses what to build, so nobody waits on four runners for one installer.
 #
 # Start it from the Actions tab, or with
 #   gh workflow run desktop-test-build.yml --ref <branch> -f windows=true -f macos=false -f linux=false

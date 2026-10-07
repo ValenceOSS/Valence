@@ -11390,6 +11390,11 @@
     "context": "The detail in the admin area (from `accelerationOptions`)."
   },
   {
+    "handler": "screens.adminArea.accelerationOptions.mediaFoundation",
+    "text": "Media Foundation",
+    "context": "The label in the admin area (from `accelerationOptions`)."
+  },
+  {
     "handler": "screens.adminArea.accelerationOptions.neverUseTheHardware",
     "text": "Never use hardware acceleration",
     "context": "The detail in the admin area (from `accelerationOptions`)."
@@ -11402,6 +11407,11 @@
   {
     "handler": "screens.adminArea.accelerationOptions.nVIDIA",
     "text": "NVIDIA",
+    "context": "The detail in the admin area (from `accelerationOptions`)."
+  },
+  {
+    "handler": "screens.adminArea.accelerationOptions.qualcommOnWindows",
+    "text": "Qualcomm on Windows on Arm",
     "context": "The detail in the admin area (from `accelerationOptions`)."
   },
   {

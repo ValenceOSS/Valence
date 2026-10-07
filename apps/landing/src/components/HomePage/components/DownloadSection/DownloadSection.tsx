@@ -22,6 +22,7 @@ import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
 import { describeReleaseDate } from '@ValenceLanding/content/changelog/describeReleaseDate';
 import { SERVER_COMMANDS } from '@ValenceLanding/content/downloads/SERVER_COMMANDS';
 import { detectPlatform } from '@ValenceLanding/content/downloads/detectPlatform';
+import { useIsArm } from '@ValenceLanding/content/downloads/useIsArm';
 import { downloadChoicesFor } from '@ValenceLanding/content/downloads/downloadChoicesFor';
 import { latestRelease } from '@ValenceLanding/content/downloads/latestRelease';
 import { nativeTranscoderFor } from '@ValenceLanding/content/downloads/nativeTranscoderFor';
@@ -36,7 +37,9 @@ const LEAD_GLYPHS = {
   macAppleSilicon: IconBrandAppleFilled,
   macIntel: IconBrandAppleFilled,
   windows: IconBrandWindowsFilled,
+  windowsArm: IconBrandWindowsFilled,
   linux: LinuxMark,
+  linuxArm: LinuxMark,
 } as const;
 
 const DOC_LINK =
@@ -53,7 +56,8 @@ const HEADING = 'font-mono text-xs uppercase tracking-[0.14em] text-text-muted';
 const DownloadSection = () => {
   const prefersReducedMotion = useReducedMotionConfig();
   const [platform] = useState(() => detectPlatform(navigator));
-  const { lead, others } = downloadChoicesFor(LATEST, platform);
+  const isArm = useIsArm();
+  const { lead, others } = downloadChoicesFor(LATEST, platform, isArm);
   const nativeTranscoder = nativeTranscoderFor(platform);
   const isOnAPhone = platform === 'iphone' || platform === 'android';
   const intel = platform === 'mac' ? others.find((choice) => choice.id === 'macIntel') : undefined;

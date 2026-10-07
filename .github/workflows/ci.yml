@@ -364,13 +364,23 @@ jobs:
   # that splits on the drive's colon, or a test that assumes a forward slash, so it is linted and its
   # unit tests run here too, on the same pull requests as the Linux job. The suites that drive a real
   # FFmpeg stay on Linux: there is no Valence FFmpeg for this runner to fetch from a package.
+  # On x64 and on Windows on Arm, each natively, so a compile error only one architecture has shows
+  # up on the pull request rather than in a release (VAL-355).
   transcoder-windows:
-    name: Transcoder on Windows
-    runs-on: windows-2025-vs2026
+    name: Transcoder on Windows (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
     needs: changes
     if: needs.changes.outputs.rust == 'true'
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: windows-2025-vs2026
+          - arch: arm64
+            runner: windows-11-arm
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -390,13 +400,23 @@ jobs:
   # The Rust job builds on Linux, where the desktop app's native module holds nothing but a helper.
   # Its Windows Hello code only compiles on Windows, so it is linted and built there, on the pull
   # requests that touch it.
+  #
+  # On both of Windows' architectures, as the transcoder is: the desktop app ships an ARM64 build too.
   desktop-native:
-    name: Desktop native module on Windows
-    runs-on: windows-2025-vs2026
+    name: Desktop native module on Windows (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
     needs: changes
     if: needs.changes.outputs.native == 'true'
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: windows-2025-vs2026
+          - arch: arm64
+            runner: windows-11-arm
     steps:
       # Nothing here pushes, and cargo runs build scripts from every crate it builds, so the token
       # is not left behind in the checkout for them to find.
