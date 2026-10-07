@@ -1,5 +1,6 @@
 import { useRef } from 'react';
-import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useTheScreen } from '@ValenceTv/platform/useTheScreen';
 import { Artwork } from '@ValenceTv/components/Artwork/Artwork';
 import { Badges } from '@ValenceTv/components/Badges/Badges';
 import { EdgeFade } from '@ValenceTv/components/EdgeFade/EdgeFade';
@@ -55,7 +56,7 @@ const TitleSpread = ({
   children,
   below,
 }: TitleSpreadProps) => {
-  const screen = useWindowDimensions();
+  const screen = useTheScreen();
   const page = useRef<ScrollView>(null);
   const picture = {
     width: screen.width * PICTURE_SHARE,

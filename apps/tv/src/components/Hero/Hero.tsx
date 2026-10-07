@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { useTheScreen } from '@ValenceTv/platform/useTheScreen';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useQuery } from '@tanstack/react-query';
 import { Info } from '@keyline-icons/react-native';
@@ -70,7 +71,7 @@ const Hero = ({
   onReached,
   playRef,
 }: HeroProps) => {
-  const screen = useWindowDimensions();
+  const screen = useTheScreen();
   const [turn, setTurn] = useState(0);
   const [isHeld, setIsHeld] = useState(false);
   const featuring = useRef(onFeature);

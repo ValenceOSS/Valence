@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Animated, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Animated, StyleSheet, Text, View } from 'react-native';
+import { useTheScreen } from '@ValenceTv/platform/useTheScreen';
 import { useRemote } from '@ValenceTv/remote/useRemote';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -152,7 +153,7 @@ const NowPlaying = ({ onEmpty, onBack, watchParty }: NowPlayingProps) => {
     upToBack.leave();
     downFromBack.leave();
   }, [upToBack, downFromBack]);
-  const screen = useWindowDimensions();
+  const screen = useTheScreen();
   const [fade] = useState(() => new Animated.Value(1));
   const [arrival] = useState(() => new Animated.Value(1));
 

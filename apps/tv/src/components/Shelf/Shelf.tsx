@@ -1,5 +1,6 @@
 import { memo } from 'react';
-import { FlatList, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { useTheScreen } from '@ValenceTv/platform/useTheScreen';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { MediaCard } from '@ValenceTv/components/MediaCard/MediaCard';
 import { cardSizes } from '@ValenceTv/components/MediaCard/cardSizes';
@@ -59,7 +60,7 @@ const ShelfRow = ({
   isUrgent = false,
   onFocus,
 }: ShelfProps) => {
-  const screen = useWindowDimensions();
+  const screen = useTheScreen();
   const card = cardSizes[shape];
   const inView = Math.ceil(screen.width / (card.width + tokens.space.md)) + 1;
 

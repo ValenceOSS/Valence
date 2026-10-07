@@ -1,12 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useTheScreen } from '@ValenceTv/platform/useTheScreen';
 import { useQuery } from '@tanstack/react-query';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { MusicShelf } from '@ValenceTv/components/MusicShelf/MusicShelf';
@@ -50,7 +44,7 @@ const MusicPage = ({ onOpen, onFeature, upTo }: MusicProps) => {
   const albums = useQuery(musicQueries.albums('recent'));
   const artists = useQuery(musicQueries.artists());
   const playlists = useQuery(musicQueries.playlists());
-  const screen = useWindowDimensions();
+  const screen = useTheScreen();
   const room = useRoomToFill();
   const upToBar = useHandOff('up', upTo);
   const [featured, setFeatured] = useState<MusicItem | null>(null);

@@ -1,12 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useTheScreen } from '@ValenceTv/platform/useTheScreen';
 import { useQuery } from '@tanstack/react-query';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import { stillListening } from '@ValenceClient/books/stillListening';
@@ -54,7 +48,7 @@ const moodOf = (book: Book | null): string | null =>
 const BooksPage = ({ libraryIds, onOpen, onFeature, upTo }: BooksProps) => {
   const { books, isPending } = useAudiobooks(libraryIds);
   const listening = useQuery(bookQueries.listening());
-  const screen = useWindowDimensions();
+  const screen = useTheScreen();
   const room = useRoomToFill();
   const upToBar = useHandOff('up', upTo);
   const [featured, setFeatured] = useState<Book | null>(null);

@@ -5,9 +5,11 @@ import { installTvPlatform } from '@ValenceTv/platform/installTvPlatform';
 import { tellQueriesWhenOnScreen } from '@ValenceTv/platform/tellQueriesWhenOnScreen';
 import { Television } from '@ValenceTv/Television';
 import { startFocusEngine } from '@ValenceTv/focus/startFocusEngine';
+import { fitTheScreen } from '@ValenceTv/platform/fitTheScreen';
 
 installTvPlatform();
 tellQueriesWhenOnScreen();
+fitTheScreen();
 startFocusEngine();
 
 registerRootComponent(Television);

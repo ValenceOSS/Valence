@@ -1,4 +1,5 @@
-import { FlatList, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { useTheScreen } from '@ValenceTv/platform/useTheScreen';
 import { CatalogueCard } from '@ValenceTv/components/CatalogueCard/CatalogueCard';
 import { cardSizes } from '@ValenceTv/components/MediaCard/cardSizes';
 import { tokens } from '@ValenceTv/theme/tokens';
@@ -17,7 +18,7 @@ import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
  * @param onOpen - Told which was chosen.
  */
 const CatalogueShelf = ({ title, titles, onOpen }: CatalogueShelfProps) => {
-  const screen = useWindowDimensions();
+  const screen = useTheScreen();
   const inView = Math.ceil(screen.width / (cardSizes.poster.width + tokens.space.md)) + 1;
 
   return (
