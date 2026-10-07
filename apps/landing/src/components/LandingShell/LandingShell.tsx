@@ -2,6 +2,7 @@ import { Link, useRouterState } from '@tanstack/react-router';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { ReleaseBar } from '@ValenceLanding/components/ReleaseBar/ReleaseBar';
 import { LandingNav } from '@ValenceLanding/components/LandingNav/LandingNav';
+import { SiteCursor } from '@ValenceLanding/components/SiteCursor/SiteCursor';
 import { SiteFooter } from '@ValenceUI/SiteFooter';
 import type { InSiteLinkProps } from '@ValenceUI/SiteFooter.types';
 import { HomePage } from '@ValenceLanding/components/HomePage/HomePage';
@@ -77,6 +78,8 @@ const LandingShell = () => {
       </AnimatePresence>
 
       <SiteFooter here="landing" InSiteLink={LandingLink} />
+
+      <SiteCursor />
     </div>
   );
 };

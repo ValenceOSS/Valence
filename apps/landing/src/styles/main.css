@@ -31,6 +31,15 @@
   animation: none;
 }
 
+:root[data-graphics='software'] * {
+  backdrop-filter: none !important;
+}
+
+.valence-cursor-none,
+.valence-cursor-none * {
+  cursor: none !important;
+}
+
 .valence-outline-text {
   -webkit-text-fill-color: var(--frame-back);
   -webkit-text-stroke: 3px currentColor;

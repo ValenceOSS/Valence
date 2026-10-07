@@ -10,7 +10,7 @@ import type { DuoFrameProps } from './DuoFrame.types';
  * @param frame - The picture of the hardware, clear where the screen is.
  * @param width - How wide that picture is, in its own pixels.
  * @param height - How tall it is.
- * @param screen - Where the screen sits within it.
+ * @param screen - Where the screen sits within it, and how round its corners are.
  * @param className - Its size and place, which the caller decides.
  * @param children - What the screen shows.
  */
@@ -26,6 +26,7 @@ const DuoFrame = ({ frame, width, height, screen, className, children }: DuoFram
         top: `${((screen.top / height) * 100).toString()}%`,
         width: `${((screen.width / width) * 100).toString()}%`,
         height: `${((screen.height / height) * 100).toString()}%`,
+        borderRadius: `${((screen.radius / screen.width) * 100).toString()}% / ${((screen.radius / screen.height) * 100).toString()}%`,
       }}
     >
       {children}

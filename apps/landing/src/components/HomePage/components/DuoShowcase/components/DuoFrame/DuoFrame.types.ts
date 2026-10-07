@@ -4,7 +4,7 @@ type DuoFrameProps = {
   frame: string;
   width: number;
   height: number;
-  screen: { left: number; top: number; width: number; height: number };
+  screen: { left: number; top: number; width: number; height: number; radius: number };
   className?: string;
   children: ReactNode;
 };

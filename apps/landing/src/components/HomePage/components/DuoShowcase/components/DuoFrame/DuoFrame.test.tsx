@@ -9,7 +9,7 @@ describe('DuoFrame', () => {
         frame="/duo/frame-open.webp"
         width={1000}
         height={500}
-        screen={{ left: 100, top: 50, width: 800, height: 400 }}
+        screen={{ left: 100, top: 50, width: 800, height: 400, radius: 40 }}
       >
         <p>On screen</p>
       </DuoFrame>,

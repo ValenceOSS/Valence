@@ -18,6 +18,8 @@ import { Doodle } from '@ValenceUI/Doodle';
 import { Icon } from '@ValenceUI/Icon';
 import { NavBar } from '@ValenceUI/NavBar';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
+import { Plug as PlugIcon } from '@keyline-icons/react/duotone';
+import { ByTheWay } from '@ValenceLanding/components/HomePage/components/ByTheWay/ByTheWay';
 
 const STOPS = [
   {
@@ -163,6 +165,10 @@ const AppTour = () => {
       </div>
 
       <div className="relative">
+        <ByTheWay drawing={PlugIcon} className="-left-16 -top-48 hidden xl:block">
+          Every plugin runs in a process of its own, kept apart from the server.
+        </ByTheWay>
+
         <span
           aria-hidden
           className="pointer-events-none absolute -right-4 -top-14 z-10 hidden w-40 lg:block xl:-right-16"

@@ -4,12 +4,14 @@ import { revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
 import { useReached } from '@ValenceUI/useReached';
 import { VideoSurface } from '@ValenceUI/VideoSurface';
 import { DuoFrame } from './components/DuoFrame/DuoFrame';
+import { Monitor as TelevisionIcon } from '@keyline-icons/react/duotone';
+import { ByTheWay } from '@ValenceLanding/components/HomePage/components/ByTheWay/ByTheWay';
 
 const OPEN = {
   frame: '/duo/frame-open.webp',
-  width: 1356,
-  height: 880,
-  screen: { left: 208, top: 110, width: 940, height: 661 },
+  width: 1323,
+  height: 993,
+  screen: { left: 49, top: 67, width: 1225, height: 859, radius: 28 },
 };
 
 /**
@@ -47,6 +49,12 @@ const DuoShowcase = () => {
       aria-label="Valence on the iPhone Duo"
       className="relative isolate overflow-hidden py-24"
     >
+      <ByTheWay
+        drawing={TelevisionIcon}
+        className="right-[2%] top-[50%] hidden w-56 min-[1400px]:block"
+      >
+        The same server plays on Apple TV, Android TV and Fire TV too.
+      </ByTheWay>
       <motion.div
         ref={headingRef}
         initial="hidden"
@@ -67,7 +75,7 @@ const DuoShowcase = () => {
       </motion.div>
 
       <div ref={stageRef} className="mx-auto flex max-w-5xl justify-center px-5">
-        <DuoFrame {...OPEN} className="w-full">
+        <DuoFrame {...OPEN} className="w-[78%]">
           <VideoSurface
             label="A comic open on the unfolded iPhone Duo as two pages, turning over with a page curl"
             src="/duo/page-turn.mp4"
