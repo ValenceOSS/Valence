@@ -6,10 +6,12 @@ import { tellQueriesWhenOnScreen } from '@ValenceTv/platform/tellQueriesWhenOnSc
 import { Television } from '@ValenceTv/Television';
 import { startFocusEngine } from '@ValenceTv/focus/startFocusEngine';
 import { fitTheScreen } from '@ValenceTv/platform/fitTheScreen';
+import { followTheController } from '@ValenceTv/remote/followTheController';
 
 installTvPlatform();
 tellQueriesWhenOnScreen();
 fitTheScreen();
 startFocusEngine();
+followTheController();
 
 registerRootComponent(Television);
