@@ -3,6 +3,7 @@ import { configure } from '@testing-library/react';
 import { afterEach } from 'vitest';
 import { tidyAfterATest } from './src/testing/tidyAfterATest';
 import '@valence/ui/src/testing/stubTheLight';
+import '@valence/ui/src/testing/stubMediaElements';
 import { MotionGlobalConfig } from 'motion/react';
 
 class LayoutlessResizeObserver implements ResizeObserver {

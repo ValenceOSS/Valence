@@ -6,6 +6,7 @@ import { MotionGlobalConfig } from 'motion/react';
 import { JSDOM } from 'jsdom';
 import { installATestClient } from './src/testing/installATestClient';
 import { tidyAfterATest } from './src/testing/tidyAfterATest';
+import '@valence/ui/src/testing/stubMediaElements';
 
 /**
  * Gives the tests web storage back, on a Node that has taken it away.
@@ -166,29 +167,6 @@ if (!('PointerEvent' in globalThis)) {
   Object.defineProperty(globalThis, 'PointerEvent', {
     configurable: true,
     value: MouseEvent,
-  });
-}
-
-if (typeof HTMLMediaElement !== 'undefined') {
-  Object.defineProperty(HTMLMediaElement.prototype, 'play', {
-    configurable: true,
-    writable: true,
-    value: () => Promise.resolve(),
-  });
-
-  Object.defineProperty(HTMLMediaElement.prototype, 'pause', {
-    configurable: true,
-    writable: true,
-    value: () => undefined,
-  });
-
-  Object.defineProperty(HTMLMediaElement.prototype, 'textTracks', {
-    configurable: true,
-    writable: true,
-    value: Object.assign([], {
-      addEventListener: () => undefined,
-      removeEventListener: () => undefined,
-    }),
   });
 }
 
