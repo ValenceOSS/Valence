@@ -23,6 +23,7 @@ const SYSTEM_MARKS: readonly { name: string; mark: BrandMarkName }[] = [
   { name: 'macOS', mark: 'apple' },
   { name: say('client.playback.detectClientLabel.android'), mark: 'android' },
   { name: say('common.linux'), mark: 'linux' },
+  { name: say('common.windows'), mark: 'windows' },
 ];
 
 /**
@@ -30,7 +31,8 @@ const SYSTEM_MARKS: readonly { name: string; mark: BrandMarkName }[] = [
  * labelled with, so a card can show them rather than a generic screen. A phone or a television
  * names its model rather than its system, so an iPhone, iPad or Apple TV is known by its name, and
  * an LG or Samsung television showing the TV layout in its browser by its maker's. A
- * browser or system without a mark of its own — Edge, Windows, anything unrecognised — answers none, and keeps its shape.
+ * browser or system without a mark of its own — Edge, anything unrecognised — answers none, and
+ * keeps its shape.
  * Chromium is shown as Chrome, since a browser built on it names itself the same way and Chrome is
  * the one that almost always is.
  *

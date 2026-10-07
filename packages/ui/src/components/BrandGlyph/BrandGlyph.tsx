@@ -12,6 +12,7 @@ import opera from '@ValenceBrands/opera.svg';
 import safari from '@ValenceBrands/safari.svg';
 import samsung from '@ValenceBrands/samsung.svg';
 import vivaldi from '@ValenceBrands/vivaldi.svg';
+import windows from '@ValenceBrands/windows.svg';
 import { cn } from '@ValenceUI/cn';
 import type { BrandGlyphProps, BrandMarkName } from './BrandGlyph.types';
 
@@ -30,6 +31,7 @@ const MARKS: Readonly<Record<BrandMarkName, string>> = {
   safari,
   samsung,
   vivaldi,
+  windows,
 };
 
 const BASE_TEXT_PX = 16;

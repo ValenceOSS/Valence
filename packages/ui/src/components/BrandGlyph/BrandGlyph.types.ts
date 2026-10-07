@@ -12,7 +12,8 @@ type BrandMarkName =
   | 'opera'
   | 'safari'
   | 'samsung'
-  | 'vivaldi';
+  | 'vivaldi'
+  | 'windows';
 
 type BrandGlyphProps = {
   of: BrandMarkName;

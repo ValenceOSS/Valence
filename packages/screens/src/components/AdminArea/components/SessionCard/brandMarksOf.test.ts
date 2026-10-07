@@ -29,7 +29,11 @@ describe('brandMarksOf', () => {
     expect(brandMarksOf('Xbox')).toEqual({ browser: null, system: null });
   });
 
-  it('answers no mark for a browser or system without one of its own', () => {
-    expect(brandMarksOf('Edge on Windows')).toEqual({ browser: null, system: null });
+  it('knows Windows by its mark', () => {
+    expect(brandMarksOf('Chromium on Windows')).toEqual({ browser: 'chrome', system: 'windows' });
+  });
+
+  it('answers no mark for a browser without one of its own', () => {
+    expect(brandMarksOf('Edge on Windows')).toEqual({ browser: null, system: 'windows' });
   });
 });
