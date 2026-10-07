@@ -21,6 +21,7 @@ const config: ExpoConfig = {
   experiments: { baseUrl: '/tv' },
   ios: {
     bundleIdentifier: 'app.valence.ios',
+    config: { usesNonExemptEncryption: false },
     infoPlist: {
       NSLocalNetworkUsageDescription:
         'Valence looks on your network for the Valence servers there, so you can pick yours instead of typing its address.',
