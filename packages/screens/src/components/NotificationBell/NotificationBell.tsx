@@ -29,7 +29,7 @@ const COUNTED_UP_TO = 9;
  * @param unread - How many have not been read, for the count on the bell.
  * @param push - Whether push is on for this device, and how to change it.
  * @param onOpen - Told when the list was opened.
- * @param onRead - Told which notification was read.
+ * @param onRead - Told which notification was opened, which takes it off the bell.
  * @param onReadAll - Told to mark everything read.
  * @param onClearAll - Told to take everything off the bell, which is different from having read it.
  * @param onFollow - Told where a notification leads, when one is pressed.

@@ -9,7 +9,7 @@ import { notification, notificationPreference, pushSubscription, user } from '#d
 import { toIso } from '@ValenceCore/functions/toIso';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { Notification } from '@ValenceContracts/schemas/Notification';
-import { A_MINUTE, LASTS_FOR_MINUTES } from './hasExpired';
+import { keptSince } from './keptSince';
 import type { NotificationStore } from './NotificationStore';
 
 /**
@@ -38,10 +38,12 @@ const createDatabaseNotificationStore = (db: AnyValenceDatabase): NotificationSt
       : [];
   };
 
-  const sweep = async (): Promise<void> => {
+  const forgetTheOldest = async (userId: string): Promise<void> => {
     await db
       .delete(notification)
-      .where(lt(notification.createdAt, new Date(Date.now() - LASTS_FOR_MINUTES * A_MINUTE)));
+      .where(
+        and(eq(notification.userId, userId), lt(notification.createdAt, keptSince(new Date()))),
+      );
   };
 
   return {
@@ -97,7 +99,7 @@ const createDatabaseNotificationStore = (db: AnyValenceDatabase): NotificationSt
     },
 
     list: async (userId, limit) => {
-      await sweep();
+      await forgetTheOldest(userId);
 
       const rows = await db
         .select()
@@ -110,7 +112,7 @@ const createDatabaseNotificationStore = (db: AnyValenceDatabase): NotificationSt
     },
 
     countUnread: async (userId) => {
-      await sweep();
+      await forgetTheOldest(userId);
 
       const rows = await db
         .select({ total: count() })

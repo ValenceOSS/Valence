@@ -103,8 +103,8 @@ describe('useDeviceNotifications', () => {
     expect(notifyLocally).toHaveBeenCalledOnce();
   });
 
-  it('leads to where the notice points once it is pressed', () => {
-    const onOpen = vi.fn();
+  it('hands over the notice that was pressed, to be opened and taken off the bell', () => {
+    const onOpen = vi.fn<(notification: Notification) => void>();
     let opened: (() => void) | undefined;
 
     installPlatform(
@@ -125,6 +125,6 @@ describe('useDeviceNotifications', () => {
 
     opened?.();
 
-    expect(onOpen).toHaveBeenCalledWith('/films/a-film');
+    expect(onOpen.mock.calls[0]?.[0]?.link).toBe('/films/a-film');
   });
 });

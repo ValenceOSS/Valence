@@ -10,6 +10,7 @@ jest.mock('@ValenceClient/notifications/fetchNotifications', () => ({
   ...jest.requireActual<object>('@ValenceClient/notifications/fetchNotifications'),
   fetchNotifications: jest.fn(),
   markNotificationsRead: jest.fn(() => Promise.resolve(true)),
+  clearNotifications: jest.fn(() => Promise.resolve(0)),
 }));
 
 beforeEach(() => {

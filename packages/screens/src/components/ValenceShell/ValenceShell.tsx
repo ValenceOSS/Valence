@@ -146,9 +146,11 @@ const ValenceShell = () => {
   useDeviceNotifications({
     notifications: bell.notifications,
     unread: bell.unread,
-    onOpen: (link) => {
-      if (link !== null) {
-        window.location.assign(link);
+    onOpen: (notification) => {
+      bell.onRead(notification.id);
+
+      if (notification.link !== null) {
+        window.location.assign(notification.link);
       }
     },
   });

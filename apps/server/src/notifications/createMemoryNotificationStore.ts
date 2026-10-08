@@ -4,7 +4,7 @@ import {
   NOTIFICATION_EVENTS,
 } from '@ValenceContracts/schemas/Notification';
 import type { Notification } from '@ValenceContracts/schemas/Notification';
-import { hasExpired } from './hasExpired';
+import { keptSince } from './keptSince';
 import type { NotificationStore, PushEndpoint } from './NotificationStore';
 
 type CreateMemoryNotificationStoreOptions = {
@@ -26,11 +26,11 @@ const createMemoryNotificationStore = ({
 
   const preferenceKey = (userId: string, event: string) => `${userId}:${event}`;
 
-  const sweep = (): void => {
-    const now = new Date();
+  const forgetTheOldest = (userId: string): void => {
+    const since = keptSince(new Date()).getTime();
 
     for (const [id, held] of notifications) {
-      if (hasExpired(held.notification.createdAt, now)) {
+      if (held.userId === userId && new Date(held.notification.createdAt).getTime() < since) {
         notifications.delete(id);
       }
     }
@@ -69,7 +69,7 @@ const createMemoryNotificationStore = ({
     },
 
     list: (userId, limit) => {
-      sweep();
+      forgetTheOldest(userId);
 
       return Promise.resolve(
         [...notifications.values()]
@@ -81,7 +81,7 @@ const createMemoryNotificationStore = ({
     },
 
     countUnread: (userId) => {
-      sweep();
+      forgetTheOldest(userId);
 
       return Promise.resolve(
         [...notifications.values()].filter(
