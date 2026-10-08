@@ -254,6 +254,12 @@ const aiReadableDocs = (): Plugin => ({
       }
 
       const pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname);
+
+      if (pathname !== '/llms.txt' && pathname !== '/llms-full.txt' && !pathname.endsWith('.md')) {
+        next();
+        return;
+      }
+
       const pages = await readAiReadablePages();
       const page = pages.find((candidate) => markdownPathOf(candidate) === pathname);
       const source =

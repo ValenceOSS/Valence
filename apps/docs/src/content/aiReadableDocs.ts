@@ -10,25 +10,45 @@ const FRONTMATTER = /^---\n[\s\S]*?\n---\n?/u;
 
 const CALLOUT_TITLE = /title="(?<title>[^"]+)"/u;
 
-const codeFenceOf = (line: string): '```' | '~~~' | null => {
-  const trimmed = line.trimStart();
-
-  if (trimmed.startsWith('```')) {
-    return '```';
-  }
-
-  if (trimmed.startsWith('~~~')) {
-    return '~~~';
-  }
-
-  return null;
+type CodeFence = {
+  character: '`' | '~';
+  length: number;
+  closes: boolean;
 };
+
+const CODE_FENCE = /^(?<run>`{3,}|~{3,})(?<rest>.*)$/u;
+
+const codeFenceOf = (line: string): CodeFence | null => {
+  const found = CODE_FENCE.exec(line.trimStart());
+
+  if (found === null) {
+    return null;
+  }
+
+  const run = found.groups?.run;
+
+  if (run === undefined) {
+    return null;
+  }
+
+  return {
+    character: run.startsWith('`') ? '`' : '~',
+    length: run.length,
+    closes: /^\s*$/u.test(found.groups?.rest ?? ''),
+  };
+};
+
+const closesFence = (found: CodeFence | null, fence: CodeFence): boolean =>
+  found !== null &&
+  found.character === fence.character &&
+  found.length >= fence.length &&
+  found.closes;
 
 const cleanOutsideCode = (source: string, clean: (chunk: string) => string): string => {
   const lines = source.split('\n');
   const cleaned: string[] = [];
   let held: string[] = [];
-  let fence: '```' | '~~~' | null = null;
+  let fence: CodeFence | null = null;
 
   for (const line of lines) {
     const found = codeFenceOf(line);
@@ -43,7 +63,7 @@ const cleanOutsideCode = (source: string, clean: (chunk: string) => string): str
     if (fence !== null) {
       held.push(line);
 
-      if (found === fence) {
+      if (closesFence(found, fence)) {
         cleaned.push(held.join('\n'));
         held = [];
         fence = null;
@@ -72,10 +92,9 @@ const dropMdxOnlySyntax = (source: string): string =>
       })
       .replace(/<\/Callout>/gu, '')
       .replace(/<\/?[A-Z][A-Za-z0-9]*(?:\s[^>]*)?>/gu, '')
+      .replace(/\n{3,}/gu, '\n\n')
       .trim(),
-  )
-    .replace(/\n{3,}/gu, '\n\n')
-    .trim();
+  ).trim();
 
 const markdownPathOf = (page: Pick<AiReadablePage, 'path'>): string => `${page.path}.md`;
 

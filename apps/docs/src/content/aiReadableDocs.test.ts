@@ -27,6 +27,18 @@ describe('dropMdxOnlySyntax', () => {
       '```tsx\nreturn <Button>Save</Button>;\n```',
     );
   });
+
+  it('keeps shorter fences inside a longer fenced example', () => {
+    expect(dropMdxOnlySyntax('````md\n```tsx\n<Button>Save</Button>\n```\n````')).toBe(
+      '````md\n```tsx\n<Button>Save</Button>\n```\n````',
+    );
+  });
+
+  it('does not collapse blank lines inside a fenced example', () => {
+    expect(dropMdxOnlySyntax('```\none\n\n\ntwo\n```\n\n\nAfter')).toBe(
+      '```\none\n\n\ntwo\n```\nAfter',
+    );
+  });
 });
 
 describe('markdownOf', () => {
