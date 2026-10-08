@@ -3,6 +3,14 @@ import { join } from 'node:path';
 import { defineConfig } from 'vite';
 import type { Plugin } from 'vite';
 import { parse } from 'yaml';
+import {
+  llmsFullTxtOf,
+  llmsTxtOf,
+  markdownOf,
+  markdownPathOf,
+} from './src/content/aiReadableDocs.ts';
+import type { AiReadablePage } from './src/content/aiReadableDocs.ts';
+import { DOC_SECTIONS } from './src/content/DOC_SECTIONS.ts';
 import { DocFrontmatterSchema } from './src/content/DocFrontmatterSchema.ts';
 import type { DocFrontmatter } from './src/content/DocFrontmatterSchema.ts';
 import react from '@vitejs/plugin-react';
@@ -71,6 +79,89 @@ const SOURCES_VIRTUAL_ID = 'virtual:doc-sources';
 const RESOLVED_SOURCES_VIRTUAL_ID = `\0${SOURCES_VIRTUAL_ID}`;
 
 const FRONTMATTER_BLOCK = /^---\n(?<yaml>[\s\S]*?)\n---/u;
+
+const AI_READABLE_CONTENT_TYPE = 'text/markdown; charset=utf-8';
+
+const CONTENT_FILE_PATH = /^\.\/(?<section>[a-z0-9-]+)\/(?<slug>[a-z0-9-]+)\.mdx$/u;
+
+type DocSourceFile = {
+  file: string;
+  frontmatter: Partial<DocFrontmatter>;
+  source: string;
+};
+
+const readDocSourceFiles = async (): Promise<readonly DocSourceFile[]> => {
+  const found: DocSourceFile[] = [];
+
+  for (const section of await readdir(CONTENT_FOLDER, { withFileTypes: true })) {
+    if (!section.isDirectory()) {
+      continue;
+    }
+
+    for (const file of await readdir(join(CONTENT_FOLDER, section.name))) {
+      if (!file.endsWith('.mdx')) {
+        continue;
+      }
+
+      const source = await readFile(join(CONTENT_FOLDER, section.name, file), 'utf8');
+      const yaml = FRONTMATTER_BLOCK.exec(source)?.groups?.yaml;
+
+      found.push({
+        file: `./${section.name}/${file}`,
+        frontmatter: yaml === undefined ? {} : DocFrontmatterSchema.partial().parse(parse(yaml)),
+        source,
+      });
+    }
+  }
+
+  return found;
+};
+
+const readAiReadablePages = async (): Promise<readonly AiReadablePage[]> => {
+  const files = await readDocSourceFiles();
+
+  return files
+    .map((file): AiReadablePage & { order: number; section: string } => {
+      const { section, slug } = CONTENT_FILE_PATH.exec(file.file)?.groups ?? {};
+      const known = DOC_SECTIONS.find((candidate) => candidate.id === section);
+
+      if (section === undefined || slug === undefined || known === undefined) {
+        throw new Error(
+          `${file.file} is not in a section. Put it in one of: ${DOC_SECTIONS.map((s) => s.id).join(', ')}.`,
+        );
+      }
+
+      const parsed = DocFrontmatterSchema.safeParse(file.frontmatter);
+
+      if (!parsed.success) {
+        throw new Error(`${file.file} has incomplete frontmatter: ${parsed.error.message}`);
+      }
+
+      return {
+        path: `/${section}/${slug}`,
+        section,
+        sectionTitle: known.title,
+        title: parsed.data.title,
+        description: parsed.data.description,
+        order: parsed.data.order,
+        source: file.source,
+      };
+    })
+    .toSorted(
+      (a, b) =>
+        DOC_SECTIONS.findIndex((section) => section.id === a.section) -
+          DOC_SECTIONS.findIndex((section) => section.id === b.section) ||
+        a.order - b.order ||
+        a.title.localeCompare(b.title),
+    )
+    .map(({ path, sectionTitle, title, description, source }) => ({
+      path,
+      sectionTitle,
+      title,
+      description,
+      source,
+    }));
+};
 
 /**
  * Reads the frontmatter of every page into one module, without loading the pages themselves.
@@ -147,6 +238,62 @@ const docSources = (): Plugin => ({
 });
 
 /**
+ * Emits the documentation in plain Markdown forms for agents and crawlers.
+ *
+ * Each rendered docs page gets a same-path `.md` twin, `/llms.txt` points readers at those page
+ * files, and `/llms-full.txt` carries everything in one fetch for tools that prefer a single file.
+ */
+const aiReadableDocs = (): Plugin => ({
+  name: 'valence-ai-readable-docs',
+
+  configureServer: (server) => {
+    server.middlewares.use(async (request, response, next) => {
+      if (request.url === undefined) {
+        next();
+        return;
+      }
+
+      const pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname);
+      const pages = await readAiReadablePages();
+      const page = pages.find((candidate) => markdownPathOf(candidate) === pathname);
+      const source =
+        pathname === '/llms.txt'
+          ? llmsTxtOf(pages)
+          : pathname === '/llms-full.txt'
+            ? llmsFullTxtOf(pages)
+            : page === undefined
+              ? null
+              : markdownOf(page);
+
+      if (source === null) {
+        next();
+        return;
+      }
+
+      response.statusCode = 200;
+      response.setHeader('Content-Type', AI_READABLE_CONTENT_TYPE);
+      response.setHeader('Link', '</llms.txt>; rel="describedby"; type="text/markdown"');
+      response.end(source);
+    });
+  },
+
+  generateBundle: async function () {
+    const pages = await readAiReadablePages();
+
+    this.emitFile({ type: 'asset', fileName: 'llms.txt', source: llmsTxtOf(pages) });
+    this.emitFile({ type: 'asset', fileName: 'llms-full.txt', source: llmsFullTxtOf(pages) });
+
+    for (const page of pages) {
+      this.emitFile({
+        type: 'asset',
+        fileName: markdownPathOf(page).slice(1),
+        source: markdownOf(page),
+      });
+    }
+  },
+});
+
+/**
  * Reads the pages again when one is added, taken away or changed while the dev server runs.
  *
  * The frontmatter and the sources are virtual modules built from the folder once, so without this a
@@ -194,6 +341,7 @@ export default defineConfig({
     documentation(),
     docFrontmatter(),
     docSources(),
+    aiReadableDocs(),
     docPagesFollowed(),
     react(),
     tailwindcss(),
@@ -204,4 +352,4 @@ export default defineConfig({
   },
 });
 
-export { docFrontmatter, docSources, documentation };
+export { aiReadableDocs, docFrontmatter, docSources, documentation };
