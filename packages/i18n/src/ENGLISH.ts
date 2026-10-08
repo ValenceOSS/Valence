@@ -5212,6 +5212,7 @@ const ENGLISH = {
   'screens.music.nameOfOwner.removedProfile': 'A deleted profile',
   'screens.music.playlistGroupFor.addedToName': 'Added to {name}',
   'screens.musicHome.musicFeature.newestInYourLibrary': 'Newest in your library',
+  'screens.musicMiniPlayer.stopAndClose': 'Stop and close',
   'screens.musicPage.albumsView.readingYourAlbums': 'Loading your albums',
   'screens.musicPage.albumView.addTitleToAPlaylist': 'Add {title} to a playlist',
   'screens.musicPage.albumView.nothingOnThisAlbumYouCan': 'No playable tracks on this album',

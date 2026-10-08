@@ -1,4 +1,5 @@
 import { Pause as PauseIcon, Play as PlayIcon } from '@keyline-icons/react/fill';
+import { X as XIcon } from '@keyline-icons/react';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
@@ -20,8 +21,9 @@ const ARRIVING = {
  * The full bar names every control music has; away from the music section none of that is what
  * somebody came here for, and a page that gave it the same room as the library would be a page that
  * put music ahead of whatever was actually asked for. This says only what is playing and offers only
- * the one thing worth reaching for without leaving — pressing pause — and opens the real bar for
- * anything more than that.
+ * the things worth reaching for without leaving — pausing, and stopping once somebody has finished
+ * listening — and opens the real bar for anything more than that. Stopping puts it away, which is the
+ * only way to without playing something else, and ends the listening status a profile shares.
  *
  * Sat in the corner rather than spanning the foot, so it reads as a note about something happening
  * elsewhere rather than as this page's own transport.
@@ -29,8 +31,10 @@ const ARRIVING = {
  * @param shown - What is playing.
  * @param onOpen - Told to take somebody to the music section.
  * @param onTogglePlay - Told to pause or resume without leaving the page.
+ * @param onClose - Told to stop the music and put the player away, or nothing where this listener
+ *   may not, following somebody else's listening party.
  */
-const MusicMiniPlayer = ({ shown, onOpen, onTogglePlay }: MusicMiniPlayerProps) => {
+const MusicMiniPlayer = ({ shown, onOpen, onTogglePlay, onClose }: MusicMiniPlayerProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
   const isStill = prefersReducedMotion === true;
   const arriving = revealTransition(prefersReducedMotion, 'heavy');
@@ -81,6 +85,18 @@ const MusicMiniPlayer = ({ shown, onOpen, onTogglePlay }: MusicMiniPlayerProps) 
             >
               <Icon of={shown.isPlaying ? PauseIcon : PlayIcon} size={16} />
             </Button>
+
+            {onClose === null ? null : (
+              <Button
+                variant="ghost"
+                size="sm"
+                isIconOnly
+                label={say('screens.musicMiniPlayer.stopAndClose')}
+                onClick={onClose}
+              >
+                <Icon of={XIcon} size={16} />
+              </Button>
+            )}
           </div>
         </div>
       </motion.div>

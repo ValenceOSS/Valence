@@ -24,7 +24,9 @@ const A_TRACK: WhatIsPlaying = {
 
 describe('MusicMiniPlayer', () => {
   it('names the track and who made it', () => {
-    render(<MusicMiniPlayer shown={A_TRACK} onOpen={() => {}} onTogglePlay={() => {}} />);
+    render(
+      <MusicMiniPlayer shown={A_TRACK} onOpen={() => {}} onTogglePlay={() => {}} onClose={null} />,
+    );
 
     expect(screen.getByText('How Not To Drown')).toBeInTheDocument();
     expect(screen.getByText('CHVRCHES, Robert Smith')).toBeInTheDocument();
@@ -34,7 +36,9 @@ describe('MusicMiniPlayer', () => {
     const actor = userEvent.setup();
     const onOpen = vi.fn();
 
-    render(<MusicMiniPlayer shown={A_TRACK} onOpen={onOpen} onTogglePlay={() => {}} />);
+    render(
+      <MusicMiniPlayer shown={A_TRACK} onOpen={onOpen} onTogglePlay={() => {}} onClose={null} />,
+    );
 
     await actor.click(screen.getByRole('button', { name: 'Open How Not To Drown' }));
 
@@ -42,7 +46,9 @@ describe('MusicMiniPlayer', () => {
   });
 
   it('offers to pause a track that is playing', () => {
-    render(<MusicMiniPlayer shown={A_TRACK} onOpen={() => {}} onTogglePlay={() => {}} />);
+    render(
+      <MusicMiniPlayer shown={A_TRACK} onOpen={() => {}} onTogglePlay={() => {}} onClose={null} />,
+    );
 
     expect(screen.getByRole('button', { name: 'Pause' })).toBeInTheDocument();
   });
@@ -53,6 +59,7 @@ describe('MusicMiniPlayer', () => {
         shown={{ ...A_TRACK, isPlaying: false }}
         onOpen={() => {}}
         onTogglePlay={() => {}}
+        onClose={null}
       />,
     );
 
@@ -64,12 +71,47 @@ describe('MusicMiniPlayer', () => {
     const onOpen = vi.fn();
     const onTogglePlay = vi.fn();
 
-    render(<MusicMiniPlayer shown={A_TRACK} onOpen={onOpen} onTogglePlay={onTogglePlay} />);
+    render(
+      <MusicMiniPlayer
+        shown={A_TRACK}
+        onOpen={onOpen}
+        onTogglePlay={onTogglePlay}
+        onClose={null}
+      />,
+    );
 
     await actor.click(screen.getByRole('button', { name: 'Pause' }));
 
     expect(onTogglePlay).toHaveBeenCalledOnce();
     expect(onOpen).not.toHaveBeenCalled();
+  });
+
+  it('stops the music and puts itself away when closed, without opening the full view', async () => {
+    const actor = userEvent.setup();
+    const onOpen = vi.fn();
+    const onClose = vi.fn();
+
+    render(
+      <MusicMiniPlayer
+        shown={{ ...A_TRACK, isPlaying: false }}
+        onOpen={onOpen}
+        onTogglePlay={() => {}}
+        onClose={onClose}
+      />,
+    );
+
+    await actor.click(screen.getByRole('button', { name: 'Stop and close' }));
+
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(onOpen).not.toHaveBeenCalled();
+  });
+
+  it('offers no close to somebody following another listener’s party', () => {
+    render(
+      <MusicMiniPlayer shown={A_TRACK} onOpen={() => {}} onTogglePlay={() => {}} onClose={null} />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Stop and close' })).not.toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

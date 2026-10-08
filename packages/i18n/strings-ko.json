@@ -20706,6 +20706,11 @@
     "context": "Shown in the music feature in the music home."
   },
   {
+    "handler": "screens.musicMiniPlayer.stopAndClose",
+    "text": "Stop and close",
+    "context": "The label of the button on the small music player shown on other pages that stops the music and puts the player away (from `MusicMiniPlayer`)."
+  },
+  {
     "handler": "screens.musicPage.albumsView.readingYourAlbums",
     "text": "Loading your albums",
     "context": "The label of a skeleton in the albums view in the music page."

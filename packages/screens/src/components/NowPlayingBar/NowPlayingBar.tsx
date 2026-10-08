@@ -144,6 +144,13 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
             player.resume();
           }
         }}
+        onClose={
+          isFollowing
+            ? null
+            : () => {
+                player.stop();
+              }
+        }
       />
     );
   }
