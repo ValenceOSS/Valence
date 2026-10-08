@@ -228,7 +228,7 @@ const AdminPage = () => {
           className={cn(
             'flex min-w-0 flex-1 flex-col overflow-hidden border-[var(--surface-line)] bg-[var(--frame-panel)] [--card-shell:var(--frame-card)]',
             'md:my-2 md:mr-2 md:rounded-2xl md:border md:shadow-[var(--shadow-raised)]',
-            isCollapsed ? 'md:ml-2' : '',
+            isCollapsed ? 'max-md:ml-16 md:ml-2' : '',
           )}
         >
           <div className="min-h-0 flex-1 overflow-y-auto p-4 lg:p-5">
