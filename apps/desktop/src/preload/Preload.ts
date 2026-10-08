@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { IpcRendererEvent } from 'electron';
 import { markTheDocument } from '@ValenceDesktop/preload/markTheDocument';
+import { drawUnreadBadge } from '@ValenceDesktop/preload/drawUnreadBadge';
 import { z } from 'zod';
 import {
   FOUND_A_VALENCE,
@@ -204,7 +205,15 @@ contextBridge.exposeInMainWorld('valence', {
   },
   notifications: {
     setBadge: (count: number) => {
-      ipcRenderer.send(SET_UNREAD_BADGE, count);
+      if (process.platform !== 'win32') {
+        ipcRenderer.send(SET_UNREAD_BADGE, count, null);
+
+        return;
+      }
+
+      void drawUnreadBadge(count).then((picture) => {
+        ipcRenderer.send(SET_UNREAD_BADGE, count, picture);
+      });
     },
   },
   passkeys: {

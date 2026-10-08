@@ -1786,6 +1786,7 @@ const ENGLISH = {
   'desktop.main.listenForTheHandBack.doctypeHtmlHtmlLangEnMeta':
     '<!doctype html>\n<html lang="en">\n  <meta charset="utf-8">\n  <meta name="color-scheme" content="light dark">\n  <title>Signed in to Valence</title>\n  <body style="margin: 0; min-height: 100vh; display: grid; place-items: center; font: 16px system-ui, sans-serif">\n    <p>Signed in. You can close this tab and go back to Valence.</p>\n  </body>\n</html>\n',
   'desktop.main.listenForTheHandBack.notHere': 'Not here.',
+  'desktop.main.showTheUnreadCount.countUnread': '{count} unread',
   'desktop.main.theApplication.hostCouldNotBeReached': 'Couldn’t connect to {host}.',
   'desktop.main.theApplication.thePageStoppedWaiting': 'The page timed out.',
   'desktop.main.theApplication.thisClientsOwnPagesCouldNot':
