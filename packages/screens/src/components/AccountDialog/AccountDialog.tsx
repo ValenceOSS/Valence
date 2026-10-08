@@ -92,12 +92,12 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
 
     setIsSaving(true);
 
-    const saved = await saveProfileDraft(profile, draft);
+    const refused = await saveProfileDraft(profile, draft);
 
     setIsSaving(false);
 
-    if (!saved) {
-      notify.failed(say('common.thoseChangesWereNotSaved'));
+    if (refused !== null) {
+      notify.failed(refused);
 
       return;
     }

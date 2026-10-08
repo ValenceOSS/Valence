@@ -1,4 +1,6 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
+import { readRefusal } from '@ValenceClient/admin/readRefusal';
+import { say } from '@ValenceI18n/say';
 import { ViewerProfileListSchema } from '@ValenceContracts/schemas/ViewerProfile';
 import type { Avatar, ProfileColour, ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
@@ -79,20 +81,24 @@ const saveProfile = async (
  * @param profileId - The profile.
  * @param photo - The photograph.
  * @param type - What kind of picture it is, where the photograph does not say, as a phone's does not.
- * @returns The profile as it now stands, or why it was refused.
+ * @returns Why it was refused, in the server's words where it gave any, or null where it was kept.
  */
 const uploadProfilePhoto = async (
   profileId: string,
   photo: Blob,
   type = photo.type,
-): Promise<boolean> => {
+): Promise<string | null> => {
   const response = await fetch(`/api/profiles/${profileId}/photo`, {
     method: 'PUT',
     headers: { 'content-type': type },
     body: photo,
   }).catch(() => null);
 
-  return response !== null && response.ok;
+  if (response === null) {
+    return say('common.thatPictureCouldNotBeSent');
+  }
+
+  return (await readRefusal(response))?.message ?? null;
 };
 
 /**

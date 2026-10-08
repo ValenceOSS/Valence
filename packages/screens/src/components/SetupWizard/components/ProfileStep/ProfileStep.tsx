@@ -44,12 +44,12 @@ const ProfileStep = ({ onContinue }: ProfileStepProps) => {
     setIsSaving(true);
     setProblem(null);
 
-    const saved = await saveProfileDraft(profile, draft);
+    const refused = await saveProfileDraft(profile, draft);
 
     setIsSaving(false);
 
-    if (!saved) {
-      setProblem(say('common.thoseChangesWereNotSaved'));
+    if (refused !== null) {
+      setProblem(refused);
 
       return;
     }
