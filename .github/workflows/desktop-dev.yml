@@ -4,9 +4,9 @@ name: Desktop dev channel
 # release, so a desktop app installed from there updates itself to whatever has just landed — the
 # desktop app's equivalent of the `dev` image.
 #
-# The channel is one release, tagged `desktop-dev` and marked as a prerelease, which this replaces
-# the contents of on every build: the installers, and the dev.yml, dev-mac.yml and dev-linux*.yml the
-# app reads to find them. A dev build is stamped with the dev channel's address when it is built
+# The channel is one release, tagged `desktop-dev` and marked as a prerelease, which every build
+# replaces with a release of its own: the installers, and the dev.yml, dev-mac.yml and dev-linux*.yml
+# the app reads to find them. A dev build is stamped with the dev channel's address when it is built
 # (see desktop.yml), so it follows this release and nothing else; a released build follows the
 # newest release, which a prerelease never is. Nothing else in the repository answers to a tag that
 # does not start with `v`, so moving this one starts nothing.
@@ -124,57 +124,64 @@ jobs:
             echo "${merged}"
           } > notes.md
 
-      - name: Say what this build holds
+      # Every build is a release of its own, made as a draft, filled, and only then put in place of the
+      # last one. GitHub lists releases by when they were published, so a release that was only ever
+      # edited stayed where it was first published and sank below every release cut after it; one
+      # published now stays at the top. A draft is seen by nobody and an app reads the published
+      # release, so the last build is whole until the moment it is swapped, and the swap is two calls.
+      # A draft left by a run that failed partway is thrown away first, so they cannot pile up.
+      - name: Fill a draft with this build
         run: |
-          if gh release view "$CHANNEL" > /dev/null 2>&1; then
-            gh release edit "$CHANNEL" --prerelease --title "Development build" --notes-file notes.md
-          else
-            gh release create "$CHANNEL" --prerelease --verify-tag \
-              --title "Development build" --notes-file notes.md
+          releases="repos/$GITHUB_REPOSITORY/releases"
+
+          gh api --paginate "$releases" \
+            -q ".[] | select(.draft and .tag_name == \"$CHANNEL\") | .id" | while read -r stale; do
+            gh api -X DELETE "$releases/$stale"
+          done
+
+          draft="$(gh api -X POST "$releases" \
+            -f tag_name="$CHANNEL" \
+            -F draft=true \
+            -F prerelease=true \
+            -f make_latest=false \
+            -f name="Development build" \
+            -F body=@notes.md \
+            -q .id)"
+          echo "DRAFT=$draft" >> "$GITHUB_ENV"
+
+          find release -type f -print0 | while IFS= read -r -d '' file; do
+            name="$(jq -rn --arg name "$(basename "$file")" '$name | @uri')"
+            curl --fail --silent --show-error --retry 3 \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Content-Type: application/octet-stream" \
+              --data-binary "@$file" \
+              "https://uploads.github.com/$releases/$draft/assets?name=$name" > /dev/null
+          done
+
+      - name: Put it in place of the last build
+        run: |
+          releases="repos/$GITHUB_REPOSITORY/releases"
+          was="$(gh api "$releases/tags/$CHANNEL" -q .id 2> /dev/null || true)"
+
+          if [ -n "$was" ]; then
+            gh api -X DELETE "$releases/$was"
           fi
 
-      # The installers first and what points at them last, so an app that checks while this runs
-      # finds either the last build whole or this one whole. Each of dev.yml and the rest goes up
-      # under a name of its own and is renamed over the last one only once it is all there, since
-      # replacing it in place deletes the old one first and a failed upload would leave the channel
-      # with nothing to read.
-      #
-      # Everything of the last build goes once nothing names it, its blockmaps included, so the
-      # release only ever holds the build it names. An app updating from a build whose blockmap is
-      # gone downloads the whole installer rather than only what changed, which is the price of a
-      # release anybody can read at a glance.
-      - name: Hang the build on it
+          gh api -X PATCH "$releases/$DRAFT" -F draft=false -f make_latest=false > /dev/null
+
+      # Should anything fail between making the draft and publishing it, the channel is left with a
+      # published release either way: the last build, with the draft thrown away, or, where the last
+      # build was already gone, this one.
+      - name: Leave the channel with a release
+        if: failure() && env.DRAFT != ''
         run: |
-          find release -type f ! -name '*.yml' -print0 | xargs -0 gh release upload "$CHANNEL" --clobber
+          releases="repos/$GITHUB_REPOSITORY/releases"
 
-          mkdir staged
-          assets="repos/$GITHUB_REPOSITORY/releases/tags/$CHANNEL"
-          for feed in release/*.yml; do
-            name="$(basename "$feed")"
-            cp "$feed" "staged/$name.next"
-            gh release upload "$CHANNEL" "staged/$name.next" --clobber
-
-            next="$(gh api "$assets" -q ".assets[] | select(.name == \"$name.next\") | .id")"
-            was="$(gh api "$assets" -q ".assets[] | select(.name == \"$name\") | .id")"
-
-            if [ -z "$next" ]; then
-              echo "The staged $name.next is not on the release, so $name is left as it was." >&2
-              exit 1
-            fi
-
-            if [ -n "$was" ]; then
-              gh api -X DELETE "repos/$GITHUB_REPOSITORY/releases/assets/$was"
-            fi
-
-            gh api -X PATCH "repos/$GITHUB_REPOSITORY/releases/assets/$next" -f name="$name" > /dev/null
-          done
-
-          ls release > kept.txt
-          gh release view "$CHANNEL" --json assets -q '.assets[].name' | while read -r asset; do
-            if ! grep -qxF "$asset" kept.txt; then
-              gh release delete-asset "$CHANNEL" "$asset" -y
-            fi
-          done
+          if gh api "$releases/tags/$CHANNEL" > /dev/null 2>&1; then
+            gh api -X DELETE "$releases/$DRAFT"
+          else
+            gh api -X PATCH "$releases/$DRAFT" -F draft=false -f make_latest=false > /dev/null
+          fi
 
       - name: Say where it went
         run: |
