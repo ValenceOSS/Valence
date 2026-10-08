@@ -9,6 +9,7 @@ import { HomePage } from '@ValenceLanding/components/HomePage/HomePage';
 import { ChangelogPage } from '@ValenceLanding/components/ChangelogPage/ChangelogPage';
 import { PluginsPage } from '@ValenceLanding/components/PluginsPage/PluginsPage';
 import { ChangelogEntryPage } from '@ValenceLanding/components/ChangelogEntryPage/ChangelogEntryPage';
+import { AboutPage } from '@ValenceLanding/components/AboutPage/AboutPage';
 import { PrivacyPage } from '@ValenceLanding/components/PrivacyPage/PrivacyPage';
 import { TermsPage } from '@ValenceLanding/components/TermsPage/TermsPage';
 import { PageProblem } from '@ValenceLanding/components/PageProblem/PageProblem';
@@ -30,6 +31,7 @@ const LandingLink = ({ to, className, children }: InSiteLinkProps) => (
 const PAGES: Record<string, ComponentType> = {
   '/': HomePage,
   '/changelog': ChangelogPage,
+  '/about': AboutPage,
   '/plugins': PluginsPage,
   '/privacy': PrivacyPage,
   '/terms': TermsPage,
@@ -77,7 +79,7 @@ const LandingShell = () => {
         </motion.main>
       </AnimatePresence>
 
-      <SiteFooter here="landing" InSiteLink={LandingLink} />
+      <SiteFooter here="landing" InSiteLink={LandingLink} logoSrc="/valence-icon.png" />
 
       <SiteCursor />
     </div>

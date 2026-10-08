@@ -46,6 +46,22 @@
   paint-order: stroke fill;
 }
 
+.landing-nav-page-surface {
+  --color-text: oklch(0.3548 0.0401 261);
+  --color-text-muted: oklch(0.49 0.03 252);
+  --color-foreground: var(--color-text);
+  --color-muted-foreground: var(--color-text-muted);
+  --surface-hover: color-mix(in oklab, var(--color-text) 6%, transparent);
+  --surface-active: color-mix(in oklab, var(--color-text) 12%, transparent);
+}
+
+:root[data-theme='dark'] .landing-nav-page-surface {
+  --color-text: oklch(0.9555 0.0118 170);
+  --color-text-muted: oklch(0.72 0 0);
+  --surface-hover: color-mix(in oklab, white 10%, transparent);
+  --surface-active: color-mix(in oklab, white 20%, transparent);
+}
+
 body {
   user-select: text;
   -webkit-user-select: text;

@@ -11,6 +11,7 @@ type InSiteLinkProps = {
 type SiteFooterProps = {
   here: FooterSite;
   InSiteLink: ComponentType<InSiteLinkProps>;
+  logoSrc?: string;
 };
 
 export type { FooterSite, InSiteLinkProps, SiteFooterProps };

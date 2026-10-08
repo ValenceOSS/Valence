@@ -24,6 +24,7 @@ const renderWithRoutes = async (component: RouteComponent, path = '/'): Promise<
   const home = createRoute({ getParentRoute: () => root, path: '/' });
   const changelog = createRoute({ getParentRoute: () => root, path: '/changelog' });
   const release = createRoute({ getParentRoute: () => root, path: '/changelog/$slug' });
+  const about = createRoute({ getParentRoute: () => root, path: '/about' });
   const plugins = createRoute({ getParentRoute: () => root, path: '/plugins' });
   const privacy = createRoute({ getParentRoute: () => root, path: '/privacy' });
   const terms = createRoute({ getParentRoute: () => root, path: '/terms' });
@@ -35,6 +36,7 @@ const renderWithRoutes = async (component: RouteComponent, path = '/'): Promise<
       home,
       changelog,
       release,
+      about,
       plugins,
       privacy,
       terms,

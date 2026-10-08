@@ -36,6 +36,14 @@ describe('LandingShell', () => {
     ).toBeInTheDocument();
   });
 
+  it('draws the about page', async () => {
+    await renderWithRoutes(LandingShell, '/about');
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: /media server/ }),
+    ).toBeInTheDocument();
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(LandingShell.displayName).toBe('LandingShell');
   });

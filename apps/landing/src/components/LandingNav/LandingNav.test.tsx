@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderWithRoutes } from '@ValenceLanding/testing/renderWithRoutes';
@@ -15,16 +15,34 @@ describe('LandingNav', () => {
     expect(screen.getByText('Valence')).toBeInTheDocument();
   });
 
-  it('offers a way to the other pages', async () => {
+  it('opens grouped product links from the desktop navigation', async () => {
+    const user = userEvent.setup();
+
     await renderWithRoutes(LandingNav);
 
-    expect(screen.getByRole('link', { name: 'Changelog' })).toHaveAttribute('href', '/changelog');
-    expect(screen.getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '/privacy');
-    expect(screen.getByRole('link', { name: 'Terms' })).toHaveAttribute('href', '/terms');
-    expect(screen.getByRole('link', { name: 'Docs' })).toHaveAttribute(
+    await user.hover(screen.getByRole('button', { name: 'Product' }));
+
+    expect(screen.getByRole('link', { name: /About Valence/ })).toHaveAttribute('href', '/about');
+    expect(screen.getByRole('link', { name: /Plugins/ })).toHaveAttribute('href', '/plugins');
+    expect(screen.getByRole('link', { name: /ValenceUI/ })).toHaveAttribute('href', '/ui');
+  });
+
+  it('opens grouped resource links from the desktop navigation', async () => {
+    const user = userEvent.setup();
+
+    await renderWithRoutes(LandingNav);
+
+    await user.hover(screen.getByRole('button', { name: 'Resources' }));
+
+    expect(screen.getByRole('link', { name: /Documentation/ })).toHaveAttribute(
       'href',
       'https://docs.getvalence.app',
     );
+    expect(screen.getByRole('link', { name: /API reference/ })).toHaveAttribute(
+      'href',
+      'https://docs.getvalence.app/api',
+    );
+    expect(screen.getByRole('link', { name: /Changelog/ })).toHaveAttribute('href', '/changelog');
   });
 
   it('opens the project on GitHub, in a new tab', async () => {
@@ -63,10 +81,21 @@ describe('LandingNav', () => {
     await renderWithRoutes(LandingNav);
 
     await user.click(screen.getByRole('button', { name: 'Navigation' }));
+    const mobileNav = screen.getByRole('navigation', { name: 'Mobile navigation' });
 
-    expect(screen.getByRole('menuitem', { name: 'Changelog' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'View the source on GitHub' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Join the Discord' })).toBeInTheDocument();
+    expect(within(mobileNav).getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
+    expect(within(mobileNav).getByRole('link', { name: /About Valence/ })).toHaveAttribute(
+      'href',
+      '/about',
+    );
+    expect(within(mobileNav).getByRole('link', { name: /Changelog/ })).toHaveAttribute(
+      'href',
+      '/changelog',
+    );
+    expect(
+      within(mobileNav).getByRole('button', { name: 'View the source on GitHub' }),
+    ).toBeInTheDocument();
+    expect(within(mobileNav).getByRole('button', { name: 'Join the Discord' })).toBeInTheDocument();
   });
 
   it('opens the Discord from the narrow-screen menu too', async () => {
@@ -76,7 +105,11 @@ describe('LandingNav', () => {
     await renderWithRoutes(LandingNav);
 
     await user.click(screen.getByRole('button', { name: 'Navigation' }));
-    await user.click(screen.getByRole('menuitem', { name: 'Join the Discord' }));
+    await user.click(
+      within(screen.getByRole('navigation', { name: 'Mobile navigation' })).getByRole('button', {
+        name: 'Join the Discord',
+      }),
+    );
 
     expect(open).toHaveBeenCalledWith(
       'https://discord.gg/uTtcAHMy9N',

@@ -26,7 +26,7 @@ const ThemeToggle = ({ className }: ThemeToggleProps) => {
   return (
     <Button
       variant="secondary"
-      size="sm"
+      size="xs"
       isIconOnly
       label={next === 'light' ? 'Switch to light mode' : 'Switch to dark mode'}
       {...(className === undefined ? {} : { className })}
@@ -44,7 +44,7 @@ const ThemeToggle = ({ className }: ThemeToggleProps) => {
           exit={isStill ? { opacity: 0 } : { rotate: 90, scale: 0.4, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 420, damping: 22 }}
         >
-          <Icon of={theme === 'dark' ? SunIcon : MoonIcon} size={16} />
+          <Icon of={theme === 'dark' ? SunIcon : MoonIcon} size={14} />
         </motion.span>
       </AnimatePresence>
     </Button>

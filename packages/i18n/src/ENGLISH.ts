@@ -7047,6 +7047,8 @@ const ENGLISH = {
   'ui.siteFooter.gitHub': 'GitHub',
   'ui.siteFooter.hono': 'Hono',
   'ui.siteFooter.joinTheDiscord': 'Join the Discord',
+  'ui.siteFooter.madeWithBy': 'Made with ❤️ by',
+  'ui.siteFooter.marques': 'Marques',
   'ui.siteFooter.navigate': 'Navigate',
   'ui.siteFooter.quickStart': 'Quick start',
   'ui.siteFooter.react': 'React',
