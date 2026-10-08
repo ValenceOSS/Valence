@@ -2,6 +2,7 @@ import { Button } from '@ValenceUI/Button';
 import { HistoryArrows } from '@ValenceUI/HistoryArrows';
 import { Icon } from '@ValenceUI/Icon';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
+import { SidebarToggle } from '@ValenceUI/SidebarToggle';
 import { Download as DownloadIcon, Question as QuestionIcon } from '@keyline-icons/react/fill';
 import { NotificationBell } from '@ValenceScreens/components/NotificationBell/NotificationBell';
 import { cn } from '@ValenceUI/cn';
@@ -42,7 +43,16 @@ import { say } from '@ValenceI18n/say';
  * @param onHelp - Told to open the Valence docs.
  * @param frame - Minimise, maximise and close, where this draws them rather than the system.
  */
-const WindowBar = ({ update, onUpdate, ways, keys, inbox, onHelp, frame }: WindowBarProps) => (
+const WindowBar = ({
+  update,
+  onUpdate,
+  ways,
+  keys,
+  inbox,
+  onHelp,
+  frame,
+  adminSidebar,
+}: WindowBarProps) => (
   <div
     data-slot="window-bar"
     data-over-dialogs
@@ -51,20 +61,28 @@ const WindowBar = ({ update, onUpdate, ways, keys, inbox, onHelp, frame }: Windo
       frame === undefined ? 'pr-[var(--valence-window-bar-clearance)]' : null,
     )}
   >
-    {ways === undefined ? (
-      <span />
-    ) : (
-      <HistoryArrows
-        canGoBack={ways.canGoBack}
-        canGoForward={ways.canGoForward}
-        onBack={ways.back}
-        onForward={ways.forward}
-        backLabel={say('common.goBack')}
-        forwardLabel={say('screens.windowBar.goForward')}
-        {...(keys === undefined ? {} : { backKeys: keys.back, forwardKeys: keys.forward })}
-        className="[-webkit-app-region:no-drag]"
-      />
-    )}
+    <div className="flex items-center gap-1 [-webkit-app-region:no-drag]">
+      {ways === undefined ? null : (
+        <HistoryArrows
+          canGoBack={ways.canGoBack}
+          canGoForward={ways.canGoForward}
+          onBack={ways.back}
+          onForward={ways.forward}
+          backLabel={say('common.goBack')}
+          forwardLabel={say('screens.windowBar.goForward')}
+          {...(keys === undefined ? {} : { backKeys: keys.back, forwardKeys: keys.forward })}
+          className="[-webkit-app-region:no-drag]"
+        />
+      )}
+
+      {adminSidebar === undefined || adminSidebar === null ? null : (
+        <SidebarToggle
+          isOpen={adminSidebar.isOpen}
+          label={adminSidebar.label}
+          onToggle={adminSidebar.onToggle}
+        />
+      )}
+    </div>
 
     <div className="flex items-center gap-1 self-stretch [-webkit-app-region:no-drag]">
       {inbox === undefined ? null : <NotificationBell {...inbox} isInTheWindowBar />}

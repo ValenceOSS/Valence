@@ -6,7 +6,10 @@ describe('planBrandOutputs', () => {
 
   it('copies the logo to every app that serves it itself', () => {
     expect(
-      outputs.filter((output) => output.kind === 'copy' && output.from.endsWith('.svg')),
+      outputs.filter(
+        (output) =>
+          output.kind === 'copy' && output.to.startsWith('apps/') && output.from.endsWith('.svg'),
+      ),
     ).toEqual(
       ['web', 'desktop', 'docs', 'landing'].map((app) => ({
         kind: 'copy',
@@ -14,6 +17,14 @@ describe('planBrandOutputs', () => {
         to: `apps/${app}/public/valence-logo.svg`,
       })),
     );
+  });
+
+  it('copies the logo to the marks BrandGlyph draws', () => {
+    expect(outputs).toContainEqual({
+      kind: 'copy',
+      from: 'assets/valence-logo.svg',
+      to: 'packages/ui/src/assets/brands/valence.svg',
+    });
   });
 
   it('renders the browser tab icon for the web, docs and landing pages', () => {

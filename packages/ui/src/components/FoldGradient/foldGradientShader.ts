@@ -1,6 +1,7 @@
 // oxlint-disable-next-line valence/no-hard-coded-strings -- GLSL source the GPU compiles, not words anyone reads
 export const fragmentShader = `#version 300 es
 precision mediump float;
+precision highp int;
 
 uniform float u_time;
 uniform vec2  u_resolution;
@@ -16,6 +17,7 @@ uniform float u_rotation;
 uniform float u_folds;
 uniform float u_ribbon;
 uniform float u_ribbonWidth;
+uniform float u_ascii;
 
 out vec4 fragColor;
 
@@ -58,12 +60,42 @@ float bayer4(vec2 p){
   return float(m[int(mod(p.y,4.0))*4 + int(mod(p.x,4.0))])/16.0;
 }
 
+const int GLYPHS[12]=int[12](
+  0,
+  128,
+  4194432,
+  458752,
+  14694400,
+  4657152,
+  18157905,
+  581046609,
+  488064558,
+  520553534,
+  490399278,
+  368389098
+);
+const vec2 GLYPH=vec2(5.0,6.0);
+const vec2 CELL=vec2(7.0,9.0);
+
+float glyphPixel(int code, vec2 at){
+  if(at.x<0.0||at.y<0.0||at.x>=GLYPH.x||at.y>=GLYPH.y) return 0.0;
+  int bit=int((GLYPH.y-1.0-at.y)*GLYPH.x + (GLYPH.x-1.0-at.x));
+  return float((code>>bit)&1);
+}
+
 void main(){
-  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 frag=gl_FragCoord.xy;
+  float glyphScale=max(1.0, floor(u_resolution.y/320.0));
+  vec2 cellSize=CELL*glyphScale;
+  vec2 cell=floor(gl_FragCoord.xy/cellSize);
+  if(u_ascii>0.5){
+    frag=(cell+0.5)*cellSize;
+  }
+  vec2 uv=frag/u_resolution.xy;
   vec2 dir=normalize(vec2(0.66,0.75));
   vec2 perp=vec2(-dir.y,dir.x);
   float sm=0.045+(2.0-u_softness)*0.075;
-  float jit=hash12(floor(gl_FragCoord.xy*0.5))-0.5;
+  float jit=hash12(floor(frag*0.5))-0.5;
 
   float asp=u_resolution.x/u_resolution.y;
   mat2  R=rot(radians(u_rotation));
@@ -132,6 +164,17 @@ void main(){
   col=clamp(mix(vec3(luma), col, u_saturation), 0.0, 1.0);
 
   float lvl=mix(255.0, 14.0, clamp(u_noise,0.0,1.0));
+  if(u_ascii>0.5){
+    float bright=dot(col, vec3(0.2126,0.7152,0.0722));
+    int pick=int(clamp(floor(pow(bright,0.5)*17.0), 0.0, 11.0));
+    vec2 inCell=floor((gl_FragCoord.xy-cell*cellSize)/glyphScale);
+    vec2 at=vec2(inCell.x-1.0, (CELL.y-1.0-inCell.y)-2.0);
+    float ink=glyphPixel(GLYPHS[pick], floor(at));
+    vec3 glow=mix(col*2.4, vec3(1.0), smoothstep(0.35,0.9,bright)*0.6);
+    fragColor=vec4(clamp(glow,0.0,1.0)*ink,1.0);
+    return;
+  }
+
   col+=(bayer4(gl_FragCoord.xy)-0.5)/lvl;
   col=floor(col*lvl+0.5)/lvl;
 

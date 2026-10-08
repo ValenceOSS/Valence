@@ -8,6 +8,7 @@ import { WindowBar } from '@ValenceScreens/components/WindowBar/WindowBar';
 import { useHistoryWays } from '@ValenceScreens/desktop/useHistoryWays';
 import { useHistoryKeys } from '@ValenceScreens/desktop/useHistoryKeys';
 import { historyKeysFor } from '@ValenceScreens/desktop/historyKeysFor';
+import { useAdminSidebarControl } from '@ValenceScreens/desktop/adminSidebarControl';
 import { useTheInbox } from '@ValenceScreens/notifications/useTheInbox';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { DOCS_ADDRESS } from '@ValenceContracts/constants/DOCS_ADDRESS';
@@ -101,6 +102,7 @@ const Desktop = () => {
   const [frame, setFrame] = useState<WindowFrame>(() => window.valence.frame.now());
   const isLost = useServerIsLost();
   const ways = useHistoryWays(router.history);
+  const adminSidebar = useAdminSidebarControl();
   const platform = document.documentElement.dataset['valencePlatform'];
 
   useAppliedTheme();
@@ -135,6 +137,7 @@ const Desktop = () => {
           window.valence.update.download();
         }}
         {...(isInside ? { ways, keys: historyKeysFor(platform) } : {})}
+        adminSidebar={adminSidebar}
         {...(isInside && who.data !== null && who.data !== undefined ? { inbox } : {})}
         onHelp={() => {
           window.open(DOCS_ADDRESS, '_blank', 'noopener,noreferrer');

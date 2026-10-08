@@ -2473,6 +2473,7 @@ mod tests {
                 artefact_root: PathBuf::from("/tmp/artefacts"),
                 idle_timeout: std::time::Duration::from_secs(60),
                 manifest_timeout: std::time::Duration::from_secs(120),
+                keyframe_deadline: crate::boundaries::DEFAULT_KEYFRAME_DEADLINE,
                 max_concurrent: 2,
                 split_audio: false,
             }),

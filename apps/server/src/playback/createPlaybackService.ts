@@ -145,9 +145,7 @@ const createPlaybackService = ({
 
     const found = await transcoder.capabilities();
 
-    if (found.encoders.length > 0) {
-      cached = found;
-    }
+    cached = found;
 
     return found;
   };

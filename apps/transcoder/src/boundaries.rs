@@ -10,7 +10,9 @@
 //! people watching the same film share the answer, and a service that restarts
 //! does not go looking for it again.
 
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::sync::{LazyLock, Mutex, PoisonError};
 
 use serde::{Deserialize, Serialize};
 
@@ -169,6 +171,17 @@ pub struct Boundaries {
     /// apiece.
     #[serde(default)]
     pub groups: Vec<u32>,
+    /// Whether these were a stopgap, given because reading the keyframes ran
+    /// past its deadline.
+    ///
+    /// The keyframes go on being read in the background, so a later start can
+    /// answer from them and copy what this one had to encode. Until they are
+    /// there, the stopgap stands, rather than every start waiting out the
+    /// deadline again and throwing away segments that are still right. Left out
+    /// of boundaries written before Valence marked any as a stopgap, which
+    /// [`read_cached`] works out for itself.
+    #[serde(default)]
+    pub provisional: bool,
 }
 
 impl Boundaries {
@@ -220,8 +233,18 @@ impl Boundaries {
             seeks_forward: false,
             can_copy: true,
             groups: Vec::new(),
+            provisional: false,
         }
     }
+}
+
+/// Whether boundaries already worked out should be worked out again.
+///
+/// Only a stopgap is ever replaced, and only once the keyframes it stood in for
+/// have been read: anything else was the answer, and replacing it would throw
+/// its segments away for nothing.
+fn is_superseded(cached: &Boundaries, keyframes_read: bool) -> bool {
+    cached.provisional && keyframes_read
 }
 
 /// The segments an encode produces, which are the length that was asked for.
@@ -257,7 +280,23 @@ async fn cached_boundaries(directory: &Path) -> Option<Boundaries> {
         .await
         .ok()?;
 
-    let found: Boundaries = serde_json::from_str(&payload).ok()?;
+    read_cached(&payload)
+}
+
+/// Reads cached boundaries, recognising a stopgap cached before stopgaps were marked.
+///
+/// Until they were, the only boundaries that could not be copied were the ones
+/// a keyframe timeout gave, so a record saying nothing about being a stopgap
+/// that cannot be copied is one, and a later start may still answer it from
+/// the keyframes.
+fn read_cached(payload: &str) -> Option<Boundaries> {
+    let record: serde_json::Value = serde_json::from_str(payload).ok()?;
+    let says_whether = record.get("provisional").is_some();
+    let mut found: Boundaries = serde_json::from_value(record).ok()?;
+
+    if !says_whether && !found.can_copy {
+        found.provisional = true;
+    }
 
     (!found.is_empty() && found.layout == LAYOUT).then_some(found)
 }
@@ -287,7 +326,7 @@ fn seeks_forward(container: crate::media::Container) -> bool {
 ///
 /// Comfortably longer than an ordinary source takes and comfortably shorter
 /// than a person will wait.
-const KEYFRAME_DEADLINE: std::time::Duration = std::time::Duration::from_secs(10);
+pub const DEFAULT_KEYFRAME_DEADLINE: std::time::Duration = std::time::Duration::from_secs(2);
 
 /// Whether a source whose keyframes are not known may still be copied.
 ///
@@ -330,6 +369,7 @@ fn from_keyframes(
         cut_seconds,
         seeks_forward,
         can_copy: true,
+        provisional: false,
     }
 }
 
@@ -342,20 +382,103 @@ fn from_keyframes(
 /// Detached deliberately. The scan that used to run here died with the request
 /// that asked for it, so every attempt began again from nothing and a large
 /// source was never read at all.
+///
+/// One read runs per source at a time, and a source whose reads keep failing
+/// is given [`INDEX_TRIES`] of them before it is left to encode until Valence
+/// restarts, rather than every start beginning another read that fails the
+/// same way.
 fn fill_index_later(ffprobe: String, artefact_root: PathBuf, path: PathBuf, duration: f64) {
+    let key = (artefact_root.clone(), path.clone());
+
+    if !claim_index_read(
+        &mut INDEXING.lock().unwrap_or_else(PoisonError::into_inner),
+        &key,
+    ) {
+        return;
+    }
+
     tokio::spawn(async move {
-        let Ok(keyframes) = read_keyframes(&ffprobe, &path, duration).await else {
-            return;
+        let mut claim = IndexClaim {
+            key,
+            succeeded: false,
         };
 
-        crate::keyframe_index::write(&artefact_root, &path, &keyframes).await;
+        if let Ok(keyframes) = read_keyframes(&ffprobe, &path, duration).await {
+            crate::keyframe_index::write(&artefact_root, &path, &keyframes).await;
+            claim.succeeded = true;
 
-        tracing::info!(
-            target: "transcode",
-            "read and kept the keyframes of {}, which the next viewer will not wait for",
-            path.display()
-        );
+            tracing::info!(
+                target: "transcode",
+                "read and kept the keyframes of {}, which the next viewer will not wait for",
+                path.display()
+            );
+        }
     });
+}
+
+/// A background read of one source's keyframes, settled however it ends.
+///
+/// Settled when it is dropped rather than at the end of the read, so a read
+/// cancelled partway, by its runtime shutting down, still gives its claim back
+/// instead of holding the source as being read for good.
+struct IndexClaim {
+    key: IndexKey,
+    succeeded: bool,
+}
+
+impl Drop for IndexClaim {
+    fn drop(&mut self) {
+        settle_index_read(
+            &mut INDEXING.lock().unwrap_or_else(PoisonError::into_inner),
+            &self.key,
+            self.succeeded,
+        );
+    }
+}
+
+/// How many times a source's keyframes are read in the background before
+/// Valence stops trying until it restarts.
+const INDEX_TRIES: u32 = 3;
+
+/// The artefact root a source's keyframes are kept under, and the source.
+type IndexKey = (PathBuf, PathBuf);
+
+/// Where each source's background keyframe reads have got to.
+#[derive(Debug, Default)]
+struct IndexReads {
+    running: bool,
+    tries: u32,
+}
+
+/// Every source whose keyframes are being, or have failed to be, read in the background.
+static INDEXING: LazyLock<Mutex<HashMap<IndexKey, IndexReads>>> = LazyLock::new(Mutex::default);
+
+/// Claims a background read of a source's keyframes, if one may start.
+///
+/// Refused while one is already running, and once [`INDEX_TRIES`] have failed.
+fn claim_index_read(reads: &mut HashMap<IndexKey, IndexReads>, key: &IndexKey) -> bool {
+    let read = reads.entry(key.clone()).or_default();
+
+    if read.running || read.tries >= INDEX_TRIES {
+        return false;
+    }
+
+    read.running = true;
+    read.tries += 1;
+
+    true
+}
+
+/// Records how a background read of a source's keyframes ended.
+///
+/// A success forgets the source, since its keyframes are kept now. A failure
+/// keeps the count of tries, so the next start may try again until they run out.
+fn settle_index_read(reads: &mut HashMap<IndexKey, IndexReads>, key: &IndexKey, succeeded: bool) {
+    if succeeded {
+        reads.remove(key);
+    } else if let Some(read) = reads.get_mut(key) {
+        read.running = false;
+    }
 }
 
 /// Works out where every segment of a plan begins and ends.
@@ -364,7 +487,12 @@ fn fill_index_later(ffprobe: String, artefact_root: PathBuf, path: PathBuf, dura
 /// source allows, which is what the keyframes say — and if they cannot be read,
 /// equal lengths are a worse answer than the truth but a better one than
 /// refusing to play the film.
-async fn compute_boundaries(ffprobe: &str, artefact_root: &Path, spec: &SessionSpec) -> Boundaries {
+async fn compute_boundaries(
+    ffprobe: &str,
+    artefact_root: &Path,
+    spec: &SessionSpec,
+    keyframe_deadline: std::time::Duration,
+) -> Boundaries {
     let path = Path::new(&spec.input_path);
     let wanted = f64::from(spec.segment_seconds.max(1));
 
@@ -384,6 +512,7 @@ async fn compute_boundaries(ffprobe: &str, artefact_root: &Path, spec: &SessionS
             cut_seconds: wanted,
             seeks_forward,
             can_copy,
+            provisional: false,
         }
     };
 
@@ -396,7 +525,7 @@ async fn compute_boundaries(ffprobe: &str, artefact_root: &Path, spec: &SessionS
     }
 
     let answered = tokio::time::timeout(
-        KEYFRAME_DEADLINE,
+        keyframe_deadline,
         read_keyframes(ffprobe, path, probe.duration_seconds),
     )
     .await;
@@ -407,7 +536,7 @@ async fn compute_boundaries(ffprobe: &str, artefact_root: &Path, spec: &SessionS
             session_id = %spec.session_id(),
             "gave up reading the keyframes of {} after {}s, so it is encoded rather than copied",
             spec.input_path,
-            KEYFRAME_DEADLINE.as_secs(),
+            keyframe_deadline.as_secs_f32(),
         );
 
         fill_index_later(
@@ -417,7 +546,10 @@ async fn compute_boundaries(ffprobe: &str, artefact_root: &Path, spec: &SessionS
             probe.duration_seconds,
         );
 
-        return equal(may_copy_without_keyframes());
+        return Boundaries {
+            provisional: true,
+            ..equal(may_copy_without_keyframes())
+        };
     };
 
     match read {
@@ -501,12 +633,29 @@ pub async fn ensure_boundaries(
     artefact_root: &Path,
     directory: &Path,
     spec: &SessionSpec,
+    keyframe_deadline: std::time::Duration,
 ) -> Boundaries {
     if let Some(found) = cached_boundaries(directory).await {
-        return found;
+        let keyframes_read = found.provisional
+            && crate::keyframe_index::read(artefact_root, Path::new(&spec.input_path))
+                .await
+                .is_some();
+
+        if !is_superseded(&found, keyframes_read) {
+            if found.provisional {
+                fill_index_later(
+                    ffprobe.to_owned(),
+                    artefact_root.to_path_buf(),
+                    PathBuf::from(&spec.input_path),
+                    found.lengths.iter().sum(),
+                );
+            }
+
+            return found;
+        }
     }
 
-    let found = compute_boundaries(ffprobe, artefact_root, spec).await;
+    let found = compute_boundaries(ffprobe, artefact_root, spec, keyframe_deadline).await;
 
     if found.is_empty() {
         return found;
@@ -545,10 +694,108 @@ pub async fn ensure_boundaries(
 #[cfg(test)]
 mod tests {
     use super::{
-        can_copy_segments, equal_lengths, from_keyframes, may_copy_without_keyframes,
-        offered_ceiling, Boundaries, KEYFRAME_DEADLINE, LAYOUT, OFFERED_SEGMENT_BYTES,
+        can_copy_segments, claim_index_read, equal_lengths, from_keyframes, is_superseded,
+        may_copy_without_keyframes, offered_ceiling, read_cached, settle_index_read, Boundaries,
+        IndexReads, DEFAULT_KEYFRAME_DEADLINE, INDEX_TRIES, LAYOUT, OFFERED_SEGMENT_BYTES,
     };
     use crate::keyframes::{Cut, Keyframes};
+    use std::collections::HashMap;
+    use std::path::PathBuf;
+
+    #[test]
+    fn replaces_a_stopgap_once_the_keyframes_have_been_read() {
+        let stopgap = Boundaries {
+            provisional: true,
+            ..grouped(vec![4.0], Vec::new())
+        };
+
+        assert!(is_superseded(&stopgap, true));
+        assert!(
+            !is_superseded(&stopgap, false),
+            "until the keyframes are read the stopgap is still the best answer"
+        );
+    }
+
+    #[test]
+    fn keeps_boundaries_that_were_the_answer() {
+        let answer = grouped(vec![4.0], Vec::new());
+
+        assert!(
+            !is_superseded(&answer, true),
+            "boundaries read from the keyframes are never thrown away for them"
+        );
+    }
+
+    /// A cached record as an earlier Valence wrote it, before stopgaps were marked.
+    fn unmarked(can_copy: bool) -> String {
+        format!(r#"{{"layout":{LAYOUT},"lengths":[4.0],"cutSeconds":4.0,"canCopy":{can_copy}}}"#)
+    }
+
+    #[test]
+    fn takes_an_unmarked_record_that_cannot_be_copied_for_a_stopgap() {
+        let found = read_cached(&unmarked(false)).expect("old boundaries still read");
+
+        assert!(
+            found.provisional,
+            "only a keyframe timeout ever cached boundaries that could not be copied"
+        );
+    }
+
+    #[test]
+    fn takes_an_unmarked_record_that_can_be_copied_as_final() {
+        let found = read_cached(&unmarked(true)).expect("old boundaries still read");
+
+        assert!(!found.provisional);
+    }
+
+    #[test]
+    fn believes_a_record_that_says_whether_it_is_a_stopgap() {
+        let payload = format!(
+            r#"{{"layout":{LAYOUT},"lengths":[4.0],"cutSeconds":4.0,"canCopy":false,"provisional":false}}"#
+        );
+        let found = read_cached(&payload).expect("the boundaries read");
+
+        assert!(!found.provisional);
+    }
+
+    #[test]
+    fn reads_a_source_once_at_a_time() {
+        let mut reads = HashMap::new();
+        let source = (PathBuf::from("/artefacts"), PathBuf::from("/films/a.mkv"));
+
+        assert!(claim_index_read(&mut reads, &source));
+        assert!(
+            !claim_index_read(&mut reads, &source),
+            "a second start does not begin another read while one is running"
+        );
+    }
+
+    #[test]
+    fn tries_again_after_a_read_fails_until_the_tries_run_out() {
+        let mut reads: HashMap<(PathBuf, PathBuf), IndexReads> = HashMap::new();
+        let source = (PathBuf::from("/artefacts"), PathBuf::from("/films/a.mkv"));
+
+        for _ in 0..INDEX_TRIES {
+            assert!(claim_index_read(&mut reads, &source));
+            settle_index_read(&mut reads, &source, false);
+        }
+
+        assert!(
+            !claim_index_read(&mut reads, &source),
+            "a source that keeps failing is left to encode"
+        );
+    }
+
+    #[test]
+    fn forgets_a_source_once_its_keyframes_are_kept() {
+        let mut reads = HashMap::new();
+        let source = (PathBuf::from("/artefacts"), PathBuf::from("/films/a.mkv"));
+
+        assert!(claim_index_read(&mut reads, &source));
+        settle_index_read(&mut reads, &source, true);
+
+        assert!(reads.is_empty());
+    }
 
     #[test]
     fn leaves_room_for_four_seconds_where_the_bitrate_is_ordinary() {
@@ -587,6 +834,7 @@ mod tests {
             seeks_forward: false,
             can_copy: true,
             groups,
+            provisional: false,
         }
     }
 
@@ -718,8 +966,8 @@ mod tests {
     /// it, so the film never played at all and nothing was ever logged.
     #[test]
     fn waits_less_for_keyframes_than_a_person_will() {
-        assert!(KEYFRAME_DEADLINE <= std::time::Duration::from_secs(15));
-        assert!(KEYFRAME_DEADLINE >= std::time::Duration::from_secs(5));
+        assert!(DEFAULT_KEYFRAME_DEADLINE <= std::time::Duration::from_secs(3));
+        assert!(DEFAULT_KEYFRAME_DEADLINE >= std::time::Duration::from_secs(1));
     }
 
     /// Copying cuts where the source already has a keyframe. Not knowing where

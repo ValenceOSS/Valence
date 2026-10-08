@@ -97,6 +97,25 @@ describe('WindowBar', () => {
     expect(back.parentElement).toHaveClass('[-webkit-app-region:no-drag]');
   });
 
+  it('holds the admin sidebar toggle beside the history controls', async () => {
+    const user = userEvent.setup();
+    const onToggle = vi.fn();
+
+    render(
+      <WindowBar
+        ways={{ canGoBack: false, canGoForward: false, back: vi.fn(), forward: vi.fn() }}
+        adminSidebar={{ isOpen: true, label: 'Close the sidebar', onToggle }}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Close the sidebar' }));
+
+    expect(onToggle).toHaveBeenCalledOnce();
+    expect(screen.getByRole('button', { name: 'Close the sidebar' }).closest('div')).toHaveClass(
+      '[-webkit-app-region:no-drag]',
+    );
+  });
+
   it('opens the docs from its question mark', async () => {
     const user = userEvent.setup();
     const onHelp = vi.fn();

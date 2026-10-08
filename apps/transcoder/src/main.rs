@@ -136,6 +136,10 @@ fn session_config(ffmpeg: String, ffprobe: String) -> SessionConfig {
             .ok()
             .and_then(|value| value.parse().ok())
             .map_or(defaults.manifest_timeout, Duration::from_secs),
+        keyframe_deadline: env::var("VALENCE_KEYFRAME_DEADLINE_SECONDS")
+            .ok()
+            .and_then(|value| value.parse().ok())
+            .map_or(defaults.keyframe_deadline, Duration::from_secs),
         max_concurrent: env::var("VALENCE_MAX_CONCURRENT_TRANSCODES")
             .ok()
             .and_then(|value| value.parse().ok())
@@ -365,6 +369,8 @@ async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
 
     report_durability(&registry, &state.monitor).await;
 
+    warm_capabilities(&ffmpeg, &registry.config().device).await;
+
     spawn_width_keeper(state.queue.clone(), registry.clone(), ffmpeg.clone());
 
     let router = shared_secret::require(create_router(state), secret);
@@ -522,6 +528,18 @@ fn spawn_width_keeper(
             tokio::time::sleep(WATCH_INTERVAL).await;
         }
     });
+}
+
+async fn warm_capabilities(ffmpeg: &str, device: &str) {
+    let started = std::time::Instant::now();
+    let capabilities = capability::detect_capabilities(ffmpeg, device).await;
+
+    tracing::info!(
+        target: "service",
+        elapsed_ms = started.elapsed().as_millis(),
+        encoders = capabilities.encoders.len(),
+        "warmed transcoder capabilities"
+    );
 }
 
 /// How many files may be fingerprinted at once.

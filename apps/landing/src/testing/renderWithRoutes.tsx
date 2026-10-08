@@ -25,6 +25,13 @@ const renderWithRoutes = async (component: RouteComponent, path = '/'): Promise<
   const changelog = createRoute({ getParentRoute: () => root, path: '/changelog' });
   const release = createRoute({ getParentRoute: () => root, path: '/changelog/$slug' });
   const about = createRoute({ getParentRoute: () => root, path: '/about' });
+  const architecture = createRoute({ getParentRoute: () => root, path: '/architecture' });
+  const compare = createRoute({ getParentRoute: () => root, path: '/compare' });
+  const developers = createRoute({ getParentRoute: () => root, path: '/developers' });
+  const requirements = createRoute({ getParentRoute: () => root, path: '/requirements' });
+  const transcoding = createRoute({ getParentRoute: () => root, path: '/transcoding' });
+  const tour = createRoute({ getParentRoute: () => root, path: '/tour' });
+  const roadmap = createRoute({ getParentRoute: () => root, path: '/roadmap' });
   const plugins = createRoute({ getParentRoute: () => root, path: '/plugins' });
   const privacy = createRoute({ getParentRoute: () => root, path: '/privacy' });
   const terms = createRoute({ getParentRoute: () => root, path: '/terms' });
@@ -37,6 +44,13 @@ const renderWithRoutes = async (component: RouteComponent, path = '/'): Promise<
       changelog,
       release,
       about,
+      architecture,
+      compare,
+      developers,
+      requirements,
+      transcoding,
+      tour,
+      roadmap,
       plugins,
       privacy,
       terms,

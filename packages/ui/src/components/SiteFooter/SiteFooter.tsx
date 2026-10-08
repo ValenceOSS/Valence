@@ -77,10 +77,10 @@ const GROUPS: readonly { title: SiteFooterString; links: readonly FooterLink[] }
   },
 ];
 
-const HEADING = 'font-mono text-xs tracking-[0.08em] text-text-muted/70';
+const HEADING = 'font-mono text-xs uppercase tracking-[0.08em] text-text-muted opacity-70';
 
 const LINK =
-  'font-normal text-[0.9375rem] text-text-muted no-underline transition-colors hover:text-text';
+  'font-medium text-[0.9375rem] text-text-muted no-underline transition-colors hover:text-text';
 
 /**
  * The close of every page on Valence's sites, and a generous one: what Valence is, the way to

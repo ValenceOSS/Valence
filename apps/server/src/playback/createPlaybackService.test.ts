@@ -542,7 +542,7 @@ describe('starting playback', () => {
     expect(capabilities).toHaveBeenCalledTimes(1);
   });
 
-  it('asks again when the media service answered with nothing it could do', async () => {
+  it('keeps an empty capability answer instead of probing again on every play', async () => {
     const capabilities = vi.fn(() => Promise.resolve({ ...CAPABILITIES, encoders: [] }));
     const { service } = build({ capabilities });
     const converting = profile({
@@ -552,7 +552,7 @@ describe('starting playback', () => {
     await service.start(MEDIA_ID, converting, 0);
     await service.start(MEDIA_ID, converting, 0);
 
-    expect(capabilities).toHaveBeenCalledTimes(2);
+    expect(capabilities).toHaveBeenCalledTimes(1);
   });
 });
 

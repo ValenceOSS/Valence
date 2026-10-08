@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { act, fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderWithRoutes } from '@ValenceLanding/testing/renderWithRoutes';
@@ -22,9 +22,16 @@ describe('LandingNav', () => {
 
     await user.hover(screen.getByRole('button', { name: 'Product' }));
 
-    expect(screen.getByRole('link', { name: /About Valence/ })).toHaveAttribute('href', '/about');
+    expect(await screen.findByRole('link', { name: /Product tour/ })).toHaveAttribute(
+      'href',
+      '/tour',
+    );
+    expect(screen.getByRole('link', { name: /How it runs/ })).toHaveAttribute(
+      'href',
+      '/architecture',
+    );
     expect(screen.getByRole('link', { name: /Plugins/ })).toHaveAttribute('href', '/plugins');
-    expect(screen.getByRole('link', { name: /ValenceUI/ })).toHaveAttribute('href', '/ui');
+    expect(screen.getByRole('link', { name: /Compare/ })).toHaveAttribute('href', '/compare');
   });
 
   it('opens grouped resource links from the desktop navigation', async () => {
@@ -34,7 +41,7 @@ describe('LandingNav', () => {
 
     await user.hover(screen.getByRole('button', { name: 'Resources' }));
 
-    expect(screen.getByRole('link', { name: /Documentation/ })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /Documentation/ })).toHaveAttribute(
       'href',
       'https://docs.getvalence.app',
     );
@@ -42,7 +49,98 @@ describe('LandingNav', () => {
       'href',
       'https://docs.getvalence.app/api',
     );
-    expect(screen.getByRole('link', { name: /Changelog/ })).toHaveAttribute('href', '/changelog');
+    expect(
+      within(screen.getByRole('region', { name: 'Resources' })).getByRole('link', {
+        name: /Changelog/,
+      }),
+    ).toHaveAttribute('href', '/changelog');
+  });
+
+  it('slides from one section to the next as the pointer moves along the bar', async () => {
+    const user = userEvent.setup();
+
+    await renderWithRoutes(LandingNav);
+
+    await user.hover(screen.getByRole('button', { name: 'Product' }));
+    expect(await screen.findByRole('region', { name: 'Product' })).toBeInTheDocument();
+
+    await user.hover(screen.getByRole('button', { name: 'Run it' }));
+
+    expect(await screen.findByRole('region', { name: 'Run it' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Run it' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: 'Product' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+  });
+
+  it('still shows a section when the pointer doubles back to it quickly', async () => {
+    const user = userEvent.setup();
+
+    await renderWithRoutes(LandingNav);
+
+    await user.hover(screen.getByRole('button', { name: 'Product' }));
+    await screen.findByRole('region', { name: 'Product' });
+    await user.hover(screen.getByRole('button', { name: 'Run it' }));
+    await user.hover(screen.getByRole('button', { name: 'Product' }));
+
+    expect(await screen.findByRole('link', { name: /Product tour/ })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Product' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+  });
+
+  it('opens and closes a section by click, for touch and the keyboard', async () => {
+    const user = userEvent.setup();
+
+    await renderWithRoutes(LandingNav);
+
+    const community = screen.getByRole('button', { name: 'Community' });
+
+    community.focus();
+    await user.keyboard('{Enter}');
+    expect(community).toHaveAttribute('aria-expanded', 'true');
+
+    await user.keyboard('{Enter}');
+    expect(community).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('folds the panel away on escape', async () => {
+    const user = userEvent.setup();
+
+    await renderWithRoutes(LandingNav);
+
+    await user.click(screen.getByRole('button', { name: 'Resources' }));
+    expect(screen.getByRole('button', { name: 'Resources' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+
+    await user.keyboard('{Escape}');
+
+    expect(screen.getByRole('button', { name: 'Resources' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+  });
+
+  it('stays shut when escape is pressed before a hovered section has opened', async () => {
+    await renderWithRoutes(LandingNav);
+    vi.useFakeTimers();
+
+    fireEvent.mouseEnter(screen.getByRole('button', { name: 'Product' }));
+    fireEvent.keyDown(window, { key: 'Escape' });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
+
+    expect(screen.getByRole('button', { name: 'Product' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+
+    vi.useRealTimers();
   });
 
   it('opens the project on GitHub, in a new tab', async () => {
@@ -84,9 +182,9 @@ describe('LandingNav', () => {
     const mobileNav = screen.getByRole('navigation', { name: 'Mobile navigation' });
 
     expect(within(mobileNav).getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
-    expect(within(mobileNav).getByRole('link', { name: /About Valence/ })).toHaveAttribute(
+    expect(within(mobileNav).getByRole('link', { name: /How it runs/ })).toHaveAttribute(
       'href',
-      '/about',
+      '/architecture',
     );
     expect(within(mobileNav).getByRole('link', { name: /Changelog/ })).toHaveAttribute(
       'href',

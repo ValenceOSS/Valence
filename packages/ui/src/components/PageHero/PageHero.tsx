@@ -37,7 +37,7 @@ const PageHero = ({ eyebrow, lead, accent, trail, description, actions, aside }:
           initial="hidden"
           animate="shown"
           className={cn(
-            'mx-auto grid max-w-6xl items-center gap-12 px-6 pb-16 pt-32 sm:px-10 sm:pb-20 sm:pt-40 xl:max-w-7xl',
+            'mx-auto grid max-w-6xl items-center gap-12 px-6 pb-16 pt-[var(--page-hero-top,8rem)] sm:px-10 sm:pb-20 sm:pt-[var(--page-hero-top-wide,10rem)] xl:max-w-7xl',
             aside === undefined ? '' : 'lg:grid-cols-[1.1fr_1fr]',
           )}
         >

@@ -9,6 +9,7 @@ type FoldGradientProps = {
   ribbon?: number;
   ribbonWidth?: number;
   speed?: number;
+  isAscii?: boolean;
   className?: string;
 };
 
