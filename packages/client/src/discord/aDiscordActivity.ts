@@ -242,7 +242,9 @@ const theTracksArtworkFor = (artwork: string | null): string | undefined => {
  * dark one, the poster can be left off for the logo, the clock can count up from the start rather
  * than down to the end, the TMDB button and the party's size can be left off, and the status in the
  * member list can name the title instead of Valence: Discord shows whichever field
- * `status_display_type` points at, and the title is the details line.
+ * `status_display_type` points at, and the title is the details line. Music always shows the artist
+ * there, as Spotify's status does: the activity's name already is the artist, and a song's title
+ * alone says less about what somebody is listening to than who it is by.
  *
  * @param playing - What is happening and how it should look, or nothing where the status should come
  *   down.
@@ -291,7 +293,6 @@ const aDiscordActivity = (
     return {
       type: LISTENING,
       ...(artists === null ? {} : { name: artists }),
-      ...shown,
       details: playing.title,
       ...(state === undefined ? {} : { state }),
       ...timestamps,

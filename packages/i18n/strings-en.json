@@ -18595,8 +18595,8 @@
     "context": "The description of the artwork setting in the desktop app's Discord settings."
   },
   {
-    "handler": "screens.discordSettings.showsValenceOrTheTitleOf",
-    "text": "Shows Valence or the title of what you’re playing as your Discord status.",
+    "handler": "screens.discordSettings.showsValenceOrTheTitleOfWhatYoureWatching",
+    "text": "Shows Valence or the title of what you’re watching as your Discord status. Music always shows the artist.",
     "context": "The description of the setting that chooses whether the Discord status is headed by Valence or by the title in the desktop app's Discord settings."
   },
   {

@@ -4673,8 +4673,8 @@ const ENGLISH = {
     'Shows that Valence is open while nothing is playing.',
   'screens.discordSettings.showsThePosterOrAlbumCover':
     'Shows the poster or album cover instead of the Valence logo.',
-  'screens.discordSettings.showsValenceOrTheTitleOf':
-    'Shows Valence or the title of what you’re playing as your Discord status.',
+  'screens.discordSettings.showsValenceOrTheTitleOfWhatYoureWatching':
+    'Shows Valence or the title of what you’re watching as your Discord status. Music always shows the artist.',
   'screens.discordSettings.theValenceLogoShownOnYour':
     'The Valence logo shown on your status, in light or dark.',
   'screens.discordSettings.timeElapsed': 'Time elapsed',

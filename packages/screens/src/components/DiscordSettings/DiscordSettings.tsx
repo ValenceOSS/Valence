@@ -121,7 +121,9 @@ const DiscordSettings = ({ draft, onDraft }: DiscordSettingsProps) => {
             <>
               <SettingRow
                 title={say('common.status')}
-                description={say('screens.discordSettings.showsValenceOrTheTitleOf')}
+                description={say(
+                  'screens.discordSettings.showsValenceOrTheTitleOfWhatYoureWatching',
+                )}
               >
                 <SegmentedRow
                   size="sm"

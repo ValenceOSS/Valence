@@ -343,9 +343,16 @@ describe('aDiscordActivity', () => {
       expect(
         aDiscordActivity({ ...A_FILM, look: { ...LOOK, statusShows: 'title' } }, OPENED),
       ).toMatchObject({ status_display_type: 2, details: 'A Film' });
-      expect(
-        aDiscordActivity({ ...A_TRACK, look: { ...LOOK, statusShows: 'title' } }, OPENED),
-      ).toMatchObject({ status_display_type: 2, details: 'How Not To Drown' });
+    });
+
+    it('names the artist in the member list for music, whichever was asked for', () => {
+      const asked = aDiscordActivity(
+        { ...A_TRACK, look: { ...LOOK, statusShows: 'title' } },
+        OPENED,
+      );
+
+      expect(asked).not.toHaveProperty('status_display_type');
+      expect(asked).toMatchObject({ name: 'CHVRCHES & Robert Smith', details: 'How Not To Drown' });
     });
 
     it('draws the dark logo wherever the logo is drawn, where asked', () => {
