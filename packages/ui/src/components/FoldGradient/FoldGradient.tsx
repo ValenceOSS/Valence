@@ -43,6 +43,7 @@ const hexToLinearRgb = (hex: string): [number, number, number] => {
  * @param speed - How fast the sheets drift; zero holds them still.
  * @param isAscii - Whether to draw the light as rows of characters on black, each picked by how
  *   bright the light is where it sits, rather than as the light itself.
+ * @param pixelBudget - The most pixels it draws, stretched to fill its box; fewer is cheaper and softer.
  * @param className - Extra classes for the caller's own layout.
  */
 const FoldGradient = ({
@@ -57,6 +58,7 @@ const FoldGradient = ({
   ribbonWidth = 1,
   speed = 1,
   isAscii = false,
+  pixelBudget = 1600 * 900,
   className,
 }: FoldGradientProps) => {
   const uniforms = useMemo(
@@ -93,7 +95,7 @@ const FoldGradient = ({
       fragmentShader={fragmentShader}
       uniforms={uniforms}
       speed={speed}
-      maxPixelCount={1600 * 900}
+      maxPixelCount={pixelBudget}
       minPixelRatio={1}
       className={cn('block h-full w-full', className)}
     />

@@ -14,6 +14,7 @@ vi.mock('@paper-design/shaders-react', () => ({
         typeof props.uniforms.u_ncols === 'number' ? props.uniforms.u_ncols : undefined,
       )}
       data-speed={asNumberAttribute(props.speed)}
+      data-max-pixels={asNumberAttribute(props.maxPixelCount)}
       className={props.className}
     />
   ),
@@ -39,6 +40,12 @@ describe('FoldGradient', () => {
 
     expect(mount).toHaveAttribute('data-speed', '0');
     expect(mount).toHaveClass('absolute', 'inset-0');
+  });
+
+  it('draws no more pixels than its budget allows', () => {
+    render(<FoldGradient pixelBudget={640 * 360} />);
+
+    expect(screen.getByTestId('shader-mount')).toHaveAttribute('data-max-pixels', '230400');
   });
 
   it('sets a display name so devtools can identify it', () => {

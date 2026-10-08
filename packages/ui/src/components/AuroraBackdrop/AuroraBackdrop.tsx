@@ -42,6 +42,7 @@ const AuroraBackdrop = ({ isAscii = false }: AuroraBackdropProps) => {
             'absolute inset-0 -z-10 h-full w-full opacity-80',
             isAscii ? 'scale-105 blur-xl' : '',
           )}
+          {...(isAscii ? { pixelBudget: 640 * 360 } : {})}
           speed={isStill ? 0 : 1.5}
         />
       )}

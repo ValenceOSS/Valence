@@ -119,8 +119,12 @@ if (!('PointerEvent' in globalThis)) {
 }
 
 vi.mock('@paper-design/shaders-react', () => ({
-  ShaderMount: ({ className }: { className?: string }) =>
-    createElement('div', { 'data-testid': 'shader-mount', className }),
+  ShaderMount: ({ className, maxPixelCount }: { className?: string; maxPixelCount?: number }) =>
+    createElement('div', {
+      'data-testid': 'shader-mount',
+      'data-max-pixels': maxPixelCount,
+      className,
+    }),
 }));
 
 afterEach(tidyAfterATest);

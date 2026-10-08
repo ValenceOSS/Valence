@@ -10,6 +10,7 @@ type FoldGradientProps = {
   ribbonWidth?: number;
   speed?: number;
   isAscii?: boolean;
+  pixelBudget?: number;
   className?: string;
 };
 
