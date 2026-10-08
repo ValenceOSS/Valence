@@ -19390,9 +19390,9 @@
     "context": "A line beneath something in a person's viewing history. {when} is when it was watched, such as \"Yesterday\"; {duration} is how much of it was watched, such as \"1:12:04\"."
   },
   {
-    "handler": "screens.householdOnboarding.aPasskeySignsYouInWith",
-    "text": "A passkey signs you in with your face, fingerprint or screen lock, so there’s no password to remember.",
-    "context": "Shown in the household onboarding."
+    "handler": "screens.householdOnboarding.aPasskeyIsOptional",
+    "text": "Optional: a passkey lets you sign in with your face, fingerprint or screen lock instead of a password. You can add one later in your security settings.",
+    "context": "Beneath the passkey step of household onboarding and the first-run setup, saying the step can be skipped."
   },
   {
     "handler": "screens.householdOnboarding.everybodyWhoWatchesHereSharesThis",
@@ -19430,11 +19430,6 @@
     "context": "A heading in the household onboarding."
   },
   {
-    "handler": "screens.householdOnboarding.somethingYouWillRecogniseLaterSuch",
-    "text": "Something you’ll recognise later, such as the device you’re on.",
-    "context": "The description of a text field in the household onboarding."
-  },
-  {
     "handler": "screens.householdOnboarding.thatIsSetYouCanSign",
     "text": "Passkey added. You can sign in with it from now on.",
     "context": "Text shown in the household onboarding."
@@ -19458,6 +19453,16 @@
     "handler": "screens.householdOnboarding.whatIsWrongWithTheName.keepItToNAMEMAXCharacters",
     "text": "Keep it to {NAME_MAX} characters.",
     "context": "Shown in the household onboarding (from `whatIsWrongWithTheName`). {NAME_MAX} is filled in by the app."
+  },
+  {
+    "handler": "screens.householdOnboarding.youHaveAPasskeyForThisAccount",
+    "text": "You have a passkey for this account. You can add more or rename it later in your security settings.",
+    "context": "Beneath the passkey step of household onboarding, for an account that already made a passkey while setting up."
+  },
+  {
+    "handler": "screens.householdOnboarding.yourAccountHasNoPasswordOrPasskey",
+    "text": "Your account doesn’t have a password or a passkey yet. Add one so you can sign in again later.",
+    "context": "Beneath the passkey step of household onboarding, for an account set up with a passkey that was never made. Finishing waits until it has one."
   },
   {
     "handler": "screens.householdOnboarding.yoursYourFamilysWhateverTheTelevision",

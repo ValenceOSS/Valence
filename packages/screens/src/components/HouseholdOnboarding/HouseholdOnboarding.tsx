@@ -13,7 +13,8 @@ import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { finishOnboarding, saveHousehold } from '@ValenceClient/household/fetchHousehold';
 import { WayInBackground } from '@ValenceScreens/components/WayInBackground/WayInBackground';
 import { HouseholdPicturePicker } from '@ValenceScreens/components/HouseholdPicturePicker/HouseholdPicturePicker';
-import { PasskeyOffer } from '@ValenceScreens/components/PasskeyOffer/PasskeyOffer';
+import { useSignInStanding } from '@ValenceScreens/passkeys/useSignInStanding';
+import { PasskeyStep } from './components/PasskeyStep/PasskeyStep';
 import { WelcomeToValence } from '@ValenceScreens/components/WelcomeToValence/WelcomeToValence';
 import { whatIsWrongWithTheName } from './whatIsWrongWithTheName';
 import type { HouseholdOnboardingProps } from './HouseholdOnboarding.types';
@@ -30,7 +31,13 @@ const LABELS = [
 const SAYS = {
   name: say('screens.householdOnboarding.everybodyWhoWatchesHereSharesThis'),
   picture: say('screens.householdOnboarding.giveTheHouseholdAPictureOr'),
-  passkey: say('screens.householdOnboarding.aPasskeySignsYouInWith'),
+};
+
+const PASSKEY_SAYS = {
+  reading: say('screens.householdOnboarding.aPasskeyIsOptional'),
+  mayAddAPasskey: say('screens.householdOnboarding.aPasskeyIsOptional'),
+  hasPasskey: say('screens.householdOnboarding.youHaveAPasskeyForThisAccount'),
+  needsAWayIn: say('screens.householdOnboarding.yourAccountHasNoPasswordOrPasskey'),
 };
 
 /**
@@ -39,7 +46,8 @@ const SAYS = {
  * Three steps, and no more, because nobody asked to be here — this stands between somebody and the
  * thing they opened Valence for. A name and a picture, which are the two things that are blank and
  * visible and have no other moment to be set, and then the offer of a passkey, which is the one
- * thing that is easier now than it will ever be again.
+ * thing that is easier now than it will ever be again. The offer is optional, except to an account
+ * that has no password and no passkey either, which is held there until it has one.
  *
  * It stands on the same ground the way in does, and that is not decoration. Signing in and setting
  * up are one continuous moment to the person going through them, and a bare form arriving after the
@@ -60,6 +68,7 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
   const [isWelcoming, setIsWelcoming] = useState(false);
 
   const asking = useQuery(sessionQueries.wayIn());
+  const standing = useSignInStanding();
 
   const travel = useTravelDirection([...STEPS], step);
   const at = STEPS.indexOf(step);
@@ -132,7 +141,9 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
             {say('screens.householdOnboarding.setUpYourHousehold')}
           </h1>
 
-          <p className="text-sm leading-relaxed text-text-muted">{SAYS[step]}</p>
+          <p className="text-sm leading-relaxed text-text-muted">
+            {step === 'passkey' ? PASSKEY_SAYS[standing] : SAYS[step]}
+          </p>
         </header>
 
         <Tabs value={step} onValueChange={() => undefined} className="flex w-full flex-col">
@@ -187,21 +198,12 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
           </TabPanel>
 
           <TabPanel value="passkey" travel={travel}>
-            <div className="flex flex-col gap-5">
-              <PasskeyOffer />
-
-              <Button
-                variant="glossy"
-                size="lg"
-                className="w-full"
-                isLoading={isSaving}
-                onClick={() => {
-                  void finish();
-                }}
-              >
-                {say('screens.householdOnboarding.finish')}
-              </Button>
-            </div>
+            <PasskeyStep
+              isFinishing={isSaving}
+              onFinish={() => {
+                void finish();
+              }}
+            />
           </TabPanel>
         </Tabs>
 

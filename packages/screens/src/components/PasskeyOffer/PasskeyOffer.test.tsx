@@ -24,36 +24,20 @@ beforeEach(() => {
 });
 
 describe('PasskeyOffer', () => {
-  it('makes a passkey under the name given and says it is set', async () => {
+  it('makes a passkey named after this device and says it is set', async () => {
     const onMade = vi.fn();
 
     render(<PasskeyOffer onMade={onMade} />);
 
-    const name = screen.getByLabelText(/Passkey name/);
+    expect(screen.queryByLabelText(/Passkey name/)).not.toBeInTheDocument();
 
-    expect(name).toHaveValue('This device');
-
-    await userEvent.clear(name);
-    await userEvent.type(name, 'Laptop');
-    await userEvent.click(screen.getByRole('button', { name: 'Add a passkey' }));
-
-    expect(registerPasskey).toHaveBeenCalledWith('Laptop');
-    expect(
-      await screen.findByText('Passkey added. You can sign in with it from now on.'),
-    ).toBeVisible();
-    expect(onMade).toHaveBeenCalledOnce();
-  });
-
-  it('calls a passkey with no name after this device, and needs nobody told', async () => {
-    render(<PasskeyOffer />);
-
-    await userEvent.clear(screen.getByLabelText(/Passkey name/));
     await userEvent.click(screen.getByRole('button', { name: 'Add a passkey' }));
 
     expect(registerPasskey).toHaveBeenCalledWith('This device');
     expect(
       await screen.findByText('Passkey added. You can sign in with it from now on.'),
     ).toBeVisible();
+    expect(onMade).toHaveBeenCalledOnce();
   });
 
   it('says nothing when the device prompt was cancelled', async () => {
@@ -82,7 +66,6 @@ describe('PasskeyOffer', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Add a passkey' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('The device said no.');
-    expect(screen.getByLabelText(/Passkey name/)).toHaveAttribute('aria-invalid', 'true');
   });
 
   it('says why this device cannot make one instead of offering it', () => {

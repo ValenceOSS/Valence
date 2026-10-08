@@ -244,7 +244,7 @@ const HouseholdStep = ({ onBack, onContinue }: HouseholdStepProps) => {
             </h2>
 
             <p className="text-sm leading-relaxed text-text-muted">
-              {say('screens.householdOnboarding.aPasskeySignsYouInWith')}
+              {say('screens.householdOnboarding.aPasskeyIsOptional')}
             </p>
 
             <PasskeyOffer className="max-w-sm" />

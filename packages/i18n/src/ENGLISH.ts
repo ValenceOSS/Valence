@@ -4878,8 +4878,8 @@ const ENGLISH = {
   'screens.historyPanel.viewingsAreForgottenAutomaticallyAfterA':
     'Watch history is deleted automatically after one year. Reading progress is kept until you clear it.',
   'screens.historyPanel.whenDurationWatched': '{when} · {duration} watched',
-  'screens.householdOnboarding.aPasskeySignsYouInWith':
-    'A passkey signs you in with your face, fingerprint or screen lock, so there’s no password to remember.',
+  'screens.householdOnboarding.aPasskeyIsOptional':
+    'Optional: a passkey lets you sign in with your face, fingerprint or screen lock instead of a password. You can add one later in your security settings.',
   'screens.householdOnboarding.everybodyWhoWatchesHereSharesThis':
     'Everyone who watches here shares this. It only takes a moment and you won’t be asked again.',
   'screens.householdOnboarding.finish': 'Finish',
@@ -4889,8 +4889,6 @@ const ENGLISH = {
   'screens.householdOnboarding.pickAnother': 'Pick another',
   'screens.householdOnboarding.settingUp': 'Setting up',
   'screens.householdOnboarding.setUpYourHousehold': 'Set up your household',
-  'screens.householdOnboarding.somethingYouWillRecogniseLaterSuch':
-    'Something you’ll recognise later, such as the device you’re on.',
   'screens.householdOnboarding.thatIsSetYouCanSign':
     'Passkey added. You can sign in with it from now on.',
   'screens.householdOnboarding.thatNameCouldNotBeSaved': 'Couldn’t save that name.',
@@ -4899,6 +4897,10 @@ const ENGLISH = {
     'Give the household a name.',
   'screens.householdOnboarding.whatIsWrongWithTheName.keepItToNAMEMAXCharacters':
     'Keep it to {NAME_MAX} characters.',
+  'screens.householdOnboarding.youHaveAPasskeyForThisAccount':
+    'You have a passkey for this account. You can add more or rename it later in your security settings.',
+  'screens.householdOnboarding.yourAccountHasNoPasswordOrPasskey':
+    'Your account doesn’t have a password or a passkey yet. Add one so you can sign in again later.',
   'screens.householdOnboarding.yoursYourFamilysWhateverTheTelevision':
     'Your name, your family’s, or whatever you call the TV.',
   'screens.householdOnboarding.youSignedInAWhileAgo':

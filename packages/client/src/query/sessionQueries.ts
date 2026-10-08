@@ -1,5 +1,5 @@
 import { queryOptions } from '@tanstack/react-query';
-import { fetchSession, hasAPassword } from '@ValenceClient/session/auth';
+import { fetchSession, hasAPassword, listPasskeys } from '@ValenceClient/session/auth';
 import { readVersion } from '@ValenceClient/session/readVersion';
 import { fetchProfiles } from '@ValenceClient/profiles/fetchProfiles';
 import { fetchEveryone } from '@ValenceClient/profiles/fetchEveryone';
@@ -44,6 +44,17 @@ const password = () =>
   queryOptions({
     queryKey: [...SESSION, 'who', 'password'],
     queryFn: () => hasAPassword(),
+  });
+
+/**
+ * The passkeys the account signed in has.
+ *
+ * @returns The query.
+ */
+const passkeys = () =>
+  queryOptions({
+    queryKey: [...SESSION, 'who', 'passkeys'],
+    queryFn: () => listPasskeys(),
   });
 
 /**
@@ -112,6 +123,7 @@ const sessionQueries = {
   setup,
   who,
   password,
+  passkeys,
   version,
   profiles,
   everyone,
