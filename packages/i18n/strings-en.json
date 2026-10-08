@@ -19255,6 +19255,16 @@
     "context": "The label of a spinner in the finish on another device."
   },
   {
+    "handler": "screens.firstPassword.passwordSet",
+    "text": "Password set. You can sign in with it from now on.",
+    "context": "A notice after somebody gives an account that had only a passkey its first password."
+  },
+  {
+    "handler": "screens.firstPassword.yourAccountHasNoPasswordYet",
+    "text": "Your account doesn’t have a password yet. Set one so you can sign in without a passkey.",
+    "context": "In the security settings, beneath the password row, for an account that was set up with only a passkey."
+  },
+  {
     "handler": "screens.folderLink.openFolderInFiles",
     "text": "Open {folder} in Files",
     "context": "The label of a button in the folder link. {folder} is filled in by the app."

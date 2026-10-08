@@ -15,6 +15,7 @@ import {
   disableTwoFactor,
   enableTwoFactor,
   fetchSession,
+  hasAPassword,
   listPasskeys,
   registerPasskey,
   renamePasskey,
@@ -329,6 +330,31 @@ const AN_ATTESTATION = {
   type: 'public-key' as const,
   response: { clientDataJSON: 'e30', attestationObject: 'AA', transports: ['internal'] },
 };
+
+describe('hasAPassword', () => {
+  it('says an account has a password where one of its ways in is one', async () => {
+    fetchMock.mockResolvedValue(
+      said([
+        { id: 'a', providerId: 'credential', accountId: AN_ACCOUNT.id, userId: AN_ACCOUNT.id },
+      ]),
+    );
+
+    await expect(hasAPassword()).resolves.toBe(true);
+    expect(asked()).toBe('/api/auth/list-accounts');
+  });
+
+  it('says an account set up with only a passkey has none', async () => {
+    fetchMock.mockResolvedValue(said([]));
+
+    await expect(hasAPassword()).resolves.toBe(false);
+  });
+
+  it('does not guess where the server refused', async () => {
+    fetchMock.mockResolvedValue(said({}, 500));
+
+    await expect(hasAPassword()).rejects.toThrow(/500/);
+  });
+});
 
 describe('passkeys through the system', () => {
   it('signs in with what the host asked its system for', async () => {

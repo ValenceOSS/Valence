@@ -3,8 +3,8 @@ import { readRefusal } from '@ValenceClient/admin/readRefusal';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';
 
 /**
- * Gives an account that was just set up without a password its first one, for somebody whose
- * passkey did not take.
+ * Gives an account that was set up without a password its first one, for somebody whose passkey did
+ * not take or who wants a way in without it.
  *
  * @param password - The password chosen.
  * @returns Any refusal from the server.

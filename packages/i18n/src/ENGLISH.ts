@@ -4845,6 +4845,9 @@ const ENGLISH = {
   'screens.finishOnAnotherDevice.nameNeedsANameAndA':
     '{name} needs a name and a picture, which are hard to enter with a remote. Open this on your phone and your TV will continue automatically.',
   'screens.finishOnAnotherDevice.waitingForYouToFinish': 'Waiting for you to finish',
+  'screens.firstPassword.passwordSet': 'Password set. You can sign in with it from now on.',
+  'screens.firstPassword.yourAccountHasNoPasswordYet':
+    'Your account doesn’t have a password yet. Set one so you can sign in without a passkey.',
   'screens.folderLink.openFolderInFiles': 'Open {folder} in Files',
   'screens.forgotPassword.ifAnAccountAnswersToThat':
     'If an account matches, a link to set a new password has been sent. It works once and expires after an hour. No email? Your server admin can find the link in the server log.',
