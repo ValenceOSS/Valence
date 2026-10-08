@@ -58,6 +58,24 @@ describe('SiteFooter', () => {
     expect(github).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
+  it('links Marques from the footer signature', () => {
+    render(<SiteFooter here="landing" InSiteLink={InSite} />);
+
+    expect(screen.getByText(/Made with/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Marques' })).toHaveAttribute(
+      'href',
+      'https://mscripps.uk',
+    );
+  });
+
+  it('can draw a site-provided app icon beside the name', () => {
+    const { container } = render(
+      <SiteFooter here="landing" InSiteLink={InSite} logoSrc="/valence-icon.png" />,
+    );
+
+    expect(container.querySelector('img[alt=""]')).toHaveAttribute('src', '/valence-icon.png');
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(SiteFooter.displayName).toBe('SiteFooter');
   });

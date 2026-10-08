@@ -33,6 +33,7 @@ const GROUPS: readonly { title: SiteFooterString; links: readonly FooterLink[] }
     title: 'ui.siteFooter.navigate',
     links: [
       { site: 'landing', path: '/', label: 'common.home' },
+      { site: 'landing', path: '/about', label: 'common.about' },
       { site: 'docs', path: '/', label: 'ui.siteFooter.docs' },
       { site: 'landing', path: '/changelog', label: 'ui.siteFooter.changelog' },
       { site: 'landing', path: '/plugins', label: 'common.plugins' },
@@ -91,7 +92,7 @@ const LINK =
  * @param here - Which site the footer is on.
  * @param InSiteLink - How that site links to one of its own pages.
  */
-const SiteFooter = ({ here, InSiteLink }: SiteFooterProps) => {
+const SiteFooter = ({ here, InSiteLink, logoSrc }: SiteFooterProps) => {
   const isStill = useReducedMotionConfig() === true;
 
   const linkTo = (link: FooterLink) => {
@@ -120,7 +121,15 @@ const SiteFooter = ({ here, InSiteLink }: SiteFooterProps) => {
         <div className="mx-auto grid max-w-6xl gap-12 px-5 pt-20 sm:px-10 lg:grid-cols-[1.4fr_repeat(4,1fr)] xl:max-w-7xl">
           <div className="flex flex-col gap-5">
             <span className="flex items-center gap-3">
-              <Logo size={34} isSolid />
+              {logoSrc === undefined ? (
+                <Logo size={34} isSolid />
+              ) : (
+                <img
+                  src={logoSrc}
+                  alt=""
+                  className="size-[2.125rem] rounded-[0.5rem] shadow-[var(--shadow-raised)]"
+                />
+              )}
               <span className="text-3xl font-semibold tracking-tight text-text">
                 {say('common.valence')}
               </span>
@@ -174,10 +183,18 @@ const SiteFooter = ({ here, InSiteLink }: SiteFooterProps) => {
         </div>
 
         <div className="mx-auto mt-16 max-w-6xl px-5 sm:px-10 xl:max-w-7xl">
-          <div className="flex items-center justify-between gap-4 border-t border-border/60 py-6">
-            <p className="font-mono text-xs text-text-muted/70">
-              {say('ui.siteFooter.copyright', { year: YEAR.toString() })}
-            </p>
+          <div className="flex flex-col gap-4 border-t border-border/60 py-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-2">
+              <p className="font-mono text-xs text-text-muted/70">
+                {say('ui.siteFooter.copyright', { year: YEAR.toString() })}
+              </p>
+              <p className="font-mono text-xs text-text-muted/70">
+                {say('ui.siteFooter.madeWithBy')}{' '}
+                <Link href="https://mscripps.uk" className="font-mono text-xs text-text-muted">
+                  {say('ui.siteFooter.marques')}
+                </Link>
+              </p>
+            </div>
 
             <Button
               variant="ghost"
@@ -201,7 +218,7 @@ const SiteFooter = ({ here, InSiteLink }: SiteFooterProps) => {
             '[-webkit-mask-image:linear-gradient(to_bottom,black_15%,transparent)]',
           )}
         >
-          <p className="absolute inset-x-0 top-0 select-none whitespace-nowrap bg-linear-to-r from-text/0 via-text/70 to-text/0 bg-clip-text text-center text-[22vw] font-bold leading-none tracking-tighter text-transparent xl:text-[20rem]">
+          <p className="absolute inset-x-0 top-0 select-none whitespace-nowrap text-center text-[22vw] font-bold leading-none tracking-tighter text-on-scrim xl:text-[20rem]">
             {say('common.valence')}
           </p>
         </div>

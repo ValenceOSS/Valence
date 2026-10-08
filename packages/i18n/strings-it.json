@@ -27892,6 +27892,16 @@
     "context": "The label of an icon button in the footer that opens the community chat."
   },
   {
+    "handler": "ui.siteFooter.madeWithBy",
+    "text": "Made with ❤️ by",
+    "context": "The beginning of the website footer signature, followed by the maker's linked name."
+  },
+  {
+    "handler": "ui.siteFooter.marques",
+    "text": "Marques",
+    "context": "The linked maker name in the website footer signature."
+  },
+  {
     "handler": "ui.siteFooter.navigate",
     "text": "Navigate",
     "context": "The heading over the links to the main pages, in the footer of the website and the documentation."
