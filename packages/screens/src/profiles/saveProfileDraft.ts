@@ -1,4 +1,5 @@
 import { saveProfile, uploadProfilePhoto } from '@ValenceClient/profiles/fetchProfiles';
+import { say } from '@ValenceI18n/say';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ProfileDraft } from '@ValenceScreens/components/ProfileSettings/ProfileSettings.types';
 
@@ -8,24 +9,30 @@ import type { ProfileDraft } from '@ValenceScreens/components/ProfileSettings/Pr
  *
  * @param profile - The profile as the server holds it.
  * @param draft - What it should become.
- * @returns Whether all of it was written.
+ * @returns Why it was not all written, or null where it was.
  */
-const saveProfileDraft = async (profile: ViewerProfile, draft: ProfileDraft): Promise<boolean> => {
-  const sent = draft.photo === null || (await uploadProfilePhoto(profile.id, draft.photo));
+const saveProfileDraft = async (
+  profile: ViewerProfile,
+  draft: ProfileDraft,
+): Promise<string | null> => {
+  const refused = draft.photo === null ? null : await uploadProfilePhoto(profile.id, draft.photo);
 
-  return (
-    sent &&
-    saveProfile(
-      profile.id,
-      draft.name.trim() === '' ? profile.name : draft.name.trim(),
-      draft.colour,
-      draft.avatar,
-      draft.askStillWatchingAfter,
-      draft.showsWhatIamWatching,
-      draft.prefersBestCopy,
-      draft.discordPresence,
-    )
+  if (refused !== null) {
+    return refused;
+  }
+
+  const saved = await saveProfile(
+    profile.id,
+    draft.name.trim() === '' ? profile.name : draft.name.trim(),
+    draft.colour,
+    draft.avatar,
+    draft.askStillWatchingAfter,
+    draft.showsWhatIamWatching,
+    draft.prefersBestCopy,
+    draft.discordPresence,
   );
+
+  return saved ? null : say('common.thoseChangesWereNotSaved');
 };
 
 export { saveProfileDraft };

@@ -228,6 +228,9 @@ const ActiveSessionSchema = z.object({
     .object({
       mediaId: z.string(),
       mediaTitle: z.string(),
+      seriesTitle: z.string().nullable().default(null),
+      seasonNumber: z.number().int().nullable().default(null),
+      episodeNumber: z.number().int().nullable().default(null),
       hasPoster: z.boolean(),
       hasBackdrop: z.boolean(),
       mode: z.enum(['direct', 'transcode']),

@@ -45,6 +45,9 @@ const WATCHING_SESSION: ActiveSession = {
   playback: {
     mediaId: 'media-1',
     mediaTitle: 'Arrival',
+    seriesTitle: null,
+    seasonNumber: null,
+    episodeNumber: null,
     hasPoster: true,
     hasBackdrop: false,
     mode: 'transcode',

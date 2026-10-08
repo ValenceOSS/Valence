@@ -1,7 +1,10 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { describeWhen } from '@ValenceClient/history/describeWhen';
-import { markNotificationsRead } from '@ValenceClient/notifications/fetchNotifications';
+import {
+  clearNotifications,
+  markNotificationsRead,
+} from '@ValenceClient/notifications/fetchNotifications';
 import { notificationQueries } from '@ValenceClient/query/notificationQueries';
 import { Button } from '@ValenceTv/components/Button/Button';
 import { readArrivalLink } from '@ValenceTv/notifications/readArrivalLink';
@@ -54,9 +57,7 @@ const YourNotifications = ({ onOpen, onJoin, onFocus }: YourNotificationsProps) 
     const named = readArrivalLink(notice.link);
     const invitation = readPartyInvitation(notice.link);
 
-    if (notice.readAt === null) {
-      void markNotificationsRead(notice.id).then(reread);
-    }
+    void clearNotifications(notice.id).then(reread);
 
     if (invitation !== null) {
       onJoin(invitation);

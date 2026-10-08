@@ -227,6 +227,7 @@ const serveSetupLinks = (app: OpenAPIHono, context: AppContext): void => {
         suggestedUsername: found.suggestedUsername,
         hasEmail: found.email !== null,
         hasPassword: found.hasPassword,
+        canResetPassword: await email.isOn('passwordResets'),
         expiresAt: found.expiresAt.toISOString(),
       },
       200,

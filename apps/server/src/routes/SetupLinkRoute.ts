@@ -157,9 +157,9 @@ const firstPasswordRoute = createRoute({
   method: 'post',
   path: '/api/setup-links/password',
   tags: ['Setup links'],
-  summary: 'Give a just set up account its first password',
+  summary: 'Give an account set up without a password its first one',
   description:
-    'For somebody who set up with a passkey that then failed: they are signed in, and have nothing else to sign in with.',
+    'For somebody who set up with a passkey, from the setup page when the passkey failed or later from their security settings. Refused for an account that already has a password.',
   request: {
     body: {
       content: {

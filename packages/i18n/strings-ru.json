@@ -3727,6 +3727,11 @@
     "context": "Read aloud by screen readers as the name, used in the lyrics panel in the music page and in the lyrics view in the music page. {title} is filled in by the app."
   },
   {
+    "handler": "common.mac",
+    "text": "Mac",
+    "context": "The name of Apple's computers, as in the desktop app for a Mac."
+  },
+  {
     "handler": "common.madeCreatedAt",
     "text": "Created {createdAt}",
     "context": "Text shown, used in the share panel in the account area and in the shares panel in the admin area. {createdAt} is filled in by the app."
@@ -7663,6 +7668,11 @@
     "handler": "desktop.main.listenForTheHandBack.notHere",
     "text": "Not here.",
     "context": "Shown in the main of the desktop app (from `listenForTheHandBack`)."
+  },
+  {
+    "handler": "desktop.main.showTheUnreadCount.countUnread",
+    "text": "{count} unread",
+    "context": "Read out by screen readers for the unread badge on Valence's taskbar button on Windows. {count} is filled in by the app."
   },
   {
     "handler": "desktop.main.theApplication.hostCouldNotBeReached",
@@ -18000,6 +18010,11 @@
     "context": "The label of a action menu in the app shell."
   },
   {
+    "handler": "screens.appShell.getValenceForSystem",
+    "text": "Get Valence for {system}",
+    "context": "An item in the account menu that opens the page the desktop app is downloaded from, in a browser on a computer (from `AppShell`). {system} is Mac, Windows or Linux."
+  },
+  {
     "handler": "screens.appShell.myAccount",
     "text": "My account",
     "context": "The label in the app shell."
@@ -18595,8 +18610,8 @@
     "context": "The description of the artwork setting in the desktop app's Discord settings."
   },
   {
-    "handler": "screens.discordSettings.showsValenceOrTheTitleOf",
-    "text": "Shows Valence or the title of what you’re playing as your Discord status.",
+    "handler": "screens.discordSettings.showsValenceOrTheTitleOfWhatYoureWatching",
+    "text": "Shows Valence or the title of what you’re watching as your Discord status. Music always shows the artist.",
     "context": "The description of the setting that chooses whether the Discord status is headed by Valence or by the title in the desktop app's Discord settings."
   },
   {
@@ -19245,6 +19260,16 @@
     "context": "The label of a spinner in the finish on another device."
   },
   {
+    "handler": "screens.firstPassword.passwordSet",
+    "text": "Password set. You can sign in with it from now on.",
+    "context": "A notice after somebody gives an account that had only a passkey its first password."
+  },
+  {
+    "handler": "screens.firstPassword.yourAccountHasNoPasswordYet",
+    "text": "Your account doesn’t have a password yet. Set one so you can sign in without a passkey.",
+    "context": "In the security settings, beneath the password row, for an account that was set up with only a passkey."
+  },
+  {
     "handler": "screens.folderLink.openFolderInFiles",
     "text": "Open {folder} in Files",
     "context": "The label of a button in the folder link. {folder} is filled in by the app."
@@ -19273,6 +19298,21 @@
     "handler": "screens.forgotPassword.usernameOrEmail",
     "text": "Username or email",
     "context": "The field in the forgotten password dialog."
+  },
+  {
+    "handler": "screens.getTheDesktopApp.getIt",
+    "text": "Get it",
+    "context": "The button in the note offering the desktop app, which opens the page it is downloaded from (from `GetTheDesktopApp`)."
+  },
+  {
+    "handler": "screens.getTheDesktopApp.itsOwnWindowDownloadsToWatch",
+    "text": "Its own window, downloads to watch offline, and your status on Discord.",
+    "context": "What the desktop app adds over the browser, in the note offering it (from `GetTheDesktopApp`)."
+  },
+  {
+    "handler": "screens.getTheDesktopApp.valenceForSystem",
+    "text": "Valence for {system}",
+    "context": "The heading of the note offering the desktop app, in a browser on a computer (from `GetTheDesktopApp`). {system} is Mac, Windows or Linux."
   },
   {
     "handler": "screens.giveUpRulesList.metadataWaitChoices.fifteenMinutes",
@@ -19355,9 +19395,9 @@
     "context": "A line beneath something in a person's viewing history. {when} is when it was watched, such as \"Yesterday\"; {duration} is how much of it was watched, such as \"1:12:04\"."
   },
   {
-    "handler": "screens.householdOnboarding.aPasskeySignsYouInWith",
-    "text": "A passkey signs you in with your face, fingerprint or screen lock, so there’s no password to remember.",
-    "context": "Shown in the household onboarding."
+    "handler": "screens.householdOnboarding.aPasskeyIsOptional",
+    "text": "Optional: a passkey lets you sign in with your face, fingerprint or screen lock instead of a password. You can add one later in your security settings.",
+    "context": "Beneath the passkey step of household onboarding and the first-run setup, saying the step can be skipped."
   },
   {
     "handler": "screens.householdOnboarding.everybodyWhoWatchesHereSharesThis",
@@ -19395,11 +19435,6 @@
     "context": "A heading in the household onboarding."
   },
   {
-    "handler": "screens.householdOnboarding.somethingYouWillRecogniseLaterSuch",
-    "text": "Something you’ll recognise later, such as the device you’re on.",
-    "context": "The description of a text field in the household onboarding."
-  },
-  {
     "handler": "screens.householdOnboarding.thatIsSetYouCanSign",
     "text": "Passkey added. You can sign in with it from now on.",
     "context": "Text shown in the household onboarding."
@@ -19423,6 +19458,16 @@
     "handler": "screens.householdOnboarding.whatIsWrongWithTheName.keepItToNAMEMAXCharacters",
     "text": "Keep it to {NAME_MAX} characters.",
     "context": "Shown in the household onboarding (from `whatIsWrongWithTheName`). {NAME_MAX} is filled in by the app."
+  },
+  {
+    "handler": "screens.householdOnboarding.youHaveAPasskeyForThisAccount",
+    "text": "You have a passkey for this account. You can add more or rename it later in your security settings.",
+    "context": "Beneath the passkey step of household onboarding, for an account that already made a passkey while setting up."
+  },
+  {
+    "handler": "screens.householdOnboarding.yourAccountHasNoPasswordOrPasskey",
+    "text": "Your account doesn’t have a password or a passkey yet. Add one so you can sign in again later.",
+    "context": "Beneath the passkey step of household onboarding, for an account set up with a passkey that was never made. Finishing waits until it has one."
   },
   {
     "handler": "screens.householdOnboarding.yoursYourFamilysWhateverTheTelevision",
@@ -20704,6 +20749,11 @@
     "handler": "screens.musicHome.musicFeature.newestInYourLibrary",
     "text": "Newest in your library",
     "context": "Shown in the music feature in the music home."
+  },
+  {
+    "handler": "screens.musicMiniPlayer.stopAndClose",
+    "text": "Stop and close",
+    "context": "The label of the button on the small music player shown on other pages that stops the music and puts the player away (from `MusicMiniPlayer`)."
   },
   {
     "handler": "screens.musicPage.albumsView.readingYourAlbums",
@@ -24584,6 +24634,11 @@
     "handler": "screens.welcomePage.chooseHowYouSignIn",
     "text": "You have an account on {server}. Choose how you sign in.",
     "context": "On the account setup page a setup link opens. {server} is what this Valence is called."
+  },
+  {
+    "handler": "screens.welcomePage.createAPasskeyInstead",
+    "text": "Create a passkey instead",
+    "context": "On the account setup page, switches from choosing a password to creating a passkey on this device for the new account."
   },
   {
     "handler": "screens.welcomePage.readingYourLink",

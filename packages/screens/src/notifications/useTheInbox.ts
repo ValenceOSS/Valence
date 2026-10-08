@@ -51,17 +51,13 @@ const useTheInbox = (isOn = true): NotificationBellProps => {
       void cache.invalidateQueries({ queryKey: notificationQueries.key });
     },
     onRead: (id) => {
-      void markNotificationsRead(id).then((unread) => {
+      void clearNotifications(id).then((unread) => {
         cache.setQueryData(notificationQueries.inbox().queryKey, (waiting: Inbox | undefined) =>
           waiting === undefined
             ? waiting
             : {
                 unread,
-                notifications: waiting.notifications.map((one) =>
-                  one.id === id && one.readAt === null
-                    ? { ...one, readAt: new Date().toISOString() }
-                    : one,
-                ),
+                notifications: waiting.notifications.filter((one) => one.id !== id),
               },
         );
       });

@@ -159,7 +159,7 @@ describe('clearing and expiring', () => {
     expect(await store.list('b', 10)).toHaveLength(1);
   });
 
-  it('takes down a notice that has had its time, without being asked', async () => {
+  it('forgets a notice nobody opened or cleared after ninety days', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-21T12:00:00.000Z'));
 
@@ -172,15 +172,14 @@ describe('clearing and expiring', () => {
       link: null,
     });
 
-    vi.setSystemTime(new Date('2026-08-21T12:06:00.000Z'));
+    vi.setSystemTime(new Date('2026-11-20T12:00:00.000Z'));
 
     expect(await store.list('a', 10)).toEqual([]);
-    expect(await store.countUnread('a')).toBe(0);
 
     vi.useRealTimers();
   });
 
-  it('keeps one that is still news', async () => {
+  it('keeps a notice until it is read or cleared, however long that takes', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-21T12:00:00.000Z'));
 
@@ -193,9 +192,10 @@ describe('clearing and expiring', () => {
       link: null,
     });
 
-    vi.setSystemTime(new Date('2026-08-21T12:04:00.000Z'));
+    vi.setSystemTime(new Date('2026-09-21T12:00:00.000Z'));
 
     expect(await store.list('a', 10)).toHaveLength(1);
+    expect(await store.countUnread('a')).toBe(1);
 
     vi.useRealTimers();
   });

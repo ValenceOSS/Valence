@@ -101,9 +101,7 @@ const TheNotifications = ({ onOpen, onJoin, onBack }: TheNotificationsProps) => 
             tone="bare"
             label={sayAgain(notification.title)}
             onPress={() => {
-              if (isUnread) {
-                void markNotificationsRead(notification.id).then(reread);
-              }
+              void clearNotifications(notification.id).then(reread);
 
               if (invitation !== null) {
                 onJoin(invitation);

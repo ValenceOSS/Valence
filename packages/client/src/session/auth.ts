@@ -531,6 +531,21 @@ const listPasskeys = async (): Promise<Passkey[]> => {
 };
 
 /**
+ * Whether this account has a password to sign in with, which one set up with only a passkey does not.
+ *
+ * @returns Whether it has one.
+ */
+const hasAPassword = async (): Promise<boolean> => {
+  const { data, error } = await client.listAccounts();
+
+  if (error !== null) {
+    throw new Error(`Account list failed with status ${String(error.status)}`);
+  }
+
+  return data.some((account) => account.providerId === 'credential');
+};
+
+/**
  * Removes a registered passkey, for somebody who has lost the device it lived on.
  *
  * @param id - The passkey to remove.
@@ -769,6 +784,7 @@ export {
   confirmItIsYou,
   authenticateWithPasskey,
   listPasskeys,
+  hasAPassword,
   deletePasskey,
   renamePasskey,
   enableTwoFactor,

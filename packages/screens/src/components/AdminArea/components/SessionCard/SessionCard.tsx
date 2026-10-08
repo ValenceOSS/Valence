@@ -73,6 +73,21 @@ const SessionCard = ({
   const hasProgress = health !== null && health.durationSeconds > 0;
   const isActive = playback !== null || heard !== null;
   const isPlaying = playback?.isPlaying ?? heard?.isPlaying ?? false;
+  const series = playback?.seriesTitle ?? null;
+  const episode =
+    playback === null || series === null
+      ? null
+      : [
+          playback.seasonNumber === null || playback.episodeNumber === null
+            ? null
+            : say('common.searchWhatEpisode', {
+                season: playback.seasonNumber.toString(),
+                episode: playback.episodeNumber.toString(),
+              }),
+          playback.mediaTitle,
+        ]
+          .filter((part) => part !== null)
+          .join(' · ');
   const fallbackGlyph =
     listening !== null
       ? MusicNoteIcon
@@ -84,7 +99,7 @@ const SessionCard = ({
 
   return (
     <Card as="article" padding="sm" radius="md" className="flex w-full min-w-0 items-center gap-3">
-      <span className="relative flex aspect-video w-24 shrink-0 items-center justify-center overflow-hidden rounded-sm bg-[var(--surface-hover)]">
+      <span className="relative flex aspect-video w-30 shrink-0 items-center justify-center overflow-hidden rounded-sm bg-[var(--surface-hover)]">
         {playback !== null && (playback.hasBackdrop || playback.hasPoster) ? (
           <img
             src={artworkUrl(playback.mediaId, playback.hasBackdrop ? 'backdrop' : 'poster')}
@@ -110,10 +125,11 @@ const SessionCard = ({
         )}
       </span>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <span className="flex min-w-0 items-center gap-2">
           <span className="truncate text-sm font-medium text-text">
-            {playback?.mediaTitle ??
+            {series ??
+              playback?.mediaTitle ??
               (listening !== null
                 ? `${listening.title} · ${listening.artists.join(', ')}`
                 : book !== null
@@ -140,6 +156,12 @@ const SessionCard = ({
             </Badge>
           )}
         </span>
+
+        {episode === null ? null : (
+          <span className="truncate text-xs text-text" title={episode}>
+            {episode}
+          </span>
+        )}
 
         <span className="flex min-w-0 items-center gap-1.5 text-xs text-text-muted">
           {isBrowser && marks.browser !== null ? (

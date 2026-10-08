@@ -47,6 +47,9 @@ const PICTURE_CONVERTED: PlaybackPlan = {
 const playing = (plan: PlaybackPlan): NonNullable<ActiveSession['playback']> => ({
   mediaId: plan.mediaId,
   mediaTitle: 'Arrival',
+  seriesTitle: null,
+  seasonNumber: null,
+  episodeNumber: null,
   hasPoster: false,
   hasBackdrop: false,
   mode: 'transcode',

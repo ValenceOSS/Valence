@@ -13,7 +13,7 @@ import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPrese
 
 type Answer = { ok: boolean; json: () => Promise<JsonValue> };
 
-type FetchLike = (input: string, init?: RequestInit) => Promise<Answer>;
+type FetchLike = (input: string, init?: RequestInit) => Promise<Answer | Response>;
 
 const fetchMock = vi.fn<FetchLike>();
 
@@ -174,12 +174,30 @@ describe('uploadProfilePhoto', () => {
     });
   });
 
-  it('reports failure when the server cannot be reached', async () => {
+  it('says nothing is wrong where the picture was kept', async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+
+    await expect(
+      uploadProfilePhoto('abc', new File(['picture'], 'me.webp', { type: 'image/webp' })),
+    ).resolves.toBeNull();
+  });
+
+  it('says why the server refused the picture, in its own words', async () => {
+    fetchMock.mockResolvedValue(
+      Response.json({ error: 'A picture has to be 8 MB or smaller.' }, { status: 413 }),
+    );
+
+    await expect(
+      uploadProfilePhoto('abc', new File(['picture'], 'me.webp', { type: 'image/webp' })),
+    ).resolves.toBe('A picture has to be 8 MB or smaller.');
+  });
+
+  it('says the picture could not be sent when the server cannot be reached', async () => {
     fetchMock.mockRejectedValue(new Error('offline'));
 
     await expect(
       uploadProfilePhoto('abc', new File(['picture'], 'me.webp', { type: 'image/webp' })),
-    ).resolves.toBe(false);
+    ).resolves.toBe('Couldn’t upload that picture.');
   });
 });
 

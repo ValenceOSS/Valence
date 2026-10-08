@@ -889,6 +889,7 @@ const ENGLISH = {
   'common.lossless': 'Lossless',
   'common.lyrics': 'Lyrics',
   'common.lyricsForTitle': 'Lyrics for {title}',
+  'common.mac': 'Mac',
   'common.madeCreatedAt': 'Created {createdAt}',
   'common.madeForYou': 'Made for you',
   'common.makeALink': 'Create share link',
@@ -1785,6 +1786,7 @@ const ENGLISH = {
   'desktop.main.listenForTheHandBack.doctypeHtmlHtmlLangEnMeta':
     '<!doctype html>\n<html lang="en">\n  <meta charset="utf-8">\n  <meta name="color-scheme" content="light dark">\n  <title>Signed in to Valence</title>\n  <body style="margin: 0; min-height: 100vh; display: grid; place-items: center; font: 16px system-ui, sans-serif">\n    <p>Signed in. You can close this tab and go back to Valence.</p>\n  </body>\n</html>\n',
   'desktop.main.listenForTheHandBack.notHere': 'Not here.',
+  'desktop.main.showTheUnreadCount.countUnread': '{count} unread',
   'desktop.main.theApplication.hostCouldNotBeReached': 'Couldn’t connect to {host}.',
   'desktop.main.theApplication.thePageStoppedWaiting': 'The page timed out.',
   'desktop.main.theApplication.thisClientsOwnPagesCouldNot':
@@ -4534,6 +4536,7 @@ const ENGLISH = {
   'screens.app.loadingInitialTitle': 'Loading {initialTitle}',
   'screens.appShell.admin': 'Admin',
   'screens.appShell.chooseSomethingAtRandom': 'Choose something at random',
+  'screens.appShell.getValenceForSystem': 'Get Valence for {system}',
   'screens.appShell.myAccount': 'My account',
   'screens.appShell.myRequests': 'My requests',
   'screens.appShell.randomiser': 'Randomiser',
@@ -4673,8 +4676,8 @@ const ENGLISH = {
     'Shows that Valence is open while nothing is playing.',
   'screens.discordSettings.showsThePosterOrAlbumCover':
     'Shows the poster or album cover instead of the Valence logo.',
-  'screens.discordSettings.showsValenceOrTheTitleOf':
-    'Shows Valence or the title of what you’re playing as your Discord status.',
+  'screens.discordSettings.showsValenceOrTheTitleOfWhatYoureWatching':
+    'Shows Valence or the title of what you’re watching as your Discord status. Music always shows the artist.',
   'screens.discordSettings.theValenceLogoShownOnYour':
     'The Valence logo shown on your status, in light or dark.',
   'screens.discordSettings.timeElapsed': 'Time elapsed',
@@ -4843,6 +4846,9 @@ const ENGLISH = {
   'screens.finishOnAnotherDevice.nameNeedsANameAndA':
     '{name} needs a name and a picture, which are hard to enter with a remote. Open this on your phone and your TV will continue automatically.',
   'screens.finishOnAnotherDevice.waitingForYouToFinish': 'Waiting for you to finish',
+  'screens.firstPassword.passwordSet': 'Password set. You can sign in with it from now on.',
+  'screens.firstPassword.yourAccountHasNoPasswordYet':
+    'Your account doesn’t have a password yet. Set one so you can sign in without a passkey.',
   'screens.folderLink.openFolderInFiles': 'Open {folder} in Files',
   'screens.forgotPassword.ifAnAccountAnswersToThat':
     'If an account matches, a link to set a new password has been sent. It works once and expires after an hour. No email? Your server admin can find the link in the server log.',
@@ -4851,6 +4857,10 @@ const ENGLISH = {
   'screens.forgotPassword.typeYourUsernameOrTheEmail':
     'Enter your username or the email address on your account, and Valence will send you a link to set a new password.',
   'screens.forgotPassword.usernameOrEmail': 'Username or email',
+  'screens.getTheDesktopApp.getIt': 'Get it',
+  'screens.getTheDesktopApp.itsOwnWindowDownloadsToWatch':
+    'Its own window, downloads to watch offline, and your status on Discord.',
+  'screens.getTheDesktopApp.valenceForSystem': 'Valence for {system}',
   'screens.giveUpRulesList.metadataWaitChoices.fifteenMinutes': 'Fifteen minutes',
   'screens.giveUpRulesList.metadataWaitChoices.halfAnHour': 'Half an hour',
   'screens.giveUpRulesList.stalledWaitChoices.twelveHours': 'Twelve hours',
@@ -4869,8 +4879,8 @@ const ENGLISH = {
   'screens.historyPanel.viewingsAreForgottenAutomaticallyAfterA':
     'Watch history is deleted automatically after one year. Reading progress is kept until you clear it.',
   'screens.historyPanel.whenDurationWatched': '{when} · {duration} watched',
-  'screens.householdOnboarding.aPasskeySignsYouInWith':
-    'A passkey signs you in with your face, fingerprint or screen lock, so there’s no password to remember.',
+  'screens.householdOnboarding.aPasskeyIsOptional':
+    'Optional: a passkey lets you sign in with your face, fingerprint or screen lock instead of a password. You can add one later in your security settings.',
   'screens.householdOnboarding.everybodyWhoWatchesHereSharesThis':
     'Everyone who watches here shares this. It only takes a moment and you won’t be asked again.',
   'screens.householdOnboarding.finish': 'Finish',
@@ -4880,8 +4890,6 @@ const ENGLISH = {
   'screens.householdOnboarding.pickAnother': 'Pick another',
   'screens.householdOnboarding.settingUp': 'Setting up',
   'screens.householdOnboarding.setUpYourHousehold': 'Set up your household',
-  'screens.householdOnboarding.somethingYouWillRecogniseLaterSuch':
-    'Something you’ll recognise later, such as the device you’re on.',
   'screens.householdOnboarding.thatIsSetYouCanSign':
     'Passkey added. You can sign in with it from now on.',
   'screens.householdOnboarding.thatNameCouldNotBeSaved': 'Couldn’t save that name.',
@@ -4890,6 +4898,10 @@ const ENGLISH = {
     'Give the household a name.',
   'screens.householdOnboarding.whatIsWrongWithTheName.keepItToNAMEMAXCharacters':
     'Keep it to {NAME_MAX} characters.',
+  'screens.householdOnboarding.youHaveAPasskeyForThisAccount':
+    'You have a passkey for this account. You can add more or rename it later in your security settings.',
+  'screens.householdOnboarding.yourAccountHasNoPasswordOrPasskey':
+    'Your account doesn’t have a password or a passkey yet. Add one so you can sign in again later.',
   'screens.householdOnboarding.yoursYourFamilysWhateverTheTelevision':
     'Your name, your family’s, or whatever you call the TV.',
   'screens.householdOnboarding.youSignedInAWhileAgo':
@@ -5212,6 +5224,7 @@ const ENGLISH = {
   'screens.music.nameOfOwner.removedProfile': 'A deleted profile',
   'screens.music.playlistGroupFor.addedToName': 'Added to {name}',
   'screens.musicHome.musicFeature.newestInYourLibrary': 'Newest in your library',
+  'screens.musicMiniPlayer.stopAndClose': 'Stop and close',
   'screens.musicPage.albumsView.readingYourAlbums': 'Loading your albums',
   'screens.musicPage.albumView.addTitleToAPlaylist': 'Add {title} to a playlist',
   'screens.musicPage.albumView.nothingOnThisAlbumYouCan': 'No playable tracks on this album',
@@ -6180,6 +6193,7 @@ const ENGLISH = {
     'Choose a new password, or create a passkey. You’ll be signed out on every other device.',
   'screens.welcomePage.chooseHowYouSignIn':
     'You have an account on {server}. Choose how you sign in.',
+  'screens.welcomePage.createAPasskeyInstead': 'Create a passkey instead',
   'screens.welcomePage.readingYourLink': 'Loading your setup link',
   'screens.welcomePage.tryThePasskeyAgain': 'Try the passkey again',
   'screens.welcomePage.useAPasswordInstead': 'Use a password instead',

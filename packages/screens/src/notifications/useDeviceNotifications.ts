@@ -6,7 +6,7 @@ import type { Notification } from '@ValenceClient/notifications/fetchNotificatio
 type DeviceNotifications = {
   notifications: Notification[];
   unread: number;
-  onOpen: (link: string | null) => void;
+  onOpen: (notification: Notification) => void;
 };
 
 /**
@@ -24,7 +24,7 @@ type DeviceNotifications = {
  * only remembers what was already there, and it is the *next* notification, the one that was not in
  * that first list, that gets shown.
  *
- * @param presence - What is on the bell, how much of it is unread, and where a press should lead.
+ * @param presence - What is on the bell, how much of it is unread, and what pressing one does.
  */
 const useDeviceNotifications = ({ notifications, unread, onOpen }: DeviceNotifications): void => {
   const seen = useRef<Set<string> | null>(null);
@@ -49,7 +49,7 @@ const useDeviceNotifications = ({ notifications, unread, onOpen }: DeviceNotific
           title: sayAgain(notification.title),
           body: sayAgain(notification.body),
           onOpen: () => {
-            onOpen(notification.link);
+            onOpen(notification);
           },
         });
       }

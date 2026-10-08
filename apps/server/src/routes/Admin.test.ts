@@ -344,6 +344,9 @@ describe('administration over HTTP', () => {
     context.presence.startPlayback('tab-1', {
       mediaId: 'media-1',
       mediaTitle: 'Arrival',
+      seriesTitle: null,
+      seasonNumber: null,
+      episodeNumber: null,
       hasPoster: false,
       hasBackdrop: false,
       mode: 'transcode',
@@ -383,6 +386,9 @@ describe('administration over HTTP', () => {
     context.presence.startPlayback('tab-1', {
       mediaId: 'media-1',
       mediaTitle: 'Arrival',
+      seriesTitle: null,
+      seasonNumber: null,
+      episodeNumber: null,
       hasPoster: false,
       hasBackdrop: false,
       mode: 'direct',
@@ -1208,6 +1214,9 @@ describe('watching and steering what is being watched', () => {
     presence.startPlayback(clientId, {
       mediaId: 'media-1',
       mediaTitle: 'Arrival',
+      seriesTitle: null,
+      seasonNumber: null,
+      episodeNumber: null,
       hasPoster: false,
       hasBackdrop: false,
       mode: 'direct',

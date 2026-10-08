@@ -1,6 +1,9 @@
 import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { markNotificationsRead } from '@ValenceClient/notifications/fetchNotifications';
+import {
+  clearNotifications,
+  markNotificationsRead,
+} from '@ValenceClient/notifications/fetchNotifications';
 import { notificationQueries } from '@ValenceClient/query/notificationQueries';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { YourNotifications } from '@ValenceTv/screens/Account/components/YourNotifications/YourNotifications';
@@ -9,6 +12,7 @@ import type { Notification } from '@ValenceContracts/schemas/Notification';
 jest.mock('@ValenceClient/notifications/fetchNotifications', () => ({
   fetchNotifications: jest.fn(() => new Promise(() => undefined)),
   markNotificationsRead: jest.fn(() => Promise.resolve(0)),
+  clearNotifications: jest.fn(() => Promise.resolve(0)),
 }));
 
 const aNotice = (id: string, title: string, link: string | null, isRead = false): Notification => ({
@@ -42,6 +46,7 @@ const drawWith = (
 
 beforeEach(() => {
   jest.mocked(markNotificationsRead).mockClear();
+  jest.mocked(clearNotifications).mockClear();
 });
 
 describe('YourNotifications', () => {
@@ -67,7 +72,7 @@ describe('YourNotifications', () => {
     });
   });
 
-  it('opens the film a notice names, reading it as it does', async () => {
+  it('opens the film a notice names, taking the notice off as it does', async () => {
     const onOpen = jest.fn();
     const drawn = await drawWith(
       [aNotice('00000000-0000-4000-8000-000000000001', 'Dune is here', '/?item=dune')],
@@ -77,7 +82,7 @@ describe('YourNotifications', () => {
     await userEvent.press(drawn.getByText('Dune is here · New'));
 
     expect(onOpen).toHaveBeenCalledWith({ kind: 'film', mediaId: 'dune' });
-    expect(markNotificationsRead).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000001');
+    expect(clearNotifications).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000001');
   });
 
   it('offers to mark everything read where the unread are further down than it shows', async () => {
@@ -112,7 +117,7 @@ describe('YourNotifications', () => {
     expect(onOpen).not.toHaveBeenCalled();
   });
 
-  it('opens nothing for a notice that names nothing to watch', async () => {
+  it('opens nothing for a notice that names nothing to watch, but still takes it off', async () => {
     const onOpen = jest.fn();
     const drawn = await drawWith(
       [aNotice('00000000-0000-4000-8000-000000000002', 'A plugin says hello', null, true)],
@@ -122,7 +127,7 @@ describe('YourNotifications', () => {
     await userEvent.press(drawn.getByText('A plugin says hello'));
 
     expect(onOpen).not.toHaveBeenCalled();
-    expect(markNotificationsRead).not.toHaveBeenCalled();
+    expect(clearNotifications).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000002');
   });
 
   it('sets a display name so devtools can identify it', () => {

@@ -1,5 +1,5 @@
 import { queryOptions } from '@tanstack/react-query';
-import { fetchSession } from '@ValenceClient/session/auth';
+import { fetchSession, hasAPassword, listPasskeys } from '@ValenceClient/session/auth';
 import { readVersion } from '@ValenceClient/session/readVersion';
 import { fetchProfiles } from '@ValenceClient/profiles/fetchProfiles';
 import { fetchEveryone } from '@ValenceClient/profiles/fetchEveryone';
@@ -33,6 +33,28 @@ const who = () =>
   queryOptions({
     queryKey: [...SESSION, 'who'],
     queryFn: () => fetchSession(),
+  });
+
+/**
+ * Whether the account signed in has a password, which one set up with only a passkey has not.
+ *
+ * @returns The query.
+ */
+const password = () =>
+  queryOptions({
+    queryKey: [...SESSION, 'who', 'password'],
+    queryFn: () => hasAPassword(),
+  });
+
+/**
+ * The passkeys the account signed in has.
+ *
+ * @returns The query.
+ */
+const passkeys = () =>
+  queryOptions({
+    queryKey: [...SESSION, 'who', 'passkeys'],
+    queryFn: () => listPasskeys(),
   });
 
 /**
@@ -100,6 +122,8 @@ const permissions = () =>
 const sessionQueries = {
   setup,
   who,
+  password,
+  passkeys,
   version,
   profiles,
   everyone,

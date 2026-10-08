@@ -127,7 +127,7 @@ beforeEach(() => {
       return Promise.resolve(ok(SETUP));
     }
 
-    if (input === '/api/notifications/read') {
+    if (input === '/api/notifications/read' || input === '/api/notifications/clear') {
       return Promise.resolve(ok({ unread: 0 }));
     }
 
@@ -261,7 +261,7 @@ describe('ValenceShell', () => {
     });
   });
 
-  it('marks a notice read where it was pressed', async () => {
+  it('takes a notice off the bell once it is opened', async () => {
     const actor = userEvent.setup();
 
     renderTheApp();
@@ -270,23 +270,20 @@ describe('ValenceShell', () => {
     await actor.click(await screen.findByRole('button', { name: /Arrival/ }));
 
     await waitFor(() => {
-      expect(sentTo('/api/notifications/read')).toContain(JSON.stringify({ id: A_NOTICE.id }));
+      expect(sentTo('/api/notifications/clear')).toContain(JSON.stringify({ id: A_NOTICE.id }));
     });
   });
 
-  it('crosses a notice off the moment it is read, rather than waiting to be told again', async () => {
+  it('takes an opened notice off the bell at once, rather than waiting to be told again', async () => {
     const actor = userEvent.setup();
 
     renderTheApp();
 
     await actor.click(await screen.findByRole('button', { name: /Notifications/ }));
-
-    expect(screen.getByRole('button', { name: /Mark all read/ })).toBeInTheDocument();
-
-    await actor.click(screen.getByRole('button', { name: /Arrival/ }));
+    await actor.click(await screen.findByRole('button', { name: /Arrival/ }));
 
     await waitFor(() => {
-      expect(screen.queryByRole('button', { name: /Mark all read/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Arrival/ })).not.toBeInTheDocument();
     });
   });
 

@@ -23,7 +23,7 @@ const PROFILE: ViewerProfile = {
 
 const fetchProfiles = vi.hoisted(() => vi.fn<() => Promise<ViewerProfile[]>>());
 const saveProfileDraft = vi.hoisted(() =>
-  vi.fn<(profile: ViewerProfile, draft: ProfileDraft) => Promise<boolean>>(),
+  vi.fn<(profile: ViewerProfile, draft: ProfileDraft) => Promise<string | null>>(),
 );
 
 vi.mock('@ValenceClient/profiles/fetchProfiles', async (importOriginal) => ({
@@ -38,7 +38,7 @@ const renderStep = (onContinue = vi.fn()) =>
 
 beforeEach(() => {
   fetchProfiles.mockReset().mockResolvedValue([PROFILE]);
-  saveProfileDraft.mockReset().mockResolvedValue(true);
+  saveProfileDraft.mockReset().mockResolvedValue(null);
 });
 
 describe('ProfileStep', () => {
@@ -68,8 +68,8 @@ describe('ProfileStep', () => {
     );
   });
 
-  it('stays and says so when the profile was not saved', async () => {
-    saveProfileDraft.mockResolvedValue(false);
+  it('stays and says why when the profile was not saved', async () => {
+    saveProfileDraft.mockResolvedValue('Couldn’t save your changes.');
     const onContinue = vi.fn();
 
     renderStep(onContinue);

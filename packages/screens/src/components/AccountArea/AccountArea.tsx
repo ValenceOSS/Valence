@@ -13,6 +13,7 @@ import { DiscordSettings } from '@ValenceScreens/components/DiscordSettings/Disc
 import { canShowOnDiscord } from '@ValenceClient/discord/canShowOnDiscord';
 import { TwoFactorSetup } from '@ValenceScreens/components/TwoFactorSetup/TwoFactorSetup';
 import { PasskeySetup } from '@ValenceScreens/components/PasskeySetup/PasskeySetup';
+import { FirstPassword } from '@ValenceScreens/components/FirstPassword/FirstPassword';
 import { DeviceList } from '@ValenceScreens/components/AccountArea/components/DeviceList/DeviceList';
 import { SharePanel } from '@ValenceScreens/components/AccountArea/components/SharePanel/SharePanel';
 import { PluginSurfaceView } from '@ValenceScreens/components/PluginSurfaceView/PluginSurfaceView';
@@ -92,6 +93,8 @@ const AccountArea = ({
         {isDemo ? null : (
           <PanelCard title="Sign-in" isFlush>
             <SettingList isInset>
+              <FirstPassword onChanged={onChanged} />
+
               <TwoFactorSetup isEnabled={user.twoFactorEnabled === true} onChanged={onChanged} />
 
               <PasskeySetup onChanged={onChanged} />

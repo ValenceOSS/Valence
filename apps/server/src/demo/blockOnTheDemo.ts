@@ -5,8 +5,8 @@ import type { Hono } from 'hono';
 
 /**
  * Turns a shared demo account away from everything that would spoil the demo for the next visitor:
- * seeing or signing out the devices visitors are signed in on, setting up two-step sign-in or a
- * passkey that would lock the next visitor out, adding or removing profiles and renaming or setting
+ * seeing or signing out the devices visitors are signed in on, setting up two-step sign-in, a
+ * passkey or a password that would lock the next visitor out, adding or removing profiles and renaming or setting
  * up the household again.
  * Handing out share links is withheld as a permission instead, so it is refused where it is checked.
  *

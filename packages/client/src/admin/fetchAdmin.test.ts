@@ -271,12 +271,18 @@ describe('fetchActiveSessions', () => {
     },
   };
 
-  it('reads every tab that has the app open, nobody listening where the server does not say', async () => {
+  it('reads every tab that has the app open, with nothing the server does not say', async () => {
     answerWith([SESSION]);
 
     await expect(fetchActiveSessions()).resolves.toEqual([
       {
         ...SESSION,
+        playback: {
+          ...SESSION.playback,
+          seriesTitle: null,
+          seasonNumber: null,
+          episodeNumber: null,
+        },
         listening: null,
         bookListening: null,
         reading: null,

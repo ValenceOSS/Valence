@@ -12,6 +12,8 @@ import { openTheDebuggingPort } from '@ValenceDesktop/main/openTheDebuggingPort'
 import { recordMemoryUse } from '@ValenceDesktop/main/recordMemoryUse';
 import { theApplicationMenu } from '@ValenceDesktop/main/theApplicationMenu';
 import { theDockIcon } from '@ValenceDesktop/main/theDockIcon';
+import { askToNotify } from '@ValenceDesktop/main/askToNotify';
+import { showTheUnreadCount } from '@ValenceDesktop/main/showTheUnreadCount';
 import { tellDiscord } from '@ValenceDesktop/main/tellDiscord';
 import { takeTheStatusDownWithTheWindow } from '@ValenceDesktop/main/takeTheStatusDownWithTheWindow';
 import { whatIsPlaying } from '@ValenceDesktop/main/whatIsPlaying';
@@ -274,6 +276,7 @@ const start = async (): Promise<void> => {
   });
 
   theDockIcon();
+  askToNotify();
 
   ipcMain.on(CHANGE_SERVER, changeServer);
 
@@ -324,8 +327,18 @@ const start = async (): Promise<void> => {
     updates?.download();
   });
 
-  ipcMain.on(SET_UNREAD_BADGE, (_event, count) => {
-    app.setBadgeCount(z.number().int().nonnegative().catch(0).parse(count));
+  ipcMain.on(SET_UNREAD_BADGE, (_event, count, picture) => {
+    showTheUnreadCount(
+      theWindow,
+      z.number().int().nonnegative().catch(0).parse(count),
+      z
+        .string()
+        .startsWith('data:image/png;base64,')
+        .max(200_000)
+        .nullable()
+        .catch(null)
+        .parse(picture),
+    );
   });
 
   let areControlsShown = true;

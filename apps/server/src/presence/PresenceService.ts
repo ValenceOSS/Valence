@@ -10,6 +10,9 @@ import type { BookCommand } from '@ValenceContracts/schemas/BookRemote';
 type PresencePlayback = {
   mediaId: string;
   mediaTitle: string;
+  seriesTitle: string | null;
+  seasonNumber: number | null;
+  episodeNumber: number | null;
   hasPoster: boolean;
   hasBackdrop: boolean;
   mode: 'direct' | 'transcode';

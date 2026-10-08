@@ -5,7 +5,9 @@ import { saveProfileDraft } from './saveProfileDraft';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 const saveProfile = vi.hoisted(() => vi.fn(() => Promise.resolve(true)));
-const uploadProfilePhoto = vi.hoisted(() => vi.fn(() => Promise.resolve(true)));
+const uploadProfilePhoto = vi.hoisted(() =>
+  vi.fn<() => Promise<string | null>>(() => Promise.resolve(null)),
+);
 
 vi.mock('@ValenceClient/profiles/fetchProfiles', () => ({ saveProfile, uploadProfilePhoto }));
 
@@ -37,12 +39,12 @@ const PHOTO = new File(['bytes'], 'face.png', { type: 'image/png' });
 
 beforeEach(() => {
   saveProfile.mockReset().mockResolvedValue(true);
-  uploadProfilePhoto.mockReset().mockResolvedValue(true);
+  uploadProfilePhoto.mockReset().mockResolvedValue(null);
 });
 
 describe('saveProfileDraft', () => {
   it('writes the draft without the spaces around its name, and sends no photo it has not got', async () => {
-    expect(await saveProfileDraft(PROFILE, DRAFT)).toBe(true);
+    expect(await saveProfileDraft(PROFILE, DRAFT)).toBeNull();
 
     expect(uploadProfilePhoto).not.toHaveBeenCalled();
     expect(saveProfile).toHaveBeenCalledWith(
@@ -73,22 +75,24 @@ describe('saveProfileDraft', () => {
   });
 
   it('sends a new photo first', async () => {
-    expect(await saveProfileDraft(PROFILE, { ...DRAFT, photo: PHOTO })).toBe(true);
+    expect(await saveProfileDraft(PROFILE, { ...DRAFT, photo: PHOTO })).toBeNull();
 
     expect(uploadProfilePhoto).toHaveBeenCalledWith(PROFILE.id, PHOTO);
     expect(saveProfile).toHaveBeenCalledOnce();
   });
 
-  it('writes nothing else when the photo could not be sent', async () => {
-    uploadProfilePhoto.mockResolvedValue(false);
+  it('says why the photo was refused, and writes nothing else', async () => {
+    uploadProfilePhoto.mockResolvedValue('A picture has to be 8 MB or smaller.');
 
-    expect(await saveProfileDraft(PROFILE, { ...DRAFT, photo: PHOTO })).toBe(false);
+    expect(await saveProfileDraft(PROFILE, { ...DRAFT, photo: PHOTO })).toBe(
+      'A picture has to be 8 MB or smaller.',
+    );
     expect(saveProfile).not.toHaveBeenCalled();
   });
 
   it('says so when the rest could not be written', async () => {
     saveProfile.mockResolvedValue(false);
 
-    expect(await saveProfileDraft(PROFILE, DRAFT)).toBe(false);
+    expect(await saveProfileDraft(PROFILE, DRAFT)).toBe('Couldn’t save your changes.');
   });
 });

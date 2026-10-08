@@ -159,6 +159,9 @@ const watching = (mode: 'direct' | 'transcode' = 'direct'): ActiveSession =>
     playback: {
       mediaId: 'med_1',
       mediaTitle: 'Arrival',
+      seriesTitle: null,
+      seasonNumber: null,
+      episodeNumber: null,
       hasPoster: false,
       hasBackdrop: false,
       mode,
