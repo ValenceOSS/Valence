@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { act, fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderWithRoutes } from '@ValenceLanding/testing/renderWithRoutes';
@@ -123,6 +123,24 @@ describe('LandingNav', () => {
       'aria-expanded',
       'false',
     );
+  });
+
+  it('stays shut when escape is pressed before a hovered section has opened', async () => {
+    await renderWithRoutes(LandingNav);
+    vi.useFakeTimers();
+
+    fireEvent.mouseEnter(screen.getByRole('button', { name: 'Product' }));
+    fireEvent.keyDown(window, { key: 'Escape' });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
+
+    expect(screen.getByRole('button', { name: 'Product' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+
+    vi.useRealTimers();
   });
 
   it('opens the project on GitHub, in a new tab', async () => {

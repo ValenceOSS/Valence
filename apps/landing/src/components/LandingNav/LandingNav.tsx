@@ -211,12 +211,13 @@ const LandingNav = () => {
   );
 
   useEffect(() => {
-    if (!isExpanded) {
-      return;
-    }
-
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        if (timerRef.current !== null) {
+          window.clearTimeout(timerRef.current);
+          timerRef.current = null;
+        }
+
         activeRef.current = null;
         setDirection(0);
         setActiveGroupId(null);
@@ -229,7 +230,7 @@ const LandingNav = () => {
     return () => {
       window.removeEventListener('keydown', closeOnEscape);
     };
-  }, [isExpanded]);
+  }, []);
 
   const heightTransition = isStill ? STILL : isExpanded ? GROW : SHRINK;
   const openHeight = isMobileOpen ? (mobileHeight ?? 0) : activeGroup === null ? 0 : panelHeight;
