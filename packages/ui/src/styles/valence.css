@@ -465,7 +465,6 @@
 
 :root {
   overscroll-behavior-y: none;
-  font-size: clamp(1rem, 0.8333vw, 1.75rem);
 }
 
 p,
