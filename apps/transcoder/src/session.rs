@@ -2131,6 +2131,7 @@ mod tests {
             seeks_forward: false,
             can_copy: true,
             groups: Vec::new(),
+            provisional: false,
         };
 
         std::fs::write(

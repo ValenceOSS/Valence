@@ -169,6 +169,16 @@ pub struct Boundaries {
     /// apiece.
     #[serde(default)]
     pub groups: Vec<u32>,
+    /// Whether these were a stopgap, given because reading the keyframes ran
+    /// past its deadline.
+    ///
+    /// The keyframes go on being read in the background, so a later start can
+    /// answer from them and copy what this one had to encode. Until they are
+    /// there, the stopgap stands, rather than every start waiting out the
+    /// deadline again and throwing away segments that are still right. False for
+    /// boundaries written before Valence marked any as a stopgap, which were not.
+    #[serde(default)]
+    pub provisional: bool,
 }
 
 impl Boundaries {
@@ -220,8 +230,18 @@ impl Boundaries {
             seeks_forward: false,
             can_copy: true,
             groups: Vec::new(),
+            provisional: false,
         }
     }
+}
+
+/// Whether boundaries already worked out should be worked out again.
+///
+/// Only a stopgap is ever replaced, and only once the keyframes it stood in for
+/// have been read: anything else was the answer, and replacing it would throw
+/// its segments away for nothing.
+fn is_superseded(cached: &Boundaries, keyframes_read: bool) -> bool {
+    cached.provisional && keyframes_read
 }
 
 /// The segments an encode produces, which are the length that was asked for.
@@ -330,6 +350,7 @@ fn from_keyframes(
         cut_seconds,
         seeks_forward,
         can_copy: true,
+        provisional: false,
     }
 }
 
@@ -389,6 +410,7 @@ async fn compute_boundaries(
             cut_seconds: wanted,
             seeks_forward,
             can_copy,
+            provisional: false,
         }
     };
 
@@ -422,7 +444,10 @@ async fn compute_boundaries(
             probe.duration_seconds,
         );
 
-        return equal(may_copy_without_keyframes());
+        return Boundaries {
+            provisional: true,
+            ..equal(may_copy_without_keyframes())
+        };
     };
 
     match read {
@@ -509,7 +534,14 @@ pub async fn ensure_boundaries(
     keyframe_deadline: std::time::Duration,
 ) -> Boundaries {
     if let Some(found) = cached_boundaries(directory).await {
-        return found;
+        let keyframes_read = found.provisional
+            && crate::keyframe_index::read(artefact_root, Path::new(&spec.input_path))
+                .await
+                .is_some();
+
+        if !is_superseded(&found, keyframes_read) {
+            return found;
+        }
     }
 
     let found = compute_boundaries(ffprobe, artefact_root, spec, keyframe_deadline).await;
@@ -551,10 +583,44 @@ pub async fn ensure_boundaries(
 #[cfg(test)]
 mod tests {
     use super::{
-        can_copy_segments, equal_lengths, from_keyframes, may_copy_without_keyframes,
-        offered_ceiling, Boundaries, DEFAULT_KEYFRAME_DEADLINE, LAYOUT, OFFERED_SEGMENT_BYTES,
+        can_copy_segments, equal_lengths, from_keyframes, is_superseded,
+        may_copy_without_keyframes, offered_ceiling, Boundaries, DEFAULT_KEYFRAME_DEADLINE, LAYOUT,
+        OFFERED_SEGMENT_BYTES,
     };
     use crate::keyframes::{Cut, Keyframes};
+
+    #[test]
+    fn replaces_a_stopgap_once_the_keyframes_have_been_read() {
+        let stopgap = Boundaries {
+            provisional: true,
+            ..grouped(vec![4.0], Vec::new())
+        };
+
+        assert!(is_superseded(&stopgap, true));
+        assert!(
+            !is_superseded(&stopgap, false),
+            "until the keyframes are read the stopgap is still the best answer"
+        );
+    }
+
+    #[test]
+    fn keeps_boundaries_that_were_the_answer() {
+        let answer = grouped(vec![4.0], Vec::new());
+
+        assert!(
+            !is_superseded(&answer, true),
+            "boundaries read from the keyframes are never thrown away for them"
+        );
+    }
+
+    #[test]
+    fn reads_boundaries_cached_before_stopgaps_were_marked_as_final() {
+        let payload = r#"{"layout":LAYOUT_HERE,"lengths":[4.0],"cutSeconds":4.0,"canCopy":false}"#
+            .replace("LAYOUT_HERE", &LAYOUT.to_string());
+        let found: Boundaries = serde_json::from_str(&payload).expect("old boundaries still read");
+
+        assert!(!found.provisional);
+    }
 
     #[test]
     fn leaves_room_for_four_seconds_where_the_bitrate_is_ordinary() {
@@ -593,6 +659,7 @@ mod tests {
             seeks_forward: false,
             can_copy: true,
             groups,
+            provisional: false,
         }
     }
 
