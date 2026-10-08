@@ -2,7 +2,7 @@
 
 The marks of the browsers, systems and televisions a session can be watched on, so the admin can
 say at a glance what a session is running in, and of the places the project lives, for the sites'
-footer. Each but Windows is one file from
+footer. Each but Windows and Valence is one file from
 [Simple Icons](https://simpleicons.org) 16.33.0, which releases them under
 [CC0 1.0](https://github.com/simple-icons/simple-icons/blob/develop/LICENSE.md). They are kept as
 files and drawn through a CSS mask by `BrandGlyph`, so no SVG is ever inlined.
@@ -24,6 +24,7 @@ files and drawn through a CSS mask by `BrandGlyph`, so no SVG is ever inlined.
 | `safari.svg`         | Safari        |
 | `samsung.svg`        | Samsung       |
 | `toshiba.svg`        | Toshiba       |
+| `valence.svg`        | Valence       |
 | `vivaldi.svg`        | Vivaldi       |
 | `windows.svg`        | Windows       |
 
@@ -35,3 +36,6 @@ Sharp televisions keep a generic shape: Simple Icons has no marks for them, and 
 image library, not the television maker. A browser that says only that it is built on Chromium is
 shown with Chrome's mark: its user agent cannot be told apart from Chrome's, and Chrome is the one
 it almost always is.
+
+`valence.svg` is Valence's own logo, copied from `assets/valence-logo.svg` by `pnpm brand:render`;
+change it there, not here.

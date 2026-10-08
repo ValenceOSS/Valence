@@ -67,6 +67,7 @@ const planBrandOutputs = (): BrandOutput[] => {
       from: LOGO,
       to: `apps/${app}/public/valence-logo.svg`,
     })),
+    { kind: 'copy', from: LOGO, to: 'packages/ui/src/assets/brands/valence.svg' },
     ...['web', 'docs', 'landing'].map((app): BrandOutput => ({
       kind: 'icon',
       from: ICON,

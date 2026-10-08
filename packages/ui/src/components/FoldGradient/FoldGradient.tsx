@@ -41,6 +41,8 @@ const hexToLinearRgb = (hex: string): [number, number, number] => {
  * @param ribbon - How much the flow is cut into discrete strips, from none to fully.
  * @param ribbonWidth - How wide those strips are, where any are cut.
  * @param speed - How fast the sheets drift; zero holds them still.
+ * @param isAscii - Whether to draw the light as rows of characters on black, each picked by how
+ *   bright the light is where it sits, rather than as the light itself.
  * @param className - Extra classes for the caller's own layout.
  */
 const FoldGradient = ({
@@ -54,6 +56,7 @@ const FoldGradient = ({
   ribbon = 0,
   ribbonWidth = 1,
   speed = 1,
+  isAscii = false,
   className,
 }: FoldGradientProps) => {
   const uniforms = useMemo(
@@ -69,8 +72,20 @@ const FoldGradient = ({
       u_folds: zoom,
       u_ribbon: ribbon,
       u_ribbonWidth: ribbonWidth,
+      u_ascii: isAscii ? 1 : 0,
     }),
-    [colors, bgColor, shadowColor, softness, saturation, rotation, zoom, ribbon, ribbonWidth],
+    [
+      colors,
+      bgColor,
+      shadowColor,
+      softness,
+      saturation,
+      rotation,
+      zoom,
+      ribbon,
+      ribbonWidth,
+      isAscii,
+    ],
   );
 
   return (
