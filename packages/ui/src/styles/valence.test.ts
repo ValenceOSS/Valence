@@ -76,8 +76,8 @@ describe('the Valence stylesheet', () => {
     expect(stylesheet).toContain('--card-face:');
   });
 
-  it('grows the page with the window only from 1920 pixels up, and not without limit', () => {
-    expect(stylesheet).toContain('font-size: clamp(1rem, 0.8333vw, 1.75rem)');
+  it('keeps the page the same size however wide the window is', () => {
+    expect(stylesheet).not.toMatch(/font-size:[^;]*vw/);
   });
 
   it("sets Gilroy's lettering in the middle of its line, where every weight sat high", () => {
