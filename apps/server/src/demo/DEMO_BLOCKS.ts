@@ -14,6 +14,7 @@ const DEMO_BLOCKS = [
   { method: 'POST', path: '/api/auth/two-factor/*' },
   { method: 'GET', path: '/api/auth/passkey/*' },
   { method: 'POST', path: '/api/auth/passkey/*' },
+  { method: 'POST', path: '/api/setup-links/password' },
 ] as const;
 
 export { DEMO_BLOCKS };
