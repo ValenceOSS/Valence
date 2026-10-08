@@ -1,5 +1,5 @@
-import { useLayoutEffect, useRef, useState } from 'react';
-import type { FocusEvent, PointerEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import type { FocusEvent } from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
 import {
   AnimatePresence,
@@ -7,185 +7,38 @@ import {
   useMotionValueEvent,
   useReducedMotionConfig,
   useScroll,
-  useSpring,
-  useTransform,
 } from 'motion/react';
 import {
-  ArrowUpRight as ArrowUpRightIcon,
-  BookOpen as BookOpenIcon,
-  CodeXml as CodeXmlIcon,
-  FileText as FileTextIcon,
-  GitFork as GitForkIcon,
+  ChevronDown as ChevronDownIcon,
   Home as HomeIcon,
-  Info as InfoIcon,
-  LayoutDashboard as LayoutDashboardIcon,
   Menu as MenuIcon,
-  Monitor as MonitorIcon,
-  Package as PackageIcon,
-  Plug as PlugIcon,
-  Rocket as RocketIcon,
-  ShieldCheck as ShieldCheckIcon,
-  SquareTerminal as SquareTerminalIcon,
-  Users as UsersIcon,
 } from '@keyline-icons/react/fill';
 import { IconBrandDiscordFilled, IconBrandGithubFilled, IconStarFilled } from '@tabler/icons-react';
+import { BrandGlyph } from '@ValenceUI/BrandGlyph';
 import { Button } from '@ValenceUI/Button';
 import { buttonStyles } from '@ValenceUI/Button/buttonStyles';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { Icon } from '@ValenceUI/Icon';
-import type { IconGlyph } from '@ValenceUI/Icon.types';
 import { letterArrival, popArrival } from '@ValenceUI/animations/reveal';
 import { cn } from '@ValenceUI/cn';
 import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
 import { readStarCount } from '@ValenceLanding/content/githubStars';
-import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
+import { DISCORD_URL } from '@ValenceLanding/content/DISCORD_URL';
 import { GITHUB_URL } from '@ValenceLanding/content/GITHUB_URL';
+import { NAV_GROUPS } from '@ValenceLanding/components/LandingNav/NAV_GROUPS';
+import { isLocalTarget } from '@ValenceLanding/components/LandingNav/isLocalTarget';
+import { useFitHeight } from '@ValenceLanding/components/LandingNav/useFitHeight';
+import type { NavGroup, NavItem } from '@ValenceLanding/components/LandingNav/LandingNav.types';
+import { NavEntry } from '@ValenceLanding/components/LandingNav/components/NavEntry/NavEntry';
+import { NavPanel } from '@ValenceLanding/components/LandingNav/components/NavPanel/NavPanel';
 import { ThemeToggle } from '@ValenceLanding/components/LandingNav/components/ThemeToggle/ThemeToggle';
 import { useSiteTheme } from '@ValenceLanding/components/LandingNav/components/ThemeToggle/useSiteTheme';
-import { RELEASE_BAR_PX } from '@ValenceLanding/components/ReleaseBar/RELEASE_BAR_PX';
+import { ReleaseBar } from '@ValenceLanding/components/ReleaseBar/ReleaseBar';
 import { DockedBand } from '@ValenceLanding/components/LandingNav/components/DockedBand/DockedBand';
 import { VALENCE_BAND_ID } from '@ValenceLanding/components/HomePage/components/Hero/components/ValenceBand/VALENCE_BAND_ID';
 import repository from 'virtual:github-stars';
 
-type NavItem = {
-  label: string;
-  detail: string;
-  icon: IconGlyph;
-} & ({ to: string } | { href: string });
-
-type NavGroup = {
-  id: string;
-  label: string;
-  eyebrow: string;
-  items: readonly NavItem[];
-};
-
-type NavTarget = { to: string } | { href: string };
-
 const HOME_LINK = { to: '/', label: 'Home' } as const;
-
-const DISCORD_URL = 'https://discord.gg/uTtcAHMy9N';
-
-const NAV_GROUPS: readonly NavGroup[] = [
-  {
-    id: 'product',
-    label: 'Product',
-    eyebrow: 'What Valence does',
-    items: [
-      {
-        to: '/about',
-        label: 'About Valence',
-        detail: 'Why it exists, what it owns, and what stays on your server.',
-        icon: InfoIcon,
-      },
-      {
-        to: '/plugins',
-        label: 'Plugins',
-        detail: 'Signed server-side extensions that ask before they reach anything.',
-        icon: PlugIcon,
-      },
-      {
-        to: '/ui',
-        label: 'ValenceUI',
-        detail: 'The component system every Valence app draws from.',
-        icon: LayoutDashboardIcon,
-      },
-    ],
-  },
-  {
-    id: 'run',
-    label: 'Run it',
-    eyebrow: 'Install and operate',
-    items: [
-      {
-        href: `${DOCS_URL}/start/quick-start`,
-        label: 'Quick start',
-        detail: 'Get a server running with the shortest supported path.',
-        icon: RocketIcon,
-      },
-      {
-        href: `${DOCS_URL}/install/complete-compose-file`,
-        label: 'Docker compose',
-        detail: 'The complete compose file and the settings it expects.',
-        icon: PackageIcon,
-      },
-      {
-        href: `${DOCS_URL}/start/set-up-with-an-ai`,
-        label: 'Set up with AI',
-        detail: 'A guided prompt for configuring Valence on your machine.',
-        icon: SquareTerminalIcon,
-      },
-      {
-        href: `${DOCS_URL}/reference/security`,
-        label: 'Security model',
-        detail: 'Origins, auth, plugin trust and how to report vulnerabilities.',
-        icon: ShieldCheckIcon,
-      },
-    ],
-  },
-  {
-    id: 'resources',
-    label: 'Resources',
-    eyebrow: 'Docs and code',
-    items: [
-      {
-        href: DOCS_URL,
-        label: 'Documentation',
-        detail: 'Install guides, usage docs, reference pages and troubleshooting.',
-        icon: BookOpenIcon,
-      },
-      {
-        href: `${DOCS_URL}/api`,
-        label: 'API reference',
-        detail: 'The OpenAPI-backed server reference.',
-        icon: FileTextIcon,
-      },
-      {
-        href: `${DOCS_URL}/plugins/getting-started`,
-        label: 'Build a plugin',
-        detail: 'Manifest, permissions, host API and packaging.',
-        icon: CodeXmlIcon,
-      },
-      {
-        to: '/changelog',
-        label: 'Changelog',
-        detail: 'What changed in each release.',
-        icon: MonitorIcon,
-      },
-    ],
-  },
-  {
-    id: 'community',
-    label: 'Community',
-    eyebrow: 'People and project',
-    items: [
-      {
-        href: GITHUB_URL,
-        label: 'GitHub',
-        detail: 'Read the source, open an issue, or follow development.',
-        icon: GitForkIcon,
-      },
-      {
-        href: DISCORD_URL,
-        label: 'Discord',
-        detail: 'Ask questions and talk through a setup.',
-        icon: UsersIcon,
-      },
-      {
-        to: '/privacy',
-        label: 'Privacy',
-        detail: 'What this site sees, and what the self-hosted app keeps away from us.',
-        icon: ShieldCheckIcon,
-      },
-      {
-        to: '/terms',
-        label: 'Terms',
-        detail: 'The short version of using the site and the MIT-licensed software.',
-        icon: UsersIcon,
-      },
-    ],
-  },
-] as const;
 
 const SOCIAL_BUTTON = 'hidden items-center gap-2 sm:inline-flex';
 
@@ -213,72 +66,76 @@ const SOCIAL_LEAD = 0.42;
 
 const STEP = 0.05;
 
-const NAV_DROP_PX = 16;
+const RELEASE_FOLDS_PAST_PX = 24;
 
-const SHRINK_OVER_PIXELS = 220;
+const OPEN_INTENT_MS = 70;
 
-const CONDENSED_PAST = 0.6;
+const ARRIVALS_SETTLE_MS = 900;
 
-const SHRINK_SPRING = { stiffness: 140, damping: 30, mass: 0.45 } as const;
+const CLOSE_GRACE_MS = 140;
 
-const PANEL_TRANSITION = { duration: 0.14, ease: [0.23, 1, 0.32, 1] } as const;
+const EASE_OUT = [0.23, 1, 0.32, 1] as const;
 
-const ICON_TILE_CLASS =
-  'flex size-8 items-center justify-center rounded-lg bg-accent text-background transition-transform duration-[var(--duration-fast)] ease-[var(--ease-out)]';
+const GROW = { duration: 0.42, ease: EASE_OUT } as const;
 
-const FLYOUT_ITEM = '[data-flyout-highlight]';
+const SHRINK = { duration: 0.28, ease: EASE_OUT } as const;
 
-const isLocal = <T extends NavTarget>(item: T): item is T & { to: string } => 'to' in item;
+const STILL = { duration: 0 } as const;
+
+const FADE = { duration: 0.2, ease: 'easeOut' } as const;
 
 /**
- * The bar every page carries, with a grouped desktop menu for the actual product surface rather
- * than a long row of peer links. The flyout moves only by transform and opacity, and reduced motion
- * keeps the state change as a short fade.
+ * The bar every page carries. Resting on a section grows the bar itself downward into a full-width
+ * panel for that section, dimming the page behind it; moving along the bar slides one section out
+ * and the next in from the side the pointer travelled, while the panel eases to the new height.
+ * Narrow screens fold every section into the same growing surface behind a menu button. Reduced
+ * motion keeps every change to a short fade.
+ *
+ * The bar is fixed rather than sticky, over a spacer that keeps its resting height, so the release
+ * line folding away or a section opening changes the bar alone and never moves the page beneath.
  */
 const LandingNav = () => {
-  const prefersReducedMotion = useReducedMotionConfig();
-  const isStill = prefersReducedMotion === true;
+  const isStill = useReducedMotionConfig() === true;
   const { scrollY } = useScroll();
-  const progress = useTransform(scrollY, [0, SHRINK_OVER_PIXELS], [0, 1], { clamp: true });
-  const smoothedProgress = useSpring(progress, SHRINK_SPRING);
-  const belowTheBar = useTransform(
-    scrollY,
-    [0, RELEASE_BAR_PX],
-    [RELEASE_BAR_PX + NAV_DROP_PX, 0],
-    {
-      clamp: true,
-    },
-  );
-
-  const maxWidth = useTransform(smoothedProgress, [0, 1], ['72rem', '50rem']);
-  const marginTop = useTransform(smoothedProgress, [0, 1], ['0.375rem', '1.125rem']);
-  const backdropRadius = useTransform(smoothedProgress, [0, 1], ['0px', '1rem']);
-
-  const [isCondensed, setIsCondensed] = useState(false);
-
-  useMotionValueEvent(smoothedProgress, 'change', (value) => {
-    setIsCondensed(value > CONDENSED_PAST);
-  });
-
   const [isBandGone, setIsBandGone] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isReleaseOpen, setIsReleaseOpen] = useState(true);
+  const [isPanelShut, setIsPanelShut] = useState(true);
 
-  useMotionValueEvent(scrollY, 'change', () => {
+  useMotionValueEvent(scrollY, 'change', (at) => {
     const band = document.getElementById(VALENCE_BAND_ID);
 
     setIsBandGone(band !== null && band.getBoundingClientRect().bottom < 0);
+    const isPast = at > RELEASE_FOLDS_PAST_PX;
+
+    setIsScrolled(isPast);
+
+    if (isPast) {
+      setIsReleaseOpen(false);
+    }
   });
 
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const isHome = pathname === '/';
   const isOn = (item: NavItem | typeof HOME_LINK) =>
-    isLocal(item) &&
+    isLocalTarget(item) &&
     (item.to === '/' ? isHome : pathname === item.to || pathname.startsWith(`${item.to}/`));
   const groupIsOn = (group: NavGroup) => group.items.some(isOn);
   const theme = useSiteTheme();
-  const isFloating = prefersReducedMotion !== true && !isCondensed;
+
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
+  const [direction, setDirection] = useState(0);
+  const [showing, setShowing] = useState(0);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const activeGroup = NAV_GROUPS.find((group) => group.id === activeGroupId) ?? null;
+  const isExpanded = activeGroup !== null || isMobileOpen;
+
+  const [panelHeight, setPanelHeight] = useState(0);
+  const { measureRef: mobileMeasureRef, height: mobileHeight } = useFitHeight();
+  const { measureRef: headerMeasureRef, height: headerHeight } = useFitHeight();
+  const timerRef = useRef<number | null>(null);
+  const activeRef = useRef<string | null>(null);
+  const isPointerInLinksRef = useRef(false);
   const {
     clear: clearNavHighlight,
     containerRef: navHighlightRef,
@@ -286,447 +143,481 @@ const LandingNav = () => {
     moveTo: moveNavHighlightTo,
     rect: navHighlightRect,
   } = useSlidingHighlight();
-  const {
-    clear: clearFlyoutHighlight,
-    containerRef: flyoutHighlightRef,
-    follow: followFlyoutHighlight,
-    moveTo: moveFlyoutHighlightTo,
-    rect: flyoutHighlightRect,
-  } = useSlidingHighlight();
-  const pointerRef = useRef<{ x: number; y: number } | null>(null);
 
-  const rememberPointer = (event: PointerEvent<HTMLElement>) => {
-    pointerRef.current = { x: event.clientX, y: event.clientY };
+  const cancelTimer = () => {
+    if (timerRef.current !== null) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
   };
 
-  useLayoutEffect(() => {
-    if (activeGroup === null) {
-      clearFlyoutHighlight();
+  const showGroup = (id: string | null) => {
+    cancelTimer();
+
+    const current = activeRef.current;
+
+    if (id === current) {
       return;
     }
 
-    const frame = window.requestAnimationFrame(() => {
-      const container = flyoutHighlightRef.current;
-      const pointer = pointerRef.current;
-      const hovered =
-        pointer && typeof document.elementFromPoint === 'function'
-          ? (document.elementFromPoint(pointer.x, pointer.y)?.closest(FLYOUT_ITEM) ?? null)
-          : null;
+    const from = NAV_GROUPS.findIndex((group) => group.id === current);
+    const to = NAV_GROUPS.findIndex((group) => group.id === id);
 
-      if (container !== null && hovered instanceof HTMLElement && container.contains(hovered)) {
-        const name = hovered.dataset.flyoutHighlight;
+    activeRef.current = id;
+    setDirection(current === null || id === null ? 0 : Math.sign(to - from));
+    setShowing((count) => count + 1);
+    setActiveGroupId(id);
+  };
 
-        if (name !== undefined) {
-          moveFlyoutHighlightTo(name);
-          return;
-        }
-      }
+  const aimAtGroup = (id: string) => {
+    moveNavHighlightTo(id);
 
-      moveFlyoutHighlightTo(activeGroup.items[0]?.label ?? '');
-    });
+    if (activeRef.current !== null) {
+      showGroup(id);
+      return;
+    }
 
-    return () => {
-      window.cancelAnimationFrame(frame);
-    };
-  }, [activeGroup, clearFlyoutHighlight, flyoutHighlightRef, moveFlyoutHighlightTo]);
+    cancelTimer();
+    timerRef.current = window.setTimeout(() => {
+      showGroup(id);
+    }, OPEN_INTENT_MS);
+  };
+
+  const closeSoon = () => {
+    cancelTimer();
+    timerRef.current = window.setTimeout(() => {
+      showGroup(null);
+    }, CLOSE_GRACE_MS);
+  };
+
+  const closeAll = () => {
+    showGroup(null);
+    setIsMobileOpen(false);
+  };
 
   const closeOnBlur = (event: FocusEvent<HTMLElement>) => {
     if (!event.currentTarget.contains(event.relatedTarget)) {
-      setActiveGroupId(null);
+      showGroup(null);
     }
   };
 
+  useEffect(
+    () => () => {
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current);
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!isExpanded) {
+      return;
+    }
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        activeRef.current = null;
+        setDirection(0);
+        setActiveGroupId(null);
+        setIsMobileOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', closeOnEscape);
+
+    return () => {
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [isExpanded]);
+
+  const heightTransition = isStill ? STILL : isExpanded ? GROW : SHRINK;
+  const openHeight = isMobileOpen ? (mobileHeight ?? 0) : activeGroup === null ? 0 : panelHeight;
+
+  const isBandShown = isBandGone && isHome;
+  const restingHighlight = isOn(HOME_LINK)
+    ? 'home'
+    : (NAV_GROUPS.find((group) => groupIsOn(group))?.id ?? null);
+
+  const settleNavHighlight = () => {
+    const settleOn = activeRef.current ?? restingHighlight;
+
+    if (settleOn === null) {
+      clearNavHighlight();
+    } else {
+      moveNavHighlightTo(settleOn);
+    }
+  };
+
+  const settleRef = useRef(settleNavHighlight);
+
+  useLayoutEffect(() => {
+    settleRef.current = settleNavHighlight;
+  });
+
+  useEffect(() => {
+    if (!isPointerInLinksRef.current) {
+      settleRef.current();
+    }
+  }, [activeGroupId, restingHighlight]);
+
+  useEffect(() => {
+    const settleOnceArrived = window.setTimeout(() => {
+      if (!isPointerInLinksRef.current) {
+        settleRef.current();
+      }
+    }, ARRIVALS_SETTLE_MS);
+    const settleOnResize = () => {
+      if (!isPointerInLinksRef.current) {
+        settleRef.current();
+      }
+    };
+
+    window.addEventListener('resize', settleOnResize);
+
+    return () => {
+      window.clearTimeout(settleOnceArrived);
+      window.removeEventListener('resize', settleOnResize);
+    };
+  }, []);
+
+  const isResting = isReleaseOpen && isPanelShut && !isScrolled && !isExpanded && !isBandShown;
+
+  useEffect(() => {
+    if (isExpanded) {
+      setIsPanelShut(false);
+    }
+  }, [isExpanded]);
+
+  useLayoutEffect(() => {
+    if (isResting && headerHeight !== null && headerHeight > 0) {
+      document.documentElement.style.setProperty('--landing-nav', `${headerHeight.toString()}px`);
+    }
+  }, [headerHeight, isResting]);
+
   return (
-    <motion.header
-      style={{ top: belowTheBar }}
-      className="fixed inset-x-0 top-0 z-40 flex flex-col items-center px-4 sm:px-6"
-    >
-      <DockedBand isShown={isBandGone && isHome} />
-
-      <motion.nav
-        aria-label="Valence"
-        onMouseLeave={() => {
-          setActiveGroupId(null);
-        }}
-        onBlur={closeOnBlur}
-        {...(prefersReducedMotion === true ? {} : { style: { maxWidth, marginTop } })}
-        className={cn(
-          'relative grid w-full min-w-fit grid-cols-[1fr_auto_1fr] items-center gap-6 px-2 py-2',
-          prefersReducedMotion === true
-            ? 'mt-1.5 max-w-6xl border-b border-border/60 bg-surface/85 backdrop-blur-md'
-            : '',
-          isFloating && isHome ? 'valence-glass--film' : '',
-        )}
-      >
-        {prefersReducedMotion === true ? null : (
-          <motion.span
-            aria-hidden
-            style={{ opacity: progress, borderRadius: backdropRadius }}
-            className="pointer-events-none absolute inset-0 border border-border/60 bg-surface/85 shadow-[var(--shadow-overlay)] backdrop-blur-md"
-          />
-        )}
-
-        <Link to="/" className="relative z-10 flex items-center gap-2.5 justify-self-start">
-          <motion.span
-            className="flex size-7 overflow-hidden rounded-[0.45rem] shadow-[var(--shadow-raised)]"
-            {...popArrival(0, isStill)}
-          >
-            <img src="/valence-icon.png" alt="" className="size-full" />
-          </motion.span>
-          <span className="sr-only">{WORDMARK}</span>
-          <span
-            aria-hidden
-            className="flex whitespace-pre text-base font-semibold tracking-tight text-text"
-          >
-            {[...WORDMARK].map((letter, at) => (
-              <motion.span
-                key={`${letter}-${at.toString()}`}
-                className="inline-block"
-                {...letterArrival(WORDMARK_LEAD + at * LETTER_STEP, isStill)}
-              >
-                {letter}
-              </motion.span>
-            ))}
-          </span>
-        </Link>
-
-        <div
-          ref={navHighlightRef}
-          className="relative z-10 hidden items-center gap-2.5 sm:flex"
-          onPointerMove={(event) => {
-            rememberPointer(event);
-            followNavHighlight(event);
-          }}
-          onPointerLeave={clearNavHighlight}
-        >
-          <HoverHighlight rect={navHighlightRect} radius="md" />
-
-          <motion.span className="relative flex" {...popArrival(LINKS_LEAD - STEP, isStill)}>
-            <Link
-              to={HOME_LINK.to}
-              data-highlight="home"
-              onMouseEnter={() => {
-                moveNavHighlightTo('home');
-                setActiveGroupId(null);
-              }}
-              onFocus={() => {
-                moveNavHighlightTo('home');
-                setActiveGroupId(null);
-              }}
-              className={cn(
-                buttonStyles({ variant: 'subtle', size: 'sm' }),
-                'relative z-10 no-underline',
-                isOn(HOME_LINK) ? 'text-text' : 'text-text-muted hover-hover:hover:text-text',
-              )}
-              onClick={() => {
-                setIsMobileOpen(false);
-              }}
-            >
-              {HOME_LINK.label}
-            </Link>
-          </motion.span>
-
-          {NAV_GROUPS.map((group, at) => (
-            <motion.span
-              key={group.id}
-              className="relative flex"
-              {...popArrival(LINKS_LEAD + at * STEP, isStill)}
-            >
-              <Button
-                variant="subtle"
-                size="sm"
-                data-highlight={group.id}
-                aria-expanded={activeGroupId === group.id}
-                aria-controls="landing-nav-flyout"
-                className={cn(
-                  'relative z-10 font-semibold',
-                  activeGroupId === group.id || groupIsOn(group)
-                    ? 'text-text'
-                    : 'text-text-muted hover-hover:hover:text-text',
-                )}
-                onMouseEnter={() => {
-                  moveNavHighlightTo(group.id);
-                  setActiveGroupId(group.id);
-                }}
-                onFocus={() => {
-                  moveNavHighlightTo(group.id);
-                  setActiveGroupId(group.id);
-                }}
-              >
-                {group.label}
-              </Button>
-            </motion.span>
-          ))}
-        </div>
-
-        <div className="relative z-10 col-start-3 flex items-center gap-2 justify-self-end">
-          <motion.span className="flex" {...popArrival(SOCIAL_LEAD - STEP, isStill)}>
-            <ThemeToggle />
-          </motion.span>
-
-          <motion.span className="hidden sm:flex" {...popArrival(SOCIAL_LEAD, isStill)}>
-            <Button
-              variant={theme === 'dark' ? 'secondary' : 'confirm'}
-              size="xs"
-              label="View the source on GitHub"
-              className={SOCIAL_BUTTON}
-              onClick={() => {
-                window.open(GITHUB_URL, '_blank', 'noopener,noreferrer');
-              }}
-            >
-              <IconBrandGithubFilled size={16} />
-              <IconStarFilled size={13} />
-              <span>{STAR_COUNT_LABEL}</span>
-            </Button>
-          </motion.span>
-
-          <motion.span className="hidden sm:flex" {...popArrival(SOCIAL_LEAD + STEP, isStill)}>
-            <Button
-              variant="discord"
-              size="xs"
-              label="Join the Discord"
-              className={SOCIAL_BUTTON}
-              onClick={() => {
-                window.open(DISCORD_URL, '_blank', 'noopener,noreferrer');
-              }}
-            >
-              <IconBrandDiscordFilled size={16} />
-              <span>Discord</span>
-            </Button>
-          </motion.span>
-
-          <Button
-            variant="ghost"
-            size="md"
-            label="Navigation"
-            isIconOnly
-            className="sm:hidden"
-            aria-expanded={isMobileOpen}
-            aria-controls="landing-mobile-nav"
-            onClick={() => {
-              setIsMobileOpen((open) => !open);
-              setActiveGroupId(null);
-            }}
-          >
-            <Icon of={MenuIcon} size={18} />
-          </Button>
-        </div>
-
+    <>
+      <div aria-hidden className="h-[var(--landing-nav)] shrink-0" />
+      <header ref={headerMeasureRef} className="fixed inset-x-0 top-0 z-40 flex flex-col">
         <AnimatePresence>
-          {activeGroup === null ? null : (
+          {isExpanded ? (
             <motion.div
-              id="landing-nav-flyout"
-              key="landing-nav-flyout"
-              initial={
-                isStill
-                  ? { opacity: 0 }
-                  : { opacity: 0, transform: 'translate3d(-50%, -0.35rem, 0)' }
-              }
-              animate={
-                isStill ? { opacity: 1 } : { opacity: 1, transform: 'translate3d(-50%, 0, 0)' }
-              }
-              exit={
-                isStill
-                  ? { opacity: 0 }
-                  : { opacity: 0, transform: 'translate3d(-50%, -0.25rem, 0)' }
-              }
-              transition={PANEL_TRANSITION}
-              className="valence-glass valence-glass--film absolute left-1/2 top-full hidden w-[min(48rem,calc(100vw-2rem))] overflow-hidden rounded-[1.6rem] p-2 shadow-[var(--shadow-cast)] sm:block"
-            >
-              <div
-                ref={flyoutHighlightRef}
-                className={cn(
-                  'landing-nav-page-surface',
-                  'relative grid gap-2 rounded-[1rem] bg-background p-3 text-text sm:grid-cols-2',
-                )}
-                onPointerMove={(event) => {
-                  rememberPointer(event);
-                  followFlyoutHighlight(event);
-                }}
-                onPointerLeave={clearFlyoutHighlight}
-              >
-                <HoverHighlight rect={flyoutHighlightRect} radius="md" />
-
-                <p className="col-span-full px-3 pb-1 pt-2 font-mono text-xs uppercase tracking-[0.14em] text-text-muted/70">
-                  {activeGroup.eyebrow}
-                </p>
-                {activeGroup.items.map((item) =>
-                  isLocal(item) ? (
-                    <Link
-                      key={item.label}
-                      to={item.to}
-                      data-highlight={item.label}
-                      data-flyout-highlight={item.label}
-                      onMouseEnter={() => {
-                        moveFlyoutHighlightTo(item.label);
-                      }}
-                      onFocus={() => {
-                        moveFlyoutHighlightTo(item.label);
-                      }}
-                      onClick={() => {
-                        setActiveGroupId(null);
-                      }}
-                      className="group relative z-10 grid grid-cols-[2rem_1fr] gap-3 rounded-md p-3 text-left no-underline outline-none transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)] focus-visible:ring-[3px] focus-visible:ring-ring"
-                    >
-                      <span className={cn(ICON_TILE_CLASS, 'group-hover:scale-105')}>
-                        <Icon of={item.icon} size={18} />
-                      </span>
-                      <span className="flex min-w-0 flex-col gap-1">
-                        <span className="text-sm font-semibold text-text">{item.label}</span>
-                        <span className="text-sm leading-snug text-text-muted">{item.detail}</span>
-                      </span>
-                    </Link>
-                  ) : (
-                    <a
-                      key={item.label}
-                      href={item.href}
-                      data-highlight={item.label}
-                      data-flyout-highlight={item.label}
-                      onMouseEnter={() => {
-                        moveFlyoutHighlightTo(item.label);
-                      }}
-                      onFocus={() => {
-                        moveFlyoutHighlightTo(item.label);
-                      }}
-                      onClick={() => {
-                        setActiveGroupId(null);
-                      }}
-                      className="group relative z-10 grid grid-cols-[2rem_1fr_auto] gap-3 rounded-md p-3 text-left no-underline outline-none transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)] focus-visible:ring-[3px] focus-visible:ring-ring"
-                    >
-                      <span className={cn(ICON_TILE_CLASS, 'group-hover:scale-105')}>
-                        <Icon of={item.icon} size={18} />
-                      </span>
-                      <span className="flex min-w-0 flex-col gap-1">
-                        <span className="text-sm font-semibold text-text">{item.label}</span>
-                        <span className="text-sm leading-snug text-text-muted">{item.detail}</span>
-                      </span>
-                      <Icon of={ArrowUpRightIcon} size={15} tone="muted" className="mt-1" />
-                    </a>
-                  ),
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {isMobileOpen ? (
-            <motion.div
-              id="landing-mobile-nav"
-              role="navigation"
-              aria-label="Mobile navigation"
-              key="mobile-nav"
-              initial={
-                isStill ? { opacity: 0 } : { opacity: 0, transform: 'translate3d(0,-0.35rem,0)' }
-              }
-              animate={isStill ? { opacity: 1 } : { opacity: 1, transform: 'translate3d(0,0,0)' }}
-              exit={
-                isStill ? { opacity: 0 } : { opacity: 0, transform: 'translate3d(0,-0.25rem,0)' }
-              }
-              transition={PANEL_TRANSITION}
-              className="valence-glass valence-glass--film absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 max-h-[min(34rem,calc(100dvh-7rem))] overflow-y-auto rounded-[1.35rem] p-2 shadow-[var(--shadow-cast)] sm:hidden"
-            >
-              <div className="flex flex-col gap-1">
-                <Link
-                  to={HOME_LINK.to}
-                  onClick={() => {
-                    setIsMobileOpen(false);
-                  }}
-                  className="grid grid-cols-[2rem_1fr] gap-3 rounded-xl p-3 no-underline outline-none transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)] hover-hover:hover:bg-[var(--surface-hover)] focus-visible:ring-[3px] focus-visible:ring-ring"
-                >
-                  <span className={ICON_TILE_CLASS}>
-                    <Icon of={HomeIcon} size={18} />
-                  </span>
-                  <span className="self-center text-base font-semibold text-text">Home</span>
-                </Link>
-
-                {NAV_GROUPS.map((group) => (
-                  <section
-                    key={group.id}
-                    aria-label={group.label}
-                    className="border-t border-border/60 pt-3 first:border-t-0 first:pt-0"
-                  >
-                    <p className="px-3 pb-1 font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-text-muted/70">
-                      {group.label}
-                    </p>
-                    <div className="flex flex-col gap-1">
-                      {group.items.map((item) =>
-                        isLocal(item) ? (
-                          <Link
-                            key={item.label}
-                            to={item.to}
-                            onClick={() => {
-                              setIsMobileOpen(false);
-                            }}
-                            className="grid grid-cols-[2rem_1fr] gap-3 rounded-xl p-3 no-underline outline-none transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)] hover-hover:hover:bg-[var(--surface-hover)] focus-visible:ring-[3px] focus-visible:ring-ring"
-                          >
-                            <span className={ICON_TILE_CLASS}>
-                              <Icon of={item.icon} size={18} />
-                            </span>
-                            <span className="flex min-w-0 flex-col gap-1">
-                              <span className="text-base font-semibold leading-tight text-text">
-                                {item.label}
-                              </span>
-                              <span className="text-sm leading-snug text-text-muted">
-                                {item.detail}
-                              </span>
-                            </span>
-                          </Link>
-                        ) : (
-                          <a
-                            key={item.label}
-                            href={item.href}
-                            onClick={() => {
-                              setIsMobileOpen(false);
-                            }}
-                            className="grid grid-cols-[2rem_1fr_auto] gap-3 rounded-xl p-3 no-underline outline-none transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)] hover-hover:hover:bg-[var(--surface-hover)] focus-visible:ring-[3px] focus-visible:ring-ring"
-                          >
-                            <span className={ICON_TILE_CLASS}>
-                              <Icon of={item.icon} size={18} />
-                            </span>
-                            <span className="flex min-w-0 flex-col gap-1">
-                              <span className="text-base font-semibold leading-tight text-text">
-                                {item.label}
-                              </span>
-                              <span className="text-sm leading-snug text-text-muted">
-                                {item.detail}
-                              </span>
-                            </span>
-                            <Icon of={ArrowUpRightIcon} size={15} tone="muted" className="mt-1" />
-                          </a>
-                        ),
-                      )}
-                    </div>
-                  </section>
-                ))}
-
-                <div className="grid gap-1 border-t border-border/60 pt-3">
-                  {SOCIAL_LINKS.map((social) => (
-                    <Button
-                      key={social.href}
-                      variant="bare"
-                      size="none"
-                      className="grid grid-cols-[2rem_1fr] justify-start gap-3 rounded-xl p-3 text-left"
-                      onClick={() => {
-                        setIsMobileOpen(false);
-                        window.open(social.href, '_blank', 'noopener,noreferrer');
-                      }}
-                    >
-                      <span className={ICON_TILE_CLASS}>
-                        <social.icon size={18} />
-                      </span>
-                      <span className="self-center text-base font-semibold text-text">
-                        {social.label}
-                      </span>
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
+              key="landing-nav-scrim"
+              aria-hidden
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={FADE}
+              className="fixed inset-0 -z-10 bg-[color-mix(in_oklab,var(--color-background)_45%,transparent)] backdrop-blur-[6px] backdrop-saturate-50"
+              onClick={closeAll}
+            />
           ) : null}
         </AnimatePresence>
-      </motion.nav>
-    </motion.header>
+
+        <div className="px-2 pt-2 sm:px-3 sm:pt-3">
+          <motion.nav
+            aria-label="Valence"
+            onMouseEnter={cancelTimer}
+            onMouseLeave={closeSoon}
+            onBlur={closeOnBlur}
+            className={cn(
+              'relative grid w-full min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-4 overflow-hidden rounded-[1.25rem] border border-border bg-surface-raised px-2.5 py-2 shadow-[inset_0_1px_0_color-mix(in_oklab,white_6%,transparent)] transition-shadow duration-300 ease-[var(--ease-out)] sm:gap-x-8 sm:rounded-[1.5rem] sm:px-4',
+              isScrolled || isExpanded
+                ? 'shadow-[inset_0_1px_0_color-mix(in_oklab,white_6%,transparent),var(--shadow-cast)]'
+                : '',
+            )}
+          >
+            <motion.div
+              initial={false}
+              animate={isScrolled ? { height: 0, opacity: 0 } : { height: 'auto', opacity: 1 }}
+              transition={isStill ? STILL : isScrolled ? SHRINK : GROW}
+              onAnimationComplete={() => {
+                if (!isScrolled) {
+                  setIsReleaseOpen(true);
+                }
+              }}
+              className="col-span-full grid grid-cols-subgrid overflow-hidden"
+            >
+              <ReleaseBar />
+              <span aria-hidden className="col-span-full mb-2 mt-1 h-px bg-border/60" />
+            </motion.div>
+
+            <DockedBand isShown={isBandShown} />
+
+            <Link
+              to="/"
+              className="relative z-10 flex items-center gap-2.5 justify-self-start"
+              onClick={closeAll}
+            >
+              <motion.span className="flex text-text" {...popArrival(0, isStill)}>
+                <BrandGlyph of="valence" size={30} />
+              </motion.span>
+              <span className="sr-only">{WORDMARK}</span>
+              <span
+                aria-hidden
+                className="flex whitespace-pre text-lg font-semibold tracking-tight text-text"
+              >
+                {[...WORDMARK].map((letter, at) => (
+                  <motion.span
+                    key={`${letter}-${at.toString()}`}
+                    className="inline-block"
+                    {...letterArrival(WORDMARK_LEAD + at * LETTER_STEP, isStill)}
+                  >
+                    {letter}
+                  </motion.span>
+                ))}
+              </span>
+            </Link>
+
+            <div
+              ref={navHighlightRef}
+              className="relative z-10 hidden min-w-0 items-center justify-start gap-1 sm:flex"
+              onPointerEnter={() => {
+                isPointerInLinksRef.current = true;
+              }}
+              onPointerMove={followNavHighlight}
+              onPointerLeave={() => {
+                isPointerInLinksRef.current = false;
+                settleNavHighlight();
+              }}
+            >
+              <HoverHighlight rect={navHighlightRect} radius="md" />
+
+              <motion.span className="relative flex" {...popArrival(LINKS_LEAD - STEP, isStill)}>
+                <Link
+                  to={HOME_LINK.to}
+                  data-highlight="home"
+                  onMouseEnter={() => {
+                    moveNavHighlightTo('home');
+                    closeSoon();
+                  }}
+                  onFocus={() => {
+                    moveNavHighlightTo('home');
+                    showGroup(null);
+                  }}
+                  className={cn(
+                    buttonStyles({ variant: 'subtle', size: 'md' }),
+                    'relative z-10 text-[0.9375rem] no-underline',
+                    isOn(HOME_LINK) ? 'text-text' : 'text-text-muted hover-hover:hover:text-text',
+                  )}
+                  onClick={closeAll}
+                >
+                  {HOME_LINK.label}
+                </Link>
+              </motion.span>
+
+              {NAV_GROUPS.map((group, at) => {
+                const isActive = activeGroupId === group.id;
+
+                return (
+                  <motion.span
+                    key={group.id}
+                    className="relative flex"
+                    {...popArrival(LINKS_LEAD + at * STEP, isStill)}
+                  >
+                    <Button
+                      variant="subtle"
+                      size="md"
+                      data-highlight={group.id}
+                      aria-expanded={isActive}
+                      aria-controls="landing-nav-panel"
+                      className={cn(
+                        'relative z-10 gap-1.5 text-[0.9375rem] font-semibold',
+                        isActive || groupIsOn(group)
+                          ? 'text-text'
+                          : 'text-text-muted hover-hover:hover:text-text',
+                      )}
+                      onMouseEnter={() => {
+                        aimAtGroup(group.id);
+                      }}
+                      onFocus={() => {
+                        moveNavHighlightTo(group.id);
+                      }}
+                      onClick={() => {
+                        showGroup(isActive ? null : group.id);
+                      }}
+                    >
+                      {group.label}
+                      <motion.span
+                        aria-hidden
+                        className="flex opacity-60"
+                        animate={{ rotate: isActive ? 180 : 0 }}
+                        transition={isStill ? STILL : GROW}
+                      >
+                        <Icon of={ChevronDownIcon} size={12} />
+                      </motion.span>
+                    </Button>
+                  </motion.span>
+                );
+              })}
+            </div>
+
+            <div className="relative z-10 col-start-3 flex items-center gap-2 justify-self-end">
+              <motion.span className="flex" {...popArrival(SOCIAL_LEAD - STEP, isStill)}>
+                <ThemeToggle />
+              </motion.span>
+
+              <motion.span className="hidden sm:flex" {...popArrival(SOCIAL_LEAD, isStill)}>
+                <Button
+                  variant={theme === 'dark' ? 'secondary' : 'confirm'}
+                  size="sm"
+                  label="View the source on GitHub"
+                  className={SOCIAL_BUTTON}
+                  onClick={() => {
+                    window.open(GITHUB_URL, '_blank', 'noopener,noreferrer');
+                  }}
+                >
+                  <IconBrandGithubFilled size={16} />
+                  <IconStarFilled size={13} />
+                  <span>{STAR_COUNT_LABEL}</span>
+                </Button>
+              </motion.span>
+
+              <motion.span className="hidden sm:flex" {...popArrival(SOCIAL_LEAD + STEP, isStill)}>
+                <Button
+                  variant="discord"
+                  size="sm"
+                  label="Join the Discord"
+                  className={SOCIAL_BUTTON}
+                  onClick={() => {
+                    window.open(DISCORD_URL, '_blank', 'noopener,noreferrer');
+                  }}
+                >
+                  <IconBrandDiscordFilled size={16} />
+                  <span>Discord</span>
+                </Button>
+              </motion.span>
+
+              <Button
+                variant="ghost"
+                size="md"
+                label="Navigation"
+                isIconOnly
+                className="sm:hidden"
+                aria-expanded={isMobileOpen}
+                aria-controls="landing-mobile-nav"
+                onClick={() => {
+                  setIsMobileOpen((open) => !open);
+                  showGroup(null);
+                }}
+              >
+                <Icon of={MenuIcon} size={18} />
+              </Button>
+            </div>
+
+            <motion.div
+              id="landing-nav-panel"
+              initial={false}
+              animate={{ height: openHeight }}
+              transition={heightTransition}
+              onAnimationComplete={() => {
+                if (!isExpanded) {
+                  setIsPanelShut(true);
+                }
+              }}
+              className="relative z-10 col-span-full grid grid-cols-subgrid overflow-hidden"
+            >
+              <motion.span
+                aria-hidden
+                initial={false}
+                animate={{
+                  opacity: isExpanded ? 1 : 0,
+                  scaleX: isExpanded || isStill ? 1 : 0.96,
+                }}
+                transition={FADE}
+                className="absolute inset-x-0 top-2 h-px bg-border/70"
+              />
+
+              <div className="col-start-2 col-end-4 hidden grid-cols-1 sm:grid">
+                <AnimatePresence initial={false} custom={direction}>
+                  {activeGroup === null ? null : (
+                    <NavPanel
+                      key={`${activeGroup.id}-${showing.toString()}`}
+                      group={activeGroup}
+                      direction={direction}
+                      onChoose={closeAll}
+                      onMeasure={setPanelHeight}
+                    />
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <AnimatePresence initial={false}>
+                {isMobileOpen ? (
+                  <motion.div
+                    ref={mobileMeasureRef}
+                    key="landing-mobile-nav"
+                    id="landing-mobile-nav"
+                    role="navigation"
+                    aria-label="Mobile navigation"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={FADE}
+                    className="col-span-full row-start-1 flex max-h-[calc(100dvh-7rem)] flex-col gap-1 self-start overflow-y-auto pb-2 pt-4 sm:hidden"
+                  >
+                    <Link
+                      to={HOME_LINK.to}
+                      onClick={closeAll}
+                      className="grid grid-cols-[1.5rem_1fr] items-center gap-3 rounded-xl p-3 no-underline outline-none transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)] hover-hover:hover:bg-[var(--surface-hover)] focus-visible:ring-[3px] focus-visible:ring-ring"
+                    >
+                      <span className="flex items-center justify-center text-accent">
+                        <Icon of={HomeIcon} size={18} />
+                      </span>
+                      <span className="text-base font-semibold text-text">{HOME_LINK.label}</span>
+                    </Link>
+
+                    {NAV_GROUPS.map((group) => (
+                      <section
+                        key={group.id}
+                        aria-label={group.label}
+                        className="mt-2 border-t border-border/60 pt-3"
+                      >
+                        <p className="px-3 pb-1 font-mono text-[0.6875rem] uppercase tracking-[0.16em] text-text-muted">
+                          {group.label}
+                        </p>
+                        <div className="flex flex-col gap-1">
+                          {group.items.map((item) => (
+                            <NavEntry
+                              key={item.label}
+                              item={item}
+                              size="menu"
+                              onChoose={closeAll}
+                            />
+                          ))}
+                        </div>
+                      </section>
+                    ))}
+
+                    <div className="mt-2 grid gap-1 border-t border-border/60 pt-3">
+                      {SOCIAL_LINKS.map((social) => (
+                        <Button
+                          key={social.href}
+                          variant="bare"
+                          size="none"
+                          className="grid grid-cols-[1.5rem_1fr] justify-start gap-3 rounded-xl p-3 text-left"
+                          onClick={() => {
+                            closeAll();
+                            window.open(social.href, '_blank', 'noopener,noreferrer');
+                          }}
+                        >
+                          <span className="flex items-center justify-center text-accent">
+                            <social.icon size={18} />
+                          </span>
+                          <span className="self-center text-base font-semibold text-text">
+                            {social.label}
+                          </span>
+                        </Button>
+                      ))}
+                    </div>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
+            </motion.div>
+          </motion.nav>
+        </div>
+      </header>
+    </>
   );
 };
 

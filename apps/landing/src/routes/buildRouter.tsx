@@ -21,6 +21,20 @@ const buildRouter = () => {
 
   const about = createRoute({ getParentRoute: () => root, path: '/about' });
 
+  const architecture = createRoute({ getParentRoute: () => root, path: '/architecture' });
+
+  const compare = createRoute({ getParentRoute: () => root, path: '/compare' });
+
+  const developers = createRoute({ getParentRoute: () => root, path: '/developers' });
+
+  const requirements = createRoute({ getParentRoute: () => root, path: '/requirements' });
+
+  const transcoding = createRoute({ getParentRoute: () => root, path: '/transcoding' });
+
+  const tour = createRoute({ getParentRoute: () => root, path: '/tour' });
+
+  const roadmap = createRoute({ getParentRoute: () => root, path: '/roadmap' });
+
   const plugins = createRoute({ getParentRoute: () => root, path: '/plugins' });
 
   const privacy = createRoute({ getParentRoute: () => root, path: '/privacy' });
@@ -37,6 +51,13 @@ const buildRouter = () => {
       changelog,
       release,
       about,
+      architecture,
+      compare,
+      developers,
+      requirements,
+      transcoding,
+      tour,
+      roadmap,
       plugins,
       privacy,
       terms,

@@ -1,10 +1,11 @@
-import { Link, useRouterState } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { ArrowLeft as ArrowLeftIcon, ArrowRight as ArrowRightIcon } from '@keyline-icons/react';
 import { Icon } from '@ValenceUI/Icon';
 import { ChangelogPicture } from '@ValenceLanding/components/ChangelogPage/components/ChangelogPicture/ChangelogPicture';
 import { PageHero } from '@ValenceUI/PageHero';
 import { SectionCard } from '@ValenceUI/SectionCard';
 import { describeReleaseDate } from '@ValenceLanding/content/changelog/describeReleaseDate';
+import { usePagePathname } from '@ValenceLanding/components/LandingShell/usePagePathname';
 import { PageProblem } from '@ValenceLanding/components/PageProblem/PageProblem';
 import { CHANGELOG } from '@ValenceLanding/content/changelog/CHANGELOG';
 
@@ -17,7 +18,7 @@ const PREFIX = '/changelog/';
  * releases either side of it at the foot.
  */
 const ChangelogEntryPage = () => {
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const pathname = usePagePathname();
   const slug = pathname.slice(PREFIX.length).replace(/\/+$/u, '');
   const at = CHANGELOG.findIndex((entry) => entry.slug === slug);
   const entry = CHANGELOG[at];

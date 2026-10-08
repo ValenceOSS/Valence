@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Link, useRouterState } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
+import { usePagePathname } from '@ValenceLanding/components/LandingShell/usePagePathname';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { Drawer } from '@ValenceUI/Drawer';
@@ -24,7 +25,7 @@ const UI_PATH = /^\/ui\/?(?<slug>[^/]*)/u;
  * to start from instead.
  */
 const UiLibraryPage = () => {
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const pathname = usePagePathname();
   const prefersReducedMotion = useReducedMotionConfig();
   const [query, setQuery] = useState('');
   const [isListOpen, setIsListOpen] = useState(false);

@@ -103,15 +103,15 @@ const Hero = () => {
   const start = STARTS.find((one) => one.id === startId) ?? STARTS[0];
 
   return (
-    <section className="relative px-2 pt-2 [--app-peek:min(30vw,8rem)] sm:px-3 sm:pt-3 sm:[--app-peek:min(22rem,max(min(14vw,9.5rem),calc(100svh-var(--release-bar)-44rem)))]">
-      <div className="relative isolate flex min-h-[calc(100svh-var(--release-bar)-1rem)] flex-col overflow-hidden rounded-[2rem] bg-aurora pb-[calc(var(--app-peek)+1.5rem)] sm:min-h-[calc(100svh-var(--release-bar)-1.5rem)] sm:rounded-[2.5rem]">
-        <AuroraBackdrop />
+    <section className="relative px-2 pt-2 [--app-peek:min(30vw,8rem)] sm:px-3 sm:pt-3 sm:[--app-peek:min(22rem,max(min(14vw,9.5rem),calc(100svh-var(--landing-nav)-44rem)))]">
+      <div className="relative isolate flex min-h-[calc(100svh-var(--landing-nav)-1rem)] flex-col overflow-hidden rounded-[2rem] bg-aurora pb-[calc(var(--app-peek)+1.5rem)] sm:min-h-[calc(100svh-var(--landing-nav)-1.5rem)] sm:rounded-[2.5rem]">
+        <AuroraBackdrop isAscii />
 
         <motion.div
           variants={staggerVariants}
           initial="hidden"
           animate="shown"
-          className="relative flex flex-col items-center gap-5 px-5 pt-32 text-center sm:pt-40"
+          className="relative flex flex-col items-center gap-5 px-5 pt-20 text-center sm:pt-28"
         >
           <motion.p
             variants={revealVariants(prefersReducedMotion)}

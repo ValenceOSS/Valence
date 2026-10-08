@@ -8,7 +8,9 @@
 }
 
 :root {
-  --release-bar: 37px;
+  --landing-nav: 6.5rem;
+  --page-hero-top: 4rem;
+  --page-hero-top-wide: 5.5rem;
 }
 
 @keyframes valence-band-run {

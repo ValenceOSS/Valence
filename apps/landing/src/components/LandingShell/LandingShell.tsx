@@ -1,6 +1,5 @@
 import { Link, useRouterState } from '@tanstack/react-router';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
-import { ReleaseBar } from '@ValenceLanding/components/ReleaseBar/ReleaseBar';
 import { LandingNav } from '@ValenceLanding/components/LandingNav/LandingNav';
 import { SiteCursor } from '@ValenceLanding/components/SiteCursor/SiteCursor';
 import { SiteFooter } from '@ValenceUI/SiteFooter';
@@ -10,11 +9,19 @@ import { ChangelogPage } from '@ValenceLanding/components/ChangelogPage/Changelo
 import { PluginsPage } from '@ValenceLanding/components/PluginsPage/PluginsPage';
 import { ChangelogEntryPage } from '@ValenceLanding/components/ChangelogEntryPage/ChangelogEntryPage';
 import { AboutPage } from '@ValenceLanding/components/AboutPage/AboutPage';
+import { ArchitecturePage } from '@ValenceLanding/components/ArchitecturePage/ArchitecturePage';
+import { ComparePage } from '@ValenceLanding/components/ComparePage/ComparePage';
+import { DevelopersPage } from '@ValenceLanding/components/DevelopersPage/DevelopersPage';
+import { ProductTourPage } from '@ValenceLanding/components/ProductTourPage/ProductTourPage';
 import { PrivacyPage } from '@ValenceLanding/components/PrivacyPage/PrivacyPage';
+import { RequirementsPage } from '@ValenceLanding/components/RequirementsPage/RequirementsPage';
+import { RoadmapPage } from '@ValenceLanding/components/RoadmapPage/RoadmapPage';
 import { TermsPage } from '@ValenceLanding/components/TermsPage/TermsPage';
+import { TranscodingPage } from '@ValenceLanding/components/TranscodingPage/TranscodingPage';
 import { PageProblem } from '@ValenceLanding/components/PageProblem/PageProblem';
 import { UiLibraryPage } from '@ValenceLanding/components/UiLibraryPage/UiLibraryPage';
 import type { ComponentType } from 'react';
+import { PagePathnameContext } from '@ValenceLanding/components/LandingShell/PagePathnameContext';
 import { pageVariants } from './pageVariants';
 
 /**
@@ -32,6 +39,13 @@ const PAGES: Record<string, ComponentType> = {
   '/': HomePage,
   '/changelog': ChangelogPage,
   '/about': AboutPage,
+  '/architecture': ArchitecturePage,
+  '/compare': ComparePage,
+  '/developers': DevelopersPage,
+  '/requirements': RequirementsPage,
+  '/roadmap': RoadmapPage,
+  '/tour': ProductTourPage,
+  '/transcoding': TranscodingPage,
   '/plugins': PluginsPage,
   '/privacy': PrivacyPage,
   '/terms': TermsPage,
@@ -39,14 +53,16 @@ const PAGES: Record<string, ComponentType> = {
 };
 
 /**
- * What every page on getvalence.app sits inside: the line about the newest release, the nav, the
- * footer, and one page blurring away as the next rises into focus.
+ * What every page on getvalence.app sits inside: the nav, with the line about the newest release
+ * across its top, the footer, and one page blurring away as the next rises into focus.
  *
  * The page shown is looked up here and rendered directly rather than through `Outlet`. `Outlet`
  * stays subscribed to the router's current match even while `AnimatePresence` is still playing its
  * exit — so the page fading out would silently swap to the page fading in partway through, rather
  * than finishing its own exit undisturbed. A plain looked-up component has no such subscription: once
  * `AnimatePresence` stops asking this component to re-render it, it just sits still until removed.
+ * A page that reads its own address does so through `usePagePathname`, which hands it the address
+ * held here rather than the router's, for the same reason.
  */
 const LandingShell = () => {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
@@ -62,8 +78,6 @@ const LandingShell = () => {
 
   return (
     <div className="relative z-0 flex min-h-dvh flex-col bg-[var(--frame-back)] text-text">
-      <ReleaseBar />
-
       <LandingNav />
 
       <AnimatePresence mode="wait">
@@ -75,7 +89,9 @@ const LandingShell = () => {
           exit="gone"
           className="flex-1"
         >
-          <Page />
+          <PagePathnameContext value={pathname}>
+            <Page />
+          </PagePathnameContext>
         </motion.main>
       </AnimatePresence>
 

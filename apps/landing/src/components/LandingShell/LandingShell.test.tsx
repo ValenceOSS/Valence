@@ -44,6 +44,12 @@ describe('LandingShell', () => {
     ).toBeInTheDocument();
   });
 
+  it('draws the architecture page', async () => {
+    await renderWithRoutes(LandingShell, '/architecture');
+
+    expect(await screen.findByRole('heading', { level: 1, name: /many apps/ })).toBeInTheDocument();
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(LandingShell.displayName).toBe('LandingShell');
   });
