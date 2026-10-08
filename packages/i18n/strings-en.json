@@ -24616,6 +24616,11 @@
     "context": "On the account setup page a setup link opens. {server} is what this Valence is called."
   },
   {
+    "handler": "screens.welcomePage.createAPasskeyInstead",
+    "text": "Create a passkey instead",
+    "context": "On the account setup page, switches from choosing a password to creating a passkey on this device for the new account."
+  },
+  {
     "handler": "screens.welcomePage.readingYourLink",
     "text": "Loading your setup link",
     "context": "Read aloud while the account setup page loads."

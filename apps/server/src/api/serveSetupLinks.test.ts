@@ -160,6 +160,7 @@ describe('serveSetupLinks', () => {
         suggestedUsername: 'ada',
         hasEmail: false,
         hasPassword: false,
+        canResetPassword: true,
         expiresAt: EXPIRES.toISOString(),
       });
     });

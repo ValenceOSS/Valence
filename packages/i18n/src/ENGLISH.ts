@@ -6187,6 +6187,7 @@ const ENGLISH = {
     'Choose a new password, or create a passkey. You’ll be signed out on every other device.',
   'screens.welcomePage.chooseHowYouSignIn':
     'You have an account on {server}. Choose how you sign in.',
+  'screens.welcomePage.createAPasskeyInstead': 'Create a passkey instead',
   'screens.welcomePage.readingYourLink': 'Loading your setup link',
   'screens.welcomePage.tryThePasskeyAgain': 'Try the passkey again',
   'screens.welcomePage.useAPasswordInstead': 'Use a password instead',

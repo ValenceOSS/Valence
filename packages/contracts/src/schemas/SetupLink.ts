@@ -31,6 +31,7 @@ const SetupLinkDetailsSchema = z.object({
   suggestedUsername: z.string(),
   hasEmail: z.boolean(),
   hasPassword: z.boolean(),
+  canResetPassword: z.boolean().default(false),
   expiresAt: z.string(),
 });
 

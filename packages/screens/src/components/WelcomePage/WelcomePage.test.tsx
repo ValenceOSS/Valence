@@ -42,6 +42,7 @@ const DETAILS = {
   suggestedUsername: 'ada',
   hasEmail: false,
   hasPassword: false,
+  canResetPassword: true,
   expiresAt: '2026-10-09T00:00:00.000Z',
 };
 
@@ -73,6 +74,25 @@ describe('WelcomePage', () => {
       password: PASSWORD,
     });
     expect(navigate).toHaveBeenCalledWith({ to: '/' });
+  });
+
+  it('says an email address lets them reset their password only where the server sends those emails', async () => {
+    drawIt();
+
+    expect(
+      await screen.findByText(
+        'With an email address, you can reset your password yourself if you forget it.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('makes no promise of a reset by email where the server sends none', async () => {
+    readSetupLink.mockResolvedValue({ ...DETAILS, canResetPassword: false });
+
+    drawIt();
+
+    expect(await screen.findByLabelText('Email (optional)')).toBeInTheDocument();
+    expect(screen.queryByText(/reset your password/u)).not.toBeInTheDocument();
   });
 
   it('will not finish with a password too short', async () => {
@@ -137,7 +157,7 @@ describe('WelcomePage', () => {
 
     drawIt();
 
-    await userEvent.click(await screen.findByRole('button', { name: /Use a passkey instead/ }));
+    await userEvent.click(await screen.findByRole('button', { name: /Create a passkey instead/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Finish' }));
 
     expect(redeemSetupLink).toHaveBeenCalledWith('tok', { username: 'ada' });
@@ -151,7 +171,7 @@ describe('WelcomePage', () => {
 
     drawIt();
 
-    await userEvent.click(await screen.findByRole('button', { name: /Use a passkey instead/ }));
+    await userEvent.click(await screen.findByRole('button', { name: /Create a passkey instead/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Finish' }));
 
     expect(

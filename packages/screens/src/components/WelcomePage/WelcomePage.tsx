@@ -2,11 +2,16 @@ import { useState } from 'react';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Key as KeyIcon } from '@keyline-icons/react';
+import { motion } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
+import { GlassPanel } from '@ValenceUI/GlassPanel';
 import { Icon } from '@ValenceUI/Icon';
 import { Link } from '@ValenceUI/Link';
+import { Logo } from '@ValenceUI/Logo';
 import { Spinner } from '@ValenceUI/Spinner';
 import { TextField } from '@ValenceUI/TextField';
+import { sessionQueries } from '@ValenceClient/query/sessionQueries';
+import { WayInBackground } from '@ValenceScreens/components/WayInBackground/WayInBackground';
 import { readSetupLink } from '@ValenceClient/setup/readSetupLink';
 import { redeemSetupLink } from '@ValenceClient/setup/redeemSetupLink';
 import { giveFirstPassword } from '@ValenceClient/setup/giveFirstPassword';
@@ -42,6 +47,7 @@ const WelcomePage = ({ name }: WelcomePageProps) => {
     retry: false,
     staleTime: Infinity,
   });
+  const wayIn = useQuery(sessionQueries.wayIn());
   const [username, setUsername] = useState<string | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -146,19 +152,33 @@ const WelcomePage = ({ name }: WelcomePageProps) => {
     (isUsingPasskey || password.length >= MINIMUM_PASSWORD_LENGTH);
 
   return (
-    <main className="flex min-h-svh flex-col items-center justify-center gap-6 px-4 py-12">
-      <p className="text-2xl font-semibold tracking-[-0.04em] text-text">{name}</p>
+    <main className="relative flex min-h-svh flex-col items-center justify-center gap-8 overflow-hidden px-6 py-16">
+      <WayInBackground splashscreen={wayIn.data?.splashscreen ?? null} />
 
-      <div className="flex w-full max-w-sm flex-col gap-4">
+      <motion.span
+        className="flex flex-col items-center gap-3"
+        initial={{ opacity: 0, scale: 0.94 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+      >
+        <Logo size={44} isSolid label={say('common.valence')} />
+        <span className="text-lg font-semibold tracking-[-0.04em] text-text">{name}</span>
+      </motion.span>
+
+      <GlassPanel
+        elevation="floating"
+        radius="large"
+        className="flex w-full max-w-md flex-col gap-4 p-8"
+      >
         {asked.isPending ? (
           <Spinner label={say('screens.welcomePage.readingYourLink')} />
         ) : details === null ? (
           <>
-            <h1 className="text-[clamp(1.5rem,4vw,2.25rem)] font-semibold tracking-[-0.04em] text-text">
+            <h1 className="text-center text-2xl font-semibold tracking-tight text-text">
               {say('server.email.composeLinkEmail.setUpYourAccount')}
             </h1>
 
-            <p role="alert" className="text-sm leading-relaxed text-text-muted">
+            <p role="alert" className="text-center text-sm leading-relaxed text-text-muted">
               {say('error.setupLink.thatLinkNoLongerWorks')}
             </p>
 
@@ -166,11 +186,11 @@ const WelcomePage = ({ name }: WelcomePageProps) => {
           </>
         ) : finish === 'needsSignIn' ? (
           <>
-            <h1 className="text-[clamp(1.5rem,4vw,2.25rem)] font-semibold tracking-[-0.04em] text-text">
+            <h1 className="text-center text-2xl font-semibold tracking-tight text-text">
               {say('server.email.composeLinkEmail.welcomeName', { name: details.name })}
             </h1>
 
-            <p role="status" className="text-sm leading-relaxed text-text-muted">
+            <p role="status" className="text-center text-sm leading-relaxed text-text-muted">
               {say('screens.welcomePage.yourPasswordIsSetSignInWithIt')}
             </p>
 
@@ -178,11 +198,11 @@ const WelcomePage = ({ name }: WelcomePageProps) => {
           </>
         ) : finish === 'passkeyFailed' ? (
           <>
-            <h1 className="text-[clamp(1.5rem,4vw,2.25rem)] font-semibold tracking-[-0.04em] text-text">
+            <h1 className="text-center text-2xl font-semibold tracking-tight text-text">
               {say('screens.welcomePage.yourPasskeyWasNotMade')}
             </h1>
 
-            <p className="text-sm leading-relaxed text-text-muted">
+            <p className="text-center text-sm leading-relaxed text-text-muted">
               {say('screens.welcomePage.yourAccountIsSetUpTryThePasskeyAgain')}
             </p>
 
@@ -229,11 +249,11 @@ const WelcomePage = ({ name }: WelcomePageProps) => {
               void submit();
             }}
           >
-            <h1 className="text-[clamp(1.5rem,4vw,2.25rem)] font-semibold tracking-[-0.04em] text-text">
+            <h1 className="text-center text-2xl font-semibold tracking-tight text-text">
               {say('server.email.composeLinkEmail.welcomeName', { name: details.name })}
             </h1>
 
-            <p className="text-sm leading-relaxed text-text-muted">
+            <p className="text-center text-sm leading-relaxed text-text-muted">
               {details.hasPassword
                 ? say('screens.welcomePage.chooseANewPasswordOrAPasskey')
                 : say('screens.welcomePage.chooseHowYouSignIn', { server: name })}
@@ -264,7 +284,9 @@ const WelcomePage = ({ name }: WelcomePageProps) => {
                 autoComplete="email"
                 value={email}
                 onValueChange={setEmail}
-                description={say('screens.welcomePage.anAddressLetsYouResetYourPassword')}
+                {...(details.canResetPassword
+                  ? { description: say('screens.welcomePage.anAddressLetsYouResetYourPassword') }
+                  : {})}
               />
             )}
 
@@ -311,12 +333,12 @@ const WelcomePage = ({ name }: WelcomePageProps) => {
                 <Icon of={KeyIcon} size={16} />
                 {isUsingPasskey
                   ? say('screens.welcomePage.useAPasswordInstead')
-                  : say('common.useAPasskeyInstead')}
+                  : say('screens.welcomePage.createAPasskeyInstead')}
               </Button>
             )}
           </form>
         )}
-      </div>
+      </GlassPanel>
     </main>
   );
 };
