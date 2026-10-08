@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { notify } from '@ValenceUI/notify';
 import { signOut } from '@ValenceClient/session/auth';
-import { useShell } from '@ValenceClient/shell/useShell';
+import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import { say } from '@ValenceI18n/say';
 
@@ -13,12 +13,13 @@ import { say } from '@ValenceI18n/say';
  * Signing out empties the cache rather than only asking who is signed in again. Everything held
  * there belongs to the person leaving — what they kept, how far through things they are, what is
  * waiting on their bell — and handing that to whoever signs in next is a privacy fault, not a stale
- * read.
+ * read. The session's own answers are reset rather than thrown away, so the screens already asking
+ * them hear that nobody is signed in now and go to the way in; a query thrown away while a screen
+ * still holds it leaves that screen on the old answer until the page is loaded again.
  *
  * @returns Signs out.
  */
 const useSignOut = (): (() => Promise<void>) => {
-  const { refresh } = useShell();
   const { go } = usePlace();
   const cache = useQueryClient();
 
@@ -31,7 +32,6 @@ const useSignOut = (): (() => Promise<void>) => {
       return;
     }
 
-    cache.clear();
     go({
       section: 'home',
       search: '',
@@ -40,8 +40,11 @@ const useSignOut = (): (() => Promise<void>) => {
       account: null,
     });
 
-    await refresh();
-  }, [cache, go, refresh]);
+    await cache.resetQueries({ queryKey: sessionQueries.key });
+    cache.removeQueries({
+      predicate: (query) => query.queryKey[0] !== sessionQueries.key[0],
+    });
+  }, [cache, go]);
 };
 
 export { useSignOut };

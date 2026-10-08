@@ -1,8 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { shellContext } from '@ValenceClient/shell/shellContext';
-import { aShell } from '@ValenceClient/testing/aShell';
 import { signOut } from '@ValenceClient/session/auth';
 import { notify } from '@ValenceUI/notify';
 import { AddressScope } from '@ValenceScreens/testing/AddressScope';
@@ -25,13 +23,9 @@ vi.mock('@ValenceUI/notify', async (importOriginal) => {
 
 const ended = vi.mocked(signOut);
 
-const refresh = vi.fn(() => Promise.resolve());
+const askWho = vi.fn<() => Promise<string | null>>();
 
-const Scope = ({ children }: { children: ReactNode }) => (
-  <shellContext.Provider value={aShell({ refresh })}>
-    <AddressScope>{children}</AddressScope>
-  </shellContext.Provider>
-);
+const Scope = ({ children }: { children: ReactNode }) => <AddressScope>{children}</AddressScope>;
 
 /**
  * Runs the hook beside the cache and the address it acts on, with the account dialog open.
@@ -40,7 +34,12 @@ const Scope = ({ children }: { children: ReactNode }) => (
  */
 const drawOpenOnTheAccount = async () => {
   const view = renderHook(
-    () => ({ leave: useSignOut(), cache: useQueryClient(), at: usePlace() }),
+    () => ({
+      leave: useSignOut(),
+      cache: useQueryClient(),
+      at: usePlace(),
+      who: useQuery({ queryKey: ['session', 'who'], queryFn: askWho }),
+    }),
     { wrapper: Scope },
   );
 
@@ -50,6 +49,7 @@ const drawOpenOnTheAccount = async () => {
 
   await waitFor(() => {
     expect(view.result.current.at.place.account).toBe('profile');
+    expect(view.result.current.who.data).toBe('Dan');
   });
 
   view.result.current.cache.setQueryData(['what', 'they', 'kept'], ['arrival']);
@@ -59,15 +59,17 @@ const drawOpenOnTheAccount = async () => {
 
 beforeEach(() => {
   ended.mockReset();
-  refresh.mockClear();
+  askWho.mockReset().mockResolvedValue('Dan');
   vi.mocked(notify.failed).mockReset();
 });
 
 describe('useSignOut', () => {
-  it('ends the session, forgets what was held for the person leaving, and goes home', async () => {
+  it('ends the session, forgets what was held for the person leaving, and goes home at once', async () => {
     ended.mockResolvedValue(true);
 
     const { result } = await drawOpenOnTheAccount();
+
+    askWho.mockResolvedValue(null);
 
     await act(async () => {
       await result.current.leave();
@@ -76,7 +78,10 @@ describe('useSignOut', () => {
     expect(result.current.cache.getQueryData(['what', 'they', 'kept'])).toBeUndefined();
     expect(result.current.at.place.account).toBeNull();
     expect(result.current.at.place.section).toBe('home');
-    expect(refresh).toHaveBeenCalledOnce();
+    await waitFor(() => {
+      expect(result.current.who.data).toBeNull();
+    });
+    expect(askWho).toHaveBeenCalledTimes(2);
     expect(notify.failed).not.toHaveBeenCalled();
   });
 
@@ -92,6 +97,6 @@ describe('useSignOut', () => {
     expect(notify.failed).toHaveBeenCalledOnce();
     expect(result.current.cache.getQueryData(['what', 'they', 'kept'])).toEqual(['arrival']);
     expect(result.current.at.place.account).toBe('profile');
-    expect(refresh).not.toHaveBeenCalled();
+    expect(result.current.who.data).toBe('Dan');
   });
 });
