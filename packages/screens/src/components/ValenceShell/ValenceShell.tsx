@@ -64,6 +64,7 @@ import { writeMusicView } from '@ValenceClient/music/musicView';
 import { libraryChoicesFor } from '@ValenceScreens/library/libraryChoicesFor';
 import { requestsChoicesFor } from '@ValenceScreens/requests/requestsChoicesFor';
 import { useStockedKinds } from '@ValenceClient/library/useStockedKinds';
+import { GetTheDesktopApp } from '@ValenceScreens/components/GetTheDesktopApp/GetTheDesktopApp';
 
 /**
  * The chrome every section sits inside: the dock, the bell, the mood behind it, and the dialogs that
@@ -233,375 +234,379 @@ const ValenceShell = () => {
   }, [place.show, openShow, cache]);
 
   return (
-    <AppShell
-      section={place.section}
-      dock={
-        <>
-          <ImmersiveMusic />
-          <NowPlayingBar />
-          <VideoRemoteBar
-            onOpen={() => {
-              setIsRemoteOpen(true);
-            }}
-          />
-          <AudiobookBar />
-        </>
-      }
-      isFitted={place.section === 'music'}
-      onSectionChange={(next) => {
-        go(
-          next === 'music'
-            ? { section: next, listen: null, library: null }
-            : { section: next, library: null },
-        );
-      }}
-      isAccountOpen={place.account !== null}
-      onOpenAccount={() => {
-        go({ account: ACCOUNT_OPENS_ON });
-      }}
-      onOpenAdmin={() => {
-        void navigate({ to: '/admin' });
-      }}
-      isDownloadsOpen={place.downloads}
-      onOpenDownloads={() => {
-        go({ downloads: true });
-      }}
-      isSearchOpen={place.section === 'search'}
-      onOpenSearch={() => {
-        go({ section: 'search' });
-      }}
-      background={<ShellMood section={place.section} />}
-      isAdministrator={mayAdminister}
-      hasMark={!isHoldingTheScreen}
-      libraryChoices={libraryChoices}
-      requestsChoices={requestsChoices}
-      {...(libraries.data === undefined ? {} : { libraryKinds })}
-      {...(stock === null ? {} : { stocked })}
-      mayRequest={mayRequest}
-      onOpenFavourites={() => {
-        go({ section: 'favourites' });
-      }}
-      onOpenMyRequests={() => {
-        go({ section: 'requests', requestsView: 'mine' });
-      }}
-      notifications={isTheDesktopClient() ? undefined : <NotificationBell {...bell} />}
-      onSurprise={surprise}
-      onSignOut={() => {
-        void leave();
-      }}
-      {...(watcher === null
-        ? {}
-        : {
-            avatar: <ProfileFace profile={watcher} className="size-7 text-xs" />,
-            accountName: watcher.name,
-          })}
-    >
-      <ShowDialog
-        show={openShow}
-        {...(mayShare
-          ? {
-              onShare: (show) => {
-                setSharing({ kind: 'series', seriesId: show.seriesId ?? '', title: show.title });
-              },
-            }
-          : {})}
-        onClose={() => {
-          go({ show: null });
+    <>
+      <AppShell
+        section={place.section}
+        dock={
+          <>
+            <ImmersiveMusic />
+            <NowPlayingBar />
+            <VideoRemoteBar
+              onOpen={() => {
+                setIsRemoteOpen(true);
+              }}
+            />
+            <AudiobookBar />
+          </>
+        }
+        isFitted={place.section === 'music'}
+        onSectionChange={(next) => {
+          go(
+            next === 'music'
+              ? { section: next, listen: null, library: null }
+              : { section: next, library: null },
+          );
         }}
-        onPlay={(media, startSeconds) => {
-          setStartOverride({ mediaId: media.id, seconds: Math.floor(startSeconds) });
-          go({ playing: media.id, show: null });
+        isAccountOpen={place.account !== null}
+        onOpenAccount={() => {
+          go({ account: ACCOUNT_OPENS_ON });
         }}
-        onInspect={(media) => {
-          go({ inspecting: media.id });
+        onOpenAdmin={() => {
+          void navigate({ to: '/admin' });
         }}
-        watchedFractionFor={(mediaId) => {
-          const found = progress.get(mediaId);
-
-          return found === undefined ? undefined : watchedFraction(found);
+        isDownloadsOpen={place.downloads}
+        onOpenDownloads={() => {
+          go({ downloads: true });
         }}
-        resumeFor={(mediaId) => resumeFor(progress, mediaId)}
-        isFinished={(mediaId) => progress.get(mediaId)?.isFinished === true}
-        onRate={(show, stars) => {
-          if ((show.seriesId ?? null) !== null) {
-            rate({ seriesId: show.seriesId ?? '' }, stars);
-          }
+        isSearchOpen={place.section === 'search'}
+        onOpenSearch={() => {
+          go({ section: 'search' });
         }}
-        onMarkWatched={(episodes, isWatched) => {
-          void failureOfThrown(() => markWatched(episodes, isWatched)).then(async (failure) => {
-            if (failure !== null) {
-              notify.failed(failure);
-
-              return;
-            }
-
-            forgetReported(episodes.map((episode) => episode.id));
-
-            await Promise.all([
-              cache.invalidateQueries({ queryKey: viewingQueries.progress().queryKey }),
-              cache.invalidateQueries({ queryKey: libraryQueries.key }),
-            ]);
-          });
+        background={<ShellMood section={place.section} />}
+        isAdministrator={mayAdminister}
+        hasMark={!isHoldingTheScreen}
+        libraryChoices={libraryChoices}
+        requestsChoices={requestsChoices}
+        {...(libraries.data === undefined ? {} : { libraryKinds })}
+        {...(stock === null ? {} : { stocked })}
+        mayRequest={mayRequest}
+        onOpenFavourites={() => {
+          go({ section: 'favourites' });
         }}
-      />
-
-      <DecideForSomebody
-        about={deciding}
-        onClose={() => {
-          setDeciding(null);
+        onOpenMyRequests={() => {
+          go({ section: 'requests', requestsView: 'mine' });
         }}
-      />
-
-      <ConfirmHiding
-        hiding={hiding}
-        onHidden={() => {
-          go({ inspecting: null, show: null });
+        notifications={isTheDesktopClient() ? undefined : <NotificationBell {...bell} />}
+        onSurprise={surprise}
+        onSignOut={() => {
+          void leave();
         }}
-      />
-
-      <MediaDetailDialog
-        media={inspecting}
-        siblings={seasonMates}
-        watchedFractionFor={(mediaId) => {
-          const found = progress.get(mediaId);
-
-          return found === undefined ? undefined : watchedFraction(found);
-        }}
-        onSelectSibling={(sibling) => {
-          go({ inspecting: sibling.id });
-        }}
-        {...(inspecting !== null && resumeFor(progress, inspecting.id) !== null
-          ? { resumeSeconds: resumeFor(progress, inspecting.id) ?? 0 }
-          : {})}
-        {...(openShow === null
+        {...(watcher === null
           ? {}
           : {
-              onBack: () => {
-                go({ inspecting: null });
-              },
-              backLabel: openShow.title,
+              avatar: <ProfileFace profile={watcher} className="size-7 text-xs" />,
+              accountName: watcher.name,
             })}
-        isKept={inspecting !== null && favourites.isKept(inspecting.id)}
-        onToggleKept={(media) => {
-          favourites.toggle(media.id);
-        }}
-        onHide={(media) => {
-          hiding.ask(media);
-        }}
-        {...(mayAdminister
-          ? {
-              onDecideForSomebody: (media: MediaSummary) => {
-                setDeciding(media);
-              },
-            }
-          : {})}
-        onRate={(media, stars) => {
-          rate({ mediaId: media.id }, stars);
-        }}
-        onOpenPerson={(member) => {
-          setOpenRole(member.role);
-          go({ person: member.personId ?? null });
-        }}
-        {...(mayShare
-          ? {
-              onShare: (media) => {
-                setSharing({ kind: 'item', media });
-              },
-            }
-          : {})}
-        {...(hasTelevision
-          ? {
-              onPlayOn: (media: MediaSummary, startSeconds: number) => {
-                setSendingToTv({ media, seconds: startSeconds });
-              },
-            }
-          : {})}
-        onStartParty={(media) => {
-          watchParty.open(media.id);
-          go({ inspecting: null, playing: media.id });
-        }}
-        onClose={() => {
-          go({ inspecting: null });
-        }}
-        onPlay={(media, startSeconds) => {
-          setStartOverride({ mediaId: media.id, seconds: Math.floor(startSeconds) });
-          go({ inspecting: null, playing: media.id });
-        }}
-      />
-
-      <PlayOnDialog
-        media={sendingToTv?.media ?? null}
-        startSeconds={sendingToTv?.seconds ?? 0}
-        onClose={() => {
-          setSendingToTv(null);
-        }}
-        onSent={() => {
-          setSendingToTv(null);
-          go({ inspecting: null });
-        }}
-      />
-
-      <VideoRemote
-        isOpen={isRemoteOpen}
-        onClose={() => {
-          setIsRemoteOpen(false);
-        }}
-        onPlayHere={(mediaId, seconds) => {
-          setStartOverride({ mediaId, seconds: Math.floor(seconds) });
-          go({ playing: mediaId });
-        }}
-      />
-
-      <BookDialog
-        bookId={place.book}
-        isKept={place.book !== null && keptBooks.isKept(place.book)}
-        onClose={() => {
-          go({ book: null });
-        }}
-        onRead={(book) => {
-          void navigate({ to: '/read/$bookId', params: { bookId: book.id } });
-        }}
-        onReadChapter={(book, chapterId) => {
-          void navigate({
-            to: '/read/$bookId',
-            params: { bookId: book.id },
-            search: { chapter: chapterId },
-          });
-        }}
-        onListen={(detail) => {
-          go({ book: null });
-          void startListening(detail, theAudiobookPlayer());
-        }}
-        onToggleKept={(book) => {
-          keptBooks.toggle(book.id);
-        }}
-        onRate={(book, stars) => {
-          rate({ bookId: book.id }, stars);
-        }}
-        {...(mayShare
-          ? {
-              onShare: (book) => {
-                setSharing({ kind: 'book', book });
-              },
-            }
-          : {})}
-      />
-
-      <AccountDialog
-        panel={place.account}
-        onPanel={(next) => {
-          go({ account: next });
-        }}
-        onClose={() => {
-          go({ account: null });
-        }}
-      />
-
-      <DownloadsDialog
-        isOpen={place.downloads}
-        onClose={() => {
-          go({ downloads: false });
-        }}
-      />
-
-      {mayRequest ? (
-        <AskableDialog
-          asking={place.asking}
+      >
+        <ShowDialog
+          show={openShow}
+          {...(mayShare
+            ? {
+                onShare: (show) => {
+                  setSharing({ kind: 'series', seriesId: show.seriesId ?? '', title: show.title });
+                },
+              }
+            : {})}
           onClose={() => {
-            go({ asking: null });
+            go({ show: null });
           }}
-          onOpen={(kind, mediaId) => {
-            replace(placeOfArrival(kind, mediaId));
+          onPlay={(media, startSeconds) => {
+            setStartOverride({ mediaId: media.id, seconds: Math.floor(startSeconds) });
+            go({ playing: media.id, show: null });
+          }}
+          onInspect={(media) => {
+            go({ inspecting: media.id });
+          }}
+          watchedFractionFor={(mediaId) => {
+            const found = progress.get(mediaId);
+
+            return found === undefined ? undefined : watchedFraction(found);
+          }}
+          resumeFor={(mediaId) => resumeFor(progress, mediaId)}
+          isFinished={(mediaId) => progress.get(mediaId)?.isFinished === true}
+          onRate={(show, stars) => {
+            if ((show.seriesId ?? null) !== null) {
+              rate({ seriesId: show.seriesId ?? '' }, stars);
+            }
+          }}
+          onMarkWatched={(episodes, isWatched) => {
+            void failureOfThrown(() => markWatched(episodes, isWatched)).then(async (failure) => {
+              if (failure !== null) {
+                notify.failed(failure);
+
+                return;
+              }
+
+              forgetReported(episodes.map((episode) => episode.id));
+
+              await Promise.all([
+                cache.invalidateQueries({ queryKey: viewingQueries.progress().queryKey }),
+                cache.invalidateQueries({ queryKey: libraryQueries.key }),
+              ]);
+            });
           }}
         />
-      ) : null}
 
-      <ShareDialog
-        subject={sharing}
-        isOpen={sharing !== null}
-        onClose={() => {
-          setSharing(null);
-        }}
-      />
+        <DecideForSomebody
+          about={deciding}
+          onClose={() => {
+            setDeciding(null);
+          }}
+        />
 
-      <StillWatchingDialog
-        isOpen={askingAbout !== null}
-        title={askingAbout?.title ?? ''}
-        secondsToAnswer={STILL_WATCHING_ANSWER_SECONDS}
-        onCarryOn={() => {
-          const following = askingAbout;
+        <ConfirmHiding
+          hiding={hiding}
+          onHidden={() => {
+            go({ inspecting: null, show: null });
+          }}
+        />
 
-          setAskingAbout(null);
+        <MediaDetailDialog
+          media={inspecting}
+          siblings={seasonMates}
+          watchedFractionFor={(mediaId) => {
+            const found = progress.get(mediaId);
 
-          if (following !== null) {
-            go({ playing: following.id, inspecting: null });
-          }
-        }}
-        onGiveUp={() => {
-          const wasPlaying = place.playing;
+            return found === undefined ? undefined : watchedFraction(found);
+          }}
+          onSelectSibling={(sibling) => {
+            go({ inspecting: sibling.id });
+          }}
+          {...(inspecting !== null && resumeFor(progress, inspecting.id) !== null
+            ? { resumeSeconds: resumeFor(progress, inspecting.id) ?? 0 }
+            : {})}
+          {...(openShow === null
+            ? {}
+            : {
+                onBack: () => {
+                  go({ inspecting: null });
+                },
+                backLabel: openShow.title,
+              })}
+          isKept={inspecting !== null && favourites.isKept(inspecting.id)}
+          onToggleKept={(media) => {
+            favourites.toggle(media.id);
+          }}
+          onHide={(media) => {
+            hiding.ask(media);
+          }}
+          {...(mayAdminister
+            ? {
+                onDecideForSomebody: (media: MediaSummary) => {
+                  setDeciding(media);
+                },
+              }
+            : {})}
+          onRate={(media, stars) => {
+            rate({ mediaId: media.id }, stars);
+          }}
+          onOpenPerson={(member) => {
+            setOpenRole(member.role);
+            go({ person: member.personId ?? null });
+          }}
+          {...(mayShare
+            ? {
+                onShare: (media) => {
+                  setSharing({ kind: 'item', media });
+                },
+              }
+            : {})}
+          {...(hasTelevision
+            ? {
+                onPlayOn: (media: MediaSummary, startSeconds: number) => {
+                  setSendingToTv({ media, seconds: startSeconds });
+                },
+              }
+            : {})}
+          onStartParty={(media) => {
+            watchParty.open(media.id);
+            go({ inspecting: null, playing: media.id });
+          }}
+          onClose={() => {
+            go({ inspecting: null });
+          }}
+          onPlay={(media, startSeconds) => {
+            setStartOverride({ mediaId: media.id, seconds: Math.floor(startSeconds) });
+            go({ inspecting: null, playing: media.id });
+          }}
+        />
 
-          setAskingAbout(null);
-          go({ playing: null, inspecting: wasPlaying });
-        }}
-      />
+        <PlayOnDialog
+          media={sendingToTv?.media ?? null}
+          startSeconds={sendingToTv?.seconds ?? 0}
+          onClose={() => {
+            setSendingToTv(null);
+          }}
+          onSent={() => {
+            setSendingToTv(null);
+            go({ inspecting: null });
+          }}
+        />
 
-      <PersonDialog
-        personId={place.person}
-        role={openRole}
-        onClose={() => {
-          go({ person: null });
-        }}
-        onPlay={(media, startSeconds) => {
-          setStartOverride({ mediaId: media.id, seconds: Math.floor(startSeconds) });
-          go({ person: null, inspecting: null, playing: media.id });
-        }}
-        onInspect={(media) => {
-          go({ person: null, inspecting: media.id });
-        }}
-        onOpenShow={(media) => {
-          const series = media.seriesId ?? showSlug(media.seriesTitle ?? '');
+        <VideoRemote
+          isOpen={isRemoteOpen}
+          onClose={() => {
+            setIsRemoteOpen(false);
+          }}
+          onPlayHere={(mediaId, seconds) => {
+            setStartOverride({ mediaId, seconds: Math.floor(seconds) });
+            go({ playing: mediaId });
+          }}
+        />
 
-          if (series !== '') {
-            go({ person: null, show: series });
-          }
-        }}
-      />
+        <BookDialog
+          bookId={place.book}
+          isKept={place.book !== null && keptBooks.isKept(place.book)}
+          onClose={() => {
+            go({ book: null });
+          }}
+          onRead={(book) => {
+            void navigate({ to: '/read/$bookId', params: { bookId: book.id } });
+          }}
+          onReadChapter={(book, chapterId) => {
+            void navigate({
+              to: '/read/$bookId',
+              params: { bookId: book.id },
+              search: { chapter: chapterId },
+            });
+          }}
+          onListen={(detail) => {
+            go({ book: null });
+            void startListening(detail, theAudiobookPlayer());
+          }}
+          onToggleKept={(book) => {
+            keptBooks.toggle(book.id);
+          }}
+          onRate={(book, stars) => {
+            rate({ bookId: book.id }, stars);
+          }}
+          {...(mayShare
+            ? {
+                onShare: (book) => {
+                  setSharing({ kind: 'book', book });
+                },
+              }
+            : {})}
+        />
 
-      <CollectionDialog
-        collectionId={place.collection}
-        onClose={() => {
-          go({ collection: null });
-        }}
-        onPlay={(media, startSeconds) => {
-          setStartOverride({ mediaId: media.id, seconds: Math.floor(startSeconds) });
-          go({ collection: null, inspecting: null, playing: media.id });
-        }}
-        onInspect={(media) => {
-          rememberItems([media]);
-          go({ collection: null, inspecting: media.id });
-        }}
-        onOpenShow={(media) => {
-          const series = media.seriesId ?? showSlug(media.seriesTitle ?? '');
+        <AccountDialog
+          panel={place.account}
+          onPanel={(next) => {
+            go({ account: next });
+          }}
+          onClose={() => {
+            go({ account: null });
+          }}
+        />
 
-          if (series !== '') {
-            go({ collection: null, show: series });
-          }
-        }}
-      />
+        <DownloadsDialog
+          isOpen={place.downloads}
+          onClose={() => {
+            go({ downloads: false });
+          }}
+        />
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={place.section}
-          variants={groupVariants}
-          initial="hidden"
-          animate="shown"
-          exit="gone"
-          style={{ display: 'contents' }}
-        >
-          <Outlet />
-        </motion.div>
-      </AnimatePresence>
-    </AppShell>
+        {mayRequest ? (
+          <AskableDialog
+            asking={place.asking}
+            onClose={() => {
+              go({ asking: null });
+            }}
+            onOpen={(kind, mediaId) => {
+              replace(placeOfArrival(kind, mediaId));
+            }}
+          />
+        ) : null}
+
+        <ShareDialog
+          subject={sharing}
+          isOpen={sharing !== null}
+          onClose={() => {
+            setSharing(null);
+          }}
+        />
+
+        <StillWatchingDialog
+          isOpen={askingAbout !== null}
+          title={askingAbout?.title ?? ''}
+          secondsToAnswer={STILL_WATCHING_ANSWER_SECONDS}
+          onCarryOn={() => {
+            const following = askingAbout;
+
+            setAskingAbout(null);
+
+            if (following !== null) {
+              go({ playing: following.id, inspecting: null });
+            }
+          }}
+          onGiveUp={() => {
+            const wasPlaying = place.playing;
+
+            setAskingAbout(null);
+            go({ playing: null, inspecting: wasPlaying });
+          }}
+        />
+
+        <PersonDialog
+          personId={place.person}
+          role={openRole}
+          onClose={() => {
+            go({ person: null });
+          }}
+          onPlay={(media, startSeconds) => {
+            setStartOverride({ mediaId: media.id, seconds: Math.floor(startSeconds) });
+            go({ person: null, inspecting: null, playing: media.id });
+          }}
+          onInspect={(media) => {
+            go({ person: null, inspecting: media.id });
+          }}
+          onOpenShow={(media) => {
+            const series = media.seriesId ?? showSlug(media.seriesTitle ?? '');
+
+            if (series !== '') {
+              go({ person: null, show: series });
+            }
+          }}
+        />
+
+        <CollectionDialog
+          collectionId={place.collection}
+          onClose={() => {
+            go({ collection: null });
+          }}
+          onPlay={(media, startSeconds) => {
+            setStartOverride({ mediaId: media.id, seconds: Math.floor(startSeconds) });
+            go({ collection: null, inspecting: null, playing: media.id });
+          }}
+          onInspect={(media) => {
+            rememberItems([media]);
+            go({ collection: null, inspecting: media.id });
+          }}
+          onOpenShow={(media) => {
+            const series = media.seriesId ?? showSlug(media.seriesTitle ?? '');
+
+            if (series !== '') {
+              go({ collection: null, show: series });
+            }
+          }}
+        />
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={place.section}
+            variants={groupVariants}
+            initial="hidden"
+            animate="shown"
+            exit="gone"
+            style={{ display: 'contents' }}
+          >
+            <Outlet />
+          </motion.div>
+        </AnimatePresence>
+      </AppShell>
+
+      <GetTheDesktopApp />
+    </>
   );
 };
 

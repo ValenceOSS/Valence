@@ -889,6 +889,7 @@ const ENGLISH = {
   'common.lossless': 'Lossless',
   'common.lyrics': 'Lyrics',
   'common.lyricsForTitle': 'Lyrics for {title}',
+  'common.mac': 'Mac',
   'common.madeCreatedAt': 'Created {createdAt}',
   'common.madeForYou': 'Made for you',
   'common.makeALink': 'Create share link',
@@ -4534,6 +4535,7 @@ const ENGLISH = {
   'screens.app.loadingInitialTitle': 'Loading {initialTitle}',
   'screens.appShell.admin': 'Admin',
   'screens.appShell.chooseSomethingAtRandom': 'Choose something at random',
+  'screens.appShell.getValenceForSystem': 'Get Valence for {system}',
   'screens.appShell.myAccount': 'My account',
   'screens.appShell.myRequests': 'My requests',
   'screens.appShell.randomiser': 'Randomiser',
@@ -4851,6 +4853,10 @@ const ENGLISH = {
   'screens.forgotPassword.typeYourUsernameOrTheEmail':
     'Enter your username or the email address on your account, and Valence will send you a link to set a new password.',
   'screens.forgotPassword.usernameOrEmail': 'Username or email',
+  'screens.getTheDesktopApp.getIt': 'Get it',
+  'screens.getTheDesktopApp.itsOwnWindowDownloadsToWatch':
+    'Its own window, downloads to watch offline, and your status on Discord.',
+  'screens.getTheDesktopApp.valenceForSystem': 'Valence for {system}',
   'screens.giveUpRulesList.metadataWaitChoices.fifteenMinutes': 'Fifteen minutes',
   'screens.giveUpRulesList.metadataWaitChoices.halfAnHour': 'Half an hour',
   'screens.giveUpRulesList.stalledWaitChoices.twelveHours': 'Twelve hours',

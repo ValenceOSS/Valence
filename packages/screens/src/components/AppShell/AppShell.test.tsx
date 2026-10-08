@@ -32,6 +32,7 @@ const draw = (overrides: Partial<AppShellProps> = {}) => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe('AppShell', () => {
@@ -258,6 +259,37 @@ describe('AppShell', () => {
       '_blank',
       'noopener,noreferrer',
     );
+  });
+
+  it("offers the desktop app from the menu on a computer's browser", async () => {
+    const open = vi.fn();
+    const user = userEvent.setup();
+
+    vi.stubGlobal('open', open);
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(
+      'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
+    );
+    draw();
+
+    await user.click(screen.getByRole('button', { name: 'Account' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Get Valence for Linux' }));
+
+    expect(open).toHaveBeenCalledWith(
+      'https://getvalence.app/#download',
+      '_blank',
+      'noopener,noreferrer',
+    );
+  });
+
+  it('offers no desktop app from the menu inside a browser that is not on a computer', async () => {
+    const user = userEvent.setup();
+
+    draw();
+
+    await user.click(screen.getByRole('button', { name: 'Account' }));
+    await screen.findByRole('menuitem', { name: 'Help' });
+
+    expect(screen.queryByRole('menuitem', { name: /Get Valence/u })).not.toBeInTheDocument();
   });
 
   it('signs out from the menu on the face', async () => {

@@ -25,13 +25,14 @@ import {
   Flame as FlameFilledIcon,
   Heart as HeartFilledIcon,
   Home as HomeFilledIcon,
+  Laptop as LaptopFilledIcon,
   Monitor as MonitorFilledIcon,
   MusicNote as MusicNoteFilledIcon,
   Search as SearchFilledIcon,
   Settings as SettingsFilledIcon,
   Question as QuestionFilledIcon,
 } from '@keyline-icons/react/fill';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   motion,
   useMotionValue,
@@ -59,6 +60,8 @@ import type { NavBarAction, NavBarItem } from '@ValenceUI/NavBar.types';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { AppShellProps, ShellSection } from './AppShell.types';
 import { say } from '@ValenceI18n/say';
+import { DESKTOP_APP_ADDRESS } from '@ValenceScreens/desktop/DESKTOP_APP_ADDRESS';
+import { desktopAppOffer } from '@ValenceScreens/desktop/desktopAppOffer';
 
 const HELP_ADDRESS = 'https://docs.getvalence.app/start/faq';
 
@@ -297,6 +300,8 @@ const AppShell = ({
     };
   }, [section]);
 
+  const [desktopApp] = useState(desktopAppOffer);
+
   const kinds = libraryKinds ?? [];
 
   const places = BROWSE_SECTIONS.filter(
@@ -467,6 +472,18 @@ const AppShell = ({
                     window.open(HELP_ADDRESS, '_blank', 'noopener,noreferrer');
                   },
                 },
+                ...(desktopApp === null
+                  ? []
+                  : [
+                      {
+                        id: 'desktop-app',
+                        label: say('screens.appShell.getValenceForSystem', { system: desktopApp }),
+                        icon: <Icon of={LaptopFilledIcon} size={16} />,
+                        onChoose: () => {
+                          window.open(DESKTOP_APP_ADDRESS, '_blank', 'noopener,noreferrer');
+                        },
+                      },
+                    ]),
               ],
             ]
               .filter((items) => items.length > 0)

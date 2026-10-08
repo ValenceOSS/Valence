@@ -3727,6 +3727,11 @@
     "context": "Read aloud by screen readers as the name, used in the lyrics panel in the music page and in the lyrics view in the music page. {title} is filled in by the app."
   },
   {
+    "handler": "common.mac",
+    "text": "Mac",
+    "context": "The name of Apple's computers, as in the desktop app for a Mac."
+  },
+  {
     "handler": "common.madeCreatedAt",
     "text": "Created {createdAt}",
     "context": "Text shown, used in the share panel in the account area and in the shares panel in the admin area. {createdAt} is filled in by the app."
@@ -18000,6 +18005,11 @@
     "context": "The label of a action menu in the app shell."
   },
   {
+    "handler": "screens.appShell.getValenceForSystem",
+    "text": "Get Valence for {system}",
+    "context": "An item in the account menu that opens the page the desktop app is downloaded from, in a browser on a computer (from `AppShell`). {system} is Mac, Windows or Linux."
+  },
+  {
     "handler": "screens.appShell.myAccount",
     "text": "My account",
     "context": "The label in the app shell."
@@ -19273,6 +19283,21 @@
     "handler": "screens.forgotPassword.usernameOrEmail",
     "text": "Username or email",
     "context": "The field in the forgotten password dialog."
+  },
+  {
+    "handler": "screens.getTheDesktopApp.getIt",
+    "text": "Get it",
+    "context": "The button in the note offering the desktop app, which opens the page it is downloaded from (from `GetTheDesktopApp`)."
+  },
+  {
+    "handler": "screens.getTheDesktopApp.itsOwnWindowDownloadsToWatch",
+    "text": "Its own window, downloads to watch offline, and your status on Discord.",
+    "context": "What the desktop app adds over the browser, in the note offering it (from `GetTheDesktopApp`)."
+  },
+  {
+    "handler": "screens.getTheDesktopApp.valenceForSystem",
+    "text": "Valence for {system}",
+    "context": "The heading of the note offering the desktop app, in a browser on a computer (from `GetTheDesktopApp`). {system} is Mac, Windows or Linux."
   },
   {
     "handler": "screens.giveUpRulesList.metadataWaitChoices.fifteenMinutes",
