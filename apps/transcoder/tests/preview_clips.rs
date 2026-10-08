@@ -165,6 +165,7 @@ async fn asking_twice_at_once_renders_one_clip_rather_than_two() {
             artefact_root: root.clone(),
             idle_timeout: Duration::from_secs(60),
             manifest_timeout: std::time::Duration::from_secs(120),
+            keyframe_deadline: valence_transcoder::boundaries::DEFAULT_KEYFRAME_DEADLINE,
             max_concurrent: 2,
             split_audio: false,
         }),

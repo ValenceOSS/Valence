@@ -287,7 +287,7 @@ fn seeks_forward(container: crate::media::Container) -> bool {
 ///
 /// Comfortably longer than an ordinary source takes and comfortably shorter
 /// than a person will wait.
-const KEYFRAME_DEADLINE: std::time::Duration = std::time::Duration::from_secs(10);
+pub const DEFAULT_KEYFRAME_DEADLINE: std::time::Duration = std::time::Duration::from_secs(2);
 
 /// Whether a source whose keyframes are not known may still be copied.
 ///
@@ -364,7 +364,12 @@ fn fill_index_later(ffprobe: String, artefact_root: PathBuf, path: PathBuf, dura
 /// source allows, which is what the keyframes say — and if they cannot be read,
 /// equal lengths are a worse answer than the truth but a better one than
 /// refusing to play the film.
-async fn compute_boundaries(ffprobe: &str, artefact_root: &Path, spec: &SessionSpec) -> Boundaries {
+async fn compute_boundaries(
+    ffprobe: &str,
+    artefact_root: &Path,
+    spec: &SessionSpec,
+    keyframe_deadline: std::time::Duration,
+) -> Boundaries {
     let path = Path::new(&spec.input_path);
     let wanted = f64::from(spec.segment_seconds.max(1));
 
@@ -396,7 +401,7 @@ async fn compute_boundaries(ffprobe: &str, artefact_root: &Path, spec: &SessionS
     }
 
     let answered = tokio::time::timeout(
-        KEYFRAME_DEADLINE,
+        keyframe_deadline,
         read_keyframes(ffprobe, path, probe.duration_seconds),
     )
     .await;
@@ -407,7 +412,7 @@ async fn compute_boundaries(ffprobe: &str, artefact_root: &Path, spec: &SessionS
             session_id = %spec.session_id(),
             "gave up reading the keyframes of {} after {}s, so it is encoded rather than copied",
             spec.input_path,
-            KEYFRAME_DEADLINE.as_secs(),
+            keyframe_deadline.as_secs_f32(),
         );
 
         fill_index_later(
@@ -501,12 +506,13 @@ pub async fn ensure_boundaries(
     artefact_root: &Path,
     directory: &Path,
     spec: &SessionSpec,
+    keyframe_deadline: std::time::Duration,
 ) -> Boundaries {
     if let Some(found) = cached_boundaries(directory).await {
         return found;
     }
 
-    let found = compute_boundaries(ffprobe, artefact_root, spec).await;
+    let found = compute_boundaries(ffprobe, artefact_root, spec, keyframe_deadline).await;
 
     if found.is_empty() {
         return found;
@@ -546,7 +552,7 @@ pub async fn ensure_boundaries(
 mod tests {
     use super::{
         can_copy_segments, equal_lengths, from_keyframes, may_copy_without_keyframes,
-        offered_ceiling, Boundaries, KEYFRAME_DEADLINE, LAYOUT, OFFERED_SEGMENT_BYTES,
+        offered_ceiling, Boundaries, DEFAULT_KEYFRAME_DEADLINE, LAYOUT, OFFERED_SEGMENT_BYTES,
     };
     use crate::keyframes::{Cut, Keyframes};
 
@@ -718,8 +724,8 @@ mod tests {
     /// it, so the film never played at all and nothing was ever logged.
     #[test]
     fn waits_less_for_keyframes_than_a_person_will() {
-        assert!(KEYFRAME_DEADLINE <= std::time::Duration::from_secs(15));
-        assert!(KEYFRAME_DEADLINE >= std::time::Duration::from_secs(5));
+        assert!(DEFAULT_KEYFRAME_DEADLINE <= std::time::Duration::from_secs(3));
+        assert!(DEFAULT_KEYFRAME_DEADLINE >= std::time::Duration::from_secs(1));
     }
 
     /// Copying cuts where the source already has a keyframe. Not knowing where

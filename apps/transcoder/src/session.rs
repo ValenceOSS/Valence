@@ -831,6 +831,13 @@ pub struct SessionConfig {
     /// any figure chosen here, and an operator who knows their box is slow
     /// should be able to say so rather than be told the transcode failed.
     pub manifest_timeout: Duration,
+    /// How long a viewer waits for keyframes before the session starts as an encode.
+    ///
+    /// Reading a copied stream's keyframes is what lets Valence avoid transcoding, but it is also
+    /// the slowest cold-start step for large remuxes and remote storage. A short deadline favours
+    /// "start the film now" and lets the keyframe index finish for the next viewer in the
+    /// background.
+    pub keyframe_deadline: Duration,
     pub max_concurrent: usize,
     /// Whether a session's sound is sent apart from its picture where it can be.
     ///
@@ -850,6 +857,7 @@ impl Default for SessionConfig {
             artefact_root: std::env::temp_dir().join("valence-artefacts"),
             idle_timeout: Duration::from_secs(90),
             manifest_timeout: Duration::from_secs(20),
+            keyframe_deadline: crate::boundaries::DEFAULT_KEYFRAME_DEADLINE,
             max_concurrent: 2,
             split_audio: true,
         }
@@ -990,13 +998,25 @@ impl SessionRegistry {
             record_device(&directory, device).await;
         }
 
+        let boundary_started = Instant::now();
         let boundaries = ensure_boundaries(
             &self.config.ffprobe,
             &self.config.artefact_root,
             &directory,
             &spec,
+            self.config.keyframe_deadline,
         )
         .await;
+        let boundary_elapsed = boundary_started.elapsed();
+
+        if boundary_elapsed > Duration::from_millis(250) {
+            tracing::info!(
+                target: "session",
+                session_id = %id,
+                elapsed_ms = boundary_elapsed.as_millis(),
+                "worked out segment boundaries"
+            );
+        }
 
         if boundaries.is_empty() {
             return Err(SessionError::Boundaries(spec.input_path.clone()));
