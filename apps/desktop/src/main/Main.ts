@@ -12,6 +12,7 @@ import { openTheDebuggingPort } from '@ValenceDesktop/main/openTheDebuggingPort'
 import { recordMemoryUse } from '@ValenceDesktop/main/recordMemoryUse';
 import { theApplicationMenu } from '@ValenceDesktop/main/theApplicationMenu';
 import { theDockIcon } from '@ValenceDesktop/main/theDockIcon';
+import { askToNotify } from '@ValenceDesktop/main/askToNotify';
 import { showTheUnreadCount } from '@ValenceDesktop/main/showTheUnreadCount';
 import { tellDiscord } from '@ValenceDesktop/main/tellDiscord';
 import { takeTheStatusDownWithTheWindow } from '@ValenceDesktop/main/takeTheStatusDownWithTheWindow';
@@ -275,6 +276,7 @@ const start = async (): Promise<void> => {
   });
 
   theDockIcon();
+  askToNotify();
 
   ipcMain.on(CHANGE_SERVER, changeServer);
 
