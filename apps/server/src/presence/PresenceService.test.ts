@@ -19,6 +19,9 @@ const plan: PlaybackPlan = {
 const PLAYBACK = {
   mediaId: 'media-1',
   mediaTitle: 'Arrival',
+  seriesTitle: null,
+  seasonNumber: null,
+  episodeNumber: null,
   hasPoster: true,
   hasBackdrop: true,
   mode: 'direct' as const,
@@ -493,6 +496,9 @@ describe('the things presence is asked about tabs it does not have', () => {
     presence.startPlayback('ghost', {
       mediaId: 'media-1',
       mediaTitle: 'Arrival',
+      seriesTitle: null,
+      seasonNumber: null,
+      episodeNumber: null,
       hasPoster: false,
       hasBackdrop: false,
       mode: 'direct',
@@ -547,6 +553,9 @@ describe('the things presence is asked about tabs it does not have', () => {
     presence.startPlayback('tab-1', {
       mediaId: 'media-1',
       mediaTitle: 'Arrival',
+      seriesTitle: null,
+      seasonNumber: null,
+      episodeNumber: null,
       hasPoster: false,
       hasBackdrop: false,
       mode: 'direct',
@@ -577,6 +586,9 @@ describe('the things presence is asked about tabs it does not have', () => {
     presence.startPlayback('tab-1', {
       mediaId: 'media-1',
       mediaTitle: 'Arrival',
+      seriesTitle: null,
+      seasonNumber: null,
+      episodeNumber: null,
       hasPoster: false,
       hasBackdrop: false,
       mode: 'direct',

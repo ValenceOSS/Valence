@@ -60,6 +60,9 @@ const WATCHING_SESSION: ActiveSession = {
   playback: {
     mediaId: 'media-1',
     mediaTitle: 'Arrival',
+    seriesTitle: null,
+    seasonNumber: null,
+    episodeNumber: null,
     hasPoster: true,
     hasBackdrop: false,
     mode: 'transcode',
@@ -266,6 +269,34 @@ describe('SessionCard', () => {
 
     expect(screen.getByText(/Arrival/)).toBeInTheDocument();
     expect(screen.getByText('DirectPlay')).toBeInTheDocument();
+  });
+
+  it('names an episode by its show, then its season, number and name, then the device', () => {
+    render(
+      <SessionCard
+        session={{
+          ...WATCHING_SESSION,
+          playback:
+            WATCHING_SESSION.playback === null
+              ? null
+              : {
+                  ...WATCHING_SESSION.playback,
+                  mediaTitle: 'The Long Corridor',
+                  seriesTitle: 'Night Shift',
+                  seasonNumber: 2,
+                  episodeNumber: 5,
+                },
+        }}
+        isBusy={false}
+        onStop={vi.fn()}
+        onPause={vi.fn()}
+        onResume={vi.fn()}
+        onMessage={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Night Shift')).toBeInTheDocument();
+    expect(screen.getByText('S2E5 · The Long Corridor')).toBeInTheDocument();
   });
 
   it('says a remux is a remux, rather than badging it as a transcode', () => {

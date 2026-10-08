@@ -583,6 +583,9 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
           presence.startPlayback(watcher, {
             mediaId: item.id,
             mediaTitle: item.title,
+            seriesTitle: item.metadata.seriesTitle ?? null,
+            seasonNumber: item.metadata.seasonNumber ?? null,
+            episodeNumber: item.metadata.episodeNumber ?? null,
             hasPoster: item.metadata.hasPoster,
             hasBackdrop: item.metadata.hasBackdrop,
             mode: started.data.delivery.kind === 'hls' ? 'transcode' : 'direct',

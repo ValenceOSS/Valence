@@ -224,6 +224,9 @@ const AdminSessionSchema = z
       .object({
         mediaId: z.string(),
         mediaTitle: z.string(),
+        seriesTitle: z.string().nullable(),
+        seasonNumber: z.number().int().nullable(),
+        episodeNumber: z.number().int().nullable(),
         hasPoster: z.boolean(),
         hasBackdrop: z.boolean(),
         mode: z.enum(['direct', 'transcode']),

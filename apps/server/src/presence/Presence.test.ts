@@ -108,6 +108,9 @@ describe('presence over HTTP', () => {
     presence.startPlayback('tab-1', {
       mediaId: 'media-1',
       mediaTitle: 'Arrival',
+      seriesTitle: null,
+      seasonNumber: null,
+      episodeNumber: null,
       hasPoster: false,
       hasBackdrop: false,
       mode: 'direct',
@@ -141,6 +144,9 @@ describe('presence over HTTP', () => {
     presence.startPlayback('tab-1', {
       mediaId: 'media-1',
       mediaTitle: 'Arrival',
+      seriesTitle: null,
+      seasonNumber: null,
+      episodeNumber: null,
       hasPoster: false,
       hasBackdrop: false,
       mode: 'direct',
@@ -175,6 +181,9 @@ describe('presence over HTTP', () => {
     presence.startPlayback('tab-1', {
       mediaId: 'media-1',
       mediaTitle: 'Arrival',
+      seriesTitle: null,
+      seasonNumber: null,
+      episodeNumber: null,
       hasPoster: false,
       hasBackdrop: false,
       mode: 'direct',
@@ -226,6 +235,9 @@ describe('presence over HTTP', () => {
     presence.startPlayback('tab-1', {
       mediaId: 'media-1',
       mediaTitle: 'Arrival',
+      seriesTitle: null,
+      seasonNumber: null,
+      episodeNumber: null,
       hasPoster: false,
       hasBackdrop: false,
       mode: 'direct',
@@ -296,6 +308,9 @@ describe('presence over HTTP', () => {
     presence.startPlayback('tab-1', {
       mediaId: 'media-1',
       mediaTitle: 'Arrival',
+      seriesTitle: null,
+      seasonNumber: null,
+      episodeNumber: null,
       hasPoster: false,
       hasBackdrop: false,
       mode: 'direct',

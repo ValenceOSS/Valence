@@ -142,6 +142,9 @@ const streaming = (bufferedAheadSeconds: number, isPlaying = true): ActiveSessio
   playback: {
     mediaId: 'med_1',
     mediaTitle: 'Arrival',
+    seriesTitle: null,
+    seasonNumber: null,
+    episodeNumber: null,
     hasPoster: false,
     hasBackdrop: false,
     mode: 'transcode',
