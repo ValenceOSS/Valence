@@ -18,6 +18,7 @@ type SidebarGroupProps = {
   defaultIsOpen?: boolean;
   isOpen?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
+  isCollapsed?: boolean;
   className?: string;
 };
 

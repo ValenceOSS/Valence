@@ -51,6 +51,7 @@ const Sidebar = ({
   value,
   onSelect,
   isCollapsed = false,
+  collapsedVariant = 'hidden',
   onCollapsedChange,
   onGroupOpenChange,
   footer,
@@ -62,6 +63,7 @@ const Sidebar = ({
   const prefersReducedMotion = useReducedMotionConfig();
   const markGroup = `sidebar-mark-${label}`;
   const isFloating = variant === 'floating';
+  const isRail = isCollapsed && collapsedVariant === 'rail';
   const [hidden, setHidden] = useState({ isAbove: false, isBelow: false });
 
   const measure = () => {
@@ -128,25 +130,34 @@ const Sidebar = ({
   return (
     <nav
       aria-label={label}
-      aria-hidden={isCollapsed}
+      aria-hidden={isCollapsed && !isRail}
       className={cn(
         'flex flex-col overflow-hidden py-3',
         'transition-[width,margin] duration-200 ease-out',
         isFloating ? 'self-stretch' : 'h-full',
-        isCollapsed
-          ? 'm-0 w-0'
-          : isFloating
-            ? 'my-6 ml-6 w-60 rounded-2xl border border-[var(--surface-line)] shadow-[var(--shadow-lifted)]'
-            : 'w-60',
+        isRail
+          ? isFloating
+            ? 'my-6 ml-6 w-16 rounded-2xl border border-[var(--surface-line)] shadow-[var(--shadow-lifted)]'
+            : 'w-16'
+          : isCollapsed
+            ? 'm-0 w-0'
+            : isFloating
+              ? 'my-6 ml-6 w-60 rounded-2xl border border-[var(--surface-line)] shadow-[var(--shadow-lifted)]'
+              : 'w-60',
         className,
       )}
     >
-      <div className="flex h-10 w-60 shrink-0 items-center justify-between gap-2 px-4">
+      <div
+        className={cn(
+          'flex h-10 shrink-0 items-center justify-between gap-2',
+          isRail ? 'w-16 px-3' : 'w-60 px-4',
+        )}
+      >
         {brand === undefined ? null : (
-          <div className="flex min-w-0 flex-1 items-center gap-2">{brand}</div>
+          <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">{brand}</div>
         )}
 
-        {onCollapsedChange === undefined ? null : (
+        {onCollapsedChange === undefined || isRail ? null : (
           <SidebarToggle
             isOpen
             label={say('common.closeTheSidebar')}
@@ -173,7 +184,10 @@ const Sidebar = ({
             setPointedAt(null);
           }
         }}
-        className="flex w-60 shrink-0 flex-1 flex-col gap-5 overflow-y-auto px-3 pt-5"
+        className={cn(
+          'flex shrink-0 flex-1 flex-col overflow-y-auto pt-5',
+          isRail ? 'w-16 items-center gap-2 px-3' : 'w-60 gap-5 px-3',
+        )}
       >
         {groups.map((group, index) => (
           <SidebarGroup
@@ -195,12 +209,20 @@ const Sidebar = ({
             markGroup={markGroup}
             pointedAt={pointedAt}
             onPointAt={setPointedAt}
+            isCollapsed={isRail}
           />
         ))}
       </div>
 
       {footer === undefined ? null : (
-        <div className="flex w-60 shrink-0 flex-col gap-2 px-3 pt-3">{footer}</div>
+        <div
+          className={cn(
+            'flex shrink-0 flex-col gap-2 pt-3',
+            isRail ? 'w-16 items-center px-3' : 'w-60 px-3',
+          )}
+        >
+          {footer}
+        </div>
       )}
     </nav>
   );

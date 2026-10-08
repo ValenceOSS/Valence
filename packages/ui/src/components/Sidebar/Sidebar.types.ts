@@ -9,6 +9,7 @@ type SidebarGroupData = {
 };
 
 type SidebarVariant = 'flush' | 'floating';
+type SidebarCollapsedVariant = 'hidden' | 'rail';
 
 type SidebarProps = {
   label: string;
@@ -17,6 +18,7 @@ type SidebarProps = {
   value: string;
   onSelect: (id: string) => void;
   isCollapsed?: boolean;
+  collapsedVariant?: SidebarCollapsedVariant;
   onCollapsedChange?: (isCollapsed: boolean) => void;
   onGroupOpenChange?: (id: string, isOpen: boolean) => void;
   footer?: ReactNode;
@@ -24,4 +26,4 @@ type SidebarProps = {
   className?: string;
 };
 
-export type { SidebarProps, SidebarGroupData, SidebarVariant };
+export type { SidebarProps, SidebarGroupData, SidebarCollapsedVariant, SidebarVariant };

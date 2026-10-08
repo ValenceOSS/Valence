@@ -45,6 +45,7 @@ const SidebarGroup = ({
   defaultIsOpen = true,
   isOpen: heldOpen,
   onOpenChange,
+  isCollapsed = false,
   className,
 }: SidebarGroupProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
@@ -53,8 +54,8 @@ const SidebarGroup = ({
   const showsFold = label !== undefined;
 
   return (
-    <div className={cn('flex flex-col gap-1', className)}>
-      {label === undefined ? null : (
+    <div className={cn('flex flex-col', isCollapsed ? 'gap-1' : 'gap-1', className)}>
+      {label === undefined || isCollapsed ? null : (
         <Button
           variant="bare"
           size="none"
@@ -84,25 +85,28 @@ const SidebarGroup = ({
       )}
 
       <AnimatePresence initial={false}>
-        {!showsFold || isOpen ? (
+        {isCollapsed || !showsFold || isOpen ? (
           <motion.ul
-            initial={showsFold ? { height: 0, opacity: 0 } : false}
+            initial={showsFold && !isCollapsed ? { height: 0, opacity: 0 } : false}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={prefersReducedMotion ? stillTransition : spring}
-            className={cn('flex flex-col overflow-hidden', showsFold ? 'gap-1 pt-1' : 'gap-0.5')}
+            className={cn(
+              'flex flex-col overflow-hidden',
+              isCollapsed ? 'gap-1' : showsFold ? 'gap-1 pt-1' : 'gap-0.5',
+            )}
           >
             {items.map((item) => {
               const isCurrent = item.id === value;
               const isLit = item.id === (pointedAt ?? value);
 
               return (
-                <li key={item.id} className={showsFold ? BRANCH : undefined}>
+                <li key={item.id} className={showsFold && !isCollapsed ? BRANCH : undefined}>
                   <Button
                     variant="bare"
                     size="sm"
                     label={item.label}
-                    hasTooltip={false}
+                    hasTooltip={isCollapsed}
                     aria-current={isCurrent ? 'page' : undefined}
                     onPointerEnter={() => {
                       onPointAt(item.id);
@@ -114,8 +118,11 @@ const SidebarGroup = ({
                       onSelect(item.id);
                     }}
                     className={cn(
-                      'relative isolate flex h-8 w-full items-center justify-start gap-2.5 rounded-md px-2.5',
+                      'relative isolate flex rounded-md',
                       'transition-colors duration-[var(--duration-fast)]',
+                      isCollapsed
+                        ? 'h-10 w-10 items-center justify-center px-0'
+                        : 'h-8 w-full items-center justify-start gap-2.5 px-2.5',
                       isCurrent ? 'font-medium text-text' : isLit ? 'text-text' : 'text-text-muted',
                     )}
                   >
@@ -142,7 +149,9 @@ const SidebarGroup = ({
                       />
                     </span>
 
-                    <span className="relative z-10 truncate">{item.label}</span>
+                    {isCollapsed ? null : (
+                      <span className="relative z-10 truncate">{item.label}</span>
+                    )}
                   </Button>
                 </li>
               );

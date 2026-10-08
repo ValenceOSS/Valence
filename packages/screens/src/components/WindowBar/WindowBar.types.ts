@@ -1,5 +1,6 @@
 import type { DesktopUpdate } from '@ValenceContracts/schemas/DesktopUpdate';
 import type { NotificationBellProps } from '@ValenceScreens/components/NotificationBell/NotificationBell.types';
+import type { AdminSidebarControl } from '@ValenceScreens/desktop/adminSidebarControl';
 
 type WindowBarWays = {
   canGoBack: boolean;
@@ -23,6 +24,7 @@ type WindowBarProps = {
   inbox?: NotificationBellProps;
   onHelp?: () => void;
   frame?: WindowBarFrame;
+  adminSidebar?: AdminSidebarControl | null;
 };
 
 export type { WindowBarFrame, WindowBarProps, WindowBarWays };

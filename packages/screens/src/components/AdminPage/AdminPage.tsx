@@ -4,7 +4,6 @@ import { readObservabilityView } from '@ValenceScreens/components/ObservabilityP
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { SidebarToggle } from '@ValenceUI/SidebarToggle';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { HoverCard } from '@ValenceUI/HoverCard';
@@ -35,6 +34,7 @@ import { THEME_CHOICES } from '@ValenceScreens/theme/themeChoices';
 import { say } from '@ValenceI18n/say';
 import { useWindowBarOnTheFrame } from '@ValenceScreens/desktop/useWindowBarOnTheFrame';
 import { BrandMark } from '@ValenceScreens/components/BrandMark/BrandMark';
+import { setAdminSidebarControl } from '@ValenceScreens/desktop/adminSidebarControl';
 
 const MARKS_PLACE = 'valence-admin-mark';
 /**
@@ -83,6 +83,31 @@ const AdminPage = () => {
       void go({ to: '/', replace: true });
     }
   }, [isLoading, mayAdminister, go]);
+
+  useEffect(() => {
+    if (isLoading || !mayAdminister) {
+      setAdminSidebarControl(null);
+
+      return () => {
+        setAdminSidebarControl(null);
+      };
+    }
+
+    setAdminSidebarControl({
+      isOpen: !isCollapsed,
+      label: isCollapsed ? say('screens.adminPage.openTheSidebar') : say('common.closeTheSidebar'),
+      onToggle: () => {
+        const next = !isCollapsed;
+
+        setIsCollapsed(next);
+        saveSidebarCollapsed(next);
+      },
+    });
+
+    return () => {
+      setAdminSidebarControl(null);
+    };
+  }, [isCollapsed, isLoading, mayAdminister]);
 
   if (isLoading || !mayAdminister) {
     return (
@@ -148,10 +173,7 @@ const AdminPage = () => {
             void go({ to: '/admin/$panel', params: { panel: next } });
           }}
           isCollapsed={isCollapsed}
-          onCollapsedChange={(next) => {
-            setIsCollapsed(next);
-            saveSidebarCollapsed(next);
-          }}
+          collapsedVariant="rail"
           footer={
             <div
               className={cn(
@@ -209,19 +231,6 @@ const AdminPage = () => {
             isCollapsed ? 'md:ml-2' : '',
           )}
         >
-          {!isCollapsed ? null : (
-            <div className="flex shrink-0 items-center px-4 pt-3">
-              <SidebarToggle
-                isOpen={false}
-                label={say('screens.adminPage.openTheSidebar')}
-                onToggle={() => {
-                  setIsCollapsed(false);
-                  saveSidebarCollapsed(false);
-                }}
-              />
-            </div>
-          )}
-
           <div className="min-h-0 flex-1 overflow-y-auto p-4 lg:p-5">
             <AdminArea
               panel={showing}
