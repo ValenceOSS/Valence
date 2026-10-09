@@ -3030,7 +3030,7 @@ const ENGLISH = {
   'screens.adminArea.arrAppsPanel.connectedAppsControl.controlConnectedAppsFromValence':
     'Control connected apps from Valence',
   'screens.adminArea.arrAppsPanel.connectedAppsControl.letsYouSearchAConnectedApps':
-    'Lets you search a connected app’s releases and choose which one it fetches. When off, Sonarr, Radarr and Lidarr search and pick on their own.',
+    'Lets you search a connected app’s releases, stop its downloads, change its blocklist and choose what it monitors, from a title’s page. When off, Sonarr, Radarr and Lidarr decide all of that on their own.',
   'screens.adminArea.arrAppsPanel.connectedAppsControl.theConnectedAppsSettingCouldNot':
     'Couldn’t save the connected apps setting.',
   'screens.adminArea.arrAppsPanel.disconnect': 'Disconnect',

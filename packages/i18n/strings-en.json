@@ -12346,7 +12346,7 @@
   },
   {
     "handler": "screens.adminArea.arrAppsPanel.connectedAppsControl.letsYouSearchAConnectedApps",
-    "text": "Lets you search a connected app’s releases and choose which one it fetches. When off, Sonarr, Radarr and Lidarr search and pick on their own.",
+    "text": "Lets you search a connected app’s releases, stop its downloads, change its blocklist and choose what it monitors, from a title’s page. When off, Sonarr, Radarr and Lidarr decide all of that on their own.",
     "context": "The description of a setting row in the Connected apps panel on the admin area’s Requests page."
   },
   {
