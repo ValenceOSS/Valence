@@ -172,6 +172,39 @@ describe('followTheUpdates', () => {
     expect(updater.checkForUpdates).toHaveBeenCalledOnce();
   });
 
+  it('looks again straight away when asked, and waits the full time again from there', async () => {
+    vi.useFakeTimers();
+
+    const updater = aUpdater();
+
+    followed = followTheUpdates({ updater, every: 1000, onChange: vi.fn(), log: vi.fn() });
+    await vi.advanceTimersByTimeAsync(600);
+    followed.checkNow();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(updater.checkForUpdates).toHaveBeenCalledTimes(2);
+
+    await vi.advanceTimersByTimeAsync(999);
+
+    expect(updater.checkForUpdates).toHaveBeenCalledTimes(2);
+
+    await vi.advanceTimersByTimeAsync(1);
+
+    expect(updater.checkForUpdates).toHaveBeenCalledTimes(3);
+  });
+
+  it('asks nothing more while a check is already out', async () => {
+    vi.useFakeTimers();
+
+    const updater = aUpdater({ checkForUpdates: () => new Promise(() => undefined) });
+
+    followed = followTheUpdates({ updater, every: 1000, onChange: vi.fn(), log: vi.fn() });
+    followed.checkNow();
+    await vi.advanceTimersByTimeAsync(5000);
+
+    expect(updater.checkForUpdates).toHaveBeenCalledOnce();
+  });
+
   it('stops checking once stopped', async () => {
     vi.useFakeTimers();
 

@@ -575,6 +575,7 @@ const ENGLISH = {
   'common.changeServer': 'Change server…',
   'common.chapterBefore': 'Previous chapter',
   'common.chapters': 'Chapters',
+  'common.checkForUpdates': 'Check for updates…',
   'common.choose': 'Choose',
   'common.chooseACover': 'Choose a cover',
   'common.chooseAnother': 'Choose another',

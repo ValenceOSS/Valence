@@ -2,7 +2,12 @@ import { Menu, shell } from 'electron';
 import type { MenuItemConstructorOptions } from 'electron';
 import { say } from '@ValenceI18n/say';
 
-const IS_MAC = process.platform === 'darwin';
+type ApplicationMenuNeeds = {
+  changeServer: () => void;
+  hasDevTools?: boolean;
+  checkForUpdates?: () => void;
+  platform?: NodeJS.Platform;
+};
 
 /**
  * Builds the menu, whose one unusual item is the way back to choosing a server.
@@ -25,15 +30,28 @@ const IS_MAC = process.platform === 'darwin';
  * installed one. They open the page's own scripts and storage to whoever is at the keyboard, which is
  * what a person debugging wants and not what somebody watching a film needs in their View menu.
  *
- * @param changeServer - What to do when somebody asks for a different one.
- * @param hasDevTools - Whether to offer the developer tools, which an installed build does not.
+ * Checking for updates sits under About on the Mac, where a Mac application keeps it, and only in a
+ * build that updates itself. Windows and Linux have no menu bar to show, and keep it in the tray.
+ *
+ * @param needs - What to do when somebody asks for a different server; whether to offer the
+ *   developer tools, which an installed build does not; what to do when somebody asks for a release
+ *   now, where this build can update itself; and which system this is.
  * @returns The menu, already set.
  */
-const theApplicationMenu = (changeServer: () => void, hasDevTools = false): Menu => {
+const theApplicationMenu = ({
+  changeServer,
+  hasDevTools = false,
+  checkForUpdates,
+  platform = process.platform,
+}: ApplicationMenuNeeds): Menu => {
+  const isMac = platform === 'darwin';
   const valence: MenuItemConstructorOptions = {
     label: say('common.valence'),
     submenu: [
       { role: 'about' },
+      ...(checkForUpdates === undefined
+        ? []
+        : [{ label: say('common.checkForUpdates'), click: checkForUpdates }]),
       { type: 'separator' },
       {
         label: say('common.changeServer'),
@@ -59,12 +77,12 @@ const theApplicationMenu = (changeServer: () => void, hasDevTools = false): Menu
         accelerator: say('desktop.main.theApplicationMenu.cmdOrCtrlShiftS'),
         click: changeServer,
       },
-      ...(IS_MAC ? [] : [{ type: 'separator' } as const, { role: 'quit' } as const]),
+      ...(isMac ? [] : [{ type: 'separator' } as const, { role: 'quit' } as const]),
     ],
   };
 
   const menu = Menu.buildFromTemplate([
-    ...(IS_MAC ? [valence] : []),
+    ...(isMac ? [valence] : []),
     file,
     { role: 'editMenu' },
     {

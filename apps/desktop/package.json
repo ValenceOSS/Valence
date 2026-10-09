@@ -71,6 +71,7 @@
       "dist-main/**",
       "dist-preload/**",
       "dist-native/**",
+      "build/icon.png",
       "package.json"
     ],
     "asarUnpack": [

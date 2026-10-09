@@ -2198,7 +2198,7 @@
   {
     "handler": "common.changeServer",
     "text": "Change server…",
-    "context": "The label, used in the main of the desktop app (from `theApplicationMenu`) and in the main of the desktop app (from `theWindowsOwnMenu`)."
+    "context": "The label of the desktop app's menu item that goes back to choosing which Valence server to use, under the Valence menu and under File."
   },
   {
     "handler": "common.chapterBefore",
@@ -2209,6 +2209,11 @@
     "handler": "common.chapters",
     "text": "Chapters",
     "context": "Shown, used in several places, among them the book of the phone app and the reader sheet in the reader of the phone app."
+  },
+  {
+    "handler": "common.checkForUpdates",
+    "text": "Check for updates…",
+    "context": "The label of what asks straight away whether a newer release of the desktop app is out: under the Valence menu on a Mac, and in the tray icon's menu on Windows and Linux."
   },
   {
     "handler": "common.choose",
