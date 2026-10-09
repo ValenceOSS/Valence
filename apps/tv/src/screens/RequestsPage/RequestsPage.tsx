@@ -1,3 +1,4 @@
+import { isAskedBy } from '@ValenceContracts/functions/isAskedBy';
 import { useEffect, useMemo } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
@@ -59,7 +60,7 @@ const RequestsPage = ({ onOpen, onLight }: RequestsPageProps) => {
             key={request.id}
             request={request}
             going={progressOfRequest(request, progress.data ?? [])}
-            isSomeoneElses={me.data !== undefined && request.requestedBy.id !== me.data?.id}
+            isSomeoneElses={me.data !== undefined && !isAskedBy(request, me.data?.id)}
             hasPreferredFocus={at === 0}
             onPress={onOpen}
           />

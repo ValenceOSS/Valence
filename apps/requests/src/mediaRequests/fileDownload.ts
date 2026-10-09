@@ -19,7 +19,14 @@ const BEING_CHECKED = '.checking';
 
 type Fileable = Pick<
   RequestItemRecord,
-  'id' | 'season' | 'episode' | 'title' | 'airDate' | 'filePath' | 'releaseTitle'
+  | 'id'
+  | 'season'
+  | 'episode'
+  | 'title'
+  | 'airDate'
+  | 'filePath'
+  | 'releaseTitle'
+  | 'versionProfileId'
 >;
 
 type Filed = {

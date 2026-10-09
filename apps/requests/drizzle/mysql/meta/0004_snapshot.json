@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "ffd82294-67c3-40d3-b168-b17871f2cce4",
+  "id": "9c43674b-397c-4c48-ba58-59068cd8da2c",
   "prevId": "ffade876-7815-4a49-9a11-6e97f8b6da96",
   "tables": {
     "requests_arr_app": {
@@ -154,6 +154,13 @@
           "type": "varchar(700)",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "info_hash": {
+          "name": "info_hash",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         },
         "indexer_id": {
@@ -1155,14 +1162,6 @@
           "autoincrement": false,
           "default": false
         },
-        "position": {
-          "name": "position",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
         "role_ids": {
           "name": "role_ids",
           "type": "json",
@@ -1361,6 +1360,14 @@
           "notNull": true,
           "autoincrement": false,
           "default": false
+        },
+        "is_followed": {
+          "name": "is_followed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
         },
         "last_searched_at": {
           "name": "last_searched_at",

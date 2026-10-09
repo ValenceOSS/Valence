@@ -1,4 +1,5 @@
 import { SUBTITLE_DEFAULTS } from '@ValenceContracts/schemas/SubtitleSettings';
+import { DEFAULT_RELEASE_TYPES } from '@ValenceContracts/schemas/MediaRequest';
 import { PRE_TRANSCODING_DEFAULTS } from '@ValenceContracts/schemas/PreTranscoding';
 import { SEERR_DEFAULTS } from '@ValenceContracts/schemas/SeerrLink';
 import { EMAIL_DEFAULTS } from '@ValenceContracts/schemas/EmailSettings';
@@ -94,7 +95,8 @@ const createMemoryAuth = (
     jobsTimezone: '',
     certificationRegion: 'GB',
     fetchesCatalogueTrailers: false,
-    requestReleaseTypes: ['album'],
+    requestReleaseTypes: [...DEFAULT_RELEASE_TYPES],
+    controlsConnectedApps: false,
     fetchesMusicDetails: false,
     audioDbKey: '',
     omdbKey: '',

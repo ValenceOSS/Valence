@@ -1,5 +1,6 @@
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { randomUUID } from 'node:crypto';
+import { categoryKindOf } from '@ValenceContracts/functions/categoryKindOf';
 import { PROTOCOL_OF_CLIENT } from '@ValenceContracts/schemas/DownloadClient';
 import { ReleaseSendSchema } from '@ValenceContracts/schemas/DownloadQueue';
 import { DownloadClientFailure } from '@ValenceRequests/downloads/DownloadClientFailure';
@@ -177,6 +178,7 @@ const createDownloadQueue = ({
       title: record.title,
       indexerName: record.indexerName,
       state: record.state,
+      wasPaused: record.wasPaused,
       problem: record.problem,
       problemCode: record.problemCode,
       ...current,
@@ -297,6 +299,7 @@ const createDownloadQueue = ({
 
     await downloads.update(record.id, {
       ...next,
+      ...(next.state === 'paused' ? { wasPaused: true } : {}),
       problemCode: null,
       ...(next.state === 'done' && record.finishedAt === null ? { finishedAt: at } : {}),
       updatedAt: at,
@@ -389,7 +392,7 @@ const createDownloadQueue = ({
     adapter: DownloadClientAdapter,
     clientName: string,
   ): Promise<boolean> => {
-    if (item === null || !record.removesWhenDone || record.filedInto === null) {
+    if (item === null || !record.removesWhenDone || record.wasPaused || record.filedInto === null) {
       return false;
     }
 
@@ -591,7 +594,7 @@ const createDownloadQueue = ({
       try {
         remoteId = await clients
           .adapterOf(client)
-          .add(file, read.title, client.categories[read.libraryKind]);
+          .add(file, read.title, client.categories[categoryKindOf(read.libraryKind)]);
       } catch (error) {
         return error instanceof DownloadClientFailure
           ? { refused: error.said, problemCode: error.problemCode }
@@ -627,6 +630,7 @@ const createDownloadQueue = ({
           filingProblemCode: null,
           filingAttempts: 0,
           filesChecked: false,
+          wasPaused: false,
           ...seedingRuleFor(
             (await indexers.records()).find((one) => one.id === read.indexerId) ?? null,
             read,

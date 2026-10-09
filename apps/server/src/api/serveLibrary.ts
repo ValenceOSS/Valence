@@ -93,12 +93,14 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const {
+      kind: holds,
       defaultAudioLanguage,
       filesAtOnce,
       takesRequests,
       requestProfileId,
       requestPath,
       keepsShowsTogether,
+      higherProfileAsks,
       fulfilment,
     } = context.req.valid('json');
     const libraryId = context.req.valid('param').id;
@@ -117,6 +119,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const updated = await library.update(libraryId, {
+      ...(holds === undefined ? {} : { kind: holds }),
       defaultAudioLanguage,
       ...(filesAtOnce === undefined ? {} : { filesAtOnce }),
       ...(takesRequests === undefined ? {} : { takesRequests }),
@@ -125,6 +128,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
         ? {}
         : { requestPath: requestPath === '' ? null : requestPath }),
       ...(keepsShowsTogether === undefined ? {} : { keepsShowsTogether }),
+      ...(higherProfileAsks === undefined ? {} : { higherProfileAsks }),
       ...(fulfilment === undefined ? {} : { fulfilment }),
     });
 

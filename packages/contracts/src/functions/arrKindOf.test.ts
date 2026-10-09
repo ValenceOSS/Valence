@@ -8,7 +8,8 @@ describe('arrKindOf', () => {
     expect(arrKindOf('music')).toBe('lidarr');
   });
 
-  it('keeps books for Valence', () => {
+  it('keeps anime and books for Valence', () => {
+    expect(arrKindOf('anime')).toBeNull();
     expect(arrKindOf('books')).toBeNull();
   });
 });

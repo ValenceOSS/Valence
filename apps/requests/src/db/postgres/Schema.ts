@@ -23,8 +23,16 @@ import {
   RELEASE_SOURCES,
   RESOLUTIONS,
 } from '@ValenceContracts/schemas/ParsedRelease';
-import { PROFILE_KINDS, RELEASE_WAITS } from '@ValenceContracts/schemas/QualityProfile';
-import type { QualitySize } from '@ValenceContracts/schemas/QualityProfile';
+import {
+  PROFILE_KINDS,
+  RELEASE_WAITS,
+  VIDEO_QUALITY_IDS,
+} from '@ValenceContracts/schemas/QualityProfile';
+import type {
+  CustomFormat,
+  QualitySize,
+  VideoQualityId,
+} from '@ValenceContracts/schemas/QualityProfile';
 import type {
   MusicQuality,
   ReleaseSource,
@@ -35,13 +43,18 @@ import { QUEUED_DOWNLOAD_STATES } from '@ValenceContracts/schemas/DownloadQueue'
 import type { IndexerCapabilities, IndexerSettings } from '@ValenceContracts/schemas/Indexer';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import {
+  BOOK_FORMATS,
   MEDIA_REQUEST_KINDS,
   REQUEST_APPROVALS,
   REQUEST_ITEM_STATES,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type {
+  BookFormat,
+  Narration,
   ReleaseType,
   RequestCatalogue,
+  ProfileAsk,
+  Requester,
   SeasonFolder,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
@@ -175,6 +188,7 @@ const sentDownload = requestsSchema.table(
     filingAttempts: integer('filing_attempts').notNull().default(0),
     filesChecked: boolean('files_checked').notNull().default(false),
     removesWhenDone: boolean('removes_when_done').notNull().default(false),
+    wasPaused: boolean('was_paused').notNull().default(false),
     seedSeconds: integer('seed_seconds'),
     seedRatio: doublePrecision('seed_ratio'),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -198,6 +212,7 @@ const qualityProfile = requestsSchema.table('quality_profile', {
   kind: text('kind', { enum: PROFILE_KINDS }).notNull(),
   resolutions: jsonb('resolutions').$type<Resolution[]>().notNull().default([]),
   sources: jsonb('sources').$type<ReleaseSource[]>().notNull().default([]),
+  qualities: jsonb('qualities').$type<VideoQualityId[]>(),
   musicQualities: jsonb('music_qualities').$type<MusicQuality[]>().notNull().default([]),
   smallestMb: doublePrecision('smallest_mb'),
   largestMb: doublePrecision('largest_mb'),
@@ -205,10 +220,14 @@ const qualityProfile = requestsSchema.table('quality_profile', {
   preferredWords: jsonb('preferred_words').$type<string[]>().notNull().default([]),
   requiredWords: jsonb('required_words').$type<string[]>().notNull().default([]),
   bannedWords: jsonb('banned_words').$type<string[]>().notNull().default([]),
+  formats: jsonb('formats').$type<CustomFormat[]>().notNull().default([]),
+  minFormatScore: integer('min_format_score').notNull().default(0),
+  upgradeUntilFormatScore: integer('upgrade_until_format_score'),
   isUpgrading: boolean('is_upgrading').notNull().default(false),
   releaseWait: text('release_wait', { enum: RELEASE_WAITS }).notNull().default('digital'),
   upgradeUntilResolution: text('upgrade_until_resolution', { enum: RESOLUTIONS }),
   upgradeUntilSource: text('upgrade_until_source', { enum: RELEASE_SOURCES }),
+  cutoff: text('cutoff', { enum: VIDEO_QUALITY_IDS }),
   upgradeUntilMusicQuality: text('upgrade_until_music_quality', { enum: MUSIC_QUALITIES }),
   libraryIds: jsonb('library_ids').$type<string[]>().notNull().default([]),
   preferredLanguage: text('preferred_language'),
@@ -227,6 +246,7 @@ const mediaRequest = requestsSchema.table(
     kind: text('kind', { enum: MEDIA_REQUEST_KINDS }).notNull(),
     tmdbId: integer('tmdb_id'),
     tvdbId: integer('tvdb_id'),
+    imdbId: text('imdb_id'),
     musicBrainzId: text('music_brainz_id'),
     openLibraryId: integer('open_library_id'),
     title: text('title').notNull(),
@@ -246,8 +266,17 @@ const mediaRequest = requestsSchema.table(
     refusedBecause: jsonb('refused_because').$type<Said>(),
     requestedById: text('requested_by_id').notNull(),
     requestedByName: text('requested_by_name').notNull(),
+    alsoAskedBy: jsonb('also_asked_by').$type<Requester[]>().notNull().default([]),
+    profileAsk: jsonb('profile_ask').$type<ProfileAsk>(),
     seasons: jsonb('seasons').$type<number[]>(),
+    followsNewSeasons: boolean('follows_new_seasons').notNull().default(false),
+    followsAfter: integer('follows_after'),
     releaseTypes: jsonb('release_types').$type<ReleaseType[]>(),
+    upgradesToLossless: boolean('upgrades_to_lossless').notNull().default(false),
+    bookFormats: jsonb('book_formats').$type<BookFormat[]>(),
+    narrations: jsonb('narrations').$type<Narration[]>(),
+    narrationsWanted: jsonb('narrations_wanted').$type<string[]>(),
+    versions: jsonb('versions').$type<string[]>(),
     runtimeMinutes: integer('runtime_minutes'),
     releaseDates: jsonb('release_dates')
       .$type<RequestCatalogue['releaseDates']>()
@@ -282,6 +311,8 @@ const requestItem = requestsSchema.table(
     musicBrainzId: text('music_brainz_id'),
     season: integer('season'),
     episode: integer('episode'),
+    format: text('format', { enum: BOOK_FORMATS }),
+    versionProfileId: uuid('version_profile_id'),
     title: text('title').notNull(),
     airDate: text('air_date'),
     state: text('state', { enum: REQUEST_ITEM_STATES }).notNull().default('waiting'),
@@ -298,6 +329,12 @@ const requestItem = requestsSchema.table(
     downloadSeconds: doublePrecision('download_seconds'),
     attempts: integer('attempts').notNull().default(0),
     isPickedByHand: boolean('is_picked_by_hand').notNull().default(false),
+    isFollowed: boolean('is_followed').notNull().default(true),
+    trackCount: integer('track_count'),
+    filedTrackCount: integer('filed_track_count'),
+    heldQuality: text('held_quality').$type<MusicQuality>(),
+    narration: text('narration'),
+    filedMinutes: doublePrecision('filed_minutes'),
     lastSearchedAt: timestamp('last_searched_at', { withTimezone: true }),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -315,6 +352,7 @@ const blocklistedRelease = requestsSchema.table(
       .notNull()
       .references(() => mediaRequest.id, { onDelete: 'cascade' }),
     title: text('title').notNull(),
+    infoHash: text('info_hash'),
     indexerId: uuid('indexer_id'),
     reason: jsonb('reason').$type<Said>().notNull(),
     at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),

@@ -4,13 +4,17 @@ import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/Pane
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  ArrowDown as ArrowDownFilledIcon,
+  ArrowUp as ArrowUpFilledIcon,
   Bin as BinFilledIcon,
   GripVertical as GripVerticalIcon,
   MoreHorizontal as MoreHorizontalIcon,
   Pen as PenFilledIcon,
   Plus as PlusFilledIcon,
+  SearchList as SearchListFilledIcon,
 } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
+import { ReleaseSearchDialog } from '@ValenceScreens/components/AdminArea/components/ReleaseSearchDialog/ReleaseSearchDialog';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { DataTable } from '@ValenceUI/DataTable';
@@ -21,11 +25,14 @@ import { Icon } from '@ValenceUI/Icon';
 import { Spinner } from '@ValenceUI/Spinner';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
+import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
+import { isEveryLibraryHandedOff } from '@ValenceClient/requests/isEveryLibraryHandedOff';
 import { removeProfile, reorderProfiles } from '@ValenceClient/requests/fetchProfiles';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { ProfileEditor } from '@ValenceScreens/components/AdminArea/components/ProfileEditor/ProfileEditor';
 import { describeAskers } from './describeAskers';
 import { describeProfile } from './describeProfile';
+import { moveProfile } from './moveProfile';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { ProfileKind, QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import { say } from '@ValenceI18n/say';
@@ -58,14 +65,25 @@ const isProfileKind = (value: string): value is ProfileKind | 'all' =>
   KINDS.some((kind) => kind.id === value);
 
 /**
- * The Profiles page: every quality profile, what each takes and how far it upgrades, the libraries
- * it is for, and changing or removing it — a profile opening as a page of its own. Search can be run against any of them.
+ * The Profiles page: every quality profile, highest first, what each takes and how far it upgrades,
+ * the libraries it is for, and moving, changing or removing it — a profile opening as a page of its
+ * own. Search can be run against any of them. Profiles of a kind no library takes requests for say
+ * they aren't used.
  */
 const ProfilesPanel = () => {
+  const requestable = useRequestableKinds();
+  const isKnown = useQuery(requestsQueries.availability()).data !== undefined;
+  const isUnused = (kind: ProfileKind) =>
+    isKnown &&
+    (kind === 'video'
+      ? !requestable.has('film') && !requestable.has('series')
+      : !requestable.has('artist') && !requestable.has('album'));
+
   const cache = useQueryClient();
   const profiles = useQuery(requestsQueries.profiles());
   const libraries = useQuery(libraryQueries.all());
   const [editing, setEditing] = useState<QualityProfile | null>(null);
+  const [trying, setTrying] = useState<QualityProfile | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [shown, setShown] = useState<ProfileKind | 'all'>('all');
   const [removing, setRemoving] = useState<QualityProfile | null>(null);
@@ -95,7 +113,7 @@ const ProfilesPanel = () => {
       }),
     );
 
-    const refusal = await reorderProfiles(ids);
+    const { refusal } = await reorderProfiles(ids);
 
     tellOutcome(
       say('screens.adminArea.profilesPanel.profilesPutInOrder'),
@@ -107,6 +125,23 @@ const ProfilesPanel = () => {
   const reread = useCallback(
     () => cache.invalidateQueries({ queryKey: requestsQueries.profiles().queryKey }),
     [cache],
+  );
+
+  const move = useCallback(
+    (profile: QualityProfile, by: -1 | 1) => {
+      const ids = moveProfile(profiles.data ?? [], profile.id, by);
+
+      if (ids === null) {
+        return;
+      }
+
+      void reorderProfiles(ids)
+        .then(({ refusal }) => {
+          setProblem(refusal?.message ?? null);
+        })
+        .then(reread);
+    },
+    [profiles.data, reread],
   );
 
   const named = useMemo(
@@ -204,6 +239,39 @@ const ProfilesPanel = () => {
                         setEditing(row.original);
                       },
                     },
+                    ...(moveProfile(profiles.data ?? [], row.original.id, -1) === null
+                      ? []
+                      : [
+                          {
+                            id: 'up',
+                            label: say('common.moveUp'),
+                            icon: <Icon of={ArrowUpFilledIcon} size={15} />,
+                            onChoose: () => {
+                              move(row.original, -1);
+                            },
+                          },
+                        ]),
+                    ...(moveProfile(profiles.data ?? [], row.original.id, 1) === null
+                      ? []
+                      : [
+                          {
+                            id: 'down',
+                            label: say('common.moveDown'),
+                            icon: <Icon of={ArrowDownFilledIcon} size={15} />,
+                            onChoose: () => {
+                              move(row.original, 1);
+                            },
+                          },
+                        ]),
+                    {
+                      id: 'try',
+                      label: say('screens.adminArea.profilesPanel.tryIt'),
+                      detail: say('screens.adminArea.profilesPanel.searchesTheIndexersAndShows'),
+                      icon: <Icon of={SearchListFilledIcon} size={15} />,
+                      onChoose: () => {
+                        setTrying(row.original);
+                      },
+                    },
                   ],
                 },
                 {
@@ -225,7 +293,7 @@ const ProfilesPanel = () => {
         ),
       },
     ],
-    [named],
+    [named, profiles.data, move],
   );
 
   return (
@@ -263,6 +331,19 @@ const ProfilesPanel = () => {
           </>
         }
       >
+        <ReleaseSearchDialog
+          title={
+            trying === null
+              ? null
+              : say('screens.adminArea.profilesPanel.tryName', { name: trying.name })
+          }
+          detail={say('screens.adminArea.profilesPanel.searchesTheIndexersAndShows')}
+          profileId={trying?.id ?? null}
+          onClose={() => {
+            setTrying(null);
+          }}
+        />
+
         <ProfileEditor
           isOpen={isAdding || editing !== null}
           profile={editing}
@@ -326,6 +407,31 @@ const ProfilesPanel = () => {
         ) : (
           KINDS.map((kind) => (
             <TabPanel key={kind.id} value={kind.id}>
+              <p className="px-4 pt-3 text-sm text-text-muted">
+                {say('screens.adminArea.profilesPanel.highestFirst')}
+              </p>
+
+              {isEveryLibraryHandedOff(
+                libraries.data ?? [],
+                kind.id === 'video'
+                  ? ['movies', 'shows', 'anime']
+                  : kind.id === 'music'
+                    ? ['music']
+                    : ['movies', 'shows', 'anime', 'music'],
+              ) ? (
+                <p className="px-4 pt-3 text-sm text-text-muted">
+                  {say('screens.adminArea.profilesPanel.everyLibraryHandsOff')}
+                </p>
+              ) : null}
+
+              {kind.id !== 'all' && isUnused(kind.id) ? (
+                <p className="px-4 pt-3 text-sm text-text-muted">
+                  {kind.id === 'video'
+                    ? say('screens.adminArea.profilesPanel.noVideoLibraryTakesRequests')
+                    : say('screens.adminArea.profilesPanel.noMusicLibraryTakesRequests')}
+                </p>
+              ) : null}
+
               <DataTable
                 height="fills"
                 label={kind.label}

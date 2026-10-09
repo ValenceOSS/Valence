@@ -4,7 +4,7 @@ description: Add and manage libraries, name your files so they match, scan, uplo
 order: 2
 ---
 
-A library is a folder on the machine running Valence that holds one kind of media: films, shows, music or books. Valence reads what is in it, looks each thing up, and presents the result on the Home, Films, Shows, Music and Read pages. This page covers adding and managing libraries, how the scanner reads names, how to fix a wrong match, and how visibility and hiding work.
+A library is a folder on the machine running Valence that holds one kind of media: films, shows, anime, music or books. Valence reads what is in it, looks each thing up, and presents the result on the Home, Films, Shows, Music and Read pages. This page covers adding and managing libraries, how the scanner reads names, how to fix a wrong match, and how visibility and hiding work.
 
 Everything here happens in the admin area, under **Content** then **Libraries**, at `/admin/libraries`. You need the relevant permission for each action, listed in the table near the end of the page.
 
@@ -25,13 +25,15 @@ Everything here happens in the admin area, under **Content** then **Libraries**,
 | ------ | ---------- | ----------------------------------------------------------------------------------------------- |
 | Movies | Films      | One film per file or per folder.                                                                |
 | Shows  | Series     | Episodes, grouped into seasons and series.                                                      |
-| Anime  | Series     | The same as Shows, with the badge Anime.                                                        |
+| Anime  | Anime      | Japanese animation, kept apart from other series. Read and shown like Shows, under Shows.       |
 | Music  | Music      | Tracks, grouped into artists and albums.                                                        |
 | Books  | Books      | Comics and books, one shelf entry per book.                                                     |
 | Manga  | Books      | The same as Books, with the badge Manga.                                                        |
 | Custom | You choose | A type name of your own, such as Documentaries, that reads like one of the four built in kinds. |
 
-The type decides how files are read. The extra names (Anime, Manga, Custom) only change the label. Under the hood every library is one of `movies`, `shows`, `music` or `books`.
+The type decides how files are read. Manga and Custom only change the label. Under the hood every library is one of `movies`, `shows`, `anime`, `music` or `books`.
+
+Anime is a kind of its own, so it can be treated as anime: today it is read, matched and shown exactly like Shows, and appears under Shows on every app. Anime libraries don't hand requests to Sonarr. A Shows library added with the Anime type before anime was a kind of its own says so in its settings, where **Holds** turns it into an anime library, or back.
 
 ### Choosing the path
 
@@ -198,11 +200,13 @@ Deleting removes the library and everything Valence knows about its contents: wa
 
 | Setting                      | Default                              | What it does                                                                                                                                                                                                                 |
 | ---------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Holds                        | What it was added as                 | Shows and Anime libraries only: whether it holds series or anime. Turning a library into an anime one stops it handing requests to Sonarr.                                                                                   |
 | Force default audio track    | Off                                  | Makes previews and playback prefer this language when a file has a track in it. A file with no matching track keeps its own default. Changing it offers to regenerate previews, so the library is not left in two languages. |
 | Files at once                | However many the server allows       | How many of the library's files are rendered at the same time. The choices are the server default, one, two or four. A library on a network share wants one, because the files come down a single wire.                      |
 | Takes requests               | On                                   | Whether media that people request can be filed in this library.                                                                                                                                                              |
 | Quality profile for requests | Whichever profile names this library | Which quality profile releases for this library are judged by.                                                                                                                                                               |
 | Where requests are filed     | The library's own folder             | A folder of its own for fetched media, when you want it kept apart.                                                                                                                                                          |
+| Higher-quality requests      | Ask me                               | What happens when somebody asks for a title already requested, at a higher quality profile: ask you on the title's page, switch the request to it, keep the one it has, or, for films, keep both versions.                   |
 
 Below the settings, **Excluded from this library** lists the files and folders its scans pass over, as described in [Leaving files and folders out](#leaving-files-and-folders-out).
 

@@ -691,7 +691,7 @@ describe('discordEmbedFor, a request as Seerr draws one', () => {
     expect(drawn.description).toBe(aRequest.overview);
     expect(drawn.thumbnail).toEqual({ url: aRequest.posterUrl });
     expect(valueOf(drawn, 'Requested by')).toBe('Jess');
-    expect(valueOf(drawn, 'Status')).toBe('Available');
+    expect(valueOf(drawn, 'Status')).toBe('In the library');
   });
 
   it('names the seasons of a series, and the artist of an album', () => {

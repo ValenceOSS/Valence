@@ -12,14 +12,14 @@ Requesting is an optional part of Valence. It needs the requests service, indexe
 
 Open **Requests** from the main navigation. The page has six tabs.
 
-| Tab         | What it shows                                                                      |
-| ----------- | ---------------------------------------------------------------------------------- |
-| Discover    | Shelves of what is trending, popular and coming soon, plus studios you can browse. |
-| Movies      | The full list of popular films, going on as far as you scroll.                     |
-| Shows       | The same for series.                                                               |
-| Music       | Artists and albums to ask for.                                                     |
-| Books       | Books to ask for.                                                                  |
-| My requests | Everything you have asked for, and where each has got to.                          |
+| Tab         | What it shows                                                                                                                                                                                  |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Discover    | The films and series trending this week at the top, each with its title logo, to request or read about, then shelves of what is trending, popular and coming soon, and studios you can browse. |
+| Movies      | The full list of popular films, going on as far as you scroll.                                                                                                                                 |
+| Shows       | The same for series.                                                                                                                                                                           |
+| Music       | Artists and albums to ask for.                                                                                                                                                                 |
+| Books       | Books to ask for.                                                                                                                                                                              |
+| My requests | Everything you have asked for, and where each has got to.                                                                                                                                      |
 
 Which tab is open is kept in the address, so you can link straight to any of them.
 
@@ -28,18 +28,26 @@ Which tab is open is kept in the address, so you can link straight to any of the
 1. Find a title on a shelf, or browse Movies, Shows, Music or Books.
 2. Open it. The dialog shows the poster, facts, cast and, for an artist, their albums.
 3. Choose **Request**. For an artist the button reads **Request this artist**.
-4. For a series you can choose which seasons you want; leaving it alone asks for every season. For an artist you can choose which kinds of release to watch (albums, EPs, singles, live records and compilations).
+4. For a series you can choose which seasons you want; leaving it alone asks for every season. Specials have their own switch and are fetched only when it's on. **Get new seasons as they come** fetches each season that airs later too, and is on unless you turn it off. For an artist you can choose which kinds of release to watch (albums, mixtapes, EPs, singles, live records and compilations).
 
-A title that is already in your library shows an **In your library** badge and an **Open** button instead. A title someone has already asked for shows where it stands (**Requested**, **Waiting for approval**, **Downloading**, **Downloading**, **Declined** or **Stalled**), so nobody asks twice.
+A series someone has already asked for lists its seasons with the ones already asked for switched on. Switch on more and choose **Add seasons** to add them to the same request.
+
+A title that is already in your library shows an **In your library** badge and an **Open** button instead. A title someone has already asked for shows where it stands (**Waiting for approval**, **Requested**, **Missing**, **Downloading**, **Importing**, **Declined** or **Failed**) and who asked for it. Choose **I want this too** to join their request: it shows in your own requests, you're told when it arrives, and you can add seasons to it. Joining doesn't approve it; one approval covers everyone who asked.
 
 You need `requests.ask` to request films, series and books, and `requests.askMusic` to request artists and albums. Both are part of the default Member role.
+
+### Searching
+
+Search, on the web, phone and TV, finds only what's in your libraries. Where the catalogues have something by the same name that the server doesn't, the results end with a card saying how many there are, with a button that shows them. On the web it opens Discover's own search, which has its own field at the top of Discover and finds films, shows, artists and books; the phone and TV show the films and shows in place, with a button back to the library's results.
+
+A show in your library that's missing episodes that have already aired has **Request more…** on its page. It opens the show's seasons to ask for, with the ones you have in full locked, and fetches only what's missing.
 
 ### Approval
 
 What happens next depends on who asked.
 
 - If you hold `requests.autoApprove`, your request is approved at once and the search starts immediately.
-- Otherwise it waits with the status **Awaiting approval** until somebody with `requests.approve` decides.
+- Otherwise it waits with the status **Waiting for approval** until somebody with `requests.approve` decides.
 
 Choosing a release by hand is a separate ability: only accounts with `requests.manage` can pick a specific release when asking.
 
@@ -47,11 +55,27 @@ Choosing a release by hand is a separate ability: only accounts with `requests.m
 
 **My requests** lists each request with its cover, a badge and a line of detail, plus a progress bar for series and artists showing how much has arrived. When a request is available, choose it to open the film, series, album or book in the library.
 
-You can **Cancel** a request until its files have been filed. A cancelled request is not fetched, and anything it had started downloading is deleted. You can ask for the same thing again whenever you like.
+You can **Cancel** a request until its files have been filed. If others asked for it too, cancelling only takes you off it, and it stays requested for them. Otherwise it isn't fetched, and anything it had started downloading is deleted. You can ask for the same thing again whenever you like.
+
+Everyone who asked for a request sees it in **My requests** and gets the notification when it arrives. A title's page in Requests › Catalogue names everyone who asked.
 
 ### Books
 
-Books can be requested, but Valence does not search for them. A requested book shows **Waiting to be added**: an administrator adds it to the library by hand, and the request completes once it appears.
+A book is requested as an **Ebook**, an **Audiobook**, or both. Ebook is ticked to start with. Each format is searched for, downloaded and shown on its own, so a request can have the ebook while the audiobook is still being looked for. A request for a book someone else asked for adds the formats you tick, and **Edit** on the title's page in the Catalogue changes them.
+
+Each format is searched for among the indexers' books or audiobooks, and releases are ranked by format:
+
+- **Ebooks:** EPUB first, then AZW3, then MOBI, with retail copies above scans.
+- **Audiobooks:** M4B first, then MP3. An abridged audiobook is refused, since only the whole book is wanted.
+
+A release counts as the book when its name contains the book's title. For a title of one or two words, it must name the author too. Picking a release by hand in **Interactive search** still works for any of them.
+
+Audiobooks also have narrations. Valence looks the book up on Audible's catalogue, and on Audnexus for each narration's narrators, full length and series:
+
+- **Which narration.** Where there's only one, that's the one. Where there are several, the one whoever reads the series' other audiobooks in your library reads is chosen. Narrators are read from an audiobook's composer tag, or from a `{Narrator}` at the end of its folder's name. Otherwise the book's page in the Catalogue asks **Which narration of…?**: pick one, or **All of them** to fetch each as an audiobook of its own. The audiobook waits until then, while the ebook carries on.
+- **Matching.** A release naming a narrator's surname is held for that narration. One naming no narrator is taken for one narration at most.
+- **Length.** Before an audiobook is filed, its download's listening time is measured against the narration's full length. One under four-fifths of it is refused as abridged, and blocklisted with both lengths ("It's abridged: 3 h 50 min against 12 h 12 min"). Where Audible and Audnexus don't know the book, no length is checked.
+- **Metadata.** A book filed on its own gets a `metadata.opf` beside it (title, author, narrators, year, blurb, series and Open Library id) and a `cover.jpg` from Open Library where the download brought no cover. Neither replaces a file already there, and your own MOBI and other files are never replaced.
 
 ### Notifications
 
@@ -59,84 +83,106 @@ When something you asked for lands in the library, you get an in-app notificatio
 
 ## Statuses
 
-A request's badge tells you where it stands. The same labels appear in the admin list and can be used to filter it.
+A request's badge tells you where it stands. The web, phone and TV apps, the admin area, the release calendar and webhooks all use the same words, and the requests list can be filtered by them.
 
-| Badge               | Meaning                                                                                       |
-| ------------------- | --------------------------------------------------------------------------------------------- |
-| Awaiting approval   | Nobody has decided yet. Nothing is fetched.                                                   |
-| Refused             | An administrator declined it, with a reason if they gave one. It can still be approved later. |
-| Looking it up       | For a series or artist, Valence is working out what there is to fetch.                        |
-| Queued to search    | It is out, and will be searched for in a moment.                                              |
-| Not out yet         | Held until the release date (or the next episode or album) the catalogue gives.               |
-| Wanted              | Searched for and not found. It is searched again every few hours.                             |
-| Searching           | An indexer search is running.                                                                 |
-| Release chosen      | A release has been picked and is about to be sent.                                            |
-| Downloading         | The download client is fetching it.                                                           |
-| Filing              | The download finished and is being placed into the library.                                   |
-| Filed               | In its library, waiting for the library to find it.                                           |
-| Available           | It is in the library.                                                                         |
-| Failed              | Something went wrong, with the reason shown.                                                  |
-| Waiting to be added | A book, which is added by hand.                                                               |
+| Badge                | Meaning                                                                                                                                 |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Waiting for approval | Nobody has decided yet. Nothing is fetched.                                                                                             |
+| Declined             | An administrator declined it, with a reason if they gave one. It can still be approved later.                                           |
+| Requested            | Approved, and nothing searched for yet. The requests list says which of the next three it is.                                           |
+| Looking it up        | For a series or artist, Valence is working out what there is to fetch.                                                                  |
+| Queued to search     | It is out, and will be searched for in a moment.                                                                                        |
+| Not out yet          | Held until the release date (or the next episode or album) the catalogue gives.                                                         |
+| Missing              | Searched for and not found. It is searched again every few hours.                                                                       |
+| Searching            | An indexer search is running.                                                                                                           |
+| Downloading          | The download client is fetching it, or is about to. Paused, Stalled or Failed beside the progress says the download client has stopped. |
+| Importing            | The download finished and is being placed into the library, or is waiting for the library to find it.                                   |
+| In the library       | It is in the library.                                                                                                                   |
+| Failed               | Something went wrong, with the reason shown.                                                                                            |
 
 ## The admin side
 
 Administrators manage requesting under the **Requests** heading of the admin area.
 
-| Panel     | Purpose                                                                      |
-| --------- | ---------------------------------------------------------------------------- |
-| Overview  | Whether the requests service answers, its version, the VPN and the indexers. |
-| Requested | Every request, with approve, refuse and troubleshooting actions.             |
-| Indexers  | The sites Valence searches for releases.                                     |
-| Search    | A manual search across every enabled indexer.                                |
-| Profiles  | Quality profiles that judge releases.                                        |
-| Downloads | The queue of downloads, and the download clients.                            |
+| Panel     | Purpose                                                                       |
+| --------- | ----------------------------------------------------------------------------- |
+| Overview  | Whether the requests service answers, its version, the VPN and the indexers.  |
+| Catalogue | Every title the libraries hold and every title asked for, with where each is. |
+| Indexers  | The sites Valence searches for releases.                                      |
+| Profiles  | Quality profiles that judge releases.                                         |
+| Downloads | The queue of downloads, and the download clients.                             |
 
 ### Overview
 
 The Overview panel checks that the requests service is answering, shows which version is running, tells you whether the VPN the downloads travel through is up, and lists how many indexers are switched on and which are failing. **Check now** asks again rather than waiting for the next scheduled check, which happens every five minutes by default (see [Jobs and logs](/use/jobs-and-logs)).
 
-### Approving and refusing
+### The Catalogue
 
-Open **Requested** to see everything asked for, filtered by kind and by where it stands, or searched by title or by who asked.
+The **Catalogue** lists every title the libraries hold and every title asked for, one poster each, with a tab for each kind of library the server has: Films, Shows, Music and Books. A bar along the foot of each poster says where the title stands, filled to how much of it is in the library, and hovering it says so in words.
 
-- **Approve** opens a dialog where you may change the **Quality** profile the release is judged by, and the **Library** it is filed into, before the search begins.
-- **Decline** takes an optional reason, shown to whoever asked. Nothing is fetched, and the request can be approved later.
-- Tick several requests waiting on approval to approve or refuse them together. A reason on a bulk refusal is shown to everybody who asked for one of them.
+The tiles above the posters count the titles at each status and filter the grid to one of them:
 
-Approving and refusing need `requests.approve`. Seeing everybody's requests, and how their downloads are going, needs `requests.viewAll` (or approve or manage), which the Member role has. Without one of those, a person sees only their own. Anybody can cancel only their own requests.
+| Status         | Meaning                                                                  |
+| -------------- | ------------------------------------------------------------------------ |
+| In the library | Everything it follows is here.                                           |
+| Downloading    | Something of it is on its way.                                           |
+| Missing        | Something it follows is out but not here, or nothing of it is here yet.  |
+| To approve     | Someone asked for it, and it waits for approval.                         |
+| Failed         | Something of it failed, with the reason on its page.                     |
+| Not followed   | It's in the library, but nobody asked for it, so nothing new is fetched. |
 
-### Working on a single request
+Search by title, narrow a tab to one library where there's more than one of that kind, narrow Music to artists or albums and Books to ebooks or audiobooks, sort by when a title was added or by name, and choose how big the posters are. **Add a title** asks for something from the catalogues; for something no catalogue knows, **Search the indexers instead** searches every indexer by hand and files what you pick into a library. **Search all missing** searches again, now, for everything still missing.
 
-Each row has an actions menu.
+**Select several** puts a box on each title waiting for approval, to approve or decline several at once. A reason given when declining several is shown to everybody who asked for one of them.
 
-| Action               | What it does                                                                                                                        |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Open                 | Opens the finished item in the library.                                                                                             |
-| See what it has done | Opens the request's history.                                                                                                        |
-| Search again now     | Searches for a request that is wanted, without waiting for the next round. Not available for books or for requests already in hand. |
-| Mark as added        | Tells Valence the item is in the library, for a request you satisfied yourself.                                                     |
-| Pick a release       | Opens the releases tab so you can choose a specific release by hand.                                                                |
-| Pick by hand only    | Stops Valence choosing for this request. It is then only followed and filed once you pick a release.                                |
-| Forget               | Removes the request. Nothing more is fetched, and whatever it already brought stays in the library.                                 |
+Approving and declining need `requests.approve`. Seeing everybody's requests, and how their downloads are going, needs `requests.viewAll` (or approve or manage), which the Member role has. Without one of those, a person sees only their own. Anybody can cancel only their own requests.
 
-The request detail dialog holds four tabs:
+### A title's page
 
-- **Progress** shows the current downloads with pause and resume.
-- **Releases** lists every release the indexers offered and how each was judged.
-- **History** is the request's log, for finding out why something happened.
-- **Blocklist** is the **blocklist**: releases that failed for this request and will not be tried again. Remove an entry to allow it.
+Open a poster for the title's own page. It shows the title, where it stands, who asked and when, and what can be done:
+
+- **Approve** and **Decline…**, while it waits for approval. Declining takes an optional note, shown to whoever asked.
+- **Search missing** searches now for whatever of it is missing. For a title whose library hands requests to Radarr, Sonarr or Lidarr, it asks the app to search again, and the page links to the title in the app. See [Handing a library to an app](/install/requesting#handing-a-library-to-an-app).
+- **Interactive search** lists every release the indexers have for it, judged by its quality profile and best first, with refused ones and why. Picking one fetches it at once: anything already downloading for the same episodes is stopped and blocked, so it isn't picked again. For a title handed to an app, it's offered only with [Control connected apps from Valence](/install/requesting#controlling-connected-apps-from-valence) on, and lists and sends releases through the app. For a film already in the library, each release offers **Replace it**, which fetches it in place of the copy there, or **Download both**, which keeps it beside that copy as a second version, under the next quality profile in your order that takes it.
+- The **…** menu has **Edit** (quality profile, library and seasons), **Fetch only releases I pick** (or **Search for it automatically**), **Mark as in the library**, for something added by hand, and **Remove…**. Removing stops its downloads, and can also delete the files it added to the library. Your own files are never touched.
+
+**Progress** shows a bar of everything the title waits for, coloured by where each part stands, and one row for each download, season packs and single episodes alike. The cross on a row stops that download, then finds a different release, opens interactive search to pick one yourself, or stops getting what it was for. Deleting what it downloaded so far is a choice.
+
+A show's **Seasons** each have a bar of their episodes, a count of how many are here and a switch to follow it. Open a season for its episodes: when each aired, where it stands, the reason on hover where something went wrong, and its file. An artist's page lists its albums the same way. Following a season of a show nobody asked for, or pressing **Follow** on any title nobody asked for, starts fetching it.
+
+**Details** and **On disk** say its quality profile, library and folder, and the files the library holds of it. **Activity** is everything its request has done, newest first, and **Never again** lists the releases it won't try again. Remove an entry to let one be tried again.
 
 ### Refetch media
 
-Anything still wanted is searched for again by itself every few hours, and again shortly after the service starts, which also catches things that came out while it was down. **Refetch media** on the Requested panel runs that search now. The service also reads the newest releases on every indexer about every quarter of an hour, so a release appearing on an indexer can be picked up without waiting for the full search.
+An indexer that can search by catalogue id is asked by the title's TVDB, IMDb or TMDB id first, so a show that goes by another name there, such as "The Office US", is still found; where that finds nothing it's asked by the title. The same release from more than one indexer is kept once, from the indexer with the better priority. A release no download client can take, such as a usenet one with only a torrent client on, is refused rather than tried on every search.
+
+Anything still wanted is searched for again by itself every few hours, and again shortly after the service starts, which also catches things that came out while it was down. **Search all missing** in the Catalogue runs that search now. The service also reads the newest releases on every indexer about every quarter of an hour, so a release appearing on an indexer can be picked up without waiting for the full search.
 
 If a download fails, or runs into trouble that the **Rules** tab of the **Downloads** panel gives up on, Valence removes it, blocklists that release for that request and looks for the next best at once. If filing fails, it tries a few times before marking the item as **Failed** for you to look at.
 
 ### Releases, quality profiles and libraries
 
-A **quality profile** decides which releases are acceptable: which resolutions and sources, how big they should be, and when a film counts as released. Profiles are managed on the **Profiles** panel and need `requests.manage`. Each library says whether it **Accept requests**, which profile its requests are judged by (by default, whichever profile names that library) and where requests are filed (by default, the library's own folder). See [Libraries](/use/libraries).
+A **quality profile** decides which releases are acceptable: which qualities, such as WEB-DL 1080p or Blu-ray 720p, in what order, how big they should be, and when a film counts as released. Profiles are managed on the **Profiles** panel and need `requests.manage`. Each library says whether it **Accept requests**, which profile its requests are judged by (by default, whichever profile names that library) and where requests are filed (by default, the library's own folder). See [Libraries](/use/libraries).
 
-For music requests, the **Settings** panel has an option for what a request for an artist watches by default: which of an artist's records are fetched when the person asking did not say. It defaults to albums.
+The **Profiles** panel lists profiles highest first. **Move up** and **Move down** in a profile's **…** menu change the order, which every list of profiles follows, including the quality picker people see when they request something. A new profile goes to the bottom. The order is what makes one profile higher than another, not its resolution: a "1080p Remux" can sit above a plain "2160p WEB".
+
+When somebody asks for a title that's already requested, at a different profile:
+
+- At the same profile, or a lower one, they just join the request. One person's ask never lowers another's.
+- At a higher one, the library's **Higher-quality requests** setting decides. **Ask me**, the default, puts a notice on the title's page in the Catalogue ("Priya asked for the UHD 4K profile. It's being fetched with HD 1080p."), with **Switch to UHD 4K** and **Keep HD 1080p**, and for a film **Get both**. **Switch to the higher profile** moves the request up at once, and **Keep the profile asked first** leaves it as it is. For a film library there's also **Keep both versions**, which does what Get both does without asking.
+
+Getting both keeps the film in two versions. Each is searched for, downloaded and upgraded within its own profile, and filed beside the other, named the way Jellyfin names a version, for example `Film (2021) - [2160p][Bluray].mkv`, so Valence and Jellyfin both show them as versions of one film. The request counts as in the library once its first version is. Whoever asked for the second version is told again when it arrives ("Film is now also in UHD 4K").
+
+Whoever asked higher sees on the title's page what became of it. If the request kept the lower profile, they're told when it arrives: "The UHD 4K version you asked for wasn't added." It's never put as a refusal, because they still get the title.
+
+For music requests, the **Settings** panel has an option for what a request for an artist watches by default: which of an artist's records are fetched when the person asking did not say. It defaults to albums, mixtapes and EPs. Mixtapes are the records MusicBrainz lists as mixtapes or street albums, which for some artists are among their best-known.
+
+How music requests treat what they fetch:
+
+- **Editions.** An album counts as complete when it has as many tracks as its longest official edition on MusicBrainz. An album filed with fewer says so on the title's page ("12 of 14 tracks"), the release it came from is blocklisted for missing tracks, and a complete copy is looked for.
+- **Singles.** When an artist's request watches singles, a single whose every track is on one of their albums, EPs or mixtapes is skipped.
+- **Collaborations.** An album credited to the artist with someone else, such as "One & Another", is filed under the artist asked for. The library lists it under that artist and credits the other on its tracks, so it shows on both artists' pages.
+- **Lossless.** **Upgrade lossy albums to lossless**, in a music request's **Edit** or approval dialog, makes albums you already have as MP3 or AAC wanted again, at a better quality than your copy. The lossless copy is filed beside yours, in a folder ending in "[Lossless]", and yours is never deleted. It's off unless you turn it on.
 
 ### Indexers
 
@@ -144,10 +190,11 @@ An indexer is a site Valence can search for releases. The **Indexers** panel sho
 
 - Add one from the catalogue of supported sites, or add a Torznab or Newznab indexer directly.
 - **Test** checks a kept indexer and reads what it can search again. You can also try an indexer before keeping it.
+- **Test search** searches that indexer alone, to see what it answers and how long it takes.
 - **Test all**, in the panel's corner, tests every indexer that is on, and every one Valence turned off for failing, then says which did not answer and why. It leaves alone the ones you switched off.
 - **Disable** and **Enable** take an indexer out of and back into rotation. **Remove** forgets it and its key.
 
-The **Search** panel searches every enabled indexer at once, by title, mode (anything, films, series, music, books), season and episode. From a result you can send it to a download client, copy the magnet link or save the torrent or NZB file.
+Searching the indexers by hand, by title, mode (anything, films, series, music, books), season and episode, opens from **Search the indexers instead** in **Add a title**, from **Test search** on an indexer, and from **Try it** on a quality profile, which ranks what's found by that profile. From a result you can send it to a download client, copy the magnet link or save the torrent or NZB file.
 
 ![The Indexers panel listing indexers with priority, searches and state badges.](/screenshots/admin-indexers.png)
 

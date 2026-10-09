@@ -5,6 +5,7 @@ type BlockedReleaseRecord = {
   id: string;
   requestId: string;
   title: string;
+  infoHash: string | null;
   indexerId: string | null;
   reason: Said;
   at: string;

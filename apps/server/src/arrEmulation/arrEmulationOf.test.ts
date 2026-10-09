@@ -31,6 +31,7 @@ const FILMS: Library = {
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 };
 
 const ARRIVAL: RequestCatalogue = {
@@ -53,8 +54,7 @@ const REMUX: QualityProfile = {
   id: '7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d',
   name: 'Remux',
   kind: 'video',
-  resolutions: [],
-  sources: [],
+  qualities: [],
   musicQualities: [],
   smallestMb: null,
   largestMb: null,
@@ -62,10 +62,12 @@ const REMUX: QualityProfile = {
   preferredWords: [],
   requiredWords: [],
   bannedWords: [],
+  formats: [],
+  minFormatScore: 0,
+  upgradeUntilFormatScore: null,
   isUpgrading: false,
   releaseWait: 'digital',
-  upgradeUntilResolution: null,
-  upgradeUntilSource: null,
+  cutoff: null,
   upgradeUntilMusicQuality: null,
   libraryIds: [],
   preferredLanguage: null,

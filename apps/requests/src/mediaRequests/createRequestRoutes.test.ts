@@ -1,13 +1,18 @@
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it, vi } from 'vitest';
-import { MediaRequestAddedSchema } from '@ValenceContracts/schemas/MediaRequest';
+import {
+  MediaRequestAddedSchema,
+  MediaRequestSchema,
+} from '@ValenceContracts/schemas/MediaRequest';
 import { createMemoryRecordStore } from '@ValenceRequests/stores/createMemoryRecordStore';
 import { aRelease } from '@ValenceRequests/testing/aRelease';
 import { createRequestRoutes } from './createRequestRoutes';
 import { createRequestService } from './createRequestService';
 import { createMemoryRequestLogStore } from './createMemoryRequestLogStore';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
+import type { HandedTo } from '@ValenceContracts/schemas/ArrApp';
+import type { Release, ReleaseSearchOutcome } from '@ValenceContracts/schemas/Indexer';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
 
@@ -21,10 +26,20 @@ const DUNE = {
   catalogue: { title: 'Dune', year: 2021 },
 };
 
+type RouteHandOff = {
+  searchNow: (id: string) => Promise<'searched' | 'failed' | 'notApproved' | 'notHandedOff'>;
+  handedTo: (id: string) => Promise<HandedTo | null>;
+  releasesFor: (id: string) => Promise<ReleaseSearchOutcome | null>;
+  pick: (id: string, release: Release) => Promise<Said | null>;
+};
+
 /**
  * The routes over no requests to begin with, and a worker that answers as told.
  */
-const theRoutes = (picked: MediaRequest | { refused: Said } | null = null) => {
+const theRoutes = (
+  picked: MediaRequest | { refused: Said } | null = null,
+  handOff: Partial<RouteHandOff> = {},
+) => {
   const worker = {
     searchMissing: vi.fn(() =>
       Promise.resolve({ searched: 2, startedAt: '2026-09-19T00:00:00.000Z' }),
@@ -39,12 +54,18 @@ const theRoutes = (picked: MediaRequest | { refused: Said } | null = null) => {
       Promise.resolve({ releases: [], indexers: [], judgements: [], pickedId: null }),
     ),
     dropDownloads: vi.fn(() => Promise.resolve(1)),
+    unfinishedDownloadsOf: vi.fn(() => Promise.resolve(['d1'])),
+    stopDownload: vi.fn((id: string): Promise<MediaRequest | null> =>
+      Promise.resolve(id === 'missing' ? null : null),
+    ),
+    deleteFiled: vi.fn(() => Promise.resolve(['/media/Films/Dune (2021)'])),
     blockedFor: vi.fn((id: string) =>
       Promise.resolve([
         {
           id: '0b1d2c3e-4f56-4a78-9b01-23456789abcd',
           requestId: id,
           title: 'Dune.2021.2160p',
+          infoHash: null,
           indexerId: null,
           reason: sayVerbatim('It stalled'),
           at: '2026-09-19T00:00:00.000Z',
@@ -61,6 +82,13 @@ const theRoutes = (picked: MediaRequest | { refused: Said } | null = null) => {
       items: createMemoryRecordStore<RequestItemRecord>(),
     }),
     worker,
+    handOff: {
+      searchNow: () => Promise.resolve('notHandedOff' as const),
+      handedTo: () => Promise.resolve(null),
+      releasesFor: () => Promise.resolve(null),
+      pick: () => Promise.resolve(sayVerbatim('Not handed off')),
+      ...handOff,
+    },
   });
 
   const ask = (path: string, method = 'GET', body?: object) =>
@@ -87,6 +115,128 @@ describe('createRequestRoutes', () => {
     expect((await ask('/requests', 'POST', DUNE)).status).toBe(200);
     expect(await (await ask('/requests')).json()).toHaveLength(1);
     expect((await ask('/requests', 'POST', { kind: 'film' })).status).toBe(400);
+  });
+
+  it('adds somebody else who wants a request, and takes them off again', async () => {
+    const { ask } = theRoutes();
+    const id = await madeDune(ask);
+
+    const joined = await ask(`/requests/${id}/askers`, 'POST', { id: 'another', name: 'Another' });
+
+    expect(joined.status).toBe(200);
+    expect(MediaRequestSchema.parse(await joined.json()).alsoAskedBy).toEqual([
+      { id: 'another', name: 'Another' },
+    ]);
+    expect((await ask(`/requests/${id}/askers`, 'POST', { name: 'Nobody' })).status).toBe(400);
+    expect((await ask('/requests/missing/askers', 'POST', { id: 'a', name: 'A' })).status).toBe(
+      404,
+    );
+
+    const left = await ask(`/requests/${id}/askers/someone`, 'DELETE');
+
+    expect(MediaRequestSchema.parse(await left.json()).requestedBy.id).toBe('another');
+    expect((await ask(`/requests/${id}/askers/another`, 'DELETE')).status).toBe(404);
+  });
+
+  it('refuses to settle a higher-quality ask that is not there, or a choice that is not one', async () => {
+    const { ask } = theRoutes();
+    const id = await madeDune(ask);
+
+    expect((await ask(`/requests/${id}/profile-ask`, 'POST', { choice: 'keep' })).status).toBe(404);
+    expect((await ask(`/requests/${id}/profile-ask`, 'POST', { choice: 'never' })).status).toBe(
+      400,
+    );
+  });
+
+  it('searches a handed-off request in its app, and says which app has it', async () => {
+    const searchNow = vi.fn((): Promise<'searched' | 'failed' | 'notApproved' | 'notHandedOff'> =>
+      Promise.resolve('searched'),
+    );
+    const handedTo = vi.fn((): Promise<HandedTo | null> =>
+      Promise.resolve({
+        appId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+        appName: 'Radarr',
+        appKind: 'radarr',
+        link: 'http://radarr.local/movie/438631',
+      }),
+    );
+    const { ask } = theRoutes(null, { searchNow, handedTo });
+    const id = await madeDune(ask);
+
+    expect((await ask(`/requests/${id}/retry`, 'POST')).status).toBe(200);
+    expect(searchNow).toHaveBeenCalledWith(id);
+
+    searchNow.mockResolvedValue('failed');
+
+    expect((await ask(`/requests/${id}/retry`, 'POST')).status).toBe(409);
+
+    searchNow.mockResolvedValue('notApproved');
+
+    expect(await (await ask(`/requests/${id}/retry`, 'POST')).json()).toMatchObject({
+      code: 'error.requests.itIsNotApprovedSoNothingIsSearched',
+    });
+    expect(await (await ask(`/requests/${id}/handed-to`)).json()).toMatchObject({
+      appName: 'Radarr',
+    });
+
+    handedTo.mockResolvedValue(null);
+
+    expect((await ask(`/requests/${id}/handed-to`)).status).toBe(404);
+  });
+
+  it('lists a handed-off request’s releases from its app, and sends the one picked there', async () => {
+    const releasesFor = vi.fn((): Promise<ReleaseSearchOutcome | null> =>
+      Promise.resolve({ releases: [], indexers: [], judgements: [], pickedId: null }),
+    );
+    const pick = vi.fn((): Promise<Said | null> => Promise.resolve(null));
+    const { ask } = theRoutes(null, { releasesFor, pick });
+    const id = await madeDune(ask);
+    const release = aRelease('Dune.2021.1080p');
+
+    expect((await ask(`/requests/${id}/hand-off/releases`)).status).toBe(200);
+    expect(releasesFor).toHaveBeenCalledWith(id);
+    expect(
+      MediaRequestSchema.parse(
+        await (await ask(`/requests/${id}/hand-off/pick`, 'POST', { release })).json(),
+      ).id,
+    ).toBe(id);
+    expect(pick).toHaveBeenCalledWith(id, release);
+
+    pick.mockResolvedValue(sayVerbatim('Radarr said no'));
+    releasesFor.mockResolvedValue(null);
+
+    expect((await ask(`/requests/${id}/hand-off/pick`, 'POST', { release })).status).toBe(400);
+    expect((await ask(`/requests/${id}/hand-off/pick`, 'POST', {})).status).toBe(400);
+    expect((await ask(`/requests/${id}/hand-off/releases`)).status).toBe(404);
+  });
+
+  it('takes which narration of an audiobook to fetch, refusing a choice of none', async () => {
+    const { ask } = theRoutes();
+    const id = await madeDune(ask);
+
+    expect((await ask(`/requests/${id}/narration`, 'POST', { asins: [] })).status).toBe(400);
+    expect((await ask(`/requests/${id}/narration`, 'POST', { asins: ['A'] })).status).toBe(404);
+  });
+
+  it('keeps only a film in two versions', async () => {
+    const { ask } = theRoutes();
+    const book = MediaRequestAddedSchema.parse(
+      await (
+        await ask('/requests', 'POST', {
+          kind: 'book',
+          openLibraryId: 1,
+          libraryId: 'books',
+          libraryPath: '/media/Books',
+          requestedBy: { id: 'someone', name: 'Someone' },
+          isApproved: false,
+          catalogue: { title: 'A Book', year: null },
+        })
+      ).json(),
+    ).request.id;
+
+    expect((await ask(`/requests/${book}/profile-ask`, 'POST', { choice: 'both' })).status).toBe(
+      400,
+    );
   });
 
   it('approves, refuses, retries and marks a request arrived', async () => {
@@ -180,9 +330,70 @@ describe('createRequestRoutes', () => {
     const id = await madeDune(ask);
 
     expect((await ask(`/requests/${id}?deleteDownloads=true`, 'DELETE')).status).toBe(204);
-    expect(worker.dropDownloads).toHaveBeenCalledWith(id);
+    expect(worker.unfinishedDownloadsOf).toHaveBeenCalledWith(id);
+    expect(worker.dropDownloads).toHaveBeenCalledWith(['d1']);
     expect((await ask('/requests/missing?deleteDownloads=true', 'DELETE')).status).toBe(404);
     expect(worker.dropDownloads).toHaveBeenCalledTimes(1);
+  });
+
+  it('answers a cancel at once, while the worker is still busy', async () => {
+    const { ask, worker } = theRoutes();
+    const id = await madeDune(ask);
+
+    worker.dropDownloads.mockReturnValue(new Promise(() => undefined));
+
+    expect((await ask(`/requests/${id}?deleteDownloads=true`, 'DELETE')).status).toBe(204);
+    expect((await ask(`/requests/${id}`)).status).toBe(404);
+  });
+
+  it('stops what a refused request was downloading', async () => {
+    const { ask, worker } = theRoutes();
+    const id = await madeDune(ask);
+
+    await ask(`/requests/${id}/refuse`, 'POST', { reason: '' });
+
+    expect(worker.dropDownloads).toHaveBeenCalledWith(['d1']);
+  });
+
+  it('stops one download of a request, saying what comes next', async () => {
+    const { ask, worker } = theRoutes();
+    const id = await madeDune(ask);
+
+    expect(
+      (await ask(`/requests/${id}/downloads/d1/stop`, 'POST', { next: 'another' })).status,
+    ).toBe(404);
+    expect(worker.stopDownload).toHaveBeenCalledWith(id, 'd1', {
+      next: 'another',
+      isDeletingFiles: true,
+    });
+    expect((await ask(`/requests/${id}/downloads/d1/stop`, 'POST', { next: 'soon' })).status).toBe(
+      400,
+    );
+  });
+
+  it('follows and stops following what a request waits for', async () => {
+    const { ask } = theRoutes();
+    const id = await madeDune(ask);
+    const made = MediaRequestSchema.parse(await (await ask(`/requests/${id}`)).json());
+    const itemIds = made.items.map((item) => item.id);
+
+    expect(
+      await (await ask(`/requests/${id}/follow`, 'POST', { itemIds, isFollowed: false })).json(),
+    ).toMatchObject({ items: [{ isFollowed: false }] });
+    expect((await ask(`/requests/${id}/follow`, 'POST', { isFollowed: false })).status).toBe(400);
+    expect(
+      (await ask('/requests/missing/follow', 'POST', { itemIds, isFollowed: true })).status,
+    ).toBe(404);
+  });
+
+  it('deletes the files a request filed, and says the folders they were in', async () => {
+    const { ask } = theRoutes();
+    const id = await madeDune(ask);
+
+    expect(await (await ask(`/requests/${id}/files/delete`, 'POST')).json()).toEqual({
+      folders: ['/media/Films/Dune (2021)'],
+    });
+    expect((await ask('/requests/missing/files/delete', 'POST')).status).toBe(404);
   });
 
   it('lists the releases a request will not try again, and lifts one', async () => {
@@ -194,6 +405,7 @@ describe('createRequestRoutes', () => {
         id: '0b1d2c3e-4f56-4a78-9b01-23456789abcd',
         requestId: id,
         title: 'Dune.2021.2160p',
+        infoHash: null,
         indexerId: null,
         reason: 'It stalled',
         at: '2026-09-19T00:00:00.000Z',

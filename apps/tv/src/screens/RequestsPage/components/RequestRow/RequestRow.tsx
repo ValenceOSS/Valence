@@ -1,3 +1,4 @@
+import { namesOfAskers } from '@ValenceClient/requests/namesOfAskers';
 import { StyleSheet, Text, View } from 'react-native';
 import { nameTheStanding } from '@ValenceClient/requests/nameTheStanding';
 import { Artwork } from '@ValenceTv/components/Artwork/Artwork';
@@ -62,12 +63,7 @@ const RequestRow = ({
 
               <Text numberOfLines={1} style={[styles.where, isFocused && { color: ink }]}>
                 {isSomeoneElses
-                  ? joinFacts([
-                      where,
-                      say('common.askedByName', {
-                        name: request.requestedBy.name,
-                      }),
-                    ])
+                  ? joinFacts([where, say('common.askedByName', { name: namesOfAskers(request) })])
                   : where}
               </Text>
 

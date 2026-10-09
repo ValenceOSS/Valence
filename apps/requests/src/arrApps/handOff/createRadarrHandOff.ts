@@ -1,3 +1,4 @@
+import { ArrReleaseSchema } from '@ValenceRequests/arrApps/schemas/ArrReleaseSchema';
 import { dirname } from 'node:path';
 import { z } from 'zod';
 import { saying } from '@ValenceI18n/saying';
@@ -70,6 +71,37 @@ const createRadarrHandOff = (caller: Pick<ArrCaller, 'read' | 'send'>): HandOffH
 
     return kept.id;
   },
+
+  search: async (_request, handOffId) => {
+    await caller.send(
+      'POST',
+      '/command',
+      { name: 'MoviesSearch', movieIds: [handOffId] },
+      ArrCommandSchema,
+    );
+  },
+
+  releases: (_request, _items, handOffId) =>
+    caller.read('/release', ArrReleaseSchema.array(), { movieId: handOffId.toString() }),
+
+  queued: (_request, items, handOffId, queue) =>
+    Promise.resolve(
+      queue
+        .filter((record) => record.movieId === handOffId)
+        .map((record) => ({ record, itemIds: items.map((item) => item.id) })),
+    ),
+
+  monitor: async (_request, _items, handOffId, isMonitored) => {
+    await caller.send(
+      'PUT',
+      '/movie/editor',
+      { movieIds: [handOffId], monitored: isMonitored },
+      ArrAcknowledgementSchema,
+    );
+  },
+
+  pageOf: (request) =>
+    Promise.resolve(request.tmdbId === null ? null : `/movie/${request.tmdbId.toString()}`),
 
   watch: async (_request, items, _handOff, handOffId, queue) => {
     const movie = await caller.read(`/movie/${handOffId.toString()}`, RadarrMovieSchema);

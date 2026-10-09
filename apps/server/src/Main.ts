@@ -7,6 +7,7 @@ import { z } from '@hono/zod-openapi';
 import { checkServerVersion } from '@ValenceDatabase/checkServerVersion';
 import { SEERR_DEFAULTS } from '@ValenceContracts/schemas/SeerrLink';
 import { EMAIL_DEFAULTS } from '@ValenceContracts/schemas/EmailSettings';
+import { DEFAULT_RELEASE_TYPES } from '@ValenceContracts/schemas/MediaRequest';
 import { LINK_SETTINGS_DEFAULTS } from '@ValenceServer/linking/LinkSettings';
 import { databaseConnectionOf } from '@ValenceDatabase/databaseConnectionOf';
 import { checkDialect } from '@ValenceDatabase/checkDialect';
@@ -154,6 +155,8 @@ import { summariseArrivals } from '@ValenceServer/events/summariseArrivals';
 import type { ScannedItem } from '@ValenceServer/library/scanLibrary';
 import type { LibraryKind, ScanResult } from '@ValenceContracts/schemas/Library';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
+import { askersOf } from '@ValenceContracts/functions/askersOf';
+import { askersKeptBelow } from '@ValenceServer/requests/arrivals/askersKeptBelow';
 import { catalogueForRequest } from '@ValenceServer/requests/catalogueForRequest';
 import { createExpiringCache } from '@ValenceServer/library/createExpiringCache';
 import { createDatabaseRequestedAlbumStore } from '@ValenceServer/requests/albums/createDatabaseRequestedAlbumStore';
@@ -163,6 +166,7 @@ import { matchArrivals } from '@ValenceServer/requests/arrivals/matchArrivals';
 import { matchDepartures } from '@ValenceServer/requests/arrivals/matchDepartures';
 import { createDatabaseLibraryHolds } from '@ValenceServer/requests/arrivals/createDatabaseLibraryHolds';
 import { createDatabaseCatalogueLookup } from '@ValenceServer/requests/catalogue/createDatabaseCatalogueLookup';
+import { heldAlbumsOf } from '@ValenceServer/requests/arrivals/heldAlbumsOf';
 import { heldInLibraryOf } from '@ValenceServer/requests/arrivals/heldInLibraryOf';
 import { findOnMusicBrainz } from '@ValenceServer/requests/deezer/findOnMusicBrainz';
 import { readDeezerCharts } from '@ValenceServer/requests/deezer/readDeezerCharts';
@@ -451,7 +455,8 @@ const settings = createDatabaseSettingsStore({
     jobsTimezone: '',
     certificationRegion: 'GB',
     fetchesCatalogueTrailers: false,
-    requestReleaseTypes: ['album'],
+    requestReleaseTypes: [...DEFAULT_RELEASE_TYPES],
+    controlsConnectedApps: false,
     fetchesMusicDetails: false,
     audioDbKey: '',
     omdbKey: '',
@@ -1887,7 +1892,9 @@ const jobs = createJobQueue({
                       into.id,
                       into.keepsShowsTogether,
                     )
-                  : null,
+                  : isMusicRequest(request.kind)
+                    ? await heldAlbumsOf(arrivalLookup, catalogue.albums)
+                    : null,
             });
           }
 
@@ -2468,7 +2475,7 @@ const jobs = createJobQueue({
       ),
       [scheduleTriggerKind(DETECT_SEGMENTS_JOB)]: scheduleAcrossLibraries(
         (id) => libraryService.detectSegments(id),
-        ['shows'],
+        ['shows', 'anime'],
       ),
       [scheduleTriggerKind(RESET_LIBRARY_JOB)]: scheduleAcrossLibraries((id) =>
         libraryService.reset(id),
@@ -2723,8 +2730,8 @@ const describeMusicForRequest = (
   mostPages?: number,
 ): Promise<RequestCatalogue | null> =>
   kind === 'artist'
-    ? describeArtistForRequest(musicWeb, musicBrainzId, mostPages)
-    : describeAlbumForRequest(musicWeb, musicBrainzId);
+    ? describeArtistForRequest(musicWeb, musicBrainzId, mostPages, mostPages === undefined)
+    : describeAlbumForRequest(musicWeb, musicBrainzId, true);
 
 const requestedAlbums = createDatabaseRequestedAlbumStore(db);
 
@@ -2741,6 +2748,8 @@ const studioed = createExpiringCache<Promise<CatalogueStudio[]>>(CHARTS_LIVE_FOR
 const ALBUM_PAGES_SHOWN = 3;
 
 const described = createExpiringCache<Promise<RequestCatalogue | null>>(CHARTS_LIVE_FOR_MS);
+
+const logoed = createExpiringCache<Promise<string | null>>(CHARTS_LIVE_FOR_MS);
 
 const foundOnMusicBrainz = createExpiringCache<Promise<string | null>>(CHARTS_LIVE_FOR_MS);
 
@@ -2806,6 +2815,12 @@ const discovery: Discovery = {
   },
   describeTitle: (tmdbId, kind) =>
     catalogueProvider.describeTitle?.(tmdbId, kind) ?? Promise.resolve(null),
+  readLogo: (tmdbId, kind) =>
+    keeping(logoed, `${kind}:${tmdbId}`, () =>
+      catalogueProvider.readLogoUrl === undefined
+        ? Promise.resolve(null)
+        : catalogueProvider.readLogoUrl({ externalId: tmdbId, isSeries: kind === 'tv' }),
+    ),
   describeMusic: (musicBrainzId, kind) =>
     keeping(described, `${kind}:${musicBrainzId}`, () =>
       describeMusicForRequest(musicBrainzId, kind, ALBUM_PAGES_SHOWN),
@@ -2884,6 +2899,10 @@ const sayARequestArrived = async (
   if (arrived.value.newlyAvailable > 0) {
     await tellOfArrival(arrived.value.request, mediaId);
   }
+
+  for (const version of arrived.value.versionsArrived) {
+    await tellOfVersion(arrived.value.request, version, mediaId);
+  }
 };
 
 const heldEpisodes = createDatabaseHeldEpisodes(db);
@@ -2914,8 +2933,16 @@ const matchArrivedRequests = async (): Promise<void> => {
   })) {
     const arrived = await requestsClient.requestArrivedInLibrary(request.id, arrivals);
 
-    if (arrived.kind === 'answered' && arrived.value.newlyAvailable > 0) {
+    if (arrived.kind !== 'answered') {
+      continue;
+    }
+
+    if (arrived.value.newlyAvailable > 0) {
       await tellOfArrival(arrived.value.request, arrivals.mediaId);
+    }
+
+    for (const version of arrived.value.versionsArrived) {
+      await tellOfVersion(arrived.value.request, version, arrivals.mediaId);
     }
   }
 };
@@ -2954,11 +2981,12 @@ const matchDepartedRequests = async (): Promise<void> => {
   }
 };
 
-const toldElsewhere = new Set<string>();
+const toldElsewhere = new Map<string, Set<string>>();
 
 /**
  * Tells whoever asked for a film or a series that a linked server now has it, so they can watch it
- * from there — once for each request — leaving the request standing, since this server's own queue
+ * from there — once for each of them, so somebody who asks after the first word still hears it —
+ * leaving the request standing, since this server's own queue
  * answers to this server's admin. Where that admin chose to, the request is dropped instead, saying
  * which server has it.
  */
@@ -2987,14 +3015,18 @@ const tellOfLinkedArrivals = async (): Promise<void> => {
   for (const request of waiting) {
     const found = request.tmdbId === null ? undefined : elsewhere.get(request.tmdbId.toString());
     const key = `${request.id}\n${found?.fromServer ?? ''}`;
+    const told = toldElsewhere.get(key);
+    const untold = askersOf(request)
+      .map((asker) => asker.id)
+      .filter((id) => told?.has(id) !== true);
 
-    if (found === undefined || toldElsewhere.has(key)) {
+    if (found === undefined || untold.length === 0) {
       continue;
     }
 
-    toldElsewhere.add(key);
+    toldElsewhere.set(key, new Set([...(told ?? []), ...untold]));
 
-    if (dropsRequestsElsewhere) {
+    if (told === undefined && dropsRequestsElsewhere) {
       await requestsClient.refuseRequest(
         request.id,
         say('server.main.nameHasItAlready', { name: found.fromServer }),
@@ -3011,9 +3043,9 @@ const tellOfLinkedArrivals = async (): Promise<void> => {
       }),
       link: LINKS_TO_ARRIVALS[request.kind](found.mediaId),
       vapid: await readPushKeys(),
-      only: [request.requestedBy.id],
+      only: untold,
       onProblem: (reason) => {
-        log.error('requests', `telling ${request.requestedBy.name}: ${reason}`);
+        log.error('requests', `telling those who asked for ${request.title}: ${reason}`);
       },
       announce: (userIds) => {
         realtime.publish(
@@ -3048,16 +3080,80 @@ const tellOfArrival = async (filed: MediaRequest, mediaId: string): Promise<void
       request: webhookRequestOf(filed),
     },
   });
+  const profiles = requestsClient === null ? null : await requestsClient.listProfiles();
+  const keptBelow = askersKeptBelow(filed, profiles?.kind === 'answered' ? profiles.value : []);
+  const told = new Set(keptBelow.map((asker) => asker.id));
+  const vapid = await readPushKeys();
+  const tell = (only: string[], body: Said) =>
+    notifyHousehold({
+      store: notifications,
+      event: 'requests.available',
+      title: saying('server.main.titleIsReady', { title: filed.title }),
+      body,
+      link: LINKS_TO_ARRIVALS[filed.kind](mediaId),
+      vapid,
+      only,
+      onProblem: (reason) => {
+        log.error('requests', `telling those who asked for ${filed.title}: ${reason}`);
+      },
+      announce: (userIds) => {
+        realtime.publish(
+          'notifications',
+          { event: 'requests.available' },
+          { kind: 'accounts', accountIds: [...userIds] },
+        );
+      },
+    });
+
+  await tell(
+    askersOf(filed)
+      .map((asker) => asker.id)
+      .filter((id) => !told.has(id)),
+    saying('server.main.titleWhichYouAskedForIs', { title: filed.title }),
+  );
+
+  for (const asker of keptBelow) {
+    await tell(
+      [asker.id],
+      saying('server.main.titleIsReadyInProfile', {
+        title: filed.title,
+        current: filed.profileName ?? '',
+        asked: asker.profileName ?? '',
+      }),
+    );
+  }
+};
+
+/**
+ * Tells those who asked for a film at the profile a further version of it was kept at that this
+ * version is here too — and nobody else, who were told when it first arrived.
+ *
+ * @param filed - The request.
+ * @param profileId - The profile the version arrived at.
+ * @param mediaId - The film.
+ */
+const tellOfVersion = async (
+  filed: MediaRequest,
+  profileId: string,
+  mediaId: string,
+): Promise<void> => {
+  const askers = filed.alsoAskedBy.filter((asker) => asker.profileId === profileId);
+  const profile = askers.find((asker) => asker.profileName !== undefined)?.profileName ?? '';
+
+  if (askers.length === 0) {
+    return;
+  }
+
   await notifyHousehold({
     store: notifications,
     event: 'requests.available',
     title: saying('server.main.titleIsReady', { title: filed.title }),
-    body: saying('server.main.titleWhichYouAskedForIs', { title: filed.title }),
+    body: saying('server.main.titleIsNowAlsoInProfile', { title: filed.title, profile }),
     link: LINKS_TO_ARRIVALS[filed.kind](mediaId),
     vapid: await readPushKeys(),
-    only: [requestedBy.id],
+    only: askers.map((asker) => asker.id),
     onProblem: (reason) => {
-      log.error('requests', `telling ${requestedBy.name}: ${reason}`);
+      log.error('requests', `telling those who asked for ${filed.title} again: ${reason}`);
     },
     announce: (userIds) => {
       realtime.publish(

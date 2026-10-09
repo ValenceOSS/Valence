@@ -40,6 +40,46 @@ const VIDEO_QUALITIES = [
   { source: 'dvd', resolution: '480p' },
 ] as const satisfies readonly { source: ReleaseSource; resolution: Resolution }[];
 
+const VIDEO_QUALITY_IDS = [
+  'remux-2160p',
+  'bluray-2160p',
+  'webdl-2160p',
+  'webrip-2160p',
+  'hdtv-2160p',
+  'remux-1080p',
+  'bluray-1080p',
+  'webdl-1080p',
+  'webrip-1080p',
+  'hdtv-1080p',
+  'bluray-720p',
+  'webdl-720p',
+  'webrip-720p',
+  'hdtv-720p',
+  'bluray-576p',
+  'dvd-576p',
+  'bluray-480p',
+  'webdl-480p',
+  'webrip-480p',
+  'hdtv-480p',
+  'dvd-480p',
+  'telesync',
+  'cam',
+] as const;
+
+const VideoQualityIdSchema = z.enum(VIDEO_QUALITY_IDS);
+
+const DEFAULT_VIDEO_QUALITIES = [
+  'remux-1080p',
+  'bluray-1080p',
+  'webdl-1080p',
+  'webrip-1080p',
+  'hdtv-1080p',
+  'bluray-720p',
+  'webdl-720p',
+  'webrip-720p',
+  'hdtv-720p',
+] as const satisfies readonly (typeof VIDEO_QUALITY_IDS)[number][];
+
 const QualitySizeSchema = z.object({
   source: ReleaseSourceSchema,
   resolution: ResolutionSchema,
@@ -66,14 +106,39 @@ const RECOMMENDED_QUALITY_SIZES: readonly z.infer<typeof QualitySizeSchema>[] = 
 
 const WordsSchema = z.array(z.string().trim().min(1).max(100)).max(50);
 
+const FORMAT_CONDITION_KINDS = [
+  'words',
+  'group',
+  'codec',
+  'hdr',
+  'source',
+  'resolution',
+  'language',
+  'size',
+] as const;
+
+const FormatConditionSchema = z.object({
+  kind: z.enum(FORMAT_CONDITION_KINDS),
+  value: z.string().trim().min(1).max(200),
+  isNegated: z.boolean().default(false),
+  isRequired: z.boolean().default(false),
+});
+
+const CustomFormatSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  score: z.number().int().min(-100_000).max(100_000),
+  conditions: z.array(FormatConditionSchema).min(1).max(20),
+});
+
+const FormatScoreSchema = z.number().int().min(-1_000_000).max(1_000_000);
+
 const HoldersSchema = z.array(z.string().min(1)).max(200);
 
 const QualityProfileSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1).max(80),
   kind: ProfileKindSchema,
-  resolutions: z.array(ResolutionSchema),
-  sources: z.array(ReleaseSourceSchema),
+  qualities: z.array(VideoQualityIdSchema),
   musicQualities: z.array(MusicQualitySchema),
   smallestMb: z.number().nonnegative().nullable(),
   largestMb: z.number().positive().nullable(),
@@ -81,10 +146,12 @@ const QualityProfileSchema = z.object({
   preferredWords: z.array(z.string()),
   requiredWords: z.array(z.string()),
   bannedWords: z.array(z.string()),
+  formats: z.array(CustomFormatSchema),
+  minFormatScore: FormatScoreSchema,
+  upgradeUntilFormatScore: FormatScoreSchema.nullable(),
   isUpgrading: z.boolean(),
   releaseWait: ReleaseWaitSchema,
-  upgradeUntilResolution: ResolutionSchema.nullable(),
-  upgradeUntilSource: ReleaseSourceSchema.nullable(),
+  cutoff: VideoQualityIdSchema.nullable(),
   upgradeUntilMusicQuality: MusicQualitySchema.nullable(),
   libraryIds: z.array(z.string()),
   preferredLanguage: z.string().nullable(),
@@ -101,11 +168,10 @@ const QualityProfileOrderSchema = z.object({ ids: z.array(z.string().uuid()).min
 const QualityProfileDraftSchema = z.object({
   name: z.string().trim().min(1).max(80),
   kind: ProfileKindSchema,
-  resolutions: z.array(ResolutionSchema).max(10).default(['1080p', '720p']),
-  sources: z
-    .array(ReleaseSourceSchema)
-    .max(10)
-    .default(['remux', 'bluray', 'webdl', 'webrip', 'hdtv']),
+  qualities: z
+    .array(VideoQualityIdSchema)
+    .max(VIDEO_QUALITY_IDS.length)
+    .default([...DEFAULT_VIDEO_QUALITIES]),
   musicQualities: z.array(MusicQualitySchema).max(10).default(['flac', 'mp3-320', 'mp3-v0']),
   smallestMb: z.number().nonnegative().nullable().default(null),
   largestMb: z.number().positive().nullable().default(null),
@@ -116,10 +182,12 @@ const QualityProfileDraftSchema = z.object({
   preferredWords: WordsSchema.default([]),
   requiredWords: WordsSchema.default([]),
   bannedWords: WordsSchema.default([]),
+  formats: z.array(CustomFormatSchema).max(50).default([]),
+  minFormatScore: FormatScoreSchema.default(0),
+  upgradeUntilFormatScore: FormatScoreSchema.nullable().default(null),
   isUpgrading: z.boolean().default(false),
   releaseWait: ReleaseWaitSchema.default('digital'),
-  upgradeUntilResolution: ResolutionSchema.nullable().default(null),
-  upgradeUntilSource: ReleaseSourceSchema.nullable().default(null),
+  cutoff: VideoQualityIdSchema.nullable().default(null),
   upgradeUntilMusicQuality: MusicQualitySchema.nullable().default(null),
   libraryIds: z.array(z.string().min(1)).max(100).default([]),
   preferredLanguage: z.string().min(2).max(8).nullable().default(null),
@@ -131,8 +199,7 @@ const QualityProfileDraftSchema = z.object({
 const QualityProfileChangeSchema = z.object({
   name: z.string().trim().min(1).max(80).optional(),
   kind: ProfileKindSchema.optional(),
-  resolutions: z.array(ResolutionSchema).max(10).optional(),
-  sources: z.array(ReleaseSourceSchema).max(10).optional(),
+  qualities: z.array(VideoQualityIdSchema).max(VIDEO_QUALITY_IDS.length).optional(),
   musicQualities: z.array(MusicQualitySchema).max(10).optional(),
   smallestMb: z.number().nonnegative().nullable().optional(),
   largestMb: z.number().positive().nullable().optional(),
@@ -140,10 +207,12 @@ const QualityProfileChangeSchema = z.object({
   preferredWords: WordsSchema.optional(),
   requiredWords: WordsSchema.optional(),
   bannedWords: WordsSchema.optional(),
+  formats: z.array(CustomFormatSchema).max(50).optional(),
+  minFormatScore: FormatScoreSchema.optional(),
+  upgradeUntilFormatScore: FormatScoreSchema.nullable().optional(),
   isUpgrading: z.boolean().optional(),
   releaseWait: ReleaseWaitSchema.optional(),
-  upgradeUntilResolution: ResolutionSchema.nullable().optional(),
-  upgradeUntilSource: ReleaseSourceSchema.nullable().optional(),
+  cutoff: VideoQualityIdSchema.nullable().optional(),
   upgradeUntilMusicQuality: MusicQualitySchema.nullable().optional(),
   libraryIds: z.array(z.string().min(1)).max(100).optional(),
   preferredLanguage: z.string().min(2).max(8).nullable().optional(),
@@ -158,6 +227,8 @@ const ProfileChoiceSchema = z.object({
   kind: ProfileKindSchema,
 });
 
+const ProfileOrderSchema = z.object({ ids: z.array(z.string().uuid()).min(1).max(200) });
+
 const ProfilesOnOfferSchema = z.object({
   choices: z.array(ProfileChoiceSchema),
   forcedId: z.string().uuid().nullable(),
@@ -166,6 +237,7 @@ const ProfilesOnOfferSchema = z.object({
 const JudgementSchema = z.object({
   releaseId: z.string(),
   parsed: ParsedReleaseSchema,
+  quality: z.number().int().nonnegative().default(0),
   score: z.number(),
   isRejected: z.boolean(),
   rejections: z.array(SaidSchema),
@@ -176,32 +248,48 @@ type ProfileKind = (typeof PROFILE_KINDS)[number];
 type ReleaseWait = (typeof RELEASE_WAITS)[number];
 type ProfileChoice = z.infer<typeof ProfileChoiceSchema>;
 type ProfilesOnOffer = z.infer<typeof ProfilesOnOfferSchema>;
+type ProfileOrder = z.infer<typeof ProfileOrderSchema>;
 type QualitySize = z.infer<typeof QualitySizeSchema>;
 type QualityProfile = z.infer<typeof QualityProfileSchema>;
 type QualityProfileDraft = z.input<typeof QualityProfileDraftSchema>;
 type QualityProfileChange = z.input<typeof QualityProfileChangeSchema>;
 type Judgement = z.infer<typeof JudgementSchema>;
+type VideoQualityId = (typeof VIDEO_QUALITY_IDS)[number];
+type CustomFormat = z.infer<typeof CustomFormatSchema>;
+type FormatCondition = z.infer<typeof FormatConditionSchema>;
+type FormatConditionKind = (typeof FORMAT_CONDITION_KINDS)[number];
 
 export type {
+  CustomFormat,
+  FormatCondition,
+  FormatConditionKind,
   Judgement,
   ProfileChoice,
   ProfileKind,
+  ProfileOrder,
   ProfilesOnOffer,
   QualityProfile,
   QualityProfileChange,
   QualityProfileDraft,
   QualitySize,
   ReleaseWait,
+  VideoQualityId,
 };
 
 export {
+  DEFAULT_VIDEO_QUALITIES,
+  FORMAT_CONDITION_KINDS,
   PROFILE_KINDS,
   RECOMMENDED_QUALITY_SIZES,
   RELEASE_WAITS,
   VIDEO_QUALITIES,
+  CustomFormatSchema,
+  FormatConditionSchema,
+  VIDEO_QUALITY_IDS,
   JudgementSchema,
   ProfileChoiceSchema,
   ProfileKindSchema,
+  ProfileOrderSchema,
   ProfilesOnOfferSchema,
   QualityProfileChangeSchema,
   QualityProfileDraftSchema,
@@ -209,4 +297,5 @@ export {
   QualityProfileSchema,
   QualitySizeSchema,
   ReleaseWaitSchema,
+  VideoQualityIdSchema,
 };

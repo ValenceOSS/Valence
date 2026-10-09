@@ -14,6 +14,7 @@ const ArrQueueRecordSchema = z.object({
     .default([]),
   errorMessage: z.string().nullish(),
   downloadClient: z.string().nullish(),
+  downloadId: z.string().nullish(),
   movieId: z.number().int().nullish(),
   seriesId: z.number().int().nullish(),
   episodeId: z.number().int().nullish(),

@@ -33,8 +33,85 @@
     {
       "idx": 4,
       "version": "5",
-      "when": 1791516891311,
-      "tag": "0004_profiles_keep_an_order",
+      "when": 1791508230455,
+      "tag": "0004_blocks_by_hash_and_follows",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1791513331793,
+      "tag": "0005_requests_follow_new_seasons",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1791517410295,
+      "tag": "0006_requests_know_the_imdb_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1791517850376,
+      "tag": "0007_profiles_combine_qualities",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1791519068820,
+      "tag": "0008_profiles_score_custom_formats",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1791525392084,
+      "tag": "0009_requests_keep_every_asker",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1791527642933,
+      "tag": "0010_profiles_keep_an_order",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1791542531559,
+      "tag": "0011_books_keep_their_formats",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1791546005183,
+      "tag": "0012_films_keep_more_than_one_version",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "5",
+      "when": 1791555401379,
+      "tag": "0013_music_counts_its_tracks",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "5",
+      "when": 1791557117573,
+      "tag": "0014_audiobooks_keep_their_narration",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "5",
+      "when": 1791563004586,
+      "tag": "0015_downloads_remember_being_paused",
       "breakpoints": true
     }
   ]

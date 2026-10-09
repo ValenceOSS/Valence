@@ -8,13 +8,15 @@ import type { RecordStore } from '@ValenceRequests/stores/RecordStore';
 
 type MediaRequestRecord = Omit<
   MediaRequest,
-  'state' | 'items' | 'requestedBy' | 'releaseDate' | 'profileName'
+  'state' | 'items' | 'requestedBy' | 'releaseDate' | 'profileName' | 'isHandedOff'
 > & {
   libraryPath: string;
+  narrationsWanted?: string[] | null;
   libraryFolder: string | null;
   seasonFolders: SeasonFolder[];
   libraryLanguage: string | null;
   aliases: string[];
+  followsAfter: number | null;
   requestedById: string;
   requestedByName: string;
   runtimeMinutes: number | null;
@@ -22,6 +24,7 @@ type MediaRequestRecord = Omit<
   isEnded: boolean;
   catalogueCheckedAt: string;
   tvdbId: number | null;
+  imdbId: string | null;
   handOff: Fulfilment | null;
   handOffId: number | null;
 };

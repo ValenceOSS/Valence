@@ -29,6 +29,7 @@ const aDownload = (id: string, state: QueuedDownload['state']): QueuedDownload =
   filedInto: null,
   filingProblem: null,
   filingProblemCode: null,
+  wasPaused: false,
 });
 
 const draw = (overrides: Partial<ChosenDownloadsBarProps> = {}) => {

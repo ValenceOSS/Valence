@@ -9,25 +9,25 @@ const EVERY = 'all';
 const PLACES = [
   {
     place: 'films',
-    kind: 'movies',
+    kinds: ['movies'],
     everyLabel: say('screens.library.libraryChoicesFor.allFilmLibraries'),
     label: say('screens.library.libraryChoicesFor.filmLibrary'),
   },
   {
     place: 'shows',
-    kind: 'shows',
+    kinds: ['shows', 'anime'],
     everyLabel: say('screens.library.libraryChoicesFor.allProgrammeLibraries'),
     label: say('screens.library.libraryChoicesFor.programmeLibrary'),
   },
   {
     place: 'read',
-    kind: 'books',
+    kinds: ['books'],
     everyLabel: say('screens.library.libraryChoicesFor.allBookLibraries'),
     label: say('screens.library.libraryChoicesFor.bookLibrary'),
   },
 ] as const satisfies readonly {
   place: 'films' | 'shows' | 'read';
-  kind: LibraryKind;
+  kinds: readonly LibraryKind[];
   everyLabel: string;
   label: string;
 }[];
@@ -52,8 +52,8 @@ const libraryChoicesFor = (
   onSelect: (libraryId: string | null, place: 'films' | 'shows' | 'read') => void,
 ): Partial<Record<'films' | 'shows' | 'read', NavBarChoices>> =>
   Object.fromEntries(
-    PLACES.flatMap(({ place, kind, everyLabel, label }) => {
-      const held = libraries.filter((library) => library.kind === kind);
+    PLACES.flatMap(({ place, kinds, everyLabel, label }) => {
+      const held = libraries.filter((library) => kinds.some((kind) => kind === library.kind));
 
       if (held.length < 2) {
         return [];

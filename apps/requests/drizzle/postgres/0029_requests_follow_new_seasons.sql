@@ -1,0 +1,2 @@
+ALTER TABLE "valence_requests"."media_request" ADD COLUMN "follows_new_seasons" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+ALTER TABLE "valence_requests"."media_request" ADD COLUMN "follows_after" integer;

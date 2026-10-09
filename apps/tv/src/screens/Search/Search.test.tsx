@@ -95,6 +95,7 @@ const aCacheHolding = (asked: string, held: Held): QueryClient => {
 
   cache.setQueryData(requestsQueries.availability().queryKey, {
     isEnabled: held.mayRequest ?? false,
+    kinds: ['film', 'series', 'artist', 'album', 'book'],
   });
   cache.setQueryData(sessionQueries.permissions().queryKey, {
     permissions: ['requests.ask'],
@@ -219,7 +220,7 @@ describe('Search', () => {
     expect(drawn.queryByText('In your library')).toBeNull();
   });
 
-  it('follows what the library has with what it lacks, to be asked for', async () => {
+  it('points to what Discover has that the library lacks, and shows it in place', async () => {
     const lacking = aTitle();
     const onAsk = jest.fn();
     const drawn = await drawSearch(
@@ -240,12 +241,29 @@ describe('Search', () => {
 
     await userEvent.type(drawn.getByPlaceholderText('Films and shows'), 'dune');
 
-    expect(await drawn.findByText('In your library')).toBeTruthy();
-    expect(drawn.getByText('Not in your library yet')).toBeTruthy();
+    expect(await drawn.findByText('Can’t find what you’re looking for?')).toBeTruthy();
+    expect(drawn.queryByRole('button', { name: 'Dune (1984)' })).toBeNull();
+
+    await userEvent.press(drawn.getByRole('button', { name: 'See 1 result in Discover' }));
+
+    expect(drawn.getByText('Results for “dune”')).toBeTruthy();
+    expect(drawn.queryByRole('button', { name: 'Dune' })).toBeNull();
 
     await userEvent.press(drawn.getByRole('button', { name: 'Dune (1984)' }));
 
     expect(onAsk).toHaveBeenCalledWith(lacking);
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Back to library results' }));
+
+    expect(drawn.getByRole('button', { name: 'Dune' })).toBeTruthy();
+  });
+
+  it('says nothing on the server matches where only Discover has it', async () => {
+    const drawn = await drawSearch(aCacheHolding('dune', { mayRequest: true, films: [aTitle()] }));
+
+    await userEvent.type(drawn.getByPlaceholderText('Films and shows'), 'dune');
+
+    expect(await drawn.findByText('Nothing on this server matches “dune”')).toBeTruthy();
   });
 
   it('says so when nothing is called what was typed', async () => {

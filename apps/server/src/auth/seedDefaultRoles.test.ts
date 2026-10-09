@@ -30,6 +30,7 @@ const emptySettings = () =>
     certificationRegion: 'GB',
     fetchesCatalogueTrailers: false,
     requestReleaseTypes: ['album'],
+    controlsConnectedApps: false,
     fetchesMusicDetails: false,
     audioDbKey: '',
     omdbKey: '',

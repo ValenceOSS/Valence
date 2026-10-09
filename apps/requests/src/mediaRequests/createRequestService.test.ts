@@ -130,6 +130,108 @@ describe('createRequestService', () => {
     expect(await service.list()).toHaveLength(1);
   });
 
+  it('keeps somebody else asking among those who asked, without approving it for everyone', async () => {
+    const { service } = aService();
+
+    await service.add(DUNE);
+
+    const { request, isNew } = await service.add({
+      ...DUNE,
+      requestedBy: { id: 'another', name: 'Another' },
+      isApproved: true,
+    });
+
+    expect(isNew).toBe(false);
+    expect(request.approval).toBe('awaiting');
+    expect(request.requestedBy).toEqual({ id: 'someone', name: 'Someone' });
+    expect(request.alsoAskedBy).toEqual([{ id: 'another', name: 'Another' }]);
+
+    const again = await service.add({ ...DUNE, requestedBy: { id: 'another', name: 'Another' } });
+
+    expect(again.request.alsoAskedBy).toHaveLength(1);
+  });
+
+  it('joins somebody to a request, once', async () => {
+    const { service } = aService();
+    const { request } = await service.add(DUNE);
+
+    await service.join(request.id, { id: 'another', name: 'Another' });
+    const joined = await service.join(request.id, { id: 'another', name: 'Another' });
+
+    expect(joined?.alsoAskedBy).toEqual([{ id: 'another', name: 'Another' }]);
+    expect(await service.join(request.id, { id: 'someone', name: 'Someone' })).toMatchObject({
+      alsoAskedBy: [{ id: 'another', name: 'Another' }],
+    });
+    expect(await service.join('nowhere', { id: 'another', name: 'Another' })).toBeNull();
+  });
+
+  it('takes one asker off a request, the next becoming the first where the first leaves', async () => {
+    const { service } = aService();
+    const { request } = await service.add(DUNE);
+
+    await service.join(request.id, { id: 'another', name: 'Another' });
+    await service.join(request.id, { id: 'third', name: 'Third' });
+
+    const left = await service.leave(request.id, 'someone');
+
+    expect(left?.requestedBy).toEqual({ id: 'another', name: 'Another' });
+    expect(left?.alsoAskedBy).toEqual([{ id: 'third', name: 'Third' }]);
+
+    const leftAgain = await service.leave(request.id, 'third');
+
+    expect(leftAgain?.requestedBy).toEqual({ id: 'another', name: 'Another' });
+    expect(leftAgain?.alsoAskedBy).toEqual([]);
+  });
+
+  it('leaves the last asker on, and nobody who did not ask', async () => {
+    const { service } = aService();
+    const { request } = await service.add(DUNE);
+
+    expect(await service.leave(request.id, 'someone')).toBeNull();
+
+    await service.join(request.id, { id: 'another', name: 'Another' });
+
+    expect(await service.leave(request.id, 'stranger')).toBeNull();
+    expect(await service.find(request.id)).toMatchObject({
+      alsoAskedBy: [{ id: 'another', name: 'Another' }],
+    });
+  });
+
+  it('waits for the operator on a later ask at a higher profile, then switches or keeps', async () => {
+    const requests = createMemoryRecordStore<MediaRequestRecord>();
+    const items = createMemoryRecordStore<RequestItemRecord>();
+    const uhd = aProfile({ id: '3fa85f64-5717-4562-b3fc-2c963f66afa6', name: 'UHD', position: 0 });
+    const hd = aProfile({ id: '3fa85f64-5717-4562-b3fc-2c963f66afa7', name: 'HD', position: 1 });
+    const service = createRequestService({
+      requests,
+      items,
+      profiles: { list: () => Promise.resolve([uhd, hd]) },
+      now: () => AT,
+    });
+    const { request } = await service.add({ ...DUNE, profileId: hd.id });
+
+    const later = await service.add({
+      ...DUNE,
+      profileId: uhd.id,
+      requestedBy: { id: 'priya', name: 'Priya' },
+    });
+
+    expect(later.request.profileId).toBe(hd.id);
+    expect(later.request.profileAsk).toEqual({
+      asker: { id: 'priya', name: 'Priya' },
+      profileId: uhd.id,
+      profileName: 'UHD',
+    });
+    expect(later.request.alsoAskedBy).toEqual([
+      { id: 'priya', name: 'Priya', profileId: uhd.id, profileName: 'UHD' },
+    ]);
+
+    const switched = await service.decideProfileAsk(request.id, { choice: 'switch' });
+
+    expect(switched).toMatchObject({ profileId: uhd.id, profileAsk: null });
+    expect(await service.decideProfileAsk(request.id, { choice: 'keep' })).toBeNull();
+  });
+
   it('keeps the quality asked for, and changes it', async () => {
     const { service } = aService();
     const profileId = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
@@ -163,6 +265,66 @@ describe('createRequestService', () => {
     expect(await service.approve('missing')).toBeNull();
   });
 
+  it('wants lossless copies of an artist’s lossy albums once told to, and lets them be once not', async () => {
+    const { service } = aService();
+    const { request } = await service.add(PINK_FLOYD);
+    const held = {
+      mediaId: null,
+      episodes: [],
+      folder: null,
+      seasonFolders: [],
+      albums: [{ id: 'a4c2e8f0-9d1b-3c5e-8f7a-2b4d6e8f0a1c', quality: 'mp3' as const }],
+    };
+
+    const wanting = await service.change(
+      request.id,
+      { upgradesToLossless: true },
+      PINK_FLOYD.catalogue,
+      held,
+    );
+
+    expect(wanting?.upgradesToLossless).toBe(true);
+    expect(wanting?.items).toMatchObject([{ title: 'The Wall', heldQuality: 'mp3' }]);
+
+    const letting = await service.change(
+      request.id,
+      { upgradesToLossless: false },
+      PINK_FLOYD.catalogue,
+      held,
+    );
+
+    expect(letting?.items).toMatchObject([{ state: 'available', heldQuality: null }]);
+  });
+
+  it('asks which narration of an audiobook to fetch, and waits for each one chosen', async () => {
+    const { service } = aService();
+    const { request } = await service.add({
+      kind: 'book',
+      openLibraryId: 1,
+      libraryId: 'books',
+      libraryPath: '/media/Books',
+      bookFormats: ['audiobook'],
+      requestedBy: { id: 'someone', name: 'Someone' },
+      isApproved: true,
+      catalogue: {
+        title: 'A Book',
+        year: null,
+        narrations: [
+          { asin: 'A', narrators: ['Ann Reader'], runtimeMinutes: 600, series: null },
+          { asin: 'B', narrators: ['Bob Voice'], runtimeMinutes: 610, series: null },
+        ],
+      },
+    });
+
+    expect(request.isAskingNarration).toBe(true);
+    expect(await service.decideNarration(request.id, ['Z'])).toBeNull();
+
+    const chosen = await service.decideNarration(request.id, ['A', 'B']);
+
+    expect(chosen?.isAskingNarration).toBe(false);
+    expect(chosen?.items.map((item) => item.narration).toSorted()).toEqual(['A', 'B']);
+  });
+
   it('changes the seasons asked for with what the catalogue says', async () => {
     const { service } = aService();
     const { request } = await service.add(SEVERANCE);
@@ -171,6 +333,61 @@ describe('createRequestService', () => {
 
     expect(changed?.items.map((item) => item.season)).toEqual([2]);
     expect(await service.change('missing', {}, null)).toBeNull();
+  });
+
+  it('follows the seasons that come after those there were when it was asked for', async () => {
+    const { service } = aService();
+    const firstSeason = {
+      ...SEVERANCE.catalogue,
+      episodes: SEVERANCE.catalogue.episodes?.filter((episode) => episode.season === 1),
+    };
+    const following = await service.add({ ...SEVERANCE, catalogue: firstSeason });
+    const later = await service.change(following.request.id, {}, SEVERANCE.catalogue);
+
+    expect(following.request.followsNewSeasons).toBe(true);
+    expect(later?.items.map((item) => item.season)).toEqual([1, 2]);
+  });
+
+  it('follows no new season where it was asked not to', async () => {
+    const { service } = aService();
+    const firstSeason = {
+      ...SEVERANCE.catalogue,
+      episodes: SEVERANCE.catalogue.episodes?.filter((episode) => episode.season === 1),
+    };
+    const { request } = await service.add({
+      ...SEVERANCE,
+      followsNewSeasons: false,
+      catalogue: firstSeason,
+    });
+    const later = await service.change(request.id, {}, SEVERANCE.catalogue);
+
+    expect(later?.items.map((item) => item.season)).toEqual([1]);
+  });
+
+  it('keeps a new season it picked up when more is asked, or following stops', async () => {
+    const { service } = aService();
+    const firstSeason = {
+      ...SEVERANCE.catalogue,
+      episodes: SEVERANCE.catalogue.episodes?.filter((episode) => episode.season === 1),
+    };
+    const { request } = await service.add({ ...SEVERANCE, catalogue: firstSeason });
+
+    await service.change(request.id, {}, SEVERANCE.catalogue);
+
+    const more = await service.add({ ...SEVERANCE, followsNewSeasons: false });
+
+    expect(more.request.seasons).toEqual([1, 2]);
+    expect(more.request.followsNewSeasons).toBe(true);
+
+    const stopped = await service.change(
+      request.id,
+      { followsNewSeasons: false },
+      SEVERANCE.catalogue,
+    );
+
+    expect(stopped?.followsNewSeasons).toBe(false);
+    expect(stopped?.seasons).toEqual([1, 2]);
+    expect(stopped?.items.map((item) => item.season)).toEqual([1, 2]);
   });
 
   it('names the quality a request is judged at, so whoever reads it need not look up an id', async () => {
@@ -402,6 +619,31 @@ describe('createRequestService', () => {
     expect(await service.list()).toHaveLength(1);
   });
 
+  it('waits for each format of a book asked for, adds a format asked later, and lets one go', async () => {
+    const { service } = aService();
+
+    const { request } = await service.add(PROJECT_HAIL_MARY);
+
+    expect(request.bookFormats).toEqual(['ebook']);
+    expect(request.items.map((item) => item.format)).toEqual(['ebook']);
+
+    const again = await service.add({
+      ...PROJECT_HAIL_MARY,
+      bookFormats: ['audiobook'],
+      requestedBy: { id: 'x', name: 'X' },
+    });
+
+    expect(again.request.bookFormats).toEqual(['ebook', 'audiobook']);
+    expect(again.request.items.map((item) => item.format).toSorted()).toEqual([
+      'audiobook',
+      'ebook',
+    ]);
+
+    const changed = await service.change(request.id, { bookFormats: ['audiobook'] }, null);
+
+    expect(changed?.items.map((item) => item.format)).toEqual(['audiobook']);
+  });
+
   it('keeps a book and a film with the same number apart', async () => {
     const { service } = aService();
 
@@ -485,6 +727,47 @@ describe('createRequestService', () => {
     });
     expect(await service.arrived(request.id, 'media-1')).toMatchObject({ newlyAvailable: 0 });
     expect(await service.retry('missing')).toBeNull();
+  });
+
+  it('keeps both versions of a film, each arriving on its own and only once filed', async () => {
+    const requests = createMemoryRecordStore<MediaRequestRecord>();
+    const items = createMemoryRecordStore<RequestItemRecord>();
+    const uhd = aProfile({ id: '3fa85f64-5717-4562-b3fc-2c963f66afa6', name: 'UHD', position: 0 });
+    const hd = aProfile({ id: '3fa85f64-5717-4562-b3fc-2c963f66afa7', name: 'HD', position: 1 });
+    const service = createRequestService({
+      requests,
+      items,
+      profiles: { list: () => Promise.resolve([uhd, hd]) },
+      now: () => AT,
+    });
+    const { request } = await service.add({ ...DUNE, profileId: hd.id, isApproved: true });
+
+    await service.add({ ...DUNE, profileId: uhd.id, requestedBy: { id: 'priya', name: 'Priya' } });
+
+    const both = await service.decideProfileAsk(request.id, { choice: 'both' });
+
+    expect(both?.versions).toEqual([uhd.id]);
+    expect(both?.items.map((item) => item.versionProfileId ?? null)).toEqual([null, uhd.id]);
+
+    const [first, version] = await items.list();
+
+    await items.update(first?.id ?? '', { state: 'filed' });
+
+    expect(
+      await service.arrivedInLibrary(request.id, {
+        mediaId: 'media-1',
+        episodes: null,
+        albums: null,
+      }),
+    ).toMatchObject({ request: { state: 'available' }, newlyAvailable: 1, versionsArrived: [] });
+    expect((await items.find(version?.id ?? ''))?.state).not.toBe('available');
+
+    await items.update(version?.id ?? '', { state: 'filed' });
+
+    expect(await service.arrived(request.id, 'media-1')).toMatchObject({
+      newlyAvailable: 0,
+      versionsArrived: [uhd.id],
+    });
   });
 
   it('follows a request’s item to another the library found it as', async () => {

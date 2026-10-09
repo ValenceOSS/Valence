@@ -10,7 +10,8 @@ const UNDER_WAY = ['downloading', 'filing', 'filed', 'chosen', 'searching'] as c
  * Where a request has got to as a whole, from where each of its films or episodes has: waiting on
  * approval or refused before anything else; then whatever is under way, the furthest along first;
  * then anything that failed, anything still wanted, and available once all that could be is.
- * Episodes that have not aired yet do not hold back a series that is otherwise all there.
+ * Episodes that have not aired yet do not hold back a series that is otherwise all there, and a
+ * film's further versions do not hold back a film whose first version is here.
  *
  * @param request - The request.
  * @param items - Its films or episodes.
@@ -18,7 +19,10 @@ const UNDER_WAY = ['downloading', 'filing', 'filed', 'chosen', 'searching'] as c
  */
 const describeRequestState = (
   request: Pick<MediaRequestRecord, 'approval' | 'problem' | 'problemCode'>,
-  items: readonly Pick<RequestItemRecord, 'state' | 'problem' | 'problemCode'>[],
+  items: readonly Pick<
+    RequestItemRecord,
+    'state' | 'problem' | 'problemCode' | 'versionProfileId'
+  >[],
 ): { state: MediaRequestState; problem: Said | null; problemCode: ProblemCode | null } => {
   if (request.approval !== 'approved') {
     return {
@@ -26,6 +30,18 @@ const describeRequestState = (
       problem: null,
       problemCode: null,
     };
+  }
+
+  const main = items.filter(
+    (item) => item.versionProfileId === null || item.versionProfileId === undefined,
+  );
+
+  if (
+    main.length > 0 &&
+    main.length < items.length &&
+    main.every((item) => item.state === 'available')
+  ) {
+    return { state: 'available', problem: null, problemCode: null };
   }
 
   const underWay = UNDER_WAY.find((state) => items.some((item) => item.state === state));

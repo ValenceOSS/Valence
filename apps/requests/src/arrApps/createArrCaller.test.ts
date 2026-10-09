@@ -87,6 +87,16 @@ describe('createArrCaller', () => {
     ).toBeNull();
   });
 
+  it('deletes with the query given, reading whatever comes back as nothing', async () => {
+    const arr = aFakeArr({ 'DELETE /api/v3/queue/41': { body: null } });
+
+    await createArrCaller(arr.fetch, anArrApp()).remove('/queue/41', { blocklist: 'true' });
+
+    expect(arr.asked.map((one) => [one.method, one.path, one.query.get('blocklist')])).toEqual([
+      ['DELETE', '/api/v3/queue/41', 'true'],
+    ]);
+  });
+
   it('says an app could not be reached, or did not answer in time', async () => {
     const refused = vi.fn<ArrFetch>(() => Promise.reject(new Error('ECONNREFUSED')));
     const late = vi.fn<ArrFetch>(() =>

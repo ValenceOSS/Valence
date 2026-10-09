@@ -13,6 +13,8 @@ import {
   pickMediaRelease,
   refuseMediaRequest,
   removeMediaRequest,
+  stopRequestDownload,
+  followRequestItems,
   retryMediaRequest,
   fulfilMediaRequest,
   searchMissing,
@@ -39,7 +41,10 @@ const REQUEST = {
   approval: 'approved',
   refusedBecause: null,
   requestedBy: { id: 'someone', name: 'Someone' },
+  alsoAskedBy: [],
+  profileAsk: null,
   seasons: null,
+  followsNewSeasons: false,
   releaseTypes: null,
   releaseDate: '2021-12-03',
   releaseDates: { theatrical: null, digital: null, physical: null },
@@ -202,5 +207,34 @@ describe('fetchMediaRequests', () => {
 
     expect(await removeMediaRequest(REQUEST.id, true)).toBeNull();
     expect(asked.mock.calls[0]?.[0]).toBe(`/api/requests/media/${REQUEST.id}?deleteDownloads=true`);
+  });
+
+  it('removes a request with the files it filed, where whoever manages requesting asks', async () => {
+    const asked = answering(null, 204);
+
+    expect(await removeMediaRequest(REQUEST.id, true, true)).toBeNull();
+    expect(asked.mock.calls[0]?.[0]).toBe(
+      `/api/requests/media/${REQUEST.id}?deleteDownloads=true&deleteFiles=true`,
+    );
+  });
+
+  it('stops one download, and follows or stops following what a request waits for', async () => {
+    const asked = answering(REQUEST);
+
+    expect(
+      (await stopRequestDownload(REQUEST.id, 'd/1', { next: 'another', isDeletingFiles: false }))
+        .value,
+    ).toEqual(REQUEST);
+    expect((await followRequestItems(REQUEST.id, ['a', 'b'], false)).value).toEqual(REQUEST);
+    expect(asked.mock.calls.map(([path, init]) => [path, init?.body])).toEqual([
+      [
+        `/api/requests/media/${REQUEST.id}/downloads/d%2F1/stop`,
+        JSON.stringify({ next: 'another', isDeletingFiles: false }),
+      ],
+      [
+        `/api/requests/media/${REQUEST.id}/follow`,
+        JSON.stringify({ itemIds: ['a', 'b'], isFollowed: false }),
+      ],
+    ]);
   });
 });

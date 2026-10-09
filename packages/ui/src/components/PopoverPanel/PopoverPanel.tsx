@@ -23,7 +23,8 @@ import type { PopoverPanelProps } from './PopoverPanel.types';
  * @param isBare - Whether the surrounding chrome already draws the hover, so this must not draw a
  * second one.
  * @param triggerLook - An icon square that is lit when pointed at, a smaller one for a strip as
- *   thin as a window bar, or a button of the standard kind with room for a word beside its icon.
+ *   thin as a window bar, a button of the standard kind with room for a word beside its icon, or
+ *   whatever it is given drawn inline, for a trigger that is a run of words and faces.
  * @param tone - Whether it sits on the page or over film, where the page's colours say nothing.
  * @param isOverDialogs - Whether it opens from chrome that stays usable over a dialog, such as the
  *   desktop's window bar, so a press inside it does not close the dialog either.
@@ -60,16 +61,18 @@ const PopoverPanel = ({
           className={
             triggerLook === 'button'
               ? buttonStyles({ variant: 'glossy', size: 'sm' })
-              : cn(
-                  'inline-flex shrink-0 items-center justify-center rounded-md',
-                  triggerLook === 'smallIcon' ? 'size-6' : 'size-10',
-                  'text-current outline-none',
-                  'transition-colors duration-[var(--duration-instant)] ease-[var(--ease-out)]',
-                  'motion-reduce:transition-none',
-                  'focus-visible:ring-[3px] focus-visible:ring-ring',
-                  'disabled:cursor-not-allowed disabled:opacity-50',
-                  isBare ? '' : 'hover:bg-hover data-[state=open]:bg-active',
-                )
+              : triggerLook === 'inline'
+                ? 'inline-flex items-center rounded-full text-current outline-none focus-visible:ring-[3px] focus-visible:ring-ring'
+                : cn(
+                    'inline-flex shrink-0 items-center justify-center rounded-md',
+                    triggerLook === 'smallIcon' ? 'size-6' : 'size-10',
+                    'text-current outline-none',
+                    'transition-colors duration-[var(--duration-instant)] ease-[var(--ease-out)]',
+                    'motion-reduce:transition-none',
+                    'focus-visible:ring-[3px] focus-visible:ring-ring',
+                    'disabled:cursor-not-allowed disabled:opacity-50',
+                    isBare ? '' : 'hover:bg-hover data-[state=open]:bg-active',
+                  )
           }
         >
           {trigger}

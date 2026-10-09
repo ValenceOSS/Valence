@@ -3,9 +3,9 @@ import type { CalendarEntry, CalendarState } from '@ValenceContracts/schemas/Rel
 import type { ICalEvent } from '@ValenceServer/calendar/ICalEvent';
 
 const STATE_HANDLERS = {
-  available: 'common.available',
+  available: 'common.inTheLibrary',
   downloading: 'common.downloading',
-  wanted: 'common.wanted',
+  wanted: 'client.requests.titleStatusNames.missing',
   notOutYet: 'common.notOutYet',
   notHeld: 'common.notInTheLibrary',
 } as const satisfies Record<CalendarState, string>;

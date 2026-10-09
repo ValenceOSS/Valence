@@ -314,6 +314,20 @@ describe('createDatabaseLibraryService', { timeout: STARTING_POSTGRES_MS }, () =
     expect(await service.isSeriesOutOfReach('ada', 'a-show')).toBe(true);
   });
 
+  it('makes a library of series an anime one and back, and never a library of films', async () => {
+    const { service } = await aLibrary();
+
+    expect(
+      await service.update(SHOWS_ID, { defaultAudioLanguage: null, kind: 'anime' }),
+    ).toMatchObject({ kind: 'anime', flavour: null, fulfilment: null });
+    expect(
+      await service.update(SHOWS_ID, { defaultAudioLanguage: null, kind: 'shows' }),
+    ).toMatchObject({ kind: 'shows' });
+    expect(
+      await service.update(FILMS_ID, { defaultAudioLanguage: null, kind: 'anime' }),
+    ).toMatchObject({ kind: 'movies' });
+  });
+
   it('counts the films in a library once each, whatever versions they come in', async () => {
     const { service } = await aLibrary();
 

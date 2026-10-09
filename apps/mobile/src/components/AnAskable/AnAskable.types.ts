@@ -3,6 +3,7 @@ import type { CatalogueBrowseKind } from '@ValenceContracts/schemas/CatalogueTit
 type AnAskableProps = {
   kind: CatalogueBrowseKind;
   id: string;
+  isMore?: boolean;
   onOpen: (kind: CatalogueBrowseKind, mediaId: string) => void;
   onBack: () => void;
 };

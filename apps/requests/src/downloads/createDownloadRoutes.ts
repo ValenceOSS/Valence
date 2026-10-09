@@ -20,7 +20,7 @@ import { refuse } from '@ValenceI18n/refuse';
 import { refuseWith } from '@ValenceI18n/refuseWith';
 
 type CreateDownloadRoutesOptions = {
-  filing?: Pick<RequestWorker, 'fileNow'>;
+  filing?: Pick<RequestWorker, 'fileNow' | 'blockDownload'>;
   clients: Pick<DownloadClientService, 'list' | 'add' | 'change' | 'remove' | 'test' | 'tryDraft'>;
   queue: Pick<
     DownloadQueueService,
@@ -46,7 +46,8 @@ const KEEP_ALIVE_MS = 15_000;
  * The stream says nothing of its own between rounds but a comment now and then, so a proxy between
  * the two does not take it for idle and close it.
  *
- * @param filing - What files a finished download into a library.
+ * @param filing - What files a finished download into a library, and blocks a removed one's
+ *   release for the requests it was fetched for, so it is not fetched for them again.
  * @param clients - The download clients.
  * @param queue - The queue.
  * @param rules - When a download is given up on, so the next best release can be tried.
@@ -54,7 +55,7 @@ const KEEP_ALIVE_MS = 15_000;
  * @returns The routes.
  */
 const createDownloadRoutes = ({
-  filing = { fileNow: () => Promise.resolve(null) },
+  filing = { fileNow: () => Promise.resolve(null), blockDownload: () => Promise.resolve(0) },
   clients,
   queue,
   rules,
@@ -210,10 +211,11 @@ const createDownloadRoutes = ({
   });
 
   routes.delete('/downloads/:id', async (context) => {
-    const removed = await queue.remove(
-      context.req.param('id'),
-      context.req.query('deleteData') === 'true',
-    );
+    const id = context.req.param('id');
+
+    await filing.blockDownload(id);
+
+    const removed = await queue.remove(id, context.req.query('deleteData') === 'true');
 
     if (typeof removed === 'object') {
       return context.json(refuseWith(removed.refused), 400);

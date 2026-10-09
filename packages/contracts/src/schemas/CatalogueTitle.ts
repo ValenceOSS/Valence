@@ -4,6 +4,7 @@ import {
   CatalogueAlbumSchema,
   MediaRequestKindSchema,
   MediaRequestStateSchema,
+  RequesterSchema,
 } from './MediaRequest';
 
 const CATALOGUE_STANDINGS = ['library', 'linked', 'requested', 'askable'] as const;
@@ -14,6 +15,7 @@ const CatalogueStandingSchema = z.object({
   requestId: z.string().uuid().nullable(),
   requestState: MediaRequestStateSchema.nullable(),
   fromServer: z.string().nullable().optional(),
+  askedBy: z.array(RequesterSchema).optional(),
 });
 
 const CatalogueTitleSchema = z.object({
@@ -91,6 +93,7 @@ const CatalogueTrackSchema = z.object({
 const CatalogueTitleDetailSchema = CatalogueTitleSchema.extend({
   musicBrainzId: z.string().uuid().nullable(),
   backdropUrl: z.string().nullable(),
+  logoUrl: z.string().nullable().default(null),
   genres: z.array(z.string()),
   runtimeMinutes: z.number().int().positive().nullable(),
   cast: z.array(CatalogueCreditSchema),

@@ -2,6 +2,8 @@ import { render, userEvent } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
+import { requestsQueries } from '@ValenceClient/query/requestsQueries';
+import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { markWatched } from '@ValenceClient/playback/markWatched';
 import { setRating } from '@ValenceClient/library/fetchRatings';
 import { setHidden } from '@ValenceClient/library/fetchHidden';
@@ -10,6 +12,10 @@ import { ShowPage } from '@ValenceTv/screens/ShowPage/ShowPage';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ShowDetail } from '@ValenceContracts/schemas/Show';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
+
+jest.mock('@ValenceClient/session/auth', () => ({
+  fetchSession: () => new Promise(() => undefined),
+}));
 
 jest.mock('@ValenceClient/library/fetchRatings', () => ({
   ...jest.requireActual<object>('@ValenceClient/library/fetchRatings'),
@@ -282,5 +288,75 @@ describe('ShowPage', () => {
     buttons.find((button) => button.text === 'Hide it')?.onPress?.();
 
     expect(setHidden).toHaveBeenCalledWith({ kind: 'series', subjectId: SERIES }, true);
+  });
+
+  it('offers to request more where an aired season is missing, to somebody who may', async () => {
+    const cache = aCacheHolding({
+      ...SEVERANCE,
+      tmdbId: 95396,
+      shape: [
+        { seasonNumber: 1, episodeCount: 2, episodes: [] },
+        { seasonNumber: 2, episodeCount: 1, episodes: [] },
+        { seasonNumber: 3, episodeCount: 10, episodes: [] },
+      ],
+    });
+    cache.setQueryData(requestsQueries.availability().queryKey, {
+      isEnabled: true,
+      kinds: ['film', 'series'],
+    });
+    cache.setQueryData(sessionQueries.permissions().queryKey, {
+      permissions: ['requests.ask'],
+      isAdministrator: false,
+    });
+    const onRequestMore = jest.fn();
+
+    const drawn = await render(
+      <QueryClientProvider client={cache}>
+        <ShowPage
+          libraryId={LIBRARY}
+          showId={SHOW}
+          viewerId={VIEWER}
+          onPlay={jest.fn()}
+          onOpenPerson={jest.fn()}
+          onRequestMore={onRequestMore}
+        />
+      </QueryClientProvider>,
+    );
+
+    await userEvent.press(await drawn.findByRole('button', { name: 'Request more…' }));
+
+    expect(onRequestMore).toHaveBeenCalledWith(95396);
+  });
+
+  it('offers nothing more to somebody who may not ask', async () => {
+    const cache = aCacheHolding({
+      ...SEVERANCE,
+      tmdbId: 95396,
+      shape: [{ seasonNumber: 3, episodeCount: 10, episodes: [] }],
+    });
+    cache.setQueryData(requestsQueries.availability().queryKey, {
+      isEnabled: true,
+      kinds: ['film', 'series'],
+    });
+    cache.setQueryData(sessionQueries.permissions().queryKey, {
+      permissions: [],
+      isAdministrator: false,
+    });
+
+    const drawn = await render(
+      <QueryClientProvider client={cache}>
+        <ShowPage
+          libraryId={LIBRARY}
+          showId={SHOW}
+          viewerId={VIEWER}
+          onPlay={jest.fn()}
+          onOpenPerson={jest.fn()}
+          onRequestMore={jest.fn()}
+        />
+      </QueryClientProvider>,
+    );
+
+    expect(await drawn.findAllByText('Severance')).not.toHaveLength(0);
+    expect(drawn.queryByRole('button', { name: 'Request more…' })).toBeNull();
   });
 });

@@ -21,6 +21,7 @@ const healthyOverview = (overrides: Partial<AdminOverview> = {}): AdminOverview 
     fetchesCatalogueTrailers: false,
     fetchesMusicDetails: false,
     requestReleaseTypes: ['album'],
+    controlsConnectedApps: false,
     certificationRegion: 'GB',
     keepsDownloadsForDays: 14,
     trustedOrigins: [],
@@ -84,6 +85,7 @@ const library = (overrides: Partial<Library> = {}): Library => ({
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 });
 
 const failedJob = (message: string | null = null): Job => ({
@@ -548,6 +550,7 @@ describe('collectConcerns', () => {
             fetchesCatalogueTrailers: false,
             fetchesMusicDetails: false,
             requestReleaseTypes: ['album'],
+            controlsConnectedApps: false,
             certificationRegion: 'GB',
             keepsDownloadsForDays: 14,
             trustedOrigins: [],
@@ -743,6 +746,7 @@ describe('collectConcerns', () => {
           fetchesCatalogueTrailers: false,
           fetchesMusicDetails: false,
           requestReleaseTypes: ['album'],
+          controlsConnectedApps: false,
           certificationRegion: 'GB',
           keepsDownloadsForDays: 14,
           trustedOrigins: [],

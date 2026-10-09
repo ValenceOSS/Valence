@@ -4,7 +4,19 @@ import { ActivityIndicator, Alert, StyleSheet } from 'react-native';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
-import { askForMedia, removeMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
+import {
+  askForMedia,
+  joinMediaRequest,
+  removeMediaRequest,
+} from '@ValenceClient/requests/fetchMediaRequests';
+import { describeOthersStillWanting } from '@ValenceClient/requests/describeOthersStillWanting';
+import { describeWhoElseAsked } from '@ValenceClient/requests/describeWhoElseAsked';
+import { describeMyProfileAsk } from '@ValenceClient/requests/describeMyProfileAsk';
+import { mayJoinRequest } from '@ValenceClient/requests/mayJoinRequest';
+import { askersOf } from '@ValenceContracts/functions/askersOf';
+import { isAskedBy } from '@ValenceContracts/functions/isAskedBy';
+import { seasonsWithItemsOf } from '@ValenceClient/requests/seasonsWithItemsOf';
+import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
 import { describeAskableFacts } from '@ValenceClient/requests/describeAskableFacts';
 import { describeStanding } from '@ValenceClient/requests/describeStanding';
 import { progressOfRequest } from '@ValenceClient/requests/progressOfRequest';
@@ -33,20 +45,24 @@ const styles = StyleSheet.create({
  * A film or programme from the catalogue: what it is, whether it is here or asked for, and the way
  * to ask for it.
  *
- * A programme is asked for a season at a time, or every season. Where the server offers more than
+ * A programme is asked for a season at a time, or every season, and whether new seasons come too;
+ * one already asked for can have more seasons added. Where the server offers more than
  * one quality somebody picks one before asking; where it offers one, or insists on one, there is
  * nothing to pick.
  *
- * Somebody can take back their own request until it has arrived, and is asked first, because it
- * throws away whatever has downloaded.
+ * Somebody else's request names who asked and can be wanted too. Somebody can take back their own
+ * request until it has arrived, and is asked first, because it throws away whatever has downloaded —
+ * unless others want it too, when it stays for them.
  *
  * @param kind - Whether it is a film or a programme.
  * @param id - Its catalogue id.
+ * @param isMore - Whether it is a programme the library holds some of, opened to ask for more of
+ *   it: its seasons are offered, those held whole locked, in place of opening it in the library.
  * @param onOpen - Told to open it in the library, which a title already there is at once, in
- *   place of this page — it is never asked about.
+ *   place of this page — it is never asked about, unless more of it is being asked for.
  * @param onBack - Told somebody is done with it.
  */
-const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
+const AnAskable = ({ kind, id, isMore = false, onOpen, onBack }: AnAskableProps) => {
   const cache = useQueryClient();
   const colours = useTheColours();
   const asking = useQuery({
@@ -57,14 +73,20 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
   const requests = useQuery(requestsQueries.mediaRequests());
   const offered = useQuery(requestsQueries.profilesOnOffer(kind));
   const who = useQuery(sessionQueries.who());
+  const kinds = useRequestableKinds();
   const [seasons, setSeasons] = useState<number[] | null>(null);
+  const [followsNew, setFollowsNew] = useState(true);
+  const [adding, setAdding] = useState<number[] | null>([]);
+  const [addsFollowing, setAddsFollowing] = useState(false);
   const [quality, setQuality] = useState<string | null>(null);
   const [refusal, setRefusal] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
   const faces = useQuery(linkingQueries.faces());
   const title = asking.data;
   const heldAs =
-    title !== undefined && title.standing.status === 'library' ? title.standing.mediaId : null;
+    !isMore && title !== undefined && title.standing.status === 'library'
+      ? title.standing.mediaId
+      : null;
 
   useEffect(() => {
     if (heldAs !== null) {
@@ -78,6 +100,20 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
   const choices = offered.data?.forcedId === null ? offered.data.choices : [];
   const needsQuality = choices.length > 1 && quality === null;
 
+  const isUnrequestable = !kinds.has(kind);
+  const isAddingSeasons =
+    !isUnrequestable &&
+    kind === 'series' &&
+    title?.standing.status === 'requested' &&
+    request !== null &&
+    request.approval !== 'refused';
+  const askedSeasons =
+    request === null ? [] : (request.seasons ?? seasonsWithItemsOf(request.items));
+  const isFollowedAlready =
+    request !== null && (request.seasons === null || request.followsNewSeasons);
+  const hasMoreToAdd =
+    adding === null || adding.length > 0 || (addsFollowing && !isFollowedAlready);
+
   const send = async () => {
     setIsSending(true);
     setRefusal(null);
@@ -85,7 +121,7 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
     const sent = await askForMedia({
       kind,
       tmdbId: Number(id),
-      ...(kind === 'series' ? { seasons } : {}),
+      ...(kind === 'series' ? { seasons, followsNewSeasons: followsNew } : {}),
       ...(quality === null ? {} : { profileId: quality }),
     });
 
@@ -94,10 +130,53 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
     await cache.invalidateQueries({ queryKey: requestsQueries.key });
   };
 
+  const addSeasons = async () => {
+    setIsSending(true);
+    setRefusal(null);
+
+    const sent = await askForMedia({
+      kind: 'series',
+      tmdbId: Number(id),
+      seasons: adding,
+      followsNewSeasons: addsFollowing,
+    });
+
+    setIsSending(false);
+    setRefusal(sent.refusal?.message ?? null);
+
+    if (sent.refusal === null) {
+      setAdding([]);
+      setAddsFollowing(false);
+    }
+
+    await cache.invalidateQueries({ queryKey: requestsQueries.key });
+  };
+
+  const join = async () => {
+    if (title?.standing.requestId === null || title?.standing.requestId === undefined) {
+      return;
+    }
+
+    setIsSending(true);
+    setRefusal(null);
+
+    try {
+      const sent = await joinMediaRequest(title.standing.requestId);
+
+      setRefusal(sent.refusal?.message ?? null);
+      await cache.invalidateQueries({ queryKey: requestsQueries.key });
+    } catch {
+      setRefusal(say('common.thatCouldNotBeRequested'));
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   const takeBack = (requestId: string) => {
     Alert.alert(
       say('common.cancelThisRequest'),
-      say('phone.anAskable.anythingAlreadyDownloadedForItIs'),
+      (request === null ? null : describeOthersStillWanting(askersOf(request), who.data?.id)) ??
+        say('phone.anAskable.anythingAlreadyDownloadedForItIs'),
       [
         { text: say('common.keepIt'), style: 'cancel' },
         {
@@ -132,7 +211,10 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
 
   const standing = describeStanding(title.standing);
   const mayTakeBack =
-    request !== null && request.requestedBy.id === who.data?.id && !HAS_ARRIVED.has(request.state);
+    request !== null && isAskedBy(request, who.data?.id) && !HAS_ARRIVED.has(request.state);
+  const whoElse = describeWhoElseAsked(title.standing.askedBy ?? [], who.data?.id);
+  const myProfileAsk = request === null ? null : describeMyProfileAsk(request, who.data?.id);
+  const isJoinable = !isUnrequestable && mayJoinRequest(title.standing, who.data?.id);
 
   return (
     <Screen scrolls onBack={onBack}>
@@ -150,6 +232,21 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
       {standing === null ? null : (
         <Words tone={standing.tone === 'danger' ? 'danger' : 'accent'}>{standing.label}</Words>
       )}
+
+      {whoElse === null ? null : <Words tone="muted">{whoElse}</Words>}
+
+      {myProfileAsk === null ? null : <Words tone="muted">{myProfileAsk}</Words>}
+
+      {isJoinable ? (
+        <Button
+          isBusy={isSending}
+          onPress={() => {
+            void join();
+          }}
+        >
+          {say('common.iWantThisToo')}
+        </Button>
+      ) : null}
 
       {going === null ? null : (
         <HowFar
@@ -178,11 +275,23 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
         </Button>
       ) : null}
 
-      {title.standing.status === 'askable' ||
-      (title.standing.status === 'linked' && title.standing.requestId === null) ? (
+      {isUnrequestable && title.standing.status === 'askable' ? (
+        <Words tone="muted">{say('common.noLibraryTakesRequestsForThis')}</Words>
+      ) : null}
+
+      {!isUnrequestable &&
+      (title.standing.status === 'askable' ||
+        (isMore && title.standing.status === 'library') ||
+        (title.standing.status === 'linked' && title.standing.requestId === null)) ? (
         <>
           {kind === 'series' ? (
-            <TheSeasons tmdbId={Number(id)} seasons={seasons} onChange={setSeasons} />
+            <TheSeasons
+              tmdbId={Number(id)}
+              seasons={seasons}
+              onChange={setSeasons}
+              followsNew={followsNew}
+              onFollowsNew={setFollowsNew}
+            />
           ) : null}
 
           {choices.length > 1 ? (
@@ -217,7 +326,7 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
                   void askLinkedServer(server.id, {
                     kind,
                     tmdbId: Number(id),
-                    ...(kind === 'series' ? { seasons } : {}),
+                    ...(kind === 'series' ? { seasons, followsNewSeasons: followsNew } : {}),
                   })
                     .then((sent) => {
                       setRefusal(sent.refusal?.message ?? null);
@@ -230,6 +339,30 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
                 {say('common.askName', { name: server.name })}
               </Button>
             ))}
+        </>
+      ) : null}
+
+      {isAddingSeasons ? (
+        <>
+          <TheSeasons
+            tmdbId={Number(id)}
+            seasons={adding}
+            onChange={setAdding}
+            followsNew={addsFollowing}
+            onFollowsNew={setAddsFollowing}
+            alreadyAsked={askedSeasons}
+            isFollowedAlready={isFollowedAlready}
+          />
+
+          <Button
+            isBusy={isSending}
+            isDisabled={!hasMoreToAdd}
+            onPress={() => {
+              void addSeasons();
+            }}
+          >
+            {say('common.addSeasons')}
+          </Button>
         </>
       ) : null}
 

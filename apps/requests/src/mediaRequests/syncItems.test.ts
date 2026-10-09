@@ -43,11 +43,20 @@ describe('syncItems', () => {
         musicBrainzId: null,
         season: null,
         episode: null,
+        versionProfileId: null,
         title: 'Dune',
         airDate: '2021-12-03',
         state: 'waiting',
       },
     ]);
+  });
+
+  it('waits for each further version of a film kept at its own profile', () => {
+    const uhd = '3fa85f64-5717-4562-b3fc-2c963f66afa6';
+    const synced = syncItems({ ...aMediaRequest(), versions: [uhd] }, NOTHING, [aRequestItem()]);
+
+    expect(synced.add.map((item) => item.versionProfileId)).toEqual([uhd]);
+    expect(synced.remove).toEqual([]);
   });
 
   it('waits for every regular episode where no seasons were named', () => {
@@ -62,6 +71,21 @@ describe('syncItems', () => {
         (item) => item.title,
       ),
     ).toEqual(['Behind the scenes', 'Hello, Ms. Cobel']);
+  });
+
+  it('waits for seasons after the last there was where it follows new ones, but not Specials', () => {
+    const following = { ...SERIES, seasons: [1], followsNewSeasons: true, followsAfter: 1 };
+
+    expect(
+      syncItems(following, { episodes: EPISODES, albums: [] }, []).add.map((item) => item.title),
+    ).toEqual(['Good News About Hell', 'Half Loop', 'Hello, Ms. Cobel']);
+    expect(
+      syncItems(
+        { ...following, followsNewSeasons: false },
+        { episodes: EPISODES, albums: [] },
+        [],
+      ).add.map((item) => item.title),
+    ).toEqual(['Good News About Hell', 'Half Loop']);
   });
 
   it('changes what the catalogue renamed or re-dated, and adds only what is new', () => {
@@ -124,6 +148,101 @@ describe('syncItems', () => {
     ).toMatchObject({ arrive: [], remove: ['wanted'] });
   });
 
+  it('leaves out an artist’s single whose every track is on one of their albums', () => {
+    const albums = [
+      { id: 'a', title: 'An Album', type: 'album' as const, firstReleased: null, trackCount: 12 },
+      {
+        id: 's',
+        title: 'A Single',
+        type: 'single' as const,
+        firstReleased: null,
+        isOnAnAlbum: true,
+      },
+      { id: 't', title: 'Another Single', type: 'single' as const, firstReleased: null },
+    ];
+
+    expect(
+      syncItems(
+        { ...ARTIST, releaseTypes: ['album', 'single'] },
+        { episodes: [], albums },
+        [],
+      ).add.map((one) => [one.musicBrainzId, one.trackCount]),
+    ).toEqual([
+      ['a', 12],
+      ['t', null],
+    ]);
+  });
+
+  it('marks an album the library holds there, or a rung to climb from where lossless is wanted', () => {
+    const albums = [
+      { id: 'a', title: 'Lossless', type: 'album' as const, firstReleased: null },
+      { id: 'b', title: 'Lossy', type: 'album' as const, firstReleased: null },
+    ];
+    const held = [
+      { id: 'a', quality: 'flac' as const },
+      { id: 'b', quality: 'mp3-320' as const },
+    ];
+    const states = (upgradesToLossless: boolean) =>
+      syncItems(
+        { ...ARTIST, upgradesToLossless },
+        { episodes: [], albums },
+        [],
+        'digital',
+        [],
+        held,
+      ).add.map((one) => [one.musicBrainzId, one.state, one.heldQuality]);
+
+    expect(states(false)).toEqual([
+      ['a', 'available', null],
+      ['b', 'available', null],
+    ]);
+    expect(states(true)).toEqual([
+      ['a', 'available', null],
+      ['b', 'waiting', 'mp3-320'],
+    ]);
+  });
+
+  it('wants again an album the library holds lossy once lossless is wanted, and lets it be once not', () => {
+    const albums = [{ id: 'b', title: 'Lossy', type: 'album' as const, firstReleased: null }];
+    const held = [{ id: 'b', quality: 'mp3' as const }];
+    const here = aRequestItem({
+      id: 'here',
+      musicBrainzId: 'b',
+      title: 'Lossy',
+      airDate: null,
+      state: 'available',
+    });
+    const climbing = aRequestItem({
+      id: 'climbing',
+      musicBrainzId: 'b',
+      title: 'Lossy',
+      airDate: null,
+      state: 'wanted',
+      heldQuality: 'mp3',
+    });
+
+    expect(
+      syncItems(
+        { ...ARTIST, upgradesToLossless: true },
+        { episodes: [], albums },
+        [here],
+        'digital',
+        [],
+        held,
+      ).change,
+    ).toEqual([{ id: 'here', changes: { heldQuality: 'mp3', state: 'wanted' } }]);
+    expect(
+      syncItems(
+        { ...ARTIST, upgradesToLossless: false },
+        { episodes: [], albums },
+        [climbing],
+        'digital',
+        [],
+        held,
+      ).arrive,
+    ).toEqual(['climbing']);
+  });
+
   it('waits for an artist’s albums of the kinds asked for, by their MusicBrainz ids', () => {
     expect(syncItems(ARTIST, { episodes: [], albums: ALBUMS }, []).add).toEqual([
       {
@@ -132,6 +251,8 @@ describe('syncItems', () => {
         episode: null,
         title: 'The Piper at the Gates of Dawn',
         airDate: '1967-08-04',
+        trackCount: null,
+        heldQuality: null,
         state: 'waiting',
       },
       {
@@ -140,6 +261,8 @@ describe('syncItems', () => {
         episode: null,
         title: 'Pulse',
         airDate: '1995-05-29',
+        trackCount: null,
+        heldQuality: null,
         state: 'waiting',
       },
       {
@@ -148,6 +271,8 @@ describe('syncItems', () => {
         episode: null,
         title: 'The Final Cut',
         airDate: null,
+        trackCount: null,
+        heldQuality: null,
         state: 'waiting',
       },
     ]);
@@ -174,5 +299,32 @@ describe('syncItems', () => {
       remove: [],
       arrive: [],
     });
+  });
+
+  it('waits for an audiobook once in each narration chosen, and once where none is', () => {
+    const book = aMediaRequest({
+      kind: 'book',
+      title: 'A Book',
+      tmdbId: null,
+      bookFormats: ['audiobook'],
+    });
+
+    expect(
+      syncItems({ ...book, narrationsWanted: ['A', 'B'] }, NOTHING, []).add.map(
+        (item) => item.narration,
+      ),
+    ).toEqual(['A', 'B']);
+    expect(syncItems(book, NOTHING, []).add.map((item) => item.narration)).toEqual([null]);
+  });
+
+  it('waits for a book once in each format asked for, an ebook where none is said', () => {
+    const book = aMediaRequest({ kind: 'book', title: 'Project Hail Mary', tmdbId: null });
+
+    expect(syncItems(book, NOTHING, []).add.map((item) => item.format)).toEqual(['ebook']);
+    expect(
+      syncItems({ ...book, bookFormats: ['ebook', 'audiobook'] }, NOTHING, [
+        aRequestItem({ format: 'ebook', airDate: null, title: 'Project Hail Mary' }),
+      ]).add.map((item) => item.format),
+    ).toEqual(['audiobook']);
   });
 });

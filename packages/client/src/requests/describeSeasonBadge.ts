@@ -2,6 +2,7 @@ import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
 import type { RequestItem } from '@ValenceContracts/schemas/MediaRequest';
 import type { StateBadge } from '@ValenceClient/status/StateBadge';
 import { say } from '@ValenceI18n/say';
+import { REQUEST_STATE_NAMES } from '@ValenceContracts/constants/REQUEST_STATE_NAMES';
 
 /**
  * Sums up where a season of a request has got to from its episodes: whether it is all here, what is
@@ -24,7 +25,7 @@ const describeSeasonBadge = (
     items.some((item) => states.includes(item.state));
 
   if (here === items.length) {
-    return { ...STATUS_LOOK.done, label: say('common.available'), detail: null };
+    return { ...STATUS_LOOK.done, label: REQUEST_STATE_NAMES.available, detail: null };
   }
 
   if (has(['searching', 'chosen', 'downloading', 'filing', 'filed'])) {
@@ -32,7 +33,7 @@ const describeSeasonBadge = (
   }
 
   if (has(['wanted', 'failed'])) {
-    return { ...STATUS_LOOK.attention, label: say('common.wanted'), detail };
+    return { ...STATUS_LOOK.attention, label: REQUEST_STATE_NAMES.wanted, detail };
   }
 
   const isAired = items.some(

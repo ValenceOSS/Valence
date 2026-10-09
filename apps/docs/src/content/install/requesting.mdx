@@ -103,9 +103,9 @@ That removes any container in the project that the compose file no longer descri
 
 ### Failing indexers
 
-Valence raises a warning, and sends the `requests.indexerFailing` webhook, when an enabled indexer fails three times in a row. Five failures turn it off. `requests.indexerWorking` follows when it answers again.
+Valence raises a warning, and sends the `requests.indexerFailing` webhook, when an enabled indexer fails three times in a row. After five failures it **rests**: searches skip it for five minutes, then for longer after each failure that follows (15 minutes, 30, an hour, 3, 6, 12, then a day), and it's tried again on its own after each rest. `requests.indexerWorking` follows when it answers again.
 
-The admin area's **Indexers** page says why each one failed. Most often the site has moved, is down for a while, or wants a login or key that has changed; open the indexer, put that right, and press **Test**. **Test all** tries every indexer that is on, and every one Valence turned off, again; it leaves alone the ones you switched off. An indexer that was turned off for failing switches back on once a test passes. A site behind Cloudflare's check has [its own section](#indexers-behind-cloudflare).
+The admin area's **Indexers** page says why each one failed. Most often the site has moved, is down for a while, or wants a login or key that has changed; open the indexer, put that right, and press **Test**. **Test all** tries every indexer that is on, resting ones included; it leaves alone the ones you switched off. A test or search that passes ends a rest at once. A site behind Cloudflare's check has [its own section](#indexers-behind-cloudflare).
 
 ## Download clients
 
@@ -163,9 +163,26 @@ Handed off means:
 - Valence follows the app every minute: its queue for what is downloading, and whether each film, episode or album has a file. Each moves from wanted to downloading to filed, the request page says what the app is doing, and the usual `requests.chosen`, `requests.downloadStarted`, `requests.downloadFailed` and `requests.filed` webhooks follow.
 - Once the app has imported something, Valence reads that folder and tells whoever asked, exactly as it does for what it files itself.
 - A series stays followed. Sonarr's monitoring fetches new episodes, and each is marked available as Sonarr imports it. A season added to the request later is monitored in Sonarr too.
-- Cancelling or refusing a request removes nothing from the app.
+- Cancelling or refusing a request removes nothing from the app. With [Control connected apps from Valence](#controlling-connected-apps-from-valence) on, declining or removing one stops the app monitoring it.
+- In Requests › Catalogue, the title's page says which app handles it, with **Open in Sonarr** (or Radarr, or Lidarr) to go to its page there. **Search missing** asks the app to search again. **Interactive search** is offered only with [Control connected apps from Valence](#controlling-connected-apps-from-valence) on; otherwise picking a release is left to the app.
+- Where every library that takes requests hands off, **Indexers** and **Profiles** say so, since Valence searches none of them for those requests.
 
 The series a request names is found in Sonarr by the TVDB id the catalogue gives. Where the catalogue gives none, Sonarr is asked to find it by its TMDB id.
+
+### Controlling connected apps from Valence
+
+By default a connected app decides for itself what to download. Turning on **Control connected apps from Valence**, on the admin area's **Requests** page under **Connected apps**, lets you do it from Valence instead.
+
+With it on, a handed-off title's page in Requests › Catalogue offers **Interactive search**. The releases listed are the ones the app finds on its own indexers, judged by its own quality profile: what it would reject is listed last, with its reasons. Picking one sends it to the app to download, exactly as picking it in the app would, and the request's history says so.
+
+The rest of the title's page works the app too:
+
+- **Downloads** are the ones in the app's queue for the title. **Stop download…** removes one from the app and its download client, which deletes what it downloaded so far, and adds the release to the app's blocklist. Then the app looks for another release, **Interactive search** opens for you to pick one, or, with **Stop getting this**, what it held is no longer followed in Valence or monitored in the app.
+- **Never again** is the app's blocklist for the title. Removing an entry removes it from the app's blocklist.
+- Following or not following a season, episode or album also monitors it in the app, or stops. Following one again asks the app to search for it where the library searches as soon as something is added.
+- Declining or removing the request stops the app monitoring it. Nothing is deleted from the app, and its files stay unless you choose to delete them.
+
+Valence's own indexers, profiles and download clients aren't used for these titles either way.
 
 ### Paths for connected apps
 
@@ -232,23 +249,33 @@ The requests service does not go through the VPN and does not need to. It talks 
 A **quality profile** is what releases are judged by. The admin area's **Profiles** page manages them, and a request can be given one when it is approved.
 
 - **A profile is chosen** when the request is approved, or the library's own is used, or the defaults apply.
+- **Qualities, best first.** A video profile is one ordered list of qualities, each a source at a resolution, such as Blu-ray 1080p, WEB-DL 1080p, then Blu-ray 720p. Order them however you like: "WEB-DL 1080p, then Blu-ray 720p, never HDTV 1080p" is three ticks and an order. A release whose name gives no source, as most anime releases don't, counts as the lowest quality the profile takes at its resolution.
+- **How releases are ranked.** As Sonarr does: first by quality, then by score (preferred words, a proper or repack, and the preferred language), then by how much of what's wanted a release holds, then by the indexer's priority, then by seeders or grabs in bands (a few, tens, hundreds), and last by age.
+- **Custom formats.** As in Sonarr and Radarr, a profile can score what a release name says beyond its quality. Each format has a name, a score and conditions: words or a pattern between slashes, the release group, the video codec, an HDR format, the source, the resolution, a language, or a size in GB (`2-10`, `-10` or `30-`). Each condition can be turned round (**Doesn't match**) or **Required**. A format matches when every required condition is met and at least one of the others. Its score adds to the release's score, which ranks releases of the same quality, and a release whose formats add up to less than the profile's **Least format score** is refused. A profile that upgrades can also keep upgrading until its formats reach a score.
 - **Defaults for video.** With no profile at all, 1080p or 720p from any good source is taken.
 - **Defaults for music.** A music quality profile puts FLAC before MP3 and so on. With none, the choice is FLAC, MP3 320 or V0.
-- **Upgrades.** Where the profile upgrades, a better release replaces what was fetched until the profile's limit is reached.
+- **Upgrades.** Where the profile upgrades, a release of a better quality, or the same quality with a better score, replaces what was fetched, until the quality it upgrades until is reached.
 - **Not out yet.** A film is held until it is out at home, digitally or on disc, as its profile says, and an episode until it airs.
+
+### Kinds with no library
+
+Only what a library takes can be asked for. With no films library that has **Takes requests** on, nobody is offered films: there's no Movies section, no films on Discover's shelves or in search, and a film's page says no library takes requests for it. The same goes for shows, music and books. Quality profiles of a kind no library takes say they aren't used. Overseerr and Jellyseerr, talking to Valence as Radarr or Sonarr, are given no root folder for it, and Valence's health check tells them why.
+
+A request still open when its library is removed is marked **Failed**, saying there's no library to put it in; edit it to choose another.
 
 ## Per library behaviour
 
 A library's own settings, on the **Libraries** page, say how requesting treats it:
 
-| Setting                       | What it does                                                                                                                                                     |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Takes requests                | Off, and nothing is filed there and it is not offered when somebody asks. A library of things you ripped yourself can be left out entirely.                      |
-| Quality profile for requests  | The profile releases for it are judged by. Left alone, whichever profile names this library is used, and failing that the defaults.                              |
-| Where requests are filed      | A folder of its own for what is fetched, where you want it kept apart from what you already had. The library's own folder otherwise.                             |
-| Who fetches what is asked for | Valence, or a connected Radarr, Sonarr or Lidarr. See [Handing a library to an app](#handing-a-library-to-an-app). The two settings above apply to Valence only. |
+| Setting                       | What it does                                                                                                                                                                                                                    |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Takes requests                | Off, and nothing is filed there and it is not offered when somebody asks. A library of things you ripped yourself can be left out entirely.                                                                                     |
+| Quality profile for requests  | The profile releases for it are judged by. Left alone, whichever profile names this library is used, and failing that the defaults.                                                                                             |
+| Where requests are filed      | A folder of its own for what is fetched, where you want it kept apart from what you already had. The library's own folder otherwise.                                                                                            |
+| Higher-quality requests       | When somebody asks for a title already requested at a profile higher in **Profiles**: ask you (the default), switch to it, keep the profile asked first, or, for films, keep both versions. A lower one just joins the request. |
+| Who fetches what is asked for | Valence, or a connected Radarr, Sonarr or Lidarr. See [Handing a library to an app](#handing-a-library-to-an-app). The three settings above apply to Valence only.                                                              |
 
-One server-wide setting sits beside them, on the **Settings** page: **what a request for an artist watches**. Albums alone unless you say otherwise.
+One server-wide setting sits beside them, on the **Settings** page: **what a request for an artist watches**. Albums, mixtapes and EPs unless you say otherwise.
 
 ## Making and approving requests
 

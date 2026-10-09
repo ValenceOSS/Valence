@@ -5,6 +5,8 @@ import { createArrCaller } from '@ValenceRequests/arrApps/createArrCaller';
 import { anArrApp } from '@ValenceRequests/arrApps/testing/anArrApp';
 import { aFakeArr } from '@ValenceRequests/arrApps/testing/aFakeArr';
 import { ArrQueuePageSchema } from '@ValenceRequests/arrApps/schemas/ArrQueuePageSchema';
+import { ArrReleaseSchema } from '@ValenceRequests/arrApps/schemas/ArrReleaseSchema';
+import { releaseFromArr } from '@ValenceRequests/arrApps/releaseFromArr';
 import { createMemoryEventStore } from '@ValenceRequests/events/createMemoryEventStore';
 import { createMemoryRequestLogStore } from '@ValenceRequests/mediaRequests/createMemoryRequestLogStore';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
@@ -41,6 +43,36 @@ const QUEUE_PAGE = {
 
 const QUEUED = ArrQueuePageSchema.parse(QUEUE_PAGE).records;
 
+const OTHERS = ArrReleaseSchema.array().parse([
+  {
+    guid: 'refused',
+    title: 'Dune.2021.2160p.REMUX',
+    indexerId: 2,
+    indexer: 'An Indexer',
+    protocol: 'torrent',
+    rejected: true,
+    rejections: ['Not wanted in profile'],
+    qualityWeight: 1800,
+  },
+  {
+    guid: 'lesser',
+    title: 'Dune.2021.720p.WEB-DL',
+    indexerId: 2,
+    indexer: 'An Indexer',
+    protocol: 'torrent',
+    qualityWeight: 700,
+  },
+]);
+
+const BEST = ArrReleaseSchema.parse({
+  guid: 'best',
+  title: 'Dune.2021.1080p.BluRay',
+  indexerId: 3,
+  indexer: 'Another Indexer',
+  protocol: 'usenet',
+  qualityWeight: 1100,
+});
+
 /**
  * A hand-off worker over memory stores, a Radarr whose queue holds one film, and a hand-off that
  * places at 12 and sees what the test says.
@@ -56,6 +88,7 @@ const aWorker = ({
   sees = (all: readonly RequestItemRecord[]): ItemSighting[] =>
     all.map((item) => ({ itemId: item.id, kind: 'missing' })),
   place = () => Promise.resolve(12),
+  releases = () => Promise.resolve([...OTHERS, BEST]),
   handler = true,
   now = () => new Date('2026-10-01T09:00:00.000Z'),
 }: {
@@ -65,6 +98,7 @@ const aWorker = ({
   apps?: ArrAppRecord[];
   sees?: (all: readonly RequestItemRecord[]) => ItemSighting[];
   place?: HandOffHandler['place'];
+  releases?: HandOffHandler['releases'];
   handler?: boolean;
   now?: () => Date;
 } = {}) => {
@@ -72,9 +106,15 @@ const aWorker = ({
   const itemStore = createMemoryRecordStore(items);
   const events = createMemoryEventStore();
   const log = createMemoryRequestLogStore();
-  const arr = aFakeArr({ 'GET /api/v3/queue': { body: QUEUE_PAGE } });
+  const arr = aFakeArr({
+    'GET /api/v3/queue': { body: QUEUE_PAGE },
+    'POST /api/v3/release': { body: [] },
+  });
   const watch = vi.fn<HandOffHandler['watch']>((_request, all) => Promise.resolve(sees(all)));
   const placing = vi.fn<HandOffHandler['place']>(place);
+  const searching = vi.fn<HandOffHandler['search']>(() => Promise.resolve());
+  const pageOf = vi.fn<HandOffHandler['pageOf']>(() => Promise.resolve('/movie/438631'));
+  const listing = vi.fn<HandOffHandler['releases']>(releases);
   const worker = createHandOffWorker({
     requests,
     items: itemStore,
@@ -82,11 +122,33 @@ const aWorker = ({
     connect: (app) => createArrCaller(arr.fetch, app),
     events,
     log: log.store,
-    handlerFor: () => (handler ? { place: placing, watch } : null),
+    handlerFor: () =>
+      handler
+        ? {
+            place: placing,
+            watch,
+            search: searching,
+            pageOf,
+            releases: listing,
+            queued: () => Promise.resolve([]),
+            monitor: () => Promise.resolve(),
+          }
+        : null,
     now,
   });
 
-  return { worker, requests, items: itemStore, events, log, arr, watch, placing };
+  return {
+    worker,
+    requests,
+    items: itemStore,
+    events,
+    log,
+    arr,
+    watch,
+    placing,
+    searching,
+    listing,
+  };
 };
 
 describe('createHandOffWorker', () => {
@@ -374,5 +436,102 @@ describe('createHandOffWorker', () => {
     const { worker } = aWorker({ place: () => Promise.reject(new Error('Broken')) });
 
     await expect(worker.step()).rejects.toThrow('Broken');
+  });
+
+  it('asks the app to search again for a request it has, and nothing for one it has not', async () => {
+    const handed = aWorker({ request: aMediaRequest({ handOff: HAND_OFF, handOffId: 12 }) });
+
+    expect(await handed.worker.searchNow(aMediaRequest().id)).toBe('searched');
+    expect(handed.searching).toHaveBeenCalledWith(expect.objectContaining({ handOffId: 12 }), 12);
+    expect(handed.log.said.map((line) => line.message.message)).toEqual([
+      'Asked Radarr to search for it again.',
+    ]);
+
+    const kept = aWorker({ request: aMediaRequest() });
+
+    expect(await kept.worker.searchNow(aMediaRequest().id)).toBe('notHandedOff');
+    expect(kept.searching).not.toHaveBeenCalled();
+
+    const declined = aWorker({
+      request: aMediaRequest({ handOff: HAND_OFF, handOffId: 12, approval: 'refused' }),
+    });
+
+    expect(await declined.worker.searchNow(aMediaRequest().id)).toBe('notApproved');
+    expect(declined.searching).not.toHaveBeenCalled();
+  });
+
+  it('says which app has a request, with a link to its page there', async () => {
+    const { worker } = aWorker({ request: aMediaRequest({ handOff: HAND_OFF, handOffId: 12 }) });
+
+    expect(await worker.handedTo(aMediaRequest().id)).toEqual({
+      appId: RADARR.id,
+      appName: RADARR.name,
+      appKind: 'radarr',
+      link: `${RADARR.url.replace(/\/+$/, '')}/movie/438631`,
+    });
+    expect(
+      await aWorker({ request: aMediaRequest() }).worker.handedTo(aMediaRequest().id),
+    ).toBeNull();
+  });
+
+  it('lists the releases the app finds, those it would take first and best first', async () => {
+    const item = aRequestItem();
+    const { worker, listing } = aWorker({
+      request: aMediaRequest({ handOff: HAND_OFF, handOffId: 12 }),
+      items: [item],
+    });
+
+    const found = await worker.releasesFor(aMediaRequest().id);
+
+    expect(listing).toHaveBeenCalledWith(expect.objectContaining({ handOffId: 12 }), [item], 12);
+    expect(found?.releases.map((one) => one.id)).toEqual(['3:best', '2:lesser', '2:refused']);
+    expect(found?.pickedId).toBe('3:best');
+    expect(found?.indexers).toMatchObject([
+      { indexerId: RADARR.id, indexerName: RADARR.name, found: 3, problem: null },
+    ]);
+  });
+
+  it('says what went wrong where the app could not list releases, and nothing for one it has not', async () => {
+    const { worker } = aWorker({
+      request: aMediaRequest({ handOff: HAND_OFF, handOffId: 12 }),
+      releases: () => Promise.reject(new ArrAppFailure(sayVerbatim('Indexers are down'))),
+    });
+
+    expect(await worker.releasesFor(aMediaRequest().id)).toMatchObject({
+      releases: [],
+      pickedId: null,
+      indexers: [{ found: 0, problem: { message: 'Indexers are down' } }],
+    });
+    expect(
+      await aWorker({ request: aMediaRequest() }).worker.releasesFor(aMediaRequest().id),
+    ).toBeNull();
+  });
+
+  it('asks the app to fetch the release picked, by its indexer and guid', async () => {
+    const { worker, arr, log } = aWorker({
+      request: aMediaRequest({ handOff: HAND_OFF, handOffId: 12 }),
+    });
+
+    expect(
+      await worker.pick(aMediaRequest().id, releaseFromArr(BEST, RADARR.id).release),
+    ).toBeNull();
+    expect(arr.sent('POST', '/api/v3/release')).toEqual([{ guid: 'best', indexerId: 3 }]);
+    expect(log.said.map((line) => line.message.message)).toEqual([
+      'Asked Radarr to fetch Dune.2021.1080p.BluRay.',
+    ]);
+  });
+
+  it('sends no pick to an app switched off, or for a request not yet handed over', async () => {
+    const release = releaseFromArr(BEST, RADARR.id).release;
+    const off = aWorker({
+      request: aMediaRequest({ handOff: HAND_OFF, handOffId: 12 }),
+      apps: [{ ...RADARR, isEnabled: false }],
+    });
+    const waiting = aWorker({ request: aMediaRequest({ handOff: HAND_OFF }) });
+
+    expect(await off.worker.pick(aMediaRequest().id, release)).not.toBeNull();
+    expect(await waiting.worker.pick(aMediaRequest().id, release)).not.toBeNull();
+    expect(off.arr.sent('POST', '/api/v3/release')).toEqual([]);
+    expect(waiting.arr.sent('POST', '/api/v3/release')).toEqual([]);
   });
 });

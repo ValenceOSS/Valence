@@ -1,15 +1,20 @@
+import { Alert } from 'react-native';
 import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
-import { askForMedia, removeMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
+import {
+  askForMedia,
+  joinMediaRequest,
+  removeMediaRequest,
+} from '@ValenceClient/requests/fetchMediaRequests';
 import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
 import { askLinkedServer } from '@ValenceClient/linking/askLinkedServer';
 import { linkingQueries } from '@ValenceClient/query/linkingQueries';
 import { aLinkedServerFace } from '@ValenceClient/testing/aLinkedServerFace';
 import { AskPage } from '@ValenceTv/screens/AskPage/AskPage';
 import type { CatalogueTitleDetail } from '@ValenceContracts/schemas/CatalogueTitle';
-import type { CatalogueSeason } from '@ValenceContracts/schemas/MediaRequest';
+import type { CatalogueSeason, MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 
 jest.mock('@ValenceClient/session/auth', () => ({
   fetchSession: () => new Promise(() => undefined),
@@ -22,6 +27,7 @@ jest.mock('@ValenceClient/linking/askLinkedServer', () => ({
 jest.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
   ...jest.requireActual<object>('@ValenceClient/requests/fetchMediaRequests'),
   askForMedia: jest.fn(),
+  joinMediaRequest: jest.fn(),
   removeMediaRequest: jest.fn(),
 }));
 
@@ -44,6 +50,7 @@ const aTitle = (overrides: Partial<CatalogueTitleDetail> = {}): CatalogueTitleDe
   standing: { status: 'askable', mediaId: null, requestId: null, requestState: null },
   musicBrainzId: null,
   backdropUrl: '/backdrops/dune.jpg',
+  logoUrl: null,
   genres: ['Science Fiction', 'Adventure'],
   runtimeMinutes: 155,
   cast: [{ name: 'Timothée Chalamet', role: 'Paul', photoUrl: null }],
@@ -66,6 +73,7 @@ type Held = {
   seasons?: CatalogueSeason[];
   choices?: { id: string; name: string; kind: 'video' }[];
   faces?: ReturnType<typeof aLinkedServerFace>[];
+  kinds?: readonly MediaRequestKind[];
 };
 
 const aCacheHolding = ({
@@ -74,6 +82,7 @@ const aCacheHolding = ({
   seasons = [],
   choices = [],
   faces = [],
+  kinds = ['film', 'series', 'artist', 'album', 'book'],
 }: Held): QueryClient => {
   const cache = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Infinity, gcTime: Infinity } },
@@ -87,6 +96,10 @@ const aCacheHolding = ({
   ]);
   cache.setQueryData(sessionQueries.who().queryKey, ME);
   cache.setQueryData(linkingQueries.faces().queryKey, faces);
+  cache.setQueryData(requestsQueries.availability().queryKey, {
+    isEnabled: true,
+    kinds: [...kinds],
+  });
 
   return cache;
 };
@@ -112,6 +125,7 @@ beforeEach(() => {
   jest.mocked(removeMediaRequest).mockReset();
   jest.mocked(askForMedia).mockResolvedValue({ value: aMediaRequest(), refusal: null });
   jest.mocked(removeMediaRequest).mockResolvedValue(null);
+  jest.mocked(joinMediaRequest).mockReset().mockResolvedValue({ value: null, refusal: null });
   jest
     .mocked(askLinkedServer)
     .mockReset()
@@ -239,7 +253,35 @@ describe('AskPage', () => {
     await userEvent.press(drawn.getByRole('button', { name: 'Season 3 · 10 episodes' }));
     await userEvent.press(drawn.getByRole('button', { name: 'Request 1 season' }));
 
-    expect(askForMedia).toHaveBeenCalledWith({ kind: 'series', tmdbId: 438631, seasons: [2] });
+    expect(askForMedia).toHaveBeenCalledWith({
+      kind: 'series',
+      tmdbId: 438631,
+      seasons: [2],
+      followsNewSeasons: true,
+    });
+  });
+
+  it('leaves Specials for whoever wants them, and asks without new seasons where told', async () => {
+    const drawn = await drawAsk(
+      aCacheHolding({
+        kind: 'series',
+        title: aTitle({ kind: 'series' }),
+        seasons: [aSeason(0, 'askable'), aSeason(1, 'askable')],
+      }),
+      { kind: 'series' },
+    );
+
+    expect(drawn.getByRole('button', { name: 'Request 1 season' })).toBeTruthy();
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Get new seasons as they come' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Request 1 season' }));
+
+    expect(askForMedia).toHaveBeenCalledWith({
+      kind: 'series',
+      tmdbId: 438631,
+      seasons: [1],
+      followsNewSeasons: false,
+    });
   });
 
   it('offers no request once every season is unchosen', async () => {
@@ -260,6 +302,12 @@ describe('AskPage', () => {
     expect(drawn.queryByRole('button', { name: /^Request/ })).toBeNull();
   });
 
+  it('offers no request for a film where no library takes films', async () => {
+    const drawn = await drawAsk(aCacheHolding({ title: aTitle(), kinds: ['series'] }));
+
+    expect(drawn.queryByRole('button', { name: 'Request' })).toBeNull();
+  });
+
   it('cancels a request this viewer made', async () => {
     const drawn = await drawAsk(
       aCacheHolding({
@@ -274,13 +322,80 @@ describe('AskPage', () => {
       }),
     );
 
-    expect(drawn.getByText('Requested')).toBeTruthy();
+    expect(drawn.getByText('Missing')).toBeTruthy();
+
+    const alert = jest.spyOn(Alert, 'alert');
 
     await userEvent.press(drawn.getByRole('button', { name: 'Cancel request' }));
+
+    expect(removeMediaRequest).not.toHaveBeenCalled();
+    expect(alert.mock.calls[0]?.[2]?.[0]).toMatchObject({ text: 'Keep it', style: 'cancel' });
+
+    alert.mock.calls[0]?.[2]?.find((button) => button.text === 'Cancel request')?.onPress?.();
 
     await waitFor(() => {
       expect(removeMediaRequest).toHaveBeenCalledWith(REQUEST_ID, true);
     });
+  });
+
+  it('names who asked for somebody else’s request, and wants it too', async () => {
+    const cache = aCacheHolding({
+      title: aTitle({
+        standing: {
+          status: 'requested',
+          mediaId: null,
+          requestId: REQUEST_ID,
+          requestState: 'wanted',
+          askedBy: [{ id: 'priya', name: 'Priya' }],
+        },
+      }),
+    });
+
+    cache.setQueryData(requestsQueries.mediaRequests().queryKey, []);
+
+    const drawn = await drawAsk(cache);
+
+    expect(drawn.getByText('Requested by Priya')).toBeTruthy();
+    expect(drawn.queryByRole('button', { name: 'Cancel request' })).toBeNull();
+
+    await userEvent.press(drawn.getByRole('button', { name: 'I want this too' }));
+
+    expect(joinMediaRequest).toHaveBeenCalledWith(REQUEST_ID);
+  });
+
+  it('says cancelling leaves a request for whoever else wants it', async () => {
+    const cache = aCacheHolding({
+      title: aTitle({
+        standing: {
+          status: 'requested',
+          mediaId: null,
+          requestId: REQUEST_ID,
+          requestState: 'wanted',
+          askedBy: [
+            { id: 'me', name: 'Marques' },
+            { id: 'priya', name: 'Priya' },
+          ],
+        },
+      }),
+    });
+
+    cache.setQueryData(requestsQueries.mediaRequests().queryKey, [
+      aMediaRequest({
+        id: REQUEST_ID,
+        requestedBy: { id: 'me', name: 'Marques' },
+        alsoAskedBy: [{ id: 'priya', name: 'Priya' }],
+      }),
+    ]);
+
+    const drawn = await drawAsk(cache);
+
+    expect(drawn.getByText('Priya wants it too')).toBeTruthy();
+
+    const alert = jest.spyOn(Alert, 'alert');
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Cancel request' }));
+
+    expect(alert.mock.calls[0]?.[1]).toBe('Priya still wants it, so it stays requested for them.');
   });
 
   it('offers to watch a film a linked server has, or to request it here anyway', async () => {

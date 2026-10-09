@@ -1,0 +1,1 @@
+ALTER TABLE "library" ADD COLUMN "higherProfileAsks" text DEFAULT 'ask' NOT NULL;

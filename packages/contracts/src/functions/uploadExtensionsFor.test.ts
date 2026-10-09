@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { uploadExtensionsFor } from '@ValenceContracts/functions/uploadExtensionsFor';
 
 describe('uploadExtensionsFor', () => {
-  it('takes video and subtitles for films and programmes', () => {
-    for (const kind of ['movies', 'shows'] as const) {
+  it('takes video and subtitles for films, programmes and anime', () => {
+    for (const kind of ['movies', 'shows', 'anime'] as const) {
       const extensions = uploadExtensionsFor(kind);
 
       expect(extensions).toContain('mkv');

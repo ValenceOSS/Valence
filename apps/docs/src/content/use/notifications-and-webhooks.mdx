@@ -97,7 +97,7 @@ You can subscribe to these events. The test delivery is separate and is sent onl
 Some notes worth knowing:
 
 - `session.started` is sent when somebody opens Valence, not when they sign in, and says where from. `session.ended` is sent a minute after the tab goes, so a page reload is not counted as leaving.
-- `requests.indexerFailing` is sent after three failures in a row. Five turn the indexer off.
+- `requests.indexerFailing` is sent after three failures in a row. After five the indexer rests, and is tried again on its own after a pause that grows with each failure.
 - `auth.failed` does not include attempts that were rate limited, because those are refused before Valence sees them.
 - The Requests group only appears where the requests service is set up. See [Requests](/use/requests).
 - `requests.made`, `requests.approved`, `requests.refused`, `requests.chosen`, `requests.filed` and `requests.available` carry the request they are about, so a Discord message shows it the way Seerr's do: what happened to which request in the title (such as "Film request now available: Dune (2021)"), the title's summary, its poster, who asked, where the request has got to, and the seasons or the artist where there are some. A request made and approved at once sends both events; subscribe to only one of them to get a single message.
@@ -139,7 +139,7 @@ The generic shape posts this envelope as the request body:
 
 `version` is the payload version, currently `1`. `id` is unique per event, so a receiver can ignore one it has already seen. `data` depends on `event`, and the full schema for each is in the API reference under [/api](/api).
 
-The request events above add a `request` object to `data`: its `id`, `kind` (`film`, `series`, `artist`, `album` or `book`), `title`, `artistName`, `year`, `overview`, `posterUrl`, `requestedBy`, the requested `seasons` and its `state`. It is `null` where an event is about something nobody requested, such as a release imported by hand.
+The request events above add a `request` object to `data`: its `id`, `kind` (`film`, `series`, `artist`, `album` or `book`), `title`, `artistName`, `year`, `overview`, `posterUrl`, `requestedBy` (whoever asked first), `alsoAskedBy` (the names of everyone who asked after them), the requested `seasons` and its `state`. It is `null` where an event is about something nobody requested, such as a release imported by hand.
 
 ### Signing
 

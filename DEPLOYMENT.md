@@ -221,7 +221,7 @@ download can be found.
 
 ### Films and series
 
-The admin area's **Requested** page asks for a film or series from the
+The admin area's **Catalogue** page asks for a film or series from the
 catalogue, which needs `CATALOGUE_API_KEY`. Somebody allowed to ask
 (`requests.ask`) makes a request; it waits for somebody who approves
 (`requests.approve`) unless the asker's role has `requests.autoApprove`.
@@ -292,7 +292,7 @@ The `requests.made`, `requests.approved`, `requests.refused`, `requests.chosen`,
 
 ### Music
 
-The same **Requested** page asks for music from MusicBrainz, which needs no key.
+The same **Catalogue** page asks for music from MusicBrainz, which needs no key.
 Valence asks it no more than once a second and names itself when it does, as
 MusicBrainz asks of everyone.
 

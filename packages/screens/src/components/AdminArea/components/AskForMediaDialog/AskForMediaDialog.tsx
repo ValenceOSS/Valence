@@ -1,3 +1,5 @@
+import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
+import { DEFAULT_RELEASE_TYPES } from '@ValenceContracts/schemas/MediaRequest';
 import { notify } from '@ValenceUI/notify';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -15,6 +17,7 @@ import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Spinner } from '@ValenceUI/Spinner';
 import { TextField } from '@ValenceUI/TextField';
 import { searchCatalogue } from '@ValenceClient/admin/fetchAdmin';
+import { ReleaseSearchDialog } from '@ValenceScreens/components/AdminArea/components/ReleaseSearchDialog/ReleaseSearchDialog';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import {
   askForMedia,
@@ -126,13 +129,15 @@ const PICKING = [
  */
 const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps) => {
   const [kind, setKind] = useState<MediaRequestKind>('film');
+  const [isSearchingIndexers, setIsSearchingIndexers] = useState(false);
   const [query, setQuery] = useState('');
   const [matches, setMatches] = useState<CatalogueMatch[] | null>(null);
   const [musicMatches, setMusicMatches] = useState<MusicCatalogueHit[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [chosen, setChosen] = useState<Chosen | null>(null);
-  const [releaseTypes, setReleaseTypes] = useState<ReleaseType[]>(['album']);
+  const [releaseTypes, setReleaseTypes] = useState<ReleaseType[]>([...DEFAULT_RELEASE_TYPES]);
   const [seasons, setSeasons] = useState<number[] | null>(null);
+  const [followsNew, setFollowsNew] = useState(true);
   const [isPickedByHand, setIsPickedByHand] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [isAsking, setIsAsking] = useState(false);
@@ -184,7 +189,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
           ...(chosen.musicBrainzId === null ? {} : { musicBrainzId: chosen.musicBrainzId }),
           ...(profileId === null ? {} : { profileId }),
           isPickedByHand,
-          ...(kind === 'series' ? { seasons } : {}),
+          ...(kind === 'series' ? { seasons, followsNewSeasons: followsNew } : {}),
           ...(kind === 'artist' ? { releaseTypes } : {}),
         };
 
@@ -271,6 +276,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
       >
         {found !== null && chosen !== null ? (
           <ReleasePickTable
+            kind={isMusicRequest(kind) ? 'music' : isBookRequest(kind) ? 'book' : 'video'}
             found={found.outcome}
             foundAt={found.at}
             pickingId={pickingId}
@@ -375,6 +381,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
                 onClick={() => {
                   setChosen(null);
                   setSeasons(null);
+                  setFollowsNew(true);
                   setFound(null);
                 }}
               >
@@ -398,7 +405,13 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
             )}
 
             {kind !== 'series' || chosen.tmdbId === null ? null : (
-              <SeasonChooser tmdbId={chosen.tmdbId} seasons={seasons} onChange={setSeasons} />
+              <SeasonChooser
+                tmdbId={chosen.tmdbId}
+                seasons={seasons}
+                onChange={setSeasons}
+                followsNew={followsNew}
+                onFollowsNew={setFollowsNew}
+              />
             )}
 
             <FormField
@@ -447,6 +460,18 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
                   },
                 }
         }
+        lead={
+          found === null ? (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setIsSearchingIndexers(true);
+              }}
+            >
+              {say('screens.adminArea.askForMediaDialog.searchTheIndexersInstead')}
+            </Button>
+          ) : null
+        }
       >
         {found === null ? null : (
           <Button
@@ -459,6 +484,19 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
           </Button>
         )}
       </DialogFooter>
+
+      <ReleaseSearchDialog
+        title={
+          isSearchingIndexers
+            ? say('screens.adminArea.askForMediaDialog.searchTheIndexersInstead')
+            : null
+        }
+        detail={say('screens.adminArea.askForMediaDialog.forSomethingNoCatalogueKnows')}
+        query={query}
+        onClose={() => {
+          setIsSearchingIndexers(false);
+        }}
+      />
     </DialogCompanion>
   );
 };

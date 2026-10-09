@@ -304,4 +304,102 @@ describe('createSonarrHandOff', () => {
       ),
     ).toMatchObject([{ folder: '/tv/Severance' }]);
   });
+
+  it('asks Sonarr to search the series again, and finds its page by its slug', async () => {
+    const arr = aFakeArr({
+      'POST /api/v3/command': { status: 201, body: { name: 'SeriesSearch', id: 1 } },
+      'GET /api/v3/series/7': {
+        body: { id: 7, tvdbId: 371_980, title: 'A Show', titleSlug: 'a-show' },
+      },
+    });
+    const handOff = createSonarrHandOff(createArrCaller(arr.fetch, SONARR));
+
+    await handOff.search(aMediaRequest({ kind: 'series' }), 7);
+
+    expect(arr.sent('POST', '/api/v3/command')).toEqual([{ name: 'SeriesSearch', seriesId: 7 }]);
+    expect(await handOff.pageOf(aMediaRequest({ kind: 'series' }), 7)).toBe('/series/a-show');
+  });
+
+  it('lists the releases Sonarr finds for each season still wanted, each once', async () => {
+    const arr = aFakeArr({
+      'GET /api/v3/release': (asked) => ({
+        body: [
+          { guid: 'whole-show', indexerId: 1 },
+          { guid: `season-${asked.query.get('seasonNumber') ?? ''}`, indexerId: 1 },
+        ],
+      }),
+    });
+
+    const found = await createSonarrHandOff(createArrCaller(arr.fetch, SONARR)).releases(
+      SEVERANCE_REQUEST,
+      [
+        aRequestItem({ id: 'a', season: 1, episode: 1, state: 'available' }),
+        aRequestItem({ id: 'b', season: 2, episode: 1 }),
+        aRequestItem({ id: 'c', season: 2, episode: 2 }),
+        aRequestItem({ id: 'd', season: 3, episode: 1 }),
+      ],
+      7,
+    );
+
+    expect(found.map((one) => one.guid)).toEqual(['whole-show', 'season-2', 'season-3']);
+    expect(arr.asked.map((one) => one.query.get('seriesId'))).toEqual(['7', '7']);
+  });
+
+  it('finds the episodes asked for in Sonarr’s queue, and monitors only those', async () => {
+    const queue = ArrQueuePageSchema.parse({
+      records: [
+        { id: 5, seriesId: 7, episodeId: 51, title: 'Show.S02.1080p', downloadId: 'pack' },
+        { id: 6, seriesId: 7, episodeId: 52, title: 'Show.S02.1080p', downloadId: 'pack' },
+        { id: 7, seriesId: 7, episodeId: 53, title: 'Show.S02E03.1080p' },
+        { id: 8, seriesId: 9, episodeId: 51, title: 'Other' },
+      ],
+    }).records;
+    const arr = aFakeArr({
+      'GET /api/v3/episode': {
+        body: [
+          anEpisode({}),
+          anEpisode({ id: 52, episodeNumber: 2 }),
+          anEpisode({ id: 53, episodeNumber: 3 }),
+        ],
+      },
+      'PUT /api/v3/episode/monitor': { body: [] },
+    });
+    const handOff = createSonarrHandOff(createArrCaller(arr.fetch, SONARR));
+    const first = aRequestItem({ id: 'a', season: 2, episode: 1 });
+    const second = aRequestItem({ id: 'b', season: 2, episode: 2 });
+
+    expect(
+      (await handOff.queued(SEVERANCE_REQUEST, [first, second], 7, queue)).map((one) => [
+        one.record.id,
+        one.itemIds,
+      ]),
+    ).toEqual([
+      [5, ['a']],
+      [6, ['b']],
+    ]);
+
+    await handOff.monitor(SEVERANCE_REQUEST, [second], 7, false);
+
+    expect(arr.sent('PUT', '/api/v3/episode/monitor')).toEqual([
+      { episodeIds: [52], monitored: false },
+    ]);
+  });
+
+  it('never monitors again an episode Valence no longer follows', async () => {
+    const arr = aFakeArr({
+      'GET /api/v3/series/7': { body: { id: 7, tvdbId: 371_980, title: 'A Show' } },
+      'GET /api/v3/episode': { body: [anEpisode({})] },
+      'GET /api/v3/episodefile': { body: [] },
+    });
+
+    await createSonarrHandOff(createArrCaller(arr.fetch, SONARR)).watch(
+      SEVERANCE_REQUEST,
+      [aRequestItem({ season: 2, episode: 1, isFollowed: false })],
+      HAND_OFF,
+      7,
+      [],
+    );
+
+    expect(arr.sent('PUT', '/api/v3/episode/monitor')).toEqual([]);
+  });
 });

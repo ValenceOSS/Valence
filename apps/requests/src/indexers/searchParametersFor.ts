@@ -1,3 +1,4 @@
+import { idsTakenBy } from '@ValenceRequests/indexers/idsTakenBy';
 import type {
   IndexerCapabilities,
   IndexerSearchMode,
@@ -18,7 +19,9 @@ const FUNCTIONS: Record<IndexerSearchMode, string> = {
  *
  * An indexer that never said what it can do is asked a plain search with everything a plain search
  * takes. One that cannot do the kind asked for is asked a plain search too, with the words — which is
- * what a person would have typed into it anyway.
+ * what a person would have typed into it anyway. One that takes a catalogue id the search carries is
+ * asked by the id alone, without the words, since a title spelled another way, such as "The Office
+ * US", would otherwise find nothing.
  *
  * @param search - What is being looked for.
  * @param capabilities - What the indexer said it can do, where it has said.
@@ -39,7 +42,12 @@ const searchParametersFor = (
 
   const wanted: Record<string, string | undefined> = {
     t: isFitting ? FUNCTIONS[mode] : 'search',
-    q: search.query === undefined || search.query === '' ? undefined : search.query,
+    q:
+      search.query === undefined ||
+      search.query === '' ||
+      Object.keys(idsTakenBy(search, capabilities)).length > 0
+        ? undefined
+        : search.query,
     imdbid: takes('imdbid') ? search.imdbId?.replace(/^tt/, '') : undefined,
     tmdbid: takes('tmdbid') ? search.tmdbId?.toString() : undefined,
     tvdbid: takes('tvdbid') ? search.tvdbId?.toString() : undefined,

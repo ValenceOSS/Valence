@@ -7,9 +7,14 @@ import {
   mediaItem,
   musicAlbum,
   musicArtist,
+  musicTrack,
   series,
 } from '#dialect/Schema';
+import { qualityOfTracks } from '@ValenceServer/requests/catalogue/qualityOfTracks';
+import { z } from 'zod';
 import { nameKey } from '@ValenceServer/music/nameKey';
+import { createDatabaseHeldTitles } from '@ValenceServer/requests/titles/createDatabaseHeldTitles';
+import { createDatabaseTitleFiles } from '@ValenceServer/requests/titles/createDatabaseTitleFiles';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { CatalogueLookup, NamedBook } from '@ValenceServer/requests/catalogue/CatalogueLookup';
 
@@ -39,9 +44,12 @@ const byKey = async (
   return found;
 };
 
+const NarratorsSchema = z.array(z.string());
+
 /**
  * The libraries, looked into for what a catalogue lists: films and series by their catalogue ids,
- * and every episode file of a series with where it is; artists by their MusicBrainz ids or names,
+ * every episode file of a series with where it is, every title held for the admin Catalogue and
+ * the files of each; artists by their MusicBrainz ids or names,
  * albums by their release groups or by their artist and title together, and books by their author
  * and title together.
  *
@@ -125,6 +133,10 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
     );
   },
 
+  heldTitles: createDatabaseHeldTitles(db),
+
+  titleFiles: createDatabaseTitleFiles(db),
+
   artists: (musicBrainzIds) =>
     byKey(musicBrainzIds, (wanted) =>
       db
@@ -148,6 +160,56 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
           ),
         ),
     ),
+
+  albumQualities: async (releaseGroupIds) => {
+    if (releaseGroupIds.length === 0) {
+      return new Map();
+    }
+
+    const rows = await db
+      .select({
+        key: musicAlbum.releaseGroupMusicbrainzId,
+        codec: musicTrack.codec,
+        isLossless: musicTrack.isLossless,
+        bitDepth: musicTrack.bitDepth,
+      })
+      .from(musicTrack)
+      .innerJoin(musicAlbum, eq(musicAlbum.id, musicTrack.albumId))
+      .innerJoin(library, eq(library.id, musicAlbum.libraryId))
+      .where(
+        and(
+          inArray(musicAlbum.releaseGroupMusicbrainzId, [...releaseGroupIds]),
+          isNull(library.linkedServerId),
+        ),
+      );
+    const tracks = new Map<string, (typeof rows)[number][]>();
+
+    for (const row of rows) {
+      if (row.key !== null) {
+        tracks.set(row.key, [...(tracks.get(row.key) ?? []), row]);
+      }
+    }
+
+    return new Map([...tracks].map(([key, held]) => [key, qualityOfTracks(held)]));
+  },
+
+  seriesNarrators: async (series) => {
+    const rows = await db
+      .select({ narrators: book.narrators })
+      .from(book)
+      .innerJoin(library, eq(library.id, book.libraryId))
+      .where(
+        and(
+          eq(book.layout, 'audio'),
+          sql`lower(${book.seriesName}) = ${series.toLowerCase()}`,
+          isNull(library.linkedServerId),
+        ),
+      );
+
+    return [
+      ...new Set(rows.flatMap((row) => NarratorsSchema.catch([]).parse(row.narrators ?? []))),
+    ];
+  },
 
   artistsNamed: (nameKeys) =>
     byKey(nameKeys, (wanted) =>

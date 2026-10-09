@@ -28,6 +28,23 @@ describe('MediaCard', () => {
     expect(onSelect).toHaveBeenCalledOnce();
   });
 
+  it('lays the caller’s own overlay and a title logo over the artwork', () => {
+    const { container } = render(
+      <MediaCard
+        title="Arrival"
+        subtitle="2016"
+        shape="wide"
+        imageUrl="/backdrop.jpg"
+        logoUrl="/logo.png"
+        overlay={<span>Asked by Dan</span>}
+        onSelect={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Asked by Dan')).toBeInTheDocument();
+    expect(container.querySelector('img[src="/logo.png"]')).not.toBeNull();
+  });
+
   it('can be activated from the keyboard', async () => {
     const onSelect = vi.fn();
     const actor = userEvent.setup();
@@ -106,6 +123,51 @@ describe('MediaCard', () => {
     render(<MediaCard title="Arrival" subtitle="2016" watchedFraction={0.4} onSelect={vi.fn()} />);
 
     expect(screen.queryByRole('img', { name: 'Watched' })).not.toBeInTheDocument();
+  });
+
+  it('draws a status bar along the foot of the artwork, filled to how much is there', () => {
+    render(
+      <MediaCard
+        title="Show"
+        subtitle=""
+        meter={{ fraction: 0.25, tone: 'busy', label: 'Show · Downloading' }}
+        onSelect={vi.fn()}
+      />,
+    );
+
+    const bar = screen.getByRole('img', { name: 'Show · Downloading' });
+    const filled = bar.querySelector('.bg-busy');
+
+    expect(filled).toHaveStyle({ width: '25%' });
+  });
+
+  it('keeps a status bar within the artwork whatever it is told', () => {
+    render(
+      <MediaCard
+        title="Show"
+        subtitle=""
+        meter={{ fraction: 3, tone: 'success', label: 'Show · In the library' }}
+        onSelect={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole('img', { name: 'Show · In the library' }).querySelector('.bg-success'),
+    ).toHaveStyle({ width: '100%' });
+  });
+
+  it('draws square artwork, as an album cover is', () => {
+    render(
+      <MediaCard
+        title="Album"
+        subtitle=""
+        shape="square"
+        imageUrl="/cover.jpg"
+        onSelect={vi.fn()}
+      />,
+    );
+
+    expect(document.querySelector('.aspect-square')).not.toBeNull();
   });
 
   it('sets a display name so devtools can identify it', () => {

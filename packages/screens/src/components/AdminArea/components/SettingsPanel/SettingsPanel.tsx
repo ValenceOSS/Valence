@@ -1,3 +1,4 @@
+import { DEFAULT_RELEASE_TYPES } from '@ValenceContracts/schemas/MediaRequest';
 import { failureOfAnswer } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { Icon } from '@ValenceUI/Icon';
@@ -123,7 +124,7 @@ const SettingsPanel = ({
   const [isSavingOmdbKey, setIsSavingOmdbKey] = useState(false);
   const [fetchesMusic, setFetchesMusic] = useState(overview?.settings.fetchesMusicDetails ?? false);
   const [releaseTypes, setReleaseTypes] = useState<ReleaseType[]>([
-    ...(overview?.settings.requestReleaseTypes ?? ['album']),
+    ...(overview?.settings.requestReleaseTypes ?? DEFAULT_RELEASE_TYPES),
   ]);
   const [splashscreen, setSplashscreen] = useState(overview?.settings.splashscreen ?? null);
   const [isChangingSplashscreen, setIsChangingSplashscreen] = useState(false);

@@ -20,6 +20,7 @@ const EPISODE: RequestItem = {
   score: null,
   downloadedBytes: null,
   downloadSeconds: null,
+  isFollowed: true,
   lastSearchedAt: null,
   updatedAt: '2026-09-19T00:00:00.000Z',
 };
@@ -31,7 +32,7 @@ const BEFORE_RELEASE = '2021-01-01';
 describe('describeRequestBadge', () => {
   it('says what a request waits for', () => {
     expect(describeRequestBadge(aMediaRequest({ state: 'awaitingApproval' })).label).toBe(
-      'Awaiting approval',
+      'Waiting for approval',
     );
     expect(describeRequestBadge(aMediaRequest({ state: 'waiting' }), BEFORE_RELEASE).detail).toBe(
       'Waiting until 3 Dec 2021, when its quality profile considers it released.',
@@ -65,16 +66,19 @@ describe('describeRequestBadge', () => {
     ).toBe('Waiting for the next album to be announced.');
   });
 
-  it('says a book waits to be added by hand, and is never queued for a search', () => {
-    for (const state of ['waiting', 'wanted', 'searching'] as const) {
-      const badge = describeRequestBadge(
-        aMediaRequest({ kind: 'book', tmdbId: null, openLibraryId: 5, state, items: [] }),
+  it('says a book is searched for, like anything else', () => {
+    expect(
+      describeRequestBadge(
+        aMediaRequest({
+          kind: 'book',
+          tmdbId: null,
+          openLibraryId: 5,
+          state: 'searching',
+          items: [],
+        }),
         TODAY,
-      );
-
-      expect(badge.label).toBe('Waiting to be added');
-      expect(badge.detail).toMatch(/added to the library manually/);
-    }
+      ).label,
+    ).toBe('Searching');
   });
 
   it('says a book that has been added is available, like anything else', () => {
@@ -83,7 +87,7 @@ describe('describeRequestBadge', () => {
         aMediaRequest({ kind: 'book', tmdbId: null, openLibraryId: 5, state: 'available' }),
         TODAY,
       ).label,
-    ).toBe('Done');
+    ).toBe('In the library');
   });
 
   it('says what has come out is queued for a search, not that it is not out yet', () => {
@@ -166,6 +170,6 @@ describe('describeRequestBadge', () => {
       (['searching', 'chosen', 'filing', 'filed', 'available'] as const).map(
         (state) => describeRequestBadge(aMediaRequest({ state })).label,
       ),
-    ).toEqual(['Searching', 'Release selected', 'Importing', 'Imported', 'Done']);
+    ).toEqual(['Searching', 'Downloading', 'Importing', 'Importing', 'In the library']);
   });
 });

@@ -18,7 +18,7 @@ describe('filterRequests', () => {
 
   it('asks for a kind in a place when both are ticked', () => {
     expect(filterRequests(ALL, new Set(['kind:film', 'state:Refused']), '')).toEqual([]);
-    expect(filterRequests(ALL, new Set(['kind:film', 'state:Awaiting approval']), '')).toEqual([
+    expect(filterRequests(ALL, new Set(['kind:film', 'state:Waiting for approval']), '')).toEqual([
       DUNE,
     ]);
   });

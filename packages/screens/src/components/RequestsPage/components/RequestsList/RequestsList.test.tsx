@@ -149,6 +149,20 @@ describe('RequestsList', () => {
     expect(handlers.onAsk).toHaveBeenCalledWith('film:438631');
   });
 
+  it('opens a book’s page by its Open Library number', async () => {
+    const handlers = { onAsk: vi.fn(), onOpen: vi.fn() };
+
+    fetchMediaRequests.mockResolvedValue([
+      { ...MINE, kind: 'book', tmdbId: null, openLibraryId: 27448, title: 'A Book' },
+    ]);
+
+    renderInAnAddress(<RequestsList {...handlers} />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Details' }));
+
+    expect(handlers.onAsk).toHaveBeenCalledWith('book:27448');
+  });
+
   it('says so where nothing has been asked for at all', async () => {
     fetchMediaRequests.mockResolvedValue([]);
 

@@ -46,6 +46,7 @@ const aLibrary = (id: string, name: string, takesRequests = true): Library => ({
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 });
 
 beforeEach(() => {
@@ -55,8 +56,7 @@ beforeEach(() => {
     aQualityProfile({
       id: '2a9e6679-7425-40de-944b-e07fc1f90ae7',
       name: 'Ultra HD',
-      resolutions: [],
-      sources: [],
+      qualities: [],
     }),
   ]);
   fetchLibraries
@@ -83,6 +83,71 @@ describe('ApproveRequestDialog', () => {
     });
     expect(changeMediaRequest).not.toHaveBeenCalled();
     expect(onApproved).toHaveBeenCalled();
+  });
+
+  it('edits a request already approved, saving what changed and approving nothing', async () => {
+    const user = userEvent.setup();
+    const onApproved = vi.fn();
+
+    renderInAnAddress(
+      <ApproveRequestDialog
+        request={aMediaRequest()}
+        isEditing
+        onClose={vi.fn()}
+        onApproved={onApproved}
+      />,
+    );
+
+    expect(await screen.findByRole('dialog', { name: 'Edit Dune' })).toBeInTheDocument();
+
+    await user.click(await screen.findByRole('button', { name: /Quality/ }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Ultra HD' }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(changeMediaRequest).toHaveBeenCalledWith(aMediaRequest().id, {
+        profileId: '2a9e6679-7425-40de-944b-e07fc1f90ae7',
+      });
+    });
+    expect(approveMediaRequest).not.toHaveBeenCalled();
+    expect(onApproved).toHaveBeenCalled();
+  });
+
+  it('upgrades a music request’s lossy albums to lossless once told to, and offers it only for music', async () => {
+    const user = userEvent.setup();
+    const album = aMediaRequest({
+      kind: 'album',
+      tmdbId: null,
+      musicBrainzId: '0b1d2c3e-4f56-4a78-9b01-23456789abcd',
+      title: 'An Album',
+    });
+
+    const { unmount } = renderInAnAddress(
+      <ApproveRequestDialog
+        request={aMediaRequest()}
+        isEditing
+        onClose={vi.fn()}
+        onApproved={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByRole('checkbox', { name: /Upgrade lossy albums to lossless/ }),
+    ).not.toBeInTheDocument();
+
+    unmount();
+    renderInAnAddress(
+      <ApproveRequestDialog request={album} isEditing onClose={vi.fn()} onApproved={vi.fn()} />,
+    );
+
+    await user.click(
+      await screen.findByRole('checkbox', { name: /Upgrade lossy albums to lossless/ }),
+    );
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(changeMediaRequest).toHaveBeenCalledWith(album.id, { upgradesToLossless: true });
+    });
   });
 
   it('saves what an admin changed before approving it', async () => {

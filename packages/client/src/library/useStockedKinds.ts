@@ -1,3 +1,4 @@
+import { isVideoKind } from '@ValenceContracts/functions/isVideoKind';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
@@ -17,10 +18,7 @@ type StockedKinds = { films: boolean; shows: boolean; books: boolean; music: boo
 const useStockedKinds = (): StockedKinds | null => {
   const libraries = useQuery(libraryQueries.all());
   const watchable = useMemo(
-    () =>
-      (libraries.data ?? [])
-        .filter((one) => one.kind === 'movies' || one.kind === 'shows')
-        .map((one) => one.id),
+    () => (libraries.data ?? []).filter((one) => isVideoKind(one.kind)).map((one) => one.id),
     [libraries.data],
   );
   const anyFilm = useQuery({
@@ -37,7 +35,7 @@ const useStockedKinds = (): StockedKinds | null => {
 
   return {
     films: (anyFilm.data ?? []).length > 0,
-    shows: holds('shows'),
+    shows: holds('shows') || holds('anime'),
     books: holds('books'),
     music: holds('music'),
   };

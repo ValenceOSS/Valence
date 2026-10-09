@@ -1,9 +1,11 @@
+import type { z } from 'zod';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { saying } from '@ValenceI18n/saying';
 import { randomUUID } from 'node:crypto';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import {
+  BOOK_FORMATS,
   MediaRequestArrivalsSchema,
   MediaRequestChangeSchema,
   MediaRequestDraftSchema,
@@ -14,6 +16,10 @@ import {
 import { chooseProfile } from '@ValenceRequests/mediaRequests/chooseProfile';
 import { itemFromDraft } from '@ValenceRequests/mediaRequests/itemFromDraft';
 import { recordFromDraft } from '@ValenceRequests/mediaRequests/recordFromDraft';
+import { highestSeasonOf } from '@ValenceRequests/mediaRequests/highestSeasonOf';
+import { rebaseSeasons } from '@ValenceRequests/mediaRequests/rebaseSeasons';
+import { seasonsChosen } from '@ValenceRequests/mediaRequests/seasonsChosen';
+import { profileChangeOf } from '@ValenceRequests/mediaRequests/profileChangeOf';
 import { requestFactsOf } from '@ValenceRequests/mediaRequests/requestFactsOf';
 import { showMediaRequest } from '@ValenceRequests/mediaRequests/showMediaRequest';
 import { syncItems } from '@ValenceRequests/mediaRequests/syncItems';
@@ -25,10 +31,14 @@ import type {
   MediaRequestArrived,
   MediaRequestChange,
   MediaRequestDraft,
+  MediaRequestFollow,
   RequestCatalogue,
   RequestCatalogueDraft,
   RequestCatalogueUpdate,
   ReleaseType,
+  ProfileAskDecision,
+  Requester,
+  SearchScope,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type {
   MediaRequestRecord,
@@ -73,6 +83,46 @@ const bothSeasons = (kept: number[] | null, asked: number[] | null): number[] | 
     : [...new Set([...kept, ...asked])].toSorted((left, right) => left - right);
 
 /**
+ * The seasons a series is asked for once a later ask is added to the request already kept for it:
+ * the seasons of both, new seasons followed where either follows them, and the seasons the kept one
+ * was following said against the catalogue now, so none of them is let go.
+ *
+ * @param kept - The request kept.
+ * @param draft - What is asked now.
+ * @returns The seasons, and how new ones are followed.
+ */
+const bothChoices = (
+  kept: MediaRequestRecord,
+  draft: Pick<
+    z.infer<typeof MediaRequestDraftSchema>,
+    'seasons' | 'followsNewSeasons' | 'catalogue'
+  >,
+): Pick<MediaRequestRecord, 'seasons' | 'followsNewSeasons' | 'followsAfter'> => {
+  const base = rebaseSeasons(kept, draft.catalogue.episodes);
+
+  return {
+    seasons: bothSeasons(
+      base.seasons,
+      seasonsChosen(draft.seasons, draft.followsNewSeasons, draft.catalogue.episodes),
+    ),
+    followsNewSeasons: base.followsNewSeasons || draft.followsNewSeasons,
+    followsAfter: base.followsAfter,
+  };
+};
+
+/**
+ * Somebody asking for what is already asked for: kept among those who asked, unless they are already.
+ *
+ * @param kept - The request kept.
+ * @param asker - Who is asking.
+ * @returns The change to the request, if any.
+ */
+const joinedBy = (kept: MediaRequestRecord, asker: Requester): Partial<MediaRequestRecord> =>
+  kept.requestedById === asker.id || kept.alsoAskedBy.some((one) => one.id === asker.id)
+    ? {}
+    : { alsoAskedBy: [...kept.alsoAskedBy, asker] };
+
+/**
  * What a series request learns from what the library already holds of it: where the library keeps
  * it, and the item it is there as. Nothing for anything else, or where the library was not asked.
  *
@@ -106,7 +156,8 @@ const bothReleaseTypes = (kept: ReleaseType[] | null, asked: ReleaseType[]): Rel
 /**
  * Keeps the requests for films and series and what each waits for: making one, or adding to one
  * already made for the same title; approving and refusing; changing what it asks for; bringing it up
- * to date with the catalogue; trying again what failed; and marking it arrived once the server has
+ * to date with the catalogue; trying again what failed; following or not following some of what it
+ * waits for; and marking it arrived once the server has
  * found it in the library, whether filed by Valence, imported by a connected app or put there by
  * hand, and following it when the library loses it again. Episodes the library already holds when a
  * series is asked for, or brought up to date, are marked there rather than searched for.
@@ -143,12 +194,18 @@ const createRequestService = ({
     held: HeldInLibrary | null = null,
   ) => {
     const at = now().toISOString();
+    const highest = record.kind === 'series' ? highestSeasonOf(catalogue.episodes) : null;
+    const known =
+      record.followsAfter === null && highest !== null
+        ? ((await requests.update(record.id, { followsAfter: highest })) ?? record)
+        : record;
     const { add, change, remove, arrive } = syncItems(
-      record,
+      known,
       catalogue,
       await itemsOf(record.id),
       chooseProfile(record, await profiles.list())?.releaseWait,
       held?.episodes ?? [],
+      held?.albums ?? [],
     );
 
     for (const draft of add) {
@@ -166,6 +223,7 @@ const createRequestService = ({
     for (const id of arrive) {
       await items.update(id, {
         state: 'available',
+        heldQuality: null,
         problem: null,
         problemCode: null,
         updatedAt: at,
@@ -209,6 +267,8 @@ const createRequestService = ({
     add: async (asked: MediaRequestDraft): Promise<Added> => {
       const draft = MediaRequestDraftSchema.parse(asked);
       const at = now().toISOString();
+      const every = await profiles.list();
+      const askedAt = every.find((profile) => profile.id === draft.profileId) ?? null;
       const kept = (await requests.list()).find(
         (record) =>
           record.kind === draft.kind &&
@@ -222,15 +282,30 @@ const createRequestService = ({
       if (kept !== undefined) {
         const merged = await requests.update(kept.id, {
           ...requestFactsOf(draft.catalogue),
-          seasons: kept.kind === 'series' ? bothSeasons(kept.seasons, draft.seasons) : null,
+          ...(kept.kind === 'series' ? bothChoices(kept, draft) : { seasons: null }),
           ...(kept.kind === 'artist' && draft.releaseTypes !== null
             ? { releaseTypes: bothReleaseTypes(kept.releaseTypes, draft.releaseTypes) }
             : {}),
-          ...(draft.profileId === null ? {} : { profileId: draft.profileId }),
+          ...(kept.kind === 'book'
+            ? {
+                bookFormats: BOOK_FORMATS.filter(
+                  (format) =>
+                    (kept.bookFormats ?? ['ebook']).includes(format) ||
+                    draft.bookFormats.includes(format),
+                ),
+              }
+            : {}),
+          ...profileChangeOf(kept, draft, every),
           ...(draft.isPickedByHand ? { isPickedByHand: true } : {}),
-          ...(draft.isApproved && kept.approval !== 'approved'
+          ...(draft.isApproved &&
+          kept.approval !== 'approved' &&
+          kept.requestedById === draft.requestedBy.id
             ? { approval: 'approved', refusedBecause: null }
             : {}),
+          ...joinedBy(kept, {
+            ...draft.requestedBy,
+            ...(askedAt === null ? {} : { profileId: askedAt.id, profileName: askedAt.name }),
+          }),
           ...keptBy(kept.kind, draft.held),
           catalogueCheckedAt: at,
           updatedAt: at,
@@ -249,6 +324,105 @@ const createRequestService = ({
       onChange();
 
       return { request: await shown(record), isNew: true };
+    },
+
+    join: async (id: string, asker: Requester): Promise<MediaRequest | null> => {
+      const kept = await requests.find(id);
+
+      if (kept === null) {
+        return null;
+      }
+
+      const record = await requests.update(id, {
+        ...joinedBy(kept, asker),
+        updatedAt: now().toISOString(),
+      });
+
+      onChange();
+
+      return record === null ? null : shown(record);
+    },
+
+    leave: async (id: string, askerId: string): Promise<MediaRequest | null> => {
+      const kept = await requests.find(id);
+      const [next, ...rest] = kept?.alsoAskedBy ?? [];
+
+      if (kept === null || next === undefined) {
+        return null;
+      }
+
+      const isFirst = kept.requestedById === askerId;
+
+      if (!isFirst && !kept.alsoAskedBy.some((one) => one.id === askerId)) {
+        return null;
+      }
+
+      const record = await requests.update(id, {
+        ...(isFirst
+          ? { requestedById: next.id, requestedByName: next.name, alsoAskedBy: rest }
+          : { alsoAskedBy: kept.alsoAskedBy.filter((one) => one.id !== askerId) }),
+        updatedAt: now().toISOString(),
+      });
+
+      onChange();
+
+      return record === null ? null : shown(record);
+    },
+
+    decideNarration: async (id: string, asins: readonly string[]): Promise<MediaRequest | null> => {
+      const kept = await requests.find(id);
+      const known = new Set((kept?.narrations ?? []).map((narration) => narration.asin));
+
+      if (kept === null || kept.kind !== 'book' || !asins.every((asin) => known.has(asin))) {
+        return null;
+      }
+
+      const record = await requests.update(id, {
+        narrationsWanted: [...asins],
+        updatedAt: now().toISOString(),
+      });
+
+      if (record === null) {
+        return null;
+      }
+
+      await sync(record, { episodes: [], albums: [] });
+      onChange();
+
+      return shown(record);
+    },
+
+    decideProfileAsk: async (
+      id: string,
+      decision: ProfileAskDecision,
+    ): Promise<MediaRequest | null> => {
+      const kept = await requests.find(id);
+
+      if (kept?.profileAsk === null || kept?.profileAsk === undefined) {
+        return null;
+      }
+
+      const asked = kept.profileAsk.profileId;
+      const record = await requests.update(id, {
+        ...(decision.choice === 'switch' ? { profileId: asked } : {}),
+        ...(decision.choice === 'both' && !(kept.versions ?? []).includes(asked)
+          ? { versions: [...(kept.versions ?? []), asked] }
+          : {}),
+        profileAsk: null,
+        updatedAt: now().toISOString(),
+      });
+
+      if (record === null) {
+        return null;
+      }
+
+      if (decision.choice === 'both') {
+        await sync(record, { episodes: [], albums: [] }, null);
+      }
+
+      onChange();
+
+      return shown(record);
     },
 
     approve: (id: string): Promise<MediaRequest | null> =>
@@ -274,9 +448,32 @@ const createRequestService = ({
         return null;
       }
 
+      const choosesSeasons =
+        kept.kind === 'series' &&
+        (change.seasons !== undefined || change.followsNewSeasons !== undefined);
+      const base = catalogue === null ? kept : rebaseSeasons(kept, catalogue.episodes);
       const record = await requests.update(id, {
-        ...(change.seasons === undefined ? {} : { seasons: change.seasons }),
+        ...(choosesSeasons
+          ? {
+              seasons:
+                change.seasons === undefined
+                  ? base.seasons
+                  : seasonsChosen(
+                      change.seasons,
+                      change.followsNewSeasons ?? base.followsNewSeasons,
+                      catalogue?.episodes ?? [],
+                    ),
+              followsNewSeasons: change.followsNewSeasons ?? base.followsNewSeasons,
+              followsAfter: base.followsAfter,
+            }
+          : {}),
         ...(change.releaseTypes === undefined ? {} : { releaseTypes: change.releaseTypes }),
+        ...(change.upgradesToLossless === undefined || !isMusicRequest(kept.kind)
+          ? {}
+          : { upgradesToLossless: change.upgradesToLossless }),
+        ...(change.bookFormats === undefined || kept.kind !== 'book'
+          ? {}
+          : { bookFormats: change.bookFormats }),
         ...(change.profileId === undefined ? {} : { profileId: change.profileId }),
         ...(change.isPickedByHand === undefined ? {} : { isPickedByHand: change.isPickedByHand }),
         ...(change.libraryId === undefined ? {} : { libraryId: change.libraryId }),
@@ -290,7 +487,7 @@ const createRequestService = ({
         return null;
       }
 
-      if (record.kind === 'film' || catalogue !== null) {
+      if (record.kind === 'film' || record.kind === 'book' || catalogue !== null) {
         await sync(record, catalogue ?? { episodes: [], albums: [] }, held);
       }
 
@@ -354,7 +551,30 @@ const createRequestService = ({
         }));
     },
 
-    retry: async (id: string): Promise<MediaRequest | null> => {
+    follow: async (id: string, following: MediaRequestFollow): Promise<MediaRequest | null> => {
+      const record = await requests.find(id);
+
+      if (record === null) {
+        return null;
+      }
+
+      const at = now().toISOString();
+      const asked = new Set(following.itemIds);
+
+      for (const item of await itemsOf(id)) {
+        if (asked.has(item.id) && item.isFollowed !== following.isFollowed) {
+          await items.update(item.id, {
+            isFollowed: following.isFollowed,
+            ...(following.isFollowed ? { lastSearchedAt: null } : {}),
+            updatedAt: at,
+          });
+        }
+      }
+
+      return changed(id, {});
+    },
+
+    retry: async (id: string, scope: SearchScope | null = null): Promise<MediaRequest | null> => {
       const record = await requests.find(id);
 
       if (record === null) {
@@ -364,18 +584,23 @@ const createRequestService = ({
       const at = now().toISOString();
 
       for (const item of await itemsOf(id)) {
-        if (item.state === 'failed' || item.state === 'wanted') {
+        const isInScope =
+          scope === null ||
+          (item.season === scope.season &&
+            (scope.episode === null || item.episode === scope.episode));
+        if (isInScope && (item.state === 'failed' || item.state === 'wanted')) {
           await items.update(item.id, {
             state: 'wanted',
             problem: null,
             attempts: 0,
             lastSearchedAt: null,
+            ...(scope === null ? {} : { isFollowed: true }),
             updatedAt: at,
           });
         }
       }
 
-      return changed(id, { problem: null });
+      return changed(id, { problem: null, isPickedByHand: false });
     },
 
     fulfil: async (id: string): Promise<MediaRequest | null> => {
@@ -403,8 +628,19 @@ const createRequestService = ({
       }
 
       const shownNow = await changed(id, { mediaId });
+      const versionsArrived = filed.flatMap((item) =>
+        item.versionProfileId === null || item.versionProfileId === undefined
+          ? []
+          : [item.versionProfileId],
+      );
 
-      return shownNow === null ? null : { request: shownNow, newlyAvailable: filed.length };
+      return shownNow === null
+        ? null
+        : {
+            request: shownNow,
+            newlyAvailable: filed.length - versionsArrived.length,
+            versionsArrived,
+          };
     },
 
     arrivedInLibrary: async (
@@ -419,6 +655,10 @@ const createRequestService = ({
       }
 
       const isHeld = (item: RequestItemRecord): boolean => {
+        if (item.versionProfileId !== null && item.versionProfileId !== undefined) {
+          return item.state === 'filed';
+        }
+
         if (item.musicBrainzId !== null) {
           return (arrivals.albums ?? []).includes(item.musicBrainzId);
         }
@@ -451,7 +691,19 @@ const createRequestService = ({
           ? await shown(record)
           : await changed(id, { mediaId: arrivals.mediaId });
 
-      return shownNow === null ? null : { request: shownNow, newlyAvailable: arriving.length };
+      const versionsArrived = arriving.flatMap((item) =>
+        item.versionProfileId === null || item.versionProfileId === undefined
+          ? []
+          : [item.versionProfileId],
+      );
+
+      return shownNow === null
+        ? null
+        : {
+            request: shownNow,
+            newlyAvailable: arriving.length - versionsArrived.length,
+            versionsArrived,
+          };
     },
 
     left: async (id: string, mediaId: string | null): Promise<MediaRequest | null> => {

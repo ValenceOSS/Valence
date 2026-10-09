@@ -55,7 +55,10 @@ const summaryOf = (playlist: FakePlaylist): PlaylistSummary => ({
 const libraryOf = (row: typeof libraryTable.$inferSelect): Library => ({
   id: row.id,
   name: row.name,
-  kind: row.kind === 'shows' || row.kind === 'music' || row.kind === 'books' ? row.kind : 'movies',
+  kind:
+    row.kind === 'shows' || row.kind === 'anime' || row.kind === 'music' || row.kind === 'books'
+      ? row.kind
+      : 'movies',
   path: row.path,
   itemCount: 0,
   lastScannedAt: null,
@@ -65,6 +68,7 @@ const libraryOf = (row: typeof libraryTable.$inferSelect): Library => ({
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 });
 
 /**

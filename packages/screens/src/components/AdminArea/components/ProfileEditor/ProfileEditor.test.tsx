@@ -59,6 +59,7 @@ const aLibrary = (id: string, name: string, kind: Library['kind']): Library => (
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 });
 
 beforeEach(() => {
@@ -102,8 +103,8 @@ describe('ProfileEditor', () => {
     const { onSaved, onClose } = open();
 
     await user.type(screen.getByRole('textbox', { name: 'Name' }), 'UHD');
-    await user.click(screen.getByRole('checkbox', { name: '2160p' }));
-    await user.click(screen.getByRole('button', { name: 'Move 2160p up' }));
+    await user.click(screen.getByRole('checkbox', { name: 'WEB-DL 2160p' }));
+    await user.click(screen.getByRole('button', { name: 'Move WEB-DL 2160p up' }));
     screen.getByRole('slider', { name: 'Largest for WEB-DL 2160p' }).focus();
     await user.keyboard('{ArrowLeft}');
 
@@ -125,7 +126,18 @@ describe('ProfileEditor', () => {
       expect.objectContaining({
         name: 'UHD',
         kind: 'video',
-        resolutions: ['1080p', '2160p', '720p'],
+        qualities: [
+          'remux-1080p',
+          'bluray-1080p',
+          'webdl-1080p',
+          'webrip-1080p',
+          'hdtv-1080p',
+          'bluray-720p',
+          'webdl-720p',
+          'webrip-720p',
+          'webdl-2160p',
+          'hdtv-720p',
+        ],
         smallestMb: null,
         largestMb: null,
         releaseWait: 'physical',
@@ -259,10 +271,8 @@ describe('ProfileEditor', () => {
     await goTo(user, 'Matching');
 
     await user.click(screen.getByRole('switch', { name: 'Upgrade to a better release later' }));
-    await user.click(screen.getByRole('button', { name: 'Until the resolution is' }));
-    await user.click(await screen.findByRole('menuitemradio', { name: '1080p' }));
-    await user.click(screen.getByRole('button', { name: 'And the source is' }));
-    await user.click(await screen.findByRole('menuitemradio', { name: 'Highest available' }));
+    await user.click(screen.getByRole('button', { name: 'Until the quality is' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'WEB-DL 1080p' }));
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => {
@@ -270,8 +280,7 @@ describe('ProfileEditor', () => {
         KEPT.id,
         expect.objectContaining({
           isUpgrading: true,
-          upgradeUntilResolution: '1080p',
-          upgradeUntilSource: null,
+          cutoff: 'webdl-1080p',
           bannedWords: ['cam'],
         }),
       );

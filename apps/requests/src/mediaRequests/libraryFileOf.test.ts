@@ -78,4 +78,20 @@ describe('libraryFileOf', () => {
       '/media/Series/Show/Season 3/Show - S03E01.mkv',
     );
   });
+
+  it('names a film’s further version as Jellyfin does, its quality set off by a dash', () => {
+    expect(
+      libraryFileOf(
+        { ...NOWHERE_YET, libraryPath: '/media/Films', title: 'A Film', year: 2021 },
+        {
+          season: null,
+          episode: null,
+          title: 'A Film',
+          versionProfileId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+        },
+        'mkv',
+        ' [2160p][Bluray]',
+      ),
+    ).toBe('/media/Films/A Film (2021)/A Film (2021) - [2160p][Bluray].mkv');
+  });
 });

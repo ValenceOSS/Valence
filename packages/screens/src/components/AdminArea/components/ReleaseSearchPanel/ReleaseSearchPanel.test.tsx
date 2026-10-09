@@ -33,8 +33,7 @@ vi.mock('@ValenceClient/requests/fetchProfiles', () => ({
 
 const HD = aQualityProfile({
   id: '9b2e1f5a-8d4c-4e2a-9f6b-1c3d5e7f9a0b',
-  resolutions: ['1080p'],
-  sources: ['bluray'],
+  qualities: ['bluray-1080p'],
 });
 
 /**
@@ -47,6 +46,7 @@ const aJudgement = (
   reasons: string[],
 ): Judgement => ({
   releaseId,
+  quality: 1,
   parsed: {
     title: 'Dune Part Two',
     year: 2024,
@@ -225,6 +225,7 @@ beforeEach(() => {
       filedInto: null,
       filingProblem: null,
       filingProblemCode: null,
+      wasPaused: false,
     },
     refusal: null,
   });
@@ -266,6 +267,29 @@ describe('ReleaseSearchPanel', () => {
     expect(rows[1]).toContain('3 days');
     expect(rows[1]).toContain('7.5 GB');
     expect(searchReleases).toHaveBeenCalledWith({ query: 'dune part two', mode: 'search' });
+  });
+
+  it('searches one indexer alone, judged against a profile, from words already typed', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(
+      <ReleaseSearchPanel
+        indexerIds={['6ba7b810-9dad-11d1-80b4-00c04fd430c8']}
+        profileId={HD.id}
+        query="dune"
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Search' }));
+
+    await waitFor(() => {
+      expect(searchReleases).toHaveBeenCalledWith({
+        query: 'dune',
+        mode: 'search',
+        profileId: HD.id,
+        indexerIds: ['6ba7b810-9dad-11d1-80b4-00c04fd430c8'],
+      });
+    });
   });
 
   it('says what each indexer found, and why one found nothing', async () => {

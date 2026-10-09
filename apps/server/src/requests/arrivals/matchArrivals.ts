@@ -4,13 +4,16 @@ import type {
   MediaRequest,
   MediaRequestArrivals,
 } from '@ValenceContracts/schemas/MediaRequest';
+import type { MusicQuality } from '@ValenceContracts/schemas/ParsedRelease';
 import type { CatalogueLookup } from '@ValenceServer/requests/catalogue/CatalogueLookup';
 
 type Arrival = { request: MediaRequest; arrivals: MediaRequestArrivals };
 
+const LOSSLESS = new Set<MusicQuality>(['flac24', 'flac', 'alac']);
+
 type MatchArrivalsOptions = {
   requests: readonly MediaRequest[];
-  lookup: Pick<CatalogueLookup, 'films' | 'series' | 'albums'>;
+  lookup: Pick<CatalogueLookup, 'films' | 'series' | 'albums' | 'albumQualities'>;
   heldEpisodes: (tmdbId: string) => Promise<readonly HeldEpisode[]>;
 };
 
@@ -18,7 +21,8 @@ type MatchArrivalsOptions = {
  * What the libraries now hold of every approved request still waiting on something: a film or a
  * series by its catalogue id, each episode by its season and number, and an album by its
  * MusicBrainz release group — however it got there, whether Valence filed it, a connected app
- * imported it, or somebody put it there by hand.
+ * imported it, or somebody put it there by hand. An album counts only lossless where the request
+ * upgrades lossy copies to lossless.
  *
  * @param requests - Every request.
  * @param lookup - The libraries, looked into by catalogue ids.
@@ -40,9 +44,19 @@ const matchArrivals = async ({
     }
 
     if (isMusicRequest(request.kind)) {
-      const albums = await lookup.albums(
-        waiting.flatMap((item) => (item.musicBrainzId === null ? [] : [item.musicBrainzId])),
+      const wanted = waiting.flatMap((item) =>
+        item.musicBrainzId === null ? [] : [item.musicBrainzId],
       );
+      const held = await lookup.albums(wanted);
+      const lossless =
+        request.upgradesToLossless === true
+          ? new Set(
+              [...(await lookup.albumQualities(wanted))].flatMap(([id, quality]) =>
+                LOSSLESS.has(quality) ? [id] : [],
+              ),
+            )
+          : null;
+      const albums = new Map([...held].filter(([id]) => lossless === null || lossless.has(id)));
       const [first] = albums.values();
 
       if (first !== undefined) {

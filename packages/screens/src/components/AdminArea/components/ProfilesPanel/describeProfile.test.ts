@@ -7,10 +7,9 @@ const HD = aQualityProfile({ musicQualities: ['flac'] });
 describe('describeProfile', () => {
   it('says what a video profile takes, and that it does not upgrade', () => {
     expect(describeProfile(HD)).toEqual({
-      takes: '1080p, 720p · Blu-ray, WEB-DL',
+      takes: 'Blu-ray 1080p, WEB-DL 1080p, Blu-ray 720p, WEB-DL 720p',
       upgrades: 'No',
     });
-    expect(describeProfile({ ...HD, sources: [] }).takes).toBe('1080p, 720p');
   });
 
   it('says what a music profile takes, and how far each upgrades', () => {
@@ -26,10 +25,9 @@ describe('describeProfile', () => {
       describeProfile({
         ...HD,
         isUpgrading: true,
-        upgradeUntilResolution: '1080p',
-        upgradeUntilSource: 'bluray',
+        cutoff: 'bluray-1080p',
       }).upgrades,
-    ).toBe('Until 1080p Blu-ray');
+    ).toBe('Until Blu-ray 1080p');
     expect(describeProfile({ ...HD, isUpgrading: true }).upgrades).toBe('To the best available');
   });
 });

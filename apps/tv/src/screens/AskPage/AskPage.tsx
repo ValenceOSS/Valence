@@ -1,13 +1,24 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Plus, X } from '@keyline-icons/react-native';
 import { Play } from '@keyline-icons/react-native/fill';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { askingFor } from '@ValenceClient/requests/askingFor';
-import { askForMedia, removeMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
+import {
+  askForMedia,
+  joinMediaRequest,
+  removeMediaRequest,
+} from '@ValenceClient/requests/fetchMediaRequests';
+import { describeOthersStillWanting } from '@ValenceClient/requests/describeOthersStillWanting';
+import { describeWhoElseAsked } from '@ValenceClient/requests/describeWhoElseAsked';
+import { describeMyProfileAsk } from '@ValenceClient/requests/describeMyProfileAsk';
+import { mayJoinRequest } from '@ValenceClient/requests/mayJoinRequest';
+import { askersOf } from '@ValenceContracts/functions/askersOf';
+import { isAskedBy } from '@ValenceContracts/functions/isAskedBy';
 import { nameTheStanding } from '@ValenceClient/requests/nameTheStanding';
+import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
 import { progressOfRequest } from '@ValenceClient/requests/progressOfRequest';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { ActionRow } from '@ValenceTv/components/ActionRow/ActionRow';
@@ -38,12 +49,16 @@ const SEASON_SAYS: Record<CatalogueSeason['standing'], string | null> = {
  * as a title's own page is: its picture, what it is, who is in it and where it stands, above what
  * can be done about it.
  *
- * A film is asked for as it is. A show lists its seasons, every one still to be had chosen to start
- * with, and asks for those chosen. Where this viewer may pick the quality it is fetched in, asking
- * first lists the qualities on offer. A film already in the library opens its own page. Somebody's
- * own request can be cancelled until it is in the library; while something is on its way, the page
- * keeps looking for where it has got to, and while it downloads gives it a panel of its own saying
- * how far through it is, how fast it is arriving and how long is left. The page is lit by the title's own picture.
+ * A film is asked for as it is. A show lists its seasons, every regular one still to be had chosen
+ * to start with and Specials left for whoever wants them, and asks for those chosen, getting new
+ * seasons as they come unless that is turned off. Where this viewer may pick the quality it is
+ * fetched in, asking first lists the qualities on offer. A film already in the library opens its
+ * own page. Somebody else's request names who asked, and can be wanted too. Somebody's own request
+ * can be cancelled until it is in the library, once they have said so, since it throws away whatever
+ * has downloaded — unless others want it too — and a remote's one press is easily made; while
+ * something is on its way, the page keeps looking for where it has got to, and while it downloads
+ * gives it a panel of its own saying how far through it is, how fast it is arriving and how long is
+ * left. The page is lit by the title's own picture.
  *
  * @param kind - Whether it is a film or a show.
  * @param id - Its number in the film database.
@@ -60,15 +75,18 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
   const title = found.data ?? null;
   const isElsewhere = title?.standing.status === 'linked';
   const faces = useQuery(linkingQueries.faces());
+  const isRequestableKind = useRequestableKinds().has(kind);
   const isAskable =
-    title?.standing.status === 'askable' || (isElsewhere && title.standing.requestId === null);
+    isRequestableKind &&
+    (title?.standing.status === 'askable' || (isElsewhere && title.standing.requestId === null));
   const seasons = useQuery({
     ...requestsQueries.seriesSeasons(kind === 'series' && title !== null ? Number(id) : null),
   });
   const canRequest =
     kind === 'film'
       ? isAskable
-      : (seasons.data ?? []).some(
+      : isRequestableKind &&
+        (seasons.data ?? []).some(
           (season) => season.standing === 'askable' || season.standing === 'partly',
         );
   const offered = useQuery(requestsQueries.profilesOnOffer(kind, canRequest));
@@ -79,6 +97,7 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
   const progress = useQuery(requestsQueries.requestProgress(request?.state === 'downloading'));
   const going = request === null ? null : progressOfRequest(request, progress.data ?? []);
   const [chosen, setChosen] = useState<ReadonlySet<number> | null>(null);
+  const [followsNew, setFollowsNew] = useState(true);
   const [asking, setAsking] = useState<MediaRequestAsk | null>(null);
   const [isBusy, setIsBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -110,15 +129,20 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
   const stillToHave = (seasons.data ?? []).filter(
     (season) => season.standing === 'askable' || season.standing === 'partly',
   );
-  const picked = chosen ?? new Set(stillToHave.map((season) => season.season));
+  const picked =
+    chosen ??
+    new Set(stillToHave.filter((season) => season.season > 0).map((season) => season.season));
   const choices = offered.data?.forcedId === null ? offered.data.choices : [];
   const standing = nameTheStanding(title.standing);
   const mayCancel =
     request !== null &&
-    request.requestedBy.id === me.data?.id &&
+    isAskedBy(request, me.data?.id) &&
     request.state !== 'filed' &&
     request.state !== 'available';
   const starring = title.cast.slice(0, STARRING).map((one) => one.name);
+  const whoElse = describeWhoElseAsked(title.standing.askedBy ?? [], me.data?.id);
+  const myProfileAsk = request === null ? null : describeMyProfileAsk(request, me.data?.id);
+  const isJoinable = isRequestableKind && mayJoinRequest(title.standing, me.data?.id);
   const isOpenable =
     title.standing.status === 'library' && kind === 'film' && title.standing.mediaId !== null;
 
@@ -148,6 +172,27 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
       });
   };
 
+  const join = () => {
+    if (title.standing.requestId === null) {
+      return;
+    }
+
+    setIsBusy(true);
+    setProblem(null);
+
+    void joinMediaRequest(title.standing.requestId)
+      .then(({ refusal }) => {
+        setProblem(refusal?.message ?? null);
+        refresh();
+      })
+      .catch(() => {
+        setProblem(say('common.thatCouldNotBeRequested'));
+      })
+      .finally(() => {
+        setIsBusy(false);
+      });
+  };
+
   const ask = (asked: MediaRequestAsk) => {
     if (choices.length > 1) {
       setAsking(asked);
@@ -158,15 +203,11 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
     send(asked);
   };
 
-  const cancel = () => {
-    if (requestId === null) {
-      return;
-    }
-
+  const cancel = (id: string) => {
     setIsBusy(true);
     setProblem(null);
 
-    void removeMediaRequest(requestId, true)
+    void removeMediaRequest(id, true)
       .then((refusal) => {
         if (refusal !== null) {
           setProblem(refusal.message);
@@ -179,6 +220,28 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
       .finally(() => {
         setIsBusy(false);
       });
+  };
+
+  const askToCancel = () => {
+    if (requestId === null) {
+      return;
+    }
+
+    Alert.alert(
+      say('common.cancelTitle', { title: title.title }),
+      (request === null ? null : describeOthersStillWanting(askersOf(request), me.data?.id)) ??
+        say('common.itWillNotBeFetchedAnd'),
+      [
+        { text: say('common.keepIt'), style: 'cancel' },
+        {
+          text: say('common.cancelRequest'),
+          style: 'destructive',
+          onPress: () => {
+            cancel(requestId);
+          },
+        },
+      ],
+    );
   };
 
   const toggle = (season: number) => {
@@ -210,15 +273,16 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
         going === null && title.standing.status !== 'library' ? (standing?.label ?? null) : null
       }
       overview={title.overview}
-      credits={
-        starring.length === 0 ? [] : [say('common.starringValue', { value: starring.join(', ') })]
-      }
+      credits={[
+        ...(starring.length === 0
+          ? []
+          : [say('common.starringValue', { value: starring.join(', ') })]),
+        ...(whoElse === null ? [] : [whoElse]),
+        ...(myProfileAsk === null ? [] : [myProfileAsk]),
+      ]}
     >
       {going === null ? null : (
-        <DownloadPanel
-          label={standing?.label ?? say('common.downloadingToLibrary')}
-          progress={going}
-        />
+        <DownloadPanel label={standing?.label ?? say('common.downloading')} progress={going} />
       )}
 
       {asking !== null && canRequest ? (
@@ -344,7 +408,17 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
               })
             : null}
 
-          {kind === 'series' && picked.size > 0 ? (
+          {kind === 'series' && canRequest && (seasons.data ?? []).length > 0 ? (
+            <ActionRow
+              label={say('common.getNewSeasonsAsTheyCome')}
+              {...(followsNew ? { icon: Check } : {})}
+              onPress={() => {
+                setFollowsNew(!followsNew);
+              }}
+            />
+          ) : null}
+
+          {kind === 'series' && canRequest && picked.size > 0 ? (
             <ActionRow
               label={
                 isBusy
@@ -362,8 +436,22 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
                       title,
                       [...picked].sort((left, right) => left - right),
                       [],
+                      followsNew,
                     ),
                   );
+                }
+              }}
+            />
+          ) : null}
+
+          {isJoinable ? (
+            <ActionRow
+              label={say('common.iWantThisToo')}
+              icon={Plus}
+              hasPreferredFocus={!isOpenable}
+              onPress={() => {
+                if (!isBusy) {
+                  join();
                 }
               }}
             />
@@ -376,7 +464,7 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
               hasPreferredFocus={!isAskable && !isOpenable}
               onPress={() => {
                 if (!isBusy) {
-                  cancel();
+                  askToCancel();
                 }
               }}
             />

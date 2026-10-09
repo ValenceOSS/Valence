@@ -41,6 +41,7 @@ const aLibrary = (id: string, name: string, kind: Library['kind']): Library => (
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 });
 
 const LIBRARIES = [

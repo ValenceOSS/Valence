@@ -1,3 +1,4 @@
+import { isAskingNarration } from '@ValenceContracts/functions/isAskingNarration';
 import { describeRequestState } from '@ValenceRequests/mediaRequests/describeRequestState';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
@@ -39,8 +40,17 @@ const showMediaRequest = (
   approval: record.approval,
   refusedBecause: record.refusedBecause,
   requestedBy: { id: record.requestedById, name: record.requestedByName },
+  alsoAskedBy: record.alsoAskedBy,
+  profileAsk: record.profileAsk,
+  isHandedOff: record.handOff !== null,
   seasons: record.seasons,
+  followsNewSeasons: record.followsNewSeasons,
   releaseTypes: record.releaseTypes,
+  upgradesToLossless: record.upgradesToLossless ?? false,
+  narrations: record.narrations ?? null,
+  isAskingNarration: isAskingNarration(record),
+  bookFormats: record.bookFormats ?? null,
+  versions: record.versions ?? null,
   releaseDate:
     record.kind === 'film' || record.kind === 'album'
       ? (items.find((item) => item.season === null)?.airDate ?? null)
@@ -58,6 +68,8 @@ const showMediaRequest = (
       musicBrainzId: item.musicBrainzId,
       season: item.season,
       episode: item.episode,
+      format: item.format ?? null,
+      versionProfileId: item.versionProfileId ?? null,
       title: item.title,
       airDate: item.airDate,
       state: item.state,
@@ -69,6 +81,13 @@ const showMediaRequest = (
       score: item.score,
       downloadedBytes: item.downloadedBytes,
       downloadSeconds: item.downloadSeconds,
+      isFollowed: item.isFollowed,
+      trackCount: item.trackCount ?? null,
+      filedTrackCount: item.filedTrackCount ?? null,
+      heldQuality: item.heldQuality ?? null,
+      narration: item.narration ?? null,
+      filedMinutes: item.filedMinutes ?? null,
+      isPickedByHand: item.isPickedByHand,
       lastSearchedAt: item.lastSearchedAt,
       updatedAt: item.updatedAt,
     })),

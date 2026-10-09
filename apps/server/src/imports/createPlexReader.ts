@@ -52,6 +52,7 @@ const LIBRARY_KINDS: Readonly<Record<string, LibraryKind>> = {
 const CATALOGUE_TYPES: Readonly<Record<LibraryKind, readonly number[]>> = {
   movies: [1],
   shows: [2, 4],
+  anime: [2, 4],
   music: [9, 10],
   books: [],
 };
@@ -59,6 +60,7 @@ const CATALOGUE_TYPES: Readonly<Record<LibraryKind, readonly number[]>> = {
 const STATE_TYPES: Readonly<Record<LibraryKind, readonly number[]>> = {
   movies: [1],
   shows: [2, 4],
+  anime: [2, 4],
   music: [10],
   books: [],
 };

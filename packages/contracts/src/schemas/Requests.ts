@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { IndexerHealthSchema } from './Indexer';
 import { ProblemCodeFieldSchema } from './ProblemCode';
+import { MEDIA_REQUEST_KINDS, MediaRequestKindSchema } from './MediaRequest';
 
 const RequestsVpnSchema = z.object({
   isConfigured: z.boolean(),
@@ -46,6 +47,7 @@ const RequestsStatusSchema = z.object({
 
 const RequestsAvailabilitySchema = z.object({
   isEnabled: z.boolean(),
+  kinds: z.array(MediaRequestKindSchema).default([...MEDIA_REQUEST_KINDS]),
 });
 
 const RequestsWorkSchema = z.object({

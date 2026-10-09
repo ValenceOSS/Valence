@@ -39,6 +39,14 @@ describe('followUpReading', () => {
     expect(asked).toEqual(['logos', 'segments', 'previews', 'trickplay']);
   });
 
+  it('looks for intros and credits in a library of anime too', async () => {
+    const { asked, work } = aLibrary();
+
+    await followUpReading(work, 'anime', 'anime');
+
+    expect(asked).toEqual(['logos', 'segments', 'previews', 'trickplay']);
+  });
+
   it('does nothing for music', async () => {
     const { asked, work } = aLibrary();
 

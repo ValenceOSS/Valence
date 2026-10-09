@@ -64,6 +64,7 @@ describe('ARequest', () => {
               downloadId: '6ba7b810-9dad-11d1-80b4-00c04fd430d2',
               downloadedBytes: null,
               downloadSeconds: null,
+              isFollowed: true,
             },
           ],
         })}

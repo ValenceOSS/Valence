@@ -36,6 +36,7 @@ const WATCHABLE_PARTS: readonly LibraryPart[] = [
 const LIBRARY_PARTS_BY_KIND: Record<LibraryKind, readonly LibraryPart[]> = {
   movies: WATCHABLE_PARTS,
   shows: WATCHABLE_PARTS,
+  anime: WATCHABLE_PARTS,
   music: ['albumCovers', 'artistPictures', 'lyrics', 'musicVideos'],
   books: [],
 };

@@ -14,6 +14,7 @@ const aCatalogueTitleDetail = (
   ...aCatalogueTitle(),
   musicBrainzId: null,
   backdropUrl: null,
+  logoUrl: null,
   genres: ['Science Fiction'],
   runtimeMinutes: 155,
   cast: [],

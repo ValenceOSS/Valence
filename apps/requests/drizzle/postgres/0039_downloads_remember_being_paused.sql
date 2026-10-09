@@ -1,0 +1,1 @@
+ALTER TABLE "valence_requests"."download" ADD COLUMN "was_paused" boolean DEFAULT false NOT NULL;

@@ -18,6 +18,7 @@ const anItem = (downloadedBytes: number | null, downloadSeconds: number | null):
   score: null,
   downloadedBytes,
   downloadSeconds,
+  isFollowed: true,
   lastSearchedAt: null,
   updatedAt: '2026-09-21T00:00:00.000Z',
 });

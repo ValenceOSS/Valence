@@ -12,6 +12,7 @@ describe('mediaKindOf', () => {
 
   it('calls a file in a shows library that reads as no episode a video, not a film', () => {
     expect(mediaKindOf({ seriesTitle: null }, 'shows')).toBe('video');
+    expect(mediaKindOf({ seriesTitle: null }, 'anime')).toBe('video');
   });
 
   it('still calls something with no series in a film library a film', () => {

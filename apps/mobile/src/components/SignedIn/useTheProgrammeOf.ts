@@ -1,3 +1,4 @@
+import { isEpisodicKind } from '@ValenceContracts/functions/isEpisodicKind';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 
@@ -12,7 +13,7 @@ const useTheProgrammeOf = (
   seriesId: string | null,
 ): { libraryId: string; showId: string } | null => {
   const libraries = useQuery({ ...libraryQueries.all(), enabled: seriesId !== null });
-  const holding = (libraries.data ?? []).filter((library) => library.kind === 'shows');
+  const holding = (libraries.data ?? []).filter((library) => isEpisodicKind(library.kind));
   const lists = useQueries({
     queries: holding.map((library) => ({
       ...libraryQueries.shows(library.id),

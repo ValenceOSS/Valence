@@ -16,8 +16,9 @@ type CreateProfileServiceOptions = {
 };
 
 /**
- * Keeps the quality profiles searches are judged against, in the order an administrator put them,
- * and by name among any never put in order.
+ * Keeps the quality profiles searches are judged against, in the order the operator puts them in,
+ * highest first: a new profile goes to the bottom until it is placed, and removing one closes the
+ * gap.
  *
  * A default profile is what every request of its kind goes through, so there is at most one of
  * them per kind: marking a profile as the default unmarks whichever held it. Enforced here rather
@@ -29,6 +30,26 @@ type CreateProfileServiceOptions = {
  * @returns The service.
  */
 const createProfileService = ({ store, now = () => new Date() }: CreateProfileServiceOptions) => {
+  const listed = async (): Promise<QualityProfile[]> =>
+    (await store.list()).toSorted(
+      (left, right) => left.position - right.position || left.name.localeCompare(right.name),
+    );
+
+  const place = async (ids: readonly string[]): Promise<QualityProfile[]> => {
+    const kept = await listed();
+    const named = ids.flatMap((id) => kept.filter((profile) => profile.id === id));
+    const placed = [...named, ...kept.filter((profile) => !ids.includes(profile.id))];
+    const at = now().toISOString();
+
+    for (const [position, profile] of placed.entries()) {
+      if (profile.position !== position) {
+        await store.update(profile.id, { position, updatedAt: at });
+      }
+    }
+
+    return listed();
+  };
+
   const standDown = async (kept: QualityProfile): Promise<void> => {
     if (!kept.isDefault) {
       return;
@@ -44,28 +65,19 @@ const createProfileService = ({ store, now = () => new Date() }: CreateProfileSe
   };
 
   return {
-    list: async (): Promise<QualityProfile[]> =>
-      (await store.list()).toSorted(
-        (left, right) => left.position - right.position || left.name.localeCompare(right.name),
-      ),
+    list: listed,
 
-    reorder: async (ids: readonly string[]): Promise<void> => {
-      const at = now().toISOString();
-
-      for (const [position, id] of ids.entries()) {
-        await store.update(id, { position, updatedAt: at });
-      }
-    },
+    reorder: (ids: readonly string[]): Promise<QualityProfile[]> => place(ids),
 
     find: (id: string): Promise<QualityProfile | null> => store.find(id),
 
     add: async (draft: QualityProfileDraft): Promise<QualityProfile> => {
       const at = now().toISOString();
-      const last = Math.max(-1, ...(await store.list()).map((profile) => profile.position));
+      const others = await store.list();
       const kept = await store.insert({
         ...QualityProfileDraftSchema.parse(draft),
+        position: Math.max(-1, ...others.map((profile) => profile.position)) + 1,
         id: randomUUID(),
-        position: last + 1,
         createdAt: at,
         updatedAt: at,
       });
@@ -94,7 +106,15 @@ const createProfileService = ({ store, now = () => new Date() }: CreateProfileSe
       return kept;
     },
 
-    remove: (id: string): Promise<boolean> => store.remove(id),
+    remove: async (id: string): Promise<boolean> => {
+      if (!(await store.remove(id))) {
+        return false;
+      }
+
+      await place([]);
+
+      return true;
+    },
   };
 };
 

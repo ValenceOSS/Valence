@@ -42,6 +42,7 @@ const OVERVIEW: AdminOverview = {
     fetchesCatalogueTrailers: false,
     fetchesMusicDetails: false,
     requestReleaseTypes: ['album'],
+    controlsConnectedApps: false,
     certificationRegion: 'GB',
     keepsDownloadsForDays: 14,
   },
@@ -143,6 +144,7 @@ const LIBRARIES: Library[] = [
     requestProfileId: null,
     requestPath: null,
     keepsShowsTogether: true,
+    higherProfileAsks: 'ask',
   },
 ];
 
@@ -161,6 +163,7 @@ const CREATED_LIBRARY: Library = {
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 };
 
 const SHOWS_LIBRARY_ID = '22222222-2222-4222-8222-222222222222';
@@ -182,6 +185,7 @@ const TWO_LIBRARIES: Library[] = [
     requestProfileId: null,
     requestPath: null,
     keepsShowsTogether: true,
+    higherProfileAsks: 'ask',
   },
 ];
 
@@ -723,10 +727,10 @@ describe('AdminArea', () => {
       expect(await screen.findByText(/No indexers yet/)).toBeInTheDocument();
     });
 
-    it('opens on searching by hand where the address names it', async () => {
-      renderInAnAddress(<TheAdmin panel="search" />);
+    it('opens on the Catalogue where the address names it', async () => {
+      renderInAnAddress(<TheAdmin panel="catalogue" />);
 
-      expect(await screen.findByText(/Search every enabled indexer at once/)).toBeInTheDocument();
+      expect(await screen.findByRole('button', { name: 'Search all missing' })).toBeInTheDocument();
     });
 
     it('says the VPN is down above everything else', async () => {

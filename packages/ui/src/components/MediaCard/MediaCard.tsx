@@ -13,10 +13,21 @@ import { WatchedBar } from '@ValenceUI/WatchedBar';
 import type { MediaCardProps, MediaCardShape } from './MediaCard.types';
 import { say } from '@ValenceI18n/say';
 
+const METER_TONES = {
+  busy: ['bg-busy/25', 'bg-busy'],
+  accent: ['bg-accent/25', 'bg-accent'],
+  success: ['bg-success/25', 'bg-success'],
+  highlight: ['bg-highlight/25', 'bg-highlight'],
+  danger: ['bg-danger/25', 'bg-danger'],
+  quiet: ['bg-on-scrim/20', 'bg-on-scrim/50'],
+  gap: ['bg-on-scrim/20', 'bg-success'],
+} as const;
+
 const SHAPE_CLASSES: Record<MediaCardShape, string> = {
   poster: 'aspect-[2/3]',
   wide: 'aspect-video',
   book: 'aspect-[2/3]',
+  square: 'aspect-square',
 };
 
 /**
@@ -28,6 +39,8 @@ const SHAPE_CLASSES: Record<MediaCardShape, string> = {
  * @param eyebrow - A line above the title, such as which episode this is.
  * @param subtitle - A line beneath it, such as the year or the length.
  * @param badges - Short facts to show over the artwork, such as the format.
+ * @param overlay - Something of the caller's own laid over the top left of the artwork, which lifts
+ *   with the card, such as who asked for it.
  * @param corner - A mark in the top right corner of the artwork, for one fact that is better shown as an
  *   icon than said, such as that it is already in the library.
  * @param origin - Where the thing comes from, where that is another server: its initial in its colour,
@@ -36,6 +49,8 @@ const SHAPE_CLASSES: Record<MediaCardShape, string> = {
  *   are left to watch; nothing is drawn for none.
  * @param countLabel - What the number means, read out and shown on hover.
  * @param imageUrl - The artwork, where any has been fetched.
+ * @param logoUrl - The title's logo, drawn over the bottom left of wide artwork as Home's cards draw
+ *   it, and left out where it cannot be read.
  * @param shape - Whether the artwork stands upright, lies flat, or is a book's cover, which is drawn as
  *   the book itself, standing turned a little to show its pages and swinging round to face you when
  *   pointed at.
@@ -51,14 +66,17 @@ const MediaCard = ({
   eyebrow,
   subtitle,
   badges = [],
+  overlay,
   corner,
   origin,
   count,
   countLabel,
   imageUrl,
+  logoUrl,
   shape = 'poster',
   emphasis = 'standard',
   watchedFraction,
+  meter,
   onSelect,
   isStill = false,
   className,
@@ -67,6 +85,7 @@ const MediaCard = ({
   const isLead = emphasis === 'lead';
   const isBook = shape === 'book';
   const [canHover] = useState(hasFinePointer);
+  const [isLogoMissing, setIsLogoMissing] = useState(false);
 
   return (
     <motion.button
@@ -135,6 +154,25 @@ const MediaCard = ({
               </span>
             )}
 
+            {logoUrl === undefined || isLogoMissing ? null : (
+              <img
+                src={logoUrl}
+                alt=""
+                loading="lazy"
+                draggable={false}
+                className="absolute bottom-[14%] left-[6%] max-h-[40%] max-w-[55%] object-contain object-left-bottom drop-shadow-lg"
+                onError={() => {
+                  setIsLogoMissing(true);
+                }}
+              />
+            )}
+
+            {overlay === undefined ? null : (
+              <span className="pointer-events-none absolute left-2.5 top-2.5 flex max-w-[calc(100%-1.25rem)]">
+                {overlay}
+              </span>
+            )}
+
             {count === undefined || count <= 0 || corner !== undefined ? null : (
               <span className="absolute right-3 top-3">
                 <Tooltip label={countLabel ?? count.toString()}>
@@ -179,6 +217,30 @@ const MediaCard = ({
                   </span>
                 </Tooltip>
               </span>
+            )}
+
+            {meter === undefined ? null : (
+              <Tooltip label={meter.label} delayMilliseconds={150}>
+                <span
+                  role="img"
+                  aria-label={meter.label}
+                  className="group/meter absolute inset-x-0 bottom-0 flex h-4 items-end"
+                >
+                  <span
+                    className={cn(
+                      'block h-1.5 w-full transition-[height] duration-[var(--duration-fast)] ease-[var(--ease-out)] group-hover/meter:h-2',
+                      METER_TONES[meter.tone][0],
+                    )}
+                  >
+                    <span
+                      className={cn('block h-full', METER_TONES[meter.tone][1])}
+                      style={{
+                        width: `${(Math.min(Math.max(meter.fraction, 0), 1) * 100).toString()}%`,
+                      }}
+                    />
+                  </span>
+                </span>
+              </Tooltip>
             )}
 
             {isLead ? (

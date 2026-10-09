@@ -32,6 +32,7 @@ const aShelf = (over: Partial<Library> = {}): Library => ({
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
   ...over,
 });
 

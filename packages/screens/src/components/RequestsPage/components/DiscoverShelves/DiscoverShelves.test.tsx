@@ -60,7 +60,12 @@ beforeEach(() => {
  * Draws the shelves, answering for what they lead to.
  */
 const draw = () => {
-  const handlers = { onAsk: vi.fn(), onBrowse: vi.fn(), onBrowseStudio: vi.fn() };
+  const handlers = {
+    onAsk: vi.fn(),
+    onBrowse: vi.fn(),
+    onBrowseStudio: vi.fn(),
+    onOpenRequests: vi.fn(),
+  };
 
   renderInAnAddress(<DiscoverShelves {...handlers} />);
 

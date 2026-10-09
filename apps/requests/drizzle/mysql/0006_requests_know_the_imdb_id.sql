@@ -1,0 +1,1 @@
+ALTER TABLE `requests_media_request` ADD `imdb_id` varchar(16);

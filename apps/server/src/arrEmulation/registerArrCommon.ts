@@ -86,7 +86,25 @@ const registerArrCommon = (
     ),
   );
 
-  app.get(`${api}/health`, (context) => context.json([], 200));
+  app.get(`${api}/health`, async (context) =>
+    context.json(
+      (await emulation.libraries(kind)).length > 0
+        ? []
+        : [
+            {
+              source: 'RootFolderCheck',
+              type: 'error',
+              message: say(
+                kind === 'film'
+                  ? 'server.arrEmulation.noFilmsLibraryTakesRequests'
+                  : 'server.arrEmulation.noShowsLibraryTakesRequests',
+              ),
+              wikiUrl: null,
+            },
+          ],
+      200,
+    ),
+  );
 
   for (const path of ['qualityprofile', 'qualityProfile']) {
     app.get(`${api}/${path}`, async (context) =>

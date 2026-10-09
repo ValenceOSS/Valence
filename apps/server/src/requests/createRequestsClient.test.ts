@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createRequestsClient } from './createRequestsClient';
 import { SOLVER_NOT_USED } from '@ValenceContracts/schemas/Requests';
 import type { DownloadStreamFrame } from '@ValenceContracts/schemas/DownloadQueue';
+import type { Release } from '@ValenceContracts/schemas/Indexer';
 
 const A_SECRET = 'a-secret-long-enough-to-be-worth-keeping';
 
@@ -624,6 +625,7 @@ describe('createRequestsClient with download clients', () => {
     filedInto: null,
     filingProblem: null,
     filingProblemCode: null,
+    wasPaused: false,
   };
 
   const A_QUEUE = { clients: [], downloads: [A_DOWNLOAD], checkedAt: null };
@@ -852,25 +854,27 @@ describe('createRequestsClient with quality profiles', () => {
     id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
     name: 'HD',
     kind: 'video' as const,
-    resolutions: ['1080p' as const],
-    sources: ['bluray' as const],
+    qualities: [],
     musicQualities: [],
     smallestMb: null,
     largestMb: null,
     preferredWords: [],
     requiredWords: [],
     bannedWords: [],
+    formats: [],
+    minFormatScore: 0,
+    upgradeUntilFormatScore: null,
     isUpgrading: false,
     releaseWait: 'digital',
     sizes: [],
-    upgradeUntilResolution: null,
-    upgradeUntilSource: null,
+    cutoff: null,
     upgradeUntilMusicQuality: null,
     libraryIds: [],
     preferredLanguage: null,
     isDefault: false,
     roleIds: [],
     accountIds: [],
+    position: 0,
     createdAt: '2026-09-19T00:00:00.000Z',
     updatedAt: '2026-09-19T00:00:00.000Z',
   };
@@ -937,7 +941,10 @@ describe('createRequestsClient with requests for films and series', () => {
     approval: 'approved' as const,
     refusedBecause: null,
     requestedBy: { id: 'someone', name: 'Someone' },
+    alsoAskedBy: [],
+    profileAsk: null,
     seasons: null,
+    followsNewSeasons: false,
     releaseTypes: null,
     releaseDate: '2021-12-03',
     releaseDates: { theatrical: null, digital: null, physical: null },
@@ -1011,7 +1018,7 @@ describe('createRequestsClient with requests for films and series', () => {
 
     expect(await client.requestArrived(REQUEST.id, 'media-1')).toEqual({
       kind: 'answered',
-      value: { request: REQUEST, newlyAvailable: 1 },
+      value: { request: REQUEST, newlyAvailable: 1, versionsArrived: [] },
     });
     expect(fetch.mock.calls.map(([url, init]) => `${init.method ?? 'GET'} ${url}`)).toEqual([
       `POST http://requests:8421/api/requests/${REQUEST.id}/arrived`,
@@ -1080,6 +1087,103 @@ describe('createRequestsClient with requests for films and series', () => {
       ).kind,
     ).toBe('refused');
     expect((await aClient(204, null).client.removeRequest(REQUEST.id)).kind).toBe('answered');
+  });
+
+  it('lists a handed-off request’s releases from its app, and sends a pick there', async () => {
+    const outcome = { releases: [], indexers: [], judgements: [], pickedId: null };
+    const listing = aClient(200, outcome);
+    const picking = aClient(200, REQUEST);
+    const release = {
+      id: '2:abc',
+      title: 'Dune.2021.1080p.WEB-DL',
+      indexerId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+      indexerName: 'An Indexer',
+      protocol: 'torrent',
+      sizeBytes: null,
+      seeders: 1,
+      leechers: 0,
+      grabs: null,
+      publishedAt: null,
+      categories: [],
+      downloadUrl: null,
+      magnetUrl: null,
+      infoUrl: null,
+      infoHash: null,
+      downloadFactor: null,
+      uploadFactor: null,
+      minimumRatio: null,
+      minimumSeedSeconds: null,
+    } satisfies Release;
+
+    expect(await listing.client.handOffReleases(REQUEST.id)).toEqual({
+      kind: 'answered',
+      value: outcome,
+    });
+    expect(listing.fetch.mock.calls[0]?.[0]).toBe(
+      `http://requests:8421/api/requests/${REQUEST.id}/hand-off/releases`,
+    );
+    expect((await picking.client.handOffPick(REQUEST.id, release)).kind).toBe('answered');
+    expect(picking.fetch.mock.calls[0]?.[0]).toBe(
+      `http://requests:8421/api/requests/${REQUEST.id}/hand-off/pick`,
+    );
+  });
+
+  it('works a handed-off request through its app: downloads, stopping, blocklist, following', async () => {
+    const download = {
+      id: '5',
+      releaseTitle: 'Dune.2021.1080p',
+      itemIds: [],
+      clientName: 'qBittorrent',
+      progress: 0.5,
+      sizeBytes: null,
+      secondsLeft: null,
+      problem: null,
+    };
+    const listing = aClient(200, [download]);
+    const blocked = aClient(200, [
+      {
+        id: '3',
+        requestId: REQUEST.id,
+        title: 'Dune.2021.720p',
+        indexerId: null,
+        reason: sayVerbatim('Download failed'),
+        at: '2026-10-01T10:00:00.000Z',
+      },
+    ]);
+    const changing = aClient(200, REQUEST);
+    const emptying = aClient(204, null);
+    const base = `http://requests:8421/api/requests/${REQUEST.id}/hand-off`;
+
+    expect(await listing.client.handOffDownloads(REQUEST.id)).toEqual({
+      kind: 'answered',
+      value: [download],
+    });
+    expect((await blocked.client.handOffBlocklist(REQUEST.id)).kind).toBe('answered');
+    expect(
+      (
+        await changing.client.handOffStop(REQUEST.id, '5', {
+          next: 'another',
+          isDeletingFiles: true,
+        })
+      ).kind,
+    ).toBe('answered');
+    expect(
+      (await changing.client.handOffFollow(REQUEST.id, { itemIds: [], isFollowed: false })).kind,
+    ).toBe('answered');
+    expect((await emptying.client.handOffLift(REQUEST.id, '3')).kind).toBe('answered');
+    expect((await emptying.client.handOffRelease(REQUEST.id)).kind).toBe('answered');
+    expect(
+      [listing, blocked, changing, emptying].flatMap((one) =>
+        one.fetch.mock.calls.map(([url]) => url),
+      ),
+    ).toEqual([
+      `${base}/downloads`,
+      `${base}/blocklist`,
+      `${base}/downloads/5/stop`,
+      `${base}/follow`,
+      `${base}/blocklist/3`,
+      `${base}/release`,
+    ]);
   });
 
   it('lists what is followed, and searches for everything missing', async () => {

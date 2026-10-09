@@ -10,11 +10,13 @@ import { aQualityProfile } from '@ValenceScreens/testing/aQualityProfile';
 
 const fetchProfiles = vi.fn<typeof Profiles.fetchProfiles>();
 const removeProfile = vi.fn<typeof Profiles.removeProfile>();
+const reorderProfiles = vi.fn<typeof Profiles.reorderProfiles>();
 const fetchLibraries = vi.fn<() => Promise<Library[]>>();
 
 vi.mock('@ValenceClient/requests/fetchProfiles', () => ({
   fetchProfiles: () => fetchProfiles(),
   removeProfile: (id: string) => removeProfile(id),
+  reorderProfiles: (ids: readonly string[]) => reorderProfiles(ids),
   addProfile: vi.fn(),
   changeProfile: vi.fn(),
 }));
@@ -25,8 +27,7 @@ vi.mock('@ValenceClient/library/fetchLibrary', async (actual) => ({
 }));
 
 const HD = aQualityProfile({
-  resolutions: ['1080p'],
-  sources: ['bluray'],
+  qualities: ['bluray-1080p'],
   libraryIds: ['films', 'gone'],
 });
 
@@ -42,6 +43,7 @@ const LOSSLESS: QualityProfile = {
 beforeEach(() => {
   fetchProfiles.mockReset().mockResolvedValue([HD, LOSSLESS]);
   removeProfile.mockReset().mockResolvedValue(null);
+  reorderProfiles.mockReset().mockResolvedValue({ value: [], refusal: null });
   fetchLibraries.mockReset().mockResolvedValue([
     {
       id: 'films',
@@ -56,6 +58,7 @@ beforeEach(() => {
       requestProfileId: null,
       requestPath: null,
       keepsShowsTogether: true,
+      higherProfileAsks: 'ask',
     },
   ]);
 });
@@ -75,7 +78,7 @@ describe('ProfilesPanel', () => {
     await waitFor(() => {
       expect(within(rowOf('HD')).getByText('Films, A deleted library')).toBeInTheDocument();
     });
-    expect(within(rowOf('HD')).getByText('1080p · Blu-ray')).toBeInTheDocument();
+    expect(within(rowOf('HD')).getByText('Blu-ray 1080p')).toBeInTheDocument();
   });
 
   it('shows films and series first, and music behind its own choice', async () => {
@@ -108,6 +111,70 @@ describe('ProfilesPanel', () => {
     await user.click(await screen.findByRole('menuitem', { name: /Change/ }));
 
     expect(await screen.findByText('Change HD')).toBeInTheDocument();
+  });
+
+  it('moves a profile up among those of its kind, and offers no move past the end', async () => {
+    const user = userEvent.setup();
+    const UHD: QualityProfile = { ...HD, id: '7c9e6679-7425-40de-944b-e07fc1f90ae8', name: 'UHD' };
+
+    fetchProfiles.mockResolvedValue([HD, LOSSLESS, UHD]);
+    renderInAnAddress(<ProfilesPanel />);
+
+    expect(await screen.findByText(/^Highest first\./)).toBeInTheDocument();
+
+    await user.click(await screen.findByRole('button', { name: 'Actions for HD' }));
+
+    expect(screen.queryByRole('menuitem', { name: /Move up/ })).toBeNull();
+
+    await user.keyboard('{Escape}');
+    await user.click(await screen.findByRole('button', { name: 'Actions for UHD' }));
+    await user.click(await screen.findByRole('menuitem', { name: /Move up/ }));
+
+    await waitFor(() => {
+      expect(reorderProfiles).toHaveBeenCalledWith([UHD.id, LOSSLESS.id, HD.id]);
+    });
+  });
+
+  it('says no request is judged by these profiles where every library hands off', async () => {
+    fetchLibraries.mockResolvedValue([
+      {
+        id: 'films',
+        name: 'Films',
+        kind: 'movies',
+        path: '/media/films',
+        itemCount: 0,
+        lastScannedAt: null,
+        defaultAudioLanguage: null,
+        filesAtOnce: null,
+        takesRequests: true,
+        requestProfileId: null,
+        requestPath: null,
+        keepsShowsTogether: true,
+        higherProfileAsks: 'ask',
+        fulfilment: {
+          appId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+          rootFolderPath: '/movies',
+          qualityProfileId: 1,
+          metadataProfileId: null,
+          searchesOnAdd: true,
+        },
+      },
+    ]);
+
+    renderInAnAddress(<ProfilesPanel />);
+
+    expect(await screen.findByText(/hands them to a connected app/)).toBeInTheDocument();
+  });
+
+  it('tries a profile on a search of the indexers', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<ProfilesPanel />);
+
+    await user.click(await screen.findByRole('button', { name: 'Actions for HD' }));
+    await user.click(await screen.findByRole('menuitem', { name: /Try it/ }));
+
+    expect(await screen.findByRole('dialog', { name: 'Try HD' })).toBeInTheDocument();
   });
 
   it('removes a profile once that is confirmed, saying why where it could not', async () => {

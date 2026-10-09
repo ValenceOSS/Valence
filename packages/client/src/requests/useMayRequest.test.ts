@@ -3,9 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderHookInACache } from '@ValenceClient/testing/renderHookInACache';
 import { useMayRequest } from './useMayRequest';
 import type { MyPermissions } from '@ValenceContracts/schemas/Permission';
+import type { RequestsAvailability } from '@ValenceContracts/schemas/Requests';
 
 const fetchMyPermissions = vi.fn<() => Promise<MyPermissions>>();
-const fetchRequestsAvailability = vi.fn<() => Promise<{ isEnabled: boolean }>>();
+const fetchRequestsAvailability = vi.fn<() => Promise<RequestsAvailability>>();
 
 vi.mock('@ValenceClient/session/fetchMyPermissions', () => ({
   fetchMyPermissions: () => fetchMyPermissions(),
@@ -20,7 +21,9 @@ beforeEach(() => {
   fetchMyPermissions
     .mockReset()
     .mockResolvedValue({ permissions: ['requests.ask'], isAdministrator: false });
-  fetchRequestsAvailability.mockReset().mockResolvedValue({ isEnabled: true });
+  fetchRequestsAvailability
+    .mockReset()
+    .mockResolvedValue({ isEnabled: true, kinds: ['film', 'series', 'artist', 'album', 'book'] });
 });
 
 describe('useMayRequest', () => {
@@ -46,7 +49,10 @@ describe('useMayRequest', () => {
   });
 
   it('does not while requesting is switched off on this server', async () => {
-    fetchRequestsAvailability.mockResolvedValue({ isEnabled: false });
+    fetchRequestsAvailability.mockResolvedValue({
+      isEnabled: false,
+      kinds: ['film', 'series', 'artist', 'album', 'book'],
+    });
 
     const { result } = renderHookInACache(() => useMayRequest());
 
@@ -66,6 +72,17 @@ describe('useMayRequest', () => {
       expect(fetchMyPermissions).toHaveBeenCalled();
     });
 
+    expect(result.current).toBe(false);
+  });
+
+  it('does not let somebody ask for films where only music is taken, and they may not ask for it', async () => {
+    fetchRequestsAvailability.mockResolvedValue({ isEnabled: true, kinds: ['artist', 'album'] });
+
+    const { result } = renderHookInACache(() => useMayRequest());
+
+    await waitFor(() => {
+      expect(fetchRequestsAvailability).toHaveBeenCalled();
+    });
     expect(result.current).toBe(false);
   });
 });

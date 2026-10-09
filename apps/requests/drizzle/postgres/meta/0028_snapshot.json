@@ -1,5 +1,5 @@
 {
-  "id": "30193ef6-46bf-4652-99f8-8b4ad308e6dc",
+  "id": "6051869b-cfdc-4819-bc60-7417b6986629",
   "prevId": "d3083e26-7273-4379-abb3-a514646f2400",
   "version": "7",
   "dialect": "postgresql",
@@ -134,6 +134,12 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "info_hash": {
+          "name": "info_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "indexer_id": {
           "name": "indexer_id",
@@ -1002,13 +1008,6 @@
           "notNull": true,
           "default": false
         },
-        "position": {
-          "name": "position",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
         "role_ids": {
           "name": "role_ids",
           "type": "jsonb",
@@ -1178,6 +1177,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": false
+        },
+        "is_followed": {
+          "name": "is_followed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
         },
         "last_searched_at": {
           "name": "last_searched_at",

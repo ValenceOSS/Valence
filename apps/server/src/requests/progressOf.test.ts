@@ -34,6 +34,7 @@ const aDownload = (id: string): QueuedDownload => ({
   filedInto: null,
   filingProblem: null,
   filingProblemCode: null,
+  wasPaused: false,
 });
 
 /**
@@ -55,6 +56,7 @@ const anItem = (downloadId: string | null): RequestItem => ({
   score: null,
   downloadedBytes: null,
   downloadSeconds: null,
+  isFollowed: true,
   lastSearchedAt: null,
   updatedAt: '2026-09-19T00:00:00.000Z',
 });

@@ -21,6 +21,7 @@ const aLibrary = (id: string, name: string, itemCount = 0): Library => ({
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 });
 
 const FILMS = aLibrary('00000000-0000-4000-8000-000000000001', 'Films', 12);

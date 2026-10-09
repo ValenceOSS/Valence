@@ -23,7 +23,14 @@ const aDownload = (
   overrides: Partial<
     Pick<
       SentDownloadRecord,
-      'protocol' | 'state' | 'problem' | 'sizeBytes' | 'doneBytes' | 'sentAt' | 'updatedAt'
+      | 'protocol'
+      | 'state'
+      | 'problem'
+      | 'sizeBytes'
+      | 'doneBytes'
+      | 'sentAt'
+      | 'updatedAt'
+      | 'wasPaused'
     >
   > = {},
 ) => ({
@@ -34,6 +41,7 @@ const aDownload = (
   doneBytes: 0,
   sentAt: SENT,
   updatedAt: SENT,
+  wasPaused: false,
   ...overrides,
 });
 
@@ -138,6 +146,15 @@ describe('judgeDownload', () => {
     expect(judgeDownload(aDownload({ state: 'done' }), at(100 * HOUR), RULES).isDoomed).toBe(false);
     expect(judgeDownload(aDownload({ state: 'paused' }), at(100 * HOUR), RULES).isDoomed).toBe(
       false,
+    );
+  });
+
+  it('never gives up on a download somebody paused, even once it is going again', () => {
+    const resumed = aDownload({ doneBytes: 1_000_000, wasPaused: true });
+
+    expect(judgeDownload(resumed, at(100 * HOUR), RULES).isDoomed).toBe(false);
+    expect(judgeDownload({ ...resumed, wasPaused: false }, at(100 * HOUR), RULES).isDoomed).toBe(
+      true,
     );
   });
 

@@ -1,18 +1,21 @@
-import { useQuery } from '@tanstack/react-query';
-import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
+import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
 
 /**
  * Whether whoever is watching may ask for something not in the library: requesting is switched on
- * on this server, and they may ask for films and programmes or for music.
+ * on this server, and they may ask for films, programmes or books where a library takes those, or
+ * for music where a library takes that.
  *
  * @returns Whether they may ask.
  */
 const useMayRequest = (): boolean => {
   const { may } = useWhatIMayDo();
-  const requesting = useQuery(requestsQueries.availability());
+  const kinds = useRequestableKinds();
 
-  return requesting.data?.isEnabled === true && (may('requests.ask') || may('requests.askMusic'));
+  return (
+    (may('requests.ask') && (kinds.has('film') || kinds.has('series') || kinds.has('book'))) ||
+    (may('requests.askMusic') && (kinds.has('artist') || kinds.has('album')))
+  );
 };
 
 export { useMayRequest };

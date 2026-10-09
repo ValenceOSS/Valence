@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { QualityProfileDraft } from '@ValenceContracts/schemas/QualityProfile';
 import { sizeOf } from './sizeOf';
 import { wordsOf } from './wordsOf';
+import { scoreOf } from './scoreOf';
 import type { ProfileForm } from './readProfileForm';
 import { say } from '@ValenceI18n/say';
 
@@ -20,11 +21,43 @@ const profileFormSchema = z
       });
     }
 
-    if (!isMusic && form.resolutions.length === 0) {
+    if (!isMusic && form.qualities.length === 0) {
       context.addIssue({
         code: 'custom',
-        path: ['resolutions'],
-        message: say('screens.profileEditor.readProfileForm.allowAtLeastOneResolution'),
+        path: ['qualities'],
+        message: say('screens.profileEditor.readProfileForm.allowAtLeastOneQuality'),
+      });
+    }
+
+    if (form.formats.some((format) => format.name.trim() === '')) {
+      context.addIssue({
+        code: 'custom',
+        path: ['formats'],
+        message: say('screens.profileEditor.readProfileForm.nameEveryFormat'),
+      });
+    }
+
+    if (
+      form.formats.some((format) =>
+        format.conditions.some((condition) => condition.value.trim() === ''),
+      )
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['formats'],
+        message: say('screens.profileEditor.readProfileForm.giveEveryConditionAValue'),
+      });
+    }
+
+    if (
+      form.formats.some((format) => typeof scoreOf(format.score) !== 'number') ||
+      scoreOf(form.minFormatScore) === undefined ||
+      scoreOf(form.upgradeUntilFormatScore) === undefined
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['formats'],
+        message: say('screens.profileEditor.readProfileForm.scoresAreWholeNumbers'),
       });
     }
 
@@ -63,8 +96,7 @@ const profileFormSchema = z
     return {
       name: form.name.trim(),
       kind: form.kind,
-      resolutions: form.resolutions,
-      sources: form.sources,
+      qualities: form.qualities,
       musicQualities: form.musicQualities,
       smallestMb: isMusic ? (sizeOf(form.smallestMb) ?? null) : null,
       largestMb: isMusic ? (sizeOf(form.largestMb) ?? null) : null,
@@ -73,9 +105,23 @@ const profileFormSchema = z
       preferredWords: wordsOf(form.preferredWords),
       requiredWords: wordsOf(form.requiredWords),
       bannedWords: wordsOf(form.bannedWords),
+      formats: form.formats.map((format) => ({
+        name: format.name.trim(),
+        score: scoreOf(format.score) ?? 0,
+        conditions: format.conditions.map((condition) => ({
+          ...condition,
+          value: condition.value.trim(),
+        })),
+      })),
+      minFormatScore: scoreOf(form.minFormatScore) ?? 0,
+      upgradeUntilFormatScore: form.isUpgrading
+        ? (scoreOf(form.upgradeUntilFormatScore) ?? null)
+        : null,
       isUpgrading: form.isUpgrading,
-      upgradeUntilResolution: form.isUpgrading ? form.upgradeUntilResolution : null,
-      upgradeUntilSource: form.isUpgrading ? form.upgradeUntilSource : null,
+      cutoff:
+        form.isUpgrading && form.cutoff !== null && form.qualities.includes(form.cutoff)
+          ? form.cutoff
+          : null,
       upgradeUntilMusicQuality: form.isUpgrading ? form.upgradeUntilMusicQuality : null,
       libraryIds: form.libraryIds,
       preferredLanguage: form.preferredLanguage,

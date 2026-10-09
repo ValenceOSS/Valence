@@ -79,8 +79,8 @@ describe('RequestsPage', () => {
     const rows = drawn.getAllByRole('button');
 
     expect(rows).toHaveLength(2);
-    expect(rows[0]).toHaveAccessibleName('Arrival, Requested');
-    expect(rows[1]).toHaveAccessibleName('Dune, Requested');
+    expect(rows[0]).toHaveAccessibleName('Arrival, Missing');
+    expect(rows[1]).toHaveAccessibleName('Dune, Missing');
     expect(drawn.queryByText(/Blue/)).toBeNull();
     expect(onLight).toHaveBeenCalledWith('/posters/arrival.jpg');
   });
@@ -91,8 +91,8 @@ describe('RequestsPage', () => {
       aMediaRequest({ id: 'b', title: 'Arrival', requestedBy: { id: 'sam', name: 'Sam' } }),
     ]);
 
-    expect(drawn.getByText('Requested   ·   Requested by Sam')).toBeTruthy();
-    expect(drawn.getByText('Requested')).toBeTruthy();
+    expect(drawn.getByText('Missing   ·   Requested by Sam')).toBeTruthy();
+    expect(drawn.getByText('Missing')).toBeTruthy();
   });
 
   it('opens the request chosen', async () => {
@@ -100,7 +100,7 @@ describe('RequestsPage', () => {
     const dune = aMediaRequest();
     const drawn = await drawRequests([dune], { onOpen });
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Dune, Requested' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Dune, Missing' }));
 
     expect(onOpen).toHaveBeenCalledWith(dune);
   });

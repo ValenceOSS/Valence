@@ -1,3 +1,4 @@
+import type { HigherProfileAsks } from '@ValenceContracts/schemas/HigherProfileAsks';
 import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
 import type { CatalogueArtwork } from '@ValenceServer/calendar/CatalogueArtwork';
 import type { CatalogueTitleRef } from '@ValenceServer/calendar/CatalogueTitleRef';
@@ -84,12 +85,14 @@ type CreateLibraryInput = {
 };
 
 type UpdateLibraryInput = {
+  kind?: 'shows' | 'anime';
   defaultAudioLanguage: string | null;
   filesAtOnce?: number | null;
   takesRequests?: boolean;
   requestProfileId?: string | null;
   requestPath?: string | null;
   keepsShowsTogether?: boolean;
+  higherProfileAsks?: HigherProfileAsks;
   fulfilment?: Fulfilment | null;
 };
 

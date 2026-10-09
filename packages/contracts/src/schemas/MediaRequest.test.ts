@@ -11,6 +11,7 @@ describe('MediaRequestAskSchema', () => {
       kind: 'series',
       tmdbId: 1399,
       seasons: null,
+      followsNewSeasons: true,
       isPickedByHand: false,
     });
   });
@@ -44,6 +45,16 @@ describe('MediaRequestAskSchema', () => {
         kind: 'artist',
         musicBrainzId: '83d91898-7763-47d7-b03b-b92132375c47',
         releaseTypes: [],
+      }),
+    ).toThrow();
+  });
+
+  it('refuses a book asked for in the same format twice', () => {
+    expect(() =>
+      MediaRequestAskSchema.parse({
+        kind: 'book',
+        openLibraryId: 21_277_329,
+        bookFormats: ['ebook', 'ebook'],
       }),
     ).toThrow();
   });

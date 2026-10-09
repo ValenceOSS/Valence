@@ -1,3 +1,4 @@
+import { queryOfScope } from '@ValenceServer/requests/queryOfScope';
 import { refuseWith } from '@ValenceI18n/refuseWith';
 import { saidFrom } from '@ValenceI18n/saidFrom';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
@@ -36,6 +37,7 @@ import { GiveUpRulesSchema } from '@ValenceContracts/schemas/GiveUpRules';
 import type { GiveUpRules } from '@ValenceContracts/schemas/GiveUpRules';
 import { QualityProfileSchema } from '@ValenceContracts/schemas/QualityProfile';
 import type {
+  ProfileOrder,
   QualityProfile,
   QualityProfileChange,
   QualityProfileDraft,
@@ -64,9 +66,11 @@ import type {
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type {
   BlockedRelease,
+  DownloadStop,
   FollowedRequest,
   MediaRequest,
   MediaRequestAdded,
+  MediaRequestFollow,
   MediaRequestArrivals,
   MediaRequestArrived,
   MediaRequestDeparture,
@@ -75,6 +79,9 @@ import type {
   MissingSearch,
   RequestCatalogueUpdate,
   RequestLogEntry,
+  NarrationDecision,
+  ProfileAskDecision,
+  Requester,
 } from '@ValenceContracts/schemas/MediaRequest';
 import {
   FollowedRequestSchema,
@@ -91,6 +98,8 @@ import {
   ArrAppSchema,
   ArrAppTestSchema,
   ArrQueueSchema,
+  HandedToSchema,
+  HandOffDownloadSchema,
   ProwlarrImportSchema,
 } from '@ValenceContracts/schemas/ArrApp';
 import type {
@@ -100,6 +109,8 @@ import type {
   ArrAppDraft,
   ArrAppTest,
   ArrQueue,
+  HandedTo,
+  HandOffDownload,
   ProwlarrImport,
 } from '@ValenceContracts/schemas/ArrApp';
 import { ArrImportAppliedSchema, ArrImportPlanSchema } from '@ValenceContracts/schemas/ArrImport';
@@ -373,11 +384,14 @@ const createRequestsClient = ({
         body: change,
       }),
 
+    reorderProfiles: (order: ProfileOrder): Promise<RequestsAnswer<QualityProfile[]>> =>
+      call('/api/profiles/order', (body) => z.array(QualityProfileSchema).parse(body), {
+        method: 'PUT',
+        body: order,
+      }),
+
     removeProfile: (id: string): Promise<RequestsAnswer<null>> =>
       call(withProfile(id), () => null, { method: 'DELETE' }),
-
-    reorderProfiles: (ids: readonly string[]): Promise<RequestsAnswer<null>> =>
-      call('/api/profiles/order', () => null, { method: 'PUT', body: { ids } }),
 
     readGiveUpRules: (): Promise<RequestsAnswer<GiveUpRules>> =>
       call('/api/give-up-rules', (body) => GiveUpRulesSchema.parse(body)),
@@ -542,8 +556,11 @@ const createRequestsClient = ({
     refuseRequest: (id: string, reason: string): Promise<RequestsAnswer<MediaRequest>> =>
       call(`${withRequest(id)}/refuse`, readRequest, { method: 'POST', body: { reason } }),
 
-    retryRequest: (id: string): Promise<RequestsAnswer<MediaRequest>> =>
-      call(`${withRequest(id)}/retry`, readRequest, { method: 'POST' }),
+    retryRequest: (
+      id: string,
+      scope: { season?: string | undefined; episode?: string | undefined } = {},
+    ): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/retry${queryOfScope(scope)}`, readRequest, { method: 'POST' }),
 
     fulfilRequest: (id: string): Promise<RequestsAnswer<MediaRequest>> =>
       call(`${withRequest(id)}/fulfil`, readRequest, { method: 'POST' }),
@@ -646,16 +663,124 @@ const createRequestsClient = ({
     liftBlock: (id: string, blockId: string): Promise<RequestsAnswer<null>> =>
       call(`${withRequest(id)}/blocklist/${blockId}`, () => null, { method: 'DELETE' }),
 
-    requestReleases: (id: string): Promise<RequestsAnswer<ReleaseSearchOutcome>> =>
-      call(`${withRequest(id)}/releases`, (body) => ReleaseSearchOutcomeSchema.parse(body), {
+    requestReleases: (
+      id: string,
+      scope: { season?: string | undefined; episode?: string | undefined } = {},
+    ): Promise<RequestsAnswer<ReleaseSearchOutcome>> =>
+      call(
+        `${withRequest(id)}/releases${queryOfScope(scope)}`,
+        (body) => ReleaseSearchOutcomeSchema.parse(body),
+        {
+          waitMs: searchTimeoutMs,
+        },
+      ),
+
+    pickRelease: (
+      id: string,
+      release: Release,
+      keepsBoth = false,
+    ): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/pick`, readRequest, {
+        method: 'POST',
+        body: keepsBoth ? { release, keepsBoth } : { release },
         waitMs: searchTimeoutMs,
       }),
 
-    pickRelease: (id: string, release: Release): Promise<RequestsAnswer<MediaRequest>> =>
-      call(`${withRequest(id)}/pick`, readRequest, {
+    handOffReleases: (id: string): Promise<RequestsAnswer<ReleaseSearchOutcome>> =>
+      call(
+        `${withRequest(id)}/hand-off/releases`,
+        (body) => ReleaseSearchOutcomeSchema.parse(body),
+        {
+          waitMs: searchTimeoutMs,
+        },
+      ),
+
+    handOffPick: (id: string, release: Release): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/hand-off/pick`, readRequest, {
         method: 'POST',
         body: { release },
         waitMs: searchTimeoutMs,
+      }),
+
+    handOffDownloads: (id: string): Promise<RequestsAnswer<HandOffDownload[]>> =>
+      call(`${withRequest(id)}/hand-off/downloads`, (body) =>
+        z.array(HandOffDownloadSchema).parse(body),
+      ),
+
+    handOffStop: (
+      id: string,
+      downloadId: string,
+      stopping: DownloadStop,
+    ): Promise<RequestsAnswer<MediaRequest>> =>
+      call(
+        `${withRequest(id)}/hand-off/downloads/${encodeURIComponent(downloadId)}/stop`,
+        readRequest,
+        { method: 'POST', body: stopping },
+      ),
+
+    handOffBlocklist: (id: string): Promise<RequestsAnswer<BlockedRelease[]>> =>
+      call(`${withRequest(id)}/hand-off/blocklist`, (body) =>
+        z.array(BlockedReleaseSchema).parse(body),
+      ),
+
+    handOffLift: (id: string, blockId: string): Promise<RequestsAnswer<null>> =>
+      call(`${withRequest(id)}/hand-off/blocklist/${encodeURIComponent(blockId)}`, () => null, {
+        method: 'DELETE',
+      }),
+
+    handOffFollow: (
+      id: string,
+      following: MediaRequestFollow,
+    ): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/hand-off/follow`, readRequest, { method: 'POST', body: following }),
+
+    handOffRelease: (id: string): Promise<RequestsAnswer<null>> =>
+      call(`${withRequest(id)}/hand-off/release`, () => null, { method: 'POST' }),
+
+    stopDownload: (
+      id: string,
+      downloadId: string,
+      stopping: DownloadStop,
+    ): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/downloads/${encodeURIComponent(downloadId)}/stop`, readRequest, {
+        method: 'POST',
+        body: stopping,
+      }),
+
+    followItems: (
+      id: string,
+      following: MediaRequestFollow,
+    ): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/follow`, readRequest, { method: 'POST', body: following }),
+
+    deleteFiled: (id: string): Promise<RequestsAnswer<{ folders: string[] }>> =>
+      call(
+        `${withRequest(id)}/files/delete`,
+        (body) => z.object({ folders: z.array(z.string()) }).parse(body),
+        { method: 'POST' },
+      ),
+
+    joinRequest: (id: string, asker: Requester): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/askers`, readRequest, { method: 'POST', body: asker }),
+
+    decideProfileAsk: (
+      id: string,
+      decision: ProfileAskDecision,
+    ): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/profile-ask`, readRequest, { method: 'POST', body: decision }),
+
+    decideNarration: (
+      id: string,
+      decision: NarrationDecision,
+    ): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/narration`, readRequest, { method: 'POST', body: decision }),
+
+    handedTo: (id: string): Promise<RequestsAnswer<HandedTo>> =>
+      call(`${withRequest(id)}/handed-to`, (body) => HandedToSchema.parse(body)),
+
+    leaveRequest: (id: string, askerId: string): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/askers/${encodeURIComponent(askerId)}`, readRequest, {
+        method: 'DELETE',
       }),
 
     removeRequest: (id: string, isDeletingDownloads = false): Promise<RequestsAnswer<null>> =>

@@ -29,6 +29,7 @@ const films: Library = {
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 };
 
 beforeEach(() => {
@@ -141,7 +142,7 @@ describe('AddLibraryDialog', () => {
     expect(onCreated).toHaveBeenCalledWith(films);
   });
 
-  it('adds anime as a library of shows under its own name', async () => {
+  it('adds anime as a library of its own kind', async () => {
     const actor = userEvent.setup();
     render(<AddLibraryDialog isOpen onClose={vi.fn()} onCreated={vi.fn()} />);
 
@@ -152,8 +153,7 @@ describe('AddLibraryDialog', () => {
     await waitFor(() => {
       expect(createLibraryMock).toHaveBeenCalledWith({
         name: 'Films',
-        kind: 'shows',
-        flavour: 'Anime',
+        kind: 'anime',
         path: '/media/films',
       });
     });

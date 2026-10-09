@@ -1,9 +1,11 @@
 import { z } from 'zod';
 import { isWebAddress } from '@ValenceCore/functions/isWebAddress';
 import { readWholeNumber } from '@ValenceCore/functions/readWholeNumber';
-import { DownloadClientKindSchema } from '@ValenceContracts/schemas/DownloadClient';
+import {
+  DOWNLOAD_CATEGORY_KINDS,
+  DownloadClientKindSchema,
+} from '@ValenceContracts/schemas/DownloadClient';
 import type { DownloadClientDraft } from '@ValenceContracts/schemas/DownloadClient';
-import { LIBRARY_KINDS } from '@ValenceContracts/schemas/Library';
 import { say } from '@ValenceI18n/say';
 
 const CategoryFieldSchema = z.string().trim();
@@ -33,15 +35,19 @@ const downloadClientFormSchema = z
         music: CategoryFieldSchema,
         books: CategoryFieldSchema,
       })
-      .refine((categories) => LIBRARY_KINDS.every((kind) => /^[\w .-]+$/.test(categories[kind])), {
-        error: say(
-          'screens.downloadClientDialog.readDownloadClientForm.aCategoryIsLettersNumbersSpaces',
-        ),
-      })
       .refine(
         (categories) =>
-          new Set(LIBRARY_KINDS.map((kind) => categories[kind].toLowerCase())).size ===
-          LIBRARY_KINDS.length,
+          DOWNLOAD_CATEGORY_KINDS.every((kind) => /^[\w .-]+$/.test(categories[kind])),
+        {
+          error: say(
+            'screens.downloadClientDialog.readDownloadClientForm.aCategoryIsLettersNumbersSpaces',
+          ),
+        },
+      )
+      .refine(
+        (categories) =>
+          new Set(DOWNLOAD_CATEGORY_KINDS.map((kind) => categories[kind].toLowerCase())).size ===
+          DOWNLOAD_CATEGORY_KINDS.length,
         {
           error: say(
             'screens.downloadClientDialog.readDownloadClientForm.eachKindNeedsACategoryOf',

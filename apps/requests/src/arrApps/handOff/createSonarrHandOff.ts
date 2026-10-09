@@ -1,3 +1,4 @@
+import { ArrReleaseSchema } from '@ValenceRequests/arrApps/schemas/ArrReleaseSchema';
 import { dirname } from 'node:path';
 import { z } from 'zod';
 import { saying } from '@ValenceI18n/saying';
@@ -14,6 +15,7 @@ import type { SonarrEpisode } from '@ValenceRequests/arrApps/schemas/SonarrEpiso
 import { SonarrSeriesSchema } from '@ValenceRequests/arrApps/schemas/SonarrSeriesSchema';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
+import { isSeasonWanted } from '@ValenceRequests/mediaRequests/isSeasonWanted';
 
 const SonarrSeriesListSchema = z.array(SonarrSeriesSchema);
 
@@ -67,6 +69,7 @@ const createSonarrHandOff = (
         !episode.hasFile &&
         items.some(
           (item) =>
+            item.isFollowed &&
             !SETTLED.has(item.state) &&
             item.season === episode.seasonNumber &&
             item.episode === episode.episodeNumber,
@@ -150,10 +153,7 @@ const createSonarrHandOff = (
             seriesType: 'standard',
             seasons: found.seasons.map((season) => ({
               seasonNumber: season.seasonNumber,
-              monitored:
-                request.seasons === null
-                  ? season.seasonNumber > 0
-                  : request.seasons.includes(season.seasonNumber),
+              monitored: isSeasonWanted(request, season.seasonNumber),
             })),
             addOptions: {
               searchForMissingEpisodes: handOff.searchesOnAdd,
@@ -164,6 +164,91 @@ const createSonarrHandOff = (
           ArrIdSchema,
         )
       ).id;
+    },
+
+    search: async (_request, handOffId) => {
+      await caller.send(
+        'POST',
+        '/command',
+        { name: 'SeriesSearch', seriesId: handOffId },
+        ArrCommandSchema,
+      );
+    },
+
+    releases: async (_request, items, handOffId) => {
+      const seasons = [
+        ...new Set(
+          items.flatMap((item) =>
+            item.season === null || item.state === 'available' || item.state === 'filed'
+              ? []
+              : [item.season],
+          ),
+        ),
+      ];
+      const found = await Promise.all(
+        seasons.map((season) =>
+          caller.read('/release', ArrReleaseSchema.array(), {
+            seriesId: handOffId.toString(),
+            seasonNumber: season.toString(),
+          }),
+        ),
+      );
+
+      return [...new Map(found.flat().map((release) => [release.guid, release])).values()];
+    },
+
+    queued: async (_request, items, handOffId, queue) => {
+      const kept = queue.filter((record) => record.seriesId === handOffId);
+      const episodes =
+        kept.length === 0
+          ? []
+          : await caller.read('/episode', SonarrEpisodesSchema, {
+              seriesId: handOffId.toString(),
+            });
+
+      return kept.flatMap((record) => {
+        const episode = episodes.find((one) => one.id === record.episodeId);
+        const itemIds = items
+          .filter(
+            (item) =>
+              episode !== undefined &&
+              item.season === episode.seasonNumber &&
+              item.episode === episode.episodeNumber,
+          )
+          .map((item) => item.id);
+
+        return itemIds.length === 0 ? [] : [{ record, itemIds }];
+      });
+    },
+
+    monitor: async (_request, items, handOffId, isMonitored) => {
+      const episodeIds = (
+        await caller.read('/episode', SonarrEpisodesSchema, { seriesId: handOffId.toString() })
+      )
+        .filter((episode) =>
+          items.some(
+            (item) =>
+              item.season === episode.seasonNumber && item.episode === episode.episodeNumber,
+          ),
+        )
+        .map((episode) => episode.id);
+
+      if (episodeIds.length > 0) {
+        await caller.send(
+          'PUT',
+          '/episode/monitor',
+          { episodeIds, monitored: isMonitored },
+          ArrAcknowledgementSchema,
+        );
+      }
+    },
+
+    pageOf: async (_request, handOffId) => {
+      const series = await caller.read(`/series/${handOffId.toString()}`, SonarrSeriesSchema);
+
+      return series.titleSlug === null || series.titleSlug === undefined
+        ? null
+        : `/series/${series.titleSlug}`;
     },
 
     watch: async (_request, items, handOff, handOffId, queue) => {

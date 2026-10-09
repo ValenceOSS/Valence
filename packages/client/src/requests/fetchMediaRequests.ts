@@ -1,3 +1,5 @@
+import { HandedToSchema, HandOffDownloadSchema } from '@ValenceContracts/schemas/ArrApp';
+import type { HandedTo, HandOffDownload } from '@ValenceContracts/schemas/ArrApp';
 import { z } from 'zod';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { sendToRequests } from '@ValenceClient/requests/sendToRequests';
@@ -17,6 +19,7 @@ import type { Release, ReleaseSearchOutcome } from '@ValenceContracts/schemas/In
 import type {
   BlockedRelease,
   CatalogueSeason,
+  DownloadStop,
   MediaRequest,
   MediaRequestDecided,
   MediaRequestAsk,
@@ -24,8 +27,11 @@ import type {
   MissingSearch,
   MusicCatalogueHit,
   MusicRequestKind,
+  ProfileAskDecision,
   RequestLogEntry,
+  SearchScope,
 } from '@ValenceContracts/schemas/MediaRequest';
+import { queryOfSearchScope } from '@ValenceClient/requests/queryOfSearchScope';
 
 const REQUESTS = '/api/requests/media';
 
@@ -87,6 +93,50 @@ const approveMediaRequest = (id: string): Promise<Sent<MediaRequest>> =>
   sendToRequests(`${REQUESTS}/${id}/approve`, 'POST', undefined, readRequest);
 
 /**
+ * Wants something somebody else asked for too, so it shows among your requests and you are told
+ * when it arrives.
+ *
+ * @param id - Which.
+ * @returns The request, or why not.
+ */
+const joinMediaRequest = (id: string): Promise<Sent<MediaRequest>> =>
+  sendToRequests(`${REQUESTS}/${id}/join`, 'POST', undefined, readRequest);
+
+/**
+ * Settles a later ask at a higher quality profile: switches the request to it, or keeps the one it
+ * has.
+ *
+ * @param id - Which request.
+ * @param decision - Which way.
+ * @returns The request, or why not.
+ */
+const decideProfileAsk = (id: string, decision: ProfileAskDecision): Promise<Sent<MediaRequest>> =>
+  sendToRequests(`${REQUESTS}/${id}/profile-ask`, 'POST', decision, readRequest);
+
+/**
+ * Chooses which narration of a book's audiobook to fetch, or more than one.
+ *
+ * @param id - Which request.
+ * @param asins - The narrations chosen.
+ * @returns The request as it now stands, or why it could not be chosen.
+ */
+const decideNarration = (id: string, asins: readonly string[]): Promise<Sent<MediaRequest>> =>
+  sendToRequests(`${REQUESTS}/${id}/narration`, 'POST', { asins: [...asins] }, readRequest);
+
+/**
+ * Reads which connected app a request was handed to, with a link to its page there.
+ *
+ * @param id - Which request.
+ * @returns The app, or null where it was not handed to one.
+ */
+const fetchHandedTo = async (id: string): Promise<HandedTo | null> =>
+  (
+    await sendToRequests(`${REQUESTS}/${id}/handed-to`, 'GET', undefined, async (response) =>
+      HandedToSchema.parse(await response.json()),
+    )
+  ).value;
+
+/**
  * Refuses a request.
  *
  * @param id - Which.
@@ -117,6 +167,16 @@ const decideMediaRequests = (
   );
 
 /**
+ * Reads what the connected app a request was handed to is downloading for it, where Valence
+ * controls the app.
+ *
+ * @param id - Which request.
+ * @returns Its downloads in the app.
+ */
+const fetchHandOffDownloads = (id: string): Promise<HandOffDownload[]> =>
+  readFromServer(`${REQUESTS}/${id}/hand-off/downloads`, z.array(HandOffDownloadSchema));
+
+/**
  * Reads the releases a request will not try again, and why each was given up on.
  *
  * @param id - Which request.
@@ -140,13 +200,23 @@ const liftRequestBlock = async (id: string, blockId: string): Promise<Refusal> =
   ).refusal;
 
 /**
- * Tries again whatever failed in a request, and searches again for what is wanted.
+ * Tries again whatever failed in a request, and searches again for what is wanted: all of it, one
+ * season, or one episode, which is followed if it was not.
  *
  * @param id - Which.
+ * @param scope - The season or episode to narrow it to, or nothing for the whole request.
  * @returns The request, or why not.
  */
-const retryMediaRequest = (id: string): Promise<Sent<MediaRequest>> =>
-  sendToRequests(`${REQUESTS}/${id}/retry`, 'POST', undefined, readRequest);
+const retryMediaRequest = (
+  id: string,
+  scope: SearchScope | null = null,
+): Promise<Sent<MediaRequest>> =>
+  sendToRequests(
+    `${REQUESTS}/${id}/retry${queryOfSearchScope(scope)}`,
+    'POST',
+    undefined,
+    readRequest,
+  );
 
 /**
  * Says a request has been met by hand — a book somebody added to the library themselves — so it
@@ -159,13 +229,21 @@ const fulfilMediaRequest = (id: string): Promise<Sent<MediaRequest>> =>
   sendToRequests(`${REQUESTS}/${id}/fulfil`, 'POST', undefined, readRequest);
 
 /**
- * Searches for a request by hand, every release judged.
+ * Searches for a request by hand, every release judged: for all of it, for one season in packs, or
+ * for one episode.
  *
  * @param id - Which.
+ * @param scope - The season or episode to narrow it to, or nothing for the whole request.
  * @returns What was found, best first.
  */
-const fetchMediaRequestReleases = (id: string): Promise<ReleaseSearchOutcome> =>
-  readFromServer(`${REQUESTS}/${id}/releases`, ReleaseSearchOutcomeSchema);
+const fetchMediaRequestReleases = (
+  id: string,
+  scope: SearchScope | null = null,
+): Promise<ReleaseSearchOutcome> =>
+  readFromServer(
+    `${REQUESTS}/${id}/releases${queryOfSearchScope(scope)}`,
+    ReleaseSearchOutcomeSchema,
+  );
 
 /**
  * Reads the seasons a series has, to choose which to ask for.
@@ -205,32 +283,96 @@ const fetchMediaRequestLog = (id: string): Promise<RequestLogEntry[]> =>
   readFromServer(`${REQUESTS}/${id}/log`, z.array(RequestLogEntrySchema));
 
 /**
- * Fetches a release picked by hand for a request.
+ * Fetches a release picked by hand for a request, in place of what it has, or — for a film already
+ * here — beside it as a second version.
  *
  * @param id - Which request.
  * @param release - The release.
+ * @param keepsBoth - Whether a film keeps the copy it has as well.
  * @returns The request, or why not.
  */
-const pickMediaRelease = (id: string, release: Release): Promise<Sent<MediaRequest>> =>
-  sendToRequests(`${REQUESTS}/${id}/pick`, 'POST', { release }, readRequest);
+const pickMediaRelease = (
+  id: string,
+  release: Release,
+  keepsBoth = false,
+): Promise<Sent<MediaRequest>> =>
+  sendToRequests(
+    `${REQUESTS}/${id}/pick`,
+    'POST',
+    keepsBoth ? { release, keepsBoth } : { release },
+    readRequest,
+  );
 
 /**
- * Forgets a request — or cancels it, taking with it whatever it had started downloading, files
- * and all.
+ * Removes a request, stopping what it had started downloading — or cancels one of your own, taking
+ * that with it, files and all, or only taking you off it while others want it too — and, for
+ * whoever manages requesting, deleting the files it filed where asked.
  *
  * @param id - Which.
  * @param isDeletingDownloads - Whether what it had started downloading goes too.
+ * @param isDeletingFiles - Whether the files it filed into the library go too.
  * @returns Why not, or nothing where it went.
  */
-const removeMediaRequest = async (id: string, isDeletingDownloads = false): Promise<Refusal> =>
-  (
+const removeMediaRequest = async (
+  id: string,
+  isDeletingDownloads = false,
+  isDeletingFiles = false,
+): Promise<Refusal> => {
+  const query = new URLSearchParams({
+    ...(isDeletingDownloads ? { deleteDownloads: 'true' } : {}),
+    ...(isDeletingFiles ? { deleteFiles: 'true' } : {}),
+  }).toString();
+
+  return (
     await sendToRequests(
-      `${REQUESTS}/${id}${isDeletingDownloads ? '?deleteDownloads=true' : ''}`,
+      `${REQUESTS}/${id}${query === '' ? '' : `?${query}`}`,
       'DELETE',
       undefined,
       () => Promise.resolve(null),
     )
   ).refusal;
+};
+
+/**
+ * Stops one of a request's downloads, then looks for another release, waits for one picked by
+ * hand, or stops getting what it was for.
+ *
+ * @param id - Which request.
+ * @param downloadId - Which of its downloads.
+ * @param stopping - What comes next, and whether what it downloaded is deleted.
+ * @returns The request, or why not.
+ */
+const stopRequestDownload = (
+  id: string,
+  downloadId: string,
+  stopping: DownloadStop,
+): Promise<Sent<MediaRequest>> =>
+  sendToRequests(
+    `${REQUESTS}/${id}/downloads/${encodeURIComponent(downloadId)}/stop`,
+    'POST',
+    stopping,
+    readRequest,
+  );
+
+/**
+ * Follows, or stops following, some of the episodes or albums a request waits for.
+ *
+ * @param id - Which request.
+ * @param itemIds - Which of what it waits for.
+ * @param isFollowed - Whether they are followed now.
+ * @returns The request, or why not.
+ */
+const followRequestItems = (
+  id: string,
+  itemIds: readonly string[],
+  isFollowed: boolean,
+): Promise<Sent<MediaRequest>> =>
+  sendToRequests(
+    `${REQUESTS}/${id}/follow`,
+    'POST',
+    { itemIds: [...itemIds], isFollowed },
+    readRequest,
+  );
 
 /**
  * Searches now for everything still wanted, and anything a profile would upgrade.
@@ -247,17 +389,24 @@ export {
   askForMedia,
   changeMediaRequest,
   decideMediaRequests,
+  decideNarration,
+  decideProfileAsk,
   fetchRequestBlocklist,
   fetchMediaRequestLog,
   fetchMediaRequestReleases,
+  fetchHandedTo,
+  fetchHandOffDownloads,
   fetchMediaRequests,
   fetchSeriesSeasons,
   findReleasesFor,
   fulfilMediaRequest,
+  joinMediaRequest,
   liftRequestBlock,
   pickMediaRelease,
   refuseMediaRequest,
   removeMediaRequest,
+  stopRequestDownload,
+  followRequestItems,
   retryMediaRequest,
   searchMissing,
   searchMusicCatalogue,

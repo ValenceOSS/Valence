@@ -6,6 +6,7 @@ import { SEASON_STANDING_NAMES } from '@ValenceClient/requests/SEASON_STANDING_N
 import { isSeasonHeld } from '@ValenceClient/requests/isSeasonHeld';
 import { theSeasonsTicked } from '@ValenceClient/requests/theSeasonsTicked';
 import { tickASeason } from '@ValenceClient/requests/tickASeason';
+import { tickEverySeason } from '@ValenceClient/requests/tickEverySeason';
 import { Toggle } from '@ValenceMobile/components/Toggle/Toggle';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
@@ -19,21 +20,40 @@ const styles = StyleSheet.create({
 });
 
 /**
- * Which of a programme's seasons to ask for, a switch each and one for every season.
+ * Which of a programme's seasons to ask for: a switch each, one for every regular season, and one
+ * to get new seasons as they come.
  *
- * Every season is held as every season rather than the ones there are today, so a programme still
- * running goes on being fetched as it airs. A season the library already holds whole is locked, as
- * there is nothing in it to ask for.
+ * Specials are a switch like any other and never part of every season, and following new seasons
+ * is a choice of its own. A season the library already holds whole is locked, as there is nothing in
+ * it to ask for. Adding to a request already made, the seasons it asks for are locked on, and so is
+ * following new seasons where it follows them already.
  *
  * @param tmdbId - Which programme.
- * @param seasons - What is ticked, null for every season.
+ * @param seasons - What is ticked, null for every regular season.
  * @param onChange - Told what is ticked now.
+ * @param followsNew - Whether seasons that air later are fetched too.
+ * @param onFollowsNew - Told whether they are as it changes.
+ * @param alreadyAsked - The seasons a request already made asks for, where seasons are being added.
+ * @param isFollowedAlready - Whether that request already gets new seasons as they come.
  */
-const TheSeasons = ({ tmdbId, seasons, onChange }: TheSeasonsProps) => {
+const TheSeasons = ({
+  tmdbId,
+  seasons,
+  onChange,
+  followsNew,
+  onFollowsNew,
+  alreadyAsked = [],
+  isFollowedAlready = false,
+}: TheSeasonsProps) => {
   const listed = useQuery(requestsQueries.seriesSeasons(tmdbId));
   const colours = useTheColours();
   const rows = listed.data ?? [];
   const ticked = theSeasonsTicked(seasons, rows);
+  const open = rows.filter((row) => row.season > 0 && !isSeasonHeld(row));
+  const isEveryOne =
+    seasons === null ||
+    (open.length > 0 &&
+      open.every((row) => ticked.includes(row.season) || alreadyAsked.includes(row.season)));
 
   if (listed.isPending) {
     return <ActivityIndicator color={colours.textMuted} />;
@@ -44,16 +64,13 @@ const TheSeasons = ({ tmdbId, seasons, onChange }: TheSeasonsProps) => {
       <View style={styles.row}>
         <View style={styles.words}>
           <Words>{say('common.everySeason')}</Words>
-          <Words size="small" tone="muted">
-            {say('phone.anAskable.theSeasons.andAnyStillToCome')}
-          </Words>
         </View>
 
         <Toggle
           label={say('common.everySeason')}
-          isOn={seasons === null}
+          isOn={isEveryOne}
           onToggle={(isOn) => {
-            onChange(isOn ? null : []);
+            onChange(tickEverySeason(seasons, rows, isOn));
           }}
         />
       </View>
@@ -75,14 +92,30 @@ const TheSeasons = ({ tmdbId, seasons, onChange }: TheSeasonsProps) => {
 
           <Toggle
             label={nameSeason(row.season)}
-            isOn={ticked.includes(row.season)}
-            isDisabled={isSeasonHeld(row)}
+            isOn={alreadyAsked.includes(row.season) || ticked.includes(row.season)}
+            isDisabled={alreadyAsked.includes(row.season) || isSeasonHeld(row)}
             onToggle={() => {
               onChange(tickASeason(seasons, rows, row.season));
             }}
           />
         </View>
       ))}
+
+      <View style={styles.row}>
+        <View style={styles.words}>
+          <Words>{say('common.getNewSeasonsAsTheyCome')}</Words>
+          <Words size="small" tone="muted">
+            {say('common.fetchesEachNewSeasonAsIt')}
+          </Words>
+        </View>
+
+        <Toggle
+          label={say('common.getNewSeasonsAsTheyCome')}
+          isOn={isFollowedAlready || followsNew}
+          isDisabled={isFollowedAlready}
+          onToggle={onFollowsNew}
+        />
+      </View>
     </View>
   );
 };

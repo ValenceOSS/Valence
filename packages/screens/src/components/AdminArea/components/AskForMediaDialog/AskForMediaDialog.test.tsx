@@ -123,6 +123,18 @@ const open = () => {
 };
 
 describe('AskForMediaDialog', () => {
+  it('searches the indexers instead, for something no catalogue knows', async () => {
+    open();
+
+    await userEvent
+      .setup()
+      .click(await screen.findByRole('button', { name: 'Search the indexers instead' }));
+
+    expect(
+      await screen.findByRole('dialog', { name: 'Search the indexers instead' }),
+    ).toBeInTheDocument();
+  });
+
   it('finds a film in the catalogue and asks for it in the quality chosen', async () => {
     const user = userEvent.setup();
     const { onAsked, onClose } = open();
@@ -181,7 +193,7 @@ describe('AskForMediaDialog', () => {
       musicBrainzId: '83d91898-7763-47d7-b03b-b92132375c47',
       profileId: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
       isPickedByHand: false,
-      releaseTypes: ['album', 'live'],
+      releaseTypes: ['album', 'mixtape', 'ep', 'live'],
     });
   });
 
@@ -208,7 +220,7 @@ describe('AskForMediaDialog', () => {
     });
   });
 
-  it('asks for the seasons ticked, as the catalogue lists them', async () => {
+  it('asks for every season once each regular one is ticked, leaving Specials out', async () => {
     const user = userEvent.setup();
 
     open();
@@ -232,7 +244,8 @@ describe('AskForMediaDialog', () => {
         kind: 'series',
         tmdbId: 95396,
         isPickedByHand: false,
-        seasons: [1, 2],
+        seasons: null,
+        followsNewSeasons: true,
       });
     });
     expect(fetchSeriesSeasons).toHaveBeenCalledWith(95396);

@@ -72,16 +72,16 @@ Without one, each Torznab and Newznab indexer in the apps is brought in once, fo
 
 Each profile that something in an app uses is brought in under its own name. Two apps with the same profile under one name make one profile; where they differ, the second is named after its app, such as `HD-1080p (Sonarr)`. A profile Valence already has under that name is left exactly as it is, so your own changes are never overwritten.
 
-| In the app                                  | In Valence                                                                                  |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| Allowed qualities, such as `Bluray-1080p`   | Resolutions and sources. Valence allows every allowed resolution from every allowed source. |
-| Lidarr's qualities, such as `FLAC 24bit`    | Music qualities.                                                                            |
-| Cutoff                                      | **Until the resolution is** and **Until the format is**, the best quality in the cutoff.    |
-| Upgrades allowed                            | **Upgrade to a better release later**.                                                      |
-| Custom formats of release-name terms        | Preferred words where they score above zero, banned words below.                            |
-| Release profiles that hold for every series | Required words, banned (ignored) words, and Sonarr 3's preferred words.                     |
+| In the app                                  | In Valence                                                                                                                                                                                                                             |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Allowed qualities, such as `Bluray-1080p`   | Resolutions and sources. Valence allows every allowed resolution from every allowed source.                                                                                                                                            |
+| Lidarr's qualities, such as `FLAC 24bit`    | Music qualities.                                                                                                                                                                                                                       |
+| Cutoff                                      | **Until the resolution is** and **Until the format is**, the best quality in the cutoff.                                                                                                                                               |
+| Upgrades allowed                            | **Upgrade to a better release later**.                                                                                                                                                                                                 |
+| Custom formats                              | Valence's own custom formats, scored as the profile scores them, with its minimum score. Release title, release group, source, resolution, remux, language and size each carry over as a condition, negated and required as they were. |
+| Release profiles that hold for every series | Required words, banned (ignored) words, and Sonarr 3's preferred words.                                                                                                                                                                |
 
-Valence says where a profile is approximated: a custom format that judges a source, resolution, language or size rather than release names is left out, as is a minimum format score and a release profile kept for tagged series. `BR-DISK`, `Raw-HD` and other qualities Valence has no equivalent for are left out of the qualities.
+Valence says where a profile is approximated: a custom format that checks something Valence has no match for, such as an indexer flag, is imported without that check, or left out where nothing it checks has a match, and a release profile kept for tagged series is left out. `BR-DISK`, `Raw-HD` and other qualities Valence has no equivalent for are left out of the qualities.
 
 ### Libraries: hand off or take over
 

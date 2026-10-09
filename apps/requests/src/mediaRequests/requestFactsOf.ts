@@ -1,8 +1,8 @@
 import type { RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
 
 /**
- * The facts a request keeps from the catalogue, its TVDB id only where the catalogue gave one, so
- * a catalogue that does not say keeps the one it had.
+ * The facts a request keeps from the catalogue, its TVDB and IMDb ids only where the catalogue gave
+ * them, so a catalogue that does not say keeps the ones it had.
  *
  * @param catalogue - What the catalogue says.
  * @returns The facts, as a request keeps them.
@@ -17,9 +17,13 @@ const requestFactsOf = (catalogue: RequestCatalogue) => ({
   runtimeMinutes: catalogue.runtimeMinutes,
   releaseDates: catalogue.releaseDates,
   isEnded: catalogue.isEnded,
+  ...(catalogue.narrations === undefined ? {} : { narrations: catalogue.narrations }),
   ...(catalogue.tvdbId === undefined || catalogue.tvdbId === null
     ? {}
     : { tvdbId: catalogue.tvdbId }),
+  ...(catalogue.imdbId === undefined || catalogue.imdbId === null
+    ? {}
+    : { imdbId: catalogue.imdbId }),
 });
 
 export { requestFactsOf };

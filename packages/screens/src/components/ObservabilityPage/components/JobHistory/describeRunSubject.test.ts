@@ -15,6 +15,7 @@ const MOVIES: Library = {
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 };
 
 describe('describeRunSubject', () => {

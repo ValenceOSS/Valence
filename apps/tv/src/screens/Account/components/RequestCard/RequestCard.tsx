@@ -31,7 +31,7 @@ const RequestCard = ({ request, going, onPress, onFocus }: RequestCardProps) => 
   const where =
     going === null
       ? (standing?.label ?? '')
-      : `${standing?.label ?? say('common.downloadingToLibrary')} · ${partsOfDownload(going).percent}`;
+      : `${standing?.label ?? say('common.downloading')} · ${partsOfDownload(going).percent}`;
 
   const poster = useMemo(
     () => (

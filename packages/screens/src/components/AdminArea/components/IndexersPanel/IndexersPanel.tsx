@@ -10,10 +10,12 @@ import {
   Pen as PenFilledIcon,
   Plug as PlugFilledIcon,
   Plus as PlusFilledIcon,
+  SearchList as SearchListFilledIcon,
   ToggleOff as ToggleOffIcon,
   ToggleOn as ToggleOnIcon,
 } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
+import { ReleaseSearchDialog } from '@ValenceScreens/components/AdminArea/components/ReleaseSearchDialog/ReleaseSearchDialog';
 import { Badge } from '@ValenceUI/Badge';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -22,6 +24,8 @@ import { Icon } from '@ValenceUI/Icon';
 import { Spinner } from '@ValenceUI/Spinner';
 import { mapWithLimit } from '@ValenceCore/functions/mapWithLimit';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
+import { libraryQueries } from '@ValenceClient/query/libraryQueries';
+import { isEveryLibraryHandedOff } from '@ValenceClient/requests/isEveryLibraryHandedOff';
 import { changeIndexer, removeIndexer } from '@ValenceClient/requests/fetchIndexers';
 import { importArrIndexers } from '@ValenceClient/requests/fetchArrApps';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
@@ -66,8 +70,10 @@ const IndexersPanel = () => {
   const cache = useQueryClient();
   const asked = useQuery(requestsQueries.indexers());
   const apps = useQuery(requestsQueries.arrApps());
+  const libraries = useQuery(libraryQueries.all());
   const [isImporting, setIsImporting] = useState(false);
   const [editing, setEditing] = useState<Indexer | null>(null);
+  const [searchingOn, setSearchingOn] = useState<Indexer | null>(null);
   const [isChoosing, setIsChoosing] = useState(false);
   const [start, setStart] = useState<IndexerStart | null>(null);
   const [removing, setRemoving] = useState<Indexer | null>(null);
@@ -286,6 +292,16 @@ const IndexersPanel = () => {
                       },
                     },
                     {
+                      id: 'testSearch',
+                      label: say('screens.adminArea.indexersPanel.testSearch'),
+                      detail: say('screens.adminArea.indexersPanel.searchesItAloneSoYouSee'),
+                      icon: <Icon of={SearchListFilledIcon} size={15} />,
+                      isDisabled: !row.original.isEnabled,
+                      onChoose: () => {
+                        setSearchingOn(row.original);
+                      },
+                    },
+                    {
                       id: 'switch',
                       label: row.original.isEnabled
                         ? say('common.switchOff')
@@ -359,6 +375,19 @@ const IndexersPanel = () => {
         </>
       }
     >
+      <ReleaseSearchDialog
+        title={
+          searchingOn === null
+            ? null
+            : say('screens.adminArea.indexersPanel.testSearchOnName', { name: searchingOn.name })
+        }
+        detail={say('screens.adminArea.indexersPanel.searchesItAloneSoYouSee')}
+        indexerIds={searchingOn === null ? [] : [searchingOn.id]}
+        onClose={() => {
+          setSearchingOn(null);
+        }}
+      />
+
       <IndexerCatalogueDialog
         isOpen={isChoosing}
         onClose={() => {
@@ -428,6 +457,12 @@ const IndexersPanel = () => {
           {problem}
         </p>
       )}
+
+      {isEveryLibraryHandedOff(libraries.data ?? [], ['movies', 'shows', 'anime', 'music']) ? (
+        <p className="px-4 pt-3 text-sm text-text-muted">
+          {say('screens.adminArea.indexersPanel.everyLibraryHandsOff')}
+        </p>
+      ) : null}
 
       {asked.isError ? (
         <CouldNotRead

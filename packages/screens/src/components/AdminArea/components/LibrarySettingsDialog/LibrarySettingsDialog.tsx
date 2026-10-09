@@ -1,3 +1,5 @@
+import { isEpisodicKind } from '@ValenceContracts/functions/isEpisodicKind';
+import type { HigherProfileAsks } from '@ValenceContracts/schemas/HigherProfileAsks';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { Icon } from '@ValenceUI/Icon';
 import { ChevronsUpDown as ChevronsUpDownIcon } from '@keyline-icons/react/fill';
@@ -20,6 +22,13 @@ import type { FulfilmentForm } from './readFulfilmentForm';
 import type { LibrarySettingsDialogProps } from './LibrarySettingsDialog.types';
 import { LeftOutList } from './components/LeftOutList/LeftOutList';
 import { say } from '@ValenceI18n/say';
+
+const HIGHER_PROFILE_ASK_CHOICES: readonly { id: HigherProfileAsks; label: string }[] = [
+  { id: 'ask', label: say('screens.adminArea.librarySettingsDialog.askMe') },
+  { id: 'upgrade', label: say('screens.adminArea.librarySettingsDialog.switchToTheHigherProfile') },
+  { id: 'keep', label: say('screens.adminArea.librarySettingsDialog.keepTheProfileAskedFirst') },
+  { id: 'both', label: say('screens.adminArea.librarySettingsDialog.keepBothVersions') },
+];
 
 const NONE_ID = 'none';
 
@@ -94,24 +103,30 @@ const LibrarySettingsDialog = ({
   const keepsTogetherId = useId();
   const languageOptions = buildLanguageOptions();
 
+  const [holds, setHolds] = useState(library?.kind ?? null);
   const [selected, setSelected] = useState(library?.defaultAudioLanguage ?? NONE_ID);
   const [atOnce, setAtOnce] = useState(library?.filesAtOnce?.toString() ?? SERVER_ID);
   const [takesRequests, setTakesRequests] = useState(library?.takesRequests ?? true);
   const [requestProfileId, setRequestProfileId] = useState(library?.requestProfileId ?? THE_BEST);
   const [requestPath, setRequestPath] = useState(library?.requestPath ?? '');
   const [keepsShowsTogether, setKeepsShowsTogether] = useState(library?.keepsShowsTogether ?? true);
+  const [higherProfileAsks, setHigherProfileAsks] = useState<HigherProfileAsks>(
+    library?.higherProfileAsks ?? 'ask',
+  );
   const [fulfilment, setFulfilment] = useState<FulfilmentForm>(() => fulfilmentFormOf(library));
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<{ saved: Library; label: string } | null>(null);
 
   const reset = () => {
+    setHolds(library?.kind ?? null);
     setSelected(library?.defaultAudioLanguage ?? NONE_ID);
     setAtOnce(library?.filesAtOnce?.toString() ?? SERVER_ID);
     setTakesRequests(library?.takesRequests ?? true);
     setRequestProfileId(library?.requestProfileId ?? THE_BEST);
     setRequestPath(library?.requestPath ?? '');
     setKeepsShowsTogether(library?.keepsShowsTogether ?? true);
+    setHigherProfileAsks(library?.higherProfileAsks ?? 'ask');
     setFulfilment(fulfilmentFormOf(library));
     setError(null);
     setConfirming(null);
@@ -137,7 +152,8 @@ const LibrarySettingsDialog = ({
       return;
     }
 
-    const handedTo = readFulfilmentForm(fulfilment, arrKindOf(library.kind));
+    const kind = holds ?? library.kind;
+    const handedTo = readFulfilmentForm(fulfilment, arrKindOf(kind));
 
     if (handedTo.problem !== null) {
       setError(handedTo.problem);
@@ -152,12 +168,14 @@ const LibrarySettingsDialog = ({
       const defaultAudioLanguage = selected === NONE_ID ? null : selected;
       const changed = defaultAudioLanguage !== (library.defaultAudioLanguage ?? null);
       const updated = await updateLibrary(library.id, {
+        ...(kind !== library.kind && isEpisodicKind(kind) ? { kind } : {}),
         defaultAudioLanguage,
         filesAtOnce: atOnce === SERVER_ID ? null : Number.parseInt(atOnce, 10),
         takesRequests,
         requestProfileId: requestProfileId === THE_BEST ? null : requestProfileId,
         requestPath: requestPath.trim() === '' ? null : requestPath.trim(),
         keepsShowsTogether,
+        higherProfileAsks,
         fulfilment: handedTo.fulfilment,
       });
 
@@ -194,7 +212,7 @@ const LibrarySettingsDialog = ({
     return null;
   }
 
-  const arrKind = arrKindOf(library.kind);
+  const arrKind = arrKindOf(holds ?? library.kind);
   const canHandOff = arrApps.some((app) => app.kind === arrKind);
   const isHandedOff = arrKind !== null && fulfilment.appId !== VALENCE;
   const selectedLabel = languageOptions.find((option) => option.id === selected)?.label ?? selected;
@@ -216,6 +234,61 @@ const LibrarySettingsDialog = ({
       {confirming === null ? (
         <>
           <DialogContent className="flex flex-col gap-6">
+            {isEpisodicKind(library.kind) ? (
+              <fieldset className="flex flex-col gap-2">
+                <legend className="text-sm font-medium text-text">
+                  {say('screens.adminArea.librarySettingsDialog.holds')}
+                </legend>
+
+                <p className="text-xs text-text-muted">
+                  {say(
+                    'screens.adminArea.librarySettingsDialog.animeLibrariesKeepJapaneseAnimation',
+                  )}
+                </p>
+
+                {library.kind === 'shows' &&
+                library.flavour !== null &&
+                library.flavour !== undefined &&
+                library.flavour !== '' ? (
+                  <p className="text-xs text-text-muted">
+                    {say('screens.adminArea.librarySettingsDialog.thisLibraryWasAddedAsFlavour', {
+                      flavour: library.flavour,
+                    })}
+                  </p>
+                ) : null}
+
+                <OptionMenu
+                  label={say('screens.adminArea.librarySettingsDialog.holds')}
+                  groups={[
+                    {
+                      name: say('screens.adminArea.librarySettingsDialog.holds'),
+                      selectedId: holds ?? library.kind,
+                      onSelect: (chosen) => {
+                        setHolds(chosen === 'anime' ? 'anime' : 'shows');
+                      },
+                      options: [
+                        { id: 'shows', label: say('common.series') },
+                        { id: 'anime', label: say('common.anime') },
+                      ],
+                    },
+                  ]}
+                  trigger={
+                    <>
+                      <span className="truncate">
+                        {(holds ?? library.kind) === 'anime'
+                          ? say('common.anime')
+                          : say('common.series')}
+                      </span>
+                      <Icon of={ChevronsUpDownIcon} size={15} tone="muted" className="shrink-0" />
+                    </>
+                  }
+                  triggerShape="field"
+                  align="start"
+                  matchTriggerWidth
+                />
+              </fieldset>
+            ) : null}
+
             <fieldset className="flex flex-col gap-2">
               <legend className="text-sm font-medium text-text">
                 {say('screens.adminArea.librarySettingsDialog.forceDefaultAudioTrack')}
@@ -351,7 +424,54 @@ const LibrarySettingsDialog = ({
                     description={say('screens.adminArea.librarySettingsDialog.aFolderOfItsOwnFor')}
                   />
 
-                  {library.kind === 'shows' ? (
+                  <div className="flex flex-col gap-1">
+                    <OptionMenu
+                      label={say('screens.adminArea.librarySettingsDialog.higherQualityRequests')}
+                      groups={[
+                        {
+                          name: say(
+                            'screens.adminArea.librarySettingsDialog.higherQualityRequests',
+                          ),
+                          selectedId: higherProfileAsks,
+                          onSelect: (next) => {
+                            const chosen = HIGHER_PROFILE_ASK_CHOICES.find(
+                              (choice) => choice.id === next,
+                            );
+
+                            if (chosen !== undefined) {
+                              setHigherProfileAsks(chosen.id);
+                            }
+                          },
+                          options: HIGHER_PROFILE_ASK_CHOICES.filter(
+                            (choice) => choice.id !== 'both' || library.kind === 'movies',
+                          ).map(({ id, label }) => ({ id, label })),
+                        },
+                      ]}
+                      trigger={
+                        <>
+                          <span className="truncate">
+                            {HIGHER_PROFILE_ASK_CHOICES.find(
+                              (choice) => choice.id === higherProfileAsks,
+                            )?.label ?? ''}
+                          </span>
+                          <Icon
+                            of={ChevronsUpDownIcon}
+                            size={15}
+                            tone="muted"
+                            className="shrink-0"
+                          />
+                        </>
+                      }
+                      triggerShape="field"
+                      align="start"
+                      matchTriggerWidth
+                    />
+                    <p className="text-xs text-text-muted">
+                      {say('screens.adminArea.librarySettingsDialog.whenSomebodyAsksForATitle')}
+                    </p>
+                  </div>
+
+                  {isEpisodicKind(library.kind) ? (
                     <div className="flex flex-col gap-1">
                       <Switch
                         label={say(

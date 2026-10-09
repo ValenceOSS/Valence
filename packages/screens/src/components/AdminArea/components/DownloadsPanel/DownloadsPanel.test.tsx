@@ -121,6 +121,7 @@ const DOWNLOAD: QueuedDownload = {
   filedInto: null,
   filingProblem: null,
   filingProblemCode: null,
+  wasPaused: false,
 };
 
 const QUEUE: DownloadQueue = {
@@ -172,6 +173,7 @@ beforeEach(() => {
       requestProfileId: null,
       requestPath: null,
       keepsShowsTogether: true,
+      higherProfileAsks: 'ask',
     },
   ]);
   heard.onQueue = null;

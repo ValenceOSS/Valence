@@ -24,6 +24,7 @@ type DescriptionSources = {
     title: string;
     artistName: string;
   }) => Promise<AppleAlbumDetail | null>;
+  readLogo?: (tmdbId: string, kind: 'tv' | 'movie') => Promise<string | null>;
 };
 
 /**
@@ -70,6 +71,11 @@ const describeCatalogueTitle = async (
 ): Promise<UnstoodDetail | null> => {
   if (kind === 'film' || kind === 'series') {
     const found = await sources.describeTitle(id, kind === 'film' ? 'movie' : 'tv');
+    const logoUrl =
+      found === null
+        ? null
+        : ((await sources.readLogo?.(id, kind === 'film' ? 'movie' : 'tv').catch(() => null)) ??
+          null);
 
     return found === null
       ? null
@@ -83,6 +89,7 @@ const describeCatalogueTitle = async (
           overview: found.overview,
           posterUrl: found.posterUrl,
           backdropUrl: found.backdropUrl,
+          logoUrl,
           genres: found.genres,
           runtimeMinutes: found.runtimeMinutes,
           cast: found.cast,
@@ -113,6 +120,7 @@ const describeCatalogueTitle = async (
           overview: found.overview,
           posterUrl: found.posterUrl,
           backdropUrl: null,
+          logoUrl: null,
           genres: found.subjects,
           runtimeMinutes: null,
           cast: [],
@@ -143,6 +151,7 @@ const describeCatalogueTitle = async (
         overview: apple?.notes ?? found.overview,
         posterUrl: found.posterUrl,
         backdropUrl: null,
+        logoUrl: null,
         genres: apple?.genre === null || apple?.genre === undefined ? [] : [apple.genre],
         runtimeMinutes: null,
         cast: [],
@@ -157,7 +166,17 @@ const describeCatalogueTitle = async (
               }))
             : [],
         authors: [],
-        tracks: apple?.tracks ?? [],
+        tracks:
+          apple !== null && apple.tracks.length > 0
+            ? apple.tracks
+            : kind === 'album'
+              ? (found.albums[0]?.tracks ?? []).map((track, at) => ({
+                  disc: 1,
+                  number: at + 1,
+                  title: track.title,
+                  seconds: track.seconds,
+                }))
+              : [],
         label: apple?.label ?? null,
         trailerKey: null,
       };

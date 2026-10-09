@@ -19,6 +19,7 @@ type SearchAreaProps = {
   onOpenShow?: (media: MediaSummary) => void;
   onOpenBook?: (book: Book) => void;
   onAsk?: (asking: string) => void;
+  onDiscover?: (query: string) => void;
 };
 
 export type { SearchAreaProps, SearchKind };

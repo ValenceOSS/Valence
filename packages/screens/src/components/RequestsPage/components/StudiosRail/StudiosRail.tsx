@@ -35,7 +35,7 @@ const StudiosRail = ({ studios, onOpen }: StudiosRailProps) => {
   const isStill = useReducedMotionConfig() === true;
 
   return (
-    <Rail title={say('screens.requestsPage.studiosRail.studios')} cards="wide" sizesCards>
+    <Rail title={say('screens.requestsPage.studiosRail.studios')} cards="poster" sizesCards>
       {studios.map((studio, at) => (
         <RevealItem key={studio.id} index={at} className="shrink-0 snap-start">
           <motion.div

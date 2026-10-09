@@ -1,3 +1,5 @@
+import { heldAlbumsOf } from '@ValenceServer/requests/arrivals/heldAlbumsOf';
+import { withAskerProfiles } from '@ValenceServer/requests/withAskerProfiles';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { saidFrom } from '@ValenceI18n/saidFrom';
 import { refuseWith } from '@ValenceI18n/refuseWith';
@@ -13,6 +15,15 @@ import {
   pickMediaReleaseRoute,
   refuseMediaRequestRoute,
   removeMediaRequestRoute,
+  joinMediaRequestRoute,
+  decideNarrationRoute,
+  decideProfileAskRoute,
+  handedToRoute,
+  handOffDownloadsRoute,
+  adminCatalogueRoute,
+  adminTitleFilesRoute,
+  stopRequestDownloadRoute,
+  followRequestItemsRoute,
   retryMediaRequestRoute,
   fulfilMediaRequestRoute,
   draftReleasesRoute,
@@ -75,10 +86,14 @@ import {
   tryIndexerChangeRoute,
   tryIndexerRoute,
 } from '@ValenceServer/routes/RequestsRoute';
+import { catalogueEntriesOf } from '@ValenceServer/requests/titles/catalogueEntriesOf';
+import type { HandOffDownload } from '@ValenceContracts/schemas/ArrApp';
+import type { RequestsAnswer, RequestsClient } from '@ValenceServer/requests/createRequestsClient';
 import { ReleaseDownloadRequestSchema } from '@ValenceContracts/schemas/Indexer';
 import { readSessionOnce } from '@ValenceServer/auth/readSessionOnce';
-import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
+import type { MediaRequest, MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
+import { isAskedBy } from '@ValenceContracts/functions/isAskedBy';
 import { seasonsOf } from '@ValenceContracts/functions/seasonsOf';
 import { describeCatalogueTitle } from '@ValenceServer/requests/catalogue/describeCatalogueTitle';
 import { discoverShelves } from '@ValenceServer/requests/catalogue/discoverShelves';
@@ -89,6 +104,8 @@ import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
 import { webhookRequestOf } from '@ValenceServer/webhooks/webhookRequestOf';
+import { requestableKindsOf } from '@ValenceContracts/functions/requestableKindsOf';
+import { withLibraryGone } from '@ValenceServer/requests/withLibraryGone';
 
 /**
  * Registers the requests endpoints.
@@ -122,6 +139,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     sayRequestsChanged,
     sayOfRequest,
     profileForAsk,
+    profileOfAccount,
     catalogueFor,
     draftFor,
     heldFor,
@@ -129,14 +147,24 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     sayOfAsk,
     whatMayBeAsked,
     everyRequest,
+    settings,
   } = context;
+
+  const requestableKinds = async (): Promise<ReadonlySet<MediaRequestKind>> =>
+    new Set(requestableKindsOf(await library.list(asTheServer)));
 
   app.openapi(requestsAvailabilityRoute, async (context) => {
     if ((await readSessionOnce(auth, context.req.raw.headers)) === null) {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
-    return context.json({ isEnabled: requests !== null }, 200);
+    return context.json(
+      {
+        isEnabled: requests !== null,
+        kinds: requests === null ? [] : [...(await requestableKinds())],
+      },
+      200,
+    );
   });
 
   app.openapi(adminRequestsOverviewRoute, async (context) => {
@@ -149,6 +177,26 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     return overview === null
       ? context.json(refuse('error.common.requestingIsOff'), 404)
       : context.json(overview, 200);
+  });
+
+  app.openapi(adminCatalogueRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'requests.manage'))) {
+      return context.json(refuse('error.common.thatIsForWhoeverSetsUp'), 403);
+    }
+
+    const [held, asked] = await Promise.all([discovery.lookup.heldTitles(), everyRequest()]);
+
+    return context.json({ entries: catalogueEntriesOf(held, asked) }, 200);
+  });
+
+  app.openapi(adminTitleFilesRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'requests.manage'))) {
+      return context.json(refuse('error.common.thatIsForWhoeverSetsUp'), 403);
+    }
+
+    const { kind, catalogueId } = context.req.valid('query');
+
+    return context.json(await discovery.lookup.titleFiles(kind, catalogueId), 200);
   });
 
   app.openapi(adminCheckRequestsRoute, async (context) => {
@@ -193,11 +241,16 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const seesAll = await seesEveryRequest(headers);
+    const shown = withLibraryGone(
+      answer.value,
+      new Set((await library.list(asTheServer)).map((entry) => entry.id)),
+    );
 
     return context.json(
-      seesAll
-        ? answer.value
-        : answer.value.filter((request) => request.requestedBy.id === session?.user.id),
+      await withAskerProfiles(
+        seesAll ? shown : shown.filter((request) => isAskedBy(request, session?.user.id)),
+        profileOfAccount,
+      ),
       200,
     );
   });
@@ -343,20 +396,24 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(NOT_YOURS, 403);
     }
 
-    const [discovered, requested] = await Promise.all([
+    const [discovered, requested, kinds] = await Promise.all([
       discoverShelves(discovery, { ...may, books: may.video }),
       everyRequest(),
+      requestableKinds(),
     ]);
+    const shelves = discovered.shelves
+      .map((shelf) => ({ ...shelf, titles: shelf.titles.filter((title) => kinds.has(title.kind)) }))
+      .filter((shelf) => shelf.titles.length > 0);
 
     return context.json(
       {
         shelves: await Promise.all(
-          discovered.shelves.map(async (shelf) => ({
+          shelves.map(async (shelf) => ({
             ...shelf,
             titles: await standTitles(shelf.titles, discovery.lookup, requested),
           })),
         ),
-        studios: discovered.studios,
+        studios: kinds.has('film') ? discovered.studios : [],
       },
       200,
     );
@@ -374,6 +431,10 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     if (!may.video) {
       return context.json(NOT_YOURS, 403);
+    }
+
+    if (!(await requestableKinds()).has(kind)) {
+      return context.json({ titles: [], page, hasMore: false }, 200);
     }
 
     const browsed = await discovery.browse({
@@ -437,6 +498,10 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     if (!(isMusicRequest(kind) ? may.music : may.video)) {
       return context.json(NOT_YOURS, 403);
+    }
+
+    if (!(await requestableKinds()).has(kind)) {
+      return context.json([], 200);
     }
 
     const found = await findInCatalogue(query, kind);
@@ -548,7 +613,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
           value: progressOf(
             seesAll
               ? listed.value
-              : listed.value.filter((request) => request.requestedBy.id === session?.user.id),
+              : listed.value.filter((request) => isAskedBy(request, session?.user.id)),
             queue.kind === 'answered' ? queue.value.downloads : [],
           ),
         };
@@ -577,7 +642,11 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     const answer = await throughRequests(
       context.req.raw.headers,
       async (client) => {
-        const asksTheCatalogue = change.seasons !== undefined || change.releaseTypes !== undefined;
+        const asksTheCatalogue =
+          change.seasons !== undefined ||
+          change.followsNewSeasons !== undefined ||
+          change.releaseTypes !== undefined ||
+          change.upgradesToLossless !== undefined;
 
         if (!asksTheCatalogue && change.libraryId === undefined) {
           return client.changeRequest(id, { change });
@@ -592,13 +661,28 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
         const libraryId = change.libraryId ?? found.value.libraryId;
         const into = (await library.list(asTheServer)).find((entry) => entry.id === libraryId);
 
+        if (change.libraryId !== undefined && into === undefined) {
+          return {
+            kind: 'refused' as const,
+            status: 404 as const,
+            refusal: refuse('error.common.noSuchLibrary'),
+          };
+        }
+
+        const catalogue = asksTheCatalogue ? await catalogueFor(found.value) : null;
+
         return client.changeRequest(id, {
-          change,
-          ...(asksTheCatalogue ? { catalogue: await catalogueFor(found.value) } : {}),
+          change:
+            change.libraryId === undefined || into === undefined
+              ? change
+              : { ...change, libraryPath: into.requestPath ?? into.path },
+          ...(catalogue === null ? {} : { catalogue }),
           held:
             found.value.kind === 'series' && found.value.tmdbId !== null && into !== undefined
               ? await heldFor(into, found.value.tmdbId)
-              : null,
+              : isMusicRequest(found.value.kind) && catalogue !== null
+                ? await heldAlbumsOf(discovery.lookup, catalogue.albums)
+                : null,
         });
       },
       APPROVERS,
@@ -609,17 +693,114 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       : context.json(bodyOf(answer), answer.status);
   });
 
+  /**
+   * Removes a request after deleting the files it filed, then has its library read again, so what
+   * was deleted leaves the library too.
+   *
+   * @param client - The requests service.
+   * @param id - The request.
+   * @returns What the service answered.
+   */
+  /**
+   * Whether a request is worked through the connected app it was handed to — its releases,
+   * downloads, blocklist and following — because the admin chose to control connected apps from
+   * here.
+   *
+   * @param client - The requests service.
+   * @param id - The request.
+   * @returns Whether to go through the app.
+   */
+  const isThroughItsApp = async (client: RequestsClient, id: string): Promise<boolean> => {
+    if (!(await settings.read()).controlsConnectedApps) {
+      return false;
+    }
+
+    const found = await client.findRequest(id);
+
+    return found.kind === 'answered' && found.value.isHandedOff === true;
+  };
+
+  /**
+   * Lets the connected app a request was handed to stop monitoring it, where Valence controls the
+   * app, before the request goes. An app already gone lets it go regardless.
+   *
+   * @param client - The requests service.
+   * @param id - The request.
+   * @returns Why it could not, or null where it may go.
+   */
+  const letGoInItsApp = async (
+    client: RequestsClient,
+    id: string,
+  ): Promise<Exclude<RequestsAnswer<null>, { kind: 'answered' }> | null> => {
+    if (!(await isThroughItsApp(client, id))) {
+      return null;
+    }
+
+    const released = await client.handOffRelease(id);
+
+    return released.kind === 'answered' || (released.kind === 'refused' && released.status === 404)
+      ? null
+      : released;
+  };
+
+  /**
+   * Refuses a request, letting the connected app it was handed to stop monitoring it first where
+   * Valence controls the app.
+   *
+   * @param client - The requests service.
+   * @param id - The request.
+   * @param reason - Why, for whoever asked.
+   * @returns The request refused, or why it could not be.
+   */
+  const refuseLettingGo = async (
+    client: RequestsClient,
+    id: string,
+    reason: string,
+  ): Promise<RequestsAnswer<MediaRequest>> =>
+    (await letGoInItsApp(client, id)) ?? client.refuseRequest(id, reason);
+
+  const removeWithFiles = async (
+    client: RequestsClient,
+    id: string,
+  ): Promise<RequestsAnswer<null>> => {
+    const found = await client.findRequest(id);
+
+    if (found.kind !== 'answered') {
+      return found;
+    }
+
+    const deleted = await client.deleteFiled(id);
+
+    if (deleted.kind !== 'answered') {
+      return deleted;
+    }
+
+    const removed = await client.removeRequest(id, true);
+
+    if (deleted.value.folders.length > 0) {
+      await library.scan(found.value.libraryId, false);
+    }
+
+    return removed;
+  };
+
   app.openapi(removeMediaRequestRoute, async (context) => {
     const { headers } = context.req.raw;
     const { id } = context.req.valid('param');
-    const isDeletingDownloads = context.req.valid('query').deleteDownloads === 'true';
+    const isDeletingFiles = context.req.valid('query').deleteFiles === 'true';
     const isManager = await requires(headers, 'requests.manage');
     const session = await readSessionOnce(auth, headers);
     const answer = await throughRequests(
       headers,
       async (client) => {
         if (isManager) {
-          return client.removeRequest(id, isDeletingDownloads);
+          const kept = await letGoInItsApp(client, id);
+
+          if (kept !== null) {
+            return kept;
+          }
+
+          return isDeletingFiles ? removeWithFiles(client, id) : client.removeRequest(id, true);
         }
 
         const found = await client.findRequest(id);
@@ -628,7 +809,9 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
           return found;
         }
 
-        if (found.value.requestedBy.id !== session?.user.id) {
+        const userId = session?.user.id;
+
+        if (userId === undefined || !isAskedBy(found.value, userId)) {
           return {
             kind: 'refused',
             status: 404,
@@ -636,13 +819,21 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
           };
         }
 
-        return found.value.state === 'filed' || found.value.state === 'available'
-          ? {
-              kind: 'refused',
-              status: 400,
-              refusal: refuse('error.requests.itIsInTheLibraryAlready'),
-            }
-          : client.removeRequest(id, true);
+        if (found.value.state === 'filed' || found.value.state === 'available') {
+          return {
+            kind: 'refused',
+            status: 400,
+            refusal: refuse('error.requests.itIsInTheLibraryAlready'),
+          };
+        }
+
+        if (found.value.alsoAskedBy.length === 0) {
+          return (await letGoInItsApp(client, id)) ?? client.removeRequest(id, true);
+        }
+
+        const left = await client.leaveRequest(id, userId);
+
+        return left.kind === 'answered' ? { kind: 'answered', value: null } : left;
       },
       ['requests.manage', ...ASKERS],
     );
@@ -653,6 +844,139 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.body(null, 204)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
+  app.openapi(joinMediaRequestRoute, async (context) => {
+    const { headers } = context.req.raw;
+    const { id } = context.req.valid('param');
+    const session = await readSessionOnce(auth, headers);
+    const found = await throughRequests(headers, (client) => client.findRequest(id), ASKERS);
+
+    if (found.kind !== 'answered') {
+      return context.json(bodyOf(found), found.status);
+    }
+
+    const needs = isMusicRequest(found.value.kind) ? 'requests.askMusic' : 'requests.ask';
+
+    if (session === null || !(await requires(headers, needs))) {
+      return context.json(refuse('error.requests.thisAccountMayNotRequestThat'), 403);
+    }
+
+    const answer = await throughRequests(
+      headers,
+      (client) => client.joinRequest(id, { id: session.user.id, name: session.user.name }),
+      [needs],
+    );
+
+    if (answer.kind === 'answered') {
+      sayRequestsChanged();
+    }
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
+  app.openapi(stopRequestDownloadRoute, async (context) => {
+    const { id, downloadId } = context.req.valid('param');
+    const answer = await throughRequests(
+      context.req.raw.headers,
+      async (client) =>
+        (await isThroughItsApp(client, id))
+          ? client.handOffStop(id, downloadId, context.req.valid('json'))
+          : client.stopDownload(id, downloadId, context.req.valid('json')),
+      ['requests.manage'],
+    );
+
+    if (answer.kind === 'answered') {
+      sayRequestsChanged();
+    }
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
+  app.openapi(followRequestItemsRoute, async (context) => {
+    const answer = await throughRequests(
+      context.req.raw.headers,
+      async (client) => {
+        const { id } = context.req.valid('param');
+
+        return (await isThroughItsApp(client, id))
+          ? client.handOffFollow(id, context.req.valid('json'))
+          : client.followItems(id, context.req.valid('json'));
+      },
+      ['requests.manage'],
+    );
+
+    if (answer.kind === 'answered') {
+      sayRequestsChanged();
+    }
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
+  app.openapi(handedToRoute, async (context) => {
+    const answer = await throughRequests(
+      context.req.raw.headers,
+      (client) => client.handedTo(context.req.valid('param').id),
+      ['requests.manage'],
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
+  app.openapi(handOffDownloadsRoute, async (context) => {
+    const { id } = context.req.valid('param');
+    const answer = await throughRequests(
+      context.req.raw.headers,
+      async (client): Promise<RequestsAnswer<HandOffDownload[]>> =>
+        (await isThroughItsApp(client, id))
+          ? client.handOffDownloads(id)
+          : { kind: 'answered', value: [] },
+      ['requests.manage'],
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
+  app.openapi(decideNarrationRoute, async (context) => {
+    const answer = await throughRequests(
+      context.req.raw.headers,
+      (client) => client.decideNarration(context.req.valid('param').id, context.req.valid('json')),
+      ['requests.manage'],
+    );
+
+    if (answer.kind === 'answered') {
+      sayRequestsChanged();
+    }
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
+  app.openapi(decideProfileAskRoute, async (context) => {
+    const answer = await throughRequests(
+      context.req.raw.headers,
+      (client) => client.decideProfileAsk(context.req.valid('param').id, context.req.valid('json')),
+      ['requests.manage'],
+    );
+
+    if (answer.kind === 'answered') {
+      sayRequestsChanged();
+    }
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
       : context.json(bodyOf(answer), answer.status);
   });
 
@@ -685,7 +1009,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     const { reason } = context.req.valid('json');
     const answer = await throughRequests(
       context.req.raw.headers,
-      (client) => client.refuseRequest(context.req.valid('param').id, reason),
+      (client) => refuseLettingGo(client, context.req.valid('param').id, reason),
       APPROVERS,
     );
 
@@ -707,7 +1031,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(retryMediaRequestRoute, async (context) => {
     const answer = await throughRequests(context.req.raw.headers, (client) =>
-      client.retryRequest(context.req.valid('param').id),
+      client.retryRequest(context.req.valid('param').id, context.req.valid('query')),
     );
 
     if (answer.kind === 'answered') {
@@ -748,7 +1072,13 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
   app.openapi(mediaRequestBlocklistRoute, async (context) => {
     const answer = await throughRequests(
       context.req.raw.headers,
-      (client) => client.requestBlocklist(context.req.valid('param').id),
+      async (client) => {
+        const { id } = context.req.valid('param');
+
+        return (await isThroughItsApp(client, id))
+          ? client.handOffBlocklist(id)
+          : client.requestBlocklist(id);
+      },
       APPROVERS,
     );
 
@@ -761,7 +1091,10 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     const { id, blockId } = context.req.valid('param');
     const answer = await throughRequests(
       context.req.raw.headers,
-      (client) => client.liftBlock(id, blockId),
+      async (client) =>
+        (await isThroughItsApp(client, id))
+          ? client.handOffLift(id, blockId)
+          : client.liftBlock(id, blockId),
       APPROVERS,
     );
 
@@ -792,7 +1125,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       const answer = await throughRequests(
         context.req.raw.headers,
         (client) =>
-          decision === 'approve' ? client.approveRequest(id) : client.refuseRequest(id, reason),
+          decision === 'approve' ? client.approveRequest(id) : refuseLettingGo(client, id, reason),
         APPROVERS,
       );
 
@@ -816,8 +1149,11 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(mediaRequestReleasesRoute, async (context) => {
-    const answer = await throughRequests(context.req.raw.headers, (client) =>
-      client.requestReleases(context.req.valid('param').id),
+    const { id } = context.req.valid('param');
+    const answer = await throughRequests(context.req.raw.headers, async (client) =>
+      (await isThroughItsApp(client, id))
+        ? client.handOffReleases(id)
+        : client.requestReleases(id, context.req.valid('query')),
     );
 
     return answer.kind === 'answered'
@@ -826,8 +1162,12 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(pickMediaReleaseRoute, async (context) => {
-    const answer = await throughRequests(context.req.raw.headers, (client) =>
-      client.pickRelease(context.req.valid('param').id, context.req.valid('json').release),
+    const { id } = context.req.valid('param');
+    const { release, keepsBoth } = context.req.valid('json');
+    const answer = await throughRequests(context.req.raw.headers, async (client) =>
+      (await isThroughItsApp(client, id))
+        ? client.handOffPick(id, release)
+        : client.pickRelease(id, release, keepsBoth === true),
     );
 
     return answer.kind === 'answered'
@@ -876,11 +1216,11 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(reorderQualityProfilesRoute, async (context) => {
     const answer = await throughRequests(context.req.raw.headers, (client) =>
-      client.reorderProfiles(context.req.valid('json').ids),
+      client.reorderProfiles(context.req.valid('json')),
     );
 
     return answer.kind === 'answered'
-      ? context.body(null, 204)
+      ? context.json(answer.value, 200)
       : context.json(bodyOf(answer), answer.status);
   });
 

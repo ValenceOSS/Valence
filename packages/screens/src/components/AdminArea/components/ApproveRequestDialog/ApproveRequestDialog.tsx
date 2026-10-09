@@ -1,6 +1,8 @@
+import { DEFAULT_RELEASE_TYPES } from '@ValenceContracts/schemas/MediaRequest';
 import { notify } from '@ValenceUI/notify';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Checkbox } from '@ValenceUI/Checkbox';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -15,8 +17,9 @@ import {
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { libraryKindOf } from '@ValenceContracts/functions/libraryKindOf';
 import { ReleaseTypeChooser } from '@ValenceScreens/components/ReleaseTypeChooser/ReleaseTypeChooser';
+import { BookFormatChooser } from '@ValenceScreens/components/BookFormatChooser/BookFormatChooser';
 import { SeasonChooser } from '@ValenceScreens/components/SeasonChooser/SeasonChooser';
-import type { ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
+import type { BookFormat, ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 import type { ApproveRequestDialogProps } from './ApproveRequestDialog.types';
 import { say } from '@ValenceI18n/say';
 
@@ -25,20 +28,31 @@ const THE_LIBRARYS = 'library';
 /**
  * Approving a request, having looked it over first: which profile its releases are judged by,
  * which library it will be filed into, and — for a series or an artist — which seasons or which
- * kinds of record are watched for. Whatever was changed is saved before it is approved, so nothing
- * is fetched against the old answer.
+ * kinds of record are watched for, and for music whether lossy albums already held are upgraded to
+ * lossless. Whatever was changed is saved before it is approved, so nothing
+ * is fetched against the old answer. The same choices edit a request already approved, saved
+ * without approving anything.
  *
  * @param request - The request, or nothing while the dialog is closed.
+ * @param isEditing - Whether it only edits the request, which is approved already.
  * @param onClose - Called when it is dismissed.
- * @param onApproved - Told once it is approved.
+ * @param onApproved - Told once it is approved, or saved.
  */
-const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDialogProps) => {
+const ApproveRequestDialog = ({
+  request,
+  isEditing = false,
+  onClose,
+  onApproved,
+}: ApproveRequestDialogProps) => {
   const profiles = useQuery(requestsQueries.profiles());
   const libraries = useQuery(libraryQueries.all());
   const [profileId, setProfileId] = useState<string | null>(null);
   const [libraryId, setLibraryId] = useState<string | null>(null);
   const [seasons, setSeasons] = useState<number[] | null>(null);
+  const [followsNew, setFollowsNew] = useState(false);
   const [releaseTypes, setReleaseTypes] = useState<ReleaseType[] | null>(null);
+  const [bookFormats, setBookFormats] = useState<BookFormat[] | null>(null);
+  const [isLossless, setIsLossless] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [opened, setOpened] = useState<string | null>(null);
@@ -48,7 +62,10 @@ const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDi
     setProfileId(request.profileId);
     setLibraryId(request.libraryId);
     setSeasons(request.seasons);
+    setFollowsNew(request.seasons === null || request.followsNewSeasons);
     setReleaseTypes(request.releaseTypes);
+    setBookFormats(request.bookFormats ?? null);
+    setIsLossless(request.upgradesToLossless === true);
     setProblem(null);
   }
 
@@ -71,7 +88,9 @@ const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDi
   const title =
     request === null
       ? say('screens.adminArea.approveRequestDialog.approveThisRequest')
-      : say('screens.adminArea.approveRequestDialog.approveTitle', { title: request.title });
+      : isEditing
+        ? say('screens.adminArea.approveRequestDialog.editTitle', { title: request.title })
+        : say('screens.adminArea.approveRequestDialog.approveTitle', { title: request.title });
 
   const approve = () => {
     if (request === null) {
@@ -82,7 +101,18 @@ const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDi
       ...(profileId === request.profileId ? {} : { profileId }),
       ...(libraryId === request.libraryId || libraryId === null ? {} : { libraryId }),
       ...(seasons === request.seasons ? {} : { seasons }),
+      ...(followsNew === (request.seasons === null || request.followsNewSeasons)
+        ? {}
+        : { followsNewSeasons: followsNew }),
       ...(releaseTypes === request.releaseTypes || releaseTypes === null ? {} : { releaseTypes }),
+      ...(isLossless === (request.upgradesToLossless === true)
+        ? {}
+        : { upgradesToLossless: isLossless }),
+      ...(bookFormats === (request.bookFormats ?? null) ||
+      bookFormats === null ||
+      bookFormats.length === 0
+        ? {}
+        : { bookFormats }),
     };
 
     setIsApproving(true);
@@ -95,7 +125,9 @@ const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDi
     )
       .then((changing) =>
         changing.refusal === null
-          ? approveMediaRequest(request.id)
+          ? isEditing
+            ? Promise.resolve({ value: request, refusal: null })
+            : approveMediaRequest(request.id)
           : Promise.resolve({ value: null, refusal: changing.refusal }),
       )
       .then(({ value, refusal }) => {
@@ -107,7 +139,11 @@ const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDi
           return;
         }
 
-        notify.worked(say('common.approvedTitle', { title: request.title }));
+        notify.worked(
+          isEditing
+            ? say('screens.adminArea.approveRequestDialog.savedTitle', { title: request.title })
+            : say('common.approvedTitle', { title: request.title }),
+        );
         onApproved(value);
         onClose();
       })
@@ -121,7 +157,9 @@ const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDi
       <DialogTitle
         size="compact"
         title={title}
-        detail={say('screens.adminArea.approveRequestDialog.itIsSearchedForAsSoon')}
+        {...(isEditing
+          ? {}
+          : { detail: say('screens.adminArea.approveRequestDialog.itIsSearchedForAsSoon') })}
       />
 
       <DialogContent className="flex flex-col gap-4">
@@ -148,18 +186,44 @@ const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDi
         )}
 
         {request?.kind !== 'artist' ? null : (
-          <ReleaseTypeChooser value={releaseTypes ?? ['album']} onChange={setReleaseTypes} />
+          <ReleaseTypeChooser
+            value={releaseTypes ?? [...DEFAULT_RELEASE_TYPES]}
+            onChange={setReleaseTypes}
+          />
+        )}
+
+        {!isMusic ? null : (
+          <Checkbox
+            label={say('screens.adminArea.approveRequestDialog.upgradeLossyAlbumsToLossless')}
+            description={say('screens.adminArea.approveRequestDialog.albumsYouHaveAsMp3AreFetched')}
+            checked={isLossless}
+            onCheckedChange={setIsLossless}
+          />
+        )}
+
+        {request?.kind !== 'book' ? null : (
+          <BookFormatChooser value={bookFormats ?? ['ebook']} onChange={setBookFormats} />
         )}
 
         {request?.kind !== 'series' || request.tmdbId === null ? null : (
-          <SeasonChooser tmdbId={request.tmdbId} seasons={seasons} onChange={setSeasons} />
+          <SeasonChooser
+            tmdbId={request.tmdbId}
+            seasons={seasons}
+            onChange={setSeasons}
+            followsNew={followsNew}
+            onFollowsNew={setFollowsNew}
+          />
         )}
       </DialogContent>
 
       <DialogFooter
         note={problem}
         dismiss={{ onChoose: onClose }}
-        confirm={{ label: say('common.approve'), onChoose: approve, isLoading: isApproving }}
+        confirm={{
+          label: isEditing ? say('common.save') : say('common.approve'),
+          onChoose: approve,
+          isLoading: isApproving,
+        }}
       />
     </DialogCompanion>
   );

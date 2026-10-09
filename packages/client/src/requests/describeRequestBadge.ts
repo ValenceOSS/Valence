@@ -4,6 +4,8 @@ import { describeCalendarDay } from '@ValenceClient/requests/describeCalendarDay
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { StateBadge } from '@ValenceClient/status/StateBadge';
 import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
+import { REQUEST_STATE_NAMES } from '@ValenceContracts/constants/REQUEST_STATE_NAMES';
+import { isYetToComeOut } from '@ValenceClient/requests/isYetToComeOut';
 import { say } from '@ValenceI18n/say';
 
 /**
@@ -18,17 +20,6 @@ const nextAirDate = (request: MediaRequest): string | null =>
     .filter((item) => item.state === 'waiting' && item.airDate !== null)
     .map((item) => item.airDate ?? '')
     .sort()[0] ?? null;
-
-/**
- * Whether a film, episode or album has come out, by the same rule the worker uses to promote it:
- * one with a day is out on that day, and one with none is out if it is not part of a season.
- *
- * @param item - The film, episode or album.
- * @param today - Today, as a calendar day.
- * @returns Whether it is out.
- */
-const isOut = (item: MediaRequest['items'][number], today: string): boolean =>
-  item.airDate === null ? item.season === null : item.airDate <= today;
 
 /**
  * Today, as a calendar day.
@@ -53,28 +44,17 @@ const calendarToday = (): string => new Date().toISOString().slice(0, 10);
  * @returns The badge's words and tone, and the line beneath it where there is one.
  */
 const describeRequestBadge = (request: MediaRequest, today = calendarToday()): StateBadge => {
-  if (
-    request.kind === 'book' &&
-    (request.state === 'waiting' || request.state === 'wanted' || request.state === 'searching')
-  ) {
-    return {
-      ...STATUS_LOOK.queued,
-      label: say('client.requests.describeRequestBadge.waitingToBeAdded'),
-      detail: say('client.requests.describeRequestBadge.booksAreAddedToTheLibrary'),
-    };
-  }
-
   switch (request.state) {
     case 'awaitingApproval':
       return {
         ...STATUS_LOOK.attention,
-        label: say('client.requests.describeRequestBadge.awaitingApproval'),
+        label: REQUEST_STATE_NAMES.awaitingApproval,
         detail: null,
       };
     case 'refused':
       return {
         ...STATUS_LOOK.failed,
-        label: say('common.refused'),
+        label: REQUEST_STATE_NAMES.refused,
         detail: request.refusedBecause === null ? null : sayAgain(request.refusedBecause),
       };
     case 'waiting': {
@@ -86,12 +66,7 @@ const describeRequestBadge = (request: MediaRequest, today = calendarToday()): S
         };
       }
 
-      const isOutNow =
-        request.kind === 'film'
-          ? request.releaseDate === null || request.releaseDate <= today
-          : request.items.some((item) => item.state === 'waiting' && isOut(item, today));
-
-      if (isOutNow) {
+      if (!isYetToComeOut(request, today)) {
         return {
           ...STATUS_LOOK.queued,
           label: say('common.queuedToSearch'),
@@ -145,7 +120,7 @@ const describeRequestBadge = (request: MediaRequest, today = calendarToday()): S
     case 'wanted':
       return {
         ...STATUS_LOOK.attention,
-        label: say('common.wanted'),
+        label: REQUEST_STATE_NAMES.wanted,
         detail:
           (request.problem === null ? null : sayAgain(request.problem)) ??
           (request.isPickedByHand
@@ -154,33 +129,34 @@ const describeRequestBadge = (request: MediaRequest, today = calendarToday()): S
         help: docsFor(request.problemCode),
       };
     case 'searching':
-      return { ...STATUS_LOOK.working, label: say('common.searching'), detail: null };
+      return { ...STATUS_LOOK.working, label: REQUEST_STATE_NAMES.searching, detail: null };
     case 'chosen':
-      return { ...STATUS_LOOK.working, label: say('common.releaseChosen'), detail: null };
+      return { ...STATUS_LOOK.working, label: REQUEST_STATE_NAMES.chosen, detail: null };
     case 'downloading':
       return {
         ...STATUS_LOOK.working,
-        label: say('common.downloading'),
+        label: REQUEST_STATE_NAMES.downloading,
         detail: request.items.find((item) => item.state === 'downloading')?.releaseTitle ?? null,
       };
     case 'filing':
       return {
         ...STATUS_LOOK.working,
-        label: say('common.filing'),
+        label: REQUEST_STATE_NAMES.filing,
         detail: request.problem === null ? null : sayAgain(request.problem),
         help: docsFor(request.problemCode),
       };
     case 'filed':
       return {
         ...STATUS_LOOK.working,
-        label: say('common.filed'),
+        label: REQUEST_STATE_NAMES.filed,
         detail: say('client.requests.describeRequestBadge.inItsLibraryWaitingForThe'),
       };
     case 'available':
-      return { ...STATUS_LOOK.done, detail: null };
+      return { ...STATUS_LOOK.done, label: REQUEST_STATE_NAMES.available, detail: null };
     case 'failed':
       return {
         ...STATUS_LOOK.failed,
+        label: REQUEST_STATE_NAMES.failed,
         detail:
           (request.problem === null ? null : sayAgain(request.problem)) ?? say('common.itFailed'),
         help: docsFor(request.problemCode),

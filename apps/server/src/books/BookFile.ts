@@ -24,6 +24,7 @@ type BookAbout = {
   authors: string[];
   description: string | null;
   partOf?: { name: string; position: number | null } | null;
+  narrators?: string[];
 };
 
 type FixedBook = {

@@ -1,3 +1,4 @@
+import { isAskedBy } from '@ValenceContracts/functions/isAskedBy';
 import { calendarEntriesOfLibrary } from '@ValenceServer/calendar/calendarEntriesOfLibrary';
 import { calendarEntriesOfRequests } from '@ValenceServer/calendar/calendarEntriesOfRequests';
 import { drawnFromThisServer } from '@ValenceServer/calendar/drawnFromThisServer';
@@ -63,7 +64,7 @@ const createCalendarReader = ({
       (request) =>
         (request.kind === 'film' || request.kind === 'series') &&
         libraries.has(request.libraryId) &&
-        (seesAll || request.requestedBy.id === viewer.accountId),
+        (seesAll || isAskedBy(request, viewer.accountId)),
     );
 
     const reachable = await Promise.all(

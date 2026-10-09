@@ -29,6 +29,22 @@ describe('DownloadProgressReadout', () => {
     expect(container).toHaveTextContent(/^50%$/);
   });
 
+  it('says when the download client has paused it', () => {
+    const { container } = render(
+      <DownloadProgressReadout
+        progress={{
+          ...GOING,
+          state: 'paused',
+          sizeBytes: null,
+          downloadBytesPerSecond: null,
+          secondsLeft: null,
+        }}
+      />,
+    );
+
+    expect(container).toHaveTextContent(/^50% · Paused$/);
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(DownloadProgressReadout.displayName).toBe('DownloadProgressReadout');
   });

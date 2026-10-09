@@ -30,6 +30,7 @@ const DOWNLOAD: QueuedDownload = {
   filedInto: null,
   filingProblem: null,
   filingProblemCode: null,
+  wasPaused: false,
 };
 
 const item = (season: number | null, episode: number | null): MediaRequest['items'][number] => ({
@@ -46,6 +47,7 @@ const item = (season: number | null, episode: number | null): MediaRequest['item
   downloadId: DOWNLOAD.id,
   filePath: null,
   score: null,
+  isFollowed: true,
   lastSearchedAt: null,
   updatedAt: '2026-10-01T10:00:00.000Z',
 });

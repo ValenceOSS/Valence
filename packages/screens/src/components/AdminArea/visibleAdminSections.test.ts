@@ -17,10 +17,21 @@ describe('visibleAdminSections', () => {
 
     expect(ids).not.toContain('requests');
     expect(ids).not.toContain('indexers');
-    expect(ids).not.toContain('search');
     expect(ids).not.toContain('downloads');
     expect(ids).not.toContain('profiles');
-    expect(ids).not.toContain('requested');
+    expect(ids).not.toContain('catalogue');
+  });
+
+  it('lists the Requests group as Overview, Catalogue, Indexers, Profiles and Downloads', () => {
+    const requests = visibleAdminSections(true).find((section) => section.id === 'requests');
+
+    expect(requests?.items.map((item) => item.id)).toEqual([
+      'requests',
+      'catalogue',
+      'indexers',
+      'profiles',
+      'downloads',
+    ]);
   });
 
   it('leaves everything else as it was', () => {

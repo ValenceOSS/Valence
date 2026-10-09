@@ -19,6 +19,7 @@ const item = (overrides: Partial<RequestItem> = {}): RequestItem => ({
   score: null,
   downloadedBytes: null,
   downloadSeconds: null,
+  isFollowed: true,
   lastSearchedAt: null,
   updatedAt: '2026-09-19T00:00:00.000Z',
   ...overrides,
@@ -52,7 +53,7 @@ describe('describeItemBadge', () => {
 
   it('says an episode in the library is available', () => {
     expect(describeItemBadge(item({ state: 'available' }), TODAY)).toMatchObject({
-      label: 'Available',
+      label: 'In the library',
       tone: 'success',
     });
   });

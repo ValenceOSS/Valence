@@ -1,4 +1,8 @@
 import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { requestsQueries } from '@ValenceClient/query/requestsQueries';
+import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
+import type { Permission } from '@ValenceContracts/schemas/Permission';
 import { TextField } from '@ValenceUI/TextField';
 import { describePermission } from '@ValenceClient/admin/describePermission';
 import { describePermissionDetail } from '@ValenceClient/admin/describePermissionDetail';
@@ -13,7 +17,8 @@ const NO_NODES: PluginContributions['nodes'] = [];
 /**
  * Every permission a role can hold, grouped by what it is about and searchable by name — a switch
  * beside a sentence saying what it actually lets somebody do, rather than a flat wall of checkboxes
- * naming an identifier nobody not writing the server would recognise.
+ * naming an identifier nobody not writing the server would recognise. A permission to ask for
+ * something says so where no library takes requests for it, since it lets nobody do anything yet.
  *
  * @param catalogue - Every permission the server knows about.
  * @param pluginNodes - The permissions plugins registered, grouped beneath Valence's own by plugin.
@@ -27,6 +32,26 @@ const PermissionEditor = ({
   onToggle,
 }: PermissionEditorProps) => {
   const [search, setSearch] = useState('');
+  const requesting = useQuery(requestsQueries.availability());
+  const kinds = useRequestableKinds();
+  const isRequesting = requesting.data?.isEnabled === true;
+
+  const noteOf = (permission: Permission): string | null => {
+    if (!isRequesting) {
+      return null;
+    }
+
+    if (permission === 'requests.askMusic' && !kinds.has('artist') && !kinds.has('album')) {
+      return say('screens.rolesPanel.permissionEditor.noMusicLibraryTakesRequests');
+    }
+
+    return permission === 'requests.ask' &&
+      !kinds.has('film') &&
+      !kinds.has('series') &&
+      !kinds.has('book')
+      ? say('screens.rolesPanel.permissionEditor.noLibraryTakesRequests')
+      : null;
+  };
 
   const groups = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -90,7 +115,9 @@ const PermissionEditor = ({
                 <PermissionRow
                   key={permission}
                   label={describePermission(permission)}
-                  detail={describePermissionDetail(permission)}
+                  detail={[describePermissionDetail(permission), noteOf(permission)]
+                    .filter((part) => part !== null)
+                    .join(' ')}
                   isOn={selected.includes(permission)}
                   onToggle={() => {
                     onToggle(permission);

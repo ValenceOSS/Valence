@@ -21,6 +21,10 @@ import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { removeMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
+import { askersOf } from '@ValenceContracts/functions/askersOf';
+import { isAskedBy } from '@ValenceContracts/functions/isAskedBy';
+import { describeAskers } from '@ValenceClient/requests/describeAskers';
+import { describeOthersStillWanting } from '@ValenceClient/requests/describeOthersStillWanting';
 import { describeRequestBadge } from '@ValenceClient/requests/describeRequestBadge';
 import { describeRequestProgress } from '@ValenceClient/requests/describeRequestProgress';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
@@ -34,6 +38,7 @@ import { describeDownloadCost } from '@ValenceScreens/requests/describeDownloadC
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { RequestsListProps } from './RequestsList.types';
 import { say } from '@ValenceI18n/say';
+import { catalogueIdOfRequest } from '@ValenceClient/requests/catalogueIdOfRequest';
 
 /**
  * The requests on this server, newest first, with where each has got to — waiting on approval,
@@ -188,9 +193,7 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
 
                   <span className="text-xs text-text-muted">
                     {[
-                      request.requestedBy.id === me.data?.id
-                        ? say('common.askedByYou')
-                        : say('common.askedByName', { name: request.requestedBy.name }),
+                      describeAskers(askersOf(request), me.data?.id),
                       named.get(request.libraryId) ?? null,
                       request.profileName,
                     ]
@@ -226,7 +229,7 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
                 </div>
 
                 <span className="flex shrink-0 flex-wrap gap-2">
-                  {request.requestedBy.id === me.data?.id &&
+                  {isAskedBy(request, me.data?.id) &&
                   request.state !== 'filed' &&
                   request.state !== 'available' ? (
                     <Button
@@ -252,7 +255,7 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
                       onAsk(
                         askingOf({
                           kind: request.kind,
-                          id: request.musicBrainzId ?? request.tmdbId?.toString() ?? '',
+                          id: catalogueIdOfRequest(request),
                         }),
                       );
                     }}
@@ -274,7 +277,12 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
             ? say('common.cancelThisRequest')
             : say('common.cancelTitle', { title: cancelling.title })
         }
-        detail={say('common.itWillNotBeFetchedAnd')}
+        detail={
+          (cancelling === null
+            ? null
+            : describeOthersStillWanting(askersOf(cancelling), me.data?.id)) ??
+          say('common.itWillNotBeFetchedAnd')
+        }
         confirmLabel={say('common.cancelRequest')}
         isDestructive
         isOpen={cancelling !== null}

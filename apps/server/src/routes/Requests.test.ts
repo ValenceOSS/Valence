@@ -37,7 +37,9 @@ import type { MissingAlbumMatcher } from '@ValenceServer/requests/missingAlbums/
 import type { EventBus, WebhookOccurrence } from '@ValenceServer/events/EventBus';
 import type { Discovery } from '@ValenceServer/requests/catalogue/Discovery';
 import { NO_DISCOVERY } from '@ValenceServer/requests/catalogue/NO_DISCOVERY';
+import type { LibraryService } from '@ValenceServer/library/LibraryService';
 import type { SeriesFile } from '@ValenceServer/requests/catalogue/SeriesFile';
+import { CatalogueListingSchema } from '@ValenceContracts/schemas/AdminCatalogue';
 
 const A_STATUS: RequestsStatus = {
   version: '0.4.0',
@@ -156,6 +158,7 @@ const FILMS: Library = {
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 };
 
 const MUSIC: Library = {
@@ -171,6 +174,7 @@ const MUSIC: Library = {
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 };
 
 const BOOKS: Library = {
@@ -186,6 +190,7 @@ const BOOKS: Library = {
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 };
 
 const SHOWS: Library = {
@@ -216,6 +221,25 @@ const HOLDING_A_SHOW: Discovery = {
   },
 };
 
+/**
+ * A library service that also says when a library is to be read again.
+ *
+ * @param service - The service.
+ * @param onScan - Told the library asked about.
+ * @returns The service.
+ */
+const scanningAs = (
+  service: LibraryService,
+  onScan?: (libraryId: string) => void,
+): LibraryService => ({
+  ...service,
+  scan: (libraryId, force) => {
+    onScan?.(libraryId);
+
+    return service.scan(libraryId, force);
+  },
+});
+
 const build = async ({
   isOn,
   granted = [],
@@ -229,6 +253,7 @@ const build = async ({
   missingAlbums,
   discovery,
   libraries = [FILMS],
+  onScan,
 }: {
   isOn: boolean;
   granted?: readonly Permission[];
@@ -245,6 +270,7 @@ const build = async ({
   missingAlbums?: MissingAlbumMatcher;
   discovery?: Discovery;
   libraries?: Library[];
+  onScan?: (libraryId: string) => void;
 }) => {
   const { auth, settings, store } = createMemoryAuth();
   const permissions = createMemoryPermissionService();
@@ -275,7 +301,7 @@ const build = async ({
     jobDefinitions: jobDefinitionsFor(isOn),
     countUsers: () => Promise.resolve(1),
     promoteToAdmin: () => Promise.resolve(null),
-    library: createMemoryLibraryService({ libraries, media: [] }),
+    library: scanningAs(createMemoryLibraryService({ libraries, media: [] }), onScan),
     ...(events === undefined ? {} : { events }),
     ...(describeForRequest === undefined ? {} : { describeForRequest }),
     ...(describeMusicForRequest === undefined ? {} : { describeMusicForRequest }),
@@ -330,14 +356,20 @@ describe('GET /api/requests/availability', () => {
     const response = await ask('/api/requests/availability');
 
     expect(response.status).toBe(200);
-    expect(RequestsAvailabilitySchema.parse(await response.json())).toEqual({ isEnabled: true });
+    expect(RequestsAvailabilitySchema.parse(await response.json())).toEqual({
+      isEnabled: true,
+      kinds: ['film'],
+    });
   });
 
   it('says requesting is off where the service was never set up', async () => {
     const { ask } = await build({ isOn: false });
     const response = await ask('/api/requests/availability');
 
-    expect(RequestsAvailabilitySchema.parse(await response.json())).toEqual({ isEnabled: false });
+    expect(RequestsAvailabilitySchema.parse(await response.json())).toEqual({
+      isEnabled: false,
+      kinds: [],
+    });
   });
 
   it('refuses somebody who is not signed in', async () => {
@@ -824,6 +856,7 @@ describe('download clients and the queue, through the server', () => {
     filedInto: null,
     filingProblem: null,
     filingProblemCode: null,
+    wasPaused: false,
   };
 
   const DRAFT = { name: 'qBittorrent', kind: 'qbittorrent', url: 'http://qbittorrent:8080' };
@@ -1084,19 +1117,20 @@ describe('quality profiles, through the server', () => {
     id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
     name: 'HD',
     kind: 'video',
-    resolutions: ['1080p'],
-    sources: ['bluray'],
+    qualities: ['bluray-1080p'],
     musicQualities: [],
     smallestMb: null,
     largestMb: null,
     preferredWords: [],
     requiredWords: [],
     bannedWords: [],
+    formats: [],
+    minFormatScore: 0,
+    upgradeUntilFormatScore: null,
     isUpgrading: false,
     releaseWait: 'digital',
     sizes: [],
-    upgradeUntilResolution: null,
-    upgradeUntilSource: null,
+    cutoff: null,
     upgradeUntilMusicQuality: null,
     libraryIds: [],
     preferredLanguage: null,
@@ -1118,6 +1152,10 @@ describe('quality profiles, through the server', () => {
       return new Response(null, { status: 204 });
     }
 
+    if (url.endsWith('/api/profiles/order')) {
+      return new Response(JSON.stringify([PROFILE]), { status: 200 });
+    }
+
     if (url.endsWith('/api/profiles')) {
       return method === 'POST'
         ? new Response(JSON.stringify(PROFILE), { status: 201 })
@@ -1131,6 +1169,7 @@ describe('quality profiles, through the server', () => {
     ['GET', '/api/admin/requests/profiles', undefined, 200],
     ['POST', '/api/admin/requests/profiles', { name: 'HD', kind: 'video' }, 201],
     ['PATCH', `/api/admin/requests/profiles/${PROFILE.id}`, { name: 'UHD' }, 200],
+    ['PUT', '/api/admin/requests/profiles/order', { ids: [PROFILE.id] }, 200],
     ['DELETE', `/api/admin/requests/profiles/${PROFILE.id}`, undefined, 204],
   ] as const;
 
@@ -1255,8 +1294,7 @@ describe('requests for films and series, through the server', () => {
     id,
     name,
     kind: 'video',
-    resolutions: [],
-    sources: [],
+    qualities: [],
     musicQualities: [],
     smallestMb: null,
     largestMb: null,
@@ -1264,10 +1302,12 @@ describe('requests for films and series, through the server', () => {
     preferredWords: [],
     requiredWords: [],
     bannedWords: [],
+    formats: [],
+    minFormatScore: 0,
+    upgradeUntilFormatScore: null,
     isUpgrading: false,
     releaseWait: 'digital',
-    upgradeUntilResolution: null,
-    upgradeUntilSource: null,
+    cutoff: null,
     upgradeUntilMusicQuality: null,
     libraryIds: [],
     preferredLanguage: null,
@@ -1992,6 +2032,33 @@ describe('requests for films and series, through the server', () => {
     });
   });
 
+  it('files into the library a request is moved to, and refuses one there is not', async () => {
+    const UHD = {
+      ...FILMS,
+      id: 'films-4k',
+      path: '/media/Films 4K',
+      requestPath: '/media/Films 4K/New',
+    };
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.approve'],
+      service: aWillingKeeper,
+      libraries: [FILMS, UHD],
+    });
+
+    sent.length = 0;
+
+    expect(
+      (await ask(`/api/requests/media/${REQUEST.id}`, 'PATCH', { libraryId: UHD.id })).status,
+    ).toBe(200);
+    expect(JSON.parse(sent.at(-1)?.body ?? '{}')).toMatchObject({
+      change: { libraryId: UHD.id, libraryPath: '/media/Films 4K/New' },
+    });
+    expect(
+      (await ask(`/api/requests/media/${REQUEST.id}`, 'PATCH', { libraryId: 'elsewhere' })).status,
+    ).toBe(404);
+  });
+
   it('changes the seasons asked for with what the catalogue says now', async () => {
     const { ask } = await build({
       isOn: true,
@@ -2046,6 +2113,242 @@ describe('requests for films and series, through the server', () => {
       searched: 1,
       startedAt: '2026-09-19T00:00:00.000Z',
     });
+  });
+
+  it('lists and picks a handed-off request’s releases through its app once the admin says so', async () => {
+    const { ask } = await build({
+      isOn: true,
+      isAdministrator: true,
+      service: (url, init) =>
+        url.endsWith(`/api/requests/${REQUEST.id}`)
+          ? Response.json({ ...REQUEST, isHandedOff: true })
+          : aWillingKeeper(url, init),
+    });
+    const asked = () => sent.map(({ method, url }) => `${method} ${url}`);
+
+    sent.length = 0;
+
+    expect((await ask(`/api/requests/media/${REQUEST.id}/releases`)).status).toBe(200);
+    expect(asked()).toContain(`GET http://requests:8421/api/requests/${REQUEST.id}/releases`);
+
+    expect(
+      await (await ask('/api/admin/settings', 'PATCH', { controlsConnectedApps: true })).json(),
+    ).toMatchObject({ controlsConnectedApps: true });
+
+    sent.length = 0;
+
+    expect((await ask(`/api/requests/media/${REQUEST.id}/releases`)).status).toBe(200);
+    expect(
+      (await ask(`/api/requests/media/${REQUEST.id}/pick`, 'POST', { release: RELEASE })).status,
+    ).toBe(200);
+    expect(asked()).toEqual(
+      expect.arrayContaining([
+        `GET http://requests:8421/api/requests/${REQUEST.id}/hand-off/releases`,
+        `POST http://requests:8421/api/requests/${REQUEST.id}/hand-off/pick`,
+      ]),
+    );
+    expect(asked()).not.toContain(`POST http://requests:8421/api/requests/${REQUEST.id}/pick`);
+  });
+
+  it('works a handed-off request’s downloads, blocklist and following through its app once the admin says so, letting the app go before removing it', async () => {
+    const handedOff = (url: string, init: { method?: string; body?: string }): Response => {
+      const method = init.method ?? 'GET';
+
+      if (method === 'GET' && url.endsWith(`/api/requests/${REQUEST.id}`)) {
+        sent.push({ method, url, body: init.body });
+
+        return Response.json({ ...REQUEST, isHandedOff: true });
+      }
+
+      if (url.endsWith('/hand-off/downloads') || url.endsWith('/hand-off/blocklist')) {
+        sent.push({ method, url, body: init.body });
+
+        return Response.json([]);
+      }
+
+      if (url.endsWith('/hand-off/release')) {
+        sent.push({ method, url, body: init.body });
+
+        return new Response(null, { status: 204 });
+      }
+
+      return aWillingKeeper(url, init);
+    };
+    const { ask } = await build({ isOn: true, isAdministrator: true, service: handedOff });
+    const media = `/api/requests/media/${REQUEST.id}`;
+    const handOff = `http://requests:8421/api/requests/${REQUEST.id}/hand-off`;
+    const asked = () => sent.map(({ method, url }) => `${method} ${url}`);
+
+    sent.length = 0;
+
+    expect(await (await ask(`${media}/hand-off/downloads`)).json()).toEqual([]);
+    expect(asked().filter((line) => line.includes('/hand-off/'))).toEqual([]);
+
+    await ask('/api/admin/settings', 'PATCH', { controlsConnectedApps: true });
+    sent.length = 0;
+
+    expect((await ask(`${media}/hand-off/downloads`)).status).toBe(200);
+    expect((await ask(`${media}/blocklist`)).status).toBe(200);
+    expect((await ask(`${media}/blocklist/3`, 'DELETE')).status).toBe(204);
+    expect(
+      (
+        await ask(`${media}/downloads/5/stop`, 'POST', {
+          next: 'another',
+          isDeletingFiles: true,
+        })
+      ).status,
+    ).toBe(200);
+    expect(
+      (
+        await ask(`${media}/follow`, 'POST', {
+          itemIds: ['0b1d2c3e-4f56-4a78-9b01-23456789abcd'],
+          isFollowed: false,
+        })
+      ).status,
+    ).toBe(200);
+    expect((await ask(`${media}/refuse`, 'POST', { reason: 'No room' })).status).toBe(200);
+    expect(asked().at(-2)).toBe(`POST ${handOff}/release`);
+    expect(asked().at(-1)).toBe(`POST http://requests:8421/api/requests/${REQUEST.id}/refuse`);
+    expect((await ask(media, 'DELETE')).status).toBe(204);
+    expect(asked()).toEqual(
+      expect.arrayContaining([
+        `GET ${handOff}/downloads`,
+        `GET ${handOff}/blocklist`,
+        `DELETE ${handOff}/blocklist/3`,
+        `POST ${handOff}/downloads/5/stop`,
+        `POST ${handOff}/follow`,
+        `POST ${handOff}/release`,
+      ]),
+    );
+    expect(asked().indexOf(`POST ${handOff}/release`)).toBeLessThan(
+      asked().findIndex(
+        (line) => line.startsWith('DELETE') && line.includes(`/requests/${REQUEST.id}?`),
+      ),
+    );
+    expect(asked()).not.toContain(`GET http://requests:8421/api/requests/${REQUEST.id}/blocklist`);
+  });
+
+  it('stops a download and follows episodes, for whoever manages requesting', async () => {
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.manage'],
+      service: aWillingKeeper,
+    });
+
+    sent.length = 0;
+
+    expect(
+      (
+        await ask(`/api/requests/media/${REQUEST.id}/downloads/d1/stop`, 'POST', {
+          next: 'byHand',
+        })
+      ).status,
+    ).toBe(200);
+    expect(JSON.parse(bodySentTo('/downloads/d1/stop'))).toEqual({
+      next: 'byHand',
+      isDeletingFiles: true,
+    });
+    expect(
+      (
+        await ask(`/api/requests/media/${REQUEST.id}/follow`, 'POST', {
+          itemIds: [REQUEST.id],
+          isFollowed: false,
+        })
+      ).status,
+    ).toBe(200);
+
+    const asker = await build({ isOn: true, granted: ['requests.ask'], service: aWillingKeeper });
+
+    expect(
+      (
+        await asker.ask(`/api/requests/media/${REQUEST.id}/downloads/d1/stop`, 'POST', {
+          next: 'byHand',
+        })
+      ).status,
+    ).toBe(403);
+  });
+
+  it('removes a request with its downloads, and its files where asked, reading the library again', async () => {
+    const scans: string[] = [];
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.manage'],
+      service: (url, init) => {
+        if (!url.endsWith('/files/delete')) {
+          return aWillingKeeper(url, init);
+        }
+
+        sent.push({ method: init.method ?? 'GET', url, body: init.body });
+
+        return Response.json({ folders: ['/media/Films/Film (2021)'] });
+      },
+      onScan: (libraryId) => {
+        scans.push(libraryId);
+      },
+    });
+
+    sent.length = 0;
+
+    expect((await ask(`/api/requests/media/${REQUEST.id}`, 'DELETE')).status).toBe(204);
+    expect(sent.at(-1)?.method).toBe('DELETE');
+    expect(sent.at(-1)?.url).toContain('deleteDownloads=true');
+
+    expect((await ask(`/api/requests/media/${REQUEST.id}?deleteFiles=true`, 'DELETE')).status).toBe(
+      204,
+    );
+    expect(sent.map((one) => one.url)).toEqual(
+      expect.arrayContaining([expect.stringContaining('/files/delete')]),
+    );
+    expect(scans).toEqual([REQUEST.libraryId]);
+  });
+
+  it('lists the Catalogue and a title’s files, for whoever manages requesting', async () => {
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.manage'],
+      service: aWillingKeeper,
+      discovery: {
+        ...NO_DISCOVERY,
+        lookup: {
+          ...NO_DISCOVERY.lookup,
+          heldTitles: () =>
+            Promise.resolve([
+              {
+                kind: 'film',
+                id: 'film-1',
+                libraryId: FILMS.id,
+                catalogueId: '1',
+                title: 'Held Film',
+                subtitle: null,
+                year: 2020,
+                art: { kind: 'media', id: 'film-1' },
+                held: 1,
+                isAudio: false,
+                addedAt: null,
+              },
+            ]),
+          titleFiles: (kind, catalogueId) =>
+            Promise.resolve({
+              folder: `/media/${kind}/${catalogueId}`,
+              files: [],
+            }),
+        },
+      },
+    });
+
+    const { entries } = CatalogueListingSchema.parse(
+      await (await ask('/api/admin/requests/catalogue')).json(),
+    );
+
+    expect(entries.find((one) => one.key === 'film:1')?.status).toBe('notFollowed');
+    expect(entries.some((one) => one.requestId === REQUEST.id)).toBe(true);
+    expect(
+      await (await ask('/api/admin/requests/catalogue/files?kind=series&catalogueId=9')).json(),
+    ).toEqual({ folder: '/media/series/9', files: [] });
+
+    const asker = await build({ isOn: true, granted: ['requests.ask'], service: aWillingKeeper });
+
+    expect((await asker.ask('/api/admin/requests/catalogue')).status).toBe(403);
   });
 
   const DISCOVERY: Discovery = {
@@ -2126,6 +2429,7 @@ describe('requests for films and series, through the server', () => {
   it('shelves what a viewer may ask for, saying where each title stands', async () => {
     const films = await build({
       isOn: true,
+      libraries: [FILMS, SHOWS, MUSIC, BOOKS],
       granted: ['requests.ask'],
       service: aWillingKeeper,
       discovery: DISCOVERY,
@@ -2148,6 +2452,7 @@ describe('requests for films and series, through the server', () => {
 
     const music = await build({
       isOn: true,
+      libraries: [FILMS, SHOWS, MUSIC, BOOKS],
       granted: ['requests.askMusic'],
       service: aWillingKeeper,
       discovery: DISCOVERY,
@@ -2163,6 +2468,27 @@ describe('requests for films and series, through the server', () => {
     const nobody = await build({ isOn: true, service: aWillingKeeper, discovery: DISCOVERY });
 
     expect((await nobody.ask('/api/requests/discover')).status).toBe(403);
+  });
+
+  it('shelves, browses and finds nothing of a kind no library takes requests for', async () => {
+    const { ask } = await build({
+      isOn: true,
+      libraries: [{ ...FILMS, takesRequests: false }, MUSIC],
+      granted: ['requests.ask', 'requests.askMusic'],
+      service: aWillingKeeper,
+      discovery: DISCOVERY,
+    });
+
+    expect(await (await ask('/api/requests/discover')).json()).toMatchObject({
+      shelves: [{ id: 'popular-albums' }],
+      studios: [],
+    });
+    expect(
+      await (await ask('/api/requests/catalogue/browse?kind=film&list=trending&page=1')).json(),
+    ).toEqual({ titles: [], page: 1, hasMore: false });
+    expect(await (await ask('/api/requests/catalogue/search?query=dune&kind=film')).json()).toEqual(
+      [],
+    );
   });
 
   it('browses a whole list a page at a time, saying whether there is more', async () => {
@@ -2226,6 +2552,7 @@ describe('requests for films and series, through the server', () => {
     );
     const { ask } = await build({
       isOn: true,
+      libraries: [FILMS, SHOWS, MUSIC, BOOKS],
       granted: ['requests.ask'],
       service: aWillingKeeper,
       discovery: { ...DISCOVERY, browse },
@@ -2239,6 +2566,7 @@ describe('requests for films and series, through the server', () => {
   it('refuses a genre that is not an id, and a rating past the top of the scale', async () => {
     const { ask } = await build({
       isOn: true,
+      libraries: [FILMS, SHOWS, MUSIC, BOOKS],
       granted: ['requests.ask'],
       service: aWillingKeeper,
       discovery: DISCOVERY,
@@ -2255,6 +2583,7 @@ describe('requests for films and series, through the server', () => {
   it('lists the genres a list can be narrowed to, for films and for series', async () => {
     const { ask } = await build({
       isOn: true,
+      libraries: [FILMS, SHOWS, MUSIC, BOOKS],
       granted: ['requests.ask'],
       service: aWillingKeeper,
       discovery: DISCOVERY,
@@ -2392,6 +2721,7 @@ describe('requests for films and series, through the server', () => {
     it('shelves books for anybody who may ask for films, and for nobody who may not', async () => {
       const viewer = await build({
         isOn: true,
+        libraries: [FILMS, SHOWS, MUSIC, BOOKS],
         granted: ['requests.ask'],
         service: aWillingKeeper,
         discovery: WITH_BOOKS,
@@ -2405,6 +2735,7 @@ describe('requests for films and series, through the server', () => {
 
       const listener = await build({
         isOn: true,
+        libraries: [FILMS, SHOWS, MUSIC, BOOKS],
         granted: ['requests.askMusic'],
         service: aWillingKeeper,
         discovery: WITH_BOOKS,
@@ -2420,6 +2751,7 @@ describe('requests for films and series, through the server', () => {
     it('searches Open Library for a book, each saying where it stands', async () => {
       const { ask } = await build({
         isOn: true,
+        libraries: [FILMS, SHOWS, MUSIC, BOOKS],
         granted: ['requests.ask'],
         service: aWillingKeeper,
         discovery: WITH_BOOKS,
@@ -2441,6 +2773,7 @@ describe('requests for films and series, through the server', () => {
     it('describes a book with its authors and subjects', async () => {
       const { ask } = await build({
         isOn: true,
+        libraries: [FILMS, SHOWS, MUSIC, BOOKS],
         granted: ['requests.ask'],
         service: aWillingKeeper,
         discovery: WITH_BOOKS,
@@ -2649,6 +2982,118 @@ describe('requests for films and series, through the server', () => {
 
     expect((await ask(`/api/requests/media/${REQUEST.id}`, 'DELETE')).status).toBe(404);
     expect(deleted).toHaveLength(1);
+  });
+
+  it('takes somebody off a request others want too, rather than cancelling it', async () => {
+    const deleted: string[] = [];
+    const { ask, accountId } = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: (url, init) => {
+        if (init.method === 'DELETE') {
+          deleted.push(url);
+
+          return Response.json({ ...REQUEST, requestedBy: { id: 'other', name: 'Other' } });
+        }
+
+        return Response.json({
+          ...REQUEST,
+          requestedBy: { id: 'other', name: 'Other' },
+          alsoAskedBy: [{ id: accountId, name: 'Me' }],
+        });
+      },
+    });
+
+    expect((await ask(`/api/requests/media/${REQUEST.id}`, 'DELETE')).status).toBe(204);
+    expect(deleted).toEqual([
+      `http://requests:8421/api/requests/${REQUEST.id}/askers/${encodeURIComponent(accountId)}`,
+    ]);
+  });
+
+  it('adds somebody who wants a request too, as whoever is signed in', async () => {
+    const asked: Array<{ url: string; body: string | undefined }> = [];
+    const { ask, accountId } = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: (url, init) => {
+        asked.push({ url, body: init.body });
+
+        return Response.json(REQUEST);
+      },
+    });
+
+    expect((await ask(`/api/requests/media/${REQUEST.id}/join`, 'POST')).status).toBe(200);
+    expect(asked.at(-1)?.url).toBe(`http://requests:8421/api/requests/${REQUEST.id}/askers`);
+    expect(JSON.parse(asked.at(-1)?.body ?? '{}')).toMatchObject({ id: accountId });
+  });
+
+  it('refuses to add somebody to a request for music they may not ask for', async () => {
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: () =>
+        Response.json({
+          ...REQUEST,
+          kind: 'artist',
+          tmdbId: null,
+          musicBrainzId: '83d91898-7763-47d7-b03b-b92132375c47',
+        }),
+    });
+
+    expect((await ask(`/api/requests/media/${REQUEST.id}/join`, 'POST')).status).toBe(403);
+  });
+
+  it('says which app a request was handed to, to whoever manages requesting', async () => {
+    const HANDED = {
+      appId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+      appName: 'Radarr',
+      appKind: 'radarr',
+      link: 'http://radarr.local/movie/438631',
+    };
+    const service = () => Response.json(HANDED);
+    const manager = await build({ isOn: true, granted: ['requests.manage'], service });
+    const member = await build({ isOn: true, granted: ['requests.ask'], service });
+    const path = `/api/requests/media/${REQUEST.id}/handed-to`;
+
+    expect(await (await manager.ask(path)).json()).toEqual(HANDED);
+    expect((await member.ask(path)).status).toBe(403);
+  });
+
+  it('lets whoever manages requesting settle a higher-quality ask, and nobody else', async () => {
+    const asked: string[] = [];
+    const service = (url: string, init: { method?: string; body?: string }) => {
+      asked.push(`${init.method ?? 'GET'} ${url} ${init.body ?? ''}`);
+
+      return Response.json(REQUEST);
+    };
+    const manager = await build({ isOn: true, granted: ['requests.manage'], service });
+    const member = await build({ isOn: true, granted: ['requests.ask'], service });
+    const path = `/api/requests/media/${REQUEST.id}/profile-ask`;
+
+    expect((await manager.ask(path, 'POST', { choice: 'switch' })).status).toBe(200);
+    expect(asked.at(-1)).toBe(
+      `POST http://requests:8421/api/requests/${REQUEST.id}/profile-ask {"choice":"switch"}`,
+    );
+    expect((await member.ask(path, 'POST', { choice: 'keep' })).status).toBe(403);
+  });
+
+  it('lets whoever manages requesting choose an audiobook’s narration, and nobody else', async () => {
+    const asked: string[] = [];
+    const service = (url: string, init: { method?: string; body?: string }) => {
+      asked.push(`${init.method ?? 'GET'} ${url} ${init.body ?? ''}`);
+
+      return Response.json(REQUEST);
+    };
+    const manager = await build({ isOn: true, granted: ['requests.manage'], service });
+    const member = await build({ isOn: true, granted: ['requests.ask'], service });
+    const path = `/api/requests/media/${REQUEST.id}/narration`;
+
+    expect((await manager.ask(path, 'POST', { asins: ['A'] })).status).toBe(200);
+    expect(asked.at(-1)).toBe(
+      `POST http://requests:8421/api/requests/${REQUEST.id}/narration {"asins":["A"]}`,
+    );
+    expect((await manager.ask(path, 'POST', { asins: [] })).status).toBe(400);
+    expect((await member.ask(path, 'POST', { asins: ['A'] })).status).toBe(403);
   });
 
   it('passes on why the service would not do something', async () => {

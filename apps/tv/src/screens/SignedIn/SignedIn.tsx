@@ -76,7 +76,7 @@ import { useStockedKinds } from '@ValenceClient/library/useStockedKinds';
 import { giveFocusTo } from '@ValenceTv/navigation/giveFocusTo';
 import { nativeTagOf } from '@ValenceTv/navigation/nativeTagOf';
 
-const WATCHABLE = new Set(['movies', 'shows']);
+const WATCHABLE = new Set(['movies', 'shows', 'anime']);
 
 const UNDER_THE_BAR = 130;
 
@@ -783,6 +783,9 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
             viewerId={user.id}
             onPlay={play}
             onOpenPerson={openPerson}
+            onRequestMore={(tmdbId) => {
+              open({ kind: 'ask', titleKind: 'series', id: tmdbId.toString(), mood: null });
+            }}
           />
         </View>
       ) : null}

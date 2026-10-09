@@ -1,18 +1,23 @@
+import { isAskingNarration } from '@ValenceContracts/functions/isAskingNarration';
 import { sayingList } from '@ValenceI18n/sayingList';
 import { sayingCount } from '@ValenceI18n/sayingCount';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { Said } from '@ValenceI18n/SaidSchema';
-import { basename, extname } from 'node:path';
+import { unlink } from 'node:fs/promises';
+import { basename, dirname, extname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { GIVE_UP_DEFAULTS } from '@ValenceContracts/schemas/GiveUpRules';
 import { QualityProfileDraftSchema } from '@ValenceContracts/schemas/QualityProfile';
 import { fileAlbum } from '@ValenceRequests/mediaRequests/fileAlbum';
+import { measureListening } from '@ValenceRequests/mediaRequests/measureListening';
+import { isIncompleteAlbum } from '@ValenceRequests/mediaRequests/isIncompleteAlbum';
 import { fileBook } from '@ValenceRequests/mediaRequests/fileBook';
 import { fileDownload } from '@ValenceRequests/mediaRequests/fileDownload';
 import { NotAllowedThere } from '@ValenceRequests/mediaRequests/NotAllowedThere';
 import { judgeForRequest } from '@ValenceRequests/mediaRequests/judgeForRequest';
+import { hashOfDownload } from '@ValenceRequests/mediaRequests/hashOfDownload';
 import { libraryFolderOf } from '@ValenceRequests/mediaRequests/libraryFolderOf';
 import { mapClientPath } from '@ValenceRequests/mediaRequests/mapClientPath';
 import { planSearches } from '@ValenceRequests/mediaRequests/planSearches';
@@ -34,13 +39,17 @@ import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
 import type {
   IndexerSearchReport,
   Release,
+  ReleaseProtocol,
   ReleaseSearch,
   ReleaseSearchOutcome,
 } from '@ValenceContracts/schemas/Indexer';
+import { PROTOCOL_OF_CLIENT } from '@ValenceContracts/schemas/DownloadClient';
 import type {
+  DownloadStopNext,
   MediaRequest,
   MediaRequestDraft,
   MissingSearch,
+  SearchScope,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { ProbeClient } from '@ValenceRequests/media/createProbeClient';
@@ -91,6 +100,7 @@ type CreateRequestWorkerOptions = {
   probe?: ProbeClient;
   fileMusic?: typeof fileAlbum;
   fileBooks?: typeof fileBook;
+  measure?: typeof measureListening;
   now?: () => Date;
   schedule?: Schedule;
   tickEveryMs?: number;
@@ -106,6 +116,48 @@ type CreateRequestWorkerOptions = {
 type Found = { request: MediaRequestRecord; items: RequestItemRecord[] };
 
 const NOTHING_REFUSED: ReadonlyMap<string, Said> = new Map();
+
+const NO_TRACKS: ReadonlyMap<string, number> = new Map();
+
+const UNABRIDGED_SHARE = 0.8;
+
+/**
+ * A listening time as a person reads it, in hours and minutes.
+ *
+ * @param minutes - The minutes.
+ * @returns The words.
+ */
+const listeningTime = (minutes: number): Said => {
+  const rounded = Math.round(minutes);
+
+  return saying('screens.requests.describeDownloadCost.hoursHMinutesMin', {
+    hours: Math.floor(rounded / 60).toString(),
+    minutes: (rounded % 60).toString(),
+  });
+};
+
+/**
+ * How long the whole of an audiobook lasts, from the narration it is fetched in, or the only one
+ * the book has; nothing for an ebook, or where nothing says.
+ *
+ * @param request - The book's request, with its narrations.
+ * @param item - The audiobook.
+ * @returns The minutes, or null.
+ */
+const fullListeningOf = (
+  request: Pick<MediaRequestRecord, 'narrations'>,
+  item: Pick<RequestItemRecord, 'format' | 'narration'>,
+): number | null => {
+  const narrations = request.narrations ?? [];
+  const narration =
+    item.narration === null || item.narration === undefined
+      ? narrations.length === 1
+        ? narrations[0]
+        : undefined
+      : narrations.find((one) => one.asin === item.narration);
+
+  return item.format === 'audiobook' ? (narration?.runtimeMinutes ?? null) : null;
+};
 
 const TICK_EVERY_MS = 30_000;
 
@@ -141,13 +193,6 @@ const LIBRARY_KINDS_OF: Record<MediaRequestRecord['kind'], LibraryKind> = {
   book: 'books',
 };
 
-const IN_FLIGHT = new Set<RequestItemRecord['state']>([
-  'searching',
-  'chosen',
-  'downloading',
-  'filing',
-]);
-
 const DEFAULT_PROFILES: Record<QualityProfile['kind'], QualityProfile> = {
   video: {
     ...QualityProfileDraftSchema.parse({ name: say('common.default'), kind: 'video' }),
@@ -163,6 +208,14 @@ const DEFAULT_PROFILES: Record<QualityProfile['kind'], QualityProfile> = {
     createdAt: '1970-01-01T00:00:00.000Z',
     updatedAt: '1970-01-01T00:00:00.000Z',
   },
+};
+
+const BOOK_PROFILE: QualityProfile = {
+  ...QualityProfileDraftSchema.parse({ name: say('common.books'), kind: 'video', sizes: [] }),
+  id: '00000000-0000-4000-8000-000000000002',
+  position: 0,
+  createdAt: '1970-01-01T00:00:00.000Z',
+  updatedAt: '1970-01-01T00:00:00.000Z',
 };
 
 /**
@@ -273,6 +326,7 @@ const groupedByDownload = (
  * @param file - How a finished download is filed.
  * @param fileMusic - How a finished download of music is filed.
  * @param fileBooks - How a finished download of a book or an audiobook is filed.
+ * @param measure - How long an audiobook download lasts, to tell an abridged one from the book.
  * @param now - The clock.
  * @param schedule - How to wait.
  * @param tickEveryMs - How often to move everything along.
@@ -300,6 +354,7 @@ const createRequestWorker = ({
   probe = () => Promise.resolve(null),
   fileMusic = fileAlbum,
   fileBooks = fileBook,
+  measure = measureListening,
   now = () => new Date(),
   schedule = waitThenRun,
   tickEveryMs = TICK_EVERY_MS,
@@ -360,13 +415,13 @@ const createRequestWorker = ({
   };
 
   const searchedByItself = async (): Promise<Found[]> =>
-    (await approved()).filter(
-      (found) => !found.request.isPickedByHand && !isBookRequest(found.request.kind),
-    );
+    (await approved()).filter((found) => !found.request.isPickedByHand);
 
   const profileFor = async (request: MediaRequestRecord): Promise<QualityProfile> =>
-    chooseProfile(request, await profiles.list()) ??
-    DEFAULT_PROFILES[isMusicRequest(request.kind) ? 'music' : 'video'];
+    isBookRequest(request.kind)
+      ? BOOK_PROFILE
+      : (chooseProfile(request, await profiles.list()) ??
+        DEFAULT_PROFILES[isMusicRequest(request.kind) ? 'music' : 'video']);
 
   const priorities = async () =>
     new Map((await indexers.list()).map((indexer) => [indexer.id, indexer.priority]));
@@ -379,16 +434,56 @@ const createRequestWorker = ({
     title: string | null,
     indexerId: string | null,
     reason: Said,
+    infoHash: string | null = null,
   ) => {
     if (title !== null) {
-      await blocked.insert({ id: randomUUID(), requestId, title, indexerId, reason, at: at() });
+      await blocked.insert({
+        id: randomUUID(),
+        requestId,
+        title,
+        infoHash,
+        indexerId,
+        reason,
+        at: at(),
+      });
     }
   };
 
+  const downloadingForOthers = async (
+    requestId: string,
+  ): Promise<{ title: string; infoHash: string | null }[]> => {
+    const own = new Set(
+      (await items.list()).flatMap((item) =>
+        item.requestId === requestId && item.downloadId !== null ? [item.downloadId] : [],
+      ),
+    );
+
+    return (await downloads.list())
+      .filter(
+        (download) =>
+          !own.has(download.id) && download.state !== 'done' && download.state !== 'failed',
+      )
+      .map((download) => ({ title: download.title, infoHash: hashOfDownload(download) }));
+  };
+
+  const protocolsTaken = async (): Promise<Set<ReleaseProtocol>> =>
+    new Set(
+      (await clients.records())
+        .filter((client) => client.isEnabled)
+        .map((client) => PROTOCOL_OF_CLIENT[client.kind]),
+    );
+
+  const isStillWanted = async (id: string): Promise<boolean> => {
+    const request = await requests.find(id);
+
+    return request !== null && request.approval !== 'refused';
+  };
+
   const isUpgradable = (profile: QualityProfile, item: RequestItemRecord): boolean =>
+    !item.isPickedByHand &&
     (item.state === 'available' || item.state === 'filed') &&
     item.filedTitle !== null &&
-    wantsUpgrade(profile, item.filedTitle);
+    (wantsUpgrade(profile, item.filedTitle) || isIncompleteAlbum(item));
 
   const send = async (
     request: MediaRequestRecord,
@@ -401,6 +496,10 @@ const createRequestWorker = ({
 
     if (url === null) {
       return saying('requests.mediaRequests.requestWorker.theReleaseHasNoLinkTo');
+    }
+
+    if (!(await isStillWanted(request.id))) {
+      return null;
     }
 
     for (const item of holding) {
@@ -432,6 +531,12 @@ const createRequestWorker = ({
       return sent.refused;
     }
 
+    if (!(await isStillWanted(request.id))) {
+      await queue.remove(sent.id, true).catch(() => false);
+
+      return null;
+    }
+
     for (const item of holding) {
       await update(item, {
         state: 'downloading',
@@ -456,19 +561,60 @@ const createRequestWorker = ({
     return null;
   };
 
+  const versionProfileOf = async (
+    request: MediaRequestRecord,
+    versionProfileId: string | null | undefined,
+  ): Promise<QualityProfile> =>
+    versionProfileId === null || versionProfileId === undefined
+      ? profileFor(request)
+      : ((await profiles.list()).find((profile) => profile.id === versionProfileId) ??
+        profileFor(request));
+
   const fetchFrom = async (
-    { request, items: all }: Found,
+    found: Found,
     releases: readonly Release[],
     isFetching: (item: RequestItemRecord) => boolean,
   ): Promise<{ isSent: boolean; said: Said }> => {
+    const versions = [...new Set(found.items.map((item) => item.versionProfileId ?? null))].filter(
+      (version) =>
+        found.items.some((item) => (item.versionProfileId ?? null) === version && isFetching(item)),
+    );
+
+    if (versions.length <= 1) {
+      return fetchVersion(found, releases, isFetching, versions[0] ?? null);
+    }
+
+    const [first, ...rest] = versions;
+    const firstOutcome = await fetchVersion(found, releases, isFetching, first ?? null);
+    const others = [];
+
+    for (const version of rest) {
+      others.push(await fetchVersion(found, releases, isFetching, version));
+    }
+
+    return {
+      isSent: firstOutcome.isSent || others.some((outcome) => outcome.isSent),
+      said: sayingList([firstOutcome.said, ...others.map((outcome) => outcome.said)]),
+    };
+  };
+
+  const fetchVersion = async (
+    { request, items: every }: Found,
+    releases: readonly Release[],
+    isFetching: (item: RequestItemRecord) => boolean,
+    version: string | null,
+  ): Promise<{ isSent: boolean; said: Said }> => {
+    const all = every.filter((item) => (item.versionProfileId ?? null) === version);
     const judged = judgeForRequest({
       request,
       items: all,
       releases,
-      profile: await profileFor(request),
+      profile: await versionProfileOf(request, version),
       blocked: await blockedFor(request.id),
       priorities: await priorities(),
       isFetching,
+      takes: await protocolsTaken(),
+      downloading: await downloadingForOthers(request.id),
     });
     const picked = judged.releases.find((release) => release.id === judged.pickedId);
     const holding = picked === undefined ? undefined : judged.holding.get(picked.id);
@@ -622,10 +768,12 @@ const createRequestWorker = ({
   };
 
   const release = async ({ request, items: all }: Found) => {
+    const isChoosing = isAskingNarration(request);
     const out = all.filter(
       (item) =>
         item.state === 'waiting' &&
-        (item.airDate === null ? item.season === null : item.airDate <= today()),
+        (item.airDate === null ? item.season === null : item.airDate <= today()) &&
+        !(isChoosing && item.format === 'audiobook'),
     );
 
     for (const item of out) {
@@ -635,7 +783,7 @@ const createRequestWorker = ({
     if (out.length > 0) {
       await note(
         request,
-        request.kind === 'film' || request.kind === 'album'
+        request.kind === 'film' || request.kind === 'album' || request.kind === 'book'
           ? saying('requests.mediaRequests.requestWorker.itIsOutAndWanted')
           : sayingCount(
               request.kind === 'artist'
@@ -730,7 +878,13 @@ const createRequestWorker = ({
 
       const reason = judged.reason ?? saying('common.theDownloadFailed');
 
-      await block(request.id, download.title, fetching[0]?.indexerId ?? null, reason);
+      await block(
+        request.id,
+        download.title,
+        fetching[0]?.indexerId ?? null,
+        reason,
+        hashOfDownload(download),
+      );
       await queue.remove(download.id, true);
 
       for (const item of fetching) {
@@ -811,9 +965,30 @@ const createRequestWorker = ({
       }
 
       const path = mapClientPath(download.contentPath, client);
+      const [only] = filing;
+      const want = only === undefined || filing.length > 1 ? null : fullListeningOf(request, only);
+      const have = want === null ? null : await measure(path);
+
+      if (only !== undefined && want !== null && have !== null && have < want * UNABRIDGED_SHARE) {
+        const why = saying('requests.mediaRequests.requestWorker.itIsAbridgedHaveAgainstWant', {
+          have: listeningTime(have),
+          want: listeningTime(want),
+        });
+
+        await block(request.id, download.title, only.indexerId, why, hashOfDownload(download));
+        await update(only, letGo(only, why));
+        await note(
+          request,
+          saying('requests.mediaRequests.requestWorker.titleWasNotFiledFirstRefusalIt', {
+            title: download.title,
+            firstRefusal: why,
+          }),
+        );
+        continue;
+      }
 
       try {
-        const { filed, missing, refused } = isMusicRequest(request.kind)
+        const { filed, missing, refused, trackCounts } = isMusicRequest(request.kind)
           ? {
               ...(await fileMusic(request, filing, path, download.protocol === 'torrent')),
               refused: NOTHING_REFUSED,
@@ -822,15 +997,20 @@ const createRequestWorker = ({
             ? {
                 ...(await fileBooks(request, filing, path, download.protocol === 'torrent')),
                 refused: NOTHING_REFUSED,
+                trackCounts: NO_TRACKS,
               }
-            : await file(
-                request,
-                filing,
-                path,
-                download.protocol === 'torrent',
-                probe,
-                await refusalsFor(request, filing),
-              );
+            : {
+                ...(await file(
+                  request,
+                  filing,
+                  path,
+                  download.protocol === 'torrent',
+                  probe,
+                  await refusalsFor(request, filing),
+                )),
+                trackCounts: NO_TRACKS,
+              };
+        const short: RequestItemRecord[] = [];
 
         for (const item of filing) {
           const path = filed.get(item.id);
@@ -850,22 +1030,53 @@ const createRequestWorker = ({
               ? item.score
               : await scoreOfFiled(filedTitle, download, request, filing.length);
 
+          const filedTrackCount = trackCounts.get(item.id) ?? null;
+          const isShort = isIncompleteAlbum({ trackCount: item.trackCount, filedTrackCount });
+
+          if (isShort) {
+            short.push(item);
+          }
+
           await update(item, {
             state: 'filed',
-            problem: null,
+            problem: isShort
+              ? saying('requests.mediaRequests.requestWorker.filedOfTotalTracks', {
+                  filed: (filedTrackCount ?? 0).toString(),
+                  total: (item.trackCount ?? 0).toString(),
+                })
+              : null,
             filePath: path,
             filedTitle,
             score,
             filedScore: score,
             attempts: 0,
+            ...(filedTrackCount === null ? {} : { filedTrackCount }),
+            ...(have === null ? {} : { filedMinutes: Math.round(have) }),
+            heldQuality: null,
             ...downloadFacts(download),
           });
+        }
+
+        if (short.length > 0) {
+          await block(
+            request.id,
+            download.title,
+            filing[0]?.indexerId ?? null,
+            saying('requests.mediaRequests.requestWorker.itWasMissingTracks'),
+            hashOfDownload(download),
+          );
         }
 
         const firstRefusal = [...refused.values()][0];
 
         if (firstRefusal !== undefined) {
-          await block(request.id, download.title, filing[0]?.indexerId ?? null, firstRefusal);
+          await block(
+            request.id,
+            download.title,
+            filing[0]?.indexerId ?? null,
+            firstRefusal,
+            hashOfDownload(download),
+          );
           await note(
             request,
             saying('requests.mediaRequests.requestWorker.titleWasNotFiledFirstRefusalIt', {
@@ -881,6 +1092,7 @@ const createRequestWorker = ({
             download.title,
             filing[0]?.indexerId ?? null,
             saying('requests.mediaRequests.requestWorker.itHeldNothingAskedFor'),
+            hashOfDownload(download),
           );
         }
 
@@ -956,8 +1168,8 @@ const createRequestWorker = ({
   ): Promise<string | null> => {
     const [artist = title, album = title] = title.split(/\s+-\s+/);
     const { filed } = await fileMusic(
-      { libraryPath, title: artist, artistName: artist },
-      [{ id: 'album', title: album, airDate: null, filePath: null }],
+      { kind: 'album', libraryPath, title: artist, artistName: artist },
+      [{ id: 'album', title: album, airDate: null, filePath: null, heldQuality: null }],
       path,
       protocol === 'torrent',
     );
@@ -1099,7 +1311,7 @@ const createRequestWorker = ({
 
       for (const found of await searchedByItself()) {
         const unsearched = found.items.filter(
-          (item) => item.state === 'wanted' && item.lastSearchedAt === null,
+          (item) => item.state === 'wanted' && item.lastSearchedAt === null && item.isFollowed,
         );
 
         if (unsearched.length > 0) {
@@ -1114,10 +1326,15 @@ const createRequestWorker = ({
       let searched = 0;
 
       for (const found of await searchedByItself()) {
-        const profile = await profileFor(found.request);
-        const fetching = found.items.filter(
-          (item) => item.state === 'wanted' || isUpgradable(profile, item),
-        );
+        const fetching = [];
+
+        for (const item of found.items) {
+          const profile = await versionProfileOf(found.request, item.versionProfileId);
+
+          if (item.isFollowed && (item.state === 'wanted' || isUpgradable(profile, item))) {
+            fetching.push(item);
+          }
+        }
 
         if (fetching.length > 0) {
           searched += 1;
@@ -1134,12 +1351,25 @@ const createRequestWorker = ({
     serially(async () => {
       const fetching = await Promise.all(
         (await searchedByItself()).map(async (found) => {
-          const profile = await profileFor(found.request);
+          const byVersion = new Map(
+            await Promise.all(
+              [...new Set(found.items.map((item) => item.versionProfileId ?? null))].map(
+                async (version) =>
+                  [version, await versionProfileOf(found.request, version)] as const,
+              ),
+            ),
+          );
 
           return {
             found,
-            isFetching: (item: RequestItemRecord) =>
-              item.state === 'wanted' || isUpgradable(profile, item),
+            isFetching: (item: RequestItemRecord) => {
+              const profile = byVersion.get(item.versionProfileId ?? null);
+
+              return (
+                item.isFollowed &&
+                (item.state === 'wanted' || (profile !== undefined && isUpgradable(profile, item)))
+              );
+            },
           };
         }),
       );
@@ -1182,6 +1412,7 @@ const createRequestWorker = ({
   const searchesByHand = (
     request: MediaRequestRecord,
     seasons: readonly number[],
+    scope: SearchScope | null = null,
   ): ReleaseSearch[] => {
     const query = queryTitleOf(request.title);
     const artist = queryTitleOf(request.artistName ?? request.title);
@@ -1193,13 +1424,32 @@ const createRequestWorker = ({
             query,
             mode: 'movie',
             ...(request.tmdbId === null ? {} : { tmdbId: request.tmdbId }),
+            ...(request.imdbId === null ? {} : { imdbId: request.imdbId }),
           },
         ];
-      case 'series':
+      case 'series': {
+        const ids = {
+          ...(request.tvdbId === null ? {} : { tvdbId: request.tvdbId }),
+          ...(request.imdbId === null ? {} : { imdbId: request.imdbId }),
+        };
+
+        if (scope !== null) {
+          return [
+            {
+              query,
+              mode: 'tv',
+              season: scope.season,
+              ...(scope.episode === null ? {} : { episode: scope.episode }),
+              ...ids,
+            },
+          ];
+        }
+
         return [
-          { query, mode: 'tv' },
-          ...seasons.map((season) => ({ query, mode: 'tv' as const, season })),
+          { query, mode: 'tv', ...ids },
+          ...seasons.map((season) => ({ query, mode: 'tv' as const, season, ...ids })),
         ];
+      }
       case 'artist':
         return [{ query: artist, mode: 'music', artist }];
       case 'album':
@@ -1214,12 +1464,13 @@ const createRequestWorker = ({
   const releasesOf = async (
     found: Found,
     blockedList: readonly BlockedReleaseRecord[],
+    scope: SearchScope | null = null,
   ): Promise<ReleaseSearchOutcome> => {
     const { request } = found;
     const seasons = [
       ...new Set(found.items.flatMap((item) => (item.season === null ? [] : [item.season]))),
     ];
-    const searches = searchesByHand(request, seasons);
+    const searches = searchesByHand(request, seasons, scope);
     const outcomes = await Promise.all(searches.map((search) => indexers.search(search)));
     const releases = [
       ...new Map(
@@ -1248,7 +1499,10 @@ const createRequestWorker = ({
       profile: await profileFor(request),
       blocked: blockedList,
       priorities: await priorities(),
-      isFetching: (item) => !IN_FLIGHT.has(item.state),
+      isFetching: (item) => item.state !== 'filing',
+      keepsTheUnnamed: true,
+      takes: await protocolsTaken(),
+      downloading: await downloadingForOthers(request.id),
     });
 
     return {
@@ -1396,6 +1650,124 @@ const createRequestWorker = ({
     return whatTheFilesSay(videos, await profileFor(request));
   };
 
+  /**
+   * Keeps a film picked by hand as a further version beside the one it has, under the first profile
+   * in order that takes it — other than the film's own and any it is kept in already — so it is
+   * judged and upgraded as that profile says. Nothing takes it where no other profile would.
+   *
+   * @param found - The film's request and what it waits for.
+   * @param picked - The release picked.
+   * @returns The request with the version added last, or why it could not be kept.
+   */
+  const alongside = async (found: Found, picked: Release): Promise<Found | { refused: Said }> => {
+    const { request } = found;
+    const current = await profileFor(request);
+    const parsed = parseReleaseName(picked.title);
+    const taking = (await profiles.list())
+      .filter(
+        (profile) =>
+          profile.kind === 'video' &&
+          profile.id !== current.id &&
+          !(request.versions ?? []).includes(profile.id),
+      )
+      .toSorted((left, right) => left.position - right.position)
+      .find((profile) => !judgeRelease(picked, parsed, profile).isRejected);
+
+    if (request.kind !== 'film' || taking === undefined) {
+      return {
+        refused: saying('requests.mediaRequests.requestWorker.noOtherProfileTakesIt'),
+      };
+    }
+
+    await requests.update(request.id, {
+      versions: [...(request.versions ?? []), taking.id],
+      updatedAt: at(),
+    });
+
+    const [first] = found.items;
+    const version = itemFromDraft(
+      {
+        musicBrainzId: null,
+        season: null,
+        episode: null,
+        versionProfileId: taking.id,
+        title: first?.title ?? request.title,
+        airDate: first?.airDate ?? null,
+        state: 'waiting',
+      },
+      randomUUID(),
+      request.id,
+      at(),
+    );
+
+    await items.insert(version);
+
+    const after = await find(request.id);
+
+    return after === null
+      ? { refused: saying('requests.mediaRequests.requestWorker.noOtherProfileTakesIt') }
+      : {
+          request: after.request,
+          items: [...after.items.filter((item) => item.id !== version.id), version],
+        };
+  };
+
+  /**
+   * Stops whatever is downloading for the films or episodes a release picked by hand will fetch
+   * instead, deleting what it had and blocking it for the request so nothing picks it again. Anything
+   * else a stopped download held goes back to being wanted.
+   *
+   * @param found - The request and everything it waits for.
+   * @param replacing - What the picked release will fetch.
+   * @param picked - The release picked.
+   */
+  const replaceDownloadsOf = async (
+    found: Found,
+    replacing: readonly RequestItemRecord[],
+    picked: Release,
+  ) => {
+    const stopping = [
+      ...new Set(
+        replacing.flatMap((item) =>
+          item.downloadId !== null && (item.state === 'downloading' || item.state === 'chosen')
+            ? [item.downloadId]
+            : [],
+        ),
+      ),
+    ];
+    const reason = saying('requests.mediaRequests.requestWorker.replacedByTitlePickedByHand', {
+      title: picked.title,
+    });
+
+    for (const downloadId of stopping) {
+      const download = await downloads.find(downloadId);
+      const held = found.items.filter((item) => item.downloadId === downloadId);
+
+      if (download !== null) {
+        await block(
+          found.request.id,
+          download.title,
+          held[0]?.indexerId ?? null,
+          reason,
+          hashOfDownload(download),
+        );
+      }
+
+      await queue.remove(downloadId, true).catch(() => false);
+
+      for (const item of held) {
+        await update(item, letGo(item, reason));
+      }
+
+      await note(
+        found.request,
+        saying('requests.mediaRequests.requestWorker.stoppedTitleForAReleasePicked', {
+          title: download?.title ?? picked.title,
+        }),
+      );
+    }
+  };
+
   return {
     tick,
 
@@ -1405,35 +1777,159 @@ const createRequestWorker = ({
 
     pollFeeds,
 
-    dropDownloads: (id: string): Promise<number> =>
-      serially(async () => {
-        const unfinished = [
-          ...new Set(
-            (await items.list()).flatMap((item) =>
-              item.requestId === id &&
-              item.downloadId !== null &&
-              (item.state === 'chosen' || item.state === 'downloading' || item.state === 'filing')
-                ? [item.downloadId]
-                : [],
-            ),
-          ),
-        ];
+    unfinishedDownloadsOf: async (id: string): Promise<string[]> => [
+      ...new Set(
+        (await items.list()).flatMap((item) =>
+          item.requestId === id &&
+          item.downloadId !== null &&
+          (item.state === 'chosen' || item.state === 'downloading' || item.state === 'filing')
+            ? [item.downloadId]
+            : [],
+        ),
+      ),
+    ],
 
-        for (const downloadId of unfinished) {
+    dropDownloads: (downloadIds: readonly string[]): Promise<number> =>
+      serially(async () => {
+        for (const downloadId of downloadIds) {
           await queue.remove(downloadId, true).catch(() => false);
         }
 
-        return unfinished.length;
+        return downloadIds.length;
+      }),
+
+    stopDownload: (
+      id: string,
+      downloadId: string,
+      stopping: { next: DownloadStopNext; isDeletingFiles: boolean },
+    ): Promise<MediaRequest | null> =>
+      serially(async () => {
+        const found = await find(id);
+        const held = found?.items.filter((item) => item.downloadId === downloadId) ?? [];
+
+        if (found === null || held.length === 0) {
+          return null;
+        }
+
+        const download = await downloads.find(downloadId);
+        const reason = saying('requests.mediaRequests.requestWorker.stoppedByAnAdmin');
+
+        if (download !== null && stopping.next !== 'nothing') {
+          await block(
+            id,
+            download.title,
+            held[0]?.indexerId ?? null,
+            reason,
+            hashOfDownload(download),
+          );
+        }
+
+        await queue.remove(downloadId, stopping.isDeletingFiles).catch(() => false);
+
+        for (const item of held) {
+          await update(item, {
+            ...letGo(item, reason),
+            ...(stopping.next === 'another' ? {} : { lastSearchedAt: at() }),
+            ...(stopping.next === 'nothing' ? { isFollowed: false } : {}),
+          });
+        }
+
+        await note(
+          found.request,
+          saying(
+            stopping.next === 'another'
+              ? 'requests.mediaRequests.requestWorker.stoppedTitleAndLookingForAnother'
+              : stopping.next === 'byHand'
+                ? 'requests.mediaRequests.requestWorker.stoppedTitleForAPickByHand'
+                : 'requests.mediaRequests.requestWorker.stoppedTitleAndStoppedGetting',
+            { title: download?.title ?? held[0]?.releaseTitle ?? '' },
+          ),
+        );
+
+        const after = await find(id);
+
+        return after === null ? null : showMediaRequest(after.request, after.items);
+      }),
+
+    blockDownload: async (downloadId: string): Promise<number> => {
+      const download = await downloads.find(downloadId);
+      const held = (await items.list()).filter((item) => item.downloadId === downloadId);
+      const requestIds = [...new Set(held.map((item) => item.requestId))];
+
+      for (const requestId of requestIds) {
+        await block(
+          requestId,
+          download?.title ??
+            held.find((item) => item.requestId === requestId)?.releaseTitle ??
+            null,
+          held.find((item) => item.requestId === requestId)?.indexerId ?? null,
+          saying('requests.mediaRequests.requestWorker.removedFromTheDownloads'),
+          download === null ? null : hashOfDownload(download),
+        );
+      }
+
+      return requestIds.length;
+    },
+
+    deleteFiled: (id: string): Promise<string[]> =>
+      serially(async () => {
+        const filed = (await items.list()).filter(
+          (item) => item.requestId === id && item.filePath !== null,
+        );
+        const folders = new Set<string>();
+
+        for (const item of filed) {
+          if (item.filePath !== null) {
+            await unlink(item.filePath).catch(() => undefined);
+            folders.add(dirname(item.filePath));
+          }
+        }
+
+        return [...folders];
       }),
 
     blockedFor,
 
     unblock: (id: string): Promise<boolean> => blocked.remove(id),
 
-    releasesFor: async (id: string): Promise<ReleaseSearchOutcome | null> => {
+    releasesFor: async (
+      id: string,
+      scope: SearchScope | null = null,
+    ): Promise<ReleaseSearchOutcome | null> => {
       const found = await find(id);
 
-      return found === null ? null : releasesOf(found, await blockedFor(id));
+      if (found === null) {
+        return null;
+      }
+
+      if (scope === null) {
+        return releasesOf(found, await blockedFor(id));
+      }
+
+      const scoped = found.items.filter(
+        (item) =>
+          item.season === scope.season &&
+          (scope.episode === null || item.episode === scope.episode),
+      );
+      const outcome = await releasesOf({ ...found, items: scoped }, await blockedFor(id), scope);
+
+      if (scope.episode !== null) {
+        return outcome;
+      }
+
+      const releases = outcome.releases.filter((release) => {
+        const parsed = parseReleaseName(release.title);
+
+        return parsed.episodes.length === 0 && parsed.seasons.includes(scope.season);
+      });
+      const kept = new Set(releases.map((release) => release.id));
+
+      return {
+        ...outcome,
+        releases,
+        judgements: outcome.judgements.filter((judged) => kept.has(judged.releaseId)),
+        pickedId: outcome.pickedId !== null && kept.has(outcome.pickedId) ? outcome.pickedId : null,
+      };
     },
 
     releasesForDraft: (asked: MediaRequestDraft): Promise<ReleaseSearchOutcome> => {
@@ -1454,31 +1950,59 @@ const createRequestWorker = ({
       );
     },
 
-    pick: (id: string, picked: Release): Promise<MediaRequest | { refused: Said } | null> =>
+    pick: (
+      id: string,
+      picked: Release,
+      keepsBoth = false,
+    ): Promise<MediaRequest | { refused: Said } | null> =>
       serially(async () => {
-        const found = await find(id);
+        const kept = await find(id);
 
-        if (found === null) {
+        if (kept === null) {
           return null;
         }
 
-        if (found.request.handOff !== null) {
+        if (kept.request.handOff !== null) {
           return {
             refused: saying('requests.mediaRequests.requestWorker.itIsHandedToAConnectedApp'),
           };
         }
 
+        const beside = keepsBoth ? await alongside(kept, picked) : null;
+
+        if (beside !== null && 'refused' in beside) {
+          return beside;
+        }
+
+        const found = beside ?? kept;
+
+        const [version] = beside === null ? [] : found.items.slice(-1);
         const judged = judgeForRequest({
           request: found.request,
-          items: found.items,
+          items: version === undefined ? found.items : [version],
           releases: [picked],
-          profile: await profileFor(found.request),
+          profile:
+            version === undefined
+              ? await profileFor(found.request)
+              : await versionProfileOf(found.request, version.versionProfileId ?? null),
           blocked: [],
           priorities: new Map(),
-          isFetching: (item) => !IN_FLIGHT.has(item.state),
+          isFetching: (item) => item.state !== 'filing',
           isTitleChecked: false,
         });
         const holding = judged.holding.get(picked.id) ?? [];
+
+        if (holding.length > 0) {
+          await replaceDownloadsOf(found, holding, picked);
+        }
+
+        if (holding.length > 0 && found.request.approval !== 'approved') {
+          await requests.update(id, {
+            approval: 'approved',
+            refusedBecause: null,
+            updatedAt: at(),
+          });
+        }
 
         if (holding.length === 0) {
           return {

@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import {
   QualityProfileChangeSchema,
   QualityProfileDraftSchema,
-  QualityProfileOrderSchema,
+  ProfileOrderSchema,
 } from '@ValenceContracts/schemas/QualityProfile';
 import { readBody } from '@ValenceRequests/readBody';
 import type { ProfileService } from '@ValenceRequests/profiles/createProfileService';
@@ -31,15 +31,11 @@ const createProfileRoutes = (profiles: ProfileService) => {
   });
 
   routes.put('/profiles/order', async (context) => {
-    const order = await readBody(context.req.raw, QualityProfileOrderSchema);
+    const order = await readBody(context.req.raw, ProfileOrderSchema);
 
-    if (order === null) {
-      return context.json(refuse('error.profile.thatIsNotAnOrderOf'), 400);
-    }
-
-    await profiles.reorder(order.ids);
-
-    return context.body(null, 204);
+    return order === null
+      ? context.json(refuse('error.profile.sayWhichOrderToPut'), 400)
+      : context.json(await profiles.reorder(order.ids));
   });
 
   routes.patch('/profiles/:id', async (context) => {

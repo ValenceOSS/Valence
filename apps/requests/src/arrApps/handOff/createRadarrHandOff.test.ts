@@ -147,4 +147,55 @@ describe('createRadarrHandOff', () => {
       ),
     ).toEqual([{ itemId: item.id, kind: 'missing' }]);
   });
+
+  it('asks Radarr to search for the film again, and says where its page is', async () => {
+    const arr = aFakeArr({
+      'POST /api/v3/command': { status: 201, body: { name: 'MoviesSearch', id: 1 } },
+    });
+    const handOff = createRadarrHandOff(createArrCaller(arr.fetch, anArrApp()));
+
+    await handOff.search(aMediaRequest(), 12);
+
+    expect(arr.sent('POST', '/api/v3/command')).toEqual([{ name: 'MoviesSearch', movieIds: [12] }]);
+    expect(await handOff.pageOf(aMediaRequest(), 12)).toBe('/movie/438631');
+  });
+
+  it('lists the releases Radarr finds for the film', async () => {
+    const arr = aFakeArr({
+      'GET /api/v3/release': (asked) => ({
+        body: [{ guid: `for-${asked.query.get('movieId') ?? ''}`, indexerId: 2 }],
+      }),
+    });
+
+    expect(
+      await createRadarrHandOff(createArrCaller(arr.fetch, anArrApp())).releases(
+        aMediaRequest(),
+        [aRequestItem()],
+        12,
+      ),
+    ).toMatchObject([{ guid: 'for-12', indexerId: 2 }]);
+  });
+
+  it('finds the film’s downloads in Radarr’s queue, and monitors it or stops', async () => {
+    const queue = ArrQueuePageSchema.parse({
+      records: [
+        { id: 5, movieId: 12, title: 'A.Film.2021.1080p' },
+        { id: 6, movieId: 13, title: 'Another.Film' },
+      ],
+    }).records;
+    const item = aRequestItem();
+    const arr = aFakeArr({ 'PUT /api/v3/movie/editor': { body: [] } });
+    const handOff = createRadarrHandOff(createArrCaller(arr.fetch, anArrApp()));
+
+    expect(
+      (await handOff.queued(aMediaRequest(), [item], 12, queue)).map((one) => [
+        one.record.id,
+        one.itemIds,
+      ]),
+    ).toEqual([[5, [item.id]]]);
+
+    await handOff.monitor(aMediaRequest(), [item], 12, false);
+
+    expect(arr.sent('PUT', '/api/v3/movie/editor')).toEqual([{ movieIds: [12], monitored: false }]);
+  });
 });

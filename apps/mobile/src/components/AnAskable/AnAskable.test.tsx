@@ -1,10 +1,15 @@
 import { Alert } from 'react-native';
-import { render, userEvent, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { askForMedia, removeMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
+import {
+  askForMedia,
+  joinMediaRequest,
+  removeMediaRequest,
+} from '@ValenceClient/requests/fetchMediaRequests';
 import { fetchSession } from '@ValenceClient/session/auth';
 import { aCatalogueTitleDetail } from '@ValenceClient/testing/aCatalogueTitleDetail';
 import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
+import { aRequestItem } from '@ValenceClient/testing/aRequestItem';
 import { askLinkedServer } from '@ValenceClient/linking/askLinkedServer';
 import { aLinkedServerFace } from '@ValenceClient/testing/aLinkedServerFace';
 import type { LinkedServerFace } from '@ValenceContracts/schemas/LinkSharing';
@@ -21,6 +26,7 @@ import { theAddressOf } from '@ValenceMobile/testing/theAddressOf';
 jest.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
   ...jest.requireActual<object>('@ValenceClient/requests/fetchMediaRequests'),
   askForMedia: jest.fn(),
+  joinMediaRequest: jest.fn(),
   removeMediaRequest: jest.fn(),
 }));
 
@@ -57,11 +63,13 @@ const answering = ({
   requests = [],
   offered = { choices: [], forcedId: null },
   faces = [],
+  kinds = ['film', 'series', 'artist', 'album', 'book'],
 }: {
   standing?: CatalogueStanding;
   requests?: MediaRequest[];
   offered?: ProfilesOnOffer;
   faces?: LinkedServerFace[];
+  kinds?: string[];
 }) => {
   globalThis.fetch = jest.fn((input: RequestInfo | URL) =>
     Promise.resolve(
@@ -71,9 +79,16 @@ const answering = ({
           ? Response.json(offered)
           : theAddressOf(input).endsWith('/api/requests/media')
             ? Response.json(requests)
-            : theAddressOf(input).endsWith('/api/linked-servers/faces')
-              ? Response.json({ servers: faces })
-              : Response.json([]),
+            : theAddressOf(input).endsWith('/api/requests/availability')
+              ? Response.json({ isEnabled: true, kinds })
+              : theAddressOf(input).endsWith('/seasons')
+                ? Response.json([
+                    { season: 1, episodeCount: 9, firstAired: '2022-02-18', standing: 'requested' },
+                    { season: 2, episodeCount: 10, firstAired: '2025-01-17', standing: 'askable' },
+                  ])
+                : theAddressOf(input).endsWith('/api/linked-servers/faces')
+                  ? Response.json({ servers: faces })
+                  : Response.json([]),
     ),
   );
 };
@@ -84,6 +99,7 @@ const drawIt = async (onOpen = jest.fn()) =>
 beforeEach(() => {
   jest.mocked(askForMedia).mockReset().mockResolvedValue({ value: null, refusal: null });
   jest.mocked(removeMediaRequest).mockReset().mockResolvedValue(null);
+  jest.mocked(joinMediaRequest).mockReset().mockResolvedValue({ value: null, refusal: null });
   jest
     .mocked(askLinkedServer)
     .mockReset()
@@ -171,6 +187,101 @@ describe('AnAskable', () => {
     expect(drawn.queryByRole('button', { name: 'Request' })).toBeNull();
   });
 
+  it('offers the seasons of a programme the library holds some of, where more is asked for', async () => {
+    answering({
+      standing: { status: 'library', mediaId: 'm-1', requestId: null, requestState: null },
+    });
+
+    const onOpen = jest.fn();
+    const drawn = await render(
+      around(<AnAskable kind="series" id="438631" isMore onOpen={onOpen} onBack={jest.fn()} />),
+    );
+
+    await userEvent.press(await drawn.findByRole('button', { name: 'Request' }));
+
+    expect(onOpen).not.toHaveBeenCalled();
+    expect(askForMedia).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'series', tmdbId: 438631 }),
+    );
+  });
+
+  it('names who asked for somebody else’s request, and wants it too', async () => {
+    answering({
+      standing: {
+        status: 'requested',
+        mediaId: null,
+        requestId: REQUEST_ID,
+        requestState: 'wanted',
+        askedBy: [{ id: 'priya', name: 'Priya' }],
+      },
+    });
+
+    const drawn = await drawIt();
+
+    expect(await drawn.findByText('Requested by Priya')).toBeTruthy();
+
+    await userEvent.press(drawn.getByRole('button', { name: 'I want this too' }));
+
+    expect(joinMediaRequest).toHaveBeenCalledWith(REQUEST_ID);
+  });
+
+  it('says so where wanting it too fails, and lets it be tried again', async () => {
+    jest.mocked(joinMediaRequest).mockRejectedValue(new Error('not a request'));
+    answering({
+      standing: {
+        status: 'requested',
+        mediaId: null,
+        requestId: REQUEST_ID,
+        requestState: 'wanted',
+        askedBy: [{ id: 'priya', name: 'Priya' }],
+      },
+    });
+
+    const drawn = await drawIt();
+
+    await userEvent.press(await drawn.findByRole('button', { name: 'I want this too' }));
+
+    expect(await drawn.findByText('Couldn’t request that.')).toBeTruthy();
+    expect(drawn.getByRole('button', { name: 'I want this too' })).toBeEnabled();
+  });
+
+  it('says who else wants your own request, and that cancelling leaves it for them', async () => {
+    const alert = jest.spyOn(Alert, 'alert');
+
+    answering({
+      standing: {
+        status: 'requested',
+        mediaId: null,
+        requestId: REQUEST_ID,
+        requestState: 'wanted',
+        askedBy: [
+          { id: 'priya', name: 'Priya' },
+          { id: 'someone', name: 'Sam' },
+        ],
+      },
+      requests: [
+        aMediaRequest({
+          id: REQUEST_ID,
+          requestedBy: { id: 'priya', name: 'Priya' },
+          alsoAskedBy: [{ id: 'someone', name: 'Sam' }],
+        }),
+      ],
+    });
+
+    const drawn = await drawIt();
+
+    expect(await drawn.findByText('Priya wants it too')).toBeTruthy();
+    expect(drawn.queryByRole('button', { name: 'I want this too' })).toBeNull();
+
+    await userEvent.press(await drawn.findByRole('button', { name: 'Cancel request' }));
+
+    expect(alert).toHaveBeenCalledWith(
+      'Cancel this request?',
+      'Priya still wants it, so it stays requested for them.',
+      expect.anything(),
+    );
+  });
+
   it('lets somebody take back their own request, once they have said so', async () => {
     const alert = jest.spyOn(Alert, 'alert');
 
@@ -197,6 +308,53 @@ describe('AnAskable', () => {
     expect(removeMediaRequest).toHaveBeenCalledWith(REQUEST_ID, true);
   });
 
+  it('offers no request where no library takes films, and says so', async () => {
+    answering({ kinds: ['series'] });
+
+    const drawn = await drawIt();
+
+    expect(await drawn.findByText(/No library on this server takes requests/)).toBeTruthy();
+    expect(drawn.queryByRole('button', { name: 'Request' })).toBeNull();
+  });
+
+  it('adds seasons to a programme already asked for', async () => {
+    answering({
+      standing: {
+        status: 'requested',
+        mediaId: null,
+        requestId: REQUEST_ID,
+        requestState: 'wanted',
+      },
+      requests: [
+        aMediaRequest({
+          id: REQUEST_ID,
+          kind: 'series',
+          tmdbId: 95396,
+          seasons: [1],
+          items: [aRequestItem({ season: 1, episode: 1 })],
+        }),
+      ],
+    });
+
+    const drawn = await render(
+      around(<AnAskable kind="series" id="95396" onOpen={jest.fn()} onBack={jest.fn()} />),
+    );
+
+    await waitFor(async () => {
+      expect(await drawn.findByRole('switch', { name: 'Season 1' })).toBeDisabled();
+    });
+
+    await fireEvent(drawn.getByRole('switch', { name: 'Season 2' }), 'valueChange', true);
+    await userEvent.press(drawn.getByRole('button', { name: 'Add seasons' }));
+
+    expect(askForMedia).toHaveBeenCalledWith({
+      kind: 'series',
+      tmdbId: 95396,
+      seasons: [2],
+      followsNewSeasons: false,
+    });
+  });
+
   it('does not offer to take back somebody else’s request', async () => {
     answering({
       standing: {
@@ -210,7 +368,7 @@ describe('AnAskable', () => {
 
     const drawn = await drawIt();
 
-    await drawn.findByText('Requested');
+    await drawn.findByText('Missing');
 
     expect(drawn.queryByRole('button', { name: 'Cancel request' })).toBeNull();
   });

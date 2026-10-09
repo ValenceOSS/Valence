@@ -1,7 +1,10 @@
+import { releaseFromArr } from '@ValenceRequests/arrApps/releaseFromArr';
+import { ArrAcknowledgementSchema } from '@ValenceRequests/arrApps/schemas/ArrAcknowledgementSchema';
+import type { Release, ReleaseSearchOutcome } from '@ValenceContracts/schemas/Indexer';
 import { basename } from 'node:path';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { saying } from '@ValenceI18n/saying';
-import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
+import type { Fulfilment, HandedTo } from '@ValenceContracts/schemas/ArrApp';
 import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
 import { ArrAppFailure } from '@ValenceRequests/arrApps/ArrAppFailure';
 import type { ArrAppRecord, ArrAppStore } from '@ValenceRequests/arrApps/ArrAppRecord';
@@ -78,6 +81,11 @@ const doneBytesOf = (record: ArrQueueRecord): number | null =>
  * albums move from wanted to downloading to filed with the events the server already acts on — a
  * filed one tells the server which folder to read, as Valence's own filing does — while the app
  * alone searches, downloads and imports.
+ *
+ * Its releases can be listed as the app sees them and one picked for the app to fetch, where Valence
+ * is set to control connected apps. Searching for one now, as Search missing does, asks its app to
+ * search for what it monitors of it again, once it is approved and the app has it — never falling
+ * back to Valence's own search; and each says which app has it, with a link to its page there.
  *
  * An app that cannot be reached is asked once a round: its other requests are given the same
  * problem without waiting on it again, so one app that is down does not hold up every request
@@ -336,6 +344,179 @@ const createHandOffWorker = ({
   };
 
   return {
+    searchNow: async (
+      id: string,
+    ): Promise<'searched' | 'failed' | 'notApproved' | 'notHandedOff'> => {
+      const request = await requests.find(id);
+      const handOff = request?.handOff ?? null;
+
+      if (request === null || handOff === null) {
+        return 'notHandedOff';
+      }
+
+      if (request.approval !== 'approved') {
+        return 'notApproved';
+      }
+
+      if (request.handOffId === null) {
+        return 'failed';
+      }
+
+      const app = await apps.find(handOff.appId);
+      const handler = app?.isEnabled === true ? handlerFor(app.kind, connect(app)) : null;
+
+      if (app === null || handler === null) {
+        return 'failed';
+      }
+
+      try {
+        await handler.search(request, request.handOffId);
+        await note(
+          request,
+          saying('requests.arrApps.handOff.askedNameToSearchAgain', { name: app.name }),
+          null,
+        );
+
+        return 'searched';
+      } catch (error) {
+        if (!(error instanceof ArrAppFailure)) {
+          throw error;
+        }
+
+        await trouble(
+          request,
+          saying('requests.arrApps.handOff.nameSaidProblem', {
+            name: app.name,
+            problem: error.said,
+          }),
+          error.problemCode,
+        );
+
+        return 'failed';
+      }
+    },
+
+    releasesFor: async (id: string): Promise<ReleaseSearchOutcome | null> => {
+      const request = await requests.find(id);
+      const handOff = request?.handOff ?? null;
+      const app = handOff === null ? null : await apps.find(handOff.appId);
+      const handler = app?.isEnabled === true ? handlerFor(app.kind, connect(app)) : null;
+
+      if (request === null || app === null || handler === null || request.handOffId === null) {
+        return null;
+      }
+
+      const started = now().getTime();
+      const report = (found: number, trouble: ArrAppFailure | null) => ({
+        indexerId: app.id,
+        indexerName: app.name,
+        found,
+        tookMs: Math.max(0, now().getTime() - started),
+        problem: trouble?.said ?? null,
+        problemCode: trouble?.problemCode ?? null,
+      });
+
+      try {
+        const listed = (
+          await handler.releases(
+            request,
+            (await items.list()).filter((item) => item.requestId === id),
+            request.handOffId,
+          )
+        )
+          .map((found) => releaseFromArr(found, app.id))
+          .toSorted(
+            (left, right) =>
+              Number(left.judgement.isRejected) - Number(right.judgement.isRejected) ||
+              right.judgement.quality - left.judgement.quality ||
+              right.judgement.score - left.judgement.score,
+          );
+
+        return {
+          releases: listed.map((one) => one.release),
+          judgements: listed.map((one) => one.judgement),
+          indexers: [report(listed.length, null)],
+          pickedId: listed.find((one) => !one.judgement.isRejected)?.release.id ?? null,
+        };
+      } catch (error) {
+        if (!(error instanceof ArrAppFailure)) {
+          throw error;
+        }
+
+        return { releases: [], judgements: [], indexers: [report(0, error)], pickedId: null };
+      }
+    },
+
+    pick: async (id: string, release: Release): Promise<Said | null> => {
+      const request = await requests.find(id);
+      const handOff = request?.handOff ?? null;
+      const app = handOff === null ? null : await apps.find(handOff.appId);
+      const [indexer, ...guid] = release.id.split(':');
+      const indexerId = Number(indexer);
+
+      if (
+        request === null ||
+        app === null ||
+        !app.isEnabled ||
+        request.handOffId === null ||
+        !Number.isInteger(indexerId) ||
+        guid.length === 0
+      ) {
+        return saying('requests.arrApps.handOff.thatIsNotOneOfItsReleases');
+      }
+
+      try {
+        await connect(app).send(
+          'POST',
+          '/release',
+          { guid: guid.join(':'), indexerId },
+          ArrAcknowledgementSchema,
+        );
+        await note(
+          request,
+          saying('requests.arrApps.handOff.askedNameToFetchTitle', {
+            name: app.name,
+            title: release.title,
+          }),
+          null,
+        );
+
+        return null;
+      } catch (error) {
+        if (!(error instanceof ArrAppFailure)) {
+          throw error;
+        }
+
+        return saying('requests.arrApps.handOff.nameSaidProblem', {
+          name: app.name,
+          problem: error.said,
+        });
+      }
+    },
+
+    handedTo: async (id: string): Promise<HandedTo | null> => {
+      const request = await requests.find(id);
+      const handOff = request?.handOff ?? null;
+      const app = handOff === null ? null : await apps.find(handOff.appId);
+
+      if (request === null || app === null) {
+        return null;
+      }
+
+      const handler = handlerFor(app.kind, connect(app));
+      const page =
+        handler === null || request.handOffId === null
+          ? null
+          : await handler.pageOf(request, request.handOffId).catch(() => null);
+
+      return {
+        appId: app.id,
+        appName: app.name,
+        appKind: app.kind,
+        link: page === null ? null : `${app.url.replace(/\/+$/, '')}${page}`,
+      };
+    },
+
     step: async (): Promise<void> => {
       const [kept, all] = await Promise.all([requests.list(), items.list()]);
       const isWatching = now().getTime() - lastWatchedAt >= watchEveryMs;

@@ -51,7 +51,7 @@ const AdminPage = () => {
   const go = useNavigate();
   const { panel } = useParams({ strict: false });
   const search = useSearch({ strict: false });
-  const { job, folder } = search;
+  const { job, folder, tab, title } = search;
   const { mayAdminister, isLoading } = useWhatIMayDo();
   const observability = ObservabilitySearchSchema.parse(search);
   const view = readObservabilityView(observability.view, panel);
@@ -255,6 +255,17 @@ const AdminPage = () => {
                 });
               }}
               folder={folder ?? null}
+              catalogue={{ tab: tab ?? 'films', title: title ?? null }}
+              onCatalogue={(address) => {
+                void go({
+                  to: '/admin/$panel',
+                  params: { panel: 'catalogue' },
+                  search: {
+                    tab: address.tab,
+                    ...(address.title === null ? {} : { title: address.title }),
+                  },
+                });
+              }}
               onOpenFolder={(path) => {
                 void go({
                   to: '/admin/$panel',

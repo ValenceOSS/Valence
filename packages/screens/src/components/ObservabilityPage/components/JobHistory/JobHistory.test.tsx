@@ -600,6 +600,7 @@ describe('JobHistory', () => {
             requestProfileId: null,
             requestPath: null,
             keepsShowsTogether: true,
+            higherProfileAsks: 'ask',
           },
         ]}
         working={[]}

@@ -19,7 +19,8 @@ const twoDigits = (value: number): string => value.toString().padStart(2, '0');
  * film as its title and year inside its folder, and an episode inside the folder the library keeps
  * its season in, or a folder of its own for a season it does not hold, as the series' folder is
  * named, its season and episode, and its own title — each followed by what this copy of it is,
- * which goes on the file and never on the folder around it.
+ * which goes on the file and never on the folder around it. A film's further version is named as
+ * Jellyfin names one, its quality set off by a dash, so the two are read as versions of one film.
  *
  * @param request - The request.
  * @param item - The film or episode.
@@ -32,7 +33,7 @@ const libraryFileOf = (
     MediaRequestRecord,
     'libraryPath' | 'libraryFolder' | 'seasonFolders' | 'title' | 'year'
   >,
-  item: Pick<RequestItemRecord, 'season' | 'episode' | 'title'>,
+  item: Pick<RequestItemRecord, 'season' | 'episode' | 'title' | 'versionProfileId'>,
   extension: string,
   quality = '',
 ): string => {
@@ -40,7 +41,12 @@ const libraryFileOf = (
   const name = folder.slice(folder.lastIndexOf('/') + 1);
 
   if (item.season === null || item.episode === null) {
-    return join(folder, `${name}${quality}.${extension}`);
+    const isVersion = item.versionProfileId !== null && item.versionProfileId !== undefined;
+
+    return join(
+      folder,
+      `${name}${isVersion && quality !== '' ? ` - ${quality.trim()}` : quality}.${extension}`,
+    );
   }
 
   const numbered = `S${twoDigits(item.season)}E${twoDigits(item.episode)}`;

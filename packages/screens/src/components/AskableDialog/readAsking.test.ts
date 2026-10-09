@@ -8,6 +8,10 @@ describe('readAsking', () => {
     expect(readAsking('book:21277329')).toEqual({ kind: 'book', id: '21277329' });
   });
 
+  it('reads a show already in the library that more of is being asked for', () => {
+    expect(readAsking('series:95396:more')).toEqual({ kind: 'series', id: '95396', isMore: true });
+  });
+
   it('reads nothing that could not be a title', () => {
     expect(readAsking(null)).toBeNull();
     expect(readAsking('novel:1')).toBeNull();

@@ -1,3 +1,5 @@
+import { narrationOfSeries } from '@ValenceServer/requests/audible/narrationOfSeries';
+import { heldAlbumsOf } from '@ValenceServer/requests/arrivals/heldAlbumsOf';
 import { createMemoryCalendarFeedService } from '@ValenceServer/calendarFeed/createMemoryCalendarFeedService';
 import type { Asker } from '@ValenceServer/api/Asker';
 import { createLinkService } from '@ValenceServer/linking/createLinkService';
@@ -56,6 +58,7 @@ import type {
   HeldInLibrary,
   MediaRequestDraft,
   MediaRequestKind,
+  Narration,
   ReleaseType,
 } from '@ValenceContracts/schemas/MediaRequest';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
@@ -164,6 +167,7 @@ const NOT_STOOD: CatalogueStanding = {
 const LIBRARY_KIND_WORDS: Record<LibraryKind, string> = {
   movies: 'films',
   shows: 'series',
+  anime: 'anime',
   music: 'music',
   books: 'books',
 };
@@ -704,6 +708,12 @@ const createAppContext = (options: CreateAppOptions) => {
   };
 
   /**
+   * The profile an account's face is drawn from: the first on it, where it has any.
+   */
+  const profileOfAccount = async (accountId: string): Promise<string | null> =>
+    profiles === undefined ? null : ((await profiles.list(accountId))[0]?.id ?? null);
+
+  /**
    * Which person on this account is watching.
    */
   const readProfileId = async (headers: Headers): Promise<string | null> => {
@@ -1105,9 +1115,9 @@ const createAppContext = (options: CreateAppOptions) => {
    * what the house may ask for, and somebody who can edit the profiles is not the house — forcing
    * them would only mean editing a profile to make one request and editing it back.
    *
-   * A book is offered nothing. Books are never searched for by themselves — they are marked as
-   * added by hand — so no profile ever judges one, and offering a quality would be asking a
-   * question that changes nothing. The permission check above still runs, so refusing somebody who
+   * A book is offered nothing. A book is judged by its formats alone — EPUB before AZW3, M4B before
+   * MP3 — never by a quality profile, so offering a quality would be asking a question that changes
+   * nothing. The permission check above still runs, so refusing somebody who
    * may not ask still happens before anything else is worked out.
    *
    * @param who - Who is asking.
@@ -1341,6 +1351,23 @@ const createAppContext = (options: CreateAppOptions) => {
       into.keepsShowsTogether,
     );
 
+  /**
+   * Which narration of a book's audiobook a new request fetches without asking: the only one, or
+   * the one whoever reads its series in the library reads; nothing where somebody should choose.
+   *
+   * @param narrations - The book's narrations.
+   * @returns The narrations chosen, or null for a choice to be made.
+   */
+  const narrationsWantedOf = async (narrations: readonly Narration[]): Promise<string[] | null> => {
+    const series = narrations.find((narration) => narration.series !== null)?.series ?? null;
+    const chosen = narrationOfSeries(
+      narrations,
+      series === null ? [] : await discovery.lookup.seriesNarrators(series),
+    );
+
+    return chosen === null ? null : [chosen];
+  };
+
   const draftFor = async (
     who: Headers | Asker,
     asked: MediaRequestAsk,
@@ -1384,21 +1411,29 @@ const createAppContext = (options: CreateAppOptions) => {
         musicBrainzId: asked.musicBrainzId ?? null,
         openLibraryId: asked.openLibraryId ?? null,
         seasons: asked.seasons,
+        followsNewSeasons: asked.followsNewSeasons,
         releaseTypes:
           asked.releaseTypes ?? (isMusicRequest(asked.kind) ? await defaultReleaseTypes() : null),
+        ...(asked.bookFormats === undefined ? {} : { bookFormats: asked.bookFormats }),
         profileId: profileId ?? chosen.requestProfileId,
         isPickedByHand: asked.isPickedByHand,
         libraryId: chosen.id,
         libraryPath: chosen.requestPath ?? chosen.path,
         libraryLanguage: chosen.defaultAudioLanguage,
         requestedBy: { id: account.id, name: account.name },
+        higherProfileAsks: chosen.higherProfileAsks,
         isApproved: await asker.holds('requests.autoApprove'),
         catalogue,
         handOff: arrKindOf(chosen.kind) === null ? null : (chosen.fulfilment ?? null),
+        ...(asked.kind === 'book' && (catalogue.narrations ?? []).length > 0
+          ? { narrationsWanted: await narrationsWantedOf(catalogue.narrations ?? []) }
+          : {}),
         held:
           asked.kind === 'series' && asked.tmdbId !== undefined
             ? await heldFor(chosen, asked.tmdbId)
-            : null,
+            : isMusicRequest(asked.kind)
+              ? await heldAlbumsOf(discovery.lookup, catalogue.albums)
+              : null,
       },
     };
   };
@@ -1732,6 +1767,7 @@ const createAppContext = (options: CreateAppOptions) => {
     sayRequestsChanged,
     sayOfRequest,
     profileForAsk,
+    profileOfAccount,
     catalogueFor,
     defaultReleaseTypes,
     draftFor,

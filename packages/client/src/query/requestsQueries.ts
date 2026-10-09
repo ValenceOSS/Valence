@@ -16,8 +16,11 @@ import { fetchGiveUpRules } from '@ValenceClient/requests/fetchGiveUpRules';
 import { fetchSeerrLink } from '@ValenceClient/requests/fetchSeerrLink';
 import { askAgainWhileMatching } from '@ValenceClient/requests/askAgainWhileMatching';
 import { fetchProfiles, fetchProfilesOnOffer } from '@ValenceClient/requests/fetchProfiles';
+import { fetchTitleCatalogue, fetchTitleFiles } from '@ValenceClient/requests/fetchTitleCatalogue';
 import {
   fetchRequestBlocklist,
+  fetchHandedTo,
+  fetchHandOffDownloads,
   fetchMediaRequestLog,
   fetchMediaRequestReleases,
   fetchMediaRequests,
@@ -34,7 +37,11 @@ import {
 } from '@ValenceClient/requests/fetchAskable';
 import type { CatalogueBrowse, CatalogueFilters } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
-import type { MediaRequestKind, MediaRequestState } from '@ValenceContracts/schemas/MediaRequest';
+import type {
+  MediaRequestKind,
+  MediaRequestState,
+  SearchScope,
+} from '@ValenceContracts/schemas/MediaRequest';
 
 const REQUESTS = ['requests'] as const;
 
@@ -212,15 +219,46 @@ const mediaRequests = () =>
   });
 
 /**
+ * The admin Catalogue, read again every few seconds while anything in it is on its way, so a title
+ * can be watched into the library from its tile.
+ *
+ * @returns The query.
+ */
+const titleCatalogue = () =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'catalogue'],
+    queryFn: () => fetchTitleCatalogue(),
+    refetchInterval: (query) =>
+      (query.state.data ?? []).some((entry) => entry.status === 'downloading')
+        ? MEDIA_REQUESTS_EVERY_MS
+        : false,
+  });
+
+/**
+ * The files the libraries hold of one title, read when its page is open.
+ *
+ * @param kind - What it is.
+ * @param catalogueId - The id it is known by, or nothing for a title known by none.
+ * @returns The query.
+ */
+const titleFiles = (kind: MediaRequestKind, catalogueId: string | null) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'catalogue', kind, catalogueId, 'files'],
+    queryFn: () => fetchTitleFiles(kind, catalogueId ?? ''),
+    enabled: catalogueId !== null,
+  });
+
+/**
  * What a search by hand found for one request, asked once and kept while the page is open.
  *
  * @param id - Which request, or nothing before one is chosen.
+ * @param scope - The season or episode the search is narrowed to, or nothing for all of it.
  * @returns The query.
  */
-const mediaRequestReleases = (id: string | null) =>
+const mediaRequestReleases = (id: string | null, scope: SearchScope | null = null) =>
   queryOptions({
-    queryKey: [...REQUESTS, 'media', id, 'releases'],
-    queryFn: () => fetchMediaRequestReleases(id ?? ''),
+    queryKey: [...REQUESTS, 'media', id, 'releases', scope?.season ?? null, scope?.episode ?? null],
+    queryFn: () => fetchMediaRequestReleases(id ?? '', scope),
     enabled: id !== null,
     staleTime: Infinity,
     retry: false,
@@ -251,6 +289,34 @@ const requestBlocklist = (id: string | null) =>
   queryOptions({
     queryKey: [...REQUESTS, 'media', id, 'blocklist'],
     queryFn: () => fetchRequestBlocklist(id ?? ''),
+    enabled: id !== null,
+  });
+
+/**
+ * Which connected app a request was handed to, read when its page is open and only for one that
+ * was handed to an app.
+ *
+ * @param id - Which request, or nothing where it was not handed to one.
+ * @returns The query.
+ */
+const handedTo = (id: string | null) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'media', id, 'handed-to'],
+    queryFn: () => fetchHandedTo(id ?? ''),
+    enabled: id !== null,
+  });
+
+/**
+ * What the connected app a request was handed to is downloading for it, read when its page is
+ * open and only where Valence controls the app.
+ *
+ * @param id - Which request, or nothing where it is not worked through its app.
+ * @returns The query.
+ */
+const handOffDownloads = (id: string | null) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'media', id, 'hand-off', 'downloads'],
+    queryFn: () => fetchHandOffDownloads(id ?? ''),
     enabled: id !== null,
   });
 
@@ -462,9 +528,13 @@ const requestsQueries = {
   profiles,
   profilesOnOffer,
   mediaRequests,
+  titleCatalogue,
+  titleFiles,
   mediaRequestReleases,
   mediaRequestLog,
   requestBlocklist,
+  handedTo,
+  handOffDownloads,
   seriesSeasons,
   discover,
   catalogueBrowse,

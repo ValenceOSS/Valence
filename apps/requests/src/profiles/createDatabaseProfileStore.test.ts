@@ -36,13 +36,13 @@ describe('createDatabaseProfileStore', () => {
 
     expect(
       await store.update(HD.id, {
-        resolutions: ['2160p'],
+        qualities: ['remux-2160p', 'bluray-2160p', 'webdl-2160p', 'webrip-2160p', 'hdtv-2160p'],
         createdAt: '2026-09-18T00:00:00.000Z',
         updatedAt: '2026-09-20T00:00:00.000Z',
       }),
     ).toEqual({
       ...HD,
-      resolutions: ['2160p'],
+      qualities: ['remux-2160p', 'bluray-2160p', 'webdl-2160p', 'webrip-2160p', 'hdtv-2160p'],
       createdAt: '2026-09-18T00:00:00.000Z',
       updatedAt: '2026-09-20T00:00:00.000Z',
     });

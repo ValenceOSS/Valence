@@ -1,3 +1,4 @@
+import { isEpisodicKind } from '@ValenceContracts/functions/isEpisodicKind';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import type { QueryClient } from '@tanstack/react-query';
 import type { ShowSummary } from '@ValenceContracts/schemas/Show';
@@ -15,7 +16,7 @@ const findAShow = async (cache: QueryClient, showId: string): Promise<ShowSummar
   const libraries = await cache.ensureQueryData(libraryQueries.all());
   const shelves = await Promise.all(
     libraries
-      .filter((library) => library.kind === 'shows')
+      .filter((library) => isEpisodicKind(library.kind))
       .map((library) => cache.ensureQueryData(libraryQueries.shows(library.id)).catch(() => [])),
   );
 

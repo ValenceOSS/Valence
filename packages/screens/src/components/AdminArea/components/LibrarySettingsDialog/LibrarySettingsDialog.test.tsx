@@ -72,6 +72,7 @@ const films = (overrides: Partial<Library> = {}): Library => ({
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
   ...overrides,
 });
 
@@ -171,6 +172,7 @@ describe('LibrarySettingsDialog', () => {
         requestProfileId: null,
         requestPath: null,
         keepsShowsTogether: true,
+        higherProfileAsks: 'ask',
         fulfilment: null,
       });
     });
@@ -334,6 +336,79 @@ describe('LibrarySettingsDialog', () => {
     });
   });
 
+  it('makes a series library added as anime an anime library, once told to', async () => {
+    const user = userEvent.setup();
+    const added = films({ kind: 'shows', name: 'Anime', path: '/media/anime', flavour: 'Anime' });
+
+    updateLibraryMock.mockResolvedValue({ ...added, kind: 'anime', flavour: null });
+
+    render(
+      <LibrarySettingsDialog
+        library={added}
+        isOpen
+        onClose={vi.fn()}
+        onUpdated={vi.fn()}
+        onRegenerate={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(/added as Anime/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Holds' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Anime' }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(updateLibraryMock).toHaveBeenCalledWith(
+        added.id,
+        expect.objectContaining({ kind: 'anime' }),
+      );
+    });
+  });
+
+  it('asks what a library holds only of one that holds series', () => {
+    render(
+      <LibrarySettingsDialog
+        library={films()}
+        isOpen
+        onClose={vi.fn()}
+        onUpdated={vi.fn()}
+        onRegenerate={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Holds' })).not.toBeInTheDocument();
+  });
+
+  it('says what a later ask at a higher profile does', async () => {
+    const user = userEvent.setup();
+
+    updateLibraryMock.mockResolvedValue(films({ higherProfileAsks: 'upgrade' }));
+
+    render(
+      <LibrarySettingsDialog
+        library={films()}
+        isOpen
+        onClose={vi.fn()}
+        onUpdated={vi.fn()}
+        onRegenerate={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Higher-quality requests' }));
+    await user.click(
+      await screen.findByRole('menuitemradio', { name: 'Switch to the higher profile' }),
+    );
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(updateLibraryMock).toHaveBeenCalledWith(
+        films().id,
+        expect.objectContaining({ higherProfileAsks: 'upgrade' }),
+      );
+    });
+  });
+
   it('offers to keep episodes with their show only for a library of shows', () => {
     render(
       <LibrarySettingsDialog
@@ -447,6 +522,7 @@ describe('LibrarySettingsDialog', () => {
         requestProfileId: null,
         requestPath: '/media/asked-for',
         keepsShowsTogether: true,
+        higherProfileAsks: 'ask',
         fulfilment: null,
       });
     });

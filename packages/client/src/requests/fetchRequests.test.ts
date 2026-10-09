@@ -54,7 +54,10 @@ describe('fetchRequestsAvailability', () => {
   it('reads whether requesting is on', async () => {
     answering({ isEnabled: true });
 
-    await expect(fetchRequestsAvailability()).resolves.toEqual({ isEnabled: true });
+    await expect(fetchRequestsAvailability()).resolves.toEqual({
+      isEnabled: true,
+      kinds: ['film', 'series', 'artist', 'album', 'book'],
+    });
   });
 });
 

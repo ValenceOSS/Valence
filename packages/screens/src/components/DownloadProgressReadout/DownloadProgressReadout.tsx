@@ -1,21 +1,25 @@
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { cn } from '@ValenceUI/cn';
+import { describeDownloadHold } from '@ValenceClient/requests/describeDownloadHold';
 import { describeDownloadProgress } from '@ValenceScreens/components/RequestsPage/components/RequestsList/describeDownloadProgress';
 import type { DownloadProgressReadoutProps } from './DownloadProgressReadout.types';
 
 /**
- * How far a download has got, for whoever is waiting on it: the percentage, then how much has
- * arrived, how fast and how long is left, every number rolling as it changes.
+ * How far a download has got, for whoever is waiting on it: the percentage, whether it is paused,
+ * stalled or failed, then how much has arrived, how fast and how long is left, every number rolling
+ * as it changes.
  *
  * @param progress - How the download is going.
  * @param className - Extra classes for the caller's own colour and layout.
  */
 const DownloadProgressReadout = ({ progress, className }: DownloadProgressReadoutProps) => {
   const facts = describeDownloadProgress(progress);
+  const hold = describeDownloadHold(progress.state);
 
   return (
     <span className={cn('text-xs tabular-nums', className)}>
       <FormattedNumber value={Math.floor(progress.progress * 100)} suffix="%" />
+      {hold === null ? null : <> · {hold}</>}
       {facts === null ? null : <> · {facts}</>}
     </span>
   );

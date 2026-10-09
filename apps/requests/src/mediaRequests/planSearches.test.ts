@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { planSearches } from './planSearches';
 
+const IDS = { tmdbId: 95396, tvdbId: 371980, imdbId: 'tt11280740' };
+
 const SEVERANCE = {
   kind: 'series' as const,
   title: 'Severance',
-  tmdbId: 95396,
   artistName: null,
+  ...IDS,
 };
 
 /**
@@ -20,17 +22,29 @@ const anEpisode = (season: number, episode: number, airDate: string | null = '20
 });
 
 describe('planSearches', () => {
-  it('asks for a film by its title and catalogue id', () => {
+  it('asks for a film by its title and catalogue ids', () => {
     const film = { id: 'film', season: null, episode: null, airDate: null, title: 'Dune' };
 
     expect(
       planSearches(
-        { kind: 'film', title: 'Dune', tmdbId: 438631, artistName: null },
+        {
+          kind: 'film',
+          title: 'Dune',
+          tmdbId: 438631,
+          tvdbId: null,
+          imdbId: 'tt1160419',
+          artistName: null,
+        },
         [film],
         [film],
         '2026-09-19',
       ),
-    ).toEqual([{ search: { query: 'Dune', mode: 'movie', tmdbId: 438631 }, itemIds: ['film'] }]);
+    ).toEqual([
+      {
+        search: { query: 'Dune', mode: 'movie', tmdbId: 438631, imdbId: 'tt1160419' },
+        itemIds: ['film'],
+      },
+    ]);
   });
 
   it('asks for each album among music, by its artist and title', () => {
@@ -45,7 +59,14 @@ describe('planSearches', () => {
 
     expect(
       planSearches(
-        { kind: 'artist', title: 'Pink Floyd', tmdbId: null, artistName: 'Pink Floyd' },
+        {
+          kind: 'artist',
+          title: 'Pink Floyd',
+          tmdbId: null,
+          tvdbId: null,
+          imdbId: null,
+          artistName: 'Pink Floyd',
+        },
         albums,
         albums,
         '2026-09-19',
@@ -76,7 +97,7 @@ describe('planSearches', () => {
     const items = [anEpisode(1, 1), anEpisode(1, 2)];
 
     expect(planSearches(SEVERANCE, items, items, '2026-09-19')).toEqual([
-      { search: { query: 'Severance', mode: 'tv', season: 1 }, itemIds: ['1x1', '1x2'] },
+      { search: { query: 'Severance', mode: 'tv', season: 1, ...IDS }, itemIds: ['1x1', '1x2'] },
     ]);
   });
 
@@ -91,10 +112,10 @@ describe('planSearches', () => {
         (planned) => planned.search,
       ),
     ).toEqual([
-      { query: 'Severance', mode: 'tv' },
-      { query: 'Severance', mode: 'tv', season: 1, episode: 2 },
-      { query: 'Severance', mode: 'tv', season: 2, episode: 1 },
-      { query: 'Severance', mode: 'tv', season: 2, episode: 2 },
+      { query: 'Severance', mode: 'tv', ...IDS },
+      { query: 'Severance', mode: 'tv', season: 1, episode: 2, ...IDS },
+      { query: 'Severance', mode: 'tv', season: 2, episode: 1, ...IDS },
+      { query: 'Severance', mode: 'tv', season: 2, episode: 2, ...IDS },
     ]);
   });
 
@@ -103,7 +124,7 @@ describe('planSearches', () => {
     const second = anEpisode(2, 1, '2025-01-17');
     const planned = planSearches(SEVERANCE, [first, second], [first, second], '2026-09-19');
 
-    expect(planned[0]?.search).toEqual({ query: 'Severance', mode: 'tv' });
+    expect(planned[0]?.search).toEqual({ query: 'Severance', mode: 'tv', ...IDS });
     expect(planned[0]?.itemIds).toEqual([first.id, second.id]);
   });
 
@@ -115,7 +136,7 @@ describe('planSearches', () => {
       planSearches(SEVERANCE, [first, second], [first, second], '2026-09-19').map(
         (planned) => planned.search,
       ),
-    ).toEqual([{ query: 'Severance', mode: 'tv', season: 1 }]);
+    ).toEqual([{ query: 'Severance', mode: 'tv', season: 1, ...IDS }]);
   });
 
   it('searches by a title that no indexer reads as leaving words out', () => {
@@ -129,5 +150,36 @@ describe('planSearches', () => {
 
   it('asks nothing where nothing is wanted', () => {
     expect(planSearches(SEVERANCE, [anEpisode(1, 1)], [], '2026-09-19')).toEqual([]);
+  });
+
+  it('asks for a book once for each format, among the indexers’ books or audiobooks', () => {
+    const ebook = {
+      id: 'e',
+      season: null,
+      episode: null,
+      format: 'ebook' as const,
+      airDate: null,
+      title: 'A Book',
+    };
+    const audiobook = { ...ebook, id: 'a', format: 'audiobook' as const };
+
+    expect(
+      planSearches(
+        {
+          kind: 'book',
+          title: 'A Book',
+          tmdbId: null,
+          tvdbId: null,
+          imdbId: null,
+          artistName: 'Someone',
+        },
+        [ebook, audiobook],
+        [ebook, audiobook],
+        '2026-10-09',
+      ),
+    ).toEqual([
+      { search: { query: 'A Book', mode: 'book', categories: [7000, 7020] }, itemIds: ['e'] },
+      { search: { query: 'A Book', mode: 'search', categories: [3030] }, itemIds: ['a'] },
+    ]);
   });
 });

@@ -66,6 +66,7 @@ const AdminSettingsSchema = z
     fetchesCatalogueTrailers: z.boolean(),
     fetchesMusicDetails: z.boolean(),
     requestReleaseTypes: ReleaseTypesSchema,
+    controlsConnectedApps: z.boolean(),
     roundness: RoundnessSchema,
     keepsDownloadsForDays: z.number().int().nonnegative(),
     splashscreen: z.string().nullable(),
@@ -152,6 +153,7 @@ const AdminSettingsRequestSchema = z
     fetchesCatalogueTrailers: z.boolean().optional(),
     fetchesMusicDetails: z.boolean().optional(),
     requestReleaseTypes: ReleaseTypesSchema.optional(),
+    controlsConnectedApps: z.boolean().optional(),
     roundness: RoundnessSchema.optional(),
     keepsDownloadsForDays: z.number().int().nonnegative().max(3650).optional(),
   })

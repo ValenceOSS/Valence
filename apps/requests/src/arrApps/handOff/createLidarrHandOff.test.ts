@@ -314,4 +314,96 @@ describe('createLidarrHandOff', () => {
       { itemId: 'b', kind: 'missing' },
     ]);
   });
+
+  it('asks Lidarr to search the artist again, and says where an album’s page is', async () => {
+    const arr = aFakeArr({
+      'POST /api/v1/command': { status: 201, body: { name: 'ArtistSearch', id: 1 } },
+    });
+    const handOff = createLidarrHandOff(createArrCaller(arr.fetch, LIDARR));
+
+    await handOff.search(ALBUM_REQUEST, 3);
+
+    expect(arr.sent('POST', '/api/v1/command')).toEqual([{ name: 'ArtistSearch', artistId: 3 }]);
+    expect(await handOff.pageOf(ALBUM_REQUEST, 3)).toBe(
+      `/album/${ALBUM_REQUEST.musicBrainzId ?? ''}`,
+    );
+  });
+
+  it('lists the releases Lidarr finds for each album still wanted', async () => {
+    const arr = aFakeArr({
+      'GET /api/v1/album': {
+        body: [anAlbum({}), anAlbum({ id: 10, title: 'Kid A', foreignAlbumId: KID_A })],
+      },
+      'GET /api/v1/release': (asked) => ({
+        body: [{ guid: `album-${asked.query.get('albumId') ?? ''}`, indexerId: 4 }],
+      }),
+    });
+    const handOff = createLidarrHandOff(createArrCaller(arr.fetch, LIDARR));
+
+    expect(
+      (
+        await handOff.releases(
+          ARTIST_REQUEST,
+          [
+            aRequestItem({ id: 'a', musicBrainzId: OK_COMPUTER, state: 'filed' }),
+            aRequestItem({ id: 'b', musicBrainzId: KID_A }),
+          ],
+          2,
+        )
+      ).map((one) => one.guid),
+    ).toEqual(['album-10']);
+    expect((await handOff.releases(ALBUM_REQUEST, [], 2)).map((one) => one.guid)).toEqual([
+      'album-9',
+    ]);
+  });
+
+  it('finds the albums asked for in Lidarr’s queue, and monitors only those', async () => {
+    const queue = ArrQueuePageSchema.parse({
+      records: [
+        { id: 5, artistId: 2, albumId: 9, title: 'Artist - Album' },
+        { id: 6, artistId: 2, albumId: 10, title: 'Artist - Other Album' },
+      ],
+    }).records;
+    const arr = aFakeArr({
+      'GET /api/v1/album': {
+        body: [anAlbum({}), anAlbum({ id: 10, foreignAlbumId: KID_A })],
+      },
+      'PUT /api/v1/album/monitor': { body: [] },
+    });
+    const handOff = createLidarrHandOff(createArrCaller(arr.fetch, LIDARR));
+    const item = aRequestItem({ id: 'b', musicBrainzId: KID_A });
+
+    expect(
+      (await handOff.queued(ARTIST_REQUEST, [item], 2, queue)).map((one) => [
+        one.record.id,
+        one.itemIds,
+      ]),
+    ).toEqual([[6, ['b']]]);
+    expect(
+      (await handOff.queued(ALBUM_REQUEST, [aRequestItem({ id: 'c' })], 2, queue)).map(
+        (one) => one.record.id,
+      ),
+    ).toEqual([5]);
+
+    await handOff.monitor(ARTIST_REQUEST, [item], 2, true);
+
+    expect(arr.sent('PUT', '/api/v1/album/monitor')).toEqual([{ albumIds: [10], monitored: true }]);
+  });
+
+  it('never monitors again an album Valence no longer follows', async () => {
+    const arr = aFakeArr({
+      'GET /api/v1/album': { body: [anAlbum({ monitored: false })] },
+      'GET /api/v1/trackfile': { body: [] },
+    });
+
+    await createLidarrHandOff(createArrCaller(arr.fetch, LIDARR)).watch(
+      ARTIST_REQUEST,
+      [aRequestItem({ musicBrainzId: OK_COMPUTER, isFollowed: false })],
+      HAND_OFF,
+      2,
+      [],
+    );
+
+    expect(arr.sent('PUT', '/api/v1/album/monitor')).toEqual([]);
+  });
 });

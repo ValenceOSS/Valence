@@ -1,3 +1,4 @@
+import { DEFAULT_RELEASE_TYPES } from '@ValenceContracts/schemas/MediaRequest';
 import { useEffect, useState } from 'react';
 import { Play as PlayFilledIcon, Stop as StopFilledIcon } from '@keyline-icons/react/fill';
 import { useSample } from '@ValenceScreens/requests/useSample';
@@ -20,8 +21,20 @@ import { Skeleton } from '@ValenceUI/Skeleton';
 import { Spinner } from '@ValenceUI/Spinner';
 import { cn } from '@ValenceUI/cn';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
-import { askForMedia, removeMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
+import {
+  askForMedia,
+  joinMediaRequest,
+  removeMediaRequest,
+} from '@ValenceClient/requests/fetchMediaRequests';
+import { describeOthersStillWanting } from '@ValenceClient/requests/describeOthersStillWanting';
+import { describeWhoElseAsked } from '@ValenceClient/requests/describeWhoElseAsked';
+import { describeMyProfileAsk } from '@ValenceClient/requests/describeMyProfileAsk';
+import { mayJoinRequest } from '@ValenceClient/requests/mayJoinRequest';
+import { askersOf } from '@ValenceContracts/functions/askersOf';
+import { isAskedBy } from '@ValenceContracts/functions/isAskedBy';
 import { askingFor } from '@ValenceClient/requests/askingFor';
+import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
+import { seasonsWithItemsOf } from '@ValenceClient/requests/seasonsWithItemsOf';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { CastGrid } from '@ValenceScreens/components/MediaDetailDialog/components/CastGrid/CastGrid';
@@ -29,6 +42,7 @@ import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwo
 import { ReleaseTypeChooser } from '@ValenceScreens/components/ReleaseTypeChooser/ReleaseTypeChooser';
 import { SlidingList } from '@ValenceScreens/components/SlidingList/SlidingList';
 import { AlbumTracks } from '@ValenceScreens/components/AskableDialog/components/AlbumTracks/AlbumTracks';
+import { BookFormatChooser } from '@ValenceScreens/components/BookFormatChooser/BookFormatChooser';
 import { ChooseQualityDialog } from '@ValenceScreens/components/AskableDialog/components/ChooseQualityDialog/ChooseQualityDialog';
 import { SeasonChooser } from '@ValenceScreens/components/SeasonChooser/SeasonChooser';
 import { describeAskableFacts } from '@ValenceClient/requests/describeAskableFacts';
@@ -46,7 +60,11 @@ import { askLinkedServer } from '@ValenceClient/linking/askLinkedServer';
 import { linkingQueries } from '@ValenceClient/query/linkingQueries';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
-import type { MediaRequestAsk, ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
+import type {
+  BookFormat,
+  MediaRequestAsk,
+  ReleaseType,
+} from '@ValenceContracts/schemas/MediaRequest';
 import type { AskableDialogProps } from './AskableDialog.types';
 import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
 import { say } from '@ValenceI18n/say';
@@ -59,14 +77,16 @@ type Choosing = { asked: MediaRequestAsk; onAsked: () => void };
  * The page of a film, series, artist or album that can be asked for, opened from anywhere its
  * address names it: its artwork, what it is, who is in it, and where it stands — in the library
  * already, with a way to open it; somewhere along being fetched; or there to be asked for, with
- * the seasons of a series or the kinds of an artist's releases to choose. An artist's albums can be
- * asked for one at a time as well. Somebody's own request can be cancelled from here until it is in
+ * the seasons of a series or the kinds of an artist's releases to choose. A series already asked
+ * for can have more seasons added. An artist's albums can be asked for one at a time as well. Somebody's own request can be cancelled from here until it is in
  * the library, which deletes whatever it had started downloading.
  *
  * @param asking - The title the address names, as its kind and id, or nothing.
  * @param onClose - Called when it is dismissed.
  * @param onOpen - Called to open what is in the library already, in its place of asking — a title
- *   the library holds is never asked about, but opened as it would be anywhere else.
+ *   the library holds is not asked about, but opened as it would be anywhere else, unless the
+ *   address asks for more of it, as a show's Request more does: then its seasons are offered, those
+ *   held whole locked, and only what is missing is fetched.
  */
 const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   const cache = useQueryClient();
@@ -77,7 +97,11 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
       query.state.data?.standing.status === 'requested' ? FOLLOWED_EVERY_MS : false,
   });
   const [seasons, setSeasons] = useState<number[] | null>(null);
-  const [releaseTypes, setReleaseTypes] = useState<ReleaseType[]>(['album']);
+  const [followsNew, setFollowsNew] = useState(true);
+  const [adding, setAdding] = useState<number[] | null>([]);
+  const [addsFollowing, setAddsFollowing] = useState(false);
+  const [releaseTypes, setReleaseTypes] = useState<ReleaseType[]>([...DEFAULT_RELEASE_TYPES]);
+  const [bookFormats, setBookFormats] = useState<BookFormat[]>(['ebook']);
   const [isAsking, setIsAsking] = useState(false);
   const [askingElsewhere, setAskingElsewhere] = useState<string | null>(null);
   const faces = useQuery(linkingQueries.faces());
@@ -85,10 +109,16 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   const [problem, setProblem] = useState<string | null>(null);
   const title = found.data ?? null;
   const heldKind = title?.kind ?? null;
-  const heldId = title?.standing.status === 'library' ? title.standing.mediaId : null;
+  const isMore = named?.isMore === true;
+  const heldId = !isMore && title?.standing.status === 'library' ? title.standing.mediaId : null;
   const isElsewhere = title?.standing.status === 'linked';
+  const kinds = useRequestableKinds();
+  const isUnrequestable = title !== null && !kinds.has(title.kind);
   const isAskable =
-    title?.standing.status === 'askable' || (isElsewhere && title.standing.requestId === null);
+    !isUnrequestable &&
+    (title?.standing.status === 'askable' ||
+      (isMore && title?.standing.status === 'library') ||
+      (isElsewhere && title.standing.requestId === null));
 
   useEffect(() => {
     if (heldKind !== null && heldId !== null) {
@@ -110,14 +140,32 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   const choices = offered.data?.forcedId === null ? offered.data.choices : [];
   const mayCancel =
     request !== null &&
-    request.requestedBy.id === me.data?.id &&
+    isAskedBy(request, me.data?.id) &&
     request.state !== 'filed' &&
     request.state !== 'available';
   const standing = title === null ? null : describeStanding(title.standing);
+  const whoElse =
+    title === null ? null : describeWhoElseAsked(title.standing.askedBy ?? [], me.data?.id);
+  const myProfileAsk = request === null ? null : describeMyProfileAsk(request, me.data?.id);
+  const isJoinable =
+    title !== null && !isUnrequestable && mayJoinRequest(title.standing, me.data?.id);
+  const isAddingSeasons =
+    !isUnrequestable &&
+    title?.kind === 'series' &&
+    title.standing.status === 'requested' &&
+    request !== null &&
+    request.approval !== 'refused';
+  const askedSeasons =
+    request === null ? [] : (request.seasons ?? seasonsWithItemsOf(request.items));
+  const isFollowedAlready =
+    request !== null && (request.seasons === null || request.followsNewSeasons);
+  const hasMoreToAdd =
+    adding === null || adding.length > 0 || (addsFollowing && !isFollowedAlready);
   const isReady =
     title !== null &&
     (seasons === null || seasons.length > 0) &&
-    (title.kind !== 'artist' || releaseTypes.length > 0);
+    (title.kind !== 'artist' || releaseTypes.length > 0) &&
+    (title.kind !== 'book' || bookFormats.length > 0);
 
   const send = (asked: MediaRequestAsk, onAsked: () => void = () => undefined) => {
     setIsAsking(true);
@@ -133,6 +181,28 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
 
         onAsked();
         void cache.invalidateQueries({ queryKey: requestsQueries.key });
+      })
+      .finally(() => {
+        setIsAsking(false);
+      });
+  };
+
+  const join = (requestId: string) => {
+    setIsAsking(true);
+    setProblem(null);
+
+    void joinMediaRequest(requestId)
+      .then(({ value, refusal }) => {
+        if (value === null) {
+          setProblem(refusal?.message ?? say('common.thatCouldNotBeRequested'));
+
+          return;
+        }
+
+        void cache.invalidateQueries({ queryKey: requestsQueries.key });
+      })
+      .catch(() => {
+        setProblem(say('common.thatCouldNotBeRequested'));
       })
       .finally(() => {
         setIsAsking(false);
@@ -253,6 +323,16 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                   <DialogHeadlinePart as="span" className="text-sm text-on-scrim/75">
                     {describeAskableFacts(title)}
                   </DialogHeadlinePart>
+                  {whoElse === null ? null : (
+                    <DialogHeadlinePart as="span" className="text-sm text-on-scrim/75">
+                      {whoElse}
+                    </DialogHeadlinePart>
+                  )}
+                  {myProfileAsk === null ? null : (
+                    <DialogHeadlinePart as="span" className="text-sm text-on-scrim/75">
+                      {myProfileAsk}
+                    </DialogHeadlinePart>
+                  )}
 
                   {going === null ? null : (
                     <DialogHeadlinePart>
@@ -300,17 +380,35 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                 </DialogSection>
               )}
 
-              {!isAskable ? null : title.kind === 'series' ? (
+              {isAddingSeasons ? (
+                <DialogSection>
+                  <SeasonChooser
+                    tmdbId={Number(title.id)}
+                    seasons={adding}
+                    onChange={setAdding}
+                    followsNew={addsFollowing}
+                    onFollowsNew={setAddsFollowing}
+                    alreadyAsked={askedSeasons}
+                    isFollowedAlready={isFollowedAlready}
+                  />
+                </DialogSection>
+              ) : !isAskable ? null : title.kind === 'series' ? (
                 <DialogSection>
                   <SeasonChooser
                     tmdbId={Number(title.id)}
                     seasons={seasons}
                     onChange={setSeasons}
+                    followsNew={followsNew}
+                    onFollowsNew={setFollowsNew}
                   />
                 </DialogSection>
               ) : title.kind === 'artist' ? (
                 <DialogSection>
                   <ReleaseTypeChooser value={releaseTypes} onChange={setReleaseTypes} />
+                </DialogSection>
+              ) : title.kind === 'book' ? (
+                <DialogSection>
+                  <BookFormatChooser value={bookFormats} onChange={setBookFormats} />
                 </DialogSection>
               ) : null}
 
@@ -368,7 +466,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                               say('screens.askableDialog.noYearGiven')}
                           </span>
                         </span>
-                        {askedAlbums.has(album.id) ? (
+                        {!kinds.has('album') ? null : askedAlbums.has(album.id) ? (
                           <Badge size="sm" tone={STATUS_LOOK.queued.tone}>
                             {say('common.requested')}
                           </Badge>
@@ -397,7 +495,12 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
       </DialogContent>
 
       <DialogFooter
-        note={problem}
+        note={
+          problem ??
+          (isUnrequestable && title.standing.status === 'askable'
+            ? say('common.noLibraryTakesRequestsForThis')
+            : null)
+        }
         {...(trailerKey === null
           ? {}
           : {
@@ -437,10 +540,40 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                     isDisabled: !isReady,
                     isLoading: isAsking,
                     onChoose: () => {
-                      ask(askingFor(title, seasons, releaseTypes));
+                      ask(askingFor(title, seasons, releaseTypes, followsNew, bookFormats));
                     },
                   }
-                : undefined
+                : isAddingSeasons
+                  ? {
+                      label: say('common.addSeasons'),
+                      isDisabled: !hasMoreToAdd,
+                      isLoading: isAsking,
+                      onChoose: () => {
+                        ask(
+                          {
+                            kind: 'series',
+                            tmdbId: Number(title.id),
+                            seasons: adding,
+                            followsNewSeasons: addsFollowing,
+                          },
+                          () => {
+                            setAdding([]);
+                            setAddsFollowing(false);
+                          },
+                        );
+                      },
+                    }
+                  : isJoinable && title.standing.requestId !== null
+                    ? {
+                        label: say('common.iWantThisToo'),
+                        isLoading: isAsking,
+                        onChoose: () => {
+                          if (title.standing.requestId !== null) {
+                            join(title.standing.requestId);
+                          }
+                        },
+                      }
+                    : undefined
         }
       >
         {mayCancel ? (
@@ -467,7 +600,10 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                   onClick={() => {
                     setAskingElsewhere(server.id);
 
-                    void askLinkedServer(server.id, askingFor(title, seasons, releaseTypes))
+                    void askLinkedServer(
+                      server.id,
+                      askingFor(title, seasons, releaseTypes, followsNew, bookFormats),
+                    )
                       .then((sent) => {
                         tellOutcome(
                           say('screens.askableDialog.askedNameForTitle', {
@@ -492,7 +628,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
             disabled={!isReady}
             isLoading={isAsking}
             onClick={() => {
-              ask(askingFor(title, seasons, releaseTypes));
+              ask(askingFor(title, seasons, releaseTypes, followsNew, bookFormats));
             }}
           >
             {say('common.requestHere')}
@@ -553,7 +689,10 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
             ? say('common.cancelThisRequest')
             : say('common.cancelTitle', { title: title.title })
         }
-        detail={say('common.itWillNotBeFetchedAnd')}
+        detail={
+          (request === null ? null : describeOthersStillWanting(askersOf(request), me.data?.id)) ??
+          say('common.itWillNotBeFetchedAnd')
+        }
         confirmLabel={say('common.cancelRequest')}
         isDestructive
         isOpen={isCancelling}

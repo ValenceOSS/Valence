@@ -18,6 +18,7 @@ const episode = (state: RequestItem['state'], airDate = '2026-01-01'): RequestIt
   score: null,
   downloadedBytes: null,
   downloadSeconds: null,
+  isFollowed: true,
   lastSearchedAt: null,
   updatedAt: '2026-09-19T00:00:00.000Z',
 });
@@ -27,7 +28,7 @@ const TODAY = '2026-09-20';
 describe('describeSeasonBadge', () => {
   it('says a season with every episode here is available', () => {
     expect(describeSeasonBadge([episode('available'), episode('available')], TODAY)).toMatchObject({
-      label: 'Available',
+      label: 'In the library',
       tone: 'success',
     });
   });
@@ -40,7 +41,7 @@ describe('describeSeasonBadge', () => {
 
   it('says a season is wanted where an episode could not be found', () => {
     expect(describeSeasonBadge([episode('available'), episode('failed')], TODAY).label).toBe(
-      'Wanted',
+      'Missing',
     );
   });
 

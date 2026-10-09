@@ -30,6 +30,7 @@ const FILMS: Library = {
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 };
 
 type AnEntry = {

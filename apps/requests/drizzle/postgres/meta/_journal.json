@@ -201,8 +201,85 @@
     {
       "idx": 28,
       "version": "7",
-      "when": 1791516890729,
-      "tag": "0028_profiles_keep_an_order",
+      "when": 1791508229976,
+      "tag": "0028_blocks_by_hash_and_follows",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1791513331330,
+      "tag": "0029_requests_follow_new_seasons",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1791517409817,
+      "tag": "0030_requests_know_the_imdb_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1791517849915,
+      "tag": "0031_profiles_combine_qualities",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1791519068350,
+      "tag": "0032_profiles_score_custom_formats",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1791525391604,
+      "tag": "0033_requests_keep_every_asker",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1791527642450,
+      "tag": "0034_profiles_keep_an_order",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1791542531083,
+      "tag": "0035_books_keep_their_formats",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1791546004699,
+      "tag": "0036_films_keep_more_than_one_version",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1791555401042,
+      "tag": "0037_music_counts_its_tracks",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1791557117224,
+      "tag": "0038_audiobooks_keep_their_narration",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1791563004218,
+      "tag": "0039_downloads_remember_being_paused",
       "breakpoints": true
     }
   ]

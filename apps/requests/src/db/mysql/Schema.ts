@@ -22,8 +22,16 @@ import {
   RELEASE_SOURCES,
   RESOLUTIONS,
 } from '@ValenceContracts/schemas/ParsedRelease';
-import { PROFILE_KINDS, RELEASE_WAITS } from '@ValenceContracts/schemas/QualityProfile';
-import type { QualitySize } from '@ValenceContracts/schemas/QualityProfile';
+import {
+  PROFILE_KINDS,
+  RELEASE_WAITS,
+  VIDEO_QUALITY_IDS,
+} from '@ValenceContracts/schemas/QualityProfile';
+import type {
+  CustomFormat,
+  QualitySize,
+  VideoQualityId,
+} from '@ValenceContracts/schemas/QualityProfile';
 import type {
   MusicQuality,
   ReleaseSource,
@@ -34,13 +42,18 @@ import { QUEUED_DOWNLOAD_STATES } from '@ValenceContracts/schemas/DownloadQueue'
 import type { IndexerCapabilities, IndexerSettings } from '@ValenceContracts/schemas/Indexer';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import {
+  BOOK_FORMATS,
   MEDIA_REQUEST_KINDS,
   REQUEST_APPROVALS,
   REQUEST_ITEM_STATES,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type {
+  BookFormat,
+  Narration,
   ReleaseType,
   RequestCatalogue,
+  ProfileAsk,
+  Requester,
   SeasonFolder,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
@@ -185,6 +198,7 @@ const sentDownload = requestsSchema(
     filingAttempts: int('filing_attempts').notNull().default(0),
     filesChecked: boolean('files_checked').notNull().default(false),
     removesWhenDone: boolean('removes_when_done').notNull().default(false),
+    wasPaused: boolean('was_paused').notNull().default(false),
     seedSeconds: int('seed_seconds'),
     seedRatio: double('seed_ratio'),
     updatedAt: momentNow('updated_at').notNull(),
@@ -218,6 +232,7 @@ const qualityProfile = requestsSchema('quality_profile', {
   kind: varchar('kind', { length: 32, enum: PROFILE_KINDS }).notNull(),
   resolutions: jsonColumn('resolutions').$type<Resolution[]>().notNull().default(jsonDefault([])),
   sources: jsonColumn('sources').$type<ReleaseSource[]>().notNull().default(jsonDefault([])),
+  qualities: jsonColumn('qualities').$type<VideoQualityId[]>(),
   musicQualities: jsonColumn('music_qualities')
     .$type<MusicQuality[]>()
     .notNull()
@@ -231,12 +246,16 @@ const qualityProfile = requestsSchema('quality_profile', {
     .default(jsonDefault([])),
   requiredWords: jsonColumn('required_words').$type<string[]>().notNull().default(jsonDefault([])),
   bannedWords: jsonColumn('banned_words').$type<string[]>().notNull().default(jsonDefault([])),
+  formats: jsonColumn('formats').$type<CustomFormat[]>().notNull().default(jsonDefault([])),
+  minFormatScore: int('min_format_score').notNull().default(0),
+  upgradeUntilFormatScore: int('upgrade_until_format_score'),
   isUpgrading: boolean('is_upgrading').notNull().default(false),
   releaseWait: varchar('release_wait', { length: 32, enum: RELEASE_WAITS })
     .notNull()
     .default('digital'),
   upgradeUntilResolution: varchar('upgrade_until_resolution', { length: 32, enum: RESOLUTIONS }),
   upgradeUntilSource: varchar('upgrade_until_source', { length: 32, enum: RELEASE_SOURCES }),
+  cutoff: varchar('cutoff', { length: 32, enum: VIDEO_QUALITY_IDS }),
   upgradeUntilMusicQuality: varchar('upgrade_until_music_quality', {
     length: 32,
     enum: MUSIC_QUALITIES,
@@ -258,6 +277,7 @@ const mediaRequest = requestsSchema(
     kind: varchar('kind', { length: 32, enum: MEDIA_REQUEST_KINDS }).notNull(),
     tmdbId: int('tmdb_id'),
     tvdbId: int('tvdb_id'),
+    imdbId: varchar('imdb_id', { length: 16 }),
     musicBrainzId: varchar('music_brainz_id', { length: 64 }),
     openLibraryId: int('open_library_id'),
     title: mediumtext('title').notNull(),
@@ -282,8 +302,20 @@ const mediaRequest = requestsSchema(
     refusedBecause: jsonColumn('refused_because').$type<Said>(),
     requestedById: varchar('requested_by_id', { length: 64 }).notNull(),
     requestedByName: mediumtext('requested_by_name').notNull(),
+    alsoAskedBy: jsonColumn('also_asked_by')
+      .$type<Requester[]>()
+      .notNull()
+      .default(jsonDefault([])),
+    profileAsk: jsonColumn('profile_ask').$type<ProfileAsk>(),
     seasons: jsonColumn('seasons').$type<number[]>(),
+    followsNewSeasons: boolean('follows_new_seasons').notNull().default(false),
+    followsAfter: int('follows_after'),
     releaseTypes: jsonColumn('release_types').$type<ReleaseType[]>(),
+    upgradesToLossless: boolean('upgrades_to_lossless').notNull().default(false),
+    bookFormats: jsonColumn('book_formats').$type<BookFormat[]>(),
+    narrations: jsonColumn('narrations').$type<Narration[]>(),
+    narrationsWanted: jsonColumn('narrations_wanted').$type<string[]>(),
+    versions: jsonColumn('versions').$type<string[]>(),
     runtimeMinutes: int('runtime_minutes'),
     releaseDates: jsonColumn('release_dates')
       .$type<RequestCatalogue['releaseDates']>()
@@ -314,6 +346,8 @@ const requestItem = requestsSchema(
     musicBrainzId: varchar('music_brainz_id', { length: 64 }),
     season: int('season'),
     episode: int('episode'),
+    format: varchar('format', { length: 16, enum: BOOK_FORMATS }),
+    versionProfileId: char('version_profile_id', { length: 36 }),
     title: mediumtext('title').notNull(),
     airDate: varchar('air_date', { length: 32 }),
     state: varchar('state', { length: 32, enum: REQUEST_ITEM_STATES }).notNull().default('waiting'),
@@ -330,6 +364,12 @@ const requestItem = requestsSchema(
     downloadSeconds: double('download_seconds'),
     attempts: int('attempts').notNull().default(0),
     isPickedByHand: boolean('is_picked_by_hand').notNull().default(false),
+    isFollowed: boolean('is_followed').notNull().default(true),
+    trackCount: int('track_count'),
+    filedTrackCount: int('filed_track_count'),
+    heldQuality: varchar('held_quality', { length: 16 }).$type<MusicQuality>(),
+    narration: varchar('narration', { length: 20 }),
+    filedMinutes: double('filed_minutes'),
     lastSearchedAt: moment('last_searched_at'),
     updatedAt: momentNow('updated_at').notNull(),
   },
@@ -355,6 +395,7 @@ const blocklistedRelease = requestsSchema(
     id: char('id', { length: 36 }).primaryKey(),
     requestId: char('request_id', { length: 36 }).notNull(),
     title: varchar('title', { length: 700 }).notNull(),
+    infoHash: varchar('info_hash', { length: 64 }),
     indexerId: char('indexer_id', { length: 36 }),
     reason: jsonColumn('reason').$type<Said>().notNull(),
     at: momentNow('at').notNull(),

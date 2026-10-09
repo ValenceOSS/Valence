@@ -1,3 +1,4 @@
+import { HIGHER_PROFILE_ASKS } from '@ValenceContracts/schemas/HigherProfileAsks';
 import { sql } from 'drizzle-orm';
 import {
   bigint,
@@ -184,6 +185,9 @@ const library = pgTable('library', {
   requestProfileId: text('requestProfileId'),
   requestPath: text('requestPath'),
   keepsShowsTogether: boolean('keepsShowsTogether').notNull().default(true),
+  higherProfileAsks: text('higherProfileAsks', { enum: HIGHER_PROFILE_ASKS })
+    .notNull()
+    .default('ask'),
   requestFulfilment: jsonb('requestFulfilment').$type<Fulfilment>(),
   linkedServerId: text('linkedServerId').references((): AnyPgColumn => linkedServer.id, {
     onDelete: 'cascade',
@@ -975,6 +979,7 @@ const book = pgTable(
     externalId: text('externalId'),
     seriesName: text('seriesName'),
     seriesPosition: real('seriesPosition'),
+    narrators: jsonb('narrators'),
     isCorrected: boolean('isCorrected').notNull().default(false),
     addedAt: timestamp('addedAt').notNull().defaultNow(),
     updatedAt: timestamp('updatedAt').notNull().defaultNow(),

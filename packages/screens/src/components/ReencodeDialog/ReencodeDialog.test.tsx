@@ -71,6 +71,7 @@ const LIBRARIES = [
     requestProfileId: null,
     requestPath: null,
     keepsShowsTogether: true,
+    higherProfileAsks: 'ask' as const,
   },
   {
     id: 'library-2',
@@ -85,6 +86,7 @@ const LIBRARIES = [
     requestProfileId: null,
     requestPath: null,
     keepsShowsTogether: true,
+    higherProfileAsks: 'ask' as const,
   },
 ];
 

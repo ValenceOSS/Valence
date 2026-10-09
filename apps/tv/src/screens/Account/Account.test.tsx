@@ -52,7 +52,10 @@ const aCache = ({
 
   cache.setQueryData(profileQueries.watching().queryKey, JO);
   cache.setQueryData(aboutQueries.server().queryKey, { commit: 'abc123', features: [] });
-  cache.setQueryData(requestsQueries.availability().queryKey, { isEnabled: mayRequest });
+  cache.setQueryData(requestsQueries.availability().queryKey, {
+    isEnabled: mayRequest,
+    kinds: ['film', 'series', 'artist', 'album', 'book'],
+  });
   cache.setQueryData(sessionQueries.permissions().queryKey, {
     permissions: ['requests.ask'],
     isAdministrator: false,

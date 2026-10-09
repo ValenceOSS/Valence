@@ -42,6 +42,7 @@ const aLibrary = (id: string, name: string): Library => ({
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 });
 
 const aTitle = (title: string): MediaSummary => ({

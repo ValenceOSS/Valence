@@ -1,4 +1,9 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import {
+  CatalogueListingSchema,
+  TitleFilesQuerySchema,
+  TitleFilesSchema,
+} from '@ValenceContracts/schemas/AdminCatalogue';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { MissingAlbumsSchema } from '@ValenceContracts/schemas/MissingAlbums';
 import {
@@ -31,13 +36,15 @@ import {
   ArrAppSchema,
   ArrAppTestSchema,
   ArrQueueSchema,
+  HandedToSchema,
+  HandOffDownloadSchema,
   ProwlarrImportSchema,
 } from '@ValenceContracts/schemas/ArrApp';
 import {
   ProfilesOnOfferSchema,
   QualityProfileChangeSchema,
+  ProfileOrderSchema,
   QualityProfileDraftSchema,
-  QualityProfileOrderSchema,
   QualityProfileSchema,
 } from '@ValenceContracts/schemas/QualityProfile';
 import {
@@ -45,11 +52,15 @@ import {
   MediaRequestAskSchema,
   MediaRequestKindSchema,
   MediaRequestChangeSchema,
+  NarrationDecisionSchema,
+  ProfileAskDecisionSchema,
   BlockedReleaseSchema,
   MediaRequestDecidedSchema,
   MediaRequestDecisionSchema,
   MediaRequestPickSchema,
   MediaRequestRefusalSchema,
+  DownloadStopSchema,
+  MediaRequestFollowSchema,
   MediaRequestSchema,
   MissingSearchSchema,
   MUSIC_REQUEST_KINDS,
@@ -113,6 +124,42 @@ const adminRequestsOverviewRoute = createRoute({
     },
     404: {
       description: 'Requesting is off',
+      content: { 'application/json': { schema: RequestsError } },
+    },
+  },
+});
+
+const adminCatalogueRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/requests/catalogue',
+  tags: ['Admin'],
+  summary:
+    'List the Catalogue: every title the libraries hold and every title asked for, with where each stands',
+  responses: {
+    200: {
+      description: 'Every title, once',
+      content: { 'application/json': { schema: CatalogueListingSchema } },
+    },
+    403: {
+      description: 'Not allowed to manage requesting',
+      content: { 'application/json': { schema: RequestsError } },
+    },
+  },
+});
+
+const adminTitleFilesRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/requests/catalogue/files',
+  tags: ['Admin'],
+  summary: 'Read the files the libraries hold of one title, and the folder it is kept in',
+  request: { query: TitleFilesQuerySchema },
+  responses: {
+    200: {
+      description: 'Its files',
+      content: { 'application/json': { schema: TitleFilesSchema } },
+    },
+    403: {
+      description: 'Not allowed to manage requesting',
       content: { 'application/json': { schema: RequestsError } },
     },
   },
@@ -802,9 +849,15 @@ const reorderQualityProfilesRoute = createRoute({
   method: 'put',
   path: '/api/admin/requests/profiles/order',
   tags: ['Admin'],
-  summary: 'Put the quality profiles in the order they are offered',
-  request: { body: { content: { 'application/json': { schema: QualityProfileOrderSchema } } } },
-  responses: failures({ ...REFUSED_BODY, 204: { description: 'Put in order' } }),
+  summary: 'Put the quality profiles in order, highest first',
+  request: { body: { content: { 'application/json': { schema: ProfileOrderSchema } } } },
+  responses: failures({
+    ...REFUSED_BODY,
+    200: {
+      description: 'Every profile, in its new order',
+      content: { 'application/json': { schema: z.array(QualityProfileAnswer) } },
+    },
+  }),
 });
 
 const removeQualityProfileRoute = createRoute({
@@ -1123,12 +1176,79 @@ const removeMediaRequestRoute = createRoute({
   path: '/api/requests/media/{id}',
   tags: ['Requests'],
   summary:
-    'Forget a request, leaving whatever it fetched where it is — or cancel one of your own not yet in the library, deleting what it had started downloading',
+    'Remove a request, stopping its downloads and, for whoever manages requesting, deleting the files it filed where asked — or cancel one of your own not yet in the library, which only takes you off it while others want it too',
   request: {
     params: RecordIdParameter,
-    query: z.object({ deleteDownloads: z.enum(['true', 'false']).optional() }),
+    query: z.object({
+      deleteDownloads: z.enum(['true', 'false']).optional(),
+      deleteFiles: z.enum(['true', 'false']).optional(),
+    }),
   },
   responses: requestFailures({ 204: { description: 'Forgotten' } }),
+});
+
+const joinMediaRequestRoute = createRoute({
+  method: 'post',
+  path: '/api/requests/media/{id}/join',
+  tags: ['Requests'],
+  summary:
+    'Want something somebody else has asked for too, so it shows in your requests and you are told when it arrives',
+  request: { params: RecordIdParameter },
+  responses: requestFailures(ONE_REQUEST),
+});
+
+const handedToRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/media/{id}/handed-to',
+  tags: ['Requests'],
+  summary: 'Which connected app a request was handed to, with a link to its page there',
+  request: { params: RecordIdParameter },
+  responses: requestFailures({
+    200: {
+      description: 'The app it was handed to',
+      content: { 'application/json': { schema: HandedToSchema } },
+    },
+  }),
+});
+
+const handOffDownloadsRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/media/{id}/hand-off/downloads',
+  tags: ['Requests'],
+  summary:
+    'What the connected app a request was handed to is downloading for it, where Valence controls connected apps',
+  request: { params: RecordIdParameter },
+  responses: requestFailures({
+    200: {
+      description: 'Its downloads in the app, or none where Valence does not control the app',
+      content: { 'application/json': { schema: z.array(HandOffDownloadSchema) } },
+    },
+  }),
+});
+
+const decideProfileAskRoute = createRoute({
+  method: 'post',
+  path: '/api/requests/media/{id}/profile-ask',
+  tags: ['Requests'],
+  summary:
+    'Settle a later ask at a higher quality profile: switch the request to it, or keep the one it has',
+  request: {
+    params: RecordIdParameter,
+    body: { content: { 'application/json': { schema: ProfileAskDecisionSchema } } },
+  },
+  responses: requestFailures(ONE_REQUEST),
+});
+
+const decideNarrationRoute = createRoute({
+  method: 'post',
+  path: '/api/requests/media/{id}/narration',
+  tags: ['Requests'],
+  summary: 'Choose which narration of a book’s audiobook to fetch, or more than one',
+  request: {
+    params: RecordIdParameter,
+    body: { content: { 'application/json': { schema: NarrationDecisionSchema } } },
+  },
+  responses: requestFailures(ONE_REQUEST),
 });
 
 const approveMediaRequestRoute = createRoute({
@@ -1137,6 +1257,31 @@ const approveMediaRequestRoute = createRoute({
   tags: ['Requests'],
   summary: 'Approve a request, so it is fetched',
   request: { params: RecordIdParameter },
+  responses: requestFailures(ONE_REQUEST),
+});
+
+const stopRequestDownloadRoute = createRoute({
+  method: 'post',
+  path: '/api/requests/media/{id}/downloads/{downloadId}/stop',
+  tags: ['Requests'],
+  summary:
+    'Stop one of a request’s downloads, then look for another release, wait for one picked by hand, or stop getting what it was for',
+  request: {
+    params: RecordIdParameter.extend({ downloadId: z.string().min(1) }),
+    body: { content: { 'application/json': { schema: DownloadStopSchema } } },
+  },
+  responses: requestFailures(ONE_REQUEST),
+});
+
+const followRequestItemsRoute = createRoute({
+  method: 'post',
+  path: '/api/requests/media/{id}/follow',
+  tags: ['Requests'],
+  summary: 'Follow, or stop following, some of the episodes or albums a request waits for',
+  request: {
+    params: RecordIdParameter,
+    body: { content: { 'application/json': { schema: MediaRequestFollowSchema } } },
+  },
   responses: requestFailures(ONE_REQUEST),
 });
 
@@ -1152,12 +1297,18 @@ const refuseMediaRequestRoute = createRoute({
   responses: requestFailures(ONE_REQUEST),
 });
 
+const SearchScopeQuery = z.object({
+  season: z.string().regex(/^\d+$/).optional(),
+  episode: z.string().regex(/^\d+$/).optional(),
+});
+
 const retryMediaRequestRoute = createRoute({
   method: 'post',
   path: '/api/requests/media/{id}/retry',
   tags: ['Requests'],
-  summary: 'Try again whatever failed in a request, and search again for what is wanted',
-  request: { params: RecordIdParameter },
+  summary:
+    'Try again whatever failed in a request, and search again for what is wanted — the whole request, one season of it, or one episode',
+  request: { params: RecordIdParameter, query: SearchScopeQuery },
   responses: requestFailures(ONE_REQUEST),
 });
 
@@ -1174,8 +1325,9 @@ const mediaRequestReleasesRoute = createRoute({
   method: 'get',
   path: '/api/requests/media/{id}/releases',
   tags: ['Requests'],
-  summary: 'Search for a request by hand, judging every release found',
-  request: { params: RecordIdParameter },
+  summary:
+    'Search for a request by hand, judging every release found — for the whole request, one season of it in packs, or one episode',
+  request: { params: RecordIdParameter, query: SearchScopeQuery },
   responses: requestFailures({
     200: {
       description: 'The releases for it, best first',
@@ -1221,7 +1373,7 @@ const liftMediaBlockRoute = createRoute({
     params: RecordIdParameter.extend({
       blockId: z
         .string()
-        .uuid()
+        .min(1)
         .openapi({ param: { name: 'blockId', in: 'path' } }),
     }),
   },
@@ -1269,6 +1421,15 @@ export {
   pickMediaReleaseRoute,
   refuseMediaRequestRoute,
   removeMediaRequestRoute,
+  joinMediaRequestRoute,
+  decideNarrationRoute,
+  decideProfileAskRoute,
+  handedToRoute,
+  handOffDownloadsRoute,
+  adminCatalogueRoute,
+  adminTitleFilesRoute,
+  stopRequestDownloadRoute,
+  followRequestItemsRoute,
   retryMediaRequestRoute,
   fulfilMediaRequestRoute,
   draftReleasesRoute,
@@ -1286,8 +1447,8 @@ export {
   changeQualityProfileRoute,
   listQualityProfilesRoute,
   profilesOnOfferRoute,
-  removeQualityProfileRoute,
   reorderQualityProfilesRoute,
+  removeQualityProfileRoute,
   addArrAppRoute,
   changeArrAppRoute,
   importArrIndexersRoute,

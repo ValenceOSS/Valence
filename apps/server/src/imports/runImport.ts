@@ -1,3 +1,4 @@
+import { isVideoKind } from '@ValenceContracts/functions/isVideoKind';
 import { eq } from 'drizzle-orm';
 import { MOST_COLLECTION_ENTRIES } from '@ValenceContracts/schemas/Collection';
 import type { CollectionSubject } from '@ValenceContracts/schemas/Collection';
@@ -217,7 +218,7 @@ const setAccess = async (
 
         const kind = kinds.get(location.libraryId);
 
-        if (person.user.ceiling !== null && (kind === 'movies' || kind === 'shows')) {
+        if (person.user.ceiling !== null && kind !== undefined && isVideoKind(kind)) {
           await services.library.setCeiling(person.userId, {
             libraryId: location.libraryId,
             maximumAge: person.user.ceiling.maximumAge,

@@ -1,3 +1,4 @@
+import { isEpisodicKind } from '@ValenceContracts/functions/isEpisodicKind';
 import { randomUUID } from 'node:crypto';
 import { groupIntoShows, buildShowDetail } from './groupIntoShows';
 import type {
@@ -335,6 +336,7 @@ const createMemoryLibraryService = (
       requestProfileId: null,
       requestPath: null,
       keepsShowsTogether: true,
+      higherProfileAsks: 'ask',
       fulfilment: null,
     };
 
@@ -352,6 +354,12 @@ const createMemoryLibraryService = (
 
     found.defaultAudioLanguage = input.defaultAudioLanguage;
 
+    if (input.kind !== undefined && isEpisodicKind(found.kind)) {
+      found.kind = input.kind;
+      found.flavour = null;
+      found.fulfilment = input.kind === 'anime' ? null : found.fulfilment;
+    }
+
     if (input.takesRequests !== undefined) {
       found.takesRequests = input.takesRequests;
     }
@@ -366,6 +374,10 @@ const createMemoryLibraryService = (
 
     if (input.keepsShowsTogether !== undefined) {
       found.keepsShowsTogether = input.keepsShowsTogether;
+    }
+
+    if (input.higherProfileAsks !== undefined) {
+      found.higherProfileAsks = input.higherProfileAsks;
     }
 
     if (input.fulfilment !== undefined) {

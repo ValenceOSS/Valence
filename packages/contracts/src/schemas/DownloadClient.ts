@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { ProblemCodeFieldSchema } from './ProblemCode';
-import { LibraryKindSchema } from './Library';
 import type { ReleaseProtocol } from './Indexer';
 import type { LibraryKind } from './Library';
 import { say } from '@ValenceI18n/say';
@@ -32,7 +31,16 @@ const PathSchema = z
   .max(500)
   .transform((path) => (path.length > 1 ? path.replace(/\/+$/, '') : path));
 
-const DEFAULT_DOWNLOAD_CATEGORIES: Readonly<Record<LibraryKind, string>> = {
+const DOWNLOAD_CATEGORY_KINDS = [
+  'movies',
+  'shows',
+  'music',
+  'books',
+] as const satisfies readonly LibraryKind[];
+
+const DEFAULT_DOWNLOAD_CATEGORIES: Readonly<
+  Record<(typeof DOWNLOAD_CATEGORY_KINDS)[number], string>
+> = {
   movies: 'valence-films',
   shows: 'valence-series',
   music: 'valence-music',
@@ -49,7 +57,7 @@ const DownloadCategoriesSchema = z
   .refine(
     (categories) =>
       new Set(Object.values(categories).map((category) => category.toLowerCase())).size ===
-      LibraryKindSchema.options.length,
+      Object.keys(categories).length,
     say('contracts.schemas.downloadClient.eachKindNeedsACategoryOf'),
   );
 
@@ -127,6 +135,7 @@ export type {
 
 export {
   DEFAULT_DOWNLOAD_CATEGORIES,
+  DOWNLOAD_CATEGORY_KINDS,
   DOWNLOAD_CLIENT_KINDS,
   DownloadCategoriesSchema,
   PROTOCOL_OF_CLIENT,
