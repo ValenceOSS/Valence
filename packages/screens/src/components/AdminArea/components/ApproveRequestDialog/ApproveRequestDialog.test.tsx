@@ -55,8 +55,7 @@ beforeEach(() => {
     aQualityProfile({
       id: '2a9e6679-7425-40de-944b-e07fc1f90ae7',
       name: 'Ultra HD',
-      resolutions: [],
-      sources: [],
+      qualities: [],
     }),
   ]);
   fetchLibraries

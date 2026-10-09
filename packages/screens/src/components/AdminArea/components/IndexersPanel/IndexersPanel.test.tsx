@@ -203,7 +203,7 @@ describe('IndexersPanel', () => {
 
     renderInAnAddress(<IndexersPanel />);
 
-    expect(await screen.findByText('Offline')).toBeInTheDocument();
+    expect(await screen.findByText('Resting')).toBeInTheDocument();
     expect(screen.getByText('Turned off after 5 failures in a row: Timed out')).toBeInTheDocument();
   });
 

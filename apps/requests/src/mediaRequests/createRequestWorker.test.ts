@@ -203,7 +203,12 @@ describe('createRequestWorker', () => {
   describe('releasing and searching', () => {
     it('searches for a film that is out, and sends the best release', async () => {
       const { worker, items, searched, send, events } = aWorker({
-        profiles: [aProfile({ sources: ['bluray', 'webdl'], libraryIds: ['films'] })],
+        profiles: [
+          aProfile({
+            qualities: ['bluray-1080p', 'webdl-1080p', 'bluray-720p', 'webdl-720p'],
+            libraryIds: ['films'],
+          }),
+        ],
         items: [aRequestItem({ state: 'waiting' })],
       });
 
@@ -238,11 +243,17 @@ describe('createRequestWorker', () => {
     it('judges by the profile chosen for the request before the library’s own', async () => {
       const chosen = aProfile({
         id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
-        sources: ['webdl', 'bluray'],
+        qualities: ['webdl-1080p', 'bluray-1080p', 'webdl-720p', 'bluray-720p'],
       });
       const { worker, send } = aWorker({
         requests: [aMediaRequest({ profileId: chosen.id })],
-        profiles: [aProfile({ sources: ['bluray', 'webdl'], libraryIds: ['films'] }), chosen],
+        profiles: [
+          aProfile({
+            qualities: ['bluray-1080p', 'webdl-1080p', 'bluray-720p', 'webdl-720p'],
+            libraryIds: ['films'],
+          }),
+          chosen,
+        ],
       });
 
       await worker.tick();
@@ -787,7 +798,10 @@ describe('createRequestWorker', () => {
       const { worker } = aWorker({
         requests: [aMediaRequest({ profileId: '6ba7b810-9dad-11d1-80b4-00c04fd430ca' })],
         profiles: [
-          aProfile({ id: '6ba7b810-9dad-11d1-80b4-00c04fd430ca', resolutions: ['2160p'] }),
+          aProfile({
+            id: '6ba7b810-9dad-11d1-80b4-00c04fd430ca',
+            qualities: ['remux-2160p', 'bluray-2160p', 'webdl-2160p', 'webrip-2160p', 'hdtv-2160p'],
+          }),
         ],
         items: [downloading()],
         sent: [done()],
@@ -843,7 +857,7 @@ describe('createRequestWorker', () => {
     const FOUR_K = aProfile({
       id: '6ba7b810-9dad-11d1-80b4-00c04fd430c9',
       name: '4K',
-      resolutions: ['2160p'],
+      qualities: ['remux-2160p', 'bluray-2160p', 'webdl-2160p', 'webrip-2160p', 'hdtv-2160p'],
     });
     const TELESYNC = 'Spider-Man.Brand.New.Day.2026.V3.1080p.TELESYNC.x264-DKS_rxl1.mp4';
 
@@ -855,7 +869,7 @@ describe('createRequestWorker', () => {
       });
 
       expect(await worker.judgeFiles(aSentDownload(), [TELESYNC])).toEqual(
-        `Its file, ${TELESYNC}, is 1080p, which this profile doesn’t allow`,
+        `Its file, ${TELESYNC}, is a telesync, which this profile doesn’t allow`,
       );
     });
 
@@ -1007,8 +1021,8 @@ describe('createRequestWorker', () => {
     const UPGRADING = aProfile({
       isUpgrading: true,
       libraryIds: ['films'],
-      sources: ['bluray', 'webdl'],
-      upgradeUntilSource: 'bluray',
+      qualities: ['bluray-1080p', 'webdl-1080p', 'bluray-720p', 'webdl-720p'],
+      cutoff: 'bluray-1080p',
     });
 
     const HERE = aRequestItem({
@@ -1716,7 +1730,12 @@ describe('createRequestWorker', () => {
     it('sends nothing for a request cancelled or declined while it was searched for', async () => {
       const held: { harness: ReturnType<typeof aWorker> | null } = { harness: null };
       const harness = aWorker({
-        profiles: [aProfile({ sources: ['bluray', 'webdl'], libraryIds: ['films'] })],
+        profiles: [
+          aProfile({
+            qualities: ['bluray-1080p', 'webdl-1080p', 'bluray-720p', 'webdl-720p'],
+            libraryIds: ['films'],
+          }),
+        ],
         items: [aRequestItem({ state: 'waiting' })],
         found: () => {
           void held.harness?.requests.update(aMediaRequest().id, { approval: 'refused' });
@@ -1827,8 +1846,8 @@ describe('createRequestWorker', () => {
           aProfile({
             isUpgrading: true,
             libraryIds: ['films'],
-            sources: ['bluray', 'webdl'],
-            upgradeUntilSource: 'bluray',
+            qualities: ['bluray-1080p', 'webdl-1080p', 'bluray-720p', 'webdl-720p'],
+            cutoff: 'bluray-1080p',
           }),
         ],
       });

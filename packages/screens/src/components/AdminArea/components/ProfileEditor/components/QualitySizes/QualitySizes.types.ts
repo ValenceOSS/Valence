@@ -1,9 +1,7 @@
-import type { ReleaseSource, Resolution } from '@ValenceContracts/schemas/ParsedRelease';
-import type { QualitySize } from '@ValenceContracts/schemas/QualityProfile';
+import type { QualitySize, VideoQualityId } from '@ValenceContracts/schemas/QualityProfile';
 
 type QualitySizesProps = {
-  resolutions: readonly Resolution[];
-  sources: readonly ReleaseSource[];
+  qualities: readonly VideoQualityId[];
   sizes: readonly QualitySize[];
   onChange: (sizes: QualitySize[]) => void;
 };

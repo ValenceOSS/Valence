@@ -38,7 +38,7 @@ describe('createProfileRoutes', () => {
     const ask = theRoutes();
 
     expect((await ask('/profiles', 'POST', { name: 'HD' })).status).toBe(400);
-    expect((await ask('/profiles/nothing', 'PATCH', { resolutions: ['8k'] })).status).toBe(400);
+    expect((await ask('/profiles/nothing', 'PATCH', { qualities: ['webdl-8k'] })).status).toBe(400);
     expect((await ask('/profiles/nothing', 'PATCH', { name: 'x' })).status).toBe(404);
   });
 });

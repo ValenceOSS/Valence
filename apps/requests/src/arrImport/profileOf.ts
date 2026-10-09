@@ -1,19 +1,19 @@
 import { saying } from '@ValenceI18n/saying';
 import { sayingAll } from '@ValenceI18n/sayingAll';
 import type { Said } from '@ValenceI18n/SaidSchema';
-import {
-  MUSIC_QUALITIES,
-  RELEASE_SOURCES,
-  RESOLUTIONS,
-} from '@ValenceContracts/schemas/ParsedRelease';
+import { MUSIC_QUALITIES } from '@ValenceContracts/schemas/ParsedRelease';
 import type { MusicQuality } from '@ValenceContracts/schemas/ParsedRelease';
-import { VIDEO_QUALITIES } from '@ValenceContracts/schemas/QualityProfile';
-import type { ProfileKind, QualityProfileDraft } from '@ValenceContracts/schemas/QualityProfile';
+import { videoQualityIdOf } from '@ValenceContracts/functions/videoQualityIdOf';
+import { VIDEO_QUALITY_IDS } from '@ValenceContracts/schemas/QualityProfile';
+import type {
+  ProfileKind,
+  QualityProfileDraft,
+  VideoQualityId,
+} from '@ValenceContracts/schemas/QualityProfile';
 import type { ArrSetup } from '@ValenceRequests/arrImport/ArrSetup';
 import { musicQualityOf } from '@ValenceRequests/arrImport/musicQualityOf';
 import { termAsWord } from '@ValenceRequests/arrImport/termAsWord';
 import { videoQualityOf } from '@ValenceRequests/arrImport/videoQualityOf';
-import type { VideoQuality } from '@ValenceRequests/arrImport/videoQualityOf';
 import { wordsOfCustomFormat } from '@ValenceRequests/arrImport/wordsOfCustomFormat';
 import type {
   ArrQuality,
@@ -52,27 +52,6 @@ const cutoffOf = (profile: ArrQualityProfile): ArrQualityItem | undefined =>
     ? undefined
     : (profile.items.find((item) => item.items.length > 0 && item.id === profile.cutoff) ??
       profile.items.find((item) => item.items.length === 0 && item.quality?.id === profile.cutoff));
-
-/**
- * The best of some video qualities, in the order Valence ranks them.
- *
- * @param qualities - The qualities.
- * @returns The best, or none.
- */
-const bestVideo = (qualities: readonly VideoQuality[]): VideoQuality | undefined =>
-  qualities.toSorted((left, right) => {
-    const rank = (quality: VideoQuality) => {
-      const found = VIDEO_QUALITIES.findIndex(
-        (one) => one.source === quality.source && one.resolution === quality.resolution,
-      );
-
-      return found === -1
-        ? VIDEO_QUALITIES.length + RELEASE_SOURCES.indexOf(quality.source)
-        : found;
-    };
-
-    return rank(left) - rank(right);
-  })[0];
 
 /**
  * Says which qualities a profile allows that Valence has no equivalent for, where there are any.
@@ -170,8 +149,9 @@ const wordsOf = (profile: ArrQualityProfile, setup: ArrSetup, notes: Said[]): Wo
 };
 
 /**
- * A Radarr, Sonarr or Lidarr quality profile as a Valence one: the qualities it allows as Valence's
- * resolutions and sources, or its music qualities; its cutoff as what to upgrade until; whether it
+ * A Radarr, Sonarr or Lidarr quality profile as a Valence one: the qualities it allows, best first
+ * as it ranks them, the qualities of a group in Valence's own order since the app holds them equal,
+ * or its music qualities; its cutoff as what to upgrade until; whether it
  * upgrades; and its custom formats and release profiles as preferred, required and banned words —
  * saying what could only be approximated and what was left out.
  *
@@ -232,52 +212,50 @@ const profileOf = (
     };
   }
 
-  const video = allowed.flatMap((quality) => {
+  const asId = (quality: ArrQuality): VideoQualityId | null => {
     const read = videoQualityOf(quality.name);
 
-    if (read === null) {
-      unknown.add(quality.name);
-    }
+    return read === null ? null : videoQualityIdOf(read.source, read.resolution);
+  };
+  const qualities = [
+    ...new Set(
+      profile.items
+        .filter((item) => item.allowed)
+        .toReversed()
+        .flatMap((item) =>
+          qualitiesIn(item)
+            .flatMap((quality) => {
+              const id = asId(quality);
 
-    return read === null ? [] : [read];
-  });
-  const until = bestVideo(
-    (cutoff === undefined ? [] : qualitiesIn(cutoff))
-      .map((quality) => videoQualityOf(quality.name))
-      .filter((quality): quality is VideoQuality => quality !== null),
-  );
-  const resolutions = RESOLUTIONS.filter((resolution) =>
-    video.some((quality) => quality.resolution === resolution),
-  );
-  const sources = RELEASE_SOURCES.filter((source) =>
-    video.some((quality) => quality.source === source),
-  );
-  const isWider = VIDEO_QUALITIES.some(
-    (one) =>
-      resolutions.includes(one.resolution) &&
-      sources.includes(one.source) &&
-      !video.some(
-        (quality) => quality.source === one.source && quality.resolution === one.resolution,
-      ),
-  );
+              if (id === null) {
+                unknown.add(quality.name);
+              }
+
+              return id === null ? [] : [id];
+            })
+            .toSorted(
+              (left, right) => VIDEO_QUALITY_IDS.indexOf(left) - VIDEO_QUALITY_IDS.indexOf(right),
+            ),
+        ),
+    ),
+  ];
+  const until = (cutoff === undefined ? [] : qualitiesIn(cutoff))
+    .map(asId)
+    .filter((id): id is VideoQualityId => id !== null && qualities.includes(id))
+    .toSorted((left, right) => qualities.indexOf(left) - qualities.indexOf(right))[0];
 
   sayUnmatched(unknown, notes);
 
-  if (isWider) {
-    notes.push(saying('requests.arrImport.everyResolutionIsTakenFromEverySource'));
-  }
-
-  if (video.length === 0) {
+  if (qualities.length === 0) {
     notes.push(saying('requests.arrImport.noQualityMatchedSoValencesDefaultsHold'));
   }
 
   return {
     draft: {
       ...base,
-      ...(video.length === 0 ? {} : { resolutions, sources }),
+      ...(qualities.length === 0 ? {} : { qualities }),
       isUpgrading: profile.upgradeAllowed && until !== undefined,
-      upgradeUntilResolution: profile.upgradeAllowed ? (until?.resolution ?? null) : null,
-      upgradeUntilSource: profile.upgradeAllowed ? (until?.source ?? null) : null,
+      cutoff: profile.upgradeAllowed ? (until ?? null) : null,
     },
     notes,
   };

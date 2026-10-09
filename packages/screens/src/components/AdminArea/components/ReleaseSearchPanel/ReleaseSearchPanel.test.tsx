@@ -33,8 +33,7 @@ vi.mock('@ValenceClient/requests/fetchProfiles', () => ({
 
 const HD = aQualityProfile({
   id: '9b2e1f5a-8d4c-4e2a-9f6b-1c3d5e7f9a0b',
-  resolutions: ['1080p'],
-  sources: ['bluray'],
+  qualities: ['bluray-1080p'],
 });
 
 /**
@@ -47,6 +46,7 @@ const aJudgement = (
   reasons: string[],
 ): Judgement => ({
   releaseId,
+  quality: 1,
   parsed: {
     title: 'Dune Part Two',
     year: 2024,

@@ -1,4 +1,7 @@
-import { RECOMMENDED_QUALITY_SIZES } from '@ValenceContracts/schemas/QualityProfile';
+import {
+  DEFAULT_VIDEO_QUALITIES,
+  RECOMMENDED_QUALITY_SIZES,
+} from '@ValenceContracts/schemas/QualityProfile';
 import { describe, expect, it } from 'vitest';
 import { A_NEW_PROFILE } from './readProfileForm';
 import type { ProfileForm } from './readProfileForm';
@@ -24,15 +27,13 @@ describe('profileFormSchema', () => {
         releaseWait: 'physical',
         preferredWords: 'HDR, Atmos, , /\\bdv\\b/',
         isUpgrading: true,
-        upgradeUntilResolution: '1080p',
-        upgradeUntilSource: 'bluray',
+        cutoff: 'bluray-1080p',
       }),
     ).toEqual({
       draft: {
         name: 'HD',
         kind: 'video',
-        resolutions: ['1080p', '720p'],
-        sources: ['remux', 'bluray', 'webdl', 'webrip', 'hdtv'],
+        qualities: [...DEFAULT_VIDEO_QUALITIES],
         musicQualities: ['flac', 'mp3-320', 'mp3-v0'],
         smallestMb: null,
         largestMb: null,
@@ -41,9 +42,11 @@ describe('profileFormSchema', () => {
         preferredWords: ['HDR', 'Atmos', '/\\bdv\\b/'],
         requiredWords: [],
         bannedWords: [],
+        formats: [],
+        minFormatScore: 0,
+        upgradeUntilFormatScore: null,
         isUpgrading: true,
-        upgradeUntilResolution: '1080p',
-        upgradeUntilSource: 'bluray',
+        cutoff: 'bluray-1080p',
         upgradeUntilMusicQuality: null,
         libraryIds: [],
         preferredLanguage: null,
@@ -75,14 +78,50 @@ describe('profileFormSchema', () => {
   });
 
   it('forgets how far to upgrade when upgrading is off', () => {
+    expect(read({ ...FILLED, isUpgrading: false, cutoff: 'bluray-1080p' }).draft).toMatchObject({
+      cutoff: null,
+    });
+  });
+
+  it('reads custom formats, their scores and the score to upgrade until', () => {
     expect(
-      read({ ...FILLED, isUpgrading: false, upgradeUntilResolution: '2160p' }).draft,
-    ).toMatchObject({ upgradeUntilResolution: null });
+      read({
+        ...FILLED,
+        isUpgrading: true,
+        minFormatScore: '-100',
+        upgradeUntilFormatScore: '500',
+        formats: [
+          {
+            name: ' HDR ',
+            score: '500',
+            conditions: [{ kind: 'hdr', value: 'hdr10', isNegated: false, isRequired: false }],
+          },
+        ],
+      }).draft,
+    ).toMatchObject({
+      minFormatScore: -100,
+      upgradeUntilFormatScore: 500,
+      formats: [{ name: 'HDR', score: 500 }],
+    });
   });
 
   it.each<[Partial<ProfileForm>, string]>([
     [{ name: ' ' }, 'Enter a name for the profile.'],
-    [{ resolutions: [] }, 'Allow at least one resolution.'],
+    [{ formats: [{ name: ' ', score: '1', conditions: [] }] }, 'Name every custom format.'],
+    [
+      {
+        formats: [
+          {
+            name: 'HDR',
+            score: '1',
+            conditions: [{ kind: 'words', value: ' ', isNegated: false, isRequired: false }],
+          },
+        ],
+      },
+      'Give every condition a value.',
+    ],
+    [{ minFormatScore: '1.5' }, 'Scores are whole numbers, such as 100 or -500.'],
+    [{ qualities: [] }, 'Allow at least one quality.'],
     [{ kind: 'music', musicQualities: [] }, 'Allow at least one format.'],
     [{ kind: 'music', smallestMb: 'lots' }, 'Enter sizes in megabytes.'],
     [{ kind: 'music', largestMb: '0' }, 'Enter sizes in megabytes.'],

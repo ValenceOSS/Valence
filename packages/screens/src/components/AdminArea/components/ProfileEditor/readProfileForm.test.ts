@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { A_NEW_PROFILE, formFor } from './readProfileForm';
 import { aQualityProfile } from '@ValenceScreens/testing/aQualityProfile';
+import { DEFAULT_VIDEO_QUALITIES } from '@ValenceContracts/schemas/QualityProfile';
 
 const KEPT = aQualityProfile({
   name: 'Albums',
   kind: 'music',
-  resolutions: [],
-  sources: [],
+  qualities: [],
   musicQualities: ['flac', 'mp3-320'],
   smallestMb: 50,
   preferredWords: ['Deluxe', 'Remastered'],
@@ -19,7 +19,7 @@ const KEPT = aQualityProfile({
 describe('formFor', () => {
   it('opens a new profile on sensible choices', () => {
     expect(formFor(null)).toEqual(A_NEW_PROFILE);
-    expect(A_NEW_PROFILE.resolutions).toEqual(['1080p', '720p']);
+    expect(A_NEW_PROFILE.qualities).toEqual(DEFAULT_VIDEO_QUALITIES);
   });
 
   it('opens on a kept profile, its words and sizes written out', () => {

@@ -15,14 +15,17 @@ describe('createProfileService', () => {
   it('adds a profile with what it was not told filled in, and lists them by name', async () => {
     const service = aService();
 
-    const ultra = await service.add({ name: 'Ultra', kind: 'video', resolutions: ['2160p'] });
+    const ultra = await service.add({
+      name: 'Ultra',
+      kind: 'video',
+      qualities: ['remux-2160p', 'bluray-2160p', 'webdl-2160p', 'webrip-2160p', 'hdtv-2160p'],
+    });
 
     await service.add({ name: 'Albums', kind: 'music' });
 
     expect(ultra).toMatchObject({
       name: 'Ultra',
-      resolutions: ['2160p'],
-      sources: ['remux', 'bluray', 'webdl', 'webrip', 'hdtv'],
+      qualities: ['remux-2160p', 'bluray-2160p', 'webdl-2160p', 'webrip-2160p', 'hdtv-2160p'],
       createdAt: AT.toISOString(),
     });
     expect((await service.list()).map((profile) => profile.name)).toEqual(['Albums', 'Ultra']);
@@ -36,7 +39,17 @@ describe('createProfileService', () => {
     expect(await service.change(hd.id, { isUpgrading: true })).toMatchObject({
       isUpgrading: true,
       bannedWords: ['cam'],
-      resolutions: ['1080p', '720p'],
+      qualities: [
+        'remux-1080p',
+        'bluray-1080p',
+        'webdl-1080p',
+        'webrip-1080p',
+        'hdtv-1080p',
+        'bluray-720p',
+        'webdl-720p',
+        'webrip-720p',
+        'hdtv-720p',
+      ],
     });
     expect(await service.change('nothing', { name: 'x' })).toBeNull();
   });

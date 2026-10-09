@@ -18,11 +18,7 @@ import { TabPanel } from '@ValenceUI/TabPanel';
 import { TabRow } from '@ValenceUI/TabRow';
 import { Tabs } from '@ValenceUI/Tabs';
 import { TextField } from '@ValenceUI/TextField';
-import {
-  MUSIC_QUALITIES,
-  RELEASE_SOURCES,
-  RESOLUTIONS,
-} from '@ValenceContracts/schemas/ParsedRelease';
+import { MUSIC_QUALITIES } from '@ValenceContracts/schemas/ParsedRelease';
 import { LANGUAGE_NAMES } from '@ValenceCore/functions/describeTrack';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
@@ -37,6 +33,9 @@ import type { ProfileTab } from './readProfileForm';
 import type { ProfileEditorProps } from './ProfileEditor.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { nameVideoQuality } from '@ValenceScreens/components/AdminArea/nameVideoQuality';
+import { VIDEO_QUALITY_IDS } from '@ValenceContracts/schemas/QualityProfile';
+import { CustomFormats } from '@ValenceScreens/components/AdminArea/components/ProfileEditor/components/CustomFormats/CustomFormats';
 
 const TABS: readonly { id: ProfileTab; label: string }[] = [
   { id: 'quality', label: say('common.quality') },
@@ -141,9 +140,11 @@ const Choosing = <Value extends string>({
 
 Choosing.displayName = 'Choosing';
 
+const VIDEO_QUALITY_OPTIONS = VIDEO_QUALITY_IDS.map((id) => ({ id, label: nameVideoQuality(id) }));
+
 /**
  * The dialog for adding a quality profile, or changing one already kept: for films and series, which
- * resolutions and sources may be taken, best first, how large a release of each quality may be an
+ * qualities may be taken, best first, how large a release of each quality may be an
  * hour, and whether a film is held until it is out digitally or on disc; for music, which formats,
  * and how large an album. Words can be preferred, required or banned, a language can be preferred,
  * it can say whether to upgrade later and up to what, who may ask with it, and which libraries it
@@ -196,7 +197,7 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
 
   const send = (event: FormEvent) => {
     if (form.check() === null) {
-      setTab('quality');
+      setTab(form.errorOf('formats') === undefined ? 'quality' : 'matching');
     }
 
     form.submit(event);
@@ -268,32 +269,21 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
                 detail={say('screens.adminArea.profileEditor.tickWhatMayBeTakenBest')}
               >
                 {isVideo ? (
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <FormField label={say('screens.adminArea.profileEditor.resolutions')}>
-                      <RankedChoices
-                        label={say('screens.adminArea.profileEditor.resolutions')}
-                        options={optionsOf(RESOLUTIONS)}
-                        chosen={values.resolutions}
-                        onChange={(resolutions) => {
-                          change({ resolutions });
-                        }}
-                      />
-                    </FormField>
-
-                    <FormField
-                      label={say('screens.adminArea.profileEditor.sources')}
-                      description={say('screens.adminArea.profileEditor.aReleaseThatDoesNotSay')}
-                    >
-                      <RankedChoices
-                        label={say('screens.adminArea.profileEditor.sources')}
-                        options={optionsOf(RELEASE_SOURCES)}
-                        chosen={values.sources}
-                        onChange={(sources) => {
-                          change({ sources });
-                        }}
-                      />
-                    </FormField>
-                  </div>
+                  <FormField
+                    label={say('screens.adminArea.profileEditor.qualities')}
+                    description={say(
+                      'screens.adminArea.profileEditor.releasesThatDoNotSayTheirSource',
+                    )}
+                  >
+                    <RankedChoices
+                      label={say('screens.adminArea.profileEditor.qualities')}
+                      options={VIDEO_QUALITY_OPTIONS}
+                      chosen={values.qualities}
+                      onChange={(qualities) => {
+                        change({ qualities });
+                      }}
+                    />
+                  </FormField>
                 ) : (
                   <FormField label={say('screens.adminArea.profileEditor.formats')}>
                     <RankedChoices
@@ -318,8 +308,7 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
               >
                 {isVideo ? (
                   <QualitySizes
-                    resolutions={values.resolutions}
-                    sources={values.sources}
+                    qualities={values.qualities}
                     sizes={values.sizes}
                     onChange={(sizes) => {
                       change({ sizes });
@@ -393,6 +382,26 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
                 </div>
               </Section>
 
+              <Section
+                title={say('screens.profileEditor.customFormats.customFormats')}
+                detail={say('screens.profileEditor.customFormats.eachFormatAddsItsScore')}
+              >
+                <CustomFormats
+                  formats={values.formats}
+                  onChange={(formats) => {
+                    change({ formats });
+                  }}
+                />
+
+                <TextField
+                  label={say('screens.profileEditor.customFormats.leastFormatScore')}
+                  type="number"
+                  {...form.text('minFormatScore')}
+                  description={say('screens.profileEditor.customFormats.releasesUnderItAreRefused')}
+                  className="sm:w-64"
+                />
+              </Section>
+
               <Section title={say('common.upgrades')}>
                 <Switch
                   label={say('screens.adminArea.profileEditor.upgradeToABetterReleaseLater')}
@@ -405,21 +414,19 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
                 {!values.isUpgrading ? null : isVideo ? (
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Choosing
-                      label={say('screens.adminArea.profileEditor.untilTheResolutionIs')}
-                      value={values.upgradeUntilResolution}
-                      options={optionsOf(values.resolutions)}
-                      onChoose={(upgradeUntilResolution) => {
-                        change({ upgradeUntilResolution });
+                      label={say('screens.adminArea.profileEditor.untilTheQualityIs')}
+                      value={values.cutoff}
+                      options={values.qualities.map((id) => ({ id, label: nameVideoQuality(id) }))}
+                      onChoose={(cutoff) => {
+                        change({ cutoff });
                       }}
                     />
 
-                    <Choosing
-                      label={say('screens.adminArea.profileEditor.andTheSourceIs')}
-                      value={values.upgradeUntilSource}
-                      options={optionsOf(values.sources)}
-                      onChoose={(upgradeUntilSource) => {
-                        change({ upgradeUntilSource });
-                      }}
+                    <TextField
+                      label={say('screens.profileEditor.customFormats.untilTheFormatScoreIs')}
+                      type="number"
+                      {...form.text('upgradeUntilFormatScore')}
+                      placeholder={say('screens.profileEditor.customFormats.anyFormatScore')}
                     />
                   </div>
                 ) : (
@@ -534,7 +541,11 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
 
           <DialogFooter
             note={
-              form.problem ?? form.errorOf('resolutions') ?? form.errorOf('musicQualities') ?? null
+              form.problem ??
+              form.errorOf('qualities') ??
+              form.errorOf('musicQualities') ??
+              form.errorOf('formats') ??
+              null
             }
             dismiss={{ onChoose: onClose }}
             confirm={{

@@ -91,7 +91,7 @@ describe('describeIndexerState', () => {
         seedRatio: null,
       }),
     ).toEqual({
-      label: 'Offline',
+      label: 'Resting',
       tone: 'danger',
       detail: 'Turned off after 5 failures in a row',
       help: null,

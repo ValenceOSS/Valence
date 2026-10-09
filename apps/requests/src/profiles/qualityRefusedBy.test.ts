@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { aProfile } from '@ValenceRequests/testing/aProfile';
 import { qualityRefusedBy } from './qualityRefusedBy';
 
-const FOUR_K = aProfile({ resolutions: ['2160p'], sources: ['webdl', 'bluray'] });
+const FOUR_K = aProfile({ qualities: ['webdl-2160p', 'bluray-2160p'] });
 
 describe('qualityRefusedBy', () => {
   it('refuses a resolution off the profile’s list', () => {

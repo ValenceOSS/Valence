@@ -1215,6 +1215,7 @@ const ENGLISH = {
   'common.requestTheAlbumTitleIsOn': 'Request the album {title} is on',
   'common.requestTitle': 'Request {title}',
   'common.resetAndRebuild': 'Reset and rebuild',
+  'common.resolution': 'Resolution',
   'common.resume': 'Resume',
   'common.resumeFromResume': 'Resume from {resume}',
   'common.resumeTitleFromResumeSeconds': 'Resume {title} from {resumeSeconds}',
@@ -2375,8 +2376,6 @@ const ENGLISH = {
     'The custom format {name} was only approximated, using preferred and banned words.',
   'requests.arrImport.customFormatNameWasLeftOut':
     'The custom format {name} checks more than release names, so it wasn’t imported.',
-  'requests.arrImport.everyResolutionIsTakenFromEverySource':
-    'Valence allows every selected resolution from every selected source, which is slightly less strict than before.',
   'requests.arrImport.itListsNoHost': 'It has no host set.',
   'requests.arrImport.libraryCouldNotBeHandedToApp':
     'Couldn’t connect {library} to {app}, so it wasn’t changed.',
@@ -2508,9 +2507,9 @@ const ENGLISH = {
     'The indexer is rate-limiting requests',
   'requests.indexers.indexerSaid': 'The indexer said: {said}',
   'requests.indexers.indexerService.failing': 'Failing',
+  'requests.indexers.indexerService.restingAfterFailuresFailuresIn':
+    'Resting after {failures} failures in a row: {problem}. It’s tried again on its own, after a longer pause each time it fails.',
   'requests.indexers.indexerService.theIndexerCouldNotBeAsked': 'Couldn’t connect to the indexer',
-  'requests.indexers.indexerService.turnedOffAfterFailuresFailuresIn':
-    'Turned off after {failures} failures in a row: {problem}',
   'requests.indexers.noDefinitionNamed': 'No definition named {definition} in the catalogue',
   'requests.indexers.noDefinitionNamedAtAll': 'The indexer has no definition selected',
   'requests.indexers.readCapabilities.theIndexerDidNotSayWhat':
@@ -2534,12 +2533,16 @@ const ENGLISH = {
   'requests.mediaRequests.judgeForRequest.everythingItHoldsIsHereOr':
     'Everything in it is already in the library or downloading',
   'requests.mediaRequests.judgeForRequest.itFailedBeforeReason': 'It failed previously: {reason}',
+  'requests.mediaRequests.judgeForRequest.itIsAlreadyDownloading':
+    'It’s already downloading for another request',
   'requests.mediaRequests.judgeForRequest.itIsNoBetterThanWhat':
     'It’s no better than what’s already in the library',
   'requests.mediaRequests.judgeForRequest.itsNameDoesNotSayItIs':
     'Its name doesn’t match this title',
   'requests.mediaRequests.judgeForRequest.onlySomeEpisodesWanted':
     'Only {wanted} of its {held} episodes are wanted',
+  'requests.mediaRequests.judgeForRequest.onlySomeSeasonsWanted':
+    'Only {wanted} of the {held} seasons it holds are wanted',
   'requests.mediaRequests.noIndexerOn': 'no indexer is turned on',
   'requests.mediaRequests.noneFoundForIt.one': 'the one result didn’t match',
   'requests.mediaRequests.noneFoundForIt.other': 'none of the {count} results matched',
@@ -2615,11 +2618,15 @@ const ENGLISH = {
   'requests.mediaRequests.searchWhat.season': 'season {season}',
   'requests.profiles.judgeRelease.fifthChoice': '{quality}, the fifth preference',
   'requests.profiles.judgeRelease.firstChoice': '{quality}, the first preference',
+  'requests.profiles.judgeRelease.formatScoreUnderMinimum':
+    'Its format score, {score}, is under this profile’s minimum of {minimum}',
   'requests.profiles.judgeRelease.fourthChoice': '{quality}, the fourth preference',
   'requests.profiles.judgeRelease.hasPreferredWord': 'It has “{word}” (+{points})',
   'requests.profiles.judgeRelease.inLanguage': 'In {name} (+{points})',
   'requests.profiles.judgeRelease.itDoesNotSayHowIt': 'Its name doesn’t say how it was encoded',
   'requests.profiles.judgeRelease.itDoesNotSayItsResolution': 'Its name doesn’t say its resolution',
+  'requests.profiles.judgeRelease.itDoesNotSayItsSource':
+    'It doesn’t say its source, so it’s taken as {quality}',
   'requests.profiles.judgeRelease.itHasWordWhichIsBanned': 'It has “{word}”, which is banned',
   'requests.profiles.judgeRelease.itIsAVideoNotA': 'It’s a video, not a book',
   'requests.profiles.judgeRelease.itIsAVideoNotMusic': 'It’s a video, not music',
@@ -2634,6 +2641,7 @@ const ENGLISH = {
   'requests.profiles.judgeRelease.largerAnHourFor':
     'At {size} MB an hour it’s larger than this profile’s limit for {resolution} from {source}, {limit}',
   'requests.profiles.judgeRelease.laterChoice': '{quality}, preference number {number}',
+  'requests.profiles.judgeRelease.matchesFormat': 'Matches {name} ({points})',
   'requests.profiles.judgeRelease.missingRequiredWords':
     'It has none of the required words: {words}',
   'requests.profiles.judgeRelease.nobodyIsSeedingIt': 'No one is seeding it',
@@ -2660,6 +2668,7 @@ const ENGLISH = {
   'requests.profiles.qualityNames.aTelesync': 'A telesync',
   'requests.profiles.qualityNames.aWebDownload': 'A web download',
   'requests.profiles.qualityNames.aWebRip': 'A web rip',
+  'requests.profiles.qualityNames.sourceAtResolution': '{source} at {resolution}',
   'requests.profiles.starterProfiles.anyMusic': 'Any music',
   'requests.profiles.whatTheFilesSay.fileNotTakenByProfile':
     'Its file, {named}, is {quality}, which this profile doesn’t allow',
@@ -3982,11 +3991,8 @@ const ENGLISH = {
   'screens.adminArea.profileEditor.aFilmIsHeldUntilThen':
     'Films aren’t searched for until then, so cinema releases aren’t downloaded.',
   'screens.adminArea.profileEditor.alwaysUseThisProfile': 'Always use this profile',
-  'screens.adminArea.profileEditor.andTheSourceIs': 'And the source is',
   'screens.adminArea.profileEditor.anyRole': 'Any role',
   'screens.adminArea.profileEditor.aReleaseNeedsAtLeastOne': 'A release must contain at least one.',
-  'screens.adminArea.profileEditor.aReleaseThatDoesNotSay':
-    'Releases that don’t specify are allowed.',
   'screens.adminArea.profileEditor.aReleaseWithAnyIsRefused':
     'Releases containing any of these are rejected.',
   'screens.adminArea.profileEditor.bannedWords': 'Banned words',
@@ -4016,12 +4022,13 @@ const ENGLISH = {
   'screens.adminArea.profileEditor.preferredWords': 'Preferred words',
   'screens.adminArea.profileEditor.prefersReleasesThatSayTheyAre':
     'Prefers releases labelled with this language. Most releases have no language label, and those aren’t affected.',
+  'screens.adminArea.profileEditor.qualities': 'Qualities',
+  'screens.adminArea.profileEditor.releasesThatDoNotSayTheirSource':
+    'A release that doesn’t give its source counts as the lowest quality allowed at its resolution.',
   'screens.adminArea.profileEditor.requiredWords': 'Required words',
-  'screens.adminArea.profileEditor.resolutions': 'Resolutions',
   'screens.adminArea.profileEditor.searchFilmsOnceTheyAre': 'Search for films once they’re',
   'screens.adminArea.profileEditor.sizes': 'Sizes',
   'screens.adminArea.profileEditor.smallestMBAnAlbum': 'Minimum (MB per album)',
-  'screens.adminArea.profileEditor.sources': 'Sources',
   'screens.adminArea.profileEditor.theBestThereIs': 'Highest available',
   'screens.adminArea.profileEditor.thereAreNoFilmOrSeriesLibraries':
     'There are no film or series libraries yet.',
@@ -4029,7 +4036,7 @@ const ENGLISH = {
   'screens.adminArea.profileEditor.tickWhatMayBeTakenBest':
     'Select the allowed options, best first. This order ranks releases before anything else.',
   'screens.adminArea.profileEditor.untilTheFormatIs': 'Until the format is',
-  'screens.adminArea.profileEditor.untilTheResolutionIs': 'Until the resolution is',
+  'screens.adminArea.profileEditor.untilTheQualityIs': 'Until the quality is',
   'screens.adminArea.profileEditor.upgradeToABetterReleaseLater':
     'Upgrade to a better release later',
   'screens.adminArea.profileEditor.useTheLibrarysLanguage': 'Use the library’s language',
@@ -5190,6 +5197,7 @@ const ENGLISH = {
   'screens.indexersPanel.describeIndexerState.failedFailuresTimes': 'Failed {failures} times',
   'screens.indexersPanel.describeIndexerState.failedOnce': 'Failed once',
   'screens.indexersPanel.describeIndexerState.notTried': 'Not tested',
+  'screens.indexersPanel.describeIndexerState.resting': 'Resting',
   'screens.indexersPanel.describeTestRound.allCountAnswered': 'All {count} responded.',
   'screens.indexersPanel.describeTestRound.valueOfCountAnsweredValue2':
     '{value} of {count} responded. {value2}',
@@ -5677,8 +5685,36 @@ const ENGLISH = {
     'Choose the clip that plays when you hover over the card.',
   'screens.previewMomentPicker.whereTheClipStarts': 'Where the clip starts',
   'screens.previewMomentPicker.whereTheClipStartsAndEnds': 'Where the clip starts and ends',
+  'screens.profileEditor.customFormats.addACondition': 'Add a condition',
+  'screens.profileEditor.customFormats.addAFormat': 'Add a format',
+  'screens.profileEditor.customFormats.anyFormatScore': 'Any score',
+  'screens.profileEditor.customFormats.checks': 'Checks',
+  'screens.profileEditor.customFormats.customFormats': 'Custom formats',
+  'screens.profileEditor.customFormats.doesNotMatch': 'Doesn’t match',
+  'screens.profileEditor.customFormats.eachFormatAddsItsScore':
+    'Each format a release matches adds its score, and the score ranks releases of the same quality. A format matches when every required condition is met and at least one of the others.',
+  'screens.profileEditor.customFormats.formatName': 'Format name',
+  'screens.profileEditor.customFormats.hdr': 'HDR',
+  'screens.profileEditor.customFormats.leastFormatScore': 'Least format score',
+  'screens.profileEditor.customFormats.noFormatsYet':
+    'No custom formats yet. Releases are ranked by quality, then by preferred words and language.',
+  'screens.profileEditor.customFormats.releaseGroup': 'Release group',
+  'screens.profileEditor.customFormats.releasesUnderItAreRefused':
+    'Releases whose formats add up to less are refused.',
+  'screens.profileEditor.customFormats.removeThisCondition': 'Remove this condition',
+  'screens.profileEditor.customFormats.required': 'Required',
+  'screens.profileEditor.customFormats.score': 'Score',
+  'screens.profileEditor.customFormats.sizeHint': '2-10',
+  'screens.profileEditor.customFormats.sizeInGb': 'Size in GB',
+  'screens.profileEditor.customFormats.thisFormat': 'this format',
+  'screens.profileEditor.customFormats.untilTheFormatScoreIs': 'And the format score is at least',
+  'screens.profileEditor.customFormats.value': 'Value',
+  'screens.profileEditor.customFormats.videoCodec': 'Video codec',
+  'screens.profileEditor.customFormats.wordsHint': 'Atmos, or /pattern/',
   'screens.profileEditor.describeSizeAnHour.megabytesMBAnHour': '{megabytes} MB an hour',
   'screens.profileEditor.describeSizeAnHour.valueGBAnHour': '{value} GB an hour',
+  'screens.profileEditor.qualitySizes.allowAQualityToSetItsSize':
+    'Allow a quality to set its size limits.',
   'screens.profileEditor.qualitySizes.atLeastValue': 'At least {value}',
   'screens.profileEditor.qualitySizes.largestForName': 'Largest for {name}',
   'screens.profileEditor.qualitySizes.minToMax': '{min} to {max}',
@@ -5686,15 +5722,16 @@ const ENGLISH = {
   'screens.profileEditor.qualitySizes.sizesForEachQuality': 'Sizes for each quality',
   'screens.profileEditor.qualitySizes.sizesForName': 'Sizes for {name}',
   'screens.profileEditor.qualitySizes.smallestForName': 'Smallest for {name}',
-  'screens.profileEditor.qualitySizes.tickAResolutionAndASource':
-    'Select a resolution and a source to set their size limits.',
   'screens.profileEditor.qualitySizes.useTRaSHsRecommendedSizes': 'Use TRaSH’s recommended sizes',
   'screens.profileEditor.readProfileForm.allowAtLeastOneFormat': 'Allow at least one format.',
-  'screens.profileEditor.readProfileForm.allowAtLeastOneResolution':
-    'Allow at least one resolution.',
+  'screens.profileEditor.readProfileForm.allowAtLeastOneQuality': 'Allow at least one quality.',
   'screens.profileEditor.readProfileForm.aSizeIsANumberOf': 'Enter sizes in megabytes.',
+  'screens.profileEditor.readProfileForm.giveEveryConditionAValue': 'Give every condition a value.',
   'screens.profileEditor.readProfileForm.giveTheProfileAName': 'Enter a name for the profile.',
+  'screens.profileEditor.readProfileForm.nameEveryFormat': 'Name every custom format.',
   'screens.profileEditor.readProfileForm.new': 'New',
+  'screens.profileEditor.readProfileForm.scoresAreWholeNumbers':
+    'Scores are whole numbers, such as 100 or -500.',
   'screens.profileEditor.readProfileForm.theLargestSizeHasToBe':
     'The largest size must be more than the smallest.',
   'screens.profileGate.pagesOfPeople': 'Profile pages',

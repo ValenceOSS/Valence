@@ -15,6 +15,7 @@ import type {
   IndexerHealth,
   IndexerSettings,
   IndexerTest,
+  Release,
   ReleaseSearch,
   ReleaseSearchOutcome,
 } from '@ValenceContracts/schemas/Indexer';
@@ -26,6 +27,10 @@ import type { IndexerClient } from '@ValenceRequests/indexers/createIndexerClien
 import type { IndexerRecord, IndexerStore } from '@ValenceRequests/indexers/IndexerRecord';
 import type { ReleaseFile } from '@ValenceRequests/indexers/ReleaseFile';
 import { saying } from '@ValenceI18n/saying';
+import { withoutRepeats } from '@ValenceRequests/releases/withoutRepeats';
+import { restOf } from '@ValenceRequests/indexers/restOf';
+import { idsTakenBy } from '@ValenceRequests/indexers/idsTakenBy';
+import { withoutIds } from '@ValenceRequests/indexers/withoutIds';
 
 type CreateIndexerServiceOptions = {
   store: IndexerStore;
@@ -92,11 +97,15 @@ const mergeSettings = (
  * found. A search against a quality profile judges every release it found by it, and puts them in
  * the order they would be chosen.
  *
- * An indexer that keeps failing is turned off rather than asked forever, with the reason kept beside
+ * An indexer that takes a catalogue id the search carries is asked by the id first, and what it
+ * finds is marked as found by it; where that finds nothing it is asked by the words instead.
+ *
+ * An indexer that keeps failing rests rather than being asked every time, with the reason kept beside
  * it: after a few failures in a row it counts as failing, which the server hears about, and after a
- * few more it is switched off. Any answer at all clears the count, and switching one back on by hand
- * clears the reason. One that answers a test after failures switched it off is switched back on;
- * one somebody switched off themselves stays off. A site asking for a captcha is not a failure; it is a question for whoever is
+ * few more it rests, skipped for five minutes and then for longer after each failure that follows,
+ * up to a day, and is asked again on its own after each rest. Any answer at all clears the count and
+ * the reason, and so does switching it on or off by hand. One somebody switched off themselves stays
+ * off. One an earlier version switched off for its failures rests like any other. A site asking for a captcha is not a failure; it is a question for whoever is
  * setting it up.
  *
  * Nothing secret is ever shown back — not the API key, and not a definition's password, key or
@@ -107,7 +116,7 @@ const mergeSettings = (
  * @param client - How to ask them.
  * @param definitions - Where to find a definition by its id.
  * @param now - The clock.
- * @param turnOffAfter - How many failures in a row switch an indexer off.
+ * @param turnOffAfter - How many failures in a row set an indexer resting.
  * @param failingAfter - How many failures in a row count as failing.
  * @returns The service.
  */
@@ -178,6 +187,7 @@ const createIndexerService = ({
       failures: 0,
       lastProblem: null,
       lastProblemCode: null,
+      ...(record.turnedOffBecause === null ? {} : { isEnabled: true, turnedOffBecause: null }),
       ...(record.failures > 0 || Object.keys(changes).length > 0
         ? { updatedAt: now().toISOString() }
         : {}),
@@ -186,7 +196,7 @@ const createIndexerService = ({
 
   const failed = async (record: IndexerRecord, problem: Said, problemCode: ProblemCode | null) => {
     const failures = record.failures + 1;
-    const isTurningOff = record.isEnabled && failures >= turnOffAfter;
+    const isResting = failures >= turnOffAfter;
 
     await store.update(record.id, {
       session: record.session,
@@ -194,17 +204,35 @@ const createIndexerService = ({
       lastProblem: problem,
       lastProblemCode: problemCode,
       lastFailedAt: now().toISOString(),
-      ...(isTurningOff
+      ...(isResting
         ? {
-            isEnabled: false,
             turnedOffBecause: saying(
-              'requests.indexers.indexerService.turnedOffAfterFailuresFailuresIn',
+              'requests.indexers.indexerService.restingAfterFailuresFailuresIn',
               { failures: failures.toString(), problem },
             ),
           }
         : {}),
     });
   };
+
+  const searchOne = async (record: IndexerRecord, search: ReleaseSearch): Promise<Release[]> => {
+    if (Object.keys(idsTakenBy(search, record.capabilities)).length === 0) {
+      return client.search(record, search);
+    }
+
+    const byId = await client.search(record, search);
+
+    if (byId.length > 0) {
+      return byId.map((release) => ({ ...release, isFoundById: true }));
+    }
+
+    return client.search(record, withoutIds(search));
+  };
+
+  const isResting = (record: IndexerRecord): boolean =>
+    record.failures >= turnOffAfter &&
+    record.lastFailedAt !== null &&
+    now().getTime() - Date.parse(record.lastFailedAt) < restOf(record.failures - turnOffAfter);
 
   const tryOut = async (record: IndexerRecord): Promise<IndexerTest> => {
     try {
@@ -292,6 +320,7 @@ const createIndexerService = ({
 
       const { settings: given, ...rest } = change;
       const isSwitchedOn = change.isEnabled === true && !current.isEnabled;
+      const isSwitchedOff = change.isEnabled === false && current.isEnabled;
       const isMoved = change.url !== undefined && change.url !== current.url;
       const isReconfigured = given !== undefined;
       const secrets = secretsOf(await definitionOf(current));
@@ -300,7 +329,7 @@ const createIndexerService = ({
         ...(given === undefined
           ? {}
           : { settings: mergeSettings(current.settings, given, secrets) }),
-        ...(isSwitchedOn
+        ...(isSwitchedOn || isSwitchedOff
           ? { turnedOffBecause: null, failures: 0, lastProblem: null, lastProblemCode: null }
           : {}),
         ...(isMoved ? { capabilities: null } : {}),
@@ -397,8 +426,10 @@ const createIndexerService = ({
       const asking = (await store.list())
         .filter(
           (record) =>
-            record.isEnabled &&
-            (search.indexerIds === undefined || search.indexerIds.includes(record.id)),
+            (record.isEnabled || record.turnedOffBecause !== null) &&
+            (search.indexerIds === undefined
+              ? !isResting(record)
+              : search.indexerIds.includes(record.id)),
         )
         .toSorted((left, right) => left.priority - right.priority);
 
@@ -407,7 +438,7 @@ const createIndexerService = ({
           const started = Date.now();
 
           try {
-            const releases = await client.search(record, search);
+            const releases = await searchOne(record, search);
 
             await succeeded(record);
 
@@ -443,7 +474,7 @@ const createIndexerService = ({
         }),
       );
 
-      const releases = answers.flatMap((answer) => answer.releases);
+      const releases = withoutRepeats(answers.flatMap((answer) => answer.releases));
       const indexers = answers.map((answer) => answer.report);
 
       if (profile === null) {

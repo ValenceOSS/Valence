@@ -50,6 +50,7 @@ describe('readRequestCatalogue', () => {
       artist: null,
       albums: [],
       tvdbId: null,
+      imdbId: null,
     });
   });
 
@@ -64,7 +65,7 @@ describe('readRequestCatalogue', () => {
           },
           episode_run_time: [24],
           status: 'Ended',
-          external_ids: { tvdb_id: 424_536 },
+          external_ids: { tvdb_id: 424_536, imdb_id: 'tt22248376' },
         },
         [],
         posterUrlOf,
@@ -75,6 +76,7 @@ describe('readRequestCatalogue', () => {
       isEnded: true,
       year: null,
       tvdbId: 424_536,
+      imdbId: 'tt22248376',
     });
   });
 

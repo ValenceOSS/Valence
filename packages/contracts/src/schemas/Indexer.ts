@@ -144,6 +144,7 @@ const ReleaseSchema = z.object({
   uploadFactor: z.number().nonnegative().nullable().default(null),
   minimumRatio: z.number().nonnegative().nullable().default(null),
   minimumSeedSeconds: z.number().int().nonnegative().nullable().default(null),
+  isFoundById: z.boolean().optional(),
 });
 
 const IndexerSearchReportSchema = z.object({

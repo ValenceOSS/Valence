@@ -8,7 +8,11 @@ import { createIndexerService } from './createIndexerService';
 import { createMemoryRecordStore } from '@ValenceRequests/stores/createMemoryRecordStore';
 import type { IndexerClient, IndexerConnection } from './createIndexerClient';
 import type { IndexerRecord } from './IndexerRecord';
-import type { IndexerCapabilities, Release } from '@ValenceContracts/schemas/Indexer';
+import type {
+  IndexerCapabilities,
+  Release,
+  ReleaseSearch,
+} from '@ValenceContracts/schemas/Indexer';
 
 const NOW = new Date('2026-09-19T12:00:00.000Z');
 
@@ -373,7 +377,7 @@ describe('createIndexerService', () => {
     });
     const { service, client } = aService(
       [first, second, off],
-      aClient({ search: (indexer) => [aRelease(indexer, 'Dune')] }),
+      aClient({ search: (indexer) => [aRelease(indexer, `Dune ${indexer.name}`)] }),
     );
 
     const outcome = await service.search({ query: 'dune' });
@@ -394,6 +398,40 @@ describe('createIndexerService', () => {
       }),
     ]);
     expect(client.search).toHaveBeenCalledTimes(2);
+  });
+
+  it('asks by the id first where the indexer takes it, then by the words where that finds nothing', async () => {
+    const byId: IndexerCapabilities = {
+      ...CAPS,
+      modes: [...CAPS.modes, { mode: 'tv', parameters: ['q', 'tvdbid'] }],
+    };
+    const finding = (found: (search: ReleaseSearch) => Release[]) => {
+      const client = aClient();
+
+      client.search = vi.fn((_indexer: IndexerConnection, search: ReleaseSearch) =>
+        Promise.resolve(found(search)),
+      );
+
+      return aService([anIndexer({ capabilities: byId })], client);
+    };
+    const asked: ReleaseSearch = { query: 'the office', mode: 'tv', tvdbId: 73244 };
+
+    const { service: answering } = finding((search) =>
+      search.tvdbId === undefined ? [] : [aRelease(anIndexer(), 'The.Office.US.S02E01')],
+    );
+    const { service: silent, client } = finding((search) =>
+      search.tvdbId === undefined ? [aRelease(anIndexer(), 'The.Office.S02E01')] : [],
+    );
+
+    expect((await answering.search(asked)).releases).toMatchObject([{ isFoundById: true }]);
+
+    const fallback = await silent.search(asked);
+
+    expect(fallback.releases.map((release) => release.isFoundById)).toEqual([undefined]);
+    expect(client.search).toHaveBeenLastCalledWith(expect.anything(), {
+      query: 'the office',
+      mode: 'tv',
+    });
   });
 
   it('judges what it found against a profile, and puts it in the order it would be chosen', async () => {
@@ -485,7 +523,7 @@ describe('createIndexerService', () => {
     );
   });
 
-  it('turns an indexer off after too many failures in a row, saying why', async () => {
+  it('sets an indexer resting after too many failures in a row, saying why', async () => {
     const { service, store } = aService(
       [anIndexer({ failures: 4 })],
       aClient({
@@ -496,10 +534,51 @@ describe('createIndexerService', () => {
     await service.test(anIndexer().id);
 
     expect(await store.find(anIndexer().id)).toMatchObject({
-      isEnabled: false,
+      isEnabled: true,
       failures: 5,
-      turnedOffBecause: 'Turned off after 5 failures in a row: Couldn’t connect to the indexer',
+      turnedOffBecause:
+        'Resting after 5 failures in a row: Couldn’t connect to the indexer. It’s tried again on its own, after a longer pause each time it fails.',
     });
+  });
+
+  it('skips a resting indexer until its rest is over, then asks it again', async () => {
+    const failedAt = (minutesAgo: number) =>
+      new Date(NOW.getTime() - minutesAgo * 60_000).toISOString();
+    const resting = { failures: 6, turnedOffBecause: sayVerbatim('Resting'), isEnabled: true };
+    const { service: early, client: notAsked } = aService([
+      anIndexer({ ...resting, lastFailedAt: failedAt(10) }),
+    ]);
+    const {
+      service: rested,
+      client: asked,
+      store,
+    } = aService([anIndexer({ ...resting, lastFailedAt: failedAt(20) })]);
+
+    await early.search({ query: 'x' });
+    await rested.search({ query: 'x' });
+
+    expect(notAsked.search).not.toHaveBeenCalled();
+    expect(asked.search).toHaveBeenCalled();
+    expect(await store.find(anIndexer().id)).toMatchObject({
+      failures: 0,
+      turnedOffBecause: null,
+    });
+  });
+
+  it('asks an indexer switched off for its failures by an earlier version again, once rested', async () => {
+    const { service, client, store } = aService([
+      anIndexer({
+        isEnabled: false,
+        failures: 5,
+        turnedOffBecause: sayVerbatim('Turned off after 5 failures'),
+        lastFailedAt: '2020-01-01T00:00:00.000Z',
+      }),
+    ]);
+
+    await service.search({ query: 'x' });
+
+    expect(client.search).toHaveBeenCalled();
+    expect((await store.find(anIndexer().id))?.isEnabled).toBe(true);
   });
 
   it('clears the count when an indexer answers a search', async () => {

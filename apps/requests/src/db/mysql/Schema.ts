@@ -22,8 +22,16 @@ import {
   RELEASE_SOURCES,
   RESOLUTIONS,
 } from '@ValenceContracts/schemas/ParsedRelease';
-import { PROFILE_KINDS, RELEASE_WAITS } from '@ValenceContracts/schemas/QualityProfile';
-import type { QualitySize } from '@ValenceContracts/schemas/QualityProfile';
+import {
+  PROFILE_KINDS,
+  RELEASE_WAITS,
+  VIDEO_QUALITY_IDS,
+} from '@ValenceContracts/schemas/QualityProfile';
+import type {
+  CustomFormat,
+  QualitySize,
+  VideoQualityId,
+} from '@ValenceContracts/schemas/QualityProfile';
 import type {
   MusicQuality,
   ReleaseSource,
@@ -218,6 +226,7 @@ const qualityProfile = requestsSchema('quality_profile', {
   kind: varchar('kind', { length: 32, enum: PROFILE_KINDS }).notNull(),
   resolutions: jsonColumn('resolutions').$type<Resolution[]>().notNull().default(jsonDefault([])),
   sources: jsonColumn('sources').$type<ReleaseSource[]>().notNull().default(jsonDefault([])),
+  qualities: jsonColumn('qualities').$type<VideoQualityId[]>(),
   musicQualities: jsonColumn('music_qualities')
     .$type<MusicQuality[]>()
     .notNull()
@@ -231,12 +240,16 @@ const qualityProfile = requestsSchema('quality_profile', {
     .default(jsonDefault([])),
   requiredWords: jsonColumn('required_words').$type<string[]>().notNull().default(jsonDefault([])),
   bannedWords: jsonColumn('banned_words').$type<string[]>().notNull().default(jsonDefault([])),
+  formats: jsonColumn('formats').$type<CustomFormat[]>().notNull().default(jsonDefault([])),
+  minFormatScore: int('min_format_score').notNull().default(0),
+  upgradeUntilFormatScore: int('upgrade_until_format_score'),
   isUpgrading: boolean('is_upgrading').notNull().default(false),
   releaseWait: varchar('release_wait', { length: 32, enum: RELEASE_WAITS })
     .notNull()
     .default('digital'),
   upgradeUntilResolution: varchar('upgrade_until_resolution', { length: 32, enum: RESOLUTIONS }),
   upgradeUntilSource: varchar('upgrade_until_source', { length: 32, enum: RELEASE_SOURCES }),
+  cutoff: varchar('cutoff', { length: 32, enum: VIDEO_QUALITY_IDS }),
   upgradeUntilMusicQuality: varchar('upgrade_until_music_quality', {
     length: 32,
     enum: MUSIC_QUALITIES,
@@ -257,6 +270,7 @@ const mediaRequest = requestsSchema(
     kind: varchar('kind', { length: 32, enum: MEDIA_REQUEST_KINDS }).notNull(),
     tmdbId: int('tmdb_id'),
     tvdbId: int('tvdb_id'),
+    imdbId: varchar('imdb_id', { length: 16 }),
     musicBrainzId: varchar('music_brainz_id', { length: 64 }),
     openLibraryId: int('open_library_id'),
     title: mediumtext('title').notNull(),

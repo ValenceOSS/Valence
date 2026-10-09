@@ -5,8 +5,8 @@ import type { StateBadge } from '@ValenceClient/status/StateBadge';
 import { say } from '@ValenceI18n/say';
 
 /**
- * Says how an indexer is, as a badge and the line beneath it: offline because Valence turned it off,
- * and why, switched off by somebody, failing and why, online, or never tried.
+ * Says how an indexer is, as a badge and the line beneath it: resting after failing too often, and
+ * why, switched off by somebody, failing and why, online, or never tried.
  *
  * @param indexer - The indexer.
  * @returns The badge's words and tone, and the reason where there is one.
@@ -14,7 +14,7 @@ import { say } from '@ValenceI18n/say';
 const describeIndexerState = (indexer: Indexer): StateBadge => {
   if (indexer.turnedOffBecause !== null) {
     return {
-      label: say('common.offline'),
+      label: say('screens.indexersPanel.describeIndexerState.resting'),
       tone: 'danger',
       detail: sayAgain(indexer.turnedOffBecause),
       help: docsFor(indexer.lastProblemCode),

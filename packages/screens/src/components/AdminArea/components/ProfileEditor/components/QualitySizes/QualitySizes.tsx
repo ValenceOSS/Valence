@@ -5,6 +5,7 @@ import {
   VIDEO_QUALITIES,
 } from '@ValenceContracts/schemas/QualityProfile';
 import { QUALITY_NAMES } from '@ValenceScreens/components/AdminArea/QUALITY_NAMES';
+import { videoQualityIdOf } from '@ValenceContracts/functions/videoQualityIdOf';
 import { describeSizeAnHour } from '@ValenceScreens/components/AdminArea/components/ProfileEditor/describeSizeAnHour';
 import {
   SIZE_STEPS,
@@ -45,17 +46,18 @@ const describeLimits = ({ minMb, maxMb }: Pick<QualitySize, 'minMb' | 'maxMb'>):
 /**
  * The smallest and largest a release may be for each quality the profile takes, an hour of it, the
  * way Radarr's quality settings are: one track for each, its handles at either end for no limit.
- * Only the qualities a profile takes are shown, best first, and the sizes TRaSH's guides recommend
- * can be put back at any time.
+ * Only the qualities a profile takes are shown, in its order, and the sizes TRaSH's guides
+ * recommend can be put back at any time. A cinema recording has no size limits of its own.
  *
- * @param resolutions - The resolutions the profile takes.
- * @param sources - The sources the profile takes.
+ * @param qualities - The qualities the profile takes, best first.
  * @param sizes - The limits kept for each quality.
  * @param onChange - Told the limits as they change.
  */
-const QualitySizes = ({ resolutions, sources, sizes, onChange }: QualitySizesProps) => {
-  const shown = VIDEO_QUALITIES.filter(
-    (quality) => resolutions.includes(quality.resolution) && sources.includes(quality.source),
+const QualitySizes = ({ qualities, sizes, onChange }: QualitySizesProps) => {
+  const shown = qualities.flatMap((id) =>
+    VIDEO_QUALITIES.filter(
+      (quality) => videoQualityIdOf(quality.source, quality.resolution) === id,
+    ),
   );
 
   const change = (next: QualitySize) => {
@@ -69,7 +71,7 @@ const QualitySizes = ({ resolutions, sources, sizes, onChange }: QualitySizesPro
     <div className="flex flex-col gap-3">
       {shown.length === 0 ? (
         <p className="font-body text-sm text-text-muted">
-          {say('screens.profileEditor.qualitySizes.tickAResolutionAndASource')}
+          {say('screens.profileEditor.qualitySizes.allowAQualityToSetItsSize')}
         </p>
       ) : (
         <ul

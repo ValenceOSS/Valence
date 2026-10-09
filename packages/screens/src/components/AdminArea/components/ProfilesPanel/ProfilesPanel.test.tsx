@@ -25,8 +25,7 @@ vi.mock('@ValenceClient/library/fetchLibrary', async (actual) => ({
 }));
 
 const HD = aQualityProfile({
-  resolutions: ['1080p'],
-  sources: ['bluray'],
+  qualities: ['bluray-1080p'],
   libraryIds: ['films', 'gone'],
 });
 
@@ -75,7 +74,7 @@ describe('ProfilesPanel', () => {
     await waitFor(() => {
       expect(within(rowOf('HD')).getByText('Films, A deleted library')).toBeInTheDocument();
     });
-    expect(within(rowOf('HD')).getByText('1080p · Blu-ray')).toBeInTheDocument();
+    expect(within(rowOf('HD')).getByText('Blu-ray 1080p')).toBeInTheDocument();
   });
 
   it('shows films and series first, and music behind its own choice', async () => {

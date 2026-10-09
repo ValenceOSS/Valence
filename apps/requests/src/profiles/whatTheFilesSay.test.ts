@@ -2,17 +2,20 @@ import { describe, expect, it } from 'vitest';
 import { aProfile } from '@ValenceRequests/testing/aProfile';
 import { whatTheFilesSay } from './whatTheFilesSay';
 
-const FOUR_K = aProfile({ name: '4K', resolutions: ['2160p'] });
+const FOUR_K = aProfile({
+  name: '4K',
+  qualities: ['remux-2160p', 'bluray-2160p', 'webdl-2160p', 'webrip-2160p', 'hdtv-2160p'],
+});
 
 describe('whatTheFilesSay', () => {
-  it('refuses a film sold as 4K whose file is a 1080p telesync', () => {
+  it('refuses a film sold as 4K whose file is a telesync', () => {
     expect(
       whatTheFilesSay(
         ['Spider-Man.Brand.New.Day.2026.V3.1080p.TELESYNC.x264-DKS_rxl1.mp4'],
         FOUR_K,
       ),
     ).toEqual(
-      'Its file, Spider-Man.Brand.New.Day.2026.V3.1080p.TELESYNC.x264-DKS_rxl1.mp4, is 1080p, which this profile doesn’t allow',
+      'Its file, Spider-Man.Brand.New.Day.2026.V3.1080p.TELESYNC.x264-DKS_rxl1.mp4, is a telesync, which this profile doesn’t allow',
     );
   });
 
@@ -23,7 +26,9 @@ describe('whatTheFilesSay', () => {
   });
 
   it('lets a file call its source something the title did not, which is only labelling', () => {
-    const webOnly = aProfile({ resolutions: ['2160p'], sources: ['webdl'] });
+    const webOnly = aProfile({
+      qualities: ['webdl-2160p'],
+    });
 
     expect(whatTheFilesSay(['Film.2026.2160p.WEBRip.x265-GRP.mkv'], webOnly)).toBeNull();
     expect(whatTheFilesSay(['Film.2026.2160p.BluRay.x265-GRP.mkv'], webOnly)).toBeNull();
@@ -33,7 +38,9 @@ describe('whatTheFilesSay', () => {
     expect(
       whatTheFilesSay(
         ['Film.2026.2160p.TELESYNC.mkv'],
-        aProfile({ resolutions: ['2160p'], sources: ['telesync'] }),
+        aProfile({
+          qualities: ['telesync'],
+        }),
       ),
     ).toBeNull();
   });

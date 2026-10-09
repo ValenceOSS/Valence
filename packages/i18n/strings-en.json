@@ -5250,6 +5250,11 @@
     "context": "The label, used in the jobs on the server (from `jobDefinitions`) and in the libraries panel in the admin area."
   },
   {
+    "handler": "common.resolution",
+    "text": "Resolution",
+    "context": "A video's resolution, such as 1080p: a custom format condition in the quality profile editor, and wherever a resolution is named."
+  },
+  {
     "handler": "common.resume",
     "text": "Resume",
     "context": "The label, used in several places, among them the download queue table in the downloads panel and the music feature in the music home."
@@ -10030,11 +10035,6 @@
     "context": "Shown beside a quality profile brought in from Radarr/Sonarr (from `profileOf`). {name} is the custom format's name."
   },
   {
-    "handler": "requests.arrImport.everyResolutionIsTakenFromEverySource",
-    "text": "Valence allows every selected resolution from every selected source, which is slightly less strict than before.",
-    "context": "Shown beside a quality profile brought in from Radarr/Sonarr (from `profileOf`). A source is Blu-ray, WEB-DL and so on."
-  },
-  {
     "handler": "requests.arrImport.itListsNoHost",
     "text": "It has no host set.",
     "context": "Shown beside a download client that is not brought in from Radarr/Sonarr/Lidarr because its settings name no host (from `plannedClientsOf`)."
@@ -10435,14 +10435,14 @@
     "context": "Shown in the indexers in the requests service (from `createIndexerService`)."
   },
   {
+    "handler": "requests.indexers.indexerService.restingAfterFailuresFailuresIn",
+    "text": "Resting after {failures} failures in a row: {problem}. It’s tried again on its own, after a longer pause each time it fails.",
+    "context": "Why an indexer is skipped for now, shown on it in Requests › Indexers and in the requests health on the Overview. {failures} is a number of failed searches in a row; {problem} is the last failure's reason."
+  },
+  {
     "handler": "requests.indexers.indexerService.theIndexerCouldNotBeAsked",
     "text": "Couldn’t connect to the indexer",
     "context": "Shown in the indexers in the requests service (from `createIndexerService`)."
-  },
-  {
-    "handler": "requests.indexers.indexerService.turnedOffAfterFailuresFailuresIn",
-    "text": "Turned off after {failures} failures in a row: {problem}",
-    "context": "Shown in the indexers in the requests service (from `createIndexerService`). {failures} is filled in by the app; {problem} is filled in by the app."
   },
   {
     "handler": "requests.indexers.noDefinitionNamed",
@@ -10530,6 +10530,11 @@
     "context": "Shown in the media requests in the requests service (from `judgeForRequest`). {reason} is filled in by the app."
   },
   {
+    "handler": "requests.mediaRequests.judgeForRequest.itIsAlreadyDownloading",
+    "text": "It’s already downloading for another request",
+    "context": "Why a release was refused for a request: the same release, by name or torrent hash, is already in the download queue, sent for a different request. Shown beside the release in interactive search."
+  },
+  {
     "handler": "requests.mediaRequests.judgeForRequest.itIsNoBetterThanWhat",
     "text": "It’s no better than what’s already in the library",
     "context": "Shown in the media requests in the requests service (from `judgeForRequest`)."
@@ -10543,6 +10548,11 @@
     "handler": "requests.mediaRequests.judgeForRequest.onlySomeEpisodesWanted",
     "text": "Only {wanted} of its {held} episodes are wanted",
     "context": "Shown in the media requests in the requests service (from `judgeForRequest`). {wanted} is filled in by the app; {held} is filled in by the app."
+  },
+  {
+    "handler": "requests.mediaRequests.judgeForRequest.onlySomeSeasonsWanted",
+    "text": "Only {wanted} of the {held} seasons it holds are wanted",
+    "context": "Why a pack of several seasons was refused for a request, shown beside the release in interactive search and in a request's activity. {wanted} and {held} are numbers of seasons."
   },
   {
     "handler": "requests.mediaRequests.noIndexerOn",
@@ -10790,6 +10800,11 @@
     "context": "Why a release scored: its quality is the profile's first choice. Shown in the list of releases found for a request. {quality} is a quality such as 1080p or A web download, and starts the sentence."
   },
   {
+    "handler": "requests.profiles.judgeRelease.formatScoreUnderMinimum",
+    "text": "Its format score, {score}, is under this profile’s minimum of {minimum}",
+    "context": "Why a release was refused: the scores of the custom formats it matches add up to less than the profile's minimum. Shown in the list of releases found for a request."
+  },
+  {
     "handler": "requests.profiles.judgeRelease.fourthChoice",
     "text": "{quality}, the fourth preference",
     "context": "Why a release scored: its quality is the profile's fourth choice. Shown in the list of releases found for a request. {quality} is a quality such as 1080p or A web download, and starts the sentence."
@@ -10813,6 +10828,11 @@
     "handler": "requests.profiles.judgeRelease.itDoesNotSayItsResolution",
     "text": "Its name doesn’t say its resolution",
     "context": "Shown in the profiles in the requests service (from `judgeRelease`)."
+  },
+  {
+    "handler": "requests.profiles.judgeRelease.itDoesNotSayItsSource",
+    "text": "It doesn’t say its source, so it’s taken as {quality}",
+    "context": "Why a release was ranked where it was: its name gives a resolution but not where it came from, so it counts as the lowest quality the profile takes at that resolution. Shown in the list of releases found for a request. {quality} is a quality such as 'HDTV at 1080p'."
   },
   {
     "handler": "requests.profiles.judgeRelease.itHasWordWhichIsBanned",
@@ -10858,6 +10878,11 @@
     "handler": "requests.profiles.judgeRelease.laterChoice",
     "text": "{quality}, preference number {number}",
     "context": "Why a release scored: its quality is further down the profile's list of choices. Shown in the list of releases found for a request. {quality} is a quality such as 1080p or A web download, and starts the sentence; {number} is its place in the list."
+  },
+  {
+    "handler": "requests.profiles.judgeRelease.matchesFormat",
+    "text": "Matches {name} ({points})",
+    "context": "Why a release scored: it matches one of the quality profile's custom formats. Shown in the list of releases found for a request. {name} is the format's name; {points} is its score with a sign, such as +500 or −10000."
   },
   {
     "handler": "requests.profiles.judgeRelease.missingRequiredWords",
@@ -10963,6 +10988,11 @@
     "handler": "requests.profiles.qualityNames.aWebRip",
     "text": "A web rip",
     "context": "A kind of release, starting a sentence: recorded from a streaming service as it played. Shown in the reasons a release scored or was refused."
+  },
+  {
+    "handler": "requests.profiles.qualityNames.sourceAtResolution",
+    "text": "{source} at {resolution}",
+    "context": "A combined video quality, such as 'A web download at 1080p', used where a release's quality is given, often at the start of a sentence. {source} is a source such as 'A web download' or 'Blu-ray'; {resolution} is a resolution such as 1080p."
   },
   {
     "handler": "requests.profiles.starterProfiles.anyMusic",
@@ -15905,11 +15935,6 @@
     "context": "The label of a switch in the profile editor in the admin area."
   },
   {
-    "handler": "screens.adminArea.profileEditor.andTheSourceIs",
-    "text": "And the source is",
-    "context": "The label of a choosing in the profile editor in the admin area."
-  },
-  {
     "handler": "screens.adminArea.profileEditor.anyRole",
     "text": "Any role",
     "context": "Shown in the profile editor in the admin area."
@@ -15918,11 +15943,6 @@
     "handler": "screens.adminArea.profileEditor.aReleaseNeedsAtLeastOne",
     "text": "A release must contain at least one.",
     "context": "The description of a text field in the profile editor in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.profileEditor.aReleaseThatDoesNotSay",
-    "text": "Releases that don’t specify are allowed.",
-    "context": "The description of a form field in the profile editor in the admin area."
   },
   {
     "handler": "screens.adminArea.profileEditor.aReleaseWithAnyIsRefused",
@@ -16025,14 +16045,19 @@
     "context": "The detail of a section in the profile editor in the admin area."
   },
   {
+    "handler": "screens.adminArea.profileEditor.qualities",
+    "text": "Qualities",
+    "context": "The label of the ordered list of video qualities, such as 'WEB-DL 1080p', a quality profile allows, in the profile editor under Requests › Profiles."
+  },
+  {
+    "handler": "screens.adminArea.profileEditor.releasesThatDoNotSayTheirSource",
+    "text": "A release that doesn’t give its source counts as the lowest quality allowed at its resolution.",
+    "context": "The description under the list of qualities in the profile editor, saying how a release whose name gives a resolution but not a source, such as most anime, is ranked."
+  },
+  {
     "handler": "screens.adminArea.profileEditor.requiredWords",
     "text": "Required words",
     "context": "The label of a text field in the profile editor in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.profileEditor.resolutions",
-    "text": "Resolutions",
-    "context": "The label of a ranked choices in the profile editor in the admin area."
   },
   {
     "handler": "screens.adminArea.profileEditor.searchFilmsOnceTheyAre",
@@ -16048,11 +16073,6 @@
     "handler": "screens.adminArea.profileEditor.smallestMBAnAlbum",
     "text": "Minimum (MB per album)",
     "context": "The label of a text field in the profile editor in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.profileEditor.sources",
-    "text": "Sources",
-    "context": "The label of a ranked choices in the profile editor in the admin area."
   },
   {
     "handler": "screens.adminArea.profileEditor.theBestThereIs",
@@ -16080,9 +16100,9 @@
     "context": "The label of a choosing in the profile editor in the admin area."
   },
   {
-    "handler": "screens.adminArea.profileEditor.untilTheResolutionIs",
-    "text": "Until the resolution is",
-    "context": "The label of a choosing in the profile editor in the admin area."
+    "handler": "screens.adminArea.profileEditor.untilTheQualityIs",
+    "text": "Until the quality is",
+    "context": "The label of the menu choosing the quality a profile stops upgrading at, in the profile editor's Upgrades section."
   },
   {
     "handler": "screens.adminArea.profileEditor.upgradeToABetterReleaseLater",
@@ -20570,6 +20590,11 @@
     "context": "The label in the indexers panel (from `describeIndexerState`)."
   },
   {
+    "handler": "screens.indexersPanel.describeIndexerState.resting",
+    "text": "Resting",
+    "context": "The badge on an indexer in Requests › Indexers that failed several times in a row and is skipped for a while before it's tried again on its own."
+  },
+  {
     "handler": "screens.indexersPanel.describeTestRound.allCountAnswered",
     "text": "All {count} responded.",
     "context": "Shown in the indexers panel (from `describeTestRound`). {count} is a number."
@@ -22631,6 +22656,121 @@
     "context": "The label of a range slider in the preview moment picker."
   },
   {
+    "handler": "screens.profileEditor.customFormats.addACondition",
+    "text": "Add a condition",
+    "context": "The button that adds a condition to a custom format in the quality profile editor."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.addAFormat",
+    "text": "Add a format",
+    "context": "The button that adds a custom format to a quality profile."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.anyFormatScore",
+    "text": "Any score",
+    "context": "The placeholder of the format score to upgrade until, when none is set."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.checks",
+    "text": "Checks",
+    "context": "The label of the menu choosing what a custom format's condition looks at, such as words, the release group or the codec, in the quality profile editor."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.customFormats",
+    "text": "Custom formats",
+    "context": "The heading of the custom formats section of the quality profile editor, on its Matching tab."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.doesNotMatch",
+    "text": "Doesn’t match",
+    "context": "The label of the switch that turns a custom format's condition round, so it is met when the release doesn't have the value."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.eachFormatAddsItsScore",
+    "text": "Each format a release matches adds its score, and the score ranks releases of the same quality. A format matches when every required condition is met and at least one of the others.",
+    "context": "The description under the custom formats heading in the quality profile editor."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.formatName",
+    "text": "Format name",
+    "context": "The label of a custom format's name field in the quality profile editor."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.hdr",
+    "text": "HDR",
+    "context": "A custom format condition that looks for an HDR format in a release."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.leastFormatScore",
+    "text": "Least format score",
+    "context": "The label of the field for the lowest total custom format score a release may have, in the quality profile editor."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.noFormatsYet",
+    "text": "No custom formats yet. Releases are ranked by quality, then by preferred words and language.",
+    "context": "Shown in the custom formats section of the quality profile editor when the profile has none."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.releaseGroup",
+    "text": "Release group",
+    "context": "A custom format condition that looks at the group that put a release out."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.releasesUnderItAreRefused",
+    "text": "Releases whose formats add up to less are refused.",
+    "context": "The description under the least format score field."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.removeThisCondition",
+    "text": "Remove this condition",
+    "context": "The label of the button that removes one condition from a custom format."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.required",
+    "text": "Required",
+    "context": "The label of the switch that makes a custom format's condition one every matching release must meet."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.score",
+    "text": "Score",
+    "context": "The label of a custom format's score field in the quality profile editor; a negative score ranks matching releases lower."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.sizeHint",
+    "text": "2-10",
+    "context": "The placeholder of a 'Size in GB' condition's value: the smallest and largest, either of which may be left out."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.sizeInGb",
+    "text": "Size in GB",
+    "context": "A custom format condition that looks for a release between two sizes, in gigabytes, such as 2-10."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.thisFormat",
+    "text": "this format",
+    "context": "Stands in for a custom format's name in 'Remove {name}' before it has one."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.untilTheFormatScoreIs",
+    "text": "And the format score is at least",
+    "context": "The label of the field for the custom format score a profile keeps upgrading until, in the Upgrades section of the profile editor."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.value",
+    "text": "Value",
+    "context": "The label of the value a custom format's condition looks for, in the quality profile editor."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.videoCodec",
+    "text": "Video codec",
+    "context": "A custom format condition that looks at a release's video codec."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.wordsHint",
+    "text": "Atmos, or /pattern/",
+    "context": "The placeholder of a 'Words' condition's value: a whole word, or a regular expression between slashes."
+  },
+  {
     "handler": "screens.profileEditor.describeSizeAnHour.megabytesMBAnHour",
     "text": "{megabytes} MB an hour",
     "context": "Shown in the profile editor (from `describeSizeAnHour`). {megabytes} is filled in by the app."
@@ -22639,6 +22779,11 @@
     "handler": "screens.profileEditor.describeSizeAnHour.valueGBAnHour",
     "text": "{value} GB an hour",
     "context": "Shown in the profile editor (from `describeSizeAnHour`). {value} is filled in by the app."
+  },
+  {
+    "handler": "screens.profileEditor.qualitySizes.allowAQualityToSetItsSize",
+    "text": "Allow a quality to set its size limits.",
+    "context": "Shown in the sizes section of the profile editor when the profile allows no quality with a resolution."
   },
   {
     "handler": "screens.profileEditor.qualitySizes.atLeastValue",
@@ -22676,11 +22821,6 @@
     "context": "Shown in the quality sizes in the profile editor. {name} is filled in by the app."
   },
   {
-    "handler": "screens.profileEditor.qualitySizes.tickAResolutionAndASource",
-    "text": "Select a resolution and a source to set their size limits.",
-    "context": "Text shown in the quality sizes in the profile editor."
-  },
-  {
     "handler": "screens.profileEditor.qualitySizes.useTRaSHsRecommendedSizes",
     "text": "Use TRaSH’s recommended sizes",
     "context": "The label of a button in the quality sizes in the profile editor."
@@ -22691,9 +22831,9 @@
     "context": "The problem in the profile editor (from `readProfileForm`)."
   },
   {
-    "handler": "screens.profileEditor.readProfileForm.allowAtLeastOneResolution",
-    "text": "Allow at least one resolution.",
-    "context": "The problem in the profile editor (from `readProfileForm`)."
+    "handler": "screens.profileEditor.readProfileForm.allowAtLeastOneQuality",
+    "text": "Allow at least one quality.",
+    "context": "Shown under the qualities list in the profile editor when none is ticked."
   },
   {
     "handler": "screens.profileEditor.readProfileForm.aSizeIsANumberOf",
@@ -22701,14 +22841,29 @@
     "context": "The problem in the profile editor (from `readProfileForm`)."
   },
   {
+    "handler": "screens.profileEditor.readProfileForm.giveEveryConditionAValue",
+    "text": "Give every condition a value.",
+    "context": "Shown in the profile editor when a custom format's condition has no value."
+  },
+  {
     "handler": "screens.profileEditor.readProfileForm.giveTheProfileAName",
     "text": "Enter a name for the profile.",
     "context": "The problem in the profile editor (from `readProfileForm`)."
   },
   {
+    "handler": "screens.profileEditor.readProfileForm.nameEveryFormat",
+    "text": "Name every custom format.",
+    "context": "Shown in the profile editor when a custom format has no name."
+  },
+  {
     "handler": "screens.profileEditor.readProfileForm.new",
     "text": "New",
     "context": "The name in the profile editor (from `readProfileForm`)."
+  },
+  {
+    "handler": "screens.profileEditor.readProfileForm.scoresAreWholeNumbers",
+    "text": "Scores are whole numbers, such as 100 or -500.",
+    "context": "Shown in the profile editor when a custom format's score, the least format score or the score to upgrade until isn't a whole number."
   },
   {
     "handler": "screens.profileEditor.readProfileForm.theLargestSizeHasToBe",

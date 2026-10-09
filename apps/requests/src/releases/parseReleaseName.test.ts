@@ -1494,6 +1494,14 @@ describe('parseReleaseName', () => {
     });
   });
 
+  it('reads no language from a word in the title', () => {
+    expect(parseReleaseName('Dan.in.Real.Life.2007.1080p.BluRay.x264-GRP').languages).toEqual([]);
+    expect(parseReleaseName('The.English.Patient.1996.1080p.BluRay.x264-GRP').languages).toEqual(
+      [],
+    );
+    expect(parseReleaseName('Fin.2024.FRENCH.1080p.WEB-DL.x264-GRP').languages).toEqual(['fr']);
+  });
+
   it('reads a daily show by the day it aired', () => {
     expect(
       parseReleaseName('The.Daily.Show.2024.03.14.Jon.Stewart.720p.WEB.h264-EDITH').airDate,

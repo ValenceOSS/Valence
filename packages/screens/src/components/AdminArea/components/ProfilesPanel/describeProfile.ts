@@ -1,4 +1,5 @@
 import { QUALITY_NAMES } from '@ValenceScreens/components/AdminArea/QUALITY_NAMES';
+import { nameVideoQuality } from '@ValenceScreens/components/AdminArea/nameVideoQuality';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import { say } from '@ValenceI18n/say';
 
@@ -9,22 +10,19 @@ import { say } from '@ValenceI18n/say';
  * @returns What it takes, and its upgrade rule.
  */
 const describeProfile = (profile: QualityProfile): { takes: string; upgrades: string } => {
-  const named = (values: readonly (keyof typeof QUALITY_NAMES)[]) =>
-    values.map((value) => QUALITY_NAMES[value]).join(', ');
-  const until = [
-    profile.upgradeUntilResolution,
-    profile.upgradeUntilSource,
-    profile.upgradeUntilMusicQuality,
-  ]
-    .filter((value) => value !== null)
-    .map((value) => QUALITY_NAMES[value])
-    .join(' ');
+  const isVideo = profile.kind === 'video';
+  const until = isVideo
+    ? profile.cutoff === null
+      ? ''
+      : nameVideoQuality(profile.cutoff)
+    : profile.upgradeUntilMusicQuality === null
+      ? ''
+      : QUALITY_NAMES[profile.upgradeUntilMusicQuality];
 
   return {
-    takes:
-      profile.kind === 'video'
-        ? [named(profile.resolutions), named(profile.sources)].filter(Boolean).join(' · ')
-        : named(profile.musicQualities),
+    takes: isVideo
+      ? profile.qualities.map(nameVideoQuality).join(', ')
+      : profile.musicQualities.map((quality) => QUALITY_NAMES[quality]).join(', '),
     upgrades: !profile.isUpgrading
       ? say('screens.profilesPanel.describeProfile.no')
       : until === ''

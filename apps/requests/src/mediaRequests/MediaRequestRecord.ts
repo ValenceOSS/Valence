@@ -23,6 +23,7 @@ type MediaRequestRecord = Omit<
   isEnded: boolean;
   catalogueCheckedAt: string;
   tvdbId: number | null;
+  imdbId: string | null;
   handOff: Fulfilment | null;
   handOffId: number | null;
 };

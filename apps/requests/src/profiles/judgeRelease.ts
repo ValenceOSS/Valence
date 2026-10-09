@@ -3,18 +3,21 @@ import { hasWord } from '@ValenceRequests/profiles/hasWord';
 import { QUALITY_LABELS } from '@ValenceRequests/profiles/QUALITY_LABELS';
 import { QUALITY_NAMES } from '@ValenceRequests/profiles/QUALITY_NAMES';
 import type { Release } from '@ValenceContracts/schemas/Indexer';
+import { placeOfVideoQuality } from '@ValenceRequests/profiles/placeOfVideoQuality';
+import { formatScoreOf } from '@ValenceRequests/profiles/formatScoreOf';
+import { videoQualityIdOf } from '@ValenceContracts/functions/videoQualityIdOf';
+import { nameVideoQuality } from '@ValenceRequests/profiles/nameVideoQuality';
+import type { MusicQuality, ParsedRelease } from '@ValenceContracts/schemas/ParsedRelease';
 import type {
-  MusicQuality,
-  ParsedRelease,
-  ReleaseSource,
-  Resolution,
-} from '@ValenceContracts/schemas/ParsedRelease';
-import type { Judgement, QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
+  Judgement,
+  QualityProfile,
+  VideoQualityId,
+} from '@ValenceContracts/schemas/QualityProfile';
 import { saying } from '@ValenceI18n/saying';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type { StringKey } from '@ValenceI18n/StringKey';
 
-type Verdict = { score: number; rejections: Said[]; reasons: Said[] };
+type Verdict = { score: number; quality?: number; rejections: Said[]; reasons: Said[] };
 
 const CHOICES: readonly StringKey[] = [
   'requests.profiles.judgeRelease.firstChoice',
@@ -71,47 +74,145 @@ const judgeLanguage = (languages: readonly string[], wanted: string | null): Ver
 };
 
 /**
- * Judges one part of a release's quality against the profile's choices, best first: the further
- * up the list, the more it scores, and anything off the list is refused.
+ * Says where a quality comes in a profile's list, best first.
  *
- * @param value - What the release is, or null where its name does not say.
- * @param choices - What the profile takes, best first.
- * @param weight - What the best choice is worth, per place down the list.
- * @param unsaid - What to say where the name does not say, or null to let it through.
- * @returns The verdict.
+ * @param quality - The quality, in words.
+ * @param place - Its place, from nought.
+ * @returns The reason.
  */
-const judgeChoice = <Quality extends Resolution | ReleaseSource | MusicQuality>(
-  value: Quality | null,
-  choices: readonly Quality[],
-  weight: number,
-  unsaid: Said | null,
-): Verdict => {
-  if (value === null) {
-    return unsaid === null
-      ? { score: 0, rejections: [], reasons: [] }
-      : { score: 0, rejections: [unsaid], reasons: [] };
-  }
-
-  const place = choices.indexOf(value);
-  const quality = QUALITY_NAMES[value];
+const choiceOf = (quality: Said, place: number): Said => {
   const choice = CHOICES[place];
 
-  if (place === -1) {
+  return choice === undefined
+    ? saying('requests.profiles.judgeRelease.laterChoice', { quality, number: place + 1 })
+    : saying(choice, { quality });
+};
+
+/**
+ * Judges a video's quality against the profile's list of qualities, best first: its place on the
+ * list is its quality, the first the best, and anything off the list is refused. A release that
+ * does not say its source is taken as the lowest quality the profile takes at its resolution, as
+ * anime releases seldom say; one that does not say its resolution is refused.
+ *
+ * @param parsed - What its name says.
+ * @param qualities - What the profile takes, best first.
+ * @returns The verdict.
+ */
+const judgeVideoQuality = (
+  parsed: Pick<ParsedRelease, 'source' | 'resolution'>,
+  qualities: readonly VideoQualityId[],
+): Verdict => {
+  const id = videoQualityIdOf(parsed.source, parsed.resolution);
+
+  if (id === null && parsed.resolution === null) {
     return {
       score: 0,
-      rejections: [saying('requests.profiles.judgeRelease.notTaken', { quality })],
+      rejections: [saying('requests.profiles.judgeRelease.itDoesNotSayItsResolution')],
+      reasons: [],
+    };
+  }
+
+  const place = placeOfVideoQuality(parsed, qualities);
+  const placed = place === null ? undefined : qualities[place];
+
+  if (place === null || placed === undefined) {
+    return {
+      score: 0,
+      rejections: [
+        saying('requests.profiles.judgeRelease.notTaken', {
+          quality: id === null ? QUALITY_NAMES[parsed.resolution ?? '1080p'] : nameVideoQuality(id),
+        }),
+      ],
       reasons: [],
     };
   }
 
   return {
-    score: (choices.length - place) * weight,
+    score: 0,
+    quality: qualities.length - place,
     rejections: [],
     reasons: [
-      choice === undefined
-        ? saying('requests.profiles.judgeRelease.laterChoice', { quality, number: place + 1 })
-        : saying(choice, { quality }),
+      id === null
+        ? saying('requests.profiles.judgeRelease.itDoesNotSayItsSource', {
+            quality: nameVideoQuality(placed),
+          })
+        : choiceOf(nameVideoQuality(id), place),
     ],
+  };
+};
+
+/**
+ * Judges music's encoding against the profile's list, best first: its place on the list is its
+ * quality, and anything off the list, or an encoding its name does not give, is refused.
+ *
+ * @param value - Its encoding, or null where its name does not say.
+ * @param choices - What the profile takes, best first.
+ * @returns The verdict.
+ */
+const judgeMusicQuality = (
+  value: MusicQuality | null,
+  choices: readonly MusicQuality[],
+): Verdict => {
+  if (value === null) {
+    return {
+      score: 0,
+      rejections: [saying('requests.profiles.judgeRelease.itDoesNotSayHowIt')],
+      reasons: [],
+    };
+  }
+
+  const place = choices.indexOf(value);
+  const quality = QUALITY_NAMES[value];
+
+  return place === -1
+    ? {
+        score: 0,
+        rejections: [saying('requests.profiles.judgeRelease.notTaken', { quality })],
+        reasons: [],
+      }
+    : {
+        score: 0,
+        quality: choices.length - place,
+        rejections: [],
+        reasons: [choiceOf(quality, place)],
+      };
+};
+
+/**
+ * Judges a release by the profile's custom formats: the scores of those it matches, each said, and
+ * a refusal where they come to less than the profile's minimum.
+ *
+ * @param release - The release.
+ * @param parsed - What its name says.
+ * @param profile - The profile.
+ * @returns The verdict.
+ */
+const judgeFormats = (
+  release: Pick<Release, 'title' | 'sizeBytes'>,
+  parsed: ParsedRelease,
+  profile: Pick<QualityProfile, 'formats' | 'minFormatScore'>,
+): Verdict => {
+  const { score, matched } = formatScoreOf(release, parsed, profile.formats);
+  const signed = (points: number) =>
+    `${points > 0 ? '+' : points < 0 ? '−' : ''}${Math.abs(points).toString()}`;
+
+  return {
+    score,
+    rejections:
+      score < profile.minFormatScore
+        ? [
+            saying('requests.profiles.judgeRelease.formatScoreUnderMinimum', {
+              score: score.toString(),
+              minimum: profile.minFormatScore.toString(),
+            }),
+          ]
+        : [],
+    reasons: matched.map((format) =>
+      saying('requests.profiles.judgeRelease.matchesFormat', {
+        name: format.name,
+        points: signed(format.score),
+      }),
+    ),
   };
 };
 
@@ -218,13 +319,15 @@ const judgeSize = (
 
 /**
  * Judges a release against a quality profile: whether it may be taken at all, and if so how well it
- * fits — its resolution and source for video, or its encoding for music, each by how far up the
- * profile's list it comes, with preferred words and a proper or repack on top. Everything that
- * refused it, and everything that scored, is said in words.
+ * fits — its quality, by how far up the profile's list of combined qualities (or for music, of
+ * encodings) it comes, and apart from that a score for its preferred words, a proper or repack, its
+ * language and the custom formats it matches, refused where those formats come to less than the
+ * profile's minimum. Everything that refused it, and everything that counted, is said in words.
  *
  * A release that does not say its resolution, or for music its encoding, is refused, since a
- * profile is chiefly about those. One that does not say its source is let through unscored, as
- * anime releases seldom do. A torrent nobody seeds is refused, since it would never arrive.
+ * profile is chiefly about those. One that does not say its source is taken as the lowest quality
+ * the profile takes at its resolution, as anime releases seldom say. A torrent nobody seeds is
+ * refused, since it would never arrive.
  *
  * The language a profile prefers only ranks releases, and never refuses one. See [`judgeLanguage`].
  *
@@ -258,15 +361,7 @@ const judgeRelease = (
         },
       ]
     : profile.kind === 'video'
-      ? [
-          judgeChoice(
-            parsed.resolution,
-            profile.resolutions,
-            1000,
-            saying('requests.profiles.judgeRelease.itDoesNotSayItsResolution'),
-          ),
-          judgeChoice(parsed.source, profile.sources, 100, null),
-        ]
+      ? [judgeVideoQuality(parsed, profile.qualities)]
       : [
           {
             score: 0,
@@ -276,12 +371,7 @@ const judgeRelease = (
                 : [saying('requests.profiles.judgeRelease.itIsAVideoNotMusic')],
             reasons: [],
           },
-          judgeChoice(
-            parsed.musicQuality,
-            profile.musicQualities,
-            1000,
-            saying('requests.profiles.judgeRelease.itDoesNotSayHowIt'),
-          ),
+          judgeMusicQuality(parsed.musicQuality, profile.musicQualities),
         ];
   const banned = profile.bannedWords.filter((word) => hasWord(release.title, word));
   const preferred = profile.preferredWords.filter((word) => hasWord(release.title, word));
@@ -326,6 +416,7 @@ const judgeRelease = (
           : [],
     },
     judgeLanguage(parsed.languages, profile.preferredLanguage),
+    judgeFormats(release, parsed, profile),
     ...(isForABook ? [] : [judgeSize(release, parsed, profile, runtimeMinutes, episodesHeld)]),
   );
 
@@ -334,6 +425,7 @@ const judgeRelease = (
   return {
     releaseId: release.id,
     parsed,
+    quality: verdicts.reduce((total, verdict) => total + (verdict.quality ?? 0), 0),
     score: verdicts.reduce((total, verdict) => total + verdict.score, 0),
     isRejected: rejections.length > 0,
     rejections,

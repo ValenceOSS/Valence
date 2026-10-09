@@ -1,3 +1,4 @@
+import { partsOfVideoQuality } from '@ValenceContracts/functions/partsOfVideoQuality';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import type {
   ParsedRelease,
@@ -8,8 +9,9 @@ import type {
 const CINEMA: ReadonlySet<ReleaseSource> = new Set(['telesync', 'cam']);
 
 /**
- * What about a video plainly makes it something a profile does not take: a resolution off its
- * list, or a recording made in a cinema it does not ask for.
+ * What about a video plainly makes it something a profile does not take: a recording made in a
+ * cinema it does not ask for, or a resolution none of its qualities has. A cinema recording it asks
+ * for is taken at any resolution.
  *
  * Only what is known counts, and only what plainly makes it another thing. Whether a file calls
  * itself WEB-DL where its title said WEBRip is labelling, and refusing over it would throw out good
@@ -28,12 +30,15 @@ const qualityRefusedBy = (
   }
 
   const { resolution = null, source = null } = quality;
+  const allowed = profile.qualities.map(partsOfVideoQuality);
 
-  if (resolution !== null && !profile.resolutions.includes(resolution)) {
-    return resolution;
+  if (source !== null && CINEMA.has(source)) {
+    return allowed.some((one) => one.source === source) ? null : source;
   }
 
-  return source !== null && CINEMA.has(source) && !profile.sources.includes(source) ? source : null;
+  return resolution !== null && !allowed.some((one) => one.resolution === resolution)
+    ? resolution
+    : null;
 };
 
 export { qualityRefusedBy };

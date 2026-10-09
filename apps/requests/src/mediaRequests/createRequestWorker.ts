@@ -36,9 +36,11 @@ import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
 import type {
   IndexerSearchReport,
   Release,
+  ReleaseProtocol,
   ReleaseSearch,
   ReleaseSearchOutcome,
 } from '@ValenceContracts/schemas/Indexer';
+import { PROTOCOL_OF_CLIENT } from '@ValenceContracts/schemas/DownloadClient';
 import type {
   DownloadStopNext,
   MediaRequest,
@@ -388,6 +390,30 @@ const createRequestWorker = ({
     }
   };
 
+  const downloadingForOthers = async (
+    requestId: string,
+  ): Promise<{ title: string; infoHash: string | null }[]> => {
+    const own = new Set(
+      (await items.list()).flatMap((item) =>
+        item.requestId === requestId && item.downloadId !== null ? [item.downloadId] : [],
+      ),
+    );
+
+    return (await downloads.list())
+      .filter(
+        (download) =>
+          !own.has(download.id) && download.state !== 'done' && download.state !== 'failed',
+      )
+      .map((download) => ({ title: download.title, infoHash: hashOfDownload(download) }));
+  };
+
+  const protocolsTaken = async (): Promise<Set<ReleaseProtocol>> =>
+    new Set(
+      (await clients.records())
+        .filter((client) => client.isEnabled)
+        .map((client) => PROTOCOL_OF_CLIENT[client.kind]),
+    );
+
   const isStillWanted = async (id: string): Promise<boolean> => {
     const request = await requests.find(id);
 
@@ -489,6 +515,8 @@ const createRequestWorker = ({
       blocked: await blockedFor(request.id),
       priorities: await priorities(),
       isFetching,
+      takes: await protocolsTaken(),
+      downloading: await downloadingForOthers(request.id),
     });
     const picked = judged.releases.find((release) => release.id === judged.pickedId);
     const holding = picked === undefined ? undefined : judged.holding.get(picked.id);
@@ -1226,13 +1254,20 @@ const createRequestWorker = ({
             query,
             mode: 'movie',
             ...(request.tmdbId === null ? {} : { tmdbId: request.tmdbId }),
+            ...(request.imdbId === null ? {} : { imdbId: request.imdbId }),
           },
         ];
-      case 'series':
+      case 'series': {
+        const ids = {
+          ...(request.tvdbId === null ? {} : { tvdbId: request.tvdbId }),
+          ...(request.imdbId === null ? {} : { imdbId: request.imdbId }),
+        };
+
         return [
-          { query, mode: 'tv' },
-          ...seasons.map((season) => ({ query, mode: 'tv' as const, season })),
+          { query, mode: 'tv', ...ids },
+          ...seasons.map((season) => ({ query, mode: 'tv' as const, season, ...ids })),
         ];
+      }
       case 'artist':
         return [{ query: artist, mode: 'music', artist }];
       case 'album':
@@ -1283,6 +1318,8 @@ const createRequestWorker = ({
       priorities: await priorities(),
       isFetching: (item) => item.state !== 'filing',
       keepsTheUnnamed: true,
+      takes: await protocolsTaken(),
+      downloading: await downloadingForOthers(request.id),
     });
 
     return {

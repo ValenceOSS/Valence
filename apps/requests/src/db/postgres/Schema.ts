@@ -23,8 +23,16 @@ import {
   RELEASE_SOURCES,
   RESOLUTIONS,
 } from '@ValenceContracts/schemas/ParsedRelease';
-import { PROFILE_KINDS, RELEASE_WAITS } from '@ValenceContracts/schemas/QualityProfile';
-import type { QualitySize } from '@ValenceContracts/schemas/QualityProfile';
+import {
+  PROFILE_KINDS,
+  RELEASE_WAITS,
+  VIDEO_QUALITY_IDS,
+} from '@ValenceContracts/schemas/QualityProfile';
+import type {
+  CustomFormat,
+  QualitySize,
+  VideoQualityId,
+} from '@ValenceContracts/schemas/QualityProfile';
 import type {
   MusicQuality,
   ReleaseSource,
@@ -198,6 +206,7 @@ const qualityProfile = requestsSchema.table('quality_profile', {
   kind: text('kind', { enum: PROFILE_KINDS }).notNull(),
   resolutions: jsonb('resolutions').$type<Resolution[]>().notNull().default([]),
   sources: jsonb('sources').$type<ReleaseSource[]>().notNull().default([]),
+  qualities: jsonb('qualities').$type<VideoQualityId[]>(),
   musicQualities: jsonb('music_qualities').$type<MusicQuality[]>().notNull().default([]),
   smallestMb: doublePrecision('smallest_mb'),
   largestMb: doublePrecision('largest_mb'),
@@ -205,10 +214,14 @@ const qualityProfile = requestsSchema.table('quality_profile', {
   preferredWords: jsonb('preferred_words').$type<string[]>().notNull().default([]),
   requiredWords: jsonb('required_words').$type<string[]>().notNull().default([]),
   bannedWords: jsonb('banned_words').$type<string[]>().notNull().default([]),
+  formats: jsonb('formats').$type<CustomFormat[]>().notNull().default([]),
+  minFormatScore: integer('min_format_score').notNull().default(0),
+  upgradeUntilFormatScore: integer('upgrade_until_format_score'),
   isUpgrading: boolean('is_upgrading').notNull().default(false),
   releaseWait: text('release_wait', { enum: RELEASE_WAITS }).notNull().default('digital'),
   upgradeUntilResolution: text('upgrade_until_resolution', { enum: RESOLUTIONS }),
   upgradeUntilSource: text('upgrade_until_source', { enum: RELEASE_SOURCES }),
+  cutoff: text('cutoff', { enum: VIDEO_QUALITY_IDS }),
   upgradeUntilMusicQuality: text('upgrade_until_music_quality', { enum: MUSIC_QUALITIES }),
   libraryIds: jsonb('library_ids').$type<string[]>().notNull().default([]),
   preferredLanguage: text('preferred_language'),
@@ -226,6 +239,7 @@ const mediaRequest = requestsSchema.table(
     kind: text('kind', { enum: MEDIA_REQUEST_KINDS }).notNull(),
     tmdbId: integer('tmdb_id'),
     tvdbId: integer('tvdb_id'),
+    imdbId: text('imdb_id'),
     musicBrainzId: text('music_brainz_id'),
     openLibraryId: integer('open_library_id'),
     title: text('title').notNull(),

@@ -14,7 +14,7 @@ const BLURAY = 'Dune.2021.1080p.BluRay.x264-GRP';
 const OPTIONS = {
   request: aMediaRequest(),
   items: [aRequestItem()],
-  profile: aProfile({ sources: ['bluray', 'webdl'] }),
+  profile: aProfile({ qualities: ['bluray-1080p', 'webdl-1080p', 'bluray-720p', 'webdl-720p'] }),
   blocked: [],
   priorities: new Map<string, number>(),
   isFetching: (item: RequestItemRecord) => item.state === 'wanted',
@@ -48,7 +48,10 @@ describe('judgeForRequest', () => {
     const judged = judgeForRequest({
       ...OPTIONS,
       request: aMediaRequest({ libraryLanguage: 'de' }),
-      profile: aProfile({ sources: ['bluray', 'webdl'], preferredLanguage: 'en' }),
+      profile: aProfile({
+        qualities: ['bluray-1080p', 'webdl-1080p', 'bluray-720p', 'webdl-720p'],
+        preferredLanguage: 'en',
+      }),
       releases: [aRelease(BLURAY), aRelease(GERMAN)],
     });
 
@@ -111,10 +114,19 @@ describe('judgeForRequest', () => {
       judgeForRequest({
         ...OPTIONS,
         releases: [aRelease(WEB)],
-        items: [aRequestItem({ state: 'available', score: 5000 })],
+        items: [aRequestItem({ state: 'available', filedTitle: BLURAY })],
         isFetching: () => true,
       }).judgements[0]?.rejections,
     ).toEqual(['It’s no better than what’s already in the library']);
+
+    expect(
+      judgeForRequest({
+        ...OPTIONS,
+        releases: [aRelease(BLURAY)],
+        items: [aRequestItem({ state: 'available', filedTitle: WEB })],
+        isFetching: () => true,
+      }).judgements[0]?.isRejected,
+    ).toBe(false);
   });
 
   it('refuses a whole run where most of what it holds is here already', () => {
@@ -148,10 +160,81 @@ describe('judgeForRequest', () => {
       judgeForRequest({
         ...OPTIONS,
         request: series,
-        releases: [aRelease(PACK)],
+        releases: [aRelease('Severance.S01-S02.1080p.BluRay.x264-GRP')],
         items: [...episodes('available', 1, 3), ...episodes('wanted', 2, 9)],
       }).judgements[0]?.isRejected,
     ).toBe(false);
+  });
+
+  it('counts the seasons a pack holds that nobody asked for', () => {
+    const series = aMediaRequest({
+      kind: 'series',
+      title: 'Severance',
+      year: 2022,
+      followsAfter: 9,
+    });
+    const asked = Array.from({ length: 9 }, (_unused, index) =>
+      aRequestItem({
+        id: `3x${(index + 1).toString()}`,
+        season: 3,
+        episode: index + 1,
+        title: 'Severance',
+        state: 'wanted',
+      }),
+    );
+    const judgedFor = (title: string) =>
+      judgeForRequest({ ...OPTIONS, request: series, releases: [aRelease(title)], items: asked })
+        .judgements[0]?.rejections;
+
+    expect(judgedFor('Severance.S01-S09.1080p.BluRay.x264-GRP')).toEqual([
+      'Only 1 of the 9 seasons it holds are wanted',
+    ]);
+    expect(judgedFor('Severance.Complete.Series.1080p.BluRay.x264-GRP')).toEqual([
+      'Only 1 of the 9 seasons it holds are wanted',
+    ]);
+  });
+
+  it('takes a release an indexer found by id under a title near the one asked for', () => {
+    const office = aMediaRequest({ kind: 'series', title: 'The Office', year: 2005 });
+    const items = [aRequestItem({ season: 2, episode: 1, title: 'The Office' })];
+    const judged = (title: string, isFoundById: boolean) =>
+      judgeForRequest({
+        ...OPTIONS,
+        request: office,
+        items,
+        releases: [aRelease(title, { isFoundById })],
+      }).releases.length;
+
+    expect(judged('The.Office.US.S02E01.1080p.WEB-DL.x264-GRP', true)).toBe(1);
+    expect(judged('The.Office.US.S02E01.1080p.WEB-DL.x264-GRP', false)).toBe(0);
+    expect(judged('Officer.Down.S02E01.1080p.WEB-DL.x264-GRP', true)).toBe(0);
+  });
+
+  it('refuses a release already downloading for another request', () => {
+    const judged = (downloading: { title: string; infoHash: string | null }[]) =>
+      judgeForRequest({
+        ...OPTIONS,
+        releases: [aRelease(WEB, { infoHash: 'b'.repeat(40) })],
+        downloading,
+      }).judgements[0]?.rejections;
+
+    expect(judged([{ title: WEB, infoHash: null }])).toEqual([
+      'It’s already downloading for another request',
+    ]);
+    expect(judged([{ title: 'Another.Name', infoHash: 'b'.repeat(40) }])).toEqual([
+      'It’s already downloading for another request',
+    ]);
+    expect(judged([{ title: BLURAY, infoHash: null }])).toEqual([]);
+  });
+
+  it('refuses a release no download client is on for', () => {
+    expect(
+      judgeForRequest({
+        ...OPTIONS,
+        releases: [aRelease(WEB, { protocol: 'usenet' })],
+        takes: new Set(['torrent'] as const),
+      }).judgements[0]?.rejections,
+    ).toEqual(['No usenet client is set up and turned on']);
   });
 
   it('never grudges a single season pack what it holds', () => {
