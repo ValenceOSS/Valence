@@ -305,7 +305,7 @@ describe('createRequestWorker', () => {
       expect(searched).toEqual([]);
     });
 
-    it('never searches by itself for a book, which is added to the library by hand', async () => {
+    it('searches by itself for each format of a book, among the indexers’ books or audiobooks', async () => {
       const { worker, searched } = aWorker({
         requests: [
           aMediaRequest({
@@ -316,16 +316,22 @@ describe('createRequestWorker', () => {
             artistName: 'Andy Weir',
             libraryId: 'books',
             libraryPath: '/media/Books',
+            bookFormats: ['ebook', 'audiobook'],
           }),
         ],
-        items: [aRequestItem({ state: 'waiting', airDate: null })],
+        items: [
+          aRequestItem({ id: 'e', state: 'wanted', airDate: null, format: 'ebook' }),
+          aRequestItem({ id: 'a', state: 'wanted', airDate: null, format: 'audiobook' }),
+        ],
+        found: () => [],
       });
 
       await worker.tick();
-      await worker.searchMissing();
-      await worker.pollFeeds();
 
-      expect(searched).toEqual([]);
+      expect(searched).toEqual([
+        { query: 'Project Hail Mary', mode: 'book', categories: [7000, 7020] },
+        { query: 'Project Hail Mary', mode: 'search', categories: [3030] },
+      ]);
     });
 
     it('leaves a request waiting on approval alone', async () => {

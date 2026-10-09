@@ -137,7 +137,30 @@ describe('AskableDialog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Request' }));
 
     await waitFor(() => {
-      expect(askForMedia).toHaveBeenCalledWith({ kind: 'book', openLibraryId: 21_277_329 });
+      expect(askForMedia).toHaveBeenCalledWith({
+        kind: 'book',
+        openLibraryId: 21_277_329,
+        bookFormats: ['ebook'],
+      });
+    });
+  });
+
+  it('asks for a book as an audiobook too, where that is ticked', async () => {
+    fetchAskable.mockResolvedValue(
+      aTitle({ kind: 'book', id: '21277329', title: 'A Book', authors: [] }),
+    );
+
+    open('book:21277329');
+
+    await userEvent.click(await screen.findByRole('checkbox', { name: 'Audiobook' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Request' }));
+
+    await waitFor(() => {
+      expect(askForMedia).toHaveBeenCalledWith({
+        kind: 'book',
+        openLibraryId: 21_277_329,
+        bookFormats: ['ebook', 'audiobook'],
+      });
     });
   });
 

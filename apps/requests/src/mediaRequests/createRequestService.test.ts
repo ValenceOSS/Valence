@@ -559,6 +559,31 @@ describe('createRequestService', () => {
     expect(await service.list()).toHaveLength(1);
   });
 
+  it('waits for each format of a book asked for, adds a format asked later, and lets one go', async () => {
+    const { service } = aService();
+
+    const { request } = await service.add(PROJECT_HAIL_MARY);
+
+    expect(request.bookFormats).toEqual(['ebook']);
+    expect(request.items.map((item) => item.format)).toEqual(['ebook']);
+
+    const again = await service.add({
+      ...PROJECT_HAIL_MARY,
+      bookFormats: ['audiobook'],
+      requestedBy: { id: 'x', name: 'X' },
+    });
+
+    expect(again.request.bookFormats).toEqual(['ebook', 'audiobook']);
+    expect(again.request.items.map((item) => item.format).toSorted()).toEqual([
+      'audiobook',
+      'ebook',
+    ]);
+
+    const changed = await service.change(request.id, { bookFormats: ['audiobook'] }, null);
+
+    expect(changed?.items.map((item) => item.format)).toEqual(['audiobook']);
+  });
+
   it('keeps a book and a film with the same number apart', async () => {
     const { service } = aService();
 

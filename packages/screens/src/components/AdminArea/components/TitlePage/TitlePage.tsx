@@ -421,7 +421,6 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
             variant="confirm"
             size="md"
             isLoading={isBusy}
-            disabled={kind === 'book'}
             onClick={() => {
               act(
                 async () => ({ refusal: (await retryMediaRequest(request.id)).refusal }),

@@ -44,17 +44,6 @@ const calendarToday = (): string => new Date().toISOString().slice(0, 10);
  * @returns The badge's words and tone, and the line beneath it where there is one.
  */
 const describeRequestBadge = (request: MediaRequest, today = calendarToday()): StateBadge => {
-  if (
-    request.kind === 'book' &&
-    (request.state === 'waiting' || request.state === 'wanted' || request.state === 'searching')
-  ) {
-    return {
-      ...STATUS_LOOK.queued,
-      label: say('client.requests.describeRequestBadge.waitingToBeAdded'),
-      detail: say('client.requests.describeRequestBadge.booksAreAddedToTheLibrary'),
-    };
-  }
-
   switch (request.state) {
     case 'awaitingApproval':
       return {

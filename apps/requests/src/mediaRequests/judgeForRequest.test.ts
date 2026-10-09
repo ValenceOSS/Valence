@@ -275,4 +275,42 @@ describe('judgeForRequest', () => {
 
     expect(judged.pickedId).toBe('Dune.Part.One.2021.1080p.BluRay.x264-GRP');
   });
+
+  it('holds a book release only for the format it is, picking an EPUB over a MOBI', () => {
+    const book = aMediaRequest({
+      kind: 'book',
+      title: 'A Book',
+      artistName: 'Someone',
+      year: null,
+      tmdbId: null,
+      openLibraryId: 1,
+      bookFormats: ['ebook', 'audiobook'],
+    });
+    const ebook = aRequestItem({ id: 'e', title: 'A Book', format: 'ebook', state: 'wanted' });
+    const audiobook = aRequestItem({
+      id: 'a',
+      title: 'A Book',
+      format: 'audiobook',
+      state: 'wanted',
+    });
+    const judged = judgeForRequest({
+      ...OPTIONS,
+      request: book,
+      items: [ebook, audiobook],
+      releases: [
+        aRelease('Someone - A Book MOBI'),
+        aRelease('Someone - A Book EPUB'),
+        { ...aRelease('Someone - A Book (Unabridged) M4B'), categories: [3030] },
+      ],
+    });
+
+    expect(judged.holding.get('Someone - A Book EPUB')?.map((item) => item.id)).toEqual(['e']);
+    expect(judged.holding.get('Someone - A Book (Unabridged) M4B')?.map((item) => item.id)).toEqual(
+      ['a'],
+    );
+    expect(judged.releases.map((release) => release.title).slice(0, 2)).toEqual([
+      'Someone - A Book EPUB',
+      'Someone - A Book (Unabridged) M4B',
+    ]);
+  });
 });

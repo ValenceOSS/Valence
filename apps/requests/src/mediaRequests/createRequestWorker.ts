@@ -358,9 +358,7 @@ const createRequestWorker = ({
   };
 
   const searchedByItself = async (): Promise<Found[]> =>
-    (await approved()).filter(
-      (found) => !found.request.isPickedByHand && !isBookRequest(found.request.kind),
-    );
+    (await approved()).filter((found) => !found.request.isPickedByHand);
 
   const profileFor = async (request: MediaRequestRecord): Promise<QualityProfile> =>
     chooseProfile(request, await profiles.list()) ??
@@ -685,7 +683,7 @@ const createRequestWorker = ({
     if (out.length > 0) {
       await note(
         request,
-        request.kind === 'film' || request.kind === 'album'
+        request.kind === 'film' || request.kind === 'album' || request.kind === 'book'
           ? saying('requests.mediaRequests.requestWorker.itIsOutAndWanted')
           : sayingCount(
               request.kind === 'artist'

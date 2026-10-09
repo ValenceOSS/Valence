@@ -16,8 +16,9 @@ import {
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { libraryKindOf } from '@ValenceContracts/functions/libraryKindOf';
 import { ReleaseTypeChooser } from '@ValenceScreens/components/ReleaseTypeChooser/ReleaseTypeChooser';
+import { BookFormatChooser } from '@ValenceScreens/components/BookFormatChooser/BookFormatChooser';
 import { SeasonChooser } from '@ValenceScreens/components/SeasonChooser/SeasonChooser';
-import type { ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
+import type { BookFormat, ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 import type { ApproveRequestDialogProps } from './ApproveRequestDialog.types';
 import { say } from '@ValenceI18n/say';
 
@@ -48,6 +49,7 @@ const ApproveRequestDialog = ({
   const [seasons, setSeasons] = useState<number[] | null>(null);
   const [followsNew, setFollowsNew] = useState(false);
   const [releaseTypes, setReleaseTypes] = useState<ReleaseType[] | null>(null);
+  const [bookFormats, setBookFormats] = useState<BookFormat[] | null>(null);
   const [isApproving, setIsApproving] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [opened, setOpened] = useState<string | null>(null);
@@ -59,6 +61,7 @@ const ApproveRequestDialog = ({
     setSeasons(request.seasons);
     setFollowsNew(request.seasons === null || request.followsNewSeasons);
     setReleaseTypes(request.releaseTypes);
+    setBookFormats(request.bookFormats ?? null);
     setProblem(null);
   }
 
@@ -98,6 +101,11 @@ const ApproveRequestDialog = ({
         ? {}
         : { followsNewSeasons: followsNew }),
       ...(releaseTypes === request.releaseTypes || releaseTypes === null ? {} : { releaseTypes }),
+      ...(bookFormats === (request.bookFormats ?? null) ||
+      bookFormats === null ||
+      bookFormats.length === 0
+        ? {}
+        : { bookFormats }),
     };
 
     setIsApproving(true);
@@ -175,6 +183,10 @@ const ApproveRequestDialog = ({
             value={releaseTypes ?? [...DEFAULT_RELEASE_TYPES]}
             onChange={setReleaseTypes}
           />
+        )}
+
+        {request?.kind !== 'book' ? null : (
+          <BookFormatChooser value={bookFormats ?? ['ebook']} onChange={setBookFormats} />
         )}
 
         {request?.kind !== 'series' || request.tmdbId === null ? null : (

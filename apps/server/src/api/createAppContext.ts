@@ -1385,6 +1385,7 @@ const createAppContext = (options: CreateAppOptions) => {
         followsNewSeasons: asked.followsNewSeasons,
         releaseTypes:
           asked.releaseTypes ?? (isMusicRequest(asked.kind) ? await defaultReleaseTypes() : null),
+        ...(asked.bookFormats === undefined ? {} : { bookFormats: asked.bookFormats }),
         profileId: profileId ?? chosen.requestProfileId,
         isPickedByHand: asked.isPickedByHand,
         libraryId: chosen.id,

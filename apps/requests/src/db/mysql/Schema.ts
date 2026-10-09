@@ -42,11 +42,13 @@ import { QUEUED_DOWNLOAD_STATES } from '@ValenceContracts/schemas/DownloadQueue'
 import type { IndexerCapabilities, IndexerSettings } from '@ValenceContracts/schemas/Indexer';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import {
+  BOOK_FORMATS,
   MEDIA_REQUEST_KINDS,
   REQUEST_APPROVALS,
   REQUEST_ITEM_STATES,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type {
+  BookFormat,
   ReleaseType,
   RequestCatalogue,
   ProfileAsk,
@@ -307,6 +309,7 @@ const mediaRequest = requestsSchema(
     followsNewSeasons: boolean('follows_new_seasons').notNull().default(false),
     followsAfter: int('follows_after'),
     releaseTypes: jsonColumn('release_types').$type<ReleaseType[]>(),
+    bookFormats: jsonColumn('book_formats').$type<BookFormat[]>(),
     runtimeMinutes: int('runtime_minutes'),
     releaseDates: jsonColumn('release_dates')
       .$type<RequestCatalogue['releaseDates']>()
@@ -337,6 +340,7 @@ const requestItem = requestsSchema(
     musicBrainzId: varchar('music_brainz_id', { length: 64 }),
     season: int('season'),
     episode: int('episode'),
+    format: varchar('format', { length: 16, enum: BOOK_FORMATS }),
     title: mediumtext('title').notNull(),
     airDate: varchar('air_date', { length: 32 }),
     state: varchar('state', { length: 32, enum: REQUEST_ITEM_STATES }).notNull().default('waiting'),

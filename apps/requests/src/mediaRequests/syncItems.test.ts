@@ -190,4 +190,15 @@ describe('syncItems', () => {
       arrive: [],
     });
   });
+
+  it('waits for a book once in each format asked for, an ebook where none is said', () => {
+    const book = aMediaRequest({ kind: 'book', title: 'Project Hail Mary', tmdbId: null });
+
+    expect(syncItems(book, NOTHING, []).add.map((item) => item.format)).toEqual(['ebook']);
+    expect(
+      syncItems({ ...book, bookFormats: ['ebook', 'audiobook'] }, NOTHING, [
+        aRequestItem({ format: 'ebook', airDate: null, title: 'Project Hail Mary' }),
+      ]).add.map((item) => item.format),
+    ).toEqual(['audiobook']);
+  });
 });

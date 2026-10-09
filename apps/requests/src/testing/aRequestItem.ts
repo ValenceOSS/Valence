@@ -13,6 +13,7 @@ const aRequestItem = (overrides: Partial<RequestItemRecord> = {}): RequestItemRe
   musicBrainzId: null,
   season: null,
   episode: null,
+  format: null,
   title: 'Dune',
   airDate: '2021-12-03',
   state: 'wanted',

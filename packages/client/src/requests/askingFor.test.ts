@@ -32,10 +32,17 @@ describe('askingFor', () => {
     });
   });
 
-  it('asks for a book by its Open Library number', () => {
+  it('asks for a book by its Open Library number, as an ebook unless told otherwise', () => {
     expect(askingFor(aCatalogueTitleDetail({ kind: 'book', id: '42' }), null, [])).toEqual({
       kind: 'book',
       openLibraryId: 42,
+      bookFormats: ['ebook'],
     });
+    expect(
+      askingFor(aCatalogueTitleDetail({ kind: 'book', id: '42' }), null, [], true, [
+        'ebook',
+        'audiobook',
+      ]),
+    ).toMatchObject({ bookFormats: ['ebook', 'audiobook'] });
   });
 });
