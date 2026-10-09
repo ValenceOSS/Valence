@@ -18,6 +18,7 @@ type DescriptionSources = {
   ) => Promise<RequestCatalogue | null>;
   findOnMusicBrainz: (kind: MusicRequestKind, deezerId: number) => Promise<string | null>;
   describeBook: (openLibraryId: number) => Promise<OpenLibraryDescription | null>;
+  readLogo?: (tmdbId: string, kind: 'tv' | 'movie') => Promise<string | null>;
 };
 
 /**
@@ -64,6 +65,11 @@ const describeCatalogueTitle = async (
 ): Promise<UnstoodDetail | null> => {
   if (kind === 'film' || kind === 'series') {
     const found = await sources.describeTitle(id, kind === 'film' ? 'movie' : 'tv');
+    const logoUrl =
+      found === null
+        ? null
+        : ((await sources.readLogo?.(id, kind === 'film' ? 'movie' : 'tv').catch(() => null)) ??
+          null);
 
     return found === null
       ? null
@@ -77,6 +83,7 @@ const describeCatalogueTitle = async (
           overview: found.overview,
           posterUrl: found.posterUrl,
           backdropUrl: found.backdropUrl,
+          logoUrl,
           genres: found.genres,
           runtimeMinutes: found.runtimeMinutes,
           cast: found.cast,
@@ -105,6 +112,7 @@ const describeCatalogueTitle = async (
           overview: found.overview,
           posterUrl: found.posterUrl,
           backdropUrl: null,
+          logoUrl: null,
           genres: found.subjects,
           runtimeMinutes: null,
           cast: [],
@@ -129,6 +137,7 @@ const describeCatalogueTitle = async (
         overview: found.overview,
         posterUrl: found.posterUrl,
         backdropUrl: null,
+        logoUrl: null,
         genres: [],
         runtimeMinutes: null,
         cast: [],

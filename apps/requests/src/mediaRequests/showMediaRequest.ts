@@ -87,6 +87,7 @@ const showMediaRequest = (
       heldQuality: item.heldQuality ?? null,
       narration: item.narration ?? null,
       filedMinutes: item.filedMinutes ?? null,
+      isPickedByHand: item.isPickedByHand,
       lastSearchedAt: item.lastSearchedAt,
       updatedAt: item.updatedAt,
     })),

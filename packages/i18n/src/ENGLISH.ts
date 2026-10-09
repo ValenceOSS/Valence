@@ -2407,12 +2407,10 @@ const ENGLISH = {
     'That isn’t on its connected app’s blocklist.',
   'requests.arrApps.handOff.theAppItWasHandedToIsGone':
     'The connected app it was sent to has been removed.',
-  'requests.arrImport.aLeastFormatScoreWasLeftOut':
-    'The minimum custom format score of {score} wasn’t imported.',
   'requests.arrImport.customFormatNameWasApproximated':
-    'The custom format {name} was only approximated, using preferred and banned words.',
+    'Some of what the custom format {name} checks has no match in Valence, so it was imported without those checks.',
   'requests.arrImport.customFormatNameWasLeftOut':
-    'The custom format {name} checks more than release names, so it wasn’t imported.',
+    'Nothing the custom format {name} checks has a match in Valence, so it wasn’t imported.',
   'requests.arrImport.itListsNoHost': 'It has no host set.',
   'requests.arrImport.libraryCouldNotBeHandedToApp':
     'Couldn’t connect {library} to {app}, so it wasn’t changed.',
@@ -2618,6 +2616,8 @@ const ENGLISH = {
   'requests.mediaRequests.requestWorker.nameHasNotSaidWhereIt':
     '{name} hasn’t reported where it saved the download',
   'requests.mediaRequests.requestWorker.noBookInItCouldBe': 'Couldn’t import any book from it',
+  'requests.mediaRequests.requestWorker.noOtherProfileTakesIt':
+    'No other quality profile takes that release, so it can’t be kept as a second version.',
   'requests.mediaRequests.requestWorker.nothingAcceptableHasBeenFoundYet':
     'Nothing acceptable has been found yet',
   'requests.mediaRequests.requestWorker.noTrackInItCouldBe': 'Couldn’t import any track from it',
@@ -4171,6 +4171,8 @@ const ENGLISH = {
   'screens.adminArea.releaseColumns.torrent': 'Torrent',
   'screens.adminArea.releaseColumns.usenet': 'Usenet',
   'screens.adminArea.releaseColumns.verdict': 'Verdict',
+  'screens.adminArea.releasePickTable.downloadBoth': 'Download both',
+  'screens.adminArea.releasePickTable.replaceIt': 'Replace it',
   'screens.adminArea.releaseSearchPanel.copyTheMagnetLink': 'Copy magnet link',
   'screens.adminArea.releaseSearchPanel.dunePartTwo2160p': 'Dune Part Two 2160p',
   'screens.adminArea.releaseSearchPanel.fetchedThroughValenceWithWhateverThe':
@@ -4506,6 +4508,7 @@ const ENGLISH = {
   'screens.adminArea.titlePage.automatically': 'Automatically',
   'screens.adminArea.titlePage.backToTheCatalogue': 'Back to the Catalogue',
   'screens.adminArea.titlePage.declineEllipsis': 'Decline…',
+  'screens.adminArea.titlePage.downloadRow.pickedByHand': 'Picked by hand',
   'screens.adminArea.titlePage.downloadRow.stopDownload': 'Stop download…',
   'screens.adminArea.titlePage.episodeTable.fileName': 'File name',
   'screens.adminArea.titlePage.fetching': 'Fetching',
@@ -6036,6 +6039,9 @@ const ENGLISH = {
     'Nothing in the catalogue matches those filters.',
   'screens.requestsPage.catalogueGrid.nothingToAskForHere': 'Nothing to request here',
   'screens.requestsPage.catalogueGrid.theCatalogueListedNothing': 'The catalogue returned nothing.',
+  'screens.requestsPage.discoverHero.trendingFilmThisWeek': 'Trending film this week',
+  'screens.requestsPage.discoverHero.trendingSeriesThisWeek': 'Trending series this week',
+  'screens.requestsPage.discoverHero.trendingTitles': 'Trending titles',
   'screens.requestsPage.findSomethingToRequest': 'Find a film, show, artist or book to request',
   'screens.requestsPage.musicDiscover.noMusicToAskFor': 'No music to request',
   'screens.requestsPage.musicDiscover.readingWhatMusicThereIsTo': 'Loading music to request',
@@ -6082,6 +6088,10 @@ const ENGLISH = {
   'screens.rolesPanel.colorSwatchPicker.noColour': 'No colour',
   'screens.rolesPanel.permissionEditor.letsSomebodyUseThisPartOf':
     'Lets someone use this part of {pluginName}.',
+  'screens.rolesPanel.permissionEditor.noLibraryTakesRequests':
+    'No film, series or book library takes requests, so there’s nothing to ask for yet. Add one, or turn on Takes requests for one, on the Libraries page.',
+  'screens.rolesPanel.permissionEditor.noMusicLibraryTakesRequests':
+    'No music library takes requests, so there’s nothing to ask for yet. Add one, or turn on Takes requests for one, on the Libraries page.',
   'screens.rolesPanel.permissionEditor.searchPermissions': 'Search permissions',
   'screens.rolesPanel.roleMembers.whetherNameHoldsThisRole': '{name} has this role',
   'screens.scrollingPages.theEnd': 'The end',

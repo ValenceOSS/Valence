@@ -10180,18 +10180,13 @@
     "context": "A request's problem, shown in the requests admin (from `createHandOffWorker`)."
   },
   {
-    "handler": "requests.arrImport.aLeastFormatScoreWasLeftOut",
-    "text": "The minimum custom format score of {score} wasn’t imported.",
-    "context": "Shown beside a quality profile brought in from Radarr/Sonarr (from `profileOf`). {score} is a number."
-  },
-  {
     "handler": "requests.arrImport.customFormatNameWasApproximated",
-    "text": "The custom format {name} was only approximated, using preferred and banned words.",
+    "text": "Some of what the custom format {name} checks has no match in Valence, so it was imported without those checks.",
     "context": "Shown beside a quality profile brought in from Radarr/Sonarr (from `profileOf`). {name} is the custom format's name; Valence profiles prefer or ban words."
   },
   {
     "handler": "requests.arrImport.customFormatNameWasLeftOut",
-    "text": "The custom format {name} checks more than release names, so it wasn’t imported.",
+    "text": "Nothing the custom format {name} checks has a match in Valence, so it wasn’t imported.",
     "context": "Shown beside a quality profile brought in from Radarr/Sonarr (from `profileOf`). {name} is the custom format's name."
   },
   {
@@ -10833,6 +10828,11 @@
     "handler": "requests.mediaRequests.requestWorker.noBookInItCouldBe",
     "text": "Couldn’t import any book from it",
     "context": "Shown in the media requests in the requests service (from `createRequestWorker`)."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.noOtherProfileTakesIt",
+    "text": "No other quality profile takes that release, so it can’t be kept as a second version.",
+    "context": "Error when a release picked by hand for a film already in the library is to be kept beside it, and no quality profile other than the film's own would take it."
   },
   {
     "handler": "requests.mediaRequests.requestWorker.nothingAcceptableHasBeenFoundYet",
@@ -16600,6 +16600,16 @@
     "context": "Shown in the admin area (from `releaseColumns`)."
   },
   {
+    "handler": "screens.adminArea.releasePickTable.downloadBoth",
+    "text": "Download both",
+    "context": "A button on a release found by hand for a film already in the library: fetch it and keep it beside the copy there, as a second version."
+  },
+  {
+    "handler": "screens.adminArea.releasePickTable.replaceIt",
+    "text": "Replace it",
+    "context": "A button on a release found by hand for a film already in the library: fetch it in place of the copy there."
+  },
+  {
     "handler": "screens.adminArea.releaseSearchPanel.copyTheMagnetLink",
     "text": "Copy magnet link",
     "context": "The label in the release search panel in the admin area."
@@ -17883,6 +17893,11 @@
     "handler": "screens.adminArea.titlePage.declineEllipsis",
     "text": "Decline…",
     "context": "A button on a title’s page that declines its request, after asking for an optional note."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.downloadRow.pickedByHand",
+    "text": "Picked by hand",
+    "context": "On a download on a title's page in the admin area, when the release was picked by hand in interactive search rather than by Valence."
   },
   {
     "handler": "screens.adminArea.titlePage.downloadRow.stopDownload",
@@ -24016,6 +24031,21 @@
     "context": "Shown in the catalogue grid in the requests page."
   },
   {
+    "handler": "screens.requestsPage.discoverHero.trendingFilmThisWeek",
+    "text": "Trending film this week",
+    "context": "Above a film's name in the big carousel at the top of Discover."
+  },
+  {
+    "handler": "screens.requestsPage.discoverHero.trendingSeriesThisWeek",
+    "text": "Trending series this week",
+    "context": "Above a series' name in the big carousel at the top of Discover."
+  },
+  {
+    "handler": "screens.requestsPage.discoverHero.trendingTitles",
+    "text": "Trending titles",
+    "context": "The name, for screen readers, of the dots that move between the titles in the carousel at the top of Discover."
+  },
+  {
     "handler": "screens.requestsPage.findSomethingToRequest",
     "text": "Find a film, show, artist or book to request",
     "context": "The placeholder of Discover's search field on the Requests page."
@@ -24184,6 +24214,16 @@
     "handler": "screens.rolesPanel.permissionEditor.letsSomebodyUseThisPartOf",
     "text": "Lets someone use this part of {pluginName}.",
     "context": "Shown in the permission editor in the roles panel. {pluginName} is filled in by the app."
+  },
+  {
+    "handler": "screens.rolesPanel.permissionEditor.noLibraryTakesRequests",
+    "text": "No film, series or book library takes requests, so there’s nothing to ask for yet. Add one, or turn on Takes requests for one, on the Libraries page.",
+    "context": "Added under the permission to request films, series and books in a role's permissions, when no library of those kinds takes requests."
+  },
+  {
+    "handler": "screens.rolesPanel.permissionEditor.noMusicLibraryTakesRequests",
+    "text": "No music library takes requests, so there’s nothing to ask for yet. Add one, or turn on Takes requests for one, on the Libraries page.",
+    "context": "Added under the permission to request music in a role's permissions, when no music library takes requests."
   },
   {
     "handler": "screens.rolesPanel.permissionEditor.searchPermissions",

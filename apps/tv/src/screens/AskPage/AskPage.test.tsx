@@ -50,6 +50,7 @@ const aTitle = (overrides: Partial<CatalogueTitleDetail> = {}): CatalogueTitleDe
   standing: { status: 'askable', mediaId: null, requestId: null, requestState: null },
   musicBrainzId: null,
   backdropUrl: '/backdrops/dune.jpg',
+  logoUrl: null,
   genres: ['Science Fiction', 'Adventure'],
   runtimeMinutes: 155,
   cast: [{ name: 'Timothée Chalamet', role: 'Paul', photoUrl: null }],

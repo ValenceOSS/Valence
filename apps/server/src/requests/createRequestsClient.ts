@@ -664,10 +664,14 @@ const createRequestsClient = ({
         waitMs: searchTimeoutMs,
       }),
 
-    pickRelease: (id: string, release: Release): Promise<RequestsAnswer<MediaRequest>> =>
+    pickRelease: (
+      id: string,
+      release: Release,
+      keepsBoth = false,
+    ): Promise<RequestsAnswer<MediaRequest>> =>
       call(`${withRequest(id)}/pick`, readRequest, {
         method: 'POST',
-        body: { release },
+        body: keepsBoth ? { release, keepsBoth } : { release },
         waitMs: searchTimeoutMs,
       }),
 

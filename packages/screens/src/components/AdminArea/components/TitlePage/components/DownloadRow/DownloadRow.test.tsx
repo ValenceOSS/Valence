@@ -48,6 +48,17 @@ describe('DownloadRow', () => {
     expect(screen.getByText('0%')).toBeInTheDocument();
   });
 
+  it('says a release was picked by hand', () => {
+    render(
+      <DownloadRow
+        download={{ ...DOWNLOAD, items: [aRequestItem({ id: 'a', isPickedByHand: true })] }}
+        onStop={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Picked by hand')).toBeInTheDocument();
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(DownloadRow.displayName).toBe('DownloadRow');
   });

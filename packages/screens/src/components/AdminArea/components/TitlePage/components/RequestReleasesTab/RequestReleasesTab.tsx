@@ -1,3 +1,5 @@
+import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
+import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { notify } from '@ValenceUI/notify';
 import { useCallback, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -13,7 +15,8 @@ import { say } from '@ValenceI18n/say';
 /**
  * Every release the indexers have for a request, judged against its quality profile and in the
  * order they would be chosen — which says both what was taken and why the rest were not — with any
- * one of them to fetch instead.
+ * one of them to fetch instead, or, for a film already here, to keep beside it as a second
+ * version.
  *
  * @param request - The request.
  * @param onPicked - Told the request once the pick is on its way.
@@ -25,11 +28,11 @@ const RequestReleasesTab = ({ request, onPicked }: RequestReleasesTabProps) => {
   const { id } = request;
 
   const pick = useCallback(
-    (release: Release) => {
+    (release: Release, keepsBoth: boolean) => {
       setPicking(release.id);
       setProblem(null);
 
-      void pickMediaRelease(id, release)
+      void pickMediaRelease(id, release, keepsBoth)
         .then(({ value, refusal }) => {
           if (value === null) {
             setProblem(
@@ -74,6 +77,13 @@ const RequestReleasesTab = ({ request, onPicked }: RequestReleasesTabProps) => {
         <Spinner isCentered label={say('common.askingEveryIndexer')} size="sm" />
       ) : (
         <ReleasePickTable
+          isHereAlready={
+            request.kind === 'film' &&
+            request.items.some((item) => item.state === 'filed' || item.state === 'available')
+          }
+          kind={
+            isMusicRequest(request.kind) ? 'music' : isBookRequest(request.kind) ? 'book' : 'video'
+          }
           found={found.data}
           foundAt={found.dataUpdatedAt}
           pickingId={picking}

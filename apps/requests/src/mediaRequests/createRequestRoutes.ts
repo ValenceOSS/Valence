@@ -338,7 +338,11 @@ const createRequestRoutes = ({ service, handOff, log, worker }: CreateRequestRou
       return context.json(refuse('error.common.sayWhichReleaseToFetch'), 400);
     }
 
-    const picked = await worker.pick(context.req.param('id'), pick.release);
+    const picked = await worker.pick(
+      context.req.param('id'),
+      pick.release,
+      pick.keepsBoth === true,
+    );
 
     return picked !== null && 'refused' in picked
       ? context.json(refuseWith(picked.refused), 400)

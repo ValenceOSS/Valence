@@ -470,6 +470,48 @@ describe('createRequestWorker', () => {
       );
     });
 
+    it('keeps a film picked by hand beside the one here, under the next profile that takes it', async () => {
+      const uhd = aProfile({
+        id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+        name: 'UHD',
+        qualities: ['bluray-2160p', 'webdl-2160p'],
+        position: 1,
+      });
+      const uhdRelease = 'Dune.2021.2160p.BluRay.x265-GRP';
+      const { worker, send, requests, items } = aWorker({
+        items: [
+          aRequestItem({
+            id: 'main',
+            state: 'available',
+            filePath: '/media/Films/Dune (2021)/Dune (2021).mkv',
+            filedTitle: BLURAY,
+          }),
+        ],
+        profiles: [
+          aProfile({ qualities: ['bluray-1080p', 'webdl-1080p'], libraryIds: ['films'] }),
+          uhd,
+        ],
+      });
+
+      const picked = await worker.pick(aMediaRequest().id, aRelease(uhdRelease), true);
+
+      expect(picked).not.toHaveProperty('refused');
+      expect((await requests.find(aMediaRequest().id))?.versions).toEqual([uhd.id]);
+      expect((await items.list()).map((item) => item.versionProfileId ?? null)).toEqual([
+        null,
+        uhd.id,
+      ]);
+      expect(send).toHaveBeenCalledWith(expect.objectContaining({ title: uhdRelease }));
+      expect(
+        await worker.pick(aMediaRequest().id, aRelease('Dune.2021.720p.HDTV.x264-GRP'), true),
+      ).toMatchObject({
+        refused: {
+          message:
+            'No other quality profile takes that release, so it can’t be kept as a second version.',
+        },
+      });
+    });
+
     it('leaves a request waiting on approval alone', async () => {
       const { worker, searched } = aWorker({
         requests: [aMediaRequest({ approval: 'awaiting' })],

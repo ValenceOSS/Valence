@@ -9,18 +9,27 @@ describe('profileOf', () => {
     const profile = firstOf(radarr.profiles.filter((one) => one.name === 'HD-1080p'));
     const { draft, notes } = profileOf(profile, 'video', radarr);
 
-    expect(draft).toEqual({
+    expect(draft).toMatchObject({
       name: 'HD-1080p',
       kind: 'video',
       qualities: ['bluray-1080p', 'webdl-1080p', 'webrip-1080p', 'hdtv-1080p'],
-      preferredWords: ['Repack'],
+      preferredWords: [],
       requiredWords: [],
-      bannedWords: ['/[xh][ ._-]?265|\\bHEVC(\\b|\\d)/', '3D'],
+      bannedWords: ['3D'],
+      minFormatScore: 0,
       isUpgrading: true,
       cutoff: 'bluray-1080p',
     });
+    expect(draft.formats?.map((format) => [format.name, format.score])).toEqual([
+      ['x265', -10_000],
+      ['HDR', 100],
+      ['Repack', 5],
+    ]);
+    expect(draft.formats?.[1]?.conditions).toMatchObject([
+      { kind: 'words' },
+      { kind: 'resolution', value: '2160p', isRequired: true },
+    ]);
     expect(notes.map((note) => note.message)).toEqual([
-      'The custom format HDR checks more than release names, so it wasn’t imported.',
       'Valence has no equivalent for BR-DISK, so they weren’t imported.',
     ]);
   });
@@ -48,7 +57,7 @@ describe('profileOf', () => {
     ]);
   });
 
-  it('says where a Sonarr 4 profile’s formats and least score cannot be carried', async () => {
+  it('carries a Sonarr 4 profile’s formats, by language too, and its least score', async () => {
     const sonarr = await aSetup('sonarr-v4', 'sonarr', 'http://sonarr:8989');
     const { draft, notes } = profileOf(firstOf(sonarr.profiles), 'video', sonarr);
 
@@ -56,11 +65,16 @@ describe('profileOf', () => {
       qualities: ['webdl-1080p', 'webrip-1080p'],
       bannedWords: ['dubbed'],
       cutoff: 'webdl-1080p',
+      minFormatScore: 10,
+      formats: [
+        {
+          name: 'Not English',
+          score: -10_000,
+          conditions: [{ kind: 'language', value: 'en', isNegated: true }],
+        },
+      ],
     });
-    expect(notes.map((note) => note.message)).toEqual([
-      'The custom format Not English checks more than release names, so it wasn’t imported.',
-      'The minimum custom format score of 10 wasn’t imported.',
-    ]);
+    expect(notes).toEqual([]);
   });
 
   it('keeps exactly the qualities a profile allows, best first', async () => {
@@ -92,6 +106,8 @@ describe('profileOf', () => {
       preferredWords: [],
       requiredWords: [],
       bannedWords: [],
+      formats: [],
+      minFormatScore: 0,
       isUpgrading: true,
       upgradeUntilMusicQuality: 'flac24',
     });

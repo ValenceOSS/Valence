@@ -113,4 +113,30 @@ describe('releaseColumns', () => {
 
     expect(screen.queryByText('Verdict')).not.toBeInTheDocument();
   });
+
+  it('says each release’s format for music, and its quality for films and series', () => {
+    const { unmount } = render(
+      <DataTable
+        label="Releases"
+        columns={releaseColumns({ judged: new Map(), pickedId: null, now: 0, kind: 'music' })}
+        rows={[aRelease('Artist - Album (2020) [FLAC]')]}
+        getRowId={(release) => release.id}
+      />,
+    );
+
+    expect(screen.getByText('Format')).toBeInTheDocument();
+    expect(screen.getByText('FLAC')).toBeInTheDocument();
+
+    unmount();
+    render(
+      <DataTable
+        label="Releases"
+        columns={releaseColumns({ judged: new Map(), pickedId: null, now: 0, kind: 'video' })}
+        rows={[aRelease('A.Film.2021.1080p.BluRay.x264')]}
+        getRowId={(release) => release.id}
+      />,
+    );
+
+    expect(screen.getByText('1080p Blu-ray')).toBeInTheDocument();
+  });
 });

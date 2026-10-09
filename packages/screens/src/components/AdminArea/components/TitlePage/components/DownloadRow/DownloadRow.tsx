@@ -9,8 +9,8 @@ import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
- * One of a title's downloads: the release, how far along it is and how long it has left, what it
- * holds and where it came from, and a quiet cross to stop it.
+ * One of a title's downloads: the release, how far along it is and how long it has left, whether
+ * it was picked by hand, what it holds and where it came from, and a quiet cross to stop it.
  *
  * @param download - The download.
  * @param onStop - Told to stop it.
@@ -44,6 +44,9 @@ const DownloadRow = ({ download, onStop }: DownloadRowProps) => {
         />
 
         <span className="flex flex-wrap items-center gap-x-2 truncate text-xs text-text-muted">
+          {items.some((item) => item.isPickedByHand === true) ? (
+            <span>{say('screens.adminArea.titlePage.downloadRow.pickedByHand')}</span>
+          ) : null}
           {holds > 1 ? <span>{sayCount('common.count.episodes', holds)}</span> : null}
           {queued?.sizeBytes === null || queued?.sizeBytes === undefined ? null : (
             <FormattedBytes bytes={queued.sizeBytes} />

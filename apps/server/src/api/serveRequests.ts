@@ -1156,11 +1156,11 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(pickMediaReleaseRoute, async (context) => {
     const { id } = context.req.valid('param');
-    const { release } = context.req.valid('json');
+    const { release, keepsBoth } = context.req.valid('json');
     const answer = await throughRequests(context.req.raw.headers, async (client) =>
       (await isThroughItsApp(client, id))
         ? client.handOffPick(id, release)
-        : client.pickRelease(id, release),
+        : client.pickRelease(id, release, keepsBoth === true),
     );
 
     return answer.kind === 'answered'

@@ -82,6 +82,7 @@ const CatalogueCreditSchema = z.object({
 const CatalogueTitleDetailSchema = CatalogueTitleSchema.extend({
   musicBrainzId: z.string().uuid().nullable(),
   backdropUrl: z.string().nullable(),
+  logoUrl: z.string().nullable().default(null),
   genres: z.array(z.string()),
   runtimeMinutes: z.number().int().positive().nullable(),
   cast: z.array(CatalogueCreditSchema),

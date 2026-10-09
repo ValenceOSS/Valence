@@ -251,6 +251,7 @@ const RequestItemSchema = z.object({
   heldQuality: MusicQualitySchema.nullish(),
   narration: z.string().nullish(),
   filedMinutes: z.number().nonnegative().nullish(),
+  isPickedByHand: z.boolean().optional(),
   lastSearchedAt: z.string().datetime().nullable(),
   updatedAt: z.string().datetime(),
 });
@@ -345,7 +346,10 @@ const MediaRequestRefusalSchema = z.object({
   reason: z.string().trim().max(500).default(''),
 });
 
-const MediaRequestPickSchema = z.object({ release: ReleaseSchema });
+const MediaRequestPickSchema = z.object({
+  release: ReleaseSchema,
+  keepsBoth: z.boolean().optional(),
+});
 
 const DOWNLOAD_STOP_NEXT = ['another', 'byHand', 'nothing'] as const;
 

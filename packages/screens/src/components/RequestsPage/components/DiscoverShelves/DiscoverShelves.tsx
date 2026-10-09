@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { DiscoverHero } from '@ValenceScreens/components/RequestsPage/components/DiscoverHero/DiscoverHero';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Spinner } from '@ValenceUI/Spinner';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
@@ -32,8 +33,11 @@ const isMusicShelf = (shelf: CatalogueShelf): boolean =>
 const isBookShelf = (shelf: CatalogueShelf): boolean =>
   shelf.titles.every((title) => isBookRequest(title.kind));
 
+const HERO_PAIRS = 3;
+
 /**
- * The Discover side of the Requests page, in the spirit of Overseerr: shelves of films and series
+ * The Discover side of the Requests page, in the spirit of Overseerr: the titles trending this week
+ * at the top, as the library's own hero is, then shelves of films and series
  * trending, popular and coming, the studios behind them, and the albums and artists most listened
  * to — each marked with what it is and whether it is in the library already or asked for. Choosing
  * one opens its page, where it can be asked for; the card at the end of a shelf opens the whole
@@ -65,10 +69,20 @@ const DiscoverShelves = ({ onAsk, onBrowse, onBrowseStudio }: DiscoverShelvesPro
   const { shelves, studios } = discovered.data;
 
   const films = shelves.filter((shelf) => !isMusicShelf(shelf) && !isBookShelf(shelf));
+  const trendingFilms = shelves.find((shelf) => shelf.id === 'trending-films')?.titles ?? [];
+  const trendingSeries = shelves.find((shelf) => shelf.id === 'trending-series')?.titles ?? [];
+  const featured = Array.from({ length: HERO_PAIRS }, (_, at) => [
+    trendingFilms[at],
+    trendingSeries[at],
+  ])
+    .flat()
+    .filter((title) => title !== undefined);
   const music = shelves.filter((shelf) => isMusicShelf(shelf));
 
   return (
     <div className="flex flex-col gap-10">
+      {featured.length === 0 ? null : <DiscoverHero titles={featured} onAsk={onAsk} />}
+
       {studios.length === 0 ? null : (
         <Reveal delay={0}>
           <StudiosRail studios={studios} onOpen={onBrowseStudio} />

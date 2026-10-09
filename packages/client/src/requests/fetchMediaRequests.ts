@@ -263,14 +263,25 @@ const fetchMediaRequestLog = (id: string): Promise<RequestLogEntry[]> =>
   readFromServer(`${REQUESTS}/${id}/log`, z.array(RequestLogEntrySchema));
 
 /**
- * Fetches a release picked by hand for a request.
+ * Fetches a release picked by hand for a request, in place of what it has, or — for a film already
+ * here — beside it as a second version.
  *
  * @param id - Which request.
  * @param release - The release.
+ * @param keepsBoth - Whether a film keeps the copy it has as well.
  * @returns The request, or why not.
  */
-const pickMediaRelease = (id: string, release: Release): Promise<Sent<MediaRequest>> =>
-  sendToRequests(`${REQUESTS}/${id}/pick`, 'POST', { release }, readRequest);
+const pickMediaRelease = (
+  id: string,
+  release: Release,
+  keepsBoth = false,
+): Promise<Sent<MediaRequest>> =>
+  sendToRequests(
+    `${REQUESTS}/${id}/pick`,
+    'POST',
+    keepsBoth ? { release, keepsBoth } : { release },
+    readRequest,
+  );
 
 /**
  * Removes a request, stopping what it had started downloading — or cancels one of your own, taking
