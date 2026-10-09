@@ -8730,6 +8730,11 @@
     "context": "An error the server answers with (HTTP 400) in the app on the server (from `serveRequests`)."
   },
   {
+    "handler": "error.requests.itIsNotApprovedSoNothingIsSearched",
+    "text": "It isn’t approved, so nothing is searched for it.",
+    "context": "Error when Search missing is pressed for a request handed to a connected app that hasn't been approved, or was declined."
+  },
+  {
     "handler": "error.requests.noSuchBlockedRelease",
     "text": "No such blocked release.",
     "context": "An error the server answers with (HTTP 404) in the media requests in the requests service (from `createRequestRoutes`)."
@@ -8798,6 +8803,11 @@
     "handler": "error.requests.thatIsNotWhatTheCatalogue",
     "text": "That doesn’t match the catalogue.",
     "context": "An error the server answers with (HTTP 400) in the media requests in the requests service (from `createRequestRoutes`)."
+  },
+  {
+    "handler": "error.requests.theAppCouldNotSearchForIt",
+    "text": "The connected app couldn’t search for it. Its history says why.",
+    "context": "Error when Search missing asks the connected app a request was handed to, such as Sonarr, to search again and the app refuses or can't be reached."
   },
   {
     "handler": "error.requests.theCatalogueDoesNotKnowThat",
