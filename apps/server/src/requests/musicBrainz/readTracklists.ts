@@ -1,7 +1,12 @@
 import { MusicBrainzReleasePageSchema } from '@ValenceServer/requests/musicBrainz/MusicBrainzReleasePageSchema';
 import type { MusicWeb } from '@ValenceServer/music/web/createMusicWeb';
+import type { AlbumTrack } from '@ValenceContracts/schemas/MediaRequest';
 
-type Tracklist = { trackCount: number; recordings: readonly string[] };
+type Tracklist = {
+  trackCount: number;
+  recordings: readonly string[];
+  tracks: readonly AlbumTrack[];
+};
 
 const PAGE = 100;
 
@@ -9,7 +14,8 @@ const MOST_PAGES = 10;
 
 /**
  * The tracks of every official release an artist or a release group has, kept as the longest
- * edition of each release group: how many tracks it has, and which recordings they are. Read a
+ * edition of each release group: how many tracks it has, which recordings they are, and what each
+ * track is called and how long it runs. Read a
  * page at a time, since MusicBrainz answers once a second.
  *
  * @param web - The way out to the web, paced as MusicBrainz asks.
@@ -56,6 +62,12 @@ const readTracklists = async (
             medium.tracks.flatMap((track) =>
               track.recording === null ? [] : [track.recording.id],
             ),
+          ),
+          tracks: release.media.flatMap((medium) =>
+            medium.tracks.map((track) => ({
+              title: track.title,
+              seconds: track.length === null ? null : Math.round(track.length / 1000),
+            })),
           ),
         });
       }

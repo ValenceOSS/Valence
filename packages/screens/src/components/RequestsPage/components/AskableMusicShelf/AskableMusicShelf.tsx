@@ -10,7 +10,7 @@ import type { AskableMusicShelfProps } from './AskableMusicShelf.types';
  * @param onAsk - Called with the album or artist to open, as its address names it.
  */
 const AskableMusicShelf = ({ shelf, onAsk }: AskableMusicShelfProps) => (
-  <Rail title={shelf.title} sizesCards>
+  <Rail title={shelf.title} sizesCards cards="poster">
     {shelf.titles.map((title, at) => (
       <RevealItem key={title.id} index={at} className="shrink-0 snap-start">
         <AskableMusicTile title={title} onAsk={onAsk} />

@@ -33,6 +33,7 @@ const aDownload = (overrides: Partial<QueuedDownload> = {}): QueuedDownload => (
   filedInto: null,
   filingProblem: null,
   filingProblemCode: null,
+  wasPaused: false,
   ...overrides,
 });
 

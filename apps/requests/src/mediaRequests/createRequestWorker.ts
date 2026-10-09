@@ -49,6 +49,7 @@ import type {
   MediaRequest,
   MediaRequestDraft,
   MissingSearch,
+  SearchScope,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { ProbeClient } from '@ValenceRequests/media/createProbeClient';
@@ -1411,6 +1412,7 @@ const createRequestWorker = ({
   const searchesByHand = (
     request: MediaRequestRecord,
     seasons: readonly number[],
+    scope: SearchScope | null = null,
   ): ReleaseSearch[] => {
     const query = queryTitleOf(request.title);
     const artist = queryTitleOf(request.artistName ?? request.title);
@@ -1431,6 +1433,18 @@ const createRequestWorker = ({
           ...(request.imdbId === null ? {} : { imdbId: request.imdbId }),
         };
 
+        if (scope !== null) {
+          return [
+            {
+              query,
+              mode: 'tv',
+              season: scope.season,
+              ...(scope.episode === null ? {} : { episode: scope.episode }),
+              ...ids,
+            },
+          ];
+        }
+
         return [
           { query, mode: 'tv', ...ids },
           ...seasons.map((season) => ({ query, mode: 'tv' as const, season, ...ids })),
@@ -1450,12 +1464,13 @@ const createRequestWorker = ({
   const releasesOf = async (
     found: Found,
     blockedList: readonly BlockedReleaseRecord[],
+    scope: SearchScope | null = null,
   ): Promise<ReleaseSearchOutcome> => {
     const { request } = found;
     const seasons = [
       ...new Set(found.items.flatMap((item) => (item.season === null ? [] : [item.season]))),
     ];
-    const searches = searchesByHand(request, seasons);
+    const searches = searchesByHand(request, seasons, scope);
     const outcomes = await Promise.all(searches.map((search) => indexers.search(search)));
     const releases = [
       ...new Map(
@@ -1877,10 +1892,44 @@ const createRequestWorker = ({
 
     unblock: (id: string): Promise<boolean> => blocked.remove(id),
 
-    releasesFor: async (id: string): Promise<ReleaseSearchOutcome | null> => {
+    releasesFor: async (
+      id: string,
+      scope: SearchScope | null = null,
+    ): Promise<ReleaseSearchOutcome | null> => {
       const found = await find(id);
 
-      return found === null ? null : releasesOf(found, await blockedFor(id));
+      if (found === null) {
+        return null;
+      }
+
+      if (scope === null) {
+        return releasesOf(found, await blockedFor(id));
+      }
+
+      const scoped = found.items.filter(
+        (item) =>
+          item.season === scope.season &&
+          (scope.episode === null || item.episode === scope.episode),
+      );
+      const outcome = await releasesOf({ ...found, items: scoped }, await blockedFor(id), scope);
+
+      if (scope.episode !== null) {
+        return outcome;
+      }
+
+      const releases = outcome.releases.filter((release) => {
+        const parsed = parseReleaseName(release.title);
+
+        return parsed.episodes.length === 0 && parsed.seasons.includes(scope.season);
+      });
+      const kept = new Set(releases.map((release) => release.id));
+
+      return {
+        ...outcome,
+        releases,
+        judgements: outcome.judgements.filter((judged) => kept.has(judged.releaseId)),
+        pickedId: outcome.pickedId !== null && kept.has(outcome.pickedId) ? outcome.pickedId : null,
+      };
     },
 
     releasesForDraft: (asked: MediaRequestDraft): Promise<ReleaseSearchOutcome> => {

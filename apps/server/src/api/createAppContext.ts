@@ -706,6 +706,12 @@ const createAppContext = (options: CreateAppOptions) => {
   };
 
   /**
+   * The profile an account's face is drawn from: the first on it, where it has any.
+   */
+  const profileOfAccount = async (accountId: string): Promise<string | null> =>
+    profiles === undefined ? null : ((await profiles.list(accountId))[0]?.id ?? null);
+
+  /**
    * Which person on this account is watching.
    */
   const readProfileId = async (headers: Headers): Promise<string | null> => {
@@ -1758,6 +1764,7 @@ const createAppContext = (options: CreateAppOptions) => {
     sayRequestsChanged,
     sayOfRequest,
     profileForAsk,
+    profileOfAccount,
     catalogueFor,
     defaultReleaseTypes,
     draftFor,

@@ -274,6 +274,13 @@
       "when": 1791557117224,
       "tag": "0038_audiobooks_keep_their_narration",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1791563004218,
+      "tag": "0039_downloads_remember_being_paused",
+      "breakpoints": true
     }
   ]
 }

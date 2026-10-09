@@ -2576,6 +2576,16 @@
     "context": "A length of time in whole months, such as how long ago a release was posted."
   },
   {
+    "handler": "common.count.others.one",
+    "text": "{count} other",
+    "context": "The end of a list of people's names when there are too many to name, as in Dan, Sam and 1 other. {count} is how many are left unnamed."
+  },
+  {
+    "handler": "common.count.others.other",
+    "text": "{count} others",
+    "context": "The end of a list of people's names when there are too many to name, as in Dan, Sam and 3 others. {count} is how many are left unnamed."
+  },
+  {
     "handler": "common.count.pages.one",
     "text": "{count} page",
     "context": "How many pages something has, such as a chapter of a book."
@@ -12732,7 +12742,7 @@
   {
     "handler": "screens.adminArea.cataloguePanel.kindsOfLibrary",
     "text": "Kind of library",
-    "context": "The label of the tabs across the top of the admin Catalogue: Films, Shows, Music, Books."
+    "context": "The label of the menu in the admin Catalogue’s toolbar that chooses which kind of library to show: Films, Shows, Music, Books."
   },
   {
     "handler": "screens.adminArea.cataloguePanel.nothingIsMissing",
@@ -17880,6 +17890,26 @@
     "context": "Shown in the admin area. {title} is filled in by the app."
   },
   {
+    "handler": "screens.adminArea.titlePage.askerStrip.askedFirst",
+    "text": "Asked first",
+    "context": "Under the name of the person who first asked for a title, in the list of everybody who wants it."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.askerStrip.countPeopleWantThis.one",
+    "text": "{count} person wants this",
+    "context": "The heading of the list of everybody who asked for a title, at the top of its page in the admin area. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.askerStrip.countPeopleWantThis.other",
+    "text": "{count} people want this",
+    "context": "The heading of the list of everybody who asked for a title, at the top of its page in the admin area. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.askerStrip.everybodyWhoWantsIt",
+    "text": "Everybody who wants it",
+    "context": "The label of the control at the top of a title's page in the admin area that opens the list of everybody who asked for it."
+  },
+  {
     "handler": "screens.adminArea.titlePage.automatically",
     "text": "Automatically",
     "context": "How a title is fetched: Valence searches for it by itself. Shown on a title’s page in the admin Catalogue."
@@ -17893,6 +17923,11 @@
     "handler": "screens.adminArea.titlePage.declineEllipsis",
     "text": "Decline…",
     "context": "A button on a title’s page that declines its request, after asking for an optional note."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.downloadRow.pausedEarlier",
+    "text": "Paused earlier, so it’s never given up on",
+    "context": "On a download on a title's page in the admin area, when somebody paused it in the download client and later resumed it. Valence no longer replaces it with another release however slow it is."
   },
   {
     "handler": "screens.adminArea.titlePage.downloadRow.pickedByHand",
@@ -17960,9 +17995,24 @@
     "context": "The title of the interactive search dialog. {title} is what is searched for."
   },
   {
+    "handler": "screens.adminArea.titlePage.interactiveSearchDialog.interactiveSearchForTitleScope",
+    "text": "Interactive search for {title}, {scope}",
+    "context": "The title of the interactive search dialog when it is narrowed to one season or episode. {title} is the show; {scope} is the season or episode, such as Season 1 or S01E03."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.interactiveSearchDialog.onlyWholeSeasonReleases",
+    "text": "Only releases of the whole season are shown. Picking one replaces whatever is downloading for it.",
+    "context": "Under the title of the interactive search dialog when it is opened for a whole season, which shows only season packs."
+  },
+  {
     "handler": "screens.adminArea.titlePage.interactiveSearchDialog.pickingOneReplaces",
     "text": "Picking a release stops whatever is downloading for the same episodes and blocks it.",
     "context": "The explanation under the title of the interactive search dialog."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.interactiveSearchForName",
+    "text": "Interactive search for {name}",
+    "context": "The label of the button on a season or episode on a title's page in the admin area that opens interactive search for it. {name} is the season or episode, such as Season 1 or S01E03."
   },
   {
     "handler": "screens.adminArea.titlePage.itemList.filedOfTotalTracks",
@@ -18020,11 +18070,6 @@
     "context": "Asked on a book's page in the admin area when its audiobook is out in more than one narration and none has been chosen. {title} is the book."
   },
   {
-    "handler": "screens.adminArea.titlePage.newSeasonsGoInFolder",
-    "text": "New seasons go in {folder}",
-    "context": "A note above a show’s seasons. {folder} is the show’s folder."
-  },
-  {
     "handler": "screens.adminArea.titlePage.newSeasonsOfTitleAreFetched",
     "text": "New seasons of {title} are fetched as they air",
     "context": "Shown on a show's admin page once 'Get new seasons as they come' is turned on. {title} is the show."
@@ -18043,11 +18088,6 @@
     "handler": "screens.adminArea.titlePage.onDisk",
     "text": "On disk",
     "context": "The heading of the card on a title’s page about its files."
-  },
-  {
-    "handler": "screens.adminArea.titlePage.onlyFetchWhatIPick",
-    "text": "Fetch only releases I pick",
-    "context": "A menu item on a title’s page that stops it being searched for automatically."
   },
   {
     "handler": "screens.adminArea.titlePage.onlyWhatYouPick",
@@ -18110,9 +18150,9 @@
     "context": "The description of Mark as in the library in the menu on a title’s page."
   },
   {
-    "handler": "screens.adminArea.titlePage.searchForItAutomatically",
-    "text": "Search for it automatically",
-    "context": "A menu item on a title’s page that has it searched for again by itself."
+    "handler": "screens.adminArea.titlePage.searchForName",
+    "text": "Search for {name}",
+    "context": "The label of the button on a season or episode on a title's page in the admin area that searches for it automatically. {name} is the season or episode, such as Season 1 or S01E03."
   },
   {
     "handler": "screens.adminArea.titlePage.searchingForTitle",
@@ -18215,19 +18255,24 @@
     "context": "At the top of a title’s page. {name} is who asked; {when} is how long ago, such as 3 hours ago."
   },
   {
-    "handler": "screens.adminArea.titlePage.titleIsOnlyFetchedWhenPicked",
-    "text": "{title} is fetched only when you pick a release",
-    "context": "Said after Fetch only releases I pick. {title} is the title."
-  },
-  {
-    "handler": "screens.adminArea.titlePage.titleIsSearchedForAutomatically",
-    "text": "{title} is searched for automatically",
-    "context": "Said after Search for it automatically. {title} is the title."
-  },
-  {
     "handler": "screens.adminArea.titlePage.titleProgress.whereEverythingStands",
     "text": "Where everything stands",
     "context": "The label of the bar of a title’s episodes or albums, coloured by where each stands, for screen readers."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.trackTable.length",
+    "text": "Length",
+    "context": "The heading of the column of how long each track runs in the list of an album's tracks on its page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.trackTable.track",
+    "text": "Track",
+    "context": "The heading of the column of track names in the list of an album's tracks on its page in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.trackTable.tracks",
+    "text": "Tracks",
+    "context": "The heading of the list of an album's tracks on its page in the admin area."
   },
   {
     "handler": "screens.adminArea.transcoder",
@@ -24074,6 +24119,21 @@
     "handler": "screens.requestsPage.nothingInTheCataloguesMatches",
     "text": "Nothing in the catalogues matches “{query}”.",
     "context": "Shown on Discover when its search finds nothing to request. {query} is what was searched for."
+  },
+  {
+    "handler": "screens.requestsPage.onItsWayShelf.askedByName",
+    "text": "Asked by {name}",
+    "context": "The small label in the corner of a card on Discover's On its way shelf, beside the face of whoever requested it. {name} is their name."
+  },
+  {
+    "handler": "screens.requestsPage.onItsWayShelf.onItsWay",
+    "text": "On its way",
+    "context": "The heading of the shelf at the top of Discover showing what the person has requested that hasn't arrived yet."
+  },
+  {
+    "handler": "screens.requestsPage.onItsWayShelf.statusPercent",
+    "text": "{status} · {percent}%",
+    "context": "The words on the bar under a request on Discover's On its way shelf while it downloads. {status} is where it stands, such as Downloading; {percent} is how much has come."
   },
   {
     "handler": "screens.requestsPage.requestsList.clearAFilterOrSearchFor",

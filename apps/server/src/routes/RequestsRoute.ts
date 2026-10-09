@@ -1297,12 +1297,18 @@ const refuseMediaRequestRoute = createRoute({
   responses: requestFailures(ONE_REQUEST),
 });
 
+const SearchScopeQuery = z.object({
+  season: z.string().regex(/^\d+$/).optional(),
+  episode: z.string().regex(/^\d+$/).optional(),
+});
+
 const retryMediaRequestRoute = createRoute({
   method: 'post',
   path: '/api/requests/media/{id}/retry',
   tags: ['Requests'],
-  summary: 'Try again whatever failed in a request, and search again for what is wanted',
-  request: { params: RecordIdParameter },
+  summary:
+    'Try again whatever failed in a request, and search again for what is wanted — the whole request, one season of it, or one episode',
+  request: { params: RecordIdParameter, query: SearchScopeQuery },
   responses: requestFailures(ONE_REQUEST),
 });
 
@@ -1319,8 +1325,9 @@ const mediaRequestReleasesRoute = createRoute({
   method: 'get',
   path: '/api/requests/media/{id}/releases',
   tags: ['Requests'],
-  summary: 'Search for a request by hand, judging every release found',
-  request: { params: RecordIdParameter },
+  summary:
+    'Search for a request by hand, judging every release found — for the whole request, one season of it in packs, or one episode',
+  request: { params: RecordIdParameter, query: SearchScopeQuery },
   responses: requestFailures({
     200: {
       description: 'The releases for it, best first',

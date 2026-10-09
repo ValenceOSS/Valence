@@ -38,6 +38,7 @@ import type {
   ReleaseType,
   ProfileAskDecision,
   Requester,
+  SearchScope,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type {
   MediaRequestRecord,
@@ -573,7 +574,7 @@ const createRequestService = ({
       return changed(id, {});
     },
 
-    retry: async (id: string): Promise<MediaRequest | null> => {
+    retry: async (id: string, scope: SearchScope | null = null): Promise<MediaRequest | null> => {
       const record = await requests.find(id);
 
       if (record === null) {
@@ -583,18 +584,23 @@ const createRequestService = ({
       const at = now().toISOString();
 
       for (const item of await itemsOf(id)) {
-        if (item.state === 'failed' || item.state === 'wanted') {
+        const isInScope =
+          scope === null ||
+          (item.season === scope.season &&
+            (scope.episode === null || item.episode === scope.episode));
+        if (isInScope && (item.state === 'failed' || item.state === 'wanted')) {
           await items.update(item.id, {
             state: 'wanted',
             problem: null,
             attempts: 0,
             lastSearchedAt: null,
+            ...(scope === null ? {} : { isFollowed: true }),
             updatedAt: at,
           });
         }
       }
 
-      return changed(id, { problem: null });
+      return changed(id, { problem: null, isPickedByHand: false });
     },
 
     fulfil: async (id: string): Promise<MediaRequest | null> => {

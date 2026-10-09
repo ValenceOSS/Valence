@@ -119,6 +119,7 @@ const NavBar = ({
   const isStill = useReducedMotionConfig() === true;
   const placesRef = useRef<HTMLUListElement | null>(null);
   const placesWidth = useFitWidth(placesRef);
+  const [hasOpened, setHasOpened] = useState(false);
   const [isArriving, setIsArriving] = useState(true);
 
   useEffect(() => {
@@ -207,8 +208,11 @@ const NavBar = ({
           <motion.div
             className="flex min-w-0 overflow-hidden rounded-full"
             initial={isStill ? false : { width: 0 }}
-            animate={{ width: placesWidth ?? 0 }}
-            transition={{ ...openSpring, delay: CAPSULE_LEAD }}
+            animate={{ width: hasOpened ? 'auto' : (placesWidth ?? 0) }}
+            transition={hasOpened ? { duration: 0 } : { ...openSpring, delay: CAPSULE_LEAD }}
+            onAnimationComplete={() => {
+              setHasOpened(placesWidth !== null);
+            }}
           >
             <ul
               ref={placesRef}

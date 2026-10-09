@@ -14,7 +14,7 @@ describe('TitleHero', () => {
         status="missing"
         facts={['Drama', '3 seasons']}
         overview="What it is about."
-        askedBy={{ name: 'Sam', at: new Date().toISOString() }}
+        askedBy={<span>Asked for by Sam</span>}
         actions={<span>Actions</span>}
       />,
     );

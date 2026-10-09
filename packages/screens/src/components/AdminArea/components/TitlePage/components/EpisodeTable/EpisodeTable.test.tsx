@@ -6,6 +6,7 @@ describe('EpisodeTable', () => {
   it('lists each episode with when it aired, where it stands and its file', () => {
     render(
       <EpisodeTable
+        season={1}
         label="Season 1"
         episodes={[
           {

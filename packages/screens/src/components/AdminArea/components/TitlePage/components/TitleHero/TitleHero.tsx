@@ -2,9 +2,7 @@ import { Badge } from '@ValenceUI/Badge';
 import { cn } from '@ValenceUI/cn';
 import { TITLE_STATUS_NAMES } from '@ValenceClient/requests/TITLE_STATUS_NAMES';
 import { TITLE_STATUS_TONES } from '@ValenceScreens/requests/TITLE_STATUS_TONES';
-import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
 import type { TitleHeroProps } from './TitleHero.types';
-import { say } from '@ValenceI18n/say';
 
 const ART_SHAPES = {
   poster: 'aspect-[2/3] rounded-xl',
@@ -25,7 +23,7 @@ const ART_SHAPES = {
  * @param status - Where it stands.
  * @param facts - A few facts about it.
  * @param overview - What it is about.
- * @param askedBy - Who asked for it and when, where anybody did.
+ * @param askedBy - Who asked for it and when, where anybody did, drawn at the top.
  * @param actions - What can be done with it.
  */
 const TitleHero = ({
@@ -65,14 +63,7 @@ const TitleHero = ({
         )}
 
         <div className="flex min-w-0 flex-1 flex-col justify-between gap-6 self-stretch">
-          {askedBy === null ? null : (
-            <span className="self-end text-xs text-text-muted">
-              {say('screens.adminArea.titlePage.titleHero.askedForByNameWhen', {
-                name: askedBy.name,
-                when: describeSince(askedBy.at, Date.now()),
-              })}
-            </span>
-          )}
+          {askedBy}
 
           <div className="flex flex-col gap-3">
             <h1 className="flex flex-wrap items-baseline gap-3">

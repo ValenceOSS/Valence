@@ -625,6 +625,7 @@ describe('createRequestsClient with download clients', () => {
     filedInto: null,
     filingProblem: null,
     filingProblemCode: null,
+    wasPaused: false,
   };
 
   const A_QUEUE = { clients: [], downloads: [A_DOWNLOAD], checkedAt: null };

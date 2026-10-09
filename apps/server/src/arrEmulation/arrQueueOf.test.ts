@@ -30,6 +30,7 @@ const DOWNLOAD: QueuedDownload = {
   filedInto: null,
   filingProblem: null,
   filingProblemCode: null,
+  wasPaused: false,
 };
 
 const item = (season: number | null, episode: number | null): MediaRequest['items'][number] => ({

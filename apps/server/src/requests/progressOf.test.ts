@@ -34,6 +34,7 @@ const aDownload = (id: string): QueuedDownload => ({
   filedInto: null,
   filingProblem: null,
   filingProblemCode: null,
+  wasPaused: false,
 });
 
 /**

@@ -2702,7 +2702,7 @@ const describeMusicForRequest = (
 ): Promise<RequestCatalogue | null> =>
   kind === 'artist'
     ? describeArtistForRequest(musicWeb, musicBrainzId, mostPages, mostPages === undefined)
-    : describeAlbumForRequest(musicWeb, musicBrainzId, mostPages === undefined);
+    : describeAlbumForRequest(musicWeb, musicBrainzId, true);
 
 const requestedAlbums = createDatabaseRequestedAlbumStore(db);
 

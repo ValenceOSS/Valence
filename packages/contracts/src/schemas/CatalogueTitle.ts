@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { QueuedDownloadStateSchema } from './DownloadQueue';
 import {
+  AlbumTrackSchema,
   CatalogueAlbumSchema,
   MediaRequestKindSchema,
   MediaRequestStateSchema,
@@ -88,6 +89,7 @@ const CatalogueTitleDetailSchema = CatalogueTitleSchema.extend({
   cast: z.array(CatalogueCreditSchema),
   albums: z.array(CatalogueAlbumSchema),
   authors: z.array(z.string()).default([]),
+  tracks: z.array(AlbumTrackSchema).optional(),
   trailerKey: z.string().nullable(),
 });
 

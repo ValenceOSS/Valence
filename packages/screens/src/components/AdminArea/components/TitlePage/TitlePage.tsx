@@ -1,5 +1,4 @@
-import { namesOfAskers } from '@ValenceClient/requests/namesOfAskers';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ChevronLeft as ChevronLeftIcon,
@@ -8,13 +7,14 @@ import {
 import {
   Bin as BinFilledIcon,
   Check as CheckFilledIcon,
-  HandPointerRight as HandPointerRightFilledIcon,
   Pen as PenFilledIcon,
   Search as SearchFilledIcon,
   SearchList as SearchListFilledIcon,
 } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Button } from '@ValenceUI/Button';
+import { cn } from '@ValenceUI/cn';
+import { qualityStepOf } from '@ValenceCore/functions/qualityStepOf';
 import { Icon } from '@ValenceUI/Icon';
 import { Spinner } from '@ValenceUI/Spinner';
 import { notify } from '@ValenceUI/notify';
@@ -36,8 +36,10 @@ import {
   retryMediaRequest,
   stopRequestDownload,
 } from '@ValenceClient/requests/fetchMediaRequests';
+import { watchDownloadQueue } from '@ValenceClient/requests/fetchDownloadQueue';
 import { seasonsOfTitle } from '@ValenceClient/requests/seasonsOfTitle';
 import { nameSeason } from '@ValenceClient/library/nameSeason';
+import { nameSearchScope } from '@ValenceClient/requests/nameSearchScope';
 import { FormattedBytes } from '@ValenceScreens/components/FormattedBytes/FormattedBytes';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { ApproveRequestDialog } from '@ValenceScreens/components/AdminArea/components/ApproveRequestDialog/ApproveRequestDialog';
@@ -46,6 +48,10 @@ import { RequestBlocklistTab } from '@ValenceScreens/components/AdminArea/compon
 import { RequestHistoryTab } from '@ValenceScreens/components/AdminArea/components/TitlePage/components/RequestHistoryTab/RequestHistoryTab';
 import { InteractiveSearchDialog } from './components/InteractiveSearchDialog/InteractiveSearchDialog';
 import { ItemList } from './components/ItemList/ItemList';
+import { AskerStrip } from './components/AskerStrip/AskerStrip';
+import { TrackTable } from './components/TrackTable/TrackTable';
+import { FolderLink } from '@ValenceScreens/components/FolderLink/FolderLink';
+import { folderOf } from '@ValenceScreens/components/AdminArea/components/MediaPanel/folderOf';
 import { RemoveTitleDialog } from './components/RemoveTitleDialog/RemoveTitleDialog';
 import { SeasonList } from './components/SeasonList/SeasonList';
 import { StopDownloadDialog } from './components/StopDownloadDialog/StopDownloadDialog';
@@ -59,7 +65,11 @@ import { askOfEntry } from './askOfEntry';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';
 import type { RequestDownload } from '@ValenceClient/requests/downloadsOfRequest';
 import type { TitleSeason } from '@ValenceClient/requests/seasonsOfTitle';
-import type { DownloadStopNext, RequestItem } from '@ValenceContracts/schemas/MediaRequest';
+import type {
+  DownloadStopNext,
+  RequestItem,
+  SearchScope,
+} from '@ValenceContracts/schemas/MediaRequest';
 import type { ActionMenuGroup } from '@ValenceUI/ActionMenu.types';
 import type { TitleFact } from './components/TitleDetails/TitleDetails.types';
 import type { TitlePageProps } from './TitlePage.types';
@@ -67,6 +77,8 @@ import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 
 const ON_ITS_WAY_EVERY_MS = 5000;
+
+const SECONDS_PER_MINUTE = 60;
 
 /**
  * One title's page in the admin Catalogue: everything about it in one place, whether it was asked
@@ -80,8 +92,9 @@ const ON_ITS_WAY_EVERY_MS = 5000;
  *
  * @param titleKey - Which title, by its Catalogue key.
  * @param onBack - Told to go back to the Catalogue.
+ * @param onOpenFolder - Called with a folder to open in Files.
  */
-const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
+const TitlePage = ({ titleKey, onBack, onOpenFolder }: TitlePageProps) => {
   const cache = useQueryClient();
   const catalogue = useQuery(requestsQueries.titleCatalogue());
   const requests = useQuery(requestsQueries.mediaRequests());
@@ -94,7 +107,7 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
       : (requests.data?.find((one) => one.id === entry.requestId) ?? null);
   const kind = entry?.kind ?? 'film';
   const catalogueId = entry?.catalogueId ?? null;
-  const isHeldOnDisk = kind === 'film' || kind === 'series' || kind === 'book';
+  const isHeldOnDisk = kind === 'film' || kind === 'series' || kind === 'album' || kind === 'book';
   const facts = useQuery(requestsQueries.askable(kind, catalogueId));
   const files = useQuery(requestsQueries.titleFiles(kind, isHeldOnDisk ? catalogueId : null));
   const seasonList = useQuery(
@@ -110,15 +123,25 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
   const isMoving = entry?.status === 'downloading';
   const isThroughItsApp =
     request?.isHandedOff === true && admin.data?.settings.controlsConnectedApps === true;
-  const queue = useQuery({
-    ...requestsQueries.downloadQueue(),
-    refetchInterval: isMoving ? ON_ITS_WAY_EVERY_MS : false,
-  });
+  const isWatchingQueue = request !== null && !isThroughItsApp;
+  const queue = useQuery(requestsQueries.downloadQueue());
   const inItsApp = useQuery({
     ...requestsQueries.handOffDownloads(isThroughItsApp ? request.id : null),
     refetchInterval: isMoving ? ON_ITS_WAY_EVERY_MS : false,
   });
-  const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    if (!isWatchingQueue) {
+      return undefined;
+    }
+
+    void cache.invalidateQueries({ queryKey: requestsQueries.downloadQueue().queryKey });
+
+    return watchDownloadQueue((next) => {
+      cache.setQueryData(requestsQueries.downloadQueue().queryKey, next);
+    });
+  }, [cache, isWatchingQueue]);
+  const [searching, setSearching] = useState<{ scope: SearchScope | null } | null>(null);
   const [isBusy, setIsBusy] = useState(false);
   const [isDeclining, setIsDeclining] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -290,7 +313,7 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
         setStopping(null);
 
         if (next === 'byHand') {
-          setIsSearching(true);
+          setSearching({ scope: null });
         }
       })
       .then(reread)
@@ -339,32 +362,6 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
                 },
               },
               {
-                id: 'picking',
-                label: request.isPickedByHand
-                  ? say('screens.adminArea.titlePage.searchForItAutomatically')
-                  : say('screens.adminArea.titlePage.onlyFetchWhatIPick'),
-                icon: <Icon of={HandPointerRightFilledIcon} size={15} />,
-                onChoose: () => {
-                  act(
-                    async () => ({
-                      refusal: (
-                        await changeMediaRequest(request.id, {
-                          isPickedByHand: !request.isPickedByHand,
-                        })
-                      ).refusal,
-                    }),
-                    request.isPickedByHand
-                      ? say('screens.adminArea.titlePage.titleIsSearchedForAutomatically', {
-                          title: entry.title,
-                        })
-                      : say('screens.adminArea.titlePage.titleIsOnlyFetchedWhenPicked', {
-                          title: entry.title,
-                        }),
-                    failedToSay,
-                  );
-                },
-              },
-              {
                 id: 'fulfil',
                 label: say('screens.adminArea.titlePage.markAsAdded'),
                 detail: say('screens.adminArea.titlePage.sayItIsHereAlready'),
@@ -394,6 +391,20 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
             ],
           },
         ];
+
+  const searchScope = (scope: SearchScope) => {
+    if (request === null) {
+      return;
+    }
+
+    act(
+      async () => ({ refusal: (await retryMediaRequest(request.id, scope)).refusal }),
+      say('screens.adminArea.titlePage.searchingForTitle', { title: nameSearchScope(scope) }),
+      failedToSay,
+    );
+  };
+
+  const canSearchByHand = request !== null && (request.isHandedOff !== true || isThroughItsApp);
 
   const actions =
     request === null ? (
@@ -461,7 +472,7 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
             variant="secondary"
             size="md"
             onClick={() => {
-              setIsSearching(true);
+              setSearching({ scope: null });
             }}
           >
             <Icon of={SearchListFilledIcon} size={15} />
@@ -469,21 +480,52 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
           </Button>
         )}
 
+        {menu
+          .flatMap((group) => group.items)
+          .map((item) => (
+            <Button
+              key={item.id}
+              variant={item.isDestructive === true ? 'ghost' : 'secondary'}
+              size="md"
+              disabled={item.isDisabled === true}
+              onClick={item.onChoose}
+              className={cn(
+                'hidden lg:inline-flex',
+                item.isDestructive === true ? 'text-danger' : '',
+              )}
+            >
+              {item.icon}
+              {item.label}
+            </Button>
+          ))}
+
         <ActionMenu
           label={say('common.actionsForTitle', { title: entry.title })}
           trigger={<Icon of={MoreHorizontalIcon} size={16} />}
           groups={menu}
+          className="lg:hidden"
         />
       </>
     );
 
   const known = facts.data ?? null;
+  const tracks = known?.tracks ?? [];
   const heroFacts = [
     ...(known?.genres.slice(0, 2) ?? []),
     ...(kind === 'film' && known?.runtimeMinutes !== null && known?.runtimeMinutes !== undefined
       ? [
           say('screens.adminArea.titlePage.minutesLong', {
             minutes: known.runtimeMinutes.toString(),
+          }),
+        ]
+      : []),
+    ...(kind === 'album' && tracks.length > 0
+      ? [
+          sayCount('common.count.tracks', tracks.length),
+          say('screens.adminArea.titlePage.minutesLong', {
+            minutes: Math.round(
+              tracks.reduce((sum, track) => sum + (track.seconds ?? 0), 0) / SECONDS_PER_MINUTE,
+            ).toString(),
           }),
         ]
       : []),
@@ -521,7 +563,21 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
     ...(libraryName === null ? [] : [{ label: say('common.library'), value: libraryName }]),
     ...(files.data?.folder === null || files.data?.folder === undefined
       ? []
-      : [{ label: say('screens.observabilityPage.jobHistory.folder'), value: files.data.folder }]),
+      : [
+          {
+            label: say('screens.observabilityPage.jobHistory.folder'),
+            value:
+              onOpenFolder === undefined ? (
+                files.data.folder
+              ) : (
+                <FolderLink
+                  shown={files.data.folder}
+                  folder={files.data.folder}
+                  onOpen={onOpenFolder}
+                />
+              ),
+          },
+        ]),
     ...(request === null
       ? []
       : [
@@ -536,7 +592,16 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
 
   const onDisk = files.data?.files ?? [];
   const sizeOnDisk = onDisk.reduce((sum, file) => sum + (file.sizeBytes ?? 0), 0);
-  const tallest = Math.max(0, ...onDisk.map((file) => file.height ?? 0));
+  const best = onDisk
+    .map((file) => ({
+      height: file.height ?? 0,
+      step: qualityStepOf({ width: file.width ?? 0, height: file.height ?? 0 }),
+    }))
+    .toSorted(
+      (left, right) =>
+        (right.step?.maxHeight ?? 0) - (left.step?.maxHeight ?? 0) || right.height - left.height,
+    )[0];
+  const tallest = best?.height ?? 0;
   const diskFacts: TitleFact[] = [
     { label: say('common.files'), value: onDisk.length.toString() },
     ...(sizeOnDisk === 0
@@ -547,12 +612,28 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
       : [
           {
             label: say('screens.adminArea.askForMediaDialog.theBestByItsQuality'),
-            value: say('screens.adminArea.titlePage.heightP', { height: tallest.toString() }),
+            value:
+              best?.step?.label ??
+              say('screens.adminArea.titlePage.heightP', { height: tallest.toString() }),
           },
         ]),
     ...(kind !== 'film' || onDisk[0] === undefined
       ? []
-      : [{ label: say('screens.adminArea.addLibraryDialog.path'), value: onDisk[0].path }]),
+      : [
+          {
+            label: say('screens.adminArea.addLibraryDialog.path'),
+            value:
+              onOpenFolder === undefined ? (
+                onDisk[0].path
+              ) : (
+                <FolderLink
+                  shown={onDisk[0].path.split('/').at(-1) ?? onDisk[0].path}
+                  folder={folderOf(onDisk[0].path)}
+                  onOpen={onOpenFolder}
+                />
+              ),
+          },
+        ]),
   ];
 
   const artUrl = catalogueArtUrl(entry) ?? known?.posterUrl ?? null;
@@ -573,7 +654,7 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
         status={entry.status}
         facts={heroFacts}
         overview={known?.overview ?? null}
-        askedBy={request === null ? null : { name: namesOfAskers(request), at: request.createdAt }}
+        askedBy={request === null ? null : <AskerStrip request={request} />}
         actions={actions}
       />
 
@@ -625,16 +706,33 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
         <TitleProgress request={request} downloads={downloads} onStop={setStopping} />
       )}
 
+      {kind === 'album' && tracks.length > 0 ? (
+        <PanelCard title={say('screens.adminArea.titlePage.trackTable.tracks')} isFlush>
+          <TrackTable
+            tracks={tracks}
+            files={files.data?.files ?? []}
+            missing={entry.status === 'library' ? 'missing' : entry.status}
+            {...(onOpenFolder === undefined ? {} : { onOpenFolder })}
+          />
+        </PanelCard>
+      ) : null}
+
       {kind === 'series' && seasons.length > 0 ? (
         <SeasonList
           seasons={seasons}
-          note={
-            files.data?.folder === null || files.data?.folder === undefined
-              ? null
-              : say('screens.adminArea.titlePage.newSeasonsGoInFolder', {
-                  folder: files.data.folder.split('/').at(-1) ?? files.data.folder,
-                })
-          }
+          {...(request === null
+            ? {}
+            : {
+                onSearch: searchScope,
+                ...(canSearchByHand
+                  ? {
+                      onInteractiveSearch: (scope: SearchScope) => {
+                        setSearching({ scope });
+                      },
+                    }
+                  : {}),
+              })}
+          {...(onOpenFolder === undefined ? {} : { onOpenFolder })}
           isFollowing={isBusy}
           onFollow={followSeason}
           followsNew={
@@ -711,9 +809,10 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
       )}
 
       <InteractiveSearchDialog
-        request={isSearching ? request : null}
+        request={searching === null ? null : request}
+        scope={searching?.scope ?? null}
         onClose={() => {
-          setIsSearching(false);
+          setSearching(null);
         }}
         onPicked={() => {
           void reread();

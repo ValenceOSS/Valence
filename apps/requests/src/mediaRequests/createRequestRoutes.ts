@@ -15,6 +15,7 @@ import {
   RequesterSchema,
 } from '@ValenceContracts/schemas/MediaRequest';
 import { readBody } from '@ValenceRequests/readBody';
+import { readSearchScope } from '@ValenceRequests/mediaRequests/readSearchScope';
 import type { MediaRequestAdded } from '@ValenceContracts/schemas/MediaRequest';
 import type { RequestService } from '@ValenceRequests/mediaRequests/createRequestService';
 import type { RequestWorker } from '@ValenceRequests/mediaRequests/createRequestWorker';
@@ -266,7 +267,12 @@ const createRequestRoutes = ({ service, handOff, log, worker }: CreateRequestRou
       return answer(await service.find(id));
     }
 
-    return answer(await service.retry(id));
+    return answer(
+      await service.retry(
+        id,
+        readSearchScope(context.req.query('season'), context.req.query('episode')),
+      ),
+    );
   });
 
   routes.post('/requests/:id/fulfil', async (context) =>
@@ -328,7 +334,12 @@ const createRequestRoutes = ({ service, handOff, log, worker }: CreateRequestRou
   });
 
   routes.get('/requests/:id/releases', async (context) =>
-    answer(await worker.releasesFor(context.req.param('id'))),
+    answer(
+      await worker.releasesFor(
+        context.req.param('id'),
+        readSearchScope(context.req.query('season'), context.req.query('episode')),
+      ),
+    ),
   );
 
   routes.post('/requests/:id/pick', async (context) => {

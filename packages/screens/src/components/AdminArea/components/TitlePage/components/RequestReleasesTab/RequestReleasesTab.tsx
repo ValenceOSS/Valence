@@ -19,10 +19,11 @@ import { say } from '@ValenceI18n/say';
  * version.
  *
  * @param request - The request.
+ * @param scope - The season or episode the search is narrowed to, or nothing for all of it.
  * @param onPicked - Told the request once the pick is on its way.
  */
-const RequestReleasesTab = ({ request, onPicked }: RequestReleasesTabProps) => {
-  const found = useQuery(requestsQueries.mediaRequestReleases(request.id));
+const RequestReleasesTab = ({ request, scope = null, onPicked }: RequestReleasesTabProps) => {
+  const found = useQuery(requestsQueries.mediaRequestReleases(request.id, scope));
   const [picking, setPicking] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const { id } = request;

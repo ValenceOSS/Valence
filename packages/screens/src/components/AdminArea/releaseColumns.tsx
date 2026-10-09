@@ -17,6 +17,8 @@ type ReleaseColumnsOptions = {
   kind?: ReleaseKind;
 };
 
+const VERDICT_TIERS = 1_000_000_000;
+
 /**
  * The columns every table of releases shares: what the release is and where it was found, how it
  * was judged where it was — picked, refused and why, or what it scored — and its size, who is
@@ -75,7 +77,17 @@ const releaseColumns = ({
         {
           id: 'verdict',
           header: say('screens.adminArea.releaseColumns.verdict'),
-          enableSorting: false,
+          accessorFn: (release: Release) => {
+            const judgement = judged.get(release.id);
+
+            return judgement === undefined
+              ? -Number.MAX_SAFE_INTEGER
+              : release.id === pickedId
+                ? Number.MAX_SAFE_INTEGER
+                : judgement.isRejected
+                  ? judgement.score - VERDICT_TIERS
+                  : judgement.score;
+          },
           cell: ({ row }: { row: { original: Release } }) => {
             const judgement = judged.get(row.original.id);
 

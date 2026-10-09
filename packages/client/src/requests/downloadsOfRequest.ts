@@ -7,7 +7,16 @@ type RequestDownload = {
   items: RequestItem[];
   queued: Pick<
     QueuedDownload,
-    'progress' | 'secondsLeft' | 'sizeBytes' | 'clientName' | 'indexerName' | 'sentAt'
+    | 'state'
+    | 'wasPaused'
+    | 'progress'
+    | 'secondsLeft'
+    | 'sizeBytes'
+    | 'downloadBytesPerSecond'
+    | 'uploadBytesPerSecond'
+    | 'clientName'
+    | 'indexerName'
+    | 'sentAt'
   > | null;
 };
 

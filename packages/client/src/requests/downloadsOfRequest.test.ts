@@ -38,6 +38,7 @@ const aQueued = (id: string, sentAt: string): QueuedDownload => ({
   filedInto: null,
   filingProblem: null,
   filingProblemCode: null,
+  wasPaused: false,
 });
 
 describe('downloadsOfRequest', () => {

@@ -25,6 +25,8 @@ const PER = {
   wide: '[--rail-per:2] sm:[--rail-per:2] md:[--rail-per:3] lg:[--rail-per:4] xl:[--rail-per:5]',
   portrait:
     '[--rail-per:2] sm:[--rail-per:2] md:[--rail-per:3] lg:[--rail-per:4] xl:[--rail-per:5]',
+  poster:
+    '[--rail-per:3] sm:[--rail-per:4] md:[--rail-per:5] lg:[--rail-per:6] xl:[--rail-per:8] 2xl:[--rail-per:9]',
 } as const;
 
 const FITTED = [

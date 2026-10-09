@@ -1,3 +1,4 @@
+import { queryOfScope } from '@ValenceServer/requests/queryOfScope';
 import { refuseWith } from '@ValenceI18n/refuseWith';
 import { saidFrom } from '@ValenceI18n/saidFrom';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
@@ -555,8 +556,11 @@ const createRequestsClient = ({
     refuseRequest: (id: string, reason: string): Promise<RequestsAnswer<MediaRequest>> =>
       call(`${withRequest(id)}/refuse`, readRequest, { method: 'POST', body: { reason } }),
 
-    retryRequest: (id: string): Promise<RequestsAnswer<MediaRequest>> =>
-      call(`${withRequest(id)}/retry`, readRequest, { method: 'POST' }),
+    retryRequest: (
+      id: string,
+      scope: { season?: string | undefined; episode?: string | undefined } = {},
+    ): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/retry${queryOfScope(scope)}`, readRequest, { method: 'POST' }),
 
     fulfilRequest: (id: string): Promise<RequestsAnswer<MediaRequest>> =>
       call(`${withRequest(id)}/fulfil`, readRequest, { method: 'POST' }),
@@ -659,10 +663,17 @@ const createRequestsClient = ({
     liftBlock: (id: string, blockId: string): Promise<RequestsAnswer<null>> =>
       call(`${withRequest(id)}/blocklist/${blockId}`, () => null, { method: 'DELETE' }),
 
-    requestReleases: (id: string): Promise<RequestsAnswer<ReleaseSearchOutcome>> =>
-      call(`${withRequest(id)}/releases`, (body) => ReleaseSearchOutcomeSchema.parse(body), {
-        waitMs: searchTimeoutMs,
-      }),
+    requestReleases: (
+      id: string,
+      scope: { season?: string | undefined; episode?: string | undefined } = {},
+    ): Promise<RequestsAnswer<ReleaseSearchOutcome>> =>
+      call(
+        `${withRequest(id)}/releases${queryOfScope(scope)}`,
+        (body) => ReleaseSearchOutcomeSchema.parse(body),
+        {
+          waitMs: searchTimeoutMs,
+        },
+      ),
 
     pickRelease: (
       id: string,

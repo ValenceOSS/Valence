@@ -648,6 +648,8 @@ const ENGLISH = {
   'common.count.minutesShort.other': '{count} min',
   'common.count.months.one': '{count} month',
   'common.count.months.other': '{count} months',
+  'common.count.others.one': '{count} other',
+  'common.count.others.other': '{count} others',
   'common.count.pages.one': '{count} page',
   'common.count.pages.other': '{count} pages',
   'common.count.permissions.one': '{count} permission',
@@ -4505,9 +4507,15 @@ const ENGLISH = {
   'screens.adminArea.theMessageCouldNotBeSent': 'Couldn’t send the message.',
   'screens.adminArea.thePreviewsOfNameCouldNot': 'Couldn’t generate previews for {name}.',
   'screens.adminArea.thePreviewsOfTitleCouldNot': 'Couldn’t rebuild previews for {title}.',
+  'screens.adminArea.titlePage.askerStrip.askedFirst': 'Asked first',
+  'screens.adminArea.titlePage.askerStrip.countPeopleWantThis.one': '{count} person wants this',
+  'screens.adminArea.titlePage.askerStrip.countPeopleWantThis.other': '{count} people want this',
+  'screens.adminArea.titlePage.askerStrip.everybodyWhoWantsIt': 'Everybody who wants it',
   'screens.adminArea.titlePage.automatically': 'Automatically',
   'screens.adminArea.titlePage.backToTheCatalogue': 'Back to the Catalogue',
   'screens.adminArea.titlePage.declineEllipsis': 'Decline…',
+  'screens.adminArea.titlePage.downloadRow.pausedEarlier':
+    'Paused earlier, so it’s never given up on',
   'screens.adminArea.titlePage.downloadRow.pickedByHand': 'Picked by hand',
   'screens.adminArea.titlePage.downloadRow.stopDownload': 'Stop download…',
   'screens.adminArea.titlePage.episodeTable.fileName': 'File name',
@@ -4523,8 +4531,13 @@ const ENGLISH = {
   'screens.adminArea.titlePage.interactiveSearch': 'Interactive search',
   'screens.adminArea.titlePage.interactiveSearchDialog.interactiveSearchForTitle':
     'Interactive search for {title}',
+  'screens.adminArea.titlePage.interactiveSearchDialog.interactiveSearchForTitleScope':
+    'Interactive search for {title}, {scope}',
+  'screens.adminArea.titlePage.interactiveSearchDialog.onlyWholeSeasonReleases':
+    'Only releases of the whole season are shown. Picking one replaces whatever is downloading for it.',
   'screens.adminArea.titlePage.interactiveSearchDialog.pickingOneReplaces':
     'Picking a release stops whatever is downloading for the same episodes and blocks it.',
+  'screens.adminArea.titlePage.interactiveSearchForName': 'Interactive search for {name}',
   'screens.adminArea.titlePage.itemList.filedOfTotalTracks': '{filed} of {total} tracks',
   'screens.adminArea.titlePage.itemList.youHaveItAsQuality':
     'You have it as {quality}, looking for lossless',
@@ -4538,14 +4551,12 @@ const ENGLISH = {
   'screens.adminArea.titlePage.narrationAskCard.everyNarration': 'All of them',
   'screens.adminArea.titlePage.narrationAskCard.whichNarrationOfTitle':
     'Which narration of {title}?',
-  'screens.adminArea.titlePage.newSeasonsGoInFolder': 'New seasons go in {folder}',
   'screens.adminArea.titlePage.newSeasonsOfTitleAreFetched':
     'New seasons of {title} are fetched as they air',
   'screens.adminArea.titlePage.newSeasonsOfTitleAreNoLonger':
     'New seasons of {title} are no longer fetched',
   'screens.adminArea.titlePage.noLongerFollowingName': 'No longer following {name}',
   'screens.adminArea.titlePage.onDisk': 'On disk',
-  'screens.adminArea.titlePage.onlyFetchWhatIPick': 'Fetch only releases I pick',
   'screens.adminArea.titlePage.onlyWhatYouPick': 'Only releases you pick',
   'screens.adminArea.titlePage.profileAskCard.aHigherQualityAsk': 'A higher-quality request',
   'screens.adminArea.titlePage.profileAskCard.getBoth': 'Get both',
@@ -4563,7 +4574,7 @@ const ENGLISH = {
   'screens.adminArea.titlePage.removeTitleDialog.removeThisRequest': 'Remove this request',
   'screens.adminArea.titlePage.sayItIsHereAlready':
     'Counts it as there, for anything added by hand',
-  'screens.adminArea.titlePage.searchForItAutomatically': 'Search for it automatically',
+  'screens.adminArea.titlePage.searchForName': 'Search for {name}',
   'screens.adminArea.titlePage.searchingForTitle': 'Searching for {title}',
   'screens.adminArea.titlePage.searchMissing': 'Search missing',
   'screens.adminArea.titlePage.seasonList.followName': 'Follow {name}',
@@ -4591,11 +4602,10 @@ const ENGLISH = {
   'screens.adminArea.titlePage.thatTitleIsNoLongerHere':
     'That title isn’t in the Catalogue any more.',
   'screens.adminArea.titlePage.titleHero.askedForByNameWhen': 'Asked for by {name} · {when}',
-  'screens.adminArea.titlePage.titleIsOnlyFetchedWhenPicked':
-    '{title} is fetched only when you pick a release',
-  'screens.adminArea.titlePage.titleIsSearchedForAutomatically':
-    '{title} is searched for automatically',
   'screens.adminArea.titlePage.titleProgress.whereEverythingStands': 'Where everything stands',
+  'screens.adminArea.titlePage.trackTable.length': 'Length',
+  'screens.adminArea.titlePage.trackTable.track': 'Track',
+  'screens.adminArea.titlePage.trackTable.tracks': 'Tracks',
   'screens.adminArea.transcoder': 'Transcoder',
   'screens.adminArea.uploadMediaDialog.chooseAFolder': 'Choose a folder',
   'screens.adminArea.uploadMediaDialog.chooseAFolderToUpload': 'Choose a folder to upload',
@@ -6051,6 +6061,9 @@ const ENGLISH = {
     'Couldn’t load music to request.',
   'screens.requestsPage.nothingInTheCataloguesMatches':
     'Nothing in the catalogues matches “{query}”.',
+  'screens.requestsPage.onItsWayShelf.askedByName': 'Asked by {name}',
+  'screens.requestsPage.onItsWayShelf.onItsWay': 'On its way',
+  'screens.requestsPage.onItsWayShelf.statusPercent': '{status} · {percent}%',
   'screens.requestsPage.requestsList.clearAFilterOrSearchFor':
     'Clear a filter, or search for something else.',
   'screens.requestsPage.requestsList.findSomethingOnDiscoverOrSearch':

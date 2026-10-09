@@ -142,6 +142,9 @@ const describeCatalogueTitle = async (
         runtimeMinutes: null,
         cast: [],
         albums: kind === 'artist' ? found.albums : [],
+        ...(kind === 'album' && found.albums[0]?.tracks !== undefined
+          ? { tracks: found.albums[0].tracks }
+          : {}),
         authors: [],
         trailerKey: null,
       };

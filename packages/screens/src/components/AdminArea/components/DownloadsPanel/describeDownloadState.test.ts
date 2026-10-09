@@ -27,6 +27,7 @@ const A_DOWNLOAD: QueuedDownload = {
   filedInto: null,
   filingProblem: null,
   filingProblemCode: null,
+  wasPaused: false,
 };
 
 describe('describeDownloadState', () => {
@@ -111,6 +112,7 @@ describe('describeDownloadState', () => {
         state: 'done',
         filingProblem: sayVerbatim('qBittorrent hasn’t reported where it saved the download'),
         filingProblemCode: null,
+        wasPaused: false,
       }),
     ).toEqual({
       label: 'Not imported',

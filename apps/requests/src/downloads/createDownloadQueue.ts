@@ -178,6 +178,7 @@ const createDownloadQueue = ({
       title: record.title,
       indexerName: record.indexerName,
       state: record.state,
+      wasPaused: record.wasPaused,
       problem: record.problem,
       problemCode: record.problemCode,
       ...current,
@@ -298,6 +299,7 @@ const createDownloadQueue = ({
 
     await downloads.update(record.id, {
       ...next,
+      ...(next.state === 'paused' ? { wasPaused: true } : {}),
       problemCode: null,
       ...(next.state === 'done' && record.finishedAt === null ? { finishedAt: at } : {}),
       updatedAt: at,
@@ -390,7 +392,7 @@ const createDownloadQueue = ({
     adapter: DownloadClientAdapter,
     clientName: string,
   ): Promise<boolean> => {
-    if (item === null || !record.removesWhenDone || record.filedInto === null) {
+    if (item === null || !record.removesWhenDone || record.wasPaused || record.filedInto === null) {
       return false;
     }
 
@@ -628,6 +630,7 @@ const createDownloadQueue = ({
           filingProblemCode: null,
           filingAttempts: 0,
           filesChecked: false,
+          wasPaused: false,
           ...seedingRuleFor(
             (await indexers.records()).find((one) => one.id === read.indexerId) ?? null,
             read,

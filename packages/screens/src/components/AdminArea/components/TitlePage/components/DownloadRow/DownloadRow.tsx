@@ -3,14 +3,16 @@ import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { describeTimeLeft } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeTimeLeft';
+import { speedsOf } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/speedsOf';
 import { FormattedBytes } from '@ValenceScreens/components/FormattedBytes/FormattedBytes';
 import type { DownloadRowProps } from './DownloadRow.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
- * One of a title's downloads: the release, how far along it is and how long it has left, whether
- * it was picked by hand, what it holds and where it came from, and a quiet cross to stop it.
+ * One of a title's downloads: the release, how far along it is, how fast and how long it has left,
+ * whether somebody has paused it in its client, whether it was picked by hand, what it holds and
+ * where it came from, and a quiet cross to stop it.
  *
  * @param download - The download.
  * @param onStop - Told to stop it.
@@ -19,6 +21,8 @@ const DownloadRow = ({ download, onStop }: DownloadRowProps) => {
   const { queued, items } = download;
   const percent = Math.round((queued?.progress ?? 0) * 100);
   const holds = items.length;
+  const speeds =
+    queued === null ? [] : speedsOf(queued.downloadBytesPerSecond, queued.uploadBytesPerSecond);
 
   return (
     <li className="flex items-center gap-4 px-4 py-3">
@@ -27,6 +31,11 @@ const DownloadRow = ({ download, onStop }: DownloadRowProps) => {
           <span className="min-w-0 flex-1 truncate text-sm font-medium text-text">
             {download.releaseTitle}
           </span>
+          {speeds.length === 0 ? null : (
+            <span className="flex shrink-0 gap-2 text-xs tabular-nums text-text-muted">
+              {speeds}
+            </span>
+          )}
           {queued?.secondsLeft === null || queued?.secondsLeft === undefined ? null : (
             <span className="shrink-0 text-xs tabular-nums text-text-muted">
               {describeTimeLeft(queued.secondsLeft)}
@@ -44,6 +53,11 @@ const DownloadRow = ({ download, onStop }: DownloadRowProps) => {
         />
 
         <span className="flex flex-wrap items-center gap-x-2 truncate text-xs text-text-muted">
+          {queued?.state === 'paused' ? (
+            <span className="font-medium text-highlight">{say('common.paused')}</span>
+          ) : queued?.wasPaused === true ? (
+            <span>{say('screens.adminArea.titlePage.downloadRow.pausedEarlier')}</span>
+          ) : null}
           {items.some((item) => item.isPickedByHand === true) ? (
             <span>{say('screens.adminArea.titlePage.downloadRow.pickedByHand')}</span>
           ) : null}

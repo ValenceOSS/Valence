@@ -18,9 +18,9 @@ describe('withTracklists', () => {
       withTracklists(
         [ALBUM, SINGLE, OTHER],
         new Map([
-          ['album', { trackCount: 12, recordings: ['a', 'b'] }],
-          ['single', { trackCount: 1, recordings: ['a'] }],
-          ['other', { trackCount: 2, recordings: ['a', 'z'] }],
+          ['album', { trackCount: 12, recordings: ['a', 'b'], tracks: [] }],
+          ['single', { trackCount: 1, recordings: ['a'], tracks: [] }],
+          ['other', { trackCount: 2, recordings: ['a', 'z'], tracks: [] }],
         ]),
       ),
     ).toEqual([

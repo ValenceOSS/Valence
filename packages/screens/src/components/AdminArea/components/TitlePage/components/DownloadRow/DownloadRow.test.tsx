@@ -10,17 +10,21 @@ const DOWNLOAD: RequestDownload = {
   releaseTitle: 'Show.S04.1080p.WEB-DL',
   items: [aRequestItem({ id: 'a' }), aRequestItem({ id: 'b', episode: 2 })],
   queued: {
+    state: 'downloading',
+    wasPaused: false,
     clientName: 'qBittorrent',
     indexerName: 'Indexer A',
     progress: 0.42,
     sizeBytes: 2_000_000_000,
+    downloadBytesPerSecond: 3_145_728,
+    uploadBytesPerSecond: 1024,
     secondsLeft: 600,
     sentAt: '2026-01-01T00:00:00.000Z',
   },
 };
 
 describe('DownloadRow', () => {
-  it('says how far along a download is, what it holds and where it came from', () => {
+  it('says how far along a download is, how fast, what it holds and where it came from', () => {
     render(
       <ul>
         <DownloadRow download={DOWNLOAD} onStop={vi.fn()} />
@@ -31,6 +35,8 @@ describe('DownloadRow', () => {
     expect(screen.getByText('42%')).toBeInTheDocument();
     expect(screen.getByText('2 episodes')).toBeInTheDocument();
     expect(screen.getByText('Indexer A')).toBeInTheDocument();
+    expect(screen.getByText('↓ 3.0 MB/s')).toBeInTheDocument();
+    expect(screen.getByText('↑ 1.0 KB/s')).toBeInTheDocument();
     expect(screen.getByRole('progressbar', { name: /Show.S04/ })).toBeInTheDocument();
   });
 

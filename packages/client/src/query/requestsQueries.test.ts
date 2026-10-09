@@ -218,7 +218,7 @@ describe('requestsQueries', () => {
     await expect(
       aCache().fetchQuery(requestsQueries.mediaRequestReleases('dune')),
     ).resolves.toEqual({ releases: [] });
-    expect(fetchMediaRequestReleases).toHaveBeenCalledWith('dune');
+    expect(fetchMediaRequestReleases).toHaveBeenCalledWith('dune', null);
 
     fetchSeriesSeasons.mockResolvedValue([]);
 

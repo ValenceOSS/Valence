@@ -20,6 +20,7 @@ const DUNE: SentDownloadRecord = {
   filingAttempts: 0,
   filesChecked: false,
   removesWhenDone: false,
+  wasPaused: false,
   seedSeconds: null,
   seedRatio: null,
   protocol: 'torrent',
