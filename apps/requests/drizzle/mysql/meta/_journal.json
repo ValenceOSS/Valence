@@ -43,6 +43,13 @@
       "when": 1791513331793,
       "tag": "0005_requests_follow_new_seasons",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1791517410295,
+      "tag": "0006_requests_know_the_imdb_id",
+      "breakpoints": true
     }
   ]
 }

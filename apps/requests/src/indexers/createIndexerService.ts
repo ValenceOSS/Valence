@@ -15,6 +15,7 @@ import type {
   IndexerHealth,
   IndexerSettings,
   IndexerTest,
+  Release,
   ReleaseSearch,
   ReleaseSearchOutcome,
 } from '@ValenceContracts/schemas/Indexer';
@@ -28,6 +29,8 @@ import type { ReleaseFile } from '@ValenceRequests/indexers/ReleaseFile';
 import { saying } from '@ValenceI18n/saying';
 import { withoutRepeats } from '@ValenceRequests/releases/withoutRepeats';
 import { restOf } from '@ValenceRequests/indexers/restOf';
+import { idsTakenBy } from '@ValenceRequests/indexers/idsTakenBy';
+import { withoutIds } from '@ValenceRequests/indexers/withoutIds';
 
 type CreateIndexerServiceOptions = {
   store: IndexerStore;
@@ -93,6 +96,9 @@ const mergeSettings = (
  * Keeps the indexers, tries them, searches every one that is on at once, and fetches what they
  * found. A search against a quality profile judges every release it found by it, and puts them in
  * the order they would be chosen.
+ *
+ * An indexer that takes a catalogue id the search carries is asked by the id first, and what it
+ * finds is marked as found by it; where that finds nothing it is asked by the words instead.
  *
  * An indexer that keeps failing rests rather than being asked every time, with the reason kept beside
  * it: after a few failures in a row it counts as failing, which the server hears about, and after a
@@ -207,6 +213,20 @@ const createIndexerService = ({
           }
         : {}),
     });
+  };
+
+  const searchOne = async (record: IndexerRecord, search: ReleaseSearch): Promise<Release[]> => {
+    if (Object.keys(idsTakenBy(search, record.capabilities)).length === 0) {
+      return client.search(record, search);
+    }
+
+    const byId = await client.search(record, search);
+
+    if (byId.length > 0) {
+      return byId.map((release) => ({ ...release, isFoundById: true }));
+    }
+
+    return client.search(record, withoutIds(search));
   };
 
   const isResting = (record: IndexerRecord): boolean =>
@@ -418,7 +438,7 @@ const createIndexerService = ({
           const started = Date.now();
 
           try {
-            const releases = await client.search(record, search);
+            const releases = await searchOne(record, search);
 
             await succeeded(record);
 

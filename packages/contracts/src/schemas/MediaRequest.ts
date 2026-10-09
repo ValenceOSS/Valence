@@ -84,6 +84,10 @@ const RequestCatalogueSchema = z.object({
   artist: z.string().nullable().default(null),
   albums: z.array(CatalogueAlbumSchema).max(2000).default([]),
   tvdbId: z.number().int().positive().nullish(),
+  imdbId: z
+    .string()
+    .regex(/^tt\d+$/)
+    .nullish(),
 });
 
 const RequesterSchema = z.object({ id: z.string().min(1), name: z.string() });

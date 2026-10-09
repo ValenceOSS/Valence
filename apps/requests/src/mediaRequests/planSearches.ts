@@ -9,7 +9,8 @@ type Plannable = Pick<RequestItemRecord, 'id' | 'season' | 'episode' | 'airDate'
 
 /**
  * What to ask the indexers for a request's films or episodes that are wanted, by a title safe to
- * search with: a film by its title and catalogue id; a season that has finished airing, with more
+ * search with and the catalogue ids it has, which an indexer that takes them is asked by first: a
+ * film by its title and ids; a season that has finished airing, with more
  * than one episode of it wanted, as a whole, since a season is usually released as one; and any
  * other episode on its own. An album is searched among the indexers' music, by its artist and title.
  *
@@ -26,7 +27,10 @@ type Plannable = Pick<RequestItemRecord, 'id' | 'season' | 'episode' | 'airDate'
  * @returns The searches, each with what it is for.
  */
 const planSearches = (
-  request: Pick<MediaRequestRecord, 'kind' | 'title' | 'tmdbId' | 'artistName'>,
+  request: Pick<
+    MediaRequestRecord,
+    'kind' | 'title' | 'tmdbId' | 'tvdbId' | 'imdbId' | 'artistName'
+  >,
   items: readonly Plannable[],
   wanted: readonly Plannable[],
   today: string,
@@ -36,15 +40,16 @@ const planSearches = (
   }
 
   const query = queryTitleOf(request.title);
+  const ids = {
+    ...(request.tmdbId === null ? {} : { tmdbId: request.tmdbId }),
+    ...(request.imdbId === null ? {} : { imdbId: request.imdbId }),
+    ...(request.kind === 'series' && request.tvdbId !== null ? { tvdbId: request.tvdbId } : {}),
+  };
 
   if (request.kind === 'film') {
     return [
       {
-        search: {
-          query,
-          mode: 'movie',
-          ...(request.tmdbId === null ? {} : { tmdbId: request.tmdbId }),
-        },
+        search: { query, mode: 'movie', ...ids },
         itemIds: wanted.map((item) => item.id),
       },
     ];
@@ -69,7 +74,7 @@ const planSearches = (
 
   const wholeRun: PlannedSearch[] =
     seasons.length > 1
-      ? [{ search: { query, mode: 'tv' }, itemIds: wanted.map((item) => item.id) }]
+      ? [{ search: { query, mode: 'tv', ...ids }, itemIds: wanted.map((item) => item.id) }]
       : [];
 
   const bySeason = seasons
@@ -83,7 +88,7 @@ const planSearches = (
       if (hasAired && inSeason.length > 1) {
         return [
           {
-            search: { query, mode: 'tv', season },
+            search: { query, mode: 'tv', season, ...ids },
             itemIds: inSeason.map((item) => item.id),
           },
         ];
@@ -94,7 +99,7 @@ const planSearches = (
           ? []
           : [
               {
-                search: { query, mode: 'tv', season, episode: item.episode },
+                search: { query, mode: 'tv', season, episode: item.episode, ...ids },
                 itemIds: [item.id],
               },
             ],

@@ -28,7 +28,13 @@ const RequestDetailSchema = z.object({
         .default([]),
     })
     .optional(),
-  external_ids: z.object({ tvdb_id: z.number().int().positive().nullish() }).optional(),
+  imdb_id: z.string().nullish(),
+  external_ids: z
+    .object({
+      tvdb_id: z.number().int().positive().nullish(),
+      imdb_id: z.string().nullish(),
+    })
+    .optional(),
   alternative_titles: z
     .object({
       titles: z.array(z.object({ title: z.string() })).default([]),
@@ -50,6 +56,15 @@ const RequestSeasonSchema = z.object({
     )
     .default([]),
 });
+
+/**
+ * An IMDb id as indexers take it, or nothing where TMDB gave none or something else.
+ *
+ * @param given - What TMDB gave.
+ * @returns The id, such as `tt1160419`, or null.
+ */
+const imdbIdOf = (given: string | null): string | null =>
+  given !== null && /^tt\d+$/.test(given) ? given : null;
 
 const THEATRICAL = [2, 3];
 
@@ -148,6 +163,7 @@ const readRequestCatalogue = (
     artist: null,
     albums: [],
     tvdbId: found.external_ids?.tvdb_id ?? null,
+    imdbId: imdbIdOf(found.imdb_id ?? found.external_ids?.imdb_id ?? null),
   };
 };
 

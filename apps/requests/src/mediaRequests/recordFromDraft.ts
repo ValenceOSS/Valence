@@ -51,6 +51,7 @@ const recordFromDraft = (
   problemCode: null,
   catalogueCheckedAt: at,
   tvdbId: draft.catalogue.tvdbId ?? null,
+  imdbId: draft.catalogue.imdbId ?? null,
   handOff: draft.handOff,
   handOffId: null,
   createdAt: at,

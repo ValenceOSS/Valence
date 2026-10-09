@@ -33,6 +33,16 @@ describe('searchParametersFor', () => {
     ).toEqual({ t: 'tvsearch', q: 'severance', season: '2', ep: '3', limit: '100' });
   });
 
+  it('asks by an id alone where the indexer takes it, leaving the words out', () => {
+    expect(
+      searchParametersFor(
+        { mode: 'tv', query: 'the office', tvdbId: 73244, season: 2 },
+        CAPABLE,
+        [],
+      ),
+    ).toEqual({ t: 'tvsearch', tvdbid: '73244', season: '2', limit: '100' });
+  });
+
   it('falls back to a plain search where the indexer cannot do the kind asked for', () => {
     expect(
       searchParametersFor({ mode: 'music', query: 'blur', artist: 'Blur' }, CAPABLE, []),

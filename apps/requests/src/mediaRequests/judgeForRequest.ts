@@ -2,6 +2,7 @@ import { saying } from '@ValenceI18n/saying';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { albumsInRelease } from '@ValenceRequests/mediaRequests/albumsInRelease';
+import { isNearTitle } from '@ValenceRequests/mediaRequests/isNearTitle';
 import { matchRelease } from '@ValenceRequests/mediaRequests/matchRelease';
 import { judgeRelease } from '@ValenceRequests/profiles/judgeRelease';
 import { rankReleases } from '@ValenceRequests/profiles/rankReleases';
@@ -89,7 +90,9 @@ type JudgedForRequest = {
  * with the pick, and what each would fetch.
  *
  * A release picked by hand is matched by its numbers alone, or an album by its title alone, since
- * whoever picked it knows what it is better than its name does.
+ * whoever picked it knows what it is better than its name does. One an indexer found by the
+ * title's catalogue id is taken under a title near the one asked for too, such as "The Office US"
+ * for "The Office", since the id says what it is.
  *
  * A release claiming a whole season or a whole run is credited only with the episodes that had
  * aired the day it was made, so a pack of a show that has since come back does not answer for the
@@ -146,10 +149,15 @@ const judgeForRequest = ({
   };
   const judged = releases.flatMap((release) => {
     const parsed = parseReleaseName(release.title);
+    const named =
+      release.isFoundById === true &&
+      [request.title, ...request.aliases].some((title) => isNearTitle(parsed.title, title))
+        ? { ...request, aliases: [...request.aliases, parsed.title] }
+        : request;
     const covered = isMusicRequest(request.kind)
       ? albumsInRelease(request, items, parsed.title, isTitleChecked)
       : matchRelease(
-          isTitleChecked ? request : { ...request, title: parsed.title, aliases: [] },
+          isTitleChecked ? named : { ...request, title: parsed.title, aliases: [] },
           items,
           isTitleChecked ? parsed : { ...parsed, year: null },
           release.publishedAt?.slice(0, 10) ?? null,

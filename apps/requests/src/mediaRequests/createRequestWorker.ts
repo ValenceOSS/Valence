@@ -1236,13 +1236,20 @@ const createRequestWorker = ({
             query,
             mode: 'movie',
             ...(request.tmdbId === null ? {} : { tmdbId: request.tmdbId }),
+            ...(request.imdbId === null ? {} : { imdbId: request.imdbId }),
           },
         ];
-      case 'series':
+      case 'series': {
+        const ids = {
+          ...(request.tvdbId === null ? {} : { tvdbId: request.tvdbId }),
+          ...(request.imdbId === null ? {} : { imdbId: request.imdbId }),
+        };
+
         return [
-          { query, mode: 'tv' },
-          ...seasons.map((season) => ({ query, mode: 'tv' as const, season })),
+          { query, mode: 'tv', ...ids },
+          ...seasons.map((season) => ({ query, mode: 'tv' as const, season, ...ids })),
         ];
+      }
       case 'artist':
         return [{ query: artist, mode: 'music', artist }];
       case 'album':

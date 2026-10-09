@@ -257,6 +257,7 @@ const mediaRequest = requestsSchema(
     kind: varchar('kind', { length: 32, enum: MEDIA_REQUEST_KINDS }).notNull(),
     tmdbId: int('tmdb_id'),
     tvdbId: int('tvdb_id'),
+    imdbId: varchar('imdb_id', { length: 16 }),
     musicBrainzId: varchar('music_brainz_id', { length: 64 }),
     openLibraryId: int('open_library_id'),
     title: mediumtext('title').notNull(),

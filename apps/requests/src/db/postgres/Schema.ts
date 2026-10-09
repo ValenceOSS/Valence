@@ -226,6 +226,7 @@ const mediaRequest = requestsSchema.table(
     kind: text('kind', { enum: MEDIA_REQUEST_KINDS }).notNull(),
     tmdbId: integer('tmdb_id'),
     tvdbId: integer('tvdb_id'),
+    imdbId: text('imdb_id'),
     musicBrainzId: text('music_brainz_id'),
     openLibraryId: integer('open_library_id'),
     title: text('title').notNull(),

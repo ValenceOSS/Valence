@@ -8,7 +8,11 @@ import { createIndexerService } from './createIndexerService';
 import { createMemoryRecordStore } from '@ValenceRequests/stores/createMemoryRecordStore';
 import type { IndexerClient, IndexerConnection } from './createIndexerClient';
 import type { IndexerRecord } from './IndexerRecord';
-import type { IndexerCapabilities, Release } from '@ValenceContracts/schemas/Indexer';
+import type {
+  IndexerCapabilities,
+  Release,
+  ReleaseSearch,
+} from '@ValenceContracts/schemas/Indexer';
 
 const NOW = new Date('2026-09-19T12:00:00.000Z');
 
@@ -394,6 +398,40 @@ describe('createIndexerService', () => {
       }),
     ]);
     expect(client.search).toHaveBeenCalledTimes(2);
+  });
+
+  it('asks by the id first where the indexer takes it, then by the words where that finds nothing', async () => {
+    const byId: IndexerCapabilities = {
+      ...CAPS,
+      modes: [...CAPS.modes, { mode: 'tv', parameters: ['q', 'tvdbid'] }],
+    };
+    const finding = (found: (search: ReleaseSearch) => Release[]) => {
+      const client = aClient();
+
+      client.search = vi.fn((_indexer: IndexerConnection, search: ReleaseSearch) =>
+        Promise.resolve(found(search)),
+      );
+
+      return aService([anIndexer({ capabilities: byId })], client);
+    };
+    const asked: ReleaseSearch = { query: 'the office', mode: 'tv', tvdbId: 73244 };
+
+    const { service: answering } = finding((search) =>
+      search.tvdbId === undefined ? [] : [aRelease(anIndexer(), 'The.Office.US.S02E01')],
+    );
+    const { service: silent, client } = finding((search) =>
+      search.tvdbId === undefined ? [aRelease(anIndexer(), 'The.Office.S02E01')] : [],
+    );
+
+    expect((await answering.search(asked)).releases).toMatchObject([{ isFoundById: true }]);
+
+    const fallback = await silent.search(asked);
+
+    expect(fallback.releases.map((release) => release.isFoundById)).toEqual([undefined]);
+    expect(client.search).toHaveBeenLastCalledWith(expect.anything(), {
+      query: 'the office',
+      mode: 'tv',
+    });
   });
 
   it('judges what it found against a profile, and puts it in the order it would be chosen', async () => {

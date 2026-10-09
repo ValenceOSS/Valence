@@ -182,6 +182,22 @@ describe('judgeForRequest', () => {
     ]);
   });
 
+  it('takes a release an indexer found by id under a title near the one asked for', () => {
+    const office = aMediaRequest({ kind: 'series', title: 'The Office', year: 2005 });
+    const items = [aRequestItem({ season: 2, episode: 1, title: 'The Office' })];
+    const judged = (title: string, isFoundById: boolean) =>
+      judgeForRequest({
+        ...OPTIONS,
+        request: office,
+        items,
+        releases: [aRelease(title, { isFoundById })],
+      }).releases.length;
+
+    expect(judged('The.Office.US.S02E01.1080p.WEB-DL.x264-GRP', true)).toBe(1);
+    expect(judged('The.Office.US.S02E01.1080p.WEB-DL.x264-GRP', false)).toBe(0);
+    expect(judged('Officer.Down.S02E01.1080p.WEB-DL.x264-GRP', true)).toBe(0);
+  });
+
   it('refuses a release no download client is on for', () => {
     expect(
       judgeForRequest({
