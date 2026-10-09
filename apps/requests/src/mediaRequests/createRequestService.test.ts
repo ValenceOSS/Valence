@@ -265,6 +265,37 @@ describe('createRequestService', () => {
     expect(await service.approve('missing')).toBeNull();
   });
 
+  it('wants lossless copies of an artist’s lossy albums once told to, and lets them be once not', async () => {
+    const { service } = aService();
+    const { request } = await service.add(PINK_FLOYD);
+    const held = {
+      mediaId: null,
+      episodes: [],
+      folder: null,
+      seasonFolders: [],
+      albums: [{ id: 'a4c2e8f0-9d1b-3c5e-8f7a-2b4d6e8f0a1c', quality: 'mp3' as const }],
+    };
+
+    const wanting = await service.change(
+      request.id,
+      { upgradesToLossless: true },
+      PINK_FLOYD.catalogue,
+      held,
+    );
+
+    expect(wanting?.upgradesToLossless).toBe(true);
+    expect(wanting?.items).toMatchObject([{ title: 'The Wall', heldQuality: 'mp3' }]);
+
+    const letting = await service.change(
+      request.id,
+      { upgradesToLossless: false },
+      PINK_FLOYD.catalogue,
+      held,
+    );
+
+    expect(letting?.items).toMatchObject([{ state: 'available', heldQuality: null }]);
+  });
+
   it('changes the seasons asked for with what the catalogue says', async () => {
     const { service } = aService();
     const { request } = await service.add(SEVERANCE);

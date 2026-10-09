@@ -1,3 +1,4 @@
+import { heldAlbumsOf } from '@ValenceServer/requests/arrivals/heldAlbumsOf';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { saidFrom } from '@ValenceI18n/saidFrom';
 import { refuseWith } from '@ValenceI18n/refuseWith';
@@ -638,7 +639,8 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
         const asksTheCatalogue =
           change.seasons !== undefined ||
           change.followsNewSeasons !== undefined ||
-          change.releaseTypes !== undefined;
+          change.releaseTypes !== undefined ||
+          change.upgradesToLossless !== undefined;
 
         if (!asksTheCatalogue && change.libraryId === undefined) {
           return client.changeRequest(id, { change });
@@ -661,16 +663,20 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
           };
         }
 
+        const catalogue = asksTheCatalogue ? await catalogueFor(found.value) : null;
+
         return client.changeRequest(id, {
           change:
             change.libraryId === undefined || into === undefined
               ? change
               : { ...change, libraryPath: into.requestPath ?? into.path },
-          ...(asksTheCatalogue ? { catalogue: await catalogueFor(found.value) } : {}),
+          ...(catalogue === null ? {} : { catalogue }),
           held:
             found.value.kind === 'series' && found.value.tmdbId !== null && into !== undefined
               ? await heldFor(into, found.value.tmdbId)
-              : null,
+              : isMusicRequest(found.value.kind) && catalogue !== null
+                ? await heldAlbumsOf(discovery.lookup, catalogue.albums)
+                : null,
         });
       },
       APPROVERS,

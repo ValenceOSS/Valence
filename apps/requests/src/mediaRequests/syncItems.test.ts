@@ -148,6 +148,101 @@ describe('syncItems', () => {
     ).toMatchObject({ arrive: [], remove: ['wanted'] });
   });
 
+  it('leaves out an artist’s single whose every track is on one of their albums', () => {
+    const albums = [
+      { id: 'a', title: 'An Album', type: 'album' as const, firstReleased: null, trackCount: 12 },
+      {
+        id: 's',
+        title: 'A Single',
+        type: 'single' as const,
+        firstReleased: null,
+        isOnAnAlbum: true,
+      },
+      { id: 't', title: 'Another Single', type: 'single' as const, firstReleased: null },
+    ];
+
+    expect(
+      syncItems(
+        { ...ARTIST, releaseTypes: ['album', 'single'] },
+        { episodes: [], albums },
+        [],
+      ).add.map((one) => [one.musicBrainzId, one.trackCount]),
+    ).toEqual([
+      ['a', 12],
+      ['t', null],
+    ]);
+  });
+
+  it('marks an album the library holds there, or a rung to climb from where lossless is wanted', () => {
+    const albums = [
+      { id: 'a', title: 'Lossless', type: 'album' as const, firstReleased: null },
+      { id: 'b', title: 'Lossy', type: 'album' as const, firstReleased: null },
+    ];
+    const held = [
+      { id: 'a', quality: 'flac' as const },
+      { id: 'b', quality: 'mp3-320' as const },
+    ];
+    const states = (upgradesToLossless: boolean) =>
+      syncItems(
+        { ...ARTIST, upgradesToLossless },
+        { episodes: [], albums },
+        [],
+        'digital',
+        [],
+        held,
+      ).add.map((one) => [one.musicBrainzId, one.state, one.heldQuality]);
+
+    expect(states(false)).toEqual([
+      ['a', 'available', null],
+      ['b', 'available', null],
+    ]);
+    expect(states(true)).toEqual([
+      ['a', 'available', null],
+      ['b', 'waiting', 'mp3-320'],
+    ]);
+  });
+
+  it('wants again an album the library holds lossy once lossless is wanted, and lets it be once not', () => {
+    const albums = [{ id: 'b', title: 'Lossy', type: 'album' as const, firstReleased: null }];
+    const held = [{ id: 'b', quality: 'mp3' as const }];
+    const here = aRequestItem({
+      id: 'here',
+      musicBrainzId: 'b',
+      title: 'Lossy',
+      airDate: null,
+      state: 'available',
+    });
+    const climbing = aRequestItem({
+      id: 'climbing',
+      musicBrainzId: 'b',
+      title: 'Lossy',
+      airDate: null,
+      state: 'wanted',
+      heldQuality: 'mp3',
+    });
+
+    expect(
+      syncItems(
+        { ...ARTIST, upgradesToLossless: true },
+        { episodes: [], albums },
+        [here],
+        'digital',
+        [],
+        held,
+      ).change,
+    ).toEqual([{ id: 'here', changes: { heldQuality: 'mp3', state: 'wanted' } }]);
+    expect(
+      syncItems(
+        { ...ARTIST, upgradesToLossless: false },
+        { episodes: [], albums },
+        [climbing],
+        'digital',
+        [],
+        held,
+      ).arrive,
+    ).toEqual(['climbing']);
+  });
+
   it('waits for an artist’s albums of the kinds asked for, by their MusicBrainz ids', () => {
     expect(syncItems(ARTIST, { episodes: [], albums: ALBUMS }, []).add).toEqual([
       {
@@ -156,6 +251,8 @@ describe('syncItems', () => {
         episode: null,
         title: 'The Piper at the Gates of Dawn',
         airDate: '1967-08-04',
+        trackCount: null,
+        heldQuality: null,
         state: 'waiting',
       },
       {
@@ -164,6 +261,8 @@ describe('syncItems', () => {
         episode: null,
         title: 'Pulse',
         airDate: '1995-05-29',
+        trackCount: null,
+        heldQuality: null,
         state: 'waiting',
       },
       {
@@ -172,6 +271,8 @@ describe('syncItems', () => {
         episode: null,
         title: 'The Final Cut',
         airDate: null,
+        trackCount: null,
+        heldQuality: null,
         state: 'waiting',
       },
     ]);

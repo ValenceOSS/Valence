@@ -1,3 +1,4 @@
+import { isIncompleteAlbum } from '@ValenceRequests/mediaRequests/isIncompleteAlbum';
 import { saying } from '@ValenceI18n/saying';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { readBookFormat } from '@ValenceRequests/releases/readBookFormat';
@@ -90,7 +91,9 @@ type JudgedForRequest = {
  * quality profile, and refused besides where it failed before, under that name or as the same
  * torrent under another, where everything it holds is here or on its way already, or where it is
  * no better than what an upgrade would replace — its quality and score against those of the
- * release filed, judged by the profile as it is now. They come back in the order they would be chosen,
+ * release filed, judged by the profile as it is now. An album filed short takes another of the same
+ * quality, for its missing tracks; an album the library holds lossy, kept to be upgraded, takes only
+ * a better quality than the library's copy. They come back in the order they would be chosen,
  * with the pick, and what each would fetch.
  *
  * A release picked by hand is matched by its numbers alone, or an album by its title alone, since
@@ -163,7 +166,13 @@ const judgeForRequest = ({
     item: RequestItemRecord,
   ): boolean => {
     if (item.filedTitle === null) {
-      return false;
+      const held = item.heldQuality ?? null;
+      const place = held === null ? -1 : judgedBy.musicQualities.indexOf(held);
+
+      return (
+        held !== null &&
+        judgement.quality <= (place === -1 ? 0 : judgedBy.musicQualities.length - place)
+      );
     }
 
     const filed = judgeRelease(
@@ -192,10 +201,10 @@ const judgeForRequest = ({
       judgedBy,
     );
 
-    return (
-      judgement.quality < filed.quality ||
-      (judgement.quality === filed.quality && judgement.score <= filed.score)
-    );
+    return isIncompleteAlbum(item)
+      ? judgement.quality < filed.quality
+      : judgement.quality < filed.quality ||
+          (judgement.quality === filed.quality && judgement.score <= filed.score);
   };
   const judged = releases.flatMap((release) => {
     const parsed = parseReleaseName(release.title);

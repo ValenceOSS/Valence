@@ -49,6 +49,8 @@ const recordFromDraft = (
   followsNewSeasons: draft.kind === 'series' && draft.followsNewSeasons,
   followsAfter: draft.kind === 'series' ? highestSeasonOf(draft.catalogue.episodes) : null,
   releaseTypes: draft.kind === 'artist' ? (draft.releaseTypes ?? [...DEFAULT_RELEASE_TYPES]) : null,
+  upgradesToLossless:
+    (draft.kind === 'artist' || draft.kind === 'album') && draft.upgradesToLossless,
   bookFormats: draft.kind === 'book' ? draft.bookFormats : null,
   versions: null,
   mediaId: draft.kind === 'series' ? (draft.held?.mediaId ?? null) : null,

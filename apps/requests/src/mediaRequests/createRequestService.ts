@@ -204,6 +204,7 @@ const createRequestService = ({
       await itemsOf(record.id),
       chooseProfile(record, await profiles.list())?.releaseWait,
       held?.episodes ?? [],
+      held?.albums ?? [],
     );
 
     for (const draft of add) {
@@ -221,6 +222,7 @@ const createRequestService = ({
     for (const id of arrive) {
       await items.update(id, {
         state: 'available',
+        heldQuality: null,
         problem: null,
         problemCode: null,
         updatedAt: at,
@@ -442,6 +444,9 @@ const createRequestService = ({
             }
           : {}),
         ...(change.releaseTypes === undefined ? {} : { releaseTypes: change.releaseTypes }),
+        ...(change.upgradesToLossless === undefined || !isMusicRequest(kept.kind)
+          ? {}
+          : { upgradesToLossless: change.upgradesToLossless }),
         ...(change.bookFormats === undefined || kept.kind !== 'book'
           ? {}
           : { bookFormats: change.bookFormats }),

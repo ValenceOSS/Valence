@@ -1,3 +1,4 @@
+import { partsOfCollaboration } from '@ValenceCore/functions/partsOfCollaboration';
 import { saying } from '@ValenceI18n/saying';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { isUnderAny } from '@ValenceServer/library/isUnderAny';
@@ -248,9 +249,13 @@ const scanMusicLibrary = async (options: ScanMusicLibraryOptions): Promise<ScanR
 
     try {
       const folder = dirname(file.path);
-      const albumArtistName = tags.isCompilation
+      const tagged = tags.isCompilation
         ? VARIOUS_ARTISTS
         : (tags.albumArtists[0] ?? tags.artists[0] ?? UNKNOWN_ARTIST);
+      const together = tags.isCompilation
+        ? null
+        : partsOfCollaboration(tagged, basename(dirname(folder)));
+      const albumArtistName = together?.[0] ?? tagged;
       const albumArtist = await artistNamed(
         albumArtistName,
         tags.isCompilation ? null : (tags.artistMusicbrainzIds[0] ?? null),
@@ -267,7 +272,12 @@ const scanMusicLibrary = async (options: ScanMusicLibraryOptions): Promise<ScanR
         releaseGroupMusicbrainzId: tags.releaseGroupMusicbrainzId,
       });
 
-      const credited = tags.artists.length === 0 ? [albumArtistName] : tags.artists;
+      const credited =
+        together === null
+          ? tags.artists.length === 0
+            ? [albumArtistName]
+            : tags.artists
+          : [...new Set([...together, ...tags.artists.filter((name) => name !== tagged)])];
       const artistIds: string[] = [];
 
       for (const name of credited) {

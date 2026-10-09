@@ -22,6 +22,7 @@ const NO_DISCOVERY: Discovery = {
     titleFiles: () => Promise.resolve({ folder: null, files: [] }),
     artists: NOTHING_FOUND,
     albums: NOTHING_FOUND,
+    albumQualities: () => Promise.resolve(new Map()),
     artistsNamed: NOTHING_FOUND,
     albumsNamed: NOTHING_FOUND,
     booksNamed: NOTHING_FOUND,
