@@ -7,6 +7,8 @@ import { Link } from '@ValenceUI/Link';
 import { MultiSelectField } from '@ValenceUI/MultiSelectField';
 import { SettingGroup } from '@ValenceUI/SettingGroup';
 import { SettingList } from '@ValenceUI/SettingList';
+import { SettingRow } from '@ValenceUI/SettingRow';
+import { Switch } from '@ValenceUI/Switch';
 import { Spinner } from '@ValenceUI/Spinner';
 import { TextField } from '@ValenceUI/TextField';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
@@ -31,6 +33,9 @@ type Draft = {
   openSubtitlesPassword: string;
   subdlKey: string;
   languages: string[];
+  isAutomatic: boolean;
+  filmMinimumScore: number;
+  episodeMinimumScore: number;
 };
 
 /**
@@ -46,6 +51,9 @@ const draftOf = (setup: SubtitleSetup): Draft => ({
   openSubtitlesPassword: '',
   subdlKey: '',
   languages: [...setup.languages],
+  isAutomatic: setup.isAutomatic,
+  filmMinimumScore: setup.filmMinimumScore,
+  episodeMinimumScore: setup.episodeMinimumScore,
 });
 
 /**
@@ -199,6 +207,52 @@ const SubtitlesCard = () => {
               className="max-w-md"
             />
           </SettingGroup>
+
+          <SettingRow
+            title={say('screens.adminArea.subtitlesCard.fetchAutomatically')}
+            description={say('screens.adminArea.subtitlesCard.whenNewFilmsAndEpisodesArrive')}
+          >
+            <Switch
+              label={say('screens.adminArea.subtitlesCard.fetchAutomatically')}
+              isLabelHidden
+              isOn={shown.isAutomatic}
+              onToggle={() => {
+                change({ isAutomatic: !shown.isAutomatic });
+              }}
+            />
+          </SettingRow>
+
+          {shown.isAutomatic ? (
+            <SettingGroup
+              title={say('screens.adminArea.subtitlesCard.minimumScore')}
+              description={say('screens.adminArea.subtitlesCard.onlyTakesASubtitleThatScores')}
+            >
+              <div className="grid max-w-md items-start gap-3 sm:grid-cols-2">
+                <TextField
+                  label={say('common.films')}
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={shown.filmMinimumScore.toString()}
+                  onValueChange={(value) => {
+                    change({ filmMinimumScore: Math.min(100, Math.max(0, Number(value) || 0)) });
+                  }}
+                />
+                <TextField
+                  label={say('common.episodes')}
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={shown.episodeMinimumScore.toString()}
+                  onValueChange={(value) => {
+                    change({
+                      episodeMinimumScore: Math.min(100, Math.max(0, Number(value) || 0)),
+                    });
+                  }}
+                />
+              </div>
+            </SettingGroup>
+          ) : null}
         </SettingList>
 
         <div className="flex justify-end">

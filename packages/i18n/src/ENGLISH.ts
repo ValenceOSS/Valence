@@ -4455,13 +4455,17 @@ const ENGLISH = {
   'screens.adminArea.subtitlesCard.apiKey': 'API key',
   'screens.adminArea.subtitlesCard.askedToo':
     'Searched alongside OpenSubtitles, and often stronger for shows.',
+  'screens.adminArea.subtitlesCard.fetchAutomatically': 'Fetch automatically',
   'screens.adminArea.subtitlesCard.findSubtitlesForWhatYourLibraries':
-    'Find subtitles for your films and shows on OpenSubtitles and SubDL. They’re saved beside each video, so every app picks them up.',
+    'Find subtitles for your films and shows on OpenSubtitles and SubDL. They’re kept in Valence’s own data, not among your media, so every app can show them.',
   'screens.adminArea.subtitlesCard.getAnOpenSubtitlesKey': 'Get an OpenSubtitles API key',
   'screens.adminArea.subtitlesCard.getASubdlKey': 'Get a SubDL API key',
   'screens.adminArea.subtitlesCard.languages': 'Languages',
+  'screens.adminArea.subtitlesCard.minimumScore': 'Minimum score',
   'screens.adminArea.subtitlesCard.offeredFirstWhenSomebodyLooks':
     'The languages offered first when someone looks for subtitles.',
+  'screens.adminArea.subtitlesCard.onlyTakesASubtitleThatScores':
+    'Out of 100. A subtitle made for the exact file scores 100; the same release with the same frame rate scores about 80. One timed to a different frame rate, or translated by a machine, is never fetched on its own.',
   'screens.adminArea.subtitlesCard.openSubtitles': 'OpenSubtitles',
   'screens.adminArea.subtitlesCard.readingTheSubtitleSettings': 'Loading subtitle settings',
   'screens.adminArea.subtitlesCard.savedTheSubtitleSettings': 'Subtitle settings saved',
@@ -4471,6 +4475,8 @@ const ENGLISH = {
   'screens.adminArea.subtitlesCard.theSubtitleSettingsCouldNotBe':
     'Couldn’t load the subtitle settings.',
   'screens.adminArea.subtitlesCard.whatLeavesTheServer': 'What’s sent to the subtitle sites',
+  'screens.adminArea.subtitlesCard.whenNewFilmsAndEpisodesArrive':
+    'When new films and episodes arrive, and each night, find subtitles in your languages for anything without them, and swap in better ones as they turn up.',
   'screens.adminArea.subtitlesCard.whenYouLookTheTitleAndA':
     'When you look for subtitles, the title, its catalogue IDs and a fingerprint of the video file are sent to the sites you’ve added keys for. Nothing is sent until someone looks.',
   'screens.adminArea.thatCouldNotBeConfirmed': 'Couldn’t confirm that.',
@@ -4916,24 +4922,39 @@ const ENGLISH = {
     'Choose a folder to move it to. Its name stays the same.',
   'screens.filesPanel.moveEntryDialog.moveName': 'Move {name}',
   'screens.filesPanel.moveEntryDialog.moveThis': 'Move this',
-  'screens.findSubtitlesDialog.count.downloads.one': '{count} download',
-  'screens.findSubtitlesDialog.count.downloads.other': '{count} downloads',
+  'screens.findSubtitlesDialog.differentFrameRateWillDrift': 'Different frame rate, will drift',
+  'screens.findSubtitlesDialog.downloads': 'Downloads',
   'screens.findSubtitlesDialog.findSubtitles': 'Find subtitles',
   'screens.findSubtitlesDialog.findSubtitlesForName': 'Find subtitles for {name}',
+  'screens.findSubtitlesDialog.fit': 'Fit',
   'screens.findSubtitlesDialog.get': 'Get',
   'screens.findSubtitlesDialog.looking': 'Looking for subtitles',
+  'screens.findSubtitlesDialog.machineTranslated': 'Machine translated',
+  'screens.findSubtitlesDialog.madeForThisFile': 'Made for this file',
   'screens.findSubtitlesDialog.noSubtitleSiteIsSetUp':
     'No subtitle site is set up yet. Add an OpenSubtitles or SubDL key under System › Subtitles.',
+  'screens.findSubtitlesDialog.notes': 'Notes',
   'screens.findSubtitlesDialog.nothingWasFoundInThatLanguage':
     'Nothing was found in that language.',
+  'screens.findSubtitlesDialog.release': 'Release',
+  'screens.findSubtitlesDialog.sameAudioCodec': 'Same audio codec',
+  'screens.findSubtitlesDialog.sameEdition': 'Same edition',
+  'screens.findSubtitlesDialog.sameFrameRate': 'Same frame rate',
+  'screens.findSubtitlesDialog.sameGroup': 'Same group',
+  'screens.findSubtitlesDialog.sameRelease': 'Same release',
+  'screens.findSubtitlesDialog.sameResolution': 'Same resolution',
+  'screens.findSubtitlesDialog.sameService': 'Same streaming service',
+  'screens.findSubtitlesDialog.sameSource': 'Same source',
+  'screens.findSubtitlesDialog.sameVideoCodec': 'Same video codec',
   'screens.findSubtitlesDialog.saved': 'Saved',
   'screens.findSubtitlesDialog.savedBesideTheVideo':
-    'The one you pick is saved beside the video, so every app shows it.',
-  'screens.findSubtitlesDialog.savedName': 'Saved {name}',
+    'Best matches first. The one you pick is kept in Valence, so every app can show it.',
+  'screens.findSubtitlesDialog.savedName': 'Added {name} subtitles',
   'screens.findSubtitlesDialog.sdh': 'SDH',
+  'screens.findSubtitlesDialog.site': 'Site',
   'screens.findSubtitlesDialog.subtitlesFound': 'Subtitles found',
   'screens.findSubtitlesDialog.theSubtitleSitesCouldNotBe': 'Couldn’t reach the subtitle sites.',
-  'screens.findSubtitlesDialog.timedToThisFile': 'Matches this file',
+  'screens.findSubtitlesDialog.why': 'Why',
   'screens.finishOnAnotherDevice.finishSettingUpOnYourPhone': 'Finish setting up on your phone',
   'screens.finishOnAnotherDevice.nameNeedsANameAndA':
     '{name} needs a name and a picture, which are hard to enter with a remote. Open this on your phone and your TV will continue automatically.',
@@ -6535,10 +6556,13 @@ const ENGLISH = {
     'Deletes selected parts of a library, such as artwork or trailers, and downloads them again.',
   'server.jobs.jobDefinitions.fetchesTitleLogosFromTMDB': 'Fetches title logos from TMDB.',
   'server.jobs.jobDefinitions.fetchMissingLogos': 'Fetch missing logos',
+  'server.jobs.jobDefinitions.fetchSubtitles': 'Fetch subtitles',
   'server.jobs.jobDefinitions.findsIntrosAndRecapsSoViewers':
     'Finds intros and recaps so viewers can skip them.',
   'server.jobs.jobDefinitions.findsNewChangedAndRemovedFiles':
     'Finds new, changed and removed files.',
+  'server.jobs.jobDefinitions.findsSubtitlesInTheHouseholdsLanguages':
+    'Finds subtitles in the household’s languages for new films and episodes, and swaps in better ones as they turn up. Only runs with automatic fetching on under System › Subtitles.',
   'server.jobs.jobDefinitions.forgetsJobRunsOlderThan30': 'Deletes job runs older than 30 days.',
   'server.jobs.jobDefinitions.forgetsServerLoadSamplesOlderThan':
     'Deletes server load samples older than a week.',
@@ -6602,6 +6626,8 @@ const ENGLISH = {
   'server.jobs.phase.reading': 'reading',
   'server.jobs.phase.segments': 'segments',
   'server.jobs.phase.sessions': 'expired sessions',
+  'server.jobs.phase.subtitlesFetched.one': '{count} subtitle fetched',
+  'server.jobs.phase.subtitlesFetched.other': '{count} subtitles fetched',
   'server.jobs.phase.trickplay': 'trickplay',
   'server.jobs.phase.unreachable': 'unreachable',
   'server.library.catalogueMetadataProvider.episodeEpisodeNumber': 'Episode {episode_number}',

@@ -1,6 +1,5 @@
 import { z } from 'zod';
-
-const SUBTITLE_SOURCES = ['opensubtitles', 'subdl'] as const;
+import { SUBTITLE_SOURCES } from '@ValenceContracts/constants/SUBTITLE_SOURCES';
 
 const SubtitleSourceSchema = z.enum(SUBTITLE_SOURCES);
 
@@ -10,6 +9,9 @@ const SubtitleSetupSchema = z.object({
   hasOpenSubtitlesPassword: z.boolean(),
   hasSubdlKey: z.boolean(),
   languages: z.array(z.string()),
+  isAutomatic: z.boolean(),
+  filmMinimumScore: z.number().int(),
+  episodeMinimumScore: z.number().int(),
 });
 
 const SubtitleSetupChangeSchema = z.object({
@@ -18,8 +20,27 @@ const SubtitleSetupChangeSchema = z.object({
   openSubtitlesPassword: z.string().max(1024).default(''),
   subdlKey: z.string().trim().max(200).default(''),
   languages: z.array(z.string().min(2).max(3)).max(20),
+  isAutomatic: z.boolean().default(false),
+  filmMinimumScore: z.number().int().min(0).max(100).default(60),
+  episodeMinimumScore: z.number().int().min(0).max(100).default(50),
   forget: z.array(z.enum(['openSubtitlesKey', 'openSubtitlesPassword', 'subdlKey'])).default([]),
 });
+
+const SUBTITLE_REASONS = [
+  'madeForThisFile',
+  'sameRelease',
+  'sameGroup',
+  'sameSource',
+  'sameResolution',
+  'sameVideoCodec',
+  'sameAudioCodec',
+  'sameService',
+  'sameEdition',
+  'sameFrameRate',
+  'differentFrameRate',
+] as const;
+
+const SubtitleReasonSchema = z.enum(SUBTITLE_REASONS);
 
 const FoundSubtitleSchema = z.object({
   source: SubtitleSourceSchema,
@@ -28,7 +49,11 @@ const FoundSubtitleSchema = z.object({
   language: z.string(),
   isExactMatch: z.boolean(),
   isHearingImpaired: z.boolean(),
+  isMachineTranslated: z.boolean().default(false),
+  frameRate: z.number().positive().nullable().default(null),
   downloads: z.number().int().nonnegative().nullable(),
+  score: z.number().int().min(0).max(100).default(0),
+  reasons: z.array(SubtitleReasonSchema).default([]),
 });
 
 const FoundSubtitlesSchema = z.object({
@@ -51,6 +76,7 @@ type SubtitleChoice = z.infer<typeof SubtitleChoiceSchema>;
 type SubtitleSetup = z.infer<typeof SubtitleSetupSchema>;
 type SubtitleSetupChange = z.input<typeof SubtitleSetupChangeSchema>;
 type SubtitleSource = z.infer<typeof SubtitleSourceSchema>;
+type SubtitleReason = z.infer<typeof SubtitleReasonSchema>;
 
 export type {
   FetchedSubtitle,
@@ -59,6 +85,7 @@ export type {
   SubtitleChoice,
   SubtitleSetup,
   SubtitleSetupChange,
+  SubtitleReason,
   SubtitleSource,
 };
 
@@ -66,9 +93,10 @@ export {
   FetchedSubtitleSchema,
   FoundSubtitleSchema,
   FoundSubtitlesSchema,
-  SUBTITLE_SOURCES,
+  SUBTITLE_REASONS,
   SubtitleChoiceSchema,
   SubtitleSetupChangeSchema,
   SubtitleSetupSchema,
+  SubtitleReasonSchema,
   SubtitleSourceSchema,
 };

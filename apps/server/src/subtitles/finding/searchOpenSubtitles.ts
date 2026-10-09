@@ -13,6 +13,9 @@ const SearchSchema = z.object({
           download_count: z.number().int().nonnegative().nullable().catch(null),
           hearing_impaired: z.boolean().catch(false),
           moviehash_match: z.boolean().catch(false),
+          machine_translated: z.boolean().catch(false),
+          ai_translated: z.boolean().catch(false),
+          fps: z.number().nonnegative().nullable().catch(null),
           release: z.string().catch(''),
           files: z.array(z.object({ file_id: z.number().int(), file_name: z.string().catch('') })),
         }),
@@ -22,9 +25,9 @@ const SearchSchema = z.object({
 });
 
 /**
- * Looks for subtitles in one language on OpenSubtitles: by the video's own hash first, which finds
- * those timed to this release, and by its film or episode's catalogue ids, which finds the rest.
- * The ones timed to this release come first, then the most downloaded.
+ * Looks for subtitles in one language on OpenSubtitles: by the video's own hash, which finds those
+ * timed to this release, and by its film or episode's catalogue ids, which finds the rest. Each says
+ * the frame rate it was timed to and whether a machine translated it, where OpenSubtitles knows.
  *
  * @param key - The API key.
  * @param lookup - What the video is.
@@ -74,23 +77,21 @@ const searchOpenSubtitles = async (
 
   const read = SearchSchema.safeParse(await answer.json().catch(() => null));
 
-  return (read.success ? read.data.data : [])
-    .flatMap(({ attributes }) =>
-      attributes.files.map((file) => ({
-        source: 'opensubtitles' as const,
-        id: file.file_id.toString(),
-        name: attributes.release === '' ? file.file_name : attributes.release,
-        language: attributes.language,
-        isExactMatch: attributes.moviehash_match,
-        isHearingImpaired: attributes.hearing_impaired,
-        downloads: attributes.download_count,
-      })),
-    )
-    .toSorted(
-      (left, right) =>
-        Number(right.isExactMatch) - Number(left.isExactMatch) ||
-        (right.downloads ?? 0) - (left.downloads ?? 0),
-    );
+  return (read.success ? read.data.data : []).flatMap(({ attributes }) =>
+    attributes.files.map((file) => ({
+      source: 'opensubtitles' as const,
+      id: file.file_id.toString(),
+      name: attributes.release === '' ? file.file_name : attributes.release,
+      language: attributes.language,
+      isExactMatch: attributes.moviehash_match,
+      isHearingImpaired: attributes.hearing_impaired,
+      isMachineTranslated: attributes.machine_translated || attributes.ai_translated,
+      frameRate: attributes.fps === null || attributes.fps === 0 ? null : attributes.fps,
+      downloads: attributes.download_count,
+      score: 0,
+      reasons: [],
+    })),
+  );
 };
 
 export { searchOpenSubtitles };

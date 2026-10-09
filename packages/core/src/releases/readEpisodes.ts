@@ -1,4 +1,4 @@
-import { rangeOf } from '@ValenceRequests/releases/rangeOf';
+import { rangeOf } from '@ValenceCore/releases/rangeOf';
 
 type Episodes = {
   seasons: number[];

@@ -15,11 +15,17 @@ type SubtitleFetch =
   | { kind: 'denied' }
   | { kind: 'failed' };
 
+type WantedFetch =
+  | { kind: 'off' }
+  | { kind: 'absent' }
+  | { kind: 'looked'; added: number; upgraded: number };
+
 type SubtitleFinder = {
   setup: () => Promise<SubtitleSetup>;
   change: (change: SubtitleSetupChange) => Promise<SubtitleSetup>;
   search: (mediaId: string, language: string) => Promise<FoundSubtitles | null>;
   fetch: (mediaId: string, choice: SubtitleChoice) => Promise<SubtitleFetch>;
+  fetchWanted: (mediaId: string, own: readonly string[]) => Promise<WantedFetch>;
 };
 
-export type { SubtitleFetch, SubtitleFinder };
+export type { SubtitleFetch, SubtitleFinder, WantedFetch };

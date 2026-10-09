@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
+import { DataTable } from '@ValenceUI/DataTable';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -14,20 +15,40 @@ import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { findSubtitles } from '@ValenceClient/library/findSubtitles';
 import { fetchFoundSubtitle } from '@ValenceClient/library/fetchFoundSubtitle';
 import { SUBTITLE_LANGUAGES } from '@ValenceContracts/constants/SUBTITLE_LANGUAGES';
-import { SlidingList } from '@ValenceScreens/components/SlidingList/SlidingList';
-import type { FoundSubtitle } from '@ValenceContracts/schemas/SubtitleFinding';
+import type { FoundSubtitle, SubtitleReason } from '@ValenceContracts/schemas/SubtitleFinding';
+import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { FindSubtitlesDialogProps } from './FindSubtitlesDialog.types';
 import { say } from '@ValenceI18n/say';
-import { sayCount } from '@ValenceI18n/sayCount';
 
 const LANGUAGE_NAMES = new Intl.DisplayNames(undefined, { type: 'language' });
 
 const SOURCE_NAMES = { opensubtitles: 'OpenSubtitles', subdl: 'SubDL' } as const;
 
+const REASONS = {
+  madeForThisFile: { label: say('screens.findSubtitlesDialog.madeForThisFile'), tone: 'success' },
+  sameRelease: { label: say('screens.findSubtitlesDialog.sameRelease'), tone: 'accent' },
+  sameGroup: { label: say('screens.findSubtitlesDialog.sameGroup'), tone: 'quiet' },
+  sameSource: { label: say('screens.findSubtitlesDialog.sameSource'), tone: 'quiet' },
+  sameResolution: { label: say('screens.findSubtitlesDialog.sameResolution'), tone: 'quiet' },
+  sameVideoCodec: { label: say('screens.findSubtitlesDialog.sameVideoCodec'), tone: 'quiet' },
+  sameAudioCodec: { label: say('screens.findSubtitlesDialog.sameAudioCodec'), tone: 'quiet' },
+  sameService: { label: say('screens.findSubtitlesDialog.sameService'), tone: 'quiet' },
+  sameEdition: { label: say('screens.findSubtitlesDialog.sameEdition'), tone: 'quiet' },
+  sameFrameRate: { label: say('screens.findSubtitlesDialog.sameFrameRate'), tone: 'quiet' },
+  differentFrameRate: {
+    label: say('screens.findSubtitlesDialog.differentFrameRateWillDrift'),
+    tone: 'danger',
+  },
+} as const satisfies Record<
+  SubtitleReason,
+  { label: string; tone: 'success' | 'accent' | 'quiet' | 'danger' }
+>;
+
 /**
  * Looks for subtitles for one film or episode on the sites Valence has keys for, in a language
  * chosen from the ones the server offers first, and fetches the one chosen, which the server keeps
- * beside the video so every app finds it. Those timed to this very file are listed first and marked.
+ * so every app finds it. They are listed by how well they fit this file, each saying why: made for
+ * this very file, the same release, the same frame rate, or a different one that will drift.
  *
  * @param media - The film or episode, by its id and name, or nothing while the dialog is shut.
  * @param onClose - Called when it is dismissed.
@@ -81,7 +102,11 @@ const FindSubtitlesDialog = ({ media, onClose, onFetched }: FindSubtitlesDialogP
         }
 
         setFetched(new Set([...fetched, key]));
-        notify.worked(say('screens.findSubtitlesDialog.savedName', { name: answer.name }));
+        notify.worked(
+          say('screens.findSubtitlesDialog.savedName', {
+            name: LANGUAGE_NAMES.of(language) ?? language,
+          }),
+        );
         onFetched?.();
       })
       .finally(() => {
@@ -89,8 +114,109 @@ const FindSubtitlesDialog = ({ media, onClose, onFetched }: FindSubtitlesDialogP
       });
   };
 
+  const columns: DataTableColumn<FoundSubtitle>[] = [
+    {
+      id: 'release',
+      header: say('screens.findSubtitlesDialog.release'),
+      accessorFn: (subtitle) => subtitle.name,
+      meta: { fills: true },
+      cell: ({ row }) => (
+        <span className="block max-w-[28rem] truncate text-text" title={row.original.name}>
+          {row.original.name}
+        </span>
+      ),
+    },
+    {
+      id: 'score',
+      header: say('screens.findSubtitlesDialog.fit'),
+      accessorFn: (subtitle) => subtitle.score,
+      meta: { shrinks: true },
+      cell: ({ row }) => <span className="tabular-nums text-text">{row.original.score}</span>,
+    },
+    {
+      id: 'why',
+      header: say('screens.findSubtitlesDialog.why'),
+      enableSorting: false,
+      cell: ({ row }) => (
+        <span className="flex flex-wrap gap-1.5">
+          {row.original.reasons.map((reason) => (
+            <Badge key={reason} size="sm" tone={REASONS[reason].tone}>
+              {REASONS[reason].label}
+            </Badge>
+          ))}
+        </span>
+      ),
+    },
+    {
+      id: 'notes',
+      header: say('screens.findSubtitlesDialog.notes'),
+      enableSorting: false,
+      meta: { shrinks: true },
+      cell: ({ row }) => (
+        <span className="flex flex-wrap gap-1.5">
+          {row.original.isHearingImpaired ? (
+            <Badge size="sm">{say('screens.findSubtitlesDialog.sdh')}</Badge>
+          ) : null}
+          {row.original.isMachineTranslated ? (
+            <Badge size="sm" tone="warning">
+              {say('screens.findSubtitlesDialog.machineTranslated')}
+            </Badge>
+          ) : null}
+        </span>
+      ),
+    },
+    {
+      id: 'source',
+      header: say('screens.findSubtitlesDialog.site'),
+      accessorFn: (subtitle) => SOURCE_NAMES[subtitle.source],
+      meta: { shrinks: true },
+      cell: ({ row }) => (
+        <span className="text-text-muted">{SOURCE_NAMES[row.original.source]}</span>
+      ),
+    },
+    {
+      id: 'downloads',
+      header: say('screens.findSubtitlesDialog.downloads'),
+      accessorFn: (subtitle) => subtitle.downloads ?? -1,
+      meta: { shrinks: true },
+      cell: ({ row }) => (
+        <span className="tabular-nums text-text-muted">
+          {row.original.downloads === null ? '—' : row.original.downloads.toLocaleString()}
+        </span>
+      ),
+    },
+    {
+      id: 'get',
+      header: '',
+      enableSorting: false,
+      meta: { shrinks: true },
+      cell: ({ row }) => {
+        const key = `${row.original.source}:${row.original.id}`;
+
+        return fetched.has(key) ? (
+          <Badge size="sm" tone="success">
+            {say('screens.findSubtitlesDialog.saved')}
+          </Badge>
+        ) : (
+          <Button
+            variant="secondary"
+            size="xs"
+            isLoading={fetching === key}
+            disabled={fetching !== null && fetching !== key}
+            onClick={() => {
+              take(row.original);
+            }}
+          >
+            {say('screens.findSubtitlesDialog.get')}
+          </Button>
+        );
+      },
+    },
+  ];
+
   return (
     <DialogCompanion
+      size="stage"
       label={title}
       isOpen={media !== null}
       onClose={() => {
@@ -133,62 +259,14 @@ const FindSubtitlesDialog = ({ media, onClose, onFetched }: FindSubtitlesDialogP
             {say('screens.findSubtitlesDialog.nothingWasFoundInThatLanguage')}
           </p>
         ) : (
-          <div className="max-h-[50vh] overflow-y-auto">
-            <SlidingList
-              label={say('screens.findSubtitlesDialog.subtitlesFound')}
-              items={found.data.subtitles}
-              keyOf={(subtitle) => `${subtitle.source}:${subtitle.id}`}
-              renderItem={(subtitle) => {
-                const key = `${subtitle.source}:${subtitle.id}`;
-
-                return (
-                  <span className="flex items-center gap-3 py-2.5">
-                    <span className="flex min-w-0 flex-1 flex-col gap-1">
-                      <span className="truncate text-sm text-text">{subtitle.name}</span>
-                      <span className="flex flex-wrap items-center gap-1.5 text-xs text-text-muted">
-                        {subtitle.isExactMatch ? (
-                          <Badge size="sm" tone="success">
-                            {say('screens.findSubtitlesDialog.timedToThisFile')}
-                          </Badge>
-                        ) : null}
-                        {subtitle.isHearingImpaired ? (
-                          <Badge size="sm">{say('screens.findSubtitlesDialog.sdh')}</Badge>
-                        ) : null}
-                        <span>{SOURCE_NAMES[subtitle.source]}</span>
-                        {subtitle.downloads === null ? null : (
-                          <span>
-                            ·{' '}
-                            {sayCount(
-                              'screens.findSubtitlesDialog.count.downloads',
-                              subtitle.downloads,
-                            )}
-                          </span>
-                        )}
-                      </span>
-                    </span>
-
-                    {fetched.has(key) ? (
-                      <Badge size="sm" tone="success">
-                        {say('screens.findSubtitlesDialog.saved')}
-                      </Badge>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        size="xs"
-                        isLoading={fetching === key}
-                        disabled={fetching !== null && fetching !== key}
-                        onClick={() => {
-                          take(subtitle);
-                        }}
-                      >
-                        {say('screens.findSubtitlesDialog.get')}
-                      </Button>
-                    )}
-                  </span>
-                );
-              }}
-            />
-          </div>
+          <DataTable
+            label={say('screens.findSubtitlesDialog.subtitlesFound')}
+            columns={columns}
+            rows={found.data.subtitles}
+            getRowId={(subtitle) => `${subtitle.source}:${subtitle.id}`}
+            pageSize={50}
+            height="compact"
+          />
         )}
       </DialogContent>
 

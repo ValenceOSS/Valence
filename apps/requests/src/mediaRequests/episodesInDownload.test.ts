@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { parseReleaseName } from '@ValenceRequests/releases/parseReleaseName';
+import { parseReleaseName } from '@ValenceCore/releases/parseReleaseName';
 import { episodesInDownload } from './episodesInDownload';
 
 describe('episodesInDownload', () => {

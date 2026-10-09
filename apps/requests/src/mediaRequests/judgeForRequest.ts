@@ -5,7 +5,7 @@ import { albumsInRelease } from '@ValenceRequests/mediaRequests/albumsInRelease'
 import { matchRelease } from '@ValenceRequests/mediaRequests/matchRelease';
 import { judgeRelease } from '@ValenceRequests/profiles/judgeRelease';
 import { rankReleases } from '@ValenceRequests/profiles/rankReleases';
-import { parseReleaseName } from '@ValenceRequests/releases/parseReleaseName';
+import { parseReleaseName } from '@ValenceCore/releases/parseReleaseName';
 import type { Release } from '@ValenceContracts/schemas/Indexer';
 import type { Judgement, QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import type { BlockedReleaseRecord } from '@ValenceRequests/mediaRequests/BlockedReleaseRecord';

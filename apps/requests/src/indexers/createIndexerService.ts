@@ -7,7 +7,7 @@ import { CaptchaNeeded } from '@ValenceRequests/indexers/CaptchaNeeded';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
 import { judgeRelease } from '@ValenceRequests/profiles/judgeRelease';
 import { rankReleases } from '@ValenceRequests/profiles/rankReleases';
-import { parseReleaseName } from '@ValenceRequests/releases/parseReleaseName';
+import { parseReleaseName } from '@ValenceCore/releases/parseReleaseName';
 import type {
   Indexer,
   IndexerChange,

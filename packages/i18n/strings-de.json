@@ -17690,6 +17690,11 @@
     "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
   },
   {
+    "handler": "screens.adminArea.subtitlesCard.fetchAutomatically",
+    "text": "Fetch automatically",
+    "context": "On the admin’s Subtitles page, under System. The switch that turns on fetching subtitles without anyone asking."
+  },
+  {
     "handler": "screens.adminArea.subtitlesCard.findSubtitlesForWhatYourLibraries",
     "text": "Find subtitles for your films and shows on OpenSubtitles and SubDL. They’re saved beside each video, so every app picks them up.",
     "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
@@ -17710,9 +17715,19 @@
     "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
   },
   {
+    "handler": "screens.adminArea.subtitlesCard.minimumScore",
+    "text": "Minimum score",
+    "context": "On the admin’s Subtitles page, under System. Above the scores a subtitle must reach to be fetched on its own."
+  },
+  {
     "handler": "screens.adminArea.subtitlesCard.offeredFirstWhenSomebodyLooks",
     "text": "The languages offered first when someone looks for subtitles.",
     "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.onlyTakesASubtitleThatScores",
+    "text": "Out of 100. A subtitle made for the exact file scores 100; the same release with the same frame rate scores about 80. One timed to a different frame rate, or translated by a machine, is never fetched on its own.",
+    "context": "On the admin’s Subtitles page, under System."
   },
   {
     "handler": "screens.adminArea.subtitlesCard.openSubtitles",
@@ -17748,6 +17763,11 @@
     "handler": "screens.adminArea.subtitlesCard.whatLeavesTheServer",
     "text": "What’s sent to the subtitle sites",
     "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.whenNewFilmsAndEpisodesArrive",
+    "text": "When new films and episodes arrive, and each night, find subtitles in your languages for anything without them, and swap in better ones as they turn up.",
+    "context": "On the admin’s Subtitles page, under System."
   },
   {
     "handler": "screens.adminArea.subtitlesCard.whenYouLookTheTitleAndA",
@@ -19525,14 +19545,14 @@
     "context": "The title of the dialog for moving a file or folder in a library, before it knows which one."
   },
   {
-    "handler": "screens.findSubtitlesDialog.count.downloads.one",
-    "text": "{count} download",
-    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. How many times a subtitle has been downloaded."
+    "handler": "screens.findSubtitlesDialog.differentFrameRateWillDrift",
+    "text": "Different frame rate, will drift",
+    "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did. It was timed to another frame rate, so it will slowly fall out of step."
   },
   {
-    "handler": "screens.findSubtitlesDialog.count.downloads.other",
-    "text": "{count} downloads",
-    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. How many times a subtitle has been downloaded."
+    "handler": "screens.findSubtitlesDialog.downloads",
+    "text": "Downloads",
+    "context": "A column heading in the table of subtitles found for a film or episode. How many times it has been downloaded."
   },
   {
     "handler": "screens.findSubtitlesDialog.findSubtitles",
@@ -19545,6 +19565,11 @@
     "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. Its title. {name} is the film or episode."
   },
   {
+    "handler": "screens.findSubtitlesDialog.fit",
+    "text": "Fit",
+    "context": "A column heading in the table of subtitles found for a film or episode. How well it fits this file, out of 100."
+  },
+  {
     "handler": "screens.findSubtitlesDialog.get",
     "text": "Get",
     "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. The button that fetches a subtitle and saves it."
@@ -19555,14 +19580,79 @@
     "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. The label of its spinner."
   },
   {
+    "handler": "screens.findSubtitlesDialog.machineTranslated",
+    "text": "Machine translated",
+    "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did. A machine or AI translated it rather than a person."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.madeForThisFile",
+    "text": "Made for this file",
+    "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did. It was timed against this exact file."
+  },
+  {
     "handler": "screens.findSubtitlesDialog.noSubtitleSiteIsSetUp",
     "text": "No subtitle site is set up yet. Add an OpenSubtitles or SubDL key under System › Subtitles.",
     "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen."
   },
   {
+    "handler": "screens.findSubtitlesDialog.notes",
+    "text": "Notes",
+    "context": "A column heading in the table of subtitles found for a film or episode. Such as SDH or machine translated."
+  },
+  {
     "handler": "screens.findSubtitlesDialog.nothingWasFoundInThatLanguage",
     "text": "Nothing was found in that language.",
     "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.release",
+    "text": "Release",
+    "context": "A column heading in the table of subtitles found for a film or episode. The release the subtitle was made for."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.sameAudioCodec",
+    "text": "Same audio codec",
+    "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.sameEdition",
+    "text": "Same edition",
+    "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did. Such as the extended cut."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.sameFrameRate",
+    "text": "Same frame rate",
+    "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.sameGroup",
+    "text": "Same group",
+    "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.sameRelease",
+    "text": "Same release",
+    "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did. Its release group and source match the file’s."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.sameResolution",
+    "text": "Same resolution",
+    "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.sameService",
+    "text": "Same streaming service",
+    "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.sameSource",
+    "text": "Same source",
+    "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.sameVideoCodec",
+    "text": "Same video codec",
+    "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did."
   },
   {
     "handler": "screens.findSubtitlesDialog.saved",
@@ -19585,6 +19675,11 @@
     "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. A badge on a subtitle that describes sounds as well as dialogue, for deaf and hard-of-hearing viewers."
   },
   {
+    "handler": "screens.findSubtitlesDialog.site",
+    "text": "Site",
+    "context": "A column heading in the table of subtitles found for a film or episode. OpenSubtitles or SubDL."
+  },
+  {
     "handler": "screens.findSubtitlesDialog.subtitlesFound",
     "text": "Subtitles found",
     "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. The list, read out."
@@ -19595,9 +19690,9 @@
     "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen."
   },
   {
-    "handler": "screens.findSubtitlesDialog.timedToThisFile",
-    "text": "Matches this file",
-    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. A badge on a subtitle timed to this exact release."
+    "handler": "screens.findSubtitlesDialog.why",
+    "text": "Why",
+    "context": "A column heading in the table of subtitles found for a film or episode. The reasons for its score."
   },
   {
     "handler": "screens.finishOnAnotherDevice.finishSettingUpOnYourPhone",
@@ -25856,6 +25951,11 @@
     "context": "The label in the jobs on the server (from `jobDefinitions`)."
   },
   {
+    "handler": "server.jobs.jobDefinitions.fetchSubtitles",
+    "text": "Fetch subtitles",
+    "context": "The name of the background job that fetches subtitles on its own, in the admin’s list of jobs."
+  },
+  {
     "handler": "server.jobs.jobDefinitions.findsIntrosAndRecapsSoViewers",
     "text": "Finds intros and recaps so viewers can skip them.",
     "context": "The description in the jobs on the server (from `jobDefinitions`)."
@@ -25864,6 +25964,11 @@
     "handler": "server.jobs.jobDefinitions.findsNewChangedAndRemovedFiles",
     "text": "Finds new, changed and removed files.",
     "context": "The description in the jobs on the server (from `jobDefinitions`)."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.findsSubtitlesInTheHouseholdsLanguages",
+    "text": "Finds subtitles in the household’s languages for new films and episodes, and swaps in better ones as they turn up. Only runs with automatic fetching on under System › Subtitles.",
+    "context": "What the job that fetches subtitles does, in the admin’s list of jobs."
   },
   {
     "handler": "server.jobs.jobDefinitions.forgetsJobRunsOlderThan30",
@@ -26129,6 +26234,16 @@
     "handler": "server.jobs.phase.sessions",
     "text": "expired sessions",
     "context": "The step a background job is on, shown beside its progress on the admin area's jobs page: clearing sign-in sessions that have ended."
+  },
+  {
+    "handler": "server.jobs.phase.subtitlesFetched.one",
+    "text": "{count} subtitle fetched",
+    "context": "Where the job that fetches subtitles got to."
+  },
+  {
+    "handler": "server.jobs.phase.subtitlesFetched.other",
+    "text": "{count} subtitles fetched",
+    "context": "Where the job that fetches subtitles got to."
   },
   {
     "handler": "server.jobs.phase.trickplay",

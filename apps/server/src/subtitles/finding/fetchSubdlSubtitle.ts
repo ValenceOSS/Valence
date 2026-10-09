@@ -4,7 +4,6 @@ import { TEXT_SUBTITLE_EXTENSIONS } from '@ValenceContracts/constants/TEXT_SUBTI
 import { parseEpisodePath } from '@ValenceServer/library/naming/parseEpisodePath';
 import type { DownloadedSubtitle } from './DownloadedSubtitle';
 
-
 /**
  * The kind of subtitle a file in a zip is, by its extension, where it is one Valence reads.
  *

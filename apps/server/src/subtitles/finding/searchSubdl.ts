@@ -63,7 +63,11 @@ const searchSubdl = async (
     language: lookup.language,
     isExactMatch: false,
     isHearingImpaired: found.hi,
+    isMachineTranslated: false,
+    frameRate: null,
     downloads: null,
+    score: 0,
+    reasons: [],
   }));
 };
 

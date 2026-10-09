@@ -1,4 +1,4 @@
-import { parseReleaseName } from '@ValenceRequests/releases/parseReleaseName';
+import { parseReleaseName } from '@ValenceCore/releases/parseReleaseName';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 
 /**

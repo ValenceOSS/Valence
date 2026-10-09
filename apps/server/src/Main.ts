@@ -1,3 +1,6 @@
+import { createSubtitleSweep } from '@ValenceServer/subtitles/finding/createSubtitleSweep';
+import { createFetchedSubtitleStore } from '@ValenceServer/subtitles/finding/createFetchedSubtitleStore';
+import { createFetchedSubtitleService } from '@ValenceServer/subtitles/finding/createFetchedSubtitleService';
 import { createSubtitleFinder } from '@ValenceServer/subtitles/finding/createSubtitleFinder';
 import { SUBTITLE_DEFAULTS } from '@ValenceContracts/schemas/SubtitleSettings';
 import { z } from '@hono/zod-openapi';
@@ -14,7 +17,7 @@ import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { saying } from '@ValenceI18n/saying';
 import { docsFor } from '@ValenceCore/functions/docsFor';
 import { fileURLToPath } from 'node:url';
-import { join, relative } from 'node:path';
+import { dirname, join, relative } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import {
   copyFile,
@@ -279,6 +282,7 @@ import {
   PRUNE_RESOURCE_HISTORY_JOB,
   REENCODE_JOB,
   PRE_TRANSCODE_JOB,
+  FETCH_SUBTITLES_JOB,
   IMPORT_PLAN_JOB,
   IMPORT_RUN_JOB,
   ImportJobSchema,
@@ -661,7 +665,11 @@ const emailService = createEmailService({
   log,
 });
 
-const subtitleFinder = createSubtitleFinder({ db, settings });
+const fetchedSubtitles = createFetchedSubtitleStore(
+  env.SUBTITLE_DIR ?? join(dirname(env.PROFILE_IMAGE_DIR), 'subtitles'),
+);
+
+const subtitleFinder = createSubtitleFinder({ db, settings, store: fetchedSubtitles });
 
 const requestPasswordReset = createPasswordResetRequests({
   findAccount: (ask) => findResetAccount(db, ask),
@@ -2083,6 +2091,18 @@ const jobs = createJobQueue({
           void jobs.enqueue(PRE_TRANSCODE_JOB, {}, PRE_TRANSCODE_JOB);
         }
       },
+      [FETCH_SUBTITLES_JOB]: async (jobId) => {
+        const fetched = await subtitleSweep.run((done, total) => {
+          jobs.reportProgress(jobId, sayingCount('server.jobs.phase.checked', done), done, total);
+        });
+
+        jobs.reportProgress(
+          jobId,
+          sayingCount('server.jobs.phase.subtitlesFetched', fetched),
+          1,
+          1,
+        );
+      },
       [PRE_TRANSCODE_JOB]: async (jobId) => {
         const ticked = await preTranscodingService.tick();
 
@@ -2615,6 +2635,8 @@ const libraryService = createDatabaseLibraryService({
   },
   onArrived: (libraryId, item) => {
     remember(arrivals, libraryId, [item]);
+    subtitleSweep.arrived(item.itemId);
+    void jobs.enqueue(FETCH_SUBTITLES_JOB, {}, FETCH_SUBTITLES_JOB);
   },
   onDeparted: (libraryId, items) => {
     remember(departures, libraryId, items);
@@ -3075,7 +3097,7 @@ const reportSubtitleProblem = (path: string, reason: Said): void => {
   log.warn('scanner', `subtitles: ${path}: ${reason.message}`);
 };
 
-const subtitleService = createLayeredSubtitleService([
+const ownSubtitles = createLayeredSubtitleService([
   createSidecarSubtitleService({
     media: { findPath: findMediaPath },
     onProblem: reportSubtitleProblem,
@@ -3098,6 +3120,21 @@ const subtitleService = createLayeredSubtitleService([
     onProblem: reportSubtitleProblem,
   }),
 ]);
+
+const subtitleService = createLayeredSubtitleService([
+  createFetchedSubtitleService(fetchedSubtitles),
+  ownSubtitles,
+]);
+
+const subtitleSweep = createSubtitleSweep({
+  db,
+  finder: subtitleFinder,
+  store: fetchedSubtitles,
+  ownLanguages: async (mediaId) =>
+    ((await ownSubtitles.list(mediaId)) ?? []).flatMap((track) =>
+      track.language === null ? [] : [track.language],
+    ),
+});
 
 const segmentService = createDatabaseSegmentService(db);
 

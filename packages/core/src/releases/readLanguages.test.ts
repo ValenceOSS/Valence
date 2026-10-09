@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { readLanguages } from '@ValenceRequests/releases/readLanguages';
-import { spacedName } from '@ValenceRequests/releases/spacedName';
+import { readLanguages } from '@ValenceCore/releases/readLanguages';
+import { spacedName } from '@ValenceCore/releases/spacedName';
 
 const read = (name: string) => readLanguages(spacedName(name));
 

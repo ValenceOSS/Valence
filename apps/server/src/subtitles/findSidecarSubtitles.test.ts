@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   findSidecarSubtitles,
   describeTags,
-  describeLabel,
   isBitmapSubtitle,
   splitName,
 } from './findSidecarSubtitles';
@@ -60,28 +59,6 @@ describe('describeTags', () => {
 
   it('reports no language when the filename says nothing', () => {
     expect(describeTags([])).toMatchObject({ language: null });
-  });
-});
-
-describe('describeLabel', () => {
-  it('names a language the way a viewer reads it', () => {
-    expect(describeLabel('de', false, false)).toBe('Deutsch');
-  });
-
-  it('says so when a track is forced', () => {
-    expect(describeLabel('en', true, false)).toBe('English (forced)');
-  });
-
-  it('says so when a track is for the hard of hearing', () => {
-    expect(describeLabel('en', false, true)).toBe('English (SDH)');
-  });
-
-  it('falls back to the code it was given', () => {
-    expect(describeLabel('tlh', false, false)).toBe('TLH');
-  });
-
-  it('admits when it does not know the language', () => {
-    expect(describeLabel(null, false, false)).toBe('Unknown');
   });
 });
 

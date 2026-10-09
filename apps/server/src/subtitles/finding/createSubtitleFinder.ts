@@ -1,26 +1,28 @@
-import { writeFile } from 'node:fs/promises';
-import { basename, dirname, extname, join } from 'node:path';
 import { eq } from 'drizzle-orm';
 import { library, mediaItem, series } from '#dialect/Schema';
 import { diskRefusalOf } from '@ValenceServer/files/diskRefusalOf';
 import { isUnderAny } from '@ValenceServer/library/isUnderAny';
+import { readLanguage } from '@ValenceCore/functions/describeTrack';
 import { fetchOpenSubtitle } from './fetchOpenSubtitle';
 import { fetchSubdlSubtitle } from './fetchSubdlSubtitle';
 import { openSubtitlesHash } from './openSubtitlesHash';
 import { searchOpenSubtitles } from './searchOpenSubtitles';
+import { rankSubtitles } from './rankSubtitles';
 import { searchSubdl } from './searchSubdl';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { SettingsStore } from '@ValenceServer/settings/ServerSettings';
 import type { SubtitleSettings } from '@ValenceContracts/schemas/SubtitleSettings';
-import type { SubtitleSetup } from '@ValenceContracts/schemas/SubtitleFinding';
+import type { FoundSubtitle, SubtitleSetup } from '@ValenceContracts/schemas/SubtitleFinding';
+import type { FetchedSubtitleStore } from './createFetchedSubtitleStore';
 import type { SubtitleFinder } from './SubtitleFinder';
 import type { SubtitleLookup } from './SubtitleLookup';
 
-const MOST_COPIES = 20;
+const REMEMBERED_SEARCHES = 50;
 
 type SubtitleFinderOptions = {
   db: AnyValenceDatabase;
   settings: SettingsStore;
+  store: FetchedSubtitleStore;
   fetchImpl?: typeof fetch;
 };
 
@@ -36,13 +38,21 @@ const setupOf = (saved: SubtitleSettings): SubtitleSetup => ({
   hasOpenSubtitlesPassword: saved.openSubtitlesPassword !== '',
   hasSubdlKey: saved.subdlKey !== '',
   languages: saved.languages,
+  isAutomatic: saved.isAutomatic,
+  filmMinimumScore: saved.filmMinimumScore,
+  episodeMinimumScore: saved.episodeMinimumScore,
 });
 
 /**
- * Finds subtitles for a film or episode on OpenSubtitles and SubDL and keeps the one chosen beside
- * the video, as `Name.en.srt` (or `.ass` or `.vtt`, as the site gave it), where every client already finds subtitles kept beside a video — so
- * a subtitle fetched is there the next time the film is played, with nothing to scan. Nothing
- * beside the video is ever written over: a second subtitle in a language is kept as `Name.en.2.srt`.
+ * Finds subtitles for a film or episode on OpenSubtitles and SubDL, scored against the file they are
+ * for, and keeps the one chosen inside Valence's own data rather than among the media, where every
+ * player lists it beside the file's own tracks the next time it is played. A subtitle fetched in a
+ * language replaces the one fetched before in it.
+ *
+ * Set to fetch on its own, it looks for each of the household's languages a file has no subtitle in
+ * of its own, and takes the best only where it scores at least the minimum for a film or an episode,
+ * was timed to the file's frame rate and was not translated by a machine — never one it can't vouch
+ * for. One it fetched before is swapped for a better one when a better one turns up.
  *
  * Each site needs its own key, entered by an administrator, since downloads are allowed per key and
  * per account. A site with no key is not asked.
@@ -53,9 +63,11 @@ const setupOf = (saved: SubtitleSettings): SubtitleSetup => ({
 const createSubtitleFinder = ({
   db,
   settings,
+  store,
   fetchImpl = fetch,
 }: SubtitleFinderOptions): SubtitleFinder => {
   const saved = async () => (await settings.read()).subtitles;
+  const lastFound = new Map<string, FoundSubtitle[]>();
 
   const read = async (mediaId: string) => {
     const [row] = await db
@@ -66,6 +78,7 @@ const createSubtitleFinder = ({
         seriesTitle: mediaItem.seriesTitle,
         season: mediaItem.seasonNumber,
         episode: mediaItem.episodeNumber,
+        frameRate: mediaItem.videoFrameRate,
         seriesExternalId: series.externalId,
         root: library.path,
       })
@@ -96,7 +109,7 @@ const createSubtitleFinder = ({
     };
   };
 
-  return {
+  const finder: SubtitleFinder = {
     setup: async () => setupOf(await saved()),
 
     change: async (change) => {
@@ -112,6 +125,9 @@ const createSubtitleFinder = ({
         openSubtitlesPassword: kept('openSubtitlesPassword', change.openSubtitlesPassword),
         subdlKey: kept('subdlKey', change.subdlKey),
         languages: [...new Set(change.languages.map((language) => language.toLowerCase()))],
+        isAutomatic: change.isAutomatic ?? false,
+        filmMinimumScore: change.filmMinimumScore ?? 60,
+        episodeMinimumScore: change.episodeMinimumScore ?? 50,
       };
 
       return setupOf((await settings.write({ subtitles: next })).subtitles);
@@ -139,7 +155,16 @@ const createSubtitleFinder = ({
         keys.subdlKey === '' ? [] : searchSubdl(keys.subdlKey, lookup, fetchImpl),
       ]);
 
-      return { subtitles: [...opened, ...subdl], isSetUp };
+      const ranked = rankSubtitles(row, [...opened, ...subdl]);
+
+      lastFound.delete(mediaId);
+      lastFound.set(mediaId, ranked);
+
+      if (lastFound.size > REMEMBERED_SEARCHES) {
+        lastFound.delete(lastFound.keys().next().value ?? mediaId);
+      }
+
+      return { subtitles: ranked, isSetUp };
     },
 
     fetch: async (mediaId, choice) => {
@@ -185,30 +210,84 @@ const createSubtitleFinder = ({
         return { kind: 'otherEpisode' };
       }
 
-      const stem = basename(row.path, extname(row.path));
-      const language = choice.language.toLowerCase();
+      const found = lastFound
+        .get(mediaId)
+        ?.find((one) => one.source === choice.source && one.id === choice.id);
 
-      for (let copy = 1; copy <= MOST_COPIES; copy += 1) {
-        const name = `${stem}.${language}${copy === 1 ? '' : `.${copy.toString()}`}.${downloaded.extension}`;
+      try {
+        const kept = await store.save(
+          mediaId,
+          {
+            language: choice.language.toLowerCase(),
+            source: choice.source,
+            id: choice.id,
+            release: found?.name ?? '',
+            score: found?.score ?? 0,
+            isHearingImpaired: found?.isHearingImpaired ?? false,
+            format: downloaded.extension,
+          },
+          downloaded.bytes,
+        );
 
-        try {
-          await writeFile(join(dirname(row.path), name), downloaded.bytes, { flag: 'wx' });
+        return { kind: 'fetched', name: kept.file };
+      } catch (error) {
+        const refusal = diskRefusalOf(error instanceof Error ? error : null);
 
-          return { kind: 'fetched', name };
-        } catch (error) {
-          if (error instanceof Error && 'code' in error && error.code === 'EEXIST') {
-            continue;
+        return refusal.kind === 'missing' ? { kind: 'failed' } : refusal;
+      }
+    },
+
+    fetchWanted: async (mediaId, own) => {
+      const keys = await saved();
+
+      if (!keys.isAutomatic || (keys.openSubtitlesKey === '' && keys.subdlKey === '')) {
+        return { kind: 'off' };
+      }
+
+      const row = await read(mediaId);
+
+      if (row === null) {
+        return { kind: 'absent' };
+      }
+
+      const minimum = row.seriesTitle === null ? keys.filmMinimumScore : keys.episodeMinimumScore;
+      const owned = new Set(own.map((language) => readLanguage(language) ?? language));
+      const fetched = await store.list(mediaId);
+      let added = 0;
+      let upgraded = 0;
+
+      for (const language of keys.languages.filter((one) => !owned.has(one))) {
+        const current = fetched.find((entry) => entry.language === language);
+        const found = await finder.search(mediaId, language);
+        const best = found?.subtitles.find(
+          (subtitle) =>
+            !subtitle.reasons.includes('differentFrameRate') &&
+            !subtitle.isMachineTranslated &&
+            subtitle.score >= minimum &&
+            (current === undefined || subtitle.score > current.score),
+        );
+
+        if (best !== undefined) {
+          const kept = await finder.fetch(mediaId, {
+            source: best.source,
+            id: best.id,
+            language,
+          });
+
+          if (kept.kind === 'fetched') {
+            added += current === undefined ? 1 : 0;
+            upgraded += current === undefined ? 0 : 1;
           }
-
-          const refusal = diskRefusalOf(error instanceof Error ? error : null);
-
-          return refusal.kind === 'missing' ? { kind: 'absent' } : refusal;
         }
       }
 
-      return { kind: 'failed' };
+      await store.markChecked(mediaId);
+
+      return { kind: 'looked', added, upgraded };
     },
   };
+
+  return finder;
 };
 
 export { createSubtitleFinder };
