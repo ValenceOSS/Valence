@@ -28,6 +28,7 @@ const aSeerrRequest = (change: Partial<MediaRequest> = {}): MediaRequest => ({
   approval: 'approved',
   refusedBecause: null,
   requestedBy: { id: 'seerr-account', name: 'Requests from Seerr' },
+  alsoAskedBy: [],
   seasons: null,
   followsNewSeasons: false,
   releaseTypes: null,

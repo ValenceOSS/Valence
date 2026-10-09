@@ -1900,6 +1900,11 @@
     "context": "Shown, used in the request in the search of the phone app and in the requests list in the requests page."
   },
   {
+    "handler": "common.askedByYouAndNames",
+    "text": "Requested by you and {names}",
+    "context": "Who asked for a title, on web, phone and TV, where the viewer and others asked. {names} is the others' names listed, such as \"Priya and Sam\"."
+  },
+  {
     "handler": "common.askIfYouAreStillWatching",
     "text": "Ask if you’re still watching",
     "context": "The label of a segmented row, used in the profile in the account of the phone app and in the profile settings in the account area."
@@ -3462,6 +3467,11 @@
     "context": "The detail of a confirm dialog, used in the askable dialog and in the requests list in the requests page."
   },
   {
+    "handler": "common.iWantThisToo",
+    "text": "I want this too",
+    "context": "Button on a title somebody else requested, on web, phone and TV. Adds the viewer to the request, so it shows in their requests and they are told when it arrives."
+  },
+  {
     "handler": "common.jellyseerr",
     "text": "Jellyseerr",
     "context": "The name of the request app Jellyseerr (now Seerr), which a setup can be brought in from."
@@ -3955,6 +3965,16 @@
     "handler": "common.nameSettings",
     "text": "{name} settings",
     "context": "The label of a dialog companion, used in the library settings dialog in the admin area and in the plugin settings dialog in the plugins panel. {name} is filled in by the app."
+  },
+  {
+    "handler": "common.namesWantItToo.one",
+    "text": "{names} wants it too",
+    "context": "On a title the viewer requested, naming the one other person who also wants it."
+  },
+  {
+    "handler": "common.namesWantItToo.other",
+    "text": "{names} want it too",
+    "context": "On a title the viewer requested, naming the other people who also want it, such as \"Priya and Sam\"."
   },
   {
     "handler": "common.nameTakesNZBsNotTorrents",
@@ -4475,6 +4495,16 @@
     "handler": "common.otherChoice",
     "text": "Other",
     "context": "Shown, used in the cardigann in the requests service (from `createCategoryMap`) and in the library (from `nameSeason`)."
+  },
+  {
+    "handler": "common.othersStillWantIt.one",
+    "text": "{names} still wants it, so it stays requested for them.",
+    "context": "In the confirmation for cancelling a request that one other person also asked for: cancelling only takes the viewer off it."
+  },
+  {
+    "handler": "common.othersStillWantIt.other",
+    "text": "{names} still want it, so it stays requested for them.",
+    "context": "In the confirmation for cancelling a request that other people also asked for: cancelling only takes the viewer off it."
   },
   {
     "handler": "common.outline",
@@ -8690,6 +8720,11 @@
     "context": "An error the server answers with (HTTP 400) in the media requests in the requests service (from `createRequestRoutes`)."
   },
   {
+    "handler": "error.requests.sayWhoIsAsking",
+    "text": "Say who is asking.",
+    "context": "Error from the requests service when somebody is added to a request without saying who they are."
+  },
+  {
     "handler": "error.requests.sayWhyItWasRefusedOr",
     "text": "Give a reason for declining, or leave it empty.",
     "context": "An error the server answers with (HTTP 400) in the media requests in the requests service (from `createRequestRoutes`)."
@@ -8713,6 +8748,11 @@
     "handler": "error.requests.theCatalogueDoesNotKnowThat",
     "text": "The catalogue doesn’t have that series, or can’t be reached.",
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveRequests`)."
+  },
+  {
+    "handler": "error.requests.thisAccountMayNotRequestThat",
+    "text": "This account isn’t allowed to request that.",
+    "context": "Error when somebody tries to join a request for a kind of title (such as music) their role doesn't let them request."
   },
   {
     "handler": "error.role.aRoleGrantingAdministratorCannotBe",

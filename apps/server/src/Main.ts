@@ -149,6 +149,7 @@ import { summariseArrivals } from '@ValenceServer/events/summariseArrivals';
 import type { ScannedItem } from '@ValenceServer/library/scanLibrary';
 import type { LibraryKind, ScanResult } from '@ValenceContracts/schemas/Library';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
+import { askersOf } from '@ValenceContracts/functions/askersOf';
 import { catalogueForRequest } from '@ValenceServer/requests/catalogueForRequest';
 import { createExpiringCache } from '@ValenceServer/library/createExpiringCache';
 import { createDatabaseRequestedAlbumStore } from '@ValenceServer/requests/albums/createDatabaseRequestedAlbumStore';
@@ -2976,9 +2977,9 @@ const tellOfLinkedArrivals = async (): Promise<void> => {
       }),
       link: LINKS_TO_ARRIVALS[request.kind](found.mediaId),
       vapid: await readPushKeys(),
-      only: [request.requestedBy.id],
+      only: askersOf(request).map((asker) => asker.id),
       onProblem: (reason) => {
-        log.error('requests', `telling ${request.requestedBy.name}: ${reason}`);
+        log.error('requests', `telling those who asked for ${request.title}: ${reason}`);
       },
       announce: (userIds) => {
         realtime.publish(
@@ -3020,9 +3021,9 @@ const tellOfArrival = async (filed: MediaRequest, mediaId: string): Promise<void
     body: saying('server.main.titleWhichYouAskedForIs', { title: filed.title }),
     link: LINKS_TO_ARRIVALS[filed.kind](mediaId),
     vapid: await readPushKeys(),
-    only: [requestedBy.id],
+    only: askersOf(filed).map((asker) => asker.id),
     onProblem: (reason) => {
-      log.error('requests', `telling ${requestedBy.name}: ${reason}`);
+      log.error('requests', `telling those who asked for ${filed.title}: ${reason}`);
     },
     announce: (userIds) => {
       realtime.publish(

@@ -1,0 +1,1 @@
+ALTER TABLE "valence_requests"."media_request" ADD COLUMN "also_asked_by" jsonb DEFAULT '[]'::jsonb NOT NULL;

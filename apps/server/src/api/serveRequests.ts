@@ -13,6 +13,7 @@ import {
   pickMediaReleaseRoute,
   refuseMediaRequestRoute,
   removeMediaRequestRoute,
+  joinMediaRequestRoute,
   adminCatalogueRoute,
   adminTitleFilesRoute,
   stopRequestDownloadRoute,
@@ -84,6 +85,7 @@ import { ReleaseDownloadRequestSchema } from '@ValenceContracts/schemas/Indexer'
 import { readSessionOnce } from '@ValenceServer/auth/readSessionOnce';
 import type { MediaRequest, MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
+import { isAskedBy } from '@ValenceContracts/functions/isAskedBy';
 import { seasonsOf } from '@ValenceContracts/functions/seasonsOf';
 import { describeCatalogueTitle } from '@ValenceServer/requests/catalogue/describeCatalogueTitle';
 import { discoverShelves } from '@ValenceServer/requests/catalogue/discoverShelves';
@@ -235,7 +237,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     return context.json(
-      seesAll ? shown : shown.filter((request) => request.requestedBy.id === session?.user.id),
+      seesAll ? shown : shown.filter((request) => isAskedBy(request, session?.user.id)),
       200,
     );
   });
@@ -598,7 +600,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
           value: progressOf(
             seesAll
               ? listed.value
-              : listed.value.filter((request) => request.requestedBy.id === session?.user.id),
+              : listed.value.filter((request) => isAskedBy(request, session?.user.id)),
             queue.kind === 'answered' ? queue.value.downloads : [],
           ),
         };
@@ -725,7 +727,9 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
           return found;
         }
 
-        if (found.value.requestedBy.id !== session?.user.id) {
+        const userId = session?.user.id;
+
+        if (userId === undefined || !isAskedBy(found.value, userId)) {
           return {
             kind: 'refused',
             status: 404,
@@ -733,13 +737,21 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
           };
         }
 
-        return found.value.state === 'filed' || found.value.state === 'available'
-          ? {
-              kind: 'refused',
-              status: 400,
-              refusal: refuse('error.requests.itIsInTheLibraryAlready'),
-            }
-          : client.removeRequest(id, true);
+        if (found.value.state === 'filed' || found.value.state === 'available') {
+          return {
+            kind: 'refused',
+            status: 400,
+            refusal: refuse('error.requests.itIsInTheLibraryAlready'),
+          };
+        }
+
+        if (found.value.alsoAskedBy.length === 0) {
+          return client.removeRequest(id, true);
+        }
+
+        const left = await client.leaveRequest(id, userId);
+
+        return left.kind === 'answered' ? { kind: 'answered', value: null } : left;
       },
       ['requests.manage', ...ASKERS],
     );
@@ -750,6 +762,37 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.body(null, 204)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
+  app.openapi(joinMediaRequestRoute, async (context) => {
+    const { headers } = context.req.raw;
+    const { id } = context.req.valid('param');
+    const session = await readSessionOnce(auth, headers);
+    const found = await throughRequests(headers, (client) => client.findRequest(id), ASKERS);
+
+    if (found.kind !== 'answered') {
+      return context.json(bodyOf(found), found.status);
+    }
+
+    const needs = isMusicRequest(found.value.kind) ? 'requests.askMusic' : 'requests.ask';
+
+    if (session === null || !(await requires(headers, needs))) {
+      return context.json(refuse('error.requests.thisAccountMayNotRequestThat'), 403);
+    }
+
+    const answer = await throughRequests(
+      headers,
+      (client) => client.joinRequest(id, { id: session.user.id, name: session.user.name }),
+      [needs],
+    );
+
+    if (answer.kind === 'answered') {
+      sayRequestsChanged();
+    }
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
       : context.json(bodyOf(answer), answer.status);
   });
 

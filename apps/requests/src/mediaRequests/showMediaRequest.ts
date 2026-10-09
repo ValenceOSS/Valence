@@ -39,6 +39,7 @@ const showMediaRequest = (
   approval: record.approval,
   refusedBecause: record.refusedBecause,
   requestedBy: { id: record.requestedById, name: record.requestedByName },
+  alsoAskedBy: record.alsoAskedBy,
   seasons: record.seasons,
   followsNewSeasons: record.followsNewSeasons,
   releaseTypes: record.releaseTypes,

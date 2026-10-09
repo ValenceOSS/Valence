@@ -139,7 +139,7 @@ The generic shape posts this envelope as the request body:
 
 `version` is the payload version, currently `1`. `id` is unique per event, so a receiver can ignore one it has already seen. `data` depends on `event`, and the full schema for each is in the API reference under [/api](/api).
 
-The request events above add a `request` object to `data`: its `id`, `kind` (`film`, `series`, `artist`, `album` or `book`), `title`, `artistName`, `year`, `overview`, `posterUrl`, `requestedBy`, the requested `seasons` and its `state`. It is `null` where an event is about something nobody requested, such as a release imported by hand.
+The request events above add a `request` object to `data`: its `id`, `kind` (`film`, `series`, `artist`, `album` or `book`), `title`, `artistName`, `year`, `overview`, `posterUrl`, `requestedBy` (whoever asked first), `alsoAskedBy` (the names of everyone who asked after them), the requested `seasons` and its `state`. It is `null` where an event is about something nobody requested, such as a release imported by hand.
 
 ### Signing
 

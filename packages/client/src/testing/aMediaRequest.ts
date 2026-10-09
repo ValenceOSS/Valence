@@ -27,6 +27,7 @@ const aMediaRequest = (overrides: Partial<MediaRequest> = {}): MediaRequest => (
   approval: 'approved',
   refusedBecause: null,
   requestedBy: { id: 'someone', name: 'Sam' },
+  alsoAskedBy: [],
   seasons: null,
   followsNewSeasons: false,
   releaseTypes: null,

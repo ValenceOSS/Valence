@@ -98,6 +98,27 @@ describe('createRequestRoutes', () => {
     expect((await ask('/requests', 'POST', { kind: 'film' })).status).toBe(400);
   });
 
+  it('adds somebody else who wants a request, and takes them off again', async () => {
+    const { ask } = theRoutes();
+    const id = await madeDune(ask);
+
+    const joined = await ask(`/requests/${id}/askers`, 'POST', { id: 'another', name: 'Another' });
+
+    expect(joined.status).toBe(200);
+    expect(MediaRequestSchema.parse(await joined.json()).alsoAskedBy).toEqual([
+      { id: 'another', name: 'Another' },
+    ]);
+    expect((await ask(`/requests/${id}/askers`, 'POST', { name: 'Nobody' })).status).toBe(400);
+    expect((await ask('/requests/missing/askers', 'POST', { id: 'a', name: 'A' })).status).toBe(
+      404,
+    );
+
+    const left = await ask(`/requests/${id}/askers/someone`, 'DELETE');
+
+    expect(MediaRequestSchema.parse(await left.json()).requestedBy.id).toBe('another');
+    expect((await ask(`/requests/${id}/askers/another`, 'DELETE')).status).toBe(404);
+  });
+
   it('approves, refuses, retries and marks a request arrived', async () => {
     const { ask } = theRoutes();
     const id = await madeDune(ask);

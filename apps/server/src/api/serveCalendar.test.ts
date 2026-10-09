@@ -58,6 +58,7 @@ const aFilmRequest = (change: Partial<MediaRequest>): MediaRequest => ({
   approval: 'approved',
   refusedBecause: null,
   requestedBy: { id: 'somebody-else', name: 'Sam' },
+  alsoAskedBy: [],
   seasons: null,
   followsNewSeasons: false,
   releaseTypes: null,

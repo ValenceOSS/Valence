@@ -23,6 +23,7 @@ describe('recordFromDraft', () => {
       approval: 'approved',
       seasons: [1],
       requestedByName: 'Someone',
+      alsoAskedBy: [],
       createdAt: '2026-09-19T00:00:00.000Z',
       tvdbId: null,
       handOff: null,

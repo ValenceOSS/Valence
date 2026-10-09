@@ -1,0 +1,1 @@
+ALTER TABLE `requests_media_request` ADD `also_asked_by` json DEFAULT ('[]') NOT NULL;

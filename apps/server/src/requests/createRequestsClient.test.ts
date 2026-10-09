@@ -938,6 +938,7 @@ describe('createRequestsClient with requests for films and series', () => {
     approval: 'approved' as const,
     refusedBecause: null,
     requestedBy: { id: 'someone', name: 'Someone' },
+    alsoAskedBy: [],
     seasons: null,
     followsNewSeasons: false,
     releaseTypes: null,

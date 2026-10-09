@@ -510,6 +510,7 @@ const ENGLISH = {
   'common.aSeries2': 'A series',
   'common.askedByName': 'Requested by {name}',
   'common.askedByYou': 'Requested by you',
+  'common.askedByYouAndNames': 'Requested by you and {names}',
   'common.askIfYouAreStillWatching': 'Ask if you’re still watching',
   'common.askingEveryIndexer': 'Searching all indexers',
   'common.askingTheCatalogue': 'Searching the catalogue',
@@ -834,6 +835,7 @@ const ENGLISH = {
   'common.itsOwnOrder': 'Custom order',
   'common.itWillNotBeFetchedAnd':
     'It won’t be downloaded, and anything already downloading is deleted. You can request it again at any time.',
+  'common.iWantThisToo': 'I want this too',
   'common.jellyseerr': 'Jellyseerr',
   'common.job': 'Job',
   'common.jobs': 'Jobs',
@@ -937,6 +939,8 @@ const ENGLISH = {
   'common.nameFromServer': '{name} from {server}',
   'common.nameRefusedTheUsernameOrPassword': '{name} rejected the username or password',
   'common.nameSettings': '{name} settings',
+  'common.namesWantItToo.one': '{names} wants it too',
+  'common.namesWantItToo.other': '{names} want it too',
   'common.nameTakesNZBsNotTorrents': '{name} accepts NZBs, not torrents',
   'common.nameTakesTorrentsNotNZBs': '{name} accepts torrents, not NZBs',
   'common.nameWillBeSignedOutAnd':
@@ -1049,6 +1053,8 @@ const ENGLISH = {
   'common.order': 'Order',
   'common.original': 'Original',
   'common.otherChoice': 'Other',
+  'common.othersStillWantIt.one': '{names} still wants it, so it stays requested for them.',
+  'common.othersStillWantIt.other': '{names} still want it, so it stays requested for them.',
   'common.outline': 'Outline',
   'common.overseerr': 'Overseerr',
   'common.page': 'Page',
@@ -2033,12 +2039,14 @@ const ENGLISH = {
     'Say what should happen after the download is stopped.',
   'error.requests.sayWhatToFollow': 'Say which episodes or albums to follow or stop following.',
   'error.requests.sayWhichItemItBecame': 'Say which library item it became.',
+  'error.requests.sayWhoIsAsking': 'Say who is asking.',
   'error.requests.sayWhyItWasRefusedOr': 'Give a reason for declining, or leave it empty.',
   'error.requests.thatIsNotAChangeTo': 'That isn’t a valid change to a request.',
   'error.requests.thatIsNotARequest': 'That isn’t a valid request.',
   'error.requests.thatIsNotWhatTheCatalogue': 'That doesn’t match the catalogue.',
   'error.requests.theCatalogueDoesNotKnowThat':
     'The catalogue doesn’t have that series, or can’t be reached.',
+  'error.requests.thisAccountMayNotRequestThat': 'This account isn’t allowed to request that.',
   'error.role.aRoleGrantingAdministratorCannotBe':
     'A role with administrator permission can’t be deleted. Change its permissions, or move its members to another role first.',
   'error.role.noSuchRole': 'No such role.',

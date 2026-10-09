@@ -130,6 +130,73 @@ describe('createRequestService', () => {
     expect(await service.list()).toHaveLength(1);
   });
 
+  it('keeps somebody else asking among those who asked, without approving it for everyone', async () => {
+    const { service } = aService();
+
+    await service.add(DUNE);
+
+    const { request, isNew } = await service.add({
+      ...DUNE,
+      requestedBy: { id: 'another', name: 'Another' },
+      isApproved: true,
+    });
+
+    expect(isNew).toBe(false);
+    expect(request.approval).toBe('awaiting');
+    expect(request.requestedBy).toEqual({ id: 'someone', name: 'Someone' });
+    expect(request.alsoAskedBy).toEqual([{ id: 'another', name: 'Another' }]);
+
+    const again = await service.add({ ...DUNE, requestedBy: { id: 'another', name: 'Another' } });
+
+    expect(again.request.alsoAskedBy).toHaveLength(1);
+  });
+
+  it('joins somebody to a request, once', async () => {
+    const { service } = aService();
+    const { request } = await service.add(DUNE);
+
+    await service.join(request.id, { id: 'another', name: 'Another' });
+    const joined = await service.join(request.id, { id: 'another', name: 'Another' });
+
+    expect(joined?.alsoAskedBy).toEqual([{ id: 'another', name: 'Another' }]);
+    expect(await service.join(request.id, { id: 'someone', name: 'Someone' })).toMatchObject({
+      alsoAskedBy: [{ id: 'another', name: 'Another' }],
+    });
+    expect(await service.join('nowhere', { id: 'another', name: 'Another' })).toBeNull();
+  });
+
+  it('takes one asker off a request, the next becoming the first where the first leaves', async () => {
+    const { service } = aService();
+    const { request } = await service.add(DUNE);
+
+    await service.join(request.id, { id: 'another', name: 'Another' });
+    await service.join(request.id, { id: 'third', name: 'Third' });
+
+    const left = await service.leave(request.id, 'someone');
+
+    expect(left?.requestedBy).toEqual({ id: 'another', name: 'Another' });
+    expect(left?.alsoAskedBy).toEqual([{ id: 'third', name: 'Third' }]);
+
+    const leftAgain = await service.leave(request.id, 'third');
+
+    expect(leftAgain?.requestedBy).toEqual({ id: 'another', name: 'Another' });
+    expect(leftAgain?.alsoAskedBy).toEqual([]);
+  });
+
+  it('leaves the last asker on, and nobody who did not ask', async () => {
+    const { service } = aService();
+    const { request } = await service.add(DUNE);
+
+    expect(await service.leave(request.id, 'someone')).toBeNull();
+
+    await service.join(request.id, { id: 'another', name: 'Another' });
+
+    expect(await service.leave(request.id, 'stranger')).toBeNull();
+    expect(await service.find(request.id)).toMatchObject({
+      alsoAskedBy: [{ id: 'another', name: 'Another' }],
+    });
+  });
+
   it('keeps the quality asked for, and changes it', async () => {
     const { service } = aService();
     const profileId = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';

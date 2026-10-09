@@ -41,6 +41,7 @@ const REQUEST = {
   approval: 'approved',
   refusedBecause: null,
   requestedBy: { id: 'someone', name: 'Someone' },
+  alsoAskedBy: [],
   seasons: null,
   followsNewSeasons: false,
   releaseTypes: null,

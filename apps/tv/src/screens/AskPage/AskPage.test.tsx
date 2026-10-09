@@ -3,7 +3,11 @@ import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
-import { askForMedia, removeMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
+import {
+  askForMedia,
+  joinMediaRequest,
+  removeMediaRequest,
+} from '@ValenceClient/requests/fetchMediaRequests';
 import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
 import { askLinkedServer } from '@ValenceClient/linking/askLinkedServer';
 import { linkingQueries } from '@ValenceClient/query/linkingQueries';
@@ -23,6 +27,7 @@ jest.mock('@ValenceClient/linking/askLinkedServer', () => ({
 jest.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
   ...jest.requireActual<object>('@ValenceClient/requests/fetchMediaRequests'),
   askForMedia: jest.fn(),
+  joinMediaRequest: jest.fn(),
   removeMediaRequest: jest.fn(),
 }));
 
@@ -119,6 +124,7 @@ beforeEach(() => {
   jest.mocked(removeMediaRequest).mockReset();
   jest.mocked(askForMedia).mockResolvedValue({ value: aMediaRequest(), refusal: null });
   jest.mocked(removeMediaRequest).mockResolvedValue(null);
+  jest.mocked(joinMediaRequest).mockReset().mockResolvedValue({ value: null, refusal: null });
   jest
     .mocked(askLinkedServer)
     .mockReset()
@@ -329,6 +335,66 @@ describe('AskPage', () => {
     await waitFor(() => {
       expect(removeMediaRequest).toHaveBeenCalledWith(REQUEST_ID, true);
     });
+  });
+
+  it('names who asked for somebody else’s request, and wants it too', async () => {
+    const cache = aCacheHolding({
+      title: aTitle({
+        standing: {
+          status: 'requested',
+          mediaId: null,
+          requestId: REQUEST_ID,
+          requestState: 'wanted',
+          askedBy: [{ id: 'priya', name: 'Priya' }],
+        },
+      }),
+    });
+
+    cache.setQueryData(requestsQueries.mediaRequests().queryKey, []);
+
+    const drawn = await drawAsk(cache);
+
+    expect(drawn.getByText('Requested by Priya')).toBeTruthy();
+    expect(drawn.queryByRole('button', { name: 'Cancel request' })).toBeNull();
+
+    await userEvent.press(drawn.getByRole('button', { name: 'I want this too' }));
+
+    expect(joinMediaRequest).toHaveBeenCalledWith(REQUEST_ID);
+  });
+
+  it('says cancelling leaves a request for whoever else wants it', async () => {
+    const cache = aCacheHolding({
+      title: aTitle({
+        standing: {
+          status: 'requested',
+          mediaId: null,
+          requestId: REQUEST_ID,
+          requestState: 'wanted',
+          askedBy: [
+            { id: 'me', name: 'Marques' },
+            { id: 'priya', name: 'Priya' },
+          ],
+        },
+      }),
+    });
+
+    cache.setQueryData(requestsQueries.mediaRequests().queryKey, [
+      aMediaRequest({
+        id: REQUEST_ID,
+        requestedBy: { id: 'me', name: 'Marques' },
+        alsoAskedBy: [{ id: 'priya', name: 'Priya' }],
+      }),
+    ]);
+
+    const drawn = await drawAsk(cache);
+
+    expect(drawn.getByText('Priya wants it too')).toBeTruthy();
+
+    const alert = jest.spyOn(Alert, 'alert');
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Cancel request' }));
+
+    expect(alert.mock.calls[0]?.[1]).toBe('Priya still wants it, so it stays requested for them.');
   });
 
   it('offers to watch a film a linked server has, or to request it here anyway', async () => {

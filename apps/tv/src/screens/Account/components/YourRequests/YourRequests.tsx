@@ -1,3 +1,4 @@
+import { isAskedBy } from '@ValenceContracts/functions/isAskedBy';
 import { useMemo } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
@@ -29,9 +30,7 @@ const YourRequests = ({ onOpen, onFocus }: YourRequestsProps) => {
   const mine = useMemo(
     () =>
       (requests.data ?? [])
-        .filter(
-          (request) => WATCHABLE_KINDS.has(request.kind) && request.requestedBy.id === me.data?.id,
-        )
+        .filter((request) => WATCHABLE_KINDS.has(request.kind) && isAskedBy(request, me.data?.id))
         .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
         .slice(0, AT_MOST),
     [requests.data, me.data?.id],
