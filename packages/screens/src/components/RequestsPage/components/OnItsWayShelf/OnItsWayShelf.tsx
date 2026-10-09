@@ -51,12 +51,7 @@ const OnItsWayShelf = ({ onAsk, onOpenAll }: OnItsWayShelfProps) => {
   }
 
   return (
-    <Rail
-      title={say('screens.requestsPage.onItsWayShelf.onItsWay')}
-      sizesCards
-      cards="wide"
-      onOpenTitle={onOpenAll}
-    >
+    <Rail title={say('common.requested')} sizesCards cards="wide" onOpenTitle={onOpenAll}>
       {coming.map((request, at) => {
         const backdropUrl = described[at]?.data?.backdropUrl ?? request.posterUrl;
         const logoUrl = described[at]?.data?.logoUrl ?? null;

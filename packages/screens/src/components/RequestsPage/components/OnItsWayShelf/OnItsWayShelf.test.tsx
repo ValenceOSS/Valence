@@ -65,7 +65,7 @@ describe('OnItsWayShelf', () => {
       setTimeout(resolve, 50);
     });
 
-    expect(screen.queryByText('On its way')).not.toBeInTheDocument();
+    expect(screen.queryByText('Requested')).not.toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

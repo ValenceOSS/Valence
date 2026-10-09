@@ -24133,17 +24133,12 @@
   {
     "handler": "screens.requestsPage.onItsWayShelf.askedByName",
     "text": "Asked by {name}",
-    "context": "The small label in the corner of a card on Discover's On its way shelf, beside the face of whoever requested it. {name} is their name."
-  },
-  {
-    "handler": "screens.requestsPage.onItsWayShelf.onItsWay",
-    "text": "On its way",
-    "context": "The heading of the shelf at the top of Discover showing what the person has requested that hasn't arrived yet."
+    "context": "The small label in the corner of a card on Discover's Requested shelf, beside the face of whoever requested it. {name} is their name."
   },
   {
     "handler": "screens.requestsPage.onItsWayShelf.statusPercent",
     "text": "{status} · {percent}%",
-    "context": "The words on the bar under a request on Discover's On its way shelf while it downloads. {status} is where it stands, such as Downloading; {percent} is how much has come."
+    "context": "The words on the bar under a request on Discover's Requested shelf while it downloads. {status} is where it stands, such as Downloading; {percent} is how much has come."
   },
   {
     "handler": "screens.requestsPage.requestsList.clearAFilterOrSearchFor",

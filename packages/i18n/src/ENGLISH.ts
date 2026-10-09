@@ -6066,7 +6066,6 @@ const ENGLISH = {
   'screens.requestsPage.nothingInTheCataloguesMatches':
     'Nothing in the catalogues matches “{query}”.',
   'screens.requestsPage.onItsWayShelf.askedByName': 'Asked by {name}',
-  'screens.requestsPage.onItsWayShelf.onItsWay': 'On its way',
   'screens.requestsPage.onItsWayShelf.statusPercent': '{status} · {percent}%',
   'screens.requestsPage.requestsList.clearAFilterOrSearchFor':
     'Clear a filter, or search for something else.',
