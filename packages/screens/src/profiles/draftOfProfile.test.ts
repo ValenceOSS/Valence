@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import { chooseDeviceNotices } from '@ValenceClient/notifications/deviceNotices';
 import { draftOfProfile } from './draftOfProfile';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
@@ -26,7 +27,14 @@ describe('draftOfProfile', () => {
       showsWhatIamWatching: true,
       discordPresence: DEFAULT_DISCORD_PRESENCE,
       prefersBestCopy: false,
+      showsDesktopNotices: false,
       photo: null,
     });
+  });
+
+  it('reads whether this computer shows notices from the computer, not the profile', () => {
+    chooseDeviceNotices(true);
+
+    expect(draftOfProfile(PROFILE).showsDesktopNotices).toBe(true);
   });
 });

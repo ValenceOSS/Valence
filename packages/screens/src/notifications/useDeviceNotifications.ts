@@ -1,6 +1,7 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { useEffect, useRef } from 'react';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
+import { noticeOnThisDevice } from '@ValenceClient/notifications/noticeOnThisDevice';
 import type { Notification } from '@ValenceClient/notifications/fetchNotifications';
 
 type DeviceNotifications = {
@@ -26,6 +27,9 @@ type DeviceNotifications = {
  * that first list, that gets shown. The first pass waits for the inbox to have arrived: before it
  * has, the list is empty rather than unknown, and remembering that empty list made everything
  * unread look new the moment the real one came, every time the window opened or reloaded.
+ *
+ * A notice goes up only where somebody has turned this device's notices on, in their profile
+ * settings. The badge is kept either way, since it asks nothing of anybody.
  *
  * @param presence - Whether the inbox has arrived yet, what is on the bell, how much of it is
  *   unread, and what pressing one does.
@@ -58,7 +62,7 @@ const useDeviceNotifications = ({
 
     for (const notification of notifications) {
       if (notification.readAt === null && !already.has(notification.id)) {
-        platformInUse().notifyLocally({
+        noticeOnThisDevice({
           title: sayAgain(notification.title),
           body: sayAgain(notification.body),
           onOpen: () => {

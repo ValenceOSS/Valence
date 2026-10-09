@@ -1,3 +1,4 @@
+import { chooseDeviceNotices } from '@ValenceClient/notifications/deviceNotices';
 import { saveProfile, uploadProfilePhoto } from '@ValenceClient/profiles/fetchProfiles';
 import { say } from '@ValenceI18n/say';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
@@ -32,7 +33,13 @@ const saveProfileDraft = async (
     draft.discordPresence,
   );
 
-  return saved ? null : say('common.thoseChangesWereNotSaved');
+  if (!saved) {
+    return say('common.thoseChangesWereNotSaved');
+  }
+
+  chooseDeviceNotices(draft.showsDesktopNotices);
+
+  return null;
 };
 
 export { saveProfileDraft };

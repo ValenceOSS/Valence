@@ -1,6 +1,7 @@
 import { act, cleanup, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { aFakeHeldFiles } from '@ValenceClient/testing/aFakeHeldFiles';
+import { chooseDeviceNotices } from '@ValenceClient/notifications/deviceNotices';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { renderHookInACache } from '@ValenceClient/testing/renderHookInACache';
@@ -149,7 +150,36 @@ describe('useFetchWhatThisDeviceAsked', () => {
     expect(files.asked).toEqual([]);
   });
 
-  it('says so once a file it was fetching has landed', async () => {
+  it('says so once a file it was fetching has landed, where notices are on', async () => {
+    const mine = aDownload();
+
+    fetchDownloads.mockResolvedValue([mine]);
+
+    const { files, notices } = aLaptop();
+
+    chooseDeviceNotices(true);
+
+    renderHookInACache(() => {
+      useFetchWhatThisDeviceAsked();
+    });
+
+    await waitFor(() => {
+      expect(files.asked).toHaveLength(1);
+    });
+
+    act(() => {
+      files.put([aFile(mine)]);
+    });
+    act(() => {
+      files.put([aFile(mine, { state: 'here', bytes: 100 })]);
+    });
+
+    expect(notices).toEqual([
+      { title: 'Arrival has finished downloading', body: 'It’s ready to watch offline.' },
+    ]);
+  });
+
+  it('says nothing when a file lands where notices are off', async () => {
     const mine = aDownload();
 
     fetchDownloads.mockResolvedValue([mine]);
@@ -171,8 +201,6 @@ describe('useFetchWhatThisDeviceAsked', () => {
       files.put([aFile(mine, { state: 'here', bytes: 100 })]);
     });
 
-    expect(notices).toEqual([
-      { title: 'Arrival has finished downloading', body: 'It’s ready to watch offline.' },
-    ]);
+    expect(notices).toEqual([]);
   });
 });

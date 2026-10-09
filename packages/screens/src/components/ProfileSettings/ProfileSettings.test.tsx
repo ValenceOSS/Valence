@@ -2,6 +2,7 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { chooseTheme, chosenTheme } from '@ValenceClient/shell/theme';
+import { areDeviceNoticesOn } from '@ValenceClient/notifications/deviceNotices';
 import { installATestClient } from '@ValenceScreens/testing/installATestClient';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { ProfileSettings } from './ProfileSettings';
@@ -30,6 +31,7 @@ const DRAFT: ProfileDraft = {
   showsWhatIamWatching: PROFILE.showsWhatIamWatching,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
+  showsDesktopNotices: false,
   photo: null,
 };
 
@@ -83,6 +85,31 @@ describe('ProfileSettings', () => {
     renderInAnAddress(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={vi.fn()} />);
 
     expect(screen.queryByText('Show what I’m playing on Discord')).not.toBeInTheDocument();
+  });
+
+  it('writes turning this computer’s notices on into the draft, in the desktop app', async () => {
+    const onDraft = vi.fn();
+
+    installATestClient({ thisClientKind: () => 'desktop' });
+
+    renderInAnAddress(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={onDraft} />);
+
+    const notices = screen.getByRole('switch', { name: 'Desktop notifications' });
+
+    expect(notices).not.toBeChecked();
+
+    await userEvent.click(notices);
+
+    expect(onDraft).toHaveBeenCalledWith({ showsDesktopNotices: true });
+    expect(areDeviceNoticesOn()).toBe(false);
+  });
+
+  it('offers no desktop notices in a browser, which has its own way to be told', () => {
+    installATestClient({ thisClientKind: () => 'browser' });
+
+    renderInAnAddress(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={vi.fn()} />);
+
+    expect(screen.queryByRole('switch', { name: 'Desktop notifications' })).not.toBeInTheDocument();
   });
 
   it('writes preferring the best copy into the draft', async () => {

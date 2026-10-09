@@ -11,6 +11,7 @@ import { THEME_CHOICES } from '@ValenceScreens/theme/themeChoices';
 import { useMotion } from '@ValenceClient/shell/useMotion';
 import { readMotion } from '@ValenceClient/shell/motion';
 import { MOTION_CHOICES } from '@ValenceScreens/motion/motionChoices';
+import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { Switch } from '@ValenceUI/Switch';
 import { PROFILE_COLOURS } from '@ValenceContracts/schemas/ViewerProfile';
 import { STILL_WATCHING_OFF } from '@ValenceContracts/schemas/StillWatching';
@@ -24,7 +25,9 @@ import { say } from '@ValenceI18n/say';
 
 /**
  * Everything about how somebody appears: their name, their picture, the colour behind it, and how
- * patient Valence is about asking whether they are still there.
+ * patient Valence is about asking whether they are still there. In the desktop app, whether this
+ * computer puts a notice up when something new reaches the inbox, which is off until turned on and,
+ * though it is kept on this computer rather than the account, waits for the same button.
  *
  * Nothing here writes. Every control changes a draft the dialog holds, and one button in the foot
  * commits the lot — because these are four facets of one profile rather than four settings, and
@@ -41,6 +44,7 @@ import { say } from '@ValenceI18n/say';
 const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
   const { theme, choose } = useTheme();
   const { motion, choose: chooseMovement } = useMotion();
+  const isOnTheDesktop = platformInUse().thisClientKind() === 'desktop';
 
   const [isEditing, setIsEditing] = useState(false);
   const isReady = profile !== null && draft !== null;
@@ -143,6 +147,23 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
           }}
         />
       </SettingRow>
+
+      {isOnTheDesktop ? (
+        <SettingRow
+          title={say('screens.accountArea.profileSettings.desktopNotifications')}
+          description={say('screens.accountArea.profileSettings.showsANoticeOnThisComputer')}
+        >
+          <Switch
+            label={say('screens.accountArea.profileSettings.desktopNotifications')}
+            isLabelHidden
+            isOn={draft?.showsDesktopNotices ?? false}
+            disabled={!isReady}
+            onToggle={() => {
+              onDraft({ showsDesktopNotices: !(draft?.showsDesktopNotices ?? false) });
+            }}
+          />
+        </SettingRow>
+      ) : null}
 
       <SettingRow
         title={say('common.colour')}

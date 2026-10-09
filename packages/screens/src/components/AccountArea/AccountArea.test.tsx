@@ -60,6 +60,7 @@ const drawOn = (
           showsWhatIamWatching: PROFILE.showsWhatIamWatching,
           discordPresence: DEFAULT_DISCORD_PRESENCE,
           prefersBestCopy: false,
+          showsDesktopNotices: false,
           photo: null,
         }}
         onDraft={vi.fn()}
