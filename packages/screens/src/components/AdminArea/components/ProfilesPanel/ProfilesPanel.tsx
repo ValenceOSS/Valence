@@ -22,6 +22,7 @@ import { Icon } from '@ValenceUI/Icon';
 import { Spinner } from '@ValenceUI/Spinner';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
+import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
 import { removeProfile } from '@ValenceClient/requests/fetchProfiles';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { ProfileEditor } from '@ValenceScreens/components/AdminArea/components/ProfileEditor/ProfileEditor';
@@ -55,9 +56,18 @@ const isProfileKind = (value: string): value is ProfileKind =>
 
 /**
  * The Profiles page: every quality profile, what each takes and how far it upgrades, the libraries
- * it is for, and changing or removing it — a profile opening as a page of its own. Search can be run against any of them.
+ * it is for, and changing or removing it — a profile opening as a page of its own. Search can be
+ * run against any of them. Profiles of a kind no library takes requests for say they aren't used.
  */
 const ProfilesPanel = () => {
+  const requestable = useRequestableKinds();
+  const isKnown = useQuery(requestsQueries.availability()).data !== undefined;
+  const isUnused = (kind: ProfileKind) =>
+    isKnown &&
+    (kind === 'video'
+      ? !requestable.has('film') && !requestable.has('series')
+      : !requestable.has('artist') && !requestable.has('album'));
+
   const cache = useQueryClient();
   const profiles = useQuery(requestsQueries.profiles());
   const libraries = useQuery(libraryQueries.all());
@@ -288,6 +298,14 @@ const ProfilesPanel = () => {
         ) : (
           KINDS.map((kind) => (
             <TabPanel key={kind.id} value={kind.id}>
+              {isUnused(kind.id) ? (
+                <p className="px-4 pt-3 text-sm text-text-muted">
+                  {kind.id === 'video'
+                    ? say('screens.adminArea.profilesPanel.noVideoLibraryTakesRequests')
+                    : say('screens.adminArea.profilesPanel.noMusicLibraryTakesRequests')}
+                </p>
+              ) : null}
+
               <DataTable
                 height="fills"
                 label={kind.label}

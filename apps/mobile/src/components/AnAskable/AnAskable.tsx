@@ -6,6 +6,7 @@ import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { askForMedia, removeMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
 import { seasonsWithItemsOf } from '@ValenceClient/requests/seasonsWithItemsOf';
+import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
 import { describeAskableFacts } from '@ValenceClient/requests/describeAskableFacts';
 import { describeStanding } from '@ValenceClient/requests/describeStanding';
 import { progressOfRequest } from '@ValenceClient/requests/progressOfRequest';
@@ -59,6 +60,7 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
   const requests = useQuery(requestsQueries.mediaRequests());
   const offered = useQuery(requestsQueries.profilesOnOffer(kind));
   const who = useQuery(sessionQueries.who());
+  const kinds = useRequestableKinds();
   const [seasons, setSeasons] = useState<number[] | null>(null);
   const [followsNew, setFollowsNew] = useState(true);
   const [adding, setAdding] = useState<number[] | null>([]);
@@ -83,7 +85,9 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
   const choices = offered.data?.forcedId === null ? offered.data.choices : [];
   const needsQuality = choices.length > 1 && quality === null;
 
+  const isUnrequestable = !kinds.has(kind);
   const isAddingSeasons =
+    !isUnrequestable &&
     kind === 'series' &&
     title?.standing.status === 'requested' &&
     request !== null &&
@@ -217,8 +221,13 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
         </Button>
       ) : null}
 
-      {title.standing.status === 'askable' ||
-      (title.standing.status === 'linked' && title.standing.requestId === null) ? (
+      {isUnrequestable && title.standing.status === 'askable' ? (
+        <Words tone="muted">{say('common.noLibraryTakesRequestsForThis')}</Words>
+      ) : null}
+
+      {!isUnrequestable &&
+      (title.standing.status === 'askable' ||
+        (title.standing.status === 'linked' && title.standing.requestId === null)) ? (
         <>
           {kind === 'series' ? (
             <TheSeasons

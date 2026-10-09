@@ -4102,6 +4102,11 @@
     "context": "The title of a nothing here, used in several places, among them the home in the library of the phone app and the browse area."
   },
   {
+    "handler": "common.noLibraryTakesRequestsForThis",
+    "text": "No library on this server takes requests for this.",
+    "context": "Shown on the page of a film, show, artist, album or book that can't be requested because no library of its kind has 'Takes requests' on, on the web and phone."
+  },
+  {
     "handler": "common.noLimit",
     "text": "No limit",
     "context": "Shown in an empty text field until something is typed, used in the indexer dialog in the admin area and in the profile editor in the admin area."
@@ -16130,6 +16135,11 @@
     "context": "The label of a tab row in the profile editor in the admin area."
   },
   {
+    "handler": "screens.adminArea.profilesPanel.noMusicLibraryTakesRequests",
+    "text": "No music library takes requests, so these profiles aren’t used. Turn on Takes requests for a library on the Libraries page.",
+    "context": "A note above the music quality profiles in Requests › Profiles when no music library has 'Takes requests' on."
+  },
+  {
     "handler": "screens.adminArea.profilesPanel.noProfilesForFilmsOrSeries",
     "text": "No profiles for films or series yet.",
     "context": "The empty in the profiles panel in the admin area."
@@ -16138,6 +16148,11 @@
     "handler": "screens.adminArea.profilesPanel.noProfilesForMusicYet",
     "text": "No profiles for music yet.",
     "context": "The empty in the profiles panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.profilesPanel.noVideoLibraryTakesRequests",
+    "text": "No films or shows library takes requests, so these profiles aren’t used. Turn on Takes requests for a library on the Libraries page.",
+    "context": "A note above the video quality profiles in Requests › Profiles when no films or shows library has 'Takes requests' on."
   },
   {
     "handler": "screens.adminArea.profilesPanel.removeThisProfile",
@@ -25246,6 +25261,16 @@
     "context": "The one language profile Valence offers Overseerr or Jellyseerr when it stands in for Sonarr (from `registerSonarrEmulation`)."
   },
   {
+    "handler": "server.arrEmulation.noFilmsLibraryTakesRequests",
+    "text": "No Valence films library takes requests, so films can’t be added",
+    "context": "A health warning Valence gives Overseerr or Jellyseerr when it answers them as Radarr and no films library has 'Takes requests' on."
+  },
+  {
+    "handler": "server.arrEmulation.noShowsLibraryTakesRequests",
+    "text": "No Valence shows library takes requests, so series can’t be added",
+    "context": "A health warning Valence gives Overseerr or Jellyseerr when it answers them as Sonarr and no shows library has 'Takes requests' on."
+  },
+  {
     "handler": "server.arrEmulation.thatIsNotWhatWasExpected",
     "text": "Valence couldn’t understand that request.",
     "context": "A message Valence answers Overseerr or Jellyseerr with when it stands in for Radarr or Sonarr (from `registerArrCommon`). Read by an administrator in their logs."
@@ -26699,6 +26724,11 @@
     "handler": "server.requests.addressAnsweredStatus",
     "text": "{address} returned {status}",
     "context": "Why the server could not use the requests service: it answered with an HTTP error. Shown in the admin area's requests pages and health checks. {address} is the requests service's address; {status} is the HTTP status number."
+  },
+  {
+    "handler": "server.requests.noLibraryToPutThisIn",
+    "text": "No library to put this in: the library it was for has been removed. Edit it to choose another.",
+    "context": "Why an open request can't go on, shown with it on the web, phone and TV and in the admin Catalogue, when the library it would be filed into no longer exists."
   },
   {
     "handler": "server.requests.nothingCouldBeDecided",

@@ -968,6 +968,7 @@ const ENGLISH = {
   'common.noFilmsYet': 'No films yet',
   'common.noIDidNotAskFor': 'No, this wasn’t me',
   'common.noLibrariesYet': 'No libraries yet',
+  'common.noLibraryTakesRequestsForThis': 'No library on this server takes requests for this.',
   'common.noLimit': 'No limit',
   'common.noLongerInTheLibrary': 'No longer in the library',
   'common.noLyricsFound': 'No lyrics found',
@@ -4044,9 +4045,13 @@ const ENGLISH = {
   'screens.adminArea.profileEditor.whichLibrariesOfferThisProfileWhen':
     'Which libraries offer this profile when someone makes a request. Select none to offer it for all of them.',
   'screens.adminArea.profileEditor.whichPartOfTheProfileTo': 'Which part of the profile to edit',
+  'screens.adminArea.profilesPanel.noMusicLibraryTakesRequests':
+    'No music library takes requests, so these profiles aren’t used. Turn on Takes requests for a library on the Libraries page.',
   'screens.adminArea.profilesPanel.noProfilesForFilmsOrSeries':
     'No profiles for films or series yet.',
   'screens.adminArea.profilesPanel.noProfilesForMusicYet': 'No profiles for music yet.',
+  'screens.adminArea.profilesPanel.noVideoLibraryTakesRequests':
+    'No films or shows library takes requests, so these profiles aren’t used. Turn on Takes requests for a library on the Libraries page.',
   'screens.adminArea.profilesPanel.removeThisProfile': 'Remove this profile?',
   'screens.adminArea.profilesPanel.searchesCanNoLongerBeJudged':
     'Search results can no longer be checked against it, and the libraries that used it will have no profile.',
@@ -6342,6 +6347,10 @@ const ENGLISH = {
   'server.arrEmulation.chooseTheAccountSeerrAsksAs':
     'First choose the Valence account that Overseerr and Jellyseerr make requests as.',
   'server.arrEmulation.english': 'English',
+  'server.arrEmulation.noFilmsLibraryTakesRequests':
+    'No Valence films library takes requests, so films can’t be added',
+  'server.arrEmulation.noShowsLibraryTakesRequests':
+    'No Valence shows library takes requests, so series can’t be added',
   'server.arrEmulation.thatIsNotWhatWasExpected': 'Valence couldn’t understand that request.',
   'server.arrEmulation.thatKeyIsNotTheOne':
     'That API key doesn’t match the one Valence created for Overseerr or Jellyseerr.',
@@ -6753,6 +6762,8 @@ const ENGLISH = {
   'server.reencode.refuseReencode.valenceCannotWriteToTheFolder':
     'Valence can’t write to this file’s folder. Media is often mounted read-only. Mount it read-write to re-encode.',
   'server.requests.addressAnsweredStatus': '{address} returned {status}',
+  'server.requests.noLibraryToPutThisIn':
+    'No library to put this in: the library it was for has been removed. Edit it to choose another.',
   'server.requests.nothingCouldBeDecided': 'None of the requests could be updated.',
   'server.requests.requestsClient.addressAnsweredButNotAsThe':
     '{address} responded, but it isn’t the requests service',

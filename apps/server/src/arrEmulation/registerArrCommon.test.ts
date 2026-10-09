@@ -53,8 +53,29 @@ describe('registerArrCommon', () => {
     expect((await app.request(`${BASE}/anything`)).status).toBe(401);
   });
 
-  it('is healthy', async () => {
+  it('is healthy where a library takes requests of its kind', async () => {
     expect(await (await build()('/health')).json()).toEqual([]);
+  });
+
+  it('says where no library takes requests of its kind, so nothing can be added', async () => {
+    const app = new OpenAPIHono();
+
+    registerArrCommon(
+      app,
+      '/arr/test',
+      'film',
+      { appName: 'Radarr', version: '3' },
+      { ...anArrEmulation().emulation, libraries: () => Promise.resolve([]) },
+    );
+
+    expect(
+      await (await app.request(`${BASE}/api/v3/health?apikey=${SEERR_KEY}`)).json(),
+    ).toMatchObject([
+      {
+        type: 'error',
+        message: 'No Valence films library takes requests, so films can’t be added',
+      },
+    ]);
   });
 
   it('gives the same tag the same id', async () => {

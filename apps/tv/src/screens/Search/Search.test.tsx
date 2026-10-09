@@ -95,6 +95,7 @@ const aCacheHolding = (asked: string, held: Held): QueryClient => {
 
   cache.setQueryData(requestsQueries.availability().queryKey, {
     isEnabled: held.mayRequest ?? false,
+    kinds: ['film', 'series', 'artist', 'album', 'book'],
   });
   cache.setQueryData(sessionQueries.permissions().queryKey, {
     permissions: ['requests.ask'],

@@ -353,14 +353,20 @@ describe('GET /api/requests/availability', () => {
     const response = await ask('/api/requests/availability');
 
     expect(response.status).toBe(200);
-    expect(RequestsAvailabilitySchema.parse(await response.json())).toEqual({ isEnabled: true });
+    expect(RequestsAvailabilitySchema.parse(await response.json())).toEqual({
+      isEnabled: true,
+      kinds: ['film'],
+    });
   });
 
   it('says requesting is off where the service was never set up', async () => {
     const { ask } = await build({ isOn: false });
     const response = await ask('/api/requests/availability');
 
-    expect(RequestsAvailabilitySchema.parse(await response.json())).toEqual({ isEnabled: false });
+    expect(RequestsAvailabilitySchema.parse(await response.json())).toEqual({
+      isEnabled: false,
+      kinds: [],
+    });
   });
 
   it('refuses somebody who is not signed in', async () => {
@@ -2299,6 +2305,7 @@ describe('requests for films and series, through the server', () => {
   it('shelves what a viewer may ask for, saying where each title stands', async () => {
     const films = await build({
       isOn: true,
+      libraries: [FILMS, SHOWS, MUSIC, BOOKS],
       granted: ['requests.ask'],
       service: aWillingKeeper,
       discovery: DISCOVERY,
@@ -2321,6 +2328,7 @@ describe('requests for films and series, through the server', () => {
 
     const music = await build({
       isOn: true,
+      libraries: [FILMS, SHOWS, MUSIC, BOOKS],
       granted: ['requests.askMusic'],
       service: aWillingKeeper,
       discovery: DISCOVERY,
@@ -2336,6 +2344,27 @@ describe('requests for films and series, through the server', () => {
     const nobody = await build({ isOn: true, service: aWillingKeeper, discovery: DISCOVERY });
 
     expect((await nobody.ask('/api/requests/discover')).status).toBe(403);
+  });
+
+  it('shelves, browses and finds nothing of a kind no library takes requests for', async () => {
+    const { ask } = await build({
+      isOn: true,
+      libraries: [{ ...FILMS, takesRequests: false }, MUSIC],
+      granted: ['requests.ask', 'requests.askMusic'],
+      service: aWillingKeeper,
+      discovery: DISCOVERY,
+    });
+
+    expect(await (await ask('/api/requests/discover')).json()).toMatchObject({
+      shelves: [{ id: 'popular-albums' }],
+      studios: [],
+    });
+    expect(
+      await (await ask('/api/requests/catalogue/browse?kind=film&list=trending&page=1')).json(),
+    ).toEqual({ titles: [], page: 1, hasMore: false });
+    expect(await (await ask('/api/requests/catalogue/search?query=dune&kind=film')).json()).toEqual(
+      [],
+    );
   });
 
   it('browses a whole list a page at a time, saying whether there is more', async () => {
@@ -2399,6 +2428,7 @@ describe('requests for films and series, through the server', () => {
     );
     const { ask } = await build({
       isOn: true,
+      libraries: [FILMS, SHOWS, MUSIC, BOOKS],
       granted: ['requests.ask'],
       service: aWillingKeeper,
       discovery: { ...DISCOVERY, browse },
@@ -2412,6 +2442,7 @@ describe('requests for films and series, through the server', () => {
   it('refuses a genre that is not an id, and a rating past the top of the scale', async () => {
     const { ask } = await build({
       isOn: true,
+      libraries: [FILMS, SHOWS, MUSIC, BOOKS],
       granted: ['requests.ask'],
       service: aWillingKeeper,
       discovery: DISCOVERY,
@@ -2428,6 +2459,7 @@ describe('requests for films and series, through the server', () => {
   it('lists the genres a list can be narrowed to, for films and for series', async () => {
     const { ask } = await build({
       isOn: true,
+      libraries: [FILMS, SHOWS, MUSIC, BOOKS],
       granted: ['requests.ask'],
       service: aWillingKeeper,
       discovery: DISCOVERY,
@@ -2565,6 +2597,7 @@ describe('requests for films and series, through the server', () => {
     it('shelves books for anybody who may ask for films, and for nobody who may not', async () => {
       const viewer = await build({
         isOn: true,
+        libraries: [FILMS, SHOWS, MUSIC, BOOKS],
         granted: ['requests.ask'],
         service: aWillingKeeper,
         discovery: WITH_BOOKS,
@@ -2578,6 +2611,7 @@ describe('requests for films and series, through the server', () => {
 
       const listener = await build({
         isOn: true,
+        libraries: [FILMS, SHOWS, MUSIC, BOOKS],
         granted: ['requests.askMusic'],
         service: aWillingKeeper,
         discovery: WITH_BOOKS,
@@ -2593,6 +2627,7 @@ describe('requests for films and series, through the server', () => {
     it('searches Open Library for a book, each saying where it stands', async () => {
       const { ask } = await build({
         isOn: true,
+        libraries: [FILMS, SHOWS, MUSIC, BOOKS],
         granted: ['requests.ask'],
         service: aWillingKeeper,
         discovery: WITH_BOOKS,
@@ -2614,6 +2649,7 @@ describe('requests for films and series, through the server', () => {
     it('describes a book with its authors and subjects', async () => {
       const { ask } = await build({
         isOn: true,
+        libraries: [FILMS, SHOWS, MUSIC, BOOKS],
         granted: ['requests.ask'],
         service: aWillingKeeper,
         discovery: WITH_BOOKS,

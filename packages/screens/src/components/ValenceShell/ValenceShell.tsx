@@ -65,6 +65,7 @@ import { libraryChoicesFor } from '@ValenceScreens/library/libraryChoicesFor';
 import { requestsChoicesFor } from '@ValenceScreens/requests/requestsChoicesFor';
 import { useStockedKinds } from '@ValenceClient/library/useStockedKinds';
 import { GetTheDesktopApp } from '@ValenceScreens/components/GetTheDesktopApp/GetTheDesktopApp';
+import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
 
 /**
  * The chrome every section sits inside: the dock, the bell, the mood behind it, and the dialogs that
@@ -173,12 +174,17 @@ const ValenceShell = () => {
     [libraries.data, faces.data, place.library, go],
   );
 
+  const requestableKinds = useRequestableKinds();
   const requestsChoices = useMemo(
     () =>
-      requestsChoicesFor(place.requestsView, (requestsView) => {
-        go({ section: 'requests', requestsView });
-      }),
-    [place.requestsView, go],
+      requestsChoicesFor(
+        place.requestsView,
+        (requestsView) => {
+          go({ section: 'requests', requestsView });
+        },
+        requestableKinds,
+      ),
+    [place.requestsView, go, requestableKinds],
   );
 
   const stock = useStockedKinds();

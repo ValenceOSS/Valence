@@ -58,11 +58,13 @@ const answering = ({
   requests = [],
   offered = { choices: [], forcedId: null },
   faces = [],
+  kinds = ['film', 'series', 'artist', 'album', 'book'],
 }: {
   standing?: CatalogueStanding;
   requests?: MediaRequest[];
   offered?: ProfilesOnOffer;
   faces?: LinkedServerFace[];
+  kinds?: string[];
 }) => {
   globalThis.fetch = jest.fn((input: RequestInfo | URL) =>
     Promise.resolve(
@@ -72,14 +74,16 @@ const answering = ({
           ? Response.json(offered)
           : theAddressOf(input).endsWith('/api/requests/media')
             ? Response.json(requests)
-            : theAddressOf(input).endsWith('/seasons')
-              ? Response.json([
-                  { season: 1, episodeCount: 9, firstAired: '2022-02-18', standing: 'requested' },
-                  { season: 2, episodeCount: 10, firstAired: '2025-01-17', standing: 'askable' },
-                ])
-              : theAddressOf(input).endsWith('/api/linked-servers/faces')
-                ? Response.json({ servers: faces })
-                : Response.json([]),
+            : theAddressOf(input).endsWith('/api/requests/availability')
+              ? Response.json({ isEnabled: true, kinds })
+              : theAddressOf(input).endsWith('/seasons')
+                ? Response.json([
+                    { season: 1, episodeCount: 9, firstAired: '2022-02-18', standing: 'requested' },
+                    { season: 2, episodeCount: 10, firstAired: '2025-01-17', standing: 'askable' },
+                  ])
+                : theAddressOf(input).endsWith('/api/linked-servers/faces')
+                  ? Response.json({ servers: faces })
+                  : Response.json([]),
     ),
   );
 };
@@ -201,6 +205,15 @@ describe('AnAskable', () => {
     buttons.find((button) => button.text === 'Cancel request')?.onPress?.();
 
     expect(removeMediaRequest).toHaveBeenCalledWith(REQUEST_ID, true);
+  });
+
+  it('offers no request where no library takes films, and says so', async () => {
+    answering({ kinds: ['series'] });
+
+    const drawn = await drawIt();
+
+    expect(await drawn.findByText(/No library on this server takes requests/)).toBeTruthy();
+    expect(drawn.queryByRole('button', { name: 'Request' })).toBeNull();
   });
 
   it('adds seasons to a programme already asked for', async () => {

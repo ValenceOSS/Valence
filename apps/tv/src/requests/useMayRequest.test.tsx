@@ -3,7 +3,9 @@ import { renderHook, waitFor } from '@testing-library/react-native';
 import { useMayRequest } from '@ValenceTv/requests/useMayRequest';
 import type { ReactNode } from 'react';
 
-const mockAvailability = jest.fn(() => Promise.resolve({ isEnabled: true }));
+const mockAvailability = jest.fn(() =>
+  Promise.resolve({ isEnabled: true, kinds: ['film', 'series', 'artist', 'album', 'book'] }),
+);
 
 const mockHeld = new Set<string>();
 
@@ -60,7 +62,10 @@ describe('useMayRequest', () => {
 
   it('does not offer asking where requests are switched off', async () => {
     mockHeld.add('requests.ask');
-    mockAvailability.mockResolvedValueOnce({ isEnabled: false });
+    mockAvailability.mockResolvedValueOnce({
+      isEnabled: false,
+      kinds: ['film', 'series', 'artist', 'album', 'book'],
+    });
 
     const { result } = await renderHook(() => useMayRequest(), { wrapper: aCache() });
 

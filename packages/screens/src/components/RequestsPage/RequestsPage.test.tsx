@@ -8,6 +8,13 @@ const drawn = vi.hoisted((): { browsing: CatalogueGridProps['browsing'] | null }
   browsing: null,
 }));
 
+const requestable = vi.hoisted((): { kinds: string[] } => ({ kinds: [] }));
+
+vi.mock('@ValenceClient/requests/fetchRequests', () => ({
+  fetchRequestsAvailability: () => Promise.resolve({ isEnabled: true, kinds: requestable.kinds }),
+  fetchRequestsOverview: vi.fn(),
+}));
+
 vi.mock('@ValenceClient/requests/fetchAskable', () => ({
   fetchDiscover: () =>
     Promise.resolve({
@@ -36,6 +43,7 @@ vi.mock('./components/RequestsList/RequestsList', () => ({
 }));
 
 beforeEach(() => {
+  requestable.kinds = ['film', 'series', 'artist', 'album', 'book'];
   drawn.browsing = null;
   window.history.replaceState(null, '', '/requests');
 });
@@ -46,6 +54,15 @@ describe('RequestsPage', () => {
 
     expect(await screen.findByRole('button', { name: 'Walt Disney Pictures' })).toBeInTheDocument();
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+  });
+
+  it('shows Discover in place of a view of a kind no library takes requests for', async () => {
+    requestable.kinds = ['film'];
+    window.history.replaceState(null, '', '/requests?view=music');
+
+    renderInAShell(<RequestsPage />);
+
+    expect(await screen.findByRole('button', { name: 'Walt Disney Pictures' })).toBeInTheDocument();
   });
 
   it('shows the whole list the address names', async () => {
