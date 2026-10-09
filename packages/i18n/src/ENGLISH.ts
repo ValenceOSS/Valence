@@ -3016,6 +3016,14 @@ const ENGLISH = {
   'screens.adminArea.arrAppsPanel.bringInASetupDetail':
     'Import the download clients, indexers, quality profiles and pending requests from Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr. Nothing in those apps is changed.',
   'screens.adminArea.arrAppsPanel.connectedApps': 'Connected apps',
+  'screens.adminArea.arrAppsPanel.connectedAppsControl.connectedAppsSettingSaved':
+    'Connected apps setting saved.',
+  'screens.adminArea.arrAppsPanel.connectedAppsControl.controlConnectedAppsFromValence':
+    'Control connected apps from Valence',
+  'screens.adminArea.arrAppsPanel.connectedAppsControl.letsYouSearchAConnectedApps':
+    'Lets you search a connected app’s releases and choose which one it fetches. When off, Sonarr, Radarr and Lidarr search and pick on their own.',
+  'screens.adminArea.arrAppsPanel.connectedAppsControl.theConnectedAppsSettingCouldNot':
+    'Couldn’t save the connected apps setting.',
   'screens.adminArea.arrAppsPanel.disconnect': 'Disconnect',
   'screens.adminArea.arrAppsPanel.disconnectedName': 'Disconnected {name}.',
   'screens.adminArea.arrAppsPanel.disconnectName': 'Disconnect {name}?',
@@ -4337,9 +4345,6 @@ const ENGLISH = {
   'screens.adminArea.settingsPanel.catalogueKey': 'Catalogue key',
   'screens.adminArea.settingsPanel.catalogueKeySaved': 'Catalogue key saved.',
   'screens.adminArea.settingsPanel.certificationRegionSaved': 'Certification region saved.',
-  'screens.adminArea.settingsPanel.connectedAppsSettingSaved': 'Connected apps setting saved.',
-  'screens.adminArea.settingsPanel.controlConnectedAppsFromValence':
-    'Control connected apps from Valence',
   'screens.adminArea.settingsPanel.country': 'Country',
   'screens.adminArea.settingsPanel.drawnBehindTheFacesWithThe':
     'Shown behind the profiles on the sign-in screen, tinted with the colour of the selected profile. It’s only visible while Show profiles on sign-in is on. JPEG, PNG, WebP, AVIF or GIF, up to 16 MB.',
@@ -4362,8 +4367,6 @@ const ENGLISH = {
   'screens.adminArea.settingsPanel.howRoundTheCornersOfEverything':
     'How rounded corners are throughout Valence, for everyone on this server. Sharp gives square corners; round softens them.',
   'screens.adminArea.settingsPanel.keptFor': 'Keep for',
-  'screens.adminArea.settingsPanel.letsYouPickAReleaseFor':
-    'Lets you search a connected app’s releases and choose which one it fetches. When off, Sonarr, Radarr and Lidarr search and pick on their own.',
   'screens.adminArea.settingsPanel.looksForWhatAMusicLibrarys':
     'Fills in what a music library’s files are missing: album covers from the Cover Art Archive, artist photos and music videos from TheAudioDB, and lyrics from LRCLIB. Each album, artist and song is looked up once, on the next scan, and nothing already in a file is replaced. Like trailers, it connects to services outside this server, so it’s off by default.',
   'screens.adminArea.settingsPanel.low': 'Low',
@@ -4408,8 +4411,6 @@ const ENGLISH = {
   'screens.adminArea.settingsPanel.theCatalogueKeyCouldNotBe': 'Couldn’t save the catalogue key.',
   'screens.adminArea.settingsPanel.theCertificationRegionCouldNotBe':
     'Couldn’t save the certification region.',
-  'screens.adminArea.settingsPanel.theConnectedAppsSettingCouldNot':
-    'Couldn’t save the connected apps setting.',
   'screens.adminArea.settingsPanel.theDesktopApp': 'Desktop app',
   'screens.adminArea.settingsPanel.theMusicDetailsSettingCouldNot':
     'Couldn’t save the music metadata setting.',
