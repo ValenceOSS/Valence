@@ -16,6 +16,7 @@ import {
   joinMediaRequestRoute,
   decideProfileAskRoute,
   handedToRoute,
+  handOffDownloadsRoute,
   adminCatalogueRoute,
   adminTitleFilesRoute,
   stopRequestDownloadRoute,
@@ -83,6 +84,7 @@ import {
   tryIndexerRoute,
 } from '@ValenceServer/routes/RequestsRoute';
 import { catalogueEntriesOf } from '@ValenceServer/requests/titles/catalogueEntriesOf';
+import type { HandOffDownload } from '@ValenceContracts/schemas/ArrApp';
 import type { RequestsAnswer, RequestsClient } from '@ValenceServer/requests/createRequestsClient';
 import { ReleaseDownloadRequestSchema } from '@ValenceContracts/schemas/Indexer';
 import { readSessionOnce } from '@ValenceServer/auth/readSessionOnce';
@@ -687,6 +689,48 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
    * @param id - The request.
    * @returns What the service answered.
    */
+  /**
+   * Whether a request is worked through the connected app it was handed to — its releases,
+   * downloads, blocklist and following — because the admin chose to control connected apps from
+   * here.
+   *
+   * @param client - The requests service.
+   * @param id - The request.
+   * @returns Whether to go through the app.
+   */
+  const isThroughItsApp = async (client: RequestsClient, id: string): Promise<boolean> => {
+    if (!(await settings.read()).controlsConnectedApps) {
+      return false;
+    }
+
+    const found = await client.findRequest(id);
+
+    return found.kind === 'answered' && found.value.isHandedOff === true;
+  };
+
+  /**
+   * Lets the connected app a request was handed to stop monitoring it, where Valence controls the
+   * app, before the request goes. An app already gone lets it go regardless.
+   *
+   * @param client - The requests service.
+   * @param id - The request.
+   * @returns Why it could not, or null where it may go.
+   */
+  const letGoInItsApp = async (
+    client: RequestsClient,
+    id: string,
+  ): Promise<RequestsAnswer<null> | null> => {
+    if (!(await isThroughItsApp(client, id))) {
+      return null;
+    }
+
+    const released = await client.handOffRelease(id);
+
+    return released.kind === 'answered' || (released.kind === 'refused' && released.status === 404)
+      ? null
+      : released;
+  };
+
   const removeWithFiles = async (
     client: RequestsClient,
     id: string,
@@ -722,6 +766,12 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       headers,
       async (client) => {
         if (isManager) {
+          const kept = await letGoInItsApp(client, id);
+
+          if (kept !== null) {
+            return kept;
+          }
+
           return isDeletingFiles ? removeWithFiles(client, id) : client.removeRequest(id, true);
         }
 
@@ -750,7 +800,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
         }
 
         if (found.value.alsoAskedBy.length === 0) {
-          return client.removeRequest(id, true);
+          return (await letGoInItsApp(client, id)) ?? client.removeRequest(id, true);
         }
 
         const left = await client.leaveRequest(id, userId);
@@ -804,7 +854,10 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     const { id, downloadId } = context.req.valid('param');
     const answer = await throughRequests(
       context.req.raw.headers,
-      (client) => client.stopDownload(id, downloadId, context.req.valid('json')),
+      async (client) =>
+        (await isThroughItsApp(client, id))
+          ? client.handOffStop(id, downloadId, context.req.valid('json'))
+          : client.stopDownload(id, downloadId, context.req.valid('json')),
       ['requests.manage'],
     );
 
@@ -820,7 +873,13 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
   app.openapi(followRequestItemsRoute, async (context) => {
     const answer = await throughRequests(
       context.req.raw.headers,
-      (client) => client.followItems(context.req.valid('param').id, context.req.valid('json')),
+      async (client) => {
+        const { id } = context.req.valid('param');
+
+        return (await isThroughItsApp(client, id))
+          ? client.handOffFollow(id, context.req.valid('json'))
+          : client.followItems(id, context.req.valid('json'));
+      },
       ['requests.manage'],
     );
 
@@ -837,6 +896,22 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     const answer = await throughRequests(
       context.req.raw.headers,
       (client) => client.handedTo(context.req.valid('param').id),
+      ['requests.manage'],
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
+  app.openapi(handOffDownloadsRoute, async (context) => {
+    const { id } = context.req.valid('param');
+    const answer = await throughRequests(
+      context.req.raw.headers,
+      async (client): Promise<RequestsAnswer<HandOffDownload[]>> =>
+        (await isThroughItsApp(client, id))
+          ? client.handOffDownloads(id)
+          : { kind: 'answered', value: [] },
       ['requests.manage'],
     );
 
@@ -953,7 +1028,13 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
   app.openapi(mediaRequestBlocklistRoute, async (context) => {
     const answer = await throughRequests(
       context.req.raw.headers,
-      (client) => client.requestBlocklist(context.req.valid('param').id),
+      async (client) => {
+        const { id } = context.req.valid('param');
+
+        return (await isThroughItsApp(client, id))
+          ? client.handOffBlocklist(id)
+          : client.requestBlocklist(id);
+      },
       APPROVERS,
     );
 
@@ -966,7 +1047,10 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     const { id, blockId } = context.req.valid('param');
     const answer = await throughRequests(
       context.req.raw.headers,
-      (client) => client.liftBlock(id, blockId),
+      async (client) =>
+        (await isThroughItsApp(client, id))
+          ? client.handOffLift(id, blockId)
+          : client.liftBlock(id, blockId),
       APPROVERS,
     );
 
@@ -1019,24 +1103,6 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return context.json({ decided, refused }, 200);
   });
-
-  /**
-   * Whether a request's releases are the connected app's to list and fetch: it was handed to one,
-   * and the admin chose to control connected apps from here.
-   *
-   * @param client - The requests service.
-   * @param id - The request.
-   * @returns Whether to go through the app.
-   */
-  const isThroughItsApp = async (client: RequestsClient, id: string): Promise<boolean> => {
-    if (!(await settings.read()).controlsConnectedApps) {
-      return false;
-    }
-
-    const found = await client.findRequest(id);
-
-    return found.kind === 'answered' && found.value.isHandedOff === true;
-  };
 
   app.openapi(mediaRequestReleasesRoute, async (context) => {
     const { id } = context.req.valid('param');

@@ -5,7 +5,10 @@ type RequestDownload = {
   downloadId: string;
   releaseTitle: string;
   items: RequestItem[];
-  queued: QueuedDownload | null;
+  queued: Pick<
+    QueuedDownload,
+    'progress' | 'secondsLeft' | 'sizeBytes' | 'clientName' | 'indexerName' | 'sentAt'
+  > | null;
 };
 
 /**

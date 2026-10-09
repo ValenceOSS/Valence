@@ -2374,7 +2374,12 @@ const ENGLISH = {
     '{name} returned HTTP {status}: {complaint}',
   'requests.arrApps.arrCaller.nameRefusedItsApiKey': '{name} rejected its API key',
   'requests.arrApps.handOff.askedNameToFetchTitle': 'Asked {name} to fetch {title}.',
+  'requests.arrApps.handOff.askedNameToMonitorIt': 'Asked {name} to monitor it.',
   'requests.arrApps.handOff.askedNameToSearchAgain': 'Asked {name} to search for it again.',
+  'requests.arrApps.handOff.askedNameToStopMonitoringIt': 'Asked {name} to stop monitoring it.',
+  'requests.arrApps.handOff.askedNameToStopTitle': 'Asked {name} to stop {title}.',
+  'requests.arrApps.handOff.askedNameToTryTitleAgain': 'Asked {name} to try {title} again.',
+  'requests.arrApps.handOff.blockedInName': 'Blocked in {name}.',
   'requests.arrApps.handOff.handedToName': 'Sent to {name}.',
   'requests.arrApps.handOff.itHasNoMusicBrainzIdToHandOver':
     'It has no MusicBrainz ID to send to Lidarr.',
@@ -2389,8 +2394,12 @@ const ENGLISH = {
   'requests.arrApps.handOff.nameSaidProblem': '{name} couldn’t add it: {problem}',
   'requests.arrApps.handOff.sonarrCannotFindItsTvdbId':
     'Sonarr can’t find it by its TVDB or TMDB ID.',
+  'requests.arrApps.handOff.thatIsNotOneOfItsDownloads':
+    'That isn’t one of the downloads its connected app has.',
   'requests.arrApps.handOff.thatIsNotOneOfItsReleases':
     'That isn’t one of the releases its connected app listed.',
+  'requests.arrApps.handOff.thatIsNotOnItsBlocklist':
+    'That isn’t on its connected app’s blocklist.',
   'requests.arrApps.handOff.theAppItWasHandedToIsGone':
     'The connected app it was sent to has been removed.',
   'requests.arrImport.aLeastFormatScoreWasLeftOut':
@@ -4536,6 +4545,8 @@ const ENGLISH = {
     'Delete what it downloaded so far',
   'screens.adminArea.titlePage.stopDownloadDialog.findADifferentRelease':
     'Find a different release',
+  'screens.adminArea.titlePage.stopDownloadDialog.nameDeletesWhatItDownloaded':
+    '{name} deletes what it downloaded so far.',
   'screens.adminArea.titlePage.stopDownloadDialog.pickOneMyself': 'Pick one myself',
   'screens.adminArea.titlePage.stopDownloadDialog.stopGettingThis': 'Stop getting this',
   'screens.adminArea.titlePage.stopDownloadDialog.stopIt': 'Stop it',

@@ -59,7 +59,7 @@ describe('downloadsOfRequest', () => {
       ['One', 1],
       ['Pack', 2],
     ]);
-    expect(rows[1]?.queued?.id).toBe(PACK);
+    expect(rows[1]?.queued?.sentAt).toBe('2026-01-02T00:00:00.000Z');
   });
 
   it('keeps a download the client no longer lists, without its progress', () => {

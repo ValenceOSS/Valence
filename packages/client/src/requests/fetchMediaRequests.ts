@@ -1,5 +1,5 @@
-import { HandedToSchema } from '@ValenceContracts/schemas/ArrApp';
-import type { HandedTo } from '@ValenceContracts/schemas/ArrApp';
+import { HandedToSchema, HandOffDownloadSchema } from '@ValenceContracts/schemas/ArrApp';
+import type { HandedTo, HandOffDownload } from '@ValenceContracts/schemas/ArrApp';
 import { z } from 'zod';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { sendToRequests } from '@ValenceClient/requests/sendToRequests';
@@ -153,6 +153,16 @@ const decideMediaRequests = (
     { ids: [...ids], decision, reason },
     async (response) => MediaRequestDecidedSchema.parse(await response.json()),
   );
+
+/**
+ * Reads what the connected app a request was handed to is downloading for it, where Valence
+ * controls the app.
+ *
+ * @param id - Which request.
+ * @returns Its downloads in the app.
+ */
+const fetchHandOffDownloads = (id: string): Promise<HandOffDownload[]> =>
+  readFromServer(`${REQUESTS}/${id}/hand-off/downloads`, z.array(HandOffDownloadSchema));
 
 /**
  * Reads the releases a request will not try again, and why each was given up on.
@@ -343,6 +353,7 @@ export {
   fetchMediaRequestLog,
   fetchMediaRequestReleases,
   fetchHandedTo,
+  fetchHandOffDownloads,
   fetchMediaRequests,
   fetchSeriesSeasons,
   findReleasesFor,

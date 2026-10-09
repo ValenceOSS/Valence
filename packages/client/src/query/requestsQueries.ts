@@ -20,6 +20,7 @@ import { fetchTitleCatalogue, fetchTitleFiles } from '@ValenceClient/requests/fe
 import {
   fetchRequestBlocklist,
   fetchHandedTo,
+  fetchHandOffDownloads,
   fetchMediaRequestLog,
   fetchMediaRequestReleases,
   fetchMediaRequests,
@@ -301,6 +302,20 @@ const handedTo = (id: string | null) =>
   });
 
 /**
+ * What the connected app a request was handed to is downloading for it, read when its page is
+ * open and only where Valence controls the app.
+ *
+ * @param id - Which request, or nothing where it is not worked through its app.
+ * @returns The query.
+ */
+const handOffDownloads = (id: string | null) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'media', id, 'hand-off', 'downloads'],
+    queryFn: () => fetchHandOffDownloads(id ?? ''),
+    enabled: id !== null,
+  });
+
+/**
  * The seasons a series has, which only change when a new one is announced, so they are kept for
  * an hour.
  *
@@ -514,6 +529,7 @@ const requestsQueries = {
   mediaRequestLog,
   requestBlocklist,
   handedTo,
+  handOffDownloads,
   seriesSeasons,
   discover,
   catalogueBrowse,

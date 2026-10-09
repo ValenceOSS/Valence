@@ -34,11 +34,19 @@ const CHOICES: readonly { id: DownloadStopNext; title: string; detail: string }[
  * which starts ticked, since a release being given up on is rarely worth keeping half of.
  *
  * @param download - The download, or nothing while the dialog is closed.
+ * @param appName - The connected app the download is in, which always deletes what it downloaded,
+ *   or nothing for one of Valence's own.
  * @param isStopping - Whether it is being stopped.
  * @param onClose - Told when it was dismissed.
  * @param onStop - Told what comes next, and whether to delete what it downloaded.
  */
-const StopDownloadDialog = ({ download, isStopping, onClose, onStop }: StopDownloadDialogProps) => {
+const StopDownloadDialog = ({
+  download,
+  appName = null,
+  isStopping,
+  onClose,
+  onStop,
+}: StopDownloadDialogProps) => {
   const [next, setNext] = useState<DownloadStopNext>('another');
   const [isDeleting, setIsDeleting] = useState(true);
   const [shownFor, setShownFor] = useState(download);
@@ -79,11 +87,21 @@ const StopDownloadDialog = ({ download, isStopping, onClose, onStop }: StopDownl
           }}
         />
 
-        <Checkbox
-          label={say('screens.adminArea.titlePage.stopDownloadDialog.deleteWhatItDownloadedSoFar')}
-          checked={isDeleting}
-          onCheckedChange={setIsDeleting}
-        />
+        {appName === null ? (
+          <Checkbox
+            label={say(
+              'screens.adminArea.titlePage.stopDownloadDialog.deleteWhatItDownloadedSoFar',
+            )}
+            checked={isDeleting}
+            onCheckedChange={setIsDeleting}
+          />
+        ) : (
+          <p className="text-sm text-text-muted">
+            {say('screens.adminArea.titlePage.stopDownloadDialog.nameDeletesWhatItDownloaded', {
+              name: appName,
+            })}
+          </p>
+        )}
       </DialogContent>
 
       <DialogFooter

@@ -2148,6 +2148,81 @@ describe('requests for films and series, through the server', () => {
     expect(asked()).not.toContain(`POST http://requests:8421/api/requests/${REQUEST.id}/pick`);
   });
 
+  it('works a handed-off request’s downloads, blocklist and following through its app once the admin says so, letting the app go before removing it', async () => {
+    const handedOff = (url: string, init: { method?: string; body?: string }): Response => {
+      const method = init.method ?? 'GET';
+
+      if (method === 'GET' && url.endsWith(`/api/requests/${REQUEST.id}`)) {
+        sent.push({ method, url, body: init.body });
+
+        return Response.json({ ...REQUEST, isHandedOff: true });
+      }
+
+      if (url.endsWith('/hand-off/downloads') || url.endsWith('/hand-off/blocklist')) {
+        sent.push({ method, url, body: init.body });
+
+        return Response.json([]);
+      }
+
+      if (url.endsWith('/hand-off/release')) {
+        sent.push({ method, url, body: init.body });
+
+        return new Response(null, { status: 204 });
+      }
+
+      return aWillingKeeper(url, init);
+    };
+    const { ask } = await build({ isOn: true, isAdministrator: true, service: handedOff });
+    const media = `/api/requests/media/${REQUEST.id}`;
+    const handOff = `http://requests:8421/api/requests/${REQUEST.id}/hand-off`;
+    const asked = () => sent.map(({ method, url }) => `${method} ${url}`);
+
+    sent.length = 0;
+
+    expect(await (await ask(`${media}/hand-off/downloads`)).json()).toEqual([]);
+    expect(asked().filter((line) => line.includes('/hand-off/'))).toEqual([]);
+
+    await ask('/api/admin/settings', 'PATCH', { controlsConnectedApps: true });
+    sent.length = 0;
+
+    expect((await ask(`${media}/hand-off/downloads`)).status).toBe(200);
+    expect((await ask(`${media}/blocklist`)).status).toBe(200);
+    expect((await ask(`${media}/blocklist/3`, 'DELETE')).status).toBe(204);
+    expect(
+      (
+        await ask(`${media}/downloads/5/stop`, 'POST', {
+          next: 'another',
+          isDeletingFiles: true,
+        })
+      ).status,
+    ).toBe(200);
+    expect(
+      (
+        await ask(`${media}/follow`, 'POST', {
+          itemIds: ['0b1d2c3e-4f56-4a78-9b01-23456789abcd'],
+          isFollowed: false,
+        })
+      ).status,
+    ).toBe(200);
+    expect((await ask(media, 'DELETE')).status).toBe(204);
+    expect(asked()).toEqual(
+      expect.arrayContaining([
+        `GET ${handOff}/downloads`,
+        `GET ${handOff}/blocklist`,
+        `DELETE ${handOff}/blocklist/3`,
+        `POST ${handOff}/downloads/5/stop`,
+        `POST ${handOff}/follow`,
+        `POST ${handOff}/release`,
+      ]),
+    );
+    expect(asked().indexOf(`POST ${handOff}/release`)).toBeLessThan(
+      asked().findIndex(
+        (line) => line.startsWith('DELETE') && line.includes(`/requests/${REQUEST.id}?`),
+      ),
+    );
+    expect(asked()).not.toContain(`GET http://requests:8421/api/requests/${REQUEST.id}/blocklist`);
+  });
+
   it('stops a download and follows episodes, for whoever manages requesting', async () => {
     const { ask } = await build({
       isOn: true,

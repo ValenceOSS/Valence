@@ -69,6 +69,7 @@ const createSonarrHandOff = (
         !episode.hasFile &&
         items.some(
           (item) =>
+            item.isFollowed &&
             !SETTLED.has(item.state) &&
             item.season === episode.seasonNumber &&
             item.episode === episode.episodeNumber,
@@ -194,6 +195,52 @@ const createSonarrHandOff = (
       );
 
       return [...new Map(found.flat().map((release) => [release.guid, release])).values()];
+    },
+
+    queued: async (_request, items, handOffId, queue) => {
+      const kept = queue.filter((record) => record.seriesId === handOffId);
+      const episodes =
+        kept.length === 0
+          ? []
+          : await caller.read('/episode', SonarrEpisodesSchema, {
+              seriesId: handOffId.toString(),
+            });
+
+      return kept.flatMap((record) => {
+        const episode = episodes.find((one) => one.id === record.episodeId);
+        const itemIds = items
+          .filter(
+            (item) =>
+              episode !== undefined &&
+              item.season === episode.seasonNumber &&
+              item.episode === episode.episodeNumber,
+          )
+          .map((item) => item.id);
+
+        return itemIds.length === 0 ? [] : [{ record, itemIds }];
+      });
+    },
+
+    monitor: async (_request, items, handOffId, isMonitored) => {
+      const episodeIds = (
+        await caller.read('/episode', SonarrEpisodesSchema, { seriesId: handOffId.toString() })
+      )
+        .filter((episode) =>
+          items.some(
+            (item) =>
+              item.season === episode.seasonNumber && item.episode === episode.episodeNumber,
+          ),
+        )
+        .map((episode) => episode.id);
+
+      if (episodeIds.length > 0) {
+        await caller.send(
+          'PUT',
+          '/episode/monitor',
+          { episodeIds, monitored: isMonitored },
+          ArrAcknowledgementSchema,
+        );
+      }
     },
 
     pageOf: async (_request, handOffId) => {

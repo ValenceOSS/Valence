@@ -10060,9 +10060,34 @@
     "context": "Entry in a request's history when a release picked by hand is sent to the connected app it was handed to. {name} is the app, such as Sonarr; {title} is the release."
   },
   {
+    "handler": "requests.arrApps.handOff.askedNameToMonitorIt",
+    "text": "Asked {name} to monitor it.",
+    "context": "Entry in a request's history when Valence tells Sonarr, Radarr or Lidarr to monitor it again. {name} is the app. Monitor is the apps' own word for following something."
+  },
+  {
     "handler": "requests.arrApps.handOff.askedNameToSearchAgain",
     "text": "Asked {name} to search for it again.",
     "context": "Entry in a request's history when Search missing asks the connected app it was handed to, such as Sonarr, to search again."
+  },
+  {
+    "handler": "requests.arrApps.handOff.askedNameToStopMonitoringIt",
+    "text": "Asked {name} to stop monitoring it.",
+    "context": "Entry in a request's history when Valence tells Sonarr, Radarr or Lidarr to stop monitoring it. {name} is the app."
+  },
+  {
+    "handler": "requests.arrApps.handOff.askedNameToStopTitle",
+    "text": "Asked {name} to stop {title}.",
+    "context": "Entry in a request's history when a download is stopped in the connected app. {name} is the app, such as Sonarr; {title} is the release."
+  },
+  {
+    "handler": "requests.arrApps.handOff.askedNameToTryTitleAgain",
+    "text": "Asked {name} to try {title} again.",
+    "context": "Entry in a request's history when a release is taken off the connected app's blocklist. {name} is the app; {title} is the release."
+  },
+  {
+    "handler": "requests.arrApps.handOff.blockedInName",
+    "text": "Blocked in {name}.",
+    "context": "Why a release is on a request's blocklist, where Sonarr, Radarr or Lidarr gave no reason. {name} is the app."
   },
   {
     "handler": "requests.arrApps.handOff.handedToName",
@@ -10115,9 +10140,19 @@
     "context": "A request's problem, shown in the requests admin, when Sonarr does not know the series asked for (from `createSonarrHandOff`)."
   },
   {
+    "handler": "requests.arrApps.handOff.thatIsNotOneOfItsDownloads",
+    "text": "That isn’t one of the downloads its connected app has.",
+    "context": "Error when stopping a download for a request handed to Sonarr, Radarr or Lidarr that the app no longer has."
+  },
+  {
     "handler": "requests.arrApps.handOff.thatIsNotOneOfItsReleases",
     "text": "That isn’t one of the releases its connected app listed.",
     "context": "Error when a release picked for a request handed to Sonarr, Radarr or Lidarr wasn't one the app listed."
+  },
+  {
+    "handler": "requests.arrApps.handOff.thatIsNotOnItsBlocklist",
+    "text": "That isn’t on its connected app’s blocklist.",
+    "context": "Error when lifting a blocked release for a request handed to Sonarr, Radarr or Lidarr that the app no longer has blocked."
   },
   {
     "handler": "requests.arrApps.handOff.theAppItWasHandedToIsGone",
@@ -18013,6 +18048,11 @@
     "handler": "screens.adminArea.titlePage.stopDownloadDialog.findADifferentRelease",
     "text": "Find a different release",
     "context": "A choice when stopping a download."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.stopDownloadDialog.nameDeletesWhatItDownloaded",
+    "text": "{name} deletes what it downloaded so far.",
+    "context": "Shown in the dialog for stopping a download that Sonarr, Radarr or Lidarr is fetching, in place of the choice to delete it. {name} is the app."
   },
   {
     "handler": "screens.adminArea.titlePage.stopDownloadDialog.pickOneMyself",

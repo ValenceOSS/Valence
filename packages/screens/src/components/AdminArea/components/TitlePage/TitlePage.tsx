@@ -22,6 +22,7 @@ import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { catalogueArtUrl } from '@ValenceClient/requests/catalogueArtUrl';
+import { downloadsOfHandOff } from '@ValenceClient/requests/downloadsOfHandOff';
 import { downloadsOfRequest } from '@ValenceClient/requests/downloadsOfRequest';
 import {
   approveMediaRequest,
@@ -105,8 +106,14 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
     requestsQueries.handedTo(request?.isHandedOff === true ? request.id : null),
   );
   const isMoving = entry?.status === 'downloading';
+  const isThroughItsApp =
+    request?.isHandedOff === true && admin.data?.settings.controlsConnectedApps === true;
   const queue = useQuery({
     ...requestsQueries.downloadQueue(),
+    refetchInterval: isMoving ? ON_ITS_WAY_EVERY_MS : false,
+  });
+  const inItsApp = useQuery({
+    ...requestsQueries.handOffDownloads(isThroughItsApp ? request.id : null),
     refetchInterval: isMoving ? ON_ITS_WAY_EVERY_MS : false,
   });
   const [isSearching, setIsSearching] = useState(false);
@@ -121,6 +128,13 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
       cache.invalidateQueries({ queryKey: requestsQueries.titleCatalogue().queryKey }),
       cache.invalidateQueries({ queryKey: requestsQueries.mediaRequests().queryKey }),
       cache.invalidateQueries({ queryKey: requestsQueries.downloadQueue().queryKey }),
+      ...(request === null
+        ? []
+        : [
+            cache.invalidateQueries({
+              queryKey: requestsQueries.handOffDownloads(request.id).queryKey,
+            }),
+          ]),
     ]);
   };
 
@@ -142,7 +156,11 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
   };
 
   const downloads =
-    request === null ? [] : downloadsOfRequest(request, queue.data?.downloads ?? []);
+    request === null
+      ? []
+      : isThroughItsApp
+        ? downloadsOfHandOff(request, inItsApp.data ?? [])
+        : downloadsOfRequest(request, queue.data?.downloads ?? []);
   const seasons =
     kind === 'series'
       ? seasonsOfTitle(request, files.data?.files ?? [], seasonList.data ?? [])
@@ -436,8 +454,7 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
           </Button>
         )}
 
-        {request.isHandedOff === true &&
-        admin.data?.settings.controlsConnectedApps !== true ? null : (
+        {request.isHandedOff === true && !isThroughItsApp ? null : (
           <Button
             variant="secondary"
             size="md"
@@ -688,6 +705,7 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
 
       <StopDownloadDialog
         download={stopping}
+        appName={isThroughItsApp ? (handedTo.data?.appName ?? null) : null}
         isStopping={isBusy}
         onClose={() => {
           setStopping(null);

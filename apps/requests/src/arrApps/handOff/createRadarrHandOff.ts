@@ -84,6 +84,22 @@ const createRadarrHandOff = (caller: Pick<ArrCaller, 'read' | 'send'>): HandOffH
   releases: (_request, _items, handOffId) =>
     caller.read('/release', ArrReleaseSchema.array(), { movieId: handOffId.toString() }),
 
+  queued: (_request, items, handOffId, queue) =>
+    Promise.resolve(
+      queue
+        .filter((record) => record.movieId === handOffId)
+        .map((record) => ({ record, itemIds: items.map((item) => item.id) })),
+    ),
+
+  monitor: async (_request, _items, handOffId, isMonitored) => {
+    await caller.send(
+      'PUT',
+      '/movie/editor',
+      { movieIds: [handOffId], monitored: isMonitored },
+      ArrAcknowledgementSchema,
+    );
+  },
+
   pageOf: (request) =>
     Promise.resolve(request.tmdbId === null ? null : `/movie/${request.tmdbId.toString()}`),
 

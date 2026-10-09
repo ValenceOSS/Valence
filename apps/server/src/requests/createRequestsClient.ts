@@ -97,6 +97,7 @@ import {
   ArrAppTestSchema,
   ArrQueueSchema,
   HandedToSchema,
+  HandOffDownloadSchema,
   ProwlarrImportSchema,
 } from '@ValenceContracts/schemas/ArrApp';
 import type {
@@ -107,6 +108,7 @@ import type {
   ArrAppTest,
   ArrQueue,
   HandedTo,
+  HandOffDownload,
   ProwlarrImport,
 } from '@ValenceContracts/schemas/ArrApp';
 import { ArrImportAppliedSchema, ArrImportPlanSchema } from '@ValenceContracts/schemas/ArrImport';
@@ -683,6 +685,41 @@ const createRequestsClient = ({
         body: { release },
         waitMs: searchTimeoutMs,
       }),
+
+    handOffDownloads: (id: string): Promise<RequestsAnswer<HandOffDownload[]>> =>
+      call(`${withRequest(id)}/hand-off/downloads`, (body) =>
+        z.array(HandOffDownloadSchema).parse(body),
+      ),
+
+    handOffStop: (
+      id: string,
+      downloadId: string,
+      stopping: DownloadStop,
+    ): Promise<RequestsAnswer<MediaRequest>> =>
+      call(
+        `${withRequest(id)}/hand-off/downloads/${encodeURIComponent(downloadId)}/stop`,
+        readRequest,
+        { method: 'POST', body: stopping },
+      ),
+
+    handOffBlocklist: (id: string): Promise<RequestsAnswer<BlockedRelease[]>> =>
+      call(`${withRequest(id)}/hand-off/blocklist`, (body) =>
+        z.array(BlockedReleaseSchema).parse(body),
+      ),
+
+    handOffLift: (id: string, blockId: string): Promise<RequestsAnswer<null>> =>
+      call(`${withRequest(id)}/hand-off/blocklist/${encodeURIComponent(blockId)}`, () => null, {
+        method: 'DELETE',
+      }),
+
+    handOffFollow: (
+      id: string,
+      following: MediaRequestFollow,
+    ): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/hand-off/follow`, readRequest, { method: 'POST', body: following }),
+
+    handOffRelease: (id: string): Promise<RequestsAnswer<null>> =>
+      call(`${withRequest(id)}/hand-off/release`, () => null, { method: 'POST' }),
 
     stopDownload: (
       id: string,

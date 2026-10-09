@@ -163,7 +163,7 @@ Handed off means:
 - Valence follows the app every minute: its queue for what is downloading, and whether each film, episode or album has a file. Each moves from wanted to downloading to filed, the request page says what the app is doing, and the usual `requests.chosen`, `requests.downloadStarted`, `requests.downloadFailed` and `requests.filed` webhooks follow.
 - Once the app has imported something, Valence reads that folder and tells whoever asked, exactly as it does for what it files itself.
 - A series stays followed. Sonarr's monitoring fetches new episodes, and each is marked available as Sonarr imports it. A season added to the request later is monitored in Sonarr too.
-- Cancelling or refusing a request removes nothing from the app.
+- Cancelling or refusing a request removes nothing from the app. With [Control connected apps from Valence](#controlling-connected-apps-from-valence) on, removing one stops the app monitoring it.
 - In Requests › Catalogue, the title's page says which app handles it, with **Open in Sonarr** (or Radarr, or Lidarr) to go to its page there. **Search missing** asks the app to search again. **Interactive search** is offered only with [Control connected apps from Valence](#controlling-connected-apps-from-valence) on; otherwise picking a release is left to the app.
 - Where every library that takes requests hands off, **Indexers** and **Profiles** say so, since Valence searches none of them for those requests.
 
@@ -174,6 +174,13 @@ The series a request names is found in Sonarr by the TVDB id the catalogue gives
 By default a connected app decides for itself what to download. Turning on **Control connected apps from Valence**, in the admin area's **Settings** under the requests settings, lets you do it from Valence instead.
 
 With it on, a handed-off title's page in Requests › Catalogue offers **Interactive search**. The releases listed are the ones the app finds on its own indexers, judged by its own quality profile: what it would reject is listed last, with its reasons. Picking one sends it to the app to download, exactly as picking it in the app would, and the request's history says so.
+
+The rest of the title's page works the app too:
+
+- **Downloads** are the ones in the app's queue for the title. **Stop download…** removes one from the app and its download client, which deletes what it downloaded so far, and adds the release to the app's blocklist. Then the app looks for another release, **Interactive search** opens for you to pick one, or, with **Stop getting this**, what it held is no longer followed in Valence or monitored in the app.
+- **Never again** is the app's blocklist for the title. Removing an entry removes it from the app's blocklist.
+- Following or not following a season, episode or album also monitors it in the app, or stops. Following one again asks the app to search for it where the library searches as soon as something is added.
+- Removing the request stops the app monitoring it. Nothing is deleted from the app, and its files stay unless you choose to delete them.
 
 Valence's own indexers, profiles and download clients aren't used for these titles either way.
 
