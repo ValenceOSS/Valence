@@ -22,8 +22,12 @@ import {
   RELEASE_SOURCES,
   RESOLUTIONS,
 } from '@ValenceContracts/schemas/ParsedRelease';
-import { PROFILE_KINDS, RELEASE_WAITS } from '@ValenceContracts/schemas/QualityProfile';
-import type { QualitySize } from '@ValenceContracts/schemas/QualityProfile';
+import {
+  PROFILE_KINDS,
+  RELEASE_WAITS,
+  VIDEO_QUALITY_IDS,
+} from '@ValenceContracts/schemas/QualityProfile';
+import type { QualitySize, VideoQualityId } from '@ValenceContracts/schemas/QualityProfile';
 import type {
   MusicQuality,
   ReleaseSource,
@@ -218,6 +222,7 @@ const qualityProfile = requestsSchema('quality_profile', {
   kind: varchar('kind', { length: 32, enum: PROFILE_KINDS }).notNull(),
   resolutions: jsonColumn('resolutions').$type<Resolution[]>().notNull().default(jsonDefault([])),
   sources: jsonColumn('sources').$type<ReleaseSource[]>().notNull().default(jsonDefault([])),
+  qualities: jsonColumn('qualities').$type<VideoQualityId[]>(),
   musicQualities: jsonColumn('music_qualities')
     .$type<MusicQuality[]>()
     .notNull()
@@ -237,6 +242,7 @@ const qualityProfile = requestsSchema('quality_profile', {
     .default('digital'),
   upgradeUntilResolution: varchar('upgrade_until_resolution', { length: 32, enum: RESOLUTIONS }),
   upgradeUntilSource: varchar('upgrade_until_source', { length: 32, enum: RELEASE_SOURCES }),
+  cutoff: varchar('cutoff', { length: 32, enum: VIDEO_QUALITY_IDS }),
   upgradeUntilMusicQuality: varchar('upgrade_until_music_quality', {
     length: 32,
     enum: MUSIC_QUALITIES,

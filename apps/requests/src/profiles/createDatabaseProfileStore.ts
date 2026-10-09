@@ -2,6 +2,7 @@ import { countAffected } from '@ValenceDatabase/countAffected';
 import { eq } from 'drizzle-orm';
 import { qualityProfile } from '#dialect/Schema';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
+import { legacyQualitiesOf } from '@ValenceRequests/profiles/legacyQualitiesOf';
 import type { RequestsDatabase } from '#dialect/RequestsDatabase';
 import type { RecordStore } from '@ValenceRequests/stores/RecordStore';
 
@@ -9,16 +10,34 @@ type ProfileRow = typeof qualityProfile.$inferSelect;
 
 /**
  * Reads a row as the profile everything else deals in, with its moments written as the contract
- * writes them.
+ * writes them. A profile kept before qualities were combined, which has none, takes the ones its
+ * resolutions and sources make.
  *
  * @param row - The row.
  * @returns The profile.
  */
-const asProfile = (row: ProfileRow): QualityProfile => ({
-  ...row,
-  createdAt: row.createdAt.toISOString(),
-  updatedAt: row.updatedAt.toISOString(),
-});
+const asProfile = (row: ProfileRow): QualityProfile => {
+  const {
+    resolutions,
+    sources,
+    upgradeUntilResolution,
+    upgradeUntilSource,
+    qualities,
+    cutoff,
+    ...rest
+  } = row;
+  const legacy =
+    qualities === null
+      ? legacyQualitiesOf({ resolutions, sources, upgradeUntilResolution, upgradeUntilSource })
+      : { qualities, cutoff };
+
+  return {
+    ...rest,
+    ...legacy,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  };
+};
 
 /**
  * Quality profiles kept in the service's own schema.

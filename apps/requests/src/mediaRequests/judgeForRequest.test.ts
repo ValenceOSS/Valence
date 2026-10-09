@@ -14,7 +14,7 @@ const BLURAY = 'Dune.2021.1080p.BluRay.x264-GRP';
 const OPTIONS = {
   request: aMediaRequest(),
   items: [aRequestItem()],
-  profile: aProfile({ sources: ['bluray', 'webdl'] }),
+  profile: aProfile({ qualities: ['bluray-1080p', 'webdl-1080p', 'bluray-720p', 'webdl-720p'] }),
   blocked: [],
   priorities: new Map<string, number>(),
   isFetching: (item: RequestItemRecord) => item.state === 'wanted',
@@ -48,7 +48,10 @@ describe('judgeForRequest', () => {
     const judged = judgeForRequest({
       ...OPTIONS,
       request: aMediaRequest({ libraryLanguage: 'de' }),
-      profile: aProfile({ sources: ['bluray', 'webdl'], preferredLanguage: 'en' }),
+      profile: aProfile({
+        qualities: ['bluray-1080p', 'webdl-1080p', 'bluray-720p', 'webdl-720p'],
+        preferredLanguage: 'en',
+      }),
       releases: [aRelease(BLURAY), aRelease(GERMAN)],
     });
 
@@ -111,10 +114,19 @@ describe('judgeForRequest', () => {
       judgeForRequest({
         ...OPTIONS,
         releases: [aRelease(WEB)],
-        items: [aRequestItem({ state: 'available', score: 5000 })],
+        items: [aRequestItem({ state: 'available', filedTitle: BLURAY })],
         isFetching: () => true,
       }).judgements[0]?.rejections,
     ).toEqual(['It’s no better than what’s already in the library']);
+
+    expect(
+      judgeForRequest({
+        ...OPTIONS,
+        releases: [aRelease(BLURAY)],
+        items: [aRequestItem({ state: 'available', filedTitle: WEB })],
+        isFetching: () => true,
+      }).judgements[0]?.isRejected,
+    ).toBe(false);
   });
 
   it('refuses a whole run where most of what it holds is here already', () => {

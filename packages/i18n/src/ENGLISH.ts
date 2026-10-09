@@ -2375,8 +2375,6 @@ const ENGLISH = {
     'The custom format {name} was only approximated, using preferred and banned words.',
   'requests.arrImport.customFormatNameWasLeftOut':
     'The custom format {name} checks more than release names, so it wasn’t imported.',
-  'requests.arrImport.everyResolutionIsTakenFromEverySource':
-    'Valence allows every selected resolution from every selected source, which is slightly less strict than before.',
   'requests.arrImport.itListsNoHost': 'It has no host set.',
   'requests.arrImport.libraryCouldNotBeHandedToApp':
     'Couldn’t connect {library} to {app}, so it wasn’t changed.',
@@ -2622,6 +2620,8 @@ const ENGLISH = {
   'requests.profiles.judgeRelease.inLanguage': 'In {name} (+{points})',
   'requests.profiles.judgeRelease.itDoesNotSayHowIt': 'Its name doesn’t say how it was encoded',
   'requests.profiles.judgeRelease.itDoesNotSayItsResolution': 'Its name doesn’t say its resolution',
+  'requests.profiles.judgeRelease.itDoesNotSayItsSource':
+    'It doesn’t say its source, so it’s taken as {quality}',
   'requests.profiles.judgeRelease.itHasWordWhichIsBanned': 'It has “{word}”, which is banned',
   'requests.profiles.judgeRelease.itIsAVideoNotA': 'It’s a video, not a book',
   'requests.profiles.judgeRelease.itIsAVideoNotMusic': 'It’s a video, not music',
@@ -2662,6 +2662,7 @@ const ENGLISH = {
   'requests.profiles.qualityNames.aTelesync': 'A telesync',
   'requests.profiles.qualityNames.aWebDownload': 'A web download',
   'requests.profiles.qualityNames.aWebRip': 'A web rip',
+  'requests.profiles.qualityNames.sourceAtResolution': '{source} at {resolution}',
   'requests.profiles.starterProfiles.anyMusic': 'Any music',
   'requests.profiles.whatTheFilesSay.fileNotTakenByProfile':
     'Its file, {named}, is {quality}, which this profile doesn’t allow',
@@ -3984,11 +3985,8 @@ const ENGLISH = {
   'screens.adminArea.profileEditor.aFilmIsHeldUntilThen':
     'Films aren’t searched for until then, so cinema releases aren’t downloaded.',
   'screens.adminArea.profileEditor.alwaysUseThisProfile': 'Always use this profile',
-  'screens.adminArea.profileEditor.andTheSourceIs': 'And the source is',
   'screens.adminArea.profileEditor.anyRole': 'Any role',
   'screens.adminArea.profileEditor.aReleaseNeedsAtLeastOne': 'A release must contain at least one.',
-  'screens.adminArea.profileEditor.aReleaseThatDoesNotSay':
-    'Releases that don’t specify are allowed.',
   'screens.adminArea.profileEditor.aReleaseWithAnyIsRefused':
     'Releases containing any of these are rejected.',
   'screens.adminArea.profileEditor.bannedWords': 'Banned words',
@@ -4018,12 +4016,13 @@ const ENGLISH = {
   'screens.adminArea.profileEditor.preferredWords': 'Preferred words',
   'screens.adminArea.profileEditor.prefersReleasesThatSayTheyAre':
     'Prefers releases labelled with this language. Most releases have no language label, and those aren’t affected.',
+  'screens.adminArea.profileEditor.qualities': 'Qualities',
+  'screens.adminArea.profileEditor.releasesThatDoNotSayTheirSource':
+    'A release that doesn’t give its source counts as the lowest quality allowed at its resolution.',
   'screens.adminArea.profileEditor.requiredWords': 'Required words',
-  'screens.adminArea.profileEditor.resolutions': 'Resolutions',
   'screens.adminArea.profileEditor.searchFilmsOnceTheyAre': 'Search for films once they’re',
   'screens.adminArea.profileEditor.sizes': 'Sizes',
   'screens.adminArea.profileEditor.smallestMBAnAlbum': 'Minimum (MB per album)',
-  'screens.adminArea.profileEditor.sources': 'Sources',
   'screens.adminArea.profileEditor.theBestThereIs': 'Highest available',
   'screens.adminArea.profileEditor.thereAreNoFilmOrSeriesLibraries':
     'There are no film or series libraries yet.',
@@ -4031,7 +4030,7 @@ const ENGLISH = {
   'screens.adminArea.profileEditor.tickWhatMayBeTakenBest':
     'Select the allowed options, best first. This order ranks releases before anything else.',
   'screens.adminArea.profileEditor.untilTheFormatIs': 'Until the format is',
-  'screens.adminArea.profileEditor.untilTheResolutionIs': 'Until the resolution is',
+  'screens.adminArea.profileEditor.untilTheQualityIs': 'Until the quality is',
   'screens.adminArea.profileEditor.upgradeToABetterReleaseLater':
     'Upgrade to a better release later',
   'screens.adminArea.profileEditor.useTheLibrarysLanguage': 'Use the library’s language',
@@ -5682,6 +5681,8 @@ const ENGLISH = {
   'screens.previewMomentPicker.whereTheClipStartsAndEnds': 'Where the clip starts and ends',
   'screens.profileEditor.describeSizeAnHour.megabytesMBAnHour': '{megabytes} MB an hour',
   'screens.profileEditor.describeSizeAnHour.valueGBAnHour': '{value} GB an hour',
+  'screens.profileEditor.qualitySizes.allowAQualityToSetItsSize':
+    'Allow a quality to set its size limits.',
   'screens.profileEditor.qualitySizes.atLeastValue': 'At least {value}',
   'screens.profileEditor.qualitySizes.largestForName': 'Largest for {name}',
   'screens.profileEditor.qualitySizes.minToMax': '{min} to {max}',
@@ -5689,12 +5690,9 @@ const ENGLISH = {
   'screens.profileEditor.qualitySizes.sizesForEachQuality': 'Sizes for each quality',
   'screens.profileEditor.qualitySizes.sizesForName': 'Sizes for {name}',
   'screens.profileEditor.qualitySizes.smallestForName': 'Smallest for {name}',
-  'screens.profileEditor.qualitySizes.tickAResolutionAndASource':
-    'Select a resolution and a source to set their size limits.',
   'screens.profileEditor.qualitySizes.useTRaSHsRecommendedSizes': 'Use TRaSH’s recommended sizes',
   'screens.profileEditor.readProfileForm.allowAtLeastOneFormat': 'Allow at least one format.',
-  'screens.profileEditor.readProfileForm.allowAtLeastOneResolution':
-    'Allow at least one resolution.',
+  'screens.profileEditor.readProfileForm.allowAtLeastOneQuality': 'Allow at least one quality.',
   'screens.profileEditor.readProfileForm.aSizeIsANumberOf': 'Enter sizes in megabytes.',
   'screens.profileEditor.readProfileForm.giveTheProfileAName': 'Enter a name for the profile.',
   'screens.profileEditor.readProfileForm.new': 'New',

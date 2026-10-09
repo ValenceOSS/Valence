@@ -86,7 +86,8 @@ type JudgedForRequest = {
  * Judges releases for one request: only those for it are kept, each judged against the request's
  * quality profile, and refused besides where it failed before, under that name or as the same
  * torrent under another, where everything it holds is here or on its way already, or where it is
- * no better than what an upgrade would replace. They come back in the order they would be chosen,
+ * no better than what an upgrade would replace — its quality and score against those of the
+ * release filed, judged by the profile as it is now. They come back in the order they would be chosen,
  * with the pick, and what each would fetch.
  *
  * A release picked by hand is matched by its numbers alone, or an album by its title alone, since
@@ -146,6 +147,45 @@ const judgeForRequest = ({
   const judgedBy: QualityProfile = {
     ...profile,
     preferredLanguage: profile.preferredLanguage ?? request.libraryLanguage,
+  };
+  const isNoBetterThanFiled = (
+    judgement: Pick<Judgement, 'quality' | 'score'>,
+    item: RequestItemRecord,
+  ): boolean => {
+    if (item.filedTitle === null) {
+      return false;
+    }
+
+    const filed = judgeRelease(
+      {
+        id: item.id,
+        title: item.filedTitle,
+        indexerId: item.indexerId ?? '',
+        indexerName: '',
+        protocol: 'usenet',
+        sizeBytes: null,
+        seeders: null,
+        leechers: null,
+        grabs: null,
+        publishedAt: null,
+        categories: [],
+        downloadUrl: null,
+        magnetUrl: null,
+        infoUrl: null,
+        infoHash: null,
+        downloadFactor: null,
+        uploadFactor: null,
+        minimumRatio: null,
+        minimumSeedSeconds: null,
+      },
+      parseReleaseName(item.filedTitle),
+      judgedBy,
+    );
+
+    return (
+      judgement.quality < filed.quality ||
+      (judgement.quality === filed.quality && judgement.score <= filed.score)
+    );
   };
   const judged = releases.flatMap((release) => {
     const parsed = parseReleaseName(release.title);
@@ -233,7 +273,7 @@ const judgeForRequest = ({
                 }),
           ]
         : []),
-      ...(fetched.some((item) => item.score !== null && judgement.score <= item.score)
+      ...(fetched.some((item) => isNoBetterThanFiled(judgement, item))
         ? [saying('requests.mediaRequests.judgeForRequest.itIsNoBetterThanWhat')]
         : []),
     ];

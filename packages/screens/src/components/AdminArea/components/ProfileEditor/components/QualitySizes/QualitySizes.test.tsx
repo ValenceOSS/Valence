@@ -8,8 +8,7 @@ describe('QualitySizes', () => {
   it('shows the limits of each quality the profile takes, best first', () => {
     render(
       <QualitySizes
-        resolutions={['1080p', '720p']}
-        sources={['bluray', 'webdl']}
+        qualities={['bluray-1080p', 'webdl-1080p', 'bluray-720p', 'webdl-720p']}
         sizes={[
           { source: 'webdl', resolution: '1080p', minMb: 750, maxMb: null },
           { source: 'bluray', resolution: '1080p', minMb: 3024, maxMb: 12_000 },
@@ -32,8 +31,7 @@ describe('QualitySizes', () => {
 
     render(
       <QualitySizes
-        resolutions={['1080p']}
-        sources={['webdl']}
+        qualities={['webdl-1080p']}
         sizes={[{ source: 'webdl', resolution: '1080p', minMb: 750, maxMb: null }]}
         onChange={onChange}
       />,
@@ -55,9 +53,9 @@ describe('QualitySizes', () => {
   it('puts back the recommended sizes, and asks for a quality where none is taken', async () => {
     const onChange = vi.fn();
 
-    render(<QualitySizes resolutions={[]} sources={[]} sizes={[]} onChange={onChange} />);
+    render(<QualitySizes qualities={[]} sizes={[]} onChange={onChange} />);
 
-    expect(screen.getByText(/Select a resolution and a source/)).toBeInTheDocument();
+    expect(screen.getByText(/Allow a quality to set its size limits/)).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: /recommended sizes/ }));
 

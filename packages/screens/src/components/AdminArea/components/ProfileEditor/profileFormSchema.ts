@@ -20,11 +20,11 @@ const profileFormSchema = z
       });
     }
 
-    if (!isMusic && form.resolutions.length === 0) {
+    if (!isMusic && form.qualities.length === 0) {
       context.addIssue({
         code: 'custom',
-        path: ['resolutions'],
-        message: say('screens.profileEditor.readProfileForm.allowAtLeastOneResolution'),
+        path: ['qualities'],
+        message: say('screens.profileEditor.readProfileForm.allowAtLeastOneQuality'),
       });
     }
 
@@ -63,8 +63,7 @@ const profileFormSchema = z
     return {
       name: form.name.trim(),
       kind: form.kind,
-      resolutions: form.resolutions,
-      sources: form.sources,
+      qualities: form.qualities,
       musicQualities: form.musicQualities,
       smallestMb: isMusic ? (sizeOf(form.smallestMb) ?? null) : null,
       largestMb: isMusic ? (sizeOf(form.largestMb) ?? null) : null,
@@ -74,8 +73,10 @@ const profileFormSchema = z
       requiredWords: wordsOf(form.requiredWords),
       bannedWords: wordsOf(form.bannedWords),
       isUpgrading: form.isUpgrading,
-      upgradeUntilResolution: form.isUpgrading ? form.upgradeUntilResolution : null,
-      upgradeUntilSource: form.isUpgrading ? form.upgradeUntilSource : null,
+      cutoff:
+        form.isUpgrading && form.cutoff !== null && form.qualities.includes(form.cutoff)
+          ? form.cutoff
+          : null,
       upgradeUntilMusicQuality: form.isUpgrading ? form.upgradeUntilMusicQuality : null,
       libraryIds: form.libraryIds,
       preferredLanguage: form.preferredLanguage,

@@ -37,6 +37,7 @@ const aRelease = (title: string, overrides: Partial<Release> = {}): Release => (
  */
 const judged = (releaseId: string, score: number, rejections: string[] = []): Judgement => ({
   releaseId,
+  quality: 1,
   parsed: {
     title: releaseId,
     year: null,

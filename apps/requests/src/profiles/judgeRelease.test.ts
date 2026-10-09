@@ -68,20 +68,29 @@ describe('judgeRelease', () => {
     expect(judged.rejections).toEqual(['It has “sample”, which is banned', 'No one is seeding it']);
   });
 
-  it('scores a release by how far up its resolution and source come, and says so', () => {
+  it('ranks a release by how far up the profile’s qualities it comes, and says so', () => {
     expect(judge('Dune.2021.1080p.BluRay.x264-GRP')).toMatchObject({
       releaseId: 'Dune.2021.1080p.BluRay.x264-GRP',
-      score: 2000 + 400,
+      quality: 8,
+      score: 0,
       isRejected: false,
       rejections: [],
-      reasons: ['1080p, the first preference', 'Blu-ray, the second preference'],
+      reasons: ['Blu-ray at 1080p, the second preference'],
     });
-    expect(judge('Dune.2021.720p.WEB-DL.x264-GRP').score).toBe(1000 + 300);
+    expect(judge('Dune.2021.720p.WEB-DL.x264-GRP').quality).toBe(3);
+  });
+
+  it('ranks one quality above another by the profile’s order, whatever its resolution', () => {
+    const profile = aProfile({ qualities: ['webdl-1080p', 'bluray-720p', 'hdtv-1080p'] });
+
+    expect(judge('Dune.2021.720p.BluRay.x264-GRP', profile).quality).toBeGreaterThan(
+      judge('Dune.2021.1080p.HDTV.x264-GRP', profile).quality,
+    );
   });
 
   it('refuses a resolution or source the profile does not take, or a name without a resolution', () => {
     expect(judge('Dune.2021.2160p.BluRay.x265-GRP').rejections).toEqual([
-      '2160p isn’t allowed by this profile',
+      'Blu-ray at 2160p isn’t allowed by this profile',
     ]);
     expect(judge('Dune.2021.1080p.HDCAM.x264-GRP').rejections).toEqual([
       'A cinema recording isn’t allowed by this profile',
@@ -92,20 +101,17 @@ describe('judgeRelease', () => {
     });
   });
 
-  it('lets a release through unscored where it does not say its source', () => {
+  it('takes a release that does not say its source as the lowest quality at its resolution', () => {
     expect(judge('[ASW] One Piece - 1100 [1080p HEVC]')).toMatchObject({
       isRejected: false,
-      score: 2000,
+      quality: 5,
+      reasons: ['It doesn’t say its source, so it’s taken as HDTV at 1080p'],
     });
   });
 
   it('names a choice far down the list by its number', () => {
-    const profile = aProfile({
-      sources: ['remux', 'bluray', 'webdl', 'webrip', 'hdtv', 'dvd'],
-    });
-
-    expect(judge('Dune.2021.1080p.DVDRip.x264-GRP', profile).reasons).toContainEqual(
-      'DVD, preference number 6',
+    expect(judge('Dune.2021.720p.WEB-DL.x264-GRP').reasons).toContainEqual(
+      'A web download at 720p, preference number 7',
     );
   });
 
@@ -125,13 +131,13 @@ describe('judgeRelease', () => {
 
     const liked = judge('Dune.2021.1080p.WEB-DL.DDP5.1.Atmos.H.265-FLUX', profile);
 
-    expect(liked.score).toBe(2000 + 300 + 20);
+    expect(liked.score).toBe(20);
     expect(liked.reasons).toContainEqual('It has “Atmos” (+10)');
     expect(liked.reasons).toContainEqual('It has “FLUX” (+10)');
     expect(judge('Dune.2021.PROPER.1080p.BluRay.x264-GRP').reasons).toContainEqual(
       'A proper, an improved release of the same content (+5)',
     );
-    expect(judge('Dune.2021.REPACK.1080p.BluRay.x264-GRP').score).toBe(2000 + 400 + 5);
+    expect(judge('Dune.2021.REPACK.1080p.BluRay.x264-GRP').score).toBe(5);
   });
 
   it('lifts a release that says it is in the language wanted', () => {
@@ -169,11 +175,11 @@ describe('judgeRelease', () => {
     ).not.toContain('Deutsch');
   });
 
-  it('never lets a wanted language outrank a resolution', () => {
-    const profile = aProfile({ preferredLanguage: 'de', resolutions: ['1080p', '720p'] });
+  it('never lets a wanted language change a release’s quality', () => {
+    const profile = aProfile({ preferredLanguage: 'de' });
 
-    expect(judge('Dune.2021.1080p.BluRay.x264-GRP', profile).score).toBeGreaterThan(
-      judge('Dune.2021.720p.GERMAN.BluRay.x264-GRP', profile).score,
+    expect(judge('Dune.2021.1080p.BluRay.x264-GRP', profile).quality).toBeGreaterThan(
+      judge('Dune.2021.720p.GERMAN.BluRay.x264-GRP', profile).quality,
     );
   });
 
@@ -270,7 +276,8 @@ describe('judgeRelease', () => {
     });
 
     expect(judge('Daft Punk - Discovery (2001) [FLAC]', profile)).toMatchObject({
-      score: 2000,
+      quality: 2,
+      score: 0,
       reasons: ['FLAC, the first preference'],
     });
     expect(judge('Daft Punk - Discovery (2001) [MP3 V0]', profile).rejections).toEqual([

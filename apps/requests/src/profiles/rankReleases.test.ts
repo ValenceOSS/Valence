@@ -22,8 +22,9 @@ const aRelease = (id: string, overrides: Partial<Release> = {}): Release =>
 /**
  * A judgement of a release.
  */
-const judged = (releaseId: string, score: number, isRejected = false): Judgement => ({
+const judged = (releaseId: string, score: number, isRejected = false, quality = 1): Judgement => ({
   releaseId,
+  quality,
   parsed: {
     title: releaseId,
     year: null,
@@ -73,17 +74,17 @@ describe('rankReleases', () => {
     expect(ranked.pickedId).toBe('best');
   });
 
-  it('breaks a tie by seeders, then grabs, then the newest, then the indexer asked first', () => {
+  it('breaks a tie by the indexer asked first, then seeders or grabs by band, then the newest', () => {
     const ranked = rankReleases(
       [
-        aRelease('older', { seeders: 5, publishedAt: '2026-01-01T00:00:00.000Z' }),
-        aRelease('later-indexer', { seeders: 5, indexerId: SECOND }),
-        aRelease('newer', { seeders: 5 }),
         aRelease('seeded', { seeders: 50 }),
         aRelease('grabbed', { protocol: 'usenet', seeders: null, grabs: 20 }),
+        aRelease('older', { seeders: 5, publishedAt: '2026-01-01T00:00:00.000Z' }),
+        aRelease('newer', { seeders: 6, publishedAt: '2026-02-01T00:00:00.000Z' }),
+        aRelease('later-indexer', { seeders: 500, indexerId: SECOND }),
         aRelease('unknown', { seeders: null, publishedAt: null, indexerId: 'elsewhere' }),
       ],
-      ['older', 'later-indexer', 'newer', 'seeded', 'grabbed', 'unknown'].map((id) =>
+      ['seeded', 'grabbed', 'older', 'newer', 'later-indexer', 'unknown'].map((id) =>
         judged(id, 100),
       ),
       PRIORITIES,
@@ -93,8 +94,8 @@ describe('rankReleases', () => {
       'seeded',
       'grabbed',
       'newer',
-      'later-indexer',
       'older',
+      'later-indexer',
       'unknown',
     ]);
   });
@@ -110,19 +111,26 @@ describe('rankReleases', () => {
     expect(ranked.releases).toHaveLength(1);
   });
 
-  it('puts what fills the most of what is wanted before what merely scores best', () => {
-    const ranked = rankReleases(
+  it('puts the better quality first, then the better score, then what fills the most', () => {
+    const fills = new Map([
+      [SECOND, 9],
+      [FIRST, 1],
+    ]);
+    const better = rankReleases(
       [aRelease(FIRST), aRelease(SECOND)],
-      [judged(FIRST, 1100), judged(SECOND, 1000)],
+      [judged(FIRST, 0, false, 2), judged(SECOND, 50, false, 1)],
       new Map(),
-      new Map([
-        [SECOND, 9],
-        [FIRST, 1],
-      ]),
+      fills,
+    );
+    const evenly = rankReleases(
+      [aRelease(FIRST), aRelease(SECOND)],
+      [judged(FIRST, 10), judged(SECOND, 10)],
+      new Map(),
+      fills,
     );
 
-    expect(ranked.pickedId).toBe(SECOND);
-    expect(ranked.releases.map((release) => release.id)).toEqual([SECOND, FIRST]);
+    expect(better.pickedId).toBe(FIRST);
+    expect(evenly.releases.map((release) => release.id)).toEqual([SECOND, FIRST]);
   });
 
   it('lets the score decide where nobody says what each fills', () => {

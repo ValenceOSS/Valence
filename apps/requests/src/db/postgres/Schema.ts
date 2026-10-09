@@ -23,8 +23,12 @@ import {
   RELEASE_SOURCES,
   RESOLUTIONS,
 } from '@ValenceContracts/schemas/ParsedRelease';
-import { PROFILE_KINDS, RELEASE_WAITS } from '@ValenceContracts/schemas/QualityProfile';
-import type { QualitySize } from '@ValenceContracts/schemas/QualityProfile';
+import {
+  PROFILE_KINDS,
+  RELEASE_WAITS,
+  VIDEO_QUALITY_IDS,
+} from '@ValenceContracts/schemas/QualityProfile';
+import type { QualitySize, VideoQualityId } from '@ValenceContracts/schemas/QualityProfile';
 import type {
   MusicQuality,
   ReleaseSource,
@@ -198,6 +202,7 @@ const qualityProfile = requestsSchema.table('quality_profile', {
   kind: text('kind', { enum: PROFILE_KINDS }).notNull(),
   resolutions: jsonb('resolutions').$type<Resolution[]>().notNull().default([]),
   sources: jsonb('sources').$type<ReleaseSource[]>().notNull().default([]),
+  qualities: jsonb('qualities').$type<VideoQualityId[]>(),
   musicQualities: jsonb('music_qualities').$type<MusicQuality[]>().notNull().default([]),
   smallestMb: doublePrecision('smallest_mb'),
   largestMb: doublePrecision('largest_mb'),
@@ -209,6 +214,7 @@ const qualityProfile = requestsSchema.table('quality_profile', {
   releaseWait: text('release_wait', { enum: RELEASE_WAITS }).notNull().default('digital'),
   upgradeUntilResolution: text('upgrade_until_resolution', { enum: RESOLUTIONS }),
   upgradeUntilSource: text('upgrade_until_source', { enum: RELEASE_SOURCES }),
+  cutoff: text('cutoff', { enum: VIDEO_QUALITY_IDS }),
   upgradeUntilMusicQuality: text('upgrade_until_music_quality', { enum: MUSIC_QUALITIES }),
   libraryIds: jsonb('library_ids').$type<string[]>().notNull().default([]),
   preferredLanguage: text('preferred_language'),

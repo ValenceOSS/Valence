@@ -12,14 +12,12 @@ describe('profileOf', () => {
     expect(draft).toEqual({
       name: 'HD-1080p',
       kind: 'video',
-      resolutions: ['1080p'],
-      sources: ['bluray', 'webdl', 'webrip', 'hdtv'],
+      qualities: ['bluray-1080p', 'webdl-1080p', 'webrip-1080p', 'hdtv-1080p'],
       preferredWords: ['Repack'],
       requiredWords: [],
       bannedWords: ['/[xh][ ._-]?265|\\bHEVC(\\b|\\d)/', '3D'],
       isUpgrading: true,
-      upgradeUntilResolution: '1080p',
-      upgradeUntilSource: 'bluray',
+      cutoff: 'bluray-1080p',
     });
     expect(notes.map((note) => note.message)).toEqual([
       'The custom format HDR checks more than release names, so it wasn’t imported.',
@@ -32,13 +30,18 @@ describe('profileOf', () => {
     const { draft, notes } = profileOf(firstOf(sonarr.profiles), 'video', sonarr);
 
     expect(draft).toMatchObject({
-      resolutions: ['1080p', '720p'],
-      sources: ['bluray', 'webdl', 'hdtv'],
+      qualities: [
+        'bluray-1080p',
+        'webdl-1080p',
+        'hdtv-1080p',
+        'bluray-720p',
+        'webdl-720p',
+        'hdtv-720p',
+      ],
       preferredWords: ['/\\b(amzn|amazon)\\b/', 'REPACK'],
       requiredWords: [],
       bannedWords: ['CAM', 'TS', 'x265'],
-      upgradeUntilResolution: '1080p',
-      upgradeUntilSource: 'webdl',
+      cutoff: 'webdl-1080p',
     });
     expect(notes.map((note) => note.message)).toEqual([
       'The release profile Anime only only applies to tagged series, so it wasn’t imported.',
@@ -50,10 +53,9 @@ describe('profileOf', () => {
     const { draft, notes } = profileOf(firstOf(sonarr.profiles), 'video', sonarr);
 
     expect(draft).toMatchObject({
-      resolutions: ['1080p'],
-      sources: ['webdl', 'webrip'],
+      qualities: ['webdl-1080p', 'webrip-1080p'],
       bannedWords: ['dubbed'],
-      upgradeUntilSource: 'webdl',
+      cutoff: 'webdl-1080p',
     });
     expect(notes.map((note) => note.message)).toEqual([
       'The custom format Not English checks more than release names, so it wasn’t imported.',
@@ -61,7 +63,7 @@ describe('profileOf', () => {
     ]);
   });
 
-  it('says where every resolution from every source allows more than the profile did', async () => {
+  it('keeps exactly the qualities a profile allows, best first', async () => {
     const radarr = await aSetup('radarr-v5', 'radarr', 'http://radarr:7878');
     const { draft, notes } = profileOf(
       {
@@ -75,10 +77,8 @@ describe('profileOf', () => {
       { ...radarr, releaseProfiles: [] },
     );
 
-    expect(draft).toMatchObject({ resolutions: ['1080p', '720p'], sources: ['bluray', 'hdtv'] });
-    expect(notes.map((note) => note.message)).toEqual([
-      'Valence allows every selected resolution from every selected source, which is slightly less strict than before.',
-    ]);
+    expect(draft).toMatchObject({ qualities: ['bluray-1080p', 'hdtv-720p'] });
+    expect(notes).toEqual([]);
   });
 
   it('makes a Lidarr profile’s qualities Valence’s music qualities', async () => {
@@ -112,8 +112,8 @@ describe('profileOf', () => {
       { ...radarr, releaseProfiles: [] },
     );
 
-    expect(draft).not.toHaveProperty('resolutions');
-    expect(draft).toMatchObject({ isUpgrading: false, upgradeUntilResolution: null });
+    expect(draft).not.toHaveProperty('qualities');
+    expect(draft).toMatchObject({ isUpgrading: false, cutoff: null });
     expect(notes.at(-1)?.message).toBe(
       'None of its qualities match Valence’s, so Valence’s defaults are used.',
     );

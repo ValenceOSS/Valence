@@ -4,14 +4,12 @@ import { wantsUpgrade } from './wantsUpgrade';
 
 const UPGRADING = aProfile({
   isUpgrading: true,
-  resolutions: ['2160p', '1080p', '720p'],
-  sources: ['bluray', 'webdl', 'hdtv'],
-  upgradeUntilResolution: '1080p',
-  upgradeUntilSource: 'bluray',
+  qualities: ['bluray-2160p', 'webdl-2160p', 'bluray-1080p', 'webdl-1080p', 'bluray-720p'],
+  cutoff: 'bluray-1080p',
 });
 
 describe('wantsUpgrade', () => {
-  it('wants better until the resolution and source it stops at', () => {
+  it('wants better until the quality it stops at', () => {
     expect(wantsUpgrade(UPGRADING, 'Dune.2021.720p.BluRay.x264-GRP')).toBe(true);
     expect(wantsUpgrade(UPGRADING, 'Dune.2021.1080p.WEB-DL.x264-GRP')).toBe(true);
     expect(wantsUpgrade(UPGRADING, 'Dune.2021.1080p.BluRay.x264-GRP')).toBe(false);
@@ -22,8 +20,8 @@ describe('wantsUpgrade', () => {
     expect(wantsUpgrade(UPGRADING, 'Dune.2021.x264-GRP')).toBe(true);
   });
 
-  it('stops at its first choices where it names nothing to stop at', () => {
-    const profile = { ...UPGRADING, upgradeUntilResolution: null, upgradeUntilSource: null };
+  it('stops at its first quality where it names no cutoff', () => {
+    const profile = { ...UPGRADING, cutoff: null };
 
     expect(wantsUpgrade(profile, 'Dune.2021.1080p.BluRay.x264-GRP')).toBe(true);
     expect(wantsUpgrade(profile, 'Dune.2021.2160p.BluRay.x265-GRP')).toBe(false);

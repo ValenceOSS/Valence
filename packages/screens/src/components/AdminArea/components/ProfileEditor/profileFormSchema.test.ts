@@ -1,4 +1,7 @@
-import { RECOMMENDED_QUALITY_SIZES } from '@ValenceContracts/schemas/QualityProfile';
+import {
+  DEFAULT_VIDEO_QUALITIES,
+  RECOMMENDED_QUALITY_SIZES,
+} from '@ValenceContracts/schemas/QualityProfile';
 import { describe, expect, it } from 'vitest';
 import { A_NEW_PROFILE } from './readProfileForm';
 import type { ProfileForm } from './readProfileForm';
@@ -24,15 +27,13 @@ describe('profileFormSchema', () => {
         releaseWait: 'physical',
         preferredWords: 'HDR, Atmos, , /\\bdv\\b/',
         isUpgrading: true,
-        upgradeUntilResolution: '1080p',
-        upgradeUntilSource: 'bluray',
+        cutoff: 'bluray-1080p',
       }),
     ).toEqual({
       draft: {
         name: 'HD',
         kind: 'video',
-        resolutions: ['1080p', '720p'],
-        sources: ['remux', 'bluray', 'webdl', 'webrip', 'hdtv'],
+        qualities: [...DEFAULT_VIDEO_QUALITIES],
         musicQualities: ['flac', 'mp3-320', 'mp3-v0'],
         smallestMb: null,
         largestMb: null,
@@ -42,8 +43,7 @@ describe('profileFormSchema', () => {
         requiredWords: [],
         bannedWords: [],
         isUpgrading: true,
-        upgradeUntilResolution: '1080p',
-        upgradeUntilSource: 'bluray',
+        cutoff: 'bluray-1080p',
         upgradeUntilMusicQuality: null,
         libraryIds: [],
         preferredLanguage: null,
@@ -75,14 +75,14 @@ describe('profileFormSchema', () => {
   });
 
   it('forgets how far to upgrade when upgrading is off', () => {
-    expect(
-      read({ ...FILLED, isUpgrading: false, upgradeUntilResolution: '2160p' }).draft,
-    ).toMatchObject({ upgradeUntilResolution: null });
+    expect(read({ ...FILLED, isUpgrading: false, cutoff: 'bluray-1080p' }).draft).toMatchObject({
+      cutoff: null,
+    });
   });
 
   it.each<[Partial<ProfileForm>, string]>([
     [{ name: ' ' }, 'Enter a name for the profile.'],
-    [{ resolutions: [] }, 'Allow at least one resolution.'],
+    [{ qualities: [] }, 'Allow at least one quality.'],
     [{ kind: 'music', musicQualities: [] }, 'Allow at least one format.'],
     [{ kind: 'music', smallestMb: 'lots' }, 'Enter sizes in megabytes.'],
     [{ kind: 'music', largestMb: '0' }, 'Enter sizes in megabytes.'],

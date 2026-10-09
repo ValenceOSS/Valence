@@ -11,8 +11,17 @@ describe('QualityProfileDraftSchema', () => {
     expect(QualityProfileDraftSchema.parse({ name: ' HD ', kind: 'video' })).toEqual({
       name: 'HD',
       kind: 'video',
-      resolutions: ['1080p', '720p'],
-      sources: ['remux', 'bluray', 'webdl', 'webrip', 'hdtv'],
+      qualities: [
+        'remux-1080p',
+        'bluray-1080p',
+        'webdl-1080p',
+        'webrip-1080p',
+        'hdtv-1080p',
+        'bluray-720p',
+        'webdl-720p',
+        'webrip-720p',
+        'hdtv-720p',
+      ],
       musicQualities: ['flac', 'mp3-320', 'mp3-v0'],
       smallestMb: null,
       largestMb: null,
@@ -22,8 +31,7 @@ describe('QualityProfileDraftSchema', () => {
       bannedWords: [],
       isUpgrading: false,
       releaseWait: 'digital',
-      upgradeUntilResolution: null,
-      upgradeUntilSource: null,
+      cutoff: null,
       upgradeUntilMusicQuality: null,
       libraryIds: [],
       preferredLanguage: null,
@@ -46,7 +54,7 @@ describe('QualityProfileDraftSchema', () => {
 
   it('refuses a resolution or source it does not know, and an empty word', () => {
     expect(() =>
-      QualityProfileDraftSchema.parse({ name: 'x', kind: 'video', resolutions: ['8k'] }),
+      QualityProfileDraftSchema.parse({ name: 'x', kind: 'video', qualities: ['webdl-8k'] }),
     ).toThrow();
     expect(() =>
       QualityProfileDraftSchema.parse({ name: 'x', kind: 'video', bannedWords: [' '] }),

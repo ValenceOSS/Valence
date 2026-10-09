@@ -10030,11 +10030,6 @@
     "context": "Shown beside a quality profile brought in from Radarr/Sonarr (from `profileOf`). {name} is the custom format's name."
   },
   {
-    "handler": "requests.arrImport.everyResolutionIsTakenFromEverySource",
-    "text": "Valence allows every selected resolution from every selected source, which is slightly less strict than before.",
-    "context": "Shown beside a quality profile brought in from Radarr/Sonarr (from `profileOf`). A source is Blu-ray, WEB-DL and so on."
-  },
-  {
     "handler": "requests.arrImport.itListsNoHost",
     "text": "It has no host set.",
     "context": "Shown beside a download client that is not brought in from Radarr/Sonarr/Lidarr because its settings name no host (from `plannedClientsOf`)."
@@ -10820,6 +10815,11 @@
     "context": "Shown in the profiles in the requests service (from `judgeRelease`)."
   },
   {
+    "handler": "requests.profiles.judgeRelease.itDoesNotSayItsSource",
+    "text": "It doesn’t say its source, so it’s taken as {quality}",
+    "context": "Why a release was ranked where it was: its name gives a resolution but not where it came from, so it counts as the lowest quality the profile takes at that resolution. Shown in the list of releases found for a request. {quality} is a quality such as 'HDTV at 1080p'."
+  },
+  {
     "handler": "requests.profiles.judgeRelease.itHasWordWhichIsBanned",
     "text": "It has “{word}”, which is banned",
     "context": "Shown in the profiles in the requests service (from `judgeRelease`). {word} is filled in by the app."
@@ -10968,6 +10968,11 @@
     "handler": "requests.profiles.qualityNames.aWebRip",
     "text": "A web rip",
     "context": "A kind of release, starting a sentence: recorded from a streaming service as it played. Shown in the reasons a release scored or was refused."
+  },
+  {
+    "handler": "requests.profiles.qualityNames.sourceAtResolution",
+    "text": "{source} at {resolution}",
+    "context": "A combined video quality, such as 'A web download at 1080p', used where a release's quality is given, often at the start of a sentence. {source} is a source such as 'A web download' or 'Blu-ray'; {resolution} is a resolution such as 1080p."
   },
   {
     "handler": "requests.profiles.starterProfiles.anyMusic",
@@ -15910,11 +15915,6 @@
     "context": "The label of a switch in the profile editor in the admin area."
   },
   {
-    "handler": "screens.adminArea.profileEditor.andTheSourceIs",
-    "text": "And the source is",
-    "context": "The label of a choosing in the profile editor in the admin area."
-  },
-  {
     "handler": "screens.adminArea.profileEditor.anyRole",
     "text": "Any role",
     "context": "Shown in the profile editor in the admin area."
@@ -15923,11 +15923,6 @@
     "handler": "screens.adminArea.profileEditor.aReleaseNeedsAtLeastOne",
     "text": "A release must contain at least one.",
     "context": "The description of a text field in the profile editor in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.profileEditor.aReleaseThatDoesNotSay",
-    "text": "Releases that don’t specify are allowed.",
-    "context": "The description of a form field in the profile editor in the admin area."
   },
   {
     "handler": "screens.adminArea.profileEditor.aReleaseWithAnyIsRefused",
@@ -16030,14 +16025,19 @@
     "context": "The detail of a section in the profile editor in the admin area."
   },
   {
+    "handler": "screens.adminArea.profileEditor.qualities",
+    "text": "Qualities",
+    "context": "The label of the ordered list of video qualities, such as 'WEB-DL 1080p', a quality profile allows, in the profile editor under Requests › Profiles."
+  },
+  {
+    "handler": "screens.adminArea.profileEditor.releasesThatDoNotSayTheirSource",
+    "text": "A release that doesn’t give its source counts as the lowest quality allowed at its resolution.",
+    "context": "The description under the list of qualities in the profile editor, saying how a release whose name gives a resolution but not a source, such as most anime, is ranked."
+  },
+  {
     "handler": "screens.adminArea.profileEditor.requiredWords",
     "text": "Required words",
     "context": "The label of a text field in the profile editor in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.profileEditor.resolutions",
-    "text": "Resolutions",
-    "context": "The label of a ranked choices in the profile editor in the admin area."
   },
   {
     "handler": "screens.adminArea.profileEditor.searchFilmsOnceTheyAre",
@@ -16053,11 +16053,6 @@
     "handler": "screens.adminArea.profileEditor.smallestMBAnAlbum",
     "text": "Minimum (MB per album)",
     "context": "The label of a text field in the profile editor in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.profileEditor.sources",
-    "text": "Sources",
-    "context": "The label of a ranked choices in the profile editor in the admin area."
   },
   {
     "handler": "screens.adminArea.profileEditor.theBestThereIs",
@@ -16085,9 +16080,9 @@
     "context": "The label of a choosing in the profile editor in the admin area."
   },
   {
-    "handler": "screens.adminArea.profileEditor.untilTheResolutionIs",
-    "text": "Until the resolution is",
-    "context": "The label of a choosing in the profile editor in the admin area."
+    "handler": "screens.adminArea.profileEditor.untilTheQualityIs",
+    "text": "Until the quality is",
+    "context": "The label of the menu choosing the quality a profile stops upgrading at, in the profile editor's Upgrades section."
   },
   {
     "handler": "screens.adminArea.profileEditor.upgradeToABetterReleaseLater",
@@ -22651,6 +22646,11 @@
     "context": "Shown in the profile editor (from `describeSizeAnHour`). {value} is filled in by the app."
   },
   {
+    "handler": "screens.profileEditor.qualitySizes.allowAQualityToSetItsSize",
+    "text": "Allow a quality to set its size limits.",
+    "context": "Shown in the sizes section of the profile editor when the profile allows no quality with a resolution."
+  },
+  {
     "handler": "screens.profileEditor.qualitySizes.atLeastValue",
     "text": "At least {value}",
     "context": "Shown in the quality sizes in the profile editor. {value} is filled in by the app."
@@ -22686,11 +22686,6 @@
     "context": "Shown in the quality sizes in the profile editor. {name} is filled in by the app."
   },
   {
-    "handler": "screens.profileEditor.qualitySizes.tickAResolutionAndASource",
-    "text": "Select a resolution and a source to set their size limits.",
-    "context": "Text shown in the quality sizes in the profile editor."
-  },
-  {
     "handler": "screens.profileEditor.qualitySizes.useTRaSHsRecommendedSizes",
     "text": "Use TRaSH’s recommended sizes",
     "context": "The label of a button in the quality sizes in the profile editor."
@@ -22701,9 +22696,9 @@
     "context": "The problem in the profile editor (from `readProfileForm`)."
   },
   {
-    "handler": "screens.profileEditor.readProfileForm.allowAtLeastOneResolution",
-    "text": "Allow at least one resolution.",
-    "context": "The problem in the profile editor (from `readProfileForm`)."
+    "handler": "screens.profileEditor.readProfileForm.allowAtLeastOneQuality",
+    "text": "Allow at least one quality.",
+    "context": "Shown under the qualities list in the profile editor when none is ticked."
   },
   {
     "handler": "screens.profileEditor.readProfileForm.aSizeIsANumberOf",

@@ -1,22 +1,18 @@
 import { QualityProfileDraftSchema } from '@ValenceContracts/schemas/QualityProfile';
-import type {
-  MusicQuality,
-  ReleaseSource,
-  Resolution,
-} from '@ValenceContracts/schemas/ParsedRelease';
+import type { MusicQuality } from '@ValenceContracts/schemas/ParsedRelease';
 import type {
   ProfileKind,
   QualityProfile,
   QualitySize,
   ReleaseWait,
+  VideoQualityId,
 } from '@ValenceContracts/schemas/QualityProfile';
 import { say } from '@ValenceI18n/say';
 
 type ProfileForm = {
   name: string;
   kind: ProfileKind;
-  resolutions: Resolution[];
-  sources: ReleaseSource[];
+  qualities: VideoQualityId[];
   musicQualities: MusicQuality[];
   smallestMb: string;
   largestMb: string;
@@ -26,8 +22,7 @@ type ProfileForm = {
   requiredWords: string;
   bannedWords: string;
   isUpgrading: boolean;
-  upgradeUntilResolution: Resolution | null;
-  upgradeUntilSource: ReleaseSource | null;
+  cutoff: VideoQualityId | null;
   upgradeUntilMusicQuality: MusicQuality | null;
   libraryIds: string[];
   preferredLanguage: string | null;
@@ -46,8 +41,7 @@ const DEFAULTS = QualityProfileDraftSchema.parse({
 const A_NEW_PROFILE: ProfileForm = {
   name: '',
   kind: 'video',
-  resolutions: DEFAULTS.resolutions,
-  sources: DEFAULTS.sources,
+  qualities: DEFAULTS.qualities,
   musicQualities: DEFAULTS.musicQualities,
   smallestMb: '',
   largestMb: '',
@@ -57,8 +51,7 @@ const A_NEW_PROFILE: ProfileForm = {
   requiredWords: '',
   bannedWords: '',
   isUpgrading: false,
-  upgradeUntilResolution: null,
-  upgradeUntilSource: null,
+  cutoff: null,
   upgradeUntilMusicQuality: null,
   libraryIds: [],
   preferredLanguage: null,
@@ -79,8 +72,7 @@ const formFor = (profile: QualityProfile | null): ProfileForm =>
     : {
         name: profile.name,
         kind: profile.kind,
-        resolutions: profile.resolutions,
-        sources: profile.sources,
+        qualities: profile.qualities,
         musicQualities: profile.musicQualities,
         smallestMb: profile.smallestMb?.toString() ?? '',
         largestMb: profile.largestMb?.toString() ?? '',
@@ -90,8 +82,7 @@ const formFor = (profile: QualityProfile | null): ProfileForm =>
         requiredWords: profile.requiredWords.join(', '),
         bannedWords: profile.bannedWords.join(', '),
         isUpgrading: profile.isUpgrading,
-        upgradeUntilResolution: profile.upgradeUntilResolution,
-        upgradeUntilSource: profile.upgradeUntilSource,
+        cutoff: profile.cutoff,
         upgradeUntilMusicQuality: profile.upgradeUntilMusicQuality,
         libraryIds: profile.libraryIds,
         preferredLanguage: profile.preferredLanguage,

@@ -3,6 +3,7 @@ import { createMemoryRecordStore } from '@ValenceRequests/stores/createMemoryRec
 import { createProfileService } from '@ValenceRequests/profiles/createProfileService';
 import { seedStarterProfiles } from '@ValenceRequests/profiles/seedStarterProfiles';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
+import { DEFAULT_VIDEO_QUALITIES } from '@ValenceContracts/schemas/QualityProfile';
 
 const aSeeding = (seededBefore: string[] = []) => {
   const profiles = createProfileService({ store: createMemoryRecordStore<QualityProfile>() });
@@ -52,8 +53,14 @@ describe('seedStarterProfiles', () => {
 
     const byName = new Map((await profiles.list()).map((profile) => [profile.name, profile]));
 
-    expect(byName.get('4K')?.resolutions).toEqual(['2160p']);
-    expect(byName.get('1080p or 720p')?.resolutions).toEqual(['1080p', '720p']);
+    expect(byName.get('4K')?.qualities).toEqual([
+      'remux-2160p',
+      'bluray-2160p',
+      'webdl-2160p',
+      'webrip-2160p',
+      'hdtv-2160p',
+    ]);
+    expect(byName.get('1080p or 720p')?.qualities).toEqual(DEFAULT_VIDEO_QUALITIES);
     expect(byName.get('Lossless')?.musicQualities).toEqual(['flac24', 'flac', 'alac']);
     expect(byName.get('MP3 320')?.musicQualities).toEqual(['mp3-320', 'mp3-v0', 'aac']);
     expect(byName.get('Any music')?.musicQualities).toHaveLength(10);
@@ -109,10 +116,14 @@ describe('seedStarterProfiles', () => {
 
   it('leaves alone a profile whose name an operator has already taken, and stops offering it', async () => {
     const { profiles, seed, names } = aSeeding();
-    const mine = await profiles.add({ name: '4K', kind: 'video', resolutions: ['1080p'] });
+    const mine = await profiles.add({
+      name: '4K',
+      kind: 'video',
+      qualities: ['remux-1080p', 'bluray-1080p', 'webdl-1080p', 'webrip-1080p', 'hdtv-1080p'],
+    });
 
     expect(await seed()).not.toContain('4K');
-    expect((await profiles.find(mine.id))?.resolutions).toEqual(['1080p']);
+    expect((await profiles.find(mine.id))?.qualities).toHaveLength(5);
     expect(names()).toContain('4K');
   });
 
