@@ -25,11 +25,13 @@ import { say } from '@ValenceI18n/say';
  * rather than guessing again from the filename.
  *
  * @param media - The item being corrected, or null when the picker is closed.
+ * @param isInShows - Whether it sits in a library of shows, so is an episode whatever the scan has
+ *   made of it so far: one not matched yet has no series to say so.
  * @param onClose - Called when it is dismissed.
  * @param onCorrected - Called once a correction is recorded, with the job refetching its details.
  */
-const MatchPicker = ({ media, onClose, onCorrected }: MatchPickerProps) => {
-  const isEpisode = media?.seriesTitle !== null && media?.seriesTitle !== undefined;
+const MatchPicker = ({ media, isInShows = false, onClose, onCorrected }: MatchPickerProps) => {
+  const isEpisode = isInShows || (media?.seriesTitle !== null && media?.seriesTitle !== undefined);
   const kind = isEpisode ? ('tv' as const) : ('movie' as const);
 
   const [query, setQuery] = useState('');
