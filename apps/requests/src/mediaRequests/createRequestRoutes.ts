@@ -263,15 +263,23 @@ const createRequestRoutes = ({ service, handOff, log, worker }: CreateRequestRou
   routes.post('/requests/:id/retry', async (context) => {
     const id = context.req.param('id');
 
-    if (handOff !== undefined && (await handOff.searchNow(id))) {
-      return answer(await service.find(id));
+    const handedOff = handOff === undefined ? 'notHandedOff' : await handOff.searchNow(id);
+
+    if (handedOff === 'notApproved') {
+      return context.json(refuse('error.requests.itIsNotApprovedSoNothingIsSearched'), 409);
+    }
+
+    if (handedOff === 'failed') {
+      return context.json(refuse('error.requests.theAppCouldNotSearchForIt'), 409);
     }
 
     return answer(
-      await service.retry(
-        id,
-        readSearchScope(context.req.query('season'), context.req.query('episode')),
-      ),
+      handedOff === 'searched'
+        ? await service.find(id)
+        : await service.retry(
+            id,
+            readSearchScope(context.req.query('season'), context.req.query('episode')),
+          ),
     );
   });
 
