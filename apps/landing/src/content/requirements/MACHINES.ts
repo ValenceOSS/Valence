@@ -73,7 +73,8 @@ const MACHINES: readonly Machine[] = [
   {
     id: 'windows',
     name: 'A Windows PC',
-    examples: 'Any x86 Windows machine with Intel, AMD or NVIDIA graphics, or a Snapdragon Windows on Arm laptop',
+    examples:
+      'Any x86 Windows machine with Intel, AMD or NVIDIA graphics, or a Snapdragon Windows on Arm laptop',
     acceleration: 'QuickSync, AMF, NVENC or Media Foundation',
     support: 'native',
     body: 'Docker Desktop runs the stack. Inside the container only NVIDIA’s encoder can be reached, so the transcoder runs natively on Windows to use Intel, AMD or NVIDIA graphics, and Media Foundation on Windows on Arm.',

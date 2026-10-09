@@ -438,7 +438,9 @@ const ProfilesPanel = () => {
                 columns={
                   kind.id === 'all' ? columns : columns.filter((column) => column.id !== 'kind')
                 }
-                rows={profiles.data.filter((profile) => kind.id === 'all' || profile.kind === kind.id)}
+                rows={profiles.data.filter(
+                  (profile) => kind.id === 'all' || profile.kind === kind.id,
+                )}
                 getRowId={(profile) => profile.id}
                 onReorder={(ids) => {
                   void putInOrder(ids);

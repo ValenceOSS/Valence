@@ -90,7 +90,9 @@ const fetchSubtitleRoute = createRoute({
       },
     },
     400: refused('No key is saved for that site'),
-    403: refused('Not somebody who may change what the library holds, or the disk would not let it'),
+    403: refused(
+      'Not somebody who may change what the library holds, or the disk would not let it',
+    ),
     404: refused('No such item'),
     502: refused('The site would not give it, such as when the day’s downloads are used up'),
   },

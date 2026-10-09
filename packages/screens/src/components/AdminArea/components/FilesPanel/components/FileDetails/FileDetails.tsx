@@ -40,12 +40,7 @@ const sizeOf = (measure: FolderMeasure | undefined): string =>
  * @param shownPath - Writes a path as it is shown, from inside its library.
  * @param onClear - Chooses nothing.
  */
-const FileDetails = ({
-  where,
-  selected,
-  shownPath,
-  onClear,
-}: FileDetailsProps) => {
+const FileDetails = ({ where, selected, shownPath, onClear }: FileDetailsProps) => {
   const only = selected.length === 1 ? (selected[0] ?? null) : null;
   const measuredPath =
     only === null
@@ -171,7 +166,6 @@ const FileDetails = ({
           </p>
         </>
       )}
-
     </aside>
   );
 };

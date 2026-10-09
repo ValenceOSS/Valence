@@ -116,8 +116,8 @@ const RequirementsPage = () => (
           <div className="flex flex-col gap-2 rounded-2xl border border-border/60 p-5">
             <h3 className="font-semibold text-text">HTTPS</h3>
             <p className="text-sm leading-relaxed text-text-muted">
-              A reverse proxy or tunnel in front. Passkeys and secure cookies need a secure
-              address, so plain HTTP is only for trying it out.
+              A reverse proxy or tunnel in front. Passkeys and secure cookies need a secure address,
+              so plain HTTP is only for trying it out.
             </p>
           </div>
         </div>
