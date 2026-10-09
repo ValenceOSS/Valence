@@ -59,4 +59,14 @@ describe('profileChangeOf', () => {
       },
     });
   });
+
+  it('keeps both versions of a film where the library says so, and asks for anything else', () => {
+    expect(profileChangeOf(KEPT, anAsk(UHD.id, 'both'), PROFILES)).toEqual({ versions: [UHD.id] });
+    expect(
+      profileChangeOf({ ...KEPT, versions: [UHD.id] }, anAsk(UHD.id, 'both'), PROFILES),
+    ).toEqual({});
+    expect(
+      profileChangeOf({ ...KEPT, kind: 'series' }, anAsk(UHD.id, 'both'), PROFILES),
+    ).toMatchObject({ profileAsk: { profileId: UHD.id } });
+  });
 });

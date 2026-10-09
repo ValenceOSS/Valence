@@ -376,15 +376,27 @@ const createRequestService = ({
         return null;
       }
 
+      const asked = kept.profileAsk.profileId;
       const record = await requests.update(id, {
-        ...(decision.choice === 'switch' ? { profileId: kept.profileAsk.profileId } : {}),
+        ...(decision.choice === 'switch' ? { profileId: asked } : {}),
+        ...(decision.choice === 'both' && !(kept.versions ?? []).includes(asked)
+          ? { versions: [...(kept.versions ?? []), asked] }
+          : {}),
         profileAsk: null,
         updatedAt: now().toISOString(),
       });
 
+      if (record === null) {
+        return null;
+      }
+
+      if (decision.choice === 'both') {
+        await sync(record, { episodes: [], albums: [] }, null);
+      }
+
       onChange();
 
-      return record === null ? null : shown(record);
+      return shown(record);
     },
 
     approve: (id: string): Promise<MediaRequest | null> =>
@@ -582,8 +594,19 @@ const createRequestService = ({
       }
 
       const shownNow = await changed(id, { mediaId });
+      const versionsArrived = filed.flatMap((item) =>
+        item.versionProfileId === null || item.versionProfileId === undefined
+          ? []
+          : [item.versionProfileId],
+      );
 
-      return shownNow === null ? null : { request: shownNow, newlyAvailable: filed.length };
+      return shownNow === null
+        ? null
+        : {
+            request: shownNow,
+            newlyAvailable: filed.length - versionsArrived.length,
+            versionsArrived,
+          };
     },
 
     arrivedInLibrary: async (
@@ -598,6 +621,10 @@ const createRequestService = ({
       }
 
       const isHeld = (item: RequestItemRecord): boolean => {
+        if (item.versionProfileId !== null && item.versionProfileId !== undefined) {
+          return item.state === 'filed';
+        }
+
         if (item.musicBrainzId !== null) {
           return (arrivals.albums ?? []).includes(item.musicBrainzId);
         }
@@ -630,7 +657,19 @@ const createRequestService = ({
           ? await shown(record)
           : await changed(id, { mediaId: arrivals.mediaId });
 
-      return shownNow === null ? null : { request: shownNow, newlyAvailable: arriving.length };
+      const versionsArrived = arriving.flatMap((item) =>
+        item.versionProfileId === null || item.versionProfileId === undefined
+          ? []
+          : [item.versionProfileId],
+      );
+
+      return shownNow === null
+        ? null
+        : {
+            request: shownNow,
+            newlyAvailable: arriving.length - versionsArrived.length,
+            versionsArrived,
+          };
     },
 
     left: async (id: string, mediaId: string | null): Promise<MediaRequest | null> => {

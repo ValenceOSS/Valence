@@ -363,6 +363,33 @@ describe('createRequestWorker', () => {
       );
     });
 
+    it('fetches each version of a film by its own profile', async () => {
+      const uhd = aProfile({
+        id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+        name: 'UHD',
+        qualities: ['bluray-2160p', 'webdl-2160p'],
+      });
+      const uhdRelease = 'Dune.2021.2160p.BluRay.x265-GRP';
+      const { worker, send } = aWorker({
+        requests: [aMediaRequest({ versions: [uhd.id] })],
+        items: [
+          aRequestItem({ id: 'main', state: 'wanted' }),
+          aRequestItem({ id: 'uhd', state: 'wanted', versionProfileId: uhd.id }),
+        ],
+        profiles: [
+          aProfile({ qualities: ['bluray-1080p', 'webdl-1080p'], libraryIds: ['films'] }),
+          uhd,
+        ],
+        found: () => [aRelease(WEB), aRelease(BLURAY), aRelease(uhdRelease)],
+      });
+
+      await worker.tick();
+
+      expect(send.mock.calls.map(([release]) => release.title).toSorted()).toEqual(
+        [BLURAY, uhdRelease].toSorted(),
+      );
+    });
+
     it('leaves a request waiting on approval alone', async () => {
       const { worker, searched } = aWorker({
         requests: [aMediaRequest({ approval: 'awaiting' })],

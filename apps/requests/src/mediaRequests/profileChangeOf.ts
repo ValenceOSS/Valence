@@ -11,7 +11,8 @@ import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaReq
  * Its only asker asking again at another profile changes it, as it always did. Somebody else asking
  * at the same profile or a lower one just joins: one person's ask never quietly downgrades another's.
  * Somebody asking at a higher one — higher in the operator's order — goes the way the library says:
- * the request moves up to it, stays where it is, or waits for the operator to say which.
+ * the request moves up to it, stays where it is, keeps both versions where it is a film, or waits for
+ * the operator to say which — as a film keeping both would where it is not one.
  *
  * @param kept - The request kept.
  * @param draft - The later ask.
@@ -43,6 +44,20 @@ const profileChangeOf = (
       return { profileId: asked.id, profileAsk: null };
     case 'keep':
       return {};
+    case 'both':
+      if (kept.kind === 'film') {
+        return (kept.versions ?? []).includes(asked.id)
+          ? {}
+          : { versions: [...(kept.versions ?? []), asked.id] };
+      }
+
+      return {
+        profileAsk: {
+          asker: { id: draft.requestedBy.id, name: draft.requestedBy.name },
+          profileId: asked.id,
+          profileName: asked.name,
+        },
+      };
     case 'ask':
       return {
         profileAsk: {

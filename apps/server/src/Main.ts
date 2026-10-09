@@ -2852,6 +2852,10 @@ const sayARequestArrived = async (
   if (arrived.value.newlyAvailable > 0) {
     await tellOfArrival(arrived.value.request, mediaId);
   }
+
+  for (const version of arrived.value.versionsArrived) {
+    await tellOfVersion(arrived.value.request, version, mediaId);
+  }
 };
 
 const heldEpisodes = createDatabaseHeldEpisodes(db);
@@ -2882,8 +2886,16 @@ const matchArrivedRequests = async (): Promise<void> => {
   })) {
     const arrived = await requestsClient.requestArrivedInLibrary(request.id, arrivals);
 
-    if (arrived.kind === 'answered' && arrived.value.newlyAvailable > 0) {
+    if (arrived.kind !== 'answered') {
+      continue;
+    }
+
+    if (arrived.value.newlyAvailable > 0) {
       await tellOfArrival(arrived.value.request, arrivals.mediaId);
+    }
+
+    for (const version of arrived.value.versionsArrived) {
+      await tellOfVersion(arrived.value.request, version, arrivals.mediaId);
     }
   }
 };
@@ -3058,6 +3070,47 @@ const tellOfArrival = async (filed: MediaRequest, mediaId: string): Promise<void
       }),
     );
   }
+};
+
+/**
+ * Tells those who asked for a film at the profile a further version of it was kept at that this
+ * version is here too — and nobody else, who were told when it first arrived.
+ *
+ * @param filed - The request.
+ * @param profileId - The profile the version arrived at.
+ * @param mediaId - The film.
+ */
+const tellOfVersion = async (
+  filed: MediaRequest,
+  profileId: string,
+  mediaId: string,
+): Promise<void> => {
+  const askers = filed.alsoAskedBy.filter((asker) => asker.profileId === profileId);
+  const profile = askers.find((asker) => asker.profileName !== undefined)?.profileName ?? '';
+
+  if (askers.length === 0) {
+    return;
+  }
+
+  await notifyHousehold({
+    store: notifications,
+    event: 'requests.available',
+    title: saying('server.main.titleIsReady', { title: filed.title }),
+    body: saying('server.main.titleIsNowAlsoInProfile', { title: filed.title, profile }),
+    link: LINKS_TO_ARRIVALS[filed.kind](mediaId),
+    vapid: await readPushKeys(),
+    only: askers.map((asker) => asker.id),
+    onProblem: (reason) => {
+      log.error('requests', `telling those who asked for ${filed.title} again: ${reason}`);
+    },
+    announce: (userIds) => {
+      realtime.publish(
+        'notifications',
+        { event: 'requests.available' },
+        { kind: 'accounts', accountIds: [...userIds] },
+      );
+    },
+  });
 };
 
 /**

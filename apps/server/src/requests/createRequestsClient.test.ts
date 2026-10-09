@@ -1016,7 +1016,7 @@ describe('createRequestsClient with requests for films and series', () => {
 
     expect(await client.requestArrived(REQUEST.id, 'media-1')).toEqual({
       kind: 'answered',
-      value: { request: REQUEST, newlyAvailable: 1 },
+      value: { request: REQUEST, newlyAvailable: 1, versionsArrived: [] },
     });
     expect(fetch.mock.calls.map(([url, init]) => `${init.method ?? 'GET'} ${url}`)).toEqual([
       `POST http://requests:8421/api/requests/${REQUEST.id}/arrived`,

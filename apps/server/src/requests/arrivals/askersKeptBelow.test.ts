@@ -60,6 +60,20 @@ describe('askersKeptBelow', () => {
     ).toEqual(['Priya']);
   });
 
+  it('leaves out whoever asked at a profile kept as a further version', () => {
+    expect(
+      askersKeptBelow(
+        {
+          profileId: HD,
+          profileName: 'HD 1080p',
+          versions: [UHD],
+          alsoAskedBy: [{ id: 'p', name: 'Priya', profileId: UHD, profileName: 'UHD 4K' }],
+        },
+        PROFILES,
+      ),
+    ).toEqual([]);
+  });
+
   it('finds nobody where the profile it was fetched with is not known', () => {
     expect(
       askersKeptBelow(

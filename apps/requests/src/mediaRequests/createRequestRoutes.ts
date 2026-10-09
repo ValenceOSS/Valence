@@ -172,9 +172,17 @@ const createRequestRoutes = ({ service, handOff, log, worker }: CreateRequestRou
   routes.post('/requests/:id/profile-ask', async (context) => {
     const decision = await readBody(context.req.raw, ProfileAskDecisionSchema);
 
-    return decision === null
-      ? context.json(refuse('error.requests.sayWhetherToSwitchOrKeep'), 400)
-      : answer(await service.decideProfileAsk(context.req.param('id'), decision));
+    if (decision === null) {
+      return context.json(refuse('error.requests.sayWhetherToSwitchOrKeep'), 400);
+    }
+
+    const kept = await service.find(context.req.param('id'));
+
+    if (decision.choice === 'both' && kept !== null && kept.kind !== 'film') {
+      return context.json(refuse('error.requests.onlyAFilmIsKeptInTwoVersions'), 400);
+    }
+
+    return answer(await service.decideProfileAsk(context.req.param('id'), decision));
   });
 
   routes.post('/requests/:id/approve', async (context) =>

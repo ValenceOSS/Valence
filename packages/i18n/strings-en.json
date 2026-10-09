@@ -8725,6 +8725,11 @@
     "context": "An error the server answers with in the media requests in the requests service (from `createRequestRoutes`)."
   },
   {
+    "handler": "error.requests.onlyAFilmIsKeptInTwoVersions",
+    "text": "Only a film can be kept in two versions.",
+    "context": "Error when somebody tries to keep both versions of something that isn't a film."
+  },
+  {
     "handler": "error.requests.pickingAReleaseIsForWhoever",
     "text": "Only request managers can choose a release.",
     "context": "An error the server answers with (HTTP 403) in the app on the server (from `serveRequests`)."
@@ -14895,6 +14900,11 @@
     "context": "Text shown in the library settings dialog in the admin area."
   },
   {
+    "handler": "screens.adminArea.librarySettingsDialog.keepBothVersions",
+    "text": "Keep both versions",
+    "context": "Option of the higher-quality requests setting, for film libraries only: the higher-quality version is fetched beside the one asked for first."
+  },
+  {
     "handler": "screens.adminArea.librarySettingsDialog.keepNewEpisodesWithTheShow",
     "text": "Keep new episodes with the show",
     "context": "The label of a switch in the library settings dialog in the admin area, for a library of shows."
@@ -17770,6 +17780,11 @@
     "context": "Said once a title, season or album is followed. {name} is what."
   },
   {
+    "handler": "screens.adminArea.titlePage.gettingBothVersions",
+    "text": "Getting both versions",
+    "context": "Toast after the operator chooses to keep both versions of a film, the one being fetched and the higher-quality one asked for."
+  },
+  {
     "handler": "screens.adminArea.titlePage.handedToNote.handledByName",
     "text": "Handled by {name}",
     "context": "Accessible name of the note on an admin title page whose library hands requests to a connected app such as Sonarr. {name} is the app's name."
@@ -17873,6 +17888,11 @@
     "handler": "screens.adminArea.titlePage.profileAskCard.aHigherQualityAsk",
     "text": "A higher-quality request",
     "context": "Accessible name of the notice on an admin title page when somebody asked for the title at a higher quality profile."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.profileAskCard.getBoth",
+    "text": "Get both",
+    "context": "Button on a film's higher-quality notice: keeps the version being fetched and fetches the higher-quality one beside it."
   },
   {
     "handler": "screens.adminArea.titlePage.profileAskCard.keepProfile",
@@ -26624,6 +26644,11 @@
     "handler": "server.main.titleHasBeenPreparedAndThe",
     "text": "{title} is ready and is downloading to the device you requested it on.",
     "context": "The body in the main on the server. {title} is filled in by the app."
+  },
+  {
+    "handler": "server.main.titleIsNowAlsoInProfile",
+    "text": "{title} is now also in {profile}.",
+    "context": "Notification to whoever asked for a film at a higher quality profile, when that second version of it arrives beside the first. {profile} is the profile's name, such as UHD 4K."
   },
   {
     "handler": "server.main.titleIsOnName",

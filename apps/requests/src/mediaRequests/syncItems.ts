@@ -8,7 +8,7 @@ import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestIt
 
 type ItemDraft = Pick<
   RequestItemRecord,
-  'musicBrainzId' | 'season' | 'episode' | 'format' | 'title' | 'airDate'
+  'musicBrainzId' | 'season' | 'episode' | 'format' | 'versionProfileId' | 'title' | 'airDate'
 > & { state: Extract<RequestItemRecord['state'], 'waiting' | 'available'> };
 
 type ItemChanges = {
@@ -35,10 +35,10 @@ const isHeld = (
 ): boolean => held.some((one) => one.season === season && one.episode === episode);
 
 /**
- * Everything a request asks for, by what the catalogue says: the film, the episodes of the seasons
- * asked for, the artist's albums of the kinds asked for, the album, or the book, once in each
- * format asked for — the ebook, the audiobook or both — each wanted at once, since a book has no
- * release to wait for.
+ * Everything a request asks for, by what the catalogue says: the film, and each further version of
+ * it kept at a profile of its own; the episodes of the seasons asked for; the artist's albums of the
+ * kinds asked for; the album; or the book, once in each format asked for — the ebook, the
+ * audiobook or both — each wanted at once, since a book has no release to wait for.
  *
  * An episode the library already holds is asked for as already there, so nothing searches for it.
  *
@@ -60,6 +60,7 @@ const wantedOf = (
     | 'musicBrainzId'
     | 'releaseTypes'
     | 'bookFormats'
+    | 'versions'
   >,
   catalogue: Pick<RequestCatalogue, 'episodes' | 'albums'>,
   waitFor: ReleaseWait,
@@ -67,16 +68,15 @@ const wantedOf = (
 ): ItemDraft[] => {
   switch (request.kind) {
     case 'film':
-      return [
-        {
-          musicBrainzId: null,
-          season: null,
-          episode: null,
-          title: request.title,
-          airDate: releaseDateOf(request, waitFor),
-          state: 'waiting',
-        },
-      ];
+      return [null, ...(request.versions ?? [])].map((versionProfileId) => ({
+        musicBrainzId: null,
+        season: null,
+        episode: null,
+        versionProfileId,
+        title: request.title,
+        airDate: releaseDateOf(request, waitFor),
+        state: 'waiting',
+      }));
     case 'series':
       return catalogue.episodes
         .filter((episode) => isSeasonWanted(request, episode.season))
@@ -146,6 +146,7 @@ const syncItems = (
     | 'musicBrainzId'
     | 'releaseTypes'
     | 'bookFormats'
+    | 'versions'
   >,
   catalogue: Pick<RequestCatalogue, 'episodes' | 'albums'>,
   items: readonly RequestItemRecord[],
@@ -153,9 +154,11 @@ const syncItems = (
   held: readonly HeldEpisode[] = [],
 ): ItemChanges => {
   const wanted = wantedOf(request, catalogue, waitFor, held);
-  const keyOf = (item: Pick<ItemDraft, 'musicBrainzId' | 'season' | 'episode' | 'format'>) =>
+  const keyOf = (
+    item: Pick<ItemDraft, 'musicBrainzId' | 'season' | 'episode' | 'format' | 'versionProfileId'>,
+  ) =>
     item.musicBrainzId ??
-    `${item.season?.toString() ?? '-'}x${item.episode?.toString() ?? '-'}${item.format ?? ''}`;
+    `${item.season?.toString() ?? '-'}x${item.episode?.toString() ?? '-'}${item.format ?? ''}${item.versionProfileId ?? ''}`;
   const kept = new Map(items.map((item) => [keyOf(item), item]));
   const wantedKeys = new Set(wanted.map(keyOf));
 

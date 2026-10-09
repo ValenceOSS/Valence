@@ -669,6 +669,47 @@ describe('createRequestService', () => {
     expect(await service.retry('missing')).toBeNull();
   });
 
+  it('keeps both versions of a film, each arriving on its own and only once filed', async () => {
+    const requests = createMemoryRecordStore<MediaRequestRecord>();
+    const items = createMemoryRecordStore<RequestItemRecord>();
+    const uhd = aProfile({ id: '3fa85f64-5717-4562-b3fc-2c963f66afa6', name: 'UHD', position: 0 });
+    const hd = aProfile({ id: '3fa85f64-5717-4562-b3fc-2c963f66afa7', name: 'HD', position: 1 });
+    const service = createRequestService({
+      requests,
+      items,
+      profiles: { list: () => Promise.resolve([uhd, hd]) },
+      now: () => AT,
+    });
+    const { request } = await service.add({ ...DUNE, profileId: hd.id, isApproved: true });
+
+    await service.add({ ...DUNE, profileId: uhd.id, requestedBy: { id: 'priya', name: 'Priya' } });
+
+    const both = await service.decideProfileAsk(request.id, { choice: 'both' });
+
+    expect(both?.versions).toEqual([uhd.id]);
+    expect(both?.items.map((item) => item.versionProfileId ?? null)).toEqual([null, uhd.id]);
+
+    const [first, version] = await items.list();
+
+    await items.update(first?.id ?? '', { state: 'filed' });
+
+    expect(
+      await service.arrivedInLibrary(request.id, {
+        mediaId: 'media-1',
+        episodes: null,
+        albums: null,
+      }),
+    ).toMatchObject({ request: { state: 'available' }, newlyAvailable: 1, versionsArrived: [] });
+    expect((await items.find(version?.id ?? ''))?.state).not.toBe('available');
+
+    await items.update(version?.id ?? '', { state: 'filed' });
+
+    expect(await service.arrived(request.id, 'media-1')).toMatchObject({
+      newlyAvailable: 0,
+      versionsArrived: [uhd.id],
+    });
+  });
+
   it('follows a request’s item to another the library found it as', async () => {
     const { service, items } = aService();
     const { request } = await service.add({ ...DUNE, isApproved: true });
