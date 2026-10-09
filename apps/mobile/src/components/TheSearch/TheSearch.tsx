@@ -9,6 +9,8 @@ import { SegmentedRow } from '@ValenceMobile/components/SegmentedRow/SegmentedRo
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { Asked } from '@ValenceMobile/components/TheSearch/components/Asked/Asked';
 import { Discovered } from '@ValenceMobile/components/TheSearch/components/Discovered/Discovered';
+import { TheDiscoverPointer } from '@ValenceMobile/components/TheSearch/components/TheDiscoverPointer/TheDiscoverPointer';
+import { TheDiscoverResults } from '@ValenceMobile/components/TheSearch/components/TheDiscoverResults/TheDiscoverResults';
 import { TheResults } from '@ValenceMobile/components/TheSearch/components/TheResults/TheResults';
 import { TheSearchBox } from '@ValenceMobile/components/TheSearch/components/TheSearchBox/TheSearchBox';
 import { TheBookResults } from '@ValenceMobile/components/TheSearch/components/TheBookResults/TheBookResults';
@@ -33,8 +35,8 @@ const SIDES = [
 
 /**
  * Looks through every library at once, as the web's search does, for everything or for films,
- * programmes, music or books alone — and, for somebody who may ask for things, through the catalogue for what the
- * library does not have yet.
+ * programmes, music or books alone — and, for somebody who may ask for things, points to what
+ * Discover has of the same name that the library does not, to show in its place.
  *
  * Before anything is typed it is where somebody who may ask for things finds something new — what
  * is trending, popular and coming — and follows what has been asked for until it arrives, so that
@@ -77,6 +79,7 @@ const TheSearch = ({
   const isTypedAbove = typedAbove !== undefined;
   const searchingFor = typedAbove ?? typedHere;
   const [kind, setKind] = useState<string>('everything');
+  const [discoveringFor, setDiscoveringFor] = useState<string | null>(null);
   const howFarThrough = useMemo(() => {
     const howFar = byMediaId(watched.data ?? []);
 
@@ -138,6 +141,14 @@ const TheSearch = ({
             )}
           </>
         )
+      ) : onAsk !== null && discoveringFor === searchingFor ? (
+        <TheDiscoverResults
+          asked={searchingFor}
+          onAsk={onAsk}
+          onBack={() => {
+            setDiscoveringFor(null);
+          }}
+        />
       ) : (
         <>
           <SegmentedRow
@@ -156,7 +167,6 @@ const TheSearch = ({
               howFarThrough={howFarThrough}
               onLookAt={onLookAt}
               onLookAtShow={onLookAtShow}
-              onAsk={onAsk}
             />
           )}
 
@@ -173,6 +183,10 @@ const TheSearch = ({
           {hasBooks && (kind === 'everything' || kind === 'books') ? (
             <TheBookResults asked={searchingFor} isOnItsOwn={kind === 'books'} onBook={onBook} />
           ) : null}
+
+          {onAsk === null || kind === 'music' || kind === 'books' ? null : (
+            <TheDiscoverPointer asked={searchingFor} onDiscover={setDiscoveringFor} />
+          )}
         </>
       )}
     </Screen>

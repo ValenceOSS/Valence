@@ -40,7 +40,6 @@ const theResults = (onLookAt = jest.fn(), onLookAtShow = jest.fn()) =>
       howFarThrough={() => 0}
       onLookAt={onLookAt}
       onLookAtShow={onLookAtShow}
-      onAsk={null}
     />,
   );
 

@@ -534,6 +534,7 @@ const ENGLISH = {
   'common.backBackSecondsSeconds': 'Back {backSeconds} seconds',
   'common.background': 'Background',
   'common.backgroundOpacity': 'Background opacity',
+  'common.backToLibraryResults': 'Back to library results',
   'common.backupCode': 'Backup code',
   'common.bitrate': 'Bitrate',
   'common.block': 'Block',

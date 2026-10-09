@@ -12,8 +12,15 @@ import type { AProgrammeBySeriesProps } from './AProgrammeBySeries.types';
  * @param onWatch - Told to play an episode, and from where.
  * @param onLookAt - Told to open an episode's own page.
  * @param onBack - Told somebody is done with it.
+ * @param onRequestMore - Told to open the programme's catalogue page to ask for more of it.
  */
-const AProgrammeBySeries = ({ seriesId, onWatch, onLookAt, onBack }: AProgrammeBySeriesProps) => {
+const AProgrammeBySeries = ({
+  seriesId,
+  onWatch,
+  onLookAt,
+  onBack,
+  onRequestMore,
+}: AProgrammeBySeriesProps) => {
   const sought = useTheProgrammeOf(seriesId);
 
   return sought === null ? (
@@ -27,6 +34,7 @@ const AProgrammeBySeries = ({ seriesId, onWatch, onLookAt, onBack }: AProgrammeB
       onWatch={onWatch}
       onLookAt={onLookAt}
       onBack={onBack}
+      {...(onRequestMore === undefined ? {} : { onRequestMore })}
     />
   );
 };

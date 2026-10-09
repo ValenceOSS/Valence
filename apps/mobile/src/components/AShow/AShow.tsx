@@ -1,4 +1,12 @@
-import { CircleCheck, Download, EyeOff, Film, ListVideo, Share } from '@keyline-icons/react-native';
+import {
+  CircleCheck,
+  Download,
+  EyeOff,
+  Film,
+  ListVideo,
+  Plus,
+  Share,
+} from '@keyline-icons/react-native';
 import {
   CircleCheck as CircleCheckFilled,
   Play as PlayFilled,
@@ -13,6 +21,7 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
+import { isShowMissingEpisodes } from '@ValenceClient/library/isShowMissingEpisodes';
 import { laySeasonsOut } from '@ValenceClient/library/laySeasonsOut';
 import { nameSeason } from '@ValenceClient/library/nameSeason';
 import { pickUpFrom } from '@ValenceClient/library/pickUpFrom';
@@ -43,6 +52,7 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { AShowProps } from './AShow.types';
 import { say } from '@ValenceI18n/say';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
+import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
 import { sayCount } from '@ValenceI18n/sayCount';
 import { ABadgeRow } from '@ValenceMobile/components/ABadgeRow/ABadgeRow';
 import { AChoiceMenu } from '@ValenceMobile/components/AChoiceMenu/AChoiceMenu';
@@ -68,7 +78,8 @@ const styles = StyleSheet.create({
  * A programme, as the web's page about one: what it is and how it stands, a button that picks up
  * wherever somebody is in it, its trailer, hiding it, your stars and the household's, and its
  * seasons — the ones the library is missing among them, and each season's missing episodes in
- * their places, with when they air.
+ * their places, with when they air — and, for somebody who may ask for programmes, a way to ask for
+ * the aired episodes the library is missing.
  *
  * It opens on the season somebody is part way through, or the one after the last they finished.
  *
@@ -77,13 +88,17 @@ const styles = StyleSheet.create({
  * @param onWatch - Told to play an episode, and from where.
  * @param onLookAt - Told to open an episode's own page.
  * @param onBack - Told somebody is done with it.
+ * @param onRequestMore - Told to open the programme's catalogue page to ask for more of it.
  */
-const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => {
+const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack, onRequestMore }: AShowProps) => {
   const asking = useQuery(libraryQueries.show(libraryId, showId));
   const [sharing, setSharing] = useState<ShareSubject | null>(null);
   const watched = useQuery(viewingQueries.progress());
   const colours = useTheColours();
-  const mayShare = useWhatIMayDo().may('sharing.link');
+  const { may } = useWhatIMayDo();
+  const mayShare = may('sharing.link');
+  const kinds = useRequestableKinds();
+  const mayAskForProgrammes = may('requests.ask') && kinds.has('series');
   const watching = useWatchingProfile();
   const hiding = useHidden(watching);
   const [chosen, setChosen] = useState<number | null | undefined>(undefined);
@@ -193,6 +208,7 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
   const trailer = (show.extras ?? []).find((extra) => extra.extraKind === 'trailer') ?? null;
   const trailerKey = show.trailerKey ?? null;
   const next = show.nextEpisode ?? null;
+  const tmdbId = show.tmdbId ?? null;
   const facts = [
     show.year === null || show.year === undefined ? null : show.year.toString(),
     sayCount('common.count.seasons', show.seasonCount),
@@ -326,6 +342,21 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
           </View>
         </Button>
       </View>
+
+      {onRequestMore === undefined ||
+      !mayAskForProgrammes ||
+      tmdbId === null ||
+      !isShowMissingEpisodes(show, today) ? null : (
+        <Button
+          tone="quiet"
+          icon={Plus}
+          onPress={() => {
+            onRequestMore(tmdbId);
+          }}
+        >
+          {say('common.requestMore')}
+        </Button>
+      )}
 
       <AShareSheet
         subject={sharing}

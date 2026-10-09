@@ -16,6 +16,8 @@ import { playlistItem } from '@ValenceTv/music/playlistItem';
 import { songItem } from '@ValenceTv/music/songItem';
 import { SystemSearch } from '@ValenceTv/components/SystemSearch/SystemSearch';
 import { useMayRequest } from '@ValenceTv/requests/useMayRequest';
+import { DiscoverPointer } from '@ValenceTv/screens/Search/components/DiscoverPointer/DiscoverPointer';
+import { DiscoverResults } from '@ValenceTv/screens/Search/components/DiscoverResults/DiscoverResults';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { MusicItem } from '@ValenceTv/music/MusicItem';
@@ -56,9 +58,9 @@ const followWhileOnTheirWay = (titles: readonly CatalogueTitle[]): number | fals
  *
  * Where this viewer may ask for what the library lacks, the space beneath the keyboard is not left
  * empty before anything is typed: it holds the shelves of the web's discovery page — what is
- * trending, what is popular, what is coming soon. Once something is typed, the films and shows the
- * film database knows by that name and the library does not have follow the library's own, to be
- * asked for.
+ * trending, what is popular, what is coming soon. Once something is typed, only the library is
+ * searched, and where the film database knows films and shows by that name the library does not
+ * have, a card beneath says how many and shows them in the library's place, to be asked for.
  *
  * The server is asked once the typing pauses rather than at every letter, and the answers already
  * shown stay while the next ones are read, so the results do not blink empty between letters. While
@@ -89,6 +91,8 @@ const Search = ({
   const [room, setRoom] = useState<{ width: number; height: number } | null>(null);
   const asked = useSettled(typed.trim(), SETTLES_AFTER_MS);
   const mayRequest = useMayRequest();
+  const [discoveringFor, setDiscoveringFor] = useState<string | null>(null);
+  const [cameBackFrom, setCameBackFrom] = useState<string | null>(null);
 
   const found = useQuery({
     ...libraryQueries.across(watchable, { search: asked, limit: AT_MOST }),
@@ -154,13 +158,16 @@ const Search = ({
     [items],
   );
 
-  const lacking = useMemo(
-    () =>
-      [...(films.data ?? []), ...(shows.data ?? [])].filter(
-        (title) => title.standing.status !== 'library',
-      ),
-    [films.data, shows.data],
+  const lackingFilms = useMemo(
+    () => (films.data ?? []).filter((title) => title.standing.status !== 'library'),
+    [films.data],
   );
+  const lackingShows = useMemo(
+    () => (shows.data ?? []).filter((title) => title.standing.status !== 'library'),
+    [shows.data],
+  );
+  const lacking = lackingFilms.length + lackingShows.length;
+  const isDiscovering = asked !== '' && discoveringFor === asked;
 
   const shelves = useMemo(
     () =>
@@ -184,7 +191,7 @@ const Search = ({
   const hasMusicFound = songItems.length > 0 || musicShelves.length > 0;
   const isLooking = asked !== '' && (found.isLoading || music.isLoading);
   const isEmpty =
-    asked !== '' && !isLooking && items.length === 0 && lacking.length === 0 && !hasMusicFound;
+    asked !== '' && !isLooking && items.length === 0 && lacking === 0 && !hasMusicFound;
 
   return (
     <SystemSearch
@@ -222,12 +229,21 @@ const Search = ({
                   ))
                 : null}
 
-              {rows.length === 0 ? null : (
-                <View style={styles.grid}>
-                  {lacking.length === 0 ? null : (
-                    <Text style={styles.heading}>{say('common.inYourLibrary')}</Text>
-                  )}
+              {isDiscovering ? (
+                <DiscoverResults
+                  asked={asked}
+                  films={lackingFilms}
+                  shows={lackingShows}
+                  onAsk={onAsk}
+                  onBack={() => {
+                    setDiscoveringFor(null);
+                    setCameBackFrom(asked);
+                  }}
+                />
+              ) : null}
 
+              {isDiscovering || rows.length === 0 ? null : (
+                <View style={styles.grid}>
                   {rows.map((row) => (
                     <View key={row[0]?.id ?? 'row'} style={styles.row}>
                       {row.map((media) => (
@@ -244,11 +260,11 @@ const Search = ({
                 </View>
               )}
 
-              {asked === '' || songItems.length === 0 ? null : (
+              {asked === '' || isDiscovering || songItems.length === 0 ? null : (
                 <MusicShelf title={say('common.songs2')} items={songItems} onOpen={playSong} />
               )}
 
-              {asked === ''
+              {asked === '' || isDiscovering
                 ? null
                 : musicShelves.map((shelf) => (
                     <MusicShelf
@@ -259,11 +275,15 @@ const Search = ({
                     />
                   ))}
 
-              {asked === '' || lacking.length === 0 ? null : (
-                <CatalogueShelf
-                  title={say('common.notInYourLibraryYet')}
-                  titles={lacking}
-                  onOpen={onAsk}
+              {asked === '' || isDiscovering || lacking === 0 ? null : (
+                <DiscoverPointer
+                  asked={asked}
+                  count={lacking}
+                  isAlone={rows.length === 0 && !hasMusicFound}
+                  hasPreferredFocus={cameBackFrom === asked}
+                  onDiscover={() => {
+                    setDiscoveringFor(asked);
+                  }}
                 />
               )}
             </ScrollView>
@@ -281,7 +301,6 @@ const styles = StyleSheet.create({
   nothing: { color: tokens.colours.muted, fontSize: tokens.type.body },
   inside: { paddingVertical: tokens.space.lg, gap: tokens.space.lg },
   grid: { paddingHorizontal: tokens.space.edge, gap: tokens.space.lg },
-  heading: { color: tokens.colours.text, fontSize: tokens.type.body, fontWeight: '600' },
   row: { flexDirection: 'row', gap: tokens.space.md },
 });
 

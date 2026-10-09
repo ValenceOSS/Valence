@@ -783,6 +783,9 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
             viewerId={user.id}
             onPlay={play}
             onOpenPerson={openPerson}
+            onRequestMore={(tmdbId) => {
+              open({ kind: 'ask', titleKind: 'series', id: tmdbId.toString(), mood: null });
+            }}
           />
         </View>
       ) : null}

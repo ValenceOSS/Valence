@@ -17,7 +17,7 @@ type APage =
   | { kind: 'series'; seriesId: string }
   | { kind: 'person'; personId: number }
   | { kind: 'collection'; collectionId: string }
-  | { kind: 'asking'; about: CatalogueBrowseKind; id: string }
+  | { kind: 'asking'; about: CatalogueBrowseKind; id: string; isMore?: boolean }
   | { kind: 'browsing'; browsing: CatalogueBrowse; title: string }
   | { kind: 'notifications' }
   | { kind: 'calendar' }

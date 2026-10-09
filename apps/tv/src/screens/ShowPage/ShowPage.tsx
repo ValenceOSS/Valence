@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { CircleCheck, EyeOff, RotateCcw, Star } from '@keyline-icons/react-native';
+import { CircleCheck, EyeOff, Plus, RotateCcw, Star } from '@keyline-icons/react-native';
 import { Play } from '@keyline-icons/react-native/fill';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
+import { isShowMissingEpisodes } from '@ValenceClient/library/isShowMissingEpisodes';
 import { nameSeason } from '@ValenceClient/library/nameSeason';
+import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
+import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { pickUpFrom } from '@ValenceClient/library/pickUpFrom';
 import { qualityBadges } from '@ValenceClient/library/qualityBadges';
 import { useHidden } from '@ValenceClient/library/useHidden';
@@ -65,15 +68,24 @@ const overviewOf = (show: ShowDetail, episode: MediaSummary): string | null =>
  * carry on with and what happens in it, the ways to watch — carry on, or start from the first — and
  * beneath, its seasons, landing on one showing its episodes. Each season's row starts from its
  * first episode, rather than wherever the last season's was left. The programme can be given stars
- * from the panel down the right, which Menu closes, or hidden, once asked.
+ * from the panel down the right, which Menu closes, or hidden, once asked. Where the catalogue lists
+ * aired episodes the library does not hold, somebody who may ask for shows can ask for more of it.
  *
  * @param libraryId - The library the programme is in.
  * @param showId - The programme.
  * @param viewerId - Who is watching, whose stars and hiding they are.
  * @param onOpenPerson - Told whose page to open, from the cast.
  * @param onPlay - Told to play an episode, and from where.
+ * @param onRequestMore - Told to open the show's catalogue page, to ask for more of it.
  */
-const ShowPage = ({ libraryId, showId, viewerId, onOpenPerson, onPlay }: ShowPageProps) => {
+const ShowPage = ({
+  libraryId,
+  showId,
+  viewerId,
+  onOpenPerson,
+  onPlay,
+  onRequestMore,
+}: ShowPageProps) => {
   const { progress } = useProgress();
   const asked = useQuery(libraryQueries.show(libraryId, showId));
   const originOf = useOriginOf();
@@ -83,6 +95,9 @@ const ShowPage = ({ libraryId, showId, viewerId, onOpenPerson, onPlay }: ShowPag
   const rate = useRate(viewerId);
   const stars = useStars(viewerId, { seriesId: seriesId ?? '' });
   const [isRating, setIsRating] = useState(false);
+  const { may } = useWhatIMayDo();
+  const kinds = useRequestableKinds();
+  const mayAskForShows = may('requests.ask') && kinds.has('series');
 
   useConfirmHiding(hiding);
   useMenuButton(
@@ -280,6 +295,22 @@ const ShowPage = ({ libraryId, showId, viewerId, onOpenPerson, onPlay }: ShowPag
           icon={Star}
           onPress={() => {
             setIsRating(true);
+          }}
+        />
+      )}
+
+      {onRequestMore === undefined ||
+      !mayAskForShows ||
+      show.tmdbId === null ||
+      show.tmdbId === undefined ||
+      !isShowMissingEpisodes(show, new Date().toISOString().slice(0, 10)) ? null : (
+        <ActionRow
+          label={say('common.requestMore')}
+          icon={Plus}
+          onPress={() => {
+            if (show.tmdbId !== null && show.tmdbId !== undefined) {
+              onRequestMore(show.tmdbId);
+            }
           }}
         />
       )}

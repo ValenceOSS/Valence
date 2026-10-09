@@ -2015,6 +2015,11 @@
     "context": "A caption setting, in the web player and on the phone and the television."
   },
   {
+    "handler": "common.backToLibraryResults",
+    "text": "Back to library results",
+    "context": "Button above what Discover found for a search, on the phone and the television, returning to what the libraries found for the same words."
+  },
+  {
     "handler": "common.backupCode",
     "text": "Backup code",
     "context": "Shown, used in the ask for the code of the phone app and in the two factor challenge."
