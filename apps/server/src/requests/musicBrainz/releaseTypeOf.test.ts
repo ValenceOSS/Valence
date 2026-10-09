@@ -12,6 +12,7 @@ describe('releaseTypeOf', () => {
     expect(releaseTypeOf('Album', ['Live'])).toBe('live');
     expect(releaseTypeOf('Album', ['Compilation'])).toBe('compilation');
     expect(releaseTypeOf('Album', ['Mixtape/Street'])).toBe('mixtape');
+    expect(releaseTypeOf('Album', ['Compilation', 'Mixtape/Street'])).toBe('mixtape');
   });
 
   it('leaves out soundtracks, remixes and anything without a type', () => {

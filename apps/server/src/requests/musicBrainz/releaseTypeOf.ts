@@ -9,9 +9,9 @@ const PRIMARY_TYPES: ReadonlyMap<string, ReleaseType> = new Map([
 
 /**
  * What kind of release a MusicBrainz release group is, as an artist can be watched for: a live
- * record, a compilation or a mixtape by what it is besides, and otherwise an album, an EP or a
- * single. A soundtrack, a remix, an interview and the like are none of them, and are never fetched
- * for an artist.
+ * record, a mixtape or a compilation by what it is besides — a mixtape that is also a compilation
+ * being a mixtape — and otherwise an album, an EP or a single. A soundtrack, a remix, an interview
+ * and the like are none of them, and are never fetched for an artist.
  *
  * @param primary - Its primary type, such as `Album`.
  * @param secondary - Its secondary types, such as `Live`.
@@ -25,12 +25,12 @@ const releaseTypeOf = (
     return 'live';
   }
 
-  if (secondary.includes('Compilation')) {
-    return 'compilation';
-  }
-
   if (secondary.includes('Mixtape/Street')) {
     return 'mixtape';
+  }
+
+  if (secondary.includes('Compilation')) {
+    return 'compilation';
   }
 
   if (secondary.length > 0) {
