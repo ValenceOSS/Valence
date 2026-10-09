@@ -285,7 +285,7 @@ const MediaPreview = ({
       />
 
       {absence === null ? null : (
-        <div className="pointer-events-none absolute inset-0 flex items-end justify-start p-4">
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-start p-4">
           <p className="rounded-md bg-shade/65 px-2.5 py-1.5 text-xs font-medium text-on-scrim/85 backdrop-blur-sm">
             {absence === 'pending' ? PREVIEW_PENDING : PREVIEW_ABSENT}
           </p>

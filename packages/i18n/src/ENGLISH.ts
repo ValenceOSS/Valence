@@ -620,6 +620,8 @@ const ENGLISH = {
   'common.count.editions.other': '{count} editions',
   'common.count.episodes.one': '{count} episode',
   'common.count.episodes.other': '{count} episodes',
+  'common.count.files.one': '{count} file',
+  'common.count.files.other': '{count} files',
   'common.count.films.one': '{count} film',
   'common.count.films.other': '{count} films',
   'common.count.grabs.one': '{count} grab',
@@ -1927,23 +1929,36 @@ const ENGLISH = {
   'error.indexers.thatIsNotAChangeTo': 'That isn’t a valid change to an indexer.',
   'error.indexers.thatIsNotAnIndexer': 'That isn’t a valid indexer.',
   'error.indexers.thatIsNotASearch': 'That isn’t a valid search.',
+  'error.library.aFileIsAlreadyThere':
+    'A file with that name is already in the other library, so Valence won’t move it over the top.',
   'error.library.catalogueCouldNotBeAsked': 'Couldn’t reach the catalogue.',
+  'error.library.itIsAlreadyInThatLibrary': 'That’s already in that library.',
   'error.library.noSuchItemMatchedToTheCatalogue': 'No such item matched to the catalogue.',
   'error.library.noSuchSeries': 'No such series.',
   'error.library.nothingLikeThatIsLeftOut': 'That isn’t excluded from this library.',
   'error.library.notMatchedToTheCatalogueYet':
     'This isn’t matched to the catalogue yet. Fix the match first.',
+  'error.library.onlyFilmsAndShowsMove':
+    'Only films and shows can be moved, and only into a library of films or shows.',
   'error.library.pictureIsNotOneTheCatalogueHas':
     'That image isn’t one of the catalogue’s choices for this item.',
   'error.library.sayWhetherThatIdIsA':
     'Say whether that ID is a series or a film — the same number can be either.',
   'error.library.thatAppCannotFulfilThisLibrary':
     'That connected app can’t handle requests for this library. Films go to Radarr, series to Sonarr and music to Lidarr.',
+  'error.library.thatDiskIsReadOnlyForMoving':
+    'One of those disks is read-only to Valence. Give Valence read-write access to both libraries to move media between them.',
   'error.library.thatDoesNotLookLikeA': 'That doesn’t look like a catalogue URL or ID.',
+  'error.library.thatFileIsNotInsideItsLibrary':
+    'That file isn’t inside its library, so Valence won’t move it.',
   'error.library.thatIsNotInsideThisLibrary': 'That isn’t inside this library.',
   'error.library.thatIsPastTheEndThe':
     'That’s past the end — the file is {durationSeconds} seconds long.',
   'error.library.thatPathIsNotAReadable': 'That path isn’t a readable folder.',
+  'error.library.theFileCouldNotBeMoved': 'Couldn’t move the file.',
+  'error.library.theFileIsNoLongerThere': 'That file is no longer where Valence last saw it.',
+  'error.library.valenceMayNotMoveFilesThere':
+    'Valence doesn’t have permission to move files there.',
   'error.libraryAccess.noSuchThingToMakeAn': 'Nothing to make an exception for.',
   'error.linking.alreadyLinked':
     'This server is already linked with that one, or a link request is pending.',
@@ -2011,6 +2026,7 @@ const ENGLISH = {
   'error.profile.noSuchProfileOrItIs': 'No such profile, or it’s the only one left.',
   'error.profile.thatAddressAlreadyHasAnAccount': 'That email address already has an account.',
   'error.profile.thatIsNotAChangeTo': 'That isn’t a valid change to a profile.',
+  'error.profile.thatIsNotAnOrderOf': 'That isn’t a valid order of profiles.',
   'error.profile.thatIsNotAProfile': 'That isn’t a valid profile.',
   'error.reencode.noSuchReEncode': 'No such re-encode.',
   'error.reencode.noSuchRendition': 'No such rendition.',
@@ -3376,7 +3392,21 @@ const ENGLISH = {
   'screens.adminArea.encodingPanel.theReEncodingQueueCouldNot':
     'Couldn’t load the re-encoding queue from the server. It may not be empty.',
   'screens.adminArea.encodingPanel.whatHappened': 'Result',
+  'screens.adminArea.fileDetails.addingUp': 'Adding up…',
+  'screens.adminArea.fileDetails.atLeastSize': 'At least {size}',
+  'screens.adminArea.fileDetails.chooseNothing': 'Clear selection',
+  'screens.adminArea.fileDetails.chooseSomethingToSeeIt':
+    'Choose a file or folder to see more about it, or tick several to move or delete them together.',
+  'screens.adminArea.fileDetails.count.folders.one': '{count} folder',
+  'screens.adminArea.fileDetails.count.folders.other': '{count} folders',
+  'screens.adminArea.fileDetails.count.selected.one': '{count} chosen',
+  'screens.adminArea.fileDetails.count.selected.other': '{count} chosen',
+  'screens.adminArea.fileDetails.details': 'Details',
+  'screens.adminArea.fileDetails.holds': 'Holds',
+  'screens.adminArea.fileDetails.together': 'Together',
   'screens.adminArea.filesPanel.changed': 'Changed',
+  'screens.adminArea.filesPanel.chooseEverythingHere': 'Choose everything here',
+  'screens.adminArea.filesPanel.chooseName': 'Choose {name}',
   'screens.adminArea.filesPanel.delete': 'Delete…',
   'screens.adminArea.filesPanel.deleteThis': 'Delete this?',
   'screens.adminArea.filesPanel.filesFound': 'Files found',
@@ -3780,6 +3810,7 @@ const ENGLISH = {
   'screens.adminArea.mediaPanel.hideTheEpisodesOfName': 'Hide the episodes of {name}',
   'screens.adminArea.mediaPanel.itsPreviewsAndThumbnailsAreThrown':
     'Its previews and thumbnails are deleted and regenerated from the file. This takes a while and uses the server’s encoder.',
+  'screens.adminArea.mediaPanel.moveToAnotherLibrary': 'Move to another library…',
   'screens.adminArea.mediaPanel.noCover': 'No cover',
   'screens.adminArea.mediaPanel.nothingHasBeenScannedIntoThis':
     'Nothing has been scanned into this library yet.',
@@ -3871,6 +3902,15 @@ const ENGLISH = {
     'Also retries anything that failed.',
   'screens.adminArea.mediaRequestsPanel.whichRequests': 'Which requests',
   'screens.adminArea.memory': 'Memory',
+  'screens.adminArea.moveToLibraryDialog.move': 'Move',
+  'screens.adminArea.moveToLibraryDialog.moveNameToAnotherLibrary':
+    'Move {name} to another library',
+  'screens.adminArea.moveToLibraryDialog.moveToAnotherLibrary': 'Move to another library',
+  'screens.adminArea.moveToLibraryDialog.nameMovedToLibrary': 'Moved {name} to {library}',
+  'screens.adminArea.moveToLibraryDialog.theFilesMoveIntoThatLibrary':
+    'The files move on the disk into that library’s folder, in the same folders they’re in now. Valence moves them along with everything it knows about them, so what everyone has watched stays, and that library then reads them again as what it holds.',
+  'screens.adminArea.moveToLibraryDialog.thereIsNoOtherLibrary':
+    'There’s no other library of films or shows to move this into.',
   'screens.adminArea.musicMatchList.foundInMusicBrainz': 'Found in MusicBrainz',
   'screens.adminArea.nameCouldNotBeScanned': 'Couldn’t scan {name}.',
   'screens.adminArea.noAlbumIsBeingCorrected': 'No album is being corrected.',
@@ -4041,9 +4081,12 @@ const ENGLISH = {
   'screens.adminArea.profileEditor.whichLibrariesOfferThisProfileWhen':
     'Which libraries offer this profile when someone makes a request. Select none to offer it for all of them.',
   'screens.adminArea.profileEditor.whichPartOfTheProfileTo': 'Which part of the profile to edit',
+  'screens.adminArea.profilesPanel.dragToChangeTheOrder': 'Drag to change the order',
   'screens.adminArea.profilesPanel.noProfilesForFilmsOrSeries':
     'No profiles for films or series yet.',
   'screens.adminArea.profilesPanel.noProfilesForMusicYet': 'No profiles for music yet.',
+  'screens.adminArea.profilesPanel.noProfilesYet': 'No profiles yet.',
+  'screens.adminArea.profilesPanel.profilesPutInOrder': 'Profile order saved',
   'screens.adminArea.profilesPanel.removeThisProfile': 'Remove this profile?',
   'screens.adminArea.profilesPanel.searchesCanNoLongerBeJudged':
     'Search results can no longer be checked against it, and the libraries that used it will have no profile.',
@@ -4278,9 +4321,8 @@ const ENGLISH = {
     'A key is set. Entering a new one replaces it. Scores appear as titles are rescanned.',
   'screens.adminArea.settingsPanel.aKeyIsSetEnteringA2':
     'A key is set. Entering a new one replaces it.',
-  'screens.adminArea.settingsPanel.alwaysOnItIsHowThis':
-    'Always on. It is how this page is reached.',
   'screens.adminArea.settingsPanel.appsSaved': 'Saved which apps may connect.',
+  'screens.adminArea.settingsPanel.appsThatCanSignIn': 'Apps that can sign in',
   'screens.adminArea.settingsPanel.backend': 'Backend',
   'screens.adminArea.settingsPanel.catalogueKey': 'Catalogue key',
   'screens.adminArea.settingsPanel.catalogueKeySaved': 'Catalogue key saved.',
@@ -4368,13 +4410,9 @@ const ENGLISH = {
   'screens.adminArea.settingsPanel.theTrailerSettingCouldNotBe':
     'Couldn’t save the trailer setting.',
   'screens.adminArea.settingsPanel.theWeb': 'Web',
+  'screens.adminArea.settingsPanel.theWebIsAlwaysOn':
+    "Which of Valence's apps people can use with this server. The web is always on, since it's how this page is reached.",
   'screens.adminArea.settingsPanel.trailerSettingSaved': 'Trailer setting saved.',
-  'screens.adminArea.settingsPanel.valenceForAppleTvAndAndroid':
-    'Valence for Apple TV and Android TV.',
-  'screens.adminArea.settingsPanel.valenceForIPhoneAndAndroid':
-    'Valence for iPhone and Android phones.',
-  'screens.adminArea.settingsPanel.valenceForMacWindowsAndLinux':
-    'Valence for Mac, Windows and Linux.',
   'screens.adminArea.settingsPanel.valencePicksWhicheverBackendTheMachine':
     'Valence uses whichever backend passes its hardware check. Choose one to force it, even if its encoder failed the check — useful when the check is wrong and the GPU clearly works.',
   'screens.adminArea.settingsPanel.whatARequestForAnArtist':
@@ -4519,6 +4557,7 @@ const ENGLISH = {
   'screens.adminPage.openTheSidebar': 'Open the sidebar',
   'screens.adminPage.readingWhatYouMayDo': 'Checking your permissions',
   'screens.adminPage.valenceVersion': 'Valence {version}',
+  'screens.albumTracks.discNumber': 'Disc {number}',
   'screens.apiKeyPanel.aKeyLetsSomethingThatIs':
     'A key lets something other than a browser act as you, such as a script, a dashboard or an assistant. It can do anything you can do, and nothing more.',
   'screens.apiKeyPanel.copyNameNowItWillNotBeShownAgain':
@@ -4556,6 +4595,7 @@ const ENGLISH = {
     'We’ll download the best release that matches.',
   'screens.askableDialog.chooseQualityDialog.whichQualityForTitle': 'Which quality for {title}?',
   'screens.askableDialog.describeCatalogueCard.inLibrary': 'In library',
+  'screens.askableDialog.fetchingItsDetails': 'Fetching its details…',
   'screens.askableDialog.noYearGiven': 'No year given',
   'screens.askableDialog.playASampleOfTitle': 'Play a sample of {title}',
   'screens.askableDialog.somethingToAskFor': 'Request a title',

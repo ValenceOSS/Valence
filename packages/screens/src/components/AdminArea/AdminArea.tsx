@@ -1075,6 +1075,21 @@ const AdminArea = ({
                 onOpenFolder?.(path);
               }}
               onCorrect={setCorrecting}
+              {...(mayDeleteMedia
+                ? {
+                    onMoved: (toLibraryId: string, jobId: string | null) => {
+                      void cache.invalidateQueries({ queryKey: libraryQueries.key });
+                      void cache.invalidateQueries({ queryKey: adminQueries.key });
+
+                      if (jobId !== null) {
+                        void watchJob(toLibraryId, 'library.readAgain', jobId).then(() => {
+                          void cache.invalidateQueries({ queryKey: libraryQueries.key });
+                          void cache.invalidateQueries({ queryKey: adminQueries.key });
+                        });
+                      }
+                    },
+                  }
+                : {})}
               onChooseArtwork={setDressing}
               onCorrectAlbum={setCorrectingAlbum}
               onCorrectBook={setCorrectingBook}
@@ -1273,9 +1288,11 @@ const AdminArea = ({
                   void cache.invalidateQueries({ queryKey: sessionQueries.wayIn().queryKey });
                 }}
               />
-
-              <EmailCard />
             </div>
+          </TabPanel>
+
+          <TabPanel value="email">
+            <EmailCard />
           </TabPanel>
 
           <TabPanel value="shares">
@@ -1408,6 +1425,9 @@ const AdminArea = ({
 
       <MatchPicker
         media={correcting}
+        isInShows={
+          libraries.find((library) => library.id === correcting?.libraryId)?.kind === 'shows'
+        }
         onClose={() => {
           setCorrecting(null);
         }}

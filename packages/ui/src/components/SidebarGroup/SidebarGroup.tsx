@@ -8,12 +8,10 @@ import { cn } from '@ValenceUI/cn';
 import { stillTransition, spring } from '@ValenceUI/animations/reveal';
 import type { SidebarGroupProps } from './SidebarGroup.types';
 
-const BRANCH = [
-  'relative pl-[1.375rem] [--branch:color-mix(in_oklab,var(--color-text)_22%,var(--frame-back))]',
-  'before:pointer-events-none before:absolute before:left-[0.9375rem] before:top-0 before:h-1/2',
-  'before:w-2 before:rounded-bl-[0.3125rem] before:border-b before:border-l before:border-[var(--branch)]',
-  'after:pointer-events-none after:absolute after:left-[0.9375rem] after:top-1/2 after:-bottom-1',
-  'after:border-l after:border-[var(--branch)] last:after:hidden',
+const TRACK = [
+  'relative ml-[1.0625rem] pl-2.5',
+  'before:pointer-events-none before:absolute before:inset-y-1 before:left-0 before:w-px',
+  'before:bg-[color-mix(in_oklab,var(--color-text)_18%,transparent)]',
 ].join(' ');
 
 /**
@@ -65,22 +63,21 @@ const SidebarGroup = ({
             onOpenChange?.(!isOpen);
           }}
           className={cn(
-            'group/fold flex items-center justify-between rounded-md px-2.5 py-1 text-left text-[0.6875rem]',
-            'font-medium uppercase tracking-[0.06em] text-text-muted',
-            'transition-colors duration-[var(--duration-fast)] hover:text-text',
+            'group/fold flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[0.8125rem]',
+            'font-medium text-text',
           )}
         >
-          {label}
-
           <Icon
             of={ChevronDownIcon}
-            size={13}
+            size={14}
             className={cn(
-              'opacity-0 transition-[rotate,opacity] duration-[var(--duration-base)] ease-[var(--ease-out)]',
-              'group-hover/fold:opacity-100 group-focus-visible/fold:opacity-100',
-              isOpen ? '' : '-rotate-90 opacity-100',
+              'shrink-0 text-text-muted transition-[rotate,color] duration-[var(--duration-base)] ease-[var(--ease-out)]',
+              'group-hover/fold:text-text',
+              isOpen ? '' : '-rotate-90',
             )}
           />
+
+          {label}
         </Button>
       )}
 
@@ -93,7 +90,7 @@ const SidebarGroup = ({
             transition={prefersReducedMotion ? stillTransition : spring}
             className={cn(
               'flex flex-col overflow-hidden',
-              isCollapsed ? 'gap-1' : showsFold ? 'gap-1 pt-1' : 'gap-0.5',
+              isCollapsed ? 'gap-1' : showsFold ? cn('gap-1 pt-1', TRACK) : 'gap-0.5',
             )}
           >
             {items.map((item) => {
@@ -101,7 +98,14 @@ const SidebarGroup = ({
               const isLit = item.id === (pointedAt ?? value);
 
               return (
-                <li key={item.id} className={showsFold && !isCollapsed ? BRANCH : undefined}>
+                <li key={item.id} className={showsFold && !isCollapsed ? 'relative' : undefined}>
+                  {isCurrent && showsFold && !isCollapsed ? (
+                    <SlidingMark
+                      group={`${markGroup}-track`}
+                      className="inset-auto -left-[0.6875rem] inset-y-1.5 z-10 w-0.5 rounded-full bg-text"
+                    />
+                  ) : null}
+
                   <Button
                     variant="bare"
                     size="sm"

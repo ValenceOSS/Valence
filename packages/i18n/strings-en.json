@@ -2436,6 +2436,16 @@
     "context": "How many episodes, such as in a notification about what arrived in the library. {count} is the number."
   },
   {
+    "handler": "common.count.files.one",
+    "text": "{count} file",
+    "context": "How many files something is made of, such as a film or a programme being moved to another library."
+  },
+  {
+    "handler": "common.count.files.other",
+    "text": "{count} files",
+    "context": "How many files something is made of, such as a film or a programme being moved to another library."
+  },
+  {
     "handler": "common.count.films.one",
     "text": "{count} film",
     "context": "How many films, such as in a notification about what arrived in the library. {count} is the number."
@@ -8270,9 +8280,19 @@
     "context": "An error the server answers with (HTTP 400) in the app in the requests service."
   },
   {
+    "handler": "error.library.aFileIsAlreadyThere",
+    "text": "A file with that name is already in the other library, so Valence won’t move it over the top.",
+    "context": "An error the server answers with (HTTP 409) in the library, when an admin moves media into another library."
+  },
+  {
     "handler": "error.library.catalogueCouldNotBeAsked",
     "text": "Couldn’t reach the catalogue.",
     "context": "An error the server answers with (HTTP 503) when the catalogue could not be reached to list or choose artwork."
+  },
+  {
+    "handler": "error.library.itIsAlreadyInThatLibrary",
+    "text": "That’s already in that library.",
+    "context": "An error the server answers with (HTTP 409) in the library, when an admin moves media into another library."
   },
   {
     "handler": "error.library.noSuchItemMatchedToTheCatalogue",
@@ -8295,6 +8315,11 @@
     "context": "An error the server answers with (HTTP 404) when an administrator asks which artwork the catalogue has for something that is not matched to it yet."
   },
   {
+    "handler": "error.library.onlyFilmsAndShowsMove",
+    "text": "Only films and shows can be moved, and only into a library of films or shows.",
+    "context": "An error the server answers with (HTTP 400) in the library, when an admin moves media into another library."
+  },
+  {
     "handler": "error.library.pictureIsNotOneTheCatalogueHas",
     "text": "That image isn’t one of the catalogue’s choices for this item.",
     "context": "An error the server answers with (HTTP 400) when an administrator chooses artwork that is not among the catalogue's choices for that item."
@@ -8310,9 +8335,19 @@
     "context": "An error the server answers with (HTTP 400) when a library's settings hand its requests to a connected app of the wrong kind, or one that is not there (from `serveLibrary`)."
   },
   {
+    "handler": "error.library.thatDiskIsReadOnlyForMoving",
+    "text": "One of those disks is read-only to Valence. Give Valence read-write access to both libraries to move media between them.",
+    "context": "An error the server answers with (HTTP 403) in the library, when an admin moves media into another library."
+  },
+  {
     "handler": "error.library.thatDoesNotLookLikeA",
     "text": "That doesn’t look like a catalogue URL or ID.",
     "context": "An error the server answers with (HTTP 400) in the app on the server (from `serveLibrary`)."
+  },
+  {
+    "handler": "error.library.thatFileIsNotInsideItsLibrary",
+    "text": "That file isn’t inside its library, so Valence won’t move it.",
+    "context": "An error the server answers with (HTTP 403) in the library, when an admin moves media into another library."
   },
   {
     "handler": "error.library.thatIsNotInsideThisLibrary",
@@ -8328,6 +8363,21 @@
     "handler": "error.library.thatPathIsNotAReadable",
     "text": "That path isn’t a readable folder.",
     "context": "An error the server answers with (HTTP 400) in the app on the server (from `serveLibrary`)."
+  },
+  {
+    "handler": "error.library.theFileCouldNotBeMoved",
+    "text": "Couldn’t move the file.",
+    "context": "An error the server answers with (HTTP 500) in the library, when an admin moves media into another library."
+  },
+  {
+    "handler": "error.library.theFileIsNoLongerThere",
+    "text": "That file is no longer where Valence last saw it.",
+    "context": "An error the server answers with (HTTP 404) in the library, when an admin moves media into another library."
+  },
+  {
+    "handler": "error.library.valenceMayNotMoveFilesThere",
+    "text": "Valence doesn’t have permission to move files there.",
+    "context": "An error the server answers with (HTTP 403) in the library, when an admin moves media into another library."
   },
   {
     "handler": "error.libraryAccess.noSuchThingToMakeAn",
@@ -8598,6 +8648,11 @@
     "handler": "error.profile.thatIsNotAChangeTo",
     "text": "That isn’t a valid change to a profile.",
     "context": "An error the server answers with (HTTP 400) in the profiles in the requests service (from `createProfileRoutes`)."
+  },
+  {
+    "handler": "error.profile.thatIsNotAnOrderOf",
+    "text": "That isn’t a valid order of profiles.",
+    "context": "An error the server answers with (HTTP 400) in the profiles in the requests service, when it is asked to put the quality profiles in an order it cannot read."
   },
   {
     "handler": "error.profile.thatIsNotAProfile",
@@ -13585,9 +13640,74 @@
     "context": "Shown in the encoding panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.fileDetails.addingUp",
+    "text": "Adding up…",
+    "context": "In the side of the admin’s file manager that says what is chosen. Shown while a folder’s size is being added up."
+  },
+  {
+    "handler": "screens.adminArea.fileDetails.atLeastSize",
+    "text": "At least {size}",
+    "context": "In the side of the admin’s file manager that says what is chosen. A folder too large to count at once. {size} is how much was counted."
+  },
+  {
+    "handler": "screens.adminArea.fileDetails.chooseNothing",
+    "text": "Clear selection",
+    "context": "In the side of the admin’s file manager that says what is chosen."
+  },
+  {
+    "handler": "screens.adminArea.fileDetails.chooseSomethingToSeeIt",
+    "text": "Choose a file or folder to see more about it, or tick several to move or delete them together.",
+    "context": "In the side of the admin’s file manager that says what is chosen. Shown while nothing is chosen."
+  },
+  {
+    "handler": "screens.adminArea.fileDetails.count.folders.one",
+    "text": "{count} folder",
+    "context": "In the side of the admin’s file manager that says what is chosen."
+  },
+  {
+    "handler": "screens.adminArea.fileDetails.count.folders.other",
+    "text": "{count} folders",
+    "context": "In the side of the admin’s file manager that says what is chosen."
+  },
+  {
+    "handler": "screens.adminArea.fileDetails.count.selected.one",
+    "text": "{count} chosen",
+    "context": "In the side of the admin’s file manager that says what is chosen. How many files and folders are chosen."
+  },
+  {
+    "handler": "screens.adminArea.fileDetails.count.selected.other",
+    "text": "{count} chosen",
+    "context": "In the side of the admin’s file manager that says what is chosen. How many files and folders are chosen."
+  },
+  {
+    "handler": "screens.adminArea.fileDetails.details",
+    "text": "Details",
+    "context": "In the side of the admin’s file manager that says what is chosen. Its name, read out."
+  },
+  {
+    "handler": "screens.adminArea.fileDetails.holds",
+    "text": "Holds",
+    "context": "In the side of the admin’s file manager that says what is chosen. Beside how many files and folders a folder holds, all the way down."
+  },
+  {
+    "handler": "screens.adminArea.fileDetails.together",
+    "text": "Together",
+    "context": "In the side of the admin’s file manager that says what is chosen. Beside how much several chosen things take on the disk between them."
+  },
+  {
     "handler": "screens.adminArea.filesPanel.changed",
     "text": "Changed",
     "context": "Shown in the files panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.filesPanel.chooseEverythingHere",
+    "text": "Choose everything here",
+    "context": "The box at the head of the admin’s file manager that chooses every file and folder listed."
+  },
+  {
+    "handler": "screens.adminArea.filesPanel.chooseName",
+    "text": "Choose {name}",
+    "context": "The box beside a file or folder in the admin’s file manager. {name} is the file or folder."
   },
   {
     "handler": "screens.adminArea.filesPanel.delete",
@@ -15100,6 +15220,11 @@
     "context": "The detail of a confirm dialog in the media panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.moveToAnotherLibrary",
+    "text": "Move to another library…",
+    "context": "In the menu of a film, programme or file in the admin’s list of media, opening the dialog that moves it into another library."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.noCover",
     "text": "No cover",
     "context": "Shown in the media panel in the admin area."
@@ -15433,6 +15558,36 @@
     "handler": "screens.adminArea.memory",
     "text": "Memory",
     "context": "The label in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.moveToLibraryDialog.move",
+    "text": "Move",
+    "context": "The dialog, in the admin’s list of media, that moves a film or programme filed in the wrong library into another. The button that moves it."
+  },
+  {
+    "handler": "screens.adminArea.moveToLibraryDialog.moveNameToAnotherLibrary",
+    "text": "Move {name} to another library",
+    "context": "The dialog, in the admin’s list of media, that moves a film or programme filed in the wrong library into another. Its title. {name} is the film, programme or file."
+  },
+  {
+    "handler": "screens.adminArea.moveToLibraryDialog.moveToAnotherLibrary",
+    "text": "Move to another library",
+    "context": "The dialog, in the admin’s list of media, that moves a film or programme filed in the wrong library into another. Its title before anything is chosen."
+  },
+  {
+    "handler": "screens.adminArea.moveToLibraryDialog.nameMovedToLibrary",
+    "text": "Moved {name} to {library}",
+    "context": "The dialog, in the admin’s list of media, that moves a film or programme filed in the wrong library into another. Told once it has moved. {library} is the library it went to."
+  },
+  {
+    "handler": "screens.adminArea.moveToLibraryDialog.theFilesMoveIntoThatLibrary",
+    "text": "The files move on the disk into that library’s folder, in the same folders they’re in now. Valence moves them along with everything it knows about them, so what everyone has watched stays, and that library then reads them again as what it holds.",
+    "context": "The dialog, in the admin’s list of media, that moves a film or programme filed in the wrong library into another. What moving does."
+  },
+  {
+    "handler": "screens.adminArea.moveToLibraryDialog.thereIsNoOtherLibrary",
+    "text": "There’s no other library of films or shows to move this into.",
+    "context": "The dialog, in the admin’s list of media, that moves a film or programme filed in the wrong library into another. Shown where there is nowhere to move it."
   },
   {
     "handler": "screens.adminArea.musicMatchList.foundInMusicBrainz",
@@ -16105,6 +16260,11 @@
     "context": "The label of a tab row in the profile editor in the admin area."
   },
   {
+    "handler": "screens.adminArea.profilesPanel.dragToChangeTheOrder",
+    "text": "Drag to change the order",
+    "context": "Read out for the grip at the start of each row of the admin's quality profiles, which can be dragged to put them in another order."
+  },
+  {
     "handler": "screens.adminArea.profilesPanel.noProfilesForFilmsOrSeries",
     "text": "No profiles for films or series yet.",
     "context": "The empty in the profiles panel in the admin area."
@@ -16113,6 +16273,16 @@
     "handler": "screens.adminArea.profilesPanel.noProfilesForMusicYet",
     "text": "No profiles for music yet.",
     "context": "The empty in the profiles panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.profilesPanel.noProfilesYet",
+    "text": "No profiles yet.",
+    "context": "Shown in the admin's list of quality profiles, showing every kind, when there are none at all."
+  },
+  {
+    "handler": "screens.adminArea.profilesPanel.profilesPutInOrder",
+    "text": "Profile order saved",
+    "context": "Told once the admin has dragged a quality profile to another place in the list and the new order is kept."
   },
   {
     "handler": "screens.adminArea.profilesPanel.removeThisProfile",
@@ -17025,14 +17195,14 @@
     "context": "Shown in the settings panel in the admin area."
   },
   {
-    "handler": "screens.adminArea.settingsPanel.alwaysOnItIsHowThis",
-    "text": "Always on. It is how this page is reached.",
-    "context": "The explanation beside the web's switch, which is on and cannot be turned off, among the admin settings saying which Valence apps may connect."
-  },
-  {
     "handler": "screens.adminArea.settingsPanel.appsSaved",
     "text": "Saved which apps may connect.",
     "context": "A confirmation after an administrator turned a Valence app on or off for this server."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.appsThatCanSignIn",
+    "text": "Apps that can sign in",
+    "context": "The title of the setting, in the admin settings, for which of Valence's apps may sign in to this server."
   },
   {
     "handler": "screens.adminArea.settingsPanel.backend",
@@ -17370,24 +17540,14 @@
     "context": "The first of the rows in the admin settings that say which Valence apps may connect to the server: Valence in a web browser, which cannot be turned off."
   },
   {
+    "handler": "screens.adminArea.settingsPanel.theWebIsAlwaysOn",
+    "text": "Which of Valence's apps people can use with this server. The web is always on, since it's how this page is reached.",
+    "context": "Beneath the setting for which apps may sign in, in the admin settings."
+  },
+  {
     "handler": "screens.adminArea.settingsPanel.trailerSettingSaved",
     "text": "Trailer setting saved.",
     "context": "Shown in the settings panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.settingsPanel.valenceForAppleTvAndAndroid",
-    "text": "Valence for Apple TV and Android TV.",
-    "context": "The explanation beside the admin switch for whether the television app may connect to this server."
-  },
-  {
-    "handler": "screens.adminArea.settingsPanel.valenceForIPhoneAndAndroid",
-    "text": "Valence for iPhone and Android phones.",
-    "context": "The explanation beside the admin switch for whether the phone app may connect to this server."
-  },
-  {
-    "handler": "screens.adminArea.settingsPanel.valenceForMacWindowsAndLinux",
-    "text": "Valence for Mac, Windows and Linux.",
-    "context": "The explanation beside the admin switch for whether the desktop app may connect to this server."
   },
   {
     "handler": "screens.adminArea.settingsPanel.valencePicksWhicheverBackendTheMachine",
@@ -17930,6 +18090,11 @@
     "context": "Text shown in the admin page. {version} is filled in by the app."
   },
   {
+    "handler": "screens.albumTracks.discNumber",
+    "text": "Disc {number}",
+    "context": "Above the songs on one disc of an album of several, in the list of an album's songs on the page for asking for it. {number} counts from one."
+  },
+  {
     "handler": "screens.apiKeyPanel.aKeyLetsSomethingThatIs",
     "text": "A key lets something other than a browser act as you, such as a script, a dashboard or an assistant. It can do anything you can do, and nothing more.",
     "context": "Text shown in the api key panel."
@@ -18093,6 +18258,11 @@
     "handler": "screens.askableDialog.describeCatalogueCard.inLibrary",
     "text": "In library",
     "context": "Shown in the askable dialog (from `describeCatalogueCard`)."
+  },
+  {
+    "handler": "screens.askableDialog.fetchingItsDetails",
+    "text": "Fetching its details…",
+    "context": "Shown large in the askable dialog while what a film, series, artist or album is, and its artwork, are still being read from the catalogue."
   },
   {
     "handler": "screens.askableDialog.noYearGiven",

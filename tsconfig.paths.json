@@ -217,6 +217,12 @@
       "@ValenceUI/TimeBars.types": ["./packages/ui/src/components/TimeBars/TimeBars.types.ts"],
       "@ValenceUI/Well": ["./packages/ui/src/components/Well/Well.tsx"],
       "@ValenceUI/Well.types": ["./packages/ui/src/components/Well/Well.types.ts"],
+      "@ValenceUI/MultiSelectField": [
+        "./packages/ui/src/components/MultiSelectField/MultiSelectField.tsx"
+      ],
+      "@ValenceUI/MultiSelectField.types": [
+        "./packages/ui/src/components/MultiSelectField/MultiSelectField.types.ts"
+      ],
       "@ValenceUI/SelectField": ["./packages/ui/src/components/SelectField/SelectField.tsx"],
       "@ValenceUI/SelectField.types": [
         "./packages/ui/src/components/SelectField/SelectField.types.ts"
@@ -297,6 +303,7 @@
       ],
       "@ValenceUI/animations/motion": ["./packages/ui/src/animations/motion.ts"],
       "@ValenceUI/tokens/menu": ["./packages/ui/src/tokens/menu.ts"],
+      "@ValenceUI/tokens/fieldTrigger": ["./packages/ui/src/tokens/fieldTrigger.ts"],
       "@ValenceUI/tokens/joinedLooks": ["./packages/ui/src/tokens/joinedLooks.ts"],
       "@ValenceUI/tokens/roleColours": ["./packages/ui/src/tokens/roleColours.ts"],
       "@ValenceUI/tokens/rail": ["./packages/ui/src/tokens/rail.ts"],
