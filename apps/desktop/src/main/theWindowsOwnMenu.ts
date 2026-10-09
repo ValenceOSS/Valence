@@ -1,29 +1,22 @@
-import { Menu } from 'electron';
-import type { BrowserWindow } from 'electron';
-import { say } from '@ValenceI18n/say';
+type RightClickedWindow = {
+  webContents: {
+    on: (event: 'context-menu', listener: (event: { preventDefault: () => void }) => void) => void;
+  };
+};
 
 /**
- * Offers the way back to choosing a server on a right click, anywhere in the window.
+ * Keeps a right click to the application, with no menu of the window's own.
  *
- * There is a menu bar with the same item on it, and on macOS it sits at the top of the screen rather
- * than in the window — which is a long way from where somebody is looking, and further still when
- * the window is nearly full screen. This client has exactly one thing in it that is not the server's,
- * and somebody who cannot find it has an application pointed at a server they cannot change.
- *
- * A right click reaches it from wherever they are, on a page this client did not draw and cannot
- * put a button on.
+ * A right click on a page the server drew used to raise a menu of reload and the developer tools,
+ * which is a browser showing through rather than an application. Changing server stays in the
+ * application menu and on its shortcut, and the developer tools stay on theirs in a build being
+ * worked on.
  *
  * @param window - The window to answer a right click in.
- * @param changeServer - What to do when somebody asks for a different one.
  */
-const theWindowsOwnMenu = (window: BrowserWindow, changeServer: () => void): void => {
-  window.webContents.on('context-menu', () => {
-    Menu.buildFromTemplate([
-      { label: say('common.changeServer'), click: changeServer },
-      { type: 'separator' },
-      { role: 'reload' },
-      { role: 'toggleDevTools' },
-    ]).popup({ window });
+const theWindowsOwnMenu = (window: RightClickedWindow): void => {
+  window.webContents.on('context-menu', (event) => {
+    event.preventDefault();
   });
 };
 
