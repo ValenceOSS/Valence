@@ -157,7 +157,9 @@ const UpNext = ({ episode, isAsking, offer, onPlay, onStay }: UpNextProps) => {
       <FocusGuide trapsLeft trapsRight trapsUp trapsDown>
         <View style={[STILL, styles.still]}>
           <Artwork
-            path={episode.hasBackdrop ? artworkUrl(episode.id, 'backdrop') : null}
+            path={
+              episode.hasBackdrop ? artworkUrl(episode.id, 'backdrop', { size: 'medium' }) : null
+            }
             style={STILL}
           />
 

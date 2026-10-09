@@ -51,7 +51,9 @@ const EpisodeCard = ({
       <View style={styles.card}>
         <View style={styles.still}>
           <Artwork
-            path={episode.hasBackdrop ? artworkUrl(episode.id, 'backdrop') : null}
+            path={
+              episode.hasBackdrop ? artworkUrl(episode.id, 'backdrop', { size: 'medium' }) : null
+            }
             style={StyleSheet.absoluteFill}
           />
 

@@ -24,6 +24,7 @@ const aServer = (isBuilt = true) => {
     writeFileSync(join(root, 'index.html'), '<p>the tv layout</p>');
     mkdirSync(join(root, '_expo'));
     writeFileSync(join(root, '_expo', 'app.js'), 'the tv code');
+    writeFileSync(join(root, '_expo', 'app.js.br'), 'the tv code, compressed');
   }
 
   const app = new Hono();
@@ -50,6 +51,15 @@ describe('serveTheTvLayout', () => {
     const answer = await aServer().request('/tv/_expo/app.js');
 
     expect(await answer.text()).toBe('the tv code');
+  });
+
+  it('sends the compressed copy of a file to a browser that takes it', async () => {
+    const answer = await aServer().request('/tv/_expo/app.js', {
+      headers: { 'accept-encoding': 'gzip, deflate, br' },
+    });
+
+    expect(answer.headers.get('content-encoding')).toBe('br');
+    expect(await answer.text()).toBe('the tv code, compressed');
   });
 
   it('shows every other browser the web app, unless somebody chose the TV layout', async () => {

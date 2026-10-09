@@ -1,5 +1,4 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { RotateCcw, RotateCw, Settings, SkipForward } from '@keyline-icons/react-native';
 import { Pause, Play } from '@keyline-icons/react-native/fill';
 import { Badges } from '@ValenceTv/components/Badges/Badges';
@@ -8,6 +7,7 @@ import { Scrubber } from '@ValenceTv/screens/Player/components/Scrubber/Scrubber
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { PlayerControlsProps } from './PlayerControls.types';
 import { say } from '@ValenceI18n/say';
+import { Shade } from '@ValenceTv/components/Shade/Shade';
 
 const SKIPS_BY = 10;
 
@@ -58,9 +58,10 @@ const PlayerControls = ({
   onTouched,
 }: PlayerControlsProps) => (
   <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-    <LinearGradient
+    <Shade
       colors={['rgba(0,0,0,0.7)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0.9)']}
       locations={[0, 0.28, 0.5, 1]}
+      flat="rgba(0,0,0,0.45)"
       style={StyleSheet.absoluteFill}
     />
 

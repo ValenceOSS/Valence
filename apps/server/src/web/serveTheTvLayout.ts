@@ -17,6 +17,9 @@ const PREFIX = '/tv';
  * between the two never hands one to the other. Where this server was built without the TV layout,
  * every browser is shown the web app.
  *
+ * Its files are sent compressed where the build left a compressed copy beside them and the browser
+ * takes one, since a television downloads its whole bundle of script before it draws anything.
+ *
  * `?layout=tv` or `?layout=web` on any page chooses the layout as the button in each does, so a
  * television left on a layout that will not draw can be brought back by typing an address.
  *
@@ -27,6 +30,7 @@ const serveTheTvLayout = (root: string) => {
   const page = join(root, 'index.html');
   const files = serveStatic({
     root,
+    precompressed: true,
     rewriteRequestPath: (path) => path.slice(PREFIX.length) || '/',
   });
 

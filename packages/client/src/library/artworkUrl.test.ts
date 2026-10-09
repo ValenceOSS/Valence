@@ -27,4 +27,10 @@ describe('artworkUrl', () => {
       '/api/media/film-2/image/poster?size=small',
     );
   });
+
+  it('asks for the medium copy where a wide card draws the picture', () => {
+    expect(artworkUrl('film-2', 'backdrop', { size: 'medium' })).toBe(
+      '/api/media/film-2/image/backdrop?size=medium',
+    );
+  });
 });
