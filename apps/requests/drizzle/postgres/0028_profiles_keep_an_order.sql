@@ -1,0 +1,1 @@
+ALTER TABLE "valence_requests"."quality_profile" ADD COLUMN "position" integer DEFAULT 0 NOT NULL;

@@ -11,6 +11,7 @@ type DataTableProps<Row extends RowData> = {
   totalRows?: number;
   emptyMessage?: string;
   onChooseRow?: (row: Row) => void;
+  onReorder?: (ids: string[]) => void;
   getRowId?: (row: Row) => string;
   toolbar?: ReactNode;
   getSubRows?: (row: Row) => readonly Row[] | undefined;

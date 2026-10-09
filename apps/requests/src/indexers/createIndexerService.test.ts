@@ -409,6 +409,7 @@ describe('createIndexerService', () => {
     );
     const profile = {
       ...QualityProfileDraftSchema.parse({ name: 'HD', kind: 'video' }),
+      position: 0,
       id: SECOND,
       createdAt: NOW.toISOString(),
       updatedAt: NOW.toISOString(),

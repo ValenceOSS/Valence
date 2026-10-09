@@ -244,6 +244,7 @@ const qualityProfile = requestsSchema('quality_profile', {
   libraryIds: jsonColumn('library_ids').$type<string[]>().notNull().default(jsonDefault([])),
   preferredLanguage: varchar('preferred_language', { length: 64 }),
   isDefault: boolean('is_default').notNull().default(false),
+  position: int('position').notNull().default(0),
   roleIds: jsonColumn('role_ids').$type<string[]>().notNull().default(jsonDefault([])),
   accountIds: jsonColumn('account_ids').$type<string[]>().notNull().default(jsonDefault([])),
   createdAt: momentNow('created_at').notNull(),

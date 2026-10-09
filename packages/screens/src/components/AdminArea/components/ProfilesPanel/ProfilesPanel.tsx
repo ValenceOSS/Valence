@@ -5,6 +5,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Bin as BinFilledIcon,
+  GripVertical as GripVerticalIcon,
   MoreHorizontal as MoreHorizontalIcon,
   Pen as PenFilledIcon,
   Plus as PlusFilledIcon,
@@ -20,7 +21,7 @@ import { Icon } from '@ValenceUI/Icon';
 import { Spinner } from '@ValenceUI/Spinner';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
-import { removeProfile } from '@ValenceClient/requests/fetchProfiles';
+import { removeProfile, reorderProfiles } from '@ValenceClient/requests/fetchProfiles';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { ProfileEditor } from '@ValenceScreens/components/AdminArea/components/ProfileEditor/ProfileEditor';
 import { describeAskers } from './describeAskers';
@@ -29,7 +30,12 @@ import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { ProfileKind, QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import { say } from '@ValenceI18n/say';
 
-const KINDS: readonly { id: ProfileKind; label: string; empty: string }[] = [
+const KINDS: readonly { id: ProfileKind | 'all'; label: string; empty: string }[] = [
+  {
+    id: 'all',
+    label: say('common.all'),
+    empty: say('screens.adminArea.profilesPanel.noProfilesYet'),
+  },
   {
     id: 'video',
     label: say('common.filmsAndSeries'),
@@ -43,12 +49,12 @@ const KINDS: readonly { id: ProfileKind; label: string; empty: string }[] = [
 ];
 
 /**
- * Whether a tab name is one of the kinds a profile can be.
+ * Whether a tab name is one of the kinds a profile can be, or every kind at once.
  *
  * @param value - What the tabs said.
- * @returns Whether it names a kind.
+ * @returns Whether it names what to show.
  */
-const isProfileKind = (value: string): value is ProfileKind =>
+const isProfileKind = (value: string): value is ProfileKind | 'all' =>
   KINDS.some((kind) => kind.id === value);
 
 /**
@@ -61,9 +67,42 @@ const ProfilesPanel = () => {
   const libraries = useQuery(libraryQueries.all());
   const [editing, setEditing] = useState<QualityProfile | null>(null);
   const [isAdding, setIsAdding] = useState(false);
-  const [shown, setShown] = useState<ProfileKind>('video');
+  const [shown, setShown] = useState<ProfileKind | 'all'>('all');
   const [removing, setRemoving] = useState<QualityProfile | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
+
+  const putInOrder = async (moved: readonly string[]) => {
+    const every = profiles.data ?? [];
+    const slots = every.map((profile) => moved.includes(profile.id));
+    let next = 0;
+    const ids = every.map((profile, at) => {
+      if (slots[at] !== true) {
+        return profile.id;
+      }
+
+      next += 1;
+
+      return moved[next - 1] ?? profile.id;
+    });
+    const byId = new Map(every.map((profile) => [profile.id, profile]));
+
+    cache.setQueryData(
+      requestsQueries.profiles().queryKey,
+      ids.flatMap((id) => {
+        const profile = byId.get(id);
+
+        return profile === undefined ? [] : [profile];
+      }),
+    );
+
+    const refusal = await reorderProfiles(ids);
+
+    tellOutcome(
+      say('screens.adminArea.profilesPanel.profilesPutInOrder'),
+      failureOfRefusal(refusal),
+    );
+    void cache.invalidateQueries({ queryKey: requestsQueries.profiles().queryKey });
+  };
 
   const reread = useCallback(
     () => cache.invalidateQueries({ queryKey: requestsQueries.profiles().queryKey }),
@@ -78,6 +117,20 @@ const ProfilesPanel = () => {
   const columns = useMemo<DataTableColumn<QualityProfile>[]>(
     () => [
       {
+        id: 'drag',
+        header: '',
+        enableSorting: false,
+        meta: { shrinks: true },
+        cell: () => (
+          <Icon
+            of={GripVerticalIcon}
+            size={16}
+            tone="muted"
+            label={say('screens.adminArea.profilesPanel.dragToChangeTheOrder')}
+          />
+        ),
+      },
+      {
         id: 'name',
         header: say('common.profile'),
         accessorFn: (profile) => profile.name,
@@ -88,6 +141,16 @@ const ProfilesPanel = () => {
             <span className="truncate text-xs text-text-muted">
               {describeProfile(row.original).takes}
             </span>
+          </span>
+        ),
+      },
+      {
+        id: 'kind',
+        header: say('common.kind'),
+        accessorFn: (profile) => profile.kind,
+        cell: ({ row }) => (
+          <span className="text-xs text-text-muted">
+            {KINDS.find((kind) => kind.id === row.original.kind)?.label}
           </span>
         ),
       },
@@ -266,9 +329,14 @@ const ProfilesPanel = () => {
               <DataTable
                 height="fills"
                 label={kind.label}
-                columns={columns}
-                rows={profiles.data.filter((profile) => profile.kind === kind.id)}
+                columns={
+                  kind.id === 'all' ? columns : columns.filter((column) => column.id !== 'kind')
+                }
+                rows={profiles.data.filter((profile) => kind.id === 'all' || profile.kind === kind.id)}
                 getRowId={(profile) => profile.id}
+                onReorder={(ids) => {
+                  void putInOrder(ids);
+                }}
                 emptyMessage={kind.empty}
               />
             </TabPanel>

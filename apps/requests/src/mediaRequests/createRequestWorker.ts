@@ -152,12 +152,14 @@ const DEFAULT_PROFILES: Record<QualityProfile['kind'], QualityProfile> = {
   video: {
     ...QualityProfileDraftSchema.parse({ name: say('common.default'), kind: 'video' }),
     id: '00000000-0000-4000-8000-000000000000',
+    position: 0,
     createdAt: '1970-01-01T00:00:00.000Z',
     updatedAt: '1970-01-01T00:00:00.000Z',
   },
   music: {
     ...QualityProfileDraftSchema.parse({ name: say('common.default'), kind: 'music' }),
     id: '00000000-0000-4000-8000-000000000001',
+    position: 0,
     createdAt: '1970-01-01T00:00:00.000Z',
     updatedAt: '1970-01-01T00:00:00.000Z',
   },

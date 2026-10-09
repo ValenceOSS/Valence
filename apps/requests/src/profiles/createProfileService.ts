@@ -16,7 +16,8 @@ type CreateProfileServiceOptions = {
 };
 
 /**
- * Keeps the quality profiles searches are judged against, in order of their names.
+ * Keeps the quality profiles searches are judged against, in the order an administrator put them,
+ * and by name among any never put in order.
  *
  * A default profile is what every request of its kind goes through, so there is at most one of
  * them per kind: marking a profile as the default unmarks whichever held it. Enforced here rather
@@ -44,15 +45,27 @@ const createProfileService = ({ store, now = () => new Date() }: CreateProfileSe
 
   return {
     list: async (): Promise<QualityProfile[]> =>
-      (await store.list()).toSorted((left, right) => left.name.localeCompare(right.name)),
+      (await store.list()).toSorted(
+        (left, right) => left.position - right.position || left.name.localeCompare(right.name),
+      ),
+
+    reorder: async (ids: readonly string[]): Promise<void> => {
+      const at = now().toISOString();
+
+      for (const [position, id] of ids.entries()) {
+        await store.update(id, { position, updatedAt: at });
+      }
+    },
 
     find: (id: string): Promise<QualityProfile | null> => store.find(id),
 
     add: async (draft: QualityProfileDraft): Promise<QualityProfile> => {
       const at = now().toISOString();
+      const last = Math.max(-1, ...(await store.list()).map((profile) => profile.position));
       const kept = await store.insert({
         ...QualityProfileDraftSchema.parse(draft),
         id: randomUUID(),
+        position: last + 1,
         createdAt: at,
         updatedAt: at,
       });

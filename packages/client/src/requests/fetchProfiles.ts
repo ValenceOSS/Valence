@@ -72,4 +72,20 @@ const removeProfile = async (id: string): Promise<Refusal> =>
   (await sendToRequests(`${PROFILES}/${id}`, 'DELETE', undefined, () => Promise.resolve(null)))
     .refusal;
 
-export { addProfile, changeProfile, fetchProfiles, fetchProfilesOnOffer, removeProfile };
+/**
+ * Puts the quality profiles in the order they are offered in, first to last.
+ *
+ * @param ids - Every profile's id, in its new order.
+ * @returns Why not, where it was refused.
+ */
+const reorderProfiles = async (ids: readonly string[]): Promise<Refusal> =>
+  (await sendToRequests(`${PROFILES}/order`, 'PUT', { ids }, () => Promise.resolve(null))).refusal;
+
+export {
+  addProfile,
+  changeProfile,
+  fetchProfiles,
+  fetchProfilesOnOffer,
+  removeProfile,
+  reorderProfiles,
+};

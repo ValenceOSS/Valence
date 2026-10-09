@@ -91,9 +91,12 @@ const QualityProfileSchema = z.object({
   isDefault: z.boolean(),
   roleIds: z.array(z.string()),
   accountIds: z.array(z.string()),
+  position: z.number().int().nonnegative().default(0),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
+
+const QualityProfileOrderSchema = z.object({ ids: z.array(z.string().uuid()).min(1) });
 
 const QualityProfileDraftSchema = z.object({
   name: z.string().trim().min(1).max(80),
@@ -202,6 +205,7 @@ export {
   ProfilesOnOfferSchema,
   QualityProfileChangeSchema,
   QualityProfileDraftSchema,
+  QualityProfileOrderSchema,
   QualityProfileSchema,
   QualitySizeSchema,
   ReleaseWaitSchema,

@@ -1,0 +1,1 @@
+ALTER TABLE `requests_quality_profile` ADD `position` int DEFAULT 0 NOT NULL;

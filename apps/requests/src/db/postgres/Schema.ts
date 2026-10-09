@@ -213,6 +213,7 @@ const qualityProfile = requestsSchema.table('quality_profile', {
   libraryIds: jsonb('library_ids').$type<string[]>().notNull().default([]),
   preferredLanguage: text('preferred_language'),
   isDefault: boolean('is_default').notNull().default(false),
+  position: integer('position').notNull().default(0),
   roleIds: jsonb('role_ids').$type<string[]>().notNull().default([]),
   accountIds: jsonb('account_ids').$type<string[]>().notNull().default([]),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

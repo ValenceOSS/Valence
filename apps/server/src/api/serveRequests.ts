@@ -34,6 +34,7 @@ import {
   listQualityProfilesRoute,
   profilesOnOfferRoute,
   removeQualityProfileRoute,
+  reorderQualityProfilesRoute,
   addArrAppRoute,
   changeArrAppRoute,
   importArrIndexersRoute,
@@ -870,6 +871,16 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
+  app.openapi(reorderQualityProfilesRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.reorderProfiles(context.req.valid('json').ids),
+    );
+
+    return answer.kind === 'answered'
+      ? context.body(null, 204)
       : context.json(bodyOf(answer), answer.status);
   });
 

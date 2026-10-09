@@ -376,6 +376,9 @@ const createRequestsClient = ({
     removeProfile: (id: string): Promise<RequestsAnswer<null>> =>
       call(withProfile(id), () => null, { method: 'DELETE' }),
 
+    reorderProfiles: (ids: readonly string[]): Promise<RequestsAnswer<null>> =>
+      call('/api/profiles/order', () => null, { method: 'PUT', body: { ids } }),
+
     readGiveUpRules: (): Promise<RequestsAnswer<GiveUpRules>> =>
       call('/api/give-up-rules', (body) => GiveUpRulesSchema.parse(body)),
 

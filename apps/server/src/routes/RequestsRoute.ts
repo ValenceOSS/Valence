@@ -37,6 +37,7 @@ import {
   ProfilesOnOfferSchema,
   QualityProfileChangeSchema,
   QualityProfileDraftSchema,
+  QualityProfileOrderSchema,
   QualityProfileSchema,
 } from '@ValenceContracts/schemas/QualityProfile';
 import {
@@ -797,6 +798,15 @@ const changeQualityProfileRoute = createRoute({
   }),
 });
 
+const reorderQualityProfilesRoute = createRoute({
+  method: 'put',
+  path: '/api/admin/requests/profiles/order',
+  tags: ['Admin'],
+  summary: 'Put the quality profiles in the order they are offered',
+  request: { body: { content: { 'application/json': { schema: QualityProfileOrderSchema } } } },
+  responses: failures({ ...REFUSED_BODY, 204: { description: 'Put in order' } }),
+});
+
 const removeQualityProfileRoute = createRoute({
   method: 'delete',
   path: '/api/admin/requests/profiles/{id}',
@@ -1277,6 +1287,7 @@ export {
   listQualityProfilesRoute,
   profilesOnOfferRoute,
   removeQualityProfileRoute,
+  reorderQualityProfilesRoute,
   addArrAppRoute,
   changeArrAppRoute,
   importArrIndexersRoute,

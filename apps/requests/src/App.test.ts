@@ -280,6 +280,7 @@ describe('createApp', () => {
     it('judges a search against a profile, and refuses one it does not have', async () => {
       const profile = {
         ...QualityProfileDraftSchema.parse({ name: 'HD', kind: 'video' }),
+        position: 0,
         id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
         createdAt: '2026-09-19T00:00:00.000Z',
         updatedAt: '2026-09-19T00:00:00.000Z',
