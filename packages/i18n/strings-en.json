@@ -3847,6 +3847,16 @@
     "context": "The label of a button, used in the notifications of the phone app and in the notification bell."
   },
   {
+    "handler": "common.markAsUnwatched",
+    "text": "Mark as unwatched",
+    "context": "The label of what takes back having watched something, forgetting how far the person got, among the actions of a film or episode's detail dialog."
+  },
+  {
+    "handler": "common.markAsWatched",
+    "text": "Mark as watched",
+    "context": "The label of what records something as seen through to the end: on an episode's row in the show dialog, and among the actions of a film or episode's detail dialog."
+  },
+  {
     "handler": "common.markSeasonUnwatched",
     "text": "Mark season unwatched",
     "context": "Shown, used in the show of the phone app and in the show dialog."
@@ -24994,11 +25004,6 @@
     "handler": "screens.showDialog.chooseEpisodes.downloadSizeEpisodes",
     "text": "Download {size} episodes",
     "context": "Shown in the choose episodes in the show dialog. {size} is filled in by the app."
-  },
-  {
-    "handler": "screens.showDialog.episodeRow.markAsWatched",
-    "text": "Mark as watched",
-    "context": "Shown in the episode row in the show dialog."
   },
   {
     "handler": "screens.showDialog.markAllUnwatched",

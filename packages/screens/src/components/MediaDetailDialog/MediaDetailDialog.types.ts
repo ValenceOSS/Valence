@@ -12,6 +12,8 @@ type MediaDetailDialogProps = {
   onBack?: () => void;
   backLabel?: string;
   isKept?: boolean;
+  isWatched?: boolean;
+  onMarkWatched?: (media: MediaSummary, isWatched: boolean) => void;
   onToggleKept?: (media: MediaSummary) => void;
   onRate?: (media: MediaSummary, stars: number | null) => void;
   onOpenPerson?: (member: CastMember) => void;
