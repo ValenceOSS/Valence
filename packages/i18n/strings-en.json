@@ -11385,6 +11385,11 @@
     "context": "Shown in the profile settings in the account area."
   },
   {
+    "handler": "screens.accountArea.profileSettings.desktopNotifications",
+    "text": "Desktop notifications",
+    "context": "The title of a setting row in the profile settings, shown only in the desktop app, turning the computer's own notification pop-ups on or off. Off until turned on."
+  },
+  {
     "handler": "screens.accountArea.profileSettings.displayName",
     "text": "Display name",
     "context": "The label of a text field in the profile settings in the account area."
@@ -11403,6 +11408,11 @@
     "handler": "screens.accountArea.profileSettings.preferTheBestCopy",
     "text": "Prefer the best version",
     "context": "Profile setting: play the better copy of a title where a linked server has one."
+  },
+  {
+    "handler": "screens.accountArea.profileSettings.showsANoticeOnThisComputer",
+    "text": "Shows a notice on this computer when something new arrives in your inbox. Saved on this device.",
+    "context": "The description under the Desktop notifications setting in the profile settings of the desktop app."
   },
   {
     "handler": "screens.accountArea.profileSettings.showWhatIAmPlayingOn",

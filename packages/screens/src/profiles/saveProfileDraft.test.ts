@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ProfileDraft } from '@ValenceScreens/components/ProfileSettings/ProfileSettings.types';
+import { areDeviceNoticesOn } from '@ValenceClient/notifications/deviceNotices';
 import { saveProfileDraft } from './saveProfileDraft';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
@@ -32,6 +33,7 @@ const DRAFT: ProfileDraft = {
   showsWhatIamWatching: true,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: true,
+  showsDesktopNotices: false,
   photo: null,
 };
 
@@ -90,9 +92,17 @@ describe('saveProfileDraft', () => {
     expect(saveProfile).not.toHaveBeenCalled();
   });
 
-  it('says so when the rest could not be written', async () => {
+  it('says so when the rest could not be written, and leaves this computer’s notices alone', async () => {
     saveProfile.mockResolvedValue(false);
 
-    expect(await saveProfileDraft(PROFILE, DRAFT)).toBe('Couldn’t save your changes.');
+    expect(await saveProfileDraft(PROFILE, { ...DRAFT, showsDesktopNotices: true })).toBe(
+      'Couldn’t save your changes.',
+    );
+    expect(areDeviceNoticesOn()).toBe(false);
+  });
+
+  it('turns this computer’s notices on once the rest is saved', async () => {
+    expect(await saveProfileDraft(PROFILE, { ...DRAFT, showsDesktopNotices: true })).toBeNull();
+    expect(areDeviceNoticesOn()).toBe(true);
   });
 });

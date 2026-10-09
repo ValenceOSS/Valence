@@ -7,7 +7,9 @@ import { notify } from '@ValenceUI/notify';
 import { somePluginContributions } from '@ValenceClient/testing/somePluginContributions';
 import { installATestClient } from '@ValenceScreens/testing/installATestClient';
 import { chooseTheLayout } from '@ValenceClient/platform/chooseTheLayout';
+import { Button } from '@ValenceUI/Button';
 import { AccountDialog } from './AccountDialog';
+import type { AccountAreaProps } from '@ValenceScreens/components/AccountArea/AccountArea.types';
 import type * as Auth from '@ValenceClient/session/auth';
 import type * as Notify from '@ValenceUI/notify';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
@@ -16,7 +18,18 @@ import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPrese
 vi.mock('@ValenceClient/platform/chooseTheLayout', () => ({ chooseTheLayout: vi.fn() }));
 
 vi.mock('@ValenceScreens/components/AccountArea/AccountArea', () => ({
-  AccountArea: () => <p>The panels</p>,
+  AccountArea: ({ onDraft }: Pick<AccountAreaProps, 'onDraft'>) => (
+    <>
+      <p>The panels</p>
+      <Button
+        onClick={() => {
+          onDraft({ showsDesktopNotices: true });
+        }}
+      >
+        Turn on desktop notifications
+      </Button>
+    </>
+  ),
 }));
 
 const mayAdminister = vi.hoisted(() => vi.fn<() => boolean>());
@@ -205,6 +218,22 @@ describe('what can actually be saved', () => {
     draw('profile');
 
     expect(await screen.findByRole('button', { name: 'Save' })).toBeInTheDocument();
+  });
+
+  it('lets turning on this computer’s notices be saved, though they are kept on the computer', async () => {
+    draw('profile');
+
+    const save = await screen.findByRole('button', { name: 'Save' });
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith('/api/profiles', expect.anything());
+    });
+
+    expect(save).toBeDisabled();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Turn on desktop notifications' }));
+
+    expect(save).toBeEnabled();
   });
 
   it('offers Save on Discord too, whose settings are part of the same draft', async () => {

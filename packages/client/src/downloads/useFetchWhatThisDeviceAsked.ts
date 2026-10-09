@@ -5,6 +5,7 @@ import { canKeepFiles } from '@ValenceClient/downloads/canKeepFiles';
 import { keepAFile } from '@ValenceClient/downloads/keepingFiles';
 import { useHeldFiles } from '@ValenceClient/downloads/useHeldFiles';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
+import { noticeOnThisDevice } from '@ValenceClient/notifications/noticeOnThisDevice';
 import { downloadQueries } from '@ValenceClient/query/downloadQueries';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import { say } from '@ValenceI18n/say';
@@ -81,7 +82,7 @@ const useFetchWhatThisDeviceAsked = (): void => {
       const before = wasFetching.current.get(file.downloadId);
 
       if (before !== undefined && file.state === 'here') {
-        platformInUse().notifyLocally({
+        noticeOnThisDevice({
           title: say('client.downloads.useFetchWhatThisDeviceAsked.titleIsOnThisDevice', {
             title: file.title,
           }),

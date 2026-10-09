@@ -3,7 +3,9 @@ import { renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
+import { chooseDeviceNotices } from '@ValenceClient/notifications/deviceNotices';
 import { useDeviceNotifications } from './useDeviceNotifications';
+import type { LocalNotice } from '@ValenceClient/platform/Platform.types';
 import type { Notification } from '@ValenceClient/notifications/fetchNotifications';
 
 const NOTHING_YET: Notification[] = [];
@@ -23,6 +25,17 @@ afterEach(() => {
   forgetPlatform();
 });
 
+/**
+ * Installs a platform that records its notices, with this device's notices turned on as asked.
+ *
+ * @param notifyLocally - What records each notice.
+ * @param areOn - Whether this device's notices are on.
+ */
+const installANoticingPlatform = (notifyLocally: (notice: LocalNotice) => void, areOn = true) => {
+  installPlatform(aFakePlatform({ notifyLocally }));
+  chooseDeviceNotices(areOn);
+};
+
 describe('useDeviceNotifications', () => {
   it('keeps the badge count on the platform up to date', () => {
     const setUnreadBadge = vi.fn();
@@ -39,7 +52,7 @@ describe('useDeviceNotifications', () => {
   it('says nothing about the inbox it found already there, which is not news', () => {
     const notifyLocally = vi.fn();
 
-    installPlatform(aFakePlatform({ notifyLocally }));
+    installANoticingPlatform(notifyLocally);
 
     renderHook(() =>
       useDeviceNotifications({
@@ -56,7 +69,7 @@ describe('useDeviceNotifications', () => {
   it('says nothing about what was waiting when the inbox arrives after an empty first look', () => {
     const notifyLocally = vi.fn();
 
-    installPlatform(aFakePlatform({ notifyLocally }));
+    installANoticingPlatform(notifyLocally);
 
     const { rerender } = renderHook(
       ({ isKnown, notifications }: { isKnown: boolean; notifications: Notification[] }) =>
@@ -78,10 +91,31 @@ describe('useDeviceNotifications', () => {
     expect(notifyLocally).toHaveBeenCalledTimes(1);
   });
 
+  it('puts nothing up while this device has its notices off', () => {
+    const notifyLocally = vi.fn();
+
+    installANoticingPlatform(notifyLocally, false);
+
+    const { rerender } = renderHook(
+      (notifications: Notification[]) =>
+        useDeviceNotifications({
+          isKnown: true,
+          notifications,
+          unread: notifications.length,
+          onOpen: () => {},
+        }),
+      { initialProps: NOTHING_YET },
+    );
+
+    rerender([aNotice()]);
+
+    expect(notifyLocally).not.toHaveBeenCalled();
+  });
+
   it('notifies for a notice that arrives after the first look', () => {
     const notifyLocally = vi.fn();
 
-    installPlatform(aFakePlatform({ notifyLocally }));
+    installANoticingPlatform(notifyLocally);
 
     const { rerender } = renderHook(
       (notifications: Notification[]) =>
@@ -104,7 +138,7 @@ describe('useDeviceNotifications', () => {
   it('says nothing for a notice that arrived already read, from another device', () => {
     const notifyLocally = vi.fn();
 
-    installPlatform(aFakePlatform({ notifyLocally }));
+    installANoticingPlatform(notifyLocally);
 
     const { rerender } = renderHook(
       (notifications: Notification[]) =>
@@ -120,7 +154,7 @@ describe('useDeviceNotifications', () => {
   it('says nothing twice for the same notice arriving again unchanged', () => {
     const notifyLocally = vi.fn();
 
-    installPlatform(aFakePlatform({ notifyLocally }));
+    installANoticingPlatform(notifyLocally);
 
     const notice = aNotice();
 
@@ -145,13 +179,9 @@ describe('useDeviceNotifications', () => {
     const onOpen = vi.fn<(notification: Notification) => void>();
     let opened: (() => void) | undefined;
 
-    installPlatform(
-      aFakePlatform({
-        notifyLocally: (notice) => {
-          opened = notice.onOpen;
-        },
-      }),
-    );
+    installANoticingPlatform((notice) => {
+      opened = notice.onOpen;
+    });
 
     const { rerender } = renderHook(
       (notifications: Notification[]) =>

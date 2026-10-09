@@ -9,6 +9,7 @@ type ProfileDraft = {
   showsWhatIamWatching: boolean;
   discordPresence: DiscordPresence;
   prefersBestCopy: boolean;
+  showsDesktopNotices: boolean;
   photo: File | null;
 };
 

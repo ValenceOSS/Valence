@@ -2774,12 +2774,15 @@ const ENGLISH = {
     'After this many episodes autoplay in a row, Valence asks if you’re still watching.',
   'screens.accountArea.profileSettings.anOrbAPhotographOrGIF':
     'An orb, a photo or GIF, an illustrated avatar, or the first letter of your name.',
+  'screens.accountArea.profileSettings.desktopNotifications': 'Desktop notifications',
   'screens.accountArea.profileSettings.displayName': 'Display name',
   'screens.accountArea.profileSettings.followingTheMachineUsesWhateverYour':
     'System uses your device’s motion setting. Reduced cuts animation in Valence only.',
   'screens.accountArea.profileSettings.keptOnThisDeviceRatherThan':
     'Saved on this device, not your account, and applied immediately.',
   'screens.accountArea.profileSettings.preferTheBestCopy': 'Prefer the best version',
+  'screens.accountArea.profileSettings.showsANoticeOnThisComputer':
+    'Shows a notice on this computer when something new arrives in your inbox. Saved on this device.',
   'screens.accountArea.profileSettings.showWhatIAmPlayingOn': 'Show what I’m playing on Discord',
   'screens.accountArea.profileSettings.theBackgroundBehindYourInitialAnd':
     'The background behind your initial and the tint on your illustrated avatar.',

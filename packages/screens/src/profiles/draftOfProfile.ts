@@ -1,3 +1,4 @@
+import { areDeviceNoticesOn } from '@ValenceClient/notifications/deviceNotices';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ProfileDraft } from '@ValenceScreens/components/ProfileSettings/ProfileSettings.types';
 
@@ -16,6 +17,7 @@ const draftOfProfile = (profile: ViewerProfile): ProfileDraft => ({
   showsWhatIamWatching: profile.showsWhatIamWatching,
   discordPresence: profile.discordPresence,
   prefersBestCopy: profile.prefersBestCopy,
+  showsDesktopNotices: areDeviceNoticesOn(),
   photo: null,
 });
 
