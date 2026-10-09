@@ -308,6 +308,13 @@ const ValenceShell = () => {
       >
         <ShowDialog
           show={openShow}
+          {...(may('requests.ask') && requestableKinds.has('series')
+            ? {
+                onRequestMore: (tmdbId: number) => {
+                  go({ show: null, asking: `series:${tmdbId.toString()}:more` });
+                },
+              }
+            : {})}
           {...(mayShare
             ? {
                 onShare: (show) => {

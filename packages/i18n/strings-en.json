@@ -5230,6 +5230,11 @@
     "context": "On a playlist, on the web and the phone: a button that requests the albums of every song in the playlist that the library does not have yet, and the title of the window it opens."
   },
   {
+    "handler": "common.requestMore",
+    "text": "Request more…",
+    "context": "The action on a show's page in the library, on the web and phone, that opens its seasons to ask for the episodes the library doesn't have yet. Offered where something aired is missing and the viewer may request."
+  },
+  {
     "handler": "common.requests",
     "text": "Requests",
     "context": "The label, used in several places, among them the requests page of the television app and the admin (from `groupPermissions`)."

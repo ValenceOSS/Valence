@@ -8,6 +8,7 @@ import {
   Info as InfoIcon,
   Layers as LayersIcon,
   Link as LinkIcon,
+  Plus as PlusIcon,
   Tape as TapeIcon,
   X as XIcon,
 } from '@keyline-icons/react';
@@ -63,6 +64,7 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ShowDialogProps } from './ShowDialog.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { isShowMissingEpisodes } from '@ValenceClient/library/isShowMissingEpisodes';
 
 /**
  * A programme in full: its seasons, its episodes, where a viewer got to in each, and the episodes
@@ -80,6 +82,8 @@ import { sayCount } from '@ValenceI18n/sayCount';
  *   season at once.
  * @param onRate - Told what they gave it, or null to take the rating back. Offered only for a
  *   programme the scanner resolved to a series of its own, since a rating is keyed on that.
+ * @param onRequestMore - Told to ask for more of the programme, by its catalogue id, where the
+ *   viewer may ask; offered where the catalogue lists aired episodes the library does not hold.
  */
 const ShowDialog = ({
   show,
@@ -92,6 +96,7 @@ const ShowDialog = ({
   isFinished,
   onMarkWatched,
   onRate,
+  onRequestMore,
 }: ShowDialogProps) => {
   const [unlettered, setUnlettered] = useState<string | null>(null);
   const [lastShown, setLastShown] = useState(show);
@@ -507,6 +512,22 @@ const ShowDialog = ({
                     icon: <Icon of={LayersIcon} size={18} />,
                     onChoose: () => {
                       setIsCollecting(true);
+                    },
+                  },
+                ]),
+            ...(onRequestMore === undefined ||
+            detail === null ||
+            (detail.tmdbId ?? null) === null ||
+            !isShowMissingEpisodes(detail, new Date().toISOString().slice(0, 10))
+              ? []
+              : [
+                  {
+                    id: 'request-more',
+                    isPinned: true,
+                    label: say('common.requestMore'),
+                    icon: <Icon of={PlusIcon} size={18} />,
+                    onChoose: () => {
+                      onRequestMore(detail.tmdbId ?? 0);
                     },
                   },
                 ]),

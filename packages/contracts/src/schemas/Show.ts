@@ -50,6 +50,7 @@ const ShowDetailSchema = ShowSummarySchema.extend({
   status: z.string().nullish(),
   overview: z.string().nullish(),
   nextEpisode: NextEpisodeSchema.nullish(),
+  tmdbId: z.number().int().positive().nullish(),
 });
 
 const ShowListSchema = z.object({ shows: z.array(ShowSummarySchema) });

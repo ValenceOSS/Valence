@@ -1210,6 +1210,7 @@ const ENGLISH = {
   'common.requestItsAlbum': 'Request its album',
   'common.requestMedia': 'Request media',
   'common.requestMissingSongs': 'Request missing songs',
+  'common.requestMore': 'Request more…',
   'common.requests': 'Requests',
   'common.requestsTheAlbumsTheMissingSongsAreOn':
     'Requests the albums that the songs not in your library are on. Untick any you don’t want.',

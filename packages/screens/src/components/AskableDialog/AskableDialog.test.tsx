@@ -414,6 +414,30 @@ describe('AskableDialog', () => {
     expect(await screen.findByText('Requested')).toBeInTheDocument();
   });
 
+  it('asks for more of a show already in the library, where the address says so', async () => {
+    const handlers = { onClose: vi.fn(), onOpen: vi.fn() };
+
+    fetchAskable.mockResolvedValue(
+      aTitle({
+        kind: 'series',
+        id: '95396',
+        title: 'Severance',
+        standing: { status: 'library', mediaId: 'show-1', requestId: null, requestState: null },
+      }),
+    );
+
+    renderInAnAddress(<AskableDialog asking="series:95396:more" {...handlers} />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Request' }));
+
+    await waitFor(() => {
+      expect(askForMedia).toHaveBeenCalledWith(
+        expect.objectContaining({ kind: 'series', tmdbId: 95396 }),
+      );
+    });
+    expect(handlers.onOpen).not.toHaveBeenCalled();
+  });
+
   it('opens what is in the library already in its own dialog, without showing this one', async () => {
     fetchAskable.mockResolvedValue(
       aTitle({
