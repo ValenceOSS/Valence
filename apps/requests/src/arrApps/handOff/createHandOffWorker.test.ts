@@ -441,7 +441,7 @@ describe('createHandOffWorker', () => {
   it('asks the app to search again for a request it has, and nothing for one it has not', async () => {
     const handed = aWorker({ request: aMediaRequest({ handOff: HAND_OFF, handOffId: 12 }) });
 
-    expect(await handed.worker.searchNow(aMediaRequest().id)).toBe(true);
+    expect(await handed.worker.searchNow(aMediaRequest().id)).toBe('searched');
     expect(handed.searching).toHaveBeenCalledWith(expect.objectContaining({ handOffId: 12 }), 12);
     expect(handed.log.said.map((line) => line.message.message)).toEqual([
       'Asked Radarr to search for it again.',
@@ -449,8 +449,15 @@ describe('createHandOffWorker', () => {
 
     const kept = aWorker({ request: aMediaRequest() });
 
-    expect(await kept.worker.searchNow(aMediaRequest().id)).toBe(false);
+    expect(await kept.worker.searchNow(aMediaRequest().id)).toBe('notHandedOff');
     expect(kept.searching).not.toHaveBeenCalled();
+
+    const declined = aWorker({
+      request: aMediaRequest({ handOff: HAND_OFF, handOffId: 12, approval: 'refused' }),
+    });
+
+    expect(await declined.worker.searchNow(aMediaRequest().id)).toBe('notApproved');
+    expect(declined.searching).not.toHaveBeenCalled();
   });
 
   it('says which app has a request, with a link to its page there', async () => {

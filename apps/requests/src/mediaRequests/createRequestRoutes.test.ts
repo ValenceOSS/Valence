@@ -27,7 +27,7 @@ const DUNE = {
 };
 
 type RouteHandOff = {
-  searchNow: (id: string) => Promise<boolean>;
+  searchNow: (id: string) => Promise<'searched' | 'failed' | 'notApproved' | 'notHandedOff'>;
   handedTo: (id: string) => Promise<HandedTo | null>;
   releasesFor: (id: string) => Promise<ReleaseSearchOutcome | null>;
   pick: (id: string, release: Release) => Promise<Said | null>;
@@ -83,7 +83,7 @@ const theRoutes = (
     }),
     worker,
     handOff: {
-      searchNow: () => Promise.resolve(false),
+      searchNow: () => Promise.resolve('notHandedOff' as const),
       handedTo: () => Promise.resolve(null),
       releasesFor: () => Promise.resolve(null),
       pick: () => Promise.resolve(sayVerbatim('Not handed off')),
@@ -149,7 +149,9 @@ describe('createRequestRoutes', () => {
   });
 
   it('searches a handed-off request in its app, and says which app has it', async () => {
-    const searchNow = vi.fn(() => Promise.resolve(true));
+    const searchNow = vi.fn((): Promise<'searched' | 'failed' | 'notApproved' | 'notHandedOff'> =>
+      Promise.resolve('searched'),
+    );
     const handedTo = vi.fn((): Promise<HandedTo | null> =>
       Promise.resolve({
         appId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
@@ -163,6 +165,16 @@ describe('createRequestRoutes', () => {
 
     expect((await ask(`/requests/${id}/retry`, 'POST')).status).toBe(200);
     expect(searchNow).toHaveBeenCalledWith(id);
+
+    searchNow.mockResolvedValue('failed');
+
+    expect((await ask(`/requests/${id}/retry`, 'POST')).status).toBe(409);
+
+    searchNow.mockResolvedValue('notApproved');
+
+    expect(await (await ask(`/requests/${id}/retry`, 'POST')).json()).toMatchObject({
+      code: 'error.requests.itIsNotApprovedSoNothingIsSearched',
+    });
     expect(await (await ask(`/requests/${id}/handed-to`)).json()).toMatchObject({
       appName: 'Radarr',
     });
