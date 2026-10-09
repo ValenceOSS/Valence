@@ -1,3 +1,4 @@
+import { narrationOfSeries } from '@ValenceServer/requests/audible/narrationOfSeries';
 import { heldAlbumsOf } from '@ValenceServer/requests/arrivals/heldAlbumsOf';
 import { createMemoryCalendarFeedService } from '@ValenceServer/calendarFeed/createMemoryCalendarFeedService';
 import type { Asker } from '@ValenceServer/api/Asker';
@@ -57,6 +58,7 @@ import type {
   HeldInLibrary,
   MediaRequestDraft,
   MediaRequestKind,
+  Narration,
   ReleaseType,
 } from '@ValenceContracts/schemas/MediaRequest';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
@@ -1341,6 +1343,23 @@ const createAppContext = (options: CreateAppOptions) => {
       into.keepsShowsTogether,
     );
 
+  /**
+   * Which narration of a book's audiobook a new request fetches without asking: the only one, or
+   * the one whoever reads its series in the library reads; nothing where somebody should choose.
+   *
+   * @param narrations - The book's narrations.
+   * @returns The narrations chosen, or null for a choice to be made.
+   */
+  const narrationsWantedOf = async (narrations: readonly Narration[]): Promise<string[] | null> => {
+    const series = narrations.find((narration) => narration.series !== null)?.series ?? null;
+    const chosen = narrationOfSeries(
+      narrations,
+      series === null ? [] : await discovery.lookup.seriesNarrators(series),
+    );
+
+    return chosen === null ? null : [chosen];
+  };
+
   const draftFor = async (
     who: Headers | Asker,
     asked: MediaRequestAsk,
@@ -1398,6 +1417,9 @@ const createAppContext = (options: CreateAppOptions) => {
         isApproved: await asker.holds('requests.autoApprove'),
         catalogue,
         handOff: arrKindOf(chosen.kind) === null ? null : (chosen.fulfilment ?? null),
+        ...(asked.kind === 'book' && (catalogue.narrations ?? []).length > 0
+          ? { narrationsWanted: await narrationsWantedOf(catalogue.narrations ?? []) }
+          : {}),
         held:
           asked.kind === 'series' && asked.tmdbId !== undefined
             ? await heldFor(chosen, asked.tmdbId)

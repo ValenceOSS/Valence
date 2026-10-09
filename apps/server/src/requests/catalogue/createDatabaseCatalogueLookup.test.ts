@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mediaItem, series } from '#dialect/Schema';
+import { book, mediaItem, series } from '#dialect/Schema';
 import { createDatabaseMusicStore } from '@ValenceServer/music/createDatabaseMusicStore';
 import { aHousehold } from '@ValenceServer/testing/aHousehold';
 import { createDatabaseCatalogueLookup } from './createDatabaseCatalogueLookup';
@@ -28,6 +28,38 @@ describe('createDatabaseCatalogueLookup', { timeout: STARTING_POSTGRES_MS }, () 
     ]);
 
     expect([...found]).toEqual([['low/hey what', album.id]]);
+  });
+
+  it('names who reads the audiobooks of a series the library holds', async () => {
+    const { db } = await aHousehold();
+
+    await db.insert(book).values([
+      {
+        id: 'one',
+        libraryId: 'music',
+        path: '/books/One',
+        title: 'One',
+        layout: 'audio',
+        direction: 'leftToRight',
+        seriesName: 'A Series',
+        narrators: ['A Reader'],
+      },
+      {
+        id: 'two',
+        libraryId: 'music',
+        path: '/books/Two',
+        title: 'Two',
+        layout: 'reflow',
+        direction: 'leftToRight',
+        seriesName: 'A Series',
+        narrators: ['Nobody'],
+      },
+    ]);
+
+    const lookup = createDatabaseCatalogueLookup(db);
+
+    expect(await lookup.seriesNarrators('a series')).toEqual(['A Reader']);
+    expect(await lookup.seriesNarrators('Another Series')).toEqual([]);
   });
 
   it('counts the episodes held in each season, a double episode as two', async () => {

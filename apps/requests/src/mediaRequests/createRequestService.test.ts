@@ -296,6 +296,35 @@ describe('createRequestService', () => {
     expect(letting?.items).toMatchObject([{ state: 'available', heldQuality: null }]);
   });
 
+  it('asks which narration of an audiobook to fetch, and waits for each one chosen', async () => {
+    const { service } = aService();
+    const { request } = await service.add({
+      kind: 'book',
+      openLibraryId: 1,
+      libraryId: 'books',
+      libraryPath: '/media/Books',
+      bookFormats: ['audiobook'],
+      requestedBy: { id: 'someone', name: 'Someone' },
+      isApproved: true,
+      catalogue: {
+        title: 'A Book',
+        year: null,
+        narrations: [
+          { asin: 'A', narrators: ['Ann Reader'], runtimeMinutes: 600, series: null },
+          { asin: 'B', narrators: ['Bob Voice'], runtimeMinutes: 610, series: null },
+        ],
+      },
+    });
+
+    expect(request.isAskingNarration).toBe(true);
+    expect(await service.decideNarration(request.id, ['Z'])).toBeNull();
+
+    const chosen = await service.decideNarration(request.id, ['A', 'B']);
+
+    expect(chosen?.isAskingNarration).toBe(false);
+    expect(chosen?.items.map((item) => item.narration).toSorted()).toEqual(['A', 'B']);
+  });
+
   it('changes the seasons asked for with what the catalogue says', async () => {
     const { service } = aService();
     const { request } = await service.add(SEVERANCE);

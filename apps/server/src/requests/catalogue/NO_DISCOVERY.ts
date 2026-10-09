@@ -23,6 +23,7 @@ const NO_DISCOVERY: Discovery = {
     artists: NOTHING_FOUND,
     albums: NOTHING_FOUND,
     albumQualities: () => Promise.resolve(new Map()),
+    seriesNarrators: () => Promise.resolve([]),
     artistsNamed: NOTHING_FOUND,
     albumsNamed: NOTHING_FOUND,
     booksNamed: NOTHING_FOUND,

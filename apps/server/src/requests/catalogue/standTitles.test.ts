@@ -31,6 +31,7 @@ const aLookup = (
     artists: held('artists'),
     albums: held('albums'),
     albumQualities: () => Promise.resolve(new Map()),
+    seriesNarrators: () => Promise.resolve([]),
     artistsNamed: held('artistsNamed'),
     albumsNamed: held('albumsNamed'),
     booksNamed: (books) =>

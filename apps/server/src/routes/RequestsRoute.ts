@@ -52,6 +52,7 @@ import {
   MediaRequestAskSchema,
   MediaRequestKindSchema,
   MediaRequestChangeSchema,
+  NarrationDecisionSchema,
   ProfileAskDecisionSchema,
   BlockedReleaseSchema,
   MediaRequestDecidedSchema,
@@ -1238,6 +1239,18 @@ const decideProfileAskRoute = createRoute({
   responses: requestFailures(ONE_REQUEST),
 });
 
+const decideNarrationRoute = createRoute({
+  method: 'post',
+  path: '/api/requests/media/{id}/narration',
+  tags: ['Requests'],
+  summary: 'Choose which narration of a book’s audiobook to fetch, or more than one',
+  request: {
+    params: RecordIdParameter,
+    body: { content: { 'application/json': { schema: NarrationDecisionSchema } } },
+  },
+  responses: requestFailures(ONE_REQUEST),
+});
+
 const approveMediaRequestRoute = createRoute({
   method: 'post',
   path: '/api/requests/media/{id}/approve',
@@ -1402,6 +1415,7 @@ export {
   refuseMediaRequestRoute,
   removeMediaRequestRoute,
   joinMediaRequestRoute,
+  decideNarrationRoute,
   decideProfileAskRoute,
   handedToRoute,
   handOffDownloadsRoute,

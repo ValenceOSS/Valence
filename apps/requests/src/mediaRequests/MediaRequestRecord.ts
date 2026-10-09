@@ -11,6 +11,7 @@ type MediaRequestRecord = Omit<
   'state' | 'items' | 'requestedBy' | 'releaseDate' | 'profileName' | 'isHandedOff'
 > & {
   libraryPath: string;
+  narrationsWanted?: string[] | null;
   libraryFolder: string | null;
   seasonFolders: SeasonFolder[];
   libraryLanguage: string | null;

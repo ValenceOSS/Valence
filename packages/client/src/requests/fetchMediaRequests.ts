@@ -112,6 +112,16 @@ const decideProfileAsk = (id: string, decision: ProfileAskDecision): Promise<Sen
   sendToRequests(`${REQUESTS}/${id}/profile-ask`, 'POST', decision, readRequest);
 
 /**
+ * Chooses which narration of a book's audiobook to fetch, or more than one.
+ *
+ * @param id - Which request.
+ * @param asins - The narrations chosen.
+ * @returns The request as it now stands, or why it could not be chosen.
+ */
+const decideNarration = (id: string, asins: readonly string[]): Promise<Sent<MediaRequest>> =>
+  sendToRequests(`${REQUESTS}/${id}/narration`, 'POST', { asins: [...asins] }, readRequest);
+
+/**
  * Reads which connected app a request was handed to, with a link to its page there.
  *
  * @param id - Which request.
@@ -348,6 +358,7 @@ export {
   askForMedia,
   changeMediaRequest,
   decideMediaRequests,
+  decideNarration,
   decideProfileAsk,
   fetchRequestBlocklist,
   fetchMediaRequestLog,

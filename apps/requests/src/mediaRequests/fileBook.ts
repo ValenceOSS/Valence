@@ -1,6 +1,9 @@
 /* oxlint-disable valence/no-hard-coded-strings -- file and folder names on disk, which media servers read in English */
 import { basename, dirname, extname, join } from 'node:path';
+import { access, writeFile } from 'node:fs/promises';
 import { parseFile } from 'music-metadata';
+import { bookMetadataOf } from '@ValenceRequests/mediaRequests/bookMetadataOf';
+import { fetchPicture } from '@ValenceRequests/mediaRequests/fetchPicture';
 import { audiobookTitleOf } from '@ValenceContracts/functions/audiobookTitleOf';
 import { AUDIOBOOK_FILE_EXTENSIONS } from '@ValenceContracts/constants/AUDIOBOOK_FILE_EXTENSIONS';
 import { BOOK_FILE_FORMATS } from '@ValenceContracts/constants/BOOK_FILE_FORMATS';
@@ -18,7 +21,8 @@ import type { DownloadedFile } from '@ValenceRequests/mediaRequests/findDownload
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
 
-type Fileable = Pick<RequestItemRecord, 'id' | 'title'>;
+type Fileable = Pick<RequestItemRecord, 'id' | 'title'> &
+  Partial<Pick<RequestItemRecord, 'format' | 'narration'>>;
 
 type Filed = { filed: ReadonlyMap<string, string>; missing: readonly string[] };
 
@@ -32,6 +36,7 @@ type SoundTags = {
 type Naming = {
   isNamedByItsFiles?: boolean;
   readTags?: (path: string) => Promise<SoundTags | null>;
+  fetchCover?: (url: string) => Promise<Uint8Array | null>;
 };
 
 type BookInDownload = {
@@ -44,6 +49,33 @@ type BookInDownload = {
 };
 
 const COVER = /^(cover|folder|front|poster)\.(jpe?g|png)$/i;
+
+/**
+ * Writes a file beside a book where none of that name is there yet, so what the library already
+ * keeps there is never replaced.
+ *
+ * @param path - Where.
+ * @param made - What goes in it, or nothing where there is nothing to write.
+ */
+const keepNew = async (
+  path: string,
+  made: () => string | Promise<Uint8Array | null>,
+): Promise<void> => {
+  if (
+    await access(path).then(
+      () => true,
+      () => false,
+    )
+  ) {
+    return;
+  }
+
+  const content = await made();
+
+  if (content !== null) {
+    await writeFile(path, content);
+  }
+};
 
 const PICTURE = /\.(jpe?g|png)$/i;
 
@@ -283,6 +315,10 @@ const sharedFolderOf = (folders: readonly string[], libraryPath: string): string
  * library opens it either way. So is a book sent by hand, whose release name is a poor guide to
  * which part is the title and which the author; one fetched for a request keeps the request's.
  *
+ * A single book gets a `metadata.opf` beside it, saying its title, author, narrators, year, blurb,
+ * series and Open Library id, and a `cover.jpg` from Open Library where the download brought no
+ * cover — each only where the folder has none of its own yet.
+ *
  * Cue sheets, checksums and notes are left behind: a cue names the file it describes, and a track
  * filed under its place in the book no longer carries that name. Nothing is moved out of a torrent
  * that is still seeding; its files are linked or copied instead.
@@ -291,16 +327,19 @@ const sharedFolderOf = (folders: readonly string[], libraryPath: string): string
  * @param items - The book the download was fetched for.
  * @param contentPath - Where the download is, as this service sees it.
  * @param isKeepingSource - Whether the download must keep its files, as a seeding torrent must.
- * @param naming - Whether a single book is named by its own tags rather than by the request, and how
- *   tags are read.
+ * @param naming - Whether a single book is named by its own tags rather than by the request, how
+ *   tags are read, and how a cover is fetched where the download brought none.
  * @returns Where each book was filed, and the ones nothing in the download could be filed as.
  */
 const fileBook = async (
-  request: Pick<MediaRequestRecord, 'libraryPath' | 'title' | 'artistName'>,
+  request: Pick<MediaRequestRecord, 'libraryPath' | 'title' | 'artistName'> &
+    Partial<
+      Pick<MediaRequestRecord, 'year' | 'overview' | 'openLibraryId' | 'narrations' | 'posterUrl'>
+    >,
   items: readonly Fileable[],
   contentPath: string,
   isKeepingSource: boolean,
-  { isNamedByItsFiles = false, readTags = readSoundTags }: Naming = {},
+  { isNamedByItsFiles = false, readTags = readSoundTags, fetchCover = fetchPicture }: Naming = {},
 ): Promise<Filed> => {
   const files = await findDownloadedFiles(contentPath);
   const books = await booksInDownload(files, readTags);
@@ -384,6 +423,32 @@ const fileBook = async (
           join(folder, `cover.${extensionOf(cover.name)}`),
           isKeepingSource,
         );
+      }
+
+      if (!isPack) {
+        const narration = (request.narrations ?? []).find(
+          (one) => item.format === 'audiobook' && one.asin === item.narration,
+        );
+
+        await keepNew(join(folder, 'metadata.opf'), () =>
+          bookMetadataOf({
+            title: request.title,
+            artistName: author,
+            year: request.year ?? null,
+            overview: request.overview ?? null,
+            openLibraryId: request.openLibraryId ?? null,
+            narrators: narration?.narrators ?? [],
+            series: narration?.series ?? null,
+          }),
+        );
+
+        const posterUrl = request.posterUrl ?? null;
+
+        if (cover === undefined && posterUrl !== null && posterUrl.startsWith('https://')) {
+          await keepNew(join(folder, 'cover.jpg'), () =>
+            fetchCover(posterUrl.replace(/-M\.jpg$/, '-L.jpg')),
+          );
+        }
       }
 
       folders.push(folder);

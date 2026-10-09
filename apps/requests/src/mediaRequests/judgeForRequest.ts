@@ -1,3 +1,4 @@
+import { narrationOfRelease } from '@ValenceRequests/mediaRequests/narrationOfRelease';
 import { isIncompleteAlbum } from '@ValenceRequests/mediaRequests/isIncompleteAlbum';
 import { saying } from '@ValenceI18n/saying';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
@@ -65,6 +66,7 @@ type JudgeForRequestOptions = {
     | 'runtimeMinutes'
     | 'libraryLanguage'
     | 'followsAfter'
+    | 'narrations'
   >;
   items: readonly RequestItemRecord[];
   releases: readonly Release[];
@@ -93,7 +95,10 @@ type JudgedForRequest = {
  * no better than what an upgrade would replace — its quality and score against those of the
  * release filed, judged by the profile as it is now. An album filed short takes another of the same
  * quality, for its missing tracks; an album the library holds lossy, kept to be upgraded, takes only
- * a better quality than the library's copy. They come back in the order they would be chosen,
+ * a better quality than the library's copy.
+ *
+ * An audiobook release naming a narrator is held for that narration only; one naming none is held
+ * for one narration at most, since nothing says which it is until its length is measured. They come back in the order they would be chosen,
  * with the pick, and what each would fetch.
  *
  * A release picked by hand is matched by its numbers alone, or an album by its title alone, since
@@ -214,6 +219,8 @@ const judgeForRequest = ({
         ? { ...request, aliases: [...request.aliases, parsed.title] }
         : request;
     const format = isBookRequest(request.kind) ? readBookFormat(release) : null;
+    const narrated =
+      format === 'audiobook' ? narrationOfRelease(release.title, request.narrations ?? []) : null;
     const covered = (
       isBookRequest(request.kind)
         ? !isTitleChecked || matchBook(request, release.title)
@@ -227,7 +234,15 @@ const judgeForRequest = ({
               isTitleChecked ? parsed : { ...parsed, year: null },
               release.publishedAt?.slice(0, 10) ?? null,
             )
-    ).filter((item) => format === null || (item.format ?? 'ebook') === format);
+    )
+      .filter((item) => format === null || (item.format ?? 'ebook') === format)
+      .filter(
+        (item, _at, all) =>
+          format !== 'audiobook' ||
+          (narrated === null
+            ? all.indexOf(item) === 0
+            : (item.narration ?? null) === null || item.narration === narrated),
+      );
 
     if (covered.length === 0) {
       if (!keepsTheUnnamed) {

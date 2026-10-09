@@ -1,3 +1,4 @@
+import { isAskingNarration } from '@ValenceContracts/functions/isAskingNarration';
 import { describeRequestState } from '@ValenceRequests/mediaRequests/describeRequestState';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
@@ -46,6 +47,8 @@ const showMediaRequest = (
   followsNewSeasons: record.followsNewSeasons,
   releaseTypes: record.releaseTypes,
   upgradesToLossless: record.upgradesToLossless ?? false,
+  narrations: record.narrations ?? null,
+  isAskingNarration: isAskingNarration(record),
   bookFormats: record.bookFormats ?? null,
   versions: record.versions ?? null,
   releaseDate:
@@ -82,6 +85,8 @@ const showMediaRequest = (
       trackCount: item.trackCount ?? null,
       filedTrackCount: item.filedTrackCount ?? null,
       heldQuality: item.heldQuality ?? null,
+      narration: item.narration ?? null,
+      filedMinutes: item.filedMinutes ?? null,
       lastSearchedAt: item.lastSearchedAt,
       updatedAt: item.updatedAt,
     })),

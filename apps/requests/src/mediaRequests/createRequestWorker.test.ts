@@ -31,6 +31,7 @@ import type { BlockedReleaseRecord } from '@ValenceRequests/mediaRequests/Blocke
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
 import type { fileAlbum } from './fileAlbum';
+import type { fileBook } from './fileBook';
 import type { fileDownload } from './fileDownload';
 
 const AT = new Date('2026-09-19T00:00:00.000Z');
@@ -60,6 +61,8 @@ type HarnessOptions = {
   refuseSendCode?: ProblemCode;
   filed?: typeof fileDownload;
   filedMusic?: typeof fileAlbum;
+  filedBooks?: typeof fileBook;
+  measured?: number | null;
   localPath?: string;
   reports?: IndexerSearchReport[];
   reportsInTurn?: IndexerSearchReport[][];
@@ -86,6 +89,8 @@ const aWorker = ({
   filedMusic = vi.fn<typeof fileAlbum>(() =>
     Promise.resolve({ filed: new Map(), missing: [], refused: new Map(), trackCounts: new Map() }),
   ),
+  filedBooks = vi.fn<typeof fileBook>(() => Promise.resolve({ filed: new Map(), missing: [] })),
+  measured = null,
   localPath = '',
   reports = [
     {
@@ -164,6 +169,8 @@ const aWorker = ({
     log: log.store,
     file: filed,
     fileMusic: filedMusic,
+    fileBooks: filedBooks,
+    measure: () => Promise.resolve(measured),
     now: () => AT,
     giveUpRules: () => Promise.resolve(rules),
     ...(handOff === undefined ? {} : { handOff }),
@@ -332,6 +339,79 @@ describe('createRequestWorker', () => {
         { query: 'Project Hail Mary', mode: 'book', categories: [7000, 7020] },
         { query: 'Project Hail Mary', mode: 'search', categories: [3030] },
       ]);
+    });
+
+    it('holds an audiobook while its narration is asked for, and fetches the ebook meanwhile', async () => {
+      const { worker, items } = aWorker({
+        requests: [
+          aMediaRequest({
+            kind: 'book',
+            tmdbId: null,
+            openLibraryId: 1,
+            title: 'A Book',
+            libraryId: 'books',
+            libraryPath: '/media/Books',
+            bookFormats: ['ebook', 'audiobook'],
+            narrations: [
+              { asin: 'A', narrators: ['Ann Reader'], runtimeMinutes: 600, series: null },
+              { asin: 'B', narrators: ['Bob Voice'], runtimeMinutes: 610, series: null },
+            ],
+          }),
+        ],
+        items: [
+          aRequestItem({ id: 'e', state: 'waiting', airDate: null, format: 'ebook' }),
+          aRequestItem({ id: 'a', state: 'waiting', airDate: null, format: 'audiobook' }),
+        ],
+        found: () => [],
+      });
+
+      await worker.tick();
+
+      expect((await items.find('e'))?.state).not.toBe('waiting');
+      expect((await items.find('a'))?.state).toBe('waiting');
+    });
+
+    it('refuses an abridged audiobook before filing it, blocking it with both lengths', async () => {
+      const filedBooks = vi.fn<typeof fileBook>(() =>
+        Promise.resolve({ filed: new Map(), missing: [] }),
+      );
+      const { worker, items, blocked } = aWorker({
+        requests: [
+          aMediaRequest({
+            kind: 'book',
+            tmdbId: null,
+            openLibraryId: 1,
+            title: 'A Book',
+            libraryId: 'books',
+            libraryPath: '/media/Books',
+            bookFormats: ['audiobook'],
+            narrations: [
+              { asin: 'A', narrators: ['Ann Reader'], runtimeMinutes: 732, series: null },
+            ],
+            narrationsWanted: ['A'],
+          }),
+        ],
+        items: [
+          aRequestItem({
+            state: 'downloading',
+            airDate: null,
+            format: 'audiobook',
+            narration: 'A',
+            downloadId: aSentDownload().id,
+          }),
+        ],
+        sent: [aSentDownload({ state: 'done', contentPath: '/downloads/A Book' })],
+        filedBooks,
+        measured: 230,
+      });
+
+      await worker.tick();
+
+      expect(filedBooks).not.toHaveBeenCalled();
+      expect((await blocked.list()).map((one) => one.reason.message)).toEqual([
+        'It’s abridged: 3 h 50 min against 12 h 12 min.',
+      ]);
+      expect((await theItem(items))?.state).toBe('wanted');
     });
 
     it('judges a book by its format alone, whatever words a video profile asks for', async () => {

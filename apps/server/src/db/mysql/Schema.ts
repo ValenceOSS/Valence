@@ -959,6 +959,7 @@ const book = mysqlTable(
     externalId: mediumtext('externalId'),
     seriesName: mediumtext('seriesName'),
     seriesPosition: float('seriesPosition'),
+    narrators: jsonColumn('narrators'),
     isCorrected: boolean('isCorrected').notNull().default(false),
     addedAt: momentNow('addedAt').notNull(),
     updatedAt: momentNow('updatedAt').notNull(),

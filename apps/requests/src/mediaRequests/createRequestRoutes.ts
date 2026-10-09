@@ -9,6 +9,7 @@ import {
   MediaRequestPickSchema,
   MediaRequestRefusalSchema,
   MediaRequestRevisionSchema,
+  NarrationDecisionSchema,
   RequestCatalogueUpdateSchema,
   ProfileAskDecisionSchema,
   RequesterSchema,
@@ -169,6 +170,14 @@ const createRequestRoutes = ({ service, handOff, log, worker }: CreateRequestRou
   routes.delete('/requests/:id/askers/:askerId', async (context) =>
     answer(await service.leave(context.req.param('id'), context.req.param('askerId'))),
   );
+
+  routes.post('/requests/:id/narration', async (context) => {
+    const decision = await readBody(context.req.raw, NarrationDecisionSchema);
+
+    return decision === null
+      ? context.json(refuse('error.requests.sayWhichNarrationToFetch'), 400)
+      : answer(await service.decideNarration(context.req.param('id'), decision.asins));
+  });
 
   routes.post('/requests/:id/profile-ask', async (context) => {
     const decision = await readBody(context.req.raw, ProfileAskDecisionSchema);

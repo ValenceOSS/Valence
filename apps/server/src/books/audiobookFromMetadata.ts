@@ -77,6 +77,7 @@ const audiobookFromMetadata = (meta: IAudioMetadata): ListenBook | null => {
       title: common.title ?? null,
       authors: author === null ? [] : [author],
       description,
+      narrators: (common.composer ?? []).filter((name) => name !== author),
     },
     readCover: () =>
       Promise.resolve(

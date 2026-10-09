@@ -198,6 +198,14 @@ describe('createRequestRoutes', () => {
     expect((await ask(`/requests/${id}/hand-off/releases`)).status).toBe(404);
   });
 
+  it('takes which narration of an audiobook to fetch, refusing a choice of none', async () => {
+    const { ask } = theRoutes();
+    const id = await madeDune(ask);
+
+    expect((await ask(`/requests/${id}/narration`, 'POST', { asins: [] })).status).toBe(400);
+    expect((await ask(`/requests/${id}/narration`, 'POST', { asins: ['A'] })).status).toBe(404);
+  });
+
   it('keeps only a film in two versions', async () => {
     const { ask } = theRoutes();
     const book = MediaRequestAddedSchema.parse(

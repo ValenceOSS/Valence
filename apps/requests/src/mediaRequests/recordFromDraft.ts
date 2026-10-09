@@ -52,6 +52,14 @@ const recordFromDraft = (
   upgradesToLossless:
     (draft.kind === 'artist' || draft.kind === 'album') && draft.upgradesToLossless,
   bookFormats: draft.kind === 'book' ? draft.bookFormats : null,
+  narrations: draft.kind === 'book' ? (draft.catalogue.narrations ?? null) : null,
+  narrationsWanted:
+    draft.kind !== 'book'
+      ? null
+      : (draft.narrationsWanted ??
+        ((draft.catalogue.narrations ?? []).length === 1
+          ? (draft.catalogue.narrations ?? []).map((narration) => narration.asin)
+          : null)),
   versions: null,
   mediaId: draft.kind === 'series' ? (draft.held?.mediaId ?? null) : null,
   problem: null,

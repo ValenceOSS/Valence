@@ -276,6 +276,50 @@ describe('judgeForRequest', () => {
     expect(judged.pickedId).toBe('Dune.Part.One.2021.1080p.BluRay.x264-GRP');
   });
 
+  it('holds an audiobook release for the narration it names, or for one at most where it names none', () => {
+    const book = aMediaRequest({
+      kind: 'book',
+      title: 'A Book',
+      artistName: 'Someone',
+      year: null,
+      tmdbId: null,
+      openLibraryId: 1,
+      bookFormats: ['audiobook'],
+      narrations: [
+        { asin: 'A', narrators: ['Ann Reader'], runtimeMinutes: 600, series: null },
+        { asin: 'B', narrators: ['Bob Voice'], runtimeMinutes: 610, series: null },
+      ],
+    });
+    const first = aRequestItem({
+      id: 'a',
+      title: 'A Book',
+      format: 'audiobook',
+      narration: 'A',
+      state: 'wanted',
+    });
+    const second = aRequestItem({
+      id: 'b',
+      title: 'A Book',
+      format: 'audiobook',
+      narration: 'B',
+      state: 'wanted',
+    });
+    const judged = judgeForRequest({
+      ...OPTIONS,
+      request: book,
+      items: [first, second],
+      releases: [
+        { ...aRelease('Someone - A Book (Read by Bob Voice) M4B'), categories: [3030] },
+        { ...aRelease('Someone - A Book M4B'), categories: [3030] },
+      ],
+    });
+
+    expect(
+      judged.holding.get('Someone - A Book (Read by Bob Voice) M4B')?.map((item) => item.id),
+    ).toEqual(['b']);
+    expect(judged.holding.get('Someone - A Book M4B')?.map((item) => item.id)).toEqual(['a']);
+  });
+
   it('holds a book release only for the format it is, picking an EPUB over a MOBI', () => {
     const book = aMediaRequest({
       kind: 'book',

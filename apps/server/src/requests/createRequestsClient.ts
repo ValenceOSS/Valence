@@ -78,6 +78,7 @@ import type {
   MissingSearch,
   RequestCatalogueUpdate,
   RequestLogEntry,
+  NarrationDecision,
   ProfileAskDecision,
   Requester,
 } from '@ValenceContracts/schemas/MediaRequest';
@@ -752,6 +753,12 @@ const createRequestsClient = ({
       decision: ProfileAskDecision,
     ): Promise<RequestsAnswer<MediaRequest>> =>
       call(`${withRequest(id)}/profile-ask`, readRequest, { method: 'POST', body: decision }),
+
+    decideNarration: (
+      id: string,
+      decision: NarrationDecision,
+    ): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/narration`, readRequest, { method: 'POST', body: decision }),
 
     handedTo: (id: string): Promise<RequestsAnswer<HandedTo>> =>
       call(`${withRequest(id)}/handed-to`, (body) => HandedToSchema.parse(body)),

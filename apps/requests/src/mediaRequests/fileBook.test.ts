@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -29,7 +29,7 @@ const aDownload = async (names: readonly string[]): Promise<string> => {
 
 const filesUnder = async (folder: string): Promise<string[]> =>
   (await readdir(folder, { recursive: true, withFileTypes: true }))
-    .filter((entry) => entry.isFile())
+    .filter((entry) => entry.isFile() && entry.name !== 'metadata.opf')
     .map((entry) => join(entry.parentPath, entry.name).slice(folder.length + 1))
     .toSorted();
 
@@ -244,5 +244,62 @@ describe('fileBook, given a pack of several books', () => {
     await fileBook(aRequest(), DUNE, download, true, { readTags });
 
     expect(await filesUnder(join(root, 'Books'))).toEqual(['Frank Herbert/Dune/Dune.m4b']);
+  });
+
+  it('writes what is known of the book beside it, and a cover where the download brought none', async () => {
+    const download = await aDownload(['Book.m4b']);
+    const covers: string[] = [];
+
+    await fileBook(
+      {
+        ...aRequest(),
+        title: 'A Book',
+        artistName: 'An Author',
+        year: 2020,
+        overview: null,
+        openLibraryId: 7,
+        posterUrl: 'https://covers.openlibrary.org/b/id/9-M.jpg',
+        narrations: [
+          { asin: 'A', narrators: ['A Reader'], runtimeMinutes: 600, series: 'A Series' },
+        ],
+      },
+      [{ id: 'book', title: 'A Book', format: 'audiobook', narration: 'A' }],
+      download,
+      true,
+      {
+        fetchCover: (url) => {
+          covers.push(url);
+
+          return Promise.resolve(new Uint8Array([1]));
+        },
+      },
+    );
+
+    const folder = join(root, 'Books', 'An Author', 'A Book');
+    const opf = await readFile(join(folder, 'metadata.opf'), 'utf8');
+
+    expect(opf).toContain('<dc:contributor opf:role="nrt">A Reader</dc:contributor>');
+    expect(opf).toContain('<meta name="calibre:series" content="A Series"/>');
+    expect(covers).toEqual(['https://covers.openlibrary.org/b/id/9-L.jpg']);
+    expect(await filesUnder(folder)).toEqual(['A Book.m4b', 'cover.jpg']);
+  });
+
+  it('never replaces what the library already keeps beside a book', async () => {
+    const folder = join(root, 'Books', 'An Author', 'A Book');
+
+    await mkdir(folder, { recursive: true });
+    await writeFile(join(folder, 'metadata.opf'), 'kept');
+    await writeFile(join(folder, 'A Book.mobi'), 'kept');
+
+    await fileBook(
+      { ...aRequest(), title: 'A Book', artistName: 'An Author' },
+      [{ id: 'book', title: 'A Book' }],
+      await aDownload(['Book.m4b']),
+      true,
+      { fetchCover: () => Promise.resolve(null) },
+    );
+
+    expect(await readFile(join(folder, 'metadata.opf'), 'utf8')).toBe('kept');
+    expect(await readFile(join(folder, 'A Book.mobi'), 'utf8')).toBe('kept');
   });
 });
