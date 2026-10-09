@@ -2000,6 +2000,11 @@
     "context": "Shown, used in several places, among them the ask for the code of the phone app and the security in the account of the phone app."
   },
   {
+    "handler": "common.auto",
+    "text": "Auto",
+    "context": "A quality choice in the video player that lets Valence pick the quality from how well the connection is keeping up."
+  },
+  {
     "handler": "common.automatic",
     "text": "Automatic",
     "context": "The label, used in several places, among them the admin area (from `accelerationOptions`) and the artwork picker in the admin area."
@@ -17795,6 +17800,21 @@
     "context": "A badge in the admin's settings panel saying the sign-in cookie is marked secure. Its opposite is \"not secure\"."
   },
   {
+    "handler": "screens.adminArea.settingsPanel.segmentLengthSaved",
+    "text": "Segment length saved.",
+    "context": "Shown in the settings panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.shortSegments",
+    "text": "Short segments",
+    "context": "Shown in the settings panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.shortSegmentsStartAndSeekSooner",
+    "text": "Sends video in pieces of about two seconds instead of four. Playback starts and seeks sooner over a slow connection or tunnel, at the cost of more requests.",
+    "context": "Shown in the settings panel in the admin area."
+  },
+  {
     "handler": "screens.adminArea.settingsPanel.showWhoLivesHere",
     "text": "Show profiles on sign-in",
     "context": "The label of a switch in the settings panel in the admin area."
@@ -17887,6 +17907,11 @@
   {
     "handler": "screens.adminArea.settingsPanel.theReleaseTypesCouldNotBe",
     "text": "Couldn’t save the release types.",
+    "context": "Shown in the settings panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.theSegmentLengthCouldNotBe",
+    "text": "The segment length could not be saved.",
     "context": "Shown in the settings panel in the admin area."
   },
   {

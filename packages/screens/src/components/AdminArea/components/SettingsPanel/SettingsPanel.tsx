@@ -28,6 +28,7 @@ import {
   saveAllowedApps,
   saveShowsProfilesBeforeSignIn,
   saveFetchesCatalogueTrailers,
+  saveUsesShortSegments,
   saveFetchesMusicDetails,
   saveRequestReleaseTypes,
   saveAudioDbKey,
@@ -118,6 +119,7 @@ const SettingsPanel = ({
   const [fetchesTrailers, setFetchesTrailers] = useState(
     overview?.settings.fetchesCatalogueTrailers ?? false,
   );
+  const [shortSegments, setShortSegments] = useState(overview?.settings.usesShortSegments ?? true);
   const [audioDbKey, setAudioDbKey] = useState('');
   const [isSavingAudioDbKey, setIsSavingAudioDbKey] = useState(false);
   const [omdbKey, setOmdbKey] = useState('');
@@ -253,6 +255,36 @@ const SettingsPanel = ({
                 );
                 if (saved) {
                   onPreviewQualitySaved();
+                }
+              });
+            }}
+          />
+        </SettingRow>
+
+        <SettingRow
+          title={say('screens.adminArea.settingsPanel.shortSegments')}
+          description={say('screens.adminArea.settingsPanel.shortSegmentsStartAndSeekSooner')}
+        >
+          <Switch
+            label={say('screens.adminArea.settingsPanel.shortSegments')}
+            isLabelHidden
+            isOn={shortSegments}
+            onToggle={() => {
+              const next = !shortSegments;
+
+              setShortSegments(next);
+
+              void saveUsesShortSegments(next).then((saved) => {
+                tellOutcome(
+                  say('screens.adminArea.settingsPanel.segmentLengthSaved'),
+                  failureOfAnswer(
+                    saved,
+                    say('screens.adminArea.settingsPanel.theSegmentLengthCouldNotBe'),
+                  ),
+                );
+
+                if (!saved) {
+                  setShortSegments(!next);
                 }
               });
             }}

@@ -2,18 +2,19 @@ import { z } from 'zod';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { QUALITY_STEP_IDS } from '@ValenceContracts/schemas/QualityStep';
 
-const QualityPreferenceSchema = z.enum(['original', ...QUALITY_STEP_IDS]);
+const QualityPreferenceSchema = z.enum(['auto', 'original', ...QUALITY_STEP_IDS]);
 
 type QualityPreference = z.infer<typeof QualityPreferenceSchema>;
 
 const STORAGE_KEY = 'valence.qualityPreference';
 
-const DEFAULT_QUALITY_PREFERENCE: QualityPreference = 'original';
+const DEFAULT_QUALITY_PREFERENCE: QualityPreference = 'auto';
 
 /**
- * Reads whether this viewer has pinned quality to a rung of the ladder or left it to be chosen. A
- * pinned choice is honoured even where the connection would carry more, since somebody who chose it
- * usually had a reason the player cannot see.
+ * Reads whether this viewer has pinned quality to a rung of the ladder, asked for the original, or
+ * left it to be chosen from how the connection is keeping up. A pinned choice is honoured even where
+ * the connection would carry more, since somebody who chose it usually had a reason the player
+ * cannot see.
  */
 const readQualityPreference = (): QualityPreference => {
   const stored = platformInUse().store.read(STORAGE_KEY);
@@ -31,7 +32,7 @@ const readQualityPreference = (): QualityPreference => {
  * Remembers the quality a viewer chose, on this device — a phone on mobile data and a television on
  * a wire want different answers from the same account.
  *
- * @param preference - The step chosen, or original.
+ * @param preference - The step chosen, the original, or auto.
  */
 const saveQualityPreference = (preference: QualityPreference): void => {
   platformInUse().store.write(STORAGE_KEY, preference);

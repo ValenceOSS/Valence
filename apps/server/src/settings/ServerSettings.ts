@@ -1,4 +1,7 @@
-import { SUBTITLE_DEFAULTS, SubtitleSettingsSchema } from '@ValenceContracts/schemas/SubtitleSettings';
+import {
+  SUBTITLE_DEFAULTS,
+  SubtitleSettingsSchema,
+} from '@ValenceContracts/schemas/SubtitleSettings';
 import { z } from 'zod';
 import { AllowedAppsSchema, EVERY_APP_ALLOWED } from '@ValenceContracts/schemas/AllowedApps';
 import { PreviewQualitySchema } from '@ValenceContracts/schemas/PreviewQuality';
@@ -30,6 +33,7 @@ const ServerSettingsSchema = z.object({
   jobsTimezone: z.string().default(''),
   certificationRegion: z.string().length(2).toUpperCase().default('GB'),
   fetchesCatalogueTrailers: z.boolean().default(false),
+  usesShortSegments: z.boolean().default(true),
   fetchesMusicDetails: z.boolean().default(false),
   audioDbKey: z.string().default(''),
   omdbKey: z.string().default(''),

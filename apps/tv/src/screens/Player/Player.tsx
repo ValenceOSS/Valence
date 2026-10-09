@@ -238,7 +238,11 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
   const [speed, setSpeed] = useState(1);
   const [isShowingStats, setIsShowingStats] = useState(false);
   const [reading, setReading] = useState<StreamReading>(NOTHING_READ);
-  const [quality, setQuality] = useState<QualityPreference>(readQualityPreference);
+  const [quality, setQuality] = useState<QualityPreference>(() => {
+    const preferred = readQualityPreference();
+
+    return preferred === 'auto' ? 'original' : preferred;
+  });
   const [scrubAt, setScrubAt] = useState<number | null>(null);
   const [isScrubbing, setIsScrubbing] = useState(false);
   const [isShowing, setIsShowing] = useState(true);

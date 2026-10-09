@@ -95,6 +95,7 @@ const createMemoryAuth = (
     jobsTimezone: '',
     certificationRegion: 'GB',
     fetchesCatalogueTrailers: false,
+    usesShortSegments: true,
     requestReleaseTypes: [...DEFAULT_RELEASE_TYPES],
     controlsConnectedApps: false,
     fetchesMusicDetails: false,

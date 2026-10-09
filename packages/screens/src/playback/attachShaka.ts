@@ -3,6 +3,7 @@ import { deliveredBitrateKbps } from '@ValenceClient/playback/deliveredBitrateKb
 import { teachShakaOurScheme } from '@ValenceScreens/playback/teachShakaOurScheme';
 import type { ShakaNetworking } from '@ValenceScreens/playback/teachShakaOurScheme';
 import type shaka from 'shaka-player/dist/shaka-player.compiled';
+import type { Buffer } from '@ValenceClient/playback/bufferFor';
 
 type ShakaVariant = {
   active: boolean;
@@ -21,17 +22,22 @@ type ShakaStats = {
   bytesDownloaded?: number;
   playTime?: number;
   streamBandwidth?: number;
+  estimatedBandwidth?: number;
 };
 
 type ShakaPlayer = {
   attach: (element: HTMLMediaElement) => Promise<void>;
   configure?: (config: {
-    manifest: {
+    manifest?: {
       hls: {
         sequenceMode: boolean;
         ignoreManifestTimestampsInSegmentsMode: boolean;
         disableClosedCaptionsDetection: boolean;
       };
+    };
+    streaming?: {
+      bufferingGoal: number;
+      bufferBehind: number;
     };
   }) => void;
   load: (manifestUrl: string, startSeconds?: number) => Promise<void>;
@@ -61,6 +67,7 @@ type AttachOptions = {
   element: HTMLVideoElement;
   manifestUrl: string;
   startSeconds?: number;
+  buffer?: Buffer;
   onFault?: (fault: PlaybackFault) => void;
   loadShaka?: () => Promise<ShakaModule>;
 };
@@ -92,6 +99,7 @@ type DeliveredFormat = {
 type AttachedStream = {
   detach: () => Promise<void>;
   readDelivered: () => DeliveredFormat | null;
+  readEstimatedKbps: () => number | null;
 };
 
 /**
@@ -175,10 +183,11 @@ const faultFrom = (event: Event): PlaybackFault | null => {
  * overwrite anything set before then — which looks exactly like a resume that worked for an instant
  * and then went back to the beginning.
  *
- * @param options - The element to attach to, the manifest to load, where to start, and how to report
- *   a fault the engine could not recover from.
+ * @param options - The element to attach to, the manifest to load, where to start, how much to hold
+ *   ahead and behind, and how to report a fault the engine could not recover from.
  * @returns A handle carrying the teardown to call — an orphaned engine keeps buffering and holds
- *   the element open — and a reading of what the engine is actually being sent.
+ *   the element open — a reading of what the engine is actually being sent, and its estimate of
+ *   what the connection carries.
  *
  * Shaka is told to place each segment by the timestamps inside it rather than by where the
  * playlist says it begins. Its default moves a segment to the playlist's time, and on a copied
@@ -197,6 +206,7 @@ const attachShaka = async ({
   element,
   manifestUrl,
   startSeconds = 0,
+  buffer,
   onFault,
   loadShaka = loadShakaPlayer,
 }: AttachOptions): Promise<AttachedStream> => {
@@ -211,6 +221,12 @@ const attachShaka = async ({
   const player = new shaka.Player();
 
   player.configure?.(READING_THE_PLAYLIST);
+
+  if (buffer !== undefined) {
+    player.configure?.({
+      streaming: { bufferingGoal: buffer.aheadSeconds, bufferBehind: buffer.behindSeconds },
+    });
+  }
 
   player.addEventListener?.('error', (event) => {
     const fault = faultFrom(event);
@@ -233,6 +249,13 @@ const attachShaka = async ({
 
   return {
     detach: () => player.destroy(),
+    readEstimatedKbps: () => {
+      const estimated = player.getStats?.().estimatedBandwidth;
+
+      return typeof estimated === 'number' && Number.isFinite(estimated) && estimated > 0
+        ? Math.round(estimated / 1000)
+        : null;
+    },
     readDelivered: () => {
       const stats = player.getStats?.() ?? null;
       const sample = { bytes: stats?.bytesDownloaded ?? 0, mediaSeconds: mediaFetched(element) };

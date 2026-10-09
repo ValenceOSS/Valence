@@ -74,6 +74,7 @@ const overview = (overrides: Partial<AdminOverview['settings']> = {}): AdminOver
     previewQuality: 'high' as const,
     showsProfilesBeforeSignIn: false,
     fetchesCatalogueTrailers: false,
+    usesShortSegments: true,
     fetchesMusicDetails: false,
     requestReleaseTypes: ['album'],
     controlsConnectedApps: false,

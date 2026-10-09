@@ -455,6 +455,7 @@ const settings = createDatabaseSettingsStore({
     jobsTimezone: '',
     certificationRegion: 'GB',
     fetchesCatalogueTrailers: false,
+    usesShortSegments: true,
     requestReleaseTypes: [...DEFAULT_RELEASE_TYPES],
     controlsConnectedApps: false,
     fetchesMusicDetails: false,
@@ -3342,6 +3343,7 @@ const playbackService = createPlaybackService({
   trickplayUrlPrefix: '/api/playback/trickplay',
   forcedAccel: async () => (await settings.read()).hardwareAccel,
   previewQuality: async () => (await settings.read()).previewQuality,
+  usesShortSegments: async () => (await settings.read()).usesShortSegments,
 });
 
 const downloadService = createDownloadService({

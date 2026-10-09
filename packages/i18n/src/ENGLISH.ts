@@ -531,6 +531,7 @@ const ENGLISH = {
   'common.audiobook': 'Audiobook',
   'common.audioOnly': 'Audio only',
   'common.authenticatorCode': 'Authenticator code',
+  'common.auto': 'Auto',
   'common.automatic': 'Automatic',
   'common.available': 'Available',
   'common.aWeek': 'A week',
@@ -4483,6 +4484,10 @@ const ENGLISH = {
   'screens.adminArea.settingsPanel.saveTheOMDbKey': 'Save OMDb key',
   'screens.adminArea.settingsPanel.saveTheTheAudioDBKey': 'Save TheAudioDB key',
   'screens.adminArea.settingsPanel.secure': 'Secure',
+  'screens.adminArea.settingsPanel.segmentLengthSaved': 'Segment length saved.',
+  'screens.adminArea.settingsPanel.shortSegments': 'Short segments',
+  'screens.adminArea.settingsPanel.shortSegmentsStartAndSeekSooner':
+    'Sends video in pieces of about two seconds instead of four. Playback starts and seeks sooner over a slow connection or tunnel, at the cost of more requests.',
   'screens.adminArea.settingsPanel.showWhoLivesHere': 'Show profiles on sign-in',
   'screens.adminArea.settingsPanel.signingIn': 'Signing in',
   'screens.adminArea.settingsPanel.signInScreenSaved': 'Sign-in screen saved.',
@@ -4507,6 +4512,8 @@ const ENGLISH = {
   'screens.adminArea.settingsPanel.thePictureCouldNotBeRemoved':
     'Couldn’t remove the image. Try again.',
   'screens.adminArea.settingsPanel.theReleaseTypesCouldNotBe': 'Couldn’t save the release types.',
+  'screens.adminArea.settingsPanel.theSegmentLengthCouldNotBe':
+    'The segment length could not be saved.',
   'screens.adminArea.settingsPanel.theSignInScreenCouldNot': 'Couldn’t change the sign-in screen.',
   'screens.adminArea.settingsPanel.theSplashscreenCouldNotBeRemoved':
     'Couldn’t remove the splashscreen.',

@@ -29,6 +29,7 @@ const SETTINGS: ServerSettings = {
   jobsTimezone: '',
   certificationRegion: 'GB',
   fetchesCatalogueTrailers: false,
+  usesShortSegments: true,
   requestReleaseTypes: ['album'],
   controlsConnectedApps: false,
   fetchesMusicDetails: false,
