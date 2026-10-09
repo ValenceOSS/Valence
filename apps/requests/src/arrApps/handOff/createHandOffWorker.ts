@@ -83,8 +83,9 @@ const doneBytesOf = (record: ArrQueueRecord): number | null =>
  * alone searches, downloads and imports.
  *
  * Its releases can be listed as the app sees them and one picked for the app to fetch, where Valence
- * is set to control connected apps. Searching for one now, as Search missing does, asks its app to search for what it monitors of it
- * again; and each says which app has it, with a link to its page there.
+ * is set to control connected apps. Searching for one now, as Search missing does, asks its app to
+ * search for what it monitors of it again, once it is approved and the app has it — never falling
+ * back to Valence's own search; and each says which app has it, with a link to its page there.
  *
  * An app that cannot be reached is asked once a round: its other requests are given the same
  * problem without waiting on it again, so one app that is down does not hold up every request
@@ -343,19 +344,29 @@ const createHandOffWorker = ({
   };
 
   return {
-    searchNow: async (id: string): Promise<boolean> => {
+    searchNow: async (
+      id: string,
+    ): Promise<'searched' | 'failed' | 'notApproved' | 'notHandedOff'> => {
       const request = await requests.find(id);
       const handOff = request?.handOff ?? null;
 
-      if (request === null || handOff === null || request.handOffId === null) {
-        return false;
+      if (request === null || handOff === null) {
+        return 'notHandedOff';
+      }
+
+      if (request.approval !== 'approved') {
+        return 'notApproved';
+      }
+
+      if (request.handOffId === null) {
+        return 'failed';
       }
 
       const app = await apps.find(handOff.appId);
       const handler = app?.isEnabled === true ? handlerFor(app.kind, connect(app)) : null;
 
       if (app === null || handler === null) {
-        return false;
+        return 'failed';
       }
 
       try {
@@ -366,7 +377,7 @@ const createHandOffWorker = ({
           null,
         );
 
-        return true;
+        return 'searched';
       } catch (error) {
         if (!(error instanceof ArrAppFailure)) {
           throw error;
@@ -381,7 +392,7 @@ const createHandOffWorker = ({
           error.problemCode,
         );
 
-        return false;
+        return 'failed';
       }
     },
 
