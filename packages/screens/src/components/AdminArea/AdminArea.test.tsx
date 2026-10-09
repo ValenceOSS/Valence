@@ -723,10 +723,10 @@ describe('AdminArea', () => {
       expect(await screen.findByText(/No indexers yet/)).toBeInTheDocument();
     });
 
-    it('opens on searching by hand where the address names it', async () => {
-      renderInAnAddress(<TheAdmin panel="search" />);
+    it('opens on the Catalogue where the address names it', async () => {
+      renderInAnAddress(<TheAdmin panel="catalogue" />);
 
-      expect(await screen.findByText(/Search every enabled indexer at once/)).toBeInTheDocument();
+      expect(await screen.findByRole('button', { name: 'Search all missing' })).toBeInTheDocument();
     });
 
     it('says the VPN is down above everything else', async () => {

@@ -123,6 +123,18 @@ const open = () => {
 };
 
 describe('AskForMediaDialog', () => {
+  it('searches the indexers instead, for something no catalogue knows', async () => {
+    open();
+
+    await userEvent
+      .setup()
+      .click(await screen.findByRole('button', { name: 'Search the indexers instead' }));
+
+    expect(
+      await screen.findByRole('dialog', { name: 'Search the indexers instead' }),
+    ).toBeInTheDocument();
+  });
+
   it('finds a film in the catalogue and asks for it in the quality chosen', async () => {
     const user = userEvent.setup();
     const { onAsked, onClose } = open();

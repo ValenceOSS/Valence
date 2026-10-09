@@ -3,9 +3,8 @@ import type { AdminPanelId } from '@ValenceScreens/components/AdminArea/adminSec
 
 const REQUESTS_PANELS: readonly AdminPanelId[] = [
   'requests',
-  'requested',
+  'catalogue',
   'indexers',
-  'search',
   'profiles',
   'downloads',
 ];

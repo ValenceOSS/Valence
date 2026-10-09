@@ -13,10 +13,21 @@ import { WatchedBar } from '@ValenceUI/WatchedBar';
 import type { MediaCardProps, MediaCardShape } from './MediaCard.types';
 import { say } from '@ValenceI18n/say';
 
+const METER_TONES = {
+  busy: ['bg-busy/25', 'bg-busy'],
+  accent: ['bg-accent/25', 'bg-accent'],
+  success: ['bg-success/25', 'bg-success'],
+  highlight: ['bg-highlight/25', 'bg-highlight'],
+  danger: ['bg-danger/25', 'bg-danger'],
+  quiet: ['bg-on-scrim/20', 'bg-on-scrim/50'],
+  gap: ['bg-on-scrim/20', 'bg-success'],
+} as const;
+
 const SHAPE_CLASSES: Record<MediaCardShape, string> = {
   poster: 'aspect-[2/3]',
   wide: 'aspect-video',
   book: 'aspect-[2/3]',
+  square: 'aspect-square',
 };
 
 /**
@@ -59,6 +70,7 @@ const MediaCard = ({
   shape = 'poster',
   emphasis = 'standard',
   watchedFraction,
+  meter,
   onSelect,
   isStill = false,
   className,
@@ -179,6 +191,30 @@ const MediaCard = ({
                   </span>
                 </Tooltip>
               </span>
+            )}
+
+            {meter === undefined ? null : (
+              <Tooltip label={meter.label} delayMilliseconds={150}>
+                <span
+                  role="img"
+                  aria-label={meter.label}
+                  className="group/meter absolute inset-x-0 bottom-0 flex h-4 items-end"
+                >
+                  <span
+                    className={cn(
+                      'block h-1.5 w-full transition-[height] duration-[var(--duration-fast)] ease-[var(--ease-out)] group-hover/meter:h-2',
+                      METER_TONES[meter.tone][0],
+                    )}
+                  >
+                    <span
+                      className={cn('block h-full', METER_TONES[meter.tone][1])}
+                      style={{
+                        width: `${(Math.min(Math.max(meter.fraction, 0), 1) * 100).toString()}%`,
+                      }}
+                    />
+                  </span>
+                </span>
+              </Tooltip>
             )}
 
             {isLead ? (

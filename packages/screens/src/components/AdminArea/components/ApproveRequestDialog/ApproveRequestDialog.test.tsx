@@ -85,6 +85,34 @@ describe('ApproveRequestDialog', () => {
     expect(onApproved).toHaveBeenCalled();
   });
 
+  it('edits a request already approved, saving what changed and approving nothing', async () => {
+    const user = userEvent.setup();
+    const onApproved = vi.fn();
+
+    renderInAnAddress(
+      <ApproveRequestDialog
+        request={aMediaRequest()}
+        isEditing
+        onClose={vi.fn()}
+        onApproved={onApproved}
+      />,
+    );
+
+    expect(await screen.findByRole('dialog', { name: 'Edit Dune' })).toBeInTheDocument();
+
+    await user.click(await screen.findByRole('button', { name: /Quality/ }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Ultra HD' }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(changeMediaRequest).toHaveBeenCalledWith(aMediaRequest().id, {
+        profileId: '2a9e6679-7425-40de-944b-e07fc1f90ae7',
+      });
+    });
+    expect(approveMediaRequest).not.toHaveBeenCalled();
+    expect(onApproved).toHaveBeenCalled();
+  });
+
   it('saves what an admin changed before approving it', async () => {
     const user = userEvent.setup();
 

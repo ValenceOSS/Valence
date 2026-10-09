@@ -8,8 +8,10 @@ import {
   MoreHorizontal as MoreHorizontalIcon,
   Pen as PenFilledIcon,
   Plus as PlusFilledIcon,
+  SearchList as SearchListFilledIcon,
 } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
+import { ReleaseSearchDialog } from '@ValenceScreens/components/AdminArea/components/ReleaseSearchDialog/ReleaseSearchDialog';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { DataTable } from '@ValenceUI/DataTable';
@@ -60,6 +62,7 @@ const ProfilesPanel = () => {
   const profiles = useQuery(requestsQueries.profiles());
   const libraries = useQuery(libraryQueries.all());
   const [editing, setEditing] = useState<QualityProfile | null>(null);
+  const [trying, setTrying] = useState<QualityProfile | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [shown, setShown] = useState<ProfileKind>('video');
   const [removing, setRemoving] = useState<QualityProfile | null>(null);
@@ -141,6 +144,15 @@ const ProfilesPanel = () => {
                         setEditing(row.original);
                       },
                     },
+                    {
+                      id: 'try',
+                      label: say('screens.adminArea.profilesPanel.tryIt'),
+                      detail: say('screens.adminArea.profilesPanel.searchesTheIndexersAndShows'),
+                      icon: <Icon of={SearchListFilledIcon} size={15} />,
+                      onChoose: () => {
+                        setTrying(row.original);
+                      },
+                    },
                   ],
                 },
                 {
@@ -200,6 +212,19 @@ const ProfilesPanel = () => {
           </>
         }
       >
+        <ReleaseSearchDialog
+          title={
+            trying === null
+              ? null
+              : say('screens.adminArea.profilesPanel.tryName', { name: trying.name })
+          }
+          detail={say('screens.adminArea.profilesPanel.searchesTheIndexersAndShows')}
+          profileId={trying?.id ?? null}
+          onClose={() => {
+            setTrying(null);
+          }}
+        />
+
         <ProfileEditor
           isOpen={isAdding || editing !== null}
           profile={editing}

@@ -15,6 +15,7 @@ import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Spinner } from '@ValenceUI/Spinner';
 import { TextField } from '@ValenceUI/TextField';
 import { searchCatalogue } from '@ValenceClient/admin/fetchAdmin';
+import { ReleaseSearchDialog } from '@ValenceScreens/components/AdminArea/components/ReleaseSearchDialog/ReleaseSearchDialog';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import {
   askForMedia,
@@ -126,6 +127,7 @@ const PICKING = [
  */
 const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps) => {
   const [kind, setKind] = useState<MediaRequestKind>('film');
+  const [isSearchingIndexers, setIsSearchingIndexers] = useState(false);
   const [query, setQuery] = useState('');
   const [matches, setMatches] = useState<CatalogueMatch[] | null>(null);
   const [musicMatches, setMusicMatches] = useState<MusicCatalogueHit[] | null>(null);
@@ -447,6 +449,18 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
                   },
                 }
         }
+        lead={
+          found === null ? (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setIsSearchingIndexers(true);
+              }}
+            >
+              {say('screens.adminArea.askForMediaDialog.searchTheIndexersInstead')}
+            </Button>
+          ) : null
+        }
       >
         {found === null ? null : (
           <Button
@@ -459,6 +473,19 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
           </Button>
         )}
       </DialogFooter>
+
+      <ReleaseSearchDialog
+        title={
+          isSearchingIndexers
+            ? say('screens.adminArea.askForMediaDialog.searchTheIndexersInstead')
+            : null
+        }
+        detail={say('screens.adminArea.askForMediaDialog.forSomethingNoCatalogueKnows')}
+        query={query}
+        onClose={() => {
+          setIsSearchingIndexers(false);
+        }}
+      />
     </DialogCompanion>
   );
 };

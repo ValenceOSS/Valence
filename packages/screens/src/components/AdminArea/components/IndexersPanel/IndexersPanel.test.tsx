@@ -177,6 +177,19 @@ describe('IndexersPanel', () => {
     expect(screen.getByText('Films')).toBeInTheDocument();
   });
 
+  it('searches one indexer alone from its menu', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<IndexersPanel />);
+
+    await user.click(await screen.findByRole('button', { name: 'Actions for Jackett' }));
+    await user.click(await screen.findByRole('menuitem', { name: /Test search/ }));
+
+    expect(
+      await screen.findByRole('dialog', { name: 'Test search on Jackett' }),
+    ).toBeInTheDocument();
+  });
+
   it('says why an indexer was turned off', async () => {
     fetchIndexers.mockResolvedValue([
       anIndexer({
@@ -276,7 +289,7 @@ describe('IndexersPanel', () => {
 
     renderInAnAddress(<IndexersPanel />);
 
-    await choose(user, 'Test');
+    await choose(user, '^Test$');
 
     await waitFor(() => {
       expect(testIndexer).toHaveBeenCalledWith(anIndexer().id);
@@ -421,7 +434,7 @@ describe('IndexersPanel', () => {
 
     renderInAnAddress(<IndexersPanel />);
 
-    await choose(user, 'Test');
+    await choose(user, '^Test$');
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Jackett: The indexer rejected the API key',
@@ -444,7 +457,7 @@ describe('IndexersPanel', () => {
 
     renderInAnAddress(<IndexersPanel />);
 
-    await choose(user, 'Test');
+    await choose(user, '^Test$');
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Jackett: no response');
   });
@@ -459,7 +472,7 @@ describe('IndexersPanel', () => {
 
     renderInAnAddress(<IndexersPanel />);
 
-    await choose(user, 'Test');
+    await choose(user, '^Test$');
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Jackett: Requests are turned off.');
   });
