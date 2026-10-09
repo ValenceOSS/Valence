@@ -21,7 +21,7 @@ import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { AlbumShelf } from '@ValenceScreens/components/AlbumShelf/AlbumShelf';
 import { ArtistShelf } from '@ValenceScreens/components/ArtistShelf/ArtistShelf';
 import { BookRow } from '@ValenceScreens/components/BookRow/BookRow';
-import { AskableResults } from './components/AskableResults/AskableResults';
+import { DiscoverPointer } from './components/DiscoverPointer/DiscoverPointer';
 import { BackToTop } from '@ValenceUI/BackToTop';
 import { AppliedFilters } from '@ValenceUI/AppliedFilters';
 import { FilterMenu } from '@ValenceUI/FilterMenu';
@@ -62,8 +62,10 @@ const KINDS: { id: SearchKind; label: string }[] = [
  * @param isKept - Whether each item is kept.
  * @param onToggleKept - Told to keep something, or stop.
  * @param onOpenBook - Told which book was chosen, where books are searched too.
- * @param onAsk - Told which title not in the library was chosen, where somebody may ask for one;
- *   without it, only the library is searched.
+ * @param onAsk - Told which title not in the library was chosen, where somebody may ask for one.
+ * @param onDiscover - Told to search Discover for the same words, where somebody may ask; with it
+ *   and onAsk, a search points to what Discover has for it, and without them only the library is
+ *   searched. Search itself only ever finds what is in the library.
  * @param onHide - Told to hide something from this viewer.
  * @param onOpenShow - Told to open the programme a result stands for, since a result that is an
  *   episode is drawn as its programme and opening it should list every episode, not play that one.
@@ -84,6 +86,7 @@ const SearchArea = ({
   onOpenShow,
   onOpenBook,
   onAsk,
+  onDiscover,
 }: SearchAreaProps) => {
   const [kind, setKind] = useState<SearchKind>('everything');
   const filters = useLibraryFilters({ genre, onGenreChange });
@@ -372,8 +375,13 @@ const SearchArea = ({
             )}
           </motion.div>
         </AnimatePresence>
-        {onAsk === undefined || settled.search === undefined ? null : (
-          <AskableResults query={settled.search} kind={kind} onAsk={onAsk} />
+        {onAsk === undefined || onDiscover === undefined || settled.search === undefined ? null : (
+          <DiscoverPointer
+            query={settled.search}
+            isAlone={howMany === 0 && !isReading}
+            onAsk={onAsk}
+            onDiscover={onDiscover}
+          />
         )}
       </motion.section>
     </motion.div>

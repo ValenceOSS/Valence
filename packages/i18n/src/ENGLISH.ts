@@ -5904,6 +5904,7 @@ const ENGLISH = {
   'screens.requests.titlePartLooks.notAskedFor': 'Not asked for',
   'screens.requests.useCatalogueFilters.startS': '{start}s',
   'screens.requests.useSample.thereIsNoSampleOfAlbum': 'There’s no sample of {album} to play.',
+  'screens.requestsPage.backToDiscover': 'Back to Discover',
   'screens.requestsPage.booksDiscover.booksFound': 'Books found',
   'screens.requestsPage.booksDiscover.noBooksFound': 'No books found',
   'screens.requestsPage.booksDiscover.noBooksToAskFor': 'No books to request',
@@ -5923,12 +5924,15 @@ const ENGLISH = {
     'Nothing in the catalogue matches those filters.',
   'screens.requestsPage.catalogueGrid.nothingToAskForHere': 'Nothing to request here',
   'screens.requestsPage.catalogueGrid.theCatalogueListedNothing': 'The catalogue returned nothing.',
+  'screens.requestsPage.findSomethingToRequest': 'Find a film, show, artist or book to request',
   'screens.requestsPage.musicDiscover.noMusicToAskFor': 'No music to request',
   'screens.requestsPage.musicDiscover.readingWhatMusicThereIsTo': 'Loading music to request',
   'screens.requestsPage.musicDiscover.thisServerIsNotSetUp':
     'This server isn’t set up to read music charts, or none could be reached.',
   'screens.requestsPage.musicDiscover.whatMusicThereIsToAskCouldNotBeRead':
     'Couldn’t load music to request.',
+  'screens.requestsPage.nothingInTheCataloguesMatches':
+    'Nothing in the catalogues matches “{query}”.',
   'screens.requestsPage.requestsList.clearAFilterOrSearchFor':
     'Clear a filter, or search for something else.',
   'screens.requestsPage.requestsList.findSomethingOnDiscoverOrSearch':
@@ -5936,6 +5940,8 @@ const ENGLISH = {
   'screens.requestsPage.requestsList.nothingHasBeenRequestedYet': 'Nothing has been requested yet',
   'screens.requestsPage.requestsList.nothingMatchesThat': 'Nothing matches that',
   'screens.requestsPage.requestsList.refusedRefusedBecause': 'Declined: {refusedBecause}',
+  'screens.requestsPage.resultsForQuery': 'Results for “{query}”',
+  'screens.requestsPage.searchDiscover': 'Search Discover',
   'screens.requestsPage.shelfMoreCard.seeMore': 'See more',
   'screens.requestsPage.studiosRail.studios': 'Studios',
   'screens.requestsPage.titleShelf.seeAllOfTitle': 'See all of {title}',
@@ -5967,7 +5973,16 @@ const ENGLISH = {
   'screens.rolesPanel.permissionEditor.searchPermissions': 'Search permissions',
   'screens.rolesPanel.roleMembers.whetherNameHoldsThisRole': '{name} has this role',
   'screens.scrollingPages.theEnd': 'The end',
-  'screens.searchArea.askableResults.artistsNotInYourLibraryYet': 'Artists not in your library yet',
+  'screens.searchArea.discoverPointer.cantFindIt': 'Can’t find what you’re looking for?',
+  'screens.searchArea.discoverPointer.discoverHasCount.one':
+    'Discover has {count} result for “{query}” that you can request.',
+  'screens.searchArea.discoverPointer.discoverHasCount.other':
+    'Discover has {count} results for “{query}” that you can request.',
+  'screens.searchArea.discoverPointer.nothingOnThisServerMatches':
+    'Nothing on this server matches “{query}”',
+  'screens.searchArea.discoverPointer.searchDiscoverFor': 'Search Discover for “{query}”',
+  'screens.searchArea.discoverPointer.seeCountInDiscover.one': 'See {count} result in Discover',
+  'screens.searchArea.discoverPointer.seeCountInDiscover.other': 'See {count} results in Discover',
   'screens.searchArea.everythingYouOwn': 'Search your library',
   'screens.searchArea.filterTheLibrary': 'Filter the library',
   'screens.searchArea.nothingHere': 'Nothing here',
