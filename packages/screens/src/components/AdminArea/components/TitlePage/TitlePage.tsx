@@ -565,6 +565,26 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
           }
           isFollowing={isBusy}
           onFollow={followSeason}
+          followsNew={
+            request === null ? null : request.seasons === null || request.followsNewSeasons
+          }
+          onFollowsNew={(isOn) => {
+            if (request !== null) {
+              act(
+                async () => ({
+                  refusal: (await changeMediaRequest(request.id, { followsNewSeasons: isOn }))
+                    .refusal,
+                }),
+                say(
+                  isOn
+                    ? 'screens.adminArea.titlePage.newSeasonsOfTitleAreFetched'
+                    : 'screens.adminArea.titlePage.newSeasonsOfTitleAreNoLonger',
+                  { title: request.title },
+                ),
+                failedToSay,
+              );
+            }
+          }}
         />
       ) : null}
 

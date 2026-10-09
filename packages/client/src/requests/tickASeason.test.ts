@@ -23,7 +23,14 @@ describe('tickASeason', () => {
     expect(tickASeason([3], THREE, 1)).toEqual([1, 3]);
   });
 
-  it('goes back to every season once the last is ticked, so later ones come too', () => {
+  it('ticks Specials on their own, never as part of every season', () => {
+    const withSpecials = [aSeason(0), ...THREE];
+
+    expect(tickASeason(null, withSpecials, 0)).toEqual([0, 1, 2, 3]);
+    expect(tickASeason([0, 1, 2, 3], withSpecials, 0)).toBeNull();
+  });
+
+  it('goes back to every season once the last is ticked', () => {
     expect(tickASeason([1, 3], THREE, 2)).toBeNull();
   });
 

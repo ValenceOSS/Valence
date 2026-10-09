@@ -164,6 +164,38 @@ describe('TitlePage', () => {
     expect(screen.getByText('New seasons go in Show')).toBeInTheDocument();
   });
 
+  it('stops getting new seasons of a show', async () => {
+    const request = aMediaRequest({
+      kind: 'series',
+      tmdbId: 42,
+      seasons: [1],
+      followsNewSeasons: true,
+      items: [aRequestItem({ id: 'a', season: 1, episode: 1, state: 'wanted' })],
+    });
+
+    requested.requests = [request];
+    catalogue.entries = [
+      aCatalogueEntry({
+        key: 'series:42',
+        tab: 'shows',
+        kind: 'series',
+        catalogueId: '42',
+        status: 'missing',
+        requestId: request.id,
+      }),
+    ];
+
+    renderInAnAddress(<TitlePage titleKey="series:42" onBack={vi.fn()} />);
+
+    await userEvent
+      .setup()
+      .click(await screen.findByRole('switch', { name: 'Get new seasons as they come' }));
+
+    await waitFor(() => {
+      expect(changeMediaRequest).toHaveBeenCalledWith(request.id, { followsNewSeasons: false });
+    });
+  });
+
   it('stops a download, then lets a release be picked by hand', async () => {
     const request = aMediaRequest({
       items: [

@@ -173,6 +173,61 @@ describe('createRequestService', () => {
     expect(await service.change('missing', {}, null)).toBeNull();
   });
 
+  it('follows the seasons that come after those there were when it was asked for', async () => {
+    const { service } = aService();
+    const firstSeason = {
+      ...SEVERANCE.catalogue,
+      episodes: SEVERANCE.catalogue.episodes?.filter((episode) => episode.season === 1),
+    };
+    const following = await service.add({ ...SEVERANCE, catalogue: firstSeason });
+    const later = await service.change(following.request.id, {}, SEVERANCE.catalogue);
+
+    expect(following.request.followsNewSeasons).toBe(true);
+    expect(later?.items.map((item) => item.season)).toEqual([1, 2]);
+  });
+
+  it('follows no new season where it was asked not to', async () => {
+    const { service } = aService();
+    const firstSeason = {
+      ...SEVERANCE.catalogue,
+      episodes: SEVERANCE.catalogue.episodes?.filter((episode) => episode.season === 1),
+    };
+    const { request } = await service.add({
+      ...SEVERANCE,
+      followsNewSeasons: false,
+      catalogue: firstSeason,
+    });
+    const later = await service.change(request.id, {}, SEVERANCE.catalogue);
+
+    expect(later?.items.map((item) => item.season)).toEqual([1]);
+  });
+
+  it('keeps a new season it picked up when more is asked, or following stops', async () => {
+    const { service } = aService();
+    const firstSeason = {
+      ...SEVERANCE.catalogue,
+      episodes: SEVERANCE.catalogue.episodes?.filter((episode) => episode.season === 1),
+    };
+    const { request } = await service.add({ ...SEVERANCE, catalogue: firstSeason });
+
+    await service.change(request.id, {}, SEVERANCE.catalogue);
+
+    const more = await service.add({ ...SEVERANCE, followsNewSeasons: false });
+
+    expect(more.request.seasons).toEqual([1, 2]);
+    expect(more.request.followsNewSeasons).toBe(true);
+
+    const stopped = await service.change(
+      request.id,
+      { followsNewSeasons: false },
+      SEVERANCE.catalogue,
+    );
+
+    expect(stopped?.followsNewSeasons).toBe(false);
+    expect(stopped?.seasons).toEqual([1, 2]);
+    expect(stopped?.items.map((item) => item.season)).toEqual([1, 2]);
+  });
+
   it('names the quality a request is judged at, so whoever reads it need not look up an id', async () => {
     const requests = createMemoryRecordStore<MediaRequestRecord>();
     const items = createMemoryRecordStore<RequestItemRecord>();

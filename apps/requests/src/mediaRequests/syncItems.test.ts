@@ -64,6 +64,21 @@ describe('syncItems', () => {
     ).toEqual(['Behind the scenes', 'Hello, Ms. Cobel']);
   });
 
+  it('waits for seasons after the last there was where it follows new ones, but not Specials', () => {
+    const following = { ...SERIES, seasons: [1], followsNewSeasons: true, followsAfter: 1 };
+
+    expect(
+      syncItems(following, { episodes: EPISODES, albums: [] }, []).add.map((item) => item.title),
+    ).toEqual(['Good News About Hell', 'Half Loop', 'Hello, Ms. Cobel']);
+    expect(
+      syncItems(
+        { ...following, followsNewSeasons: false },
+        { episodes: EPISODES, albums: [] },
+        [],
+      ).add.map((item) => item.title),
+    ).toEqual(['Good News About Hell', 'Half Loop']);
+  });
+
   it('changes what the catalogue renamed or re-dated, and adds only what is new', () => {
     const kept = aRequestItem({ season: 1, episode: 1, title: 'Pilot', airDate: '2022-02-18' });
     const changes = syncItems(SERIES, { episodes: EPISODES, albums: [] }, [kept]);

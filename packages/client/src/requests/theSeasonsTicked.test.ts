@@ -17,6 +17,10 @@ describe('theSeasonsTicked', () => {
     expect(theSeasonsTicked(null, [aSeason(1), aSeason(2)])).toEqual([1, 2]);
   });
 
+  it('leaves Specials out of every season', () => {
+    expect(theSeasonsTicked(null, [aSeason(0), aSeason(1)])).toEqual([1]);
+  });
+
   it('ticks only the ones asked for otherwise', () => {
     expect(theSeasonsTicked([2], [aSeason(1), aSeason(2)])).toEqual([2]);
   });

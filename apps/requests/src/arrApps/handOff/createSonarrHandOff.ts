@@ -14,6 +14,7 @@ import type { SonarrEpisode } from '@ValenceRequests/arrApps/schemas/SonarrEpiso
 import { SonarrSeriesSchema } from '@ValenceRequests/arrApps/schemas/SonarrSeriesSchema';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
+import { isSeasonWanted } from '@ValenceRequests/mediaRequests/isSeasonWanted';
 
 const SonarrSeriesListSchema = z.array(SonarrSeriesSchema);
 
@@ -150,10 +151,7 @@ const createSonarrHandOff = (
             seriesType: 'standard',
             seasons: found.seasons.map((season) => ({
               seasonNumber: season.seasonNumber,
-              monitored:
-                request.seasons === null
-                  ? season.seasonNumber > 0
-                  : request.seasons.includes(season.seasonNumber),
+              monitored: isSeasonWanted(request, season.seasonNumber),
             })),
             addOptions: {
               searchForMissingEpisodes: handOff.searchesOnAdd,

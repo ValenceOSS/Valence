@@ -45,6 +45,7 @@ const ApproveRequestDialog = ({
   const [profileId, setProfileId] = useState<string | null>(null);
   const [libraryId, setLibraryId] = useState<string | null>(null);
   const [seasons, setSeasons] = useState<number[] | null>(null);
+  const [followsNew, setFollowsNew] = useState(false);
   const [releaseTypes, setReleaseTypes] = useState<ReleaseType[] | null>(null);
   const [isApproving, setIsApproving] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -55,6 +56,7 @@ const ApproveRequestDialog = ({
     setProfileId(request.profileId);
     setLibraryId(request.libraryId);
     setSeasons(request.seasons);
+    setFollowsNew(request.seasons === null || request.followsNewSeasons);
     setReleaseTypes(request.releaseTypes);
     setProblem(null);
   }
@@ -91,6 +93,9 @@ const ApproveRequestDialog = ({
       ...(profileId === request.profileId ? {} : { profileId }),
       ...(libraryId === request.libraryId || libraryId === null ? {} : { libraryId }),
       ...(seasons === request.seasons ? {} : { seasons }),
+      ...(followsNew === (request.seasons === null || request.followsNewSeasons)
+        ? {}
+        : { followsNewSeasons: followsNew }),
       ...(releaseTypes === request.releaseTypes || releaseTypes === null ? {} : { releaseTypes }),
     };
 
@@ -169,7 +174,13 @@ const ApproveRequestDialog = ({
         )}
 
         {request?.kind !== 'series' || request.tmdbId === null ? null : (
-          <SeasonChooser tmdbId={request.tmdbId} seasons={seasons} onChange={setSeasons} />
+          <SeasonChooser
+            tmdbId={request.tmdbId}
+            seasons={seasons}
+            onChange={setSeasons}
+            followsNew={followsNew}
+            onFollowsNew={setFollowsNew}
+          />
         )}
       </DialogContent>
 

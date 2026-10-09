@@ -37,21 +37,47 @@ const badgeOf = (season: TitleSeason): TitlePart | 'notAsked' | null => {
 /**
  * A show's seasons on its title page, specials first, one row each: a bar of its episodes coloured
  * by where each stands, how many are here, a badge for anything needing a look, and a switch to
- * follow it. A row opens onto its episodes.
+ * follow it. A row opens onto its episodes. Where it was asked for, a switch in its header gets new
+ * seasons as they come.
  *
  * @param seasons - The seasons.
  * @param note - Where new seasons go, where that is worth saying.
  * @param isFollowing - Whether follow switches can be pressed right now.
  * @param onFollow - Told a season to follow or stop following.
+ * @param followsNew - Whether new seasons are fetched as they come, or nothing where nobody asked.
+ * @param onFollowsNew - Told whether they are to be.
  */
-const SeasonList = ({ seasons, note, isFollowing, onFollow }: SeasonListProps) => {
+const SeasonList = ({
+  seasons,
+  note,
+  isFollowing,
+  onFollow,
+  followsNew = null,
+  onFollowsNew,
+}: SeasonListProps) => {
   const [open, setOpen] = useState<number | null>(null);
 
   return (
     <PanelCard
       title={say('screens.seasonChooser.seasons')}
       isFlush
-      actions={note === null ? null : <span className="text-xs text-text-muted">{note}</span>}
+      actions={
+        note === null && followsNew === null ? null : (
+          <span className="flex flex-wrap items-center gap-4">
+            {note === null ? null : <span className="text-xs text-text-muted">{note}</span>}
+            {followsNew === null ? null : (
+              <Switch
+                label={say('common.getNewSeasonsAsTheyCome')}
+                isOn={followsNew}
+                disabled={isFollowing}
+                onToggle={() => {
+                  onFollowsNew?.(!followsNew);
+                }}
+              />
+            )}
+          </span>
+        )
+      }
     >
       <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
         {seasons.map((season) => {

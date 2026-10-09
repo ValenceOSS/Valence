@@ -5,6 +5,7 @@ import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemote
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { askForMedia, removeMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
+import { seasonsWithItemsOf } from '@ValenceClient/requests/seasonsWithItemsOf';
 import { describeAskableFacts } from '@ValenceClient/requests/describeAskableFacts';
 import { describeStanding } from '@ValenceClient/requests/describeStanding';
 import { progressOfRequest } from '@ValenceClient/requests/progressOfRequest';
@@ -33,7 +34,8 @@ const styles = StyleSheet.create({
  * A film or programme from the catalogue: what it is, whether it is here or asked for, and the way
  * to ask for it.
  *
- * A programme is asked for a season at a time, or every season. Where the server offers more than
+ * A programme is asked for a season at a time, or every season, and whether new seasons come too;
+ * one already asked for can have more seasons added. Where the server offers more than
  * one quality somebody picks one before asking; where it offers one, or insists on one, there is
  * nothing to pick.
  *
@@ -58,6 +60,9 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
   const offered = useQuery(requestsQueries.profilesOnOffer(kind));
   const who = useQuery(sessionQueries.who());
   const [seasons, setSeasons] = useState<number[] | null>(null);
+  const [followsNew, setFollowsNew] = useState(true);
+  const [adding, setAdding] = useState<number[] | null>([]);
+  const [addsFollowing, setAddsFollowing] = useState(false);
   const [quality, setQuality] = useState<string | null>(null);
   const [refusal, setRefusal] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
@@ -78,6 +83,18 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
   const choices = offered.data?.forcedId === null ? offered.data.choices : [];
   const needsQuality = choices.length > 1 && quality === null;
 
+  const isAddingSeasons =
+    kind === 'series' &&
+    title?.standing.status === 'requested' &&
+    request !== null &&
+    request.approval !== 'refused';
+  const askedSeasons =
+    request === null ? [] : (request.seasons ?? seasonsWithItemsOf(request.items));
+  const isFollowedAlready =
+    request !== null && (request.seasons === null || request.followsNewSeasons);
+  const hasMoreToAdd =
+    adding === null || adding.length > 0 || (addsFollowing && !isFollowedAlready);
+
   const send = async () => {
     setIsSending(true);
     setRefusal(null);
@@ -85,12 +102,34 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
     const sent = await askForMedia({
       kind,
       tmdbId: Number(id),
-      ...(kind === 'series' ? { seasons } : {}),
+      ...(kind === 'series' ? { seasons, followsNewSeasons: followsNew } : {}),
       ...(quality === null ? {} : { profileId: quality }),
     });
 
     setIsSending(false);
     setRefusal(sent.refusal?.message ?? null);
+    await cache.invalidateQueries({ queryKey: requestsQueries.key });
+  };
+
+  const addSeasons = async () => {
+    setIsSending(true);
+    setRefusal(null);
+
+    const sent = await askForMedia({
+      kind: 'series',
+      tmdbId: Number(id),
+      seasons: adding,
+      followsNewSeasons: addsFollowing,
+    });
+
+    setIsSending(false);
+    setRefusal(sent.refusal?.message ?? null);
+
+    if (sent.refusal === null) {
+      setAdding([]);
+      setAddsFollowing(false);
+    }
+
     await cache.invalidateQueries({ queryKey: requestsQueries.key });
   };
 
@@ -182,7 +221,13 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
       (title.standing.status === 'linked' && title.standing.requestId === null) ? (
         <>
           {kind === 'series' ? (
-            <TheSeasons tmdbId={Number(id)} seasons={seasons} onChange={setSeasons} />
+            <TheSeasons
+              tmdbId={Number(id)}
+              seasons={seasons}
+              onChange={setSeasons}
+              followsNew={followsNew}
+              onFollowsNew={setFollowsNew}
+            />
           ) : null}
 
           {choices.length > 1 ? (
@@ -217,7 +262,7 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
                   void askLinkedServer(server.id, {
                     kind,
                     tmdbId: Number(id),
-                    ...(kind === 'series' ? { seasons } : {}),
+                    ...(kind === 'series' ? { seasons, followsNewSeasons: followsNew } : {}),
                   })
                     .then((sent) => {
                       setRefusal(sent.refusal?.message ?? null);
@@ -230,6 +275,30 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
                 {say('common.askName', { name: server.name })}
               </Button>
             ))}
+        </>
+      ) : null}
+
+      {isAddingSeasons ? (
+        <>
+          <TheSeasons
+            tmdbId={Number(id)}
+            seasons={adding}
+            onChange={setAdding}
+            followsNew={addsFollowing}
+            onFollowsNew={setAddsFollowing}
+            alreadyAsked={askedSeasons}
+            isFollowedAlready={isFollowedAlready}
+          />
+
+          <Button
+            isBusy={isSending}
+            isDisabled={!hasMoreToAdd}
+            onPress={() => {
+              void addSeasons();
+            }}
+          >
+            {say('common.addSeasons')}
+          </Button>
         </>
       ) : null}
 

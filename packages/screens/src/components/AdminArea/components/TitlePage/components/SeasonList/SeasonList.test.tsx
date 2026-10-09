@@ -74,6 +74,30 @@ describe('SeasonList', () => {
     expect(screen.getByText('New seasons go in Show/Season NN/')).toBeInTheDocument();
   });
 
+  it('gets new seasons as they come where it was asked for, and only then', async () => {
+    const onFollowsNew = vi.fn();
+    const { rerender } = render(
+      <SeasonList
+        seasons={SEASONS}
+        note={null}
+        isFollowing={false}
+        onFollow={vi.fn()}
+        followsNew
+        onFollowsNew={onFollowsNew}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('switch', { name: 'Get new seasons as they come' }));
+
+    expect(onFollowsNew).toHaveBeenCalledWith(false);
+
+    rerender(<SeasonList seasons={SEASONS} note={null} isFollowing={false} onFollow={vi.fn()} />);
+
+    expect(
+      screen.queryByRole('switch', { name: 'Get new seasons as they come' }),
+    ).not.toBeInTheDocument();
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(SeasonList.displayName).toBe('SeasonList');
   });

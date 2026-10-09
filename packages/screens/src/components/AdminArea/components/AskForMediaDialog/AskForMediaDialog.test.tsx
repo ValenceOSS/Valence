@@ -218,7 +218,7 @@ describe('AskForMediaDialog', () => {
     });
   });
 
-  it('asks for the seasons ticked, as the catalogue lists them', async () => {
+  it('asks for every season once each regular one is ticked, leaving Specials out', async () => {
     const user = userEvent.setup();
 
     open();
@@ -242,7 +242,8 @@ describe('AskForMediaDialog', () => {
         kind: 'series',
         tmdbId: 95396,
         isPickedByHand: false,
-        seasons: [1, 2],
+        seasons: null,
+        followsNewSeasons: true,
       });
     });
     expect(fetchSeriesSeasons).toHaveBeenCalledWith(95396);

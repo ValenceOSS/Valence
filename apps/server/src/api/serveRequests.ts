@@ -602,7 +602,10 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     const answer = await throughRequests(
       context.req.raw.headers,
       async (client) => {
-        const asksTheCatalogue = change.seasons !== undefined || change.releaseTypes !== undefined;
+        const asksTheCatalogue =
+          change.seasons !== undefined ||
+          change.followsNewSeasons !== undefined ||
+          change.releaseTypes !== undefined;
 
         if (!asksTheCatalogue && change.libraryId === undefined) {
           return client.changeRequest(id, { change });

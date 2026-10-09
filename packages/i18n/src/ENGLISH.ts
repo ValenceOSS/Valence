@@ -468,6 +468,7 @@ const ENGLISH = {
   'common.addMediaProfile': 'Add media profile',
   'common.addOneToGetStarted': 'Add one to get started.',
   'common.address': 'Address',
+  'common.addSeasons': 'Add seasons',
   'common.addSongsToItFromThe': 'Add songs to it from the menu beside any song.',
   'common.addToACollection': 'Add to a collection',
   'common.addToCalendar': 'Add to calendar',
@@ -763,6 +764,8 @@ const ENGLISH = {
   'common.federationOutcome.aboveTheAge': 'Above the age limit',
   'common.federationOutcome.notShared': 'Not shared',
   'common.federationOutcome.tooMany': 'Rate limited',
+  'common.fetchesEachNewSeasonAsIt':
+    'Fetches each new season as it airs. Specials are only fetched when ticked.',
   'common.filed': 'Imported',
   'common.files': 'Files',
   'common.filing': 'Importing',
@@ -796,6 +799,7 @@ const ENGLISH = {
   'common.genre': 'Genre',
   'common.georgiaTimesNewRomanSerif': 'Georgia, "Times New Roman", serif',
   'common.getAFreeKey': 'Get a free key',
+  'common.getNewSeasonsAsTheyCome': 'Get new seasons as they come',
   'common.goBack': 'Go back',
   'common.googleCalendar': 'Google Calendar',
   'common.goToADay': 'Go to a day',
@@ -2124,7 +2128,6 @@ const ENGLISH = {
   'phone.anArtist.thatArtistCouldNotBeRead': 'Couldn’t load that artist.',
   'phone.anAskable.anythingAlreadyDownloadedForItIs':
     'Any files already downloaded for it will be deleted.',
-  'phone.anAskable.theSeasons.andAnyStillToCome': 'Include future seasons',
   'phone.aPlaylist.thatPlaylistCouldNotBeRead': 'Couldn’t load that playlist.',
   'phone.aPluginPage.readingThePage': 'Loading page',
   'phone.aPluginPage.thisPageCouldNotBeRead': 'Couldn’t load this page from the plugin.',
@@ -4429,6 +4432,10 @@ const ENGLISH = {
   'screens.adminArea.titlePage.markedTitleAsAdded': 'Marked {title} as in the library',
   'screens.adminArea.titlePage.minutesLong': '{minutes} min',
   'screens.adminArea.titlePage.newSeasonsGoInFolder': 'New seasons go in {folder}',
+  'screens.adminArea.titlePage.newSeasonsOfTitleAreFetched':
+    'New seasons of {title} are fetched as they air',
+  'screens.adminArea.titlePage.newSeasonsOfTitleAreNoLonger':
+    'New seasons of {title} are no longer fetched',
   'screens.adminArea.titlePage.noLongerFollowingName': 'No longer following {name}',
   'screens.adminArea.titlePage.onDisk': 'On disk',
   'screens.adminArea.titlePage.onlyFetchWhatIPick': 'Fetch only releases I pick',
@@ -5935,7 +5942,6 @@ const ENGLISH = {
   'screens.seasonChooser.askingTheCatalogueForItsSeasons': 'Loading seasons from the catalogue',
   'screens.seasonChooser.chosenOfSeasons.one': '{length} of {count} season.',
   'screens.seasonChooser.chosenOfSeasons.other': '{length} of {count} seasons.',
-  'screens.seasonChooser.everySeasonAndAnyThatCome': 'All seasons, including future ones.',
   'screens.seasonChooser.firstAired': 'First aired',
   'screens.seasonChooser.noSeasonIsTakenYet': 'No seasons selected yet.',
   'screens.seasonChooser.seasons': 'Seasons',

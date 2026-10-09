@@ -204,6 +204,13 @@
       "when": 1791508229976,
       "tag": "0028_blocks_by_hash_and_follows",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1791513331330,
+      "tag": "0029_requests_follow_new_seasons",
+      "breakpoints": true
     }
   ]
 }

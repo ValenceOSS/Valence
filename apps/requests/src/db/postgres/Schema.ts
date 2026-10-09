@@ -246,6 +246,8 @@ const mediaRequest = requestsSchema.table(
     requestedById: text('requested_by_id').notNull(),
     requestedByName: text('requested_by_name').notNull(),
     seasons: jsonb('seasons').$type<number[]>(),
+    followsNewSeasons: boolean('follows_new_seasons').notNull().default(false),
+    followsAfter: integer('follows_after'),
     releaseTypes: jsonb('release_types').$type<ReleaseType[]>(),
     runtimeMinutes: integer('runtime_minutes'),
     releaseDates: jsonb('release_dates')
