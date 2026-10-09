@@ -29,7 +29,9 @@ describe('useDeviceNotifications', () => {
 
     installPlatform(aFakePlatform({ setUnreadBadge }));
 
-    renderHook(() => useDeviceNotifications({ notifications: [], unread: 3, onOpen: () => {} }));
+    renderHook(() =>
+      useDeviceNotifications({ isKnown: true, notifications: [], unread: 3, onOpen: () => {} }),
+    );
 
     expect(setUnreadBadge).toHaveBeenCalledWith(3);
   });
@@ -41,6 +43,7 @@ describe('useDeviceNotifications', () => {
 
     renderHook(() =>
       useDeviceNotifications({
+        isKnown: true,
         notifications: [aNotice()],
         unread: 1,
         onOpen: () => {},
@@ -50,6 +53,31 @@ describe('useDeviceNotifications', () => {
     expect(notifyLocally).not.toHaveBeenCalled();
   });
 
+  it('says nothing about what was waiting when the inbox arrives after an empty first look', () => {
+    const notifyLocally = vi.fn();
+
+    installPlatform(aFakePlatform({ notifyLocally }));
+
+    const { rerender } = renderHook(
+      ({ isKnown, notifications }: { isKnown: boolean; notifications: Notification[] }) =>
+        useDeviceNotifications({
+          isKnown,
+          notifications,
+          unread: notifications.length,
+          onOpen: () => {},
+        }),
+      { initialProps: { isKnown: false, notifications: NOTHING_YET } },
+    );
+
+    rerender({ isKnown: true, notifications: [aNotice()] });
+
+    expect(notifyLocally).not.toHaveBeenCalled();
+
+    rerender({ isKnown: true, notifications: [aNotice(), aNotice({ id: 'another' })] });
+
+    expect(notifyLocally).toHaveBeenCalledTimes(1);
+  });
+
   it('notifies for a notice that arrives after the first look', () => {
     const notifyLocally = vi.fn();
 
@@ -57,7 +85,12 @@ describe('useDeviceNotifications', () => {
 
     const { rerender } = renderHook(
       (notifications: Notification[]) =>
-        useDeviceNotifications({ notifications, unread: notifications.length, onOpen: () => {} }),
+        useDeviceNotifications({
+          isKnown: true,
+          notifications,
+          unread: notifications.length,
+          onOpen: () => {},
+        }),
       { initialProps: NOTHING_YET },
     );
 
@@ -75,7 +108,7 @@ describe('useDeviceNotifications', () => {
 
     const { rerender } = renderHook(
       (notifications: Notification[]) =>
-        useDeviceNotifications({ notifications, unread: 0, onOpen: () => {} }),
+        useDeviceNotifications({ isKnown: true, notifications, unread: 0, onOpen: () => {} }),
       { initialProps: NOTHING_YET },
     );
 
@@ -93,7 +126,12 @@ describe('useDeviceNotifications', () => {
 
     const { rerender } = renderHook(
       (notifications: Notification[]) =>
-        useDeviceNotifications({ notifications, unread: notifications.length, onOpen: () => {} }),
+        useDeviceNotifications({
+          isKnown: true,
+          notifications,
+          unread: notifications.length,
+          onOpen: () => {},
+        }),
       { initialProps: NOTHING_YET },
     );
 
@@ -117,7 +155,12 @@ describe('useDeviceNotifications', () => {
 
     const { rerender } = renderHook(
       (notifications: Notification[]) =>
-        useDeviceNotifications({ notifications, unread: notifications.length, onOpen }),
+        useDeviceNotifications({
+          isKnown: true,
+          notifications,
+          unread: notifications.length,
+          onOpen,
+        }),
       { initialProps: NOTHING_YET },
     );
 

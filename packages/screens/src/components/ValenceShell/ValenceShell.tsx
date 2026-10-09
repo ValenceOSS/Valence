@@ -162,6 +162,7 @@ const ValenceShell = () => {
   const bell = useTheInbox();
 
   useDeviceNotifications({
+    isKnown: bell.isKnown,
     notifications: bell.notifications,
     unread: bell.unread,
     onOpen: (notification) => {

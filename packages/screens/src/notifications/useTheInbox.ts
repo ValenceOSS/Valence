@@ -21,9 +21,9 @@ const NOTHING_WAITING: Inbox = { notifications: [], unread: 0 };
  * desktop's window bar — it is the same inbox.
  *
  * @param isOn - Whether there is anybody signed in to ask about, so nothing is asked before there is.
- * @returns What to hand the bell.
+ * @returns What to hand the bell, and whether the inbox has arrived yet.
  */
-const useTheInbox = (isOn = true): NotificationBellProps => {
+const useTheInbox = (isOn = true): NotificationBellProps & { isKnown: boolean } => {
   const cache = useQueryClient();
   const [pushChoice, setPushChoice] = useState<boolean | null>(null);
   const held = useQuery({ ...notificationQueries.inbox(), enabled: isOn });
@@ -33,6 +33,7 @@ const useTheInbox = (isOn = true): NotificationBellProps => {
   const isPushOn = pushChoice ?? howToPush.data?.preferences.some((one) => one.push) ?? false;
 
   return {
+    isKnown: held.data !== undefined,
     notifications: inbox.notifications,
     unread: inbox.unread,
     ...(pushKey === '' || !canReceivePush()
