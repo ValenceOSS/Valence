@@ -188,6 +188,9 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
 
         void cache.invalidateQueries({ queryKey: requestsQueries.key });
       })
+      .catch(() => {
+        setProblem(say('common.thatCouldNotBeRequested'));
+      })
       .finally(() => {
         setIsAsking(false);
       });
