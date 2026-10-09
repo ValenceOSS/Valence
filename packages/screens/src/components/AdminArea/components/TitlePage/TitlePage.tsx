@@ -435,7 +435,7 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
           </Button>
         )}
 
-        {request?.isHandedOff === true ? null : (
+        {request.isHandedOff === true ? null : (
           <Button
             variant="secondary"
             size="md"
