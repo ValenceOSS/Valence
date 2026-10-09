@@ -10675,6 +10675,11 @@
     "context": "Shown in the media requests in the requests service (from `createRequestWorker`). {reason} is filled in by the app."
   },
   {
+    "handler": "requests.mediaRequests.requestWorker.removedFromTheDownloads",
+    "text": "Removed from the downloads",
+    "context": "Why a release won't be fetched again for a request, shown in its blocklist ('Never again') on the admin title page, after an admin removed its download from Requests › Downloads."
+  },
+  {
     "handler": "requests.mediaRequests.requestWorker.replacedByTitlePickedByHand",
     "text": "Replaced by {title}, picked by hand",
     "context": "Why a download was stopped and blocked: an admin picked another release in its place. {title} is the release picked (from `createRequestWorker`)."

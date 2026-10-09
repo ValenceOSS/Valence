@@ -10675,6 +10675,11 @@
     "context": "Shown in the media requests in the requests service (from `createRequestWorker`). {reason} is filled in by the app."
   },
   {
+    "handler": "requests.mediaRequests.requestWorker.removedFromTheDownloads",
+    "text": "Removed from the downloads",
+    "context": "Why a release won't be fetched again for a request, shown in its blocklist ('Never again') on the admin title page, after an admin removed its download from Requests › Downloads."
+  },
+  {
     "handler": "requests.mediaRequests.requestWorker.replacedByTitlePickedByHand",
     "text": "Replaced by {title}, picked by hand",
     "context": "Why a download was stopped and blocked: an admin picked another release in its place. {title} is the release picked (from `createRequestWorker`)."
@@ -16456,12 +16461,12 @@
   },
   {
     "handler": "screens.adminArea.removeDownloadDialog.itIsTakenOutOfItsClient",
-    "text": "It’s removed from its download client, and Valence stops tracking it.",
+    "text": "It’s removed from its download client, and Valence stops tracking it. A request it was for looks for a different release.",
     "context": "Explains removing a download, in the dialog confirming it, before it knows which download client holds it."
   },
   {
     "handler": "screens.adminArea.removeDownloadDialog.itIsTakenOutOfName",
-    "text": "It’s removed from {name}, and Valence stops tracking it.",
+    "text": "It’s removed from {name}, and Valence stops tracking it. A request it was for looks for a different release.",
     "context": "Explains removing a download, in the dialog confirming it. {name} is the download client's name, such as qBittorrent."
   },
   {
@@ -16491,7 +16496,7 @@
   },
   {
     "handler": "screens.adminArea.removeDownloadDialog.theyAreTakenOutOfTheirClients",
-    "text": "They’re removed from their download clients, and Valence stops tracking them.",
+    "text": "They’re removed from their download clients, and Valence stops tracking them. Requests they were for look for different releases.",
     "context": "Explains removing several ticked downloads at once, in the dialog confirming it."
   },
   {

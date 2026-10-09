@@ -1569,6 +1569,26 @@ const createRequestWorker = ({
         return after === null ? null : showMediaRequest(after.request, after.items);
       }),
 
+    blockDownload: async (downloadId: string): Promise<number> => {
+      const download = await downloads.find(downloadId);
+      const held = (await items.list()).filter((item) => item.downloadId === downloadId);
+      const requestIds = [...new Set(held.map((item) => item.requestId))];
+
+      for (const requestId of requestIds) {
+        await block(
+          requestId,
+          download?.title ??
+            held.find((item) => item.requestId === requestId)?.releaseTitle ??
+            null,
+          held.find((item) => item.requestId === requestId)?.indexerId ?? null,
+          saying('requests.mediaRequests.requestWorker.removedFromTheDownloads'),
+          download === null ? null : hashOfDownload(download),
+        );
+      }
+
+      return requestIds.length;
+    },
+
     deleteFiled: (id: string): Promise<string[]> =>
       serially(async () => {
         const filed = (await items.list()).filter(

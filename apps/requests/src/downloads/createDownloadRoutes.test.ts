@@ -116,6 +116,7 @@ const theRoutes = () => {
         id === 'claimed' ? ('claimed' as const) : id === 'gone' ? null : aSentDownload({ id }),
       ),
     ),
+    blockDownload: vi.fn(() => Promise.resolve(1)),
   };
   const rules = {
     read: vi.fn(() => Promise.resolve(GIVE_UP_DEFAULTS)),
@@ -237,10 +238,11 @@ describe('createDownloadRoutes', () => {
       expect(await refused.json()).toEqual({ error: 'It is gone', code: null, values: {} });
     });
 
-    it('removes a download, deleting its data only where asked', async () => {
-      const { ask, queue } = theRoutes();
+    it('removes a download, deleting its data only where asked, and never fetches it again', async () => {
+      const { ask, queue, filing } = theRoutes();
 
       expect((await ask(`/downloads/${DOWNLOAD.id}?deleteData=true`, 'DELETE')).status).toBe(204);
+      expect(filing.blockDownload).toHaveBeenCalledWith(DOWNLOAD.id);
       expect(queue.remove).toHaveBeenLastCalledWith(DOWNLOAD.id, true);
       expect((await ask(`/downloads/${DOWNLOAD.id}`, 'DELETE')).status).toBe(204);
       expect(queue.remove).toHaveBeenLastCalledWith(DOWNLOAD.id, false);

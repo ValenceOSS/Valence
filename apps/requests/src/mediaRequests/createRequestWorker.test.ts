@@ -1700,6 +1700,19 @@ describe('createRequestWorker', () => {
       expect(remove).toHaveBeenCalledWith(aSentDownload().id, true);
     });
 
+    it('blocks the release of a download removed by hand for the request it was fetched for', async () => {
+      const { worker, blocked } = aWorker({
+        items: [aRequestItem({ state: 'downloading', downloadId: aSentDownload().id })],
+        sent: [aSentDownload()],
+      });
+
+      expect(await worker.blockDownload(aSentDownload().id)).toBe(1);
+      expect(await blocked.list()).toMatchObject([
+        { requestId: aMediaRequest().id, title: aSentDownload().title },
+      ]);
+      expect(await worker.blockDownload('fetched-for-nobody')).toBe(0);
+    });
+
     it('sends nothing for a request cancelled or declined while it was searched for', async () => {
       const held: { harness: ReturnType<typeof aWorker> | null } = { harness: null };
       const harness = aWorker({

@@ -2581,6 +2581,7 @@ const ENGLISH = {
   'requests.mediaRequests.requestWorker.noVideoInItCouldBe': 'Couldn’t import any video from it',
   'requests.mediaRequests.requestWorker.reasonTryingTheNextBestRelease':
     '{reason}. Trying the next best release.',
+  'requests.mediaRequests.requestWorker.removedFromTheDownloads': 'Removed from the downloads',
   'requests.mediaRequests.requestWorker.replacedByTitlePickedByHand':
     'Replaced by {title}, picked by hand',
   'requests.mediaRequests.requestWorker.stoppedByAnAdmin': 'Stopped by an admin',
@@ -4123,9 +4124,9 @@ const ENGLISH = {
   'screens.adminArea.removeDownloadDialog.deleteWhatItDownloadedAsWell':
     'Also delete downloaded files',
   'screens.adminArea.removeDownloadDialog.itIsTakenOutOfItsClient':
-    'It’s removed from its download client, and Valence stops tracking it.',
+    'It’s removed from its download client, and Valence stops tracking it. A request it was for looks for a different release.',
   'screens.adminArea.removeDownloadDialog.itIsTakenOutOfName':
-    'It’s removed from {name}, and Valence stops tracking it.',
+    'It’s removed from {name}, and Valence stops tracking it. A request it was for looks for a different release.',
   'screens.adminArea.removeDownloadDialog.nameKeepsWhatItHasFinished':
     '{name} doesn’t delete finished downloads, so their files stay where they are.',
   'screens.adminArea.removeDownloadDialog.removeCountDownloads.one': 'Remove {count} download',
@@ -4134,7 +4135,7 @@ const ENGLISH = {
   'screens.adminArea.removeDownloadDialog.theClientKeepsWhatItHasFinished':
     'This download client doesn’t delete finished downloads, so their files stay where they are.',
   'screens.adminArea.removeDownloadDialog.theyAreTakenOutOfTheirClients':
-    'They’re removed from their download clients, and Valence stops tracking them.',
+    'They’re removed from their download clients, and Valence stops tracking them. Requests they were for look for different releases.',
   'screens.adminArea.requestDetailDialog.neverAgain': 'Blocklist',
   'screens.adminArea.requestsPanel.atAddressLastCheckedWhen': 'At {address}. Last checked {when}.',
   'screens.adminArea.requestsPanel.atAddressLastCheckedWhenProblem':
