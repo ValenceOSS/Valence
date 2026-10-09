@@ -350,7 +350,7 @@ const ProfilesPanel = () => {
 
               {isEveryLibraryHandedOff(
                 libraries.data ?? [],
-                kind.id === 'video' ? ['movies', 'shows'] : ['music'],
+                kind.id === 'video' ? ['movies', 'shows', 'anime'] : ['music'],
               ) ? (
                 <p className="px-4 pt-3 text-sm text-text-muted">
                   {say('screens.adminArea.profilesPanel.everyLibraryHandsOff')}

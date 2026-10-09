@@ -79,7 +79,7 @@ const kindOf = (libraryKind: string, seriesTitle: string | null): MediaKind => {
     return 'song';
   }
 
-  if (libraryKind === 'shows' || seriesTitle !== null) {
+  if (libraryKind === 'shows' || libraryKind === 'anime' || seriesTitle !== null) {
     return 'episode';
   }
 

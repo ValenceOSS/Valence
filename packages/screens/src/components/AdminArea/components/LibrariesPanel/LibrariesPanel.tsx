@@ -1,3 +1,4 @@
+import { isVideoKind } from '@ValenceContracts/functions/isVideoKind';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { Icon } from '@ValenceUI/Icon';
 import {
@@ -239,7 +240,7 @@ const LibrariesPanel = ({
                         setRereading(row.original);
                       },
                     },
-                    ...(row.original.kind === 'movies' || row.original.kind === 'shows'
+                    ...(isVideoKind(row.original.kind)
                       ? [
                           {
                             id: 'previews',

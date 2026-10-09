@@ -59,6 +59,7 @@ type CreateLibraryInput = {
 };
 
 type UpdateLibraryInput = {
+  kind?: 'shows' | 'anime';
   defaultAudioLanguage: string | null;
   filesAtOnce?: number | null;
   takesRequests?: boolean;

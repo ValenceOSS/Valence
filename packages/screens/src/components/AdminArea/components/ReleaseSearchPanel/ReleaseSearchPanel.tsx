@@ -22,6 +22,7 @@ import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { fetchRelease } from '@ValenceClient/requests/fetchIndexers';
 import { sendRelease } from '@ValenceClient/requests/fetchDownloadQueue';
 import { PROTOCOL_OF_CLIENT } from '@ValenceContracts/schemas/DownloadClient';
+import { categoryKindOf } from '@ValenceContracts/functions/categoryKindOf';
 import { LIBRARY_KINDS } from '@ValenceContracts/schemas/Library';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { StringKey } from '@ValenceI18n/StringKey';
@@ -41,6 +42,7 @@ import { say } from '@ValenceI18n/say';
 const SEND_AS = {
   movies: 'screens.adminArea.releaseSearchPanel.sendToNameAsAFilm',
   shows: 'screens.adminArea.releaseSearchPanel.sendToNameAsASeries',
+  anime: 'screens.adminArea.releaseSearchPanel.sendToNameAsAnime',
   music: 'screens.adminArea.releaseSearchPanel.sendToNameAsMusic',
   books: 'screens.adminArea.releaseSearchPanel.sendToNameAsABook',
 } as const satisfies Readonly<Record<LibraryKind, StringKey>>;
@@ -250,7 +252,7 @@ const ReleaseSearchPanel = ({
                             detail: describeWhereItGoes(
                               sending,
                               libraries.data ?? [],
-                              target.categories[sending],
+                              target.categories[categoryKindOf(sending)],
                             ),
                             icon: <Icon of={SendFilledIcon} size={15} />,
                             isDisabled: address === null,

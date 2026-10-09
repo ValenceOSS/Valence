@@ -66,6 +66,7 @@ const LIBRARY_KINDS: Readonly<Record<string, LibraryKind>> = {
 const TYPES_OF_LIBRARY: Readonly<Record<LibraryKind, string>> = {
   movies: 'Movie',
   shows: 'Series,Episode',
+  anime: 'Series,Episode',
   music: 'MusicAlbum,Audio',
   books: '',
 };

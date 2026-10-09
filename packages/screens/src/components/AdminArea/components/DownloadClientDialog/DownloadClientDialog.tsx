@@ -18,7 +18,7 @@ import {
   changeDownloadClient,
   tryDownloadClient,
 } from '@ValenceClient/requests/fetchDownloadClients';
-import { LIBRARY_KINDS } from '@ValenceContracts/schemas/Library';
+import { DOWNLOAD_CATEGORY_KINDS } from '@ValenceContracts/schemas/DownloadClient';
 import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
 import { TryItButton } from '@ValenceScreens/components/AdminArea/components/TryItButton/TryItButton';
 import { CLIENT_KINDS, choosingKind, formFor } from './readDownloadClientForm';
@@ -256,7 +256,7 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
                   : { error: form.errorOf('categories') ?? '' })}
               >
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {LIBRARY_KINDS.map((libraryKind) => (
+                  {DOWNLOAD_CATEGORY_KINDS.map((libraryKind) => (
                     <TextField
                       key={libraryKind}
                       label={LIBRARY_KIND_NAMES[libraryKind].label}

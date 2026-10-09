@@ -1,3 +1,4 @@
+import { isVideoKind } from '@ValenceContracts/functions/isVideoKind';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
@@ -92,7 +93,7 @@ const TheSearch = ({
   const watchable = useMemo(
     () =>
       (libraries.data ?? [])
-        .filter((library) => library.kind === 'movies' || library.kind === 'shows')
+        .filter((library) => isVideoKind(library.kind))
         .map((library) => library.id),
     [libraries.data],
   );

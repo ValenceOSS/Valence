@@ -55,7 +55,7 @@ import { sayCount } from '@ValenceI18n/sayCount';
 
 const NO_PATHS: Readonly<Record<string, string>> = {};
 
-const TAB_ORDER: readonly string[] = ['movies', 'shows', 'music', 'books'];
+const TAB_ORDER: readonly string[] = ['movies', 'shows', 'anime', 'music', 'books'];
 
 const NO_ALBUMS: readonly MusicAlbum[] = [];
 

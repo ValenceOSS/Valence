@@ -1,3 +1,4 @@
+import { isEpisodicKind } from '@ValenceContracts/functions/isEpisodicKind';
 import { AWrittenName } from '@ValenceMobile/components/AWrittenName/AWrittenName';
 import { Calendar, Film, Inbox, Monitor, ScanQrCode, SearchX } from '@keyline-icons/react-native';
 import {
@@ -322,7 +323,7 @@ const TheLibrary = ({
   const { films, programmes, hasMusic, bookLibraries, watchable } = useMemo(() => {
     const every = libraries.data ?? NO_LIBRARIES;
     const filmLibraries = every.filter((library) => library.kind === 'movies');
-    const programmeLibraries = every.filter((library) => library.kind === 'shows');
+    const programmeLibraries = every.filter((library) => isEpisodicKind(library.kind));
 
     return {
       films: filmLibraries,

@@ -92,6 +92,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const {
+      kind: holds,
       defaultAudioLanguage,
       filesAtOnce,
       takesRequests,
@@ -117,6 +118,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const updated = await library.update(libraryId, {
+      ...(holds === undefined ? {} : { kind: holds }),
       defaultAudioLanguage,
       ...(filesAtOnce === undefined ? {} : { filesAtOnce }),
       ...(takesRequests === undefined ? {} : { takesRequests }),

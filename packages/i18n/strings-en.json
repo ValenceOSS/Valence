@@ -1795,6 +1795,11 @@
     "context": "The label, used in the give up rules list (from `metadataWaitChoices`) and in the give up rules list (from `stalledWaitChoices`)."
   },
   {
+    "handler": "common.anime",
+    "text": "Anime",
+    "context": "The name of a kind of library, and of the series it holds: Japanese animation, kept apart from other series."
+  },
+  {
     "handler": "common.any",
     "text": "Any",
     "context": "The name, used in the starter profiles in the profiles in the requests service and in the indexer catalogue dialog in the admin area."
@@ -11525,11 +11530,6 @@
     "context": "A note at the foot of the dialog for adding an account."
   },
   {
-    "handler": "screens.addLibraryDialog.libraryPresets.anime",
-    "text": "Anime",
-    "context": "Shown in the library presets in the add library dialog."
-  },
-  {
     "handler": "screens.addLibraryDialog.libraryPresets.manga",
     "text": "Manga",
     "context": "Shown in the library presets in the add library dialog."
@@ -14905,6 +14905,11 @@
     "context": "The description of a text field in the library settings dialog in the admin area."
   },
   {
+    "handler": "screens.adminArea.librarySettingsDialog.animeLibrariesKeepJapaneseAnimation",
+    "text": "Anime libraries keep Japanese animation apart from other series. They don’t hand requests to Sonarr yet.",
+    "context": "Under the choice of whether a library holds series or anime, in its settings."
+  },
+  {
     "handler": "screens.adminArea.librarySettingsDialog.askMe",
     "text": "Ask me",
     "context": "Option of the higher-quality requests setting: the title's page asks the operator whether to switch or keep."
@@ -14953,6 +14958,11 @@
     "handler": "screens.adminArea.librarySettingsDialog.higherQualityRequests",
     "text": "Higher-quality requests",
     "context": "Label of the library setting that decides what happens when somebody asks for a title already requested, at a higher quality profile."
+  },
+  {
+    "handler": "screens.adminArea.librarySettingsDialog.holds",
+    "text": "Holds",
+    "context": "The heading of the choice, in a series or anime library's settings, of whether it holds series or anime."
   },
   {
     "handler": "screens.adminArea.librarySettingsDialog.howeverManyTheServerAllows",
@@ -15073,6 +15083,11 @@
     "handler": "screens.adminArea.librarySettingsDialog.theLibraryCouldNotBeUpdated",
     "text": "Couldn’t update the library. Try again.",
     "context": "Shown in the library settings dialog in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.librarySettingsDialog.thisLibraryWasAddedAsFlavour",
+    "text": "This library was added as {flavour}. Choose Anime to make it an anime library.",
+    "context": "Under the choice of whether a library holds series or anime, for a series library added with the Anime preset before anime was a kind of its own. {flavour} is what it was added as, such as Anime."
   },
   {
     "handler": "screens.adminArea.librarySettingsDialog.thisWillStartAPreviewGeneration",
@@ -16673,6 +16688,11 @@
     "handler": "screens.adminArea.releaseSearchPanel.sendToNameAsAFilm",
     "text": "Send to {name} as a film",
     "context": "A menu item that sends a release found by hand to a download client, to be filed as a film. {name} is the download client."
+  },
+  {
+    "handler": "screens.adminArea.releaseSearchPanel.sendToNameAsAnime",
+    "text": "Send to {name} as anime",
+    "context": "A menu item that sends a release found by hand to a download client, to be filed as anime. {name} is the download client."
   },
   {
     "handler": "screens.adminArea.releaseSearchPanel.sendToNameAsASeries",
@@ -18618,6 +18638,11 @@
     "handler": "screens.appShell.randomiser",
     "text": "Randomiser",
     "context": "The label in the app shell."
+  },
+  {
+    "handler": "screens.appShell.someAnime",
+    "text": "Some anime",
+    "context": "What a surprise pick takes from an anime library, on the button that picks something at random."
   },
   {
     "handler": "screens.appShell.somethingToListenTo",
@@ -23673,6 +23698,16 @@
   {
     "handler": "screens.releaseSearchPanel.describeWhereItGoes.asAFilmNoLibrary",
     "text": "As a film. There’s no film library to import it into, so it stays in the download client under {category}.",
+    "context": "Under a choice of how to send a release found by hand, when there is no library for it. {category} is the download client's category."
+  },
+  {
+    "handler": "screens.releaseSearchPanel.describeWhereItGoes.asAnimeFiledIntoName",
+    "text": "As anime, imported into {name} once it’s downloaded.",
+    "context": "Under a choice of how to send a release found by hand. {name} is the library it will be filed into."
+  },
+  {
+    "handler": "screens.releaseSearchPanel.describeWhereItGoes.asAnimeNoLibrary",
+    "text": "As anime. There’s no anime library to import it into, so it stays in the download client under {category}.",
     "context": "Under a choice of how to send a release found by hand, when there is no library for it. {category} is the download client's category."
   },
   {

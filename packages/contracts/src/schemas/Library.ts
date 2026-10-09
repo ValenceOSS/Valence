@@ -3,7 +3,7 @@ import { MediaItemSchema } from './MediaItem';
 import { FulfilmentSchema } from './ArrApp';
 import { HigherProfileAsksSchema } from './HigherProfileAsks';
 import { say } from '@ValenceI18n/say';
-const LIBRARY_KINDS = ['movies', 'shows', 'music', 'books'] as const;
+const LIBRARY_KINDS = ['movies', 'shows', 'anime', 'music', 'books'] as const;
 
 const EXTRA_KINDS = [
   'trailer',
@@ -33,7 +33,7 @@ const EXTRA_KIND_LABELS: Record<z.infer<typeof ExtraKindSchema>, string> = {
   other: say('contracts.schemas.library.extra'),
 };
 
-const SELECTABLE_LIBRARY_KINDS = ['movies', 'shows', 'music', 'books'] as const;
+const SELECTABLE_LIBRARY_KINDS = ['movies', 'shows', 'anime', 'music', 'books'] as const;
 
 const LibraryKindSchema = z.enum(LIBRARY_KINDS);
 
@@ -65,6 +65,7 @@ const LibrarySchema = z.object({
 });
 
 const UpdateLibraryRequestSchema = z.object({
+  kind: z.enum(['shows', 'anime']).optional(),
   defaultAudioLanguage: z.string().nullable(),
   filesAtOnce: z.number().int().positive().max(16).nullable().optional(),
   takesRequests: z.boolean().optional(),

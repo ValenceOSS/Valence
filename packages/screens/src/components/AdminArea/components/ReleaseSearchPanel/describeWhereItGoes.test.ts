@@ -19,6 +19,16 @@ describe('describeWhereItGoes', () => {
     );
   });
 
+  it('files anime into a library of anime', () => {
+    expect(
+      describeWhereItGoes(
+        'anime',
+        [...LIBRARIES, { kind: 'anime', name: 'Anime' }],
+        'valence-series',
+      ),
+    ).toBe('As anime, imported into Anime once it’s downloaded.');
+  });
+
   it('files music and books into their own libraries too', () => {
     expect(describeWhereItGoes('music', LIBRARIES, 'valence-music')).toBe(
       'As music, imported into Albums once it’s downloaded.',

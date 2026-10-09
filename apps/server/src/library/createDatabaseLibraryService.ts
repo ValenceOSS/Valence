@@ -1,3 +1,4 @@
+import { isEpisodicKind } from '@ValenceContracts/functions/isEpisodicKind';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { Said } from '@ValenceI18n/SaidSchema';
@@ -640,7 +641,7 @@ const createDatabaseLibraryService = ({
 
     await scanLibrary({
       libraryId,
-      kind: found.kind === 'shows' ? 'shows' : 'movies',
+      kind: found.kind === 'shows' || found.kind === 'anime' ? 'shows' : 'movies',
       root: found.path,
       files: {
         listFiles: () => Promise.resolve({ files: rows, unreadable: [] }),
@@ -843,7 +844,7 @@ const createDatabaseLibraryService = ({
   ): Promise<ScanResult> =>
     scanLibrary({
       libraryId: found.id,
-      kind: found.kind === 'shows' ? 'shows' : 'movies',
+      kind: found.kind === 'shows' || found.kind === 'anime' ? 'shows' : 'movies',
       root: found.path,
       files: filesFor(found.id),
       store,
@@ -1044,7 +1045,7 @@ const createDatabaseLibraryService = ({
   const showsInTheCatalogue = async (
     viewer: Viewer,
   ): Promise<{ show: ShowSummary; externalId: string }[]> => {
-    const held = (await service.list(viewer)).filter((entry) => entry.kind === 'shows');
+    const held = (await service.list(viewer)).filter((entry) => isEpisodicKind(entry.kind));
 
     const shows = (
       await Promise.all(held.map(async (entry) => service.listShows(viewer, entry.id)))
@@ -1267,9 +1268,18 @@ const createDatabaseLibraryService = ({
         return null;
       }
 
+      const isEpisodic = before.kind === 'shows' || before.kind === 'anime';
+
       await db
         .update(library)
         .set({
+          ...(input.kind === undefined || !isEpisodic
+            ? {}
+            : {
+                kind: input.kind,
+                flavour: null,
+                ...(input.kind === 'anime' ? { requestFulfilment: null } : {}),
+              }),
           defaultAudioLanguage: input.defaultAudioLanguage,
           ...(input.filesAtOnce === undefined ? {} : { filesAtOnce: input.filesAtOnce }),
           ...(input.takesRequests === undefined ? {} : { takesRequests: input.takesRequests }),
@@ -1399,7 +1409,7 @@ const createDatabaseLibraryService = ({
           ? []
           : options.kind === 'shows'
             ? [isNotNull(mediaItem.seriesTitle)]
-            : holds === 'shows'
+            : holds === 'shows' || holds === 'anime'
               ? [sql`false`]
               : [isNull(mediaItem.seriesTitle)]),
         ...(options.genre === undefined || options.genre === ''
@@ -2354,7 +2364,10 @@ const createDatabaseLibraryService = ({
         return scanBooks(found, false, jobId);
       }
 
-      if (found === null || (found.kind !== 'movies' && found.kind !== 'shows')) {
+      if (
+        found === null ||
+        (found.kind !== 'movies' && found.kind !== 'shows' && found.kind !== 'anime')
+      ) {
         return found?.kind === 'music'
           ? scanMusic({ id: libraryId, path: folder }, false, jobId, true)
           : null;
@@ -2362,7 +2375,7 @@ const createDatabaseLibraryService = ({
 
       return scanLibrary({
         libraryId,
-        kind: found.kind,
+        kind: found.kind === 'movies' ? 'movies' : 'shows',
         root: found.path,
         within: folder,
         files: filesFor(libraryId),

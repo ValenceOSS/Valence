@@ -6,7 +6,7 @@ import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 
 /**
  * The extensions of the files a library of a given kind reads: video and the subtitles that go with
- * it for films and programmes, tracks for music, and the formats a book comes in for books.
+ * it for films, programmes and anime, tracks for music, and the formats a book comes in for books.
  *
  * @param kind - The kind of library.
  * @returns The extensions, lower case and without their dot, in alphabetical order.
@@ -15,6 +15,7 @@ const uploadExtensionsFor = (kind: LibraryKind): readonly string[] => {
   switch (kind) {
     case 'movies':
     case 'shows':
+    case 'anime':
       return [...VIDEO_FILE_EXTENSIONS, ...TEXT_SUBTITLE_EXTENSIONS].sort();
     case 'music':
       return [...AUDIO_FILE_EXTENSIONS].sort();

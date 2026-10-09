@@ -16,6 +16,7 @@ type SortedFiles = {
 const WANTED: Readonly<Record<LibraryKind, ReadonlySet<string>>> = {
   movies: new Set([...VIDEO_FILE_EXTENSIONS, ...TEXT_SUBTITLE_EXTENSIONS]),
   shows: new Set([...VIDEO_FILE_EXTENSIONS, ...TEXT_SUBTITLE_EXTENSIONS]),
+  anime: new Set([...VIDEO_FILE_EXTENSIONS, ...TEXT_SUBTITLE_EXTENSIONS]),
   music: new Set([...AUDIO_FILE_EXTENSIONS, 'jpg', 'jpeg', 'png']),
   books: new Set([...BOOK_FORMATS, ...AUDIOBOOK_FILE_EXTENSIONS, 'cue', 'jpg', 'jpeg', 'png']),
 };

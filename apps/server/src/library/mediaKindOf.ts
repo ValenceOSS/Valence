@@ -1,3 +1,4 @@
+import { isEpisodicKind } from '@ValenceContracts/functions/isEpisodicKind';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { MediaKind } from '@ValenceContracts/schemas/MediaKind';
 
@@ -39,7 +40,7 @@ const mediaKindOf = (
     return 'episode';
   }
 
-  return libraryKind === 'shows' ? 'video' : 'movie';
+  return isEpisodicKind(libraryKind) ? 'video' : 'movie';
 };
 
 export { mediaKindOf };

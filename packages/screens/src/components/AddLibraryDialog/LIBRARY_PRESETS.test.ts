@@ -11,10 +11,10 @@ describe('LIBRARY_PRESETS', () => {
     }
   });
 
-  it('reads anime as a show and manga as a book, under their own names', () => {
+  it('reads anime as a kind of its own and manga as a book, under its own name', () => {
     expect(LIBRARY_PRESETS.find((preset) => preset.id === 'anime')).toMatchObject({
-      kind: 'shows',
-      flavour: 'Anime',
+      kind: 'anime',
+      flavour: null,
     });
     expect(LIBRARY_PRESETS.find((preset) => preset.id === 'manga')).toMatchObject({
       kind: 'books',

@@ -336,6 +336,50 @@ describe('LibrarySettingsDialog', () => {
     });
   });
 
+  it('makes a series library added as anime an anime library, once told to', async () => {
+    const user = userEvent.setup();
+    const added = films({ kind: 'shows', name: 'Anime', path: '/media/anime', flavour: 'Anime' });
+
+    updateLibraryMock.mockResolvedValue({ ...added, kind: 'anime', flavour: null });
+
+    render(
+      <LibrarySettingsDialog
+        library={added}
+        isOpen
+        onClose={vi.fn()}
+        onUpdated={vi.fn()}
+        onRegenerate={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(/added as Anime/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Holds' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Anime' }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(updateLibraryMock).toHaveBeenCalledWith(
+        added.id,
+        expect.objectContaining({ kind: 'anime' }),
+      );
+    });
+  });
+
+  it('asks what a library holds only of one that holds series', () => {
+    render(
+      <LibrarySettingsDialog
+        library={films()}
+        isOpen
+        onClose={vi.fn()}
+        onUpdated={vi.fn()}
+        onRegenerate={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Holds' })).not.toBeInTheDocument();
+  });
+
   it('says what a later ask at a higher profile does', async () => {
     const user = userEvent.setup();
 

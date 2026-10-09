@@ -1,3 +1,4 @@
+import { isVideoKind } from '@ValenceContracts/functions/isVideoKind';
 import { useQuery } from '@tanstack/react-query';
 import { SettingList } from '@ValenceUI/SettingList';
 import { SettingRow } from '@ValenceUI/SettingRow';
@@ -82,9 +83,7 @@ const DiscordSettings = ({ draft, onDraft }: DiscordSettingsProps) => {
   const libraries = useQuery(libraryQueries.all());
   const presence = draft?.discordPresence ?? DEFAULT_DISCORD_PRESENCE;
   const isShown = draft?.showsWhatIamWatching ?? false;
-  const watchable = (libraries.data ?? []).filter(
-    (library) => library.kind === 'movies' || library.kind === 'shows',
-  );
+  const watchable = (libraries.data ?? []).filter((library) => isVideoKind(library.kind));
 
   const change = (part: Partial<DiscordPresence>) => {
     onDraft({ discordPresence: { ...presence, ...part } });

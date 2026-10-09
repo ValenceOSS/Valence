@@ -1,3 +1,4 @@
+import { isEpisodicKind } from '@ValenceContracts/functions/isEpisodicKind';
 import { randomUUID } from 'node:crypto';
 import { groupIntoShows, buildShowDetail } from './groupIntoShows';
 import type {
@@ -352,6 +353,12 @@ const createMemoryLibraryService = (
     }
 
     found.defaultAudioLanguage = input.defaultAudioLanguage;
+
+    if (input.kind !== undefined && isEpisodicKind(found.kind)) {
+      found.kind = input.kind;
+      found.flavour = null;
+      found.fulfilment = input.kind === 'anime' ? null : found.fulfilment;
+    }
 
     if (input.takesRequests !== undefined) {
       found.takesRequests = input.takesRequests;

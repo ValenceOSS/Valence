@@ -488,6 +488,7 @@ const ENGLISH = {
   'common.aMonth': 'A month',
   'common.androidTV': 'Android TV',
   'common.anHour': 'An hour',
+  'common.anime': 'Anime',
   'common.any': 'Any',
   'common.anybody': 'Anyone',
   'common.anySize': 'Any size',
@@ -2816,7 +2817,6 @@ const ENGLISH = {
   'screens.addAccountDialog.theirSetupLink': 'Their setup link',
   'screens.addAccountDialog.theyStartWithTheDefaultRole':
     'New accounts get the default role. Set their roles and library access in the account editor.',
-  'screens.addLibraryDialog.libraryPresets.anime': 'Anime',
   'screens.addLibraryDialog.libraryPresets.manga': 'Manga',
   'screens.addLibraryDialog.validateAddLibraryForm.enterANameForThisLibrary':
     'Enter a name for this library.',
@@ -3720,6 +3720,8 @@ const ENGLISH = {
   'screens.adminArea.librariesPanel.whatNameIsDoing': '{name} activity',
   'screens.adminArea.librarySettingsDialog.aFolderOfItsOwnFor':
     'A separate folder for downloaded requests, if you want them kept apart. Otherwise, the library’s own folder is used.',
+  'screens.adminArea.librarySettingsDialog.animeLibrariesKeepJapaneseAnimation':
+    'Anime libraries keep Japanese animation apart from other series. They don’t hand requests to Sonarr yet.',
   'screens.adminArea.librarySettingsDialog.askMe': 'Ask me',
   'screens.adminArea.librarySettingsDialog.atOnce': 'Immediately',
   'screens.adminArea.librarySettingsDialog.chooseAMetadataProfileForLidarr':
@@ -3732,6 +3734,7 @@ const ENGLISH = {
   'screens.adminArea.librarySettingsDialog.forceDefaultAudioTrack': 'Force default audio track',
   'screens.adminArea.librarySettingsDialog.fourAtATime': 'Four at a time',
   'screens.adminArea.librarySettingsDialog.higherQualityRequests': 'Higher-quality requests',
+  'screens.adminArea.librarySettingsDialog.holds': 'Holds',
   'screens.adminArea.librarySettingsDialog.howeverManyTheServerAllows':
     'As many as the server allows',
   'screens.adminArea.librarySettingsDialog.howManyOfThisLibrarysFiles':
@@ -3769,6 +3772,8 @@ const ENGLISH = {
     'Couldn’t load the app’s folders and profiles.',
   'screens.adminArea.librarySettingsDialog.theLibraryCouldNotBeUpdated':
     'Couldn’t update the library. Try again.',
+  'screens.adminArea.librarySettingsDialog.thisLibraryWasAddedAsFlavour':
+    'This library was added as {flavour}. Choose Anime to make it an anime library.',
   'screens.adminArea.librarySettingsDialog.thisWillStartAPreviewGeneration':
     'This starts generating previews for {name}’s existing media to match {label}. Progress is shown next to the library. Continue?',
   'screens.adminArea.librarySettingsDialog.twoAtATime': 'Two at a time',
@@ -4185,6 +4190,7 @@ const ENGLISH = {
   'screens.adminArea.releaseSearchPanel.sendToName': 'Send to {name}',
   'screens.adminArea.releaseSearchPanel.sendToNameAsABook': 'Send to {name} as a book',
   'screens.adminArea.releaseSearchPanel.sendToNameAsAFilm': 'Send to {name} as a film',
+  'screens.adminArea.releaseSearchPanel.sendToNameAsAnime': 'Send to {name} as anime',
   'screens.adminArea.releaseSearchPanel.sendToNameAsASeries': 'Send to {name} as a series',
   'screens.adminArea.releaseSearchPanel.sendToNameAsMusic': 'Send to {name} as music',
   'screens.adminArea.releaseSearchPanel.sentTitleToClientName': 'Sent {title} to {clientName}.',
@@ -4695,6 +4701,7 @@ const ENGLISH = {
   'screens.appShell.myAccount': 'My account',
   'screens.appShell.myRequests': 'My requests',
   'screens.appShell.randomiser': 'Randomiser',
+  'screens.appShell.someAnime': 'Some anime',
   'screens.appShell.somethingToListenTo': 'Something to listen to',
   'screens.appShell.somethingToRead': 'Something to read',
   'screens.appShell.valenceBackToTheStart': 'Valence home',
@@ -5943,6 +5950,10 @@ const ENGLISH = {
     'As a film, imported into {name} once it’s downloaded.',
   'screens.releaseSearchPanel.describeWhereItGoes.asAFilmNoLibrary':
     'As a film. There’s no film library to import it into, so it stays in the download client under {category}.',
+  'screens.releaseSearchPanel.describeWhereItGoes.asAnimeFiledIntoName':
+    'As anime, imported into {name} once it’s downloaded.',
+  'screens.releaseSearchPanel.describeWhereItGoes.asAnimeNoLibrary':
+    'As anime. There’s no anime library to import it into, so it stays in the download client under {category}.',
   'screens.releaseSearchPanel.describeWhereItGoes.asASeriesFiledIntoName':
     'As a series, imported into {name} once it’s downloaded.',
   'screens.releaseSearchPanel.describeWhereItGoes.asASeriesNoLibrary':
