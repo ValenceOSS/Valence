@@ -283,6 +283,47 @@ const correctMatch = async (
   };
 };
 
+const MovedSchema = z.object({ files: z.number().int(), jobId: z.string().nullable() });
+
+/**
+ * Moves files into another library, on its disk and in Valence, keeping what each has been watched
+ * to, and has that library read them again as what it holds.
+ *
+ * @param mediaIds - The files to move, all from one library.
+ * @param libraryId - The library they go to.
+ * @returns How many moved and the job reading them again, or why not.
+ */
+const moveMedia = async (
+  mediaIds: readonly string[],
+  libraryId: string,
+): Promise<z.infer<typeof MovedSchema> | { problem: string }> => {
+  const response = await fetch('/api/media/move', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    credentials: 'same-origin',
+    body: JSON.stringify({ mediaIds, libraryId }),
+  }).catch(() => null);
+
+  if (response === null) {
+    return { problem: say('common.theServerCouldNotBeReached') };
+  }
+
+  const answer = z
+    .union([MovedSchema, ProblemSchema])
+    .safeParse(await response.json().catch(() => null));
+
+  if (response.ok && answer.success && 'files' in answer.data) {
+    return answer.data;
+  }
+
+  return {
+    problem:
+      answer.success && 'error' in answer.data
+        ? answer.data.error
+        : say('common.theServerAnsweredStatus', { status: response.status.toString() }),
+  };
+};
+
 /**
  * Forgets a correction, putting a file back to whatever the catalogue finds on its own.
  *
@@ -521,6 +562,7 @@ export {
   createLibrary,
   updateLibrary,
   fetchLibraryItems,
+  moveMedia,
   fetchMediaDetail,
   scanLibrary,
   readScanState,

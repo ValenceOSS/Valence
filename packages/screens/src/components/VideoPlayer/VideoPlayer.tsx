@@ -1,3 +1,4 @@
+import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { Icon } from '@ValenceUI/Icon';
 import { AnimatePresence, motion, useDragControls } from 'motion/react';
 import { gainFor } from '@ValenceCore/functions/gainFor';
@@ -12,12 +13,14 @@ import { Button } from '@ValenceUI/Button';
 import { Spinner } from '@ValenceUI/Spinner';
 import { useNowPlaying } from '@ValenceScreens/playback/useNowPlaying';
 import { useDiscordPresence } from '@ValenceScreens/playback/useDiscordPresence';
+import { useAutoQuality } from '@ValenceScreens/playback/useAutoQuality';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { VideoSurface } from '@ValenceUI/VideoSurface';
 import { SubtitleCues } from '@ValenceScreens/components/SubtitleCues/SubtitleCues';
 import { isTheDesktopClient } from '@ValenceScreens/desktop/theDesktopShell';
 import { detectFromBrowser } from '@ValenceClient/playback/detectFromBrowser';
 import { qualityStepCostsFor } from '@ValenceClient/playback/qualityStepCostsFor';
+import { bufferFor } from '@ValenceClient/playback/bufferFor';
 import { stepsThatSaveNothing } from '@ValenceClient/playback/stepsThatSaveNothing';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { onPresenceEvent } from '@ValenceClient/presence/presenceEvents';
@@ -115,7 +118,9 @@ import type { SubtitleTrack } from '@ValenceClient/playback/fetchSubtitles';
 import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
 import type { PlaybackHealth } from './components/StreamStats/StreamStats.types';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
+import type { AutoRung } from '@ValenceClient/playback/decideAutoQuality';
 import type { PlayerState, VideoPlayerProps } from './VideoPlayer.types';
+import { FindSubtitlesDialog } from '@ValenceScreens/components/FindSubtitlesDialog/FindSubtitlesDialog';
 import { PlayOnDialog } from '@ValenceScreens/components/PlayOnDialog/PlayOnDialog';
 import { useVideoDevices } from '@ValenceClient/video/useVideoDevices';
 import { say } from '@ValenceI18n/say';
@@ -140,6 +145,8 @@ const PAUSED_SCREEN_MILLISECONDS = 10_000;
 const DOUBLE_TAP_MILLISECONDS = 300;
 
 const TAP_EDGE = 0.33;
+
+const SKIPS_SETTLE_MILLISECONDS = 300;
 
 const STALL_BEFORE_SAYING_SO_MS = 400;
 
@@ -326,6 +333,8 @@ const VideoPlayer = ({
   const [activity, setActivity] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [subtitleTracks, setSubtitleTracks] = useState<SubtitleTrack[]>([]);
+  const [isFindingSubtitles, setIsFindingSubtitles] = useState(false);
+  const { mayAdminister } = useWhatIMayDo();
   const [selectedSubtitleId, setSelectedSubtitleId] = useState(SUBTITLES_OFF);
   const defaultedForRef = useRef<string | null>(null);
   const [captionStyle, setCaptionStyle] = useState(readCaptionStyle);
@@ -339,10 +348,12 @@ const VideoPlayer = ({
     audioStreamIndex?: number;
     subtitleStreamIndex?: number;
     requestedQuality: QualityPreference;
+    autoRung: AutoRung;
   }>({
     mediaId: media.id,
     startSeconds: Math.floor(startSeconds),
     requestedQuality: readQualityPreference(),
+    autoRung: 'original',
   });
   const [heldFrame, setHeldFrame] = useState<{ url: string; isItemChange: boolean } | null>(null);
   const controlsRef = useRef<HTMLDivElement>(null);
@@ -436,6 +447,7 @@ const VideoPlayer = ({
   }, [partyNotice]);
   const releaseRef = useRef<(() => Promise<void>) | null>(null);
   const deliveredRef = useRef<(() => DeliveredFormat | null) | null>(null);
+  const estimatedRef = useRef<(() => number | null) | null>(null);
   const settledRef = useRef<Promise<void>>(Promise.resolve());
   const castContextRef = useRef<CastContext | null>(null);
 
@@ -643,6 +655,7 @@ const VideoPlayer = ({
     void attachShaka({ element, manifestUrl: session.delivery.manifestUrl }).then((attached) => {
       releaseRef.current = attached.detach;
       deliveredRef.current = attached.readDelivered;
+      estimatedRef.current = attached.readEstimatedKbps;
       element.currentTime = at;
       start(element);
     });
@@ -708,6 +721,7 @@ const VideoPlayer = ({
       mediaId: media.id,
       startSeconds: Math.floor(startSeconds),
       requestedQuality: request.requestedQuality,
+      autoRung: request.autoRung,
     });
   }
 
@@ -801,7 +815,7 @@ const VideoPlayer = ({
               clientId,
               request.startSeconds,
               request.audioStreamIndex,
-              request.requestedQuality,
+              request.requestedQuality === 'auto' ? request.autoRung : request.requestedQuality,
               request.subtitleStreamIndex,
             )
           : ({ kind: 'started', session: aKeptSession(request.mediaId, keptSource) } as const);
@@ -858,10 +872,19 @@ const VideoPlayer = ({
         if (outcome.session.delivery.kind === 'direct') {
           element.src = outcome.session.delivery.url;
         } else {
+          const { plan } = outcome.session;
+          const source = await cache
+            .ensureQueryData(libraryQueries.detail(request.mediaId))
+            .catch(() => null);
           const attached = await attachShaka({
             element,
             manifestUrl: outcome.session.delivery.manifestUrl,
             startSeconds: request.startSeconds,
+            buffer: bufferFor(
+              plan.video.kind === 'transcode'
+                ? plan.video.maxBitrateKbps
+                : (source?.bitrateKbps ?? null),
+            ),
             onFault: (fault) => {
               if (fault.severity < CRITICAL || isAbandoned()) {
                 return;
@@ -875,6 +898,7 @@ const VideoPlayer = ({
           teardown = attached.detach;
           releaseRef.current = attached.detach;
           deliveredRef.current = attached.readDelivered;
+          estimatedRef.current = attached.readEstimatedKbps;
         }
 
         if (request.startSeconds > 0 && outcome.session.delivery.kind === 'direct') {
@@ -916,7 +940,16 @@ const VideoPlayer = ({
         void stopPlaybackSession(startedId, clientId);
       }
     };
-  }, [request, start, reportPresenceHeartbeat, deviceProfile, media.id, keptSource, rememberWhere]);
+  }, [
+    request,
+    start,
+    reportPresenceHeartbeat,
+    deviceProfile,
+    media.id,
+    keptSource,
+    rememberWhere,
+    cache,
+  ]);
 
   useEffect(
     () =>
@@ -1325,6 +1358,7 @@ const VideoPlayer = ({
         mediaId: request.mediaId,
         startSeconds: Math.floor(position),
         requestedQuality: request.requestedQuality,
+        autoRung: request.autoRung,
         ...(request.audioStreamIndex === undefined
           ? {}
           : { audioStreamIndex: request.audioStreamIndex }),
@@ -1335,6 +1369,7 @@ const VideoPlayer = ({
       subtitleTracks,
       request.mediaId,
       request.requestedQuality,
+      request.autoRung,
       request.audioStreamIndex,
       request.subtitleStreamIndex,
       position,
@@ -1342,8 +1377,10 @@ const VideoPlayer = ({
     ],
   );
 
-  const availableQualitySteps =
-    detail === null || keptSource !== undefined ? [] : listAvailableQualitySteps(detail);
+  const availableQualitySteps = useMemo(
+    () => (detail === null || keptSource !== undefined ? [] : listAvailableQualitySteps(detail)),
+    [detail, keptSource],
+  );
   const qualityStepsSavingNothing = useMemo(
     () => (detail === null ? [] : stepsThatSaveNothing({ media: detail, profile: deviceProfile })),
     [detail, deviceProfile],
@@ -1353,6 +1390,36 @@ const VideoPlayer = ({
     () => (detail === null ? {} : qualityStepCostsFor({ media: detail, profile: deviceProfile })),
     [detail, deviceProfile],
   );
+
+  const autoSteps = useMemo(
+    () => availableQualitySteps.filter((step) => !qualityStepsSavingNothing.includes(step)),
+    [availableQualitySteps, qualityStepsSavingNothing],
+  );
+
+  const moveAutoRung = useCallback(
+    (rung: AutoRung) => {
+      const element = videoRef.current;
+
+      hold(element);
+
+      setRequest((asked) => ({
+        ...asked,
+        startSeconds: Math.floor(element?.currentTime ?? asked.startSeconds),
+        autoRung: rung,
+      }));
+    },
+    [hold],
+  );
+
+  useAutoQuality({
+    isOn: request.requestedQuality === 'auto' && state === 'playing' && keptSource === undefined,
+    videoRef,
+    readEstimatedKbps: () => estimatedRef.current?.() ?? null,
+    current: request.autoRung,
+    steps: autoSteps,
+    sourceBitrateKbps: detail?.bitrateKbps ?? null,
+    onChange: moveAutoRung,
+  });
 
   const offerHere =
     following === null
@@ -1400,12 +1467,20 @@ const VideoPlayer = ({
         startSeconds: Math.floor(position),
         audioStreamIndex: streamIndex,
         requestedQuality: request.requestedQuality,
+        autoRung: request.autoRung,
         ...(request.subtitleStreamIndex === undefined
           ? {}
           : { subtitleStreamIndex: request.subtitleStreamIndex }),
       });
     },
-    [request.mediaId, request.requestedQuality, request.subtitleStreamIndex, position, hold],
+    [
+      request.mediaId,
+      request.requestedQuality,
+      request.autoRung,
+      request.subtitleStreamIndex,
+      position,
+      hold,
+    ],
   );
 
   const changeQuality = useCallback(
@@ -1419,6 +1494,7 @@ const VideoPlayer = ({
         mediaId: request.mediaId,
         startSeconds: Math.floor(position),
         requestedQuality: quality,
+        autoRung: 'original',
         ...(request.audioStreamIndex === undefined
           ? {}
           : { audioStreamIndex: request.audioStreamIndex }),
@@ -1474,11 +1550,39 @@ const VideoPlayer = ({
     element.currentTime = Math.min(Math.max(at, 0), last);
   }, []);
 
+  const pendingSkipRef = useRef<{ target: number; timer: ReturnType<typeof setTimeout> } | null>(
+    null,
+  );
+
   const skip = useCallback(
     (delta: number) => {
-      seek(Math.min(Math.max(position + delta, 0), duration));
+      const pending = pendingSkipRef.current;
+      const target = Math.min(Math.max((pending?.target ?? position) + delta, 0), duration);
+
+      if (pending !== null) {
+        clearTimeout(pending.timer);
+      }
+
+      setPosition(target);
+
+      pendingSkipRef.current = {
+        target,
+        timer: setTimeout(() => {
+          pendingSkipRef.current = null;
+          seek(target);
+        }, SKIPS_SETTLE_MILLISECONDS),
+      };
     },
     [seek, position, duration],
+  );
+
+  useEffect(
+    () => () => {
+      if (pendingSkipRef.current !== null) {
+        clearTimeout(pendingSkipRef.current.timer);
+      }
+    },
+    [],
   );
 
   const skipRef = useRef(skip);
@@ -1783,7 +1887,10 @@ const VideoPlayer = ({
 
   const asItPlays = {
     onTimeUpdate: (seconds: number) => {
-      setPosition(seconds);
+      if (pendingSkipRef.current === null) {
+        setPosition(seconds);
+      }
+
       setHeldFrame(null);
       onProgress?.(seconds, duration);
 
@@ -2109,6 +2216,13 @@ const VideoPlayer = ({
             }`}
           >
             <PlayerControls
+              {...(mayAdminister
+                ? {
+                    onFindSubtitles: () => {
+                      setIsFindingSubtitles(true);
+                    },
+                  }
+                : {})}
               {...(renderPartyMenu === undefined
                 ? {}
                 : {
@@ -2150,6 +2264,7 @@ const VideoPlayer = ({
               qualityStepsSavingNothing={qualityStepsSavingNothing}
               qualityStepCosts={qualityStepCosts}
               selectedQuality={request.requestedQuality}
+              autoRung={request.autoRung}
               isDisabled={state !== 'playing'}
               onTogglePlay={togglePlay}
               onSeek={seek}
@@ -2266,6 +2381,18 @@ const VideoPlayer = ({
         onSent={() => {
           setSendingAt(null);
           onClose();
+        }}
+      />
+
+      <FindSubtitlesDialog
+        media={isFindingSubtitles ? { id: media.id, name: media.title } : null}
+        onClose={() => {
+          setIsFindingSubtitles(false);
+        }}
+        onFetched={() => {
+          void fetchSubtitleTracks(media.id)
+            .catch(() => [])
+            .then(setSubtitleTracks);
         }}
       />
     </section>

@@ -236,9 +236,7 @@ const LibrarySettingsDialog = ({
           <DialogContent className="flex flex-col gap-6">
             {isEpisodicKind(library.kind) ? (
               <fieldset className="flex flex-col gap-2">
-                <legend className="text-sm font-medium text-text">
-                  {say('screens.adminArea.librarySettingsDialog.holds')}
-                </legend>
+                <legend className="text-sm font-medium text-text">{say('common.holds')}</legend>
 
                 <p className="text-xs text-text-muted">
                   {say(
@@ -258,10 +256,10 @@ const LibrarySettingsDialog = ({
                 ) : null}
 
                 <OptionMenu
-                  label={say('screens.adminArea.librarySettingsDialog.holds')}
+                  label={say('common.holds')}
                   groups={[
                     {
-                      name: say('screens.adminArea.librarySettingsDialog.holds'),
+                      name: say('common.holds'),
                       selectedId: holds ?? library.kind,
                       onSelect: (chosen) => {
                         setHolds(chosen === 'anime' ? 'anime' : 'shows');

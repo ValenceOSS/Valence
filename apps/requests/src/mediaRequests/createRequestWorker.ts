@@ -28,7 +28,7 @@ import { recordFromDraft } from '@ValenceRequests/mediaRequests/recordFromDraft'
 import { syncItems } from '@ValenceRequests/mediaRequests/syncItems';
 import { MediaRequestDraftSchema } from '@ValenceContracts/schemas/MediaRequest';
 import { episodesInDownload } from '@ValenceRequests/mediaRequests/episodesInDownload';
-import { parseReleaseName } from '@ValenceRequests/releases/parseReleaseName';
+import { parseReleaseName } from '@ValenceCore/releases/parseReleaseName';
 import { showMediaRequest } from '@ValenceRequests/mediaRequests/showMediaRequest';
 import { wantsUpgrade } from '@ValenceRequests/mediaRequests/wantsUpgrade';
 import { waitThenRun } from '@ValenceRequests/timing/waitThenRun';

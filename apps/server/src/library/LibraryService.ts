@@ -17,9 +17,17 @@ import type { Person } from '@ValenceContracts/schemas/Person';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
 import type { MediaFileDeletion } from '@ValenceServer/library/deleteMediaFile';
+import type { MediaFileMove } from '@ValenceServer/library/moveMediaFile';
 import type { CalendarEpisode } from '@ValenceServer/calendar/CalendarEpisode';
 
 type MediaDeletion = MediaFileDeletion | { kind: 'absent' };
+
+type MediaMove =
+  | { kind: 'moved'; files: number; jobId: string | null }
+  | { kind: 'absent' }
+  | { kind: 'sameLibrary' }
+  | { kind: 'wrongKind' }
+  | (Exclude<MediaFileMove, { kind: 'moved' }> & { jobId?: string | null });
 
 type SeriesDeletion =
   | { kind: 'deleted'; files: number }
@@ -152,6 +160,7 @@ type LibraryService = ShowService & {
   remove: (libraryId: string) => Promise<boolean>;
   deleteMedia: (mediaId: string) => Promise<MediaDeletion>;
   deleteSeries: (seriesId: string) => Promise<SeriesDeletion>;
+  moveMedia: (mediaIds: readonly string[], toLibraryId: string) => Promise<MediaMove>;
   mediaIdsAt: (paths: string[]) => Promise<Record<string, string>>;
   mediaPathsIn: (libraryId: string) => Promise<Record<string, string>>;
   correctMatch: (
@@ -219,6 +228,7 @@ export type {
   LibraryService,
   ListItemsOptions,
   MediaDeletion,
+  MediaMove,
   SeriesDeletion,
   PreviewMomentOutcome,
   UpdateLibraryInput,

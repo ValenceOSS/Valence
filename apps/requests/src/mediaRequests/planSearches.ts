@@ -1,4 +1,4 @@
-import { BOOK_CATEGORIES } from '@ValenceRequests/releases/BOOK_CATEGORIES';
+import { BOOK_CATEGORIES } from '@ValenceCore/releases/BOOK_CATEGORIES';
 import { queryTitleOf } from '@ValenceRequests/mediaRequests/queryTitleOf';
 import type { ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';

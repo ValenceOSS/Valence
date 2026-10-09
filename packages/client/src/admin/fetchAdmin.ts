@@ -58,6 +58,7 @@ const AdminOverviewSchema = z.object({
     showsProfilesBeforeSignIn: z.boolean().default(false),
     allowedApps: AllowedAppsSchema.optional(),
     fetchesCatalogueTrailers: z.boolean().default(false),
+    usesShortSegments: z.boolean().default(true),
     fetchesMusicDetails: z.boolean().default(false),
     requestReleaseTypes: ReleaseTypesSchema.default([...DEFAULT_RELEASE_TYPES]),
     controlsConnectedApps: z.boolean().default(false),
@@ -861,6 +862,24 @@ const saveFetchesCatalogueTrailers = async (
 };
 
 /**
+ * Sets whether films are sent in short segments, which start and seek sooner over a slow
+ * connection at the cost of more requests.
+ *
+ * @param usesShortSegments - Whether to send them short.
+ * @returns Whether the setting was written.
+ */
+const saveUsesShortSegments = async (usesShortSegments: boolean): Promise<boolean> => {
+  const response = await fetch('/api/admin/settings', {
+    method: 'PATCH',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ usesShortSegments }),
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
+/**
  * Sets whether a music library's missing covers, artist photographs, music videos and song words
  * are looked for on the web, which reaches outside the server just as a fetched trailer does.
  *
@@ -1148,6 +1167,7 @@ export {
   saveAllowedApps,
   saveShowsProfilesBeforeSignIn,
   saveFetchesCatalogueTrailers,
+  saveUsesShortSegments,
   saveFetchesMusicDetails,
   saveControlsConnectedApps,
   saveRequestReleaseTypes,

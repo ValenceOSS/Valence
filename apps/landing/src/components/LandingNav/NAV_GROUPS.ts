@@ -1,6 +1,7 @@
 import {
   BookOpen as BookOpenIcon,
   CodeXml as CodeXmlIcon,
+  Download as DownloadIcon,
   Compass as CompassIcon,
   FileText as FileTextIcon,
   GitFork as GitForkIcon,
@@ -62,6 +63,12 @@ const NAV_GROUPS: readonly NavGroup[] = [
     blurb:
       'What to run it on, how to install it, and what happens when a file will not play as it is.',
     items: [
+      {
+        to: '/downloads',
+        label: 'Download',
+        detail: 'The desktop app, the server and the phone apps.',
+        icon: DownloadIcon,
+      },
       {
         to: '/requirements',
         label: 'Requirements',

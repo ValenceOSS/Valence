@@ -86,6 +86,8 @@ const aTitle = (overrides: Partial<CatalogueTitleDetail> = {}): CatalogueTitleDe
   cast: [{ name: 'Zendaya', role: 'Chani', photoUrl: null }],
   albums: [],
   authors: [],
+  tracks: [],
+  label: null,
   trailerKey: null,
   standing: ASKABLE,
   ...overrides,
@@ -193,18 +195,21 @@ describe('AskableDialog', () => {
             title: 'Another Brick',
             type: 'single',
             firstReleased: '1979-11-23',
+            coverUrl: null,
           },
           {
             id: '6ba7b810-9dad-11d1-80b4-00c04fd43002',
             title: 'The Wall',
             type: 'album',
             firstReleased: '1979-11-30',
+            coverUrl: null,
           },
           {
             id: '6ba7b810-9dad-11d1-80b4-00c04fd43003',
             title: 'Pulse',
             type: 'live',
             firstReleased: '1995-05-29',
+            coverUrl: null,
           },
         ],
       }),
@@ -499,6 +504,7 @@ describe('AskableDialog', () => {
             title: 'The Wall',
             type: 'album',
             firstReleased: '1979-11-30',
+            coverUrl: null,
           },
         ],
       }),
@@ -506,7 +512,9 @@ describe('AskableDialog', () => {
 
     open('artist:deezer-2');
 
-    await userEvent.click(await screen.findByRole('checkbox', { name: 'Live' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Releases' }));
+    await userEvent.click(screen.getByRole('menuitemcheckbox', { name: 'Live' }));
+    await userEvent.keyboard('{Escape}');
     await userEvent.click(screen.getByRole('button', { name: 'Request this artist' }));
 
     await waitFor(() => {
@@ -570,6 +578,45 @@ describe('AskableDialog', () => {
     });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Open' })).not.toBeInTheDocument();
+  });
+
+  it('opens straight away and says it is fetching, rather than waiting on the catalogue', async () => {
+    fetchAskable.mockReturnValue(new Promise(() => undefined));
+
+    open('artist:deezer-2');
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Fetching its details…' })).toBeInTheDocument();
+  });
+
+  it('shows each of an artist’s records with its cover', async () => {
+    fetchAskable.mockResolvedValue(
+      aTitle({
+        kind: 'artist',
+        id: '83d91898-7763-47d7-b03b-b92132375c47',
+        musicBrainzId: '83d91898-7763-47d7-b03b-b92132375c47',
+        title: 'Pink Floyd',
+        cast: [],
+        albums: [
+          {
+            id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+            title: 'The Wall',
+            type: 'album',
+            firstReleased: '1979-11-30',
+            coverUrl: '/api/music/catalogue/covers/6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+          },
+        ],
+      }),
+    );
+
+    open('artist:deezer-2');
+
+    const albums = await screen.findByRole('region', { name: 'Albums' });
+
+    expect(within(albums).getByRole('img')).toHaveAttribute(
+      'src',
+      '/api/music/catalogue/covers/6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+    );
   });
 
   it('says why something could not be asked for', async () => {

@@ -40,6 +40,7 @@ const OVERVIEW: AdminOverview = {
     previewQuality: 'high' as const,
     showsProfilesBeforeSignIn: false,
     fetchesCatalogueTrailers: false,
+    usesShortSegments: true,
     fetchesMusicDetails: false,
     requestReleaseTypes: ['album'],
     controlsConnectedApps: false,

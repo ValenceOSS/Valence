@@ -1,3 +1,7 @@
+import {
+  SUBTITLE_DEFAULTS,
+  SubtitleSettingsSchema,
+} from '@ValenceContracts/schemas/SubtitleSettings';
 import { z } from 'zod';
 import { AllowedAppsSchema, EVERY_APP_ALLOWED } from '@ValenceContracts/schemas/AllowedApps';
 import { PreviewQualitySchema } from '@ValenceContracts/schemas/PreviewQuality';
@@ -29,6 +33,7 @@ const ServerSettingsSchema = z.object({
   jobsTimezone: z.string().default(''),
   certificationRegion: z.string().length(2).toUpperCase().default('GB'),
   fetchesCatalogueTrailers: z.boolean().default(false),
+  usesShortSegments: z.boolean().default(true),
   fetchesMusicDetails: z.boolean().default(false),
   audioDbKey: z.string().default(''),
   omdbKey: z.string().default(''),
@@ -42,6 +47,7 @@ const ServerSettingsSchema = z.object({
   preTranscoding: PreTranscodingSettingsSchema.default(PRE_TRANSCODING_DEFAULTS),
   seerr: SeerrSettingsSchema.default(SEERR_DEFAULTS),
   email: EmailSettingsSchema.default(EMAIL_DEFAULTS),
+  subtitles: SubtitleSettingsSchema.default(SUBTITLE_DEFAULTS),
   linking: LinkSettingsSchema.default(LINK_SETTINGS_DEFAULTS),
 });
 

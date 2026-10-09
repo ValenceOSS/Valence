@@ -1,3 +1,4 @@
+import { STREAMING_SERVICES } from '@ValenceCore/releases/STREAMING_SERVICES';
 import type { ReleaseSource } from '@ValenceContracts/schemas/ParsedRelease';
 
 const SOURCES: readonly [RegExp, ReleaseSource][] = [
@@ -11,8 +12,6 @@ const SOURCES: readonly [RegExp, ReleaseSource][] = [
   [/\b(hd)?cam(rip)?\b/i, 'cam'],
 ];
 
-const STREAMERS = /\b(amzn|nf|dsnp|atvp|hmax|max|hulu|pcok|pmtp|cr|adn|b-global|stan|itunes|ma)\b/i;
-
 /**
  * Where a release came from — a remux, Blu-ray, a web download or rip, television, DVD, or a
  * recording made in a cinema — by the first sign of each, best first. A name that names only a
@@ -23,6 +22,6 @@ const STREAMERS = /\b(amzn|nf|dsnp|atvp|hmax|max|hulu|pcok|pmtp|cr|adn|b-global|
  */
 const readSource = (spaced: string): ReleaseSource | null =>
   SOURCES.find(([pattern]) => pattern.test(spaced))?.[1] ??
-  (STREAMERS.test(spaced) ? 'webdl' : null);
+  (STREAMING_SERVICES.test(spaced) ? 'webdl' : null);
 
 export { readSource };

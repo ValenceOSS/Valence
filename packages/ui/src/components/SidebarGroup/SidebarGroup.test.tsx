@@ -30,12 +30,20 @@ describe('SidebarGroup', () => {
     expect(container.querySelectorAll('li svg')).toHaveLength(ITEMS.length);
   });
 
-  it('draws a branch line beside each destination of a labelled group', () => {
+  it('hangs the destinations of a labelled group from one line', () => {
     const { container } = render(group());
 
-    for (const item of container.querySelectorAll('li')) {
-      expect(item.className).toContain('before:');
-    }
+    expect(container.querySelector('ul')?.className).toContain('before:w-px');
+  });
+
+  it('marks the current destination on the line, and no other', () => {
+    render(group());
+
+    expect(screen.getByRole('button', { name: 'Sessions' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    expect(screen.getByRole('button', { name: 'Links' })).not.toHaveAttribute('aria-current');
   });
 
   it('folds and unfolds by its label, and says which it is', async () => {
@@ -50,12 +58,6 @@ describe('SidebarGroup', () => {
     await user.click(fold);
 
     expect(fold).toHaveAttribute('aria-expanded', 'false');
-  });
-
-  it('sets its label in capitals', () => {
-    render(group());
-
-    expect(screen.getByRole('button', { name: 'Activity' })).toHaveClass('uppercase');
   });
 
   it('is held open or folded by its caller, and tells the caller when it is pressed', async () => {

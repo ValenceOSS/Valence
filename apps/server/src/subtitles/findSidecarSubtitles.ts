@@ -1,6 +1,6 @@
+import { describeSubtitleLabel } from './describeSubtitleLabel';
 import { TEXT_SUBTITLE_EXTENSIONS } from '@ValenceContracts/constants/TEXT_SUBTITLE_EXTENSIONS';
-import { describeLanguage, readLanguage } from '@ValenceCore/functions/describeTrack';
-import { say } from '@ValenceI18n/say';
+import { readLanguage } from '@ValenceCore/functions/describeTrack';
 
 const BITMAP_SUBTITLE_EXTENSIONS = new Set(['sup', 'sub', 'idx']);
 
@@ -79,29 +79,6 @@ const describeTags = (
 };
 
 /**
- * Names a subtitle track the way it should read in a menu: the language in its own words, then what
- * makes it different from the other track in the same language — forced, or transcribing the sound
- * as well as the dialogue.
- *
- * @param language - The language the filename claimed.
- * @param isForced - Whether it claimed the track is forced.
- * @param isHearingImpaired - Whether it claimed the track transcribes the sound as well.
- * @returns The line to show in a menu.
- */
-const describeLabel = (
-  language: string | null,
-  isForced: boolean,
-  isHearingImpaired: boolean,
-): string => {
-  const base = describeLanguage(language) ?? say('server.subtitles.findSidecarSubtitles.unknown');
-  const notes = [isForced ? 'forced' : '', isHearingImpaired ? 'SDH' : ''].filter(
-    (note) => note !== '',
-  );
-
-  return notes.length === 0 ? base : `${base} (${notes.join(', ')})`;
-};
-
-/**
  * Says whether a subtitle file is one Valence cannot draw — a disc's, which is pictures of text
  * rather than text, and needs burning in or a renderer of its own.
  *
@@ -156,7 +133,7 @@ const findSidecarSubtitles = (
       path: file.path,
       format: extension,
       language,
-      label: describeLabel(language, isForced, isHearingImpaired),
+      label: describeSubtitleLabel(language, isForced, isHearingImpaired),
       isForced,
       isHearingImpaired,
     });
@@ -167,11 +144,4 @@ const findSidecarSubtitles = (
 
 export type { SidecarFile, SidecarSubtitle };
 
-export {
-  findSidecarSubtitles,
-  describeTags,
-  describeLabel,
-  isBitmapSubtitle,
-  splitName,
-  SUBTITLE_DIRECTORIES,
-};
+export { findSidecarSubtitles, describeTags, isBitmapSubtitle, splitName, SUBTITLE_DIRECTORIES };

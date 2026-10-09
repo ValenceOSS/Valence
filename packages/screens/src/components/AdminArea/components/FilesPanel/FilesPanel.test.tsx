@@ -123,8 +123,8 @@ const draw = (mayDelete = true, openAt: string | null = null) => {
  * @param actor - Who is pressing.
  */
 const openFilms = async (actor: ReturnType<typeof userEvent.setup>) => {
-  await actor.click(await screen.findByRole('cell', { name: /^Films$/ }));
-  await screen.findByRole('cell', { name: /Arrival\.mkv/ });
+  await actor.click(await screen.findByRole('button', { name: 'Films' }));
+  await screen.findByRole('cell', { name: /^Arrival\.mkv/ });
 };
 
 describe('FilesPanel', () => {
@@ -182,7 +182,7 @@ describe('FilesPanel', () => {
   it('opens a folder it is handed, such as a library’s from the Libraries page', async () => {
     draw(true, '/media/films');
 
-    expect(await screen.findByRole('cell', { name: /Arrival\.mkv/ })).toBeInTheDocument();
+    expect(await screen.findByRole('cell', { name: /^Arrival\.mkv/ })).toBeInTheDocument();
     expect(fetchLibraryFolderMock).toHaveBeenCalledWith('/media/films');
   });
 

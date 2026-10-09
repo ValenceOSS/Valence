@@ -2,7 +2,7 @@ import { narrationOfRelease } from '@ValenceRequests/mediaRequests/narrationOfRe
 import { isIncompleteAlbum } from '@ValenceRequests/mediaRequests/isIncompleteAlbum';
 import { saying } from '@ValenceI18n/saying';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
-import { readBookFormat } from '@ValenceRequests/releases/readBookFormat';
+import { readBookFormat } from '@ValenceCore/releases/readBookFormat';
 import { matchBook } from '@ValenceRequests/mediaRequests/matchBook';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { albumsInRelease } from '@ValenceRequests/mediaRequests/albumsInRelease';
@@ -11,7 +11,7 @@ import { matchRelease } from '@ValenceRequests/mediaRequests/matchRelease';
 import { judgeRelease } from '@ValenceRequests/profiles/judgeRelease';
 import { rankReleases } from '@ValenceRequests/profiles/rankReleases';
 import { hashOfRelease } from '@ValenceRequests/releases/hashOfRelease';
-import { parseReleaseName } from '@ValenceRequests/releases/parseReleaseName';
+import { parseReleaseName } from '@ValenceCore/releases/parseReleaseName';
 import type { Release, ReleaseProtocol } from '@ValenceContracts/schemas/Indexer';
 import type { ParsedRelease } from '@ValenceContracts/schemas/ParsedRelease';
 import type { Judgement, QualityProfile } from '@ValenceContracts/schemas/QualityProfile';

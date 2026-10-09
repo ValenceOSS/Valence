@@ -7,6 +7,7 @@ import { Button } from '@ValenceUI/Button';
 import { TabPanel } from '@ValenceUI/TabPanel';
 import { SettingsPanel } from './components/SettingsPanel/SettingsPanel';
 import { EmailCard } from './components/EmailCard/EmailCard';
+import { SubtitlesCard } from '@ValenceScreens/components/AdminArea/components/SubtitlesCard/SubtitlesCard';
 import { ActivityPanel } from './components/ActivityPanel/ActivityPanel';
 import { ObservabilityPage } from '@ValenceScreens/components/ObservabilityPage/ObservabilityPage';
 import { LibrariesPanel } from './components/LibrariesPanel/LibrariesPanel';
@@ -1081,6 +1082,21 @@ const AdminArea = ({
                 onOpenFolder?.(path);
               }}
               onCorrect={setCorrecting}
+              {...(mayDeleteMedia
+                ? {
+                    onMoved: (toLibraryId: string, jobId: string | null) => {
+                      void cache.invalidateQueries({ queryKey: libraryQueries.key });
+                      void cache.invalidateQueries({ queryKey: adminQueries.key });
+
+                      if (jobId !== null) {
+                        void watchJob(toLibraryId, 'library.readAgain', jobId).then(() => {
+                          void cache.invalidateQueries({ queryKey: libraryQueries.key });
+                          void cache.invalidateQueries({ queryKey: adminQueries.key });
+                        });
+                      }
+                    },
+                  }
+                : {})}
               onChooseArtwork={setDressing}
               onCorrectAlbum={setCorrectingAlbum}
               onCorrectBook={setCorrectingBook}
@@ -1290,9 +1306,15 @@ const AdminArea = ({
                   void cache.invalidateQueries({ queryKey: sessionQueries.wayIn().queryKey });
                 }}
               />
-
-              <EmailCard />
             </div>
+          </TabPanel>
+
+          <TabPanel value="email">
+            <EmailCard />
+          </TabPanel>
+
+          <TabPanel value="subtitles">
+            <SubtitlesCard />
           </TabPanel>
 
           <TabPanel value="shares">
@@ -1425,6 +1447,9 @@ const AdminArea = ({
 
       <MatchPicker
         media={correcting}
+        isInShows={
+          libraries.find((library) => library.id === correcting?.libraryId)?.kind === 'shows'
+        }
         onClose={() => {
           setCorrecting(null);
         }}

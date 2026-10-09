@@ -8,7 +8,7 @@ import { libraryFileOf } from '@ValenceRequests/mediaRequests/libraryFileOf';
 import { placeFile } from '@ValenceRequests/mediaRequests/placeFile';
 import { qualityTagOf } from '@ValenceRequests/mediaRequests/qualityTagOf';
 import { qualityFromProbe } from '@ValenceRequests/media/qualityFromProbe';
-import { parseReleaseName } from '@ValenceRequests/releases/parseReleaseName';
+import { parseReleaseName } from '@ValenceCore/releases/parseReleaseName';
 import type { DownloadedFile } from '@ValenceRequests/mediaRequests/findDownloadedFiles';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { ParsedRelease } from '@ValenceContracts/schemas/ParsedRelease';

@@ -3,7 +3,7 @@ import {
   IconBrandWindowsFilled,
   IconDownloadFilled,
 } from '@tabler/icons-react';
-import { LinuxMark } from '@ValenceLanding/components/HomePage/components/DownloadSection/components/LinuxMark/LinuxMark';
+import { LinuxMark } from '@ValenceLanding/components/DownloadsPage/components/DownloadSection/components/LinuxMark/LinuxMark';
 import { Button } from '@ValenceUI/Button';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import type { DownloadRowProps } from './DownloadRow.types';

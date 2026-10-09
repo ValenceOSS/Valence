@@ -1,7 +1,7 @@
 import { extname } from 'node:path';
 import { VIDEO_FILE_EXTENSIONS } from '@ValenceContracts/constants/VIDEO_FILE_EXTENSIONS';
 import { findDownloadedFiles } from '@ValenceRequests/mediaRequests/findDownloadedFiles';
-import { parseReleaseName } from '@ValenceRequests/releases/parseReleaseName';
+import { parseReleaseName } from '@ValenceCore/releases/parseReleaseName';
 import type { ParsedRelease } from '@ValenceContracts/schemas/ParsedRelease';
 
 type Episode = { id: string; season: number; episode: number };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseReleaseName } from '@ValenceRequests/releases/parseReleaseName';
+import { parseReleaseName } from '@ValenceCore/releases/parseReleaseName';
 import { formatScoreOf } from './formatScoreOf';
 import type { CustomFormat } from '@ValenceContracts/schemas/QualityProfile';
 

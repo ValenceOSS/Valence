@@ -1,16 +1,16 @@
-import { readAudio } from '@ValenceRequests/releases/readAudio';
-import { readCodec } from '@ValenceRequests/releases/readCodec';
-import { readEdition } from '@ValenceRequests/releases/readEdition';
-import { readEpisodes } from '@ValenceRequests/releases/readEpisodes';
-import { readHdr } from '@ValenceRequests/releases/readHdr';
-import { readLanguages } from '@ValenceRequests/releases/readLanguages';
-import { readMusicQuality } from '@ValenceRequests/releases/readMusicQuality';
-import { readReleaseGroup } from '@ValenceRequests/releases/readReleaseGroup';
-import { readResolution } from '@ValenceRequests/releases/readResolution';
-import { readRevision } from '@ValenceRequests/releases/readRevision';
-import { readSource } from '@ValenceRequests/releases/readSource';
-import { readTitle } from '@ValenceRequests/releases/readTitle';
-import { spacedName } from '@ValenceRequests/releases/spacedName';
+import { readAudio } from '@ValenceCore/releases/readAudio';
+import { readCodec } from '@ValenceCore/releases/readCodec';
+import { readEdition } from '@ValenceCore/releases/readEdition';
+import { readEpisodes } from '@ValenceCore/releases/readEpisodes';
+import { readHdr } from '@ValenceCore/releases/readHdr';
+import { readLanguages } from '@ValenceCore/releases/readLanguages';
+import { readMusicQuality } from '@ValenceCore/releases/readMusicQuality';
+import { readReleaseGroup } from '@ValenceCore/releases/readReleaseGroup';
+import { readResolution } from '@ValenceCore/releases/readResolution';
+import { readRevision } from '@ValenceCore/releases/readRevision';
+import { readSource } from '@ValenceCore/releases/readSource';
+import { readTitle } from '@ValenceCore/releases/readTitle';
+import { spacedName } from '@ValenceCore/releases/spacedName';
 import type { ParsedRelease } from '@ValenceContracts/schemas/ParsedRelease';
 
 /**

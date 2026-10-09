@@ -6,12 +6,22 @@ type MenuOption = {
   detail?: string;
 };
 
-type MenuGroup = {
+type OneOfMenuGroup = {
   name: string;
   options: MenuOption[];
   selectedId: string;
   onSelect: (id: string) => void;
 };
+
+type ManyOfMenuGroup = {
+  name: string;
+  options: MenuOption[];
+  selectedIds: readonly string[];
+  lockedIds?: readonly string[];
+  onToggle: (id: string, isChosen: boolean) => void;
+};
+
+type MenuGroup = OneOfMenuGroup | ManyOfMenuGroup;
 
 type OptionMenuProps = {
   label: string;
@@ -34,4 +44,4 @@ type OptionMenuProps = {
     | 'raisedJoined';
 };
 
-export type { MenuOption, MenuGroup, OptionMenuProps };
+export type { ManyOfMenuGroup, MenuOption, MenuGroup, OneOfMenuGroup, OptionMenuProps };

@@ -1,4 +1,4 @@
-import { parseReleaseName } from '@ValenceRequests/releases/parseReleaseName';
+import { parseReleaseName } from '@ValenceCore/releases/parseReleaseName';
 import { QUALITY_LABELS } from '@ValenceRequests/profiles/QUALITY_LABELS';
 import { qualityRefusedBy } from '@ValenceRequests/profiles/qualityRefusedBy';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';

@@ -11,6 +11,7 @@ import { ChangelogEntryPage } from '@ValenceLanding/components/ChangelogEntryPag
 import { AboutPage } from '@ValenceLanding/components/AboutPage/AboutPage';
 import { ArchitecturePage } from '@ValenceLanding/components/ArchitecturePage/ArchitecturePage';
 import { ComparePage } from '@ValenceLanding/components/ComparePage/ComparePage';
+import { DownloadsPage } from '@ValenceLanding/components/DownloadsPage/DownloadsPage';
 import { DevelopersPage } from '@ValenceLanding/components/DevelopersPage/DevelopersPage';
 import { ProductTourPage } from '@ValenceLanding/components/ProductTourPage/ProductTourPage';
 import { PrivacyPage } from '@ValenceLanding/components/PrivacyPage/PrivacyPage';
@@ -42,6 +43,7 @@ const PAGES: Record<string, ComponentType> = {
   '/architecture': ArchitecturePage,
   '/compare': ComparePage,
   '/developers': DevelopersPage,
+  '/downloads': DownloadsPage,
   '/requirements': RequirementsPage,
   '/roadmap': RoadmapPage,
   '/tour': ProductTourPage,

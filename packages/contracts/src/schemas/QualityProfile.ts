@@ -163,6 +163,8 @@ const QualityProfileSchema = z.object({
   updatedAt: z.string().datetime(),
 });
 
+const QualityProfileOrderSchema = z.object({ ids: z.array(z.string().uuid()).min(1) });
+
 const QualityProfileDraftSchema = z.object({
   name: z.string().trim().min(1).max(80),
   kind: ProfileKindSchema,
@@ -291,6 +293,7 @@ export {
   ProfilesOnOfferSchema,
   QualityProfileChangeSchema,
   QualityProfileDraftSchema,
+  QualityProfileOrderSchema,
   QualityProfileSchema,
   QualitySizeSchema,
   ReleaseWaitSchema,

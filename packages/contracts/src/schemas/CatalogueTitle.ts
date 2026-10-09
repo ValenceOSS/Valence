@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { QueuedDownloadStateSchema } from './DownloadQueue';
 import {
-  AlbumTrackSchema,
   CatalogueAlbumSchema,
   MediaRequestKindSchema,
   MediaRequestStateSchema,
@@ -80,6 +79,17 @@ const CatalogueCreditSchema = z.object({
   photoUrl: z.string().nullable(),
 });
 
+const CatalogueReleaseSchema = CatalogueAlbumSchema.extend({
+  coverUrl: z.string().nullable().default(null),
+});
+
+const CatalogueTrackSchema = z.object({
+  disc: z.number().int().positive(),
+  number: z.number().int().nonnegative(),
+  title: z.string(),
+  seconds: z.number().nonnegative().nullable(),
+});
+
 const CatalogueTitleDetailSchema = CatalogueTitleSchema.extend({
   musicBrainzId: z.string().uuid().nullable(),
   backdropUrl: z.string().nullable(),
@@ -87,9 +97,10 @@ const CatalogueTitleDetailSchema = CatalogueTitleSchema.extend({
   genres: z.array(z.string()),
   runtimeMinutes: z.number().int().positive().nullable(),
   cast: z.array(CatalogueCreditSchema),
-  albums: z.array(CatalogueAlbumSchema),
+  albums: z.array(CatalogueReleaseSchema),
   authors: z.array(z.string()).default([]),
-  tracks: z.array(AlbumTrackSchema).optional(),
+  tracks: z.array(CatalogueTrackSchema).default([]),
+  label: z.string().nullable().default(null),
   trailerKey: z.string().nullable(),
 });
 
@@ -120,8 +131,10 @@ type CataloguePage = z.infer<typeof CataloguePageSchema>;
 type CatalogueStanding = z.infer<typeof CatalogueStandingSchema>;
 type CatalogueStudio = z.infer<typeof CatalogueStudioSchema>;
 type CatalogueTitle = z.infer<typeof CatalogueTitleSchema>;
+type CatalogueRelease = z.infer<typeof CatalogueReleaseSchema>;
 type CatalogueShelf = z.infer<typeof CatalogueShelfSchema>;
 type CatalogueTitleDetail = z.infer<typeof CatalogueTitleDetailSchema>;
+type CatalogueTrack = z.infer<typeof CatalogueTrackSchema>;
 type RequestProgress = z.infer<typeof RequestProgressSchema>;
 
 export type {
@@ -132,11 +145,13 @@ export type {
   CatalogueDiscovery,
   CatalogueList,
   CataloguePage,
+  CatalogueRelease,
   CatalogueShelf,
   CatalogueStanding,
   CatalogueStudio,
   CatalogueTitle,
   CatalogueTitleDetail,
+  CatalogueTrack,
   RequestProgress,
 };
 
@@ -152,10 +167,12 @@ export {
   CatalogueGenreSchema,
   CatalogueListSchema,
   CataloguePageSchema,
+  CatalogueReleaseSchema,
   CatalogueShelfSchema,
   CatalogueStandingSchema,
   CatalogueStudioSchema,
   CatalogueTitleDetailSchema,
   CatalogueTitleSchema,
+  CatalogueTrackSchema,
   RequestProgressSchema,
 };

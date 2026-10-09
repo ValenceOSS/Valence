@@ -172,9 +172,11 @@ describe('AskForMediaDialog', () => {
     await user.click(await screen.findByRole('button', { name: /Pink Floyd/ }));
 
     expect(screen.getByText('1965 · UK rock band')).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: 'Albums' })).toBeChecked();
+    expect(screen.getByRole('button', { name: 'Releases' })).toHaveTextContent('Albums');
 
-    await user.click(screen.getByRole('checkbox', { name: 'Live' }));
+    await user.click(screen.getByRole('button', { name: 'Releases' }));
+    await user.click(screen.getByRole('menuitemcheckbox', { name: 'Live' }));
+    await user.keyboard('{Escape}');
     await user.click(screen.getByRole('button', { name: 'Quality' }));
 
     expect(screen.queryByRole('menuitemradio', { name: 'UHD' })).not.toBeInTheDocument();

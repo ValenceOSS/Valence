@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { CaptionStyle } from '@ValenceClient/playback/captionStyle';
 import type { SubtitleTrack } from '@ValenceClient/playback/fetchSubtitles';
+import type { AutoRung } from '@ValenceClient/playback/decideAutoQuality';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
 import type { QualityStepId } from '@ValenceContracts/schemas/QualityStep';
 
@@ -37,6 +38,7 @@ type PlayerControlsProps = {
   qualityStepsSavingNothing?: readonly QualityStepId[];
   qualityStepCosts?: Partial<Record<QualityPreference, string>>;
   selectedQuality: QualityPreference;
+  autoRung?: AutoRung;
   isDisabled?: boolean;
   onTogglePlay: () => void;
   onSeek: (seconds: number) => void;
@@ -62,6 +64,7 @@ type PlayerControlsProps = {
   onToggleFullscreen: () => void;
   onToggleStats: () => void;
   subtitleOffsetSeconds?: number;
+  onFindSubtitles?: () => void;
   onSubtitleOffsetChange?: (seconds: number) => void;
   castState?: CastState;
   onCast?: () => void;

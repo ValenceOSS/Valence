@@ -27,7 +27,8 @@ use crate::transcode_plan::{SessionSpec, Track, VideoAction, MANIFEST_NAME};
 /// The segment boundaries, cached beside the segments they describe.
 pub const LENGTHS_NAME: &str = "lengths.json";
 
-/// How long the playlist tries to make each segment it offers.
+/// The most a single offered segment should come to in bytes, for each second
+/// of segment the session asked for.
 ///
 /// The muxer cuts at every keyframe, because that is the only way a run
 /// restarted after a seek agrees with a run from the beginning about where the
@@ -35,17 +36,11 @@ pub const LENGTHS_NAME: &str = "lengths.json";
 /// further: on the measured 4K remux, 2,322 of them averaging 2.6 seconds where
 /// the four asked for wanted about 1,500. Every extra one is a whole round trip.
 ///
-/// So the muxer's segments are grouped and the playlist offers the groups. This
-/// is the length a group grows to before it stands on its own. Grouping to four
-/// rather than to one takes that film from 2,226 offered segments to about
-/// 1,100 while moving nothing: the cuts are where they were, and the lengths
-/// declared are still sums of lengths really produced.
-///
-/// A tail too short to stand alone joins the group before it rather than being
-/// offered as a stub.
-const OFFERED_SEGMENT_SECONDS: f64 = 4.0;
-
-/// The most a single offered segment should come to in bytes.
+/// So the muxer's segments are grouped and the playlist offers the groups,
+/// each growing to the length the session asked for before it stands on its
+/// own. The cuts are where they were, and the lengths declared are still sums
+/// of lengths really produced. A tail too short to stand alone joins the group
+/// before it rather than being offered as a stub.
 ///
 /// A segment is fetched and appended whole, so grouping in seconds alone sets
 /// the size of a request by the film's bitrate — which across a library runs
@@ -53,26 +48,28 @@ const OFFERED_SEGMENT_SECONDS: f64 = 4.0;
 /// `QUOTA_EXCEEDED` on ten second segments of the measured remux, 17.5MB at
 /// 14.5 Mbps, so seconds are the wrong unit to hold a request to. See VAL-125.
 ///
-/// Twelve leaves room under the size that failed. Where a film's bitrate makes
-/// four seconds cost more than this, the groups are shorter and there are more
-/// of them, which is the trade worth making: too many requests is slow, and one
+/// Three megabytes a second asked for is twelve for four second segments,
+/// which leaves room under the size that failed, and six for two second ones,
+/// which is what a viewer behind a slow tunnel waits for before the first
+/// frame. Where a film's bitrate makes a group cost more than this, the groups
+/// are shorter and there are more of them: too many requests is slow, and one
 /// request too large does not play at all.
-const OFFERED_SEGMENT_BYTES: f64 = 12.0 * 1024.0 * 1024.0;
+const OFFERED_BYTES_PER_SECOND_ASKED: f64 = 3.0 * 1024.0 * 1024.0;
 
 /// The most an offered segment may grow to, in seconds, for a file of this
-/// bitrate.
+/// bitrate and segments of the length asked for.
 ///
 /// The budget is in bytes, because that is what a browser refuses; seconds are
 /// only how a group is measured while it is being filled. A file that never
 /// said what it runs at has no ceiling, since guessing a size from nothing
 /// would be worse than the grouping this replaces.
 #[must_use]
-fn offered_ceiling(bitrate_kbps: Option<u32>) -> f64 {
+fn offered_ceiling(bitrate_kbps: Option<u32>, wanted: f64) -> f64 {
     let Some(kbps) = bitrate_kbps.filter(|rate| *rate > 0) else {
         return f64::INFINITY;
     };
 
-    OFFERED_SEGMENT_BYTES / (f64::from(kbps) * 125.0)
+    OFFERED_BYTES_PER_SECOND_ASKED * wanted / (f64::from(kbps) * 125.0)
 }
 
 /// What this version of Valence writes into a plan's directory.
@@ -360,11 +357,7 @@ fn from_keyframes(
 
     Boundaries {
         layout: LAYOUT,
-        groups: segment_groups(
-            &lengths,
-            OFFERED_SEGMENT_SECONDS,
-            offered_ceiling(bitrate_kbps),
-        ),
+        groups: segment_groups(&lengths, wanted, offered_ceiling(bitrate_kbps, wanted)),
         lengths,
         cut_seconds,
         seeks_forward,
@@ -696,7 +689,7 @@ mod tests {
     use super::{
         can_copy_segments, claim_index_read, equal_lengths, from_keyframes, is_superseded,
         may_copy_without_keyframes, offered_ceiling, read_cached, settle_index_read, Boundaries,
-        IndexReads, DEFAULT_KEYFRAME_DEADLINE, INDEX_TRIES, LAYOUT, OFFERED_SEGMENT_BYTES,
+        IndexReads, DEFAULT_KEYFRAME_DEADLINE, INDEX_TRIES, LAYOUT, OFFERED_BYTES_PER_SECOND_ASKED,
     };
     use crate::keyframes::{Cut, Keyframes};
     use std::collections::HashMap;
@@ -800,7 +793,7 @@ mod tests {
     #[test]
     fn leaves_room_for_four_seconds_where_the_bitrate_is_ordinary() {
         assert!(
-            offered_ceiling(Some(2_000)) > 4.0,
+            offered_ceiling(Some(2_000), 4.0) > 4.0,
             "two megabits spends three of the twelve on four seconds"
         );
     }
@@ -808,10 +801,10 @@ mod tests {
     #[test]
     fn holds_a_request_to_the_budget_however_high_the_bitrate_goes() {
         for kbps in [25_800_u32, 50_000, 100_000, 400_000] {
-            let bytes = offered_ceiling(Some(kbps)) * f64::from(kbps) * 125.0;
+            let bytes = offered_ceiling(Some(kbps), 4.0) * f64::from(kbps) * 125.0;
 
             assert!(
-                (bytes - OFFERED_SEGMENT_BYTES).abs() < 1.0,
+                (bytes - OFFERED_BYTES_PER_SECOND_ASKED * 4.0).abs() < 1.0,
                 "{kbps} kbps allowed {bytes} bytes"
             );
         }
@@ -819,9 +812,9 @@ mod tests {
 
     #[test]
     fn sets_no_ceiling_where_the_file_never_said_what_it_runs_at() {
-        assert!(offered_ceiling(None).is_infinite());
+        assert!(offered_ceiling(None, 4.0).is_infinite());
         assert!(
-            offered_ceiling(Some(0)).is_infinite(),
+            offered_ceiling(Some(0), 4.0).is_infinite(),
             "a bitrate of nothing is a file that did not say, not a file of infinite size"
         );
     }

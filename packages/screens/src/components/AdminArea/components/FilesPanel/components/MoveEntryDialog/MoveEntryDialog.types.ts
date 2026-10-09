@@ -1,7 +1,5 @@
-import type { LibraryEntry } from '@ValenceContracts/schemas/LibraryFiles';
-
 type MoveEntryDialogProps = {
-  entry: LibraryEntry | null;
+  name: string | null;
   start: string;
   onClose: () => void;
   onMove: (into: string) => void;

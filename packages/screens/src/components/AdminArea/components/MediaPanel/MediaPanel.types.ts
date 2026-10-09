@@ -20,6 +20,7 @@ type MediaPanelProps = {
   onDelete?: (media: MediaSummary, isWholeSeries: boolean) => Promise<boolean>;
   paths?: Readonly<Record<string, string>>;
   onOpenFolder?: (path: string) => void;
+  onMoved?: (libraryId: string, jobId: string | null) => void;
 };
 
 export type { MediaPanelProps };

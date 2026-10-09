@@ -1,3 +1,4 @@
+import { SUBTITLE_DEFAULTS } from '@ValenceContracts/schemas/SubtitleSettings';
 import { DEFAULT_RELEASE_TYPES } from '@ValenceContracts/schemas/MediaRequest';
 import { PRE_TRANSCODING_DEFAULTS } from '@ValenceContracts/schemas/PreTranscoding';
 import { SEERR_DEFAULTS } from '@ValenceContracts/schemas/SeerrLink';
@@ -94,6 +95,7 @@ const createMemoryAuth = (
     jobsTimezone: '',
     certificationRegion: 'GB',
     fetchesCatalogueTrailers: false,
+    usesShortSegments: true,
     requestReleaseTypes: [...DEFAULT_RELEASE_TYPES],
     controlsConnectedApps: false,
     fetchesMusicDetails: false,
@@ -107,6 +109,7 @@ const createMemoryAuth = (
     preTranscoding: PRE_TRANSCODING_DEFAULTS,
     seerr: SEERR_DEFAULTS,
     email: EMAIL_DEFAULTS,
+    subtitles: SUBTITLE_DEFAULTS,
     linking: LINK_SETTINGS_DEFAULTS,
   });
 

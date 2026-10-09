@@ -12,6 +12,7 @@ const NO_DISCOVERY: Discovery = {
   charts: () => Promise.resolve({ albums: [], artists: [] }),
   describeTitle: () => Promise.resolve(null),
   describeMusic: () => Promise.resolve(null),
+  describeAppleAlbum: () => Promise.resolve(null),
   findOnMusicBrainz: () => Promise.resolve(null),
   lookup: {
     films: NOTHING_FOUND,

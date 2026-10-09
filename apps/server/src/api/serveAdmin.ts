@@ -1,3 +1,4 @@
+import { registerSubtitleFindingRoutes } from '@ValenceServer/subtitles/finding/registerSubtitleFindingRoutes';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import {
   adminOverviewRoute,
@@ -82,9 +83,11 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     within,
     requires,
     email,
+    subtitleFinder,
   } = context;
 
   registerEmailRoutes(app, { email, requires });
+  registerSubtitleFindingRoutes(app, { finder: subtitleFinder, requires });
 
   app.openapi(searchCatalogueRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'media.override'))) {
@@ -183,6 +186,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           showsProfilesBeforeSignIn: current.showsProfilesBeforeSignIn,
           allowedApps: current.allowedApps,
           fetchesCatalogueTrailers: current.fetchesCatalogueTrailers,
+          usesShortSegments: current.usesShortSegments,
           fetchesMusicDetails: current.fetchesMusicDetails,
           requestReleaseTypes: current.requestReleaseTypes,
           controlsConnectedApps: current.controlsConnectedApps,
@@ -240,6 +244,9 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
       ...(patch.fetchesCatalogueTrailers === undefined
         ? {}
         : { fetchesCatalogueTrailers: patch.fetchesCatalogueTrailers }),
+      ...(patch.usesShortSegments === undefined
+        ? {}
+        : { usesShortSegments: patch.usesShortSegments }),
       ...(patch.fetchesMusicDetails === undefined
         ? {}
         : { fetchesMusicDetails: patch.fetchesMusicDetails }),
@@ -282,6 +289,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         showsProfilesBeforeSignIn: updated.showsProfilesBeforeSignIn,
         allowedApps: updated.allowedApps,
         fetchesCatalogueTrailers: updated.fetchesCatalogueTrailers,
+        usesShortSegments: updated.usesShortSegments,
         fetchesMusicDetails: updated.fetchesMusicDetails,
         requestReleaseTypes: updated.requestReleaseTypes,
         controlsConnectedApps: updated.controlsConnectedApps,

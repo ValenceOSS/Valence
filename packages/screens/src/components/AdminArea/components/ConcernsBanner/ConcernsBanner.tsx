@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { Icon } from '@ValenceUI/Icon';
+import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
 import {
   ChevronRight as ChevronRightIcon,
   Info as InfoIcon,
@@ -35,6 +37,7 @@ const TONE_CLASSES: Record<ConcernTone, string> = {
 const ConcernsBanner = ({ concerns, onOpenPanel, onDismiss }: ConcernsBannerProps) => {
   const [opened, setOpened] = useState<string | null>(null);
   const isStill = useReducedMotion() === true;
+  const { containerRef, rect, follow, clear } = useSlidingHighlight();
 
   if (concerns.length === 0) {
     return null;
@@ -47,103 +50,116 @@ const ConcernsBanner = ({ concerns, onOpenPanel, onDismiss }: ConcernsBannerProp
         <span className="tabular-nums">{concerns.length}</span>
       </span>
 
-      <ul className="valence-card-face flex flex-col divide-y divide-[var(--surface-line)] p-1.5">
-        {concerns.map((concern) => (
-          <li key={concern.id} className="flex flex-col">
-            <span className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                className="h-auto min-w-0 flex-1 justify-start gap-3 px-3 py-2.5 text-left"
-                {...(concern.items === undefined ? {} : { 'aria-expanded': opened === concern.id })}
-                onClick={() => {
-                  if (concern.items === undefined) {
-                    onOpenPanel(concern.panel, concern.search);
+      <div
+        ref={containerRef}
+        className="valence-card-face relative p-1.5"
+        onPointerMove={follow}
+        onPointerLeave={clear}
+      >
+        <HoverHighlight rect={rect} radius="md" />
 
-                    return;
-                  }
+        <ul className="relative flex flex-col divide-y divide-[var(--surface-line)]">
+          {concerns.map((concern) => (
+            <li key={concern.id} className="flex flex-col">
+              <span data-highlight={concern.id} className="flex items-center gap-1 pr-1.5">
+                <Button
+                  variant="bare"
+                  className="flex h-auto min-w-0 flex-1 items-center justify-start gap-3 rounded-md px-3 py-2.5 text-left"
+                  {...(concern.items === undefined
+                    ? {}
+                    : { 'aria-expanded': opened === concern.id })}
+                  onClick={() => {
+                    if (concern.items === undefined) {
+                      onOpenPanel(concern.panel, concern.search);
 
-                  setOpened((was) => (was === concern.id ? null : concern.id));
-                }}
-              >
-                <span className={`mt-0.5 shrink-0 ${TONE_CLASSES[concern.tone]}`}>
-                  {concern.tone === 'setup' ? (
-                    <Icon of={InfoIcon} size={16} />
-                  ) : (
-                    <Icon of={TriangleAlertIcon} size={16} />
-                  )}
-                </span>
+                      return;
+                    }
 
-                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <span className="text-sm text-text">{concern.title}</span>
-                  <span className="truncate text-xs text-text-muted">{concern.detail}</span>
-                </span>
-
-                <Icon
-                  of={ChevronRightIcon}
-                  size={14}
-                  tone="muted"
-                  className={
-                    concern.items !== undefined && opened === concern.id
-                      ? 'shrink-0 rotate-90 transition-transform'
-                      : 'shrink-0 transition-transform'
-                  }
-                />
-              </Button>
-
-              <HowToFix href={concern.help} />
-
-              <Button
-                variant="ghost"
-                size="sm"
-                isIconOnly
-                label={say('screens.adminArea.concernsBanner.dismissTitle', {
-                  title: concern.title,
-                })}
-                onClick={() => {
-                  onDismiss(concern);
-                }}
-              >
-                <Icon of={XIcon} size={14} />
-              </Button>
-            </span>
-
-            <AnimatePresence initial={false}>
-              {concern.items === undefined || opened !== concern.id ? null : (
-                <motion.div
-                  key="items"
-                  initial={isStill ? { opacity: 0 } : { height: 0, opacity: 0 }}
-                  animate={isStill ? { opacity: 1 } : { height: 'auto', opacity: 1 }}
-                  exit={isStill ? { opacity: 0 } : { height: 0, opacity: 0 }}
-                  transition={{ duration: isStill ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] }}
-                  className="overflow-hidden"
+                    setOpened((was) => (was === concern.id ? null : concern.id));
+                  }}
                 >
-                  <div className="flex flex-col gap-3 pb-3 pl-10 pr-3">
-                    <ul className="flex flex-col gap-2">
-                      {concern.items.map((item) => (
-                        <li key={item.name} className="flex flex-col gap-0.5 text-sm">
-                          <span className="font-medium text-text">{item.name}</span>
-                          <span className="text-xs text-text-muted">{item.problem}</span>
-                        </li>
-                      ))}
-                    </ul>
+                  <span className={`mt-0.5 shrink-0 ${TONE_CLASSES[concern.tone]}`}>
+                    {concern.tone === 'setup' ? (
+                      <Icon of={InfoIcon} size={16} />
+                    ) : (
+                      <Icon of={TriangleAlertIcon} size={16} />
+                    )}
+                  </span>
 
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="self-start"
-                      onClick={() => {
-                        onOpenPanel(concern.panel, concern.search);
-                      }}
-                    >
-                      {say('screens.adminArea.concernsBanner.goToPanel', { panel: concern.panel })}
-                    </Button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </li>
-        ))}
-      </ul>
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="text-sm text-text">{concern.title}</span>
+                    <span className="truncate text-xs text-text-muted">{concern.detail}</span>
+                  </span>
+
+                  <Icon
+                    of={ChevronRightIcon}
+                    size={14}
+                    tone="muted"
+                    className={
+                      concern.items !== undefined && opened === concern.id
+                        ? 'shrink-0 rotate-90 transition-transform'
+                        : 'shrink-0 transition-transform'
+                    }
+                  />
+                </Button>
+
+                <HowToFix href={concern.help} />
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  isIconOnly
+                  label={say('screens.adminArea.concernsBanner.dismissTitle', {
+                    title: concern.title,
+                  })}
+                  onClick={() => {
+                    onDismiss(concern);
+                  }}
+                >
+                  <Icon of={XIcon} size={14} />
+                </Button>
+              </span>
+
+              <AnimatePresence initial={false}>
+                {concern.items === undefined || opened !== concern.id ? null : (
+                  <motion.div
+                    key="items"
+                    initial={isStill ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                    animate={isStill ? { opacity: 1 } : { height: 'auto', opacity: 1 }}
+                    exit={isStill ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                    transition={{ duration: isStill ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] }}
+                    className="overflow-hidden"
+                  >
+                    <div className="flex flex-col gap-3 pb-3 pl-10 pr-3">
+                      <ul className="flex flex-col gap-2">
+                        {concern.items.map((item) => (
+                          <li key={item.name} className="flex flex-col gap-0.5 text-sm">
+                            <span className="font-medium text-text">{item.name}</span>
+                            <span className="text-xs text-text-muted">{item.problem}</span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="self-start"
+                        onClick={() => {
+                          onOpenPanel(concern.panel, concern.search);
+                        }}
+                      >
+                        {say('screens.adminArea.concernsBanner.goToPanel', {
+                          panel: concern.panel,
+                        })}
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </li>
+          ))}
+        </ul>
+      </div>
     </section>
   );
 };

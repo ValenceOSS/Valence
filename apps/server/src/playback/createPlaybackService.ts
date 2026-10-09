@@ -12,6 +12,7 @@ import type { PreviewMoment } from '@ValenceContracts/schemas/Library';
 import type { PreviewQuality } from '@ValenceContracts/schemas/PreviewQuality';
 import {
   SEGMENT_SECONDS,
+  SHORT_SEGMENT_SECONDS,
   TRICKPLAY_INTERVAL_SECONDS,
   TRICKPLAY_TILE_WIDTH,
   TRICKPLAY_COLUMNS,
@@ -107,6 +108,7 @@ type CreatePlaybackServiceOptions = {
   trickplayUrlPrefix: string;
   forcedAccel?: () => Promise<string>;
   previewQuality?: () => Promise<PreviewQuality>;
+  usesShortSegments?: () => Promise<boolean>;
   readFromDisk?: (path: string, range: string | null) => Promise<TranscoderStreamedFile | null>;
   readSessionFromDisk?: (
     paths: readonly string[],
@@ -133,6 +135,7 @@ const createPlaybackService = ({
   trickplayUrlPrefix,
   forcedAccel = () => Promise.resolve(''),
   previewQuality = (): Promise<PreviewQuality> => Promise.resolve('high'),
+  usesShortSegments = () => Promise.resolve(false),
   readFromDisk,
   readSessionFromDisk,
 }: CreatePlaybackServiceOptions): PlaybackService => {
@@ -240,7 +243,7 @@ const createPlaybackService = ({
         capabilities: await capabilities(),
         forcedAccel: await forcedAccel(),
         startSeconds,
-        segmentSeconds: SEGMENT_SECONDS,
+        segmentSeconds: (await usesShortSegments()) ? SHORT_SEGMENT_SECONDS : SEGMENT_SECONDS,
         container: segmentContainerFor(profile),
         ...(audioStreamIndex !== undefined
           ? { audioStreamIndex }

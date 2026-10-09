@@ -209,6 +209,27 @@ describe('MatchPicker', () => {
     });
   });
 
+  it('looks for a series for a file in a library of shows that has not been matched yet', async () => {
+    searchCatalogueMock.mockResolvedValue([MATCH]);
+
+    const unmatched: MediaSummary = {
+      ...episode,
+      title: 'A Sign of Affection - 1x01 - Il mondo di Yuki -',
+      seriesTitle: null,
+    };
+
+    render(<MatchPicker media={unmatched} isInShows onClose={vi.fn()} onCorrected={vi.fn()} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Search' }));
+
+    await waitFor(() => {
+      expect(searchCatalogueMock).toHaveBeenCalledWith(
+        'A Sign of Affection - 1x01 - Il mondo di Yuki -',
+        'tv',
+      );
+    });
+  });
+
   it('says a correction reaches the whole series', () => {
     render(<MatchPicker media={episode} onClose={vi.fn()} onCorrected={vi.fn()} />);
 

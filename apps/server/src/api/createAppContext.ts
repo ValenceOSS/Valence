@@ -79,6 +79,7 @@ import { workOf } from '@ValenceServer/requests/workOf';
 import type { RequestsOverview } from '@ValenceContracts/schemas/Requests';
 import { NO_DISCOVERY } from '@ValenceServer/requests/catalogue/NO_DISCOVERY';
 import { NO_EMAIL } from '@ValenceServer/email/NO_EMAIL';
+import { NO_SUBTITLE_FINDER } from '@ValenceServer/subtitles/finding/NO_SUBTITLE_FINDER';
 import type { Library, LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { CatalogueStanding } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { GrantedPermission, Permission } from '@ValenceContracts/schemas/Permission';
@@ -307,6 +308,7 @@ const createAppContext = (options: CreateAppOptions) => {
     sayALinkWasWithdrawn,
     plugins: startPlugins,
     email = NO_EMAIL,
+    subtitleFinder = NO_SUBTITLE_FINDER,
     requestPasswordReset = () => Promise.resolve(),
   } = options;
 
@@ -1705,6 +1707,7 @@ const createAppContext = (options: CreateAppOptions) => {
     events,
     sayALinkWasWithdrawn,
     email,
+    subtitleFinder,
     requestPasswordReset,
     SHARE_JOINER,
     tooBigToRead,

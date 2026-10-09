@@ -1,4 +1,4 @@
-import { parseReleaseName } from '@ValenceRequests/releases/parseReleaseName';
+import { parseReleaseName } from '@ValenceCore/releases/parseReleaseName';
 import { placeOfVideoQuality } from '@ValenceRequests/profiles/placeOfVideoQuality';
 import { formatScoreOf } from '@ValenceRequests/profiles/formatScoreOf';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';

@@ -1,20 +1,9 @@
-import { readdir, rm, rmdir } from 'node:fs/promises';
+import { readdir, rm } from 'node:fs/promises';
 import { basename, dirname, extname, join } from 'node:path';
-import { TEXT_SUBTITLE_EXTENSIONS } from '@ValenceContracts/constants/TEXT_SUBTITLE_EXTENSIONS';
+import { isSidecarOf } from '@ValenceServer/library/isSidecarOf';
+import { removeEmptyFoldersUpTo } from '@ValenceServer/library/removeEmptyFoldersUpTo';
 import { isUnderAny } from '@ValenceServer/library/isUnderAny';
 import { diskRefusalOf } from '@ValenceServer/files/diskRefusalOf';
-
-const SIDECAR_EXTENSIONS: ReadonlySet<string> = new Set([
-  ...TEXT_SUBTITLE_EXTENSIONS,
-  'sub',
-  'idx',
-  'sup',
-  'nfo',
-  'jpg',
-  'jpeg',
-  'png',
-  'webp',
-]);
 
 type MediaFileDeletion =
   | { kind: 'deleted' }
@@ -22,19 +11,6 @@ type MediaFileDeletion =
   | { kind: 'readOnly' }
   | { kind: 'denied' }
   | { kind: 'failed' };
-
-/**
- * Whether a file beside a film belongs to it alone: named for it, as `Arrival.en.srt` or
- * `Arrival-poster.jpg` are for `Arrival.mkv`, and of a kind that is only ever kept beside something
- * else. Another film is never one, so `Arrival.Extended.mkv` stays where it is.
- *
- * @param name - The name of the file beside it.
- * @param stem - The film's own name, without its extension.
- * @returns Whether it goes with the film.
- */
-const isSidecarOf = (name: string, stem: string): boolean =>
-  (name.startsWith(`${stem}.`) || name.startsWith(`${stem}-`)) &&
-  SIDECAR_EXTENSIONS.has(extname(name).slice(1).toLowerCase());
 
 /**
  * Deletes one media file from its library's disk, with what was kept beside it for it alone —
@@ -85,18 +61,7 @@ const deleteMediaFile = async (
     return refusal.kind === 'missing' ? { kind: 'failed' } : refusal;
   }
 
-  for (let emptied = folder; emptied !== root && isUnderAny(emptied, [root]);) {
-    const isGone = await rmdir(emptied).then(
-      () => true,
-      () => false,
-    );
-
-    if (!isGone) {
-      break;
-    }
-
-    emptied = dirname(emptied);
-  }
+  await removeEmptyFoldersUpTo(folder, root);
 
   return { kind: 'deleted' };
 };

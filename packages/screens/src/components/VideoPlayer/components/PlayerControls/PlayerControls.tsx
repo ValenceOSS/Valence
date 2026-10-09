@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Icon } from '@ValenceUI/Icon';
 import {
   Cast as CastIcon,
@@ -14,6 +15,7 @@ import {
   RefreshCw as RefreshCwIcon,
   RotateCcw as RotateCcwIcon,
   RotateCw as RotateCwIcon,
+  Search as SearchIcon,
   Settings as SettingsIcon,
   SkipForward as SkipForwardIcon,
   Subtitles as SubtitlesIcon,
@@ -85,6 +87,7 @@ const rateLabel = (rate: number): string => `${rate.toString()}x`;
  *   shown but not offered.
  * @param qualityStepCosts - What each rung would actually cost, where the session has worked it out.
  * @param selectedQuality - Whether quality is being chosen automatically or pinned to a rung.
+ * @param autoRung - The rung auto has settled on, shown beside it.
  * @param isDisabled - Whether the controls are inert, as they are while a session is starting.
  * @param onTogglePlay - Called to play or pause.
  * @param onSeek - Called with where the viewer scrubbed to.
@@ -111,6 +114,8 @@ const rateLabel = (rate: number): string => `${rate.toString()}x`;
  * @param onToggleStats - Called to open or close the statistics panel.
  * @param subtitleOffsetSeconds - How far subtitles are nudged from where the file puts them.
  * @param onSubtitleOffsetChange - Called with a nudge to that.
+ * @param onFindSubtitles - Opens the search for subtitles on subtitle sites, where the person
+ *   watching may fetch them.
  * @param castState - Whether there is anywhere to cast to, and whether it is in use.
  * @param onCast - Called to cast to another device.
  * @param onPlayOnTv - Called to send the film to one of this person's televisions, where one is open.
@@ -141,6 +146,7 @@ const PlayerControls = ({
   qualityStepsSavingNothing = [],
   qualityStepCosts = {},
   selectedQuality,
+  autoRung = 'original',
   isDisabled = false,
   onTogglePlay,
   onSeek,
@@ -172,6 +178,7 @@ const PlayerControls = ({
   onToggleStats,
   subtitleOffsetSeconds = 0,
   onSubtitleOffsetChange,
+  onFindSubtitles,
   renderPreview,
   partyMenu,
 }: PlayerControlsProps) => {
@@ -183,14 +190,21 @@ const PlayerControls = ({
         ? null
         : nextEpisode(episodes, playing);
 
+  const [scrubbedTo, setScrubbedTo] = useState<number | null>(null);
+  const shownPosition = scrubbedTo ?? position;
+
   return (
     <div className="valence-solid flex flex-col gap-1 rounded-lg px-3 py-2 text-text sm:px-4">
       <div className="flex items-center gap-3">
         <Slider
           label={say('common.moveThroughTitle', { title })}
-          value={position}
+          value={shownPosition}
           max={duration}
-          onValueChange={onSeek}
+          onValueChange={setScrubbedTo}
+          onValueCommit={(seconds) => {
+            setScrubbedTo(null);
+            onSeek(seconds);
+          }}
           tone="glass"
           className="min-w-0 flex-1"
           {...(renderPreview === undefined ? {} : { renderPreview })}
@@ -208,8 +222,8 @@ const PlayerControls = ({
           className="shrink-0 px-1 text-xs tabular-nums sm:text-sm"
         >
           {isShowingRemaining
-            ? `-${formatDuration(Math.max(duration - position, 0))}`
-            : formatDuration(position)}{' '}
+            ? `-${formatDuration(Math.max(duration - shownPosition, 0))}`
+            : formatDuration(shownPosition)}{' '}
           <span className="text-text-muted">/ {formatDuration(duration)}</span>
         </Button>
       </div>
@@ -405,6 +419,17 @@ const PlayerControls = ({
                     ],
                   },
                 ]),
+            ...(onFindSubtitles === undefined
+              ? []
+              : [
+                  {
+                    kind: 'action' as const,
+                    id: 'find-subtitles',
+                    label: say('screens.videoPlayer.playerControls.findSubtitles'),
+                    icon: <Icon of={SearchIcon} size={18} />,
+                    onSelect: onFindSubtitles,
+                  },
+                ]),
             ...(selectedSubtitleId === SUBTITLES_OFF || onSubtitleOffsetChange === undefined
               ? []
               : [
@@ -511,10 +536,21 @@ const PlayerControls = ({
                     selectedId: selectedQuality,
                     onSelect: (id: string) => {
                       onQualityChange(
-                        availableQualitySteps.find((step) => step === id) ?? 'original',
+                        id === 'auto'
+                          ? 'auto'
+                          : (availableQualitySteps.find((step) => step === id) ?? 'original'),
                       );
                     },
                     choices: [
+                      {
+                        id: 'auto',
+                        label: say('common.auto'),
+                        detail:
+                          autoRung === 'original'
+                            ? originalLabel
+                            : (QUALITY_STEPS.find((entry) => entry.id === autoRung)?.label ??
+                              autoRung),
+                      },
                       {
                         id: 'original',
                         label: originalLabel,

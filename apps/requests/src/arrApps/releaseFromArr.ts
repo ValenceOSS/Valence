@@ -1,5 +1,5 @@
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
-import { parseReleaseName } from '@ValenceRequests/releases/parseReleaseName';
+import { parseReleaseName } from '@ValenceCore/releases/parseReleaseName';
 import type { ArrRelease } from '@ValenceRequests/arrApps/schemas/ArrReleaseSchema';
 import type { Release } from '@ValenceContracts/schemas/Indexer';
 import type { Judgement } from '@ValenceContracts/schemas/QualityProfile';

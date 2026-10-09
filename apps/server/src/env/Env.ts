@@ -68,6 +68,7 @@ const EnvSchema = z.object({
   CATALOGUE_API_KEY: z.string().default(''),
   IMAGE_CACHE_DIR: z.string().default('/cache/images'),
   PROFILE_IMAGE_DIR: z.string().default('/config/profiles'),
+  SUBTITLE_DIR: z.string().optional(),
   VALENCE_VERSION: z.string().default('0.0.0'),
   VALENCE_COMMIT: z.string().optional(),
   VALENCE_PLUGIN_CATALOGUE_URL: z

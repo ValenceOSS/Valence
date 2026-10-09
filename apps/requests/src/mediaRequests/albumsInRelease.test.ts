@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { spacedName } from '@ValenceRequests/releases/spacedName';
-import { parseReleaseName } from '@ValenceRequests/releases/parseReleaseName';
+import { spacedName } from '@ValenceCore/releases/spacedName';
+import { parseReleaseName } from '@ValenceCore/releases/parseReleaseName';
 import { albumsInRelease } from './albumsInRelease';
 
 const NO_ALIASES: string[] = [];

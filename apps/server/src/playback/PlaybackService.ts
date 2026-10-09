@@ -85,6 +85,8 @@ type Trickplay = {
 
 const SEGMENT_SECONDS = 4;
 
+const SHORT_SEGMENT_SECONDS = 2;
+
 const TRICKPLAY_INTERVAL_SECONDS = 10;
 
 const TRICKPLAY_TILE_WIDTH = 320;
@@ -95,6 +97,7 @@ export type { Delivery, PlaybackService, PreviewRead, StartOutcome, StartedSessi
 
 export {
   SEGMENT_SECONDS,
+  SHORT_SEGMENT_SECONDS,
   TRICKPLAY_INTERVAL_SECONDS,
   TRICKPLAY_TILE_WIDTH,
   TRICKPLAY_COLUMNS,

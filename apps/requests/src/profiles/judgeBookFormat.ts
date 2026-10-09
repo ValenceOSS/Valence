@@ -1,5 +1,5 @@
 import { saying } from '@ValenceI18n/saying';
-import { readBookFormat } from '@ValenceRequests/releases/readBookFormat';
+import { readBookFormat } from '@ValenceCore/releases/readBookFormat';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type { Release } from '@ValenceContracts/schemas/Indexer';
 

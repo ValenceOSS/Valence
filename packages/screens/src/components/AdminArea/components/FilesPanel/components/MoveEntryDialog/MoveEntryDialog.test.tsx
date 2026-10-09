@@ -31,7 +31,7 @@ describe('MoveEntryDialog', () => {
 
     render(
       <QueryClientProvider client={new QueryClient()}>
-        <MoveEntryDialog entry={ENTRY} start="/media/films" onClose={vi.fn()} onMove={onMove} />
+        <MoveEntryDialog name={ENTRY.name} start="/media/films" onClose={vi.fn()} onMove={onMove} />
       </QueryClientProvider>,
     );
 

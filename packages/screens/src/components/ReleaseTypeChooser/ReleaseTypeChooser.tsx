@@ -1,5 +1,7 @@
-import { Checkbox } from '@ValenceUI/Checkbox';
-import { FormField } from '@ValenceUI/FormField';
+import { Info as InfoFilledIcon } from '@keyline-icons/react/fill';
+import { HoverCard } from '@ValenceUI/HoverCard';
+import { Icon } from '@ValenceUI/Icon';
+import { MultiSelectField } from '@ValenceUI/MultiSelectField';
 import { RELEASE_TYPES } from '@ValenceContracts/schemas/MediaRequest';
 import { RELEASE_TYPE_NAMES } from '@ValenceClient/requests/RELEASE_TYPE_NAMES';
 import type { ReleaseTypeChooserProps } from './ReleaseTypeChooser.types';
@@ -7,35 +9,39 @@ import { say } from '@ValenceI18n/say';
 
 /**
  * Which kinds of an artist's releases to fetch, now and as new ones come out — albums, EPs,
- * singles, live records and compilations — ticked in the order they are offered.
+ * singles, live records and compilations — chosen from one field, in the order they are offered,
+ * with what the choice means behind an icon beside it.
  *
- * @param value - The kinds ticked.
+ * @param value - The kinds chosen.
  * @param onChange - Told the kinds as they change, in the order they are offered.
  */
 const ReleaseTypeChooser = ({ value, onChange }: ReleaseTypeChooserProps) => (
-  <FormField
-    label={say('common.releases')}
-    description={say('screens.releaseTypeChooser.whichOfTheirReleasesAreFetched')}
-  >
-    <ul
-      aria-label={say('screens.releaseTypeChooser.whichReleases')}
-      className="grid gap-2 sm:grid-cols-3"
+  <div className="flex items-center gap-1.5">
+    <MultiSelectField
+      label={say('common.releases')}
+      isLabelHidden
+      placeholder={say('common.none')}
+      className="flex-1"
+      options={RELEASE_TYPES.map((type) => ({ id: type, label: RELEASE_TYPE_NAMES[type].label }))}
+      value={value}
+      onChange={(next) => {
+        onChange(RELEASE_TYPES.filter((type) => next.includes(type)));
+      }}
+    />
+
+    <HoverCard
+      side="bottom"
+      align="end"
+      detail={say('screens.releaseTypeChooser.whichOfTheirReleasesAreFetched')}
     >
-      {RELEASE_TYPES.map((type) => (
-        <li key={type}>
-          <Checkbox
-            label={RELEASE_TYPE_NAMES[type].label}
-            checked={value.includes(type)}
-            onCheckedChange={(isChecked) => {
-              onChange(
-                RELEASE_TYPES.filter((one) => (one === type ? isChecked : value.includes(one))),
-              );
-            }}
-          />
-        </li>
-      ))}
-    </ul>
-  </FormField>
+      <Icon
+        of={InfoFilledIcon}
+        size={15}
+        tone="muted"
+        label={say('screens.adminArea.statStrip.aboutLabel', { label: say('common.releases') })}
+      />
+    </HoverCard>
+  </div>
 );
 
 ReleaseTypeChooser.displayName = 'ReleaseTypeChooser';

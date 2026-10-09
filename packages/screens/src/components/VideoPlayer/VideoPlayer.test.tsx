@@ -1215,7 +1215,9 @@ describe('VideoPlayer', () => {
 
     await actor.click(screen.getByRole('button', { name: 'Forward 10 seconds' }));
 
-    expect(element).toHaveProperty('currentTime', 70);
+    await waitFor(() => {
+      expect(element).toHaveProperty('currentTime', 70);
+    });
     expect(startMock).toHaveBeenCalledTimes(1);
   });
 
@@ -2048,12 +2050,16 @@ describe('VideoPlayer', () => {
 
     await actor.keyboard('{ArrowRight}');
 
-    expect(element).toHaveProperty('currentTime', 70);
+    await waitFor(() => {
+      expect(element).toHaveProperty('currentTime', 70);
+    });
 
     fireEvent.timeUpdate(element);
     await actor.keyboard('{ArrowLeft}');
 
-    expect(element).toHaveProperty('currentTime', 60);
+    await waitFor(() => {
+      expect(element).toHaveProperty('currentTime', 60);
+    });
     expect(pause).not.toHaveBeenCalled();
     expect(startMock).toHaveBeenCalledOnce();
   });
@@ -2301,7 +2307,9 @@ describe('the keys a viewer can reach for', () => {
 
     await actor.keyboard('l');
 
-    expect(positionOf(element)).toBeGreaterThan(before);
+    await waitFor(() => {
+      expect(positionOf(element)).toBeGreaterThan(before);
+    });
   });
 
   it('jumps back with j', async () => {
@@ -2310,11 +2318,17 @@ describe('the keys a viewer can reach for', () => {
     await actor.keyboard('l');
     await actor.keyboard('l');
 
+    await waitFor(() => {
+      expect(positionOf(element)).toBeGreaterThan(0);
+    });
+
     const before = positionOf(element);
 
     await actor.keyboard('j');
 
-    expect(positionOf(element)).toBeLessThan(before);
+    await waitFor(() => {
+      expect(positionOf(element)).toBeLessThan(before);
+    });
   });
 
   it('mutes and unmutes with m', async () => {

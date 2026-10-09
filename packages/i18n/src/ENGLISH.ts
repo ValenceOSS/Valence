@@ -531,6 +531,7 @@ const ENGLISH = {
   'common.audiobook': 'Audiobook',
   'common.audioOnly': 'Audio only',
   'common.authenticatorCode': 'Authenticator code',
+  'common.auto': 'Auto',
   'common.automatic': 'Automatic',
   'common.available': 'Available',
   'common.aWeek': 'A week',
@@ -631,6 +632,8 @@ const ENGLISH = {
   'common.count.editions.other': '{count} editions',
   'common.count.episodes.one': '{count} episode',
   'common.count.episodes.other': '{count} episodes',
+  'common.count.files.one': '{count} file',
+  'common.count.files.other': '{count} files',
   'common.count.films.one': '{count} film',
   'common.count.films.other': '{count} films',
   'common.count.grabs.one': '{count} grab',
@@ -822,6 +825,7 @@ const ENGLISH = {
   'common.hideTheControls': 'Hide the controls',
   'common.high': 'High',
   'common.history': 'History',
+  'common.holds': 'Holds',
   'common.home': 'Home',
   'common.hoursHMinutesM': '{hours}h {minutes}m',
   'common.hoursHoursAgo': '{hours} hours ago',
@@ -1954,23 +1958,36 @@ const ENGLISH = {
   'error.indexers.thatIsNotAChangeTo': 'That isn’t a valid change to an indexer.',
   'error.indexers.thatIsNotAnIndexer': 'That isn’t a valid indexer.',
   'error.indexers.thatIsNotASearch': 'That isn’t a valid search.',
+  'error.library.aFileIsAlreadyThere':
+    'A file with that name is already in the other library, so Valence won’t move it over the top.',
   'error.library.catalogueCouldNotBeAsked': 'Couldn’t reach the catalogue.',
+  'error.library.itIsAlreadyInThatLibrary': 'That’s already in that library.',
   'error.library.noSuchItemMatchedToTheCatalogue': 'No such item matched to the catalogue.',
   'error.library.noSuchSeries': 'No such series.',
   'error.library.nothingLikeThatIsLeftOut': 'That isn’t excluded from this library.',
   'error.library.notMatchedToTheCatalogueYet':
     'This isn’t matched to the catalogue yet. Fix the match first.',
+  'error.library.onlyFilmsAndShowsMove':
+    'Only films and shows can be moved, and only into a library of films or shows.',
   'error.library.pictureIsNotOneTheCatalogueHas':
     'That image isn’t one of the catalogue’s choices for this item.',
   'error.library.sayWhetherThatIdIsA':
     'Say whether that ID is a series or a film — the same number can be either.',
   'error.library.thatAppCannotFulfilThisLibrary':
     'That connected app can’t handle requests for this library. Films go to Radarr, series to Sonarr and music to Lidarr.',
+  'error.library.thatDiskIsReadOnlyForMoving':
+    'One of those disks is read-only to Valence. Give Valence read-write access to both libraries to move media between them.',
   'error.library.thatDoesNotLookLikeA': 'That doesn’t look like a catalogue URL or ID.',
+  'error.library.thatFileIsNotInsideItsLibrary':
+    'That file isn’t inside its library, so Valence won’t move it.',
   'error.library.thatIsNotInsideThisLibrary': 'That isn’t inside this library.',
   'error.library.thatIsPastTheEndThe':
     'That’s past the end — the file is {durationSeconds} seconds long.',
   'error.library.thatPathIsNotAReadable': 'That path isn’t a readable folder.',
+  'error.library.theFileCouldNotBeMoved': 'Couldn’t move the file.',
+  'error.library.theFileIsNoLongerThere': 'That file is no longer where Valence last saw it.',
+  'error.library.valenceMayNotMoveFilesThere':
+    'Valence doesn’t have permission to move files there.',
   'error.libraryAccess.noSuchThingToMakeAn': 'Nothing to make an exception for.',
   'error.linking.alreadyLinked':
     'This server is already linked with that one, or a link request is pending.',
@@ -2039,6 +2056,7 @@ const ENGLISH = {
   'error.profile.sayWhichOrderToPut': 'Say which order to put the profiles in.',
   'error.profile.thatAddressAlreadyHasAnAccount': 'That email address already has an account.',
   'error.profile.thatIsNotAChangeTo': 'That isn’t a valid change to a profile.',
+  'error.profile.thatIsNotAnOrderOf': 'That isn’t a valid order of profiles.',
   'error.profile.thatIsNotAProfile': 'That isn’t a valid profile.',
   'error.reencode.noSuchReEncode': 'No such re-encode.',
   'error.reencode.noSuchRendition': 'No such rendition.',
@@ -2117,6 +2135,15 @@ const ENGLISH = {
   'error.share.thisAccountMayNotWithdrawSomebody':
     'This account isn’t allowed to revoke someone else’s share link.',
   'error.subtitle.thatTrackCarriesNoStylingOf': 'That subtitle track has no styling of its own.',
+  'error.subtitles.noKeyIsSavedForThatSite':
+    'There’s no key saved for that subtitle site. Add one under System › Subtitles.',
+  'error.subtitles.thatDownloadIsForAnotherEpisode':
+    'That download doesn’t hold this episode’s subtitles. Try another.',
+  'error.subtitles.theSiteWouldNotGiveIt':
+    'The subtitle site wouldn’t hand that one over. Today’s downloads may be used up.',
+  'error.subtitles.theSubtitleCouldNotBeKept': 'Couldn’t save the subtitle beside the video.',
+  'error.subtitles.valenceMayNotWriteBesideIt':
+    'Valence isn’t allowed to save files beside that video.',
   'error.upload.aFileGoesAtAPlain':
     'Upload paths must be inside the library, with no dots or empty folder names.',
   'error.upload.noFileWasSent': 'No file was sent.',
@@ -3514,7 +3541,18 @@ const ENGLISH = {
   'screens.adminArea.encodingPanel.theReEncodingQueueCouldNot':
     'Couldn’t load the re-encoding queue from the server. It may not be empty.',
   'screens.adminArea.encodingPanel.whatHappened': 'Result',
+  'screens.adminArea.fileDetails.addingUp': 'Adding up…',
+  'screens.adminArea.fileDetails.atLeastSize': 'At least {size}',
+  'screens.adminArea.fileDetails.chooseSomethingToSeeIt':
+    'Choose a file or folder to see more about it, or tick several to move or delete them together.',
+  'screens.adminArea.fileDetails.count.folders.one': '{count} folder',
+  'screens.adminArea.fileDetails.count.folders.other': '{count} folders',
+  'screens.adminArea.fileDetails.count.selected.one': '{count} chosen',
+  'screens.adminArea.fileDetails.count.selected.other': '{count} chosen',
+  'screens.adminArea.fileDetails.together': 'Together',
   'screens.adminArea.filesPanel.changed': 'Changed',
+  'screens.adminArea.filesPanel.chooseEverythingHere': 'Choose everything here',
+  'screens.adminArea.filesPanel.chooseName': 'Choose {name}',
   'screens.adminArea.filesPanel.delete': 'Delete…',
   'screens.adminArea.filesPanel.deleteThis': 'Delete this?',
   'screens.adminArea.filesPanel.filesFound': 'Files found',
@@ -3759,7 +3797,6 @@ const ENGLISH = {
   'screens.adminArea.librarySettingsDialog.forceDefaultAudioTrack': 'Force default audio track',
   'screens.adminArea.librarySettingsDialog.fourAtATime': 'Four at a time',
   'screens.adminArea.librarySettingsDialog.higherQualityRequests': 'Higher-quality requests',
-  'screens.adminArea.librarySettingsDialog.holds': 'Holds',
   'screens.adminArea.librarySettingsDialog.howeverManyTheServerAllows':
     'As many as the server allows',
   'screens.adminArea.librarySettingsDialog.howManyOfThisLibrarysFiles':
@@ -3938,6 +3975,7 @@ const ENGLISH = {
   'screens.adminArea.mediaPanel.hideTheEpisodesOfName': 'Hide the episodes of {name}',
   'screens.adminArea.mediaPanel.itsPreviewsAndThumbnailsAreThrown':
     'Its previews and thumbnails are deleted and regenerated from the file. This takes a while and uses the server’s encoder.',
+  'screens.adminArea.mediaPanel.moveToAnotherLibrary': 'Move to another library…',
   'screens.adminArea.mediaPanel.noCover': 'No cover',
   'screens.adminArea.mediaPanel.nothingHasBeenScannedIntoThis':
     'Nothing has been scanned into this library yet.',
@@ -3965,6 +4003,14 @@ const ENGLISH = {
   'screens.adminArea.mediaRequestsPanel.hideWhatTitleIsMadeOf': 'Collapse {title}',
   'screens.adminArea.mediaRequestsPanel.showWhatTitleIsMadeOf': 'Expand {title}',
   'screens.adminArea.memory': 'Memory',
+  'screens.adminArea.moveToLibraryDialog.moveNameToAnotherLibrary':
+    'Move {name} to another library',
+  'screens.adminArea.moveToLibraryDialog.moveToAnotherLibrary': 'Move to another library',
+  'screens.adminArea.moveToLibraryDialog.nameMovedToLibrary': 'Moved {name} to {library}',
+  'screens.adminArea.moveToLibraryDialog.theFilesMoveIntoThatLibrary':
+    'The files move on the disk into that library’s folder, in the same folders they’re in now. Valence moves them along with everything it knows about them, so what everyone has watched stays, and that library then reads them again as what it holds.',
+  'screens.adminArea.moveToLibraryDialog.thereIsNoOtherLibrary':
+    'There’s no other library of films or shows to move this into.',
   'screens.adminArea.musicMatchList.foundInMusicBrainz': 'Found in MusicBrainz',
   'screens.adminArea.nameCouldNotBeScanned': 'Couldn’t scan {name}.',
   'screens.adminArea.noAlbumIsBeingCorrected': 'No album is being corrected.',
@@ -4133,6 +4179,7 @@ const ENGLISH = {
   'screens.adminArea.profileEditor.whichLibrariesOfferThisProfileWhen':
     'Which libraries offer this profile when someone makes a request. Select none to offer it for all of them.',
   'screens.adminArea.profileEditor.whichPartOfTheProfileTo': 'Which part of the profile to edit',
+  'screens.adminArea.profilesPanel.dragToChangeTheOrder': 'Drag to change the order',
   'screens.adminArea.profilesPanel.everyLibraryHandsOff':
     'Every library of this kind that takes requests hands them to a connected app, so no request is judged by these profiles.',
   'screens.adminArea.profilesPanel.highestFirst':
@@ -4142,8 +4189,10 @@ const ENGLISH = {
   'screens.adminArea.profilesPanel.noProfilesForFilmsOrSeries':
     'No profiles for films or series yet.',
   'screens.adminArea.profilesPanel.noProfilesForMusicYet': 'No profiles for music yet.',
+  'screens.adminArea.profilesPanel.noProfilesYet': 'No profiles yet.',
   'screens.adminArea.profilesPanel.noVideoLibraryTakesRequests':
     'No films or shows library takes requests, so these profiles aren’t used. Turn on Takes requests for a library on the Libraries page.',
+  'screens.adminArea.profilesPanel.profilesPutInOrder': 'Profile order saved',
   'screens.adminArea.profilesPanel.removeThisProfile': 'Remove this profile?',
   'screens.adminArea.profilesPanel.searchesCanNoLongerBeJudged':
     'Search results can no longer be checked against it, and the libraries that used it will have no profile.',
@@ -4380,9 +4429,8 @@ const ENGLISH = {
     'A key is set. Entering a new one replaces it. Scores appear as titles are rescanned.',
   'screens.adminArea.settingsPanel.aKeyIsSetEnteringA2':
     'A key is set. Entering a new one replaces it.',
-  'screens.adminArea.settingsPanel.alwaysOnItIsHowThis':
-    'Always on. It is how this page is reached.',
   'screens.adminArea.settingsPanel.appsSaved': 'Saved which apps may connect.',
+  'screens.adminArea.settingsPanel.appsThatCanSignIn': 'Apps that can sign in',
   'screens.adminArea.settingsPanel.backend': 'Backend',
   'screens.adminArea.settingsPanel.catalogueKey': 'Catalogue key',
   'screens.adminArea.settingsPanel.catalogueKeySaved': 'Catalogue key saved.',
@@ -4438,6 +4486,10 @@ const ENGLISH = {
   'screens.adminArea.settingsPanel.saveTheOMDbKey': 'Save OMDb key',
   'screens.adminArea.settingsPanel.saveTheTheAudioDBKey': 'Save TheAudioDB key',
   'screens.adminArea.settingsPanel.secure': 'Secure',
+  'screens.adminArea.settingsPanel.segmentLengthSaved': 'Segment length saved.',
+  'screens.adminArea.settingsPanel.shortSegments': 'Short segments',
+  'screens.adminArea.settingsPanel.shortSegmentsStartAndSeekSooner':
+    'Sends video in pieces of about two seconds instead of four. Playback starts and seeks sooner over a slow connection or tunnel, at the cost of more requests.',
   'screens.adminArea.settingsPanel.showWhoLivesHere': 'Show profiles on sign-in',
   'screens.adminArea.settingsPanel.signingIn': 'Signing in',
   'screens.adminArea.settingsPanel.signInScreenSaved': 'Sign-in screen saved.',
@@ -4462,6 +4514,8 @@ const ENGLISH = {
   'screens.adminArea.settingsPanel.thePictureCouldNotBeRemoved':
     'Couldn’t remove the image. Try again.',
   'screens.adminArea.settingsPanel.theReleaseTypesCouldNotBe': 'Couldn’t save the release types.',
+  'screens.adminArea.settingsPanel.theSegmentLengthCouldNotBe':
+    'The segment length could not be saved.',
   'screens.adminArea.settingsPanel.theSignInScreenCouldNot': 'Couldn’t change the sign-in screen.',
   'screens.adminArea.settingsPanel.theSplashscreenCouldNotBeRemoved':
     'Couldn’t remove the splashscreen.',
@@ -4470,13 +4524,9 @@ const ENGLISH = {
   'screens.adminArea.settingsPanel.theTrailerSettingCouldNotBe':
     'Couldn’t save the trailer setting.',
   'screens.adminArea.settingsPanel.theWeb': 'Web',
+  'screens.adminArea.settingsPanel.theWebIsAlwaysOn':
+    "Which of Valence's apps people can use with this server. The web is always on, since it's how this page is reached.",
   'screens.adminArea.settingsPanel.trailerSettingSaved': 'Trailer setting saved.',
-  'screens.adminArea.settingsPanel.valenceForAppleTvAndAndroid':
-    'Valence for Apple TV and Android TV.',
-  'screens.adminArea.settingsPanel.valenceForIPhoneAndAndroid':
-    'Valence for iPhone and Android phones.',
-  'screens.adminArea.settingsPanel.valenceForMacWindowsAndLinux':
-    'Valence for Mac, Windows and Linux.',
   'screens.adminArea.settingsPanel.valencePicksWhicheverBackendTheMachine':
     'Valence uses whichever backend passes its hardware check. Choose one to force it, even if its encoder failed the check — useful when the check is wrong and the GPU clearly works.',
   'screens.adminArea.settingsPanel.whatARequestForAnArtist':
@@ -4507,6 +4557,32 @@ const ENGLISH = {
   'screens.adminArea.stoppedThatStream': 'Stopped that stream.',
   'screens.adminArea.stoppedTheReEncode': 'Stopped the re-encode.',
   'screens.adminArea.storage': 'Storage',
+  'screens.adminArea.subtitlesCard.askedToo':
+    'Searched alongside OpenSubtitles, and often stronger for shows.',
+  'screens.adminArea.subtitlesCard.fetchAutomatically': 'Fetch automatically',
+  'screens.adminArea.subtitlesCard.findSubtitlesForWhatYourLibraries':
+    'Find subtitles for your films and shows on OpenSubtitles and SubDL. They’re kept in Valence’s own data, not among your media, so every app can show them.',
+  'screens.adminArea.subtitlesCard.getAnOpenSubtitlesKey': 'Get an OpenSubtitles API key',
+  'screens.adminArea.subtitlesCard.getASubdlKey': 'Get a SubDL API key',
+  'screens.adminArea.subtitlesCard.languages': 'Languages',
+  'screens.adminArea.subtitlesCard.minimumScore': 'Minimum score',
+  'screens.adminArea.subtitlesCard.offeredFirstWhenSomebodyLooks':
+    'The languages offered first when someone looks for subtitles.',
+  'screens.adminArea.subtitlesCard.onlyTakesASubtitleThatScores':
+    'Out of 100. A subtitle made for the exact file scores 100; the same release with the same frame rate scores about 80. One timed to a different frame rate, or translated by a machine, is never fetched on its own.',
+  'screens.adminArea.subtitlesCard.openSubtitles': 'OpenSubtitles',
+  'screens.adminArea.subtitlesCard.readingTheSubtitleSettings': 'Loading subtitle settings',
+  'screens.adminArea.subtitlesCard.savedTheSubtitleSettings': 'Subtitle settings saved',
+  'screens.adminArea.subtitlesCard.subdl': 'SubDL',
+  'screens.adminArea.subtitlesCard.theBiggestCatalogueAKeyIs':
+    'The biggest catalogue, and it can find subtitles timed to your exact file. Downloads are counted against the account you sign in with.',
+  'screens.adminArea.subtitlesCard.theSubtitleSettingsCouldNotBe':
+    'Couldn’t load the subtitle settings.',
+  'screens.adminArea.subtitlesCard.whatLeavesTheServer': 'What’s sent to the subtitle sites',
+  'screens.adminArea.subtitlesCard.whenNewFilmsAndEpisodesArrive':
+    'When new films and episodes arrive, and each night, find subtitles in your languages for anything without them, and swap in better ones as they turn up.',
+  'screens.adminArea.subtitlesCard.whenYouLookTheTitleAndA':
+    'When you look for subtitles, the title, its catalogue IDs and a fingerprint of the video file are sent to the sites you’ve added keys for. Nothing is sent until someone looks.',
   'screens.adminArea.thatCouldNotBeConfirmed': 'Couldn’t confirm that.',
   'screens.adminArea.thatReEncodeCouldNotBe': 'Couldn’t stop the re-encode.',
   'screens.adminArea.thatScheduleCouldNotBeAdded': 'Couldn’t add the schedule.',
@@ -4720,6 +4796,7 @@ const ENGLISH = {
   'screens.adminPage.openTheSidebar': 'Open the sidebar',
   'screens.adminPage.readingWhatYouMayDo': 'Checking your permissions',
   'screens.adminPage.valenceVersion': 'Valence {version}',
+  'screens.albumTracks.discNumber': 'Disc {number}',
   'screens.apiKeyPanel.aKeyLetsSomethingThatIs':
     'A key lets something other than a browser act as you, such as a script, a dashboard or an assistant. It can do anything you can do, and nothing more.',
   'screens.apiKeyPanel.copyNameNowItWillNotBeShownAgain':
@@ -4758,6 +4835,7 @@ const ENGLISH = {
     'We’ll download the best release that matches.',
   'screens.askableDialog.chooseQualityDialog.whichQualityForTitle': 'Which quality for {title}?',
   'screens.askableDialog.describeCatalogueCard.inLibrary': 'In library',
+  'screens.askableDialog.fetchingItsDetails': 'Fetching its details…',
   'screens.askableDialog.noYearGiven': 'No year given',
   'screens.askableDialog.playASampleOfTitle': 'Play a sample of {title}',
   'screens.askableDialog.somethingToAskFor': 'Request a title',
@@ -4793,8 +4871,6 @@ const ENGLISH = {
   'screens.cacheBreakdown.cacheRows.bookPages': 'Book pages',
   'screens.cacheBreakdown.cacheRows.clips.one': '{count} clip',
   'screens.cacheBreakdown.cacheRows.clips.other': '{count} clips',
-  'screens.cacheBreakdown.cacheRows.files.one': '{count} file',
-  'screens.cacheBreakdown.cacheRows.files.other': '{count} files',
   'screens.cacheBreakdown.cacheRows.filesThatWillNotPlayOn':
     'Files that can’t play directly on a device are transcoded, and the result is saved so resuming doesn’t transcode it again. Each device keeps only the last item it played. None of this is your media — it’s rebuilt when needed.',
   'screens.cacheBreakdown.cacheRows.images.one': '{count} image',
@@ -5051,6 +5127,35 @@ const ENGLISH = {
     'Choose a folder to move it to. Its name stays the same.',
   'screens.filesPanel.moveEntryDialog.moveName': 'Move {name}',
   'screens.filesPanel.moveEntryDialog.moveThis': 'Move this',
+  'screens.findSubtitlesDialog.differentFrameRateWillDrift': 'Different frame rate, will drift',
+  'screens.findSubtitlesDialog.findSubtitles': 'Find subtitles',
+  'screens.findSubtitlesDialog.findSubtitlesForName': 'Find subtitles for {name}',
+  'screens.findSubtitlesDialog.get': 'Get',
+  'screens.findSubtitlesDialog.looking': 'Looking for subtitles',
+  'screens.findSubtitlesDialog.machineTranslated': 'Machine translated',
+  'screens.findSubtitlesDialog.madeForThisFile': 'Made for this file',
+  'screens.findSubtitlesDialog.match': 'Match',
+  'screens.findSubtitlesDialog.noSubtitleSiteIsSetUp':
+    'No subtitle site is set up yet. Add an OpenSubtitles or SubDL key under System › Subtitles.',
+  'screens.findSubtitlesDialog.notes': 'Notes',
+  'screens.findSubtitlesDialog.nothingWasFoundInThatLanguage':
+    'Nothing was found in that language.',
+  'screens.findSubtitlesDialog.sameAudioCodec': 'Same audio codec',
+  'screens.findSubtitlesDialog.sameEdition': 'Same edition',
+  'screens.findSubtitlesDialog.sameFrameRate': 'Same frame rate',
+  'screens.findSubtitlesDialog.sameGroup': 'Same group',
+  'screens.findSubtitlesDialog.sameRelease': 'Same release',
+  'screens.findSubtitlesDialog.sameResolution': 'Same resolution',
+  'screens.findSubtitlesDialog.sameService': 'Same streaming service',
+  'screens.findSubtitlesDialog.sameSource': 'Same source',
+  'screens.findSubtitlesDialog.sameVideoCodec': 'Same video codec',
+  'screens.findSubtitlesDialog.saved': 'Saved',
+  'screens.findSubtitlesDialog.savedBesideTheVideo':
+    'Best matches first. The one you pick is kept in Valence, so every app can show it.',
+  'screens.findSubtitlesDialog.savedName': 'Added {name} subtitles',
+  'screens.findSubtitlesDialog.sdh': 'SDH',
+  'screens.findSubtitlesDialog.subtitlesFound': 'Subtitles found',
+  'screens.findSubtitlesDialog.theSubtitleSitesCouldNotBe': 'Couldn’t reach the subtitle sites.',
   'screens.finishOnAnotherDevice.finishSettingUpOnYourPhone': 'Finish setting up on your phone',
   'screens.finishOnAnotherDevice.nameNeedsANameAndA':
     '{name} needs a name and a picture, which are hard to enter with a remote. Open this on your phone and your TV will continue automatically.',
@@ -6385,6 +6490,7 @@ const ENGLISH = {
   'screens.videoPlayer.playbackFailed': 'Playback failed.',
   'screens.videoPlayer.playerControls.audioTrack': 'Audio track',
   'screens.videoPlayer.playerControls.backSKIPSECONDSSeconds': 'Back {SKIP_SECONDS} seconds',
+  'screens.videoPlayer.playerControls.findSubtitles': 'Find subtitles…',
   'screens.videoPlayer.playerControls.forwardSKIPSECONDSSeconds': 'Forward {SKIP_SECONDS} seconds',
   'screens.videoPlayer.playerControls.immersiveView': 'Immersive view',
   'screens.videoPlayer.playerControls.leaveTheImmersiveView': 'Exit immersive view',
@@ -6706,10 +6812,13 @@ const ENGLISH = {
     'Deletes selected parts of a library, such as artwork or trailers, and downloads them again.',
   'server.jobs.jobDefinitions.fetchesTitleLogosFromTMDB': 'Fetches title logos from TMDB.',
   'server.jobs.jobDefinitions.fetchMissingLogos': 'Fetch missing logos',
+  'server.jobs.jobDefinitions.fetchSubtitles': 'Fetch subtitles',
   'server.jobs.jobDefinitions.findsIntrosAndRecapsSoViewers':
     'Finds intros and recaps so viewers can skip them.',
   'server.jobs.jobDefinitions.findsNewChangedAndRemovedFiles':
     'Finds new, changed and removed files.',
+  'server.jobs.jobDefinitions.findsSubtitlesInTheHouseholdsLanguages':
+    'Finds subtitles in the household’s languages for new films and episodes, and swaps in better ones as they turn up. Only runs with automatic fetching on under System › Subtitles.',
   'server.jobs.jobDefinitions.forgetsJobRunsOlderThan30': 'Deletes job runs older than 30 days.',
   'server.jobs.jobDefinitions.forgetsServerLoadSamplesOlderThan':
     'Deletes server load samples older than a week.',
@@ -6773,6 +6882,8 @@ const ENGLISH = {
   'server.jobs.phase.reading': 'reading',
   'server.jobs.phase.segments': 'segments',
   'server.jobs.phase.sessions': 'expired sessions',
+  'server.jobs.phase.subtitlesFetched.one': '{count} subtitle fetched',
+  'server.jobs.phase.subtitlesFetched.other': '{count} subtitles fetched',
   'server.jobs.phase.trickplay': 'trickplay',
   'server.jobs.phase.unreachable': 'unreachable',
   'server.library.catalogueMetadataProvider.episodeEpisodeNumber': 'Episode {episode_number}',

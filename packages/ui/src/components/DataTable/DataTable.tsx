@@ -8,7 +8,7 @@ import {
   Filter as FilterIcon,
 } from '@keyline-icons/react';
 import { useState } from 'react';
-import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
+import { AnimatePresence, Reorder, motion, useReducedMotionConfig } from 'motion/react';
 import { spring, stillTransition } from '@ValenceUI/animations/reveal';
 import { useRoomBelow } from '@ValenceUI/useRoomBelow';
 import { useTable } from '@tanstack/react-table';
@@ -90,6 +90,9 @@ const HEIGHT_CLASSES = {
  *   rows it was given, and shows them as they come instead of cutting a page out of them.
  * @param emptyMessage - What to say when there are none, rather than showing an empty grid.
  * @param onChooseRow - Told which row was pressed, where rows lead somewhere.
+ * @param onReorder - Told every row's id in its new order once a row is dragged to another place,
+ *   where rows can be put in order by hand; the columns are not sorted then, since a sorted table
+ *   has no order of its own to change.
  * @param getRowId - Names a row by what it is about rather than where it sits, so a row a person
  *   is mid-interaction with keeps its own identity when a live update inserts or reorders around it.
  * @param toolbar - Controls to sit above the table, such as a search box.
@@ -118,6 +121,7 @@ const DataTable = <Row extends RowData>({
   getRowId,
   toolbar,
   getSubRows,
+  onReorder,
   pageSize = ROWS_A_PAGE,
   page: givenPage,
   onPageChange,
@@ -126,6 +130,15 @@ const DataTable = <Row extends RowData>({
   className,
 }: DataTableProps<Row>) => {
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [dragged, setDragged] = useState<{ from: string; ids: string[] } | null>(null);
+  const idOf = (row: Row, at: number): string => getRowId?.(row) ?? at.toString();
+  const givenOrder = rows.map(idOf).join('\n');
+  const isReordering = onReorder !== undefined && getRowId !== undefined;
+  const dragOrder = dragged !== null && dragged.from === givenOrder ? dragged.ids : null;
+  const orderedRows =
+    dragOrder === null
+      ? rows
+      : dragOrder.flatMap((id) => rows.filter((row, at) => idOf(row, at) === id));
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const [ownPage, setOwnPage] = useState(0);
@@ -157,7 +170,8 @@ const DataTable = <Row extends RowData>({
 
   const table = useTable({
     features: dataTableFeatures,
-    data: rows,
+    data: orderedRows,
+    enableSorting: !isReordering,
     columns,
     manualPagination: totalRows !== undefined,
     ...(getRowId === undefined ? {} : { getRowId }),
@@ -304,7 +318,17 @@ const DataTable = <Row extends RowData>({
             ))}
           </thead>
 
-          <tbody className={cn('relative z-10', STRIPES)}>
+          <Reorder.Group
+            as="tbody"
+            axis="y"
+            values={orderedRows.map(idOf)}
+            onReorder={(ids: string[]) => {
+              if (isReordering) {
+                setDragged({ from: givenOrder, ids });
+              }
+            }}
+            className={cn('relative z-10', STRIPES)}
+          >
             {rows.length === 0 ? (
               <tr>
                 <td
@@ -333,8 +357,17 @@ const DataTable = <Row extends RowData>({
                     .map((cell) => cell.column.columnDef.meta?.fills === true);
 
                   return row.depth === 0 ? (
-                    <tr
+                    <Reorder.Item
+                      as="tr"
                       key={row.id}
+                      value={row.id}
+                      drag={isReordering ? 'y' : false}
+                      {...(isReordering ? { layout: 'position' as const } : {})}
+                      onDragEnd={() => {
+                        if (dragOrder !== null) {
+                          onReorder?.(dragOrder);
+                        }
+                      }}
                       data-highlight={row.id}
                       data-depth={row.depth}
                       onClick={
@@ -344,7 +377,10 @@ const DataTable = <Row extends RowData>({
                               onChooseRow(row.original);
                             }
                       }
-                      className={cn(onChooseRow === undefined ? '' : 'cursor-pointer')}
+                      className={cn(
+                        onChooseRow === undefined ? '' : 'cursor-pointer',
+                        isReordering ? 'relative cursor-grab active:cursor-grabbing' : '',
+                      )}
                     >
                       {cells.map((drawn, at) => (
                         <td
@@ -358,7 +394,7 @@ const DataTable = <Row extends RowData>({
                           {drawn}
                         </td>
                       ))}
-                    </tr>
+                    </Reorder.Item>
                   ) : (
                     <motion.tr
                       key={row.id}
@@ -400,7 +436,7 @@ const DataTable = <Row extends RowData>({
                 })}
               </AnimatePresence>
             )}
-          </tbody>
+          </Reorder.Group>
         </table>
       </div>
 

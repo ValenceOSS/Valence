@@ -4,18 +4,24 @@ import { describe, expect, it, vi } from 'vitest';
 import { ReleaseTypeChooser } from './ReleaseTypeChooser';
 
 describe('ReleaseTypeChooser', () => {
-  it('ticks and unticks kinds of release, keeping the order they are offered', async () => {
+  it('chooses kinds of release from one field, keeping the order they are offered', async () => {
+    const user = userEvent.setup();
     const onChange = vi.fn();
 
     render(<ReleaseTypeChooser value={['live']} onChange={onChange} />);
 
-    expect(screen.getByRole('checkbox', { name: 'Live' })).toBeChecked();
+    await user.click(screen.getByRole('button', { name: 'Releases' }));
 
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Albums' }));
+    expect(screen.getByRole('menuitemcheckbox', { name: 'Live' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+
+    await user.click(screen.getByRole('menuitemcheckbox', { name: 'Albums' }));
 
     expect(onChange).toHaveBeenLastCalledWith(['album', 'live']);
 
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Live' }));
+    await user.click(screen.getByRole('menuitemcheckbox', { name: 'Live' }));
 
     expect(onChange).toHaveBeenLastCalledWith([]);
   });

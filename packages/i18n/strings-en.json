@@ -2000,6 +2000,11 @@
     "context": "Shown, used in several places, among them the ask for the code of the phone app and the security in the account of the phone app."
   },
   {
+    "handler": "common.auto",
+    "text": "Auto",
+    "context": "A quality choice in the video player that lets Valence pick the quality from how well the connection is keeping up."
+  },
+  {
     "handler": "common.automatic",
     "text": "Automatic",
     "context": "The label, used in several places, among them the admin area (from `accelerationOptions`) and the artwork picker in the admin area."
@@ -2489,6 +2494,16 @@
     "handler": "common.count.episodes.other",
     "text": "{count} episodes",
     "context": "How many episodes, such as in a notification about what arrived in the library. {count} is the number."
+  },
+  {
+    "handler": "common.count.files.one",
+    "text": "{count} file",
+    "context": "How many files something is made of, such as a film or a programme being moved to another library."
+  },
+  {
+    "handler": "common.count.files.other",
+    "text": "{count} files",
+    "context": "How many files something is made of, such as a film or a programme being moved to another library."
   },
   {
     "handler": "common.count.films.one",
@@ -3405,6 +3420,11 @@
     "handler": "common.history",
     "text": "History",
     "context": "The title, used in several places, among them the account panels in the account of the phone app and the open library on the server (from `readOpenLibraryShelves`)."
+  },
+  {
+    "handler": "common.holds",
+    "text": "Holds",
+    "context": "The heading of the choice, in a series or anime library's settings, of whether it holds series or anime."
   },
   {
     "handler": "common.home",
@@ -8395,9 +8415,19 @@
     "context": "An error the server answers with (HTTP 400) in the app in the requests service."
   },
   {
+    "handler": "error.library.aFileIsAlreadyThere",
+    "text": "A file with that name is already in the other library, so Valence won’t move it over the top.",
+    "context": "An error the server answers with (HTTP 409) in the library, when an admin moves media into another library."
+  },
+  {
     "handler": "error.library.catalogueCouldNotBeAsked",
     "text": "Couldn’t reach the catalogue.",
     "context": "An error the server answers with (HTTP 503) when the catalogue could not be reached to list or choose artwork."
+  },
+  {
+    "handler": "error.library.itIsAlreadyInThatLibrary",
+    "text": "That’s already in that library.",
+    "context": "An error the server answers with (HTTP 409) in the library, when an admin moves media into another library."
   },
   {
     "handler": "error.library.noSuchItemMatchedToTheCatalogue",
@@ -8420,6 +8450,11 @@
     "context": "An error the server answers with (HTTP 404) when an administrator asks which artwork the catalogue has for something that is not matched to it yet."
   },
   {
+    "handler": "error.library.onlyFilmsAndShowsMove",
+    "text": "Only films and shows can be moved, and only into a library of films or shows.",
+    "context": "An error the server answers with (HTTP 400) in the library, when an admin moves media into another library."
+  },
+  {
     "handler": "error.library.pictureIsNotOneTheCatalogueHas",
     "text": "That image isn’t one of the catalogue’s choices for this item.",
     "context": "An error the server answers with (HTTP 400) when an administrator chooses artwork that is not among the catalogue's choices for that item."
@@ -8435,9 +8470,19 @@
     "context": "An error the server answers with (HTTP 400) when a library's settings hand its requests to a connected app of the wrong kind, or one that is not there (from `serveLibrary`)."
   },
   {
+    "handler": "error.library.thatDiskIsReadOnlyForMoving",
+    "text": "One of those disks is read-only to Valence. Give Valence read-write access to both libraries to move media between them.",
+    "context": "An error the server answers with (HTTP 403) in the library, when an admin moves media into another library."
+  },
+  {
     "handler": "error.library.thatDoesNotLookLikeA",
     "text": "That doesn’t look like a catalogue URL or ID.",
     "context": "An error the server answers with (HTTP 400) in the app on the server (from `serveLibrary`)."
+  },
+  {
+    "handler": "error.library.thatFileIsNotInsideItsLibrary",
+    "text": "That file isn’t inside its library, so Valence won’t move it.",
+    "context": "An error the server answers with (HTTP 403) in the library, when an admin moves media into another library."
   },
   {
     "handler": "error.library.thatIsNotInsideThisLibrary",
@@ -8453,6 +8498,21 @@
     "handler": "error.library.thatPathIsNotAReadable",
     "text": "That path isn’t a readable folder.",
     "context": "An error the server answers with (HTTP 400) in the app on the server (from `serveLibrary`)."
+  },
+  {
+    "handler": "error.library.theFileCouldNotBeMoved",
+    "text": "Couldn’t move the file.",
+    "context": "An error the server answers with (HTTP 500) in the library, when an admin moves media into another library."
+  },
+  {
+    "handler": "error.library.theFileIsNoLongerThere",
+    "text": "That file is no longer where Valence last saw it.",
+    "context": "An error the server answers with (HTTP 404) in the library, when an admin moves media into another library."
+  },
+  {
+    "handler": "error.library.valenceMayNotMoveFilesThere",
+    "text": "Valence doesn’t have permission to move files there.",
+    "context": "An error the server answers with (HTTP 403) in the library, when an admin moves media into another library."
   },
   {
     "handler": "error.libraryAccess.noSuchThingToMakeAn",
@@ -8728,6 +8788,11 @@
     "handler": "error.profile.thatIsNotAChangeTo",
     "text": "That isn’t a valid change to a profile.",
     "context": "An error the server answers with (HTTP 400) in the profiles in the requests service (from `createProfileRoutes`)."
+  },
+  {
+    "handler": "error.profile.thatIsNotAnOrderOf",
+    "text": "That isn’t a valid order of profiles.",
+    "context": "An error the server answers with (HTTP 400) in the profiles in the requests service, when it is asked to put the quality profiles in an order it cannot read."
   },
   {
     "handler": "error.profile.thatIsNotAProfile",
@@ -9013,6 +9078,31 @@
     "handler": "error.subtitle.thatTrackCarriesNoStylingOf",
     "text": "That subtitle track has no styling of its own.",
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveSubtitle`)."
+  },
+  {
+    "handler": "error.subtitles.noKeyIsSavedForThatSite",
+    "text": "There’s no key saved for that subtitle site. Add one under System › Subtitles.",
+    "context": "An error the server answers with (HTTP 400) when an admin fetches a subtitle found for a film or episode."
+  },
+  {
+    "handler": "error.subtitles.thatDownloadIsForAnotherEpisode",
+    "text": "That download doesn’t hold this episode’s subtitles. Try another.",
+    "context": "An error the server answers with (HTTP 502) when an admin fetches a subtitle whose download turns out to be for a different episode."
+  },
+  {
+    "handler": "error.subtitles.theSiteWouldNotGiveIt",
+    "text": "The subtitle site wouldn’t hand that one over. Today’s downloads may be used up.",
+    "context": "An error the server answers with (HTTP 502) when an admin fetches a subtitle found for a film or episode."
+  },
+  {
+    "handler": "error.subtitles.theSubtitleCouldNotBeKept",
+    "text": "Couldn’t save the subtitle beside the video.",
+    "context": "An error the server answers with (HTTP 502) when an admin fetches a subtitle found for a film or episode."
+  },
+  {
+    "handler": "error.subtitles.valenceMayNotWriteBesideIt",
+    "text": "Valence isn’t allowed to save files beside that video.",
+    "context": "An error the server answers with (HTTP 403) when an admin fetches a subtitle found for a film or episode."
   },
   {
     "handler": "error.upload.aFileGoesAtAPlain",
@@ -14100,9 +14190,59 @@
     "context": "Shown in the encoding panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.fileDetails.addingUp",
+    "text": "Adding up…",
+    "context": "In the side of the admin’s file manager that says what is chosen. Shown while a folder’s size is being added up."
+  },
+  {
+    "handler": "screens.adminArea.fileDetails.atLeastSize",
+    "text": "At least {size}",
+    "context": "In the side of the admin’s file manager that says what is chosen. A folder too large to count at once. {size} is how much was counted."
+  },
+  {
+    "handler": "screens.adminArea.fileDetails.chooseSomethingToSeeIt",
+    "text": "Choose a file or folder to see more about it, or tick several to move or delete them together.",
+    "context": "In the side of the admin’s file manager that says what is chosen. Shown while nothing is chosen."
+  },
+  {
+    "handler": "screens.adminArea.fileDetails.count.folders.one",
+    "text": "{count} folder",
+    "context": "In the side of the admin’s file manager that says what is chosen."
+  },
+  {
+    "handler": "screens.adminArea.fileDetails.count.folders.other",
+    "text": "{count} folders",
+    "context": "In the side of the admin’s file manager that says what is chosen."
+  },
+  {
+    "handler": "screens.adminArea.fileDetails.count.selected.one",
+    "text": "{count} chosen",
+    "context": "In the side of the admin’s file manager that says what is chosen. How many files and folders are chosen."
+  },
+  {
+    "handler": "screens.adminArea.fileDetails.count.selected.other",
+    "text": "{count} chosen",
+    "context": "In the side of the admin’s file manager that says what is chosen. How many files and folders are chosen."
+  },
+  {
+    "handler": "screens.adminArea.fileDetails.together",
+    "text": "Together",
+    "context": "In the side of the admin’s file manager that says what is chosen. Beside how much several chosen things take on the disk between them."
+  },
+  {
     "handler": "screens.adminArea.filesPanel.changed",
     "text": "Changed",
     "context": "Shown in the files panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.filesPanel.chooseEverythingHere",
+    "text": "Choose everything here",
+    "context": "The box at the head of the admin’s file manager that chooses every file and folder listed."
+  },
+  {
+    "handler": "screens.adminArea.filesPanel.chooseName",
+    "text": "Choose {name}",
+    "context": "The box beside a file or folder in the admin’s file manager. {name} is the file or folder."
   },
   {
     "handler": "screens.adminArea.filesPanel.delete",
@@ -15045,11 +15185,6 @@
     "context": "Label of the library setting that decides what happens when somebody asks for a title already requested, at a higher quality profile."
   },
   {
-    "handler": "screens.adminArea.librarySettingsDialog.holds",
-    "text": "Holds",
-    "context": "The heading of the choice, in a series or anime library's settings, of whether it holds series or anime."
-  },
-  {
     "handler": "screens.adminArea.librarySettingsDialog.howeverManyTheServerAllows",
     "text": "As many as the server allows",
     "context": "The label in the library settings dialog in the admin area."
@@ -15680,6 +15815,11 @@
     "context": "The detail of a confirm dialog in the media panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.moveToAnotherLibrary",
+    "text": "Move to another library…",
+    "context": "In the menu of a film, programme or file in the admin’s list of media, opening the dialog that moves it into another library."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.noCover",
     "text": "No cover",
     "context": "Shown in the media panel in the admin area."
@@ -15788,6 +15928,31 @@
     "handler": "screens.adminArea.memory",
     "text": "Memory",
     "context": "The label in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.moveToLibraryDialog.moveNameToAnotherLibrary",
+    "text": "Move {name} to another library",
+    "context": "The dialog, in the admin’s list of media, that moves a film or programme filed in the wrong library into another. Its title. {name} is the film, programme or file."
+  },
+  {
+    "handler": "screens.adminArea.moveToLibraryDialog.moveToAnotherLibrary",
+    "text": "Move to another library",
+    "context": "The dialog, in the admin’s list of media, that moves a film or programme filed in the wrong library into another. Its title before anything is chosen."
+  },
+  {
+    "handler": "screens.adminArea.moveToLibraryDialog.nameMovedToLibrary",
+    "text": "Moved {name} to {library}",
+    "context": "The dialog, in the admin’s list of media, that moves a film or programme filed in the wrong library into another. Told once it has moved. {library} is the library it went to."
+  },
+  {
+    "handler": "screens.adminArea.moveToLibraryDialog.theFilesMoveIntoThatLibrary",
+    "text": "The files move on the disk into that library’s folder, in the same folders they’re in now. Valence moves them along with everything it knows about them, so what everyone has watched stays, and that library then reads them again as what it holds.",
+    "context": "The dialog, in the admin’s list of media, that moves a film or programme filed in the wrong library into another. What moving does."
+  },
+  {
+    "handler": "screens.adminArea.moveToLibraryDialog.thereIsNoOtherLibrary",
+    "text": "There’s no other library of films or shows to move this into.",
+    "context": "The dialog, in the admin’s list of media, that moves a film or programme filed in the wrong library into another. Shown where there is nowhere to move it."
   },
   {
     "handler": "screens.adminArea.musicMatchList.foundInMusicBrainz",
@@ -16450,6 +16615,11 @@
     "context": "The label of a tab row in the profile editor in the admin area."
   },
   {
+    "handler": "screens.adminArea.profilesPanel.dragToChangeTheOrder",
+    "text": "Drag to change the order",
+    "context": "Read out for the grip at the start of each row of the admin's quality profiles, which can be dragged to put them in another order."
+  },
+  {
     "handler": "screens.adminArea.profilesPanel.everyLibraryHandsOff",
     "text": "Every library of this kind that takes requests hands them to a connected app, so no request is judged by these profiles.",
     "context": "Note above the profiles of one kind in Admin › Requests › Profiles, when every library of that kind hands requests to Radarr, Sonarr or Lidarr."
@@ -16475,9 +16645,19 @@
     "context": "The empty in the profiles panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.profilesPanel.noProfilesYet",
+    "text": "No profiles yet.",
+    "context": "Shown in the admin's list of quality profiles, showing every kind, when there are none at all."
+  },
+  {
     "handler": "screens.adminArea.profilesPanel.noVideoLibraryTakesRequests",
     "text": "No films or shows library takes requests, so these profiles aren’t used. Turn on Takes requests for a library on the Libraries page.",
     "context": "A note above the video quality profiles in Requests › Profiles when no films or shows library has 'Takes requests' on."
+  },
+  {
+    "handler": "screens.adminArea.profilesPanel.profilesPutInOrder",
+    "text": "Profile order saved",
+    "context": "Told once the admin has dragged a quality profile to another place in the list and the new order is kept."
   },
   {
     "handler": "screens.adminArea.profilesPanel.removeThisProfile",
@@ -17405,14 +17585,14 @@
     "context": "Shown in the settings panel in the admin area."
   },
   {
-    "handler": "screens.adminArea.settingsPanel.alwaysOnItIsHowThis",
-    "text": "Always on. It is how this page is reached.",
-    "context": "The explanation beside the web's switch, which is on and cannot be turned off, among the admin settings saying which Valence apps may connect."
-  },
-  {
     "handler": "screens.adminArea.settingsPanel.appsSaved",
     "text": "Saved which apps may connect.",
     "context": "A confirmation after an administrator turned a Valence app on or off for this server."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.appsThatCanSignIn",
+    "text": "Apps that can sign in",
+    "context": "The title of the setting, in the admin settings, for which of Valence's apps may sign in to this server."
   },
   {
     "handler": "screens.adminArea.settingsPanel.backend",
@@ -17625,6 +17805,21 @@
     "context": "A badge in the admin's settings panel saying the sign-in cookie is marked secure. Its opposite is \"not secure\"."
   },
   {
+    "handler": "screens.adminArea.settingsPanel.segmentLengthSaved",
+    "text": "Segment length saved.",
+    "context": "Shown in the settings panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.shortSegments",
+    "text": "Short segments",
+    "context": "Shown in the settings panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.shortSegmentsStartAndSeekSooner",
+    "text": "Sends video in pieces of about two seconds instead of four. Playback starts and seeks sooner over a slow connection or tunnel, at the cost of more requests.",
+    "context": "Shown in the settings panel in the admin area."
+  },
+  {
     "handler": "screens.adminArea.settingsPanel.showWhoLivesHere",
     "text": "Show profiles on sign-in",
     "context": "The label of a switch in the settings panel in the admin area."
@@ -17720,6 +17915,11 @@
     "context": "Shown in the settings panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.settingsPanel.theSegmentLengthCouldNotBe",
+    "text": "The segment length could not be saved.",
+    "context": "Shown in the settings panel in the admin area."
+  },
+  {
     "handler": "screens.adminArea.settingsPanel.theSignInScreenCouldNot",
     "text": "Couldn’t change the sign-in screen.",
     "context": "Shown in the settings panel in the admin area."
@@ -17750,24 +17950,14 @@
     "context": "The first of the rows in the admin settings that say which Valence apps may connect to the server: Valence in a web browser, which cannot be turned off."
   },
   {
+    "handler": "screens.adminArea.settingsPanel.theWebIsAlwaysOn",
+    "text": "Which of Valence's apps people can use with this server. The web is always on, since it's how this page is reached.",
+    "context": "Beneath the setting for which apps may sign in, in the admin settings."
+  },
+  {
     "handler": "screens.adminArea.settingsPanel.trailerSettingSaved",
     "text": "Trailer setting saved.",
     "context": "Shown in the settings panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.settingsPanel.valenceForAppleTvAndAndroid",
-    "text": "Valence for Apple TV and Android TV.",
-    "context": "The explanation beside the admin switch for whether the television app may connect to this server."
-  },
-  {
-    "handler": "screens.adminArea.settingsPanel.valenceForIPhoneAndAndroid",
-    "text": "Valence for iPhone and Android phones.",
-    "context": "The explanation beside the admin switch for whether the phone app may connect to this server."
-  },
-  {
-    "handler": "screens.adminArea.settingsPanel.valenceForMacWindowsAndLinux",
-    "text": "Valence for Mac, Windows and Linux.",
-    "context": "The explanation beside the admin switch for whether the desktop app may connect to this server."
   },
   {
     "handler": "screens.adminArea.settingsPanel.valencePicksWhicheverBackendTheMachine",
@@ -17873,6 +18063,96 @@
     "handler": "screens.adminArea.storage",
     "text": "Storage",
     "context": "The label in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.askedToo",
+    "text": "Searched alongside OpenSubtitles, and often stronger for shows.",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.fetchAutomatically",
+    "text": "Fetch automatically",
+    "context": "On the admin’s Subtitles page, under System. The switch that turns on fetching subtitles without anyone asking."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.findSubtitlesForWhatYourLibraries",
+    "text": "Find subtitles for your films and shows on OpenSubtitles and SubDL. They’re kept in Valence’s own data, not among your media, so every app can show them.",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.getAnOpenSubtitlesKey",
+    "text": "Get an OpenSubtitles API key",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.getASubdlKey",
+    "text": "Get a SubDL API key",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.languages",
+    "text": "Languages",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.minimumScore",
+    "text": "Minimum score",
+    "context": "On the admin’s Subtitles page, under System. Above the scores a subtitle must reach to be fetched on its own."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.offeredFirstWhenSomebodyLooks",
+    "text": "The languages offered first when someone looks for subtitles.",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.onlyTakesASubtitleThatScores",
+    "text": "Out of 100. A subtitle made for the exact file scores 100; the same release with the same frame rate scores about 80. One timed to a different frame rate, or translated by a machine, is never fetched on its own.",
+    "context": "On the admin’s Subtitles page, under System."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.openSubtitles",
+    "text": "OpenSubtitles",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.readingTheSubtitleSettings",
+    "text": "Loading subtitle settings",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.savedTheSubtitleSettings",
+    "text": "Subtitle settings saved",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.subdl",
+    "text": "SubDL",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.theBiggestCatalogueAKeyIs",
+    "text": "The biggest catalogue, and it can find subtitles timed to your exact file. Downloads are counted against the account you sign in with.",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.theSubtitleSettingsCouldNotBe",
+    "text": "Couldn’t load the subtitle settings.",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.whatLeavesTheServer",
+    "text": "What’s sent to the subtitle sites",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.whenNewFilmsAndEpisodesArrive",
+    "text": "When new films and episodes arrive, and each night, find subtitles in your languages for anything without them, and swap in better ones as they turn up.",
+    "context": "On the admin’s Subtitles page, under System."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.whenYouLookTheTitleAndA",
+    "text": "When you look for subtitles, the title, its catalogue IDs and a fingerprint of the video file are sent to the sites you’ve added keys for. Nothing is sent until someone looks.",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
   },
   {
     "handler": "screens.adminArea.thatCouldNotBeConfirmed",
@@ -18695,6 +18975,11 @@
     "context": "Text shown in the admin page. {version} is filled in by the app."
   },
   {
+    "handler": "screens.albumTracks.discNumber",
+    "text": "Disc {number}",
+    "context": "Above the songs on one disc of an album of several, in the list of an album's songs on the page for asking for it. {number} counts from one."
+  },
+  {
     "handler": "screens.apiKeyPanel.aKeyLetsSomethingThatIs",
     "text": "A key lets something other than a browser act as you, such as a script, a dashboard or an assistant. It can do anything you can do, and nothing more.",
     "context": "Text shown in the api key panel."
@@ -18865,6 +19150,11 @@
     "context": "Shown in the askable dialog (from `describeCatalogueCard`)."
   },
   {
+    "handler": "screens.askableDialog.fetchingItsDetails",
+    "text": "Fetching its details…",
+    "context": "Shown large in the askable dialog while what a film, series, artist or album is, and its artwork, are still being read from the catalogue."
+  },
+  {
     "handler": "screens.askableDialog.noYearGiven",
     "text": "No year given",
     "context": "Shown in the askable dialog."
@@ -19033,16 +19323,6 @@
     "handler": "screens.cacheBreakdown.cacheRows.clips.other",
     "text": "{count} clips",
     "context": "How many preview clips are kept, in the cache breakdown in the admin area."
-  },
-  {
-    "handler": "screens.cacheBreakdown.cacheRows.files.one",
-    "text": "{count} file",
-    "context": "How many files the media library holds, in the cache breakdown in the admin area."
-  },
-  {
-    "handler": "screens.cacheBreakdown.cacheRows.files.other",
-    "text": "{count} files",
-    "context": "How many files the media library holds, in the cache breakdown in the admin area."
   },
   {
     "handler": "screens.cacheBreakdown.cacheRows.filesThatWillNotPlayOn",
@@ -20033,6 +20313,136 @@
     "handler": "screens.filesPanel.moveEntryDialog.moveThis",
     "text": "Move this",
     "context": "The title of the dialog for moving a file or folder in a library, before it knows which one."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.differentFrameRateWillDrift",
+    "text": "Different frame rate, will drift",
+    "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did. It was timed to another frame rate, so it will slowly fall out of step."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.findSubtitles",
+    "text": "Find subtitles",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. Its title before anything is chosen."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.findSubtitlesForName",
+    "text": "Find subtitles for {name}",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. Its title. {name} is the film or episode."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.get",
+    "text": "Get",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. The button that fetches a subtitle and saves it."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.looking",
+    "text": "Looking for subtitles",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. The label of its spinner."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.machineTranslated",
+    "text": "Machine translated",
+    "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did. A machine or AI translated it rather than a person."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.madeForThisFile",
+    "text": "Made for this file",
+    "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did. It was timed against this exact file."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.match",
+    "text": "Match",
+    "context": "Column heading in the find subtitles dialog for how well a subtitle matches the video file."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.noSubtitleSiteIsSetUp",
+    "text": "No subtitle site is set up yet. Add an OpenSubtitles or SubDL key under System › Subtitles.",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.notes",
+    "text": "Notes",
+    "context": "A column heading in the table of subtitles found for a film or episode. Such as SDH or machine translated."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.nothingWasFoundInThatLanguage",
+    "text": "Nothing was found in that language.",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.sameAudioCodec",
+    "text": "Same audio codec",
+    "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.sameEdition",
+    "text": "Same edition",
+    "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did. Such as the extended cut."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.sameFrameRate",
+    "text": "Same frame rate",
+    "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.sameGroup",
+    "text": "Same group",
+    "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.sameRelease",
+    "text": "Same release",
+    "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did. Its release group and source match the file’s."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.sameResolution",
+    "text": "Same resolution",
+    "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.sameService",
+    "text": "Same streaming service",
+    "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.sameSource",
+    "text": "Same source",
+    "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.sameVideoCodec",
+    "text": "Same video codec",
+    "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.saved",
+    "text": "Saved",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. A badge on a subtitle once it has been saved."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.savedBesideTheVideo",
+    "text": "Best matches first. The one you pick is kept in Valence, so every app can show it.",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. Beneath its title."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.savedName",
+    "text": "Added {name} subtitles",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. Told once a subtitle is saved. {name} is the file it was saved as."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.sdh",
+    "text": "SDH",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. A badge on a subtitle that describes sounds as well as dialogue, for deaf and hard-of-hearing viewers."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.subtitlesFound",
+    "text": "Subtitles found",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. The list, read out."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.theSubtitleSitesCouldNotBe",
+    "text": "Couldn’t reach the subtitle sites.",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen."
   },
   {
     "handler": "screens.finishOnAnotherDevice.finishSettingUpOnYourPhone",
@@ -25351,6 +25761,11 @@
     "context": "The label of a button in the player controls in the video player. {SKIP_SECONDS} is filled in by the app."
   },
   {
+    "handler": "screens.videoPlayer.playerControls.findSubtitles",
+    "text": "Find subtitles…",
+    "context": "In the video player’s settings menu, for an administrator, opening the search for subtitles on subtitle sites."
+  },
+  {
     "handler": "screens.videoPlayer.playerControls.forwardSKIPSECONDSSeconds",
     "text": "Forward {SKIP_SECONDS} seconds",
     "context": "The label of a button in the player controls in the video player. {SKIP_SECONDS} is filled in by the app."
@@ -26506,6 +26921,11 @@
     "context": "The label in the jobs on the server (from `jobDefinitions`)."
   },
   {
+    "handler": "server.jobs.jobDefinitions.fetchSubtitles",
+    "text": "Fetch subtitles",
+    "context": "The name of the background job that fetches subtitles on its own, in the admin’s list of jobs."
+  },
+  {
     "handler": "server.jobs.jobDefinitions.findsIntrosAndRecapsSoViewers",
     "text": "Finds intros and recaps so viewers can skip them.",
     "context": "The description in the jobs on the server (from `jobDefinitions`)."
@@ -26514,6 +26934,11 @@
     "handler": "server.jobs.jobDefinitions.findsNewChangedAndRemovedFiles",
     "text": "Finds new, changed and removed files.",
     "context": "The description in the jobs on the server (from `jobDefinitions`)."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.findsSubtitlesInTheHouseholdsLanguages",
+    "text": "Finds subtitles in the household’s languages for new films and episodes, and swaps in better ones as they turn up. Only runs with automatic fetching on under System › Subtitles.",
+    "context": "What the job that fetches subtitles does, in the admin’s list of jobs."
   },
   {
     "handler": "server.jobs.jobDefinitions.forgetsJobRunsOlderThan30",
@@ -26779,6 +27204,16 @@
     "handler": "server.jobs.phase.sessions",
     "text": "expired sessions",
     "context": "The step a background job is on, shown beside its progress on the admin area's jobs page: clearing sign-in sessions that have ended."
+  },
+  {
+    "handler": "server.jobs.phase.subtitlesFetched.one",
+    "text": "{count} subtitle fetched",
+    "context": "Where the job that fetches subtitles got to."
+  },
+  {
+    "handler": "server.jobs.phase.subtitlesFetched.other",
+    "text": "{count} subtitles fetched",
+    "context": "Where the job that fetches subtitles got to."
   },
   {
     "handler": "server.jobs.phase.trickplay",

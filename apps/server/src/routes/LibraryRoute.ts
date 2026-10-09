@@ -396,6 +396,48 @@ const deleteMediaRoute = createRoute({
   },
 });
 
+const MoveMediaRequest = z
+  .object({ mediaIds: z.array(z.string().uuid()).min(1), libraryId: z.string().uuid() })
+  .openapi('MoveMediaRequest');
+
+const MovedMedia = z
+  .object({ files: z.number().int().nonnegative(), jobId: z.string().nullable() })
+  .openapi('MovedMedia');
+
+const moveMediaRoute = createRoute({
+  method: 'post',
+  path: '/api/media/move',
+  tags: ['Library'],
+  summary: 'Move files into another library, on its disk and in Valence, and read them again there',
+  request: { body: { content: { 'application/json': { schema: MoveMediaRequest } } } },
+  responses: {
+    200: {
+      description: 'How many files moved, and the job reading them again in their new library',
+      content: { 'application/json': { schema: MovedMedia } },
+    },
+    400: {
+      description: 'Only films and shows move, and only into a library of films or shows',
+      content: { 'application/json': { schema: RefusalSchema } },
+    },
+    403: {
+      description: 'The disk would not let Valence move them',
+      content: { 'application/json': { schema: Forbidden } },
+    },
+    404: {
+      description: 'No such items, or no such library',
+      content: { 'application/json': { schema: NotFound } },
+    },
+    409: {
+      description: 'They are in that library already, or a file of that name is there',
+      content: { 'application/json': { schema: RefusalSchema } },
+    },
+    500: {
+      description: 'A file could not be moved',
+      content: { 'application/json': { schema: RefusalSchema } },
+    },
+  },
+});
+
 const DeletedSeries = z.object({ files: z.number().int().nonnegative() }).openapi('DeletedSeries');
 
 const deleteSeriesRoute = createRoute({
@@ -779,6 +821,7 @@ export {
   bringBackRoute,
   rebuildArtefactsRoute,
   deleteMediaRoute,
+  moveMediaRoute,
   deleteSeriesRoute,
   setPreviewMomentRoute,
   clearPreviewMomentRoute,
