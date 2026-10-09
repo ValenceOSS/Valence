@@ -390,6 +390,23 @@ const createRequestWorker = ({
     }
   };
 
+  const downloadingForOthers = async (
+    requestId: string,
+  ): Promise<{ title: string; infoHash: string | null }[]> => {
+    const own = new Set(
+      (await items.list()).flatMap((item) =>
+        item.requestId === requestId && item.downloadId !== null ? [item.downloadId] : [],
+      ),
+    );
+
+    return (await downloads.list())
+      .filter(
+        (download) =>
+          !own.has(download.id) && download.state !== 'done' && download.state !== 'failed',
+      )
+      .map((download) => ({ title: download.title, infoHash: hashOfDownload(download) }));
+  };
+
   const protocolsTaken = async (): Promise<Set<ReleaseProtocol>> =>
     new Set(
       (await clients.records())
@@ -499,6 +516,7 @@ const createRequestWorker = ({
       priorities: await priorities(),
       isFetching,
       takes: await protocolsTaken(),
+      downloading: await downloadingForOthers(request.id),
     });
     const picked = judged.releases.find((release) => release.id === judged.pickedId);
     const holding = picked === undefined ? undefined : judged.holding.get(picked.id);
@@ -1301,6 +1319,7 @@ const createRequestWorker = ({
       isFetching: (item) => item.state !== 'filing',
       keepsTheUnnamed: true,
       takes: await protocolsTaken(),
+      downloading: await downloadingForOthers(request.id),
     });
 
     return {

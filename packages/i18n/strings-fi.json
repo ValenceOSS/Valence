@@ -10525,6 +10525,11 @@
     "context": "Shown in the media requests in the requests service (from `judgeForRequest`). {reason} is filled in by the app."
   },
   {
+    "handler": "requests.mediaRequests.judgeForRequest.itIsAlreadyDownloading",
+    "text": "It’s already downloading for another request",
+    "context": "Why a release was refused for a request: the same release, by name or torrent hash, is already in the download queue, sent for a different request. Shown beside the release in interactive search."
+  },
+  {
     "handler": "requests.mediaRequests.judgeForRequest.itIsNoBetterThanWhat",
     "text": "It’s no better than what’s already in the library",
     "context": "Shown in the media requests in the requests service (from `judgeForRequest`)."

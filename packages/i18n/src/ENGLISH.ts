@@ -2532,6 +2532,8 @@ const ENGLISH = {
   'requests.mediaRequests.judgeForRequest.everythingItHoldsIsHereOr':
     'Everything in it is already in the library or downloading',
   'requests.mediaRequests.judgeForRequest.itFailedBeforeReason': 'It failed previously: {reason}',
+  'requests.mediaRequests.judgeForRequest.itIsAlreadyDownloading':
+    'It’s already downloading for another request',
   'requests.mediaRequests.judgeForRequest.itIsNoBetterThanWhat':
     'It’s no better than what’s already in the library',
   'requests.mediaRequests.judgeForRequest.itsNameDoesNotSayItIs':

@@ -210,6 +210,23 @@ describe('judgeForRequest', () => {
     expect(judged('Officer.Down.S02E01.1080p.WEB-DL.x264-GRP', true)).toBe(0);
   });
 
+  it('refuses a release already downloading for another request', () => {
+    const judged = (downloading: { title: string; infoHash: string | null }[]) =>
+      judgeForRequest({
+        ...OPTIONS,
+        releases: [aRelease(WEB, { infoHash: 'b'.repeat(40) })],
+        downloading,
+      }).judgements[0]?.rejections;
+
+    expect(judged([{ title: WEB, infoHash: null }])).toEqual([
+      'It’s already downloading for another request',
+    ]);
+    expect(judged([{ title: 'Another.Name', infoHash: 'b'.repeat(40) }])).toEqual([
+      'It’s already downloading for another request',
+    ]);
+    expect(judged([{ title: BLURAY, infoHash: null }])).toEqual([]);
+  });
+
   it('refuses a release no download client is on for', () => {
     expect(
       judgeForRequest({

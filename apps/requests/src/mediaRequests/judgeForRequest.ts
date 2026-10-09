@@ -73,6 +73,7 @@ type JudgeForRequestOptions = {
   isTitleChecked?: boolean;
   keepsTheUnnamed?: boolean;
   takes?: ReadonlySet<ReleaseProtocol>;
+  downloading?: readonly { title: string; infoHash: string | null }[];
 };
 
 type JudgedForRequest = {
@@ -121,6 +122,8 @@ type JudgedForRequest = {
  *   went.
  * @param takes - The protocols a download client is on for, where known; a release of any other
  *   could never be sent, and is refused rather than chosen again on every search.
+ * @param downloading - What is downloading for other requests, by name and torrent hash; the same
+ *   release again is refused rather than fetched twice.
  * @returns The releases and their judgements in order, the pick, and what each would fetch.
  */
 const judgeForRequest = ({
@@ -134,7 +137,12 @@ const judgeForRequest = ({
   isTitleChecked = true,
   keepsTheUnnamed = false,
   takes,
+  downloading = [],
 }: JudgeForRequestOptions): JudgedForRequest => {
+  const downloadingTitles = new Set(downloading.map((one) => one.title.toLowerCase()));
+  const downloadingHashes = new Set(
+    downloading.flatMap((one) => (one.infoHash === null ? [] : [one.infoHash])),
+  );
   const holding = new Map<string, RequestItemRecord[]>();
   const blockedBecause = new Map(blocked.map((block) => [block.title, block.reason]));
   const blockedHashes = new Map(
@@ -250,6 +258,10 @@ const judgeForRequest = ({
         : [saying('requests.mediaRequests.judgeForRequest.itFailedBeforeReason', { reason })]),
       ...(fetched.length === 0
         ? [saying('requests.mediaRequests.judgeForRequest.everythingItHoldsIsHereOr')]
+        : []),
+      ...(downloadingTitles.has(release.title.toLowerCase()) ||
+      (hash !== null && downloadingHashes.has(hash))
+        ? [saying('requests.mediaRequests.judgeForRequest.itIsAlreadyDownloading')]
         : []),
       ...(takes === undefined || takes.has(release.protocol)
         ? []
