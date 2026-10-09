@@ -4,6 +4,7 @@ import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import type { Notification } from '@ValenceClient/notifications/fetchNotifications';
 
 type DeviceNotifications = {
+  isKnown: boolean;
   notifications: Notification[];
   unread: number;
   onOpen: (notification: Notification) => void;
@@ -22,11 +23,19 @@ type DeviceNotifications = {
  * The first inbox a session sees is not news — it is whatever arrived before this ran, and showing
  * all of it as if it had just happened would be answering a question nobody asked. So the first pass
  * only remembers what was already there, and it is the *next* notification, the one that was not in
- * that first list, that gets shown.
+ * that first list, that gets shown. The first pass waits for the inbox to have arrived: before it
+ * has, the list is empty rather than unknown, and remembering that empty list made everything
+ * unread look new the moment the real one came, every time the window opened or reloaded.
  *
- * @param presence - What is on the bell, how much of it is unread, and what pressing one does.
+ * @param presence - Whether the inbox has arrived yet, what is on the bell, how much of it is
+ *   unread, and what pressing one does.
  */
-const useDeviceNotifications = ({ notifications, unread, onOpen }: DeviceNotifications): void => {
+const useDeviceNotifications = ({
+  isKnown,
+  notifications,
+  unread,
+  onOpen,
+}: DeviceNotifications): void => {
   const seen = useRef<Set<string> | null>(null);
 
   useEffect(() => {
@@ -34,6 +43,10 @@ const useDeviceNotifications = ({ notifications, unread, onOpen }: DeviceNotific
   }, [unread]);
 
   useEffect(() => {
+    if (!isKnown) {
+      return;
+    }
+
     const arrived = new Set(notifications.map((one) => one.id));
     const already = seen.current;
 
@@ -54,7 +67,7 @@ const useDeviceNotifications = ({ notifications, unread, onOpen }: DeviceNotific
         });
       }
     }
-  }, [notifications, onOpen]);
+  }, [isKnown, notifications, onOpen]);
 };
 
 export { useDeviceNotifications };
