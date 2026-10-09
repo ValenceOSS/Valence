@@ -719,7 +719,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
   const letGoInItsApp = async (
     client: RequestsClient,
     id: string,
-  ): Promise<RequestsAnswer<null> | null> => {
+  ): Promise<Exclude<RequestsAnswer<null>, { kind: 'answered' }> | null> => {
     if (!(await isThroughItsApp(client, id))) {
       return null;
     }
@@ -730,6 +730,22 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       ? null
       : released;
   };
+
+  /**
+   * Refuses a request, letting the connected app it was handed to stop monitoring it first where
+   * Valence controls the app.
+   *
+   * @param client - The requests service.
+   * @param id - The request.
+   * @param reason - Why, for whoever asked.
+   * @returns The request refused, or why it could not be.
+   */
+  const refuseLettingGo = async (
+    client: RequestsClient,
+    id: string,
+    reason: string,
+  ): Promise<RequestsAnswer<MediaRequest>> =>
+    (await letGoInItsApp(client, id)) ?? client.refuseRequest(id, reason);
 
   const removeWithFiles = async (
     client: RequestsClient,
@@ -965,7 +981,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     const { reason } = context.req.valid('json');
     const answer = await throughRequests(
       context.req.raw.headers,
-      (client) => client.refuseRequest(context.req.valid('param').id, reason),
+      (client) => refuseLettingGo(client, context.req.valid('param').id, reason),
       APPROVERS,
     );
 
@@ -1081,7 +1097,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       const answer = await throughRequests(
         context.req.raw.headers,
         (client) =>
-          decision === 'approve' ? client.approveRequest(id) : client.refuseRequest(id, reason),
+          decision === 'approve' ? client.approveRequest(id) : refuseLettingGo(client, id, reason),
         APPROVERS,
       );
 

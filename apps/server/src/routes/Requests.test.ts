@@ -2204,6 +2204,9 @@ describe('requests for films and series, through the server', () => {
         })
       ).status,
     ).toBe(200);
+    expect((await ask(`${media}/refuse`, 'POST', { reason: 'No room' })).status).toBe(200);
+    expect(asked().at(-2)).toBe(`POST ${handOff}/release`);
+    expect(asked().at(-1)).toBe(`POST http://requests:8421/api/requests/${REQUEST.id}/refuse`);
     expect((await ask(media, 'DELETE')).status).toBe(204);
     expect(asked()).toEqual(
       expect.arrayContaining([
