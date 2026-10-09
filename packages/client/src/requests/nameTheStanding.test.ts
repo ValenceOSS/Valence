@@ -39,6 +39,22 @@ describe('nameTheStanding', () => {
     ).toBe('attention');
   });
 
+  it('names a request’s state in the same words as everywhere else', () => {
+    const asked = (requestState: CatalogueStanding['requestState']) =>
+      nameTheStanding(
+        standing({
+          status: 'requested',
+          requestId: '00000000-0000-4000-8000-000000000001',
+          requestState,
+        }),
+      );
+
+    expect(asked('failed')).toEqual({ look: 'failed', label: 'Failed' });
+    expect(asked('available')).toEqual({ look: 'done', label: 'In the library' });
+    expect(asked('chosen')).toEqual({ look: 'working', label: 'Downloading' });
+    expect(asked('wanted')).toEqual({ look: 'attention', label: 'Missing' });
+  });
+
   it('says a request is queued while nothing has happened to it yet', () => {
     expect(
       nameTheStanding(

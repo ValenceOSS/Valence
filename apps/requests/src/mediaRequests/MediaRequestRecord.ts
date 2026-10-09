@@ -15,6 +15,7 @@ type MediaRequestRecord = Omit<
   seasonFolders: SeasonFolder[];
   libraryLanguage: string | null;
   aliases: string[];
+  followsAfter: number | null;
   requestedById: string;
   requestedByName: string;
   runtimeMinutes: number | null;

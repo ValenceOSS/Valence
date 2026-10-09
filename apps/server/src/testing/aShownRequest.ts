@@ -29,6 +29,7 @@ const aShownRequest = (overrides: Partial<MediaRequest> = {}): MediaRequest => (
   refusedBecause: null,
   requestedBy: { id: 'someone', name: 'Sam' },
   seasons: null,
+  followsNewSeasons: false,
   releaseTypes: null,
   releaseDate: null,
   releaseDates: { theatrical: null, digital: null, physical: null },

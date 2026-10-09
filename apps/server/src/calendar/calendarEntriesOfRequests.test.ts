@@ -44,6 +44,7 @@ const aRequest = (change: Partial<MediaRequest>): MediaRequest => ({
   refusedBecause: null,
   requestedBy: { id: 'account-1', name: 'Sam' },
   seasons: null,
+  followsNewSeasons: false,
   releaseTypes: null,
   releaseDate: null,
   releaseDates: { theatrical: '2026-10-10', digital: '2026-11-20', physical: '2027-01-05' },

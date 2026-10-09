@@ -282,6 +282,8 @@ const mediaRequest = requestsSchema(
     requestedById: varchar('requested_by_id', { length: 64 }).notNull(),
     requestedByName: mediumtext('requested_by_name').notNull(),
     seasons: jsonColumn('seasons').$type<number[]>(),
+    followsNewSeasons: boolean('follows_new_seasons').notNull().default(false),
+    followsAfter: int('follows_after'),
     releaseTypes: jsonColumn('release_types').$type<ReleaseType[]>(),
     runtimeMinutes: int('runtime_minutes'),
     releaseDates: jsonColumn('release_dates')

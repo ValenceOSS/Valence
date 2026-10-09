@@ -40,6 +40,7 @@ const showMediaRequest = (
   refusedBecause: record.refusedBecause,
   requestedBy: { id: record.requestedById, name: record.requestedByName },
   seasons: record.seasons,
+  followsNewSeasons: record.followsNewSeasons,
   releaseTypes: record.releaseTypes,
   releaseDate:
     record.kind === 'film' || record.kind === 'album'

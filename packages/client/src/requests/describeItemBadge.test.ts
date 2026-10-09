@@ -53,7 +53,7 @@ describe('describeItemBadge', () => {
 
   it('says an episode in the library is available', () => {
     expect(describeItemBadge(item({ state: 'available' }), TODAY)).toMatchObject({
-      label: 'Available',
+      label: 'In the library',
       tone: 'success',
     });
   });

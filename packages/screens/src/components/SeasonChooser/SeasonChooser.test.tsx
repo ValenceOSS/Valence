@@ -19,6 +19,8 @@ beforeEach(() => {
   ]);
 });
 
+const SERIES = { tmdbId: 95396, followsNew: true, onFollowsNew: vi.fn() };
+
 /**
  * The row naming a season.
  */
@@ -27,7 +29,7 @@ const rowOf = (name: string) =>
 
 describe('SeasonChooser', () => {
   it('lists a season a row, with its episodes and the year it began', async () => {
-    renderInAnAddress(<SeasonChooser tmdbId={95396} seasons={null} onChange={vi.fn()} />);
+    renderInAnAddress(<SeasonChooser {...SERIES} seasons={null} onChange={vi.fn()} />);
 
     expect(await screen.findByText('Season 1')).toBeInTheDocument();
     expect(within(rowOf('Season 1')).getByText('9')).toBeInTheDocument();
@@ -43,7 +45,7 @@ describe('SeasonChooser', () => {
       { season: 4, episodeCount: 8, firstAired: null, standing: 'askable' },
     ]);
 
-    renderInAnAddress(<SeasonChooser tmdbId={95396} seasons={null} onChange={vi.fn()} />);
+    renderInAnAddress(<SeasonChooser {...SERIES} seasons={null} onChange={vi.fn()} />);
 
     expect(await screen.findByText('Season 1')).toBeInTheDocument();
     expect(within(rowOf('Season 1')).getByText('In the library')).toBeInTheDocument();
@@ -61,7 +63,7 @@ describe('SeasonChooser', () => {
       { season: 3, episodeCount: 8, firstAired: null, standing: 'askable' },
     ]);
 
-    renderInAnAddress(<SeasonChooser tmdbId={95396} seasons={[2]} onChange={onChange} />);
+    renderInAnAddress(<SeasonChooser {...SERIES} seasons={[2]} onChange={onChange} />);
 
     expect(await screen.findByRole('switch', { name: 'Season 1' })).toBeDisabled();
     expect(screen.getByRole('switch', { name: 'Season 1' })).not.toBeChecked();
@@ -73,42 +75,93 @@ describe('SeasonChooser', () => {
     expect(onChange).toHaveBeenCalledWith(null);
   });
 
-  it('takes every season until one is dropped', async () => {
+  it('takes every regular season until one is dropped, leaving Specials out', async () => {
     const onChange = vi.fn();
 
-    renderInAnAddress(<SeasonChooser tmdbId={95396} seasons={null} onChange={onChange} />);
+    renderInAnAddress(<SeasonChooser {...SERIES} seasons={null} onChange={onChange} />);
 
-    expect(await screen.findByText('All seasons, including future ones.')).toBeInTheDocument();
-    expect(screen.getByRole('switch', { name: 'Season 1' })).toBeChecked();
+    expect(await screen.findByRole('switch', { name: 'Season 1' })).toBeChecked();
+    expect(screen.getByRole('switch', { name: 'Specials' })).not.toBeChecked();
 
-    await userEvent.click(screen.getByRole('switch', { name: 'Specials' }));
+    await userEvent.click(screen.getByRole('switch', { name: 'Season 2' }));
 
-    expect(onChange).toHaveBeenLastCalledWith([1, 2]);
+    expect(onChange).toHaveBeenLastCalledWith([1]);
   });
 
-  it('comes back to every season once the last one is taken', async () => {
+  it('takes Specials on their own, never as part of every season', async () => {
     const onChange = vi.fn();
 
-    renderInAnAddress(<SeasonChooser tmdbId={95396} seasons={[0, 2]} onChange={onChange} />);
+    renderInAnAddress(<SeasonChooser {...SERIES} seasons={null} onChange={onChange} />);
 
-    expect(await screen.findByText('2 of 3 seasons.')).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole('switch', { name: 'Specials' }));
+
+    expect(onChange).toHaveBeenLastCalledWith([0, 1, 2]);
+  });
+
+  it('comes back to every season once the last regular one is taken', async () => {
+    const onChange = vi.fn();
+
+    renderInAnAddress(<SeasonChooser {...SERIES} seasons={[2]} onChange={onChange} />);
+
+    expect(await screen.findByText('1 of 2 seasons.')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('switch', { name: 'Season 1' }));
 
     expect(onChange).toHaveBeenLastCalledWith(null);
   });
 
+  it('gets new seasons as they come as a choice of its own', async () => {
+    const onFollowsNew = vi.fn();
+
+    renderInAnAddress(
+      <SeasonChooser
+        {...SERIES}
+        seasons={[1]}
+        onChange={vi.fn()}
+        followsNew
+        onFollowsNew={onFollowsNew}
+      />,
+    );
+
+    const following = await screen.findByRole('switch', { name: 'Get new seasons as they come' });
+
+    expect(following).toBeChecked();
+
+    await userEvent.click(following);
+
+    expect(onFollowsNew).toHaveBeenCalledWith(false);
+  });
+
+  it('shows the seasons a request already asks for as taken, adding to it', async () => {
+    renderInAnAddress(
+      <SeasonChooser
+        {...SERIES}
+        seasons={[]}
+        onChange={vi.fn()}
+        followsNew={false}
+        alreadyAsked={[1]}
+        isFollowedAlready
+      />,
+    );
+
+    expect(await screen.findByRole('switch', { name: 'Season 1' })).toBeChecked();
+    expect(screen.getByRole('switch', { name: 'Season 1' })).toBeDisabled();
+    expect(screen.getByRole('switch', { name: 'Season 2' })).not.toBeChecked();
+    expect(screen.getByRole('switch', { name: 'Get new seasons as they come' })).toBeChecked();
+    expect(screen.getByRole('switch', { name: 'Get new seasons as they come' })).toBeDisabled();
+  });
+
   it('takes the lot, and drops the lot, from the header', async () => {
     const onChange = vi.fn();
     const { rerender } = renderInAnAddress(
-      <SeasonChooser tmdbId={95396} seasons={[2]} onChange={onChange} />,
+      <SeasonChooser {...SERIES} seasons={[2]} onChange={onChange} />,
     );
 
     await userEvent.click(await screen.findByRole('switch', { name: 'Every season' }));
 
     expect(onChange).toHaveBeenLastCalledWith(null);
 
-    rerender(<SeasonChooser tmdbId={95396} seasons={null} onChange={onChange} />);
+    rerender(<SeasonChooser {...SERIES} seasons={null} onChange={onChange} />);
 
     await userEvent.click(screen.getByRole('switch', { name: 'Every season' }));
 
@@ -116,7 +169,7 @@ describe('SeasonChooser', () => {
   });
 
   it('says when nothing is taken yet', async () => {
-    renderInAnAddress(<SeasonChooser tmdbId={95396} seasons={[]} onChange={vi.fn()} />);
+    renderInAnAddress(<SeasonChooser {...SERIES} seasons={[]} onChange={vi.fn()} />);
 
     expect(await screen.findByText('No seasons selected yet.')).toBeInTheDocument();
   });
@@ -124,12 +177,12 @@ describe('SeasonChooser', () => {
   it('keeps a switch the same element as what is taken changes, so its animation runs', async () => {
     const onChange = vi.fn();
     const { rerender } = renderInAnAddress(
-      <SeasonChooser tmdbId={95396} seasons={[1]} onChange={onChange} />,
+      <SeasonChooser {...SERIES} seasons={[1]} onChange={onChange} />,
     );
 
     const before = await screen.findByRole('switch', { name: 'Season 2' });
 
-    rerender(<SeasonChooser tmdbId={95396} seasons={[1, 2]} onChange={onChange} />);
+    rerender(<SeasonChooser {...SERIES} seasons={[1, 2]} onChange={onChange} />);
 
     expect(screen.getByRole('switch', { name: 'Season 2' })).toBe(before);
     expect(before).toBeChecked();

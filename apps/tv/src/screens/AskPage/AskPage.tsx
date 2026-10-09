@@ -38,8 +38,9 @@ const SEASON_SAYS: Record<CatalogueSeason['standing'], string | null> = {
  * as a title's own page is: its picture, what it is, who is in it and where it stands, above what
  * can be done about it.
  *
- * A film is asked for as it is. A show lists its seasons, every one still to be had chosen to start
- * with, and asks for those chosen. Where this viewer may pick the quality it is fetched in, asking
+ * A film is asked for as it is. A show lists its seasons, every regular one still to be had chosen
+ * to start with and Specials left for whoever wants them, and asks for those chosen, getting new
+ * seasons as they come unless that is turned off. Where this viewer may pick the quality it is fetched in, asking
  * first lists the qualities on offer. A film already in the library opens its own page. Somebody's
  * own request can be cancelled until it is in the library; while something is on its way, the page
  * keeps looking for where it has got to, and while it downloads gives it a panel of its own saying
@@ -79,6 +80,7 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
   const progress = useQuery(requestsQueries.requestProgress(request?.state === 'downloading'));
   const going = request === null ? null : progressOfRequest(request, progress.data ?? []);
   const [chosen, setChosen] = useState<ReadonlySet<number> | null>(null);
+  const [followsNew, setFollowsNew] = useState(true);
   const [asking, setAsking] = useState<MediaRequestAsk | null>(null);
   const [isBusy, setIsBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -110,7 +112,9 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
   const stillToHave = (seasons.data ?? []).filter(
     (season) => season.standing === 'askable' || season.standing === 'partly',
   );
-  const picked = chosen ?? new Set(stillToHave.map((season) => season.season));
+  const picked =
+    chosen ??
+    new Set(stillToHave.filter((season) => season.season > 0).map((season) => season.season));
   const choices = offered.data?.forcedId === null ? offered.data.choices : [];
   const standing = nameTheStanding(title.standing);
   const mayCancel =
@@ -215,10 +219,7 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
       }
     >
       {going === null ? null : (
-        <DownloadPanel
-          label={standing?.label ?? say('common.downloadingToLibrary')}
-          progress={going}
-        />
+        <DownloadPanel label={standing?.label ?? say('common.downloading')} progress={going} />
       )}
 
       {asking !== null && canRequest ? (
@@ -344,6 +345,16 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
               })
             : null}
 
+          {kind === 'series' && (seasons.data ?? []).length > 0 ? (
+            <ActionRow
+              label={say('common.getNewSeasonsAsTheyCome')}
+              {...(followsNew ? { icon: Check } : {})}
+              onPress={() => {
+                setFollowsNew(!followsNew);
+              }}
+            />
+          ) : null}
+
           {kind === 'series' && picked.size > 0 ? (
             <ActionRow
               label={
@@ -362,6 +373,7 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
                       title,
                       [...picked].sort((left, right) => left - right),
                       [],
+                      followsNew,
                     ),
                   );
                 }

@@ -45,7 +45,7 @@ describe('ACalendarEntry', () => {
     );
 
     expect(drawn.getByText('In cinemas')).toBeTruthy();
-    expect(drawn.getByText('Wanted · Sam')).toBeTruthy();
+    expect(drawn.getByText('Missing · Sam')).toBeTruthy();
   });
 
   it('draws the library’s poster where the library holds it', async () => {

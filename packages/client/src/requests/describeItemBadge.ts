@@ -5,6 +5,7 @@ import { describeCalendarDay } from '@ValenceClient/requests/describeCalendarDay
 import type { RequestItem } from '@ValenceContracts/schemas/MediaRequest';
 import type { StateBadge } from '@ValenceClient/status/StateBadge';
 import { say } from '@ValenceI18n/say';
+import { REQUEST_STATE_NAMES } from '@ValenceContracts/constants/REQUEST_STATE_NAMES';
 
 /**
  * Says where one episode or album of a request has got to, as a badge and the line beneath it.
@@ -32,7 +33,7 @@ const describeItemBadge = (
     case 'wanted':
       return {
         ...STATUS_LOOK.attention,
-        label: say('common.wanted'),
+        label: REQUEST_STATE_NAMES.wanted,
         detail: item.problem === null ? null : sayAgain(item.problem),
         help: docsFor(item.problemCode),
       };
@@ -41,7 +42,7 @@ const describeItemBadge = (
     case 'chosen':
       return {
         ...STATUS_LOOK.working,
-        label: say('common.releaseChosen'),
+        label: REQUEST_STATE_NAMES.chosen,
         detail: item.releaseTitle,
       };
     case 'downloading':
@@ -58,9 +59,9 @@ const describeItemBadge = (
         help: docsFor(item.problemCode),
       };
     case 'filed':
-      return { ...STATUS_LOOK.working, label: say('common.filed'), detail: null };
+      return { ...STATUS_LOOK.working, label: REQUEST_STATE_NAMES.filed, detail: null };
     case 'available':
-      return { ...STATUS_LOOK.done, label: say('common.available'), detail: null };
+      return { ...STATUS_LOOK.done, label: REQUEST_STATE_NAMES.available, detail: null };
     case 'failed':
       return {
         ...STATUS_LOOK.failed,

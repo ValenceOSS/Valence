@@ -239,7 +239,35 @@ describe('AskPage', () => {
     await userEvent.press(drawn.getByRole('button', { name: 'Season 3 · 10 episodes' }));
     await userEvent.press(drawn.getByRole('button', { name: 'Request 1 season' }));
 
-    expect(askForMedia).toHaveBeenCalledWith({ kind: 'series', tmdbId: 438631, seasons: [2] });
+    expect(askForMedia).toHaveBeenCalledWith({
+      kind: 'series',
+      tmdbId: 438631,
+      seasons: [2],
+      followsNewSeasons: true,
+    });
+  });
+
+  it('leaves Specials for whoever wants them, and asks without new seasons where told', async () => {
+    const drawn = await drawAsk(
+      aCacheHolding({
+        kind: 'series',
+        title: aTitle({ kind: 'series' }),
+        seasons: [aSeason(0, 'askable'), aSeason(1, 'askable')],
+      }),
+      { kind: 'series' },
+    );
+
+    expect(drawn.getByRole('button', { name: 'Request 1 season' })).toBeTruthy();
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Get new seasons as they come' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Request 1 season' }));
+
+    expect(askForMedia).toHaveBeenCalledWith({
+      kind: 'series',
+      tmdbId: 438631,
+      seasons: [1],
+      followsNewSeasons: false,
+    });
   });
 
   it('offers no request once every season is unchosen', async () => {
@@ -274,7 +302,7 @@ describe('AskPage', () => {
       }),
     );
 
-    expect(drawn.getByText('Requested')).toBeTruthy();
+    expect(drawn.getByText('Missing')).toBeTruthy();
 
     await userEvent.press(drawn.getByRole('button', { name: 'Cancel request' }));
 

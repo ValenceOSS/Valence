@@ -5,6 +5,8 @@ type SeasonListProps = {
   note: string | null;
   isFollowing: boolean;
   onFollow: (season: TitleSeason, isFollowed: boolean) => void;
+  followsNew?: boolean | null;
+  onFollowsNew?: (isOn: boolean) => void;
 };
 
 export type { SeasonListProps };

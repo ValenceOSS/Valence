@@ -135,6 +135,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
   const [chosen, setChosen] = useState<Chosen | null>(null);
   const [releaseTypes, setReleaseTypes] = useState<ReleaseType[]>(['album']);
   const [seasons, setSeasons] = useState<number[] | null>(null);
+  const [followsNew, setFollowsNew] = useState(true);
   const [isPickedByHand, setIsPickedByHand] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [isAsking, setIsAsking] = useState(false);
@@ -186,7 +187,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
           ...(chosen.musicBrainzId === null ? {} : { musicBrainzId: chosen.musicBrainzId }),
           ...(profileId === null ? {} : { profileId }),
           isPickedByHand,
-          ...(kind === 'series' ? { seasons } : {}),
+          ...(kind === 'series' ? { seasons, followsNewSeasons: followsNew } : {}),
           ...(kind === 'artist' ? { releaseTypes } : {}),
         };
 
@@ -377,6 +378,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
                 onClick={() => {
                   setChosen(null);
                   setSeasons(null);
+                  setFollowsNew(true);
                   setFound(null);
                 }}
               >
@@ -400,7 +402,13 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
             )}
 
             {kind !== 'series' || chosen.tmdbId === null ? null : (
-              <SeasonChooser tmdbId={chosen.tmdbId} seasons={seasons} onChange={setSeasons} />
+              <SeasonChooser
+                tmdbId={chosen.tmdbId}
+                seasons={seasons}
+                onChange={setSeasons}
+                followsNew={followsNew}
+                onFollowsNew={setFollowsNew}
+              />
             )}
 
             <FormField

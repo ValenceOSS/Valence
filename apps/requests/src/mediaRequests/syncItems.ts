@@ -1,3 +1,4 @@
+import { isSeasonWanted } from '@ValenceRequests/mediaRequests/isSeasonWanted';
 import { releaseDateOf } from '@ValenceRequests/mediaRequests/releaseDateOf';
 import type { ReleaseWait } from '@ValenceContracts/schemas/QualityProfile';
 import type { HeldEpisode, RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
@@ -48,7 +49,14 @@ const isHeld = (
 const wantedOf = (
   request: Pick<
     MediaRequestRecord,
-    'kind' | 'title' | 'seasons' | 'releaseDates' | 'musicBrainzId' | 'releaseTypes'
+    | 'kind'
+    | 'title'
+    | 'seasons'
+    | 'followsNewSeasons'
+    | 'followsAfter'
+    | 'releaseDates'
+    | 'musicBrainzId'
+    | 'releaseTypes'
   >,
   catalogue: Pick<RequestCatalogue, 'episodes' | 'albums'>,
   waitFor: ReleaseWait,
@@ -68,9 +76,7 @@ const wantedOf = (
       ];
     case 'series':
       return catalogue.episodes
-        .filter((episode) =>
-          request.seasons === null ? episode.season > 0 : request.seasons.includes(episode.season),
-        )
+        .filter((episode) => isSeasonWanted(request, episode.season))
         .map(({ season, episode, title, airDate }) => ({
           musicBrainzId: null,
           season,
@@ -111,8 +117,8 @@ const wantedOf = (
 
 /**
  * Brings what a request waits for into line with what it asks for and what the catalogue now says:
- * a film is one thing, held until its release; a series is each episode of the seasons asked for —
- * every regular season, and any that come later, where none were named — each held until it airs;
+ * a film is one thing, held until its release; a series is each episode of the seasons it wants,
+ * each held until it airs;
  * an artist is each of their albums of the kinds asked for, and any that come later; an album is
  * itself. Something the catalogue has renamed or re-dated is changed, and something no longer asked
  * for is let go, unless it is on its way or here already. An episode the library already holds is
@@ -128,7 +134,14 @@ const wantedOf = (
 const syncItems = (
   request: Pick<
     MediaRequestRecord,
-    'kind' | 'title' | 'seasons' | 'releaseDates' | 'musicBrainzId' | 'releaseTypes'
+    | 'kind'
+    | 'title'
+    | 'seasons'
+    | 'followsNewSeasons'
+    | 'followsAfter'
+    | 'releaseDates'
+    | 'musicBrainzId'
+    | 'releaseTypes'
   >,
   catalogue: Pick<RequestCatalogue, 'episodes' | 'albums'>,
   items: readonly RequestItemRecord[],

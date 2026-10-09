@@ -1,4 +1,4 @@
-import { describeRequestBadge } from '@ValenceClient/requests/describeRequestBadge';
+import { isYetToComeOut } from '@ValenceClient/requests/isYetToComeOut';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 
 const REQUEST_SHELVES = ['approve', 'progress', 'coming', 'wanted', 'here', 'refused'] as const;
@@ -28,7 +28,7 @@ const shelfOfRequest = (
     case 'failed':
       return 'wanted';
     case 'waiting':
-      return describeRequestBadge(request, today).label === 'Not out yet' ? 'coming' : 'progress';
+      return isYetToComeOut(request, today) ? 'coming' : 'progress';
     case 'searching':
     case 'chosen':
     case 'downloading':

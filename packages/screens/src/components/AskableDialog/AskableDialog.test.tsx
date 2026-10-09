@@ -10,9 +10,12 @@ import type * as Requests from '@ValenceClient/requests/fetchMediaRequests';
 import type { ProfilesOnOffer } from '@ValenceContracts/schemas/QualityProfile';
 import type * as Linked from '@ValenceClient/linking/askLinkedServer';
 import type { LinkedServerFace } from '@ValenceContracts/schemas/LinkSharing';
+import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
+import { aRequestItem } from '@ValenceClient/testing/aRequestItem';
 import { aLinkedServerFace } from '@ValenceClient/testing/aLinkedServerFace';
 
 const fetchAskable = vi.fn<typeof Askable.fetchAskable>();
+const requested = vi.hoisted((): { requests: MediaRequest[] } => ({ requests: [] }));
 const askForMedia = vi.fn<typeof Requests.askForMedia>();
 const fetchProfilesOnOffer = vi.fn<() => Promise<ProfilesOnOffer>>();
 
@@ -40,6 +43,7 @@ vi.mock('@ValenceClient/linking/askLinkedServer', () => ({
 
 vi.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
   askForMedia: (...given: Parameters<typeof Requests.askForMedia>) => askForMedia(...given),
+  fetchMediaRequests: () => Promise.resolve(requested.requests),
   fetchSeriesSeasons: () =>
     Promise.resolve([
       { season: 1, episodeCount: 9, firstAired: '2022-02-18', standing: 'askable' },
@@ -73,6 +77,7 @@ const aTitle = (overrides: Partial<CatalogueTitleDetail> = {}): CatalogueTitleDe
 });
 
 beforeEach(() => {
+  requested.requests = [];
   fetchAskable.mockReset().mockResolvedValue(aTitle());
   askForMedia.mockReset().mockResolvedValue({ value: aMediaRequest(), refusal: null });
   fetchProfilesOnOffer.mockReset().mockResolvedValue({ choices: [], forcedId: null });
@@ -281,7 +286,78 @@ describe('AskableDialog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Request' }));
 
     await waitFor(() => {
-      expect(askForMedia).toHaveBeenCalledWith({ kind: 'series', tmdbId: 95396, seasons: [2] });
+      expect(askForMedia).toHaveBeenCalledWith({
+        kind: 'series',
+        tmdbId: 95396,
+        seasons: [2],
+        followsNewSeasons: true,
+      });
+    });
+  });
+
+  it('asks for a series without new seasons where they are not wanted', async () => {
+    fetchAskable.mockResolvedValue(aTitle({ kind: 'series', id: '95396', title: 'Severance' }));
+
+    open('series:95396');
+
+    await userEvent.click(
+      await screen.findByRole('switch', { name: 'Get new seasons as they come' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Request' }));
+
+    await waitFor(() => {
+      expect(askForMedia).toHaveBeenCalledWith({
+        kind: 'series',
+        tmdbId: 95396,
+        seasons: null,
+        followsNewSeasons: false,
+      });
+    });
+  });
+
+  it('adds seasons to a series already asked for', async () => {
+    const request = aMediaRequest({
+      id: '6ba7b810-9dad-11d1-80b4-00c04fd43011',
+      kind: 'series',
+      tmdbId: 95396,
+      seasons: [1],
+      items: [aRequestItem({ season: 1, episode: 1 })],
+    });
+
+    requested.requests = [request];
+    fetchAskable.mockResolvedValue(
+      aTitle({
+        kind: 'series',
+        id: '95396',
+        title: 'Severance',
+        standing: {
+          status: 'requested',
+          mediaId: null,
+          requestId: request.id,
+          requestState: 'waiting',
+        },
+      }),
+    );
+
+    open('series:95396');
+
+    const first = await screen.findByRole('switch', { name: 'Season 1' });
+
+    await waitFor(() => {
+      expect(first).toBeDisabled();
+    });
+    expect(screen.getByRole('button', { name: 'Add seasons' })).toBeDisabled();
+
+    await userEvent.click(screen.getByRole('switch', { name: 'Season 2' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add seasons' }));
+
+    await waitFor(() => {
+      expect(askForMedia).toHaveBeenCalledWith({
+        kind: 'series',
+        tmdbId: 95396,
+        seasons: [2],
+        followsNewSeasons: false,
+      });
     });
   });
 

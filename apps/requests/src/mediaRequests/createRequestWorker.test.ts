@@ -1691,10 +1691,45 @@ describe('createRequestWorker', () => {
         ],
       });
 
-      expect(await worker.dropDownloads(aMediaRequest().id)).toBe(1);
+      const unfinished = await worker.unfinishedDownloadsOf(aMediaRequest().id);
+
+      expect(unfinished).toEqual([aSentDownload().id]);
+      expect(await worker.unfinishedDownloadsOf('someone-else')).toEqual([]);
+      expect(await worker.dropDownloads(unfinished)).toBe(1);
       expect(remove).toHaveBeenCalledTimes(1);
       expect(remove).toHaveBeenCalledWith(aSentDownload().id, true);
-      expect(await worker.dropDownloads('someone-else')).toBe(0);
+    });
+
+    it('blocks the release of a download removed by hand for the request it was fetched for', async () => {
+      const { worker, blocked } = aWorker({
+        items: [aRequestItem({ state: 'downloading', downloadId: aSentDownload().id })],
+        sent: [aSentDownload()],
+      });
+
+      expect(await worker.blockDownload(aSentDownload().id)).toBe(1);
+      expect(await blocked.list()).toMatchObject([
+        { requestId: aMediaRequest().id, title: aSentDownload().title },
+      ]);
+      expect(await worker.blockDownload('fetched-for-nobody')).toBe(0);
+    });
+
+    it('sends nothing for a request cancelled or declined while it was searched for', async () => {
+      const held: { harness: ReturnType<typeof aWorker> | null } = { harness: null };
+      const harness = aWorker({
+        profiles: [aProfile({ sources: ['bluray', 'webdl'], libraryIds: ['films'] })],
+        items: [aRequestItem({ state: 'waiting' })],
+        found: () => {
+          void held.harness?.requests.update(aMediaRequest().id, { approval: 'refused' });
+
+          return [aRelease(WEB), aRelease(BLURAY)];
+        },
+      });
+
+      held.harness = harness;
+
+      await harness.worker.tick();
+
+      expect(harness.send).not.toHaveBeenCalled();
     });
 
     it('sends the release an admin picked, whatever it is called', async () => {

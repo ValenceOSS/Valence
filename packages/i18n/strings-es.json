@@ -1290,11 +1290,6 @@
     "context": "The detail in the requests (from `describeItemBadge`). {airDate} is filled in by the app."
   },
   {
-    "handler": "client.requests.describeRequestBadge.awaitingApproval",
-    "text": "Awaiting approval",
-    "context": "The label in the requests (from `describeRequestBadge`)."
-  },
-  {
     "handler": "client.requests.describeRequestBadge.booksAreAddedToTheLibrary",
     "text": "Books are added to the library manually. It’ll appear here once it’s been added.",
     "context": "The detail in the requests (from `describeRequestBadge`)."
@@ -1688,6 +1683,11 @@
     "handler": "common.address",
     "text": "Address",
     "context": "The label of a text field, used in several places, among them the accounts panel in the admin area and the download client dialog in the admin area."
+  },
+  {
+    "handler": "common.addSeasons",
+    "text": "Add seasons",
+    "context": "The button on a show's request page, on the web and phone, that asks for the seasons ticked on top of those already asked for."
   },
   {
     "handler": "common.addSongsToItFromThe",
@@ -2896,11 +2896,6 @@
     "context": "Shown, used in several places, among them the title of the phone app and the requests (from `describeItemBadge`)."
   },
   {
-    "handler": "common.downloadingToLibrary",
-    "text": "Downloading to library",
-    "context": "Shown, used in several places, among them the request card in the account of the television app and the ask page of the television app."
-  },
-  {
     "handler": "common.downloads",
     "text": "Downloads",
     "context": "The label, used in several places, among them the signed in of the phone app and the downloads of the phone app."
@@ -3126,9 +3121,9 @@
     "context": "In the record of what a linked server asked for: refused, because it asked too many times in a minute."
   },
   {
-    "handler": "common.filed",
-    "text": "Imported",
-    "context": "The label, used in the requests (from `describeItemBadge`) and in the requests (from `describeRequestBadge`)."
+    "handler": "common.fetchesEachNewSeasonAsIt",
+    "text": "Fetches each new season as it airs. Specials are only fetched when ticked.",
+    "context": "The description under the 'Get new seasons as they come' switch when asking for a show, on the web and phone."
   },
   {
     "handler": "common.files",
@@ -3284,6 +3279,11 @@
     "handler": "common.getAFreeKey",
     "text": "Get a free key",
     "context": "The label of a button, used in the admin setup guide in the admin area and in the settings panel in the admin area."
+  },
+  {
+    "handler": "common.getNewSeasonsAsTheyCome",
+    "text": "Get new seasons as they come",
+    "context": "The label of a switch beside a show's seasons when asking for it, on the web, phone and TV, which also fetches each season that airs later. Specials are never part of it."
   },
   {
     "handler": "common.goBack",
@@ -6465,11 +6465,6 @@
     "context": "Shown, used in the admin (from `describeReencodeState`) and in the encoding panel in the admin area."
   },
   {
-    "handler": "common.wanted",
-    "text": "Wanted",
-    "context": "The label, used in several places, among them the requests (from `describeItemBadge`) and the requests (from `describeRequestBadge`)."
-  },
-  {
     "handler": "common.warnings",
     "text": "Warnings",
     "context": "The name, used in the stream stats in the player of the television app and in the admin (from `describeLogLevel`)."
@@ -9045,11 +9040,6 @@
     "context": "A message in an alert in the askable of the phone app."
   },
   {
-    "handler": "phone.anAskable.theSeasons.andAnyStillToCome",
-    "text": "Include future seasons",
-    "context": "Text shown in the seasons in the askable of the phone app."
-  },
-  {
     "handler": "phone.aPlaylist.thatPlaylistCouldNotBeRead",
     "text": "Couldn’t load that playlist.",
     "context": "Text shown in the playlist of the phone app."
@@ -10683,6 +10673,11 @@
     "handler": "requests.mediaRequests.requestWorker.reasonTryingTheNextBestRelease",
     "text": "{reason}. Trying the next best release.",
     "context": "Shown in the media requests in the requests service (from `createRequestWorker`). {reason} is filled in by the app."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.removedFromTheDownloads",
+    "text": "Removed from the downloads",
+    "context": "Why a release won't be fetched again for a request, shown in its blocklist ('Never again') on the admin title page, after an admin removed its download from Requests › Downloads."
   },
   {
     "handler": "requests.mediaRequests.requestWorker.replacedByTitlePickedByHand",
@@ -17640,6 +17635,16 @@
     "context": "A note above a show’s seasons. {folder} is the show’s folder."
   },
   {
+    "handler": "screens.adminArea.titlePage.newSeasonsOfTitleAreFetched",
+    "text": "New seasons of {title} are fetched as they air",
+    "context": "Shown on a show's admin page once 'Get new seasons as they come' is turned on. {title} is the show."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.newSeasonsOfTitleAreNoLonger",
+    "text": "New seasons of {title} are no longer fetched",
+    "context": "Shown on a show's admin page once 'Get new seasons as they come' is turned off. {title} is the show."
+  },
+  {
     "handler": "screens.adminArea.titlePage.noLongerFollowingName",
     "text": "No longer following {name}",
     "context": "Said once a season or album is no longer followed. {name} is what."
@@ -23659,11 +23664,6 @@
     "handler": "screens.seasonChooser.chosenOfSeasons.other",
     "text": "{length} of {count} seasons.",
     "context": "How many of a series' seasons are chosen. {length} is how many are chosen; {count} is how many there are."
-  },
-  {
-    "handler": "screens.seasonChooser.everySeasonAndAnyThatCome",
-    "text": "All seasons, including future ones.",
-    "context": "Shown in the season chooser."
   },
   {
     "handler": "screens.seasonChooser.firstAired",

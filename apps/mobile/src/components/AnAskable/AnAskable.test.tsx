@@ -1,10 +1,11 @@
 import { Alert } from 'react-native';
-import { render, userEvent, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { askForMedia, removeMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
 import { fetchSession } from '@ValenceClient/session/auth';
 import { aCatalogueTitleDetail } from '@ValenceClient/testing/aCatalogueTitleDetail';
 import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
+import { aRequestItem } from '@ValenceClient/testing/aRequestItem';
 import { askLinkedServer } from '@ValenceClient/linking/askLinkedServer';
 import { aLinkedServerFace } from '@ValenceClient/testing/aLinkedServerFace';
 import type { LinkedServerFace } from '@ValenceContracts/schemas/LinkSharing';
@@ -71,9 +72,14 @@ const answering = ({
           ? Response.json(offered)
           : theAddressOf(input).endsWith('/api/requests/media')
             ? Response.json(requests)
-            : theAddressOf(input).endsWith('/api/linked-servers/faces')
-              ? Response.json({ servers: faces })
-              : Response.json([]),
+            : theAddressOf(input).endsWith('/seasons')
+              ? Response.json([
+                  { season: 1, episodeCount: 9, firstAired: '2022-02-18', standing: 'requested' },
+                  { season: 2, episodeCount: 10, firstAired: '2025-01-17', standing: 'askable' },
+                ])
+              : theAddressOf(input).endsWith('/api/linked-servers/faces')
+                ? Response.json({ servers: faces })
+                : Response.json([]),
     ),
   );
 };
@@ -197,6 +203,44 @@ describe('AnAskable', () => {
     expect(removeMediaRequest).toHaveBeenCalledWith(REQUEST_ID, true);
   });
 
+  it('adds seasons to a programme already asked for', async () => {
+    answering({
+      standing: {
+        status: 'requested',
+        mediaId: null,
+        requestId: REQUEST_ID,
+        requestState: 'wanted',
+      },
+      requests: [
+        aMediaRequest({
+          id: REQUEST_ID,
+          kind: 'series',
+          tmdbId: 95396,
+          seasons: [1],
+          items: [aRequestItem({ season: 1, episode: 1 })],
+        }),
+      ],
+    });
+
+    const drawn = await render(
+      around(<AnAskable kind="series" id="95396" onOpen={jest.fn()} onBack={jest.fn()} />),
+    );
+
+    await waitFor(async () => {
+      expect(await drawn.findByRole('switch', { name: 'Season 1' })).toBeDisabled();
+    });
+
+    await fireEvent(drawn.getByRole('switch', { name: 'Season 2' }), 'valueChange', true);
+    await userEvent.press(drawn.getByRole('button', { name: 'Add seasons' }));
+
+    expect(askForMedia).toHaveBeenCalledWith({
+      kind: 'series',
+      tmdbId: 95396,
+      seasons: [2],
+      followsNewSeasons: false,
+    });
+  });
+
   it('does not offer to take back somebody else’s request', async () => {
     answering({
       standing: {
@@ -210,7 +254,7 @@ describe('AnAskable', () => {
 
     const drawn = await drawIt();
 
-    await drawn.findByText('Requested');
+    await drawn.findByText('Missing');
 
     expect(drawn.queryByRole('button', { name: 'Cancel request' })).toBeNull();
   });

@@ -68,7 +68,7 @@ describe('CalendarMonthNarrow', () => {
     expect(screen.getByText('A Film')).toBeInTheDocument();
     expect(screen.getByText('On disc')).toBeInTheDocument();
     expect(screen.getByText('Sam')).toBeInTheDocument();
-    expect(screen.getByText('Wanted')).toBeInTheDocument();
+    expect(screen.getByText('Missing')).toBeInTheDocument();
     expect(screen.queryByText('Later Show')).not.toBeInTheDocument();
   });
 

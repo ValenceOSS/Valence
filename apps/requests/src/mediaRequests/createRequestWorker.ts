@@ -388,6 +388,12 @@ const createRequestWorker = ({
     }
   };
 
+  const isStillWanted = async (id: string): Promise<boolean> => {
+    const request = await requests.find(id);
+
+    return request !== null && request.approval !== 'refused';
+  };
+
   const isUpgradable = (profile: QualityProfile, item: RequestItemRecord): boolean =>
     !item.isPickedByHand &&
     (item.state === 'available' || item.state === 'filed') &&
@@ -405,6 +411,10 @@ const createRequestWorker = ({
 
     if (url === null) {
       return saying('requests.mediaRequests.requestWorker.theReleaseHasNoLinkTo');
+    }
+
+    if (!(await isStillWanted(request.id))) {
+      return null;
     }
 
     for (const item of holding) {
@@ -434,6 +444,12 @@ const createRequestWorker = ({
       }
 
       return sent.refused;
+    }
+
+    if (!(await isStillWanted(request.id))) {
+      await queue.remove(sent.id, true).catch(() => false);
+
+      return null;
     }
 
     for (const item of holding) {
@@ -1479,25 +1495,25 @@ const createRequestWorker = ({
 
     pollFeeds,
 
-    dropDownloads: (id: string): Promise<number> =>
-      serially(async () => {
-        const unfinished = [
-          ...new Set(
-            (await items.list()).flatMap((item) =>
-              item.requestId === id &&
-              item.downloadId !== null &&
-              (item.state === 'chosen' || item.state === 'downloading' || item.state === 'filing')
-                ? [item.downloadId]
-                : [],
-            ),
-          ),
-        ];
+    unfinishedDownloadsOf: async (id: string): Promise<string[]> => [
+      ...new Set(
+        (await items.list()).flatMap((item) =>
+          item.requestId === id &&
+          item.downloadId !== null &&
+          (item.state === 'chosen' || item.state === 'downloading' || item.state === 'filing')
+            ? [item.downloadId]
+            : [],
+        ),
+      ),
+    ],
 
-        for (const downloadId of unfinished) {
+    dropDownloads: (downloadIds: readonly string[]): Promise<number> =>
+      serially(async () => {
+        for (const downloadId of downloadIds) {
           await queue.remove(downloadId, true).catch(() => false);
         }
 
-        return unfinished.length;
+        return downloadIds.length;
       }),
 
     stopDownload: (
@@ -1552,6 +1568,26 @@ const createRequestWorker = ({
 
         return after === null ? null : showMediaRequest(after.request, after.items);
       }),
+
+    blockDownload: async (downloadId: string): Promise<number> => {
+      const download = await downloads.find(downloadId);
+      const held = (await items.list()).filter((item) => item.downloadId === downloadId);
+      const requestIds = [...new Set(held.map((item) => item.requestId))];
+
+      for (const requestId of requestIds) {
+        await block(
+          requestId,
+          download?.title ??
+            held.find((item) => item.requestId === requestId)?.releaseTitle ??
+            null,
+          held.find((item) => item.requestId === requestId)?.indexerId ?? null,
+          saying('requests.mediaRequests.requestWorker.removedFromTheDownloads'),
+          download === null ? null : hashOfDownload(download),
+        );
+      }
+
+      return requestIds.length;
+    },
 
     deleteFiled: (id: string): Promise<string[]> =>
       serially(async () => {

@@ -56,7 +56,7 @@ describe('YourRequests', () => {
     );
 
     expect(drawn.getByText('Your requests')).toBeTruthy();
-    expect(drawn.getByRole('button', { name: 'Dune, Requested' })).toBeTruthy();
+    expect(drawn.getByRole('button', { name: 'Dune, Missing' })).toBeTruthy();
     expect(drawn.queryByText('Arrival')).toBeNull();
     expect(drawn.queryByText('Blue')).toBeNull();
   });
@@ -80,7 +80,7 @@ describe('YourRequests', () => {
       </QueryClientProvider>,
     );
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Dune, Requested' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Dune, Missing' }));
 
     expect(onOpen).toHaveBeenCalledWith(mine);
   });

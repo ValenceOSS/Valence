@@ -1,3 +1,4 @@
+import type { z } from 'zod';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { saying } from '@ValenceI18n/saying';
 import { randomUUID } from 'node:crypto';
@@ -14,6 +15,9 @@ import {
 import { chooseProfile } from '@ValenceRequests/mediaRequests/chooseProfile';
 import { itemFromDraft } from '@ValenceRequests/mediaRequests/itemFromDraft';
 import { recordFromDraft } from '@ValenceRequests/mediaRequests/recordFromDraft';
+import { highestSeasonOf } from '@ValenceRequests/mediaRequests/highestSeasonOf';
+import { rebaseSeasons } from '@ValenceRequests/mediaRequests/rebaseSeasons';
+import { seasonsChosen } from '@ValenceRequests/mediaRequests/seasonsChosen';
 import { requestFactsOf } from '@ValenceRequests/mediaRequests/requestFactsOf';
 import { showMediaRequest } from '@ValenceRequests/mediaRequests/showMediaRequest';
 import { syncItems } from '@ValenceRequests/mediaRequests/syncItems';
@@ -72,6 +76,34 @@ const bothSeasons = (kept: number[] | null, asked: number[] | null): number[] | 
   kept === null || asked === null
     ? null
     : [...new Set([...kept, ...asked])].toSorted((left, right) => left - right);
+
+/**
+ * The seasons a series is asked for once a later ask is added to the request already kept for it:
+ * the seasons of both, new seasons followed where either follows them, and the seasons the kept one
+ * was following said against the catalogue now, so none of them is let go.
+ *
+ * @param kept - The request kept.
+ * @param draft - What is asked now.
+ * @returns The seasons, and how new ones are followed.
+ */
+const bothChoices = (
+  kept: MediaRequestRecord,
+  draft: Pick<
+    z.infer<typeof MediaRequestDraftSchema>,
+    'seasons' | 'followsNewSeasons' | 'catalogue'
+  >,
+): Pick<MediaRequestRecord, 'seasons' | 'followsNewSeasons' | 'followsAfter'> => {
+  const base = rebaseSeasons(kept, draft.catalogue.episodes);
+
+  return {
+    seasons: bothSeasons(
+      base.seasons,
+      seasonsChosen(draft.seasons, draft.followsNewSeasons, draft.catalogue.episodes),
+    ),
+    followsNewSeasons: base.followsNewSeasons || draft.followsNewSeasons,
+    followsAfter: base.followsAfter,
+  };
+};
 
 /**
  * What a series request learns from what the library already holds of it: where the library keeps
@@ -145,8 +177,13 @@ const createRequestService = ({
     held: HeldInLibrary | null = null,
   ) => {
     const at = now().toISOString();
+    const highest = record.kind === 'series' ? highestSeasonOf(catalogue.episodes) : null;
+    const known =
+      record.followsAfter === null && highest !== null
+        ? ((await requests.update(record.id, { followsAfter: highest })) ?? record)
+        : record;
     const { add, change, remove, arrive } = syncItems(
-      record,
+      known,
       catalogue,
       await itemsOf(record.id),
       chooseProfile(record, await profiles.list())?.releaseWait,
@@ -224,7 +261,7 @@ const createRequestService = ({
       if (kept !== undefined) {
         const merged = await requests.update(kept.id, {
           ...requestFactsOf(draft.catalogue),
-          seasons: kept.kind === 'series' ? bothSeasons(kept.seasons, draft.seasons) : null,
+          ...(kept.kind === 'series' ? bothChoices(kept, draft) : { seasons: null }),
           ...(kept.kind === 'artist' && draft.releaseTypes !== null
             ? { releaseTypes: bothReleaseTypes(kept.releaseTypes, draft.releaseTypes) }
             : {}),
@@ -276,8 +313,25 @@ const createRequestService = ({
         return null;
       }
 
+      const choosesSeasons =
+        kept.kind === 'series' &&
+        (change.seasons !== undefined || change.followsNewSeasons !== undefined);
+      const base = catalogue === null ? kept : rebaseSeasons(kept, catalogue.episodes);
       const record = await requests.update(id, {
-        ...(change.seasons === undefined ? {} : { seasons: change.seasons }),
+        ...(choosesSeasons
+          ? {
+              seasons:
+                change.seasons === undefined
+                  ? base.seasons
+                  : seasonsChosen(
+                      change.seasons,
+                      change.followsNewSeasons ?? base.followsNewSeasons,
+                      catalogue?.episodes ?? [],
+                    ),
+              followsNewSeasons: change.followsNewSeasons ?? base.followsNewSeasons,
+              followsAfter: base.followsAfter,
+            }
+          : {}),
         ...(change.releaseTypes === undefined ? {} : { releaseTypes: change.releaseTypes }),
         ...(change.profileId === undefined ? {} : { profileId: change.profileId }),
         ...(change.isPickedByHand === undefined ? {} : { isPickedByHand: change.isPickedByHand }),

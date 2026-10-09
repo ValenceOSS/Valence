@@ -18,10 +18,12 @@ beforeEach(() => {
   );
 });
 
+const SHOW = { tmdbId: 1399, followsNew: true, onFollowsNew: jest.fn() };
+
 describe('TheSeasons', () => {
   it('lists each season with what it holds and where it stands', async () => {
     const drawn = await render(
-      around(<TheSeasons tmdbId={1399} seasons={null} onChange={jest.fn()} />),
+      around(<TheSeasons {...SHOW} seasons={null} onChange={jest.fn()} />),
     );
 
     expect(await drawn.findByText('10 episodes · 2011 · In the library')).toBeTruthy();
@@ -29,7 +31,7 @@ describe('TheSeasons', () => {
 
   it('ticks every season where every season is asked for', async () => {
     const drawn = await render(
-      around(<TheSeasons tmdbId={1399} seasons={null} onChange={jest.fn()} />),
+      around(<TheSeasons {...SHOW} seasons={null} onChange={jest.fn()} />),
     );
 
     expect(await drawn.findByRole('switch', { name: 'Season 2', checked: true })).toBeTruthy();
@@ -37,9 +39,7 @@ describe('TheSeasons', () => {
 
   it('unticks one out of every season', async () => {
     const onChange = jest.fn();
-    const drawn = await render(
-      around(<TheSeasons tmdbId={1399} seasons={null} onChange={onChange} />),
-    );
+    const drawn = await render(around(<TheSeasons {...SHOW} seasons={null} onChange={onChange} />));
 
     await fireEvent(await drawn.findByRole('switch', { name: 'Season 2' }), 'valueChange', false);
 
@@ -48,7 +48,7 @@ describe('TheSeasons', () => {
 
   it('locks a season the library already holds whole', async () => {
     const drawn = await render(
-      around(<TheSeasons tmdbId={1399} seasons={null} onChange={jest.fn()} />),
+      around(<TheSeasons {...SHOW} seasons={null} onChange={jest.fn()} />),
     );
 
     const held = await drawn.findByRole('switch', { name: 'Season 1' });
@@ -57,11 +57,47 @@ describe('TheSeasons', () => {
     expect(held).not.toBeChecked();
   });
 
+  it('gets new seasons as they come as a choice of its own', async () => {
+    const onFollowsNew = jest.fn();
+    const drawn = await render(
+      around(
+        <TheSeasons {...SHOW} seasons={null} onChange={jest.fn()} onFollowsNew={onFollowsNew} />,
+      ),
+    );
+
+    await fireEvent(
+      await drawn.findByRole('switch', { name: 'Get new seasons as they come' }),
+      'valueChange',
+      false,
+    );
+
+    expect(onFollowsNew).toHaveBeenCalledWith(false);
+  });
+
+  it('locks on the seasons a request already asks for, adding to it', async () => {
+    const drawn = await render(
+      around(
+        <TheSeasons
+          {...SHOW}
+          seasons={[]}
+          onChange={jest.fn()}
+          followsNew={false}
+          alreadyAsked={[2]}
+          isFollowedAlready
+        />,
+      ),
+    );
+
+    const asked = await drawn.findByRole('switch', { name: 'Season 2' });
+
+    expect(asked).toBeChecked();
+    expect(asked).toBeDisabled();
+    expect(drawn.getByRole('switch', { name: 'Get new seasons as they come' })).toBeDisabled();
+  });
+
   it('takes none where every season is turned off', async () => {
     const onChange = jest.fn();
-    const drawn = await render(
-      around(<TheSeasons tmdbId={1399} seasons={null} onChange={onChange} />),
-    );
+    const drawn = await render(around(<TheSeasons {...SHOW} seasons={null} onChange={onChange} />));
 
     await fireEvent(
       await drawn.findByRole('switch', { name: 'Every season' }),

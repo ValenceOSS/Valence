@@ -36,6 +36,13 @@
       "when": 1791508230455,
       "tag": "0004_blocks_by_hash_and_follows",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1791513331793,
+      "tag": "0005_requests_follow_new_seasons",
+      "breakpoints": true
     }
   ]
 }

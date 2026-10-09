@@ -5,9 +5,9 @@ import type { CalendarState } from '@ValenceContracts/schemas/ReleaseCalendar';
 
 describe('CalendarStateSign', () => {
   it.each<[CalendarState, string]>([
-    ['available', 'Available'],
+    ['available', 'In the library'],
     ['downloading', 'Downloading'],
-    ['wanted', 'Wanted'],
+    ['wanted', 'Missing'],
     ['notOutYet', 'Not out yet'],
     ['notHeld', 'Not in the library'],
   ])('says %s in words for a screen reader', (state, said) => {

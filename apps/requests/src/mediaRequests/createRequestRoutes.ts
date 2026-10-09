@@ -29,6 +29,7 @@ type CreateRequestRoutesOptions = {
     | 'releasesForDraft'
     | 'pick'
     | 'dropDownloads'
+    | 'unfinishedDownloadsOf'
     | 'stopDownload'
     | 'deleteFiled'
     | 'blockedFor'
@@ -59,19 +60,35 @@ const createRequestRoutes = ({ service, log, worker }: CreateRequestRoutesOption
     shown === null ? Response.json(NO_SUCH_REQUEST, { status: 404 }) : Response.json(shown);
 
   /**
+   * Stops downloads once whatever the worker is doing has finished, without waiting for it, so
+   * a long search never holds up whoever asked.
+   *
+   * @param downloadIds - The downloads.
+   */
+  const dropLater = (downloadIds: readonly string[]) => {
+    if (downloadIds.length > 0) {
+      void worker.dropDownloads(downloadIds).catch(() => 0);
+    }
+  };
+
+  /**
    * Refuses a request, stopping whatever it was already downloading, files and all, so a refusal
-   * after approval leaves nothing running.
+   * after approval leaves nothing running. It answers at once, and the downloads stop once the
+   * worker is free.
    *
    * @param id - The request.
    * @param reason - Why, for whoever asked.
    * @returns The request, or nothing where there is no such request.
    */
   const refuseAndStop = async (id: string, reason: string) => {
-    if ((await service.find(id)) !== null) {
-      await worker.dropDownloads(id);
+    const unfinished = await worker.unfinishedDownloadsOf(id);
+    const refused = await service.refuse(id, reason);
+
+    if (refused !== null) {
+      dropLater(unfinished);
     }
 
-    return service.refuse(id, reason);
+    return refused;
   };
 
   routes.get('/requests', async (context) => context.json(await service.list()));
@@ -121,14 +138,16 @@ const createRequestRoutes = ({ service, log, worker }: CreateRequestRoutesOption
 
   routes.delete('/requests/:id', async (context) => {
     const id = context.req.param('id');
+    const unfinished =
+      context.req.query('deleteDownloads') === 'true' ? await worker.unfinishedDownloadsOf(id) : [];
 
-    if (context.req.query('deleteDownloads') === 'true' && (await service.find(id)) !== null) {
-      await worker.dropDownloads(id);
+    if (!(await service.remove(id))) {
+      return context.json(NO_SUCH_REQUEST, 404);
     }
 
-    return (await service.remove(id))
-      ? context.body(null, 204)
-      : context.json(NO_SUCH_REQUEST, 404);
+    dropLater(unfinished);
+
+    return context.body(null, 204);
   });
 
   routes.post('/requests/:id/approve', async (context) =>

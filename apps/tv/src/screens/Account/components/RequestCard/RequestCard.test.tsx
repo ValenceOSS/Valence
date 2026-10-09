@@ -25,8 +25,8 @@ describe('RequestCard', () => {
     );
 
     expect(drawn.getByText('Dune')).toBeTruthy();
-    expect(drawn.getByText('Requested')).toBeTruthy();
-    expect(drawn.getByRole('button', { name: 'Dune, Requested' })).toBeTruthy();
+    expect(drawn.getByText('Missing')).toBeTruthy();
+    expect(drawn.getByRole('button', { name: 'Dune, Missing' })).toBeTruthy();
   });
 
   it('says how far through a download it is', async () => {
@@ -62,7 +62,7 @@ describe('RequestCard', () => {
       <RequestCard request={request} going={null} onPress={onPress} onFocus={jest.fn()} />,
     );
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Dune, Requested' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Dune, Missing' }));
 
     expect(onPress).toHaveBeenCalledWith(request);
   });

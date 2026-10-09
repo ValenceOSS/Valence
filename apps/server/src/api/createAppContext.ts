@@ -1382,6 +1382,7 @@ const createAppContext = (options: CreateAppOptions) => {
         musicBrainzId: asked.musicBrainzId ?? null,
         openLibraryId: asked.openLibraryId ?? null,
         seasons: asked.seasons,
+        followsNewSeasons: asked.followsNewSeasons,
         releaseTypes:
           asked.releaseTypes ?? (isMusicRequest(asked.kind) ? await defaultReleaseTypes() : null),
         profileId: profileId ?? chosen.requestProfileId,

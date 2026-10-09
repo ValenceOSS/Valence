@@ -28,7 +28,7 @@ const TODAY = '2026-09-20';
 describe('describeSeasonBadge', () => {
   it('says a season with every episode here is available', () => {
     expect(describeSeasonBadge([episode('available'), episode('available')], TODAY)).toMatchObject({
-      label: 'Available',
+      label: 'In the library',
       tone: 'success',
     });
   });
@@ -41,7 +41,7 @@ describe('describeSeasonBadge', () => {
 
   it('says a season is wanted where an episode could not be found', () => {
     expect(describeSeasonBadge([episode('available'), episode('failed')], TODAY).label).toBe(
-      'Wanted',
+      'Missing',
     );
   });
 

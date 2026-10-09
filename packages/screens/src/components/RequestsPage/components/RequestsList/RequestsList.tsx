@@ -34,6 +34,7 @@ import { describeDownloadCost } from '@ValenceScreens/requests/describeDownloadC
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { RequestsListProps } from './RequestsList.types';
 import { say } from '@ValenceI18n/say';
+import { catalogueIdOfRequest } from '@ValenceClient/requests/catalogueIdOfRequest';
 
 /**
  * The requests on this server, newest first, with where each has got to — waiting on approval,
@@ -252,7 +253,7 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
                       onAsk(
                         askingOf({
                           kind: request.kind,
-                          id: request.musicBrainzId ?? request.tmdbId?.toString() ?? '',
+                          id: catalogueIdOfRequest(request),
                         }),
                       );
                     }}

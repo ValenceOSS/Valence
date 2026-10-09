@@ -28,6 +28,7 @@ const aMediaRequest = (overrides: Partial<MediaRequest> = {}): MediaRequest => (
   refusedBecause: null,
   requestedBy: { id: 'someone', name: 'Sam' },
   seasons: null,
+  followsNewSeasons: false,
   releaseTypes: null,
   releaseDate: '2021-12-03',
   releaseDates: { theatrical: '2021-10-22', digital: '2021-12-03', physical: '2022-01-11' },

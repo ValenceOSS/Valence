@@ -28,9 +28,11 @@ Which tab is open is kept in the address, so you can link straight to any of the
 1. Find a title on a shelf, or browse Movies, Shows, Music or Books.
 2. Open it. The dialog shows the poster, facts, cast and, for an artist, their albums.
 3. Choose **Request**. For an artist the button reads **Request this artist**.
-4. For a series you can choose which seasons you want; leaving it alone asks for every season. For an artist you can choose which kinds of release to watch (albums, EPs, singles, live records and compilations).
+4. For a series you can choose which seasons you want; leaving it alone asks for every season. Specials have their own switch and are fetched only when it's on. **Get new seasons as they come** fetches each season that airs later too, and is on unless you turn it off. For an artist you can choose which kinds of release to watch (albums, EPs, singles, live records and compilations).
 
-A title that is already in your library shows an **In your library** badge and an **Open** button instead. A title someone has already asked for shows where it stands (**Requested**, **Waiting for approval**, **Downloading**, **Downloading**, **Declined** or **Stalled**), so nobody asks twice.
+A series someone has already asked for lists its seasons with the ones already asked for switched on. Switch on more and choose **Add seasons** to add them to the same request.
+
+A title that is already in your library shows an **In your library** badge and an **Open** button instead. A title someone has already asked for shows where it stands (**Waiting for approval**, **Requested**, **Missing**, **Downloading**, **Importing**, **Declined** or **Failed**), so nobody asks twice.
 
 You need `requests.ask` to request films, series and books, and `requests.askMusic` to request artists and albums. Both are part of the default Member role.
 
@@ -39,7 +41,7 @@ You need `requests.ask` to request films, series and books, and `requests.askMus
 What happens next depends on who asked.
 
 - If you hold `requests.autoApprove`, your request is approved at once and the search starts immediately.
-- Otherwise it waits with the status **Awaiting approval** until somebody with `requests.approve` decides.
+- Otherwise it waits with the status **Waiting for approval** until somebody with `requests.approve` decides.
 
 Choosing a release by hand is a separate ability: only accounts with `requests.manage` can pick a specific release when asking.
 
@@ -59,24 +61,23 @@ When something you asked for lands in the library, you get an in-app notificatio
 
 ## Statuses
 
-A request's badge tells you where it stands. The same labels appear in the admin list and can be used to filter it.
+A request's badge tells you where it stands. The web, phone and TV apps, the admin area, the release calendar and webhooks all use the same words, and the requests list can be filtered by them.
 
-| Badge               | Meaning                                                                                       |
-| ------------------- | --------------------------------------------------------------------------------------------- |
-| Awaiting approval   | Nobody has decided yet. Nothing is fetched.                                                   |
-| Refused             | An administrator declined it, with a reason if they gave one. It can still be approved later. |
-| Looking it up       | For a series or artist, Valence is working out what there is to fetch.                        |
-| Queued to search    | It is out, and will be searched for in a moment.                                              |
-| Not out yet         | Held until the release date (or the next episode or album) the catalogue gives.               |
-| Wanted              | Searched for and not found. It is searched again every few hours.                             |
-| Searching           | An indexer search is running.                                                                 |
-| Release chosen      | A release has been picked and is about to be sent.                                            |
-| Downloading         | The download client is fetching it.                                                           |
-| Filing              | The download finished and is being placed into the library.                                   |
-| Filed               | In its library, waiting for the library to find it.                                           |
-| Available           | It is in the library.                                                                         |
-| Failed              | Something went wrong, with the reason shown.                                                  |
-| Waiting to be added | A book, which is added by hand.                                                               |
+| Badge                | Meaning                                                                                                                                 |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Waiting for approval | Nobody has decided yet. Nothing is fetched.                                                                                             |
+| Declined             | An administrator declined it, with a reason if they gave one. It can still be approved later.                                           |
+| Requested            | Approved, and nothing searched for yet. The requests list says which of the next three it is.                                           |
+| Looking it up        | For a series or artist, Valence is working out what there is to fetch.                                                                  |
+| Queued to search     | It is out, and will be searched for in a moment.                                                                                        |
+| Not out yet          | Held until the release date (or the next episode or album) the catalogue gives.                                                         |
+| Missing              | Searched for and not found. It is searched again every few hours.                                                                       |
+| Searching            | An indexer search is running.                                                                                                           |
+| Downloading          | The download client is fetching it, or is about to. Paused, Stalled or Failed beside the progress says the download client has stopped. |
+| Importing            | The download finished and is being placed into the library, or is waiting for the library to find it.                                   |
+| In the library       | It is in the library.                                                                                                                   |
+| Failed               | Something went wrong, with the reason shown.                                                                                            |
+| Waiting to be added  | A book, which is added by hand.                                                                                                         |
 
 ## The admin side
 

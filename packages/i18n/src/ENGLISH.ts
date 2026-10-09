@@ -370,7 +370,6 @@ const ENGLISH = {
     'This needs a newer version of the server. Update the server to use it.',
   'client.requests.describeDownloadLine.underAMinuteLeft': 'Under a minute left',
   'client.requests.describeItemBadge.outAirDate': 'Out {airDate}.',
-  'client.requests.describeRequestBadge.awaitingApproval': 'Awaiting approval',
   'client.requests.describeRequestBadge.booksAreAddedToTheLibrary':
     'Books are added to the library manually. It’ll appear here once it’s been added.',
   'client.requests.describeRequestBadge.findingOutWhatThereIsTo': 'Searching for releases.',
@@ -468,6 +467,7 @@ const ENGLISH = {
   'common.addMediaProfile': 'Add media profile',
   'common.addOneToGetStarted': 'Add one to get started.',
   'common.address': 'Address',
+  'common.addSeasons': 'Add seasons',
   'common.addSongsToItFromThe': 'Add songs to it from the menu beside any song.',
   'common.addToACollection': 'Add to a collection',
   'common.addToCalendar': 'Add to calendar',
@@ -714,7 +714,6 @@ const ENGLISH = {
   'common.downloaded': 'Downloaded',
   'common.downloadFailed': 'Download failed',
   'common.downloading': 'Downloading',
-  'common.downloadingToLibrary': 'Downloading to library',
   'common.downloads': 'Downloads',
   'common.downloadTitle': 'Download {title}',
   'common.durationIn': '{duration} in',
@@ -763,7 +762,8 @@ const ENGLISH = {
   'common.federationOutcome.aboveTheAge': 'Above the age limit',
   'common.federationOutcome.notShared': 'Not shared',
   'common.federationOutcome.tooMany': 'Rate limited',
-  'common.filed': 'Imported',
+  'common.fetchesEachNewSeasonAsIt':
+    'Fetches each new season as it airs. Specials are only fetched when ticked.',
   'common.files': 'Files',
   'common.filing': 'Importing',
   'common.film': 'Film',
@@ -796,6 +796,7 @@ const ENGLISH = {
   'common.genre': 'Genre',
   'common.georgiaTimesNewRomanSerif': 'Georgia, "Times New Roman", serif',
   'common.getAFreeKey': 'Get a free key',
+  'common.getNewSeasonsAsTheyCome': 'Get new seasons as they come',
   'common.goBack': 'Go back',
   'common.googleCalendar': 'Google Calendar',
   'common.goToADay': 'Go to a day',
@@ -1467,7 +1468,6 @@ const ENGLISH = {
   'common.volume': 'Volume',
   'common.waiting': 'Waiting',
   'common.waitingForYou': 'Waiting for your review',
-  'common.wanted': 'Wanted',
   'common.warnings': 'Warnings',
   'common.watch': 'Watch',
   'common.watchCredits': 'Watch Credits',
@@ -2124,7 +2124,6 @@ const ENGLISH = {
   'phone.anArtist.thatArtistCouldNotBeRead': 'Couldn’t load that artist.',
   'phone.anAskable.anythingAlreadyDownloadedForItIs':
     'Any files already downloaded for it will be deleted.',
-  'phone.anAskable.theSeasons.andAnyStillToCome': 'Include future seasons',
   'phone.aPlaylist.thatPlaylistCouldNotBeRead': 'Couldn’t load that playlist.',
   'phone.aPluginPage.readingThePage': 'Loading page',
   'phone.aPluginPage.thisPageCouldNotBeRead': 'Couldn’t load this page from the plugin.',
@@ -2582,6 +2581,7 @@ const ENGLISH = {
   'requests.mediaRequests.requestWorker.noVideoInItCouldBe': 'Couldn’t import any video from it',
   'requests.mediaRequests.requestWorker.reasonTryingTheNextBestRelease':
     '{reason}. Trying the next best release.',
+  'requests.mediaRequests.requestWorker.removedFromTheDownloads': 'Removed from the downloads',
   'requests.mediaRequests.requestWorker.replacedByTitlePickedByHand':
     'Replaced by {title}, picked by hand',
   'requests.mediaRequests.requestWorker.stoppedByAnAdmin': 'Stopped by an admin',
@@ -4124,9 +4124,9 @@ const ENGLISH = {
   'screens.adminArea.removeDownloadDialog.deleteWhatItDownloadedAsWell':
     'Also delete downloaded files',
   'screens.adminArea.removeDownloadDialog.itIsTakenOutOfItsClient':
-    'It’s removed from its download client, and Valence stops tracking it.',
+    'It’s removed from its download client, and Valence stops tracking it. A request it was for looks for a different release.',
   'screens.adminArea.removeDownloadDialog.itIsTakenOutOfName':
-    'It’s removed from {name}, and Valence stops tracking it.',
+    'It’s removed from {name}, and Valence stops tracking it. A request it was for looks for a different release.',
   'screens.adminArea.removeDownloadDialog.nameKeepsWhatItHasFinished':
     '{name} doesn’t delete finished downloads, so their files stay where they are.',
   'screens.adminArea.removeDownloadDialog.removeCountDownloads.one': 'Remove {count} download',
@@ -4135,7 +4135,7 @@ const ENGLISH = {
   'screens.adminArea.removeDownloadDialog.theClientKeepsWhatItHasFinished':
     'This download client doesn’t delete finished downloads, so their files stay where they are.',
   'screens.adminArea.removeDownloadDialog.theyAreTakenOutOfTheirClients':
-    'They’re removed from their download clients, and Valence stops tracking them.',
+    'They’re removed from their download clients, and Valence stops tracking them. Requests they were for look for different releases.',
   'screens.adminArea.requestDetailDialog.neverAgain': 'Blocklist',
   'screens.adminArea.requestsPanel.atAddressLastCheckedWhen': 'At {address}. Last checked {when}.',
   'screens.adminArea.requestsPanel.atAddressLastCheckedWhenProblem':
@@ -4429,6 +4429,10 @@ const ENGLISH = {
   'screens.adminArea.titlePage.markedTitleAsAdded': 'Marked {title} as in the library',
   'screens.adminArea.titlePage.minutesLong': '{minutes} min',
   'screens.adminArea.titlePage.newSeasonsGoInFolder': 'New seasons go in {folder}',
+  'screens.adminArea.titlePage.newSeasonsOfTitleAreFetched':
+    'New seasons of {title} are fetched as they air',
+  'screens.adminArea.titlePage.newSeasonsOfTitleAreNoLonger':
+    'New seasons of {title} are no longer fetched',
   'screens.adminArea.titlePage.noLongerFollowingName': 'No longer following {name}',
   'screens.adminArea.titlePage.onDisk': 'On disk',
   'screens.adminArea.titlePage.onlyFetchWhatIPick': 'Fetch only releases I pick',
@@ -5935,7 +5939,6 @@ const ENGLISH = {
   'screens.seasonChooser.askingTheCatalogueForItsSeasons': 'Loading seasons from the catalogue',
   'screens.seasonChooser.chosenOfSeasons.one': '{length} of {count} season.',
   'screens.seasonChooser.chosenOfSeasons.other': '{length} of {count} seasons.',
-  'screens.seasonChooser.everySeasonAndAnyThatCome': 'All seasons, including future ones.',
   'screens.seasonChooser.firstAired': 'First aired',
   'screens.seasonChooser.noSeasonIsTakenYet': 'No seasons selected yet.',
   'screens.seasonChooser.seasons': 'Seasons',

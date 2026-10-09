@@ -42,6 +42,7 @@ const theRoutes = (picked: MediaRequest | { refused: Said } | null = null) => {
       Promise.resolve({ releases: [], indexers: [], judgements: [], pickedId: null }),
     ),
     dropDownloads: vi.fn(() => Promise.resolve(1)),
+    unfinishedDownloadsOf: vi.fn(() => Promise.resolve(['d1'])),
     stopDownload: vi.fn((id: string): Promise<MediaRequest | null> =>
       Promise.resolve(id === 'missing' ? null : null),
     ),
@@ -188,9 +189,20 @@ describe('createRequestRoutes', () => {
     const id = await madeDune(ask);
 
     expect((await ask(`/requests/${id}?deleteDownloads=true`, 'DELETE')).status).toBe(204);
-    expect(worker.dropDownloads).toHaveBeenCalledWith(id);
+    expect(worker.unfinishedDownloadsOf).toHaveBeenCalledWith(id);
+    expect(worker.dropDownloads).toHaveBeenCalledWith(['d1']);
     expect((await ask('/requests/missing?deleteDownloads=true', 'DELETE')).status).toBe(404);
     expect(worker.dropDownloads).toHaveBeenCalledTimes(1);
+  });
+
+  it('answers a cancel at once, while the worker is still busy', async () => {
+    const { ask, worker } = theRoutes();
+    const id = await madeDune(ask);
+
+    worker.dropDownloads.mockReturnValue(new Promise(() => undefined));
+
+    expect((await ask(`/requests/${id}?deleteDownloads=true`, 'DELETE')).status).toBe(204);
+    expect((await ask(`/requests/${id}`)).status).toBe(404);
   });
 
   it('stops what a refused request was downloading', async () => {
@@ -199,7 +211,7 @@ describe('createRequestRoutes', () => {
 
     await ask(`/requests/${id}/refuse`, 'POST', { reason: '' });
 
-    expect(worker.dropDownloads).toHaveBeenCalledWith(id);
+    expect(worker.dropDownloads).toHaveBeenCalledWith(['d1']);
   });
 
   it('stops one download of a request, saying what comes next', async () => {
