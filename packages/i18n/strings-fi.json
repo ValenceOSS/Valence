@@ -10065,6 +10065,11 @@
     "context": "Shown in the connected apps (Radarr, Sonarr, Lidarr, Prowlarr) in the requests service (from `createArrCaller`). {name} is what the admin called the app."
   },
   {
+    "handler": "requests.arrApps.handOff.askedNameToFetchTitle",
+    "text": "Asked {name} to fetch {title}.",
+    "context": "Entry in a request's history when a release picked by hand is sent to the connected app it was handed to. {name} is the app, such as Sonarr; {title} is the release."
+  },
+  {
     "handler": "requests.arrApps.handOff.askedNameToSearchAgain",
     "text": "Asked {name} to search for it again.",
     "context": "Entry in a request's history when Search missing asks the connected app it was handed to, such as Sonarr, to search again."
@@ -10118,6 +10123,11 @@
     "handler": "requests.arrApps.handOff.sonarrCannotFindItsTvdbId",
     "text": "Sonarr can’t find it by its TVDB or TMDB ID.",
     "context": "A request's problem, shown in the requests admin, when Sonarr does not know the series asked for (from `createSonarrHandOff`)."
+  },
+  {
+    "handler": "requests.arrApps.handOff.thatIsNotOneOfItsReleases",
+    "text": "That isn’t one of the releases its connected app listed.",
+    "context": "Error when a release picked for a request handed to Sonarr, Radarr or Lidarr wasn't one the app listed."
   },
   {
     "handler": "requests.arrApps.handOff.theAppItWasHandedToIsGone",
@@ -12298,6 +12308,26 @@
     "handler": "screens.adminArea.arrAppsPanel.connectedApps",
     "text": "Connected apps",
     "context": "Shown in the admin area: the title of the panel listing the connected Radarr, Sonarr, Lidarr and Prowlarr apps, and a tab of the Downloads page."
+  },
+  {
+    "handler": "screens.adminArea.arrAppsPanel.connectedAppsControl.connectedAppsSettingSaved",
+    "text": "Connected apps setting saved.",
+    "context": "Shown in the Connected apps panel on the admin area’s Requests page."
+  },
+  {
+    "handler": "screens.adminArea.arrAppsPanel.connectedAppsControl.controlConnectedAppsFromValence",
+    "text": "Control connected apps from Valence",
+    "context": "The label of a switch in the Connected apps panel on the admin area’s Requests page. Connected apps are Sonarr, Radarr and Lidarr, which a library can hand its requests to."
+  },
+  {
+    "handler": "screens.adminArea.arrAppsPanel.connectedAppsControl.letsYouSearchAConnectedApps",
+    "text": "Lets you search a connected app’s releases and choose which one it fetches. When off, Sonarr, Radarr and Lidarr search and pick on their own.",
+    "context": "The description of a setting row in the Connected apps panel on the admin area’s Requests page."
+  },
+  {
+    "handler": "screens.adminArea.arrAppsPanel.connectedAppsControl.theConnectedAppsSettingCouldNot",
+    "text": "Couldn’t save the connected apps setting.",
+    "context": "Shown in the Connected apps panel on the admin area’s Requests page."
   },
   {
     "handler": "screens.adminArea.arrAppsPanel.disconnect",

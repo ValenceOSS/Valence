@@ -18,6 +18,7 @@ import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { Spinner } from '@ValenceUI/Spinner';
 import { notify } from '@ValenceUI/notify';
+import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { catalogueArtUrl } from '@ValenceClient/requests/catalogueArtUrl';
@@ -82,6 +83,7 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
   const catalogue = useQuery(requestsQueries.titleCatalogue());
   const requests = useQuery(requestsQueries.mediaRequests());
   const libraries = useQuery(libraryQueries.all());
+  const admin = useQuery(adminQueries.overview());
   const entry = catalogue.data?.find((one) => one.key === titleKey) ?? null;
   const request =
     entry?.requestId === null || entry === null
@@ -434,7 +436,8 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
           </Button>
         )}
 
-        {request.isHandedOff === true ? null : (
+        {request.isHandedOff === true &&
+        admin.data?.settings.controlsConnectedApps !== true ? null : (
           <Button
             variant="secondary"
             size="md"

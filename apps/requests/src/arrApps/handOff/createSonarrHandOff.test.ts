@@ -319,4 +319,29 @@ describe('createSonarrHandOff', () => {
     expect(arr.sent('POST', '/api/v3/command')).toEqual([{ name: 'SeriesSearch', seriesId: 7 }]);
     expect(await handOff.pageOf(aMediaRequest({ kind: 'series' }), 7)).toBe('/series/a-show');
   });
+
+  it('lists the releases Sonarr finds for each season still wanted, each once', async () => {
+    const arr = aFakeArr({
+      'GET /api/v3/release': (asked) => ({
+        body: [
+          { guid: 'whole-show', indexerId: 1 },
+          { guid: `season-${asked.query.get('seasonNumber') ?? ''}`, indexerId: 1 },
+        ],
+      }),
+    });
+
+    const found = await createSonarrHandOff(createArrCaller(arr.fetch, SONARR)).releases(
+      SEVERANCE_REQUEST,
+      [
+        aRequestItem({ id: 'a', season: 1, episode: 1, state: 'available' }),
+        aRequestItem({ id: 'b', season: 2, episode: 1 }),
+        aRequestItem({ id: 'c', season: 2, episode: 2 }),
+        aRequestItem({ id: 'd', season: 3, episode: 1 }),
+      ],
+      7,
+    );
+
+    expect(found.map((one) => one.guid)).toEqual(['whole-show', 'season-2', 'season-3']);
+    expect(arr.asked.map((one) => one.query.get('seriesId'))).toEqual(['7', '7']);
+  });
 });

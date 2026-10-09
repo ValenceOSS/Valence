@@ -24,7 +24,7 @@ import { refuseWith } from '@ValenceI18n/refuseWith';
 
 type CreateRequestRoutesOptions = {
   service: RequestService;
-  handOff?: Pick<HandOffWorker, 'searchNow' | 'handedTo'>;
+  handOff?: Pick<HandOffWorker, 'searchNow' | 'handedTo' | 'releasesFor' | 'pick'>;
   log: Pick<RequestLogStore, 'list'>;
   worker: Pick<
     RequestWorker,
@@ -55,7 +55,8 @@ const NO_SUCH_REQUEST = refuse('error.requests.noSuchRequest');
  * and a request refused takes them always.
  *
  * @param service - The requests.
- * @param handOff - What hands requests to connected apps: which app has one, and searching it again.
+ * @param handOff - What hands requests to connected apps: which app has one, searching it again, and
+ *   listing and picking its releases as the app sees them.
  * @param log - What each request has done.
  * @param worker - What fetches them.
  * @returns The routes.
@@ -225,6 +226,24 @@ const createRequestRoutes = ({ service, handOff, log, worker }: CreateRequestRou
     return (await service.find(id)) === null
       ? context.json(NO_SUCH_REQUEST, 404)
       : context.json({ folders: await worker.deleteFiled(id) });
+  });
+
+  routes.get('/requests/:id/hand-off/releases', async (context) =>
+    answer((await handOff?.releasesFor(context.req.param('id'))) ?? null),
+  );
+
+  routes.post('/requests/:id/hand-off/pick', async (context) => {
+    const pick = await readBody(context.req.raw, MediaRequestPickSchema);
+
+    if (pick === null || handOff === undefined) {
+      return context.json(refuse('error.common.sayWhichReleaseToFetch'), 400);
+    }
+
+    const refused = await handOff.pick(context.req.param('id'), pick.release);
+
+    return refused === null
+      ? answer(await service.find(context.req.param('id')))
+      : context.json(refuseWith(refused), 400);
   });
 
   routes.get('/requests/:id/handed-to', async (context) =>

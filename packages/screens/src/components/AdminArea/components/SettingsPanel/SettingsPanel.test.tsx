@@ -76,6 +76,7 @@ const overview = (overrides: Partial<AdminOverview['settings']> = {}): AdminOver
     fetchesCatalogueTrailers: false,
     fetchesMusicDetails: false,
     requestReleaseTypes: ['album'],
+    controlsConnectedApps: false,
     roundness: 'default' as const,
     certificationRegion: 'GB',
     keepsDownloadsForDays: 14,

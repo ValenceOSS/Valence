@@ -1,3 +1,4 @@
+import { ArrReleaseSchema } from '@ValenceRequests/arrApps/schemas/ArrReleaseSchema';
 import { dirname } from 'node:path';
 import { z } from 'zod';
 import { saying } from '@ValenceI18n/saying';
@@ -171,6 +172,28 @@ const createSonarrHandOff = (
         { name: 'SeriesSearch', seriesId: handOffId },
         ArrCommandSchema,
       );
+    },
+
+    releases: async (_request, items, handOffId) => {
+      const seasons = [
+        ...new Set(
+          items.flatMap((item) =>
+            item.season === null || item.state === 'available' || item.state === 'filed'
+              ? []
+              : [item.season],
+          ),
+        ),
+      ];
+      const found = await Promise.all(
+        seasons.map((season) =>
+          caller.read('/release', ArrReleaseSchema.array(), {
+            seriesId: handOffId.toString(),
+            seasonNumber: season.toString(),
+          }),
+        ),
+      );
+
+      return [...new Map(found.flat().map((release) => [release.guid, release])).values()];
     },
 
     pageOf: async (_request, handOffId) => {

@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createRequestsClient } from './createRequestsClient';
 import { SOLVER_NOT_USED } from '@ValenceContracts/schemas/Requests';
 import type { DownloadStreamFrame } from '@ValenceContracts/schemas/DownloadQueue';
+import type { Release } from '@ValenceContracts/schemas/Indexer';
 
 const A_SECRET = 'a-secret-long-enough-to-be-worth-keeping';
 
@@ -1085,6 +1086,45 @@ describe('createRequestsClient with requests for films and series', () => {
       ).kind,
     ).toBe('refused');
     expect((await aClient(204, null).client.removeRequest(REQUEST.id)).kind).toBe('answered');
+  });
+
+  it('lists a handed-off request’s releases from its app, and sends a pick there', async () => {
+    const outcome = { releases: [], indexers: [], judgements: [], pickedId: null };
+    const listing = aClient(200, outcome);
+    const picking = aClient(200, REQUEST);
+    const release = {
+      id: '2:abc',
+      title: 'Dune.2021.1080p.WEB-DL',
+      indexerId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+      indexerName: 'An Indexer',
+      protocol: 'torrent',
+      sizeBytes: null,
+      seeders: 1,
+      leechers: 0,
+      grabs: null,
+      publishedAt: null,
+      categories: [],
+      downloadUrl: null,
+      magnetUrl: null,
+      infoUrl: null,
+      infoHash: null,
+      downloadFactor: null,
+      uploadFactor: null,
+      minimumRatio: null,
+      minimumSeedSeconds: null,
+    } satisfies Release;
+
+    expect(await listing.client.handOffReleases(REQUEST.id)).toEqual({
+      kind: 'answered',
+      value: outcome,
+    });
+    expect(listing.fetch.mock.calls[0]?.[0]).toBe(
+      `http://requests:8421/api/requests/${REQUEST.id}/hand-off/releases`,
+    );
+    expect((await picking.client.handOffPick(REQUEST.id, release)).kind).toBe('answered');
+    expect(picking.fetch.mock.calls[0]?.[0]).toBe(
+      `http://requests:8421/api/requests/${REQUEST.id}/hand-off/pick`,
+    );
   });
 
   it('lists what is followed, and searches for everything missing', async () => {

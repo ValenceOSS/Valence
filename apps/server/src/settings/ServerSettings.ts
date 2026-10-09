@@ -36,6 +36,7 @@ const ServerSettingsSchema = z.object({
   splashscreenFile: z.string().nullable().default(null),
   reencodesAwaitingReviewCap: z.number().int().positive().max(50).default(5),
   requestReleaseTypes: ReleaseTypesSchema.default([...DEFAULT_RELEASE_TYPES]),
+  controlsConnectedApps: z.boolean().default(false),
   roundness: RoundnessSchema.default('default'),
   keepsDownloadsForDays: z.number().int().nonnegative().max(3650).default(14),
   preTranscoding: PreTranscodingSettingsSchema.default(PRE_TRANSCODING_DEFAULTS),

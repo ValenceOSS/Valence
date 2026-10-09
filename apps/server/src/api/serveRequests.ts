@@ -141,6 +141,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     sayOfAsk,
     whatMayBeAsked,
     everyRequest,
+    settings,
   } = context;
 
   const requestableKinds = async (): Promise<ReadonlySet<MediaRequestKind>> =>
@@ -1019,9 +1020,28 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     return context.json({ decided, refused }, 200);
   });
 
+  /**
+   * Whether a request's releases are the connected app's to list and fetch: it was handed to one,
+   * and the admin chose to control connected apps from here.
+   *
+   * @param client - The requests service.
+   * @param id - The request.
+   * @returns Whether to go through the app.
+   */
+  const isThroughItsApp = async (client: RequestsClient, id: string): Promise<boolean> => {
+    if (!(await settings.read()).controlsConnectedApps) {
+      return false;
+    }
+
+    const found = await client.findRequest(id);
+
+    return found.kind === 'answered' && found.value.isHandedOff === true;
+  };
+
   app.openapi(mediaRequestReleasesRoute, async (context) => {
-    const answer = await throughRequests(context.req.raw.headers, (client) =>
-      client.requestReleases(context.req.valid('param').id),
+    const { id } = context.req.valid('param');
+    const answer = await throughRequests(context.req.raw.headers, async (client) =>
+      (await isThroughItsApp(client, id)) ? client.handOffReleases(id) : client.requestReleases(id),
     );
 
     return answer.kind === 'answered'
@@ -1030,8 +1050,12 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(pickMediaReleaseRoute, async (context) => {
-    const answer = await throughRequests(context.req.raw.headers, (client) =>
-      client.pickRelease(context.req.valid('param').id, context.req.valid('json').release),
+    const { id } = context.req.valid('param');
+    const { release } = context.req.valid('json');
+    const answer = await throughRequests(context.req.raw.headers, async (client) =>
+      (await isThroughItsApp(client, id))
+        ? client.handOffPick(id, release)
+        : client.pickRelease(id, release),
     );
 
     return answer.kind === 'answered'

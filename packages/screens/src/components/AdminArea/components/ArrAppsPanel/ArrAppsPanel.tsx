@@ -34,6 +34,7 @@ import { ARR_APP_NAMES } from '@ValenceScreens/components/AdminArea/ARR_APP_NAME
 import { ArrAppDialog } from '@ValenceScreens/components/AdminArea/components/ArrAppDialog/ArrAppDialog';
 import { describeArrAppState } from './describeArrAppState';
 import { ArrImportDialog } from './components/ArrImportDialog/ArrImportDialog';
+import { ConnectedAppsControl } from './components/ConnectedAppsControl/ConnectedAppsControl';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { ArrApp } from '@ValenceContracts/schemas/ArrApp';
 import { say } from '@ValenceI18n/say';
@@ -41,7 +42,8 @@ import { say } from '@ValenceI18n/say';
 /**
  * The Radarr, Sonarr, Lidarr and Prowlarr apps Valence is connected to: how each is, and the things
  * that can be done to one — changing it, testing it, bringing in a Prowlarr's indexers, switching it
- * on or off, and disconnecting it — with whatever went wrong shown above the table.
+ * on or off, and disconnecting it — with whatever went wrong shown above the table, and whether
+ * Valence works the apps from a title's page.
  */
 const ArrAppsPanel = () => {
   const cache = useQueryClient();
@@ -362,6 +364,8 @@ const ArrAppsPanel = () => {
           emptyMessage={say('screens.adminArea.arrAppsPanel.noneYetConnectARadarrSonarr')}
         />
       )}
+
+      <ConnectedAppsControl />
     </PanelCard>
   );
 };

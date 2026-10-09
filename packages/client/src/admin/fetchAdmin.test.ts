@@ -10,6 +10,7 @@ import {
   watchJobs,
   messageSession,
   saveCatalogueKey,
+  saveControlsConnectedApps,
   fetchActiveSessions,
   stopSession,
   pauseSession,
@@ -67,6 +68,7 @@ const OVERVIEW = {
     fetchesCatalogueTrailers: false,
     fetchesMusicDetails: false,
     requestReleaseTypes: ['album'],
+    controlsConnectedApps: false,
     certificationRegion: 'GB',
     keepsDownloadsForDays: 14,
   },
@@ -234,6 +236,21 @@ describe('saveCatalogueKey', () => {
     fetchMock.mockRejectedValue(new Error('offline'));
 
     await expect(saveCatalogueKey('a-key')).resolves.toBe(false);
+  });
+});
+
+describe('saveControlsConnectedApps', () => {
+  it('saves whether Valence controls the connected apps', async () => {
+    answerWith({});
+
+    await expect(saveControlsConnectedApps(true)).resolves.toBe(true);
+    expect(sentBody()).toEqual({ controlsConnectedApps: true });
+  });
+
+  it('reports failure rather than pretending it saved', async () => {
+    answerWith({}, false);
+
+    await expect(saveControlsConnectedApps(false)).resolves.toBe(false);
   });
 });
 

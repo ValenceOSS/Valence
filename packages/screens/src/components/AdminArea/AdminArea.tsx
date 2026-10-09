@@ -1279,6 +1279,9 @@ const AdminArea = ({
                 onMusicDetailsSaved={() => {
                   void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
                 }}
+                onReleaseTypesSaved={() => {
+                  void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
+                }}
                 onSplashscreenSaved={() => {
                   void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
                   void cache.invalidateQueries({ queryKey: sessionQueries.wayIn().queryKey });

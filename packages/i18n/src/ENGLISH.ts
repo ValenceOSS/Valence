@@ -2377,6 +2377,7 @@ const ENGLISH = {
   'requests.arrApps.arrCaller.nameAnsweredStatusComplaint':
     '{name} returned HTTP {status}: {complaint}',
   'requests.arrApps.arrCaller.nameRefusedItsApiKey': '{name} rejected its API key',
+  'requests.arrApps.handOff.askedNameToFetchTitle': 'Asked {name} to fetch {title}.',
   'requests.arrApps.handOff.askedNameToSearchAgain': 'Asked {name} to search for it again.',
   'requests.arrApps.handOff.handedToName': 'Sent to {name}.',
   'requests.arrApps.handOff.itHasNoMusicBrainzIdToHandOver':
@@ -2392,6 +2393,8 @@ const ENGLISH = {
   'requests.arrApps.handOff.nameSaidProblem': '{name} couldn’t add it: {problem}',
   'requests.arrApps.handOff.sonarrCannotFindItsTvdbId':
     'Sonarr can’t find it by its TVDB or TMDB ID.',
+  'requests.arrApps.handOff.thatIsNotOneOfItsReleases':
+    'That isn’t one of the releases its connected app listed.',
   'requests.arrApps.handOff.theAppItWasHandedToIsGone':
     'The connected app it was sent to has been removed.',
   'requests.arrImport.aLeastFormatScoreWasLeftOut':
@@ -3017,6 +3020,14 @@ const ENGLISH = {
   'screens.adminArea.arrAppsPanel.bringInASetupDetail':
     'Import the download clients, indexers, quality profiles and pending requests from Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr. Nothing in those apps is changed.',
   'screens.adminArea.arrAppsPanel.connectedApps': 'Connected apps',
+  'screens.adminArea.arrAppsPanel.connectedAppsControl.connectedAppsSettingSaved':
+    'Connected apps setting saved.',
+  'screens.adminArea.arrAppsPanel.connectedAppsControl.controlConnectedAppsFromValence':
+    'Control connected apps from Valence',
+  'screens.adminArea.arrAppsPanel.connectedAppsControl.letsYouSearchAConnectedApps':
+    'Lets you search a connected app’s releases and choose which one it fetches. When off, Sonarr, Radarr and Lidarr search and pick on their own.',
+  'screens.adminArea.arrAppsPanel.connectedAppsControl.theConnectedAppsSettingCouldNot':
+    'Couldn’t save the connected apps setting.',
   'screens.adminArea.arrAppsPanel.disconnect': 'Disconnect',
   'screens.adminArea.arrAppsPanel.disconnectedName': 'Disconnected {name}.',
   'screens.adminArea.arrAppsPanel.disconnectName': 'Disconnect {name}?',
