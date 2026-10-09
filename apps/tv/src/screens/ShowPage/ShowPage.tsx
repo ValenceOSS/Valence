@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { CircleCheck, EyeOff, Plus, RotateCcw, Star } from '@keyline-icons/react-native';
 import { Play } from '@keyline-icons/react-native/fill';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
@@ -15,8 +15,6 @@ import { useHidden } from '@ValenceClient/library/useHidden';
 import { useRate } from '@ValenceClient/library/useRate';
 import { useStars } from '@ValenceClient/library/useStars';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
-import { markWatched } from '@ValenceClient/playback/markWatched';
-import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { ActionRow } from '@ValenceTv/components/ActionRow/ActionRow';
@@ -30,6 +28,7 @@ import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
 import { useConfirmHiding } from '@ValenceNative/library/useConfirmHiding';
 import { joinFacts } from '@ValenceTv/library/joinFacts';
 import { useProgress } from '@ValenceTv/library/useProgress';
+import { useMarkWatched } from '@ValenceTv/library/useMarkWatched';
 import { tokens } from '@ValenceTv/theme/tokens';
 import { useOriginOf } from '@ValenceClient/linking/useOriginOf';
 import { whereFrom } from '@ValenceClient/linking/whereFrom';
@@ -110,7 +109,7 @@ const ShowPage = ({
   );
   const cover = useQuery(libraryQueries.detail(show?.coverMediaId ?? null));
   const [chosen, setChosen] = useState<string | null>(null);
-  const cache = useQueryClient();
+  const mark = useMarkWatched();
 
   if (show === null) {
     return (
@@ -149,24 +148,6 @@ const ShowPage = ({
   const watched = carryingOn === null ? undefined : progress.get(carryingOn.episode.id);
   const isSeasonWatched =
     episodes.length > 0 && episodes.every((one) => progress.get(one.id)?.isFinished === true);
-
-  /**
-   * Marks episodes watched, or unwatched again, and reads progress and the shelves again so the
-   * cards and the count of what is left follow.
-   *
-   * @param which - The episodes.
-   * @param isWatched - Whether they are now watched.
-   */
-  const mark = (which: readonly MediaSummary[], isWatched: boolean) => {
-    void markWatched(which, isWatched)
-      .then(async () =>
-        Promise.all([
-          cache.invalidateQueries({ queryKey: viewingQueries.progress().queryKey }),
-          cache.invalidateQueries({ queryKey: libraryQueries.key }),
-        ]),
-      )
-      .catch(() => null);
-  };
 
   const page = (
     <TitleSpread
