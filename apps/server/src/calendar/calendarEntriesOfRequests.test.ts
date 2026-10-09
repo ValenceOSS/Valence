@@ -44,6 +44,7 @@ const aRequest = (change: Partial<MediaRequest>): MediaRequest => ({
   refusedBecause: null,
   requestedBy: { id: 'account-1', name: 'Sam' },
   alsoAskedBy: [],
+  profileAsk: null,
   seasons: null,
   followsNewSeasons: false,
   releaseTypes: null,

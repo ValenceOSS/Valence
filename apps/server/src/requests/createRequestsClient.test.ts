@@ -872,6 +872,7 @@ describe('createRequestsClient with quality profiles', () => {
     isDefault: false,
     roleIds: [],
     accountIds: [],
+    position: 0,
     createdAt: '2026-09-19T00:00:00.000Z',
     updatedAt: '2026-09-19T00:00:00.000Z',
   };
@@ -939,6 +940,7 @@ describe('createRequestsClient with requests for films and series', () => {
     refusedBecause: null,
     requestedBy: { id: 'someone', name: 'Someone' },
     alsoAskedBy: [],
+    profileAsk: null,
     seasons: null,
     followsNewSeasons: false,
     releaseTypes: null,

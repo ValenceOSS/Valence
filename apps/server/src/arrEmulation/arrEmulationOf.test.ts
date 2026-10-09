@@ -31,6 +31,7 @@ const FILMS: Library = {
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 };
 
 const ARRIVAL: RequestCatalogue = {
@@ -73,6 +74,7 @@ const REMUX: QualityProfile = {
   isDefault: false,
   roleIds: [],
   accountIds: [],
+  position: 0,
   createdAt: '2026-10-01T00:00:00.000Z',
   updatedAt: '2026-10-01T00:00:00.000Z',
 };

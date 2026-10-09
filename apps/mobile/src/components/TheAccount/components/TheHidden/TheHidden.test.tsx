@@ -30,6 +30,7 @@ describe('TheHidden', () => {
         requestProfileId: null,
         requestPath: null,
         keepsShowsTogether: true,
+        higherProfileAsks: 'ask',
       },
     ]);
     const drawn = await render(<TheHidden />, { wrapper: CacheScope });

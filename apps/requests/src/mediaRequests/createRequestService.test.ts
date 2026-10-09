@@ -197,6 +197,41 @@ describe('createRequestService', () => {
     });
   });
 
+  it('waits for the operator on a later ask at a higher profile, then switches or keeps', async () => {
+    const requests = createMemoryRecordStore<MediaRequestRecord>();
+    const items = createMemoryRecordStore<RequestItemRecord>();
+    const uhd = aProfile({ id: '3fa85f64-5717-4562-b3fc-2c963f66afa6', name: 'UHD', position: 0 });
+    const hd = aProfile({ id: '3fa85f64-5717-4562-b3fc-2c963f66afa7', name: 'HD', position: 1 });
+    const service = createRequestService({
+      requests,
+      items,
+      profiles: { list: () => Promise.resolve([uhd, hd]) },
+      now: () => AT,
+    });
+    const { request } = await service.add({ ...DUNE, profileId: hd.id });
+
+    const later = await service.add({
+      ...DUNE,
+      profileId: uhd.id,
+      requestedBy: { id: 'priya', name: 'Priya' },
+    });
+
+    expect(later.request.profileId).toBe(hd.id);
+    expect(later.request.profileAsk).toEqual({
+      asker: { id: 'priya', name: 'Priya' },
+      profileId: uhd.id,
+      profileName: 'UHD',
+    });
+    expect(later.request.alsoAskedBy).toEqual([
+      { id: 'priya', name: 'Priya', profileId: uhd.id, profileName: 'UHD' },
+    ]);
+
+    const switched = await service.decideProfileAsk(request.id, { choice: 'switch' });
+
+    expect(switched).toMatchObject({ profileId: uhd.id, profileAsk: null });
+    expect(await service.decideProfileAsk(request.id, { choice: 'keep' })).toBeNull();
+  });
+
   it('keeps the quality asked for, and changes it', async () => {
     const { service } = aService();
     const profileId = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';

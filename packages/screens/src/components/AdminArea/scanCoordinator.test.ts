@@ -62,6 +62,7 @@ const LIBRARY: Library = {
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 };
 
 describe('scanCoordinator', () => {

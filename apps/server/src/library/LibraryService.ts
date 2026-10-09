@@ -1,3 +1,4 @@
+import type { HigherProfileAsks } from '@ValenceContracts/schemas/HigherProfileAsks';
 import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
 import type { CatalogueArtwork } from '@ValenceServer/calendar/CatalogueArtwork';
 import type { CatalogueTitleRef } from '@ValenceServer/calendar/CatalogueTitleRef';
@@ -82,6 +83,7 @@ type UpdateLibraryInput = {
   requestProfileId?: string | null;
   requestPath?: string | null;
   keepsShowsTogether?: boolean;
+  higherProfileAsks?: HigherProfileAsks;
   fulfilment?: Fulfilment | null;
 };
 

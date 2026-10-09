@@ -1,3 +1,4 @@
+import type { HigherProfileAsks } from '@ValenceContracts/schemas/HigherProfileAsks';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { Icon } from '@ValenceUI/Icon';
 import { ChevronsUpDown as ChevronsUpDownIcon } from '@keyline-icons/react/fill';
@@ -20,6 +21,12 @@ import type { FulfilmentForm } from './readFulfilmentForm';
 import type { LibrarySettingsDialogProps } from './LibrarySettingsDialog.types';
 import { LeftOutList } from './components/LeftOutList/LeftOutList';
 import { say } from '@ValenceI18n/say';
+
+const HIGHER_PROFILE_ASK_CHOICES: readonly { id: HigherProfileAsks; label: string }[] = [
+  { id: 'ask', label: say('screens.adminArea.librarySettingsDialog.askMe') },
+  { id: 'upgrade', label: say('screens.adminArea.librarySettingsDialog.switchToTheHigherProfile') },
+  { id: 'keep', label: say('screens.adminArea.librarySettingsDialog.keepTheProfileAskedFirst') },
+];
 
 const NONE_ID = 'none';
 
@@ -100,6 +107,9 @@ const LibrarySettingsDialog = ({
   const [requestProfileId, setRequestProfileId] = useState(library?.requestProfileId ?? THE_BEST);
   const [requestPath, setRequestPath] = useState(library?.requestPath ?? '');
   const [keepsShowsTogether, setKeepsShowsTogether] = useState(library?.keepsShowsTogether ?? true);
+  const [higherProfileAsks, setHigherProfileAsks] = useState<HigherProfileAsks>(
+    library?.higherProfileAsks ?? 'ask',
+  );
   const [fulfilment, setFulfilment] = useState<FulfilmentForm>(() => fulfilmentFormOf(library));
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -112,6 +122,7 @@ const LibrarySettingsDialog = ({
     setRequestProfileId(library?.requestProfileId ?? THE_BEST);
     setRequestPath(library?.requestPath ?? '');
     setKeepsShowsTogether(library?.keepsShowsTogether ?? true);
+    setHigherProfileAsks(library?.higherProfileAsks ?? 'ask');
     setFulfilment(fulfilmentFormOf(library));
     setError(null);
     setConfirming(null);
@@ -158,6 +169,7 @@ const LibrarySettingsDialog = ({
         requestProfileId: requestProfileId === THE_BEST ? null : requestProfileId,
         requestPath: requestPath.trim() === '' ? null : requestPath.trim(),
         keepsShowsTogether,
+        higherProfileAsks,
         fulfilment: handedTo.fulfilment,
       });
 
@@ -350,6 +362,54 @@ const LibrarySettingsDialog = ({
                     placeholder={library.path}
                     description={say('screens.adminArea.librarySettingsDialog.aFolderOfItsOwnFor')}
                   />
+
+                  <div className="flex flex-col gap-1">
+                    <OptionMenu
+                      label={say('screens.adminArea.librarySettingsDialog.higherQualityRequests')}
+                      groups={[
+                        {
+                          name: say(
+                            'screens.adminArea.librarySettingsDialog.higherQualityRequests',
+                          ),
+                          selectedId: higherProfileAsks,
+                          onSelect: (next) => {
+                            const chosen = HIGHER_PROFILE_ASK_CHOICES.find(
+                              (choice) => choice.id === next,
+                            );
+
+                            if (chosen !== undefined) {
+                              setHigherProfileAsks(chosen.id);
+                            }
+                          },
+                          options: HIGHER_PROFILE_ASK_CHOICES.map(({ id, label }) => ({
+                            id,
+                            label,
+                          })),
+                        },
+                      ]}
+                      trigger={
+                        <>
+                          <span className="truncate">
+                            {HIGHER_PROFILE_ASK_CHOICES.find(
+                              (choice) => choice.id === higherProfileAsks,
+                            )?.label ?? ''}
+                          </span>
+                          <Icon
+                            of={ChevronsUpDownIcon}
+                            size={15}
+                            tone="muted"
+                            className="shrink-0"
+                          />
+                        </>
+                      }
+                      triggerShape="field"
+                      align="start"
+                      matchTriggerWidth
+                    />
+                    <p className="text-xs text-text-muted">
+                      {say('screens.adminArea.librarySettingsDialog.whenSomebodyAsksForATitle')}
+                    </p>
+                  </div>
 
                   {library.kind === 'shows' ? (
                     <div className="flex flex-col gap-1">

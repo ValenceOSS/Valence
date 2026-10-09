@@ -11,6 +11,7 @@ import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 const aProfile = (overrides: Partial<QualityProfile> = {}): QualityProfile => ({
   ...QualityProfileDraftSchema.parse({ name: 'HD', kind: 'video', sizes: [] }),
   id: '0f8fad5b-d9cb-469f-a165-70867728950e',
+  position: 0,
   createdAt: '2026-09-19T00:00:00.000Z',
   updatedAt: '2026-09-19T00:00:00.000Z',
   ...overrides,

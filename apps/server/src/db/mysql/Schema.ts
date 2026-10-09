@@ -1,3 +1,4 @@
+import { HIGHER_PROFILE_ASKS } from '@ValenceContracts/schemas/HigherProfileAsks';
 import { sql } from 'drizzle-orm';
 import {
   bigint,
@@ -190,6 +191,9 @@ const library = mysqlTable('library', {
   requestProfileId: identifier('requestProfileId'),
   requestPath: mediumtext('requestPath'),
   keepsShowsTogether: boolean('keepsShowsTogether').notNull().default(true),
+  higherProfileAsks: varchar('higherProfileAsks', { length: 16, enum: HIGHER_PROFILE_ASKS })
+    .notNull()
+    .default('ask'),
   requestFulfilment: jsonColumn('requestFulfilment').$type<Fulfilment>(),
   linkedServerId: identifier('linkedServerId').references((): AnyMySqlColumn => linkedServer.id, {
     onDelete: 'cascade',

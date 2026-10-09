@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import {
   QualityProfileChangeSchema,
   QualityProfileDraftSchema,
+  ProfileOrderSchema,
 } from '@ValenceContracts/schemas/QualityProfile';
 import { readBody } from '@ValenceRequests/readBody';
 import type { ProfileService } from '@ValenceRequests/profiles/createProfileService';
@@ -10,7 +11,8 @@ import { refuse } from '@ValenceI18n/refuse';
 const NO_SUCH_PROFILE = refuse('error.common.noSuchProfile');
 
 /**
- * The quality profiles, as routes under `/api`: listing, adding, changing and removing them.
+ * The quality profiles, as routes under `/api`: listing, adding, changing, putting in order and
+ * removing them.
  *
  * @param profiles - The profiles.
  * @returns The routes.
@@ -26,6 +28,14 @@ const createProfileRoutes = (profiles: ProfileService) => {
     return draft === null
       ? context.json(refuse('error.profile.thatIsNotAProfile'), 400)
       : context.json(await profiles.add(draft), 201);
+  });
+
+  routes.put('/profiles/order', async (context) => {
+    const order = await readBody(context.req.raw, ProfileOrderSchema);
+
+    return order === null
+      ? context.json(refuse('error.profile.sayWhichOrderToPut'), 400)
+      : context.json(await profiles.reorder(order.ids));
   });
 
   routes.patch('/profiles/:id', async (context) => {

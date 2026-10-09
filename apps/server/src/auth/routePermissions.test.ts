@@ -40,6 +40,7 @@ const build = () => {
           requestProfileId: null,
           requestPath: null,
           keepsShowsTogether: true,
+          higherProfileAsks: 'ask',
         },
       ],
       media: [],

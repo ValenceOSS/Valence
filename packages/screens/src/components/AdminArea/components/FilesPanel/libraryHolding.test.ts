@@ -16,6 +16,7 @@ const library = (id: string, path: string): Library => ({
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 });
 
 const FILMS = library('films', '/media/Films');

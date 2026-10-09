@@ -98,6 +98,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       requestProfileId,
       requestPath,
       keepsShowsTogether,
+      higherProfileAsks,
       fulfilment,
     } = context.req.valid('json');
     const libraryId = context.req.valid('param').id;
@@ -124,6 +125,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
         ? {}
         : { requestPath: requestPath === '' ? null : requestPath }),
       ...(keepsShowsTogether === undefined ? {} : { keepsShowsTogether }),
+      ...(higherProfileAsks === undefined ? {} : { higherProfileAsks }),
       ...(fulfilment === undefined ? {} : { fulfilment }),
     });
 

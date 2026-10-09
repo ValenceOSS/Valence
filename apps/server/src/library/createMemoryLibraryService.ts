@@ -335,6 +335,7 @@ const createMemoryLibraryService = (
       requestProfileId: null,
       requestPath: null,
       keepsShowsTogether: true,
+      higherProfileAsks: 'ask',
       fulfilment: null,
     };
 
@@ -366,6 +367,10 @@ const createMemoryLibraryService = (
 
     if (input.keepsShowsTogether !== undefined) {
       found.keepsShowsTogether = input.keepsShowsTogether;
+    }
+
+    if (input.higherProfileAsks !== undefined) {
+      found.higherProfileAsks = input.higherProfileAsks;
     }
 
     if (input.fulfilment !== undefined) {

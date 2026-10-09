@@ -1,0 +1,1 @@
+ALTER TABLE `library` ADD `higherProfileAsks` varchar(16) DEFAULT 'ask' NOT NULL;

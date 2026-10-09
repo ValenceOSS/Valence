@@ -4,6 +4,8 @@ import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/Pane
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  ArrowDown as ArrowDownFilledIcon,
+  ArrowUp as ArrowUpFilledIcon,
   Bin as BinFilledIcon,
   MoreHorizontal as MoreHorizontalIcon,
   Pen as PenFilledIcon,
@@ -23,11 +25,12 @@ import { Spinner } from '@ValenceUI/Spinner';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
-import { removeProfile } from '@ValenceClient/requests/fetchProfiles';
+import { removeProfile, reorderProfiles } from '@ValenceClient/requests/fetchProfiles';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { ProfileEditor } from '@ValenceScreens/components/AdminArea/components/ProfileEditor/ProfileEditor';
 import { describeAskers } from './describeAskers';
 import { describeProfile } from './describeProfile';
+import { moveProfile } from './moveProfile';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { ProfileKind, QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import { say } from '@ValenceI18n/say';
@@ -55,9 +58,10 @@ const isProfileKind = (value: string): value is ProfileKind =>
   KINDS.some((kind) => kind.id === value);
 
 /**
- * The Profiles page: every quality profile, what each takes and how far it upgrades, the libraries
- * it is for, and changing or removing it — a profile opening as a page of its own. Search can be
- * run against any of them. Profiles of a kind no library takes requests for say they aren't used.
+ * The Profiles page: every quality profile, highest first, what each takes and how far it upgrades,
+ * the libraries it is for, and moving, changing or removing it — a profile opening as a page of its
+ * own. Search can be run against any of them. Profiles of a kind no library takes requests for say
+ * they aren't used.
  */
 const ProfilesPanel = () => {
   const requestable = useRequestableKinds();
@@ -81,6 +85,23 @@ const ProfilesPanel = () => {
   const reread = useCallback(
     () => cache.invalidateQueries({ queryKey: requestsQueries.profiles().queryKey }),
     [cache],
+  );
+
+  const move = useCallback(
+    (profile: QualityProfile, by: -1 | 1) => {
+      const ids = moveProfile(profiles.data ?? [], profile.id, by);
+
+      if (ids === null) {
+        return;
+      }
+
+      void reorderProfiles(ids)
+        .then(({ refusal }) => {
+          setProblem(refusal?.message ?? null);
+        })
+        .then(reread);
+    },
+    [profiles.data, reread],
   );
 
   const named = useMemo(
@@ -154,6 +175,30 @@ const ProfilesPanel = () => {
                         setEditing(row.original);
                       },
                     },
+                    ...(moveProfile(profiles.data ?? [], row.original.id, -1) === null
+                      ? []
+                      : [
+                          {
+                            id: 'up',
+                            label: say('common.moveUp'),
+                            icon: <Icon of={ArrowUpFilledIcon} size={15} />,
+                            onChoose: () => {
+                              move(row.original, -1);
+                            },
+                          },
+                        ]),
+                    ...(moveProfile(profiles.data ?? [], row.original.id, 1) === null
+                      ? []
+                      : [
+                          {
+                            id: 'down',
+                            label: say('common.moveDown'),
+                            icon: <Icon of={ArrowDownFilledIcon} size={15} />,
+                            onChoose: () => {
+                              move(row.original, 1);
+                            },
+                          },
+                        ]),
                     {
                       id: 'try',
                       label: say('screens.adminArea.profilesPanel.tryIt'),
@@ -184,7 +229,7 @@ const ProfilesPanel = () => {
         ),
       },
     ],
-    [named],
+    [named, profiles.data, move],
   );
 
   return (
@@ -298,6 +343,10 @@ const ProfilesPanel = () => {
         ) : (
           KINDS.map((kind) => (
             <TabPanel key={kind.id} value={kind.id}>
+              <p className="px-4 pt-3 text-sm text-text-muted">
+                {say('screens.adminArea.profilesPanel.highestFirst')}
+              </p>
+
               {isUnused(kind.id) ? (
                 <p className="px-4 pt-3 text-sm text-text-muted">
                   {kind.id === 'video'

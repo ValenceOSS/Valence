@@ -38,6 +38,7 @@ const FILMS: Library = {
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 };
 
 const entry = (overrides: Partial<LibraryEntry>): LibraryEntry => ({

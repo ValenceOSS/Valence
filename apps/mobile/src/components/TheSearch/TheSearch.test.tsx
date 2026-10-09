@@ -41,6 +41,7 @@ describe('TheSearch', () => {
         requestProfileId: null,
         requestPath: null,
         keepsShowsTogether: true,
+        higherProfileAsks: 'ask',
       },
     ]);
     const drawn = await render(aSearch(), { wrapper: CacheScope });

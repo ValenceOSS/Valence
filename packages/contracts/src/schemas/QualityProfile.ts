@@ -158,6 +158,7 @@ const QualityProfileSchema = z.object({
   isDefault: z.boolean(),
   roleIds: z.array(z.string()),
   accountIds: z.array(z.string()),
+  position: z.number().int().nonnegative().default(0),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -224,6 +225,8 @@ const ProfileChoiceSchema = z.object({
   kind: ProfileKindSchema,
 });
 
+const ProfileOrderSchema = z.object({ ids: z.array(z.string().uuid()).min(1).max(200) });
+
 const ProfilesOnOfferSchema = z.object({
   choices: z.array(ProfileChoiceSchema),
   forcedId: z.string().uuid().nullable(),
@@ -243,6 +246,7 @@ type ProfileKind = (typeof PROFILE_KINDS)[number];
 type ReleaseWait = (typeof RELEASE_WAITS)[number];
 type ProfileChoice = z.infer<typeof ProfileChoiceSchema>;
 type ProfilesOnOffer = z.infer<typeof ProfilesOnOfferSchema>;
+type ProfileOrder = z.infer<typeof ProfileOrderSchema>;
 type QualitySize = z.infer<typeof QualitySizeSchema>;
 type QualityProfile = z.infer<typeof QualityProfileSchema>;
 type QualityProfileDraft = z.input<typeof QualityProfileDraftSchema>;
@@ -260,6 +264,7 @@ export type {
   Judgement,
   ProfileChoice,
   ProfileKind,
+  ProfileOrder,
   ProfilesOnOffer,
   QualityProfile,
   QualityProfileChange,
@@ -282,6 +287,7 @@ export {
   JudgementSchema,
   ProfileChoiceSchema,
   ProfileKindSchema,
+  ProfileOrderSchema,
   ProfilesOnOfferSchema,
   QualityProfileChangeSchema,
   QualityProfileDraftSchema,

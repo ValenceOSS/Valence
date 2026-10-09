@@ -1,3 +1,4 @@
+import type { HigherProfileAsks } from '@ValenceContracts/schemas/HigherProfileAsks';
 import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { readFromServerOrAbsent } from '@ValenceClient/query/readFromServerOrAbsent';
@@ -64,6 +65,7 @@ type UpdateLibraryInput = {
   requestProfileId?: string | null;
   requestPath?: string | null;
   keepsShowsTogether?: boolean;
+  higherProfileAsks?: HigherProfileAsks;
   fulfilment?: Fulfilment | null;
 };
 

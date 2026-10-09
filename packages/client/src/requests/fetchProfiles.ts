@@ -34,7 +34,7 @@ const fetchProfilesOnOffer = (kind: MediaRequestKind): Promise<ProfilesOnOffer> 
 /**
  * Reads the quality profiles searches are judged against.
  *
- * @returns The profiles, by name.
+ * @returns The profiles, in the operator's order, highest first.
  */
 const fetchProfiles = (): Promise<QualityProfile[]> =>
   readFromServer(PROFILES, z.array(QualityProfileSchema));
@@ -63,6 +63,17 @@ const changeProfile = (id: string, change: QualityProfileChange): Promise<Sent<Q
   );
 
 /**
+ * Puts the quality profiles in order, highest first.
+ *
+ * @param ids - The profiles, in their new order.
+ * @returns Every profile in its new order, or why not.
+ */
+const reorderProfiles = (ids: readonly string[]): Promise<Sent<QualityProfile[]>> =>
+  sendToRequests(`${PROFILES}/order`, 'PUT', { ids }, async (response) =>
+    z.array(QualityProfileSchema).parse(await response.json()),
+  );
+
+/**
  * Forgets a quality profile.
  *
  * @param id - Which.
@@ -72,4 +83,11 @@ const removeProfile = async (id: string): Promise<Refusal> =>
   (await sendToRequests(`${PROFILES}/${id}`, 'DELETE', undefined, () => Promise.resolve(null)))
     .refusal;
 
-export { addProfile, changeProfile, fetchProfiles, fetchProfilesOnOffer, removeProfile };
+export {
+  addProfile,
+  changeProfile,
+  fetchProfiles,
+  fetchProfilesOnOffer,
+  removeProfile,
+  reorderProfiles,
+};

@@ -113,6 +113,7 @@ const SHOWS: Library = {
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 };
 
 const FILMS: Library = { ...SHOWS, id: 'valence-films', name: 'Our films', kind: 'movies' };

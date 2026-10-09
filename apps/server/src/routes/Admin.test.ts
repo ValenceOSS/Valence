@@ -40,6 +40,7 @@ const LIBRARY = {
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask' as const,
 };
 
 const build = (

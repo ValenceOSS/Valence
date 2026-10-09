@@ -14,6 +14,7 @@ import {
   refuseMediaRequestRoute,
   removeMediaRequestRoute,
   joinMediaRequestRoute,
+  decideProfileAskRoute,
   adminCatalogueRoute,
   adminTitleFilesRoute,
   stopRequestDownloadRoute,
@@ -39,6 +40,7 @@ import {
   listQualityProfilesRoute,
   profilesOnOfferRoute,
   removeQualityProfileRoute,
+  reorderQualityProfilesRoute,
   addArrAppRoute,
   changeArrAppRoute,
   importArrIndexersRoute,
@@ -829,6 +831,22 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       : context.json(bodyOf(answer), answer.status);
   });
 
+  app.openapi(decideProfileAskRoute, async (context) => {
+    const answer = await throughRequests(
+      context.req.raw.headers,
+      (client) => client.decideProfileAsk(context.req.valid('param').id, context.req.valid('json')),
+      ['requests.manage'],
+    );
+
+    if (answer.kind === 'answered') {
+      sayRequestsChanged();
+    }
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
   app.openapi(approveMediaRequestRoute, async (context) => {
     const { headers } = context.req.raw;
     const session = await readSessionOnce(auth, headers);
@@ -1040,6 +1058,16 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
   app.openapi(changeQualityProfileRoute, async (context) => {
     const answer = await throughRequests(context.req.raw.headers, (client) =>
       client.changeProfile(context.req.valid('param').id, context.req.valid('json')),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
+  app.openapi(reorderQualityProfilesRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.reorderProfiles(context.req.valid('json')),
     );
 
     return answer.kind === 'answered'

@@ -21,6 +21,7 @@ const aLibraryAt = (path: string, id = '3f2504e0-4f89-41d3-9a0c-0305e82c3301'): 
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
   fulfilment: null,
 });
 

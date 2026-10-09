@@ -72,6 +72,7 @@ const films = (overrides: Partial<Library> = {}): Library => ({
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
   ...overrides,
 });
 
@@ -171,6 +172,7 @@ describe('LibrarySettingsDialog', () => {
         requestProfileId: null,
         requestPath: null,
         keepsShowsTogether: true,
+        higherProfileAsks: 'ask',
         fulfilment: null,
       });
     });
@@ -334,6 +336,35 @@ describe('LibrarySettingsDialog', () => {
     });
   });
 
+  it('says what a later ask at a higher profile does', async () => {
+    const user = userEvent.setup();
+
+    updateLibraryMock.mockResolvedValue(films({ higherProfileAsks: 'upgrade' }));
+
+    render(
+      <LibrarySettingsDialog
+        library={films()}
+        isOpen
+        onClose={vi.fn()}
+        onUpdated={vi.fn()}
+        onRegenerate={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Higher-quality requests' }));
+    await user.click(
+      await screen.findByRole('menuitemradio', { name: 'Switch to the higher profile' }),
+    );
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(updateLibraryMock).toHaveBeenCalledWith(
+        films().id,
+        expect.objectContaining({ higherProfileAsks: 'upgrade' }),
+      );
+    });
+  });
+
   it('offers to keep episodes with their show only for a library of shows', () => {
     render(
       <LibrarySettingsDialog
@@ -447,6 +478,7 @@ describe('LibrarySettingsDialog', () => {
         requestProfileId: null,
         requestPath: '/media/asked-for',
         keepsShowsTogether: true,
+        higherProfileAsks: 'ask',
         fulfilment: null,
       });
     });

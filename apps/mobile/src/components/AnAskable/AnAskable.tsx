@@ -11,6 +11,7 @@ import {
 } from '@ValenceClient/requests/fetchMediaRequests';
 import { describeOthersStillWanting } from '@ValenceClient/requests/describeOthersStillWanting';
 import { describeWhoElseAsked } from '@ValenceClient/requests/describeWhoElseAsked';
+import { describeMyProfileAsk } from '@ValenceClient/requests/describeMyProfileAsk';
 import { mayJoinRequest } from '@ValenceClient/requests/mayJoinRequest';
 import { askersOf } from '@ValenceContracts/functions/askersOf';
 import { isAskedBy } from '@ValenceContracts/functions/isAskedBy';
@@ -207,6 +208,7 @@ const AnAskable = ({ kind, id, isMore = false, onOpen, onBack }: AnAskableProps)
   const mayTakeBack =
     request !== null && isAskedBy(request, who.data?.id) && !HAS_ARRIVED.has(request.state);
   const whoElse = describeWhoElseAsked(title.standing.askedBy ?? [], who.data?.id);
+  const myProfileAsk = request === null ? null : describeMyProfileAsk(request, who.data?.id);
   const isJoinable = !isUnrequestable && mayJoinRequest(title.standing, who.data?.id);
 
   return (
@@ -227,6 +229,8 @@ const AnAskable = ({ kind, id, isMore = false, onOpen, onBack }: AnAskableProps)
       )}
 
       {whoElse === null ? null : <Words tone="muted">{whoElse}</Words>}
+
+      {myProfileAsk === null ? null : <Words tone="muted">{myProfileAsk}</Words>}
 
       {isJoinable ? (
         <Button

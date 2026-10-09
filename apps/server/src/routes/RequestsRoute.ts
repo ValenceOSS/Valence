@@ -41,6 +41,7 @@ import {
 import {
   ProfilesOnOfferSchema,
   QualityProfileChangeSchema,
+  ProfileOrderSchema,
   QualityProfileDraftSchema,
   QualityProfileSchema,
 } from '@ValenceContracts/schemas/QualityProfile';
@@ -49,6 +50,7 @@ import {
   MediaRequestAskSchema,
   MediaRequestKindSchema,
   MediaRequestChangeSchema,
+  ProfileAskDecisionSchema,
   BlockedReleaseSchema,
   MediaRequestDecidedSchema,
   MediaRequestDecisionSchema,
@@ -840,6 +842,21 @@ const changeQualityProfileRoute = createRoute({
   }),
 });
 
+const reorderQualityProfilesRoute = createRoute({
+  method: 'put',
+  path: '/api/admin/requests/profiles/order',
+  tags: ['Admin'],
+  summary: 'Put the quality profiles in order, highest first',
+  request: { body: { content: { 'application/json': { schema: ProfileOrderSchema } } } },
+  responses: failures({
+    ...REFUSED_BODY,
+    200: {
+      description: 'Every profile, in its new order',
+      content: { 'application/json': { schema: z.array(QualityProfileAnswer) } },
+    },
+  }),
+});
+
 const removeQualityProfileRoute = createRoute({
   method: 'delete',
   path: '/api/admin/requests/profiles/{id}',
@@ -1177,6 +1194,19 @@ const joinMediaRequestRoute = createRoute({
   responses: requestFailures(ONE_REQUEST),
 });
 
+const decideProfileAskRoute = createRoute({
+  method: 'post',
+  path: '/api/requests/media/{id}/profile-ask',
+  tags: ['Requests'],
+  summary:
+    'Settle a later ask at a higher quality profile: switch the request to it, or keep the one it has',
+  request: {
+    params: RecordIdParameter,
+    body: { content: { 'application/json': { schema: ProfileAskDecisionSchema } } },
+  },
+  responses: requestFailures(ONE_REQUEST),
+});
+
 const approveMediaRequestRoute = createRoute({
   method: 'post',
   path: '/api/requests/media/{id}/approve',
@@ -1341,6 +1371,7 @@ export {
   refuseMediaRequestRoute,
   removeMediaRequestRoute,
   joinMediaRequestRoute,
+  decideProfileAskRoute,
   adminCatalogueRoute,
   adminTitleFilesRoute,
   stopRequestDownloadRoute,
@@ -1362,6 +1393,7 @@ export {
   changeQualityProfileRoute,
   listQualityProfilesRoute,
   profilesOnOfferRoute,
+  reorderQualityProfilesRoute,
   removeQualityProfileRoute,
   addArrAppRoute,
   changeArrAppRoute,

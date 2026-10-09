@@ -792,6 +792,7 @@ describe('deleting a library', () => {
               requestProfileId: null,
               requestPath: null,
               keepsShowsTogether: true,
+              higherProfileAsks: 'ask',
             },
           ],
           media: [],

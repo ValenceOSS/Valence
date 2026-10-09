@@ -121,6 +121,7 @@ const library = (overrides: Partial<Library> = {}): Library => ({
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 });
 
 const job = (overrides: Partial<Job> = {}): Job => ({

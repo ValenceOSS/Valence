@@ -150,6 +150,7 @@ import type { ScannedItem } from '@ValenceServer/library/scanLibrary';
 import type { LibraryKind, ScanResult } from '@ValenceContracts/schemas/Library';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { askersOf } from '@ValenceContracts/functions/askersOf';
+import { askersKeptBelow } from '@ValenceServer/requests/arrivals/askersKeptBelow';
 import { catalogueForRequest } from '@ValenceServer/requests/catalogueForRequest';
 import { createExpiringCache } from '@ValenceServer/library/createExpiringCache';
 import { createDatabaseRequestedAlbumStore } from '@ValenceServer/requests/albums/createDatabaseRequestedAlbumStore';
@@ -3014,25 +3015,48 @@ const tellOfArrival = async (filed: MediaRequest, mediaId: string): Promise<void
       request: webhookRequestOf(filed),
     },
   });
-  await notifyHousehold({
-    store: notifications,
-    event: 'requests.available',
-    title: saying('server.main.titleIsReady', { title: filed.title }),
-    body: saying('server.main.titleWhichYouAskedForIs', { title: filed.title }),
-    link: LINKS_TO_ARRIVALS[filed.kind](mediaId),
-    vapid: await readPushKeys(),
-    only: askersOf(filed).map((asker) => asker.id),
-    onProblem: (reason) => {
-      log.error('requests', `telling those who asked for ${filed.title}: ${reason}`);
-    },
-    announce: (userIds) => {
-      realtime.publish(
-        'notifications',
-        { event: 'requests.available' },
-        { kind: 'accounts', accountIds: [...userIds] },
-      );
-    },
-  });
+  const profiles = requestsClient === null ? null : await requestsClient.listProfiles();
+  const keptBelow = askersKeptBelow(filed, profiles?.kind === 'answered' ? profiles.value : []);
+  const told = new Set(keptBelow.map((asker) => asker.id));
+  const vapid = await readPushKeys();
+  const tell = (only: string[], body: Said) =>
+    notifyHousehold({
+      store: notifications,
+      event: 'requests.available',
+      title: saying('server.main.titleIsReady', { title: filed.title }),
+      body,
+      link: LINKS_TO_ARRIVALS[filed.kind](mediaId),
+      vapid,
+      only,
+      onProblem: (reason) => {
+        log.error('requests', `telling those who asked for ${filed.title}: ${reason}`);
+      },
+      announce: (userIds) => {
+        realtime.publish(
+          'notifications',
+          { event: 'requests.available' },
+          { kind: 'accounts', accountIds: [...userIds] },
+        );
+      },
+    });
+
+  await tell(
+    askersOf(filed)
+      .map((asker) => asker.id)
+      .filter((id) => !told.has(id)),
+    saying('server.main.titleWhichYouAskedForIs', { title: filed.title }),
+  );
+
+  for (const asker of keptBelow) {
+    await tell(
+      [asker.id],
+      saying('server.main.titleIsReadyInProfile', {
+        title: filed.title,
+        current: filed.profileName ?? '',
+        asked: asker.profileName ?? '',
+      }),
+    );
+  }
 };
 
 /**

@@ -131,6 +131,7 @@ const build = () => {
           requestProfileId: null,
           requestPath: null,
           keepsShowsTogether: true,
+          higherProfileAsks: 'ask',
         },
       ],
       media: [item(), item({ id: OTHER, title: 'Nocturnal Animals' })],

@@ -65,6 +65,7 @@ const libraryOf = (row: typeof libraryTable.$inferSelect): Library => ({
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 });
 
 /**

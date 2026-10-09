@@ -51,6 +51,7 @@ const library = (overrides: Partial<Library> = {}): Library => ({
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
   ...overrides,
 });
 

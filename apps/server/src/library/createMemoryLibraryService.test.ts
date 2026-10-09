@@ -42,6 +42,7 @@ const theLibrary = {
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask' as const,
 } as const;
 
 describe('what a library offers to filter by', () => {
@@ -233,6 +234,7 @@ describe("a programme's own extras", () => {
     requestProfileId: null,
     requestPath: null,
     keepsShowsTogether: true,
+    higherProfileAsks: 'ask' as const,
   } as const;
 
   const service = createMemoryLibraryService({
@@ -361,6 +363,7 @@ describe('deleting a library', () => {
     requestProfileId: null,
     requestPath: null,
     keepsShowsTogether: true,
+    higherProfileAsks: 'ask' as const,
   };
 
   it('forgets the library and everything in it', async () => {

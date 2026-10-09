@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { MediaItemSchema } from './MediaItem';
 import { FulfilmentSchema } from './ArrApp';
+import { HigherProfileAsksSchema } from './HigherProfileAsks';
 import { say } from '@ValenceI18n/say';
 const LIBRARY_KINDS = ['movies', 'shows', 'music', 'books'] as const;
 
@@ -58,6 +59,7 @@ const LibrarySchema = z.object({
   requestProfileId: z.string().uuid().nullable().default(null),
   requestPath: z.string().nullable().default(null),
   keepsShowsTogether: z.boolean().default(true),
+  higherProfileAsks: HigherProfileAsksSchema.default('ask'),
   fulfilment: FulfilmentSchema.nullable().optional(),
   linkedServerId: z.string().uuid().nullable().optional(),
 });
@@ -69,6 +71,7 @@ const UpdateLibraryRequestSchema = z.object({
   requestProfileId: z.string().uuid().nullable().optional(),
   requestPath: z.string().trim().nullable().optional(),
   keepsShowsTogether: z.boolean().optional(),
+  higherProfileAsks: HigherProfileAsksSchema.optional(),
   fulfilment: FulfilmentSchema.nullable().optional(),
 });
 

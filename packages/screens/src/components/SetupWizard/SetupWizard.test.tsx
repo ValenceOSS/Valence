@@ -35,6 +35,7 @@ const LIBRARY: Library = {
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 };
 
 const completeSetup = vi.hoisted(() =>

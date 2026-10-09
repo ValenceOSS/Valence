@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { describe, expect, it } from 'vitest';
 import { createMemoryRecordStore } from '@ValenceRequests/stores/createMemoryRecordStore';
 import { createProfileRoutes } from './createProfileRoutes';
@@ -32,6 +33,27 @@ describe('createProfileRoutes', () => {
     expect((await ask(`/profiles/${id}`, 'PATCH', { name: 'UHD' })).status).toBe(200);
     expect((await ask(`/profiles/${id}`, 'DELETE')).status).toBe(204);
     expect((await ask(`/profiles/${id}`, 'DELETE')).status).toBe(404);
+  });
+
+  it('puts the profiles in order', async () => {
+    const ask = theRoutes();
+    const hd = QualityProfileSchema.parse(
+      await (await ask('/profiles', 'POST', { name: 'HD', kind: 'video' })).json(),
+    );
+    const uhd = QualityProfileSchema.parse(
+      await (await ask('/profiles', 'POST', { name: 'UHD', kind: 'video' })).json(),
+    );
+
+    const ordered = await ask('/profiles/order', 'PUT', { ids: [uhd.id, hd.id] });
+
+    expect(ordered.status).toBe(200);
+    expect(
+      z
+        .array(QualityProfileSchema)
+        .parse(await ordered.json())
+        .map((profile) => profile.name),
+    ).toEqual(['UHD', 'HD']);
+    expect((await ask('/profiles/order', 'PUT', { ids: [] })).status).toBe(400);
   });
 
   it('refuses what is not a profile, and a change to one that is not there', async () => {

@@ -197,6 +197,7 @@ const LIBRARY_COLUMNS = {
   requestProfileId: library.requestProfileId,
   requestPath: library.requestPath,
   keepsShowsTogether: library.keepsShowsTogether,
+  higherProfileAsks: library.higherProfileAsks,
   requestFulfilment: library.requestFulfilment,
   linkedServerId: library.linkedServerId,
 };
@@ -1221,6 +1222,7 @@ const createDatabaseLibraryService = ({
         requestProfileId: row.requestProfileId,
         requestPath: row.requestPath,
         keepsShowsTogether: row.keepsShowsTogether,
+        higherProfileAsks: row.higherProfileAsks,
         fulfilment: row.requestFulfilment,
         linkedServerId: row.linkedServerId,
       })) satisfies Library[];
@@ -1253,6 +1255,7 @@ const createDatabaseLibraryService = ({
         requestProfileId: null,
         requestPath: null,
         keepsShowsTogether: true,
+        higherProfileAsks: 'ask',
         fulfilment: null,
       };
     },
@@ -1277,6 +1280,9 @@ const createDatabaseLibraryService = ({
           ...(input.keepsShowsTogether === undefined
             ? {}
             : { keepsShowsTogether: input.keepsShowsTogether }),
+          ...(input.higherProfileAsks === undefined
+            ? {}
+            : { higherProfileAsks: input.higherProfileAsks }),
           ...(input.fulfilment === undefined ? {} : { requestFulfilment: input.fulfilment }),
         })
         .where(eq(library.id, libraryId));
@@ -1318,6 +1324,7 @@ const createDatabaseLibraryService = ({
         requestProfileId: row.requestProfileId,
         requestPath: row.requestPath,
         keepsShowsTogether: row.keepsShowsTogether,
+        higherProfileAsks: row.higherProfileAsks,
         fulfilment: row.requestFulfilment,
         linkedServerId: row.linkedServerId,
       };

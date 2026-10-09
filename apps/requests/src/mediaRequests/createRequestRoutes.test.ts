@@ -119,6 +119,14 @@ describe('createRequestRoutes', () => {
     expect((await ask(`/requests/${id}/askers/another`, 'DELETE')).status).toBe(404);
   });
 
+  it('refuses to settle a higher-quality ask that is not there, or a choice that is not one', async () => {
+    const { ask } = theRoutes();
+    const id = await madeDune(ask);
+
+    expect((await ask(`/requests/${id}/profile-ask`, 'POST', { choice: 'keep' })).status).toBe(404);
+    expect((await ask(`/requests/${id}/profile-ask`, 'POST', { choice: 'both' })).status).toBe(400);
+  });
+
   it('approves, refuses, retries and marks a request arrived', async () => {
     const { ask } = theRoutes();
     const id = await madeDune(ask);
