@@ -26,6 +26,7 @@ import {
   approveMediaRequest,
   askForMedia,
   changeMediaRequest,
+  decideProfileAsk,
   followRequestItems,
   fulfilMediaRequest,
   removeMediaRequest,
@@ -48,6 +49,7 @@ import { StopDownloadDialog } from './components/StopDownloadDialog/StopDownload
 import { TitleDetails } from './components/TitleDetails/TitleDetails';
 import { TitleHero } from './components/TitleHero/TitleHero';
 import { TitleProgress } from './components/TitleProgress/TitleProgress';
+import { ProfileAskCard } from './components/ProfileAskCard/ProfileAskCard';
 import { askOfEntry } from './askOfEntry';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';
 import type { RequestDownload } from '@ValenceClient/requests/downloadsOfRequest';
@@ -547,6 +549,28 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
         askedBy={request === null ? null : { name: namesOfAskers(request), at: request.createdAt }}
         actions={actions}
       />
+
+      {request?.profileAsk === null || request?.profileAsk === undefined ? null : (
+        <ProfileAskCard
+          ask={request.profileAsk}
+          currentName={request.profileName ?? null}
+          isBusy={isBusy}
+          onDecide={(choice) => {
+            const named =
+              choice === 'switch'
+                ? (request.profileAsk?.profileName ?? say('common.aHigherProfile'))
+                : (request.profileName ?? say('common.itsLibrarysProfile'));
+
+            act(
+              async () => ({ refusal: (await decideProfileAsk(request.id, { choice })).refusal }),
+              choice === 'switch'
+                ? say('screens.adminArea.titlePage.switchedToProfile', { profile: named })
+                : say('screens.adminArea.titlePage.keptProfile', { profile: named }),
+              failedToSay,
+            );
+          }}
+        />
+      )}
 
       {request === null ? null : (
         <TitleProgress request={request} downloads={downloads} onStop={setStopping} />

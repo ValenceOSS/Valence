@@ -25,6 +25,7 @@ import type {
   MissingSearch,
   MusicCatalogueHit,
   MusicRequestKind,
+  ProfileAskDecision,
   RequestLogEntry,
 } from '@ValenceContracts/schemas/MediaRequest';
 
@@ -96,6 +97,17 @@ const approveMediaRequest = (id: string): Promise<Sent<MediaRequest>> =>
  */
 const joinMediaRequest = (id: string): Promise<Sent<MediaRequest>> =>
   sendToRequests(`${REQUESTS}/${id}/join`, 'POST', undefined, readRequest);
+
+/**
+ * Settles a later ask at a higher quality profile: switches the request to it, or keeps the one it
+ * has.
+ *
+ * @param id - Which request.
+ * @param decision - Which way.
+ * @returns The request, or why not.
+ */
+const decideProfileAsk = (id: string, decision: ProfileAskDecision): Promise<Sent<MediaRequest>> =>
+  sendToRequests(`${REQUESTS}/${id}/profile-ask`, 'POST', decision, readRequest);
 
 /**
  * Refuses a request.
@@ -311,6 +323,7 @@ export {
   askForMedia,
   changeMediaRequest,
   decideMediaRequests,
+  decideProfileAsk,
   fetchRequestBlocklist,
   fetchMediaRequestLog,
   fetchMediaRequestReleases,

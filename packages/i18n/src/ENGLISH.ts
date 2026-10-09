@@ -477,6 +477,7 @@ const ENGLISH = {
   'common.addTrigger': 'Add trigger',
   'common.administrator': 'Administrator',
   'common.aFilm2': 'A film',
+  'common.aHigherProfile': 'a higher profile',
   'common.album': 'Album',
   'common.albums': 'Albums',
   'common.aLibrary': 'A library',
@@ -832,6 +833,7 @@ const ENGLISH = {
   'common.itDidNotAnswer': 'It didn’t respond.',
   'common.items': 'Items',
   'common.itFailed': 'It failed.',
+  'common.itsLibrarysProfile': 'its library’s profile',
   'common.itsOwnOrder': 'Custom order',
   'common.itWillNotBeFetchedAnd':
     'It won’t be downloaded, and anything already downloading is deleted. You can request it again at any time.',
@@ -1530,6 +1532,9 @@ const ENGLISH = {
   'common.year': 'Year',
   'common.yellow': 'Yellow',
   'common.yesThatIsMine': 'Yes, this was me',
+  'common.youAskedForProfileKept': 'You asked for {asked} · it’s being fetched with {current}',
+  'common.youAskedForProfileWaiting':
+    'You asked for {asked}. An admin will decide which quality it’s fetched in.',
   'common.youCanFollowItUnderSearch': 'You can track it in Search, under Requested.',
   'common.youHaveWatchedEverythingHere': 'You’ve watched everything here.',
   'common.yourAccountAsksForACode':
@@ -2023,6 +2028,7 @@ const ENGLISH = {
   'error.plugins.thereIsNoSuchPluginOr': 'No such plugin, or it’s turned off.',
   'error.plugins.tooManyMessagesTryAgainIn': 'Too many messages. Try again in a minute.',
   'error.profile.noSuchProfileOrItIs': 'No such profile, or it’s the only one left.',
+  'error.profile.sayWhichOrderToPut': 'Say which order to put the profiles in.',
   'error.profile.thatAddressAlreadyHasAnAccount': 'That email address already has an account.',
   'error.profile.thatIsNotAChangeTo': 'That isn’t a valid change to a profile.',
   'error.profile.thatIsNotAProfile': 'That isn’t a valid profile.',
@@ -2038,6 +2044,8 @@ const ENGLISH = {
   'error.requests.sayWhatHappensAfterTheDownload':
     'Say what should happen after the download is stopped.',
   'error.requests.sayWhatToFollow': 'Say which episodes or albums to follow or stop following.',
+  'error.requests.sayWhetherToSwitchOrKeep':
+    'Say whether to switch the request to the higher profile or keep the one it has.',
   'error.requests.sayWhichItemItBecame': 'Say which library item it became.',
   'error.requests.sayWhoIsAsking': 'Say who is asking.',
   'error.requests.sayWhyItWasRefusedOr': 'Give a reason for declining, or leave it empty.',
@@ -3681,6 +3689,7 @@ const ENGLISH = {
   'screens.adminArea.librariesPanel.whatNameIsDoing': '{name} activity',
   'screens.adminArea.librarySettingsDialog.aFolderOfItsOwnFor':
     'A separate folder for downloaded requests, if you want them kept apart. Otherwise, the library’s own folder is used.',
+  'screens.adminArea.librarySettingsDialog.askMe': 'Ask me',
   'screens.adminArea.librarySettingsDialog.atOnce': 'Immediately',
   'screens.adminArea.librarySettingsDialog.chooseAMetadataProfileForLidarr':
     'Choose a metadata profile for Lidarr.',
@@ -3691,12 +3700,15 @@ const ENGLISH = {
   'screens.adminArea.librarySettingsDialog.filesAtOnce': 'Files processed at once',
   'screens.adminArea.librarySettingsDialog.forceDefaultAudioTrack': 'Force default audio track',
   'screens.adminArea.librarySettingsDialog.fourAtATime': 'Four at a time',
+  'screens.adminArea.librarySettingsDialog.higherQualityRequests': 'Higher-quality requests',
   'screens.adminArea.librarySettingsDialog.howeverManyTheServerAllows':
     'As many as the server allows',
   'screens.adminArea.librarySettingsDialog.howManyOfThisLibrarysFiles':
     'How many of this library’s files are processed at the same time. For a local disk, use as many as the server can handle. For a network share, use one: files share a single connection, so processing four at once splits its speed four ways.',
   'screens.adminArea.librarySettingsDialog.keepNewEpisodesWithTheShow':
     'Keep new episodes with the show',
+  'screens.adminArea.librarySettingsDialog.keepTheProfileAskedFirst':
+    'Keep the profile asked first',
   'screens.adminArea.librarySettingsDialog.kindSearchesDownloadsAndImports':
     '{kind} searches, downloads and imports it.',
   'screens.adminArea.librarySettingsDialog.metadataProfile': 'Metadata profile',
@@ -3716,6 +3728,8 @@ const ENGLISH = {
   'screens.adminArea.librarySettingsDialog.rootFolder': 'Root folder',
   'screens.adminArea.librarySettingsDialog.savedTheSettingsOfName': 'Saved settings for {name}.',
   'screens.adminArea.librarySettingsDialog.searchAsSoonAsItIsAdded': 'Search as soon as it’s added',
+  'screens.adminArea.librarySettingsDialog.switchToTheHigherProfile':
+    'Switch to the higher profile',
   'screens.adminArea.librarySettingsDialog.takesRequests': 'Accept requests',
   'screens.adminArea.librarySettingsDialog.theAppCannotReachThisFolder':
     'The app can’t access this folder',
@@ -3728,6 +3742,8 @@ const ENGLISH = {
   'screens.adminArea.librarySettingsDialog.twoAtATime': 'Two at a time',
   'screens.adminArea.librarySettingsDialog.valenceSearchesDownloadsAndFilesIt':
     'Valence searches for, downloads and imports it.',
+  'screens.adminArea.librarySettingsDialog.whenSomebodyAsksForATitle':
+    'When somebody asks for a title already requested, at a profile higher in Requests › Profiles. A lower one just joins the request.',
   'screens.adminArea.librarySettingsDialog.whereRequestsAreFiled': 'Download folder for requests',
   'screens.adminArea.librarySettingsDialog.whetherWhatPeopleAskForCan':
     'Whether requests can be added to this library, which quality profile releases are checked against, and where they’re saved. By default, the profile assigned to this library is used and downloads are saved in the library’s folder.',
@@ -4055,6 +4071,8 @@ const ENGLISH = {
   'screens.adminArea.profileEditor.whichLibrariesOfferThisProfileWhen':
     'Which libraries offer this profile when someone makes a request. Select none to offer it for all of them.',
   'screens.adminArea.profileEditor.whichPartOfTheProfileTo': 'Which part of the profile to edit',
+  'screens.adminArea.profilesPanel.highestFirst':
+    'Highest first. When people ask for the same title at different profiles, this order decides which is higher.',
   'screens.adminArea.profilesPanel.noMusicLibraryTakesRequests':
     'No music library takes requests, so these profiles aren’t used. Turn on Takes requests for a library on the Libraries page.',
   'screens.adminArea.profilesPanel.noProfilesForFilmsOrSeries':
@@ -4447,6 +4465,7 @@ const ENGLISH = {
   'screens.adminArea.titlePage.interactiveSearchDialog.pickingOneReplaces':
     'Picking a release stops whatever is downloading for the same episodes and blocks it.',
   'screens.adminArea.titlePage.itsQualityLibraryAndSeasons': 'Quality, library and seasons',
+  'screens.adminArea.titlePage.keptProfile': 'Kept {profile}',
   'screens.adminArea.titlePage.markAsAdded': 'Mark as in the library',
   'screens.adminArea.titlePage.markedTitleAsAdded': 'Marked {title} as in the library',
   'screens.adminArea.titlePage.minutesLong': '{minutes} min',
@@ -4459,6 +4478,11 @@ const ENGLISH = {
   'screens.adminArea.titlePage.onDisk': 'On disk',
   'screens.adminArea.titlePage.onlyFetchWhatIPick': 'Fetch only releases I pick',
   'screens.adminArea.titlePage.onlyWhatYouPick': 'Only releases you pick',
+  'screens.adminArea.titlePage.profileAskCard.aHigherQualityAsk': 'A higher-quality request',
+  'screens.adminArea.titlePage.profileAskCard.keepProfile': 'Keep {profile}',
+  'screens.adminArea.titlePage.profileAskCard.nameAskedForProfile':
+    '{name} asked for the {asked} profile. It’s being fetched with {current}.',
+  'screens.adminArea.titlePage.profileAskCard.switchToProfile': 'Switch to {profile}',
   'screens.adminArea.titlePage.removeEllipsis': 'Remove…',
   'screens.adminArea.titlePage.removeTitleDialog.deleteTheFilesItAdded':
     'Delete the files it added to the library',
@@ -4490,6 +4514,7 @@ const ENGLISH = {
   'screens.adminArea.titlePage.stopDownloadDialog.stopTitle': 'Stop {title}?',
   'screens.adminArea.titlePage.stopDownloadDialog.thenWhat': 'After stopping',
   'screens.adminArea.titlePage.stoppedTitle': 'Stopped {title}',
+  'screens.adminArea.titlePage.switchedToProfile': 'Switched to {profile}',
   'screens.adminArea.titlePage.thatCouldNotBeDone': 'That couldn’t be done.',
   'screens.adminArea.titlePage.thatTitleIsNoLongerHere':
     'That title isn’t in the Catalogue any more.',
@@ -6691,6 +6716,8 @@ const ENGLISH = {
     '{title} is ready and is downloading to the device you requested it on.',
   'server.main.titleIsOnName': '{title} is available on {name}',
   'server.main.titleIsReady': '{title} is ready',
+  'server.main.titleIsReadyInProfile':
+    '{title} is ready to watch in {current}. The {asked} version you asked for wasn’t added.',
   'server.main.titleIsReadyToKeep': '{title} is ready to download',
   'server.main.titleWhichYouAskedForIs': '{title}, which you requested, is now in the library.',
   'server.main.transcoderDidNotAnswer': '{address} didn’t respond to a health check.',

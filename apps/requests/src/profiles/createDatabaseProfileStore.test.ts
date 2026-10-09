@@ -14,6 +14,7 @@ const HD: QualityProfile = {
     libraryIds: ['films'],
   }),
   id: '0f8fad5b-d9cb-469f-a165-70867728950e',
+  position: 0,
   createdAt: '2026-09-19T00:00:00.000Z',
   updatedAt: '2026-09-19T00:00:00.000Z',
 };

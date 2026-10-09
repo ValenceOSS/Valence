@@ -42,6 +42,7 @@ const REQUEST = {
   refusedBecause: null,
   requestedBy: { id: 'someone', name: 'Someone' },
   alsoAskedBy: [],
+  profileAsk: null,
   seasons: null,
   followsNewSeasons: false,
   releaseTypes: null,

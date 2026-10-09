@@ -46,6 +46,7 @@ const aLibrary = (id: string, name: string, takesRequests = true): Library => ({
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 });
 
 beforeEach(() => {

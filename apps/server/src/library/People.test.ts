@@ -71,6 +71,7 @@ const build = (media: MediaDetail[] = []) => {
           requestProfileId: null,
           requestPath: null,
           keepsShowsTogether: true,
+          higherProfileAsks: 'ask',
         },
       ],
       media,

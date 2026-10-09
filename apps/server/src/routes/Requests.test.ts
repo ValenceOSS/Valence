@@ -158,6 +158,7 @@ const FILMS: Library = {
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 };
 
 const MUSIC: Library = {
@@ -173,6 +174,7 @@ const MUSIC: Library = {
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 };
 
 const BOOKS: Library = {
@@ -188,6 +190,7 @@ const BOOKS: Library = {
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 };
 
 const SHOWS: Library = {
@@ -1147,6 +1150,10 @@ describe('quality profiles, through the server', () => {
       return new Response(null, { status: 204 });
     }
 
+    if (url.endsWith('/api/profiles/order')) {
+      return new Response(JSON.stringify([PROFILE]), { status: 200 });
+    }
+
     if (url.endsWith('/api/profiles')) {
       return method === 'POST'
         ? new Response(JSON.stringify(PROFILE), { status: 201 })
@@ -1160,6 +1167,7 @@ describe('quality profiles, through the server', () => {
     ['GET', '/api/admin/requests/profiles', undefined, 200],
     ['POST', '/api/admin/requests/profiles', { name: 'HD', kind: 'video' }, 201],
     ['PATCH', `/api/admin/requests/profiles/${PROFILE.id}`, { name: 'UHD' }, 200],
+    ['PUT', '/api/admin/requests/profiles/order', { ids: [PROFILE.id] }, 200],
     ['DELETE', `/api/admin/requests/profiles/${PROFILE.id}`, undefined, 204],
   ] as const;
 
@@ -1304,6 +1312,7 @@ describe('requests for films and series, through the server', () => {
     isDefault: false,
     roleIds: [],
     accountIds: [],
+    position: 0,
     createdAt: '2026-09-19T00:00:00.000Z',
     updatedAt: '2026-09-19T00:00:00.000Z',
     ...extra,
@@ -2917,6 +2926,24 @@ describe('requests for films and series, through the server', () => {
     });
 
     expect((await ask(`/api/requests/media/${REQUEST.id}/join`, 'POST')).status).toBe(403);
+  });
+
+  it('lets whoever manages requesting settle a higher-quality ask, and nobody else', async () => {
+    const asked: string[] = [];
+    const service = (url: string, init: { method?: string; body?: string }) => {
+      asked.push(`${init.method ?? 'GET'} ${url} ${init.body ?? ''}`);
+
+      return Response.json(REQUEST);
+    };
+    const manager = await build({ isOn: true, granted: ['requests.manage'], service });
+    const member = await build({ isOn: true, granted: ['requests.ask'], service });
+    const path = `/api/requests/media/${REQUEST.id}/profile-ask`;
+
+    expect((await manager.ask(path, 'POST', { choice: 'switch' })).status).toBe(200);
+    expect(asked.at(-1)).toBe(
+      `POST http://requests:8421/api/requests/${REQUEST.id}/profile-ask {"choice":"switch"}`,
+    );
+    expect((await member.ask(path, 'POST', { choice: 'keep' })).status).toBe(403);
   });
 
   it('passes on why the service would not do something', async () => {

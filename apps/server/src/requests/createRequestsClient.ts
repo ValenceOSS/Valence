@@ -36,6 +36,7 @@ import { GiveUpRulesSchema } from '@ValenceContracts/schemas/GiveUpRules';
 import type { GiveUpRules } from '@ValenceContracts/schemas/GiveUpRules';
 import { QualityProfileSchema } from '@ValenceContracts/schemas/QualityProfile';
 import type {
+  ProfileOrder,
   QualityProfile,
   QualityProfileChange,
   QualityProfileDraft,
@@ -77,6 +78,7 @@ import type {
   MissingSearch,
   RequestCatalogueUpdate,
   RequestLogEntry,
+  ProfileAskDecision,
   Requester,
 } from '@ValenceContracts/schemas/MediaRequest';
 import {
@@ -374,6 +376,12 @@ const createRequestsClient = ({
       call(withProfile(id), (body) => QualityProfileSchema.parse(body), {
         method: 'PATCH',
         body: change,
+      }),
+
+    reorderProfiles: (order: ProfileOrder): Promise<RequestsAnswer<QualityProfile[]>> =>
+      call('/api/profiles/order', (body) => z.array(QualityProfileSchema).parse(body), {
+        method: 'PUT',
+        body: order,
       }),
 
     removeProfile: (id: string): Promise<RequestsAnswer<null>> =>
@@ -683,6 +691,12 @@ const createRequestsClient = ({
 
     joinRequest: (id: string, asker: Requester): Promise<RequestsAnswer<MediaRequest>> =>
       call(`${withRequest(id)}/askers`, readRequest, { method: 'POST', body: asker }),
+
+    decideProfileAsk: (
+      id: string,
+      decision: ProfileAskDecision,
+    ): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/profile-ask`, readRequest, { method: 'POST', body: decision }),
 
     leaveRequest: (id: string, askerId: string): Promise<RequestsAnswer<MediaRequest>> =>
       call(`${withRequest(id)}/askers/${encodeURIComponent(askerId)}`, readRequest, {

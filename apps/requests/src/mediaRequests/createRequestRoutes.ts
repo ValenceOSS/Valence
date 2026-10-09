@@ -10,6 +10,7 @@ import {
   MediaRequestRefusalSchema,
   MediaRequestRevisionSchema,
   RequestCatalogueUpdateSchema,
+  ProfileAskDecisionSchema,
   RequesterSchema,
 } from '@ValenceContracts/schemas/MediaRequest';
 import { readBody } from '@ValenceRequests/readBody';
@@ -43,6 +44,7 @@ const NO_SUCH_REQUEST = refuse('error.requests.noSuchRequest');
 /**
  * Requests for films and series, as routes under `/api`: making and listing them, approving and
  * refusing them, adding somebody else who wants one and taking away one who no longer does,
+ * settling a later ask at a higher quality profile,
  * changing what they ask for, keeping them up to date with the catalogue, trying again, searching
  * by hand and picking a release — for a request not yet made, too — searching for everything still
  * missing, reading what each has done, and lifting a release it will not try again, stopping one of
@@ -163,6 +165,14 @@ const createRequestRoutes = ({ service, log, worker }: CreateRequestRoutesOption
   routes.delete('/requests/:id/askers/:askerId', async (context) =>
     answer(await service.leave(context.req.param('id'), context.req.param('askerId'))),
   );
+
+  routes.post('/requests/:id/profile-ask', async (context) => {
+    const decision = await readBody(context.req.raw, ProfileAskDecisionSchema);
+
+    return decision === null
+      ? context.json(refuse('error.requests.sayWhetherToSwitchOrKeep'), 400)
+      : answer(await service.decideProfileAsk(context.req.param('id'), decision));
+  });
 
   routes.post('/requests/:id/approve', async (context) =>
     answer(await service.approve(context.req.param('id'))),

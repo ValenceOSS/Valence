@@ -10,11 +10,13 @@ import { aQualityProfile } from '@ValenceScreens/testing/aQualityProfile';
 
 const fetchProfiles = vi.fn<typeof Profiles.fetchProfiles>();
 const removeProfile = vi.fn<typeof Profiles.removeProfile>();
+const reorderProfiles = vi.fn<typeof Profiles.reorderProfiles>();
 const fetchLibraries = vi.fn<() => Promise<Library[]>>();
 
 vi.mock('@ValenceClient/requests/fetchProfiles', () => ({
   fetchProfiles: () => fetchProfiles(),
   removeProfile: (id: string) => removeProfile(id),
+  reorderProfiles: (ids: readonly string[]) => reorderProfiles(ids),
   addProfile: vi.fn(),
   changeProfile: vi.fn(),
 }));
@@ -41,6 +43,7 @@ const LOSSLESS: QualityProfile = {
 beforeEach(() => {
   fetchProfiles.mockReset().mockResolvedValue([HD, LOSSLESS]);
   removeProfile.mockReset().mockResolvedValue(null);
+  reorderProfiles.mockReset().mockResolvedValue({ value: [], refusal: null });
   fetchLibraries.mockReset().mockResolvedValue([
     {
       id: 'films',
@@ -55,6 +58,7 @@ beforeEach(() => {
       requestProfileId: null,
       requestPath: null,
       keepsShowsTogether: true,
+      higherProfileAsks: 'ask',
     },
   ]);
 });
@@ -107,6 +111,28 @@ describe('ProfilesPanel', () => {
     await user.click(await screen.findByRole('menuitem', { name: /Change/ }));
 
     expect(await screen.findByText('Change HD')).toBeInTheDocument();
+  });
+
+  it('moves a profile up among those of its kind, and offers no move past the end', async () => {
+    const user = userEvent.setup();
+    const UHD: QualityProfile = { ...HD, id: '7c9e6679-7425-40de-944b-e07fc1f90ae8', name: 'UHD' };
+
+    fetchProfiles.mockResolvedValue([HD, LOSSLESS, UHD]);
+    renderInAnAddress(<ProfilesPanel />);
+
+    expect(await screen.findByText(/^Highest first\./)).toBeInTheDocument();
+
+    await user.click(await screen.findByRole('button', { name: 'Actions for HD' }));
+
+    expect(screen.queryByRole('menuitem', { name: /Move up/ })).toBeNull();
+
+    await user.keyboard('{Escape}');
+    await user.click(await screen.findByRole('button', { name: 'Actions for UHD' }));
+    await user.click(await screen.findByRole('menuitem', { name: /Move up/ }));
+
+    await waitFor(() => {
+      expect(reorderProfiles).toHaveBeenCalledWith([UHD.id, LOSSLESS.id, HD.id]);
+    });
   });
 
   it('tries a profile on a search of the indexers', async () => {

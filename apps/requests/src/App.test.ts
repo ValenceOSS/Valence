@@ -281,6 +281,7 @@ describe('createApp', () => {
       const profile = {
         ...QualityProfileDraftSchema.parse({ name: 'HD', kind: 'video' }),
         id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+        position: 0,
         createdAt: '2026-09-19T00:00:00.000Z',
         updatedAt: '2026-09-19T00:00:00.000Z',
       };

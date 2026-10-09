@@ -39,6 +39,7 @@ const LIBRARIES: Library[] = [
     requestProfileId: null,
     requestPath: null,
     keepsShowsTogether: true,
+    higherProfileAsks: 'ask',
   },
 ];
 

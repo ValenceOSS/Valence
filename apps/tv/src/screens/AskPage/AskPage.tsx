@@ -13,6 +13,7 @@ import {
 } from '@ValenceClient/requests/fetchMediaRequests';
 import { describeOthersStillWanting } from '@ValenceClient/requests/describeOthersStillWanting';
 import { describeWhoElseAsked } from '@ValenceClient/requests/describeWhoElseAsked';
+import { describeMyProfileAsk } from '@ValenceClient/requests/describeMyProfileAsk';
 import { mayJoinRequest } from '@ValenceClient/requests/mayJoinRequest';
 import { askersOf } from '@ValenceContracts/functions/askersOf';
 import { isAskedBy } from '@ValenceContracts/functions/isAskedBy';
@@ -140,6 +141,7 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
     request.state !== 'available';
   const starring = title.cast.slice(0, STARRING).map((one) => one.name);
   const whoElse = describeWhoElseAsked(title.standing.askedBy ?? [], me.data?.id);
+  const myProfileAsk = request === null ? null : describeMyProfileAsk(request, me.data?.id);
   const isJoinable = isRequestableKind && mayJoinRequest(title.standing, me.data?.id);
   const isOpenable =
     title.standing.status === 'library' && kind === 'film' && title.standing.mediaId !== null;
@@ -276,6 +278,7 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
           ? []
           : [say('common.starringValue', { value: starring.join(', ') })]),
         ...(whoElse === null ? [] : [whoElse]),
+        ...(myProfileAsk === null ? [] : [myProfileAsk]),
       ]}
     >
       {going === null ? null : (

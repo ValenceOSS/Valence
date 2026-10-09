@@ -151,6 +151,15 @@ If a download fails, or runs into trouble that the **Rules** tab of the **Downlo
 
 A **quality profile** decides which releases are acceptable: which qualities, such as WEB-DL 1080p or Blu-ray 720p, in what order, how big they should be, and when a film counts as released. Profiles are managed on the **Profiles** panel and need `requests.manage`. Each library says whether it **Accept requests**, which profile its requests are judged by (by default, whichever profile names that library) and where requests are filed (by default, the library's own folder). See [Libraries](/use/libraries).
 
+The **Profiles** panel lists profiles highest first. **Move up** and **Move down** in a profile's **…** menu change the order, which every list of profiles follows, including the quality picker people see when they request something. A new profile goes to the bottom. The order is what makes one profile higher than another, not its resolution: a "1080p Remux" can sit above a plain "2160p WEB".
+
+When somebody asks for a title that's already requested, at a different profile:
+
+- At the same profile, or a lower one, they just join the request. One person's ask never lowers another's.
+- At a higher one, the library's **Higher-quality requests** setting decides. **Ask me**, the default, puts a notice on the title's page in the Catalogue ("Priya asked for the UHD 4K profile. It's being fetched with HD 1080p."), with **Switch to UHD 4K** and **Keep HD 1080p**. **Switch to the higher profile** moves the request up at once, and **Keep the profile asked first** leaves it as it is.
+
+Whoever asked higher sees on the title's page what became of it. If the request kept the lower profile, they're told when it arrives: "The UHD 4K version you asked for wasn't added." It's never put as a refusal, because they still get the title.
+
 For music requests, the **Settings** panel has an option for what a request for an artist watches by default: which of an artist's records are fetched when the person asking did not say. It defaults to albums.
 
 ### Indexers

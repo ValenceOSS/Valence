@@ -1735,6 +1735,11 @@
     "context": "The label, used in the ask for media dialog in the admin area and in the app shell."
   },
   {
+    "handler": "common.aHigherProfile",
+    "text": "a higher profile",
+    "context": "Stands in for the name of a quality profile that has since been removed, in a sentence about a higher-quality request."
+  },
+  {
     "handler": "common.album",
     "text": "Album",
     "context": "Shown, used in several places, among them the album of the phone app and the music collection of the television app."
@@ -3455,6 +3460,11 @@
     "handler": "common.itFailed",
     "text": "It failed.",
     "context": "Shown, used in several places, among them the service on the server (from `createPluginService`) and the requests (from `describeRequestBadge`)."
+  },
+  {
+    "handler": "common.itsLibrarysProfile",
+    "text": "its library’s profile",
+    "context": "Stands in for the quality profile a request is fetched with when it names none and uses its library's, in a sentence about a higher-quality request."
   },
   {
     "handler": "common.itsOwnOrder",
@@ -6770,6 +6780,16 @@
     "context": "The label of a button, used in the sign in a television in the devices of the phone app and in the device approval."
   },
   {
+    "handler": "common.youAskedForProfileKept",
+    "text": "You asked for {asked} · it’s being fetched with {current}",
+    "context": "On a title somebody else requested first, when the viewer asked for a different quality profile and the request kept its own. Not a refusal: the viewer still gets the title."
+  },
+  {
+    "handler": "common.youAskedForProfileWaiting",
+    "text": "You asked for {asked}. An admin will decide which quality it’s fetched in.",
+    "context": "On a title somebody else requested first, when the viewer asked for a higher quality profile and an admin hasn't decided yet. {asked} is the profile's name."
+  },
+  {
     "handler": "common.youCanFollowItUnderSearch",
     "text": "You can track it in Search, under Requested.",
     "context": "A message in an alert in the artist story in the artist of the phone app. Also said by the phone once a missing song's album is requested from a playlist."
@@ -8655,6 +8675,11 @@
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveProfile`)."
   },
   {
+    "handler": "error.profile.sayWhichOrderToPut",
+    "text": "Say which order to put the profiles in.",
+    "context": "Error when the profiles are reordered without a list of profile ids."
+  },
+  {
     "handler": "error.profile.thatAddressAlreadyHasAnAccount",
     "text": "That email address already has an account.",
     "context": "An error the server answers with (HTTP 409) in the app on the server (from `serveProfile`)."
@@ -8713,6 +8738,11 @@
     "handler": "error.requests.sayWhatToFollow",
     "text": "Say which episodes or albums to follow or stop following.",
     "context": "An error the requests service answers with (HTTP 400) when following is asked for without saying what (from `createRequestRoutes`)."
+  },
+  {
+    "handler": "error.requests.sayWhetherToSwitchOrKeep",
+    "text": "Say whether to switch the request to the higher profile or keep the one it has.",
+    "context": "Error when a later, higher-quality ask is settled without saying which way."
   },
   {
     "handler": "error.requests.sayWhichItemItBecame",
@@ -14770,6 +14800,11 @@
     "context": "The description of a text field in the library settings dialog in the admin area."
   },
   {
+    "handler": "screens.adminArea.librarySettingsDialog.askMe",
+    "text": "Ask me",
+    "context": "Option of the higher-quality requests setting: the title's page asks the operator whether to switch or keep."
+  },
+  {
     "handler": "screens.adminArea.librarySettingsDialog.atOnce",
     "text": "Immediately",
     "context": "The name in the library settings dialog in the admin area."
@@ -14810,6 +14845,11 @@
     "context": "The label in the library settings dialog in the admin area."
   },
   {
+    "handler": "screens.adminArea.librarySettingsDialog.higherQualityRequests",
+    "text": "Higher-quality requests",
+    "context": "Label of the library setting that decides what happens when somebody asks for a title already requested, at a higher quality profile."
+  },
+  {
     "handler": "screens.adminArea.librarySettingsDialog.howeverManyTheServerAllows",
     "text": "As many as the server allows",
     "context": "The label in the library settings dialog in the admin area."
@@ -14823,6 +14863,11 @@
     "handler": "screens.adminArea.librarySettingsDialog.keepNewEpisodesWithTheShow",
     "text": "Keep new episodes with the show",
     "context": "The label of a switch in the library settings dialog in the admin area, for a library of shows."
+  },
+  {
+    "handler": "screens.adminArea.librarySettingsDialog.keepTheProfileAskedFirst",
+    "text": "Keep the profile asked first",
+    "context": "Option of the higher-quality requests setting: the request stays at the profile it was first asked at."
   },
   {
     "handler": "screens.adminArea.librarySettingsDialog.kindSearchesDownloadsAndImports",
@@ -14895,6 +14940,11 @@
     "context": "Shown in the admin area: a switch saying whether the connected app searches for a request the moment it is handed over."
   },
   {
+    "handler": "screens.adminArea.librarySettingsDialog.switchToTheHigherProfile",
+    "text": "Switch to the higher profile",
+    "context": "Option of the higher-quality requests setting: the request moves to the higher profile at once."
+  },
+  {
     "handler": "screens.adminArea.librarySettingsDialog.takesRequests",
     "text": "Accept requests",
     "context": "The label of a switch in the library settings dialog in the admin area."
@@ -14928,6 +14978,11 @@
     "handler": "screens.adminArea.librarySettingsDialog.valenceSearchesDownloadsAndFilesIt",
     "text": "Valence searches for, downloads and imports it.",
     "context": "Shown in the admin area: the detail of choosing Valence to fulfil a library's requests."
+  },
+  {
+    "handler": "screens.adminArea.librarySettingsDialog.whenSomebodyAsksForATitle",
+    "text": "When somebody asks for a title already requested, at a profile higher in Requests › Profiles. A lower one just joins the request.",
+    "context": "Description under the higher-quality requests setting."
   },
   {
     "handler": "screens.adminArea.librarySettingsDialog.whereRequestsAreFiled",
@@ -16183,6 +16238,11 @@
     "handler": "screens.adminArea.profileEditor.whichPartOfTheProfileTo",
     "text": "Which part of the profile to edit",
     "context": "The label of a tab row in the profile editor in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.profilesPanel.highestFirst",
+    "text": "Highest first. When people ask for the same title at different profiles, this order decides which is higher.",
+    "context": "Note above the list of quality profiles in Admin › Requests › Profiles, which can be moved up and down."
   },
   {
     "handler": "screens.adminArea.profilesPanel.noMusicLibraryTakesRequests",
@@ -17700,6 +17760,11 @@
     "context": "The description of Edit in the menu on a title’s page."
   },
   {
+    "handler": "screens.adminArea.titlePage.keptProfile",
+    "text": "Kept {profile}",
+    "context": "Toast after the operator keeps a request at its profile, turning down a higher one somebody asked for."
+  },
+  {
     "handler": "screens.adminArea.titlePage.markAsAdded",
     "text": "Mark as in the library",
     "context": "A menu item on a title’s page for something added to the library by hand."
@@ -17748,6 +17813,26 @@
     "handler": "screens.adminArea.titlePage.onlyWhatYouPick",
     "text": "Only releases you pick",
     "context": "How a title is fetched: only what an admin picks by hand. Shown on a title’s page in the admin Catalogue."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.profileAskCard.aHigherQualityAsk",
+    "text": "A higher-quality request",
+    "context": "Accessible name of the notice on an admin title page when somebody asked for the title at a higher quality profile."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.profileAskCard.keepProfile",
+    "text": "Keep {profile}",
+    "context": "Button on the higher-quality notice: the request stays at the profile it has."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.profileAskCard.nameAskedForProfile",
+    "text": "{name} asked for the {asked} profile. It’s being fetched with {current}.",
+    "context": "Notice on an admin title page. {name} is who asked, {asked} the higher profile they asked for, {current} the profile the request uses now."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.profileAskCard.switchToProfile",
+    "text": "Switch to {profile}",
+    "context": "Button on the higher-quality notice: the request moves to the profile asked for."
   },
   {
     "handler": "screens.adminArea.titlePage.removeEllipsis",
@@ -17858,6 +17943,11 @@
     "handler": "screens.adminArea.titlePage.stoppedTitle",
     "text": "Stopped {title}",
     "context": "Said once a download was stopped. {title} is the release."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.switchedToProfile",
+    "text": "Switched to {profile}",
+    "context": "Toast after the operator switches a request to a higher profile somebody asked for."
   },
   {
     "handler": "screens.adminArea.titlePage.thatCouldNotBeDone",
@@ -26479,6 +26569,11 @@
     "handler": "server.main.titleIsReady",
     "text": "{title} is ready",
     "context": "The title in the main on the server. {title} is filled in by the app."
+  },
+  {
+    "handler": "server.main.titleIsReadyInProfile",
+    "text": "{title} is ready to watch in {current}. The {asked} version you asked for wasn’t added.",
+    "context": "Notification when a title arrives, to somebody who asked for it at a higher quality profile the request kept below. Not a refusal: they can watch it. {current} and {asked} are profile names."
   },
   {
     "handler": "server.main.titleIsReadyToKeep",

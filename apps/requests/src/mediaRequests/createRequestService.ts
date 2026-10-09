@@ -18,6 +18,7 @@ import { recordFromDraft } from '@ValenceRequests/mediaRequests/recordFromDraft'
 import { highestSeasonOf } from '@ValenceRequests/mediaRequests/highestSeasonOf';
 import { rebaseSeasons } from '@ValenceRequests/mediaRequests/rebaseSeasons';
 import { seasonsChosen } from '@ValenceRequests/mediaRequests/seasonsChosen';
+import { profileChangeOf } from '@ValenceRequests/mediaRequests/profileChangeOf';
 import { requestFactsOf } from '@ValenceRequests/mediaRequests/requestFactsOf';
 import { showMediaRequest } from '@ValenceRequests/mediaRequests/showMediaRequest';
 import { syncItems } from '@ValenceRequests/mediaRequests/syncItems';
@@ -34,6 +35,7 @@ import type {
   RequestCatalogueDraft,
   RequestCatalogueUpdate,
   ReleaseType,
+  ProfileAskDecision,
   Requester,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type {
@@ -261,6 +263,8 @@ const createRequestService = ({
     add: async (asked: MediaRequestDraft): Promise<Added> => {
       const draft = MediaRequestDraftSchema.parse(asked);
       const at = now().toISOString();
+      const every = await profiles.list();
+      const askedAt = every.find((profile) => profile.id === draft.profileId) ?? null;
       const kept = (await requests.list()).find(
         (record) =>
           record.kind === draft.kind &&
@@ -278,14 +282,17 @@ const createRequestService = ({
           ...(kept.kind === 'artist' && draft.releaseTypes !== null
             ? { releaseTypes: bothReleaseTypes(kept.releaseTypes, draft.releaseTypes) }
             : {}),
-          ...(draft.profileId === null ? {} : { profileId: draft.profileId }),
+          ...profileChangeOf(kept, draft, every),
           ...(draft.isPickedByHand ? { isPickedByHand: true } : {}),
           ...(draft.isApproved &&
           kept.approval !== 'approved' &&
           kept.requestedById === draft.requestedBy.id
             ? { approval: 'approved', refusedBecause: null }
             : {}),
-          ...joinedBy(kept, draft.requestedBy),
+          ...joinedBy(kept, {
+            ...draft.requestedBy,
+            ...(askedAt === null ? {} : { profileId: askedAt.id, profileName: askedAt.name }),
+          }),
           ...keptBy(kept.kind, draft.held),
           catalogueCheckedAt: at,
           updatedAt: at,
@@ -341,6 +348,27 @@ const createRequestService = ({
         ...(isFirst
           ? { requestedById: next.id, requestedByName: next.name, alsoAskedBy: rest }
           : { alsoAskedBy: kept.alsoAskedBy.filter((one) => one.id !== askerId) }),
+        updatedAt: now().toISOString(),
+      });
+
+      onChange();
+
+      return record === null ? null : shown(record);
+    },
+
+    decideProfileAsk: async (
+      id: string,
+      decision: ProfileAskDecision,
+    ): Promise<MediaRequest | null> => {
+      const kept = await requests.find(id);
+
+      if (kept?.profileAsk === null || kept?.profileAsk === undefined) {
+        return null;
+      }
+
+      const record = await requests.update(id, {
+        ...(decision.choice === 'switch' ? { profileId: kept.profileAsk.profileId } : {}),
+        profileAsk: null,
         updatedAt: now().toISOString(),
       });
 

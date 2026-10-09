@@ -5,6 +5,7 @@ import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { ReleaseSchema } from './Indexer';
 import { FulfilmentSchema } from './ArrApp';
+import { HigherProfileAsksSchema } from './HigherProfileAsks';
 import { say } from '@ValenceI18n/say';
 
 const MEDIA_REQUEST_KINDS = ['film', 'series', 'artist', 'album', 'book'] as const;
@@ -90,7 +91,20 @@ const RequestCatalogueSchema = z.object({
     .nullish(),
 });
 
-const RequesterSchema = z.object({ id: z.string().min(1), name: z.string() });
+const RequesterSchema = z.object({
+  id: z.string().min(1),
+  name: z.string(),
+  profileId: z.string().uuid().nullable().optional(),
+  profileName: z.string().nullable().optional(),
+});
+
+const ProfileAskSchema = z.object({
+  asker: RequesterSchema,
+  profileId: z.string().uuid(),
+  profileName: z.string().nullable().default(null),
+});
+
+const ProfileAskDecisionSchema = z.object({ choice: z.enum(['switch', 'keep']) });
 
 const HeldEpisodeSchema = z.object({
   season: z.number().int().nonnegative(),
@@ -175,6 +189,7 @@ const MediaRequestDraftSchema = z
     followsNewSeasons: z.boolean().default(true),
     releaseTypes: ReleaseTypesSchema.nullable().default(null),
     requestedBy: RequesterSchema,
+    higherProfileAsks: HigherProfileAsksSchema.default('ask'),
     isApproved: z.boolean(),
     catalogue: RequestCatalogueSchema,
     handOff: FulfilmentSchema.nullable().default(null),
@@ -225,6 +240,7 @@ const MediaRequestSchema = z.object({
   refusedBecause: SaidSchema.nullable(),
   requestedBy: RequesterSchema,
   alsoAskedBy: z.array(RequesterSchema).default([]),
+  profileAsk: ProfileAskSchema.nullable().default(null),
   seasons: SeasonsSchema,
   followsNewSeasons: z.boolean().default(false),
   releaseTypes: ReleaseTypesSchema.nullable(),
@@ -402,6 +418,8 @@ type CatalogueSeason = z.infer<typeof CatalogueSeasonSchema>;
 type SeasonStanding = (typeof SEASON_STANDINGS)[number];
 
 type Requester = z.infer<typeof RequesterSchema>;
+type ProfileAsk = z.infer<typeof ProfileAskSchema>;
+type ProfileAskDecision = z.infer<typeof ProfileAskDecisionSchema>;
 
 export type {
   BlockedRelease,
@@ -442,6 +460,8 @@ export type {
   RequestLogEntry,
   SeasonFolder,
   VideoRequestKind,
+  ProfileAsk,
+  ProfileAskDecision,
   Requester,
 };
 
@@ -497,6 +517,8 @@ export {
   RequestItemSchema,
   RequestItemStateSchema,
   RequestLogEntrySchema,
+  ProfileAskDecisionSchema,
+  ProfileAskSchema,
   RequesterSchema,
   SeasonFolderSchema,
 };

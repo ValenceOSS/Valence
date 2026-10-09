@@ -24,6 +24,7 @@ import {
 } from '@ValenceClient/requests/fetchMediaRequests';
 import { describeOthersStillWanting } from '@ValenceClient/requests/describeOthersStillWanting';
 import { describeWhoElseAsked } from '@ValenceClient/requests/describeWhoElseAsked';
+import { describeMyProfileAsk } from '@ValenceClient/requests/describeMyProfileAsk';
 import { mayJoinRequest } from '@ValenceClient/requests/mayJoinRequest';
 import { askersOf } from '@ValenceContracts/functions/askersOf';
 import { isAskedBy } from '@ValenceContracts/functions/isAskedBy';
@@ -133,6 +134,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   const standing = title === null ? null : describeStanding(title.standing);
   const whoElse =
     title === null ? null : describeWhoElseAsked(title.standing.askedBy ?? [], me.data?.id);
+  const myProfileAsk = request === null ? null : describeMyProfileAsk(request, me.data?.id);
   const isJoinable =
     title !== null && !isUnrequestable && mayJoinRequest(title.standing, me.data?.id);
   const isAddingSeasons =
@@ -294,6 +296,11 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                   {whoElse === null ? null : (
                     <DialogHeadlinePart as="span" className="text-sm text-on-scrim/75">
                       {whoElse}
+                    </DialogHeadlinePart>
+                  )}
+                  {myProfileAsk === null ? null : (
+                    <DialogHeadlinePart as="span" className="text-sm text-on-scrim/75">
+                      {myProfileAsk}
                     </DialogHeadlinePart>
                   )}
 

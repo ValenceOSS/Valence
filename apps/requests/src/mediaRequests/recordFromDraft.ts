@@ -40,6 +40,7 @@ const recordFromDraft = (
   requestedById: draft.requestedBy.id,
   requestedByName: draft.requestedBy.name,
   alsoAskedBy: [],
+  profileAsk: null,
   seasons:
     draft.kind === 'series'
       ? seasonsChosen(draft.seasons, draft.followsNewSeasons, draft.catalogue.episodes)

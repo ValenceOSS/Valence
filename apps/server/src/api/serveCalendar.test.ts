@@ -33,6 +33,7 @@ const FILMS: Library = {
   requestProfileId: null,
   requestPath: null,
   keepsShowsTogether: true,
+  higherProfileAsks: 'ask',
 };
 
 const ELSEWHERE = '1b2d4f6e-1a3c-4e5f-8a7b-0c1d2e3f4a5b';
@@ -59,6 +60,7 @@ const aFilmRequest = (change: Partial<MediaRequest>): MediaRequest => ({
   refusedBecause: null,
   requestedBy: { id: 'somebody-else', name: 'Sam' },
   alsoAskedBy: [],
+  profileAsk: null,
   seasons: null,
   followsNewSeasons: false,
   releaseTypes: null,

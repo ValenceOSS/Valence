@@ -1391,6 +1391,7 @@ const createAppContext = (options: CreateAppOptions) => {
         libraryPath: chosen.requestPath ?? chosen.path,
         libraryLanguage: chosen.defaultAudioLanguage,
         requestedBy: { id: account.id, name: account.name },
+        higherProfileAsks: chosen.higherProfileAsks,
         isApproved: await asker.holds('requests.autoApprove'),
         catalogue,
         handOff: arrKindOf(chosen.kind) === null ? null : (chosen.fulfilment ?? null),

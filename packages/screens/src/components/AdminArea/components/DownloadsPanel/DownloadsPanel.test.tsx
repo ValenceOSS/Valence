@@ -172,6 +172,7 @@ beforeEach(() => {
       requestProfileId: null,
       requestPath: null,
       keepsShowsTogether: true,
+      higherProfileAsks: 'ask',
     },
   ]);
   heard.onQueue = null;
