@@ -404,6 +404,27 @@ describe('AskableDialog', () => {
     expect(askForMedia).not.toHaveBeenCalled();
   });
 
+  it('says so where wanting it too fails', async () => {
+    joinMediaRequest.mockRejectedValue(new Error('not a request'));
+    fetchAskable.mockResolvedValue(
+      aTitle({
+        standing: {
+          status: 'requested',
+          mediaId: null,
+          requestId: '6ba7b810-9dad-11d1-80b4-00c04fd43012',
+          requestState: 'wanted',
+          askedBy: [{ id: 'p', name: 'Priya' }],
+        },
+      }),
+    );
+
+    open();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'I want this too' }));
+
+    expect(await screen.findByText('Couldn’t request that.')).toBeInTheDocument();
+  });
+
   it('says who else wants your own request, and offers nothing more to join', async () => {
     const request = aMediaRequest({
       id: '6ba7b810-9dad-11d1-80b4-00c04fd43013',

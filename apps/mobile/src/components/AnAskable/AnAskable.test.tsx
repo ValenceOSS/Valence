@@ -225,6 +225,26 @@ describe('AnAskable', () => {
     expect(joinMediaRequest).toHaveBeenCalledWith(REQUEST_ID);
   });
 
+  it('says so where wanting it too fails, and lets it be tried again', async () => {
+    jest.mocked(joinMediaRequest).mockRejectedValue(new Error('not a request'));
+    answering({
+      standing: {
+        status: 'requested',
+        mediaId: null,
+        requestId: REQUEST_ID,
+        requestState: 'wanted',
+        askedBy: [{ id: 'priya', name: 'Priya' }],
+      },
+    });
+
+    const drawn = await drawIt();
+
+    await userEvent.press(await drawn.findByRole('button', { name: 'I want this too' }));
+
+    expect(await drawn.findByText('Couldn’t request that.')).toBeTruthy();
+    expect(drawn.getByRole('button', { name: 'I want this too' })).toBeEnabled();
+  });
+
   it('says who else wants your own request, and that cancelling leaves it for them', async () => {
     const alert = jest.spyOn(Alert, 'alert');
 
