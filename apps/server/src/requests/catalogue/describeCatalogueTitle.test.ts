@@ -44,6 +44,14 @@ const sources = () => {
         albums: [ALBUM],
       }),
     ),
+    describeAppleAlbum: vi.fn<DescriptionSources['describeAppleAlbum']>(() =>
+      Promise.resolve({
+        notes: 'A rock opera about isolation.',
+        genre: 'Rock',
+        label: 'Columbia Records',
+        tracks: [{ disc: 1, number: 1, title: 'In the Flesh?', seconds: 199 }],
+      }),
+    ),
     findOnMusicBrainz: vi.fn<DescriptionSources['findOnMusicBrainz']>((_kind, deezerId) =>
       Promise.resolve(deezerId === 2 ? PINK_FLOYD : null),
     ),
@@ -80,7 +88,7 @@ describe('describeCatalogueTitle', () => {
     expect(asked.describeTitle).toHaveBeenCalledWith('95396', 'tv');
   });
 
-  it('describes an artist from the charts by the MusicBrainz id they turn out to have', async () => {
+  it('describes an artist from the charts by the MusicBrainz id they turn out to have, each record with its cover', async () => {
     const asked = sources();
 
     expect(await describeCatalogueTitle(asked, 'artist', 'deezer-2')).toMatchObject({
@@ -88,9 +96,51 @@ describe('describeCatalogueTitle', () => {
       id: PINK_FLOYD,
       musicBrainzId: PINK_FLOYD,
       overview: 'UK rock band',
-      albums: [ALBUM],
+      albums: [
+        {
+          ...ALBUM,
+          coverUrl: `/api/music/catalogue/covers/${ALBUM.id}?title=The+Wall&artist=Pink+Floyd`,
+        },
+      ],
     });
     expect(asked.describeMusic).toHaveBeenCalledWith(PINK_FLOYD, 'artist');
+  });
+
+  it('fills an album in with what Apple Music says of it: its notes, genre, label and songs', async () => {
+    const asked = sources();
+
+    expect(await describeCatalogueTitle(asked, 'album', ALBUM.id)).toMatchObject({
+      kind: 'album',
+      overview: 'A rock opera about isolation.',
+      genres: ['Rock'],
+      label: 'Columbia Records',
+      tracks: [{ disc: 1, number: 1, title: 'In the Flesh?', seconds: 199 }],
+    });
+    expect(asked.describeAppleAlbum).toHaveBeenCalledWith({
+      title: 'Pink Floyd',
+      artistName: 'Pink Floyd',
+    });
+  });
+
+  it('keeps what MusicBrainz says of an album that Apple Music does not have', async () => {
+    const asked = sources();
+
+    asked.describeAppleAlbum.mockResolvedValue(null);
+
+    expect(await describeCatalogueTitle(asked, 'album', ALBUM.id)).toMatchObject({
+      overview: 'UK rock band',
+      genres: [],
+      label: null,
+      tracks: [],
+    });
+  });
+
+  it('asks Apple Music nothing about an artist', async () => {
+    const asked = sources();
+
+    await describeCatalogueTitle(asked, 'artist', 'deezer-2');
+
+    expect(asked.describeAppleAlbum).not.toHaveBeenCalled();
   });
 
   it('knows nothing of music MusicBrainz cannot find', async () => {

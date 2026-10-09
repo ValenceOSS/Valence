@@ -19,6 +19,8 @@ const aCatalogueTitleDetail = (
   cast: [],
   albums: [],
   authors: [],
+  tracks: [],
+  label: null,
   trailerKey: null,
   ...overrides,
 });

@@ -164,6 +164,8 @@ import { readDeezerCharts } from '@ValenceServer/requests/deezer/readDeezerChart
 import type { Discovery } from '@ValenceServer/requests/catalogue/Discovery';
 import type { DeezerCharts } from '@ValenceServer/requests/deezer/readDeezerCharts';
 import type { CatalogueStudio } from '@ValenceContracts/schemas/CatalogueTitle';
+import { describeAppleAlbum } from '@ValenceServer/music/web/describeAppleAlbum';
+import type { AppleAlbumDetail } from '@ValenceServer/music/web/describeAppleAlbum';
 import { describeAlbumForRequest } from '@ValenceServer/requests/musicBrainz/describeAlbumForRequest';
 import { describeArtistForRequest } from '@ValenceServer/requests/musicBrainz/describeArtistForRequest';
 import { findAlbumsOfSongs } from '@ValenceServer/requests/musicBrainz/findAlbumsOfSongs';
@@ -2715,6 +2717,8 @@ const described = createExpiringCache<Promise<RequestCatalogue | null>>(CHARTS_L
 
 const foundOnMusicBrainz = createExpiringCache<Promise<string | null>>(CHARTS_LIVE_FOR_MS);
 
+const appleAlbums = createExpiringCache<Promise<AppleAlbumDetail | null>>(CHARTS_LIVE_FOR_MS);
+
 /**
  * Keeps an answer for as long as the charts are kept, so opening the same album twice asks
  * MusicBrainz once. MusicBrainz answers a request a second, and a page somebody is waiting on is
@@ -2794,6 +2798,10 @@ const discovery: Discovery = {
   },
   searchBooks: (query) => searchOpenLibrary(musicWeb, query),
   describeBook: (openLibraryId) => describeOpenLibraryBook(musicWeb, openLibraryId),
+  describeAppleAlbum: (album) =>
+    keeping(appleAlbums, `${album.artistName}\n${album.title}`, () =>
+      describeAppleAlbum(musicWeb, album),
+    ),
   findOnMusicBrainz: (kind, deezerId) =>
     keeping(foundOnMusicBrainz, `${kind}:${deezerId.toString()}`, () =>
       findOnMusicBrainz(musicWeb, kind, deezerId),

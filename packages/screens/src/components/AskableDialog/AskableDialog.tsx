@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Stop as StopFilledIcon } from '@keyline-icons/react/fill';
+import { Play as PlayFilledIcon, Stop as StopFilledIcon } from '@keyline-icons/react/fill';
 import { useSample } from '@ValenceScreens/requests/useSample';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { MusicNote as MusicNoteIcon, Tape as TapeIcon, X as XIcon } from '@keyline-icons/react';
+import { Tape as TapeIcon, X as XIcon } from '@keyline-icons/react';
 import { BackdropScrim } from '@ValenceUI/BackdropScrim';
 import { DownloadProgressReadout } from '@ValenceScreens/components/DownloadProgressReadout/DownloadProgressReadout';
 import { Badge } from '@ValenceUI/Badge';
@@ -15,7 +15,10 @@ import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { Icon } from '@ValenceUI/Icon';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
+import { ReadMore } from '@ValenceUI/ReadMore';
+import { Skeleton } from '@ValenceUI/Skeleton';
 import { Spinner } from '@ValenceUI/Spinner';
+import { cn } from '@ValenceUI/cn';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { askForMedia, removeMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
 import { askingFor } from '@ValenceClient/requests/askingFor';
@@ -24,6 +27,8 @@ import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { CastGrid } from '@ValenceScreens/components/MediaDetailDialog/components/CastGrid/CastGrid';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { ReleaseTypeChooser } from '@ValenceScreens/components/ReleaseTypeChooser/ReleaseTypeChooser';
+import { SlidingList } from '@ValenceScreens/components/SlidingList/SlidingList';
+import { AlbumTracks } from '@ValenceScreens/components/AskableDialog/components/AlbumTracks/AlbumTracks';
 import { ChooseQualityDialog } from '@ValenceScreens/components/AskableDialog/components/ChooseQualityDialog/ChooseQualityDialog';
 import { SeasonChooser } from '@ValenceScreens/components/SeasonChooser/SeasonChooser';
 import { describeAskableFacts } from '@ValenceClient/requests/describeAskableFacts';
@@ -147,7 +152,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   return (
     <Dialog
       label={title?.title ?? say('screens.askableDialog.somethingToAskFor')}
-      isOpen={named !== null && heldId === null && (title !== null || !found.isPending)}
+      isOpen={named !== null && heldId === null}
       onClose={onClose}
       size="stage"
     >
@@ -161,7 +166,24 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
             }}
           />
         ) : title === null ? (
-          <Spinner isCentered label={say('common.readingTheCatalogue')} />
+          <div aria-busy className="flex flex-col gap-4">
+            <div className="relative overflow-hidden rounded-2xl">
+              <Skeleton shape="soft" className="h-[34vh] min-h-[14rem] w-full sm:h-[22rem]" />
+              <div className="absolute right-4 top-4">
+                <Button isIconOnly variant="overlay" label={say('common.close')} onClick={onClose}>
+                  <Icon of={XIcon} size={20} />
+                </Button>
+              </div>
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-text-muted">
+                <Spinner size="lg" label={say('screens.askableDialog.fetchingItsDetails')} />
+                <span aria-hidden className="text-sm font-medium">
+                  {say('screens.askableDialog.fetchingItsDetails')}
+                </span>
+              </div>
+            </div>
+            <Skeleton shape="soft" className="h-28 w-full" />
+            <Skeleton shape="soft" className="h-40 w-full" />
+          </div>
         ) : (
           <DialogArrival key={`${title.kind}:${title.id}`} className="flex flex-col gap-4">
             <div className="relative overflow-hidden rounded-2xl">
@@ -251,9 +273,18 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
             <DialogSections className="flex flex-col gap-3 pb-4">
               {title.overview === null ? null : (
                 <DialogSection heading={say('common.synopsis')}>
-                  <p className="max-w-[70ch] text-[0.95rem] leading-relaxed text-text">
+                  <ReadMore
+                    lines={5}
+                    className="max-w-[70ch] whitespace-pre-line text-[0.95rem] leading-relaxed text-text"
+                  >
                     {title.overview}
-                  </p>
+                  </ReadMore>
+                </DialogSection>
+              )}
+
+              {title.tracks.length === 0 ? null : (
+                <DialogSection heading={say('common.songs2')}>
+                  <AlbumTracks tracks={title.tracks} label={title.label} />
                 </DialogSection>
               )}
 
@@ -285,38 +316,51 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
 
               {groupReleases(title.albums).map((group) => (
                 <DialogSection key={group.id} heading={group.title}>
-                  <ul className="flex flex-col gap-1">
-                    {group.albums.map((album) => (
-                      <li
-                        key={album.id}
-                        className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-[var(--surface-hover)]"
-                      >
-                        <Button
-                          isIconOnly
-                          variant="ghost"
-                          size="xs"
-                          label={
-                            sample.heard === album.id
-                              ? say('screens.askableDialog.stopTheSampleOfTitle', {
-                                  title: album.title,
-                                })
-                              : say('screens.askableDialog.playASampleOfTitle', {
-                                  title: album.title,
-                                })
-                          }
-                          isActive={sample.heard === album.id}
-                          isLoading={sample.finding === album.id}
-                          onClick={() => {
-                            void sample.toggle(album.id, title.title, album.title);
-                          }}
-                          className="shrink-0"
-                        >
-                          <Icon
-                            of={sample.heard === album.id ? StopFilledIcon : MusicNoteIcon}
-                            size={16}
-                            tone={sample.heard === album.id ? 'inherit' : 'muted'}
+                  <SlidingList
+                    items={group.albums}
+                    keyOf={(album) => album.id}
+                    renderItem={(album) => (
+                      <span className="group flex items-center gap-3 py-2">
+                        <span className="relative size-12 shrink-0">
+                          <MusicArtwork
+                            src={album.coverUrl}
+                            label={say('common.theCoverOfTitle', { title: album.title })}
+                            className="size-12"
                           />
-                        </Button>
+                          <span
+                            className={cn(
+                              'absolute inset-0 flex items-center justify-center rounded-md bg-shade/40 transition-opacity duration-[var(--duration-fast)] ease-[var(--ease-out)] focus-within:opacity-100',
+                              sample.heard === album.id || sample.finding === album.id
+                                ? 'opacity-100'
+                                : 'opacity-0 group-hover:opacity-100',
+                            )}
+                          >
+                            <Button
+                              isIconOnly
+                              variant="overlay"
+                              size="xs"
+                              label={
+                                sample.heard === album.id
+                                  ? say('screens.askableDialog.stopTheSampleOfTitle', {
+                                      title: album.title,
+                                    })
+                                  : say('screens.askableDialog.playASampleOfTitle', {
+                                      title: album.title,
+                                    })
+                              }
+                              isActive={sample.heard === album.id}
+                              isLoading={sample.finding === album.id}
+                              onClick={() => {
+                                void sample.toggle(album.id, title.title, album.title);
+                              }}
+                            >
+                              <Icon
+                                of={sample.heard === album.id ? StopFilledIcon : PlayFilledIcon}
+                                size={14}
+                              />
+                            </Button>
+                          </span>
+                        </span>
                         <span className="flex min-w-0 flex-1 flex-col">
                           <span className="truncate text-sm text-text">{album.title}</span>
                           <span className="text-xs text-text-muted">
@@ -342,9 +386,9 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                             {say('common.request')}
                           </Button>
                         )}
-                      </li>
-                    ))}
-                  </ul>
+                      </span>
+                    )}
+                  />
                 </DialogSection>
               ))}
             </DialogSections>

@@ -3,10 +3,10 @@ import { RELEASE_TYPE_NAMES } from '@ValenceClient/requests/RELEASE_TYPE_NAMES';
 import type { CatalogueAlbum, ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 import { say } from '@ValenceI18n/say';
 
-type ReleaseGroup = {
+type ReleaseGroup<Album extends CatalogueAlbum = CatalogueAlbum> = {
   id: string;
   title: string;
-  albums: CatalogueAlbum[];
+  albums: Album[];
 };
 
 const OTHER = 'other';
@@ -25,8 +25,10 @@ const OTHER = 'other';
  * @param albums - Every release the catalogue knows of.
  * @returns The groups, leaving out any with nothing in them.
  */
-const groupReleases = (albums: readonly CatalogueAlbum[]): ReleaseGroup[] => {
-  const newestFirst = (left: CatalogueAlbum, right: CatalogueAlbum) =>
+const groupReleases = <Album extends CatalogueAlbum>(
+  albums: readonly Album[],
+): ReleaseGroup<Album>[] => {
+  const newestFirst = (left: Album, right: Album) =>
     (right.firstReleased ?? '').localeCompare(left.firstReleased ?? '');
 
   const named: { id: string; title: string; of: ReleaseType | null }[] = [

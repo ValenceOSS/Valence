@@ -1,3 +1,4 @@
+import { releaseGroupCoverUrl } from '@ValenceServer/requests/musicBrainz/releaseGroupCoverUrl';
 import { DEEZER_ID_PREFIX } from '@ValenceServer/requests/catalogue/DEEZER_ID_PREFIX';
 import type { CatalogueTitleDetail } from '@ValenceContracts/schemas/CatalogueTitle';
 import type {
@@ -6,6 +7,7 @@ import type {
   RequestCatalogue,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type { OpenLibraryDescription } from '@ValenceServer/requests/openLibrary/describeOpenLibraryBook';
+import type { AppleAlbumDetail } from '@ValenceServer/music/web/describeAppleAlbum';
 import type { CatalogueDescription } from '@ValenceServer/library/MetadataProvider';
 
 type UnstoodDetail = Omit<CatalogueTitleDetail, 'standing'>;
@@ -18,6 +20,10 @@ type DescriptionSources = {
   ) => Promise<RequestCatalogue | null>;
   findOnMusicBrainz: (kind: MusicRequestKind, deezerId: number) => Promise<string | null>;
   describeBook: (openLibraryId: number) => Promise<OpenLibraryDescription | null>;
+  describeAppleAlbum: (album: {
+    title: string;
+    artistName: string;
+  }) => Promise<AppleAlbumDetail | null>;
 };
 
 /**
@@ -82,6 +88,8 @@ const describeCatalogueTitle = async (
           cast: found.cast,
           albums: [],
           authors: [],
+          tracks: [],
+          label: null,
           trailerKey: found.trailerKey,
         };
   }
@@ -110,12 +118,18 @@ const describeCatalogueTitle = async (
           cast: [],
           albums: [],
           authors: found.authors,
+          tracks: [],
+          label: null,
           trailerKey: null,
         };
   }
 
   const musicBrainzId = await musicBrainzIdOf(sources, kind, id);
   const found = musicBrainzId === null ? null : await sources.describeMusic(musicBrainzId, kind);
+  const apple =
+    kind !== 'album' || found === null || found.artist === null
+      ? null
+      : await sources.describeAppleAlbum({ title: found.title, artistName: found.artist });
 
   return musicBrainzId === null || found === null
     ? null
@@ -126,14 +140,25 @@ const describeCatalogueTitle = async (
         title: found.title,
         subtitle: kind === 'album' ? found.artist : null,
         year: found.year,
-        overview: found.overview,
+        overview: apple?.notes ?? found.overview,
         posterUrl: found.posterUrl,
         backdropUrl: null,
-        genres: [],
+        genres: apple?.genre === null || apple?.genre === undefined ? [] : [apple.genre],
         runtimeMinutes: null,
         cast: [],
-        albums: kind === 'artist' ? found.albums : [],
+        albums:
+          kind === 'artist'
+            ? found.albums.map((album) => ({
+                ...album,
+                coverUrl: releaseGroupCoverUrl(album.id, {
+                  title: album.title,
+                  artist: found.title,
+                }),
+              }))
+            : [],
         authors: [],
+        tracks: apple?.tracks ?? [],
+        label: apple?.label ?? null,
         trailerKey: null,
       };
 };
