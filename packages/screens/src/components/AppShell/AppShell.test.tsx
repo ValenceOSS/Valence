@@ -275,7 +275,7 @@ describe('AppShell', () => {
     await user.click(await screen.findByRole('menuitem', { name: 'Get Valence for Linux' }));
 
     expect(open).toHaveBeenCalledWith(
-      'https://getvalence.app/#download',
+      'https://getvalence.app/downloads',
       '_blank',
       'noopener,noreferrer',
     );

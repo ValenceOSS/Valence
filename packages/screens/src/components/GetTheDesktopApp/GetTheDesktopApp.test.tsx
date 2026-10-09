@@ -64,7 +64,7 @@ describe('GetTheDesktopApp', () => {
     await user.click(await screen.findByRole('button', { name: 'Get it' }));
 
     expect(open).toHaveBeenCalledWith(
-      'https://getvalence.app/#download',
+      'https://getvalence.app/downloads',
       '_blank',
       'noopener,noreferrer',
     );
