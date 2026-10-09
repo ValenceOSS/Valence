@@ -32,6 +32,7 @@ const FILMS: Library = {
   takesRequests: true,
   requestProfileId: null,
   requestPath: null,
+  keepsShowsTogether: true,
 };
 
 const ELSEWHERE = '1b2d4f6e-1a3c-4e5f-8a7b-0c1d2e3f4a5b';

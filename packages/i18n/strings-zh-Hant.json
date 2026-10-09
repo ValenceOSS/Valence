@@ -14505,6 +14505,11 @@
     "context": "Text shown in the library settings dialog in the admin area."
   },
   {
+    "handler": "screens.adminArea.librarySettingsDialog.keepNewEpisodesWithTheShow",
+    "text": "Keep new episodes with the show",
+    "context": "The label of a switch in the library settings dialog in the admin area, for a library of shows."
+  },
+  {
     "handler": "screens.adminArea.librarySettingsDialog.kindSearchesDownloadsAndImports",
     "text": "{kind} searches, downloads and imports it.",
     "context": "Shown in the admin area: the detail of choosing a connected app to fulfil a library's requests. {kind} is Radarr, Sonarr or Lidarr."
@@ -14523,6 +14528,11 @@
     "handler": "screens.adminArea.librarySettingsDialog.previewsAndPlaybackPreferThisLanguage",
     "text": "Previews and playback use this audio language when a file has it. Files without a matching track use their own default.",
     "context": "Text shown in the library settings dialog in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.librarySettingsDialog.putsNewSeasonsOfAShow",
+    "text": "Puts requested seasons and episodes of a show you already have in its existing folder. When off, they go in a new folder named after the show.",
+    "context": "The description under the switch that keeps new episodes with the show, in the library settings dialog in the admin area."
   },
   {
     "handler": "screens.adminArea.librarySettingsDialog.qualityProfileForRequests",

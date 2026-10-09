@@ -55,6 +55,7 @@ const MOVIES: Library = {
   takesRequests: true,
   requestProfileId: null,
   requestPath: null,
+  keepsShowsTogether: true,
 };
 
 /**

@@ -55,6 +55,7 @@ beforeEach(() => {
       takesRequests: true,
       requestProfileId: null,
       requestPath: null,
+      keepsShowsTogether: true,
     },
   ]);
 });

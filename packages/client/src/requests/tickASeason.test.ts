@@ -2,11 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { tickASeason } from './tickASeason';
 import type { CatalogueSeason } from '@ValenceContracts/schemas/MediaRequest';
 
-const aSeason = (season: number): CatalogueSeason => ({
+const aSeason = (
+  season: number,
+  standing: CatalogueSeason['standing'] = 'askable',
+): CatalogueSeason => ({
   season,
   episodeCount: 10,
   firstAired: null,
-  standing: 'askable',
+  standing,
 });
 
 const THREE = [aSeason(1), aSeason(2), aSeason(3)];
@@ -26,5 +29,12 @@ describe('tickASeason', () => {
 
   it('leaves nothing ticked where the last one is unticked', () => {
     expect(tickASeason([2], THREE, 2)).toEqual([]);
+  });
+
+  it('goes back to every season once every one not already held is ticked', () => {
+    const someHeld = [aSeason(1, 'library'), aSeason(2), aSeason(3, 'partly')];
+
+    expect(tickASeason([2], someHeld, 3)).toBeNull();
+    expect(tickASeason(null, someHeld, 3)).toEqual([2]);
   });
 });

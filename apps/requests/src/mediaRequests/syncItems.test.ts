@@ -39,7 +39,14 @@ const ARTIST = aMediaRequest({
 describe('syncItems', () => {
   it('waits for a film until its release', () => {
     expect(syncItems(aMediaRequest(), NOTHING, []).add).toEqual([
-      { musicBrainzId: null, season: null, episode: null, title: 'Dune', airDate: '2021-12-03' },
+      {
+        musicBrainzId: null,
+        season: null,
+        episode: null,
+        title: 'Dune',
+        airDate: '2021-12-03',
+        state: 'waiting',
+      },
     ]);
   });
 
@@ -77,6 +84,46 @@ describe('syncItems', () => {
     ).toEqual(['wanted']);
   });
 
+  it('adds the episodes the library already holds as there, so nothing searches for them', () => {
+    const { add } = syncItems(SERIES, { episodes: EPISODES, albums: [] }, [], 'digital', [
+      { season: 1, episode: 1 },
+    ]);
+
+    expect(add.map((item) => [item.season, item.episode, item.state])).toEqual([
+      [1, 1, 'available'],
+      [1, 2, 'waiting'],
+      [2, 1, 'waiting'],
+    ]);
+  });
+
+  it('marks there what was still waited for once the library holds it, unless it is coming', () => {
+    const waiting = aRequestItem({ id: 'waiting', season: 1, episode: 1, state: 'waiting' });
+    const failed = aRequestItem({ id: 'failed', season: 1, episode: 2, state: 'failed' });
+    const coming = aRequestItem({ id: 'coming', season: 2, episode: 1, state: 'downloading' });
+
+    expect(
+      syncItems(SERIES, { episodes: EPISODES, albums: [] }, [waiting, failed, coming], 'digital', [
+        { season: 1, episode: 1 },
+        { season: 1, episode: 2 },
+        { season: 2, episode: 1 },
+      ]).arrive,
+    ).toEqual(['waiting', 'failed']);
+  });
+
+  it('marks nothing there that is no longer asked for', () => {
+    const wanted = aRequestItem({ id: 'wanted', season: 2, episode: 1, state: 'wanted' });
+
+    expect(
+      syncItems(
+        { ...SERIES, seasons: [1] },
+        { episodes: EPISODES, albums: [] },
+        [wanted],
+        'digital',
+        [{ season: 2, episode: 1 }],
+      ),
+    ).toMatchObject({ arrive: [], remove: ['wanted'] });
+  });
+
   it('waits for an artist’s albums of the kinds asked for, by their MusicBrainz ids', () => {
     expect(syncItems(ARTIST, { episodes: [], albums: ALBUMS }, []).add).toEqual([
       {
@@ -85,9 +132,24 @@ describe('syncItems', () => {
         episode: null,
         title: 'The Piper at the Gates of Dawn',
         airDate: '1967-08-04',
+        state: 'waiting',
       },
-      { musicBrainzId: '2', season: null, episode: null, title: 'Pulse', airDate: '1995-05-29' },
-      { musicBrainzId: '4', season: null, episode: null, title: 'The Final Cut', airDate: null },
+      {
+        musicBrainzId: '2',
+        season: null,
+        episode: null,
+        title: 'Pulse',
+        airDate: '1995-05-29',
+        state: 'waiting',
+      },
+      {
+        musicBrainzId: '4',
+        season: null,
+        episode: null,
+        title: 'The Final Cut',
+        airDate: null,
+        state: 'waiting',
+      },
     ]);
   });
 
@@ -110,6 +172,7 @@ describe('syncItems', () => {
       add: [],
       change: [],
       remove: [],
+      arrive: [],
     });
   });
 });

@@ -268,9 +268,12 @@ Once a request is approved:
 - **Filing.** A finished download is filed into the library the request is for,
   as `Title (Year)/Title (Year).mkv` for a film and
   `Title (Year)/Season 01/Title (Year) - S01E01 - Episode.mkv` for an episode,
-  with any subtitles beside it. Valence then reads just that folder, ties the
-  request to what it found, and tells whoever asked — in the app, and by push
-  where they chose.
+  with any subtitles beside it. A show the library already holds keeps its own
+  folder: new seasons go in a season folder inside it, and missing episodes go
+  beside the ones already there, unless the library's **Keep new episodes with
+  the show** is switched off. Episodes already in a library are never fetched
+  again. Valence then reads just that folder, ties the request to what it found,
+  and tells whoever asked — in the app, and by push where they chose.
 
 Filing hard-links where it can, so a film takes no extra room and a torrent goes
 on seeding. A hard link only works within one filesystem as a container sees it,

@@ -134,6 +134,13 @@
       "when": 1791407137180,
       "tag": "0018_grant_members_every_request",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1791504199719,
+      "tag": "0019_libraries_keep_shows_together",
+      "breakpoints": true
     }
   ]
 }

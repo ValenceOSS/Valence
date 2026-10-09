@@ -19,6 +19,8 @@ import type { MediaProbe, Transcoder } from '@ValenceServer/transcoder/Transcode
 import type { ExtraKind, ScanResult } from '@ValenceContracts/schemas/Library';
 import { saying } from '@ValenceI18n/saying';
 import { seriesFolderUnder } from './placement/seriesFolderUnder';
+import { filesToLookUpAgain } from './filesToLookUpAgain';
+import { reachOfEachSeries } from './reachOfEachSeries';
 
 type ScannedFile = {
   path: string;
@@ -56,6 +58,7 @@ type MediaRow = {
   episode: EpisodeNumbering;
   extraKind: ExtraKind | null;
   versionLabel: string | null;
+  isCorrected?: boolean;
 };
 
 type MediaFileSystem = {
@@ -387,7 +390,6 @@ const scanLibrary = async ({
   const seen = force
     ? { changed: found, missing: selectChanged(found, stored, probeVersion).missing }
     : selectChanged(found, stored, probeVersion);
-  const { changed } = seen;
 
   const hasVanished = found.length === 0 && stored.length > 0;
   const missing =
@@ -406,6 +408,13 @@ const scanLibrary = async ({
   );
   const overridesBySeries = correctionsBySeries(corrections, seriesFolders);
   const catalogueBySeries = catalogueIdsBySeries(stored, seriesFolders);
+  const reachBySeries = reachOfEachSeries(placed);
+  const changed = force
+    ? seen.changed
+    : [
+        ...seen.changed,
+        ...filesToLookUpAgain(found, stored, seen.changed, seriesFolders, catalogueBySeries),
+      ];
   const nfoRead = new Map<string, Promise<ExternalIds | null>>();
 
   /**
@@ -468,7 +477,14 @@ const scanLibrary = async ({
       }
 
       const placement = placed.get(file.path);
-      const episode = placement?.episode ?? NOT_AN_EPISODE;
+      const numbered = placement?.episode ?? NOT_AN_EPISODE;
+      const episode = {
+        ...numbered,
+        seriesReach:
+          numbered.seriesFolder === null
+            ? null
+            : (reachBySeries.get(numbered.seriesFolder) ?? null),
+      };
       const extra = placement?.extra ?? null;
       const corrected = correctionFor(
         file.path,
@@ -554,9 +570,10 @@ const scanLibrary = async ({
         probe,
         probeVersion,
         metadata,
-        episode,
+        episode: numbered,
         extraKind: extra?.kind ?? null,
         versionLabel: versions.get(file.path)?.label ?? null,
+        isCorrected: corrected !== null,
       });
 
       if (knownPaths.has(file.path)) {

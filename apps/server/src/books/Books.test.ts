@@ -92,6 +92,7 @@ const build = (options: { refusesEveryAccount?: boolean } = {}) => {
           takesRequests: true,
           requestProfileId: null,
           requestPath: null,
+          keepsShowsTogether: true,
         },
       ],
       media: [],

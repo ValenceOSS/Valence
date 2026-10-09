@@ -52,6 +52,27 @@ describe('SeasonChooser', () => {
     expect(within(rowOf('Season 4')).getByText('Not requested')).toBeInTheDocument();
   });
 
+  it('locks a season the library holds whole, and leaves one it holds part of open', async () => {
+    const onChange = vi.fn();
+
+    fetchSeriesSeasons.mockResolvedValue([
+      { season: 1, episodeCount: 9, firstAired: '2022-02-18', standing: 'library' },
+      { season: 2, episodeCount: 10, firstAired: '2025-01-17', standing: 'partly' },
+      { season: 3, episodeCount: 8, firstAired: null, standing: 'askable' },
+    ]);
+
+    renderInAnAddress(<SeasonChooser tmdbId={95396} seasons={[2]} onChange={onChange} />);
+
+    expect(await screen.findByRole('switch', { name: 'Season 1' })).toBeDisabled();
+    expect(screen.getByRole('switch', { name: 'Season 1' })).not.toBeChecked();
+    expect(screen.getByRole('switch', { name: 'Season 2' })).toBeEnabled();
+    expect(screen.getByText('1 of 2 seasons.')).toBeInTheDocument();
+
+    await userEvent.setup().click(screen.getByRole('switch', { name: 'Season 3' }));
+
+    expect(onChange).toHaveBeenCalledWith(null);
+  });
+
   it('takes every season until one is dropped', async () => {
     const onChange = vi.fn();
 

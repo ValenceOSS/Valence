@@ -1,7 +1,7 @@
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { Icon } from '@ValenceUI/Icon';
 import { ChevronsUpDown as ChevronsUpDownIcon } from '@keyline-icons/react/fill';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -91,6 +91,7 @@ const LibrarySettingsDialog = ({
   onRegenerate,
 }: LibrarySettingsDialogProps) => {
   const library = useHeldWhileClosing(requested, isOpen);
+  const keepsTogetherId = useId();
   const languageOptions = buildLanguageOptions();
 
   const [selected, setSelected] = useState(library?.defaultAudioLanguage ?? NONE_ID);
@@ -98,6 +99,7 @@ const LibrarySettingsDialog = ({
   const [takesRequests, setTakesRequests] = useState(library?.takesRequests ?? true);
   const [requestProfileId, setRequestProfileId] = useState(library?.requestProfileId ?? THE_BEST);
   const [requestPath, setRequestPath] = useState(library?.requestPath ?? '');
+  const [keepsShowsTogether, setKeepsShowsTogether] = useState(library?.keepsShowsTogether ?? true);
   const [fulfilment, setFulfilment] = useState<FulfilmentForm>(() => fulfilmentFormOf(library));
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -109,6 +111,7 @@ const LibrarySettingsDialog = ({
     setTakesRequests(library?.takesRequests ?? true);
     setRequestProfileId(library?.requestProfileId ?? THE_BEST);
     setRequestPath(library?.requestPath ?? '');
+    setKeepsShowsTogether(library?.keepsShowsTogether ?? true);
     setFulfilment(fulfilmentFormOf(library));
     setError(null);
     setConfirming(null);
@@ -154,6 +157,7 @@ const LibrarySettingsDialog = ({
         takesRequests,
         requestProfileId: requestProfileId === THE_BEST ? null : requestProfileId,
         requestPath: requestPath.trim() === '' ? null : requestPath.trim(),
+        keepsShowsTogether,
         fulfilment: handedTo.fulfilment,
       });
 
@@ -346,6 +350,24 @@ const LibrarySettingsDialog = ({
                     placeholder={library.path}
                     description={say('screens.adminArea.librarySettingsDialog.aFolderOfItsOwnFor')}
                   />
+
+                  {library.kind === 'shows' ? (
+                    <div className="flex flex-col gap-1">
+                      <Switch
+                        label={say(
+                          'screens.adminArea.librarySettingsDialog.keepNewEpisodesWithTheShow',
+                        )}
+                        isOn={keepsShowsTogether}
+                        onToggle={() => {
+                          setKeepsShowsTogether(!keepsShowsTogether);
+                        }}
+                        describedBy={keepsTogetherId}
+                      />
+                      <p id={keepsTogetherId} className="text-xs text-text-muted">
+                        {say('screens.adminArea.librarySettingsDialog.putsNewSeasonsOfAShow')}
+                      </p>
+                    </div>
+                  ) : null}
                 </>
               )}
             </fieldset>

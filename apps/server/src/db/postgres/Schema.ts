@@ -183,6 +183,7 @@ const library = pgTable('library', {
   takesRequests: boolean('takesRequests').notNull().default(true),
   requestProfileId: text('requestProfileId'),
   requestPath: text('requestPath'),
+  keepsShowsTogether: boolean('keepsShowsTogether').notNull().default(true),
   requestFulfilment: jsonb('requestFulfilment').$type<Fulfilment>(),
   linkedServerId: text('linkedServerId').references((): AnyPgColumn => linkedServer.id, {
     onDelete: 'cascade',

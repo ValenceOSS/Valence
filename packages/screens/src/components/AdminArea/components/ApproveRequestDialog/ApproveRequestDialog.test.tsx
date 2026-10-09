@@ -45,6 +45,7 @@ const aLibrary = (id: string, name: string, takesRequests = true): Library => ({
   takesRequests,
   requestProfileId: null,
   requestPath: null,
+  keepsShowsTogether: true,
 });
 
 beforeEach(() => {

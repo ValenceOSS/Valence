@@ -167,6 +167,20 @@ describe('createMediaStore', { timeout: STARTING_POSTGRES_MS }, () => {
     expect(new Set(items.map((item) => item.seriesId)).size).toBe(1);
   });
 
+  it('takes the catalogue match somebody corrected a programme to', async () => {
+    const { db, store } = await aStore();
+
+    await store.upsert(anEpisode('/shows/Show/1.mkv', 'Wrong Show', 'tv:1'));
+    await store.upsert(anEpisode('/shows/Show/2.mkv', 'Show', 'tv:2'));
+    expect(await db.select().from(series)).toMatchObject([
+      { title: 'Wrong Show', externalId: 'tv:1' },
+    ]);
+
+    await store.upsert({ ...anEpisode('/shows/Show/1.mkv', 'Show', 'tv:2'), isCorrected: true });
+
+    expect(await db.select().from(series)).toMatchObject([{ title: 'Show', externalId: 'tv:2' }]);
+  });
+
   it('hands back what it removed, and counts what it cleared', async () => {
     const { db, store } = await aStore();
 

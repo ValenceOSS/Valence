@@ -37,6 +37,7 @@ import type { MissingAlbumMatcher } from '@ValenceServer/requests/missingAlbums/
 import type { EventBus, WebhookOccurrence } from '@ValenceServer/events/EventBus';
 import type { Discovery } from '@ValenceServer/requests/catalogue/Discovery';
 import { NO_DISCOVERY } from '@ValenceServer/requests/catalogue/NO_DISCOVERY';
+import type { SeriesFile } from '@ValenceServer/requests/catalogue/SeriesFile';
 
 const A_STATUS: RequestsStatus = {
   version: '0.4.0',
@@ -154,6 +155,7 @@ const FILMS: Library = {
   takesRequests: true,
   requestProfileId: null,
   requestPath: null,
+  keepsShowsTogether: true,
 };
 
 const MUSIC: Library = {
@@ -168,6 +170,7 @@ const MUSIC: Library = {
   takesRequests: true,
   requestProfileId: null,
   requestPath: null,
+  keepsShowsTogether: true,
 };
 
 const BOOKS: Library = {
@@ -182,6 +185,35 @@ const BOOKS: Library = {
   takesRequests: true,
   requestProfileId: null,
   requestPath: null,
+  keepsShowsTogether: true,
+};
+
+const SHOWS: Library = {
+  ...FILMS,
+  id: '2e4f6a8c-0b1d-4e3f-9a5b-7c9d1e3f5a7b',
+  name: 'Shows',
+  kind: 'shows',
+  path: '/media/Shows',
+};
+
+const SHOW_FILES: readonly SeriesFile[] = [
+  {
+    libraryId: SHOWS.id,
+    seriesId: 'show',
+    seriesKey: 'folder:/media/Shows/Show',
+    path: '/media/Shows/Show/Season 1/Show S01E01.mkv',
+    season: 1,
+    episode: 1,
+    lastEpisode: null,
+  },
+];
+
+const HOLDING_A_SHOW: Discovery = {
+  ...NO_DISCOVERY,
+  lookup: {
+    ...NO_DISCOVERY.lookup,
+    seriesFiles: (tmdbId) => Promise.resolve(tmdbId === '42' ? SHOW_FILES : []),
+  },
 };
 
 const build = async ({
@@ -1888,6 +1920,74 @@ describe('requests for films and series, through the server', () => {
     const asker = await build({ isOn: true, granted: ['requests.ask'], service: aWillingKeeper });
 
     expect((await asker.ask(`/api/requests/media/${REQUEST.id}/blocklist`)).status).toBe(403);
+  });
+
+  it('tells the requests service what the library already holds of a series asked for', async () => {
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: aWillingKeeper,
+      libraries: [FILMS, SHOWS],
+      discovery: HOLDING_A_SHOW,
+      describeForRequest: () => Promise.resolve(DUNE),
+    });
+
+    sent.length = 0;
+
+    expect((await ask('/api/requests/media', 'POST', { kind: 'series', tmdbId: 42 })).status).toBe(
+      201,
+    );
+    expect(JSON.parse(bodySentTo('/api/requests'))).toMatchObject({
+      libraryId: SHOWS.id,
+      held: {
+        mediaId: 'show',
+        episodes: [{ season: 1, episode: 1 }],
+        folder: '/media/Shows/Show',
+        seasonFolders: [{ season: 1, folder: '/media/Shows/Show/Season 1' }],
+      },
+    });
+  });
+
+  it('names no folder to file into where the library keeps new episodes apart', async () => {
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: aWillingKeeper,
+      libraries: [{ ...SHOWS, keepsShowsTogether: false }],
+      discovery: HOLDING_A_SHOW,
+      describeForRequest: () => Promise.resolve(DUNE),
+    });
+
+    sent.length = 0;
+    await ask('/api/requests/media', 'POST', { kind: 'series', tmdbId: 42 });
+
+    expect(JSON.parse(bodySentTo('/api/requests'))).toMatchObject({
+      held: { episodes: [{ season: 1, episode: 1 }], folder: null, seasonFolders: [] },
+    });
+  });
+
+  it('tells the requests service what the library holds when a series’ seasons change', async () => {
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.approve'],
+      service: (url, init) =>
+        url.endsWith(`/api/requests/${REQUEST.id}`) && (init.method ?? 'GET') === 'GET'
+          ? Response.json({ ...REQUEST, kind: 'series', tmdbId: 42, libraryId: SHOWS.id })
+          : aWillingKeeper(url, init),
+      libraries: [SHOWS],
+      discovery: HOLDING_A_SHOW,
+      describeForRequest: () => Promise.resolve(DUNE),
+    });
+
+    sent.length = 0;
+
+    expect(
+      (await ask(`/api/requests/media/${REQUEST.id}`, 'PATCH', { seasons: [1, 2] })).status,
+    ).toBe(200);
+    expect(JSON.parse(sent.at(-1)?.body ?? '{}')).toMatchObject({
+      change: { seasons: [1, 2] },
+      held: { mediaId: 'show', folder: '/media/Shows/Show' },
+    });
   });
 
   it('changes the seasons asked for with what the catalogue says now', async () => {

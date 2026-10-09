@@ -39,7 +39,11 @@ import {
   REQUEST_APPROVALS,
   REQUEST_ITEM_STATES,
 } from '@ValenceContracts/schemas/MediaRequest';
-import type { ReleaseType, RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
+import type {
+  ReleaseType,
+  RequestCatalogue,
+  SeasonFolder,
+} from '@ValenceContracts/schemas/MediaRequest';
 import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
 
 const requestsSchema = pgSchema('valence_requests');
@@ -232,6 +236,8 @@ const mediaRequest = requestsSchema.table(
     posterUrl: text('poster_url'),
     libraryId: text('library_id').notNull(),
     libraryPath: text('library_path').notNull(),
+    libraryFolder: text('library_folder'),
+    seasonFolders: jsonb('season_folders').$type<SeasonFolder[]>().notNull().default([]),
     profileId: uuid('profile_id'),
     libraryLanguage: text('library_language'),
     isPickedByHand: boolean('is_picked_by_hand').notNull().default(false),

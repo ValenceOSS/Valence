@@ -6,8 +6,8 @@ import type { z } from 'zod';
 /**
  * A request as it is first kept, from what was asked: approved or waiting on approval as the asker
  * may be, with the facts the catalogue gave, and with the connected app it is handed to where its
- * library hands requests off. Only a series keeps the seasons asked for, and only an artist the
- * kinds of release, albums alone where none were named.
+ * library hands requests off. Only a series keeps the seasons asked for, and the folders the library
+ * already keeps it in, and only an artist the kinds of release, albums alone where none were named.
  *
  * @param draft - What was asked, read.
  * @param id - Its id.
@@ -27,6 +27,8 @@ const recordFromDraft = (
   ...requestFactsOf(draft.catalogue),
   libraryId: draft.libraryId,
   libraryPath: draft.libraryPath,
+  libraryFolder: draft.kind === 'series' ? (draft.held?.folder ?? null) : null,
+  seasonFolders: draft.kind === 'series' ? (draft.held?.seasonFolders ?? []) : [],
   libraryLanguage: draft.libraryLanguage ?? null,
   profileId: draft.profileId,
   isPickedByHand: draft.isPickedByHand,
@@ -36,7 +38,7 @@ const recordFromDraft = (
   requestedByName: draft.requestedBy.name,
   seasons: draft.kind === 'series' ? draft.seasons : null,
   releaseTypes: draft.kind === 'artist' ? (draft.releaseTypes ?? ['album']) : null,
-  mediaId: null,
+  mediaId: draft.kind === 'series' ? (draft.held?.mediaId ?? null) : null,
   problem: null,
   problemCode: null,
   catalogueCheckedAt: at,

@@ -17,6 +17,7 @@ import type {
   CatalogueMatch,
   Metadata,
   MetadataProvider,
+  SeriesReach,
 } from './MetadataProvider';
 import { releaseFactsOf } from '@ValenceServer/library/releaseFactsOf';
 import { discoverParameters } from '@ValenceServer/library/discoverParameters';
@@ -299,6 +300,8 @@ const YEAR_ADJACENT = 1;
 
 const SECONDS_IN_MINUTE = 60;
 
+const SEASON_CHECKS = 5;
+
 /**
  * Scores a catalogue title against the one a file named, the way Jellyfin does: the same title
  * scores highest, one that starts with it and carries on with more words half that, and anything
@@ -400,6 +403,58 @@ const bestMatches = (
 
   return scored.filter((one) => one.score === best).map((one) => one.entry);
 };
+
+/**
+ * Every entry whose title matches the file's at all, best first and in the catalogue's order among
+ * equals, for when the likeliest answers turn out not to hold what is on disk.
+ *
+ * @param candidates - What the catalogue offered, in its order.
+ * @param wanted - The title read from the file.
+ * @param year - The year read from the file, where it had one.
+ * @returns The entries whose titles match, best first.
+ */
+const titledMatches = (
+  candidates: readonly SearchResult[],
+  wanted: string,
+  year: number | null,
+): SearchResult[] => {
+  const normalised = normalizeTitle(wanted);
+
+  if (normalised === '') {
+    return [];
+  }
+
+  return candidates
+    .map((entry, order) => {
+      const title = Math.max(
+        scoreTitle(normalised, entry.title ?? entry.name),
+        scoreTitle(normalised, entry.original_title ?? entry.original_name),
+      );
+
+      return {
+        entry,
+        order,
+        title,
+        score: title + scoreYear(year, readYear(entry.release_date ?? entry.first_air_date)),
+      };
+    })
+    .filter((one) => one.title > 0)
+    .toSorted((left, right) => right.score - left.score || left.order - right.order)
+    .map((one) => one.entry);
+};
+
+/**
+ * Whether a programme's seasons, as the catalogue lists them, reach as far as the episodes on disk.
+ *
+ * @param seasons - The programme's seasons and how many episodes each has.
+ * @param reach - The furthest season on disk, and the furthest episode in it.
+ * @returns Whether the programme has that episode.
+ */
+const reachesEpisode = (
+  seasons: readonly { season_number: number; episode_count: number }[],
+  reach: SeriesReach,
+): boolean =>
+  seasons.some((one) => one.season_number === reach.season && one.episode_count >= reach.episode);
 
 /**
  * The words a catalogue is searched with: everything that is not a letter, a number or a mark
@@ -872,8 +927,47 @@ const createCatalogueMetadataProvider = ({
         return closestToRuntime(timed, facts.probe.durationSeconds / SECONDS_IN_MINUTE);
       };
 
-      const first =
-        shortlist.length > 1 && !isEpisode
+      /**
+       * Settles which programme a folder is by what is on disk: the first of the entries, tied best
+       * and then every other whose title matches, that has the furthest season and episode the
+       * folder holds. A folder named without a year is the case this exists for: several
+       * programmes share the name, and the catalogue's own order would pick whichever is most
+       * popular whatever the folder holds.
+       *
+       * Asked with the same extras the chosen entry is read with, so the one that wins is already
+       * remembered by the time it is read in full.
+       *
+       * @param reach - The furthest season on disk, and the furthest episode in it.
+       * @returns The entry that reaches it, or nothing where none does or none is in doubt.
+       */
+      const settleBySeasons = async (reach: SeriesReach): Promise<SearchResult | undefined> => {
+        const titled = titledMatches(candidates, searchTitle, searchYear);
+        const inDoubt = [
+          ...shortlist,
+          ...titled.filter((entry) => !shortlist.includes(entry)),
+        ].slice(0, SEASON_CHECKS);
+
+        if (inDoubt.length < 2) {
+          return undefined;
+        }
+
+        for (const entry of inDoubt) {
+          const detail = DetailResponseSchema.safeParse(
+            await request(`/tv/${entry.id.toString()}`, key, { append_to_response: appended }),
+          );
+
+          if (detail.success && reachesEpisode(detail.data.seasons, reach)) {
+            return entry;
+          }
+        }
+
+        return undefined;
+      };
+
+      const reach = facts.episode?.seriesReach ?? null;
+      const first = isEpisode
+        ? ((reach === null ? undefined : await settleBySeasons(reach)) ?? shortlist[0])
+        : shortlist.length > 1
           ? ((await settleByRuntime(shortlist)) ?? shortlist[0])
           : shortlist[0];
 

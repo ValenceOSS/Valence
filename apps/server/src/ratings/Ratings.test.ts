@@ -70,6 +70,7 @@ const build = () => {
           takesRequests: true,
           requestProfileId: null,
           requestPath: null,
+          keepsShowsTogether: true,
         },
       ],
       media: [FILM],

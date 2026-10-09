@@ -70,6 +70,7 @@ const build = (media: MediaDetail[] = []) => {
           takesRequests: true,
           requestProfileId: null,
           requestPath: null,
+          keepsShowsTogether: true,
         },
       ],
       media,

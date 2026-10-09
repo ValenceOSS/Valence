@@ -15,6 +15,8 @@ import type {
 } from '@ValenceContracts/schemas/CatalogueTitle';
 import { saying } from '@ValenceI18n/saying';
 
+type SeriesReach = { season: number; episode: number };
+
 type MediaFacts = {
   path: string;
   probe: MediaProbe;
@@ -26,6 +28,7 @@ type MediaFacts = {
     episodeNumber: number | null;
     episodeNumberEnd?: number | null;
     episodeTitle?: string | null;
+    seriesReach?: SeriesReach | null;
   };
   knownExternalId?: string | null;
   knownExternalKind?: 'tv' | 'movie';
@@ -307,6 +310,7 @@ export type {
   MediaFacts,
   Metadata,
   MetadataProvider,
+  SeriesReach,
   SeriesShape,
 };
 

@@ -189,6 +189,7 @@ const library = mysqlTable('library', {
   takesRequests: boolean('takesRequests').notNull().default(true),
   requestProfileId: identifier('requestProfileId'),
   requestPath: mediumtext('requestPath'),
+  keepsShowsTogether: boolean('keepsShowsTogether').notNull().default(true),
   requestFulfilment: jsonColumn('requestFulfilment').$type<Fulfilment>(),
   linkedServerId: identifier('linkedServerId').references((): AnyMySqlColumn => linkedServer.id, {
     onDelete: 'cascade',

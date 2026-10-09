@@ -15,6 +15,7 @@ const library = (id: string, path: string): Library => ({
   takesRequests: true,
   requestProfileId: null,
   requestPath: null,
+  keepsShowsTogether: true,
 });
 
 const FILMS = library('films', '/media/Films');

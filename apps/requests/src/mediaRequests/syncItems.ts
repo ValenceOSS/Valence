@@ -1,30 +1,48 @@
 import { releaseDateOf } from '@ValenceRequests/mediaRequests/releaseDateOf';
 import type { ReleaseWait } from '@ValenceContracts/schemas/QualityProfile';
-import type { RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
+import type { HeldEpisode, RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
 
 type ItemDraft = Pick<
   RequestItemRecord,
   'musicBrainzId' | 'season' | 'episode' | 'title' | 'airDate'
->;
+> & { state: Extract<RequestItemRecord['state'], 'waiting' | 'available'> };
 
 type ItemChanges = {
   add: ItemDraft[];
   change: Array<{ id: string; changes: Pick<RequestItemRecord, 'title' | 'airDate'> }>;
   remove: string[];
+  arrive: string[];
 };
 
 const LETTING_GO = new Set<RequestItemRecord['state']>(['waiting', 'wanted', 'failed']);
+
+/**
+ * Whether the library holds an episode.
+ *
+ * @param held - The episodes it holds.
+ * @param season - The episode's season.
+ * @param episode - Its number in the season.
+ * @returns Whether it is held.
+ */
+const isHeld = (
+  held: readonly HeldEpisode[],
+  season: number | null,
+  episode: number | null,
+): boolean => held.some((one) => one.season === season && one.episode === episode);
 
 /**
  * Everything a request asks for, by what the catalogue says: the film, the episodes of the seasons
  * asked for, the artist's albums of the kinds asked for, the album, or the book, which is wanted
  * at once since a book has no release to wait for.
  *
+ * An episode the library already holds is asked for as already there, so nothing searches for it.
+ *
  * @param request - The request.
  * @param catalogue - What the catalogue knows.
  * @param waitFor - What its quality profile holds a film until.
+ * @param held - The episodes the library already holds.
  * @returns What it asks for.
  */
 const wantedOf = (
@@ -34,6 +52,7 @@ const wantedOf = (
   >,
   catalogue: Pick<RequestCatalogue, 'episodes' | 'albums'>,
   waitFor: ReleaseWait,
+  held: readonly HeldEpisode[],
 ): ItemDraft[] => {
   switch (request.kind) {
     case 'film':
@@ -44,6 +63,7 @@ const wantedOf = (
           episode: null,
           title: request.title,
           airDate: releaseDateOf(request, waitFor),
+          state: 'waiting',
         },
       ];
     case 'series':
@@ -57,6 +77,7 @@ const wantedOf = (
           episode,
           title,
           airDate,
+          state: isHeld(held, season, episode) ? 'available' : 'waiting',
         }));
     case 'book':
       return [
@@ -66,6 +87,7 @@ const wantedOf = (
           episode: null,
           title: request.title,
           airDate: null,
+          state: 'waiting',
         },
       ];
     case 'artist':
@@ -82,6 +104,7 @@ const wantedOf = (
           episode: null,
           title: album.title,
           airDate: album.firstReleased,
+          state: 'waiting',
         }));
   }
 };
@@ -92,13 +115,15 @@ const wantedOf = (
  * every regular season, and any that come later, where none were named — each held until it airs;
  * an artist is each of their albums of the kinds asked for, and any that come later; an album is
  * itself. Something the catalogue has renamed or re-dated is changed, and something no longer asked
- * for is let go, unless it is on its way or here already.
+ * for is let go, unless it is on its way or here already. An episode the library already holds is
+ * added as there, and one still waited for is marked there, unless it is on its way.
  *
  * @param request - The request.
  * @param catalogue - What the catalogue knows: every episode, or every album.
  * @param items - What the request waits for now.
  * @param waitFor - What its quality profile holds a film until.
- * @returns What to add, change and remove.
+ * @param held - The episodes the library already holds.
+ * @returns What to add, change, remove and mark there.
  */
 const syncItems = (
   request: Pick<
@@ -108,8 +133,9 @@ const syncItems = (
   catalogue: Pick<RequestCatalogue, 'episodes' | 'albums'>,
   items: readonly RequestItemRecord[],
   waitFor: ReleaseWait = 'digital',
+  held: readonly HeldEpisode[] = [],
 ): ItemChanges => {
-  const wanted = wantedOf(request, catalogue, waitFor);
+  const wanted = wantedOf(request, catalogue, waitFor, held);
   const keyOf = (item: Pick<ItemDraft, 'musicBrainzId' | 'season' | 'episode'>) =>
     item.musicBrainzId ?? `${item.season?.toString() ?? '-'}x${item.episode?.toString() ?? '-'}`;
   const kept = new Map(items.map((item) => [keyOf(item), item]));
@@ -126,6 +152,15 @@ const syncItems = (
     }),
     remove: items
       .filter((item) => !wantedKeys.has(keyOf(item)) && LETTING_GO.has(item.state))
+      .map((item) => item.id),
+    arrive: items
+      .filter(
+        (item) =>
+          item.season !== null &&
+          LETTING_GO.has(item.state) &&
+          wantedKeys.has(keyOf(item)) &&
+          isHeld(held, item.season, item.episode),
+      )
       .map((item) => item.id),
   };
 };

@@ -57,6 +57,7 @@ const LibrarySchema = z.object({
   takesRequests: z.boolean().default(true),
   requestProfileId: z.string().uuid().nullable().default(null),
   requestPath: z.string().nullable().default(null),
+  keepsShowsTogether: z.boolean().default(true),
   fulfilment: FulfilmentSchema.nullable().optional(),
   linkedServerId: z.string().uuid().nullable().optional(),
 });
@@ -67,6 +68,7 @@ const UpdateLibraryRequestSchema = z.object({
   takesRequests: z.boolean().optional(),
   requestProfileId: z.string().uuid().nullable().optional(),
   requestPath: z.string().trim().nullable().optional(),
+  keepsShowsTogether: z.boolean().optional(),
   fulfilment: FulfilmentSchema.nullable().optional(),
 });
 

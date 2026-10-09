@@ -39,6 +39,7 @@ const LIBRARY = {
   takesRequests: true,
   requestProfileId: null,
   requestPath: null,
+  keepsShowsTogether: true,
 };
 
 const build = (

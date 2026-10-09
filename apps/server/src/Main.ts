@@ -158,6 +158,7 @@ import { matchArrivals } from '@ValenceServer/requests/arrivals/matchArrivals';
 import { matchDepartures } from '@ValenceServer/requests/arrivals/matchDepartures';
 import { createDatabaseLibraryHolds } from '@ValenceServer/requests/arrivals/createDatabaseLibraryHolds';
 import { createDatabaseCatalogueLookup } from '@ValenceServer/requests/catalogue/createDatabaseCatalogueLookup';
+import { heldInLibraryOf } from '@ValenceServer/requests/arrivals/heldInLibraryOf';
 import { findOnMusicBrainz } from '@ValenceServer/requests/deezer/findOnMusicBrainz';
 import { readDeezerCharts } from '@ValenceServer/requests/deezer/readDeezerCharts';
 import type { Discovery } from '@ValenceServer/requests/catalogue/Discovery';
@@ -1858,12 +1859,20 @@ const jobs = createJobQueue({
             { describeForRequest, describeMusicForRequest, describeBookForRequest: describeBook },
             request,
           );
-          const libraryPath = libraries.find((entry) => entry.id === request.libraryId)?.path;
+          const into = libraries.find((entry) => entry.id === request.libraryId);
 
           if (catalogue !== null) {
             await requestsClient.updateRequestCatalogue(request.id, {
               catalogue,
-              ...(libraryPath === undefined ? {} : { libraryPath }),
+              ...(into === undefined ? {} : { libraryPath: into.requestPath ?? into.path }),
+              held:
+                request.kind === 'series' && request.tmdbId !== null && into !== undefined
+                  ? heldInLibraryOf(
+                      await arrivalLookup.seriesFiles(request.tmdbId.toString()),
+                      into.id,
+                      into.keepsShowsTogether,
+                    )
+                  : null,
             });
           }
 

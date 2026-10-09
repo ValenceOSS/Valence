@@ -112,24 +112,34 @@ const groupSeriesByFolder = (
 /**
  * Files a programme under its key in a library, or finds the one already there, and says which it
  * is. A programme already held keeps the catalogue identity it has, and only takes a new title
- * where it has none yet or the incoming one agrees with it.
+ * where it has none yet or the incoming one agrees with it — unless somebody corrected the match,
+ * which replaces both.
  *
  * @param db - The database to write to.
  * @param wanted - The library, the key it is filed under, its title and its catalogue identity.
+ * @param isCorrected - Whether the identity is one somebody corrected the match to.
  * @returns The programme's id.
  */
 const placeSeries = async (
   db: AnyValenceDatabase,
   wanted: { libraryId: string; key: string; title: string; externalId: string | null },
+  isCorrected = false,
 ): Promise<string | null> => {
   await upsert(db, series, {
     values: [{ id: randomUUID(), ...wanted }],
     target: [series.libraryId, series.key],
-    set: {
-      title: sql`case when ${series.externalId} is null or ${isNotDistinctFrom(incoming(series.externalId), series.externalId)} then ${incoming(series.title)} else ${series.title} end`,
-      externalId: sql`coalesce(${series.externalId}, ${incoming(series.externalId)})`,
-      updatedAt: new Date(),
-    },
+    set:
+      isCorrected && wanted.externalId !== null
+        ? {
+            title: incoming(series.title),
+            externalId: incoming(series.externalId),
+            updatedAt: new Date(),
+          }
+        : {
+            title: sql`case when ${series.externalId} is null or ${isNotDistinctFrom(incoming(series.externalId), series.externalId)} then ${incoming(series.title)} else ${series.title} end`,
+            externalId: sql`coalesce(${series.externalId}, ${incoming(series.externalId)})`,
+            updatedAt: new Date(),
+          },
   });
 
   const [placed] = await db
@@ -239,12 +249,16 @@ const createMediaStore = (
     const seriesId =
       seriesKey === null || seriesTitle === null
         ? null
-        : await placeSeries(db, {
-            libraryId: row.libraryId,
-            key: seriesKey,
-            title: seriesTitle,
-            externalId: row.metadata.externalId ?? null,
-          });
+        : await placeSeries(
+            db,
+            {
+              libraryId: row.libraryId,
+              key: seriesKey,
+              title: seriesTitle,
+              externalId: row.metadata.externalId ?? null,
+            },
+            row.isCorrected,
+          );
 
     const changeable = {
       libraryId: row.libraryId,

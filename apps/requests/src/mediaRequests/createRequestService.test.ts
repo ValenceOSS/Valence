@@ -80,6 +80,7 @@ const aService = () => {
 
   return {
     service: createRequestService({ requests, items, now: () => AT, onChange }),
+    requests,
     items,
     onChange,
   };
@@ -237,6 +238,83 @@ describe('createRequestService', () => {
 
     expect(updated?.items).toHaveLength(3);
     expect(await service.updateCatalogue('missing', { catalogue: DUNE.catalogue })).toBeNull();
+  });
+
+  it('marks there what the library already holds of a series, and keeps where it keeps it', async () => {
+    const { service, requests } = aService();
+    const held = {
+      mediaId: 'show',
+      episodes: [{ season: 1, episode: 1 }],
+      folder: '/media/Series/Show',
+      seasonFolders: [{ season: 1, folder: '/media/Series/Show/Season 1' }],
+    };
+
+    const { request } = await service.add({ ...SEVERANCE, seasons: null, held });
+
+    expect(request.mediaId).toBe('show');
+    expect(request.items.map((item) => [item.season, item.state])).toEqual([
+      [1, 'available'],
+      [2, 'waiting'],
+    ]);
+    expect(await requests.find(request.id)).toMatchObject({
+      libraryFolder: '/media/Series/Show',
+      seasonFolders: [{ season: 1, folder: '/media/Series/Show/Season 1' }],
+    });
+  });
+
+  it('marks there what the library has come to hold when brought up to date', async () => {
+    const { service, requests } = aService();
+    const { request } = await service.add({ ...SEVERANCE, seasons: null });
+
+    const updated = await service.updateCatalogue(request.id, {
+      catalogue: SEVERANCE.catalogue,
+      held: {
+        mediaId: 'show',
+        episodes: [{ season: 2, episode: 1 }],
+        folder: '/media/Series/Show',
+      },
+    });
+
+    expect(updated?.items.map((item) => [item.season, item.state])).toEqual([
+      [1, 'waiting'],
+      [2, 'available'],
+    ]);
+    expect(await requests.find(request.id)).toMatchObject({ libraryFolder: '/media/Series/Show' });
+
+    await service.updateCatalogue(request.id, { catalogue: SEVERANCE.catalogue });
+
+    expect(await requests.find(request.id)).toMatchObject({ libraryFolder: '/media/Series/Show' });
+  });
+
+  it('marks there what the library holds of seasons added to a request', async () => {
+    const { service } = aService();
+    const { request } = await service.add(SEVERANCE);
+
+    const changed = await service.change(request.id, { seasons: [1, 2] }, SEVERANCE.catalogue, {
+      mediaId: 'show',
+      episodes: [{ season: 2, episode: 1 }],
+      folder: null,
+      seasonFolders: [],
+    });
+
+    expect(changed?.items.map((item) => [item.season, item.state])).toEqual([
+      [1, 'waiting'],
+      [2, 'available'],
+    ]);
+  });
+
+  it('keeps nothing of a library holding for a film', async () => {
+    const { service, requests } = aService();
+    const { request } = await service.add({
+      ...DUNE,
+      held: { mediaId: 'film', folder: '/media/Films/Film' },
+    });
+
+    expect(await requests.find(request.id)).toMatchObject({
+      libraryFolder: null,
+      seasonFolders: [],
+      mediaId: null,
+    });
   });
 
   it('follows what may still change: series still running, and films not yet fetched', async () => {

@@ -53,6 +53,7 @@ import { MediaRequestAskSchema } from '@ValenceContracts/schemas/MediaRequest';
 import type {
   MediaRequest,
   MediaRequestAsk,
+  HeldInLibrary,
   MediaRequestDraft,
   MediaRequestKind,
   ReleaseType,
@@ -70,11 +71,12 @@ import { isForLibrary, profilesOnOffer } from '@ValenceContracts/functions/profi
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import { libraryKindOf } from '@ValenceContracts/functions/libraryKindOf';
 import { catalogueForRequest } from '@ValenceServer/requests/catalogueForRequest';
+import { heldInLibraryOf } from '@ValenceServer/requests/arrivals/heldInLibraryOf';
 import { workOf } from '@ValenceServer/requests/workOf';
 import type { RequestsOverview } from '@ValenceContracts/schemas/Requests';
 import { NO_DISCOVERY } from '@ValenceServer/requests/catalogue/NO_DISCOVERY';
 import { NO_EMAIL } from '@ValenceServer/email/NO_EMAIL';
-import type { LibraryKind } from '@ValenceContracts/schemas/Library';
+import type { Library, LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { CatalogueStanding } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { GrantedPermission, Permission } from '@ValenceContracts/schemas/Permission';
 import type { CreateAppOptions } from '@ValenceServer/api/CreateAppOptions';
@@ -1319,6 +1321,24 @@ const createAppContext = (options: CreateAppOptions) => {
   const defaultReleaseTypes = async (): Promise<ReleaseType[]> =>
     (await settings.read()).requestReleaseTypes;
 
+  /**
+   * What a library already holds of a series a request is for, as the requests service is told it,
+   * so it fetches none of it again and files the rest beside it.
+   *
+   * @param into - The library the request files into.
+   * @param tmdbId - The series.
+   * @returns What it holds.
+   */
+  const heldFor = async (
+    into: Pick<Library, 'id' | 'keepsShowsTogether'>,
+    tmdbId: number,
+  ): Promise<HeldInLibrary> =>
+    heldInLibraryOf(
+      await discovery.lookup.seriesFiles(tmdbId.toString()),
+      into.id,
+      into.keepsShowsTogether,
+    );
+
   const draftFor = async (
     who: Headers | Asker,
     asked: MediaRequestAsk,
@@ -1373,6 +1393,10 @@ const createAppContext = (options: CreateAppOptions) => {
         isApproved: await asker.holds('requests.autoApprove'),
         catalogue,
         handOff: arrKindOf(chosen.kind) === null ? null : (chosen.fulfilment ?? null),
+        held:
+          asked.kind === 'series' && asked.tmdbId !== undefined
+            ? await heldFor(chosen, asked.tmdbId)
+            : null,
       },
     };
   };
@@ -1708,6 +1732,7 @@ const createAppContext = (options: CreateAppOptions) => {
     catalogueFor,
     defaultReleaseTypes,
     draftFor,
+    heldFor,
     whatMayBeAsked,
     everyRequest,
     phoneHandBacks,

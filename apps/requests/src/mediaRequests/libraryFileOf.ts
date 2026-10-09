@@ -2,6 +2,7 @@
 import { join } from 'node:path';
 import { libraryFolderOf } from '@ValenceRequests/mediaRequests/libraryFolderOf';
 import { safeFileName } from '@ValenceRequests/mediaRequests/safeFileName';
+import { seasonFolderOf } from '@ValenceRequests/mediaRequests/seasonFolderOf';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
 
@@ -15,8 +16,9 @@ const twoDigits = (value: number): string => value.toString().padStart(2, '0');
 
 /**
  * Where a film or episode is filed, named so the library's scanner reads it without guessing: a
- * film as its title and year inside its folder, and an episode inside a folder for its season, as
- * the series, its season and episode, and its own title — each followed by what this copy of it is,
+ * film as its title and year inside its folder, and an episode inside the folder the library keeps
+ * its season in, or a folder of its own for a season it does not hold, as the series' folder is
+ * named, its season and episode, and its own title — each followed by what this copy of it is,
  * which goes on the file and never on the folder around it.
  *
  * @param request - The request.
@@ -26,7 +28,10 @@ const twoDigits = (value: number): string => value.toString().padStart(2, '0');
  * @returns The path.
  */
 const libraryFileOf = (
-  request: Pick<MediaRequestRecord, 'libraryPath' | 'title' | 'year'>,
+  request: Pick<
+    MediaRequestRecord,
+    'libraryPath' | 'libraryFolder' | 'seasonFolders' | 'title' | 'year'
+  >,
   item: Pick<RequestItemRecord, 'season' | 'episode' | 'title'>,
   extension: string,
   quality = '',
@@ -42,8 +47,7 @@ const libraryFileOf = (
   const episodeTitle = safeFileName(item.title);
 
   return join(
-    folder,
-    `Season ${twoDigits(item.season)}`,
+    seasonFolderOf(folder, item.season, request.seasonFolders),
     `${name} - ${numbered}${episodeTitle === '' ? '' : ` - ${episodeTitle}`}${quality}.${extension}`,
   );
 };

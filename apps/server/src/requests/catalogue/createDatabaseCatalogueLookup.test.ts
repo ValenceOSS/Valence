@@ -75,4 +75,62 @@ describe('createDatabaseCatalogueLookup', { timeout: STARTING_POSTGRES_MS }, () 
       [2, 1],
     ]);
   });
+
+  it('lists every episode file of a series, leaving out its extras', async () => {
+    const { db } = await aHousehold();
+    const episode = {
+      libraryId: 'films',
+      seriesId: 'show',
+      title: 'An Episode',
+      sizeBytes: 1,
+      modifiedAtMs: 0,
+      container: 'mkv',
+      durationSeconds: 1800,
+      videoCodec: 'h264',
+      videoRange: 'sdr',
+      width: 1920,
+      height: 1080,
+      audioStreams: [],
+      subtitleStreams: [],
+    };
+
+    await db.insert(series).values({
+      id: 'show',
+      libraryId: 'films',
+      key: 'folder:/media/Show',
+      title: 'Show',
+      externalId: '42',
+    });
+    await db.insert(mediaItem).values([
+      {
+        ...episode,
+        id: 'e1',
+        path: '/media/Show/Season 1/a.mkv',
+        seasonNumber: 1,
+        episodeNumber: 1,
+        episodeNumberEnd: 2,
+      },
+      {
+        ...episode,
+        id: 'x1',
+        path: '/media/Show/Season 1/behind.mkv',
+        seasonNumber: 1,
+        episodeNumber: 3,
+        extraKind: 'featurette',
+      },
+    ]);
+
+    expect(await createDatabaseCatalogueLookup(db).seriesFiles('42')).toEqual([
+      {
+        libraryId: 'films',
+        seriesId: 'show',
+        seriesKey: 'folder:/media/Show',
+        path: '/media/Show/Season 1/a.mkv',
+        season: 1,
+        episode: 1,
+        lastEpisode: 2,
+      },
+    ]);
+    expect(await createDatabaseCatalogueLookup(db).seriesFiles('43')).toEqual([]);
+  });
 });

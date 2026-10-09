@@ -1,8 +1,10 @@
+import { isSeasonHeld } from '@ValenceClient/requests/isSeasonHeld';
 import { theSeasonsTicked } from '@ValenceClient/requests/theSeasonsTicked';
 import type { CatalogueSeason } from '@ValenceContracts/schemas/MediaRequest';
 
 /**
- * Ticks or unticks one season, going back to every season, null, once all of them are ticked.
+ * Ticks or unticks one season, going back to every season, null, once all of them are ticked that
+ * the library does not already hold whole.
  *
  * @param seasons - What is being asked for, null for every season.
  * @param listed - The seasons there are.
@@ -18,8 +20,11 @@ const tickASeason = (
   const next = ticked.includes(season)
     ? ticked.filter((one) => one !== season)
     : [...ticked, season];
+  const open = listed.filter((one) => !isSeasonHeld(one));
 
-  return next.length === listed.length ? null : [...next].sort((left, right) => left - right);
+  return open.length > 0 && open.every((one) => next.includes(one.season))
+    ? null
+    : [...next].sort((left, right) => left - right);
 };
 
 export { tickASeason };

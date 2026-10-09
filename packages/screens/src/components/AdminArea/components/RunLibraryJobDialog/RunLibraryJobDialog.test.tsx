@@ -42,6 +42,7 @@ const MOVIES: Library = {
   takesRequests: true,
   requestProfileId: null,
   requestPath: null,
+  keepsShowsTogether: true,
 };
 
 const SHOWS: Library = { ...MOVIES, id: 'lib-shows', name: 'Shows', kind: 'shows' };

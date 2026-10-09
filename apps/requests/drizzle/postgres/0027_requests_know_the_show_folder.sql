@@ -1,0 +1,2 @@
+ALTER TABLE "valence_requests"."media_request" ADD COLUMN "library_folder" text;--> statement-breakpoint
+ALTER TABLE "valence_requests"."media_request" ADD COLUMN "season_folders" jsonb DEFAULT '[]'::jsonb NOT NULL;

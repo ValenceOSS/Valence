@@ -40,6 +40,7 @@ const aLibrary = (id: string, name: string, kind: Library['kind']): Library => (
   takesRequests: true,
   requestProfileId: null,
   requestPath: null,
+  keepsShowsTogether: true,
 });
 
 const LIBRARIES = [

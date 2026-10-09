@@ -1,0 +1,1 @@
+ALTER TABLE `library` ADD `keepsShowsTogether` boolean DEFAULT true NOT NULL;

@@ -24,6 +24,7 @@ const aLookup = (
     films: held('films'),
     series: held('series'),
     episodesHeld: () => Promise.resolve(new Map<number, number>()),
+    seriesFiles: () => Promise.resolve([]),
     elsewhere: () => Promise.resolve(new Map()),
     artists: held('artists'),
     albums: held('albums'),
