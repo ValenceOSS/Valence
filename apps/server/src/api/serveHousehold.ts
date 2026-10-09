@@ -36,6 +36,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     announceProfiles,
     readAccount,
     callerOf,
+    listUsers,
   } = context;
 
   app.openapi(readOnboardingRoute, async (context) => {
@@ -163,12 +164,30 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
 
   app.get('/api/profiles/everyone', async (context) => {
     const everyone = (await profiles?.listEveryone()) ?? [];
+    const signsIn =
+      listUsers === undefined
+        ? null
+        : new Set(
+            (await listUsers())
+              .filter((account) => account.canSignIn ?? true)
+              .map((account) => account.id),
+          );
     const shown =
-      demoAccounts.length === 0 || profiles === undefined
+      profiles === undefined
         ? everyone
         : (
             await Promise.all(
               everyone.map(async (profile) => {
+                const owner = signsIn === null ? null : await profiles.accountOf(profile.id);
+
+                if (signsIn !== null && (owner === null || !signsIn.has(owner))) {
+                  return [];
+                }
+
+                if (demoAccounts.length === 0) {
+                  return [profile];
+                }
+
                 const account = await profiles.findSignIn(profile.id);
 
                 return account !== null && isDemoAccount(account, demoAccounts) ? [profile] : [];

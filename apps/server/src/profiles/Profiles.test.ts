@@ -14,6 +14,7 @@ import { createMemoryProfileService } from './createMemoryProfileService';
 import { createMemoryPermissionService } from '@ValenceServer/auth/createMemoryPermissionService';
 import { makeAdministrator } from '@ValenceServer/auth/signUpForTest';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import type { CreateAppOptions } from '@ValenceServer/api/CreateAppOptions';
 import {
   DEFAULT_DISCORD_PRESENCE,
   DiscordPresenceSchema,
@@ -59,6 +60,7 @@ const build = (
     | { kind: 'missing' }
     | { kind: 'failed' }
   >,
+  listUsers?: CreateAppOptions['listUsers'],
 ) => {
   const { auth, settings, store } = createMemoryAuth();
   const profiles = createMemoryProfileService();
@@ -69,6 +71,7 @@ const build = (
     settings,
     permissions,
     ...(promoteProfile === undefined ? {} : { promoteProfile }),
+    ...(listUsers === undefined ? {} : { listUsers }),
     countUsers: () => Promise.resolve(1),
     promoteToAdmin: () => Promise.resolve(null),
     library: createMemoryLibraryService(),
@@ -310,6 +313,39 @@ describe('profiles over HTTP', () => {
 
     expect(response.status).toBe(200);
     expect(body.profiles).toHaveLength(1);
+  });
+
+  it('leaves out an account still waiting to be set up', async () => {
+    const waiting = { id: '', canSignIn: false };
+    const { app, settings, profiles } = build(undefined, () =>
+      Promise.resolve(
+        profiles.state.map((held) => ({
+          id: held.userId,
+          name: held.profile.name,
+          email: '',
+          role: null,
+          createdAt: '',
+          canSignIn: held.userId !== waiting.id,
+        })),
+      ),
+    );
+    const cookie = await signedIn(app);
+
+    await settings.write({ showsProfilesBeforeSignIn: true });
+    await read(app, cookie);
+
+    const shownBefore = ProfileListSchema.parse(
+      await (await app.request(`${BASE}/api/profiles/everyone`)).json(),
+    );
+
+    waiting.id = profiles.state[0]?.userId ?? '';
+
+    const shownAfter = ProfileListSchema.parse(
+      await (await app.request(`${BASE}/api/profiles/everyone`)).json(),
+    );
+
+    expect(shownBefore.profiles).toHaveLength(1);
+    expect(shownAfter.profiles).toHaveLength(0);
   });
 
   it('never says an address to somebody who has not signed in', async () => {
