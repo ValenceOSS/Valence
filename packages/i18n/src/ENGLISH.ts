@@ -2038,6 +2038,8 @@ const ENGLISH = {
     'The request was made, but that release couldn’t be downloaded: {problem}',
   'error.requests.itIsInTheLibraryAlready':
     'It’s already in the library, so there’s nothing to cancel.',
+  'error.requests.itIsNotApprovedSoNothingIsSearched':
+    'It isn’t approved, so nothing is searched for it.',
   'error.requests.noSuchBlockedRelease': 'No such blocked release.',
   'error.requests.noSuchRequest': 'No such request.',
   'error.requests.pickingAReleaseIsForWhoever': 'Only request managers can choose a release.',
@@ -2052,6 +2054,8 @@ const ENGLISH = {
   'error.requests.thatIsNotAChangeTo': 'That isn’t a valid change to a request.',
   'error.requests.thatIsNotARequest': 'That isn’t a valid request.',
   'error.requests.thatIsNotWhatTheCatalogue': 'That doesn’t match the catalogue.',
+  'error.requests.theAppCouldNotSearchForIt':
+    'The connected app couldn’t search for it. Its history says why.',
   'error.requests.theCatalogueDoesNotKnowThat':
     'The catalogue doesn’t have that series, or can’t be reached.',
   'error.requests.thisAccountMayNotRequestThat': 'This account isn’t allowed to request that.',
