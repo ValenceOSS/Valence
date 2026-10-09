@@ -49,6 +49,8 @@ import { createRequestService } from '@ValenceRequests/mediaRequests/createReque
 import { createProbeClient } from '@ValenceRequests/media/createProbeClient';
 import { createRequestWorker } from '@ValenceRequests/mediaRequests/createRequestWorker';
 import { createArrAppRoutes } from '@ValenceRequests/arrApps/createArrAppRoutes';
+import { createHandOffControl } from '@ValenceRequests/arrApps/handOff/createHandOffControl';
+import { createHandOffRoutes } from '@ValenceRequests/arrApps/handOff/createHandOffRoutes';
 import { createArrAppService } from '@ValenceRequests/arrApps/createArrAppService';
 import { createArrCaller } from '@ValenceRequests/arrApps/createArrCaller';
 import { createDatabaseArrAppStore } from '@ValenceRequests/arrApps/createDatabaseArrAppStore';
@@ -343,6 +345,16 @@ const app = createApp({
       worker: requestWorker,
     }),
     createArrAppRoutes({ apps: arrApps }),
+    createHandOffRoutes({
+      service: mediaRequests,
+      control: createHandOffControl({
+        requests: requestStore,
+        items: requestItems,
+        apps: arrAppStore,
+        connect: connectArr,
+        log: requestLog,
+      }),
+    }),
     createArrImportRoutes({
       imports: createArrImportService({
         connect: (source) => createArrCaller(fetch, source),

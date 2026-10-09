@@ -10,6 +10,8 @@ type ItemSighting =
   | { itemId: string; kind: 'missing' }
   | { itemId: string; kind: 'unchanged' };
 
+type QueuedFor = { record: ArrQueueRecord; itemIds: string[] };
+
 type HandOffHandler = {
   place: (
     request: MediaRequestRecord,
@@ -30,6 +32,18 @@ type HandOffHandler = {
     handOffId: number,
   ) => Promise<ArrRelease[]>;
   pageOf: (request: MediaRequestRecord, handOffId: number) => Promise<string | null>;
+  queued: (
+    request: MediaRequestRecord,
+    items: readonly RequestItemRecord[],
+    handOffId: number,
+    queue: readonly ArrQueueRecord[],
+  ) => Promise<QueuedFor[]>;
+  monitor: (
+    request: MediaRequestRecord,
+    items: readonly RequestItemRecord[],
+    handOffId: number,
+    isMonitored: boolean,
+  ) => Promise<void>;
 };
 
-export type { HandOffHandler, ItemSighting };
+export type { HandOffHandler, ItemSighting, QueuedFor };

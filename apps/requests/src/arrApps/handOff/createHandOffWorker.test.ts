@@ -123,7 +123,17 @@ const aWorker = ({
     events,
     log: log.store,
     handlerFor: () =>
-      handler ? { place: placing, watch, search: searching, pageOf, releases: listing } : null,
+      handler
+        ? {
+            place: placing,
+            watch,
+            search: searching,
+            pageOf,
+            releases: listing,
+            queued: () => Promise.resolve([]),
+            monitor: () => Promise.resolve(),
+          }
+        : null,
     now,
   });
 

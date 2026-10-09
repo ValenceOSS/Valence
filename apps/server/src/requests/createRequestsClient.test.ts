@@ -1127,6 +1127,64 @@ describe('createRequestsClient with requests for films and series', () => {
     );
   });
 
+  it('works a handed-off request through its app: downloads, stopping, blocklist, following', async () => {
+    const download = {
+      id: '5',
+      releaseTitle: 'Dune.2021.1080p',
+      itemIds: [],
+      clientName: 'qBittorrent',
+      progress: 0.5,
+      sizeBytes: null,
+      secondsLeft: null,
+      problem: null,
+    };
+    const listing = aClient(200, [download]);
+    const blocked = aClient(200, [
+      {
+        id: '3',
+        requestId: REQUEST.id,
+        title: 'Dune.2021.720p',
+        indexerId: null,
+        reason: sayVerbatim('Download failed'),
+        at: '2026-10-01T10:00:00.000Z',
+      },
+    ]);
+    const changing = aClient(200, REQUEST);
+    const emptying = aClient(204, null);
+    const base = `http://requests:8421/api/requests/${REQUEST.id}/hand-off`;
+
+    expect(await listing.client.handOffDownloads(REQUEST.id)).toEqual({
+      kind: 'answered',
+      value: [download],
+    });
+    expect((await blocked.client.handOffBlocklist(REQUEST.id)).kind).toBe('answered');
+    expect(
+      (
+        await changing.client.handOffStop(REQUEST.id, '5', {
+          next: 'another',
+          isDeletingFiles: true,
+        })
+      ).kind,
+    ).toBe('answered');
+    expect(
+      (await changing.client.handOffFollow(REQUEST.id, { itemIds: [], isFollowed: false })).kind,
+    ).toBe('answered');
+    expect((await emptying.client.handOffLift(REQUEST.id, '3')).kind).toBe('answered');
+    expect((await emptying.client.handOffRelease(REQUEST.id)).kind).toBe('answered');
+    expect(
+      [listing, blocked, changing, emptying].flatMap((one) =>
+        one.fetch.mock.calls.map(([url]) => url),
+      ),
+    ).toEqual([
+      `${base}/downloads`,
+      `${base}/blocklist`,
+      `${base}/downloads/5/stop`,
+      `${base}/follow`,
+      `${base}/blocklist/3`,
+      `${base}/release`,
+    ]);
+  });
+
   it('lists what is followed, and searches for everything missing', async () => {
     expect(
       await aClient(200, [

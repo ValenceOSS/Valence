@@ -296,7 +296,7 @@ const MediaRequestDecidedSchema = z.object({
 });
 
 const BlockedReleaseSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().min(1),
   requestId: z.string().uuid(),
   title: z.string(),
   indexerId: z.string().nullable(),

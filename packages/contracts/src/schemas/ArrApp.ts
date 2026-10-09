@@ -129,8 +129,20 @@ const HandedToSchema = z.object({
   link: z.string().url().nullable(),
 });
 
+const HandOffDownloadSchema = z.object({
+  id: z.string().min(1),
+  releaseTitle: z.string(),
+  itemIds: z.array(z.string().uuid()),
+  clientName: z.string(),
+  progress: z.number().min(0).max(1),
+  sizeBytes: z.number().nonnegative().nullable(),
+  secondsLeft: z.number().int().nonnegative().nullable(),
+  problem: SaidSchema.nullable(),
+});
+
 type ArrAppOption = z.infer<typeof ArrAppOptionSchema>;
 type HandedTo = z.infer<typeof HandedToSchema>;
+type HandOffDownload = z.infer<typeof HandOffDownloadSchema>;
 type ArrRootFolder = z.infer<typeof ArrRootFolderSchema>;
 type ArrAppChoices = z.infer<typeof ArrAppChoicesSchema>;
 type Fulfilment = z.infer<typeof FulfilmentSchema>;
@@ -154,6 +166,7 @@ export type {
   FulfillingArrAppKind,
   Fulfilment,
   HandedTo,
+  HandOffDownload,
   ProwlarrImport,
 };
 
@@ -174,5 +187,6 @@ export {
   FulfillingArrAppKindSchema,
   FulfilmentSchema,
   HandedToSchema,
+  HandOffDownloadSchema,
   ProwlarrImportSchema,
 };

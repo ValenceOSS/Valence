@@ -35,6 +35,26 @@ vi.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
   fetchMediaRequestLog: () => Promise.resolve([]),
   fetchRequestBlocklist: () => Promise.resolve([]),
   fetchMediaRequestReleases: () => new Promise(() => undefined),
+  fetchHandedTo: () =>
+    Promise.resolve({
+      appId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+      appName: 'Radarr',
+      appKind: 'radarr',
+      link: null,
+    }),
+  fetchHandOffDownloads: () =>
+    Promise.resolve([
+      {
+        id: '5',
+        releaseTitle: 'Dune.2021.1080p.BluRay',
+        itemIds: ['0b1d2c3e-4f56-4a78-9b01-23456789abcd'],
+        clientName: 'qBittorrent',
+        progress: 0.5,
+        sizeBytes: 1000,
+        secondsLeft: null,
+        problem: null,
+      },
+    ]),
   approveMediaRequest: (id: string) => approveMediaRequest(id),
   askForMedia: (...given: Parameters<typeof Requests.askForMedia>) => askForMedia(...given),
   changeMediaRequest: (...given: Parameters<typeof Requests.changeMediaRequest>) =>
@@ -252,6 +272,40 @@ describe('TitlePage', () => {
     renderInAnAddress(<TitlePage titleKey="film:1" onBack={vi.fn()} />);
 
     expect(await screen.findByRole('button', { name: 'Interactive search' })).toBeInTheDocument();
+  });
+
+  it('shows what the app is downloading for a title it fetches, and stops it there', async () => {
+    const request = aMediaRequest({
+      isHandedOff: true,
+      items: [aRequestItem({ id: '0b1d2c3e-4f56-4a78-9b01-23456789abcd', state: 'downloading' })],
+    });
+    const user = userEvent.setup();
+
+    admin.controlsConnectedApps = true;
+    requested.requests = [request];
+    catalogue.entries = [
+      aCatalogueEntry({ key: 'film:1', status: 'downloading', requestId: request.id }),
+    ];
+
+    renderInAnAddress(<TitlePage titleKey="film:1" onBack={vi.fn()} />);
+
+    expect(await screen.findByText('Dune.2021.1080p.BluRay')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Stop download…' }));
+
+    expect(
+      await screen.findByText('Radarr deletes what it downloaded so far.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Stop it' }));
+
+    await waitFor(() => {
+      expect(stopRequestDownload).toHaveBeenCalledWith(request.id, '5', {
+        next: 'another',
+        isDeletingFiles: true,
+      });
+    });
   });
 
   it('removes a request, deleting its files where asked', async () => {

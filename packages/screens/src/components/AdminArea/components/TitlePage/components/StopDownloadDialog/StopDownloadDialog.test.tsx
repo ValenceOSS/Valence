@@ -41,6 +41,21 @@ describe('StopDownloadDialog', () => {
     expect(onStop).toHaveBeenCalledWith('nothing', false);
   });
 
+  it('says a connected app deletes what it downloaded, in place of asking', () => {
+    render(
+      <StopDownloadDialog
+        download={DOWNLOAD}
+        appName="Sonarr"
+        isStopping={false}
+        onClose={vi.fn()}
+        onStop={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Sonarr deletes what it downloaded so far.')).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  });
+
   it('is shut while there is nothing to stop', () => {
     render(
       <StopDownloadDialog download={null} isStopping={false} onClose={vi.fn()} onStop={vi.fn()} />,

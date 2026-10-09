@@ -37,6 +37,7 @@ import {
   ArrAppTestSchema,
   ArrQueueSchema,
   HandedToSchema,
+  HandOffDownloadSchema,
   ProwlarrImportSchema,
 } from '@ValenceContracts/schemas/ArrApp';
 import {
@@ -1209,6 +1210,21 @@ const handedToRoute = createRoute({
   }),
 });
 
+const handOffDownloadsRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/media/{id}/hand-off/downloads',
+  tags: ['Requests'],
+  summary:
+    'What the connected app a request was handed to is downloading for it, where Valence controls connected apps',
+  request: { params: RecordIdParameter },
+  responses: requestFailures({
+    200: {
+      description: 'Its downloads in the app, or none where Valence does not control the app',
+      content: { 'application/json': { schema: z.array(HandOffDownloadSchema) } },
+    },
+  }),
+});
+
 const decideProfileAskRoute = createRoute({
   method: 'post',
   path: '/api/requests/media/{id}/profile-ask',
@@ -1337,7 +1353,7 @@ const liftMediaBlockRoute = createRoute({
     params: RecordIdParameter.extend({
       blockId: z
         .string()
-        .uuid()
+        .min(1)
         .openapi({ param: { name: 'blockId', in: 'path' } }),
     }),
   },
@@ -1388,6 +1404,7 @@ export {
   joinMediaRequestRoute,
   decideProfileAskRoute,
   handedToRoute,
+  handOffDownloadsRoute,
   adminCatalogueRoute,
   adminTitleFilesRoute,
   stopRequestDownloadRoute,

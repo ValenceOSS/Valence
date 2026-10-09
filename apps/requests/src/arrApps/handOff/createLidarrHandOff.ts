@@ -232,6 +232,49 @@ const createLidarrHandOff = (caller: Pick<ArrCaller, 'read' | 'send'>): HandOffH
       return [...new Map(found.flat().map((release) => [release.guid, release])).values()];
     },
 
+    queued: async (request, items, handOffId, queue) => {
+      const kept = queue.filter((record) => record.artistId === handOffId);
+      const albums =
+        kept.length === 0
+          ? []
+          : await caller.read('/album', LidarrAlbumsSchema, { artistId: handOffId.toString() });
+
+      return kept.flatMap((record) => {
+        const album = albums.find((one) => one.id === record.albumId);
+        const itemIds = items
+          .filter((item) =>
+            request.kind === 'album'
+              ? album !== undefined && album.foreignAlbumId === request.musicBrainzId
+              : album !== undefined && item.musicBrainzId === album.foreignAlbumId,
+          )
+          .map((item) => item.id);
+
+        return itemIds.length === 0 ? [] : [{ record, itemIds }];
+      });
+    },
+
+    monitor: async (request, items, handOffId, isMonitored) => {
+      const wanted = new Set(
+        request.kind === 'album'
+          ? [request.musicBrainzId ?? '']
+          : items.flatMap((item) => (item.musicBrainzId === null ? [] : [item.musicBrainzId])),
+      );
+      const albumIds = (
+        await caller.read('/album', LidarrAlbumsSchema, { artistId: handOffId.toString() })
+      )
+        .filter((album) => wanted.has(album.foreignAlbumId))
+        .map((album) => album.id);
+
+      if (albumIds.length > 0) {
+        await caller.send(
+          'PUT',
+          '/album/monitor',
+          { albumIds, monitored: isMonitored },
+          ArrAcknowledgementSchema,
+        );
+      }
+    },
+
     pageOf: (request) =>
       Promise.resolve(
         request.musicBrainzId === null
@@ -250,7 +293,12 @@ const createLidarrHandOff = (caller: Pick<ArrCaller, 'read' | 'send'>): HandOffH
         items.flatMap((item) => {
           const album = albumOf(item);
 
-          return album === undefined || album.monitored || SETTLED.has(item.state) ? [] : [album];
+          return album === undefined ||
+            album.monitored ||
+            !item.isFollowed ||
+            SETTLED.has(item.state)
+            ? []
+            : [album];
         }),
         handOff,
       );

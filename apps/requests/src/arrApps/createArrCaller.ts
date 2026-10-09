@@ -172,6 +172,10 @@ const createArrCaller = (fetch: ArrFetch, app: ArrCalled, waitSeconds = WAIT_SEC
       body: JsonValue,
       reader: ArrReader<Value>,
     ): Promise<Value> => ask(method, path, reader, { body }),
+
+    remove: async (path: string, query: Record<string, string> = {}): Promise<void> => {
+      await ask('DELETE', path, JsonValueSchema, { query });
+    },
   };
 };
 

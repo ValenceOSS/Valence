@@ -175,4 +175,27 @@ describe('createRadarrHandOff', () => {
       ),
     ).toMatchObject([{ guid: 'for-12', indexerId: 2 }]);
   });
+
+  it('finds the film’s downloads in Radarr’s queue, and monitors it or stops', async () => {
+    const queue = ArrQueuePageSchema.parse({
+      records: [
+        { id: 5, movieId: 12, title: 'A.Film.2021.1080p' },
+        { id: 6, movieId: 13, title: 'Another.Film' },
+      ],
+    }).records;
+    const item = aRequestItem();
+    const arr = aFakeArr({ 'PUT /api/v3/movie/editor': { body: [] } });
+    const handOff = createRadarrHandOff(createArrCaller(arr.fetch, anArrApp()));
+
+    expect(
+      (await handOff.queued(aMediaRequest(), [item], 12, queue)).map((one) => [
+        one.record.id,
+        one.itemIds,
+      ]),
+    ).toEqual([[5, [item.id]]]);
+
+    await handOff.monitor(aMediaRequest(), [item], 12, false);
+
+    expect(arr.sent('PUT', '/api/v3/movie/editor')).toEqual([{ movieIds: [12], monitored: false }]);
+  });
 });
