@@ -1,7 +1,7 @@
 import { basename } from 'node:path';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { saying } from '@ValenceI18n/saying';
-import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
+import type { Fulfilment, HandedTo } from '@ValenceContracts/schemas/ArrApp';
 import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
 import { ArrAppFailure } from '@ValenceRequests/arrApps/ArrAppFailure';
 import type { ArrAppRecord, ArrAppStore } from '@ValenceRequests/arrApps/ArrAppRecord';
@@ -78,6 +78,9 @@ const doneBytesOf = (record: ArrQueueRecord): number | null =>
  * albums move from wanted to downloading to filed with the events the server already acts on — a
  * filed one tells the server which folder to read, as Valence's own filing does — while the app
  * alone searches, downloads and imports.
+ *
+ * Searching for one now, as Search missing does, asks its app to search for what it monitors of it
+ * again; and each says which app has it, with a link to its page there.
  *
  * An app that cannot be reached is asked once a round: its other requests are given the same
  * problem without waiting on it again, so one app that is down does not hold up every request
@@ -336,6 +339,71 @@ const createHandOffWorker = ({
   };
 
   return {
+    searchNow: async (id: string): Promise<boolean> => {
+      const request = await requests.find(id);
+      const handOff = request?.handOff ?? null;
+
+      if (request === null || handOff === null || request.handOffId === null) {
+        return false;
+      }
+
+      const app = await apps.find(handOff.appId);
+      const handler = app?.isEnabled === true ? handlerFor(app.kind, connect(app)) : null;
+
+      if (app === null || handler === null) {
+        return false;
+      }
+
+      try {
+        await handler.search(request, request.handOffId);
+        await note(
+          request,
+          saying('requests.arrApps.handOff.askedNameToSearchAgain', { name: app.name }),
+          null,
+        );
+
+        return true;
+      } catch (error) {
+        if (!(error instanceof ArrAppFailure)) {
+          throw error;
+        }
+
+        await trouble(
+          request,
+          saying('requests.arrApps.handOff.nameSaidProblem', {
+            name: app.name,
+            problem: error.said,
+          }),
+          error.problemCode,
+        );
+
+        return false;
+      }
+    },
+
+    handedTo: async (id: string): Promise<HandedTo | null> => {
+      const request = await requests.find(id);
+      const handOff = request?.handOff ?? null;
+      const app = handOff === null ? null : await apps.find(handOff.appId);
+
+      if (request === null || app === null) {
+        return null;
+      }
+
+      const handler = handlerFor(app.kind, connect(app));
+      const page =
+        handler === null || request.handOffId === null
+          ? null
+          : await handler.pageOf(request, request.handOffId).catch(() => null);
+
+      return {
+        appId: app.id,
+        appName: app.name,
+        appKind: app.kind,
+        link: page === null ? null : `${app.url.replace(/\/+$/, '')}${page}`,
+      };
+    },
+
     step: async (): Promise<void> => {
       const [kept, all] = await Promise.all([requests.list(), items.list()]);
       const isWatching = now().getTime() - lastWatchedAt >= watchEveryMs;

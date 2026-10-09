@@ -122,7 +122,15 @@ type ArrApp = z.infer<typeof ArrAppSchema>;
 type ArrAppDraft = z.input<typeof ArrAppDraftSchema>;
 type ArrAppChange = z.infer<typeof ArrAppChangeSchema>;
 type ArrAppTest = z.infer<typeof ArrAppTestSchema>;
+const HandedToSchema = z.object({
+  appId: z.string().uuid(),
+  appName: z.string(),
+  appKind: ArrAppKindSchema,
+  link: z.string().url().nullable(),
+});
+
 type ArrAppOption = z.infer<typeof ArrAppOptionSchema>;
+type HandedTo = z.infer<typeof HandedToSchema>;
 type ArrRootFolder = z.infer<typeof ArrRootFolderSchema>;
 type ArrAppChoices = z.infer<typeof ArrAppChoicesSchema>;
 type Fulfilment = z.infer<typeof FulfilmentSchema>;
@@ -145,6 +153,7 @@ export type {
   ArrRootFolder,
   FulfillingArrAppKind,
   Fulfilment,
+  HandedTo,
   ProwlarrImport,
 };
 
@@ -164,5 +173,6 @@ export {
   ArrRootFolderSchema,
   FulfillingArrAppKindSchema,
   FulfilmentSchema,
+  HandedToSchema,
   ProwlarrImportSchema,
 };

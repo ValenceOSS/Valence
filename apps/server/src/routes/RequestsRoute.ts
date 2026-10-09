@@ -36,6 +36,7 @@ import {
   ArrAppSchema,
   ArrAppTestSchema,
   ArrQueueSchema,
+  HandedToSchema,
   ProwlarrImportSchema,
 } from '@ValenceContracts/schemas/ArrApp';
 import {
@@ -1194,6 +1195,20 @@ const joinMediaRequestRoute = createRoute({
   responses: requestFailures(ONE_REQUEST),
 });
 
+const handedToRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/media/{id}/handed-to',
+  tags: ['Requests'],
+  summary: 'Which connected app a request was handed to, with a link to its page there',
+  request: { params: RecordIdParameter },
+  responses: requestFailures({
+    200: {
+      description: 'The app it was handed to',
+      content: { 'application/json': { schema: HandedToSchema } },
+    },
+  }),
+});
+
 const decideProfileAskRoute = createRoute({
   method: 'post',
   path: '/api/requests/media/{id}/profile-ask',
@@ -1372,6 +1387,7 @@ export {
   removeMediaRequestRoute,
   joinMediaRequestRoute,
   decideProfileAskRoute,
+  handedToRoute,
   adminCatalogueRoute,
   adminTitleFilesRoute,
   stopRequestDownloadRoute,

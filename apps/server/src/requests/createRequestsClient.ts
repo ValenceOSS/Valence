@@ -96,6 +96,7 @@ import {
   ArrAppSchema,
   ArrAppTestSchema,
   ArrQueueSchema,
+  HandedToSchema,
   ProwlarrImportSchema,
 } from '@ValenceContracts/schemas/ArrApp';
 import type {
@@ -105,6 +106,7 @@ import type {
   ArrAppDraft,
   ArrAppTest,
   ArrQueue,
+  HandedTo,
   ProwlarrImport,
 } from '@ValenceContracts/schemas/ArrApp';
 import { ArrImportAppliedSchema, ArrImportPlanSchema } from '@ValenceContracts/schemas/ArrImport';
@@ -697,6 +699,9 @@ const createRequestsClient = ({
       decision: ProfileAskDecision,
     ): Promise<RequestsAnswer<MediaRequest>> =>
       call(`${withRequest(id)}/profile-ask`, readRequest, { method: 'POST', body: decision }),
+
+    handedTo: (id: string): Promise<RequestsAnswer<HandedTo>> =>
+      call(`${withRequest(id)}/handed-to`, (body) => HandedToSchema.parse(body)),
 
     leaveRequest: (id: string, askerId: string): Promise<RequestsAnswer<MediaRequest>> =>
       call(`${withRequest(id)}/askers/${encodeURIComponent(askerId)}`, readRequest, {

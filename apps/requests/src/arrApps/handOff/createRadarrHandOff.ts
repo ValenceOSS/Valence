@@ -71,6 +71,18 @@ const createRadarrHandOff = (caller: Pick<ArrCaller, 'read' | 'send'>): HandOffH
     return kept.id;
   },
 
+  search: async (_request, handOffId) => {
+    await caller.send(
+      'POST',
+      '/command',
+      { name: 'MoviesSearch', movieIds: [handOffId] },
+      ArrCommandSchema,
+    );
+  },
+
+  pageOf: (request) =>
+    Promise.resolve(request.tmdbId === null ? null : `/movie/${request.tmdbId.toString()}`),
+
   watch: async (_request, items, _handOff, handOffId, queue) => {
     const movie = await caller.read(`/movie/${handOffId.toString()}`, RadarrMovieSchema);
     const filePath = movie.hasFile ? (movie.movieFile?.path ?? null) : null;

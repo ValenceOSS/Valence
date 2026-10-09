@@ -22,6 +22,8 @@ type HandOffHandler = {
     handOffId: number,
     queue: readonly ArrQueueRecord[],
   ) => Promise<ItemSighting[]>;
+  search: (request: MediaRequestRecord, handOffId: number) => Promise<void>;
+  pageOf: (request: MediaRequestRecord, handOffId: number) => Promise<string | null>;
 };
 
 export type { HandOffHandler, ItemSighting };

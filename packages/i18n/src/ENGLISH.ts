@@ -2373,6 +2373,7 @@ const ENGLISH = {
   'requests.arrApps.arrCaller.nameAnsweredStatusComplaint':
     '{name} returned HTTP {status}: {complaint}',
   'requests.arrApps.arrCaller.nameRefusedItsApiKey': '{name} rejected its API key',
+  'requests.arrApps.handOff.askedNameToSearchAgain': 'Asked {name} to search for it again.',
   'requests.arrApps.handOff.handedToName': 'Sent to {name}.',
   'requests.arrApps.handOff.itHasNoMusicBrainzIdToHandOver':
     'It has no MusicBrainz ID to send to Lidarr.',
@@ -3594,6 +3595,8 @@ const ENGLISH = {
   'screens.adminArea.indexerDialog.whichOfTheSitesAddressesTo':
     'The site address to use. Try another if one is blocked.',
   'screens.adminArea.indexerReportList.whatEachIndexerSaid': 'Results by indexer',
+  'screens.adminArea.indexersPanel.everyLibraryHandsOff':
+    'Every library that takes requests hands them to a connected app, so Valence doesn’t search these indexers for them.',
   'screens.adminArea.indexersPanel.fromNameAddedUpdatedRemoved':
     'From {name}: {added} added, {updated} updated, {removed} removed.',
   'screens.adminArea.indexersPanel.importFromProwlarr': 'Import from Prowlarr',
@@ -4071,6 +4074,8 @@ const ENGLISH = {
   'screens.adminArea.profileEditor.whichLibrariesOfferThisProfileWhen':
     'Which libraries offer this profile when someone makes a request. Select none to offer it for all of them.',
   'screens.adminArea.profileEditor.whichPartOfTheProfileTo': 'Which part of the profile to edit',
+  'screens.adminArea.profilesPanel.everyLibraryHandsOff':
+    'Every library of this kind that takes requests hands them to a connected app, so no request is judged by these profiles.',
   'screens.adminArea.profilesPanel.highestFirst':
     'Highest first. When people ask for the same title at different profiles, this order decides which is higher.',
   'screens.adminArea.profilesPanel.noMusicLibraryTakesRequests':
@@ -4457,6 +4462,10 @@ const ENGLISH = {
   'screens.adminArea.titlePage.episodeTable.fileName': 'File name',
   'screens.adminArea.titlePage.fetching': 'Fetching',
   'screens.adminArea.titlePage.followingName': 'Following {name}',
+  'screens.adminArea.titlePage.handedToNote.handledByName': 'Handled by {name}',
+  'screens.adminArea.titlePage.handedToNote.nameSearchesDownloadsAndImports':
+    'Handled by {name}. It searches for, downloads and imports this title, and Valence follows what it does. Search missing asks {name} to search again.',
+  'screens.adminArea.titlePage.handedToNote.openInName': 'Open in {name}',
   'screens.adminArea.titlePage.heightP': '{height}p',
   'screens.adminArea.titlePage.heldOfTotal': '{held} of {total}',
   'screens.adminArea.titlePage.interactiveSearch': 'Interactive search',

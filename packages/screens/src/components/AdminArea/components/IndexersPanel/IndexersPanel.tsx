@@ -24,6 +24,8 @@ import { Icon } from '@ValenceUI/Icon';
 import { Spinner } from '@ValenceUI/Spinner';
 import { mapWithLimit } from '@ValenceCore/functions/mapWithLimit';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
+import { libraryQueries } from '@ValenceClient/query/libraryQueries';
+import { isEveryLibraryHandedOff } from '@ValenceClient/requests/isEveryLibraryHandedOff';
 import { changeIndexer, removeIndexer } from '@ValenceClient/requests/fetchIndexers';
 import { importArrIndexers } from '@ValenceClient/requests/fetchArrApps';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
@@ -68,6 +70,7 @@ const IndexersPanel = () => {
   const cache = useQueryClient();
   const asked = useQuery(requestsQueries.indexers());
   const apps = useQuery(requestsQueries.arrApps());
+  const libraries = useQuery(libraryQueries.all());
   const [isImporting, setIsImporting] = useState(false);
   const [editing, setEditing] = useState<Indexer | null>(null);
   const [searchingOn, setSearchingOn] = useState<Indexer | null>(null);
@@ -454,6 +457,12 @@ const IndexersPanel = () => {
           {problem}
         </p>
       )}
+
+      {isEveryLibraryHandedOff(libraries.data ?? [], ['movies', 'shows', 'music']) ? (
+        <p className="px-4 pt-3 text-sm text-text-muted">
+          {say('screens.adminArea.indexersPanel.everyLibraryHandsOff')}
+        </p>
+      ) : null}
 
       {asked.isError ? (
         <CouldNotRead

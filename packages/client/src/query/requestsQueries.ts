@@ -19,6 +19,7 @@ import { fetchProfiles, fetchProfilesOnOffer } from '@ValenceClient/requests/fet
 import { fetchTitleCatalogue, fetchTitleFiles } from '@ValenceClient/requests/fetchTitleCatalogue';
 import {
   fetchRequestBlocklist,
+  fetchHandedTo,
   fetchMediaRequestLog,
   fetchMediaRequestReleases,
   fetchMediaRequests,
@@ -286,6 +287,20 @@ const requestBlocklist = (id: string | null) =>
   });
 
 /**
+ * Which connected app a request was handed to, read when its page is open and only for one that
+ * was handed to an app.
+ *
+ * @param id - Which request, or nothing where it was not handed to one.
+ * @returns The query.
+ */
+const handedTo = (id: string | null) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'media', id, 'handed-to'],
+    queryFn: () => fetchHandedTo(id ?? ''),
+    enabled: id !== null,
+  });
+
+/**
  * The seasons a series has, which only change when a new one is announced, so they are kept for
  * an hour.
  *
@@ -498,6 +513,7 @@ const requestsQueries = {
   mediaRequestReleases,
   mediaRequestLog,
   requestBlocklist,
+  handedTo,
   seriesSeasons,
   discover,
   catalogueBrowse,

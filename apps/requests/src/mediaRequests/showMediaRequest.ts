@@ -41,6 +41,7 @@ const showMediaRequest = (
   requestedBy: { id: record.requestedById, name: record.requestedByName },
   alsoAskedBy: record.alsoAskedBy,
   profileAsk: record.profileAsk,
+  isHandedOff: record.handOff !== null,
   seasons: record.seasons,
   followsNewSeasons: record.followsNewSeasons,
   releaseTypes: record.releaseTypes,
