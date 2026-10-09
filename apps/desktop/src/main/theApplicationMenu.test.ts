@@ -31,7 +31,7 @@ beforeEach(() => {
 
 describe('theApplicationMenu', () => {
   it('offers a way back to choosing a server, which no screen can offer once the server draws them', () => {
-    theApplicationMenu(vi.fn());
+    theApplicationMenu({ changeServer: vi.fn(), platform: 'darwin' });
 
     expect(built().some((item) => item.label === 'Change server…')).toBe(true);
   });
@@ -39,7 +39,7 @@ describe('theApplicationMenu', () => {
   it('asks for a different one when that is chosen', () => {
     const changeServer = vi.fn();
 
-    theApplicationMenu(changeServer);
+    theApplicationMenu({ changeServer });
     built()
       .find((item) => item.label === 'Change server…')
       ?.click?.();
@@ -48,19 +48,19 @@ describe('theApplicationMenu', () => {
   });
 
   it('keeps copy and paste, which setting a menu at all would otherwise take away', () => {
-    theApplicationMenu(vi.fn());
+    theApplicationMenu({ changeServer: vi.fn(), platform: 'darwin' });
 
     expect(built().some((item) => item.role === 'editMenu')).toBe(true);
   });
 
   it('keeps a way to reload, for a server that was restarted underneath the window', () => {
-    theApplicationMenu(vi.fn());
+    theApplicationMenu({ changeServer: vi.fn(), platform: 'darwin' });
 
     expect(built().some((item) => item.role === 'reload')).toBe(true);
   });
 
   it('offers it under File, since the application menu is named by the bundle and may not say Valence', () => {
-    theApplicationMenu(vi.fn());
+    theApplicationMenu({ changeServer: vi.fn(), platform: 'darwin' });
 
     const file = buildFromTemplate.mock.calls[0]?.[0].find((item) => item.label === 'File');
 
@@ -68,7 +68,7 @@ describe('theApplicationMenu', () => {
   });
 
   it('gives it a shortcut, for somebody who has already hunted for it once', () => {
-    theApplicationMenu(vi.fn());
+    theApplicationMenu({ changeServer: vi.fn(), platform: 'darwin' });
 
     const changing = built().filter((item) => item.label === 'Change server…');
 
@@ -76,20 +76,37 @@ describe('theApplicationMenu', () => {
     expect(changing.length).toBeGreaterThan(0);
   });
 
+  it('offers a check for a release under About, where a build can update itself', () => {
+    const checkForUpdates = vi.fn();
+
+    theApplicationMenu({ changeServer: vi.fn(), checkForUpdates, platform: 'darwin' });
+    built()
+      .find((item) => item.label === 'Check for updates…')
+      ?.click?.();
+
+    expect(checkForUpdates).toHaveBeenCalledOnce();
+  });
+
+  it('offers no check in a build that cannot update itself', () => {
+    theApplicationMenu({ changeServer: vi.fn(), platform: 'darwin' });
+
+    expect(built().some((item) => item.label === 'Check for updates…')).toBe(false);
+  });
+
   it('sets it, rather than building one nobody sees', () => {
-    theApplicationMenu(vi.fn());
+    theApplicationMenu({ changeServer: vi.fn(), platform: 'darwin' });
 
     expect(setApplicationMenu).toHaveBeenCalledOnce();
   });
 
   it('leaves the developer tools out of an installed build', () => {
-    theApplicationMenu(vi.fn());
+    theApplicationMenu({ changeServer: vi.fn(), platform: 'darwin' });
 
     expect(built().some((item) => item.role === 'toggleDevTools')).toBe(false);
   });
 
   it('offers the developer tools to a build that is being worked on', () => {
-    theApplicationMenu(vi.fn(), true);
+    theApplicationMenu({ changeServer: vi.fn(), hasDevTools: true });
 
     expect(built().some((item) => item.role === 'toggleDevTools')).toBe(true);
   });

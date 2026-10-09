@@ -1,5 +1,6 @@
 import { join } from 'node:path';
 import { app, BrowserWindow, ipcMain, net } from 'electron';
+import type { Tray } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import { answerAboutPreferences } from '@ValenceDesktop/main/answerAboutPreferences';
 import {
@@ -20,6 +21,7 @@ import { whatIsPlaying } from '@ValenceDesktop/main/whatIsPlaying';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import { theWindowsOwnMenu } from '@ValenceDesktop/main/theWindowsOwnMenu';
+import { theTray } from '@ValenceDesktop/main/theTray';
 import {
   forgetTheServerAddress,
   THE_SERVER_ADDRESS,
@@ -108,6 +110,8 @@ claimTheScheme();
 openTheDebuggingPort();
 
 let theWindow: BrowserWindow | null = null;
+
+let tray: Tray | null = null;
 
 let stopLooking: (() => void) | null = null;
 
@@ -382,7 +386,19 @@ const start = async (): Promise<void> => {
     discord.close();
   });
 
-  theApplicationMenu(changeServer, !app.isPackaged);
+  const checkForUpdates = updates === null ? undefined : updates.checkNow;
+
+  theApplicationMenu({
+    changeServer,
+    hasDevTools: !app.isPackaged,
+    ...(checkForUpdates === undefined ? {} : { checkForUpdates }),
+  });
+
+  tray = checkForUpdates === undefined ? null : theTray(checkForUpdates);
+
+  app.on('will-quit', () => {
+    tray?.destroy();
+  });
 
   theWindow = openAWindow();
 
