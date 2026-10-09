@@ -37,7 +37,9 @@ import type { MissingAlbumMatcher } from '@ValenceServer/requests/missingAlbums/
 import type { EventBus, WebhookOccurrence } from '@ValenceServer/events/EventBus';
 import type { Discovery } from '@ValenceServer/requests/catalogue/Discovery';
 import { NO_DISCOVERY } from '@ValenceServer/requests/catalogue/NO_DISCOVERY';
+import type { LibraryService } from '@ValenceServer/library/LibraryService';
 import type { SeriesFile } from '@ValenceServer/requests/catalogue/SeriesFile';
+import { CatalogueListingSchema } from '@ValenceContracts/schemas/AdminCatalogue';
 
 const A_STATUS: RequestsStatus = {
   version: '0.4.0',
@@ -216,6 +218,25 @@ const HOLDING_A_SHOW: Discovery = {
   },
 };
 
+/**
+ * A library service that also says when a library is to be read again.
+ *
+ * @param service - The service.
+ * @param onScan - Told the library asked about.
+ * @returns The service.
+ */
+const scanningAs = (
+  service: LibraryService,
+  onScan?: (libraryId: string) => void,
+): LibraryService => ({
+  ...service,
+  scan: (libraryId, force) => {
+    onScan?.(libraryId);
+
+    return service.scan(libraryId, force);
+  },
+});
+
 const build = async ({
   isOn,
   granted = [],
@@ -229,6 +250,7 @@ const build = async ({
   missingAlbums,
   discovery,
   libraries = [FILMS],
+  onScan,
 }: {
   isOn: boolean;
   granted?: readonly Permission[];
@@ -245,6 +267,7 @@ const build = async ({
   missingAlbums?: MissingAlbumMatcher;
   discovery?: Discovery;
   libraries?: Library[];
+  onScan?: (libraryId: string) => void;
 }) => {
   const { auth, settings, store } = createMemoryAuth();
   const permissions = createMemoryPermissionService();
@@ -275,7 +298,7 @@ const build = async ({
     jobDefinitions: jobDefinitionsFor(isOn),
     countUsers: () => Promise.resolve(1),
     promoteToAdmin: () => Promise.resolve(null),
-    library: createMemoryLibraryService({ libraries, media: [] }),
+    library: scanningAs(createMemoryLibraryService({ libraries, media: [] }), onScan),
     ...(events === undefined ? {} : { events }),
     ...(describeForRequest === undefined ? {} : { describeForRequest }),
     ...(describeMusicForRequest === undefined ? {} : { describeMusicForRequest }),
@@ -2044,6 +2067,129 @@ describe('requests for films and series, through the server', () => {
       searched: 1,
       startedAt: '2026-09-19T00:00:00.000Z',
     });
+  });
+
+  it('stops a download and follows episodes, for whoever manages requesting', async () => {
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.manage'],
+      service: aWillingKeeper,
+    });
+
+    sent.length = 0;
+
+    expect(
+      (
+        await ask(`/api/requests/media/${REQUEST.id}/downloads/d1/stop`, 'POST', {
+          next: 'byHand',
+        })
+      ).status,
+    ).toBe(200);
+    expect(JSON.parse(bodySentTo('/downloads/d1/stop'))).toEqual({
+      next: 'byHand',
+      isDeletingFiles: true,
+    });
+    expect(
+      (
+        await ask(`/api/requests/media/${REQUEST.id}/follow`, 'POST', {
+          itemIds: [REQUEST.id],
+          isFollowed: false,
+        })
+      ).status,
+    ).toBe(200);
+
+    const asker = await build({ isOn: true, granted: ['requests.ask'], service: aWillingKeeper });
+
+    expect(
+      (
+        await asker.ask(`/api/requests/media/${REQUEST.id}/downloads/d1/stop`, 'POST', {
+          next: 'byHand',
+        })
+      ).status,
+    ).toBe(403);
+  });
+
+  it('removes a request with its downloads, and its files where asked, reading the library again', async () => {
+    const scans: string[] = [];
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.manage'],
+      service: (url, init) => {
+        if (!url.endsWith('/files/delete')) {
+          return aWillingKeeper(url, init);
+        }
+
+        sent.push({ method: init.method ?? 'GET', url, body: init.body });
+
+        return Response.json({ folders: ['/media/Films/Film (2021)'] });
+      },
+      onScan: (libraryId) => {
+        scans.push(libraryId);
+      },
+    });
+
+    sent.length = 0;
+
+    expect((await ask(`/api/requests/media/${REQUEST.id}`, 'DELETE')).status).toBe(204);
+    expect(sent.at(-1)?.method).toBe('DELETE');
+    expect(sent.at(-1)?.url).toContain('deleteDownloads=true');
+
+    expect((await ask(`/api/requests/media/${REQUEST.id}?deleteFiles=true`, 'DELETE')).status).toBe(
+      204,
+    );
+    expect(sent.map((one) => one.url)).toEqual(
+      expect.arrayContaining([expect.stringContaining('/files/delete')]),
+    );
+    expect(scans).toEqual([REQUEST.libraryId]);
+  });
+
+  it('lists the Catalogue and a title’s files, for whoever manages requesting', async () => {
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.manage'],
+      service: aWillingKeeper,
+      discovery: {
+        ...NO_DISCOVERY,
+        lookup: {
+          ...NO_DISCOVERY.lookup,
+          heldTitles: () =>
+            Promise.resolve([
+              {
+                kind: 'film',
+                id: 'film-1',
+                libraryId: FILMS.id,
+                catalogueId: '1',
+                title: 'Held Film',
+                subtitle: null,
+                year: 2020,
+                art: { kind: 'media', id: 'film-1' },
+                held: 1,
+                isAudio: false,
+                addedAt: null,
+              },
+            ]),
+          titleFiles: (kind, catalogueId) =>
+            Promise.resolve({
+              folder: `/media/${kind}/${catalogueId}`,
+              files: [],
+            }),
+        },
+      },
+    });
+
+    const { entries } = CatalogueListingSchema.parse(
+      await (await ask('/api/admin/requests/catalogue')).json(),
+    );
+
+    expect(entries.find((one) => one.key === 'film:1')?.status).toBe('notFollowed');
+    expect(entries.some((one) => one.requestId === REQUEST.id)).toBe(true);
+    expect(
+      await (await ask('/api/admin/requests/catalogue/files?kind=series&catalogueId=9')).json(),
+    ).toEqual({ folder: '/media/series/9', files: [] });
+
+    const asker = await build({ isOn: true, granted: ['requests.ask'], service: aWillingKeeper });
+
+    expect((await asker.ask('/api/admin/requests/catalogue')).status).toBe(403);
   });
 
   const DISCOVERY: Discovery = {

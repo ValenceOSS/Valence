@@ -1,5 +1,7 @@
 import { Hono } from 'hono';
 import {
+  DownloadStopSchema,
+  MediaRequestFollowSchema,
   MediaRequestArrivalSchema,
   MediaRequestDepartureSchema,
   MediaRequestArrivalsSchema,
@@ -27,6 +29,8 @@ type CreateRequestRoutesOptions = {
     | 'releasesForDraft'
     | 'pick'
     | 'dropDownloads'
+    | 'stopDownload'
+    | 'deleteFiled'
     | 'blockedFor'
     | 'unblock'
   >;
@@ -39,8 +43,9 @@ const NO_SUCH_REQUEST = refuse('error.requests.noSuchRequest');
  * refusing them, changing what they ask for, keeping them up to date with the catalogue, trying
  * again, searching by hand and picking a release — for a request not yet made, too — searching for
  * everything still missing, reading what each has done, and lifting a release it will not try
- * again. A request cancelled can take the
- * downloads it had not yet finished filing with it, files and all.
+ * again, stopping one of its downloads, following or not following its episodes, and deleting the
+ * files it filed. A request cancelled can take the downloads it had not yet finished filing with it,
+ * files and all, and a request refused takes them always.
  *
  * @param service - The requests.
  * @param log - What each request has done.
@@ -52,6 +57,22 @@ const createRequestRoutes = ({ service, log, worker }: CreateRequestRoutesOption
 
   const answer = <Shown>(shown: Shown | null) =>
     shown === null ? Response.json(NO_SUCH_REQUEST, { status: 404 }) : Response.json(shown);
+
+  /**
+   * Refuses a request, stopping whatever it was already downloading, files and all, so a refusal
+   * after approval leaves nothing running.
+   *
+   * @param id - The request.
+   * @param reason - Why, for whoever asked.
+   * @returns The request, or nothing where there is no such request.
+   */
+  const refuseAndStop = async (id: string, reason: string) => {
+    if ((await service.find(id)) !== null) {
+      await worker.dropDownloads(id);
+    }
+
+    return service.refuse(id, reason);
+  };
 
   routes.get('/requests', async (context) => context.json(await service.list()));
 
@@ -119,7 +140,37 @@ const createRequestRoutes = ({ service, log, worker }: CreateRequestRoutesOption
 
     return refusal === null
       ? context.json(refuse('error.requests.sayWhyItWasRefusedOr'), 400)
-      : answer(await service.refuse(context.req.param('id'), refusal.reason));
+      : answer(await refuseAndStop(context.req.param('id'), refusal.reason));
+  });
+
+  routes.post('/requests/:id/downloads/:downloadId/stop', async (context) => {
+    const stopping = await readBody(context.req.raw, DownloadStopSchema);
+
+    return stopping === null
+      ? context.json(refuse('error.requests.sayWhatHappensAfterTheDownload'), 400)
+      : answer(
+          await worker.stopDownload(
+            context.req.param('id'),
+            context.req.param('downloadId'),
+            stopping,
+          ),
+        );
+  });
+
+  routes.post('/requests/:id/follow', async (context) => {
+    const following = await readBody(context.req.raw, MediaRequestFollowSchema);
+
+    return following === null
+      ? context.json(refuse('error.requests.sayWhatToFollow'), 400)
+      : answer(await service.follow(context.req.param('id'), following));
+  });
+
+  routes.post('/requests/:id/files/delete', async (context) => {
+    const id = context.req.param('id');
+
+    return (await service.find(id)) === null
+      ? context.json(NO_SUCH_REQUEST, 404)
+      : context.json({ folders: await worker.deleteFiled(id) });
   });
 
   routes.post('/requests/:id/retry', async (context) =>

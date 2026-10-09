@@ -18,6 +18,7 @@ const episode = (state: RequestItem['state'], airDate = '2026-01-01'): RequestIt
   score: null,
   downloadedBytes: null,
   downloadSeconds: null,
+  isFollowed: true,
   lastSearchedAt: null,
   updatedAt: '2026-09-19T00:00:00.000Z',
 });

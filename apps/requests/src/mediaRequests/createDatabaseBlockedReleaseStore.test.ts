@@ -9,6 +9,7 @@ const BLOCKED = {
   id: '5a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d',
   requestId: aMediaRequest().id,
   title: 'Dune.2021.1080p.BluRay.x264-GRP',
+  infoHash: 'c12fe1c06bba254a9dc9f519b335aa7c1367a88a',
   indexerId: null,
   reason: sayVerbatim('The tracker is gone'),
   at: '2026-09-19T00:00:00.000Z',

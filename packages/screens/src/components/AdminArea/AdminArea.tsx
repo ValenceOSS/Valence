@@ -13,6 +13,7 @@ import { LibrariesPanel } from './components/LibrariesPanel/LibrariesPanel';
 import { EncodingPanel } from './components/EncodingPanel/EncodingPanel';
 import { KeptCopiesDialog } from './components/KeptCopiesDialog/KeptCopiesDialog';
 import { PreTranscodingCard } from './components/PreTranscodingCard/PreTranscodingCard';
+import type { CatalogueAddress } from '@ValenceScreens/components/AdminArea/components/CataloguePanel/CatalogueAddress.types';
 import type { KeptCopiesSubject } from './components/KeptCopiesDialog/KeptCopiesDialog.types';
 import { FilesPanel } from '@ValenceScreens/components/AdminArea/components/FilesPanel/FilesPanel';
 import { MediaPanel } from './components/MediaPanel/MediaPanel';
@@ -148,10 +149,9 @@ import { RequestsPanel } from './components/RequestsPanel/RequestsPanel';
 import { ArrAppsPanel } from './components/ArrAppsPanel/ArrAppsPanel';
 import { SeerrCard } from './components/SeerrCard/SeerrCard';
 import { IndexersPanel } from './components/IndexersPanel/IndexersPanel';
-import { MediaRequestsPanel } from '@ValenceScreens/components/AdminArea/components/MediaRequestsPanel/MediaRequestsPanel';
+import { CataloguePanel } from '@ValenceScreens/components/AdminArea/components/CataloguePanel/CataloguePanel';
 import { ProfilesPanel } from '@ValenceScreens/components/AdminArea/components/ProfilesPanel/ProfilesPanel';
 import { DownloadsPanel } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/DownloadsPanel';
-import { ReleaseSearchPanel } from './components/ReleaseSearchPanel/ReleaseSearchPanel';
 import type { AdminAreaProps } from './AdminArea.types';
 import type { ObservabilitySearch } from '@ValenceClient/admin/ObservabilitySearchSchema';
 import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
@@ -163,6 +163,8 @@ const NO_BOOKS: Book[] = [];
 const HISTORY_LENGTH = 60;
 
 const NO_PATHS: Readonly<Record<string, string>> = {};
+
+const CATALOGUE_AT_FIRST: CatalogueAddress = { tab: 'films', title: null };
 
 /**
  * Listens for nothing, for while the page is hidden: what is running is read again once it is shown.
@@ -189,6 +191,8 @@ const stayStill = (): (() => void) => () => {};
  * @param onJobChange - Called with the job whose schedule was opened, or null on going back.
  * @param folder - The folder the address says to open in Files.
  * @param onOpenFolder - Called with a folder to open in Files.
+ * @param catalogue - The Catalogue's tab and the title open in it, as the address says them.
+ * @param onCatalogue - Called with a change to either, to write into the address.
  */
 const AdminArea = ({
   historyLength = HISTORY_LENGTH,
@@ -200,6 +204,8 @@ const AdminArea = ({
   onJobChange,
   folder = null,
   onOpenFolder,
+  catalogue = CATALOGUE_AT_FIRST,
+  onCatalogue,
 }: AdminAreaProps) => {
   const cache = useQueryClient();
   const isShown = usePageIsShown();
@@ -1213,12 +1219,17 @@ const AdminArea = ({
                 <IndexersPanel />
               </TabPanel>
 
-              <TabPanel value="search">
-                <ReleaseSearchPanel />
-              </TabPanel>
-
-              <TabPanel value="requested">
-                <MediaRequestsPanel />
+              <TabPanel value="catalogue">
+                <CataloguePanel
+                  tab={catalogue.tab}
+                  title={catalogue.title}
+                  onTab={(tab) => {
+                    onCatalogue?.({ tab, title: null });
+                  }}
+                  onOpen={(title) => {
+                    onCatalogue?.({ tab: catalogue.tab, title });
+                  }}
+                />
               </TabPanel>
 
               <TabPanel value="profiles">

@@ -268,6 +268,29 @@ describe('ReleaseSearchPanel', () => {
     expect(searchReleases).toHaveBeenCalledWith({ query: 'dune part two', mode: 'search' });
   });
 
+  it('searches one indexer alone, judged against a profile, from words already typed', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(
+      <ReleaseSearchPanel
+        indexerIds={['6ba7b810-9dad-11d1-80b4-00c04fd430c8']}
+        profileId={HD.id}
+        query="dune"
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Search' }));
+
+    await waitFor(() => {
+      expect(searchReleases).toHaveBeenCalledWith({
+        query: 'dune',
+        mode: 'search',
+        profileId: HD.id,
+        indexerIds: ['6ba7b810-9dad-11d1-80b4-00c04fd430c8'],
+      });
+    });
+  });
+
   it('says what each indexer found, and why one found nothing', async () => {
     const user = userEvent.setup();
 

@@ -26,13 +26,20 @@ const THE_LIBRARYS = 'library';
  * Approving a request, having looked it over first: which profile its releases are judged by,
  * which library it will be filed into, and — for a series or an artist — which seasons or which
  * kinds of record are watched for. Whatever was changed is saved before it is approved, so nothing
- * is fetched against the old answer.
+ * is fetched against the old answer. The same choices edit a request already approved, saved
+ * without approving anything.
  *
  * @param request - The request, or nothing while the dialog is closed.
+ * @param isEditing - Whether it only edits the request, which is approved already.
  * @param onClose - Called when it is dismissed.
- * @param onApproved - Told once it is approved.
+ * @param onApproved - Told once it is approved, or saved.
  */
-const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDialogProps) => {
+const ApproveRequestDialog = ({
+  request,
+  isEditing = false,
+  onClose,
+  onApproved,
+}: ApproveRequestDialogProps) => {
   const profiles = useQuery(requestsQueries.profiles());
   const libraries = useQuery(libraryQueries.all());
   const [profileId, setProfileId] = useState<string | null>(null);
@@ -71,7 +78,9 @@ const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDi
   const title =
     request === null
       ? say('screens.adminArea.approveRequestDialog.approveThisRequest')
-      : say('screens.adminArea.approveRequestDialog.approveTitle', { title: request.title });
+      : isEditing
+        ? say('screens.adminArea.approveRequestDialog.editTitle', { title: request.title })
+        : say('screens.adminArea.approveRequestDialog.approveTitle', { title: request.title });
 
   const approve = () => {
     if (request === null) {
@@ -95,7 +104,9 @@ const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDi
     )
       .then((changing) =>
         changing.refusal === null
-          ? approveMediaRequest(request.id)
+          ? isEditing
+            ? Promise.resolve({ value: request, refusal: null })
+            : approveMediaRequest(request.id)
           : Promise.resolve({ value: null, refusal: changing.refusal }),
       )
       .then(({ value, refusal }) => {
@@ -107,7 +118,11 @@ const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDi
           return;
         }
 
-        notify.worked(say('common.approvedTitle', { title: request.title }));
+        notify.worked(
+          isEditing
+            ? say('screens.adminArea.approveRequestDialog.savedTitle', { title: request.title })
+            : say('common.approvedTitle', { title: request.title }),
+        );
         onApproved(value);
         onClose();
       })
@@ -121,7 +136,9 @@ const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDi
       <DialogTitle
         size="compact"
         title={title}
-        detail={say('screens.adminArea.approveRequestDialog.itIsSearchedForAsSoon')}
+        {...(isEditing
+          ? {}
+          : { detail: say('screens.adminArea.approveRequestDialog.itIsSearchedForAsSoon') })}
       />
 
       <DialogContent className="flex flex-col gap-4">
@@ -159,7 +176,11 @@ const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDi
       <DialogFooter
         note={problem}
         dismiss={{ onChoose: onClose }}
-        confirm={{ label: say('common.approve'), onChoose: approve, isLoading: isApproving }}
+        confirm={{
+          label: isEditing ? say('common.save') : say('common.approve'),
+          onChoose: approve,
+          isLoading: isApproving,
+        }}
       />
     </DialogCompanion>
   );

@@ -1,4 +1,9 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import {
+  CatalogueListingSchema,
+  TitleFilesQuerySchema,
+  TitleFilesSchema,
+} from '@ValenceContracts/schemas/AdminCatalogue';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { MissingAlbumsSchema } from '@ValenceContracts/schemas/MissingAlbums';
 import {
@@ -49,6 +54,8 @@ import {
   MediaRequestDecisionSchema,
   MediaRequestPickSchema,
   MediaRequestRefusalSchema,
+  DownloadStopSchema,
+  MediaRequestFollowSchema,
   MediaRequestSchema,
   MissingSearchSchema,
   MUSIC_REQUEST_KINDS,
@@ -112,6 +119,42 @@ const adminRequestsOverviewRoute = createRoute({
     },
     404: {
       description: 'Requesting is off',
+      content: { 'application/json': { schema: RequestsError } },
+    },
+  },
+});
+
+const adminCatalogueRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/requests/catalogue',
+  tags: ['Admin'],
+  summary:
+    'List the Catalogue: every title the libraries hold and every title asked for, with where each stands',
+  responses: {
+    200: {
+      description: 'Every title, once',
+      content: { 'application/json': { schema: CatalogueListingSchema } },
+    },
+    403: {
+      description: 'Not allowed to manage requesting',
+      content: { 'application/json': { schema: RequestsError } },
+    },
+  },
+});
+
+const adminTitleFilesRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/requests/catalogue/files',
+  tags: ['Admin'],
+  summary: 'Read the files the libraries hold of one title, and the folder it is kept in',
+  request: { query: TitleFilesQuerySchema },
+  responses: {
+    200: {
+      description: 'Its files',
+      content: { 'application/json': { schema: TitleFilesSchema } },
+    },
+    403: {
+      description: 'Not allowed to manage requesting',
       content: { 'application/json': { schema: RequestsError } },
     },
   },
@@ -1113,10 +1156,13 @@ const removeMediaRequestRoute = createRoute({
   path: '/api/requests/media/{id}',
   tags: ['Requests'],
   summary:
-    'Forget a request, leaving whatever it fetched where it is — or cancel one of your own not yet in the library, deleting what it had started downloading',
+    'Remove a request, stopping its downloads and, for whoever manages requesting, deleting the files it filed where asked — or cancel one of your own not yet in the library',
   request: {
     params: RecordIdParameter,
-    query: z.object({ deleteDownloads: z.enum(['true', 'false']).optional() }),
+    query: z.object({
+      deleteDownloads: z.enum(['true', 'false']).optional(),
+      deleteFiles: z.enum(['true', 'false']).optional(),
+    }),
   },
   responses: requestFailures({ 204: { description: 'Forgotten' } }),
 });
@@ -1127,6 +1173,31 @@ const approveMediaRequestRoute = createRoute({
   tags: ['Requests'],
   summary: 'Approve a request, so it is fetched',
   request: { params: RecordIdParameter },
+  responses: requestFailures(ONE_REQUEST),
+});
+
+const stopRequestDownloadRoute = createRoute({
+  method: 'post',
+  path: '/api/requests/media/{id}/downloads/{downloadId}/stop',
+  tags: ['Requests'],
+  summary:
+    'Stop one of a request’s downloads, then look for another release, wait for one picked by hand, or stop getting what it was for',
+  request: {
+    params: RecordIdParameter.extend({ downloadId: z.string().min(1) }),
+    body: { content: { 'application/json': { schema: DownloadStopSchema } } },
+  },
+  responses: requestFailures(ONE_REQUEST),
+});
+
+const followRequestItemsRoute = createRoute({
+  method: 'post',
+  path: '/api/requests/media/{id}/follow',
+  tags: ['Requests'],
+  summary: 'Follow, or stop following, some of the episodes or albums a request waits for',
+  request: {
+    params: RecordIdParameter,
+    body: { content: { 'application/json': { schema: MediaRequestFollowSchema } } },
+  },
   responses: requestFailures(ONE_REQUEST),
 });
 
@@ -1259,6 +1330,10 @@ export {
   pickMediaReleaseRoute,
   refuseMediaRequestRoute,
   removeMediaRequestRoute,
+  adminCatalogueRoute,
+  adminTitleFilesRoute,
+  stopRequestDownloadRoute,
+  followRequestItemsRoute,
   retryMediaRequestRoute,
   fulfilMediaRequestRoute,
   draftReleasesRoute,

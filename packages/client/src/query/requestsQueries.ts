@@ -16,6 +16,7 @@ import { fetchGiveUpRules } from '@ValenceClient/requests/fetchGiveUpRules';
 import { fetchSeerrLink } from '@ValenceClient/requests/fetchSeerrLink';
 import { askAgainWhileMatching } from '@ValenceClient/requests/askAgainWhileMatching';
 import { fetchProfiles, fetchProfilesOnOffer } from '@ValenceClient/requests/fetchProfiles';
+import { fetchTitleCatalogue, fetchTitleFiles } from '@ValenceClient/requests/fetchTitleCatalogue';
 import {
   fetchRequestBlocklist,
   fetchMediaRequestLog,
@@ -209,6 +210,36 @@ const mediaRequests = () =>
       (query.state.data ?? []).some((request) => STILL_MOVING.has(request.state))
         ? MEDIA_REQUESTS_EVERY_MS
         : false,
+  });
+
+/**
+ * The admin Catalogue, read again every few seconds while anything in it is on its way, so a title
+ * can be watched into the library from its tile.
+ *
+ * @returns The query.
+ */
+const titleCatalogue = () =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'catalogue'],
+    queryFn: () => fetchTitleCatalogue(),
+    refetchInterval: (query) =>
+      (query.state.data ?? []).some((entry) => entry.status === 'downloading')
+        ? MEDIA_REQUESTS_EVERY_MS
+        : false,
+  });
+
+/**
+ * The files the libraries hold of one title, read when its page is open.
+ *
+ * @param kind - What it is.
+ * @param catalogueId - The id it is known by, or nothing for a title known by none.
+ * @returns The query.
+ */
+const titleFiles = (kind: MediaRequestKind, catalogueId: string | null) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'catalogue', kind, catalogueId, 'files'],
+    queryFn: () => fetchTitleFiles(kind, catalogueId ?? ''),
+    enabled: catalogueId !== null,
   });
 
 /**
@@ -462,6 +493,8 @@ const requestsQueries = {
   profiles,
   profilesOnOffer,
   mediaRequests,
+  titleCatalogue,
+  titleFiles,
   mediaRequestReleases,
   mediaRequestLog,
   requestBlocklist,

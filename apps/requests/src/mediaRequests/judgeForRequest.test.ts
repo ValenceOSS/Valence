@@ -66,6 +66,38 @@ describe('judgeForRequest', () => {
     expect(judged.judgements[0]?.rejections).toEqual(['It failed previously: The tracker is gone']);
   });
 
+  it('refuses the same torrent posted under another name', () => {
+    const HASH = 'c12fe1c06bba254a9dc9f519b335aa7c1367a88a';
+    const judged = judgeForRequest({
+      ...OPTIONS,
+      releases: [aRelease(BLURAY, { infoHash: HASH })],
+      blocked: [
+        { title: 'Dune.2021.Something.Else', infoHash: HASH, reason: sayVerbatim('Stalled') },
+      ],
+    });
+
+    expect(judged.pickedId).toBeNull();
+    expect(judged.judgements[0]?.rejections).toEqual(['It failed previously: Stalled']);
+  });
+
+  it('keeps a release whose name is not for the request, refused, for somebody choosing', () => {
+    const judged = judgeForRequest({
+      ...OPTIONS,
+      releases: [aRelease(BLURAY), aRelease('Heat.1995.1080p.BluRay.x264-GRP')],
+      keepsTheUnnamed: true,
+    });
+
+    expect(judged.releases.map((release) => release.title)).toEqual([
+      BLURAY,
+      'Heat.1995.1080p.BluRay.x264-GRP',
+    ]);
+    expect(judged.judgements[1]).toMatchObject({
+      isRejected: true,
+      rejections: ['Its name doesn’t match this title'],
+    });
+    expect(judged.pickedId).toBe(BLURAY);
+  });
+
   it('refuses what would fetch nothing, and what is no better than what is here', () => {
     expect(
       judgeForRequest({

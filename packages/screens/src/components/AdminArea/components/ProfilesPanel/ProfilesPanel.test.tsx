@@ -110,6 +110,17 @@ describe('ProfilesPanel', () => {
     expect(await screen.findByText('Change HD')).toBeInTheDocument();
   });
 
+  it('tries a profile on a search of the indexers', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<ProfilesPanel />);
+
+    await user.click(await screen.findByRole('button', { name: 'Actions for HD' }));
+    await user.click(await screen.findByRole('menuitem', { name: /Try it/ }));
+
+    expect(await screen.findByRole('dialog', { name: 'Try HD' })).toBeInTheDocument();
+  });
+
   it('removes a profile once that is confirmed, saying why where it could not', async () => {
     removeProfile.mockResolvedValueOnce({ message: 'Requests are turned off.' });
 

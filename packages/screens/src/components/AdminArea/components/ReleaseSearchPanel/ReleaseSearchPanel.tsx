@@ -35,6 +35,7 @@ import { libraryKindOf } from './libraryKindOf';
 import { profilesForMode } from './profilesForMode';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { IndexerSearchMode, Release, ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
+import type { ReleaseSearchPanelProps } from './ReleaseSearchPanel.types';
 import { say } from '@ValenceI18n/say';
 
 const SEND_AS = {
@@ -75,14 +76,25 @@ const numbered = (text: string): number | undefined => {
  * A search is asked once and kept for as long as the page is open, so going back to one does not
  * ask every indexer again. Each indexer's own answer is shown above the results, so one that
  * failed or timed out says so rather than simply finding nothing.
+ *
+ * It can be opened on one indexer alone, to see what that indexer answers, already judged against
+ * a profile, to see how the profile ranks releases, or with words already typed.
+ *
+ * @param indexerIds - The indexers searched, where not every one.
+ * @param profileId - The profile to judge against from the start.
+ * @param query - What to search for from the start.
  */
-const ReleaseSearchPanel = () => {
-  const [query, setQuery] = useState('');
+const ReleaseSearchPanel = ({
+  indexerIds,
+  profileId: startingProfileId = null,
+  query: startingQuery = '',
+}: ReleaseSearchPanelProps) => {
+  const [query, setQuery] = useState(startingQuery);
   const [mode, setMode] = useState<IndexerSearchMode>('search');
   const [season, setSeason] = useState('');
   const [episode, setEpisode] = useState('');
   const [asked, setAsked] = useState<ReleaseSearch | null>(null);
-  const [profileId, setProfileId] = useState<string | null>(null);
+  const [profileId, setProfileId] = useState<string | null>(startingProfileId);
   const [runtime, setRuntime] = useState('');
   const found = useQuery(requestsQueries.search(asked));
   const profiles = useQuery(requestsQueries.profiles());
@@ -313,6 +325,7 @@ const ReleaseSearchPanel = () => {
       ...(seasonNumber === undefined ? {} : { season: seasonNumber }),
       ...(episodeNumber === undefined ? {} : { episode: episodeNumber }),
       ...(profile === null ? {} : { profileId: profile.id }),
+      ...(indexerIds === undefined ? {} : { indexerIds: [...indexerIds] }),
       ...(profile?.kind !== 'video' || runtimeMinutes === undefined || runtimeMinutes === 0
         ? {}
         : { runtimeMinutes }),

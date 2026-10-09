@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-router';
 import { z } from 'zod';
 import { ObservabilitySearchSchema } from '@ValenceClient/admin/ObservabilitySearchSchema';
+import { CatalogueTabSchema } from '@ValenceContracts/schemas/AdminCatalogue';
 import { readSearch } from '@ValenceClient/navigation/readSearch';
 import { ValenceRoot } from '@ValenceScreens/components/ValenceRoot/ValenceRoot';
 import { SignedIn } from '@ValenceScreens/components/SignedIn/SignedIn';
@@ -99,6 +100,8 @@ const ADMIN_DEFAULT_PANEL = 'overview';
 const adminSearch = z.object({
   job: z.string().optional(),
   folder: z.string().optional(),
+  tab: CatalogueTabSchema.optional().catch(undefined),
+  title: z.string().optional(),
   ...ObservabilitySearchSchema.shape,
 });
 

@@ -1430,6 +1430,21 @@
     "context": "Shown in the season standing names in the requests."
   },
   {
+    "handler": "client.requests.titleStatusNames.missing",
+    "text": "Missing",
+    "context": "A status of a title in the admin Catalogue: something it follows isn't in the library and isn't downloading yet."
+  },
+  {
+    "handler": "client.requests.titleStatusNames.notFollowed",
+    "text": "Not followed",
+    "context": "A status of a title in the admin Catalogue: it's in the library but nothing new is fetched for it."
+  },
+  {
+    "handler": "client.requests.titleStatusNames.toApprove",
+    "text": "To approve",
+    "context": "A status of a title in the admin Catalogue: someone asked for it and it's waiting for an admin to approve it."
+  },
+  {
     "handler": "client.session.auth.addAPasskeyFromValenceIn",
     "text": "Add a passkey from Valence in your browser.",
     "context": "The reason in the session (from `auth`)."
@@ -2129,6 +2144,11 @@
     "handler": "common.casual",
     "text": "Casual",
     "context": "A caption setting, in the web player and on the phone and the television."
+  },
+  {
+    "handler": "common.catalogue",
+    "text": "Catalogue",
+    "context": "The admin page listing every title the libraries hold and every title asked for, in the Requests section of the admin sidebar."
   },
   {
     "handler": "common.categories",
@@ -8640,6 +8660,16 @@
     "context": "An error the server answers with (HTTP 403) in the app on the server (from `serveRequests`)."
   },
   {
+    "handler": "error.requests.sayWhatHappensAfterTheDownload",
+    "text": "Say what should happen after the download is stopped.",
+    "context": "An error the requests service answers with (HTTP 400) when stopping a download without saying what comes next (from `createRequestRoutes`)."
+  },
+  {
+    "handler": "error.requests.sayWhatToFollow",
+    "text": "Say which episodes or albums to follow or stop following.",
+    "context": "An error the requests service answers with (HTTP 400) when following is asked for without saying what (from `createRequestRoutes`)."
+  },
+  {
     "handler": "error.requests.sayWhichItemItBecame",
     "text": "Say which library item it became.",
     "context": "An error the server answers with (HTTP 400) in the media requests in the requests service (from `createRequestRoutes`)."
@@ -10515,6 +10545,11 @@
     "context": "Shown in the media requests in the requests service (from `judgeForRequest`)."
   },
   {
+    "handler": "requests.mediaRequests.judgeForRequest.itsNameDoesNotSayItIs",
+    "text": "Its name doesn't match this title",
+    "context": "Why a release in interactive search can't be chosen automatically: its name doesn't say it's for the requested title (from `judgeForRequest`)."
+  },
+  {
     "handler": "requests.mediaRequests.judgeForRequest.onlySomeEpisodesWanted",
     "text": "Only {wanted} of its {held} episodes are wanted",
     "context": "Shown in the media requests in the requests service (from `judgeForRequest`). {wanted} is filled in by the app; {held} is filled in by the app."
@@ -10648,6 +10683,36 @@
     "handler": "requests.mediaRequests.requestWorker.reasonTryingTheNextBestRelease",
     "text": "{reason}. Trying the next best release.",
     "context": "Shown in the media requests in the requests service (from `createRequestWorker`). {reason} is filled in by the app."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.replacedByTitlePickedByHand",
+    "text": "Replaced by {title}, picked by hand",
+    "context": "Why a download was stopped and blocked: an admin picked another release in its place. {title} is the release picked (from `createRequestWorker`)."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.stoppedByAnAdmin",
+    "text": "Stopped by an admin",
+    "context": "Why a download was stopped and blocked: an admin stopped it on the title page (from `createRequestWorker`)."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.stoppedTitleAndLookingForAnother",
+    "text": "Stopped {title} and blocked it. Looking for a different release.",
+    "context": "A line in a request's activity when an admin stops a download and asks for another release. {title} is the stopped release (from `createRequestWorker`)."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.stoppedTitleAndStoppedGetting",
+    "text": "Stopped {title}. What it was fetching is no longer followed.",
+    "context": "A line in a request's activity when an admin stops a download and stops getting what it was for. {title} is the stopped release (from `createRequestWorker`)."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.stoppedTitleForAPickByHand",
+    "text": "Stopped {title} and blocked it, to pick a release by hand.",
+    "context": "A line in a request's activity when an admin stops a download to pick another release themselves. {title} is the stopped release (from `createRequestWorker`)."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.stoppedTitleForAReleasePicked",
+    "text": "Stopped {title} for a release picked by hand.",
+    "context": "A line in a request's activity when picking a release by hand stops the download it replaces. {title} is the stopped release (from `createRequestWorker`)."
   },
   {
     "handler": "requests.mediaRequests.requestWorker.theDownloadWasTakenOutBefore",
@@ -11965,6 +12030,11 @@
     "context": "Shown in the approve request dialog in the admin area."
   },
   {
+    "handler": "screens.adminArea.approveRequestDialog.editTitle",
+    "text": "Edit {title}",
+    "context": "The title of the dialog that edits a request already approved. {title} is what was asked for."
+  },
+  {
     "handler": "screens.adminArea.approveRequestDialog.itCouldNotBeApproved",
     "text": "Couldn’t approve the request. Try again.",
     "context": "Shown in the approve request dialog in the admin area."
@@ -11973,6 +12043,11 @@
     "handler": "screens.adminArea.approveRequestDialog.itIsSearchedForAsSoon",
     "text": "Valence starts searching as soon as you approve it. You can change the request first.",
     "context": "The detail of a dialog title in the approve request dialog in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.approveRequestDialog.savedTitle",
+    "text": "Saved {title}",
+    "context": "Said once an approved request was edited. {title} is what was asked for."
   },
   {
     "handler": "screens.adminArea.approveRequestDialog.whereItIsFiledOnceIt",
@@ -12240,6 +12315,11 @@
     "context": "The label in the ask for media dialog in the admin area."
   },
   {
+    "handler": "screens.adminArea.askForMediaDialog.forSomethingNoCatalogueKnows",
+    "text": "For something no catalogue knows. Pick a release and choose which library it goes to.",
+    "context": "The line under the dialog that searches the indexers by hand from Add a title."
+  },
+  {
     "handler": "screens.adminArea.askForMediaDialog.iWillPickIt",
     "text": "Choose manually",
     "context": "The label in the ask for media dialog in the admin area."
@@ -12268,6 +12348,11 @@
     "handler": "screens.adminArea.askForMediaDialog.searchForAnArtist",
     "text": "Search for an artist",
     "context": "The label of the search box in the admin area's dialog for asking for media, when asking for an artist."
+  },
+  {
+    "handler": "screens.adminArea.askForMediaDialog.searchTheIndexersInstead",
+    "text": "Search the indexers instead",
+    "context": "A button in the Add a title dialog, for something no catalogue knows, that searches the indexers by hand."
   },
   {
     "handler": "screens.adminArea.askForMediaDialog.theBestByItsQuality",
@@ -12323,6 +12408,141 @@
     "handler": "screens.adminArea.cacheBreakdown.whatLabelMeans",
     "text": "What {label} means",
     "context": "The label of a button in the cache breakdown in the admin area. {label} is filled in by the app."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.addATitle",
+    "text": "Add a title",
+    "context": "A button in the admin Catalogue that asks for a film, show, album or book."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.allLibraries",
+    "text": "All libraries",
+    "context": "The choice in the admin Catalogue's library menu that shows the titles of every library of the tab's kind, shown when the server has more than one library of that kind."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.audiobooks",
+    "text": "Audiobooks",
+    "context": "A choice in the admin Catalogue’s Books tab: show audiobooks only."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.chooseSeveral",
+    "text": "Select several",
+    "context": "A button in the admin Catalogue that lets you tick several titles waiting on approval, to approve or decline them together."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.couldNotDecide",
+    "text": "Those requests couldn’t be decided.",
+    "context": "Said when approving or declining several requests at once failed."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.countApproved.one",
+    "text": "Approved {count} request",
+    "context": "Said after approving several requests at once. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.countApproved.other",
+    "text": "Approved {count} requests",
+    "context": "Said after approving several requests at once. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.countDeclined.one",
+    "text": "Declined {count} request",
+    "context": "Said after declining several requests at once. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.countDeclined.other",
+    "text": "Declined {count} requests",
+    "context": "Said after declining several requests at once. {count} is how many."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.ebooks",
+    "text": "Ebooks",
+    "context": "A choice in the admin Catalogue’s Books tab: show ebooks only."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.findABookOrAuthor",
+    "text": "Find a book or author",
+    "context": "The placeholder of the search field in the admin Catalogue’s Books tab."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.findAFilm",
+    "text": "Find a film",
+    "context": "The placeholder of the search field in the admin Catalogue’s Films tab."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.findAnArtistOrAlbum",
+    "text": "Find an artist or album",
+    "context": "The placeholder of the search field in the admin Catalogue’s Music tab."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.findAShow",
+    "text": "Find a show",
+    "context": "The placeholder of the search field in the admin Catalogue’s Shows tab."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.kindsOfLibrary",
+    "text": "Kind of library",
+    "context": "The label of the tabs across the top of the admin Catalogue: Films, Shows, Music, Books."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.nothingIsMissing",
+    "text": "Nothing is missing, so nothing was searched for.",
+    "context": "Said after Search all missing, when nothing was missing."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.nothingMatches",
+    "text": "Nothing matches. Try another status or search.",
+    "context": "Shown in the admin Catalogue when the status or search leaves nothing."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.reading",
+    "text": "Reading the Catalogue",
+    "context": "Shown while the admin Catalogue loads."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.searchAllMissing",
+    "text": "Search all missing",
+    "context": "A button in the admin Catalogue that searches again for everything missing."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.searchingAgainForCount.one",
+    "text": "Searching again for {count} title",
+    "context": "Said after Search all missing. {count} is how many titles are searched for."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.searchingAgainForCount.other",
+    "text": "Searching again for {count} titles",
+    "context": "Said after Search all missing. {count} is how many titles are searched for."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.sort",
+    "text": "Sort",
+    "context": "The label of the sort menu in the admin Catalogue."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.sortSort",
+    "text": "Sort: {sort}",
+    "context": "The sort menu’s button in the admin Catalogue. {sort} is the order chosen, such as Recently added."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.statusHeldOfTotal",
+    "text": "{status} · {held} of {total}",
+    "context": "The hover text of the bar under a poster in the admin Catalogue. {status} is where it stands; {held} of {total} is how many episodes or albums are in the library."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.theCatalogueCouldNotBeRead",
+    "text": "The Catalogue couldn’t be read.",
+    "context": "Shown when the admin Catalogue failed to load."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.theSearchCouldNotStart",
+    "text": "The search couldn’t start.",
+    "context": "Said when Search all missing failed."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.titles",
+    "text": "Titles",
+    "context": "The label of the grid of posters in the admin Catalogue, for screen readers."
   },
   {
     "handler": "screens.adminArea.certificationRegions.australia",
@@ -14175,6 +14395,11 @@
     "context": "Shown in the indexers panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.indexersPanel.searchesItAloneSoYouSee",
+    "text": "Searches this indexer alone, so you can see what it answers.",
+    "context": "The description of Test search on an indexer, and the line under the dialog it opens."
+  },
+  {
     "handler": "screens.adminArea.indexersPanel.semiPrivateSite",
     "text": "Semi-private site",
     "context": "Shown in the indexers panel in the admin area."
@@ -14183,6 +14408,16 @@
     "handler": "screens.adminArea.indexersPanel.testAll",
     "text": "Test all",
     "context": "Text shown in the indexers panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.indexersPanel.testSearch",
+    "text": "Test search",
+    "context": "A menu item on an indexer in Admin › Requests › Indexers that searches that indexer alone."
+  },
+  {
+    "handler": "screens.adminArea.indexersPanel.testSearchOnName",
+    "text": "Test search on {name}",
+    "context": "The title of the dialog that searches one indexer alone. {name} is the indexer."
   },
   {
     "handler": "screens.adminArea.indexersPanel.theIndexersCouldNotBeRead",
@@ -15190,69 +15425,9 @@
     "context": "Shown in the media panel in the admin area."
   },
   {
-    "handler": "screens.adminArea.mediaRequestsPanel.aboutThisList",
-    "text": "About this list",
-    "context": "The label of a button in the media requests panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.approveThem",
-    "text": "Approve selected",
-    "context": "The label of a button in the media requests panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.approveTitle",
-    "text": "Approve {title}",
-    "context": "The label of a button in the media requests panel in the admin area. {title} is filled in by the app."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.chooseAllLengthWaitingOnApproval",
-    "text": "Select all {length} awaiting approval",
-    "context": "The label of a checkbox in the media requests panel in the admin area. {length} is filled in by the app."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.countApproved.one",
-    "text": "{count} approved.",
-    "context": "Said after the admin approves several requests at once, in the admin's requests table. {count} is how many were approved."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.countApproved.other",
-    "text": "{count} approved.",
-    "context": "Said after the admin approves several requests at once, in the admin's requests table. {count} is how many were approved."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.countRefused.one",
-    "text": "{count} declined.",
-    "context": "Said after the admin refuses several requests at once, in the admin's requests table. {count} is how many were refused."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.countRefused.other",
-    "text": "{count} declined.",
-    "context": "Said after the admin refuses several requests at once, in the admin's requests table. {count} is how many were refused."
-  },
-  {
     "handler": "screens.adminArea.mediaRequestsPanel.dateRequested",
     "text": "Date requested",
     "context": "Shown in the media requests panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.everyFilmSeriesArtistAndAlbum",
-    "text": "Every requested film, series, artist and album, and its status. Anything still missing is searched for automatically every few hours, or now with Refetch media.",
-    "context": "Text shown in the media requests panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.everySearchWhatItFoundAnd",
-    "text": "Every search, what it found, and why.",
-    "context": "The detail in the media requests panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.fetchTheBestByItself",
-    "text": "Download the best release automatically",
-    "context": "Shown in the media requests panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.forgetThisRequest",
-    "text": "Remove this request?",
-    "context": "The title of the dialog confirming a request is forgotten, in the admin's requests table, before it knows which request."
   },
   {
     "handler": "screens.adminArea.mediaRequestsPanel.hideWhatTitleIsMadeOf",
@@ -15260,174 +15435,9 @@
     "context": "The label of the button that folds away a request's seasons, episodes or albums in the admin's requests table. {title} is the requested title."
   },
   {
-    "handler": "screens.adminArea.mediaRequestsPanel.howItIsGoingWhatIt",
-    "text": "Its progress, what it found, and what it won’t try.",
-    "context": "The detail in the media requests panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.lengthDoneLength2CouldNotBe",
-    "text": "{length} done, {length2} failed.",
-    "context": "Shown in the media requests panel in the admin area. {length} is filled in by the app; {length2} is filled in by the app."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.lengthWaitingOnApproval",
-    "text": "{length} awaiting approval",
-    "context": "Shown in the media requests panel in the admin area. {length} is filled in by the app."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.lookItOverAndChangeIt",
-    "text": "Review it, and change it first if you need to.",
-    "context": "The detail in the media requests panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.markAsAdded",
-    "text": "Mark as added",
-    "context": "The label in the media requests panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.markedTitleAsAdded",
-    "text": "Marked {title} as added.",
-    "context": "A short message shown once something is done in the media requests panel in the admin area. {title} is filled in by the app."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.nothingHasBeenRequestedYetRequest",
-    "text": "Nothing has been requested yet. Request a film, series, artist or album to have it downloaded and added to its library.",
-    "context": "Shown in the media requests panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.nothingIsMissing",
-    "text": "Nothing is missing.",
-    "context": "Shown in the media requests panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.nothingMatchesClearTheFiltersOr",
-    "text": "Nothing matches. Clear the filters or search for something else.",
-    "context": "Shown in the media requests panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.nothingMoreIsFetchedForIt",
-    "text": "Nothing more will be downloaded for it. Anything already downloaded stays in the library.",
-    "context": "The detail of a confirm dialog in the media requests panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.onlyFetchWhatIPick",
-    "text": "Download only what I choose",
-    "context": "Shown in the media requests panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.pickARelease",
-    "text": "Choose a release",
-    "context": "The label in the media requests panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.refetchMedia",
-    "text": "Refetch media",
-    "context": "Text shown in the media requests panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.refuseThem",
-    "text": "Decline selected",
-    "context": "The label of a button in the media requests panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.refuseTitle",
-    "text": "Decline {title}",
-    "context": "The label of a button in the media requests panel in the admin area. {title} is filled in by the app."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.requestsSHELFNAMES",
-    "text": "Requests: {SHELF_NAMES}",
-    "context": "The label of a data table in the media requests panel in the admin area. {SHELF_NAMES} is filled in by the app."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.sayItHasBeenMetSuch",
-    "text": "Mark it as fulfilled, such as a book you added to the library yourself.",
-    "context": "The detail in the media requests panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.searchAgainNow",
-    "text": "Search again now",
-    "context": "The label in the media requests panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.searchedAgainForCountRequests.one",
-    "text": "Searched again for {count} request.",
-    "context": "Shown in the media requests panel in the admin area. {count} is a number."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.searchedAgainForCountRequests.other",
-    "text": "Searched again for {count} requests.",
-    "context": "Shown in the media requests panel in the admin area. {count} is a number."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.searchesForItAndFetchesThe",
-    "text": "Searches for it and downloads the best release for its quality profile.",
-    "context": "Shown in the media requests panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.searchEveryIndexerAndChooseWhat",
-    "text": "Search every indexer and choose what to download.",
-    "context": "The detail in the media requests panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.searchingAgainForTitle",
-    "text": "Searching again for {title}.",
-    "context": "A short message shown once something is done in the media requests panel in the admin area. {title} is filled in by the app."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.seeWhatItHasDone",
-    "text": "View activity",
-    "context": "The label in the media requests panel in the admin area."
-  },
-  {
     "handler": "screens.adminArea.mediaRequestsPanel.showWhatTitleIsMadeOf",
     "text": "Expand {title}",
     "context": "The label of the button that unfolds a request's seasons, episodes or albums in the admin's requests table. {title} is the requested title."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.stopsSearchingForItByItself",
-    "text": "Stops searching for it automatically.",
-    "context": "Shown in the media requests panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.theSearchCouldNotStart",
-    "text": "Couldn’t start the search.",
-    "context": "Shown in the media requests panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.theyCouldNotBeDecided",
-    "text": "Couldn’t update the requests.",
-    "context": "Shown in the media requests panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.titleCouldNotBeApproved",
-    "text": "Couldn’t approve {title}.",
-    "context": "The message in the media requests panel in the admin area. {title} is filled in by the app."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.titleWillBeFetchedAutomatically",
-    "text": "{title} will be downloaded automatically.",
-    "context": "Shown in the media requests panel in the admin area. {title} is filled in by the app."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.titleWillOnlyBeFetchedWhen",
-    "text": "{title} will only be downloaded when you choose a release.",
-    "context": "Shown in the media requests panel in the admin area. {title} is filled in by the app."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.toApprove",
-    "text": "To approve",
-    "context": "Shown in the media requests panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.triesAgainWhateverFailedToo",
-    "text": "Also retries anything that failed.",
-    "context": "The detail in the media requests panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.mediaRequestsPanel.whichRequests",
-    "text": "Which requests",
-    "context": "The label of a tab row in the media requests panel in the admin area."
   },
   {
     "handler": "screens.adminArea.memory",
@@ -16125,9 +16135,24 @@
     "context": "The detail of a confirm dialog in the profiles panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.profilesPanel.searchesTheIndexersAndShows",
+    "text": "Searches the indexers and shows how this profile ranks what’s found.",
+    "context": "The description of Try it on a quality profile, and the line under the dialog it opens."
+  },
+  {
     "handler": "screens.adminArea.profilesPanel.theProfilesCouldNotBeRead",
     "text": "Couldn’t load the profiles.",
     "context": "Shown where the profiles could not be read from the server, followed by a sentence about why and a button to try again."
+  },
+  {
+    "handler": "screens.adminArea.profilesPanel.tryIt",
+    "text": "Try it",
+    "context": "A menu item on a quality profile in Admin › Requests › Profiles that searches the indexers and ranks what's found by the profile."
+  },
+  {
+    "handler": "screens.adminArea.profilesPanel.tryName",
+    "text": "Try {name}",
+    "context": "The title of the dialog that tries a quality profile on a search. {name} is the profile."
   },
   {
     "handler": "screens.adminArea.profilesPanel.whichProfilesToShow",
@@ -16480,24 +16505,9 @@
     "context": "Explains removing several ticked downloads at once, in the dialog confirming it."
   },
   {
-    "handler": "screens.adminArea.requestDetailDialog.aRequest",
-    "text": "A request",
-    "context": "Shown in the request detail dialog in the admin area."
-  },
-  {
     "handler": "screens.adminArea.requestDetailDialog.neverAgain",
     "text": "Blocklist",
     "context": "The label in the request detail dialog in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.requestDetailDialog.rEQUESTKINDNAMESRequestedByName",
-    "text": "{REQUEST_KIND_NAMES} · requested by {name}",
-    "context": "The detail in the request detail dialog in the admin area. {REQUEST_KIND_NAMES} is filled in by the app; {name} is filled in by the app."
-  },
-  {
-    "handler": "screens.adminArea.requestDetailDialog.whatToShowAboutThisRequest",
-    "text": "What to show about this request",
-    "context": "The label of a tab row in the request detail dialog in the admin area."
   },
   {
     "handler": "screens.adminArea.requestsPanel.atAddressLastCheckedWhen",
@@ -17543,6 +17553,251 @@
     "handler": "screens.adminArea.thePreviewsOfTitleCouldNot",
     "text": "Couldn’t rebuild previews for {title}.",
     "context": "Shown in the admin area. {title} is filled in by the app."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.automatically",
+    "text": "Automatically",
+    "context": "How a title is fetched: Valence searches for it by itself. Shown on a title’s page in the admin Catalogue."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.backToTheCatalogue",
+    "text": "Back to the Catalogue",
+    "context": "A button shown when a title opened in the admin Catalogue is no longer there."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.declineEllipsis",
+    "text": "Decline…",
+    "context": "A button on a title’s page that declines its request, after asking for an optional note."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.downloadRow.stopDownload",
+    "text": "Stop download…",
+    "context": "The tooltip of the cross that stops one download on a title’s page."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.episodeTable.fileName",
+    "text": "File name",
+    "context": "A column in the episode table on a show’s page in the admin Catalogue."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.fetching",
+    "text": "Fetching",
+    "context": "A label on a title’s page: whether it is searched for automatically or only fetched when a release is picked by hand."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.followingName",
+    "text": "Following {name}",
+    "context": "Said once a title, season or album is followed. {name} is what."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.heightP",
+    "text": "{height}p",
+    "context": "A resolution, such as 1080p. {height} is the picture’s height in pixels."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.heldOfTotal",
+    "text": "{held} of {total}",
+    "context": "How many episodes or albums of a title are in the library, on its page. {held} is how many are; {total} is how many there are."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.interactiveSearch",
+    "text": "Interactive search",
+    "context": "A button on a title’s page that lists every release the indexers have for it, to pick one by hand."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.interactiveSearchDialog.interactiveSearchForTitle",
+    "text": "Interactive search for {title}",
+    "context": "The title of the interactive search dialog. {title} is what is searched for."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.interactiveSearchDialog.pickingOneReplaces",
+    "text": "Picking a release stops whatever is downloading for the same episodes and blocks it.",
+    "context": "The explanation under the title of the interactive search dialog."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.itsQualityLibraryAndSeasons",
+    "text": "Quality, library and seasons",
+    "context": "The description of Edit in the menu on a title’s page."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.markAsAdded",
+    "text": "Mark as in the library",
+    "context": "A menu item on a title’s page for something added to the library by hand."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.markedTitleAsAdded",
+    "text": "Marked {title} as in the library",
+    "context": "Said after Mark as in the library. {title} is the title."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.minutesLong",
+    "text": "{minutes} min",
+    "context": "How long a film runs, on its page. {minutes} is how many minutes."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.newSeasonsGoInFolder",
+    "text": "New seasons go in {folder}",
+    "context": "A note above a show’s seasons. {folder} is the show’s folder."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.noLongerFollowingName",
+    "text": "No longer following {name}",
+    "context": "Said once a season or album is no longer followed. {name} is what."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.onDisk",
+    "text": "On disk",
+    "context": "The heading of the card on a title’s page about its files."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.onlyFetchWhatIPick",
+    "text": "Fetch only releases I pick",
+    "context": "A menu item on a title’s page that stops it being searched for automatically."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.onlyWhatYouPick",
+    "text": "Only releases you pick",
+    "context": "How a title is fetched: only what an admin picks by hand. Shown on a title’s page in the admin Catalogue."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.removeEllipsis",
+    "text": "Remove…",
+    "context": "A menu item on a title’s page that removes its request, after asking."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.removeTitleDialog.deleteTheFilesItAdded",
+    "text": "Delete the files it added to the library",
+    "context": "A choice when removing a title’s request."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.removeTitleDialog.itStopsDownloadingAndNothing",
+    "text": "Its downloads stop, and nothing more is fetched for it.",
+    "context": "What removing a title’s request does, in the dialog that asks first."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.removeTitleDialog.onlyFilesValenceFiledFor",
+    "text": "Only files Valence downloaded for this request are deleted. Your own files are left alone.",
+    "context": "The description under Delete the files it added to the library."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.removeTitleDialog.removeThisRequest",
+    "text": "Remove this request",
+    "context": "The title of the dialog that removes a request, before it knows which."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.sayItIsHereAlready",
+    "text": "Counts it as there, for anything added by hand",
+    "context": "The description of Mark as in the library in the menu on a title’s page."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.searchForItAutomatically",
+    "text": "Search for it automatically",
+    "context": "A menu item on a title’s page that has it searched for again by itself."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.searchingForTitle",
+    "text": "Searching for {title}",
+    "context": "Said after Search missing on a title’s page. {title} is the title."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.searchMissing",
+    "text": "Search missing",
+    "context": "A button on a title’s page that searches now for whatever of it is missing."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.seasonList.followName",
+    "text": "Follow {name}",
+    "context": "The label of the switch that follows a season or album, for screen readers. {name} is which."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.seasonList.heldOfTotal",
+    "text": "{held} / {total}",
+    "context": "How many of a season’s episodes are in the library, beside its bar. {held} is how many are; {total} is how many there are."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.stopDownloadDialog.blocksThisReleaseAndOpens",
+    "text": "Blocks this release and opens interactive search.",
+    "context": "The description of Pick one myself when stopping a download."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.stopDownloadDialog.blocksThisReleaseAndSearchesAgain",
+    "text": "Blocks this release and searches for another straight away.",
+    "context": "The description of Find a different release when stopping a download."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.stopDownloadDialog.deleteWhatItDownloadedSoFar",
+    "text": "Delete what it downloaded so far",
+    "context": "A choice when stopping a download."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.stopDownloadDialog.findADifferentRelease",
+    "text": "Find a different release",
+    "context": "A choice when stopping a download."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.stopDownloadDialog.pickOneMyself",
+    "text": "Pick one myself",
+    "context": "A choice when stopping a download."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.stopDownloadDialog.stopGettingThis",
+    "text": "Stop getting this",
+    "context": "A choice when stopping a download."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.stopDownloadDialog.stopIt",
+    "text": "Stop it",
+    "context": "The button that stops a download."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.stopDownloadDialog.stopsFollowingWhatItWasFor",
+    "text": "Stops following what it was for, so nothing more is fetched for it.",
+    "context": "The description of Stop getting this when stopping a download."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.stopDownloadDialog.stopTitle",
+    "text": "Stop {title}?",
+    "context": "The title of the dialog that stops a download. {title} is the release."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.stopDownloadDialog.thenWhat",
+    "text": "After stopping",
+    "context": "The label of the choices of what happens once a download is stopped."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.stoppedTitle",
+    "text": "Stopped {title}",
+    "context": "Said once a download was stopped. {title} is the release."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.thatCouldNotBeDone",
+    "text": "That couldn’t be done.",
+    "context": "Said when something done on a title’s page failed and the server gave no reason."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.thatTitleIsNoLongerHere",
+    "text": "That title isn’t in the Catalogue any more.",
+    "context": "Shown when a title opened in the admin Catalogue is gone."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.titleHero.askedForByNameWhen",
+    "text": "Asked for by {name} · {when}",
+    "context": "At the top of a title’s page. {name} is who asked; {when} is how long ago, such as 3 hours ago."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.titleIsOnlyFetchedWhenPicked",
+    "text": "{title} is fetched only when you pick a release",
+    "context": "Said after Fetch only releases I pick. {title} is the title."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.titleIsSearchedForAutomatically",
+    "text": "{title} is searched for automatically",
+    "context": "Said after Search for it automatically. {title} is the title."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.titleProgress.whereEverythingStands",
+    "text": "Where everything stands",
+    "context": "The label of the bar of a title’s episodes or albums, coloured by where each stands, for screen readers."
   },
   {
     "handler": "screens.adminArea.transcoder",
@@ -23011,26 +23266,6 @@
     "context": "The label of a spinner in the request history tab in the request detail dialog."
   },
   {
-    "handler": "screens.requestDetailDialog.requestProgressTab.nothingIsDownloadingForThisJust",
-    "text": "Nothing is downloading for this request right now.",
-    "context": "Text shown in the request progress tab in the request detail dialog."
-  },
-  {
-    "handler": "screens.requestDetailDialog.requestProgressTab.refusedBecauseReason",
-    "text": "Declined because: {reason}",
-    "context": "Shown on a refused media request's progress tab. {reason} is the reason the admin gave, drawn a little brighter."
-  },
-  {
-    "handler": "screens.requestDetailDialog.requestProgressTab.scoredScore",
-    "text": "scored {score}",
-    "context": "Text shown in the request progress tab in the request detail dialog. {score} is filled in by the app."
-  },
-  {
-    "handler": "screens.requestDetailDialog.requestProgressTab.whatWasChosen",
-    "text": "Selected release",
-    "context": "A heading in the request progress tab in the request detail dialog."
-  },
-  {
     "handler": "screens.requestDetailDialog.requestReleasesTab.fetchingThatRelease",
     "text": "Downloading that release.",
     "context": "A short message shown once something is done in the request releases tab in the request detail dialog."
@@ -23109,6 +23344,11 @@
     "handler": "screens.requests.requestsChoicesFor.whatToDiscover",
     "text": "What to discover",
     "context": "The label in the requests (from `requestsChoicesFor`)."
+  },
+  {
+    "handler": "screens.requests.titlePartLooks.notAskedFor",
+    "text": "Not asked for",
+    "context": "Where an episode stands on a show’s page: nobody asked for it and the library doesn’t hold it."
   },
   {
     "handler": "screens.requests.useCatalogueFilters.startS",

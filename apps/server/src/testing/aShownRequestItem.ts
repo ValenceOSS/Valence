@@ -20,6 +20,7 @@ const aShownRequestItem = (overrides: Partial<RequestItem>): RequestItem => ({
   downloadId: null,
   filePath: null,
   score: null,
+  isFollowed: true,
   lastSearchedAt: null,
   updatedAt: '2026-09-19T00:00:00.000Z',
   ...overrides,

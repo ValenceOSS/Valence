@@ -41,6 +41,14 @@ const fetchGiveUpRules = vi.hoisted(() => vi.fn());
 
 vi.mock('@ValenceClient/requests/fetchGiveUpRules', () => ({ fetchGiveUpRules }));
 
+const fetchTitleCatalogue = vi.hoisted(() => vi.fn());
+const fetchTitleFiles = vi.hoisted(() => vi.fn());
+
+vi.mock('@ValenceClient/requests/fetchTitleCatalogue', () => ({
+  fetchTitleCatalogue,
+  fetchTitleFiles,
+}));
+
 const fetchProfiles = vi.hoisted(() => vi.fn());
 const fetchProfilesOnOffer = vi.hoisted(() => vi.fn());
 
@@ -242,6 +250,39 @@ describe('requestsQueries', () => {
     );
 
     vi.useRealTimers();
+  });
+
+  it('asks for the Catalogue again only while something in it is on its way', async () => {
+    vi.useFakeTimers();
+
+    const asksOverAMinute = async (entries: { status: string }[]): Promise<number> => {
+      fetchTitleCatalogue.mockClear().mockResolvedValue(entries);
+
+      const stop = new QueryObserver(aCache(), requestsQueries.titleCatalogue()).subscribe(
+        () => undefined,
+      );
+
+      await vi.advanceTimersByTimeAsync(60_000);
+      stop();
+
+      return fetchTitleCatalogue.mock.calls.length;
+    };
+
+    expect(await asksOverAMinute([{ status: 'library' }])).toBe(1);
+    expect(await asksOverAMinute([{ status: 'downloading' }])).toBeGreaterThan(1);
+
+    vi.useRealTimers();
+  });
+
+  it('asks for a title’s files only once it is known by an id', async () => {
+    fetchTitleFiles.mockResolvedValue({ folder: null, files: [] });
+
+    expect(requestsQueries.titleFiles('series', null).enabled).toBe(false);
+    expect(await aCache().fetchQuery(requestsQueries.titleFiles('series', '42'))).toEqual({
+      folder: null,
+      files: [],
+    });
+    expect(fetchTitleFiles).toHaveBeenCalledWith('series', '42');
   });
 
   it('asks how downloads are going every few seconds, and only while asked to', () => {

@@ -410,6 +410,9 @@ const ENGLISH = {
   'client.requests.releaseTypeNames.single': 'Single',
   'client.requests.releaseTypeNames.singles': 'Singles',
   'client.requests.seasonStandingNames.notRequested': 'Not requested',
+  'client.requests.titleStatusNames.missing': 'Missing',
+  'client.requests.titleStatusNames.notFollowed': 'Not followed',
+  'client.requests.titleStatusNames.toApprove': 'To approve',
   'client.session.auth.addAPasskeyFromValenceIn': 'Add a passkey from Valence in your browser.',
   'client.session.auth.thatCodeWasNotAccepted': 'That code wasn’t accepted. Try again.',
   'client.session.auth.thatPasskeyWasNotAccepted': 'That passkey wasn’t accepted.',
@@ -559,6 +562,7 @@ const ENGLISH = {
   'common.carryOnFetchingTitle': 'Resume downloading {title}',
   'common.cast': 'Cast',
   'common.casual': 'Casual',
+  'common.catalogue': 'Catalogue',
   'common.categories': 'Categories',
   'common.change': 'Change',
   'common.changeName': 'Change {name}',
@@ -2021,6 +2025,9 @@ const ENGLISH = {
   'error.requests.noSuchBlockedRelease': 'No such blocked release.',
   'error.requests.noSuchRequest': 'No such request.',
   'error.requests.pickingAReleaseIsForWhoever': 'Only request managers can choose a release.',
+  'error.requests.sayWhatHappensAfterTheDownload':
+    'Say what should happen after the download is stopped.',
+  'error.requests.sayWhatToFollow': 'Say which episodes or albums to follow or stop following.',
   'error.requests.sayWhichItemItBecame': 'Say which library item it became.',
   'error.requests.sayWhyItWasRefusedOr': 'Give a reason for declining, or leave it empty.',
   'error.requests.thatIsNotAChangeTo': 'That isn’t a valid change to a request.',
@@ -2530,6 +2537,8 @@ const ENGLISH = {
   'requests.mediaRequests.judgeForRequest.itFailedBeforeReason': 'It failed previously: {reason}',
   'requests.mediaRequests.judgeForRequest.itIsNoBetterThanWhat':
     'It’s no better than what’s already in the library',
+  'requests.mediaRequests.judgeForRequest.itsNameDoesNotSayItIs':
+    'Its name doesn’t match this title',
   'requests.mediaRequests.judgeForRequest.onlySomeEpisodesWanted':
     'Only {wanted} of its {held} episodes are wanted',
   'requests.mediaRequests.noIndexerOn': 'no indexer is turned on',
@@ -2573,6 +2582,17 @@ const ENGLISH = {
   'requests.mediaRequests.requestWorker.noVideoInItCouldBe': 'Couldn’t import any video from it',
   'requests.mediaRequests.requestWorker.reasonTryingTheNextBestRelease':
     '{reason}. Trying the next best release.',
+  'requests.mediaRequests.requestWorker.replacedByTitlePickedByHand':
+    'Replaced by {title}, picked by hand',
+  'requests.mediaRequests.requestWorker.stoppedByAnAdmin': 'Stopped by an admin',
+  'requests.mediaRequests.requestWorker.stoppedTitleAndLookingForAnother':
+    'Stopped {title} and blocked it. Looking for a different release.',
+  'requests.mediaRequests.requestWorker.stoppedTitleAndStoppedGetting':
+    'Stopped {title}. What it was fetching is no longer followed.',
+  'requests.mediaRequests.requestWorker.stoppedTitleForAPickByHand':
+    'Stopped {title} and blocked it, to pick a release by hand.',
+  'requests.mediaRequests.requestWorker.stoppedTitleForAReleasePicked':
+    'Stopped {title} for a release picked by hand.',
   'requests.mediaRequests.requestWorker.theDownloadWasTakenOutBefore':
     'The download was removed before it was imported',
   'requests.mediaRequests.requestWorker.theDownloadWasTakenOutBefore2':
@@ -2922,10 +2942,12 @@ const ENGLISH = {
   'screens.adminArea.approveRequestDialog.approveThisRequest': 'Approve this request?',
   'screens.adminArea.approveRequestDialog.approveTitle': 'Approve {title}?',
   'screens.adminArea.approveRequestDialog.chooseALibrary': 'Choose a library',
+  'screens.adminArea.approveRequestDialog.editTitle': 'Edit {title}',
   'screens.adminArea.approveRequestDialog.itCouldNotBeApproved':
     'Couldn’t approve the request. Try again.',
   'screens.adminArea.approveRequestDialog.itIsSearchedForAsSoon':
     'Valence starts searching as soon as you approve it. You can change the request first.',
+  'screens.adminArea.approveRequestDialog.savedTitle': 'Saved {title}',
   'screens.adminArea.approveRequestDialog.whereItIsFiledOnceIt':
     'The library it’s added to once it’s downloaded.',
   'screens.adminArea.aPreviewMomentCanBeChosen':
@@ -2998,6 +3020,8 @@ const ENGLISH = {
   'screens.adminArea.askForMediaDialog.findAFilmASeriesAn':
     'Search for a film, series, artist or album. Once the request is approved, it’s searched for, downloaded and added to its library.',
   'screens.adminArea.askForMediaDialog.findReleases': 'Find releases',
+  'screens.adminArea.askForMediaDialog.forSomethingNoCatalogueKnows':
+    'For something no catalogue knows. Pick a release and choose which library it goes to.',
   'screens.adminArea.askForMediaDialog.iWillPickIt': 'Choose manually',
   'screens.adminArea.askForMediaDialog.laterAlbumsWaitForAPick':
     ' Later albums also wait for you to choose a release.',
@@ -3008,6 +3032,7 @@ const ENGLISH = {
   'screens.adminArea.askForMediaDialog.nothingTheIndexersHaveIsFor':
     'Your indexers have no releases for this. Go back and choose Best quality to download one when it becomes available.',
   'screens.adminArea.askForMediaDialog.searchForAnArtist': 'Search for an artist',
+  'screens.adminArea.askForMediaDialog.searchTheIndexersInstead': 'Search the indexers instead',
   'screens.adminArea.askForMediaDialog.theBestByItsQuality': 'Best quality',
   'screens.adminArea.askForMediaDialog.theBestReleaseByItsQuality':
     'The best-quality release is downloaded as soon as one is available.',
@@ -3023,6 +3048,37 @@ const ENGLISH = {
     'Couldn’t load the queue from the server.',
   'screens.adminArea.cacheBreakdown.countingWhatIsOnTheDisk': 'Calculating disk usage.',
   'screens.adminArea.cacheBreakdown.whatLabelMeans': 'What {label} means',
+  'screens.adminArea.cataloguePanel.addATitle': 'Add a title',
+  'screens.adminArea.cataloguePanel.allLibraries': 'All libraries',
+  'screens.adminArea.cataloguePanel.audiobooks': 'Audiobooks',
+  'screens.adminArea.cataloguePanel.chooseSeveral': 'Select several',
+  'screens.adminArea.cataloguePanel.couldNotDecide': 'Those requests couldn’t be decided.',
+  'screens.adminArea.cataloguePanel.countApproved.one': 'Approved {count} request',
+  'screens.adminArea.cataloguePanel.countApproved.other': 'Approved {count} requests',
+  'screens.adminArea.cataloguePanel.countDeclined.one': 'Declined {count} request',
+  'screens.adminArea.cataloguePanel.countDeclined.other': 'Declined {count} requests',
+  'screens.adminArea.cataloguePanel.ebooks': 'Ebooks',
+  'screens.adminArea.cataloguePanel.findABookOrAuthor': 'Find a book or author',
+  'screens.adminArea.cataloguePanel.findAFilm': 'Find a film',
+  'screens.adminArea.cataloguePanel.findAnArtistOrAlbum': 'Find an artist or album',
+  'screens.adminArea.cataloguePanel.findAShow': 'Find a show',
+  'screens.adminArea.cataloguePanel.kindsOfLibrary': 'Kind of library',
+  'screens.adminArea.cataloguePanel.nothingIsMissing':
+    'Nothing is missing, so nothing was searched for.',
+  'screens.adminArea.cataloguePanel.nothingMatches':
+    'Nothing matches. Try another status or search.',
+  'screens.adminArea.cataloguePanel.reading': 'Reading the Catalogue',
+  'screens.adminArea.cataloguePanel.searchAllMissing': 'Search all missing',
+  'screens.adminArea.cataloguePanel.searchingAgainForCount.one':
+    'Searching again for {count} title',
+  'screens.adminArea.cataloguePanel.searchingAgainForCount.other':
+    'Searching again for {count} titles',
+  'screens.adminArea.cataloguePanel.sort': 'Sort',
+  'screens.adminArea.cataloguePanel.sortSort': 'Sort: {sort}',
+  'screens.adminArea.cataloguePanel.statusHeldOfTotal': '{status} · {held} of {total}',
+  'screens.adminArea.cataloguePanel.theCatalogueCouldNotBeRead': 'The Catalogue couldn’t be read.',
+  'screens.adminArea.cataloguePanel.theSearchCouldNotStart': 'The search couldn’t start.',
+  'screens.adminArea.cataloguePanel.titles': 'Titles',
   'screens.adminArea.certificationRegions.australia': 'Australia',
   'screens.adminArea.certificationRegions.france': 'France',
   'screens.adminArea.certificationRegions.fSK06121618': 'FSK 0, 6, 12, 16, 18',
@@ -3523,8 +3579,12 @@ const ENGLISH = {
   'screens.adminArea.indexersPanel.readingTheIndexers': 'Loading indexers',
   'screens.adminArea.indexersPanel.removeThisIndexer': 'Remove this indexer?',
   'screens.adminArea.indexersPanel.searches': 'Searches',
+  'screens.adminArea.indexersPanel.searchesItAloneSoYouSee':
+    'Searches this indexer alone, so you can see what it answers.',
   'screens.adminArea.indexersPanel.semiPrivateSite': 'Semi-private site',
   'screens.adminArea.indexersPanel.testAll': 'Test all',
+  'screens.adminArea.indexersPanel.testSearch': 'Test search',
+  'screens.adminArea.indexersPanel.testSearchOnName': 'Test search on {name}',
   'screens.adminArea.indexersPanel.theIndexersCouldNotBeRead': 'Couldn’t load indexers.',
   'screens.adminArea.jobRunner.runThisJob': 'Run this job?',
   'screens.adminArea.jobRunner.stopIt': 'Stop job',
@@ -3803,73 +3863,9 @@ const ENGLISH = {
   'screens.adminArea.mediaPanel.unmatched': 'Unmatched',
   'screens.adminArea.mediaPanel.whichTitles': 'Which titles',
   'screens.adminArea.mediaPanel.willRebuild': 'Will rebuild',
-  'screens.adminArea.mediaRequestsPanel.aboutThisList': 'About this list',
-  'screens.adminArea.mediaRequestsPanel.approveThem': 'Approve selected',
-  'screens.adminArea.mediaRequestsPanel.approveTitle': 'Approve {title}',
-  'screens.adminArea.mediaRequestsPanel.chooseAllLengthWaitingOnApproval':
-    'Select all {length} awaiting approval',
-  'screens.adminArea.mediaRequestsPanel.countApproved.one': '{count} approved.',
-  'screens.adminArea.mediaRequestsPanel.countApproved.other': '{count} approved.',
-  'screens.adminArea.mediaRequestsPanel.countRefused.one': '{count} declined.',
-  'screens.adminArea.mediaRequestsPanel.countRefused.other': '{count} declined.',
   'screens.adminArea.mediaRequestsPanel.dateRequested': 'Date requested',
-  'screens.adminArea.mediaRequestsPanel.everyFilmSeriesArtistAndAlbum':
-    'Every requested film, series, artist and album, and its status. Anything still missing is searched for automatically every few hours, or now with Refetch media.',
-  'screens.adminArea.mediaRequestsPanel.everySearchWhatItFoundAnd':
-    'Every search, what it found, and why.',
-  'screens.adminArea.mediaRequestsPanel.fetchTheBestByItself':
-    'Download the best release automatically',
-  'screens.adminArea.mediaRequestsPanel.forgetThisRequest': 'Remove this request?',
   'screens.adminArea.mediaRequestsPanel.hideWhatTitleIsMadeOf': 'Collapse {title}',
-  'screens.adminArea.mediaRequestsPanel.howItIsGoingWhatIt':
-    'Its progress, what it found, and what it won’t try.',
-  'screens.adminArea.mediaRequestsPanel.lengthDoneLength2CouldNotBe':
-    '{length} done, {length2} failed.',
-  'screens.adminArea.mediaRequestsPanel.lengthWaitingOnApproval': '{length} awaiting approval',
-  'screens.adminArea.mediaRequestsPanel.lookItOverAndChangeIt':
-    'Review it, and change it first if you need to.',
-  'screens.adminArea.mediaRequestsPanel.markAsAdded': 'Mark as added',
-  'screens.adminArea.mediaRequestsPanel.markedTitleAsAdded': 'Marked {title} as added.',
-  'screens.adminArea.mediaRequestsPanel.nothingHasBeenRequestedYetRequest':
-    'Nothing has been requested yet. Request a film, series, artist or album to have it downloaded and added to its library.',
-  'screens.adminArea.mediaRequestsPanel.nothingIsMissing': 'Nothing is missing.',
-  'screens.adminArea.mediaRequestsPanel.nothingMatchesClearTheFiltersOr':
-    'Nothing matches. Clear the filters or search for something else.',
-  'screens.adminArea.mediaRequestsPanel.nothingMoreIsFetchedForIt':
-    'Nothing more will be downloaded for it. Anything already downloaded stays in the library.',
-  'screens.adminArea.mediaRequestsPanel.onlyFetchWhatIPick': 'Download only what I choose',
-  'screens.adminArea.mediaRequestsPanel.pickARelease': 'Choose a release',
-  'screens.adminArea.mediaRequestsPanel.refetchMedia': 'Refetch media',
-  'screens.adminArea.mediaRequestsPanel.refuseThem': 'Decline selected',
-  'screens.adminArea.mediaRequestsPanel.refuseTitle': 'Decline {title}',
-  'screens.adminArea.mediaRequestsPanel.requestsSHELFNAMES': 'Requests: {SHELF_NAMES}',
-  'screens.adminArea.mediaRequestsPanel.sayItHasBeenMetSuch':
-    'Mark it as fulfilled, such as a book you added to the library yourself.',
-  'screens.adminArea.mediaRequestsPanel.searchAgainNow': 'Search again now',
-  'screens.adminArea.mediaRequestsPanel.searchedAgainForCountRequests.one':
-    'Searched again for {count} request.',
-  'screens.adminArea.mediaRequestsPanel.searchedAgainForCountRequests.other':
-    'Searched again for {count} requests.',
-  'screens.adminArea.mediaRequestsPanel.searchesForItAndFetchesThe':
-    'Searches for it and downloads the best release for its quality profile.',
-  'screens.adminArea.mediaRequestsPanel.searchEveryIndexerAndChooseWhat':
-    'Search every indexer and choose what to download.',
-  'screens.adminArea.mediaRequestsPanel.searchingAgainForTitle': 'Searching again for {title}.',
-  'screens.adminArea.mediaRequestsPanel.seeWhatItHasDone': 'View activity',
   'screens.adminArea.mediaRequestsPanel.showWhatTitleIsMadeOf': 'Expand {title}',
-  'screens.adminArea.mediaRequestsPanel.stopsSearchingForItByItself':
-    'Stops searching for it automatically.',
-  'screens.adminArea.mediaRequestsPanel.theSearchCouldNotStart': 'Couldn’t start the search.',
-  'screens.adminArea.mediaRequestsPanel.theyCouldNotBeDecided': 'Couldn’t update the requests.',
-  'screens.adminArea.mediaRequestsPanel.titleCouldNotBeApproved': 'Couldn’t approve {title}.',
-  'screens.adminArea.mediaRequestsPanel.titleWillBeFetchedAutomatically':
-    '{title} will be downloaded automatically.',
-  'screens.adminArea.mediaRequestsPanel.titleWillOnlyBeFetchedWhen':
-    '{title} will only be downloaded when you choose a release.',
-  'screens.adminArea.mediaRequestsPanel.toApprove': 'To approve',
-  'screens.adminArea.mediaRequestsPanel.triesAgainWhateverFailedToo':
-    'Also retries anything that failed.',
-  'screens.adminArea.mediaRequestsPanel.whichRequests': 'Which requests',
   'screens.adminArea.memory': 'Memory',
   'screens.adminArea.musicMatchList.foundInMusicBrainz': 'Found in MusicBrainz',
   'screens.adminArea.nameCouldNotBeScanned': 'Couldn’t scan {name}.',
@@ -4047,7 +4043,11 @@ const ENGLISH = {
   'screens.adminArea.profilesPanel.removeThisProfile': 'Remove this profile?',
   'screens.adminArea.profilesPanel.searchesCanNoLongerBeJudged':
     'Search results can no longer be checked against it, and the libraries that used it will have no profile.',
+  'screens.adminArea.profilesPanel.searchesTheIndexersAndShows':
+    'Searches the indexers and shows how this profile ranks what’s found.',
   'screens.adminArea.profilesPanel.theProfilesCouldNotBeRead': 'Couldn’t load the profiles.',
+  'screens.adminArea.profilesPanel.tryIt': 'Try it',
+  'screens.adminArea.profilesPanel.tryName': 'Try {name}',
   'screens.adminArea.profilesPanel.whichProfilesToShow': 'Which profiles to show',
   'screens.adminArea.putTheOriginalBack': 'Restored the original.',
   'screens.adminArea.qualityNames.cam': 'Cam',
@@ -4136,12 +4136,7 @@ const ENGLISH = {
     'This download client doesn’t delete finished downloads, so their files stay where they are.',
   'screens.adminArea.removeDownloadDialog.theyAreTakenOutOfTheirClients':
     'They’re removed from their download clients, and Valence stops tracking them.',
-  'screens.adminArea.requestDetailDialog.aRequest': 'A request',
   'screens.adminArea.requestDetailDialog.neverAgain': 'Blocklist',
-  'screens.adminArea.requestDetailDialog.rEQUESTKINDNAMESRequestedByName':
-    '{REQUEST_KIND_NAMES} · requested by {name}',
-  'screens.adminArea.requestDetailDialog.whatToShowAboutThisRequest':
-    'What to show about this request',
   'screens.adminArea.requestsPanel.atAddressLastCheckedWhen': 'At {address}. Last checked {when}.',
   'screens.adminArea.requestsPanel.atAddressLastCheckedWhenProblem':
     'At {address}. Last checked {when}. {problem}.',
@@ -4415,6 +4410,69 @@ const ENGLISH = {
   'screens.adminArea.theMessageCouldNotBeSent': 'Couldn’t send the message.',
   'screens.adminArea.thePreviewsOfNameCouldNot': 'Couldn’t generate previews for {name}.',
   'screens.adminArea.thePreviewsOfTitleCouldNot': 'Couldn’t rebuild previews for {title}.',
+  'screens.adminArea.titlePage.automatically': 'Automatically',
+  'screens.adminArea.titlePage.backToTheCatalogue': 'Back to the Catalogue',
+  'screens.adminArea.titlePage.declineEllipsis': 'Decline…',
+  'screens.adminArea.titlePage.downloadRow.stopDownload': 'Stop download…',
+  'screens.adminArea.titlePage.episodeTable.fileName': 'File name',
+  'screens.adminArea.titlePage.fetching': 'Fetching',
+  'screens.adminArea.titlePage.followingName': 'Following {name}',
+  'screens.adminArea.titlePage.heightP': '{height}p',
+  'screens.adminArea.titlePage.heldOfTotal': '{held} of {total}',
+  'screens.adminArea.titlePage.interactiveSearch': 'Interactive search',
+  'screens.adminArea.titlePage.interactiveSearchDialog.interactiveSearchForTitle':
+    'Interactive search for {title}',
+  'screens.adminArea.titlePage.interactiveSearchDialog.pickingOneReplaces':
+    'Picking a release stops whatever is downloading for the same episodes and blocks it.',
+  'screens.adminArea.titlePage.itsQualityLibraryAndSeasons': 'Quality, library and seasons',
+  'screens.adminArea.titlePage.markAsAdded': 'Mark as in the library',
+  'screens.adminArea.titlePage.markedTitleAsAdded': 'Marked {title} as in the library',
+  'screens.adminArea.titlePage.minutesLong': '{minutes} min',
+  'screens.adminArea.titlePage.newSeasonsGoInFolder': 'New seasons go in {folder}',
+  'screens.adminArea.titlePage.noLongerFollowingName': 'No longer following {name}',
+  'screens.adminArea.titlePage.onDisk': 'On disk',
+  'screens.adminArea.titlePage.onlyFetchWhatIPick': 'Fetch only releases I pick',
+  'screens.adminArea.titlePage.onlyWhatYouPick': 'Only releases you pick',
+  'screens.adminArea.titlePage.removeEllipsis': 'Remove…',
+  'screens.adminArea.titlePage.removeTitleDialog.deleteTheFilesItAdded':
+    'Delete the files it added to the library',
+  'screens.adminArea.titlePage.removeTitleDialog.itStopsDownloadingAndNothing':
+    'Its downloads stop, and nothing more is fetched for it.',
+  'screens.adminArea.titlePage.removeTitleDialog.onlyFilesValenceFiledFor':
+    'Only files Valence downloaded for this request are deleted. Your own files are left alone.',
+  'screens.adminArea.titlePage.removeTitleDialog.removeThisRequest': 'Remove this request',
+  'screens.adminArea.titlePage.sayItIsHereAlready':
+    'Counts it as there, for anything added by hand',
+  'screens.adminArea.titlePage.searchForItAutomatically': 'Search for it automatically',
+  'screens.adminArea.titlePage.searchingForTitle': 'Searching for {title}',
+  'screens.adminArea.titlePage.searchMissing': 'Search missing',
+  'screens.adminArea.titlePage.seasonList.followName': 'Follow {name}',
+  'screens.adminArea.titlePage.seasonList.heldOfTotal': '{held} / {total}',
+  'screens.adminArea.titlePage.stopDownloadDialog.blocksThisReleaseAndOpens':
+    'Blocks this release and opens interactive search.',
+  'screens.adminArea.titlePage.stopDownloadDialog.blocksThisReleaseAndSearchesAgain':
+    'Blocks this release and searches for another straight away.',
+  'screens.adminArea.titlePage.stopDownloadDialog.deleteWhatItDownloadedSoFar':
+    'Delete what it downloaded so far',
+  'screens.adminArea.titlePage.stopDownloadDialog.findADifferentRelease':
+    'Find a different release',
+  'screens.adminArea.titlePage.stopDownloadDialog.pickOneMyself': 'Pick one myself',
+  'screens.adminArea.titlePage.stopDownloadDialog.stopGettingThis': 'Stop getting this',
+  'screens.adminArea.titlePage.stopDownloadDialog.stopIt': 'Stop it',
+  'screens.adminArea.titlePage.stopDownloadDialog.stopsFollowingWhatItWasFor':
+    'Stops following what it was for, so nothing more is fetched for it.',
+  'screens.adminArea.titlePage.stopDownloadDialog.stopTitle': 'Stop {title}?',
+  'screens.adminArea.titlePage.stopDownloadDialog.thenWhat': 'After stopping',
+  'screens.adminArea.titlePage.stoppedTitle': 'Stopped {title}',
+  'screens.adminArea.titlePage.thatCouldNotBeDone': 'That couldn’t be done.',
+  'screens.adminArea.titlePage.thatTitleIsNoLongerHere':
+    'That title isn’t in the Catalogue any more.',
+  'screens.adminArea.titlePage.titleHero.askedForByNameWhen': 'Asked for by {name} · {when}',
+  'screens.adminArea.titlePage.titleIsOnlyFetchedWhenPicked':
+    '{title} is fetched only when you pick a release',
+  'screens.adminArea.titlePage.titleIsSearchedForAutomatically':
+    '{title} is searched for automatically',
+  'screens.adminArea.titlePage.titleProgress.whereEverythingStands': 'Where everything stands',
   'screens.adminArea.transcoder': 'Transcoder',
   'screens.adminArea.uploadMediaDialog.chooseAFolder': 'Choose a folder',
   'screens.adminArea.uploadMediaDialog.chooseAFolderToUpload': 'Choose a folder to upload',
@@ -5778,12 +5836,6 @@ const ENGLISH = {
   'screens.requestDetailDialog.requestBlocklistTab.whatItWillNotTryAgainCouldNotBeRead':
     'Couldn’t load the blocklist.',
   'screens.requestDetailDialog.requestHistoryTab.readingWhatItHasDone': 'Loading history',
-  'screens.requestDetailDialog.requestProgressTab.nothingIsDownloadingForThisJust':
-    'Nothing is downloading for this request right now.',
-  'screens.requestDetailDialog.requestProgressTab.refusedBecauseReason':
-    'Declined because: {reason}',
-  'screens.requestDetailDialog.requestProgressTab.scoredScore': 'scored {score}',
-  'screens.requestDetailDialog.requestProgressTab.whatWasChosen': 'Selected release',
   'screens.requestDetailDialog.requestReleasesTab.fetchingThatRelease': 'Downloading that release.',
   'screens.requestDetailDialog.requestReleasesTab.nothingTheIndexersHaveIsFor':
     'No indexer results match this request.',
@@ -5803,6 +5855,7 @@ const ENGLISH = {
   'screens.requests.describeRequestFilters.noQualitySet': 'No quality set',
   'screens.requests.groupReleases.otherReleases': 'Other releases',
   'screens.requests.requestsChoicesFor.whatToDiscover': 'What to discover',
+  'screens.requests.titlePartLooks.notAskedFor': 'Not asked for',
   'screens.requests.useCatalogueFilters.startS': '{start}s',
   'screens.requests.useSample.thereIsNoSampleOfAlbum': 'There’s no sample of {album} to play.',
   'screens.requestsPage.booksDiscover.booksFound': 'Books found',

@@ -133,4 +133,93 @@ describe('createDatabaseCatalogueLookup', { timeout: STARTING_POSTGRES_MS }, () 
     ]);
     expect(await createDatabaseCatalogueLookup(db).seriesFiles('43')).toEqual([]);
   });
+
+  it('lists every film and series held for the Catalogue, and the files of each', async () => {
+    const { db } = await aHousehold();
+    const file = {
+      libraryId: 'films',
+      title: 'Something',
+      sizeBytes: 10,
+      modifiedAtMs: 0,
+      container: 'mkv',
+      durationSeconds: 1800,
+      videoCodec: 'h264',
+      videoRange: 'sdr',
+      width: 1920,
+      height: 1080,
+      audioStreams: [],
+      subtitleStreams: [],
+    };
+
+    await db.insert(series).values({
+      id: 'held-show',
+      libraryId: 'films',
+      key: 'folder:/films/Show',
+      title: 'Show',
+      externalId: '4242',
+    });
+    await db.insert(mediaItem).values([
+      {
+        ...file,
+        id: 'held-film',
+        path: '/films/Film (2020)/Film.mkv',
+        externalId: '7007',
+        year: 2020,
+      },
+      {
+        ...file,
+        id: 'held-e1',
+        seriesId: 'held-show',
+        path: '/films/Show/Season 1/a.mkv',
+        seasonNumber: 1,
+        episodeNumber: 1,
+        year: 2019,
+      },
+      {
+        ...file,
+        id: 'held-e2',
+        seriesId: 'held-show',
+        path: '/films/Show/Season 1/b.mkv',
+        seasonNumber: 1,
+        episodeNumber: 2,
+        year: 2019,
+      },
+    ]);
+
+    const lookup = createDatabaseCatalogueLookup(db);
+
+    expect(await lookup.heldTitles()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'film',
+          id: 'held-film',
+          catalogueId: '7007',
+          year: 2020,
+          held: 1,
+          art: { kind: 'media', id: 'held-film' },
+        }),
+        expect.objectContaining({
+          kind: 'series',
+          id: 'held-show',
+          catalogueId: '4242',
+          held: 2,
+          year: 2019,
+          art: { kind: 'media', id: 'held-e1' },
+        }),
+      ]),
+    );
+    const episodes = await lookup.titleFiles('series', '4242');
+
+    expect(episodes.folder).toBe('/films/Show');
+    expect(episodes.files.find((one) => one.mediaId === 'held-e2')).toMatchObject({
+      season: 1,
+      episode: 2,
+      height: 1080,
+    });
+    expect(await lookup.titleFiles('film', '7007')).toMatchObject({
+      folder: null,
+      files: [{ mediaId: 'held-film', path: '/films/Film (2020)/Film.mkv' }],
+    });
+    expect(await lookup.titleFiles('album', 'x')).toEqual({ folder: null, files: [] });
+  });
 });

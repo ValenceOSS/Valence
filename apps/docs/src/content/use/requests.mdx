@@ -82,53 +82,57 @@ A request's badge tells you where it stands. The same labels appear in the admin
 
 Administrators manage requesting under the **Requests** heading of the admin area.
 
-| Panel     | Purpose                                                                      |
-| --------- | ---------------------------------------------------------------------------- |
-| Overview  | Whether the requests service answers, its version, the VPN and the indexers. |
-| Requested | Every request, with approve, refuse and troubleshooting actions.             |
-| Indexers  | The sites Valence searches for releases.                                     |
-| Search    | A manual search across every enabled indexer.                                |
-| Profiles  | Quality profiles that judge releases.                                        |
-| Downloads | The queue of downloads, and the download clients.                            |
+| Panel     | Purpose                                                                       |
+| --------- | ----------------------------------------------------------------------------- |
+| Overview  | Whether the requests service answers, its version, the VPN and the indexers.  |
+| Catalogue | Every title the libraries hold and every title asked for, with where each is. |
+| Indexers  | The sites Valence searches for releases.                                      |
+| Profiles  | Quality profiles that judge releases.                                         |
+| Downloads | The queue of downloads, and the download clients.                             |
 
 ### Overview
 
 The Overview panel checks that the requests service is answering, shows which version is running, tells you whether the VPN the downloads travel through is up, and lists how many indexers are switched on and which are failing. **Check now** asks again rather than waiting for the next scheduled check, which happens every five minutes by default (see [Jobs and logs](/use/jobs-and-logs)).
 
-### Approving and refusing
+### The Catalogue
 
-Open **Requested** to see everything asked for, filtered by kind and by where it stands, or searched by title or by who asked.
+The **Catalogue** lists every title the libraries hold and every title asked for, one poster each, with a tab for each kind of library the server has: Films, Shows, Music and Books. A bar along the foot of each poster says where the title stands, filled to how much of it is in the library, and hovering it says so in words.
 
-- **Approve** opens a dialog where you may change the **Quality** profile the release is judged by, and the **Library** it is filed into, before the search begins.
-- **Decline** takes an optional reason, shown to whoever asked. Nothing is fetched, and the request can be approved later.
-- Tick several requests waiting on approval to approve or refuse them together. A reason on a bulk refusal is shown to everybody who asked for one of them.
+The tiles above the posters count the titles at each status and filter the grid to one of them:
 
-Approving and refusing need `requests.approve`. Seeing everybody's requests, and how their downloads are going, needs `requests.viewAll` (or approve or manage), which the Member role has. Without one of those, a person sees only their own. Anybody can cancel only their own requests.
+| Status         | Meaning                                                                  |
+| -------------- | ------------------------------------------------------------------------ |
+| In the library | Everything it follows is here.                                           |
+| Downloading    | Something of it is on its way.                                           |
+| Missing        | Something it follows is out but not here, or nothing of it is here yet.  |
+| To approve     | Someone asked for it, and it waits for approval.                         |
+| Failed         | Something of it failed, with the reason on its page.                     |
+| Not followed   | It's in the library, but nobody asked for it, so nothing new is fetched. |
 
-### Working on a single request
+Search by title, narrow a tab to one library where there's more than one of that kind, narrow Music to artists or albums and Books to ebooks or audiobooks, sort by when a title was added or by name, and choose how big the posters are. **Add a title** asks for something from the catalogues; for something no catalogue knows, **Search the indexers instead** searches every indexer by hand and files what you pick into a library. **Search all missing** searches again, now, for everything still missing.
 
-Each row has an actions menu.
+**Select several** puts a box on each title waiting for approval, to approve or decline several at once. A reason given when declining several is shown to everybody who asked for one of them.
 
-| Action               | What it does                                                                                                                        |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Open                 | Opens the finished item in the library.                                                                                             |
-| See what it has done | Opens the request's history.                                                                                                        |
-| Search again now     | Searches for a request that is wanted, without waiting for the next round. Not available for books or for requests already in hand. |
-| Mark as added        | Tells Valence the item is in the library, for a request you satisfied yourself.                                                     |
-| Pick a release       | Opens the releases tab so you can choose a specific release by hand.                                                                |
-| Pick by hand only    | Stops Valence choosing for this request. It is then only followed and filed once you pick a release.                                |
-| Forget               | Removes the request. Nothing more is fetched, and whatever it already brought stays in the library.                                 |
+Approving and declining need `requests.approve`. Seeing everybody's requests, and how their downloads are going, needs `requests.viewAll` (or approve or manage), which the Member role has. Without one of those, a person sees only their own. Anybody can cancel only their own requests.
 
-The request detail dialog holds four tabs:
+### A title's page
 
-- **Progress** shows the current downloads with pause and resume.
-- **Releases** lists every release the indexers offered and how each was judged.
-- **History** is the request's log, for finding out why something happened.
-- **Blocklist** is the **blocklist**: releases that failed for this request and will not be tried again. Remove an entry to allow it.
+Open a poster for the title's own page. It shows the title, where it stands, who asked and when, and what can be done:
+
+- **Approve** and **Decline…**, while it waits for approval. Declining takes an optional note, shown to whoever asked.
+- **Search missing** searches now for whatever of it is missing.
+- **Interactive search** lists every release the indexers have for it, judged by its quality profile and best first, with refused ones and why. Picking one fetches it at once: anything already downloading for the same episodes is stopped and blocked, so it isn't picked again.
+- The **…** menu has **Edit** (quality profile, library and seasons), **Fetch only releases I pick** (or **Search for it automatically**), **Mark as in the library**, for something added by hand, and **Remove…**. Removing stops its downloads, and can also delete the files it added to the library. Your own files are never touched.
+
+**Progress** shows a bar of everything the title waits for, coloured by where each part stands, and one row for each download, season packs and single episodes alike. The cross on a row stops that download, then finds a different release, opens interactive search to pick one yourself, or stops getting what it was for. Deleting what it downloaded so far is a choice.
+
+A show's **Seasons** each have a bar of their episodes, a count of how many are here and a switch to follow it. Open a season for its episodes: when each aired, where it stands, the reason on hover where something went wrong, and its file. An artist's page lists its albums the same way. Following a season of a show nobody asked for, or pressing **Follow** on any title nobody asked for, starts fetching it.
+
+**Details** and **On disk** say its quality profile, library and folder, and the files the library holds of it. **Activity** is everything its request has done, newest first, and **Never again** lists the releases it won't try again. Remove an entry to let one be tried again.
 
 ### Refetch media
 
-Anything still wanted is searched for again by itself every few hours, and again shortly after the service starts, which also catches things that came out while it was down. **Refetch media** on the Requested panel runs that search now. The service also reads the newest releases on every indexer about every quarter of an hour, so a release appearing on an indexer can be picked up without waiting for the full search.
+Anything still wanted is searched for again by itself every few hours, and again shortly after the service starts, which also catches things that came out while it was down. **Search all missing** in the Catalogue runs that search now. The service also reads the newest releases on every indexer about every quarter of an hour, so a release appearing on an indexer can be picked up without waiting for the full search.
 
 If a download fails, or runs into trouble that the **Rules** tab of the **Downloads** panel gives up on, Valence removes it, blocklists that release for that request and looks for the next best at once. If filing fails, it tries a few times before marking the item as **Failed** for you to look at.
 
@@ -144,10 +148,11 @@ An indexer is a site Valence can search for releases. The **Indexers** panel sho
 
 - Add one from the catalogue of supported sites, or add a Torznab or Newznab indexer directly.
 - **Test** checks a kept indexer and reads what it can search again. You can also try an indexer before keeping it.
+- **Test search** searches that indexer alone, to see what it answers and how long it takes.
 - **Test all**, in the panel's corner, tests every indexer that is on, and every one Valence turned off for failing, then says which did not answer and why. It leaves alone the ones you switched off.
 - **Disable** and **Enable** take an indexer out of and back into rotation. **Remove** forgets it and its key.
 
-The **Search** panel searches every enabled indexer at once, by title, mode (anything, films, series, music, books), season and episode. From a result you can send it to a download client, copy the magnet link or save the torrent or NZB file.
+Searching the indexers by hand, by title, mode (anything, films, series, music, books), season and episode, opens from **Search the indexers instead** in **Add a title**, from **Test search** on an indexer, and from **Try it** on a quality profile, which ranks what's found by that profile. From a result you can send it to a download client, copy the magnet link or save the torrent or NZB file.
 
 ![The Indexers panel listing indexers with priority, searches and state badges.](/screenshots/admin-indexers.png)
 

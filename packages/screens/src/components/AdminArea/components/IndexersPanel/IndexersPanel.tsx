@@ -10,10 +10,12 @@ import {
   Pen as PenFilledIcon,
   Plug as PlugFilledIcon,
   Plus as PlusFilledIcon,
+  SearchList as SearchListFilledIcon,
   ToggleOff as ToggleOffIcon,
   ToggleOn as ToggleOnIcon,
 } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
+import { ReleaseSearchDialog } from '@ValenceScreens/components/AdminArea/components/ReleaseSearchDialog/ReleaseSearchDialog';
 import { Badge } from '@ValenceUI/Badge';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -68,6 +70,7 @@ const IndexersPanel = () => {
   const apps = useQuery(requestsQueries.arrApps());
   const [isImporting, setIsImporting] = useState(false);
   const [editing, setEditing] = useState<Indexer | null>(null);
+  const [searchingOn, setSearchingOn] = useState<Indexer | null>(null);
   const [isChoosing, setIsChoosing] = useState(false);
   const [start, setStart] = useState<IndexerStart | null>(null);
   const [removing, setRemoving] = useState<Indexer | null>(null);
@@ -286,6 +289,16 @@ const IndexersPanel = () => {
                       },
                     },
                     {
+                      id: 'testSearch',
+                      label: say('screens.adminArea.indexersPanel.testSearch'),
+                      detail: say('screens.adminArea.indexersPanel.searchesItAloneSoYouSee'),
+                      icon: <Icon of={SearchListFilledIcon} size={15} />,
+                      isDisabled: !row.original.isEnabled,
+                      onChoose: () => {
+                        setSearchingOn(row.original);
+                      },
+                    },
+                    {
                       id: 'switch',
                       label: row.original.isEnabled
                         ? say('common.switchOff')
@@ -359,6 +372,19 @@ const IndexersPanel = () => {
         </>
       }
     >
+      <ReleaseSearchDialog
+        title={
+          searchingOn === null
+            ? null
+            : say('screens.adminArea.indexersPanel.testSearchOnName', { name: searchingOn.name })
+        }
+        detail={say('screens.adminArea.indexersPanel.searchesItAloneSoYouSee')}
+        indexerIds={searchingOn === null ? [] : [searchingOn.id]}
+        onClose={() => {
+          setSearchingOn(null);
+        }}
+      />
+
       <IndexerCatalogueDialog
         isOpen={isChoosing}
         onClose={() => {
