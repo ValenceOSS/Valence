@@ -1,23 +1,29 @@
-import { useEffect, useState } from 'react';
-import { Animated, Easing, StyleSheet } from 'react-native';
+import { useEffect } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { useDrawnElement } from '@ValenceTv/web/useDrawnElement';
-import { useKeepsStill } from '@ValenceTv/platform/useKeepsStill';
 import type { LiftOnFocusProps } from './LiftOnFocus.types';
 
-const LIFT_MS = 200;
+const RING_WIDTH = 3;
 
-const SHADOW = { blur: 28, drop: 18, opacity: 0.55 };
+const RING_GAP = 2;
+
+const RING_COLOUR = '#ffffff';
 
 /**
- * Lifts what it holds while the remote is anywhere inside it, for a television's browser: it grows
- * by the given scale, from its left edge where asked, and a shadow fades in beneath the picture.
+ * Marks what the remote is on, for a television's browser. A card gets a white ring around its
+ * picture; anything else, such as a button, grows by the given scale, from its left edge where asked.
  *
- * @param scale - How far it lifts.
- * @param shadowHeight - How tall the picture casting the shadow is, from the top, or nought for none.
+ * Nothing is animated and React draws nothing again: landing and leaving set one style on the page
+ * directly. On a television the card grows and casts a shadow, but in a browser that meant drawing
+ * a large blurred shadow and redrawing two cards through React on every press of the remote, which
+ * an LG set felt. A ring is a border, which costs next to nothing to show.
+ *
+ * @param scale - How far something that is not a card grows.
+ * @param shadowHeight - How tall a card's picture is, from the top, or nought for what is not a card.
  * @param cornerRadius - How rounded that picture is.
  * @param isAnchoredLeft - Whether it grows from its left edge, as a row in a list does.
  * @param style - How it is laid out.
- * @param children - What is lifted.
+ * @param children - What is marked.
  */
 const LiftOnFocus = ({
   scale,
@@ -28,8 +34,8 @@ const LiftOnFocus = ({
   children,
 }: LiftOnFocusProps) => {
   const [element, drawn] = useDrawnElement();
-  const [lift] = useState(() => new Animated.Value(0));
-  const isStill = useKeepsStill();
+  const [ring, drawnRing] = useDrawnElement();
+  const isCard = shadowHeight > 0;
 
   useEffect(() => {
     if (element === null) {
@@ -37,30 +43,26 @@ const LiftOnFocus = ({
     }
 
     /**
-     * Eases the lift towards being on or off.
+     * Shows the remote is here, or that it has gone.
      *
-     * @param to - Nought for resting, one for lifted.
+     * @param isHere - Whether it is here.
      */
-    const ease = (to: number) => {
-      if (isStill) {
-        lift.setValue(to);
+    const mark = (isHere: boolean) => {
+      if (ring !== null) {
+        ring.style.opacity = isHere ? '1' : '0';
 
         return;
       }
 
-      Animated.timing(lift, {
-        toValue: to,
-        duration: LIFT_MS,
-        easing: Easing.out(Easing.quad),
-        useNativeDriver: false,
-      }).start();
+      element.style.transform = isHere ? `scale(${scale.toString()})` : '';
+      element.style.zIndex = isHere ? '1' : '';
     };
     const landed = () => {
-      ease(1);
+      mark(true);
     };
     const left = (event: FocusEvent) => {
       if (!(event.relatedTarget instanceof Node) || !element.contains(event.relatedTarget)) {
-        ease(0);
+        mark(false);
       }
     };
 
@@ -71,47 +73,39 @@ const LiftOnFocus = ({
       element.removeEventListener('focusin', landed);
       element.removeEventListener('focusout', left);
     };
-  }, [element, isStill, lift]);
+  }, [element, ring, scale]);
 
   return (
-    <Animated.View
+    <View
       ref={drawn}
-      style={[
-        style,
-        {
-          transformOrigin: isAnchoredLeft ? 'left center' : 'center',
-          transform: [{ scale: lift.interpolate({ inputRange: [0, 1], outputRange: [1, scale] }) }],
-          zIndex: lift.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
-        },
-      ]}
+      style={[style, { transformOrigin: isAnchoredLeft ? 'left center' : 'center' }]}
     >
-      {shadowHeight > 0 ? (
-        <Animated.View
+      {children}
+      {isCard ? (
+        <View
+          ref={drawnRing}
           pointerEvents="none"
           style={[
-            styles.shadow,
-            { height: shadowHeight, borderRadius: cornerRadius, opacity: lift },
+            styles.ring,
+            { height: shadowHeight + RING_GAP * 2, borderRadius: cornerRadius + RING_GAP },
           ]}
         />
       ) : null}
-      {children}
-    </Animated.View>
+    </View>
   );
 };
 
 LiftOnFocus.displayName = 'LiftOnFocus';
 
 const styles = StyleSheet.create({
-  shadow: {
+  ring: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#000000',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: SHADOW.drop },
-    shadowOpacity: SHADOW.opacity,
-    shadowRadius: SHADOW.blur,
+    top: -RING_GAP,
+    left: -RING_GAP,
+    right: -RING_GAP,
+    borderWidth: RING_WIDTH,
+    borderColor: RING_COLOUR,
+    opacity: 0,
   },
 });
 
