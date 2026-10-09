@@ -24,9 +24,14 @@ const foldCopiesHere = async (
     .from(library)
     .where(eq(library.id, libraryId));
 
-  if (shelf === undefined || (shelf.kind !== 'movies' && shelf.kind !== 'shows')) {
+  if (
+    shelf === undefined ||
+    (shelf.kind !== 'movies' && shelf.kind !== 'shows' && shelf.kind !== 'anime')
+  ) {
     return 0;
   }
+
+  const isEpisodic = shelf.kind !== 'movies';
 
   const theirs = await db
     .select({
@@ -87,7 +92,7 @@ const foldCopiesHere = async (
 
   for (const row of ours) {
     for (const key of [
-      shelf.kind === 'shows' ? episodeKey(row) : null,
+      isEpisodic ? episodeKey(row) : null,
       shelf.kind === 'movies' && row.externalId !== null ? `x:${row.externalId}` : null,
       shelf.kind === 'movies' && row.imdbId !== null ? `i:${row.imdbId}` : null,
     ]) {
@@ -98,13 +103,12 @@ const foldCopiesHere = async (
   }
 
   const folds = theirs.flatMap((row) => {
-    const keys =
-      shelf.kind === 'shows'
-        ? [episodeKey(row)]
-        : [
-            row.externalId === null ? null : `x:${row.externalId}`,
-            row.imdbId === null ? null : `i:${row.imdbId}`,
-          ];
+    const keys = isEpisodic
+      ? [episodeKey(row)]
+      : [
+          row.externalId === null ? null : `x:${row.externalId}`,
+          row.imdbId === null ? null : `i:${row.imdbId}`,
+        ];
     const here = keys.map((key) => (key === null ? undefined : byKey.get(key))).find(Boolean);
 
     return here === undefined ? [] : [{ id: row.id, parentId: here, height: row.height }];

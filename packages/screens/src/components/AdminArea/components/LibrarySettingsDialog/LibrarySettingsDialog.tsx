@@ -1,3 +1,4 @@
+import { isEpisodicKind } from '@ValenceContracts/functions/isEpisodicKind';
 import type { HigherProfileAsks } from '@ValenceContracts/schemas/HigherProfileAsks';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { Icon } from '@ValenceUI/Icon';
@@ -102,6 +103,7 @@ const LibrarySettingsDialog = ({
   const keepsTogetherId = useId();
   const languageOptions = buildLanguageOptions();
 
+  const [holds, setHolds] = useState(library?.kind ?? null);
   const [selected, setSelected] = useState(library?.defaultAudioLanguage ?? NONE_ID);
   const [atOnce, setAtOnce] = useState(library?.filesAtOnce?.toString() ?? SERVER_ID);
   const [takesRequests, setTakesRequests] = useState(library?.takesRequests ?? true);
@@ -117,6 +119,7 @@ const LibrarySettingsDialog = ({
   const [confirming, setConfirming] = useState<{ saved: Library; label: string } | null>(null);
 
   const reset = () => {
+    setHolds(library?.kind ?? null);
     setSelected(library?.defaultAudioLanguage ?? NONE_ID);
     setAtOnce(library?.filesAtOnce?.toString() ?? SERVER_ID);
     setTakesRequests(library?.takesRequests ?? true);
@@ -149,7 +152,8 @@ const LibrarySettingsDialog = ({
       return;
     }
 
-    const handedTo = readFulfilmentForm(fulfilment, arrKindOf(library.kind));
+    const kind = holds ?? library.kind;
+    const handedTo = readFulfilmentForm(fulfilment, arrKindOf(kind));
 
     if (handedTo.problem !== null) {
       setError(handedTo.problem);
@@ -164,6 +168,7 @@ const LibrarySettingsDialog = ({
       const defaultAudioLanguage = selected === NONE_ID ? null : selected;
       const changed = defaultAudioLanguage !== (library.defaultAudioLanguage ?? null);
       const updated = await updateLibrary(library.id, {
+        ...(kind !== library.kind && isEpisodicKind(kind) ? { kind } : {}),
         defaultAudioLanguage,
         filesAtOnce: atOnce === SERVER_ID ? null : Number.parseInt(atOnce, 10),
         takesRequests,
@@ -207,7 +212,7 @@ const LibrarySettingsDialog = ({
     return null;
   }
 
-  const arrKind = arrKindOf(library.kind);
+  const arrKind = arrKindOf(holds ?? library.kind);
   const canHandOff = arrApps.some((app) => app.kind === arrKind);
   const isHandedOff = arrKind !== null && fulfilment.appId !== VALENCE;
   const selectedLabel = languageOptions.find((option) => option.id === selected)?.label ?? selected;
@@ -229,6 +234,61 @@ const LibrarySettingsDialog = ({
       {confirming === null ? (
         <>
           <DialogContent className="flex flex-col gap-6">
+            {isEpisodicKind(library.kind) ? (
+              <fieldset className="flex flex-col gap-2">
+                <legend className="text-sm font-medium text-text">
+                  {say('screens.adminArea.librarySettingsDialog.holds')}
+                </legend>
+
+                <p className="text-xs text-text-muted">
+                  {say(
+                    'screens.adminArea.librarySettingsDialog.animeLibrariesKeepJapaneseAnimation',
+                  )}
+                </p>
+
+                {library.kind === 'shows' &&
+                library.flavour !== null &&
+                library.flavour !== undefined &&
+                library.flavour !== '' ? (
+                  <p className="text-xs text-text-muted">
+                    {say('screens.adminArea.librarySettingsDialog.thisLibraryWasAddedAsFlavour', {
+                      flavour: library.flavour,
+                    })}
+                  </p>
+                ) : null}
+
+                <OptionMenu
+                  label={say('screens.adminArea.librarySettingsDialog.holds')}
+                  groups={[
+                    {
+                      name: say('screens.adminArea.librarySettingsDialog.holds'),
+                      selectedId: holds ?? library.kind,
+                      onSelect: (chosen) => {
+                        setHolds(chosen === 'anime' ? 'anime' : 'shows');
+                      },
+                      options: [
+                        { id: 'shows', label: say('common.series') },
+                        { id: 'anime', label: say('common.anime') },
+                      ],
+                    },
+                  ]}
+                  trigger={
+                    <>
+                      <span className="truncate">
+                        {(holds ?? library.kind) === 'anime'
+                          ? say('common.anime')
+                          : say('common.series')}
+                      </span>
+                      <Icon of={ChevronsUpDownIcon} size={15} tone="muted" className="shrink-0" />
+                    </>
+                  }
+                  triggerShape="field"
+                  align="start"
+                  matchTriggerWidth
+                />
+              </fieldset>
+            ) : null}
+
             <fieldset className="flex flex-col gap-2">
               <legend className="text-sm font-medium text-text">
                 {say('screens.adminArea.librarySettingsDialog.forceDefaultAudioTrack')}
@@ -411,7 +471,7 @@ const LibrarySettingsDialog = ({
                     </p>
                   </div>
 
-                  {library.kind === 'shows' ? (
+                  {isEpisodicKind(library.kind) ? (
                     <div className="flex flex-col gap-1">
                       <Switch
                         label={say(

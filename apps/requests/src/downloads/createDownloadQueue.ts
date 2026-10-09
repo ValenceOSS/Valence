@@ -1,5 +1,6 @@
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { randomUUID } from 'node:crypto';
+import { categoryKindOf } from '@ValenceContracts/functions/categoryKindOf';
 import { PROTOCOL_OF_CLIENT } from '@ValenceContracts/schemas/DownloadClient';
 import { ReleaseSendSchema } from '@ValenceContracts/schemas/DownloadQueue';
 import { DownloadClientFailure } from '@ValenceRequests/downloads/DownloadClientFailure';
@@ -591,7 +592,7 @@ const createDownloadQueue = ({
       try {
         remoteId = await clients
           .adapterOf(client)
-          .add(file, read.title, client.categories[read.libraryKind]);
+          .add(file, read.title, client.categories[categoryKindOf(read.libraryKind)]);
       } catch (error) {
         return error instanceof DownloadClientFailure
           ? { refused: error.said, problemCode: error.problemCode }

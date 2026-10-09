@@ -26,6 +26,17 @@ describe('libraryChoicesFor', () => {
     expect(choices.shows).toBeUndefined();
   });
 
+  it('offers anime libraries beside series ones, under the programmes place', () => {
+    const choices = libraryChoicesFor(
+      [library('a', 'shows'), library('b', 'anime')],
+      [],
+      null,
+      vi.fn(),
+    );
+
+    expect(choices.shows?.options.map((option) => option.id)).toEqual(['all', 'a', 'b']);
+  });
+
   it('marks the library the address names, and all of them otherwise', () => {
     const libraries = [library('a', 'movies'), library('b', 'movies')];
 

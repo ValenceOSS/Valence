@@ -71,6 +71,7 @@ const createDatabaseMediaRefs = (
       case 'movies':
         return 'film';
       case 'shows':
+      case 'anime':
         return 'episode';
       case 'music':
         return 'track';
@@ -259,7 +260,7 @@ const createDatabaseMediaRefs = (
         case 'film':
           return ['movies'];
         case 'episode':
-          return ['shows'];
+          return ['shows', 'anime'];
         case 'track':
           return ['music'];
         case 'series':

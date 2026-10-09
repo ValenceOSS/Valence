@@ -1,3 +1,4 @@
+import { isEpisodicKind } from '@ValenceContracts/functions/isEpisodicKind';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
@@ -38,7 +39,7 @@ const useDiscordSamples = (): DiscordSamples => {
   const [at, setAt] = useState(Math.random);
   const libraries = useQuery(libraryQueries.all());
   const filmLibraries = (libraries.data ?? []).filter((library) => library.kind === 'movies');
-  const showLibraries = (libraries.data ?? []).filter((library) => library.kind === 'shows');
+  const showLibraries = (libraries.data ?? []).filter((library) => isEpisodicKind(library.kind));
   const films = useQuery(
     libraryQueries.across(
       filmLibraries.map((library) => library.id),

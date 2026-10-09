@@ -76,7 +76,7 @@ import { useStockedKinds } from '@ValenceClient/library/useStockedKinds';
 import { giveFocusTo } from '@ValenceTv/navigation/giveFocusTo';
 import { nativeTagOf } from '@ValenceTv/navigation/nativeTagOf';
 
-const WATCHABLE = new Set(['movies', 'shows']);
+const WATCHABLE = new Set(['movies', 'shows', 'anime']);
 
 const UNDER_THE_BAR = 130;
 

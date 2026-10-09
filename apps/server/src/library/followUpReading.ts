@@ -1,3 +1,4 @@
+import { isEpisodicKind } from '@ValenceContracts/functions/isEpisodicKind';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 
 type FollowUps = {
@@ -29,7 +30,7 @@ const followUpReading = async (
 
   await work.fetchLogos(libraryId);
 
-  if (kind === 'shows') {
+  if (kind !== undefined && isEpisodicKind(kind)) {
     await work.detectSegments(libraryId);
   }
 

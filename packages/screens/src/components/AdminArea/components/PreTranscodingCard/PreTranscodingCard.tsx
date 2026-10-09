@@ -59,7 +59,7 @@ const SCHEDULE_CHOICES = [
   { id: 'untilDone', label: say('screens.adminArea.preTranscodingCard.untilEverythingIsDone') },
 ] as const;
 
-const VIDEO_LIBRARY_KINDS: readonly string[] = ['movies', 'shows'];
+const VIDEO_LIBRARY_KINDS: readonly string[] = ['movies', 'shows', 'anime'];
 
 /**
  * Pre-transcoding, where it is set up and watched: a copy of each film and episode kept beside it

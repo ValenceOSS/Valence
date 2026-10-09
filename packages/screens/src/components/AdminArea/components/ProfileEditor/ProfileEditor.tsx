@@ -1,3 +1,4 @@
+import { isVideoKind } from '@ValenceContracts/functions/isVideoKind';
 import { accountHandleOf } from '@ValenceClient/accounts/accountHandleOf';
 import { notify } from '@ValenceUI/notify';
 import { useState } from 'react';
@@ -192,7 +193,7 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
 
   const isVideo = values.kind === 'video';
   const forKind = (libraries.data ?? []).filter((library) =>
-    isVideo ? library.kind === 'movies' || library.kind === 'shows' : library.kind === 'music',
+    isVideo ? isVideoKind(library.kind) : library.kind === 'music',
   );
 
   const send = (event: FormEvent) => {

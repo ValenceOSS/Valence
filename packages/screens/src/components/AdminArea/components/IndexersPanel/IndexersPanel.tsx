@@ -458,7 +458,7 @@ const IndexersPanel = () => {
         </p>
       )}
 
-      {isEveryLibraryHandedOff(libraries.data ?? [], ['movies', 'shows', 'music']) ? (
+      {isEveryLibraryHandedOff(libraries.data ?? [], ['movies', 'shows', 'anime', 'music']) ? (
         <p className="px-4 pt-3 text-sm text-text-muted">
           {say('screens.adminArea.indexersPanel.everyLibraryHandsOff')}
         </p>

@@ -2445,7 +2445,7 @@ const jobs = createJobQueue({
       ),
       [scheduleTriggerKind(DETECT_SEGMENTS_JOB)]: scheduleAcrossLibraries(
         (id) => libraryService.detectSegments(id),
-        ['shows'],
+        ['shows', 'anime'],
       ),
       [scheduleTriggerKind(RESET_LIBRARY_JOB)]: scheduleAcrossLibraries((id) =>
         libraryService.reset(id),

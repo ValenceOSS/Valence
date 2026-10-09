@@ -40,7 +40,7 @@ const SEARCH_DEBOUNCE_MS = 250;
 
 const HERO_SAMPLE = 200;
 
-const WATCHABLE: ReadonlySet<LibraryKind> = new Set(['movies', 'shows']);
+const WATCHABLE: ReadonlySet<LibraryKind> = new Set(['movies', 'shows', 'anime']);
 
 /**
  * The front of the server: a hero drawn from everything on it, and the rows beneath it.

@@ -44,7 +44,7 @@ const MOST_TRIES_A_TICK = 20;
 
 const FAILURES_BEFORE_GIVING_UP = 2;
 
-const VIDEO_LIBRARY_KINDS = ['movies', 'shows'];
+const VIDEO_LIBRARY_KINDS = ['movies', 'shows', 'anime'];
 
 const REFUSALS_THAT_PASS: readonly string[] = ['BeingWatched', 'AlreadyUnderWay'];
 

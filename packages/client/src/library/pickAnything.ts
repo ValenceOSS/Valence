@@ -1,3 +1,4 @@
+import { isEpisodicKind } from '@ValenceContracts/functions/isEpisodicKind';
 import { fetchLibraries, fetchLibraryItems } from '@ValenceClient/library/fetchLibrary';
 import { fetchShows } from '@ValenceClient/library/fetchShows';
 import { fetchAlbums } from '@ValenceClient/music/fetchMusic';
@@ -90,7 +91,7 @@ const pickAnything = async (only?: LibraryKind): Promise<Surprise | null> => {
       ...wanted
         .filter((entry) => entry.kind !== 'music')
         .map(async (entry) =>
-          entry.kind === 'shows'
+          isEpisodicKind(entry.kind)
             ? shelfOfShows(entry.id).catch(() => ({ total: 0, at: () => Promise.resolve(null) }))
             : shelfOfItems(entry.id).catch(() => ({ total: 0, at: () => Promise.resolve(null) })),
         ),

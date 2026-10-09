@@ -11,6 +11,10 @@ const WORDS = {
     filed: 'screens.releaseSearchPanel.describeWhereItGoes.asASeriesFiledIntoName',
     kept: 'screens.releaseSearchPanel.describeWhereItGoes.asASeriesNoLibrary',
   },
+  anime: {
+    filed: 'screens.releaseSearchPanel.describeWhereItGoes.asAnimeFiledIntoName',
+    kept: 'screens.releaseSearchPanel.describeWhereItGoes.asAnimeNoLibrary',
+  },
   music: {
     filed: 'screens.releaseSearchPanel.describeWhereItGoes.asMusicFiledIntoName',
     kept: 'screens.releaseSearchPanel.describeWhereItGoes.asMusicNoLibrary',

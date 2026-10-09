@@ -163,6 +163,7 @@ const NOT_STOOD: CatalogueStanding = {
 const LIBRARY_KIND_WORDS: Record<LibraryKind, string> = {
   movies: 'films',
   shows: 'series',
+  anime: 'anime',
   music: 'music',
   books: 'books',
 };
