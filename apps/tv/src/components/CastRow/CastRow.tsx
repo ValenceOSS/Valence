@@ -6,6 +6,7 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import type { CastRowProps } from './CastRow.types';
 import { say } from '@ValenceI18n/say';
 import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
+import { rowsRememberTheirPlace } from '@ValenceTv/focus/rowsRememberTheirPlace';
 
 const PORTRAIT = 132;
 
@@ -31,7 +32,7 @@ const CastRow = ({ cast, onOpen }: CastRowProps) => {
     <View style={styles.section}>
       <Text style={styles.heading}>{say('common.cast')}</Text>
 
-      <FocusGuide isRemembering>
+      <FocusGuide isRemembering={rowsRememberTheirPlace}>
         <FlatList
           horizontal
           data={shown}

@@ -58,6 +58,7 @@ const pictureFor = (media: MediaSummary, shape: MediaCardShape): string | null =
  * @param width - How wide it is, where it is sized to fill a grid rather than drawn at its shape's own
  *   size; it keeps its shape's proportions.
  * @param onFocus - Told when the remote lands on it.
+ * @param upTo - Where pressing up from it goes, where it should not be left to the television.
  */
 const MediaCard = ({
   media,
@@ -70,6 +71,7 @@ const MediaCard = ({
   isUrgent = false,
   width,
   onFocus,
+  upTo,
 }: MediaCardProps) => {
   const size = useMemo(() => {
     const natural = cardSizes[shape];
@@ -149,6 +151,7 @@ const MediaCard = ({
       label={origin === null ? name : `${name}, ${origin.label}`}
       shadow={{ height: size.height, cornerRadius: tokens.radii.xl }}
       hasPreferredFocus={hasPreferredFocus}
+      {...(upTo === undefined || upTo === null ? {} : { nextFocusUp: upTo })}
       scale={1.1}
       onPress={() => {
         onPress(media);

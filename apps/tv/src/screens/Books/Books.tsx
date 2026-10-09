@@ -15,6 +15,7 @@ import type { Book } from '@ValenceContracts/schemas/Book';
 import type { BooksProps } from './Books.types';
 import { say } from '@ValenceI18n/say';
 import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
+import { rowsRememberTheirPlace } from '@ValenceTv/focus/rowsRememberTheirPlace';
 
 const ACROSS = 6;
 
@@ -139,7 +140,7 @@ const BooksPage = ({ libraryIds, onOpen, onFeature, upTo }: BooksProps) => {
           <View style={styles.every}>
             <Text style={styles.title}>{say('tv.books.everyAudiobook')}</Text>
 
-            <FocusGuide isRemembering style={styles.grid}>
+            <FocusGuide isRemembering={rowsRememberTheirPlace} style={styles.grid}>
               {books.map((book, at) => (
                 <BookTile
                   key={book.id}

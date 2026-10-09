@@ -4,6 +4,7 @@ import { BookTile } from '@ValenceTv/components/BookTile/BookTile';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { BookShelfProps } from './BookShelf.types';
 import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
+import { rowsRememberTheirPlace } from '@ValenceTv/focus/rowsRememberTheirPlace';
 
 const IN_VIEW = 8;
 
@@ -20,7 +21,7 @@ const BookShelfRow = ({ title, books, onOpen, onFocus }: BookShelfProps) => (
   <View style={styles.shelf}>
     <Text style={styles.title}>{title}</Text>
 
-    <FocusGuide isRemembering>
+    <FocusGuide isRemembering={rowsRememberTheirPlace}>
       <FlatList
         horizontal
         initialNumToRender={IN_VIEW}

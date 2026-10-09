@@ -4,6 +4,7 @@ import { MusicTile } from '@ValenceTv/components/MusicTile/MusicTile';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { MusicShelfProps } from './MusicShelf.types';
 import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
+import { rowsRememberTheirPlace } from '@ValenceTv/focus/rowsRememberTheirPlace';
 
 const IN_VIEW = 8;
 
@@ -20,7 +21,7 @@ const MusicShelfRow = ({ title, items, onOpen, onFocus }: MusicShelfProps) => (
   <View style={styles.shelf}>
     <Text style={styles.title}>{title}</Text>
 
-    <FocusGuide isRemembering>
+    <FocusGuide isRemembering={rowsRememberTheirPlace}>
       <FlatList
         horizontal
         initialNumToRender={IN_VIEW}

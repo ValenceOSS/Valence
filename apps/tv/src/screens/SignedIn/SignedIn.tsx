@@ -759,6 +759,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
           hasMusic={hasMusic}
           hasBooks={hasBooks}
           rightOfTheBar={playingChip}
+          downFromTheBar={tab === 'home' ? heroPlay : null}
         />
       </FocusFence>
 
