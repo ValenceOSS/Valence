@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Plus, X } from '@keyline-icons/react-native';
 import { Play } from '@keyline-icons/react-native/fill';
@@ -40,11 +40,13 @@ const SEASON_SAYS: Record<CatalogueSeason['standing'], string | null> = {
  *
  * A film is asked for as it is. A show lists its seasons, every regular one still to be had chosen
  * to start with and Specials left for whoever wants them, and asks for those chosen, getting new
- * seasons as they come unless that is turned off. Where this viewer may pick the quality it is fetched in, asking
- * first lists the qualities on offer. A film already in the library opens its own page. Somebody's
- * own request can be cancelled until it is in the library; while something is on its way, the page
- * keeps looking for where it has got to, and while it downloads gives it a panel of its own saying
- * how far through it is, how fast it is arriving and how long is left. The page is lit by the title's own picture.
+ * seasons as they come unless that is turned off. Where this viewer may pick the quality it is
+ * fetched in, asking first lists the qualities on offer. A film already in the library opens its
+ * own page. Somebody's own request can be cancelled until it is in the library, once they have said
+ * so, since it throws away whatever has downloaded and a remote's one press is easily made; while
+ * something is on its way, the page keeps looking for where it has got to, and while it downloads
+ * gives it a panel of its own saying how far through it is, how fast it is arriving and how long is
+ * left. The page is lit by the title's own picture.
  *
  * @param kind - Whether it is a film or a show.
  * @param id - Its number in the film database.
@@ -162,15 +164,11 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
     send(asked);
   };
 
-  const cancel = () => {
-    if (requestId === null) {
-      return;
-    }
-
+  const cancel = (id: string) => {
     setIsBusy(true);
     setProblem(null);
 
-    void removeMediaRequest(requestId, true)
+    void removeMediaRequest(id, true)
       .then((refusal) => {
         if (refusal !== null) {
           setProblem(refusal.message);
@@ -183,6 +181,27 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
       .finally(() => {
         setIsBusy(false);
       });
+  };
+
+  const askToCancel = () => {
+    if (requestId === null) {
+      return;
+    }
+
+    Alert.alert(
+      say('common.cancelTitle', { title: title.title }),
+      say('common.itWillNotBeFetchedAnd'),
+      [
+        { text: say('common.keepIt'), style: 'cancel' },
+        {
+          text: say('common.cancelRequest'),
+          style: 'destructive',
+          onPress: () => {
+            cancel(requestId);
+          },
+        },
+      ],
+    );
   };
 
   const toggle = (season: number) => {
@@ -388,7 +407,7 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
               hasPreferredFocus={!isAskable && !isOpenable}
               onPress={() => {
                 if (!isBusy) {
-                  cancel();
+                  askToCancel();
                 }
               }}
             />

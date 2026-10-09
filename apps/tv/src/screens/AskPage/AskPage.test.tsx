@@ -1,3 +1,4 @@
+import { Alert } from 'react-native';
 import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
@@ -304,7 +305,14 @@ describe('AskPage', () => {
 
     expect(drawn.getByText('Missing')).toBeTruthy();
 
+    const alert = jest.spyOn(Alert, 'alert');
+
     await userEvent.press(drawn.getByRole('button', { name: 'Cancel request' }));
+
+    expect(removeMediaRequest).not.toHaveBeenCalled();
+    expect(alert.mock.calls[0]?.[2]?.[0]).toMatchObject({ text: 'Keep it', style: 'cancel' });
+
+    alert.mock.calls[0]?.[2]?.find((button) => button.text === 'Cancel request')?.onPress?.();
 
     await waitFor(() => {
       expect(removeMediaRequest).toHaveBeenCalledWith(REQUEST_ID, true);
