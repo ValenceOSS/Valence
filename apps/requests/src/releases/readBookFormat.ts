@@ -7,7 +7,7 @@ const BOOK_CATEGORIES = { from: 7000, to: 7999 };
 
 const HEARD = /\b(?:m4b|m4a|mp3|flac|aac|audiobooks?|audio ?book|unabridged|abridged|narrated)\b/i;
 
-const READ = /\b(?:epub|azw3?|mobi|kfx|pdf|cbz|cbr|ebooks?|kindle|retail)\b/i;
+const READ = /\b(?:epub|azw3?|mobi|kfx|pdf|cbz|cbr|ebooks?|kindle)\b/i;
 
 /**
  * Whether a release is a book to read or one to hear: by the categories its indexer filed it under

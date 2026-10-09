@@ -14,6 +14,12 @@ describe('readBookFormat', () => {
     expect(readBookFormat({ title: 'Author - Some Book.epub', categories: [] })).toBe('ebook');
   });
 
+  it('takes a retail audiobook for an audiobook, since retail says where it came from', () => {
+    expect(readBookFormat({ title: 'Author - Some Book (Retail) M4B', categories: [] })).toBe(
+      'audiobook',
+    );
+  });
+
   it('takes a book that says nothing for an ebook', () => {
     expect(readBookFormat({ title: 'Author - Some Book', categories: [] })).toBe('ebook');
   });

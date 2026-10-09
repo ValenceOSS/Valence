@@ -32,7 +32,11 @@ const BOOK_FORMATS = ['ebook', 'audiobook'] as const;
 
 const BookFormatSchema = z.enum(BOOK_FORMATS);
 
-const BookFormatsSchema = z.array(BookFormatSchema).min(1).max(BOOK_FORMATS.length);
+const BookFormatsSchema = z
+  .array(BookFormatSchema)
+  .min(1)
+  .max(BOOK_FORMATS.length)
+  .refine((formats) => new Set(formats).size === formats.length);
 
 const REQUEST_ITEM_STATES = [
   'waiting',

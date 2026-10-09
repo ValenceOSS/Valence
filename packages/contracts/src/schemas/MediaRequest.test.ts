@@ -48,6 +48,16 @@ describe('MediaRequestAskSchema', () => {
       }),
     ).toThrow();
   });
+
+  it('refuses a book asked for in the same format twice', () => {
+    expect(() =>
+      MediaRequestAskSchema.parse({
+        kind: 'book',
+        openLibraryId: 21_277_329,
+        bookFormats: ['ebook', 'ebook'],
+      }),
+    ).toThrow();
+  });
 });
 
 describe('RequestCatalogueSchema', () => {
