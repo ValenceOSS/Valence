@@ -47,7 +47,7 @@ describe('CalendarWeek', () => {
 
     expect(thursday.getAllByRole('listitem')).toHaveLength(4);
     expect(thursday.getByText('Another Show')).toBeInTheDocument();
-    expect(thursday.getByText('Available')).toBeInTheDocument();
+    expect(thursday.getByText('In the library')).toBeInTheDocument();
   });
 
   it('says each day with nothing on it has no releases', () => {

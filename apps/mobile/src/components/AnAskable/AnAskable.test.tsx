@@ -254,7 +254,7 @@ describe('AnAskable', () => {
 
     const drawn = await drawIt();
 
-    await drawn.findByText('Requested');
+    await drawn.findByText('Missing');
 
     expect(drawn.queryByRole('button', { name: 'Cancel request' })).toBeNull();
   });

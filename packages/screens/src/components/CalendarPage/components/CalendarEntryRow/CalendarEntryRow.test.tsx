@@ -34,14 +34,14 @@ describe('CalendarEntryRow', () => {
   it('says where it has got to, and who asked for it', () => {
     render(<CalendarEntryRow entry={ASKED} onOpen={vi.fn()} />);
 
-    expect(screen.getByText('Wanted')).not.toHaveClass('sr-only');
+    expect(screen.getByText('Missing')).not.toHaveClass('sr-only');
     expect(screen.getByText('Sam')).toBeInTheDocument();
   });
 
   it('says where it has got to with a sign and leaves out who asked when compact', () => {
     render(<CalendarEntryRow entry={ASKED} onOpen={vi.fn()} isCompact />);
 
-    expect(screen.getByText('Wanted')).toHaveClass('sr-only');
+    expect(screen.getByText('Missing')).toHaveClass('sr-only');
     expect(screen.queryByText('Sam')).not.toBeInTheDocument();
   });
 

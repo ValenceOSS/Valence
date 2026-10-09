@@ -22,7 +22,10 @@ describe('describeRequestFilters', () => {
       aMediaRequest({ state: 'refused' }),
     ]);
 
-    expect(where?.options.map((option) => option.label)).toEqual(['Awaiting approval', 'Declined']);
+    expect(where?.options.map((option) => option.label)).toEqual([
+      'Declined',
+      'Waiting for approval',
+    ]);
   });
 
   it('names the libraries requests are actually for, and nothing else', () => {

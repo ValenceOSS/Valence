@@ -42,6 +42,7 @@ const REQUEST = {
   refusedBecause: null,
   requestedBy: { id: 'someone', name: 'Someone' },
   seasons: null,
+  followsNewSeasons: false,
   releaseTypes: null,
   releaseDate: '2021-12-03',
   releaseDates: { theatrical: null, digital: null, physical: null },

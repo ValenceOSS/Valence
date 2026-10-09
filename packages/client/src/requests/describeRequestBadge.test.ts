@@ -32,7 +32,7 @@ const BEFORE_RELEASE = '2021-01-01';
 describe('describeRequestBadge', () => {
   it('says what a request waits for', () => {
     expect(describeRequestBadge(aMediaRequest({ state: 'awaitingApproval' })).label).toBe(
-      'Awaiting approval',
+      'Waiting for approval',
     );
     expect(describeRequestBadge(aMediaRequest({ state: 'waiting' }), BEFORE_RELEASE).detail).toBe(
       'Waiting until 3 Dec 2021, when its quality profile considers it released.',
@@ -84,7 +84,7 @@ describe('describeRequestBadge', () => {
         aMediaRequest({ kind: 'book', tmdbId: null, openLibraryId: 5, state: 'available' }),
         TODAY,
       ).label,
-    ).toBe('Done');
+    ).toBe('In the library');
   });
 
   it('says what has come out is queued for a search, not that it is not out yet', () => {
@@ -167,6 +167,6 @@ describe('describeRequestBadge', () => {
       (['searching', 'chosen', 'filing', 'filed', 'available'] as const).map(
         (state) => describeRequestBadge(aMediaRequest({ state })).label,
       ),
-    ).toEqual(['Searching', 'Release selected', 'Importing', 'Imported', 'Done']);
+    ).toEqual(['Searching', 'Downloading', 'Importing', 'Importing', 'In the library']);
   });
 });

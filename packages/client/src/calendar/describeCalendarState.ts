@@ -2,6 +2,7 @@ import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
 import { say } from '@ValenceI18n/say';
 import type { CalendarState } from '@ValenceContracts/schemas/ReleaseCalendar';
 import type { StateBadge } from '@ValenceClient/status/StateBadge';
+import { REQUEST_STATE_NAMES } from '@ValenceContracts/constants/REQUEST_STATE_NAMES';
 
 /**
  * Says where something on the release calendar has got to, in the looks the rest of the app uses
@@ -13,11 +14,11 @@ import type { StateBadge } from '@ValenceClient/status/StateBadge';
 const describeCalendarState = (state: CalendarState): StateBadge => {
   switch (state) {
     case 'available':
-      return { ...STATUS_LOOK.done, label: say('common.available'), detail: null };
+      return { ...STATUS_LOOK.done, label: REQUEST_STATE_NAMES.available, detail: null };
     case 'downloading':
       return { ...STATUS_LOOK.working, label: say('common.downloading'), detail: null };
     case 'wanted':
-      return { ...STATUS_LOOK.attention, label: say('common.wanted'), detail: null };
+      return { ...STATUS_LOOK.attention, label: REQUEST_STATE_NAMES.wanted, detail: null };
     case 'notOutYet':
       return { ...STATUS_LOOK.queued, tone: 'quiet', label: say('common.notOutYet'), detail: null };
     case 'notHeld':

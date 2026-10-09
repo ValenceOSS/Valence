@@ -34,9 +34,9 @@ describe('CalendarRow', () => {
     );
 
     expect(drawn.getByText('On disc')).toBeTruthy();
-    expect(drawn.getByText('Wanted   ·   Sam')).toBeTruthy();
+    expect(drawn.getByText('Missing   ·   Sam')).toBeTruthy();
     expect(
-      drawn.getByRole('button', { name: 'Dune   ·   On disc   ·   Wanted   ·   Sam' }),
+      drawn.getByRole('button', { name: 'Dune   ·   On disc   ·   Missing   ·   Sam' }),
     ).toBeTruthy();
   });
 

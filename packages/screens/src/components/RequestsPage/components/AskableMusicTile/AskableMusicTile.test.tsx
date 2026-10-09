@@ -21,7 +21,7 @@ describe('AskableMusicTile', () => {
 
     render(<AskableMusicTile title={ALBUM} onAsk={onAsk} />);
 
-    expect(screen.getByText('Band · Requested')).toBeInTheDocument();
+    expect(screen.getByText('Band · Searching')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: /Pylon/ }));
 

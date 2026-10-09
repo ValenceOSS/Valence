@@ -41,6 +41,6 @@ describe('describeCatalogueCard', () => {
     );
 
     expect(drawn.corner).toBeUndefined();
-    expect(drawn.badges).toEqual(['Film', 'Downloading to library']);
+    expect(drawn.badges).toEqual(['Film', 'Downloading']);
   });
 });

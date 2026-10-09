@@ -41,7 +41,7 @@ describe('RequestRow', () => {
       />,
     );
 
-    expect(drawn.getByText('Requested   ·   Requested by Sam')).toBeTruthy();
+    expect(drawn.getByText('Missing   ·   Requested by Sam')).toBeTruthy();
   });
 
   it('says how a download is going while it downloads', async () => {
@@ -72,7 +72,7 @@ describe('RequestRow', () => {
       />,
     );
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Dune, Requested' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Dune, Missing' }));
 
     expect(onPress).toHaveBeenCalledWith(request);
   });

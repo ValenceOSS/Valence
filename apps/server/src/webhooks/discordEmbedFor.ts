@@ -4,7 +4,7 @@ import { describeSpan } from './describeSpan';
 import { isListenedTo } from './isListenedTo';
 import { nameOfItem } from './nameOfItem';
 import { nameOfViewer } from './nameOfViewer';
-import { describeRequestState } from './describeRequestState';
+import { REQUEST_STATE_NAMES } from '@ValenceContracts/constants/REQUEST_STATE_NAMES';
 import { MEDIA_KIND_LABELS } from '@ValenceContracts/schemas/MediaKind';
 import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 import type { PlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
@@ -176,7 +176,7 @@ const requestPartsFor = (request: WebhookRequest, embed: RequestEmbed): EmbedPar
     posterUrl: request.posterUrl,
     fields: [
       field(say('screens.requests.describeRequestFilters.askedBy'), request.requestedBy),
-      field(say('common.status'), describeRequestState(request.state)),
+      field(say('common.status'), REQUEST_STATE_NAMES[request.state]),
       field(
         say('screens.seasonChooser.seasons'),
         request.kind === 'series' && request.seasons !== null ? request.seasons.join(', ') : null,

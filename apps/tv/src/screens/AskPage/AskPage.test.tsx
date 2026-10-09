@@ -302,7 +302,7 @@ describe('AskPage', () => {
       }),
     );
 
-    expect(drawn.getByText('Requested')).toBeTruthy();
+    expect(drawn.getByText('Missing')).toBeTruthy();
 
     await userEvent.press(drawn.getByRole('button', { name: 'Cancel request' }));
 

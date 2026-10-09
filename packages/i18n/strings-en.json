@@ -1290,11 +1290,6 @@
     "context": "The detail in the requests (from `describeItemBadge`). {airDate} is filled in by the app."
   },
   {
-    "handler": "client.requests.describeRequestBadge.awaitingApproval",
-    "text": "Awaiting approval",
-    "context": "The label in the requests (from `describeRequestBadge`)."
-  },
-  {
     "handler": "client.requests.describeRequestBadge.booksAreAddedToTheLibrary",
     "text": "Books are added to the library manually. It’ll appear here once it’s been added.",
     "context": "The detail in the requests (from `describeRequestBadge`)."
@@ -2901,11 +2896,6 @@
     "context": "Shown, used in several places, among them the title of the phone app and the requests (from `describeItemBadge`)."
   },
   {
-    "handler": "common.downloadingToLibrary",
-    "text": "Downloading to library",
-    "context": "Shown, used in several places, among them the request card in the account of the television app and the ask page of the television app."
-  },
-  {
     "handler": "common.downloads",
     "text": "Downloads",
     "context": "The label, used in several places, among them the signed in of the phone app and the downloads of the phone app."
@@ -3134,11 +3124,6 @@
     "handler": "common.fetchesEachNewSeasonAsIt",
     "text": "Fetches each new season as it airs. Specials are only fetched when ticked.",
     "context": "The description under the 'Get new seasons as they come' switch when asking for a show, on the web and phone."
-  },
-  {
-    "handler": "common.filed",
-    "text": "Imported",
-    "context": "The label, used in the requests (from `describeItemBadge`) and in the requests (from `describeRequestBadge`)."
   },
   {
     "handler": "common.files",
@@ -6478,11 +6463,6 @@
     "handler": "common.waitingForYou",
     "text": "Waiting for your review",
     "context": "Shown, used in the admin (from `describeReencodeState`) and in the encoding panel in the admin area."
-  },
-  {
-    "handler": "common.wanted",
-    "text": "Wanted",
-    "context": "The label, used in several places, among them the requests (from `describeItemBadge`) and the requests (from `describeRequestBadge`)."
   },
   {
     "handler": "common.warnings",

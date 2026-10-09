@@ -370,7 +370,6 @@ const ENGLISH = {
     'This needs a newer version of the server. Update the server to use it.',
   'client.requests.describeDownloadLine.underAMinuteLeft': 'Under a minute left',
   'client.requests.describeItemBadge.outAirDate': 'Out {airDate}.',
-  'client.requests.describeRequestBadge.awaitingApproval': 'Awaiting approval',
   'client.requests.describeRequestBadge.booksAreAddedToTheLibrary':
     'Books are added to the library manually. It’ll appear here once it’s been added.',
   'client.requests.describeRequestBadge.findingOutWhatThereIsTo': 'Searching for releases.',
@@ -715,7 +714,6 @@ const ENGLISH = {
   'common.downloaded': 'Downloaded',
   'common.downloadFailed': 'Download failed',
   'common.downloading': 'Downloading',
-  'common.downloadingToLibrary': 'Downloading to library',
   'common.downloads': 'Downloads',
   'common.downloadTitle': 'Download {title}',
   'common.durationIn': '{duration} in',
@@ -766,7 +764,6 @@ const ENGLISH = {
   'common.federationOutcome.tooMany': 'Rate limited',
   'common.fetchesEachNewSeasonAsIt':
     'Fetches each new season as it airs. Specials are only fetched when ticked.',
-  'common.filed': 'Imported',
   'common.files': 'Files',
   'common.filing': 'Importing',
   'common.film': 'Film',
@@ -1471,7 +1468,6 @@ const ENGLISH = {
   'common.volume': 'Volume',
   'common.waiting': 'Waiting',
   'common.waitingForYou': 'Waiting for your review',
-  'common.wanted': 'Wanted',
   'common.warnings': 'Warnings',
   'common.watch': 'Watch',
   'common.watchCredits': 'Watch Credits',

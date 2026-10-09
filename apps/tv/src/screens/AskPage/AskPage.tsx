@@ -219,10 +219,7 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
       }
     >
       {going === null ? null : (
-        <DownloadPanel
-          label={standing?.label ?? say('common.downloadingToLibrary')}
-          progress={going}
-        />
+        <DownloadPanel label={standing?.label ?? say('common.downloading')} progress={going} />
       )}
 
       {asking !== null && canRequest ? (

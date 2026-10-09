@@ -1,18 +1,21 @@
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { partsOfTimeLeft } from '@ValenceCore/functions/partsOfTimeLeft';
+import { describeDownloadHold } from '@ValenceClient/requests/describeDownloadHold';
 import type { RequestProgress } from '@ValenceContracts/schemas/CatalogueTitle';
 import { say } from '@ValenceI18n/say';
 
 /**
  * Says how a download is going in one line of words, for a screen that shows it as text rather
- * than as rolling numbers: how much of it has come, how fast it is coming, and how long is left.
+ * than as rolling numbers: whether it is paused, stalled or failed, how much of it has come, how
+ * fast it is coming, and how long is left.
  *
  * @param progress - How the download is going.
  * @returns Such as `40 MB of 120 MB · 2.1 MB/s · 3 min left`, or nothing where nothing is known —
  *   a size the download client has not learnt yet is left out rather than said as nothing.
  */
 const describeDownloadLine = (progress: RequestProgress): string | null => {
-  const parts: string[] = [];
+  const hold = describeDownloadHold(progress.state);
+  const parts: string[] = hold === null ? [] : [hold];
 
   if (progress.sizeBytes !== null && progress.sizeBytes > 0) {
     parts.push(
