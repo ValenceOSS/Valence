@@ -18,7 +18,9 @@ const BOOK_REQUEST_KINDS = ['book'] as const;
 
 const OpenLibraryIdSchema = z.number().int().positive();
 
-const RELEASE_TYPES = ['album', 'ep', 'single', 'live', 'compilation'] as const;
+const RELEASE_TYPES = ['album', 'mixtape', 'ep', 'single', 'live', 'compilation'] as const;
+
+const DEFAULT_RELEASE_TYPES: readonly ReleaseType[] = ['album', 'mixtape', 'ep'];
 
 const ReleaseTypeSchema = z.enum(RELEASE_TYPES);
 
@@ -467,6 +469,7 @@ export type {
 };
 
 export {
+  DEFAULT_RELEASE_TYPES,
   BOOK_REQUEST_KINDS,
   MEDIA_REQUEST_KINDS,
   MEDIA_REQUEST_STATES,

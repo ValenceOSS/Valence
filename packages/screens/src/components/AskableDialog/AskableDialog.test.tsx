@@ -489,7 +489,7 @@ describe('AskableDialog', () => {
       expect(askForMedia).toHaveBeenCalledWith({
         kind: 'artist',
         musicBrainzId: '83d91898-7763-47d7-b03b-b92132375c47',
-        releaseTypes: ['album', 'live'],
+        releaseTypes: ['album', 'mixtape', 'ep', 'live'],
       });
     });
 

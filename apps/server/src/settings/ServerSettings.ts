@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { AllowedAppsSchema, EVERY_APP_ALLOWED } from '@ValenceContracts/schemas/AllowedApps';
 import { PreviewQualitySchema } from '@ValenceContracts/schemas/PreviewQuality';
 import { RoundnessSchema } from '@ValenceContracts/schemas/Roundness';
-import { ReleaseTypesSchema } from '@ValenceContracts/schemas/MediaRequest';
+import { DEFAULT_RELEASE_TYPES, ReleaseTypesSchema } from '@ValenceContracts/schemas/MediaRequest';
 import {
   PRE_TRANSCODING_DEFAULTS,
   PreTranscodingSettingsSchema,
@@ -35,7 +35,7 @@ const ServerSettingsSchema = z.object({
   ownerAccountId: z.string().default(''),
   splashscreenFile: z.string().nullable().default(null),
   reencodesAwaitingReviewCap: z.number().int().positive().max(50).default(5),
-  requestReleaseTypes: ReleaseTypesSchema.default(['album']),
+  requestReleaseTypes: ReleaseTypesSchema.default([...DEFAULT_RELEASE_TYPES]),
   roundness: RoundnessSchema.default('default'),
   keepsDownloadsForDays: z.number().int().nonnegative().max(3650).default(14),
   preTranscoding: PreTranscodingSettingsSchema.default(PRE_TRANSCODING_DEFAULTS),

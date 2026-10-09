@@ -1,3 +1,4 @@
+import { DEFAULT_RELEASE_TYPES } from '@ValenceContracts/schemas/MediaRequest';
 import { notify } from '@ValenceUI/notify';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -133,7 +134,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
   const [musicMatches, setMusicMatches] = useState<MusicCatalogueHit[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [chosen, setChosen] = useState<Chosen | null>(null);
-  const [releaseTypes, setReleaseTypes] = useState<ReleaseType[]>(['album']);
+  const [releaseTypes, setReleaseTypes] = useState<ReleaseType[]>([...DEFAULT_RELEASE_TYPES]);
   const [seasons, setSeasons] = useState<number[] | null>(null);
   const [followsNew, setFollowsNew] = useState(true);
   const [isPickedByHand, setIsPickedByHand] = useState(false);

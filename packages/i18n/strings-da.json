@@ -1410,6 +1410,16 @@
     "context": "The label in the release type names in the requests."
   },
   {
+    "handler": "client.requests.releaseTypeNames.mixtape",
+    "text": "Mixtape",
+    "context": "One release of the mixtape kind, such as on an album card."
+  },
+  {
+    "handler": "client.requests.releaseTypeNames.mixtapes",
+    "text": "Mixtapes",
+    "context": "A kind of release an artist can be followed for: records MusicBrainz lists as mixtapes or street albums."
+  },
+  {
     "handler": "client.requests.releaseTypeNames.single",
     "text": "Single",
     "context": "Shown in the release type names in the requests."

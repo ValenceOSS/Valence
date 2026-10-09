@@ -3,6 +3,10 @@ import { say } from '@ValenceI18n/say';
 
 const RELEASE_TYPE_NAMES: Readonly<Record<ReleaseType, { label: string; one: string }>> = {
   album: { label: say('common.albums'), one: say('common.album') },
+  mixtape: {
+    label: say('client.requests.releaseTypeNames.mixtapes'),
+    one: say('client.requests.releaseTypeNames.mixtape'),
+  },
   ep: { label: say('client.requests.releaseTypeNames.ePs'), one: 'EP' },
   single: {
     label: say('client.requests.releaseTypeNames.singles'),
