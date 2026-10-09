@@ -12,6 +12,7 @@ import { createRequestService } from './createRequestService';
 import { createMemoryRequestLogStore } from './createMemoryRequestLogStore';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { HandedTo } from '@ValenceContracts/schemas/ArrApp';
+import type { Release, ReleaseSearchOutcome } from '@ValenceContracts/schemas/Indexer';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
 
@@ -25,17 +26,19 @@ const DUNE = {
   catalogue: { title: 'Dune', year: 2021 },
 };
 
+type RouteHandOff = {
+  searchNow: (id: string) => Promise<boolean>;
+  handedTo: (id: string) => Promise<HandedTo | null>;
+  releasesFor: (id: string) => Promise<ReleaseSearchOutcome | null>;
+  pick: (id: string, release: Release) => Promise<Said | null>;
+};
+
 /**
  * The routes over no requests to begin with, and a worker that answers as told.
  */
 const theRoutes = (
   picked: MediaRequest | { refused: Said } | null = null,
-  handOff:
-    | {
-        searchNow: (id: string) => Promise<boolean>;
-        handedTo: (id: string) => Promise<HandedTo | null>;
-      }
-    | undefined = undefined,
+  handOff: Partial<RouteHandOff> = {},
 ) => {
   const worker = {
     searchMissing: vi.fn(() =>
@@ -79,7 +82,13 @@ const theRoutes = (
       items: createMemoryRecordStore<RequestItemRecord>(),
     }),
     worker,
-    ...(handOff === undefined ? {} : { handOff }),
+    handOff: {
+      searchNow: () => Promise.resolve(false),
+      handedTo: () => Promise.resolve(null),
+      releasesFor: () => Promise.resolve(null),
+      pick: () => Promise.resolve(sayVerbatim('Not handed off')),
+      ...handOff,
+    },
   });
 
   const ask = (path: string, method = 'GET', body?: object) =>
@@ -161,6 +170,32 @@ describe('createRequestRoutes', () => {
     handedTo.mockResolvedValue(null);
 
     expect((await ask(`/requests/${id}/handed-to`)).status).toBe(404);
+  });
+
+  it('lists a handed-off request’s releases from its app, and sends the one picked there', async () => {
+    const releasesFor = vi.fn((): Promise<ReleaseSearchOutcome | null> =>
+      Promise.resolve({ releases: [], indexers: [], judgements: [], pickedId: null }),
+    );
+    const pick = vi.fn((): Promise<Said | null> => Promise.resolve(null));
+    const { ask } = theRoutes(null, { releasesFor, pick });
+    const id = await madeDune(ask);
+    const release = aRelease('Dune.2021.1080p');
+
+    expect((await ask(`/requests/${id}/hand-off/releases`)).status).toBe(200);
+    expect(releasesFor).toHaveBeenCalledWith(id);
+    expect(
+      MediaRequestSchema.parse(
+        await (await ask(`/requests/${id}/hand-off/pick`, 'POST', { release })).json(),
+      ).id,
+    ).toBe(id);
+    expect(pick).toHaveBeenCalledWith(id, release);
+
+    pick.mockResolvedValue(sayVerbatim('Radarr said no'));
+    releasesFor.mockResolvedValue(null);
+
+    expect((await ask(`/requests/${id}/hand-off/pick`, 'POST', { release })).status).toBe(400);
+    expect((await ask(`/requests/${id}/hand-off/pick`, 'POST', {})).status).toBe(400);
+    expect((await ask(`/requests/${id}/hand-off/releases`)).status).toBe(404);
   });
 
   it('keeps only a film in two versions', async () => {

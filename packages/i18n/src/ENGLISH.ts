@@ -2373,6 +2373,7 @@ const ENGLISH = {
   'requests.arrApps.arrCaller.nameAnsweredStatusComplaint':
     '{name} returned HTTP {status}: {complaint}',
   'requests.arrApps.arrCaller.nameRefusedItsApiKey': '{name} rejected its API key',
+  'requests.arrApps.handOff.askedNameToFetchTitle': 'Asked {name} to fetch {title}.',
   'requests.arrApps.handOff.askedNameToSearchAgain': 'Asked {name} to search for it again.',
   'requests.arrApps.handOff.handedToName': 'Sent to {name}.',
   'requests.arrApps.handOff.itHasNoMusicBrainzIdToHandOver':
@@ -2388,6 +2389,8 @@ const ENGLISH = {
   'requests.arrApps.handOff.nameSaidProblem': '{name} couldn’t add it: {problem}',
   'requests.arrApps.handOff.sonarrCannotFindItsTvdbId':
     'Sonarr can’t find it by its TVDB or TMDB ID.',
+  'requests.arrApps.handOff.thatIsNotOneOfItsReleases':
+    'That isn’t one of the releases its connected app listed.',
   'requests.arrApps.handOff.theAppItWasHandedToIsGone':
     'The connected app it was sent to has been removed.',
   'requests.arrImport.aLeastFormatScoreWasLeftOut':
@@ -4334,6 +4337,9 @@ const ENGLISH = {
   'screens.adminArea.settingsPanel.catalogueKey': 'Catalogue key',
   'screens.adminArea.settingsPanel.catalogueKeySaved': 'Catalogue key saved.',
   'screens.adminArea.settingsPanel.certificationRegionSaved': 'Certification region saved.',
+  'screens.adminArea.settingsPanel.connectedAppsSettingSaved': 'Connected apps setting saved.',
+  'screens.adminArea.settingsPanel.controlConnectedAppsFromValence':
+    'Control connected apps from Valence',
   'screens.adminArea.settingsPanel.country': 'Country',
   'screens.adminArea.settingsPanel.drawnBehindTheFacesWithThe':
     'Shown behind the profiles on the sign-in screen, tinted with the colour of the selected profile. It’s only visible while Show profiles on sign-in is on. JPEG, PNG, WebP, AVIF or GIF, up to 16 MB.',
@@ -4356,6 +4362,8 @@ const ENGLISH = {
   'screens.adminArea.settingsPanel.howRoundTheCornersOfEverything':
     'How rounded corners are throughout Valence, for everyone on this server. Sharp gives square corners; round softens them.',
   'screens.adminArea.settingsPanel.keptFor': 'Keep for',
+  'screens.adminArea.settingsPanel.letsYouPickAReleaseFor':
+    'Lets you search for and pick a release by hand for a title a connected app fetches, sent through that app. When off, Sonarr, Radarr and Lidarr search and pick on their own.',
   'screens.adminArea.settingsPanel.looksForWhatAMusicLibrarys':
     'Fills in what a music library’s files are missing: album covers from the Cover Art Archive, artist photos and music videos from TheAudioDB, and lyrics from LRCLIB. Each album, artist and song is looked up once, on the next scan, and nothing already in a file is replaced. Like trailers, it connects to services outside this server, so it’s off by default.',
   'screens.adminArea.settingsPanel.low': 'Low',
@@ -4400,6 +4408,8 @@ const ENGLISH = {
   'screens.adminArea.settingsPanel.theCatalogueKeyCouldNotBe': 'Couldn’t save the catalogue key.',
   'screens.adminArea.settingsPanel.theCertificationRegionCouldNotBe':
     'Couldn’t save the certification region.',
+  'screens.adminArea.settingsPanel.theConnectedAppsSettingCouldNot':
+    'Couldn’t save the connected apps setting.',
   'screens.adminArea.settingsPanel.theDesktopApp': 'Desktop app',
   'screens.adminArea.settingsPanel.theMusicDetailsSettingCouldNot':
     'Couldn’t save the music metadata setting.',

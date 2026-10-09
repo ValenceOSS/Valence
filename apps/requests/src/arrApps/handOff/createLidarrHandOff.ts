@@ -1,3 +1,4 @@
+import { ArrReleaseSchema } from '@ValenceRequests/arrApps/schemas/ArrReleaseSchema';
 import { dirname } from 'node:path';
 import { z } from 'zod';
 import { saying } from '@ValenceI18n/saying';
@@ -207,6 +208,28 @@ const createLidarrHandOff = (caller: Pick<ArrCaller, 'read' | 'send'>): HandOffH
         { name: 'ArtistSearch', artistId: handOffId },
         ArrCommandSchema,
       );
+    },
+
+    releases: async (request, items, handOffId) => {
+      const wanted = new Set(
+        request.kind === 'album'
+          ? [request.musicBrainzId ?? '']
+          : items.flatMap((item) =>
+              item.musicBrainzId === null || item.state === 'available' || item.state === 'filed'
+                ? []
+                : [item.musicBrainzId],
+            ),
+      );
+      const albums = (
+        await caller.read('/album', LidarrAlbumsSchema, { artistId: handOffId.toString() })
+      ).filter((album) => wanted.has(album.foreignAlbumId));
+      const found = await Promise.all(
+        albums.map((album) =>
+          caller.read('/release', ArrReleaseSchema.array(), { albumId: album.id.toString() }),
+        ),
+      );
+
+      return [...new Map(found.flat().map((release) => [release.guid, release])).values()];
     },
 
     pageOf: (request) =>

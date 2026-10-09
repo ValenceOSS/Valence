@@ -10,6 +10,7 @@ type SettingsPanelProps = {
   onCatalogueTrailersSaved: () => void;
   onMusicDetailsSaved?: () => void;
   onReleaseTypesSaved?: () => void;
+  onControlsConnectedAppsSaved?: () => void;
   onRoundnessSaved?: () => void;
   onSplashscreenSaved: () => void;
 };

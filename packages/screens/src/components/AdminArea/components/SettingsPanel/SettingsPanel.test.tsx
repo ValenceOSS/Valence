@@ -32,6 +32,10 @@ const saveFetchesMusicDetails = vi.hoisted(() =>
   vi.fn<(fetches: boolean) => Promise<boolean>>(() => Promise.resolve(true)),
 );
 
+const saveControlsConnectedApps = vi.hoisted(() =>
+  vi.fn<(controls: boolean) => Promise<boolean>>(() => Promise.resolve(true)),
+);
+
 const saveAudioDbKey = vi.hoisted(() =>
   vi.fn<(key: string) => Promise<boolean>>(() => Promise.resolve(true)),
 );
@@ -56,6 +60,7 @@ vi.mock('@ValenceClient/admin/fetchAdmin', () => ({
   saveKeepsDownloadsForDays,
   saveFetchesCatalogueTrailers,
   saveFetchesMusicDetails,
+  saveControlsConnectedApps,
   saveAudioDbKey,
   saveOmdbKey,
   saveSplashscreen,
@@ -76,6 +81,7 @@ const overview = (overrides: Partial<AdminOverview['settings']> = {}): AdminOver
     fetchesCatalogueTrailers: false,
     fetchesMusicDetails: false,
     requestReleaseTypes: ['album'],
+    controlsConnectedApps: false,
     roundness: 'default' as const,
     certificationRegion: 'GB',
     keepsDownloadsForDays: 14,
@@ -726,6 +732,43 @@ describe('whose age certificates to read', () => {
     expect(saveFetchesMusicDetails).toHaveBeenCalledWith(true);
     await waitFor(() => {
       expect(onMusicDetailsSaved).toHaveBeenCalled();
+    });
+  });
+
+  it('controls the connected apps from Valence only once it is turned on, and turns back where it could not save', async () => {
+    const onControlsConnectedAppsSaved = vi.fn();
+
+    render(
+      <SettingsPanel
+        overview={overview()}
+        onCatalogueKeySaved={vi.fn()}
+        onHardwareAccelSaved={vi.fn()}
+        onPreviewQualitySaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
+        onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
+        onControlsConnectedAppsSaved={onControlsConnectedAppsSaved}
+        onSplashscreenSaved={vi.fn()}
+      />,
+    );
+
+    const toggle = screen.getByRole('switch', { name: 'Control connected apps from Valence' });
+
+    expect(toggle).toHaveAttribute('aria-checked', 'false');
+
+    await userEvent.click(toggle);
+
+    expect(saveControlsConnectedApps).toHaveBeenCalledWith(true);
+    await waitFor(() => {
+      expect(onControlsConnectedAppsSaved).toHaveBeenCalled();
+    });
+
+    saveControlsConnectedApps.mockResolvedValueOnce(false);
+    await userEvent.click(toggle);
+
+    expect(saveControlsConnectedApps).toHaveBeenLastCalledWith(false);
+    await waitFor(() => {
+      expect(toggle).toHaveAttribute('aria-checked', 'true');
     });
   });
 

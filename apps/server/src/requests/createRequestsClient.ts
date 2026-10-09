@@ -668,6 +668,22 @@ const createRequestsClient = ({
         waitMs: searchTimeoutMs,
       }),
 
+    handOffReleases: (id: string): Promise<RequestsAnswer<ReleaseSearchOutcome>> =>
+      call(
+        `${withRequest(id)}/hand-off/releases`,
+        (body) => ReleaseSearchOutcomeSchema.parse(body),
+        {
+          waitMs: searchTimeoutMs,
+        },
+      ),
+
+    handOffPick: (id: string, release: Release): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/hand-off/pick`, readRequest, {
+        method: 'POST',
+        body: { release },
+        waitMs: searchTimeoutMs,
+      }),
+
     stopDownload: (
       id: string,
       downloadId: string,

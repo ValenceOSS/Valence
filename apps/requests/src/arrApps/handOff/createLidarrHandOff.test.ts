@@ -328,4 +328,32 @@ describe('createLidarrHandOff', () => {
       `/album/${ALBUM_REQUEST.musicBrainzId ?? ''}`,
     );
   });
+
+  it('lists the releases Lidarr finds for each album still wanted', async () => {
+    const arr = aFakeArr({
+      'GET /api/v1/album': {
+        body: [anAlbum({}), anAlbum({ id: 10, title: 'Kid A', foreignAlbumId: KID_A })],
+      },
+      'GET /api/v1/release': (asked) => ({
+        body: [{ guid: `album-${asked.query.get('albumId') ?? ''}`, indexerId: 4 }],
+      }),
+    });
+    const handOff = createLidarrHandOff(createArrCaller(arr.fetch, LIDARR));
+
+    expect(
+      (
+        await handOff.releases(
+          ARTIST_REQUEST,
+          [
+            aRequestItem({ id: 'a', musicBrainzId: OK_COMPUTER, state: 'filed' }),
+            aRequestItem({ id: 'b', musicBrainzId: KID_A }),
+          ],
+          2,
+        )
+      ).map((one) => one.guid),
+    ).toEqual(['album-10']);
+    expect((await handOff.releases(ALBUM_REQUEST, [], 2)).map((one) => one.guid)).toEqual([
+      'album-9',
+    ]);
+  });
 });

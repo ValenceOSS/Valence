@@ -95,6 +95,7 @@ const createMemoryAuth = (
     certificationRegion: 'GB',
     fetchesCatalogueTrailers: false,
     requestReleaseTypes: [...DEFAULT_RELEASE_TYPES],
+    controlsConnectedApps: false,
     fetchesMusicDetails: false,
     audioDbKey: '',
     omdbKey: '',

@@ -5,7 +5,7 @@ import {
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { RoundnessSchema } from '@ValenceContracts/schemas/Roundness';
 import type { Roundness } from '@ValenceContracts/schemas/Roundness';
-import { ReleaseTypesSchema } from '@ValenceContracts/schemas/MediaRequest';
+import { DEFAULT_RELEASE_TYPES, ReleaseTypesSchema } from '@ValenceContracts/schemas/MediaRequest';
 import type { ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { ListeningSessionSchema } from '@ValenceContracts/schemas/MusicRemote';
@@ -59,7 +59,8 @@ const AdminOverviewSchema = z.object({
     allowedApps: AllowedAppsSchema.optional(),
     fetchesCatalogueTrailers: z.boolean().default(false),
     fetchesMusicDetails: z.boolean().default(false),
-    requestReleaseTypes: ReleaseTypesSchema.default(['album']),
+    requestReleaseTypes: ReleaseTypesSchema.default([...DEFAULT_RELEASE_TYPES]),
+    controlsConnectedApps: z.boolean().default(false),
     roundness: RoundnessSchema.optional(),
     certificationRegion: z.string().default('GB'),
     keepsDownloadsForDays: z.number().int().nonnegative().default(14),
@@ -901,6 +902,24 @@ const saveRoundness = async (roundness: Roundness): Promise<boolean> => {
   return response !== null && response.ok;
 };
 
+/**
+ * Sets whether Valence controls the connected apps libraries hand their requests to, listing and
+ * fetching their releases from a title's page, or leaves that to the apps themselves.
+ *
+ * @param controlsConnectedApps - Whether it does.
+ * @returns Whether the setting was written.
+ */
+const saveControlsConnectedApps = async (controlsConnectedApps: boolean): Promise<boolean> => {
+  const response = await fetch('/api/admin/settings', {
+    method: 'PATCH',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ controlsConnectedApps }),
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
 const saveRequestReleaseTypes = async (
   requestReleaseTypes: readonly ReleaseType[],
 ): Promise<boolean> => {
@@ -1130,6 +1149,7 @@ export {
   saveShowsProfilesBeforeSignIn,
   saveFetchesCatalogueTrailers,
   saveFetchesMusicDetails,
+  saveControlsConnectedApps,
   saveRequestReleaseTypes,
   saveAudioDbKey,
   saveOmdbKey,

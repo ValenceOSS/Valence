@@ -29,6 +29,7 @@ import {
   saveFetchesCatalogueTrailers,
   saveFetchesMusicDetails,
   saveRequestReleaseTypes,
+  saveControlsConnectedApps,
   saveAudioDbKey,
   saveOmdbKey,
   saveSplashscreen,
@@ -96,6 +97,8 @@ const APPS = [
  * @param onSplashscreenSaved - Called once the picture behind the way in has been chosen or removed.
  * @param onMusicDetailsSaved - Called once looking for music details on the web is turned on or off.
  * @param onReleaseTypesSaved - Called once the kinds of record a request watches have been written.
+ * @param onControlsConnectedAppsSaved - Called once whether Valence works the connected apps is
+ * written.
  * @param onRoundnessSaved - Called once how round the application is has been written.
  */
 const SettingsPanel = ({
@@ -108,6 +111,7 @@ const SettingsPanel = ({
   onCatalogueTrailersSaved,
   onMusicDetailsSaved,
   onReleaseTypesSaved,
+  onControlsConnectedAppsSaved,
   onRoundnessSaved,
   onSplashscreenSaved,
 }: SettingsPanelProps) => {
@@ -137,6 +141,9 @@ const SettingsPanel = ({
   const [releaseTypes, setReleaseTypes] = useState<ReleaseType[]>([
     ...(overview?.settings.requestReleaseTypes ?? DEFAULT_RELEASE_TYPES),
   ]);
+  const [controlsApps, setControlsApps] = useState(
+    overview?.settings.controlsConnectedApps ?? false,
+  );
   const [splashscreen, setSplashscreen] = useState(overview?.settings.splashscreen ?? null);
   const [isChangingSplashscreen, setIsChangingSplashscreen] = useState(false);
   const [splashscreenProblem, setSplashscreenProblem] = useState<string | null>(null);
@@ -665,6 +672,39 @@ const SettingsPanel = ({
               }}
             />
           </div>
+        </SettingRow>
+
+        <SettingRow
+          title={say('screens.adminArea.settingsPanel.controlConnectedAppsFromValence')}
+          description={say('screens.adminArea.settingsPanel.letsYouPickAReleaseFor')}
+        >
+          <Switch
+            label={say('screens.adminArea.settingsPanel.controlConnectedAppsFromValence')}
+            isLabelHidden
+            isOn={controlsApps}
+            onToggle={() => {
+              const next = !controlsApps;
+
+              setControlsApps(next);
+
+              void saveControlsConnectedApps(next).then((saved) => {
+                tellOutcome(
+                  say('screens.adminArea.settingsPanel.connectedAppsSettingSaved'),
+                  failureOfAnswer(
+                    saved,
+                    say('screens.adminArea.settingsPanel.theConnectedAppsSettingCouldNot'),
+                  ),
+                );
+                if (saved) {
+                  onControlsConnectedAppsSaved?.();
+
+                  return;
+                }
+
+                setControlsApps(!next);
+              });
+            }}
+          />
         </SettingRow>
 
         <SettingRow

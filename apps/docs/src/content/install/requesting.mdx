@@ -164,10 +164,18 @@ Handed off means:
 - Once the app has imported something, Valence reads that folder and tells whoever asked, exactly as it does for what it files itself.
 - A series stays followed. Sonarr's monitoring fetches new episodes, and each is marked available as Sonarr imports it. A season added to the request later is monitored in Sonarr too.
 - Cancelling or refusing a request removes nothing from the app.
-- In Requests › Catalogue, the title's page says which app handles it, with **Open in Sonarr** (or Radarr, or Lidarr) to go to its page there. **Search missing** asks the app to search again. **Interactive search** isn't offered: picking a release is left to the app.
+- In Requests › Catalogue, the title's page says which app handles it, with **Open in Sonarr** (or Radarr, or Lidarr) to go to its page there. **Search missing** asks the app to search again. **Interactive search** is offered only with [Control connected apps from Valence](#controlling-connected-apps-from-valence) on; otherwise picking a release is left to the app.
 - Where every library that takes requests hands off, **Indexers** and **Profiles** say so, since Valence searches none of them for those requests.
 
 The series a request names is found in Sonarr by the TVDB id the catalogue gives. Where the catalogue gives none, Sonarr is asked to find it by its TMDB id.
+
+### Controlling connected apps from Valence
+
+By default a connected app decides for itself what to download. Turning on **Control connected apps from Valence**, in the admin area's **Settings** under the requests settings, lets you do it from Valence instead.
+
+With it on, a handed-off title's page in Requests › Catalogue offers **Interactive search**. The releases listed are the ones the app finds on its own indexers, judged by its own quality profile: what it would reject is listed last, with its reasons. Picking one sends it to the app to download, exactly as picking it in the app would, and the request's history says so.
+
+Valence's own indexers, profiles and download clients aren't used for these titles either way.
 
 ### Paths for connected apps
 

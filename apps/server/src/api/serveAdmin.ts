@@ -185,6 +185,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           fetchesCatalogueTrailers: current.fetchesCatalogueTrailers,
           fetchesMusicDetails: current.fetchesMusicDetails,
           requestReleaseTypes: current.requestReleaseTypes,
+          controlsConnectedApps: current.controlsConnectedApps,
           roundness: current.roundness,
           keepsDownloadsForDays: current.keepsDownloadsForDays,
           splashscreen: await splashscreen.address(),
@@ -245,6 +246,9 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
       ...(patch.requestReleaseTypes === undefined
         ? {}
         : { requestReleaseTypes: patch.requestReleaseTypes }),
+      ...(patch.controlsConnectedApps === undefined
+        ? {}
+        : { controlsConnectedApps: patch.controlsConnectedApps }),
       ...(patch.roundness === undefined ? {} : { roundness: patch.roundness }),
       ...(patch.keepsDownloadsForDays === undefined
         ? {}
@@ -280,6 +284,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         fetchesCatalogueTrailers: updated.fetchesCatalogueTrailers,
         fetchesMusicDetails: updated.fetchesMusicDetails,
         requestReleaseTypes: updated.requestReleaseTypes,
+        controlsConnectedApps: updated.controlsConnectedApps,
         roundness: updated.roundness,
         keepsDownloadsForDays: updated.keepsDownloadsForDays,
         splashscreen: await splashscreen.address(),

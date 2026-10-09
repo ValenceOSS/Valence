@@ -1,3 +1,4 @@
+import { ArrReleaseSchema } from '@ValenceRequests/arrApps/schemas/ArrReleaseSchema';
 import { dirname } from 'node:path';
 import { z } from 'zod';
 import { saying } from '@ValenceI18n/saying';
@@ -79,6 +80,9 @@ const createRadarrHandOff = (caller: Pick<ArrCaller, 'read' | 'send'>): HandOffH
       ArrCommandSchema,
     );
   },
+
+  releases: (_request, _items, handOffId) =>
+    caller.read('/release', ArrReleaseSchema.array(), { movieId: handOffId.toString() }),
 
   pageOf: (request) =>
     Promise.resolve(request.tmdbId === null ? null : `/movie/${request.tmdbId.toString()}`),

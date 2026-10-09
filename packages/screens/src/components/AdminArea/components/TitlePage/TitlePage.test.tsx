@@ -12,6 +12,7 @@ import type * as Requests from '@ValenceClient/requests/fetchMediaRequests';
 
 const catalogue = vi.hoisted((): { entries: CatalogueEntry[] } => ({ entries: [] }));
 const requested = vi.hoisted((): { requests: MediaRequest[] } => ({ requests: [] }));
+const admin = vi.hoisted(() => ({ controlsConnectedApps: false }));
 const approveMediaRequest = vi.fn<typeof Requests.approveMediaRequest>();
 const askForMedia = vi.fn<typeof Requests.askForMedia>();
 const changeMediaRequest = vi.fn<typeof Requests.changeMediaRequest>();
@@ -50,6 +51,11 @@ vi.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
   pickMediaRelease: vi.fn(),
 }));
 
+vi.mock('@ValenceClient/admin/fetchAdmin', () => ({
+  fetchAdminOverview: () =>
+    Promise.resolve({ settings: { controlsConnectedApps: admin.controlsConnectedApps } }),
+}));
+
 vi.mock('@ValenceClient/requests/fetchAskable', () => ({
   fetchAskable: () =>
     Promise.resolve({
@@ -85,6 +91,7 @@ const ANSWERED = { value: aMediaRequest(), refusal: null };
 beforeEach(() => {
   catalogue.entries = [];
   requested.requests = [];
+  admin.controlsConnectedApps = false;
   approveMediaRequest.mockReset().mockResolvedValue(ANSWERED);
   askForMedia.mockReset().mockResolvedValue(ANSWERED);
   changeMediaRequest.mockReset().mockResolvedValue(ANSWERED);
@@ -224,6 +231,27 @@ describe('TitlePage', () => {
     expect(
       await screen.findByRole('dialog', { name: /Interactive search for Dune/ }),
     ).toBeInTheDocument();
+  });
+
+  it('offers an interactive search for a title an app fetches only when Valence controls the app', async () => {
+    const request = aMediaRequest({ isHandedOff: true });
+
+    requested.requests = [request];
+    catalogue.entries = [
+      aCatalogueEntry({ key: 'film:1', status: 'missing', requestId: request.id }),
+    ];
+
+    const { unmount } = renderInAnAddress(<TitlePage titleKey="film:1" onBack={vi.fn()} />);
+
+    expect(await screen.findByRole('button', { name: /Actions for/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Interactive search' })).not.toBeInTheDocument();
+
+    unmount();
+    admin.controlsConnectedApps = true;
+
+    renderInAnAddress(<TitlePage titleKey="film:1" onBack={vi.fn()} />);
+
+    expect(await screen.findByRole('button', { name: 'Interactive search' })).toBeInTheDocument();
   });
 
   it('removes a request, deleting its files where asked', async () => {

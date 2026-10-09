@@ -2113,6 +2113,41 @@ describe('requests for films and series, through the server', () => {
     });
   });
 
+  it('lists and picks a handed-off request’s releases through its app once the admin says so', async () => {
+    const { ask } = await build({
+      isOn: true,
+      isAdministrator: true,
+      service: (url, init) =>
+        url.endsWith(`/api/requests/${REQUEST.id}`)
+          ? Response.json({ ...REQUEST, isHandedOff: true })
+          : aWillingKeeper(url, init),
+    });
+    const asked = () => sent.map(({ method, url }) => `${method} ${url}`);
+
+    sent.length = 0;
+
+    expect((await ask(`/api/requests/media/${REQUEST.id}/releases`)).status).toBe(200);
+    expect(asked()).toContain(`GET http://requests:8421/api/requests/${REQUEST.id}/releases`);
+
+    expect(
+      await (await ask('/api/admin/settings', 'PATCH', { controlsConnectedApps: true })).json(),
+    ).toMatchObject({ controlsConnectedApps: true });
+
+    sent.length = 0;
+
+    expect((await ask(`/api/requests/media/${REQUEST.id}/releases`)).status).toBe(200);
+    expect(
+      (await ask(`/api/requests/media/${REQUEST.id}/pick`, 'POST', { release: RELEASE })).status,
+    ).toBe(200);
+    expect(asked()).toEqual(
+      expect.arrayContaining([
+        `GET http://requests:8421/api/requests/${REQUEST.id}/hand-off/releases`,
+        `POST http://requests:8421/api/requests/${REQUEST.id}/hand-off/pick`,
+      ]),
+    );
+    expect(asked()).not.toContain(`POST http://requests:8421/api/requests/${REQUEST.id}/pick`);
+  });
+
   it('stops a download and follows episodes, for whoever manages requesting', async () => {
     const { ask } = await build({
       isOn: true,

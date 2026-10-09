@@ -159,4 +159,20 @@ describe('createRadarrHandOff', () => {
     expect(arr.sent('POST', '/api/v3/command')).toEqual([{ name: 'MoviesSearch', movieIds: [12] }]);
     expect(await handOff.pageOf(aMediaRequest(), 12)).toBe('/movie/438631');
   });
+
+  it('lists the releases Radarr finds for the film', async () => {
+    const arr = aFakeArr({
+      'GET /api/v3/release': (asked) => ({
+        body: [{ guid: `for-${asked.query.get('movieId') ?? ''}`, indexerId: 2 }],
+      }),
+    });
+
+    expect(
+      await createRadarrHandOff(createArrCaller(arr.fetch, anArrApp())).releases(
+        aMediaRequest(),
+        [aRequestItem()],
+        12,
+      ),
+    ).toMatchObject([{ guid: 'for-12', indexerId: 2 }]);
+  });
 });
