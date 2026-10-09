@@ -10,6 +10,7 @@ import {
   LayoutDashboard as LayoutDashboardIcon,
   Link as LinkIcon,
   Mail as MailIcon,
+  Subtitles as SubtitlesIcon,
   Plug as PlugIcon,
   Route as RouteIcon,
   Search as SearchIcon,
@@ -34,6 +35,7 @@ import {
   LayoutDashboard as LayoutDashboardFilledIcon,
   Link as LinkFilledIcon,
   Mail as MailFilledIcon,
+  Subtitles as SubtitlesFilledIcon,
   Plug as PlugFilledIcon,
   Route as RouteFilledIcon,
   Search as SearchFilledIcon,
@@ -168,6 +170,12 @@ const ADMIN_SECTIONS = [
         activeIcon: SettingsFilledIcon,
       },
       { id: 'email', label: say('common.email'), icon: MailIcon, activeIcon: MailFilledIcon },
+      {
+        id: 'subtitles',
+        label: say('common.subtitles'),
+        icon: SubtitlesIcon,
+        activeIcon: SubtitlesFilledIcon,
+      },
       {
         id: 'webhooks',
         label: say('common.webhooks'),

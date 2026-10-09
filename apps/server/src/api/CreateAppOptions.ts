@@ -1,3 +1,4 @@
+import type { SubtitleFinder } from '@ValenceServer/subtitles/finding/SubtitleFinder';
 import type { Context } from 'hono';
 import type { CalendarFeedService } from '@ValenceServer/calendarFeed/CalendarFeedService';
 import type { PasswordResetAsk } from '@ValenceContracts/schemas/PasswordResetRequest';
@@ -282,6 +283,7 @@ type CreateAppOptions = {
   plugins?: (requests: PluginHost['requests']) => PluginService;
   imports?: ImportService;
   email?: EmailService;
+  subtitleFinder?: SubtitleFinder;
   requestPasswordReset?: (ask: PasswordResetAsk, redirectTo: string) => Promise<void>;
   sayALinkWasWithdrawn?: (told: {
     accountId: string;

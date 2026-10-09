@@ -29,6 +29,7 @@ import { fetchFolders } from '@ValenceClient/admin/fetchFolders';
 import { searchFolders } from '@ValenceClient/admin/searchFolders';
 import { fetchLibraryFolder } from '@ValenceClient/admin/fetchLibraryFolder';
 import { fetchFolderMeasure } from '@ValenceClient/admin/fetchFolderMeasure';
+import { fetchSubtitleSetup } from '@ValenceClient/admin/fetchSubtitleSetup';
 import { fetchMediaPaths } from '@ValenceClient/admin/fetchMediaPaths';
 import { searchLibraryFiles } from '@ValenceClient/admin/searchLibraryFiles';
 import { fetchResourceHistory } from '@ValenceClient/admin/fetchResourceHistory';
@@ -662,8 +663,20 @@ const emailSetup = () =>
     queryFn: () => fetchEmailSetup(),
   });
 
+/**
+ * Where Valence finds subtitles, for the admin's Subtitles page.
+ *
+ * @returns The query.
+ */
+const subtitleSetup = () =>
+  queryOptions({
+    queryKey: [...ADMIN, 'subtitles'],
+    queryFn: () => fetchSubtitleSetup(),
+  });
+
 const adminQueries = {
   emailSetup,
+  subtitleSetup,
   everyFile,
   preTranscoding,
   mediaPaths,

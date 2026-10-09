@@ -14,6 +14,7 @@ import {
   RefreshCw as RefreshCwIcon,
   RotateCcw as RotateCcwIcon,
   RotateCw as RotateCwIcon,
+  Search as SearchIcon,
   Settings as SettingsIcon,
   SkipForward as SkipForwardIcon,
   Subtitles as SubtitlesIcon,
@@ -111,6 +112,8 @@ const rateLabel = (rate: number): string => `${rate.toString()}x`;
  * @param onToggleStats - Called to open or close the statistics panel.
  * @param subtitleOffsetSeconds - How far subtitles are nudged from where the file puts them.
  * @param onSubtitleOffsetChange - Called with a nudge to that.
+ * @param onFindSubtitles - Opens the search for subtitles on subtitle sites, where the person
+ *   watching may fetch them.
  * @param castState - Whether there is anywhere to cast to, and whether it is in use.
  * @param onCast - Called to cast to another device.
  * @param onPlayOnTv - Called to send the film to one of this person's televisions, where one is open.
@@ -172,6 +175,7 @@ const PlayerControls = ({
   onToggleStats,
   subtitleOffsetSeconds = 0,
   onSubtitleOffsetChange,
+  onFindSubtitles,
   renderPreview,
   partyMenu,
 }: PlayerControlsProps) => {
@@ -403,6 +407,17 @@ const PlayerControls = ({
                         ...(track.format === '' ? {} : { detail: track.format.toUpperCase() }),
                       })),
                     ],
+                  },
+                ]),
+            ...(onFindSubtitles === undefined
+              ? []
+              : [
+                  {
+                    kind: 'action' as const,
+                    id: 'find-subtitles',
+                    label: say('screens.videoPlayer.playerControls.findSubtitles'),
+                    icon: <Icon of={SearchIcon} size={18} />,
+                    onSelect: onFindSubtitles,
                   },
                 ]),
             ...(selectedSubtitleId === SUBTITLES_OFF || onSubtitleOffsetChange === undefined

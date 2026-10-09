@@ -1,3 +1,4 @@
+import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { Icon } from '@ValenceUI/Icon';
 import { AnimatePresence, motion, useDragControls } from 'motion/react';
 import { gainFor } from '@ValenceCore/functions/gainFor';
@@ -116,6 +117,7 @@ import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
 import type { PlaybackHealth } from './components/StreamStats/StreamStats.types';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
 import type { PlayerState, VideoPlayerProps } from './VideoPlayer.types';
+import { FindSubtitlesDialog } from '@ValenceScreens/components/FindSubtitlesDialog/FindSubtitlesDialog';
 import { PlayOnDialog } from '@ValenceScreens/components/PlayOnDialog/PlayOnDialog';
 import { useVideoDevices } from '@ValenceClient/video/useVideoDevices';
 import { say } from '@ValenceI18n/say';
@@ -326,6 +328,8 @@ const VideoPlayer = ({
   const [activity, setActivity] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [subtitleTracks, setSubtitleTracks] = useState<SubtitleTrack[]>([]);
+  const [isFindingSubtitles, setIsFindingSubtitles] = useState(false);
+  const { mayAdminister } = useWhatIMayDo();
   const [selectedSubtitleId, setSelectedSubtitleId] = useState(SUBTITLES_OFF);
   const defaultedForRef = useRef<string | null>(null);
   const [captionStyle, setCaptionStyle] = useState(readCaptionStyle);
@@ -2109,6 +2113,13 @@ const VideoPlayer = ({
             }`}
           >
             <PlayerControls
+              {...(mayAdminister
+                ? {
+                    onFindSubtitles: () => {
+                      setIsFindingSubtitles(true);
+                    },
+                  }
+                : {})}
               {...(renderPartyMenu === undefined
                 ? {}
                 : {
@@ -2266,6 +2277,18 @@ const VideoPlayer = ({
         onSent={() => {
           setSendingAt(null);
           onClose();
+        }}
+      />
+
+      <FindSubtitlesDialog
+        media={isFindingSubtitles ? { id: media.id, name: media.title } : null}
+        onClose={() => {
+          setIsFindingSubtitles(false);
+        }}
+        onFetched={() => {
+          void fetchSubtitleTracks(media.id)
+            .catch(() => [])
+            .then(setSubtitleTracks);
         }}
       />
     </section>

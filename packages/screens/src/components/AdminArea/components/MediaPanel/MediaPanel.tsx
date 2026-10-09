@@ -11,11 +11,13 @@ import {
   MoreHorizontal as MoreHorizontalIcon,
   RefreshCw as RefreshCwFilledIcon,
   Search as SearchFilledIcon,
+  Subtitles as SubtitlesFilledIcon,
   Tape as TapeFilledIcon,
 } from '@keyline-icons/react/fill';
 import { useCallback, useMemo, useState } from 'react';
 import { LeaveOutDialog } from '@ValenceScreens/components/AdminArea/components/LeaveOutDialog/LeaveOutDialog';
 import type { LeaveOutTarget } from '@ValenceScreens/components/AdminArea/components/LeaveOutDialog/LeaveOutDialog.types';
+import { FindSubtitlesDialog } from '@ValenceScreens/components/FindSubtitlesDialog/FindSubtitlesDialog';
 import { MoveToLibraryDialog } from '@ValenceScreens/components/AdminArea/components/MoveToLibraryDialog/MoveToLibraryDialog';
 import type { MoveTarget } from '@ValenceScreens/components/AdminArea/components/MoveToLibraryDialog/MoveToLibraryDialog.types';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
@@ -203,6 +205,7 @@ const MediaPanel = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [leaving, setLeaving] = useState<LeaveOutTarget | null>(null);
   const [moving, setMoving] = useState<MoveTarget | null>(null);
+  const [subtitling, setSubtitling] = useState<{ id: string; name: string } | null>(null);
 
   const moveItem = useCallback(
     (items: readonly MediaSummary[], name: string): ActionMenuItem[] =>
@@ -400,6 +403,14 @@ const MediaPanel = ({
             isDisabled: rebuilding === item.id,
             onChoose: () => {
               setConfirming(item);
+            },
+          },
+          {
+            id: 'find-subtitles',
+            label: say('screens.videoPlayer.playerControls.findSubtitles'),
+            icon: <Icon of={SubtitlesFilledIcon} size={15} />,
+            onChoose: () => {
+              setSubtitling({ id: item.id, name });
             },
           },
           {
@@ -820,6 +831,13 @@ const MediaPanel = ({
             </TabPanel>
           ))
         )}
+
+        <FindSubtitlesDialog
+          media={subtitling}
+          onClose={() => {
+            setSubtitling(null);
+          }}
+        />
 
         <MoveToLibraryDialog
           target={moving}

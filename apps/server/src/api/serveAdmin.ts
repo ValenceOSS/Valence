@@ -1,3 +1,4 @@
+import { registerSubtitleFindingRoutes } from '@ValenceServer/subtitles/finding/registerSubtitleFindingRoutes';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import {
   adminOverviewRoute,
@@ -82,9 +83,11 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     within,
     requires,
     email,
+    subtitleFinder,
   } = context;
 
   registerEmailRoutes(app, { email, requires });
+  registerSubtitleFindingRoutes(app, { finder: subtitleFinder, requires });
 
   app.openapi(searchCatalogueRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'media.override'))) {

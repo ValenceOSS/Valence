@@ -305,9 +305,9 @@ const moveMedia = async (
     return { problem: say('common.theServerCouldNotBeReached') };
   }
 
-  const answer = z.union([MovedSchema, ProblemSchema]).safeParse(
-    await response.json().catch(() => null),
-  );
+  const answer = z
+    .union([MovedSchema, ProblemSchema])
+    .safeParse(await response.json().catch(() => null));
 
   if (response.ok && answer.success && 'files' in answer.data) {
     return answer.data;

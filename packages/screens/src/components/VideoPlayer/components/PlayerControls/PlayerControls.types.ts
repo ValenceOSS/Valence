@@ -62,6 +62,7 @@ type PlayerControlsProps = {
   onToggleFullscreen: () => void;
   onToggleStats: () => void;
   subtitleOffsetSeconds?: number;
+  onFindSubtitles?: () => void;
   onSubtitleOffsetChange?: (seconds: number) => void;
   castState?: CastState;
   onCast?: () => void;

@@ -7,6 +7,7 @@ import { Button } from '@ValenceUI/Button';
 import { TabPanel } from '@ValenceUI/TabPanel';
 import { SettingsPanel } from './components/SettingsPanel/SettingsPanel';
 import { EmailCard } from './components/EmailCard/EmailCard';
+import { SubtitlesCard } from '@ValenceScreens/components/AdminArea/components/SubtitlesCard/SubtitlesCard';
 import { ActivityPanel } from './components/ActivityPanel/ActivityPanel';
 import { ObservabilityPage } from '@ValenceScreens/components/ObservabilityPage/ObservabilityPage';
 import { LibrariesPanel } from './components/LibrariesPanel/LibrariesPanel';
@@ -1293,6 +1294,10 @@ const AdminArea = ({
 
           <TabPanel value="email">
             <EmailCard />
+          </TabPanel>
+
+          <TabPanel value="subtitles">
+            <SubtitlesCard />
           </TabPanel>
 
           <TabPanel value="shares">

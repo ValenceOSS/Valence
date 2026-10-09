@@ -1,3 +1,5 @@
+import { createSubtitleFinder } from '@ValenceServer/subtitles/finding/createSubtitleFinder';
+import { SUBTITLE_DEFAULTS } from '@ValenceContracts/schemas/SubtitleSettings';
 import { z } from '@hono/zod-openapi';
 import { checkServerVersion } from '@ValenceDatabase/checkServerVersion';
 import { SEERR_DEFAULTS } from '@ValenceContracts/schemas/SeerrLink';
@@ -457,6 +459,7 @@ const settings = createDatabaseSettingsStore({
     preTranscoding: PRE_TRANSCODING_DEFAULTS,
     seerr: SEERR_DEFAULTS,
     email: EMAIL_DEFAULTS,
+    subtitles: SUBTITLE_DEFAULTS,
     linking: LINK_SETTINGS_DEFAULTS,
   },
 });
@@ -657,6 +660,8 @@ const emailService = createEmailService({
   environment: { smtpUrl: env.SMTP_URL, smtpFrom: env.SMTP_FROM },
   log,
 });
+
+const subtitleFinder = createSubtitleFinder({ db, settings });
 
 const requestPasswordReset = createPasswordResetRequests({
   findAccount: (ask) => findResetAccount(db, ask),
@@ -3708,6 +3713,7 @@ const app = createApp({
   shareSessions: createShareSessions(),
   playbackSessions: createPlaybackSessions(),
   email: emailService,
+  subtitleFinder,
   requestPasswordReset,
   sayALinkWasWithdrawn: async ({ accountId, title, byName }) => {
     await notifyHousehold({

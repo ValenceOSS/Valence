@@ -1,3 +1,4 @@
+import { SUBTITLE_DEFAULTS } from '@ValenceContracts/schemas/SubtitleSettings';
 import { PRE_TRANSCODING_DEFAULTS } from '@ValenceContracts/schemas/PreTranscoding';
 import { SEERR_DEFAULTS } from '@ValenceContracts/schemas/SeerrLink';
 import { EMAIL_DEFAULTS } from '@ValenceContracts/schemas/EmailSettings';
@@ -105,6 +106,7 @@ const createMemoryAuth = (
     preTranscoding: PRE_TRANSCODING_DEFAULTS,
     seerr: SEERR_DEFAULTS,
     email: EMAIL_DEFAULTS,
+    subtitles: SUBTITLE_DEFAULTS,
     linking: LINK_SETTINGS_DEFAULTS,
   });
 

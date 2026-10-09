@@ -8895,6 +8895,31 @@
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveSubtitle`)."
   },
   {
+    "handler": "error.subtitles.noKeyIsSavedForThatSite",
+    "text": "There’s no key saved for that subtitle site. Add one under System › Subtitles.",
+    "context": "An error the server answers with (HTTP 400) when an admin fetches a subtitle found for a film or episode."
+  },
+  {
+    "handler": "error.subtitles.thatDownloadIsForAnotherEpisode",
+    "text": "That download doesn’t hold this episode’s subtitles. Try another.",
+    "context": "An error the server answers with (HTTP 502) when an admin fetches a subtitle whose download turns out to be for a different episode."
+  },
+  {
+    "handler": "error.subtitles.theSiteWouldNotGiveIt",
+    "text": "The subtitle site wouldn’t hand that one over. Today’s downloads may be used up.",
+    "context": "An error the server answers with (HTTP 502) when an admin fetches a subtitle found for a film or episode."
+  },
+  {
+    "handler": "error.subtitles.theSubtitleCouldNotBeKept",
+    "text": "Couldn’t save the subtitle beside the video.",
+    "context": "An error the server answers with (HTTP 502) when an admin fetches a subtitle found for a film or episode."
+  },
+  {
+    "handler": "error.subtitles.valenceMayNotWriteBesideIt",
+    "text": "Valence isn’t allowed to save files beside that video.",
+    "context": "An error the server answers with (HTTP 403) when an admin fetches a subtitle found for a film or episode."
+  },
+  {
     "handler": "error.upload.aFileGoesAtAPlain",
     "text": "Upload paths must be inside the library, with no dots or empty folder names.",
     "context": "An error the server answers with (HTTP 400) in the app on the server (from `serveUpload`)."
@@ -17655,6 +17680,81 @@
     "context": "The label in the admin area."
   },
   {
+    "handler": "screens.adminArea.subtitlesCard.apiKey",
+    "text": "API key",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.askedToo",
+    "text": "Searched alongside OpenSubtitles, and often stronger for shows.",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.findSubtitlesForWhatYourLibraries",
+    "text": "Find subtitles for your films and shows on OpenSubtitles and SubDL. They’re saved beside each video, so every app picks them up.",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.getAnOpenSubtitlesKey",
+    "text": "Get an OpenSubtitles API key",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.getASubdlKey",
+    "text": "Get a SubDL API key",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.languages",
+    "text": "Languages",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.offeredFirstWhenSomebodyLooks",
+    "text": "The languages offered first when someone looks for subtitles.",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.openSubtitles",
+    "text": "OpenSubtitles",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.readingTheSubtitleSettings",
+    "text": "Loading subtitle settings",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.savedTheSubtitleSettings",
+    "text": "Subtitle settings saved",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.subdl",
+    "text": "SubDL",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.theBiggestCatalogueAKeyIs",
+    "text": "The biggest catalogue, and it can find subtitles timed to your exact file. Downloads are counted against the account you sign in with.",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.theSubtitleSettingsCouldNotBe",
+    "text": "Couldn’t load the subtitle settings.",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.whatLeavesTheServer",
+    "text": "What’s sent to the subtitle sites",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.whenYouLookTheTitleAndA",
+    "text": "When you look for subtitles, the title, its catalogue IDs and a fingerprint of the video file are sent to the sites you’ve added keys for. Nothing is sent until someone looks.",
+    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
+  },
+  {
     "handler": "screens.adminArea.thatCouldNotBeConfirmed",
     "text": "Couldn’t confirm that.",
     "context": "Shown in the admin area."
@@ -19423,6 +19523,81 @@
     "handler": "screens.filesPanel.moveEntryDialog.moveThis",
     "text": "Move this",
     "context": "The title of the dialog for moving a file or folder in a library, before it knows which one."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.count.downloads.one",
+    "text": "{count} download",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. How many times a subtitle has been downloaded."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.count.downloads.other",
+    "text": "{count} downloads",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. How many times a subtitle has been downloaded."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.findSubtitles",
+    "text": "Find subtitles",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. Its title before anything is chosen."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.findSubtitlesForName",
+    "text": "Find subtitles for {name}",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. Its title. {name} is the film or episode."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.get",
+    "text": "Get",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. The button that fetches a subtitle and saves it."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.looking",
+    "text": "Looking for subtitles",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. The label of its spinner."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.noSubtitleSiteIsSetUp",
+    "text": "No subtitle site is set up yet. Add an OpenSubtitles or SubDL key under System › Subtitles.",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.nothingWasFoundInThatLanguage",
+    "text": "Nothing was found in that language.",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.saved",
+    "text": "Saved",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. A badge on a subtitle once it has been saved."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.savedBesideTheVideo",
+    "text": "The one you pick is saved beside the video, so every app shows it.",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. Beneath its title."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.savedName",
+    "text": "Saved {name}",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. Told once a subtitle is saved. {name} is the file it was saved as."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.sdh",
+    "text": "SDH",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. A badge on a subtitle that describes sounds as well as dialogue, for deaf and hard-of-hearing viewers."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.subtitlesFound",
+    "text": "Subtitles found",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. The list, read out."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.theSubtitleSitesCouldNotBe",
+    "text": "Couldn’t reach the subtitle sites.",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.timedToThisFile",
+    "text": "Matches this file",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. A badge on a subtitle timed to this exact release."
   },
   {
     "handler": "screens.finishOnAnotherDevice.finishSettingUpOnYourPhone",
@@ -24529,6 +24704,11 @@
     "handler": "screens.videoPlayer.playerControls.backSKIPSECONDSSeconds",
     "text": "Back {SKIP_SECONDS} seconds",
     "context": "The label of a button in the player controls in the video player. {SKIP_SECONDS} is filled in by the app."
+  },
+  {
+    "handler": "screens.videoPlayer.playerControls.findSubtitles",
+    "text": "Find subtitles…",
+    "context": "In the video player’s settings menu, for an administrator, opening the search for subtitles on subtitle sites."
   },
   {
     "handler": "screens.videoPlayer.playerControls.forwardSKIPSECONDSSeconds",

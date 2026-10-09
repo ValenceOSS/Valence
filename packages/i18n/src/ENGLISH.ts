@@ -2092,6 +2092,15 @@ const ENGLISH = {
   'error.share.thisAccountMayNotWithdrawSomebody':
     'This account isn’t allowed to revoke someone else’s share link.',
   'error.subtitle.thatTrackCarriesNoStylingOf': 'That subtitle track has no styling of its own.',
+  'error.subtitles.noKeyIsSavedForThatSite':
+    'There’s no key saved for that subtitle site. Add one under System › Subtitles.',
+  'error.subtitles.thatDownloadIsForAnotherEpisode':
+    'That download doesn’t hold this episode’s subtitles. Try another.',
+  'error.subtitles.theSiteWouldNotGiveIt':
+    'The subtitle site wouldn’t hand that one over. Today’s downloads may be used up.',
+  'error.subtitles.theSubtitleCouldNotBeKept': 'Couldn’t save the subtitle beside the video.',
+  'error.subtitles.valenceMayNotWriteBesideIt':
+    'Valence isn’t allowed to save files beside that video.',
   'error.upload.aFileGoesAtAPlain':
     'Upload paths must be inside the library, with no dots or empty folder names.',
   'error.upload.noFileWasSent': 'No file was sent.',
@@ -4443,6 +4452,27 @@ const ENGLISH = {
   'screens.adminArea.stoppedThatStream': 'Stopped that stream.',
   'screens.adminArea.stoppedTheReEncode': 'Stopped the re-encode.',
   'screens.adminArea.storage': 'Storage',
+  'screens.adminArea.subtitlesCard.apiKey': 'API key',
+  'screens.adminArea.subtitlesCard.askedToo':
+    'Searched alongside OpenSubtitles, and often stronger for shows.',
+  'screens.adminArea.subtitlesCard.findSubtitlesForWhatYourLibraries':
+    'Find subtitles for your films and shows on OpenSubtitles and SubDL. They’re saved beside each video, so every app picks them up.',
+  'screens.adminArea.subtitlesCard.getAnOpenSubtitlesKey': 'Get an OpenSubtitles API key',
+  'screens.adminArea.subtitlesCard.getASubdlKey': 'Get a SubDL API key',
+  'screens.adminArea.subtitlesCard.languages': 'Languages',
+  'screens.adminArea.subtitlesCard.offeredFirstWhenSomebodyLooks':
+    'The languages offered first when someone looks for subtitles.',
+  'screens.adminArea.subtitlesCard.openSubtitles': 'OpenSubtitles',
+  'screens.adminArea.subtitlesCard.readingTheSubtitleSettings': 'Loading subtitle settings',
+  'screens.adminArea.subtitlesCard.savedTheSubtitleSettings': 'Subtitle settings saved',
+  'screens.adminArea.subtitlesCard.subdl': 'SubDL',
+  'screens.adminArea.subtitlesCard.theBiggestCatalogueAKeyIs':
+    'The biggest catalogue, and it can find subtitles timed to your exact file. Downloads are counted against the account you sign in with.',
+  'screens.adminArea.subtitlesCard.theSubtitleSettingsCouldNotBe':
+    'Couldn’t load the subtitle settings.',
+  'screens.adminArea.subtitlesCard.whatLeavesTheServer': 'What’s sent to the subtitle sites',
+  'screens.adminArea.subtitlesCard.whenYouLookTheTitleAndA':
+    'When you look for subtitles, the title, its catalogue IDs and a fingerprint of the video file are sent to the sites you’ve added keys for. Nothing is sent until someone looks.',
   'screens.adminArea.thatCouldNotBeConfirmed': 'Couldn’t confirm that.',
   'screens.adminArea.thatReEncodeCouldNotBe': 'Couldn’t stop the re-encode.',
   'screens.adminArea.thatScheduleCouldNotBeAdded': 'Couldn’t add the schedule.',
@@ -4886,6 +4916,24 @@ const ENGLISH = {
     'Choose a folder to move it to. Its name stays the same.',
   'screens.filesPanel.moveEntryDialog.moveName': 'Move {name}',
   'screens.filesPanel.moveEntryDialog.moveThis': 'Move this',
+  'screens.findSubtitlesDialog.count.downloads.one': '{count} download',
+  'screens.findSubtitlesDialog.count.downloads.other': '{count} downloads',
+  'screens.findSubtitlesDialog.findSubtitles': 'Find subtitles',
+  'screens.findSubtitlesDialog.findSubtitlesForName': 'Find subtitles for {name}',
+  'screens.findSubtitlesDialog.get': 'Get',
+  'screens.findSubtitlesDialog.looking': 'Looking for subtitles',
+  'screens.findSubtitlesDialog.noSubtitleSiteIsSetUp':
+    'No subtitle site is set up yet. Add an OpenSubtitles or SubDL key under System › Subtitles.',
+  'screens.findSubtitlesDialog.nothingWasFoundInThatLanguage':
+    'Nothing was found in that language.',
+  'screens.findSubtitlesDialog.saved': 'Saved',
+  'screens.findSubtitlesDialog.savedBesideTheVideo':
+    'The one you pick is saved beside the video, so every app shows it.',
+  'screens.findSubtitlesDialog.savedName': 'Saved {name}',
+  'screens.findSubtitlesDialog.sdh': 'SDH',
+  'screens.findSubtitlesDialog.subtitlesFound': 'Subtitles found',
+  'screens.findSubtitlesDialog.theSubtitleSitesCouldNotBe': 'Couldn’t reach the subtitle sites.',
+  'screens.findSubtitlesDialog.timedToThisFile': 'Matches this file',
   'screens.finishOnAnotherDevice.finishSettingUpOnYourPhone': 'Finish setting up on your phone',
   'screens.finishOnAnotherDevice.nameNeedsANameAndA':
     '{name} needs a name and a picture, which are hard to enter with a remote. Open this on your phone and your TV will continue automatically.',
@@ -6169,6 +6217,7 @@ const ENGLISH = {
   'screens.videoPlayer.playbackFailed': 'Playback failed.',
   'screens.videoPlayer.playerControls.audioTrack': 'Audio track',
   'screens.videoPlayer.playerControls.backSKIPSECONDSSeconds': 'Back {SKIP_SECONDS} seconds',
+  'screens.videoPlayer.playerControls.findSubtitles': 'Find subtitles…',
   'screens.videoPlayer.playerControls.forwardSKIPSECONDSSeconds': 'Forward {SKIP_SECONDS} seconds',
   'screens.videoPlayer.playerControls.immersiveView': 'Immersive view',
   'screens.videoPlayer.playerControls.leaveTheImmersiveView': 'Exit immersive view',
