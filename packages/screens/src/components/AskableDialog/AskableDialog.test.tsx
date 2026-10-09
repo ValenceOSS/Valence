@@ -21,6 +21,12 @@ const fetchProfilesOnOffer = vi.fn<() => Promise<ProfilesOnOffer>>();
 
 const aQuality = (id: string, name: string) => ({ id, name, kind: 'video' as const });
 
+vi.mock('@ValenceClient/requests/fetchRequests', () => ({
+  fetchRequestsAvailability: () =>
+    Promise.resolve({ isEnabled: true, kinds: ['film', 'series', 'artist', 'album', 'book'] }),
+  fetchRequestsOverview: vi.fn(),
+}));
+
 vi.mock('@ValenceClient/requests/fetchAskable', () => ({
   fetchAskable: (...given: Parameters<typeof Askable.fetchAskable>) => fetchAskable(...given),
 }));

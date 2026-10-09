@@ -8,6 +8,7 @@ import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { askingFor } from '@ValenceClient/requests/askingFor';
 import { askForMedia, removeMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
 import { nameTheStanding } from '@ValenceClient/requests/nameTheStanding';
+import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
 import { progressOfRequest } from '@ValenceClient/requests/progressOfRequest';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { ActionRow } from '@ValenceTv/components/ActionRow/ActionRow';
@@ -63,15 +64,18 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
   const title = found.data ?? null;
   const isElsewhere = title?.standing.status === 'linked';
   const faces = useQuery(linkingQueries.faces());
+  const isRequestableKind = useRequestableKinds().has(kind);
   const isAskable =
-    title?.standing.status === 'askable' || (isElsewhere && title.standing.requestId === null);
+    isRequestableKind &&
+    (title?.standing.status === 'askable' || (isElsewhere && title.standing.requestId === null));
   const seasons = useQuery({
     ...requestsQueries.seriesSeasons(kind === 'series' && title !== null ? Number(id) : null),
   });
   const canRequest =
     kind === 'film'
       ? isAskable
-      : (seasons.data ?? []).some(
+      : isRequestableKind &&
+        (seasons.data ?? []).some(
           (season) => season.standing === 'askable' || season.standing === 'partly',
         );
   const offered = useQuery(requestsQueries.profilesOnOffer(kind, canRequest));
@@ -364,7 +368,7 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
               })
             : null}
 
-          {kind === 'series' && (seasons.data ?? []).length > 0 ? (
+          {kind === 'series' && canRequest && (seasons.data ?? []).length > 0 ? (
             <ActionRow
               label={say('common.getNewSeasonsAsTheyCome')}
               {...(followsNew ? { icon: Check } : {})}
@@ -374,7 +378,7 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
             />
           ) : null}
 
-          {kind === 'series' && picked.size > 0 ? (
+          {kind === 'series' && canRequest && picked.size > 0 ? (
             <ActionRow
               label={
                 isBusy

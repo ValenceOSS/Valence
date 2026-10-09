@@ -11,8 +11,9 @@ import type {
 } from '@ValenceContracts/schemas/ArrImport';
 import type { Sent } from '@ValenceClient/requests/sendToRequests';
 import { ArrImportStep } from './ArrImportStep';
+import type { RequestsAvailability } from '@ValenceContracts/schemas/Requests';
 
-const fetchRequestsAvailability = vi.fn<() => Promise<{ isEnabled: boolean }>>();
+const fetchRequestsAvailability = vi.fn<() => Promise<RequestsAvailability>>();
 const planArrImport = vi.fn<(ask: ArrImportAsk) => Promise<Sent<ArrImportPlan>>>();
 const applyArrImport = vi.fn<(ask: ArrImportAsk) => Promise<Sent<ArrImportApplied>>>();
 const askForArrWanted = vi.fn<(items: readonly ArrWanted[]) => Promise<Sent<ArrWantedOutcome>>>();
@@ -96,7 +97,9 @@ const APPLIED: ArrImportApplied = {
 };
 
 beforeEach(() => {
-  fetchRequestsAvailability.mockReset().mockResolvedValue({ isEnabled: true });
+  fetchRequestsAvailability
+    .mockReset()
+    .mockResolvedValue({ isEnabled: true, kinds: ['film', 'series', 'artist', 'album', 'book'] });
   planArrImport.mockReset().mockResolvedValue({ value: PLAN, refusal: null });
   applyArrImport.mockReset().mockResolvedValue({ value: APPLIED, refusal: null });
   askForArrWanted
@@ -110,7 +113,10 @@ describe('ArrImportStep', () => {
   it('says how to switch requesting on where it is off, and lets the admin skip', async () => {
     const onSkip = vi.fn();
 
-    fetchRequestsAvailability.mockResolvedValue({ isEnabled: false });
+    fetchRequestsAvailability.mockResolvedValue({
+      isEnabled: false,
+      kinds: ['film', 'series', 'artist', 'album', 'book'],
+    });
     renderInAnAddress(<ArrImportStep onSkip={onSkip} />);
 
     expect(await screen.findByText('Requests aren’t enabled')).toBeInTheDocument();

@@ -240,6 +240,12 @@ A **quality profile** is what releases are judged by. The admin area's **Profile
 - **Upgrades.** Where the profile upgrades, a release of a better quality, or the same quality with a better score, replaces what was fetched, until the quality it upgrades until is reached.
 - **Not out yet.** A film is held until it is out at home, digitally or on disc, as its profile says, and an episode until it airs.
 
+### Kinds with no library
+
+Only what a library takes can be asked for. With no films library that has **Takes requests** on, nobody is offered films: there's no Movies section, no films on Discover's shelves or in search, and a film's page says no library takes requests for it. The same goes for shows, music and books. Quality profiles of a kind no library takes say they aren't used. Overseerr and Jellyseerr, talking to Valence as Radarr or Sonarr, are given no root folder for it, and Valence's health check tells them why.
+
+A request still open when its library is removed is marked **Failed**, saying there's no library to put it in; edit it to choose another.
+
 ## Per library behaviour
 
 A library's own settings, on the **Libraries** page, say how requesting treats it:

@@ -82,7 +82,7 @@ import { catalogueEntriesOf } from '@ValenceServer/requests/titles/catalogueEntr
 import type { RequestsAnswer, RequestsClient } from '@ValenceServer/requests/createRequestsClient';
 import { ReleaseDownloadRequestSchema } from '@ValenceContracts/schemas/Indexer';
 import { readSessionOnce } from '@ValenceServer/auth/readSessionOnce';
-import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
+import type { MediaRequest, MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { seasonsOf } from '@ValenceContracts/functions/seasonsOf';
 import { describeCatalogueTitle } from '@ValenceServer/requests/catalogue/describeCatalogueTitle';
@@ -94,6 +94,8 @@ import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
 import { webhookRequestOf } from '@ValenceServer/webhooks/webhookRequestOf';
+import { requestableKindsOf } from '@ValenceContracts/functions/requestableKindsOf';
+import { withLibraryGone } from '@ValenceServer/requests/withLibraryGone';
 
 /**
  * Registers the requests endpoints.
@@ -136,12 +138,21 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     everyRequest,
   } = context;
 
+  const requestableKinds = async (): Promise<ReadonlySet<MediaRequestKind>> =>
+    new Set(requestableKindsOf(await library.list(asTheServer)));
+
   app.openapi(requestsAvailabilityRoute, async (context) => {
     if ((await readSessionOnce(auth, context.req.raw.headers)) === null) {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
-    return context.json({ isEnabled: requests !== null }, 200);
+    return context.json(
+      {
+        isEnabled: requests !== null,
+        kinds: requests === null ? [] : [...(await requestableKinds())],
+      },
+      200,
+    );
   });
 
   app.openapi(adminRequestsOverviewRoute, async (context) => {
@@ -218,11 +229,13 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const seesAll = await seesEveryRequest(headers);
+    const shown = withLibraryGone(
+      answer.value,
+      new Set((await library.list(asTheServer)).map((entry) => entry.id)),
+    );
 
     return context.json(
-      seesAll
-        ? answer.value
-        : answer.value.filter((request) => request.requestedBy.id === session?.user.id),
+      seesAll ? shown : shown.filter((request) => request.requestedBy.id === session?.user.id),
       200,
     );
   });
@@ -368,20 +381,24 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(NOT_YOURS, 403);
     }
 
-    const [discovered, requested] = await Promise.all([
+    const [discovered, requested, kinds] = await Promise.all([
       discoverShelves(discovery, { ...may, books: may.video }),
       everyRequest(),
+      requestableKinds(),
     ]);
+    const shelves = discovered.shelves
+      .map((shelf) => ({ ...shelf, titles: shelf.titles.filter((title) => kinds.has(title.kind)) }))
+      .filter((shelf) => shelf.titles.length > 0);
 
     return context.json(
       {
         shelves: await Promise.all(
-          discovered.shelves.map(async (shelf) => ({
+          shelves.map(async (shelf) => ({
             ...shelf,
             titles: await standTitles(shelf.titles, discovery.lookup, requested),
           })),
         ),
-        studios: discovered.studios,
+        studios: kinds.has('film') ? discovered.studios : [],
       },
       200,
     );
@@ -399,6 +416,10 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     if (!may.video) {
       return context.json(NOT_YOURS, 403);
+    }
+
+    if (!(await requestableKinds()).has(kind)) {
+      return context.json({ titles: [], page, hasMore: false }, 200);
     }
 
     const browsed = await discovery.browse({
@@ -462,6 +483,10 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     if (!(isMusicRequest(kind) ? may.music : may.video)) {
       return context.json(NOT_YOURS, 403);
+    }
+
+    if (!(await requestableKinds()).has(kind)) {
+      return context.json([], 200);
     }
 
     const found = await findInCatalogue(query, kind);

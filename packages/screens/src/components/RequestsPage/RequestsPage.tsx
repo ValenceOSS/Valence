@@ -10,6 +10,8 @@ import { describeBrowsing } from '@ValenceScreens/requests/describeBrowsing';
 import { readBrowsing } from '@ValenceScreens/requests/readBrowsing';
 import { viewOfBrowsing } from '@ValenceScreens/requests/viewOfBrowsing';
 import { requestsViewShown } from '@ValenceScreens/requests/requestsViewShown';
+import { requestsViewsFor } from '@ValenceScreens/requests/requestsViewsFor';
+import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
 import { CatalogueBrowser } from './components/CatalogueBrowser/CatalogueBrowser';
 import { DiscoverShelves } from './components/DiscoverShelves/DiscoverShelves';
 import { BooksDiscover } from './components/BooksDiscover/BooksDiscover';
@@ -22,14 +24,19 @@ import { say } from '@ValenceI18n/say';
  * the spirit of Overseerr, and to follow what you have asked for until it arrives. Discover shows
  * what is trending, popular and coming; Movies and Shows are those lists whole, going on as far as
  * they are scrolled; My requests shows where each of yours has got to. Which is showing is in the
- * address, so any of them can be linked to.
+ * address, so any of them can be linked to; one for a kind no library takes requests for shows
+ * Discover instead.
  */
 const RequestsPage = () => {
   const { place, go } = usePlace();
   const prefersReducedMotion = useReducedMotionConfig();
   const discovered = useQuery(requestsQueries.discover());
+  const kinds = useRequestableKinds();
+  const isKnown = useQuery(requestsQueries.availability()).data !== undefined;
   const browsing = readBrowsing(place.requestsView);
-  const showing = requestsViewShown(place.requestsView);
+  const shown = requestsViewShown(place.requestsView);
+  const showing =
+    !isKnown || requestsViewsFor(kinds).some((view) => view.id === shown) ? shown : 'discover';
 
   const ask = (asking: string) => {
     go({ asking });
@@ -77,7 +84,7 @@ const RequestsPage = () => {
                   });
                 }}
               />
-            ) : browsing !== null ? (
+            ) : browsing !== null && (!isKnown || kinds.has(browsing.kind)) ? (
               <>
                 <h2 className="text-2xl font-semibold tracking-tight text-text">
                   {describeBrowsing(browsing, studioName)}

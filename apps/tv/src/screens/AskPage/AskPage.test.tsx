@@ -10,7 +10,7 @@ import { linkingQueries } from '@ValenceClient/query/linkingQueries';
 import { aLinkedServerFace } from '@ValenceClient/testing/aLinkedServerFace';
 import { AskPage } from '@ValenceTv/screens/AskPage/AskPage';
 import type { CatalogueTitleDetail } from '@ValenceContracts/schemas/CatalogueTitle';
-import type { CatalogueSeason } from '@ValenceContracts/schemas/MediaRequest';
+import type { CatalogueSeason, MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 
 jest.mock('@ValenceClient/session/auth', () => ({
   fetchSession: () => new Promise(() => undefined),
@@ -67,6 +67,7 @@ type Held = {
   seasons?: CatalogueSeason[];
   choices?: { id: string; name: string; kind: 'video' }[];
   faces?: ReturnType<typeof aLinkedServerFace>[];
+  kinds?: readonly MediaRequestKind[];
 };
 
 const aCacheHolding = ({
@@ -75,6 +76,7 @@ const aCacheHolding = ({
   seasons = [],
   choices = [],
   faces = [],
+  kinds = ['film', 'series', 'artist', 'album', 'book'],
 }: Held): QueryClient => {
   const cache = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Infinity, gcTime: Infinity } },
@@ -88,6 +90,10 @@ const aCacheHolding = ({
   ]);
   cache.setQueryData(sessionQueries.who().queryKey, ME);
   cache.setQueryData(linkingQueries.faces().queryKey, faces);
+  cache.setQueryData(requestsQueries.availability().queryKey, {
+    isEnabled: true,
+    kinds: [...kinds],
+  });
 
   return cache;
 };
@@ -287,6 +293,12 @@ describe('AskPage', () => {
     await userEvent.press(drawn.getByRole('button', { name: 'Season 2 · 10 episodes' }));
 
     expect(drawn.queryByRole('button', { name: /^Request/ })).toBeNull();
+  });
+
+  it('offers no request for a film where no library takes films', async () => {
+    const drawn = await drawAsk(aCacheHolding({ title: aTitle(), kinds: ['series'] }));
+
+    expect(drawn.queryByRole('button', { name: 'Request' })).toBeNull();
   });
 
   it('cancels a request this viewer made', async () => {

@@ -4,7 +4,8 @@ import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { ArrImportDialog } from './ArrImportDialog';
 
 vi.mock('@ValenceClient/requests/fetchRequests', () => ({
-  fetchRequestsAvailability: () => Promise.resolve({ isEnabled: true }),
+  fetchRequestsAvailability: () =>
+    Promise.resolve({ isEnabled: true, kinds: ['film', 'series', 'artist', 'album', 'book'] }),
   fetchRequestsOverview: vi.fn(),
   checkRequestsNow: vi.fn(),
 }));

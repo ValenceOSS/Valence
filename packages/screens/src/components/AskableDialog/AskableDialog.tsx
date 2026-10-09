@@ -19,6 +19,7 @@ import { Spinner } from '@ValenceUI/Spinner';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { askForMedia, removeMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
 import { askingFor } from '@ValenceClient/requests/askingFor';
+import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
 import { seasonsWithItemsOf } from '@ValenceClient/requests/seasonsWithItemsOf';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
@@ -86,8 +87,11 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   const heldKind = title?.kind ?? null;
   const heldId = title?.standing.status === 'library' ? title.standing.mediaId : null;
   const isElsewhere = title?.standing.status === 'linked';
+  const kinds = useRequestableKinds();
+  const isUnrequestable = title !== null && !kinds.has(title.kind);
   const isAskable =
-    title?.standing.status === 'askable' || (isElsewhere && title.standing.requestId === null);
+    !isUnrequestable &&
+    (title?.standing.status === 'askable' || (isElsewhere && title.standing.requestId === null));
 
   useEffect(() => {
     if (heldKind !== null && heldId !== null) {
@@ -114,6 +118,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
     request.state !== 'available';
   const standing = title === null ? null : describeStanding(title.standing);
   const isAddingSeasons =
+    !isUnrequestable &&
     title?.kind === 'series' &&
     title.standing.status === 'requested' &&
     request !== null &&
@@ -353,7 +358,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                               say('screens.askableDialog.noYearGiven')}
                           </span>
                         </span>
-                        {askedAlbums.has(album.id) ? (
+                        {!kinds.has('album') ? null : askedAlbums.has(album.id) ? (
                           <Badge size="sm" tone={STATUS_LOOK.queued.tone}>
                             {say('common.requested')}
                           </Badge>
@@ -382,7 +387,12 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
       </DialogContent>
 
       <DialogFooter
-        note={problem}
+        note={
+          problem ??
+          (isUnrequestable && title.standing.status === 'askable'
+            ? say('common.noLibraryTakesRequestsForThis')
+            : null)
+        }
         {...(trailerKey === null
           ? {}
           : {

@@ -90,7 +90,10 @@ const aCache = (): QueryClient =>
 beforeEach(() => {
   vi.clearAllMocks();
 
-  fetchRequestsAvailability.mockResolvedValue({ isEnabled: true });
+  fetchRequestsAvailability.mockResolvedValue({
+    isEnabled: true,
+    kinds: ['film', 'series', 'artist', 'album', 'book'],
+  });
   fetchRequestsOverview.mockResolvedValue({
     address: 'http://requests:8421',
     isReachable: false,
@@ -103,6 +106,7 @@ describe('requestsQueries', () => {
   it('asks whether requesting is on, and asks again once the answer is a few minutes old', async () => {
     await expect(aCache().fetchQuery(requestsQueries.availability())).resolves.toEqual({
       isEnabled: true,
+      kinds: ['film', 'series', 'artist', 'album', 'book'],
     });
     expect(requestsQueries.availability().staleTime).toBe(5 * 60 * 1000);
   });
