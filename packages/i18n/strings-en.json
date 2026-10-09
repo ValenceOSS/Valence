@@ -29101,6 +29101,11 @@
     "context": "Shown in the up next in the player of the television app."
   },
   {
+    "handler": "tv.prompt.ok",
+    "text": "OK",
+    "context": "The one button of a popup on a TV that asks nothing, only tells, which closes it."
+  },
+  {
     "handler": "tv.rating.rateIt",
     "text": "Rate it",
     "context": "On the television, the button on a film or programme page that opens the choice of stars, before it has been rated."

@@ -7371,6 +7371,7 @@ const ENGLISH = {
   'tv.player.thisValenceTurnedTheTelevisionAway':
     'The server rejected this TV. Your session may have expired, so go back and sign in again.',
   'tv.player.upNext.keepWatching': 'Keep watching',
+  'tv.prompt.ok': 'OK',
   'tv.rating.rateIt': 'Rate it',
   'tv.rating.takeTheRatingBack': 'Remove my rating',
   'tv.requestsPage.findSomethingInSearchAndRequest':
