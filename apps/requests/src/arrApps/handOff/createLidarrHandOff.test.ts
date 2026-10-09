@@ -314,4 +314,18 @@ describe('createLidarrHandOff', () => {
       { itemId: 'b', kind: 'missing' },
     ]);
   });
+
+  it('asks Lidarr to search the artist again, and says where an album’s page is', async () => {
+    const arr = aFakeArr({
+      'POST /api/v1/command': { status: 201, body: { name: 'ArtistSearch', id: 1 } },
+    });
+    const handOff = createLidarrHandOff(createArrCaller(arr.fetch, LIDARR));
+
+    await handOff.search(ALBUM_REQUEST, 3);
+
+    expect(arr.sent('POST', '/api/v1/command')).toEqual([{ name: 'ArtistSearch', artistId: 3 }]);
+    expect(await handOff.pageOf(ALBUM_REQUEST, 3)).toBe(
+      `/album/${ALBUM_REQUEST.musicBrainzId ?? ''}`,
+    );
+  });
 });

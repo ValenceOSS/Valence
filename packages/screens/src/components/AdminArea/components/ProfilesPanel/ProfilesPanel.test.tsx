@@ -135,6 +135,37 @@ describe('ProfilesPanel', () => {
     });
   });
 
+  it('says no request is judged by these profiles where every library hands off', async () => {
+    fetchLibraries.mockResolvedValue([
+      {
+        id: 'films',
+        name: 'Films',
+        kind: 'movies',
+        path: '/media/films',
+        itemCount: 0,
+        lastScannedAt: null,
+        defaultAudioLanguage: null,
+        filesAtOnce: null,
+        takesRequests: true,
+        requestProfileId: null,
+        requestPath: null,
+        keepsShowsTogether: true,
+        higherProfileAsks: 'ask',
+        fulfilment: {
+          appId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+          rootFolderPath: '/movies',
+          qualityProfileId: 1,
+          metadataProfileId: null,
+          searchesOnAdd: true,
+        },
+      },
+    ]);
+
+    renderInAnAddress(<ProfilesPanel />);
+
+    expect(await screen.findByText(/hands them to a connected app/)).toBeInTheDocument();
+  });
+
   it('tries a profile on a search of the indexers', async () => {
     const user = userEvent.setup();
 

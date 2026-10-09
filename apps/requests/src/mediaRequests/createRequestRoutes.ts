@@ -17,12 +17,14 @@ import { readBody } from '@ValenceRequests/readBody';
 import type { MediaRequestAdded } from '@ValenceContracts/schemas/MediaRequest';
 import type { RequestService } from '@ValenceRequests/mediaRequests/createRequestService';
 import type { RequestWorker } from '@ValenceRequests/mediaRequests/createRequestWorker';
+import type { HandOffWorker } from '@ValenceRequests/arrApps/handOff/createHandOffWorker';
 import type { RequestLogStore } from '@ValenceRequests/mediaRequests/RequestLogStore';
 import { refuse } from '@ValenceI18n/refuse';
 import { refuseWith } from '@ValenceI18n/refuseWith';
 
 type CreateRequestRoutesOptions = {
   service: RequestService;
+  handOff?: Pick<HandOffWorker, 'searchNow' | 'handedTo'>;
   log: Pick<RequestLogStore, 'list'>;
   worker: Pick<
     RequestWorker,
@@ -53,11 +55,12 @@ const NO_SUCH_REQUEST = refuse('error.requests.noSuchRequest');
  * and a request refused takes them always.
  *
  * @param service - The requests.
+ * @param handOff - What hands requests to connected apps: which app has one, and searching it again.
  * @param log - What each request has done.
  * @param worker - What fetches them.
  * @returns The routes.
  */
-const createRequestRoutes = ({ service, log, worker }: CreateRequestRoutesOptions) => {
+const createRequestRoutes = ({ service, handOff, log, worker }: CreateRequestRoutesOptions) => {
   const routes = new Hono();
 
   const answer = <Shown>(shown: Shown | null) =>
@@ -216,9 +219,25 @@ const createRequestRoutes = ({ service, log, worker }: CreateRequestRoutesOption
       : context.json({ folders: await worker.deleteFiled(id) });
   });
 
-  routes.post('/requests/:id/retry', async (context) =>
-    answer(await service.retry(context.req.param('id'))),
+  routes.get('/requests/:id/handed-to', async (context) =>
+    answer((await handOff?.handedTo(context.req.param('id'))) ?? null),
   );
+
+  routes.post('/requests/:id/retry', async (context) => {
+    const id = context.req.param('id');
+
+    const handedOff = handOff === undefined ? 'notHandedOff' : await handOff.searchNow(id);
+
+    if (handedOff === 'notApproved') {
+      return context.json(refuse('error.requests.itIsNotApprovedSoNothingIsSearched'), 409);
+    }
+
+    if (handedOff === 'failed') {
+      return context.json(refuse('error.requests.theAppCouldNotSearchForIt'), 409);
+    }
+
+    return answer(handedOff === 'searched' ? await service.find(id) : await service.retry(id));
+  });
 
   routes.post('/requests/:id/fulfil', async (context) =>
     answer(await service.fulfil(context.req.param('id'))),

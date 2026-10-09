@@ -8715,6 +8715,11 @@
     "context": "An error the server answers with (HTTP 400) in the app on the server (from `serveRequests`)."
   },
   {
+    "handler": "error.requests.itIsNotApprovedSoNothingIsSearched",
+    "text": "It isn’t approved, so nothing is searched for it.",
+    "context": "Error when Search missing is pressed for a request handed to a connected app that hasn't been approved, or was declined."
+  },
+  {
     "handler": "error.requests.noSuchBlockedRelease",
     "text": "No such blocked release.",
     "context": "An error the server answers with (HTTP 404) in the media requests in the requests service (from `createRequestRoutes`)."
@@ -8773,6 +8778,11 @@
     "handler": "error.requests.thatIsNotWhatTheCatalogue",
     "text": "That doesn’t match the catalogue.",
     "context": "An error the server answers with (HTTP 400) in the media requests in the requests service (from `createRequestRoutes`)."
+  },
+  {
+    "handler": "error.requests.theAppCouldNotSearchForIt",
+    "text": "The connected app couldn’t search for it. Its history says why.",
+    "context": "Error when Search missing asks the connected app a request was handed to, such as Sonarr, to search again and the app refuses or can't be reached."
   },
   {
     "handler": "error.requests.theCatalogueDoesNotKnowThat",
@@ -10048,6 +10058,11 @@
     "handler": "requests.arrApps.arrCaller.nameRefusedItsApiKey",
     "text": "{name} rejected its API key",
     "context": "Shown in the connected apps (Radarr, Sonarr, Lidarr, Prowlarr) in the requests service (from `createArrCaller`). {name} is what the admin called the app."
+  },
+  {
+    "handler": "requests.arrApps.handOff.askedNameToSearchAgain",
+    "text": "Asked {name} to search for it again.",
+    "context": "Entry in a request's history when Search missing asks the connected app it was handed to, such as Sonarr, to search again."
   },
   {
     "handler": "requests.arrApps.handOff.handedToName",
@@ -14455,6 +14470,11 @@
     "context": "Read aloud by screen readers as the name in the indexer report list in the admin area."
   },
   {
+    "handler": "screens.adminArea.indexersPanel.everyLibraryHandsOff",
+    "text": "Every library that takes requests hands them to a connected app, so Valence doesn’t search these indexers for them.",
+    "context": "Note above the indexers in Admin › Requests › Indexers, when every library hands requests to Radarr, Sonarr or Lidarr."
+  },
+  {
     "handler": "screens.adminArea.indexersPanel.fromNameAddedUpdatedRemoved",
     "text": "From {name}: {added} added, {updated} updated, {removed} removed.",
     "context": "Shown in the admin area: said after bringing a Prowlarr's indexers in. {name} is the Prowlarr; the others are counts."
@@ -16240,6 +16260,11 @@
     "context": "The label of a tab row in the profile editor in the admin area."
   },
   {
+    "handler": "screens.adminArea.profilesPanel.everyLibraryHandsOff",
+    "text": "Every library of this kind that takes requests hands them to a connected app, so no request is judged by these profiles.",
+    "context": "Note above the profiles of one kind in Admin › Requests › Profiles, when every library of that kind hands requests to Radarr, Sonarr or Lidarr."
+  },
+  {
     "handler": "screens.adminArea.profilesPanel.highestFirst",
     "text": "Highest first. When people ask for the same title at different profiles, this order decides which is higher.",
     "context": "Note above the list of quality profiles in Admin › Requests › Profiles, which can be moved up and down."
@@ -17728,6 +17753,21 @@
     "handler": "screens.adminArea.titlePage.followingName",
     "text": "Following {name}",
     "context": "Said once a title, season or album is followed. {name} is what."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.handedToNote.handledByName",
+    "text": "Handled by {name}",
+    "context": "Accessible name of the note on an admin title page whose library hands requests to a connected app such as Sonarr. {name} is the app's name."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.handedToNote.nameSearchesDownloadsAndImports",
+    "text": "Handled by {name}. It searches for, downloads and imports this title, and Valence follows what it does. Search missing asks {name} to search again.",
+    "context": "Note on an admin title page whose library hands requests to a connected app. {name} is the app's name, such as Sonarr."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.handedToNote.openInName",
+    "text": "Open in {name}",
+    "context": "Link on the handed-off note to the title's page in the connected app, such as Sonarr."
   },
   {
     "handler": "screens.adminArea.titlePage.heightP",

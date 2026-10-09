@@ -164,6 +164,23 @@ const createSonarrHandOff = (
       ).id;
     },
 
+    search: async (_request, handOffId) => {
+      await caller.send(
+        'POST',
+        '/command',
+        { name: 'SeriesSearch', seriesId: handOffId },
+        ArrCommandSchema,
+      );
+    },
+
+    pageOf: async (_request, handOffId) => {
+      const series = await caller.read(`/series/${handOffId.toString()}`, SonarrSeriesSchema);
+
+      return series.titleSlug === null || series.titleSlug === undefined
+        ? null
+        : `/series/${series.titleSlug}`;
+    },
+
     watch: async (_request, items, handOff, handOffId, queue) => {
       const seriesId = handOffId.toString();
       const [series, episodes, files] = await Promise.all([

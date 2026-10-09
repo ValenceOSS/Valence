@@ -336,7 +336,12 @@ const app = createApp({
       rules: giveUpRules,
     }),
     createProfileRoutes(profiles),
-    createRequestRoutes({ service: mediaRequests, log: requestLog, worker: requestWorker }),
+    createRequestRoutes({
+      service: mediaRequests,
+      handOff,
+      log: requestLog,
+      worker: requestWorker,
+    }),
     createArrAppRoutes({ apps: arrApps }),
     createArrImportRoutes({
       imports: createArrImportService({

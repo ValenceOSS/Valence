@@ -200,6 +200,22 @@ const createLidarrHandOff = (caller: Pick<ArrCaller, 'read' | 'send'>): HandOffH
     place: (request, _items, handOff) =>
       request.kind === 'artist' ? placeArtist(request, handOff) : placeAlbum(request, handOff),
 
+    search: async (_request, handOffId) => {
+      await caller.send(
+        'POST',
+        '/command',
+        { name: 'ArtistSearch', artistId: handOffId },
+        ArrCommandSchema,
+      );
+    },
+
+    pageOf: (request) =>
+      Promise.resolve(
+        request.musicBrainzId === null
+          ? null
+          : `/${request.kind === 'album' ? 'album' : 'artist'}/${request.musicBrainzId}`,
+      ),
+
     watch: async (_request, items, handOff, handOffId, queue) => {
       const albums = await caller.read('/album', LidarrAlbumsSchema, {
         artistId: handOffId.toString(),

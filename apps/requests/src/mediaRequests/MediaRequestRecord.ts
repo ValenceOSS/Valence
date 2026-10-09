@@ -8,7 +8,7 @@ import type { RecordStore } from '@ValenceRequests/stores/RecordStore';
 
 type MediaRequestRecord = Omit<
   MediaRequest,
-  'state' | 'items' | 'requestedBy' | 'releaseDate' | 'profileName'
+  'state' | 'items' | 'requestedBy' | 'releaseDate' | 'profileName' | 'isHandedOff'
 > & {
   libraryPath: string;
   libraryFolder: string | null;

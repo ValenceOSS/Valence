@@ -50,6 +50,7 @@ import { TitleDetails } from './components/TitleDetails/TitleDetails';
 import { TitleHero } from './components/TitleHero/TitleHero';
 import { TitleProgress } from './components/TitleProgress/TitleProgress';
 import { ProfileAskCard } from './components/ProfileAskCard/ProfileAskCard';
+import { HandedToNote } from './components/HandedToNote/HandedToNote';
 import { askOfEntry } from './askOfEntry';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';
 import type { RequestDownload } from '@ValenceClient/requests/downloadsOfRequest';
@@ -97,6 +98,9 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
         ? Number(catalogueId)
         : null,
     ),
+  );
+  const handedTo = useQuery(
+    requestsQueries.handedTo(request?.isHandedOff === true ? request.id : null),
   );
   const isMoving = entry?.status === 'downloading';
   const queue = useQuery({
@@ -431,16 +435,18 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
           </Button>
         )}
 
-        <Button
-          variant="secondary"
-          size="md"
-          onClick={() => {
-            setIsSearching(true);
-          }}
-        >
-          <Icon of={SearchListFilledIcon} size={15} />
-          {say('screens.adminArea.titlePage.interactiveSearch')}
-        </Button>
+        {request.isHandedOff === true ? null : (
+          <Button
+            variant="secondary"
+            size="md"
+            onClick={() => {
+              setIsSearching(true);
+            }}
+          >
+            <Icon of={SearchListFilledIcon} size={15} />
+            {say('screens.adminArea.titlePage.interactiveSearch')}
+          </Button>
+        )}
 
         <ActionMenu
           label={say('common.actionsForTitle', { title: entry.title })}
@@ -549,6 +555,10 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
         askedBy={request === null ? null : { name: namesOfAskers(request), at: request.createdAt }}
         actions={actions}
       />
+
+      {handedTo.data === null || handedTo.data === undefined ? null : (
+        <HandedToNote handedTo={handedTo.data} />
+      )}
 
       {request?.profileAsk === null || request?.profileAsk === undefined ? null : (
         <ProfileAskCard

@@ -304,4 +304,19 @@ describe('createSonarrHandOff', () => {
       ),
     ).toMatchObject([{ folder: '/tv/Severance' }]);
   });
+
+  it('asks Sonarr to search the series again, and finds its page by its slug', async () => {
+    const arr = aFakeArr({
+      'POST /api/v3/command': { status: 201, body: { name: 'SeriesSearch', id: 1 } },
+      'GET /api/v3/series/7': {
+        body: { id: 7, tvdbId: 371_980, title: 'A Show', titleSlug: 'a-show' },
+      },
+    });
+    const handOff = createSonarrHandOff(createArrCaller(arr.fetch, SONARR));
+
+    await handOff.search(aMediaRequest({ kind: 'series' }), 7);
+
+    expect(arr.sent('POST', '/api/v3/command')).toEqual([{ name: 'SeriesSearch', seriesId: 7 }]);
+    expect(await handOff.pageOf(aMediaRequest({ kind: 'series' }), 7)).toBe('/series/a-show');
+  });
 });

@@ -11,6 +11,7 @@ import { createRequestRoutes } from './createRequestRoutes';
 import { createRequestService } from './createRequestService';
 import { createMemoryRequestLogStore } from './createMemoryRequestLogStore';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
+import type { HandedTo } from '@ValenceContracts/schemas/ArrApp';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
 
@@ -27,7 +28,15 @@ const DUNE = {
 /**
  * The routes over no requests to begin with, and a worker that answers as told.
  */
-const theRoutes = (picked: MediaRequest | { refused: Said } | null = null) => {
+const theRoutes = (
+  picked: MediaRequest | { refused: Said } | null = null,
+  handOff:
+    | {
+        searchNow: (id: string) => Promise<'searched' | 'failed' | 'notApproved' | 'notHandedOff'>;
+        handedTo: (id: string) => Promise<HandedTo | null>;
+      }
+    | undefined = undefined,
+) => {
   const worker = {
     searchMissing: vi.fn(() =>
       Promise.resolve({ searched: 2, startedAt: '2026-09-19T00:00:00.000Z' }),
@@ -70,6 +79,7 @@ const theRoutes = (picked: MediaRequest | { refused: Said } | null = null) => {
       items: createMemoryRecordStore<RequestItemRecord>(),
     }),
     worker,
+    ...(handOff === undefined ? {} : { handOff }),
   });
 
   const ask = (path: string, method = 'GET', body?: object) =>
@@ -125,6 +135,42 @@ describe('createRequestRoutes', () => {
 
     expect((await ask(`/requests/${id}/profile-ask`, 'POST', { choice: 'keep' })).status).toBe(404);
     expect((await ask(`/requests/${id}/profile-ask`, 'POST', { choice: 'both' })).status).toBe(400);
+  });
+
+  it('searches a handed-off request in its app, and says which app has it', async () => {
+    const searchNow = vi.fn((): Promise<'searched' | 'failed' | 'notApproved' | 'notHandedOff'> =>
+      Promise.resolve('searched'),
+    );
+    const handedTo = vi.fn((): Promise<HandedTo | null> =>
+      Promise.resolve({
+        appId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+        appName: 'Radarr',
+        appKind: 'radarr',
+        link: 'http://radarr.local/movie/438631',
+      }),
+    );
+    const { ask } = theRoutes(null, { searchNow, handedTo });
+    const id = await madeDune(ask);
+
+    expect((await ask(`/requests/${id}/retry`, 'POST')).status).toBe(200);
+    expect(searchNow).toHaveBeenCalledWith(id);
+
+    searchNow.mockResolvedValue('failed');
+
+    expect((await ask(`/requests/${id}/retry`, 'POST')).status).toBe(409);
+
+    searchNow.mockResolvedValue('notApproved');
+
+    expect(await (await ask(`/requests/${id}/retry`, 'POST')).json()).toMatchObject({
+      code: 'error.requests.itIsNotApprovedSoNothingIsSearched',
+    });
+    expect(await (await ask(`/requests/${id}/handed-to`)).json()).toMatchObject({
+      appName: 'Radarr',
+    });
+
+    handedTo.mockResolvedValue(null);
+
+    expect((await ask(`/requests/${id}/handed-to`)).status).toBe(404);
   });
 
   it('approves, refuses, retries and marks a request arrived', async () => {

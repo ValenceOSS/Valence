@@ -164,6 +164,8 @@ Handed off means:
 - Once the app has imported something, Valence reads that folder and tells whoever asked, exactly as it does for what it files itself.
 - A series stays followed. Sonarr's monitoring fetches new episodes, and each is marked available as Sonarr imports it. A season added to the request later is monitored in Sonarr too.
 - Cancelling or refusing a request removes nothing from the app.
+- In Requests › Catalogue, the title's page says which app handles it, with **Open in Sonarr** (or Radarr, or Lidarr) to go to its page there. **Search missing** asks the app to search again. **Interactive search** isn't offered: picking a release is left to the app.
+- Where every library that takes requests hands off, **Indexers** and **Profiles** say so, since Valence searches none of them for those requests.
 
 The series a request names is found in Sonarr by the TVDB id the catalogue gives. Where the catalogue gives none, Sonarr is asked to find it by its TMDB id.
 

@@ -2928,6 +2928,22 @@ describe('requests for films and series, through the server', () => {
     expect((await ask(`/api/requests/media/${REQUEST.id}/join`, 'POST')).status).toBe(403);
   });
 
+  it('says which app a request was handed to, to whoever manages requesting', async () => {
+    const HANDED = {
+      appId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+      appName: 'Radarr',
+      appKind: 'radarr',
+      link: 'http://radarr.local/movie/438631',
+    };
+    const service = () => Response.json(HANDED);
+    const manager = await build({ isOn: true, granted: ['requests.manage'], service });
+    const member = await build({ isOn: true, granted: ['requests.ask'], service });
+    const path = `/api/requests/media/${REQUEST.id}/handed-to`;
+
+    expect(await (await manager.ask(path)).json()).toEqual(HANDED);
+    expect((await member.ask(path)).status).toBe(403);
+  });
+
   it('lets whoever manages requesting settle a higher-quality ask, and nobody else', async () => {
     const asked: string[] = [];
     const service = (url: string, init: { method?: string; body?: string }) => {

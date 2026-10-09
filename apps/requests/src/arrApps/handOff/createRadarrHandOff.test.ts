@@ -147,4 +147,16 @@ describe('createRadarrHandOff', () => {
       ),
     ).toEqual([{ itemId: item.id, kind: 'missing' }]);
   });
+
+  it('asks Radarr to search for the film again, and says where its page is', async () => {
+    const arr = aFakeArr({
+      'POST /api/v3/command': { status: 201, body: { name: 'MoviesSearch', id: 1 } },
+    });
+    const handOff = createRadarrHandOff(createArrCaller(arr.fetch, anArrApp()));
+
+    await handOff.search(aMediaRequest(), 12);
+
+    expect(arr.sent('POST', '/api/v3/command')).toEqual([{ name: 'MoviesSearch', movieIds: [12] }]);
+    expect(await handOff.pageOf(aMediaRequest(), 12)).toBe('/movie/438631');
+  });
 });

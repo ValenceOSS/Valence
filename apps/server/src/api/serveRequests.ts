@@ -15,6 +15,7 @@ import {
   removeMediaRequestRoute,
   joinMediaRequestRoute,
   decideProfileAskRoute,
+  handedToRoute,
   adminCatalogueRoute,
   adminTitleFilesRoute,
   stopRequestDownloadRoute,
@@ -825,6 +826,18 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     if (answer.kind === 'answered') {
       sayRequestsChanged();
     }
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
+  app.openapi(handedToRoute, async (context) => {
+    const answer = await throughRequests(
+      context.req.raw.headers,
+      (client) => client.handedTo(context.req.valid('param').id),
+      ['requests.manage'],
+    );
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)

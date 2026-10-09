@@ -75,6 +75,8 @@ const aWorker = ({
   const arr = aFakeArr({ 'GET /api/v3/queue': { body: QUEUE_PAGE } });
   const watch = vi.fn<HandOffHandler['watch']>((_request, all) => Promise.resolve(sees(all)));
   const placing = vi.fn<HandOffHandler['place']>(place);
+  const searching = vi.fn<HandOffHandler['search']>(() => Promise.resolve());
+  const pageOf = vi.fn<HandOffHandler['pageOf']>(() => Promise.resolve('/movie/438631'));
   const worker = createHandOffWorker({
     requests,
     items: itemStore,
@@ -82,11 +84,11 @@ const aWorker = ({
     connect: (app) => createArrCaller(arr.fetch, app),
     events,
     log: log.store,
-    handlerFor: () => (handler ? { place: placing, watch } : null),
+    handlerFor: () => (handler ? { place: placing, watch, search: searching, pageOf } : null),
     now,
   });
 
-  return { worker, requests, items: itemStore, events, log, arr, watch, placing };
+  return { worker, requests, items: itemStore, events, log, arr, watch, placing, searching };
 };
 
 describe('createHandOffWorker', () => {
@@ -374,5 +376,41 @@ describe('createHandOffWorker', () => {
     const { worker } = aWorker({ place: () => Promise.reject(new Error('Broken')) });
 
     await expect(worker.step()).rejects.toThrow('Broken');
+  });
+
+  it('asks the app to search again for a request it has, and nothing for one it has not', async () => {
+    const handed = aWorker({ request: aMediaRequest({ handOff: HAND_OFF, handOffId: 12 }) });
+
+    expect(await handed.worker.searchNow(aMediaRequest().id)).toBe('searched');
+    expect(handed.searching).toHaveBeenCalledWith(expect.objectContaining({ handOffId: 12 }), 12);
+    expect(handed.log.said.map((line) => line.message.message)).toEqual([
+      'Asked Radarr to search for it again.',
+    ]);
+
+    const kept = aWorker({ request: aMediaRequest() });
+
+    expect(await kept.worker.searchNow(aMediaRequest().id)).toBe('notHandedOff');
+    expect(kept.searching).not.toHaveBeenCalled();
+
+    const declined = aWorker({
+      request: aMediaRequest({ handOff: HAND_OFF, handOffId: 12, approval: 'refused' }),
+    });
+
+    expect(await declined.worker.searchNow(aMediaRequest().id)).toBe('notApproved');
+    expect(declined.searching).not.toHaveBeenCalled();
+  });
+
+  it('says which app has a request, with a link to its page there', async () => {
+    const { worker } = aWorker({ request: aMediaRequest({ handOff: HAND_OFF, handOffId: 12 }) });
+
+    expect(await worker.handedTo(aMediaRequest().id)).toEqual({
+      appId: RADARR.id,
+      appName: RADARR.name,
+      appKind: 'radarr',
+      link: `${RADARR.url.replace(/\/+$/, '')}/movie/438631`,
+    });
+    expect(
+      await aWorker({ request: aMediaRequest() }).worker.handedTo(aMediaRequest().id),
+    ).toBeNull();
   });
 });

@@ -1,3 +1,5 @@
+import { HandedToSchema } from '@ValenceContracts/schemas/ArrApp';
+import type { HandedTo } from '@ValenceContracts/schemas/ArrApp';
 import { z } from 'zod';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { sendToRequests } from '@ValenceClient/requests/sendToRequests';
@@ -108,6 +110,19 @@ const joinMediaRequest = (id: string): Promise<Sent<MediaRequest>> =>
  */
 const decideProfileAsk = (id: string, decision: ProfileAskDecision): Promise<Sent<MediaRequest>> =>
   sendToRequests(`${REQUESTS}/${id}/profile-ask`, 'POST', decision, readRequest);
+
+/**
+ * Reads which connected app a request was handed to, with a link to its page there.
+ *
+ * @param id - Which request.
+ * @returns The app, or null where it was not handed to one.
+ */
+const fetchHandedTo = async (id: string): Promise<HandedTo | null> =>
+  (
+    await sendToRequests(`${REQUESTS}/${id}/handed-to`, 'GET', undefined, async (response) =>
+      HandedToSchema.parse(await response.json()),
+    )
+  ).value;
 
 /**
  * Refuses a request.
@@ -327,6 +342,7 @@ export {
   fetchRequestBlocklist,
   fetchMediaRequestLog,
   fetchMediaRequestReleases,
+  fetchHandedTo,
   fetchMediaRequests,
   fetchSeriesSeasons,
   findReleasesFor,

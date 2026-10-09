@@ -25,6 +25,7 @@ import { Spinner } from '@ValenceUI/Spinner';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
+import { isEveryLibraryHandedOff } from '@ValenceClient/requests/isEveryLibraryHandedOff';
 import { removeProfile, reorderProfiles } from '@ValenceClient/requests/fetchProfiles';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { ProfileEditor } from '@ValenceScreens/components/AdminArea/components/ProfileEditor/ProfileEditor';
@@ -346,6 +347,15 @@ const ProfilesPanel = () => {
               <p className="px-4 pt-3 text-sm text-text-muted">
                 {say('screens.adminArea.profilesPanel.highestFirst')}
               </p>
+
+              {isEveryLibraryHandedOff(
+                libraries.data ?? [],
+                kind.id === 'video' ? ['movies', 'shows'] : ['music'],
+              ) ? (
+                <p className="px-4 pt-3 text-sm text-text-muted">
+                  {say('screens.adminArea.profilesPanel.everyLibraryHandsOff')}
+                </p>
+              ) : null}
 
               {isUnused(kind.id) ? (
                 <p className="px-4 pt-3 text-sm text-text-muted">
