@@ -81,13 +81,13 @@ describe('ProfilesPanel', () => {
     expect(within(rowOf('HD')).getByText('Blu-ray 1080p')).toBeInTheDocument();
   });
 
-  it('shows films and series first, and music behind its own choice', async () => {
+  it('shows every kind at first, and one kind behind its own choice', async () => {
     const user = userEvent.setup();
 
     renderInAnAddress(<ProfilesPanel />);
 
     expect(await screen.findByText('HD')).toBeInTheDocument();
-    expect(screen.queryByText('Lossless')).not.toBeInTheDocument();
+    expect(screen.getByText('Lossless')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Which profiles to show' }));
     await user.click(await screen.findByRole('menuitemradio', { name: 'Music' }));
@@ -225,7 +225,7 @@ describe('ProfilesPanel', () => {
 
     answer([]);
 
-    expect(await screen.findByText('No profiles for films or series yet.')).toBeInTheDocument();
+    expect(await screen.findByText('No profiles yet.')).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

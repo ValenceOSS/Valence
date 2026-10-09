@@ -66,6 +66,7 @@ const OVERVIEW = {
     previewQuality: 'high',
     showsProfilesBeforeSignIn: false,
     fetchesCatalogueTrailers: false,
+    usesShortSegments: true,
     fetchesMusicDetails: false,
     requestReleaseTypes: ['album'],
     controlsConnectedApps: false,
