@@ -21,6 +21,7 @@ import {
   bringBackRoute,
   rebuildArtefactsRoute,
   deleteMediaRoute,
+  moveMediaRoute,
   deleteSeriesRoute,
   setPreviewMomentRoute,
   clearPreviewMomentRoute,
@@ -421,6 +422,38 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     return rebuilt === null
       ? context.json(refuse('error.common.noSuchItem'), 404)
       : context.json(rebuilt, 200);
+  });
+
+  app.openapi(moveMediaRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.delete'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
+    }
+
+    const { mediaIds, libraryId } = context.req.valid('json');
+    const moved = await library.moveMedia(mediaIds, libraryId);
+
+    switch (moved.kind) {
+      case 'moved':
+        return context.json({ files: moved.files, jobId: moved.jobId }, 200);
+      case 'absent':
+        return context.json(refuse('error.common.noSuchItem'), 404);
+      case 'wrongKind':
+        return context.json(refuse('error.library.onlyFilmsAndShowsMove'), 400);
+      case 'sameLibrary':
+        return context.json(refuse('error.library.itIsAlreadyInThatLibrary'), 409);
+      case 'taken':
+        return context.json(refuse('error.library.aFileIsAlreadyThere'), 409);
+      case 'outside':
+        return context.json(refuse('error.library.thatFileIsNotInsideItsLibrary'), 403);
+      case 'readOnly':
+        return context.json(refuse('error.library.thatDiskIsReadOnlyForMoving'), 403);
+      case 'denied':
+        return context.json(refuse('error.library.valenceMayNotMoveFilesThere'), 403);
+      case 'missing':
+        return context.json(refuse('error.library.theFileIsNoLongerThere'), 404);
+      case 'failed':
+        return context.json(refuse('error.library.theFileCouldNotBeMoved'), 500);
+    }
   });
 
   app.openapi(deleteMediaRoute, async (context) => {

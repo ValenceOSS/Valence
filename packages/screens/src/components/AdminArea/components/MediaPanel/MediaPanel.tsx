@@ -5,6 +5,7 @@ import {
   Copy as CopyFilledIcon,
   EyeOff as EyeOffFilledIcon,
   Film as FilmFilledIcon,
+  FolderArrowRight as FolderArrowRightFilledIcon,
   FolderOpen as FolderOpenIcon,
   Image as ImageFilledIcon,
   MoreHorizontal as MoreHorizontalIcon,
@@ -15,6 +16,8 @@ import {
 import { useCallback, useMemo, useState } from 'react';
 import { LeaveOutDialog } from '@ValenceScreens/components/AdminArea/components/LeaveOutDialog/LeaveOutDialog';
 import type { LeaveOutTarget } from '@ValenceScreens/components/AdminArea/components/LeaveOutDialog/LeaveOutDialog.types';
+import { MoveToLibraryDialog } from '@ValenceScreens/components/AdminArea/components/MoveToLibraryDialog/MoveToLibraryDialog';
+import type { MoveTarget } from '@ValenceScreens/components/AdminArea/components/MoveToLibraryDialog/MoveToLibraryDialog.types';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -147,6 +150,8 @@ const describeTitle = (title: MediaTitle): string => {
  *   deleting is offered at all, answering whether it went.
  * @param paths - Where each item's file is, by the item, where they have been read.
  * @param onOpenFolder - Called with a folder to open in Files, where the file manager is offered.
+ * @param onMoved - Told the library media went to and the job reading it there, once moved; where
+ *   it is not given, nothing offers to move.
  */
 const MediaPanel = ({
   isUnreachable = false,
@@ -165,6 +170,7 @@ const MediaPanel = ({
   onDelete,
   paths = NO_PATHS,
   onOpenFolder,
+  onMoved,
 }: MediaPanelProps) => {
   const tabs = useMemo(
     () =>
@@ -196,6 +202,24 @@ const MediaPanel = ({
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [leaving, setLeaving] = useState<LeaveOutTarget | null>(null);
+  const [moving, setMoving] = useState<MoveTarget | null>(null);
+
+  const moveItem = useCallback(
+    (items: readonly MediaSummary[], name: string): ActionMenuItem[] =>
+      onMoved === undefined || items.length === 0
+        ? []
+        : [
+            {
+              id: 'move',
+              label: say('screens.adminArea.mediaPanel.moveToAnotherLibrary'),
+              icon: <Icon of={FolderArrowRightFilledIcon} size={15} />,
+              onChoose: () => {
+                setMoving({ items, name, libraryId: items[0]?.libraryId ?? '' });
+              },
+            },
+          ],
+    [onMoved],
+  );
 
   const titles = useMemo(() => gatherTitles(media), [media]);
 
@@ -412,6 +436,7 @@ const MediaPanel = ({
               ]),
         ],
         [
+          ...moveItem([item], name),
           ...leaveOutItems(paths[item.id], name, false),
           ...(onDelete === undefined
             ? []
@@ -430,6 +455,7 @@ const MediaPanel = ({
       ].filter((group) => group.length > 0),
     [
       leaveOutItems,
+      moveItem,
       onChooseMoment,
       onDelete,
       onOpenFolder,
@@ -490,6 +516,7 @@ const MediaPanel = ({
               ]),
         ],
         [
+          ...moveItem(title.episodes, title.name),
           ...leaveOutItems(placeOf(title)?.folder, title.name, true),
           ...(onDelete === undefined || title.lead.seriesId === null
             ? []
@@ -506,7 +533,7 @@ const MediaPanel = ({
               ]),
         ],
       ].filter((group) => group.length > 0),
-    [artworkAction, leaveOutItems, onCorrect, onDelete, onReencode, placeOf],
+    [artworkAction, leaveOutItems, moveItem, onCorrect, onDelete, onReencode, placeOf],
   );
 
   const actionsFor = useCallback(
@@ -545,12 +572,13 @@ const MediaPanel = ({
                 },
               },
               ...artworkAction(title),
+              ...(title.episodes.length > 1 ? moveItem(title.episodes, title.name) : []),
             ],
             ...fileActions(title.lead, title.name),
           ];
       }
     },
-    [artworkAction, fileActions, onCorrect, onReencode, seriesActions],
+    [artworkAction, fileActions, moveItem, onCorrect, onReencode, seriesActions],
   );
 
   const columns = useMemo<DataTableColumn<MediaTitle>[]>(
@@ -792,6 +820,18 @@ const MediaPanel = ({
             </TabPanel>
           ))
         )}
+
+        <MoveToLibraryDialog
+          target={moving}
+          libraries={libraries}
+          onClose={() => {
+            setMoving(null);
+          }}
+          onMoved={(toLibraryId, jobId) => {
+            setMoving(null);
+            onMoved?.(toLibraryId, jobId);
+          }}
+        />
 
         <LeaveOutDialog
           target={leaving}

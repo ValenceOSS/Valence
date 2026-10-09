@@ -45,6 +45,7 @@ import {
   mediaItem,
   musicTrack,
   watchProgress,
+  mediaOverride,
   mediaPreviewOverride,
   rating,
   series,
@@ -87,6 +88,7 @@ import { nextEpisodeOf } from '@ValenceServer/library/nextEpisodeOf';
 import { regeneratePreviews } from './regeneratePreviews';
 import { generateTrickplay } from './generateTrickplay';
 import { rebuildItemArtefacts } from './rebuildItemArtefacts';
+import { moveMediaFile } from '@ValenceServer/library/moveMediaFile';
 import { deleteMediaFile } from '@ValenceServer/library/deleteMediaFile';
 import { keptCopiesOf } from '@ValenceServer/library/keptCopiesOf';
 import type { MediaFileDeletion } from '@ValenceServer/library/deleteMediaFile';
@@ -2176,6 +2178,83 @@ const createDatabaseLibraryService = ({
     },
 
     deleteSeries: (seriesId) => deleteFilesWhere(eq(mediaItem.seriesId, seriesId)),
+
+    moveMedia: async (mediaIds, toLibraryId) => {
+      const target = await findLibrary(toLibraryId);
+
+      if (target === null || (target.kind !== 'movies' && target.kind !== 'shows')) {
+        return { kind: 'wrongKind' };
+      }
+
+      const items =
+        mediaIds.length === 0
+          ? []
+          : await db
+              .select({ id: mediaItem.id, path: mediaItem.path, libraryId: mediaItem.libraryId })
+              .from(mediaItem)
+              .where(inArray(mediaItem.id, [...mediaIds]));
+      const sourceId = items[0]?.libraryId ?? null;
+      const source = sourceId === null ? null : await findLibrary(sourceId);
+
+      if (source === null || items.some((item) => item.libraryId !== source.id)) {
+        return { kind: 'absent' };
+      }
+
+      if (source.id === target.id) {
+        return { kind: 'sameLibrary' };
+      }
+
+      if (source.kind !== 'movies' && source.kind !== 'shows') {
+        return { kind: 'wrongKind' };
+      }
+
+      const moved: string[] = [];
+
+      for (const item of items) {
+        const outcome = await moveMediaFile(source.path, item.path, target.path);
+
+        if (outcome.kind !== 'moved') {
+          await store.forgetEmptySeries?.(source.id);
+
+          return moved.length === 0
+            ? outcome
+            : { ...outcome, jobId: await queueReadAgain(target.id, moved) };
+        }
+
+        await db
+          .update(mediaItem)
+          .set({
+            libraryId: target.id,
+            path: outcome.to,
+            seriesId: null,
+            seriesTitle: null,
+            seasonNumber: null,
+            episodeNumber: null,
+            episodeNumberEnd: null,
+            parentId: null,
+            externalId: null,
+          })
+          .where(eq(mediaItem.id, item.id));
+        await db
+          .update(mediaPreviewOverride)
+          .set({ libraryId: target.id, path: outcome.to })
+          .where(
+            and(
+              eq(mediaPreviewOverride.libraryId, source.id),
+              eq(mediaPreviewOverride.path, item.path),
+            ),
+          );
+        await db
+          .delete(mediaOverride)
+          .where(and(eq(mediaOverride.libraryId, source.id), eq(mediaOverride.path, item.path)));
+
+        moved.push(outcome.to);
+      }
+
+      await store.forgetEmptySeries?.(source.id);
+
+      return { kind: 'moved', files: moved.length, jobId: await queueReadAgain(target.id, moved) };
+    },
 
     mediaIdsAt: async (paths) => {
       if (paths.length === 0) {

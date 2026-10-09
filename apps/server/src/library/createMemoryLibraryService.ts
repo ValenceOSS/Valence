@@ -827,6 +827,20 @@ const createMemoryLibraryService = (
     return Promise.resolve({ kind: 'deleted', files });
   },
 
+  moveMedia: (mediaIds, toLibraryId) => {
+    const moving = state.media.filter((one) => mediaIds.includes(one.id));
+
+    if (moving.length === 0) {
+      return Promise.resolve({ kind: 'absent' });
+    }
+
+    state.media = state.media.map((one) =>
+      mediaIds.includes(one.id) ? { ...one, libraryId: toLibraryId } : one,
+    );
+
+    return Promise.resolve({ kind: 'moved', files: moving.length, jobId: null });
+  },
+
   mediaIdsAt: () => Promise.resolve({}),
 
   mediaPathsIn: () => Promise.resolve({}),
