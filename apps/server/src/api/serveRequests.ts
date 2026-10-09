@@ -620,8 +620,19 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
         const libraryId = change.libraryId ?? found.value.libraryId;
         const into = (await library.list(asTheServer)).find((entry) => entry.id === libraryId);
 
+        if (change.libraryId !== undefined && into === undefined) {
+          return {
+            kind: 'refused' as const,
+            status: 404 as const,
+            refusal: refuse('error.common.noSuchLibrary'),
+          };
+        }
+
         return client.changeRequest(id, {
-          change,
+          change:
+            change.libraryId === undefined || into === undefined
+              ? change
+              : { ...change, libraryPath: into.requestPath ?? into.path },
           ...(asksTheCatalogue ? { catalogue: await catalogueFor(found.value) } : {}),
           held:
             found.value.kind === 'series' && found.value.tmdbId !== null && into !== undefined

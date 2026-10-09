@@ -2013,6 +2013,33 @@ describe('requests for films and series, through the server', () => {
     });
   });
 
+  it('files into the library a request is moved to, and refuses one there is not', async () => {
+    const UHD = {
+      ...FILMS,
+      id: 'films-4k',
+      path: '/media/Films 4K',
+      requestPath: '/media/Films 4K/New',
+    };
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.approve'],
+      service: aWillingKeeper,
+      libraries: [FILMS, UHD],
+    });
+
+    sent.length = 0;
+
+    expect(
+      (await ask(`/api/requests/media/${REQUEST.id}`, 'PATCH', { libraryId: UHD.id })).status,
+    ).toBe(200);
+    expect(JSON.parse(sent.at(-1)?.body ?? '{}')).toMatchObject({
+      change: { libraryId: UHD.id, libraryPath: '/media/Films 4K/New' },
+    });
+    expect(
+      (await ask(`/api/requests/media/${REQUEST.id}`, 'PATCH', { libraryId: 'elsewhere' })).status,
+    ).toBe(404);
+  });
+
   it('changes the seasons asked for with what the catalogue says now', async () => {
     const { ask } = await build({
       isOn: true,
