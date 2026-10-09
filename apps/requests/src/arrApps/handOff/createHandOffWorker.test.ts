@@ -503,4 +503,18 @@ describe('createHandOffWorker', () => {
       'Asked Radarr to fetch Dune.2021.1080p.BluRay.',
     ]);
   });
+
+  it('sends no pick to an app switched off, or for a request not yet handed over', async () => {
+    const release = releaseFromArr(BEST, RADARR.id).release;
+    const off = aWorker({
+      request: aMediaRequest({ handOff: HAND_OFF, handOffId: 12 }),
+      apps: [{ ...RADARR, isEnabled: false }],
+    });
+    const waiting = aWorker({ request: aMediaRequest({ handOff: HAND_OFF }) });
+
+    expect(await off.worker.pick(aMediaRequest().id, release)).not.toBeNull();
+    expect(await waiting.worker.pick(aMediaRequest().id, release)).not.toBeNull();
+    expect(off.arr.sent('POST', '/api/v3/release')).toEqual([]);
+    expect(waiting.arr.sent('POST', '/api/v3/release')).toEqual([]);
+  });
 });

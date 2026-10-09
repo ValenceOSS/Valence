@@ -17341,7 +17341,7 @@
   },
   {
     "handler": "screens.adminArea.settingsPanel.letsYouPickAReleaseFor",
-    "text": "Lets you search for and pick a release by hand for a title a connected app fetches, sent through that app. When off, Sonarr, Radarr and Lidarr search and pick on their own.",
+    "text": "Lets you search a connected app’s releases and choose which one it fetches. When off, Sonarr, Radarr and Lidarr search and pick on their own.",
     "context": "The description of a setting row in the settings panel in the admin area."
   },
   {

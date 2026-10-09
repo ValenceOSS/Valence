@@ -443,7 +443,14 @@ const createHandOffWorker = ({
       const [indexer, ...guid] = release.id.split(':');
       const indexerId = Number(indexer);
 
-      if (request === null || app === null || !Number.isInteger(indexerId) || guid.length === 0) {
+      if (
+        request === null ||
+        app === null ||
+        !app.isEnabled ||
+        request.handOffId === null ||
+        !Number.isInteger(indexerId) ||
+        guid.length === 0
+      ) {
         return saying('requests.arrApps.handOff.thatIsNotOneOfItsReleases');
       }
 

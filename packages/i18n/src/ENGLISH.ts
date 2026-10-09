@@ -4363,7 +4363,7 @@ const ENGLISH = {
     'How rounded corners are throughout Valence, for everyone on this server. Sharp gives square corners; round softens them.',
   'screens.adminArea.settingsPanel.keptFor': 'Keep for',
   'screens.adminArea.settingsPanel.letsYouPickAReleaseFor':
-    'Lets you search for and pick a release by hand for a title a connected app fetches, sent through that app. When off, Sonarr, Radarr and Lidarr search and pick on their own.',
+    'Lets you search a connected app’s releases and choose which one it fetches. When off, Sonarr, Radarr and Lidarr search and pick on their own.',
   'screens.adminArea.settingsPanel.looksForWhatAMusicLibrarys':
     'Fills in what a music library’s files are missing: album covers from the Cover Art Archive, artist photos and music videos from TheAudioDB, and lyrics from LRCLIB. Each album, artist and song is looked up once, on the next scan, and nothing already in a file is replaced. Like trailers, it connects to services outside this server, so it’s off by default.',
   'screens.adminArea.settingsPanel.low': 'Low',
