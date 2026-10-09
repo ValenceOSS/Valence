@@ -12335,6 +12335,26 @@
     "context": "Shown in the admin area: the title of the panel listing the connected Radarr, Sonarr, Lidarr and Prowlarr apps, and a tab of the Downloads page."
   },
   {
+    "handler": "screens.adminArea.arrAppsPanel.connectedAppsControl.connectedAppsSettingSaved",
+    "text": "Connected apps setting saved.",
+    "context": "Shown in the Connected apps panel on the admin area’s Requests page."
+  },
+  {
+    "handler": "screens.adminArea.arrAppsPanel.connectedAppsControl.controlConnectedAppsFromValence",
+    "text": "Control connected apps from Valence",
+    "context": "The label of a switch in the Connected apps panel on the admin area’s Requests page. Connected apps are Sonarr, Radarr and Lidarr, which a library can hand its requests to."
+  },
+  {
+    "handler": "screens.adminArea.arrAppsPanel.connectedAppsControl.letsYouSearchAConnectedApps",
+    "text": "Lets you search a connected app’s releases and choose which one it fetches. When off, Sonarr, Radarr and Lidarr search and pick on their own.",
+    "context": "The description of a setting row in the Connected apps panel on the admin area’s Requests page."
+  },
+  {
+    "handler": "screens.adminArea.arrAppsPanel.connectedAppsControl.theConnectedAppsSettingCouldNot",
+    "text": "Couldn’t save the connected apps setting.",
+    "context": "Shown in the Connected apps panel on the admin area’s Requests page."
+  },
+  {
     "handler": "screens.adminArea.arrAppsPanel.disconnect",
     "text": "Disconnect",
     "context": "Shown in the admin area: the action disconnecting a connected app."
@@ -17300,16 +17320,6 @@
     "context": "Shown in the settings panel in the admin area."
   },
   {
-    "handler": "screens.adminArea.settingsPanel.connectedAppsSettingSaved",
-    "text": "Connected apps setting saved.",
-    "context": "Shown in the settings panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.settingsPanel.controlConnectedAppsFromValence",
-    "text": "Control connected apps from Valence",
-    "context": "The label of a switch in the settings panel in the admin area. Connected apps are Sonarr, Radarr and Lidarr, which a library can hand its requests to."
-  },
-  {
     "handler": "screens.adminArea.settingsPanel.country",
     "text": "Country",
     "context": "The name in the settings panel in the admin area."
@@ -17373,11 +17383,6 @@
     "handler": "screens.adminArea.settingsPanel.keptFor",
     "text": "Keep for",
     "context": "The name in the settings panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.settingsPanel.letsYouPickAReleaseFor",
-    "text": "Lets you search a connected app’s releases and choose which one it fetches. When off, Sonarr, Radarr and Lidarr search and pick on their own.",
-    "context": "The description of a setting row in the settings panel in the admin area."
   },
   {
     "handler": "screens.adminArea.settingsPanel.looksForWhatAMusicLibrarys",
@@ -17562,11 +17567,6 @@
   {
     "handler": "screens.adminArea.settingsPanel.theCertificationRegionCouldNotBe",
     "text": "Couldn’t save the certification region.",
-    "context": "Shown in the settings panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.settingsPanel.theConnectedAppsSettingCouldNot",
-    "text": "Couldn’t save the connected apps setting.",
     "context": "Shown in the settings panel in the admin area."
   },
   {

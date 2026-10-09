@@ -1282,9 +1282,6 @@ const AdminArea = ({
                 onReleaseTypesSaved={() => {
                   void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
                 }}
-                onControlsConnectedAppsSaved={() => {
-                  void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
-                }}
                 onSplashscreenSaved={() => {
                   void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
                   void cache.invalidateQueries({ queryKey: sessionQueries.wayIn().queryKey });
