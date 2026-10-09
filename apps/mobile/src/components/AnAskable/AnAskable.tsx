@@ -160,11 +160,16 @@ const AnAskable = ({ kind, id, isMore = false, onOpen, onBack }: AnAskableProps)
     setIsSending(true);
     setRefusal(null);
 
-    const sent = await joinMediaRequest(title.standing.requestId);
+    try {
+      const sent = await joinMediaRequest(title.standing.requestId);
 
-    setIsSending(false);
-    setRefusal(sent.refusal?.message ?? null);
-    await cache.invalidateQueries({ queryKey: requestsQueries.key });
+      setRefusal(sent.refusal?.message ?? null);
+      await cache.invalidateQueries({ queryKey: requestsQueries.key });
+    } catch {
+      setRefusal(say('common.thatCouldNotBeRequested'));
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const takeBack = (requestId: string) => {
