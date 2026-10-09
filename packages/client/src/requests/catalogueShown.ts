@@ -24,8 +24,8 @@ const isOfKind = (entry: CatalogueEntry, kind: CatalogueView['kind']): boolean =
 };
 
 /**
- * The Catalogue's titles as a view of it shows them: those of its tab, status and kind, whose title
- * or the name beside it has the words looked for, newest first or by title.
+ * The Catalogue's titles as a view of it shows them: those of its tab, library, status and kind,
+ * whose title or the name beside it has the words looked for, newest first or by title.
  *
  * @param entries - Every title.
  * @param view - What is shown.
@@ -41,6 +41,7 @@ const catalogueShown = (
     .filter(
       (entry) =>
         entry.tab === view.tab &&
+        (view.libraryId === null || entry.libraryId === view.libraryId) &&
         (view.status === 'all' || entry.status === view.status) &&
         isOfKind(entry, view.kind) &&
         (query === '' ||

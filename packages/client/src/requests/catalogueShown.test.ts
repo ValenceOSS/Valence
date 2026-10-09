@@ -3,7 +3,14 @@ import { aCatalogueEntry } from '@ValenceClient/testing/aCatalogueEntry';
 import { catalogueShown } from './catalogueShown';
 import type { CatalogueView } from '@ValenceClient/requests/CatalogueView.types';
 
-const VIEW: CatalogueView = { tab: 'films', status: 'all', kind: 'all', query: '', sort: 'recent' };
+const VIEW: CatalogueView = {
+  tab: 'films',
+  libraryId: null,
+  status: 'all',
+  kind: 'all',
+  query: '',
+  sort: 'recent',
+};
 
 describe('catalogueShown', () => {
   it('shows a tab’s titles, newest first', () => {
@@ -12,6 +19,15 @@ describe('catalogueShown', () => {
     const show = aCatalogueEntry({ key: 'c', tab: 'shows', kind: 'series' });
 
     expect(catalogueShown([older, newer, show], VIEW).map((one) => one.key)).toEqual(['b', 'a']);
+  });
+
+  it('narrows to one library', () => {
+    const here = aCatalogueEntry({ key: 'here', libraryId: 'films-4k' });
+    const there = aCatalogueEntry({ key: 'there', libraryId: 'films' });
+
+    expect(
+      catalogueShown([here, there], { ...VIEW, libraryId: 'films-4k' }).map((one) => one.key),
+    ).toEqual(['here']);
   });
 
   it('sorts by title where asked', () => {

@@ -1,13 +1,7 @@
 import { CATALOGUE_TABS } from '@ValenceContracts/schemas/AdminCatalogue';
 import type { CatalogueTab } from '@ValenceContracts/schemas/AdminCatalogue';
 import type { Library } from '@ValenceContracts/schemas/Library';
-
-const LIBRARY_KIND_OF: Readonly<Record<CatalogueTab, Library['kind']>> = {
-  films: 'movies',
-  shows: 'shows',
-  music: 'music',
-  books: 'books',
-};
+import { LIBRARY_KIND_OF_TAB } from '@ValenceClient/requests/LIBRARY_KIND_OF_TAB';
 
 /**
  * The Catalogue's tabs on this server: one for each kind of library it has, so a server with no
@@ -22,7 +16,7 @@ const catalogueTabsOf = (
   libraries === undefined
     ? [...CATALOGUE_TABS]
     : CATALOGUE_TABS.filter((tab) =>
-        libraries.some((library) => library.kind === LIBRARY_KIND_OF[tab]),
+        libraries.some((library) => library.kind === LIBRARY_KIND_OF_TAB[tab]),
       );
 
 export { catalogueTabsOf };

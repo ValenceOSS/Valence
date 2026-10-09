@@ -15,6 +15,7 @@ import { catalogueShown } from '@ValenceClient/requests/catalogueShown';
 import { countTitleStatuses } from '@ValenceClient/requests/countTitleStatuses';
 import { decideMediaRequests, searchMissing } from '@ValenceClient/requests/fetchMediaRequests';
 import { catalogueTabsOf } from '@ValenceClient/requests/catalogueTabsOf';
+import { LIBRARY_KIND_OF_TAB } from '@ValenceClient/requests/LIBRARY_KIND_OF_TAB';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { GridSizeChooser } from '@ValenceScreens/components/GridSizeChooser/GridSizeChooser';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
@@ -86,6 +87,7 @@ const CataloguePanel = ({ tab: asked, title, onTab, onOpen }: CataloguePanelProp
   const tab = tabs.includes(asked) ? asked : (tabs[0] ?? asked);
   const catalogue = useQuery(requestsQueries.titleCatalogue());
   const requests = useQuery(requestsQueries.mediaRequests());
+  const [libraryId, setLibraryId] = useState<string | null>(null);
   const [status, setStatus] = useState<TitleStatus | 'all'>('all');
   const [kind, setKind] = useState<CatalogueKind>('all');
   const [query, setQuery] = useState('');
@@ -105,8 +107,21 @@ const CataloguePanel = ({ tab: asked, title, onTab, onOpen }: CataloguePanelProp
     ]);
   };
 
-  const inTab = (catalogue.data ?? []).filter((entry) => entry.tab === tab);
-  const shown = catalogueShown(inTab, { tab, status, kind, query, sort });
+  const tabLibraries = (libraries.data ?? []).filter(
+    (library) => library.kind === LIBRARY_KIND_OF_TAB[tab],
+  );
+  const library = tabLibraries.find((one) => one.id === libraryId) ?? null;
+  const inTab = (catalogue.data ?? []).filter(
+    (entry) => entry.tab === tab && (library === null || entry.libraryId === library.id),
+  );
+  const shown = catalogueShown(inTab, {
+    tab,
+    libraryId: library?.id ?? null,
+    status,
+    kind,
+    query,
+    sort,
+  });
   const counts = countTitleStatuses(inTab);
   const chosenRequests = (requests.data ?? []).filter((request) =>
     inTab.some((entry) => chosen.has(entry.key) && entry.requestId === request.id),
@@ -255,6 +270,7 @@ const CataloguePanel = ({ tab: asked, title, onTab, onOpen }: CataloguePanelProp
 
             if (found !== undefined) {
               setKind('all');
+              setLibraryId(null);
               setChosen(new Set());
               onTab(found);
             }
@@ -336,6 +352,37 @@ const CataloguePanel = ({ tab: asked, title, onTab, onOpen }: CataloguePanelProp
             >
               {say('screens.adminArea.cataloguePanel.chooseSeveral')}
             </Button>
+          )}
+
+          {tabLibraries.length < 2 ? null : (
+            <OptionMenu
+              label={say('common.whichLibrary')}
+              size="sm"
+              triggerShape="field"
+              className="w-auto"
+              trigger={
+                <>
+                  <span>
+                    {library?.name ?? say('screens.adminArea.cataloguePanel.allLibraries')}
+                  </span>
+                  <Icon of={ChevronDownIcon} size={14} className="valence-chevron shrink-0" />
+                </>
+              }
+              groups={[
+                {
+                  name: say('common.whichLibrary'),
+                  selectedId: library?.id ?? 'all',
+                  onSelect: (next) => {
+                    setLibraryId(next === 'all' ? null : next);
+                    setChosen(new Set());
+                  },
+                  options: [
+                    { id: 'all', label: say('screens.adminArea.cataloguePanel.allLibraries') },
+                    ...tabLibraries.map((one) => ({ id: one.id, label: one.name })),
+                  ],
+                },
+              ]}
+            />
           )}
 
           {kinds === null ? null : (

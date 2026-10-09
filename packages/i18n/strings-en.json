@@ -12415,6 +12415,11 @@
     "context": "A button in the admin Catalogue that asks for a film, show, album or book."
   },
   {
+    "handler": "screens.adminArea.cataloguePanel.allLibraries",
+    "text": "All libraries",
+    "context": "The choice in the admin Catalogue's library menu that shows the titles of every library of the tab's kind, shown when the server has more than one library of that kind."
+  },
+  {
     "handler": "screens.adminArea.cataloguePanel.audiobooks",
     "text": "Audiobooks",
     "context": "A choice in the admin Catalogue’s Books tab: show audiobooks only."

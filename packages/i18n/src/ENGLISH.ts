@@ -3049,6 +3049,7 @@ const ENGLISH = {
   'screens.adminArea.cacheBreakdown.countingWhatIsOnTheDisk': 'Calculating disk usage.',
   'screens.adminArea.cacheBreakdown.whatLabelMeans': 'What {label} means',
   'screens.adminArea.cataloguePanel.addATitle': 'Add a title',
+  'screens.adminArea.cataloguePanel.allLibraries': 'All libraries',
   'screens.adminArea.cataloguePanel.audiobooks': 'Audiobooks',
   'screens.adminArea.cataloguePanel.chooseSeveral': 'Select several',
   'screens.adminArea.cataloguePanel.couldNotDecide': 'Those requests couldn’t be decided.',

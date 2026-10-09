@@ -22,7 +22,9 @@ vi.mock('@ValenceClient/requests/fetchTitleCatalogue', () => ({
 
 vi.mock('@ValenceClient/library/fetchLibrary', () => ({
   fetchLibraries: () =>
-    Promise.resolve(held.kinds.map((kind, at) => ({ id: at.toString(), kind }))),
+    Promise.resolve(
+      held.kinds.map((kind, at) => ({ id: at.toString(), kind, name: `${kind} ${at.toString()}` })),
+    ),
 }));
 
 vi.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
@@ -143,6 +145,31 @@ describe('CataloguePanel', () => {
 
     expect(screen.queryByRole('button', { name: /Held Film/ })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Asked Film/ })).toBeInTheDocument();
+  });
+
+  it('narrows a tab to one library where the server has several of its kind', async () => {
+    const user = userEvent.setup();
+
+    held.kinds = ['movies', 'movies', 'shows'];
+    catalogue.entries = [
+      aCatalogueEntry({ key: 'film:1', title: 'Held Film', libraryId: '0' }),
+      aCatalogueEntry({ key: 'film:2', title: 'Other Film', libraryId: '1' }),
+    ];
+
+    aPanel();
+
+    await user.click(await screen.findByRole('button', { name: 'Which library' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'movies 1' }));
+
+    expect(screen.queryByRole('button', { name: /Held Film/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Other Film/ })).toBeInTheDocument();
+  });
+
+  it('has no library menu where the server has one library of the kind', async () => {
+    aPanel();
+
+    expect(await screen.findByRole('button', { name: /Held Film/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Which library' })).not.toBeInTheDocument();
   });
 
   it('has no tab for a kind of library the server lacks', async () => {

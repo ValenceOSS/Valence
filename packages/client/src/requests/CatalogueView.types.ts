@@ -6,6 +6,7 @@ type CatalogueSort = 'recent' | 'title';
 
 type CatalogueView = {
   tab: CatalogueTab;
+  libraryId: string | null;
   status: TitleStatus | 'all';
   kind: CatalogueKind;
   query: string;
