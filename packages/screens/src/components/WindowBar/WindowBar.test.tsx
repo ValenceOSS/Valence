@@ -33,6 +33,14 @@ describe('WindowBar', () => {
     );
   });
 
+  it('lets go of the window while something it opened is showing, so a press on it closes that', () => {
+    const { container } = render(<WindowBar />);
+
+    expect(container.querySelector('[data-slot="window-bar"]')).toHaveClass(
+      'has-[[data-state=open]]:[-webkit-app-region:no-drag]',
+    );
+  });
+
   it('offers a release it has found, by its version', () => {
     render(<WindowBar update={{ kind: 'available', version: '1.2.0' }} />);
 
