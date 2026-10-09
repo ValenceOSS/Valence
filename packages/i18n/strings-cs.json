@@ -21575,6 +21575,31 @@
     "context": "The label of a button in the job runner row in the job runner. {label} is filled in by the app."
   },
   {
+    "handler": "screens.keepTheLayout.goBackToTheTvLayout",
+    "text": "Go back to the TV layout",
+    "context": "The button in that popup that goes back to the TV layout straight away."
+  },
+  {
+    "handler": "screens.keepTheLayout.goingBackIn.one",
+    "text": "Valence goes back to the TV layout in {count} second unless you keep this one.",
+    "context": "The countdown in that popup. {count} is how many seconds are left."
+  },
+  {
+    "handler": "screens.keepTheLayout.goingBackIn.other",
+    "text": "Valence goes back to the TV layout in {count} seconds unless you keep this one.",
+    "context": "The countdown in that popup. {count} is how many seconds are left."
+  },
+  {
+    "handler": "screens.keepTheLayout.keepTheDesktopLayout",
+    "text": "Keep the desktop layout?",
+    "context": "The title of the popup the desktop layout shows on a TV just switched to it, counting down to going back to the TV layout."
+  },
+  {
+    "handler": "screens.keepTheLayout.keepTheDesktopLayoutAnswer",
+    "text": "Keep the desktop layout",
+    "context": "The button in that popup that keeps the desktop layout on this TV, where the remote starts."
+  },
+  {
     "handler": "screens.keptPlayerPage.thatIsNotOnThisDevice",
     "text": "This download is no longer on this device.",
     "context": "Text shown in the kept player page."
@@ -28589,6 +28614,21 @@
     "handler": "tv.account.chooseAnotherProfile",
     "text": "Choose another profile",
     "context": "The detail of a button in the account of the television app."
+  },
+  {
+    "handler": "tv.account.madeForComputersSomeTvs",
+    "text": "Made for computers, so some TVs show a blank screen. If it doesn’t load, Valence switches back to the TV layout after 30 seconds.",
+    "context": "The message of the popup on a TV asking whether to use the desktop layout, saying what can go wrong and that it undoes itself."
+  },
+  {
+    "handler": "tv.account.stayOnTheTvLayout",
+    "text": "Stay on the TV layout",
+    "context": "The answer in that popup that keeps the TV layout, where the remote starts."
+  },
+  {
+    "handler": "tv.account.switchToTheDesktopLayout",
+    "text": "Switch to the desktop layout?",
+    "context": "The title of the popup on a TV's account page asking whether to leave the TV layout for the layout made for computers."
   },
   {
     "handler": "tv.account.themeChoice.valenceOpensInThisThemeThe",

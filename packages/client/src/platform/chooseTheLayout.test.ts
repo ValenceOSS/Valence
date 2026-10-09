@@ -10,4 +10,21 @@ describe('chooseTheLayout', () => {
     expect(page.cookie).toBe('valence-layout=web; path=/; max-age=31536000; samesite=lax');
     expect(page.location.reload).toHaveBeenCalledOnce();
   });
+
+  it('forgets that a television kept the web app, so choosing it again asks again', () => {
+    const written: string[] = [];
+    const page = {
+      set cookie(value: string) {
+        written.push(value);
+      },
+      get cookie() {
+        return written.join('; ');
+      },
+      location: { reload: vi.fn() },
+    };
+
+    chooseTheLayout('web', page);
+
+    expect(written[0]).toBe('valence-layout-kept=; path=/; max-age=0; samesite=lax');
+  });
 });

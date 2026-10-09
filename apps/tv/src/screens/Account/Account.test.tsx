@@ -8,11 +8,18 @@ import { pluginQueries } from '@ValenceClient/query/pluginQueries';
 import { somePluginContributions } from '@ValenceClient/testing/somePluginContributions';
 import { signOutHere } from '@ValenceTv/session/signOutHere';
 import { Account } from '@ValenceTv/screens/Account/Account';
+import { Alert } from 'react-native';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 jest.mock('@ValenceClient/session/auth', () => ({
   fetchSession: () => new Promise(() => undefined),
+}));
+
+const mockToTheDesktop = jest.fn();
+
+jest.mock('@ValenceTv/platform/toTheDesktopLayout', () => ({
+  toTheDesktopLayout: () => mockToTheDesktop,
 }));
 
 jest.mock('@ValenceTv/session/signOutHere', () => ({
@@ -160,6 +167,27 @@ describe('Account', () => {
 
     expect(onRequests).toHaveBeenCalledTimes(1);
     expect(onChangeServer).toHaveBeenCalledTimes(1);
+  });
+
+  it('asks before moving to the desktop layout, starting on staying put', async () => {
+    mockToTheDesktop.mockClear();
+
+    const asked = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const drawn = await drawAccount(aCache({ mayRequest: false }));
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Use the desktop layout' }));
+
+    const [title, , answers = []] = asked.mock.calls.at(-1) ?? [];
+
+    expect(title).toBe('Switch to the desktop layout?');
+    expect(answers[0]).toEqual(
+      expect.objectContaining({ text: 'Stay on the TV layout', style: 'cancel' }),
+    );
+    expect(mockToTheDesktop).not.toHaveBeenCalled();
+
+    answers[1]?.onPress?.();
+
+    expect(mockToTheDesktop).toHaveBeenCalledTimes(1);
   });
 
   it('leaves the pages plugins add to an account to the web and the phone', async () => {

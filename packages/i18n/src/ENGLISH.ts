@@ -5454,6 +5454,13 @@ const ENGLISH = {
   'screens.jobRunner.jobRunnerRow.runByHandOnly': 'Manual only',
   'screens.jobRunner.jobRunnerRow.stopLabel': 'Stop {label}',
   'screens.jobRunner.jobRunnerRow.whatLabelIsDoing': 'What {label} is doing',
+  'screens.keepTheLayout.goBackToTheTvLayout': 'Go back to the TV layout',
+  'screens.keepTheLayout.goingBackIn.one':
+    'Valence goes back to the TV layout in {count} second unless you keep this one.',
+  'screens.keepTheLayout.goingBackIn.other':
+    'Valence goes back to the TV layout in {count} seconds unless you keep this one.',
+  'screens.keepTheLayout.keepTheDesktopLayout': 'Keep the desktop layout?',
+  'screens.keepTheLayout.keepTheDesktopLayoutAnswer': 'Keep the desktop layout',
   'screens.keptPlayerPage.thatIsNotOnThisDevice': 'This download is no longer on this device.',
   'screens.library.letterFontLooks.bebas': 'Bebas',
   'screens.library.letterFontLooks.caveat': 'Caveat',
@@ -7261,6 +7268,10 @@ const ENGLISH = {
   'tv.about.describeThisBuild.valenceVersionCommit': 'Valence {version} ({commit})',
   'tv.account.allRequests': 'All requests',
   'tv.account.chooseAnotherProfile': 'Choose another profile',
+  'tv.account.madeForComputersSomeTvs':
+    'It’s made for computers, so some TVs show a blank screen. You’ll be asked to keep it, and if you don’t within 10 seconds, Valence goes back to the TV layout.',
+  'tv.account.stayOnTheTvLayout': 'Stay on the TV layout',
+  'tv.account.switchToTheDesktopLayout': 'Switch to the desktop layout?',
   'tv.account.themeChoice.valenceOpensInThisThemeThe':
     'This theme is applied the next time you open Valence.',
   'tv.account.useTheDesktopLayout': 'Use the desktop layout',
