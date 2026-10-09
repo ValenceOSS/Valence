@@ -64,9 +64,11 @@ import type {
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type {
   BlockedRelease,
+  DownloadStop,
   FollowedRequest,
   MediaRequest,
   MediaRequestAdded,
+  MediaRequestFollow,
   MediaRequestArrivals,
   MediaRequestArrived,
   MediaRequestDeparture,
@@ -654,6 +656,29 @@ const createRequestsClient = ({
         body: { release },
         waitMs: searchTimeoutMs,
       }),
+
+    stopDownload: (
+      id: string,
+      downloadId: string,
+      stopping: DownloadStop,
+    ): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/downloads/${encodeURIComponent(downloadId)}/stop`, readRequest, {
+        method: 'POST',
+        body: stopping,
+      }),
+
+    followItems: (
+      id: string,
+      following: MediaRequestFollow,
+    ): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/follow`, readRequest, { method: 'POST', body: following }),
+
+    deleteFiled: (id: string): Promise<RequestsAnswer<{ folders: string[] }>> =>
+      call(
+        `${withRequest(id)}/files/delete`,
+        (body) => z.object({ folders: z.array(z.string()) }).parse(body),
+        { method: 'POST' },
+      ),
 
     removeRequest: (id: string, isDeletingDownloads = false): Promise<RequestsAnswer<null>> =>
       call(`${withRequest(id)}${isDeletingDownloads ? '?deleteDownloads=true' : ''}`, () => null, {

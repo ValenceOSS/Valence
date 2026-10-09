@@ -10,6 +10,8 @@ import {
   series,
 } from '#dialect/Schema';
 import { nameKey } from '@ValenceServer/music/nameKey';
+import { createDatabaseHeldTitles } from '@ValenceServer/requests/titles/createDatabaseHeldTitles';
+import { createDatabaseTitleFiles } from '@ValenceServer/requests/titles/createDatabaseTitleFiles';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { CatalogueLookup, NamedBook } from '@ValenceServer/requests/catalogue/CatalogueLookup';
 
@@ -41,7 +43,8 @@ const byKey = async (
 
 /**
  * The libraries, looked into for what a catalogue lists: films and series by their catalogue ids,
- * and every episode file of a series with where it is; artists by their MusicBrainz ids or names,
+ * every episode file of a series with where it is, every title held for the admin Catalogue and
+ * the files of each; artists by their MusicBrainz ids or names,
  * albums by their release groups or by their artist and title together, and books by their author
  * and title together.
  *
@@ -124,6 +127,10 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
       season === null || episode === null ? [] : [{ ...rest, season, episode }],
     );
   },
+
+  heldTitles: createDatabaseHeldTitles(db),
+
+  titleFiles: createDatabaseTitleFiles(db),
 
   artists: (musicBrainzIds) =>
     byKey(musicBrainzIds, (wanted) =>

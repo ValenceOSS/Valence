@@ -17,6 +17,7 @@ import type { Release, ReleaseSearchOutcome } from '@ValenceContracts/schemas/In
 import type {
   BlockedRelease,
   CatalogueSeason,
+  DownloadStop,
   MediaRequest,
   MediaRequestDecided,
   MediaRequestAsk,
@@ -215,22 +216,75 @@ const pickMediaRelease = (id: string, release: Release): Promise<Sent<MediaReque
   sendToRequests(`${REQUESTS}/${id}/pick`, 'POST', { release }, readRequest);
 
 /**
- * Forgets a request — or cancels it, taking with it whatever it had started downloading, files
- * and all.
+ * Removes a request, stopping what it had started downloading — or cancels one of your own, taking
+ * that with it, files and all — and, for whoever manages requesting, deleting the files it filed
+ * where asked.
  *
  * @param id - Which.
  * @param isDeletingDownloads - Whether what it had started downloading goes too.
+ * @param isDeletingFiles - Whether the files it filed into the library go too.
  * @returns Why not, or nothing where it went.
  */
-const removeMediaRequest = async (id: string, isDeletingDownloads = false): Promise<Refusal> =>
-  (
+const removeMediaRequest = async (
+  id: string,
+  isDeletingDownloads = false,
+  isDeletingFiles = false,
+): Promise<Refusal> => {
+  const query = new URLSearchParams({
+    ...(isDeletingDownloads ? { deleteDownloads: 'true' } : {}),
+    ...(isDeletingFiles ? { deleteFiles: 'true' } : {}),
+  }).toString();
+
+  return (
     await sendToRequests(
-      `${REQUESTS}/${id}${isDeletingDownloads ? '?deleteDownloads=true' : ''}`,
+      `${REQUESTS}/${id}${query === '' ? '' : `?${query}`}`,
       'DELETE',
       undefined,
       () => Promise.resolve(null),
     )
   ).refusal;
+};
+
+/**
+ * Stops one of a request's downloads, then looks for another release, waits for one picked by
+ * hand, or stops getting what it was for.
+ *
+ * @param id - Which request.
+ * @param downloadId - Which of its downloads.
+ * @param stopping - What comes next, and whether what it downloaded is deleted.
+ * @returns The request, or why not.
+ */
+const stopRequestDownload = (
+  id: string,
+  downloadId: string,
+  stopping: DownloadStop,
+): Promise<Sent<MediaRequest>> =>
+  sendToRequests(
+    `${REQUESTS}/${id}/downloads/${encodeURIComponent(downloadId)}/stop`,
+    'POST',
+    stopping,
+    readRequest,
+  );
+
+/**
+ * Follows, or stops following, some of the episodes or albums a request waits for.
+ *
+ * @param id - Which request.
+ * @param itemIds - Which of what it waits for.
+ * @param isFollowed - Whether they are followed now.
+ * @returns The request, or why not.
+ */
+const followRequestItems = (
+  id: string,
+  itemIds: readonly string[],
+  isFollowed: boolean,
+): Promise<Sent<MediaRequest>> =>
+  sendToRequests(
+    `${REQUESTS}/${id}/follow`,
+    'POST',
+    { itemIds: [...itemIds], isFollowed },
+    readRequest,
+  );
 
 /**
  * Searches now for everything still wanted, and anything a profile would upgrade.
@@ -258,6 +312,8 @@ export {
   pickMediaRelease,
   refuseMediaRequest,
   removeMediaRequest,
+  stopRequestDownload,
+  followRequestItems,
   retryMediaRequest,
   searchMissing,
   searchMusicCatalogue,

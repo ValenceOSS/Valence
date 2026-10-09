@@ -13,6 +13,10 @@ import {
   pickMediaReleaseRoute,
   refuseMediaRequestRoute,
   removeMediaRequestRoute,
+  adminCatalogueRoute,
+  adminTitleFilesRoute,
+  stopRequestDownloadRoute,
+  followRequestItemsRoute,
   retryMediaRequestRoute,
   fulfilMediaRequestRoute,
   draftReleasesRoute,
@@ -74,6 +78,8 @@ import {
   tryIndexerChangeRoute,
   tryIndexerRoute,
 } from '@ValenceServer/routes/RequestsRoute';
+import { catalogueEntriesOf } from '@ValenceServer/requests/titles/catalogueEntriesOf';
+import type { RequestsAnswer, RequestsClient } from '@ValenceServer/requests/createRequestsClient';
 import { ReleaseDownloadRequestSchema } from '@ValenceContracts/schemas/Indexer';
 import { readSessionOnce } from '@ValenceServer/auth/readSessionOnce';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
@@ -148,6 +154,26 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     return overview === null
       ? context.json(refuse('error.common.requestingIsOff'), 404)
       : context.json(overview, 200);
+  });
+
+  app.openapi(adminCatalogueRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'requests.manage'))) {
+      return context.json(refuse('error.common.thatIsForWhoeverSetsUp'), 403);
+    }
+
+    const [held, asked] = await Promise.all([discovery.lookup.heldTitles(), everyRequest()]);
+
+    return context.json({ entries: catalogueEntriesOf(held, asked) }, 200);
+  });
+
+  app.openapi(adminTitleFilesRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'requests.manage'))) {
+      return context.json(refuse('error.common.thatIsForWhoeverSetsUp'), 403);
+    }
+
+    const { kind, catalogueId } = context.req.valid('query');
+
+    return context.json(await discovery.lookup.titleFiles(kind, catalogueId), 200);
   });
 
   app.openapi(adminCheckRequestsRoute, async (context) => {
@@ -608,17 +634,50 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       : context.json(bodyOf(answer), answer.status);
   });
 
+  /**
+   * Removes a request after deleting the files it filed, then has its library read again, so what
+   * was deleted leaves the library too.
+   *
+   * @param client - The requests service.
+   * @param id - The request.
+   * @returns What the service answered.
+   */
+  const removeWithFiles = async (
+    client: RequestsClient,
+    id: string,
+  ): Promise<RequestsAnswer<null>> => {
+    const found = await client.findRequest(id);
+
+    if (found.kind !== 'answered') {
+      return found;
+    }
+
+    const deleted = await client.deleteFiled(id);
+
+    if (deleted.kind !== 'answered') {
+      return deleted;
+    }
+
+    const removed = await client.removeRequest(id, true);
+
+    if (deleted.value.folders.length > 0) {
+      await library.scan(found.value.libraryId, false);
+    }
+
+    return removed;
+  };
+
   app.openapi(removeMediaRequestRoute, async (context) => {
     const { headers } = context.req.raw;
     const { id } = context.req.valid('param');
-    const isDeletingDownloads = context.req.valid('query').deleteDownloads === 'true';
+    const isDeletingFiles = context.req.valid('query').deleteFiles === 'true';
     const isManager = await requires(headers, 'requests.manage');
     const session = await readSessionOnce(auth, headers);
     const answer = await throughRequests(
       headers,
       async (client) => {
         if (isManager) {
-          return client.removeRequest(id, isDeletingDownloads);
+          return isDeletingFiles ? removeWithFiles(client, id) : client.removeRequest(id, true);
         }
 
         const found = await client.findRequest(id);
@@ -652,6 +711,39 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.body(null, 204)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
+  app.openapi(stopRequestDownloadRoute, async (context) => {
+    const { id, downloadId } = context.req.valid('param');
+    const answer = await throughRequests(
+      context.req.raw.headers,
+      (client) => client.stopDownload(id, downloadId, context.req.valid('json')),
+      ['requests.manage'],
+    );
+
+    if (answer.kind === 'answered') {
+      sayRequestsChanged();
+    }
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
+  app.openapi(followRequestItemsRoute, async (context) => {
+    const answer = await throughRequests(
+      context.req.raw.headers,
+      (client) => client.followItems(context.req.valid('param').id, context.req.valid('json')),
+      ['requests.manage'],
+    );
+
+    if (answer.kind === 'answered') {
+      sayRequestsChanged();
+    }
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
       : context.json(bodyOf(answer), answer.status);
   });
 
