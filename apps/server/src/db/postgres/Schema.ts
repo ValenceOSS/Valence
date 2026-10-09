@@ -979,6 +979,7 @@ const book = pgTable(
     externalId: text('externalId'),
     seriesName: text('seriesName'),
     seriesPosition: real('seriesPosition'),
+    narrators: jsonb('narrators'),
     isCorrected: boolean('isCorrected').notNull().default(false),
     addedAt: timestamp('addedAt').notNull().defaultNow(),
     updatedAt: timestamp('updatedAt').notNull().defaultNow(),

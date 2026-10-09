@@ -87,6 +87,13 @@ const CatalogueAlbumSchema = z.object({
   isOnAnAlbum: z.boolean().optional(),
 });
 
+const NarrationSchema = z.object({
+  asin: z.string().min(1).max(20),
+  narrators: z.array(z.string().min(1)).max(20),
+  runtimeMinutes: z.number().int().positive().nullable(),
+  series: z.string().nullable().default(null),
+});
+
 const RequestCatalogueSchema = z.object({
   title: z.string().min(1),
   year: z.number().int().nullable(),
@@ -99,6 +106,7 @@ const RequestCatalogueSchema = z.object({
   isEnded: z.boolean().default(false),
   artist: z.string().nullable().default(null),
   albums: z.array(CatalogueAlbumSchema).max(2000).default([]),
+  narrations: z.array(NarrationSchema).max(20).optional(),
   tvdbId: z.number().int().positive().nullish(),
   imdbId: z
     .string()
@@ -209,6 +217,7 @@ const MediaRequestDraftSchema = z
     releaseTypes: ReleaseTypesSchema.nullable().default(null),
     upgradesToLossless: z.boolean().default(false),
     bookFormats: BookFormatsSchema.default(['ebook']),
+    narrationsWanted: z.array(z.string().min(1).max(20)).max(20).nullable().optional(),
     requestedBy: RequesterSchema,
     higherProfileAsks: HigherProfileAsksSchema.default('ask'),
     isApproved: z.boolean(),
@@ -240,6 +249,8 @@ const RequestItemSchema = z.object({
   trackCount: z.number().int().positive().nullish(),
   filedTrackCount: z.number().int().nonnegative().nullish(),
   heldQuality: MusicQualitySchema.nullish(),
+  narration: z.string().nullish(),
+  filedMinutes: z.number().nonnegative().nullish(),
   lastSearchedAt: z.string().datetime().nullable(),
   updatedAt: z.string().datetime(),
 });
@@ -273,6 +284,8 @@ const MediaRequestSchema = z.object({
   releaseTypes: ReleaseTypesSchema.nullable(),
   upgradesToLossless: z.boolean().optional(),
   bookFormats: BookFormatsSchema.nullish(),
+  narrations: z.array(NarrationSchema).nullish(),
+  isAskingNarration: z.boolean().optional(),
   versions: z.array(z.string().uuid()).nullish(),
   releaseDate: CalendarDateSchema.nullable(),
   releaseDates: ReleaseDatesSchema.default(NO_RELEASE_DATES),
@@ -292,6 +305,10 @@ const MediaRequestChangeSchema = z.object({
   bookFormats: BookFormatsSchema.optional(),
   libraryId: z.string().min(1).optional(),
   libraryPath: z.string().min(1).optional(),
+});
+
+const NarrationDecisionSchema = z.object({
+  asins: z.array(z.string().min(1).max(20)).min(1).max(5),
 });
 
 const MEDIA_REQUEST_DECISIONS = ['approve', 'refuse'] as const;
@@ -438,6 +455,8 @@ type RequestCatalogueUpdate = z.input<typeof RequestCatalogueUpdateSchema>;
 type FollowedRequest = z.infer<typeof FollowedRequestSchema>;
 type HeldEpisode = z.infer<typeof HeldEpisodeSchema>;
 type HeldAlbum = z.infer<typeof HeldAlbumSchema>;
+type Narration = z.infer<typeof NarrationSchema>;
+type NarrationDecision = z.infer<typeof NarrationDecisionSchema>;
 type HeldInLibrary = z.infer<typeof HeldInLibrarySchema>;
 type SeasonFolder = z.infer<typeof SeasonFolderSchema>;
 type MediaRequestArrivals = z.input<typeof MediaRequestArrivalsSchema>;
@@ -470,6 +489,8 @@ export type {
   SeasonStanding,
   FollowedRequest,
   HeldAlbum,
+  Narration,
+  NarrationDecision,
   HeldEpisode,
   HeldInLibrary,
   MediaRequest,
@@ -530,6 +551,8 @@ export {
   FollowedRequestSchema,
   MediaRequestAddedSchema,
   HeldAlbumSchema,
+  NarrationDecisionSchema,
+  NarrationSchema,
   HeldEpisodeSchema,
   HeldInLibrarySchema,
   MediaRequestArrivalSchema,

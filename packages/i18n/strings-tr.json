@@ -1290,6 +1290,16 @@
     "context": "The detail in the requests (from `describeItemBadge`). {airDate} is filled in by the app."
   },
   {
+    "handler": "client.requests.describeNarration.readByNarrators",
+    "text": "Read by {narrators}",
+    "context": "One narration of an audiobook, where how long it lasts is not known. {narrators} is a list of names."
+  },
+  {
+    "handler": "client.requests.describeNarration.readByNarratorsLength",
+    "text": "Read by {narrators}, {hours} h {minutes} min",
+    "context": "One narration of an audiobook: who reads it and how long it lasts. {narrators} is a list of names; {hours} and {minutes} are numbers."
+  },
+  {
     "handler": "client.requests.describeRequestBadge.findingOutWhatThereIsTo",
     "text": "Searching for releases.",
     "context": "The detail in the requests (from `describeRequestBadge`)."
@@ -8765,6 +8775,11 @@
     "context": "An error the server answers with (HTTP 400) in the media requests in the requests service (from `createRequestRoutes`)."
   },
   {
+    "handler": "error.requests.sayWhichNarrationToFetch",
+    "text": "Say which narration of the audiobook to fetch.",
+    "context": "Error when choosing a narration for a book request without saying which."
+  },
+  {
     "handler": "error.requests.sayWhoIsAsking",
     "text": "Say who is asking.",
     "context": "Error from the requests service when somebody is added to a request without saying who they are."
@@ -10783,6 +10798,11 @@
     "handler": "requests.mediaRequests.requestWorker.itHeldNothingAskedFor",
     "text": "It didn’t contain anything requested",
     "context": "Shown in the media requests in the requests service (from `createRequestWorker`)."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.itIsAbridgedHaveAgainstWant",
+    "text": "It’s abridged: {have} against {want}.",
+    "context": "Why an audiobook download was refused and blocklisted: it is much shorter than the book's full listening time. {have} and {want} are lengths, such as 3 h 50 min."
   },
   {
     "handler": "requests.mediaRequests.requestWorker.itIsHandedToAConnectedApp",
@@ -17973,6 +17993,26 @@
     "handler": "screens.adminArea.titlePage.minutesLong",
     "text": "{minutes} min",
     "context": "How long a film runs, on its page. {minutes} is how many minutes."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.narrationAskCard.aNarrationToChoose",
+    "text": "A narration to choose",
+    "context": "The name, for screen readers, of the card on a book's page asking which narration of its audiobook to fetch."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.narrationAskCard.chose",
+    "text": "Fetching the narration chosen.",
+    "context": "Shown once a narration of an audiobook was chosen on a book's page."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.narrationAskCard.everyNarration",
+    "text": "All of them",
+    "context": "A button on the card asking which narration of an audiobook to fetch, fetching every narration listed."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.narrationAskCard.whichNarrationOfTitle",
+    "text": "Which narration of {title}?",
+    "context": "Asked on a book's page in the admin area when its audiobook is out in more than one narration and none has been chosen. {title} is the book."
   },
   {
     "handler": "screens.adminArea.titlePage.newSeasonsGoInFolder",

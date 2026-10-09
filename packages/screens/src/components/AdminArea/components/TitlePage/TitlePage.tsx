@@ -28,6 +28,7 @@ import {
   approveMediaRequest,
   askForMedia,
   changeMediaRequest,
+  decideNarration,
   decideProfileAsk,
   followRequestItems,
   fulfilMediaRequest,
@@ -52,6 +53,7 @@ import { TitleDetails } from './components/TitleDetails/TitleDetails';
 import { TitleHero } from './components/TitleHero/TitleHero';
 import { TitleProgress } from './components/TitleProgress/TitleProgress';
 import { ProfileAskCard } from './components/ProfileAskCard/ProfileAskCard';
+import { NarrationAskCard } from './components/NarrationAskCard/NarrationAskCard';
 import { HandedToNote } from './components/HandedToNote/HandedToNote';
 import { askOfEntry } from './askOfEntry';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';
@@ -598,6 +600,21 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
                 : choice === 'switch'
                   ? say('screens.adminArea.titlePage.switchedToProfile', { profile: named })
                   : say('screens.adminArea.titlePage.keptProfile', { profile: named }),
+              failedToSay,
+            );
+          }}
+        />
+      )}
+
+      {request?.isAskingNarration !== true ? null : (
+        <NarrationAskCard
+          title={request.title}
+          narrations={request.narrations ?? []}
+          isBusy={isBusy}
+          onDecide={(asins) => {
+            act(
+              async () => ({ refusal: (await decideNarration(request.id, asins)).refusal }),
+              say('screens.adminArea.titlePage.narrationAskCard.chose'),
               failedToSay,
             );
           }}

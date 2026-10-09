@@ -50,6 +50,7 @@ import {
 } from '@ValenceContracts/schemas/MediaRequest';
 import type {
   BookFormat,
+  Narration,
   ReleaseType,
   RequestCatalogue,
   ProfileAsk,
@@ -272,6 +273,8 @@ const mediaRequest = requestsSchema.table(
     releaseTypes: jsonb('release_types').$type<ReleaseType[]>(),
     upgradesToLossless: boolean('upgrades_to_lossless').notNull().default(false),
     bookFormats: jsonb('book_formats').$type<BookFormat[]>(),
+    narrations: jsonb('narrations').$type<Narration[]>(),
+    narrationsWanted: jsonb('narrations_wanted').$type<string[]>(),
     versions: jsonb('versions').$type<string[]>(),
     runtimeMinutes: integer('runtime_minutes'),
     releaseDates: jsonb('release_dates')
@@ -329,6 +332,8 @@ const requestItem = requestsSchema.table(
     trackCount: integer('track_count'),
     filedTrackCount: integer('filed_track_count'),
     heldQuality: text('held_quality').$type<MusicQuality>(),
+    narration: text('narration'),
+    filedMinutes: doublePrecision('filed_minutes'),
     lastSearchedAt: timestamp('last_searched_at', { withTimezone: true }),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

@@ -1,3 +1,4 @@
+import { narratorsOf } from './narratorsOf';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { isUnderAny } from '@ValenceServer/library/isUnderAny';
 import { basename, dirname, relative, sep } from 'node:path';
@@ -38,6 +39,7 @@ type BookRow = {
   authors: string[];
   overview: string | null;
   series: { name: string; position: number | null } | null;
+  narrators?: string[];
 };
 
 type ChapterRow = {
@@ -227,6 +229,7 @@ const scanBookLibrary = async (options: ScanBookLibraryOptions): Promise<ScanRes
         authors: about?.authors ?? [],
         overview: about?.description ?? null,
         series: about?.partOf ?? placed?.series ?? null,
+        narrators: narratorsOf(about?.narrators ?? [], bookPath),
       });
 
       written.add(bookPath);

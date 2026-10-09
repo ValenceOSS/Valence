@@ -231,6 +231,7 @@ const createDatabaseBookService = (
             overview: row.overview,
             seriesName: row.series?.name ?? null,
             seriesPosition: row.series?.position ?? null,
+            narrators: (row.narrators ?? []).length === 0 ? null : (row.narrators ?? null),
           },
         ],
         target: [book.libraryId, book.path],
@@ -240,6 +241,7 @@ const createDatabaseBookService = (
           year: sql`case when ${book.isCorrected} then ${book.year} else ${row.year} end`,
           seriesName: row.series?.name ?? null,
           seriesPosition: row.series?.position ?? null,
+          ...((row.narrators ?? []).length === 0 ? {} : { narrators: row.narrators ?? null }),
           updatedAt: new Date(),
           ...(row.authors.length === 0
             ? {}

@@ -1,3 +1,4 @@
+import { isAskingNarration } from '@ValenceContracts/functions/isAskingNarration';
 import { sayingList } from '@ValenceI18n/sayingList';
 import { sayingCount } from '@ValenceI18n/sayingCount';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
@@ -10,6 +11,7 @@ import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { GIVE_UP_DEFAULTS } from '@ValenceContracts/schemas/GiveUpRules';
 import { QualityProfileDraftSchema } from '@ValenceContracts/schemas/QualityProfile';
 import { fileAlbum } from '@ValenceRequests/mediaRequests/fileAlbum';
+import { measureListening } from '@ValenceRequests/mediaRequests/measureListening';
 import { isIncompleteAlbum } from '@ValenceRequests/mediaRequests/isIncompleteAlbum';
 import { fileBook } from '@ValenceRequests/mediaRequests/fileBook';
 import { fileDownload } from '@ValenceRequests/mediaRequests/fileDownload';
@@ -97,6 +99,7 @@ type CreateRequestWorkerOptions = {
   probe?: ProbeClient;
   fileMusic?: typeof fileAlbum;
   fileBooks?: typeof fileBook;
+  measure?: typeof measureListening;
   now?: () => Date;
   schedule?: Schedule;
   tickEveryMs?: number;
@@ -114,6 +117,46 @@ type Found = { request: MediaRequestRecord; items: RequestItemRecord[] };
 const NOTHING_REFUSED: ReadonlyMap<string, Said> = new Map();
 
 const NO_TRACKS: ReadonlyMap<string, number> = new Map();
+
+const UNABRIDGED_SHARE = 0.8;
+
+/**
+ * A listening time as a person reads it, in hours and minutes.
+ *
+ * @param minutes - The minutes.
+ * @returns The words.
+ */
+const listeningTime = (minutes: number): Said => {
+  const rounded = Math.round(minutes);
+
+  return saying('screens.requests.describeDownloadCost.hoursHMinutesMin', {
+    hours: Math.floor(rounded / 60).toString(),
+    minutes: (rounded % 60).toString(),
+  });
+};
+
+/**
+ * How long the whole of an audiobook lasts, from the narration it is fetched in, or the only one
+ * the book has; nothing for an ebook, or where nothing says.
+ *
+ * @param request - The book's request, with its narrations.
+ * @param item - The audiobook.
+ * @returns The minutes, or null.
+ */
+const fullListeningOf = (
+  request: Pick<MediaRequestRecord, 'narrations'>,
+  item: Pick<RequestItemRecord, 'format' | 'narration'>,
+): number | null => {
+  const narrations = request.narrations ?? [];
+  const narration =
+    item.narration === null || item.narration === undefined
+      ? narrations.length === 1
+        ? narrations[0]
+        : undefined
+      : narrations.find((one) => one.asin === item.narration);
+
+  return item.format === 'audiobook' ? (narration?.runtimeMinutes ?? null) : null;
+};
 
 const TICK_EVERY_MS = 30_000;
 
@@ -282,6 +325,7 @@ const groupedByDownload = (
  * @param file - How a finished download is filed.
  * @param fileMusic - How a finished download of music is filed.
  * @param fileBooks - How a finished download of a book or an audiobook is filed.
+ * @param measure - How long an audiobook download lasts, to tell an abridged one from the book.
  * @param now - The clock.
  * @param schedule - How to wait.
  * @param tickEveryMs - How often to move everything along.
@@ -309,6 +353,7 @@ const createRequestWorker = ({
   probe = () => Promise.resolve(null),
   fileMusic = fileAlbum,
   fileBooks = fileBook,
+  measure = measureListening,
   now = () => new Date(),
   schedule = waitThenRun,
   tickEveryMs = TICK_EVERY_MS,
@@ -722,10 +767,12 @@ const createRequestWorker = ({
   };
 
   const release = async ({ request, items: all }: Found) => {
+    const isChoosing = isAskingNarration(request);
     const out = all.filter(
       (item) =>
         item.state === 'waiting' &&
-        (item.airDate === null ? item.season === null : item.airDate <= today()),
+        (item.airDate === null ? item.season === null : item.airDate <= today()) &&
+        !(isChoosing && item.format === 'audiobook'),
     );
 
     for (const item of out) {
@@ -917,6 +964,27 @@ const createRequestWorker = ({
       }
 
       const path = mapClientPath(download.contentPath, client);
+      const [only] = filing;
+      const want = only === undefined || filing.length > 1 ? null : fullListeningOf(request, only);
+      const have = want === null ? null : await measure(path);
+
+      if (only !== undefined && want !== null && have !== null && have < want * UNABRIDGED_SHARE) {
+        const why = saying('requests.mediaRequests.requestWorker.itIsAbridgedHaveAgainstWant', {
+          have: listeningTime(have),
+          want: listeningTime(want),
+        });
+
+        await block(request.id, download.title, only.indexerId, why, hashOfDownload(download));
+        await update(only, letGo(only, why));
+        await note(
+          request,
+          saying('requests.mediaRequests.requestWorker.titleWasNotFiledFirstRefusalIt', {
+            title: download.title,
+            firstRefusal: why,
+          }),
+        );
+        continue;
+      }
 
       try {
         const { filed, missing, refused, trackCounts } = isMusicRequest(request.kind)
@@ -982,6 +1050,7 @@ const createRequestWorker = ({
             filedScore: score,
             attempts: 0,
             ...(filedTrackCount === null ? {} : { filedTrackCount }),
+            ...(have === null ? {} : { filedMinutes: Math.round(have) }),
             heldQuality: null,
             ...downloadFacts(download),
           });

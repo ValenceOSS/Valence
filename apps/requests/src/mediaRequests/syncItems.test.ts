@@ -301,6 +301,22 @@ describe('syncItems', () => {
     });
   });
 
+  it('waits for an audiobook once in each narration chosen, and once where none is', () => {
+    const book = aMediaRequest({
+      kind: 'book',
+      title: 'A Book',
+      tmdbId: null,
+      bookFormats: ['audiobook'],
+    });
+
+    expect(
+      syncItems({ ...book, narrationsWanted: ['A', 'B'] }, NOTHING, []).add.map(
+        (item) => item.narration,
+      ),
+    ).toEqual(['A', 'B']);
+    expect(syncItems(book, NOTHING, []).add.map((item) => item.narration)).toEqual([null]);
+  });
+
   it('waits for a book once in each format asked for, an ebook where none is said', () => {
     const book = aMediaRequest({ kind: 'book', title: 'Project Hail Mary', tmdbId: null });
 

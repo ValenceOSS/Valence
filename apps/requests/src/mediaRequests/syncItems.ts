@@ -22,6 +22,7 @@ type ItemDraft = Pick<
   | 'airDate'
   | 'trackCount'
   | 'heldQuality'
+  | 'narration'
 > & { state: Extract<RequestItemRecord['state'], 'waiting' | 'available'> };
 
 type ItemChanges = {
@@ -83,7 +84,8 @@ const standingOfHeld = (
  * Everything a request asks for, by what the catalogue says: the film, and each further version of
  * it kept at a profile of its own; the episodes of the seasons asked for; the artist's albums of the
  * kinds asked for; the album; or the book, once in each format asked for — the ebook, the
- * audiobook or both — each wanted at once, since a book has no release to wait for.
+ * audiobook or both, the audiobook once in each narration chosen — each wanted at once, since a
+ * book has no release to wait for.
  *
  * An episode or album the library already holds is asked for as already there, so nothing searches
  * for it — unless the request upgrades lossy albums to lossless and the library's copy is lossy,
@@ -111,6 +113,7 @@ const wantedOf = (
     | 'bookFormats'
     | 'versions'
     | 'upgradesToLossless'
+    | 'narrationsWanted'
   >,
   catalogue: Pick<RequestCatalogue, 'episodes' | 'albums'>,
   waitFor: ReleaseWait,
@@ -140,15 +143,21 @@ const wantedOf = (
           state: isHeld(held, season, episode) ? 'available' : 'waiting',
         }));
     case 'book':
-      return (request.bookFormats ?? ['ebook']).map((format) => ({
-        musicBrainzId: null,
-        season: null,
-        episode: null,
-        format,
-        title: request.title,
-        airDate: null,
-        state: 'waiting',
-      }));
+      return (request.bookFormats ?? ['ebook']).flatMap((format) =>
+        (format === 'audiobook' && (request.narrationsWanted ?? []).length > 0
+          ? (request.narrationsWanted ?? [])
+          : [null]
+        ).map((narration) => ({
+          musicBrainzId: null,
+          season: null,
+          episode: null,
+          format,
+          narration,
+          title: request.title,
+          airDate: null,
+          state: 'waiting' as const,
+        })),
+      );
     case 'artist':
     case 'album':
       return catalogue.albums
@@ -206,6 +215,7 @@ const syncItems = (
     | 'bookFormats'
     | 'versions'
     | 'upgradesToLossless'
+    | 'narrationsWanted'
   >,
   catalogue: Pick<RequestCatalogue, 'episodes' | 'albums'>,
   items: readonly RequestItemRecord[],
@@ -215,10 +225,13 @@ const syncItems = (
 ): ItemChanges => {
   const wanted = wantedOf(request, catalogue, waitFor, held, heldAlbums);
   const keyOf = (
-    item: Pick<ItemDraft, 'musicBrainzId' | 'season' | 'episode' | 'format' | 'versionProfileId'>,
+    item: Pick<
+      ItemDraft,
+      'musicBrainzId' | 'season' | 'episode' | 'format' | 'versionProfileId' | 'narration'
+    >,
   ) =>
     item.musicBrainzId ??
-    `${item.season?.toString() ?? '-'}x${item.episode?.toString() ?? '-'}${item.format ?? ''}${item.versionProfileId ?? ''}`;
+    `${item.season?.toString() ?? '-'}x${item.episode?.toString() ?? '-'}${item.format ?? ''}${item.versionProfileId ?? ''}${item.narration ?? ''}`;
   const kept = new Map(items.map((item) => [keyOf(item), item]));
   const wantedKeys = new Set(wanted.map(keyOf));
 

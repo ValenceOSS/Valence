@@ -70,6 +70,13 @@ Each format is searched for among the indexers' books or audiobooks, and release
 
 A release counts as the book when its name contains the book's title. For a title of one or two words, it must name the author too. Picking a release by hand in **Interactive search** still works for any of them.
 
+Audiobooks also have narrations. Valence looks the book up on Audible's catalogue, and on Audnexus for each narration's narrators, full length and series:
+
+- **Which narration.** Where there's only one, that's the one. Where there are several, the one whoever reads the series' other audiobooks in your library reads is chosen. Narrators are read from an audiobook's composer tag, or from a `{Narrator}` at the end of its folder's name. Otherwise the book's page in the Catalogue asks **Which narration of…?**: pick one, or **All of them** to fetch each as an audiobook of its own. The audiobook waits until then, while the ebook carries on.
+- **Matching.** A release naming a narrator's surname is held for that narration. One naming no narrator is taken for one narration at most.
+- **Length.** Before an audiobook is filed, its download's listening time is measured against the narration's full length. One under four-fifths of it is refused as abridged, and blocklisted with both lengths ("It's abridged: 3 h 50 min against 12 h 12 min"). Where Audible and Audnexus don't know the book, no length is checked.
+- **Metadata.** A book filed on its own gets a `metadata.opf` beside it (title, author, narrators, year, blurb, series and Open Library id) and a `cover.jpg` from Open Library where the download brought no cover. Neither replaces a file already there, and your own MOBI and other files are never replaced.
+
 ### Notifications
 
 When something you asked for lands in the library, you get an in-app notification ("Something you asked for is ready"), and a push notification if you have enabled them. Each person can switch this on or off per transport. See [Notifications and webhooks](/use/notifications-and-webhooks).

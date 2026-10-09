@@ -18,6 +18,7 @@ type CatalogueLookup = {
   albumQualities: (
     releaseGroupIds: readonly string[],
   ) => Promise<ReadonlyMap<string, MusicQuality>>;
+  seriesNarrators: (series: string) => Promise<readonly string[]>;
   artistsNamed: (nameKeys: readonly string[]) => Promise<ReadonlyMap<string, string>>;
   albumsNamed: (titleKeys: readonly string[]) => Promise<ReadonlyMap<string, string>>;
   booksNamed: (books: readonly NamedBook[]) => Promise<ReadonlyMap<string, string>>;

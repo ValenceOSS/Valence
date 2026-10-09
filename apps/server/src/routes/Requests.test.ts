@@ -3075,6 +3075,25 @@ describe('requests for films and series, through the server', () => {
     expect((await member.ask(path, 'POST', { choice: 'keep' })).status).toBe(403);
   });
 
+  it('lets whoever manages requesting choose an audiobook’s narration, and nobody else', async () => {
+    const asked: string[] = [];
+    const service = (url: string, init: { method?: string; body?: string }) => {
+      asked.push(`${init.method ?? 'GET'} ${url} ${init.body ?? ''}`);
+
+      return Response.json(REQUEST);
+    };
+    const manager = await build({ isOn: true, granted: ['requests.manage'], service });
+    const member = await build({ isOn: true, granted: ['requests.ask'], service });
+    const path = `/api/requests/media/${REQUEST.id}/narration`;
+
+    expect((await manager.ask(path, 'POST', { asins: ['A'] })).status).toBe(200);
+    expect(asked.at(-1)).toBe(
+      `POST http://requests:8421/api/requests/${REQUEST.id}/narration {"asins":["A"]}`,
+    );
+    expect((await manager.ask(path, 'POST', { asins: [] })).status).toBe(400);
+    expect((await member.ask(path, 'POST', { asins: ['A'] })).status).toBe(403);
+  });
+
   it('passes on why the service would not do something', async () => {
     const refusing = await build({
       isOn: true,

@@ -370,6 +370,9 @@ const ENGLISH = {
     'This needs a newer version of the server. Update the server to use it.',
   'client.requests.describeDownloadLine.underAMinuteLeft': 'Under a minute left',
   'client.requests.describeItemBadge.outAirDate': 'Out {airDate}.',
+  'client.requests.describeNarration.readByNarrators': 'Read by {narrators}',
+  'client.requests.describeNarration.readByNarratorsLength':
+    'Read by {narrators}, {hours} h {minutes} min',
   'client.requests.describeRequestBadge.findingOutWhatThereIsTo': 'Searching for releases.',
   'client.requests.describeRequestBadge.heldUntilReleaseDateWhenItsQuality':
     'Waiting until {releaseDate}, when its quality profile considers it released.',
@@ -2050,6 +2053,7 @@ const ENGLISH = {
   'error.requests.sayWhetherToSwitchOrKeep':
     'Say whether to switch the request to the higher profile or keep the one it has.',
   'error.requests.sayWhichItemItBecame': 'Say which library item it became.',
+  'error.requests.sayWhichNarrationToFetch': 'Say which narration of the audiobook to fetch.',
   'error.requests.sayWhoIsAsking': 'Say who is asking.',
   'error.requests.sayWhyItWasRefusedOr': 'Give a reason for declining, or leave it empty.',
   'error.requests.thatIsNotAChangeTo': 'That isn’t a valid change to a request.',
@@ -2604,6 +2608,8 @@ const ENGLISH = {
     '{forIt} of them matched, but none were acceptable — the best, {title}, was rejected because {why}',
   'requests.mediaRequests.requestWorker.itHeldNothingAskedFor':
     'It didn’t contain anything requested',
+  'requests.mediaRequests.requestWorker.itIsAbridgedHaveAgainstWant':
+    'It’s abridged: {have} against {want}.',
   'requests.mediaRequests.requestWorker.itIsHandedToAConnectedApp':
     'This request is sent to a connected app, which chooses its own releases.',
   'requests.mediaRequests.requestWorker.itIsOutAndWanted': 'It’s been released and is wanted.',
@@ -4528,6 +4534,11 @@ const ENGLISH = {
   'screens.adminArea.titlePage.markAsAdded': 'Mark as in the library',
   'screens.adminArea.titlePage.markedTitleAsAdded': 'Marked {title} as in the library',
   'screens.adminArea.titlePage.minutesLong': '{minutes} min',
+  'screens.adminArea.titlePage.narrationAskCard.aNarrationToChoose': 'A narration to choose',
+  'screens.adminArea.titlePage.narrationAskCard.chose': 'Fetching the narration chosen.',
+  'screens.adminArea.titlePage.narrationAskCard.everyNarration': 'All of them',
+  'screens.adminArea.titlePage.narrationAskCard.whichNarrationOfTitle':
+    'Which narration of {title}?',
   'screens.adminArea.titlePage.newSeasonsGoInFolder': 'New seasons go in {folder}',
   'screens.adminArea.titlePage.newSeasonsOfTitleAreFetched':
     'New seasons of {title} are fetched as they air',

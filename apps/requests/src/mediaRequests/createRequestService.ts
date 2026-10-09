@@ -368,6 +368,29 @@ const createRequestService = ({
       return record === null ? null : shown(record);
     },
 
+    decideNarration: async (id: string, asins: readonly string[]): Promise<MediaRequest | null> => {
+      const kept = await requests.find(id);
+      const known = new Set((kept?.narrations ?? []).map((narration) => narration.asin));
+
+      if (kept === null || kept.kind !== 'book' || !asins.every((asin) => known.has(asin))) {
+        return null;
+      }
+
+      const record = await requests.update(id, {
+        narrationsWanted: [...asins],
+        updatedAt: now().toISOString(),
+      });
+
+      if (record === null) {
+        return null;
+      }
+
+      await sync(record, { episodes: [], albums: [] });
+      onChange();
+
+      return shown(record);
+    },
+
     decideProfileAsk: async (
       id: string,
       decision: ProfileAskDecision,

@@ -11,6 +11,7 @@ import {
   series,
 } from '#dialect/Schema';
 import { qualityOfTracks } from '@ValenceServer/requests/catalogue/qualityOfTracks';
+import { z } from 'zod';
 import { nameKey } from '@ValenceServer/music/nameKey';
 import { createDatabaseHeldTitles } from '@ValenceServer/requests/titles/createDatabaseHeldTitles';
 import { createDatabaseTitleFiles } from '@ValenceServer/requests/titles/createDatabaseTitleFiles';
@@ -42,6 +43,8 @@ const byKey = async (
 
   return found;
 };
+
+const NarratorsSchema = z.array(z.string());
 
 /**
  * The libraries, looked into for what a catalogue lists: films and series by their catalogue ids,
@@ -188,6 +191,24 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
     }
 
     return new Map([...tracks].map(([key, held]) => [key, qualityOfTracks(held)]));
+  },
+
+  seriesNarrators: async (series) => {
+    const rows = await db
+      .select({ narrators: book.narrators })
+      .from(book)
+      .innerJoin(library, eq(library.id, book.libraryId))
+      .where(
+        and(
+          eq(book.layout, 'audio'),
+          sql`lower(${book.seriesName}) = ${series.toLowerCase()}`,
+          isNull(library.linkedServerId),
+        ),
+      );
+
+    return [
+      ...new Set(rows.flatMap((row) => NarratorsSchema.catch([]).parse(row.narrators ?? []))),
+    ];
   },
 
   artistsNamed: (nameKeys) =>

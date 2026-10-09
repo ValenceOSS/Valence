@@ -1,11 +1,13 @@
 import { RequestCatalogueSchema } from '@ValenceContracts/schemas/MediaRequest';
 import { describeOpenLibraryBook } from '@ValenceServer/requests/openLibrary/describeOpenLibraryBook';
+import { readNarrations } from '@ValenceServer/requests/audible/readNarrations';
 import type { RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
 import type { MusicWeb } from '@ValenceServer/music/web/createMusicWeb';
 
 /**
  * What Open Library says of a book, in the shape a request keeps of what was asked for: its title,
- * the year it was first published, what it is about, its cover, and who wrote it.
+ * the year it was first published, what it is about, its cover, and who wrote it — with each
+ * unabridged narration of its audiobook Audible sells, for choosing one and checking its length.
  *
  * A book has no release to wait for and no episodes, and is not going to change, so nothing more is
  * kept of it, and it is never followed for changes.
@@ -29,6 +31,7 @@ const describeBookForRequest = async (
         posterUrl: found.posterUrl,
         artist: found.authors[0] ?? null,
         isEnded: true,
+        narrations: await readNarrations(web, found.title, found.authors[0] ?? null),
       });
 };
 
