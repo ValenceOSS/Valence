@@ -310,6 +310,7 @@ const mediaRequest = requestsSchema(
     followsAfter: int('follows_after'),
     releaseTypes: jsonColumn('release_types').$type<ReleaseType[]>(),
     bookFormats: jsonColumn('book_formats').$type<BookFormat[]>(),
+    versions: jsonColumn('versions').$type<string[]>(),
     runtimeMinutes: int('runtime_minutes'),
     releaseDates: jsonColumn('release_dates')
       .$type<RequestCatalogue['releaseDates']>()
@@ -341,6 +342,7 @@ const requestItem = requestsSchema(
     season: int('season'),
     episode: int('episode'),
     format: varchar('format', { length: 16, enum: BOOK_FORMATS }),
+    versionProfileId: char('version_profile_id', { length: 36 }),
     title: mediumtext('title').notNull(),
     airDate: varchar('air_date', { length: 32 }),
     state: varchar('state', { length: 32, enum: REQUEST_ITEM_STATES }).notNull().default('waiting'),

@@ -88,4 +88,18 @@ describe('describeRequestState', () => {
       ).problemCode,
     ).toBe('CloudflareRefusesAddress');
   });
+
+  it('counts a film here once its first version is, whatever its further versions are doing', () => {
+    expect(
+      describeRequestState(APPROVED, [
+        { state: 'available', problem: null, problemCode: null, versionProfileId: null },
+        {
+          state: 'downloading',
+          problem: null,
+          problemCode: null,
+          versionProfileId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+        },
+      ]).state,
+    ).toBe('available');
+  });
 });

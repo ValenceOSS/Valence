@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const HIGHER_PROFILE_ASKS = ['ask', 'upgrade', 'keep'] as const;
+const HIGHER_PROFILE_ASKS = ['ask', 'upgrade', 'keep', 'both'] as const;
 
 const HigherProfileAsksSchema = z.enum(HIGHER_PROFILE_ASKS);
 

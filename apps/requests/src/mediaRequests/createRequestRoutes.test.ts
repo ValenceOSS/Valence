@@ -134,7 +134,9 @@ describe('createRequestRoutes', () => {
     const id = await madeDune(ask);
 
     expect((await ask(`/requests/${id}/profile-ask`, 'POST', { choice: 'keep' })).status).toBe(404);
-    expect((await ask(`/requests/${id}/profile-ask`, 'POST', { choice: 'both' })).status).toBe(400);
+    expect((await ask(`/requests/${id}/profile-ask`, 'POST', { choice: 'never' })).status).toBe(
+      400,
+    );
   });
 
   it('searches a handed-off request in its app, and says which app has it', async () => {
@@ -171,6 +173,27 @@ describe('createRequestRoutes', () => {
     handedTo.mockResolvedValue(null);
 
     expect((await ask(`/requests/${id}/handed-to`)).status).toBe(404);
+  });
+
+  it('keeps only a film in two versions', async () => {
+    const { ask } = theRoutes();
+    const book = MediaRequestAddedSchema.parse(
+      await (
+        await ask('/requests', 'POST', {
+          kind: 'book',
+          openLibraryId: 1,
+          libraryId: 'books',
+          libraryPath: '/media/Books',
+          requestedBy: { id: 'someone', name: 'Someone' },
+          isApproved: false,
+          catalogue: { title: 'A Book', year: null },
+        })
+      ).json(),
+    ).request.id;
+
+    expect((await ask(`/requests/${book}/profile-ask`, 'POST', { choice: 'both' })).status).toBe(
+      400,
+    );
   });
 
   it('approves, refuses, retries and marks a request arrived', async () => {

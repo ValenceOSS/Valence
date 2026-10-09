@@ -12,7 +12,7 @@ import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
  * @returns Who asked higher, with the profile they asked at named.
  */
 const askersKeptBelow = (
-  request: Pick<MediaRequest, 'alsoAskedBy' | 'profileId' | 'profileName'>,
+  request: Pick<MediaRequest, 'alsoAskedBy' | 'profileId' | 'profileName' | 'versions'>,
   profiles: readonly QualityProfile[],
 ): Requester[] => {
   const current =
@@ -26,7 +26,12 @@ const askersKeptBelow = (
   return request.alsoAskedBy.filter((asker) => {
     const asked = profiles.find((profile) => profile.id === asker.profileId);
 
-    return asked !== undefined && asked.kind === current.kind && isProfileAbove(asked, current);
+    return (
+      asked !== undefined &&
+      asked.kind === current.kind &&
+      isProfileAbove(asked, current) &&
+      !(request.versions ?? []).includes(asked.id)
+    );
   });
 };
 

@@ -4,7 +4,8 @@ type ProfileAskCardProps = {
   ask: ProfileAsk;
   currentName: string | null;
   isBusy: boolean;
-  onDecide: (choice: 'switch' | 'keep') => void;
+  canKeepBoth: boolean;
+  onDecide: (choice: 'switch' | 'keep' | 'both') => void;
 };
 
 export type { ProfileAskCardProps };

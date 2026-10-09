@@ -26,6 +26,7 @@ const HIGHER_PROFILE_ASK_CHOICES: readonly { id: HigherProfileAsks; label: strin
   { id: 'ask', label: say('screens.adminArea.librarySettingsDialog.askMe') },
   { id: 'upgrade', label: say('screens.adminArea.librarySettingsDialog.switchToTheHigherProfile') },
   { id: 'keep', label: say('screens.adminArea.librarySettingsDialog.keepTheProfileAskedFirst') },
+  { id: 'both', label: say('screens.adminArea.librarySettingsDialog.keepBothVersions') },
 ];
 
 const NONE_ID = 'none';
@@ -381,10 +382,9 @@ const LibrarySettingsDialog = ({
                               setHigherProfileAsks(chosen.id);
                             }
                           },
-                          options: HIGHER_PROFILE_ASK_CHOICES.map(({ id, label }) => ({
-                            id,
-                            label,
-                          })),
+                          options: HIGHER_PROFILE_ASK_CHOICES.filter(
+                            (choice) => choice.id !== 'both' || library.kind === 'movies',
+                          ).map(({ id, label }) => ({ id, label })),
                         },
                       ]}
                       trigger={

@@ -512,16 +512,55 @@ const createRequestWorker = ({
     return null;
   };
 
+  const versionProfileOf = async (
+    request: MediaRequestRecord,
+    versionProfileId: string | null | undefined,
+  ): Promise<QualityProfile> =>
+    versionProfileId === null || versionProfileId === undefined
+      ? profileFor(request)
+      : ((await profiles.list()).find((profile) => profile.id === versionProfileId) ??
+        profileFor(request));
+
   const fetchFrom = async (
-    { request, items: all }: Found,
+    found: Found,
     releases: readonly Release[],
     isFetching: (item: RequestItemRecord) => boolean,
   ): Promise<{ isSent: boolean; said: Said }> => {
+    const versions = [...new Set(found.items.map((item) => item.versionProfileId ?? null))].filter(
+      (version) =>
+        found.items.some((item) => (item.versionProfileId ?? null) === version && isFetching(item)),
+    );
+
+    if (versions.length <= 1) {
+      return fetchVersion(found, releases, isFetching, versions[0] ?? null);
+    }
+
+    const [first, ...rest] = versions;
+    const firstOutcome = await fetchVersion(found, releases, isFetching, first ?? null);
+    const others = [];
+
+    for (const version of rest) {
+      others.push(await fetchVersion(found, releases, isFetching, version));
+    }
+
+    return {
+      isSent: firstOutcome.isSent || others.some((outcome) => outcome.isSent),
+      said: sayingList([firstOutcome.said, ...others.map((outcome) => outcome.said)]),
+    };
+  };
+
+  const fetchVersion = async (
+    { request, items: every }: Found,
+    releases: readonly Release[],
+    isFetching: (item: RequestItemRecord) => boolean,
+    version: string | null,
+  ): Promise<{ isSent: boolean; said: Said }> => {
+    const all = every.filter((item) => (item.versionProfileId ?? null) === version);
     const judged = judgeForRequest({
       request,
       items: all,
       releases,
-      profile: await profileFor(request),
+      profile: await versionProfileOf(request, version),
       blocked: await blockedFor(request.id),
       priorities: await priorities(),
       isFetching,
@@ -1185,10 +1224,15 @@ const createRequestWorker = ({
       let searched = 0;
 
       for (const found of await searchedByItself()) {
-        const profile = await profileFor(found.request);
-        const fetching = found.items.filter(
-          (item) => item.isFollowed && (item.state === 'wanted' || isUpgradable(profile, item)),
-        );
+        const fetching = [];
+
+        for (const item of found.items) {
+          const profile = await versionProfileOf(found.request, item.versionProfileId);
+
+          if (item.isFollowed && (item.state === 'wanted' || isUpgradable(profile, item))) {
+            fetching.push(item);
+          }
+        }
 
         if (fetching.length > 0) {
           searched += 1;
@@ -1205,12 +1249,25 @@ const createRequestWorker = ({
     serially(async () => {
       const fetching = await Promise.all(
         (await searchedByItself()).map(async (found) => {
-          const profile = await profileFor(found.request);
+          const byVersion = new Map(
+            await Promise.all(
+              [...new Set(found.items.map((item) => item.versionProfileId ?? null))].map(
+                async (version) =>
+                  [version, await versionProfileOf(found.request, version)] as const,
+              ),
+            ),
+          );
 
           return {
             found,
-            isFetching: (item: RequestItemRecord) =>
-              item.isFollowed && (item.state === 'wanted' || isUpgradable(profile, item)),
+            isFetching: (item: RequestItemRecord) => {
+              const profile = byVersion.get(item.versionProfileId ?? null);
+
+              return (
+                item.isFollowed &&
+                (item.state === 'wanted' || (profile !== undefined && isUpgradable(profile, item)))
+              );
+            },
           };
         }),
       );

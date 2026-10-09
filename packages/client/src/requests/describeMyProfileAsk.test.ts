@@ -34,6 +34,10 @@ describe('describeMyProfileAsk', () => {
     ).toBe('You asked for UHD 4K. An admin will decide which quality it’s fetched in.');
   });
 
+  it('says nothing where the profile asked at is kept as a further version', () => {
+    expect(describeMyProfileAsk({ ...REQUEST, versions: [UHD] }, 'me')).toBeNull();
+  });
+
   it('says nothing where somebody got what they asked for, or asked at no profile', () => {
     expect(describeMyProfileAsk({ ...REQUEST, profileId: UHD }, 'me')).toBeNull();
     expect(describeMyProfileAsk(REQUEST, 'someone-else')).toBeNull();

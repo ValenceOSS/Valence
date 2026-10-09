@@ -116,7 +116,7 @@ const ProfileAskSchema = z.object({
   profileName: z.string().nullable().default(null),
 });
 
-const ProfileAskDecisionSchema = z.object({ choice: z.enum(['switch', 'keep']) });
+const ProfileAskDecisionSchema = z.object({ choice: z.enum(['switch', 'keep', 'both']) });
 
 const HeldEpisodeSchema = z.object({
   season: z.number().int().nonnegative(),
@@ -217,6 +217,7 @@ const RequestItemSchema = z.object({
   season: z.number().int().nonnegative().nullable(),
   episode: z.number().int().nonnegative().nullable(),
   format: BookFormatSchema.nullish(),
+  versionProfileId: z.string().uuid().nullish(),
   title: z.string(),
   airDate: CalendarDateSchema.nullable(),
   state: RequestItemStateSchema,
@@ -261,6 +262,7 @@ const MediaRequestSchema = z.object({
   followsNewSeasons: z.boolean().default(false),
   releaseTypes: ReleaseTypesSchema.nullable(),
   bookFormats: BookFormatsSchema.nullish(),
+  versions: z.array(z.string().uuid()).nullish(),
   releaseDate: CalendarDateSchema.nullable(),
   releaseDates: ReleaseDatesSchema.default(NO_RELEASE_DATES),
   items: z.array(RequestItemSchema),
@@ -351,6 +353,7 @@ const MediaRequestArrivalsSchema = z.object({
 const MediaRequestArrivedSchema = z.object({
   request: MediaRequestSchema,
   newlyAvailable: z.number().int().nonnegative(),
+  versionsArrived: z.array(z.string().uuid()).default([]),
 });
 
 const FollowedRequestSchema = z.object({

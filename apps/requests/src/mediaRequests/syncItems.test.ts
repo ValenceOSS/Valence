@@ -43,11 +43,20 @@ describe('syncItems', () => {
         musicBrainzId: null,
         season: null,
         episode: null,
+        versionProfileId: null,
         title: 'Dune',
         airDate: '2021-12-03',
         state: 'waiting',
       },
     ]);
+  });
+
+  it('waits for each further version of a film kept at its own profile', () => {
+    const uhd = '3fa85f64-5717-4562-b3fc-2c963f66afa6';
+    const synced = syncItems({ ...aMediaRequest(), versions: [uhd] }, NOTHING, [aRequestItem()]);
+
+    expect(synced.add.map((item) => item.versionProfileId)).toEqual([uhd]);
+    expect(synced.remove).toEqual([]);
   });
 
   it('waits for every regular episode where no seasons were named', () => {

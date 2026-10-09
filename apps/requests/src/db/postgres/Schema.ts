@@ -271,6 +271,7 @@ const mediaRequest = requestsSchema.table(
     followsAfter: integer('follows_after'),
     releaseTypes: jsonb('release_types').$type<ReleaseType[]>(),
     bookFormats: jsonb('book_formats').$type<BookFormat[]>(),
+    versions: jsonb('versions').$type<string[]>(),
     runtimeMinutes: integer('runtime_minutes'),
     releaseDates: jsonb('release_dates')
       .$type<RequestCatalogue['releaseDates']>()
@@ -306,6 +307,7 @@ const requestItem = requestsSchema.table(
     season: integer('season'),
     episode: integer('episode'),
     format: text('format', { enum: BOOK_FORMATS }),
+    versionProfileId: uuid('version_profile_id'),
     title: text('title').notNull(),
     airDate: text('air_date'),
     state: text('state', { enum: REQUEST_ITEM_STATES }).notNull().default('waiting'),

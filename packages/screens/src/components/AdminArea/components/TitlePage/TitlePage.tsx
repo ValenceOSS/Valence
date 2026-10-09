@@ -564,6 +564,7 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
           ask={request.profileAsk}
           currentName={request.profileName ?? null}
           isBusy={isBusy}
+          canKeepBoth={request.kind === 'film'}
           onDecide={(choice) => {
             const named =
               choice === 'switch'
@@ -572,9 +573,11 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
 
             act(
               async () => ({ refusal: (await decideProfileAsk(request.id, { choice })).refusal }),
-              choice === 'switch'
-                ? say('screens.adminArea.titlePage.switchedToProfile', { profile: named })
-                : say('screens.adminArea.titlePage.keptProfile', { profile: named }),
+              choice === 'both'
+                ? say('screens.adminArea.titlePage.gettingBothVersions')
+                : choice === 'switch'
+                  ? say('screens.adminArea.titlePage.switchedToProfile', { profile: named })
+                  : say('screens.adminArea.titlePage.keptProfile', { profile: named }),
               failedToSay,
             );
           }}

@@ -2041,6 +2041,7 @@ const ENGLISH = {
     'It isn’t approved, so nothing is searched for it.',
   'error.requests.noSuchBlockedRelease': 'No such blocked release.',
   'error.requests.noSuchRequest': 'No such request.',
+  'error.requests.onlyAFilmIsKeptInTwoVersions': 'Only a film can be kept in two versions.',
   'error.requests.pickingAReleaseIsForWhoever': 'Only request managers can choose a release.',
   'error.requests.sayWhatHappensAfterTheDownload':
     'Say what should happen after the download is stopped.',
@@ -3719,6 +3720,7 @@ const ENGLISH = {
     'As many as the server allows',
   'screens.adminArea.librarySettingsDialog.howManyOfThisLibrarysFiles':
     'How many of this library’s files are processed at the same time. For a local disk, use as many as the server can handle. For a network share, use one: files share a single connection, so processing four at once splits its speed four ways.',
+  'screens.adminArea.librarySettingsDialog.keepBothVersions': 'Keep both versions',
   'screens.adminArea.librarySettingsDialog.keepNewEpisodesWithTheShow':
     'Keep new episodes with the show',
   'screens.adminArea.librarySettingsDialog.keepTheProfileAskedFirst':
@@ -4473,6 +4475,7 @@ const ENGLISH = {
   'screens.adminArea.titlePage.episodeTable.fileName': 'File name',
   'screens.adminArea.titlePage.fetching': 'Fetching',
   'screens.adminArea.titlePage.followingName': 'Following {name}',
+  'screens.adminArea.titlePage.gettingBothVersions': 'Getting both versions',
   'screens.adminArea.titlePage.handedToNote.handledByName': 'Handled by {name}',
   'screens.adminArea.titlePage.handedToNote.nameSearchesDownloadsAndImports':
     'Handled by {name}. It searches for, downloads and imports this title, and Valence follows what it does. Search missing asks {name} to search again.',
@@ -4499,6 +4502,7 @@ const ENGLISH = {
   'screens.adminArea.titlePage.onlyFetchWhatIPick': 'Fetch only releases I pick',
   'screens.adminArea.titlePage.onlyWhatYouPick': 'Only releases you pick',
   'screens.adminArea.titlePage.profileAskCard.aHigherQualityAsk': 'A higher-quality request',
+  'screens.adminArea.titlePage.profileAskCard.getBoth': 'Get both',
   'screens.adminArea.titlePage.profileAskCard.keepProfile': 'Keep {profile}',
   'screens.adminArea.titlePage.profileAskCard.nameAskedForProfile':
     '{name} asked for the {asked} profile. It’s being fetched with {current}.',
@@ -6737,6 +6741,7 @@ const ENGLISH = {
     'The server restarted while this was running. Completed work was saved, and the rest will continue on the next run.',
   'server.main.titleHasBeenPreparedAndThe':
     '{title} is ready and is downloading to the device you requested it on.',
+  'server.main.titleIsNowAlsoInProfile': '{title} is now also in {profile}.',
   'server.main.titleIsOnName': '{title} is available on {name}',
   'server.main.titleIsReady': '{title} is ready',
   'server.main.titleIsReadyInProfile':

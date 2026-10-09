@@ -13,7 +13,15 @@ describe('ProfileAskCard', () => {
   it('says who asked for what, and switches or keeps', async () => {
     const onDecide = vi.fn();
 
-    render(<ProfileAskCard ask={ASK} currentName="HD 1080p" isBusy={false} onDecide={onDecide} />);
+    render(
+      <ProfileAskCard
+        ask={ASK}
+        currentName="HD 1080p"
+        isBusy={false}
+        canKeepBoth={false}
+        onDecide={onDecide}
+      />,
+    );
 
     expect(
       screen.getByText('Priya asked for the UHD 4K profile. It’s being fetched with HD 1080p.'),
@@ -23,6 +31,25 @@ describe('ProfileAskCard', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Keep HD 1080p' }));
 
     expect(onDecide.mock.calls).toEqual([['switch'], ['keep']]);
+    expect(screen.queryByRole('button', { name: 'Get both' })).toBeNull();
+  });
+
+  it('offers to get both versions of a film', async () => {
+    const onDecide = vi.fn();
+
+    render(
+      <ProfileAskCard
+        ask={ASK}
+        currentName="HD 1080p"
+        isBusy={false}
+        canKeepBoth
+        onDecide={onDecide}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Get both' }));
+
+    expect(onDecide).toHaveBeenCalledWith('both');
   });
 
   it('sets a display name so devtools can identify it', () => {

@@ -36,6 +36,7 @@ const aMediaRequest = (overrides: Partial<MediaRequestRecord> = {}): MediaReques
   followsAfter: null,
   releaseTypes: null,
   bookFormats: null,
+  versions: null,
   runtimeMinutes: 155,
   releaseDates: { theatrical: '2021-10-22', digital: '2021-12-03', physical: '2022-01-11' },
   isEnded: false,
