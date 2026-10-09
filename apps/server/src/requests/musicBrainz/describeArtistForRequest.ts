@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { catalogueAlbumOf } from '@ValenceServer/requests/musicBrainz/catalogueAlbumOf';
 import { MusicBrainzReleaseGroupSchema } from '@ValenceServer/requests/musicBrainz/MusicBrainzReleaseGroupSchema';
 import { artistPictureUrl } from '@ValenceServer/requests/musicBrainz/artistPictureUrl';
+import { readTracklists } from '@ValenceServer/requests/musicBrainz/readTracklists';
+import { withTracklists } from '@ValenceServer/requests/musicBrainz/withTracklists';
 import type { RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
 import type { MusicWeb } from '@ValenceServer/music/web/createMusicWeb';
 
@@ -36,6 +38,9 @@ const ReleaseGroupPageSchema = z.object({
  *   request that will watch the artist, since a missed album is an album never fetched; a few for a
  *   page somebody is waiting on, since MusicBrainz answers once a second and nobody waits half a
  *   minute to read what an artist is.
+ * @param isReadingTracks - Whether to read every official release's tracks too, for how many the
+ *   longest edition of each album has and which singles are on an album already, as a request
+ *   needs and a page does not.
  * @returns What a request keeps of them, or null where MusicBrainz does not know them or cannot be
  *   asked.
  */
@@ -43,6 +48,7 @@ const describeArtistForRequest = async (
   web: MusicWeb,
   musicBrainzId: string,
   mostPages: number = MOST_PAGES,
+  isReadingTracks = false,
 ): Promise<RequestCatalogue | null> => {
   const id = encodeURIComponent(musicBrainzId);
   const artist = ArtistSchema.safeParse(
@@ -73,7 +79,10 @@ const describeArtistForRequest = async (
     }
   }
 
-  const albums = groups.map(catalogueAlbumOf);
+  const listed = groups.map(catalogueAlbumOf);
+  const albums = isReadingTracks
+    ? withTracklists(listed, await readTracklists(web, { artist: musicBrainzId }))
+    : listed;
   const newest = albums
     .filter((album) => album.type === 'album' && album.firstReleased !== null)
     .toSorted((left, right) => (right.firstReleased ?? '').localeCompare(left.firstReleased ?? ''))

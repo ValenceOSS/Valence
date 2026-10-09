@@ -2592,6 +2592,8 @@ const ENGLISH = {
     'Among the newest releases, {said}.',
   'requests.mediaRequests.requestWorker.choseTitleTheBestOfForIt':
     'chose {title}, the best of {forIt} matches',
+  'requests.mediaRequests.requestWorker.filedOfTotalTracks':
+    'Only {filed} of its {total} tracks came. Looking for a complete copy.',
   'requests.mediaRequests.requestWorker.filedSizeFromTitleIntoFolder':
     'Imported {size} from {title} into {folder}.',
   'requests.mediaRequests.requestWorker.forItOfThemForItAnd':
@@ -2605,6 +2607,7 @@ const ENGLISH = {
     'Its download was removed before it finished, so it’s wanted again.',
   'requests.mediaRequests.requestWorker.itsNameDoesNotSayWhat':
     'Its name doesn’t identify what it is',
+  'requests.mediaRequests.requestWorker.itWasMissingTracks': 'It was missing tracks.',
   'requests.mediaRequests.requestWorker.itWasNotInWhatWas': 'It wasn’t in the downloaded files',
   'requests.mediaRequests.requestWorker.nameHasNotSaidWhereIt':
     '{name} hasn’t reported where it saved the download',
@@ -2988,6 +2991,8 @@ const ENGLISH = {
   'screens.adminArea.ageChoices.upTo15': 'Up to 15',
   'screens.adminArea.ageChoices.upTo18': 'Up to 18',
   'screens.adminArea.ageChoices.upTo8': 'Up to 8',
+  'screens.adminArea.approveRequestDialog.albumsYouHaveAsMp3AreFetched':
+    'Fetches lossless copies of albums you already have as MP3 or AAC, and keeps them beside yours. Yours are never deleted.',
   'screens.adminArea.approveRequestDialog.approveThisRequest': 'Approve this request?',
   'screens.adminArea.approveRequestDialog.approveTitle': 'Approve {title}?',
   'screens.adminArea.approveRequestDialog.chooseALibrary': 'Choose a library',
@@ -2997,6 +3002,8 @@ const ENGLISH = {
   'screens.adminArea.approveRequestDialog.itIsSearchedForAsSoon':
     'Valence starts searching as soon as you approve it. You can change the request first.',
   'screens.adminArea.approveRequestDialog.savedTitle': 'Saved {title}',
+  'screens.adminArea.approveRequestDialog.upgradeLossyAlbumsToLossless':
+    'Upgrade lossy albums to lossless',
   'screens.adminArea.approveRequestDialog.whereItIsFiledOnceIt':
     'The library it’s added to once it’s downloaded.',
   'screens.adminArea.aPreviewMomentCanBeChosen':
@@ -4509,6 +4516,9 @@ const ENGLISH = {
     'Interactive search for {title}',
   'screens.adminArea.titlePage.interactiveSearchDialog.pickingOneReplaces':
     'Picking a release stops whatever is downloading for the same episodes and blocks it.',
+  'screens.adminArea.titlePage.itemList.filedOfTotalTracks': '{filed} of {total} tracks',
+  'screens.adminArea.titlePage.itemList.youHaveItAsQuality':
+    'You have it as {quality}, looking for lossless',
   'screens.adminArea.titlePage.itsQualityLibraryAndSeasons': 'Quality, library and seasons',
   'screens.adminArea.titlePage.keptProfile': 'Kept {profile}',
   'screens.adminArea.titlePage.markAsAdded': 'Mark as in the library',

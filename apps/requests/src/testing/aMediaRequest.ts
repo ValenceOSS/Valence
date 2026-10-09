@@ -35,6 +35,7 @@ const aMediaRequest = (overrides: Partial<MediaRequestRecord> = {}): MediaReques
   followsNewSeasons: false,
   followsAfter: null,
   releaseTypes: null,
+  upgradesToLossless: false,
   bookFormats: null,
   versions: null,
   runtimeMinutes: 155,

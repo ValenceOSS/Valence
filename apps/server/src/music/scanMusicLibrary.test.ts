@@ -184,6 +184,25 @@ describe('scanMusicLibrary', () => {
     expect(tracks[0]?.artistIds).toEqual(['artist-1', 'artist-2']);
   });
 
+  it('files a collaboration under the artist whose folder it is in, crediting both', async () => {
+    const { store, albums, artists, tracks } = memoryStore();
+    const track = '/music/One/Together (2020)/01.flac';
+
+    await scanMusicLibrary({
+      libraryId: 'lib',
+      root: '/music',
+      store,
+      artwork: keptArtwork(),
+      files: filesWith([fileAt(track)], {
+        [track]: tagsFor({ albumArtists: ['One & Another'], artists: ['One & Another'] }),
+      }),
+    });
+
+    expect(artists.get('one')?.id).toBe([...albums.values()][0]?.artistId);
+    expect([...artists.values()].map((artist) => artist.name)).toEqual(['One', 'Another']);
+    expect(tracks[0]?.artistIds).toHaveLength(2);
+  });
+
   it('files a compilation under various artists', async () => {
     const { store, albums, artists } = memoryStore();
     const track = '/music/Now 99/01.mp3';

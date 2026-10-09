@@ -84,7 +84,7 @@ const aWorker = ({
     Promise.resolve({ filed: new Map(), missing: [], refused: new Map() }),
   ),
   filedMusic = vi.fn<typeof fileAlbum>(() =>
-    Promise.resolve({ filed: new Map(), missing: [], refused: new Map() }),
+    Promise.resolve({ filed: new Map(), missing: [], refused: new Map(), trackCounts: new Map() }),
   ),
   localPath = '',
   reports = [
@@ -1047,6 +1047,7 @@ describe('createRequestWorker', () => {
           filed: new Map([[THE_WALL.id, folder]]),
           missing: [],
           refused: new Map(),
+          trackCounts: new Map(),
         }),
       );
       const { worker, items, events, filed } = aWorker({
@@ -1075,6 +1076,42 @@ describe('createRequestWorker', () => {
           libraryId: 'music',
           folder,
         },
+      ]);
+    });
+
+    it('says how many tracks came, and blocks the release so a complete one is looked for', async () => {
+      const folder = '/media/Music/Pink Floyd/The Wall (1979)';
+      const filedMusic = vi.fn<typeof fileAlbum>(() =>
+        Promise.resolve({
+          filed: new Map([[THE_WALL.id, folder]]),
+          missing: [],
+          refused: new Map(),
+          trackCounts: new Map([[THE_WALL.id, 12]]),
+        }),
+      );
+      const { worker, items, blocked } = aWorker({
+        requests: [PINK_FLOYD],
+        items: [
+          {
+            ...THE_WALL,
+            state: 'downloading',
+            downloadId: aSentDownload().id,
+            trackCount: 14,
+          },
+        ],
+        sent: [aSentDownload({ state: 'done', contentPath: '/downloads/The Wall' })],
+        filedMusic,
+      });
+
+      await worker.tick();
+
+      expect(await theItem(items)).toMatchObject({
+        state: 'filed',
+        filedTrackCount: 12,
+        problem: { message: 'Only 12 of its 14 tracks came. Looking for a complete copy.' },
+      });
+      expect((await blocked.list()).map((one) => one.reason.message)).toEqual([
+        'It was missing tracks.',
       ]);
     });
   });
@@ -1216,7 +1253,12 @@ describe('createRequestWorker', () => {
     it('files a finished album into the music library it was sent for, by its tags', async () => {
       const folder = '/media/Music/Pink Floyd/The Wall (1979)';
       const filedMusic = vi.fn<typeof fileAlbum>(() =>
-        Promise.resolve({ filed: new Map([['album', folder]]), missing: [], refused: new Map() }),
+        Promise.resolve({
+          filed: new Map([['album', folder]]),
+          missing: [],
+          refused: new Map(),
+          trackCounts: new Map(),
+        }),
       );
       const { worker, downloads } = aWorker({
         requests: [],
@@ -1237,8 +1279,13 @@ describe('createRequestWorker', () => {
       await worker.tick();
 
       expect(filedMusic).toHaveBeenCalledWith(
-        { libraryPath: '/media/Music', title: 'Pink Floyd', artistName: 'Pink Floyd' },
-        [{ id: 'album', title: 'The Wall', airDate: null, filePath: null }],
+        {
+          kind: 'album',
+          libraryPath: '/media/Music',
+          title: 'Pink Floyd',
+          artistName: 'Pink Floyd',
+        },
+        [{ id: 'album', title: 'The Wall', airDate: null, filePath: null, heldQuality: null }],
         '/downloads/The Wall',
         true,
       );

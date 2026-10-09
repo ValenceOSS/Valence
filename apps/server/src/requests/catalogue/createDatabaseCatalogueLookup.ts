@@ -7,8 +7,10 @@ import {
   mediaItem,
   musicAlbum,
   musicArtist,
+  musicTrack,
   series,
 } from '#dialect/Schema';
+import { qualityOfTracks } from '@ValenceServer/requests/catalogue/qualityOfTracks';
 import { nameKey } from '@ValenceServer/music/nameKey';
 import { createDatabaseHeldTitles } from '@ValenceServer/requests/titles/createDatabaseHeldTitles';
 import { createDatabaseTitleFiles } from '@ValenceServer/requests/titles/createDatabaseTitleFiles';
@@ -155,6 +157,38 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
           ),
         ),
     ),
+
+  albumQualities: async (releaseGroupIds) => {
+    if (releaseGroupIds.length === 0) {
+      return new Map();
+    }
+
+    const rows = await db
+      .select({
+        key: musicAlbum.releaseGroupMusicbrainzId,
+        codec: musicTrack.codec,
+        isLossless: musicTrack.isLossless,
+        bitDepth: musicTrack.bitDepth,
+      })
+      .from(musicTrack)
+      .innerJoin(musicAlbum, eq(musicAlbum.id, musicTrack.albumId))
+      .innerJoin(library, eq(library.id, musicAlbum.libraryId))
+      .where(
+        and(
+          inArray(musicAlbum.releaseGroupMusicbrainzId, [...releaseGroupIds]),
+          isNull(library.linkedServerId),
+        ),
+      );
+    const tracks = new Map<string, (typeof rows)[number][]>();
+
+    for (const row of rows) {
+      if (row.key !== null) {
+        tracks.set(row.key, [...(tracks.get(row.key) ?? []), row]);
+      }
+    }
+
+    return new Map([...tracks].map(([key, held]) => [key, qualityOfTracks(held)]));
+  },
 
   artistsNamed: (nameKeys) =>
     byKey(nameKeys, (wanted) =>

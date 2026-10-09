@@ -45,6 +45,7 @@ const showMediaRequest = (
   seasons: record.seasons,
   followsNewSeasons: record.followsNewSeasons,
   releaseTypes: record.releaseTypes,
+  upgradesToLossless: record.upgradesToLossless ?? false,
   bookFormats: record.bookFormats ?? null,
   versions: record.versions ?? null,
   releaseDate:
@@ -78,6 +79,9 @@ const showMediaRequest = (
       downloadedBytes: item.downloadedBytes,
       downloadSeconds: item.downloadSeconds,
       isFollowed: item.isFollowed,
+      trackCount: item.trackCount ?? null,
+      filedTrackCount: item.filedTrackCount ?? null,
+      heldQuality: item.heldQuality ?? null,
       lastSearchedAt: item.lastSearchedAt,
       updatedAt: item.updatedAt,
     })),

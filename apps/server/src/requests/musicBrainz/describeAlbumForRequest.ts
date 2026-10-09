@@ -2,21 +2,26 @@ import { creditedArtistOf } from '@ValenceServer/requests/musicBrainz/creditedAr
 import { catalogueAlbumOf } from '@ValenceServer/requests/musicBrainz/catalogueAlbumOf';
 import { MusicBrainzReleaseGroupSchema } from '@ValenceServer/requests/musicBrainz/MusicBrainzReleaseGroupSchema';
 import { releaseGroupCoverUrl } from '@ValenceServer/requests/musicBrainz/releaseGroupCoverUrl';
+import { readTracklists } from '@ValenceServer/requests/musicBrainz/readTracklists';
+import { withTracklists } from '@ValenceServer/requests/musicBrainz/withTracklists';
 import type { RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
 import type { MusicWeb } from '@ValenceServer/music/web/createMusicWeb';
 
 /**
  * What MusicBrainz knows of an album that a request for it needs: its title, who it is credited
- * to, when it came out, and its cover.
+ * to, when it came out, its cover and, where asked, how many tracks its longest edition has.
  *
  * @param web - The way out to the web, paced as MusicBrainz asks.
  * @param musicBrainzId - The album's release group's MusicBrainz id.
+ * @param isReadingTracks - Whether to read its releases' tracks too, as a request needs and a page
+ *   does not.
  * @returns What a request keeps of it, or null where MusicBrainz does not know it or cannot be
  *   asked.
  */
 const describeAlbumForRequest = async (
   web: MusicWeb,
   musicBrainzId: string,
+  isReadingTracks = false,
 ): Promise<RequestCatalogue | null> => {
   const read = MusicBrainzReleaseGroupSchema.safeParse(
     await web.json(
@@ -28,7 +33,12 @@ const describeAlbumForRequest = async (
     return null;
   }
 
-  const album = catalogueAlbumOf(read.data);
+  const [album = catalogueAlbumOf(read.data)] = isReadingTracks
+    ? withTracklists(
+        [catalogueAlbumOf(read.data)],
+        await readTracklists(web, { releaseGroup: musicBrainzId }),
+      )
+    : [];
 
   return {
     title: album.title,

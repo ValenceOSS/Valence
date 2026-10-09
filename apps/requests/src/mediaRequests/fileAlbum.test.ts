@@ -24,7 +24,12 @@ const NO_TAGS: AudioTags = {
   title: null,
 };
 
-const REQUEST = { libraryPath: '', title: 'Pink Floyd', artistName: 'Pink Floyd' };
+const REQUEST = {
+  kind: 'artist' as const,
+  libraryPath: '',
+  title: 'Pink Floyd',
+  artistName: 'Pink Floyd',
+};
 
 /**
  * Writes files into a download's folder, returning where it is.
@@ -83,6 +88,7 @@ describe('fileAlbum', () => {
     expect(outcome).toEqual({
       filed: new Map([['wall', join(library, 'Pink Floyd', 'The Wall (1979)')]]),
       missing: [],
+      trackCounts: new Map([['wall', 2]]),
     });
     expect(await filesUnder(library)).toEqual([
       'Pink Floyd/The Wall (1979)/1-01 - In the Flesh.flac',
@@ -160,5 +166,33 @@ describe('fileAlbum', () => {
     );
 
     expect(await filesUnder(before)).toEqual(['01 - In the Flesh.flac', 'notes.txt']);
+  });
+
+  it('files a collaboration under the artist asked for, and a lossless copy beside the library’s own', async () => {
+    const download = await aDownload(['01.flac']);
+    const tags: Record<string, AudioTags> = {
+      '01.flac': {
+        artist: 'An Artist & Another',
+        album: 'Together',
+        year: 2020,
+        disc: 1,
+        track: 1,
+        title: 'Opening',
+      },
+    };
+    const library = join(root, 'Music');
+
+    const outcome = await fileAlbum(
+      { kind: 'artist', libraryPath: library, title: 'An Artist', artistName: 'An Artist' },
+      [{ id: 'together', title: 'Together', airDate: null, filePath: null, heldQuality: 'mp3' }],
+      download,
+      true,
+      (path) => Promise.resolve(tags[path.slice(path.lastIndexOf('/') + 1)] ?? NO_TAGS),
+    );
+
+    expect(outcome.filed.get('together')).toBe(
+      join(library, 'An Artist', 'Together (2020) [Lossless]'),
+    );
+    expect(outcome.trackCounts.get('together')).toBe(1);
   });
 });

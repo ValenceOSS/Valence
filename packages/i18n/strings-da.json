@@ -10755,6 +10755,11 @@
     "context": "Shown in the media requests in the requests service (from `createRequestWorker`). {title} is filled in by the app; {forIt} is filled in by the app."
   },
   {
+    "handler": "requests.mediaRequests.requestWorker.filedOfTotalTracks",
+    "text": "Only {filed} of its {total} tracks came. Looking for a complete copy.",
+    "context": "Shown on an album of a music request that was filed with fewer tracks than its longest edition has. {filed} and {total} are numbers of tracks."
+  },
+  {
     "handler": "requests.mediaRequests.requestWorker.filedSizeFromTitleIntoFolder",
     "text": "Imported {size} from {title} into {folder}.",
     "context": "Shown in the media requests in the requests service (from `createRequestWorker`). {size} is filled in by the app; {title} is filled in by the app; {folder} is filled in by the app."
@@ -10788,6 +10793,11 @@
     "handler": "requests.mediaRequests.requestWorker.itsNameDoesNotSayWhat",
     "text": "Its name doesn’t identify what it is",
     "context": "Shown in the media requests in the requests service (from `createRequestWorker`)."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.itWasMissingTracks",
+    "text": "It was missing tracks.",
+    "context": "Why a release is on a music request's blocklist: the album it held had fewer tracks than its longest edition."
   },
   {
     "handler": "requests.mediaRequests.requestWorker.itWasNotInWhatWas",
@@ -12205,6 +12215,11 @@
     "context": "The label in the admin area (from `ageChoices`)."
   },
   {
+    "handler": "screens.adminArea.approveRequestDialog.albumsYouHaveAsMp3AreFetched",
+    "text": "Fetches lossless copies of albums you already have as MP3 or AAC, and keeps them beside yours. Yours are never deleted.",
+    "context": "Under the checkbox for upgrading lossy albums to lossless, in the dialog for approving or editing a music request."
+  },
+  {
     "handler": "screens.adminArea.approveRequestDialog.approveThisRequest",
     "text": "Approve this request?",
     "context": "The title of the dialog that approves a media request, while it has none to show."
@@ -12238,6 +12253,11 @@
     "handler": "screens.adminArea.approveRequestDialog.savedTitle",
     "text": "Saved {title}",
     "context": "Said once an approved request was edited. {title} is what was asked for."
+  },
+  {
+    "handler": "screens.adminArea.approveRequestDialog.upgradeLossyAlbumsToLossless",
+    "text": "Upgrade lossy albums to lossless",
+    "context": "A checkbox in the dialog for approving or editing a request for an artist or an album."
   },
   {
     "handler": "screens.adminArea.approveRequestDialog.whereItIsFiledOnceIt",
@@ -17908,6 +17928,16 @@
     "handler": "screens.adminArea.titlePage.interactiveSearchDialog.pickingOneReplaces",
     "text": "Picking a release stops whatever is downloading for the same episodes and blocks it.",
     "context": "The explanation under the title of the interactive search dialog."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.itemList.filedOfTotalTracks",
+    "text": "{filed} of {total} tracks",
+    "context": "Under an album on a music request's page, when fewer of its tracks came than its longest edition has. {filed} and {total} are numbers."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.itemList.youHaveItAsQuality",
+    "text": "You have it as {quality}, looking for lossless",
+    "context": "Under an album on a music request's page, when the library holds it lossy and the request upgrades lossy albums to lossless. {quality} is a quality, such as MP3 320."
   },
   {
     "handler": "screens.adminArea.titlePage.itsQualityLibraryAndSeasons",

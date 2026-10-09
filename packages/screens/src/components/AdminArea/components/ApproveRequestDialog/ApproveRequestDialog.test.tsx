@@ -113,6 +113,43 @@ describe('ApproveRequestDialog', () => {
     expect(onApproved).toHaveBeenCalled();
   });
 
+  it('upgrades a music request’s lossy albums to lossless once told to, and offers it only for music', async () => {
+    const user = userEvent.setup();
+    const album = aMediaRequest({
+      kind: 'album',
+      tmdbId: null,
+      musicBrainzId: '0b1d2c3e-4f56-4a78-9b01-23456789abcd',
+      title: 'An Album',
+    });
+
+    const { unmount } = renderInAnAddress(
+      <ApproveRequestDialog
+        request={aMediaRequest()}
+        isEditing
+        onClose={vi.fn()}
+        onApproved={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByRole('checkbox', { name: /Upgrade lossy albums to lossless/ }),
+    ).not.toBeInTheDocument();
+
+    unmount();
+    renderInAnAddress(
+      <ApproveRequestDialog request={album} isEditing onClose={vi.fn()} onApproved={vi.fn()} />,
+    );
+
+    await user.click(
+      await screen.findByRole('checkbox', { name: /Upgrade lossy albums to lossless/ }),
+    );
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(changeMediaRequest).toHaveBeenCalledWith(album.id, { upgradesToLossless: true });
+    });
+  });
+
   it('saves what an admin changed before approving it', async () => {
     const user = userEvent.setup();
 

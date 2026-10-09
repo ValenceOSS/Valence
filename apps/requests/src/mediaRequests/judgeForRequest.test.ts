@@ -313,4 +313,60 @@ describe('judgeForRequest', () => {
       'Someone - A Book (Unabridged) M4B',
     ]);
   });
+
+  describe('an album', () => {
+    const ALBUM = aMediaRequest({
+      kind: 'album',
+      tmdbId: null,
+      musicBrainzId: '0b1d2c3e-4f56-4a78-9b01-23456789abcd',
+      title: 'An Album',
+      artistName: 'An Artist',
+    });
+    const MUSIC = aProfile({ kind: 'music', musicQualities: ['flac', 'mp3-320'] });
+    const LOSSY = 'An Artist - An Album (2020) [MP3 320]';
+    const LOSSLESS = 'An Artist - An Album (2020) [FLAC]';
+    const anAlbum = (fields: Partial<RequestItemRecord>) =>
+      aRequestItem({
+        musicBrainzId: '0b1d2c3e-4f56-4a78-9b01-23456789abcd',
+        title: 'An Album',
+        airDate: null,
+        ...fields,
+      });
+
+    it('takes only a better quality than the library’s own lossy copy', () => {
+      const judged = judgeForRequest({
+        ...OPTIONS,
+        request: ALBUM,
+        profile: MUSIC,
+        items: [anAlbum({ state: 'wanted', heldQuality: 'mp3-320' })],
+        releases: [aRelease(LOSSY), aRelease(LOSSLESS)],
+      });
+
+      expect(judged.pickedId).toBe(LOSSLESS);
+      expect(judged.judgements.find((judgement) => judgement.releaseId === LOSSY)?.isRejected).toBe(
+        true,
+      );
+    });
+
+    it('takes another of the same quality for an album filed short', () => {
+      const judged = judgeForRequest({
+        ...OPTIONS,
+        request: ALBUM,
+        profile: MUSIC,
+        isFetching: () => true,
+        items: [
+          anAlbum({
+            state: 'filed',
+            filedTitle: LOSSLESS,
+            filedScore: 0,
+            trackCount: 14,
+            filedTrackCount: 12,
+          }),
+        ],
+        releases: [aRelease('An Artist - An Album (2020) [FLAC] Deluxe')],
+      });
+
+      expect(judged.pickedId).toBe('An Artist - An Album (2020) [FLAC] Deluxe');
+    });
+  });
 });

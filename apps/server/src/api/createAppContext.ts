@@ -1,3 +1,4 @@
+import { heldAlbumsOf } from '@ValenceServer/requests/arrivals/heldAlbumsOf';
 import { createMemoryCalendarFeedService } from '@ValenceServer/calendarFeed/createMemoryCalendarFeedService';
 import type { Asker } from '@ValenceServer/api/Asker';
 import { createLinkService } from '@ValenceServer/linking/createLinkService';
@@ -1400,7 +1401,9 @@ const createAppContext = (options: CreateAppOptions) => {
         held:
           asked.kind === 'series' && asked.tmdbId !== undefined
             ? await heldFor(chosen, asked.tmdbId)
-            : null,
+            : isMusicRequest(asked.kind)
+              ? await heldAlbumsOf(discovery.lookup, catalogue.albums)
+              : null,
       },
     };
   };

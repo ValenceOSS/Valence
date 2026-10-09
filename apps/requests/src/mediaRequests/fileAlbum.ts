@@ -4,6 +4,7 @@ import { basename, dirname, extname, join } from 'node:path';
 import { AUDIO_FILE_EXTENSIONS } from '@ValenceContracts/constants/AUDIO_FILE_EXTENSIONS';
 import { albumFolderOf } from '@ValenceRequests/mediaRequests/albumFolderOf';
 import { findDownloadedFiles } from '@ValenceRequests/mediaRequests/findDownloadedFiles';
+import { partsOfCollaboration } from '@ValenceCore/functions/partsOfCollaboration';
 import { isSameTitle } from '@ValenceRequests/mediaRequests/isSameTitle';
 import { placeFile } from '@ValenceRequests/mediaRequests/placeFile';
 import { readAudioTags } from '@ValenceRequests/mediaRequests/readAudioTags';
@@ -13,9 +14,13 @@ import type { DownloadedFile } from '@ValenceRequests/mediaRequests/findDownload
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
 
-type Fileable = Pick<RequestItemRecord, 'id' | 'title' | 'airDate' | 'filePath'>;
+type Fileable = Pick<RequestItemRecord, 'id' | 'title' | 'airDate' | 'filePath' | 'heldQuality'>;
 
-type Filed = { filed: ReadonlyMap<string, string>; missing: readonly string[] };
+type Filed = {
+  filed: ReadonlyMap<string, string>;
+  missing: readonly string[];
+  trackCounts: ReadonlyMap<string, number>;
+};
 
 type Track = { file: DownloadedFile; tags: AudioTags };
 
@@ -103,15 +108,20 @@ const trackNameOf = (track: Track, isOnDiscs: boolean, place: number): string =>
  * the tracks or from the album's own folder above its discs. Where an album was here before, as an
  * upgrade replaces it, the tracks this did not bring are removed.
  *
+ * A collaboration of the artist asked for is filed under that artist, its tracks keeping the
+ * credit that names the others. A lossless copy of an album the library held lossy is filed beside
+ * it, in a folder of its own, since the library's own files are never touched.
+ *
  * @param request - The artist or album asked for.
  * @param items - The albums the download was fetched for.
  * @param contentPath - Where the download is, as this service sees it.
  * @param isKeepingSource - Whether the download must keep its files, as a seeding torrent must.
  * @param readTags - How a track's tags are read.
- * @returns The folder each album was filed into, and which could not be found in it.
+ * @returns The folder each album was filed into, how many tracks went into each, and which could
+ *   not be found in it.
  */
 const fileAlbum = async (
-  request: Pick<MediaRequestRecord, 'libraryPath' | 'title' | 'artistName'>,
+  request: Pick<MediaRequestRecord, 'kind' | 'libraryPath' | 'title' | 'artistName'>,
   items: readonly Fileable[],
   contentPath: string,
   isKeepingSource: boolean,
@@ -124,7 +134,9 @@ const fileAlbum = async (
       .map(async (file) => ({ file, tags: await readTags(file.path) })),
   );
   const filed = new Map<string, string>();
+  const trackCounts = new Map<string, number>();
   const missing: string[] = [];
+  const asked = request.artistName ?? request.title;
 
   for (const item of items) {
     const own = tracksOf(item, tracks, items.length === 1).toSorted(
@@ -139,14 +151,20 @@ const fileAlbum = async (
       continue;
     }
 
-    const folder = albumFolderOf(request.libraryPath, {
+    const credited = commonest(own.map((track) => track.tags.artist));
+    const named = albumFolderOf(request.libraryPath, {
       artist:
-        commonest(own.map((track) => track.tags.artist)) ?? request.artistName ?? request.title,
+        credited === null ||
+        (request.kind === 'artist' && partsOfCollaboration(credited, asked) !== null)
+          ? asked
+          : credited,
       title: commonest(own.map((track) => track.tags.album)) ?? item.title,
       year:
         commonest(own.map((track) => track.tags.year)) ??
         (item.airDate === null ? null : Number(item.airDate.slice(0, 4))),
     });
+    const folder =
+      item.filePath === null && (item.heldQuality ?? null) !== null ? `${named} [Lossless]` : named;
     const isOnDiscs = own.some((track) => (track.tags.disc ?? 1) > 1);
     const placed = new Set<string>();
 
@@ -184,9 +202,10 @@ const fileAlbum = async (
     }
 
     filed.set(item.id, folder);
+    trackCounts.set(item.id, own.length);
   }
 
-  return { filed, missing };
+  return { filed, missing, trackCounts };
 };
 
 export { fileAlbum };

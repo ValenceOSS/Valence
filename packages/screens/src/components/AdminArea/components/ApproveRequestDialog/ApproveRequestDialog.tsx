@@ -2,6 +2,7 @@ import { DEFAULT_RELEASE_TYPES } from '@ValenceContracts/schemas/MediaRequest';
 import { notify } from '@ValenceUI/notify';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Checkbox } from '@ValenceUI/Checkbox';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -27,7 +28,8 @@ const THE_LIBRARYS = 'library';
 /**
  * Approving a request, having looked it over first: which profile its releases are judged by,
  * which library it will be filed into, and — for a series or an artist — which seasons or which
- * kinds of record are watched for. Whatever was changed is saved before it is approved, so nothing
+ * kinds of record are watched for, and for music whether lossy albums already held are upgraded to
+ * lossless. Whatever was changed is saved before it is approved, so nothing
  * is fetched against the old answer. The same choices edit a request already approved, saved
  * without approving anything.
  *
@@ -50,6 +52,7 @@ const ApproveRequestDialog = ({
   const [followsNew, setFollowsNew] = useState(false);
   const [releaseTypes, setReleaseTypes] = useState<ReleaseType[] | null>(null);
   const [bookFormats, setBookFormats] = useState<BookFormat[] | null>(null);
+  const [isLossless, setIsLossless] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [opened, setOpened] = useState<string | null>(null);
@@ -62,6 +65,7 @@ const ApproveRequestDialog = ({
     setFollowsNew(request.seasons === null || request.followsNewSeasons);
     setReleaseTypes(request.releaseTypes);
     setBookFormats(request.bookFormats ?? null);
+    setIsLossless(request.upgradesToLossless === true);
     setProblem(null);
   }
 
@@ -101,6 +105,9 @@ const ApproveRequestDialog = ({
         ? {}
         : { followsNewSeasons: followsNew }),
       ...(releaseTypes === request.releaseTypes || releaseTypes === null ? {} : { releaseTypes }),
+      ...(isLossless === (request.upgradesToLossless === true)
+        ? {}
+        : { upgradesToLossless: isLossless }),
       ...(bookFormats === (request.bookFormats ?? null) ||
       bookFormats === null ||
       bookFormats.length === 0
@@ -182,6 +189,15 @@ const ApproveRequestDialog = ({
           <ReleaseTypeChooser
             value={releaseTypes ?? [...DEFAULT_RELEASE_TYPES]}
             onChange={setReleaseTypes}
+          />
+        )}
+
+        {!isMusic ? null : (
+          <Checkbox
+            label={say('screens.adminArea.approveRequestDialog.upgradeLossyAlbumsToLossless')}
+            description={say('screens.adminArea.approveRequestDialog.albumsYouHaveAsMp3AreFetched')}
+            checked={isLossless}
+            onCheckedChange={setIsLossless}
           />
         )}
 

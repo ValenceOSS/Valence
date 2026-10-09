@@ -14,6 +14,10 @@ const LOOKUP = {
     Promise.resolve(new Map(ids.filter((id) => id === '95396').map((id) => [id, 'severance']))),
   albums: (ids: readonly string[]) =>
     Promise.resolve(new Map(ids.filter((id) => id === ALBUM).map((id) => [id, 'ok-computer']))),
+  albumQualities: (ids: readonly string[]) =>
+    Promise.resolve(
+      new Map(ids.filter((id) => id === ALBUM).map((id) => [id, 'mp3-320' as const])),
+    ),
 };
 
 /**
@@ -74,6 +78,17 @@ describe('matchArrivals', () => {
     expect(await matchArrivals({ requests: [artist], lookup: LOOKUP, heldEpisodes })).toEqual([
       { request: artist, arrivals: { mediaId: 'ok-computer', episodes: null, albums: [ALBUM] } },
     ]);
+  });
+
+  it('passes over an album held lossy where the request wants lossless', async () => {
+    const artist = aShownRequest({
+      kind: 'artist',
+      tmdbId: null,
+      upgradesToLossless: true,
+      items: [aShownRequestItem({ musicBrainzId: ALBUM })],
+    });
+
+    expect(await matchArrivals({ requests: [artist], lookup: LOOKUP, heldEpisodes })).toEqual([]);
   });
 
   it('passes over what is not there, already there, unapproved, a book or has no id', async () => {

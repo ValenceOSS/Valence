@@ -30,6 +30,7 @@ const aLookup = (
     elsewhere: () => Promise.resolve(new Map()),
     artists: held('artists'),
     albums: held('albums'),
+    albumQualities: () => Promise.resolve(new Map()),
     artistsNamed: held('artistsNamed'),
     albumsNamed: held('albumsNamed'),
     booksNamed: (books) =>

@@ -10,6 +10,7 @@ import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { GIVE_UP_DEFAULTS } from '@ValenceContracts/schemas/GiveUpRules';
 import { QualityProfileDraftSchema } from '@ValenceContracts/schemas/QualityProfile';
 import { fileAlbum } from '@ValenceRequests/mediaRequests/fileAlbum';
+import { isIncompleteAlbum } from '@ValenceRequests/mediaRequests/isIncompleteAlbum';
 import { fileBook } from '@ValenceRequests/mediaRequests/fileBook';
 import { fileDownload } from '@ValenceRequests/mediaRequests/fileDownload';
 import { NotAllowedThere } from '@ValenceRequests/mediaRequests/NotAllowedThere';
@@ -111,6 +112,8 @@ type CreateRequestWorkerOptions = {
 type Found = { request: MediaRequestRecord; items: RequestItemRecord[] };
 
 const NOTHING_REFUSED: ReadonlyMap<string, Said> = new Map();
+
+const NO_TRACKS: ReadonlyMap<string, number> = new Map();
 
 const TICK_EVERY_MS = 30_000;
 
@@ -434,7 +437,7 @@ const createRequestWorker = ({
     !item.isPickedByHand &&
     (item.state === 'available' || item.state === 'filed') &&
     item.filedTitle !== null &&
-    wantsUpgrade(profile, item.filedTitle);
+    (wantsUpgrade(profile, item.filedTitle) || isIncompleteAlbum(item));
 
   const send = async (
     request: MediaRequestRecord,
@@ -916,7 +919,7 @@ const createRequestWorker = ({
       const path = mapClientPath(download.contentPath, client);
 
       try {
-        const { filed, missing, refused } = isMusicRequest(request.kind)
+        const { filed, missing, refused, trackCounts } = isMusicRequest(request.kind)
           ? {
               ...(await fileMusic(request, filing, path, download.protocol === 'torrent')),
               refused: NOTHING_REFUSED,
@@ -925,15 +928,20 @@ const createRequestWorker = ({
             ? {
                 ...(await fileBooks(request, filing, path, download.protocol === 'torrent')),
                 refused: NOTHING_REFUSED,
+                trackCounts: NO_TRACKS,
               }
-            : await file(
-                request,
-                filing,
-                path,
-                download.protocol === 'torrent',
-                probe,
-                await refusalsFor(request, filing),
-              );
+            : {
+                ...(await file(
+                  request,
+                  filing,
+                  path,
+                  download.protocol === 'torrent',
+                  probe,
+                  await refusalsFor(request, filing),
+                )),
+                trackCounts: NO_TRACKS,
+              };
+        const short: RequestItemRecord[] = [];
 
         for (const item of filing) {
           const path = filed.get(item.id);
@@ -953,16 +961,40 @@ const createRequestWorker = ({
               ? item.score
               : await scoreOfFiled(filedTitle, download, request, filing.length);
 
+          const filedTrackCount = trackCounts.get(item.id) ?? null;
+          const isShort = isIncompleteAlbum({ trackCount: item.trackCount, filedTrackCount });
+
+          if (isShort) {
+            short.push(item);
+          }
+
           await update(item, {
             state: 'filed',
-            problem: null,
+            problem: isShort
+              ? saying('requests.mediaRequests.requestWorker.filedOfTotalTracks', {
+                  filed: (filedTrackCount ?? 0).toString(),
+                  total: (item.trackCount ?? 0).toString(),
+                })
+              : null,
             filePath: path,
             filedTitle,
             score,
             filedScore: score,
             attempts: 0,
+            ...(filedTrackCount === null ? {} : { filedTrackCount }),
+            heldQuality: null,
             ...downloadFacts(download),
           });
+        }
+
+        if (short.length > 0) {
+          await block(
+            request.id,
+            download.title,
+            filing[0]?.indexerId ?? null,
+            saying('requests.mediaRequests.requestWorker.itWasMissingTracks'),
+            hashOfDownload(download),
+          );
         }
 
         const firstRefusal = [...refused.values()][0];
@@ -1066,8 +1098,8 @@ const createRequestWorker = ({
   ): Promise<string | null> => {
     const [artist = title, album = title] = title.split(/\s+-\s+/);
     const { filed } = await fileMusic(
-      { libraryPath, title: artist, artistName: artist },
-      [{ id: 'album', title: album, airDate: null, filePath: null }],
+      { kind: 'album', libraryPath, title: artist, artistName: artist },
+      [{ id: 'album', title: album, airDate: null, filePath: null, heldQuality: null }],
       path,
       protocol === 'torrent',
     );

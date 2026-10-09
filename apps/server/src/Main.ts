@@ -161,6 +161,7 @@ import { matchArrivals } from '@ValenceServer/requests/arrivals/matchArrivals';
 import { matchDepartures } from '@ValenceServer/requests/arrivals/matchDepartures';
 import { createDatabaseLibraryHolds } from '@ValenceServer/requests/arrivals/createDatabaseLibraryHolds';
 import { createDatabaseCatalogueLookup } from '@ValenceServer/requests/catalogue/createDatabaseCatalogueLookup';
+import { heldAlbumsOf } from '@ValenceServer/requests/arrivals/heldAlbumsOf';
 import { heldInLibraryOf } from '@ValenceServer/requests/arrivals/heldInLibraryOf';
 import { findOnMusicBrainz } from '@ValenceServer/requests/deezer/findOnMusicBrainz';
 import { readDeezerCharts } from '@ValenceServer/requests/deezer/readDeezerCharts';
@@ -1876,7 +1877,9 @@ const jobs = createJobQueue({
                       into.id,
                       into.keepsShowsTogether,
                     )
-                  : null,
+                  : isMusicRequest(request.kind)
+                    ? await heldAlbumsOf(arrivalLookup, catalogue.albums)
+                    : null,
             });
           }
 
@@ -2698,8 +2701,8 @@ const describeMusicForRequest = (
   mostPages?: number,
 ): Promise<RequestCatalogue | null> =>
   kind === 'artist'
-    ? describeArtistForRequest(musicWeb, musicBrainzId, mostPages)
-    : describeAlbumForRequest(musicWeb, musicBrainzId);
+    ? describeArtistForRequest(musicWeb, musicBrainzId, mostPages, mostPages === undefined)
+    : describeAlbumForRequest(musicWeb, musicBrainzId, mostPages === undefined);
 
 const requestedAlbums = createDatabaseRequestedAlbumStore(db);
 

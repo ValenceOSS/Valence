@@ -6,6 +6,7 @@ import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { ReleaseSchema } from './Indexer';
 import { FulfilmentSchema } from './ArrApp';
 import { HigherProfileAsksSchema } from './HigherProfileAsks';
+import { MusicQualitySchema } from './ParsedRelease';
 import { say } from '@ValenceI18n/say';
 
 const MEDIA_REQUEST_KINDS = ['film', 'series', 'artist', 'album', 'book'] as const;
@@ -82,6 +83,8 @@ const CatalogueAlbumSchema = z.object({
   title: z.string(),
   type: ReleaseTypeSchema.nullable(),
   firstReleased: CalendarDateSchema.nullable(),
+  trackCount: z.number().int().positive().nullish(),
+  isOnAnAlbum: z.boolean().optional(),
 });
 
 const RequestCatalogueSchema = z.object({
@@ -128,9 +131,12 @@ const SeasonFolderSchema = z.object({
   folder: z.string().min(1),
 });
 
+const HeldAlbumSchema = z.object({ id: MusicBrainzIdSchema, quality: MusicQualitySchema });
+
 const HeldInLibrarySchema = z.object({
   mediaId: z.string().min(1).nullable().default(null),
   episodes: z.array(HeldEpisodeSchema).max(10_000).default([]),
+  albums: z.array(HeldAlbumSchema).max(2000).optional(),
   folder: z.string().min(1).nullable().default(null),
   seasonFolders: z.array(SeasonFolderSchema).max(200).default([]),
 });
@@ -201,6 +207,7 @@ const MediaRequestDraftSchema = z
     seasons: SeasonsSchema.default(null),
     followsNewSeasons: z.boolean().default(true),
     releaseTypes: ReleaseTypesSchema.nullable().default(null),
+    upgradesToLossless: z.boolean().default(false),
     bookFormats: BookFormatsSchema.default(['ebook']),
     requestedBy: RequesterSchema,
     higherProfileAsks: HigherProfileAsksSchema.default('ask'),
@@ -230,6 +237,9 @@ const RequestItemSchema = z.object({
   downloadedBytes: z.number().nonnegative().nullish(),
   downloadSeconds: z.number().nonnegative().nullish(),
   isFollowed: z.boolean().default(true),
+  trackCount: z.number().int().positive().nullish(),
+  filedTrackCount: z.number().int().nonnegative().nullish(),
+  heldQuality: MusicQualitySchema.nullish(),
   lastSearchedAt: z.string().datetime().nullable(),
   updatedAt: z.string().datetime(),
 });
@@ -261,6 +271,7 @@ const MediaRequestSchema = z.object({
   seasons: SeasonsSchema,
   followsNewSeasons: z.boolean().default(false),
   releaseTypes: ReleaseTypesSchema.nullable(),
+  upgradesToLossless: z.boolean().optional(),
   bookFormats: BookFormatsSchema.nullish(),
   versions: z.array(z.string().uuid()).nullish(),
   releaseDate: CalendarDateSchema.nullable(),
@@ -277,6 +288,7 @@ const MediaRequestChangeSchema = z.object({
   seasons: SeasonsSchema.optional(),
   followsNewSeasons: z.boolean().optional(),
   releaseTypes: ReleaseTypesSchema.optional(),
+  upgradesToLossless: z.boolean().optional(),
   bookFormats: BookFormatsSchema.optional(),
   libraryId: z.string().min(1).optional(),
   libraryPath: z.string().min(1).optional(),
@@ -425,6 +437,7 @@ type MediaRequestAdded = z.infer<typeof MediaRequestAddedSchema>;
 type RequestCatalogueUpdate = z.input<typeof RequestCatalogueUpdateSchema>;
 type FollowedRequest = z.infer<typeof FollowedRequestSchema>;
 type HeldEpisode = z.infer<typeof HeldEpisodeSchema>;
+type HeldAlbum = z.infer<typeof HeldAlbumSchema>;
 type HeldInLibrary = z.infer<typeof HeldInLibrarySchema>;
 type SeasonFolder = z.infer<typeof SeasonFolderSchema>;
 type MediaRequestArrivals = z.input<typeof MediaRequestArrivalsSchema>;
@@ -456,6 +469,7 @@ export type {
   MediaRequestRemoval,
   SeasonStanding,
   FollowedRequest,
+  HeldAlbum,
   HeldEpisode,
   HeldInLibrary,
   MediaRequest,
@@ -515,6 +529,7 @@ export {
   SeasonStandingSchema,
   FollowedRequestSchema,
   MediaRequestAddedSchema,
+  HeldAlbumSchema,
   HeldEpisodeSchema,
   HeldInLibrarySchema,
   MediaRequestArrivalSchema,

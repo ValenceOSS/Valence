@@ -170,6 +170,13 @@ Whoever asked higher sees on the title's page what became of it. If the request 
 
 For music requests, the **Settings** panel has an option for what a request for an artist watches by default: which of an artist's records are fetched when the person asking did not say. It defaults to albums, mixtapes and EPs. Mixtapes are the records MusicBrainz lists as mixtapes or street albums, which for some artists are among their best-known.
 
+How music requests treat what they fetch:
+
+- **Editions.** An album counts as complete when it has as many tracks as its longest official edition on MusicBrainz. An album filed with fewer says so on the title's page ("12 of 14 tracks"), the release it came from is blocklisted for missing tracks, and a complete copy is looked for.
+- **Singles.** When an artist's request watches singles, a single whose every track is on one of their albums, EPs or mixtapes is skipped.
+- **Collaborations.** An album credited to the artist with someone else, such as "One & Another", is filed under the artist asked for. The library lists it under that artist and credits the other on its tracks, so it shows on both artists' pages.
+- **Lossless.** **Upgrade lossy albums to lossless**, in a music request's **Edit** or approval dialog, makes albums you already have as MP3 or AAC wanted again, at a better quality than your copy. The lossless copy is filed beside yours, in a folder ending in "[Lossless]", and yours is never deleted. It's off unless you turn it on.
+
 ### Indexers
 
 An indexer is a site Valence can search for releases. The **Indexers** panel shows each with its priority, what it can search and its state.
