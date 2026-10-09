@@ -78,7 +78,7 @@ const MoveToLibraryDialog = ({ target, libraries, onClose, onMoved }: MoveToLibr
         note={problem}
         dismiss={{ onChoose: onClose }}
         confirm={{
-          label: say('screens.adminArea.moveToLibraryDialog.move'),
+          label: say('common.move'),
           isDisabled: target === null || libraryId === '',
           isLoading: isMoving,
           onChoose: () => {

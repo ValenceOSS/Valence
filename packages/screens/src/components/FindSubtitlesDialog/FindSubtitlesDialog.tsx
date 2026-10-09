@@ -117,7 +117,7 @@ const FindSubtitlesDialog = ({ media, onClose, onFetched }: FindSubtitlesDialogP
   const columns: DataTableColumn<FoundSubtitle>[] = [
     {
       id: 'release',
-      header: say('screens.findSubtitlesDialog.release'),
+      header: say('common.release'),
       accessorFn: (subtitle) => subtitle.name,
       meta: { fills: true },
       cell: ({ row }) => (
@@ -128,14 +128,14 @@ const FindSubtitlesDialog = ({ media, onClose, onFetched }: FindSubtitlesDialogP
     },
     {
       id: 'score',
-      header: say('screens.findSubtitlesDialog.fit'),
+      header: say('screens.findSubtitlesDialog.match'),
       accessorFn: (subtitle) => subtitle.score,
       meta: { shrinks: true },
       cell: ({ row }) => <span className="tabular-nums text-text">{row.original.score}</span>,
     },
     {
       id: 'why',
-      header: say('screens.findSubtitlesDialog.why'),
+      header: say('common.why'),
       enableSorting: false,
       cell: ({ row }) => (
         <span className="flex flex-wrap gap-1.5">
@@ -167,7 +167,7 @@ const FindSubtitlesDialog = ({ media, onClose, onFetched }: FindSubtitlesDialogP
     },
     {
       id: 'source',
-      header: say('screens.findSubtitlesDialog.site'),
+      header: say('common.site'),
       accessorFn: (subtitle) => SOURCE_NAMES[subtitle.source],
       meta: { shrinks: true },
       cell: ({ row }) => (
@@ -176,7 +176,7 @@ const FindSubtitlesDialog = ({ media, onClose, onFetched }: FindSubtitlesDialogP
     },
     {
       id: 'downloads',
-      header: say('screens.findSubtitlesDialog.downloads'),
+      header: say('common.downloads'),
       accessorFn: (subtitle) => subtitle.downloads ?? -1,
       meta: { shrinks: true },
       cell: ({ row }) => (

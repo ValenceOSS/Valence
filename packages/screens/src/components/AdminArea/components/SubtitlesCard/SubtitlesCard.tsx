@@ -121,7 +121,7 @@ const SubtitlesCard = () => {
           >
             <div className="flex flex-col gap-3">
               <TextField
-                label={say('screens.adminArea.subtitlesCard.apiKey')}
+                label={say('common.aPIKey')}
                 type="password"
                 autoComplete="off"
                 placeholder={
@@ -173,7 +173,7 @@ const SubtitlesCard = () => {
           >
             <div className="flex flex-col gap-3">
               <TextField
-                label={say('screens.adminArea.subtitlesCard.apiKey')}
+                label={say('common.aPIKey')}
                 type="password"
                 autoComplete="off"
                 placeholder={

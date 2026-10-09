@@ -3417,6 +3417,11 @@
     "context": "The title, used in several places, among them the account panels in the account of the phone app and the open library on the server (from `readOpenLibraryShelves`)."
   },
   {
+    "handler": "common.holds",
+    "text": "Holds",
+    "context": "The heading of the choice, in a series or anime library's settings, of whether it holds series or anime."
+  },
+  {
     "handler": "common.home",
     "text": "Home",
     "context": "The label, used in several places, among them the signed in of the phone app and the library of the phone app."
@@ -14170,11 +14175,6 @@
     "context": "In the side of the admin’s file manager that says what is chosen. A folder too large to count at once. {size} is how much was counted."
   },
   {
-    "handler": "screens.adminArea.fileDetails.chooseNothing",
-    "text": "Clear selection",
-    "context": "In the side of the admin’s file manager that says what is chosen."
-  },
-  {
     "handler": "screens.adminArea.fileDetails.chooseSomethingToSeeIt",
     "text": "Choose a file or folder to see more about it, or tick several to move or delete them together.",
     "context": "In the side of the admin’s file manager that says what is chosen. Shown while nothing is chosen."
@@ -14198,16 +14198,6 @@
     "handler": "screens.adminArea.fileDetails.count.selected.other",
     "text": "{count} chosen",
     "context": "In the side of the admin’s file manager that says what is chosen. How many files and folders are chosen."
-  },
-  {
-    "handler": "screens.adminArea.fileDetails.details",
-    "text": "Details",
-    "context": "In the side of the admin’s file manager that says what is chosen. Its name, read out."
-  },
-  {
-    "handler": "screens.adminArea.fileDetails.holds",
-    "text": "Holds",
-    "context": "In the side of the admin’s file manager that says what is chosen. Beside how many files and folders a folder holds, all the way down."
   },
   {
     "handler": "screens.adminArea.fileDetails.together",
@@ -15170,11 +15160,6 @@
     "context": "Label of the library setting that decides what happens when somebody asks for a title already requested, at a higher quality profile."
   },
   {
-    "handler": "screens.adminArea.librarySettingsDialog.holds",
-    "text": "Holds",
-    "context": "The heading of the choice, in a series or anime library's settings, of whether it holds series or anime."
-  },
-  {
     "handler": "screens.adminArea.librarySettingsDialog.howeverManyTheServerAllows",
     "text": "As many as the server allows",
     "context": "The label in the library settings dialog in the admin area."
@@ -15918,11 +15903,6 @@
     "handler": "screens.adminArea.memory",
     "text": "Memory",
     "context": "The label in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.moveToLibraryDialog.move",
-    "text": "Move",
-    "context": "The dialog, in the admin’s list of media, that moves a film or programme filed in the wrong library into another. The button that moves it."
   },
   {
     "handler": "screens.adminArea.moveToLibraryDialog.moveNameToAnotherLibrary",
@@ -18060,11 +18040,6 @@
     "context": "The label in the admin area."
   },
   {
-    "handler": "screens.adminArea.subtitlesCard.apiKey",
-    "text": "API key",
-    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
-  },
-  {
     "handler": "screens.adminArea.subtitlesCard.askedToo",
     "text": "Searched alongside OpenSubtitles, and often stronger for shows.",
     "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
@@ -19325,16 +19300,6 @@
     "context": "How many preview clips are kept, in the cache breakdown in the admin area."
   },
   {
-    "handler": "screens.cacheBreakdown.cacheRows.files.one",
-    "text": "{count} file",
-    "context": "How many files the media library holds, in the cache breakdown in the admin area."
-  },
-  {
-    "handler": "screens.cacheBreakdown.cacheRows.files.other",
-    "text": "{count} files",
-    "context": "How many files the media library holds, in the cache breakdown in the admin area."
-  },
-  {
     "handler": "screens.cacheBreakdown.cacheRows.filesThatWillNotPlayOn",
     "text": "Files that can’t play directly on a device are transcoded, and the result is saved so resuming doesn’t transcode it again. Each device keeps only the last item it played. None of this is your media — it’s rebuilt when needed.",
     "context": "The hint in the cache breakdown (from `cacheRows`)."
@@ -20330,11 +20295,6 @@
     "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did. It was timed to another frame rate, so it will slowly fall out of step."
   },
   {
-    "handler": "screens.findSubtitlesDialog.downloads",
-    "text": "Downloads",
-    "context": "A column heading in the table of subtitles found for a film or episode. How many times it has been downloaded."
-  },
-  {
     "handler": "screens.findSubtitlesDialog.findSubtitles",
     "text": "Find subtitles",
     "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. Its title before anything is chosen."
@@ -20343,11 +20303,6 @@
     "handler": "screens.findSubtitlesDialog.findSubtitlesForName",
     "text": "Find subtitles for {name}",
     "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. Its title. {name} is the film or episode."
-  },
-  {
-    "handler": "screens.findSubtitlesDialog.fit",
-    "text": "Fit",
-    "context": "A column heading in the table of subtitles found for a film or episode. How well it fits this file, out of 100."
   },
   {
     "handler": "screens.findSubtitlesDialog.get",
@@ -20370,6 +20325,11 @@
     "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did. It was timed against this exact file."
   },
   {
+    "handler": "screens.findSubtitlesDialog.match",
+    "text": "Match",
+    "context": "Column heading in the find subtitles dialog for how well a subtitle matches the video file."
+  },
+  {
     "handler": "screens.findSubtitlesDialog.noSubtitleSiteIsSetUp",
     "text": "No subtitle site is set up yet. Add an OpenSubtitles or SubDL key under System › Subtitles.",
     "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen."
@@ -20383,11 +20343,6 @@
     "handler": "screens.findSubtitlesDialog.nothingWasFoundInThatLanguage",
     "text": "Nothing was found in that language.",
     "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen."
-  },
-  {
-    "handler": "screens.findSubtitlesDialog.release",
-    "text": "Release",
-    "context": "A column heading in the table of subtitles found for a film or episode. The release the subtitle was made for."
   },
   {
     "handler": "screens.findSubtitlesDialog.sameAudioCodec",
@@ -20455,11 +20410,6 @@
     "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. A badge on a subtitle that describes sounds as well as dialogue, for deaf and hard-of-hearing viewers."
   },
   {
-    "handler": "screens.findSubtitlesDialog.site",
-    "text": "Site",
-    "context": "A column heading in the table of subtitles found for a film or episode. OpenSubtitles or SubDL."
-  },
-  {
     "handler": "screens.findSubtitlesDialog.subtitlesFound",
     "text": "Subtitles found",
     "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. The list, read out."
@@ -20468,11 +20418,6 @@
     "handler": "screens.findSubtitlesDialog.theSubtitleSitesCouldNotBe",
     "text": "Couldn’t reach the subtitle sites.",
     "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen."
-  },
-  {
-    "handler": "screens.findSubtitlesDialog.why",
-    "text": "Why",
-    "context": "A column heading in the table of subtitles found for a film or episode. The reasons for its score."
   },
   {
     "handler": "screens.finishOnAnotherDevice.finishSettingUpOnYourPhone",

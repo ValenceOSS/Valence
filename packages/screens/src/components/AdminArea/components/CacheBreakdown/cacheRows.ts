@@ -92,7 +92,7 @@ const cacheRows = (
         ? pending
         : {
             value: formatBytes(library.bytes),
-            detail: sayCount('screens.cacheBreakdown.cacheRows.files', library.itemCount),
+            detail: sayCount('common.count.files', library.itemCount),
           }),
     },
   ];

@@ -76,7 +76,7 @@ const FileDetails = ({
 
   return (
     <aside
-      aria-label={say('screens.adminArea.fileDetails.details')}
+      aria-label={say('common.details')}
       className="flex w-80 shrink-0 flex-col gap-4 overflow-y-auto border-l border-[var(--surface-line)] p-4 max-lg:hidden"
     >
       {only !== null ? (
@@ -100,7 +100,7 @@ const FileDetails = ({
                   : formatBytes(only.sizeBytes)}
             </InfoRow>
             {only.isFolder && measured.data !== undefined ? (
-              <InfoRow label={say('screens.adminArea.fileDetails.holds')}>
+              <InfoRow label={say('common.holds')}>
                 {sayCount('common.count.files', measured.data.files)} ·{' '}
                 {sayCount('screens.adminArea.fileDetails.count.folders', measured.data.folders)}
               </InfoRow>
@@ -124,7 +124,7 @@ const FileDetails = ({
               {sayCount('screens.adminArea.fileDetails.count.selected', selected.length)}
             </h3>
             <Button variant="link" size="none" className="self-start text-xs" onClick={onClear}>
-              {say('screens.adminArea.fileDetails.chooseNothing')}
+              {say('screens.adminArea.downloadsPanel.untickThem')}
             </Button>
           </div>
 
@@ -133,7 +133,7 @@ const FileDetails = ({
               {sizeOf(together)}
             </InfoRow>
             {together === undefined ? null : (
-              <InfoRow label={say('screens.adminArea.fileDetails.holds')}>
+              <InfoRow label={say('common.holds')}>
                 {sayCount('common.count.files', together.files)} ·{' '}
                 {sayCount('screens.adminArea.fileDetails.count.folders', together.folders)}
               </InfoRow>
@@ -158,7 +158,7 @@ const FileDetails = ({
             <div className="flex flex-col">
               <InfoRow label={say('common.size')}>{sizeOf(measured.data)}</InfoRow>
               {measured.data === undefined ? null : (
-                <InfoRow label={say('screens.adminArea.fileDetails.holds')}>
+                <InfoRow label={say('common.holds')}>
                   {sayCount('common.count.files', measured.data.files)} ·{' '}
                   {sayCount('screens.adminArea.fileDetails.count.folders', measured.data.folders)}
                 </InfoRow>
