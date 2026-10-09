@@ -2,7 +2,8 @@ import { sayingList } from '@ValenceI18n/sayingList';
 import { sayingCount } from '@ValenceI18n/sayingCount';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { Said } from '@ValenceI18n/SaidSchema';
-import { basename, extname } from 'node:path';
+import { unlink } from 'node:fs/promises';
+import { basename, dirname, extname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
@@ -13,6 +14,7 @@ import { fileBook } from '@ValenceRequests/mediaRequests/fileBook';
 import { fileDownload } from '@ValenceRequests/mediaRequests/fileDownload';
 import { NotAllowedThere } from '@ValenceRequests/mediaRequests/NotAllowedThere';
 import { judgeForRequest } from '@ValenceRequests/mediaRequests/judgeForRequest';
+import { hashOfDownload } from '@ValenceRequests/mediaRequests/hashOfDownload';
 import { libraryFolderOf } from '@ValenceRequests/mediaRequests/libraryFolderOf';
 import { mapClientPath } from '@ValenceRequests/mediaRequests/mapClientPath';
 import { planSearches } from '@ValenceRequests/mediaRequests/planSearches';
@@ -38,6 +40,7 @@ import type {
   ReleaseSearchOutcome,
 } from '@ValenceContracts/schemas/Indexer';
 import type {
+  DownloadStopNext,
   MediaRequest,
   MediaRequestDraft,
   MissingSearch,
@@ -140,13 +143,6 @@ const LIBRARY_KINDS_OF: Record<MediaRequestRecord['kind'], LibraryKind> = {
   album: 'music',
   book: 'books',
 };
-
-const IN_FLIGHT = new Set<RequestItemRecord['state']>([
-  'searching',
-  'chosen',
-  'downloading',
-  'filing',
-]);
 
 const DEFAULT_PROFILES: Record<QualityProfile['kind'], QualityProfile> = {
   video: {
@@ -377,13 +373,23 @@ const createRequestWorker = ({
     title: string | null,
     indexerId: string | null,
     reason: Said,
+    infoHash: string | null = null,
   ) => {
     if (title !== null) {
-      await blocked.insert({ id: randomUUID(), requestId, title, indexerId, reason, at: at() });
+      await blocked.insert({
+        id: randomUUID(),
+        requestId,
+        title,
+        infoHash,
+        indexerId,
+        reason,
+        at: at(),
+      });
     }
   };
 
   const isUpgradable = (profile: QualityProfile, item: RequestItemRecord): boolean =>
+    !item.isPickedByHand &&
     (item.state === 'available' || item.state === 'filed') &&
     item.filedTitle !== null &&
     wantsUpgrade(profile, item.filedTitle);
@@ -728,7 +734,13 @@ const createRequestWorker = ({
 
       const reason = judged.reason ?? saying('common.theDownloadFailed');
 
-      await block(request.id, download.title, fetching[0]?.indexerId ?? null, reason);
+      await block(
+        request.id,
+        download.title,
+        fetching[0]?.indexerId ?? null,
+        reason,
+        hashOfDownload(download),
+      );
       await queue.remove(download.id, true);
 
       for (const item of fetching) {
@@ -863,7 +875,13 @@ const createRequestWorker = ({
         const firstRefusal = [...refused.values()][0];
 
         if (firstRefusal !== undefined) {
-          await block(request.id, download.title, filing[0]?.indexerId ?? null, firstRefusal);
+          await block(
+            request.id,
+            download.title,
+            filing[0]?.indexerId ?? null,
+            firstRefusal,
+            hashOfDownload(download),
+          );
           await note(
             request,
             saying('requests.mediaRequests.requestWorker.titleWasNotFiledFirstRefusalIt', {
@@ -879,6 +897,7 @@ const createRequestWorker = ({
             download.title,
             filing[0]?.indexerId ?? null,
             saying('requests.mediaRequests.requestWorker.itHeldNothingAskedFor'),
+            hashOfDownload(download),
           );
         }
 
@@ -1097,7 +1116,7 @@ const createRequestWorker = ({
 
       for (const found of await searchedByItself()) {
         const unsearched = found.items.filter(
-          (item) => item.state === 'wanted' && item.lastSearchedAt === null,
+          (item) => item.state === 'wanted' && item.lastSearchedAt === null && item.isFollowed,
         );
 
         if (unsearched.length > 0) {
@@ -1114,7 +1133,7 @@ const createRequestWorker = ({
       for (const found of await searchedByItself()) {
         const profile = await profileFor(found.request);
         const fetching = found.items.filter(
-          (item) => item.state === 'wanted' || isUpgradable(profile, item),
+          (item) => item.isFollowed && (item.state === 'wanted' || isUpgradable(profile, item)),
         );
 
         if (fetching.length > 0) {
@@ -1137,7 +1156,7 @@ const createRequestWorker = ({
           return {
             found,
             isFetching: (item: RequestItemRecord) =>
-              item.state === 'wanted' || isUpgradable(profile, item),
+              item.isFollowed && (item.state === 'wanted' || isUpgradable(profile, item)),
           };
         }),
       );
@@ -1246,7 +1265,8 @@ const createRequestWorker = ({
       profile: await profileFor(request),
       blocked: blockedList,
       priorities: await priorities(),
-      isFetching: (item) => !IN_FLIGHT.has(item.state),
+      isFetching: (item) => item.state !== 'filing',
+      keepsTheUnnamed: true,
     });
 
     return {
@@ -1394,6 +1414,62 @@ const createRequestWorker = ({
     return whatTheFilesSay(videos, await profileFor(request));
   };
 
+  /**
+   * Stops whatever is downloading for the films or episodes a release picked by hand will fetch
+   * instead, deleting what it had and blocking it for the request so nothing picks it again. Anything
+   * else a stopped download held goes back to being wanted.
+   *
+   * @param found - The request and everything it waits for.
+   * @param replacing - What the picked release will fetch.
+   * @param picked - The release picked.
+   */
+  const replaceDownloadsOf = async (
+    found: Found,
+    replacing: readonly RequestItemRecord[],
+    picked: Release,
+  ) => {
+    const stopping = [
+      ...new Set(
+        replacing.flatMap((item) =>
+          item.downloadId !== null && (item.state === 'downloading' || item.state === 'chosen')
+            ? [item.downloadId]
+            : [],
+        ),
+      ),
+    ];
+    const reason = saying('requests.mediaRequests.requestWorker.replacedByTitlePickedByHand', {
+      title: picked.title,
+    });
+
+    for (const downloadId of stopping) {
+      const download = await downloads.find(downloadId);
+      const held = found.items.filter((item) => item.downloadId === downloadId);
+
+      if (download !== null) {
+        await block(
+          found.request.id,
+          download.title,
+          held[0]?.indexerId ?? null,
+          reason,
+          hashOfDownload(download),
+        );
+      }
+
+      await queue.remove(downloadId, true).catch(() => false);
+
+      for (const item of held) {
+        await update(item, letGo(item, reason));
+      }
+
+      await note(
+        found.request,
+        saying('requests.mediaRequests.requestWorker.stoppedTitleForAReleasePicked', {
+          title: download?.title ?? picked.title,
+        }),
+      );
+    }
+  };
+
   return {
     tick,
 
@@ -1422,6 +1498,76 @@ const createRequestWorker = ({
         }
 
         return unfinished.length;
+      }),
+
+    stopDownload: (
+      id: string,
+      downloadId: string,
+      stopping: { next: DownloadStopNext; isDeletingFiles: boolean },
+    ): Promise<MediaRequest | null> =>
+      serially(async () => {
+        const found = await find(id);
+        const held = found?.items.filter((item) => item.downloadId === downloadId) ?? [];
+
+        if (found === null || held.length === 0) {
+          return null;
+        }
+
+        const download = await downloads.find(downloadId);
+        const reason = saying('requests.mediaRequests.requestWorker.stoppedByAnAdmin');
+
+        if (download !== null && stopping.next !== 'nothing') {
+          await block(
+            id,
+            download.title,
+            held[0]?.indexerId ?? null,
+            reason,
+            hashOfDownload(download),
+          );
+        }
+
+        await queue.remove(downloadId, stopping.isDeletingFiles).catch(() => false);
+
+        for (const item of held) {
+          await update(item, {
+            ...letGo(item, reason),
+            ...(stopping.next === 'another' ? {} : { lastSearchedAt: at() }),
+            ...(stopping.next === 'nothing' ? { isFollowed: false } : {}),
+          });
+        }
+
+        await note(
+          found.request,
+          saying(
+            stopping.next === 'another'
+              ? 'requests.mediaRequests.requestWorker.stoppedTitleAndLookingForAnother'
+              : stopping.next === 'byHand'
+                ? 'requests.mediaRequests.requestWorker.stoppedTitleForAPickByHand'
+                : 'requests.mediaRequests.requestWorker.stoppedTitleAndStoppedGetting',
+            { title: download?.title ?? held[0]?.releaseTitle ?? '' },
+          ),
+        );
+
+        const after = await find(id);
+
+        return after === null ? null : showMediaRequest(after.request, after.items);
+      }),
+
+    deleteFiled: (id: string): Promise<string[]> =>
+      serially(async () => {
+        const filed = (await items.list()).filter(
+          (item) => item.requestId === id && item.filePath !== null,
+        );
+        const folders = new Set<string>();
+
+        for (const item of filed) {
+          if (item.filePath !== null) {
+            await unlink(item.filePath).catch(() => undefined);
+            folders.add(dirname(item.filePath));
+          }
+        }
+
+        return [...folders];
       }),
 
     blockedFor,
@@ -1473,10 +1619,22 @@ const createRequestWorker = ({
           profile: await profileFor(found.request),
           blocked: [],
           priorities: new Map(),
-          isFetching: (item) => !IN_FLIGHT.has(item.state),
+          isFetching: (item) => item.state !== 'filing',
           isTitleChecked: false,
         });
         const holding = judged.holding.get(picked.id) ?? [];
+
+        if (holding.length > 0) {
+          await replaceDownloadsOf(found, holding, picked);
+        }
+
+        if (holding.length > 0 && found.request.approval !== 'approved') {
+          await requests.update(id, {
+            approval: 'approved',
+            refusedBecause: null,
+            updatedAt: at(),
+          });
+        }
 
         if (holding.length === 0) {
           return {

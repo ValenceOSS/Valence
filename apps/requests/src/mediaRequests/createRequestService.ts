@@ -25,6 +25,7 @@ import type {
   MediaRequestArrived,
   MediaRequestChange,
   MediaRequestDraft,
+  MediaRequestFollow,
   RequestCatalogue,
   RequestCatalogueDraft,
   RequestCatalogueUpdate,
@@ -106,7 +107,8 @@ const bothReleaseTypes = (kept: ReleaseType[] | null, asked: ReleaseType[]): Rel
 /**
  * Keeps the requests for films and series and what each waits for: making one, or adding to one
  * already made for the same title; approving and refusing; changing what it asks for; bringing it up
- * to date with the catalogue; trying again what failed; and marking it arrived once the server has
+ * to date with the catalogue; trying again what failed; following or not following some of what it
+ * waits for; and marking it arrived once the server has
  * found it in the library, whether filed by Valence, imported by a connected app or put there by
  * hand, and following it when the library loses it again. Episodes the library already holds when a
  * series is asked for, or brought up to date, are marked there rather than searched for.
@@ -352,6 +354,29 @@ const createRequestService = ({
           openLibraryId,
           libraryId,
         }));
+    },
+
+    follow: async (id: string, following: MediaRequestFollow): Promise<MediaRequest | null> => {
+      const record = await requests.find(id);
+
+      if (record === null) {
+        return null;
+      }
+
+      const at = now().toISOString();
+      const asked = new Set(following.itemIds);
+
+      for (const item of await itemsOf(id)) {
+        if (asked.has(item.id) && item.isFollowed !== following.isFollowed) {
+          await items.update(item.id, {
+            isFollowed: following.isFollowed,
+            ...(following.isFollowed ? { lastSearchedAt: null } : {}),
+            updatedAt: at,
+          });
+        }
+      }
+
+      return changed(id, {});
     },
 
     retry: async (id: string): Promise<MediaRequest | null> => {

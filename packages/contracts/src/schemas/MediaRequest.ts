@@ -192,6 +192,7 @@ const RequestItemSchema = z.object({
   score: z.number().nullable(),
   downloadedBytes: z.number().nonnegative().nullish(),
   downloadSeconds: z.number().nonnegative().nullish(),
+  isFollowed: z.boolean().default(true),
   lastSearchedAt: z.string().datetime().nullable(),
   updatedAt: z.string().datetime(),
 });
@@ -271,6 +272,22 @@ const MediaRequestRefusalSchema = z.object({
 });
 
 const MediaRequestPickSchema = z.object({ release: ReleaseSchema });
+
+const DOWNLOAD_STOP_NEXT = ['another', 'byHand', 'nothing'] as const;
+
+const DownloadStopSchema = z.object({
+  next: z.enum(DOWNLOAD_STOP_NEXT),
+  isDeletingFiles: z.boolean().default(true),
+});
+
+const MediaRequestFollowSchema = z.object({
+  itemIds: z.array(z.string().uuid()).min(1).max(10_000),
+  isFollowed: z.boolean(),
+});
+
+const MediaRequestRemovalSchema = z.object({
+  isDeletingFiles: z.boolean().default(false),
+});
 
 const RequestCatalogueUpdateSchema = z.object({
   catalogue: RequestCatalogueSchema,
@@ -367,6 +384,10 @@ type MediaRequestArrivals = z.input<typeof MediaRequestArrivalsSchema>;
 type MediaRequestArrived = z.infer<typeof MediaRequestArrivedSchema>;
 type MediaRequestDeparture = z.infer<typeof MediaRequestDepartureSchema>;
 type MissingSearch = z.infer<typeof MissingSearchSchema>;
+type DownloadStop = z.input<typeof DownloadStopSchema>;
+type DownloadStopNext = (typeof DOWNLOAD_STOP_NEXT)[number];
+type MediaRequestFollow = z.infer<typeof MediaRequestFollowSchema>;
+type MediaRequestRemoval = z.input<typeof MediaRequestRemovalSchema>;
 type RequestLogEntry = z.infer<typeof RequestLogEntrySchema>;
 type CatalogueSeason = z.infer<typeof CatalogueSeasonSchema>;
 type SeasonStanding = (typeof SEASON_STANDINGS)[number];
@@ -377,6 +398,10 @@ export type {
   CatalogueAlbum,
   CatalogueEpisode,
   CatalogueSeason,
+  DownloadStop,
+  DownloadStopNext,
+  MediaRequestFollow,
+  MediaRequestRemoval,
   SeasonStanding,
   FollowedRequest,
   HeldEpisode,
@@ -419,6 +444,10 @@ export {
   REQUEST_ITEM_STATES,
   BlockedReleaseSchema,
   CalendarDateSchema,
+  DOWNLOAD_STOP_NEXT,
+  DownloadStopSchema,
+  MediaRequestFollowSchema,
+  MediaRequestRemovalSchema,
   ReleaseDatesSchema,
   CatalogueAlbumSchema,
   CatalogueEpisodeSchema,

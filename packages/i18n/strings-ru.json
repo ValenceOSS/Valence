@@ -8640,6 +8640,16 @@
     "context": "An error the server answers with (HTTP 403) in the app on the server (from `serveRequests`)."
   },
   {
+    "handler": "error.requests.sayWhatHappensAfterTheDownload",
+    "text": "Say what should happen after the download is stopped.",
+    "context": "An error the requests service answers with (HTTP 400) when stopping a download without saying what comes next (from `createRequestRoutes`)."
+  },
+  {
+    "handler": "error.requests.sayWhatToFollow",
+    "text": "Say which episodes or albums to follow or stop following.",
+    "context": "An error the requests service answers with (HTTP 400) when following is asked for without saying what (from `createRequestRoutes`)."
+  },
+  {
     "handler": "error.requests.sayWhichItemItBecame",
     "text": "Say which library item it became.",
     "context": "An error the server answers with (HTTP 400) in the media requests in the requests service (from `createRequestRoutes`)."
@@ -10515,6 +10525,11 @@
     "context": "Shown in the media requests in the requests service (from `judgeForRequest`)."
   },
   {
+    "handler": "requests.mediaRequests.judgeForRequest.itsNameDoesNotSayItIs",
+    "text": "Its name doesn't match this title",
+    "context": "Why a release in interactive search can't be chosen automatically: its name doesn't say it's for the requested title (from `judgeForRequest`)."
+  },
+  {
     "handler": "requests.mediaRequests.judgeForRequest.onlySomeEpisodesWanted",
     "text": "Only {wanted} of its {held} episodes are wanted",
     "context": "Shown in the media requests in the requests service (from `judgeForRequest`). {wanted} is filled in by the app; {held} is filled in by the app."
@@ -10648,6 +10663,36 @@
     "handler": "requests.mediaRequests.requestWorker.reasonTryingTheNextBestRelease",
     "text": "{reason}. Trying the next best release.",
     "context": "Shown in the media requests in the requests service (from `createRequestWorker`). {reason} is filled in by the app."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.replacedByTitlePickedByHand",
+    "text": "Replaced by {title}, picked by hand",
+    "context": "Why a download was stopped and blocked: an admin picked another release in its place. {title} is the release picked (from `createRequestWorker`)."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.stoppedByAnAdmin",
+    "text": "Stopped by an admin",
+    "context": "Why a download was stopped and blocked: an admin stopped it on the title page (from `createRequestWorker`)."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.stoppedTitleAndLookingForAnother",
+    "text": "Stopped {title} and blocked it. Looking for a different release.",
+    "context": "A line in a request's activity when an admin stops a download and asks for another release. {title} is the stopped release (from `createRequestWorker`)."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.stoppedTitleAndStoppedGetting",
+    "text": "Stopped {title}. What it was fetching is no longer followed.",
+    "context": "A line in a request's activity when an admin stops a download and stops getting what it was for. {title} is the stopped release (from `createRequestWorker`)."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.stoppedTitleForAPickByHand",
+    "text": "Stopped {title} and blocked it, to pick a release by hand.",
+    "context": "A line in a request's activity when an admin stops a download to pick another release themselves. {title} is the stopped release (from `createRequestWorker`)."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.stoppedTitleForAReleasePicked",
+    "text": "Stopped {title} for a release picked by hand.",
+    "context": "A line in a request's activity when picking a release by hand stops the download it replaces. {title} is the stopped release (from `createRequestWorker`)."
   },
   {
     "handler": "requests.mediaRequests.requestWorker.theDownloadWasTakenOutBefore",

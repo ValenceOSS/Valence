@@ -1,6 +1,6 @@
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
-import { mkdtemp, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
@@ -1712,7 +1712,7 @@ describe('createRequestWorker', () => {
     });
 
     it('says why a pick cannot be sent', async () => {
-      const busy = aWorker({ items: [aRequestItem({ state: 'downloading' })] });
+      const busy = aWorker({ items: [aRequestItem({ state: 'filing' })] });
 
       expect(await busy.worker.pick(aMediaRequest().id, aRelease(WEB))).toEqual({
         refused: 'The film is already downloading',
@@ -1732,6 +1732,164 @@ describe('createRequestWorker', () => {
       expect(await series.worker.pick(SEVERANCE.id, aRelease('Severance.S02E01.WEB'))).toEqual({
         refused: 'That release doesn’t contain any episode this request is waiting for',
       });
+    });
+  });
+
+  describe('picking by hand in place of a download', () => {
+    const OLD = aSentDownload({ id: 'd-old', title: 'Dune.2021.720p.HDTV-GRP' });
+
+    it('stops what is downloading, blocks it by name and hash, and sends the pick', async () => {
+      const { worker, remove, blocked, items, said } = aWorker({
+        items: [
+          aRequestItem({ state: 'downloading', downloadId: OLD.id, releaseTitle: OLD.title }),
+        ],
+        sent: [OLD],
+      });
+
+      expect(await worker.pick(aMediaRequest().id, aRelease(WEB))).toMatchObject({
+        items: [{ state: 'downloading', releaseTitle: WEB }],
+      });
+      expect(remove).toHaveBeenCalledWith(OLD.id, true);
+      const [block] = await blocked.list();
+
+      expect(block).toMatchObject({ title: OLD.title, infoHash: OLD.remoteId });
+      expect(block?.reason.message).toContain(WEB);
+      expect(await theItem(items)).toMatchObject({ isPickedByHand: true });
+      expect(said.some((line) => line.message.message.startsWith('Stopped'))).toBe(true);
+    });
+
+    it('is not refused while the request is only searching', async () => {
+      const { worker, send } = aWorker({ items: [aRequestItem({ state: 'searching' })] });
+
+      await worker.pick(aMediaRequest().id, aRelease(WEB));
+
+      expect(send).toHaveBeenCalledWith(expect.objectContaining({ title: WEB }));
+    });
+
+    it('approves a request still waiting on approval, so what is picked is filed', async () => {
+      const { worker, requests } = aWorker({
+        requests: [aMediaRequest({ approval: 'awaiting' })],
+      });
+
+      await worker.pick(aMediaRequest().id, aRelease(WEB));
+
+      expect(await requests.find(aMediaRequest().id)).toMatchObject({ approval: 'approved' });
+    });
+
+    it('never upgrades what was picked by hand', async () => {
+      const { worker, searched } = aWorker({
+        items: [
+          aRequestItem({
+            state: 'available',
+            filePath: '/media/Films/Dune (2021)/Dune (2021).mkv',
+            releaseTitle: WEB,
+            filedTitle: WEB,
+            score: 2100,
+            isPickedByHand: true,
+          }),
+        ],
+        profiles: [
+          aProfile({
+            isUpgrading: true,
+            libraryIds: ['films'],
+            sources: ['bluray', 'webdl'],
+            upgradeUntilSource: 'bluray',
+          }),
+        ],
+      });
+
+      await worker.searchMissing();
+
+      expect(searched).toEqual([]);
+    });
+  });
+
+  describe('stopping a download', () => {
+    const OLD = aSentDownload({ id: 'd-old', title: 'Dune.2021.720p.HDTV-GRP' });
+    const DOWNLOADING = aRequestItem({
+      state: 'downloading',
+      downloadId: OLD.id,
+      releaseTitle: OLD.title,
+      lastSearchedAt: '2026-09-18T00:00:00.000Z',
+    });
+
+    it('blocks it and looks for another release straight away', async () => {
+      const { worker, remove, blocked, items } = aWorker({ items: [DOWNLOADING], sent: [OLD] });
+
+      await worker.stopDownload(aMediaRequest().id, OLD.id, {
+        next: 'another',
+        isDeletingFiles: true,
+      });
+
+      expect(remove).toHaveBeenCalledWith(OLD.id, true);
+      expect(await blocked.list()).toMatchObject([{ title: OLD.title }]);
+      expect(await theItem(items)).toMatchObject({ state: 'wanted', lastSearchedAt: null });
+    });
+
+    it('blocks it and waits for a release picked by hand', async () => {
+      const { worker, items } = aWorker({ items: [DOWNLOADING], sent: [OLD] });
+
+      await worker.stopDownload(aMediaRequest().id, OLD.id, {
+        next: 'byHand',
+        isDeletingFiles: false,
+      });
+
+      expect(await theItem(items)).toMatchObject({
+        state: 'wanted',
+        lastSearchedAt: AT.toISOString(),
+        isFollowed: true,
+      });
+    });
+
+    it('stops getting what it was for, keeping its files, without blocking it', async () => {
+      const { worker, remove, blocked, items } = aWorker({ items: [DOWNLOADING], sent: [OLD] });
+
+      await worker.stopDownload(aMediaRequest().id, OLD.id, {
+        next: 'nothing',
+        isDeletingFiles: false,
+      });
+
+      expect(remove).toHaveBeenCalledWith(OLD.id, false);
+      expect(await blocked.list()).toEqual([]);
+      expect(await theItem(items)).toMatchObject({ state: 'wanted', isFollowed: false });
+    });
+
+    it('says nothing of a download the request does not have', async () => {
+      const { worker } = aWorker({ items: [DOWNLOADING], sent: [OLD] });
+
+      expect(
+        await worker.stopDownload(aMediaRequest().id, 'elsewhere', {
+          next: 'another',
+          isDeletingFiles: true,
+        }),
+      ).toBeNull();
+    });
+  });
+
+  describe('following', () => {
+    it('searches for nothing that is not followed', async () => {
+      const { worker, searched } = aWorker({
+        items: [aRequestItem({ state: 'wanted', isFollowed: false })],
+      });
+
+      await worker.tick();
+      await worker.searchMissing();
+
+      expect(searched).toEqual([]);
+    });
+  });
+
+  describe('deleting what was filed', () => {
+    it('deletes the files a request filed and says the folders they were in', async () => {
+      const folder = await mkdtemp(join(tmpdir(), 'valence-filed-'));
+      const path = join(folder, 'Dune (2021).mkv');
+
+      await writeFile(path, 'video');
+
+      const { worker } = aWorker({ items: [aRequestItem({ state: 'available', filePath: path })] });
+
+      expect(await worker.deleteFiled(aMediaRequest().id)).toEqual([folder]);
+      await expect(readFile(path)).rejects.toThrow();
     });
   });
 

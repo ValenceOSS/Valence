@@ -69,6 +69,7 @@ const showMediaRequest = (
       score: item.score,
       downloadedBytes: item.downloadedBytes,
       downloadSeconds: item.downloadSeconds,
+      isFollowed: item.isFollowed,
       lastSearchedAt: item.lastSearchedAt,
       updatedAt: item.updatedAt,
     })),

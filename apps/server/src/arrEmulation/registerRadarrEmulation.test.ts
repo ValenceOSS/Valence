@@ -344,6 +344,7 @@ describe('what Overseerr reads back', () => {
           downloadId: download.id,
           filePath: null,
           score: null,
+          isFollowed: true,
           lastSearchedAt: null,
           updatedAt: '2026-10-01T10:00:00.000Z',
         },

@@ -1,0 +1,2 @@
+ALTER TABLE "valence_requests"."blocklisted_release" ADD COLUMN "info_hash" text;--> statement-breakpoint
+ALTER TABLE "valence_requests"."request_item" ADD COLUMN "is_followed" boolean DEFAULT true NOT NULL;

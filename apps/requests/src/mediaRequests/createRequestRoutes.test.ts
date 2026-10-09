@@ -1,7 +1,10 @@
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it, vi } from 'vitest';
-import { MediaRequestAddedSchema } from '@ValenceContracts/schemas/MediaRequest';
+import {
+  MediaRequestAddedSchema,
+  MediaRequestSchema,
+} from '@ValenceContracts/schemas/MediaRequest';
 import { createMemoryRecordStore } from '@ValenceRequests/stores/createMemoryRecordStore';
 import { aRelease } from '@ValenceRequests/testing/aRelease';
 import { createRequestRoutes } from './createRequestRoutes';
@@ -39,12 +42,17 @@ const theRoutes = (picked: MediaRequest | { refused: Said } | null = null) => {
       Promise.resolve({ releases: [], indexers: [], judgements: [], pickedId: null }),
     ),
     dropDownloads: vi.fn(() => Promise.resolve(1)),
+    stopDownload: vi.fn((id: string): Promise<MediaRequest | null> =>
+      Promise.resolve(id === 'missing' ? null : null),
+    ),
+    deleteFiled: vi.fn(() => Promise.resolve(['/media/Films/Dune (2021)'])),
     blockedFor: vi.fn((id: string) =>
       Promise.resolve([
         {
           id: '0b1d2c3e-4f56-4a78-9b01-23456789abcd',
           requestId: id,
           title: 'Dune.2021.2160p',
+          infoHash: null,
           indexerId: null,
           reason: sayVerbatim('It stalled'),
           at: '2026-09-19T00:00:00.000Z',
@@ -185,6 +193,56 @@ describe('createRequestRoutes', () => {
     expect(worker.dropDownloads).toHaveBeenCalledTimes(1);
   });
 
+  it('stops what a refused request was downloading', async () => {
+    const { ask, worker } = theRoutes();
+    const id = await madeDune(ask);
+
+    await ask(`/requests/${id}/refuse`, 'POST', { reason: '' });
+
+    expect(worker.dropDownloads).toHaveBeenCalledWith(id);
+  });
+
+  it('stops one download of a request, saying what comes next', async () => {
+    const { ask, worker } = theRoutes();
+    const id = await madeDune(ask);
+
+    expect(
+      (await ask(`/requests/${id}/downloads/d1/stop`, 'POST', { next: 'another' })).status,
+    ).toBe(404);
+    expect(worker.stopDownload).toHaveBeenCalledWith(id, 'd1', {
+      next: 'another',
+      isDeletingFiles: true,
+    });
+    expect((await ask(`/requests/${id}/downloads/d1/stop`, 'POST', { next: 'soon' })).status).toBe(
+      400,
+    );
+  });
+
+  it('follows and stops following what a request waits for', async () => {
+    const { ask } = theRoutes();
+    const id = await madeDune(ask);
+    const made = MediaRequestSchema.parse(await (await ask(`/requests/${id}`)).json());
+    const itemIds = made.items.map((item) => item.id);
+
+    expect(
+      await (await ask(`/requests/${id}/follow`, 'POST', { itemIds, isFollowed: false })).json(),
+    ).toMatchObject({ items: [{ isFollowed: false }] });
+    expect((await ask(`/requests/${id}/follow`, 'POST', { isFollowed: false })).status).toBe(400);
+    expect(
+      (await ask('/requests/missing/follow', 'POST', { itemIds, isFollowed: true })).status,
+    ).toBe(404);
+  });
+
+  it('deletes the files a request filed, and says the folders they were in', async () => {
+    const { ask } = theRoutes();
+    const id = await madeDune(ask);
+
+    expect(await (await ask(`/requests/${id}/files/delete`, 'POST')).json()).toEqual({
+      folders: ['/media/Films/Dune (2021)'],
+    });
+    expect((await ask('/requests/missing/files/delete', 'POST')).status).toBe(404);
+  });
+
   it('lists the releases a request will not try again, and lifts one', async () => {
     const { ask, worker } = theRoutes();
     const id = await madeDune(ask);
@@ -194,6 +252,7 @@ describe('createRequestRoutes', () => {
         id: '0b1d2c3e-4f56-4a78-9b01-23456789abcd',
         requestId: id,
         title: 'Dune.2021.2160p',
+        infoHash: null,
         indexerId: null,
         reason: 'It stalled',
         at: '2026-09-19T00:00:00.000Z',

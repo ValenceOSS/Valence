@@ -29,6 +29,13 @@
       "when": 1791503902049,
       "tag": "0003_requests_know_the_show_folder",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1791508230455,
+      "tag": "0004_blocks_by_hash_and_follows",
+      "breakpoints": true
     }
   ]
 }

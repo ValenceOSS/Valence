@@ -2021,6 +2021,9 @@ const ENGLISH = {
   'error.requests.noSuchBlockedRelease': 'No such blocked release.',
   'error.requests.noSuchRequest': 'No such request.',
   'error.requests.pickingAReleaseIsForWhoever': 'Only request managers can choose a release.',
+  'error.requests.sayWhatHappensAfterTheDownload':
+    'Say what should happen after the download is stopped.',
+  'error.requests.sayWhatToFollow': 'Say which episodes or albums to follow or stop following.',
   'error.requests.sayWhichItemItBecame': 'Say which library item it became.',
   'error.requests.sayWhyItWasRefusedOr': 'Give a reason for declining, or leave it empty.',
   'error.requests.thatIsNotAChangeTo': 'That isn’t a valid change to a request.',
@@ -2530,6 +2533,8 @@ const ENGLISH = {
   'requests.mediaRequests.judgeForRequest.itFailedBeforeReason': 'It failed previously: {reason}',
   'requests.mediaRequests.judgeForRequest.itIsNoBetterThanWhat':
     'It’s no better than what’s already in the library',
+  'requests.mediaRequests.judgeForRequest.itsNameDoesNotSayItIs':
+    'Its name doesn’t match this title',
   'requests.mediaRequests.judgeForRequest.onlySomeEpisodesWanted':
     'Only {wanted} of its {held} episodes are wanted',
   'requests.mediaRequests.noIndexerOn': 'no indexer is turned on',
@@ -2573,6 +2578,17 @@ const ENGLISH = {
   'requests.mediaRequests.requestWorker.noVideoInItCouldBe': 'Couldn’t import any video from it',
   'requests.mediaRequests.requestWorker.reasonTryingTheNextBestRelease':
     '{reason}. Trying the next best release.',
+  'requests.mediaRequests.requestWorker.replacedByTitlePickedByHand':
+    'Replaced by {title}, picked by hand',
+  'requests.mediaRequests.requestWorker.stoppedByAnAdmin': 'Stopped by an admin',
+  'requests.mediaRequests.requestWorker.stoppedTitleAndLookingForAnother':
+    'Stopped {title} and blocked it. Looking for a different release.',
+  'requests.mediaRequests.requestWorker.stoppedTitleAndStoppedGetting':
+    'Stopped {title}. What it was fetching is no longer followed.',
+  'requests.mediaRequests.requestWorker.stoppedTitleForAPickByHand':
+    'Stopped {title} and blocked it, to pick a release by hand.',
+  'requests.mediaRequests.requestWorker.stoppedTitleForAReleasePicked':
+    'Stopped {title} for a release picked by hand.',
   'requests.mediaRequests.requestWorker.theDownloadWasTakenOutBefore':
     'The download was removed before it was imported',
   'requests.mediaRequests.requestWorker.theDownloadWasTakenOutBefore2':

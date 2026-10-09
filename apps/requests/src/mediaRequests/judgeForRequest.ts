@@ -5,6 +5,7 @@ import { albumsInRelease } from '@ValenceRequests/mediaRequests/albumsInRelease'
 import { matchRelease } from '@ValenceRequests/mediaRequests/matchRelease';
 import { judgeRelease } from '@ValenceRequests/profiles/judgeRelease';
 import { rankReleases } from '@ValenceRequests/profiles/rankReleases';
+import { hashOfRelease } from '@ValenceRequests/releases/hashOfRelease';
 import { parseReleaseName } from '@ValenceRequests/releases/parseReleaseName';
 import type { Release } from '@ValenceContracts/schemas/Indexer';
 import type { Judgement, QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
@@ -22,10 +23,12 @@ type JudgeForRequestOptions = {
   items: readonly RequestItemRecord[];
   releases: readonly Release[];
   profile: QualityProfile;
-  blocked: readonly Pick<BlockedReleaseRecord, 'title' | 'reason'>[];
+  blocked: readonly (Pick<BlockedReleaseRecord, 'title' | 'reason'> &
+    Partial<Pick<BlockedReleaseRecord, 'infoHash'>>)[];
   priorities: ReadonlyMap<string, number>;
   isFetching: (item: RequestItemRecord) => boolean;
   isTitleChecked?: boolean;
+  keepsTheUnnamed?: boolean;
 };
 
 type JudgedForRequest = {
@@ -37,9 +40,10 @@ type JudgedForRequest = {
 
 /**
  * Judges releases for one request: only those for it are kept, each judged against the request's
- * quality profile, and refused besides where it failed before, where everything it holds is here or
- * on its way already, or where it is no better than what an upgrade would replace. They come back
- * in the order they would be chosen, with the pick, and what each would fetch.
+ * quality profile, and refused besides where it failed before, under that name or as the same
+ * torrent under another, where everything it holds is here or on its way already, or where it is
+ * no better than what an upgrade would replace. They come back in the order they would be chosen,
+ * with the pick, and what each would fetch.
  *
  * A release picked by hand is matched by its numbers alone, or an album by its title alone, since
  * whoever picked it knows what it is better than its name does.
@@ -64,6 +68,9 @@ type JudgedForRequest = {
  * @param priorities - Each indexer's priority, by its id.
  * @param isFetching - Whether a film or episode is one to fetch now.
  * @param isTitleChecked - Whether a release must be named for the request.
+ * @param keepsTheUnnamed - Whether a release whose name does not say it is for the request is kept,
+ *   refused for that, as somebody choosing by hand is shown it rather than left wondering where it
+ *   went.
  * @returns The releases and their judgements in order, the pick, and what each would fetch.
  */
 const judgeForRequest = ({
@@ -75,9 +82,17 @@ const judgeForRequest = ({
   priorities,
   isFetching,
   isTitleChecked = true,
+  keepsTheUnnamed = false,
 }: JudgeForRequestOptions): JudgedForRequest => {
   const holding = new Map<string, RequestItemRecord[]>();
   const blockedBecause = new Map(blocked.map((block) => [block.title, block.reason]));
+  const blockedHashes = new Map(
+    blocked.flatMap((block) =>
+      block.infoHash === undefined || block.infoHash === null
+        ? []
+        : [[block.infoHash, block.reason] as const],
+    ),
+  );
   const judgedBy: QualityProfile = {
     ...profile,
     preferredLanguage: profile.preferredLanguage ?? request.libraryLanguage,
@@ -94,7 +109,26 @@ const judgeForRequest = ({
         );
 
     if (covered.length === 0) {
-      return [];
+      if (!keepsTheUnnamed) {
+        return [];
+      }
+
+      const unnamed = judgeRelease(
+        release,
+        parsed,
+        judgedBy,
+        request.runtimeMinutes ?? undefined,
+        1,
+        isBookRequest(request.kind),
+      );
+      const rejections = [
+        saying('requests.mediaRequests.judgeForRequest.itsNameDoesNotSayItIs'),
+        ...unnamed.rejections,
+      ];
+
+      holding.set(release.id, []);
+
+      return [{ release, judgement: { ...unnamed, rejections, isRejected: true } }];
     }
 
     const fetched = covered.filter(isFetching);
@@ -106,7 +140,9 @@ const judgeForRequest = ({
       covered.length,
       isBookRequest(request.kind),
     );
-    const reason = blockedBecause.get(release.title);
+    const hash = hashOfRelease(release);
+    const reason =
+      blockedBecause.get(release.title) ?? (hash === null ? undefined : blockedHashes.get(hash));
     const isWholeRun = parsed.isCompleteSeries || parsed.seasons.length > 1;
     const isMostlyUnwanted =
       isWholeRun && fetched.length > 0 && fetched.length / covered.length < WORTH_ITS_BYTES;

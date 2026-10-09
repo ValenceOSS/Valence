@@ -33,6 +33,7 @@ const itemFromDraft = (
   downloadSeconds: null,
   attempts: 0,
   isPickedByHand: false,
+  isFollowed: true,
   lastSearchedAt: null,
   updatedAt: at,
 });
