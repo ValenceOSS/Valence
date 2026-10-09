@@ -29,7 +29,9 @@ import type {
   MusicRequestKind,
   ProfileAskDecision,
   RequestLogEntry,
+  SearchScope,
 } from '@ValenceContracts/schemas/MediaRequest';
+import { queryOfSearchScope } from '@ValenceClient/requests/queryOfSearchScope';
 
 const REQUESTS = '/api/requests/media';
 
@@ -198,13 +200,23 @@ const liftRequestBlock = async (id: string, blockId: string): Promise<Refusal> =
   ).refusal;
 
 /**
- * Tries again whatever failed in a request, and searches again for what is wanted.
+ * Tries again whatever failed in a request, and searches again for what is wanted: all of it, one
+ * season, or one episode, which is followed if it was not.
  *
  * @param id - Which.
+ * @param scope - The season or episode to narrow it to, or nothing for the whole request.
  * @returns The request, or why not.
  */
-const retryMediaRequest = (id: string): Promise<Sent<MediaRequest>> =>
-  sendToRequests(`${REQUESTS}/${id}/retry`, 'POST', undefined, readRequest);
+const retryMediaRequest = (
+  id: string,
+  scope: SearchScope | null = null,
+): Promise<Sent<MediaRequest>> =>
+  sendToRequests(
+    `${REQUESTS}/${id}/retry${queryOfSearchScope(scope)}`,
+    'POST',
+    undefined,
+    readRequest,
+  );
 
 /**
  * Says a request has been met by hand — a book somebody added to the library themselves — so it
@@ -217,13 +229,21 @@ const fulfilMediaRequest = (id: string): Promise<Sent<MediaRequest>> =>
   sendToRequests(`${REQUESTS}/${id}/fulfil`, 'POST', undefined, readRequest);
 
 /**
- * Searches for a request by hand, every release judged.
+ * Searches for a request by hand, every release judged: for all of it, for one season in packs, or
+ * for one episode.
  *
  * @param id - Which.
+ * @param scope - The season or episode to narrow it to, or nothing for the whole request.
  * @returns What was found, best first.
  */
-const fetchMediaRequestReleases = (id: string): Promise<ReleaseSearchOutcome> =>
-  readFromServer(`${REQUESTS}/${id}/releases`, ReleaseSearchOutcomeSchema);
+const fetchMediaRequestReleases = (
+  id: string,
+  scope: SearchScope | null = null,
+): Promise<ReleaseSearchOutcome> =>
+  readFromServer(
+    `${REQUESTS}/${id}/releases${queryOfSearchScope(scope)}`,
+    ReleaseSearchOutcomeSchema,
+  );
 
 /**
  * Reads the seasons a series has, to choose which to ask for.
@@ -263,14 +283,25 @@ const fetchMediaRequestLog = (id: string): Promise<RequestLogEntry[]> =>
   readFromServer(`${REQUESTS}/${id}/log`, z.array(RequestLogEntrySchema));
 
 /**
- * Fetches a release picked by hand for a request.
+ * Fetches a release picked by hand for a request, in place of what it has, or — for a film already
+ * here — beside it as a second version.
  *
  * @param id - Which request.
  * @param release - The release.
+ * @param keepsBoth - Whether a film keeps the copy it has as well.
  * @returns The request, or why not.
  */
-const pickMediaRelease = (id: string, release: Release): Promise<Sent<MediaRequest>> =>
-  sendToRequests(`${REQUESTS}/${id}/pick`, 'POST', { release }, readRequest);
+const pickMediaRelease = (
+  id: string,
+  release: Release,
+  keepsBoth = false,
+): Promise<Sent<MediaRequest>> =>
+  sendToRequests(
+    `${REQUESTS}/${id}/pick`,
+    'POST',
+    keepsBoth ? { release, keepsBoth } : { release },
+    readRequest,
+  );
 
 /**
  * Removes a request, stopping what it had started downloading — or cancels one of your own, taking

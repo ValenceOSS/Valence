@@ -977,6 +977,25 @@ describe('createDownloadQueue', () => {
       expect(await downloads.list()).toEqual([]);
     });
 
+    it('leaves one somebody paused while it was downloading where it is', async () => {
+      const adapter = anAdapter([done()]);
+      const { queue, downloads } = aQueue({ sent: [filed({ wasPaused: true })], adapter });
+
+      await queue.check();
+
+      expect(adapter.remove).not.toHaveBeenCalled();
+      expect(await downloads.list()).toHaveLength(1);
+    });
+
+    it('remembers that a download was paused, once it is going again', async () => {
+      const adapter = anAdapter([anItem({ state: 'paused' })]);
+      const { queue, downloads } = aQueue({ sent: [aSentDownload()], adapter });
+
+      await queue.check();
+
+      expect((await downloads.find(aSentDownload().id))?.wasPaused).toBe(true);
+    });
+
     it('keeps one that has not seeded for as long as it was asked to', async () => {
       const adapter = anAdapter([done({ seedingSeconds: 60 })]);
       const { queue, downloads } = aQueue({

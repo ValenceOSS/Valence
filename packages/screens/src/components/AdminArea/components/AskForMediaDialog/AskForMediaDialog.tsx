@@ -1,3 +1,4 @@
+import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { DEFAULT_RELEASE_TYPES } from '@ValenceContracts/schemas/MediaRequest';
 import { notify } from '@ValenceUI/notify';
 import { useState } from 'react';
@@ -275,6 +276,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
       >
         {found !== null && chosen !== null ? (
           <ReleasePickTable
+            kind={isMusicRequest(kind) ? 'music' : isBookRequest(kind) ? 'book' : 'video'}
             found={found.outcome}
             foundAt={found.at}
             pickingId={pickingId}

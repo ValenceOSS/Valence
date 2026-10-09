@@ -8,7 +8,13 @@ const MusicBrainzReleaseSchema = z.object({
       z.object({
         'track-count': z.number().int().nonnegative().catch(0),
         tracks: z
-          .array(z.object({ recording: z.object({ id: z.string() }).nullable().catch(null) }))
+          .array(
+            z.object({
+              title: z.string().catch(''),
+              length: z.number().nonnegative().nullable().catch(null),
+              recording: z.object({ id: z.string() }).nullable().catch(null),
+            }),
+          )
           .catch([]),
       }),
     )

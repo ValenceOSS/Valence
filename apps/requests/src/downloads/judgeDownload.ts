@@ -60,7 +60,8 @@ const roughly = (ms: number): Said => {
  * second, and a rule that did not wait would drop every one of them.
  *
  * Any of the last three can be turned off by leaving its wait empty, and a download it would have
- * given up on is left to carry on.
+ * given up on is left to carry on. A download somebody has paused is never given up on, even once
+ * it is going again: they have taken it in hand, and its average rate counts the pause against it.
  *
  * @param download - The download as the client last left it.
  * @param now - The clock.
@@ -70,12 +71,19 @@ const roughly = (ms: number): Said => {
 const judgeDownload = (
   download: Pick<
     SentDownloadRecord,
-    'protocol' | 'state' | 'problem' | 'sizeBytes' | 'doneBytes' | 'sentAt' | 'updatedAt'
+    | 'protocol'
+    | 'state'
+    | 'problem'
+    | 'sizeBytes'
+    | 'doneBytes'
+    | 'sentAt'
+    | 'updatedAt'
+    | 'wasPaused'
   >,
   now: Date,
   rules: DownloadRules,
 ): Judged => {
-  if (download.state === 'done' || download.state === 'paused') {
+  if (download.state === 'done' || download.state === 'paused' || download.wasPaused) {
     return FINE;
   }
 

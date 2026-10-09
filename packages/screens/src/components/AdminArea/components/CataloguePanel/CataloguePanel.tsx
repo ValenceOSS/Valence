@@ -6,7 +6,6 @@ import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Icon } from '@ValenceUI/Icon';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
-import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Spinner } from '@ValenceUI/Spinner';
 import { TextField } from '@ValenceUI/TextField';
 import { notify } from '@ValenceUI/notify';
@@ -70,17 +69,38 @@ const SORTS: readonly { id: CatalogueSort; label: string }[] = [
 ];
 
 /**
- * Admin › Requests › Catalogue: every title the libraries hold and every title asked for, a tab
- * for each kind of library the server has, as posters with a bar under each saying where it stands. The statuses
- * are tiles that filter it, and titles waiting on approval can be chosen and approved or declined
+ * What a menu in the Catalogue's toolbar shows on its face: its choice, and the chevron that says it
+ * opens.
+ *
+ * @param text - The choice in force.
+ * @returns The trigger's contents.
+ */
+const fieldTrigger = (text: string) => (
+  <>
+    <span>{text}</span>
+    <Icon of={ChevronDownIcon} size={14} className="valence-chevron shrink-0" />
+  </>
+);
+
+/**
+ * Admin › Requests › Catalogue: every title the libraries hold and every title asked for, one kind
+ * of library at a time, chosen beside the sort, as posters with a bar under each saying where it
+ * stands. The statuses are tiles that filter it, and titles waiting on approval can be chosen and approved or declined
  * together. Opening a title shows its own page in place of the grid.
  *
  * @param tab - The kind of library shown.
  * @param title - The key of the title open, or nothing for the grid.
  * @param onTab - Told the kind of library chosen.
  * @param onOpen - Told the title opened, or nothing to go back to the grid.
+ * @param onOpenFolder - Called with a folder to open in Files.
  */
-const CataloguePanel = ({ tab: asked, title, onTab, onOpen }: CataloguePanelProps) => {
+const CataloguePanel = ({
+  tab: asked,
+  title,
+  onTab,
+  onOpen,
+  onOpenFolder,
+}: CataloguePanelProps) => {
   const cache = useQueryClient();
   const libraries = useQuery(libraryQueries.all());
   const tabs = catalogueTabsOf(libraries.data);
@@ -205,6 +225,7 @@ const CataloguePanel = ({ tab: asked, title, onTab, onOpen }: CataloguePanelProp
         onBack={() => {
           onOpen(null);
         }}
+        {...(onOpenFolder === undefined ? {} : { onOpenFolder })}
       />
     );
   }
@@ -261,23 +282,6 @@ const CataloguePanel = ({ tab: asked, title, onTab, onOpen }: CataloguePanelProp
       />
 
       <div className="flex flex-col gap-5">
-        <SegmentedRow
-          label={say('screens.adminArea.cataloguePanel.kindsOfLibrary')}
-          size="md"
-          value={tab}
-          onSelect={(next) => {
-            const found = tabs.find((one) => one === next);
-
-            if (found !== undefined) {
-              setKind('all');
-              setLibraryId(null);
-              setChosen(new Set());
-              onTab(found);
-            }
-          }}
-          items={tabs.map((id) => ({ id, label: TAB_NAMES[id] }))}
-        />
-
         <CatalogueTiles
           counts={counts}
           total={inTab.length}
@@ -289,11 +293,37 @@ const CataloguePanel = ({ tab: asked, title, onTab, onOpen }: CataloguePanelProp
         />
 
         <div className="flex flex-wrap items-center gap-2">
+          {tabs.length < 2 ? null : (
+            <OptionMenu
+              label={say('screens.adminArea.cataloguePanel.kindsOfLibrary')}
+              align="start"
+              triggerShape="field"
+              className="w-auto"
+              trigger={fieldTrigger(TAB_NAMES[tab])}
+              groups={[
+                {
+                  name: say('screens.adminArea.cataloguePanel.kindsOfLibrary'),
+                  selectedId: tab,
+                  onSelect: (next) => {
+                    const found = tabs.find((one) => one === next);
+
+                    if (found !== undefined) {
+                      setKind('all');
+                      setLibraryId(null);
+                      setChosen(new Set());
+                      onTab(found);
+                    }
+                  },
+                  options: tabs.map((id) => ({ id, label: TAB_NAMES[id] })),
+                },
+              ]}
+            />
+          )}
+
           <TextField
             label={say('common.findATitle')}
             isLabelHidden
             type="search"
-            size="sm"
             value={query}
             onValueChange={setQuery}
             placeholder={PLACEHOLDERS[tab]}
@@ -310,7 +340,7 @@ const CataloguePanel = ({ tab: asked, title, onTab, onOpen }: CataloguePanelProp
 
               <Button
                 variant="secondary"
-                size="xs"
+                size="md"
                 isLoading={isDeciding}
                 disabled={chosenRequests.length === 0}
                 onClick={() => {
@@ -322,7 +352,7 @@ const CataloguePanel = ({ tab: asked, title, onTab, onOpen }: CataloguePanelProp
 
               <Button
                 variant="ghost"
-                size="xs"
+                size="md"
                 disabled={isDeciding || chosenRequests.length === 0}
                 onClick={() => {
                   setIsDeclining(true);
@@ -333,7 +363,7 @@ const CataloguePanel = ({ tab: asked, title, onTab, onOpen }: CataloguePanelProp
 
               <Button
                 variant="ghost"
-                size="xs"
+                size="md"
                 onClick={() => {
                   setIsChoosing(false);
                   setChosen(new Set());
@@ -345,7 +375,7 @@ const CataloguePanel = ({ tab: asked, title, onTab, onOpen }: CataloguePanelProp
           ) : (
             <Button
               variant="ghost"
-              size="xs"
+              size="md"
               onClick={() => {
                 setIsChoosing(true);
               }}
@@ -357,17 +387,11 @@ const CataloguePanel = ({ tab: asked, title, onTab, onOpen }: CataloguePanelProp
           {tabLibraries.length < 2 ? null : (
             <OptionMenu
               label={say('common.whichLibrary')}
-              size="sm"
               triggerShape="field"
               className="w-auto"
-              trigger={
-                <>
-                  <span>
-                    {library?.name ?? say('screens.adminArea.cataloguePanel.allLibraries')}
-                  </span>
-                  <Icon of={ChevronDownIcon} size={14} className="valence-chevron shrink-0" />
-                </>
-              }
+              trigger={fieldTrigger(
+                library?.name ?? say('screens.adminArea.cataloguePanel.allLibraries'),
+              )}
               groups={[
                 {
                   name: say('common.whichLibrary'),
@@ -386,36 +410,37 @@ const CataloguePanel = ({ tab: asked, title, onTab, onOpen }: CataloguePanelProp
           )}
 
           {kinds === null ? null : (
-            <SegmentedRow
+            <OptionMenu
               label={say('common.kind')}
-              size="sm"
-              value={kind}
-              onSelect={(next) => {
-                const found = kinds.find((one) => one.id === next);
+              triggerShape="field"
+              className="w-auto"
+              trigger={fieldTrigger(kinds.find((one) => one.id === kind)?.label ?? '')}
+              groups={[
+                {
+                  name: say('common.kind'),
+                  selectedId: kind,
+                  onSelect: (next) => {
+                    const found = kinds.find((one) => one.id === next);
 
-                if (found !== undefined) {
-                  setKind(found.id);
-                }
-              }}
-              items={kinds}
+                    if (found !== undefined) {
+                      setKind(found.id);
+                    }
+                  },
+                  options: [...kinds],
+                },
+              ]}
             />
           )}
 
           <OptionMenu
             label={say('screens.adminArea.cataloguePanel.sort')}
-            size="sm"
             triggerShape="field"
             className="w-auto"
-            trigger={
-              <>
-                <span>
-                  {say('screens.adminArea.cataloguePanel.sortSort', {
-                    sort: SORTS.find((one) => one.id === sort)?.label ?? '',
-                  })}
-                </span>
-                <Icon of={ChevronDownIcon} size={14} className="valence-chevron shrink-0" />
-              </>
-            }
+            trigger={fieldTrigger(
+              say('screens.adminArea.cataloguePanel.sortSort', {
+                sort: SORTS.find((one) => one.id === sort)?.label ?? '',
+              }),
+            )}
             groups={[
               {
                 name: say('screens.adminArea.cataloguePanel.sort'),

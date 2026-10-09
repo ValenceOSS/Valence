@@ -1229,6 +1229,9 @@ const AdminArea = ({
                   onOpen={(title) => {
                     onCatalogue?.({ tab: catalogue.tab, title });
                   }}
+                  onOpenFolder={(path) => {
+                    onOpenFolder?.(path);
+                  }}
                 />
               </TabPanel>
 

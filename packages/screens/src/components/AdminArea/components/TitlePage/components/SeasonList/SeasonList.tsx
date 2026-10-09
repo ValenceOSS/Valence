@@ -8,6 +8,7 @@ import { cn } from '@ValenceUI/cn';
 import { nameSeason } from '@ValenceClient/library/nameSeason';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { TITLE_PART_LOOKS } from '@ValenceScreens/requests/TITLE_PART_LOOKS';
+import { SearchButtons } from '@ValenceScreens/components/AdminArea/components/TitlePage/components/SearchButtons/SearchButtons';
 import { EpisodeTable } from '@ValenceScreens/components/AdminArea/components/TitlePage/components/EpisodeTable/EpisodeTable';
 import type { TitleSeason } from '@ValenceClient/requests/seasonsOfTitle';
 import type { TitlePart } from '@ValenceClient/requests/TitlePart.types';
@@ -41,19 +42,23 @@ const badgeOf = (season: TitleSeason): TitlePart | 'notAsked' | null => {
  * seasons as they come.
  *
  * @param seasons - The seasons.
- * @param note - Where new seasons go, where that is worth saying.
  * @param isFollowing - Whether follow switches can be pressed right now.
  * @param onFollow - Told a season to follow or stop following.
  * @param followsNew - Whether new seasons are fetched as they come, or nothing where nobody asked.
  * @param onFollowsNew - Told whether they are to be.
+ * @param onOpenFolder - Called with a folder to open in Files, from an episode's file.
+ * @param onSearch - Called to search automatically for a season or one episode of it.
+ * @param onInteractiveSearch - Called to search by hand for a season, in its packs, or an episode.
  */
 const SeasonList = ({
   seasons,
-  note,
   isFollowing,
   onFollow,
   followsNew = null,
   onFollowsNew,
+  onOpenFolder,
+  onSearch,
+  onInteractiveSearch,
 }: SeasonListProps) => {
   const [open, setOpen] = useState<number | null>(null);
 
@@ -62,19 +67,20 @@ const SeasonList = ({
       title={say('screens.seasonChooser.seasons')}
       isFlush
       actions={
-        note === null && followsNew === null ? null : (
-          <span className="flex flex-wrap items-center gap-4">
-            {note === null ? null : <span className="text-xs text-text-muted">{note}</span>}
-            {followsNew === null ? null : (
-              <Switch
-                label={say('common.getNewSeasonsAsTheyCome')}
-                isOn={followsNew}
-                disabled={isFollowing}
-                onToggle={() => {
-                  onFollowsNew?.(!followsNew);
-                }}
-              />
-            )}
+        followsNew === null ? null : (
+          <span className="flex items-center gap-2.5">
+            <span aria-hidden className="text-sm text-text-muted">
+              {say('common.getNewSeasonsAsTheyCome')}
+            </span>
+            <Switch
+              label={say('common.getNewSeasonsAsTheyCome')}
+              isLabelHidden
+              isOn={followsNew}
+              disabled={isFollowing}
+              onToggle={() => {
+                onFollowsNew?.(!followsNew);
+              }}
+            />
           </span>
         )
       }
@@ -142,6 +148,12 @@ const SeasonList = ({
                   )}
                 </span>
 
+                <SearchButtons
+                  scope={{ season: season.season, episode: null }}
+                  onSearch={onSearch}
+                  onInteractiveSearch={onInteractiveSearch}
+                />
+
                 <Switch
                   label={say('screens.adminArea.titlePage.seasonList.followName', { name })}
                   isLabelHidden
@@ -155,7 +167,14 @@ const SeasonList = ({
 
               {isOpen && season.episodes.length > 0 ? (
                 <div className="border-t border-[var(--surface-line)]">
-                  <EpisodeTable label={name} episodes={season.episodes} />
+                  <EpisodeTable
+                    label={name}
+                    season={season.season}
+                    episodes={season.episodes}
+                    {...(onOpenFolder === undefined ? {} : { onOpenFolder })}
+                    {...(onSearch === undefined ? {} : { onSearch })}
+                    {...(onInteractiveSearch === undefined ? {} : { onInteractiveSearch })}
+                  />
                 </div>
               ) : null}
             </li>

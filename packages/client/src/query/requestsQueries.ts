@@ -37,7 +37,11 @@ import {
 } from '@ValenceClient/requests/fetchAskable';
 import type { CatalogueBrowse, CatalogueFilters } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
-import type { MediaRequestKind, MediaRequestState } from '@ValenceContracts/schemas/MediaRequest';
+import type {
+  MediaRequestKind,
+  MediaRequestState,
+  SearchScope,
+} from '@ValenceContracts/schemas/MediaRequest';
 
 const REQUESTS = ['requests'] as const;
 
@@ -248,12 +252,13 @@ const titleFiles = (kind: MediaRequestKind, catalogueId: string | null) =>
  * What a search by hand found for one request, asked once and kept while the page is open.
  *
  * @param id - Which request, or nothing before one is chosen.
+ * @param scope - The season or episode the search is narrowed to, or nothing for all of it.
  * @returns The query.
  */
-const mediaRequestReleases = (id: string | null) =>
+const mediaRequestReleases = (id: string | null, scope: SearchScope | null = null) =>
   queryOptions({
-    queryKey: [...REQUESTS, 'media', id, 'releases'],
-    queryFn: () => fetchMediaRequestReleases(id ?? ''),
+    queryKey: [...REQUESTS, 'media', id, 'releases', scope?.season ?? null, scope?.episode ?? null],
+    queryFn: () => fetchMediaRequestReleases(id ?? '', scope),
     enabled: id !== null,
     staleTime: Infinity,
     retry: false,

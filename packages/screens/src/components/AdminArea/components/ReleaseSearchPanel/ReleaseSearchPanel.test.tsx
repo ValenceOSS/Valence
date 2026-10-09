@@ -225,6 +225,7 @@ beforeEach(() => {
       filedInto: null,
       filingProblem: null,
       filingProblemCode: null,
+      wasPaused: false,
     },
     refusal: null,
   });

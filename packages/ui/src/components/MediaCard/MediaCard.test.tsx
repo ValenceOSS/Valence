@@ -28,6 +28,23 @@ describe('MediaCard', () => {
     expect(onSelect).toHaveBeenCalledOnce();
   });
 
+  it('lays the caller’s own overlay and a title logo over the artwork', () => {
+    const { container } = render(
+      <MediaCard
+        title="Arrival"
+        subtitle="2016"
+        shape="wide"
+        imageUrl="/backdrop.jpg"
+        logoUrl="/logo.png"
+        overlay={<span>Asked by Dan</span>}
+        onSelect={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Asked by Dan')).toBeInTheDocument();
+    expect(container.querySelector('img[src="/logo.png"]')).not.toBeNull();
+  });
+
   it('can be activated from the keyboard', async () => {
     const onSelect = vi.fn();
     const actor = userEvent.setup();

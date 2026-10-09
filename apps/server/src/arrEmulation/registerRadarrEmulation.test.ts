@@ -326,6 +326,7 @@ describe('what Overseerr reads back', () => {
       filedInto: null,
       filingProblem: null,
       filingProblemCode: null,
+      wasPaused: false,
     };
     const request = aSeerrRequest({
       state: 'downloading',

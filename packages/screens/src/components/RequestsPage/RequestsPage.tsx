@@ -116,6 +116,9 @@ const RequestsPage = () => {
                 onBrowse={(next) => {
                   go({ requestsView: viewOfBrowsing(next) });
                 }}
+                onOpenRequests={() => {
+                  go({ requestsView: 'mine' });
+                }}
                 onBrowseStudio={(studioId) => {
                   go({
                     requestsView: viewOfBrowsing({

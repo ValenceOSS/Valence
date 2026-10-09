@@ -17,6 +17,9 @@ import { say } from '@ValenceI18n/say';
  * @param foundAt - When it was found, which ages are told from.
  * @param pickingId - The release being fetched, while it is.
  * @param emptyMessage - What to say where nothing was found.
+ * @param kind - What the releases are for, which decides the quality or format column.
+ * @param isHereAlready - Whether a film is in the library already, when each release is offered
+ *   in place of the copy there or beside it as a second version.
  * @param onPick - Told the release picked.
  */
 const ReleasePickTable = ({
@@ -24,6 +27,8 @@ const ReleasePickTable = ({
   foundAt,
   pickingId,
   emptyMessage,
+  kind,
+  isHereAlready = false,
   onPick,
 }: ReleasePickTableProps) => {
   const columns = useMemo<DataTableColumn<Release>[]>(
@@ -32,29 +37,44 @@ const ReleasePickTable = ({
         judged: new Map(found.judgements.map((one) => [one.releaseId, one])),
         pickedId: found.pickedId,
         now: foundAt,
+        ...(kind === undefined ? {} : { kind }),
       }),
       {
         id: 'act',
         header: '',
         enableSorting: false,
         cell: ({ row }) => (
-          <span className="flex justify-end">
+          <span className="flex justify-end gap-2">
+            {isHereAlready ? (
+              <Button
+                variant="secondary"
+                size="xs"
+                disabled={pickingId !== null}
+                onClick={() => {
+                  onPick(row.original, true);
+                }}
+              >
+                {say('screens.adminArea.releasePickTable.downloadBoth')}
+              </Button>
+            ) : null}
             <Button
               variant="secondary"
               size="xs"
               disabled={pickingId !== null}
               isLoading={pickingId === row.original.id}
               onClick={() => {
-                onPick(row.original);
+                onPick(row.original, false);
               }}
             >
-              {say('common.download')}
+              {isHereAlready
+                ? say('screens.adminArea.releasePickTable.replaceIt')
+                : say('common.download')}
             </Button>
           </span>
         ),
       },
     ],
-    [found, foundAt, pickingId, onPick],
+    [found, foundAt, pickingId, onPick, kind, isHereAlready],
   );
 
   return (

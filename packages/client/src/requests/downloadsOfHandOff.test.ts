@@ -27,9 +27,13 @@ describe('downloadsOfHandOff', () => {
         releaseTitle: 'Show.S01E02.1080p',
         items: [second],
         queued: {
+          state: 'downloading',
+          wasPaused: false,
           progress: 0.25,
           secondsLeft: 90,
           sizeBytes: 2000,
+          downloadBytesPerSecond: null,
+          uploadBytesPerSecond: null,
           clientName: 'qBittorrent',
           indexerName: null,
           sentAt: '',

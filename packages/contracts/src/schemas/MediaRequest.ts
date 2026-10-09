@@ -78,6 +78,11 @@ const CatalogueEpisodeSchema = z.object({
   airDate: CalendarDateSchema.nullable(),
 });
 
+const AlbumTrackSchema = z.object({
+  title: z.string(),
+  seconds: z.number().int().nonnegative().nullable(),
+});
+
 const CatalogueAlbumSchema = z.object({
   id: MusicBrainzIdSchema,
   title: z.string(),
@@ -85,6 +90,7 @@ const CatalogueAlbumSchema = z.object({
   firstReleased: CalendarDateSchema.nullable(),
   trackCount: z.number().int().positive().nullish(),
   isOnAnAlbum: z.boolean().optional(),
+  tracks: z.array(AlbumTrackSchema).optional(),
 });
 
 const NarrationSchema = z.object({
@@ -251,6 +257,7 @@ const RequestItemSchema = z.object({
   heldQuality: MusicQualitySchema.nullish(),
   narration: z.string().nullish(),
   filedMinutes: z.number().nonnegative().nullish(),
+  isPickedByHand: z.boolean().optional(),
   lastSearchedAt: z.string().datetime().nullable(),
   updatedAt: z.string().datetime(),
 });
@@ -345,7 +352,10 @@ const MediaRequestRefusalSchema = z.object({
   reason: z.string().trim().max(500).default(''),
 });
 
-const MediaRequestPickSchema = z.object({ release: ReleaseSchema });
+const MediaRequestPickSchema = z.object({
+  release: ReleaseSchema,
+  keepsBoth: z.boolean().optional(),
+});
 
 const DOWNLOAD_STOP_NEXT = ['another', 'byHand', 'nothing'] as const;
 
@@ -423,6 +433,11 @@ const RequestLogEntrySchema = z.object({
   problemCode: ProblemCodeFieldSchema,
 });
 
+const SearchScopeSchema = z.object({
+  season: z.number().int().nonnegative(),
+  episode: z.number().int().nonnegative().nullable().default(null),
+});
+
 const MissingSearchSchema = z.object({
   searched: z.number().int().nonnegative(),
   startedAt: z.string().datetime(),
@@ -434,6 +449,7 @@ type BookRequestKind = (typeof BOOK_REQUEST_KINDS)[number];
 type VideoRequestKind = Exclude<MediaRequestKind, MusicRequestKind | BookRequestKind>;
 type ReleaseType = (typeof RELEASE_TYPES)[number];
 type BookFormat = (typeof BOOK_FORMATS)[number];
+type AlbumTrack = z.infer<typeof AlbumTrackSchema>;
 type CatalogueAlbum = z.infer<typeof CatalogueAlbumSchema>;
 type MusicCatalogueHit = z.infer<typeof MusicCatalogueHitSchema>;
 type RequestItemState = (typeof REQUEST_ITEM_STATES)[number];
@@ -463,6 +479,7 @@ type MediaRequestArrivals = z.input<typeof MediaRequestArrivalsSchema>;
 type MediaRequestArrived = z.infer<typeof MediaRequestArrivedSchema>;
 type MediaRequestDeparture = z.infer<typeof MediaRequestDepartureSchema>;
 type MissingSearch = z.infer<typeof MissingSearchSchema>;
+type SearchScope = z.infer<typeof SearchScopeSchema>;
 type DownloadStop = z.input<typeof DownloadStopSchema>;
 type DownloadStopNext = (typeof DOWNLOAD_STOP_NEXT)[number];
 type MediaRequestFollow = z.infer<typeof MediaRequestFollowSchema>;
@@ -476,6 +493,7 @@ type ProfileAsk = z.infer<typeof ProfileAskSchema>;
 type ProfileAskDecision = z.infer<typeof ProfileAskDecisionSchema>;
 
 export type {
+  AlbumTrack,
   BookFormat,
   BlockedRelease,
   BookRequestKind,
@@ -516,6 +534,7 @@ export type {
   RequestItem,
   RequestItemState,
   RequestLogEntry,
+  SearchScope,
   SeasonFolder,
   VideoRequestKind,
   ProfileAsk,
@@ -582,6 +601,8 @@ export {
   RequestItemSchema,
   RequestItemStateSchema,
   RequestLogEntrySchema,
+  SearchScopeSchema,
+  AlbumTrackSchema,
   ProfileAskDecisionSchema,
   ProfileAskSchema,
   RequesterSchema,

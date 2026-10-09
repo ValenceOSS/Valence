@@ -80,6 +80,23 @@ describe('describeCatalogueTitle', () => {
     expect(asked.describeTitle).toHaveBeenCalledWith('95396', 'tv');
   });
 
+  it('gives a film or series its title logo, where the catalogue has one', async () => {
+    const withLogo = {
+      ...sources(),
+      readLogo: vi.fn((tmdbId: string) =>
+        Promise.resolve(tmdbId === '95396' ? 'https://logo.png' : null),
+      ),
+    };
+
+    expect(await describeCatalogueTitle(withLogo, 'series', '95396')).toMatchObject({
+      logoUrl: 'https://logo.png',
+    });
+    expect(await describeCatalogueTitle(withLogo, 'film', '1')).toMatchObject({ logoUrl: null });
+    expect(await describeCatalogueTitle(sources(), 'series', '95396')).toMatchObject({
+      logoUrl: null,
+    });
+  });
+
   it('describes an artist from the charts by the MusicBrainz id they turn out to have', async () => {
     const asked = sources();
 

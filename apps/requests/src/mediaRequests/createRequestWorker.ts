@@ -49,6 +49,7 @@ import type {
   MediaRequest,
   MediaRequestDraft,
   MissingSearch,
+  SearchScope,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { ProbeClient } from '@ValenceRequests/media/createProbeClient';
@@ -1411,6 +1412,7 @@ const createRequestWorker = ({
   const searchesByHand = (
     request: MediaRequestRecord,
     seasons: readonly number[],
+    scope: SearchScope | null = null,
   ): ReleaseSearch[] => {
     const query = queryTitleOf(request.title);
     const artist = queryTitleOf(request.artistName ?? request.title);
@@ -1431,6 +1433,18 @@ const createRequestWorker = ({
           ...(request.imdbId === null ? {} : { imdbId: request.imdbId }),
         };
 
+        if (scope !== null) {
+          return [
+            {
+              query,
+              mode: 'tv',
+              season: scope.season,
+              ...(scope.episode === null ? {} : { episode: scope.episode }),
+              ...ids,
+            },
+          ];
+        }
+
         return [
           { query, mode: 'tv', ...ids },
           ...seasons.map((season) => ({ query, mode: 'tv' as const, season, ...ids })),
@@ -1450,12 +1464,13 @@ const createRequestWorker = ({
   const releasesOf = async (
     found: Found,
     blockedList: readonly BlockedReleaseRecord[],
+    scope: SearchScope | null = null,
   ): Promise<ReleaseSearchOutcome> => {
     const { request } = found;
     const seasons = [
       ...new Set(found.items.flatMap((item) => (item.season === null ? [] : [item.season]))),
     ];
-    const searches = searchesByHand(request, seasons);
+    const searches = searchesByHand(request, seasons, scope);
     const outcomes = await Promise.all(searches.map((search) => indexers.search(search)));
     const releases = [
       ...new Map(
@@ -1633,6 +1648,68 @@ const createRequestWorker = ({
     }
 
     return whatTheFilesSay(videos, await profileFor(request));
+  };
+
+  /**
+   * Keeps a film picked by hand as a further version beside the one it has, under the first profile
+   * in order that takes it — other than the film's own and any it is kept in already — so it is
+   * judged and upgraded as that profile says. Nothing takes it where no other profile would.
+   *
+   * @param found - The film's request and what it waits for.
+   * @param picked - The release picked.
+   * @returns The request with the version added last, or why it could not be kept.
+   */
+  const alongside = async (found: Found, picked: Release): Promise<Found | { refused: Said }> => {
+    const { request } = found;
+    const current = await profileFor(request);
+    const parsed = parseReleaseName(picked.title);
+    const taking = (await profiles.list())
+      .filter(
+        (profile) =>
+          profile.kind === 'video' &&
+          profile.id !== current.id &&
+          !(request.versions ?? []).includes(profile.id),
+      )
+      .toSorted((left, right) => left.position - right.position)
+      .find((profile) => !judgeRelease(picked, parsed, profile).isRejected);
+
+    if (request.kind !== 'film' || taking === undefined) {
+      return {
+        refused: saying('requests.mediaRequests.requestWorker.noOtherProfileTakesIt'),
+      };
+    }
+
+    await requests.update(request.id, {
+      versions: [...(request.versions ?? []), taking.id],
+      updatedAt: at(),
+    });
+
+    const [first] = found.items;
+    const version = itemFromDraft(
+      {
+        musicBrainzId: null,
+        season: null,
+        episode: null,
+        versionProfileId: taking.id,
+        title: first?.title ?? request.title,
+        airDate: first?.airDate ?? null,
+        state: 'waiting',
+      },
+      randomUUID(),
+      request.id,
+      at(),
+    );
+
+    await items.insert(version);
+
+    const after = await find(request.id);
+
+    return after === null
+      ? { refused: saying('requests.mediaRequests.requestWorker.noOtherProfileTakesIt') }
+      : {
+          request: after.request,
+          items: [...after.items.filter((item) => item.id !== version.id), version],
+        };
   };
 
   /**
@@ -1815,10 +1892,44 @@ const createRequestWorker = ({
 
     unblock: (id: string): Promise<boolean> => blocked.remove(id),
 
-    releasesFor: async (id: string): Promise<ReleaseSearchOutcome | null> => {
+    releasesFor: async (
+      id: string,
+      scope: SearchScope | null = null,
+    ): Promise<ReleaseSearchOutcome | null> => {
       const found = await find(id);
 
-      return found === null ? null : releasesOf(found, await blockedFor(id));
+      if (found === null) {
+        return null;
+      }
+
+      if (scope === null) {
+        return releasesOf(found, await blockedFor(id));
+      }
+
+      const scoped = found.items.filter(
+        (item) =>
+          item.season === scope.season &&
+          (scope.episode === null || item.episode === scope.episode),
+      );
+      const outcome = await releasesOf({ ...found, items: scoped }, await blockedFor(id), scope);
+
+      if (scope.episode !== null) {
+        return outcome;
+      }
+
+      const releases = outcome.releases.filter((release) => {
+        const parsed = parseReleaseName(release.title);
+
+        return parsed.episodes.length === 0 && parsed.seasons.includes(scope.season);
+      });
+      const kept = new Set(releases.map((release) => release.id));
+
+      return {
+        ...outcome,
+        releases,
+        judgements: outcome.judgements.filter((judged) => kept.has(judged.releaseId)),
+        pickedId: outcome.pickedId !== null && kept.has(outcome.pickedId) ? outcome.pickedId : null,
+      };
     },
 
     releasesForDraft: (asked: MediaRequestDraft): Promise<ReleaseSearchOutcome> => {
@@ -1839,25 +1950,41 @@ const createRequestWorker = ({
       );
     },
 
-    pick: (id: string, picked: Release): Promise<MediaRequest | { refused: Said } | null> =>
+    pick: (
+      id: string,
+      picked: Release,
+      keepsBoth = false,
+    ): Promise<MediaRequest | { refused: Said } | null> =>
       serially(async () => {
-        const found = await find(id);
+        const kept = await find(id);
 
-        if (found === null) {
+        if (kept === null) {
           return null;
         }
 
-        if (found.request.handOff !== null) {
+        if (kept.request.handOff !== null) {
           return {
             refused: saying('requests.mediaRequests.requestWorker.itIsHandedToAConnectedApp'),
           };
         }
 
+        const beside = keepsBoth ? await alongside(kept, picked) : null;
+
+        if (beside !== null && 'refused' in beside) {
+          return beside;
+        }
+
+        const found = beside ?? kept;
+
+        const [version] = beside === null ? [] : found.items.slice(-1);
         const judged = judgeForRequest({
           request: found.request,
-          items: found.items,
+          items: version === undefined ? found.items : [version],
           releases: [picked],
-          profile: await profileFor(found.request),
+          profile:
+            version === undefined
+              ? await profileFor(found.request)
+              : await versionProfileOf(found.request, version.versionProfileId ?? null),
           blocked: [],
           priorities: new Map(),
           isFetching: (item) => item.state !== 'filing',

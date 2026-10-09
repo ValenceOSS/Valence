@@ -60,7 +60,31 @@ describe('ReleasePickTable', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Download' }));
 
-    expect(onPick).toHaveBeenCalledWith(RELEASE);
+    expect(onPick).toHaveBeenCalledWith(RELEASE, false);
+  });
+
+  it('offers a film already here in place of the copy there, or beside it', async () => {
+    const onPick = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <ReleasePickTable
+        found={FOUND}
+        foundAt={0}
+        pickingId={null}
+        emptyMessage="Nothing"
+        isHereAlready
+        onPick={onPick}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Download both' }));
+    await user.click(screen.getByRole('button', { name: 'Replace it' }));
+
+    expect(onPick.mock.calls).toEqual([
+      [RELEASE, true],
+      [RELEASE, false],
+    ]);
   });
 
   it('waits while one is being fetched, and says when nothing was found', () => {

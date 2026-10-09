@@ -4,7 +4,7 @@ import type { RequestDownload } from '@ValenceClient/requests/downloadsOfRequest
 
 /**
  * What a request handed to a connected app has downloading there, one row a download as Valence's
- * own are shown, with the items each holds and how far along the app says it is.
+ * own are shown, with the items each holds and how far along the app says it is — the app doesn't say how fast.
  *
  * @param request - The request.
  * @param downloads - What the app has downloading for it.
@@ -19,9 +19,13 @@ const downloadsOfHandOff = (
     releaseTitle: download.releaseTitle,
     items: request.items.filter((item) => download.itemIds.includes(item.id)),
     queued: {
+      state: 'downloading',
+      wasPaused: false,
       progress: download.progress,
       secondsLeft: download.secondsLeft,
       sizeBytes: download.sizeBytes,
+      downloadBytesPerSecond: null,
+      uploadBytesPerSecond: null,
       clientName: download.clientName,
       indexerName: null,
       sentAt: '',

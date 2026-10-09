@@ -2702,7 +2702,7 @@ const describeMusicForRequest = (
 ): Promise<RequestCatalogue | null> =>
   kind === 'artist'
     ? describeArtistForRequest(musicWeb, musicBrainzId, mostPages, mostPages === undefined)
-    : describeAlbumForRequest(musicWeb, musicBrainzId, mostPages === undefined);
+    : describeAlbumForRequest(musicWeb, musicBrainzId, true);
 
 const requestedAlbums = createDatabaseRequestedAlbumStore(db);
 
@@ -2719,6 +2719,8 @@ const studioed = createExpiringCache<Promise<CatalogueStudio[]>>(CHARTS_LIVE_FOR
 const ALBUM_PAGES_SHOWN = 3;
 
 const described = createExpiringCache<Promise<RequestCatalogue | null>>(CHARTS_LIVE_FOR_MS);
+
+const logoed = createExpiringCache<Promise<string | null>>(CHARTS_LIVE_FOR_MS);
 
 const foundOnMusicBrainz = createExpiringCache<Promise<string | null>>(CHARTS_LIVE_FOR_MS);
 
@@ -2782,6 +2784,12 @@ const discovery: Discovery = {
   },
   describeTitle: (tmdbId, kind) =>
     catalogueProvider.describeTitle?.(tmdbId, kind) ?? Promise.resolve(null),
+  readLogo: (tmdbId, kind) =>
+    keeping(logoed, `${kind}:${tmdbId}`, () =>
+      catalogueProvider.readLogoUrl === undefined
+        ? Promise.resolve(null)
+        : catalogueProvider.readLogoUrl({ externalId: tmdbId, isSeries: kind === 'tv' }),
+    ),
   describeMusic: (musicBrainzId, kind) =>
     keeping(described, `${kind}:${musicBrainzId}`, () =>
       describeMusicForRequest(musicBrainzId, kind, ALBUM_PAGES_SHOWN),

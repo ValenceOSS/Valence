@@ -11,7 +11,7 @@ const aRelease = (group: string, ...discs: string[][]) => ({
   'release-group': { id: group },
   media: discs.map((recordings) => ({
     'track-count': recordings.length,
-    tracks: recordings.map((id) => ({ recording: { id } })),
+    tracks: recordings.map((id) => ({ title: `Track ${id}`, length: 61_000, recording: { id } })),
   })),
 });
 
@@ -40,8 +40,20 @@ describe('readTracklists', () => {
 
     const read = await readTracklists(web, { artist: 'an-artist' });
 
-    expect(read.get('album')).toEqual({ trackCount: 3, recordings: ['a', 'b', 'c'] });
-    expect(read.get('single')).toEqual({ trackCount: 1, recordings: ['a'] });
+    expect(read.get('album')).toEqual({
+      trackCount: 3,
+      recordings: ['a', 'b', 'c'],
+      tracks: [
+        { title: 'Track a', seconds: 61 },
+        { title: 'Track b', seconds: 61 },
+        { title: 'Track c', seconds: 61 },
+      ],
+    });
+    expect(read.get('single')).toEqual({
+      trackCount: 1,
+      recordings: ['a'],
+      tracks: [{ title: 'Track a', seconds: 61 }],
+    });
     expect(web.json.mock.calls[0]?.[0]).toContain('release?artist=an-artist&status=official');
     expect(web.json.mock.calls[1]?.[0]).toContain('offset=100');
   });

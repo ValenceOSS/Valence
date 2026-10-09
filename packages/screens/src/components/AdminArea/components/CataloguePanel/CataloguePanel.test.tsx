@@ -103,9 +103,11 @@ describe('CataloguePanel', () => {
   });
 
   it('switches to another kind of library', async () => {
+    const user = userEvent.setup();
     const { onTab } = aPanel();
 
-    await userEvent.setup().click(await screen.findByRole('button', { name: 'Shows' }));
+    await user.click(await screen.findByRole('button', { name: 'Kind of library' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Shows' }));
 
     expect(onTab).toHaveBeenCalledWith('shows');
   });
@@ -172,14 +174,25 @@ describe('CataloguePanel', () => {
     expect(screen.queryByRole('button', { name: 'Which library' })).not.toBeInTheDocument();
   });
 
-  it('has no tab for a kind of library the server lacks', async () => {
+  it('offers no kind of library the server lacks', async () => {
+    const user = userEvent.setup();
+
     aPanel();
 
-    await waitFor(() => {
-      expect(screen.queryByRole('button', { name: 'Music' })).not.toBeInTheDocument();
-    });
-    expect(screen.getByRole('button', { name: 'Shows' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Books' })).not.toBeInTheDocument();
+    await user.click(await screen.findByRole('button', { name: 'Kind of library' }));
+
+    expect(await screen.findByRole('menuitemradio', { name: 'Shows' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitemradio', { name: 'Music' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitemradio', { name: 'Books' })).not.toBeInTheDocument();
+  });
+
+  it('has no kind menu where the server has one kind of library', async () => {
+    held.kinds = ['shows'];
+
+    aPanel({ tab: 'shows' });
+
+    expect(await screen.findByRole('button', { name: /A Show/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Kind of library' })).not.toBeInTheDocument();
   });
 
   it('opens on the first tab there is where the one asked for has no library', async () => {

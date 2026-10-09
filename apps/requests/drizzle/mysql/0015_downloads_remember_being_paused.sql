@@ -1,0 +1,1 @@
+ALTER TABLE `requests_download` ADD `was_paused` boolean DEFAULT false NOT NULL;

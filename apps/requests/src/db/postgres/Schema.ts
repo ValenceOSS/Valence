@@ -188,6 +188,7 @@ const sentDownload = requestsSchema.table(
     filingAttempts: integer('filing_attempts').notNull().default(0),
     filesChecked: boolean('files_checked').notNull().default(false),
     removesWhenDone: boolean('removes_when_done').notNull().default(false),
+    wasPaused: boolean('was_paused').notNull().default(false),
     seedSeconds: integer('seed_seconds'),
     seedRatio: doublePrecision('seed_ratio'),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

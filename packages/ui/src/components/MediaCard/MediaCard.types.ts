@@ -24,11 +24,13 @@ type MediaCardProps = {
   eyebrow?: ReactNode;
   subtitle: ReactNode;
   badges?: string[];
+  overlay?: ReactNode;
   corner?: MediaCardCorner;
   origin?: MediaCardOrigin;
   count?: number;
   countLabel?: string;
   imageUrl?: string;
+  logoUrl?: string;
   shape?: MediaCardShape;
   emphasis?: MediaCardEmphasis;
   watchedFraction?: number;

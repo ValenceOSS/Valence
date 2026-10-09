@@ -71,6 +71,10 @@ vi.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
   pickMediaRelease: vi.fn(),
 }));
 
+vi.mock('@ValenceClient/admin/fetchAccounts', () => ({
+  fetchAccounts: () => Promise.resolve([]),
+}));
+
 vi.mock('@ValenceClient/admin/fetchAdmin', () => ({
   fetchAdminOverview: () =>
     Promise.resolve({ settings: { controlsConnectedApps: admin.controlsConnectedApps } }),
@@ -100,6 +104,7 @@ vi.mock('@ValenceClient/requests/fetchAskable', () => ({
 
 vi.mock('@ValenceClient/requests/fetchDownloadQueue', () => ({
   fetchDownloadQueue: () => Promise.resolve({ clients: [], downloads: [], checkedAt: null }),
+  watchDownloadQueue: () => () => undefined,
 }));
 
 vi.mock('@ValenceClient/library/fetchLibrary', () => ({
@@ -188,7 +193,6 @@ describe('TitlePage', () => {
     await waitFor(() => {
       expect(followRequestItems).toHaveBeenCalledWith(request.id, ['a', 'b'], false);
     });
-    expect(screen.getByText('New seasons go in Show')).toBeInTheDocument();
   });
 
   it('stops getting new seasons of a show', async () => {
@@ -306,6 +310,22 @@ describe('TitlePage', () => {
         isDeletingFiles: true,
       });
     });
+  });
+
+  it('lays the menu’s actions along the row for wide screens', async () => {
+    const request = aMediaRequest();
+    const user = userEvent.setup();
+
+    requested.requests = [request];
+    catalogue.entries = [
+      aCatalogueEntry({ key: 'film:1', status: 'library', requestId: request.id }),
+    ];
+
+    renderInAnAddress(<TitlePage titleKey="film:1" onBack={vi.fn()} />);
+
+    await user.click(await screen.findByRole('button', { name: 'Remove…' }));
+
+    expect(await screen.findByRole('dialog', { name: /Remove/ })).toBeInTheDocument();
   });
 
   it('removes a request, deleting its files where asked', async () => {

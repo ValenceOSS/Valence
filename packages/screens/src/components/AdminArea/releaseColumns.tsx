@@ -5,6 +5,8 @@ import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Release } from '@ValenceContracts/schemas/Indexer';
 import type { Judgement } from '@ValenceContracts/schemas/QualityProfile';
+import { qualityOfReleaseTitle } from '@ValenceClient/requests/qualityOfReleaseTitle';
+import type { ReleaseKind } from '@ValenceClient/requests/qualityOfReleaseTitle';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 
@@ -12,7 +14,10 @@ type ReleaseColumnsOptions = {
   judged: ReadonlyMap<string, Judgement>;
   pickedId: string | null;
   now: number;
+  kind?: ReleaseKind;
 };
+
+const VERDICT_TIERS = 1_000_000_000;
 
 /**
  * The columns every table of releases shares: what the release is and where it was found, how it
@@ -22,12 +27,15 @@ type ReleaseColumnsOptions = {
  * @param judged - How each release was judged, by its id; empty where none were.
  * @param pickedId - The release that would be chosen, where one would.
  * @param now - The moment ages are told from.
+ * @param kind - What the releases are for, where one kind: a column then says each one's quality
+ *   or format, as fits films and series, music, or books.
  * @returns The columns.
  */
 const releaseColumns = ({
   judged,
   pickedId,
   now,
+  kind,
 }: ReleaseColumnsOptions): DataTableColumn<Release>[] => [
   {
     id: 'title',
@@ -48,13 +56,38 @@ const releaseColumns = ({
       </span>
     ),
   },
+  ...(kind === undefined
+    ? []
+    : [
+        {
+          id: 'quality',
+          header:
+            kind === 'video' ? say('common.quality') : say('screens.adminArea.webhookFields.shape'),
+          accessorFn: (release: Release) => qualityOfReleaseTitle(release.title, kind) ?? '',
+          cell: ({ row }: { row: { original: Release } }) => (
+            <span className="whitespace-nowrap text-sm text-text">
+              {qualityOfReleaseTitle(row.original.title, kind) ?? ''}
+            </span>
+          ),
+        },
+      ]),
   ...(judged.size === 0
     ? []
     : [
         {
           id: 'verdict',
           header: say('screens.adminArea.releaseColumns.verdict'),
-          enableSorting: false,
+          accessorFn: (release: Release) => {
+            const judgement = judged.get(release.id);
+
+            return judgement === undefined
+              ? -Number.MAX_SAFE_INTEGER
+              : release.id === pickedId
+                ? Number.MAX_SAFE_INTEGER
+                : judgement.isRejected
+                  ? judgement.score - VERDICT_TIERS
+                  : judgement.score;
+          },
           cell: ({ row }: { row: { original: Release } }) => {
             const judgement = judged.get(row.original.id);
 

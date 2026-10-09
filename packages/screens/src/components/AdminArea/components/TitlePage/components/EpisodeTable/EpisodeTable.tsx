@@ -3,6 +3,9 @@ import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
 import { Tooltip } from '@ValenceUI/Tooltip';
 import { TITLE_PART_LOOKS } from '@ValenceScreens/requests/TITLE_PART_LOOKS';
+import { SearchButtons } from '@ValenceScreens/components/AdminArea/components/TitlePage/components/SearchButtons/SearchButtons';
+import { FolderLink } from '@ValenceScreens/components/FolderLink/FolderLink';
+import { folderOf } from '@ValenceScreens/components/AdminArea/components/MediaPanel/folderOf';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { TitleEpisode } from '@ValenceClient/requests/seasonsOfTitle';
 import type { EpisodeTableProps } from './EpisodeTable.types';
@@ -14,9 +17,20 @@ import { say } from '@ValenceI18n/say';
  * hover.
  *
  * @param label - What the table is of, for somebody who cannot see it.
+ * @param season - The season they are in.
  * @param episodes - The episodes.
+ * @param onOpenFolder - Called with a folder to open in Files, from an episode's file.
+ * @param onSearch - Called to search automatically for one episode.
+ * @param onInteractiveSearch - Called to search by hand for one episode.
  */
-const EpisodeTable = ({ label, episodes }: EpisodeTableProps) => {
+const EpisodeTable = ({
+  label,
+  season,
+  episodes,
+  onOpenFolder,
+  onSearch,
+  onInteractiveSearch,
+}: EpisodeTableProps) => {
   const columns = useMemo<DataTableColumn<TitleEpisode>[]>(
     () => [
       {
@@ -81,6 +95,14 @@ const EpisodeTable = ({ label, episodes }: EpisodeTableProps) => {
 
           return path === null ? (
             <span className="text-xs text-text-muted">—</span>
+          ) : onOpenFolder !== undefined ? (
+            <span className="block max-w-52 text-xs">
+              <FolderLink
+                shown={path.split('/').at(-1) ?? path}
+                folder={folderOf(path)}
+                onOpen={onOpenFolder}
+              />
+            </span>
           ) : (
             <Tooltip label={path}>
               <span
@@ -93,8 +115,24 @@ const EpisodeTable = ({ label, episodes }: EpisodeTableProps) => {
           );
         },
       },
+      ...(onSearch === undefined && onInteractiveSearch === undefined
+        ? []
+        : [
+            {
+              id: 'search',
+              header: '',
+              enableSorting: false,
+              cell: ({ row }: { row: { original: TitleEpisode } }) => (
+                <SearchButtons
+                  scope={{ season, episode: row.original.episode }}
+                  onSearch={onSearch}
+                  onInteractiveSearch={onInteractiveSearch}
+                />
+              ),
+            },
+          ]),
     ],
-    [],
+    [season, onOpenFolder, onSearch, onInteractiveSearch],
   );
 
   return (

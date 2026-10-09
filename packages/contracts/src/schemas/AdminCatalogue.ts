@@ -53,6 +53,7 @@ const TitleFileSchema = z.object({
   episode: z.number().int().nonnegative().nullable(),
   lastEpisode: z.number().int().nonnegative().nullable(),
   sizeBytes: z.number().nonnegative().nullable(),
+  width: z.number().int().nonnegative().nullable().optional(),
   height: z.number().int().nonnegative().nullable(),
   videoCodec: z.string().nullable(),
   addedAt: z.string().datetime().nullable(),

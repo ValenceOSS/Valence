@@ -1,6 +1,9 @@
 const KEPT_IN_PLACE = [
   'item',
   'show',
+  'ask',
+  'book',
+  'collection',
   'person',
   'party',
   'account',

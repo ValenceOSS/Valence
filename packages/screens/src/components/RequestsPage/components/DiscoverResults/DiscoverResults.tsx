@@ -35,7 +35,7 @@ const DiscoverResults = ({ query, onAsk }: DiscoverResultsProps) => {
    */
   const posters = (title: string, titles: readonly CatalogueTitle[]) =>
     titles.length === 0 ? null : (
-      <Rail title={title} sizesCards className="-mx-[var(--rail-lane)]">
+      <Rail title={title} sizesCards cards="poster" className="-mx-[var(--rail-lane)]">
         {titles.map((one, at) => (
           <RevealItem key={`${one.kind}-${one.id}`} index={at} className="shrink-0 snap-start">
             <MediaCard
@@ -70,7 +70,12 @@ const DiscoverResults = ({ query, onAsk }: DiscoverResultsProps) => {
       {posters(say('common.shows'), found.shows)}
 
       {found.artists.length === 0 ? null : (
-        <Rail title={say('common.artists')} sizesCards className="-mx-[var(--rail-lane)]">
+        <Rail
+          title={say('common.artists')}
+          sizesCards
+          cards="poster"
+          className="-mx-[var(--rail-lane)]"
+        >
           {found.artists.map((title, at) => (
             <RevealItem key={title.id} index={at} className="shrink-0 snap-start">
               <MusicTile
@@ -97,7 +102,12 @@ const DiscoverResults = ({ query, onAsk }: DiscoverResultsProps) => {
       )}
 
       {found.books.length === 0 ? null : (
-        <Rail title={say('common.books')} sizesCards className="-mx-[var(--rail-lane)]">
+        <Rail
+          title={say('common.books')}
+          sizesCards
+          cards="poster"
+          className="-mx-[var(--rail-lane)]"
+        >
           {found.books.map((title, at) => (
             <RevealItem key={title.id} index={at} className="shrink-0 snap-start">
               <AskableBookTile title={title} onAsk={onAsk} />

@@ -4,7 +4,10 @@ import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
 import { useQuery } from '@tanstack/react-query';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Spinner } from '@ValenceUI/Spinner';
+import { cn } from '@ValenceUI/cn';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
+import { toneOfRequestLog } from '@ValenceClient/requests/toneOfRequestLog';
+import type { RequestLogTone } from '@ValenceClient/requests/RequestLogTone';
 import type { RequestHistoryTabProps } from './RequestHistoryTab.types';
 import { say } from '@ValenceI18n/say';
 
@@ -16,11 +19,20 @@ const WHEN = new Intl.DateTimeFormat('en-GB', {
   second: '2-digit',
 });
 
+const DOTS: Readonly<Record<RequestLogTone, string>> = {
+  quiet: 'bg-text-muted/50',
+  accent: 'bg-accent',
+  busy: 'bg-busy',
+  success: 'bg-success',
+  highlight: 'bg-highlight',
+  danger: 'bg-danger',
+};
+
 /**
  * What a request has done, newest first: every search, how many releases it found and how many
  * were for it, what was chosen or why none would do, which indexers could not answer, and what
- * became of each download. It is read again every few seconds, so a search can be followed as it
- * goes.
+ * became of each download, as a line of coloured dots saying how each went. It is read again every
+ * few seconds, so a search can be followed as it goes.
  *
  * @param request - The request.
  */
@@ -54,15 +66,30 @@ const RequestHistoryTab = ({ request }: RequestHistoryTabProps) => {
   }
 
   return (
-    <ol aria-label={say('common.history')} className="flex flex-col gap-2">
-      {said.data.map((line) => (
-        <li key={line.id} className="flex gap-3 text-sm">
-          <time dateTime={line.at} className="shrink-0 tabular-nums text-xs text-text-muted">
-            {WHEN.format(new Date(line.at))}
-          </time>
-          <span className="flex min-w-0 flex-col items-start gap-0.5">
-            <span className="break-words text-text">{sayAgain(line.message)}</span>
-            <HowToFix href={docsFor(line.problemCode)} />
+    <ol aria-label={say('common.history')} className="flex flex-col">
+      {said.data.map((line, at) => (
+        <li key={line.id} className="relative flex gap-3 pb-4 text-sm last:pb-0">
+          {at === said.data.length - 1 ? null : (
+            <span
+              aria-hidden
+              className="absolute left-[4.5px] top-3 h-full w-px bg-[var(--surface-line)]"
+            />
+          )}
+          <span
+            aria-hidden
+            className={cn(
+              'relative mt-1.5 size-2.5 shrink-0 rounded-full',
+              DOTS[toneOfRequestLog(line)],
+            )}
+          />
+          <span className="flex min-w-0 flex-1 items-baseline justify-between gap-4">
+            <span className="flex min-w-0 flex-col items-start gap-0.5">
+              <span className="break-words text-text">{sayAgain(line.message)}</span>
+              <HowToFix href={docsFor(line.problemCode)} />
+            </span>
+            <time dateTime={line.at} className="shrink-0 tabular-nums text-xs text-text-muted">
+              {WHEN.format(new Date(line.at))}
+            </time>
           </span>
         </li>
       ))}

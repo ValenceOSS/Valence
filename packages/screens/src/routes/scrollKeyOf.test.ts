@@ -16,7 +16,15 @@ describe('scrollKeyOf', () => {
   });
 
   it('treats every kind of overlay the same way, since all of them sit over the page', () => {
-    for (const overlay of ['item=tt42', 'show=s1', 'person=7', 'party=abc']) {
+    for (const overlay of [
+      'item=tt42',
+      'show=s1',
+      'person=7',
+      'party=abc',
+      'ask=film:42',
+      'book=b1',
+      'collection=c1',
+    ]) {
       expect(scrollKeyOf(at('/', `?${overlay}`))).toBe('/');
     }
   });

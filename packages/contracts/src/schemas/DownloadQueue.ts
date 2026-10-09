@@ -28,6 +28,7 @@ const QueuedDownloadSchema = z.object({
   title: z.string(),
   indexerName: z.string().nullable(),
   state: QueuedDownloadStateSchema,
+  wasPaused: z.boolean().default(false),
   problem: SaidSchema.nullable(),
   problemCode: ProblemCodeFieldSchema,
   progress: z.number().min(0).max(1),

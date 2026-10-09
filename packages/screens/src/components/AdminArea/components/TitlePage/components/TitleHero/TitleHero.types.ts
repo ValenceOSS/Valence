@@ -10,7 +10,7 @@ type TitleHeroProps = {
   status: TitleStatus;
   facts: readonly string[];
   overview: string | null;
-  askedBy: { name: string; at: string } | null;
+  askedBy: ReactNode;
   actions: ReactNode;
 };
 

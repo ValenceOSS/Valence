@@ -33,6 +33,7 @@ const TitleShelf = ({ shelf, onAsk, onBrowse }: TitleShelfProps) => {
     <Rail
       title={shelf.title}
       sizesCards
+      cards="poster"
       {...(openAll === undefined ? {} : { onOpenTitle: openAll })}
     >
       {shelf.titles.map((title, at) => (

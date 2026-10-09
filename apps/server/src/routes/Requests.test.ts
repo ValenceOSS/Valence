@@ -856,6 +856,7 @@ describe('download clients and the queue, through the server', () => {
     filedInto: null,
     filingProblem: null,
     filingProblemCode: null,
+    wasPaused: false,
   };
 
   const DRAFT = { name: 'qBittorrent', kind: 'qbittorrent', url: 'http://qbittorrent:8080' };

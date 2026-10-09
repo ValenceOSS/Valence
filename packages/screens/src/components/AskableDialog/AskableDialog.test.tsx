@@ -80,6 +80,7 @@ const aTitle = (overrides: Partial<CatalogueTitleDetail> = {}): CatalogueTitleDe
   overview: 'Spice.',
   posterUrl: null,
   backdropUrl: null,
+  logoUrl: null,
   genres: ['Science Fiction'],
   runtimeMinutes: 155,
   cast: [{ name: 'Zendaya', role: 'Chani', photoUrl: null }],

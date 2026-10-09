@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { QueuedDownloadStateSchema } from './DownloadQueue';
 import {
+  AlbumTrackSchema,
   CatalogueAlbumSchema,
   MediaRequestKindSchema,
   MediaRequestStateSchema,
@@ -82,11 +83,13 @@ const CatalogueCreditSchema = z.object({
 const CatalogueTitleDetailSchema = CatalogueTitleSchema.extend({
   musicBrainzId: z.string().uuid().nullable(),
   backdropUrl: z.string().nullable(),
+  logoUrl: z.string().nullable().default(null),
   genres: z.array(z.string()),
   runtimeMinutes: z.number().int().positive().nullable(),
   cast: z.array(CatalogueCreditSchema),
   albums: z.array(CatalogueAlbumSchema),
   authors: z.array(z.string()).default([]),
+  tracks: z.array(AlbumTrackSchema).optional(),
   trailerKey: z.string().nullable(),
 });
 

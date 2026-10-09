@@ -121,6 +121,7 @@ const DOWNLOAD: QueuedDownload = {
   filedInto: null,
   filingProblem: null,
   filingProblemCode: null,
+  wasPaused: false,
 };
 
 const QUEUE: DownloadQueue = {
