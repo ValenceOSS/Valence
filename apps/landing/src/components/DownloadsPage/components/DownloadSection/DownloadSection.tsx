@@ -10,13 +10,12 @@ import {
   IconDeviceDesktopFilled,
   IconDeviceMobileFilled,
 } from '@tabler/icons-react';
-import { LinuxMark } from '@ValenceLanding/components/HomePage/components/DownloadSection/components/LinuxMark/LinuxMark';
+import { LinuxMark } from '@ValenceLanding/components/DownloadsPage/components/DownloadSection/components/LinuxMark/LinuxMark';
 import { revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
 import { PRESS_MOTION } from '@ValenceUI/animations/motion';
 import { Button } from '@ValenceUI/Button';
 import { Link as TextLink } from '@ValenceUI/Link';
 import { cn } from '@ValenceUI/cn';
-import { Doodle } from '@ValenceUI/Doodle';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
 import { describeReleaseDate } from '@ValenceLanding/content/changelog/describeReleaseDate';
@@ -48,7 +47,8 @@ const DOC_LINK =
 const HEADING = 'font-mono text-xs uppercase tracking-[0.14em] text-text-muted';
 
 /**
- * Where to get Valence: the latest release and what is new in it, then a card each for the desktop
+ * Where to get Valence, beneath the downloads page's opening card: the latest release and what is
+ * new in it, then a card each for the desktop
  * app — the visitor's own computer first and every other one beneath it — the few commands that
  * start a server, with how to transcode in hardware on a Mac or Windows, and what there is for a
  * phone. A visitor on a phone is shown the phone first.
@@ -92,7 +92,7 @@ const DownloadSection = () => {
     <section
       id="download"
       aria-label="Download"
-      className="mx-auto max-w-6xl scroll-mt-24 px-5 py-24 sm:px-10 xl:max-w-7xl"
+      className="mx-auto max-w-6xl scroll-mt-24 px-5 py-12 sm:px-10 sm:py-16 xl:max-w-7xl"
     >
       <motion.div
         initial="hidden"
@@ -101,49 +101,29 @@ const DownloadSection = () => {
         viewport={{ margin: '-80px' }}
         variants={revealVariants(prefersReducedMotion)}
         transition={revealTransition(prefersReducedMotion, 'bouncy')}
-        className="flex flex-col gap-14"
+        className="flex flex-col gap-6"
       >
-        <div className="grid gap-6 lg:grid-cols-2 lg:items-end lg:gap-16">
-          <div className="flex flex-col gap-4">
-            <h2 className="max-w-xl text-balance text-4xl font-semibold tracking-tight text-text lg:text-6xl">
-              Get Valence on{' '}
-              <span className="relative inline-block font-accent font-normal italic tracking-normal">
-                your own
-                <Doodle
-                  of="underline"
-                  delay={0.3}
-                  className="absolute -bottom-3 left-0 h-4 w-full text-accent"
-                />
-              </span>{' '}
-              server.
-            </h2>
-            <p className="max-w-md text-balance text-lg text-text-muted">
-              A server you run, and an app for every screen that watches from it.
-            </p>
-          </div>
-
-          {LATEST === null ? null : (
-            <Link
-              to="/changelog"
-              className={cn(
-                'group inline-flex items-center gap-2 self-start rounded-full border border-border/60 px-3 py-1.5 text-sm text-text-muted hover:text-text lg:self-end lg:justify-self-end',
-                PRESS_MOTION,
-              )}
-            >
-              <span className="font-semibold text-text">{LATEST.version}</span>
-              {LATEST.publishedAt === null ? null : (
-                <span>{describeReleaseDate(LATEST.publishedAt)}</span>
-              )}
-              <span className="inline-flex items-center gap-1 font-semibold text-text">
-                What&rsquo;s new
-                <IconArrowRight
-                  size={14}
-                  className="transition-transform duration-[var(--duration-fast)] group-hover:translate-x-0.5"
-                />
-              </span>
-            </Link>
-          )}
-        </div>
+        {LATEST === null ? null : (
+          <Link
+            to="/changelog"
+            className={cn(
+              'group inline-flex items-center gap-2 self-end rounded-full border border-border/60 px-3 py-1.5 text-sm text-text-muted hover:text-text',
+              PRESS_MOTION,
+            )}
+          >
+            <span className="font-semibold text-text">{LATEST.version}</span>
+            {LATEST.publishedAt === null ? null : (
+              <span>{describeReleaseDate(LATEST.publishedAt)}</span>
+            )}
+            <span className="inline-flex items-center gap-1 font-semibold text-text">
+              What&rsquo;s new
+              <IconArrowRight
+                size={14}
+                className="transition-transform duration-[var(--duration-fast)] group-hover:translate-x-0.5"
+              />
+            </span>
+          </Link>
+        )}
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {isOnAPhone ? phones : null}
