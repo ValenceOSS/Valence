@@ -9,6 +9,7 @@ import {
   MediaRequestDraftSchema,
   RELEASE_TYPES,
   RequestCatalogueSchema,
+  RequestCatalogueUpdateSchema,
 } from '@ValenceContracts/schemas/MediaRequest';
 import { chooseProfile } from '@ValenceRequests/mediaRequests/chooseProfile';
 import { itemFromDraft } from '@ValenceRequests/mediaRequests/itemFromDraft';
@@ -18,6 +19,7 @@ import { showMediaRequest } from '@ValenceRequests/mediaRequests/showMediaReques
 import { syncItems } from '@ValenceRequests/mediaRequests/syncItems';
 import type {
   FollowedRequest,
+  HeldInLibrary,
   MediaRequest,
   MediaRequestArrivals,
   MediaRequestArrived,
@@ -71,6 +73,26 @@ const bothSeasons = (kept: number[] | null, asked: number[] | null): number[] | 
     : [...new Set([...kept, ...asked])].toSorted((left, right) => left - right);
 
 /**
+ * What a series request learns from what the library already holds of it: where the library keeps
+ * it, and the item it is there as. Nothing for anything else, or where the library was not asked.
+ *
+ * @param kind - What the request is for.
+ * @param held - What the library holds, where it was asked.
+ * @returns The changes to the request.
+ */
+const keptBy = (
+  kind: MediaRequestRecord['kind'],
+  held: HeldInLibrary | null,
+): Partial<Pick<MediaRequestRecord, 'libraryFolder' | 'seasonFolders' | 'mediaId'>> =>
+  kind !== 'series' || held === null
+    ? {}
+    : {
+        libraryFolder: held.folder,
+        seasonFolders: held.seasonFolders,
+        ...(held.mediaId === null ? {} : { mediaId: held.mediaId }),
+      };
+
+/**
  * The kinds of release two requests for the same artist watch for: both lists together, in the
  * order they are offered.
  *
@@ -86,7 +108,8 @@ const bothReleaseTypes = (kept: ReleaseType[] | null, asked: ReleaseType[]): Rel
  * already made for the same title; approving and refusing; changing what it asks for; bringing it up
  * to date with the catalogue; trying again what failed; and marking it arrived once the server has
  * found it in the library, whether filed by Valence, imported by a connected app or put there by
- * hand, and following it when the library loses it again.
+ * hand, and following it when the library loses it again. Episodes the library already holds when a
+ * series is asked for, or brought up to date, are marked there rather than searched for.
  *
  * Whatever changes what there is to fetch is said, so whatever fetches can get on with it.
  *
@@ -117,13 +140,15 @@ const createRequestService = ({
   const sync = async (
     record: MediaRequestRecord,
     catalogue: Pick<RequestCatalogue, 'episodes' | 'albums'>,
+    held: HeldInLibrary | null = null,
   ) => {
     const at = now().toISOString();
-    const { add, change, remove } = syncItems(
+    const { add, change, remove, arrive } = syncItems(
       record,
       catalogue,
       await itemsOf(record.id),
       chooseProfile(record, await profiles.list())?.releaseWait,
+      held?.episodes ?? [],
     );
 
     for (const draft of add) {
@@ -136,6 +161,15 @@ const createRequestService = ({
 
     for (const id of remove) {
       await items.remove(id);
+    }
+
+    for (const id of arrive) {
+      await items.update(id, {
+        state: 'available',
+        problem: null,
+        problemCode: null,
+        updatedAt: at,
+      });
     }
   };
 
@@ -197,12 +231,13 @@ const createRequestService = ({
           ...(draft.isApproved && kept.approval !== 'approved'
             ? { approval: 'approved', refusedBecause: null }
             : {}),
+          ...keptBy(kept.kind, draft.held),
           catalogueCheckedAt: at,
           updatedAt: at,
         });
         const record = merged ?? kept;
 
-        await sync(record, draft.catalogue);
+        await sync(record, draft.catalogue, draft.held);
         onChange();
 
         return { request: await shown(record), isNew: false };
@@ -210,7 +245,7 @@ const createRequestService = ({
 
       const record = await requests.insert(recordFromDraft(draft, randomUUID(), at));
 
-      await sync(record, draft.catalogue);
+      await sync(record, draft.catalogue, draft.held);
       onChange();
 
       return { request: await shown(record), isNew: true };
@@ -229,9 +264,16 @@ const createRequestService = ({
       id: string,
       asked: MediaRequestChange,
       given: RequestCatalogueDraft | null,
+      held: HeldInLibrary | null = null,
     ): Promise<MediaRequest | null> => {
       const change = MediaRequestChangeSchema.parse(asked);
       const catalogue = given === null ? null : RequestCatalogueSchema.parse(given);
+      const kept = await requests.find(id);
+
+      if (kept === null) {
+        return null;
+      }
+
       const record = await requests.update(id, {
         ...(change.seasons === undefined ? {} : { seasons: change.seasons }),
         ...(change.releaseTypes === undefined ? {} : { releaseTypes: change.releaseTypes }),
@@ -240,6 +282,7 @@ const createRequestService = ({
         ...(change.libraryId === undefined ? {} : { libraryId: change.libraryId }),
         ...(change.libraryPath === undefined ? {} : { libraryPath: change.libraryPath }),
         ...(catalogue === null ? {} : requestFactsOf(catalogue)),
+        ...keptBy(kept.kind, held),
         updatedAt: now().toISOString(),
       });
 
@@ -248,7 +291,7 @@ const createRequestService = ({
       }
 
       if (record.kind === 'film' || catalogue !== null) {
-        await sync(record, catalogue ?? { episodes: [], albums: [] });
+        await sync(record, catalogue ?? { episodes: [], albums: [] }, held);
       }
 
       onChange();
@@ -260,11 +303,18 @@ const createRequestService = ({
       id: string,
       update: RequestCatalogueUpdate,
     ): Promise<MediaRequest | null> => {
-      const catalogue = RequestCatalogueSchema.parse(update.catalogue);
+      const { catalogue, held, libraryPath } = RequestCatalogueUpdateSchema.parse(update);
       const at = now().toISOString();
+      const kept = await requests.find(id);
+
+      if (kept === null) {
+        return null;
+      }
+
       const record = await requests.update(id, {
         ...requestFactsOf(catalogue),
-        ...(update.libraryPath === undefined ? {} : { libraryPath: update.libraryPath }),
+        ...(libraryPath === undefined ? {} : { libraryPath }),
+        ...keptBy(kept.kind, held),
         catalogueCheckedAt: at,
         updatedAt: at,
       });
@@ -273,7 +323,7 @@ const createRequestService = ({
         return null;
       }
 
-      await sync(record, catalogue);
+      await sync(record, catalogue, held);
       onChange();
 
       return shown(record);

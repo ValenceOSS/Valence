@@ -1,9 +1,12 @@
+import type { SeriesFile } from '@ValenceServer/requests/catalogue/SeriesFile';
+
 type NamedBook = { key: string; title: string };
 
 type CatalogueLookup = {
   films: (tmdbIds: readonly string[]) => Promise<ReadonlyMap<string, string>>;
   series: (tmdbIds: readonly string[]) => Promise<ReadonlyMap<string, string>>;
   episodesHeld: (tmdbId: string) => Promise<ReadonlyMap<number, number>>;
+  seriesFiles: (tmdbId: string) => Promise<readonly SeriesFile[]>;
   artists: (musicBrainzIds: readonly string[]) => Promise<ReadonlyMap<string, string>>;
   albums: (releaseGroupIds: readonly string[]) => Promise<ReadonlyMap<string, string>>;
   artistsNamed: (nameKeys: readonly string[]) => Promise<ReadonlyMap<string, string>>;

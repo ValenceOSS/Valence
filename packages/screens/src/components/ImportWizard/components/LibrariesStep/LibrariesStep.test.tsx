@@ -112,6 +112,7 @@ const SHOWS: Library = {
   takesRequests: true,
   requestProfileId: null,
   requestPath: null,
+  keepsShowsTogether: true,
 };
 
 const FILMS: Library = { ...SHOWS, id: 'valence-films', name: 'Our films', kind: 'movies' };

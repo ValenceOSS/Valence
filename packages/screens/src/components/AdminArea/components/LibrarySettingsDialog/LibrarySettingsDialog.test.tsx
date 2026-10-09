@@ -71,6 +71,7 @@ const films = (overrides: Partial<Library> = {}): Library => ({
   takesRequests: true,
   requestProfileId: null,
   requestPath: null,
+  keepsShowsTogether: true,
   ...overrides,
 });
 
@@ -169,6 +170,7 @@ describe('LibrarySettingsDialog', () => {
         takesRequests: true,
         requestProfileId: null,
         requestPath: null,
+        keepsShowsTogether: true,
         fulfilment: null,
       });
     });
@@ -300,6 +302,54 @@ describe('LibrarySettingsDialog', () => {
     expect(LibrarySettingsDialog.displayName).toBe('LibrarySettingsDialog');
   });
 
+  it('files requested episodes apart from a show already held once told to', async () => {
+    const user = userEvent.setup();
+    const shows = films({ kind: 'shows', name: 'Shows', path: '/media/shows' });
+
+    updateLibraryMock.mockResolvedValue({ ...shows, keepsShowsTogether: false });
+
+    render(
+      <LibrarySettingsDialog
+        library={shows}
+        isOpen
+        onClose={vi.fn()}
+        onUpdated={vi.fn()}
+        onRegenerate={vi.fn()}
+      />,
+    );
+
+    const keeping = screen.getByRole('switch', { name: 'Keep new episodes with the show' });
+
+    expect(keeping).toBeChecked();
+    expect(keeping).toHaveAccessibleDescription(/existing folder/);
+
+    await user.click(keeping);
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(updateLibraryMock).toHaveBeenCalledWith(
+        shows.id,
+        expect.objectContaining({ keepsShowsTogether: false }),
+      );
+    });
+  });
+
+  it('offers to keep episodes with their show only for a library of shows', () => {
+    render(
+      <LibrarySettingsDialog
+        library={films()}
+        isOpen
+        onClose={vi.fn()}
+        onUpdated={vi.fn()}
+        onRegenerate={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByRole('switch', { name: 'Keep new episodes with the show' }),
+    ).not.toBeInTheDocument();
+  });
+
   it('asks for one file at a time when a library is told to', async () => {
     const user = userEvent.setup();
 
@@ -396,6 +446,7 @@ describe('LibrarySettingsDialog', () => {
         takesRequests: true,
         requestProfileId: null,
         requestPath: '/media/asked-for',
+        keepsShowsTogether: true,
         fulfilment: null,
       });
     });

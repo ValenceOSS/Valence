@@ -34,6 +34,7 @@ const shelf = (id: string, name: string, kind: Library['kind']): Library => ({
   takesRequests: true,
   requestProfileId: null,
   requestPath: null,
+  keepsShowsTogether: true,
 });
 
 const film = (id: string, libraryId: string, title: string, seriesTitle?: string): MediaDetail => ({

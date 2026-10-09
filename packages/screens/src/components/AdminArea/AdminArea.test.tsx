@@ -142,6 +142,7 @@ const LIBRARIES: Library[] = [
     takesRequests: true,
     requestProfileId: null,
     requestPath: null,
+    keepsShowsTogether: true,
   },
 ];
 
@@ -159,6 +160,7 @@ const CREATED_LIBRARY: Library = {
   takesRequests: true,
   requestProfileId: null,
   requestPath: null,
+  keepsShowsTogether: true,
 };
 
 const SHOWS_LIBRARY_ID = '22222222-2222-4222-8222-222222222222';
@@ -179,6 +181,7 @@ const TWO_LIBRARIES: Library[] = [
     takesRequests: true,
     requestProfileId: null,
     requestPath: null,
+    keepsShowsTogether: true,
   },
 ];
 

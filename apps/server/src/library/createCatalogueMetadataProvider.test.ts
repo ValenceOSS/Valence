@@ -2016,3 +2016,80 @@ describe('finding a series by its TVDB id', () => {
     ).resolves.toBeNull();
   });
 });
+
+describe('a programme folder named without a year', () => {
+  const SEARCHED = {
+    results: [
+      { id: 101, name: 'Show', first_air_date: '2001-07-09' },
+      { id: 202, name: 'Show', first_air_date: '2005-03-24' },
+      { id: 303, name: 'Show Again', first_air_date: '2010-01-01' },
+    ],
+  };
+  const SHORT = {
+    id: 101,
+    name: 'Show',
+    genres: [],
+    seasons: [{ season_number: 1, episode_count: 6 }],
+  };
+  const LONG = {
+    id: 202,
+    name: 'Show',
+    genres: [],
+    seasons: [
+      { season_number: 0, episode_count: 30 },
+      ...Array.from({ length: 9 }, (_, index) => ({
+        season_number: index + 1,
+        episode_count: 22,
+      })),
+    ],
+  };
+
+  /**
+   * An episode of the folder, which reaches as far as asked.
+   *
+   * @param season - The furthest season on disk.
+   * @param episode - The furthest episode in it.
+   * @returns The facts.
+   */
+  const reaching = (season: number, episode: number) =>
+    facts('/media/Show/Season 1/Show.S01E01.mkv', {
+      seriesTitle: 'Show',
+      seasonNumber: 1,
+      episodeNumber: 1,
+      seriesReach: { season, episode },
+    });
+
+  it('is the programme that has the seasons and episodes on disk, not the most popular', async () => {
+    const { instance } = provider({ '/search/tv': SEARCHED, '/tv/101': SHORT, '/tv/202': LONG });
+
+    expect(await instance.describe(reaching(5, 3))).toMatchObject({ externalId: '202' });
+  });
+
+  it('is the first that has them, asking nothing of the rest', async () => {
+    const { instance, calls } = provider({
+      '/search/tv': SEARCHED,
+      '/tv/101': SHORT,
+      '/tv/202': LONG,
+    });
+
+    expect(await instance.describe(reaching(1, 6))).toMatchObject({ externalId: '101' });
+    expect(calls.some((call) => call.includes('/tv/202'))).toBe(false);
+  });
+
+  it('may be one whose title matches less closely, where only it has them', async () => {
+    const { instance } = provider({
+      '/search/tv': SEARCHED,
+      '/tv/101': SHORT,
+      '/tv/202': { ...SHORT, id: 202 },
+      '/tv/303': { ...LONG, id: 303, name: 'Show Again' },
+    });
+
+    expect(await instance.describe(reaching(7, 1))).toMatchObject({ externalId: '303' });
+  });
+
+  it('is the catalogue’s first choice where none of them has what is on disk', async () => {
+    const { instance } = provider({ '/search/tv': SEARCHED, '/tv/101': SHORT, '/tv/202': LONG });
+
+    expect(await instance.describe(reaching(12, 1))).toMatchObject({ externalId: '101' });
+  });
+});

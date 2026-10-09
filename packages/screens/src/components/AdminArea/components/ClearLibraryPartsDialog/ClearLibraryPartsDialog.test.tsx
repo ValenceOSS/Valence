@@ -30,6 +30,7 @@ const MOVIES: Library = {
   takesRequests: true,
   requestProfileId: null,
   requestPath: null,
+  keepsShowsTogether: true,
 };
 
 const MUSIC: Library = { ...MOVIES, id: 'lib-music', name: 'Music', kind: 'music' };

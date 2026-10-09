@@ -41,9 +41,20 @@ describe('TheSeasons', () => {
       around(<TheSeasons tmdbId={1399} seasons={null} onChange={onChange} />),
     );
 
-    await fireEvent(await drawn.findByRole('switch', { name: 'Season 1' }), 'valueChange', false);
+    await fireEvent(await drawn.findByRole('switch', { name: 'Season 2' }), 'valueChange', false);
 
-    expect(onChange).toHaveBeenCalledWith([2]);
+    expect(onChange).toHaveBeenCalledWith([]);
+  });
+
+  it('locks a season the library already holds whole', async () => {
+    const drawn = await render(
+      around(<TheSeasons tmdbId={1399} seasons={null} onChange={jest.fn()} />),
+    );
+
+    const held = await drawn.findByRole('switch', { name: 'Season 1' });
+
+    expect(held).toBeDisabled();
+    expect(held).not.toBeChecked();
   });
 
   it('takes none where every season is turned off', async () => {

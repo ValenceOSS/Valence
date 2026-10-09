@@ -88,6 +88,23 @@ const RequestCatalogueSchema = z.object({
 
 const RequesterSchema = z.object({ id: z.string().min(1), name: z.string() });
 
+const HeldEpisodeSchema = z.object({
+  season: z.number().int().nonnegative(),
+  episode: z.number().int().nonnegative(),
+});
+
+const SeasonFolderSchema = z.object({
+  season: z.number().int().nonnegative(),
+  folder: z.string().min(1),
+});
+
+const HeldInLibrarySchema = z.object({
+  mediaId: z.string().min(1).nullable().default(null),
+  episodes: z.array(HeldEpisodeSchema).max(10_000).default([]),
+  folder: z.string().min(1).nullable().default(null),
+  seasonFolders: z.array(SeasonFolderSchema).max(200).default([]),
+});
+
 const SeasonsSchema = z.array(z.number().int().nonnegative()).max(200).nullable();
 
 /**
@@ -155,6 +172,7 @@ const MediaRequestDraftSchema = z
     isApproved: z.boolean(),
     catalogue: RequestCatalogueSchema,
     handOff: FulfilmentSchema.nullable().default(null),
+    held: HeldInLibrarySchema.nullable().default(null),
   })
   .superRefine(needsItsId);
 
@@ -243,6 +261,7 @@ const BlockedReleaseSchema = z.object({
 const MediaRequestRevisionSchema = z.object({
   change: MediaRequestChangeSchema,
   catalogue: RequestCatalogueSchema.nullable().default(null),
+  held: HeldInLibrarySchema.nullable().default(null),
 });
 
 const MediaRequestAddedSchema = z.object({ request: MediaRequestSchema, isNew: z.boolean() });
@@ -256,16 +275,12 @@ const MediaRequestPickSchema = z.object({ release: ReleaseSchema });
 const RequestCatalogueUpdateSchema = z.object({
   catalogue: RequestCatalogueSchema,
   libraryPath: z.string().min(1).optional(),
+  held: HeldInLibrarySchema.nullable().default(null),
 });
 
 const MediaRequestArrivalSchema = z.object({ mediaId: z.string().min(1) });
 
 const MediaRequestDepartureSchema = z.object({ mediaId: z.string().min(1).nullable() });
-
-const HeldEpisodeSchema = z.object({
-  season: z.number().int().nonnegative(),
-  episode: z.number().int().nonnegative(),
-});
 
 const MediaRequestArrivalsSchema = z.object({
   mediaId: z.string().min(1),
@@ -346,6 +361,8 @@ type MediaRequestAdded = z.infer<typeof MediaRequestAddedSchema>;
 type RequestCatalogueUpdate = z.input<typeof RequestCatalogueUpdateSchema>;
 type FollowedRequest = z.infer<typeof FollowedRequestSchema>;
 type HeldEpisode = z.infer<typeof HeldEpisodeSchema>;
+type HeldInLibrary = z.infer<typeof HeldInLibrarySchema>;
+type SeasonFolder = z.infer<typeof SeasonFolderSchema>;
 type MediaRequestArrivals = z.input<typeof MediaRequestArrivalsSchema>;
 type MediaRequestArrived = z.infer<typeof MediaRequestArrivedSchema>;
 type MediaRequestDeparture = z.infer<typeof MediaRequestDepartureSchema>;
@@ -363,6 +380,7 @@ export type {
   SeasonStanding,
   FollowedRequest,
   HeldEpisode,
+  HeldInLibrary,
   MediaRequest,
   MediaRequestArrivals,
   MediaRequestArrived,
@@ -386,6 +404,7 @@ export type {
   RequestItem,
   RequestItemState,
   RequestLogEntry,
+  SeasonFolder,
   VideoRequestKind,
 };
 
@@ -409,6 +428,7 @@ export {
   FollowedRequestSchema,
   MediaRequestAddedSchema,
   HeldEpisodeSchema,
+  HeldInLibrarySchema,
   MediaRequestArrivalSchema,
   MediaRequestArrivalsSchema,
   MediaRequestArrivedSchema,
@@ -437,4 +457,5 @@ export {
   RequestItemStateSchema,
   RequestLogEntrySchema,
   RequesterSchema,
+  SeasonFolderSchema,
 };

@@ -71,6 +71,7 @@ const build = async () => {
           takesRequests: true,
           requestProfileId: null,
           requestPath: null,
+          keepsShowsTogether: true,
         },
       ],
       media: [FILM],

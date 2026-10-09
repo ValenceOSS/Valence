@@ -952,6 +952,43 @@ describe('a correction somebody made', () => {
     expect(asked).toBe('222');
   });
 
+  it('is stored as a correction, so it replaces the programme’s match', async () => {
+    const { run, rows } = harness({
+      kind: 'shows',
+      root: '/media/shows',
+      found: [
+        file('/media/shows/Show/Season 01/show.s01e01.mkv'),
+        file('/media/shows/Other/Season 01/other.s01e01.mkv'),
+      ],
+      overrides: [
+        {
+          path: '/media/shows/Show/Season 01/show.s01e01.mkv',
+          externalId: '222',
+          externalKind: 'tv',
+        },
+      ],
+      force: true,
+      providers: [
+        {
+          name: 'catalogue',
+          describe: () =>
+            Promise.resolve({ title: 'Pilot', year: 2022, seriesTitle: 'Show', externalId: '222' }),
+        },
+      ],
+    });
+
+    await run();
+
+    expect(
+      rows
+        .map((row) => [row.path, row.isCorrected])
+        .toSorted(([left], [right]) => String(left).localeCompare(String(right))),
+    ).toEqual([
+      ['/media/shows/Other/Season 01/other.s01e01.mkv', false],
+      ['/media/shows/Show/Season 01/show.s01e01.mkv', true],
+    ]);
+  });
+
   it('reaches a season that did not exist when it was made', async () => {
     const asked: (string | null | undefined)[] = [];
     const { run } = harness({
@@ -1703,5 +1740,117 @@ describe('a library holding copies Valence keeps beside its films', () => {
     await run();
 
     expect(rows.map((row) => row.path)).toEqual(['/media/films/Arrival (2016)/Arrival (2016).mkv']);
+  });
+});
+
+describe('a programme the catalogue could not name before', () => {
+  const SHOWS = '/media/shows';
+
+  it('asks again about one of its files on a later scan, though nothing changed', async () => {
+    const probed: string[] = [];
+    const { run, rows } = harness({
+      kind: 'shows',
+      root: SHOWS,
+      found: [
+        file(`${SHOWS}/Show/Season 1/Show - S01E02.mkv`),
+        file(`${SHOWS}/Show/Season 1/Show - S01E01.mkv`),
+      ],
+      existing: [
+        stored(`${SHOWS}/Show/Season 1/Show - S01E01.mkv`),
+        stored(`${SHOWS}/Show/Season 1/Show - S01E02.mkv`),
+      ],
+      probeImpl: (path) => {
+        probed.push(path);
+
+        return Promise.resolve(probe());
+      },
+      providers: [
+        {
+          name: 'naming',
+          describe: () =>
+            Promise.resolve({ title: 'Pilot', year: 2019, seriesTitle: 'Show', externalId: '7' }),
+        },
+      ],
+    });
+
+    expect(await run()).toMatchObject({ added: 0, updated: 1 });
+    expect(probed).toEqual([`${SHOWS}/Show/Season 1/Show - S01E01.mkv`]);
+    expect(rows.map((row) => row.metadata.externalId)).toEqual(['7']);
+  });
+
+  it('asks again about every episode still unnamed once the programme is named', async () => {
+    const probed: string[] = [];
+    const { run } = harness({
+      kind: 'shows',
+      root: SHOWS,
+      found: [
+        file(`${SHOWS}/Show/Season 1/Show - S01E01.mkv`),
+        file(`${SHOWS}/Show/Season 1/Show - S01E02.mkv`),
+        file(`${SHOWS}/Show/Season 1/Show - S01E03.mkv`),
+      ],
+      existing: [
+        stored(`${SHOWS}/Show/Season 1/Show - S01E01.mkv`, { externalId: '7' }),
+        stored(`${SHOWS}/Show/Season 1/Show - S01E02.mkv`),
+        stored(`${SHOWS}/Show/Season 1/Show - S01E03.mkv`),
+      ],
+      probeImpl: (path) => {
+        probed.push(path);
+
+        return Promise.resolve(probe());
+      },
+    });
+
+    await run();
+
+    expect(probed.toSorted()).toEqual([
+      `${SHOWS}/Show/Season 1/Show - S01E02.mkv`,
+      `${SHOWS}/Show/Season 1/Show - S01E03.mkv`,
+    ]);
+  });
+
+  it('leaves a named programme, and a film, alone', async () => {
+    const probeSpy = vi.fn(() => Promise.resolve(probe()));
+    const { run } = harness({
+      kind: 'shows',
+      root: SHOWS,
+      found: [file(`${SHOWS}/Show/Season 1/Show - S01E01.mkv`)],
+      existing: [stored(`${SHOWS}/Show/Season 1/Show - S01E01.mkv`, { externalId: '7' })],
+      probeImpl: probeSpy,
+    });
+
+    await run();
+
+    const films = harness({
+      root: '/media/films',
+      found: [file('/media/films/Film (2016)/Film (2016).mkv')],
+      existing: [stored('/media/films/Film (2016)/Film (2016).mkv')],
+      probeImpl: probeSpy,
+    });
+
+    await films.run();
+
+    expect(probeSpy).not.toHaveBeenCalled();
+  });
+
+  it('asks nothing twice where a new episode is being read already', async () => {
+    const probed: string[] = [];
+    const { run } = harness({
+      kind: 'shows',
+      root: SHOWS,
+      found: [
+        file(`${SHOWS}/Show/Season 1/Show - S01E01.mkv`),
+        file(`${SHOWS}/Show/Season 1/Show - S01E02.mkv`),
+      ],
+      existing: [stored(`${SHOWS}/Show/Season 1/Show - S01E01.mkv`)],
+      probeImpl: (path) => {
+        probed.push(path);
+
+        return Promise.resolve(probe());
+      },
+    });
+
+    await run();
+
+    expect(probed).toEqual([`${SHOWS}/Show/Season 1/Show - S01E02.mkv`]);
   });
 });

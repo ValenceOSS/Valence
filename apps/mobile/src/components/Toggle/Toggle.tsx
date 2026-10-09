@@ -10,7 +10,13 @@ import type { ToggleProps } from './Toggle.types';
  * @param isDisabled - Whether it can be touched.
  */
 const Toggle = ({ label, isOn, onToggle, isDisabled = false }: ToggleProps) => (
-  <Switch accessibilityLabel={label} value={isOn} onValueChange={onToggle} disabled={isDisabled} />
+  <Switch
+    accessibilityLabel={label}
+    accessibilityState={{ disabled: isDisabled }}
+    value={isOn}
+    onValueChange={onToggle}
+    disabled={isDisabled}
+  />
 );
 
 Toggle.displayName = 'Toggle';

@@ -63,6 +63,7 @@ type UpdateLibraryInput = {
   takesRequests?: boolean;
   requestProfileId?: string | null;
   requestPath?: string | null;
+  keepsShowsTogether?: boolean;
   fulfilment?: Fulfilment | null;
 };
 

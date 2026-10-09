@@ -31,6 +31,7 @@ const aShelf = (over: Partial<Library> = {}): Library => ({
   takesRequests: true,
   requestProfileId: null,
   requestPath: null,
+  keepsShowsTogether: true,
   ...over,
 });
 

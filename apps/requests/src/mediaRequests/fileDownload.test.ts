@@ -47,7 +47,7 @@ describe('fileDownload', () => {
     await writeFile(join(release, 'Sample', 'sample-dune.mkv'), 'a bit of the film, longer');
 
     const { filed, missing } = await fileDownload(
-      { libraryPath: library, title: 'Dune', year: 2021 },
+      { libraryPath: library, libraryFolder: null, seasonFolders: [], title: 'Dune', year: 2021 },
       [anItem('film', null, null)],
       release,
       true,
@@ -75,7 +75,13 @@ describe('fileDownload', () => {
     await writeFile(join(release, 'Severance.S01E02.1080p.WEB-DL-GRP.mkv'), 'two');
 
     const { filed, missing } = await fileDownload(
-      { libraryPath: library, title: 'Severance', year: 2022 },
+      {
+        libraryPath: library,
+        libraryFolder: null,
+        seasonFolders: [],
+        title: 'Severance',
+        year: 2022,
+      },
       [anItem('1', 1, 1, 'Good News About Hell'), anItem('2', 1, 2), anItem('3', 1, 3)],
       release,
       false,
@@ -109,7 +115,13 @@ describe('fileDownload', () => {
     await writeFile(join(downloads, 'episode.mkv'), 'one');
 
     const { filed } = await fileDownload(
-      { libraryPath: library, title: 'Severance', year: 2022 },
+      {
+        libraryPath: library,
+        libraryFolder: null,
+        seasonFolders: [],
+        title: 'Severance',
+        year: 2022,
+      },
       [anItem('1', 1, 1)],
       join(downloads, 'episode.mkv'),
       true,
@@ -126,7 +138,7 @@ describe('fileDownload', () => {
     await writeFile(join(downloads, 'Dune.2021.2160p.BluRay.REMUX.HEVC.TrueHD.7.1.mkv'), 'film');
 
     const { filed } = await fileDownload(
-      { libraryPath: library, title: 'Dune', year: 2021 },
+      { libraryPath: library, libraryFolder: null, seasonFolders: [], title: 'Dune', year: 2021 },
       [anItem('film', null, null)],
       join(downloads, 'Dune.2021.2160p.BluRay.REMUX.HEVC.TrueHD.7.1.mkv'),
       true,
@@ -146,7 +158,13 @@ describe('fileDownload', () => {
     await writeFile(join(release, 'S01E01.mkv'), 'one');
 
     const { filed } = await fileDownload(
-      { libraryPath: library, title: 'Severance', year: 2022 },
+      {
+        libraryPath: library,
+        libraryFolder: null,
+        seasonFolders: [],
+        title: 'Severance',
+        year: 2022,
+      },
       [anItem('1', 1, 1, '', 'Severance.S01.2160p.WEB-DL.DDP5.1.Atmos.H.265-GRP')],
       release,
       true,
@@ -171,7 +189,7 @@ describe('fileDownload', () => {
     await writeFile(join(release, 'Dune.2021.1080p.WEB-DL-GRP.en.srt'), 'words');
 
     const { filed } = await fileDownload(
-      { libraryPath: library, title: 'Dune', year: 2021 },
+      { libraryPath: library, libraryFolder: null, seasonFolders: [], title: 'Dune', year: 2021 },
       [anItem('film', null, null)],
       release,
       true,
@@ -201,7 +219,7 @@ describe('fileDownload', () => {
 
     const seen: object[] = [];
     const { filed, refused } = await fileDownload(
-      { libraryPath: library, title: 'Film', year: 2026 },
+      { libraryPath: library, libraryFolder: null, seasonFolders: [], title: 'Film', year: 2026 },
       [anItem('film', null, null)],
       release,
       true,
@@ -236,7 +254,7 @@ describe('fileDownload', () => {
     await writeFile(join(release, 'Film.2026.2160p.WEB-DL-GRP.mkv'), 'a copy that lies');
 
     const { refused } = await fileDownload(
-      { libraryPath: library, title: 'Film', year: 2026 },
+      { libraryPath: library, libraryFolder: null, seasonFolders: [], title: 'Film', year: 2026 },
       [{ ...anItem('film', null, null), filePath: kept }],
       release,
       true,
@@ -257,7 +275,7 @@ describe('fileDownload', () => {
     await writeFile(join(release, 'Film.2026.2160p.WEB-DL-GRP.mkv'), 'the film');
 
     const { filed, refused } = await fileDownload(
-      { libraryPath: library, title: 'Film', year: 2026 },
+      { libraryPath: library, libraryFolder: null, seasonFolders: [], title: 'Film', year: 2026 },
       [anItem('film', null, null)],
       release,
       true,
@@ -279,7 +297,7 @@ describe('fileDownload', () => {
     await writeFile(join(downloads, 'Dune.2021.1080p.WEB-DL.x264-GRP.mkv'), 'the film');
 
     const { filed } = await fileDownload(
-      { libraryPath: library, title: 'Dune', year: 2021 },
+      { libraryPath: library, libraryFolder: null, seasonFolders: [], title: 'Dune', year: 2021 },
       [anItem('film', null, null)],
       join(downloads, 'Dune.2021.1080p.WEB-DL.x264-GRP.mkv'),
       true,
@@ -297,7 +315,7 @@ describe('fileDownload', () => {
     await writeFile(join(downloads, 'Dune.2021.2160p.BluRay.REMUX.mkv'), 'the film');
 
     const { filed } = await fileDownload(
-      { libraryPath: library, title: 'Dune', year: 2021 },
+      { libraryPath: library, libraryFolder: null, seasonFolders: [], title: 'Dune', year: 2021 },
       [anItem('film', null, null)],
       join(downloads, 'Dune.2021.2160p.BluRay.REMUX.mkv'),
       true,
@@ -322,7 +340,7 @@ describe('fileDownload', () => {
     await writeFile(join(downloads, 'Dune.2021.2160p.mkv'), 'better');
 
     await fileDownload(
-      { libraryPath: library, title: 'Dune', year: 2021 },
+      { libraryPath: library, libraryFolder: null, seasonFolders: [], title: 'Dune', year: 2021 },
       [{ ...anItem('film', null, null), filePath: old }],
       join(downloads, 'Dune.2021.2160p.mkv'),
       true,
@@ -337,7 +355,7 @@ describe('fileDownload', () => {
     await writeFile(join(downloads, 'readme.txt'), 'hello');
 
     const { filed, missing } = await fileDownload(
-      { libraryPath: library, title: 'Dune', year: 2021 },
+      { libraryPath: library, libraryFolder: null, seasonFolders: [], title: 'Dune', year: 2021 },
       [anItem('film', null, null)],
       downloads,
       true,

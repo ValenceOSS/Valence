@@ -38,7 +38,11 @@ import {
   REQUEST_APPROVALS,
   REQUEST_ITEM_STATES,
 } from '@ValenceContracts/schemas/MediaRequest';
-import type { ReleaseType, RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
+import type {
+  ReleaseType,
+  RequestCatalogue,
+  SeasonFolder,
+} from '@ValenceContracts/schemas/MediaRequest';
 import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { EMPTY_TEXT } from '@ValenceDatabase/mysql/columns/EMPTY_TEXT';
@@ -263,6 +267,11 @@ const mediaRequest = requestsSchema(
     posterUrl: mediumtext('poster_url'),
     libraryId: varchar('library_id', { length: 64 }).notNull(),
     libraryPath: mediumtext('library_path').notNull(),
+    libraryFolder: mediumtext('library_folder'),
+    seasonFolders: jsonColumn('season_folders')
+      .$type<SeasonFolder[]>()
+      .notNull()
+      .default(jsonDefault([])),
     profileId: char('profile_id', { length: 36 }),
     libraryLanguage: varchar('library_language', { length: 64 }),
     isPickedByHand: boolean('is_picked_by_hand').notNull().default(false),

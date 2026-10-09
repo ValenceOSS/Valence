@@ -1,5 +1,9 @@
 import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
-import type { MediaRequest, RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
+import type {
+  MediaRequest,
+  RequestCatalogue,
+  SeasonFolder,
+} from '@ValenceContracts/schemas/MediaRequest';
 import type { RecordStore } from '@ValenceRequests/stores/RecordStore';
 
 type MediaRequestRecord = Omit<
@@ -7,6 +11,8 @@ type MediaRequestRecord = Omit<
   'state' | 'items' | 'requestedBy' | 'releaseDate' | 'profileName'
 > & {
   libraryPath: string;
+  libraryFolder: string | null;
+  seasonFolders: SeasonFolder[];
   libraryLanguage: string | null;
   aliases: string[];
   requestedById: string;

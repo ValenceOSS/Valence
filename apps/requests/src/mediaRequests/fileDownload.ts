@@ -142,7 +142,10 @@ const videoFor = (
  * @returns Where each was filed, which could not be found in it, and which were refused and why.
  */
 const fileDownload = async (
-  request: Pick<MediaRequestRecord, 'libraryPath' | 'title' | 'year'>,
+  request: Pick<
+    MediaRequestRecord,
+    'libraryPath' | 'libraryFolder' | 'seasonFolders' | 'title' | 'year'
+  >,
   items: readonly Fileable[],
   contentPath: string,
   isKeepingSource: boolean,

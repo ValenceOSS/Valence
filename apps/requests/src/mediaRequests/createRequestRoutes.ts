@@ -88,7 +88,14 @@ const createRequestRoutes = ({ service, log, worker }: CreateRequestRoutesOption
 
     return revision === null
       ? context.json(refuse('error.requests.thatIsNotAChangeTo'), 400)
-      : answer(await service.change(context.req.param('id'), revision.change, revision.catalogue));
+      : answer(
+          await service.change(
+            context.req.param('id'),
+            revision.change,
+            revision.catalogue,
+            revision.held,
+          ),
+        );
   });
 
   routes.delete('/requests/:id', async (context) => {

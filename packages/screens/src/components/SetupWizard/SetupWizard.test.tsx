@@ -34,6 +34,7 @@ const LIBRARY: Library = {
   takesRequests: true,
   requestProfileId: null,
   requestPath: null,
+  keepsShowsTogether: true,
 };
 
 const completeSetup = vi.hoisted(() =>

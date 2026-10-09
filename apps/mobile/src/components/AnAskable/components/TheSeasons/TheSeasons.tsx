@@ -3,6 +3,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { nameSeason } from '@ValenceClient/library/nameSeason';
 import { SEASON_STANDING_NAMES } from '@ValenceClient/requests/SEASON_STANDING_NAMES';
+import { isSeasonHeld } from '@ValenceClient/requests/isSeasonHeld';
 import { theSeasonsTicked } from '@ValenceClient/requests/theSeasonsTicked';
 import { tickASeason } from '@ValenceClient/requests/tickASeason';
 import { Toggle } from '@ValenceMobile/components/Toggle/Toggle';
@@ -21,7 +22,8 @@ const styles = StyleSheet.create({
  * Which of a programme's seasons to ask for, a switch each and one for every season.
  *
  * Every season is held as every season rather than the ones there are today, so a programme still
- * running goes on being fetched as it airs.
+ * running goes on being fetched as it airs. A season the library already holds whole is locked, as
+ * there is nothing in it to ask for.
  *
  * @param tmdbId - Which programme.
  * @param seasons - What is ticked, null for every season.
@@ -74,6 +76,7 @@ const TheSeasons = ({ tmdbId, seasons, onChange }: TheSeasonsProps) => {
           <Toggle
             label={nameSeason(row.season)}
             isOn={ticked.includes(row.season)}
+            isDisabled={isSeasonHeld(row)}
             onToggle={() => {
               onChange(tickASeason(seasons, rows, row.season));
             }}

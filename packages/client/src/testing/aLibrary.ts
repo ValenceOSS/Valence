@@ -18,6 +18,7 @@ const aLibrary = (change: Partial<Library> = {}): Library => ({
   takesRequests: false,
   requestProfileId: null,
   requestPath: null,
+  keepsShowsTogether: true,
   linkedServerId: null,
   ...change,
 });

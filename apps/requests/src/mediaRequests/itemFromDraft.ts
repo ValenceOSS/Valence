@@ -2,7 +2,8 @@ import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestIt
 import type { ItemDraft } from '@ValenceRequests/mediaRequests/syncItems';
 
 /**
- * A film or episode as a request first waits for it: not out yet, and nothing searched for.
+ * A film or episode as a request first waits for it: not out yet, or already in the library, and
+ * nothing searched for.
  *
  * @param draft - Which film or episode.
  * @param id - Its id.
@@ -19,7 +20,6 @@ const itemFromDraft = (
   ...draft,
   id,
   requestId,
-  state: 'waiting',
   problem: null,
   problemCode: null,
   releaseTitle: null,

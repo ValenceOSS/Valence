@@ -70,6 +70,7 @@ const LIBRARIES = [
     takesRequests: true,
     requestProfileId: null,
     requestPath: null,
+    keepsShowsTogether: true,
   },
   {
     id: 'library-2',
@@ -83,6 +84,7 @@ const LIBRARIES = [
     takesRequests: true,
     requestProfileId: null,
     requestPath: null,
+    keepsShowsTogether: true,
   },
 ];
 

@@ -18,6 +18,7 @@ const library = (overrides: Partial<Library> = {}): Library => ({
   takesRequests: true,
   requestProfileId: null,
   requestPath: null,
+  keepsShowsTogether: true,
   ...overrides,
 });
 

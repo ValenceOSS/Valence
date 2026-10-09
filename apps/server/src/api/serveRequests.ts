@@ -123,6 +123,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     profileForAsk,
     catalogueFor,
     draftFor,
+    heldFor,
     findInCatalogue,
     sayOfAsk,
     whatMayBeAsked,
@@ -575,7 +576,9 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     const answer = await throughRequests(
       context.req.raw.headers,
       async (client) => {
-        if (change.seasons === undefined && change.releaseTypes === undefined) {
+        const asksTheCatalogue = change.seasons !== undefined || change.releaseTypes !== undefined;
+
+        if (!asksTheCatalogue && change.libraryId === undefined) {
           return client.changeRequest(id, { change });
         }
 
@@ -585,7 +588,17 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
           return found;
         }
 
-        return client.changeRequest(id, { change, catalogue: await catalogueFor(found.value) });
+        const libraryId = change.libraryId ?? found.value.libraryId;
+        const into = (await library.list(asTheServer)).find((entry) => entry.id === libraryId);
+
+        return client.changeRequest(id, {
+          change,
+          ...(asksTheCatalogue ? { catalogue: await catalogueFor(found.value) } : {}),
+          held:
+            found.value.kind === 'series' && found.value.tmdbId !== null && into !== undefined
+              ? await heldFor(into, found.value.tmdbId)
+              : null,
+        });
       },
       APPROVERS,
     );

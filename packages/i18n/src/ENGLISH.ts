@@ -3615,12 +3615,16 @@ const ENGLISH = {
     'As many as the server allows',
   'screens.adminArea.librarySettingsDialog.howManyOfThisLibrarysFiles':
     'How many of this library’s files are processed at the same time. For a local disk, use as many as the server can handle. For a network share, use one: files share a single connection, so processing four at once splits its speed four ways.',
+  'screens.adminArea.librarySettingsDialog.keepNewEpisodesWithTheShow':
+    'Keep new episodes with the show',
   'screens.adminArea.librarySettingsDialog.kindSearchesDownloadsAndImports':
     '{kind} searches, downloads and imports it.',
   'screens.adminArea.librarySettingsDialog.metadataProfile': 'Metadata profile',
   'screens.adminArea.librarySettingsDialog.oneAtATime': 'One at a time',
   'screens.adminArea.librarySettingsDialog.previewsAndPlaybackPreferThisLanguage':
     'Previews and playback use this audio language when a file has it. Files without a matching track use their own default.',
+  'screens.adminArea.librarySettingsDialog.putsNewSeasonsOfAShow':
+    'Puts requested seasons and episodes of a show you already have in its existing folder. When off, they go in a new folder named after the show.',
   'screens.adminArea.librarySettingsDialog.qualityProfileForRequests':
     'Quality profile for requests',
   'screens.adminArea.librarySettingsDialog.qualityProfileInTheApp': 'Quality profile in the app',
@@ -6419,7 +6423,7 @@ const ENGLISH = {
   'server.jobs.jobDefinitions.checksTheTranscoderIsStillAnswering':
     'Checks the transcoder is still responding.',
   'server.jobs.jobDefinitions.checksTMDBForNewEpisodesAnd':
-    'Checks TMDB for new episodes and changed release dates.',
+    'Checks TMDB for new episodes and changed release dates, and what the library already holds of each requested show.',
   'server.jobs.jobDefinitions.checkTheRequestsService': 'Check the requests service',
   'server.jobs.jobDefinitions.checkTheTranscoder': 'Check the transcoder',
   'server.jobs.jobDefinitions.cleanUpCachedImages': 'Clean up cached images',

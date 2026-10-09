@@ -58,6 +58,7 @@ const build = async (isAdministrator = true) => {
           takesRequests: true,
           requestProfileId: null,
           requestPath: null,
+          keepsShowsTogether: true,
         },
       ],
       media: [],

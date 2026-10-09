@@ -1105,7 +1105,13 @@ describe('createRequestWorker', () => {
       await worker.tick();
 
       expect(filed).toHaveBeenCalledWith(
-        { libraryPath: '/media/Films', title: 'The Matrix', year: 1999 },
+        {
+          libraryPath: '/media/Films',
+          libraryFolder: null,
+          seasonFolders: [],
+          title: 'The Matrix',
+          year: 1999,
+        },
         [
           {
             id: 'film',

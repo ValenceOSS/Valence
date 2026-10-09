@@ -17,6 +17,7 @@ const NO_DISCOVERY: Discovery = {
     films: NOTHING_FOUND,
     series: NOTHING_FOUND,
     episodesHeld: () => Promise.resolve(new Map()),
+    seriesFiles: () => Promise.resolve([]),
     artists: NOTHING_FOUND,
     albums: NOTHING_FOUND,
     artistsNamed: NOTHING_FOUND,

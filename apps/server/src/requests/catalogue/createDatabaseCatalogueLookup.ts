@@ -41,8 +41,9 @@ const byKey = async (
 
 /**
  * The libraries, looked into for what a catalogue lists: films and series by their catalogue ids,
- * artists by their MusicBrainz ids or names, albums by their release groups or by their artist
- * and title together, and books by their author and title together.
+ * and every episode file of a series with where it is; artists by their MusicBrainz ids or names,
+ * albums by their release groups or by their artist and title together, and books by their author
+ * and title together.
  *
  * @param db - The database.
  * @returns The lookup.
@@ -93,6 +94,35 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
       .groupBy(mediaItem.seasonNumber);
 
     return new Map(rows.flatMap((row) => (row.season === null ? [] : [[row.season, row.held]])));
+  },
+
+  seriesFiles: async (tmdbId) => {
+    const rows = await db
+      .select({
+        libraryId: series.libraryId,
+        seriesId: series.id,
+        seriesKey: series.key,
+        path: mediaItem.path,
+        season: mediaItem.seasonNumber,
+        episode: mediaItem.episodeNumber,
+        lastEpisode: mediaItem.episodeNumberEnd,
+      })
+      .from(mediaItem)
+      .innerJoin(series, eq(mediaItem.seriesId, series.id))
+      .innerJoin(library, eq(library.id, series.libraryId))
+      .where(
+        and(
+          eq(series.externalId, tmdbId),
+          isNull(library.linkedServerId),
+          isNull(mediaItem.extraKind),
+          isNotNull(mediaItem.seasonNumber),
+          isNotNull(mediaItem.episodeNumber),
+        ),
+      );
+
+    return rows.flatMap(({ season, episode, ...rest }) =>
+      season === null || episode === null ? [] : [{ ...rest, season, episode }],
+    );
   },
 
   artists: (musicBrainzIds) =>

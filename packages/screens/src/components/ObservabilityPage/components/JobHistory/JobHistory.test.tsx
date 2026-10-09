@@ -599,6 +599,7 @@ describe('JobHistory', () => {
             takesRequests: true,
             requestProfileId: null,
             requestPath: null,
+            keepsShowsTogether: true,
           },
         ]}
         working={[]}

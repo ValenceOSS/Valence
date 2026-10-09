@@ -936,14 +936,14 @@ const createRequestWorker = ({
         ? [{ id: 'film', season: null, episode: null }]
         : await episodesInDownload(path, parsed);
     const { filed } = await file(
-      into,
+      { ...into, libraryFolder: null, seasonFolders: [] },
       wanted.map((one) => ({ ...one, title: '', airDate: null, filePath: null, releaseTitle })),
       path,
       protocol === 'torrent',
       probe,
     );
 
-    return filed.size === 0 ? null : libraryFolderOf(into);
+    return filed.size === 0 ? null : libraryFolderOf({ ...into, libraryFolder: null });
   };
 
   const fileSentAlbum = async (
@@ -1441,10 +1441,12 @@ const createRequestWorker = ({
       return releasesOf(
         {
           request,
-          items: syncItems(request, draft.catalogue, []).add.map((one) => ({
-            ...itemFromDraft(one, randomUUID(), request.id, at()),
-            state: 'wanted',
-          })),
+          items: syncItems(request, draft.catalogue, [], 'digital', draft.held?.episodes ?? [])
+            .add.filter((one) => one.state === 'waiting')
+            .map((one) => ({
+              ...itemFromDraft(one, randomUUID(), request.id, at()),
+              state: 'wanted',
+            })),
         },
         [],
       );

@@ -8,6 +8,7 @@ import { Switch } from '@ValenceUI/Switch';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { nameSeason } from '@ValenceClient/library/nameSeason';
 import { SEASON_STANDING_NAMES } from '@ValenceClient/requests/SEASON_STANDING_NAMES';
+import { isSeasonHeld } from '@ValenceClient/requests/isSeasonHeld';
 import { theSeasonsTicked } from '@ValenceClient/requests/theSeasonsTicked';
 import { tickASeason } from '@ValenceClient/requests/tickASeason';
 import type { CatalogueSeason, SeasonStanding } from '@ValenceContracts/schemas/MediaRequest';
@@ -32,7 +33,9 @@ const STANDING_TONES: Readonly<Record<SeasonStanding, BadgeTone>> = {
  * a series still running goes on being fetched as it airs. Ticking them one by one comes to the
  * same thing, which is what a person ticking all of them means.
  *
- * Each season says where it stands, so nobody asks again for what is already on the shelf.
+ * Each season says where it stands, so nobody asks again for what is already on the shelf, and one
+ * the library holds whole cannot be ticked at all. A season it holds part of can, and only what it
+ * is missing is fetched.
  *
  * @param tmdbId - The series' catalogue id.
  * @param seasons - The seasons chosen, or null for every one.
@@ -42,7 +45,9 @@ const SeasonChooser = ({ tmdbId, seasons, onChange }: SeasonChooserProps) => {
   const listed = useQuery(requestsQueries.seriesSeasons(tmdbId));
   const rows = useMemo(() => listed.data ?? [], [listed.data]);
   const ticked = useMemo(() => theSeasonsTicked(seasons, rows), [seasons, rows]);
-  const isEveryOne = rows.length > 0 && ticked.length === rows.length;
+  const open = useMemo(() => rows.filter((one) => !isSeasonHeld(one)), [rows]);
+  const isEveryOne =
+    seasons === null || (open.length > 0 && open.every((one) => ticked.includes(one.season)));
 
   const columns = useMemo<DataTableColumn<CatalogueSeason>[]>(
     () => [
@@ -67,6 +72,7 @@ const SeasonChooser = ({ tmdbId, seasons, onChange }: SeasonChooserProps) => {
               label={nameSeason(row.original.season)}
               isLabelHidden
               isOn={isTaken}
+              disabled={isSeasonHeld(row.original)}
               onToggle={() => {
                 onChange(tickASeason(seasons, rows, row.original.season));
               }}
@@ -140,7 +146,7 @@ const SeasonChooser = ({ tmdbId, seasons, onChange }: SeasonChooserProps) => {
               ? say('screens.seasonChooser.everySeasonAndAnyThatCome')
               : ticked.length === 0
                 ? say('screens.seasonChooser.noSeasonIsTakenYet')
-                : sayCount('screens.seasonChooser.chosenOfSeasons', rows.length, {
+                : sayCount('screens.seasonChooser.chosenOfSeasons', open.length, {
                     length: ticked.length.toString(),
                   })}
           </p>

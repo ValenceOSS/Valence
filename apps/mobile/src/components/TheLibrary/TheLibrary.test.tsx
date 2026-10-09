@@ -41,6 +41,7 @@ const aLibrary = (id: string, name: string): Library => ({
   takesRequests: true,
   requestProfileId: null,
   requestPath: null,
+  keepsShowsTogether: true,
 });
 
 const aTitle = (title: string): MediaSummary => ({
