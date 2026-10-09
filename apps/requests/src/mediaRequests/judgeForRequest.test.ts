@@ -148,10 +148,48 @@ describe('judgeForRequest', () => {
       judgeForRequest({
         ...OPTIONS,
         request: series,
-        releases: [aRelease(PACK)],
+        releases: [aRelease('Severance.S01-S02.1080p.BluRay.x264-GRP')],
         items: [...episodes('available', 1, 3), ...episodes('wanted', 2, 9)],
       }).judgements[0]?.isRejected,
     ).toBe(false);
+  });
+
+  it('counts the seasons a pack holds that nobody asked for', () => {
+    const series = aMediaRequest({
+      kind: 'series',
+      title: 'Severance',
+      year: 2022,
+      followsAfter: 9,
+    });
+    const asked = Array.from({ length: 9 }, (_unused, index) =>
+      aRequestItem({
+        id: `3x${(index + 1).toString()}`,
+        season: 3,
+        episode: index + 1,
+        title: 'Severance',
+        state: 'wanted',
+      }),
+    );
+    const judgedFor = (title: string) =>
+      judgeForRequest({ ...OPTIONS, request: series, releases: [aRelease(title)], items: asked })
+        .judgements[0]?.rejections;
+
+    expect(judgedFor('Severance.S01-S09.1080p.BluRay.x264-GRP')).toEqual([
+      'Only 1 of the 9 seasons it holds are wanted',
+    ]);
+    expect(judgedFor('Severance.Complete.Series.1080p.BluRay.x264-GRP')).toEqual([
+      'Only 1 of the 9 seasons it holds are wanted',
+    ]);
+  });
+
+  it('refuses a release no download client is on for', () => {
+    expect(
+      judgeForRequest({
+        ...OPTIONS,
+        releases: [aRelease(WEB, { protocol: 'usenet' })],
+        takes: new Set(['torrent'] as const),
+      }).judgements[0]?.rejections,
+    ).toEqual(['No usenet client is set up and turned on']);
   });
 
   it('never grudges a single season pack what it holds', () => {

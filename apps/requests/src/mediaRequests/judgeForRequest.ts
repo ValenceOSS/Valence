@@ -7,7 +7,8 @@ import { judgeRelease } from '@ValenceRequests/profiles/judgeRelease';
 import { rankReleases } from '@ValenceRequests/profiles/rankReleases';
 import { hashOfRelease } from '@ValenceRequests/releases/hashOfRelease';
 import { parseReleaseName } from '@ValenceRequests/releases/parseReleaseName';
-import type { Release } from '@ValenceContracts/schemas/Indexer';
+import type { Release, ReleaseProtocol } from '@ValenceContracts/schemas/Indexer';
+import type { ParsedRelease } from '@ValenceContracts/schemas/ParsedRelease';
 import type { Judgement, QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import type { BlockedReleaseRecord } from '@ValenceRequests/mediaRequests/BlockedReleaseRecord';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
@@ -15,10 +16,51 @@ import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestIt
 
 const WORTH_ITS_BYTES = 2 / 3;
 
+/**
+ * How much a release holds, counting seasons the request never asked for: the seasons its name
+ * gives, or for a complete run every season up to the last there is, and its episodes, those it was
+ * matched with and as many again for each season nobody asked for as a season that was asked for
+ * has.
+ *
+ * @param parsed - What its name says.
+ * @param covered - The request's films or episodes it was matched with.
+ * @param lastSeason - The last regular season there is, where known.
+ * @returns How many seasons and episodes it holds, and how many of its seasons were not asked for.
+ */
+const packOf = (
+  parsed: Pick<ParsedRelease, 'seasons' | 'isCompleteSeries'>,
+  covered: readonly Pick<RequestItemRecord, 'season'>[],
+  lastSeason: number | null,
+): { seasons: number; episodes: number; unasked: number } => {
+  const asked = new Set(covered.flatMap((item) => (item.season === null ? [] : [item.season])));
+  const last = lastSeason ?? Math.max(0, ...asked);
+  const seasons =
+    parsed.seasons.length > 0
+      ? parsed.seasons
+      : parsed.isCompleteSeries
+        ? Array.from({ length: last }, (_unused, at) => at + 1)
+        : [...asked];
+  const unasked = seasons.filter((season) => !asked.has(season)).length;
+  const perSeason = asked.size === 0 ? 0 : covered.length / asked.size;
+
+  return {
+    seasons: seasons.length,
+    episodes: covered.length + Math.round(unasked * perSeason),
+    unasked,
+  };
+};
+
 type JudgeForRequestOptions = {
   request: Pick<
     MediaRequestRecord,
-    'kind' | 'title' | 'artistName' | 'aliases' | 'year' | 'runtimeMinutes' | 'libraryLanguage'
+    | 'kind'
+    | 'title'
+    | 'artistName'
+    | 'aliases'
+    | 'year'
+    | 'runtimeMinutes'
+    | 'libraryLanguage'
+    | 'followsAfter'
   >;
   items: readonly RequestItemRecord[];
   releases: readonly Release[];
@@ -29,6 +71,7 @@ type JudgeForRequestOptions = {
   isFetching: (item: RequestItemRecord) => boolean;
   isTitleChecked?: boolean;
   keepsTheUnnamed?: boolean;
+  takes?: ReadonlySet<ReleaseProtocol>;
 };
 
 type JudgedForRequest = {
@@ -52,9 +95,10 @@ type JudgedForRequest = {
  * aired the day it was made, so a pack of a show that has since come back does not answer for the
  * seasons that followed it.
  *
- * A pack spanning more than one season is refused where most of what it holds is already here.
- * Fetching nine seasons to fill the gaps in one is paid for in full and used in part, and the
- * seasons on their own are the better way round to it.
+ * A pack spanning more than one season is refused where most of what it holds is already here or
+ * not asked for. What it holds counts the seasons nobody asked for too, at the episodes a season
+ * asked for has, and so does the size it is judged by. Fetching nine seasons to fill the gaps in one
+ * is paid for in full and used in part, and the seasons on their own are the better way round to it.
  *
  * A profile that names no preferred language takes the one its library is set to, which is what
  * makes the setting worth having: an operator who has already said their films are in German
@@ -71,6 +115,8 @@ type JudgedForRequest = {
  * @param keepsTheUnnamed - Whether a release whose name does not say it is for the request is kept,
  *   refused for that, as somebody choosing by hand is shown it rather than left wondering where it
  *   went.
+ * @param takes - The protocols a download client is on for, where known; a release of any other
+ *   could never be sent, and is refused rather than chosen again on every search.
  * @returns The releases and their judgements in order, the pick, and what each would fetch.
  */
 const judgeForRequest = ({
@@ -83,6 +129,7 @@ const judgeForRequest = ({
   isFetching,
   isTitleChecked = true,
   keepsTheUnnamed = false,
+  takes,
 }: JudgeForRequestOptions): JudgedForRequest => {
   const holding = new Map<string, RequestItemRecord[]>();
   const blockedBecause = new Map(blocked.map((block) => [block.title, block.reason]));
@@ -132,12 +179,13 @@ const judgeForRequest = ({
     }
 
     const fetched = covered.filter(isFetching);
+    const pack = packOf(parsed, covered, request.followsAfter);
     const judgement = judgeRelease(
       release,
       parsed,
       judgedBy,
       request.runtimeMinutes ?? undefined,
-      covered.length,
+      pack.episodes,
       isBookRequest(request.kind),
     );
     const hash = hashOfRelease(release);
@@ -145,7 +193,8 @@ const judgeForRequest = ({
       blockedBecause.get(release.title) ?? (hash === null ? undefined : blockedHashes.get(hash));
     const isWholeRun = parsed.isCompleteSeries || parsed.seasons.length > 1;
     const isMostlyUnwanted =
-      isWholeRun && fetched.length > 0 && fetched.length / covered.length < WORTH_ITS_BYTES;
+      isWholeRun && fetched.length > 0 && fetched.length / pack.episodes < WORTH_ITS_BYTES;
+    const seasonsWanted = new Set(fetched.map((item) => item.season)).size;
     const rejections = [
       ...judgement.rejections,
       ...(reason === undefined
@@ -154,12 +203,26 @@ const judgeForRequest = ({
       ...(fetched.length === 0
         ? [saying('requests.mediaRequests.judgeForRequest.everythingItHoldsIsHereOr')]
         : []),
+      ...(takes === undefined || takes.has(release.protocol)
+        ? []
+        : [
+            saying(
+              release.protocol === 'torrent'
+                ? 'requests.downloads.noTorrentClient'
+                : 'requests.downloads.noUsenetClient',
+            ),
+          ]),
       ...(isMostlyUnwanted
         ? [
-            saying('requests.mediaRequests.judgeForRequest.onlySomeEpisodesWanted', {
-              wanted: fetched.length.toString(),
-              held: covered.length.toString(),
-            }),
+            pack.unasked > 0
+              ? saying('requests.mediaRequests.judgeForRequest.onlySomeSeasonsWanted', {
+                  wanted: seasonsWanted.toString(),
+                  held: pack.seasons.toString(),
+                })
+              : saying('requests.mediaRequests.judgeForRequest.onlySomeEpisodesWanted', {
+                  wanted: fetched.length.toString(),
+                  held: covered.length.toString(),
+                }),
           ]
         : []),
       ...(fetched.some((item) => item.score !== null && judgement.score <= item.score)

@@ -2508,9 +2508,9 @@ const ENGLISH = {
     'The indexer is rate-limiting requests',
   'requests.indexers.indexerSaid': 'The indexer said: {said}',
   'requests.indexers.indexerService.failing': 'Failing',
+  'requests.indexers.indexerService.restingAfterFailuresFailuresIn':
+    'Resting after {failures} failures in a row: {problem}. It’s tried again on its own, after a longer pause each time it fails.',
   'requests.indexers.indexerService.theIndexerCouldNotBeAsked': 'Couldn’t connect to the indexer',
-  'requests.indexers.indexerService.turnedOffAfterFailuresFailuresIn':
-    'Turned off after {failures} failures in a row: {problem}',
   'requests.indexers.noDefinitionNamed': 'No definition named {definition} in the catalogue',
   'requests.indexers.noDefinitionNamedAtAll': 'The indexer has no definition selected',
   'requests.indexers.readCapabilities.theIndexerDidNotSayWhat':
@@ -2540,6 +2540,8 @@ const ENGLISH = {
     'Its name doesn’t match this title',
   'requests.mediaRequests.judgeForRequest.onlySomeEpisodesWanted':
     'Only {wanted} of its {held} episodes are wanted',
+  'requests.mediaRequests.judgeForRequest.onlySomeSeasonsWanted':
+    'Only {wanted} of the {held} seasons it holds are wanted',
   'requests.mediaRequests.noIndexerOn': 'no indexer is turned on',
   'requests.mediaRequests.noneFoundForIt.one': 'the one result didn’t match',
   'requests.mediaRequests.noneFoundForIt.other': 'none of the {count} results matched',
@@ -5190,6 +5192,7 @@ const ENGLISH = {
   'screens.indexersPanel.describeIndexerState.failedFailuresTimes': 'Failed {failures} times',
   'screens.indexersPanel.describeIndexerState.failedOnce': 'Failed once',
   'screens.indexersPanel.describeIndexerState.notTried': 'Not tested',
+  'screens.indexersPanel.describeIndexerState.resting': 'Resting',
   'screens.indexersPanel.describeTestRound.allCountAnswered': 'All {count} responded.',
   'screens.indexersPanel.describeTestRound.valueOfCountAnsweredValue2':
     '{value} of {count} responded. {value2}',

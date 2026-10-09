@@ -36,9 +36,11 @@ import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
 import type {
   IndexerSearchReport,
   Release,
+  ReleaseProtocol,
   ReleaseSearch,
   ReleaseSearchOutcome,
 } from '@ValenceContracts/schemas/Indexer';
+import { PROTOCOL_OF_CLIENT } from '@ValenceContracts/schemas/DownloadClient';
 import type {
   DownloadStopNext,
   MediaRequest,
@@ -388,6 +390,13 @@ const createRequestWorker = ({
     }
   };
 
+  const protocolsTaken = async (): Promise<Set<ReleaseProtocol>> =>
+    new Set(
+      (await clients.records())
+        .filter((client) => client.isEnabled)
+        .map((client) => PROTOCOL_OF_CLIENT[client.kind]),
+    );
+
   const isStillWanted = async (id: string): Promise<boolean> => {
     const request = await requests.find(id);
 
@@ -489,6 +498,7 @@ const createRequestWorker = ({
       blocked: await blockedFor(request.id),
       priorities: await priorities(),
       isFetching,
+      takes: await protocolsTaken(),
     });
     const picked = judged.releases.find((release) => release.id === judged.pickedId);
     const holding = picked === undefined ? undefined : judged.holding.get(picked.id);
@@ -1283,6 +1293,7 @@ const createRequestWorker = ({
       priorities: await priorities(),
       isFetching: (item) => item.state !== 'filing',
       keepsTheUnnamed: true,
+      takes: await protocolsTaken(),
     });
 
     return {

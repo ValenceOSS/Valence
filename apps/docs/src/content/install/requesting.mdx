@@ -103,9 +103,9 @@ That removes any container in the project that the compose file no longer descri
 
 ### Failing indexers
 
-Valence raises a warning, and sends the `requests.indexerFailing` webhook, when an enabled indexer fails three times in a row. Five failures turn it off. `requests.indexerWorking` follows when it answers again.
+Valence raises a warning, and sends the `requests.indexerFailing` webhook, when an enabled indexer fails three times in a row. After five failures it **rests**: searches skip it for five minutes, then for longer after each failure that follows (15 minutes, 30, an hour, 3, 6, 12, then a day), and it's tried again on its own after each rest. `requests.indexerWorking` follows when it answers again.
 
-The admin area's **Indexers** page says why each one failed. Most often the site has moved, is down for a while, or wants a login or key that has changed; open the indexer, put that right, and press **Test**. **Test all** tries every indexer that is on, and every one Valence turned off, again; it leaves alone the ones you switched off. An indexer that was turned off for failing switches back on once a test passes. A site behind Cloudflare's check has [its own section](#indexers-behind-cloudflare).
+The admin area's **Indexers** page says why each one failed. Most often the site has moved, is down for a while, or wants a login or key that has changed; open the indexer, put that right, and press **Test**. **Test all** tries every indexer that is on, resting ones included; it leaves alone the ones you switched off. A test or search that passes ends a rest at once. A site behind Cloudflare's check has [its own section](#indexers-behind-cloudflare).
 
 ## Download clients
 

@@ -10435,14 +10435,14 @@
     "context": "Shown in the indexers in the requests service (from `createIndexerService`)."
   },
   {
+    "handler": "requests.indexers.indexerService.restingAfterFailuresFailuresIn",
+    "text": "Resting after {failures} failures in a row: {problem}. It’s tried again on its own, after a longer pause each time it fails.",
+    "context": "Why an indexer is skipped for now, shown on it in Requests › Indexers and in the requests health on the Overview. {failures} is a number of failed searches in a row; {problem} is the last failure's reason."
+  },
+  {
     "handler": "requests.indexers.indexerService.theIndexerCouldNotBeAsked",
     "text": "Couldn’t connect to the indexer",
     "context": "Shown in the indexers in the requests service (from `createIndexerService`)."
-  },
-  {
-    "handler": "requests.indexers.indexerService.turnedOffAfterFailuresFailuresIn",
-    "text": "Turned off after {failures} failures in a row: {problem}",
-    "context": "Shown in the indexers in the requests service (from `createIndexerService`). {failures} is filled in by the app; {problem} is filled in by the app."
   },
   {
     "handler": "requests.indexers.noDefinitionNamed",
@@ -10543,6 +10543,11 @@
     "handler": "requests.mediaRequests.judgeForRequest.onlySomeEpisodesWanted",
     "text": "Only {wanted} of its {held} episodes are wanted",
     "context": "Shown in the media requests in the requests service (from `judgeForRequest`). {wanted} is filled in by the app; {held} is filled in by the app."
+  },
+  {
+    "handler": "requests.mediaRequests.judgeForRequest.onlySomeSeasonsWanted",
+    "text": "Only {wanted} of the {held} seasons it holds are wanted",
+    "context": "Why a pack of several seasons was refused for a request, shown beside the release in interactive search and in a request's activity. {wanted} and {held} are numbers of seasons."
   },
   {
     "handler": "requests.mediaRequests.noIndexerOn",
@@ -20568,6 +20573,11 @@
     "handler": "screens.indexersPanel.describeIndexerState.notTried",
     "text": "Not tested",
     "context": "The label in the indexers panel (from `describeIndexerState`)."
+  },
+  {
+    "handler": "screens.indexersPanel.describeIndexerState.resting",
+    "text": "Resting",
+    "context": "The badge on an indexer in Requests › Indexers that failed several times in a row and is skipped for a while before it's tried again on its own."
   },
   {
     "handler": "screens.indexersPanel.describeTestRound.allCountAnswered",
