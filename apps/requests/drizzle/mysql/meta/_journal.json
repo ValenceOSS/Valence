@@ -57,6 +57,13 @@
       "when": 1791517850376,
       "tag": "0007_profiles_combine_qualities",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1791519068820,
+      "tag": "0008_profiles_score_custom_formats",
+      "breakpoints": true
     }
   ]
 }

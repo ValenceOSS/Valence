@@ -4,6 +4,7 @@ import { QUALITY_LABELS } from '@ValenceRequests/profiles/QUALITY_LABELS';
 import { QUALITY_NAMES } from '@ValenceRequests/profiles/QUALITY_NAMES';
 import type { Release } from '@ValenceContracts/schemas/Indexer';
 import { placeOfVideoQuality } from '@ValenceRequests/profiles/placeOfVideoQuality';
+import { formatScoreOf } from '@ValenceRequests/profiles/formatScoreOf';
 import { videoQualityIdOf } from '@ValenceContracts/functions/videoQualityIdOf';
 import { nameVideoQuality } from '@ValenceRequests/profiles/nameVideoQuality';
 import type { MusicQuality, ParsedRelease } from '@ValenceContracts/schemas/ParsedRelease';
@@ -178,6 +179,44 @@ const judgeMusicQuality = (
 };
 
 /**
+ * Judges a release by the profile's custom formats: the scores of those it matches, each said, and
+ * a refusal where they come to less than the profile's minimum.
+ *
+ * @param release - The release.
+ * @param parsed - What its name says.
+ * @param profile - The profile.
+ * @returns The verdict.
+ */
+const judgeFormats = (
+  release: Pick<Release, 'title' | 'sizeBytes'>,
+  parsed: ParsedRelease,
+  profile: Pick<QualityProfile, 'formats' | 'minFormatScore'>,
+): Verdict => {
+  const { score, matched } = formatScoreOf(release, parsed, profile.formats);
+  const signed = (points: number) =>
+    `${points > 0 ? '+' : points < 0 ? '−' : ''}${Math.abs(points).toString()}`;
+
+  return {
+    score,
+    rejections:
+      score < profile.minFormatScore
+        ? [
+            saying('requests.profiles.judgeRelease.formatScoreUnderMinimum', {
+              score: score.toString(),
+              minimum: profile.minFormatScore.toString(),
+            }),
+          ]
+        : [],
+    reasons: matched.map((format) =>
+      saying('requests.profiles.judgeRelease.matchesFormat', {
+        name: format.name,
+        points: signed(format.score),
+      }),
+    ),
+  };
+};
+
+/**
  * Judges a release's size against the profile's limits: per album for music, and per hour for
  * video — the limits for its own source and resolution, where the profile sets them, and otherwise
  * the profile's own — which needs its running time.
@@ -281,8 +320,9 @@ const judgeSize = (
 /**
  * Judges a release against a quality profile: whether it may be taken at all, and if so how well it
  * fits — its quality, by how far up the profile's list of combined qualities (or for music, of
- * encodings) it comes, and apart from that a score for its preferred words, a proper or repack and
- * its language. Everything that refused it, and everything that counted, is said in words.
+ * encodings) it comes, and apart from that a score for its preferred words, a proper or repack, its
+ * language and the custom formats it matches, refused where those formats come to less than the
+ * profile's minimum. Everything that refused it, and everything that counted, is said in words.
  *
  * A release that does not say its resolution, or for music its encoding, is refused, since a
  * profile is chiefly about those. One that does not say its source is taken as the lowest quality
@@ -376,6 +416,7 @@ const judgeRelease = (
           : [],
     },
     judgeLanguage(parsed.languages, profile.preferredLanguage),
+    judgeFormats(release, parsed, profile),
     ...(isForABook ? [] : [judgeSize(release, parsed, profile, runtimeMinutes, episodesHeld)]),
   );
 

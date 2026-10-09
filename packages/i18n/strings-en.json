@@ -5250,6 +5250,11 @@
     "context": "The label, used in the jobs on the server (from `jobDefinitions`) and in the libraries panel in the admin area."
   },
   {
+    "handler": "common.resolution",
+    "text": "Resolution",
+    "context": "A video's resolution, such as 1080p: a custom format condition in the quality profile editor, and wherever a resolution is named."
+  },
+  {
     "handler": "common.resume",
     "text": "Resume",
     "context": "The label, used in several places, among them the download queue table in the downloads panel and the music feature in the music home."
@@ -10795,6 +10800,11 @@
     "context": "Why a release scored: its quality is the profile's first choice. Shown in the list of releases found for a request. {quality} is a quality such as 1080p or A web download, and starts the sentence."
   },
   {
+    "handler": "requests.profiles.judgeRelease.formatScoreUnderMinimum",
+    "text": "Its format score, {score}, is under this profile’s minimum of {minimum}",
+    "context": "Why a release was refused: the scores of the custom formats it matches add up to less than the profile's minimum. Shown in the list of releases found for a request."
+  },
+  {
     "handler": "requests.profiles.judgeRelease.fourthChoice",
     "text": "{quality}, the fourth preference",
     "context": "Why a release scored: its quality is the profile's fourth choice. Shown in the list of releases found for a request. {quality} is a quality such as 1080p or A web download, and starts the sentence."
@@ -10868,6 +10878,11 @@
     "handler": "requests.profiles.judgeRelease.laterChoice",
     "text": "{quality}, preference number {number}",
     "context": "Why a release scored: its quality is further down the profile's list of choices. Shown in the list of releases found for a request. {quality} is a quality such as 1080p or A web download, and starts the sentence; {number} is its place in the list."
+  },
+  {
+    "handler": "requests.profiles.judgeRelease.matchesFormat",
+    "text": "Matches {name} ({points})",
+    "context": "Why a release scored: it matches one of the quality profile's custom formats. Shown in the list of releases found for a request. {name} is the format's name; {points} is its score with a sign, such as +500 or −10000."
   },
   {
     "handler": "requests.profiles.judgeRelease.missingRequiredWords",
@@ -22641,6 +22656,121 @@
     "context": "The label of a range slider in the preview moment picker."
   },
   {
+    "handler": "screens.profileEditor.customFormats.addACondition",
+    "text": "Add a condition",
+    "context": "The button that adds a condition to a custom format in the quality profile editor."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.addAFormat",
+    "text": "Add a format",
+    "context": "The button that adds a custom format to a quality profile."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.anyFormatScore",
+    "text": "Any score",
+    "context": "The placeholder of the format score to upgrade until, when none is set."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.checks",
+    "text": "Checks",
+    "context": "The label of the menu choosing what a custom format's condition looks at, such as words, the release group or the codec, in the quality profile editor."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.customFormats",
+    "text": "Custom formats",
+    "context": "The heading of the custom formats section of the quality profile editor, on its Matching tab."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.doesNotMatch",
+    "text": "Doesn’t match",
+    "context": "The label of the switch that turns a custom format's condition round, so it is met when the release doesn't have the value."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.eachFormatAddsItsScore",
+    "text": "Each format a release matches adds its score, and the score ranks releases of the same quality. A format matches when every required condition is met and at least one of the others.",
+    "context": "The description under the custom formats heading in the quality profile editor."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.formatName",
+    "text": "Format name",
+    "context": "The label of a custom format's name field in the quality profile editor."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.hdr",
+    "text": "HDR",
+    "context": "A custom format condition that looks for an HDR format in a release."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.leastFormatScore",
+    "text": "Least format score",
+    "context": "The label of the field for the lowest total custom format score a release may have, in the quality profile editor."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.noFormatsYet",
+    "text": "No custom formats yet. Releases are ranked by quality, then by preferred words and language.",
+    "context": "Shown in the custom formats section of the quality profile editor when the profile has none."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.releaseGroup",
+    "text": "Release group",
+    "context": "A custom format condition that looks at the group that put a release out."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.releasesUnderItAreRefused",
+    "text": "Releases whose formats add up to less are refused.",
+    "context": "The description under the least format score field."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.removeThisCondition",
+    "text": "Remove this condition",
+    "context": "The label of the button that removes one condition from a custom format."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.required",
+    "text": "Required",
+    "context": "The label of the switch that makes a custom format's condition one every matching release must meet."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.score",
+    "text": "Score",
+    "context": "The label of a custom format's score field in the quality profile editor; a negative score ranks matching releases lower."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.sizeHint",
+    "text": "2-10",
+    "context": "The placeholder of a 'Size in GB' condition's value: the smallest and largest, either of which may be left out."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.sizeInGb",
+    "text": "Size in GB",
+    "context": "A custom format condition that looks for a release between two sizes, in gigabytes, such as 2-10."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.thisFormat",
+    "text": "this format",
+    "context": "Stands in for a custom format's name in 'Remove {name}' before it has one."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.untilTheFormatScoreIs",
+    "text": "And the format score is at least",
+    "context": "The label of the field for the custom format score a profile keeps upgrading until, in the Upgrades section of the profile editor."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.value",
+    "text": "Value",
+    "context": "The label of the value a custom format's condition looks for, in the quality profile editor."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.videoCodec",
+    "text": "Video codec",
+    "context": "A custom format condition that looks at a release's video codec."
+  },
+  {
+    "handler": "screens.profileEditor.customFormats.wordsHint",
+    "text": "Atmos, or /pattern/",
+    "context": "The placeholder of a 'Words' condition's value: a whole word, or a regular expression between slashes."
+  },
+  {
     "handler": "screens.profileEditor.describeSizeAnHour.megabytesMBAnHour",
     "text": "{megabytes} MB an hour",
     "context": "Shown in the profile editor (from `describeSizeAnHour`). {megabytes} is filled in by the app."
@@ -22711,14 +22841,29 @@
     "context": "The problem in the profile editor (from `readProfileForm`)."
   },
   {
+    "handler": "screens.profileEditor.readProfileForm.giveEveryConditionAValue",
+    "text": "Give every condition a value.",
+    "context": "Shown in the profile editor when a custom format's condition has no value."
+  },
+  {
     "handler": "screens.profileEditor.readProfileForm.giveTheProfileAName",
     "text": "Enter a name for the profile.",
     "context": "The problem in the profile editor (from `readProfileForm`)."
   },
   {
+    "handler": "screens.profileEditor.readProfileForm.nameEveryFormat",
+    "text": "Name every custom format.",
+    "context": "Shown in the profile editor when a custom format has no name."
+  },
+  {
     "handler": "screens.profileEditor.readProfileForm.new",
     "text": "New",
     "context": "The name in the profile editor (from `readProfileForm`)."
+  },
+  {
+    "handler": "screens.profileEditor.readProfileForm.scoresAreWholeNumbers",
+    "text": "Scores are whole numbers, such as 100 or -500.",
+    "context": "Shown in the profile editor when a custom format's score, the least format score or the score to upgrade until isn't a whole number."
   },
   {
     "handler": "screens.profileEditor.readProfileForm.theLargestSizeHasToBe",

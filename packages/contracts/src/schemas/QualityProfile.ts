@@ -106,6 +106,32 @@ const RECOMMENDED_QUALITY_SIZES: readonly z.infer<typeof QualitySizeSchema>[] = 
 
 const WordsSchema = z.array(z.string().trim().min(1).max(100)).max(50);
 
+const FORMAT_CONDITION_KINDS = [
+  'words',
+  'group',
+  'codec',
+  'hdr',
+  'source',
+  'resolution',
+  'language',
+  'size',
+] as const;
+
+const FormatConditionSchema = z.object({
+  kind: z.enum(FORMAT_CONDITION_KINDS),
+  value: z.string().trim().min(1).max(200),
+  isNegated: z.boolean().default(false),
+  isRequired: z.boolean().default(false),
+});
+
+const CustomFormatSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  score: z.number().int().min(-100_000).max(100_000),
+  conditions: z.array(FormatConditionSchema).min(1).max(20),
+});
+
+const FormatScoreSchema = z.number().int().min(-1_000_000).max(1_000_000);
+
 const HoldersSchema = z.array(z.string().min(1)).max(200);
 
 const QualityProfileSchema = z.object({
@@ -120,6 +146,9 @@ const QualityProfileSchema = z.object({
   preferredWords: z.array(z.string()),
   requiredWords: z.array(z.string()),
   bannedWords: z.array(z.string()),
+  formats: z.array(CustomFormatSchema),
+  minFormatScore: FormatScoreSchema,
+  upgradeUntilFormatScore: FormatScoreSchema.nullable(),
   isUpgrading: z.boolean(),
   releaseWait: ReleaseWaitSchema,
   cutoff: VideoQualityIdSchema.nullable(),
@@ -150,6 +179,9 @@ const QualityProfileDraftSchema = z.object({
   preferredWords: WordsSchema.default([]),
   requiredWords: WordsSchema.default([]),
   bannedWords: WordsSchema.default([]),
+  formats: z.array(CustomFormatSchema).max(50).default([]),
+  minFormatScore: FormatScoreSchema.default(0),
+  upgradeUntilFormatScore: FormatScoreSchema.nullable().default(null),
   isUpgrading: z.boolean().default(false),
   releaseWait: ReleaseWaitSchema.default('digital'),
   cutoff: VideoQualityIdSchema.nullable().default(null),
@@ -172,6 +204,9 @@ const QualityProfileChangeSchema = z.object({
   preferredWords: WordsSchema.optional(),
   requiredWords: WordsSchema.optional(),
   bannedWords: WordsSchema.optional(),
+  formats: z.array(CustomFormatSchema).max(50).optional(),
+  minFormatScore: FormatScoreSchema.optional(),
+  upgradeUntilFormatScore: FormatScoreSchema.nullable().optional(),
   isUpgrading: z.boolean().optional(),
   releaseWait: ReleaseWaitSchema.optional(),
   cutoff: VideoQualityIdSchema.nullable().optional(),
@@ -214,8 +249,14 @@ type QualityProfileDraft = z.input<typeof QualityProfileDraftSchema>;
 type QualityProfileChange = z.input<typeof QualityProfileChangeSchema>;
 type Judgement = z.infer<typeof JudgementSchema>;
 type VideoQualityId = (typeof VIDEO_QUALITY_IDS)[number];
+type CustomFormat = z.infer<typeof CustomFormatSchema>;
+type FormatCondition = z.infer<typeof FormatConditionSchema>;
+type FormatConditionKind = (typeof FORMAT_CONDITION_KINDS)[number];
 
 export type {
+  CustomFormat,
+  FormatCondition,
+  FormatConditionKind,
   Judgement,
   ProfileChoice,
   ProfileKind,
@@ -230,10 +271,13 @@ export type {
 
 export {
   DEFAULT_VIDEO_QUALITIES,
+  FORMAT_CONDITION_KINDS,
   PROFILE_KINDS,
   RECOMMENDED_QUALITY_SIZES,
   RELEASE_WAITS,
   VIDEO_QUALITIES,
+  CustomFormatSchema,
+  FormatConditionSchema,
   VIDEO_QUALITY_IDS,
   JudgementSchema,
   ProfileChoiceSchema,

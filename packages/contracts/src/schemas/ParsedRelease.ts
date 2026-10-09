@@ -103,6 +103,7 @@ export {
   MUSIC_QUALITIES,
   RELEASE_SOURCES,
   RESOLUTIONS,
+  VIDEO_CODECS,
   AudioCodecSchema,
   HdrFormatSchema,
   MusicQualitySchema,

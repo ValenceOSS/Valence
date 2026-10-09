@@ -7,6 +7,7 @@ import type {
   ReleaseWait,
   VideoQualityId,
 } from '@ValenceContracts/schemas/QualityProfile';
+import type { FormatDraft } from './components/CustomFormats/CustomFormats.types';
 import { say } from '@ValenceI18n/say';
 
 type ProfileForm = {
@@ -21,6 +22,9 @@ type ProfileForm = {
   preferredWords: string;
   requiredWords: string;
   bannedWords: string;
+  formats: FormatDraft[];
+  minFormatScore: string;
+  upgradeUntilFormatScore: string;
   isUpgrading: boolean;
   cutoff: VideoQualityId | null;
   upgradeUntilMusicQuality: MusicQuality | null;
@@ -50,6 +54,9 @@ const A_NEW_PROFILE: ProfileForm = {
   preferredWords: '',
   requiredWords: '',
   bannedWords: '',
+  formats: [],
+  minFormatScore: '0',
+  upgradeUntilFormatScore: '',
   isUpgrading: false,
   cutoff: null,
   upgradeUntilMusicQuality: null,
@@ -81,6 +88,9 @@ const formFor = (profile: QualityProfile | null): ProfileForm =>
         preferredWords: profile.preferredWords.join(', '),
         requiredWords: profile.requiredWords.join(', '),
         bannedWords: profile.bannedWords.join(', '),
+        formats: profile.formats.map((format) => ({ ...format, score: format.score.toString() })),
+        minFormatScore: profile.minFormatScore.toString(),
+        upgradeUntilFormatScore: profile.upgradeUntilFormatScore?.toString() ?? '',
         isUpgrading: profile.isUpgrading,
         cutoff: profile.cutoff,
         upgradeUntilMusicQuality: profile.upgradeUntilMusicQuality,

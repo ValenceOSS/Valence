@@ -1215,6 +1215,7 @@ const ENGLISH = {
   'common.requestTheAlbumTitleIsOn': 'Request the album {title} is on',
   'common.requestTitle': 'Request {title}',
   'common.resetAndRebuild': 'Reset and rebuild',
+  'common.resolution': 'Resolution',
   'common.resume': 'Resume',
   'common.resumeFromResume': 'Resume from {resume}',
   'common.resumeTitleFromResumeSeconds': 'Resume {title} from {resumeSeconds}',
@@ -2617,6 +2618,8 @@ const ENGLISH = {
   'requests.mediaRequests.searchWhat.season': 'season {season}',
   'requests.profiles.judgeRelease.fifthChoice': '{quality}, the fifth preference',
   'requests.profiles.judgeRelease.firstChoice': '{quality}, the first preference',
+  'requests.profiles.judgeRelease.formatScoreUnderMinimum':
+    'Its format score, {score}, is under this profile’s minimum of {minimum}',
   'requests.profiles.judgeRelease.fourthChoice': '{quality}, the fourth preference',
   'requests.profiles.judgeRelease.hasPreferredWord': 'It has “{word}” (+{points})',
   'requests.profiles.judgeRelease.inLanguage': 'In {name} (+{points})',
@@ -2638,6 +2641,7 @@ const ENGLISH = {
   'requests.profiles.judgeRelease.largerAnHourFor':
     'At {size} MB an hour it’s larger than this profile’s limit for {resolution} from {source}, {limit}',
   'requests.profiles.judgeRelease.laterChoice': '{quality}, preference number {number}',
+  'requests.profiles.judgeRelease.matchesFormat': 'Matches {name} ({points})',
   'requests.profiles.judgeRelease.missingRequiredWords':
     'It has none of the required words: {words}',
   'requests.profiles.judgeRelease.nobodyIsSeedingIt': 'No one is seeding it',
@@ -5681,6 +5685,32 @@ const ENGLISH = {
     'Choose the clip that plays when you hover over the card.',
   'screens.previewMomentPicker.whereTheClipStarts': 'Where the clip starts',
   'screens.previewMomentPicker.whereTheClipStartsAndEnds': 'Where the clip starts and ends',
+  'screens.profileEditor.customFormats.addACondition': 'Add a condition',
+  'screens.profileEditor.customFormats.addAFormat': 'Add a format',
+  'screens.profileEditor.customFormats.anyFormatScore': 'Any score',
+  'screens.profileEditor.customFormats.checks': 'Checks',
+  'screens.profileEditor.customFormats.customFormats': 'Custom formats',
+  'screens.profileEditor.customFormats.doesNotMatch': 'Doesn’t match',
+  'screens.profileEditor.customFormats.eachFormatAddsItsScore':
+    'Each format a release matches adds its score, and the score ranks releases of the same quality. A format matches when every required condition is met and at least one of the others.',
+  'screens.profileEditor.customFormats.formatName': 'Format name',
+  'screens.profileEditor.customFormats.hdr': 'HDR',
+  'screens.profileEditor.customFormats.leastFormatScore': 'Least format score',
+  'screens.profileEditor.customFormats.noFormatsYet':
+    'No custom formats yet. Releases are ranked by quality, then by preferred words and language.',
+  'screens.profileEditor.customFormats.releaseGroup': 'Release group',
+  'screens.profileEditor.customFormats.releasesUnderItAreRefused':
+    'Releases whose formats add up to less are refused.',
+  'screens.profileEditor.customFormats.removeThisCondition': 'Remove this condition',
+  'screens.profileEditor.customFormats.required': 'Required',
+  'screens.profileEditor.customFormats.score': 'Score',
+  'screens.profileEditor.customFormats.sizeHint': '2-10',
+  'screens.profileEditor.customFormats.sizeInGb': 'Size in GB',
+  'screens.profileEditor.customFormats.thisFormat': 'this format',
+  'screens.profileEditor.customFormats.untilTheFormatScoreIs': 'And the format score is at least',
+  'screens.profileEditor.customFormats.value': 'Value',
+  'screens.profileEditor.customFormats.videoCodec': 'Video codec',
+  'screens.profileEditor.customFormats.wordsHint': 'Atmos, or /pattern/',
   'screens.profileEditor.describeSizeAnHour.megabytesMBAnHour': '{megabytes} MB an hour',
   'screens.profileEditor.describeSizeAnHour.valueGBAnHour': '{value} GB an hour',
   'screens.profileEditor.qualitySizes.allowAQualityToSetItsSize':
@@ -5696,8 +5726,12 @@ const ENGLISH = {
   'screens.profileEditor.readProfileForm.allowAtLeastOneFormat': 'Allow at least one format.',
   'screens.profileEditor.readProfileForm.allowAtLeastOneQuality': 'Allow at least one quality.',
   'screens.profileEditor.readProfileForm.aSizeIsANumberOf': 'Enter sizes in megabytes.',
+  'screens.profileEditor.readProfileForm.giveEveryConditionAValue': 'Give every condition a value.',
   'screens.profileEditor.readProfileForm.giveTheProfileAName': 'Enter a name for the profile.',
+  'screens.profileEditor.readProfileForm.nameEveryFormat': 'Name every custom format.',
   'screens.profileEditor.readProfileForm.new': 'New',
+  'screens.profileEditor.readProfileForm.scoresAreWholeNumbers':
+    'Scores are whole numbers, such as 100 or -500.',
   'screens.profileEditor.readProfileForm.theLargestSizeHasToBe':
     'The largest size must be more than the smallest.',
   'screens.profileGate.pagesOfPeople': 'Profile pages',

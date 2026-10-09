@@ -183,6 +183,34 @@ describe('judgeRelease', () => {
     );
   });
 
+  it('scores the custom formats it matches, and refuses it under the minimum', () => {
+    const profile = aProfile({
+      minFormatScore: 0,
+      formats: [
+        {
+          name: 'HDR',
+          score: 500,
+          conditions: [{ kind: 'hdr', value: 'hdr10', isNegated: false, isRequired: false }],
+        },
+        {
+          name: 'No x265 at 1080p',
+          score: -10_000,
+          conditions: [
+            { kind: 'codec', value: 'h265', isNegated: false, isRequired: true },
+            { kind: 'resolution', value: '1080p', isNegated: false, isRequired: true },
+          ],
+        },
+      ],
+    });
+    const hdr = judge('Dune.2021.1080p.BluRay.HDR10.x264-GRP', profile);
+
+    expect(hdr.score).toBe(500);
+    expect(hdr.reasons).toContainEqual('Matches HDR (+500)');
+    expect(judge('Dune.2021.1080p.BluRay.x265-GRP', profile).rejections).toEqual([
+      'Its format score, -10000, is under this profile’s minimum of 0',
+    ]);
+  });
+
   it('refuses a torrent nobody seeds, but not an NZB', () => {
     expect(judge('Dune.2021.1080p.BluRay.x264-GRP', aProfile(), { seeders: 0 }).rejections).toEqual(
       ['No one is seeding it'],

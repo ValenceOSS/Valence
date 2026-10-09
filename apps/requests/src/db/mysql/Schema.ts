@@ -27,7 +27,11 @@ import {
   RELEASE_WAITS,
   VIDEO_QUALITY_IDS,
 } from '@ValenceContracts/schemas/QualityProfile';
-import type { QualitySize, VideoQualityId } from '@ValenceContracts/schemas/QualityProfile';
+import type {
+  CustomFormat,
+  QualitySize,
+  VideoQualityId,
+} from '@ValenceContracts/schemas/QualityProfile';
 import type {
   MusicQuality,
   ReleaseSource,
@@ -236,6 +240,9 @@ const qualityProfile = requestsSchema('quality_profile', {
     .default(jsonDefault([])),
   requiredWords: jsonColumn('required_words').$type<string[]>().notNull().default(jsonDefault([])),
   bannedWords: jsonColumn('banned_words').$type<string[]>().notNull().default(jsonDefault([])),
+  formats: jsonColumn('formats').$type<CustomFormat[]>().notNull().default(jsonDefault([])),
+  minFormatScore: int('min_format_score').notNull().default(0),
+  upgradeUntilFormatScore: int('upgrade_until_format_score'),
   isUpgrading: boolean('is_upgrading').notNull().default(false),
   releaseWait: varchar('release_wait', { length: 32, enum: RELEASE_WAITS })
     .notNull()

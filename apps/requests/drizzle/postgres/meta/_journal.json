@@ -225,6 +225,13 @@
       "when": 1791517849915,
       "tag": "0031_profiles_combine_qualities",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1791519068350,
+      "tag": "0032_profiles_score_custom_formats",
+      "breakpoints": true
     }
   ]
 }

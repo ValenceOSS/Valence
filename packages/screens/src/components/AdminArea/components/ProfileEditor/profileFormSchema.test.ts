@@ -42,6 +42,9 @@ describe('profileFormSchema', () => {
         preferredWords: ['HDR', 'Atmos', '/\\bdv\\b/'],
         requiredWords: [],
         bannedWords: [],
+        formats: [],
+        minFormatScore: 0,
+        upgradeUntilFormatScore: null,
         isUpgrading: true,
         cutoff: 'bluray-1080p',
         upgradeUntilMusicQuality: null,
@@ -80,8 +83,44 @@ describe('profileFormSchema', () => {
     });
   });
 
+  it('reads custom formats, their scores and the score to upgrade until', () => {
+    expect(
+      read({
+        ...FILLED,
+        isUpgrading: true,
+        minFormatScore: '-100',
+        upgradeUntilFormatScore: '500',
+        formats: [
+          {
+            name: ' HDR ',
+            score: '500',
+            conditions: [{ kind: 'hdr', value: 'hdr10', isNegated: false, isRequired: false }],
+          },
+        ],
+      }).draft,
+    ).toMatchObject({
+      minFormatScore: -100,
+      upgradeUntilFormatScore: 500,
+      formats: [{ name: 'HDR', score: 500 }],
+    });
+  });
+
   it.each<[Partial<ProfileForm>, string]>([
     [{ name: ' ' }, 'Enter a name for the profile.'],
+    [{ formats: [{ name: ' ', score: '1', conditions: [] }] }, 'Name every custom format.'],
+    [
+      {
+        formats: [
+          {
+            name: 'HDR',
+            score: '1',
+            conditions: [{ kind: 'words', value: ' ', isNegated: false, isRequired: false }],
+          },
+        ],
+      },
+      'Give every condition a value.',
+    ],
+    [{ minFormatScore: '1.5' }, 'Scores are whole numbers, such as 100 or -500.'],
     [{ qualities: [] }, 'Allow at least one quality.'],
     [{ kind: 'music', musicQualities: [] }, 'Allow at least one format.'],
     [{ kind: 'music', smallestMb: 'lots' }, 'Enter sizes in megabytes.'],

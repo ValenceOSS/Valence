@@ -35,6 +35,7 @@ import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 import { nameVideoQuality } from '@ValenceScreens/components/AdminArea/nameVideoQuality';
 import { VIDEO_QUALITY_IDS } from '@ValenceContracts/schemas/QualityProfile';
+import { CustomFormats } from '@ValenceScreens/components/AdminArea/components/ProfileEditor/components/CustomFormats/CustomFormats';
 
 const TABS: readonly { id: ProfileTab; label: string }[] = [
   { id: 'quality', label: say('common.quality') },
@@ -196,7 +197,7 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
 
   const send = (event: FormEvent) => {
     if (form.check() === null) {
-      setTab('quality');
+      setTab(form.errorOf('formats') === undefined ? 'quality' : 'matching');
     }
 
     form.submit(event);
@@ -381,6 +382,26 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
                 </div>
               </Section>
 
+              <Section
+                title={say('screens.profileEditor.customFormats.customFormats')}
+                detail={say('screens.profileEditor.customFormats.eachFormatAddsItsScore')}
+              >
+                <CustomFormats
+                  formats={values.formats}
+                  onChange={(formats) => {
+                    change({ formats });
+                  }}
+                />
+
+                <TextField
+                  label={say('screens.profileEditor.customFormats.leastFormatScore')}
+                  type="number"
+                  {...form.text('minFormatScore')}
+                  description={say('screens.profileEditor.customFormats.releasesUnderItAreRefused')}
+                  className="sm:w-64"
+                />
+              </Section>
+
               <Section title={say('common.upgrades')}>
                 <Switch
                   label={say('screens.adminArea.profileEditor.upgradeToABetterReleaseLater')}
@@ -391,14 +412,23 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
                 />
 
                 {!values.isUpgrading ? null : isVideo ? (
-                  <Choosing
-                    label={say('screens.adminArea.profileEditor.untilTheQualityIs')}
-                    value={values.cutoff}
-                    options={values.qualities.map((id) => ({ id, label: nameVideoQuality(id) }))}
-                    onChoose={(cutoff) => {
-                      change({ cutoff });
-                    }}
-                  />
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Choosing
+                      label={say('screens.adminArea.profileEditor.untilTheQualityIs')}
+                      value={values.cutoff}
+                      options={values.qualities.map((id) => ({ id, label: nameVideoQuality(id) }))}
+                      onChoose={(cutoff) => {
+                        change({ cutoff });
+                      }}
+                    />
+
+                    <TextField
+                      label={say('screens.profileEditor.customFormats.untilTheFormatScoreIs')}
+                      type="number"
+                      {...form.text('upgradeUntilFormatScore')}
+                      placeholder={say('screens.profileEditor.customFormats.anyFormatScore')}
+                    />
+                  </div>
                 ) : (
                   <Choosing
                     label={say('screens.adminArea.profileEditor.untilTheFormatIs')}
@@ -511,7 +541,11 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
 
           <DialogFooter
             note={
-              form.problem ?? form.errorOf('qualities') ?? form.errorOf('musicQualities') ?? null
+              form.problem ??
+              form.errorOf('qualities') ??
+              form.errorOf('musicQualities') ??
+              form.errorOf('formats') ??
+              null
             }
             dismiss={{ onChoose: onClose }}
             confirm={{

@@ -28,7 +28,11 @@ import {
   RELEASE_WAITS,
   VIDEO_QUALITY_IDS,
 } from '@ValenceContracts/schemas/QualityProfile';
-import type { QualitySize, VideoQualityId } from '@ValenceContracts/schemas/QualityProfile';
+import type {
+  CustomFormat,
+  QualitySize,
+  VideoQualityId,
+} from '@ValenceContracts/schemas/QualityProfile';
 import type {
   MusicQuality,
   ReleaseSource,
@@ -210,6 +214,9 @@ const qualityProfile = requestsSchema.table('quality_profile', {
   preferredWords: jsonb('preferred_words').$type<string[]>().notNull().default([]),
   requiredWords: jsonb('required_words').$type<string[]>().notNull().default([]),
   bannedWords: jsonb('banned_words').$type<string[]>().notNull().default([]),
+  formats: jsonb('formats').$type<CustomFormat[]>().notNull().default([]),
+  minFormatScore: integer('min_format_score').notNull().default(0),
+  upgradeUntilFormatScore: integer('upgrade_until_format_score'),
   isUpgrading: boolean('is_upgrading').notNull().default(false),
   releaseWait: text('release_wait', { enum: RELEASE_WAITS }).notNull().default('digital'),
   upgradeUntilResolution: text('upgrade_until_resolution', { enum: RESOLUTIONS }),

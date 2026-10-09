@@ -27,6 +27,25 @@ describe('wantsUpgrade', () => {
     expect(wantsUpgrade(profile, 'Dune.2021.2160p.BluRay.x265-GRP')).toBe(false);
   });
 
+  it('wants better until its custom formats come to the score it upgrades until', () => {
+    const profile = {
+      ...UPGRADING,
+      upgradeUntilFormatScore: 100,
+      formats: [
+        {
+          name: 'HDR',
+          score: 100,
+          conditions: [
+            { kind: 'words' as const, value: 'HDR', isNegated: false, isRequired: true },
+          ],
+        },
+      ],
+    };
+
+    expect(wantsUpgrade(profile, 'Dune.2021.1080p.BluRay.x264-GRP')).toBe(true);
+    expect(wantsUpgrade(profile, 'Dune.2021.1080p.BluRay.HDR.x265-GRP')).toBe(false);
+  });
+
   it('never wants one from a profile that does not upgrade', () => {
     expect(wantsUpgrade(aProfile(), 'Dune.2021.480p.DVD.x264-GRP')).toBe(false);
   });
