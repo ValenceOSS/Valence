@@ -151,4 +151,35 @@ describe('planSearches', () => {
   it('asks nothing where nothing is wanted', () => {
     expect(planSearches(SEVERANCE, [anEpisode(1, 1)], [], '2026-09-19')).toEqual([]);
   });
+
+  it('asks for a book once for each format, among the indexers’ books or audiobooks', () => {
+    const ebook = {
+      id: 'e',
+      season: null,
+      episode: null,
+      format: 'ebook' as const,
+      airDate: null,
+      title: 'A Book',
+    };
+    const audiobook = { ...ebook, id: 'a', format: 'audiobook' as const };
+
+    expect(
+      planSearches(
+        {
+          kind: 'book',
+          title: 'A Book',
+          tmdbId: null,
+          tvdbId: null,
+          imdbId: null,
+          artistName: 'Someone',
+        },
+        [ebook, audiobook],
+        [ebook, audiobook],
+        '2026-10-09',
+      ),
+    ).toEqual([
+      { search: { query: 'A Book', mode: 'book', categories: [7000, 7020] }, itemIds: ['e'] },
+      { search: { query: 'A Book', mode: 'search', categories: [3030] }, itemIds: ['a'] },
+    ]);
+  });
 });

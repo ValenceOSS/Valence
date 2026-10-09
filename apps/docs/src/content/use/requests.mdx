@@ -61,7 +61,14 @@ Everyone who asked for a request sees it in **My requests** and gets the notific
 
 ### Books
 
-Books can be requested, but Valence does not search for them. A requested book shows **Waiting to be added**: an administrator adds it to the library by hand, and the request completes once it appears.
+A book is requested as an **Ebook**, an **Audiobook**, or both. Ebook is ticked to start with. Each format is searched for, downloaded and shown on its own, so a request can have the ebook while the audiobook is still being looked for. A request for a book someone else asked for adds the formats you tick, and **Edit** on the title's page in the Catalogue changes them.
+
+Each format is searched for among the indexers' books or audiobooks, and releases are ranked by format:
+
+- **Ebooks:** EPUB first, then AZW3, then MOBI, with retail copies above scans.
+- **Audiobooks:** M4B first, then MP3. An abridged audiobook is refused, since only the whole book is wanted.
+
+A release counts as the book when its name contains the book's title. For a title of one or two words, it must name the author too. Picking a release by hand in **Interactive search** still works for any of them.
 
 ### Notifications
 
@@ -85,7 +92,6 @@ A request's badge tells you where it stands. The web, phone and TV apps, the adm
 | Importing            | The download finished and is being placed into the library, or is waiting for the library to find it.                                   |
 | In the library       | It is in the library.                                                                                                                   |
 | Failed               | Something went wrong, with the reason shown.                                                                                            |
-| Waiting to be added  | A book, which is added by hand.                                                                                                         |
 
 ## The admin side
 

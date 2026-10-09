@@ -45,6 +45,7 @@ const showMediaRequest = (
   seasons: record.seasons,
   followsNewSeasons: record.followsNewSeasons,
   releaseTypes: record.releaseTypes,
+  bookFormats: record.bookFormats ?? null,
   releaseDate:
     record.kind === 'film' || record.kind === 'album'
       ? (items.find((item) => item.season === null)?.airDate ?? null)
@@ -62,6 +63,7 @@ const showMediaRequest = (
       musicBrainzId: item.musicBrainzId,
       season: item.season,
       episode: item.episode,
+      format: item.format ?? null,
       title: item.title,
       airDate: item.airDate,
       state: item.state,

@@ -1290,11 +1290,6 @@
     "context": "The detail in the requests (from `describeItemBadge`). {airDate} is filled in by the app."
   },
   {
-    "handler": "client.requests.describeRequestBadge.booksAreAddedToTheLibrary",
-    "text": "Books are added to the library manually. It’ll appear here once it’s been added.",
-    "context": "The detail in the requests (from `describeRequestBadge`)."
-  },
-  {
     "handler": "client.requests.describeRequestBadge.findingOutWhatThereIsTo",
     "text": "Searching for releases.",
     "context": "The detail in the requests (from `describeRequestBadge`)."
@@ -1348,11 +1343,6 @@
     "handler": "client.requests.describeRequestBadge.waitingForTheNextEpisodeTo",
     "text": "Waiting for the next episode to be announced.",
     "context": "Shown in the requests (from `describeRequestBadge`)."
-  },
-  {
-    "handler": "client.requests.describeRequestBadge.waitingToBeAdded",
-    "text": "Waiting to be added",
-    "context": "The label in the requests (from `describeRequestBadge`)."
   },
   {
     "handler": "client.requests.describeRequestProgress.albumsHere.one",
@@ -10900,6 +10890,31 @@
     "context": "What a search was for, in the middle of a sentence: one season of a series. Fills {what} in Searched for {what}. {season} is the season's number."
   },
   {
+    "handler": "requests.profiles.judgeBookFormat.formatPreferredForAudiobooks",
+    "text": "{format}, preferred for audiobooks (+{points})",
+    "context": "Why an audiobook release ranks where it does. {format} is a file format such as M4B; {points} is the score it adds."
+  },
+  {
+    "handler": "requests.profiles.judgeBookFormat.formatPreferredForEbooks",
+    "text": "{format}, preferred for ebooks (+{points})",
+    "context": "Why an ebook release ranks where it does. {format} is a file format such as EPUB; {points} is the score it adds."
+  },
+  {
+    "handler": "requests.profiles.judgeBookFormat.itIsAbridged",
+    "text": "It’s abridged, and only whole audiobooks are taken",
+    "context": "Why a release was refused for a book request: an abridged audiobook. Shown in interactive search and the request's history."
+  },
+  {
+    "handler": "requests.profiles.judgeBookFormat.retail",
+    "text": "Retail (+{points})",
+    "context": "Why an ebook release ranks higher: it is a retail copy rather than a scan. {points} is the score it adds."
+  },
+  {
+    "handler": "requests.profiles.judgeBookFormat.scanned",
+    "text": "Scanned (−{points})",
+    "context": "Why an ebook release ranks lower: it is a scan. {points} is the score it takes away."
+  },
+  {
     "handler": "requests.profiles.judgeRelease.fifthChoice",
     "text": "{quality}, the fifth preference",
     "context": "Why a release scored: its quality is the profile's fifth choice. Shown in the list of releases found for a request. {quality} is a quality such as 1080p or A web download, and starts the sentence."
@@ -18678,6 +18693,16 @@
     "handler": "screens.bookDialog.stopKeeping",
     "text": "Remove from favourites",
     "context": "Shown in the book dialog."
+  },
+  {
+    "handler": "screens.bookFormatChooser.eachIsSearchedForOnItsOwn",
+    "text": "Each is searched for and downloaded on its own. Tick both to get the ebook and the audiobook.",
+    "context": "Description under the choice of a book's formats when requesting it."
+  },
+  {
+    "handler": "screens.bookFormatChooser.whichFormats",
+    "text": "Which formats",
+    "context": "Accessible name of the list of a book's formats to tick when requesting it."
   },
   {
     "handler": "screens.bookRail.thatShelfCouldNotBeRead",

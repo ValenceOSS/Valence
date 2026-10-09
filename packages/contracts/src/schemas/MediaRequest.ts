@@ -28,6 +28,16 @@ const ReleaseTypesSchema = z.array(ReleaseTypeSchema).min(1).max(RELEASE_TYPES.l
 
 const MusicBrainzIdSchema = z.string().uuid();
 
+const BOOK_FORMATS = ['ebook', 'audiobook'] as const;
+
+const BookFormatSchema = z.enum(BOOK_FORMATS);
+
+const BookFormatsSchema = z
+  .array(BookFormatSchema)
+  .min(1)
+  .max(BOOK_FORMATS.length)
+  .refine((formats) => new Set(formats).size === formats.length);
+
 const REQUEST_ITEM_STATES = [
   'waiting',
   'wanted',
@@ -169,6 +179,7 @@ const MediaRequestAskSchema = z
     seasons: SeasonsSchema.default(null),
     followsNewSeasons: z.boolean().default(true),
     releaseTypes: ReleaseTypesSchema.optional(),
+    bookFormats: BookFormatsSchema.optional(),
     libraryId: z.string().uuid().optional(),
     profileId: z.string().uuid().optional(),
     isPickedByHand: z.boolean().default(false),
@@ -190,6 +201,7 @@ const MediaRequestDraftSchema = z
     seasons: SeasonsSchema.default(null),
     followsNewSeasons: z.boolean().default(true),
     releaseTypes: ReleaseTypesSchema.nullable().default(null),
+    bookFormats: BookFormatsSchema.default(['ebook']),
     requestedBy: RequesterSchema,
     higherProfileAsks: HigherProfileAsksSchema.default('ask'),
     isApproved: z.boolean(),
@@ -204,6 +216,7 @@ const RequestItemSchema = z.object({
   musicBrainzId: MusicBrainzIdSchema.nullable(),
   season: z.number().int().nonnegative().nullable(),
   episode: z.number().int().nonnegative().nullable(),
+  format: BookFormatSchema.nullish(),
   title: z.string(),
   airDate: CalendarDateSchema.nullable(),
   state: RequestItemStateSchema,
@@ -247,6 +260,7 @@ const MediaRequestSchema = z.object({
   seasons: SeasonsSchema,
   followsNewSeasons: z.boolean().default(false),
   releaseTypes: ReleaseTypesSchema.nullable(),
+  bookFormats: BookFormatsSchema.nullish(),
   releaseDate: CalendarDateSchema.nullable(),
   releaseDates: ReleaseDatesSchema.default(NO_RELEASE_DATES),
   items: z.array(RequestItemSchema),
@@ -261,6 +275,7 @@ const MediaRequestChangeSchema = z.object({
   seasons: SeasonsSchema.optional(),
   followsNewSeasons: z.boolean().optional(),
   releaseTypes: ReleaseTypesSchema.optional(),
+  bookFormats: BookFormatsSchema.optional(),
   libraryId: z.string().min(1).optional(),
   libraryPath: z.string().min(1).optional(),
 });
@@ -386,6 +401,7 @@ type MusicRequestKind = (typeof MUSIC_REQUEST_KINDS)[number];
 type BookRequestKind = (typeof BOOK_REQUEST_KINDS)[number];
 type VideoRequestKind = Exclude<MediaRequestKind, MusicRequestKind | BookRequestKind>;
 type ReleaseType = (typeof RELEASE_TYPES)[number];
+type BookFormat = (typeof BOOK_FORMATS)[number];
 type CatalogueAlbum = z.infer<typeof CatalogueAlbumSchema>;
 type MusicCatalogueHit = z.infer<typeof MusicCatalogueHitSchema>;
 type RequestItemState = (typeof REQUEST_ITEM_STATES)[number];
@@ -425,6 +441,7 @@ type ProfileAsk = z.infer<typeof ProfileAskSchema>;
 type ProfileAskDecision = z.infer<typeof ProfileAskDecisionSchema>;
 
 export type {
+  BookFormat,
   BlockedRelease,
   BookRequestKind,
   CatalogueAlbum,
@@ -469,6 +486,9 @@ export type {
 };
 
 export {
+  BOOK_FORMATS,
+  BookFormatSchema,
+  BookFormatsSchema,
   DEFAULT_RELEASE_TYPES,
   BOOK_REQUEST_KINDS,
   MEDIA_REQUEST_KINDS,

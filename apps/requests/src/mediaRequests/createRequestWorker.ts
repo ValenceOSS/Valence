@@ -163,6 +163,14 @@ const DEFAULT_PROFILES: Record<QualityProfile['kind'], QualityProfile> = {
   },
 };
 
+const BOOK_PROFILE: QualityProfile = {
+  ...QualityProfileDraftSchema.parse({ name: say('common.books'), kind: 'video', sizes: [] }),
+  id: '00000000-0000-4000-8000-000000000002',
+  position: 0,
+  createdAt: '1970-01-01T00:00:00.000Z',
+  updatedAt: '1970-01-01T00:00:00.000Z',
+};
+
 /**
  * Says why a finished download could not be filed, and whether it counts as a try. Most often this
  * service does not see the download where its client says it put it, which a folder set on the
@@ -358,13 +366,13 @@ const createRequestWorker = ({
   };
 
   const searchedByItself = async (): Promise<Found[]> =>
-    (await approved()).filter(
-      (found) => !found.request.isPickedByHand && !isBookRequest(found.request.kind),
-    );
+    (await approved()).filter((found) => !found.request.isPickedByHand);
 
   const profileFor = async (request: MediaRequestRecord): Promise<QualityProfile> =>
-    chooseProfile(request, await profiles.list()) ??
-    DEFAULT_PROFILES[isMusicRequest(request.kind) ? 'music' : 'video'];
+    isBookRequest(request.kind)
+      ? BOOK_PROFILE
+      : (chooseProfile(request, await profiles.list()) ??
+        DEFAULT_PROFILES[isMusicRequest(request.kind) ? 'music' : 'video']);
 
   const priorities = async () =>
     new Map((await indexers.list()).map((indexer) => [indexer.id, indexer.priority]));
@@ -685,7 +693,7 @@ const createRequestWorker = ({
     if (out.length > 0) {
       await note(
         request,
-        request.kind === 'film' || request.kind === 'album'
+        request.kind === 'film' || request.kind === 'album' || request.kind === 'book'
           ? saying('requests.mediaRequests.requestWorker.itIsOutAndWanted')
           : sayingCount(
               request.kind === 'artist'

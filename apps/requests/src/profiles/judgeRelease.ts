@@ -1,3 +1,4 @@
+import { judgeBookFormat } from '@ValenceRequests/profiles/judgeBookFormat';
 import { describeLanguage } from '@ValenceCore/functions/describeTrack';
 import { hasWord } from '@ValenceRequests/profiles/hasWord';
 import { QUALITY_LABELS } from '@ValenceRequests/profiles/QUALITY_LABELS';
@@ -338,7 +339,7 @@ const judgeSize = (
  * @param episodesHeld - How many episodes the release holds, so a pack is judged by size an hour
  *   like anything else. Left out where nobody knows, and then a pack's size goes unjudged.
  * @param isForABook - Whether it is for a book or an audiobook, which says nothing of a resolution
- *   or an encoding and is judged by its words alone; a video is refused outright.
+ *   or an encoding and is judged by its words and its format; a video is refused outright.
  * @returns The judgement.
  */
 const judgeRelease = (
@@ -417,7 +418,9 @@ const judgeRelease = (
     },
     judgeLanguage(parsed.languages, profile.preferredLanguage),
     judgeFormats(release, parsed, profile),
-    ...(isForABook ? [] : [judgeSize(release, parsed, profile, runtimeMinutes, episodesHeld)]),
+    ...(isForABook
+      ? [judgeBookFormat(release)]
+      : [judgeSize(release, parsed, profile, runtimeMinutes, episodesHeld)]),
   );
 
   const rejections = verdicts.flatMap((verdict) => verdict.rejections);

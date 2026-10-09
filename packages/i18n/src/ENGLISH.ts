@@ -370,8 +370,6 @@ const ENGLISH = {
     'This needs a newer version of the server. Update the server to use it.',
   'client.requests.describeDownloadLine.underAMinuteLeft': 'Under a minute left',
   'client.requests.describeItemBadge.outAirDate': 'Out {airDate}.',
-  'client.requests.describeRequestBadge.booksAreAddedToTheLibrary':
-    'Books are added to the library manually. It’ll appear here once it’s been added.',
   'client.requests.describeRequestBadge.findingOutWhatThereIsTo': 'Searching for releases.',
   'client.requests.describeRequestBadge.heldUntilReleaseDateWhenItsQuality':
     'Waiting until {releaseDate}, when its quality profile considers it released.',
@@ -390,7 +388,6 @@ const ENGLISH = {
     'Waiting for the next album to be announced.',
   'client.requests.describeRequestBadge.waitingForTheNextEpisodeTo':
     'Waiting for the next episode to be announced.',
-  'client.requests.describeRequestBadge.waitingToBeAdded': 'Waiting to be added',
   'client.requests.describeRequestProgress.albumsHere.one':
     '{here} of {count} album in the library',
   'client.requests.describeRequestProgress.albumsHere.other':
@@ -2642,6 +2639,14 @@ const ENGLISH = {
   'requests.mediaRequests.searchWhat.album': '“{album}”',
   'requests.mediaRequests.searchWhat.it': 'it',
   'requests.mediaRequests.searchWhat.season': 'season {season}',
+  'requests.profiles.judgeBookFormat.formatPreferredForAudiobooks':
+    '{format}, preferred for audiobooks (+{points})',
+  'requests.profiles.judgeBookFormat.formatPreferredForEbooks':
+    '{format}, preferred for ebooks (+{points})',
+  'requests.profiles.judgeBookFormat.itIsAbridged':
+    'It’s abridged, and only whole audiobooks are taken',
+  'requests.profiles.judgeBookFormat.retail': 'Retail (+{points})',
+  'requests.profiles.judgeBookFormat.scanned': 'Scanned (−{points})',
   'requests.profiles.judgeRelease.fifthChoice': '{quality}, the fifth preference',
   'requests.profiles.judgeRelease.firstChoice': '{quality}, the first preference',
   'requests.profiles.judgeRelease.formatScoreUnderMinimum':
@@ -4700,6 +4705,9 @@ const ENGLISH = {
   'screens.bookDialog.moreToDoWithThisBook': 'More options',
   'screens.bookDialog.nothingIsWrittenAboutThisBook': 'No description for this book yet.',
   'screens.bookDialog.stopKeeping': 'Remove from favourites',
+  'screens.bookFormatChooser.eachIsSearchedForOnItsOwn':
+    'Each is searched for and downloaded on its own. Tick both to get the ebook and the audiobook.',
+  'screens.bookFormatChooser.whichFormats': 'Which formats',
   'screens.bookRail.thatShelfCouldNotBeRead': 'Couldn’t load that shelf.',
   'screens.bookRow.bookPosition': 'Book {position}',
   'screens.bookShelf.noBookLibrariesYet': 'No book libraries yet',

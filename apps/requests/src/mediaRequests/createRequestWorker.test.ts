@@ -305,7 +305,7 @@ describe('createRequestWorker', () => {
       expect(searched).toEqual([]);
     });
 
-    it('never searches by itself for a book, which is added to the library by hand', async () => {
+    it('searches by itself for each format of a book, among the indexers’ books or audiobooks', async () => {
       const { worker, searched } = aWorker({
         requests: [
           aMediaRequest({
@@ -316,16 +316,51 @@ describe('createRequestWorker', () => {
             artistName: 'Andy Weir',
             libraryId: 'books',
             libraryPath: '/media/Books',
+            bookFormats: ['ebook', 'audiobook'],
           }),
         ],
-        items: [aRequestItem({ state: 'waiting', airDate: null })],
+        items: [
+          aRequestItem({ id: 'e', state: 'wanted', airDate: null, format: 'ebook' }),
+          aRequestItem({ id: 'a', state: 'wanted', airDate: null, format: 'audiobook' }),
+        ],
+        found: () => [],
       });
 
       await worker.tick();
-      await worker.searchMissing();
-      await worker.pollFeeds();
 
-      expect(searched).toEqual([]);
+      expect(searched).toEqual([
+        { query: 'Project Hail Mary', mode: 'book', categories: [7000, 7020] },
+        { query: 'Project Hail Mary', mode: 'search', categories: [3030] },
+      ]);
+    });
+
+    it('judges a book by its format alone, whatever words a video profile asks for', async () => {
+      const { worker, send } = aWorker({
+        requests: [
+          aMediaRequest({
+            kind: 'book',
+            tmdbId: null,
+            year: null,
+            openLibraryId: 21_277_329,
+            title: 'Project Hail Mary',
+            artistName: 'Andy Weir',
+            libraryId: 'books',
+            libraryPath: '/media/Books',
+            bookFormats: ['ebook'],
+          }),
+        ],
+        items: [aRequestItem({ state: 'wanted', airDate: null, format: 'ebook' })],
+        profiles: [aProfile({ requiredWords: ['2160p'], libraryIds: ['books'] })],
+        found: () => [
+          aRelease('Andy Weir - Project Hail Mary (2021) [EPUB]', { categories: [7020] }),
+        ],
+      });
+
+      await worker.tick();
+
+      expect(send).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Andy Weir - Project Hail Mary (2021) [EPUB]' }),
+      );
     });
 
     it('leaves a request waiting on approval alone', async () => {

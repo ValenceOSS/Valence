@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import {
+  BOOK_FORMATS,
   MediaRequestArrivalsSchema,
   MediaRequestChangeSchema,
   MediaRequestDraftSchema,
@@ -282,6 +283,15 @@ const createRequestService = ({
           ...(kept.kind === 'artist' && draft.releaseTypes !== null
             ? { releaseTypes: bothReleaseTypes(kept.releaseTypes, draft.releaseTypes) }
             : {}),
+          ...(kept.kind === 'book'
+            ? {
+                bookFormats: BOOK_FORMATS.filter(
+                  (format) =>
+                    (kept.bookFormats ?? ['ebook']).includes(format) ||
+                    draft.bookFormats.includes(format),
+                ),
+              }
+            : {}),
           ...profileChangeOf(kept, draft, every),
           ...(draft.isPickedByHand ? { isPickedByHand: true } : {}),
           ...(draft.isApproved &&
@@ -420,6 +430,9 @@ const createRequestService = ({
             }
           : {}),
         ...(change.releaseTypes === undefined ? {} : { releaseTypes: change.releaseTypes }),
+        ...(change.bookFormats === undefined || kept.kind !== 'book'
+          ? {}
+          : { bookFormats: change.bookFormats }),
         ...(change.profileId === undefined ? {} : { profileId: change.profileId }),
         ...(change.isPickedByHand === undefined ? {} : { isPickedByHand: change.isPickedByHand }),
         ...(change.libraryId === undefined ? {} : { libraryId: change.libraryId }),
@@ -433,7 +446,7 @@ const createRequestService = ({
         return null;
       }
 
-      if (record.kind === 'film' || catalogue !== null) {
+      if (record.kind === 'film' || record.kind === 'book' || catalogue !== null) {
         await sync(record, catalogue ?? { episodes: [], albums: [] }, held);
       }
 

@@ -32,6 +32,11 @@ const ItemList = ({ title, request, items, isFollowing, onFollow }: ItemListProp
               {item.airDate === null ? null : (
                 <span className="text-xs text-text-muted">{item.airDate.slice(0, 4)}</span>
               )}
+              {item.format === null || item.format === undefined ? null : (
+                <span className="text-xs text-text-muted">
+                  {item.format === 'audiobook' ? say('common.audiobook') : say('common.ebook')}
+                </span>
+              )}
             </span>
 
             <Tooltip label={problem ?? ''} isDisabled={problem === null}>

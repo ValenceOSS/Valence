@@ -66,16 +66,19 @@ describe('describeRequestBadge', () => {
     ).toBe('Waiting for the next album to be announced.');
   });
 
-  it('says a book waits to be added by hand, and is never queued for a search', () => {
-    for (const state of ['waiting', 'wanted', 'searching'] as const) {
-      const badge = describeRequestBadge(
-        aMediaRequest({ kind: 'book', tmdbId: null, openLibraryId: 5, state, items: [] }),
+  it('says a book is searched for, like anything else', () => {
+    expect(
+      describeRequestBadge(
+        aMediaRequest({
+          kind: 'book',
+          tmdbId: null,
+          openLibraryId: 5,
+          state: 'searching',
+          items: [],
+        }),
         TODAY,
-      );
-
-      expect(badge.label).toBe('Waiting to be added');
-      expect(badge.detail).toMatch(/added to the library manually/);
-    }
+      ).label,
+    ).toBe('Searching');
   });
 
   it('says a book that has been added is available, like anything else', () => {

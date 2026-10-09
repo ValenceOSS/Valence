@@ -1103,9 +1103,9 @@ const createAppContext = (options: CreateAppOptions) => {
    * what the house may ask for, and somebody who can edit the profiles is not the house — forcing
    * them would only mean editing a profile to make one request and editing it back.
    *
-   * A book is offered nothing. Books are never searched for by themselves — they are marked as
-   * added by hand — so no profile ever judges one, and offering a quality would be asking a
-   * question that changes nothing. The permission check above still runs, so refusing somebody who
+   * A book is offered nothing. A book is judged by its formats alone — EPUB before AZW3, M4B before
+   * MP3 — never by a quality profile, so offering a quality would be asking a question that changes
+   * nothing. The permission check above still runs, so refusing somebody who
    * may not ask still happens before anything else is worked out.
    *
    * @param who - Who is asking.
@@ -1385,6 +1385,7 @@ const createAppContext = (options: CreateAppOptions) => {
         followsNewSeasons: asked.followsNewSeasons,
         releaseTypes:
           asked.releaseTypes ?? (isMusicRequest(asked.kind) ? await defaultReleaseTypes() : null),
+        ...(asked.bookFormats === undefined ? {} : { bookFormats: asked.bookFormats }),
         profileId: profileId ?? chosen.requestProfileId,
         isPickedByHand: asked.isPickedByHand,
         libraryId: chosen.id,

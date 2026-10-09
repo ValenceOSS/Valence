@@ -1,3 +1,4 @@
+import { BOOK_CATEGORIES } from '@ValenceRequests/releases/BOOK_CATEGORIES';
 import { queryTitleOf } from '@ValenceRequests/mediaRequests/queryTitleOf';
 import type { ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
@@ -5,12 +6,16 @@ import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestIt
 
 type PlannedSearch = { search: ReleaseSearch; itemIds: string[] };
 
-type Plannable = Pick<RequestItemRecord, 'id' | 'season' | 'episode' | 'airDate' | 'title'>;
+type Plannable = Pick<
+  RequestItemRecord,
+  'id' | 'season' | 'episode' | 'format' | 'airDate' | 'title'
+>;
 
 /**
  * What to ask the indexers for a request's films or episodes that are wanted, by a title safe to
  * search with and the catalogue ids it has, which an indexer that takes them is asked by first: a
- * film by its title and ids; a season that has finished airing, with more
+ * film by its title and ids; a book once for each format, an ebook among the indexers' books and
+ * an audiobook among their audiobooks; a season that has finished airing, with more
  * than one episode of it wanted, as a whole, since a season is usually released as one; and any
  * other episode on its own. An album is searched among the indexers' music, by its artist and title.
  *
@@ -53,6 +58,16 @@ const planSearches = (
         itemIds: wanted.map((item) => item.id),
       },
     ];
+  }
+
+  if (request.kind === 'book') {
+    return wanted.map((item) => ({
+      search:
+        item.format === 'audiobook'
+          ? { query, mode: 'search', categories: [...BOOK_CATEGORIES.audiobook] }
+          : { query, mode: 'book', categories: [...BOOK_CATEGORIES.ebook] },
+      itemIds: [item.id],
+    }));
   }
 
   if (request.kind === 'artist' || request.kind === 'album') {

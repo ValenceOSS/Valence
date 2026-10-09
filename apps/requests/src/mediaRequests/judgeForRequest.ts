@@ -1,5 +1,7 @@
 import { saying } from '@ValenceI18n/saying';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
+import { readBookFormat } from '@ValenceRequests/releases/readBookFormat';
+import { matchBook } from '@ValenceRequests/mediaRequests/matchBook';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { albumsInRelease } from '@ValenceRequests/mediaRequests/albumsInRelease';
 import { isNearTitle } from '@ValenceRequests/mediaRequests/isNearTitle';
@@ -202,14 +204,21 @@ const judgeForRequest = ({
       [request.title, ...request.aliases].some((title) => isNearTitle(parsed.title, title))
         ? { ...request, aliases: [...request.aliases, parsed.title] }
         : request;
-    const covered = isMusicRequest(request.kind)
-      ? albumsInRelease(request, items, parsed.title, isTitleChecked)
-      : matchRelease(
-          isTitleChecked ? named : { ...request, title: parsed.title, aliases: [] },
-          items,
-          isTitleChecked ? parsed : { ...parsed, year: null },
-          release.publishedAt?.slice(0, 10) ?? null,
-        );
+    const format = isBookRequest(request.kind) ? readBookFormat(release) : null;
+    const covered = (
+      isBookRequest(request.kind)
+        ? !isTitleChecked || matchBook(request, release.title)
+          ? [...items]
+          : []
+        : isMusicRequest(request.kind)
+          ? albumsInRelease(request, items, parsed.title, isTitleChecked)
+          : matchRelease(
+              isTitleChecked ? named : { ...request, title: parsed.title, aliases: [] },
+              items,
+              isTitleChecked ? parsed : { ...parsed, year: null },
+              release.publishedAt?.slice(0, 10) ?? null,
+            )
+    ).filter((item) => format === null || (item.format ?? 'ebook') === format);
 
     if (covered.length === 0) {
       if (!keepsTheUnnamed) {

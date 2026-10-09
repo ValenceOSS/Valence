@@ -49,6 +49,7 @@ const recordFromDraft = (
   followsNewSeasons: draft.kind === 'series' && draft.followsNewSeasons,
   followsAfter: draft.kind === 'series' ? highestSeasonOf(draft.catalogue.episodes) : null,
   releaseTypes: draft.kind === 'artist' ? (draft.releaseTypes ?? [...DEFAULT_RELEASE_TYPES]) : null,
+  bookFormats: draft.kind === 'book' ? draft.bookFormats : null,
   mediaId: draft.kind === 'series' ? (draft.held?.mediaId ?? null) : null,
   problem: null,
   problemCode: null,
