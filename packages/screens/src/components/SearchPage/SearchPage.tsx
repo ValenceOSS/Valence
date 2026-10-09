@@ -13,6 +13,7 @@ import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { showSlug } from '@ValenceCore/functions/showSlug';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { say } from '@ValenceI18n/say';
+import { viewOfDiscoverSearch } from '@ValenceScreens/requests/viewOfDiscoverSearch';
 
 /**
  * Searching the whole server, as a page of its own rather than a sheet over whatever was underneath.
@@ -56,6 +57,9 @@ const SearchPage = () => {
         }}
         onAsk={(asking) => {
           go({ asking });
+        }}
+        onDiscover={(query) => {
+          go({ section: 'requests', requestsView: viewOfDiscoverSearch(query) });
         }}
         onItemsLoaded={rememberItems}
         onOpenShow={(media) => {

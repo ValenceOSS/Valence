@@ -17,12 +17,18 @@ import { DiscoverShelves } from './components/DiscoverShelves/DiscoverShelves';
 import { BooksDiscover } from './components/BooksDiscover/BooksDiscover';
 import { MusicDiscover } from './components/MusicDiscover/MusicDiscover';
 import { RequestsList } from './components/RequestsList/RequestsList';
+import { DiscoverResults } from './components/DiscoverResults/DiscoverResults';
+import { DiscoverSearchField } from './components/DiscoverSearchField/DiscoverSearchField';
+import { Button } from '@ValenceUI/Button';
+import { readDiscoverSearch } from '@ValenceScreens/requests/readDiscoverSearch';
+import { viewOfDiscoverSearch } from '@ValenceScreens/requests/viewOfDiscoverSearch';
 import { say } from '@ValenceI18n/say';
 
 /**
  * The Requests page: somewhere to find things that are not in the library yet and ask for them, in
  * the spirit of Overseerr, and to follow what you have asked for until it arrives. Discover shows
- * what is trending, popular and coming; Movies and Shows are those lists whole, going on as far as
+ * what is trending, popular and coming, and searches the catalogues for anything else to ask for;
+ * Movies and Shows are those lists whole, going on as far as
  * they are scrolled; My requests shows where each of yours has got to. Which is showing is in the
  * address, so any of them can be linked to; one for a kind no library takes requests for shows
  * Discover instead.
@@ -34,6 +40,7 @@ const RequestsPage = () => {
   const kinds = useRequestableKinds();
   const isKnown = useQuery(requestsQueries.availability()).data !== undefined;
   const browsing = readBrowsing(place.requestsView);
+  const finding = readDiscoverSearch(place.requestsView);
   const shown = requestsViewShown(place.requestsView);
   const showing =
     !isKnown || requestsViewsFor(kinds).some((view) => view.id === shown) ? shown : 'discover';
@@ -66,9 +73,44 @@ const RequestsPage = () => {
           <motion.div
             variants={revealVariants(prefersReducedMotion)}
             transition={revealTransition(prefersReducedMotion)}
-            className={cn(showing === 'discover' ? '' : RAIL.inset, 'flex flex-col gap-6')}
+            className={cn(
+              showing === 'discover' && finding === null ? '' : RAIL.inset,
+              'flex flex-col gap-6',
+            )}
           >
             {showing === 'discover' ? (
+              <div className={finding === null ? RAIL.inset : ''}>
+                <DiscoverSearchField
+                  key={finding ?? ''}
+                  query={finding ?? ''}
+                  onSearch={(query) => {
+                    go({ requestsView: viewOfDiscoverSearch(query) });
+                  }}
+                />
+              </div>
+            ) : null}
+
+            {showing === 'discover' && finding !== null ? (
+              <>
+                <span className="flex flex-wrap items-center justify-between gap-3">
+                  <h2 className="text-2xl font-semibold tracking-tight text-text">
+                    {say('screens.requestsPage.resultsForQuery', { query: finding })}
+                  </h2>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      go({ requestsView: null });
+                    }}
+                  >
+                    {say('screens.requestsPage.backToDiscover')}
+                  </Button>
+                </span>
+
+                <DiscoverResults query={finding} onAsk={ask} />
+              </>
+            ) : showing === 'discover' ? (
               <DiscoverShelves
                 onAsk={ask}
                 onBrowse={(next) => {

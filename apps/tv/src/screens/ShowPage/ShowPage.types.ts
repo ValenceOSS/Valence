@@ -6,6 +6,7 @@ type ShowPageProps = {
   viewerId: string | null;
   onOpenPerson: (personId: number) => void;
   onPlay: (episode: MediaSummary, startSeconds: number) => void;
+  onRequestMore?: (tmdbId: number) => void;
 };
 
 export type { ShowPageProps };

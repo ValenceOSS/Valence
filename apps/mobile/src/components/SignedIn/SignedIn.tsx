@@ -341,6 +341,10 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
     open({ kind: 'show', libraryId, showId });
   };
 
+  const requestMore = (tmdbId: number) => {
+    open({ kind: 'asking', about: 'series', id: tmdbId.toString(), isMore: true });
+  };
+
   const choose = (mediaId: string, startSeconds: number) => {
     setCarriedOn(0);
     setWatching({ mediaId, startSeconds });
@@ -544,6 +548,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
             onWatch={choose}
             onLookAt={lookAt}
             onBack={back}
+            onRequestMore={requestMore}
           />
         );
       case 'series':
@@ -553,6 +558,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
             onWatch={choose}
             onLookAt={lookAt}
             onBack={back}
+            onRequestMore={requestMore}
           />
         );
       case 'collection':
@@ -578,6 +584,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
           <AnAskable
             kind={page.about}
             id={page.id}
+            isMore={page.isMore === true}
             onOpen={(kind, mediaId) => {
               swap(pageInTheLibrary(kind, mediaId));
             }}

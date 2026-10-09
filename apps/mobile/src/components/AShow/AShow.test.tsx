@@ -11,6 +11,12 @@ import { AShow } from './AShow';
 import type { ReactNode } from 'react';
 
 jest.mock('@ValenceClient/library/fetchShows');
+jest.mock('@ValenceClient/requests/useRequestableKinds', () => ({
+  useRequestableKinds: () => new Set(['series']),
+}));
+jest.mock('@ValenceClient/session/useWhatIMayDo', () => ({
+  useWhatIMayDo: () => ({ may: () => true }),
+}));
 jest.mock('@ValenceClient/playback/markWatched', () => ({
   markWatched: jest.fn().mockResolvedValue(undefined),
 }));
@@ -324,5 +330,64 @@ describe('AShow', () => {
 
     expect(await drawn.findByLabelText('Mark season unwatched')).toBeTruthy();
     expect(drawn.getByLabelText('Mark Good News About Hell as unwatched')).toBeTruthy();
+  });
+
+  it('offers to request more where an aired season is missing', async () => {
+    jest.mocked(fetchShow).mockResolvedValue({
+      ...TWO_SEASONS,
+      tmdbId: 95396,
+      shape: [
+        { seasonNumber: 1, episodeCount: 1, episodes: [] },
+        { seasonNumber: 2, episodeCount: 1, episodes: [] },
+        { seasonNumber: 3, episodeCount: 10, episodes: [] },
+      ],
+    });
+
+    const onRequestMore = jest.fn();
+    const drawn = await render(
+      around(
+        <AShow
+          libraryId="l"
+          showId="s"
+          onWatch={jest.fn()}
+          onLookAt={jest.fn()}
+          onBack={jest.fn()}
+          onRequestMore={onRequestMore}
+        />,
+      ),
+    );
+
+    await userEvent.press(await drawn.findByText('Request more…'));
+
+    expect(onRequestMore).toHaveBeenCalledWith(95396);
+  });
+
+  it('offers nothing more where every aired episode is held', async () => {
+    jest.mocked(fetchShow).mockResolvedValue({
+      ...TWO_SEASONS,
+      tmdbId: 95396,
+      shape: [
+        { seasonNumber: 1, episodeCount: 1, episodes: [] },
+        { seasonNumber: 2, episodeCount: 1, episodes: [] },
+      ],
+    });
+
+    const drawn = await render(
+      around(
+        <AShow
+          libraryId="l"
+          showId="s"
+          onWatch={jest.fn()}
+          onLookAt={jest.fn()}
+          onBack={jest.fn()}
+          onRequestMore={jest.fn()}
+        />,
+      ),
+    );
+
+    await waitFor(() => {
+      expect(drawn.getAllByText('Severance').length).toBeGreaterThan(0);
+    });
+    expect(drawn.queryByText('Request more…')).toBeNull();
   });
 });

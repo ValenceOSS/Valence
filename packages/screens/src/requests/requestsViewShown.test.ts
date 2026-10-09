@@ -21,6 +21,10 @@ describe('requestsViewShown', () => {
     expect(requestsViewShown('mine')).toBe('mine');
   });
 
+  it('files a search of Discover under Discover', () => {
+    expect(requestsViewShown('find:dune')).toBe('discover');
+  });
+
   it('falls back to Discover for a view it does not know', () => {
     expect(requestsViewShown('nonsense')).toBe('discover');
   });

@@ -181,6 +181,24 @@ describe('AnAskable', () => {
     expect(drawn.queryByRole('button', { name: 'Request' })).toBeNull();
   });
 
+  it('offers the seasons of a programme the library holds some of, where more is asked for', async () => {
+    answering({
+      standing: { status: 'library', mediaId: 'm-1', requestId: null, requestState: null },
+    });
+
+    const onOpen = jest.fn();
+    const drawn = await render(
+      around(<AnAskable kind="series" id="438631" isMore onOpen={onOpen} onBack={jest.fn()} />),
+    );
+
+    await userEvent.press(await drawn.findByRole('button', { name: 'Request' }));
+
+    expect(onOpen).not.toHaveBeenCalled();
+    expect(askForMedia).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'series', tmdbId: 438631 }),
+    );
+  });
+
   it('lets somebody take back their own request, once they have said so', async () => {
     const alert = jest.spyOn(Alert, 'alert');
 

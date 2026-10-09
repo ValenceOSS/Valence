@@ -63,7 +63,9 @@ type Choosing = { asked: MediaRequestAsk; onAsked: () => void };
  * @param asking - The title the address names, as its kind and id, or nothing.
  * @param onClose - Called when it is dismissed.
  * @param onOpen - Called to open what is in the library already, in its place of asking — a title
- *   the library holds is never asked about, but opened as it would be anywhere else.
+ *   the library holds is not asked about, but opened as it would be anywhere else, unless the
+ *   address asks for more of it, as a show's Request more does: then its seasons are offered, those
+ *   held whole locked, and only what is missing is fetched.
  */
 const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   const cache = useQueryClient();
@@ -85,13 +87,16 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   const [problem, setProblem] = useState<string | null>(null);
   const title = found.data ?? null;
   const heldKind = title?.kind ?? null;
-  const heldId = title?.standing.status === 'library' ? title.standing.mediaId : null;
+  const isMore = named?.isMore === true;
+  const heldId = !isMore && title?.standing.status === 'library' ? title.standing.mediaId : null;
   const isElsewhere = title?.standing.status === 'linked';
   const kinds = useRequestableKinds();
   const isUnrequestable = title !== null && !kinds.has(title.kind);
   const isAskable =
     !isUnrequestable &&
-    (title?.standing.status === 'askable' || (isElsewhere && title.standing.requestId === null));
+    (title?.standing.status === 'askable' ||
+      (isMore && title?.standing.status === 'library') ||
+      (isElsewhere && title.standing.requestId === null));
 
   useEffect(() => {
     if (heldKind !== null && heldId !== null) {

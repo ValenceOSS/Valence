@@ -45,11 +45,13 @@ const styles = StyleSheet.create({
  *
  * @param kind - Whether it is a film or a programme.
  * @param id - Its catalogue id.
+ * @param isMore - Whether it is a programme the library holds some of, opened to ask for more of
+ *   it: its seasons are offered, those held whole locked, in place of opening it in the library.
  * @param onOpen - Told to open it in the library, which a title already there is at once, in
- *   place of this page — it is never asked about.
+ *   place of this page — it is never asked about, unless more of it is being asked for.
  * @param onBack - Told somebody is done with it.
  */
-const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
+const AnAskable = ({ kind, id, isMore = false, onOpen, onBack }: AnAskableProps) => {
   const cache = useQueryClient();
   const colours = useTheColours();
   const asking = useQuery({
@@ -71,7 +73,9 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
   const faces = useQuery(linkingQueries.faces());
   const title = asking.data;
   const heldAs =
-    title !== undefined && title.standing.status === 'library' ? title.standing.mediaId : null;
+    !isMore && title !== undefined && title.standing.status === 'library'
+      ? title.standing.mediaId
+      : null;
 
   useEffect(() => {
     if (heldAs !== null) {
@@ -227,6 +231,7 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
 
       {!isUnrequestable &&
       (title.standing.status === 'askable' ||
+        (isMore && title.standing.status === 'library') ||
         (title.standing.status === 'linked' && title.standing.requestId === null)) ? (
         <>
           {kind === 'series' ? (

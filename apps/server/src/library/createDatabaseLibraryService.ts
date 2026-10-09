@@ -2671,12 +2671,18 @@ const createDatabaseLibraryService = ({
       const extras = await extrasOfShow(viewer, libraryId, detail);
 
       const [cover] = await db
-        .select({ trailerKey: mediaItem.trailerKey })
+        .select({ trailerKey: mediaItem.trailerKey, externalId: mediaItem.externalId })
         .from(mediaItem)
         .where(eq(mediaItem.id, detail.coverMediaId))
         .limit(1);
+      const externalId = cover?.externalId ?? '';
 
-      const whole = { ...detail, extras, trailerKey: cover?.trailerKey ?? null };
+      const whole = {
+        ...detail,
+        extras,
+        trailerKey: cover?.trailerKey ?? null,
+        tmdbId: /^\d+$/.test(externalId) ? Number(externalId) : null,
+      };
 
       return shape === null
         ? whole

@@ -2015,6 +2015,11 @@
     "context": "A caption setting, in the web player and on the phone and the television."
   },
   {
+    "handler": "common.backToLibraryResults",
+    "text": "Back to library results",
+    "context": "Button above what Discover found for a search, on the phone and the television, returning to what the libraries found for the same words."
+  },
+  {
     "handler": "common.backupCode",
     "text": "Backup code",
     "context": "Shown, used in the ask for the code of the phone app and in the two factor challenge."
@@ -5228,6 +5233,11 @@
     "handler": "common.requestMissingSongs",
     "text": "Request missing songs",
     "context": "On a playlist, on the web and the phone: a button that requests the albums of every song in the playlist that the library does not have yet, and the title of the window it opens."
+  },
+  {
+    "handler": "common.requestMore",
+    "text": "Request more…",
+    "context": "The action on a show's page in the library, on the web and phone, that opens its seasons to ask for the episodes the library doesn't have yet. Offered where something aired is missing and the viewer may request."
   },
   {
     "handler": "common.requests",
@@ -23536,6 +23546,11 @@
     "context": "Shown in the use sample in the requests. {album} is filled in by the app."
   },
   {
+    "handler": "screens.requestsPage.backToDiscover",
+    "text": "Back to Discover",
+    "context": "The button above Discover's search results that goes back to Discover's shelves."
+  },
+  {
     "handler": "screens.requestsPage.booksDiscover.booksFound",
     "text": "Books found",
     "context": "Shown in the books discover in the requests page."
@@ -23611,6 +23626,11 @@
     "context": "Shown in the catalogue grid in the requests page."
   },
   {
+    "handler": "screens.requestsPage.findSomethingToRequest",
+    "text": "Find a film, show, artist or book to request",
+    "context": "The placeholder of Discover's search field on the Requests page."
+  },
+  {
     "handler": "screens.requestsPage.musicDiscover.noMusicToAskFor",
     "text": "No music to request",
     "context": "The title of a nothing here in the music discover in the requests page."
@@ -23629,6 +23649,11 @@
     "handler": "screens.requestsPage.musicDiscover.whatMusicThereIsToAskCouldNotBeRead",
     "text": "Couldn’t load music to request.",
     "context": "Shown where what music there is to ask for could not be read from the server, followed by a sentence about why and a button to try again."
+  },
+  {
+    "handler": "screens.requestsPage.nothingInTheCataloguesMatches",
+    "text": "Nothing in the catalogues matches “{query}”.",
+    "context": "Shown on Discover when its search finds nothing to request. {query} is what was searched for."
   },
   {
     "handler": "screens.requestsPage.requestsList.clearAFilterOrSearchFor",
@@ -23654,6 +23679,16 @@
     "handler": "screens.requestsPage.requestsList.refusedRefusedBecause",
     "text": "Declined: {refusedBecause}",
     "context": "Text shown in the requests list in the requests page. {refusedBecause} is filled in by the app."
+  },
+  {
+    "handler": "screens.requestsPage.resultsForQuery",
+    "text": "Results for “{query}”",
+    "context": "The heading over what Discover's search found in the catalogues. {query} is what was searched for."
+  },
+  {
+    "handler": "screens.requestsPage.searchDiscover",
+    "text": "Search Discover",
+    "context": "The label of the search field at the top of Discover on the Requests page, which searches the catalogues for something to request."
   },
   {
     "handler": "screens.requestsPage.shelfMoreCard.seeMore",
@@ -23776,9 +23811,39 @@
     "context": "Text shown in the scrolling pages."
   },
   {
-    "handler": "screens.searchArea.askableResults.artistsNotInYourLibraryYet",
-    "text": "Artists not in your library yet",
-    "context": "The title of a rail in the askable results in the search area."
+    "handler": "screens.searchArea.discoverPointer.cantFindIt",
+    "text": "Can’t find what you’re looking for?",
+    "context": "The heading of the banner under library search results that points to Discover, where things not on the server can be requested."
+  },
+  {
+    "handler": "screens.searchArea.discoverPointer.discoverHasCount.one",
+    "text": "Discover has {count} result for “{query}” that you can request.",
+    "context": "Under library search results, how many things the catalogues have for the same words that can be requested, when it's one. {query} is what was searched for."
+  },
+  {
+    "handler": "screens.searchArea.discoverPointer.discoverHasCount.other",
+    "text": "Discover has {count} results for “{query}” that you can request.",
+    "context": "Under library search results, how many things the catalogues have for the same words that can be requested. {query} is what was searched for."
+  },
+  {
+    "handler": "screens.searchArea.discoverPointer.nothingOnThisServerMatches",
+    "text": "Nothing on this server matches “{query}”",
+    "context": "The heading of the card shown when library search finds nothing but the catalogues have something to request. {query} is what was searched for."
+  },
+  {
+    "handler": "screens.searchArea.discoverPointer.searchDiscoverFor",
+    "text": "Search Discover for “{query}”",
+    "context": "The button under library search results that opens Discover's search for the same words."
+  },
+  {
+    "handler": "screens.searchArea.discoverPointer.seeCountInDiscover.one",
+    "text": "See {count} result in Discover",
+    "context": "The button on the card shown when library search finds nothing, opening Discover's search for the same words, when it found one."
+  },
+  {
+    "handler": "screens.searchArea.discoverPointer.seeCountInDiscover.other",
+    "text": "See {count} results in Discover",
+    "context": "The button on the card shown when library search finds nothing, opening Discover's search for the same words."
   },
   {
     "handler": "screens.searchArea.everythingYouOwn",

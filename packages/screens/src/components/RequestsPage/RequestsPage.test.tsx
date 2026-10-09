@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAShell } from '@ValenceScreens/testing/renderInAShell';
 import { RequestsPage } from './RequestsPage';
@@ -61,6 +62,19 @@ describe('RequestsPage', () => {
     window.history.replaceState(null, '', '/requests?view=music');
 
     renderInAShell(<RequestsPage />);
+
+    expect(await screen.findByRole('button', { name: 'Walt Disney Pictures' })).toBeInTheDocument();
+  });
+
+  it('searches Discover for the words the address names, and goes back to the shelves', async () => {
+    window.history.replaceState(null, '', '/requests?view=find%3Adune');
+
+    renderInAShell(<RequestsPage />);
+
+    expect(await screen.findByRole('heading', { name: 'Results for “dune”' })).toBeInTheDocument();
+    expect(screen.getByRole('searchbox', { name: 'Search Discover' })).toHaveValue('dune');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Back to Discover' }));
 
     expect(await screen.findByRole('button', { name: 'Walt Disney Pictures' })).toBeInTheDocument();
   });

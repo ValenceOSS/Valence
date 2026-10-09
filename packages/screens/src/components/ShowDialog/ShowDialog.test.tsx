@@ -126,6 +126,60 @@ describe('ShowDialog', () => {
     expect(onShare).toHaveBeenCalledWith(programme);
   });
 
+  it('offers to request more of a programme the library is missing aired episodes of', async () => {
+    const onRequestMore = vi.fn();
+
+    fetchShowMock.mockResolvedValue({
+      ...detail([{ seasonNumber: 1, episodes: [1] }]),
+      tmdbId: 95396,
+      shape: [
+        {
+          seasonNumber: 1,
+          episodeCount: 2,
+          episodes: [
+            { episodeNumber: 1, title: '', airDate: '2022-02-18' },
+            { episodeNumber: 2, title: '', airDate: '2022-02-25' },
+          ],
+        },
+      ],
+    });
+
+    renderInAnAddress(
+      <ShowDialog
+        show={summary}
+        onClose={vi.fn()}
+        onPlay={vi.fn()}
+        onRequestMore={onRequestMore}
+      />,
+    );
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Request more…' }));
+
+    expect(onRequestMore).toHaveBeenCalledWith(95396);
+  });
+
+  it('offers no more to request of a programme the library holds every aired episode of', async () => {
+    fetchShowMock.mockResolvedValue({
+      ...detail([{ seasonNumber: 1, episodes: [1] }]),
+      tmdbId: 95396,
+      shape: [
+        {
+          seasonNumber: 1,
+          episodeCount: 1,
+          episodes: [{ episodeNumber: 1, title: '', airDate: '2022-02-18' }],
+        },
+      ],
+    });
+
+    renderInAnAddress(
+      <ShowDialog show={summary} onClose={vi.fn()} onPlay={vi.fn()} onRequestMore={vi.fn()} />,
+    );
+
+    await screen.findByRole('button', { name: /Play Episode 1/ });
+
+    expect(screen.queryByRole('button', { name: 'Request more…' })).not.toBeInTheDocument();
+  });
+
   it('offers no way to share a programme it has no series for', async () => {
     fetchShowMock.mockResolvedValue(detail([{ seasonNumber: 1, episodes: [1] }]));
 
