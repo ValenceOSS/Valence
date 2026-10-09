@@ -5,19 +5,49 @@ import * as RadixMenu from '@radix-ui/react-dropdown-menu';
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import { MENU } from '@ValenceUI/tokens/menu';
+import { FIELD_TRIGGER } from '@ValenceUI/tokens/fieldTrigger';
 import { JOINED_LOOKS } from '@ValenceUI/tokens/joinedLooks';
 import { POPUP_MOTION, PRESS_MOTION } from '@ValenceUI/animations/motion';
 import { usePortalContainer } from '@ValenceUI/usePortalContainer';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
-import type { OptionMenuProps } from './OptionMenu.types';
+import type { MenuOption, OptionMenuProps } from './OptionMenu.types';
 
 const HOVER_OPENS_MS = 120;
+
+const OPTION_ROW = cn(
+  'relative z-10 flex min-h-8 cursor-default items-center justify-between gap-4 rounded-md px-2.5 py-1.5',
+  'text-text-muted outline-none transition-colors duration-[var(--duration-fast)]',
+  'hover:text-text focus:text-text data-[state=checked]:bg-[var(--surface-hover)] data-[state=checked]:text-text',
+  'data-[disabled]:cursor-not-allowed data-[disabled]:hover:text-text-muted',
+);
 
 const HOVER_CLOSES_MS = 220;
 
 /**
- * A menu of choices where exactly one is in force — an audio track, a quality, a sort order. Shows
+ * What one choice in the menu says, with what more there is to say of it beneath, and a tick
+ * at the end of its row while it is in force.
+ *
+ * @param option - The choice.
+ */
+const OptionText = ({ option }: { option: MenuOption }) => (
+  <>
+    <span className="flex flex-col gap-0.5">
+      {option.label}
+      {option.detail === undefined ? null : (
+        <span className="text-xs text-text-muted">{option.detail}</span>
+      )}
+    </span>
+
+    <RadixMenu.ItemIndicator className="flex size-4 shrink-0 items-center justify-center text-text">
+      <Icon of={CheckIcon} size={15} />
+    </RadixMenu.ItemIndicator>
+  </>
+);
+
+/**
+ * A menu of choices where one is in force, or, in a group that allows it, any number — an audio
+ * track, a quality, a sort order, the apps that may sign in. Shows
  * which is chosen rather than only changing what is beneath it, and lays out in columns where there
  * are more options than a single list would read well.
  *
@@ -108,12 +138,7 @@ const OptionMenu = ({
               : triggerShape === 'raisedJoined'
                 ? JOINED_LOOKS.raised
                 : triggerShape === 'field'
-                  ? cn(
-                      'w-full justify-between gap-2 rounded-md px-2.5 text-[0.8125rem] font-medium',
-                      size === 'sm' ? 'h-7' : 'h-8',
-                      'border border-[var(--surface-line)] bg-[var(--surface-hover)] text-text',
-                      'hover:bg-[var(--surface-active)]',
-                    )
+                  ? cn(FIELD_TRIGGER.base, FIELD_TRIGGER[size])
                   : cn(
                       'size-8 justify-center rounded-md',
                       'hover:bg-[var(--surface-hover)] data-[state=open]:bg-[var(--surface-active)]',
@@ -194,37 +219,46 @@ const OptionMenu = ({
               >
                 <RadixMenu.Label className={MENU.stickyLabel}>{group.name}</RadixMenu.Label>
 
-                <RadixMenu.RadioGroup
-                  value={group.selectedId}
-                  onValueChange={(next) => {
-                    group.onSelect(String(next));
-                  }}
-                  className="flex flex-col"
-                >
-                  {group.options.map((option) => (
-                    <RadixMenu.RadioItem
-                      key={option.id}
-                      value={option.id}
-                      data-highlight={`${group.name}:${option.id}`}
-                      className={cn(
-                        'relative z-10 flex min-h-8 cursor-default items-center justify-between gap-4 rounded-md px-2.5 py-1.5',
-                        'text-text-muted outline-none transition-colors duration-[var(--duration-fast)]',
-                        'hover:text-text focus:text-text data-[state=checked]:bg-[var(--surface-hover)] data-[state=checked]:text-text',
-                      )}
-                    >
-                      <span className="flex flex-col gap-0.5">
-                        {option.label}
-                        {option.detail === undefined ? null : (
-                          <span className="text-xs text-text-muted">{option.detail}</span>
-                        )}
-                      </span>
-
-                      <RadixMenu.ItemIndicator className="flex size-4 shrink-0 items-center justify-center text-text">
-                        <Icon of={CheckIcon} size={15} />
-                      </RadixMenu.ItemIndicator>
-                    </RadixMenu.RadioItem>
-                  ))}
-                </RadixMenu.RadioGroup>
+                {'selectedIds' in group ? (
+                  <div className="flex flex-col">
+                    {group.options.map((option) => (
+                      <RadixMenu.CheckboxItem
+                        key={option.id}
+                        checked={group.selectedIds.includes(option.id)}
+                        disabled={group.lockedIds?.includes(option.id) === true}
+                        data-highlight={`${group.name}:${option.id}`}
+                        onSelect={(event) => {
+                          event.preventDefault();
+                        }}
+                        onCheckedChange={(isChosen) => {
+                          group.onToggle(option.id, isChosen === true);
+                        }}
+                        className={OPTION_ROW}
+                      >
+                        <OptionText option={option} />
+                      </RadixMenu.CheckboxItem>
+                    ))}
+                  </div>
+                ) : (
+                  <RadixMenu.RadioGroup
+                    value={group.selectedId}
+                    onValueChange={(next) => {
+                      group.onSelect(String(next));
+                    }}
+                    className="flex flex-col"
+                  >
+                    {group.options.map((option) => (
+                      <RadixMenu.RadioItem
+                        key={option.id}
+                        value={option.id}
+                        data-highlight={`${group.name}:${option.id}`}
+                        className={OPTION_ROW}
+                      >
+                        <OptionText option={option} />
+                      </RadixMenu.RadioItem>
+                    ))}
+                  </RadixMenu.RadioGroup>
+                )}
               </RadixMenu.Group>
             ))}
 

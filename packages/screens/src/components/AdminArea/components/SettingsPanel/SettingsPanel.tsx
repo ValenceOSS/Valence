@@ -15,6 +15,7 @@ import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { TextField } from '@ValenceUI/TextField';
 import { Switch } from '@ValenceUI/Switch';
+import { MultiSelectField } from '@ValenceUI/MultiSelectField';
 import { FilePicker } from '@ValenceUI/FilePicker';
 import {
   saveCertificationRegion,
@@ -65,21 +66,9 @@ const ROUNDNESS_CHOICES = ROUNDNESS_LEVELS.map((level) => ({
 }));
 
 const APPS = [
-  {
-    id: 'desktop',
-    title: say('screens.adminArea.settingsPanel.theDesktopApp'),
-    description: say('screens.adminArea.settingsPanel.valenceForMacWindowsAndLinux'),
-  },
-  {
-    id: 'phone',
-    title: say('screens.adminArea.settingsPanel.thePhoneApp'),
-    description: say('screens.adminArea.settingsPanel.valenceForIPhoneAndAndroid'),
-  },
-  {
-    id: 'tv',
-    title: say('screens.adminArea.settingsPanel.theTelevisionApp'),
-    description: say('screens.adminArea.settingsPanel.valenceForAppleTvAndAndroid'),
-  },
+  { id: 'desktop', title: say('screens.adminArea.settingsPanel.theDesktopApp') },
+  { id: 'phone', title: say('screens.adminArea.settingsPanel.thePhoneApp') },
+  { id: 'tv', title: say('screens.adminArea.settingsPanel.theTelevisionApp') },
 ] as const;
 /**
  * What this server is configured with and who may sign into it: the metadata catalogue key, which
@@ -380,47 +369,45 @@ const SettingsPanel = ({
         </SettingRow>
 
         <SettingRow
-          title={say('screens.adminArea.settingsPanel.theWeb')}
-          description={say('screens.adminArea.settingsPanel.alwaysOnItIsHowThis')}
+          title={say('screens.adminArea.settingsPanel.appsThatCanSignIn')}
+          description={say('screens.adminArea.settingsPanel.theWebIsAlwaysOn')}
         >
-          <Switch
-            label={say('screens.adminArea.settingsPanel.theWeb')}
+          <MultiSelectField
+            label={say('screens.adminArea.settingsPanel.appsThatCanSignIn')}
             isLabelHidden
-            isOn
-            disabled
-            onToggle={() => undefined}
+            placeholder={say('screens.adminArea.settingsPanel.theWeb')}
+            className="w-64"
+            options={[
+              { id: 'web', label: say('screens.adminArea.settingsPanel.theWeb'), isLocked: true },
+              ...APPS.map((app) => ({ id: app.id, label: app.title })),
+            ]}
+            value={APPS.filter((app) => allowedApps[app.id]).map((app) => app.id)}
+            onChange={(chosen) => {
+              const was = allowedApps;
+              const next = {
+                desktop: chosen.includes('desktop'),
+                phone: chosen.includes('phone'),
+                tv: chosen.includes('tv'),
+              };
+
+              setAllowedApps(next);
+
+              void saveAllowedApps(next).then((saved) => {
+                tellOutcome(
+                  say('screens.adminArea.settingsPanel.appsSaved'),
+                  failureOfAnswer(
+                    saved,
+                    say('screens.adminArea.settingsPanel.theAppsCouldNotBeSaved'),
+                  ),
+                );
+
+                if (!saved) {
+                  setAllowedApps(was);
+                }
+              });
+            }}
           />
         </SettingRow>
-
-        {APPS.map((app) => (
-          <SettingRow key={app.id} title={app.title} description={app.description}>
-            <Switch
-              label={app.title}
-              isLabelHidden
-              isOn={allowedApps[app.id]}
-              onToggle={() => {
-                const was = allowedApps;
-                const next = { ...allowedApps, [app.id]: !allowedApps[app.id] };
-
-                setAllowedApps(next);
-
-                void saveAllowedApps(next).then((saved) => {
-                  tellOutcome(
-                    say('screens.adminArea.settingsPanel.appsSaved'),
-                    failureOfAnswer(
-                      saved,
-                      say('screens.adminArea.settingsPanel.theAppsCouldNotBeSaved'),
-                    ),
-                  );
-
-                  if (!saved) {
-                    setAllowedApps(was);
-                  }
-                });
-              }}
-            />
-          </SettingRow>
-        ))}
 
         <div>
           <SettingRow
