@@ -28,6 +28,7 @@ import { fetchAccountSessions } from '@ValenceClient/admin/fetchAccountSessions'
 import { fetchFolders } from '@ValenceClient/admin/fetchFolders';
 import { searchFolders } from '@ValenceClient/admin/searchFolders';
 import { fetchLibraryFolder } from '@ValenceClient/admin/fetchLibraryFolder';
+import { fetchFolderMeasure } from '@ValenceClient/admin/fetchFolderMeasure';
 import { fetchMediaPaths } from '@ValenceClient/admin/fetchMediaPaths';
 import { searchLibraryFiles } from '@ValenceClient/admin/searchLibraryFiles';
 import { fetchResourceHistory } from '@ValenceClient/admin/fetchResourceHistory';
@@ -544,6 +545,22 @@ const libraryFolder = (path: string | null) =>
   });
 
 /**
+ * How much a folder inside a library takes on the disk and what it holds, read only while it is
+ * shown, since adding up a large folder is not free.
+ *
+ * @param path - The folder, or nothing where none is shown.
+ * @returns The query.
+ */
+const folderMeasure = (path: string | null) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'files', 'measure', path],
+    queryFn: () => fetchFolderMeasure(path ?? ''),
+    enabled: path !== null,
+    retry: false,
+    staleTime: 30_000,
+  });
+
+/**
  * What inside the libraries is named with some words, below a folder, for the file manager.
  *
  * @param words - What the names should hold.
@@ -657,6 +674,7 @@ const adminQueries = {
   folders,
   folderSearch,
   libraryFolder,
+  folderMeasure,
   libraryFileSearch,
   overview,
   scans,

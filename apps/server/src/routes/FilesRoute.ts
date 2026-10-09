@@ -3,6 +3,7 @@ import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
   ChangedEntrySchema,
   LibraryFileSearchSchema,
+  FolderMeasureSchema,
   LibraryFolderSchema,
   MediaPathsSchema,
   MoveEntryRequestSchema,
@@ -31,6 +32,24 @@ const listLibraryFilesRoute = createRoute({
     200: {
       description: 'What is in it, folders first',
       content: { 'application/json': { schema: LibraryFolderSchema.openapi('LibraryFolder') } },
+    },
+    403: refused(
+      'Not somebody who may change libraries, a folder outside every library, or one Valence cannot read',
+    ),
+    404: refused('No such folder'),
+  },
+});
+
+const measureLibraryFolderRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/files/measure',
+  tags: ['Admin'],
+  summary: 'Add up how much a folder inside a library takes on the disk, and what it holds',
+  request: { query: z.object({ path: z.string().min(1) }) },
+  responses: {
+    200: {
+      description: 'Its size, and how many files and folders are inside it',
+      content: { 'application/json': { schema: FolderMeasureSchema.openapi('FolderMeasure') } },
     },
     403: refused(
       'Not somebody who may change libraries, a folder outside every library, or one Valence cannot read',
@@ -141,6 +160,7 @@ export {
   deleteLibraryFileRoute,
   listLibraryFilesRoute,
   listMediaPathsRoute,
+  measureLibraryFolderRoute,
   moveLibraryFileRoute,
   renameLibraryFileRoute,
   searchLibraryFilesRoute,

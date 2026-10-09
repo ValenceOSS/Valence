@@ -39,15 +39,24 @@ const MediaPathsSchema = z.object({
   paths: z.record(z.string(), z.string()),
 });
 
+const FolderMeasureSchema = z.object({
+  sizeBytes: z.number().nonnegative(),
+  files: z.number().int().nonnegative(),
+  folders: z.number().int().nonnegative(),
+  isPartial: z.boolean(),
+});
+
+type FolderMeasure = z.infer<typeof FolderMeasureSchema>;
 type LibraryEntry = z.infer<typeof LibraryEntrySchema>;
 type LibraryFolder = z.infer<typeof LibraryFolderSchema>;
 type LibraryFileSearch = z.infer<typeof LibraryFileSearchSchema>;
 type MediaPaths = z.infer<typeof MediaPathsSchema>;
 
-export type { LibraryEntry, LibraryFileSearch, LibraryFolder, MediaPaths };
+export type { FolderMeasure, LibraryEntry, LibraryFileSearch, LibraryFolder, MediaPaths };
 
 export {
   ChangedEntrySchema,
+  FolderMeasureSchema,
   LibraryEntrySchema,
   LibraryFileSearchSchema,
   LibraryFolderSchema,

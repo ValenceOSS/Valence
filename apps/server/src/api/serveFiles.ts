@@ -4,11 +4,13 @@ import {
   deleteLibraryFileRoute,
   listLibraryFilesRoute,
   listMediaPathsRoute,
+  measureLibraryFolderRoute,
   moveLibraryFileRoute,
   renameLibraryFileRoute,
   searchLibraryFilesRoute,
 } from '@ValenceServer/routes/FilesRoute';
 import { listLibraryFolder } from '@ValenceServer/files/listLibraryFolder';
+import { measureLibraryFolder } from '@ValenceServer/files/measureLibraryFolder';
 import { searchLibraryFiles } from '@ValenceServer/files/searchLibraryFiles';
 import { deleteLibraryEntry } from '@ValenceServer/files/deleteLibraryEntry';
 import { moveLibraryEntry } from '@ValenceServer/files/moveLibraryEntry';
@@ -39,6 +41,30 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
     switch (listed.kind) {
       case 'listed':
         return context.json(listed.folder, 200);
+      case 'missing':
+        return context.json(refuse('error.common.thereIsNoSuchFolder'), 404);
+      case 'outside':
+        return context.json(refuse('error.common.thatIsNotInsideALibrary'), 403);
+      case 'readOnly':
+      case 'denied':
+      case 'failed':
+        return context.json(refuse('error.common.valenceIsNotAllowedToRead'), 403);
+    }
+  });
+
+  app.openapi(measureLibraryFolderRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'library.edit'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
+    }
+
+    const measured = await measureLibraryFolder(
+      await library.list(asTheServer),
+      context.req.valid('query').path,
+    );
+
+    switch (measured.kind) {
+      case 'measured':
+        return context.json(measured.measure, 200);
       case 'missing':
         return context.json(refuse('error.common.thereIsNoSuchFolder'), 404);
       case 'outside':

@@ -17,6 +17,7 @@ import {
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
+import { Checkbox } from '@ValenceUI/Checkbox';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { DataTable } from '@ValenceUI/DataTable';
@@ -37,11 +38,13 @@ import { failureOfThrown } from '@ValenceScreens/admin/failureOf';
 import { UploadMediaDialog } from '@ValenceScreens/components/AdminArea/components/UploadMediaDialog/UploadMediaDialog';
 import { NameEntryDialog } from './components/NameEntryDialog/NameEntryDialog';
 import { MoveEntryDialog } from './components/MoveEntryDialog/MoveEntryDialog';
+import { FileDetails } from './components/FileDetails/FileDetails';
 import { trailInLibrary } from './trailInLibrary';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { LibraryEntry } from '@ValenceContracts/schemas/LibraryFiles';
 import type { FilesPanelProps } from './FilesPanel.types';
 import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * The file manager: what is in each library's folders, as it sits on the disk, with everything an
@@ -74,8 +77,9 @@ const FilesPanel = ({
   const words = useDeferredValue(typed.trim());
   const isSearching = words.length >= 2;
   const [renaming, setRenaming] = useState<LibraryEntry | null>(null);
-  const [moving, setMoving] = useState<LibraryEntry | null>(null);
-  const [condemned, setCondemned] = useState<LibraryEntry | null>(null);
+  const [moving, setMoving] = useState<readonly LibraryEntry[] | null>(null);
+  const [condemned, setCondemned] = useState<readonly LibraryEntry[] | null>(null);
+  const [chosenPaths, setChosenPaths] = useState<ReadonlySet<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
   const [isNamingFolder, setIsNamingFolder] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -99,9 +103,20 @@ const FilesPanel = ({
       ? ''
       : folder.path.slice(folder.libraryPath.length).replace(/^[\\/]+/, '');
 
+  const chosen = rows.filter((entry) => chosenPaths.has(entry.path));
+
   const open = (path: string | null) => {
     setTyped('');
+    setChosenPaths(new Set());
     setAt(path);
+  };
+
+  const shownPath = (path: string): string => {
+    const holding = libraryHolding(path, libraries);
+
+    return holding === null
+      ? path
+      : `${holding.name}/${path.slice(holding.path.length).replace(/^[\\/]+/, '')}`;
   };
 
   if (wasHanded !== openAt) {
@@ -135,6 +150,22 @@ const FilesPanel = ({
     return failure;
   };
 
+  const changeEach = async (
+    entries: readonly LibraryEntry[],
+    what: Parameters<typeof changeLibraryFile>[1],
+    done: (entry: LibraryEntry) => string,
+  ): Promise<string | null> => {
+    for (const entry of entries) {
+      const failure = await change(entry, what, done(entry));
+
+      if (failure !== null) {
+        return failure;
+      }
+    }
+
+    return null;
+  };
+
   const leaveOutItemsFor = useCallback(
     (entry: LibraryEntry) => {
       const holding = libraryHolding(entry.path, libraries);
@@ -164,6 +195,52 @@ const FilesPanel = ({
   const columns = useMemo<DataTableColumn<LibraryEntry>[]>(
     () => [
       {
+        id: 'choose',
+        header: () => (
+          <Checkbox
+            label={say('screens.adminArea.filesPanel.chooseEverythingHere')}
+            isLabelHidden
+            checked={rows.length > 0 && rows.every((entry) => chosenPaths.has(entry.path))}
+            isMixed={
+              rows.some((entry) => chosenPaths.has(entry.path)) &&
+              !rows.every((entry) => chosenPaths.has(entry.path))
+            }
+            onCheckedChange={(isChecked) => {
+              setChosenPaths(new Set(isChecked ? rows.map((entry) => entry.path) : []));
+            }}
+          />
+        ),
+        enableSorting: false,
+        meta: { shrinks: true },
+        cell: ({ row }) => (
+          <span
+            className="flex items-center"
+            onClick={(event) => {
+              event.stopPropagation();
+            }}
+          >
+            <Checkbox
+              label={say('screens.adminArea.filesPanel.chooseName', { name: row.original.name })}
+              isLabelHidden
+              checked={chosenPaths.has(row.original.path)}
+              onCheckedChange={(isChecked) => {
+                setChosenPaths((was) => {
+                  const next = new Set(was);
+
+                  if (isChecked) {
+                    next.add(row.original.path);
+                  } else {
+                    next.delete(row.original.path);
+                  }
+
+                  return next;
+                });
+              }}
+            />
+          </span>
+        ),
+      },
+      {
         id: 'name',
         header: say('common.name'),
         accessorFn: (entry) => entry.name,
@@ -173,7 +250,21 @@ const FilesPanel = ({
             <Icon of={row.original.isFolder ? FolderIcon : FileIcon} size={16} tone="muted" />
 
             <span className="flex min-w-0 flex-col">
-              <span className="truncate font-medium text-text">{row.original.name}</span>
+              {row.original.isFolder ? (
+                <Button
+                  variant="subtle"
+                  size="none"
+                  className="self-start truncate font-medium text-text hover:underline"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    open(row.original.path);
+                  }}
+                >
+                  {row.original.name}
+                </Button>
+              ) : (
+                <span className="truncate font-medium text-text">{row.original.name}</span>
+              )}
 
               {isSearching ? (
                 <span className="truncate font-body text-xs text-text-muted">
@@ -255,7 +346,7 @@ const FilesPanel = ({
                         label: say('screens.adminArea.filesPanel.move'),
                         icon: <Icon of={MoveFilledIcon} size={15} />,
                         onChoose: () => {
-                          setMoving(row.original);
+                          setMoving([row.original]);
                         },
                       },
                     ],
@@ -271,7 +362,7 @@ const FilesPanel = ({
                               icon: <Icon of={BinFilledIcon} size={15} />,
                               isDestructive: true,
                               onChoose: () => {
-                                setCondemned(row.original);
+                                setCondemned([row.original]);
                               },
                             },
                           ]
@@ -284,7 +375,7 @@ const FilesPanel = ({
           ),
       },
     ],
-    [at, isSearching, leaveOutItemsFor, mayDelete],
+    [at, chosenPaths, isSearching, leaveOutItemsFor, mayDelete, rows],
   );
 
   return (
@@ -355,6 +446,34 @@ const FilesPanel = ({
               ))}
         </nav>
 
+        {chosen.length > 1 && (at !== null || isSearching) ? (
+          <span className="flex shrink-0 gap-2">
+            <Button
+              variant="secondary"
+              size="xs"
+              onClick={() => {
+                setMoving(chosen);
+              }}
+            >
+              <Icon of={MoveFilledIcon} size={14} />
+              {say('screens.adminArea.filesPanel.move')}
+            </Button>
+
+            {mayDelete ? (
+              <Button
+                variant="secondary"
+                size="xs"
+                onClick={() => {
+                  setCondemned(chosen);
+                }}
+              >
+                <Icon of={BinFilledIcon} size={14} />
+                {say('screens.adminArea.filesPanel.delete')}
+              </Button>
+            ) : null}
+          </span>
+        ) : null}
+
         {isInLibrary ? (
           <span className="flex shrink-0 gap-2">
             <Button
@@ -413,26 +532,56 @@ const FilesPanel = ({
           }}
         />
       ) : (
-        <DataTable
-          height="fills"
-          label={isSearching ? say('screens.adminArea.filesPanel.filesFound') : say('common.files')}
-          columns={columns}
-          rows={rows}
-          pageSize={50}
-          getRowId={(entry) => entry.path}
-          onChooseRow={(entry) => {
-            if (entry.isFolder) {
-              open(entry.path);
+        <div className="flex min-h-0 flex-1">
+          <div className="min-w-0 flex-1">
+            <DataTable
+              height="fills"
+              label={
+                isSearching ? say('screens.adminArea.filesPanel.filesFound') : say('common.files')
+              }
+              columns={columns}
+              rows={rows}
+              pageSize={50}
+              getRowId={(entry) => entry.path}
+              onChooseRow={(entry) => {
+                setChosenPaths(
+                  chosenPaths.size === 1 && chosenPaths.has(entry.path)
+                    ? new Set()
+                    : new Set([entry.path]),
+                );
+              }}
+              emptyMessage={
+                isSearching
+                  ? say('screens.adminArea.filesPanel.nothingHereIsCalledThat')
+                  : at === null
+                    ? say('common.thereAreNoLibrariesYet')
+                    : say('screens.adminArea.filesPanel.thisFolderIsEmpty')
+              }
+            />
+          </div>
+
+          <FileDetails
+            where={
+              isSearching
+                ? null
+                : {
+                    name:
+                      at === null || folder?.path === null || folder?.path === undefined
+                        ? say('common.libraries')
+                        : library !== null && folder.path === library.path
+                          ? library.name
+                          : (folder.path.split(/[\\/]/).at(-1) ?? folder.path),
+                    path: at === null ? null : (folder?.path ?? null),
+                    holds: rows.length,
+                  }
             }
-          }}
-          emptyMessage={
-            isSearching
-              ? say('screens.adminArea.filesPanel.nothingHereIsCalledThat')
-              : at === null
-                ? say('common.thereAreNoLibrariesYet')
-                : say('screens.adminArea.filesPanel.thisFolderIsEmpty')
-          }
-        />
+            selected={chosen}
+            shownPath={shownPath}
+            onClear={() => {
+              setChosenPaths(new Set());
+            }}
+          />
+        </div>
       )}
 
       {(isSearching ? searched.data?.isTruncated : folder?.isTruncated) === true ? (
@@ -510,7 +659,13 @@ const FilesPanel = ({
       />
 
       <MoveEntryDialog
-        entry={moving}
+        name={
+          moving === null
+            ? null
+            : moving.length === 1
+              ? (moving[0]?.name ?? '')
+              : sayCount('common.count.items', moving.length)
+        }
         start={at ?? ''}
         onClose={() => {
           setMoving(null);
@@ -520,13 +675,12 @@ const FilesPanel = ({
             return;
           }
 
-          void change(
-            moving,
-            { kind: 'move', into },
-            say('screens.adminArea.filesPanel.movedName', { name: moving.name }),
+          void changeEach(moving, { kind: 'move', into }, (entry) =>
+            say('screens.adminArea.filesPanel.movedName', { name: entry.name }),
           ).then((failure) => {
             if (failure === null) {
               setMoving(null);
+              setChosenPaths(new Set());
             }
           });
         }}
@@ -537,10 +691,15 @@ const FilesPanel = ({
         title={
           condemned === null
             ? say('screens.adminArea.filesPanel.deleteThis')
-            : say('common.deleteName', { name: condemned.name })
+            : say('common.deleteName', {
+                name:
+                  condemned.length === 1
+                    ? (condemned[0]?.name ?? '')
+                    : sayCount('common.count.items', condemned.length),
+              })
         }
         detail={
-          condemned?.isFolder === true
+          condemned?.some((entry) => entry.isFolder) === true
             ? say('screens.adminArea.filesPanel.theFolderIsDeletedFromThe')
             : say('screens.adminArea.filesPanel.theFileIsDeletedFromThe')
         }
@@ -557,15 +716,14 @@ const FilesPanel = ({
 
           setIsDeleting(true);
 
-          void change(
-            condemned,
-            { kind: 'delete' },
-            say('common.deletedName', { name: condemned.name }),
+          void changeEach(condemned, { kind: 'delete' }, (entry) =>
+            say('common.deletedName', { name: entry.name }),
           ).then((failure) => {
             setIsDeleting(false);
 
             if (failure === null) {
               setCondemned(null);
+              setChosenPaths(new Set());
             }
           });
         }}
