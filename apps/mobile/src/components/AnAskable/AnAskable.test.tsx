@@ -1,7 +1,11 @@
 import { Alert } from 'react-native';
 import { fireEvent, render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { askForMedia, removeMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
+import {
+  askForMedia,
+  joinMediaRequest,
+  removeMediaRequest,
+} from '@ValenceClient/requests/fetchMediaRequests';
 import { fetchSession } from '@ValenceClient/session/auth';
 import { aCatalogueTitleDetail } from '@ValenceClient/testing/aCatalogueTitleDetail';
 import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
@@ -22,6 +26,7 @@ import { theAddressOf } from '@ValenceMobile/testing/theAddressOf';
 jest.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
   ...jest.requireActual<object>('@ValenceClient/requests/fetchMediaRequests'),
   askForMedia: jest.fn(),
+  joinMediaRequest: jest.fn(),
   removeMediaRequest: jest.fn(),
 }));
 
@@ -94,6 +99,7 @@ const drawIt = async (onOpen = jest.fn()) =>
 beforeEach(() => {
   jest.mocked(askForMedia).mockReset().mockResolvedValue({ value: null, refusal: null });
   jest.mocked(removeMediaRequest).mockReset().mockResolvedValue(null);
+  jest.mocked(joinMediaRequest).mockReset().mockResolvedValue({ value: null, refusal: null });
   jest
     .mocked(askLinkedServer)
     .mockReset()
@@ -196,6 +202,83 @@ describe('AnAskable', () => {
     expect(onOpen).not.toHaveBeenCalled();
     expect(askForMedia).toHaveBeenCalledWith(
       expect.objectContaining({ kind: 'series', tmdbId: 438631 }),
+    );
+  });
+
+  it('names who asked for somebody else’s request, and wants it too', async () => {
+    answering({
+      standing: {
+        status: 'requested',
+        mediaId: null,
+        requestId: REQUEST_ID,
+        requestState: 'wanted',
+        askedBy: [{ id: 'priya', name: 'Priya' }],
+      },
+    });
+
+    const drawn = await drawIt();
+
+    expect(await drawn.findByText('Requested by Priya')).toBeTruthy();
+
+    await userEvent.press(drawn.getByRole('button', { name: 'I want this too' }));
+
+    expect(joinMediaRequest).toHaveBeenCalledWith(REQUEST_ID);
+  });
+
+  it('says so where wanting it too fails, and lets it be tried again', async () => {
+    jest.mocked(joinMediaRequest).mockRejectedValue(new Error('not a request'));
+    answering({
+      standing: {
+        status: 'requested',
+        mediaId: null,
+        requestId: REQUEST_ID,
+        requestState: 'wanted',
+        askedBy: [{ id: 'priya', name: 'Priya' }],
+      },
+    });
+
+    const drawn = await drawIt();
+
+    await userEvent.press(await drawn.findByRole('button', { name: 'I want this too' }));
+
+    expect(await drawn.findByText('Couldn’t request that.')).toBeTruthy();
+    expect(drawn.getByRole('button', { name: 'I want this too' })).toBeEnabled();
+  });
+
+  it('says who else wants your own request, and that cancelling leaves it for them', async () => {
+    const alert = jest.spyOn(Alert, 'alert');
+
+    answering({
+      standing: {
+        status: 'requested',
+        mediaId: null,
+        requestId: REQUEST_ID,
+        requestState: 'wanted',
+        askedBy: [
+          { id: 'priya', name: 'Priya' },
+          { id: 'someone', name: 'Sam' },
+        ],
+      },
+      requests: [
+        aMediaRequest({
+          id: REQUEST_ID,
+          requestedBy: { id: 'priya', name: 'Priya' },
+          alsoAskedBy: [{ id: 'someone', name: 'Sam' }],
+        }),
+      ],
+    });
+
+    const drawn = await drawIt();
+
+    expect(await drawn.findByText('Priya wants it too')).toBeTruthy();
+    expect(drawn.queryByRole('button', { name: 'I want this too' })).toBeNull();
+
+    await userEvent.press(await drawn.findByRole('button', { name: 'Cancel request' }));
+
+    expect(alert).toHaveBeenCalledWith(
+      'Cancel this request?',
+      'Priya still wants it, so it stays requested for them.',
+      expect.anything(),
     );
   });
 

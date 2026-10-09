@@ -34,6 +34,7 @@ import type {
   RequestCatalogueDraft,
   RequestCatalogueUpdate,
   ReleaseType,
+  Requester,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type {
   MediaRequestRecord,
@@ -104,6 +105,18 @@ const bothChoices = (
     followsAfter: base.followsAfter,
   };
 };
+
+/**
+ * Somebody asking for what is already asked for: kept among those who asked, unless they are already.
+ *
+ * @param kept - The request kept.
+ * @param asker - Who is asking.
+ * @returns The change to the request, if any.
+ */
+const joinedBy = (kept: MediaRequestRecord, asker: Requester): Partial<MediaRequestRecord> =>
+  kept.requestedById === asker.id || kept.alsoAskedBy.some((one) => one.id === asker.id)
+    ? {}
+    : { alsoAskedBy: [...kept.alsoAskedBy, asker] };
 
 /**
  * What a series request learns from what the library already holds of it: where the library keeps
@@ -267,9 +280,12 @@ const createRequestService = ({
             : {}),
           ...(draft.profileId === null ? {} : { profileId: draft.profileId }),
           ...(draft.isPickedByHand ? { isPickedByHand: true } : {}),
-          ...(draft.isApproved && kept.approval !== 'approved'
+          ...(draft.isApproved &&
+          kept.approval !== 'approved' &&
+          kept.requestedById === draft.requestedBy.id
             ? { approval: 'approved', refusedBecause: null }
             : {}),
+          ...joinedBy(kept, draft.requestedBy),
           ...keptBy(kept.kind, draft.held),
           catalogueCheckedAt: at,
           updatedAt: at,
@@ -288,6 +304,49 @@ const createRequestService = ({
       onChange();
 
       return { request: await shown(record), isNew: true };
+    },
+
+    join: async (id: string, asker: Requester): Promise<MediaRequest | null> => {
+      const kept = await requests.find(id);
+
+      if (kept === null) {
+        return null;
+      }
+
+      const record = await requests.update(id, {
+        ...joinedBy(kept, asker),
+        updatedAt: now().toISOString(),
+      });
+
+      onChange();
+
+      return record === null ? null : shown(record);
+    },
+
+    leave: async (id: string, askerId: string): Promise<MediaRequest | null> => {
+      const kept = await requests.find(id);
+      const [next, ...rest] = kept?.alsoAskedBy ?? [];
+
+      if (kept === null || next === undefined) {
+        return null;
+      }
+
+      const isFirst = kept.requestedById === askerId;
+
+      if (!isFirst && !kept.alsoAskedBy.some((one) => one.id === askerId)) {
+        return null;
+      }
+
+      const record = await requests.update(id, {
+        ...(isFirst
+          ? { requestedById: next.id, requestedByName: next.name, alsoAskedBy: rest }
+          : { alsoAskedBy: kept.alsoAskedBy.filter((one) => one.id !== askerId) }),
+        updatedAt: now().toISOString(),
+      });
+
+      onChange();
+
+      return record === null ? null : shown(record);
     },
 
     approve: (id: string): Promise<MediaRequest | null> =>

@@ -6,7 +6,16 @@ import { Play } from '@keyline-icons/react-native/fill';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { askingFor } from '@ValenceClient/requests/askingFor';
-import { askForMedia, removeMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
+import {
+  askForMedia,
+  joinMediaRequest,
+  removeMediaRequest,
+} from '@ValenceClient/requests/fetchMediaRequests';
+import { describeOthersStillWanting } from '@ValenceClient/requests/describeOthersStillWanting';
+import { describeWhoElseAsked } from '@ValenceClient/requests/describeWhoElseAsked';
+import { mayJoinRequest } from '@ValenceClient/requests/mayJoinRequest';
+import { askersOf } from '@ValenceContracts/functions/askersOf';
+import { isAskedBy } from '@ValenceContracts/functions/isAskedBy';
 import { nameTheStanding } from '@ValenceClient/requests/nameTheStanding';
 import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
 import { progressOfRequest } from '@ValenceClient/requests/progressOfRequest';
@@ -43,8 +52,9 @@ const SEASON_SAYS: Record<CatalogueSeason['standing'], string | null> = {
  * to start with and Specials left for whoever wants them, and asks for those chosen, getting new
  * seasons as they come unless that is turned off. Where this viewer may pick the quality it is
  * fetched in, asking first lists the qualities on offer. A film already in the library opens its
- * own page. Somebody's own request can be cancelled until it is in the library, once they have said
- * so, since it throws away whatever has downloaded and a remote's one press is easily made; while
+ * own page. Somebody else's request names who asked, and can be wanted too. Somebody's own request
+ * can be cancelled until it is in the library, once they have said so, since it throws away whatever
+ * has downloaded — unless others want it too — and a remote's one press is easily made; while
  * something is on its way, the page keeps looking for where it has got to, and while it downloads
  * gives it a panel of its own saying how far through it is, how fast it is arriving and how long is
  * left. The page is lit by the title's own picture.
@@ -125,10 +135,12 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
   const standing = nameTheStanding(title.standing);
   const mayCancel =
     request !== null &&
-    request.requestedBy.id === me.data?.id &&
+    isAskedBy(request, me.data?.id) &&
     request.state !== 'filed' &&
     request.state !== 'available';
   const starring = title.cast.slice(0, STARRING).map((one) => one.name);
+  const whoElse = describeWhoElseAsked(title.standing.askedBy ?? [], me.data?.id);
+  const isJoinable = isRequestableKind && mayJoinRequest(title.standing, me.data?.id);
   const isOpenable =
     title.standing.status === 'library' && kind === 'film' && title.standing.mediaId !== null;
 
@@ -152,6 +164,27 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
 
         setAsking(null);
         refresh();
+      })
+      .finally(() => {
+        setIsBusy(false);
+      });
+  };
+
+  const join = () => {
+    if (title.standing.requestId === null) {
+      return;
+    }
+
+    setIsBusy(true);
+    setProblem(null);
+
+    void joinMediaRequest(title.standing.requestId)
+      .then(({ refusal }) => {
+        setProblem(refusal?.message ?? null);
+        refresh();
+      })
+      .catch(() => {
+        setProblem(say('common.thatCouldNotBeRequested'));
       })
       .finally(() => {
         setIsBusy(false);
@@ -194,7 +227,8 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
 
     Alert.alert(
       say('common.cancelTitle', { title: title.title }),
-      say('common.itWillNotBeFetchedAnd'),
+      (request === null ? null : describeOthersStillWanting(askersOf(request), me.data?.id)) ??
+        say('common.itWillNotBeFetchedAnd'),
       [
         { text: say('common.keepIt'), style: 'cancel' },
         {
@@ -237,9 +271,12 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
         going === null && title.standing.status !== 'library' ? (standing?.label ?? null) : null
       }
       overview={title.overview}
-      credits={
-        starring.length === 0 ? [] : [say('common.starringValue', { value: starring.join(', ') })]
-      }
+      credits={[
+        ...(starring.length === 0
+          ? []
+          : [say('common.starringValue', { value: starring.join(', ') })]),
+        ...(whoElse === null ? [] : [whoElse]),
+      ]}
     >
       {going === null ? null : (
         <DownloadPanel label={standing?.label ?? say('common.downloading')} progress={going} />
@@ -399,6 +436,19 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
                       followsNew,
                     ),
                   );
+                }
+              }}
+            />
+          ) : null}
+
+          {isJoinable ? (
+            <ActionRow
+              label={say('common.iWantThisToo')}
+              icon={Plus}
+              hasPreferredFocus={!isOpenable}
+              onPress={() => {
+                if (!isBusy) {
+                  join();
                 }
               }}
             />

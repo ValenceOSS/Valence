@@ -77,6 +77,7 @@ import type {
   MissingSearch,
   RequestCatalogueUpdate,
   RequestLogEntry,
+  Requester,
 } from '@ValenceContracts/schemas/MediaRequest';
 import {
   FollowedRequestSchema,
@@ -679,6 +680,14 @@ const createRequestsClient = ({
         (body) => z.object({ folders: z.array(z.string()) }).parse(body),
         { method: 'POST' },
       ),
+
+    joinRequest: (id: string, asker: Requester): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/askers`, readRequest, { method: 'POST', body: asker }),
+
+    leaveRequest: (id: string, askerId: string): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/askers/${encodeURIComponent(askerId)}`, readRequest, {
+        method: 'DELETE',
+      }),
 
     removeRequest: (id: string, isDeletingDownloads = false): Promise<RequestsAnswer<null>> =>
       call(`${withRequest(id)}${isDeletingDownloads ? '?deleteDownloads=true' : ''}`, () => null, {

@@ -39,6 +39,7 @@ const recordFromDraft = (
   refusedBecause: null,
   requestedById: draft.requestedBy.id,
   requestedByName: draft.requestedBy.name,
+  alsoAskedBy: [],
   seasons:
     draft.kind === 'series'
       ? seasonsChosen(draft.seasons, draft.followsNewSeasons, draft.catalogue.episodes)

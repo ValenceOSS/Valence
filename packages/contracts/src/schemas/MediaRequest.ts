@@ -224,6 +224,7 @@ const MediaRequestSchema = z.object({
   approval: RequestApprovalSchema,
   refusedBecause: SaidSchema.nullable(),
   requestedBy: RequesterSchema,
+  alsoAskedBy: z.array(RequesterSchema).default([]),
   seasons: SeasonsSchema,
   followsNewSeasons: z.boolean().default(false),
   releaseTypes: ReleaseTypesSchema.nullable(),
@@ -400,6 +401,8 @@ type RequestLogEntry = z.infer<typeof RequestLogEntrySchema>;
 type CatalogueSeason = z.infer<typeof CatalogueSeasonSchema>;
 type SeasonStanding = (typeof SEASON_STANDINGS)[number];
 
+type Requester = z.infer<typeof RequesterSchema>;
+
 export type {
   BlockedRelease,
   BookRequestKind,
@@ -439,6 +442,7 @@ export type {
   RequestLogEntry,
   SeasonFolder,
   VideoRequestKind,
+  Requester,
 };
 
 export {

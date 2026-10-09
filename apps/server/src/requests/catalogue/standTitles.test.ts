@@ -86,6 +86,7 @@ const aRequest = (overrides: Partial<MediaRequest>): MediaRequest => ({
   approval: 'approved',
   refusedBecause: null,
   requestedBy: { id: 'someone', name: 'Sam' },
+  alsoAskedBy: [],
   seasons: null,
   followsNewSeasons: false,
   releaseTypes: null,
@@ -112,6 +113,7 @@ describe('standTitles', () => {
         mediaId: null,
         requestId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
         requestState: 'downloading',
+        askedBy: [{ id: 'someone', name: 'Sam' }],
       },
       { status: 'library', mediaId: 'show-1', requestId: null, requestState: null },
       { status: 'askable', mediaId: null, requestId: null, requestState: null },
@@ -210,6 +212,7 @@ describe('standTitles', () => {
         requestId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
         requestState: 'downloading',
         fromServer: 'Films',
+        askedBy: [{ id: 'someone', name: 'Sam' }],
       },
       {
         status: 'linked',

@@ -1,3 +1,4 @@
+import { askersOf } from '@ValenceContracts/functions/askersOf';
 import { nameKey } from '@ValenceServer/music/nameKey';
 import { DEEZER_ID_PREFIX } from '@ValenceServer/requests/catalogue/DEEZER_ID_PREFIX';
 import type { CatalogueStanding, CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
@@ -68,7 +69,8 @@ const isFor = (request: MediaRequest, title: UnstoodTitle): boolean => {
 /**
  * Says where each title stands for whoever is looking: in the library already, with where it is;
  * on a linked server, with which, so nobody asks for what they can already watch — though they may
- * still want a copy here; asked for, with where the request has got to; or there to be asked for.
+ * still want a copy here; asked for, with where the request has got to and everybody who asked; or
+ * there to be asked for.
  * A title known only from Deezer's charts is found by its name, having no MusicBrainz id to be
  * found by.
  *
@@ -135,6 +137,7 @@ const standTitles = async (
           mediaId,
           requestId: request?.id ?? null,
           requestState: request?.state ?? null,
+          ...(request === undefined ? {} : { askedBy: askersOf(request) }),
         },
       };
     }
@@ -150,6 +153,7 @@ const standTitles = async (
           mediaId: onAnother.mediaId,
           requestId: request?.id ?? null,
           requestState: request?.state ?? null,
+          ...(request === undefined ? {} : { askedBy: askersOf(request) }),
           fromServer: onAnother.fromServer,
         },
       };
@@ -165,6 +169,7 @@ const standTitles = async (
               mediaId: request.mediaId,
               requestId: request.id,
               requestState: request.state,
+              askedBy: askersOf(request),
             },
     };
   });

@@ -1,3 +1,4 @@
+import { askersOf } from '@ValenceContracts/functions/askersOf';
 import { describeRequestBadge } from '@ValenceClient/requests/describeRequestBadge';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 
@@ -44,11 +45,11 @@ const filterRequests = (
       (kinds.length === 0 || kinds.includes(request.kind)) &&
       (states.length === 0 || states.includes(describeRequestBadge(request).label)) &&
       (libraries.length === 0 || libraries.includes(request.libraryId)) &&
-      (askers.length === 0 || askers.includes(request.requestedBy.id)) &&
+      (askers.length === 0 || askersOf(request).some((asker) => askers.includes(asker.id))) &&
       (qualities.length === 0 || qualities.includes(request.profileName ?? '')) &&
       (words === '' ||
         request.title.toLowerCase().includes(words) ||
-        request.requestedBy.name.toLowerCase().includes(words)),
+        askersOf(request).some((asker) => asker.name.toLowerCase().includes(words))),
   );
 };
 

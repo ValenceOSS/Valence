@@ -4,7 +4,16 @@ import { ActivityIndicator, Alert, StyleSheet } from 'react-native';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
-import { askForMedia, removeMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
+import {
+  askForMedia,
+  joinMediaRequest,
+  removeMediaRequest,
+} from '@ValenceClient/requests/fetchMediaRequests';
+import { describeOthersStillWanting } from '@ValenceClient/requests/describeOthersStillWanting';
+import { describeWhoElseAsked } from '@ValenceClient/requests/describeWhoElseAsked';
+import { mayJoinRequest } from '@ValenceClient/requests/mayJoinRequest';
+import { askersOf } from '@ValenceContracts/functions/askersOf';
+import { isAskedBy } from '@ValenceContracts/functions/isAskedBy';
 import { seasonsWithItemsOf } from '@ValenceClient/requests/seasonsWithItemsOf';
 import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
 import { describeAskableFacts } from '@ValenceClient/requests/describeAskableFacts';
@@ -40,8 +49,9 @@ const styles = StyleSheet.create({
  * one quality somebody picks one before asking; where it offers one, or insists on one, there is
  * nothing to pick.
  *
- * Somebody can take back their own request until it has arrived, and is asked first, because it
- * throws away whatever has downloaded.
+ * Somebody else's request names who asked and can be wanted too. Somebody can take back their own
+ * request until it has arrived, and is asked first, because it throws away whatever has downloaded —
+ * unless others want it too, when it stays for them.
  *
  * @param kind - Whether it is a film or a programme.
  * @param id - Its catalogue id.
@@ -141,10 +151,31 @@ const AnAskable = ({ kind, id, isMore = false, onOpen, onBack }: AnAskableProps)
     await cache.invalidateQueries({ queryKey: requestsQueries.key });
   };
 
+  const join = async () => {
+    if (title?.standing.requestId === null || title?.standing.requestId === undefined) {
+      return;
+    }
+
+    setIsSending(true);
+    setRefusal(null);
+
+    try {
+      const sent = await joinMediaRequest(title.standing.requestId);
+
+      setRefusal(sent.refusal?.message ?? null);
+      await cache.invalidateQueries({ queryKey: requestsQueries.key });
+    } catch {
+      setRefusal(say('common.thatCouldNotBeRequested'));
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   const takeBack = (requestId: string) => {
     Alert.alert(
       say('common.cancelThisRequest'),
-      say('phone.anAskable.anythingAlreadyDownloadedForItIs'),
+      (request === null ? null : describeOthersStillWanting(askersOf(request), who.data?.id)) ??
+        say('phone.anAskable.anythingAlreadyDownloadedForItIs'),
       [
         { text: say('common.keepIt'), style: 'cancel' },
         {
@@ -179,7 +210,9 @@ const AnAskable = ({ kind, id, isMore = false, onOpen, onBack }: AnAskableProps)
 
   const standing = describeStanding(title.standing);
   const mayTakeBack =
-    request !== null && request.requestedBy.id === who.data?.id && !HAS_ARRIVED.has(request.state);
+    request !== null && isAskedBy(request, who.data?.id) && !HAS_ARRIVED.has(request.state);
+  const whoElse = describeWhoElseAsked(title.standing.askedBy ?? [], who.data?.id);
+  const isJoinable = !isUnrequestable && mayJoinRequest(title.standing, who.data?.id);
 
   return (
     <Screen scrolls onBack={onBack}>
@@ -197,6 +230,19 @@ const AnAskable = ({ kind, id, isMore = false, onOpen, onBack }: AnAskableProps)
       {standing === null ? null : (
         <Words tone={standing.tone === 'danger' ? 'danger' : 'accent'}>{standing.label}</Words>
       )}
+
+      {whoElse === null ? null : <Words tone="muted">{whoElse}</Words>}
+
+      {isJoinable ? (
+        <Button
+          isBusy={isSending}
+          onPress={() => {
+            void join();
+          }}
+        >
+          {say('common.iWantThisToo')}
+        </Button>
+      ) : null}
 
       {going === null ? null : (
         <HowFar

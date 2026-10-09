@@ -24,6 +24,7 @@ describe('webhookRequestOf', () => {
       overview: 'A teenager discovers she has telekinetic powers.',
       posterUrl: 'https://image.tmdb.org/t/p/w500/carrie.jpg',
       requestedBy: 'Jess',
+      alsoAskedBy: [],
       seasons: [1],
       state: 'downloading',
     });

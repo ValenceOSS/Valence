@@ -88,6 +88,16 @@ const approveMediaRequest = (id: string): Promise<Sent<MediaRequest>> =>
   sendToRequests(`${REQUESTS}/${id}/approve`, 'POST', undefined, readRequest);
 
 /**
+ * Wants something somebody else asked for too, so it shows among your requests and you are told
+ * when it arrives.
+ *
+ * @param id - Which.
+ * @returns The request, or why not.
+ */
+const joinMediaRequest = (id: string): Promise<Sent<MediaRequest>> =>
+  sendToRequests(`${REQUESTS}/${id}/join`, 'POST', undefined, readRequest);
+
+/**
  * Refuses a request.
  *
  * @param id - Which.
@@ -217,8 +227,8 @@ const pickMediaRelease = (id: string, release: Release): Promise<Sent<MediaReque
 
 /**
  * Removes a request, stopping what it had started downloading — or cancels one of your own, taking
- * that with it, files and all — and, for whoever manages requesting, deleting the files it filed
- * where asked.
+ * that with it, files and all, or only taking you off it while others want it too — and, for
+ * whoever manages requesting, deleting the files it filed where asked.
  *
  * @param id - Which.
  * @param isDeletingDownloads - Whether what it had started downloading goes too.
@@ -308,6 +318,7 @@ export {
   fetchSeriesSeasons,
   findReleasesFor,
   fulfilMediaRequest,
+  joinMediaRequest,
   liftRequestBlock,
   pickMediaRelease,
   refuseMediaRequest,

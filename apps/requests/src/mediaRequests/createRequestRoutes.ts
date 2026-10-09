@@ -10,6 +10,7 @@ import {
   MediaRequestRefusalSchema,
   MediaRequestRevisionSchema,
   RequestCatalogueUpdateSchema,
+  RequesterSchema,
 } from '@ValenceContracts/schemas/MediaRequest';
 import { readBody } from '@ValenceRequests/readBody';
 import type { MediaRequestAdded } from '@ValenceContracts/schemas/MediaRequest';
@@ -41,12 +42,13 @@ const NO_SUCH_REQUEST = refuse('error.requests.noSuchRequest');
 
 /**
  * Requests for films and series, as routes under `/api`: making and listing them, approving and
- * refusing them, changing what they ask for, keeping them up to date with the catalogue, trying
- * again, searching by hand and picking a release — for a request not yet made, too — searching for
- * everything still missing, reading what each has done, and lifting a release it will not try
- * again, stopping one of its downloads, following or not following its episodes, and deleting the
- * files it filed. A request cancelled can take the downloads it had not yet finished filing with it,
- * files and all, and a request refused takes them always.
+ * refusing them, adding somebody else who wants one and taking away one who no longer does,
+ * changing what they ask for, keeping them up to date with the catalogue, trying again, searching
+ * by hand and picking a release — for a request not yet made, too — searching for everything still
+ * missing, reading what each has done, and lifting a release it will not try again, stopping one of
+ * its downloads, following or not following its episodes, and deleting the files it filed. A
+ * request cancelled can take the downloads it had not yet finished filing with it, files and all,
+ * and a request refused takes them always.
  *
  * @param service - The requests.
  * @param log - What each request has done.
@@ -149,6 +151,18 @@ const createRequestRoutes = ({ service, log, worker }: CreateRequestRoutesOption
 
     return context.body(null, 204);
   });
+
+  routes.post('/requests/:id/askers', async (context) => {
+    const asker = await readBody(context.req.raw, RequesterSchema);
+
+    return asker === null
+      ? context.json(refuse('error.requests.sayWhoIsAsking'), 400)
+      : answer(await service.join(context.req.param('id'), asker));
+  });
+
+  routes.delete('/requests/:id/askers/:askerId', async (context) =>
+    answer(await service.leave(context.req.param('id'), context.req.param('askerId'))),
+  );
 
   routes.post('/requests/:id/approve', async (context) =>
     answer(await service.approve(context.req.param('id'))),

@@ -50,6 +50,7 @@ import {
 import type {
   ReleaseType,
   RequestCatalogue,
+  Requester,
   SeasonFolder,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
@@ -259,6 +260,7 @@ const mediaRequest = requestsSchema.table(
     refusedBecause: jsonb('refused_because').$type<Said>(),
     requestedById: text('requested_by_id').notNull(),
     requestedByName: text('requested_by_name').notNull(),
+    alsoAskedBy: jsonb('also_asked_by').$type<Requester[]>().notNull().default([]),
     seasons: jsonb('seasons').$type<number[]>(),
     followsNewSeasons: boolean('follows_new_seasons').notNull().default(false),
     followsAfter: integer('follows_after'),

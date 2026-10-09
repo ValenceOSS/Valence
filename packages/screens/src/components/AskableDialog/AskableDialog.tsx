@@ -17,7 +17,16 @@ import { Icon } from '@ValenceUI/Icon';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { Spinner } from '@ValenceUI/Spinner';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
-import { askForMedia, removeMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
+import {
+  askForMedia,
+  joinMediaRequest,
+  removeMediaRequest,
+} from '@ValenceClient/requests/fetchMediaRequests';
+import { describeOthersStillWanting } from '@ValenceClient/requests/describeOthersStillWanting';
+import { describeWhoElseAsked } from '@ValenceClient/requests/describeWhoElseAsked';
+import { mayJoinRequest } from '@ValenceClient/requests/mayJoinRequest';
+import { askersOf } from '@ValenceContracts/functions/askersOf';
+import { isAskedBy } from '@ValenceContracts/functions/isAskedBy';
 import { askingFor } from '@ValenceClient/requests/askingFor';
 import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
 import { seasonsWithItemsOf } from '@ValenceClient/requests/seasonsWithItemsOf';
@@ -118,10 +127,14 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   const choices = offered.data?.forcedId === null ? offered.data.choices : [];
   const mayCancel =
     request !== null &&
-    request.requestedBy.id === me.data?.id &&
+    isAskedBy(request, me.data?.id) &&
     request.state !== 'filed' &&
     request.state !== 'available';
   const standing = title === null ? null : describeStanding(title.standing);
+  const whoElse =
+    title === null ? null : describeWhoElseAsked(title.standing.askedBy ?? [], me.data?.id);
+  const isJoinable =
+    title !== null && !isUnrequestable && mayJoinRequest(title.standing, me.data?.id);
   const isAddingSeasons =
     !isUnrequestable &&
     title?.kind === 'series' &&
@@ -153,6 +166,28 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
 
         onAsked();
         void cache.invalidateQueries({ queryKey: requestsQueries.key });
+      })
+      .finally(() => {
+        setIsAsking(false);
+      });
+  };
+
+  const join = (requestId: string) => {
+    setIsAsking(true);
+    setProblem(null);
+
+    void joinMediaRequest(requestId)
+      .then(({ value, refusal }) => {
+        if (value === null) {
+          setProblem(refusal?.message ?? say('common.thatCouldNotBeRequested'));
+
+          return;
+        }
+
+        void cache.invalidateQueries({ queryKey: requestsQueries.key });
+      })
+      .catch(() => {
+        setProblem(say('common.thatCouldNotBeRequested'));
       })
       .finally(() => {
         setIsAsking(false);
@@ -256,6 +291,11 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                   <DialogHeadlinePart as="span" className="text-sm text-on-scrim/75">
                     {describeAskableFacts(title)}
                   </DialogHeadlinePart>
+                  {whoElse === null ? null : (
+                    <DialogHeadlinePart as="span" className="text-sm text-on-scrim/75">
+                      {whoElse}
+                    </DialogHeadlinePart>
+                  )}
 
                   {going === null ? null : (
                     <DialogHeadlinePart>
@@ -460,7 +500,17 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                         );
                       },
                     }
-                  : undefined
+                  : isJoinable && title.standing.requestId !== null
+                    ? {
+                        label: say('common.iWantThisToo'),
+                        isLoading: isAsking,
+                        onChoose: () => {
+                          if (title.standing.requestId !== null) {
+                            join(title.standing.requestId);
+                          }
+                        },
+                      }
+                    : undefined
         }
       >
         {mayCancel ? (
@@ -576,7 +626,10 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
             ? say('common.cancelThisRequest')
             : say('common.cancelTitle', { title: title.title })
         }
-        detail={say('common.itWillNotBeFetchedAnd')}
+        detail={
+          (request === null ? null : describeOthersStillWanting(askersOf(request), me.data?.id)) ??
+          say('common.itWillNotBeFetchedAnd')
+        }
         confirmLabel={say('common.cancelRequest')}
         isDestructive
         isOpen={isCancelling}

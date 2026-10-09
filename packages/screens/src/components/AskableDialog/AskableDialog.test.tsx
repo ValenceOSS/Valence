@@ -17,6 +17,7 @@ import { aLinkedServerFace } from '@ValenceClient/testing/aLinkedServerFace';
 const fetchAskable = vi.fn<typeof Askable.fetchAskable>();
 const requested = vi.hoisted((): { requests: MediaRequest[] } => ({ requests: [] }));
 const askForMedia = vi.fn<typeof Requests.askForMedia>();
+const joinMediaRequest = vi.fn<typeof Requests.joinMediaRequest>();
 const fetchProfilesOnOffer = vi.fn<() => Promise<ProfilesOnOffer>>();
 
 const aQuality = (id: string, name: string) => ({ id, name, kind: 'video' as const });
@@ -47,8 +48,15 @@ vi.mock('@ValenceClient/linking/askLinkedServer', () => ({
     askLinkedServer(...given),
 }));
 
+vi.mock('@ValenceClient/session/auth', () => ({
+  fetchSession: () =>
+    Promise.resolve({ id: 'me', name: 'Me', email: 'me@valence.local', emailVerified: true }),
+}));
+
 vi.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
   askForMedia: (...given: Parameters<typeof Requests.askForMedia>) => askForMedia(...given),
+  joinMediaRequest: (...given: Parameters<typeof Requests.joinMediaRequest>) =>
+    joinMediaRequest(...given),
   fetchMediaRequests: () => Promise.resolve(requested.requests),
   fetchSeriesSeasons: () =>
     Promise.resolve([
@@ -86,6 +94,7 @@ beforeEach(() => {
   requested.requests = [];
   fetchAskable.mockReset().mockResolvedValue(aTitle());
   askForMedia.mockReset().mockResolvedValue({ value: aMediaRequest(), refusal: null });
+  joinMediaRequest.mockReset().mockResolvedValue({ value: aMediaRequest(), refusal: null });
   fetchProfilesOnOffer.mockReset().mockResolvedValue({ choices: [], forcedId: null });
   fetchLinkedServerFaces.mockReset().mockResolvedValue([]);
   askLinkedServer
@@ -365,6 +374,91 @@ describe('AskableDialog', () => {
         followsNewSeasons: false,
       });
     });
+  });
+
+  it('names who asked for somebody else’s request, and wants it too', async () => {
+    const requestId = '6ba7b810-9dad-11d1-80b4-00c04fd43012';
+
+    fetchAskable.mockResolvedValue(
+      aTitle({
+        standing: {
+          status: 'requested',
+          mediaId: null,
+          requestId,
+          requestState: 'wanted',
+          askedBy: [
+            { id: 'p', name: 'Priya' },
+            { id: 's', name: 'Sam' },
+          ],
+        },
+      }),
+    );
+
+    open();
+
+    expect(await screen.findByText('Requested by Priya and Sam')).toBeInTheDocument();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'I want this too' }));
+
+    expect(joinMediaRequest).toHaveBeenCalledWith(requestId);
+    expect(askForMedia).not.toHaveBeenCalled();
+  });
+
+  it('says so where wanting it too fails', async () => {
+    joinMediaRequest.mockRejectedValue(new Error('not a request'));
+    fetchAskable.mockResolvedValue(
+      aTitle({
+        standing: {
+          status: 'requested',
+          mediaId: null,
+          requestId: '6ba7b810-9dad-11d1-80b4-00c04fd43012',
+          requestState: 'wanted',
+          askedBy: [{ id: 'p', name: 'Priya' }],
+        },
+      }),
+    );
+
+    open();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'I want this too' }));
+
+    expect(await screen.findByText('Couldn’t request that.')).toBeInTheDocument();
+  });
+
+  it('says who else wants your own request, and offers nothing more to join', async () => {
+    const request = aMediaRequest({
+      id: '6ba7b810-9dad-11d1-80b4-00c04fd43013',
+      requestedBy: { id: 'p', name: 'Priya' },
+      alsoAskedBy: [{ id: 'me', name: 'Me' }],
+      state: 'wanted',
+    });
+
+    requested.requests = [request];
+    fetchAskable.mockResolvedValue(
+      aTitle({
+        standing: {
+          status: 'requested',
+          mediaId: null,
+          requestId: request.id,
+          requestState: 'wanted',
+          askedBy: [
+            { id: 'p', name: 'Priya' },
+            { id: 'me', name: 'Me' },
+          ],
+        },
+      }),
+    );
+
+    open();
+
+    expect(await screen.findByText('Priya wants it too')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'I want this too' })).toBeNull();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Cancel request' }));
+
+    expect(
+      await screen.findByText('Priya still wants it, so it stays requested for them.'),
+    ).toBeInTheDocument();
   });
 
   it('watches an artist for the kinds of release chosen, or asks for one album', async () => {

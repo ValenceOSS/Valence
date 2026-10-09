@@ -1,3 +1,5 @@
+import { askersOf } from '@ValenceContracts/functions/askersOf';
+import { describeAskers } from '@ValenceClient/requests/describeAskers';
 import { useEffect } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
@@ -83,9 +85,7 @@ const ARequest = ({ request, progress, myId, onAsk }: ARequestProps) => {
         )}
 
         <Words size="small" tone="muted">
-          {request.requestedBy.id === myId
-            ? say('common.askedByYou')
-            : say('common.askedByName', { name: request.requestedBy.name })}
+          {describeAskers(askersOf(request), myId)}
         </Words>
 
         {going === null ? null : (

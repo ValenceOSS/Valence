@@ -1,3 +1,4 @@
+import { namesOfAskers } from '@ValenceClient/requests/namesOfAskers';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -543,9 +544,7 @@ const TitlePage = ({ titleKey, onBack }: TitlePageProps) => {
         status={entry.status}
         facts={heroFacts}
         overview={known?.overview ?? null}
-        askedBy={
-          request === null ? null : { name: request.requestedBy.name, at: request.createdAt }
-        }
+        askedBy={request === null ? null : { name: namesOfAskers(request), at: request.createdAt }}
         actions={actions}
       />
 

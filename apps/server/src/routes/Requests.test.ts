@@ -2860,6 +2860,65 @@ describe('requests for films and series, through the server', () => {
     expect(deleted).toHaveLength(1);
   });
 
+  it('takes somebody off a request others want too, rather than cancelling it', async () => {
+    const deleted: string[] = [];
+    const { ask, accountId } = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: (url, init) => {
+        if (init.method === 'DELETE') {
+          deleted.push(url);
+
+          return Response.json({ ...REQUEST, requestedBy: { id: 'other', name: 'Other' } });
+        }
+
+        return Response.json({
+          ...REQUEST,
+          requestedBy: { id: 'other', name: 'Other' },
+          alsoAskedBy: [{ id: accountId, name: 'Me' }],
+        });
+      },
+    });
+
+    expect((await ask(`/api/requests/media/${REQUEST.id}`, 'DELETE')).status).toBe(204);
+    expect(deleted).toEqual([
+      `http://requests:8421/api/requests/${REQUEST.id}/askers/${encodeURIComponent(accountId)}`,
+    ]);
+  });
+
+  it('adds somebody who wants a request too, as whoever is signed in', async () => {
+    const asked: Array<{ url: string; body: string | undefined }> = [];
+    const { ask, accountId } = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: (url, init) => {
+        asked.push({ url, body: init.body });
+
+        return Response.json(REQUEST);
+      },
+    });
+
+    expect((await ask(`/api/requests/media/${REQUEST.id}/join`, 'POST')).status).toBe(200);
+    expect(asked.at(-1)?.url).toBe(`http://requests:8421/api/requests/${REQUEST.id}/askers`);
+    expect(JSON.parse(asked.at(-1)?.body ?? '{}')).toMatchObject({ id: accountId });
+  });
+
+  it('refuses to add somebody to a request for music they may not ask for', async () => {
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: () =>
+        Response.json({
+          ...REQUEST,
+          kind: 'artist',
+          tmdbId: null,
+          musicBrainzId: '83d91898-7763-47d7-b03b-b92132375c47',
+        }),
+    });
+
+    expect((await ask(`/api/requests/media/${REQUEST.id}/join`, 'POST')).status).toBe(403);
+  });
+
   it('passes on why the service would not do something', async () => {
     const refusing = await build({
       isOn: true,

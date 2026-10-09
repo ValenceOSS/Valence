@@ -1156,7 +1156,7 @@ const removeMediaRequestRoute = createRoute({
   path: '/api/requests/media/{id}',
   tags: ['Requests'],
   summary:
-    'Remove a request, stopping its downloads and, for whoever manages requesting, deleting the files it filed where asked — or cancel one of your own not yet in the library',
+    'Remove a request, stopping its downloads and, for whoever manages requesting, deleting the files it filed where asked — or cancel one of your own not yet in the library, which only takes you off it while others want it too',
   request: {
     params: RecordIdParameter,
     query: z.object({
@@ -1165,6 +1165,16 @@ const removeMediaRequestRoute = createRoute({
     }),
   },
   responses: requestFailures({ 204: { description: 'Forgotten' } }),
+});
+
+const joinMediaRequestRoute = createRoute({
+  method: 'post',
+  path: '/api/requests/media/{id}/join',
+  tags: ['Requests'],
+  summary:
+    'Want something somebody else has asked for too, so it shows in your requests and you are told when it arrives',
+  request: { params: RecordIdParameter },
+  responses: requestFailures(ONE_REQUEST),
 });
 
 const approveMediaRequestRoute = createRoute({
@@ -1330,6 +1340,7 @@ export {
   pickMediaReleaseRoute,
   refuseMediaRequestRoute,
   removeMediaRequestRoute,
+  joinMediaRequestRoute,
   adminCatalogueRoute,
   adminTitleFilesRoute,
   stopRequestDownloadRoute,

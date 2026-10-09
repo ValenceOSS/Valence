@@ -149,6 +149,7 @@ import { summariseArrivals } from '@ValenceServer/events/summariseArrivals';
 import type { ScannedItem } from '@ValenceServer/library/scanLibrary';
 import type { LibraryKind, ScanResult } from '@ValenceContracts/schemas/Library';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
+import { askersOf } from '@ValenceContracts/functions/askersOf';
 import { catalogueForRequest } from '@ValenceServer/requests/catalogueForRequest';
 import { createExpiringCache } from '@ValenceServer/library/createExpiringCache';
 import { createDatabaseRequestedAlbumStore } from '@ValenceServer/requests/albums/createDatabaseRequestedAlbumStore';
@@ -2919,11 +2920,12 @@ const matchDepartedRequests = async (): Promise<void> => {
   }
 };
 
-const toldElsewhere = new Set<string>();
+const toldElsewhere = new Map<string, Set<string>>();
 
 /**
  * Tells whoever asked for a film or a series that a linked server now has it, so they can watch it
- * from there — once for each request — leaving the request standing, since this server's own queue
+ * from there — once for each of them, so somebody who asks after the first word still hears it —
+ * leaving the request standing, since this server's own queue
  * answers to this server's admin. Where that admin chose to, the request is dropped instead, saying
  * which server has it.
  */
@@ -2952,14 +2954,18 @@ const tellOfLinkedArrivals = async (): Promise<void> => {
   for (const request of waiting) {
     const found = request.tmdbId === null ? undefined : elsewhere.get(request.tmdbId.toString());
     const key = `${request.id}\n${found?.fromServer ?? ''}`;
+    const told = toldElsewhere.get(key);
+    const untold = askersOf(request)
+      .map((asker) => asker.id)
+      .filter((id) => told?.has(id) !== true);
 
-    if (found === undefined || toldElsewhere.has(key)) {
+    if (found === undefined || untold.length === 0) {
       continue;
     }
 
-    toldElsewhere.add(key);
+    toldElsewhere.set(key, new Set([...(told ?? []), ...untold]));
 
-    if (dropsRequestsElsewhere) {
+    if (told === undefined && dropsRequestsElsewhere) {
       await requestsClient.refuseRequest(
         request.id,
         say('server.main.nameHasItAlready', { name: found.fromServer }),
@@ -2976,9 +2982,9 @@ const tellOfLinkedArrivals = async (): Promise<void> => {
       }),
       link: LINKS_TO_ARRIVALS[request.kind](found.mediaId),
       vapid: await readPushKeys(),
-      only: [request.requestedBy.id],
+      only: untold,
       onProblem: (reason) => {
-        log.error('requests', `telling ${request.requestedBy.name}: ${reason}`);
+        log.error('requests', `telling those who asked for ${request.title}: ${reason}`);
       },
       announce: (userIds) => {
         realtime.publish(
@@ -3020,9 +3026,9 @@ const tellOfArrival = async (filed: MediaRequest, mediaId: string): Promise<void
     body: saying('server.main.titleWhichYouAskedForIs', { title: filed.title }),
     link: LINKS_TO_ARRIVALS[filed.kind](mediaId),
     vapid: await readPushKeys(),
-    only: [requestedBy.id],
+    only: askersOf(filed).map((asker) => asker.id),
     onProblem: (reason) => {
-      log.error('requests', `telling ${requestedBy.name}: ${reason}`);
+      log.error('requests', `telling those who asked for ${filed.title}: ${reason}`);
     },
     announce: (userIds) => {
       realtime.publish(

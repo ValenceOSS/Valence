@@ -1,3 +1,4 @@
+import { askersOf } from '@ValenceContracts/functions/askersOf';
 import { REQUEST_KIND_NAMES } from '@ValenceScreens/requests/REQUEST_KIND_NAMES';
 import { describeRequestBadge } from '@ValenceClient/requests/describeRequestBadge';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
@@ -58,7 +59,13 @@ const describeRequestFilters = (
     ),
     ...groupOf(
       say('screens.requests.describeRequestFilters.askedBy'),
-      [...new Map(requests.map((request) => [request.requestedBy.id, request.requestedBy.name]))]
+      [
+        ...new Map(
+          requests.flatMap((request) =>
+            askersOf(request).map((asker) => [asker.id, asker.name] as const),
+          ),
+        ),
+      ]
         .map(([id, name]) => ({ id: `who:${id}`, label: name }))
         .toSorted((left, right) => left.label.localeCompare(right.label)),
     ),
