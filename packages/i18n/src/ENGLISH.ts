@@ -914,6 +914,8 @@ const ENGLISH = {
   'common.manage': 'Manage',
   'common.margins': 'Margins',
   'common.markAllRead': 'Mark all read',
+  'common.markAsUnwatched': 'Mark as unwatched',
+  'common.markAsWatched': 'Mark as watched',
   'common.markSeasonUnwatched': 'Mark season unwatched',
   'common.markSeasonWatched': 'Mark season watched',
   'common.markTitleAsUnwatched': 'Mark {title} as unwatched',
@@ -6066,7 +6068,6 @@ const ENGLISH = {
   'screens.requestsPage.nothingInTheCataloguesMatches':
     'Nothing in the catalogues matches “{query}”.',
   'screens.requestsPage.onItsWayShelf.askedByName': 'Asked by {name}',
-  'screens.requestsPage.onItsWayShelf.onItsWay': 'On its way',
   'screens.requestsPage.onItsWayShelf.statusPercent': '{status} · {percent}%',
   'screens.requestsPage.requestsList.clearAFilterOrSearchFor':
     'Clear a filter, or search for something else.',
@@ -6298,7 +6299,6 @@ const ENGLISH = {
   'screens.showDialog.chooseEpisodes.chooseEpisodesOfTitle': 'Choose episodes of {title}',
   'screens.showDialog.chooseEpisodes.download1Episode': 'Download 1 episode',
   'screens.showDialog.chooseEpisodes.downloadSizeEpisodes': 'Download {size} episodes',
-  'screens.showDialog.episodeRow.markAsWatched': 'Mark as watched',
   'screens.showDialog.markAllUnwatched': 'Mark all unwatched',
   'screens.showDialog.markAllWatched': 'Mark all watched',
   'screens.showDialog.missingRow.episodeEpisodeNumber': 'Episode {episodeNumber}',

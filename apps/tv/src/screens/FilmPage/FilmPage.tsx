@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   Check,
   ChevronsUpDown,
+  CircleCheck,
   EyeOff,
   Film,
   Plus,
@@ -32,6 +33,7 @@ import { ChoicePanel } from '@ValenceTv/components/ChoicePanel/ChoicePanel';
 import { TitleSpread } from '@ValenceTv/components/TitleSpread/TitleSpread';
 import { joinFacts } from '@ValenceTv/library/joinFacts';
 import { useProgress } from '@ValenceTv/library/useProgress';
+import { useMarkWatched } from '@ValenceTv/library/useMarkWatched';
 import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
 import { tokens } from '@ValenceTv/theme/tokens';
 import { useOriginOf } from '@ValenceClient/linking/useOriginOf';
@@ -57,6 +59,7 @@ const STARRING = 4;
  */
 const FilmPage = ({ mediaId, viewerId, onPlay, onOpenPerson }: FilmPageProps) => {
   const { progress } = useProgress();
+  const mark = useMarkWatched();
   const favourites = useFavourites(viewerId);
   const hiding = useHidden(viewerId);
   const rate = useRate(viewerId);
@@ -189,6 +192,16 @@ const FilmPage = ({ mediaId, viewerId, onPlay, onOpenPerson }: FilmPageProps) =>
         icon={favourites.isKept(film.id) ? Check : Plus}
         onPress={() => {
           favourites.toggle(film.id);
+        }}
+      />
+
+      <ActionRow
+        label={
+          watched?.isFinished === true ? say('common.markAsUnwatched') : say('common.markAsWatched')
+        }
+        icon={CircleCheck}
+        onPress={() => {
+          mark([summary], watched?.isFinished !== true);
         }}
       />
 

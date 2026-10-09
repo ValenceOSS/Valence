@@ -360,7 +360,7 @@ const start = async (): Promise<void> => {
 
     areControlsShown = true;
 
-    theWindowsOwnMenu(window, changeServer);
+    theWindowsOwnMenu(window);
 
     answerAboutTheFrame(window);
 

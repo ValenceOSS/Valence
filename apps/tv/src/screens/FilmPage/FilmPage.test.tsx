@@ -8,6 +8,7 @@ import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { setFavourite } from '@ValenceClient/library/fetchFavourites';
 import { setRating } from '@ValenceClient/library/fetchRatings';
 import { setHidden } from '@ValenceClient/library/fetchHidden';
+import { markWatched } from '@ValenceClient/playback/markWatched';
 import { Alert } from 'react-native';
 import { MediaDetailSchema } from '@ValenceContracts/schemas/Library';
 import { summariseDetail } from '@ValenceClient/library/summariseDetail';
@@ -27,6 +28,10 @@ jest.mock('@ValenceClient/library/fetchRatings', () => ({
 jest.mock('@ValenceClient/library/fetchHidden', () => ({
   ...jest.requireActual<object>('@ValenceClient/library/fetchHidden'),
   setHidden: jest.fn(() => Promise.resolve(true)),
+}));
+
+jest.mock('@ValenceClient/playback/markWatched', () => ({
+  markWatched: jest.fn().mockResolvedValue(undefined),
 }));
 
 const FILM = '00000000-0000-4000-8000-000000000001';
@@ -179,6 +184,24 @@ describe('FilmPage', () => {
     await waitFor(() => {
       expect(setFavourite).toHaveBeenCalledWith(FILM, false);
     });
+  });
+
+  it('marks a film watched that has not been', async () => {
+    const drawn = await drawFilm(aCacheHolding({}));
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Mark as watched' }));
+
+    expect(markWatched).toHaveBeenLastCalledWith([expect.objectContaining({ id: FILM })], true);
+  });
+
+  it('takes back having watched a film that has been', async () => {
+    const drawn = await drawFilm(
+      aCacheHolding({ progress: [{ ...HALFWAY, positionSeconds: 6960, isFinished: true }] }),
+    );
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Mark as unwatched' }));
+
+    expect(markWatched).toHaveBeenLastCalledWith([expect.objectContaining({ id: FILM })], false);
   });
 
   it('gives the film stars from the panel, and says how many afterwards', async () => {

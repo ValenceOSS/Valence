@@ -28,9 +28,11 @@ import { say } from '@ValenceI18n/say';
  * controls are drawn, a rule stands between them and those.
  *
  * Everything that answers a press is marked `no-drag`, so a press reaches it rather than moving the
- * window — the rest of the strip is for picking the window up by. It stays usable while a dialog is
- * open, and the inbox it opens with it, so going back, the window's controls and the rest still
- * answer rather than only closing the dialog.
+ * window — the rest of the strip is for picking the window up by. While something it opened is
+ * showing, the whole strip answers instead: a press on a strip held for dragging never reaches the
+ * page, so a click on the bar would leave the inbox open. It stays usable while a dialog is open,
+ * and the inbox it opens with it, so going back, the window's controls and the rest still answer
+ * rather than only closing the dialog.
  *
  * While a film plays it takes no room at all: the film runs to the top of the window, and this and
  * the window's controls come and go over it with the player's controls.
@@ -57,7 +59,7 @@ const WindowBar = ({
     data-slot="window-bar"
     data-over-dialogs
     className={cn(
-      'fixed inset-x-0 top-0 z-[60] flex h-[var(--valence-window-bar-height)] items-center justify-between border-b border-[var(--surface-line)] bg-[color-mix(in_oklab,var(--color-surface-raised)_88%,var(--color-surface))] pl-[var(--valence-window-bar-lead)] text-on-scrim [-webkit-app-region:drag]',
+      'fixed inset-x-0 top-0 z-[60] flex h-[var(--valence-window-bar-height)] items-center justify-between border-b border-[var(--surface-line)] bg-[color-mix(in_oklab,var(--color-surface-raised)_88%,var(--color-surface))] pl-[var(--valence-window-bar-lead)] text-on-scrim [-webkit-app-region:drag] has-[[data-state=open]]:[-webkit-app-region:no-drag]',
       frame === undefined ? 'pr-[var(--valence-window-bar-clearance)]' : null,
     )}
   >

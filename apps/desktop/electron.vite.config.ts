@@ -5,6 +5,8 @@ import { commitBuiltFrom } from '@valence/core/src/functions/commitBuiltFrom.ts'
 
 const NOT_BUNDLED = [/^electron$/, /^conf$/, /^better-auth(\/.*)?$/, /^@better-auth\/.*/, /^zod$/];
 
+const FROM_THE_ROOT = { name: 'valence:from-the-root', config: () => ({ base: '/' }) };
+
 const DEFINE = { __VALENCE_COMMIT__: JSON.stringify(commitBuiltFrom()) };
 
 export default defineConfig({
@@ -31,7 +33,7 @@ export default defineConfig({
   renderer: {
     root: '.',
     resolve: { tsconfigPaths: true },
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), FROM_THE_ROOT],
     server: { hmr: { protocol: 'ws', host: 'localhost', port: 5174 } },
     build: { outDir: 'dist', target: 'chrome138', rolldownOptions: { input: 'index.html' } },
   },

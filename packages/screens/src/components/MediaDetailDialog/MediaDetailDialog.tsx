@@ -5,6 +5,7 @@ import { TitleLogo } from '@ValenceScreens/components/TitleLogo/TitleLogo';
 import {
   ArrowUTurnRight as ArrowUTurnRightIcon,
   ChevronLeft as ChevronLeftIcon,
+  CircleCheck as CircleCheckIcon,
   Download as DownloadIcon,
   EyeOff as EyeOffIcon,
   Info as InfoIcon,
@@ -16,7 +17,10 @@ import {
   X as XIcon,
   Monitor as MonitorIcon,
 } from '@keyline-icons/react';
-import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
+import {
+  CircleCheck as CircleCheckFilledIcon,
+  Play as PlayFilledIcon,
+} from '@keyline-icons/react/fill';
 import { useEffect, useRef, useState } from 'react';
 import { useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
@@ -91,6 +95,8 @@ const LOGO_BOX = 'max-h-[16svh] w-auto max-w-[min(70vw,26rem)] object-contain ob
  * @param backLabel - What going back is called.
  * @param isKept - Whether it is kept.
  * @param onToggleKept - Told to keep it, or stop.
+ * @param isWatched - Whether this viewer has watched it through.
+ * @param onMarkWatched - Told to record it as watched, or to take that back.
  * @param onRate - Told what they gave it, or null to take the rating back.
  * @param onOpenPerson - Told which performer to open from the cast, where opening one is offered.
  * @param onShare - Told to hand out a link to it, where this account may share at all.
@@ -110,6 +116,8 @@ const MediaDetailDialog = ({
   backLabel,
   isKept = false,
   onToggleKept,
+  isWatched = false,
+  onMarkWatched,
   onRate,
   onOpenPerson,
   onShare,
@@ -554,6 +562,20 @@ const MediaDetailDialog = ({
                     icon: <Icon of={ArrowUTurnRightIcon} size={18} />,
                     onChoose: () => {
                       onPlay(shown, 0);
+                    },
+                  },
+                ]),
+            ...(onMarkWatched === undefined
+              ? []
+              : [
+                  {
+                    id: 'watched',
+                    label: isWatched ? say('common.markAsUnwatched') : say('common.markAsWatched'),
+                    icon: (
+                      <Icon of={isWatched ? CircleCheckFilledIcon : CircleCheckIcon} size={18} />
+                    ),
+                    onChoose: () => {
+                      onMarkWatched(shown, !isWatched);
                     },
                   },
                 ]),

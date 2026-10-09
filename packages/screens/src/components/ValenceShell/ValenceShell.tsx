@@ -132,6 +132,23 @@ const ValenceShell = () => {
   const favourites = useFavourites(watching);
   const keptBooks = useFavourites(watching, 'books');
   const rate = useRate(watching);
+
+  const markThemWatched = (items: readonly MediaSummary[], isWatched: boolean): void => {
+    void failureOfThrown(() => markWatched(items, isWatched)).then(async (failure) => {
+      if (failure !== null) {
+        notify.failed(failure);
+
+        return;
+      }
+
+      forgetReported(items.map((item) => item.id));
+
+      await Promise.all([
+        cache.invalidateQueries({ queryKey: viewingQueries.progress().queryKey }),
+        cache.invalidateQueries({ queryKey: libraryQueries.key }),
+      ]);
+    });
+  };
   const hiding = useHidden(watching);
   const { may, mayAdminister } = useWhatIMayDo();
   const mayShare = may('sharing.link');
@@ -344,22 +361,7 @@ const ValenceShell = () => {
               rate({ seriesId: show.seriesId ?? '' }, stars);
             }
           }}
-          onMarkWatched={(episodes, isWatched) => {
-            void failureOfThrown(() => markWatched(episodes, isWatched)).then(async (failure) => {
-              if (failure !== null) {
-                notify.failed(failure);
-
-                return;
-              }
-
-              forgetReported(episodes.map((episode) => episode.id));
-
-              await Promise.all([
-                cache.invalidateQueries({ queryKey: viewingQueries.progress().queryKey }),
-                cache.invalidateQueries({ queryKey: libraryQueries.key }),
-              ]);
-            });
-          }}
+          onMarkWatched={markThemWatched}
         />
 
         <DecideForSomebody
@@ -399,6 +401,10 @@ const ValenceShell = () => {
                 backLabel: openShow.title,
               })}
           isKept={inspecting !== null && favourites.isKept(inspecting.id)}
+          isWatched={inspecting !== null && progress.get(inspecting.id)?.isFinished === true}
+          onMarkWatched={(media, isWatched) => {
+            markThemWatched([media], isWatched);
+          }}
           onToggleKept={(media) => {
             favourites.toggle(media.id);
           }}

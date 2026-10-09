@@ -562,6 +562,45 @@ describe('keeping something, and getting back to where you were', () => {
     ).toBeInTheDocument();
   });
 
+  it('offers to mark an item watched that has not been', async () => {
+    const onMarkWatched = vi.fn();
+
+    renderInAnAddress(
+      <MediaDetailDialog
+        media={summary}
+        onClose={vi.fn()}
+        onPlay={vi.fn()}
+        onMarkWatched={onMarkWatched}
+      />,
+    );
+
+    await openTheMenu();
+    await userEvent.setup().click(await screen.findByRole('menuitem', { name: 'Mark as watched' }));
+
+    expect(onMarkWatched).toHaveBeenCalledWith(summary, true);
+  });
+
+  it('offers to take back having watched one that has been', async () => {
+    const onMarkWatched = vi.fn();
+
+    renderInAnAddress(
+      <MediaDetailDialog
+        media={summary}
+        onClose={vi.fn()}
+        onPlay={vi.fn()}
+        isWatched
+        onMarkWatched={onMarkWatched}
+      />,
+    );
+
+    await openTheMenu();
+    await userEvent
+      .setup()
+      .click(await screen.findByRole('menuitem', { name: 'Mark as unwatched' }));
+
+    expect(onMarkWatched).toHaveBeenCalledWith(summary, false);
+  });
+
   it('offers nothing to keep with when nobody is listening', () => {
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 

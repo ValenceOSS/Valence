@@ -116,9 +116,7 @@ const EpisodeRow = ({
               onMarkWatched(episode, (watchedFraction ?? 0) < 1);
             }}
           >
-            {(watchedFraction ?? 0) >= 1
-              ? say('common.watched')
-              : say('screens.showDialog.episodeRow.markAsWatched')}
+            {(watchedFraction ?? 0) >= 1 ? say('common.watched') : say('common.markAsWatched')}
             <Icon
               of={(watchedFraction ?? 0) >= 1 ? CircleCheckFilledIcon : CircleCheckIcon}
               size={14}
