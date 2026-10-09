@@ -57,6 +57,8 @@ const aTitle = (overrides: Partial<CatalogueTitleDetail> = {}): CatalogueTitleDe
   albums: [],
   authors: [],
   trailerKey: null,
+  tracks: [],
+  label: null,
   ...overrides,
 });
 
