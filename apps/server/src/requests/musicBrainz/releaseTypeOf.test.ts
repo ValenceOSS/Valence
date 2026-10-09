@@ -8,9 +8,10 @@ describe('releaseTypeOf', () => {
     expect(releaseTypeOf('Single', [])).toBe('single');
   });
 
-  it('reads live records and compilations by what they are besides', () => {
+  it('reads live records, compilations and mixtapes by what they are besides', () => {
     expect(releaseTypeOf('Album', ['Live'])).toBe('live');
     expect(releaseTypeOf('Album', ['Compilation'])).toBe('compilation');
+    expect(releaseTypeOf('Album', ['Mixtape/Street'])).toBe('mixtape');
   });
 
   it('leaves out soundtracks, remixes and anything without a type', () => {

@@ -1,3 +1,4 @@
+import { DEFAULT_RELEASE_TYPES } from '@ValenceContracts/schemas/MediaRequest';
 import { notify } from '@ValenceUI/notify';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -170,7 +171,10 @@ const ApproveRequestDialog = ({
         )}
 
         {request?.kind !== 'artist' ? null : (
-          <ReleaseTypeChooser value={releaseTypes ?? ['album']} onChange={setReleaseTypes} />
+          <ReleaseTypeChooser
+            value={releaseTypes ?? [...DEFAULT_RELEASE_TYPES]}
+            onChange={setReleaseTypes}
+          />
         )}
 
         {request?.kind !== 'series' || request.tmdbId === null ? null : (

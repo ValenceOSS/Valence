@@ -2,6 +2,7 @@ import { z } from '@hono/zod-openapi';
 import { checkServerVersion } from '@ValenceDatabase/checkServerVersion';
 import { SEERR_DEFAULTS } from '@ValenceContracts/schemas/SeerrLink';
 import { EMAIL_DEFAULTS } from '@ValenceContracts/schemas/EmailSettings';
+import { DEFAULT_RELEASE_TYPES } from '@ValenceContracts/schemas/MediaRequest';
 import { LINK_SETTINGS_DEFAULTS } from '@ValenceServer/linking/LinkSettings';
 import { databaseConnectionOf } from '@ValenceDatabase/databaseConnectionOf';
 import { checkDialect } from '@ValenceDatabase/checkDialect';
@@ -445,7 +446,7 @@ const settings = createDatabaseSettingsStore({
     jobsTimezone: '',
     certificationRegion: 'GB',
     fetchesCatalogueTrailers: false,
-    requestReleaseTypes: ['album'],
+    requestReleaseTypes: [...DEFAULT_RELEASE_TYPES],
     fetchesMusicDetails: false,
     audioDbKey: '',
     omdbKey: '',

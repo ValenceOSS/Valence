@@ -1,3 +1,4 @@
+import { DEFAULT_RELEASE_TYPES } from '@ValenceContracts/schemas/MediaRequest';
 import { isSeasonWanted } from '@ValenceRequests/mediaRequests/isSeasonWanted';
 import { releaseDateOf } from '@ValenceRequests/mediaRequests/releaseDateOf';
 import type { ReleaseWait } from '@ValenceContracts/schemas/QualityProfile';
@@ -102,7 +103,8 @@ const wantedOf = (
         .filter((album) =>
           request.kind === 'album'
             ? album.id === request.musicBrainzId
-            : album.type !== null && (request.releaseTypes ?? ['album']).includes(album.type),
+            : album.type !== null &&
+              (request.releaseTypes ?? DEFAULT_RELEASE_TYPES).includes(album.type),
         )
         .map((album) => ({
           musicBrainzId: album.id,

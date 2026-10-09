@@ -406,6 +406,8 @@ const ENGLISH = {
   'client.requests.nameTheStanding.waitingForApproval': 'Waiting for approval',
   'client.requests.releaseTypeNames.compilations': 'Compilations',
   'client.requests.releaseTypeNames.ePs': 'EPs',
+  'client.requests.releaseTypeNames.mixtape': 'Mixtape',
+  'client.requests.releaseTypeNames.mixtapes': 'Mixtapes',
   'client.requests.releaseTypeNames.single': 'Single',
   'client.requests.releaseTypeNames.singles': 'Singles',
   'client.requests.seasonStandingNames.notRequested': 'Not requested',

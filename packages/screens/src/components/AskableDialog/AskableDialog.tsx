@@ -1,3 +1,4 @@
+import { DEFAULT_RELEASE_TYPES } from '@ValenceContracts/schemas/MediaRequest';
 import { useEffect, useState } from 'react';
 import { Stop as StopFilledIcon } from '@keyline-icons/react/fill';
 import { useSample } from '@ValenceScreens/requests/useSample';
@@ -89,7 +90,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   const [followsNew, setFollowsNew] = useState(true);
   const [adding, setAdding] = useState<number[] | null>([]);
   const [addsFollowing, setAddsFollowing] = useState(false);
-  const [releaseTypes, setReleaseTypes] = useState<ReleaseType[]>(['album']);
+  const [releaseTypes, setReleaseTypes] = useState<ReleaseType[]>([...DEFAULT_RELEASE_TYPES]);
   const [isAsking, setIsAsking] = useState(false);
   const [askingElsewhere, setAskingElsewhere] = useState<string | null>(null);
   const faces = useQuery(linkingQueries.faces());

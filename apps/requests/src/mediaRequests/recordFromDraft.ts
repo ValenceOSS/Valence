@@ -1,3 +1,4 @@
+import { DEFAULT_RELEASE_TYPES } from '@ValenceContracts/schemas/MediaRequest';
 import { highestSeasonOf } from '@ValenceRequests/mediaRequests/highestSeasonOf';
 import { requestFactsOf } from '@ValenceRequests/mediaRequests/requestFactsOf';
 import { seasonsChosen } from '@ValenceRequests/mediaRequests/seasonsChosen';
@@ -47,7 +48,7 @@ const recordFromDraft = (
       : null,
   followsNewSeasons: draft.kind === 'series' && draft.followsNewSeasons,
   followsAfter: draft.kind === 'series' ? highestSeasonOf(draft.catalogue.episodes) : null,
-  releaseTypes: draft.kind === 'artist' ? (draft.releaseTypes ?? ['album']) : null,
+  releaseTypes: draft.kind === 'artist' ? (draft.releaseTypes ?? [...DEFAULT_RELEASE_TYPES]) : null,
   mediaId: draft.kind === 'series' ? (draft.held?.mediaId ?? null) : null,
   problem: null,
   problemCode: null,

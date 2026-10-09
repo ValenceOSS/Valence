@@ -191,7 +191,7 @@ describe('AskForMediaDialog', () => {
       musicBrainzId: '83d91898-7763-47d7-b03b-b92132375c47',
       profileId: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
       isPickedByHand: false,
-      releaseTypes: ['album', 'live'],
+      releaseTypes: ['album', 'mixtape', 'ep', 'live'],
     });
   });
 
