@@ -183,6 +183,9 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
         setProblem(refusal?.message ?? null);
         refresh();
       })
+      .catch(() => {
+        setProblem(say('common.thatCouldNotBeRequested'));
+      })
       .finally(() => {
         setIsBusy(false);
       });
