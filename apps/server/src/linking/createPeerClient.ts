@@ -32,6 +32,7 @@ type PeerClient = {
     token: string,
   ) => Promise<PeerAnswer<PairAnswer>>;
   tellUnlinked: (address: string, token: string) => Promise<boolean>;
+  tellChanged: (address: string, token: string) => Promise<boolean>;
   libraries: (
     address: string,
     token: string,
@@ -124,6 +125,16 @@ const createPeerClient = (fetcher: typeof fetch = fetch): PeerClient => {
         '/unlink',
         { method: 'POST', headers: { authorization: `Bearer ${token}` }, body: '{}' },
         z.object({ isUnlinked: z.boolean() }),
+      );
+
+      return answered.kind === 'answered';
+    },
+    tellChanged: async (address, token) => {
+      const answered = await send(
+        address,
+        '/changed',
+        { method: 'POST', headers: { authorization: `Bearer ${token}` }, body: '{}' },
+        z.object({ isHeard: z.boolean() }),
       );
 
       return answered.kind === 'answered';

@@ -1715,6 +1715,7 @@ const createAppContext = (options: CreateAppOptions) => {
     linkPersonOf,
     linkCatalogue: linkingOptions?.catalogue ?? (() => Promise.resolve(null)),
     syncLinkedServer: linkingOptions?.syncServer ?? (() => Promise.resolve(null)),
+    tellLinkedOfChange: linkingOptions?.tellChanged ?? (() => Promise.resolve()),
     isLinkedServerReachable: linkingOptions?.isReachable ?? (() => true),
     linkParties: linkingOptions?.parties ?? null,
     linkedServerTakesRequests: linkingOptions?.takesRequests ?? (() => false),

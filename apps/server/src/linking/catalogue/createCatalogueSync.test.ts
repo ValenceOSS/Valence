@@ -80,6 +80,7 @@ const mirroring = async () => {
     pair: () => Promise.resolve({ kind: 'unreachable' }),
     pairingState: () => Promise.resolve({ kind: 'unreachable' }),
     tellUnlinked: () => Promise.resolve(false),
+    tellChanged: () => Promise.resolve(false),
     libraries: () =>
       Promise.resolve(
         sharing.isAway

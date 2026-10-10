@@ -93,6 +93,13 @@ const DownloadsPanel = () => {
   const isShown = usePageIsShown();
   const [busyId, setBusyId] = useState<string | null>(null);
   const libraries = useQuery(libraryQueries.all());
+  const ownLibraries = useMemo(
+    () =>
+      (libraries.data ?? NO_LIBRARIES).filter(
+        (library) => (library.linkedServerId ?? null) === null,
+      ),
+    [libraries.data],
+  );
   const [problem, setProblem] = useState<string | null>(null);
   const apps = useQuery(requestsQueries.arrApps());
   const hasFulfillingApps = (apps.data ?? []).some((app) => app.kind !== 'prowlarr');
@@ -420,7 +427,7 @@ const DownloadsPanel = () => {
             <DownloadQueueTable
               fillsScreen
               downloads={queue.data.downloads}
-              libraries={libraries.data ?? NO_LIBRARIES}
+              libraries={ownLibraries}
               busyId={busyId}
               busyIds={busyIds}
               chosen={chosenIds}

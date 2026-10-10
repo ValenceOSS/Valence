@@ -92,12 +92,12 @@ describe('libraryChoicesFor', () => {
       vi.fn(),
     );
 
-    expect(choices.films?.options.map((option) => option.label)).toEqual([
-      'Everywhere',
-      'Here',
-      'Films',
-      'a',
-      'Cinema · Films',
+    expect(choices.films?.options.map((option) => [option.group ?? null, option.label])).toEqual([
+      [null, 'Everywhere'],
+      ['This server', 'All'],
+      ['This server', 'a'],
+      ['Films', 'All'],
+      ['Films', 'Cinema'],
     ]);
     expect(choices.films?.selectedId).toBe(`from:${films.id}`);
   });

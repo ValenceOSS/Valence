@@ -12,6 +12,7 @@ import type { PartyBinding } from '@ValenceServer/parties/handlePartyMessage';
 import type { PartyRelayHub } from '@ValenceServer/linking/parties/createPartyRelayHub';
 import type { AskedAlong } from '@ValenceContracts/schemas/LinkSharing';
 import type { PersonScope } from '@ValenceServer/linking/content/createPersonScope';
+import type { LinkedChange } from '@ValenceServer/linking/createChangeTeller';
 import type { SyncOutcome } from '@ValenceServer/linking/catalogue/createCatalogueSync';
 import type { LinkSharingStore } from '@ValenceServer/linking/LinkSharingStore';
 import type { PeerClient } from '@ValenceServer/linking/createPeerClient';
@@ -134,6 +135,7 @@ type CreateAppOptions = {
     service?: LinkService;
     people?: PersonScope;
     syncServer?: (id: string) => Promise<SyncOutcome | null>;
+    tellChanged?: (change: LinkedChange) => Promise<void>;
     isReachable?: (id: string) => boolean;
     takesRequests?: (id: string) => boolean;
     ask?: (

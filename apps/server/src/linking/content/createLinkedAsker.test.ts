@@ -23,6 +23,7 @@ const asking = async () => {
       pair: () => Promise.resolve({ kind: 'unreachable' }),
       pairingState: () => Promise.resolve({ kind: 'unreachable' }),
       tellUnlinked: () => Promise.resolve(false),
+      tellChanged: () => Promise.resolve(false),
       libraries: () => Promise.resolve({ kind: 'unreachable' }),
       activity: () => Promise.resolve({ kind: 'unreachable' }),
       catalogue: () => Promise.resolve({ kind: 'unreachable' }),

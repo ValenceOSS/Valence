@@ -116,6 +116,7 @@ import { createDatabaseLinkSharingStore } from '@ValenceServer/linking/createDat
 import { createPeerClient } from '@ValenceServer/linking/createPeerClient';
 import { createLinkService } from '@ValenceServer/linking/createLinkService';
 import { linkSettingsOf } from '@ValenceServer/linking/linkSettingsOf';
+import { createChangeTeller } from '@ValenceServer/linking/createChangeTeller';
 import { createCatalogueSync } from '@ValenceServer/linking/catalogue/createCatalogueSync';
 import { readLinkedAddress } from '@ValenceServer/linking/catalogue/readLinkedAddress';
 import { createPersonScope } from '@ValenceServer/linking/content/createPersonScope';
@@ -1367,6 +1368,13 @@ const linkedAsker = createLinkedAsker({
 });
 
 const linkedTitleOf = createLinkedTitleReader(db);
+
+const tellLinkedOfChange = createChangeTeller({
+  links: linkStore,
+  sharing: linkSharingStore,
+  linking: linkService,
+  peers: linkPeers,
+});
 
 const catalogueSync = createCatalogueSync({
   db,
@@ -2680,6 +2688,10 @@ const sayWhatAScanChanged = async (
   scanned: { name: string; kind: LibraryKind },
   result: ScanResult,
 ): Promise<ScannedItem[]> => {
+  if (result.added + result.updated + result.removed > 0) {
+    void tellLinkedOfChange({ libraryId }).catch(() => undefined);
+  }
+
   const arrived = arrivals.get(libraryId) ?? [];
   const departed = departures.get(libraryId) ?? [];
 
@@ -3839,6 +3851,7 @@ const app = createApp({
     people: linkPeople,
     address: env.BETTER_AUTH_URL,
     peers: linkPeers,
+    tellChanged: tellLinkedOfChange,
     syncServer: async (id) => {
       const synced = await catalogueSync.syncServer(id);
 

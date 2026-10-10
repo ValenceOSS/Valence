@@ -15,13 +15,13 @@ describe('libraryOptionsFor', () => {
     );
 
     expect(options).toEqual([
-      { id: 'all', label: 'All film libraries' },
-      { id: 'a', label: 'Films' },
-      { id: 'b', label: 'Anime' },
+      { id: 'all', label: 'All film libraries', shortLabel: 'All film libraries', group: null },
+      { id: 'a', label: 'Films', shortLabel: 'Films', group: null },
+      { id: 'b', label: 'Anime', shortLabel: 'Anime', group: null },
     ]);
   });
 
-  it('says where, and names each linked library with its server after this server’s own', () => {
+  it('says where, and heads each linked library with its server after this server’s own', () => {
     const options = libraryOptionsFor(
       [
         aLibrary({ id: 'theirs', name: 'Cinema', linkedServerId: FILMS.id }),
@@ -33,11 +33,11 @@ describe('libraryOptionsFor', () => {
     );
 
     expect(options).toEqual([
-      { id: 'all', label: 'Everywhere' },
-      { id: 'here', label: 'Here' },
-      { id: `from:${FILMS.id}`, label: 'Films' },
-      { id: 'mine', label: 'Films' },
-      { id: 'theirs', label: 'Cinema · Films' },
+      { id: 'all', label: 'Everywhere', shortLabel: 'Everywhere', group: null },
+      { id: 'here', label: 'Here', shortLabel: 'All', group: 'This server' },
+      { id: 'mine', label: 'Films', shortLabel: 'Films', group: 'This server' },
+      { id: `from:${FILMS.id}`, label: 'Films', shortLabel: 'All', group: 'Films' },
+      { id: 'theirs', label: 'Cinema · Films', shortLabel: 'Cinema', group: 'Films' },
     ]);
   });
 

@@ -35,6 +35,7 @@ import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import type { PeerAsk } from '@ValenceServer/linking/content/PeerAskSchema';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import { FEDERATION_PATH } from '@ValenceServer/linking/FEDERATION_PATH';
+import { createSoonSync } from '@ValenceServer/linking/createSoonSync';
 import type { Admission } from '@ValenceServer/linking/LinkSharingService';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
@@ -43,6 +44,8 @@ import { saying } from '@ValenceI18n/saying';
 import { say } from '@ValenceI18n/say';
 
 type Admitted = Extract<Admission, { kind: 'admitted' }>;
+
+const SYNCS_AFTER_MS = 5000;
 
 const FORWARDED_HEADERS = ['accept', 'content-type', 'range', 'if-none-match', 'if-range'] as const;
 
@@ -124,6 +127,7 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
     peerClaims,
     peerRequests,
     syncLinkedServer,
+    tellLinkedOfChange,
     isLinkedServerReachable,
     linking,
     readAccount,
@@ -141,6 +145,7 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
   const tickets = createDirectTickets();
   const viewerOf = (serverId: string, sessionId: string) => `peer~${serverId}~${sessionId}`;
   const keeper = createLinkKeeper(context);
+  const syncSoon = createSoonSync(syncLinkedServer, SYNCS_AFTER_MS);
   const admitted = new WeakMap<Request, Admitted>();
 
   app.use(
@@ -197,6 +202,18 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
     return entries === null
       ? context.json(refuse('error.linking.thatServerDoesNotShowItsRecord'), 403)
       : context.json({ entries }, 200);
+  });
+
+  app.post(`${FEDERATION_PATH}/changed`, (context) => {
+    const who = admitted.get(context.req.raw);
+
+    if (who === undefined) {
+      return context.json(refuse('error.linking.notSignedByALinkedServer'), 401);
+    }
+
+    syncSoon(who.serverId);
+
+    return context.json({ isHeard: true }, 200);
   });
 
   app.post(`${FEDERATION_PATH}/parties/say`, async (context) => {
@@ -668,9 +685,13 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.noSuchLibrary'), 400);
     }
 
-    return changed.kind === 'noSuchServer'
-      ? context.json(refuse('error.linking.noSuchServer'), 404)
-      : context.json(changed.sharing, 200);
+    if (changed.kind === 'noSuchServer') {
+      return context.json(refuse('error.linking.noSuchServer'), 404);
+    }
+
+    void tellLinkedOfChange({ serverId: context.req.valid('param').id });
+
+    return context.json(changed.sharing, 200);
   });
 
   app.openapi(remotePeopleRoute, async (context) => {

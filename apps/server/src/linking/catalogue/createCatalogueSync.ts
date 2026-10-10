@@ -16,6 +16,7 @@ import { linkedAddressOf } from './linkedAddressOf';
 import { localRowsOf } from './localRowsOf';
 import { setEverythingFrom } from './setEverythingFrom';
 import { foldCopiesHere } from './foldCopiesHere';
+import { fingerprintOf } from '@ValenceServer/linking/fingerprintOf';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { SharedLibrary } from '@ValenceContracts/schemas/LinkSharing';
 import type { LinkService } from '@ValenceServer/linking/LinkService';
@@ -63,6 +64,10 @@ const inBatches = async (ids: readonly string[], remove: (batch: string[]) => Pr
  * never lost to a refresh. What a whole pass no longer brings has gone from the other server and
  * goes here too, and a library that is no longer shared goes with everything in it, as does one
  * an administrator here chose not to take.
+ *
+ * Each pass also takes the server's name and colour again, as it says them now, so a server renamed
+ * or recoloured there is called the same here — believed only from the key it was linked with, so
+ * whatever answers at its address cannot rename it.
  *
  * A server that cannot be reached is left as it was, so its titles stay browsable while it is away,
  * and is remembered as unreachable until it answers again, so a page can say so.
@@ -218,6 +223,16 @@ const createCatalogueSync = ({
       warn(`linking: ${server.name} could not be reached to read what it shares`);
 
       return null;
+    }
+
+    const identity = await peers.identityAt(server.address);
+
+    if (
+      identity !== null &&
+      fingerprintOf(identity.publicKey) === server.fingerprint &&
+      (identity.name !== server.name || identity.colour !== server.colour)
+    ) {
+      await links.changeServer(serverId, { name: identity.name, colour: identity.colour });
     }
 
     let kept = 0;

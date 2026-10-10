@@ -56,7 +56,7 @@ const tokenOf = (header: string): string => header.slice('Bearer '.length);
  * @param context - What they are answered with.
  */
 const serveLinking = (app: OpenAPIHono, context: AppContext): void => {
-  const { linking } = context;
+  const { linking, tellLinkedOfChange } = context;
 
   const keeper = createLinkKeeper(context);
 
@@ -104,9 +104,15 @@ const serveLinking = (app: OpenAPIHono, context: AppContext): void => {
   app.openapi(changeIdentityRoute, async (context) => {
     const refusal = await keeper(context.req.raw.headers);
 
-    return refusal === null
-      ? context.json(await linking.changeIdentity(context.req.valid('json')), 200)
-      : context.json(refusal.body, refusal.status);
+    if (refusal !== null) {
+      return context.json(refusal.body, refusal.status);
+    }
+
+    const changed = await linking.changeIdentity(context.req.valid('json'));
+
+    void tellLinkedOfChange({});
+
+    return context.json(changed, 200);
   });
 
   app.openapi(makeInviteRoute, async (context) => {

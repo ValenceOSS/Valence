@@ -97,7 +97,7 @@ Region.displayName = 'Region';
  *
  * @param overview - What the server reports about itself, or null before it has answered.
  * @param monitor - The latest readings, or null before any have arrived.
- * @param libraries - The libraries configured.
+ * @param libraries - The libraries configured, of which only this server's own are listed.
  * @param sessions - What is being watched at the moment.
  * @param readings - The readings taken while the page has been open, for the last minute's chart.
  * @param onOpenPanel - Called with the panel to open.
@@ -111,6 +111,7 @@ const OverviewPanel = ({
   onOpenPanel,
 }: OverviewPanelProps) => {
   const [loadRange, setLoadRange] = useState<LoadRange>('7d');
+  const own = libraries.filter((library) => (library.linkedServerId ?? null) === null);
 
   const askedLoadHistory = useQuery({
     ...adminQueries.resourceHistory(loadRange === 'minute' ? '24h' : loadRange),
@@ -235,13 +236,13 @@ const OverviewPanel = ({
             onOpenPanel('libraries');
           }}
         >
-          {libraries.length === 0 ? (
+          {own.length === 0 ? (
             <p className="text-sm text-text-muted">
               {say('screens.adminArea.overviewPanel.noLibrariesYet')}
             </p>
           ) : (
             <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
-              {libraries.map((library) => (
+              {own.map((library) => (
                 <li key={library.id} className="flex items-center gap-4 py-3 first:pt-0">
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <span className="flex items-center gap-2 text-sm text-text">
