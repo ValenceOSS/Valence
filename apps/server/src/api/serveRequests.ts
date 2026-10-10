@@ -103,7 +103,6 @@ import { progressOf } from '@ValenceServer/requests/progressOf';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
-import { webhookRequestOf } from '@ValenceServer/webhooks/webhookRequestOf';
 import { requestableKindsOf } from '@ValenceContracts/functions/requestableKindsOf';
 import { withLibraryGone } from '@ValenceServer/requests/withLibraryGone';
 
@@ -148,6 +147,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     whatMayBeAsked,
     everyRequest,
     settings,
+    describeForWebhooks,
   } = context;
 
   const requestableKinds = async (): Promise<ReadonlySet<MediaRequestKind>> =>
@@ -1002,7 +1002,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       data: {
         title: answer.value.title,
         approvedBy: session?.user.name ?? null,
-        request: webhookRequestOf(answer.value),
+        request: await describeForWebhooks(answer.value),
       },
     });
 
@@ -1026,7 +1026,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       data: {
         title: answer.value.title,
         reason: answer.value.refusedBecause?.message ?? null,
-        request: webhookRequestOf(answer.value),
+        request: await describeForWebhooks(answer.value),
       },
     });
 

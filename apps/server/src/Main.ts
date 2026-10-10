@@ -202,7 +202,7 @@ import type { Play } from '@ValenceServer/devices/createPlayTracker';
 import type { MusicNowPlaying } from '@ValenceContracts/schemas/MusicRemote';
 import type { NowListening } from '@ValenceContracts/schemas/BookRemote';
 import type { WebhookPayload, WebhookRequest } from '@ValenceContracts/schemas/Webhook';
-import { webhookRequestOf } from '@ValenceServer/webhooks/webhookRequestOf';
+import { createWebhookRequestReader } from '@ValenceServer/webhooks/createWebhookRequestReader';
 import { webhookIconOf } from '@ValenceServer/webhooks/webhookIconOf';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 
@@ -2875,6 +2875,24 @@ const discovery: Discovery = {
 };
 
 /**
+ * The Discord ID on an account, where its owner gave one.
+ *
+ * @param userId - The account.
+ * @returns The ID, or nothing.
+ */
+const discordIdOf = async (userId: string): Promise<string | null> => {
+  const [found] = await db
+    .select({ discordId: user.discordId })
+    .from(user)
+    .where(eq(user.id, userId))
+    .limit(1);
+
+  return found?.discordId ?? null;
+};
+
+const describeForWebhooks = createWebhookRequestReader(discordIdOf);
+
+/**
  * What a webhook says about the request an event belongs to, read from the requests service, or
  * nothing where it cannot be read.
  *
@@ -2884,7 +2902,7 @@ const discovery: Discovery = {
 const webhookRequestFor = async (requestId: string): Promise<WebhookRequest | null> => {
   const found = await requestsClient?.findRequest(requestId);
 
-  return found?.kind === 'answered' ? webhookRequestOf(found.value) : null;
+  return found?.kind === 'answered' ? describeForWebhooks(found.value) : null;
 };
 
 const LINKS_TO_ARRIVALS: Record<MediaRequestKind, (mediaId: string) => string> = {
@@ -3107,7 +3125,7 @@ const tellOfArrival = async (filed: MediaRequest, mediaId: string): Promise<void
       title: filed.title,
       requestedBy: requestedBy.name,
       mediaId,
-      request: webhookRequestOf(filed),
+      request: await describeForWebhooks(filed),
     },
   });
   const profiles = requestsClient === null ? null : await requestsClient.listProfiles();
@@ -4122,15 +4140,7 @@ const app = createApp({
   },
   setupLinks,
   createAccountWithoutPassword: addAccountWithoutPassword,
-  discordIdOf: async (userId) => {
-    const [found] = await db
-      .select({ discordId: user.discordId })
-      .from(user)
-      .where(eq(user.id, userId))
-      .limit(1);
-
-    return found?.discordId ?? null;
-  },
+  discordIdOf,
   editAccount: async (userId, changes) => {
     const [found] = await db.select({ id: user.id }).from(user).where(eq(user.id, userId)).limit(1);
 
