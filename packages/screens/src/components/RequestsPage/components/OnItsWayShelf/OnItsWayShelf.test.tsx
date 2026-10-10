@@ -22,7 +22,7 @@ vi.mock('@ValenceClient/session/auth', () => ({
 }));
 
 describe('OnItsWayShelf', () => {
-  it('shows what you asked for that has not come yet, and opens it', async () => {
+  it('shows what anybody asked for that has not come yet, and opens it', async () => {
     const onAsk = vi.fn();
 
     held.requests = [
@@ -53,7 +53,7 @@ describe('OnItsWayShelf', () => {
 
     expect(onAsk).toHaveBeenCalledWith('film:7');
     expect(screen.queryByRole('button', { name: /Here Film/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Their Film/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Their Film/ })).toBeInTheDocument();
   });
 
   it('names everybody who asked by their own names, never by the quality they asked at', async () => {
