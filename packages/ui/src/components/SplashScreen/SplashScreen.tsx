@@ -134,7 +134,7 @@ const SplashScreen = ({
     };
   }, [hasIntroPlayed, isRingFull, prefersReducedMotion, onIntroDone]);
 
-  const [landing, setLanding] = useState<string | 'none' | null>(null);
+  const [landing, setLanding] = useState<{ clip: string | null } | null>(null);
 
   useEffect(() => {
     if (!isLeaving) {
@@ -145,11 +145,11 @@ const SplashScreen = ({
     const isOnScreen = target !== undefined && target.top < window.innerHeight && target.height > 0;
 
     if (!isOnScreen || prefersReducedMotion === true) {
-      setLanding('none');
+      setLanding({ clip: null });
     } else {
-      setLanding(
-        `inset(${Math.max(0, target.top).toString()}px ${Math.max(0, window.innerWidth - target.right).toString()}px ${Math.max(0, window.innerHeight - target.bottom).toString()}px ${Math.max(0, target.left).toString()}px round ${CARD_RADIUS.toString()}px)`,
-      );
+      setLanding({
+        clip: `inset(${Math.max(0, target.top).toString()}px ${Math.max(0, window.innerWidth - target.right).toString()}px ${Math.max(0, window.innerHeight - target.bottom).toString()}px ${Math.max(0, target.left).toString()}px round ${CARD_RADIUS.toString()}px)`,
+      });
     }
 
     const gone = setTimeout(
@@ -185,14 +185,14 @@ const SplashScreen = ({
         animate={
           !isLeaving || landing === null
             ? { clipPath: hasLanded || isLeaving ? INSET : EDGE_TO_EDGE, opacity: 1 }
-            : landing === 'none'
+            : landing.clip === null
               ? { clipPath: INSET, opacity: 0 }
-              : { clipPath: landing, opacity: 0 }
+              : { clipPath: landing.clip, opacity: 0 }
         }
         transition={
           prefersReducedMotion === true
             ? stillTransition
-            : isLeaving && landing !== null && landing !== 'none'
+            : isLeaving && landing !== null && landing.clip !== null
               ? {
                   clipPath: { duration: LANDS_MILLISECONDS / 1000, ease: [0.22, 1, 0.36, 1] },
                   opacity: {
@@ -201,7 +201,7 @@ const SplashScreen = ({
                     ease: 'easeOut',
                   },
                 }
-              : isLeaving && landing === 'none'
+              : isLeaving && landing?.clip === null
                 ? { duration: FADES_MILLISECONDS / 1000, ease: 'easeOut' }
                 : { duration: CARD_OPENS_SECONDS, ease: [0.22, 1, 0.36, 1] }
         }

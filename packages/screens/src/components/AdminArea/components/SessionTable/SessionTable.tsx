@@ -120,7 +120,7 @@ const SessionTable = ({
         const heard = listening ?? bookListening;
         const health = playback?.health ?? heard;
 
-        return health === null || health === undefined || health.durationSeconds <= 0 ? (
+        return health === null || health.durationSeconds <= 0 ? (
           <span className="text-text-muted">—</span>
         ) : (
           <span className="whitespace-nowrap tabular-nums text-text-muted">

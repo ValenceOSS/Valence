@@ -501,6 +501,8 @@ const AccountsPanel = () => {
     draftName,
     usernameChange,
     emailChange,
+    discordIdChange,
+    isDiscordIdWellFormed,
     draftFace,
     draftRoleIds,
     currentRoleIds,

@@ -41,7 +41,9 @@ const MorphingRing = ({
   const litFrom = finish?.from ?? (isEmptying ? phase - SEGMENTS + 1 : 0);
   const shownRef = useRef({ lit, from: litFrom });
 
-  shownRef.current = { lit, from: litFrom };
+  useEffect(() => {
+    shownRef.current = { lit, from: litFrom };
+  });
 
   useEffect(() => {
     if (!isFinishing) {

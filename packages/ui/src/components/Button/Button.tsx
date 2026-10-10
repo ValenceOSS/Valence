@@ -84,7 +84,10 @@ const Button = ({
       {...rest}
     >
       {isLoading ? (
-        <Spinner size={size === 'lg' || size === 'xl' ? 'md' : 'sm'} label={say('common.working')} />
+        <Spinner
+          size={size === 'lg' || size === 'xl' ? 'md' : 'sm'}
+          label={say('common.working')}
+        />
       ) : null}
       {children}
     </button>

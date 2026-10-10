@@ -1,6 +1,7 @@
 import { Reorder, useDragControls } from 'motion/react';
 import type { ReorderRowProps } from './ReorderRow.types';
 
+// oxlint-disable-next-line valence/no-hard-coded-strings -- a CSS selector, not words anyone reads
 const CONTROLS = 'button, a, input, select, textarea, [role="combobox"], [role="switch"]';
 
 /**

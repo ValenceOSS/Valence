@@ -22,8 +22,6 @@ const AssSubtitles = ({ video, mediaId, trackId, offsetSeconds }: AssSubtitlesPr
   const drawn = useRef<JASSUB | null>(null);
   const offset = useRef(offsetSeconds);
 
-  offset.current = offsetSeconds;
-
   useEffect(() => {
     const element = video.current;
     let isGone = false;
@@ -56,6 +54,8 @@ const AssSubtitles = ({ video, mediaId, trackId, offsetSeconds }: AssSubtitlesPr
   }, [video, mediaId, trackId]);
 
   useEffect(() => {
+    offset.current = offsetSeconds;
+
     if (drawn.current !== null) {
       drawn.current.timeOffset = -offsetSeconds;
       void drawn.current.resize(true);

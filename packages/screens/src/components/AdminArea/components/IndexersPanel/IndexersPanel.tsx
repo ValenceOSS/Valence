@@ -240,9 +240,7 @@ const IndexersPanel = () => {
         accessorFn: (indexer) => indexer.privacy ?? indexer.kind,
         cell: ({ row }) => {
           const look =
-            row.original.privacy === null || row.original.privacy === undefined
-              ? null
-              : INDEXER_PRIVACY_LOOKS[row.original.privacy];
+            row.original.privacy === null ? null : INDEXER_PRIVACY_LOOKS[row.original.privacy];
 
           return look === null ? (
             <Badge size="sm">{KIND_LABELS[row.original.kind]}</Badge>

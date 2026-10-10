@@ -64,13 +64,15 @@ const createMemorySubtitleService = (state: MemoryState = {}): SubtitleService =
       );
     },
 
-    readCues: async (mediaId, id) => {
+    readCues: (mediaId, id) => {
       const track = state[mediaId]?.find((candidate) => trackId(candidate.path) === id);
 
-      return cuesOfScript(
-        track === undefined || !STYLED_FORMATS.has(track.format.toLowerCase())
-          ? null
-          : track.contents,
+      return Promise.resolve(
+        cuesOfScript(
+          track === undefined || !STYLED_FORMATS.has(track.format.toLowerCase())
+            ? null
+            : track.contents,
+        ),
       );
     },
   };

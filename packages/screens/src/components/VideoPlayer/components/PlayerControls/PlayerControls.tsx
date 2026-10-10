@@ -196,10 +196,10 @@ const PlayerControls = ({
         : nextEpisode(episodes, playing);
 
   const [scrubbedTo, setScrubbedTo] = useState<number | null>(null);
-  const [scrubbedWhile, setScrubbedWhile] = useState(`${playingId ?? ''}|${title}`);
+  const [scrubbedWhile, setScrubbedWhile] = useState(`${playingId}|${title}`);
 
-  if (scrubbedWhile !== `${playingId ?? ''}|${title}`) {
-    setScrubbedWhile(`${playingId ?? ''}|${title}`);
+  if (scrubbedWhile !== `${playingId}|${title}`) {
+    setScrubbedWhile(`${playingId}|${title}`);
     setScrubbedTo(null);
   }
 

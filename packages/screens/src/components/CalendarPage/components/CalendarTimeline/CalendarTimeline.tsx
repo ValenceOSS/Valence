@@ -55,6 +55,7 @@ const CalendarTimeline = ({ day, today, entries, onOpen }: CalendarTimelineProps
             className="grid min-w-[80rem] px-3 pb-3"
             style={{
               gridTemplateColumns: `repeat(${days.length.toString()}, minmax(0, 1fr))`,
+              // oxlint-disable-next-line valence/no-hard-coded-strings -- a CSS grid template, not words anyone reads
               gridTemplateRows: `auto auto ${rows.length === 0 ? '16rem' : `repeat(${rows.length.toString()}, 3.25rem)`}`,
             }}
           >
