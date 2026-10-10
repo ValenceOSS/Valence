@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { menuGroupsOf } from '@ValenceUI/menuGroupsOf';
+import { librariesByPlace } from '@ValenceClient/library/librariesByPlace';
+import { linkingQueries } from '@ValenceClient/query/linkingQueries';
 import { ChevronDown as ChevronDownIcon } from '@keyline-icons/react';
 import {
   Eye as EyeFilledIcon,
@@ -111,6 +114,7 @@ const CataloguePanel = ({
 }: CataloguePanelProps) => {
   const cache = useQueryClient();
   const libraries = useQuery(libraryQueries.all());
+  const faces = useQuery(linkingQueries.faces());
   const tabs = catalogueTabsOf(libraries.data);
   const tab = tabs.includes(asked) ? asked : (tabs[0] ?? asked);
   const catalogue = useQuery(requestsQueries.titleCatalogue());
@@ -427,20 +431,22 @@ const CataloguePanel = ({
               trigger={fieldTrigger(
                 library?.name ?? say('screens.adminArea.cataloguePanel.allLibraries'),
               )}
-              groups={[
-                {
-                  name: say('common.whichLibrary'),
-                  selectedId: library?.id ?? 'all',
-                  onSelect: (next) => {
-                    setLibraryId(next === 'all' ? null : next);
-                    setChosen(new Set());
-                  },
-                  options: [
-                    { id: 'all', label: say('screens.adminArea.cataloguePanel.allLibraries') },
-                    ...tabLibraries.map((one) => ({ id: one.id, label: one.name })),
-                  ],
+              groups={menuGroupsOf(
+                say('common.whichLibrary'),
+                [
+                  { id: 'all', label: say('screens.adminArea.cataloguePanel.allLibraries') },
+                  ...librariesByPlace(tabLibraries, faces.data ?? []).map((one) => ({
+                    id: one.library.id,
+                    label: one.library.name,
+                    group: one.group,
+                  })),
+                ],
+                library?.id ?? 'all',
+                (next) => {
+                  setLibraryId(next === 'all' ? null : next);
+                  setChosen(new Set());
                 },
-              ]}
+              )}
             />
           )}
 

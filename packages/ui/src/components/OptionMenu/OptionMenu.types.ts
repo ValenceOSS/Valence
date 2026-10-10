@@ -4,6 +4,7 @@ type MenuOption = {
   id: string;
   label: string;
   detail?: string;
+  group?: string | null;
 };
 
 type OneOfMenuGroup = {

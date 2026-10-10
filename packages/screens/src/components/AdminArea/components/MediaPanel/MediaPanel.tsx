@@ -14,6 +14,9 @@ import {
   Tape as TapeFilledIcon,
 } from '@keyline-icons/react/fill';
 import { useCallback, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { librariesByPlace } from '@ValenceClient/library/librariesByPlace';
+import { linkingQueries } from '@ValenceClient/query/linkingQueries';
 import { LeaveOutDialog } from '@ValenceScreens/components/AdminArea/components/LeaveOutDialog/LeaveOutDialog';
 import type { LeaveOutTarget } from '@ValenceScreens/components/AdminArea/components/LeaveOutDialog/LeaveOutDialog.types';
 import { FindSubtitlesDialog } from '@ValenceScreens/components/FindSubtitlesDialog/FindSubtitlesDialog';
@@ -180,6 +183,7 @@ const MediaPanel = ({
       ),
     [libraries],
   );
+  const faces = useQuery(linkingQueries.faces());
   const [chosenLibrary, setChosenLibrary] = useState<string | null>(null);
   const libraryId = tabs.some((library) => library.id === chosenLibrary)
     ? (chosenLibrary ?? '')
@@ -750,7 +754,11 @@ const MediaPanel = ({
                   : [
                       {
                         label: say('common.whichLibrary'),
-                        options: tabs.map((library) => ({ id: library.id, label: library.name })),
+                        options: librariesByPlace(tabs, faces.data ?? []).map((one) => ({
+                          id: one.library.id,
+                          label: one.library.name,
+                          group: one.group,
+                        })),
                         value: libraryId,
                         onChange: setChosenLibrary,
                       },
