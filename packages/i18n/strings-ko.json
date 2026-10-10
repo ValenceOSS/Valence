@@ -11560,8 +11560,8 @@
     "context": "The description of a setting row in the profile settings in the account area."
   },
   {
-    "handler": "screens.accountArea.profileSettings.anOrbAPhotographOrGIF",
-    "text": "An orb, a photo or GIF, an illustrated avatar, or the first letter of your name.",
+    "handler": "screens.accountArea.profileSettings.aPhotoOrGIFAnIllustratedAvatar",
+    "text": "A photo or GIF, an illustrated avatar, or the first letter of your name.",
     "context": "Shown in the profile settings in the account area."
   },
   {
