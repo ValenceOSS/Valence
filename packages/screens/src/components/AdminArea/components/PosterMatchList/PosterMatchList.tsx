@@ -22,13 +22,13 @@ const PosterMatchList = ({ matches, busyId = null, onChoose }: PosterMatchListPr
             onChoose(match.id);
           }}
         >
-          <span className="aspect-[2/3] w-14 shrink-0 overflow-hidden rounded-lg bg-surface-raised">
+          <span className="relative aspect-[2/3] w-14 shrink-0 overflow-hidden rounded-lg bg-surface-raised">
             {match.posterUrl === null ? null : (
               <img
                 src={match.posterUrl}
                 alt=""
                 loading="lazy"
-                className="h-full w-full object-cover"
+                className="absolute inset-0 size-full object-cover"
               />
             )}
           </span>

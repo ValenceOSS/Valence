@@ -32,6 +32,7 @@ import { parseReleaseName } from '@ValenceCore/releases/parseReleaseName';
 import { showMediaRequest } from '@ValenceRequests/mediaRequests/showMediaRequest';
 import { wantsUpgrade } from '@ValenceRequests/mediaRequests/wantsUpgrade';
 import { waitThenRun } from '@ValenceRequests/timing/waitThenRun';
+import { createTurns } from '@ValenceRequests/timing/createTurns';
 import { downloadFacts } from '@ValenceRequests/mediaRequests/downloadFacts';
 import { judgeDownload } from '@ValenceRequests/downloads/judgeDownload';
 import type { GiveUpRules } from '@ValenceContracts/schemas/GiveUpRules';
@@ -366,22 +367,33 @@ const createRequestWorker = ({
   print = () => undefined,
   handOff = { step: () => Promise.resolve() },
 }: CreateRequestWorkerOptions) => {
-  let working: Promise<void> = Promise.resolve();
   let isRunning = false;
   const cancels = new Map<string, () => void>();
+  const lanes = createTurns();
+  const holds = createTurns();
+  const changes = new Map<string, number>();
 
-  const serially = <Result>(work: () => Promise<Result>): Promise<Result> => {
-    const next = working.then(work);
+  const told = <Result>(running: Promise<Result>): Promise<Result> => {
+    void running.catch((error: Error) => {
+      print(`Moving requests along failed: ${error.message}`);
+    });
 
-    working = next.then(
-      () => undefined,
-      (error: Error) => {
-        print(`Moving requests along failed: ${error.message}`);
-      },
-    );
-
-    return next;
+    return running;
   };
+
+  const inLane = <Result>(lane: 'filing' | 'searching', work: () => Promise<Result>) =>
+    told(lanes(lane, work));
+
+  const holding = <Result>(requestId: string, work: () => Promise<Result>) =>
+    told(
+      holds(requestId, async () => {
+        try {
+          return await work();
+        } finally {
+          changes.set(requestId, (changes.get(requestId) ?? 0) + 1);
+        }
+      }),
+    );
 
   const at = () => now().toISOString();
 
@@ -403,19 +415,23 @@ const createRequestWorker = ({
     print(`${request.title}: ${message.message}`);
   };
 
+  const isMovedAlong = (request: MediaRequestRecord) =>
+    request.approval === 'approved' && request.handOff === null;
+
+  const isSearchedByItself = (request: MediaRequestRecord) =>
+    isMovedAlong(request) && !request.isPickedByHand;
+
   const approved = async (): Promise<Found[]> => {
     const [kept, waiting] = await Promise.all([requests.list(), items.list()]);
 
-    return kept
-      .filter((request) => request.approval === 'approved' && request.handOff === null)
-      .map((request) => ({
-        request,
-        items: waiting.filter((item) => item.requestId === request.id),
-      }));
+    return kept.filter(isMovedAlong).map((request) => ({
+      request,
+      items: waiting.filter((item) => item.requestId === request.id),
+    }));
   };
 
   const searchedByItself = async (): Promise<Found[]> =>
-    (await approved()).filter((found) => !found.request.isPickedByHand);
+    (await approved()).filter((found) => isSearchedByItself(found.request));
 
   const profileFor = async (request: MediaRequestRecord): Promise<QualityProfile> =>
     isBookRequest(request.kind)
@@ -672,8 +688,47 @@ const createRequestWorker = ({
           });
   };
 
-  const searchFor = async (found: Found, fetching: readonly RequestItemRecord[]) => {
+  /**
+   * Searches the indexers for what a request is to fetch, holding the request only while what they
+   * found is judged and sent, so nothing else done to it waits on the indexers.
+   *
+   * @param listed - The request, as it was listed.
+   * @param since - How many times each request had been changed when it was listed.
+   * @param choose - What to fetch of the request, as it is once it is held.
+   * @returns Whether it was searched for.
+   */
+  const searchFor = async (
+    listed: Found,
+    since: ReadonlyMap<string, number>,
+    choose: (found: Found) => Promise<RequestItemRecord[]>,
+  ): Promise<boolean> => {
+    const begun = await holding(listed.request.id, async () => {
+      const held = await asNow(listed, since);
+      const fetching = held === null || !isSearchedByItself(held.request) ? [] : await choose(held);
+
+      if (held === null || fetching.length === 0) {
+        return null;
+      }
+
+      for (const item of fetching.filter((one) => one.state === 'wanted')) {
+        await update(item, { state: 'searching' });
+      }
+
+      return { found: held, fetching };
+    });
+
+    if (begun === null) {
+      return false;
+    }
+
+    const { found, fetching } = begun;
+    const id = found.request.id;
+    const begunAs = new Map(
+      fetching.map((item) => [item.id, item.state === 'wanted' ? 'searching' : item.state]),
+    );
     const pending = new Set(fetching.map((item) => item.id));
+    const isPending = (item: RequestItemRecord) =>
+      pending.has(item.id) && begunAs.get(item.id) === item.state;
     const queries = [
       ...new Set(
         [found.request.title, ...found.request.aliases.slice(0, MOST_ALIASES_SEARCHED)].map(
@@ -682,10 +737,7 @@ const createRequestWorker = ({
       ),
     ];
     const plans = planSearches(found.request, found.items, fetching, today());
-
-    for (const item of fetching.filter((one) => one.state === 'wanted')) {
-      await update(item, { state: 'searching' });
-    }
+    let isGone = false;
 
     const run = async (
       search: ReleaseSearch,
@@ -693,45 +745,60 @@ const createRequestWorker = ({
       asking: readonly string[] = queries,
     ) => {
       for (const query of asking) {
-        const outcome = await indexers.search({ ...search, query });
-        const current = (await items.list()).filter((item) => item.requestId === found.request.id);
-        const fetched = await fetchFrom(
-          { ...found, items: current },
-          outcome.releases,
-          (item) => itemIds.includes(item.id) && pending.has(item.id),
-        );
-        const what = describeSearch(search);
-        const searched =
-          outcome.indexers.length === 0
-            ? saying('requests.mediaRequests.noIndexerOn')
-            : sayingCount('requests.mediaRequests.foundByIndexers', outcome.indexers.length, {
-                found: outcome.releases.length,
-                fetched: fetched.said,
-              });
-
-        await note(
-          found.request,
-          query === search.query || query === queries[0]
-            ? saying('requests.mediaRequests.searched', { what, outcome: searched })
-            : saying('requests.mediaRequests.searchedAs', { what, query, outcome: searched }),
-        );
-
-        for (const report of outcome.indexers) {
-          if (report.problem !== null) {
-            await note(
-              found.request,
-              saying('requests.mediaRequests.indexerCouldNotAnswer', {
-                indexer: report.indexerName,
-                problem: report.problem,
-              }),
-              report.problemCode,
-            );
-          }
+        if (isGone) {
+          return true;
         }
 
-        if (fetched.isSent) {
-          for (const id of itemIds) {
-            pending.delete(id);
+        const outcome = await indexers.search({ ...search, query });
+        const isSent = await holding(id, async () => {
+          const current = await find(id);
+
+          if (current === null) {
+            isGone = true;
+
+            return true;
+          }
+
+          const fetched = await fetchFrom(
+            current,
+            outcome.releases,
+            (item) => itemIds.includes(item.id) && isPending(item),
+          );
+          const what = describeSearch(search);
+          const searched =
+            outcome.indexers.length === 0
+              ? saying('requests.mediaRequests.noIndexerOn')
+              : sayingCount('requests.mediaRequests.foundByIndexers', outcome.indexers.length, {
+                  found: outcome.releases.length,
+                  fetched: fetched.said,
+                });
+
+          await note(
+            current.request,
+            query === search.query || query === queries[0]
+              ? saying('requests.mediaRequests.searched', { what, outcome: searched })
+              : saying('requests.mediaRequests.searchedAs', { what, query, outcome: searched }),
+          );
+
+          for (const report of outcome.indexers) {
+            if (report.problem !== null) {
+              await note(
+                current.request,
+                saying('requests.mediaRequests.indexerCouldNotAnswer', {
+                  indexer: report.indexerName,
+                  problem: report.problem,
+                }),
+                report.problemCode,
+              );
+            }
+          }
+
+          return fetched.isSent;
+        });
+
+        if (isSent) {
+          for (const itemId of itemIds) {
+            pending.delete(itemId);
           }
 
           return true;
@@ -757,16 +824,19 @@ const createRequestWorker = ({
       }
     }
 
-    for (const item of (await items.list()).filter((one) => pending.has(one.id))) {
-      await update(item, {
-        state: item.state === 'searching' ? 'wanted' : item.state,
-        problem: item.state === 'searching' ? NOTHING_FOUND : item.problem,
-        problemCode: item.state === 'searching' ? null : item.problemCode,
-        lastSearchedAt: at(),
-      });
-    }
-  };
+    await holding(id, async () => {
+      for (const item of (await items.list()).filter(isPending)) {
+        await update(item, {
+          state: item.state === 'searching' ? 'wanted' : item.state,
+          problem: item.state === 'searching' ? NOTHING_FOUND : item.problem,
+          problemCode: item.state === 'searching' ? null : item.problemCode,
+          lastSearchedAt: at(),
+        });
+      }
+    });
 
+    return true;
+  };
   const release = async ({ request, items: all }: Found) => {
     const isChoosing = isAskingNarration(request);
     const out = all.filter(
@@ -1298,82 +1368,119 @@ const createRequestWorker = ({
     }
   };
 
-  const tick = () =>
-    serially(async () => {
+  const moveAlong = () =>
+    inLane('filing', async () => {
       for (const step of [release, follow, fileFinished]) {
-        for (const found of await approved()) {
-          await step(found);
-        }
+        await eachHeld(approved, isMovedAlong, step);
       }
 
       await fileSentByHand();
       await handOff.step();
+    });
 
-      for (const found of await searchedByItself()) {
-        const unsearched = found.items.filter(
-          (item) => item.state === 'wanted' && item.lastSearchedAt === null && item.isFollowed,
-        );
+  const unsearchedOf = (found: Found) =>
+    Promise.resolve(
+      found.items.filter(
+        (item) => item.state === 'wanted' && item.lastSearchedAt === null && item.isFollowed,
+      ),
+    );
 
-        if (unsearched.length > 0) {
-          await searchFor(found, unsearched);
+  let newSearch: Promise<void> | null = null;
+
+  const searchNew = (): Promise<void> => {
+    newSearch ??= inLane('searching', async () => {
+      newSearch = null;
+
+      const since = new Map(changes);
+
+      for (const listed of await searchedByItself()) {
+        if ((await unsearchedOf(listed)).length > 0) {
+          await searchFor(listed, since, unsearchedOf);
         }
       }
     });
 
-  const searchMissing = (): Promise<MissingSearch> =>
-    serially(async () => {
-      const startedAt = at();
-      let searched = 0;
+    return newSearch;
+  };
 
-      for (const found of await searchedByItself()) {
-        const fetching = [];
+  const tick = async () => {
+    await moveAlong();
+    await searchNew();
+  };
 
-        for (const item of found.items) {
-          const profile = await versionProfileOf(found.request, item.versionProfileId);
+  const missingOf = async (found: Found): Promise<RequestItemRecord[]> => {
+    const fetching = [];
 
-          if (item.isFollowed && (item.state === 'wanted' || isUpgradable(profile, item))) {
-            fetching.push(item);
-          }
-        }
+    for (const item of found.items) {
+      const profile = await versionProfileOf(found.request, item.versionProfileId);
 
-        if (fetching.length > 0) {
-          searched += 1;
-          await searchFor(found, fetching);
-        }
+      if (item.isFollowed && (item.state === 'wanted' || isUpgradable(profile, item))) {
+        fetching.push(item);
       }
+    }
 
-      print(`Searched again for ${searched.toString()} requests still missing something.`);
+    return fetching;
+  };
 
-      return { searched, startedAt };
+  let sweeping: Promise<MissingSearch> | null = null;
+
+  const sweep = async (): Promise<MissingSearch> => {
+    const startedAt = at();
+    const since = new Map(changes);
+    let searched = 0;
+
+    for (const listed of await searchedByItself()) {
+      if (
+        (await missingOf(listed)).length > 0 &&
+        (await inLane('searching', () => searchFor(listed, since, missingOf)))
+      ) {
+        searched += 1;
+      }
+    }
+
+    print(`Searched again for ${searched.toString()} requests still missing something.`);
+
+    return { searched, startedAt };
+  };
+
+  const searchMissing = (): Promise<MissingSearch> => {
+    sweeping ??= sweep().finally(() => {
+      sweeping = null;
     });
+
+    return sweeping;
+  };
+
+  const feedFetchingOf = async (found: Found) => {
+    const byVersion = new Map(
+      await Promise.all(
+        [...new Set(found.items.map((item) => item.versionProfileId ?? null))].map(
+          async (version) => [version, await versionProfileOf(found.request, version)] as const,
+        ),
+      ),
+    );
+
+    return (item: RequestItemRecord) => {
+      const profile = byVersion.get(item.versionProfileId ?? null);
+
+      return (
+        item.isFollowed &&
+        (item.state === 'wanted' || (profile !== undefined && isUpgradable(profile, item)))
+      );
+    };
+  };
 
   const pollFeeds = () =>
-    serially(async () => {
-      const fetching = await Promise.all(
-        (await searchedByItself()).map(async (found) => {
-          const byVersion = new Map(
-            await Promise.all(
-              [...new Set(found.items.map((item) => item.versionProfileId ?? null))].map(
-                async (version) =>
-                  [version, await versionProfileOf(found.request, version)] as const,
-              ),
-            ),
-          );
+    inLane('searching', async () => {
+      const since = new Map(changes);
+      const listed = await searchedByItself();
+      const wanting = [];
 
-          return {
-            found,
-            isFetching: (item: RequestItemRecord) => {
-              const profile = byVersion.get(item.versionProfileId ?? null);
-
-              return (
-                item.isFollowed &&
-                (item.state === 'wanted' || (profile !== undefined && isUpgradable(profile, item)))
-              );
-            },
-          };
-        }),
-      );
-      const wanting = fetching.filter(({ found, isFetching }) => found.items.some(isFetching));
+      for (const found of listed) {
+        if (found.items.some(await feedFetchingOf(found))) {
+          wanting.push(found);
+        }
+      }
 
       if (wanting.length === 0) {
         return;
@@ -1381,17 +1488,25 @@ const createRequestWorker = ({
 
       const outcome = await indexers.search({ query: '', mode: 'search' });
 
-      for (const { found, isFetching } of wanting) {
-        const fetched = await fetchFrom(found, outcome.releases, isFetching);
+      for (const one of wanting) {
+        await holding(one.request.id, async () => {
+          const found = await asNow(one, since);
 
-        if (fetched.isSent) {
-          await note(
-            found.request,
-            saying('requests.mediaRequests.requestWorker.amongTheNewestReleasesSaid', {
-              said: fetched.said,
-            }),
-          );
-        }
+          if (found === null || !isSearchedByItself(found.request)) {
+            return;
+          }
+
+          const fetched = await fetchFrom(found, outcome.releases, await feedFetchingOf(found));
+
+          if (fetched.isSent) {
+            await note(
+              found.request,
+              saying('requests.mediaRequests.requestWorker.amongTheNewestReleasesSaid', {
+                said: fetched.said,
+              }),
+            );
+          }
+        });
       }
     });
 
@@ -1401,6 +1516,45 @@ const createRequestWorker = ({
     return request === null
       ? null
       : { request, items: (await items.list()).filter((item) => item.requestId === id) };
+  };
+
+  /**
+   * A request as it is now: as it was listed, unless something has been done to it since, when it
+   * is read again.
+   *
+   * @param listed - The request as it was listed.
+   * @param since - How many times each request had been changed when it was listed.
+   * @returns The request as it is now, or null once it is gone.
+   */
+  const asNow = (listed: Found, since: ReadonlyMap<string, number>): Promise<Found | null> =>
+    changes.get(listed.request.id) === since.get(listed.request.id)
+      ? Promise.resolve(listed)
+      : find(listed.request.id);
+
+  /**
+   * Does a step to each request in turn, holding each while it is done, on the request as it is by
+   * then and only while it is still one the step is for.
+   *
+   * @param listing - The requests to do it to, as they are now.
+   * @param isStill - Whether a request is still one to do it to.
+   * @param step - What to do to each.
+   */
+  const eachHeld = async (
+    listing: () => Promise<Found[]>,
+    isStill: (request: MediaRequestRecord) => boolean,
+    step: (found: Found) => Promise<void>,
+  ) => {
+    const since = new Map(changes);
+
+    for (const listed of await listing()) {
+      await holding(listed.request.id, async () => {
+        const found = await asNow(listed, since);
+
+        if (found !== null && isStill(found.request)) {
+          await step(found);
+        }
+      });
+    }
   };
 
   const quietly = (work: () => Promise<void>): Promise<void> =>
@@ -1790,7 +1944,7 @@ const createRequestWorker = ({
     ],
 
     dropDownloads: (downloadIds: readonly string[]): Promise<number> =>
-      serially(async () => {
+      inLane('filing', async () => {
         for (const downloadId of downloadIds) {
           await queue.remove(downloadId, true).catch(() => false);
         }
@@ -1803,7 +1957,7 @@ const createRequestWorker = ({
       downloadId: string,
       stopping: { next: DownloadStopNext; isDeletingFiles: boolean },
     ): Promise<MediaRequest | null> =>
-      serially(async () => {
+      holding(id, async () => {
         const found = await find(id);
         const held = found?.items.filter((item) => item.downloadId === downloadId) ?? [];
 
@@ -1872,7 +2026,7 @@ const createRequestWorker = ({
     },
 
     deleteFiled: (id: string): Promise<string[]> =>
-      serially(async () => {
+      holding(id, async () => {
         const filed = (await items.list()).filter(
           (item) => item.requestId === id && item.filePath !== null,
         );
@@ -1955,7 +2109,7 @@ const createRequestWorker = ({
       picked: Release,
       keepsBoth = false,
     ): Promise<MediaRequest | { refused: Said } | null> =>
-      serially(async () => {
+      holding(id, async () => {
         const kept = await find(id);
 
         if (kept === null) {
@@ -2045,7 +2199,7 @@ const createRequestWorker = ({
       id: string,
       library: { id: string; path: string },
     ): Promise<SentDownloadRecord | 'claimed' | null> =>
-      serially(async () => {
+      inLane('filing', async () => {
         if ((await downloads.find(id)) === null) {
           return null;
         }
@@ -2086,7 +2240,15 @@ const createRequestWorker = ({
       }
 
       isRunning = true;
-      repeat('tick', tick, tickEveryMs, 0);
+      repeat(
+        'tick',
+        async () => {
+          await moveAlong();
+          void quietly(searchNew);
+        },
+        tickEveryMs,
+        0,
+      );
       repeat(
         'missing',
         async () => {

@@ -165,6 +165,40 @@ describe('createRequestService', () => {
     expect(await service.join('nowhere', { id: 'another', name: 'Another' })).toBeNull();
   });
 
+  it('names whoever asked as their accounts are called now, telling of it only when anything changed', async () => {
+    const { service, requests, onChange } = aService();
+    const { request } = await service.add(DUNE);
+
+    await service.join(request.id, { id: 'another', name: 'Another', profileId: null });
+    await requests.update(request.id, {
+      profileAsk: {
+        asker: { id: 'another', name: 'Another' },
+        profileId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+        profileName: '4K',
+      },
+    });
+    onChange.mockClear();
+
+    const renamed = await service.renameAskers([
+      { id: 'someone', name: 'Sam' },
+      { id: 'another', name: 'Kit' },
+      { id: 'stranger', name: 'Nobody here' },
+    ]);
+
+    expect(renamed).toBe(1);
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(await service.find(request.id)).toMatchObject({
+      requestedBy: { id: 'someone', name: 'Sam' },
+      alsoAskedBy: [{ id: 'another', name: 'Kit', profileId: null }],
+      profileAsk: { asker: { id: 'another', name: 'Kit' }, profileName: '4K' },
+    });
+
+    onChange.mockClear();
+
+    expect(await service.renameAskers([{ id: 'someone', name: 'Sam' }])).toBe(0);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it('takes one asker off a request, the next becoming the first where the first leaves', async () => {
     const { service } = aService();
     const { request } = await service.add(DUNE);
@@ -333,6 +367,34 @@ describe('createRequestService', () => {
 
     expect(changed?.items.map((item) => item.season)).toEqual([2]);
     expect(await service.change('missing', {}, null)).toBeNull();
+  });
+
+  it('follows or stops following what a season holds as it is ticked or unticked, as its own switch does', async () => {
+    const { service, items } = aService();
+    const both = { ...SEVERANCE, seasons: [1, 2] };
+    const { request } = await service.add(both);
+    const inSeason = async (season: number) =>
+      (await items.list()).find((item) => item.season === season);
+    const first = await inSeason(1);
+    const second = await inSeason(2);
+
+    if (first === undefined || second === undefined) {
+      throw new Error('Both seasons should have an episode');
+    }
+
+    await items.update(first.id, { state: 'available' });
+    await items.update(second.id, { state: 'available', isFollowed: false });
+
+    await service.change(request.id, { seasons: [2] }, SEVERANCE.catalogue);
+
+    expect(await inSeason(1)).toMatchObject({ state: 'available', isFollowed: false });
+    expect(await inSeason(2)).toMatchObject({ isFollowed: false });
+
+    await items.update(first.id, { lastSearchedAt: AT.toISOString() });
+    await service.change(request.id, { seasons: [1, 2] }, SEVERANCE.catalogue);
+
+    expect(await inSeason(1)).toMatchObject({ isFollowed: true, lastSearchedAt: null });
+    expect(await inSeason(2)).toMatchObject({ isFollowed: false });
   });
 
   it('follows the seasons that come after those there were when it was asked for', async () => {

@@ -4,10 +4,8 @@ import { Rail } from '@ValenceUI/Rail';
 import { RevealItem } from '@ValenceUI/RevealItem';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
-import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { catalogueIdOfRequest } from '@ValenceClient/requests/catalogueIdOfRequest';
 import { progressOfRequest } from '@ValenceClient/requests/progressOfRequest';
-import { isAskedBy } from '@ValenceContracts/functions/isAskedBy';
 import { askingOf } from '@ValenceScreens/requests/askingOf';
 import { ProfileFace } from '@ValenceScreens/components/ProfileFace/ProfileFace';
 import { meterOfRequest } from './meterOfRequest';
@@ -22,20 +20,18 @@ const ARRIVED = new Set(['filed', 'available', 'refused']);
 const FACES = 3;
 
 /**
- * What you have asked for that has not arrived yet, at the top of Discover: each over its backdrop,
- * with everybody who wants it in the corner and a bar under it saying where it stands and how far it has
- * come. Nothing is drawn until you have asked for
- * something; the title opens everything you have asked for.
+ * What everybody has asked for that has not arrived yet, at the top of Discover: each over its
+ * backdrop, with everybody who wants it in the corner and a bar under it saying where it stands and
+ * how far it has come. Everybody's means as many as the server shows you, which is only your own
+ * where you may not see the rest. Nothing is drawn until something is on its way; the title opens
+ * every request.
  *
  * @param onAsk - Called with the title to open, as its address names it.
- * @param onOpenAll - Called to show all of your requests.
+ * @param onOpenAll - Called to show every request.
  */
 const OnItsWayShelf = ({ onAsk, onOpenAll }: OnItsWayShelfProps) => {
-  const me = useQuery(sessionQueries.who());
   const requests = useQuery(requestsQueries.mediaRequests());
-  const coming = (requests.data ?? []).filter(
-    (request) => isAskedBy(request, me.data?.id) && !ARRIVED.has(request.state),
-  );
+  const coming = (requests.data ?? []).filter((request) => !ARRIVED.has(request.state));
   const faces = useQuery(profileQueries.everyone());
   const described = useQueries({
     queries: coming.map((request) =>
@@ -56,7 +52,7 @@ const OnItsWayShelf = ({ onAsk, onOpenAll }: OnItsWayShelfProps) => {
         const backdropUrl = described[at]?.data?.backdropUrl ?? request.posterUrl;
         const logoUrl = described[at]?.data?.logoUrl ?? null;
         const askers = [request.requestedBy, ...request.alsoAskedBy];
-        const names = askers.map((asker) => asker.profileName ?? asker.name);
+        const names = askers.map((asker) => asker.name);
         const [first, ...rest] = names;
 
         return (
@@ -72,7 +68,9 @@ const OnItsWayShelf = ({ onAsk, onOpenAll }: OnItsWayShelfProps) => {
                 <span className="flex min-w-0 items-center gap-1.5 rounded-full bg-overlay py-0.5 pl-0.5 pr-2.5 text-xs font-medium text-on-scrim backdrop-blur-md">
                   <span className="flex shrink-0 -space-x-1.5">
                     {askers.slice(0, FACES).map((asker) => {
-                      const face = faces.data?.find((profile) => profile.id === asker.profileId);
+                      const face = faces.data?.find(
+                        (profile) => profile.id === asker.faceProfileId,
+                      );
 
                       return face === undefined ? (
                         <span

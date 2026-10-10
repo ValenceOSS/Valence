@@ -73,7 +73,7 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
         title={say('screens.faceEditor.yourFace')}
         description={
           draft?.photo === null || draft?.photo === undefined
-            ? say('screens.accountArea.profileSettings.anOrbAPhotographOrGIF')
+            ? say('screens.accountArea.profileSettings.aPhotoOrGIFAnIllustratedAvatar')
             : say('screens.accountArea.profileSettings.yourNewFaceIsSavedWhen')
         }
       >

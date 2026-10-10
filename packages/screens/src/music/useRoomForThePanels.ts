@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useMatchesMedia } from '@ValenceUI/useMatchesMedia';
 
 const WIDE_FROM = '(min-width: 64rem)';
 
@@ -7,39 +7,8 @@ const WIDE_FROM = '(min-width: 64rem)';
  * which is the large breakpoint. Below it they are drawers, opened when asked for, since a column
  * squeezed into a phone's width is a sliver nobody can use.
  *
- * Answers true where there is no `matchMedia` to ask, since a test environment is better served by
- * the arrangement that has room.
- *
  * @returns Whether there is room for the panels beside the page.
  */
-const useRoomForThePanels = (): boolean => {
-  const [hasRoom, setHasRoom] = useState(() =>
-    typeof window === 'undefined' || typeof window.matchMedia !== 'function'
-      ? true
-      : window.matchMedia(WIDE_FROM).matches,
-  );
-
-  useEffect(() => {
-    if (typeof window.matchMedia !== 'function') {
-      return;
-    }
-
-    const asked = window.matchMedia(WIDE_FROM);
-
-    const answer = (): void => {
-      setHasRoom(asked.matches);
-    };
-
-    answer();
-
-    asked.addEventListener('change', answer);
-
-    return () => {
-      asked.removeEventListener('change', answer);
-    };
-  }, []);
-
-  return hasRoom;
-};
+const useRoomForThePanels = (): boolean => useMatchesMedia(WIDE_FROM);
 
 export { useRoomForThePanels };

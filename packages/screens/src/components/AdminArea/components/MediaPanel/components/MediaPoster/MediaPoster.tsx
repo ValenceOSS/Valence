@@ -20,7 +20,7 @@ const MediaPoster = ({ src, isSquare = false, className }: MediaPosterProps) => 
   return (
     <span
       className={cn(
-        'flex w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-[var(--surface-hover)]',
+        'relative flex w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-[var(--surface-hover)]',
         isSquare ? 'aspect-square' : 'aspect-[2/3]',
         className,
       )}
@@ -40,7 +40,7 @@ const MediaPoster = ({ src, isSquare = false, className }: MediaPosterProps) => 
           onError={() => {
             setMissing(src);
           }}
-          className="h-full w-full object-cover"
+          className="absolute inset-0 size-full object-cover"
         />
       )}
     </span>

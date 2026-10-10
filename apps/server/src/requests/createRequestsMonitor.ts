@@ -13,6 +13,7 @@ type CreateRequestsMonitorOptions = {
   now?: () => Date;
   onLost: (reason: Said, problemCode: ProblemCode) => void;
   onRegained: () => void;
+  onAnswering?: () => void;
   onVpnDown: (reason: Said, problemCode: ProblemCode) => void;
   onVpnUp: (vpn: RequestsVpn) => void;
   onIndexerFailing?: (indexer: {
@@ -38,6 +39,7 @@ type CreateRequestsMonitorOptions = {
  * @param now - The clock, for when it was last asked.
  * @param onLost - Told why, once, when the service stops answering.
  * @param onRegained - Told once when it answers again.
+ * @param onAnswering - Told whenever it answers after not having answered, the first time included.
  * @param onVpnDown - Told why, once, when the tunnel drops.
  * @param onVpnUp - Told once when it comes back.
  * @param onIndexerFailing - Told once, with why, when an indexer starts failing.
@@ -50,6 +52,7 @@ const createRequestsMonitor = ({
   now = () => new Date(),
   onLost,
   onRegained,
+  onAnswering = () => undefined,
   onVpnDown,
   onVpnUp,
   onIndexerFailing = () => undefined,
@@ -96,6 +99,7 @@ const createRequestsMonitor = ({
     check: async (): Promise<boolean> => {
       const reading = await client.readStatus();
       const checkedAt = now().toISOString();
+      const wasAnswering = latest.isReachable;
 
       if (reading.kind === 'silent') {
         silence = { reason: reading.reason, problemCode: reading.problemCode };
@@ -123,6 +127,10 @@ const createRequestsMonitor = ({
         work: NO_WORK,
       };
       service.record(true);
+
+      if (!wasAnswering) {
+        onAnswering();
+      }
 
       const nowFailing = new Map(
         reading.status.indexers.failing.map((indexer) => [indexer.id, indexer.name]),

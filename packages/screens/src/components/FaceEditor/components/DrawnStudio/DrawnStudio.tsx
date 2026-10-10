@@ -6,6 +6,7 @@ import { cn } from '@ValenceUI/cn';
 import { AVATAR_STYLES } from '@ValenceContracts/schemas/ViewerProfile';
 import type { DrawnStudioProps } from './DrawnStudio.types';
 import { say } from '@ValenceI18n/say';
+import { randomId } from '@ValenceClient/platform/randomId';
 
 /**
  * A drawn face: which style it is drawn in, and a shuffle that draws a different face in that
@@ -59,7 +60,7 @@ const DrawnStudio = ({ style, seed, onChange }: DrawnStudioProps) => (
         variant="secondary"
         size="sm"
         onClick={() => {
-          onChange({ style, seed: crypto.randomUUID().slice(0, 12) });
+          onChange({ style, seed: randomId().slice(0, 12) });
         }}
       >
         <Icon of={ShuffleIcon} size={15} />

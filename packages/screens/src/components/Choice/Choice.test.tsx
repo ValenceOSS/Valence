@@ -15,6 +15,15 @@ describe('Choice', () => {
     expect(screen.getByText('Codec')).toBeVisible();
   });
 
+  it('leaves the question unwritten where something else says it, still naming the menu by it', () => {
+    render(
+      <Choice label="Codec" options={options} value="hevc" onSelect={vi.fn()} isLabelHidden />,
+    );
+
+    expect(screen.queryByText('Codec')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Codec' })).toHaveTextContent('HEVC');
+  });
+
   it('shows the answer in force rather than its identifier', () => {
     render(<Choice label="Codec" options={options} value="hevc" onSelect={vi.fn()} />);
 

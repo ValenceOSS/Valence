@@ -1,4 +1,4 @@
-import { useId, useMemo } from 'react';
+import { useCallback, useId, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
@@ -33,7 +33,8 @@ const STANDING_TONES: Readonly<Record<SeasonStanding, BadgeTone>> = {
  *
  * Specials are a row like any other: ticking them fetches them, and they are never part of every
  * season. Following new seasons is a choice of its own rather than something read from which rows
- * are ticked.
+ * are ticked, except that taking no regular season at all stops following new ones too, until a
+ * regular season is taken again.
  *
  * Each season says where it stands, so nobody asks again for what is already on the shelf, and one
  * the library holds whole cannot be ticked at all. A season it holds part of can, and only what it
@@ -67,6 +68,25 @@ const SeasonChooser = ({
     (open.length > 0 &&
       open.every((one) => ticked.includes(one.season) || alreadyAsked.includes(one.season)));
 
+  const wasFollowing = useRef(false);
+
+  const choose = useCallback(
+    (next: number[] | null) => {
+      onChange(next);
+
+      const isAnyRegular = next === null || [...next, ...alreadyAsked].some((season) => season > 0);
+
+      if (followsNew && !isAnyRegular) {
+        wasFollowing.current = true;
+        onFollowsNew(false);
+      } else if (wasFollowing.current && isAnyRegular) {
+        wasFollowing.current = false;
+        onFollowsNew(true);
+      }
+    },
+    [alreadyAsked, followsNew, onChange, onFollowsNew],
+  );
+
   const columns = useMemo<DataTableColumn<CatalogueSeason>[]>(
     () => [
       {
@@ -78,7 +98,7 @@ const SeasonChooser = ({
             isLabelHidden
             isOn={isEveryOne}
             onToggle={() => {
-              onChange(tickEverySeason(seasons, rows, !isEveryOne));
+              choose(tickEverySeason(seasons, rows, !isEveryOne));
             }}
           />
         ),
@@ -92,7 +112,7 @@ const SeasonChooser = ({
               isOn={isAsked || ticked.includes(row.original.season)}
               disabled={isAsked || isSeasonHeld(row.original)}
               onToggle={() => {
-                onChange(tickASeason(seasons, rows, row.original.season));
+                choose(tickASeason(seasons, rows, row.original.season));
               }}
             />
           );
@@ -137,7 +157,7 @@ const SeasonChooser = ({
         ),
       },
     ],
-    [alreadyAsked, isEveryOne, onChange, rows, seasons, ticked],
+    [alreadyAsked, choose, isEveryOne, rows, seasons, ticked],
   );
 
   return (
@@ -175,6 +195,7 @@ const SeasonChooser = ({
               isOn={isFollowedAlready || followsNew}
               disabled={isFollowedAlready}
               onToggle={() => {
+                wasFollowing.current = false;
                 onFollowsNew(!followsNew);
               }}
               describedBy={followId}

@@ -2098,6 +2098,7 @@ const ENGLISH = {
   'error.requests.sayWhichItemItBecame': 'Say which library item it became.',
   'error.requests.sayWhichNarrationToFetch': 'Say which narration of the audiobook to fetch.',
   'error.requests.sayWhoIsAsking': 'Say who is asking.',
+  'error.requests.sayWhoIsCalledWhat': 'Say what each account is called now.',
   'error.requests.sayWhyItWasRefusedOr': 'Give a reason for declining, or leave it empty.',
   'error.requests.thatIsNotAChangeTo': 'That isn’t a valid change to a request.',
   'error.requests.thatIsNotARequest': 'That isn’t a valid request.',
@@ -2820,8 +2821,8 @@ const ENGLISH = {
   'screens.accountArea.pluginThemeRow.theColoursValenceComesWith': 'Valence’s default colours',
   'screens.accountArea.profileSettings.afterThisManyEpisodesPlayBy':
     'After this many episodes autoplay in a row, Valence asks if you’re still watching.',
-  'screens.accountArea.profileSettings.anOrbAPhotographOrGIF':
-    'An orb, a photo or GIF, an illustrated avatar, or the first letter of your name.',
+  'screens.accountArea.profileSettings.aPhotoOrGIFAnIllustratedAvatar':
+    'A photo or GIF, an illustrated avatar, or the first letter of your name.',
   'screens.accountArea.profileSettings.desktopNotifications': 'Desktop notifications',
   'screens.accountArea.profileSettings.displayName': 'Display name',
   'screens.accountArea.profileSettings.followingTheMachineUsesWhateverYour':

@@ -46,6 +46,7 @@ const aMonitor = (...readings: RequestsReading[]) => {
   const told = {
     onLost: vi.fn(),
     onRegained: vi.fn(),
+    onAnswering: vi.fn(),
     onVpnDown: vi.fn(),
     onVpnUp: vi.fn(),
   };
@@ -120,6 +121,25 @@ describe('createRequestsMonitor', () => {
     await monitor.check();
 
     expect(onRegained).toHaveBeenCalledTimes(1);
+  });
+
+  it('says it is answering the first time it does, and each time after it was silent', async () => {
+    const { monitor, onAnswering } = aMonitor(
+      answered(null),
+      answered(null),
+      SILENT,
+      answered(null),
+    );
+
+    await monitor.check();
+    await monitor.check();
+
+    expect(onAnswering).toHaveBeenCalledTimes(1);
+
+    await monitor.check();
+    await monitor.check();
+
+    expect(onAnswering).toHaveBeenCalledTimes(2);
   });
 
   it('says why when the tunnel drops, and where it leaves from once it is back', async () => {

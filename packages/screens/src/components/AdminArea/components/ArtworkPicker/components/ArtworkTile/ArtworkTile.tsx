@@ -59,7 +59,10 @@ const ArtworkTile = ({
         alt=""
         loading="lazy"
         draggable={false}
-        className={cn('h-full w-full', kind === 'logo' ? 'object-contain p-4' : 'object-cover')}
+        className={cn(
+          'absolute inset-0 size-full',
+          kind === 'logo' ? 'object-contain p-4' : 'object-cover',
+        )}
       />
     )}
 

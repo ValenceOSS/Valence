@@ -1208,4 +1208,21 @@ describe('createRequestsClient with requests for films and series', () => {
       }).client.searchMissing(),
     ).toMatchObject({ kind: 'answered', value: { searched: 3 } });
   });
+
+  it('tells the service what every account is called now, and reads how many requests changed', async () => {
+    const { client, fetch } = aClient(200, { renamed: 2 });
+
+    expect(await client.renameAskers([{ id: 'someone', name: 'Sam' }])).toEqual({
+      kind: 'answered',
+      value: 2,
+    });
+    expect(fetch).toHaveBeenCalledWith(
+      'http://requests:8421/api/askers/names',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ askers: [{ id: 'someone', name: 'Sam' }] }),
+      }),
+    );
+    expect((await aClient(200, { renamed: 'two' }).client.renameAskers([])).kind).toBe('silent');
+  });
 });

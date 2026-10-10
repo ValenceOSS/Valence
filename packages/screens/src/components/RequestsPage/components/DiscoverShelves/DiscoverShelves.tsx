@@ -51,7 +51,7 @@ const STUDIOS_AFTER = 1;
  * @param onAsk - Called with the title to open, as its address names it.
  * @param onBrowse - Called with the whole list to show.
  * @param onBrowseStudio - Called with the studio whose films to show.
- * @param onOpenRequests - Called to show all of your requests.
+ * @param onOpenRequests - Called to show every request.
  */
 const DiscoverShelves = ({
   onAsk,

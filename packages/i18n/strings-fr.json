@@ -8960,6 +8960,11 @@
     "context": "Error from the requests service when somebody is added to a request without saying who they are."
   },
   {
+    "handler": "error.requests.sayWhoIsCalledWhat",
+    "text": "Say what each account is called now.",
+    "context": "An error the requests service answers with (HTTP 400) when the server sends account names to keep its requests up to date with, but not as a list of accounts and their names (from `createRequestRoutes`)."
+  },
+  {
     "handler": "error.requests.sayWhyItWasRefusedOr",
     "text": "Give a reason for declining, or leave it empty.",
     "context": "An error the server answers with (HTTP 400) in the media requests in the requests service (from `createRequestRoutes`)."
@@ -11560,8 +11565,8 @@
     "context": "The description of a setting row in the profile settings in the account area."
   },
   {
-    "handler": "screens.accountArea.profileSettings.anOrbAPhotographOrGIF",
-    "text": "An orb, a photo or GIF, an illustrated avatar, or the first letter of your name.",
+    "handler": "screens.accountArea.profileSettings.aPhotoOrGIFAnIllustratedAvatar",
+    "text": "A photo or GIF, an illustrated avatar, or the first letter of your name.",
     "context": "Shown in the profile settings in the account area."
   },
   {

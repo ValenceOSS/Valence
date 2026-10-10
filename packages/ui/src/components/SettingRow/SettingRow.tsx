@@ -7,6 +7,10 @@ import type { SettingRowProps } from './SettingRow.types';
  * of, kept in one place so that a switch, a menu and a button all sit on the same baseline and
  * leave the same room around them rather than each screen arranging its own.
  *
+ * The words keep room enough to read before giving any up: where the control would leave them
+ * narrower than that, as a menu does on a phone, it moves beneath them instead of squeezing them
+ * into a column a word wide. A switch is small enough to stay beside them.
+ *
  * The row is not itself pressable. What answers the setting is the control on the right, which
  * keeps one press target per row instead of two that disagree about what they do.
  *
@@ -38,7 +42,7 @@ const SettingRow = ({
       className,
     )}
   >
-    <div className="flex min-w-0 flex-1 items-start gap-3">
+    <div className="flex min-w-0 flex-[1_1_13rem] items-start gap-3">
       {icon === undefined ? null : (
         <span className="flex shrink-0 items-center pt-0.5 text-text-muted">{icon}</span>
       )}

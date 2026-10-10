@@ -10,6 +10,7 @@ import type { ScanJob } from '@ValenceClient/library/fetchLibrary';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import { LIBRARY_PARTS_BY_KIND } from '@ValenceContracts/schemas/LibraryPart';
 import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
+import { randomId } from '@ValenceClient/platform/randomId';
 
 type ScanEntry = {
   libraryId: string;
@@ -264,7 +265,7 @@ const startScanAll = async (libraries: readonly Library[]): Promise<boolean> => 
   isScanningAll = true;
   notify();
 
-  const run = { id: crypto.randomUUID(), of: libraries.length };
+  const run = { id: randomId(), of: libraries.length };
 
   try {
     const taken = await Promise.all(

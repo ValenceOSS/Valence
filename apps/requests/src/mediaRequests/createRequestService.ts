@@ -19,6 +19,7 @@ import { recordFromDraft } from '@ValenceRequests/mediaRequests/recordFromDraft'
 import { highestSeasonOf } from '@ValenceRequests/mediaRequests/highestSeasonOf';
 import { rebaseSeasons } from '@ValenceRequests/mediaRequests/rebaseSeasons';
 import { seasonsChosen } from '@ValenceRequests/mediaRequests/seasonsChosen';
+import { isSeasonWanted } from '@ValenceRequests/mediaRequests/isSeasonWanted';
 import { profileChangeOf } from '@ValenceRequests/mediaRequests/profileChangeOf';
 import { requestFactsOf } from '@ValenceRequests/mediaRequests/requestFactsOf';
 import { showMediaRequest } from '@ValenceRequests/mediaRequests/showMediaRequest';
@@ -37,6 +38,7 @@ import type {
   RequestCatalogueUpdate,
   ReleaseType,
   ProfileAskDecision,
+  AskerNames,
   Requester,
   RequestOrigin,
   SearchScope,
@@ -262,6 +264,37 @@ const createRequestService = ({
     }
   };
 
+  /**
+   * Follows the episodes of each season a series is newly asked for and stops following those of
+   * each season it no longer is, as switching the season itself would, so what is already fetched
+   * or on its way is left alone rather than searched for or upgraded.
+   *
+   * @param before - The request as it was.
+   * @param after - The request as it is now.
+   */
+  const followChosenSeasons = async (
+    before: Pick<MediaRequestRecord, 'seasons' | 'followsNewSeasons' | 'followsAfter'>,
+    after: MediaRequestRecord,
+  ) => {
+    const at = now().toISOString();
+
+    for (const item of await itemsOf(after.id)) {
+      if (item.season === null) {
+        continue;
+      }
+
+      const isWanted = isSeasonWanted(after, item.season);
+
+      if (isWanted !== isSeasonWanted(before, item.season) && item.isFollowed !== isWanted) {
+        await items.update(item.id, {
+          isFollowed: isWanted,
+          ...(isWanted ? { lastSearchedAt: null } : {}),
+          updatedAt: at,
+        });
+      }
+    }
+  };
+
   const changed = async (id: string, changes: Partial<Omit<MediaRequestRecord, 'id'>>) => {
     const updated = await requests.update(id, { ...changes, updatedAt: now().toISOString() });
 
@@ -410,6 +443,41 @@ const createRequestService = ({
       return record === null ? null : shown(record);
     },
 
+    renameAskers: async (askers: AskerNames['askers']): Promise<number> => {
+      const names = new Map(askers.map((asker) => [asker.id, asker.name]));
+      const renamed = (asker: Requester): Requester => {
+        const name = names.get(asker.id);
+
+        return name === undefined || name === asker.name ? asker : { ...asker, name };
+      };
+      let changed = 0;
+
+      for (const kept of await requests.list()) {
+        const requestedByName = names.get(kept.requestedById) ?? kept.requestedByName;
+        const alsoAskedBy = kept.alsoAskedBy.map(renamed);
+        const ask = kept.profileAsk ?? null;
+        const askedFor = ask === null ? null : { ...ask, asker: renamed(ask.asker) };
+        const changes = {
+          ...(requestedByName === kept.requestedByName ? {} : { requestedByName }),
+          ...(alsoAskedBy.every((asker, at) => asker === kept.alsoAskedBy[at])
+            ? {}
+            : { alsoAskedBy }),
+          ...(askedFor === null || askedFor.asker === ask?.asker ? {} : { profileAsk: askedFor }),
+        };
+
+        if (Object.keys(changes).length > 0) {
+          await requests.update(kept.id, changes);
+          changed += 1;
+        }
+      }
+
+      if (changed > 0) {
+        onChange();
+      }
+
+      return changed;
+    },
+
     decideNarration: async (id: string, asins: readonly string[]): Promise<MediaRequest | null> => {
       const kept = await requests.find(id);
       const known = new Set((kept?.narrations ?? []).map((narration) => narration.asin));
@@ -530,6 +598,10 @@ const createRequestService = ({
 
       if (record.kind === 'film' || record.kind === 'book' || catalogue !== null) {
         await sync(record, catalogue ?? { episodes: [], albums: [] }, held);
+      }
+
+      if (choosesSeasons) {
+        await followChosenSeasons(base, (await requests.find(id)) ?? record);
       }
 
       onChange();

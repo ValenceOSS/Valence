@@ -223,6 +223,19 @@ describe('createAuth', () => {
     expect(profiles).toHaveLength(1);
   });
 
+  it('tells of an account changed through better-auth, such as a new name', async () => {
+    const { auth, changed, store } = createMemoryAuth();
+    const signedUp = await auth.handler(post('/api/auth/sign-up/email', credentials));
+    const cookie = signedUp.headers.getSetCookie()[0]?.split(';')[0] ?? '';
+
+    const response = await auth.handler(
+      post('/api/auth/update-user', { name: 'Renamed' }, { cookie, origin: BASE_URL }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(changed).toEqual([store.user[0]?.id]);
+  });
+
   it('produces a recovery link when someone forgets their password', async () => {
     const { auth, resetLinks } = createMemoryAuth();
     await auth.handler(post('/api/auth/sign-up/email', credentials));

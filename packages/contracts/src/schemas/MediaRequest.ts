@@ -129,6 +129,11 @@ const RequesterSchema = z.object({
   name: z.string(),
   profileId: z.string().uuid().nullable().optional(),
   profileName: z.string().nullable().optional(),
+  faceProfileId: z.string().uuid().nullable().optional(),
+});
+
+const AskerNamesSchema = z.object({
+  askers: z.array(RequesterSchema.pick({ id: true, name: true })),
 });
 
 const ProfileAskSchema = z.object({
@@ -498,10 +503,12 @@ type CatalogueSeason = z.infer<typeof CatalogueSeasonSchema>;
 type SeasonStanding = (typeof SEASON_STANDINGS)[number];
 
 type Requester = z.infer<typeof RequesterSchema>;
+type AskerNames = z.infer<typeof AskerNamesSchema>;
 type ProfileAsk = z.infer<typeof ProfileAskSchema>;
 type ProfileAskDecision = z.infer<typeof ProfileAskDecisionSchema>;
 
 export type {
+  AskerNames,
   RequestOrigin,
   AlbumTrack,
   BookFormat,
@@ -553,6 +560,7 @@ export type {
 };
 
 export {
+  AskerNamesSchema,
   BOOK_FORMATS,
   BookFormatSchema,
   BookFormatsSchema,

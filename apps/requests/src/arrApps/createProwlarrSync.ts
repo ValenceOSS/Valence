@@ -6,6 +6,7 @@ import type { ArrCaller } from '@ValenceRequests/arrApps/createArrCaller';
 import { ProwlarrIndexerSchema } from '@ValenceRequests/arrApps/schemas/ProwlarrIndexerSchema';
 import type { ProwlarrIndexer } from '@ValenceRequests/arrApps/schemas/ProwlarrIndexerSchema';
 import type { IndexerRecord, IndexerStore } from '@ValenceRequests/indexers/IndexerRecord';
+import { createTurns } from '@ValenceRequests/timing/createTurns';
 
 type CreateProwlarrSyncOptions = {
   indexers: IndexerStore;
@@ -58,31 +59,7 @@ const createProwlarrSync = ({
   connect,
   now = () => new Date(),
 }: CreateProwlarrSyncOptions) => {
-  const running = new Map<string, Promise<void>>();
-
-  /**
-   * Does a piece of work on a Prowlarr once whatever is already being done on it has finished.
-   *
-   * @param appId - The Prowlarr.
-   * @param work - What to do.
-   * @returns What the work came to.
-   */
-  const inTurn = <T>(appId: string, work: () => Promise<T>): Promise<T> => {
-    const next = (running.get(appId) ?? Promise.resolve()).then(work, work);
-    const settled = next.then(
-      () => undefined,
-      () => undefined,
-    );
-
-    running.set(appId, settled);
-    void settled.then(() => {
-      if (running.get(appId) === settled) {
-        running.delete(appId);
-      }
-    });
-
-    return next;
-  };
+  const inTurn = createTurns();
 
   const sync = async (app: ArrAppRecord): Promise<ProwlarrImport> => {
     const listed = (await connect(app).read('/indexer', ProwlarrIndexersSchema)).filter(

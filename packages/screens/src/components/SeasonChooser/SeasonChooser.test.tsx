@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -26,6 +27,24 @@ const SERIES = { tmdbId: 95396, followsNew: true, onFollowsNew: vi.fn() };
  */
 const rowOf = (name: string) =>
   screen.getAllByRole('row').find((row) => row.textContent.includes(name)) ?? document.body;
+
+/**
+ * A chooser that keeps what it is told, as the dialogs that draw it do.
+ */
+const Kept = ({ from, following = true }: { from: number[] | null; following?: boolean }) => {
+  const [seasons, setSeasons] = useState(from);
+  const [followsNew, setFollowsNew] = useState(following);
+
+  return (
+    <SeasonChooser
+      tmdbId={95396}
+      seasons={seasons}
+      onChange={setSeasons}
+      followsNew={followsNew}
+      onFollowsNew={setFollowsNew}
+    />
+  );
+};
 
 describe('SeasonChooser', () => {
   it('lists a season a row, with its episodes and the year it began', async () => {
@@ -186,6 +205,47 @@ describe('SeasonChooser', () => {
 
     expect(screen.getByRole('switch', { name: 'Season 2' })).toBe(before);
     expect(before).toBeChecked();
+  });
+
+  it('stops getting new seasons once no regular season is taken, and gets them again once one is', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<Kept from={null} />);
+
+    const following = await screen.findByRole('switch', { name: 'Get new seasons as they come' });
+
+    await user.click(screen.getByRole('switch', { name: 'Every season' }));
+
+    expect(following).not.toBeChecked();
+
+    await user.click(screen.getByRole('switch', { name: 'Season 1' }));
+
+    expect(following).toBeChecked();
+  });
+
+  it('keeps new seasons as somebody set them by hand, whatever is taken after', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<Kept from={[1]} following={false} />);
+
+    const following = await screen.findByRole('switch', { name: 'Get new seasons as they come' });
+
+    await user.click(screen.getByRole('switch', { name: 'Season 1' }));
+    await user.click(screen.getByRole('switch', { name: 'Season 2' }));
+
+    expect(following).not.toBeChecked();
+  });
+
+  it('keeps getting new seasons while a regular season is still taken', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<Kept from={[1, 2]} />);
+
+    const following = await screen.findByRole('switch', { name: 'Get new seasons as they come' });
+
+    await user.click(screen.getByRole('switch', { name: 'Season 2' }));
+
+    expect(following).toBeChecked();
   });
 
   it('sets a display name so devtools can identify it', () => {

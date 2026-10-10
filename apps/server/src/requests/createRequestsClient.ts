@@ -81,6 +81,7 @@ import type {
   RequestLogEntry,
   NarrationDecision,
   ProfileAskDecision,
+  AskerNames,
   Requester,
 } from '@ValenceContracts/schemas/MediaRequest';
 import {
@@ -762,6 +763,13 @@ const createRequestsClient = ({
 
     joinRequest: (id: string, asker: Requester): Promise<RequestsAnswer<MediaRequest>> =>
       call(`${withRequest(id)}/askers`, readRequest, { method: 'POST', body: asker }),
+
+    renameAskers: (askers: AskerNames['askers']): Promise<RequestsAnswer<number>> =>
+      call(
+        '/api/askers/names',
+        (body) => z.object({ renamed: z.number().int().nonnegative() }).parse(body).renamed,
+        { method: 'POST', body: { askers } },
+      ),
 
     decideProfileAsk: (
       id: string,

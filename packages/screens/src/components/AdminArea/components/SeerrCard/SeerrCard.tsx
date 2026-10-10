@@ -149,6 +149,7 @@ const SeerrCard = ({ origin }: SeerrCardProps) => {
               >
                 <Choice
                   label={say('screens.adminArea.seerrCard.askAs')}
+                  isLabelHidden
                   options={choices}
                   value={link.accountId}
                   onSelect={(accountId) => {

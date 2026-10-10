@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { DataTable } from './DataTable';
@@ -408,5 +408,44 @@ describe('DataTable', () => {
     );
 
     expect(screen.getByRole('button', { name: 'shows open' })).toBeInTheDocument();
+  });
+
+  it('fades the edge a wide table scrolls towards, and the other once it is scrolled', () => {
+    render(<DataTable label="Libraries" columns={COLUMNS} rows={ROWS} />);
+
+    const scroller = screen.getByRole('table', { name: 'Libraries' }).parentElement;
+
+    if (scroller === null) {
+      throw new Error('The table should sit in what scrolls it');
+    }
+
+    Object.defineProperty(scroller, 'clientWidth', { value: 300 });
+    Object.defineProperty(scroller, 'scrollWidth', { value: 600 });
+
+    fireEvent.scroll(scroller);
+
+    expect(scroller).toHaveAttribute('data-more-after');
+    expect(scroller).not.toHaveAttribute('data-more-before');
+
+    scroller.scrollLeft = 300;
+    fireEvent.scroll(scroller);
+
+    expect(scroller).toHaveAttribute('data-more-before');
+    expect(scroller).not.toHaveAttribute('data-more-after');
+  });
+
+  it('fades nothing where the table fits', () => {
+    render(<DataTable label="Libraries" columns={COLUMNS} rows={ROWS} />);
+
+    const scroller = screen.getByRole('table', { name: 'Libraries' }).parentElement;
+
+    if (scroller === null) {
+      throw new Error('The table should sit in what scrolls it');
+    }
+
+    fireEvent.scroll(scroller);
+
+    expect(scroller).not.toHaveAttribute('data-more-before');
+    expect(scroller).not.toHaveAttribute('data-more-after');
   });
 });

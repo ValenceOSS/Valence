@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import {
+  AskerNamesSchema,
   DownloadStopSchema,
   MediaRequestFollowSchema,
   MediaRequestArrivalSchema,
@@ -70,8 +71,8 @@ const createRequestRoutes = ({ service, handOff, log, worker }: CreateRequestRou
     shown === null ? Response.json(NO_SUCH_REQUEST, { status: 404 }) : Response.json(shown);
 
   /**
-   * Stops downloads once whatever the worker is doing has finished, without waiting for it, so
-   * a long search never holds up whoever asked.
+   * Stops downloads once the worker has finished filing what it is filing, without waiting for it,
+   * so whoever asked is never held up.
    *
    * @param downloadIds - The downloads.
    */
@@ -102,6 +103,14 @@ const createRequestRoutes = ({ service, handOff, log, worker }: CreateRequestRou
   };
 
   routes.get('/requests', async (context) => context.json(await service.list()));
+
+  routes.post('/askers/names', async (context) => {
+    const named = await readBody(context.req.raw, AskerNamesSchema);
+
+    return named === null
+      ? context.json(refuse('error.requests.sayWhoIsCalledWhat'), 400)
+      : context.json({ renamed: await service.renameAskers(named.askers) });
+  });
 
   routes.post('/requests', async (context) => {
     const draft = await readBody(context.req.raw, MediaRequestDraftSchema);
