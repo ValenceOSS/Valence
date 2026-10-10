@@ -8,11 +8,13 @@ import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaReq
 /**
  * What a later ask at a quality profile does to the request already kept for the same title.
  *
- * Its only asker asking again at another profile changes it, as it always did. Somebody else asking
- * at the same profile or a lower one just joins: one person's ask never quietly downgrades another's.
- * Somebody asking at a higher one — higher in the operator's order — goes the way the library says:
- * the request moves up to it, stays where it is, keeps both versions where it is a film, or waits for
- * the operator to say which — as a film keeping both would where it is not one.
+ * Its only asker asking again at another profile changes it, as it always did, and so does the
+ * first person to ask for a title only followed until now; following a title changes nothing.
+ * Somebody else asking at the same profile or a lower one just joins: one person's ask never quietly
+ * downgrades another's. Somebody asking at a higher one — higher in the operator's order — goes the
+ * way the library says: the request moves up to it, stays where it is, keeps both versions where it
+ * is a film, or waits for the operator to say which — as a film keeping both would where it is not
+ * one.
  *
  * @param kept - The request kept.
  * @param draft - The later ask.
@@ -24,11 +26,18 @@ const profileChangeOf = (
   draft: z.infer<typeof MediaRequestDraftSchema>,
   profiles: readonly QualityProfile[],
 ): Partial<MediaRequestRecord> => {
-  if (draft.profileId === null || draft.profileId === kept.profileId) {
+  if (
+    draft.profileId === null ||
+    draft.profileId === kept.profileId ||
+    draft.origin === 'monitored'
+  ) {
     return {};
   }
 
-  if (kept.requestedById === draft.requestedBy.id && kept.alsoAskedBy.length === 0) {
+  if (
+    kept.origin === 'monitored' ||
+    (kept.requestedById === draft.requestedBy.id && kept.alsoAskedBy.length === 0)
+  ) {
     return { profileId: draft.profileId, profileAsk: null };
   }
 

@@ -38,6 +38,7 @@ import type {
   ReleaseType,
   ProfileAskDecision,
   Requester,
+  RequestOrigin,
   SearchScope,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type {
@@ -121,6 +122,36 @@ const joinedBy = (kept: MediaRequestRecord, asker: Requester): Partial<MediaRequ
   kept.requestedById === asker.id || kept.alsoAskedBy.some((one) => one.id === asker.id)
     ? {}
     : { alsoAskedBy: [...kept.alsoAskedBy, asker] };
+
+/**
+ * Somebody asking for a title, as it changes the request kept for it. Following a title nobody
+ * asked for changes nothing of who asked; somebody asking for a title only followed until now
+ * becomes the one who asked for it, as though they were the first; and anybody else asking joins
+ * those who asked.
+ *
+ * @param kept - The request kept.
+ * @param asker - Who is asking.
+ * @param origin - Whether they asked for it or only follow it.
+ * @returns The change to the request, if any.
+ */
+const askedBy = (
+  kept: MediaRequestRecord,
+  asker: Requester,
+  origin: RequestOrigin,
+): Partial<MediaRequestRecord> => {
+  if (origin === 'monitored') {
+    return {};
+  }
+
+  return kept.origin === 'monitored'
+    ? {
+        origin: 'asked',
+        requestedById: asker.id,
+        requestedByName: asker.name,
+        alsoAskedBy: [],
+      }
+    : joinedBy(kept, asker);
+};
 
 /**
  * What a series request learns from what the library already holds of it: where the library keeps
@@ -302,10 +333,14 @@ const createRequestService = ({
           kept.requestedById === draft.requestedBy.id
             ? { approval: 'approved', refusedBecause: null }
             : {}),
-          ...joinedBy(kept, {
-            ...draft.requestedBy,
-            ...(askedAt === null ? {} : { profileId: askedAt.id, profileName: askedAt.name }),
-          }),
+          ...askedBy(
+            kept,
+            {
+              ...draft.requestedBy,
+              ...(askedAt === null ? {} : { profileId: askedAt.id, profileName: askedAt.name }),
+            },
+            draft.origin,
+          ),
           ...keptBy(kept.kind, draft.held),
           catalogueCheckedAt: at,
           updatedAt: at,
@@ -334,7 +369,7 @@ const createRequestService = ({
       }
 
       const record = await requests.update(id, {
-        ...joinedBy(kept, asker),
+        ...askedBy(kept, asker, 'asked'),
         updatedAt: now().toISOString(),
       });
 

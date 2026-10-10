@@ -1,0 +1,1 @@
+ALTER TABLE `requests_media_request` ADD `origin` varchar(16) DEFAULT 'asked' NOT NULL;

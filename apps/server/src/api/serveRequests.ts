@@ -264,6 +264,10 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.requests.pickingAReleaseIsForWhoever'), 403);
     }
 
+    if (asked.origin === 'monitored' && !(await requires(headers, 'requests.manage'))) {
+      return context.json(refuse('error.requests.followingIsForWhoever'), 403);
+    }
+
     const profile = await profileForAsk(headers, asked);
 
     if (profile.kind === 'refused') {

@@ -152,7 +152,12 @@ describe('TitlePage', () => {
     await userEvent.setup().click(await screen.findByRole('button', { name: 'Follow' }));
 
     await waitFor(() => {
-      expect(askForMedia).toHaveBeenCalledWith({ kind: 'film', tmdbId: 27 });
+      expect(askForMedia).toHaveBeenCalledWith({
+        kind: 'film',
+        tmdbId: 27,
+        origin: 'monitored',
+        libraryId: 'films',
+      });
     });
   });
 

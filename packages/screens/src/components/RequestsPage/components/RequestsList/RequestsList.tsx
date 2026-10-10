@@ -1,4 +1,5 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
+import { isAskedFor } from '@ValenceContracts/functions/isAskedFor';
 import { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import { groupVariants } from '@ValenceUI/animations/reveal';
@@ -64,7 +65,7 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
   const libraries = useQuery(libraryQueries.all());
   const [filters, setFilters] = useState<ReadonlySet<string>>(new Set());
   const [search, setSearch] = useState('');
-  const everything = useMemo(() => requests.data ?? [], [requests.data]);
+  const everything = useMemo(() => (requests.data ?? []).filter(isAskedFor), [requests.data]);
   const named = useMemo(
     () => new Map((libraries.data ?? []).map((library) => [library.id, library.name])),
     [libraries.data],

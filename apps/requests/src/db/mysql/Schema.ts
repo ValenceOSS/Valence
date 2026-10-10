@@ -45,6 +45,7 @@ import {
   BOOK_FORMATS,
   MEDIA_REQUEST_KINDS,
   REQUEST_APPROVALS,
+  REQUEST_ORIGINS,
   REQUEST_ITEM_STATES,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type {
@@ -306,6 +307,7 @@ const mediaRequest = requestsSchema(
       .$type<Requester[]>()
       .notNull()
       .default(jsonDefault([])),
+    origin: varchar('origin', { length: 16, enum: REQUEST_ORIGINS }).notNull().default('asked'),
     profileAsk: jsonColumn('profile_ask').$type<ProfileAsk>(),
     seasons: jsonColumn('seasons').$type<number[]>(),
     followsNewSeasons: boolean('follows_new_seasons').notNull().default(false),

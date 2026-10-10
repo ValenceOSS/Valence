@@ -89,6 +89,7 @@ const aRequest = (overrides: Partial<MediaRequest>): MediaRequest => ({
   refusedBecause: null,
   requestedBy: { id: 'someone', name: 'Sam' },
   alsoAskedBy: [],
+  origin: 'asked',
   profileAsk: null,
   seasons: null,
   followsNewSeasons: false,

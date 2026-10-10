@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { isAskedFor } from '@ValenceContracts/functions/isAskedFor';
 import { ActivityIndicator } from 'react-native';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
@@ -18,7 +19,7 @@ const Asked = ({ onAsk }: AskedProps) => {
   const requests = useQuery(requestsQueries.mediaRequests());
   const who = useQuery(sessionQueries.who());
   const colours = useTheColours();
-  const mine = requests.data ?? [];
+  const mine = (requests.data ?? []).filter(isAskedFor);
   const progress = useQuery(
     requestsQueries.requestProgress(mine.some((request) => request.state === 'downloading')),
   );

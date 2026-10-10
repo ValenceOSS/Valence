@@ -11,7 +11,8 @@ import type { z } from 'zod';
  * may be, with the facts the catalogue gave, and with the connected app it is handed to where its
  * library hands requests off. Only a series keeps the seasons asked for, whether it follows new ones
  * and the last season there was to tell them by, and the folders the library already keeps it in;
- * and only an artist the kinds of release, albums alone where none were named.
+ * and only an artist the kinds of release, albums alone where none were named. A film or a series
+ * the library already holds keeps the item it is there as.
  *
  * @param draft - What was asked, read.
  * @param id - Its id.
@@ -41,6 +42,7 @@ const recordFromDraft = (
   requestedById: draft.requestedBy.id,
   requestedByName: draft.requestedBy.name,
   alsoAskedBy: [],
+  origin: draft.origin,
   profileAsk: null,
   seasons:
     draft.kind === 'series'
@@ -61,7 +63,7 @@ const recordFromDraft = (
           ? (draft.catalogue.narrations ?? []).map((narration) => narration.asin)
           : null)),
   versions: null,
-  mediaId: draft.kind === 'series' ? (draft.held?.mediaId ?? null) : null,
+  mediaId: draft.kind === 'series' || draft.kind === 'film' ? (draft.held?.mediaId ?? null) : null,
   problem: null,
   problemCode: null,
   catalogueCheckedAt: at,

@@ -2,14 +2,14 @@ import type { MediaRequest, Requester } from '@ValenceContracts/schemas/MediaReq
 
 /**
  * Everybody who has asked for something, the first asker first and the rest in the order they
- * joined.
+ * joined; nobody for a title only followed, which nobody asked for.
  *
  * @param request - The request.
  * @returns Who asked.
  */
-const askersOf = (request: Pick<MediaRequest, 'requestedBy' | 'alsoAskedBy'>): Requester[] => [
-  request.requestedBy,
-  ...request.alsoAskedBy,
-];
+const askersOf = (
+  request: Pick<MediaRequest, 'requestedBy' | 'alsoAskedBy' | 'origin'>,
+): Requester[] =>
+  request.origin === 'monitored' ? [] : [request.requestedBy, ...request.alsoAskedBy];
 
 export { askersOf };

@@ -1429,6 +1429,63 @@ describe('requests for films and series, through the server', () => {
     });
   });
 
+  it('follows a title nobody asked for, approved and without saying anybody asked', async () => {
+    const published = vi.fn<(occurrence: WebhookOccurrence) => Promise<void>>(() =>
+      Promise.resolve(),
+    );
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.ask', 'requests.manage'],
+      service: (url: string, init: { method?: string; body?: string }) => {
+        const answer = aWillingKeeper(url, init);
+
+        return url.endsWith('/api/requests') && init.method === 'POST'
+          ? Response.json(
+              { request: { ...REQUEST, origin: 'monitored' }, isNew: true },
+              { status: 201 },
+            )
+          : answer;
+      },
+      events: { publish: published },
+      describeForRequest: () => Promise.resolve(DUNE),
+    });
+
+    sent.length = 0;
+
+    const made = await ask('/api/requests/media', 'POST', {
+      kind: 'film',
+      tmdbId: 438631,
+      origin: 'monitored',
+    });
+
+    expect(made.status).toBe(201);
+    expect(JSON.parse(bodySentTo('/api/requests'))).toMatchObject({
+      origin: 'monitored',
+      isApproved: true,
+    });
+    expect(published).not.toHaveBeenCalled();
+  });
+
+  it('lets only whoever manages requests follow a title nobody asked for', async () => {
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.ask', 'requests.autoApprove'],
+      service: aWillingKeeper,
+      describeForRequest: () => Promise.resolve(DUNE),
+    });
+
+    sent.length = 0;
+
+    const refused = await ask('/api/requests/media', 'POST', {
+      kind: 'film',
+      tmdbId: 438631,
+      origin: 'monitored',
+    });
+
+    expect(refused.status).toBe(403);
+    expect(sent.some(({ url }) => url.endsWith('/api/requests'))).toBe(false);
+  });
+
   it('hands a film to the connected app its library names, and keeps a book Valence’s own', async () => {
     const fulfilment = {
       appId: '3f0e8a52-7b1c-4d2e-9f3a-5b6c7d8e9f01',

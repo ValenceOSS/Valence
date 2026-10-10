@@ -1352,6 +1352,21 @@ const createAppContext = (options: CreateAppOptions) => {
     );
 
   /**
+   * The film a library already holds, as the requests service is told it, so it is not fetched
+   * again; nothing where no library holds it.
+   *
+   * @param tmdbId - The film.
+   * @returns What is held of it.
+   */
+  const heldFilmOf = async (tmdbId: number): Promise<HeldInLibrary | null> => {
+    const mediaId = (await discovery.lookup.films([tmdbId.toString()])).get(tmdbId.toString());
+
+    return mediaId === undefined
+      ? null
+      : { mediaId, episodes: [], folder: null, seasonFolders: [] };
+  };
+
+  /**
    * Which narration of a book's audiobook a new request fetches without asking: the only one, or
    * the one whoever reads its series in the library reads; nothing where somebody should choose.
    *
@@ -1422,18 +1437,21 @@ const createAppContext = (options: CreateAppOptions) => {
         libraryLanguage: chosen.defaultAudioLanguage,
         requestedBy: { id: account.id, name: account.name },
         higherProfileAsks: chosen.higherProfileAsks,
-        isApproved: await asker.holds('requests.autoApprove'),
+        isApproved: asked.origin === 'monitored' || (await asker.holds('requests.autoApprove')),
         catalogue,
         handOff: arrKindOf(chosen.kind) === null ? null : (chosen.fulfilment ?? null),
         ...(asked.kind === 'book' && (catalogue.narrations ?? []).length > 0
           ? { narrationsWanted: await narrationsWantedOf(catalogue.narrations ?? []) }
           : {}),
+        origin: asked.origin,
         held:
           asked.kind === 'series' && asked.tmdbId !== undefined
             ? await heldFor(chosen, asked.tmdbId)
-            : isMusicRequest(asked.kind)
-              ? await heldAlbumsOf(discovery.lookup, catalogue.albums)
-              : null,
+            : asked.kind === 'film' && asked.tmdbId !== undefined
+              ? await heldFilmOf(asked.tmdbId)
+              : isMusicRequest(asked.kind)
+                ? await heldAlbumsOf(discovery.lookup, catalogue.albums)
+                : null,
       },
     };
   };
@@ -1489,13 +1507,18 @@ const createAppContext = (options: CreateAppOptions) => {
           }));
 
   /**
-   * Says that something was asked for, and that it was approved where asking was enough.
+   * Says that something was asked for, and that it was approved where asking was enough; nothing of
+   * a title only followed, which nobody asked for.
    *
    * @param request - What the requests service made of the ask.
    * @param isNew - Whether this ask made it, rather than finding it already asked for.
    * @param isApproved - Whether the asker's ask approves it.
    */
   const sayOfAsk = (request: MediaRequest, isNew: boolean, isApproved: boolean): void => {
+    if (request.origin === 'monitored') {
+      return;
+    }
+
     if (isNew) {
       sayOfRequest({
         event: 'requests.made',

@@ -13,7 +13,14 @@ describe('MediaRequestAskSchema', () => {
       seasons: null,
       followsNewSeasons: true,
       isPickedByHand: false,
+      origin: 'asked',
     });
+  });
+
+  it('follows a title rather than asking for it where told to', () => {
+    expect(
+      MediaRequestAskSchema.parse({ kind: 'film', tmdbId: 1, origin: 'monitored' }).origin,
+    ).toBe('monitored');
   });
 
   it('refuses something that is not a film, a series, an artist or an album', () => {

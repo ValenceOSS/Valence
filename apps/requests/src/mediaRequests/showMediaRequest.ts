@@ -41,6 +41,7 @@ const showMediaRequest = (
   refusedBecause: record.refusedBecause,
   requestedBy: { id: record.requestedById, name: record.requestedByName },
   alsoAskedBy: record.alsoAskedBy,
+  origin: record.origin,
   profileAsk: record.profileAsk,
   isHandedOff: record.handOff !== null,
   seasons: record.seasons,

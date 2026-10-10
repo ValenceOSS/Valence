@@ -51,6 +51,20 @@ describe('syncItems', () => {
     ]);
   });
 
+  it('counts a film the library already holds as there, but still waits for its other versions', () => {
+    const uhd = '3fa85f64-5717-4562-b3fc-2c963f66afa6';
+    const synced = syncItems(
+      { ...aMediaRequest(), mediaId: 'dune-in-the-library', versions: [uhd] },
+      NOTHING,
+      [],
+    );
+
+    expect(synced.add.map((item) => [item.versionProfileId, item.state])).toEqual([
+      [null, 'available'],
+      [uhd, 'waiting'],
+    ]);
+  });
+
   it('waits for each further version of a film kept at its own profile', () => {
     const uhd = '3fa85f64-5717-4562-b3fc-2c963f66afa6';
     const synced = syncItems({ ...aMediaRequest(), versions: [uhd] }, NOTHING, [aRequestItem()]);
