@@ -4,7 +4,7 @@ import type { IconGesture } from '@ValenceUI/AnimatedIcon.types';
 
 type NavBarChoices = {
   label: string;
-  options: readonly { id: string; label: string }[];
+  options: readonly { id: string; label: string; group?: string | null }[];
   selectedId: string;
   onSelect: (id: string) => void;
 };

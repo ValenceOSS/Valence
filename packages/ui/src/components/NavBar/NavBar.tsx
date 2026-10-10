@@ -293,17 +293,20 @@ const NavBar = ({
                   </Button>
                 );
 
+                const { choices } = item;
                 const groups =
-                  item.choices === undefined
+                  choices === undefined
                     ? []
                     : [
-                        {
-                          name: item.choices.label,
-                          options: [...item.choices.options],
-                          selectedId: item.choices.selectedId,
-                          onSelect: item.choices.onSelect,
-                        },
-                      ];
+                        ...new Set(choices.options.map((option) => option.group ?? choices.label)),
+                      ].map((name) => ({
+                        name,
+                        options: choices.options
+                          .filter((option) => (option.group ?? choices.label) === name)
+                          .map((option) => ({ id: option.id, label: option.label })),
+                        selectedId: choices.selectedId,
+                        onSelect: choices.onSelect,
+                      }));
 
                 return (
                   <li key={item.id} className="flex shrink-0 items-center">

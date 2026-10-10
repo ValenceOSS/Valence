@@ -36,7 +36,7 @@ const PLACES = [
  * Works out, for films, programmes and books, the choice between the libraries that hold them —
  * offered only where there is more than one library to choose between. Where some of them come from
  * linked servers, the choice also says where: everything, only this server's own, or only one linked
- * server's; and each linked library is named with the server it comes from, after this server's own.
+ * server's; and the libraries are headed by the server they come from, this server's own first.
  *
  * @param libraries - Every library there is.
  * @param servers - The servers this one is linked with.
@@ -59,7 +59,11 @@ const libraryChoicesFor = (
         return [];
       }
 
-      const options = libraryOptionsFor(held, servers, EVERY, everyLabel);
+      const options = libraryOptionsFor(held, servers, EVERY, everyLabel).map((option) => ({
+        id: option.id,
+        label: option.shortLabel,
+        group: option.group,
+      }));
 
       return [
         [
