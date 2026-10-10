@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { RefreshCw as RefreshCwFilledIcon } from '@keyline-icons/react/fill';
 import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
+import { useSyncLinkedServer } from '@ValenceScreens/admin/useSyncLinkedServer';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { chooseTheirLibrary } from '@ValenceClient/admin/chooseTheirLibrary';
 import { syncLinkedServer } from '@ValenceClient/admin/syncLinkedServer';
@@ -30,33 +31,9 @@ import { say } from '@ValenceI18n/say';
 const TheirLibrariesCard = ({ server }: TheirLibrariesCardProps) => {
   const cache = useQueryClient();
   const asked = useQuery(adminQueries.theirLibraries(server.id));
-  const [isReading, setIsReading] = useState(false);
+  const { syncing, sync } = useSyncLinkedServer();
   const [choosing, setChoosing] = useState<string | null>(null);
 
-  const readAgain = () => {
-    setIsReading(true);
-
-    void syncLinkedServer(server.id)
-      .then(async (sent) => {
-        const isRead = tellOutcome(
-          say('screens.adminArea.linkedServersPanel.readCountTitlesFromName', {
-            count: String(sent.value?.kept ?? 0),
-            name: server.name,
-          }),
-          failureOfRefusal(sent.refusal),
-        );
-
-        if (isRead) {
-          await Promise.all([
-            cache.invalidateQueries({ queryKey: adminQueries.theirLibraries(server.id).queryKey }),
-            cache.invalidateQueries({ queryKey: libraryQueries.all().queryKey }),
-          ]);
-        }
-      })
-      .finally(() => {
-        setIsReading(false);
-      });
-  };
   const choose = (library: TheirLibrary) => {
     const isTaken = !library.isTaken;
 
@@ -95,7 +72,13 @@ const TheirLibrariesCard = ({ server }: TheirLibrariesCardProps) => {
       title={title}
       isFlush
       actions={
-        <PanelCardAction icon={RefreshCwFilledIcon} isLoading={isReading} onClick={readAgain}>
+        <PanelCardAction
+          icon={RefreshCwFilledIcon}
+          isLoading={syncing === server.id}
+          onClick={() => {
+            void sync(server.id, server.name);
+          }}
+        >
           {say('screens.adminArea.linkedServersPanel.readAgainNow')}
         </PanelCardAction>
       }

@@ -28,6 +28,7 @@ import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
 import { isEveryLibraryHandedOff } from '@ValenceClient/requests/isEveryLibraryHandedOff';
 import { removeProfile, reorderProfiles } from '@ValenceClient/requests/fetchProfiles';
+import { TableSection } from '@ValenceScreens/components/AdminArea/components/TableSection/TableSection';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { ProfileEditor } from '@ValenceScreens/components/AdminArea/components/ProfileEditor/ProfileEditor';
 import { describeAskers } from './describeAskers';
@@ -433,11 +434,7 @@ const ProfilesPanel = () => {
                       group.id !== 'all' &&
                       profiles.data.some((profile) => profile.kind === group.id),
                   ).map((group) => (
-                    <section key={group.id} className="flex flex-col gap-2">
-                      <h3 className="px-4 pt-3 text-[0.6875rem] font-medium uppercase tracking-[0.08em] text-text-muted">
-                        {group.label}
-                      </h3>
-
+                    <TableSection key={group.id} title={group.label}>
                       <DataTable
                         height="compact"
                         label={group.label}
@@ -448,7 +445,7 @@ const ProfilesPanel = () => {
                           void putInOrder(ids);
                         }}
                       />
-                    </section>
+                    </TableSection>
                   ))}
                 </div>
               ) : (
