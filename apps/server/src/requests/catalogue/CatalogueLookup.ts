@@ -8,6 +8,7 @@ type NamedBook = { key: string; title: string };
 
 type CatalogueLookup = {
   films: (tmdbIds: readonly string[]) => Promise<ReadonlyMap<string, string>>;
+  filmIn: (libraryId: string, tmdbId: string) => Promise<string | null>;
   series: (tmdbIds: readonly string[]) => Promise<ReadonlyMap<string, string>>;
   episodesHeld: (tmdbId: string) => Promise<ReadonlyMap<number, number>>;
   seriesFiles: (tmdbId: string) => Promise<readonly SeriesFile[]>;

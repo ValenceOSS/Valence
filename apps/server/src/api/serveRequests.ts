@@ -264,6 +264,10 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.requests.pickingAReleaseIsForWhoever'), 403);
     }
 
+    if (asked.origin === 'monitored' && !(await requires(headers, 'requests.manage'))) {
+      return context.json(refuse('error.requests.followingIsForWhoever'), 403);
+    }
+
     const profile = await profileForAsk(headers, asked);
 
     if (profile.kind === 'refused') {
@@ -827,7 +831,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
           };
         }
 
-        if (found.value.alsoAskedBy.length === 0) {
+        if (found.value.alsoAskedBy.length === 0 && !found.value.isFollowed) {
           return (await letGoInItsApp(client, id)) ?? client.removeRequest(id, true);
         }
 

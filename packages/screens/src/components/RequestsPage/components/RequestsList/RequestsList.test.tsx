@@ -59,6 +59,18 @@ describe('RequestsList', () => {
     expect(screen.getByText('Arrival (2021)')).toBeInTheDocument();
   });
 
+  it('leaves out a title only followed, which nobody asked for', async () => {
+    fetchMediaRequests.mockResolvedValue([
+      MINE,
+      aMediaRequest({ id: 'followed', title: 'Followed Only', origin: 'monitored' }),
+    ]);
+
+    renderInAnAddress(<RequestsList onAsk={vi.fn()} onOpen={vi.fn()} />);
+
+    expect(await screen.findByText('Dune (2021)')).toBeInTheDocument();
+    expect(screen.queryByText('Followed Only (2021)')).not.toBeInTheDocument();
+  });
+
   it('says who asked, which library it is for, and the quality it is judged at', async () => {
     fetchMediaRequests.mockResolvedValue([{ ...THEIRS, libraryId: 'films', profileName: '4K' }]);
 

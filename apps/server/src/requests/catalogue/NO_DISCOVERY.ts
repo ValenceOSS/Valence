@@ -29,6 +29,7 @@ const NO_DISCOVERY: Discovery = {
     albumsNamed: NOTHING_FOUND,
     booksNamed: NOTHING_FOUND,
     elsewhere: () => Promise.resolve(new Map()),
+    filmIn: () => Promise.resolve(null),
   },
 };
 

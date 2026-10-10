@@ -2431,6 +2431,16 @@
     "context": "A notice after a playlist's missing songs were requested, on the web and the phone. {count} is how many albums were requested."
   },
   {
+    "handler": "common.count.artists.one",
+    "text": "{count} artist",
+    "context": "A count of music artists."
+  },
+  {
+    "handler": "common.count.artists.other",
+    "text": "{count} artists",
+    "context": "A count of music artists."
+  },
+  {
     "handler": "common.count.books.one",
     "text": "{count} book",
     "context": "How many books there are, such as in a book library. {count} is the number."
@@ -2689,6 +2699,16 @@
     "handler": "common.count.selected.other",
     "text": "{count} selected",
     "context": "How many rows of an admin table are ticked, beside what can be done to them all. {count} is the number."
+  },
+  {
+    "handler": "common.count.shows.one",
+    "text": "{count} show",
+    "context": "A count of TV shows."
+  },
+  {
+    "handler": "common.count.shows.other",
+    "text": "{count} shows",
+    "context": "A count of TV shows."
   },
   {
     "handler": "common.count.songs.one",
@@ -8840,6 +8860,11 @@
     "context": "An error the server answers with (HTTP 400) when somebody asks for something and picks a release by hand, and the request was made but the release could not be sent to download. {problem} is why."
   },
   {
+    "handler": "error.requests.followingIsForWhoever",
+    "text": "Only request managers can follow titles nobody requested.",
+    "context": "An error the server answers with (HTTP 403) in the app on the server, when somebody without request management tries to follow a title (from `serveRequests`)."
+  },
+  {
     "handler": "error.requests.itIsInTheLibraryAlready",
     "text": "It’s already in the library, so there’s nothing to cancel.",
     "context": "An error the server answers with (HTTP 400) in the app on the server (from `serveRequests`)."
@@ -12888,6 +12913,91 @@
     "handler": "screens.adminArea.cataloguePanel.findAShow",
     "text": "Find a show",
     "context": "The placeholder of the search field in the admin Catalogue’s Shows tab."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAll",
+    "text": "Follow all",
+    "context": "Button on Admin › Requests › Catalogue that opens a dialog to follow every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.albumsStillToFind",
+    "text": "Albums still to find",
+    "context": "Label for how many albums of followed artists are not in the library yet. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.couldNotBeFollowed",
+    "text": "Couldn’t be followed",
+    "context": "Label for how many titles failed to be followed. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.countElsewhere.one",
+    "text": "{count} more title is in a library that doesn’t take requests, so it’s left as it is.",
+    "context": "In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.countElsewhere.other",
+    "text": "{count} more titles are in libraries that don’t take requests, so they’re left as they are.",
+    "context": "In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.episodesStillToFind",
+    "text": "Episodes still to find",
+    "context": "Label for how many episodes of followed shows are not in the library yet. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.filmsStillToFind",
+    "text": "Films still to find",
+    "context": "Label for how many followed films are not in the library yet. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.followCountTitles.one",
+    "text": "Follow {count} title",
+    "context": "Confirm button. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.followCountTitles.other",
+    "text": "Follow {count} titles",
+    "context": "Confirm button. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.followedCountTitles.one",
+    "text": "Followed {count} title",
+    "context": "Title of the dialog once it has finished. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.followedCountTitles.other",
+    "text": "Followed {count} titles",
+    "context": "Title of the dialog once it has finished. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.followedDoneOfCount",
+    "text": "Followed {done} of {count}",
+    "context": "Progress while the titles are being followed. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.followEveryTitle",
+    "text": "Follow every title",
+    "context": "Title of the follow-all dialog. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.nobodyIsNotified",
+    "text": "Nobody is notified, and none of it shows on the Requests page.",
+    "context": "Explains that following is quiet. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.nothingToFollow",
+    "text": "Every title in the libraries is already followed.",
+    "context": "Shown when there is nothing left to follow. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.searchedForOnTheSchedule",
+    "text": "Anything still to find is searched for on the next scheduled search. Search all missing searches now.",
+    "context": "Shown once following has finished. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.whatIsFetched",
+    "text": "New episodes, seasons and albums are downloaded as they come out, and anything missing now is searched for.",
+    "context": "Explains what following every title does. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
   },
   {
     "handler": "screens.adminArea.cataloguePanel.kindsOfLibrary",
@@ -24614,11 +24724,6 @@
     "handler": "screens.requestsPage.nothingInTheCataloguesMatches",
     "text": "Nothing in the catalogues matches “{query}”.",
     "context": "Shown on Discover when its search finds nothing to request. {query} is what was searched for."
-  },
-  {
-    "handler": "screens.requestsPage.onItsWayShelf.askedByName",
-    "text": "Asked by {name}",
-    "context": "The small label in the corner of a card on Discover's Requested shelf, beside the face of whoever requested it. {name} is their name."
   },
   {
     "handler": "screens.requestsPage.onItsWayShelf.statusPercent",

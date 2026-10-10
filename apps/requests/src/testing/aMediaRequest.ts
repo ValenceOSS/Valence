@@ -30,6 +30,8 @@ const aMediaRequest = (overrides: Partial<MediaRequestRecord> = {}): MediaReques
   requestedById: 'someone',
   requestedByName: 'Someone',
   alsoAskedBy: [],
+  origin: 'asked',
+  isFollowed: false,
   profileAsk: null,
   seasons: null,
   followsNewSeasons: false,

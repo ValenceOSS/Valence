@@ -520,7 +520,7 @@ describe('createRequestService', () => {
     ]);
   });
 
-  it('keeps nothing of a library holding for a film', async () => {
+  it('keeps only the item a film is there as from a library holding, not its folder', async () => {
     const { service, requests } = aService();
     const { request } = await service.add({
       ...DUNE,
@@ -530,7 +530,7 @@ describe('createRequestService', () => {
     expect(await requests.find(request.id)).toMatchObject({
       libraryFolder: null,
       seasonFolders: [],
-      mediaId: null,
+      mediaId: 'film',
     });
   });
 
@@ -871,5 +871,137 @@ describe('createRequestService', () => {
     expect(await service.remove(request.id)).toBe(true);
     expect(await items.list()).toEqual([]);
     expect(await service.find(request.id)).toBeNull();
+  });
+});
+
+describe('following a title nobody asked for', () => {
+  it('keeps it as followed, approved and with nobody among those who asked', async () => {
+    const { service } = aService();
+
+    const { request } = await service.add({
+      ...SEVERANCE,
+      requestedBy: { id: 'operator', name: 'Operator' },
+      origin: 'monitored',
+    });
+
+    expect(request).toMatchObject({ origin: 'monitored', approval: 'approved', alsoAskedBy: [] });
+  });
+
+  it('makes the first person to ask for it the one who asked, approved as it was', async () => {
+    const { service } = aService();
+
+    await service.add({
+      ...SEVERANCE,
+      requestedBy: { id: 'operator', name: 'Operator' },
+      origin: 'monitored',
+    });
+
+    const { request } = await service.add({ ...SEVERANCE, isApproved: false, seasons: [2] });
+
+    expect(request).toMatchObject({
+      origin: 'asked',
+      approval: 'approved',
+      requestedBy: { id: 'someone', name: 'Someone' },
+      alsoAskedBy: [],
+      seasons: [1, 2],
+    });
+  });
+
+  it('makes somebody joining it the one who asked, too', async () => {
+    const { service } = aService();
+    const { request } = await service.add({
+      ...DUNE,
+      isApproved: true,
+      requestedBy: { id: 'operator', name: 'Operator' },
+      origin: 'monitored',
+    });
+
+    expect(await service.join(request.id, { id: 'another', name: 'Another' })).toMatchObject({
+      origin: 'asked',
+      requestedBy: { id: 'another', name: 'Another' },
+      alsoAskedBy: [],
+    });
+  });
+
+  it('changes nothing of who asked for a title somebody already asked for', async () => {
+    const { service } = aService();
+
+    await service.add(DUNE);
+
+    const { request } = await service.add({
+      ...DUNE,
+      isApproved: true,
+      requestedBy: { id: 'operator', name: 'Operator' },
+      origin: 'monitored',
+    });
+
+    expect(request).toMatchObject({
+      origin: 'asked',
+      approval: 'awaiting',
+      requestedBy: { id: 'someone', name: 'Someone' },
+      alsoAskedBy: [],
+    });
+  });
+
+  it('counts a film the library already holds as there, so nothing searches for it', async () => {
+    const { service, requests } = aService();
+
+    const { request } = await service.add({
+      ...DUNE,
+      isApproved: true,
+      origin: 'monitored',
+      held: { mediaId: 'dune-in-the-library' },
+    });
+
+    expect(request.items).toMatchObject([{ state: 'available' }]);
+    expect((await requests.find(request.id))?.mediaId).toBe('dune-in-the-library');
+  });
+
+  it('stays followed when the only person who asked for it leaves', async () => {
+    const { service } = aService();
+
+    await service.add({
+      ...SEVERANCE,
+      requestedBy: { id: 'operator', name: 'Operator' },
+      origin: 'monitored',
+    });
+
+    const { request } = await service.add(SEVERANCE);
+
+    expect(request).toMatchObject({ origin: 'asked', isFollowed: true });
+    expect(await service.leave(request.id, 'someone')).toMatchObject({
+      origin: 'monitored',
+      isFollowed: true,
+    });
+    expect(await service.list()).toHaveLength(1);
+  });
+
+  it('keeps a title somebody asked for followed once it is followed too', async () => {
+    const { service } = aService();
+
+    await service.add({ ...SEVERANCE, isApproved: true });
+
+    const { request } = await service.add({
+      ...SEVERANCE,
+      requestedBy: { id: 'operator', name: 'Operator' },
+      origin: 'monitored',
+    });
+
+    expect(request).toMatchObject({ origin: 'asked', isFollowed: true });
+    expect(await service.leave(request.id, 'someone')).toMatchObject({ origin: 'monitored' });
+  });
+
+  it('lets nobody leave a title only followed, or the last asker leave one nobody follows', async () => {
+    const { service } = aService();
+    const followed = await service.add({
+      ...DUNE,
+      isApproved: true,
+      requestedBy: { id: 'operator', name: 'Operator' },
+      origin: 'monitored',
+    });
+    const asked = await service.add({ ...SEVERANCE, isApproved: true });
+
+    expect(await service.leave(followed.request.id, 'operator')).toBeNull();
+    expect(await service.leave(asked.request.id, 'someone')).toBeNull();
   });
 });

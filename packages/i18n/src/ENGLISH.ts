@@ -619,6 +619,8 @@ const ENGLISH = {
   'common.count.albumsCouldNotBeRequested.other': '{count} albums couldn’t be requested',
   'common.count.albumsRequested.one': '{count} album requested',
   'common.count.albumsRequested.other': '{count} albums requested',
+  'common.count.artists.one': '{count} artist',
+  'common.count.artists.other': '{count} artists',
   'common.count.books.one': '{count} book',
   'common.count.books.other': '{count} books',
   'common.count.chapters.one': '{count} chapter',
@@ -671,6 +673,8 @@ const ENGLISH = {
   'common.count.seconds.other': '{count} seconds',
   'common.count.selected.one': '{count} selected',
   'common.count.selected.other': '{count} selected',
+  'common.count.shows.one': '{count} show',
+  'common.count.shows.other': '{count} shows',
   'common.count.songs.one': '{count} song',
   'common.count.songs.other': '{count} songs',
   'common.count.songsNotInYourLibrary.one': '{count} song not in your library',
@@ -2067,6 +2071,8 @@ const ENGLISH = {
   'error.reencode.noSuchRendition': 'No such rendition.',
   'error.requests.askedButNotFetched':
     'The request was made, but that release couldn’t be downloaded: {problem}',
+  'error.requests.followingIsForWhoever':
+    'Only request managers can follow titles nobody requested.',
   'error.requests.itIsInTheLibraryAlready':
     'It’s already in the library, so there’s nothing to cancel.',
   'error.requests.itIsNotApprovedSoNothingIsSearched':
@@ -3176,6 +3182,33 @@ const ENGLISH = {
   'screens.adminArea.cataloguePanel.findAFilm': 'Find a film',
   'screens.adminArea.cataloguePanel.findAnArtistOrAlbum': 'Find an artist or album',
   'screens.adminArea.cataloguePanel.findAShow': 'Find a show',
+  'screens.adminArea.cataloguePanel.followAll': 'Follow all',
+  'screens.adminArea.cataloguePanel.followAllDialog.albumsStillToFind': 'Albums still to find',
+  'screens.adminArea.cataloguePanel.followAllDialog.couldNotBeFollowed': 'Couldn’t be followed',
+  'screens.adminArea.cataloguePanel.followAllDialog.countElsewhere.one':
+    '{count} more title is in a library that doesn’t take requests, so it’s left as it is.',
+  'screens.adminArea.cataloguePanel.followAllDialog.countElsewhere.other':
+    '{count} more titles are in libraries that don’t take requests, so they’re left as they are.',
+  'screens.adminArea.cataloguePanel.followAllDialog.episodesStillToFind': 'Episodes still to find',
+  'screens.adminArea.cataloguePanel.followAllDialog.filmsStillToFind': 'Films still to find',
+  'screens.adminArea.cataloguePanel.followAllDialog.followCountTitles.one': 'Follow {count} title',
+  'screens.adminArea.cataloguePanel.followAllDialog.followCountTitles.other':
+    'Follow {count} titles',
+  'screens.adminArea.cataloguePanel.followAllDialog.followedCountTitles.one':
+    'Followed {count} title',
+  'screens.adminArea.cataloguePanel.followAllDialog.followedCountTitles.other':
+    'Followed {count} titles',
+  'screens.adminArea.cataloguePanel.followAllDialog.followedDoneOfCount':
+    'Followed {done} of {count}',
+  'screens.adminArea.cataloguePanel.followAllDialog.followEveryTitle': 'Follow every title',
+  'screens.adminArea.cataloguePanel.followAllDialog.nobodyIsNotified':
+    'Nobody is notified, and none of it shows on the Requests page.',
+  'screens.adminArea.cataloguePanel.followAllDialog.nothingToFollow':
+    'Every title in the libraries is already followed.',
+  'screens.adminArea.cataloguePanel.followAllDialog.searchedForOnTheSchedule':
+    'Anything still to find is searched for on the next scheduled search, or now with Search all missing.',
+  'screens.adminArea.cataloguePanel.followAllDialog.whatIsFetched':
+    'New episodes, seasons and albums are downloaded as they come out, and anything missing now is searched for.',
   'screens.adminArea.cataloguePanel.kindsOfLibrary': 'Kind of library',
   'screens.adminArea.cataloguePanel.nothingIsMissing':
     'Nothing is missing, so nothing was searched for.',
@@ -6188,7 +6221,6 @@ const ENGLISH = {
     'Couldn’t load music to request.',
   'screens.requestsPage.nothingInTheCataloguesMatches':
     'Nothing in the catalogues matches “{query}”.',
-  'screens.requestsPage.onItsWayShelf.askedByName': 'Asked by {name}',
   'screens.requestsPage.onItsWayShelf.statusPercent': '{status} · {percent}%',
   'screens.requestsPage.requestsList.clearAFilterOrSearchFor':
     'Clear a filter, or search for something else.',

@@ -52,6 +52,16 @@ describe('catalogueEntriesOf', () => {
     });
   });
 
+  it('names nobody as asking for a title only followed', () => {
+    const request = aShownRequest({
+      origin: 'monitored',
+      items: [aShownRequestItem({ state: 'available' })],
+    });
+    const [entry] = catalogueEntriesOf([aHeldTitle()], [request]);
+
+    expect(entry).toMatchObject({ status: 'library', requestId: request.id, askedBy: null });
+  });
+
   it('lists what is asked for and not yet held, with where it stands', () => {
     const states = [
       [aShownRequest({ approval: 'awaiting' }), 'toApprove'],

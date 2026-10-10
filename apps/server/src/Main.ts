@@ -3067,7 +3067,7 @@ const tellOfLinkedArrivals = async (): Promise<void> => {
 
 /**
  * Tells whoever asked for something that it is ready — in the app, and by push where they chose —
- * and anything subscribed.
+ * and anything subscribed. A title only followed, which nobody asked for, arrives quietly.
  *
  * @param filed - The request, as it stands now it has arrived.
  * @param mediaId - The film, the series, or the album the library found.
@@ -3075,8 +3075,15 @@ const tellOfLinkedArrivals = async (): Promise<void> => {
 const tellOfArrival = async (filed: MediaRequest, mediaId: string): Promise<void> => {
   const { requestedBy } = filed;
 
-  log.info('requests', `${filed.title} is in the library, as ${requestedBy.name} asked`);
   realtime.publish('requests', { changed: true }, { kind: 'everyone' });
+
+  if (filed.origin === 'monitored') {
+    log.info('requests', `${filed.title} is in the library, as it was followed`);
+
+    return;
+  }
+
+  log.info('requests', `${filed.title} is in the library, as ${requestedBy.name} asked`);
 
   await events.publish({
     event: 'requests.available',
