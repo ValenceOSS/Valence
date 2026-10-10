@@ -43,6 +43,7 @@ const PreTranscodingSettingsSchema = z.object({
     .min(1)
     .max(MOST_PRE_TRANSCODE_TARGETS)
     .default([DEFAULT_PRE_TRANSCODE_TARGET]),
+  keepsOriginal: z.boolean().default(true),
   libraryIds: z.array(z.string().uuid()).nullable().default(null),
   schedule: PreTranscodeScheduleSchema.default('window'),
   windowStartHour: HourSchema.default(1),
@@ -53,6 +54,7 @@ const PRE_TRANSCODING_DEFAULTS = PreTranscodingSettingsSchema.parse({});
 
 const PreTranscodeTargetProgressSchema = z.object({
   target: PreTranscodeTargetSchema,
+  replacesOriginal: z.boolean(),
   copiesMade: z.number().int().nonnegative(),
   bytesKept: z.number().nonnegative(),
   stillNeeded: z.number().int().nonnegative(),

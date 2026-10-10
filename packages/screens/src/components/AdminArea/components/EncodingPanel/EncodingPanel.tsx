@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Callout } from '@ValenceUI/Callout';
+import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { DataTable } from '@ValenceUI/DataTable';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
@@ -13,6 +14,7 @@ import { describeReencodeState } from '@ValenceClient/admin/describeReencodeStat
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { sortReencodes } from './sortReencodes';
+import { useAdminCommand } from '@ValenceScreens/admin/useAdminCommand';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { EncodingPanelProps } from './EncodingPanel.types';
 import type { Reencode } from '@ValenceContracts/schemas/Reencode';
@@ -58,6 +60,8 @@ const freedBy = (reencode: Reencode): string | null => {
  * @param reencodes - Every re-encode.
  * @param awaitingReviewCap - How many may wait for judgement before the queue pauses.
  * @param onReview - Called with the one to be judged.
+ * @param onConfirmAll - Called with every one waiting, to keep each new encode and delete each
+ *   original at once, after asking.
  * @param onStop - Called with the one to be stopped, answering whether it was.
  * @param onChoose - Called to open the chooser.
  */
@@ -66,10 +70,17 @@ const EncodingPanel = ({
   reencodes,
   awaitingReviewCap = 5,
   onReview,
+  onConfirmAll,
   onStop,
   onChoose,
 }: EncodingPanelProps) => {
   const [stopping, setStopping] = useState<string | null>(null);
+  const [isConfirmingAll, setIsConfirmingAll] = useState(false);
+  const [isAskingToConfirmAll, setIsAskingToConfirmAll] = useState(false);
+
+  useAdminCommand('reEncode', () => {
+    onChoose();
+  });
 
   const { awaitingReview, underWay, settled } = useMemo(
     () => sortReencodes(reencodes),
@@ -183,6 +194,44 @@ const EncodingPanel = ({
                   })
                 : say('screens.adminArea.encodingPanel.nothingIsThrownAwayUntilYou')}
             </Callout>
+
+            {onConfirmAll === undefined || awaitingReview.length < 2 ? null : (
+              <>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  isLoading={isConfirmingAll}
+                  onClick={() => {
+                    setIsAskingToConfirmAll(true);
+                  }}
+                  className="self-end"
+                >
+                  {say('screens.adminArea.encodingPanel.confirmAll')}
+                </Button>
+
+                <ConfirmDialog
+                  isOpen={isAskingToConfirmAll}
+                  isDestructive
+                  isBusy={isConfirmingAll}
+                  title={sayCount(
+                    'screens.adminArea.encodingPanel.deleteCountOriginals',
+                    awaitingReview.length,
+                  )}
+                  detail={say('screens.adminArea.encodingPanel.eachNewEncodeIsKeptAndIts')}
+                  confirmLabel={say('screens.adminArea.encodingPanel.confirmAll')}
+                  onClose={() => {
+                    setIsAskingToConfirmAll(false);
+                  }}
+                  onConfirm={() => {
+                    setIsConfirmingAll(true);
+                    void onConfirmAll(awaitingReview.map((one) => one.id)).finally(() => {
+                      setIsConfirmingAll(false);
+                      setIsAskingToConfirmAll(false);
+                    });
+                  }}
+                />
+              </>
+            )}
 
             <ul className="flex flex-col gap-2">
               {awaitingReview.map((one) => (

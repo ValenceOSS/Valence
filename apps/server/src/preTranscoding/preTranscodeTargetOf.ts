@@ -8,20 +8,24 @@ type PreTranscodeRequest = {
 
 /**
  * What pre-transcoding asks the re-encoder for to make one rung of the ladder — a copy kept beside
- * each film — and the key that rung's copies and refusals are filed under, which changes whenever
- * the copy would.
+ * each film, or for the rung that takes the original's place, a replacement that waits for review —
+ * and the key that rung's copies and refusals are filed under, which changes whenever the copy would.
  *
  * @param target - The rung.
+ * @param mode - Whether the copy is kept beside the original or replaces it.
  * @returns The request every copy at that rung is made from, and its key.
  */
-const preTranscodeTargetOf = (target: PreTranscodeTarget): PreTranscodeRequest => ({
+const preTranscodeTargetOf = (
+  target: PreTranscodeTarget,
+  mode: 'keep' | 'replace' = 'keep',
+): PreTranscodeRequest => ({
   settings: {
-    mode: 'keep',
+    mode,
     quality: target.quality,
     videoCodec: target.videoCodec,
     audio: target.audio,
     container: target.container,
-    placement: 'beside',
+    ...(mode === 'keep' ? { placement: 'beside' as const } : {}),
     ...(target.maxBitrateKbps === null ? {} : { maxBitrateKbps: target.maxBitrateKbps }),
   },
   key: [
@@ -30,6 +34,7 @@ const preTranscodeTargetOf = (target: PreTranscodeTarget): PreTranscodeRequest =
     target.container,
     target.maxBitrateKbps?.toString() ?? 'any',
     target.audio,
+    ...(mode === 'replace' ? ['replace'] : []),
   ].join('/'),
 });
 
