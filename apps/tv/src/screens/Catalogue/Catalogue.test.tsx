@@ -302,11 +302,11 @@ describe('Catalogue', () => {
           maxRating: 0,
         });
         cache.setQueryData(
-          libraryQueries.everything([LIBRARY], { kind: 'films', genre: 'Drama' }).queryKey,
+          libraryQueries.everything([LIBRARY], { kind: 'films', genres: ['Drama'] }).queryKey,
           [LAST_IN],
         );
         cache.setQueryData(
-          libraryQueries.everything([LIBRARY], { kind: 'films', genre: 'Comedy' }).queryKey,
+          libraryQueries.everything([LIBRARY], { kind: 'films', genres: ['Comedy'] }).queryKey,
           [],
         );
       },
