@@ -1,12 +1,14 @@
 import type { BrandMarkName } from '@ValenceUI/BrandGlyph.types';
 import { say } from '@ValenceI18n/say';
+import { BROWSER_NAMES } from '@ValenceCore/functions/BROWSER_NAMES';
 
 const BROWSER_MARKS: readonly { name: string; mark: BrandMarkName }[] = [
-  { name: say('common.opera'), mark: 'opera' },
-  { name: say('common.chromium'), mark: 'chrome' },
-  { name: say('screens.sessionCard.deviceIcon.chrome'), mark: 'chrome' },
-  { name: say('common.firefox'), mark: 'firefox' },
-  { name: say('client.playback.detectClientLabel.safari'), mark: 'safari' },
+  { name: BROWSER_NAMES.opera, mark: 'opera' },
+  { name: BROWSER_NAMES.brave, mark: 'brave' },
+  { name: BROWSER_NAMES.chromium, mark: 'chrome' },
+  { name: BROWSER_NAMES.chrome, mark: 'chrome' },
+  { name: BROWSER_NAMES.firefox, mark: 'firefox' },
+  { name: BROWSER_NAMES.safari, mark: 'safari' },
 ];
 
 const DEVICE_MARKS: readonly { name: string; mark: BrandMarkName }[] = [
@@ -39,8 +41,8 @@ const SYSTEM_MARKS: readonly { name: string; mark: BrandMarkName }[] = [
  * maker's. A
  * browser or system without a mark of its own — Edge, anything unrecognised — answers none, and
  * keeps its shape.
- * Chromium is shown as Chrome, since a browser built on it names itself the same way and Chrome is
- * the one that almost always is.
+ * Chromium is shown with Chrome's mark, since it is what a browser built on Chrome that does not
+ * name itself is called, and Brave with its own.
  *
  * @param deviceLabel - What the session is labelled, such as "Chromium on macOS".
  * @returns The browser's mark and the system's, each where there is one.

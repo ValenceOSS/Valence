@@ -6,8 +6,18 @@ describe('describeDevice', () => {
     expect(
       describeDevice(
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
+        ['Not A(Brand', 'Google Chrome', 'Chromium'],
       ),
     ).toEqual('Chrome on macOS');
+  });
+
+  it('calls a browser built on Chromium Chromium where its hints do not name Google Chrome', () => {
+    const chromium =
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0 Safari/537.36';
+
+    expect(describeDevice(chromium, ['Not A(Brand', 'Chromium'])).toEqual('Chromium on macOS');
+    expect(describeDevice(chromium)).toEqual('Chromium on macOS');
+    expect(describeDevice(chromium, ['Brave', 'Chromium'])).toEqual('Brave on macOS');
   });
 
   it('believes the most specific claim, since every browser claims to be several', () => {

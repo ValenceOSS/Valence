@@ -17,6 +17,14 @@ describe('detectClientLabel', () => {
     expect(detectClientLabel(CHROME_MAC)).toBe('Chromium on macOS');
   });
 
+  it('names Chrome where its client hints say it is Google Chrome, and Brave where they say Brave', () => {
+    expect(detectClientLabel(CHROME_MAC, ['Not A(Brand', 'Google Chrome', 'Chromium'])).toBe(
+      'Chrome on macOS',
+    );
+    expect(detectClientLabel(CHROME_MAC, ['Brave', 'Chromium'])).toBe('Brave on macOS');
+    expect(detectClientLabel(CHROME_MAC, ['Not A(Brand', 'Chromium'])).toBe('Chromium on macOS');
+  });
+
   it('tells Safari apart from Chromium, even though both carry "Safari"', () => {
     expect(detectClientLabel(SAFARI_MAC)).toBe('Safari on macOS');
   });

@@ -24,6 +24,9 @@ const unmapped = (address: string): string =>
  * itself, unless that is a proxy this server trusts, in which case the last address in the
  * forwarded chain that is not one of its trusted proxies.
  *
+ * A trusted proxy that sends no chain but names the caller in `x-real-ip`, as some are set up to,
+ * is believed about that instead.
+ *
  * Anybody can send `x-forwarded-for`, so a chain is read only from a trusted proxy, and only from
  * its end — each proxy appends the address it was reached from, while everything to the left of
  * the last trusted one is whatever the caller chose to write. Read from the front, a guesser would
@@ -53,6 +56,12 @@ const clientAddressOf = ({
     .split(',')
     .map((hop) => unmapped(hop.trim()))
     .filter((hop) => hop !== '');
+
+  if (chain.length === 0) {
+    const real = unmapped((headers.get('x-real-ip') ?? '').trim());
+
+    return isIP(real) === 0 ? socket : real;
+  }
 
   for (const hop of [...chain].reverse()) {
     if (isIP(hop) === 0) {
