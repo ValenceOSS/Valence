@@ -3541,8 +3541,6 @@ const ENGLISH = {
   'screens.adminArea.emailCard.mailServer': 'Mail server',
   'screens.adminArea.emailCard.nothingIsEmailedWhileThisIs':
     'No emails are sent while this is off. Links can still be copied, and reset links are written to the server log.',
-  'screens.adminArea.emailCard.onceEmailIsOnTheAddresses':
-    'When email is on, recipient addresses and email contents are sent to the mail provider you set up here.',
   'screens.adminArea.emailCard.port': 'Port',
   'screens.adminArea.emailCard.readingTheEmailSettings': 'Loading email settings…',
   'screens.adminArea.emailCard.recentEmails.failedBecause': 'Failed: {reason}',
@@ -3576,8 +3574,6 @@ const ENGLISH = {
   'screens.adminArea.emailCard.tls': 'TLS',
   'screens.adminArea.emailCard.toWhoeverAsksOnTheSign':
     'Sends a reset link to anyone who requests one on the sign-in screen, if their account has an email address.',
-  'screens.adminArea.emailCard.useResend': 'Use Resend',
-  'screens.adminArea.emailCard.whatLeavesTheServer': 'What’s sent to your mail provider',
   'screens.adminArea.encodingPanel.alreadyDone': 'Completed',
   'screens.adminArea.encodingPanel.aReplacementKeepsBothFilesUntil':
     'Both the original and the re-encoded file are kept until you’ve watched the new one and approved it. Nothing is deleted automatically.',
@@ -5706,11 +5702,9 @@ const ENGLISH = {
   'screens.observabilityPage.jobHealth.hasFailed': 'Has failed',
   'screens.observabilityPage.jobHealth.howEachKindOfJobHas': 'Results by job type',
   'screens.observabilityPage.jobHealth.howTheJobsAreDoing': 'Job health',
-  'screens.observabilityPage.jobHealth.howTheJobsAreDoingOverall': 'Overall job health',
   'screens.observabilityPage.jobHealth.lastRun': 'Last run',
   'screens.observabilityPage.jobHealth.neverFailed': 'Never failed',
   'screens.observabilityPage.jobHealth.noJobHasRunInThis': 'No jobs ran in this time range.',
-  'screens.observabilityPage.jobHealth.ofTheRunsThatHaveEnded': 'Of finished runs',
   'screens.observabilityPage.jobHealth.readingHowTheJobsHaveGone': 'Loading job health…',
   'screens.observabilityPage.jobHealth.runs': 'Runs',
   'screens.observabilityPage.jobHealth.searchByJob': 'Search by job',

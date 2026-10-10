@@ -507,8 +507,10 @@ describe('ShowDialog', () => {
     );
     renderInAnAddress(<ShowDialog show={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    expect(await screen.findByRole('button', { name: 'Season 2' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Season 1' })).toBeInTheDocument();
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'Season' }));
+
+    expect(await screen.findByRole('menuitemradio', { name: /Season 2/ })).toBeInTheDocument();
+    expect(screen.getByRole('menuitemradio', { name: /Season 1/ })).toBeInTheDocument();
   });
 
   it('says what the catalogue says of where the programme stands', async () => {
@@ -518,7 +520,7 @@ describe('ShowDialog', () => {
     });
     renderInAnAddress(<ShowDialog show={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    expect(await screen.findByText('Returning Series')).toBeInTheDocument();
+    expect(await screen.findByText('Returning')).toBeInTheDocument();
   });
 
   it('says when the next episode comes out, and which it is', async () => {
@@ -591,7 +593,8 @@ describe('ShowDialog', () => {
     });
     renderInAnAddress(<ShowDialog show={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    await user.click(await screen.findByRole('button', { name: 'Season 2' }));
+    await user.click(await screen.findByRole('button', { name: 'Season' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: /Season 2/ }));
 
     expect(screen.getByText('1. A Fresh Start')).toBeInTheDocument();
     expect(screen.getByText('2. The Second')).toBeInTheDocument();
@@ -613,7 +616,8 @@ describe('ShowDialog', () => {
     });
     renderInAnAddress(<ShowDialog show={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    await user.click(await screen.findByRole('button', { name: 'Season 2' }));
+    await user.click(await screen.findByRole('button', { name: 'Season' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: /Season 2/ }));
 
     expect(screen.queryByRole('button', { name: /Play A Fresh Start/ })).not.toBeInTheDocument();
   });
@@ -656,7 +660,9 @@ describe('ShowDialog', () => {
     });
     renderInAnAddress(<ShowDialog show={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    expect(await screen.findByRole('button', { name: 'Specials' })).toBeInTheDocument();
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'Season' }));
+
+    expect(await screen.findByRole('menuitemradio', { name: /Specials/ })).toBeInTheDocument();
   });
 
   it('says nothing is missing from a series the catalogue says is complete', async () => {

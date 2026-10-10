@@ -14170,11 +14170,6 @@
     "context": "Shown in the admin Settings, on the Email card."
   },
   {
-    "handler": "screens.adminArea.emailCard.onceEmailIsOnTheAddresses",
-    "text": "When email is on, recipient addresses and email contents are sent to the mail provider you set up here.",
-    "context": "Shown in the admin Settings, on the Email card: a plain statement of what leaves the server."
-  },
-  {
     "handler": "screens.adminArea.emailCard.port",
     "text": "Port",
     "context": "Shown in the admin Settings, on the Email card: the mail server's network port."
@@ -14308,16 +14303,6 @@
     "handler": "screens.adminArea.emailCard.toWhoeverAsksOnTheSign",
     "text": "Sends a reset link to anyone who requests one on the sign-in screen, if their account has an email address.",
     "context": "Shown in the admin Settings, on the Email card, describing the password reset switch."
-  },
-  {
-    "handler": "screens.adminArea.emailCard.useResend",
-    "text": "Use Resend",
-    "context": "Shown in the admin Settings, on the Email card: a button that fills in Resend's mail server. Resend is a product name."
-  },
-  {
-    "handler": "screens.adminArea.emailCard.whatLeavesTheServer",
-    "text": "What’s sent to your mail provider",
-    "context": "Shown in the admin Settings, on the Email card: a note's title."
   },
   {
     "handler": "screens.adminArea.encodingPanel.alreadyDone",
@@ -22631,11 +22616,6 @@
     "context": "The title of a headed section in the job health in the observability page."
   },
   {
-    "handler": "screens.observabilityPage.jobHealth.howTheJobsAreDoingOverall",
-    "text": "Overall job health",
-    "context": "The label of a stat strip in the job health in the observability page."
-  },
-  {
     "handler": "screens.observabilityPage.jobHealth.lastRun",
     "text": "Last run",
     "context": "Shown in the job health in the observability page."
@@ -22649,11 +22629,6 @@
     "handler": "screens.observabilityPage.jobHealth.noJobHasRunInThis",
     "text": "No jobs ran in this time range.",
     "context": "Shown in the job health in the observability page."
-  },
-  {
-    "handler": "screens.observabilityPage.jobHealth.ofTheRunsThatHaveEnded",
-    "text": "Of finished runs",
-    "context": "The detail in the job health in the observability page."
   },
   {
     "handler": "screens.observabilityPage.jobHealth.readingHowTheJobsHaveGone",

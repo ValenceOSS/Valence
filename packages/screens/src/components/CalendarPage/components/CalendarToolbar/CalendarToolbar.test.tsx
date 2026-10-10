@@ -34,19 +34,19 @@ describe('CalendarToolbar', () => {
   it('heads a month with its name', () => {
     draw();
 
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(nameTheMonth('2026-10-08'));
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(nameTheMonth('2026-10-08'));
   });
 
   it('heads a week with the days it spans', () => {
     draw({ view: 'week' });
 
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(nameTheWeek('2026-10-08'));
+    expect(screen.getByRole('heading', { level: 2 }).textContent).toBe(nameTheWeek('2026-10-08'));
   });
 
   it('heads the upcoming list as such, with nothing to turn', () => {
     draw({ view: 'upcoming' });
 
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Upcoming');
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Upcoming');
     expect(screen.queryByRole('button', { name: 'Previous' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Next' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Go to a day' })).not.toBeInTheDocument();
@@ -76,15 +76,17 @@ describe('CalendarToolbar', () => {
   it('marks the view shown and switches to another', async () => {
     const user = userEvent.setup();
     const props = draw();
-    const views = within(screen.getByRole('group', { name: 'Calendar views' }));
 
-    expect(views.getByRole('button', { name: 'Month' })).toHaveAttribute('aria-pressed', 'true');
+    await user.click(screen.getByRole('button', { name: 'Calendar views' }));
 
-    await user.click(views.getByRole('button', { name: 'Week' }));
-    await user.click(views.getByRole('button', { name: 'Upcoming' }));
+    expect(await screen.findByRole('menuitemradio', { name: 'Month' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
 
-    expect(props.onView).toHaveBeenNthCalledWith(1, 'week');
-    expect(props.onView).toHaveBeenNthCalledWith(2, 'upcoming');
+    await user.click(screen.getByRole('menuitemradio', { name: 'Week' }));
+
+    expect(props.onView).toHaveBeenCalledWith('week');
   });
 
   it('offers to add the calendar to a calendar app', () => {
@@ -96,7 +98,9 @@ describe('CalendarToolbar', () => {
   it('offers a way to narrow the calendar', () => {
     draw();
 
-    expect(screen.getByRole('button', { name: /Filter calendar/ })).toBeInTheDocument();
+    const narrowing = within(screen.getByRole('group', { name: 'Filter calendar' }));
+
+    expect(narrowing.getByRole('button', { name: 'Kind' })).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

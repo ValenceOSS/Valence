@@ -89,14 +89,14 @@ describe('CalendarPage', () => {
     expect(fetchReleaseCalendar).toHaveBeenCalledWith('2026-10-19', '2026-10-25', 'mine');
   });
 
-  it('opens on the month around today', async () => {
+  it('opens on a timeline of the five weeks around today', async () => {
     window.history.replaceState(null, '', '/calendar');
 
     renderInAnAddress(<CalendarPage />);
 
     await screen.findByRole('heading', { name: 'Coming up' });
 
-    expect(fetchReleaseCalendar).toHaveBeenCalledWith('2026-09-28', '2026-11-08', 'mine');
+    expect(fetchReleaseCalendar).toHaveBeenCalledWith('2026-09-28', '2026-11-01', 'mine');
   });
 
   it('lists the week a day at a time, with what is coming up above it', async () => {
@@ -187,14 +187,11 @@ describe('CalendarPage', () => {
     renderInAnAddress(<CalendarPage />);
 
     await screen.findByRole('heading', { name: 'Coming up' });
-    await user.click(
-      within(screen.getByRole('group', { name: 'Calendar views' })).getByRole('button', {
-        name: 'Upcoming',
-      }),
-    );
+    await user.click(screen.getByRole('button', { name: 'Calendar views' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Upcoming' }));
 
     expect(new URLSearchParams(window.location.search).get('view')).toBe('upcoming');
-    expect(await screen.findByRole('heading', { level: 1, name: 'Upcoming' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 2, name: 'Upcoming' })).toBeInTheDocument();
   });
 
   it('turns a week on from the toolbar', async () => {
@@ -237,8 +234,8 @@ describe('CalendarPage', () => {
     renderInAnAddress(<CalendarPage />);
 
     await screen.findByRole('heading', { name: 'Coming up' });
-    await user.click(screen.getByRole('button', { name: /Filter calendar/ }));
-    await user.click(await screen.findByRole('menuitemcheckbox', { name: /Everyone/ }));
+    await user.click(screen.getByRole('button', { name: 'Whose requests' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: /Everyone/ }));
 
     expect(fetchReleaseCalendar).toHaveBeenLastCalledWith('2026-10-05', '2026-10-11', 'everyone');
   });
@@ -249,10 +246,10 @@ describe('CalendarPage', () => {
     renderInAnAddress(<CalendarPage />);
 
     await screen.findByRole('heading', { name: 'Coming up' });
-    await user.click(screen.getByRole('button', { name: /Filter calendar/ }));
-    await screen.findByRole('menuitemcheckbox', { name: /Films/ });
+    await user.click(screen.getByRole('button', { name: 'Kind' }));
+    await screen.findByRole('menuitemradio', { name: /Films/ });
 
-    expect(screen.queryByRole('menuitemcheckbox', { name: /Everyone/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Whose requests' })).not.toBeInTheDocument();
   });
 
   it('narrows what it shows to what is chosen', async () => {
@@ -261,8 +258,8 @@ describe('CalendarPage', () => {
     renderInAnAddress(<CalendarPage />);
 
     await screen.findByRole('heading', { name: 'Coming up' });
-    await user.click(screen.getByRole('button', { name: /Filter calendar/ }));
-    await user.click(await screen.findByRole('menuitemcheckbox', { name: /Films/ }));
+    await user.click(screen.getByRole('button', { name: 'Kind' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: /Films/ }));
     await user.keyboard('{Escape}');
 
     expect(dayCard(nameTheShortDay('2026-10-09')).getByText('A Film')).toBeInTheDocument();

@@ -7,17 +7,19 @@ const seasonsUpTo = (last: number) =>
   Array.from({ length: last }, (_, at) => ({ seasonNumber: at + 1, isHeld: true }));
 
 describe('SeasonPicker', () => {
-  it('lays a few seasons out as one track and tells the one pressed', async () => {
+  it('lists the seasons in a menu, however few there are, and tells the one chosen', async () => {
     const onChange = vi.fn();
+    const user = userEvent.setup();
 
     render(<SeasonPicker seasons={seasonsUpTo(4)} value={1} onChange={onChange} />);
 
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Season 3' }));
+    await user.click(screen.getByRole('button', { name: 'Season' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: /Season 3/ }));
 
     expect(onChange).toHaveBeenCalledWith(3);
   });
 
-  it('turns to a menu once there are more seasons than fit across', async () => {
+  it('lists every season of a long programme at once', async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
 
@@ -64,7 +66,10 @@ describe('SeasonPicker', () => {
       />,
     );
 
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Other' }));
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole('button', { name: 'Season' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: /Other/ }));
 
     expect(onChange).toHaveBeenCalledWith(null);
   });

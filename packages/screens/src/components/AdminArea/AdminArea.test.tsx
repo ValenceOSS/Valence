@@ -1089,7 +1089,8 @@ describe('AdminArea', () => {
     const actor = userEvent.setup();
     renderInAnAddress(<TheAdmin panel="activity" />);
 
-    await actor.click(await screen.findByRole('button', { name: /Stop/ }));
+    await actor.click(await screen.findByRole('button', { name: /^Actions for/ }));
+    await actor.click(await screen.findByRole('menuitem', { name: /Stop/ }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
@@ -1648,7 +1649,8 @@ describe('steering somebody else’s stream', () => {
   it('pauses a stream, and says which tab it paused', async () => {
     const actor = await onTheSessionsTab();
 
-    await actor.click(await screen.findByRole('button', { name: 'Pause' }));
+    await actor.click(await screen.findByRole('button', { name: /^Actions for/ }));
+    await actor.click(await screen.findByRole('menuitem', { name: 'Pause' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
@@ -1664,7 +1666,8 @@ describe('steering somebody else’s stream', () => {
       playback: { ...WATCHING.playback!, isPlaying: false, pausedByAdmin: true },
     });
 
-    await actor.click(await screen.findByRole('button', { name: 'Play' }));
+    await actor.click(await screen.findByRole('button', { name: /^Actions for/ }));
+    await actor.click(await screen.findByRole('menuitem', { name: 'Play' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
@@ -1677,7 +1680,8 @@ describe('steering somebody else’s stream', () => {
   it('stops a stream outright', async () => {
     const actor = await onTheSessionsTab();
 
-    await actor.click(await screen.findByRole('button', { name: 'Stop' }));
+    await actor.click(await screen.findByRole('button', { name: /^Actions for/ }));
+    await actor.click(await screen.findByRole('menuitem', { name: 'Stop' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(

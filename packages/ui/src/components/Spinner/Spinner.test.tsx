@@ -12,9 +12,9 @@ describe('Spinner', () => {
   it('draws small enough to sit inside a badge', () => {
     render(<Spinner label="Downloading" size="xs" />);
 
-    expect(
-      screen.getByRole('status', { name: 'Downloading' }).querySelector('svg'),
-    ).toHaveAttribute('width', '0.75rem');
+    expect(screen.getByRole('status', { name: 'Downloading' }).firstElementChild).toHaveStyle({
+      width: '12px',
+    });
   });
 
   it('accepts a custom class', () => {
@@ -27,10 +27,17 @@ describe('Spinner', () => {
     expect(Spinner.displayName).toBe('Spinner');
   });
 
-  it('turns on the stylesheet, which keeps it turning while the page is busy and holds it still for less motion', () => {
+  it('draws a ring of eight segments that light one after another while it waits', () => {
     render(<Spinner label="Loading" />);
 
-    expect(screen.getByRole('status', { name: 'Loading' })).toHaveClass('valence-spin');
+    const segments = screen
+      .getByRole('status', { name: 'Loading' })
+      .querySelectorAll<HTMLElement>('span.absolute > span');
+
+    expect(segments).toHaveLength(8);
+    expect([...segments].filter((segment) => segment.style.opacity === '1').length).toBeGreaterThan(
+      0,
+    );
   });
 
   it('shows how far along something is, still, as a progress bar, where that is known', () => {

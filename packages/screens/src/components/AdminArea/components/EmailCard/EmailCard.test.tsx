@@ -49,41 +49,13 @@ beforeEach(() => {
 });
 
 describe('EmailCard', () => {
-  it('says plainly what leaves the server, and links to how to set it up', async () => {
+  it('links to how to set it up', async () => {
     renderInAnAddress(<EmailCard />);
 
-    expect(
-      await screen.findByText(
-        /recipient addresses and email contents are sent to the mail provider/,
-      ),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'How to set up email' })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: 'How to set up email' })).toHaveAttribute(
       'href',
       'https://docs.getvalence.app/use/email',
     );
-  });
-
-  it('fills in Resend with one press, keeping the saved password unless a new one is typed', async () => {
-    renderInAnAddress(<EmailCard />);
-
-    await userEvent.click(await screen.findByRole('button', { name: /Use Resend/ }));
-    await userEvent.click(screen.getByRole('switch', { name: 'Send email' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
-
-    await waitFor(() => {
-      expect(saveEmailSetup).toHaveBeenCalledWith({
-        isEnabled: true,
-        host: 'smtp.resend.com',
-        port: 465,
-        security: 'tls',
-        username: 'resend',
-        password: '',
-        fromName: 'Home',
-        fromAddress: 'valence@example.com',
-        sendsPasswordResets: false,
-        sendsSetupLinks: false,
-      });
-    });
   });
 
   it('turns on what is emailed', async () => {
