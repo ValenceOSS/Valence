@@ -347,18 +347,16 @@ describe('SearchArea', () => {
     });
   });
 
-  it('says how many filters are on, since they are in a panel', async () => {
+  it('says how many of each kind of filter are on', async () => {
     const user = userEvent.setup();
 
     renderInAnAddress(
       <HeldSearchArea search="" onSearchChange={vi.fn()} onPlay={vi.fn()} onInspect={vi.fn()} />,
     );
-    await user.click(await screen.findByRole('button', { name: 'Filter the library' }));
+    await user.click(await screen.findByRole('button', { name: 'Decade' }));
     await user.click(await screen.findByRole('menuitemcheckbox', { name: '1990s' }));
 
-    expect(await screen.findByRole('button', { name: 'Filter the library' })).toHaveTextContent(
-      '1',
-    );
+    expect(await screen.findByRole('button', { name: 'Decade' })).toHaveTextContent('1');
   });
 
   it('takes every filter off at once when asked to clear', async () => {
@@ -367,7 +365,7 @@ describe('SearchArea', () => {
     renderInAnAddress(
       <HeldSearchArea search="" onSearchChange={vi.fn()} onPlay={vi.fn()} onInspect={vi.fn()} />,
     );
-    await user.click(await screen.findByRole('button', { name: 'Filter the library' }));
+    await user.click(await screen.findByRole('button', { name: 'Decade' }));
     await user.click(await screen.findByRole('menuitemcheckbox', { name: '1990s' }));
     await user.keyboard('{Escape}');
     await user.click(await screen.findByRole('button', { name: 'Clear all' }));
@@ -378,16 +376,13 @@ describe('SearchArea', () => {
   it('offers nothing that would only lead to an empty page', async () => {
     fetchFacets.mockResolvedValue({ genres: [], decades: [1990], maxRating: 0 });
 
-    const user = userEvent.setup();
-
     renderInAnAddress(
       <HeldSearchArea search="" onSearchChange={vi.fn()} onPlay={vi.fn()} onInspect={vi.fn()} />,
     );
-    await user.click(await screen.findByRole('button', { name: 'Filter the library' }));
+    await screen.findByRole('button', { name: 'Decade' });
 
-    expect(screen.queryByRole('group', { name: 'Rating' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('group', { name: 'Genre' })).not.toBeInTheDocument();
-    expect(screen.getByRole('group', { name: 'Decade' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Rating' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Genre' })).not.toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

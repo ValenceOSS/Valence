@@ -61,19 +61,37 @@ describe('LadderTable', () => {
     expect(on.onBitrateChange).toHaveBeenCalledWith('a', '9');
   });
 
-  it('removes a rung, but never the last one', async () => {
+  it('removes a rung', async () => {
     const on = handlers();
     const user = userEvent.setup();
 
-    const { rerender } = render(<LadderTable rungs={[rung('a'), rung('b')]} {...on} />);
+    render(<LadderTable rungs={[rung('a'), rung('b')]} {...on} />);
 
-    await user.click(screen.getAllByRole('button', { name: /^Remove the/ })[1] ?? document.body);
+    const removes = screen.getAllByRole('button', { name: /^Remove the/ });
+
+    await user.click(removes[1] ?? removes[0] ?? document.body);
 
     expect(on.onRemove).toHaveBeenCalledWith('b');
+  });
 
-    rerender(<LadderTable rungs={[rung('a')]} {...on} />);
+  it('never removes the last rung', () => {
+    render(<LadderTable rungs={[rung('a')]} {...handlers()} />);
 
     expect(screen.getByRole('button', { name: /^Remove the/ })).toBeDisabled();
+  });
+
+  it('keeps the cursor in a ceiling while it is typed', async () => {
+    const on = handlers();
+    const user = userEvent.setup();
+
+    render(<LadderTable rungs={[rung('a')]} {...on} />);
+
+    const field = screen.getByRole('spinbutton', { name: 'Bitrate ceiling' });
+
+    await user.type(field, '12');
+
+    expect(field).toHaveFocus();
+    expect(on.onBitrateChange).toHaveBeenCalledTimes(2);
   });
 
   it('marks the rung that replaces the original', () => {

@@ -11,11 +11,16 @@ describe('PreTranscodingSettingsSchema', () => {
     expect(PRE_TRANSCODING_DEFAULTS).toEqual({
       isEnabled: false,
       isPaused: false,
-      quality: '1080p',
-      videoCodec: 'h264',
-      container: 'mp4',
-      maxBitrateKbps: null,
-      audio: 'keep',
+      targets: [
+        {
+          quality: '1080p',
+          videoCodec: 'h264',
+          container: 'mp4',
+          maxBitrateKbps: null,
+          audio: 'keep',
+        },
+      ],
+      keepsOriginal: true,
       libraryIds: null,
       schedule: 'window',
       windowStartHour: 1,
@@ -32,7 +37,19 @@ describe('PreTranscodingSettingsSchema', () => {
   });
 
   it('refuses a rung below the ladder it offers', () => {
-    expect(() => PreTranscodingSettingsSchema.parse({ quality: '144p' })).toThrow();
+    expect(() => PreTranscodingSettingsSchema.parse({ targets: [{ quality: '144p' }] })).toThrow();
+  });
+
+  it('holds a ladder of at least one rung and at most six', () => {
+    expect(() => PreTranscodingSettingsSchema.parse({ targets: [] })).toThrow();
+    expect(() =>
+      PreTranscodingSettingsSchema.parse({ targets: Array.from({ length: 7 }, () => ({})) }),
+    ).toThrow();
+    expect(
+      PreTranscodingSettingsSchema.parse({ targets: [{}, { quality: '720p' }] }).targets.map(
+        (target) => target.quality,
+      ),
+    ).toEqual(['1080p', '720p']);
   });
 
   it('keeps a chosen set of libraries', () => {
@@ -51,6 +68,7 @@ describe('PreTranscodingStatusSchema', () => {
       copiesMade: 3,
       stillNeeded: 12,
       givenUp: 1,
+      ladder: [],
       current: null,
       isInWindow: false,
       timezone: 'Europe/London',

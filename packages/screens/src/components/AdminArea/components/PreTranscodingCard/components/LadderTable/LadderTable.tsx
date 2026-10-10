@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Bin as BinIcon, GripVertical as GripVerticalIcon } from '@keyline-icons/react';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -35,6 +35,7 @@ const CONTAINER_CHOICES = REENCODE_CONTAINERS.map((container) => ({
  * The pre-transcoding ladder as a table, one rung to a row: the picture, codec and container a copy
  * is made at, the most bits a second it may spend, and how far the library has got at that rung.
  * Rungs are dragged into the order they are worked in, and the last one cannot be removed. The
+ * columns stay the same between renders, so a field keeps its cursor while a ceiling is typed. The
  * rung that takes the original's place, where the original is not kept, says so.
  *
  * @param rungs - The ladder as it is being edited.
@@ -50,6 +51,12 @@ const LadderTable = ({
   onRemove,
   onReorder,
 }: LadderTableProps) => {
+  const told = useRef({ onChange, onBitrateChange, onRemove });
+
+  useEffect(() => {
+    told.current = { onChange, onBitrateChange, onRemove };
+  });
+
   const columns = useMemo<DataTableColumn<DraftRung>[]>(
     () => [
       {
@@ -78,7 +85,7 @@ const LadderTable = ({
             options={QUALITY_CHOICES}
             value={row.original.target.quality}
             onSelect={(id) => {
-              onChange(row.original.id, {
+              told.current.onChange(row.original.id, {
                 quality: PRE_TRANSCODE_QUALITIES.find((one) => one === id) ?? '1080p',
               });
             }}
@@ -97,7 +104,7 @@ const LadderTable = ({
             options={CODEC_CHOICES}
             value={row.original.target.videoCodec}
             onSelect={(id) => {
-              onChange(row.original.id, {
+              told.current.onChange(row.original.id, {
                 videoCodec: REENCODE_CODECS.find((one) => one === id) ?? 'h264',
               });
             }}
@@ -116,7 +123,7 @@ const LadderTable = ({
             options={CONTAINER_CHOICES}
             value={row.original.target.container}
             onSelect={(id) => {
-              onChange(row.original.id, {
+              told.current.onChange(row.original.id, {
                 container: REENCODE_CONTAINERS.find((one) => one === id) ?? 'mp4',
               });
             }}
@@ -137,7 +144,7 @@ const LadderTable = ({
             placeholder={say('common.noBitrateCeiling')}
             value={row.original.bitrate}
             onValueChange={(next) => {
-              onBitrateChange(row.original.id, next);
+              told.current.onBitrateChange(row.original.id, next);
             }}
             {...(readBitrate(row.original.bitrate).kind === 'invalid'
               ? { error: say('screens.adminArea.preTranscodingCard.aWholeNumberFrom100') }
@@ -198,7 +205,7 @@ const LadderTable = ({
             })}
             disabled={rungs.length <= 1}
             onClick={() => {
-              onRemove(row.original.id);
+              told.current.onRemove(row.original.id);
             }}
           >
             <Icon of={BinIcon} size={15} />
@@ -206,7 +213,7 @@ const LadderTable = ({
         ),
       },
     ],
-    [rungs.length, onChange, onBitrateChange, onRemove],
+    [rungs.length],
   );
 
   return (

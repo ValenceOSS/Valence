@@ -1,11 +1,5 @@
-import type { StringKey } from './StringKey';
+import type { COUNTED_KEYS } from './COUNTED_KEYS';
 
-type BaseOf<Key> = Key extends `${infer Base}.other`
-  ? `${Base}.one` extends StringKey
-    ? Base
-    : never
-  : never;
-
-type CountedKey = BaseOf<StringKey>;
+type CountedKey = (typeof COUNTED_KEYS)[number];
 
 export type { CountedKey };

@@ -7,6 +7,7 @@ const status = {
   copiesMade: 0,
   stillNeeded: 3,
   givenUp: 0,
+  ladder: [],
   current: null,
   isInWindow: true,
   timezone: 'UTC',

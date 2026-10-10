@@ -340,7 +340,7 @@ describe('how a page of the library is laid out', () => {
       () => {
         expect(fetchLibraryItems).toHaveBeenCalledWith(
           'library-1',
-          expect.objectContaining({ yearFrom: 1990, yearTo: 1999 }),
+          expect.objectContaining({ decades: [1990] }),
         );
       },
       { timeout: 5_000 },
