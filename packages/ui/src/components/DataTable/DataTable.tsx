@@ -100,6 +100,7 @@ const HEIGHT_CLASSES = {
  * @param getSubRows - The rows that open beneath a row, such as a series' episodes, drawn in the
  *   same columns and indented by how deep they sit, sliding open and shut. A cell opens and closes
  *   its own row through the row it is handed; the rows beneath it do not count towards a page.
+ * @param isOpenAtFirst - Whether every row with rows beneath it starts open rather than shut.
  * @param pageSize - How many rows to show at once.
  * @param page - Which page to show, counted from nothing, where the caller keeps it — so it survives
  *   the table being drawn again elsewhere, and can be carried in an address.
@@ -122,6 +123,7 @@ const DataTable = <Row extends RowData>({
   getRowId,
   toolbar,
   getSubRows,
+  isOpenAtFirst = false,
   onReorder,
   pageSize = ROWS_A_PAGE,
   page: givenPage,
@@ -141,7 +143,7 @@ const DataTable = <Row extends RowData>({
       ? rows
       : dragOrder.flatMap((id) => rows.filter((row, at) => idOf(row, at) === id));
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [expanded, setExpanded] = useState<ExpandedState>({});
+  const [expanded, setExpanded] = useState<ExpandedState>(isOpenAtFirst ? true : {});
   const [ownPage, setOwnPage] = useState(0);
   const [shown, setShown] = useState(pageSize);
   const { containerRef, rect, follow, clear } = useSlidingHighlight();

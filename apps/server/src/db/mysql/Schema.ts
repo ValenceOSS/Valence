@@ -1389,6 +1389,18 @@ const linkGrant = mysqlTable(
   ],
 );
 
+const linkDecline = mysqlTable(
+  'link_decline',
+  {
+    linkedServerId: identifier('linkedServerId')
+      .notNull()
+      .references(() => linkedServer.id, { onDelete: 'cascade' }),
+    libraryId: identifier('libraryId').notNull(),
+    declinedAt: momentNow('declinedAt').notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.linkedServerId, table.libraryId] })],
+);
+
 const remotePerson = mysqlTable(
   'remote_person',
   {
@@ -1819,6 +1831,7 @@ export {
   webhookSubscription,
   webhookDelivery,
   federationAudit,
+  linkDecline,
   linkGrant,
   linkInvite,
   linkedServer,

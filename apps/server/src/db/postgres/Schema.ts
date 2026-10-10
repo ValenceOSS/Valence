@@ -1406,6 +1406,18 @@ const linkGrant = pgTable(
   ],
 );
 
+const linkDecline = pgTable(
+  'link_decline',
+  {
+    linkedServerId: text('linkedServerId')
+      .notNull()
+      .references(() => linkedServer.id, { onDelete: 'cascade' }),
+    libraryId: text('libraryId').notNull(),
+    declinedAt: timestamp('declinedAt').notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.linkedServerId, table.libraryId] })],
+);
+
 const remotePerson = pgTable(
   'remote_person',
   {
@@ -1835,6 +1847,7 @@ export {
   webhookSubscription,
   webhookDelivery,
   federationAudit,
+  linkDecline,
   linkGrant,
   linkInvite,
   linkedServer,

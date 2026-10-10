@@ -2716,6 +2716,16 @@
     "context": "How many rows of an admin table are ticked, beside what can be done to them all. {count} is the number."
   },
   {
+    "handler": "common.count.sessions.one",
+    "text": "{count} session",
+    "context": "How many sessions (open tabs or apps) one viewer has, in the admin’s sessions table. {count} is the number."
+  },
+  {
+    "handler": "common.count.sessions.other",
+    "text": "{count} sessions",
+    "context": "How many sessions (open tabs or apps) one viewer has, in the admin’s sessions table. {count} is the number."
+  },
+  {
     "handler": "common.count.shows.one",
     "text": "{count} show",
     "context": "A count of TV shows."
@@ -2764,6 +2774,16 @@
     "handler": "common.count.stillLookingForAlbums.other",
     "text": "Still looking for {count} albums…",
     "context": "Beside the buttons of the window for requesting a playlist's missing songs, on the web and the phone, while the server is still finding some albums; the search carries on if the window is closed, and a notification says when a long one is done. {count} is how many are left to find."
+  },
+  {
+    "handler": "common.count.thingsWatched.one",
+    "text": "{count} thing watched",
+    "context": "How many things one viewer watched lately, in the admin’s watch history. {count} is the number."
+  },
+  {
+    "handler": "common.count.thingsWatched.other",
+    "text": "{count} things watched",
+    "context": "How many things one viewer watched lately, in the admin’s watch history. {count} is the number."
   },
   {
     "handler": "common.count.times.one",
@@ -15710,6 +15730,11 @@
     "context": "Shown when a linked server's admin has not let this server read its record. {name} is that server."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.nameIsLeftOffThisServer",
+    "text": "{name} won’t show on this server.",
+    "context": "Said once an admin chose to leave out a library a linked server shares. {name} is the library."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.nameItself",
     "text": "{name} itself",
     "context": "In a record, a request a linked server made for itself rather than for one of its people. {name} is that server."
@@ -15728,6 +15753,11 @@
     "handler": "screens.adminArea.linkedServersPanel.nameSharesNothingWithThisServer",
     "text": "{name} isn’t sharing anything with this server yet.",
     "context": "Shown when a linked server shares no libraries with this one. {name} is that server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.nameShowsOnThisServer",
+    "text": "{name} will show on this server.",
+    "context": "Said once an admin chose to take a library a linked server shares into this server. {name} is the library."
   },
   {
     "handler": "screens.adminArea.linkedServersPanel.namesPeopleMayAskThisServer",
@@ -15828,6 +15858,11 @@
     "handler": "screens.adminArea.linkedServersPanel.shareNameWithName2",
     "text": "Share {name} with {name2}",
     "context": "Accessible name of the button sharing one library with a linked server. {name} is the library, {name2} the server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.showNameOnThisServer",
+    "text": "Show {name} on this server",
+    "context": "The label of the switch beside one library a linked server shares, choosing whether it is taken into this server. {name} is the library."
   },
   {
     "handler": "screens.adminArea.linkedServersPanel.showThemTheirRecord",
@@ -17810,6 +17845,16 @@
     "context": "Shown in the session stats dialog in the admin area."
   },
   {
+    "handler": "screens.adminArea.sessionTable.hideTheSessionsOfName",
+    "text": "Hide the sessions of {name}",
+    "context": "The label of the button that folds one viewer’s sessions away in the admin’s sessions table. {name} is the viewer."
+  },
+  {
+    "handler": "screens.adminArea.sessionTable.showTheSessionsOfName",
+    "text": "Show the sessions of {name}",
+    "context": "The label of the button that opens one viewer’s sessions in the admin’s sessions table. {name} is the viewer."
+  },
+  {
     "handler": "screens.adminArea.sessionTable.viewer",
     "text": "Viewer",
     "context": "The heading of the column in the admin sessions table naming who has each session open."
@@ -18390,19 +18435,9 @@
     "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
   },
   {
-    "handler": "screens.adminArea.subtitlesCard.whatLeavesTheServer",
-    "text": "What’s sent to the subtitle sites",
-    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
-  },
-  {
     "handler": "screens.adminArea.subtitlesCard.whenNewFilmsAndEpisodesArrive",
     "text": "When new films and episodes arrive, and each night, find subtitles in your languages for anything without them, and swap in better ones as they turn up.",
     "context": "On the admin’s Subtitles page, under System."
-  },
-  {
-    "handler": "screens.adminArea.subtitlesCard.whenYouLookTheTitleAndA",
-    "text": "When you look for subtitles, the title, its catalogue IDs and a fingerprint of the video file are sent to the sites you’ve added keys for. Nothing is sent until someone looks.",
-    "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
   },
   {
     "handler": "screens.adminArea.thatCouldNotBeConfirmed",
@@ -19005,9 +19040,19 @@
     "context": "The title of the dialog for uploading media. {name} is the library's name, or the name of the folder in it being uploaded into."
   },
   {
+    "handler": "screens.adminArea.watchHistoryCard.hideWhatNameWatched",
+    "text": "Hide what {name} watched",
+    "context": "The label of the button that folds one viewer’s watch history away in the admin’s watch history table. {name} is the viewer."
+  },
+  {
     "handler": "screens.adminArea.watchHistoryCard.nothingWatchedYet",
     "text": "Nobody has watched anything yet.",
     "context": "Shown in the admin watch history table before anything has been played."
+  },
+  {
+    "handler": "screens.adminArea.watchHistoryCard.showWhatNameWatched",
+    "text": "Show what {name} watched",
+    "context": "The label of the button that opens one viewer’s watch history in the admin’s watch history table. {name} is the viewer."
   },
   {
     "handler": "screens.adminArea.webhookCreated",

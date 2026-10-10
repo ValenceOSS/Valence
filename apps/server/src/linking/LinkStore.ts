@@ -41,6 +41,8 @@ type LinkStore = {
   addServer: (server: NewLinkedServer) => Promise<StoredLinkedServer>;
   changeServer: (id: string, change: LinkedServerChange) => Promise<StoredLinkedServer | null>;
   removeServer: (id: string) => Promise<boolean>;
+  listDeclined: (id: string) => Promise<string[]>;
+  declineLibrary: (id: string, libraryId: string, isDeclined: boolean) => Promise<void>;
 };
 
 export type { LinkStore, LinkedServerChange, NewLinkedServer, StoredLinkedServer };

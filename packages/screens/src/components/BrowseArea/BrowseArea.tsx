@@ -89,6 +89,9 @@ const NOTHING_FINISHED = () => false;
  * has been kept — drawn as a grid across every library rather than one at a time.
  *
  * @param kind - Which question this page asks.
+ * @param filters - The filters chosen, where they are kept somewhere that outlives the page, such
+ *   as the address.
+ * @param onFiltersChange - Told every filter chosen once one changes.
  * @param libraryId - One library to keep the page to, or null for every one of that kind.
  * @param onOpenShow - Told to open a programme, for a page whose cards stand for programmes.
  * @param onPlay - Told to start something, and where from.
@@ -108,6 +111,8 @@ const NOTHING_FINISHED = () => false;
 const BrowseArea = ({
   kind,
   libraryId = null,
+  filters: chosenFilters,
+  onFiltersChange,
   onOpenShow,
   onPlay,
   onInspect,
@@ -127,7 +132,11 @@ const BrowseArea = ({
   const [chosen, setChosen] = useState<{ kind: string; arrangement: Arrangement } | null>(null);
   const prefersReducedMotion = useReducedMotionConfig();
   const page = PAGES[kind];
-  const filters = useLibraryFilters();
+  const filters = useLibraryFilters(
+    chosenFilters === undefined || onFiltersChange === undefined
+      ? undefined
+      : { selected: chosenFilters, onChange: onFiltersChange },
+  );
   const arrangement = useMemo(
     () => (chosen?.kind === kind ? chosen.arrangement : readBrowseArrangement(kind)),
     [chosen, kind],

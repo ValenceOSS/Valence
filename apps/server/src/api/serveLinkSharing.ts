@@ -16,6 +16,7 @@ import {
   facesRoute,
   syncRoute,
   theirLibrariesRoute,
+  chooseTheirLibraryRoute,
   unblockPersonRoute,
 } from '@ValenceServer/routes/LinkSharingRoute';
 import { createLinkKeeper } from '@ValenceServer/api/createLinkKeeper';
@@ -742,6 +743,21 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
     return theirs === null
       ? context.json(refuse('error.linking.noSuchServer'), 404)
       : context.json(theirs, 200);
+  });
+
+  app.openapi(chooseTheirLibraryRoute, async (context) => {
+    const refusal = await keeper(context.req.raw.headers);
+
+    if (refusal !== null) {
+      return context.json(refusal.body, refusal.status);
+    }
+
+    const { id, libraryId } = context.req.valid('param');
+    const { isTaken } = context.req.valid('json');
+
+    return (await linkSharing.chooseTheirLibrary(id, libraryId, isTaken))
+      ? context.json({ isTaken }, 200)
+      : context.json(refuse('error.linking.noSuchServer'), 404);
   });
 
   app.openapi(facesRoute, async (context) => {

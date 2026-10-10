@@ -1,7 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
   Bin as BinFilledIcon,
-  ChevronRight as ChevronRightIcon,
   Copy as CopyFilledIcon,
   EyeOff as EyeOffFilledIcon,
   Film as FilmFilledIcon,
@@ -22,8 +21,8 @@ import { MoveToLibraryDialog } from '@ValenceScreens/components/AdminArea/compon
 import type { MoveTarget } from '@ValenceScreens/components/AdminArea/components/MoveToLibraryDialog/MoveToLibraryDialog.types';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
-import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
+import { RowFoldButton } from '@ValenceScreens/components/AdminArea/components/RowFoldButton/RowFoldButton';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { DataTable } from '@ValenceUI/DataTable';
 import { TabPanel } from '@ValenceUI/TabPanel';
@@ -600,10 +599,7 @@ const MediaPanel = ({
           return (
             <span className={cn('flex min-w-0 items-center gap-3', INDENTS[row.depth] ?? '')}>
               {!holdsParts ? null : row.getCanExpand() ? (
-                <Button
-                  variant="subtle"
-                  size="none"
-                  isIconOnly
+                <RowFoldButton
                   label={
                     title.kind === 'series'
                       ? say(
@@ -626,22 +622,11 @@ const MediaPanel = ({
                             { name: title.name },
                           )
                   }
-                  aria-expanded={isOpen}
-                  onClick={() => {
+                  isOpen={isOpen}
+                  onToggle={() => {
                     row.toggleExpanded();
                   }}
-                  className="size-6 shrink-0"
-                >
-                  <Icon
-                    of={ChevronRightIcon}
-                    size={15}
-                    className={cn(
-                      'transition-transform duration-[var(--duration-fast)] ease-[var(--ease-out)]',
-                      'motion-reduce:transition-none',
-                      isOpen ? 'rotate-90' : '',
-                    )}
-                  />
-                </Button>
+                />
               ) : (
                 <span className="size-6 shrink-0" />
               )}

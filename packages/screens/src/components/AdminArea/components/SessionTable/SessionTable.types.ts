@@ -1,5 +1,12 @@
 import type { ActiveSession } from '@ValenceClient/admin/fetchAdmin';
 
+type SessionRow = {
+  id: string;
+  session: ActiveSession;
+  group: { label: string; count: number } | null;
+  parts: SessionRow[];
+};
+
 type SessionTableProps = {
   sessions: readonly ActiveSession[];
   busyClientId: string | null;
@@ -9,4 +16,4 @@ type SessionTableProps = {
   onMessage: (session: ActiveSession) => void;
 };
 
-export type { SessionTableProps };
+export type { SessionRow, SessionTableProps };

@@ -13,6 +13,7 @@ type HeldInvite = LinkInvite & { codeHash: string; usedAt: string | null };
 const createMemoryLinkStore = (): LinkStore => {
   const invites = new Map<string, HeldInvite>();
   const servers = new Map<string, StoredLinkedServer>();
+  const declined = new Map<string, Set<string>>();
 
   const isOpen = (invite: HeldInvite, now: Date) =>
     invite.usedAt === null && new Date(invite.expiresAt) > now;
@@ -93,7 +94,27 @@ const createMemoryLinkStore = (): LinkStore => {
 
       return Promise.resolve(changed);
     },
-    removeServer: (id) => Promise.resolve(servers.delete(id)),
+    removeServer: (id) => {
+      declined.delete(id);
+
+      return Promise.resolve(servers.delete(id));
+    },
+
+    listDeclined: (id) => Promise.resolve([...(declined.get(id) ?? [])]),
+
+    declineLibrary: (id, libraryId, isDeclined) => {
+      const held = declined.get(id) ?? new Set<string>();
+
+      if (isDeclined) {
+        held.add(libraryId);
+      } else {
+        held.delete(libraryId);
+      }
+
+      declined.set(id, held);
+
+      return Promise.resolve();
+    },
   };
 };
 

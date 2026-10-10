@@ -57,6 +57,7 @@ type LinkSharingService = {
   block: (id: string, personId: string, isBlocked: boolean) => Promise<RemotePerson | null>;
   activity: (id: string) => Promise<FederationActivity[] | null>;
   theirLibraries: (id: string) => Promise<TheirLibraries | null>;
+  chooseTheirLibrary: (id: string, libraryId: string, isTaken: boolean) => Promise<boolean>;
   theirActivity: (id: string) => Promise<TheirActivity | null>;
   askAs: (id: string, person: LinkPerson) => Promise<{ address: string; token: string } | null>;
 };

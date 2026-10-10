@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { Logo } from '@ValenceUI/Logo';
 import { liquidSpring, stillTransition } from '@ValenceUI/animations/reveal';
 import { MorphingRing } from '@ValenceUI/MorphingRing';
+import { layoutBoxOf } from '@ValenceUI/layoutBoxOf';
 import { WordReveal } from '@ValenceUI/WordReveal';
 import { splashIntro } from './splashIntro';
 import type { SplashScreenProps } from './SplashScreen.types';
@@ -47,6 +48,9 @@ const DONE_AT_MILLISECONDS = NAME_AT_MILLISECONDS + CARD_OPENS_SECONDS * 1000;
  * rather than the whole card shrinking. When it leaves, the ground around the card fades to show
  * the page, and where the page has a card at the top marked as the place to land — the home page's
  * featured title — the splash card's edges draw in onto it before the splash card fades over it.
+ * Where that card rests is measured once the page has laid itself out, leaving out the slide the
+ * page arrives with, so the splash card lands where the card will be rather than where it was
+ * partway through arriving.
  * While it leaves it sinks beneath the bar along the top, so the mark flying to its place there is
  * never covered by the card it left.
  *
@@ -141,27 +145,39 @@ const SplashScreen = ({
       return undefined;
     }
 
-    const target = document.querySelector('[data-splash-lands]')?.getBoundingClientRect();
-    const isOnScreen = target !== undefined && target.top < window.innerHeight && target.height > 0;
+    let gone: ReturnType<typeof setTimeout> | undefined;
+    let second = 0;
 
-    if (!isOnScreen || prefersReducedMotion === true) {
-      setLanding({ clip: null });
-    } else {
-      setLanding({
-        clip: `inset(${Math.max(0, target.top).toString()}px ${Math.max(0, window.innerWidth - target.right).toString()}px ${Math.max(0, window.innerHeight - target.bottom).toString()}px ${Math.max(0, target.left).toString()}px round ${CARD_RADIUS.toString()}px)`,
-      });
-    }
+    const land = () => {
+      const found = document.querySelector('[data-splash-lands]');
+      const target = found instanceof HTMLElement ? layoutBoxOf(found) : null;
+      const isOnScreen = target !== null && target.top < window.innerHeight && target.height > 0;
 
-    const gone = setTimeout(
-      () => {
-        onLeft?.();
-      },
-      isOnScreen && prefersReducedMotion !== true
-        ? LANDS_MILLISECONDS + FADES_MILLISECONDS
-        : FADES_MILLISECONDS,
-    );
+      if (!isOnScreen || prefersReducedMotion === true) {
+        setLanding({ clip: null });
+      } else {
+        setLanding({
+          clip: `inset(${Math.max(0, target.top).toString()}px ${Math.max(0, window.innerWidth - target.left - target.width).toString()}px ${Math.max(0, window.innerHeight - target.top - target.height).toString()}px ${Math.max(0, target.left).toString()}px round ${CARD_RADIUS.toString()}px)`,
+        });
+      }
+
+      gone = setTimeout(
+        () => {
+          onLeft?.();
+        },
+        isOnScreen && prefersReducedMotion !== true
+          ? LANDS_MILLISECONDS + FADES_MILLISECONDS
+          : FADES_MILLISECONDS,
+      );
+    };
+
+    const first = requestAnimationFrame(() => {
+      second = requestAnimationFrame(land);
+    });
 
     return () => {
+      cancelAnimationFrame(first);
+      cancelAnimationFrame(second);
       clearTimeout(gone);
     };
   }, [isLeaving, prefersReducedMotion, onLeft]);

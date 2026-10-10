@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { and, asc, eq, gt, isNull } from 'drizzle-orm';
 import { countAffected } from '@ValenceDatabase/countAffected';
 import { toIso } from '@ValenceCore/functions/toIso';
-import { linkInvite, linkedServer } from '#dialect/Schema';
+import { linkDecline, linkInvite, linkedServer } from '#dialect/Schema';
 import { LinkStateSchema, PublicServerKeySchema } from '@ValenceContracts/schemas/LinkedServer';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { LinkStore, StoredLinkedServer } from './LinkStore';
@@ -151,6 +151,25 @@ const createDatabaseLinkStore = (db: AnyValenceDatabase): LinkStore => {
 
     removeServer: async (id) =>
       countAffected(await db.delete(linkedServer).where(eq(linkedServer.id, id))) > 0,
+
+    listDeclined: async (id) => {
+      const rows = await db
+        .select({ libraryId: linkDecline.libraryId })
+        .from(linkDecline)
+        .where(eq(linkDecline.linkedServerId, id));
+
+      return rows.map((row) => row.libraryId);
+    },
+
+    declineLibrary: async (id, libraryId, isDeclined) => {
+      await db
+        .delete(linkDecline)
+        .where(and(eq(linkDecline.linkedServerId, id), eq(linkDecline.libraryId, libraryId)));
+
+      if (isDeclined) {
+        await db.insert(linkDecline).values({ linkedServerId: id, libraryId });
+      }
+    },
   };
 };
 

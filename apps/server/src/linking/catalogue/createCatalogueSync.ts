@@ -61,7 +61,8 @@ const inBatches = async (ids: readonly string[], remove: (batch: string[]) => Pr
  * from the same id, or its name in its library, which the other server keeps unique as this one
  * does — names that same row. What people here have watched, rated or kept on those rows is
  * never lost to a refresh. What a whole pass no longer brings has gone from the other server and
- * goes here too, and a library that is no longer shared goes with everything in it.
+ * goes here too, and a library that is no longer shared goes with everything in it, as does one
+ * an administrator here chose not to take.
  *
  * A server that cannot be reached is left as it was, so its titles stay browsable while it is away,
  * and is remembered as unreachable until it answers again, so a page can say so.
@@ -226,7 +227,9 @@ const createCatalogueSync = ({
     downloads.set(serverId, listed.answer.allowsDownloads);
     requesting.set(serverId, listed.answer.takesRequests);
 
-    for (const shared of listed.answer.libraries) {
+    const declined = new Set(await links.listDeclined(serverId));
+
+    for (const shared of listed.answer.libraries.filter((one) => !declined.has(one.id))) {
       const libraryId = await keepLibrary(serverId, shared);
       const seen = new Set<string>();
       let after: string | null = null;

@@ -678,6 +678,8 @@ const ENGLISH = {
   'common.count.seconds.other': '{count} seconds',
   'common.count.selected.one': '{count} selected',
   'common.count.selected.other': '{count} selected',
+  'common.count.sessions.one': '{count} session',
+  'common.count.sessions.other': '{count} sessions',
   'common.count.shows.one': '{count} show',
   'common.count.shows.other': '{count} shows',
   'common.count.songs.one': '{count} song',
@@ -690,6 +692,8 @@ const ENGLISH = {
     'Still looking for {count} album. You can close this and come back to it.',
   'common.count.stillLookingForAlbums.other':
     'Still looking for {count} albums. You can close this and come back to it.',
+  'common.count.thingsWatched.one': '{count} thing watched',
+  'common.count.thingsWatched.other': '{count} things watched',
   'common.count.times.one': '{count} time',
   'common.count.times.other': '{count} times',
   'common.count.titles.one': '{count} title',
@@ -3950,6 +3954,8 @@ const ENGLISH = {
   'screens.adminArea.linkedServersPanel.nameCouldNotBeReached': 'Couldn’t reach {name}.',
   'screens.adminArea.linkedServersPanel.nameDoesNotShowThisServerIts':
     '{name} doesn’t share its request history with this server.',
+  'screens.adminArea.linkedServersPanel.nameIsLeftOffThisServer':
+    '{name} won’t show on this server.',
   'screens.adminArea.linkedServersPanel.nameItself': '{name} itself',
   'screens.adminArea.linkedServersPanel.namesAdminCanPauseSomebodyHere':
     '{name}’s admin can pause anyone here who’s watching from that server, or send them a message. They can always stop a stream without this setting, because the stream is theirs.',
@@ -3957,6 +3963,7 @@ const ENGLISH = {
     '{name} sees the names of people watching. When off, it sees “Someone from {server}” instead.',
   'screens.adminArea.linkedServersPanel.nameSharesNothingWithThisServer':
     '{name} isn’t sharing anything with this server yet.',
+  'screens.adminArea.linkedServersPanel.nameShowsOnThisServer': '{name} will show on this server.',
   'screens.adminArea.linkedServersPanel.namesPeopleMayAskThisServer':
     '{name}’s people can request films and series from this server. Their requests appear in your queue, labelled with their server, for you to approve.',
   'screens.adminArea.linkedServersPanel.namesPeopleMayDownloadWhatIs':
@@ -3986,6 +3993,7 @@ const ENGLISH = {
   'screens.adminArea.linkedServersPanel.seenWhen': 'Seen {when}',
   'screens.adminArea.linkedServersPanel.sendYourPeoplesNames': 'Send your people’s names',
   'screens.adminArea.linkedServersPanel.shareNameWithName2': 'Share {name} with {name2}',
+  'screens.adminArea.linkedServersPanel.showNameOnThisServer': 'Show {name} on this server',
   'screens.adminArea.linkedServersPanel.showThemTheirRecord': 'Share their request history',
   'screens.adminArea.linkedServersPanel.streamsAtOnce': 'Simultaneous streams',
   'screens.adminArea.linkedServersPanel.streamsAtOnceForName': 'Simultaneous streams for {name}',
@@ -4490,6 +4498,8 @@ const ENGLISH = {
   'screens.adminArea.sessionStatsDialog.nothingRightNow': 'Nothing right now',
   'screens.adminArea.sessionStatsDialog.notReportedYet': 'Not reported yet',
   'screens.adminArea.sessionStatsDialog.pausedByAnAdmin': 'Paused by an admin',
+  'screens.adminArea.sessionTable.hideTheSessionsOfName': 'Hide the sessions of {name}',
+  'screens.adminArea.sessionTable.showTheSessionsOfName': 'Show the sessions of {name}',
   'screens.adminArea.sessionTable.viewer': 'Viewer',
   'screens.adminArea.settingsPanel.ageCertificates': 'Age certificates',
   'screens.adminArea.settingsPanel.aKeyIsSetEnteringA':
@@ -4647,11 +4657,8 @@ const ENGLISH = {
     'The biggest catalogue, and it can find subtitles timed to your exact file. Downloads are counted against the account you sign in with.',
   'screens.adminArea.subtitlesCard.theSubtitleSettingsCouldNotBe':
     'Couldn’t load the subtitle settings.',
-  'screens.adminArea.subtitlesCard.whatLeavesTheServer': 'What’s sent to the subtitle sites',
   'screens.adminArea.subtitlesCard.whenNewFilmsAndEpisodesArrive':
     'When new films and episodes arrive, and each night, find subtitles in your languages for anything without them, and swap in better ones as they turn up.',
-  'screens.adminArea.subtitlesCard.whenYouLookTheTitleAndA':
-    'When you look for subtitles, the title, its catalogue IDs and a fingerprint of the video file are sent to the sites you’ve added keys for. Nothing is sent until someone looks.',
   'screens.adminArea.thatCouldNotBeConfirmed': 'Couldn’t confirm that.',
   'screens.adminArea.thatReEncodeCouldNotBe': 'Couldn’t stop the re-encode.',
   'screens.adminArea.thatScheduleCouldNotBeAdded': 'Couldn’t add the schedule.',
@@ -4808,7 +4815,9 @@ const ENGLISH = {
     '{count} uploads didn’t finish. Choose the same files again to resume them.',
   'screens.adminArea.uploadMediaDialog.uploadToALibrary': 'Upload to a library',
   'screens.adminArea.uploadMediaDialog.uploadToName': 'Upload to {name}',
+  'screens.adminArea.watchHistoryCard.hideWhatNameWatched': 'Hide what {name} watched',
   'screens.adminArea.watchHistoryCard.nothingWatchedYet': 'Nobody has watched anything yet.',
+  'screens.adminArea.watchHistoryCard.showWhatNameWatched': 'Show what {name} watched',
   'screens.adminArea.webhookCreated': 'Webhook created.',
   'screens.adminArea.webhookDeleted': 'Webhook deleted.',
   'screens.adminArea.webhookFields.aFirstScanOfALarge':

@@ -827,6 +827,13 @@
       "when": 1791648193778,
       "tag": "0117_viewings_know_their_device",
       "breakpoints": true
+    },
+    {
+      "idx": 118,
+      "version": "7",
+      "when": 1791670024414,
+      "tag": "0118_linked_libraries_can_be_declined",
+      "breakpoints": true
     }
   ]
 }

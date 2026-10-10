@@ -286,9 +286,29 @@ const createLinkSharingService = ({
       const signed = await linking.signFor(id);
       const answered = signed === null ? null : await peers.libraries(signed.address, signed.token);
 
-      return answered?.kind === 'answered'
-        ? { isReachable: true, libraries: answered.answer.libraries }
-        : { isReachable: false, libraries: [] };
+      if (answered?.kind !== 'answered') {
+        return { isReachable: false, libraries: [] };
+      }
+
+      const declined = new Set(await links.listDeclined(id));
+
+      return {
+        isReachable: true,
+        libraries: answered.answer.libraries.map((library) => ({
+          ...library,
+          isTaken: !declined.has(library.id),
+        })),
+      };
+    },
+
+    chooseTheirLibrary: async (id, libraryId, isTaken) => {
+      if ((await links.readServer(id)) === null) {
+        return false;
+      }
+
+      await links.declineLibrary(id, libraryId, !isTaken);
+
+      return true;
     },
 
     theirActivity: async (id) => {
