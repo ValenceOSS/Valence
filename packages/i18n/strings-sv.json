@@ -4202,6 +4202,11 @@
     "context": "The title of a nothing here, used in the artists of the phone app and in the artists view in the music page."
   },
   {
+    "handler": "common.noBitrateCeiling",
+    "text": "No ceiling",
+    "context": "The placeholder of a bitrate ceiling field left empty, meaning the resolution's own limit applies."
+  },
+  {
     "handler": "common.nobodyHasAnAccountOnThis",
     "text": "There are no accounts on this server yet.",
     "context": "Text shown, used in the way in of the phone app and in the profile gate."

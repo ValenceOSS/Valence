@@ -134,7 +134,7 @@ const LadderTable = ({
             type="number"
             size="sm"
             min={100}
-            placeholder={say('common.noCeiling')}
+            placeholder={say('common.noBitrateCeiling')}
             value={row.original.bitrate}
             onValueChange={(next) => {
               onBitrateChange(row.original.id, next);

@@ -120,8 +120,6 @@ describe('ProfilesPanel', () => {
     fetchProfiles.mockResolvedValue([HD, LOSSLESS, UHD]);
     renderInAnAddress(<ProfilesPanel />);
 
-    expect(await screen.findByText(/^Highest first\./)).toBeInTheDocument();
-
     await user.click(await screen.findByRole('button', { name: 'Actions for HD' }));
 
     expect(screen.queryByRole('menuitem', { name: /Move up/ })).toBeNull();

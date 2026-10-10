@@ -34,6 +34,7 @@ const ScopedField = ({
   <div className={cn('flex min-w-0 items-end', className)}>
     <TextField
       label={label}
+      type="search"
       value={value}
       onValueChange={onValueChange}
       isLabelHidden={isLabelHidden}

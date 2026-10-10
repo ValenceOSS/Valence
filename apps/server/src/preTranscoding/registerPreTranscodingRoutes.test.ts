@@ -37,6 +37,7 @@ const build = (isAdministrator = true) => {
     copiesMade: 0,
     stillNeeded: 2,
     givenUp: 0,
+    ladder: [],
     current: null,
     isInWindow: true,
     timezone: 'UTC',

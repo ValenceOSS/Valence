@@ -2,7 +2,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { PRE_TRANSCODING_DEFAULTS } from '@ValenceContracts/schemas/PreTranscoding';
+import {
+  DEFAULT_PRE_TRANSCODE_TARGET,
+  PRE_TRANSCODING_DEFAULTS,
+} from '@ValenceContracts/schemas/PreTranscoding';
 import { PreTranscodingCard } from './PreTranscodingCard';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type {
@@ -55,6 +58,14 @@ const statusOf = (settings: PreTranscodingSettings): PreTranscodingStatus => ({
   copiesMade: 4,
   stillNeeded: 12,
   givenUp: 1,
+  ladder: settings.targets.map((target) => ({
+    target,
+    replacesOriginal: false,
+    copiesMade: 4,
+    bytesKept: 0,
+    stillNeeded: 12,
+    givenUp: 1,
+  })),
   current: null,
   isInWindow: false,
   timezone: 'Europe/London',
@@ -117,7 +128,10 @@ describe('PreTranscodingCard', () => {
     await userEvent.type(field, '00');
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
-    expect(savePreTranscodingMock).toHaveBeenCalledWith({ ...ON, maxBitrateKbps: 2000 });
+    expect(savePreTranscodingMock).toHaveBeenCalledWith({
+      ...ON,
+      targets: [{ ...DEFAULT_PRE_TRANSCODE_TARGET, maxBitrateKbps: 2000 }],
+    });
   });
 
   it('works until everything is done when asked to', async () => {
@@ -133,7 +147,7 @@ describe('PreTranscodingCard', () => {
     draw();
 
     await userEvent.click(
-      await screen.findByRole('checkbox', { name: /All film and series libraries/ }),
+      await screen.findByRole('switch', { name: /All film and series libraries/ }),
     );
 
     expect(screen.getByRole('checkbox', { name: /Films/ })).toBeChecked();
@@ -165,6 +179,29 @@ describe('PreTranscodingCard', () => {
       isPaused: true,
       schedule: 'untilDone',
     });
+  });
+
+  it('adds a rung one step below the lowest, and saves the ladder', async () => {
+    draw();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Add a rung' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(savePreTranscodingMock).toHaveBeenCalledWith({
+      ...ON,
+      targets: [DEFAULT_PRE_TRANSCODE_TARGET, { ...DEFAULT_PRE_TRANSCODE_TARGET, quality: '720p' }],
+    });
+  });
+
+  it('says which rung replaces the original once the original is not kept', async () => {
+    draw();
+
+    expect(await screen.findByRole('switch', { name: 'Keep the original' })).toBeChecked();
+    expect(screen.queryByText('Replaces the original')).toBeNull();
+
+    await userEvent.click(screen.getByRole('switch', { name: 'Keep the original' }));
+
+    expect(screen.getByText('Replaces the original')).toBeVisible();
   });
 
   it('asks for the next copy now', async () => {

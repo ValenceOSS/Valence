@@ -222,7 +222,7 @@ pub fn build_ladder_playlist(videos: &[LadderVariant], audio: &AudioRendition) -
 
     let mut ordered: Vec<&LadderVariant> = videos.iter().collect();
 
-    ordered.sort_by(|left, right| right.rendition.bandwidth.cmp(&left.rendition.bandwidth));
+    ordered.sort_by_key(|variant| std::cmp::Reverse(variant.rendition.bandwidth));
 
     for variant in ordered {
         let resolution = variant
@@ -288,8 +288,8 @@ pub fn segment_at(lengths: &[f64], seconds: f64) -> Option<usize> {
 #[cfg(test)]
 mod tests {
     use super::{
-        build_multivariant_playlist, build_vod_playlist, segment_at, segment_name, target_duration,
-        AudioRendition, VideoRendition,
+        build_ladder_playlist, build_multivariant_playlist, build_vod_playlist, segment_at,
+        segment_name, target_duration, AudioRendition, LadderVariant, VideoRendition,
     };
     use crate::transcode_plan::{SegmentContainer, Track};
 
@@ -517,5 +517,61 @@ mod tests {
         );
         assert!(playlist.contains("audio00001.m4s\n"), "{playlist}");
         assert!(!playlist.contains("segment"), "{playlist}");
+    }
+
+    /// Every quality of a film over one sound, the largest first, each where
+    /// its own playlist is. See VAL-363.
+    #[test]
+    fn offers_every_quality_over_one_sound_largest_first() {
+        let (video, audio) = charlies_angels();
+        let smaller = VideoRendition {
+            codec: "avc1.64001f".into(),
+            bandwidth: 3_000_000,
+            size: Some((1280, 534)),
+        };
+        let playlist = build_ladder_playlist(
+            &[
+                LadderVariant {
+                    rendition: smaller,
+                    uri: "../copy-720/index.m3u8".into(),
+                },
+                LadderVariant {
+                    rendition: video,
+                    uri: "video.m3u8".into(),
+                },
+            ],
+            &audio,
+        );
+
+        assert_eq!(playlist.matches("#EXT-X-MEDIA:TYPE=AUDIO").count(), 1);
+        assert_eq!(playlist.matches("#EXT-X-STREAM-INF").count(), 2);
+        assert_eq!(playlist.matches("AUDIO=\"audio\"").count(), 2);
+
+        let largest = playlist
+            .find("video.m3u8")
+            .expect("the original is offered");
+        let smallest = playlist
+            .find("../copy-720/index.m3u8")
+            .expect("the copy is offered");
+
+        assert!(largest < smallest, "largest first:\n{playlist}");
+        assert!(playlist.contains("RESOLUTION=1280x534"));
+    }
+
+    /// One variant is a ladder of one, the same playlist as before ladders.
+    #[test]
+    fn a_film_with_one_quality_is_offered_as_it_always_was() {
+        let (video, audio) = charlies_angels();
+
+        assert_eq!(
+            build_multivariant_playlist(&video, &audio),
+            build_ladder_playlist(
+                &[LadderVariant {
+                    rendition: video.clone(),
+                    uri: "video.m3u8".into(),
+                }],
+                &audio,
+            )
+        );
     }
 }

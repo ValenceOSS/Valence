@@ -386,7 +386,7 @@ const ReencodeDialog = ({
                 size="sm"
                 type="number"
                 min={100}
-                placeholder={say('common.noCeiling')}
+                placeholder={say('common.noBitrateCeiling')}
                 value={ceiling}
                 onValueChange={setCeiling}
                 {...(ceilingRead.kind === 'invalid'

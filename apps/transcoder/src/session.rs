@@ -1940,10 +1940,10 @@ pub async fn await_run(directory: &Path, timeout: Duration) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        classify_exit, classify_reuse, is_another_viewer, is_segment_ready, release_device,
-        releases_a_hold, resolve_segment, resume_from, run_has_closed, run_is_writing,
-        should_retry_in_software, ExitClass, Reuse, RunPosition, SegmentPlan, Session,
-        SessionConfig, SessionRegistry, COMPLETE_MARKER,
+        classify_exit, classify_reuse, is_another_viewer, is_segment_ready, kept_with,
+        release_device, releases_a_hold, resolve_segment, resume_from, run_has_closed,
+        run_is_writing, should_retry_in_software, ExitClass, Reuse, RunPosition, SegmentPlan,
+        Session, SessionConfig, SessionRegistry, COMPLETE_MARKER,
     };
     use crate::boundaries::{Boundaries, LAYOUT, LENGTHS_NAME};
     use crate::transcode_plan::{
@@ -2489,6 +2489,63 @@ mod tests {
     #[test]
     fn does_not_retry_something_that_worked() {
         assert!(!should_retry_in_software(ExitClass::Completed, true));
+    }
+
+    /// A ladder: the session it was started from, that session's sound, and
+    /// two rungs, held as the registry holds them.
+    fn a_ladder() -> HashMap<String, Session> {
+        let mut sessions = HashMap::new();
+
+        for id in ["root", "sound", "rung-720", "rung-480", "other"] {
+            let (mut session, _stopped) = a_session_running(1);
+
+            session.id = id.to_owned();
+            sessions.insert(id.to_owned(), session);
+        }
+
+        if let Some(root) = sessions.get_mut("root") {
+            root.companion = Some("sound".to_owned());
+            root.variants = vec!["rung-720".to_owned(), "rung-480".to_owned()];
+        }
+
+        if let Some(sound) = sessions.get_mut("sound") {
+            sound.companion = Some("root".to_owned());
+        }
+
+        for rung in ["rung-720", "rung-480"] {
+            if let Some(session) = sessions.get_mut(rung) {
+                session.ladder_root = Some("root".to_owned());
+            }
+        }
+
+        sessions
+    }
+
+    /// Using the session a ladder was started from keeps every rung, so a
+    /// quality the player has not reached for is there when it does. VAL-363.
+    #[test]
+    fn using_a_ladder_keeps_every_rung_and_the_sound() {
+        assert_eq!(
+            kept_with(&a_ladder(), "root"),
+            ["root", "rung-480", "rung-720", "sound"]
+        );
+    }
+
+    /// Using one rung keeps the session it belongs to and that session's
+    /// sound, which is what the player is listening to alongside it.
+    #[test]
+    fn using_a_rung_keeps_what_it_belongs_to() {
+        assert_eq!(
+            kept_with(&a_ladder(), "rung-480"),
+            ["root", "rung-480", "sound"]
+        );
+    }
+
+    /// A session outside any ladder keeps only itself.
+    #[test]
+    fn a_session_on_its_own_keeps_only_itself() {
+        assert_eq!(kept_with(&a_ladder(), "other"), ["other"]);
+        assert_eq!(kept_with(&a_ladder(), "gone"), ["gone"]);
     }
 
     /// A session whose live run is `run`, begun at the first segment, as the

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { screen, waitFor } from '@testing-library/react';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import userEvent from '@testing-library/user-event';
@@ -6,12 +7,14 @@ import { SearchArea } from './SearchArea';
 import { readsWhole } from '@ValenceScreens/testing/readsWhole';
 import type { LibraryFacets, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { Book } from '@ValenceContracts/schemas/Book';
+import type { SearchAreaProps } from './SearchArea.types';
 
 type Page = { items: MediaSummary[]; total: number };
 type Options = {
   search?: string;
   kind?: string;
-  genre?: string;
+  genres?: string[];
+  decades?: number[];
   yearFrom?: number;
   yearTo?: number;
   minRating?: number;
@@ -95,11 +98,9 @@ const A_BOOK: Book = {
  */
 const searchFor = (search: string, onOpenBook = vi.fn()) => {
   renderInAnAddress(
-    <SearchArea
+    <HeldSearchArea
       search={search}
       onSearchChange={vi.fn()}
-      genre={null}
-      onGenreChange={vi.fn()}
       onPlay={vi.fn()}
       onInspect={vi.fn()}
       onOpenBook={onOpenBook}
@@ -113,17 +114,37 @@ vi.mock('@ValenceUI/useHasScrolledPast', () => ({
   useHasScrolledPast: () => ({ mark: () => undefined, hasPassed: true }),
 }));
 
+/**
+ * The search area holding its own filters, as the page holding it in the address does.
+ *
+ * @param props - What the search area is given, less its filters, which start as asked.
+ */
+const HeldSearchArea = ({
+  startingFilters = new Set(),
+  onFiltersChange,
+  ...rest
+}: Omit<SearchAreaProps, 'filters' | 'onFiltersChange'> & {
+  startingFilters?: ReadonlySet<string>;
+  onFiltersChange?: (next: ReadonlySet<string>) => void;
+}) => {
+  const [filters, setFilters] = useState(startingFilters);
+
+  return (
+    <SearchArea
+      {...rest}
+      filters={filters}
+      onFiltersChange={(next) => {
+        setFilters(next);
+        onFiltersChange?.(next);
+      }}
+    />
+  );
+};
+
 describe('SearchArea', () => {
   it('offers the way back to the top once the top has been left', async () => {
     renderInAnAddress(
-      <SearchArea
-        search=""
-        onSearchChange={vi.fn()}
-        genre={null}
-        onGenreChange={vi.fn()}
-        onPlay={vi.fn()}
-        onInspect={vi.fn()}
-      />,
+      <HeldSearchArea search="" onSearchChange={vi.fn()} onPlay={vi.fn()} onInspect={vi.fn()} />,
     );
 
     expect(await screen.findByRole('button', { name: 'Back to top' })).toBeInTheDocument();
@@ -131,14 +152,7 @@ describe('SearchArea', () => {
 
   it('offers somewhere to type', async () => {
     renderInAnAddress(
-      <SearchArea
-        search=""
-        onSearchChange={vi.fn()}
-        genre={null}
-        onGenreChange={vi.fn()}
-        onPlay={vi.fn()}
-        onInspect={vi.fn()}
-      />,
+      <HeldSearchArea search="" onSearchChange={vi.fn()} onPlay={vi.fn()} onInspect={vi.fn()} />,
     );
 
     expect(await screen.findByRole('searchbox')).toBeInTheDocument();
@@ -146,11 +160,9 @@ describe('SearchArea', () => {
 
   it('asks the server rather than sifting what happened to arrive', async () => {
     renderInAnAddress(
-      <SearchArea
+      <HeldSearchArea
         search="arrival"
         onSearchChange={vi.fn()}
-        genre={null}
-        onGenreChange={vi.fn()}
         onPlay={vi.fn()}
         onInspect={vi.fn()}
       />,
@@ -168,14 +180,7 @@ describe('SearchArea', () => {
     const user = userEvent.setup();
 
     renderInAnAddress(
-      <SearchArea
-        search=""
-        onSearchChange={vi.fn()}
-        genre={null}
-        onGenreChange={vi.fn()}
-        onPlay={vi.fn()}
-        onInspect={vi.fn()}
-      />,
+      <HeldSearchArea search="" onSearchChange={vi.fn()} onPlay={vi.fn()} onInspect={vi.fn()} />,
     );
     await user.click(await screen.findByRole('button', { name: 'Films' }));
 
@@ -189,19 +194,10 @@ describe('SearchArea', () => {
 
   it('offers the genres the library actually has', async () => {
     renderInAnAddress(
-      <SearchArea
-        search=""
-        onSearchChange={vi.fn()}
-        genre={null}
-        onGenreChange={vi.fn()}
-        onPlay={vi.fn()}
-        onInspect={vi.fn()}
-      />,
+      <HeldSearchArea search="" onSearchChange={vi.fn()} onPlay={vi.fn()} onInspect={vi.fn()} />,
     );
 
-    await userEvent
-      .setup()
-      .click(await screen.findByRole('button', { name: 'Filter the library' }));
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'Genre' }));
 
     expect(
       await screen.findByRole('menuitemcheckbox', { name: 'Science fiction' }),
@@ -210,14 +206,7 @@ describe('SearchArea', () => {
 
   it('shows what it found', async () => {
     renderInAnAddress(
-      <SearchArea
-        search=""
-        onSearchChange={vi.fn()}
-        genre={null}
-        onGenreChange={vi.fn()}
-        onPlay={vi.fn()}
-        onInspect={vi.fn()}
-      />,
+      <HeldSearchArea search="" onSearchChange={vi.fn()} onPlay={vi.fn()} onInspect={vi.fn()} />,
     );
 
     expect(await screen.findByRole('button', { name: /Arrival/ })).toBeInTheDocument();
@@ -227,14 +216,7 @@ describe('SearchArea', () => {
     const user = userEvent.setup();
 
     renderInAnAddress(
-      <SearchArea
-        search=""
-        onSearchChange={vi.fn()}
-        genre={null}
-        onGenreChange={vi.fn()}
-        onPlay={vi.fn()}
-        onInspect={vi.fn()}
-      />,
+      <HeldSearchArea search="" onSearchChange={vi.fn()} onPlay={vi.fn()} onInspect={vi.fn()} />,
     );
     await user.click(await screen.findByRole('button', { name: 'Films' }));
     fetchLibraryItems.mockResolvedValue({ items: [], total: 0 });
@@ -243,22 +225,22 @@ describe('SearchArea', () => {
   });
 
   it('takes the genre off on request, from the chip that says it is on', async () => {
-    const onGenreChange = vi.fn();
+    const onFiltersChange = vi.fn();
     const user = userEvent.setup();
 
     renderInAnAddress(
-      <SearchArea
+      <HeldSearchArea
         search=""
         onSearchChange={vi.fn()}
-        genre="Science fiction"
-        onGenreChange={onGenreChange}
+        startingFilters={new Set(['genre:Science fiction'])}
+        onFiltersChange={onFiltersChange}
         onPlay={vi.fn()}
         onInspect={vi.fn()}
       />,
     );
     await user.click(await screen.findByRole('button', { name: 'Clear all' }));
 
-    expect(onGenreChange).toHaveBeenCalledWith(null);
+    expect(onFiltersChange).toHaveBeenCalledWith(new Set());
   });
 
   it('draws a programme once rather than once per episode', async () => {
@@ -271,14 +253,7 @@ describe('SearchArea', () => {
     });
 
     renderInAnAddress(
-      <SearchArea
-        search=""
-        onSearchChange={vi.fn()}
-        genre={null}
-        onGenreChange={vi.fn()}
-        onPlay={vi.fn()}
-        onInspect={vi.fn()}
-      />,
+      <HeldSearchArea search="" onSearchChange={vi.fn()} onPlay={vi.fn()} onInspect={vi.fn()} />,
     );
 
     expect(await screen.findByText(readsWhole('1 result'))).toBeInTheDocument();
@@ -297,11 +272,9 @@ describe('SearchArea', () => {
     const onInspect = vi.fn();
 
     renderInAnAddress(
-      <SearchArea
+      <HeldSearchArea
         search=""
         onSearchChange={vi.fn()}
-        genre={null}
-        onGenreChange={vi.fn()}
         onPlay={vi.fn()}
         onInspect={onInspect}
         onOpenShow={onOpenShow}
@@ -318,14 +291,7 @@ describe('SearchArea', () => {
     const user = userEvent.setup();
 
     renderInAnAddress(
-      <SearchArea
-        search=""
-        onSearchChange={vi.fn()}
-        genre={null}
-        onGenreChange={vi.fn()}
-        onPlay={vi.fn()}
-        onInspect={vi.fn()}
-      />,
+      <HeldSearchArea search="" onSearchChange={vi.fn()} onPlay={vi.fn()} onInspect={vi.fn()} />,
     );
 
     const before = await screen.findByRole('button', { name: /Arrival/ });
@@ -339,41 +305,27 @@ describe('SearchArea', () => {
 
   it('keeps the narrower filters in a panel until they are asked for', async () => {
     renderInAnAddress(
-      <SearchArea
-        search=""
-        onSearchChange={vi.fn()}
-        genre={null}
-        onGenreChange={vi.fn()}
-        onPlay={vi.fn()}
-        onInspect={vi.fn()}
-      />,
+      <HeldSearchArea search="" onSearchChange={vi.fn()} onPlay={vi.fn()} onInspect={vi.fn()} />,
     );
 
-    await screen.findByRole('button', { name: 'Filter the library' });
+    await screen.findByRole('group', { name: 'Filter the library' });
 
     expect(screen.queryByRole('menuitemcheckbox', { name: '1990s' })).not.toBeInTheDocument();
   });
 
-  it('asks for a decade as the years either side of it', async () => {
+  it('asks for any of the decades chosen', async () => {
     const user = userEvent.setup();
 
     renderInAnAddress(
-      <SearchArea
-        search=""
-        onSearchChange={vi.fn()}
-        genre={null}
-        onGenreChange={vi.fn()}
-        onPlay={vi.fn()}
-        onInspect={vi.fn()}
-      />,
+      <HeldSearchArea search="" onSearchChange={vi.fn()} onPlay={vi.fn()} onInspect={vi.fn()} />,
     );
-    await user.click(await screen.findByRole('button', { name: 'Filter the library' }));
+    await user.click(await screen.findByRole('button', { name: 'Decade' }));
     await user.click(await screen.findByRole('menuitemcheckbox', { name: '1990s' }));
 
     await waitFor(() => {
       expect(fetchLibraryItems).toHaveBeenCalledWith(
         'library-1',
-        expect.objectContaining({ yearFrom: 1990, yearTo: 1999 }),
+        expect.objectContaining({ decades: [1990] }),
       );
     });
   });
@@ -382,17 +334,10 @@ describe('SearchArea', () => {
     const user = userEvent.setup();
 
     renderInAnAddress(
-      <SearchArea
-        search=""
-        onSearchChange={vi.fn()}
-        genre={null}
-        onGenreChange={vi.fn()}
-        onPlay={vi.fn()}
-        onInspect={vi.fn()}
-      />,
+      <HeldSearchArea search="" onSearchChange={vi.fn()} onPlay={vi.fn()} onInspect={vi.fn()} />,
     );
-    await user.click(await screen.findByRole('button', { name: 'Filter the library' }));
-    await user.click(await screen.findByRole('menuitemcheckbox', { name: '8+' }));
+    await user.click(await screen.findByRole('button', { name: 'Rating' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: '8+' }));
 
     await waitFor(() => {
       expect(fetchLibraryItems).toHaveBeenCalledWith(
@@ -406,14 +351,7 @@ describe('SearchArea', () => {
     const user = userEvent.setup();
 
     renderInAnAddress(
-      <SearchArea
-        search=""
-        onSearchChange={vi.fn()}
-        genre={null}
-        onGenreChange={vi.fn()}
-        onPlay={vi.fn()}
-        onInspect={vi.fn()}
-      />,
+      <HeldSearchArea search="" onSearchChange={vi.fn()} onPlay={vi.fn()} onInspect={vi.fn()} />,
     );
     await user.click(await screen.findByRole('button', { name: 'Filter the library' }));
     await user.click(await screen.findByRole('menuitemcheckbox', { name: '1990s' }));
@@ -427,14 +365,7 @@ describe('SearchArea', () => {
     const user = userEvent.setup();
 
     renderInAnAddress(
-      <SearchArea
-        search=""
-        onSearchChange={vi.fn()}
-        genre={null}
-        onGenreChange={vi.fn()}
-        onPlay={vi.fn()}
-        onInspect={vi.fn()}
-      />,
+      <HeldSearchArea search="" onSearchChange={vi.fn()} onPlay={vi.fn()} onInspect={vi.fn()} />,
     );
     await user.click(await screen.findByRole('button', { name: 'Filter the library' }));
     await user.click(await screen.findByRole('menuitemcheckbox', { name: '1990s' }));
@@ -450,14 +381,7 @@ describe('SearchArea', () => {
     const user = userEvent.setup();
 
     renderInAnAddress(
-      <SearchArea
-        search=""
-        onSearchChange={vi.fn()}
-        genre={null}
-        onGenreChange={vi.fn()}
-        onPlay={vi.fn()}
-        onInspect={vi.fn()}
-      />,
+      <HeldSearchArea search="" onSearchChange={vi.fn()} onPlay={vi.fn()} onInspect={vi.fn()} />,
     );
     await user.click(await screen.findByRole('button', { name: 'Filter the library' }));
 

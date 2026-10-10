@@ -33,7 +33,7 @@ describe('SearchPage', () => {
     renderInAShell(<SearchPage />);
 
     expect(drawn.props?.search).toBe('blade');
-    expect(drawn.props?.genre).toBe('drama');
+    expect(drawn.props?.filters).toEqual(new Set(['genre:drama']));
   });
 
   it('puts what was typed in the address without leaving a history behind', async () => {
@@ -49,17 +49,27 @@ describe('SearchPage', () => {
     );
   });
 
-  it('puts a chosen genre in the address', async () => {
+  it('puts every filter chosen in the address', async () => {
     renderInAShell(<SearchPage />);
 
-    drawn.props?.onGenreChange?.('thriller');
+    drawn.props?.onFiltersChange?.(new Set(['genre:thriller', 'decade:1990']));
 
     await vi.waitFor(
       () => {
-        expect(window.location.search).toContain('genre=thriller');
+        expect(new URLSearchParams(window.location.search).get('filters')).toBe(
+          'genre:thriller,decade:1990',
+        );
       },
       { timeout: 5_000 },
     );
+  });
+
+  it('reads every filter the address chose', () => {
+    window.history.replaceState(null, '', '/search?filters=genre%3Athriller%2Cdecade%3A1990');
+
+    renderInAShell(<SearchPage />);
+
+    expect(drawn.props?.filters).toEqual(new Set(['genre:thriller', 'decade:1990']));
   });
 
   it('says how far through each result this viewer is', () => {
