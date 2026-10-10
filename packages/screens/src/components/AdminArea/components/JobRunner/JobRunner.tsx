@@ -153,7 +153,7 @@ const JobRunner = ({
           return (
             <HeadedSection key={group} title={describeJobGroup(group)}>
               <Well isFlush>
-                <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
+                <ul className="flex flex-col">
                   {inGroup.map((definition) => (
                     <JobRunnerRow
                       key={definition.kind}

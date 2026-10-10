@@ -1,3 +1,4 @@
+import { INDEXER_PRIVACY_LOOKS } from '@ValenceScreens/admin/INDEXER_PRIVACY_LOOKS';
 import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
@@ -47,9 +48,6 @@ const KIND_LABELS: Readonly<Record<string, string>> = {
   torznab: say('common.torznab'),
   newznab: say('common.newznab'),
   cardigann: say('common.site'),
-  public: say('screens.adminArea.indexersPanel.publicSite'),
-  'semi-private': say('screens.adminArea.indexersPanel.semiPrivateSite'),
-  private: say('screens.adminArea.indexersPanel.privateSite'),
 };
 
 const TESTED_AT_ONCE = 4;
@@ -222,7 +220,6 @@ const IndexersPanel = () => {
           <span className="flex min-w-0 flex-col gap-0.5">
             <span className="flex flex-wrap items-center gap-2">
               <span className="truncate font-medium text-text">{row.original.name}</span>
-              <Badge size="sm">{KIND_LABELS[row.original.privacy ?? row.original.kind]}</Badge>
 
               {row.original.sourceAppId === null ? null : (
                 <Badge size="sm" tone="outline">
@@ -236,6 +233,23 @@ const IndexersPanel = () => {
             <span className="truncate text-xs text-text-muted">{row.original.url}</span>
           </span>
         ),
+      },
+      {
+        id: 'privacy',
+        header: say('screens.adminArea.indexerCatalogueDialog.privacy'),
+        accessorFn: (indexer) => indexer.privacy ?? indexer.kind,
+        cell: ({ row }) => {
+          const look =
+            row.original.privacy === null ? null : INDEXER_PRIVACY_LOOKS[row.original.privacy];
+
+          return look === null ? (
+            <Badge size="sm">{KIND_LABELS[row.original.kind]}</Badge>
+          ) : (
+            <Badge size="sm" tone={look.tone}>
+              {look.label}
+            </Badge>
+          );
+        },
       },
       {
         id: 'priority',
@@ -259,7 +273,9 @@ const IndexersPanel = () => {
           const state = describeIndexerState(row.original);
 
           return testing.has(row.original.id) ? (
-            <Spinner size="sm" label={say('common.testingName', { name: row.original.name })} />
+            <Badge size="sm" tone="busy">
+              {say('screens.adminArea.indexersPanel.testing')}
+            </Badge>
           ) : (
             <span className="flex min-w-0 flex-col items-start gap-1">
               <Badge size="sm" tone={state.tone}>

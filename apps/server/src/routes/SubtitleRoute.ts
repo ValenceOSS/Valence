@@ -112,8 +112,66 @@ const readSubtitleCuesRoute = createRoute({
   },
 });
 
+const readSubtitleScriptRoute = createRoute({
+  method: 'get',
+  path: '/api/media/{mediaId}/subtitles/{trackId}/script',
+  tags: ['Subtitles'],
+  summary: 'Read one styled subtitle track as the Advanced SubStation script it is',
+  description:
+    'For a player that draws the script whole, with every effect, position and font it names. A ' +
+    'track with no styling of its own answers 404.',
+  request: {
+    params: z.object({ mediaId: z.string().uuid(), trackId: z.string().min(1) }),
+  },
+  responses: {
+    200: { description: 'The script, as text' },
+    404: {
+      description: 'No such track, or a track that carries no styling',
+      content: { 'application/json': { schema: SubtitleError } },
+    },
+  },
+});
+
+const SubtitleFontsSchema = z.object({ fonts: z.array(z.string()) }).openapi('SubtitleFonts');
+
+const listSubtitleFontsRoute = createRoute({
+  method: 'get',
+  path: '/api/media/{mediaId}/fonts',
+  tags: ['Subtitles'],
+  summary: 'List the fonts a title carries for its own subtitles',
+  description:
+    'Typeset subtitles name fonts nobody has installed and carry them inside the file. Each is ' +
+    'read by name from the route beside this one.',
+  request: { params: z.object({ mediaId: z.string().uuid() }) },
+  responses: {
+    200: {
+      description: 'The fonts, by name',
+      content: { 'application/json': { schema: SubtitleFontsSchema } },
+    },
+  },
+});
+
+const readSubtitleFontRoute = createRoute({
+  method: 'get',
+  path: '/api/media/{mediaId}/fonts/{name}',
+  tags: ['Subtitles'],
+  summary: 'Read one font a title carries for its subtitles',
+  request: { params: z.object({ mediaId: z.string().uuid(), name: z.string().min(1) }) },
+  responses: {
+    200: { description: 'The font file' },
+    404: {
+      description: 'No font by that name',
+      content: { 'application/json': { schema: SubtitleError } },
+    },
+  },
+});
+
 export {
   SubtitleCuesSchema,
+  SubtitleFontsSchema,
+  listSubtitleFontsRoute,
+  readSubtitleFontRoute,
+  readSubtitleScriptRoute,
   SubtitleListSchema,
   listSubtitlesRoute,
   readSubtitleCuesRoute,

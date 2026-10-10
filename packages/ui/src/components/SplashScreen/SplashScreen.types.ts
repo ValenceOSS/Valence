@@ -5,6 +5,8 @@ type SplashScreenProps = {
   marksPlace?: string;
   hasMark?: boolean;
   isLeaving?: boolean;
+  onIntroDone?: () => void;
+  onLeft?: () => void;
 };
 
 export type { SplashScreenProps };

@@ -1,3 +1,5 @@
+import { cuesOfScript } from './cuesOfScript';
+import { STYLED_FORMATS } from './STYLED_FORMATS';
 import { say } from '@ValenceI18n/say';
 import { saying } from '@ValenceI18n/saying';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
@@ -26,7 +28,11 @@ type EmbeddedLookup = {
 };
 
 type Extractor = {
-  readSubtitle: (request: { inputPath: string; streamIndex: number }) => Promise<string>;
+  readSubtitle: (request: {
+    inputPath: string;
+    streamIndex: number;
+    format?: 'webvtt' | 'ass';
+  }) => Promise<string>;
 };
 
 type CreateEmbeddedSubtitleServiceOptions = {
@@ -127,6 +133,30 @@ const createEmbeddedSubtitleService = ({
     void transcoder.readSubtitle({ inputPath: path, streamIndex: text.index }).catch(() => null);
   };
 
+  /**
+   * A styled track's script, copied out of the container as the file carries it.
+   *
+   * @param mediaId - The title.
+   * @param id - The track.
+   * @returns The script, or nothing for a track with no styling or one that cannot be read.
+   */
+  const readScript = async (mediaId: string, id: string): Promise<string | null> => {
+    const found = await discover(mediaId);
+    const stream = found?.streams.find((candidate) => idFor(found.path, candidate.index) === id);
+
+    if (
+      found === null ||
+      stream === undefined ||
+      !STYLED_FORMATS.has(stream.format.toLowerCase())
+    ) {
+      return null;
+    }
+
+    return transcoder
+      .readSubtitle({ inputPath: found.path, streamIndex: stream.index, format: 'ass' })
+      .catch(() => null);
+  };
+
   return {
     list: async (mediaId) => {
       const found = await discover(mediaId);
@@ -186,7 +216,9 @@ const createEmbeddedSubtitleService = ({
       }
     },
 
-    readCues: () => Promise.resolve(null),
+    readScript,
+
+    readCues: async (mediaId, id) => cuesOfScript(await readScript(mediaId, id)),
   };
 };
 

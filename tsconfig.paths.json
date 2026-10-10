@@ -171,6 +171,14 @@
       "@ValenceUI/OriginMark.types": [
         "./packages/ui/src/components/OriginMark/OriginMark.types.ts"
       ],
+      "@ValenceUI/WordReveal": ["./packages/ui/src/components/WordReveal/WordReveal.tsx"],
+      "@ValenceUI/WordReveal.types": [
+        "./packages/ui/src/components/WordReveal/WordReveal.types.ts"
+      ],
+      "@ValenceUI/MorphingRing": ["./packages/ui/src/components/MorphingRing/MorphingRing.tsx"],
+      "@ValenceUI/MorphingRing.types": [
+        "./packages/ui/src/components/MorphingRing/MorphingRing.types.ts"
+      ],
       "@ValenceUI/MoodBackground": [
         "./packages/ui/src/components/MoodBackground/MoodBackground.tsx"
       ],
@@ -349,6 +357,7 @@
       "@ValenceUI/cn": ["./packages/ui/src/functions/cn.ts"],
       "@ValenceUI/useHasScrolledPast": ["./packages/ui/src/functions/useHasScrolledPast.ts"],
       "@ValenceUI/scrollMarginIn": ["./packages/ui/src/functions/scrollMarginIn.ts"],
+      "@ValenceUI/heldBelow": ["./packages/ui/src/functions/heldBelow.ts"],
       "@ValenceUI/scrollerAbove": ["./packages/ui/src/functions/scrollerAbove.ts"],
       "@ValenceUI/useRoomBelow": ["./packages/ui/src/functions/useRoomBelow.ts"],
       "@ValenceUI/useTravelDirection": ["./packages/ui/src/functions/useTravelDirection.ts"],

@@ -2,7 +2,7 @@ import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { AvatarSchema, ProfileColourSchema } from '@ValenceContracts/schemas/ViewerProfile';
-import { AccountSchema } from '@ValenceContracts/schemas/Account';
+import { AccountSchema, DiscordIdSchema } from '@ValenceContracts/schemas/Account';
 import { MINIMUM_PASSWORD_LENGTH } from '@ValenceContracts/constants/MINIMUM_PASSWORD_LENGTH';
 import {
   IssuedSetupLinkSchema,
@@ -167,6 +167,7 @@ const editAccountRoute = createRoute({
             name: z.string().trim().min(1).max(100).optional(),
             username: UsernameSchema.optional(),
             email: z.string().trim().email().nullable().optional(),
+            discordId: DiscordIdSchema.nullable().optional(),
           }),
         },
       },

@@ -3816,6 +3816,18 @@ const app = createApp({
   maintenance,
   schedules,
   subtitles: createLinkedSubtitles(subtitleService, linkedTitleOf, linkedAsker),
+  subtitleFonts: {
+    list: async (mediaId) => {
+      const path = await findMediaPath(mediaId);
+
+      return path === null ? [] : transcoder.listFonts({ inputPath: path });
+    },
+    read: async (mediaId, name) => {
+      const path = await findMediaPath(mediaId);
+
+      return path === null ? null : transcoder.readFont({ inputPath: path, name });
+    },
+  },
   segments: createLinkedSegments(segmentService, linkedTitleOf, linkedAsker),
   progress: createDatabaseWatchProgressService(db),
   history: historyService,
@@ -3986,6 +3998,7 @@ const app = createApp({
         email: user.email,
         username: user.username,
         displayUsername: user.displayUsername,
+        discordId: user.discordId,
         role: user.role,
         createdAt: user.createdAt,
         lastSignedInAt: accountActivity.lastSignInAt,
@@ -4091,6 +4104,15 @@ const app = createApp({
   },
   setupLinks,
   createAccountWithoutPassword: addAccountWithoutPassword,
+  discordIdOf: async (userId) => {
+    const [found] = await db
+      .select({ discordId: user.discordId })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1);
+
+    return found?.discordId ?? null;
+  },
   editAccount: async (userId, changes) => {
     const [found] = await db.select({ id: user.id }).from(user).where(eq(user.id, userId)).limit(1);
 
@@ -4133,6 +4155,7 @@ const app = createApp({
         ...(changes.username === undefined
           ? {}
           : { username: changes.username.toLowerCase(), displayUsername: changes.username }),
+        ...(changes.discordId === undefined ? {} : { discordId: changes.discordId }),
       })
       .where(eq(user.id, userId));
 

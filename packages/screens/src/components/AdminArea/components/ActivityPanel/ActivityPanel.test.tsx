@@ -1,3 +1,5 @@
+import userEvent from '@testing-library/user-event';
+import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { ActivityPanel } from './ActivityPanel';
@@ -32,13 +34,23 @@ const props = {
 
 describe('ActivityPanel', () => {
   it('says when nobody has the app open', () => {
-    render(<ActivityPanel {...props} />);
+    render(<ActivityPanel {...props} />, { wrapper: CacheScope });
 
     expect(screen.getByText('No one is using the app right now.')).toBeInTheDocument();
   });
 
-  it('groups sessions under the viewer holding them', () => {
-    render(<ActivityPanel {...props} sessions={[session(), session({ clientId: 'cli_2' })]} />);
+  it('lists sessions as a table to begin with', () => {
+    render(<ActivityPanel {...props} sessions={[session()]} />, { wrapper: CacheScope });
+
+    expect(screen.getByRole('table')).toBeInTheDocument();
+  });
+
+  it('groups sessions under the viewer holding them, as cards', async () => {
+    render(<ActivityPanel {...props} sessions={[session(), session({ clientId: 'cli_2' })]} />, {
+      wrapper: CacheScope,
+    });
+
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Show as cards' }));
 
     expect(screen.getAllByRole('heading', { name: 'Dan' })).toHaveLength(1);
   });

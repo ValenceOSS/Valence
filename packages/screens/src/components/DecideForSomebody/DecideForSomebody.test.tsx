@@ -27,6 +27,7 @@ const account = (overrides: Partial<Account> = {}): Account => ({
   id: 'usr_1',
   name: 'Somebody',
   username: null,
+  discordId: null,
   canSignIn: true,
   lastSignedInAt: null,
   setup: { state: 'none', expiresAt: null },

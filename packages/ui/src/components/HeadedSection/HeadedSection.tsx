@@ -25,7 +25,7 @@ const HeadedSection = ({
 
   return (
     <section aria-labelledby={headingId} className={cn('flex flex-col gap-3', className)}>
-      <header className="flex min-h-8 flex-wrap items-center justify-between gap-2 border-b border-[var(--surface-line)] pb-2">
+      <header className="flex min-h-8 flex-wrap items-center justify-between gap-2">
         <h2 id={headingId} className="text-xs font-medium text-text-muted">
           {title}
         </h2>

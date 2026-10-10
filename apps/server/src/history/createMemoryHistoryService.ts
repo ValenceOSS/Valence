@@ -3,7 +3,7 @@ import { decideViewing } from './decideViewing';
 import type { HistoryService, Viewing } from './HistoryService';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
-type MemoryViewing = Viewing & { profileId: string };
+type MemoryViewing = Viewing & { profileId: string; deviceLabel?: string | null };
 
 type MemoryHistoryState = {
   viewings: MemoryViewing[];
@@ -82,6 +82,10 @@ const createMemoryHistoryService = (
         found.isFinished = decided.isFinished;
         found.lastWatchedAt = seen.at.toISOString();
 
+        if (seen.deviceLabel !== undefined) {
+          found.deviceLabel = seen.deviceLabel;
+        }
+
         return Promise.resolve(shown(found));
       }
 
@@ -96,6 +100,7 @@ const createMemoryHistoryService = (
         lastWatchedAt: seen.at.toISOString(),
         secondsWatched: decided.secondsWatched,
         isFinished: decided.isFinished,
+        deviceLabel: seen.deviceLabel ?? null,
       };
 
       state.viewings.push(made);
@@ -111,6 +116,20 @@ const createMemoryHistoryService = (
           .sort((left, right) => Date.parse(right.lastWatchedAt) - Date.parse(left.lastWatchedAt))
           .slice(options.offset ?? 0, (options.offset ?? 0) + (options.limit ?? 50))
           .map((one) => shown(one, true)),
+      ),
+
+    recent: (options = {}) =>
+      Promise.resolve(
+        [...state.viewings]
+          .sort((left, right) => Date.parse(right.lastWatchedAt) - Date.parse(left.lastWatchedAt))
+          .slice(0, options.limit ?? 100)
+          .map((one) => ({
+            ...shown(one, true),
+            profileId: one.profileId,
+            profileName: null,
+            accountId: null,
+            deviceLabel: one.deviceLabel ?? null,
+          })),
       ),
 
     forget: (profileId, viewingId) => {

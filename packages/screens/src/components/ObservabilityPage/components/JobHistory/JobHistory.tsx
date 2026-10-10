@@ -13,7 +13,7 @@ import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { DataTable } from '@ValenceUI/DataTable';
-import { FilterMenu } from '@ValenceUI/FilterMenu';
+import { FilterSplit } from '@ValenceUI/FilterSplit';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { ScopedField } from '@ValenceUI/ScopedField';
 import { Well } from '@ValenceUI/Well';
@@ -680,9 +680,8 @@ const JobHistoryPanel = ({
           className="min-w-56 flex-1"
         />
 
-        <FilterMenu
+        <FilterSplit
           label={say('screens.observabilityPage.jobHistory.filterJobRuns')}
-          hasLabel
           groups={groups}
           selected={chosen}
           onChange={changeFilters}

@@ -6,7 +6,6 @@ import {
   ChevronUp as ChevronUpIcon,
   Folder as FolderIcon,
   FolderPlus as FolderPlusIcon,
-  Search as SearchIcon,
 } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -192,7 +191,6 @@ const FolderBrowser = ({ start, onChoose, onCancel }: FolderBrowserProps) => {
         }
         value={typed}
         onValueChange={setTyped}
-        icon={<Icon of={SearchIcon} size={14} />}
       />
 
       {isNaming ? (

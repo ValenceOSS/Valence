@@ -1,4 +1,6 @@
 import { describeSessionDelivery } from '@ValenceScreens/admin/describeSessionDelivery';
+import { episodeOfSession } from '@ValenceScreens/admin/episodeOfSession';
+import { titleOfSession } from '@ValenceScreens/admin/titleOfSession';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { Icon } from '@ValenceUI/Icon';
 import {
@@ -73,21 +75,7 @@ const SessionCard = ({
   const hasProgress = health !== null && health.durationSeconds > 0;
   const isActive = playback !== null || heard !== null;
   const isPlaying = playback?.isPlaying ?? heard?.isPlaying ?? false;
-  const series = playback?.seriesTitle ?? null;
-  const episode =
-    playback === null || series === null
-      ? null
-      : [
-          playback.seasonNumber === null || playback.episodeNumber === null
-            ? null
-            : say('common.searchWhatEpisode', {
-                season: playback.seasonNumber.toString(),
-                episode: playback.episodeNumber.toString(),
-              }),
-          playback.mediaTitle,
-        ]
-          .filter((part) => part !== null)
-          .join(' · ');
+  const episode = episodeOfSession(session);
   const fallbackGlyph =
     listening !== null
       ? MusicNoteIcon
@@ -127,15 +115,7 @@ const SessionCard = ({
 
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <span className="flex min-w-0 items-center gap-2">
-          <span className="truncate text-sm font-medium text-text">
-            {series ??
-              playback?.mediaTitle ??
-              (listening !== null
-                ? `${listening.title} · ${listening.artists.join(', ')}`
-                : book !== null
-                  ? [book.title, ...book.authors].join(' · ')
-                  : say('screens.adminArea.sessionCard.notWatchingAnything'))}
-          </span>
+          <span className="truncate text-sm font-medium text-text">{titleOfSession(session)}</span>
 
           {listening === null || playback !== null ? null : (
             <Badge size="sm">

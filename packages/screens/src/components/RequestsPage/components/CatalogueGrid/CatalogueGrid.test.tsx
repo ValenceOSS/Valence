@@ -57,12 +57,6 @@ describe('CatalogueGrid', () => {
     expect(fetchCatalogueBrowse).toHaveBeenCalledWith(BROWSING, 1, {});
   });
 
-  it('offers the way back to the top once the top has been left', async () => {
-    renderInAnAddress(<CatalogueGrid browsing={BROWSING} onAsk={vi.fn()} />);
-
-    expect(await screen.findByRole('button', { name: 'Back to top' })).toBeInTheDocument();
-  });
-
   it('says there is nothing where the catalogue listed nothing', async () => {
     fetchCatalogueBrowse.mockResolvedValue({ titles: [], page: 1, hasMore: false });
 

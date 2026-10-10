@@ -229,27 +229,6 @@ describe('PlayerControls', () => {
     expect(container.querySelector('[data-tone="default"]')).not.toBeInTheDocument();
   });
 
-  it('offers the immersive view only where the player has one to offer', () => {
-    draw();
-
-    expect(screen.queryByRole('button', { name: 'Immersive view' })).not.toBeInTheDocument();
-  });
-
-  it('turns the immersive view on and off from the bar', async () => {
-    const user = userEvent.setup();
-    const props = draw({ onToggleGlow: vi.fn() });
-
-    await user.click(screen.getByRole('button', { name: 'Immersive view' }));
-
-    expect(props.onToggleGlow).toHaveBeenCalledOnce();
-  });
-
-  it('says how to leave the immersive view while in it', () => {
-    draw({ onToggleGlow: vi.fn(), isGlowing: true });
-
-    expect(screen.getByRole('button', { name: 'Exit immersive view' })).toBeInTheDocument();
-  });
-
   it('offers to play on a television only where the player has one to send to', () => {
     draw();
 

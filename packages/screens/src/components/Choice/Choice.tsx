@@ -7,7 +7,8 @@ import type { ChoiceProps } from './Choice.types';
  * One decision in the form, as the platform's own menu. Written once here because the dialog asks
  * three questions of exactly the same shape, and three hand-built menus would drift apart.
  *
- * The answer takes whatever room the question leaves and sits against the right edge of it, which
+ * Every question is given the same width, so the menus of a stack of them line up. The answer takes
+ * whatever room the question leaves and sits against the right edge of it, which
  * on any normal panel is room enough to read it whole. Shortening only happens where it genuinely
  * will not fit.
  *
@@ -24,7 +25,7 @@ import type { ChoiceProps } from './Choice.types';
  */
 const Choice = ({ label, options, value, onSelect }: ChoiceProps) => (
   <span className="flex items-center justify-between gap-4">
-    <span className="shrink-0 text-sm text-text-muted">{label}</span>
+    <span className="w-32 shrink-0 text-sm text-text-muted">{label}</span>
 
     <OptionMenu
       label={label}

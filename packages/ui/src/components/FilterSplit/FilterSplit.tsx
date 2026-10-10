@@ -3,6 +3,7 @@ import { Badge } from '@ValenceUI/Badge';
 import { Icon } from '@ValenceUI/Icon';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { cn } from '@ValenceUI/cn';
+import { JOINED_LOOKS } from '@ValenceUI/tokens/joinedLooks';
 import { say } from '@ValenceI18n/say';
 import type { FilterSplitProps } from './FilterSplit.types';
 
@@ -15,21 +16,39 @@ const ANY = '';
  * is read without opening anything.
  *
  * @param label - What is being filtered, read out to anybody who cannot see the row.
+ * @param scope - A choice of what is filtered at all, such as films or shows, set first and saying
+ *   the one in force rather than how many.
  * @param groups - The kinds of filter, each with its choices.
  * @param selected - Every choice in force, across every kind.
  * @param onChange - Told every choice in force once one changes.
  * @param className - Extra classes for the caller's own layout.
  */
-const FilterSplit = ({ label, groups, selected, onChange, className }: FilterSplitProps) => (
-  <div
-    role="group"
-    aria-label={label}
-    className={cn(
-      'inline-flex min-w-0 divide-x divide-[var(--surface-line)] overflow-hidden rounded-md',
-      'border border-[var(--surface-line)] bg-[var(--surface-hover)] backdrop-blur-xl',
-      className,
+const FilterSplit = ({ label, scope, groups, selected, onChange, className }: FilterSplitProps) => (
+  <div role="group" aria-label={label} className={cn(JOINED_LOOKS.track, className)}>
+    {scope === undefined ? null : (
+      <OptionMenu
+        label={scope.label}
+        triggerShape="segment"
+        align="start"
+        groups={[
+          {
+            name: scope.label,
+            options: scope.options,
+            selectedId: scope.value,
+            onSelect: scope.onChange,
+          },
+        ]}
+        trigger={
+          <>
+            <span className="whitespace-nowrap">
+              {scope.options.find((option) => option.id === scope.value)?.label ?? scope.label}
+            </span>
+            <Icon of={ChevronDownIcon} size={14} tone="muted" className="shrink-0" />
+          </>
+        }
+      />
     )}
-  >
+
     {groups.map((group) => {
       const ownIds = group.options.map((option) => option.id);
       const chosen = ownIds.filter((id) => selected.has(id));

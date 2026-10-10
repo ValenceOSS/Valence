@@ -1,3 +1,4 @@
+import { fetchRecentViewings } from '@ValenceClient/admin/fetchRecentViewings';
 import { fetchLinking } from '@ValenceClient/admin/fetchLinking';
 import { fetchLinkActivity } from '@ValenceClient/admin/fetchLinkActivity';
 import { fetchLinkSharing } from '@ValenceClient/admin/fetchLinkSharing';
@@ -104,6 +105,17 @@ const sessions = () =>
   queryOptions({
     queryKey: [...ADMIN, 'sessions'],
     queryFn: () => fetchActiveSessions(),
+  });
+
+/**
+ * What was watched lately, by whom and on what.
+ *
+ * @returns The query.
+ */
+const watchHistory = () =>
+  queryOptions({
+    queryKey: [...ADMIN, 'watchHistory'],
+    queryFn: () => fetchRecentViewings(),
   });
 
 /**
@@ -693,6 +705,7 @@ const adminQueries = {
   scans,
   monitor,
   sessions,
+  watchHistory,
   jobs,
   jobHistory,
   recentFailures,

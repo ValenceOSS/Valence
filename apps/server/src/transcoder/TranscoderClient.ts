@@ -139,6 +139,8 @@ const FingerprintSchema = z.object({
 
 const SubtitleTrackSchema = z.object({ content: z.string() });
 
+const FontListSchema = z.object({ names: z.array(z.string()) });
+
 const ForgetReportSchema = z.object({ forgotten: z.boolean() });
 
 const StopReportSchema = z.object({ stopped: z.boolean() });
@@ -330,7 +332,13 @@ type Transcoder = {
     range?: string | null,
   ) => Promise<TranscoderStreamedFile | null>;
   fingerprint: (request: FingerprintRequest) => Promise<Fingerprint>;
-  readSubtitle: (request: { inputPath: string; streamIndex: number }) => Promise<string>;
+  readSubtitle: (request: {
+    inputPath: string;
+    streamIndex: number;
+    format?: 'webvtt' | 'ass';
+  }) => Promise<string>;
+  listFonts: (request: { inputPath: string }) => Promise<string[]>;
+  readFont: (request: { inputPath: string; name: string }) => Promise<ArrayBuffer>;
   readMonitor: () => Promise<JsonValue>;
   openMonitorSocket: () => Promise<TranscoderSocket | null>;
   readFrame: (request: {
@@ -810,6 +818,11 @@ const createTranscoderClient = ({
     forgetTrickplay: async (request) =>
       ForgetReportSchema.parse(await (await postJson('/trickplay/forget', request)).json())
         .forgotten,
+
+    listFonts: async (request) =>
+      FontListSchema.parse(await (await postRender('/fonts', request)).json()).names,
+
+    readFont: async (request) => (await postRender('/fonts/read', request)).arrayBuffer(),
 
     readMonitor: async () => (await call('/monitor')).json(),
 

@@ -100,11 +100,12 @@ const EpisodeRow = ({
     </Button>
 
     {onMarkWatched === undefined && onInspect === undefined ? null : (
-      <span className="ml-auto flex shrink-0 items-center gap-1">
+      <span className="ml-auto flex shrink-0 items-center">
         {onMarkWatched === undefined ? null : (
           <Button
             variant={(watchedFraction ?? 0) >= 1 ? 'secondary' : 'confirm'}
-            size="xs"
+            size="sm"
+            {...(onInspect === undefined ? {} : { joins: 'next' as const })}
             label={
               (watchedFraction ?? 0) >= 1
                 ? say('common.markTitleAsUnwatched', { title: episode.title })
@@ -119,7 +120,7 @@ const EpisodeRow = ({
             {(watchedFraction ?? 0) >= 1 ? say('common.watched') : say('common.markAsWatched')}
             <Icon
               of={(watchedFraction ?? 0) >= 1 ? CircleCheckFilledIcon : CircleCheckIcon}
-              size={14}
+              size={16}
             />
           </Button>
         )}
@@ -127,7 +128,9 @@ const EpisodeRow = ({
         {onInspect === undefined ? null : (
           <Button
             variant="secondary"
-            size="xs"
+            size="sm"
+            {...(onMarkWatched === undefined ? {} : { joins: 'previous' as const })}
+            className={onMarkWatched === undefined ? '' : 'border-l-0'}
             label={say('common.aboutTitle', { title: episode.title })}
             hasTooltip={false}
             onClick={() => {
@@ -135,7 +138,7 @@ const EpisodeRow = ({
             }}
           >
             {say('common.moreInfo')}
-            <Icon of={InfoIcon} size={14} />
+            <Icon of={InfoIcon} size={16} />
           </Button>
         )}
       </span>

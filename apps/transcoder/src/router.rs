@@ -1754,6 +1754,63 @@ fn answer_with_track(outcome: Result<SubtitleTrack, SubtitleError>) -> Response 
     }
 }
 
+/// Lists the fonts a file carries for its subtitles.
+async fn list_fonts(
+    State(state): State<AppState>,
+    Json(request): Json<crate::fonts::FontsRequest>,
+) -> Response {
+    let path = PathBuf::from(&request.input_path);
+
+    if !state.is_readable(&path) {
+        return error(
+            StatusCode::FORBIDDEN,
+            "That file is outside the media roots.",
+        );
+    }
+
+    let config = state.registry.config();
+    let tools = Tools {
+        ffmpeg: config.ffmpeg.clone(),
+        ffprobe: state.ffprobe.clone(),
+    };
+
+    match crate::fonts::list(&tools, &config.artefact_root, &path).await {
+        Ok(found) => (StatusCode::OK, Json(found)).into_response(),
+        Err(failure) => error(StatusCode::BAD_REQUEST, &failure.to_string()),
+    }
+}
+
+/// Hands over one font a file carries, by name.
+async fn read_font(
+    State(state): State<AppState>,
+    Json(request): Json<crate::fonts::FontRequest>,
+) -> Response {
+    let path = PathBuf::from(&request.input_path);
+
+    if !state.is_readable(&path) {
+        return error(
+            StatusCode::FORBIDDEN,
+            "That file is outside the media roots.",
+        );
+    }
+
+    let config = state.registry.config();
+    let tools = Tools {
+        ffmpeg: config.ffmpeg.clone(),
+        ffprobe: state.ffprobe.clone(),
+    };
+
+    match crate::fonts::read(&tools, &config.artefact_root, &path, &request.name).await {
+        Ok(bytes) => (
+            StatusCode::OK,
+            [(header::CONTENT_TYPE, "application/octet-stream")],
+            bytes,
+        )
+            .into_response(),
+        Err(failure) => error(StatusCode::NOT_FOUND, &failure.to_string()),
+    }
+}
+
 /// Reads one subtitle track out of a container.
 ///
 /// Answers with the whole track rather than a path, because a subtitle file is
@@ -1784,7 +1841,13 @@ async fn start_subtitle(
     answer_with_track(
         state
             .subtitles
-            .read(tools, &config.artefact_root, path, request.stream_index)
+            .read(
+                tools,
+                &config.artefact_root,
+                path,
+                request.stream_index,
+                request.format,
+            )
             .await,
     )
 }
@@ -2550,6 +2613,8 @@ pub fn create_router(state: AppState) -> Router {
         .route("/previews/forget", post(forget_preview))
         .route("/previews/{id}/{name}", get(preview_file))
         .route("/subtitles", post(start_subtitle))
+        .route("/fonts", post(list_fonts))
+        .route("/fonts/read", post(read_font))
         .route("/renditions", post(start_rendition))
         .route("/renditions/stop", post(stop_rendition))
         .route("/renditions/forget", post(forget_rendition))

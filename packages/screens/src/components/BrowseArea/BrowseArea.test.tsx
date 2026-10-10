@@ -333,7 +333,7 @@ describe('how a page of the library is laid out', () => {
 
     renderInAnAddress(<BrowseArea kind="films" onPlay={vi.fn()} onInspect={vi.fn()} />);
 
-    await user.click(await screen.findByRole('button', { name: 'Filter films' }));
+    await user.click(await screen.findByRole('button', { name: 'Decade' }));
     await user.click(await screen.findByRole('menuitemcheckbox', { name: '1990s' }));
 
     await vi.waitFor(
@@ -357,10 +357,12 @@ describe('how a page of the library is laid out', () => {
     expect(screen.queryByRole('button', { name: /^Filter/ })).not.toBeInTheDocument();
   });
 
-  it('names the page for anybody reading it, without a banner saying it again', async () => {
+  it('names the page at its top, without a banner saying it again', async () => {
     renderInAnAddress(<BrowseArea kind="films" onPlay={vi.fn()} onInspect={vi.fn()} />);
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Films' })).toHaveClass('sr-only');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Films' })).not.toHaveClass(
+      'sr-only',
+    );
     expect(screen.queryByText('Everything that stands on its own.')).not.toBeInTheDocument();
   });
 

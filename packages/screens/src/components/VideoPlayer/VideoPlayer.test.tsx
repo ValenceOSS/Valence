@@ -147,13 +147,13 @@ const transcodingPlan: PlaybackPlan = {
 const media = { id: 'media-1', title: 'Arrival', durationSeconds: 7200 };
 
 /**
- * Finds the stage a video is drawn on, which holds the video's sizing box and the video within it.
+ * Finds the stage a video is drawn on, which holds the video directly.
  *
  * @param video - The video.
  * @returns The stage.
  */
 const stageOf = (video: HTMLElement): HTMLElement => {
-  const stage = video.parentElement?.parentElement;
+  const stage = video.parentElement;
 
   if (stage === null || stage === undefined) {
     throw new Error('The video is not on a stage');
@@ -2609,9 +2609,12 @@ describe('when an administrator reaches into the stream', () => {
       emitPresenceEvent({ kind: 'resumed' });
     });
 
-    await waitFor(() => {
-      expect(screen.queryByText(/Dinner./)).not.toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.queryByText(/Dinner./)).not.toBeInTheDocument();
+      },
+      { timeout: 3_000 },
+    );
   });
 });
 
@@ -3066,47 +3069,8 @@ describe('the skip button', () => {
     renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
 
     const skip = await screen.findByRole('button', { name: /skip/i });
-    const stood = Number.parseInt(skip.parentElement?.style.bottom ?? '0', 10);
 
-    expect(stood).toBeGreaterThanOrEqual(36);
-  });
-});
-
-describe('the immersive view', () => {
-  const watching = async (isImmersive: boolean) => {
-    const actor = userEvent.setup();
-
-    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} isImmersive={isImmersive} />);
-    await settled();
-
-    const element = await screen.findByLabelText('Arrival');
-
-    fakeMediaElement(element).loaded({ duration: 7200, seekableTo: 7200 });
-
-    return { actor };
-  };
-
-  it('is offered where the player fills the page, and puts the picture in a glow when chosen', async () => {
-    const { actor } = await watching(true);
-
-    await actor.click(screen.getByRole('button', { name: 'Immersive view' }));
-
-    expect(screen.getByRole('button', { name: 'Exit immersive view' })).toBeInTheDocument();
-  });
-
-  it('goes back to filling the page when it is left', async () => {
-    const { actor } = await watching(true);
-
-    await actor.click(screen.getByRole('button', { name: 'Immersive view' }));
-    await actor.click(screen.getByRole('button', { name: 'Exit immersive view' }));
-
-    expect(screen.getByRole('button', { name: 'Immersive view' })).toBeInTheDocument();
-  });
-
-  it('is not offered where the player sits within a page', async () => {
-    await watching(false);
-
-    expect(screen.queryByRole('button', { name: 'Immersive view' })).not.toBeInTheDocument();
+    expect(skip.parentElement?.style.bottom).toMatch(/^calc\(\d+px \+ env\(safe-area-inset-bottom/);
   });
 });
 

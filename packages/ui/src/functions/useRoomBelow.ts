@@ -1,4 +1,5 @@
 import { useLayoutEffect, useState } from 'react';
+import { heldBelow } from '@ValenceUI/heldBelow';
 import { scrollerAbove } from '@ValenceUI/scrollerAbove';
 import type { RefObject } from 'react';
 
@@ -8,7 +9,11 @@ const LEAST = 240;
  * How tall a box can stand for everything around it to fit in what scrolls it without scrolling:
  * from its top to the foot of the scrolling area, less whatever of the page sits below it. What
  * sits below is read from where the page's content ends rather than from how far it scrolls, since
- * a page shorter than its window scrolls exactly as far as the window is tall. Measured again
+ * a page shorter than its window scrolls exactly as far as the window is tall. Where the window
+ * itself scrolls, what sits below is added up from the box outwards instead, since a page stretched
+ * to the window's height would otherwise count its own empty space as taken. It is measured again
+ * whenever anything around it changes size too, since there what moves it down the page — a row of
+ * figures arriving above it — does not change the size of the page. Measured again
  * whenever the window or what scrolls changes size, and never less than a usable height, so a short
  * window scrolls the page rather than squashing the box to nothing.
  *
@@ -39,7 +44,7 @@ const useRoomBelow = (box: RefObject<HTMLElement | null>, isOn: boolean): number
         ...[...scroller.children].map((child) => child.getBoundingClientRect().bottom),
       );
       const padding = Number.parseFloat(getComputedStyle(scroller).paddingBottom) || 0;
-      const below = lowest + padding - edges.bottom;
+      const below = isWindow ? heldBelow(measured) : lowest + padding - edges.bottom;
 
       const scrolled = isWindow ? window.scrollY : scroller.scrollTop;
 
@@ -54,6 +59,20 @@ const useRoomBelow = (box: RefObject<HTMLElement | null>, isOn: boolean): number
 
     if (scroller.firstElementChild !== null) {
       watcher.observe(scroller.firstElementChild);
+    }
+
+    if (isWindow) {
+      for (
+        let around = measured.parentElement;
+        around !== null && around !== document.body;
+        around = around.parentElement
+      ) {
+        for (const beside of around.children) {
+          if (beside !== measured) {
+            watcher.observe(beside);
+          }
+        }
+      }
     }
 
     window.addEventListener('resize', measure);

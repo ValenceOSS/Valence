@@ -22,8 +22,10 @@ import { readCalendarFilters } from '@ValenceScreens/calendar/readCalendarFilter
 import { turnTheCalendar } from '@ValenceScreens/calendar/turnTheCalendar';
 import { calendarPageTurn } from '@ValenceScreens/calendar/calendarPageTurn';
 import { say } from '@ValenceI18n/say';
+import { PageTitle } from '@ValenceScreens/components/PageTitle/PageTitle';
 import { CalendarToolbar } from './components/CalendarToolbar/CalendarToolbar';
 import { CalendarMonth } from './components/CalendarMonth/CalendarMonth';
+import { CalendarTimeline } from './components/CalendarTimeline/CalendarTimeline';
 import { CalendarMonthNarrow } from './components/CalendarMonthNarrow/CalendarMonthNarrow';
 import { CalendarWeek } from './components/CalendarWeek/CalendarWeek';
 import { CalendarUpcoming } from './components/CalendarUpcoming/CalendarUpcoming';
@@ -34,7 +36,8 @@ const NOTHING_CHOSEN: ReadonlySet<string> = new Set();
 
 /**
  * The release calendar: when episodes of shows in the library air, and when films and shows the
- * viewer asked for come out, a month or a week at a time or as a list of what is coming.
+ * viewer asked for come out, as a timeline of five weeks, a month or a week at a time, or as a list of what is
+ * coming.
  *
  * Which view and which day are kept in the address, so going back returns to them; what it is
  * narrowed to is kept on the page. Turning a page slides the next one in from the side turned
@@ -78,6 +81,8 @@ const CalendarPage = () => {
       exit="gone"
       className={cn(RAIL.lane, RAIL.inset, 'flex flex-col gap-6 pt-6 pb-16')}
     >
+      <PageTitle>{say('common.calendar')}</PageTitle>
+
       <CalendarToolbar
         view={view}
         day={day}
@@ -126,6 +131,8 @@ const CalendarPage = () => {
             />
           ) : asked.isPending ? (
             <Spinner isPageCentered label={say('screens.calendarPage.readingTheCalendar')} />
+          ) : view === 'timeline' ? (
+            <CalendarTimeline day={day} today={today} entries={entries} onOpen={open} />
           ) : view === 'month' ? (
             <>
               <CalendarMonth

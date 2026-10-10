@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Button } from '@ValenceUI/Button';
-import { TextField } from '@ValenceUI/TextField';
+import { Lock as LockIcon } from '@keyline-icons/react';
+import { ScopedField } from '@ValenceUI/ScopedField';
 import { confirmItIsYou } from '@ValenceClient/session/auth';
 import type { ConfirmItIsYouProps } from './ConfirmItIsYou.types';
 import { say } from '@ValenceI18n/say';
@@ -37,32 +37,32 @@ const ConfirmItIsYou = ({ onConfirmed }: ConfirmItIsYouProps) => {
   return (
     <form
       noValidate
-      className="flex flex-wrap items-end gap-3"
+      className="flex flex-col gap-2"
       onSubmit={(event) => {
         event.preventDefault();
         void confirm();
       }}
     >
-      <TextField
+      <ScopedField
         label={say('common.password')}
         type="password"
         value={password}
         onValueChange={setPassword}
         autoComplete="current-password"
         description={say('screens.passkeySetup.confirmItIsYou.youSignedInAWhileAgo')}
-        className="min-w-56 flex-1"
-        {...(problem === null ? {} : { error: problem })}
+        submit={{
+          label: say('common.confirm'),
+          icon: LockIcon,
+          isDisabled: password === '',
+          isBusy: isConfirming,
+        }}
       />
 
-      <Button
-        type="submit"
-        variant="glossy"
-        size="md"
-        isLoading={isConfirming}
-        disabled={password === ''}
-      >
-        {say('common.confirm')}
-      </Button>
+      {problem === null ? null : (
+        <p role="alert" className="text-sm text-danger">
+          {problem}
+        </p>
+      )}
     </form>
   );
 };

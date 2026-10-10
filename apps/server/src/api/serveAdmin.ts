@@ -11,6 +11,7 @@ import {
   searchCatalogueRoute,
   adminSettingsRoute,
   adminSessionsRoute,
+  adminWatchHistoryRoute,
   adminStopSessionRoute,
   adminPauseSessionRoute,
   adminMessageSessionRoute,
@@ -84,6 +85,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     requires,
     email,
     subtitleFinder,
+    history,
   } = context;
 
   registerEmailRoutes(app, { email, requires });
@@ -297,6 +299,19 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         keepsDownloadsForDays: updated.keepsDownloadsForDays,
         splashscreen: await splashscreen.address(),
       },
+      200,
+    );
+  });
+
+  app.openapi(adminWatchHistoryRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'streaming.view'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
+    }
+
+    const { limit } = context.req.valid('query');
+
+    return context.json(
+      { viewings: (await history?.recent(limit === undefined ? {} : { limit })) ?? [] },
       200,
     );
   });

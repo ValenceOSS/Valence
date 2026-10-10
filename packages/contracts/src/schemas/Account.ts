@@ -13,6 +13,7 @@ const AccountSchema = z.object({
   name: z.string(),
   username: z.string().nullable().default(null),
   email: z.string().nullable(),
+  discordId: z.string().nullable().default(null),
   createdAt: z.string(),
   isBanned: z.boolean(),
   banReason: z.string().nullable(),
@@ -26,6 +27,11 @@ const AccountSchema = z.object({
   setup: AccountSetupSchema.default({ state: 'none', expiresAt: null }),
 });
 
+const DiscordIdSchema = z
+  .string()
+  .trim()
+  .regex(/^\d{17,20}$/);
+
 const AccountListSchema = z.object({
   accounts: z.array(AccountSchema),
   canEmailSetupLinks: z.boolean().default(false),
@@ -36,4 +42,4 @@ type AccountSetup = z.infer<typeof AccountSetupSchema>;
 
 export type { Account, AccountSetup };
 
-export { AccountListSchema, AccountSchema, AccountSetupSchema };
+export { AccountListSchema, AccountSchema, AccountSetupSchema, DiscordIdSchema };

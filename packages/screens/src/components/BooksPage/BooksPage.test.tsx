@@ -54,10 +54,10 @@ describe('BooksPage', () => {
     expect(screen.getByRole('heading', { name: 'Books', level: 1 })).toBeInTheDocument();
   });
 
-  it('names the section for anybody reading the page, without a banner saying it again', () => {
+  it('names the section at the top of the page, without a banner saying it again', () => {
     renderInAShell(<BooksPage />);
 
-    expect(screen.getByRole('heading', { level: 1, name: 'Books' })).toHaveClass('sr-only');
+    expect(screen.getByRole('heading', { level: 1, name: 'Books' })).not.toHaveClass('sr-only');
     expect(screen.queryByText('Everything there is to read.')).not.toBeInTheDocument();
   });
 

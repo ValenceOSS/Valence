@@ -3,6 +3,7 @@ import { Bin as BinIcon, Key as KeyIcon, PenLine as PenLineIcon } from '@keyline
 import { Check as CheckFilledIcon } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@ValenceUI/Button';
+import { ScopedField } from '@ValenceUI/ScopedField';
 import { SettingRow } from '@ValenceUI/SettingRow';
 import { TextField } from '@ValenceUI/TextField';
 import { describePasskeyUnavailability } from '@ValenceScreens/passkeys/isPasskeySupported';
@@ -149,7 +150,7 @@ const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
         </span>
       </SettingRow>
 
-      <div className="flex flex-col gap-4 px-5 pb-5">
+      <div className="flex flex-col gap-4 pb-5">
         {message === null ? null : (
           <p role="alert" className="text-sm text-danger">
             {message}
@@ -241,23 +242,18 @@ const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
         ) : unavailable === null ? (
           <form
             noValidate
-            className="flex flex-wrap items-end gap-3"
             onSubmit={(event) => {
               event.preventDefault();
               void add();
             }}
           >
-            <TextField
+            <ScopedField
               label={say('common.passkeyName')}
+              type="text"
               value={name}
               onValueChange={setName}
-              className="min-w-56 flex-1"
+              submit={{ label: say('common.addAPasskey'), icon: KeyIcon, isBusy: isAdding }}
             />
-
-            <Button type="submit" variant="glossy" size="md" isLoading={isAdding}>
-              <Icon of={KeyIcon} size={16} />
-              {say('common.addAPasskey')}
-            </Button>
           </form>
         ) : whereTheyAreAdded.kind === 'through-a-sign-in-page' ? (
           <div>

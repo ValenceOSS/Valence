@@ -1,6 +1,4 @@
-import { Icon } from '@ValenceUI/Icon';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
-import { Search as SearchIcon } from '@keyline-icons/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { TextField } from '@ValenceUI/TextField';
@@ -25,7 +23,6 @@ import { DiscoverPointer } from './components/DiscoverPointer/DiscoverPointer';
 import { BackToTop } from '@ValenceUI/BackToTop';
 import { AppliedFilters } from '@ValenceUI/AppliedFilters';
 import { FilterSplit } from '@ValenceUI/FilterSplit';
-import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { say } from '@ValenceI18n/say';
 import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
 
@@ -233,7 +230,6 @@ const SearchArea = ({
             hasFocusOnMount
             value={liveSearch}
             placeholder={say('screens.searchArea.everythingYouOwn')}
-            icon={<Icon of={SearchIcon} size={28} />}
             onValueChange={setLiveSearch}
           />
         </motion.div>
@@ -243,27 +239,33 @@ const SearchArea = ({
           transition={revealTransition(prefersReducedMotion)}
           className="flex flex-col gap-3"
         >
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <SegmentedRow
-              label={say('common.whatToLookFor')}
-              size="sm"
-              items={KINDS}
-              value={kind}
-              onSelect={(id) => {
-                const chosen = KINDS.find((option) => option.id === id);
+          <div className="flex flex-wrap items-center gap-3">
+            <FilterSplit
+              label={say('screens.searchArea.filterTheLibrary')}
+              scope={{
+                label: say('common.whatToLookFor'),
+                options: KINDS,
+                value: kind,
+                onChange: (id) => {
+                  const chosen = KINDS.find((option) => option.id === id);
 
-                if (chosen !== undefined) {
-                  setKind(chosen.id);
-                }
+                  if (chosen !== undefined) {
+                    setKind(chosen.id);
+                  }
+                },
               }}
+              groups={filters.groups}
+              selected={filters.selected}
+              onChange={filters.change}
             />
 
-            {filters.groups.length === 0 ? null : (
-              <FilterSplit
-                label={say('screens.searchArea.filterTheLibrary')}
-                groups={filters.groups}
-                selected={filters.selected}
-                onChange={filters.change}
+            {items.length === 0 ? null : (
+              <GridSizeChooser
+                value={size}
+                onValueChange={(next) => {
+                  setSize(next);
+                  saveGridSize(next);
+                }}
               />
             )}
           </div>
@@ -303,16 +305,6 @@ const SearchArea = ({
                 />
               )}
             </span>
-          )}
-
-          {items.length === 0 ? null : (
-            <GridSizeChooser
-              value={size}
-              onValueChange={(next) => {
-                setSize(next);
-                saveGridSize(next);
-              }}
-            />
           )}
         </header>
 

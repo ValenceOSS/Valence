@@ -2,6 +2,8 @@ import { sayAgain } from '@ValenceI18n/sayAgain';
 import { useEffect, useMemo, useState } from 'react';
 import { Callout } from '@ValenceUI/Callout';
 import { Checkbox } from '@ValenceUI/Checkbox';
+import { SettingRow } from '@ValenceUI/SettingRow';
+import { Switch } from '@ValenceUI/Switch';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -397,12 +399,20 @@ const ReencodeDialog = ({
           ) : null}
 
           {mode === 'audioOnly' ? null : (
-            <Checkbox
-              label={say('screens.reencodeDialog.compressTheLosslessAudioToo')}
+            <SettingRow
+              title={say('screens.reencodeDialog.compressTheLosslessAudioToo')}
               description={say('screens.reencodeDialog.aTrueHDOrDTSHDTrack')}
-              checked={compressesAudio}
-              onCheckedChange={setCompressesAudio}
-            />
+              className="py-1"
+            >
+              <Switch
+                label={say('screens.reencodeDialog.compressTheLosslessAudioToo')}
+                isLabelHidden
+                isOn={compressesAudio}
+                onToggle={() => {
+                  setCompressesAudio((was) => !was);
+                }}
+              />
+            </SettingRow>
           )}
         </fieldset>
 

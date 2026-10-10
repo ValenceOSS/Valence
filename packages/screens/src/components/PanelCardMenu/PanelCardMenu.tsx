@@ -11,11 +11,12 @@ import { say } from '@ValenceI18n/say';
  *
  * @param label - What the menu acts on, read out to anybody who cannot see it.
  * @param groups - The actions, grouped as the menu should show them.
+ * @param isSegment - Whether it is one part of a joined row of controls rather than standing alone.
  */
-const PanelCardMenu = ({ label, groups }: PanelCardMenuProps) => (
+const PanelCardMenu = ({ label, groups, isSegment = false }: PanelCardMenuProps) => (
   <ActionMenu
     label={label}
-    look="labelled"
+    look={isSegment ? 'segment' : 'labelled'}
     align="end"
     trigger={
       <>

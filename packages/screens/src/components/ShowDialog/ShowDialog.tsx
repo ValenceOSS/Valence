@@ -1,3 +1,6 @@
+import { cn } from '@ValenceUI/cn';
+import { JOINED_LOOKS } from '@ValenceUI/tokens/joinedLooks';
+import { ShowStatusBadge } from '@ValenceScreens/components/ShowStatusBadge/ShowStatusBadge';
 import { Icon } from '@ValenceUI/Icon';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { titleLogoUrl } from '@ValenceClient/library/titleLogoUrl';
@@ -248,7 +251,7 @@ const ShowDialog = ({
               {detail?.status === undefined ||
               detail.status === null ||
               detail.status === '' ? null : (
-                <Badge size="sm">{detail.status}</Badge>
+                <ShowStatusBadge status={detail.status} />
               )}
 
               {detail?.nextEpisode === undefined || detail.nextEpisode === null ? null : (
@@ -314,33 +317,37 @@ const ShowDialog = ({
             <header className="flex flex-wrap items-center justify-between gap-3">
               <h3 className={RAIL.sectionTitle}>{say('common.episodes')}</h3>
 
-              <span className="flex flex-wrap items-center gap-2">
-                {onMarkWatched === undefined || shownEpisodes.length === 0 ? null : (
-                  <Button
-                    variant="secondary"
-                    size="xs"
-                    onClick={() => {
-                      onMarkWatched(shownEpisodes, !isSeasonWatched);
-                    }}
-                  >
-                    <Icon
-                      of={isSeasonWatched ? CircleCheckFilledIcon : CircleCheckIcon}
-                      size={14}
-                    />
-                    {isSeasonWatched
-                      ? chooseFrom.length < 2
-                        ? say('screens.showDialog.markAllUnwatched')
-                        : say('common.markSeasonUnwatched')
-                      : chooseFrom.length < 2
-                        ? say('screens.showDialog.markAllWatched')
-                        : say('common.markSeasonWatched')}
-                  </Button>
-                )}
+              {(onMarkWatched === undefined || shownEpisodes.length === 0) &&
+              chooseFrom.length < 2 ? null : (
+                <span className={JOINED_LOOKS.track}>
+                  {onMarkWatched === undefined || shownEpisodes.length === 0 ? null : (
+                    <Button
+                      variant="bare"
+                      size="none"
+                      className={cn(JOINED_LOOKS.segment, 'inline-flex items-center')}
+                      onClick={() => {
+                        onMarkWatched(shownEpisodes, !isSeasonWatched);
+                      }}
+                    >
+                      <Icon
+                        of={isSeasonWatched ? CircleCheckFilledIcon : CircleCheckIcon}
+                        size={15}
+                      />
+                      {isSeasonWatched
+                        ? chooseFrom.length < 2
+                          ? say('screens.showDialog.markAllUnwatched')
+                          : say('common.markSeasonUnwatched')
+                        : chooseFrom.length < 2
+                          ? say('screens.showDialog.markAllWatched')
+                          : say('common.markSeasonWatched')}
+                    </Button>
+                  )}
 
-                {chooseFrom.length < 2 ? null : (
-                  <SeasonPicker seasons={chooseFrom} value={showing} onChange={setChosenSeason} />
-                )}
-              </span>
+                  {chooseFrom.length < 2 ? null : (
+                    <SeasonPicker seasons={chooseFrom} value={showing} onChange={setChosenSeason} />
+                  )}
+                </span>
+              )}
             </header>
 
             {show !== null && asked.isError ? (

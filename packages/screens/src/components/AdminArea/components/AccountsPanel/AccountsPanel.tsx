@@ -57,6 +57,7 @@ import { notify } from '@ValenceUI/notify';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { Skeleton } from '@ValenceUI/Skeleton';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
+import { DiscordIdSchema } from '@ValenceContracts/schemas/Account';
 import { DEFAULT_SETUP_LINK_LIFETIME } from '@ValenceContracts/schemas/SetupLink';
 import type { IssuedSetupLink } from '@ValenceContracts/schemas/SetupLink';
 import { accountStandingOf } from './accountStandingOf';
@@ -180,6 +181,7 @@ const AccountsPanel = () => {
   const [draftName, setDraftName] = useState('');
   const [draftUsername, setDraftUsername] = useState('');
   const [draftEmail, setDraftEmail] = useState('');
+  const [draftDiscordId, setDraftDiscordId] = useState('');
   const [draftRoleIds, setDraftRoleIds] = useState<ReadonlySet<string>>(new Set());
   const [draftLibraryAccess, setDraftLibraryAccess] = useState<LibraryReach[]>([]);
   const [draftFace, setDraftFace] = useState<AccountAvatarDraft>({
@@ -305,6 +307,7 @@ const AccountsPanel = () => {
     setDraftName(picked?.name ?? '');
     setDraftUsername(picked?.username ?? '');
     setDraftEmail(picked?.email ?? '');
+    setDraftDiscordId(picked?.discordId ?? '');
     setDraftFace({
       avatar: picked?.face?.avatar ?? { kind: 'initial', font: 'gilroy' },
       colour: picked?.face?.colour ?? PROFILE_COLOURS[0],
@@ -329,12 +332,16 @@ const AccountsPanel = () => {
 
   const usernameChange = draftUsername.trim();
   const emailChange = draftEmail.trim();
+  const discordIdChange = draftDiscordId.trim();
+  const isDiscordIdWellFormed =
+    discordIdChange === '' || DiscordIdSchema.safeParse(discordIdChange).success;
 
   const hasUnsavedChanges =
     picked !== null &&
     (draftName !== picked.name ||
       usernameChange !== (picked.username ?? '') ||
       emailChange !== (picked.email ?? '') ||
+      discordIdChange !== (picked.discordId ?? '') ||
       draftFace.photo !== null ||
       !avatarsEqual(draftFace.avatar, picked.face?.avatar ?? { kind: 'initial', font: 'gilroy' }) ||
       draftFace.colour !== (picked.face?.colour ?? PROFILE_COLOURS[0]) ||
@@ -356,7 +363,12 @@ const AccountsPanel = () => {
       return;
     }
 
-    const patch: { name?: string; username?: string; email?: string | null } = {};
+    const patch: {
+      name?: string;
+      username?: string;
+      email?: string | null;
+      discordId?: string | null;
+    } = {};
 
     if (draftName !== picked.name) {
       patch.name = draftName;
@@ -368,6 +380,10 @@ const AccountsPanel = () => {
 
     if (emailChange !== (picked.email ?? '')) {
       patch.email = emailChange === '' ? null : emailChange;
+    }
+
+    if (isDiscordIdWellFormed && discordIdChange !== (picked.discordId ?? '')) {
+      patch.discordId = discordIdChange === '' ? null : discordIdChange;
     }
 
     if (Object.keys(patch).length > 0) {
@@ -485,6 +501,8 @@ const AccountsPanel = () => {
     draftName,
     usernameChange,
     emailChange,
+    discordIdChange,
+    isDiscordIdWellFormed,
     draftFace,
     draftRoleIds,
     currentRoleIds,
@@ -1029,6 +1047,20 @@ const AccountsPanel = () => {
                     value={draftEmail}
                     onValueChange={setDraftEmail}
                     description={say('screens.adminArea.accountsPanel.leaveItEmptyForNoAddress')}
+                  />
+
+                  <TextField
+                    label={say('screens.adminArea.accountsPanel.discordIdOptional')}
+                    value={draftDiscordId}
+                    onValueChange={setDraftDiscordId}
+                    autoComplete="off"
+                    {...(isDiscordIdWellFormed
+                      ? {
+                          description: say(
+                            'screens.adminArea.accountsPanel.discordIdMentionedOnRequests',
+                          ),
+                        }
+                      : { error: say('screens.adminArea.accountsPanel.discordIdIsDigits') })}
                   />
 
                   <AccountAvatarPicker

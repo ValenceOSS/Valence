@@ -45,12 +45,13 @@ const besideTheNumber = (parts: readonly ReactNode[]): ReactNode[] =>
  * A thin bar beneath splits the finished runs by how they ended, so a run of failures shows as red
  * at a glance rather than as a number to read.
  *
- * @param running - How many are running now.
+ * @param running - How many are running now, left out where that is not being told.
  * @param completed - How many completed.
  * @param failed - How many failed.
  * @param stopped - How many were stopped.
+ * @param extra - One more figure set beside the counts, such as the slowest run.
  */
-const JobRunMix = ({ running, completed, failed, stopped }: JobRunMixProps) => {
+const JobRunMix = ({ running, completed, failed, stopped, extra }: JobRunMixProps) => {
   const counts = { completed, failed, stopped };
   const finished = completed + failed + stopped;
   const succeeded = finished === 0 ? null : Math.round((completed / finished) * 100);
@@ -61,24 +62,26 @@ const JobRunMix = ({ running, completed, failed, stopped }: JobRunMixProps) => {
       className="flex flex-col gap-3 px-1"
     >
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-        <p className="flex items-center gap-2">
-          <span
-            aria-hidden
-            className={cn(
-              'size-2 rounded-full',
-              running > 0 ? 'animate-pulse bg-busy' : 'bg-text-muted/50',
+        {running === undefined ? null : (
+          <p className="flex items-center gap-2">
+            <span
+              aria-hidden
+              className={cn(
+                'size-2 rounded-full',
+                running > 0 ? 'animate-pulse bg-busy' : 'bg-text-muted/50',
+              )}
+            />
+            {besideTheNumber(
+              sayCountParts('screens.observabilityPage.jobRunMix.countRunningNow', running, {
+                count: (
+                  <span className="text-lg font-semibold tabular-nums text-text">
+                    <FormattedNumber value={running} />
+                  </span>
+                ),
+              }),
             )}
-          />
-          {besideTheNumber(
-            sayCountParts('screens.observabilityPage.jobRunMix.countRunningNow', running, {
-              count: (
-                <span className="text-lg font-semibold tabular-nums text-text">
-                  <FormattedNumber value={running} />
-                </span>
-              ),
-            }),
-          )}
-        </p>
+          </p>
+        )}
 
         {SEGMENTS.map((segment) => (
           <p key={segment.id} className="flex items-center gap-2">
@@ -99,6 +102,13 @@ const JobRunMix = ({ running, completed, failed, stopped }: JobRunMixProps) => {
             )}
           </p>
         ))}
+
+        {extra === undefined ? null : (
+          <p className="flex items-center gap-2">
+            <span className="text-sm text-text-muted">{extra.label}</span>
+            <span className="text-lg font-semibold tabular-nums text-text">{extra.value}</span>
+          </p>
+        )}
 
         {succeeded === null ? null : (
           <p className="ml-auto flex items-center gap-2">

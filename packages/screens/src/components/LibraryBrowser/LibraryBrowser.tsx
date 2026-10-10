@@ -115,7 +115,20 @@ const LibraryBrowser = ({
 
   const heroItems = useMemo(() => sample.data ?? [], [sample.data]);
 
-  const heroPicks = useMemo(() => pickFeatured(heroItems, HERO_COUNT), [heroItems]);
+  const sampleIds = heroItems.map((item) => item.id).join(' ');
+  const [picked, setPicked] = useState(() => ({
+    of: sampleIds,
+    items: pickFeatured(heroItems, HERO_COUNT),
+  }));
+
+  if (picked.of !== sampleIds) {
+    setPicked({ of: sampleIds, items: pickFeatured(heroItems, HERO_COUNT) });
+  }
+
+  const heroPicks = useMemo(
+    () => picked.items.map((one) => heroItems.find((item) => item.id === one.id) ?? one),
+    [picked.items, heroItems],
+  );
 
   const watched = useQuery(viewingQueries.progress());
   const progress = useMemo(() => byMediaId(watched.data ?? []), [watched.data]);

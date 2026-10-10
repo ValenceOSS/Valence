@@ -1,5 +1,5 @@
+import { cuesOfScript } from '@ValenceServer/subtitles/cuesOfScript';
 import { readFile } from 'node:fs/promises';
-import { parseAdvancedSubStation } from '@ValenceCore/functions/parseAdvancedSubStation';
 import { toWebVtt } from '@ValenceCore/functions/toWebVtt';
 import { decodeSubtitle } from '@ValenceServer/subtitles/decodeSubtitle';
 import { describeSubtitleLabel } from '@ValenceServer/subtitles/describeSubtitleLabel';
@@ -52,12 +52,16 @@ const createFetchedSubtitleService = (store: FetchedSubtitleStore): SubtitleServ
       return read === null ? null : toWebVtt(read.text, read.entry.format);
     },
 
+    readScript: async (mediaId, id) => {
+      const read = await readText(mediaId, id);
+
+      return read === null || !STYLED.has(read.entry.format) ? null : read.text;
+    },
+
     readCues: async (mediaId, id) => {
       const read = await readText(mediaId, id);
 
-      return read === null || !STYLED.has(read.entry.format)
-        ? null
-        : parseAdvancedSubStation(read.text).cues;
+      return cuesOfScript(read === null || !STYLED.has(read.entry.format) ? null : read.text);
     },
   };
 };

@@ -17,7 +17,6 @@ import { calendarQueries } from '@ValenceClient/query/calendarQueries';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { Icon } from '@ValenceUI/Icon';
-import { cn } from '@ValenceUI/cn';
 import { say } from '@ValenceI18n/say';
 import type { CalendarSubscribeProps } from './CalendarSubscribe.types';
 
@@ -88,9 +87,9 @@ const CalendarSubscribe = ({ className }: CalendarSubscribeProps) => {
     <>
       <ActionMenu
         label={say('common.addToCalendar')}
-        look="raised"
+        look="segment"
         align="end"
-        className={cn('h-7 w-auto px-0', className)}
+        {...(className === undefined ? {} : { className })}
         onOpenChange={(isOpen) => {
           setHasCopied(false);
 
@@ -99,7 +98,7 @@ const CalendarSubscribe = ({ className }: CalendarSubscribeProps) => {
           }
         }}
         trigger={
-          <span className="flex items-center gap-1.5 px-2.5 text-[0.8125rem] font-medium">
+          <span className="flex items-center gap-1.5">
             <Icon of={CalendarPlusIcon} size={16} />
             {say('common.addToCalendar')}
           </span>

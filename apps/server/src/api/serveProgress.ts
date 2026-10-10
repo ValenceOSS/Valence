@@ -1,3 +1,5 @@
+import { describeDevice } from '@ValenceServer/account/describeDevice';
+import { brandsOf } from '@ValenceServer/web/brandsOf';
 import {
   listProgressRoute,
   recordProgressRoute,
@@ -83,6 +85,10 @@ const serveProgress = (app: OpenAPIHono, context: AppContext): void => {
         at,
         secondsWatched,
         isFinished: report.isFinished,
+        deviceLabel: describeDevice(
+          context.req.header('user-agent') ?? null,
+          brandsOf(context.req.header('sec-ch-ua')),
+        ).message,
       });
     }
 

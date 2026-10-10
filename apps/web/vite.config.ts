@@ -102,6 +102,14 @@ const key = certificate('local-key.pem');
 export default defineConfig({
   resolve: { tsconfigPaths: true },
   plugins: [react(), tailwindcss(), pushWorker(), aliasesAsTheyChange()],
+  optimizeDeps: {
+    exclude: ['jassub'],
+    include: [
+      '@valence/screens > jassub > throughput',
+      '@valence/screens > jassub > rvfc-polyfill',
+    ],
+  },
+  worker: { format: 'es' },
   server: {
     port: 5173,
     host: true,

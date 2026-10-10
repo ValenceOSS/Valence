@@ -43,6 +43,17 @@ const createLayeredSubtitleService = (sources: SubtitleService[]): SubtitleServi
 
     return null;
   },
+  readScript: async (mediaId, trackId) => {
+    for (const source of sources) {
+      const script = await source.readScript(mediaId, trackId);
+
+      if (script !== null) {
+        return script;
+      }
+    }
+
+    return null;
+  },
 });
 
 export { createLayeredSubtitleService };

@@ -61,6 +61,20 @@ const createLinkedSubtitles = (
 
     return read?.success === true ? read.data.cues : null;
   },
+  readScript: async (mediaId, trackId) => {
+    const linked = await linkedTitleOf(mediaId);
+
+    if (linked === null) {
+      return local.readScript(mediaId, trackId);
+    }
+
+    const answered = await asker.ask(
+      linked.serverId,
+      `/api/media/${linked.remoteId}/subtitles/${encodeURIComponent(trackId)}/script`,
+    );
+
+    return answered?.ok === true ? answered.text() : null;
+  },
 });
 
 export { createLinkedSubtitles };

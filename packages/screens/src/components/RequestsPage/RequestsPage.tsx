@@ -19,6 +19,7 @@ import { MusicDiscover } from './components/MusicDiscover/MusicDiscover';
 import { RequestsList } from './components/RequestsList/RequestsList';
 import { DiscoverResults } from './components/DiscoverResults/DiscoverResults';
 import { DiscoverSearchField } from './components/DiscoverSearchField/DiscoverSearchField';
+import { BackToTop } from '@ValenceUI/BackToTop';
 import { Button } from '@ValenceUI/Button';
 import { readDiscoverSearch } from '@ValenceScreens/requests/readDiscoverSearch';
 import { viewOfDiscoverSearch } from '@ValenceScreens/requests/viewOfDiscoverSearch';
@@ -31,7 +32,7 @@ import { say } from '@ValenceI18n/say';
  * Movies and Shows are those lists whole, going on as far as
  * they are scrolled; My requests shows where each of yours has got to. Which is showing is in the
  * address, so any of them can be linked to; one for a kind no library takes requests for shows
- * Discover instead.
+ * Discover instead. Discover's search stays put while what it found changes beneath it.
  */
 const RequestsPage = () => {
   const { place, go } = usePlace();
@@ -60,7 +61,20 @@ const RequestsPage = () => {
       exit="gone"
       className={cn(RAIL.lane, 'flex flex-col gap-6 pt-6 pb-16')}
     >
+      <BackToTop />
+
       <h1 className="sr-only">{say('common.requests')}</h1>
+
+      {showing === 'discover' ? (
+        <div className={RAIL.inset}>
+          <DiscoverSearchField
+            query={finding ?? ''}
+            onSearch={(query) => {
+              go({ requestsView: viewOfDiscoverSearch(query) });
+            }}
+          />
+        </div>
+      ) : null}
 
       <AnimatePresence mode="wait">
         <motion.div
@@ -78,18 +92,6 @@ const RequestsPage = () => {
               'flex flex-col gap-6',
             )}
           >
-            {showing === 'discover' ? (
-              <div className={finding === null ? RAIL.inset : ''}>
-                <DiscoverSearchField
-                  key={finding ?? ''}
-                  query={finding ?? ''}
-                  onSearch={(query) => {
-                    go({ requestsView: viewOfDiscoverSearch(query) });
-                  }}
-                />
-              </div>
-            ) : null}
-
             {showing === 'discover' && finding !== null ? (
               <>
                 <span className="flex flex-wrap items-center justify-between gap-3">

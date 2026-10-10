@@ -18,6 +18,7 @@ const aLocal = (): SubtitleService => ({
   list: vi.fn(() => Promise.resolve([])),
   read: vi.fn(() => Promise.resolve('here')),
   readCues: vi.fn(() => Promise.resolve([])),
+  readScript: vi.fn(() => Promise.resolve(null)),
 });
 
 const linkedTitleOf = (mediaId: string) =>

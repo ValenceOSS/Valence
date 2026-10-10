@@ -1,6 +1,4 @@
 import { useMemo, useState } from 'react';
-import { Search as SearchIcon } from '@keyline-icons/react/fill';
-import { Icon } from '@ValenceUI/Icon';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Switch } from '@ValenceUI/Switch';
 import { TextField } from '@ValenceUI/TextField';
@@ -97,7 +95,6 @@ const WebhookFilterList = ({
                 placeholder={say('screens.webhooksPanel.webhookFilterList.findInTitle', {
                   title: title.toLowerCase(),
                 })}
-                icon={<Icon of={SearchIcon} size={15} />}
               />
 
               {shown.length === 0 ? (

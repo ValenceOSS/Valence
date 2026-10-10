@@ -706,8 +706,8 @@ describe('JobHistory', () => {
 
       drawHistory();
       await screen.findByText('Generate missing previews');
-      await userEvent.click(screen.getByRole('button', { name: 'Filter job runs' }));
-      await userEvent.click(await screen.findByRole('menuitemcheckbox', { name: 'Failed' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Status' }));
+      await userEvent.click(await screen.findByRole('menuitemradio', { name: 'Failed' }));
 
       await waitFor(() => {
         expect(askedHistory.mock.calls.at(-1)?.[0]).toMatchObject({ status: 'failed' });

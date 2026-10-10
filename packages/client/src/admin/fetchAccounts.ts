@@ -119,7 +119,7 @@ const inviteAccount = async (request: {
 };
 
 /**
- * Changes an account's name, username or address. Takes only what changed rather than the whole
+ * Changes an account's name, username, address or Discord ID. Takes only what changed rather than the whole
  * account, so an administrator editing one field does not have to resend the others.
  *
  * @param userId - The account to change.
@@ -128,7 +128,7 @@ const inviteAccount = async (request: {
  */
 const editAccount = async (
   userId: string,
-  changes: { name?: string; username?: string; email?: string | null },
+  changes: { name?: string; username?: string; email?: string | null; discordId?: string | null },
 ): Promise<Refusal> => {
   const response = await fetch(`/api/admin/accounts/${userId}`, {
     method: 'PATCH',

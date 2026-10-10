@@ -101,11 +101,11 @@ describe('JobHealth', () => {
 
     await screen.findByText('Scan for changes');
 
-    const strip = screen.getByLabelText('Overall job health');
+    const strip = screen.getByLabelText('Job run summary');
 
-    expect(within(strip).getByText('110')).toBeInTheDocument();
+    expect(within(strip).getByText('107')).toBeInTheDocument();
     expect(within(strip).getByText('3')).toBeInTheDocument();
-    expect(within(strip).getByText('97.2%')).toBeInTheDocument();
+    expect(within(strip).getByText(/97\s*%/)).toBeInTheDocument();
   });
 
   it('asks about the last day to begin with, and about the range chosen after', async () => {

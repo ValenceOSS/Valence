@@ -162,6 +162,20 @@
       "when": 1791583437878,
       "tag": "0022_pre_transcoding_climbs_a_ladder",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "5",
+      "when": 1791647369646,
+      "tag": "0023_accounts_know_their_discord",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "5",
+      "when": 1791648194376,
+      "tag": "0024_viewings_know_their_device",
+      "breakpoints": true
     }
   ]
 }

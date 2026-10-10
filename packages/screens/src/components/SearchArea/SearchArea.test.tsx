@@ -182,7 +182,8 @@ describe('SearchArea', () => {
     renderInAnAddress(
       <HeldSearchArea search="" onSearchChange={vi.fn()} onPlay={vi.fn()} onInspect={vi.fn()} />,
     );
-    await user.click(await screen.findByRole('button', { name: 'Films' }));
+    await user.click(await screen.findByRole('button', { name: 'Search in' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Films' }));
 
     await waitFor(() => {
       expect(fetchLibraryItems).toHaveBeenCalledWith(
@@ -218,7 +219,8 @@ describe('SearchArea', () => {
     renderInAnAddress(
       <HeldSearchArea search="" onSearchChange={vi.fn()} onPlay={vi.fn()} onInspect={vi.fn()} />,
     );
-    await user.click(await screen.findByRole('button', { name: 'Films' }));
+    await user.click(await screen.findByRole('button', { name: 'Search in' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Films' }));
     fetchLibraryItems.mockResolvedValue({ items: [], total: 0 });
 
     expect(await screen.findByText(/Try removing one/)).toBeInTheDocument();
@@ -296,7 +298,8 @@ describe('SearchArea', () => {
 
     const before = await screen.findByRole('button', { name: /Arrival/ });
 
-    await user.click(screen.getByRole('button', { name: 'Films' }));
+    await user.click(await screen.findByRole('button', { name: 'Search in' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Films' }));
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /Arrival/ })).not.toBe(before);
@@ -417,7 +420,8 @@ describe('SearchArea', () => {
   it('searches only books when only books are wanted', async () => {
     searchFor('austen');
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Books' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Search in' }));
+    await userEvent.click(await screen.findByRole('menuitemradio', { name: 'Books' }));
 
     await waitFor(() => {
       expect(screen.queryByText('Arrival')).not.toBeInTheDocument();

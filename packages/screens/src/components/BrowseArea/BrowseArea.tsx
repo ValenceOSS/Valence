@@ -39,9 +39,11 @@ import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { BookRow } from '@ValenceScreens/components/BookRow/BookRow';
 import { AppliedFilters } from '@ValenceUI/AppliedFilters';
 import { BackToTop } from '@ValenceUI/BackToTop';
-import { FilterMenu } from '@ValenceUI/FilterMenu';
+import { FilterSplit } from '@ValenceUI/FilterSplit';
+import { JOINED_LOOKS } from '@ValenceUI/tokens/joinedLooks';
 import { useLibraryFilters } from '@ValenceClient/library/useLibraryFilters';
 import { say } from '@ValenceI18n/say';
+import { PageTitle } from '@ValenceScreens/components/PageTitle/PageTitle';
 
 const PAGE_SIZE = 120;
 
@@ -229,12 +231,11 @@ const BrowseArea = ({
         transition={revealTransition(prefersReducedMotion, 'heavy')}
         className="flex min-h-10 items-center justify-end gap-4"
       >
-        <h1 className="sr-only">{page.title}</h1>
+        <PageTitle className="mr-auto">{page.title}</PageTitle>
 
         {!isFilterable || filters.groups.length === 0 ? null : (
-          <FilterMenu
+          <FilterSplit
             label={say('screens.browseArea.filterTitle', { title: page.title.toLowerCase() })}
-            hasLabel
             groups={filters.groups}
             selected={filters.selected}
             onChange={filters.change}
@@ -242,45 +243,47 @@ const BrowseArea = ({
         )}
 
         {!isFilterable || isReading || items.length === 0 ? null : (
-          <OptionMenu
-            label={say('screens.browseArea.orderTitle', { title: page.title.toLowerCase() })}
-            align="end"
-            triggerShape="button"
-            trigger={
-              <>
-                <Icon of={SortIcon} size={16} />
-                {nameBrowseOrder(arrangement.order)}
-              </>
-            }
-            groups={[
-              {
-                name: say('common.order'),
-                options: BrowseOrderSchema.options.map((order) => ({
-                  id: order,
-                  label: nameBrowseOrder(order),
-                })),
-                selectedId: arrangement.order,
-                onSelect: (id) => {
-                  const chosen = BrowseOrderSchema.safeParse(id);
+          <div className={JOINED_LOOKS.track}>
+            <OptionMenu
+              label={say('screens.browseArea.orderTitle', { title: page.title.toLowerCase() })}
+              align="end"
+              triggerShape="segment"
+              trigger={
+                <>
+                  <Icon of={SortIcon} size={16} />
+                  {nameBrowseOrder(arrangement.order)}
+                </>
+              }
+              groups={[
+                {
+                  name: say('common.order'),
+                  options: BrowseOrderSchema.options.map((order) => ({
+                    id: order,
+                    label: nameBrowseOrder(order),
+                  })),
+                  selectedId: arrangement.order,
+                  onSelect: (id) => {
+                    const chosen = BrowseOrderSchema.safeParse(id);
 
-                  if (chosen.success) {
-                    arrange({ ...arrangement, order: chosen.data });
-                  }
+                    if (chosen.success) {
+                      arrange({ ...arrangement, order: chosen.data });
+                    }
+                  },
                 },
-              },
-              {
-                name: say('common.show'),
-                options: [
-                  { id: 'everything', label: say('common.everything') },
-                  { id: 'unwatched', label: say('common.onlyWhatYouHaveNotWatched') },
-                ],
-                selectedId: arrangement.isHidingWatched ? 'unwatched' : 'everything',
-                onSelect: (id) => {
-                  arrange({ ...arrangement, isHidingWatched: id === 'unwatched' });
+                {
+                  name: say('common.show'),
+                  options: [
+                    { id: 'everything', label: say('common.everything') },
+                    { id: 'unwatched', label: say('common.onlyWhatYouHaveNotWatched') },
+                  ],
+                  selectedId: arrangement.isHidingWatched ? 'unwatched' : 'everything',
+                  onSelect: (id) => {
+                    arrange({ ...arrangement, isHidingWatched: id === 'unwatched' });
+                  },
                 },
-              },
-            ]}
-          />
+              ]}
+            />
+          </div>
         )}
 
         {isReading || items.length === 0 ? null : (

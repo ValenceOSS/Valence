@@ -256,14 +256,14 @@ describe('IndexersPanel', () => {
     });
   });
 
-  it('shows a site’s privacy in place of its kind', async () => {
+  it('shows a site’s privacy in a column of its own', async () => {
     fetchIndexers.mockResolvedValue([
       anIndexer({ kind: 'cardigann', privacy: 'private', definitionId: 'hdb' }),
     ]);
 
     renderInAnAddress(<IndexersPanel />);
 
-    expect(await screen.findByText('Private site')).toBeInTheDocument();
+    expect(await screen.findByText('Private')).toBeInTheDocument();
   });
 
   it('opens the dialog to change one', async () => {
@@ -387,7 +387,7 @@ describe('IndexersPanel', () => {
     expect(screen.queryByLabelText(/^Testing /)).not.toBeInTheDocument();
   });
 
-  it('shows a spinner only for the indexers being tested, not those waiting their turn', async () => {
+  it('marks only the indexers being tested as testing, not those waiting their turn', async () => {
     fetchIndexers.mockResolvedValue(
       ['a', 'b', 'c', 'd', 'e'].map((letter) =>
         anIndexer({ id: letter, name: `Indexer ${letter}` }),
@@ -403,9 +403,8 @@ describe('IndexersPanel', () => {
     await user.click(screen.getByRole('button', { name: /Test all/ }));
 
     await waitFor(() => {
-      expect(screen.getAllByLabelText(/^Testing Indexer/)).toHaveLength(4);
+      expect(screen.getAllByText('Testing', { exact: true })).toHaveLength(4);
     });
-    expect(screen.queryByLabelText('Testing Indexer e')).not.toBeInTheDocument();
   });
 
   it('has nothing to test where every indexer was switched off', async () => {

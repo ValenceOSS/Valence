@@ -20,6 +20,7 @@ pub mod download;
 pub mod drm_clients;
 pub mod durability;
 pub mod fingerprint;
+pub mod fonts;
 pub mod frame;
 pub mod graphics;
 pub mod integrity;

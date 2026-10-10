@@ -1,3 +1,4 @@
+import { RecentViewingListSchema } from '@ValenceContracts/schemas/RecentViewing';
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
@@ -265,6 +266,26 @@ const adminSessionsRoute = createRoute({
     200: {
       description: 'Every open tab',
       content: { 'application/json': { schema: z.array(AdminSessionSchema) } },
+    },
+    403: {
+      description: 'Not an administrator',
+      content: { 'application/json': { schema: AdminError } },
+    },
+  },
+});
+
+const adminWatchHistoryRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/history',
+  tags: ['Admin'],
+  summary: 'List what was watched lately, by whom and on what',
+  request: {
+    query: z.object({ limit: z.coerce.number().int().min(1).max(500).optional() }),
+  },
+  responses: {
+    200: {
+      description: 'The most recent viewings across every profile, newest first',
+      content: { 'application/json': { schema: RecentViewingListSchema } },
     },
     403: {
       description: 'Not an administrator',
@@ -895,6 +916,7 @@ export {
   adminMeasureStorageRoute,
   adminSettingsRoute,
   adminSessionsRoute,
+  adminWatchHistoryRoute,
   adminStopSessionRoute,
   adminPauseSessionRoute,
   adminMessageSessionRoute,

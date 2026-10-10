@@ -80,6 +80,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
           id: account.id,
           name: account.name,
           username: account.username ?? null,
+          discordId: account.discordId ?? null,
           email: realEmailOf(account.email),
           createdAt: account.createdAt,
           isBanned: (await isAccountBanned?.(account.id)) ?? false,
@@ -330,6 +331,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
       ...(body.name === undefined ? {} : { name: body.name }),
       ...(body.username === undefined ? {} : { username: body.username }),
       ...(body.email === undefined ? {} : { email: body.email }),
+      ...(body.discordId === undefined ? {} : { discordId: body.discordId }),
     });
 
     if (changed === undefined || changed === 'missing') {

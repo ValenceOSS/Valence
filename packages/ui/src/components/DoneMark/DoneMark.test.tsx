@@ -8,7 +8,7 @@ describe('DoneMark', () => {
     const { container } = render(<DoneMark />);
 
     expect(container.firstElementChild).toHaveAttribute('aria-hidden', 'true');
-    expect(container.querySelector('.valence-spin')).not.toBeNull();
+    expect(container.querySelector('[role="status"]')).not.toBeNull();
     expect(container.querySelector('.valence-draw svg')).not.toBeNull();
   });
 
@@ -19,7 +19,7 @@ describe('DoneMark', () => {
       </MotionConfig>,
     );
 
-    expect(container.querySelector('.valence-spin')).toBeNull();
+    expect(container.querySelector('[role="status"]')).toBeNull();
     expect(container.querySelector('.valence-draw svg')).not.toBeNull();
   });
 

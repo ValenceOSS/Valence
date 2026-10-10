@@ -665,6 +665,16 @@
     "context": "The line under a film's title on the release calendar, on the day it comes out to buy or rent online."
   },
   {
+    "handler": "client.calendar.describeCalendarRun.episodesAcrossSeasons",
+    "text": "S{firstSeason} E{firstEpisode} – S{lastSeason} E{lastEpisode}",
+    "context": "The run of episodes of a show airing in the days the release calendar's timeline shows, crossing from one season into the next. Every value is a number."
+  },
+  {
+    "handler": "client.calendar.describeCalendarRun.episodesInSeason",
+    "text": "S{seasonNumber} · E{firstEpisode}–E{lastEpisode}",
+    "context": "The run of episodes of a show airing in the days the release calendar's timeline shows, all in one season. {seasonNumber}, {firstEpisode} and {lastEpisode} are numbers."
+  },
+  {
     "handler": "client.downloads.useFetchWhatThisDeviceAsked.itIsReadyToWatchOffline",
     "text": "It’s ready to watch offline.",
     "context": "The body in the use fetch what this device asked in the downloads."
@@ -6365,6 +6375,11 @@
     "context": "The name, used in the download panel of the television app and in the download queue table in the downloads panel."
   },
   {
+    "handler": "common.timeline",
+    "text": "Timeline",
+    "context": "The choice that shows the release calendar as a timeline: a row for each show or film, running across the days its releases fall on."
+  },
+  {
     "handler": "common.title",
     "text": "Title",
     "context": "Shown, used in several places, among them the stream stats in the player of the television app and the encoding panel in the admin area."
@@ -9145,6 +9160,11 @@
     "context": "An error the server answers with (HTTP 403) in the app on the server (from `serveShare`)."
   },
   {
+    "handler": "error.subtitle.noSuchFont",
+    "text": "This title carries no font by that name.",
+    "context": "Refusal when a player asks for a subtitle font the video file does not carry."
+  },
+  {
     "handler": "error.subtitle.thatTrackCarriesNoStylingOf",
     "text": "That subtitle track has no styling of its own.",
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveSubtitle`)."
@@ -11860,6 +11880,11 @@
     "context": "The detail in the admin (from `describeSessionDelivery`)."
   },
   {
+    "handler": "screens.admin.indexerPrivacy.semiPrivate",
+    "text": "Semi-private",
+    "context": "An indexer anyone can join but must sign up to, on its privacy badge."
+  },
+  {
     "handler": "screens.admin.nameOfSession.unknownViewer",
     "text": "Unknown viewer",
     "context": "Shown in the admin (from `nameOfSession`)."
@@ -12018,6 +12043,21 @@
     "handler": "screens.adminArea.accountsPanel.deleteThisAccount",
     "text": "Delete this account?",
     "context": "Shown in the accounts panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.accountsPanel.discordIdIsDigits",
+    "text": "A Discord ID is 17 to 20 digits. Turn on Developer Mode in Discord, then copy it from their profile.",
+    "context": "Shown under the Discord ID field in the admin account editor when what was typed is not a Discord ID."
+  },
+  {
+    "handler": "screens.adminArea.accountsPanel.discordIdMentionedOnRequests",
+    "text": "Discord webhooks mention them when they ask for something.",
+    "context": "The explanation under the Discord ID field in the admin account editor."
+  },
+  {
+    "handler": "screens.adminArea.accountsPanel.discordIdOptional",
+    "text": "Discord ID (optional)",
+    "context": "The label of the field in the admin account editor holding the number Discord knows this person by."
   },
   {
     "handler": "screens.adminArea.accountsPanel.editAccount",
@@ -12203,6 +12243,21 @@
     "handler": "screens.adminArea.activityPanel.nobodyHasTheAppOpenRight",
     "text": "No one is using the app right now.",
     "context": "Text shown in the activity panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.activityPanel.showAsATable",
+    "text": "Show as a table",
+    "context": "The button on the admin sessions panel that lists the sessions as rows of a table."
+  },
+  {
+    "handler": "screens.adminArea.activityPanel.showAsCards",
+    "text": "Show as cards",
+    "context": "The button on the admin sessions panel that shows each session as a card with its artwork."
+  },
+  {
+    "handler": "screens.adminArea.activityPanel.showSessionsAs",
+    "text": "Show sessions as",
+    "context": "Read out for the pair of buttons on the admin sessions panel that switch between a table and cards."
   },
   {
     "handler": "screens.adminArea.addLibraryDialog.aFolderOnTheMachineRunning",
@@ -14115,11 +14170,6 @@
     "context": "Shown in the admin Settings, on the Email card."
   },
   {
-    "handler": "screens.adminArea.emailCard.onceEmailIsOnTheAddresses",
-    "text": "When email is on, recipient addresses and email contents are sent to the mail provider you set up here.",
-    "context": "Shown in the admin Settings, on the Email card: a plain statement of what leaves the server."
-  },
-  {
     "handler": "screens.adminArea.emailCard.port",
     "text": "Port",
     "context": "Shown in the admin Settings, on the Email card: the mail server's network port."
@@ -14253,16 +14303,6 @@
     "handler": "screens.adminArea.emailCard.toWhoeverAsksOnTheSign",
     "text": "Sends a reset link to anyone who requests one on the sign-in screen, if their account has an email address.",
     "context": "Shown in the admin Settings, on the Email card, describing the password reset switch."
-  },
-  {
-    "handler": "screens.adminArea.emailCard.useResend",
-    "text": "Use Resend",
-    "context": "Shown in the admin Settings, on the Email card: a button that fills in Resend's mail server. Resend is a product name."
-  },
-  {
-    "handler": "screens.adminArea.emailCard.whatLeavesTheServer",
-    "text": "What’s sent to your mail provider",
-    "context": "Shown in the admin Settings, on the Email card: a note's title."
   },
   {
     "handler": "screens.adminArea.encodingPanel.alreadyDone",
@@ -14990,16 +15030,6 @@
     "context": "Shown in the indexers panel in the admin area."
   },
   {
-    "handler": "screens.adminArea.indexersPanel.privateSite",
-    "text": "Private site",
-    "context": "Shown in the indexers panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.indexersPanel.publicSite",
-    "text": "Public site",
-    "context": "Shown in the indexers panel in the admin area."
-  },
-  {
     "handler": "screens.adminArea.indexersPanel.readingTheIndexers",
     "text": "Loading indexers",
     "context": "The label of a spinner in the indexers panel in the admin area."
@@ -15020,14 +15050,14 @@
     "context": "The description of Test search on an indexer, and the line under the dialog it opens."
   },
   {
-    "handler": "screens.adminArea.indexersPanel.semiPrivateSite",
-    "text": "Semi-private site",
-    "context": "Shown in the indexers panel in the admin area."
-  },
-  {
     "handler": "screens.adminArea.indexersPanel.testAll",
     "text": "Test all",
     "context": "Text shown in the indexers panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.indexersPanel.testing",
+    "text": "Testing",
+    "context": "The state badge on an indexer while Valence is checking it can be reached and searched."
   },
   {
     "handler": "screens.adminArea.indexersPanel.testSearch",
@@ -17780,6 +17810,11 @@
     "context": "Shown in the session stats dialog in the admin area."
   },
   {
+    "handler": "screens.adminArea.sessionTable.viewer",
+    "text": "Viewer",
+    "context": "The heading of the column in the admin sessions table naming who has each session open."
+  },
+  {
     "handler": "screens.adminArea.settingsPanel.ageCertificates",
     "text": "Age certificates",
     "context": "The label of a option menu in the settings panel in the admin area."
@@ -18968,6 +19003,11 @@
     "handler": "screens.adminArea.uploadMediaDialog.uploadToName",
     "text": "Upload to {name}",
     "context": "The title of the dialog for uploading media. {name} is the library's name, or the name of the folder in it being uploaded into."
+  },
+  {
+    "handler": "screens.adminArea.watchHistoryCard.nothingWatchedYet",
+    "text": "Nobody has watched anything yet.",
+    "context": "Shown in the admin watch history table before anything has been played."
   },
   {
     "handler": "screens.adminArea.webhookCreated",
@@ -22576,11 +22616,6 @@
     "context": "The title of a headed section in the job health in the observability page."
   },
   {
-    "handler": "screens.observabilityPage.jobHealth.howTheJobsAreDoingOverall",
-    "text": "Overall job health",
-    "context": "The label of a stat strip in the job health in the observability page."
-  },
-  {
     "handler": "screens.observabilityPage.jobHealth.lastRun",
     "text": "Last run",
     "context": "Shown in the job health in the observability page."
@@ -22594,11 +22629,6 @@
     "handler": "screens.observabilityPage.jobHealth.noJobHasRunInThis",
     "text": "No jobs ran in this time range.",
     "context": "Shown in the job health in the observability page."
-  },
-  {
-    "handler": "screens.observabilityPage.jobHealth.ofTheRunsThatHaveEnded",
-    "text": "Of finished runs",
-    "context": "The detail in the job health in the observability page."
   },
   {
     "handler": "screens.observabilityPage.jobHealth.readingHowTheJobsHaveGone",
@@ -23589,6 +23619,16 @@
     "handler": "screens.playback.useNowPlaying.seriesSeasonNumberEpisodeEpisodeNumber",
     "text": "Season {seasonNumber}, Episode {episodeNumber}",
     "context": "Shown in the use now playing in the playback. {seasonNumber} is filled in by the app; {episodeNumber} is filled in by the app."
+  },
+  {
+    "handler": "screens.playback.useSubtitleFetching.couldNotFetch",
+    "text": "{language} subtitles could not be downloaded.",
+    "context": "Shown when fetching a subtitle picked in the player fails. {language} is the language’s name."
+  },
+  {
+    "handler": "screens.playback.useSubtitleFetching.noneFound",
+    "text": "No {language} subtitles were found for this.",
+    "context": "Shown when the subtitle sites have nothing in the language picked in the player. {language} is the language’s name."
   },
   {
     "handler": "screens.playlistShelf.byARemovedProfile",
@@ -25721,6 +25761,36 @@
     "context": "Shown where the episodes could not be read from the server, followed by a sentence about why and a button to try again."
   },
   {
+    "handler": "screens.showStatusBadge.cancelled",
+    "text": "Cancelled",
+    "context": "Where a show stands, on the badge beside its episode count."
+  },
+  {
+    "handler": "screens.showStatusBadge.ended",
+    "text": "Ended",
+    "context": "Where a show stands, on the badge beside its episode count."
+  },
+  {
+    "handler": "screens.showStatusBadge.inProduction",
+    "text": "In production",
+    "context": "Where a show stands, on the badge beside its episode count."
+  },
+  {
+    "handler": "screens.showStatusBadge.pilot",
+    "text": "Pilot",
+    "context": "Where a show stands, on the badge beside its episode count."
+  },
+  {
+    "handler": "screens.showStatusBadge.planned",
+    "text": "Planned",
+    "context": "Where a show stands, on the badge beside its episode count."
+  },
+  {
+    "handler": "screens.showStatusBadge.returning",
+    "text": "Returning",
+    "context": "Where a show stands, on the badge beside its episode count."
+  },
+  {
     "handler": "screens.stillWatchingDialog.titleIsUpNextNothingWill",
     "text": "{title} is up next. Nothing will play or be marked as watched until you confirm.",
     "context": "Text shown in the still watching dialog. {title} is filled in by the app."
@@ -26011,6 +26081,16 @@
     "context": "The label of a button in the player controls in the video player. {SKIP_SECONDS} is filled in by the app."
   },
   {
+    "handler": "screens.videoPlayer.playerControls.fetchingSubtitle",
+    "text": "Downloading…",
+    "context": "Beneath a language in the player’s subtitle menu while a subtitle in it is being fetched."
+  },
+  {
+    "handler": "screens.videoPlayer.playerControls.fetchSubtitle",
+    "text": "Download and turn on",
+    "context": "Beneath a language in the player’s subtitle menu that has no track yet but can be fetched from a subtitle site."
+  },
+  {
     "handler": "screens.videoPlayer.playerControls.findSubtitles",
     "text": "Find subtitles…",
     "context": "In the video player’s settings menu, for an administrator, opening the search for subtitles on subtitle sites."
@@ -26019,16 +26099,6 @@
     "handler": "screens.videoPlayer.playerControls.forwardSKIPSECONDSSeconds",
     "text": "Forward {SKIP_SECONDS} seconds",
     "context": "The label of a button in the player controls in the video player. {SKIP_SECONDS} is filled in by the app."
-  },
-  {
-    "handler": "screens.videoPlayer.playerControls.immersiveView",
-    "text": "Immersive view",
-    "context": "Shown in the player controls in the video player."
-  },
-  {
-    "handler": "screens.videoPlayer.playerControls.leaveTheImmersiveView",
-    "text": "Exit immersive view",
-    "context": "Shown in the player controls in the video player."
   },
   {
     "handler": "screens.videoPlayer.playerControls.nextEpisodeNumberTitle",
@@ -26064,6 +26134,11 @@
     "handler": "screens.videoPlayer.playerControls.showTheTimeRemaining",
     "text": "Show time remaining",
     "context": "Shown in the player controls in the video player."
+  },
+  {
+    "handler": "screens.videoPlayer.playerControls.subtitlesAndCaptions",
+    "text": "Subtitles/CC",
+    "context": "The heading of the subtitle menu in the player."
   },
   {
     "handler": "screens.videoPlayer.playerControls.subtitlesEarlier",
