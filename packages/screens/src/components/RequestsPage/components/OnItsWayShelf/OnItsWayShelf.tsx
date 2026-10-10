@@ -56,7 +56,7 @@ const OnItsWayShelf = ({ onAsk, onOpenAll }: OnItsWayShelfProps) => {
         const backdropUrl = described[at]?.data?.backdropUrl ?? request.posterUrl;
         const logoUrl = described[at]?.data?.logoUrl ?? null;
         const askers = [request.requestedBy, ...request.alsoAskedBy];
-        const names = askers.map((asker) => asker.profileName ?? asker.name);
+        const names = askers.map((asker) => asker.name);
         const [first, ...rest] = names;
 
         return (
@@ -72,7 +72,9 @@ const OnItsWayShelf = ({ onAsk, onOpenAll }: OnItsWayShelfProps) => {
                 <span className="flex min-w-0 items-center gap-1.5 rounded-full bg-overlay py-0.5 pl-0.5 pr-2.5 text-xs font-medium text-on-scrim backdrop-blur-md">
                   <span className="flex shrink-0 -space-x-1.5">
                     {askers.slice(0, FACES).map((asker) => {
-                      const face = faces.data?.find((profile) => profile.id === asker.profileId);
+                      const face = faces.data?.find(
+                        (profile) => profile.id === asker.faceProfileId,
+                      );
 
                       return face === undefined ? (
                         <span

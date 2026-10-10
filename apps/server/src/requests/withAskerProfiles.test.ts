@@ -45,7 +45,7 @@ const aRequest = (change: Partial<MediaRequest>): MediaRequest => ({
 const PROFILE = '11111111-1111-4111-8111-111111111111';
 
 describe('withAskerProfiles', () => {
-  it('fills in the profile of each asker that has none, asking once per account', async () => {
+  it('fills in the profile each asker’s face is drawn from, asking once per account', async () => {
     const profileOf = vi.fn((accountId: string) =>
       Promise.resolve(accountId === 'account-1' ? PROFILE : null),
     );
@@ -58,19 +58,27 @@ describe('withAskerProfiles', () => {
       profileOf,
     );
 
-    expect(first?.requestedBy.profileId).toBe(PROFILE);
-    expect(first?.alsoAskedBy[0]?.profileId).toBeUndefined();
-    expect(second?.requestedBy.profileId).toBe(PROFILE);
+    expect(first?.requestedBy.faceProfileId).toBe(PROFILE);
+    expect(first?.alsoAskedBy[0]?.faceProfileId).toBeNull();
+    expect(second?.requestedBy.faceProfileId).toBe(PROFILE);
     expect(profileOf).toHaveBeenCalledTimes(2);
   });
 
-  it('keeps the profile a request already kept', async () => {
-    const kept = '22222222-2222-4222-8222-222222222222';
+  it('keeps the quality profile an asker asked at apart from its face', async () => {
+    const asked = '22222222-2222-4222-8222-222222222222';
     const [request] = await withAskerProfiles(
-      [aRequest({ requestedBy: { id: 'account-1', name: 'Sam', profileId: kept } })],
+      [
+        aRequest({
+          alsoAskedBy: [{ id: 'account-1', name: 'Sam', profileId: asked, profileName: '4K' }],
+        }),
+      ],
       () => Promise.resolve(PROFILE),
     );
 
-    expect(request?.requestedBy.profileId).toBe(kept);
+    expect(request?.alsoAskedBy[0]).toMatchObject({
+      profileId: asked,
+      profileName: '4K',
+      faceProfileId: PROFILE,
+    });
   });
 });
