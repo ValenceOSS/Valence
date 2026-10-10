@@ -1,6 +1,7 @@
 import { addDays } from '@ValenceCore/functions/addDays';
 import { monthGridOf } from '@ValenceCore/functions/monthGridOf';
 import { startOfWeek } from '@ValenceCore/functions/startOfWeek';
+import { timelineDaysOf } from '@ValenceScreens/calendar/timelineDaysOf';
 import type { CalendarView } from '@ValenceScreens/calendar/CALENDAR_VIEWS';
 
 const UPCOMING_DAYS = 60;
@@ -8,7 +9,7 @@ const UPCOMING_DAYS = 60;
 /**
  * The first and last days a view of the calendar shows.
  *
- * A month shows its whole grid, the days either side of it included, since they are drawn. The
+ * The timeline shows its five weeks. A month shows its whole grid, the days either side of it included, since they are drawn. The
  * upcoming list always starts today, wherever the calendar was turned to.
  *
  * @param view - The view.
@@ -22,6 +23,11 @@ const daysShownIn = (
   today: string,
 ): { from: string; to: string } => {
   switch (view) {
+    case 'timeline': {
+      const days = timelineDaysOf(day);
+
+      return { from: days[0] ?? day, to: days[days.length - 1] ?? day };
+    }
     case 'month': {
       const grid = monthGridOf(day);
 

@@ -39,10 +39,23 @@ const NEAR_THE_BOTTOM = '8%';
  * @param src - The subtitle file to read as WebVTT.
  * @param cuesSrc - Where to ask for the same track as styled lines, for a track that has them.
  * @param atSeconds - Where playback is up to, offset included.
+ * @param video - The video it is drawn over, whose clock it reads every frame where given, so a
+ *   line comes and goes on the frame it should rather than on the browser's next quarter-second
+ *   report of the time.
+ * @param offsetSeconds - How far the viewer has moved the subtitles against the picture, read
+ *   against that clock.
  * @param style - How this viewer likes captions drawn.
  * @param isLifted - Whether the controls are up and dialogue should sit above them.
  */
-const SubtitleCues = ({ src, cuesSrc, atSeconds, style, isLifted = false }: SubtitleCuesProps) => {
+const SubtitleCues = ({
+  src,
+  cuesSrc,
+  atSeconds,
+  video,
+  offsetSeconds = 0,
+  style,
+  isLifted = false,
+}: SubtitleCuesProps) => {
   const [cues, setCues] = useState<readonly SubtitleCue[]>([]);
 
   useEffect(() => {
@@ -75,7 +88,42 @@ const SubtitleCues = ({ src, cuesSrc, atSeconds, style, isLifted = false }: Subt
     };
   }, [src, cuesSrc]);
 
-  const said = linesAt(cues, atSeconds);
+  const [liveSeconds, setLiveSeconds] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (video === undefined) {
+      return undefined;
+    }
+
+    let frame = 0;
+    let shown = '';
+
+    const follow = () => {
+      const element = video.current;
+
+      if (element !== null) {
+        const seconds = element.currentTime - offsetSeconds;
+        const showing = linesAt(cues, seconds)
+          .map((line) => `${line.from.toString()}:${line.to.toString()}`)
+          .join(' ');
+
+        if (showing !== shown) {
+          shown = showing;
+          setLiveSeconds(seconds);
+        }
+      }
+
+      frame = requestAnimationFrame(follow);
+    };
+
+    frame = requestAnimationFrame(follow);
+
+    return () => {
+      cancelAnimationFrame(frame);
+    };
+  }, [video, offsetSeconds, cues]);
+
+  const said = linesAt(cues, video === undefined ? atSeconds : (liveSeconds ?? atSeconds));
 
   if (said.length === 0) {
     return null;

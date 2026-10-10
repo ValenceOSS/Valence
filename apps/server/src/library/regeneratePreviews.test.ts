@@ -36,6 +36,8 @@ const stubTranscoder = (requestPreview: Transcoder['requestPreview']): Transcode
   readTrickplayFile: () => Promise.resolve(null),
   stopSession: () => Promise.resolve(true),
   heartbeatSession: () => Promise.resolve(true),
+  listFonts: () => Promise.resolve([]),
+  readFont: () => Promise.resolve(new ArrayBuffer(0)),
   readSubtitle: () => Promise.reject(new Error('not used')),
   readFrame: () => Promise.reject(new Error('not used')),
   requestPreview,

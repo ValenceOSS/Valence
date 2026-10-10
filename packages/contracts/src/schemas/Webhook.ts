@@ -222,6 +222,7 @@ const WebhookRequestSchema = z.object({
   overview: z.string().nullable(),
   posterUrl: z.string().nullable(),
   requestedBy: z.string(),
+  requestedByDiscordId: z.string().nullable().optional(),
   alsoAskedBy: z.array(z.string()).optional(),
   seasons: z.array(z.number().int().nonnegative()).nullable(),
   state: MediaRequestStateSchema,

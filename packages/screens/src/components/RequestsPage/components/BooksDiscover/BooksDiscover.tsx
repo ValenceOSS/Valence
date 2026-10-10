@@ -1,8 +1,7 @@
 import { useDeferredValue, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpen as BookOpenIcon, Search as SearchIcon } from '@keyline-icons/react';
+import { BookOpen as BookOpenIcon } from '@keyline-icons/react';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-import { Icon } from '@ValenceUI/Icon';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { Spinner } from '@ValenceUI/Spinner';
 import { TextField } from '@ValenceUI/TextField';
@@ -47,7 +46,6 @@ const BooksDiscover = ({ onAsk }: BooksDiscoverProps) => {
       value={typed}
       onValueChange={setTyped}
       placeholder={say('screens.requestsPage.booksDiscover.searchForABookOrAn')}
-      icon={<Icon of={SearchIcon} size={16} />}
       className="max-w-md"
     />
   );

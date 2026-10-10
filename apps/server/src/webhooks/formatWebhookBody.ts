@@ -2,6 +2,7 @@ import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { describeArrival } from './describeArrival';
 import { describeSpan } from './describeSpan';
 import { discordEmbedFor } from './discordEmbedFor';
+import { discordMentionOf } from './discordMentionOf';
 import { isListenedTo } from './isListenedTo';
 import { nameOfItem } from './nameOfItem';
 import { nameOfViewer } from './nameOfViewer';
@@ -382,7 +383,8 @@ const withHowToFix = (sentence: string, docs: string | null): string =>
 /**
  * Writes a delivery in the shape its subscriber expects — the event itself for anything generic, and
  * the message shapes Discord and Slack require for those. The same event, said in whichever way the
- * receiver understands.
+ * receiver understands. A Discord message about a request mentions whoever asked, where their
+ * account carries their Discord ID, and lets nobody else be pinged by it.
  *
  * @param preset The shape this subscriber expects.
  * @param payload The event being delivered.
@@ -399,8 +401,15 @@ const formatWebhookBody = (
     }
 
     case 'discord': {
+      const mention = discordMentionOf(payload);
+      const embeds = [discordEmbedFor(payload, sentenceFor(payload), iconUrl)];
+
       return {
-        body: JSON.stringify({ embeds: [discordEmbedFor(payload, sentenceFor(payload), iconUrl)] }),
+        body: JSON.stringify(
+          mention === null
+            ? { embeds }
+            : { content: `<@${mention}>`, allowed_mentions: { users: [mention] }, embeds },
+        ),
         contentType: 'application/json',
       };
     }

@@ -29,6 +29,7 @@ const account = (over: Partial<Account> = {}): Account => ({
   name: 'Marques',
   email: 'm@example.com',
   username: null,
+  discordId: null,
   canSignIn: true,
   lastSignedInAt: null,
   setup: { state: 'none', expiresAt: null },

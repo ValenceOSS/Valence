@@ -73,6 +73,7 @@ const account = (overrides: Partial<Account> = {}): Account => ({
   id: 'usr_1',
   name: 'Dan',
   username: 'dan',
+  discordId: null,
   email: 'dan@valence.local',
   canSignIn: true,
   lastSignedInAt: null,

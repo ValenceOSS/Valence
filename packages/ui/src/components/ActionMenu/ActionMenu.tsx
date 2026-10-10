@@ -1,6 +1,7 @@
 import * as RadixMenu from '@radix-ui/react-dropdown-menu';
 import { Info as InfoIcon } from '@keyline-icons/react/fill';
 import { cn } from '@ValenceUI/cn';
+import { JOINED_LOOKS } from '@ValenceUI/tokens/joinedLooks';
 import { Icon } from '@ValenceUI/Icon';
 import { Tooltip } from '@ValenceUI/Tooltip';
 import { POPUP_MOTION, PRESS_MOTION } from '@ValenceUI/animations/motion';
@@ -22,6 +23,7 @@ const LOOKS = {
   pill: 'size-auto rounded-full bg-[var(--surface-hover)] p-1 hover:bg-[var(--surface-active)] data-[state=open]:bg-[var(--surface-active)]',
   raised: 'border border-[var(--surface-line)] bg-[var(--surface-hover)]',
   labelled: 'h-6 w-auto gap-1.5 px-2 text-xs font-medium',
+  segment: cn(JOINED_LOOKS.segment, 'w-auto rounded-none'),
 } as const;
 
 /**
@@ -51,7 +53,7 @@ const LOOKS = {
  * @param look - Plain, lit only when pointed at; a face, which is a circle that is not lit at all,
  *   for a picture standing in as the control; raised, with a fill and an edge of its own, for a
  *   control that has to be found on a busy row; or labelled, sized to words rather than a glyph, for
- *   a menu that says what it is.
+ *   a menu that says what it is; or a segment, one part of a joined row of them.
  * @param onOpenChange - Told when it opens or closes, for a caller that must not vanish from under
  *   it while it is open.
  * @param className - Extra classes for the caller's own layout.

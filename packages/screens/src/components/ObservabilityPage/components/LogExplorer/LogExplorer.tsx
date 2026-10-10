@@ -2,7 +2,6 @@ import { sayAgain } from '@ValenceI18n/sayAgain';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import {
-  ChevronDown as ChevronDownIcon,
   Copy as CopyFilledIcon,
   Download as DownloadFilledIcon,
   Radio as RadioIcon,
@@ -16,11 +15,12 @@ import { BarList } from '@ValenceUI/BarList';
 import { Button } from '@ValenceUI/Button';
 import { HeadedSection } from '@ValenceUI/HeadedSection';
 import { Well } from '@ValenceUI/Well';
-import { FilterMenu } from '@ValenceUI/FilterMenu';
+import { FilterSplit } from '@ValenceUI/FilterSplit';
 import { Icon } from '@ValenceUI/Icon';
 import { NothingHere } from '@ValenceUI/NothingHere';
-import { OptionMenu } from '@ValenceUI/OptionMenu';
-import { TextField } from '@ValenceUI/TextField';
+import { ScopedField } from '@ValenceUI/ScopedField';
+import { cn } from '@ValenceUI/cn';
+import { JOINED_LOOKS } from '@ValenceUI/tokens/joinedLooks';
 import { TimeBars } from '@ValenceUI/TimeBars';
 import { notify } from '@ValenceUI/notify';
 import { LOG_LEVELS, LOG_SOURCES } from '@ValenceContracts/schemas/Log';
@@ -45,7 +45,7 @@ import { applyTypedSearch } from '@ValenceScreens/admin/applyTypedSearch';
 import { describeLogLevel } from '@ValenceScreens/admin/describeLogLevel';
 import { LogDetailDialog } from '@ValenceScreens/components/ObservabilityPage/components/LogDetailDialog/LogDetailDialog';
 import { LogLine } from './components/LogLine/LogLine';
-import { TimeRangeMenu } from '@ValenceScreens/components/ObservabilityPage/components/TimeRangeMenu/TimeRangeMenu';
+import { timeRangeChoice } from '@ValenceScreens/components/ObservabilityPage/components/TimeRangeMenu/timeRangeChoice';
 import { LevelToggles } from '@ValenceScreens/components/ObservabilityPage/components/LevelToggles/LevelToggles';
 import type { FilterGroup } from '@ValenceUI/FilterMenu.types';
 import type { LogView } from '@ValenceClient/admin/logView.types';
@@ -371,11 +371,9 @@ const LogExplorer = ({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
-        <TextField
+        <ScopedField
           label={say('screens.observabilityPage.logExplorer.searchTheLog')}
           isLabelHidden
-          type="search"
-          size="sm"
           placeholder={say('screens.observabilityPage.logExplorer.searchOrFilterWithLevelError')}
           value={typed}
           className="min-w-64 flex-1"
@@ -390,44 +388,29 @@ const LogExplorer = ({
               setAnchor();
             }
           }}
-        />
-
-        <TimeRangeMenu search={search} onSearchChange={onSearchChange} />
-
-        <OptionMenu
-          label={say('common.order')}
-          size="sm"
-          triggerShape="field"
-          className="w-auto"
-          groups={[
+          choices={[
+            timeRangeChoice(search, onSearchChange),
             {
-              name: say('common.order'),
-              selectedId: view.sort,
-              onSelect: (id) => {
+              label: say('common.order'),
+              options: SORTS.map((sort) => ({
+                id: sort.id,
+                label: sort.label,
+                detail: sort.detail,
+              })),
+              value: view.sort,
+              onChange: (id) => {
                 const sort = SORTS.find((one) => one.id === id);
 
                 if (sort !== undefined) {
                   change({ ...view, sort: sort.id });
                 }
               },
-              options: SORTS.map((sort) => ({
-                id: sort.id,
-                label: sort.label,
-                detail: sort.detail,
-              })),
             },
           ]}
-          trigger={
-            <>
-              <span className="truncate">{SORTS.find((one) => one.id === view.sort)?.label}</span>
-              <Icon of={ChevronDownIcon} size={14} className="valence-chevron shrink-0" />
-            </>
-          }
         />
 
-        <FilterMenu
+        <FilterSplit
           label={say('screens.observabilityPage.logExplorer.filterTheLog')}
-          hasLabel
           groups={groups}
           selected={selection}
           onChange={(next) => {
@@ -435,82 +418,89 @@ const LogExplorer = ({
           }}
         />
 
-        <Button
-          variant="secondary"
-          size="sm"
-          isActive={isLive}
-          aria-pressed={isLive}
-          onClick={() => {
-            setIsLive((was) => !was);
-          }}
-        >
-          <Icon of={RadioIcon} size={15} />
-          {say('common.live')}
-        </Button>
+        <div className={JOINED_LOOKS.track}>
+          <Button
+            variant="bare"
+            size="none"
+            aria-pressed={isLive}
+            className={cn(
+              JOINED_LOOKS.segment,
+              'inline-flex items-center',
+              isLive ? 'bg-[var(--surface-active)]' : '',
+            )}
+            onClick={() => {
+              setIsLive((was) => !was);
+            }}
+          >
+            <Icon of={RadioIcon} size={15} />
+            {say('common.live')}
+          </Button>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          isIconOnly
-          label={say('screens.observabilityPage.logExplorer.readTheLogAgain')}
-          onClick={() => {
-            setAnchor();
-          }}
-        >
-          <Icon of={RefreshCwIcon} size={16} />
-        </Button>
+          <Button
+            variant="bare"
+            size="none"
+            label={say('screens.observabilityPage.logExplorer.readTheLogAgain')}
+            className={cn(JOINED_LOOKS.segment, 'inline-flex items-center px-2.5')}
+            onClick={() => {
+              setAnchor();
+            }}
+          >
+            <Icon of={RefreshCwIcon} size={16} />
+          </Button>
 
-        <PanelCardMenu
-          label={say('screens.mediaDetailDialog.moreToDoWithThis')}
-          groups={[
-            {
-              items: [
-                {
-                  id: 'copy',
-                  label: say('screens.observabilityPage.logExplorer.copyTheseLines'),
-                  icon: <Icon of={CopyFilledIcon} size={15} />,
-                  isDisabled: records.length === 0,
-                  onChoose: copyVisible,
-                },
-                {
-                  id: 'download',
-                  label: say('screens.observabilityPage.logExplorer.downloadTheseLines'),
-                  icon: <Icon of={DownloadFilledIcon} size={15} />,
-                  isDisabled: records.length === 0,
-                  onChoose: () => {
-                    download(
-                      `valence-log-${new Date().toISOString().slice(0, 10)}.txt`,
-                      logsAsText(records),
-                    );
+          <PanelCardMenu
+            isSegment
+            label={say('screens.mediaDetailDialog.moreToDoWithThis')}
+            groups={[
+              {
+                items: [
+                  {
+                    id: 'copy',
+                    label: say('screens.observabilityPage.logExplorer.copyTheseLines'),
+                    icon: <Icon of={CopyFilledIcon} size={15} />,
+                    isDisabled: records.length === 0,
+                    onChoose: copyVisible,
                   },
-                },
-              ],
-            },
-            {
-              name: say('common.view'),
-              items: [
-                {
-                  id: 'wrap',
-                  label: isWrapped
-                    ? say('screens.observabilityPage.logExplorer.cutLongLinesShort')
-                    : say('screens.observabilityPage.logExplorer.wrapLongLines'),
-                  onChoose: () => {
-                    setIsWrapped((was) => !was);
+                  {
+                    id: 'download',
+                    label: say('screens.observabilityPage.logExplorer.downloadTheseLines'),
+                    icon: <Icon of={DownloadFilledIcon} size={15} />,
+                    isDisabled: records.length === 0,
+                    onChoose: () => {
+                      download(
+                        `valence-log-${new Date().toISOString().slice(0, 10)}.txt`,
+                        logsAsText(records),
+                      );
+                    },
                   },
-                },
-                {
-                  id: 'time',
-                  label: hasTime
-                    ? say('screens.observabilityPage.logExplorer.hideTheTime')
-                    : say('screens.observabilityPage.logExplorer.showTheTime'),
-                  onChoose: () => {
-                    setHasTime((was) => !was);
+                ],
+              },
+              {
+                name: say('common.view'),
+                items: [
+                  {
+                    id: 'wrap',
+                    label: isWrapped
+                      ? say('screens.observabilityPage.logExplorer.cutLongLinesShort')
+                      : say('screens.observabilityPage.logExplorer.wrapLongLines'),
+                    onChoose: () => {
+                      setIsWrapped((was) => !was);
+                    },
                   },
-                },
-              ],
-            },
-          ]}
-        />
+                  {
+                    id: 'time',
+                    label: hasTime
+                      ? say('screens.observabilityPage.logExplorer.hideTheTime')
+                      : say('screens.observabilityPage.logExplorer.showTheTime'),
+                    onChoose: () => {
+                      setHasTime((was) => !was);
+                    },
+                  },
+                ],
+              },
+            ]}
+          />
+        </div>
       </div>
 
       {applied.size === 0 && view.zoom === null ? null : (

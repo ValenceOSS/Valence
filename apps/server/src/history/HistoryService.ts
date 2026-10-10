@@ -12,12 +12,21 @@ type Viewing = {
   isFinished: boolean;
 };
 
+type RecentViewing = Viewing & {
+  profileId: string;
+  profileName: string | null;
+  accountId: string | null;
+  deviceLabel: string | null;
+};
+
 type HistoryService = {
   record: (
     profileId: string,
     mediaItemId: string,
-    seen: { at: Date; secondsWatched: number; isFinished: boolean },
+    seen: { at: Date; secondsWatched: number; isFinished: boolean; deviceLabel?: string | null },
   ) => Promise<Viewing | null>;
+
+  recent: (options?: { limit?: number }) => Promise<RecentViewing[]>;
 
   list: (
     viewer: Viewer,
@@ -32,4 +41,4 @@ type HistoryService = {
   prune: (before: Date) => Promise<number>;
 };
 
-export type { HistoryService, Viewing };
+export type { HistoryService, RecentViewing, Viewing };

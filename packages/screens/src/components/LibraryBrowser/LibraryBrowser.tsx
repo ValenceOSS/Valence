@@ -115,7 +115,19 @@ const LibraryBrowser = ({
 
   const heroItems = useMemo(() => sample.data ?? [], [sample.data]);
 
-  const heroPicks = useMemo(() => pickFeatured(heroItems, HERO_COUNT), [heroItems]);
+  const heroItemsRef = useRef(heroItems);
+
+  heroItemsRef.current = heroItems;
+
+  const sampleIds = heroItems.map((item) => item.id).join(' ');
+  const pickedIds = useMemo(
+    () => (sampleIds === '' ? [] : pickFeatured(heroItemsRef.current, HERO_COUNT)),
+    [sampleIds],
+  );
+  const heroPicks = useMemo(
+    () => pickedIds.map((picked) => heroItems.find((item) => item.id === picked.id) ?? picked),
+    [pickedIds, heroItems],
+  );
 
   const watched = useQuery(viewingQueries.progress());
   const progress = useMemo(() => byMediaId(watched.data ?? []), [watched.data]);

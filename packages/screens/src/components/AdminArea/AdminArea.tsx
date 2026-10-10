@@ -8,6 +8,7 @@ import { TabPanel } from '@ValenceUI/TabPanel';
 import { SettingsPanel } from './components/SettingsPanel/SettingsPanel';
 import { EmailCard } from './components/EmailCard/EmailCard';
 import { SubtitlesCard } from '@ValenceScreens/components/AdminArea/components/SubtitlesCard/SubtitlesCard';
+import { WatchHistoryCard } from '@ValenceScreens/components/AdminArea/components/WatchHistoryCard/WatchHistoryCard';
 import { ActivityPanel } from './components/ActivityPanel/ActivityPanel';
 import { ObservabilityPage } from '@ValenceScreens/components/ObservabilityPage/ObservabilityPage';
 import { LibrariesPanel } from './components/LibrariesPanel/LibrariesPanel';
@@ -1018,7 +1019,7 @@ const AdminArea = ({
             />
           </TabPanel>
 
-          <TabPanel value="activity">
+          <TabPanel value="activity" className="flex flex-col gap-4">
             <ActivityPanel
               sessions={sessions}
               busyClientId={busyClientId}
@@ -1033,6 +1034,8 @@ const AdminArea = ({
               }}
               onMessage={tellViewer}
             />
+
+            <WatchHistoryCard />
           </TabPanel>
 
           <TabPanel value="libraries">

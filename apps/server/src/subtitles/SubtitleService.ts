@@ -16,6 +16,7 @@ type SubtitleService = {
   list: (mediaId: string) => Promise<SubtitleTrack[] | null>;
   read: (mediaId: string, trackId: string) => Promise<string | null>;
   readCues: (mediaId: string, trackId: string) => Promise<AssCue[] | null>;
+  readScript: (mediaId: string, trackId: string) => Promise<string | null>;
 };
 
 /**

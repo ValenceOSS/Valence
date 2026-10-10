@@ -13,7 +13,7 @@ const PAUSE_MILLISECONDS = 300;
 
 /**
  * A username, checked as it is typed: whether it is one a username may be, and once it is, whether
- * somebody else already holds it. The account's own username is always free to it.
+ * somebody else already holds it. What a username may be is only said once one breaks it. The account's own username is always free to it.
  *
  * @param value - The username typed.
  * @param onValueChange - Told as it changes.
@@ -83,7 +83,7 @@ const UsernameField = ({
   const description =
     wanted !== '' && !isUnchanged && isWellFormed && answer === true
       ? say('screens.usernameField.thatUsernameIsFree')
-      : rule;
+      : undefined;
 
   return (
     <TextField
@@ -91,7 +91,7 @@ const UsernameField = ({
       value={value}
       onValueChange={onValueChange}
       autoComplete={autoComplete}
-      {...(error === undefined ? { description } : { error })}
+      {...(error !== undefined ? { error } : description === undefined ? {} : { description })}
       {...(descriptionPlacement === undefined ? {} : { descriptionPlacement })}
       {...(className === undefined ? {} : { className })}
     />

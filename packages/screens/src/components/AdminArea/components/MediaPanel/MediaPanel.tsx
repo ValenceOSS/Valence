@@ -29,7 +29,6 @@ import { DataTable } from '@ValenceUI/DataTable';
 import { TabPanel } from '@ValenceUI/TabPanel';
 import { Tabs } from '@ValenceUI/Tabs';
 import { ScopedField } from '@ValenceUI/ScopedField';
-import { useTravelDirection } from '@ValenceUI/useTravelDirection';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
@@ -186,11 +185,6 @@ const MediaPanel = ({
   const libraryId = tabs.some((library) => library.id === chosenLibrary)
     ? (chosenLibrary ?? '')
     : (tabs[0]?.id ?? '');
-  const travel = useTravelDirection(
-    tabs.map((library) => library.id),
-    libraryId,
-  );
-
   const [search, setSearch] = useState('');
   const [showing, setShowing] = useState<string>('all');
   const [rebuilding, setRebuilding] = useState<string | null>(null);
@@ -811,7 +805,7 @@ const MediaPanel = ({
           </p>
         ) : (
           tabs.map((library) => (
-            <TabPanel key={library.id} value={library.id} travel={travel}>
+            <TabPanel key={library.id} value={library.id} isInstant>
               {library.kind === 'music' || library.kind === 'books' ? (
                 <ShelfTable
                   label={say('screens.adminArea.mediaPanel.everythingInName', {

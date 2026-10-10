@@ -27,6 +27,7 @@ const sourceOf = (
   list: () => Promise.resolve(tracks),
   read: (_mediaId, trackId) => Promise.resolve(content[trackId] ?? null),
   readCues: (_mediaId, trackId) => Promise.resolve(cues[trackId] ?? null),
+  readScript: () => Promise.resolve(null),
 });
 
 const cueOf = (text: string): AssCue => ({

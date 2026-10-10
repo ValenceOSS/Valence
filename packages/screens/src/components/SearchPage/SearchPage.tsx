@@ -15,6 +15,7 @@ import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { say } from '@ValenceI18n/say';
 import { viewOfDiscoverSearch } from '@ValenceScreens/requests/viewOfDiscoverSearch';
 import { filtersOf } from './filtersOf';
+import { PageTitle } from '@ValenceScreens/components/PageTitle/PageTitle';
 
 /**
  * Searching the whole server, as a page of its own rather than a sheet over whatever was underneath.
@@ -36,7 +37,7 @@ const SearchPage = () => {
       exit="gone"
       className={cn(RAIL.lane, RAIL.inset, 'flex flex-col gap-6 pt-6 pb-16')}
     >
-      <h1 className="sr-only">{say('common.search')}</h1>
+      <PageTitle>{say('common.search')}</PageTitle>
 
       <ConfirmHiding hiding={hiding} />
 

@@ -45,7 +45,7 @@ import type { SignedInProps } from './SignedIn.types';
 import { say } from '@ValenceI18n/say';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 
-const MARK_FLIES_MS = 300;
+const SPLASH_LEAVES_AT_MOST_MS = 1500;
 
 const MARKS_PLACE = 'valence-mark';
 
@@ -137,11 +137,18 @@ const SignedIn = ({ title }: SignedInProps) => {
         (serverSetup.data?.isFlowOpen === true && mine.isPending)));
 
   const [phase, setPhase] = useState<'holding' | 'fading' | 'gone'>('holding');
+  const [hasIntroPlayed, setHasIntroPlayed] = useState(false);
+  const introPlayed = useCallback(() => {
+    setHasIntroPlayed(true);
+  }, []);
+  const splashLeft = useCallback(() => {
+    setPhase('gone');
+  }, []);
 
   const isHoldingTheScreen = phase === 'holding';
 
   useEffect(() => {
-    if (phase === 'gone' || isWaiting) {
+    if (phase === 'gone' || isWaiting || !hasIntroPlayed) {
       return;
     }
 
@@ -149,12 +156,12 @@ const SignedIn = ({ title }: SignedInProps) => {
 
     const goes = setTimeout(() => {
       setPhase('gone');
-    }, MARK_FLIES_MS);
+    }, SPLASH_LEAVES_AT_MOST_MS);
 
     return () => {
       clearTimeout(goes);
     };
-  }, [isWaiting, phase]);
+  }, [isWaiting, phase, hasIntroPlayed]);
 
   useBrowsingPresence(user !== null);
   useTellTheServerWhatIsHeld();
@@ -470,6 +477,8 @@ const SignedIn = ({ title }: SignedInProps) => {
           marksPlace={MARKS_PLACE}
           hasMark={phase === 'holding'}
           isLeaving={phase === 'fading'}
+          onIntroDone={introPlayed}
+          onLeft={splashLeft}
         />
       )}
     </LayoutGroup>

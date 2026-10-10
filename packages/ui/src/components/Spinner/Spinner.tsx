@@ -1,6 +1,4 @@
-import { Icon } from '@ValenceUI/Icon';
-import { CircleProgressThreeQuarter as CircleProgressIcon } from '@keyline-icons/react';
-import { progressIconFor } from './progressIconFor';
+import { MorphingRing } from '@ValenceUI/MorphingRing';
 import { cn } from '@ValenceUI/cn';
 import type { SpinnerProps, SpinnerSize } from './Spinner.types';
 
@@ -19,7 +17,8 @@ const SIZE_PIXELS: Record<SpinnerSize, number> = {
  * @param size - How large to draw it, from inside a badge to the middle of a page.
  * @param label - What is being waited for, read out and shown to anybody hovering.
  * @param progress - How far along it is, from nothing to done, where that is known: the ring then
- *   holds still and fills a quarter at a time, and is read out as a progress bar.
+ *   holds still and melts from one quarter to the next as it fills, and is read out as a progress
+ *   bar. Without one the ring keeps filling and starting over as it turns.
  * @param isCentered - Whether it stands in the middle of the space it was given, for a spinner that is
  *   all an area shows while it loads. Left to sit where it falls, it lands in the top corner of a panel
  *   that is otherwise empty, which reads as a fault rather than as something arriving.
@@ -45,11 +44,11 @@ const Spinner = ({
         role="status"
         aria-label={label}
         className={cn(
-          'valence-spin inline-flex shrink-0 items-center justify-center self-center leading-none text-current',
+          'inline-flex shrink-0 items-center justify-center self-center leading-none text-current',
           className,
         )}
       >
-        <Icon of={CircleProgressIcon} size={SIZE_PIXELS[size]} />
+        <MorphingRing size={SIZE_PIXELS[size]} />
       </span>
     ) : (
       <span
@@ -63,7 +62,7 @@ const Spinner = ({
           className,
         )}
       >
-        <Icon of={progressIconFor(progress)} size={SIZE_PIXELS[size]} />
+        <MorphingRing size={SIZE_PIXELS[size]} progress={progress} />
       </span>
     );
 

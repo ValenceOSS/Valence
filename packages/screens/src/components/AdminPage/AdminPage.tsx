@@ -122,7 +122,7 @@ const AdminPage = () => {
         void go({ to: '/admin/$panel', params: { panel: next } });
       }}
     >
-      <div className="relative mt-[var(--valence-window-bar)] flex h-[calc(100dvh-var(--valence-window-bar))] overflow-hidden bg-[var(--frame-back)]">
+      <div className="relative mt-[var(--valence-window-bar)] flex min-h-[calc(100dvh-var(--valence-window-bar))] bg-[var(--frame-back)]">
         {isCollapsed ? null : (
           <Button
             variant="bare"
@@ -137,7 +137,7 @@ const AdminPage = () => {
         )}
 
         <Sidebar
-          className="fixed bottom-0 left-0 top-[var(--valence-window-bar)] z-40 bg-[var(--frame-back)] md:static md:z-auto"
+          className="fixed bottom-0 left-0 top-[var(--valence-window-bar)] z-40 bg-[var(--frame-back)] md:sticky md:z-auto md:h-[calc(100dvh-var(--valence-window-bar))] md:self-start"
           label={say('common.server')}
           brand={
             <Button
@@ -227,12 +227,12 @@ const AdminPage = () => {
 
         <div
           className={cn(
-            'flex min-w-0 flex-1 flex-col overflow-hidden border-[var(--surface-line)] bg-[var(--frame-panel)] [--card-shell:var(--frame-card)]',
+            'flex min-w-0 flex-1 flex-col overflow-clip border-[var(--surface-line)] bg-[var(--frame-panel)] [--card-shell:var(--frame-card)]',
             'md:my-2 md:mr-2 md:rounded-2xl md:border md:shadow-[var(--shadow-raised)]',
             isCollapsed ? 'md:ml-2' : '',
           )}
         >
-          <div className="min-h-0 flex-1 overflow-y-auto p-4 lg:p-5">
+          <div className="flex-1 p-4 lg:p-5">
             {isCollapsed && !isTheDesktopClient() ? (
               <div className="mb-3">
                 <SidebarToggle

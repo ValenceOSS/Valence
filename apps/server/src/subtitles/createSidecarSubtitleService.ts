@@ -1,9 +1,10 @@
+import { cuesOfScript } from './cuesOfScript';
+import { STYLED_FORMATS } from './STYLED_FORMATS';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { readdir, readFile } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
 import { toWebVtt } from '@ValenceCore/functions/toWebVtt';
-import { parseAdvancedSubStation } from '@ValenceCore/functions/parseAdvancedSubStation';
 import { decodeSubtitle } from './decodeSubtitle';
 import { describeSubtitleCharset } from './describeSubtitleCharset';
 import {
@@ -16,8 +17,6 @@ import { trackId } from './SubtitleService';
 import type { SubtitleService, SubtitleTrack } from './SubtitleService';
 import type { SidecarFile, SidecarSubtitle } from './findSidecarSubtitles';
 import { saying } from '@ValenceI18n/saying';
-
-const STYLED_FORMATS = new Set(['ass', 'ssa']);
 
 type MediaPathLookup = {
   findPath: (mediaId: string) => Promise<string | null>;
@@ -163,6 +162,24 @@ const createSidecarSubtitleService = ({
     };
   };
 
+  /**
+   * A styled track's script as the file holds it, for a player that draws it whole.
+   *
+   * @param mediaId - The title.
+   * @param id - The track.
+   * @returns The script, or nothing for a track with no styling.
+   */
+  const readScript = async (mediaId: string, id: string): Promise<string | null> => {
+    const found = await discover(mediaId);
+    const track = found?.tracks.find((candidate) => trackId(candidate.path) === id);
+
+    if (track === undefined || !STYLED_FORMATS.has(track.format.toLowerCase())) {
+      return null;
+    }
+
+    return (await readTrack(track))?.text ?? null;
+  };
+
   return {
     list: async (mediaId) => {
       const found = await discover(mediaId);
@@ -205,18 +222,9 @@ const createSidecarSubtitleService = ({
       return read === null ? null : toWebVtt(read.text, track.format);
     },
 
-    readCues: async (mediaId, id) => {
-      const found = await discover(mediaId);
-      const track = found?.tracks.find((candidate) => trackId(candidate.path) === id);
+    readScript,
 
-      if (track === undefined || !STYLED_FORMATS.has(track.format.toLowerCase())) {
-        return null;
-      }
-
-      const read = await readTrack(track);
-
-      return read === null ? null : parseAdvancedSubStation(read.text).cues;
-    },
+    readCues: async (mediaId, id) => cuesOfScript(await readScript(mediaId, id)),
   };
 };
 

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { and, desc, eq, isNull, lt } from 'drizzle-orm';
 import { countAffected } from '@ValenceDatabase/countAffected';
-import { watchHistory, mediaItem } from '#dialect/Schema';
+import { watchHistory, mediaItem, viewerProfile } from '#dialect/Schema';
 import { decideViewing } from './decideViewing';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { HistoryService, Viewing } from './HistoryService';
@@ -102,6 +102,7 @@ const createDatabaseHistoryService = (db: AnyValenceDatabase): HistoryService =>
             secondsWatched: decided.secondsWatched,
             isFinished: decided.isFinished,
             lastWatchedAt: seen.at,
+            ...(seen.deviceLabel === undefined ? {} : { deviceLabel: seen.deviceLabel }),
           })
           .where(eq(watchHistory.id, decided.id));
 
@@ -118,6 +119,7 @@ const createDatabaseHistoryService = (db: AnyValenceDatabase): HistoryService =>
         lastWatchedAt: seen.at,
         secondsWatched: decided.secondsWatched,
         isFinished: decided.isFinished,
+        deviceLabel: seen.deviceLabel ?? null,
       });
 
       return readViewing(id);
@@ -144,6 +146,38 @@ const createDatabaseHistoryService = (db: AnyValenceDatabase): HistoryService =>
         .offset(options.offset ?? 0);
 
       return rows.map(shown);
+    },
+
+    recent: async (options = {}) => {
+      const rows = await db
+        .select({
+          id: watchHistory.id,
+          mediaItemId: watchHistory.mediaItemId,
+          title: mediaItem.title,
+          seriesTitle: mediaItem.seriesTitle,
+          seriesId: mediaItem.seriesId,
+          startedAt: watchHistory.startedAt,
+          lastWatchedAt: watchHistory.lastWatchedAt,
+          secondsWatched: watchHistory.secondsWatched,
+          isFinished: watchHistory.isFinished,
+          profileId: watchHistory.profileId,
+          profileName: viewerProfile.name,
+          accountId: viewerProfile.userId,
+          deviceLabel: watchHistory.deviceLabel,
+        })
+        .from(watchHistory)
+        .innerJoin(mediaItem, eq(mediaItem.id, watchHistory.mediaItemId))
+        .leftJoin(viewerProfile, eq(viewerProfile.id, watchHistory.profileId))
+        .orderBy(desc(watchHistory.lastWatchedAt))
+        .limit(options.limit ?? 100);
+
+      return rows.map((row) => ({
+        ...shown(row),
+        profileId: row.profileId,
+        profileName: row.profileName,
+        accountId: row.accountId,
+        deviceLabel: row.deviceLabel,
+      }));
     },
 
     forget: async (profileId, viewingId) => {

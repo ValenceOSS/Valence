@@ -41,6 +41,7 @@ const user = mysqlTable('user', {
   banExpires: moment('banExpires'),
   username: varchar('username', { length: 255 }).unique(),
   displayUsername: mediumtext('displayUsername'),
+  discordId: varchar('discordId', { length: 32 }),
 });
 
 const accountActivity = mysqlTable('account_activity', {
@@ -239,6 +240,7 @@ const watchHistory = mysqlTable(
     isFinished: boolean('isFinished').notNull().default(false),
     importedFrom: varchar('importedFrom', { length: 32 }),
     importKey: varchar('importKey', { length: 255 }).unique(),
+    deviceLabel: varchar('deviceLabel', { length: 255 }),
   },
   (table) => [
     index('watch_history_recent_idx').on(table.profileId, table.lastWatchedAt),

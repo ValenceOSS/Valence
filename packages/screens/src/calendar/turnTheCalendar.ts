@@ -1,9 +1,11 @@
 import { addDays } from '@ValenceCore/functions/addDays';
 import type { CalendarView } from '@ValenceScreens/calendar/CALENDAR_VIEWS';
 
+const TIMELINE_TURN_DAYS = 28;
+
 /**
  * The day a calendar is turned to after moving one page back or on: a month at a time in the month
- * view, a week at a time otherwise.
+ * view, four weeks at a time in the timeline, a week at a time otherwise.
  *
  * @param view - The view.
  * @param day - The day it is turned to now.
@@ -11,6 +13,10 @@ import type { CalendarView } from '@ValenceScreens/calendar/CALENDAR_VIEWS';
  * @returns The day it is turned to after.
  */
 const turnTheCalendar = (view: CalendarView, day: string, pages: number): string => {
+  if (view === 'timeline') {
+    return addDays(day, pages * TIMELINE_TURN_DAYS);
+  }
+
   if (view !== 'month') {
     return addDays(day, pages * 7);
   }

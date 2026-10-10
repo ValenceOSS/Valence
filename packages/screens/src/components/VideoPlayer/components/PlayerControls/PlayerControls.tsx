@@ -25,7 +25,6 @@ import {
 } from '@keyline-icons/react';
 import {
   Cast as CastFilledIcon,
-  Monitor as MonitorFilledIcon,
   Pause as PauseFilledIcon,
   PictureInPicture as PictureInPictureFilledIcon,
   Play as PlayFilledIcon,
@@ -40,6 +39,7 @@ import { nextEpisode } from '@ValenceClient/library/pickFeatured';
 import { SUBTITLES_OFF } from '@ValenceClient/playback/fetchSubtitles';
 import { qualityStepDetail } from '@ValenceClient/playback/qualityStepDetail';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
+import { isStyledSubtitle } from '@ValenceScreens/playback/isStyledSubtitle';
 import { CaptionSettings } from '@ValenceScreens/components/VideoPlayer/components/CaptionSettings/CaptionSettings';
 import { EpisodeMenu } from '@ValenceScreens/components/VideoPlayer/components/EpisodeMenu/EpisodeMenu';
 import { SKIP_SECONDS, BOOST_STEPS } from './PlayerControls.types';
@@ -49,6 +49,8 @@ import { describePlaybackRate } from '@ValenceClient/playback/describePlaybackRa
 import { describeSubtitleOffset } from '@ValenceClient/playback/describeSubtitleOffset';
 import type { PlayerControlsProps } from './PlayerControls.types';
 import { say } from '@ValenceI18n/say';
+
+const FETCH = 'fetch:';
 
 /**
  * Formats a playback rate the way a viewer reads it rather than the way a float prints, so the menu
@@ -73,12 +75,13 @@ const rateLabel = (rate: number): string => `${rate.toString()}x`;
  * @param volume - How loud it is.
  * @param isMuted - Whether it is silenced.
  * @param isFullscreen - Whether the player fills the screen.
- * @param isGlowing - Whether the picture sits within a glow of its own colours, rather than filling the page.
- * @param onToggleGlow - Called to go into or out of that view, where this player offers it.
  * @param isShowingStats - Whether the statistics panel is open.
  * @param playbackRate - How fast it is playing.
  * @param subtitleTracks - The subtitle tracks available.
  * @param selectedSubtitleId - The subtitle track in use, if any.
+ * @param fetchableSubtitles - Languages a subtitle could be fetched in, listed after the tracks.
+ * @param fetchingSubtitle - The language being fetched, if one is.
+ * @param onFetchSubtitle - Called with a language to fetch a subtitle in and switch it on.
  * @param audioTracks - The audio tracks available.
  * @param selectedAudioIndex - The audio track in use, if the player has settled on one.
  * @param availableQualitySteps - The rungs of the ladder this session offers.
@@ -105,7 +108,8 @@ const rateLabel = (rate: number): string => `${rate.toString()}x`;
  * @param onMenuOpenChange - Called as a menu opens or closes, so the bar is not hidden beneath one.
  * @param isShowingRemaining - Whether the clock counts down to the end or up from the start.
  * @param onToggleTimeDisplay - Called to swap between those two.
- * @param captionStyle - How captions are drawn.
+ * @param captionStyle - How captions are drawn, offered for changing unless the track chosen is a
+ *   script that draws itself.
  * @param onCaptionStyleChange - Called with a change to that.
  * @param onCaptionStyleReset - Called to put caption appearance back to its defaults.
  * @param onVolumeChange - Called with the volume they set.
@@ -133,11 +137,12 @@ const PlayerControls = ({
   boost,
   isMuted,
   isFullscreen,
-  isGlowing = false,
-  onToggleGlow,
   isShowingStats,
   playbackRate,
   subtitleTracks,
+  fetchableSubtitles = [],
+  fetchingSubtitle = null,
+  onFetchSubtitle,
   selectedSubtitleId,
   audioTracks,
   selectedAudioIndex,
@@ -191,7 +196,16 @@ const PlayerControls = ({
         : nextEpisode(episodes, playing);
 
   const [scrubbedTo, setScrubbedTo] = useState<number | null>(null);
+  const [scrubbedWhile, setScrubbedWhile] = useState(`${playingId ?? ''}|${title}`);
+
+  if (scrubbedWhile !== `${playingId ?? ''}|${title}`) {
+    setScrubbedWhile(`${playingId ?? ''}|${title}`);
+    setScrubbedTo(null);
+  }
+
   const shownPosition = scrubbedTo ?? position;
+  const chosenTrack = subtitleTracks.find((track) => track.id === selectedSubtitleId);
+  const isChosenTrackStyled = chosenTrack !== undefined && isStyledSubtitle(chosenTrack.format);
 
   return (
     <div className="valence-solid flex flex-col gap-1 rounded-lg px-3 py-2 text-text sm:px-4">
@@ -399,16 +413,27 @@ const PlayerControls = ({
                     })),
                   },
                 ]),
-            ...(subtitleTracks.length === 0
+            ...(subtitleTracks.length === 0 && fetchableSubtitles.length === 0
               ? []
               : [
                   {
                     kind: 'choice' as const,
                     id: 'subtitles',
-                    label: 'Subtitles/CC',
+                    label: say('screens.videoPlayer.playerControls.subtitlesAndCaptions'),
                     icon: <Icon of={SubtitlesIcon} size={18} />,
-                    selectedId: selectedSubtitleId,
-                    onSelect: onSubtitleChange,
+                    selectedId:
+                      fetchingSubtitle === null
+                        ? selectedSubtitleId
+                        : `${FETCH}${fetchingSubtitle}`,
+                    onSelect: (id: string) => {
+                      if (id.startsWith(FETCH)) {
+                        onFetchSubtitle?.(id.slice(FETCH.length));
+
+                        return;
+                      }
+
+                      onSubtitleChange(id);
+                    },
                     choices: [
                       { id: SUBTITLES_OFF, label: say('common.off') },
                       ...subtitleTracks.map((track) => ({
@@ -416,6 +441,16 @@ const PlayerControls = ({
                         label: track.label,
                         ...(track.format === '' ? {} : { detail: track.format.toUpperCase() }),
                       })),
+                      ...(onFetchSubtitle === undefined ? [] : fetchableSubtitles).map(
+                        (language) => ({
+                          id: `${FETCH}${language.code}`,
+                          label: language.label,
+                          detail:
+                            fetchingSubtitle === language.code
+                              ? say('screens.videoPlayer.playerControls.fetchingSubtitle')
+                              : say('screens.videoPlayer.playerControls.fetchSubtitle'),
+                        }),
+                      ),
                     ],
                   },
                 ]),
@@ -480,7 +515,7 @@ const PlayerControls = ({
                     ),
                   },
                 ]),
-            ...(subtitleTracks.length === 0
+            ...(subtitleTracks.length === 0 || isChosenTrackStyled
               ? []
               : [
                   {
@@ -636,23 +671,6 @@ const PlayerControls = ({
               isActive={isPoppedOut}
               size={20}
             />
-          </Button>
-        )}
-
-        {onToggleGlow === undefined ? null : (
-          <Button
-            isIconOnly
-            variant="ghost"
-            label={
-              isGlowing
-                ? say('screens.videoPlayer.playerControls.leaveTheImmersiveView')
-                : say('screens.videoPlayer.playerControls.immersiveView')
-            }
-            isActive={isGlowing}
-            onClick={onToggleGlow}
-            size="md"
-          >
-            <Icon of={MonitorIcon} whenActive={MonitorFilledIcon} isActive={isGlowing} size={20} />
           </Button>
         )}
 

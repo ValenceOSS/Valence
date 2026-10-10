@@ -36,6 +36,7 @@ const user = pgTable('user', {
   banExpires: timestamp('banExpires'),
   username: text('username').unique(),
   displayUsername: text('displayUsername'),
+  discordId: text('discordId'),
 });
 
 const accountActivity = pgTable('account_activity', {
@@ -233,6 +234,7 @@ const watchHistory = pgTable(
     isFinished: boolean('isFinished').notNull().default(false),
     importedFrom: text('importedFrom'),
     importKey: text('importKey').unique(),
+    deviceLabel: text('deviceLabel'),
   },
   (table) => [
     index('watch_history_recent_idx').on(table.profileId, table.lastWatchedAt),

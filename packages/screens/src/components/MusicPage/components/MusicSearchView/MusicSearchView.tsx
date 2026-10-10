@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Search as SearchIcon } from '@keyline-icons/react';
-import { Icon } from '@ValenceUI/Icon';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { Skeleton } from '@ValenceUI/Skeleton';
 import { TextField } from '@ValenceUI/TextField';
@@ -67,7 +66,6 @@ const MusicSearchView = ({ query }: MusicSearchViewProps) => {
           size="lg"
           hasFocusOnMount
           placeholder={say('screens.musicPage.musicSearchView.whatDoYouWantToListen')}
-          icon={<Icon of={SearchIcon} size={18} />}
           value={typed}
           onValueChange={setTyped}
           className="max-w-2xl"

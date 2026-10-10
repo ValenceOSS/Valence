@@ -47,6 +47,8 @@ const TRANSCODER: Transcoder = {
   readTrickplayFile: () => Promise.resolve(null),
   stopSession: () => Promise.resolve(true),
   heartbeatSession: () => Promise.resolve(true),
+  listFonts: () => Promise.resolve([]),
+  readFont: () => Promise.resolve(new ArrayBuffer(0)),
   readSubtitle: NOT_USED,
   readFrame: NOT_USED,
   requestPreview: NOT_USED,

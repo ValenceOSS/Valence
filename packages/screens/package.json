@@ -20,6 +20,7 @@
     "@valence/i18n": "workspace:*",
     "@valence/ui": "workspace:*",
     "better-auth": "1.7.4",
+    "jassub": "2.5.16",
     "motion": "13.2.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",

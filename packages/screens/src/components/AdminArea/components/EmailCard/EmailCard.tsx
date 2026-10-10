@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Send as SendFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { Callout } from '@ValenceUI/Callout';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -21,7 +20,6 @@ import { sayAgain } from '@ValenceI18n/sayAgain';
 import { failureOfMissing } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
-import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { useTicking } from '@ValenceScreens/clock/useTicking';
 import { A_CAPTION_AGES_EVERY } from '@ValenceScreens/clock/A_CAPTION_AGES_EVERY';
 import { RecentEmails } from './components/RecentEmails/RecentEmails';
@@ -167,31 +165,12 @@ const EmailCard = () => {
   };
 
   return (
-    <PanelCard
-      title={title}
-      actions={
-        isFixed ? null : (
-          <PanelCardAction
-            icon={SendFilledIcon}
-            onClick={() => {
-              change({ ...RESEND });
-              setPort(RESEND.port.toString());
-            }}
-          >
-            {say('screens.adminArea.emailCard.useResend')}
-          </PanelCardAction>
-        )
-      }
-    >
+    <PanelCard title={title}>
       <div className="flex flex-col gap-5">
         <p className="font-body text-[0.8125rem] leading-snug text-text-muted">
           {say('screens.adminArea.emailCard.sendPasswordResetLinksAndSetup')}{' '}
           <Link href={EMAIL_DOCS}>{say('screens.adminArea.emailCard.howToSetUpEmail')}</Link>
         </p>
-
-        <Callout tone="quiet" title={say('screens.adminArea.emailCard.whatLeavesTheServer')}>
-          {say('screens.adminArea.emailCard.onceEmailIsOnTheAddresses')}
-        </Callout>
 
         {isFixed ? (
           <Callout tone="quiet" title={say('screens.adminArea.emailCard.setByTheEnvironment')}>

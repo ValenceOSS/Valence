@@ -35,7 +35,7 @@ const CalendarDayPicker = ({ day, today, onPick }: CalendarDayPickerProps) => {
   return (
     <PopoverPanel
       label={say('common.goToADay')}
-      triggerLook="button"
+      triggerLook="segment"
       side="bottom"
       align="end"
       isOpen={isOpen}

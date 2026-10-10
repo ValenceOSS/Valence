@@ -19,6 +19,7 @@ import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
 import { dataTableFeatures } from './dataTableFeatures';
 import { DrawnCell } from './DrawnCell';
+import { ReorderRow } from './components/ReorderRow/ReorderRow';
 import type {
   ColumnFiltersState,
   ExpandedState,
@@ -61,7 +62,7 @@ const ROWS_A_PAGE = 25;
 
 const NEAR_THE_END = 200;
 
-const SHRINKS = 'w-px whitespace-nowrap pr-0 sm:pr-0';
+const SHRINKS = 'w-px whitespace-nowrap [&:not(:last-child)]:pr-0 sm:[&:not(:last-child)]:pr-0';
 
 const FILLS = 'w-full max-w-0';
 
@@ -357,26 +358,23 @@ const DataTable = <Row extends RowData>({
                     .map((cell) => cell.column.columnDef.meta?.fills === true);
 
                   return row.depth === 0 ? (
-                    <Reorder.Item
-                      as="tr"
+                    <ReorderRow
                       key={row.id}
-                      value={row.id}
-                      drag={isReordering ? 'y' : false}
-                      {...(isReordering ? { layout: 'position' as const } : {})}
+                      id={row.id}
+                      isReordering={isReordering}
+                      depth={row.depth}
                       onDragEnd={() => {
                         if (dragOrder !== null) {
                           onReorder?.(dragOrder);
                         }
                       }}
-                      data-highlight={row.id}
-                      data-depth={row.depth}
-                      onClick={
-                        onChooseRow === undefined
-                          ? undefined
-                          : () => {
+                      {...(onChooseRow === undefined
+                        ? {}
+                        : {
+                            onClick: () => {
                               onChooseRow(row.original);
-                            }
-                      }
+                            },
+                          })}
                       className={cn(
                         onChooseRow === undefined ? '' : 'cursor-pointer',
                         isReordering ? 'relative cursor-grab active:cursor-grabbing' : '',
@@ -394,7 +392,7 @@ const DataTable = <Row extends RowData>({
                           {drawn}
                         </td>
                       ))}
-                    </Reorder.Item>
+                    </ReorderRow>
                   ) : (
                     <motion.tr
                       key={row.id}

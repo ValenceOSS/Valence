@@ -1,5 +1,5 @@
+import { cuesOfScript } from './cuesOfScript';
 import { toWebVtt } from '@ValenceCore/functions/toWebVtt';
-import { parseAdvancedSubStation } from '@ValenceCore/functions/parseAdvancedSubStation';
 import { trackId } from './SubtitleService';
 import type { SubtitleService, SubtitleTrack } from './SubtitleService';
 
@@ -54,14 +54,24 @@ const createMemorySubtitleService = (state: MemoryState = {}): SubtitleService =
       return Promise.resolve(track === undefined ? null : toWebVtt(track.contents, track.format));
     },
 
-    readCues: (mediaId, id) => {
+    readScript: (mediaId, id) => {
       const track = state[mediaId]?.find((candidate) => trackId(candidate.path) === id);
 
-      if (track === undefined || !STYLED_FORMATS.has(track.format.toLowerCase())) {
-        return Promise.resolve(null);
-      }
+      return Promise.resolve(
+        track === undefined || !STYLED_FORMATS.has(track.format.toLowerCase())
+          ? null
+          : track.contents,
+      );
+    },
 
-      return Promise.resolve(parseAdvancedSubStation(track.contents).cues);
+    readCues: async (mediaId, id) => {
+      const track = state[mediaId]?.find((candidate) => trackId(candidate.path) === id);
+
+      return cuesOfScript(
+        track === undefined || !STYLED_FORMATS.has(track.format.toLowerCase())
+          ? null
+          : track.contents,
+      );
     },
   };
 };

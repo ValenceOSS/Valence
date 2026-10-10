@@ -1,18 +1,19 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { useMemo, useState } from 'react';
-import { FilterMenu } from '@ValenceUI/FilterMenu';
-import { TextField } from '@ValenceUI/TextField';
+import { FilterSplit } from '@ValenceUI/FilterSplit';
+import { ScopedField } from '@ValenceUI/ScopedField';
 import type { FilterGroup } from '@ValenceUI/FilterMenu.types';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
-import { StatStrip } from '@ValenceUI/StatStrip';
+import { Well } from '@ValenceUI/Well';
+import { JobRunMix } from '@ValenceScreens/components/ObservabilityPage/components/JobRunMix/JobRunMix';
 import { useAnchoredNow } from '@ValenceScreens/admin/useAnchoredNow';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { defaultLogView } from '@ValenceClient/admin/defaultLogView';
 import { logRangeStart } from '@ValenceClient/admin/logRanges';
-import { TimeRangeMenu } from '@ValenceScreens/components/ObservabilityPage/components/TimeRangeMenu/TimeRangeMenu';
+import { timeRangeChoice } from '@ValenceScreens/components/ObservabilityPage/components/TimeRangeMenu/timeRangeChoice';
 import { describeJobKind } from '@ValenceClient/admin/describeJobKind';
 import { ElapsedTime } from '@ValenceScreens/components/ElapsedTime/ElapsedTime';
 import { describeLogDay, describeLogTime } from '@ValenceClient/admin/describeLogTime';
@@ -96,7 +97,6 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
     }),
     { runs: 0, completed: 0, failed: 0, slowest: 0 },
   );
-  const overall = successRate(totals.completed, totals.failed);
 
   const columns = useMemo<DataTableColumn<JobKindStats>[]>(
     () => [
@@ -194,56 +194,35 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
-        <TextField
+        <ScopedField
           label={say('screens.observabilityPage.jobHealth.findAKindOfJob')}
           isLabelHidden
-          size="sm"
-          type="search"
           placeholder={say('screens.observabilityPage.jobHealth.searchByJob')}
           value={typed}
           onValueChange={setTyped}
+          choices={[timeRangeChoice(search, onSearchChange)]}
           className="min-w-56 flex-1"
         />
 
-        <TimeRangeMenu search={search} onSearchChange={onSearchChange} />
-
-        <FilterMenu
+        <FilterSplit
           label={say('screens.observabilityPage.jobHealth.filterTheKinds')}
           groups={FILTERS}
           selected={chosen}
-          hasLabel
           onChange={setChosen}
         />
       </div>
 
-      <StatStrip
-        label={say('screens.observabilityPage.jobHealth.howTheJobsAreDoingOverall')}
-        items={[
-          {
-            id: 'runs',
-            label: say('screens.observabilityPage.jobHealth.runs'),
-            value: <FormattedNumber value={totals.runs} />,
-          },
-          {
-            id: 'rate',
-            label: say('screens.observabilityPage.jobHealth.finishedWell'),
-            value: showRate(overall),
-            isAlarming: overall !== null && overall < 0.9,
-            detail: say('screens.observabilityPage.jobHealth.ofTheRunsThatHaveEnded'),
-          },
-          {
-            id: 'failed',
-            label: say('common.failed'),
-            value: <FormattedNumber value={totals.failed} />,
-            isAlarming: totals.failed > 0,
-          },
-          {
-            id: 'slowest',
+      <Well>
+        <JobRunMix
+          completed={totals.completed}
+          failed={totals.failed}
+          stopped={Math.max(0, totals.runs - totals.completed - totals.failed)}
+          extra={{
             label: say('screens.observabilityPage.jobHealth.slowestRun'),
             value: totals.slowest === 0 ? '—' : <ElapsedTime ms={totals.slowest} />,
-          },
-        ]}
-      />
+          }}
+        />
+      </Well>
 
       <DataTable
         className="m-0"

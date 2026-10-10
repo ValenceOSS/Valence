@@ -21,12 +21,20 @@ const SLIDES_IN_BY_PIXELS = 24;
  * @param children - What the panel holds.
  * @param render - An element to render as, where a plain division is not the right thing.
  * @param travel - Which way the tabs were moved through, from `useTravelDirection`.
+ * @param isInstant - Whether it simply appears, for a panel such as a table that should not move.
  * @param className - Extra classes for the caller's own layout.
  */
-const TabPanel = ({ value, children, render, travel, className }: TabPanelProps) => {
+const TabPanel = ({
+  value,
+  children,
+  render,
+  travel,
+  isInstant = false,
+  className,
+}: TabPanelProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
 
-  const isStill = travel === undefined || prefersReducedMotion === true;
+  const isStill = isInstant || travel === undefined || prefersReducedMotion === true;
   const held = isStill ? (
     children
   ) : (
@@ -46,9 +54,14 @@ const TabPanel = ({ value, children, render, travel, className }: TabPanelProps)
       value={value}
       asChild={render !== undefined}
       className={cn(
-        'outline-none data-[state=active]:animate-in data-[state=active]:fade-in-0',
-        'duration-[var(--duration-fast)] ease-[var(--ease-out)]',
-        'motion-reduce:duration-[var(--duration-instant)]',
+        'outline-none',
+        isInstant
+          ? ''
+          : cn(
+              'data-[state=active]:animate-in data-[state=active]:fade-in-0',
+              'duration-[var(--duration-fast)] ease-[var(--ease-out)]',
+              'motion-reduce:duration-[var(--duration-instant)]',
+            ),
         isStill ? className : '',
       )}
     >

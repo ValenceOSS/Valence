@@ -18,8 +18,8 @@ import { ScopedField } from '@ValenceUI/ScopedField';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { refreshCatalogue } from '@ValenceClient/requests/fetchDefinitions';
 import { filterCatalogue } from './filterCatalogue';
+import { INDEXER_PRIVACY_LOOKS } from '@ValenceScreens/admin/INDEXER_PRIVACY_LOOKS';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
-import type { BadgeTone } from '@ValenceUI/Badge.types';
 import type {
   IndexerDefinitionSummary,
   IndexerPrivacy,
@@ -31,15 +31,9 @@ import { say } from '@ValenceI18n/say';
 const PRIVACIES = [
   { id: 'any', label: say('common.any') },
   { id: 'public', label: say('screens.adminArea.indexerCatalogueDialog.public') },
-  { id: 'semi-private', label: 'Semi-private' },
+  { id: 'semi-private', label: say('screens.admin.indexerPrivacy.semiPrivate') },
   { id: 'private', label: say('screens.adminArea.indexerCatalogueDialog.private') },
 ] as const;
-
-const PRIVACY: Readonly<Record<IndexerPrivacy, { label: string; tone: BadgeTone }>> = {
-  public: { label: say('screens.adminArea.indexerCatalogueDialog.public'), tone: 'success' },
-  'semi-private': { label: 'Semi-private', tone: 'warning' },
-  private: { label: say('screens.adminArea.indexerCatalogueDialog.private'), tone: 'warning' },
-};
 
 const GENERIC: readonly { id: 'torznab' | 'newznab'; name: string; description: string }[] = [
   {
@@ -111,8 +105,8 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
         header: say('screens.adminArea.indexerCatalogueDialog.privacy'),
         accessorFn: (definition) => definition.privacy,
         cell: ({ row }) => (
-          <Badge size="sm" tone={PRIVACY[row.original.privacy].tone}>
-            {PRIVACY[row.original.privacy].label}
+          <Badge size="sm" tone={INDEXER_PRIVACY_LOOKS[row.original.privacy].tone}>
+            {INDEXER_PRIVACY_LOOKS[row.original.privacy].label}
           </Badge>
         ),
       },

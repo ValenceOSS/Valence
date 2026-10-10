@@ -23,7 +23,8 @@ import { say } from '@ValenceI18n/say';
  * @param size - How large it is, or none to leave height and padding to the caller.
  * @param isLoading - Whether the thing it does is under way, which also stops it being pressed twice.
  * @param isPill - Whether to round it fully, which is a circle for an icon on its own.
- * @param joins - Whether it runs on into the control after it, squaring the side they meet on.
+ * @param joins - Whether it runs on into the control after it or follows on from the one before,
+ *   squaring the side they meet on.
  * @param label - What it does in words, required of anything wearing only an icon.
  * @param isIconOnly - Whether it is a glyph and nothing else, which makes it square rather than wide.
  * @param isActive - Whether what it does is currently in force, said as well as shown.
@@ -73,7 +74,9 @@ const Button = ({
                 ? 'pill'
                 : joins === 'next'
                   ? 'joinsNext'
-                  : 'square',
+                  : joins === 'previous'
+                    ? 'joinsPrevious'
+                    : 'square',
         }),
         isActive && !isBare ? 'bg-active' : '',
         className,
@@ -81,7 +84,7 @@ const Button = ({
       {...rest}
     >
       {isLoading ? (
-        <Spinner size={size === 'sm' ? 'sm' : 'md'} label={say('common.working')} />
+        <Spinner size={size === 'lg' || size === 'xl' ? 'md' : 'sm'} label={say('common.working')} />
       ) : null}
       {children}
     </button>

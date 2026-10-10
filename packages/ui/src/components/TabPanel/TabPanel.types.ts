@@ -5,6 +5,7 @@ type TabPanelProps = {
   children: ReactNode;
   render?: ReactElement;
   travel?: 1 | -1;
+  isInstant?: boolean;
   className?: string;
 };
 

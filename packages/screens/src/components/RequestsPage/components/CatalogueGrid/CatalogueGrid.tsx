@@ -11,7 +11,6 @@ import { VirtualGrid } from '@ValenceUI/VirtualGrid';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { askingOf } from '@ValenceScreens/requests/askingOf';
 import type { CatalogueGridProps } from './CatalogueGrid.types';
-import { BackToTop } from '@ValenceUI/BackToTop';
 import { useIsTitleWatched } from '@ValenceScreens/requests/useIsTitleWatched';
 import { describeCatalogueCard } from '@ValenceScreens/components/AskableDialog/describeCatalogueCard';
 import { say } from '@ValenceI18n/say';
@@ -100,8 +99,6 @@ const CatalogueGrid = ({ browsing, filters = {}, onAsk }: CatalogueGridProps) =>
 
   return (
     <div className="flex flex-col gap-8">
-      <BackToTop />
-
       <VirtualGrid
         count={titles.length}
         label={say('common.whatThereIsToAskFor')}

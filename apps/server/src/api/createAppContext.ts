@@ -227,6 +227,7 @@ const createAppContext = (options: CreateAppOptions) => {
     schedules = createMemoryJobScheduleService(),
     presence = createPresenceService(),
     subtitles,
+    subtitleFonts,
     segments,
     progress,
     downloads,
@@ -250,6 +251,7 @@ const createAppContext = (options: CreateAppOptions) => {
     onReencodeQueued,
     preTranscoding,
     promoteProfile,
+    discordIdOf,
     listUsers,
     capabilities,
     artworkUsage,
@@ -1511,7 +1513,8 @@ const createAppContext = (options: CreateAppOptions) => {
 
   /**
    * Says that something was asked for, and that it was approved where asking was enough; nothing of
-   * a title only followed, which nobody asked for.
+   * a title only followed, which nobody asked for. The asker's Discord account, where one is on
+   * theirs, goes with it so a Discord webhook can mention them.
    *
    * @param request - What the requests service made of the ask.
    * @param isNew - Whether this ask made it, rather than finding it already asked for.
@@ -1522,24 +1525,28 @@ const createAppContext = (options: CreateAppOptions) => {
       return;
     }
 
-    if (isNew) {
-      sayOfRequest({
-        event: 'requests.made',
-        data: {
-          title: request.title,
-          kind: request.kind,
-          requestedBy: request.requestedBy.name,
-          request: webhookRequestOf(request),
-        },
-      });
-    }
+    void (async () => {
+      if (isNew) {
+        const discordId = (await discordIdOf?.(request.requestedBy.id).catch(() => null)) ?? null;
 
-    if (isApproved && (isNew || request.approval === 'approved')) {
-      sayOfRequest({
-        event: 'requests.approved',
-        data: { title: request.title, approvedBy: null, request: webhookRequestOf(request) },
-      });
-    }
+        sayOfRequest({
+          event: 'requests.made',
+          data: {
+            title: request.title,
+            kind: request.kind,
+            requestedBy: request.requestedBy.name,
+            request: { ...webhookRequestOf(request), requestedByDiscordId: discordId },
+          },
+        });
+      }
+
+      if (isApproved && (isNew || request.approval === 'approved')) {
+        sayOfRequest({
+          event: 'requests.approved',
+          data: { title: request.title, approvedBy: null, request: webhookRequestOf(request) },
+        });
+      }
+    })();
   };
 
   const requestsForPlugins: PluginHost['requests'] = {
@@ -1642,6 +1649,7 @@ const createAppContext = (options: CreateAppOptions) => {
     schedules,
     presence,
     subtitles,
+    subtitleFonts,
     segments,
     progress,
     downloads,

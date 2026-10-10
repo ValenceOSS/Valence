@@ -188,6 +188,10 @@ const ENGLISH = {
   'client.calendar.describeCalendarEntry.sSeasonNumberEEpisodeNumberTitle':
     'S{seasonNumber} E{episodeNumber} · {title}',
   'client.calendar.describeCalendarEntry.toBuyOrRent': 'To buy or rent',
+  'client.calendar.describeCalendarRun.episodesAcrossSeasons':
+    'S{firstSeason} E{firstEpisode} – S{lastSeason} E{lastEpisode}',
+  'client.calendar.describeCalendarRun.episodesInSeason':
+    'S{seasonNumber} · E{firstEpisode}–E{lastEpisode}',
   'client.downloads.useFetchWhatThisDeviceAsked.itIsReadyToWatchOffline':
     'It’s ready to watch offline.',
   'client.downloads.useFetchWhatThisDeviceAsked.titleIsOnThisDevice':
@@ -1447,6 +1451,7 @@ const ENGLISH = {
   'common.tight': 'Tight',
   'common.time': 'Time',
   'common.timeLeft': 'Time left',
+  'common.timeline': 'Timeline',
   'common.title': 'Title',
   'common.titleByArtistIsNotInYourLibrary':
     '{title} by {artist} isn’t in your library. Choose the album it’s on to request it.',
@@ -2149,6 +2154,7 @@ const ENGLISH = {
   'error.share.thisAccountMayNotShare': 'This account isn’t allowed to share.',
   'error.share.thisAccountMayNotWithdrawSomebody':
     'This account isn’t allowed to revoke someone else’s share link.',
+  'error.subtitle.noSuchFont': 'This title carries no font by that name.',
   'error.subtitle.thatTrackCarriesNoStylingOf': 'That subtitle track has no styling of its own.',
   'error.subtitles.noKeyIsSavedForThatSite':
     'There’s no key saved for that subtitle site. Add one under System › Subtitles.',
@@ -2908,6 +2914,7 @@ const ENGLISH = {
   'screens.admin.describeSessionDelivery.transcoding': 'Transcoding',
   'screens.admin.describeSessionDelivery.transcodingTheServerIsConvertingThe':
     'Transcoding — the server is transcoding the video in real time',
+  'screens.admin.indexerPrivacy.semiPrivate': 'Semi-private',
   'screens.admin.nameOfSession.unknownViewer': 'Unknown viewer',
   'screens.adminArea.accelerationOptions.aMDNeedsTheProprietaryDriver':
     'AMD, requires the proprietary driver',
@@ -2946,6 +2953,11 @@ const ENGLISH = {
   'screens.adminArea.accountsPanel.copiedTheSetupLink': 'Copied the setup link.',
   'screens.adminArea.accountsPanel.deleteAccount': 'Delete account',
   'screens.adminArea.accountsPanel.deleteThisAccount': 'Delete this account?',
+  'screens.adminArea.accountsPanel.discordIdIsDigits':
+    'A Discord ID is 17 to 20 digits. Turn on Developer Mode in Discord, then copy it from their profile.',
+  'screens.adminArea.accountsPanel.discordIdMentionedOnRequests':
+    'Discord webhooks mention them when they ask for something.',
+  'screens.adminArea.accountsPanel.discordIdOptional': 'Discord ID (optional)',
   'screens.adminArea.accountsPanel.editAccount': 'Edit account',
   'screens.adminArea.accountsPanel.endsEverySessionThisAccountHolds':
     'Signs this account out on every device without changing its password.',
@@ -2995,6 +3007,9 @@ const ENGLISH = {
   'screens.adminArea.accountsPanel.youDoNotHoldThePermission':
     'You don’t have permission to reset passwords or sign accounts out.',
   'screens.adminArea.activityPanel.nobodyHasTheAppOpenRight': 'No one is using the app right now.',
+  'screens.adminArea.activityPanel.showAsATable': 'Show as a table',
+  'screens.adminArea.activityPanel.showAsCards': 'Show as cards',
+  'screens.adminArea.activityPanel.showSessionsAs': 'Show sessions as',
   'screens.adminArea.addLibraryDialog.aFolderOnTheMachineRunning':
     'A folder on the server running Valence, not on your device.',
   'screens.adminArea.addLibraryDialog.browse': 'Browse',
@@ -3746,15 +3761,13 @@ const ENGLISH = {
     'It won’t be searched again, and its API key is deleted. To add it back, you’ll need to enter the key again.',
   'screens.adminArea.indexersPanel.noIndexersYetAddASite':
     'No indexers yet. Add one from the catalogue, or any Torznab or Newznab indexer, to start searching.',
-  'screens.adminArea.indexersPanel.privateSite': 'Private site',
-  'screens.adminArea.indexersPanel.publicSite': 'Public site',
   'screens.adminArea.indexersPanel.readingTheIndexers': 'Loading indexers',
   'screens.adminArea.indexersPanel.removeThisIndexer': 'Remove this indexer?',
   'screens.adminArea.indexersPanel.searches': 'Searches',
   'screens.adminArea.indexersPanel.searchesItAloneSoYouSee':
     'Searches this indexer alone, so you can see what it answers.',
-  'screens.adminArea.indexersPanel.semiPrivateSite': 'Semi-private site',
   'screens.adminArea.indexersPanel.testAll': 'Test all',
+  'screens.adminArea.indexersPanel.testing': 'Testing',
   'screens.adminArea.indexersPanel.testSearch': 'Test search',
   'screens.adminArea.indexersPanel.testSearchOnName': 'Test search on {name}',
   'screens.adminArea.indexersPanel.theIndexersCouldNotBeRead': 'Couldn’t load indexers.',
@@ -4481,6 +4494,7 @@ const ENGLISH = {
   'screens.adminArea.sessionStatsDialog.nothingRightNow': 'Nothing right now',
   'screens.adminArea.sessionStatsDialog.notReportedYet': 'Not reported yet',
   'screens.adminArea.sessionStatsDialog.pausedByAnAdmin': 'Paused by an admin',
+  'screens.adminArea.sessionTable.viewer': 'Viewer',
   'screens.adminArea.settingsPanel.ageCertificates': 'Age certificates',
   'screens.adminArea.settingsPanel.aKeyIsSetEnteringA':
     'A key is set. Entering a new one replaces it. Scores appear as titles are rescanned.',
@@ -4798,6 +4812,7 @@ const ENGLISH = {
     '{count} uploads didn’t finish. Choose the same files again to resume them.',
   'screens.adminArea.uploadMediaDialog.uploadToALibrary': 'Upload to a library',
   'screens.adminArea.uploadMediaDialog.uploadToName': 'Upload to {name}',
+  'screens.adminArea.watchHistoryCard.nothingWatchedYet': 'Nobody has watched anything yet.',
   'screens.adminArea.webhookCreated': 'Webhook created.',
   'screens.adminArea.webhookDeleted': 'Webhook deleted.',
   'screens.adminArea.webhookFields.aFirstScanOfALarge':
@@ -5934,6 +5949,9 @@ const ENGLISH = {
   'screens.playback.toSpanStyle.verdanaGenevaSansSerif': 'Verdana, Geneva, sans-serif',
   'screens.playback.useNowPlaying.seriesSeasonNumberEpisodeEpisodeNumber':
     'Season {seasonNumber}, Episode {episodeNumber}',
+  'screens.playback.useSubtitleFetching.couldNotFetch':
+    '{language} subtitles could not be downloaded.',
+  'screens.playback.useSubtitleFetching.noneFound': 'No {language} subtitles were found for this.',
   'screens.playlistShelf.byARemovedProfile': 'By a removed profile',
   'screens.playlistShelf.byOwner': 'By {owner}',
   'screens.playOnDialog.notPlayingAnything': 'Not playing anything',
@@ -6485,6 +6503,12 @@ const ENGLISH = {
   'screens.showDialog.readingTheEpisodes': 'Loading episodes',
   'screens.showDialog.resumeStartSeconds': 'Resume {startSeconds}',
   'screens.showDialog.theEpisodesCouldNotBeRead': 'Couldn’t load the episodes.',
+  'screens.showStatusBadge.cancelled': 'Cancelled',
+  'screens.showStatusBadge.ended': 'Ended',
+  'screens.showStatusBadge.inProduction': 'In production',
+  'screens.showStatusBadge.pilot': 'Pilot',
+  'screens.showStatusBadge.planned': 'Planned',
+  'screens.showStatusBadge.returning': 'Returning',
   'screens.stillWatchingDialog.titleIsUpNextNothingWill':
     '{title} is up next. Nothing will play or be marked as watched until you confirm.',
   'screens.streamStats.planAxis.burnIn': 'burn in',
@@ -6558,10 +6582,10 @@ const ENGLISH = {
   'screens.videoPlayer.playbackFailed': 'Playback failed.',
   'screens.videoPlayer.playerControls.audioTrack': 'Audio track',
   'screens.videoPlayer.playerControls.backSKIPSECONDSSeconds': 'Back {SKIP_SECONDS} seconds',
+  'screens.videoPlayer.playerControls.fetchingSubtitle': 'Downloading…',
+  'screens.videoPlayer.playerControls.fetchSubtitle': 'Download and turn on',
   'screens.videoPlayer.playerControls.findSubtitles': 'Find subtitles…',
   'screens.videoPlayer.playerControls.forwardSKIPSECONDSSeconds': 'Forward {SKIP_SECONDS} seconds',
-  'screens.videoPlayer.playerControls.immersiveView': 'Immersive view',
-  'screens.videoPlayer.playerControls.leaveTheImmersiveView': 'Exit immersive view',
   'screens.videoPlayer.playerControls.nextEpisodeNumberTitle': 'Next episode: {number}. {title}',
   'screens.videoPlayer.playerControls.nextEpisodeTitle': 'Next episode: {title}',
   'screens.videoPlayer.playerControls.playbackSpeed': 'Playback speed',
@@ -6570,6 +6594,7 @@ const ENGLISH = {
   'screens.videoPlayer.playerControls.popOut': 'Pop out',
   'screens.videoPlayer.playerControls.showTheTimePlayed': 'Show elapsed time',
   'screens.videoPlayer.playerControls.showTheTimeRemaining': 'Show time remaining',
+  'screens.videoPlayer.playerControls.subtitlesAndCaptions': 'Subtitles/CC',
   'screens.videoPlayer.playerControls.subtitlesEarlier': 'Subtitles earlier',
   'screens.videoPlayer.playerControls.subtitlesInTime': 'Reset subtitle timing',
   'screens.videoPlayer.playerControls.subtitlesLater': 'Subtitles later',

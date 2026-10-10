@@ -228,6 +228,7 @@ const Hero = ({
           }
         }}
         {...(isReceding ? { style: { scale, opacity, y } } : {})}
+        {...(fills ? {} : { 'data-splash-lands': '' })}
         className={cn(
           'relative flex flex-col justify-end overflow-hidden',
           fills

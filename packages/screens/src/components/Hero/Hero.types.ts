@@ -10,6 +10,7 @@ type HeroProps = {
   onFeatureChange?: (media: MediaSummary) => void;
   rotateAfterMilliseconds?: number;
   fills?: boolean;
+  growsFromSplash?: boolean;
   staysBehind?: boolean;
 };
 

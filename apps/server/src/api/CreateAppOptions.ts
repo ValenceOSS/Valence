@@ -127,7 +127,7 @@ type CreateAppOptions = {
   isAccountBanned?: (userId: string) => Promise<boolean>;
   editAccount?: (
     userId: string,
-    changes: { name?: string; email?: string | null; username?: string },
+    changes: { name?: string; email?: string | null; username?: string; discordId?: string | null },
   ) => Promise<'changed' | 'missing' | 'taken' | 'usernameTaken'>;
   setupLinks?: SetupLinkService;
   linking?: {
@@ -183,6 +183,10 @@ type CreateAppOptions = {
   schedules?: JobScheduleService;
   presence?: PresenceService;
   subtitles: SubtitleService;
+  subtitleFonts?: {
+    list: (mediaId: string) => Promise<string[]>;
+    read: (mediaId: string, name: string) => Promise<ArrayBuffer | null>;
+  };
   segments: SegmentService;
   progress: WatchProgressService;
   downloads?: DownloadService;
@@ -215,6 +219,7 @@ type CreateAppOptions = {
     | { kind: 'missing' }
     | { kind: 'failed' }
   >;
+  discordIdOf?: (userId: string) => Promise<string | null>;
   listUsers?: () => Promise<
     {
       id: string;
@@ -223,6 +228,7 @@ type CreateAppOptions = {
       role: string | null;
       createdAt: string;
       username?: string | null;
+      discordId?: string | null;
       canSignIn?: boolean;
       lastSignedInAt?: string | null;
     }[]

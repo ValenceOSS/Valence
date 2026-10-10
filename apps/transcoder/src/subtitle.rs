@@ -38,13 +38,29 @@ pub struct SubtitleRequest {
     pub input_path: String,
     /// The stream to take, as ffprobe numbered it.
     pub stream_index: u32,
+    /// What to hand it back as.
+    #[serde(default)]
+    pub format: SubtitleFormat,
+}
+
+/// What a track is handed back as.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum SubtitleFormat {
+    /// `WebVTT`, which every text track can become and every player can show.
+    #[default]
+    Webvtt,
+    /// Advanced `SubStation` as the file carries it, positions and lettering
+    /// and all, for an ASS or SSA track whose signs belong somewhere on the
+    /// picture rather than along its foot.
+    Ass,
 }
 
 /// A track pulled out of a container.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SubtitleTrack {
-    /// The whole track as `WebVTT`.
+    /// The whole track, as `WebVTT` or as Advanced `SubStation`, whichever was asked for.
     pub content: String,
 }
 
@@ -110,6 +126,67 @@ pub fn extract_all_arguments(path: &Path, stream_indices: &[u32], directory: &Pa
     }
 
     arguments
+}
+
+/// The arguments that copy one embedded ASS or SSA track out as Advanced
+/// `SubStation`, keeping its styles, positions and override tags.
+#[must_use]
+pub fn extract_ass_arguments(path: &Path, stream_index: u32) -> Vec<String> {
+    vec![
+        "-nostdin".to_owned(),
+        "-loglevel".to_owned(),
+        "error".to_owned(),
+        "-i".to_owned(),
+        path.to_string_lossy().into_owned(),
+        "-map".to_owned(),
+        format!("0:{stream_index}"),
+        "-c:s".to_owned(),
+        "ass".to_owned(),
+        "-f".to_owned(),
+        "ass".to_owned(),
+        "-".to_owned(),
+    ]
+}
+
+/// Where a finished Advanced `SubStation` copy of a track is kept.
+fn kept_ass_at(directory: &Path, stream_index: u32) -> PathBuf {
+    directory.join(format!("{stream_index}.ass"))
+}
+
+/// Refuses an Advanced `SubStation` copy holding no lines.
+fn as_ass_track(content: String) -> Result<SubtitleTrack, SubtitleError> {
+    if !content.contains("Dialogue:") {
+        return Err(SubtitleError::Empty);
+    }
+
+    Ok(SubtitleTrack { content })
+}
+
+/// Copies one track out as Advanced `SubStation`.
+///
+/// # Errors
+///
+/// Returns [`SubtitleError`] when ffmpeg cannot be started, it refuses the
+/// stream, or the stream turns out to hold nothing.
+pub async fn extract_ass(
+    ffmpeg: &str,
+    path: &Path,
+    stream_index: u32,
+) -> Result<SubtitleTrack, SubtitleError> {
+    let output = Command::new(ffmpeg)
+        .args(extract_ass_arguments(path, stream_index))
+        .kill_on_drop(true)
+        .output()
+        .await
+        .map_err(SubtitleError::Spawn)?;
+
+    if !output.status.success() {
+        return Err(SubtitleError::Failed(
+            String::from_utf8_lossy(&output.stderr).trim().to_owned(),
+        ));
+    }
+
+    as_ass_track(String::from_utf8_lossy(&output.stdout).into_owned())
 }
 
 /// Where a finished track is kept.
@@ -245,7 +322,14 @@ impl SubtitleRegistry {
         artefact_root: &Path,
         path: PathBuf,
         stream_index: u32,
+        format: SubtitleFormat,
     ) -> Result<SubtitleTrack, SubtitleError> {
+        if format == SubtitleFormat::Ass {
+            return self
+                .read_ass(tools, artefact_root, path, stream_index)
+                .await;
+        }
+
         let Some(address) = crate::source_address::of(&path).await else {
             let slot = self.slot().await?;
 
@@ -276,6 +360,64 @@ impl SubtitleRegistry {
             let _slot = slot;
 
             read_into(&tools, &directory, &path, stream_index).await
+        })
+        .await
+    }
+}
+
+impl SubtitleRegistry {
+    /// One ASS or SSA track as Advanced `SubStation`, kept beside the file's
+    /// `WebVTT` copies once read. Read on its own rather than in the file's
+    /// one pass, since only a player drawing signs where they belong asks for
+    /// it, and only of tracks that have any.
+    async fn read_ass(
+        &self,
+        tools: Tools,
+        artefact_root: &Path,
+        path: PathBuf,
+        stream_index: u32,
+    ) -> Result<SubtitleTrack, SubtitleError> {
+        let Some(address) = crate::source_address::of(&path).await else {
+            let slot = self.slot().await?;
+
+            return finish(async move {
+                let _slot = slot;
+
+                extract_ass(&tools.ffmpeg, &path, stream_index).await
+            })
+            .await;
+        };
+
+        let directory = artefact_root.join(DIRECTORY).join(&address);
+        let kept = kept_ass_at(&directory, stream_index);
+
+        if let Ok(content) = tokio::fs::read_to_string(&kept).await {
+            return as_ass_track(content);
+        }
+
+        let claim = self.claim(&address).await;
+
+        if let Ok(content) = tokio::fs::read_to_string(&kept).await {
+            return as_ass_track(content);
+        }
+
+        let slot = self.slot().await?;
+
+        finish(async move {
+            let _claim = claim;
+            let _slot = slot;
+
+            let track = extract_ass(&tools.ffmpeg, &path, stream_index).await?;
+
+            if tokio::fs::create_dir_all(&directory).await.is_ok() {
+                let partial = directory.join(format!("{stream_index}.ass.partial"));
+
+                if tokio::fs::write(&partial, &track.content).await.is_ok() {
+                    let _ = tokio::fs::rename(&partial, &kept).await;
+                }
+            }
+
+            Ok(track)
         })
         .await
     }

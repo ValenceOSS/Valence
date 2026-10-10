@@ -25,11 +25,12 @@ type PlayerControlsProps = {
   boost: number;
   isMuted: boolean;
   isFullscreen: boolean;
-  isGlowing?: boolean;
-  onToggleGlow?: () => void;
   isShowingStats: boolean;
   playbackRate: number;
   subtitleTracks: SubtitleTrack[];
+  fetchableSubtitles?: readonly { code: string; label: string }[];
+  fetchingSubtitle?: string | null;
+  onFetchSubtitle?: (code: string) => void;
   selectedSubtitleId: string;
   audioTracks: AudioTrack[];
   selectedAudioIndex: number | null;
