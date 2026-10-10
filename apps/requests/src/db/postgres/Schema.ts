@@ -269,6 +269,7 @@ const mediaRequest = requestsSchema.table(
     requestedByName: text('requested_by_name').notNull(),
     alsoAskedBy: jsonb('also_asked_by').$type<Requester[]>().notNull().default([]),
     origin: text('origin', { enum: REQUEST_ORIGINS }).notNull().default('asked'),
+    isFollowed: boolean('is_followed').notNull().default(false),
     profileAsk: jsonb('profile_ask').$type<ProfileAsk>(),
     seasons: jsonb('seasons').$type<number[]>(),
     followsNewSeasons: boolean('follows_new_seasons').notNull().default(false),

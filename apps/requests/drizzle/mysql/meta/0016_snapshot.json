@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "87160bbb-37c0-4841-bfc9-a41a48b99041",
+  "id": "10536a73-2161-4a40-b625-002dfb6e8c03",
   "prevId": "0d415be9-fc91-4bf5-97ad-71bfab516124",
   "tables": {
     "requests_arr_app": {
@@ -898,6 +898,14 @@
           "notNull": true,
           "autoincrement": false,
           "default": "'asked'"
+        },
+        "is_followed": {
+          "name": "is_followed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
         },
         "profile_ask": {
           "name": "profile_ask",

@@ -1,5 +1,5 @@
 {
-  "id": "12cc5744-bfa7-49fd-924b-1d7a376a95cf",
+  "id": "a19db55d-f865-452e-bf5d-1077e313341c",
   "prevId": "c3d9ffad-1baa-4052-a007-f318cf23c04c",
   "version": "7",
   "dialect": "postgresql",
@@ -775,6 +775,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'asked'"
+        },
+        "is_followed": {
+          "name": "is_followed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "profile_ask": {
           "name": "profile_ask",

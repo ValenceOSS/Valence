@@ -124,10 +124,10 @@ const joinedBy = (kept: MediaRequestRecord, asker: Requester): Partial<MediaRequ
     : { alsoAskedBy: [...kept.alsoAskedBy, asker] };
 
 /**
- * Somebody asking for a title, as it changes the request kept for it. Following a title nobody
- * asked for changes nothing of who asked; somebody asking for a title only followed until now
- * becomes the one who asked for it, as though they were the first; and anybody else asking joins
- * those who asked.
+ * Somebody asking for a title, as it changes the request kept for it. Following a title changes
+ * nothing of who asked, and keeps it followed however those who asked come and go; somebody asking
+ * for a title only followed until now becomes the one who asked for it, as though they were the
+ * first; and anybody else asking joins those who asked.
  *
  * @param kept - The request kept.
  * @param asker - Who is asking.
@@ -140,7 +140,7 @@ const askedBy = (
   origin: RequestOrigin,
 ): Partial<MediaRequestRecord> => {
   if (origin === 'monitored') {
-    return {};
+    return { isFollowed: true };
   }
 
   return kept.origin === 'monitored'
@@ -380,22 +380,28 @@ const createRequestService = ({
 
     leave: async (id: string, askerId: string): Promise<MediaRequest | null> => {
       const kept = await requests.find(id);
-      const [next, ...rest] = kept?.alsoAskedBy ?? [];
 
-      if (kept === null || next === undefined) {
+      if (kept === null || kept.origin === 'monitored') {
         return null;
       }
 
+      const [next, ...rest] = kept.alsoAskedBy;
       const isFirst = kept.requestedById === askerId;
+      const isLast = isFirst && next === undefined;
 
-      if (!isFirst && !kept.alsoAskedBy.some((one) => one.id === askerId)) {
+      if (
+        (isLast && !kept.isFollowed) ||
+        (!isFirst && !kept.alsoAskedBy.some((one) => one.id === askerId))
+      ) {
         return null;
       }
 
       const record = await requests.update(id, {
-        ...(isFirst
-          ? { requestedById: next.id, requestedByName: next.name, alsoAskedBy: rest }
-          : { alsoAskedBy: kept.alsoAskedBy.filter((one) => one.id !== askerId) }),
+        ...(isLast
+          ? { origin: 'monitored' }
+          : isFirst && next !== undefined
+            ? { requestedById: next.id, requestedByName: next.name, alsoAskedBy: rest }
+            : { alsoAskedBy: kept.alsoAskedBy.filter((one) => one.id !== askerId) }),
         updatedAt: now().toISOString(),
       });
 

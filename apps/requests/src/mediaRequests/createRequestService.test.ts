@@ -956,4 +956,52 @@ describe('following a title nobody asked for', () => {
     expect(request.items).toMatchObject([{ state: 'available' }]);
     expect((await requests.find(request.id))?.mediaId).toBe('dune-in-the-library');
   });
+
+  it('stays followed when the only person who asked for it leaves', async () => {
+    const { service } = aService();
+
+    await service.add({
+      ...SEVERANCE,
+      requestedBy: { id: 'operator', name: 'Operator' },
+      origin: 'monitored',
+    });
+
+    const { request } = await service.add(SEVERANCE);
+
+    expect(request).toMatchObject({ origin: 'asked', isFollowed: true });
+    expect(await service.leave(request.id, 'someone')).toMatchObject({
+      origin: 'monitored',
+      isFollowed: true,
+    });
+    expect(await service.list()).toHaveLength(1);
+  });
+
+  it('keeps a title somebody asked for followed once it is followed too', async () => {
+    const { service } = aService();
+
+    await service.add({ ...SEVERANCE, isApproved: true });
+
+    const { request } = await service.add({
+      ...SEVERANCE,
+      requestedBy: { id: 'operator', name: 'Operator' },
+      origin: 'monitored',
+    });
+
+    expect(request).toMatchObject({ origin: 'asked', isFollowed: true });
+    expect(await service.leave(request.id, 'someone')).toMatchObject({ origin: 'monitored' });
+  });
+
+  it('lets nobody leave a title only followed, or the last asker leave one nobody follows', async () => {
+    const { service } = aService();
+    const followed = await service.add({
+      ...DUNE,
+      isApproved: true,
+      requestedBy: { id: 'operator', name: 'Operator' },
+      origin: 'monitored',
+    });
+    const asked = await service.add({ ...SEVERANCE, isApproved: true });
+
+    expect(await service.leave(followed.request.id, 'operator')).toBeNull();
+    expect(await service.leave(asked.request.id, 'someone')).toBeNull();
+  });
 });

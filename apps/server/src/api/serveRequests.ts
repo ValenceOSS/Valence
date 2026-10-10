@@ -831,7 +831,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
           };
         }
 
-        if (found.value.alsoAskedBy.length === 0) {
+        if (found.value.alsoAskedBy.length === 0 && !found.value.isFollowed) {
           return (await letGoInItsApp(client, id)) ?? client.removeRequest(id, true);
         }
 

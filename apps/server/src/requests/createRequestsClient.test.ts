@@ -943,6 +943,7 @@ describe('createRequestsClient with requests for films and series', () => {
     requestedBy: { id: 'someone', name: 'Someone' },
     alsoAskedBy: [],
     origin: 'asked',
+    isFollowed: false,
     profileAsk: null,
     seasons: null,
     followsNewSeasons: false,

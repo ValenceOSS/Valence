@@ -291,6 +291,7 @@ const MediaRequestSchema = z.object({
   requestedBy: RequesterSchema,
   alsoAskedBy: z.array(RequesterSchema).default([]),
   origin: RequestOriginSchema.default('asked'),
+  isFollowed: z.boolean().default(false),
   profileAsk: ProfileAskSchema.nullable().default(null),
   isHandedOff: z.boolean().optional(),
   seasons: SeasonsSchema,

@@ -3201,7 +3201,7 @@ const ENGLISH = {
   'screens.adminArea.cataloguePanel.followAllDialog.nothingToFollow':
     'Every title in the libraries is already followed.',
   'screens.adminArea.cataloguePanel.followAllDialog.searchedForOnTheSchedule':
-    'Anything still to find is searched for on the next scheduled search. Search all missing searches now.',
+    'Anything still to find is searched for on the next scheduled search, or now with Search all missing.',
   'screens.adminArea.cataloguePanel.followAllDialog.whatIsFetched':
     'New episodes, seasons and albums are downloaded as they come out, and anything missing now is searched for.',
   'screens.adminArea.cataloguePanel.kindsOfLibrary': 'Kind of library',

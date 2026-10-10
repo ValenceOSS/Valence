@@ -308,6 +308,7 @@ const mediaRequest = requestsSchema(
       .notNull()
       .default(jsonDefault([])),
     origin: varchar('origin', { length: 16, enum: REQUEST_ORIGINS }).notNull().default('asked'),
+    isFollowed: boolean('is_followed').notNull().default(false),
     profileAsk: jsonColumn('profile_ask').$type<ProfileAsk>(),
     seasons: jsonColumn('seasons').$type<number[]>(),
     followsNewSeasons: boolean('follows_new_seasons').notNull().default(false),

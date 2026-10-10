@@ -43,6 +43,7 @@ const recordFromDraft = (
   requestedByName: draft.requestedBy.name,
   alsoAskedBy: [],
   origin: draft.origin,
+  isFollowed: draft.origin === 'monitored',
   profileAsk: null,
   seasons:
     draft.kind === 'series'

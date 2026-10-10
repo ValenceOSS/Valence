@@ -1352,18 +1352,21 @@ const createAppContext = (options: CreateAppOptions) => {
     );
 
   /**
-   * The film a library already holds, as the requests service is told it, so it is not fetched
-   * again; nothing where no library holds it.
+   * The film the library a request files into already holds, as the requests service is told it,
+   * so it is not fetched again; nothing where that library does not hold it, even where another
+   * does.
    *
+   * @param into - The library the request files into.
    * @param tmdbId - The film.
    * @returns What is held of it.
    */
-  const heldFilmOf = async (tmdbId: number): Promise<HeldInLibrary | null> => {
-    const mediaId = (await discovery.lookup.films([tmdbId.toString()])).get(tmdbId.toString());
+  const heldFilmIn = async (
+    into: Pick<Library, 'id'>,
+    tmdbId: number,
+  ): Promise<HeldInLibrary | null> => {
+    const mediaId = await discovery.lookup.filmIn(into.id, tmdbId.toString());
 
-    return mediaId === undefined
-      ? null
-      : { mediaId, episodes: [], folder: null, seasonFolders: [] };
+    return mediaId === null ? null : { mediaId, episodes: [], folder: null, seasonFolders: [] };
   };
 
   /**
@@ -1448,7 +1451,7 @@ const createAppContext = (options: CreateAppOptions) => {
           asked.kind === 'series' && asked.tmdbId !== undefined
             ? await heldFor(chosen, asked.tmdbId)
             : asked.kind === 'film' && asked.tmdbId !== undefined
-              ? await heldFilmOf(asked.tmdbId)
+              ? await heldFilmIn(chosen, asked.tmdbId)
               : isMusicRequest(asked.kind)
                 ? await heldAlbumsOf(discovery.lookup, catalogue.albums)
                 : null,

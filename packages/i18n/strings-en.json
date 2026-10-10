@@ -12966,7 +12966,7 @@
   },
   {
     "handler": "screens.adminArea.cataloguePanel.followAllDialog.searchedForOnTheSchedule",
-    "text": "Anything still to find is searched for on the next scheduled search. Search all missing searches now.",
+    "text": "Anything still to find is searched for on the next scheduled search, or now with Search all missing.",
     "context": "Shown once following has finished. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
   },
   {

@@ -3067,6 +3067,35 @@ describe('requests for films and series, through the server', () => {
     ]);
   });
 
+  it('leaves a followed title followed when the only person who asked for it cancels', async () => {
+    const deleted: string[] = [];
+    let owner = '';
+    const { ask, accountId } = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: (url, init) => {
+        if (init.method === 'DELETE') {
+          deleted.push(url);
+
+          return Response.json({ ...REQUEST, origin: 'monitored', isFollowed: true });
+        }
+
+        return Response.json({
+          ...REQUEST,
+          requestedBy: { id: owner, name: 'Me' },
+          isFollowed: true,
+        });
+      },
+    });
+
+    owner = accountId;
+
+    expect((await ask(`/api/requests/media/${REQUEST.id}`, 'DELETE')).status).toBe(204);
+    expect(deleted).toEqual([
+      `http://requests:8421/api/requests/${REQUEST.id}/askers/${encodeURIComponent(accountId)}`,
+    ]);
+  });
+
   it('adds somebody who wants a request too, as whoever is signed in', async () => {
     const asked: Array<{ url: string; body: string | undefined }> = [];
     const { ask, accountId } = await build({
