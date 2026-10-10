@@ -14,6 +14,7 @@ type PopoverPanelProps = {
   triggerLook?: 'icon' | 'smallIcon' | 'button' | 'inline';
   tone?: 'default' | 'overlay';
   isOverDialogs?: boolean;
+  hasSurface?: boolean;
   className?: string;
 };
 

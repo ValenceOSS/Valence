@@ -6,8 +6,8 @@ type SearchKind = 'everything' | 'films' | 'shows' | 'music' | 'books';
 type SearchAreaProps = {
   search: string;
   onSearchChange: (search: string) => void;
-  genre: string | null;
-  onGenreChange: (genre: string | null) => void;
+  filters: ReadonlySet<string>;
+  onFiltersChange: (next: ReadonlySet<string>) => void;
   onPlay: (media: MediaSummary, startSeconds: number) => void;
   onInspect: (media: MediaSummary) => void;
   onItemsLoaded?: (items: MediaSummary[]) => void;

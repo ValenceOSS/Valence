@@ -28,6 +28,9 @@ import type { PopoverPanelProps } from './PopoverPanel.types';
  * @param tone - Whether it sits on the page or over film, where the page's colours say nothing.
  * @param isOverDialogs - Whether it opens from chrome that stays usable over a dialog, such as the
  *   desktop's window bar, so a press inside it does not close the dialog either.
+ * @param hasSurface - Whether it draws its own floating surface, or leaves that to what it holds,
+ *   such as a card that is already one — which is then set on the frame's solid colour, so its
+ *   shell reads as a dialog's does rather than letting the page show through.
  * @param className - Extra classes for the caller's own layout.
  */
 const PopoverPanel = ({
@@ -44,6 +47,7 @@ const PopoverPanel = ({
   triggerLook = 'icon',
   tone = 'default',
   isOverDialogs = false,
+  hasSurface = true,
   className,
 }: PopoverPanelProps) => {
   const portalContainer = usePortalContainer();
@@ -91,8 +95,12 @@ const PopoverPanel = ({
           data-slot="popover-content"
           {...(isOverDialogs ? { 'data-over-dialogs': '' } : {})}
           className={cn(
-            'z-50 flex max-h-[70vh] flex-col overflow-hidden rounded-lg p-3 text-text',
-            tone === 'overlay' ? 'valence-glass valence-glass--film' : 'valence-float',
+            'z-50 flex max-h-[70vh] flex-col overflow-hidden text-text',
+            !hasSurface
+              ? 'rounded-2xl bg-[var(--frame-back)] shadow-[var(--shadow-overlay)]'
+              : tone === 'overlay'
+                ? 'valence-glass valence-glass--film rounded-lg p-3'
+                : 'valence-float rounded-lg p-3',
             'outline-none',
             POPUP_MOTION,
             className,

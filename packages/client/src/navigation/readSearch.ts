@@ -11,6 +11,7 @@ type PlaceSearch = {
   chapter?: string;
   party?: string;
   genre?: string;
+  filters?: string;
   library?: string;
   panel?: string;
   account?: string;
@@ -36,6 +37,7 @@ const SearchSchema = z.object({
   chapter: said,
   party: said,
   genre: said,
+  filters: said,
   library: said,
   panel: said,
   account: said,

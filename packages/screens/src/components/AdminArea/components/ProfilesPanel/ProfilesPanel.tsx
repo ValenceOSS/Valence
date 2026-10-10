@@ -35,6 +35,7 @@ import { describeProfile } from './describeProfile';
 import { moveProfile } from './moveProfile';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { ProfileKind, QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
+import { useAdminCommand } from '@ValenceScreens/admin/useAdminCommand';
 import { say } from '@ValenceI18n/say';
 
 const KINDS: readonly { id: ProfileKind | 'all'; label: string; empty: string }[] = [
@@ -85,6 +86,10 @@ const ProfilesPanel = () => {
   const [editing, setEditing] = useState<QualityProfile | null>(null);
   const [trying, setTrying] = useState<QualityProfile | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+
+  useAdminCommand('addProfile', () => {
+    setIsAdding(true);
+  });
   const [shown, setShown] = useState<ProfileKind | 'all'>('all');
   const [removing, setRemoving] = useState<QualityProfile | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
@@ -161,7 +166,7 @@ const ProfilesPanel = () => {
             of={GripVerticalIcon}
             size={16}
             tone="muted"
-            label={say('screens.adminArea.profilesPanel.dragToChangeTheOrder')}
+            label={say('common.dragToChangeTheOrder')}
           />
         ),
       },
@@ -170,22 +175,15 @@ const ProfilesPanel = () => {
         header: say('common.profile'),
         accessorFn: (profile) => profile.name,
         cell: ({ row }) => (
-          <span className="flex min-w-0 flex-col gap-0.5">
+          <span className="flex min-w-0 max-w-xl flex-col gap-0.5">
             <span className="truncate font-medium text-text">{row.original.name}</span>
 
-            <span className="truncate text-xs text-text-muted">
+            <span
+              title={describeProfile(row.original).takes}
+              className="truncate text-xs text-text-muted"
+            >
               {describeProfile(row.original).takes}
             </span>
-          </span>
-        ),
-      },
-      {
-        id: 'kind',
-        header: say('common.kind'),
-        accessorFn: (profile) => profile.kind,
-        cell: ({ row }) => (
-          <span className="text-xs text-text-muted">
-            {KINDS.find((kind) => kind.id === row.original.kind)?.label}
           </span>
         ),
       },
@@ -407,10 +405,6 @@ const ProfilesPanel = () => {
         ) : (
           KINDS.map((kind) => (
             <TabPanel key={kind.id} value={kind.id}>
-              <p className="px-4 pt-3 text-sm text-text-muted">
-                {say('screens.adminArea.profilesPanel.highestFirst')}
-              </p>
-
               {isEveryLibraryHandedOff(
                 libraries.data ?? [],
                 kind.id === 'video'
@@ -432,21 +426,46 @@ const ProfilesPanel = () => {
                 </p>
               ) : null}
 
-              <DataTable
-                height="fills"
-                label={kind.label}
-                columns={
-                  kind.id === 'all' ? columns : columns.filter((column) => column.id !== 'kind')
-                }
-                rows={profiles.data.filter(
-                  (profile) => kind.id === 'all' || profile.kind === kind.id,
-                )}
-                getRowId={(profile) => profile.id}
-                onReorder={(ids) => {
-                  void putInOrder(ids);
-                }}
-                emptyMessage={kind.empty}
-              />
+              {kind.id === 'all' && profiles.data.length > 0 ? (
+                <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto pb-2">
+                  {KINDS.filter(
+                    (group) =>
+                      group.id !== 'all' &&
+                      profiles.data.some((profile) => profile.kind === group.id),
+                  ).map((group) => (
+                    <section key={group.id} className="flex flex-col gap-2">
+                      <h3 className="px-4 pt-3 text-[0.6875rem] font-medium uppercase tracking-[0.08em] text-text-muted">
+                        {group.label}
+                      </h3>
+
+                      <DataTable
+                        height="compact"
+                        label={group.label}
+                        columns={columns}
+                        rows={profiles.data.filter((profile) => profile.kind === group.id)}
+                        getRowId={(profile) => profile.id}
+                        onReorder={(ids) => {
+                          void putInOrder(ids);
+                        }}
+                      />
+                    </section>
+                  ))}
+                </div>
+              ) : (
+                <DataTable
+                  height="fills"
+                  label={kind.label}
+                  columns={columns}
+                  rows={profiles.data.filter(
+                    (profile) => kind.id === 'all' || profile.kind === kind.id,
+                  )}
+                  getRowId={(profile) => profile.id}
+                  onReorder={(ids) => {
+                    void putInOrder(ids);
+                  }}
+                  emptyMessage={kind.empty}
+                />
+              )}
             </TabPanel>
           ))
         )}

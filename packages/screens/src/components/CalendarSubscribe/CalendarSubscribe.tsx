@@ -90,7 +90,7 @@ const CalendarSubscribe = ({ className }: CalendarSubscribeProps) => {
         label={say('common.addToCalendar')}
         look="raised"
         align="end"
-        className={cn('h-9 w-auto px-0', className)}
+        className={cn('h-7 w-auto px-0', className)}
         onOpenChange={(isOpen) => {
           setHasCopied(false);
 
@@ -99,7 +99,7 @@ const CalendarSubscribe = ({ className }: CalendarSubscribeProps) => {
           }
         }}
         trigger={
-          <span className="flex items-center gap-2 px-3 text-sm font-medium">
+          <span className="flex items-center gap-1.5 px-2.5 text-[0.8125rem] font-medium">
             <Icon of={CalendarPlusIcon} size={16} />
             {say('common.addToCalendar')}
           </span>

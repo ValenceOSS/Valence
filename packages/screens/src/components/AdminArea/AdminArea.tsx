@@ -157,6 +157,7 @@ import type { AdminAreaProps } from './AdminArea.types';
 import type { ObservabilitySearch } from '@ValenceClient/admin/ObservabilitySearchSchema';
 import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
 import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const NO_ALBUMS: MusicAlbum[] = [];
 
@@ -1199,6 +1200,25 @@ const AdminArea = ({
                 isUnreachable={askedReencodes.isError}
                 reencodes={reencodes}
                 onReview={setReviewing}
+                onConfirmAll={async (ids) => {
+                  let confirmed = 0;
+
+                  for (const id of ids) {
+                    if (await confirmReencode(id)) {
+                      confirmed += 1;
+                    }
+                  }
+
+                  tellOutcome(
+                    sayCount('screens.adminArea.confirmedCountReEncodes', confirmed),
+                    failureOfAnswer(
+                      confirmed === ids.length,
+                      say('screens.adminArea.someCouldNotBeConfirmed'),
+                    ),
+                  );
+
+                  await Promise.all([reloadReencodes(), loadAll()]);
+                }}
                 onStop={async (one) => {
                   const stopped = tellOutcome(
                     say('screens.adminArea.stoppedTheReEncode'),

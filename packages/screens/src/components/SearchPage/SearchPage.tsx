@@ -14,6 +14,7 @@ import { showSlug } from '@ValenceCore/functions/showSlug';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { say } from '@ValenceI18n/say';
 import { viewOfDiscoverSearch } from '@ValenceScreens/requests/viewOfDiscoverSearch';
+import { filtersOf } from './filtersOf';
 
 /**
  * Searching the whole server, as a page of its own rather than a sheet over whatever was underneath.
@@ -44,9 +45,9 @@ const SearchPage = () => {
         onSearchChange={(next) => {
           replace({ search: next });
         }}
-        genre={place.genre}
-        onGenreChange={(next) => {
-          replace({ genre: next });
+        filters={filtersOf(place)}
+        onFiltersChange={(next) => {
+          replace({ genre: null, filters: next.size === 0 ? null : [...next].join(',') });
         }}
         onPlay={(media, startSeconds) => {
           setStartOverride({ mediaId: media.id, seconds: Math.floor(startSeconds) });

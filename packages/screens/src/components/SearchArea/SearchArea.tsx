@@ -24,7 +24,7 @@ import { BookRow } from '@ValenceScreens/components/BookRow/BookRow';
 import { DiscoverPointer } from './components/DiscoverPointer/DiscoverPointer';
 import { BackToTop } from '@ValenceUI/BackToTop';
 import { AppliedFilters } from '@ValenceUI/AppliedFilters';
-import { FilterMenu } from '@ValenceUI/FilterMenu';
+import { FilterSplit } from '@ValenceUI/FilterSplit';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { say } from '@ValenceI18n/say';
 import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
@@ -52,8 +52,8 @@ const KINDS: { id: SearchKind; label: string }[] = [
  *
  * @param search - What is in the search box.
  * @param onSearchChange - Told what was typed.
- * @param genre - The genre chosen, or nothing.
- * @param onGenreChange - Told which genre was chosen.
+ * @param filters - Every filter chosen, such as `genre:Drama` or `decade:1990`.
+ * @param onFiltersChange - Told every filter chosen once one changes.
  * @param onPlay - Told to start something, and where from.
  * @param onInspect - Told to open the page about something.
  * @param onItemsLoaded - Told what it found, so an address naming an item can be resolved.
@@ -73,8 +73,8 @@ const KINDS: { id: SearchKind; label: string }[] = [
 const SearchArea = ({
   search,
   onSearchChange,
-  genre,
-  onGenreChange,
+  filters: chosenFilters,
+  onFiltersChange,
   onPlay,
   onInspect,
   onItemsLoaded,
@@ -89,7 +89,7 @@ const SearchArea = ({
   onDiscover,
 }: SearchAreaProps) => {
   const [kind, setKind] = useState<SearchKind>('everything');
-  const filters = useLibraryFilters({ genre, onGenreChange });
+  const filters = useLibraryFilters({ selected: chosenFilters, onChange: onFiltersChange });
   const [size, setSize] = useState(readGridSize);
   const [liveSearch, setLiveSearch] = useState(search);
   const prefersReducedMotion = useReducedMotionConfig();
@@ -180,8 +180,8 @@ const SearchArea = ({
   const wantsBooks =
     (kind === 'everything' || kind === 'books') &&
     settled.search !== undefined &&
-    genre === null &&
-    settled.yearFrom === undefined &&
+    settled.genres === undefined &&
+    settled.decades === undefined &&
     settled.minRating === undefined &&
     settled.minYourStars === undefined;
 
@@ -259,9 +259,8 @@ const SearchArea = ({
             />
 
             {filters.groups.length === 0 ? null : (
-              <FilterMenu
+              <FilterSplit
                 label={say('screens.searchArea.filterTheLibrary')}
-                hasLabel
                 groups={filters.groups}
                 selected={filters.selected}
                 onChange={filters.change}

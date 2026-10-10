@@ -15,9 +15,10 @@ import { Icon } from '@ValenceUI/Icon';
 import { SelectField } from '@ValenceUI/SelectField';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Spinner } from '@ValenceUI/Spinner';
-import { TextField } from '@ValenceUI/TextField';
+import { NothingHere } from '@ValenceUI/NothingHere';
+import { ScopedField } from '@ValenceUI/ScopedField';
 import { searchCatalogue } from '@ValenceClient/admin/fetchAdmin';
-import { ReleaseSearchDialog } from '@ValenceScreens/components/AdminArea/components/ReleaseSearchDialog/ReleaseSearchDialog';
+import { ReleaseSearchPanel } from '@ValenceScreens/components/AdminArea/components/ReleaseSearchPanel/ReleaseSearchPanel';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import {
   askForMedia,
@@ -42,25 +43,27 @@ import type {
 import type { AskForMediaDialogProps } from './AskForMediaDialog.types';
 import { say } from '@ValenceI18n/say';
 
+const INDEXERS = 'indexers';
+
 const KINDS: readonly { id: MediaRequestKind; label: string; searchFor: string }[] = [
   {
     id: 'film',
-    label: say('common.aFilm2'),
+    label: say('common.films'),
     searchFor: say('screens.adminArea.matchPicker.searchForAFilm'),
   },
   {
     id: 'series',
-    label: say('common.aSeries2'),
+    label: say('common.series'),
     searchFor: say('screens.adminArea.matchPicker.searchForASeries'),
   },
   {
     id: 'artist',
-    label: say('screens.adminArea.askForMediaDialog.anArtist2'),
+    label: say('common.artists'),
     searchFor: say('screens.adminArea.askForMediaDialog.searchForAnArtist'),
   },
   {
     id: 'album',
-    label: say('screens.adminArea.askForMediaDialog.anAlbum2'),
+    label: say('common.albums'),
     searchFor: say('screens.adminArea.searchForARecord'),
   },
 ];
@@ -255,11 +258,16 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
       });
   };
 
+  const close = () => {
+    setIsSearchingIndexers(false);
+    onClose();
+  };
+
   return (
     <DialogCompanion
       label={say('common.requestMedia')}
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={close}
       size="stage"
     >
       <DialogTitle
@@ -271,10 +279,14 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
       <DialogContent
         className={cn(
           'flex flex-col gap-4',
-          found !== null && chosen !== null ? 'min-h-0 overflow-hidden' : '',
+          (found !== null && chosen !== null) || isSearchingIndexers
+            ? 'min-h-0 flex-1 overflow-hidden'
+            : '',
         )}
       >
-        {found !== null && chosen !== null ? (
+        {isSearchingIndexers ? (
+          <ReleaseSearchPanel query={query} />
+        ) : found !== null && chosen !== null ? (
           <ReleasePickTable
             kind={isMusicRequest(kind) ? 'music' : isBookRequest(kind) ? 'book' : 'video'}
             found={found.outcome}
@@ -287,25 +299,6 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
           />
         ) : chosen === null ? (
           <>
-            <FormField label={say('screens.adminArea.addLibraryDialog.type')}>
-              <SegmentedRow
-                label={say('screens.adminArea.addLibraryDialog.type')}
-                size="sm"
-                items={KINDS}
-                value={kind}
-                onSelect={(next) => {
-                  const picked = KINDS.find((one) => one.id === next)?.id;
-
-                  if (picked !== undefined) {
-                    setKind(picked);
-                    setMatches(null);
-                    setMusicMatches(null);
-                    setProfileId(null);
-                  }
-                }}
-              />
-            </FormField>
-
             <form
               className="flex flex-wrap items-end gap-3"
               onSubmit={(event) => {
@@ -316,10 +309,40 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
                 }
               }}
             >
-              <TextField
+              <ScopedField
                 label={KINDS.find((one) => one.id === kind)?.searchFor ?? say('common.search')}
+                isLabelHidden
+                placeholder={
+                  KINDS.find((one) => one.id === kind)?.searchFor ?? say('common.search')
+                }
                 value={query}
                 onValueChange={setQuery}
+                choices={[
+                  {
+                    label: say('screens.adminArea.addLibraryDialog.type'),
+                    options: [
+                      ...KINDS.map(({ id, label }) => ({ id, label })),
+                      { id: INDEXERS, label: say('common.indexers') },
+                    ],
+                    value: kind,
+                    onChange: (next) => {
+                      if (next === INDEXERS) {
+                        setIsSearchingIndexers(true);
+
+                        return;
+                      }
+
+                      const picked = KINDS.find((one) => one.id === next)?.id;
+
+                      if (picked !== undefined) {
+                        setKind(picked);
+                        setMatches(null);
+                        setMusicMatches(null);
+                        setProfileId(null);
+                      }
+                    },
+                  },
+                ]}
                 className="min-w-0 flex-1"
               />
 
@@ -335,6 +358,26 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
             </form>
 
             {isSearching ? <Spinner label={say('common.askingTheCatalogue')} size="sm" /> : null}
+
+            {isSearching || (isMusic ? musicMatches : matches) !== null ? null : (
+              <NothingHere
+                of={SearchIcon}
+                fills
+                title={say('screens.adminArea.askForMediaDialog.findSomethingToRequest')}
+                detail={say('screens.adminArea.askForMediaDialog.searchTheCatalogueAboveOr')}
+                action={
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      setIsSearchingIndexers(true);
+                    }}
+                  >
+                    {say('screens.adminArea.askForMediaDialog.searchTheIndexers')}
+                  </Button>
+                }
+              />
+            )}
 
             {isSearching ? null : isMusic ? (
               musicMatches === null ? null : musicMatches.length === 0 ? (
@@ -440,9 +483,9 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
 
       <DialogFooter
         note={problem}
-        dismiss={{ onChoose: onClose }}
+        dismiss={{ onChoose: close }}
         confirm={
-          found !== null
+          found !== null || isSearchingIndexers
             ? undefined
             : isPickedByHand
               ? {
@@ -460,23 +503,17 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
                   },
                 }
         }
-        lead={
-          found === null ? (
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setIsSearchingIndexers(true);
-              }}
-            >
-              {say('screens.adminArea.askForMediaDialog.searchTheIndexersInstead')}
-            </Button>
-          ) : null
-        }
       >
-        {found === null ? null : (
+        {found === null && !isSearchingIndexers ? null : (
           <Button
             variant="secondary"
             onClick={() => {
+              if (isSearchingIndexers) {
+                setIsSearchingIndexers(false);
+
+                return;
+              }
+
               setFound(null);
             }}
           >
@@ -484,19 +521,6 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
           </Button>
         )}
       </DialogFooter>
-
-      <ReleaseSearchDialog
-        title={
-          isSearchingIndexers
-            ? say('screens.adminArea.askForMediaDialog.searchTheIndexersInstead')
-            : null
-        }
-        detail={say('screens.adminArea.askForMediaDialog.forSomethingNoCatalogueKnows')}
-        query={query}
-        onClose={() => {
-          setIsSearchingIndexers(false);
-        }}
-      />
     </DialogCompanion>
   );
 };

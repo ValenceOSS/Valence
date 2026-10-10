@@ -2371,6 +2371,11 @@
     "context": "The title, used in the library (from `groupIntoRails`) and in the library (from `homeRows`)."
   },
   {
+    "handler": "common.controlKey",
+    "text": "Ctrl",
+    "context": "The Control key, as a keyboard shortcut names it."
+  },
+  {
     "handler": "common.copied",
     "text": "Copied",
     "context": "Shown, used in several places, among them the copyable address in the plugin settings dialog and the api key panel."
@@ -2989,6 +2994,11 @@
     "handler": "common.downloadTitle",
     "text": "Download {title}",
     "context": "The title, used in several places, among them the show of the phone app (from `askHowMuchToDownload`) and the downloads of the phone app (from `askToKeepAProgrammeOnThisPhone`). {title} is filled in by the app."
+  },
+  {
+    "handler": "common.dragToChangeTheOrder",
+    "text": "Drag to change the order",
+    "context": "The label of the handle a table row is dragged by to change the order."
   },
   {
     "handler": "common.durationIn",
@@ -4203,7 +4213,7 @@
   },
   {
     "handler": "common.noCeiling",
-    "text": "No age limit",
+    "text": "No ceiling",
     "context": "Shown, used in the library access in the schemas and in the admin area (from `ageChoices`)."
   },
   {
@@ -4550,6 +4560,11 @@
     "handler": "common.openThePlayer",
     "text": "Open the player",
     "context": "The label of a button, used in the now playing bar of the phone app and in the audiobook bar."
+  },
+  {
+    "handler": "common.openTheSidebar",
+    "text": "Open the sidebar",
+    "context": "The label of a button in the admin page."
   },
   {
     "handler": "common.openThisOnYourPhone",
@@ -12725,16 +12740,6 @@
     "context": "Shown in the admin area. {label} is filled in by the app."
   },
   {
-    "handler": "screens.adminArea.askForMediaDialog.anAlbum2",
-    "text": "An album",
-    "context": "The label in the ask for media dialog in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.askForMediaDialog.anArtist2",
-    "text": "An artist",
-    "context": "The label in the ask for media dialog in the admin area."
-  },
-  {
     "handler": "screens.adminArea.askForMediaDialog.askedForIt",
     "text": "Requested.",
     "context": "A short message shown once something is done in the ask for media dialog in the admin area."
@@ -12750,9 +12755,9 @@
     "context": "The label in the ask for media dialog in the admin area."
   },
   {
-    "handler": "screens.adminArea.askForMediaDialog.forSomethingNoCatalogueKnows",
-    "text": "For something no catalogue knows. Pick a release and choose which library it goes to.",
-    "context": "The line under the dialog that searches the indexers by hand from Add a title."
+    "handler": "screens.adminArea.askForMediaDialog.findSomethingToRequest",
+    "text": "Find something to request",
+    "context": "Shown in the request media dialog in the admin area, before anything has been searched for."
   },
   {
     "handler": "screens.adminArea.askForMediaDialog.iWillPickIt",
@@ -12785,9 +12790,14 @@
     "context": "The label of the search box in the admin area's dialog for asking for media, when asking for an artist."
   },
   {
-    "handler": "screens.adminArea.askForMediaDialog.searchTheIndexersInstead",
-    "text": "Search the indexers instead",
-    "context": "A button in the Add a title dialog, for something no catalogue knows, that searches the indexers by hand."
+    "handler": "screens.adminArea.askForMediaDialog.searchTheCatalogueAboveOr",
+    "text": "Search the catalogue above for a film, series, artist or album. For something no catalogue knows, search the indexers directly.",
+    "context": "Shown in the request media dialog in the admin area, before anything has been searched for."
+  },
+  {
+    "handler": "screens.adminArea.askForMediaDialog.searchTheIndexers",
+    "text": "Search the indexers",
+    "context": "Shown in the request media dialog in the admin area, before anything has been searched for."
   },
   {
     "handler": "screens.adminArea.askForMediaDialog.theBestByItsQuality",
@@ -13448,6 +13458,16 @@
     "handler": "screens.adminArea.concernsBanner.goToPanel",
     "text": "Go to {panel}",
     "context": "The label of a button in the concerns banner in the admin area. {panel} is filled in by the app."
+  },
+  {
+    "handler": "screens.adminArea.confirmedCountReEncodes.one",
+    "text": "Kept {count} new encode and deleted its original.",
+    "context": "Shown after confirming re-encodes awaiting review in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.confirmedCountReEncodes.other",
+    "text": "Kept {count} new encodes and deleted their originals.",
+    "context": "Shown after confirming re-encodes awaiting review in the admin area."
   },
   {
     "handler": "screens.adminArea.coresValenceNotMeasured.one",
@@ -14250,6 +14270,11 @@
     "context": "The detail of a nothing here in the encoding panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.encodingPanel.confirmAll",
+    "text": "Confirm all",
+    "context": "Shown in the re-encoding panel of the admin area."
+  },
+  {
     "handler": "screens.adminArea.encodingPanel.countEncodesAreHoldingAFilm.one",
     "text": "{count} re-encode is keeping both the original and the new file",
     "context": "The title of a callout in the encoding panel in the admin area. {count} is a number."
@@ -14258,6 +14283,21 @@
     "handler": "screens.adminArea.encodingPanel.countEncodesAreHoldingAFilm.other",
     "text": "{count} re-encodes are keeping both the original and the new file",
     "context": "The title of a callout in the encoding panel in the admin area. {count} is a number."
+  },
+  {
+    "handler": "screens.adminArea.encodingPanel.deleteCountOriginals.one",
+    "text": "Delete {count} original?",
+    "context": "Shown in the re-encoding panel of the admin area."
+  },
+  {
+    "handler": "screens.adminArea.encodingPanel.deleteCountOriginals.other",
+    "text": "Delete {count} originals?",
+    "context": "Shown in the re-encoding panel of the admin area."
+  },
+  {
+    "handler": "screens.adminArea.encodingPanel.eachNewEncodeIsKeptAndIts",
+    "text": "Each new encode is kept and the original it replaced is deleted for good. Review one first if you are not sure how they look.",
+    "context": "Shown in the re-encoding panel of the admin area."
   },
   {
     "handler": "screens.adminArea.encodingPanel.freesSize",
@@ -16435,6 +16475,11 @@
     "context": "A checkbox on the pre-transcoding card: make copies in every video library rather than chosen ones."
   },
   {
+    "handler": "screens.adminArea.preTranscodingCard.everyRungIsKeptBesideThe",
+    "text": "Every rung is kept beside the original, which stays as it is.",
+    "context": "Shown in the pre-transcoding card in the encoding section of the admin area."
+  },
+  {
     "handler": "screens.adminArea.preTranscodingCard.includingOnesAddedLater",
     "text": "Including ones added later.",
     "context": "The description of the checkbox for making copies in every video library."
@@ -16455,9 +16500,14 @@
     "context": "The explanation at the top of the pre-transcoding card in the administration area. The quoted name is an example file name and should be kept as it is."
   },
   {
-    "handler": "screens.adminArea.preTranscodingCard.madeStillToMakeAndKept",
-    "text": "{made} made · {left} still to make · {size} on disk",
+    "handler": "screens.adminArea.preTranscodingCard.keepTheOriginal",
+    "text": "Keep the original",
     "context": "Shown in the pre-transcoding card in the encoding section of the admin area."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.madeOfAll",
+    "text": "{made} of {all}",
+    "context": "How many copies a rung of the pre-transcoding ladder has made, of all it needs to make."
   },
   {
     "handler": "screens.adminArea.preTranscodingCard.makeTheNextCopyNow",
@@ -16495,6 +16545,11 @@
     "context": "A notice shown after an administrator paused pre-transcoding."
   },
   {
+    "handler": "screens.adminArea.preTranscodingCard.quietHours",
+    "text": "Quiet hours",
+    "context": "Shown in the pre-transcoding card in the encoding section of the admin area."
+  },
+  {
     "handler": "screens.adminArea.preTranscodingCard.refusedOrFailedTwice",
     "text": "Refused or failed twice. Saving the settings retries the refused ones, and changing the copy format retries all of them.",
     "context": "The detail under the Passed over figure on the pre-transcoding card."
@@ -16503,6 +16558,11 @@
     "handler": "screens.adminArea.preTranscodingCard.removeTheQualityRung",
     "text": "Remove the {quality} rung",
     "context": "Shown in the pre-transcoding card in the encoding section of the admin area."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.replacesTheOriginal",
+    "text": "Replaces the original",
+    "context": "A badge on the pre-transcoding rung whose copy takes the original file's place."
   },
   {
     "handler": "screens.adminArea.preTranscodingCard.rightNow",
@@ -16538,6 +16598,11 @@
     "handler": "screens.adminArea.preTranscodingCard.thereIsNothingToMakeA",
     "text": "Nothing needs a copy, or pre-transcoding is off.",
     "context": "A notice shown when an administrator asked pre-transcoding to make the next copy and none could be started."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.theTallestRungReplacesTheOriginal",
+    "text": "The tallest rung takes the original’s place, made after the others so they come from the original. Each one waits for you to confirm in Re-encoding before the original is deleted, and the queue pauses while five are waiting.",
+    "context": "Shown in the pre-transcoding card in the encoding section of the admin area."
   },
   {
     "handler": "screens.adminArea.preTranscodingCard.untilEverythingIsDone",
@@ -16765,19 +16830,9 @@
     "context": "The label of a tab row in the profile editor in the admin area."
   },
   {
-    "handler": "screens.adminArea.profilesPanel.dragToChangeTheOrder",
-    "text": "Drag to change the order",
-    "context": "Read out for the grip at the start of each row of the admin's quality profiles, which can be dragged to put them in another order."
-  },
-  {
     "handler": "screens.adminArea.profilesPanel.everyLibraryHandsOff",
     "text": "Every library of this kind that takes requests hands them to a connected app, so no request is judged by these profiles.",
     "context": "Note above the profiles of one kind in Admin › Requests › Profiles, when every library of that kind hands requests to Radarr, Sonarr or Lidarr."
-  },
-  {
-    "handler": "screens.adminArea.profilesPanel.highestFirst",
-    "text": "Highest first. When people ask for the same title at different profiles, this order decides which is higher.",
-    "context": "Note above the list of quality profiles in Admin › Requests › Profiles, which can be moved up and down."
   },
   {
     "handler": "screens.adminArea.profilesPanel.noMusicLibraryTakesRequests",
@@ -18185,6 +18240,11 @@
     "context": "The storage figure at the top of the admin area. {size} is the room left on the disk the library is on, such as 2.0 TB."
   },
   {
+    "handler": "screens.adminArea.someCouldNotBeConfirmed",
+    "text": "Some could not be confirmed, and are still waiting.",
+    "context": "Shown when confirming every re-encode awaiting review in the admin area partly failed."
+  },
+  {
     "handler": "screens.adminArea.someOfThisCouldNotBeRead",
     "text": "Some data couldn’t be loaded from the server, so parts of this page may be missing rather than empty.",
     "context": "A warning across the admin area when some of what it shows could not be read."
@@ -19105,13 +19165,23 @@
     "context": "Text shown in the admin area."
   },
   {
-    "handler": "screens.adminPage.backToValence",
-    "text": "Back to Valence",
-    "context": "The label of a button in the admin page."
+    "handler": "screens.adminPage.adminSearch.findAPage",
+    "text": "Find a page",
+    "context": "The search at the head of the admin area's sidebar, which opens a command palette of its pages."
   },
   {
-    "handler": "screens.adminPage.openTheSidebar",
-    "text": "Open the sidebar",
+    "handler": "screens.adminPage.adminSearch.general",
+    "text": "General",
+    "context": "The heading over admin pages that sit in no group, in the admin area's command palette."
+  },
+  {
+    "handler": "screens.adminPage.adminSearch.searchTheAdminArea",
+    "text": "Search the admin area",
+    "context": "The search at the head of the admin area's sidebar, which opens a command palette of its pages."
+  },
+  {
+    "handler": "screens.adminPage.backToValence",
+    "text": "Back to Valence",
     "context": "The label of a button in the admin page."
   },
   {
@@ -22421,9 +22491,19 @@
     "context": "The label of a switch in the notification bell."
   },
   {
+    "handler": "screens.notificationBell.everythingHasBeenRead",
+    "text": "Everything has been read.",
+    "context": "Shown in the notifications list behind the bell."
+  },
+  {
     "handler": "screens.notificationBell.nothingYetNewFilmsAndEpisodes",
     "text": "Nothing yet. New films and episodes will appear here.",
     "context": "Text shown in the notification bell."
+  },
+  {
+    "handler": "screens.notificationBell.unread",
+    "text": "Unread",
+    "context": "The tab of the notifications list that shows only what has not been read."
   },
   {
     "handler": "screens.nowPlayingBar.hostingAListeningPartyLengthHere",

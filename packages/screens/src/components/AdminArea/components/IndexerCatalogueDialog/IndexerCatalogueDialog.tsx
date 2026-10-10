@@ -2,10 +2,7 @@ import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { notify } from '@ValenceUI/notify';
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  ChevronsUpDown as ChevronsUpDownIcon,
-  RefreshCw as RefreshCwIcon,
-} from '@keyline-icons/react/fill';
+import { RefreshCw as RefreshCwIcon } from '@keyline-icons/react/fill';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -15,10 +12,9 @@ import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { Icon } from '@ValenceUI/Icon';
-import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Spinner } from '@ValenceUI/Spinner';
-import { TextField } from '@ValenceUI/TextField';
+import { ScopedField } from '@ValenceUI/ScopedField';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { refreshCatalogue } from '@ValenceClient/requests/fetchDefinitions';
 import { filterCatalogue } from './filterCatalogue';
@@ -158,48 +154,27 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
       });
   };
 
-  const menu = (
+  const choiceOf = (
     label: string,
     value: string,
     options: readonly string[],
-    onSelect: (next: string) => void,
-  ) => (
-    <OptionMenu
-      label={say('screens.adminArea.indexerCatalogueDialog.filterByLabel', {
-        label: label.toLowerCase(),
-      })}
-      triggerShape="field"
-      className="w-40"
-      groups={[
-        {
-          name: label,
-          selectedId: value,
-          onSelect,
-          options: [
-            {
-              id: '',
-              label: say('screens.adminArea.indexerCatalogueDialog.anyLabel', {
-                label: label.toLowerCase(),
-              }),
-            },
-            ...options.map((option) => ({ id: option, label: option })),
-          ],
-        },
-      ]}
-      trigger={
-        <>
-          <span className="truncate">
-            {value === ''
-              ? say('screens.adminArea.indexerCatalogueDialog.anyLabel', {
-                  label: label.toLowerCase(),
-                })
-              : value}
-          </span>
-          <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
-        </>
-      }
-    />
-  );
+    onChange: (next: string) => void,
+  ) => ({
+    label: say('screens.adminArea.indexerCatalogueDialog.filterByLabel', {
+      label: label.toLowerCase(),
+    }),
+    value,
+    onChange,
+    options: [
+      {
+        id: '',
+        label: say('screens.adminArea.indexerCatalogueDialog.anyLabel', {
+          label: label.toLowerCase(),
+        }),
+      },
+      ...options.map((option) => ({ id: option, label: option })),
+    ],
+  });
 
   return (
     <DialogCompanion
@@ -232,23 +207,22 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
           ))}
         </div>
 
-        <div className="flex shrink-0 flex-wrap items-end gap-3">
-          <TextField
-            label={say('screens.adminArea.indexerCatalogueDialog.findASite')}
-            type="search"
-            value={words}
-            onValueChange={setWords}
-            placeholder={say('screens.adminArea.indexerCatalogueDialog.n1337xRutrackerAnime')}
-            className="min-w-[14rem] flex-1"
-          />
-          {menu(
-            say('screens.adminArea.indexerCatalogueDialog.category'),
-            category,
-            categories,
-            setCategory,
-          )}
-          {menu(say('common.language'), language, languages, setLanguage)}
-        </div>
+        <ScopedField
+          label={say('screens.adminArea.indexerCatalogueDialog.findASite')}
+          value={words}
+          onValueChange={setWords}
+          placeholder={say('screens.adminArea.indexerCatalogueDialog.n1337xRutrackerAnime')}
+          choices={[
+            choiceOf(
+              say('screens.adminArea.indexerCatalogueDialog.category'),
+              category,
+              categories,
+              setCategory,
+            ),
+            choiceOf(say('common.language'), language, languages, setLanguage),
+          ]}
+          className="shrink-0"
+        />
 
         <SegmentedRow
           label={say('screens.adminArea.indexerCatalogueDialog.privacy')}

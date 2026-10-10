@@ -40,6 +40,8 @@ type ListItemsOptions = {
   search?: string;
   kind?: 'films' | 'shows';
   genre?: string;
+  genres?: readonly string[];
+  decades?: readonly number[];
   yearFrom?: number;
   yearTo?: number;
   minRating?: number;
@@ -154,6 +156,8 @@ const fetchLibraryItems = async (
     search,
     kind,
     genre,
+    genres,
+    decades,
     yearFrom,
     yearTo,
     minRating,
@@ -177,6 +181,14 @@ const fetchLibraryItems = async (
 
   if (genre !== undefined && genre !== '') {
     query.set('genre', genre);
+  }
+
+  if (genres !== undefined && genres.length > 0) {
+    query.set('genres', genres.join(','));
+  }
+
+  if (decades !== undefined && decades.length > 0) {
+    query.set('decades', decades.join(','));
   }
 
   if (yearFrom !== undefined) {

@@ -59,9 +59,9 @@ const OptionText = ({ option }: { option: MenuOption }) => (
  * @param columns - The choices, in one or more named columns.
  * @param className - Extra classes for the caller's own layout.
  * @param size - How tall its field is, to sit level with the fields and buttons beside it.
- * @param triggerShape - How its own control is drawn: a glyph, a field, a button, a quiet
- *   button for the heading of a card, or an arrow that runs on from the button before it and is
- *   painted as that button.
+ * @param triggerShape - How its own control is drawn: a glyph, a field, a choice that runs on
+ *   from the text field before it, one segment of a row of joined choices, a button, a quiet button for the heading of a card, or an arrow
+ *   that runs on from the button before it and is painted as that button.
  */
 const OptionMenu = ({
   label,
@@ -125,7 +125,7 @@ const OptionMenu = ({
     ) : (
       <RadixMenu.Trigger
         aria-label={label}
-        title={label}
+        {...(triggerShape === 'fieldJoined' ? {} : { title: label })}
         disabled={isDisabled}
         className={cn(
           'inline-flex shrink-0 items-center text-current',
@@ -139,10 +139,14 @@ const OptionMenu = ({
                 ? JOINED_LOOKS.raised
                 : triggerShape === 'field'
                   ? cn(FIELD_TRIGGER.base, FIELD_TRIGGER[size])
-                  : cn(
-                      'size-8 justify-center rounded-md',
-                      'hover:bg-[var(--surface-hover)] data-[state=open]:bg-[var(--surface-active)]',
-                    ),
+                  : triggerShape === 'fieldJoined'
+                    ? JOINED_LOOKS.field
+                    : triggerShape === 'segment'
+                      ? JOINED_LOOKS.segment
+                      : cn(
+                          'size-8 justify-center rounded-md',
+                          'hover:bg-[var(--surface-hover)] data-[state=open]:bg-[var(--surface-active)]',
+                        ),
           className,
         )}
       >

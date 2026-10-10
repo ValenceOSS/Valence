@@ -7,6 +7,7 @@ type BadgeTone =
   | 'success'
   | 'highlight'
   | 'solid'
+  | 'bright'
   | 'busy'
   | 'waiting'
   | 'warning'

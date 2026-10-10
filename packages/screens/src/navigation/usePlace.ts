@@ -3,6 +3,8 @@ import { useRouter } from '@tanstack/react-router';
 import { placeIn, writeLocation } from '@ValenceClient/navigation/readLocation';
 import type { Place } from '@ValenceClient/navigation/readLocation';
 
+const PAGE_SCOPED: Partial<Place> = { search: '', genre: null, filters: null, library: null };
+
 /**
  * Where the application is, read from the router rather than held in state, so that every place in
  * Valence is somewhere the browser can go back to, reload into, or have a link sent to.
@@ -11,6 +13,10 @@ import type { Place } from '@ValenceClient/navigation/readLocation';
  * reasons in, and turns a change to that shape back into an address. It reads the router's history
  * rather than its matches, because the shell draws every address itself and only wants to know
  * which one it is at.
+ *
+ * Moving to another section leaves behind what belonged to the page being left — what was typed,
+ * the genre and filters chosen, the library narrowed to — unless the move says them itself, so a
+ * filter chosen on one page does not quietly narrow the next.
  *
  * @returns Where it is, and the two ways of moving: one that leaves a way back, one that does not.
  */
@@ -34,7 +40,12 @@ const usePlace = (): {
 
   const move = useCallback(
     (change: Partial<Place>, isReplacing: boolean) => {
-      const next = writeLocation({ ...place, ...change });
+      const isLeaving = change.section !== undefined && change.section !== place.section;
+      const next = writeLocation({
+        ...place,
+        ...(isLeaving ? PAGE_SCOPED : {}),
+        ...change,
+      });
 
       if (next === address) {
         return;

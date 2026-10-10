@@ -41,6 +41,7 @@ import type { Library } from '@ValenceContracts/schemas/Library';
 import type { QueuedDownload } from '@ValenceContracts/schemas/DownloadQueue';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { useAdminCommand } from '@ValenceScreens/admin/useAdminCommand';
 import { usePageIsShown } from '@ValenceScreens/visibility/usePageIsShown';
 
 const DOWNLOADS_TABS = ['queue', 'apps', 'clients', 'rules'] as const;
@@ -80,6 +81,10 @@ const DownloadsPanel = () => {
   const travel = useTravelDirection([...DOWNLOADS_TABS], tab);
   const [editing, setEditing] = useState<DownloadClient | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+
+  useAdminCommand('addDownloadClient', () => {
+    setIsAdding(true);
+  });
   const [removingClient, setRemovingClient] = useState<DownloadClient | null>(null);
   const [removing, setRemoving] = useState<readonly QueuedDownload[]>(NO_DOWNLOADS);
   const [chosenIds, setChosenIds] = useState<ReadonlySet<string>>(new Set());

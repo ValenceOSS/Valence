@@ -8,49 +8,46 @@ import { say } from '@ValenceI18n/say';
 
 const NO_FACETS: LibraryFacets = { genres: [], decades: [], maxRating: 0 };
 
-const DECADE = 10;
+const NOTHING_CHOSEN: ReadonlySet<string> = new Set();
 
 const GROUPS = [
-  { name: say('common.genre'), prefix: 'genre:' },
-  { name: say('common.decade'), prefix: 'decade:' },
-  { name: say('common.rating'), prefix: 'rating:' },
-  { name: say('common.yourRating'), prefix: 'yours:' },
+  { name: say('common.genre'), prefix: 'genre:', isSingle: false },
+  { name: say('common.rating'), prefix: 'rating:', isSingle: true },
+  { name: say('common.decade'), prefix: 'decade:', isSingle: false },
+  { name: say('common.yourRating'), prefix: 'yours:', isSingle: true },
 ] as const;
 
 /**
- * What somebody has narrowed a page of the library by — genre, decade, rating and their own rating
- * — and the choices the libraries actually offer for each, so nobody is offered a filter that would
- * only lead to an empty page. Returns them in the shape a filter menu and its applied chips take,
- * and as the question to put to the libraries.
+ * What somebody has narrowed a page of the library by — any of several genres and decades, a
+ * rating and their own rating at least — and the choices the libraries actually offer for each, so
+ * nobody is offered a filter that would only lead to an empty page. Returns them in the shape a
+ * filter menu and its applied chips take, and as the question to put to the libraries.
  *
- * The genre can be held by the caller, where it lives in the address; the rest are held here. The
- * question is the same object for as long as the choices are, so it can be a dependency.
+ * Every choice is one entry of a set, such as `genre:Drama` or `decade:1990`, which the caller can
+ * hold — in the address, so a narrowed page can be shared — or leave to be held here. The question
+ * is the same object for as long as the choices are, so it can be a dependency.
  *
- * @param held - The genre and the way to change it, where the caller keeps it.
+ * @param held - What is chosen and the way to change it, where the caller keeps it.
  * @returns The choices, what is chosen, how to change or clear it, and it as a query.
  */
 const useLibraryFilters = (held?: {
-  genre: string | null;
-  onGenreChange: (genre: string | null) => void;
+  selected: ReadonlySet<string>;
+  onChange: (next: ReadonlySet<string>) => void;
 }): {
   groups: FilterGroup[];
   selected: ReadonlySet<string>;
   change: (next: ReadonlySet<string>) => void;
   clear: () => void;
   asked: {
-    genre?: string;
-    yearFrom?: number;
-    yearTo?: number;
+    genres?: string[];
+    decades?: number[];
     minRating?: number;
     minYourStars?: number;
   };
 } => {
-  const [ownGenre, setOwnGenre] = useState<string | null>(null);
-  const [decade, setDecade] = useState<string | null>(null);
-  const [minRating, setMinRating] = useState<string | null>(null);
-  const [minYourStars, setMinYourStars] = useState<string | null>(null);
-  const genre = held === undefined ? ownGenre : held.genre;
-  const setGenre = held === undefined ? setOwnGenre : held.onGenreChange;
+  const [own, setOwn] = useState<ReadonlySet<string>>(NOTHING_CHOSEN);
+  const selected = held === undefined ? own : held.selected;
+  const change = held === undefined ? setOwn : held.onChange;
 
   const facets = useQuery(libraryQueries.facets()).data ?? NO_FACETS;
   const options = useMemo(() => buildFilterOptions(facets), [facets]);
@@ -64,51 +61,43 @@ const useLibraryFilters = (held?: {
 
   const groups = GROUPS.map((group) => ({
     name: group.name,
-    isSingle: true,
+    isSingle: group.isSingle,
     options: offered[group.prefix].map((option) => ({
       id: `${group.prefix}${option.value}`,
       label: option.label,
     })),
   })).filter((group) => group.options.length > 0);
 
-  const selected = new Set(
-    [
-      genre === null ? null : `genre:${genre}`,
-      decade === null ? null : `decade:${decade}`,
-      minRating === null ? null : `rating:${minRating}`,
-      minYourStars === null ? null : `yours:${minYourStars}`,
-    ].filter((id) => id !== null),
-  );
-
-  const change = (next: ReadonlySet<string>) => {
-    const pick = (prefix: string): string | null =>
-      [...next].find((id) => id.startsWith(prefix))?.slice(prefix.length) ?? null;
-
-    setGenre(pick('genre:'));
-    setDecade(pick('decade:'));
-    setMinRating(pick('rating:'));
-    setMinYourStars(pick('yours:'));
-  };
-
-  const clear = () => {
-    setGenre(null);
-    setDecade(null);
-    setMinRating(null);
-    setMinYourStars(null);
-  };
+  const key = [...selected].sort().join('|');
 
   const asked = useMemo(() => {
-    const startsAt = decade === null ? undefined : Number(decade);
+    const every = (prefix: string): string[] =>
+      key
+        .split('|')
+        .filter((id) => id.startsWith(prefix))
+        .map((id) => id.slice(prefix.length));
+    const genres = every('genre:');
+    const decades = every('decade:').map(Number).filter(Number.isInteger);
+    const minRating = every('rating:')[0];
+    const minYourStars = every('yours:')[0];
 
     return {
-      ...(genre === null ? {} : { genre }),
-      ...(startsAt === undefined ? {} : { yearFrom: startsAt, yearTo: startsAt + DECADE - 1 }),
-      ...(minRating === null ? {} : { minRating: Number(minRating) }),
-      ...(minYourStars === null ? {} : { minYourStars: Number(minYourStars) }),
+      ...(genres.length === 0 ? {} : { genres }),
+      ...(decades.length === 0 ? {} : { decades }),
+      ...(minRating === undefined ? {} : { minRating: Number(minRating) }),
+      ...(minYourStars === undefined ? {} : { minYourStars: Number(minYourStars) }),
     };
-  }, [genre, decade, minRating, minYourStars]);
+  }, [key]);
 
-  return { groups, selected, change, clear, asked };
+  return {
+    groups,
+    selected,
+    change,
+    clear: () => {
+      change(NOTHING_CHOSEN);
+    },
+    asked,
+  };
 };
 
 export { useLibraryFilters };

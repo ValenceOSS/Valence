@@ -146,6 +146,8 @@ import type { JobQueue } from '@ValenceServer/jobs/JobQueue';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import { filesAtOnce } from '@ValenceServer/library/filesAtOnce';
 
+const DECADE = 10;
+
 const GenresSchema = z.array(z.string());
 
 type PreviewSubject = {
@@ -1417,6 +1419,18 @@ const createDatabaseLibraryService = ({
         ...(options.genre === undefined || options.genre === ''
           ? []
           : [jsonContains(mediaItem.genres, [options.genre])]),
+        ...(options.genres === undefined || options.genres.length === 0
+          ? []
+          : [or(...options.genres.map((one) => jsonContains(mediaItem.genres, [one])))]),
+        ...(options.decades === undefined || options.decades.length === 0
+          ? []
+          : [
+              or(
+                ...options.decades.map((decade) =>
+                  and(gte(mediaItem.year, decade), lte(mediaItem.year, decade + DECADE - 1)),
+                ),
+              ),
+            ]),
         ...(options.yearFrom === undefined ? [] : [gte(mediaItem.year, options.yearFrom)]),
         ...(options.yearTo === undefined ? [] : [lte(mediaItem.year, options.yearTo)]),
         ...(options.minRating === undefined ? [] : [gte(mediaItem.rating, options.minRating)]),

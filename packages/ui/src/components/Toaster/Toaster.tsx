@@ -1,6 +1,7 @@
 import { Toaster as SonnerToaster } from 'sonner';
 import { cn } from '@ValenceUI/cn';
 import { PRESS_MOTION } from '@ValenceUI/animations/motion';
+import { DoneMark } from '@ValenceUI/DoneMark';
 import type { ToasterProps } from './Toaster.types';
 
 /**
@@ -10,7 +11,7 @@ import type { ToasterProps } from './Toaster.types';
  * Sonner is wrapped rather than reached for directly so that a toast is a Valence component like any
  * other: callers say what happened and this decides how it looks, which is what stops sixty screens
  * each inventing their own banner. It carries the product's own surface, border and radius rather
- * than the library's defaults, and its answer is the product's grey secondary button, never a
+ * than the library's defaults, a success arrives as the work settling into a tick, and its answer is the product's grey secondary button, never a
  * coloured one: a toast reports, it does not ask to be the loudest thing on the screen.
  *
  * There is normally one, at the root. The exception is the player: it goes fullscreen, and a toast
@@ -31,6 +32,7 @@ const Toaster = ({ theme = 'system', id, position = 'bottom-right' }: ToasterPro
     mobileOffset={16}
     gap={10}
     visibleToasts={4}
+    icons={{ success: <DoneMark /> }}
     toastOptions={{
       duration: 5000,
       classNames: {

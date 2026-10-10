@@ -18,6 +18,7 @@ const TONE_CLASSES: Record<BadgeTone, string> = {
   success: 'bg-success/15 text-success',
   highlight: 'bg-highlight/15 text-highlight',
   solid: 'bg-overlay text-on-scrim',
+  bright: 'bg-text text-surface',
   busy: 'bg-busy/15 text-busy',
   waiting: 'bg-busy/15 text-busy',
   warning: 'bg-highlight/15 text-highlight',

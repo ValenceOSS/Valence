@@ -34,6 +34,7 @@ import { Switch } from '@ValenceUI/Switch';
 import { TabPanel } from '@ValenceUI/TabPanel';
 import { TabRow } from '@ValenceUI/TabRow';
 import { Tabs } from '@ValenceUI/Tabs';
+import { ScopedField } from '@ValenceUI/ScopedField';
 import { TextField } from '@ValenceUI/TextField';
 import { useTravelDirection } from '@ValenceUI/useTravelDirection';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
@@ -77,13 +78,13 @@ import type { Role } from '@ValenceContracts/schemas/Permission';
 import type { LibraryReach } from '@ValenceContracts/schemas/LibraryAccess';
 import type { Avatar } from '@ValenceContracts/schemas/ViewerProfile';
 import type { AccountAvatarDraft } from './components/AccountAvatarPicker/AccountAvatarPicker.types';
-import { PanelCardChoice } from '@ValenceScreens/components/PanelCardChoice/PanelCardChoice';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { setCeiling, setLibraryAccess } from '@ValenceClient/admin/fetchLibraryAccess';
 import { describeCeiling } from '@ValenceContracts/schemas/LibraryAccess';
 import { AGE_CHOICES } from '@ValenceScreens/components/AdminArea/ageChoices';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { useAdminCommand } from '@ValenceScreens/admin/useAdminCommand';
 import { MINIMUM_PASSWORD_LENGTH } from '@ValenceContracts/constants/MINIMUM_PASSWORD_LENGTH';
 
 type Asked = { kind: 'ban' | 'remove'; account: Account };
@@ -168,6 +169,10 @@ const AccountsPanel = () => {
   const [editTab, setEditTab] = useState<EditTab>('profile');
   const [refusal, setRefusal] = useState<Refusal>(null);
   const [isAddingAccount, setIsAddingAccount] = useState(false);
+
+  useAdminCommand('addAccount', () => {
+    setIsAddingAccount(true);
+  });
   const [search, setSearch] = useState('');
   const [showing, setShowing] = useState<Showing>('everyone');
   const [asking, setAsking] = useState<Asked | null>(null);
@@ -836,15 +841,41 @@ const AccountsPanel = () => {
         isFlush
         actions={
           <>
-            <TextField
+            <ScopedField
               label={say('screens.adminArea.accountsPanel.findSomebodyByNameOrUsername')}
               isLabelHidden
-              size="sm"
-              type="search"
               placeholder={say('common.findSomebody')}
               value={search}
               onValueChange={setSearch}
-              className="w-56 max-w-full"
+              choices={[
+                {
+                  label: say('screens.adminArea.accountsPanel.whoToShow'),
+                  options: SHOWINGS.map((one) => ({
+                    id: one,
+                    label:
+                      one === 'everyone'
+                        ? say('screens.adminArea.accountsPanel.everyoneCount', {
+                            count: counts.everyone,
+                          })
+                        : one === 'waiting'
+                          ? say('screens.adminArea.accountsPanel.waitingForSetupCount', {
+                              count: counts.waiting,
+                            })
+                          : say('screens.adminArea.accountsPanel.bannedCount', {
+                              count: counts.banned,
+                            }),
+                  })),
+                  value: showing,
+                  onChange: (id) => {
+                    const chosen = SHOWINGS.find((one) => one === id);
+
+                    if (chosen !== undefined) {
+                      setShowing(chosen);
+                    }
+                  },
+                },
+              ]}
+              className="w-80 max-w-full"
             />
 
             <PanelCardAction
@@ -900,39 +931,6 @@ const AccountsPanel = () => {
           />
         ) : (
           <div className="flex flex-col">
-            {counts.waiting === 0 && counts.banned === 0 ? null : (
-              <div className="px-3 pt-3 sm:px-5">
-                <PanelCardChoice
-                  label={say('screens.adminArea.accountsPanel.whoToShow')}
-                  value={showing}
-                  options={SHOWINGS.filter((one) => one === showing || counts[one] > 0).map(
-                    (one) => ({
-                      id: one,
-                      label:
-                        one === 'everyone'
-                          ? say('screens.adminArea.accountsPanel.everyoneCount', {
-                              count: counts.everyone,
-                            })
-                          : one === 'waiting'
-                            ? say('screens.adminArea.accountsPanel.waitingForSetupCount', {
-                                count: counts.waiting,
-                              })
-                            : say('screens.adminArea.accountsPanel.bannedCount', {
-                                count: counts.banned,
-                              }),
-                    }),
-                  )}
-                  onSelect={(id) => {
-                    const chosen = SHOWINGS.find((one) => one === id);
-
-                    if (chosen !== undefined) {
-                      setShowing(chosen);
-                    }
-                  }}
-                />
-              </div>
-            )}
-
             <DataTable
               label={say('common.accounts')}
               columns={columns}

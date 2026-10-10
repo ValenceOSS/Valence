@@ -1182,3 +1182,27 @@ button:disabled,
     animation: none;
   }
 }
+
+.valence-draw :is(path, circle, line, polyline, rect) {
+  stroke-dasharray: 64;
+  stroke-dashoffset: 64;
+  animation: valence-draw 0.45s var(--ease-out) 0.3s forwards;
+}
+
+@keyframes valence-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+:root[data-motion='reduced'] .valence-draw :is(path, circle, line, polyline, rect) {
+  animation: none;
+  stroke-dashoffset: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='full']) .valence-draw :is(path, circle, line, polyline, rect) {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}

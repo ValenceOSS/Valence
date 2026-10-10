@@ -223,6 +223,17 @@
       "@ValenceUI/MultiSelectField.types": [
         "./packages/ui/src/components/MultiSelectField/MultiSelectField.types.ts"
       ],
+      "@ValenceUI/DoneMark": ["./packages/ui/src/components/DoneMark/DoneMark.tsx"],
+      "@ValenceUI/FilterSplit": ["./packages/ui/src/components/FilterSplit/FilterSplit.tsx"],
+      "@ValenceUI/FilterSplit.types": [
+        "./packages/ui/src/components/FilterSplit/FilterSplit.types.ts"
+      ],
+      "@ValenceUI/Kbd": ["./packages/ui/src/components/Kbd/Kbd.tsx"],
+      "@ValenceUI/Kbd.types": ["./packages/ui/src/components/Kbd/Kbd.types.ts"],
+      "@ValenceUI/ScopedField": ["./packages/ui/src/components/ScopedField/ScopedField.tsx"],
+      "@ValenceUI/ScopedField.types": [
+        "./packages/ui/src/components/ScopedField/ScopedField.types.ts"
+      ],
       "@ValenceUI/SelectField": ["./packages/ui/src/components/SelectField/SelectField.tsx"],
       "@ValenceUI/SelectField.types": [
         "./packages/ui/src/components/SelectField/SelectField.types.ts"

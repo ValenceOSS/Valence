@@ -29,6 +29,8 @@ import type { TextFieldProps } from './TextField.types';
  * @param icon - Something to draw inside the field, such as a magnifying glass.
  * @param trailing - A control to set after the field on the same line, such as a way to browse for
  *   what it asks, kept level with the field however the notes beneath it grow.
+ * @param joins - Whether the field runs on into the control after it, squared off and without its
+ *   own edge on that side, as a split button's halves do.
  * @param hasFocusOnMount - Whether to put the cursor here as soon as it appears.
  * @param className - Extra classes for the caller's own layout.
  */
@@ -52,6 +54,7 @@ const TextField = ({
   isLabelHidden = false,
   icon,
   trailing,
+  joins,
   hasFocusOnMount = false,
   className,
 }: TextFieldProps) => {
@@ -121,6 +124,7 @@ const TextField = ({
                     : 'h-8 px-3 text-[0.8125rem]',
             isBare && size === 'xl' ? 'text-2xl tracking-tight sm:text-3xl' : '',
             isBare ? '' : isPill ? 'rounded-full' : 'rounded-md',
+            joins === 'next' ? 'rounded-r-none border-r-0' : '',
             error === undefined ? '' : 'border-destructive',
           )}
         />

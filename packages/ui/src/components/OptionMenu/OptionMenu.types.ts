@@ -37,6 +37,8 @@ type OptionMenuProps = {
   triggerShape?:
     | 'icon'
     | 'field'
+    | 'fieldJoined'
+    | 'segment'
     | 'button'
     | 'quiet'
     | 'confirmJoined'

@@ -22,6 +22,7 @@ type SidebarProps = {
   onCollapsedChange?: (isCollapsed: boolean) => void;
   onGroupOpenChange?: (id: string, isOpen: boolean) => void;
   footer?: ReactNode;
+  lead?: ReactNode;
   variant?: SidebarVariant;
   className?: string;
 };
