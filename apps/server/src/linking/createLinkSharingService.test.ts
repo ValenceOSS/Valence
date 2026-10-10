@@ -169,7 +169,7 @@ describe('createLinkSharingService', () => {
 
     expect(await filmsSharing.theirLibraries(animeAtFilms)).toEqual({
       isReachable: true,
-      libraries: [LIBRARIES[0]],
+      libraries: [{ ...LIBRARIES[0], isTaken: true }],
     });
   });
 

@@ -385,7 +385,7 @@ describe('the linked server routes', () => {
     expect(LinkSharingSchema.parse(await shared.json()).libraryIds).toEqual([FILMS.id]);
     expect(await theirs()).toEqual({
       isReachable: true,
-      libraries: [{ id: FILMS.id, name: 'Films', kind: 'movies' }],
+      libraries: [{ id: FILMS.id, name: 'Films', kind: 'movies', isTaken: true }],
     });
 
     const record = FederationActivityListSchema.parse(
