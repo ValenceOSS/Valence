@@ -86,6 +86,7 @@ The service's `environment` block is the list of settings that reach the contain
 | `BETTER_AUTH_SECRET`              | Seals sign-in cookies. At least 32 characters. Changing it later signs everybody out.                                                         |
 | `BETTER_AUTH_URL`                 | Set from `PUBLIC_URL`. The address a browser reaches Valence at, which is the proxy's, not the container's. Sign-in builds redirects from it. |
 | `TRUSTED_ORIGINS`                 | Also set from `PUBLIC_URL`. Sign-in is refused from any origin not listed here.                                                               |
+| `TRUSTED_PROXIES`                 | The proxies whose forwarded addresses are believed, the private ranges by default. Add yours if it is anywhere else.                          |
 | `COOKIE_SECURE`                   | `true` by default because the browser's half of the journey is HTTPS. Set `false` only for plain HTTP testing.                                |
 | `VALENCE_ARTEFACT_DIR`            | Where previews and thumbnail sheets go, `/cache/artefacts` by default.                                                                        |
 | `PROFILE_IMAGE_DIR`               | Where profile pictures go, `/config/profiles` by default.                                                                                     |
