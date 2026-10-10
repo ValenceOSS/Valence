@@ -20,6 +20,7 @@ const StartRequest = z
     audioStreamIndex: z.number().int().nonnegative().optional(),
     subtitleStreamIndex: z.number().int().nonnegative().optional(),
     requestedQuality: QualityStepIdSchema.optional(),
+    isAdaptive: z.boolean().optional(),
   })
   .openapi('PlaybackStartRequest');
 

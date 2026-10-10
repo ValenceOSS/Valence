@@ -37,6 +37,7 @@ import { ArrImportDialog } from './components/ArrImportDialog/ArrImportDialog';
 import { ConnectedAppsControl } from './components/ConnectedAppsControl/ConnectedAppsControl';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { ArrApp } from '@ValenceContracts/schemas/ArrApp';
+import { useAdminCommand } from '@ValenceScreens/admin/useAdminCommand';
 import { say } from '@ValenceI18n/say';
 
 /**
@@ -50,7 +51,15 @@ const ArrAppsPanel = () => {
   const asked = useQuery(requestsQueries.arrApps());
   const [editing, setEditing] = useState<ArrApp | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+
+  useAdminCommand('connectApp', () => {
+    setIsAdding(true);
+  });
   const [isImporting, setIsImporting] = useState(false);
+
+  useAdminCommand('bringInASetup', () => {
+    setIsImporting(true);
+  });
   const [removing, setRemoving] = useState<ArrApp | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);

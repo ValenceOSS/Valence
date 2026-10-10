@@ -39,6 +39,9 @@ type ShakaPlayer = {
       bufferingGoal: number;
       bufferBehind: number;
     };
+    abr?: {
+      defaultBandwidthEstimate: number;
+    };
   }) => void;
   load: (manifestUrl: string, startSeconds?: number) => Promise<void>;
   destroy: () => Promise<void>;
@@ -74,6 +77,8 @@ type AttachOptions = {
 
 const CRITICAL = 2;
 
+const FIRST_GUESS_AT_THE_CONNECTION = 5_000_000;
+
 const READING_THE_PLAYLIST = {
   manifest: {
     hls: {
@@ -100,6 +105,7 @@ type AttachedStream = {
   detach: () => Promise<void>;
   readDelivered: () => DeliveredFormat | null;
   readEstimatedKbps: () => number | null;
+  readLadder: () => { variants: number; activeHeight: number | null };
 };
 
 /**
@@ -186,8 +192,8 @@ const faultFrom = (event: Event): PlaybackFault | null => {
  * @param options - The element to attach to, the manifest to load, where to start, how much to hold
  *   ahead and behind, and how to report a fault the engine could not recover from.
  * @returns A handle carrying the teardown to call — an orphaned engine keeps buffering and holds
- *   the element open — a reading of what the engine is actually being sent, and its estimate of
- *   what the connection carries.
+ *   the element open — a reading of what the engine is actually being sent, its estimate of what
+ *   the connection carries, and how many qualities it can switch between on its own.
  *
  * Shaka is told to place each segment by the timestamps inside it rather than by where the
  * playlist says it begins. Its default moves a segment to the playlist's time, and on a copied
@@ -221,6 +227,7 @@ const attachShaka = async ({
   const player = new shaka.Player();
 
   player.configure?.(READING_THE_PLAYLIST);
+  player.configure?.({ abr: { defaultBandwidthEstimate: FIRST_GUESS_AT_THE_CONNECTION } });
 
   if (buffer !== undefined) {
     player.configure?.({
@@ -249,6 +256,15 @@ const attachShaka = async ({
 
   return {
     detach: () => player.destroy(),
+    readLadder: () => {
+      const variants = player.getVariantTracks?.() ?? [];
+      const heights = new Set(variants.map((variant) => variant.height ?? 0));
+
+      return {
+        variants: heights.size,
+        activeHeight: variants.find((variant) => variant.active)?.height ?? null,
+      };
+    },
     readEstimatedKbps: () => {
       const estimated = player.getStats?.().estimatedBandwidth;
 

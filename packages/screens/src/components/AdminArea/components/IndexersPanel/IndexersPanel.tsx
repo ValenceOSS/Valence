@@ -40,6 +40,7 @@ import { testAndSayWhy } from './testAndSayWhy';
 import { whichToTest } from './whichToTest';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Indexer } from '@ValenceContracts/schemas/Indexer';
+import { useAdminCommand } from '@ValenceScreens/admin/useAdminCommand';
 import { say } from '@ValenceI18n/say';
 
 const KIND_LABELS: Readonly<Record<string, string>> = {
@@ -75,6 +76,10 @@ const IndexersPanel = () => {
   const [editing, setEditing] = useState<Indexer | null>(null);
   const [searchingOn, setSearchingOn] = useState<Indexer | null>(null);
   const [isChoosing, setIsChoosing] = useState(false);
+
+  useAdminCommand('addIndexer', () => {
+    setIsChoosing(true);
+  });
   const [start, setStart] = useState<IndexerStart | null>(null);
   const [removing, setRemoving] = useState<Indexer | null>(null);
   const [testing, setTesting] = useState<ReadonlySet<string>>(NONE_TESTING);
@@ -142,6 +147,10 @@ const IndexersPanel = () => {
       });
   };
 
+  useAdminCommand('importFromProwlarr', () => {
+    void importFromProwlarr();
+  });
+
   const testAll = () => {
     setIsTestingAll(true);
     setProblem(null);
@@ -167,6 +176,10 @@ const IndexersPanel = () => {
         setIsTestingAll(false);
       });
   };
+
+  useAdminCommand('testAllIndexers', () => {
+    void testAll();
+  });
 
   const columns = useMemo<DataTableColumn<Indexer>[]>(() => {
     const test = (indexer: Indexer) => {

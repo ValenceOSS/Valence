@@ -274,6 +274,38 @@ pub struct Session {
     /// Either half being used keeps both, so one is never collected as idle
     /// while a viewer is still playing the other.
     companion: Option<String>,
+    /// The other qualities of the same film, each its own session, that a
+    /// player may switch to without asking for a new one.
+    ///
+    /// Held by the session a ladder was started from. Using it keeps every
+    /// rung, so a quality the player has not reached for yet is still there
+    /// when it does.
+    variants: Vec<String>,
+    /// The session a rung of a ladder belongs to, which using the rung keeps.
+    ladder_root: Option<String>,
+}
+
+/// Every session that using this one keeps: itself, its other half, the rungs
+/// of a ladder it was started from, and — for a rung — the session it belongs
+/// to and that session's other half.
+fn kept_with(sessions: &HashMap<String, Session>, id: &str) -> Vec<String> {
+    let mut kept = vec![id.to_owned()];
+    let Some(session) = sessions.get(id) else {
+        return kept;
+    };
+
+    kept.extend(session.companion.iter().cloned());
+    kept.extend(session.variants.iter().cloned());
+
+    if let Some(root) = &session.ladder_root {
+        kept.push(root.clone());
+        kept.extend(sessions.get(root).and_then(|root| root.companion.clone()));
+    }
+
+    kept.sort();
+    kept.dedup();
+
+    kept
 }
 
 impl Session {
@@ -1067,6 +1099,8 @@ impl SessionRegistry {
             seeks_forward: boundaries.seeks_forward,
             last_wanted: 0,
             companion: None,
+            variants: Vec::new(),
+            ladder_root: None,
         };
 
         if is_complete {
@@ -1160,21 +1194,51 @@ impl SessionRegistry {
     }
 
     /// Reports the directory of a session and marks it as used.
+    ///
+    /// Everything that session keeps is marked too: the other half of a film
+    /// sent as picture and sound apart, and every rung of a ladder.
     #[must_use]
     pub async fn touch(&self, id: &str) -> Option<PathBuf> {
         let mut sessions = self.sessions.lock().await;
-        let session = sessions.get_mut(id)?;
+        let directory = sessions.get(id)?.directory.clone();
 
-        session.touch();
-
-        let directory = session.directory.clone();
-        let companion = session.companion.clone();
-
-        if let Some(other) = companion.and_then(|other| sessions.get_mut(&other)) {
-            other.touch();
+        for kept in kept_with(&sessions, id) {
+            if let Some(session) = sessions.get_mut(&kept) {
+                session.touch();
+            }
         }
 
         Some(directory)
+    }
+
+    /// Ties the rungs of a ladder to the session it was started from, so that
+    /// using any of them keeps all of them.
+    pub async fn bind_ladder(&self, root: &str, variants: &[String]) {
+        let mut sessions = self.sessions.lock().await;
+
+        if let Some(session) = sessions.get_mut(root) {
+            for variant in variants {
+                if !session.variants.contains(variant) {
+                    session.variants.push(variant.clone());
+                }
+            }
+        }
+
+        for variant in variants {
+            if let Some(session) = sessions.get_mut(variant) {
+                session.ladder_root = Some(root.to_owned());
+            }
+        }
+    }
+
+    /// The rungs of the ladder a session was started from.
+    pub async fn variants_of(&self, id: &str) -> Vec<String> {
+        self.sessions
+            .lock()
+            .await
+            .get(id)
+            .map(|session| session.variants.clone())
+            .unwrap_or_default()
     }
 
     /// Pairs a session's picture with its sound, so that using either keeps both.
@@ -1256,10 +1320,10 @@ impl SessionRegistry {
 
         session.heartbeat(is_playing);
 
-        let companion = session.companion.clone();
-
-        if let Some(other) = companion.and_then(|other| sessions.get_mut(&other)) {
-            other.heartbeat(is_playing);
+        for kept in kept_with(&sessions, id) {
+            if let Some(other) = sessions.get_mut(&kept) {
+                other.heartbeat(is_playing);
+            }
         }
 
         true
@@ -1876,10 +1940,10 @@ pub async fn await_run(directory: &Path, timeout: Duration) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        classify_exit, classify_reuse, is_another_viewer, is_segment_ready, release_device,
-        releases_a_hold, resolve_segment, resume_from, run_has_closed, run_is_writing,
-        should_retry_in_software, ExitClass, Reuse, RunPosition, SegmentPlan, Session,
-        SessionConfig, SessionRegistry, COMPLETE_MARKER,
+        classify_exit, classify_reuse, is_another_viewer, is_segment_ready, kept_with,
+        release_device, releases_a_hold, resolve_segment, resume_from, run_has_closed,
+        run_is_writing, should_retry_in_software, ExitClass, Reuse, RunPosition, SegmentPlan,
+        Session, SessionConfig, SessionRegistry, COMPLETE_MARKER,
     };
     use crate::boundaries::{Boundaries, LAYOUT, LENGTHS_NAME};
     use crate::transcode_plan::{
@@ -2427,6 +2491,63 @@ mod tests {
         assert!(!should_retry_in_software(ExitClass::Completed, true));
     }
 
+    /// A ladder: the session it was started from, that session's sound, and
+    /// two rungs, held as the registry holds them.
+    fn a_ladder() -> HashMap<String, Session> {
+        let mut sessions = HashMap::new();
+
+        for id in ["root", "sound", "rung-720", "rung-480", "other"] {
+            let (mut session, _stopped) = a_session_running(1);
+
+            session.id = id.to_owned();
+            sessions.insert(id.to_owned(), session);
+        }
+
+        if let Some(root) = sessions.get_mut("root") {
+            root.companion = Some("sound".to_owned());
+            root.variants = vec!["rung-720".to_owned(), "rung-480".to_owned()];
+        }
+
+        if let Some(sound) = sessions.get_mut("sound") {
+            sound.companion = Some("root".to_owned());
+        }
+
+        for rung in ["rung-720", "rung-480"] {
+            if let Some(session) = sessions.get_mut(rung) {
+                session.ladder_root = Some("root".to_owned());
+            }
+        }
+
+        sessions
+    }
+
+    /// Using the session a ladder was started from keeps every rung, so a
+    /// quality the player has not reached for is there when it does. VAL-363.
+    #[test]
+    fn using_a_ladder_keeps_every_rung_and_the_sound() {
+        assert_eq!(
+            kept_with(&a_ladder(), "root"),
+            ["root", "rung-480", "rung-720", "sound"]
+        );
+    }
+
+    /// Using one rung keeps the session it belongs to and that session's
+    /// sound, which is what the player is listening to alongside it.
+    #[test]
+    fn using_a_rung_keeps_what_it_belongs_to() {
+        assert_eq!(
+            kept_with(&a_ladder(), "rung-480"),
+            ["root", "rung-480", "sound"]
+        );
+    }
+
+    /// A session outside any ladder keeps only itself.
+    #[test]
+    fn a_session_on_its_own_keeps_only_itself() {
+        assert_eq!(kept_with(&a_ladder(), "other"), ["other"]);
+        assert_eq!(kept_with(&a_ladder(), "gone"), ["gone"]);
+    }
+
     /// A session whose live run is `run`, begun at the first segment, as the
     /// registry holds one between a start and a stop, with what stops the run.
     fn a_session_running(run: u64) -> (Session, oneshot::Receiver<()>) {
@@ -2474,6 +2595,8 @@ mod tests {
             seeks_forward: false,
             last_wanted: 0,
             companion: None,
+            variants: Vec::new(),
+            ladder_root: None,
         };
 
         (session, stopped)

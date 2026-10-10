@@ -2,6 +2,7 @@ import { useContext } from 'react';
 import * as RadixTooltip from '@radix-ui/react-tooltip';
 import { tooltipScopeContext } from '@ValenceUI/tooltipScopeContext';
 import { cn } from '@ValenceUI/cn';
+import { Kbd } from '@ValenceUI/Kbd';
 import { usePortalContainer } from '@ValenceUI/usePortalContainer';
 import { windowBarHeight } from '@ValenceUI/windowBarHeight';
 import type { TooltipProps } from './Tooltip.types';
@@ -104,16 +105,7 @@ const Tooltip = ({
           ) : (
             <span className="flex flex-col items-center gap-1.5">
               {label}
-              <span className="flex gap-1">
-                {keys.map((key) => (
-                  <kbd
-                    key={key}
-                    className="min-w-5 rounded-[0.3rem] bg-surface/15 px-1.5 py-0.5 text-center font-body text-[0.6875rem] leading-4"
-                  >
-                    {key}
-                  </kbd>
-                ))}
-              </span>
+              <Kbd keys={keys} tone="inverse" />
             </span>
           )}
         </RadixTooltip.Content>

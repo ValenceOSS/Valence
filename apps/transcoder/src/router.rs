@@ -19,7 +19,9 @@ use crate::download::{self, DownloadFile, DownloadJob, DownloadRequest};
 use crate::fingerprint::{fingerprint, FingerprintJob, FingerprintRequest};
 use crate::frame::{take_frame, FrameRequest};
 use crate::monitor::{Monitor, Report};
-use crate::playlist::{build_multivariant_playlist, VideoRendition, AUDIO_PLAYLIST_NAME};
+use crate::playlist::{
+    build_ladder_playlist, LadderVariant, VideoRendition, AUDIO_PLAYLIST_NAME, VIDEO_PLAYLIST_NAME,
+};
 use crate::preview::{
     directory_for as preview_directory, is_complete as preview_ready, PreviewClip, PreviewJob,
     PreviewRegistry, PreviewRequest,
@@ -682,13 +684,22 @@ struct StartSessionRequest {
     spec: SessionSpec,
     #[serde(default)]
     device_id: Option<String>,
+    /// Other qualities of the same film for the player to switch between,
+    /// each a picture copied from a file kept beside the original. Only a
+    /// session sent as picture and sound apart can offer them. See VAL-363.
+    #[serde(default)]
+    variants: Vec<SessionSpec>,
 }
 
 async fn start_session(
     State(state): State<AppState>,
     Json(request): Json<StartSessionRequest>,
 ) -> Response {
-    let StartSessionRequest { spec, device_id } = request;
+    let StartSessionRequest {
+        spec,
+        device_id,
+        variants,
+    } = request;
 
     tracing::info!(
         target: "session",
@@ -711,7 +722,7 @@ async fn start_session(
     }
 
     if split_session::splits(&spec, state.registry.config().split_audio) {
-        if let Some(response) = start_split(&state, &spec, device_id.as_deref()).await {
+        if let Some(response) = start_split(&state, &spec, &variants, device_id.as_deref()).await {
             return response;
         }
     }
@@ -777,6 +788,7 @@ async fn start_both(state: &AppState, spec: SessionSpec, device_id: Option<&str>
 async fn start_split(
     state: &AppState,
     spec: &SessionSpec,
+    variants: &[SessionSpec],
     device_id: Option<&str>,
 ) -> Option<Response> {
     let probe = probe_media(&state.ffprobe, Path::new(&spec.input_path))
@@ -813,12 +825,29 @@ async fn start_split(
         })
         .flatten();
 
-    let playlist = build_multivariant_playlist(
-        &VideoRendition {
+    let rungs = start_variants(state, variants, device_id).await;
+
+    state
+        .registry
+        .bind_ladder(
+            &halves.video.id,
+            &rungs.iter().map(|(id, _)| id.clone()).collect::<Vec<_>>(),
+        )
+        .await;
+
+    let ladder: Vec<LadderVariant> = std::iter::once(LadderVariant {
+        rendition: VideoRendition {
             codec: video_codec,
             bandwidth: split_session::bandwidth(spec, probe.bitrate_kbps),
             size,
         },
+        uri: VIDEO_PLAYLIST_NAME.to_owned(),
+    })
+    .chain(rungs.into_iter().map(|(_, variant)| variant))
+    .collect();
+
+    let playlist = build_ladder_playlist(
+        &ladder,
         &split_session::audio_rendition(&stream, &spec.audio, audio_codec),
     );
 
@@ -944,6 +973,90 @@ async fn start_halves(
     }
 
     Ok(halves)
+}
+
+/// Starts the other qualities of a film as pictures of their own, together.
+///
+/// A rung that cannot be started, or whose codec cannot be read, is left out of
+/// the ladder rather than failing the film: the player still has every other
+/// quality, and the one it was started on.
+async fn start_variants(
+    state: &AppState,
+    variants: &[SessionSpec],
+    device_id: Option<&str>,
+) -> Vec<(String, LadderVariant)> {
+    let mut starting = tokio::task::JoinSet::new();
+
+    for (order, variant) in variants.iter().enumerate() {
+        let state = state.clone();
+        let spec = variant.video_alone();
+        let device = device_id.map(str::to_owned);
+
+        starting.spawn(async move {
+            let started = start_variant(&state, spec, device.as_deref()).await;
+
+            (order, started)
+        });
+    }
+
+    let mut rungs = Vec::new();
+
+    while let Some(joined) = starting.join_next().await {
+        if let Ok((order, Some(rung))) = joined {
+            rungs.push((order, rung));
+        }
+    }
+
+    rungs.sort_by_key(|(order, _)| *order);
+
+    rungs.into_iter().map(|(_, rung)| rung).collect()
+}
+
+/// Starts one quality of a ladder and describes it for the playlist.
+async fn start_variant(
+    state: &AppState,
+    spec: SessionSpec,
+    device_id: Option<&str>,
+) -> Option<(String, LadderVariant)> {
+    let probe = probe_media(&state.ffprobe, Path::new(&spec.input_path))
+        .await
+        .ok()?;
+    let started = match state.registry.start(spec.clone(), device_id).await {
+        Ok(started) => started,
+        Err(failure) => {
+            tracing::warn!(target: "session", %failure, "a rung of the ladder could not be started");
+
+            return None;
+        }
+    };
+    let directory = state.registry.touch(&started.id).await?;
+
+    if !await_run(&directory, state.registry.config().manifest_timeout).await {
+        state.registry.stop(&started.id, device_id).await;
+
+        return None;
+    }
+
+    let Some(codec) = codec_of(&directory).await else {
+        state.registry.stop(&started.id, device_id).await;
+
+        return None;
+    };
+
+    let size = probe
+        .video
+        .as_ref()
+        .map(|video| (video.width, video.height));
+    let variant = LadderVariant {
+        rendition: VideoRendition {
+            codec,
+            bandwidth: split_session::bandwidth(&spec, probe.bitrate_kbps),
+            size,
+        },
+        uri: format!("../{}/{MANIFEST_NAME}", started.id),
+    };
+
+    Some((started.id, variant))
 }
 
 /// Lets go of both halves of a split session.
@@ -2261,13 +2374,11 @@ async fn stop_session(
     Query(query): Query<StopSessionQuery>,
 ) -> Response {
     let companion = state.registry.companion_of(&id).await;
+    let variants = state.registry.variants_of(&id).await;
 
     if state.registry.stop(&id, query.device_id.as_deref()).await {
-        if let Some(companion) = companion {
-            state
-                .registry
-                .stop(&companion, query.device_id.as_deref())
-                .await;
+        for kept in companion.into_iter().chain(variants) {
+            state.registry.stop(&kept, query.device_id.as_deref()).await;
         }
 
         return (StatusCode::NO_CONTENT, Body::empty()).into_response();

@@ -122,24 +122,38 @@ const open = () => {
   return handlers;
 };
 
+/**
+ * Chooses what kind of thing is being looked for, from the menu at the end of the search field.
+ *
+ * @param user - Who is pressing.
+ * @param kind - The kind, as the menu names it.
+ */
+const pickKind = async (user: ReturnType<typeof userEvent.setup>, kind: string) => {
+  await user.click(screen.getByRole('button', { name: 'Type' }));
+  await user.click(await screen.findByRole('menuitemradio', { name: kind }));
+};
+
 describe('AskForMediaDialog', () => {
   it('searches the indexers instead, for something no catalogue knows', async () => {
     open();
 
-    await userEvent
-      .setup()
-      .click(await screen.findByRole('button', { name: 'Search the indexers instead' }));
+    const user = userEvent.setup();
 
-    expect(
-      await screen.findByRole('dialog', { name: 'Search the indexers instead' }),
-    ).toBeInTheDocument();
+    await user.click(await screen.findByRole('button', { name: 'Search the indexers' }));
+
+    expect(await screen.findByRole('button', { name: 'Back' })).toBeInTheDocument();
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+
+    await user.click(screen.getByRole('button', { name: 'Back' }));
+
+    expect(await screen.findByRole('button', { name: 'Search the indexers' })).toBeInTheDocument();
   });
 
   it('finds a film in the catalogue and asks for it in the quality chosen', async () => {
     const user = userEvent.setup();
     const { onAsked, onClose } = open();
 
-    await user.type(screen.getByRole('textbox', { name: 'Search for a film' }), 'Dune');
+    await user.type(screen.getByRole('searchbox', { name: 'Search for a film' }), 'Dune');
     await user.click(screen.getByRole('button', { name: 'Search' }));
     await user.click(await screen.findByRole('button', { name: /Dune \(2021\)/ }));
     await user.click(screen.getByRole('button', { name: 'Quality' }));
@@ -166,8 +180,8 @@ describe('AskForMediaDialog', () => {
     const user = userEvent.setup();
     const { onAsked } = open();
 
-    await user.click(screen.getByRole('button', { name: 'An artist' }));
-    await user.type(screen.getByRole('textbox', { name: 'Search for an artist' }), 'Pink Floyd');
+    await pickKind(user, 'Artists');
+    await user.type(screen.getByRole('searchbox', { name: 'Search for an artist' }), 'Pink Floyd');
     await user.click(screen.getByRole('button', { name: 'Search' }));
     await user.click(await screen.findByRole('button', { name: /Pink Floyd/ }));
 
@@ -202,8 +216,8 @@ describe('AskForMediaDialog', () => {
 
     open();
 
-    await user.click(screen.getByRole('button', { name: 'An album' }));
-    await user.type(screen.getByRole('textbox', { name: 'Search for an album' }), 'dark side');
+    await pickKind(user, 'Albums');
+    await user.type(screen.getByRole('searchbox', { name: 'Search for an album' }), 'dark side');
     await user.click(screen.getByRole('button', { name: 'Search' }));
     await user.click(await screen.findByRole('button', { name: /The Dark Side of the Moon/ }));
 
@@ -225,8 +239,8 @@ describe('AskForMediaDialog', () => {
 
     open();
 
-    await user.click(screen.getByRole('button', { name: 'A series' }));
-    await user.type(screen.getByRole('textbox', { name: 'Search for a series' }), 'Severance');
+    await pickKind(user, 'Series');
+    await user.type(screen.getByRole('searchbox', { name: 'Search for a series' }), 'Severance');
     await user.click(screen.getByRole('button', { name: 'Search' }));
     await user.click(await screen.findByRole('button', { name: /Severance \(2022\)/ }));
     await user.click(await screen.findByRole('switch', { name: 'Every season' }));
@@ -255,7 +269,7 @@ describe('AskForMediaDialog', () => {
     const user = userEvent.setup();
     const { onAsked } = open();
 
-    await user.type(screen.getByRole('textbox', { name: 'Search for a film' }), 'Dune');
+    await user.type(screen.getByRole('searchbox', { name: 'Search for a film' }), 'Dune');
     await user.click(screen.getByRole('button', { name: 'Search' }));
     await user.click(await screen.findByRole('button', { name: /Dune \(2021\)/ }));
     await user.click(screen.getByRole('button', { name: 'Choose manually' }));
@@ -288,7 +302,7 @@ describe('AskForMediaDialog', () => {
     });
     open();
 
-    await user.type(screen.getByRole('textbox', { name: 'Search for a film' }), 'Dune');
+    await user.type(screen.getByRole('searchbox', { name: 'Search for a film' }), 'Dune');
     await user.click(screen.getByRole('button', { name: 'Search' }));
     await user.click(await screen.findByRole('button', { name: /Dune \(2021\)/ }));
     await user.click(screen.getByRole('button', { name: 'Choose manually' }));
@@ -307,7 +321,7 @@ describe('AskForMediaDialog', () => {
     });
     open();
 
-    await user.type(screen.getByRole('textbox', { name: 'Search for a film' }), 'Dune');
+    await user.type(screen.getByRole('searchbox', { name: 'Search for a film' }), 'Dune');
     await user.click(screen.getByRole('button', { name: 'Search' }));
     await user.click(await screen.findByRole('button', { name: /Dune \(2021\)/ }));
     await user.click(screen.getByRole('button', { name: 'Request' }));
@@ -318,7 +332,7 @@ describe('AskForMediaDialog', () => {
 
     await user.click(screen.getByRole('button', { name: 'Choose another' }));
 
-    expect(screen.getByRole('textbox', { name: 'Search for a film' })).toBeInTheDocument();
+    expect(screen.getByRole('searchbox', { name: 'Search for a film' })).toBeInTheDocument();
   });
 
   it('says when the catalogue has nothing under a name', async () => {
@@ -327,7 +341,7 @@ describe('AskForMediaDialog', () => {
     searchCatalogue.mockResolvedValue([]);
     open();
 
-    await user.type(screen.getByRole('textbox', { name: 'Search for a film' }), 'Nothing');
+    await user.type(screen.getByRole('searchbox', { name: 'Search for a film' }), 'Nothing');
     await user.click(screen.getByRole('button', { name: 'Search' }));
 
     expect(await screen.findByText('No results for that name.')).toBeInTheDocument();

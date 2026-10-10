@@ -928,15 +928,19 @@ const reencodeRequest = mysqlTable(
   ],
 );
 
-const preTranscodeRefusal = mysqlTable('pre_transcode_refusal', {
-  mediaItemId: identifier('mediaItemId')
-    .primaryKey()
-    .references(() => mediaItem.id, { onDelete: 'cascade' }),
-  target: mediumtext('target').notNull(),
-  code: varchar('code', { length: 64 }).notNull(),
-  detail: jsonColumn('detail').$type<Said>().notNull(),
-  refusedAt: momentNow('refusedAt').notNull(),
-});
+const preTranscodeRefusal = mysqlTable(
+  'pre_transcode_refusal',
+  {
+    mediaItemId: identifier('mediaItemId')
+      .notNull()
+      .references(() => mediaItem.id, { onDelete: 'cascade' }),
+    target: varchar('target', { length: 191 }).notNull(),
+    code: varchar('code', { length: 64 }).notNull(),
+    detail: jsonColumn('detail').$type<Said>().notNull(),
+    refusedAt: momentNow('refusedAt').notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.mediaItemId, table.target] })],
+);
 
 const book = mysqlTable(
   'book',

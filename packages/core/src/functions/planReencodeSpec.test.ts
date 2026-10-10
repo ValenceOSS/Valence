@@ -112,10 +112,10 @@ describe('planReencodeSpec', () => {
     expect(outcome.kind === 'unsupported' ? outcome.reason.message : '').toContain('eac3');
   });
 
-  it('asks for keyframes at playback spacing, so the result can be segmented by copying', () => {
+  it('asks for keyframes every two seconds, so the result can be copied in short segments', () => {
     const outcome = ask(replacing);
 
-    expect(outcome.kind === 'ok' ? outcome.request.spec.segmentSeconds : 0).toBe(4);
+    expect(outcome.kind === 'ok' ? outcome.request.spec.segmentSeconds : 0).toBe(2);
   });
 
   it('keeps the chapters for a whole film and leaves them out of a sample', () => {

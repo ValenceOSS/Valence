@@ -1,53 +1,44 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Plus as PlusIcon } from '@keyline-icons/react';
 import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
-import { Checkbox } from '@ValenceUI/Checkbox';
+import { Icon } from '@ValenceUI/Icon';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
+import { SelectField } from '@ValenceUI/SelectField';
 import { SettingList } from '@ValenceUI/SettingList';
 import { SettingRow } from '@ValenceUI/SettingRow';
 import { Switch } from '@ValenceUI/Switch';
-import { TextField } from '@ValenceUI/TextField';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { describeEncodeProgress } from '@ValenceClient/admin/describeEncodeProgress';
 import { describeReencodeState } from '@ValenceClient/admin/describeReencodeState';
 import { runPreTranscodingNow } from '@ValenceClient/admin/runPreTranscodingNow';
 import { savePreTranscoding } from '@ValenceClient/admin/savePreTranscoding';
-import { CODEC_NAMES } from '@ValenceCore/functions/renditionLabel';
-import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
 import {
+  DEFAULT_PRE_TRANSCODE_TARGET,
+  MOST_PRE_TRANSCODE_TARGETS,
   PRE_TRANSCODE_QUALITIES,
   PRE_TRANSCODING_DEFAULTS,
 } from '@ValenceContracts/schemas/PreTranscoding';
-import { REENCODE_CODECS, REENCODE_CONTAINERS } from '@ValenceContracts/schemas/Reencode';
 import { failureOfAnswer, failureOfMissing } from '@ValenceScreens/admin/failureOf';
+import { readBitrate } from '@ValenceScreens/admin/readBitrate';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
-import { Choice } from '@ValenceScreens/components/Choice/Choice';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { LibraryPicker } from '@ValenceScreens/components/AdminArea/components/LibraryPicker/LibraryPicker';
 import { StatStrip } from '@ValenceScreens/components/AdminArea/components/StatStrip/StatStrip';
-import { describeHour } from './describeHour';
-import { readBitrate } from '@ValenceScreens/admin/readBitrate';
-import type { PreTranscodingSettings } from '@ValenceContracts/schemas/PreTranscoding';
-import type { PreTranscodingCardProps } from './PreTranscodingCard.types';
 import { say } from '@ValenceI18n/say';
-
-const QUALITY_CHOICES = PRE_TRANSCODE_QUALITIES.map((id) => ({
-  id,
-  label: QUALITY_STEPS.find((step) => step.id === id)?.label ?? id,
-}));
-
-const CODEC_CHOICES = REENCODE_CODECS.map((codec) => ({
-  id: codec,
-  label: CODEC_NAMES[codec] ?? codec,
-}));
-
-const CONTAINER_CHOICES = REENCODE_CONTAINERS.map((container) => ({
-  id: container,
-  label: container.toUpperCase(),
-}));
+import { describeHour } from './describeHour';
+import { LadderTable } from './components/LadderTable/LadderTable';
+import type {
+  PreTranscodeTarget,
+  PreTranscodeTargetProgress,
+  PreTranscodingSettings,
+} from '@ValenceContracts/schemas/PreTranscoding';
+import type { DraftRung } from './components/LadderTable/LadderTable.types';
+import { useAdminCommand } from '@ValenceScreens/admin/useAdminCommand';
+import type { PreTranscodingCardProps } from './PreTranscodingCard.types';
 
 const HOUR_CHOICES = Array.from({ length: 24 }, (_, hour) => ({
   id: hour.toString(),
@@ -62,10 +53,58 @@ const SCHEDULE_CHOICES = [
 const VIDEO_LIBRARY_KINDS: readonly string[] = ['movies', 'shows', 'anime'];
 
 /**
- * Pre-transcoding, where it is set up and watched: a copy of each film and episode kept beside it
- * that a modest device plays without the server converting it, made in the hours chosen. Shows how
- * far it has got and the copy being made now, lets it be paused or asked to make the next copy at
- * once, and saves what is changed only when asked to.
+ * The rung a ladder gains next: one step below its lowest, made the way that rung is made, or the
+ * lowest step there is where the ladder already reaches it.
+ *
+ * @param targets - The ladder so far.
+ * @returns The rung to add.
+ */
+const rungBelow = (targets: readonly PreTranscodeTarget[]): PreTranscodeTarget => {
+  const lowest = targets.reduce(
+    (at, target) => Math.max(at, PRE_TRANSCODE_QUALITIES.indexOf(target.quality)),
+    -1,
+  );
+  const below = PRE_TRANSCODE_QUALITIES[Math.min(lowest + 1, PRE_TRANSCODE_QUALITIES.length - 1)];
+  const like = targets.at(-1) ?? DEFAULT_PRE_TRANSCODE_TARGET;
+
+  return { ...like, quality: below ?? like.quality, maxBitrateKbps: null };
+};
+
+/**
+ * The ladder as rows that can be edited and dragged, each with a name of its own and its ceiling as
+ * text, which is empty where it has none.
+ *
+ * @param targets - The rungs.
+ * @returns The rows.
+ */
+const asRungs = (targets: readonly PreTranscodeTarget[]) =>
+  targets.map((target) => ({
+    id: crypto.randomUUID(),
+    target,
+    bitrate: target.maxBitrateKbps === null ? '' : target.maxBitrateKbps.toString(),
+  }));
+
+/**
+ * What tells one rung from another, so a rung's progress follows it wherever it is dragged.
+ *
+ * @param target - The rung.
+ * @returns Its identity as text.
+ */
+const keyOf = (target: PreTranscodeTarget): string =>
+  [
+    target.quality,
+    target.videoCodec,
+    target.container,
+    target.maxBitrateKbps ?? 'any',
+    target.audio,
+  ].join('/');
+
+/**
+ * Pre-transcoding, where it is set up and watched: a ladder of copies of each film and episode kept
+ * beside it, one at every rung chosen, so a modest device or a slow connection has one it plays
+ * without the server converting anything, made in the hours chosen. Shows how far each rung has got
+ * and the copy being made now, lets it be paused or asked to make the next copy at once, and saves
+ * what is changed only when asked to.
  *
  * @param libraries - Every library, of which only those holding films or episodes are offered.
  */
@@ -74,7 +113,7 @@ const PreTranscodingCard = ({ libraries }: PreTranscodingCardProps) => {
   const asked = useQuery(adminQueries.preTranscoding());
   const saved = asked.data?.settings ?? PRE_TRANSCODING_DEFAULTS;
   const [draft, setDraft] = useState<PreTranscodingSettings>(saved);
-  const [bitrate, setBitrate] = useState('');
+  const [rungs, setRungs] = useState(() => asRungs(saved.targets));
   const [isSaving, setIsSaving] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [isEdited, setIsEdited] = useState(false);
@@ -85,7 +124,7 @@ const PreTranscodingCard = ({ libraries }: PreTranscodingCardProps) => {
     }
 
     setDraft(saved);
-    setBitrate(saved.maxBitrateKbps === null ? '' : saved.maxBitrateKbps.toString());
+    setRungs(asRungs(saved.targets));
   }, [saved, isEdited]);
 
   const videoLibraries = useMemo(
@@ -93,17 +132,45 @@ const PreTranscodingCard = ({ libraries }: PreTranscodingCardProps) => {
     [libraries],
   );
 
-  const reading = readBitrate(bitrate);
-  const chosen: PreTranscodingSettings = {
-    ...draft,
-    isPaused: saved.isPaused,
-    maxBitrateKbps: reading.kind === 'kbps' ? reading.kbps : null,
-  };
+  const status = asked.data;
+  const current = status?.current ?? null;
+  const progressOf = (target: PreTranscodeTarget): PreTranscodeTargetProgress | null =>
+    status?.ladder.find((rung) => keyOf(rung.target) === keyOf(target)) ?? null;
+
+  const targets = rungs.map((rung) => {
+    const reading = readBitrate(rung.bitrate);
+
+    return { ...rung.target, maxBitrateKbps: reading.kind === 'kbps' ? reading.kbps : null };
+  });
+  const hasInvalidBitrate = rungs.some((rung) => readBitrate(rung.bitrate).kind === 'invalid');
+  const chosen: PreTranscodingSettings = { ...draft, isPaused: saved.isPaused, targets };
   const isChanged = JSON.stringify(chosen) !== JSON.stringify(saved);
+  const compressesAudio = rungs.every((rung) => rung.target.audio === 'compress');
+  const tallest = draft.keepsOriginal
+    ? null
+    : rungs.reduce<(typeof rungs)[number] | null>(
+        (best, rung) =>
+          best === null ||
+          PRE_TRANSCODE_QUALITIES.indexOf(rung.target.quality) <
+            PRE_TRANSCODE_QUALITIES.indexOf(best.target.quality)
+            ? rung
+            : best,
+        null,
+      );
+  const tableRungs: DraftRung[] = rungs.map((rung, index) => ({
+    ...rung,
+    progress: progressOf(targets[index] ?? rung.target),
+    replacesOriginal: rung.id === tallest?.id,
+  }));
 
   const change = (patch: Partial<PreTranscodingSettings>) => {
     setIsEdited(true);
     setDraft((before) => ({ ...before, ...patch }));
+  };
+
+  const changeRungs = (next: (before: typeof rungs) => typeof rungs) => {
+    setIsEdited(true);
+    setRungs(next);
   };
 
   const store = async (next: PreTranscodingSettings, done: string): Promise<boolean> => {
@@ -137,8 +204,9 @@ const PreTranscodingCard = ({ libraries }: PreTranscodingCardProps) => {
     void cache.invalidateQueries({ queryKey: adminQueries.reencodes().queryKey });
   };
 
-  const status = asked.data;
-  const current = status?.current ?? null;
+  useAdminCommand('makeNextCopy', () => {
+    void runNow();
+  });
 
   if (asked.isError) {
     return (
@@ -251,60 +319,67 @@ const PreTranscodingCard = ({ libraries }: PreTranscodingCardProps) => {
             />
           </SettingRow>
 
-          <SettingRow
-            title={say('screens.adminArea.preTranscodingCard.whatEachCopyIs')}
-            description={say('screens.adminArea.preTranscodingCard.aCopyIsNeverLargerThan')}
-          >
-            <div className="flex w-64 max-w-full flex-col gap-2">
-              <Choice
-                label={say('common.quality')}
-                value={draft.quality}
-                options={QUALITY_CHOICES}
-                onSelect={(id) => {
-                  change({ quality: PRE_TRANSCODE_QUALITIES.find((one) => one === id) ?? '1080p' });
+          <div className="flex flex-col pb-4">
+            <SettingRow
+              title={say('screens.adminArea.preTranscodingCard.theLadder')}
+              description={say('screens.adminArea.preTranscodingCard.aCopyIsMadeAtEveryRung')}
+            >
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={rungs.length >= MOST_PRE_TRANSCODE_TARGETS}
+                onClick={() => {
+                  changeRungs((before) => [
+                    ...before,
+                    { id: crypto.randomUUID(), target: rungBelow(targets), bitrate: '' },
+                  ]);
                 }}
-              />
+              >
+                <Icon of={PlusIcon} size={14} />
+                {say('screens.adminArea.preTranscodingCard.addARung')}
+              </Button>
+            </SettingRow>
 
-              <Choice
-                label={say('screens.reencodeDialog.codec')}
-                value={draft.videoCodec}
-                options={CODEC_CHOICES}
-                onSelect={(id) => {
-                  change({ videoCodec: REENCODE_CODECS.find((one) => one === id) ?? 'h264' });
-                }}
-              />
-
-              <Choice
-                label={say('screens.adminArea.preTranscodingCard.container')}
-                value={draft.container}
-                options={CONTAINER_CHOICES}
-                onSelect={(id) => {
-                  change({ container: REENCODE_CONTAINERS.find((one) => one === id) ?? 'mp4' });
-                }}
-              />
-            </div>
-          </SettingRow>
-
-          <SettingRow
-            title={say('screens.adminArea.preTranscodingCard.bitrateCeiling')}
-            description={say('screens.adminArea.preTranscodingCard.inKilobitsASecondLeaveEmpty')}
-          >
-            <TextField
-              label={say('screens.adminArea.preTranscodingCard.bitrateCeiling')}
-              isLabelHidden
-              type="number"
-              size="sm"
-              min={100}
-              placeholder={say('common.noCeiling')}
-              value={bitrate}
-              onValueChange={(next) => {
-                setIsEdited(true);
-                setBitrate(next);
+            <LadderTable
+              rungs={tableRungs}
+              onChange={(id, patch) => {
+                changeRungs((before) =>
+                  before.map((rung) =>
+                    rung.id === id ? { ...rung, target: { ...rung.target, ...patch } } : rung,
+                  ),
+                );
               }}
-              {...(reading.kind === 'invalid'
-                ? { error: say('screens.adminArea.preTranscodingCard.aWholeNumberFrom100') }
-                : {})}
-              className="w-40"
+              onBitrateChange={(id, bitrate) => {
+                changeRungs((before) =>
+                  before.map((rung) => (rung.id === id ? { ...rung, bitrate } : rung)),
+                );
+              }}
+              onRemove={(id) => {
+                changeRungs((before) => before.filter((rung) => rung.id !== id));
+              }}
+              onReorder={(ids) => {
+                changeRungs((before) =>
+                  ids.flatMap((id) => before.filter((rung) => rung.id === id)),
+                );
+              }}
+            />
+          </div>
+
+          <SettingRow
+            title={say('screens.adminArea.preTranscodingCard.keepTheOriginal')}
+            description={
+              draft.keepsOriginal
+                ? say('screens.adminArea.preTranscodingCard.everyRungIsKeptBesideThe')
+                : say('screens.adminArea.preTranscodingCard.theTallestRungReplacesTheOriginal')
+            }
+          >
+            <Switch
+              label={say('screens.adminArea.preTranscodingCard.keepTheOriginal')}
+              isLabelHidden
+              isOn={draft.keepsOriginal}
+              onToggle={() => {
+                change({ keepsOriginal: !draft.keepsOriginal });
+              }}
             />
           </SettingRow>
 
@@ -315,9 +390,14 @@ const PreTranscodingCard = ({ libraries }: PreTranscodingCardProps) => {
             <Switch
               label={say('screens.reencodeDialog.compressTheLosslessAudioToo')}
               isLabelHidden
-              isOn={draft.audio === 'compress'}
+              isOn={compressesAudio}
               onToggle={() => {
-                change({ audio: draft.audio === 'compress' ? 'keep' : 'compress' });
+                changeRungs((before) =>
+                  before.map((rung) => ({
+                    ...rung,
+                    target: { ...rung.target, audio: compressesAudio ? 'keep' : 'compress' },
+                  })),
+                );
               }}
             />
           </SettingRow>
@@ -332,72 +412,84 @@ const PreTranscodingCard = ({ libraries }: PreTranscodingCardProps) => {
                 : say('screens.adminArea.preTranscodingCard.atAnyHourUntilEveryFile')
             }
           >
-            <div className="flex flex-col items-end gap-2">
-              <SegmentedRow
-                label={say('screens.observabilityPage.schedule')}
-                size="sm"
-                tone="accent"
-                items={SCHEDULE_CHOICES}
-                value={draft.schedule}
-                onSelect={(id) => {
-                  change({ schedule: id === 'untilDone' ? 'untilDone' : 'window' });
-                }}
-              />
-
-              {draft.schedule === 'window' ? (
-                <div className="flex w-64 max-w-full flex-col gap-2">
-                  <Choice
-                    label={say('screens.adminArea.preTranscodingCard.startingAt')}
-                    value={draft.windowStartHour.toString()}
-                    options={HOUR_CHOICES}
-                    onSelect={(id) => {
-                      change({ windowStartHour: Number(id) });
-                    }}
-                  />
-
-                  <Choice
-                    label={say('screens.adminArea.preTranscodingCard.endingAt')}
-                    value={draft.windowEndHour.toString()}
-                    options={HOUR_CHOICES}
-                    onSelect={(id) => {
-                      change({ windowEndHour: Number(id) });
-                    }}
-                  />
-                </div>
-              ) : null}
-            </div>
-          </SettingRow>
-        </SettingList>
-
-        <div className="flex flex-col gap-3">
-          <Checkbox
-            label={say('screens.adminArea.preTranscodingCard.everyLibraryOfFilmsAndShows')}
-            description={say('screens.adminArea.preTranscodingCard.includingOnesAddedLater')}
-            checked={draft.libraryIds === null}
-            onCheckedChange={(isEvery) => {
-              change({
-                libraryIds: isEvery ? null : videoLibraries.map((one) => one.id),
-              });
-            }}
-          />
-
-          {draft.libraryIds === null ? null : (
-            <LibraryPicker
-              libraries={[...videoLibraries]}
-              chosen={new Set(draft.libraryIds)}
-              onChange={(next) => {
-                change({ libraryIds: [...next] });
+            <SegmentedRow
+              label={say('screens.observabilityPage.schedule')}
+              size="sm"
+              tone="accent"
+              items={SCHEDULE_CHOICES}
+              value={draft.schedule}
+              onSelect={(id) => {
+                change({ schedule: id === 'untilDone' ? 'untilDone' : 'window' });
               }}
             />
-          )}
-        </div>
+          </SettingRow>
+
+          {draft.schedule === 'window' ? (
+            <SettingRow title={say('screens.adminArea.preTranscodingCard.quietHours')}>
+              <SelectField
+                label={say('screens.adminArea.preTranscodingCard.startingAt')}
+                isLabelHidden
+                size="sm"
+                options={HOUR_CHOICES}
+                value={draft.windowStartHour.toString()}
+                onSelect={(id) => {
+                  change({ windowStartHour: Number(id) });
+                }}
+                className="w-28"
+              />
+
+              <span className="text-sm text-text-muted">–</span>
+
+              <SelectField
+                label={say('screens.adminArea.preTranscodingCard.endingAt')}
+                isLabelHidden
+                size="sm"
+                options={HOUR_CHOICES}
+                value={draft.windowEndHour.toString()}
+                onSelect={(id) => {
+                  change({ windowEndHour: Number(id) });
+                }}
+                className="w-28"
+              />
+            </SettingRow>
+          ) : null}
+
+          <div className="flex flex-col pb-4">
+            <SettingRow
+              title={say('screens.adminArea.preTranscodingCard.everyLibraryOfFilmsAndShows')}
+              description={say('screens.adminArea.preTranscodingCard.includingOnesAddedLater')}
+            >
+              <Switch
+                label={say('screens.adminArea.preTranscodingCard.everyLibraryOfFilmsAndShows')}
+                isLabelHidden
+                isOn={draft.libraryIds === null}
+                onToggle={() => {
+                  change({
+                    libraryIds:
+                      draft.libraryIds === null ? videoLibraries.map((one) => one.id) : null,
+                  });
+                }}
+              />
+            </SettingRow>
+
+            {draft.libraryIds === null ? null : (
+              <LibraryPicker
+                libraries={[...videoLibraries]}
+                chosen={new Set(draft.libraryIds)}
+                onChange={(next) => {
+                  change({ libraryIds: [...next] });
+                }}
+              />
+            )}
+          </div>
+        </SettingList>
 
         <div className="flex justify-end">
           <Button
             variant="primary"
             size="sm"
             isLoading={isSaving}
-            disabled={!isChanged || reading.kind === 'invalid'}
+            disabled={!isChanged || hasInvalidBitrate}
             onClick={() => {
               void store(
                 chosen,

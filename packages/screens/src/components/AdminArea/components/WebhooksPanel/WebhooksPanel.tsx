@@ -15,6 +15,7 @@ import type { WebhooksPanelProps } from './WebhooksPanel.types';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { useTicking } from '@ValenceScreens/clock/useTicking';
 import { A_CAPTION_AGES_EVERY } from '@ValenceScreens/clock/A_CAPTION_AGES_EVERY';
+import { useAdminCommand } from '@ValenceScreens/admin/useAdminCommand';
 import { say } from '@ValenceI18n/say';
 
 /**
@@ -93,6 +94,10 @@ const WebhooksPanel = ({
   onRedeliver,
 }: WebhooksPanelProps) => {
   const [isAdding, setIsAdding] = useState(false);
+
+  useAdminCommand('createWebhook', () => {
+    setIsAdding(true);
+  });
   const [editing, setEditing] = useState<WebhookSubscription | null>(null);
   const [deleting, setDeleting] = useState<WebhookSubscription | null>(null);
   const now = useTicking(A_CAPTION_AGES_EVERY);

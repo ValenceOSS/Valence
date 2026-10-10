@@ -48,6 +48,7 @@ import { pluginQueries } from '@ValenceClient/query/pluginQueries';
 import type { GrantedPermission, Permission, Role } from '@ValenceContracts/schemas/Permission';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { say } from '@ValenceI18n/say';
+import { useAdminCommand } from '@ValenceScreens/admin/useAdminCommand';
 import { sayCount } from '@ValenceI18n/sayCount';
 
 const NO_ROLES: Role[] = [];
@@ -78,6 +79,10 @@ const RolesPanel = () => {
   const [editTab, setEditTab] = useState<EditTab>('display');
   const [deleting, setDeleting] = useState<Role | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+
+  useAdminCommand('createRole', () => {
+    setIsCreating(true);
+  });
   const [refusal, setRefusal] = useState<Refusal>(null);
   const [draftMemberIds, setDraftMemberIds] = useState<ReadonlySet<string>>(new Set());
 

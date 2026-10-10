@@ -40,6 +40,7 @@ const FADE = 48;
  * @param onGroupOpenChange - Told when a group with an id is opened or folded, so the caller can
  *   remember it.
  * @param footer - What sits pinned below every group — sign out, a theme choice, an account face.
+ * @param lead - What sits under the brand, above every group, such as a way to search.
  * @param variant - Whether it stands flush against the page's own edge, or floats a step in from
  *   every edge with a border and a shadow of its own.
  * @param className - Extra classes for the caller's own layout.
@@ -55,6 +56,7 @@ const Sidebar = ({
   onCollapsedChange,
   onGroupOpenChange,
   footer,
+  lead,
   variant = 'flush',
   className,
 }: SidebarProps) => {
@@ -153,20 +155,26 @@ const Sidebar = ({
           isRail ? 'w-16 px-3' : 'w-60 px-4',
         )}
       >
-        {brand === undefined ? null : (
+        {brand === undefined || (isRail && onCollapsedChange !== undefined) ? null : (
           <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">{brand}</div>
         )}
 
-        {onCollapsedChange === undefined || isRail ? null : (
+        {onCollapsedChange === undefined ? null : (
           <SidebarToggle
-            isOpen
-            label={say('common.closeTheSidebar')}
+            isOpen={!isRail}
+            label={isRail ? say('common.openTheSidebar') : say('common.closeTheSidebar')}
             onToggle={() => {
-              onCollapsedChange(true);
+              onCollapsedChange(!isRail);
             }}
           />
         )}
       </div>
+
+      {lead === undefined ? null : (
+        <div className={cn('shrink-0 pt-2', isRail ? 'flex w-16 justify-center' : 'w-60 px-3')}>
+          {lead}
+        </div>
+      )}
 
       <div
         ref={scroller}

@@ -60,6 +60,7 @@ type PlaybackService = {
     requestedQuality?: QualityStepId,
     deviceId?: string,
     subtitleStreamIndex?: number,
+    isAdaptive?: boolean,
   ) => Promise<StartOutcome>;
   readSessionFile: (sessionId: string, name: string) => Promise<SessionFile | null>;
   readDirectFile: (

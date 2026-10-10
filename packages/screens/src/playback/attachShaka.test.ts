@@ -370,6 +370,24 @@ describe('the timestamps Shaka plays to', () => {
       loadShaka: () => Promise.resolve(module),
     });
 
-    expect(order).toEqual(['configure', 'load']);
+    expect(order.at(-1)).toBe('load');
+    expect(order.slice(0, -1)).not.toHaveLength(0);
+    expect(order.slice(0, -1).every((step) => step === 'configure')).toBe(true);
+  });
+});
+
+describe('switching between the qualities of a ladder', () => {
+  it('starts from a guess at the connection good enough not to open at the lowest rung', async () => {
+    const { module, player } = engine();
+
+    await attachShaka({
+      element: element(),
+      manifestUrl: '/manifest.m3u8',
+      loadShaka: () => Promise.resolve(module),
+    });
+
+    expect(player.configure).toHaveBeenCalledWith({
+      abr: { defaultBandwidthEstimate: 5_000_000 },
+    });
   });
 });

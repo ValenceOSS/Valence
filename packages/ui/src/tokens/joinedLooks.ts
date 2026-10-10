@@ -30,6 +30,19 @@ const JOINED_LOOKS = {
     FLIPS,
     'border-l-0 shadow-none before:bg-[var(--surface-line)] data-[state=open]:brightness-125',
   ),
+  segment: cn(
+    'h-8 gap-1.5 px-3 text-[0.8125rem] font-medium text-text',
+    'hover:bg-[var(--surface-active)] data-[state=open]:bg-[var(--surface-active)]',
+    FLIPS,
+  ),
+  field: cn(
+    'h-8 gap-1.5 rounded-l-none rounded-r-md px-3 text-[0.8125rem] font-medium text-text',
+    'border border-l-0 border-[var(--surface-line)] bg-[var(--surface-hover)] backdrop-blur-xl',
+    'hover:border-[var(--surface-divider)] hover:bg-[var(--surface-active)] data-[state=open]:bg-[var(--surface-active)]',
+    DIVIDER,
+    'before:inset-y-1.5 before:bg-[var(--surface-line)]',
+    FLIPS,
+  ),
 } as const;
 
 export { JOINED_LOOKS };

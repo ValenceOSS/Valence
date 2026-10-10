@@ -607,6 +607,7 @@ const ENGLISH = {
   'common.continueListening': 'Continue listening',
   'common.continueReading': 'Continue reading',
   'common.continueWatching': 'Continue watching',
+  'common.controlKey': 'Ctrl',
   'common.copied': 'Copied',
   'common.copiedToTheClipboard': 'Copied to clipboard.',
   'common.copy': 'Copy',
@@ -733,6 +734,7 @@ const ENGLISH = {
   'common.downloading': 'Downloading',
   'common.downloads': 'Downloads',
   'common.downloadTitle': 'Download {title}',
+  'common.dragToChangeTheOrder': 'Drag to change the order',
   'common.durationIn': '{duration} in',
   'common.durationLeft': '{timeLeft} left',
   'common.durationWatched': '{duration} watched',
@@ -986,6 +988,7 @@ const ENGLISH = {
   'common.noAlbumsYet': 'No albums yet',
   'common.noAlbumWasFoundForIt': 'No album was found for it in the catalogue.',
   'common.noArtistsYet': 'No artists yet',
+  'common.noBitrateCeiling': 'No ceiling',
   'common.nobodyHasAnAccountOnThis': 'There are no accounts on this server yet.',
   'common.nobodyHereMatchesThat': 'No one matches your search.',
   'common.noCeiling': 'No age limit',
@@ -1063,6 +1066,7 @@ const ENGLISH = {
   'common.openingTheBook': 'Opening the book',
   'common.openName': 'Open {name}',
   'common.openThePlayer': 'Open the player',
+  'common.openTheSidebar': 'Open the sidebar',
   'common.openThisOnYourPhone': 'Open this on your phone',
   'common.openTitle': 'Open {title}',
   'common.openValenceOnAnotherDeviceSigned':
@@ -3134,14 +3138,11 @@ const ENGLISH = {
   'screens.adminArea.artworkPicker.useTheCataloguesOwnPoster': 'Use the default poster',
   'screens.adminArea.artworkPicker.whichPicture': 'Artwork type',
   'screens.adminArea.askedLabelToStop': 'Stopping {label}.',
-  'screens.adminArea.askForMediaDialog.anAlbum2': 'An album',
-  'screens.adminArea.askForMediaDialog.anArtist2': 'An artist',
   'screens.adminArea.askForMediaDialog.askedForIt': 'Requested.',
   'screens.adminArea.askForMediaDialog.findAFilmASeriesAn':
     'Search for a film, series, artist or album. Once the request is approved, it’s searched for, downloaded and added to its library.',
   'screens.adminArea.askForMediaDialog.findReleases': 'Find releases',
-  'screens.adminArea.askForMediaDialog.forSomethingNoCatalogueKnows':
-    'For something no catalogue knows. Pick a release and choose which library it goes to.',
+  'screens.adminArea.askForMediaDialog.findSomethingToRequest': 'Find something to request',
   'screens.adminArea.askForMediaDialog.iWillPickIt': 'Choose manually',
   'screens.adminArea.askForMediaDialog.laterAlbumsWaitForAPick':
     ' Later albums also wait for you to choose a release.',
@@ -3152,7 +3153,9 @@ const ENGLISH = {
   'screens.adminArea.askForMediaDialog.nothingTheIndexersHaveIsFor':
     'Your indexers have no releases for this. Go back and choose Best quality to download one when it becomes available.',
   'screens.adminArea.askForMediaDialog.searchForAnArtist': 'Search for an artist',
-  'screens.adminArea.askForMediaDialog.searchTheIndexersInstead': 'Search the indexers instead',
+  'screens.adminArea.askForMediaDialog.searchTheCatalogueAboveOr':
+    'Search the catalogue above for a film, series, artist or album. For something no catalogue knows, search the indexers directly.',
+  'screens.adminArea.askForMediaDialog.searchTheIndexers': 'Search the indexers',
   'screens.adminArea.askForMediaDialog.theBestByItsQuality': 'Best quality',
   'screens.adminArea.askForMediaDialog.theBestReleaseByItsQuality':
     'The best-quality release is downloaded as soon as one is available.',
@@ -3346,6 +3349,10 @@ const ENGLISH = {
     'Valence is using {share}% of the CPU, so this load is its own. Transcoded playback may stutter until it clears.',
   'screens.adminArea.concernsBanner.dismissTitle': 'Dismiss “{title}”',
   'screens.adminArea.concernsBanner.goToPanel': 'Go to {panel}',
+  'screens.adminArea.confirmedCountReEncodes.one':
+    'Kept {count} new encode and deleted its original.',
+  'screens.adminArea.confirmedCountReEncodes.other':
+    'Kept {count} new encodes and deleted their originals.',
   'screens.adminArea.coresValenceNotMeasured.one': '{count} core · Valence not measured',
   'screens.adminArea.coresValenceNotMeasured.other': '{count} cores · Valence not measured',
   'screens.adminArea.coresValenceShare.one': '{count} core · Valence {share}',
@@ -3559,10 +3566,15 @@ const ENGLISH = {
   'screens.adminArea.encodingPanel.alreadyDone': 'Completed',
   'screens.adminArea.encodingPanel.aReplacementKeepsBothFilesUntil':
     'Both the original and the re-encoded file are kept until you’ve watched the new one and approved it. Nothing is deleted automatically.',
+  'screens.adminArea.encodingPanel.confirmAll': 'Confirm all',
   'screens.adminArea.encodingPanel.countEncodesAreHoldingAFilm.one':
     '{count} re-encode is keeping both the original and the new file',
   'screens.adminArea.encodingPanel.countEncodesAreHoldingAFilm.other':
     '{count} re-encodes are keeping both the original and the new file',
+  'screens.adminArea.encodingPanel.deleteCountOriginals.one': 'Delete {count} original?',
+  'screens.adminArea.encodingPanel.deleteCountOriginals.other': 'Delete {count} originals?',
+  'screens.adminArea.encodingPanel.eachNewEncodeIsKeptAndIts':
+    'Each new encode is kept and the original it replaced is deleted for good. Review one first if you are not sure how they look.',
   'screens.adminArea.encodingPanel.freesSize': 'frees {size}',
   'screens.adminArea.encodingPanel.keptAlongside': 'Kept both',
   'screens.adminArea.encodingPanel.nothingHasBeenReEncodedYet': 'Nothing has been re-encoded yet.',
@@ -4118,8 +4130,9 @@ const ENGLISH = {
   'screens.adminArea.pluginsPanel.turnedNameOn': 'Turned {name} on.',
   'screens.adminArea.pluginsPanel.versionComesBackWithWhat':
     'Rolls the plugin back to {version} and restores the data it had saved before the upgrade. Anything it saved after the upgrade is deleted.',
-  'screens.adminArea.preTranscodingCard.aCopyIsNeverLargerThan':
-    'H.264 in MP4 plays directly on the most devices. A copy is never larger than its original, and files already that small are skipped.',
+  'screens.adminArea.preTranscodingCard.aCopyIsMadeAtEveryRung':
+    'A copy is made at every rung the original stands above, so each film has one for a slow connection as well as a fast one. H.264 in MP4 plays directly on the most devices, and a copy is never larger than its original. Leave the ceiling empty to use the limit for that resolution.',
+  'screens.adminArea.preTranscodingCard.addARung': 'Add a rung',
   'screens.adminArea.preTranscodingCard.atAnyHourUntilEveryFile':
     'At any time, one file at a time, until every file has a copy.',
   'screens.adminArea.preTranscodingCard.aWholeNumberFrom100': 'A whole number from 100 to 200000.',
@@ -4131,12 +4144,16 @@ const ENGLISH = {
   'screens.adminArea.preTranscodingCard.endingAt': 'Ending at',
   'screens.adminArea.preTranscodingCard.everyLibraryOfFilmsAndShows':
     'All film and series libraries',
+  'screens.adminArea.preTranscodingCard.everyRungIsKeptBesideThe':
+    'Every rung is kept beside the original, which stays as it is.',
   'screens.adminArea.preTranscodingCard.includingOnesAddedLater': 'Including ones added later.',
   'screens.adminArea.preTranscodingCard.inKilobitsASecondLeaveEmpty':
     'In kilobits per second. Leave empty to use the limit for the chosen resolution.',
   'screens.adminArea.preTranscodingCard.inQuietHours': 'Only during quiet hours',
   'screens.adminArea.preTranscodingCard.keepsACopyOfEachFilm':
     'Saves a copy of each film and episode next to the original, in a size and format most devices can play directly, so the server doesn’t have to transcode it while someone watches. Copies are named like “Arrival (2016) - 1080p H264.valence.mp4”, and Valence never adds files named this way to a library.',
+  'screens.adminArea.preTranscodingCard.keepTheOriginal': 'Keep the original',
+  'screens.adminArea.preTranscodingCard.madeOfAll': '{made} of {all}',
   'screens.adminArea.preTranscodingCard.makeTheNextCopyNow': 'Start the next copy now',
   'screens.adminArea.preTranscodingCard.makingACopyOfTitle': 'Making a copy of {title}',
   'screens.adminArea.preTranscodingCard.onlyBetweenTheseHoursOnThe':
@@ -4147,18 +4164,23 @@ const ENGLISH = {
     'Couldn’t load the pre-transcoding settings.',
   'screens.adminArea.preTranscodingCard.preTranscodingIsPaused':
     'Pre-transcoding is paused, and the current copy has stopped.',
+  'screens.adminArea.preTranscodingCard.quietHours': 'Quiet hours',
   'screens.adminArea.preTranscodingCard.refusedOrFailedTwice':
     'Refused or failed twice. Saving the settings retries the refused ones, and changing the copy format retries all of them.',
+  'screens.adminArea.preTranscodingCard.removeTheQualityRung': 'Remove the {quality} rung',
+  'screens.adminArea.preTranscodingCard.replacesTheOriginal': 'Replaces the original',
   'screens.adminArea.preTranscodingCard.rightNow': 'Right now',
   'screens.adminArea.preTranscodingCard.savedPreTranscoding': 'Saved the pre-transcoding settings.',
   'screens.adminArea.preTranscodingCard.startingAt': 'Starting at',
   'screens.adminArea.preTranscodingCard.stillToMake': 'Remaining',
+  'screens.adminArea.preTranscodingCard.theLadder': 'The ladder',
   'screens.adminArea.preTranscodingCard.theNextCopyIsBeingMade': 'Started the next copy.',
   'screens.adminArea.preTranscodingCard.thereIsNothingToMakeA':
     'Nothing needs a copy, or pre-transcoding is off.',
+  'screens.adminArea.preTranscodingCard.theTallestRungReplacesTheOriginal':
+    'The tallest rung takes the original’s place, made after the others so they come from the original. Each one waits for you to confirm in Re-encoding before the original is deleted, and the queue pauses while five are waiting.',
   'screens.adminArea.preTranscodingCard.untilEverythingIsDone': 'Until everything is done',
   'screens.adminArea.preTranscodingCard.waitingForQuietHours': 'Waiting for quiet hours',
-  'screens.adminArea.preTranscodingCard.whatEachCopyIs': 'Copy format',
   'screens.adminArea.processor': 'CPU',
   'screens.adminArea.profileEditor.addProfile': 'Add profile',
   'screens.adminArea.profileEditor.aFilmIsHeldUntilThen':
@@ -4217,11 +4239,8 @@ const ENGLISH = {
   'screens.adminArea.profileEditor.whichLibrariesOfferThisProfileWhen':
     'Which libraries offer this profile when someone makes a request. Select none to offer it for all of them.',
   'screens.adminArea.profileEditor.whichPartOfTheProfileTo': 'Which part of the profile to edit',
-  'screens.adminArea.profilesPanel.dragToChangeTheOrder': 'Drag to change the order',
   'screens.adminArea.profilesPanel.everyLibraryHandsOff':
     'Every library of this kind that takes requests hands them to a connected app, so no request is judged by these profiles.',
-  'screens.adminArea.profilesPanel.highestFirst':
-    'Highest first. When people ask for the same title at different profiles, this order decides which is higher.',
   'screens.adminArea.profilesPanel.noMusicLibraryTakesRequests':
     'No music library takes requests, so these profiles aren’t used. Turn on Takes requests for a library on the Libraries page.',
   'screens.adminArea.profilesPanel.noProfilesForFilmsOrSeries':
@@ -4588,6 +4607,8 @@ const ENGLISH = {
   'screens.adminArea.sharesPanel.theLinksCouldNotBeRead': 'Couldn’t load share links.',
   'screens.adminArea.sharesPanel.withdrewTheLink': 'Revoked the share link.',
   'screens.adminArea.sizeFree': '{size} free',
+  'screens.adminArea.someCouldNotBeConfirmed':
+    'Some could not be confirmed, and are still waiting.',
   'screens.adminArea.someOfThisCouldNotBeRead':
     'Some data couldn’t be loaded from the server, so parts of this page may be missing rather than empty.',
   'screens.adminArea.startedReEncoding': 'Started re-encoding.',
@@ -4830,8 +4851,10 @@ const ENGLISH = {
   'screens.adminArea.webhookTurnedOff': 'Webhook turned off.',
   'screens.adminArea.webhookTurnedOn': 'Webhook turned on.',
   'screens.adminArea.whyThereIsNoFigure': 'Why there is no figure',
+  'screens.adminPage.adminSearch.findAPage': 'Find a page',
+  'screens.adminPage.adminSearch.general': 'General',
+  'screens.adminPage.adminSearch.searchTheAdminArea': 'Search the admin area',
   'screens.adminPage.backToValence': 'Back to Valence',
-  'screens.adminPage.openTheSidebar': 'Open the sidebar',
   'screens.adminPage.readingWhatYouMayDo': 'Checking your permissions',
   'screens.adminPage.valenceVersion': 'Valence {version}',
   'screens.albumTracks.discNumber': 'Disc {number}',
@@ -5650,8 +5673,10 @@ const ENGLISH = {
   'screens.musicPage.queuePanel.takeTitleOutOfTheQueue': 'Remove {title} from the queue',
   'screens.musicTransport.whereTheSongIs': 'Song position',
   'screens.notificationBell.alsoSendTheseToThisDevice': 'Send push notifications to this device',
+  'screens.notificationBell.everythingHasBeenRead': 'Everything has been read.',
   'screens.notificationBell.nothingYetNewFilmsAndEpisodes':
     'Nothing yet. New films and episodes will appear here.',
+  'screens.notificationBell.unread': 'Unread',
   'screens.nowPlayingBar.hostingAListeningPartyLengthHere':
     'Hosting a listening party · {length} here',
   'screens.nowPlayingBar.listeningAlongWithHostName': 'Listening along with {hostName}',

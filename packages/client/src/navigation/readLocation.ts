@@ -31,6 +31,7 @@ type Place = {
   playing: string | null;
   party: string | null;
   genre: string | null;
+  filters: string | null;
   library: string | null;
   account: string | null;
   downloads: boolean;
@@ -53,6 +54,7 @@ const HOME: Place = {
   playing: null,
   party: null,
   genre: null,
+  filters: null,
   library: null,
   account: null,
   downloads: false,
@@ -97,6 +99,7 @@ const placeIn = (pathname: string, query: Record<string, string>): Place => {
     playing: first === 'watch' && second !== '' ? second : null,
     party: said.party ?? null,
     genre: said.genre ?? null,
+    filters: said.filters ?? null,
     library: said.library ?? null,
     account: said.account ?? (first === 'account' ? ACCOUNT_OPENS_ON : null),
     downloads: said.downloads === 'open' || first === 'downloads',
@@ -175,6 +178,10 @@ const writeLocation = (place: Place): string => {
 
   if (place.genre !== null) {
     query.set('genre', place.genre);
+  }
+
+  if (place.filters !== null) {
+    query.set('filters', place.filters);
   }
 
   if (place.library !== null) {

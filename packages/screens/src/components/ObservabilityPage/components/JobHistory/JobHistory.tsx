@@ -4,7 +4,6 @@ import { cn } from '@ValenceUI/cn';
 import { Icon } from '@ValenceUI/Icon';
 import {
   Bookmark as BookmarkFilledIcon,
-  ChevronDown as ChevronDownIcon,
   Info as InfoIcon,
   MoreHorizontal as MoreHorizontalIcon,
 } from '@keyline-icons/react/fill';
@@ -15,9 +14,8 @@ import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { DataTable } from '@ValenceUI/DataTable';
 import { FilterMenu } from '@ValenceUI/FilterMenu';
-import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
-import { TextField } from '@ValenceUI/TextField';
+import { ScopedField } from '@ValenceUI/ScopedField';
 import { Well } from '@ValenceUI/Well';
 import { HoverCard } from '@ValenceUI/HoverCard';
 import { Dialog } from '@ValenceUI/Dialog';
@@ -42,7 +40,7 @@ import { defaultLogView } from '@ValenceClient/admin/defaultLogView';
 import { logRangeStart } from '@ValenceClient/admin/logRanges';
 import { logSearchFromView } from '@ValenceClient/admin/logSearchFromView';
 import { logViewFromSearch } from '@ValenceClient/admin/logViewFromSearch';
-import { TimeRangeMenu } from '@ValenceScreens/components/ObservabilityPage/components/TimeRangeMenu/TimeRangeMenu';
+import { timeRangeChoice } from '@ValenceScreens/components/ObservabilityPage/components/TimeRangeMenu/timeRangeChoice';
 import type { FilterGroup } from '@ValenceUI/FilterMenu.types';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type {
@@ -316,32 +314,6 @@ const JobHistoryPanel = ({
       });
     },
     [definitions, filterText, filterView, onSearchChange],
-  );
-  const sortGroups = useMemo(
-    () => [
-      {
-        name: say('common.order'),
-        selectedId: sort,
-        onSelect: (id: string) => {
-          const found = SORTS.find((one) => one.id === id);
-
-          if (found !== undefined) {
-            onSearchChange({ rsort: found.id === 'newest' ? undefined : found.id });
-          }
-        },
-        options: SORTS.map((one) => ({ id: one.id, label: one.label, detail: one.detail })),
-      },
-    ],
-    [sort, onSearchChange],
-  );
-  const sortTrigger = useMemo(
-    () => (
-      <>
-        <span className="truncate">{SORTS.find((one) => one.id === sort)?.label}</span>
-        <Icon of={ChevronDownIcon} size={14} className="valence-chevron shrink-0" />
-      </>
-    ),
-    [sort],
   );
   const isShown = usePageIsShown();
   const traceRun = useCallback(
@@ -684,26 +656,28 @@ const JobHistoryPanel = ({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
-        <TextField
+        <ScopedField
           label={say('screens.observabilityPage.jobHistory.searchJobRuns')}
           isLabelHidden
-          type="search"
-          size="sm"
           placeholder={say('screens.observabilityPage.jobHistory.searchByJobLibraryErrorOr')}
           value={typed}
-          className="min-w-56 flex-1"
           onValueChange={setTyped}
-        />
+          choices={[
+            timeRangeChoice(search, onSearchChange),
+            {
+              label: say('common.order'),
+              options: SORTS.map((one) => ({ id: one.id, label: one.label, detail: one.detail })),
+              value: sort,
+              onChange: (id) => {
+                const found = SORTS.find((one) => one.id === id);
 
-        <TimeRangeMenu search={search} onSearchChange={onSearchChange} />
-
-        <OptionMenu
-          label={say('common.order')}
-          size="sm"
-          triggerShape="field"
-          className="w-auto"
-          groups={sortGroups}
-          trigger={sortTrigger}
+                if (found !== undefined) {
+                  onSearchChange({ rsort: found.id === 'newest' ? undefined : found.id });
+                }
+              },
+            },
+          ]}
+          className="min-w-56 flex-1"
         />
 
         <FilterMenu

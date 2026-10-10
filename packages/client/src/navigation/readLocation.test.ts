@@ -123,6 +123,7 @@ describe('writeLocation', () => {
       playing: null,
       party: null,
       genre: null,
+      filters: null,
       library: null,
       account: null,
       downloads: false,

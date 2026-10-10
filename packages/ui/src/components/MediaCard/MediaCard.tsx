@@ -48,7 +48,8 @@ const SHAPE_CLASSES: Record<MediaCardShape, string> = {
  * @param count - A number to show in the top right corner of the artwork, such as how many episodes
  *   are left to watch; nothing is drawn for none.
  * @param countLabel - What the number means, read out and shown on hover.
- * @param imageUrl - The artwork, where any has been fetched.
+ * @param imageUrl - The artwork, where any has been fetched. Where it will not load, the card falls
+ *   back to the placeholder a card without artwork shows, rather than a broken image.
  * @param logoUrl - The title's logo, drawn over the bottom left of wide artwork as Home's cards draw
  *   it, and left out where it cannot be read.
  * @param shape - Whether the artwork stands upright, lies flat, or is a book's cover, which is drawn as
@@ -86,6 +87,8 @@ const MediaCard = ({
   const isBook = shape === 'book';
   const [canHover] = useState(hasFinePointer);
   const [isLogoMissing, setIsLogoMissing] = useState(false);
+  const [missingImageUrl, setMissingImageUrl] = useState<string | null>(null);
+  const showsImage = imageUrl !== undefined && missingImageUrl !== imageUrl;
 
   return (
     <motion.button
@@ -119,7 +122,7 @@ const MediaCard = ({
               SHAPE_CLASSES[shape],
             )}
           >
-            {imageUrl === undefined ? (
+            {!showsImage ? (
               <span
                 aria-hidden
                 className="absolute bottom-[-0.15em] left-[-0.06em] text-[9rem] font-semibold leading-none tracking-tighter text-on-scrim/[0.07]"
@@ -131,6 +134,9 @@ const MediaCard = ({
                 src={imageUrl}
                 alt=""
                 loading="lazy"
+                onError={() => {
+                  setMissingImageUrl(imageUrl);
+                }}
                 className={cn(
                   'h-full w-full object-cover',
                   isBook

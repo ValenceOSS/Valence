@@ -148,6 +148,8 @@ const listItemsRoute = createRoute({
       search: z.string().optional(),
       kind: z.enum(['films', 'shows']).optional(),
       genre: z.string().optional(),
+      genres: z.string().optional(),
+      decades: z.string().optional(),
       yearFrom: z.coerce.number().int().optional(),
       yearTo: z.coerce.number().int().optional(),
       minRating: z.coerce.number().min(0).max(10).optional(),

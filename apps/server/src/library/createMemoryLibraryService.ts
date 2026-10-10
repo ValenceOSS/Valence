@@ -283,6 +283,12 @@ const matchesFilters = (item: MediaDetail, options: ListItemsOptions): boolean =
   const rating = item.metadata.rating ?? null;
 
   return (
+    (options.genres === undefined ||
+      options.genres.length === 0 ||
+      options.genres.some((one) => (item.metadata.genres ?? []).includes(one))) &&
+    (options.decades === undefined ||
+      options.decades.length === 0 ||
+      (year !== null && options.decades.some((decade) => year >= decade && year < decade + 10))) &&
     (options.yearFrom === undefined || (year !== null && year >= options.yearFrom)) &&
     (options.yearTo === undefined || (year !== null && year <= options.yearTo)) &&
     (options.minRating === undefined || (rating !== null && rating >= options.minRating))

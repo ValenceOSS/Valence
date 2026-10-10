@@ -16,6 +16,7 @@ import { withdrawLinkInvite } from '@ValenceClient/admin/withdrawLinkInvite';
 import { saidWhen } from '@ValenceClient/format/saidWhen';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import type { InviteCardProps } from './InviteCard.types';
+import { useAdminCommand } from '@ValenceScreens/admin/useAdminCommand';
 import { say } from '@ValenceI18n/say';
 
 /**
@@ -50,6 +51,10 @@ const InviteCard = ({ invites }: InviteCardProps) => {
         setIsMaking(false);
       });
   };
+
+  useAdminCommand('makeInvite', () => {
+    void make();
+  });
 
   return (
     <PanelCard

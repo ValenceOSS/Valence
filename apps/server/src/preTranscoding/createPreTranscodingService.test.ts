@@ -9,10 +9,18 @@ import {
   reencodeRequest,
 } from '#dialect/Schema';
 import { saying } from '@ValenceI18n/saying';
-import { PRE_TRANSCODING_DEFAULTS } from '@ValenceContracts/schemas/PreTranscoding';
+import {
+  DEFAULT_PRE_TRANSCODE_TARGET,
+  PRE_TRANSCODING_DEFAULTS,
+} from '@ValenceContracts/schemas/PreTranscoding';
 import { createPreTranscodingService } from './createPreTranscodingService';
 import type { PreTranscodingSettings } from '@ValenceContracts/schemas/PreTranscoding';
-import type { Reencode, ReencodeOrigin, ReencodeRefusal } from '@ValenceContracts/schemas/Reencode';
+import type {
+  Reencode,
+  ReencodeOrigin,
+  ReencodeRefusal,
+  ReencodeSettings,
+} from '@ValenceContracts/schemas/Reencode';
 import type { ReencodeService } from '@ValenceServer/reencode/ReencodeService';
 
 const STARTING_POSTGRES_MS = 60_000;
@@ -143,6 +151,7 @@ const aPreTranscoder = async (
   const db = await aMigratedDatabase();
   let held = options.settings ?? ON;
   const asked: { mediaId: string; askedBy: string | null }[] = [];
+  const askedFor: ReencodeSettings[] = [];
   const cancelled: string[] = [];
   let queuedCount = 0;
 
@@ -158,11 +167,12 @@ const aPreTranscoder = async (
 
   const reencodes: ReencodeService = {
     estimate: () => Promise.reject(new Error('not used')),
-    start: async (mediaIds, _settings, askedBy, origin = 'admin') => {
+    start: async (mediaIds, settings, askedBy, origin = 'admin') => {
       const mediaId = mediaIds[0] ?? '';
       const refusal = options.refuses?.[mediaId];
 
       asked.push({ mediaId, askedBy });
+      askedFor.push(settings);
 
       if (refusal !== undefined) {
         return { started: [], refused: [{ mediaId, refusal }] };
@@ -205,7 +215,7 @@ const aPreTranscoder = async (
     now: () => options.at ?? AT_THREE_IN_THE_MORNING,
   });
 
-  return { db, service, asked, cancelled, queued: () => queuedCount };
+  return { db, service, asked, askedFor, cancelled, queued: () => queuedCount };
 };
 
 describe('createPreTranscodingService', { timeout: STARTING_POSTGRES_MS }, () => {
@@ -360,6 +370,53 @@ describe('createPreTranscodingService', { timeout: STARTING_POSTGRES_MS }, () =>
     await expect(
       db.select({ mediaItemId: preTranscodeRefusal.mediaItemId }).from(preTranscodeRefusal),
     ).resolves.toEqual([{ mediaItemId: 'a-readonly' }]);
+  });
+
+  it('works through every rung of the ladder, saying how far each has got', async () => {
+    const ladder: PreTranscodingSettings = {
+      ...ON,
+      targets: [
+        { ...DEFAULT_PRE_TRANSCODE_TARGET, quality: '1080p' },
+        { ...DEFAULT_PRE_TRANSCODE_TARGET, quality: '720p' },
+      ],
+    };
+    const { service, askedFor } = await aPreTranscoder([aFile('a-remux', FILMS_ID)], {
+      settings: ladder,
+    });
+
+    const status = await service.status();
+
+    expect(status.ladder.map((rung) => [rung.target.quality, rung.stillNeeded])).toEqual([
+      ['1080p', 1],
+      ['720p', 1],
+    ]);
+    expect(status.stillNeeded).toBe(2);
+
+    await expect(service.tick()).resolves.toEqual({ kind: 'queued', mediaId: 'a-remux' });
+    expect(askedFor[0]).toMatchObject({ mode: 'keep', quality: '1080p', placement: 'beside' });
+  });
+
+  it('makes the rung that replaces the original last, so the others come from the original', async () => {
+    const { service, askedFor } = await aPreTranscoder([aFile('a-remux', FILMS_ID)], {
+      settings: {
+        ...ON,
+        keepsOriginal: false,
+        targets: [
+          { ...DEFAULT_PRE_TRANSCODE_TARGET, quality: '1080p' },
+          { ...DEFAULT_PRE_TRANSCODE_TARGET, quality: '720p' },
+        ],
+      },
+    });
+
+    await expect(service.tick()).resolves.toEqual({ kind: 'queued', mediaId: 'a-remux' });
+    expect(askedFor[0]).toMatchObject({ mode: 'keep', quality: '720p' });
+
+    const status = await service.status();
+
+    expect(status.ladder.map((rung) => [rung.target.quality, rung.replacesOriginal])).toEqual([
+      ['720p', false],
+      ['1080p', true],
+    ]);
   });
 
   it('says it is finished once nothing is left to improve', async () => {

@@ -18,6 +18,7 @@ import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { describeRequestsSolver } from './describeRequestsSolver';
 import { describeRequestsVpn } from './describeRequestsVpn';
 import { say } from '@ValenceI18n/say';
+import { useAdminCommand } from '@ValenceScreens/admin/useAdminCommand';
 import { sayCount } from '@ValenceI18n/sayCount';
 
 const SOLVER_DOES = say('screens.adminArea.requestsPanel.opensSitesProtectedByCloudflareIn');
@@ -50,6 +51,10 @@ const RequestsPanel = () => {
         setIsChecking(false);
       });
   };
+
+  useAdminCommand('checkRequests', () => {
+    void checkNow();
+  });
 
   const overview = asked.data ?? null;
   const vpn = overview === null ? null : describeRequestsVpn(overview);

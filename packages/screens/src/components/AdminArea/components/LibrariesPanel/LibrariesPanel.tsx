@@ -41,6 +41,7 @@ import { workOf } from '@ValenceScreens/components/AdminArea/workOf';
 import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
 import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
 import { say } from '@ValenceI18n/say';
+import { useAdminCommand } from '@ValenceScreens/admin/useAdminCommand';
 import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
 
 /**
@@ -92,6 +93,10 @@ const LibrariesPanel = ({
   onHideSetup,
 }: LibrariesPanelProps) => {
   const [isAdding, setIsAdding] = useState(false);
+
+  useAdminCommand('addLibrary', () => {
+    setIsAdding(true);
+  });
   const [isConfirmingReset, setIsConfirmingReset] = useState(false);
   const [settingsLibraryId, setSettingsLibraryId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Library | null>(null);

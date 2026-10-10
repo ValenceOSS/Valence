@@ -25,24 +25,30 @@ describe('useLibraryFilters', () => {
     await waitFor(() => {
       expect(result.current.groups.map((group) => group.name)).toEqual([
         'Genre',
-        'Decade',
         'Rating',
+        'Decade',
         'Your rating',
       ]);
     });
 
-    expect(result.current.groups[1]?.options.map((option) => option.label)).toEqual([
+    expect(result.current.groups[2]?.options.map((option) => option.label)).toEqual([
       '1990s',
       '2000s',
     ]);
-    expect(result.current.groups[2]?.options.map((option) => option.label)).toEqual([
+    expect(result.current.groups[1]?.options.map((option) => option.label)).toEqual([
       '6+',
       '7+',
       '8+',
     ]);
+    expect(result.current.groups.map((group) => group.isSingle)).toEqual([
+      false,
+      true,
+      false,
+      true,
+    ]);
   });
 
-  it('asks for a decade as the years either side of it, and a rating as a floor', async () => {
+  it('asks for any of several genres and decades, and a rating as a floor', async () => {
     const { result } = renderHookInACache(() => useLibraryFilters());
 
     await waitFor(() => {
@@ -50,16 +56,19 @@ describe('useLibraryFilters', () => {
     });
 
     act(() => {
-      result.current.change(new Set(['decade:1990', 'rating:7', 'genre:Drama']));
+      result.current.change(
+        new Set(['decade:1990', 'decade:2000', 'rating:7', 'genre:Drama', 'genre:Comedy']),
+      );
     });
 
     expect(result.current.asked).toEqual({
-      genre: 'Drama',
-      yearFrom: 1990,
-      yearTo: 1999,
+      genres: ['Comedy', 'Drama'],
+      decades: [1990, 2000],
       minRating: 7,
     });
-    expect(result.current.selected).toEqual(new Set(['genre:Drama', 'decade:1990', 'rating:7']));
+    expect(result.current.selected).toEqual(
+      new Set(['decade:1990', 'decade:2000', 'rating:7', 'genre:Drama', 'genre:Comedy']),
+    );
   });
 
   it('takes every filter off at once', () => {
@@ -77,18 +86,18 @@ describe('useLibraryFilters', () => {
     expect(result.current.selected.size).toBe(0);
   });
 
-  it('leaves the genre to the caller where the caller keeps it', () => {
-    const onGenreChange = vi.fn();
+  it('leaves what is chosen to the caller where the caller keeps it', () => {
+    const onChange = vi.fn();
     const { result } = renderHookInACache(() =>
-      useLibraryFilters({ genre: 'Comedy', onGenreChange }),
+      useLibraryFilters({ selected: new Set(['genre:Comedy']), onChange }),
     );
 
-    expect(result.current.asked).toEqual({ genre: 'Comedy' });
+    expect(result.current.asked).toEqual({ genres: ['Comedy'] });
 
     act(() => {
       result.current.change(new Set(['genre:Drama']));
     });
 
-    expect(onGenreChange).toHaveBeenCalledWith('Drama');
+    expect(onChange).toHaveBeenCalledWith(new Set(['genre:Drama']));
   });
 });

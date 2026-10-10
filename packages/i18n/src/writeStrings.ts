@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { alignTranslation } from '@ValenceI18n/alignTranslation';
+import { countedKeysModuleOf } from '@ValenceI18n/countedKeysModuleOf';
 import { englishModuleOf } from '@ValenceI18n/englishModuleOf';
 import { LANGUAGES } from '@ValenceI18n/LANGUAGES';
 import { sortStrings } from '@ValenceI18n/sortStrings';
@@ -36,5 +37,10 @@ const englishModule = join(PACKAGE, 'src', 'ENGLISH.ts');
 
 writeFileSync(englishModule, englishModuleOf(wordsOf(english)));
 written.push(englishModule);
+
+const countedModule = join(PACKAGE, 'src', 'COUNTED_KEYS.ts');
+
+writeFileSync(countedModule, countedKeysModuleOf(wordsOf(english)));
+written.push(countedModule);
 
 execFileSync('oxfmt', written, { stdio: 'inherit' });

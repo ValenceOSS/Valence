@@ -8,6 +8,7 @@ import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { HoverCard } from '@ValenceUI/HoverCard';
 import { Sidebar } from '@ValenceUI/Sidebar';
+import { SidebarToggle } from '@ValenceUI/SidebarToggle';
 import { Spinner } from '@ValenceUI/Spinner';
 import { Tabs } from '@ValenceUI/Tabs';
 import { cn } from '@ValenceUI/cn';
@@ -27,14 +28,12 @@ import {
   readSidebarFolds,
   saveSidebarFolds,
 } from '@ValenceScreens/navigation/sidebarFoldPreference';
-import { SegmentedRow } from '@ValenceUI/SegmentedRow';
-import { useTheme } from '@ValenceClient/shell/useTheme';
-import { readTheme } from '@ValenceClient/shell/theme';
-import { THEME_CHOICES } from '@ValenceScreens/theme/themeChoices';
 import { say } from '@ValenceI18n/say';
 import { useWindowBarOnTheFrame } from '@ValenceScreens/desktop/useWindowBarOnTheFrame';
 import { BrandMark } from '@ValenceScreens/components/BrandMark/BrandMark';
 import { setAdminSidebarControl } from '@ValenceScreens/desktop/adminSidebarControl';
+import { isTheDesktopClient } from '@ValenceScreens/desktop/theDesktopShell';
+import { AdminSearch } from './components/AdminSearch/AdminSearch';
 
 const MARKS_PLACE = 'valence-admin-mark';
 /**
@@ -57,7 +56,6 @@ const AdminPage = () => {
   const view = readObservabilityView(observability.view, panel);
   const [isCollapsed, setIsCollapsed] = useState(readSidebarCollapsed);
   const [folds, setFolds] = useState(readSidebarFolds);
-  const { theme, choose } = useTheme();
 
   const requesting = useQuery(requestsQueries.availability());
   const sections = visibleAdminSections(requesting.data?.isEnabled ?? false);
@@ -95,7 +93,7 @@ const AdminPage = () => {
 
     setAdminSidebarControl({
       isOpen: !isCollapsed,
-      label: isCollapsed ? say('screens.adminPage.openTheSidebar') : say('common.closeTheSidebar'),
+      label: isCollapsed ? say('common.openTheSidebar') : say('common.closeTheSidebar'),
       onToggle: () => {
         const next = !isCollapsed;
 
@@ -172,8 +170,25 @@ const AdminPage = () => {
           onSelect={(next) => {
             void go({ to: '/admin/$panel', params: { panel: next } });
           }}
+          lead={
+            <AdminSearch
+              sections={sections}
+              isCompact={isCollapsed}
+              onGo={(next) => {
+                void go({ to: '/admin/$panel', params: { panel: next } });
+              }}
+            />
+          }
+          {...(isTheDesktopClient()
+            ? {}
+            : {
+                onCollapsedChange: (next: boolean) => {
+                  setIsCollapsed(next);
+                  saveSidebarCollapsed(next);
+                },
+              })}
           isCollapsed={isCollapsed}
-          collapsedVariant="rail"
+          collapsedVariant="hidden"
           footer={
             <div
               className={cn(
@@ -181,20 +196,6 @@ const AdminPage = () => {
                 isCollapsed ? 'flex-col items-center gap-2' : 'flex-col gap-2 px-1',
               )}
             >
-              {isCollapsed ? null : (
-                <SegmentedRow
-                  size="xs"
-                  tone="accent"
-                  label={say('common.theme')}
-                  value={theme}
-                  items={THEME_CHOICES}
-                  onSelect={(picked) => {
-                    choose(readTheme(picked));
-                  }}
-                  className="w-full [&>*]:flex-1 [&>*]:justify-center"
-                />
-              )}
-
               {isCollapsed || acceleration === null ? null : (
                 <HoverCard
                   side="right"
@@ -228,10 +229,23 @@ const AdminPage = () => {
           className={cn(
             'flex min-w-0 flex-1 flex-col overflow-hidden border-[var(--surface-line)] bg-[var(--frame-panel)] [--card-shell:var(--frame-card)]',
             'md:my-2 md:mr-2 md:rounded-2xl md:border md:shadow-[var(--shadow-raised)]',
-            isCollapsed ? 'max-md:ml-16 md:ml-2' : '',
+            isCollapsed ? 'md:ml-2' : '',
           )}
         >
           <div className="min-h-0 flex-1 overflow-y-auto p-4 lg:p-5">
+            {isCollapsed && !isTheDesktopClient() ? (
+              <div className="mb-3">
+                <SidebarToggle
+                  isOpen={false}
+                  label={say('common.openTheSidebar')}
+                  onToggle={() => {
+                    setIsCollapsed(false);
+                    saveSidebarCollapsed(false);
+                  }}
+                />
+              </div>
+            ) : null}
+
             <AdminArea
               panel={showing}
               onPanel={(next, search) => {

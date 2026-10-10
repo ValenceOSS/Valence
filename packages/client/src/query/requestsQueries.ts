@@ -126,7 +126,7 @@ const search = (asked: ReleaseSearch | null) =>
  */
 const catalogue = () =>
   queryOptions({
-    queryKey: [...REQUESTS, 'catalogue'],
+    queryKey: [...REQUESTS, 'siteCatalogue'],
     queryFn: () => fetchCatalogue(),
     staleTime: 60_000,
   });

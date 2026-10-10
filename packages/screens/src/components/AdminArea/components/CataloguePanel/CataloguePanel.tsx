@@ -11,7 +11,7 @@ import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Icon } from '@ValenceUI/Icon';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { Spinner } from '@ValenceUI/Spinner';
-import { TextField } from '@ValenceUI/TextField';
+import { ScopedField } from '@ValenceUI/ScopedField';
 import { notify } from '@ValenceUI/notify';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { catalogueShown } from '@ValenceClient/requests/catalogueShown';
@@ -35,6 +35,7 @@ import type { CatalogueKind, CatalogueSort } from '@ValenceClient/requests/Catal
 import type { MediaGridSize } from '@ValenceScreens/components/MediaGrid/MediaGrid.types';
 import type { CataloguePanelProps } from './CataloguePanel.types';
 import { say } from '@ValenceI18n/say';
+import { useAdminCommand } from '@ValenceScreens/admin/useAdminCommand';
 import { sayCount } from '@ValenceI18n/sayCount';
 
 const TAB_NAMES: Readonly<Record<CatalogueTab, string>> = {
@@ -121,7 +122,15 @@ const CataloguePanel = ({
   const [sort, setSort] = useState<CatalogueSort>('recent');
   const [size, setSize] = useState<MediaGridSize>(readGridSize);
   const [isAdding, setIsAdding] = useState(false);
+
+  useAdminCommand('addTitle', () => {
+    setIsAdding(true);
+  });
   const [isFollowingAll, setIsFollowingAll] = useState(false);
+
+  useAdminCommand('followAll', () => {
+    setIsFollowingAll(true);
+  });
   const [isSearching, setIsSearching] = useState(false);
   const [isChoosing, setIsChoosing] = useState(false);
   const [chosen, setChosen] = useState<ReadonlySet<string>>(new Set());
@@ -226,6 +235,10 @@ const CataloguePanel = ({
       });
   };
 
+  useAdminCommand('searchAllMissing', () => {
+    void searchEverythingMissing();
+  });
+
   if (title !== null) {
     return (
       <TitlePage
@@ -322,41 +335,34 @@ const CataloguePanel = ({
         />
 
         <div className="flex flex-wrap items-center gap-2">
-          {tabs.length < 2 ? null : (
-            <OptionMenu
-              label={say('screens.adminArea.cataloguePanel.kindsOfLibrary')}
-              align="start"
-              triggerShape="field"
-              className="w-auto"
-              trigger={fieldTrigger(TAB_NAMES[tab])}
-              groups={[
-                {
-                  name: say('screens.adminArea.cataloguePanel.kindsOfLibrary'),
-                  selectedId: tab,
-                  onSelect: (next) => {
-                    const found = tabs.find((one) => one === next);
-
-                    if (found !== undefined) {
-                      setKind('all');
-                      setLibraryId(null);
-                      setChosen(new Set());
-                      onTab(found);
-                    }
-                  },
-                  options: tabs.map((id) => ({ id, label: TAB_NAMES[id] })),
-                },
-              ]}
-            />
-          )}
-
-          <TextField
+          <ScopedField
             label={say('common.findATitle')}
             isLabelHidden
-            type="search"
             value={query}
             onValueChange={setQuery}
             placeholder={PLACEHOLDERS[tab]}
-            className="w-full sm:w-80"
+            choices={
+              tabs.length < 2
+                ? []
+                : [
+                    {
+                      label: say('screens.adminArea.cataloguePanel.kindsOfLibrary'),
+                      options: tabs.map((id) => ({ id, label: TAB_NAMES[id] })),
+                      value: tab,
+                      onChange: (next) => {
+                        const found = tabs.find((one) => one === next);
+
+                        if (found !== undefined) {
+                          setKind('all');
+                          setLibraryId(null);
+                          setChosen(new Set());
+                          onTab(found);
+                        }
+                      },
+                    },
+                  ]
+            }
+            className="w-full sm:w-96"
           />
 
           <span className="flex-1" />

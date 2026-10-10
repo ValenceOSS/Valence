@@ -43,7 +43,8 @@ const ErrorSchema = z.object({ error: z.string() });
  * @param clientId - Which device is asking, for presence.
  * @param startSeconds - Where to begin.
  * @param audioStreamIndex - A particular audio track, where one was chosen.
- * @param requestedQuality - A ceiling a viewer chose; auto and the original ask for none.
+ * @param requestedQuality - A ceiling a viewer chose; the original asks for none, and auto asks
+ *   for every quality kept beside the film, for the player to switch between.
  * @param subtitleStreamIndex - A subtitle stream to draw into the picture, where one was chosen.
  * @returns The session, or why there is not one.
  */
@@ -70,6 +71,7 @@ const startPlaybackSession = async (
         ? {}
         : { requestedQuality }),
       ...(subtitleStreamIndex === undefined ? {} : { subtitleStreamIndex }),
+      ...(requestedQuality === 'auto' ? { isAdaptive: true } : {}),
     }),
   }).catch(() => null);
 

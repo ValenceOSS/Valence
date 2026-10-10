@@ -86,6 +86,69 @@ describe('Sidebar', () => {
     expect(scrollBy).toHaveBeenCalledTimes(1);
   });
 
+  it('draws what leads it under the brand, above every group', () => {
+    render(
+      <Sidebar
+        label="Server"
+        brand={<span>Valence</span>}
+        lead={<span>Search the admin area</span>}
+        groups={GROUPS}
+        value="sessions"
+        onSelect={vi.fn()}
+      />,
+    );
+
+    const lead = screen.getByText('Search the admin area');
+
+    expect(screen.getByText('Valence').compareDocumentPosition(lead)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(lead.compareDocumentPosition(screen.getByRole('button', { name: 'Sessions' }))).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
+
+  it('closes from its header, where the caller lets it', () => {
+    const onCollapsedChange = vi.fn();
+
+    render(
+      <Sidebar
+        label="Server"
+        groups={GROUPS}
+        value="sessions"
+        onSelect={vi.fn()}
+        onCollapsedChange={onCollapsedChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close the sidebar' }));
+
+    expect(onCollapsedChange).toHaveBeenCalledWith(true);
+  });
+
+  it('opens again from its rail, in place of the brand', () => {
+    const onCollapsedChange = vi.fn();
+
+    render(
+      <Sidebar
+        label="Server"
+        brand={<span>Valence</span>}
+        groups={GROUPS}
+        value="sessions"
+        onSelect={vi.fn()}
+        isCollapsed
+        collapsedVariant="rail"
+        onCollapsedChange={onCollapsedChange}
+      />,
+    );
+
+    expect(screen.queryByText('Valence')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open the sidebar' }));
+
+    expect(onCollapsedChange).toHaveBeenCalledWith(false);
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(Sidebar.displayName).toBe('Sidebar');
   });

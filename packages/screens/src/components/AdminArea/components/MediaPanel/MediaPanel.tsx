@@ -28,7 +28,7 @@ import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { DataTable } from '@ValenceUI/DataTable';
 import { TabPanel } from '@ValenceUI/TabPanel';
 import { Tabs } from '@ValenceUI/Tabs';
-import { TextField } from '@ValenceUI/TextField';
+import { ScopedField } from '@ValenceUI/ScopedField';
 import { useTravelDirection } from '@ValenceUI/useTravelDirection';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
@@ -37,7 +37,6 @@ import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 import { FolderLink } from '@ValenceScreens/components/FolderLink/FolderLink';
-import { PanelCardChoice } from '@ValenceScreens/components/PanelCardChoice/PanelCardChoice';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { MediaPoster } from './components/MediaPoster/MediaPoster';
 import { ShelfTable } from './components/ShelfTable/ShelfTable';
@@ -760,36 +759,44 @@ const MediaPanel = ({
         isFlush
         actions={
           <>
-            <PanelCardChoice
-              label={say('screens.adminArea.mediaPanel.whichTitles')}
-              options={SHOWING.map((item) =>
-                item.id === 'look'
-                  ? {
-                      id: item.id,
-                      label: `${isShelf ? say('screens.adminArea.mediaPanel.noCover') : say('screens.adminArea.mediaPanel.unmatched')} (${looking.toString()})`,
-                    }
-                  : item,
-              )}
-              value={showing}
-              onSelect={setShowing}
-            />
-            {tabs.length < 2 ? null : (
-              <PanelCardChoice
-                label={say('common.whichLibrary')}
-                options={tabs.map((library) => ({ id: library.id, label: library.name }))}
-                value={libraryId}
-                onSelect={setChosenLibrary}
-              />
-            )}
-            <TextField
+            <ScopedField
               label={say('screens.adminArea.mediaPanel.findAProgrammeOrFilm')}
               isLabelHidden
-              size="sm"
-              type="search"
               placeholder={say('common.findATitle')}
               value={search}
               onValueChange={setSearch}
-              className="w-64 max-w-full"
+              choices={[
+                ...(tabs.length < 2
+                  ? []
+                  : [
+                      {
+                        label: say('common.whichLibrary'),
+                        options: tabs.map((library) => ({ id: library.id, label: library.name })),
+                        value: libraryId,
+                        onChange: setChosenLibrary,
+                      },
+                    ]),
+                {
+                  label: say('screens.adminArea.mediaPanel.whichTitles'),
+                  options: SHOWING.map((item) =>
+                    item.id === 'look'
+                      ? {
+                          id: item.id,
+                          label: `${isShelf ? say('screens.adminArea.mediaPanel.noCover') : say('screens.adminArea.mediaPanel.unmatched')} (${looking.toString()})`,
+                        }
+                      : item,
+                  ),
+                  value: showing,
+                  onChange: (id) => {
+                    const found = SHOWING.find((item) => item.id === id);
+
+                    if (found !== undefined) {
+                      setShowing(found.id);
+                    }
+                  },
+                },
+              ]}
+              className="w-[28rem] max-w-full"
             />
           </>
         }

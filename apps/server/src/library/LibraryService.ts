@@ -37,6 +37,8 @@ type ListItemsOptions = {
   search?: string;
   kind?: 'films' | 'shows';
   genre?: string;
+  genres?: string[];
+  decades?: number[];
   yearFrom?: number;
   yearTo?: number;
   minRating?: number;

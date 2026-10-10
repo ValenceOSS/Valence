@@ -26,11 +26,14 @@ import {
   REENCODES_STILL_TO_BE_WRITTEN,
   REENCODES_UNDER_WAY,
 } from '@ValenceContracts/schemas/Reencode';
+import { PRE_TRANSCODE_QUALITIES } from '@ValenceContracts/schemas/PreTranscoding';
 import { localHourOf } from './localHourOf';
 import { preTranscodeTargetOf } from './preTranscodeTargetOf';
 import type { SQL } from 'drizzle-orm';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type {
+  PreTranscodeTarget,
+  PreTranscodeTargetProgress,
   PreTranscodingSettings,
   PreTranscodingStatus,
 } from '@ValenceContracts/schemas/PreTranscoding';
@@ -48,6 +51,44 @@ const VIDEO_LIBRARY_KINDS = ['movies', 'shows', 'anime'];
 
 const REFUSALS_THAT_PASS: readonly string[] = ['BeingWatched', 'AlreadyUnderWay'];
 
+const REPLACEMENTS_MADE = ['awaitingReview', 'finished'] as const;
+
+type Rung = {
+  target: PreTranscodeTarget;
+  mode: 'keep' | 'replace';
+};
+
+/**
+ * The rungs of a ladder in the order they are made, each with whether its copy is kept beside the
+ * original or takes its place. Where the original is not kept, the tallest rung replaces it and is
+ * made last, so every other rung is made from the original rather than from a copy of it.
+ *
+ * @param chosen - The pre-transcoding settings.
+ * @returns The rungs, in the order they are worked through.
+ */
+const rungsOf = (chosen: PreTranscodingSettings): Rung[] => {
+  if (chosen.keepsOriginal) {
+    return chosen.targets.map((target) => ({ target, mode: 'keep' }));
+  }
+
+  const tallest = chosen.targets.reduce<PreTranscodeTarget | null>(
+    (best, target) =>
+      best === null ||
+      PRE_TRANSCODE_QUALITIES.indexOf(target.quality) <
+        PRE_TRANSCODE_QUALITIES.indexOf(best.quality)
+        ? target
+        : best,
+    null,
+  );
+
+  return [
+    ...chosen.targets
+      .filter((target) => target !== tallest)
+      .map((target): Rung => ({ target, mode: 'keep' })),
+    ...(tallest === null ? [] : [{ target: tallest, mode: 'replace' as const }]),
+  ];
+};
+
 type CreatePreTranscodingServiceOptions = {
   db: AnyValenceDatabase;
   reencodes: ReencodeService;
@@ -62,14 +103,17 @@ type CreatePreTranscodingServiceOptions = {
 
 /**
  * Pre-transcoding: working through the video libraries one film or episode at a time, keeping
- * beside each one a copy a modest device plays untouched, in the hours an administrator chose.
+ * beside each one a ladder of copies — one for every rung the administrator chose that the original
+ * stands above — so a modest device, or a slow connection, has something it plays untouched, in the
+ * hours an administrator chose. The rungs are worked in the order they were listed, each through
+ * the whole library before the next.
  *
  * Every copy is an ordinary re-encode kept alongside, asked for with `preTranscode` as its origin,
  * so the one queue makes it, the one rendition table remembers it and playback already prefers it.
  * This decides only what to ask for next and when: never while one of its own is under way, never
  * outside the window, and never for a file the copy would not improve. What it queued stops when
- * the window closes, so nothing runs into the day. A file refused, or failed twice, is passed over
- * until the copy asked for changes or the settings are saved again.
+ * the window closes, so nothing runs into the day. A file refused at a rung, or failed there twice,
+ * is passed over at that rung until the copy asked for changes or the settings are saved again.
  *
  * The files are walked in the order of their identifiers from where the last one was taken, so a
  * library of thousands is not read from the top on every tick.
@@ -86,31 +130,33 @@ const createPreTranscodingService = ({
   onQueued,
   now = () => new Date(),
 }: CreatePreTranscodingServiceOptions): PreTranscodingService => {
-  let cursor = '';
+  const cursors = new Map<string, string>();
 
-  const asTarget = (chosen: PreTranscodingSettings): SQL | undefined =>
+  const asTarget = ({ target, mode }: Rung): SQL | undefined =>
     and(
       eq(reencodeRequest.origin, 'preTranscode'),
-      eq(reencodeRequest.mode, 'keep'),
-      eq(reencodeRequest.quality, chosen.quality),
-      eq(reencodeRequest.videoCodec, chosen.videoCodec),
-      eq(reencodeRequest.container, chosen.container),
+      eq(reencodeRequest.mode, mode),
+      eq(reencodeRequest.quality, target.quality),
+      eq(reencodeRequest.videoCodec, target.videoCodec),
+      eq(reencodeRequest.container, target.container),
     );
 
-  const keptAs = (chosen: PreTranscodingSettings): SQL | undefined =>
+  const keptAs = ({ target, mode }: Rung): SQL | undefined =>
     and(
-      eq(reencodeRequest.mode, 'keep'),
-      eq(reencodeRequest.state, 'finished'),
-      eq(reencodeRequest.quality, chosen.quality),
-      eq(reencodeRequest.videoCodec, chosen.videoCodec),
-      eq(reencodeRequest.container, chosen.container),
+      eq(reencodeRequest.mode, mode),
+      mode === 'keep'
+        ? eq(reencodeRequest.state, 'finished')
+        : inArray(reencodeRequest.state, [...REPLACEMENTS_MADE]),
+      eq(reencodeRequest.quality, target.quality),
+      eq(reencodeRequest.videoCodec, target.videoCodec),
+      eq(reencodeRequest.container, target.container),
     );
 
-  const failedTwice = (chosen: PreTranscodingSettings) =>
+  const failedTwice = (rung: Rung) =>
     db
       .select({ mediaItemId: reencodeRequest.mediaItemId })
       .from(reencodeRequest)
-      .where(and(asTarget(chosen), eq(reencodeRequest.state, 'failed')))
+      .where(and(asTarget(rung), eq(reencodeRequest.state, 'failed')))
       .groupBy(reencodeRequest.mediaItemId)
       .having(gte(count(), FAILURES_BEFORE_GIVING_UP));
 
@@ -126,18 +172,34 @@ const createPreTranscodingService = ({
       gt(mediaItem.height, 0),
     );
 
-  const stillWanting = (chosen: PreTranscodingSettings): SQL | undefined => {
-    const { key } = preTranscodeTargetOf(chosen);
+  const alreadyMade = (rung: Rung): SQL =>
+    rung.mode === 'keep'
+      ? notExists(
+          db
+            .select({ one: sql`1` })
+            .from(reencodeRequest)
+            .innerJoin(mediaRendition, eq(mediaRendition.path, reencodeRequest.workingPath))
+            .where(and(eq(reencodeRequest.mediaItemId, mediaItem.id), keptAs(rung))),
+        )
+      : notExists(
+          db
+            .select({ one: sql`1` })
+            .from(reencodeRequest)
+            .where(
+              and(
+                eq(reencodeRequest.mediaItemId, mediaItem.id),
+                asTarget(rung),
+                eq(reencodeRequest.state, 'rejected'),
+              ),
+            ),
+        );
+
+  const stillWanting = (chosen: PreTranscodingSettings, rung: Rung): SQL | undefined => {
+    const { key } = preTranscodeTargetOf(rung.target, rung.mode);
 
     return and(
       inScope(chosen),
-      notExists(
-        db
-          .select({ one: sql`1` })
-          .from(reencodeRequest)
-          .innerJoin(mediaRendition, eq(mediaRendition.path, reencodeRequest.workingPath))
-          .where(and(eq(reencodeRequest.mediaItemId, mediaItem.id), keptAs(chosen))),
-      ),
+      alreadyMade(rung),
       notExists(
         db
           .select({ one: sql`1` })
@@ -160,11 +222,11 @@ const createPreTranscodingService = ({
             ),
           ),
       ),
-      notInArray(mediaItem.id, failedTwice(chosen)),
+      notInArray(mediaItem.id, failedTwice(rung)),
     );
   };
 
-  const pageFrom = (chosen: PreTranscodingSettings, after: string) =>
+  const pageFrom = (chosen: PreTranscodingSettings, rung: Rung, after: string) =>
     db
       .select({
         id: mediaItem.id,
@@ -175,12 +237,12 @@ const createPreTranscodingService = ({
       })
       .from(mediaItem)
       .innerJoin(library, eq(library.id, mediaItem.libraryId))
-      .where(and(stillWanting(chosen), gt(mediaItem.id, after)))
+      .where(and(stillWanting(chosen, rung), gt(mediaItem.id, after)))
       .orderBy(asc(mediaItem.id))
       .limit(PAGE);
 
   const wouldImprove = (
-    chosen: PreTranscodingSettings,
+    { target }: Rung,
     row: {
       height: number;
       bitrateKbps: number | null;
@@ -191,20 +253,21 @@ const createPreTranscodingService = ({
     needsPreTranscode(
       { ...row, bitrateKbps: row.bitrateKbps ?? 0 },
       {
-        quality: chosen.quality,
-        videoCodec: chosen.videoCodec,
-        maxBitrateKbps: chosen.maxBitrateKbps,
+        quality: target.quality,
+        videoCodec: target.videoCodec,
+        maxBitrateKbps: target.maxBitrateKbps,
       },
     );
 
   const nextAfter = async (
     chosen: PreTranscodingSettings,
+    rung: Rung,
     after: string,
     passed: ReadonlySet<string>,
   ): Promise<string | null> => {
     for (let from = after; ;) {
-      const rows = await pageFrom(chosen, from);
-      const found = rows.find((row) => !passed.has(row.id) && wouldImprove(chosen, row));
+      const rows = await pageFrom(chosen, rung, from);
+      const found = rows.find((row) => !passed.has(row.id) && wouldImprove(rung, row));
 
       if (found !== undefined) {
         return found.id;
@@ -222,18 +285,24 @@ const createPreTranscodingService = ({
 
   const findNext = async (
     chosen: PreTranscodingSettings,
+    rung: Rung,
     passed: ReadonlySet<string>,
-  ): Promise<string | null> =>
-    (await nextAfter(chosen, cursor, passed)) ??
-    (cursor === '' ? null : await nextAfter(chosen, '', passed));
+  ): Promise<string | null> => {
+    const cursor = cursors.get(preTranscodeTargetOf(rung.target, rung.mode).key) ?? '';
 
-  const countStillNeeded = async (chosen: PreTranscodingSettings): Promise<number> => {
+    return (
+      (await nextAfter(chosen, rung, cursor, passed)) ??
+      (cursor === '' ? null : await nextAfter(chosen, rung, '', passed))
+    );
+  };
+
+  const countStillNeeded = async (chosen: PreTranscodingSettings, rung: Rung): Promise<number> => {
     let needed = 0;
 
     for (let from = ''; ;) {
-      const rows = await pageFrom(chosen, from);
+      const rows = await pageFrom(chosen, rung, from);
 
-      needed += rows.filter((row) => wouldImprove(chosen, row)).length;
+      needed += rows.filter((row) => wouldImprove(rung, row)).length;
 
       const last = rows.at(-1);
 
@@ -277,35 +346,36 @@ const createPreTranscodingService = ({
   ): Promise<void> => {
     await upsert(db, preTranscodeRefusal, {
       values: [{ mediaItemId, target: key, code, detail, refusedAt: now() }],
-      target: preTranscodeRefusal.mediaItemId,
-      set: { target: key, code, detail, refusedAt: now() },
+      target: [preTranscodeRefusal.mediaItemId, preTranscodeRefusal.target],
+      set: { code, detail, refusedAt: now() },
     });
   };
 
-  const queueNext = async (
+  const queueNextAt = async (
     chosen: PreTranscodingSettings,
+    rung: Rung,
     askedBy: string | null,
   ): Promise<PreTranscodeTick> => {
-    const target = preTranscodeTargetOf(chosen);
+    const request = preTranscodeTargetOf(rung.target, rung.mode);
     const passed = new Set<string>();
 
     for (let tries = 0; tries < MOST_TRIES_A_TICK; tries += 1) {
-      const mediaId = await findNext(chosen, passed);
+      const mediaId = await findNext(chosen, rung, passed);
 
       if (mediaId === null) {
-        cursor = '';
+        cursors.delete(request.key);
 
         return { kind: 'nothingLeft' };
       }
 
       const { started, refused } = await reencodes.start(
         [mediaId],
-        target.settings,
+        request.settings,
         askedBy,
         'preTranscode',
       );
 
-      cursor = mediaId;
+      cursors.set(request.key, mediaId);
 
       if (started.length > 0) {
         onQueued();
@@ -318,12 +388,92 @@ const createPreTranscodingService = ({
       const refusal = refused[0]?.refusal;
 
       if (refusal !== undefined && !REFUSALS_THAT_PASS.includes(refusal.code)) {
-        await remember(mediaId, target.key, refusal);
+        await remember(mediaId, request.key, refusal);
       }
     }
 
     return { kind: 'nothingLeft' };
   };
+
+  const queueNext = async (
+    chosen: PreTranscodingSettings,
+    askedBy: string | null,
+  ): Promise<PreTranscodeTick> => {
+    for (const rung of rungsOf(chosen)) {
+      const ticked = await queueNextAt(chosen, rung, askedBy);
+
+      if (ticked.kind !== 'nothingLeft') {
+        return ticked;
+      }
+    }
+
+    return { kind: 'nothingLeft' };
+  };
+
+  const progressAt = async (
+    chosen: PreTranscodingSettings,
+    rung: Rung,
+  ): Promise<PreTranscodeTargetProgress> => {
+    const { key } = preTranscodeTargetOf(rung.target, rung.mode);
+
+    const [made] =
+      rung.mode === 'keep'
+        ? await db
+            .select({ counted: countDistinct(reencodeRequest.mediaItemId) })
+            .from(reencodeRequest)
+            .innerJoin(mediaRendition, eq(mediaRendition.path, reencodeRequest.workingPath))
+            .where(keptAs(rung))
+        : await db
+            .select({ counted: countDistinct(reencodeRequest.mediaItemId) })
+            .from(reencodeRequest)
+            .where(and(eq(reencodeRequest.origin, 'preTranscode'), keptAs(rung)));
+
+    const [refusedCount] = await db
+      .select({ counted: count() })
+      .from(preTranscodeRefusal)
+      .where(eq(preTranscodeRefusal.target, key));
+
+    const [kept] =
+      rung.mode === 'keep'
+        ? await db
+            .select({
+              bytes: sql<number>`coalesce(sum(${mediaRendition.sizeBytes}), 0)`.mapWith(Number),
+            })
+            .from(mediaRendition)
+            .where(
+              inArray(
+                mediaRendition.path,
+                db
+                  .select({ path: reencodeRequest.workingPath })
+                  .from(reencodeRequest)
+                  .where(keptAs(rung)),
+              ),
+            )
+        : await db
+            .select({
+              bytes: sql<number>`coalesce(sum(${reencodeRequest.producedBytes}), 0)`.mapWith(
+                Number,
+              ),
+            })
+            .from(reencodeRequest)
+            .where(and(eq(reencodeRequest.origin, 'preTranscode'), keptAs(rung)));
+
+    const failed = await failedTwice(rung);
+
+    return {
+      target: rung.target,
+      replacesOriginal: rung.mode === 'replace',
+      copiesMade: made?.counted ?? 0,
+      bytesKept: kept?.bytes ?? 0,
+      stillNeeded: await countStillNeeded(chosen, rung),
+      givenUp: (refusedCount?.counted ?? 0) + failed.length,
+    };
+  };
+
+  const keysOf = (chosen: PreTranscodingSettings): string =>
+    rungsOf(chosen)
+      .map((rung) => preTranscodeTargetOf(rung.target, rung.mode).key)
+      .join('|');
 
   const isInTheWindow = async (chosen: PreTranscodingSettings): Promise<boolean> =>
     chosen.schedule === 'untilDone' ||
@@ -335,20 +485,14 @@ const createPreTranscodingService = ({
 
   const status = async (): Promise<PreTranscodingStatus> => {
     const chosen = await settings.read();
-    const { key } = preTranscodeTargetOf(chosen);
+    const ladder: PreTranscodeTargetProgress[] = [];
 
-    const [made] = await db
-      .select({ counted: countDistinct(reencodeRequest.mediaItemId) })
-      .from(reencodeRequest)
-      .innerJoin(mediaRendition, eq(mediaRendition.path, reencodeRequest.workingPath))
-      .where(keptAs(chosen));
+    for (const rung of rungsOf(chosen)) {
+      ladder.push(await progressAt(chosen, rung));
+    }
 
-    const [refusedCount] = await db
-      .select({ counted: count() })
-      .from(preTranscodeRefusal)
-      .where(eq(preTranscodeRefusal.target, key));
-
-    const failed = await failedTwice(chosen);
+    const total = (of: (rung: PreTranscodeTargetProgress) => number): number =>
+      ladder.reduce((sum, rung) => sum + of(rung), 0);
 
     const current =
       (await reencodes.list()).find(
@@ -359,9 +503,10 @@ const createPreTranscodingService = ({
 
     return {
       settings: chosen,
-      copiesMade: made?.counted ?? 0,
-      stillNeeded: await countStillNeeded(chosen),
-      givenUp: (refusedCount?.counted ?? 0) + failed.length,
+      copiesMade: total((rung) => rung.copiesMade),
+      stillNeeded: total((rung) => rung.stillNeeded),
+      givenUp: total((rung) => rung.givenUp),
+      ladder,
       current,
       isInWindow: await isInTheWindow(chosen),
       timezone: await timezone(),
@@ -374,13 +519,13 @@ const createPreTranscodingService = ({
     save: async (next) => {
       const before = await settings.read();
       const wasSame =
-        preTranscodeTargetOf(before).key === preTranscodeTargetOf(next).key &&
+        keysOf(before) === keysOf(next) &&
         JSON.stringify(before.libraryIds) === JSON.stringify(next.libraryIds);
 
       await settings.write(next);
       await db.delete(preTranscodeRefusal);
 
-      cursor = '';
+      cursors.clear();
 
       if (!next.isEnabled || next.isPaused || !wasSame) {
         await cancelOwn(false);
