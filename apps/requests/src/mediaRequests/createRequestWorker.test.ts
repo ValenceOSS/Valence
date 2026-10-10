@@ -68,6 +68,7 @@ type HarnessOptions = {
   reportsInTurn?: IndexerSearchReport[][];
   rules?: GiveUpRules;
   handOff?: { step: () => Promise<void> };
+  answering?: Promise<void>;
 };
 
 /**
@@ -105,6 +106,7 @@ const aWorker = ({
   reportsInTurn,
   rules = GIVE_UP_DEFAULTS,
   handOff,
+  answering = Promise.resolve(),
 }: HarnessOptions = {}) => {
   const requestStore = createMemoryRecordStore(requests);
   const itemStore = createMemoryRecordStore(items);
@@ -150,17 +152,18 @@ const aWorker = ({
     },
     queue: { send, remove },
     indexers: {
-      search: (search) => {
+      search: async (search) => {
         const asked = { ...search };
 
         searched.push(asked);
+        await answering;
 
-        return Promise.resolve({
+        return {
           releases: found(asked),
           indexers: reportsInTurn?.shift() ?? reports,
           judgements: [],
           pickedId: null,
-        });
+        };
       },
       list: () => Promise.resolve([]),
     },
@@ -2212,6 +2215,139 @@ describe('createRequestWorker', () => {
         refused: 'This request is sent to a connected app, which chooses its own releases.',
       });
       expect(send).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('while the indexers are still answering', () => {
+    const OTHER = aMediaRequest({ id: '6f1e2d3c-4b5a-4968-8776-655443322110', title: 'Arrival' });
+    const OTHER_WANTED = aRequestItem({
+      id: '0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d',
+      requestId: OTHER.id,
+      title: 'Arrival',
+    });
+
+    /**
+     * Indexers that answer only once told to.
+     */
+    const heldIndexers = () => {
+      const held: { answer: () => void } = { answer: () => undefined };
+      const answering = new Promise<void>((resolve) => {
+        held.answer = resolve;
+      });
+
+      return { held, answering };
+    };
+
+    it('stops a download without waiting for a search for another request', async () => {
+      const OLD = aSentDownload({ id: 'd-old', title: 'Dune.2021.720p.HDTV-GRP' });
+      const { held, answering } = heldIndexers();
+      const { worker, remove, searched, items } = aWorker({
+        requests: [aMediaRequest(), OTHER],
+        items: [
+          aRequestItem({ state: 'downloading', downloadId: OLD.id, releaseTitle: OLD.title }),
+          OTHER_WANTED,
+        ],
+        sent: [OLD],
+        answering,
+      });
+
+      const sweep = worker.searchMissing();
+
+      await vi.waitFor(() => {
+        expect(searched).toHaveLength(1);
+      });
+      await worker.stopDownload(aMediaRequest().id, OLD.id, {
+        next: 'byHand',
+        isDeletingFiles: true,
+      });
+
+      expect(remove).toHaveBeenCalledWith(OLD.id, true);
+      expect(await items.find(aRequestItem().id)).toMatchObject({ state: 'wanted' });
+
+      held.answer();
+      await sweep;
+    });
+
+    it('takes a pick for a request being searched for, and sends nothing more for it', async () => {
+      const { held, answering } = heldIndexers();
+      const { worker, send, searched, items } = aWorker({ answering });
+
+      const sweep = worker.searchMissing();
+
+      await vi.waitFor(() => {
+        expect(searched).toHaveLength(1);
+      });
+
+      expect(await worker.pick(aMediaRequest().id, aRelease(WEB))).toMatchObject({
+        state: 'downloading',
+      });
+
+      held.answer();
+      await sweep;
+
+      expect(send).toHaveBeenCalledTimes(1);
+      expect(await theItem(items)).toMatchObject({ state: 'downloading', releaseTitle: WEB });
+    });
+
+    it('files a finished download without waiting for a search', async () => {
+      const { held, answering } = heldIndexers();
+      const { worker, searched, filed, scheduled } = aWorker({
+        requests: [aMediaRequest(), OTHER],
+        items: [
+          aRequestItem({ state: 'downloading', downloadId: aSentDownload().id }),
+          OTHER_WANTED,
+        ],
+        sent: [aSentDownload({ state: 'done', contentPath: '/downloads/valence-films/Dune' })],
+        answering,
+      });
+
+      const sweep = worker.searchMissing();
+
+      await vi.waitFor(() => {
+        expect(searched).toHaveLength(1);
+      });
+      await worker.start();
+      scheduled[0]?.run();
+      await vi.waitFor(() => {
+        expect(filed).toHaveBeenCalled();
+      });
+
+      worker.stop();
+      held.answer();
+      await sweep;
+    });
+
+    it('searches for a new request between the requests a sweep searches again', async () => {
+      const NEW = aMediaRequest({ id: '5d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a', title: 'Heat' });
+      const { held, answering } = heldIndexers();
+      const harness = aWorker({
+        requests: [aMediaRequest(), OTHER],
+        items: [
+          aRequestItem({ lastSearchedAt: AT.toISOString() }),
+          { ...OTHER_WANTED, lastSearchedAt: AT.toISOString() },
+        ],
+        answering,
+      });
+
+      const sweep = harness.worker.searchMissing();
+
+      await vi.waitFor(() => {
+        expect(harness.searched).toHaveLength(1);
+      });
+      await harness.requests.insert(NEW);
+      await harness.items.insert(
+        aRequestItem({ id: 'e1d2c3b4-a5f6-4e7d-8c9b-0a1f2e3d4c5b', requestId: NEW.id }),
+      );
+
+      const searchedNew = harness.worker.tick();
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 0);
+      });
+      held.answer();
+      await Promise.all([sweep, searchedNew]);
+
+      expect(harness.searched.map((search) => search.query)).toEqual(['Dune', 'Heat', 'Arrival']);
     });
   });
 

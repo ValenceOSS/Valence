@@ -70,8 +70,8 @@ const createRequestRoutes = ({ service, handOff, log, worker }: CreateRequestRou
     shown === null ? Response.json(NO_SUCH_REQUEST, { status: 404 }) : Response.json(shown);
 
   /**
-   * Stops downloads once whatever the worker is doing has finished, without waiting for it, so
-   * a long search never holds up whoever asked.
+   * Stops downloads once the worker has finished filing what it is filing, without waiting for it,
+   * so whoever asked is never held up.
    *
    * @param downloadIds - The downloads.
    */
