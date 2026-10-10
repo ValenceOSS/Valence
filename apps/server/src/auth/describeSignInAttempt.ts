@@ -12,6 +12,7 @@ type SignInAttempt = {
   account: { id: string; name: string } | null;
   identifier: string | null;
   userAgent: string | null;
+  brands: readonly string[];
   address: string | null;
 };
 
@@ -30,7 +31,7 @@ const describeSignInAttempt = (attempt: SignInAttempt): WebhookOccurrence | null
     return null;
   }
 
-  const deviceLabel = describeDevice(attempt.userAgent).message;
+  const deviceLabel = describeDevice(attempt.userAgent, attempt.brands).message;
 
   if (attempt.account !== null) {
     return {

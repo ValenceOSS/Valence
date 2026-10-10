@@ -16,6 +16,15 @@ describe('describeThisBrowser', () => {
     expect(describeThisBrowser()).toBe('Chromium on macOS');
   });
 
+  it('names Chrome where the browser’s client hints say it is Google Chrome', () => {
+    vi.stubGlobal('navigator', {
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/154.0.0.0 Safari/537.36',
+      userAgentData: { brands: [{ brand: 'Not A(Brand' }, { brand: 'Google Chrome' }] },
+    });
+
+    expect(describeThisBrowser()).toBe('Chrome on macOS');
+  });
+
   it('reads whatever this browser says about itself, rather than a fixed answer', () => {
     claimingToBe('Mozilla/5.0 (Windows NT 10.0; Win64; x64) Firefox/121.0');
 

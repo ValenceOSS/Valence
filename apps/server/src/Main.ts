@@ -189,7 +189,7 @@ import type {
 } from '@ValenceContracts/schemas/MediaRequest';
 import { getConnInfo } from '@hono/node-server/conninfo';
 import type { Context } from 'hono';
-import { readCallerAddress } from '@ValenceServer/web/readCallerAddress';
+import { createForwardingWarning } from '@ValenceServer/web/createForwardingWarning';
 import { createDatabaseMusicPlays } from '@ValenceServer/music/mixes/createDatabaseMusicPlays';
 import { createMixes } from '@ValenceServer/music/mixes/createMixes';
 import { clientAddressOf } from '@ValenceServer/web/clientAddressOf';
@@ -1373,8 +1373,11 @@ const catalogueSync = createCatalogueSync({
   linking: linkService,
   links: linkStore,
   peers: linkPeers,
-  warn: (message) => {
-    log.warn('server', message);
+  warn: (address) => {
+    log.warn(
+      'server',
+      `a request from ${address} said who it was forwarded for, but ${address} is not in TRUSTED_PROXIES, so it was counted as ${address}; if that is your reverse proxy, add it to TRUSTED_PROXIES`,
+    );
   },
 });
 
@@ -1400,8 +1403,11 @@ const partyRelayClient = createPartyRelayClient({
   asker: linkedAsker,
   people: linkPeople,
   linkedTitleOf,
-  warn: (message) => {
-    log.warn('server', message);
+  warn: (address) => {
+    log.warn(
+      'server',
+      `a request from ${address} said who it was forwarded for, but ${address} is not in TRUSTED_PROXIES, so it was counted as ${address}; if that is your reverse proxy, add it to TRUSTED_PROXIES`,
+    );
   },
 });
 
@@ -3720,13 +3726,34 @@ const importService = createImportService({
 
 const isTrustedProxy = trustedProxyCheck(env.TRUSTED_PROXIES);
 
+const warnOfForwarding = createForwardingWarning({
+  isTrustedProxy,
+  warn: (address) => {
+    log.warn(
+      'server',
+      `a request from ${address} said who it was forwarded for, but ${address} is not in TRUSTED_PROXIES, so it was counted as ${address}; if that is your reverse proxy, add it to TRUSTED_PROXIES`,
+    );
+  },
+});
+
+/**
+ * Where a request came from, believing only the proxies this server trusts, and warning where an
+ * untrusted one said who it forwarded.
+ *
+ * @param context - The request.
+ * @returns The caller's address, or nothing where it cannot be told.
+ */
+const callerOf = (context: Context): string | null => {
+  const { headers } = context.req.raw;
+  const socketAddress = socketAddressOf(context);
+
+  warnOfForwarding(headers, socketAddress);
+
+  return clientAddressOf({ headers, socketAddress, isTrustedProxy });
+};
+
 const app = createApp({
-  callerOf: (context) =>
-    clientAddressOf({
-      headers: context.req.raw.headers,
-      socketAddress: socketAddressOf(context),
-      isTrustedProxy,
-    }),
+  callerOf,
   imports: importService,
   plugins: startPlugins,
   auth,
@@ -4726,10 +4753,7 @@ app.get(
     }
 
     const accountId = account?.id ?? null;
-    const address = readCallerAddress({
-      headers: context.req.raw.headers,
-      socketAddress: socketAddressOf(context),
-    });
+    const address = callerOf(context);
 
     if (signedIn !== null) {
       void rememberWhereTheyAre(signedIn.session.id, signedIn.session.ipAddress ?? null, address);

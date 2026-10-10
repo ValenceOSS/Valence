@@ -10,6 +10,7 @@ const attempted = (attempt: Partial<SignInAttempt>): SignInAttempt => ({
   account: null,
   identifier: 'ada@example.com',
   userAgent: CHROME,
+  brands: ['Google Chrome', 'Chromium'],
   address: '203.0.113.7',
   ...attempt,
 });
@@ -65,7 +66,9 @@ describe('describeSignInAttempt', () => {
   });
 
   it('names an unknown device rather than printing nothing', () => {
-    const occurrence = describeSignInAttempt(attempted({ statusCode: 401, userAgent: null }));
+    const occurrence = describeSignInAttempt(
+      attempted({ statusCode: 401, userAgent: null, brands: [] }),
+    );
 
     expect(occurrence?.data).toMatchObject({ deviceLabel: 'Unknown device' });
   });
