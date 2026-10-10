@@ -882,7 +882,7 @@ const AdminArea = ({
         />
       </motion.div>
 
-      <div>
+      <div className={panel === 'overview' ? undefined : 'hidden md:block'}>
         <StatStrip
           stats={[
             {

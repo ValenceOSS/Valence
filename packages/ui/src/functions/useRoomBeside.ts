@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useMatchesMedia } from '@ValenceUI/useMatchesMedia';
 
 const BESIDE_FROM = '(min-width: 40rem)';
 
@@ -11,40 +11,8 @@ const BESIDE_FROM = '(min-width: 40rem)';
  * `min(26rem, 40vw)` on a phone is 156px of sliver — the row stacks correctly and the width does not
  * follow it.
  *
- * Answers `true` where there is no `matchMedia` to ask, since a server rendering a page and a test
- * environment are both better served by the arrangement that has room than by one that assumes a
- * phone.
- *
  * @returns Whether a second panel fits beside the first.
  */
-const useRoomBeside = (): boolean => {
-  const [hasRoom, setHasRoom] = useState(() =>
-    typeof window === 'undefined' || typeof window.matchMedia !== 'function'
-      ? true
-      : window.matchMedia(BESIDE_FROM).matches,
-  );
-
-  useEffect(() => {
-    if (typeof window.matchMedia !== 'function') {
-      return;
-    }
-
-    const asked = window.matchMedia(BESIDE_FROM);
-
-    const answer = (): void => {
-      setHasRoom(asked.matches);
-    };
-
-    answer();
-
-    asked.addEventListener('change', answer);
-
-    return () => {
-      asked.removeEventListener('change', answer);
-    };
-  }, []);
-
-  return hasRoom;
-};
+const useRoomBeside = (): boolean => useMatchesMedia(BESIDE_FROM);
 
 export { useRoomBeside };

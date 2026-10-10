@@ -21,11 +21,13 @@ import type { ChoiceProps } from './Choice.types';
  * @param options - The choices.
  * @param value - The choice in force.
  * @param onSelect - Called with the choice made.
+ * @param isLabelHidden - Whether the question goes unwritten beside the menu, where something else,
+ *   such as the setting row it answers, already says it. The menu is still named by it.
  * @returns The menu.
  */
-const Choice = ({ label, options, value, onSelect }: ChoiceProps) => (
+const Choice = ({ label, options, value, onSelect, isLabelHidden = false }: ChoiceProps) => (
   <span className="flex items-center justify-between gap-4">
-    <span className="w-32 shrink-0 text-sm text-text-muted">{label}</span>
+    {isLabelHidden ? null : <span className="w-32 shrink-0 text-sm text-text-muted">{label}</span>}
 
     <OptionMenu
       label={label}

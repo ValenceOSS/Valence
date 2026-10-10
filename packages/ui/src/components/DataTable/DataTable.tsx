@@ -7,7 +7,7 @@ import {
   ChevronsUpDown as ChevronsUpDownIcon,
   Filter as FilterIcon,
 } from '@keyline-icons/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AnimatePresence, Reorder, motion, useReducedMotionConfig } from 'motion/react';
 import { spring, stillTransition } from '@ValenceUI/animations/reveal';
 import { useRoomBelow } from '@ValenceUI/useRoomBelow';
@@ -62,9 +62,11 @@ const ROWS_A_PAGE = 25;
 
 const NEAR_THE_END = 200;
 
+const SIDE_FADE = 32;
+
 const SHRINKS = 'w-px whitespace-nowrap [&:not(:last-child)]:pr-0 sm:[&:not(:last-child)]:pr-0';
 
-const FILLS = 'w-full max-w-0';
+const FILLS = 'w-full min-w-64 max-w-0';
 
 const BAND = 'bg-[color-mix(in_oklab,var(--card-face)_93%,var(--color-text))]';
 
@@ -82,6 +84,9 @@ const HEIGHT_CLASSES = {
  * A table of things that can be sorted by any column and paged through, with the single highlight
  * that follows the pointer down the rows. Rows can lead somewhere; where they do, the whole row is
  * the press target rather than a link inside it.
+ *
+ * A table wider than its room scrolls across, and the edge with more beyond it fades out, so a
+ * column cut off at the side of a phone reads as one to scroll to rather than as the last one.
  *
  * @param label - What the table lists, read out to anybody who cannot see it.
  * @param columns - The columns, each saying how to read a row and whether it can be sorted by.
@@ -146,6 +151,46 @@ const DataTable = <Row extends RowData>({
   const [shown, setShown] = useState(pageSize);
   const { containerRef, rect, follow, clear } = useSlidingHighlight();
   const room = useRoomBelow(containerRef, height === 'fills');
+  const [beside, setBeside] = useState({ isBefore: false, isAfter: false, isRtl: false });
+
+  const measureBeside = (box: HTMLElement) => {
+    const travelled = Math.abs(box.scrollLeft);
+    const next = {
+      isBefore: travelled > 1,
+      isAfter: travelled + box.clientWidth < box.scrollWidth - 1,
+      isRtl: getComputedStyle(box).direction === 'rtl',
+    };
+
+    setBeside((before) =>
+      before.isBefore === next.isBefore &&
+      before.isAfter === next.isAfter &&
+      before.isRtl === next.isRtl
+        ? before
+        : next,
+    );
+  };
+
+  useEffect(() => {
+    const box = containerRef.current;
+
+    if (box === null || typeof ResizeObserver === 'undefined') {
+      return;
+    }
+
+    const watcher = new ResizeObserver(() => {
+      measureBeside(box);
+    });
+
+    watcher.observe(box);
+
+    for (const child of box.children) {
+      watcher.observe(child);
+    }
+
+    return () => {
+      watcher.disconnect();
+    };
+  }, [containerRef]);
   const slides = useReducedMotionConfig() === true ? stillTransition : spring;
 
   const everyRow = totalRows ?? rows.length;
@@ -226,8 +271,18 @@ const DataTable = <Row extends RowData>({
         onPointerLeave={clear}
         onScroll={(event) => {
           reachEnd(event.currentTarget);
+          measureBeside(event.currentTarget);
         }}
-        {...(room === null ? {} : { style: { height: room } })}
+        {...(beside.isBefore ? { 'data-more-before': '' } : {})}
+        {...(beside.isAfter ? { 'data-more-after': '' } : {})}
+        style={{
+          ...(room === null ? {} : { height: room }),
+          ...(beside.isBefore || beside.isAfter
+            ? {
+                maskImage: `linear-gradient(to ${beside.isRtl ? 'left' : 'right'}, ${beside.isBefore ? 'transparent' : 'black'} 0, black ${(beside.isBefore ? SIDE_FADE : 0).toString()}px, black calc(100% - ${(beside.isAfter ? SIDE_FADE : 0).toString()}px), ${beside.isAfter ? 'transparent' : 'black'} 100%)`,
+              }
+            : {}),
+        }}
         className={cn(
           'valence-rail relative overflow-x-auto overflow-y-auto',
           HEIGHT_CLASSES[height],

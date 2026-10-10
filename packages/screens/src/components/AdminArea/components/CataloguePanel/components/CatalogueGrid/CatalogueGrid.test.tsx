@@ -1,8 +1,40 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { aCatalogueEntry } from '@ValenceClient/testing/aCatalogueEntry';
 import { CatalogueGrid } from './CatalogueGrid';
+import type * as Grid from '@ValenceUI/VirtualGrid';
+
+const askedFor: number[] = [];
+
+vi.mock('@ValenceUI/VirtualGrid', async (original) => {
+  const { VirtualGrid } = await original<typeof Grid>();
+
+  return {
+    VirtualGrid: (props: Parameters<typeof VirtualGrid>[0]) => {
+      askedFor.push(props.leastCardWidth);
+
+      return <VirtualGrid {...props} />;
+    },
+  };
+});
+
+/**
+ * A window as wide as asked: a phone, or one with room.
+ */
+const aWindow = (hasRoom: boolean) => {
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: hasRoom,
+    media: query,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  }));
+};
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  askedFor.length = 0;
+});
 
 const FILM = aCatalogueEntry({ key: 'film:1', title: 'Held Film' });
 const ASKED = aCatalogueEntry({
@@ -34,6 +66,20 @@ const aGrid = (overrides: Partial<Parameters<typeof CatalogueGrid>[0]> = {}) => 
 };
 
 describe('CatalogueGrid', () => {
+  it('lets cards be narrower on a phone, so two fit across rather than one', () => {
+    aWindow(false);
+    aGrid();
+
+    expect(askedFor.at(-1)).toBe(130);
+  });
+
+  it('keeps the library pages’ card width where there is room', () => {
+    aWindow(true);
+    aGrid();
+
+    expect(askedFor.at(-1)).toBe(170);
+  });
+
   it('draws each title with a bar saying where it stands, and opens one', async () => {
     const { onOpen } = aGrid();
 
