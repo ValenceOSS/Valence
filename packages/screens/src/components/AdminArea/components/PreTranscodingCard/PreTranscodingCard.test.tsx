@@ -119,13 +119,17 @@ describe('PreTranscodingCard', () => {
   it('saves a bitrate ceiling, and refuses to save one it cannot take', async () => {
     draw();
 
-    const field = await screen.findByRole('spinbutton', { name: 'Bitrate ceiling' });
+    const ceiling = () => screen.findByRole('spinbutton', { name: 'Bitrate ceiling' });
 
-    await userEvent.type(field, '20');
+    await userEvent.type(await ceiling(), '20');
 
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
 
-    await userEvent.type(field, '00');
+    await userEvent.clear(await ceiling());
+    await userEvent.type(await ceiling(), '2000');
+
+    expect(await ceiling()).toHaveValue(2000);
+
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     expect(savePreTranscodingMock).toHaveBeenCalledWith({

@@ -355,6 +355,7 @@ describe('SearchArea', () => {
     );
     await user.click(await screen.findByRole('button', { name: 'Decade' }));
     await user.click(await screen.findByRole('menuitemcheckbox', { name: '1990s' }));
+    await user.keyboard('{Escape}');
 
     expect(await screen.findByRole('button', { name: 'Decade' })).toHaveTextContent('1');
   });
