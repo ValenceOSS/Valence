@@ -3,6 +3,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { buildQueryClient } from '@ValenceClient/query/queryClient';
 import { TheWayIn } from '@ValenceTv/screens/TheWayIn/TheWayIn';
 import { ControllerHint } from '@ValenceTv/components/ControllerHint/ControllerHint';
+import { PromptHost } from '@ValenceTv/components/PromptHost/PromptHost';
 
 /**
  * Valence on a television: the whole application, from choosing a server to watching something.
@@ -17,6 +18,7 @@ const Television = () => {
     <QueryClientProvider client={answers}>
       <TheWayIn />
       <ControllerHint />
+      <PromptHost />
     </QueryClientProvider>
   );
 };

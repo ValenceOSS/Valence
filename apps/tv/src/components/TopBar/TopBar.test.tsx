@@ -1,7 +1,10 @@
-import { fireEvent, render, userEvent } from '@testing-library/react-native';
+import { fireEvent, render, userEvent, waitFor } from '@testing-library/react-native';
+import { useState } from 'react';
+import { Pressable, Text } from 'react-native';
 import { TopBar } from '@ValenceTv/components/TopBar/TopBar';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { TopBarProps } from '@ValenceTv/components/TopBar/TopBar.types';
+import type { View } from 'react-native';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 const ADA: ViewerProfile = {
@@ -34,7 +37,43 @@ const aBar = (overrides: Partial<TopBarProps> = {}): TopBarProps => ({
   ...overrides,
 });
 
+/**
+ * The bar above a page whose Play button pressing down from it should go to.
+ *
+ * @returns The bar and the button.
+ */
+const BarAbovePlay = () => {
+  const [play, setPlay] = useState<View | null>(null);
+
+  return (
+    <>
+      <TopBar {...aBar({ downFromTheBar: play })} />
+      <Pressable ref={setPlay} accessibilityLabel="Play" onPress={jest.fn()}>
+        <Text>Play</Text>
+      </Pressable>
+    </>
+  );
+};
+
 describe('TopBar', () => {
+  it('tells everything on the bar where pressing down goes, where it is told', async () => {
+    const drawn = await render(<BarAbovePlay />);
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Search').props).toHaveProperty('nextFocusDown');
+    });
+
+    for (const name of ['Home', 'Films', 'Ada’s profile']) {
+      expect(drawn.getByLabelText(name).props).toHaveProperty('nextFocusDown');
+    }
+  });
+
+  it('leaves pressing down to the television where it is told nothing', async () => {
+    const drawn = await render(<TopBar {...aBar()} />);
+
+    expect(drawn.getByLabelText('Search').props).not.toHaveProperty('nextFocusDown');
+  });
+
   it('offers films and programmes only where the server has some', async () => {
     const drawn = await render(<TopBar {...aBar({ hasFilms: false, hasShows: false })} />);
 

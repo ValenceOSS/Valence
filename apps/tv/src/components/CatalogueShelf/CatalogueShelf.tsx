@@ -5,6 +5,7 @@ import { cardSizes } from '@ValenceTv/components/MediaCard/cardSizes';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { CatalogueShelfProps } from './CatalogueShelf.types';
 import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
+import { rowsRememberTheirPlace } from '@ValenceTv/focus/rowsRememberTheirPlace';
 
 /**
  * A named row of films and shows from the film database, for the remote to move along — what is
@@ -25,7 +26,7 @@ const CatalogueShelf = ({ title, titles, onOpen }: CatalogueShelfProps) => {
     <View style={styles.shelf}>
       <Text style={styles.title}>{title}</Text>
 
-      <FocusGuide isRemembering>
+      <FocusGuide isRemembering={rowsRememberTheirPlace}>
         <FlatList
           horizontal
           initialNumToRender={inView}

@@ -33,6 +33,8 @@ import type { FocusableProps } from './Focusable.types';
  * @param isAnchoredLeft - Whether it lifts from its left edge, as a row in a list does.
  * @param nextFocusRight - Where pressing right goes, where it should not be left to the television
  *   to find: another element, or this one to stay put.
+ * @param nextFocusDown - Where pressing down goes, where it should not be left to the television.
+ * @param nextFocusUp - Where pressing up goes, where it should not be left to the television.
  * @param style - How it is laid out.
  * @param ref - Handed the pressable element, for something that has to send the remote to it.
  */
@@ -50,16 +52,18 @@ const Focusable = ({
   scale = tokens.FOCUS_SCALE,
   isAnchoredLeft = false,
   nextFocusRight,
+  nextFocusDown,
+  nextFocusUp,
   style,
 }: FocusableProps) => {
   const [isFocused, setIsFocused] = useState(false);
   const [hasHadFocus, setHasHadFocus] = useState(false);
   const isDrawnByFocus = typeof children === 'function';
-  const { ref: pressableRef, hints } = useFocusHints(
-    ref,
-    hasPreferredFocus && !hasHadFocus,
-    nextFocusRight,
-  );
+  const { ref: pressableRef, hints } = useFocusHints(ref, hasPreferredFocus && !hasHadFocus, {
+    ...(nextFocusRight === undefined ? {} : { right: nextFocusRight }),
+    ...(nextFocusDown === undefined ? {} : { down: nextFocusDown }),
+    ...(nextFocusUp === undefined ? {} : { up: nextFocusUp }),
+  });
 
   return (
     <LiftOnFocus

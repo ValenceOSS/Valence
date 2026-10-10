@@ -54,7 +54,7 @@ describe('Artwork', () => {
 
     expect(mockDrawnImage).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        source: { uri: 'https://image.tmdb.org/poster.jpg', headers: {} },
+        source: { uri: 'https://image.tmdb.org/poster.jpg' },
       }),
     );
   });

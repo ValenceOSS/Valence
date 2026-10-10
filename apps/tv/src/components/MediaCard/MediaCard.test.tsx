@@ -91,13 +91,13 @@ describe('MediaCard', () => {
       wrapper: CacheScope,
     });
 
-    expect(picturesIn(wide)).toEqual([`/api/media/${FILM.id}/image/backdrop`]);
+    expect(picturesIn(wide)).toEqual([`/api/media/${FILM.id}/image/backdrop?size=medium`]);
 
     const tall = await render(<MediaCard media={FILM} shape="poster" onPress={jest.fn()} />, {
       wrapper: CacheScope,
     });
 
-    expect(picturesIn(tall)).toEqual([`/api/media/${FILM.id}/image/poster`]);
+    expect(picturesIn(tall)).toEqual([`/api/media/${FILM.id}/image/poster?size=small`]);
   });
 
   it('falls back to whichever picture a title has, and to none at all', async () => {
@@ -106,7 +106,7 @@ describe('MediaCard', () => {
       { wrapper: CacheScope },
     );
 
-    expect(picturesIn(posterOnly)).toEqual([`/api/media/${FILM.id}/image/poster`]);
+    expect(picturesIn(posterOnly)).toEqual([`/api/media/${FILM.id}/image/poster?size=medium`]);
 
     const neither = await render(
       <MediaCard media={{ ...FILM, hasBackdrop: false, hasPoster: false }} onPress={jest.fn()} />,
@@ -122,7 +122,7 @@ describe('MediaCard', () => {
       { wrapper: CacheScope },
     );
 
-    expect(picturesIn(drawn)).toContain(`/api/media/${FILM.id}/image/logo?at=full`);
+    expect(picturesIn(drawn)).toContain(`/api/media/${FILM.id}/image/logo?size=medium`);
 
     await fireEvent(drawn.getByRole('button', { name: 'Dune' }), 'focus');
 
@@ -139,7 +139,7 @@ describe('MediaCard', () => {
       await fireEvent(logo, 'error', { nativeEvent: { error: 'Not found' } });
     }
 
-    expect(picturesIn(drawn)).not.toContain(`/api/media/${FILM.id}/image/logo?at=full`);
+    expect(picturesIn(drawn)).not.toContain(`/api/media/${FILM.id}/image/logo?size=medium`);
     expect(drawn.getByText('Dune')).not.toHaveStyle({ opacity: 0 });
   });
 

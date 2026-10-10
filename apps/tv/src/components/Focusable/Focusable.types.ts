@@ -15,6 +15,8 @@ type FocusableProps = {
   scale?: number;
   isAnchoredLeft?: boolean;
   nextFocusRight?: View | null;
+  nextFocusDown?: View | null;
+  nextFocusUp?: View | null;
   style?: StyleProp<ViewStyle>;
 };
 

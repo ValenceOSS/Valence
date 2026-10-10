@@ -43,6 +43,19 @@ describe('moveFocus', () => {
     expect(named()).toBe('second');
   });
 
+  it('scrolls what it lands on clear of the bar floating along the top', () => {
+    const row = aPart();
+
+    aLandingPlace(row, 'first', box(0, 500)).focus();
+    aLandingPlace(row, 'second', box(120, 500));
+
+    moveFocus('right');
+
+    expect(
+      document.activeElement instanceof HTMLElement && document.activeElement.style.scrollMarginTop,
+    ).toBe('160px');
+  });
+
   it('lands on the first place when nothing has the remote', () => {
     aLandingPlace(aPart(), 'only', box(0, 0));
 
@@ -74,6 +87,28 @@ describe('moveFocus', () => {
 
     expect(moveFocus('up')).toBe(false);
     expect(named()).toBe('inside');
+  });
+
+  it('moves sideways into a remembering guide to what is next to it, not where the remote last was', () => {
+    const page = aPart();
+    const tabs = document.createElement('div');
+
+    placeOnScreen(tabs, box(120, 0, 400, 100));
+    page.append(tabs);
+    aLandingPlace(page, 'search', box(0, 0)).focus();
+    aLandingPlace(tabs, 'home', box(120, 0));
+
+    const films = aLandingPlace(tabs, 'films', box(240, 0));
+
+    guideRules.set(tabs, {
+      isRemembering: true,
+      trapped: new Set(),
+      isShut: false,
+      lastFocused: films,
+    });
+
+    expect(moveFocus('right')).toBe(true);
+    expect(named()).toBe('home');
   });
 
   it('comes back into a remembering guide where the remote last was', () => {

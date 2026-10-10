@@ -39,8 +39,24 @@ const isLevel = (from: Box, to: Box, direction: Direction): boolean =>
     : to.left < from.right && from.left < to.right;
 
 /**
+ * How far a point lies beyond a span, or nought where it lies within it.
+ *
+ * @param point - The point.
+ * @param start - Where the span starts.
+ * @param end - Where it ends.
+ * @returns The distance outside the span.
+ */
+const outside = (point: number, start: number, end: number): number =>
+  point < start ? start - point : point > end ? point - end : 0;
+
+/**
  * How far away a box is in a direction, the gap along the move weighing far more than the offset
  * across it, so the next thing in line beats something nearer but out of line.
+ *
+ * The offset across is measured from the whole width of where the remote is, not its middle, so
+ * everything sitting straight below a wide button counts as in line with it, and the first of them
+ * in the page wins: down from a film's last button lands on the first of the cast, not the one
+ * nearest the button's middle.
  *
  * @param from - Where the remote is.
  * @param to - Somewhere it might go.
@@ -58,8 +74,8 @@ const distanceTo = (from: Box, to: Box, direction: Direction): number => {
           : from.top - to.bottom;
   const across =
     direction === 'left' || direction === 'right'
-      ? (to.top + to.bottom) / 2 - (from.top + from.bottom) / 2
-      : (to.left + to.right) / 2 - (from.left + from.right) / 2;
+      ? outside((to.top + to.bottom) / 2, from.top, from.bottom)
+      : outside((to.left + to.right) / 2, from.left, from.right);
 
   return ACROSS_WEIGHT * Math.max(along, 0) ** 2 + across ** 2;
 };

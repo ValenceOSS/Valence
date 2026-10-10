@@ -8,6 +8,7 @@ type TabBarProps<Tab extends string> = {
   isStartingHere?: boolean;
   onFocusChange?: (isIn: boolean) => void;
   itemRef?: (tab: Tab, item: View | null) => void;
+  downTo?: View | null;
 };
 
 export type { TabBarProps };

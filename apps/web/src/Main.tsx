@@ -7,6 +7,7 @@ import { TooltipScope } from '@ValenceUI/TooltipScope';
 import { buildQueryClient } from '@ValenceClient/query/queryClient';
 import { installBrowserPlatform } from '@ValenceWeb/platform/installBrowserPlatform';
 import { buildRouter } from '@ValenceScreens/routes/buildRouter';
+import { KeepTheLayout } from '@ValenceScreens/components/KeepTheLayout/KeepTheLayout';
 import './styles/main.css';
 
 installBrowserPlatform();
@@ -27,6 +28,7 @@ createRoot(container).render(
       <TooltipScope>
         <RouterProvider router={router} />
         <Toaster />
+        <KeepTheLayout />
       </TooltipScope>
     </QueryClientProvider>
   </StrictMode>,

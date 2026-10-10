@@ -9,7 +9,7 @@
     "prebuild:android": "EXPO_TV=1 REACT_NATIVE_NODE_MODULES_DIR=$PWD/node_modules expo prebuild --platform android --clean",
     "tvos": "EXPO_TV=1 REACT_NATIVE_NODE_MODULES_DIR=$PWD/node_modules expo run:ios",
     "android": "EXPO_TV=1 REACT_NATIVE_NODE_MODULES_DIR=$PWD/node_modules expo run:android",
-    "build:web": "EXPO_TV=1 REACT_NATIVE_NODE_MODULES_DIR=$PWD/node_modules expo export --platform web --output-dir web-dist && esbuild 'web-dist/_expo/static/js/web/*.js' --target=chrome84 --outdir=web-dist/_expo/static/js/web --allow-overwrite --log-level=warning",
+    "build:web": "EXPO_TV=1 REACT_NATIVE_NODE_MODULES_DIR=$PWD/node_modules expo export --platform web --output-dir web-dist && esbuild 'web-dist/_expo/static/js/web/*.js' --target=chrome84 --minify --outdir=web-dist/_expo/static/js/web --allow-overwrite --log-level=warning && tsx src/web/compressTheBuild.ts web-dist",
     "test": "jest",
     "typecheck": "tsc --noEmit"
   },

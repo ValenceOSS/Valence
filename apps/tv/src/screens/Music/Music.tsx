@@ -16,6 +16,7 @@ import type { MusicItem } from '@ValenceTv/music/MusicItem';
 import type { MusicProps } from './Music.types';
 import { say } from '@ValenceI18n/say';
 import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
+import { rowsRememberTheirPlace } from '@ValenceTv/focus/rowsRememberTheirPlace';
 
 const ACROSS = 4;
 
@@ -127,7 +128,7 @@ const MusicPage = ({ onOpen, onFeature, upTo }: MusicProps) => {
           contentContainerStyle={styles.inside}
           showsVerticalScrollIndicator={false}
         >
-          <FocusGuide isRemembering style={styles.grid}>
+          <FocusGuide isRemembering={rowsRememberTheirPlace} style={styles.grid}>
             {shortcuts.map((item, at) => (
               <MusicShortcut
                 key={`${item.kind}:${item.id}`}

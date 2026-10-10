@@ -1,3 +1,4 @@
+import type { View } from 'react-native';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
 type MediaCardShape = 'wide' | 'poster';
@@ -13,6 +14,7 @@ type MediaCardProps = {
   isUrgent?: boolean;
   width?: number;
   onFocus?: (media: MediaSummary) => void;
+  upTo?: View | null;
 };
 
 export type { MediaCardProps, MediaCardShape };

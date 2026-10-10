@@ -36,6 +36,8 @@ type Place = { x: number; y: number; width: number; height: number };
  * @param isStartingHere - Whether the remote starts on the current tab when the screen appears.
  * @param onFocusChange - Told when the remote comes onto a tab and when it leaves one.
  * @param itemRef - Handed each tab by its name, for anything that sends the remote up to one.
+ * @param downTo - Where pressing down from any tab goes, where it should not be left to the
+ *   television to find.
  */
 const TabBar = <Tab extends string>({
   tabs,
@@ -44,6 +46,7 @@ const TabBar = <Tab extends string>({
   isStartingHere = false,
   onFocusChange,
   itemRef,
+  downTo,
 }: TabBarProps<Tab>) => {
   const [places, setPlaces] = useState<ReadonlyMap<Tab, Place>>(new Map());
   const [isInRow, setIsInRow] = useState(false);
@@ -124,6 +127,7 @@ const TabBar = <Tab extends string>({
         >
           <Focusable
             ref={refs.get(tab.id)}
+            {...(downTo === undefined || downTo === null ? {} : { nextFocusDown: downTo })}
             label={tab.label}
             hasPreferredFocus={isStartingHere && tab.id === current}
             scale={1}
