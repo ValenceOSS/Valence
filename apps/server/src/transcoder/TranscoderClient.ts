@@ -316,7 +316,11 @@ type QueueControl = {
 type Transcoder = {
   isReachable: () => Promise<boolean>;
   probe: (path: string) => Promise<MediaProbe>;
-  startSession: (spec: SessionSpec, deviceId?: string) => Promise<SessionResponse>;
+  startSession: (
+    spec: SessionSpec,
+    deviceId?: string,
+    variants?: readonly SessionSpec[],
+  ) => Promise<SessionResponse>;
   readSessionFile: (sessionId: string, name: string) => Promise<TranscoderStreamedFile | null>;
   locateSessionFile?: (sessionId: string, name: string) => Promise<LocatedSessionFile | null>;
   readFile: (path: string, range: string | null) => Promise<TranscoderStreamedFile | null>;
@@ -701,10 +705,14 @@ const createTranscoderClient = ({
     probe: async (path) =>
       MediaProbeSchema.parse(await (await postJson('/probe', { path })).json()),
 
-    startSession: async (spec, deviceId) =>
+    startSession: async (spec, deviceId, variants = []) =>
       SessionResponseSchema.parse(
         await (
-          await postJson('/sessions', deviceId === undefined ? spec : { ...spec, deviceId })
+          await postJson('/sessions', {
+            ...spec,
+            ...(deviceId === undefined ? {} : { deviceId }),
+            ...(variants.length === 0 ? {} : { variants }),
+          })
         ).json(),
       ),
 

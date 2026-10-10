@@ -14,6 +14,7 @@ import {
 import { SEERR_DEFAULTS, SeerrSettingsSchema } from '@ValenceContracts/schemas/SeerrLink';
 import { EMAIL_DEFAULTS, EmailSettingsSchema } from '@ValenceContracts/schemas/EmailSettings';
 import { LINK_SETTINGS_DEFAULTS, LinkSettingsSchema } from '@ValenceServer/linking/LinkSettings';
+import { withPreTranscodeTargets } from '@ValenceServer/settings/withPreTranscodeTargets';
 
 const ServerSettingsSchema = z.object({
   trustedOrigins: z.array(z.string().url()),
@@ -44,7 +45,9 @@ const ServerSettingsSchema = z.object({
   controlsConnectedApps: z.boolean().default(false),
   roundness: RoundnessSchema.default('default'),
   keepsDownloadsForDays: z.number().int().nonnegative().max(3650).default(14),
-  preTranscoding: PreTranscodingSettingsSchema.default(PRE_TRANSCODING_DEFAULTS),
+  preTranscoding: z
+    .preprocess(withPreTranscodeTargets, PreTranscodingSettingsSchema)
+    .default(PRE_TRANSCODING_DEFAULTS),
   seerr: SeerrSettingsSchema.default(SEERR_DEFAULTS),
   email: EmailSettingsSchema.default(EMAIL_DEFAULTS),
   subtitles: SubtitleSettingsSchema.default(SUBTITLE_DEFAULTS),

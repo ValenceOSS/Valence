@@ -6,7 +6,7 @@ import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
 import type { ReencodeSettings } from '@ValenceContracts/schemas/Reencode';
 import { saying } from '@ValenceI18n/saying';
 
-const SEGMENT_SECONDS = 4;
+const KEYFRAME_SECONDS = 2;
 
 type RenditionVideo =
   | { kind: 'copy' }
@@ -139,7 +139,7 @@ const planReencodeSpec = ({
   const shared = {
     inputPath,
     startSeconds: 0,
-    segmentSeconds: SEGMENT_SECONDS,
+    segmentSeconds: KEYFRAME_SECONDS,
     audio: { kind: 'copy' } as const,
     subtitles: { kind: 'none' } as const,
     container: 'fmp4' as const,

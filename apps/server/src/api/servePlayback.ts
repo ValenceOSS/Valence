@@ -62,6 +62,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
       audioStreamIndex,
       requestedQuality,
       subtitleStreamIndex,
+      isAdaptive,
     } = context.req.valid('json');
 
     const outcome = await playback.start(
@@ -72,6 +73,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
       requestedQuality,
       clientId,
       subtitleStreamIndex,
+      isAdaptive,
     );
 
     if (outcome.kind === 'notFound') {

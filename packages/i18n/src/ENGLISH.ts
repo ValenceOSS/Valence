@@ -4080,8 +4080,9 @@ const ENGLISH = {
   'screens.adminArea.pluginsPanel.turnedNameOn': 'Turned {name} on.',
   'screens.adminArea.pluginsPanel.versionComesBackWithWhat':
     'Rolls the plugin back to {version} and restores the data it had saved before the upgrade. Anything it saved after the upgrade is deleted.',
-  'screens.adminArea.preTranscodingCard.aCopyIsNeverLargerThan':
-    'H.264 in MP4 plays directly on the most devices. A copy is never larger than its original, and files already that small are skipped.',
+  'screens.adminArea.preTranscodingCard.aCopyIsMadeAtEveryRung':
+    'A copy is made at every rung the original stands above, so each film has one for a slow connection as well as a fast one. H.264 in MP4 plays directly on the most devices, and a copy is never larger than its original. Leave the ceiling empty to use the limit for that resolution.',
+  'screens.adminArea.preTranscodingCard.addARung': 'Add a rung',
   'screens.adminArea.preTranscodingCard.atAnyHourUntilEveryFile':
     'At any time, one file at a time, until every file has a copy.',
   'screens.adminArea.preTranscodingCard.aWholeNumberFrom100': 'A whole number from 100 to 200000.',
@@ -4099,6 +4100,8 @@ const ENGLISH = {
   'screens.adminArea.preTranscodingCard.inQuietHours': 'Only during quiet hours',
   'screens.adminArea.preTranscodingCard.keepsACopyOfEachFilm':
     'Saves a copy of each film and episode next to the original, in a size and format most devices can play directly, so the server doesn’t have to transcode it while someone watches. Copies are named like “Arrival (2016) - 1080p H264.valence.mp4”, and Valence never adds files named this way to a library.',
+  'screens.adminArea.preTranscodingCard.madeStillToMakeAndKept':
+    '{made} made · {left} still to make · {size} on disk',
   'screens.adminArea.preTranscodingCard.makeTheNextCopyNow': 'Start the next copy now',
   'screens.adminArea.preTranscodingCard.makingACopyOfTitle': 'Making a copy of {title}',
   'screens.adminArea.preTranscodingCard.onlyBetweenTheseHoursOnThe':
@@ -4111,16 +4114,17 @@ const ENGLISH = {
     'Pre-transcoding is paused, and the current copy has stopped.',
   'screens.adminArea.preTranscodingCard.refusedOrFailedTwice':
     'Refused or failed twice. Saving the settings retries the refused ones, and changing the copy format retries all of them.',
+  'screens.adminArea.preTranscodingCard.removeTheQualityRung': 'Remove the {quality} rung',
   'screens.adminArea.preTranscodingCard.rightNow': 'Right now',
   'screens.adminArea.preTranscodingCard.savedPreTranscoding': 'Saved the pre-transcoding settings.',
   'screens.adminArea.preTranscodingCard.startingAt': 'Starting at',
   'screens.adminArea.preTranscodingCard.stillToMake': 'Remaining',
+  'screens.adminArea.preTranscodingCard.theLadder': 'The ladder',
   'screens.adminArea.preTranscodingCard.theNextCopyIsBeingMade': 'Started the next copy.',
   'screens.adminArea.preTranscodingCard.thereIsNothingToMakeA':
     'Nothing needs a copy, or pre-transcoding is off.',
   'screens.adminArea.preTranscodingCard.untilEverythingIsDone': 'Until everything is done',
   'screens.adminArea.preTranscodingCard.waitingForQuietHours': 'Waiting for quiet hours',
-  'screens.adminArea.preTranscodingCard.whatEachCopyIs': 'Copy format',
   'screens.adminArea.processor': 'CPU',
   'screens.adminArea.profileEditor.addProfile': 'Add profile',
   'screens.adminArea.profileEditor.aFilmIsHeldUntilThen':

@@ -31,6 +31,8 @@ import { preTranscodeTargetOf } from './preTranscodeTargetOf';
 import type { SQL } from 'drizzle-orm';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type {
+  PreTranscodeTarget,
+  PreTranscodeTargetProgress,
   PreTranscodingSettings,
   PreTranscodingStatus,
 } from '@ValenceContracts/schemas/PreTranscoding';
@@ -62,14 +64,17 @@ type CreatePreTranscodingServiceOptions = {
 
 /**
  * Pre-transcoding: working through the video libraries one film or episode at a time, keeping
- * beside each one a copy a modest device plays untouched, in the hours an administrator chose.
+ * beside each one a ladder of copies — one for every rung the administrator chose that the original
+ * stands above — so a modest device, or a slow connection, has something it plays untouched, in the
+ * hours an administrator chose. The rungs are worked in the order they were listed, each through
+ * the whole library before the next.
  *
  * Every copy is an ordinary re-encode kept alongside, asked for with `preTranscode` as its origin,
  * so the one queue makes it, the one rendition table remembers it and playback already prefers it.
  * This decides only what to ask for next and when: never while one of its own is under way, never
  * outside the window, and never for a file the copy would not improve. What it queued stops when
- * the window closes, so nothing runs into the day. A file refused, or failed twice, is passed over
- * until the copy asked for changes or the settings are saved again.
+ * the window closes, so nothing runs into the day. A file refused at a rung, or failed there twice,
+ * is passed over at that rung until the copy asked for changes or the settings are saved again.
  *
  * The files are walked in the order of their identifiers from where the last one was taken, so a
  * library of thousands is not read from the top on every tick.
@@ -86,9 +91,9 @@ const createPreTranscodingService = ({
   onQueued,
   now = () => new Date(),
 }: CreatePreTranscodingServiceOptions): PreTranscodingService => {
-  let cursor = '';
+  const cursors = new Map<string, string>();
 
-  const asTarget = (chosen: PreTranscodingSettings): SQL | undefined =>
+  const asTarget = (chosen: PreTranscodeTarget): SQL | undefined =>
     and(
       eq(reencodeRequest.origin, 'preTranscode'),
       eq(reencodeRequest.mode, 'keep'),
@@ -97,7 +102,7 @@ const createPreTranscodingService = ({
       eq(reencodeRequest.container, chosen.container),
     );
 
-  const keptAs = (chosen: PreTranscodingSettings): SQL | undefined =>
+  const keptAs = (chosen: PreTranscodeTarget): SQL | undefined =>
     and(
       eq(reencodeRequest.mode, 'keep'),
       eq(reencodeRequest.state, 'finished'),
@@ -106,7 +111,7 @@ const createPreTranscodingService = ({
       eq(reencodeRequest.container, chosen.container),
     );
 
-  const failedTwice = (chosen: PreTranscodingSettings) =>
+  const failedTwice = (chosen: PreTranscodeTarget) =>
     db
       .select({ mediaItemId: reencodeRequest.mediaItemId })
       .from(reencodeRequest)
@@ -126,8 +131,11 @@ const createPreTranscodingService = ({
       gt(mediaItem.height, 0),
     );
 
-  const stillWanting = (chosen: PreTranscodingSettings): SQL | undefined => {
-    const { key } = preTranscodeTargetOf(chosen);
+  const stillWanting = (
+    chosen: PreTranscodingSettings,
+    target: PreTranscodeTarget,
+  ): SQL | undefined => {
+    const { key } = preTranscodeTargetOf(target);
 
     return and(
       inScope(chosen),
@@ -136,7 +144,7 @@ const createPreTranscodingService = ({
           .select({ one: sql`1` })
           .from(reencodeRequest)
           .innerJoin(mediaRendition, eq(mediaRendition.path, reencodeRequest.workingPath))
-          .where(and(eq(reencodeRequest.mediaItemId, mediaItem.id), keptAs(chosen))),
+          .where(and(eq(reencodeRequest.mediaItemId, mediaItem.id), keptAs(target))),
       ),
       notExists(
         db
@@ -160,11 +168,11 @@ const createPreTranscodingService = ({
             ),
           ),
       ),
-      notInArray(mediaItem.id, failedTwice(chosen)),
+      notInArray(mediaItem.id, failedTwice(target)),
     );
   };
 
-  const pageFrom = (chosen: PreTranscodingSettings, after: string) =>
+  const pageFrom = (chosen: PreTranscodingSettings, target: PreTranscodeTarget, after: string) =>
     db
       .select({
         id: mediaItem.id,
@@ -175,12 +183,12 @@ const createPreTranscodingService = ({
       })
       .from(mediaItem)
       .innerJoin(library, eq(library.id, mediaItem.libraryId))
-      .where(and(stillWanting(chosen), gt(mediaItem.id, after)))
+      .where(and(stillWanting(chosen, target), gt(mediaItem.id, after)))
       .orderBy(asc(mediaItem.id))
       .limit(PAGE);
 
   const wouldImprove = (
-    chosen: PreTranscodingSettings,
+    target: PreTranscodeTarget,
     row: {
       height: number;
       bitrateKbps: number | null;
@@ -191,20 +199,21 @@ const createPreTranscodingService = ({
     needsPreTranscode(
       { ...row, bitrateKbps: row.bitrateKbps ?? 0 },
       {
-        quality: chosen.quality,
-        videoCodec: chosen.videoCodec,
-        maxBitrateKbps: chosen.maxBitrateKbps,
+        quality: target.quality,
+        videoCodec: target.videoCodec,
+        maxBitrateKbps: target.maxBitrateKbps,
       },
     );
 
   const nextAfter = async (
     chosen: PreTranscodingSettings,
+    target: PreTranscodeTarget,
     after: string,
     passed: ReadonlySet<string>,
   ): Promise<string | null> => {
     for (let from = after; ;) {
-      const rows = await pageFrom(chosen, from);
-      const found = rows.find((row) => !passed.has(row.id) && wouldImprove(chosen, row));
+      const rows = await pageFrom(chosen, target, from);
+      const found = rows.find((row) => !passed.has(row.id) && wouldImprove(target, row));
 
       if (found !== undefined) {
         return found.id;
@@ -222,18 +231,27 @@ const createPreTranscodingService = ({
 
   const findNext = async (
     chosen: PreTranscodingSettings,
+    target: PreTranscodeTarget,
     passed: ReadonlySet<string>,
-  ): Promise<string | null> =>
-    (await nextAfter(chosen, cursor, passed)) ??
-    (cursor === '' ? null : await nextAfter(chosen, '', passed));
+  ): Promise<string | null> => {
+    const cursor = cursors.get(preTranscodeTargetOf(target).key) ?? '';
 
-  const countStillNeeded = async (chosen: PreTranscodingSettings): Promise<number> => {
+    return (
+      (await nextAfter(chosen, target, cursor, passed)) ??
+      (cursor === '' ? null : await nextAfter(chosen, target, '', passed))
+    );
+  };
+
+  const countStillNeeded = async (
+    chosen: PreTranscodingSettings,
+    target: PreTranscodeTarget,
+  ): Promise<number> => {
     let needed = 0;
 
     for (let from = ''; ;) {
-      const rows = await pageFrom(chosen, from);
+      const rows = await pageFrom(chosen, target, from);
 
-      needed += rows.filter((row) => wouldImprove(chosen, row)).length;
+      needed += rows.filter((row) => wouldImprove(target, row)).length;
 
       const last = rows.at(-1);
 
@@ -277,23 +295,24 @@ const createPreTranscodingService = ({
   ): Promise<void> => {
     await upsert(db, preTranscodeRefusal, {
       values: [{ mediaItemId, target: key, code, detail, refusedAt: now() }],
-      target: preTranscodeRefusal.mediaItemId,
-      set: { target: key, code, detail, refusedAt: now() },
+      target: [preTranscodeRefusal.mediaItemId, preTranscodeRefusal.target],
+      set: { code, detail, refusedAt: now() },
     });
   };
 
-  const queueNext = async (
+  const queueNextAt = async (
     chosen: PreTranscodingSettings,
+    rung: PreTranscodeTarget,
     askedBy: string | null,
   ): Promise<PreTranscodeTick> => {
-    const target = preTranscodeTargetOf(chosen);
+    const target = preTranscodeTargetOf(rung);
     const passed = new Set<string>();
 
     for (let tries = 0; tries < MOST_TRIES_A_TICK; tries += 1) {
-      const mediaId = await findNext(chosen, passed);
+      const mediaId = await findNext(chosen, rung, passed);
 
       if (mediaId === null) {
-        cursor = '';
+        cursors.delete(target.key);
 
         return { kind: 'nothingLeft' };
       }
@@ -305,7 +324,7 @@ const createPreTranscodingService = ({
         'preTranscode',
       );
 
-      cursor = mediaId;
+      cursors.set(target.key, mediaId);
 
       if (started.length > 0) {
         onQueued();
@@ -325,6 +344,65 @@ const createPreTranscodingService = ({
     return { kind: 'nothingLeft' };
   };
 
+  const queueNext = async (
+    chosen: PreTranscodingSettings,
+    askedBy: string | null,
+  ): Promise<PreTranscodeTick> => {
+    for (const rung of chosen.targets) {
+      const ticked = await queueNextAt(chosen, rung, askedBy);
+
+      if (ticked.kind !== 'nothingLeft') {
+        return ticked;
+      }
+    }
+
+    return { kind: 'nothingLeft' };
+  };
+
+  const progressAt = async (
+    chosen: PreTranscodingSettings,
+    target: PreTranscodeTarget,
+  ): Promise<PreTranscodeTargetProgress> => {
+    const { key } = preTranscodeTargetOf(target);
+
+    const [made] = await db
+      .select({ counted: countDistinct(reencodeRequest.mediaItemId) })
+      .from(reencodeRequest)
+      .innerJoin(mediaRendition, eq(mediaRendition.path, reencodeRequest.workingPath))
+      .where(keptAs(target));
+
+    const [refusedCount] = await db
+      .select({ counted: count() })
+      .from(preTranscodeRefusal)
+      .where(eq(preTranscodeRefusal.target, key));
+
+    const [kept] = await db
+      .select({ bytes: sql<number>`coalesce(sum(${mediaRendition.sizeBytes}), 0)`.mapWith(Number) })
+      .from(mediaRendition)
+      .where(
+        inArray(
+          mediaRendition.path,
+          db
+            .select({ path: reencodeRequest.workingPath })
+            .from(reencodeRequest)
+            .where(keptAs(target)),
+        ),
+      );
+
+    const failed = await failedTwice(target);
+
+    return {
+      target,
+      copiesMade: made?.counted ?? 0,
+      bytesKept: kept?.bytes ?? 0,
+      stillNeeded: await countStillNeeded(chosen, target),
+      givenUp: (refusedCount?.counted ?? 0) + failed.length,
+    };
+  };
+
+  const keysOf = (chosen: PreTranscodingSettings): string =>
+    chosen.targets.map((target) => preTranscodeTargetOf(target).key).join('|');
+
   const isInTheWindow = async (chosen: PreTranscodingSettings): Promise<boolean> =>
     chosen.schedule === 'untilDone' ||
     isWithinHours(
@@ -335,20 +413,14 @@ const createPreTranscodingService = ({
 
   const status = async (): Promise<PreTranscodingStatus> => {
     const chosen = await settings.read();
-    const { key } = preTranscodeTargetOf(chosen);
+    const ladder: PreTranscodeTargetProgress[] = [];
 
-    const [made] = await db
-      .select({ counted: countDistinct(reencodeRequest.mediaItemId) })
-      .from(reencodeRequest)
-      .innerJoin(mediaRendition, eq(mediaRendition.path, reencodeRequest.workingPath))
-      .where(keptAs(chosen));
+    for (const target of chosen.targets) {
+      ladder.push(await progressAt(chosen, target));
+    }
 
-    const [refusedCount] = await db
-      .select({ counted: count() })
-      .from(preTranscodeRefusal)
-      .where(eq(preTranscodeRefusal.target, key));
-
-    const failed = await failedTwice(chosen);
+    const total = (of: (rung: PreTranscodeTargetProgress) => number): number =>
+      ladder.reduce((sum, rung) => sum + of(rung), 0);
 
     const current =
       (await reencodes.list()).find(
@@ -359,9 +431,10 @@ const createPreTranscodingService = ({
 
     return {
       settings: chosen,
-      copiesMade: made?.counted ?? 0,
-      stillNeeded: await countStillNeeded(chosen),
-      givenUp: (refusedCount?.counted ?? 0) + failed.length,
+      copiesMade: total((rung) => rung.copiesMade),
+      stillNeeded: total((rung) => rung.stillNeeded),
+      givenUp: total((rung) => rung.givenUp),
+      ladder,
       current,
       isInWindow: await isInTheWindow(chosen),
       timezone: await timezone(),
@@ -374,13 +447,13 @@ const createPreTranscodingService = ({
     save: async (next) => {
       const before = await settings.read();
       const wasSame =
-        preTranscodeTargetOf(before).key === preTranscodeTargetOf(next).key &&
+        keysOf(before) === keysOf(next) &&
         JSON.stringify(before.libraryIds) === JSON.stringify(next.libraryIds);
 
       await settings.write(next);
       await db.delete(preTranscodeRefusal);
 
-      cursor = '';
+      cursors.clear();
 
       if (!next.isEnabled || next.isPaused || !wasSame) {
         await cancelOwn(false);

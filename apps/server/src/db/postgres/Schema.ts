@@ -949,15 +949,19 @@ const reencodeRequest = pgTable(
   ],
 );
 
-const preTranscodeRefusal = pgTable('pre_transcode_refusal', {
-  mediaItemId: text('mediaItemId')
-    .primaryKey()
-    .references(() => mediaItem.id, { onDelete: 'cascade' }),
-  target: text('target').notNull(),
-  code: text('code').notNull(),
-  detail: jsonb('detail').$type<Said>().notNull(),
-  refusedAt: timestamp('refusedAt').notNull().defaultNow(),
-});
+const preTranscodeRefusal = pgTable(
+  'pre_transcode_refusal',
+  {
+    mediaItemId: text('mediaItemId')
+      .notNull()
+      .references(() => mediaItem.id, { onDelete: 'cascade' }),
+    target: text('target').notNull(),
+    code: text('code').notNull(),
+    detail: jsonb('detail').$type<Said>().notNull(),
+    refusedAt: timestamp('refusedAt').notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.mediaItemId, table.target] })],
+);
 
 const book = pgTable(
   'book',

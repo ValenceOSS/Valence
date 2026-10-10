@@ -16250,9 +16250,14 @@
     "context": "The detail of the dialog confirming a plugin is rolled back to its earlier version, in the admin's plugins panel. {version} is the earlier version's number, such as 1.2.0."
   },
   {
-    "handler": "screens.adminArea.preTranscodingCard.aCopyIsNeverLargerThan",
-    "text": "H.264 in MP4 plays directly on the most devices. A copy is never larger than its original, and files already that small are skipped.",
-    "context": "The description of the setting for what each pre-transcoded copy is."
+    "handler": "screens.adminArea.preTranscodingCard.aCopyIsMadeAtEveryRung",
+    "text": "A copy is made at every rung the original stands above, so each film has one for a slow connection as well as a fast one. H.264 in MP4 plays directly on the most devices, and a copy is never larger than its original. Leave the ceiling empty to use the limit for that resolution.",
+    "context": "Shown in the pre-transcoding card in the encoding section of the admin area."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.addARung",
+    "text": "Add a rung",
+    "context": "Shown in the pre-transcoding card in the encoding section of the admin area."
   },
   {
     "handler": "screens.adminArea.preTranscodingCard.atAnyHourUntilEveryFile",
@@ -16315,6 +16320,11 @@
     "context": "The explanation at the top of the pre-transcoding card in the administration area. The quoted name is an example file name and should be kept as it is."
   },
   {
+    "handler": "screens.adminArea.preTranscodingCard.madeStillToMakeAndKept",
+    "text": "{made} made · {left} still to make · {size} on disk",
+    "context": "Shown in the pre-transcoding card in the encoding section of the admin area."
+  },
+  {
     "handler": "screens.adminArea.preTranscodingCard.makeTheNextCopyNow",
     "text": "Start the next copy now",
     "context": "A button on the pre-transcoding card that starts the next copy straight away, whatever the hour."
@@ -16355,6 +16365,11 @@
     "context": "The detail under the Passed over figure on the pre-transcoding card."
   },
   {
+    "handler": "screens.adminArea.preTranscodingCard.removeTheQualityRung",
+    "text": "Remove the {quality} rung",
+    "context": "Shown in the pre-transcoding card in the encoding section of the admin area."
+  },
+  {
     "handler": "screens.adminArea.preTranscodingCard.rightNow",
     "text": "Right now",
     "context": "A figure on the pre-transcoding card saying what pre-transcoding is doing at the moment."
@@ -16375,6 +16390,11 @@
     "context": "A figure on the pre-transcoding card: how many films and episodes still need a copy."
   },
   {
+    "handler": "screens.adminArea.preTranscodingCard.theLadder",
+    "text": "The ladder",
+    "context": "Shown in the pre-transcoding card in the encoding section of the admin area."
+  },
+  {
     "handler": "screens.adminArea.preTranscodingCard.theNextCopyIsBeingMade",
     "text": "Started the next copy.",
     "context": "A notice shown after an administrator asked pre-transcoding to make the next copy straight away."
@@ -16393,11 +16413,6 @@
     "handler": "screens.adminArea.preTranscodingCard.waitingForQuietHours",
     "text": "Waiting for quiet hours",
     "context": "What pre-transcoding is doing at the moment: it is outside the hours it may run in."
-  },
-  {
-    "handler": "screens.adminArea.preTranscodingCard.whatEachCopyIs",
-    "text": "Copy format",
-    "context": "A setting on the pre-transcoding card: the picture size, codec and container of every copy."
   },
   {
     "handler": "screens.adminArea.processor",

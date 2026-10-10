@@ -1,4 +1,4 @@
-import type { PreTranscodingSettings } from '@ValenceContracts/schemas/PreTranscoding';
+import type { PreTranscodeTarget } from '@ValenceContracts/schemas/PreTranscoding';
 import type { ReencodeSettings } from '@ValenceContracts/schemas/Reencode';
 
 type PreTranscodeRequest = {
@@ -7,28 +7,29 @@ type PreTranscodeRequest = {
 };
 
 /**
- * What pre-transcoding asks the re-encoder for on these settings — a copy kept beside each film —
- * and the key a remembered refusal is filed under, which changes whenever the copy would.
+ * What pre-transcoding asks the re-encoder for to make one rung of the ladder — a copy kept beside
+ * each film — and the key that rung's copies and refusals are filed under, which changes whenever
+ * the copy would.
  *
- * @param settings - The pre-transcoding settings.
- * @returns The request every copy is made from, and its key.
+ * @param target - The rung.
+ * @returns The request every copy at that rung is made from, and its key.
  */
-const preTranscodeTargetOf = (settings: PreTranscodingSettings): PreTranscodeRequest => ({
+const preTranscodeTargetOf = (target: PreTranscodeTarget): PreTranscodeRequest => ({
   settings: {
     mode: 'keep',
-    quality: settings.quality,
-    videoCodec: settings.videoCodec,
-    audio: settings.audio,
-    container: settings.container,
+    quality: target.quality,
+    videoCodec: target.videoCodec,
+    audio: target.audio,
+    container: target.container,
     placement: 'beside',
-    ...(settings.maxBitrateKbps === null ? {} : { maxBitrateKbps: settings.maxBitrateKbps }),
+    ...(target.maxBitrateKbps === null ? {} : { maxBitrateKbps: target.maxBitrateKbps }),
   },
   key: [
-    settings.quality,
-    settings.videoCodec,
-    settings.container,
-    settings.maxBitrateKbps?.toString() ?? 'any',
-    settings.audio,
+    target.quality,
+    target.videoCodec,
+    target.container,
+    target.maxBitrateKbps?.toString() ?? 'any',
+    target.audio,
   ].join('/'),
 });
 

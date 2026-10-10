@@ -1,5 +1,6 @@
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { chooseSource } from '@ValenceCore/functions/chooseSource';
+import type { ChosenSource } from '@ValenceCore/functions/chooseSource';
 import { sourcesOf } from '@ValenceCore/functions/sourcesOf';
 import type { negotiatePlayback } from '@ValenceCore/functions/negotiatePlayback';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
@@ -183,6 +184,7 @@ const createPlaybackService = ({
       requestedQuality,
       deviceId,
       subtitleStreamIndex,
+      isAdaptive,
     ) => {
       const found = await media.findForPlayback(mediaId);
 
@@ -190,8 +192,9 @@ const createPlaybackService = ({
         return { kind: 'notFound' };
       }
 
+      const sources = sourcesOf(found);
       const chosen = chooseSource({
-        sources: sourcesOf(found),
+        sources,
         profile,
         requestedQuality: requestedQuality ?? 'original',
         preferredAudioLanguage: found.defaultAudioLanguage,
@@ -204,8 +207,26 @@ const createPlaybackService = ({
 
       const { plan } = chosen;
       const source = chosen.source.item;
+      const rungs =
+        isAdaptive === true
+          ? sources
+              .filter((candidate) => candidate.id !== chosen.source.id)
+              .map((candidate) =>
+                chooseSource({
+                  sources: [candidate],
+                  profile,
+                  requestedQuality: 'original',
+                  preferredAudioLanguage: found.defaultAudioLanguage,
+                  chosenSubtitleStreamIndex: subtitleStreamIndex ?? null,
+                }),
+              )
+              .filter(
+                (weighed): weighed is ChosenSource =>
+                  weighed !== null && weighed.plan.video.kind === 'passthrough',
+              )
+          : [];
 
-      if (chosen.isDirectPlay && audioStreamIndex === undefined) {
+      if (chosen.isDirectPlay && audioStreamIndex === undefined && rungs.length === 0) {
         const file = `${directUrlPrefix}/${mediaId}/file`;
 
         return {
@@ -226,30 +247,44 @@ const createPlaybackService = ({
         };
       }
 
-      const outcome = planToSessionSpec({
-        plan,
-        inputPath: chosen.source.path,
-        sourceRange: source.videoRange,
-        sourceRangeBase: source.videoRangeBase ?? null,
-        sourceSize: [source.width, source.height],
-        sourceVideoCodec: source.videoCodec,
-        sourceBitDepth: source.videoBitDepth,
-        sourceIsInterlaced: source.videoIsInterlaced,
-        sourcePixelAspect: source.videoPixelAspect ?? null,
-        imageSubtitleIndexes: source.subtitleStreams
-          .filter((stream) => isImageSubtitle(stream.format))
-          .map((stream) => stream.index),
-        subtitleIndexes: source.subtitleStreams.map((stream) => stream.index),
-        capabilities: await capabilities(),
-        forcedAccel: await forcedAccel(),
-        startSeconds,
-        segmentSeconds: (await usesShortSegments()) ? SHORT_SEGMENT_SECONDS : SEGMENT_SECONDS,
-        container: segmentContainerFor(profile),
-        ...(audioStreamIndex !== undefined
-          ? { audioStreamIndex }
-          : plan.audio.streamIndex === null
-            ? {}
-            : { audioStreamIndex: plan.audio.streamIndex }),
+      const shortSegments = await usesShortSegments();
+      const accel = await forcedAccel();
+      const able = await capabilities();
+      const specFor = (weighed: ChosenSource) => {
+        const item = weighed.source.item;
+
+        return planToSessionSpec({
+          plan: weighed.plan,
+          inputPath: weighed.source.path,
+          sourceRange: item.videoRange,
+          sourceRangeBase: item.videoRangeBase ?? null,
+          sourceSize: [item.width, item.height],
+          sourceVideoCodec: item.videoCodec,
+          sourceBitDepth: item.videoBitDepth,
+          sourceIsInterlaced: item.videoIsInterlaced,
+          sourcePixelAspect: item.videoPixelAspect ?? null,
+          imageSubtitleIndexes: item.subtitleStreams
+            .filter((stream) => isImageSubtitle(stream.format))
+            .map((stream) => stream.index),
+          subtitleIndexes: item.subtitleStreams.map((stream) => stream.index),
+          capabilities: able,
+          forcedAccel: accel,
+          startSeconds,
+          segmentSeconds: shortSegments ? SHORT_SEGMENT_SECONDS : SEGMENT_SECONDS,
+          container: segmentContainerFor(profile),
+          ...(audioStreamIndex !== undefined
+            ? { audioStreamIndex }
+            : plan.audio.streamIndex === null
+              ? {}
+              : { audioStreamIndex: plan.audio.streamIndex }),
+        });
+      };
+
+      const outcome = specFor(chosen);
+      const variants = rungs.flatMap((rung) => {
+        const made = specFor(rung);
+
+        return made.kind === 'unsupported' ? [] : [made.spec];
       });
 
       if (outcome.kind === 'unsupported') {
@@ -257,7 +292,7 @@ const createPlaybackService = ({
       }
 
       try {
-        const session = await transcoder.startSession(outcome.spec, deviceId);
+        const session = await transcoder.startSession(outcome.spec, deviceId, variants);
 
         const delivered = withDeliveredRange(
           asDelivered(plan, source, session.encodesVideo),

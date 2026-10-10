@@ -21,6 +21,7 @@ import { isTheDesktopClient } from '@ValenceScreens/desktop/theDesktopShell';
 import { detectFromBrowser } from '@ValenceClient/playback/detectFromBrowser';
 import { qualityStepCostsFor } from '@ValenceClient/playback/qualityStepCostsFor';
 import { bufferFor } from '@ValenceClient/playback/bufferFor';
+import { rungOfHeight } from '@ValenceClient/playback/rungOfHeight';
 import { stepsThatSaveNothing } from '@ValenceClient/playback/stepsThatSaveNothing';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { onPresenceEvent } from '@ValenceClient/presence/presenceEvents';
@@ -147,6 +148,8 @@ const DOUBLE_TAP_MILLISECONDS = 300;
 const TAP_EDGE = 0.33;
 
 const SKIPS_SETTLE_MILLISECONDS = 300;
+
+const LADDER_READ_EVERY_MILLISECONDS = 2000;
 
 const STALL_BEFORE_SAYING_SO_MS = 400;
 
@@ -448,6 +451,10 @@ const VideoPlayer = ({
   const releaseRef = useRef<(() => Promise<void>) | null>(null);
   const deliveredRef = useRef<(() => DeliveredFormat | null) | null>(null);
   const estimatedRef = useRef<(() => number | null) | null>(null);
+  const ladderRef = useRef<(() => { variants: number; activeHeight: number | null }) | null>(null);
+  const [ladder, setLadder] = useState<{ variants: number; activeHeight: number | null } | null>(
+    null,
+  );
   const settledRef = useRef<Promise<void>>(Promise.resolve());
   const castContextRef = useRef<CastContext | null>(null);
 
@@ -656,6 +663,7 @@ const VideoPlayer = ({
       releaseRef.current = attached.detach;
       deliveredRef.current = attached.readDelivered;
       estimatedRef.current = attached.readEstimatedKbps;
+      ladderRef.current = attached.readLadder;
       element.currentTime = at;
       start(element);
     });
@@ -899,6 +907,7 @@ const VideoPlayer = ({
           releaseRef.current = attached.detach;
           deliveredRef.current = attached.readDelivered;
           estimatedRef.current = attached.readEstimatedKbps;
+          ladderRef.current = attached.readLadder;
         }
 
         if (request.startSeconds > 0 && outcome.session.delivery.kind === 'direct') {
@@ -1411,8 +1420,32 @@ const VideoPlayer = ({
     [hold],
   );
 
+  useEffect(() => {
+    if (state !== 'playing') {
+      return;
+    }
+
+    const read = () => {
+      setLadder(ladderRef.current?.() ?? null);
+    };
+
+    read();
+
+    const timer = setInterval(read, LADDER_READ_EVERY_MILLISECONDS);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, [state, session]);
+
+  const isOnALadder = (ladder?.variants ?? 1) > 1;
+
   useAutoQuality({
-    isOn: request.requestedQuality === 'auto' && state === 'playing' && keptSource === undefined,
+    isOn:
+      request.requestedQuality === 'auto' &&
+      state === 'playing' &&
+      keptSource === undefined &&
+      !isOnALadder,
     videoRef,
     readEstimatedKbps: () => estimatedRef.current?.() ?? null,
     current: request.autoRung,
@@ -2264,7 +2297,11 @@ const VideoPlayer = ({
               qualityStepsSavingNothing={qualityStepsSavingNothing}
               qualityStepCosts={qualityStepCosts}
               selectedQuality={request.requestedQuality}
-              autoRung={request.autoRung}
+              autoRung={
+                isOnALadder && typeof ladder?.activeHeight === 'number'
+                  ? rungOfHeight(ladder.activeHeight)
+                  : request.autoRung
+              }
               isDisabled={state !== 'playing'}
               onTogglePlay={togglePlay}
               onSeek={seek}
