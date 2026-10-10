@@ -19,6 +19,7 @@ import { recordFromDraft } from '@ValenceRequests/mediaRequests/recordFromDraft'
 import { highestSeasonOf } from '@ValenceRequests/mediaRequests/highestSeasonOf';
 import { rebaseSeasons } from '@ValenceRequests/mediaRequests/rebaseSeasons';
 import { seasonsChosen } from '@ValenceRequests/mediaRequests/seasonsChosen';
+import { isSeasonWanted } from '@ValenceRequests/mediaRequests/isSeasonWanted';
 import { profileChangeOf } from '@ValenceRequests/mediaRequests/profileChangeOf';
 import { requestFactsOf } from '@ValenceRequests/mediaRequests/requestFactsOf';
 import { showMediaRequest } from '@ValenceRequests/mediaRequests/showMediaRequest';
@@ -260,6 +261,37 @@ const createRequestService = ({
         problemCode: null,
         updatedAt: at,
       });
+    }
+  };
+
+  /**
+   * Follows the episodes of each season a series is newly asked for and stops following those of
+   * each season it no longer is, as switching the season itself would, so what is already fetched
+   * or on its way is left alone rather than searched for or upgraded.
+   *
+   * @param before - The request as it was.
+   * @param after - The request as it is now.
+   */
+  const followChosenSeasons = async (
+    before: Pick<MediaRequestRecord, 'seasons' | 'followsNewSeasons' | 'followsAfter'>,
+    after: MediaRequestRecord,
+  ) => {
+    const at = now().toISOString();
+
+    for (const item of await itemsOf(after.id)) {
+      if (item.season === null) {
+        continue;
+      }
+
+      const isWanted = isSeasonWanted(after, item.season);
+
+      if (isWanted !== isSeasonWanted(before, item.season) && item.isFollowed !== isWanted) {
+        await items.update(item.id, {
+          isFollowed: isWanted,
+          ...(isWanted ? { lastSearchedAt: null } : {}),
+          updatedAt: at,
+        });
+      }
     }
   };
 
@@ -566,6 +598,10 @@ const createRequestService = ({
 
       if (record.kind === 'film' || record.kind === 'book' || catalogue !== null) {
         await sync(record, catalogue ?? { episodes: [], albums: [] }, held);
+      }
+
+      if (choosesSeasons) {
+        await followChosenSeasons(base, (await requests.find(id)) ?? record);
       }
 
       onChange();
