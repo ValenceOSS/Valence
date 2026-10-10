@@ -1,8 +1,6 @@
 import { useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
-import { titleLogoUrl } from '@ValenceClient/library/titleLogoUrl';
 import { whereItFalls } from '@ValenceClient/library/whereItFalls';
 import { Artwork } from '@ValenceTv/components/Artwork/Artwork';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
@@ -15,10 +13,11 @@ import { LETTER_INKS } from '@ValenceNative/library/LETTER_INKS';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MediaCardProps, MediaCardShape } from './MediaCard.types';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { Shade } from '@ValenceTv/components/Shade/Shade';
 
 /**
  * Which of a title's pictures suits a card of this shape, falling back to the other where it has
- * only one.
+ * only one, narrowed to the card's size: a wide card is about 420 wide and a poster about 260.
  *
  * @param media - The title.
  * @param shape - The card's shape.
@@ -28,12 +27,13 @@ const pictureFor = (media: MediaSummary, shape: MediaCardShape): string | null =
   const [first, second] =
     shape === 'wide' ? (['backdrop', 'poster'] as const) : (['poster', 'backdrop'] as const);
   const has = { backdrop: media.hasBackdrop, poster: media.hasPoster };
+  const size = shape === 'wide' ? 'medium' : 'small';
 
   if (has[first]) {
-    return artworkUrl(media.id, first);
+    return artworkUrl(media.id, first, { size });
   }
 
-  return has[second] ? artworkUrl(media.id, second) : null;
+  return has[second] ? artworkUrl(media.id, second, { size }) : null;
 };
 
 /**
@@ -58,6 +58,7 @@ const pictureFor = (media: MediaSummary, shape: MediaCardShape): string | null =
  * @param width - How wide it is, where it is sized to fill a grid rather than drawn at its shape's own
  *   size; it keeps its shape's proportions.
  * @param onFocus - Told when the remote lands on it.
+ * @param upTo - Where pressing up from it goes, where it should not be left to the television.
  */
 const MediaCard = ({
   media,
@@ -70,6 +71,7 @@ const MediaCard = ({
   isUrgent = false,
   width,
   onFocus,
+  upTo,
 }: MediaCardProps) => {
   const size = useMemo(() => {
     const natural = cardSizes[shape];
@@ -94,14 +96,15 @@ const MediaCard = ({
 
         {isLettered ? (
           <>
-            <LinearGradient
+            <Shade
               colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.55)']}
               start={{ x: 0.5, y: 0.45 }}
               end={{ x: 0.5, y: 1 }}
+              flat="rgba(0,0,0,0.25)"
               style={StyleSheet.absoluteFill}
             />
             <Artwork
-              path={titleLogoUrl(media.id)}
+              path={artworkUrl(media.id, 'logo', { size: 'medium' })}
               fit="contain"
               anchor="left"
               isUrgent={isUrgent}
@@ -148,6 +151,7 @@ const MediaCard = ({
       label={origin === null ? name : `${name}, ${origin.label}`}
       shadow={{ height: size.height, cornerRadius: tokens.radii.xl }}
       hasPreferredFocus={hasPreferredFocus}
+      {...(upTo === undefined || upTo === null ? {} : { nextFocusUp: upTo })}
       scale={1.1}
       onPress={() => {
         onPress(media);

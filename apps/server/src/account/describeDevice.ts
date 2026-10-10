@@ -2,17 +2,11 @@ import type { Said } from '@ValenceI18n/SaidSchema';
 import { saying } from '@ValenceI18n/saying';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { tvBrowserOf } from '@ValenceCore/functions/tvBrowserOf';
+import { browserOf } from '@ValenceCore/functions/browserOf';
+import { BROWSER_NAMES } from '@ValenceCore/functions/BROWSER_NAMES';
 import { tvMakerOf } from '@ValenceCore/functions/tvMakerOf';
 import type { TvBrowser } from '@ValenceCore/functions/TvBrowser';
 /* oxlint-disable valence/no-hard-coded-strings -- browsers' and systems' own names, and the marks their user agents carry */
-const BROWSERS = [
-  { named: 'Edge', marks: ['Edg/'] },
-  { named: 'Opera', marks: ['OPR/', 'Opera'] },
-  { named: 'Firefox', marks: ['Firefox/'] },
-  { named: 'Chrome', marks: ['Chrome/', 'Chromium/'] },
-  { named: 'Safari', marks: ['Safari/'] },
-] as const;
-
 const SYSTEMS = [
   { named: 'iPhone', marks: ['iPhone'] },
   { named: 'iPad', marks: ['iPad'] },
@@ -49,10 +43,18 @@ const OUR_APP = /^Valence \((?<device>[^)]+)\)/u;
  * television's own browser is named as the television, since its user agent claims to be several
  * browsers and LG's spells Chrome "Chr0me", which would leave it called Safari.
  *
+ * A browser built on Chromium is called Chrome only where its client hints name Google Chrome, and
+ * by its own name where they name it, since all of them send Chrome's user agent; with no hints to
+ * go on it is Chromium.
+ *
  * @param userAgent - What the browser sent, if it sent anything.
+ * @param brands - The brands its client hints named, where it sent any.
  * @returns The browser and system, as a person would say them.
  */
-const describeDevice = (userAgent: string | null | undefined): Said => {
+const describeDevice = (
+  userAgent: string | null | undefined,
+  brands: readonly string[] = [],
+): Said => {
   const said = userAgent ?? '';
   const app = OUR_APP.exec(said)?.groups?.['device'];
 
@@ -66,9 +68,8 @@ const describeDevice = (userAgent: string | null | undefined): Said => {
     return TELEVISIONS[television](said);
   }
 
-  const browser = BROWSERS.find((candidate) =>
-    candidate.marks.some((mark) => said.includes(mark)),
-  )?.named;
+  const known = browserOf(said, brands);
+  const browser = known === null ? undefined : BROWSER_NAMES[known];
 
   const system = SYSTEMS.find((candidate) =>
     candidate.marks.some((mark) => said.includes(mark)),

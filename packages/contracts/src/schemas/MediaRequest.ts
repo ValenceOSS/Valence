@@ -61,6 +61,10 @@ const REQUEST_APPROVALS = ['awaiting', 'approved', 'refused'] as const;
 
 const RequestApprovalSchema = z.enum(REQUEST_APPROVALS);
 
+const REQUEST_ORIGINS = ['asked', 'monitored'] as const;
+
+const RequestOriginSchema = z.enum(REQUEST_ORIGINS);
+
 const CalendarDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 const ReleaseDatesSchema = z.object({
@@ -204,6 +208,7 @@ const MediaRequestAskSchema = z
     profileId: z.string().uuid().optional(),
     isPickedByHand: z.boolean().default(false),
     release: ReleaseSchema.optional(),
+    origin: RequestOriginSchema.default('asked'),
   })
   .superRefine(needsItsId);
 
@@ -230,6 +235,7 @@ const MediaRequestDraftSchema = z
     catalogue: RequestCatalogueSchema,
     handOff: FulfilmentSchema.nullable().default(null),
     held: HeldInLibrarySchema.nullable().default(null),
+    origin: RequestOriginSchema.default('asked'),
   })
   .superRefine(needsItsId);
 
@@ -284,6 +290,8 @@ const MediaRequestSchema = z.object({
   refusedBecause: SaidSchema.nullable(),
   requestedBy: RequesterSchema,
   alsoAskedBy: z.array(RequesterSchema).default([]),
+  origin: RequestOriginSchema.default('asked'),
+  isFollowed: z.boolean().default(false),
   profileAsk: ProfileAskSchema.nullable().default(null),
   isHandedOff: z.boolean().optional(),
   seasons: SeasonsSchema,
@@ -474,6 +482,7 @@ type HeldAlbum = z.infer<typeof HeldAlbumSchema>;
 type Narration = z.infer<typeof NarrationSchema>;
 type NarrationDecision = z.infer<typeof NarrationDecisionSchema>;
 type HeldInLibrary = z.infer<typeof HeldInLibrarySchema>;
+type RequestOrigin = z.infer<typeof RequestOriginSchema>;
 type SeasonFolder = z.infer<typeof SeasonFolderSchema>;
 type MediaRequestArrivals = z.input<typeof MediaRequestArrivalsSchema>;
 type MediaRequestArrived = z.infer<typeof MediaRequestArrivedSchema>;
@@ -493,6 +502,7 @@ type ProfileAsk = z.infer<typeof ProfileAskSchema>;
 type ProfileAskDecision = z.infer<typeof ProfileAskDecisionSchema>;
 
 export type {
+  RequestOrigin,
   AlbumTrack,
   BookFormat,
   BlockedRelease,
@@ -553,6 +563,7 @@ export {
   MUSIC_REQUEST_KINDS,
   RELEASE_TYPES,
   REQUEST_APPROVALS,
+  REQUEST_ORIGINS,
   MEDIA_REQUEST_DECISIONS,
   REQUEST_ITEM_STATES,
   BlockedReleaseSchema,
@@ -596,6 +607,7 @@ export {
   ReleaseTypeSchema,
   ReleaseTypesSchema,
   RequestApprovalSchema,
+  RequestOriginSchema,
   RequestCatalogueSchema,
   RequestCatalogueUpdateSchema,
   RequestItemSchema,

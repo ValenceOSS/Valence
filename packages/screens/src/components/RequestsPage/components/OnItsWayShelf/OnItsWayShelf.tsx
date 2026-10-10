@@ -91,7 +91,7 @@ const OnItsWayShelf = ({ onAsk, onOpenAll }: OnItsWayShelfProps) => {
                     })}
                   </span>
                   <span className="truncate">
-                    {say('screens.requestsPage.onItsWayShelf.askedByName', {
+                    {say('common.askedByName', {
                       name: sayAgain(
                         sayingAll(
                           rest.length === 0

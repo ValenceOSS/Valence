@@ -3,15 +3,26 @@ import { toTheDesktopLayout } from '@ValenceTv/platform/toTheDesktopLayout';
 describe('toTheDesktopLayout in a browser', () => {
   it('chooses the web app’s layout for this browser and shows it', () => {
     const reload = jest.fn();
-    const page = { cookie: '', location: { reload } };
     const choose: (asked: {
       cookie: string;
       location: { reload: () => void };
     }) => (() => void) | null = toTheDesktopLayout;
 
-    choose(page)?.();
+    const written: string[] = [];
+    const watched = {
+      set cookie(value: string) {
+        written.push(value);
+      },
+      get cookie() {
+        return written.join('; ');
+      },
+      location: { reload },
+    };
 
-    expect(page.cookie).toContain('valence-layout=web');
+    choose(watched)?.();
+
+    expect(written.some((one) => one.startsWith('valence-layout-on-trial=1'))).toBe(true);
+    expect(written.at(-1)).toContain('valence-layout=web');
     expect(reload).toHaveBeenCalledTimes(1);
   });
 

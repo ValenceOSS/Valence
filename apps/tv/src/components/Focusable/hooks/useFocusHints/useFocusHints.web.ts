@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { nextFocusOverrides } from '@ValenceTv/focus/nextFocusOverrides';
 import type { Ref } from 'react';
 import type { View } from 'react-native';
-import type { FocusHints } from './FocusHints';
+import type { FocusHints, NextFocus } from './FocusHints';
 import type { useFocusHints as onTheTelevision } from '@ValenceTv/components/Focusable/hooks/useFocusHints/useFocusHints';
 
 /**
@@ -20,20 +20,21 @@ const handTo = (ref: Ref<View> | undefined, view: View | null): void => {
 };
 
 /**
- * Tells a television's browser where the remote starts and where pressing right goes from a
- * pressable element: it takes focus once it is drawn, if it wants it, and the web focus engine is
- * told where right leads.
+ * Tells a television's browser where the remote starts and where pressing right, down or up goes from
+ * a pressable element: it takes focus once it is drawn, if it wants it, and the web focus engine is
+ * told where right, down and up lead.
  *
  * @param ref - Handed the element, for whatever sends the remote to it.
  * @param wantsFocus - Whether the remote should start here.
- * @param nextFocusRight - Where pressing right goes, where it should not be left to the television.
+ * @param next - Where pressing right, down and up go, where they should not be left to the television.
  * @returns The ref to hand the element, and no props, since the browser reads none of them.
  */
 const useFocusHints: typeof onTheTelevision = (
   ref: Ref<View> | undefined,
   wantsFocus: boolean,
-  nextFocusRight: View | null | undefined,
+  next: NextFocus = {},
 ): FocusHints => {
+  const { right, down, up } = next;
   const [element, setElement] = useState<HTMLElement | null>(null);
   const drawn = useCallback(
     (view: View | null) => {
@@ -54,12 +55,18 @@ const useFocusHints: typeof onTheTelevision = (
       return;
     }
 
-    if (nextFocusRight instanceof HTMLElement) {
-      nextFocusOverrides.set(element, { right: nextFocusRight });
-    } else {
+    const told = {
+      ...(right instanceof HTMLElement ? { right } : {}),
+      ...(down instanceof HTMLElement ? { down } : {}),
+      ...(up instanceof HTMLElement ? { up } : {}),
+    };
+
+    if (Object.keys(told).length === 0) {
       nextFocusOverrides.delete(element);
+    } else {
+      nextFocusOverrides.set(element, told);
     }
-  }, [element, nextFocusRight]);
+  }, [element, right, down, up]);
 
   return { ref: drawn, hints: {} };
 };

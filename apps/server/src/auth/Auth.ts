@@ -3,7 +3,7 @@ import { createAuthMiddleware, APIError } from 'better-auth/api';
 import { z } from 'zod';
 import type { DBAdapter, DBAdapterInstance } from 'better-auth';
 import type { SignInAttempt } from '@ValenceServer/auth/describeSignInAttempt';
-import { readCallerAddress } from '@ValenceServer/web/readCallerAddress';
+import { brandsOf } from '@ValenceServer/web/brandsOf';
 import { CALLER_HEADER } from '@ValenceServer/web/CALLER_HEADER';
 import { setSessionCookie } from 'better-auth/cookies';
 import { bearerWithoutACookie } from '@ValenceServer/auth/bearerWithoutACookie';
@@ -148,11 +148,8 @@ const createAuth = ({
             ? (identifier.data.email ?? identifier.data.username ?? null)
             : null,
           userAgent: context.headers?.get('user-agent') ?? null,
-          address:
-            context.headers === undefined
-              ? null
-              : (context.headers.get(CALLER_HEADER) ??
-                readCallerAddress({ headers: context.headers, socketAddress: null })),
+          brands: brandsOf(context.headers?.get('sec-ch-ua')),
+          address: context.headers?.get(CALLER_HEADER) ?? null,
         });
 
         await Promise.resolve();

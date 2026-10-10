@@ -1,4 +1,5 @@
 import { nameKey } from '@ValenceServer/music/nameKey';
+import { askersOf } from '@ValenceContracts/functions/askersOf';
 import type {
   CatalogueEntry,
   CatalogueTab,
@@ -157,7 +158,7 @@ const catalogueEntriesOf = (
       requestId: request?.id ?? null,
       mediaId: title?.id ?? request?.mediaId ?? null,
       libraryId: title?.libraryId ?? request?.libraryId ?? null,
-      askedBy: request?.requestedBy ?? null,
+      askedBy: request === null ? null : (askersOf(request)[0] ?? null),
       addedAt: title?.addedAt ?? request?.createdAt ?? null,
     };
   };

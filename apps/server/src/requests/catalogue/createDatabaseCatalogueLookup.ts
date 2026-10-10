@@ -73,6 +73,23 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
         ),
     ),
 
+  filmIn: async (libraryId, tmdbId) => {
+    const [found] = await db
+      .select({ id: mediaItem.id })
+      .from(mediaItem)
+      .where(
+        and(
+          eq(mediaItem.libraryId, libraryId),
+          eq(mediaItem.externalId, tmdbId),
+          isNull(mediaItem.seriesId),
+          isNull(mediaItem.parentId),
+        ),
+      )
+      .limit(1);
+
+    return found?.id ?? null;
+  },
+
   series: (tmdbIds) =>
     byKey(tmdbIds, (wanted) =>
       db

@@ -259,7 +259,6 @@ const ENGLISH = {
   'client.playback.describeRungCost.valueMbps': '{value} Mbps',
   'client.playback.detectClientLabel.android': 'Android',
   'client.playback.detectClientLabel.browserOnOs': '{browser} on {os}',
-  'client.playback.detectClientLabel.safari': 'Safari',
   'client.playback.fetchSegments.skipCredits': 'Skip Credits',
   'client.playback.fetchSegments.skipIntro': 'Skip Intro',
   'client.playback.fetchSegments.skipRecap': 'Skip Recap',
@@ -548,6 +547,7 @@ const ENGLISH = {
   'common.book': 'Book',
   'common.books': 'Books',
   'common.bornBornOn': 'Born {bornOn}',
+  'common.brave': 'Brave',
   'common.bringBack': 'Restore',
   'common.bringTitleBack': 'Unhide {title}',
   'common.browser': 'Browser',
@@ -583,6 +583,7 @@ const ENGLISH = {
   'common.chooseAPicture': 'Choose a picture',
   'common.chooseEpisodes': 'Choose episodes',
   'common.chooseThePreviewMoment': 'Choose the preview frame',
+  'common.chrome': 'Chrome',
   'common.chromium': 'Chromium',
   'common.clear': 'Clear',
   'common.clearAll': 'Clear all',
@@ -618,6 +619,8 @@ const ENGLISH = {
   'common.count.albumsCouldNotBeRequested.other': '{count} albums couldn’t be requested',
   'common.count.albumsRequested.one': '{count} album requested',
   'common.count.albumsRequested.other': '{count} albums requested',
+  'common.count.artists.one': '{count} artist',
+  'common.count.artists.other': '{count} artists',
   'common.count.books.one': '{count} book',
   'common.count.books.other': '{count} books',
   'common.count.chapters.one': '{count} chapter',
@@ -670,6 +673,8 @@ const ENGLISH = {
   'common.count.seconds.other': '{count} seconds',
   'common.count.selected.one': '{count} selected',
   'common.count.selected.other': '{count} selected',
+  'common.count.shows.one': '{count} show',
+  'common.count.shows.other': '{count} shows',
   'common.count.songs.one': '{count} song',
   'common.count.songs.other': '{count} songs',
   'common.count.songsNotInYourLibrary.one': '{count} song not in your library',
@@ -1248,6 +1253,8 @@ const ENGLISH = {
   'common.run': 'Run',
   'common.runLabel': 'Run {label}',
   'common.running': 'Running',
+  'common.safari': 'Safari',
+  'common.samsungInternet': 'Samsung Internet',
   'common.samsungTV': 'Samsung TV',
   'common.sans': 'Sans',
   'common.save': 'Save',
@@ -1489,6 +1496,7 @@ const ENGLISH = {
   'common.valueKbps': '{value} kbps',
   'common.video': 'Video',
   'common.view': 'View',
+  'common.vivaldi': 'Vivaldi',
   'common.volume': 'Volume',
   'common.waiting': 'Waiting',
   'common.waitingForYou': 'Waiting for your review',
@@ -1541,6 +1549,7 @@ const ENGLISH = {
   'common.workingOnTitle': 'Working on {title}',
   'common.wrongMatch': 'Wrong match?',
   'common.xbox': 'Xbox',
+  'common.yandexBrowser': 'Yandex Browser',
   'common.year': 'Year',
   'common.yellow': 'Yellow',
   'common.yesThatIsMine': 'Yes, this was me',
@@ -2062,6 +2071,8 @@ const ENGLISH = {
   'error.reencode.noSuchRendition': 'No such rendition.',
   'error.requests.askedButNotFetched':
     'The request was made, but that release couldn’t be downloaded: {problem}',
+  'error.requests.followingIsForWhoever':
+    'Only request managers can follow titles nobody requested.',
   'error.requests.itIsInTheLibraryAlready':
     'It’s already in the library, so there’s nothing to cancel.',
   'error.requests.itIsNotApprovedSoNothingIsSearched':
@@ -3171,6 +3182,33 @@ const ENGLISH = {
   'screens.adminArea.cataloguePanel.findAFilm': 'Find a film',
   'screens.adminArea.cataloguePanel.findAnArtistOrAlbum': 'Find an artist or album',
   'screens.adminArea.cataloguePanel.findAShow': 'Find a show',
+  'screens.adminArea.cataloguePanel.followAll': 'Follow all',
+  'screens.adminArea.cataloguePanel.followAllDialog.albumsStillToFind': 'Albums still to find',
+  'screens.adminArea.cataloguePanel.followAllDialog.couldNotBeFollowed': 'Couldn’t be followed',
+  'screens.adminArea.cataloguePanel.followAllDialog.countElsewhere.one':
+    '{count} more title is in a library that doesn’t take requests, so it’s left as it is.',
+  'screens.adminArea.cataloguePanel.followAllDialog.countElsewhere.other':
+    '{count} more titles are in libraries that don’t take requests, so they’re left as they are.',
+  'screens.adminArea.cataloguePanel.followAllDialog.episodesStillToFind': 'Episodes still to find',
+  'screens.adminArea.cataloguePanel.followAllDialog.filmsStillToFind': 'Films still to find',
+  'screens.adminArea.cataloguePanel.followAllDialog.followCountTitles.one': 'Follow {count} title',
+  'screens.adminArea.cataloguePanel.followAllDialog.followCountTitles.other':
+    'Follow {count} titles',
+  'screens.adminArea.cataloguePanel.followAllDialog.followedCountTitles.one':
+    'Followed {count} title',
+  'screens.adminArea.cataloguePanel.followAllDialog.followedCountTitles.other':
+    'Followed {count} titles',
+  'screens.adminArea.cataloguePanel.followAllDialog.followedDoneOfCount':
+    'Followed {done} of {count}',
+  'screens.adminArea.cataloguePanel.followAllDialog.followEveryTitle': 'Follow every title',
+  'screens.adminArea.cataloguePanel.followAllDialog.nobodyIsNotified':
+    'Nobody is notified, and none of it shows on the Requests page.',
+  'screens.adminArea.cataloguePanel.followAllDialog.nothingToFollow':
+    'Every title in the libraries is already followed.',
+  'screens.adminArea.cataloguePanel.followAllDialog.searchedForOnTheSchedule':
+    'Anything still to find is searched for on the next scheduled search, or now with Search all missing.',
+  'screens.adminArea.cataloguePanel.followAllDialog.whatIsFetched':
+    'New episodes, seasons and albums are downloaded as they come out, and anything missing now is searched for.',
   'screens.adminArea.cataloguePanel.kindsOfLibrary': 'Kind of library',
   'screens.adminArea.cataloguePanel.nothingIsMissing':
     'Nothing is missing, so nothing was searched for.',
@@ -5458,6 +5496,13 @@ const ENGLISH = {
   'screens.jobRunner.jobRunnerRow.runByHandOnly': 'Manual only',
   'screens.jobRunner.jobRunnerRow.stopLabel': 'Stop {label}',
   'screens.jobRunner.jobRunnerRow.whatLabelIsDoing': 'What {label} is doing',
+  'screens.keepTheLayout.goBackToTheTvLayout': 'Go back to the TV layout',
+  'screens.keepTheLayout.goingBackIn.one':
+    'Valence goes back to the TV layout in {count} second unless you keep this one.',
+  'screens.keepTheLayout.goingBackIn.other':
+    'Valence goes back to the TV layout in {count} seconds unless you keep this one.',
+  'screens.keepTheLayout.keepTheDesktopLayout': 'Keep the desktop layout?',
+  'screens.keepTheLayout.keepTheDesktopLayoutAnswer': 'Keep the desktop layout',
   'screens.keptPlayerPage.thatIsNotOnThisDevice': 'This download is no longer on this device.',
   'screens.library.letterFontLooks.bebas': 'Bebas',
   'screens.library.letterFontLooks.caveat': 'Caveat',
@@ -6180,7 +6225,6 @@ const ENGLISH = {
     'Couldn’t load music to request.',
   'screens.requestsPage.nothingInTheCataloguesMatches':
     'Nothing in the catalogues matches “{query}”.',
-  'screens.requestsPage.onItsWayShelf.askedByName': 'Asked by {name}',
   'screens.requestsPage.onItsWayShelf.statusPercent': '{status} · {percent}%',
   'screens.requestsPage.requestsList.clearAFilterOrSearchFor':
     'Clear a filter, or search for something else.',
@@ -6257,7 +6301,6 @@ const ENGLISH = {
   'screens.seasonChooser.whichSeasons': 'Which seasons',
   'screens.seriesDialog.inOrder': 'In order',
   'screens.session.useSignOut.youAreStillSignedInThe': 'Couldn’t sign out. You’re still signed in.',
-  'screens.sessionCard.deviceIcon.chrome': 'Chrome',
   'screens.setupLinkHandover.aCodeThatOpensNamesSetupLink': 'QR code for {name}’s setup link',
   'screens.setupLinkHandover.sendByEmail': 'Send by email',
   'screens.setupLinkHandover.setupLinkForName': 'Setup link for {name}',
@@ -7265,6 +7308,10 @@ const ENGLISH = {
   'tv.about.describeThisBuild.valenceVersionCommit': 'Valence {version} ({commit})',
   'tv.account.allRequests': 'All requests',
   'tv.account.chooseAnotherProfile': 'Choose another profile',
+  'tv.account.madeForComputersSomeTvs':
+    'It’s made for computers, so some TVs show a blank screen. You’ll be asked to keep it, and if you don’t within 10 seconds, Valence goes back to the TV layout.',
+  'tv.account.stayOnTheTvLayout': 'Stay on the TV layout',
+  'tv.account.switchToTheDesktopLayout': 'Switch to the desktop layout?',
   'tv.account.themeChoice.valenceOpensInThisThemeThe':
     'This theme is applied the next time you open Valence.',
   'tv.account.useTheDesktopLayout': 'Use the desktop layout',
@@ -7375,6 +7422,7 @@ const ENGLISH = {
   'tv.player.thisValenceTurnedTheTelevisionAway':
     'The server rejected this TV. Your session may have expired, so go back and sign in again.',
   'tv.player.upNext.keepWatching': 'Keep watching',
+  'tv.prompt.ok': 'OK',
   'tv.rating.rateIt': 'Rate it',
   'tv.rating.takeTheRatingBack': 'Remove my rating',
   'tv.requestsPage.findSomethingInSearchAndRequest':

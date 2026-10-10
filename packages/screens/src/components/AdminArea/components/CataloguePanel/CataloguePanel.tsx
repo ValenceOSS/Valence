@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronDown as ChevronDownIcon } from '@keyline-icons/react';
-import { Plus as PlusFilledIcon, Search as SearchFilledIcon } from '@keyline-icons/react/fill';
+import {
+  Eye as EyeFilledIcon,
+  Plus as PlusFilledIcon,
+  Search as SearchFilledIcon,
+} from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Icon } from '@ValenceUI/Icon';
@@ -25,6 +29,7 @@ import { RefuseRequestDialog } from '@ValenceScreens/components/AdminArea/compon
 import { TitlePage } from '@ValenceScreens/components/AdminArea/components/TitlePage/TitlePage';
 import { CatalogueGrid } from './components/CatalogueGrid/CatalogueGrid';
 import { CatalogueTiles } from './components/CatalogueTiles/CatalogueTiles';
+import { FollowAllDialog } from './components/FollowAllDialog/FollowAllDialog';
 import type { CatalogueTab, TitleStatus } from '@ValenceContracts/schemas/AdminCatalogue';
 import type { CatalogueKind, CatalogueSort } from '@ValenceClient/requests/CatalogueView.types';
 import type { MediaGridSize } from '@ValenceScreens/components/MediaGrid/MediaGrid.types';
@@ -86,7 +91,9 @@ const fieldTrigger = (text: string) => (
  * Admin › Requests › Catalogue: every title the libraries hold and every title asked for, one kind
  * of library at a time, chosen beside the sort, as posters with a bar under each saying where it
  * stands. The statuses are tiles that filter it, and titles waiting on approval can be chosen and approved or declined
- * together. Opening a title shows its own page in place of the grid.
+ * together. Follow all follows every title the libraries hold that nothing follows yet, once its
+ * dialog has said how many from each library. Opening a title shows its own page in place of the
+ * grid.
  *
  * @param tab - The kind of library shown.
  * @param title - The key of the title open, or nothing for the grid.
@@ -114,6 +121,7 @@ const CataloguePanel = ({
   const [sort, setSort] = useState<CatalogueSort>('recent');
   const [size, setSize] = useState<MediaGridSize>(readGridSize);
   const [isAdding, setIsAdding] = useState(false);
+  const [isFollowingAll, setIsFollowingAll] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [isChoosing, setIsChoosing] = useState(false);
   const [chosen, setChosen] = useState<ReadonlySet<string>>(new Set());
@@ -246,6 +254,15 @@ const CataloguePanel = ({
           </PanelCardAction>
 
           <PanelCardAction
+            icon={EyeFilledIcon}
+            onClick={() => {
+              setIsFollowingAll(true);
+            }}
+          >
+            {say('screens.adminArea.cataloguePanel.followAll')}
+          </PanelCardAction>
+
+          <PanelCardAction
             icon={PlusFilledIcon}
             onClick={() => {
               setIsAdding(true);
@@ -262,6 +279,18 @@ const CataloguePanel = ({
           setIsAdding(false);
         }}
         onAsked={() => {
+          void reread();
+        }}
+      />
+
+      <FollowAllDialog
+        isOpen={isFollowingAll}
+        entries={catalogue.data ?? []}
+        libraries={libraries.data ?? []}
+        onClose={() => {
+          setIsFollowingAll(false);
+        }}
+        onFollowed={() => {
           void reread();
         }}
       />

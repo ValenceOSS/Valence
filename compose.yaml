@@ -50,6 +50,13 @@ services:
       BETTER_AUTH_URL: ${PUBLIC_URL:?set PUBLIC_URL, e.g. https://valence.example.com}
       TRUSTED_ORIGINS: ${PUBLIC_URL}
 
+      # The reverse proxies believed about who they forwarded, since anybody can
+      # send X-Forwarded-For. A proxy outside these private ranges, such as one
+      # on a Tailscale address, goes on the end of the list, inside the quotes
+      # and on the same line, or every sign-in shows the proxy's address instead
+      # of the person's. The server log names the address to add.
+      TRUSTED_PROXIES: '${TRUSTED_PROXIES:-127.0.0.0/8, ::1, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, fc00::/7}'
+
       # True because the browser's half of the journey is HTTPS, even though
       # this container only ever speaks plain HTTP to the proxy in front of it.
       # A browser refuses to store a secure cookie from an insecure origin, so

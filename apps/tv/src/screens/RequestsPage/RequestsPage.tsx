@@ -1,4 +1,5 @@
 import { isAskedBy } from '@ValenceContracts/functions/isAskedBy';
+import { isAskedFor } from '@ValenceContracts/functions/isAskedFor';
 import { useEffect, useMemo } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
@@ -28,7 +29,7 @@ const RequestsPage = ({ onOpen, onLight }: RequestsPageProps) => {
   const shown = useMemo(
     () =>
       (requests.data ?? [])
-        .filter((request) => WATCHABLE_KINDS.has(request.kind))
+        .filter((request) => WATCHABLE_KINDS.has(request.kind) && isAskedFor(request))
         .sort((left, right) => right.createdAt.localeCompare(left.createdAt)),
     [requests.data],
   );

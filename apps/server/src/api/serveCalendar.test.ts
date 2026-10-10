@@ -60,6 +60,8 @@ const aFilmRequest = (change: Partial<MediaRequest>): MediaRequest => ({
   refusedBecause: null,
   requestedBy: { id: 'somebody-else', name: 'Sam' },
   alsoAskedBy: [],
+  origin: 'asked',
+  isFollowed: false,
   profileAsk: null,
   seasons: null,
   followsNewSeasons: false,

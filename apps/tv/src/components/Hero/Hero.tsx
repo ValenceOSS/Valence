@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTheScreen } from '@ValenceTv/platform/useTheScreen';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useQuery } from '@tanstack/react-query';
 import { Info } from '@keyline-icons/react-native';
 import { Play } from '@keyline-icons/react-native/fill';
@@ -25,6 +24,7 @@ import { withAlpha } from '@ValenceTv/theme/withAlpha';
 import type { HeroProps } from './Hero.types';
 import { say } from '@ValenceI18n/say';
 import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
+import { Shade } from '@ValenceTv/components/Shade/Shade';
 
 const TAKES_TURNS_MS = 20_000;
 
@@ -116,10 +116,11 @@ const Hero = ({
               style={StyleSheet.absoluteFill}
             />
 
-            <LinearGradient
+            <Shade
               colors={[withAlpha(tokens.colours.canvas, 0.85), withAlpha(tokens.colours.canvas, 0)]}
               start={{ x: 0, y: 0.5 }}
               end={{ x: 0.65, y: 0.5 }}
+              flat={withAlpha(tokens.colours.canvas, 0.55)}
               style={StyleSheet.absoluteFill}
             />
           </EdgeFade>

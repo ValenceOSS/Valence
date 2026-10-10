@@ -1,14 +1,8 @@
 import { say } from '@ValenceI18n/say';
+import { browserOf } from '@ValenceCore/functions/browserOf';
+import { BROWSER_NAMES } from '@ValenceCore/functions/BROWSER_NAMES';
 
 type Match = { name: string; pattern: RegExp };
-
-const BROWSERS: Match[] = [
-  { name: say('common.edge'), pattern: /Edg\// },
-  { name: say('common.opera'), pattern: /OPR\// },
-  { name: say('common.chromium'), pattern: /Chrome\// },
-  { name: say('common.firefox'), pattern: /Firefox\// },
-  { name: say('client.playback.detectClientLabel.safari'), pattern: /Safari\// },
-];
 
 const OPERATING_SYSTEMS: Match[] = [
   { name: 'iOS', pattern: /iPhone|iPad|iPod/ },
@@ -20,15 +14,17 @@ const OPERATING_SYSTEMS: Match[] = [
 
 /**
  * Names what a viewer is watching from — "Chrome on macOS" rather than a generic "Browser" — for the
- * sessions an operator sees and the devices an account can review. Built from the user agent, in the
- * shape other media servers use, so an operator reading it recognises what they are looking at.
+ * sessions an operator sees and the devices an account can review. Built from the user agent and
+ * the brands the browser names in its client hints, in the shape other media servers use, so an
+ * operator reading it recognises what they are looking at.
  *
  * @param userAgent - What the browser says about itself.
+ * @param brands - The brands its client hints name, where it gave any.
  * @returns The device as a person would describe it.
  */
-const detectClientLabel = (userAgent: string): string => {
-  const browser =
-    BROWSERS.find((candidate) => candidate.pattern.test(userAgent))?.name ?? say('common.browser');
+const detectClientLabel = (userAgent: string, brands: readonly string[] = []): string => {
+  const known = browserOf(userAgent, brands);
+  const browser = known === null ? say('common.browser') : BROWSER_NAMES[known];
   const os = OPERATING_SYSTEMS.find((candidate) => candidate.pattern.test(userAgent))?.name ?? null;
 
   return os === null

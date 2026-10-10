@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { aboutQueries } from '@ValenceClient/query/aboutQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
@@ -33,6 +33,9 @@ import { toTheDesktopLayout } from '@ValenceTv/platform/toTheDesktopLayout';
  * plugins on this server add to an account, each opening on its own, everywhere the account is
  * signed in, and any themes those plugins offer. Its foot names this build and the server's, as
  * the desktop app's account dialog does. On a shared demo account it says so beneath the server, and leaves out where it is signed in.
+ *
+ * Moving to the desktop layout asks first, starting on staying put: it is made for computers, and
+ * some televisions draw it as a blank page, which the server undoes by itself after ten seconds.
  *
  * @param user - Who is signed in.
  * @param onChangeServer - Told when somebody wants a different Valence.
@@ -121,7 +124,16 @@ const AccountPage = ({
               label={say('tv.account.useTheDesktopLayout')}
               variant="ghost"
               onFocus={upToBar.leave}
-              onPress={toDesktop}
+              onPress={() => {
+                Alert.alert(
+                  say('tv.account.switchToTheDesktopLayout'),
+                  say('tv.account.madeForComputersSomeTvs'),
+                  [
+                    { text: say('tv.account.stayOnTheTvLayout'), style: 'cancel' },
+                    { text: say('tv.account.useTheDesktopLayout'), onPress: toDesktop },
+                  ],
+                );
+              }}
             />
           )}
         </View>

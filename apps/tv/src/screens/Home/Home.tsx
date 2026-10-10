@@ -1,4 +1,4 @@
-import { Fragment, memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
@@ -61,7 +61,8 @@ const HEARS_SCROLL_EVERY_MS = 250;
  * @param isCovered - Whether another page is over the front page, which stops its preview.
  * @param onFeature - Told which title the top of the page is showing.
  * @param upTo - The bar along the top, which pressing up from the top of the page goes to.
- * @param playRef - Handed the hero's Play button, which pressing down from the bar goes to.
+ * @param playRef - Handed the hero's Play button, which pressing down from the bar goes to, as does
+ *   pressing up from anywhere along the first shelf.
  * @param isHeldBack - Whether to wait before drawing anything, while somebody's face is still
  *   flying into the bar as they sign in; what it needs is asked for all the same.
  */
@@ -77,6 +78,14 @@ const HomePage = ({
   isHeldBack,
 }: HomeProps) => {
   const { progress, isKnown } = useProgress();
+  const [play, setPlay] = useState<View | null>(null);
+  const handPlay = useCallback(
+    (element: View | null) => {
+      setPlay(element);
+      playRef(element);
+    },
+    [playRef],
+  );
   const home = useHomeRows(viewerId, watchable, progress, true, isKnown);
 
   const sample = useQuery({
@@ -198,7 +207,7 @@ const HomePage = ({
               onFeature={onFeature}
               upTo={upTo}
               onReached={showTheTop}
-              playRef={playRef}
+              playRef={handPlay}
             />
           )}
 
@@ -223,6 +232,7 @@ const HomePage = ({
                 areEpisodes={rail.id === RESUMING}
                 isUrgent={at === 0}
                 onOpen={rail.id === RESUMING ? resume : onOpen}
+                {...(at === 0 ? { upTo: play } : {})}
               />
 
               {at === 0 ? (

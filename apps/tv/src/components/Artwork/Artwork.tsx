@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { onTheServer } from '@ValenceTv/platform/theServersOrigin';
 import { signedHeadersFor } from '@ValenceTv/platform/theSessionToken';
+import { pictureSource } from '@ValenceTv/platform/pictureSource';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { ArtworkProps } from './Artwork.types';
 
@@ -41,7 +42,7 @@ const Artwork = ({
     <View style={[styles.frame, style]}>
       {path === null || isMissing ? null : (
         <Image
-          source={{ uri: onTheServer(path), headers: signedHeadersFor(path) }}
+          source={pictureSource(onTheServer(path), signedHeadersFor(path))}
           style={StyleSheet.absoluteFill}
           contentFit={fit}
           contentPosition={anchor}

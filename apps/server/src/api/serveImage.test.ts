@@ -115,6 +115,17 @@ describe('GET /api/media/{mediaId}/image/{kind}', () => {
     );
   });
 
+  it('serves the medium copy at the width a wide card draws it', async () => {
+    const { ask, readImage } = await build();
+    const response = await ask(`${POSTER}?size=medium`);
+
+    expect(response.status).toBe(200);
+    expect(readImage).toHaveBeenCalledWith(
+      `https://images.test/poster/${MEDIA_ID}.jpg`,
+      ARTWORK_WIDTHS.medium,
+    );
+  });
+
   it('tags the small copy apart from the whole picture', async () => {
     const { ask } = await build();
     const whole = await ask(POSTER);

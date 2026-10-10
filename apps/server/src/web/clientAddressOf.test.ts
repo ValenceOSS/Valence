@@ -4,9 +4,12 @@ import { trustedProxyCheck } from './trustedProxyCheck';
 
 const isTrustedProxy = trustedProxyCheck(['127.0.0.0/8', '10.0.0.0/8', '192.168.0.0/16']);
 
-const asked = (forwardedFor: string | null, socketAddress: string | null) =>
+const asked = (forwardedFor: string | null, socketAddress: string | null, realIp?: string) =>
   clientAddressOf({
-    headers: new Headers(forwardedFor === null ? {} : { 'x-forwarded-for': forwardedFor }),
+    headers: new Headers({
+      ...(forwardedFor === null ? {} : { 'x-forwarded-for': forwardedFor }),
+      ...(realIp === undefined ? {} : { 'x-real-ip': realIp }),
+    }),
     socketAddress,
     isTrustedProxy,
   });
@@ -38,6 +41,16 @@ describe('clientAddressOf', () => {
 
   it('takes the proxy itself where it forwarded nobody', () => {
     expect(asked(null, '127.0.0.1')).toBe('127.0.0.1');
+  });
+
+  it('believes a trusted proxy that names the caller only in x-real-ip', () => {
+    expect(asked(null, '192.168.1.5', '203.0.113.7')).toBe('203.0.113.7');
+    expect(asked('198.51.100.1', '192.168.1.5', '203.0.113.7')).toBe('198.51.100.1');
+  });
+
+  it('ignores x-real-ip from anybody it does not trust, and anything that is not an address', () => {
+    expect(asked(null, '203.0.113.9', '198.51.100.1')).toBe('203.0.113.9');
+    expect(asked(null, '127.0.0.1', 'unknown')).toBe('127.0.0.1');
   });
 
   it('unwraps an IPv4 address an IPv6 socket reported in its mapped form', () => {

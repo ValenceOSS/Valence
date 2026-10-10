@@ -759,6 +759,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
           hasMusic={hasMusic}
           hasBooks={hasBooks}
           rightOfTheBar={playingChip}
+          downFromTheBar={tab === 'home' ? heroPlay : null}
         />
       </FocusFence>
 
@@ -894,7 +895,9 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
         <ArrivalBanner
           key={arrival.id}
           arrival={arrival}
-          picture={arrived === null ? null : artworkUrl(arrived.mediaId, 'backdrop')}
+          picture={
+            arrived === null ? null : artworkUrl(arrived.mediaId, 'backdrop', { size: 'medium' })
+          }
           onWatch={watchArrival}
           onDismiss={dismiss}
         />

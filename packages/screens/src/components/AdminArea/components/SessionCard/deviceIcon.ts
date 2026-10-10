@@ -13,7 +13,7 @@ const BROWSERS = [
   say('common.edge'),
   say('common.opera'),
   say('common.chromium'),
-  say('screens.sessionCard.deviceIcon.chrome'),
+  say('common.chrome'),
   say('common.firefox'),
 ] as const;
 

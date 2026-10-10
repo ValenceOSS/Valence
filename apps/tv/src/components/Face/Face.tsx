@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { profileAvatarUrl, profileInitial } from '@ValenceContracts/schemas/ViewerProfile';
 import { onTheServer } from '@ValenceTv/platform/theServersOrigin';
 import { signedHeaders } from '@ValenceTv/platform/theSessionToken';
+import { pictureSource } from '@ValenceTv/platform/pictureSource';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { FaceProps } from './Face.types';
 
@@ -32,7 +33,7 @@ const Face = ({ profile, size, isFocused = false, isRound = false }: FaceProps) 
         </Text>
       ) : (
         <Image
-          source={{ uri: onTheServer(profileAvatarUrl(profile)), headers: signedHeaders() }}
+          source={pictureSource(onTheServer(profileAvatarUrl(profile)), signedHeaders())}
           style={[StyleSheet.absoluteFill, { borderRadius: ring.borderRadius }]}
           contentFit="cover"
           onError={() => {

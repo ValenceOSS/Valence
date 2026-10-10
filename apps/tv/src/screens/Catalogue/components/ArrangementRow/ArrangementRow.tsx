@@ -7,6 +7,7 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import type { ArrangementRowProps } from './ArrangementRow.types';
 import { say } from '@ValenceI18n/say';
 import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
+import { rowsRememberTheirPlace } from '@ValenceTv/focus/rowsRememberTheirPlace';
 
 /**
  * The web's order, its filters and its choice to leave out what has been watched, as a row of pills
@@ -30,7 +31,7 @@ const ArrangementRow = ({
   onFilters,
   where,
 }: ArrangementRowProps) => (
-  <FocusGuide isRemembering style={styles.row}>
+  <FocusGuide isRemembering={rowsRememberTheirPlace} style={styles.row}>
     <View style={styles.orders}>
       {BrowseOrderSchema.options.map((order) => (
         <Button

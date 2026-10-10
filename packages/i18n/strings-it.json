@@ -940,11 +940,6 @@
     "context": "What somebody is watching on, as in Firefox on Windows. {browser} is the browser's name; {os} is the operating system's."
   },
   {
-    "handler": "client.playback.detectClientLabel.safari",
-    "text": "Safari",
-    "context": "The name in the playback (from `detectClientLabel`)."
-  },
-  {
     "handler": "client.playback.fetchSegments.skipCredits",
     "text": "Skip Credits",
     "context": "Shown in the playback (from `fetchSegments`)."
@@ -2081,6 +2076,11 @@
     "context": "When somebody in a cast was born, on the phone and the television. {bornOn} is the date."
   },
   {
+    "handler": "common.brave",
+    "text": "Brave",
+    "context": "The name of the Brave browser, as a device is labelled with it."
+  },
+  {
     "handler": "common.bringBack",
     "text": "Restore",
     "context": "A button beside a file or folder left out of a library, which lets the library's scans find it again."
@@ -2249,6 +2249,11 @@
     "handler": "common.chooseThePreviewMoment",
     "text": "Choose the preview frame",
     "context": "The label, used in several places, among them the media panel in the admin area and the media detail dialog."
+  },
+  {
+    "handler": "common.chrome",
+    "text": "Chrome",
+    "context": "The name of the Google Chrome browser, as a device is labelled with it."
   },
   {
     "handler": "common.chromium",
@@ -2424,6 +2429,16 @@
     "handler": "common.count.albumsRequested.other",
     "text": "{count} albums requested",
     "context": "A notice after a playlist's missing songs were requested, on the web and the phone. {count} is how many albums were requested."
+  },
+  {
+    "handler": "common.count.artists.one",
+    "text": "{count} artist",
+    "context": "A count of music artists."
+  },
+  {
+    "handler": "common.count.artists.other",
+    "text": "{count} artists",
+    "context": "A count of music artists."
   },
   {
     "handler": "common.count.books.one",
@@ -2684,6 +2699,16 @@
     "handler": "common.count.selected.other",
     "text": "{count} selected",
     "context": "How many rows of an admin table are ticked, beside what can be done to them all. {count} is the number."
+  },
+  {
+    "handler": "common.count.shows.one",
+    "text": "{count} show",
+    "context": "A count of TV shows."
+  },
+  {
+    "handler": "common.count.shows.other",
+    "text": "{count} shows",
+    "context": "A count of TV shows."
   },
   {
     "handler": "common.count.songs.one",
@@ -5415,6 +5440,16 @@
     "context": "The label, used in the installed plugin card in the plugins panel and in the status (from `describeJobStatus`)."
   },
   {
+    "handler": "common.safari",
+    "text": "Safari",
+    "context": "The name of the Safari browser, as a device is labelled with it."
+  },
+  {
+    "handler": "common.samsungInternet",
+    "text": "Samsung Internet",
+    "context": "The name of the Samsung Internet browser, as a device is labelled with it."
+  },
+  {
     "handler": "common.samsungTV",
     "text": "Samsung TV",
     "context": "The name of the kind of television, for a Samsung television showing the TV layout in its browser; shown in the platform of the television app (from `describeThisTv`) and in the playback of the television app (from `theTvsProfile`)."
@@ -6570,6 +6605,11 @@
     "context": "The label, used in the main of the desktop app (from `theApplicationMenu`) and in the log explorer in the observability page."
   },
   {
+    "handler": "common.vivaldi",
+    "text": "Vivaldi",
+    "context": "The name of the Vivaldi browser, as a device is labelled with it."
+  },
+  {
     "handler": "common.volume",
     "text": "Volume",
     "context": "The label of a slider, used in several places, among them the volume slider of the phone app and the immersive music."
@@ -6823,6 +6863,11 @@
     "handler": "common.xbox",
     "text": "Xbox",
     "context": "The name of the kind of device, for an Xbox showing the TV layout in its Edge browser; shown in the platform of the television app (from `describeThisTv`) and in the playback of the television app (from `theTvsProfile`)."
+  },
+  {
+    "handler": "common.yandexBrowser",
+    "text": "Yandex Browser",
+    "context": "The name of the Yandex Browser browser, as a device is labelled with it."
   },
   {
     "handler": "common.year",
@@ -8813,6 +8858,11 @@
     "handler": "error.requests.askedButNotFetched",
     "text": "The request was made, but that release couldn’t be downloaded: {problem}",
     "context": "An error the server answers with (HTTP 400) when somebody asks for something and picks a release by hand, and the request was made but the release could not be sent to download. {problem} is why."
+  },
+  {
+    "handler": "error.requests.followingIsForWhoever",
+    "text": "Only request managers can follow titles nobody requested.",
+    "context": "An error the server answers with (HTTP 403) in the app on the server, when somebody without request management tries to follow a title (from `serveRequests`)."
   },
   {
     "handler": "error.requests.itIsInTheLibraryAlready",
@@ -12863,6 +12913,91 @@
     "handler": "screens.adminArea.cataloguePanel.findAShow",
     "text": "Find a show",
     "context": "The placeholder of the search field in the admin Catalogue’s Shows tab."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAll",
+    "text": "Follow all",
+    "context": "Button on Admin › Requests › Catalogue that opens a dialog to follow every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.albumsStillToFind",
+    "text": "Albums still to find",
+    "context": "Label for how many albums of followed artists are not in the library yet. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.couldNotBeFollowed",
+    "text": "Couldn’t be followed",
+    "context": "Label for how many titles failed to be followed. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.countElsewhere.one",
+    "text": "{count} more title is in a library that doesn’t take requests, so it’s left as it is.",
+    "context": "In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.countElsewhere.other",
+    "text": "{count} more titles are in libraries that don’t take requests, so they’re left as they are.",
+    "context": "In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.episodesStillToFind",
+    "text": "Episodes still to find",
+    "context": "Label for how many episodes of followed shows are not in the library yet. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.filmsStillToFind",
+    "text": "Films still to find",
+    "context": "Label for how many followed films are not in the library yet. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.followCountTitles.one",
+    "text": "Follow {count} title",
+    "context": "Confirm button. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.followCountTitles.other",
+    "text": "Follow {count} titles",
+    "context": "Confirm button. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.followedCountTitles.one",
+    "text": "Followed {count} title",
+    "context": "Title of the dialog once it has finished. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.followedCountTitles.other",
+    "text": "Followed {count} titles",
+    "context": "Title of the dialog once it has finished. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.followedDoneOfCount",
+    "text": "Followed {done} of {count}",
+    "context": "Progress while the titles are being followed. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.followEveryTitle",
+    "text": "Follow every title",
+    "context": "Title of the follow-all dialog. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.nobodyIsNotified",
+    "text": "Nobody is notified, and none of it shows on the Requests page.",
+    "context": "Explains that following is quiet. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.nothingToFollow",
+    "text": "Every title in the libraries is already followed.",
+    "context": "Shown when there is nothing left to follow. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.searchedForOnTheSchedule",
+    "text": "Anything still to find is searched for on the next scheduled search. Search all missing searches now.",
+    "context": "Shown once following has finished. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.followAllDialog.whatIsFetched",
+    "text": "New episodes, seasons and albums are downloaded as they come out, and anything missing now is searched for.",
+    "context": "Explains what following every title does. In the follow-all dialog on Admin › Requests › Catalogue, which follows every title the libraries hold that nothing follows yet."
   },
   {
     "handler": "screens.adminArea.cataloguePanel.kindsOfLibrary",
@@ -21590,6 +21725,31 @@
     "context": "The label of a button in the job runner row in the job runner. {label} is filled in by the app."
   },
   {
+    "handler": "screens.keepTheLayout.goBackToTheTvLayout",
+    "text": "Go back to the TV layout",
+    "context": "The button in that popup that goes back to the TV layout straight away."
+  },
+  {
+    "handler": "screens.keepTheLayout.goingBackIn.one",
+    "text": "Valence goes back to the TV layout in {count} second unless you keep this one.",
+    "context": "The countdown in that popup. {count} is how many seconds are left."
+  },
+  {
+    "handler": "screens.keepTheLayout.goingBackIn.other",
+    "text": "Valence goes back to the TV layout in {count} seconds unless you keep this one.",
+    "context": "The countdown in that popup. {count} is how many seconds are left."
+  },
+  {
+    "handler": "screens.keepTheLayout.keepTheDesktopLayout",
+    "text": "Keep the desktop layout?",
+    "context": "The title of the popup the desktop layout shows on a TV just switched to it, counting down to going back to the TV layout."
+  },
+  {
+    "handler": "screens.keepTheLayout.keepTheDesktopLayoutAnswer",
+    "text": "Keep the desktop layout",
+    "context": "The button in that popup that keeps the desktop layout on this TV, where the remote starts."
+  },
+  {
     "handler": "screens.keptPlayerPage.thatIsNotOnThisDevice",
     "text": "This download is no longer on this device.",
     "context": "Text shown in the kept player page."
@@ -24581,11 +24741,6 @@
     "context": "Shown on Discover when its search finds nothing to request. {query} is what was searched for."
   },
   {
-    "handler": "screens.requestsPage.onItsWayShelf.askedByName",
-    "text": "Asked by {name}",
-    "context": "The small label in the corner of a card on Discover's Requested shelf, beside the face of whoever requested it. {name} is their name."
-  },
-  {
     "handler": "screens.requestsPage.onItsWayShelf.statusPercent",
     "text": "{status} · {percent}%",
     "context": "The words on the bar under a request on Discover's Requested shelf while it downloads. {status} is where it stands, such as Downloading; {percent} is how much has come."
@@ -24879,11 +25034,6 @@
     "handler": "screens.session.useSignOut.youAreStillSignedInThe",
     "text": "Couldn’t sign out. You’re still signed in.",
     "context": "A short message shown once something is done in the use sign out in the session."
-  },
-  {
-    "handler": "screens.sessionCard.deviceIcon.chrome",
-    "text": "Chrome",
-    "context": "Shown in the session card (from `deviceIcon`)."
   },
   {
     "handler": "screens.setupLinkHandover.aCodeThatOpensNamesSetupLink",
@@ -28606,6 +28756,21 @@
     "context": "The detail of a button in the account of the television app."
   },
   {
+    "handler": "tv.account.madeForComputersSomeTvs",
+    "text": "Made for computers, so some TVs show a blank screen. If it doesn’t load, Valence switches back to the TV layout after 30 seconds.",
+    "context": "The message of the popup on a TV asking whether to use the desktop layout, saying what can go wrong and that it undoes itself."
+  },
+  {
+    "handler": "tv.account.stayOnTheTvLayout",
+    "text": "Stay on the TV layout",
+    "context": "The answer in that popup that keeps the TV layout, where the remote starts."
+  },
+  {
+    "handler": "tv.account.switchToTheDesktopLayout",
+    "text": "Switch to the desktop layout?",
+    "context": "The title of the popup on a TV's account page asking whether to leave the TV layout for the layout made for computers."
+  },
+  {
     "handler": "tv.account.themeChoice.valenceOpensInThisThemeThe",
     "text": "This theme is applied the next time you open Valence.",
     "context": "Text shown in the theme choice in the account of the television app."
@@ -29114,6 +29279,11 @@
     "handler": "tv.player.upNext.keepWatching",
     "text": "Keep watching",
     "context": "Shown in the up next in the player of the television app."
+  },
+  {
+    "handler": "tv.prompt.ok",
+    "text": "OK",
+    "context": "The one button of a popup on a TV that asks nothing, only tells, which closes it."
   },
   {
     "handler": "tv.rating.rateIt",

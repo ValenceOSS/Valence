@@ -69,4 +69,16 @@ describe('profileChangeOf', () => {
       profileChangeOf({ ...KEPT, kind: 'series' }, anAsk(UHD.id, 'both'), PROFILES),
     ).toMatchObject({ profileAsk: { profileId: UHD.id } });
   });
+
+  it('lets the first person to ask for a title only followed until now change it', () => {
+    expect(
+      profileChangeOf({ ...KEPT, origin: 'monitored' }, anAsk(SD.id, 'keep'), PROFILES),
+    ).toEqual({ profileId: SD.id, profileAsk: null });
+  });
+
+  it('changes nothing for following a title', () => {
+    expect(
+      profileChangeOf(KEPT, { ...anAsk(UHD.id, 'upgrade'), origin: 'monitored' }, PROFILES),
+    ).toEqual({});
+  });
 });

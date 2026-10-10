@@ -88,4 +88,27 @@ describe('recordFromDraft', () => {
       artistName: 'Andy Weir',
     });
   });
+
+  it('keeps whether anybody asked, as asked unless it is only followed', () => {
+    const at = '2026-09-19T00:00:00.000Z';
+
+    expect(recordFromDraft(MediaRequestDraftSchema.parse(DRAFT), 'id', at).origin).toBe('asked');
+    expect(
+      recordFromDraft(MediaRequestDraftSchema.parse({ ...DRAFT, origin: 'monitored' }), 'id', at)
+        .origin,
+    ).toBe('monitored');
+  });
+
+  it('keeps the item a film the library already holds is there as', () => {
+    const film = MediaRequestDraftSchema.parse({
+      ...DRAFT,
+      kind: 'film',
+      seasons: null,
+      held: { mediaId: 'film-in-the-library' },
+    });
+
+    expect(recordFromDraft(film, 'id', '2026-09-19T00:00:00.000Z').mediaId).toBe(
+      'film-in-the-library',
+    );
+  });
 });

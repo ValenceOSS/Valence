@@ -61,7 +61,7 @@ import { TitleProgress } from './components/TitleProgress/TitleProgress';
 import { ProfileAskCard } from './components/ProfileAskCard/ProfileAskCard';
 import { NarrationAskCard } from './components/NarrationAskCard/NarrationAskCard';
 import { HandedToNote } from './components/HandedToNote/HandedToNote';
-import { askOfEntry } from './askOfEntry';
+import { askOfEntry } from '@ValenceClient/requests/askOfEntry';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';
 import type { RequestDownload } from '@ValenceClient/requests/downloadsOfRequest';
 import type { TitleSeason } from '@ValenceClient/requests/seasonsOfTitle';

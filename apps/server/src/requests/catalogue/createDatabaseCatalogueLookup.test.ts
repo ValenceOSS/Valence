@@ -62,6 +62,34 @@ describe('createDatabaseCatalogueLookup', { timeout: STARTING_POSTGRES_MS }, () 
     expect(await lookup.seriesNarrators('Another Series')).toEqual([]);
   });
 
+  it('finds a film only in the library it is held in', async () => {
+    const { db } = await aHousehold();
+
+    await db.insert(mediaItem).values({
+      id: 'film-1',
+      libraryId: 'films',
+      path: '/film.mkv',
+      title: 'A Film',
+      externalId: '27',
+      sizeBytes: 1,
+      modifiedAtMs: 0,
+      container: 'mkv',
+      durationSeconds: 6000,
+      videoCodec: 'h264',
+      videoRange: 'sdr',
+      width: 1920,
+      height: 1080,
+      audioStreams: [],
+      subtitleStreams: [],
+    });
+
+    const lookup = createDatabaseCatalogueLookup(db);
+
+    expect(await lookup.filmIn('films', '27')).toBe('film-1');
+    expect(await lookup.filmIn('another-library', '27')).toBeNull();
+    expect(await lookup.filmIn('films', '28')).toBeNull();
+  });
+
   it('counts the episodes held in each season, a double episode as two', async () => {
     const { db } = await aHousehold();
     const episode = {

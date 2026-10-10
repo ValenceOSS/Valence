@@ -87,9 +87,9 @@ const standingOfHeld = (
  * audiobook or both, the audiobook once in each narration chosen — each wanted at once, since a
  * book has no release to wait for.
  *
- * An episode or album the library already holds is asked for as already there, so nothing searches
- * for it — unless the request upgrades lossy albums to lossless and the library's copy is lossy,
- * when that copy is the quality to climb from. A single whose every track is on one of the artist's
+ * A film, episode or album the library already holds is asked for as already there, so nothing
+ * searches for it — unless the request upgrades lossy albums to lossless and the library's copy is
+ * lossy, when that copy is the quality to climb from. A single whose every track is on one of the artist's
  * albums is not asked for at all.
  *
  * @param request - The request.
@@ -114,6 +114,7 @@ const wantedOf = (
     | 'versions'
     | 'upgradesToLossless'
     | 'narrationsWanted'
+    | 'mediaId'
   >,
   catalogue: Pick<RequestCatalogue, 'episodes' | 'albums'>,
   waitFor: ReleaseWait,
@@ -129,7 +130,7 @@ const wantedOf = (
         versionProfileId,
         title: request.title,
         airDate: releaseDateOf(request, waitFor),
-        state: 'waiting',
+        state: versionProfileId === null && request.mediaId !== null ? 'available' : 'waiting',
       }));
     case 'series':
       return catalogue.episodes
@@ -187,7 +188,7 @@ const wantedOf = (
 
 /**
  * Brings what a request waits for into line with what it asks for and what the catalogue now says:
- * a film is one thing, held until its release; a series is each episode of the seasons it wants,
+ * a film is one thing, held until its release, and there already where the library holds it; a series is each episode of the seasons it wants,
  * each held until it airs;
  * an artist is each of their albums of the kinds asked for, and any that come later; an album is
  * itself. Something the catalogue has renamed or re-dated is changed, and something no longer asked
@@ -216,6 +217,7 @@ const syncItems = (
     | 'versions'
     | 'upgradesToLossless'
     | 'narrationsWanted'
+    | 'mediaId'
   >,
   catalogue: Pick<RequestCatalogue, 'episodes' | 'albums'>,
   items: readonly RequestItemRecord[],

@@ -16,7 +16,9 @@ Three things matter. The first two are the ones people miss.
 
 **Turn buffering off.** Video is delivered as a playlist and a stream of segments. A proxy that buffers responses holds each segment until it is whole, which turns steady playback into stalling.
 
-**Set `X-Forwarded-For`.** It is what the sign-in rate limiter counts against. Without it every person in the house looks like one address, the proxy's, and shares one limit.
+**Set `X-Forwarded-For`.** It is what the sign-in rate limiter counts against, and the address sign-in notices show. Without it every person in the house looks like one address, the proxy's, and shares one limit. A proxy that sends only `X-Real-IP` works too.
+
+Valence believes those headers only from a proxy it trusts, because anybody can send them. By default that is any address on a private network: `127.0.0.0/8`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16` and their IPv6 equivalents. A proxy anywhere else, such as on a Tailscale address in `100.64.0.0/10`, goes on the end of `TRUSTED_PROXIES` in the compose file, after the defaults already there. When an untrusted address forwards somebody, the server log says which address to add.
 
 Two more are worth doing:
 

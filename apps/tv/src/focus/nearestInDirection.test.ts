@@ -47,6 +47,16 @@ describe('nearestInDirection', () => {
     expect(nearestInDirection(box(900, 500), [{ place: 'tab', box: box(0, 0) }], 'up')).toBe('tab');
   });
 
+  it('goes down from a wide button to the first of what sits under it, not the one nearest its middle', () => {
+    const places = [
+      { place: 'first', box: box(100, 300, 120, 120) },
+      { place: 'second', box: box(280, 300, 120, 120) },
+      { place: 'third', box: box(460, 300, 120, 120) },
+    ];
+
+    expect(nearestInDirection(box(80, 100, 640, 60), places, 'down')).toBe('first');
+  });
+
   it('finds nothing where nothing lies that way', () => {
     expect(nearestInDirection(box(0, 0), row, 'up')).toBeNull();
   });

@@ -60,6 +60,8 @@ const ROUND_SIZE = 60;
  * @param rightOfTheBar - What sits to the right of the bar — the song or book playing — for pressing
  *   right from the face to go to; with nothing there the remote stays on the face, rather than
  *   dropping onto whatever on the page below lies furthest right.
+ * @param downFromTheBar - Where pressing down from anything on the bar goes, such as the front
+ *   page's Play button, which may have scrolled out of sight above the page's first shelf.
  */
 const TopBar = ({
   current,
@@ -75,7 +77,12 @@ const TopBar = ({
   hasMusic,
   hasBooks,
   rightOfTheBar,
+  downFromTheBar,
 }: TopBarProps) => {
+  const down =
+    downFromTheBar === undefined || downFromTheBar === null
+      ? {}
+      : { nextFocusDown: downFromTheBar };
   const [face, setFace] = useState<View | null>(null);
   const tabs = useMemo(
     () => [
@@ -118,6 +125,7 @@ const TopBar = ({
         <FocusGuide isRemembering style={styles.capsule}>
           <Focusable
             ref={searchRef}
+            {...down}
             label={say('common.search')}
             scale={1.08}
             onFocus={() => {
@@ -151,12 +159,14 @@ const TopBar = ({
             isStartingHere
             onFocusChange={onTabFocus}
             itemRef={itemRef}
+            downTo={downFromTheBar ?? null}
           />
 
           {profile === null ? null : (
             <Focusable
               ref={faceRef}
               nextFocusRight={rightOfTheBar ?? face}
+              {...down}
               label={say('tv.topBar.nameSProfile', { name: profile.name })}
               scale={1.08}
               onFocus={() => {

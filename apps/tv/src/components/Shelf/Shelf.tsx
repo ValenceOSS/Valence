@@ -7,6 +7,7 @@ import { cardSizes } from '@ValenceTv/components/MediaCard/cardSizes';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { ShelfProps } from './Shelf.types';
 import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
+import { rowsRememberTheirPlace } from '@ValenceTv/focus/rowsRememberTheirPlace';
 
 /**
  * Whether a shelf would be drawn the same: the same titles in the same order, and everything else it
@@ -22,6 +23,7 @@ const isSameShelf = (was: ShelfProps, now: ShelfProps): boolean =>
   was.progress === now.progress &&
   was.onOpen === now.onOpen &&
   was.onFocus === now.onFocus &&
+  was.upTo === now.upTo &&
   was.shape === now.shape &&
   was.areEpisodes === now.areEpisodes &&
   was.isUrgent === now.isUrgent &&
@@ -34,7 +36,9 @@ const isSameShelf = (was: ShelfProps, now: ShelfProps): boolean =>
  * Each card carries how far through it this viewer is, so a shelf of things somebody started says
  * so at a glance. The row catches the remote across the whole width of the screen, so moving up or
  * down onto a shelf with only a few titles at its left lands on it from anywhere, not only from what
- * sits straight above or below.
+ * sits straight above or below. On a television it sends the remote back to the card it was last on,
+ * as the television's own rows do; in a browser, where the row does not bring that card back into
+ * line, up and down land on the nearest card instead.
  *
  * It is drawn again only when its titles or what it is handed change, so moving about the rest of
  * the page does not draw every card on it again. It builds only the cards that fit across the screen
@@ -49,6 +53,8 @@ const isSameShelf = (was: ShelfProps, now: ShelfProps): boolean =>
  * @param areEpisodes - Whether the cards stand for episodes rather than their programmes.
  * @param isUrgent - Whether its pictures are fetched ahead of the others', as the first shelf's are.
  * @param onFocus - Told which title the remote is on.
+ * @param upTo - Where pressing up from any card goes, such as the front page's Play button above the
+ *   first shelf, where it should not be left to the television.
  */
 const ShelfRow = ({
   title,
@@ -59,6 +65,7 @@ const ShelfRow = ({
   areEpisodes = false,
   isUrgent = false,
   onFocus,
+  upTo,
 }: ShelfProps) => {
   const screen = useTheScreen();
   const card = cardSizes[shape];
@@ -68,7 +75,7 @@ const ShelfRow = ({
     <View style={styles.shelf}>
       <Text style={styles.title}>{title}</Text>
 
-      <FocusGuide isRemembering>
+      <FocusGuide isRemembering={rowsRememberTheirPlace}>
         <FlatList
           horizontal
           initialNumToRender={inView}
@@ -92,6 +99,7 @@ const ShelfRow = ({
                 onPress={onOpen}
                 {...(watched === undefined ? {} : { watchedFraction: watchedFraction(watched) })}
                 {...(onFocus === undefined ? {} : { onFocus })}
+                {...(upTo === undefined ? {} : { upTo })}
               />
             );
           }}

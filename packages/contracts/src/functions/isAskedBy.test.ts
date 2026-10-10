@@ -4,6 +4,7 @@ import { isAskedBy } from './isAskedBy';
 const REQUEST = {
   requestedBy: { id: 'a', name: 'Priya' },
   alsoAskedBy: [{ id: 'b', name: 'Sam' }],
+  origin: 'asked' as const,
 };
 
 describe('isAskedBy', () => {
@@ -16,5 +17,9 @@ describe('isAskedBy', () => {
     expect(isAskedBy(REQUEST, 'c')).toBe(false);
     expect(isAskedBy(REQUEST, null)).toBe(false);
     expect(isAskedBy(REQUEST, undefined)).toBe(false);
+  });
+
+  it('holds for nobody on a title only followed, not even whoever followed it', () => {
+    expect(isAskedBy({ ...REQUEST, alsoAskedBy: [], origin: 'monitored' }, 'a')).toBe(false);
   });
 });

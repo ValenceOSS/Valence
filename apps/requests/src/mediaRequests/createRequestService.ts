@@ -38,6 +38,7 @@ import type {
   ReleaseType,
   ProfileAskDecision,
   Requester,
+  RequestOrigin,
   SearchScope,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type {
@@ -121,6 +122,36 @@ const joinedBy = (kept: MediaRequestRecord, asker: Requester): Partial<MediaRequ
   kept.requestedById === asker.id || kept.alsoAskedBy.some((one) => one.id === asker.id)
     ? {}
     : { alsoAskedBy: [...kept.alsoAskedBy, asker] };
+
+/**
+ * Somebody asking for a title, as it changes the request kept for it. Following a title changes
+ * nothing of who asked, and keeps it followed however those who asked come and go; somebody asking
+ * for a title only followed until now becomes the one who asked for it, as though they were the
+ * first; and anybody else asking joins those who asked.
+ *
+ * @param kept - The request kept.
+ * @param asker - Who is asking.
+ * @param origin - Whether they asked for it or only follow it.
+ * @returns The change to the request, if any.
+ */
+const askedBy = (
+  kept: MediaRequestRecord,
+  asker: Requester,
+  origin: RequestOrigin,
+): Partial<MediaRequestRecord> => {
+  if (origin === 'monitored') {
+    return { isFollowed: true };
+  }
+
+  return kept.origin === 'monitored'
+    ? {
+        origin: 'asked',
+        requestedById: asker.id,
+        requestedByName: asker.name,
+        alsoAskedBy: [],
+      }
+    : joinedBy(kept, asker);
+};
 
 /**
  * What a series request learns from what the library already holds of it: where the library keeps
@@ -302,10 +333,14 @@ const createRequestService = ({
           kept.requestedById === draft.requestedBy.id
             ? { approval: 'approved', refusedBecause: null }
             : {}),
-          ...joinedBy(kept, {
-            ...draft.requestedBy,
-            ...(askedAt === null ? {} : { profileId: askedAt.id, profileName: askedAt.name }),
-          }),
+          ...askedBy(
+            kept,
+            {
+              ...draft.requestedBy,
+              ...(askedAt === null ? {} : { profileId: askedAt.id, profileName: askedAt.name }),
+            },
+            draft.origin,
+          ),
           ...keptBy(kept.kind, draft.held),
           catalogueCheckedAt: at,
           updatedAt: at,
@@ -334,7 +369,7 @@ const createRequestService = ({
       }
 
       const record = await requests.update(id, {
-        ...joinedBy(kept, asker),
+        ...askedBy(kept, asker, 'asked'),
         updatedAt: now().toISOString(),
       });
 
@@ -345,22 +380,28 @@ const createRequestService = ({
 
     leave: async (id: string, askerId: string): Promise<MediaRequest | null> => {
       const kept = await requests.find(id);
-      const [next, ...rest] = kept?.alsoAskedBy ?? [];
 
-      if (kept === null || next === undefined) {
+      if (kept === null || kept.origin === 'monitored') {
         return null;
       }
 
+      const [next, ...rest] = kept.alsoAskedBy;
       const isFirst = kept.requestedById === askerId;
+      const isLast = isFirst && next === undefined;
 
-      if (!isFirst && !kept.alsoAskedBy.some((one) => one.id === askerId)) {
+      if (
+        (isLast && !kept.isFollowed) ||
+        (!isFirst && !kept.alsoAskedBy.some((one) => one.id === askerId))
+      ) {
         return null;
       }
 
       const record = await requests.update(id, {
-        ...(isFirst
-          ? { requestedById: next.id, requestedByName: next.name, alsoAskedBy: rest }
-          : { alsoAskedBy: kept.alsoAskedBy.filter((one) => one.id !== askerId) }),
+        ...(isLast
+          ? { origin: 'monitored' }
+          : isFirst && next !== undefined
+            ? { requestedById: next.id, requestedByName: next.name, alsoAskedBy: rest }
+            : { alsoAskedBy: kept.alsoAskedBy.filter((one) => one.id !== askerId) }),
         updatedAt: now().toISOString(),
       });
 

@@ -1,0 +1,2 @@
+ALTER TABLE "valence_requests"."media_request" ADD COLUMN "origin" text DEFAULT 'asked' NOT NULL;--> statement-breakpoint
+ALTER TABLE "valence_requests"."media_request" ADD COLUMN "is_followed" boolean DEFAULT false NOT NULL;
