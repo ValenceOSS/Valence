@@ -35,6 +35,7 @@ const readServerRow = (row: typeof linkedServer.$inferSelect): StoredLinkedServe
       createdAt: row.createdAt.toISOString(),
       linkedAt: toIso(row.linkedAt),
       lastSeenAt: toIso(row.lastSeenAt),
+      pictureAt: row.pictureAt,
     },
   ];
 };

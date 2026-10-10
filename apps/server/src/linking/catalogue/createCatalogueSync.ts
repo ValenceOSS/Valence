@@ -17,12 +17,14 @@ import { localRowsOf } from './localRowsOf';
 import { setEverythingFrom } from './setEverythingFrom';
 import { foldCopiesHere } from './foldCopiesHere';
 import { fingerprintOf } from '@ValenceServer/linking/fingerprintOf';
+import { linkedPictureKey } from '@ValenceServer/linking/linkedPictureKey';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { SharedLibrary } from '@ValenceContracts/schemas/LinkSharing';
 import type { LinkService } from '@ValenceServer/linking/LinkService';
 import type { LinkStore } from '@ValenceServer/linking/LinkStore';
 import type { PeerAnswer, PeerClient } from '@ValenceServer/linking/createPeerClient';
 import type { CataloguePage } from './CataloguePageSchema';
+import type { ServerPictures } from '@ValenceServer/linking/createServerPictures';
 
 const MOST_PAGES = 1000;
 
@@ -35,6 +37,7 @@ type CatalogueSyncOptions = {
   linking: LinkService;
   links: LinkStore;
   peers: PeerClient;
+  pictures?: ServerPictures;
   warn?: (message: string) => void;
 };
 
@@ -65,8 +68,8 @@ const inBatches = async (ids: readonly string[], remove: (batch: string[]) => Pr
  * goes here too, and a library that is no longer shared goes with everything in it, as does one
  * an administrator here chose not to take.
  *
- * Each pass also takes the server's name and colour again, as it says them now, so a server renamed
- * or recoloured there is called the same here — believed only from the key it was linked with, so
+ * Each pass also takes the server's name, colour and picture again, as it says them now, so a
+ * server renamed, recoloured or pictured anew there is shown the same here — believed only from the key it was linked with, so
  * whatever answers at its address cannot rename it.
  *
  * A server that cannot be reached is left as it was, so its titles stay browsable while it is away,
@@ -80,6 +83,7 @@ const createCatalogueSync = ({
   linking,
   links,
   peers,
+  pictures,
   warn = () => undefined,
 }: CatalogueSyncOptions) => {
   const reachable = new Map<string, boolean>();
@@ -227,12 +231,26 @@ const createCatalogueSync = ({
 
     const identity = await peers.identityAt(server.address);
 
-    if (
-      identity !== null &&
-      fingerprintOf(identity.publicKey) === server.fingerprint &&
-      (identity.name !== server.name || identity.colour !== server.colour)
-    ) {
+    const isThem = identity !== null && fingerprintOf(identity.publicKey) === server.fingerprint;
+
+    if (isThem && (identity.name !== server.name || identity.colour !== server.colour)) {
       await links.changeServer(serverId, { name: identity.name, colour: identity.colour });
+    }
+
+    if (isThem && pictures !== undefined && identity.pictureAt !== server.pictureAt) {
+      const picture = identity.pictureAt === null ? null : await peers.pictureAt(server.address);
+      const isKept =
+        picture === null
+          ? identity.pictureAt === null
+          : (await pictures.save(linkedPictureKey(serverId), picture)) === null;
+
+      if (identity.pictureAt === null) {
+        await pictures.remove(linkedPictureKey(serverId));
+      }
+
+      if (isKept) {
+        await links.changeServer(serverId, { pictureAt: identity.pictureAt });
+      }
     }
 
     let kept = 0;

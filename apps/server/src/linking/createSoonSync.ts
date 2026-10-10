@@ -6,8 +6,8 @@
  * @param waitMs - How long to wait after the last word from a server.
  * @returns A way to ask for a server to be read again soon.
  */
-const createSoonSync = (
-  sync: (serverId: string) => Promise<unknown>,
+const createSoonSync = <Outcome>(
+  sync: (serverId: string) => Promise<Outcome>,
   waitMs: number,
 ): ((serverId: string) => void) => {
   const waiting = new Map<string, ReturnType<typeof setTimeout>>();

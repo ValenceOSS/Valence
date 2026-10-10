@@ -7,6 +7,7 @@ import {
 import { FEDERATION_PATH } from './FEDERATION_PATH';
 import type { FederationActivity, SharedLibrary } from '@ValenceContracts/schemas/LinkSharing';
 import { CataloguePageSchema } from './catalogue/CataloguePageSchema';
+import type { ServerPicture } from './createServerPictures';
 import type { CataloguePage } from './catalogue/CataloguePageSchema';
 import type {
   PairAnswer,
@@ -25,6 +26,7 @@ type PeerAnswer<Answer> =
 
 type PeerClient = {
   identityAt: (address: string) => Promise<ServerIdentity | null>;
+  pictureAt: (address: string) => Promise<ServerPicture | null>;
   pair: (address: string, request: PairRequest) => Promise<PeerAnswer<PairAnswer>>;
   pairingState: (
     address: string,
@@ -109,6 +111,22 @@ const createPeerClient = (fetcher: typeof fetch = fetch): PeerClient => {
       const answered = await send(address, '/server', { method: 'GET' }, ServerIdentitySchema);
 
       return answered.kind === 'answered' ? answered.answer : null;
+    },
+    pictureAt: async (address) => {
+      try {
+        const response = await fetcher(`${address}${FEDERATION_PATH}/server/picture`, {
+          signal: AbortSignal.timeout(WAITS_MS),
+        });
+
+        return response.ok
+          ? {
+              body: new Uint8Array(await response.arrayBuffer()),
+              contentType: response.headers.get('content-type') ?? '',
+            }
+          : null;
+      } catch {
+        return null;
+      }
     },
     pair: (address, request) =>
       send(address, '/pair', { method: 'POST', body: JSON.stringify(request) }, PairAnswerSchema),

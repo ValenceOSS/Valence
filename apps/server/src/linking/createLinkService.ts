@@ -61,6 +61,7 @@ const shownOf = (server: StoredLinkedServer): LinkedServer => ({
   createdAt: server.createdAt,
   linkedAt: server.linkedAt,
   lastSeenAt: server.lastSeenAt,
+  pictureAt: server.pictureAt,
 });
 
 /**
@@ -131,6 +132,7 @@ const createLinkService = ({
       publicKey,
       fingerprint: fingerprintOf(publicKey),
       dropsRequestsElsewhere: held.dropsRequestsElsewhere,
+      pictureAt: held.pictureAt === '' ? null : held.pictureAt,
     };
   };
 
@@ -223,6 +225,7 @@ const createLinkService = ({
         protocols: me.protocols,
         publicKey: me.publicKey,
         fingerprint: me.fingerprint,
+        pictureAt: me.pictureAt,
       };
     },
 
@@ -238,6 +241,12 @@ const createLinkService = ({
           ? {}
           : { dropsRequestsElsewhere: change.dropsRequestsElsewhere }),
       });
+
+      return identity();
+    },
+
+    changePicture: async (pictureAt) => {
+      await settings.write({ ...(await keys()), pictureAt: pictureAt ?? '' });
 
       return identity();
     },

@@ -69,6 +69,7 @@ const createMemoryLinkStore = (): LinkStore => {
         createdAt: new Date().toISOString(),
         linkedAt: server.state === 'linked' ? new Date().toISOString() : null,
         lastSeenAt: null,
+        pictureAt: null,
       };
 
       servers.set(made.id, made);

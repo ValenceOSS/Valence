@@ -8685,6 +8685,11 @@
     "context": "Refusal when a linked server's admin has not let this server read its record of what this server's people asked for."
   },
   {
+    "handler": "error.linking.thatServerHasNoPicture",
+    "text": "That server has no picture.",
+    "context": "Refusal when a server’s picture is asked for and it has none."
+  },
+  {
     "handler": "error.linking.thatServerTakesNoRequestsFromYours",
     "text": "That server doesn’t accept requests from yours.",
     "context": "Refusal sent to a linked Valence server whose people ask this one for something when this server's admin has not let it."
@@ -15830,6 +15835,11 @@
     "context": "Accessible label while linked servers load."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.removeThePicture",
+    "text": "Remove picture",
+    "context": "Button on the admin’s This server card that takes away the server’s picture, so it shows its initial again."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.runsOutWhen",
     "text": "Expires {when}",
     "context": "When an open invite to link servers stops working, as a relative time."
@@ -15908,6 +15918,16 @@
     "handler": "screens.adminArea.linkedServersPanel.theirRecordOfYourPeople",
     "text": "Their request history for your people",
     "context": "Heading of a linked server's record of what this server's people asked it for."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.thePictureIsRemoved",
+    "text": "Linked servers will show the initial again.",
+    "context": "Said once an admin removed this server’s picture on the This server card."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.thePictureIsSaved",
+    "text": "Linked servers will show this picture.",
+    "context": "Said once an admin uploaded a picture for this server on the This server card."
   },
   {
     "handler": "screens.adminArea.linkedServersPanel.unlink",

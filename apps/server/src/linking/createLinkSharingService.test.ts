@@ -54,6 +54,7 @@ const twoSharingServers = async (limits?: { perServer: number; perPerson: number
     pairingState: () => Promise.resolve({ kind: 'unreachable' }),
     tellUnlinked: () => Promise.resolve(false),
     tellChanged: () => Promise.resolve(false),
+    pictureAt: () => Promise.resolve(null),
     libraries: async (address, token) => {
       const admitted = await asking(address, '/api/federation/v1/libraries', token);
 

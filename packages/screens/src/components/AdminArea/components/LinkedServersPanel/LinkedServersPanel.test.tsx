@@ -17,6 +17,7 @@ const LINKING: Linking = {
     colour: '#3a8ee8',
     address: 'https://anime.example',
     dropsRequestsElsewhere: false,
+    pictureAt: null,
     protocols: ['valence-link/1'],
     publicKey: { kty: 'OKP', crv: 'Ed25519', x: 'AAAA' },
     fingerprint: '0123456789abcdef',
@@ -33,6 +34,7 @@ const LINKING: Linking = {
       createdAt: '2026-10-02T12:00:00.000Z',
       linkedAt: '2026-10-02T12:00:00.000Z',
       lastSeenAt: null,
+      pictureAt: null,
     },
   ],
 };

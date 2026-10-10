@@ -41,6 +41,7 @@ const reaching = (at: Map<string, LinkService>): PeerClient => ({
   },
   tellUnlinked: async (address, token) => (await at.get(address)?.hearUnlinked(token)) ?? false,
   tellChanged: () => Promise.resolve(true),
+  pictureAt: () => Promise.resolve(null),
   libraries: () => Promise.resolve({ kind: 'unreachable' }),
   activity: () => Promise.resolve({ kind: 'unreachable' }),
   catalogue: () => Promise.resolve({ kind: 'unreachable' }),

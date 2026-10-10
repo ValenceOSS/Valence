@@ -2031,6 +2031,7 @@ const ENGLISH = {
     'Couldn’t connect to that server. Check its address is reachable from this one.',
   'error.linking.thatServerDoesNotShowItsRecord':
     'That server doesn’t share its request history for your users.',
+  'error.linking.thatServerHasNoPicture': 'That server has no picture.',
   'error.linking.thatServerTakesNoRequestsFromYours':
     'That server doesn’t accept requests from yours.',
   'error.linking.thisAccountMayNotLinkServers':
@@ -3987,6 +3988,7 @@ const ENGLISH = {
   'screens.adminArea.linkedServersPanel.readCountTitlesFromName':
     'Synced {count} titles from {name}.',
   'screens.adminArea.linkedServersPanel.readingLinkedServers': 'Loading linked servers',
+  'screens.adminArea.linkedServersPanel.removeThePicture': 'Remove picture',
   'screens.adminArea.linkedServersPanel.runsOutWhen': 'Expires {when}',
   'screens.adminArea.linkedServersPanel.savedThisServer': 'Saved this server’s linking details.',
   'screens.adminArea.linkedServersPanel.savedWhatNameCanSee': 'Saved what {name} can see.',
@@ -4006,6 +4008,10 @@ const ENGLISH = {
   'screens.adminArea.linkedServersPanel.theirInvite': 'Their invite',
   'screens.adminArea.linkedServersPanel.theirRecordOfYourPeople':
     'Their request history for your people',
+  'screens.adminArea.linkedServersPanel.thePictureIsRemoved':
+    'Linked servers will show the initial again.',
+  'screens.adminArea.linkedServersPanel.thePictureIsSaved':
+    'Linked servers will show this picture.',
   'screens.adminArea.linkedServersPanel.unlink': 'Unlink',
   'screens.adminArea.linkedServersPanel.unlinkedName': 'Unlinked {name}.',
   'screens.adminArea.linkedServersPanel.unlinkNameAsk': 'Unlink {name}?',

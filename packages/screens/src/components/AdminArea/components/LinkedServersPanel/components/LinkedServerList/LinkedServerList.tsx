@@ -4,7 +4,8 @@ import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { notify } from '@ValenceUI/notify';
-import { FaceCircle } from '@ValenceScreens/components/FaceCircle/FaceCircle';
+import { ServerFace } from '@ValenceScreens/components/AdminArea/components/LinkedServersPanel/components/ServerFace/ServerFace';
+import { serverPictureUrl } from '@ValenceClient/linking/serverPictureUrl';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { answerLinkedServer } from '@ValenceClient/admin/answerLinkedServer';
 import { unlinkServer } from '@ValenceClient/admin/unlinkServer';
@@ -16,8 +17,6 @@ import type { BadgeTone } from '@ValenceUI/Badge.types';
 import type { LinkState, LinkedServer } from '@ValenceContracts/schemas/LinkedServer';
 import type { LinkedServerListProps } from './LinkedServerList.types';
 import { say } from '@ValenceI18n/say';
-
-const AN_INITIAL = { kind: 'initial', font: 'gilroy' } as const;
 
 const STATE_TONES: Readonly<Record<LinkState, BadgeTone>> = {
   awaitingThem: 'waiting',
@@ -140,11 +139,10 @@ const LinkedServerList = ({ servers, managing, onManage }: LinkedServerListProps
 
             return (
               <li key={server.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
-                <FaceCircle
+                <ServerFace
                   name={server.name}
                   colour={server.colour}
-                  avatar={AN_INITIAL}
-                  source=""
+                  picture={serverPictureUrl(server.id, server.pictureAt)}
                   className="size-9 text-sm"
                 />
 

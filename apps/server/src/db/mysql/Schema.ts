@@ -1362,6 +1362,7 @@ const linkedServer = mysqlTable(
     allowsDownloads: boolean('allowsDownloads').notNull().default(false),
     takesTheirRequests: boolean('takesTheirRequests').notNull().default(false),
     playsDirect: boolean('playsDirect').notNull().default(false),
+    pictureAt: varchar('pictureAt', { length: 40 }),
   },
   (table) => [
     uniqueIndex('linked_server_fingerprint_idx').on(table.fingerprint),

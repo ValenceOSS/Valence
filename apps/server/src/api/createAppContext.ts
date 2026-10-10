@@ -1716,6 +1716,7 @@ const createAppContext = (options: CreateAppOptions) => {
     linkCatalogue: linkingOptions?.catalogue ?? (() => Promise.resolve(null)),
     syncLinkedServer: linkingOptions?.syncServer ?? (() => Promise.resolve(null)),
     tellLinkedOfChange: linkingOptions?.tellChanged ?? (() => Promise.resolve()),
+    serverPictures: linkingOptions?.pictures,
     isLinkedServerReachable: linkingOptions?.isReachable ?? (() => true),
     linkParties: linkingOptions?.parties ?? null,
     linkedServerTakesRequests: linkingOptions?.takesRequests ?? (() => false),

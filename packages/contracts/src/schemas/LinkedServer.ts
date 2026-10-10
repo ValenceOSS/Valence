@@ -34,6 +34,7 @@ const ServerIdentitySchema = z.object({
   protocols: z.array(z.string()),
   publicKey: PublicServerKeySchema,
   fingerprint: z.string().min(1),
+  pictureAt: z.string().max(40).nullable().default(null),
 });
 
 const LinkIdentitySchema = ServerIdentitySchema.extend({
@@ -75,6 +76,7 @@ const LinkedServerSchema = z.object({
   createdAt: z.string().datetime(),
   linkedAt: z.string().datetime().nullable(),
   lastSeenAt: z.string().datetime().nullable(),
+  pictureAt: z.string().nullable().default(null),
 });
 
 const LinkingSchema = z.object({

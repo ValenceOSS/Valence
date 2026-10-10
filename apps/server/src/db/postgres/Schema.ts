@@ -1379,6 +1379,7 @@ const linkedServer = pgTable(
     allowsDownloads: boolean('allowsDownloads').notNull().default(false),
     takesTheirRequests: boolean('takesTheirRequests').notNull().default(false),
     playsDirect: boolean('playsDirect').notNull().default(false),
+    pictureAt: text('pictureAt'),
   },
   (table) => [
     uniqueIndex('linked_server_fingerprint_idx').on(table.fingerprint),

@@ -117,6 +117,7 @@ import { createPeerClient } from '@ValenceServer/linking/createPeerClient';
 import { createLinkService } from '@ValenceServer/linking/createLinkService';
 import { linkSettingsOf } from '@ValenceServer/linking/linkSettingsOf';
 import { createChangeTeller } from '@ValenceServer/linking/createChangeTeller';
+import { createServerPictures } from '@ValenceServer/linking/createServerPictures';
 import { createCatalogueSync } from '@ValenceServer/linking/catalogue/createCatalogueSync';
 import { readLinkedAddress } from '@ValenceServer/linking/catalogue/readLinkedAddress';
 import { createPersonScope } from '@ValenceServer/linking/content/createPersonScope';
@@ -1369,6 +1370,8 @@ const linkedAsker = createLinkedAsker({
 
 const linkedTitleOf = createLinkedTitleReader(db);
 
+const serverPictures = createServerPictures(join(env.PROFILE_IMAGE_DIR, 'servers'));
+
 const tellLinkedOfChange = createChangeTeller({
   links: linkStore,
   sharing: linkSharingStore,
@@ -1381,6 +1384,7 @@ const catalogueSync = createCatalogueSync({
   linking: linkService,
   links: linkStore,
   peers: linkPeers,
+  pictures: serverPictures,
   warn: (address) => {
     log.warn(
       'server',
@@ -3852,6 +3856,7 @@ const app = createApp({
     address: env.BETTER_AUTH_URL,
     peers: linkPeers,
     tellChanged: tellLinkedOfChange,
+    pictures: serverPictures,
     syncServer: async (id) => {
       const synced = await catalogueSync.syncServer(id);
 

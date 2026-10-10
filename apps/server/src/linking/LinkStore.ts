@@ -28,6 +28,7 @@ type LinkedServerChange = {
   theirPairingId?: string | null;
   linkedAt?: Date | null;
   lastSeenAt?: Date;
+  pictureAt?: string | null;
 };
 
 type LinkStore = {

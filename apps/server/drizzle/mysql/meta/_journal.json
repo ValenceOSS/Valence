@@ -183,6 +183,13 @@
       "when": 1791670025051,
       "tag": "0025_linked_libraries_can_be_declined",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "5",
+      "when": 1791675928493,
+      "tag": "0026_linked_servers_keep_their_picture",
+      "breakpoints": true
     }
   ]
 }

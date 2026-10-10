@@ -9,6 +9,7 @@ const PASSTHROUGH = '/api';
 
 const PAIRING_ROUTES: readonly { method: string; path: RegExp }[] = [
   { method: 'GET', path: /^\/server$/ },
+  { method: 'GET', path: /^\/server\/picture$/ },
   { method: 'POST', path: /^\/pair$/ },
   { method: 'GET', path: new RegExp(`^/pair/${ID}$`) },
   { method: 'POST', path: /^\/unlink$/ },
