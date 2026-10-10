@@ -37,6 +37,7 @@ import type {
   RequestCatalogueUpdate,
   ReleaseType,
   ProfileAskDecision,
+  AskerNames,
   Requester,
   RequestOrigin,
   SearchScope,
@@ -408,6 +409,41 @@ const createRequestService = ({
       onChange();
 
       return record === null ? null : shown(record);
+    },
+
+    renameAskers: async (askers: AskerNames['askers']): Promise<number> => {
+      const names = new Map(askers.map((asker) => [asker.id, asker.name]));
+      const renamed = (asker: Requester): Requester => {
+        const name = names.get(asker.id);
+
+        return name === undefined || name === asker.name ? asker : { ...asker, name };
+      };
+      let changed = 0;
+
+      for (const kept of await requests.list()) {
+        const requestedByName = names.get(kept.requestedById) ?? kept.requestedByName;
+        const alsoAskedBy = kept.alsoAskedBy.map(renamed);
+        const ask = kept.profileAsk ?? null;
+        const askedFor = ask === null ? null : { ...ask, asker: renamed(ask.asker) };
+        const changes = {
+          ...(requestedByName === kept.requestedByName ? {} : { requestedByName }),
+          ...(alsoAskedBy.every((asker, at) => asker === kept.alsoAskedBy[at])
+            ? {}
+            : { alsoAskedBy }),
+          ...(askedFor === null || askedFor.asker === ask?.asker ? {} : { profileAsk: askedFor }),
+        };
+
+        if (Object.keys(changes).length > 0) {
+          await requests.update(kept.id, changes);
+          changed += 1;
+        }
+      }
+
+      if (changed > 0) {
+        onChange();
+      }
+
+      return changed;
     },
 
     decideNarration: async (id: string, asins: readonly string[]): Promise<MediaRequest | null> => {

@@ -138,6 +138,20 @@ describe('createRequestRoutes', () => {
     expect((await ask(`/requests/${id}/askers/another`, 'DELETE')).status).toBe(404);
   });
 
+  it('names whoever asked as their accounts are called now, and says how many requests changed', async () => {
+    const { ask } = theRoutes();
+    const id = await madeDune(ask);
+    const asker = MediaRequestSchema.parse(await (await ask(`/requests/${id}`)).json()).requestedBy;
+
+    const renamed = await ask('/askers/names', 'POST', { askers: [{ id: asker.id, name: 'Sam' }] });
+
+    expect(await renamed.json()).toEqual({ renamed: 1 });
+    expect(
+      MediaRequestSchema.parse(await (await ask(`/requests/${id}`)).json()).requestedBy.name,
+    ).toBe('Sam');
+    expect((await ask('/askers/names', 'POST', { askers: [{ id: asker.id }] })).status).toBe(400);
+  });
+
   it('refuses to settle a higher-quality ask that is not there, or a choice that is not one', async () => {
     const { ask } = theRoutes();
     const id = await madeDune(ask);

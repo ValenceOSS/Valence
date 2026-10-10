@@ -38,6 +38,7 @@ type CreateAuthOptions = {
   settings: SettingsStore;
   cookieSecure: boolean;
   onUserCreated?: (userId: string) => Promise<void>;
+  onUserChanged?: (userId: string) => Promise<void>;
   onSignedIn?: (userId: string, at: Date) => Promise<void>;
   onPasswordResetRequested?: (email: string, url: string, name: string) => Promise<void>;
   onSignInSettled?: (attempt: SignInAttempt) => void;
@@ -65,7 +66,7 @@ const DEVICE_TOKEN_PATH = '/device/token';
  * own. Without either, a television that finished signing in was left on the sign-in screen.
  *
  * @param options - The environment, the database, the settings store, whether cookies are secure,
- * and the hooks fired when an account is made, signs in, or asks for a reset.
+ * and the hooks fired when an account is made or changed, signs in, or asks for a reset.
  * @returns The authentication layer.
  */
 const createAuth = ({
@@ -74,6 +75,7 @@ const createAuth = ({
   settings,
   cookieSecure,
   onUserCreated,
+  onUserChanged,
   onSignedIn,
   onPasswordResetRequested,
   onSignInSettled,
@@ -114,6 +116,11 @@ const createAuth = ({
         create: {
           after: async (created) => {
             await onUserCreated?.(created.id);
+          },
+        },
+        update: {
+          after: async (changed) => {
+            await onUserChanged?.(changed.id);
           },
         },
       },

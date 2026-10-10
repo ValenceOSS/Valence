@@ -2098,6 +2098,7 @@ const ENGLISH = {
   'error.requests.sayWhichItemItBecame': 'Say which library item it became.',
   'error.requests.sayWhichNarrationToFetch': 'Say which narration of the audiobook to fetch.',
   'error.requests.sayWhoIsAsking': 'Say who is asking.',
+  'error.requests.sayWhoIsCalledWhat': 'Say what each account is called now.',
   'error.requests.sayWhyItWasRefusedOr': 'Give a reason for declining, or leave it empty.',
   'error.requests.thatIsNotAChangeTo': 'That isn’t a valid change to a request.',
   'error.requests.thatIsNotARequest': 'That isn’t a valid request.',

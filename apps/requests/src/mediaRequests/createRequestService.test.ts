@@ -165,6 +165,40 @@ describe('createRequestService', () => {
     expect(await service.join('nowhere', { id: 'another', name: 'Another' })).toBeNull();
   });
 
+  it('names whoever asked as their accounts are called now, telling of it only when anything changed', async () => {
+    const { service, requests, onChange } = aService();
+    const { request } = await service.add(DUNE);
+
+    await service.join(request.id, { id: 'another', name: 'Another', profileId: null });
+    await requests.update(request.id, {
+      profileAsk: {
+        asker: { id: 'another', name: 'Another' },
+        profileId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+        profileName: '4K',
+      },
+    });
+    onChange.mockClear();
+
+    const renamed = await service.renameAskers([
+      { id: 'someone', name: 'Sam' },
+      { id: 'another', name: 'Kit' },
+      { id: 'stranger', name: 'Nobody here' },
+    ]);
+
+    expect(renamed).toBe(1);
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(await service.find(request.id)).toMatchObject({
+      requestedBy: { id: 'someone', name: 'Sam' },
+      alsoAskedBy: [{ id: 'another', name: 'Kit', profileId: null }],
+      profileAsk: { asker: { id: 'another', name: 'Kit' }, profileName: '4K' },
+    });
+
+    onChange.mockClear();
+
+    expect(await service.renameAskers([{ id: 'someone', name: 'Sam' }])).toBe(0);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it('takes one asker off a request, the next becoming the first where the first leaves', async () => {
     const { service } = aService();
     const { request } = await service.add(DUNE);

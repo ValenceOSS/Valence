@@ -62,10 +62,12 @@ const createMemoryAuth = (
   auth: ValenceAuth;
   settings: SettingsStore;
   profiles: string[];
+  changed: string[];
   resetLinks: { email: string; url: string }[];
   store: ReturnType<typeof emptyStore>;
 } => {
   const profiles: string[] = [];
+  const changed: string[] = [];
   const resetLinks: { email: string; url: string }[] = [];
   const store = emptyStore();
 
@@ -123,6 +125,11 @@ const createMemoryAuth = (
 
       return Promise.resolve();
     },
+    onUserChanged: (userId) => {
+      changed.push(userId);
+
+      return Promise.resolve();
+    },
     onPasswordResetRequested: (email, url) => {
       resetLinks.push({ email, url });
 
@@ -130,7 +137,7 @@ const createMemoryAuth = (
     },
   });
 
-  return { auth, settings, profiles, resetLinks, store };
+  return { auth, settings, profiles, changed, resetLinks, store };
 };
 
 export { createMemoryAuth };

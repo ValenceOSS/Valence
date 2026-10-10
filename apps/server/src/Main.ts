@@ -566,6 +566,11 @@ const auth = createAuth({
       data: { accountId: userId, name: made?.name ?? say('common.somebody') },
     });
   },
+  onUserChanged: () => {
+    tellRequestsWhoIsWhoLater();
+
+    return Promise.resolve();
+  },
   onSignInSettled: (attempt) => {
     const occurrence = describeSignInAttempt(attempt);
 
@@ -1492,6 +1497,41 @@ const requestsClient =
     ? createRequestsClient({ address: requestsSetup.address, secret: requestsSetup.secret, fetch })
     : null;
 
+/**
+ * Tells the requests service what every account is called now, so the requests it keeps name whoever
+ * asked as they are called today rather than as they were called when they asked.
+ */
+const tellRequestsWhoIsWho = async () => {
+  if (requestsClient === null) {
+    return;
+  }
+
+  const told = await requestsClient.renameAskers(
+    await db.select({ id: user.id, name: user.name }).from(user),
+  );
+
+  if (told.kind === 'answered' && told.value > 0) {
+    log.info('requests', `renamed whoever asked in ${told.value.toString()} requests`);
+  }
+
+  if (told.kind !== 'answered') {
+    log.warn('requests', 'the requests service was not told what accounts are called now');
+  }
+};
+
+/**
+ * Tells the requests service what every account is called now, without waiting for it, and says so
+ * if it could not be told.
+ */
+const tellRequestsWhoIsWhoLater = () => {
+  void tellRequestsWhoIsWho().catch((error: Error) => {
+    log.warn(
+      'requests',
+      `the requests service was not told what accounts are called now — ${error.message}`,
+    );
+  });
+};
+
 const requests =
   requestsSetup.kind === 'on' && requestsClient !== null
     ? createRequestsMonitor({
@@ -1510,6 +1550,7 @@ const requests =
 
           void events.publish({ event: 'requests.reachable', data: {} });
         },
+        onAnswering: tellRequestsWhoIsWhoLater,
         onVpnDown: (reason, problemCode) => {
           log.warn('requests', `the VPN is down — ${reason.message}`);
 
@@ -4158,6 +4199,10 @@ const app = createApp({
         ...(changes.discordId === undefined ? {} : { discordId: changes.discordId }),
       })
       .where(eq(user.id, userId));
+
+    if (changes.name !== undefined) {
+      tellRequestsWhoIsWhoLater();
+    }
 
     return 'changed';
   },
