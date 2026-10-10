@@ -39,6 +39,7 @@ import type {
 import type { DraftRung } from './components/LadderTable/LadderTable.types';
 import { useAdminCommand } from '@ValenceScreens/admin/useAdminCommand';
 import type { PreTranscodingCardProps } from './PreTranscodingCard.types';
+import { randomId } from '@ValenceClient/platform/randomId';
 
 const HOUR_CHOICES = Array.from({ length: 24 }, (_, hour) => ({
   id: hour.toString(),
@@ -79,7 +80,7 @@ const rungBelow = (targets: readonly PreTranscodeTarget[]): PreTranscodeTarget =
  */
 const asRungs = (targets: readonly PreTranscodeTarget[]) =>
   targets.map((target) => ({
-    id: crypto.randomUUID(),
+    id: randomId(),
     target,
     bitrate: target.maxBitrateKbps === null ? '' : target.maxBitrateKbps.toString(),
   }));
@@ -331,7 +332,7 @@ const PreTranscodingCard = ({ libraries }: PreTranscodingCardProps) => {
                 onClick={() => {
                   changeRungs((before) => [
                     ...before,
-                    { id: crypto.randomUUID(), target: rungBelow(targets), bitrate: '' },
+                    { id: randomId(), target: rungBelow(targets), bitrate: '' },
                   ]);
                 }}
               >
