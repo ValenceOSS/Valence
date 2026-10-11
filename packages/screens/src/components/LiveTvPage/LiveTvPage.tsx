@@ -10,6 +10,7 @@ import { liveQueries } from '@ValenceClient/query/liveQueries';
 import { LiveGuideGrid } from '@ValenceScreens/components/LiveTvPage/components/LiveGuideGrid/LiveGuideGrid';
 import { LivePlayer } from '@ValenceScreens/components/LiveTvPage/components/LivePlayer/LivePlayer';
 import { readLastChannel, saveLastChannel } from '@ValenceScreens/live/lastChannelPreference';
+import { groupsOf } from '@ValenceClient/live/groupsOf';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { say } from '@ValenceI18n/say';
 import type { LiveChannel, LiveGuide } from '@ValenceContracts/schemas/LiveTv';
@@ -39,14 +40,16 @@ const LiveTvPage = () => {
     channels.find((channel) => channel.isFavourite) ??
     channels[0] ??
     null;
-  const groups = [
-    ...new Set(channels.flatMap((channel) => (channel.group === null ? [] : [channel.group]))),
-  ];
+  const groups = [...new Set(channels.flatMap((channel) => groupsOf(channel.group)))].sort(
+    (left, right) => left.localeCompare(right),
+  );
   const searched = search.trim().toLowerCase();
   const shown = channels.filter(
     (channel) =>
       (showing === ALL ||
-        (showing === FAVOURITES ? channel.isFavourite : channel.group === showing)) &&
+        (showing === FAVOURITES
+          ? channel.isFavourite
+          : groupsOf(channel.group).includes(showing))) &&
       (searched === '' ||
         channel.name.toLowerCase().includes(searched) ||
         channel.number === searched),
@@ -126,8 +129,9 @@ const LiveTvPage = () => {
         <PanelCard
           title={say('screens.liveTvPage.guide')}
           isFlush
-          below={
+          actions={
             <ScopedField
+              className="w-full sm:w-96"
               label={say('screens.liveTvPage.findAChannel')}
               isLabelHidden
               placeholder={say('screens.liveTvPage.findAChannel')}

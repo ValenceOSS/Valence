@@ -4,6 +4,7 @@ import { Star as StarFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
+import { groupsOf } from '@ValenceClient/live/groupsOf';
 import { TABLE_LOOKS } from '@ValenceUI/tokens/tableLooks';
 import { ChannelLogo } from '@ValenceScreens/components/LiveTvPage/components/ChannelLogo/ChannelLogo';
 import { say } from '@ValenceI18n/say';
@@ -19,6 +20,8 @@ const REM_AN_HOUR = 20;
 const CHANNELS_REM = 16;
 
 const LOOKS_BACK_MS = 20 * 60 * 1000;
+
+const LABEL_CLEARS_MS = 14 * 60 * 1000;
 
 const ROW_REM = 4.5;
 
@@ -133,7 +136,7 @@ const LiveGuideGrid = ({
           >
             <div
               className={cn(
-                'sticky left-0 z-10 flex shrink-0 items-center border-r border-[var(--surface-line)] px-3',
+                'sticky left-0 z-20 flex shrink-0 items-center border-r border-[var(--surface-line)] px-3',
                 TABLE_LOOKS.band,
               )}
               style={{ width: `${CHANNELS_REM.toString()}rem` }}
@@ -152,13 +155,13 @@ const LiveGuideGrid = ({
                   className="absolute bottom-0 top-0 flex items-center border-l border-[var(--surface-line)] pl-2 tabular-nums"
                   style={{ left: `${remOf(slot).toString()}rem` }}
                 >
-                  {timeOf(slot)}
+                  {isNowShown && Math.abs(slot - now) < LABEL_CLEARS_MS ? '' : timeOf(slot)}
                 </span>
               ))}
             </div>
             {isNowShown ? (
               <span
-                className="absolute top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent px-2 py-0.5 text-[0.6875rem] font-semibold tabular-nums text-accent-contrast"
+                className="absolute top-1/2 z-[5] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent px-2 py-0.5 text-[0.6875rem] font-semibold tabular-nums text-accent-contrast"
                 style={{ left: nowLeft }}
               >
                 {timeOf(now)}
@@ -221,7 +224,7 @@ const LiveGuideGrid = ({
                       </span>
                       {channel.group === null ? null : (
                         <span className="truncate text-[0.6875rem] text-text-muted">
-                          {channel.group}
+                          {groupsOf(channel.group).join(' · ')}
                         </span>
                       )}
                     </span>
