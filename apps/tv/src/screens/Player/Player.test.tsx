@@ -234,6 +234,7 @@ const STARTED: StartedSession = {
   },
   warnings: [],
   reuse: null,
+  keptCopies: [],
 };
 
 const SOURCE = {

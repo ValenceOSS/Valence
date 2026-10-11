@@ -362,6 +362,7 @@ describe('SignedIn', () => {
           },
           warnings: [],
           reuse: null,
+          keptCopies: [],
         },
       });
 

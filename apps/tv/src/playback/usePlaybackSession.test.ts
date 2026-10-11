@@ -38,6 +38,7 @@ const aSession = (delivery: StartedSession['delivery']): StartedSession => ({
   },
   warnings: [],
   reuse: null,
+  keptCopies: [],
 });
 
 const HLS = aSession({ kind: 'hls', manifestUrl: '/api/playback/session-1/master.m3u8' });

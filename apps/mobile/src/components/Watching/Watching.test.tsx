@@ -67,6 +67,7 @@ const started = (delivery: StartedSession['delivery']): StartOutcome => ({
     plan: A_PLAN,
     warnings: [],
     reuse: null,
+    keptCopies: [],
   },
 });
 

@@ -58,6 +58,7 @@ const SESSION: StartedSession = {
   },
   warnings: [sayVerbatim('Tone mapped'), sayVerbatim('Slow disk')],
   reuse: 'whole',
+  keptCopies: [],
 };
 
 const READING: StreamReading = {
@@ -235,6 +236,7 @@ describe('StreamStats', () => {
           delivery: { kind: 'direct', url: '/api/file' },
           warnings: [],
           reuse: null,
+          keptCopies: [],
         }}
         sessionStartSeconds={0}
         quality="Original"
