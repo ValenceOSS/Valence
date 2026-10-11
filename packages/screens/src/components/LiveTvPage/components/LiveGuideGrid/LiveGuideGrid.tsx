@@ -1,9 +1,10 @@
+import { useEffect, useRef, useState } from 'react';
 import { Star as StarIcon } from '@keyline-icons/react';
 import { Star as StarFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
-import { liveChannelLogoUrl } from '@ValenceClient/live/liveChannelLogoUrl';
+import { ChannelLogo } from '@ValenceScreens/components/LiveTvPage/components/ChannelLogo/ChannelLogo';
 import { say } from '@ValenceI18n/say';
 import type { LiveProgramme } from '@ValenceContracts/schemas/LiveTv';
 import type { LiveGuideGridProps } from './LiveGuideGrid.types';
@@ -12,7 +13,15 @@ const HALF_HOUR_MS = 30 * 60 * 1000;
 
 const HOUR_MS = 60 * 60 * 1000;
 
-const REM_AN_HOUR = 16;
+const REM_AN_HOUR = 20;
+
+const CHANNELS_REM = 16;
+
+const LOOKS_BACK_MS = 20 * 60 * 1000;
+
+const ROW_REM = 4.5;
+
+const ROWS_BEYOND = 6;
 
 /**
  * A clock time as the viewer reads it, such as `19:30`.
@@ -24,11 +33,13 @@ const timeOf = (at: number): string =>
   new Date(at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 
 /**
- * The guide as a grid: a row for each channel, in order, with what is on it laid along a timeline
- * of the hours shown, a line at now, and a star to keep the channel. Choosing a channel's name or
- * anywhere on its row plays it. A channel the guide knows nothing of says so along its row, and
- * rows far down the list are left undrawn until they are scrolled to, so a playlist of thousands of
- * channels stays quick.
+ * The guide, laid out as a television's is: the channels down the side, held in place as the hours
+ * scroll past, a time bar along the top held in place as the channels scroll, and one line through
+ * every row at the time now, labelled with it. What is on now is lit with how far through it is,
+ * what has finished is dimmed, and a channel the guide knows nothing of shows a quiet band rather
+ * than a programme. Choosing a channel, or anywhere along its row, plays it; the star keeps it.
+ * Only the rows in view, and a few either side, are drawn at all — and so only their logos asked
+ * for — so a playlist of thousands of channels opens as quickly as one of ten.
  *
  * @param channels - The channels, in order.
  * @param programmes - What is on them.
@@ -49,47 +60,102 @@ const LiveGuideGrid = ({
   onChoose,
   onToggleFavourite,
 }: LiveGuideGridProps) => {
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const [remPx] = useState(
+    () => Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16,
+  );
+  const [view, setView] = useState({ top: 0, height: 800 });
   const span = until - from;
-  const width = `${((span / HOUR_MS) * REM_AN_HOUR).toString()}rem`;
+  const timelineRem = (span / HOUR_MS) * REM_AN_HOUR;
+  const remOf = (at: number) =>
+    ((Math.min(Math.max(at, from), until) - from) / HOUR_MS) * REM_AN_HOUR;
   const slots = Array.from(
     { length: Math.ceil(span / HALF_HOUR_MS) },
     (_, at) => from + at * HALF_HOUR_MS,
   );
   const byChannel = new Map<string, LiveProgramme[]>();
+  const isNowShown = now >= from && now <= until;
+  const nowLeft = `${(CHANNELS_REM + remOf(now)).toString()}rem`;
 
   for (const programme of programmes) {
-    byChannel.set(programme.channelId, [...(byChannel.get(programme.channelId) ?? []), programme]);
+    const held = byChannel.get(programme.channelId);
+
+    if (held === undefined) {
+      byChannel.set(programme.channelId, [programme]);
+    } else {
+      held.push(programme);
+    }
   }
 
-  const placeOf = (start: number, end: number) => {
-    const left = Math.max(start, from) - from;
-    const right = Math.min(end, until) - from;
+  const rowPx = ROW_REM * remPx;
+  const first = Math.max(Math.floor(view.top / rowPx) - ROWS_BEYOND, 0);
+  const last = Math.min(Math.ceil((view.top + view.height) / rowPx) + ROWS_BEYOND, channels.length);
+  const drawn = channels.slice(first, last);
 
-    return {
-      left: `${((left / span) * 100).toString()}%`,
-      width: `${(((right - left) / span) * 100).toString()}%`,
-    };
+  const jumpToNow = () => {
+    scrollerRef.current?.scrollTo({
+      left: Math.max(remOf(now - LOOKS_BACK_MS), 0) * remPx,
+      behavior: 'smooth',
+    });
   };
 
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+
+    if (scroller === null) {
+      return;
+    }
+
+    setView({ top: scroller.scrollTop, height: scroller.clientHeight });
+    scroller.scrollLeft = Math.max(remOf(now - LOOKS_BACK_MS), 0) * remPx;
+    // oxlint-disable-next-line react-hooks/exhaustive-deps -- placed once, as the guide opens; the viewer scrolls it from there
+  }, []);
+
   return (
-    <div className="overflow-x-auto rounded-2xl border border-[var(--surface-line)] bg-[var(--card-shell)]">
-      <div className="min-w-max">
-        <div className="flex border-b border-[var(--surface-line)] text-xs text-text-muted">
-          <div className="sticky left-0 z-10 w-56 shrink-0 bg-[var(--card-shell)]" />
-          <div className="relative h-9" style={{ width }}>
+    <div
+      ref={scrollerRef}
+      onScroll={(event) => {
+        setView({ top: event.currentTarget.scrollTop, height: event.currentTarget.clientHeight });
+      }}
+      className="relative max-h-[70vh] overflow-auto"
+    >
+      <div className="relative" style={{ width: `${(CHANNELS_REM + timelineRem).toString()}rem` }}>
+        <div className="sticky top-0 z-20 flex h-11 border-b border-[var(--surface-line)] bg-[var(--card-face)] text-xs text-text-muted">
+          <div
+            className="sticky left-0 z-10 flex shrink-0 items-center border-r border-[var(--surface-line)] bg-[var(--card-face)] px-3"
+            style={{ width: `${CHANNELS_REM.toString()}rem` }}
+          >
+            <Button variant="soft" size="xs" isPill onClick={jumpToNow}>
+              {say('screens.liveTvPage.jumpToNow')}
+            </Button>
+          </div>
+          <div
+            className="relative h-full shrink-0"
+            style={{ width: `${timelineRem.toString()}rem` }}
+          >
             {slots.map((slot) => (
               <span
                 key={slot}
-                className="absolute top-0 flex h-full items-center border-l border-[var(--surface-line)] pl-2 tabular-nums"
-                style={{ left: placeOf(slot, slot).left }}
+                className="absolute bottom-0 top-0 flex items-center border-l border-[var(--surface-line)] pl-2 tabular-nums"
+                style={{ left: `${remOf(slot).toString()}rem` }}
               >
                 {timeOf(slot)}
               </span>
             ))}
           </div>
+          {isNowShown ? (
+            <span
+              className="absolute top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent px-2 py-0.5 text-[0.6875rem] font-semibold tabular-nums text-accent-contrast"
+              style={{ left: nowLeft }}
+            >
+              {timeOf(now)}
+            </span>
+          ) : null}
         </div>
 
-        {channels.map((channel) => {
+        <div aria-hidden style={{ height: `${(first * ROW_REM).toString()}rem` }} />
+
+        {drawn.map((channel) => {
           const shown = byChannel.get(channel.id) ?? [];
           const isChosen = channel.id === chosenId;
 
@@ -97,11 +163,20 @@ const LiveGuideGrid = ({
             <div
               key={channel.id}
               className={cn(
-                'flex h-16 border-b border-[var(--surface-line)] [contain-intrinsic-size:auto_4rem] [content-visibility:auto] last:border-b-0',
-                isChosen ? 'bg-[var(--surface-active)]' : '',
+                'group box-border flex h-[4.5rem] border-b border-[var(--surface-line)]',
+                isChosen ? 'bg-[var(--surface-active)]' : 'hover:bg-[var(--surface-hover)]',
               )}
             >
-              <div className="sticky left-0 z-[1] flex w-56 shrink-0 items-center gap-2 bg-[var(--card-shell)] px-3">
+              <div
+                className="sticky left-0 z-10 flex shrink-0 items-center gap-2 border-r border-[var(--surface-line)] bg-[var(--card-face)] px-3"
+                style={{ width: `${CHANNELS_REM.toString()}rem` }}
+              >
+                {isChosen ? (
+                  <span
+                    aria-hidden
+                    className="absolute inset-y-2 left-0 w-1 rounded-r-full bg-accent"
+                  />
+                ) : null}
                 <Button
                   variant="bare"
                   size="none"
@@ -109,26 +184,31 @@ const LiveGuideGrid = ({
                   onClick={() => {
                     onChoose(channel.id);
                   }}
-                  className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
+                  className="flex min-w-0 flex-1 items-center gap-3 text-left"
                 >
-                  <span className="w-8 shrink-0 text-right text-xs tabular-nums text-text-muted">
-                    {channel.number ?? ''}
-                  </span>
-                  <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[var(--surface-raised)]">
-                    {channel.hasLogo ? (
-                      <img
-                        src={liveChannelLogoUrl(channel.id)}
-                        alt=""
-                        loading="lazy"
-                        className="size-full object-contain"
-                      />
-                    ) : (
-                      <span className="text-xs font-semibold text-text-muted">
-                        {channel.name.slice(0, 2)}
+                  <ChannelLogo
+                    channelId={channel.id}
+                    name={channel.name}
+                    hasLogo={channel.hasLogo}
+                    className="size-11"
+                  />
+                  <span className="flex min-w-0 flex-col">
+                    <span className="flex min-w-0 items-baseline gap-1.5">
+                      {channel.number === null ? null : (
+                        <span className="shrink-0 text-xs tabular-nums text-text-muted">
+                          {channel.number}
+                        </span>
+                      )}
+                      <span className="line-clamp-2 text-sm font-medium leading-tight text-text">
+                        {channel.name}
+                      </span>
+                    </span>
+                    {channel.group === null ? null : (
+                      <span className="truncate text-[0.6875rem] text-text-muted">
+                        {channel.group}
                       </span>
                     )}
                   </span>
-                  <span className="truncate text-sm font-medium text-text">{channel.name}</span>
                 </Button>
                 <Button
                   variant="bare"
@@ -144,8 +224,10 @@ const LiveGuideGrid = ({
                     onToggleFavourite(channel);
                   }}
                   className={cn(
-                    'size-7 shrink-0',
-                    channel.isFavourite ? 'text-warning' : 'text-text-muted',
+                    'size-7 shrink-0 transition-opacity duration-[var(--duration-fast)] motion-reduce:transition-none',
+                    channel.isFavourite
+                      ? 'text-warning'
+                      : 'text-text-muted opacity-0 focus-visible:opacity-100 group-hover:opacity-100',
                   )}
                 >
                   <Icon of={channel.isFavourite ? StarFilledIcon : StarIcon} size={14} />
@@ -160,10 +242,10 @@ const LiveGuideGrid = ({
                   onChoose(channel.id);
                 }}
                 className="relative block h-full shrink-0 text-left"
-                style={{ width }}
+                style={{ width: `${timelineRem.toString()}rem` }}
               >
                 {shown.length === 0 ? (
-                  <span className="absolute inset-y-2 left-1 right-1 flex items-center rounded-lg px-3 text-xs text-text-muted">
+                  <span className="absolute inset-y-2 left-1.5 right-1.5 flex items-center rounded-xl border border-dashed border-[var(--surface-line)] px-3 text-xs text-text-muted">
                     {say('screens.liveTvPage.noGuideForThisChannel')}
                   </span>
                 ) : (
@@ -171,37 +253,60 @@ const LiveGuideGrid = ({
                     const start = Date.parse(programme.startsAt);
                     const end = Date.parse(programme.endsAt);
                     const isOn = start <= now && now < end;
+                    const isOver = end <= now;
+                    const left = remOf(start);
+                    const width = remOf(end) - left;
 
                     return (
                       <span
                         key={`${programme.startsAt}-${programme.title}`}
                         className={cn(
-                          'absolute inset-y-2 flex min-w-0 flex-col justify-center overflow-hidden rounded-lg border border-[var(--surface-line)] px-3',
-                          isOn ? 'bg-[var(--surface-raised)]' : '',
+                          'absolute inset-y-2 flex min-w-0 flex-col justify-center overflow-hidden rounded-xl border px-3',
+                          isOn ? 'border-accent bg-surface-raised' : 'border-[var(--surface-line)]',
+                          isOver ? 'opacity-50' : '',
                         )}
-                        style={placeOf(start, end)}
+                        style={{
+                          left: `calc(${left.toString()}rem + 0.125rem)`,
+                          width: `calc(${width.toString()}rem - 0.25rem)`,
+                        }}
                       >
                         <span className="truncate text-xs font-medium text-text">
                           {programme.title}
                         </span>
                         <span className="truncate text-[0.6875rem] tabular-nums text-text-muted">
                           {timeOf(start)} – {timeOf(end)}
+                          {programme.category === null ? '' : ` · ${programme.category}`}
                         </span>
+                        {isOn ? (
+                          <span
+                            aria-hidden
+                            className="absolute bottom-0 left-0 h-0.5 bg-accent"
+                            style={{
+                              width: `${(((now - start) / (end - start)) * 100).toString()}%`,
+                            }}
+                          />
+                        ) : null}
                       </span>
                     );
                   })
-                )}
-                {now < from || now > until ? null : (
-                  <span
-                    aria-hidden
-                    className="absolute inset-y-0 w-px bg-[var(--accent)]"
-                    style={{ left: placeOf(now, now).left }}
-                  />
                 )}
               </Button>
             </div>
           );
         })}
+
+        <div
+          aria-hidden
+          style={{ height: `${((channels.length - last) * ROW_REM).toString()}rem` }}
+        />
+
+        {isNowShown ? (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute bottom-0 top-11 z-[5] w-0.5 -translate-x-1/2 bg-accent"
+            style={{ left: nowLeft }}
+          />
+        ) : null}
       </div>
     </div>
   );

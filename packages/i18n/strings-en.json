@@ -22300,6 +22300,16 @@
     "context": "Heading above the channel groups (such as News or Sports) in the live TV guide’s filter menu."
   },
   {
+    "handler": "screens.liveTvPage.guide",
+    "text": "Guide",
+    "context": "Title of the programme guide card on the live TV page."
+  },
+  {
+    "handler": "screens.liveTvPage.jumpToNow",
+    "text": "Jump to now",
+    "context": "Button in the live TV guide’s corner that scrolls the timeline back to the time now."
+  },
+  {
     "handler": "screens.liveTvPage.keepName",
     "text": "Keep {name} as a favourite",
     "context": "Label of the star that keeps a live TV channel as a favourite. {name} is the channel."

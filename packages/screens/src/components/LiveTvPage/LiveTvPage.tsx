@@ -9,6 +9,7 @@ import { useLiveWindow } from '@ValenceClient/live/useLiveWindow';
 import { liveQueries } from '@ValenceClient/query/liveQueries';
 import { LiveGuideGrid } from '@ValenceScreens/components/LiveTvPage/components/LiveGuideGrid/LiveGuideGrid';
 import { LivePlayer } from '@ValenceScreens/components/LiveTvPage/components/LivePlayer/LivePlayer';
+import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { say } from '@ValenceI18n/say';
 import type { LiveChannel, LiveGuide } from '@ValenceContracts/schemas/LiveTv';
 
@@ -120,51 +121,59 @@ const LiveTvPage = () => {
         />
       </div>
 
-      <ScopedField
-        label={say('screens.liveTvPage.findAChannel')}
-        isLabelHidden
-        placeholder={say('screens.liveTvPage.findAChannel')}
-        value={search}
-        onValueChange={setSearch}
-        choices={[
-          {
-            label: say('screens.liveTvPage.whichChannels'),
-            options: [
-              { id: ALL, label: say('screens.liveTvPage.allChannels') },
-              { id: FAVOURITES, label: say('common.favourites') },
-              ...groups.map((group) => ({
-                id: group,
-                label: group,
-                group: say('screens.liveTvPage.groups'),
-              })),
-            ],
-            value: showing,
-            onChange: setShowing,
-          },
-        ]}
-      />
-
-      {shown.length === 0 ? (
-        <p className="py-10 text-center text-sm text-text-muted">
-          {showing === FAVOURITES
-            ? say('screens.liveTvPage.noFavouritesYet')
-            : say('common.nothingHereMatchesThat')}
-        </p>
-      ) : (
-        <LiveGuideGrid
-          channels={shown}
-          programmes={guide.data.programmes}
-          from={from}
-          until={until}
-          now={now}
-          chosenId={chosen.id}
-          onChoose={(channelId) => {
-            setChosenId(channelId);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          onToggleFavourite={toggleFavourite}
-        />
-      )}
+      <div className="rounded-2xl bg-[var(--frame-panel)] [--card-shell:var(--frame-card)]">
+        <PanelCard
+          title={say('screens.liveTvPage.guide')}
+          isFlush
+          below={
+            <ScopedField
+              label={say('screens.liveTvPage.findAChannel')}
+              isLabelHidden
+              placeholder={say('screens.liveTvPage.findAChannel')}
+              value={search}
+              onValueChange={setSearch}
+              choices={[
+                {
+                  label: say('screens.liveTvPage.whichChannels'),
+                  options: [
+                    { id: ALL, label: say('screens.liveTvPage.allChannels') },
+                    { id: FAVOURITES, label: say('common.favourites') },
+                    ...groups.map((group) => ({
+                      id: group,
+                      label: group,
+                      group: say('screens.liveTvPage.groups'),
+                    })),
+                  ],
+                  value: showing,
+                  onChange: setShowing,
+                },
+              ]}
+            />
+          }
+        >
+          {shown.length === 0 ? (
+            <p className="py-10 text-center text-sm text-text-muted">
+              {showing === FAVOURITES
+                ? say('screens.liveTvPage.noFavouritesYet')
+                : say('common.nothingHereMatchesThat')}
+            </p>
+          ) : (
+            <LiveGuideGrid
+              channels={shown}
+              programmes={guide.data.programmes}
+              from={from}
+              until={until}
+              now={now}
+              chosenId={chosen.id}
+              onChoose={(channelId) => {
+                setChosenId(channelId);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              onToggleFavourite={toggleFavourite}
+            />
+          )}
+        </PanelCard>
+      </div>
     </div>
   );
 };

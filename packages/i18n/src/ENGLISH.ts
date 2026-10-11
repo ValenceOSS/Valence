@@ -5635,6 +5635,8 @@ const ENGLISH = {
   'screens.liveTvPage.allChannels': 'All channels',
   'screens.liveTvPage.findAChannel': 'Find a channel',
   'screens.liveTvPage.groups': 'Groups',
+  'screens.liveTvPage.guide': 'Guide',
+  'screens.liveTvPage.jumpToNow': 'Jump to now',
   'screens.liveTvPage.keepName': 'Keep {name} as a favourite',
   'screens.liveTvPage.nextTimeTitle': 'Next at {time}: {title}',
   'screens.liveTvPage.noChannelsYet':
