@@ -782,6 +782,24 @@ describe('VideoPlayer', () => {
     expect(screen.getByLabelText('Arrival')).toHaveAttribute('src', '/api/playback/media-1/file');
   });
 
+  it('asks the server to stop nothing for a direct file, which it never kept a session for', async () => {
+    startMock.mockResolvedValue({
+      kind: 'started',
+      session: {
+        ...startedSession,
+        sessionId: 'direct-media-1',
+        mode: 'DirectPlay',
+        delivery: { kind: 'direct', url: '/api/playback/media-1/file' },
+      },
+    });
+    const { unmount } = renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+    await settled();
+    unmount();
+
+    expect(stopMock).not.toHaveBeenCalledWith('direct-media-1', 'client-1');
+  });
+
   it('offers a seek bar named after the item', async () => {
     renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
 

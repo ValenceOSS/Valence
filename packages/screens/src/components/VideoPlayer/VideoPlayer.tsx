@@ -835,6 +835,13 @@ const VideoPlayer = ({
           ? await cache.ensureQueryData(libraryQueries.detail(request.mediaId)).catch(() => null)
           : null;
       const engine = film === null ? null : await readEngineSupport();
+      const asked =
+        request.audioStreamIndex === undefined
+          ? null
+          : (film?.audioStreams.find((stream) => stream.index === request.audioStreamIndex) ??
+            null);
+      const picksItsOwnSound =
+        engine !== null && asked !== null && engine.audioCodecs.includes(asked.codec);
       const outcome =
         keptSource === undefined
           ? await startPlaybackSession(
@@ -844,7 +851,7 @@ const VideoPlayer = ({
                 : withTheEngine(deviceProfile, engine, { isHdr: film.videoRange !== 'SDR' }),
               clientId,
               request.startSeconds,
-              request.audioStreamIndex,
+              picksItsOwnSound ? undefined : request.audioStreamIndex,
               request.requestedQuality === 'auto' ? request.autoRung : request.requestedQuality,
               request.subtitleStreamIndex,
             )
@@ -859,7 +866,10 @@ const VideoPlayer = ({
         return;
       }
 
-      startedId = keptSource === undefined ? outcome.session.sessionId : null;
+      startedId =
+        keptSource === undefined && outcome.session.delivery.kind !== 'direct'
+          ? outcome.session.sessionId
+          : null;
 
       if (isAbandoned()) {
         if (startedId !== null) {
@@ -868,7 +878,17 @@ const VideoPlayer = ({
 
         return;
       }
-      setSession(outcome.session);
+      setSession(
+        picksItsOwnSound && request.audioStreamIndex !== undefined
+          ? {
+              ...outcome.session,
+              plan: {
+                ...outcome.session.plan,
+                audio: { ...outcome.session.plan.audio, streamIndex: request.audioStreamIndex },
+              },
+            }
+          : outcome.session,
+      );
 
       const { sessionId } = outcome.session;
       const isHls = outcome.session.delivery.kind !== 'direct';
@@ -901,18 +921,23 @@ const VideoPlayer = ({
       try {
         const heard =
           film?.audioStreams.findIndex(
-            (stream) => stream.index === outcome.session.plan.audio.streamIndex,
+            (stream) =>
+              stream.index ===
+              (picksItsOwnSound
+                ? request.audioStreamIndex
+                : outcome.session.plan.audio.streamIndex),
           ) ?? -1;
         const isTheEngines =
           outcome.session.delivery.kind === 'direct' &&
           engine !== null &&
           film !== null &&
           pictureRef.current !== null &&
-          !isPlayedNatively(deviceProfile, {
-            container: film.container,
-            videoCodec: film.videoCodec,
-            audioCodec: film.audioStreams[Math.max(heard, 0)]?.codec ?? '',
-          });
+          (picksItsOwnSound ||
+            !isPlayedNatively(deviceProfile, {
+              container: film.container,
+              videoCodec: film.videoCodec,
+              audioCodec: film.audioStreams[Math.max(heard, 0)]?.codec ?? '',
+            }));
         const route =
           engine === null || film === null
             ? null
