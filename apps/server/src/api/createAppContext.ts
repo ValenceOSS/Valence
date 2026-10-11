@@ -1220,13 +1220,13 @@ const createAppContext = (options: CreateAppOptions) => {
     realtime?.publish('requests', { changed: true }, { kind: 'everyone' });
   };
 
+  const describeForWebhooks = createWebhookRequestReader(discordIdOf);
+
   /**
    * Says a request's news to anything subscribed, where anything could be.
    *
    * @param payload - What happened.
    */
-  const describeForWebhooks = createWebhookRequestReader(discordIdOf);
-
   const sayOfRequest = (payload: WebhookOccurrence): void => {
     sayRequestsChanged();
     void events?.publish(payload);
