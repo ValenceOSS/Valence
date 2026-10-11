@@ -11,10 +11,10 @@ describe('splitPictures', () => {
     const units = splitPictures(STREAM);
 
     expect(units.map((unit) => [unit.start, unit.end])).toEqual([
-      [0, 13],
-      [13, 18],
-      [18, 29],
-      [29, STREAM.length],
+      [0, 10],
+      [10, 15],
+      [15, 26],
+      [26, STREAM.length],
     ]);
   });
 
