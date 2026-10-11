@@ -4,7 +4,7 @@ const liveTvAndTheBrowser: ChangelogEntry = {
   slug: 'live-tv-and-the-browser',
   version: 'v1.5.0',
   date: '2026-10-11',
-  title: 'Live TV, and far more films in the browser',
+  title: 'Live TV, and more direct play support in the browser',
   summary:
     'Valence 1.5 adds live television with a guide, plays DTS, TrueHD, 7.1 and HDR films in the browser without the server converting them, and rebuilds requests around a catalogue of every title that works alongside Sonarr, Radarr and Lidarr.',
   picture: {
@@ -17,7 +17,7 @@ const liveTvAndTheBrowser: ChangelogEntry = {
       body: 'Add channels from a single stream, an M3U playlist by address or upload, an iptv-org country or category, an HDHomeRun tuner, or a web page with its own player. Several XMLTV guides are read at once and matched to channels for you, shown as a time bar or a table, with favourites to keep the ones you watch close. Every channel is checked each hour, so the list says what is on air, and when a channel will not play Valence says why rather than showing a black screen. Streams pass through the server, so the browser never sees a provider’s address or password.',
     },
     {
-      title: 'More films play straight in the browser',
+      title: 'More direct play in the browser',
       body: 'A browser with WebGPU now plays files it could never play by itself, without asking the server to convert them. Files are repackaged on your device, pictures are drawn with WebGPU, and HDR films in HEVC, AV1 and VP9 are tone mapped from each film’s own brightness so they look right on an ordinary screen. DTS, Dolby Digital and Dolby TrueHD are decoded in the page, and surround sound stays surround, 7.1 included, carried losslessly to the speakers. DVDs in MPEG-2 play too, through Valence’s own decoders built for the browser. Turn it on under Play more films in this browser in your profile settings.',
     },
     {
