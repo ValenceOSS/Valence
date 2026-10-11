@@ -1,4 +1,5 @@
 import { ALL_FORMATS, EncodedPacketSink, Input, UrlSource, VideoSampleSink } from 'mediabunny';
+import { createBitrateMeter } from './createBitrateMeter';
 import { createFrameQueue } from './createFrameQueue';
 import { createHdrFrameSource } from './createHdrFrameSource';
 import { createPicturePresenter } from './createPicturePresenter';
@@ -216,6 +217,8 @@ const attachEngine = async ({
     }
   };
 
+  const meter = createBitrateMeter([new EncodedPacketSink(video)], () => element.currentTime);
+
   element.style.aspectRatio = `${shape.width.toString()} / ${shape.height.toString()}`;
   frames.startAt(startSeconds);
   await feed.startAt(startSeconds);
@@ -232,7 +235,11 @@ const attachEngine = async ({
       width: shape.width,
       height: shape.height,
       frameRate: null,
-      bitrateKbps: null,
+      bitrateKbps: (() => {
+        const picture = meter.read();
+
+        return picture === null ? null : picture + (feed.bitrateAt(element.currentTime) ?? 0);
+      })(),
       audioSampleRate: feed.sound.kind === 'carried' ? sampleRate : 48_000,
       audioChannels: feed.sound.kind === 'carried' ? channels : feed.sound.numberOfChannels,
     }),
@@ -265,6 +272,7 @@ const attachEngine = async ({
 
       element.removeEventListener('seeking', onSeeking);
       redraw.disconnect();
+      meter.stop();
       frames.stop();
       shown.sample?.close();
       shown.sample = null;

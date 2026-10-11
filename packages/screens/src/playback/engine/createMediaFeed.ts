@@ -22,10 +22,13 @@ const FRAGMENT_SECONDS = 1;
 
 const SAMPLE_RATE = 48_000;
 
+const MEASURED_FRAGMENTS = 3;
+
 const AAC_FROM_WAVE = [2, 0, 1, 4, 5, 3];
 
 type MediaFeed = {
   sound: SoundRoute;
+  bitrateAt: (seconds: number) => number | null;
   startAt: (seconds: number) => Promise<void>;
   holds: (seconds: number) => boolean;
   stop: () => Promise<void>;
@@ -132,6 +135,9 @@ const stereoOf = (sample: AudioSample): AudioSample =>
  * everything else is folded into stereo by Valence's own downmix, so the dialogue in the centre
  * channel is never lost or moved.
  *
+ * It knows the size and start of every fragment it appends, so it can say the bitrate of what is
+ * playing now — the file's own, where the picture is copied — at no cost.
+ *
  * Starting counts as done once the element holds media to play, not merely the file's header, so
  * nothing waiting on the element mistakes a slow first fragment for a stream that failed.
  *
@@ -177,10 +183,16 @@ const createMediaFeed = async ({
   source.duration = duration;
 
   const buffer = source.addSourceBuffer(typeOf(pictureCodec, sound.parameter));
-  const state: { run: number; conversion: Conversion | null; queue: Promise<void> } = {
+  const state: {
+    run: number;
+    conversion: Conversion | null;
+    queue: Promise<void>;
+    fragments: { at: number; bytes: number }[];
+  } = {
     run: 0,
     conversion: null,
     queue: Promise.resolve(),
+    fragments: [],
   };
 
   const inTurn = (work: () => Promise<void>): Promise<void> => {
@@ -244,6 +256,18 @@ const createMediaFeed = async ({
       format: new Mp4OutputFormat({
         fastStart: 'fragmented',
         minimumFragmentDuration: FRAGMENT_SECONDS,
+        onMoof: (data, _, timestamp) => {
+          if (run === state.run) {
+            state.fragments.push({ at: seconds + timestamp, bytes: data.length });
+          }
+        },
+        onMdat: (data) => {
+          const last = state.fragments.at(-1);
+
+          if (run === state.run && last !== undefined) {
+            last.bytes += data.length;
+          }
+        },
       }),
       target: new StreamTarget(
         new WritableStream<StreamTargetChunk>({
@@ -323,6 +347,22 @@ const createMediaFeed = async ({
   return {
     sound,
 
+    bitrateAt: (seconds) => {
+      const after = state.fragments.findIndex((fragment) => fragment.at > seconds);
+      const until = after === -1 ? state.fragments.length : after;
+      const counted = state.fragments.slice(Math.max(0, until - MEASURED_FRAGMENTS), until);
+      const first = counted[0];
+      const ends = state.fragments[until]?.at ?? null;
+
+      if (first === undefined || ends === null || ends <= first.at) {
+        return null;
+      }
+
+      return Math.round(
+        (counted.reduce((sum, fragment) => sum + fragment.bytes, 0) * 8) / (ends - first.at) / 1000,
+      );
+    },
+
     startAt: async (seconds) => {
       await cancelRunning();
 
@@ -338,6 +378,7 @@ const createMediaFeed = async ({
 
         await remove(0, Number.POSITIVE_INFINITY);
         buffer.timestampOffset = from;
+        state.fragments = [];
       });
 
       await new Promise<void>((resolve) => {

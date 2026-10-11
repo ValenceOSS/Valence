@@ -852,22 +852,36 @@ const VideoPlayer = ({
         audioStreamIndex === undefined
           ? null
           : (film?.audioStreams.find((stream) => stream.index === audioStreamIndex) ?? null);
-      const picksItsOwnSound =
-        engine !== null && asked !== null && engine.audioCodecs.includes(asked.codec);
-      const outcome =
+      const isWhole =
+        request.requestedQuality === 'original' ||
+        (request.requestedQuality === 'auto' && request.autoRung === 'original');
+      const mayPickSound =
+        isWhole && engine !== null && asked !== null && engine.audioCodecs.includes(asked.codec);
+      const ask = (heardIndex: number | undefined) =>
+        startPlaybackSession(
+          request.mediaId,
+          engine === null || film === null
+            ? deviceProfile
+            : withTheEngine(deviceProfile, engine, { isHdr: film.videoRange !== 'SDR' }),
+          clientId,
+          request.startSeconds,
+          heardIndex,
+          request.requestedQuality === 'auto' ? request.autoRung : request.requestedQuality,
+          request.subtitleStreamIndex,
+        );
+      const first =
         keptSource === undefined
-          ? await startPlaybackSession(
-              request.mediaId,
-              engine === null || film === null
-                ? deviceProfile
-                : withTheEngine(deviceProfile, engine, { isHdr: film.videoRange !== 'SDR' }),
-              clientId,
-              request.startSeconds,
-              picksItsOwnSound ? undefined : audioStreamIndex,
-              request.requestedQuality === 'auto' ? request.autoRung : request.requestedQuality,
-              request.subtitleStreamIndex,
-            )
+          ? await ask(mayPickSound ? undefined : audioStreamIndex)
           : ({ kind: 'started', session: aKeptSession(request.mediaId, keptSource) } as const);
+      const isServerMade =
+        mayPickSound && first.kind === 'started' && first.session.delivery.kind !== 'direct';
+
+      if (isServerMade) {
+        void stopPlaybackSession(first.session.sessionId, clientId);
+      }
+
+      const picksItsOwnSound = mayPickSound && !isServerMade;
+      const outcome = isServerMade ? await ask(audioStreamIndex) : first;
 
       if (outcome.kind === 'failed') {
         if (!isAbandoned()) {

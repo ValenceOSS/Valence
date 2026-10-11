@@ -102,7 +102,7 @@ const attachRemux = async ({
       width: video.squarePixelWidth,
       height: video.squarePixelHeight,
       frameRate: null,
-      bitrateKbps: null,
+      bitrateKbps: feed.bitrateAt(element.currentTime),
       audioSampleRate: feed.sound.kind === 'carried' ? sampleRate : 48_000,
       audioChannels: feed.sound.kind === 'carried' ? channels : feed.sound.numberOfChannels,
     }),
