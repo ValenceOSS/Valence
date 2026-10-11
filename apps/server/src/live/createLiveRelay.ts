@@ -19,6 +19,8 @@ type RelayAsk = { channelId: string; address: string; until: number; signature: 
  * A DASH manifest, whose segments are numbered by the player as it goes, cannot have each of their
  * addresses signed ahead of time, so it is given one base address here instead, signed for the
  * manifest's own directory on the provider, and the player builds every segment's address under it.
+ * A quality a broadcaster lists twice under one id, as the BBC does, is kept once, since the player
+ * refuses a manifest that names two qualities alike.
  *
  * Each link is signed for its channel and lasts a few hours, and the playlists a player keeps
  * fetching hand it fresh ones, so this is never a way to fetch any address through the server — only
@@ -58,7 +60,20 @@ const createLiveRelay = (now: () => number = Date.now) => {
 
   const dashRewritten = (channelId: string, manifest: string, base: string): string => {
     const directoryOf = (address: string) => new URL('.', new URL(address, base)).toString();
-    const located = manifest.replace(
+    const seen = new Set<string>();
+    const deduplicated = manifest.replace(
+      /<Representation\b[^>]*?\bid="([^"]*)"[^>]*?(?:\/>|>[\s\S]*?<\/Representation>)/gu,
+      (whole: string, id: string) => {
+        if (seen.has(id)) {
+          return '';
+        }
+
+        seen.add(id);
+
+        return whole;
+      },
+    );
+    const located = deduplicated.replace(
       /<Location>([^<]+)<\/Location>/gu,
       (_, address: string) =>
         `<Location>${linkFor(channelId, new URL(address.trim(), base).toString())}</Location>`,

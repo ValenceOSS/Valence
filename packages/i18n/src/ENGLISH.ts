@@ -5650,6 +5650,8 @@ const ENGLISH = {
   'screens.liveTvPage.guide': 'Guide',
   'screens.liveTvPage.itIsNotBroadcastingNow':
     'This channel isn’t broadcasting right now. Some, like event channels, only come on for a programme.',
+  'screens.liveTvPage.itsDescriptionCannotBeRead':
+    'The stream’s description of itself couldn’t be read, so there was nothing to play.',
   'screens.liveTvPage.itSentNoPictures':
     'It started but sent no pictures. It may be off air right now; some channels aren’t on all day.',
   'screens.liveTvPage.itStoppedAnswering': 'The stream stopped answering part of the way in.',

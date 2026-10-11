@@ -23,6 +23,8 @@ const LOOKS_EVERY_MS = 200;
 
 const NETWORK = 1;
 
+const MANIFEST = 4;
+
 /**
  * A clock time as the viewer reads it, such as `19:30`.
  *
@@ -114,7 +116,9 @@ const LivePlayer = ({ channel, onNow, upNext, now, onToggleFavourite }: LivePlay
                 ? say('error.live.theBroadcasterRefusedIt')
                 : fault.category === NETWORK
                   ? say('screens.liveTvPage.itStoppedAnswering')
-                  : say('screens.liveTvPage.yourBrowserCannotPlayIt'),
+                  : fault.category === MANIFEST
+                    ? say('screens.liveTvPage.itsDescriptionCannotBeRead')
+                    : say('screens.liveTvPage.yourBrowserCannotPlayIt'),
           );
         },
       }).catch(() => null);
