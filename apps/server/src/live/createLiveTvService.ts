@@ -54,7 +54,8 @@ const shownOf = (source: StoredLiveSource): LiveSource => ({
  * the guide a source names or comes with, and which channels each profile keeps as favourites.
  *
  * A source that cannot be read keeps the channels it had, and says why, so a provider that is down
- * for an hour does not empty the guide. A playlist address that turns out to be one HLS stream
+ * for an hour does not empty the guide, and one whose reading fails part of the way through says so
+ * rather than standing empty with nothing said. A playlist address that turns out to be one HLS stream
  * rather than a list of channels is taken as one channel, since that is what it is.
  *
  * @param options - The store, the clock, how requests are sent, and where to warn.
@@ -125,6 +126,19 @@ const createLiveTvService = ({
   };
 
   const refreshed = async (source: StoredLiveSource): Promise<LiveSource> => {
+    try {
+      return await readAgain(source);
+    } catch {
+      const problem = saying('server.live.thePlaylistCouldNotBeRead');
+
+      warn(`live tv: reading ${source.name} failed part of the way through`);
+      await store.changeSource(source.id, { problem, refreshedAt: now() });
+
+      return shownOf({ ...source, problem, refreshedAt: now() });
+    }
+  };
+
+  const readAgain = async (source: StoredLiveSource): Promise<LiveSource> => {
     const read = await channelsOf(source);
 
     if ('code' in read) {
