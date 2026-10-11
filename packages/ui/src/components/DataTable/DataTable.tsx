@@ -14,6 +14,7 @@ import { useRoomBelow } from '@ValenceUI/useRoomBelow';
 import { useTable } from '@tanstack/react-table';
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
+import { TABLE_LOOKS } from '@ValenceUI/tokens/tableLooks';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
@@ -68,7 +69,7 @@ const SHRINKS = 'w-px whitespace-nowrap [&:not(:last-child)]:pr-0 sm:[&:not(:las
 
 const FILLS = 'w-full min-w-64 max-w-0';
 
-const BAND = 'bg-[color-mix(in_oklab,var(--card-face)_93%,var(--color-text))]';
+const BAND = TABLE_LOOKS.band;
 
 const STRIPES =
   '[&>tr:nth-child(even)]:bg-[color-mix(in_oklab,var(--color-text)_2.5%,transparent)]';
@@ -255,12 +256,7 @@ const DataTable = <Row extends RowData>({
     totalRows === undefined ? table.getPageCount() : Math.max(1, Math.ceil(totalRows / pageSize));
 
   return (
-    <div
-      className={cn(
-        'valence-well m-2 flex flex-col overflow-hidden rounded-xl border-[color-mix(in_oklab,var(--color-text)_13%,transparent)]!',
-        className,
-      )}
-    >
+    <div className={cn(TABLE_LOOKS.well, className)}>
       {toolbar === undefined ? null : (
         <div className="flex flex-wrap items-center justify-end gap-3 px-5 pb-4 pt-4">
           {toolbar}

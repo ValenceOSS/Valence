@@ -4,6 +4,7 @@ import { Star as StarFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
+import { TABLE_LOOKS } from '@ValenceUI/tokens/tableLooks';
 import { ChannelLogo } from '@ValenceScreens/components/LiveTvPage/components/ChannelLogo/ChannelLogo';
 import { say } from '@ValenceI18n/say';
 import type { LiveProgramme } from '@ValenceContracts/schemas/LiveTv';
@@ -112,71 +113,143 @@ const LiveGuideGrid = ({
   }, []);
 
   return (
-    <div
-      ref={scrollerRef}
-      onScroll={(event) => {
-        setView({ top: event.currentTarget.scrollTop, height: event.currentTarget.clientHeight });
-      }}
-      className="relative max-h-[70vh] overflow-auto"
-    >
-      <div className="relative" style={{ width: `${(CHANNELS_REM + timelineRem).toString()}rem` }}>
-        <div className="sticky top-0 z-20 flex h-11 border-b border-[var(--surface-line)] bg-[var(--card-face)] text-xs text-text-muted">
+    <div className={TABLE_LOOKS.well}>
+      <div
+        ref={scrollerRef}
+        onScroll={(event) => {
+          setView({ top: event.currentTarget.scrollTop, height: event.currentTarget.clientHeight });
+        }}
+        className="relative max-h-[70vh] overflow-auto"
+      >
+        <div
+          className="relative"
+          style={{ width: `${(CHANNELS_REM + timelineRem).toString()}rem` }}
+        >
           <div
-            className="sticky left-0 z-10 flex shrink-0 items-center border-r border-[var(--surface-line)] bg-[var(--card-face)] px-3"
-            style={{ width: `${CHANNELS_REM.toString()}rem` }}
+            className={cn(
+              'sticky top-0 z-20 flex h-11 border-b border-[var(--surface-line)] text-xs font-medium text-text-muted',
+              TABLE_LOOKS.band,
+            )}
           >
-            <Button variant="soft" size="xs" isPill onClick={jumpToNow}>
-              {say('screens.liveTvPage.jumpToNow')}
-            </Button>
-          </div>
-          <div
-            className="relative h-full shrink-0"
-            style={{ width: `${timelineRem.toString()}rem` }}
-          >
-            {slots.map((slot) => (
-              <span
-                key={slot}
-                className="absolute bottom-0 top-0 flex items-center border-l border-[var(--surface-line)] pl-2 tabular-nums"
-                style={{ left: `${remOf(slot).toString()}rem` }}
-              >
-                {timeOf(slot)}
-              </span>
-            ))}
-          </div>
-          {isNowShown ? (
-            <span
-              className="absolute top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent px-2 py-0.5 text-[0.6875rem] font-semibold tabular-nums text-accent-contrast"
-              style={{ left: nowLeft }}
-            >
-              {timeOf(now)}
-            </span>
-          ) : null}
-        </div>
-
-        <div aria-hidden style={{ height: `${(first * ROW_REM).toString()}rem` }} />
-
-        {drawn.map((channel) => {
-          const shown = byChannel.get(channel.id) ?? [];
-          const isChosen = channel.id === chosenId;
-
-          return (
             <div
-              key={channel.id}
               className={cn(
-                'group box-border flex h-[4.5rem] border-b border-[var(--surface-line)]',
-                isChosen ? 'bg-[var(--surface-active)]' : 'hover:bg-[var(--surface-hover)]',
+                'sticky left-0 z-10 flex shrink-0 items-center border-r border-[var(--surface-line)] px-3',
+                TABLE_LOOKS.band,
               )}
+              style={{ width: `${CHANNELS_REM.toString()}rem` }}
             >
-              <div
-                className="sticky left-0 z-10 flex shrink-0 items-center gap-2 border-r border-[var(--surface-line)] bg-[var(--card-face)] px-3"
-                style={{ width: `${CHANNELS_REM.toString()}rem` }}
+              <Button variant="soft" size="xs" isPill onClick={jumpToNow}>
+                {say('screens.liveTvPage.jumpToNow')}
+              </Button>
+            </div>
+            <div
+              className="relative h-full shrink-0"
+              style={{ width: `${timelineRem.toString()}rem` }}
+            >
+              {slots.map((slot) => (
+                <span
+                  key={slot}
+                  className="absolute bottom-0 top-0 flex items-center border-l border-[var(--surface-line)] pl-2 tabular-nums"
+                  style={{ left: `${remOf(slot).toString()}rem` }}
+                >
+                  {timeOf(slot)}
+                </span>
+              ))}
+            </div>
+            {isNowShown ? (
+              <span
+                className="absolute top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent px-2 py-0.5 text-[0.6875rem] font-semibold tabular-nums text-accent-contrast"
+                style={{ left: nowLeft }}
               >
-                {isChosen ? (
-                  <span
-                    aria-hidden
-                    className="absolute inset-y-2 left-0 w-1 rounded-r-full bg-accent"
-                  />
-                ) : null}
+                {timeOf(now)}
+              </span>
+            ) : null}
+          </div>
+
+          <div aria-hidden style={{ height: `${(first * ROW_REM).toString()}rem` }} />
+
+          {drawn.map((channel) => {
+            const shown = byChannel.get(channel.id) ?? [];
+            const isChosen = channel.id === chosenId;
+
+            return (
+              <div
+                key={channel.id}
+                className={cn(
+                  'group box-border flex h-[4.5rem] border-b border-[var(--surface-line)]',
+                  isChosen ? 'bg-[var(--surface-active)]' : 'hover:bg-[var(--surface-hover)]',
+                )}
+              >
+                <div
+                  className={cn(
+                    'sticky left-0 z-10 flex shrink-0 items-center gap-2 border-r border-[var(--surface-line)] px-3',
+                    TABLE_LOOKS.body,
+                  )}
+                  style={{ width: `${CHANNELS_REM.toString()}rem` }}
+                >
+                  {isChosen ? (
+                    <span
+                      aria-hidden
+                      className="absolute inset-y-2 left-0 w-1 rounded-r-full bg-accent"
+                    />
+                  ) : null}
+                  <Button
+                    variant="bare"
+                    size="none"
+                    label={say('screens.liveTvPage.watchName', { name: channel.name })}
+                    onClick={() => {
+                      onChoose(channel.id);
+                    }}
+                    className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                  >
+                    <ChannelLogo
+                      channelId={channel.id}
+                      name={channel.name}
+                      hasLogo={channel.hasLogo}
+                      className="size-11"
+                    />
+                    <span className="flex min-w-0 flex-col">
+                      <span className="flex min-w-0 items-baseline gap-1.5">
+                        {channel.number === null ? null : (
+                          <span className="shrink-0 text-xs tabular-nums text-text-muted">
+                            {channel.number}
+                          </span>
+                        )}
+                        <span className="line-clamp-2 text-sm font-medium leading-tight text-text">
+                          {channel.name}
+                        </span>
+                      </span>
+                      {channel.group === null ? null : (
+                        <span className="truncate text-[0.6875rem] text-text-muted">
+                          {channel.group}
+                        </span>
+                      )}
+                    </span>
+                  </Button>
+                  <Button
+                    variant="bare"
+                    size="none"
+                    isIconOnly
+                    label={
+                      channel.isFavourite
+                        ? say('screens.liveTvPage.stopKeepingName', { name: channel.name })
+                        : say('screens.liveTvPage.keepName', { name: channel.name })
+                    }
+                    aria-pressed={channel.isFavourite}
+                    onClick={() => {
+                      onToggleFavourite(channel);
+                    }}
+                    className={cn(
+                      'size-7 shrink-0 transition-opacity duration-[var(--duration-fast)] motion-reduce:transition-none',
+                      channel.isFavourite
+                        ? 'text-warning'
+                        : 'text-text-muted opacity-0 focus-visible:opacity-100 group-hover:opacity-100',
+                    )}
+                  >
+                    <Icon of={channel.isFavourite ? StarFilledIcon : StarIcon} size={14} />
+                  </Button>
+                </div>
+
                 <Button
                   variant="bare"
                   size="none"
@@ -184,137 +257,83 @@ const LiveGuideGrid = ({
                   onClick={() => {
                     onChoose(channel.id);
                   }}
-                  className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                  className="relative block h-full shrink-0 text-left"
+                  style={{ width: `${timelineRem.toString()}rem` }}
                 >
-                  <ChannelLogo
-                    channelId={channel.id}
-                    name={channel.name}
-                    hasLogo={channel.hasLogo}
-                    className="size-11"
-                  />
-                  <span className="flex min-w-0 flex-col">
-                    <span className="flex min-w-0 items-baseline gap-1.5">
-                      {channel.number === null ? null : (
-                        <span className="shrink-0 text-xs tabular-nums text-text-muted">
-                          {channel.number}
-                        </span>
-                      )}
-                      <span className="line-clamp-2 text-sm font-medium leading-tight text-text">
-                        {channel.name}
-                      </span>
+                  {shown.length === 0 ? (
+                    <span
+                      className="absolute inset-y-2 flex items-center rounded-xl bg-[var(--surface-hover)] px-3 text-xs text-text-muted"
+                      style={{
+                        left: `calc(${(isNowShown ? remOf(now) : 0).toString()}rem + 0.5rem)`,
+                        right: '0.375rem',
+                      }}
+                    >
+                      {say('screens.liveTvPage.liveNowNoGuide')}
                     </span>
-                    {channel.group === null ? null : (
-                      <span className="truncate text-[0.6875rem] text-text-muted">
-                        {channel.group}
-                      </span>
-                    )}
-                  </span>
-                </Button>
-                <Button
-                  variant="bare"
-                  size="none"
-                  isIconOnly
-                  label={
-                    channel.isFavourite
-                      ? say('screens.liveTvPage.stopKeepingName', { name: channel.name })
-                      : say('screens.liveTvPage.keepName', { name: channel.name })
-                  }
-                  aria-pressed={channel.isFavourite}
-                  onClick={() => {
-                    onToggleFavourite(channel);
-                  }}
-                  className={cn(
-                    'size-7 shrink-0 transition-opacity duration-[var(--duration-fast)] motion-reduce:transition-none',
-                    channel.isFavourite
-                      ? 'text-warning'
-                      : 'text-text-muted opacity-0 focus-visible:opacity-100 group-hover:opacity-100',
+                  ) : (
+                    shown.map((programme) => {
+                      const start = Date.parse(programme.startsAt);
+                      const end = Date.parse(programme.endsAt);
+                      const isOn = start <= now && now < end;
+                      const isOver = end <= now;
+                      const left = remOf(start);
+                      const width = remOf(end) - left;
+
+                      return (
+                        <span
+                          key={`${programme.startsAt}-${programme.title}`}
+                          className={cn(
+                            'absolute inset-y-2 flex min-w-0 flex-col justify-center overflow-hidden rounded-xl border px-3',
+                            isOn
+                              ? 'border-accent bg-surface-raised'
+                              : 'border-[var(--surface-line)]',
+                            isOver ? 'opacity-50' : '',
+                          )}
+                          style={{
+                            left: `calc(${left.toString()}rem + 0.125rem)`,
+                            width: `calc(${width.toString()}rem - 0.25rem)`,
+                          }}
+                        >
+                          <span className="truncate text-xs font-medium text-text">
+                            {programme.title}
+                          </span>
+                          <span className="truncate text-[0.6875rem] tabular-nums text-text-muted">
+                            {timeOf(start)} – {timeOf(end)}
+                            {programme.category === null ? '' : ` · ${programme.category}`}
+                          </span>
+                          {isOn ? (
+                            <span
+                              aria-hidden
+                              className="absolute bottom-0 left-0 h-0.5 bg-accent"
+                              style={{
+                                width: `${(((now - start) / (end - start)) * 100).toString()}%`,
+                              }}
+                            />
+                          ) : null}
+                        </span>
+                      );
+                    })
                   )}
-                >
-                  <Icon of={channel.isFavourite ? StarFilledIcon : StarIcon} size={14} />
                 </Button>
               </div>
+            );
+          })}
 
-              <Button
-                variant="bare"
-                size="none"
-                label={say('screens.liveTvPage.watchName', { name: channel.name })}
-                onClick={() => {
-                  onChoose(channel.id);
-                }}
-                className="relative block h-full shrink-0 text-left"
-                style={{ width: `${timelineRem.toString()}rem` }}
-              >
-                {shown.length === 0 ? (
-                  <span
-                    className="absolute inset-y-2 flex items-center rounded-xl bg-[var(--surface-hover)] px-3 text-xs text-text-muted"
-                    style={{
-                      left: `calc(${(isNowShown ? remOf(now) : 0).toString()}rem + 0.5rem)`,
-                      right: '0.375rem',
-                    }}
-                  >
-                    {say('screens.liveTvPage.liveNowNoGuide')}
-                  </span>
-                ) : (
-                  shown.map((programme) => {
-                    const start = Date.parse(programme.startsAt);
-                    const end = Date.parse(programme.endsAt);
-                    const isOn = start <= now && now < end;
-                    const isOver = end <= now;
-                    const left = remOf(start);
-                    const width = remOf(end) - left;
-
-                    return (
-                      <span
-                        key={`${programme.startsAt}-${programme.title}`}
-                        className={cn(
-                          'absolute inset-y-2 flex min-w-0 flex-col justify-center overflow-hidden rounded-xl border px-3',
-                          isOn ? 'border-accent bg-surface-raised' : 'border-[var(--surface-line)]',
-                          isOver ? 'opacity-50' : '',
-                        )}
-                        style={{
-                          left: `calc(${left.toString()}rem + 0.125rem)`,
-                          width: `calc(${width.toString()}rem - 0.25rem)`,
-                        }}
-                      >
-                        <span className="truncate text-xs font-medium text-text">
-                          {programme.title}
-                        </span>
-                        <span className="truncate text-[0.6875rem] tabular-nums text-text-muted">
-                          {timeOf(start)} – {timeOf(end)}
-                          {programme.category === null ? '' : ` · ${programme.category}`}
-                        </span>
-                        {isOn ? (
-                          <span
-                            aria-hidden
-                            className="absolute bottom-0 left-0 h-0.5 bg-accent"
-                            style={{
-                              width: `${(((now - start) / (end - start)) * 100).toString()}%`,
-                            }}
-                          />
-                        ) : null}
-                      </span>
-                    );
-                  })
-                )}
-              </Button>
-            </div>
-          );
-        })}
-
-        <div
-          aria-hidden
-          style={{ height: `${((channels.length - last) * ROW_REM).toString()}rem` }}
-        />
-
-        {isNowShown ? (
-          <span
+          <div
             aria-hidden
-            className="pointer-events-none absolute bottom-0 top-11 z-[5] w-px -translate-x-1/2 bg-accent/80"
-            style={{ left: nowLeft }}
-          >
-            <span className="absolute -left-[3px] -top-[3px] size-[7px] rounded-full bg-accent" />
-          </span>
-        ) : null}
+            style={{ height: `${((channels.length - last) * ROW_REM).toString()}rem` }}
+          />
+
+          {isNowShown ? (
+            <span
+              aria-hidden
+              className="pointer-events-none absolute bottom-0 top-11 z-[5] w-px -translate-x-1/2 bg-accent/80"
+              style={{ left: nowLeft }}
+            >
+              <span className="absolute -left-[3px] -top-[3px] size-[7px] rounded-full bg-accent" />
+            </span>
+          ) : null}
+        </div>
       </div>
     </div>
   );
