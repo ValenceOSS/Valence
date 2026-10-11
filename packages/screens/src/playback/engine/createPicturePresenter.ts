@@ -45,7 +45,8 @@ const createPicturePresenter = async (
       : null;
   const device = adapter === null ? null : await adapter.requestDevice().catch(() => null);
   const drawn = device === null ? null : canvas.getContext('webgpu');
-  const context = drawn instanceof GPUCanvasContext ? drawn : null;
+  const context =
+    typeof GPUCanvasContext !== 'undefined' && drawn instanceof GPUCanvasContext ? drawn : null;
 
   if (device === null || context === null) {
     device?.destroy();

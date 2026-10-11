@@ -5,7 +5,7 @@
       "@ValenceUI/ColourPicker.types": [
         "./packages/ui/src/components/ColourPicker/ColourPicker.types.ts"
       ],
-    "@ValenceUI/hsvOf": ["./packages/ui/src/functions/hsvOf.ts"],
+      "@ValenceUI/hsvOf": ["./packages/ui/src/functions/hsvOf.ts"],
       "@ValenceUI/hexOfHsv": ["./packages/ui/src/functions/hexOfHsv.ts"],
       "@ValenceUI/PageCurl": ["./packages/ui/src/components/PageCurl/PageCurl.tsx"],
       "@ValenceUI/PictureCanvas": ["./packages/ui/src/components/PictureCanvas/PictureCanvas.tsx"],

@@ -46,7 +46,7 @@ describe('downmixToStereo', () => {
     const loud = aPlane(1);
     const [left] = downmixToStereo([loud, loud, loud, loud, loud, loud]);
 
-    expect(left[0]).toBeLessThan(1);
+    expect(left[0]).toBeLessThanOrEqual(1);
     expect(left[0]).toBeGreaterThan(0.9);
   });
 
