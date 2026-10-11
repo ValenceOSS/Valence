@@ -3,6 +3,6 @@ import { checkToneMapping } from '@ValenceScreens/playback/engine/checkToneMappi
 
 describe('checkToneMapping', () => {
   it('trusts nothing in a browser without WebCodecs and WebGPU', async () => {
-    expect(await checkToneMapping()).toBe(false);
+    expect(await checkToneMapping('hevc')).toBe(false);
   });
 });

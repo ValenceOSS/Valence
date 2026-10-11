@@ -1,16 +1,6 @@
-import { decoderColourOf } from './decoderColourOf';
-import { unlabelHevcConfig } from './hevc/unlabelHevcConfig';
-import { unlabelHevcPacket } from './hevc/unlabelHevcPacket';
+import { prepareHdrDecoding } from './prepareHdrDecoding';
 import type { EncodedPacketSink, InputVideoTrack } from 'mediabunny';
 import type { HdrSignal } from './HdrSignal';
-
-const PQ = 16;
-
-const HLG = 18;
-
-const BT2020_MATRIX = 9;
-
-const BT2020_PRIMARIES = 9;
 
 const DECODES_AHEAD = 2;
 
@@ -19,65 +9,49 @@ const MICROSECONDS = 1_000_000;
 type HdrFrame = { timestamp: number; frame: VideoFrame; close: () => void };
 
 /**
- * Decodes an HDR H.265 picture so that its frames reach WebGPU as the signal that was encoded
- * rather than as the browser's own eight-bit conversion of it.
- *
- * A browser converts a frame to its canvas's colours according to what the stream says its colour
- * is, and for PQ or HLG that means its own idea of HDR, clipped. So the stream is told nothing: its
- * sequence parameter sets — in the configuration record and wherever the packets repeat them — say
- * their colour is unspecified, and the decoder is configured to report sRGB primaries and transfer
- * with the stream's real matrix. The browser then only turns YUV into RGB, and every sample arrives
- * as the PQ or HLG value it was encoded as, for the shader to tone map.
+ * Decodes an HDR H.265, AV1 or VP9 picture so that its frames reach WebGPU as the signal that was
+ * encoded rather than as the browser's own eight-bit conversion of it — see `prepareHdrDecoding` —
+ * and reads how bright its brightest pixel is, for the tone mapping to roll off from.
  *
  * Decoding starts at the key frame at or before where it is asked to, passing over frames before
  * that point, and keeps no more than two packets waiting in the decoder.
  *
  * @param track - The picture.
  * @param sink - Where its packets are read from.
- * @returns Where its frames come from and which HDR signal they carry, or nothing where the picture
- *   is not HDR H.265 this can read.
+ * @returns Where its frames come from and what HDR they carry, or nothing where the picture is not
+ *   HDR this can decode untouched.
  */
 const createHdrFrameSource = async (
-  track: Pick<InputVideoTrack, 'codec' | 'getDecoderConfig'>,
+  track: Pick<InputVideoTrack, 'codec' | 'getDecoderConfig' | 'getColorSpace'>,
   sink: Pick<EncodedPacketSink, 'getKeyPacket' | 'getFirstKeyPacket' | 'packets'>,
 ): Promise<{
   signal: HdrSignal;
   isWideGamut: boolean;
+  peakNits: number | null;
   samples: (startTimestamp: number) => AsyncGenerator<HdrFrame>;
 } | null> => {
-  const config = track.codec === 'hevc' ? await track.getDecoderConfig() : null;
-  const description =
-    config?.description === undefined
-      ? null
-      : ArrayBuffer.isView(config.description)
-        ? new Uint8Array(
-            config.description.buffer,
-            config.description.byteOffset,
-            config.description.byteLength,
-          )
-        : new Uint8Array(config.description);
-  const unlabelled = description === null ? null : unlabelHevcConfig(description);
+  const config = await track.getDecoderConfig();
 
-  if (
-    config === null ||
-    unlabelled === null ||
-    (unlabelled.colour.transfer !== PQ && unlabelled.colour.transfer !== HLG)
-  ) {
+  if (config === null || !['hevc', 'av1', 'vp9'].includes(track.codec ?? '')) {
     return null;
   }
 
-  const configured: VideoDecoderConfig = {
-    ...config,
-    description: unlabelled.record,
-    colorSpace: decoderColourOf(
-      unlabelled.colour.matrix === BT2020_MATRIX,
-      unlabelled.colour.isFullRange,
-    ),
-  };
+  const firstKey = await sink.getFirstKeyPacket().catch(() => null);
+  const prepared = prepareHdrDecoding({
+    codec: track.codec,
+    config,
+    containerColour: await track.getColorSpace(),
+    firstKey: firstKey?.data ?? null,
+  });
+
+  if (prepared === null) {
+    return null;
+  }
 
   return {
-    signal: unlabelled.colour.transfer === PQ ? 'pq' : 'hlg',
-    isWideGamut: unlabelled.colour.primaries === BT2020_PRIMARIES,
+    signal: prepared.signal,
+    isWideGamut: prepared.isWideGamut,
+    peakNits: prepared.peakNits,
 
     samples: async function* (startTimestamp) {
       const ready: VideoFrame[] = [];
@@ -101,7 +75,7 @@ const createHdrFrameSource = async (
       const packets = sink.packets(first ?? undefined);
 
       decoder.addEventListener('dequeue', nudge);
-      decoder.configure(configured);
+      decoder.configure(prepared.config);
 
       try {
         for (;;) {
@@ -118,7 +92,7 @@ const createHdrFrameSource = async (
                     type: next.value.type,
                     timestamp: Math.round(next.value.timestamp * MICROSECONDS),
                     duration: Math.round(next.value.duration * MICROSECONDS),
-                    data: unlabelHevcPacket(next.value.data, unlabelled.lengthSize),
+                    data: prepared.rewrite(next.value.data),
                   }),
                 );
               }

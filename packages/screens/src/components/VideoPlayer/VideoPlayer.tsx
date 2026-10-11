@@ -101,7 +101,7 @@ import { notify } from '@ValenceUI/notify';
 import { useFollowTheRoom } from '@ValenceClient/party/useFollowTheRoom';
 import type { RoomPlayer } from '@ValenceClient/party/RoomPlayer';
 import type { Trickplay } from '@ValenceClient/playback/fetchTrickplay';
-import type { PoppedOut } from '@ValenceScreens/playback/popOutWithCaptions';
+import type { DrawnPicture, PoppedOut } from '@ValenceScreens/playback/popOutWithCaptions';
 import type { CastState } from '@ValenceScreens/playback/castPlayback.types';
 import { describePlaying } from './describePlaying';
 import { PausedScreen } from './components/PausedScreen/PausedScreen';
@@ -292,6 +292,10 @@ const VideoPlayer = ({
   const pictureRef = useRef<HTMLCanvasElement>(null);
   const [isDrawnByTheEngine, setIsDrawnByTheEngine] = useState(false);
   const engineRefusedRef = useRef(false);
+  const enginePictureRef = useRef<DrawnPicture | null>(null);
+  const [enginePicture, setEnginePicture] = useState<{ width: number; height: number } | null>(
+    null,
+  );
   const engineStatsRef = useRef<(() => EngineStats) | null>(null);
   const switchCopyRef = useRef<((rung: AutoRung) => Promise<void>) | null>(null);
   const [browserRung, setBrowserRung] = useState<AutoRung | null>(null);
@@ -492,9 +496,11 @@ const VideoPlayer = ({
     }
 
     void (async () => {
-      const withCaptions = Array.from(element.textTracks).some((track) => track.mode !== 'disabled')
-        ? await popOutWithCaptions(element)
-        : null;
+      const drawn = enginePictureRef.current;
+      const withCaptions =
+        drawn !== null || Array.from(element.textTracks).some((track) => track.mode !== 'disabled')
+          ? await popOutWithCaptions(element, drawn)
+          : null;
 
       if (withCaptions !== null) {
         poppedRef.current = withCaptions;
@@ -786,6 +792,8 @@ const VideoPlayer = ({
   useEffect(() => {
     setSession(null);
     setIsDrawnByTheEngine(false);
+    setEnginePicture(null);
+    enginePictureRef.current = null;
     engineStatsRef.current = null;
     switchCopyRef.current = null;
     setBrowserRung(null);
@@ -1022,6 +1030,17 @@ const VideoPlayer = ({
           const copies = outcome.session.keptCopies;
           const isHdrScreen = window.matchMedia('(dynamic-range: high)').matches;
           const take = (playing: typeof attached) => {
+            const shown = playing.readDelivered();
+            const isDrawn = playing.readEngine().route === 'webgpu';
+
+            enginePictureRef.current =
+              isDrawn &&
+              pictureRef.current !== null &&
+              shown.width !== null &&
+              shown.height !== null
+                ? { canvas: pictureRef.current, width: shown.width, height: shown.height }
+                : null;
+            setEnginePicture(enginePictureRef.current);
             teardown = playing.detach;
             releaseRef.current = playing.detach;
             deliveredRef.current = playing.readDelivered;
@@ -2264,6 +2283,7 @@ const VideoPlayer = ({
             mediaId={media.id}
             trackId={fetchableTrack.id}
             offsetSeconds={subtitleOffset}
+            picture={isDrawnByTheEngine ? enginePicture : null}
           />
         )}
 

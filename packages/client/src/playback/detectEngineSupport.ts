@@ -45,7 +45,9 @@ const DECODED_AUDIO = [
   { codec: 'vorbis', config: 'vorbis' },
 ] as const;
 
-const DECODED_IN_THE_PAGE = ['ac3', 'eac3', 'pcm'] as const;
+const DECODED_IN_THE_PAGE = ['ac3', 'eac3', 'dts', 'pcm'] as const;
+
+const LOSSLESS_AS = 'audio/mp4; codecs="flac"';
 
 const RE_ENCODED_AS = 'audio/mp4; codecs="opus"';
 
@@ -56,7 +58,7 @@ const NOTHING: EngineSupport = {
   tenBitVideoCodecs: [],
   remuxVideoCodecs: [],
   remuxTenBitVideoCodecs: [],
-  toneMapsHevc: false,
+  toneMappedCodecs: [],
   audioCodecs: [],
 };
 
@@ -78,16 +80,17 @@ const answerOf = async (asking: () => Promise<boolean>): Promise<boolean> => {
  * What this browser can play beyond what the media element plays from a file by itself, by asking
  * each decoder rather than reading the browser's name: the pictures its own player decodes with
  * WebCodecs and draws with WebGPU, the pictures the element decodes once a file is repackaged here
- * into fragmented MP4, whether 10-bit HEVC can be decoded here and reaches WebGPU untouched for
+ * into fragmented MP4, which 10-bit pictures can be decoded here and reach WebGPU untouched for
  * Valence to tone map — proven by the browser rather than assumed, since not every browser honours
  * the colour a decoder is told — and the
  * sounds either can be given.
  *
  * A picture counts for the player where WebCodecs decodes it at 4K, and for repackaging where Media
  * Source Extensions take it in MP4. A sound counts where the media element takes it
- * repackaged into fragmented MP4 as it is, or where it can be decoded here and an Opus encoder exists
- * to hand it on — AC-3, E-AC-3 and PCM are decoded in the page whatever the browser says, which is
- * how Dolby plays on a Linux browser that has no Dolby of its own. Nothing is claimed without a GPU,
+ * repackaged into fragmented MP4 as it is, or where it can be decoded here and handed on — as
+ * lossless FLAC wherever the element takes it, Valence bringing its own encoder, or else as Opus
+ * where this browser encodes it. AC-3, E-AC-3, DTS and PCM are decoded in the page whatever the
+ * browser says, which is how Dolby and DTS play in a browser that has neither of its own. Nothing is claimed without a GPU,
  * a secure page and somewhere to put the sound, since the player needs all three.
  *
  * @param browser - What this browser offers.
@@ -118,11 +121,17 @@ const detectEngineSupport = async (browser: EnginesBrowser): Promise<EngineSuppo
     ({ codec }) => codec,
   );
   const canReEncode =
-    canStream(RE_ENCODED_AS) &&
-    canEncodeAudio !== null &&
-    (await answerOf(() =>
-      canEncodeAudio({ codec: 'opus', sampleRate: 48_000, numberOfChannels: 2, bitrate: 192_000 }),
-    ));
+    canStream(LOSSLESS_AS) ||
+    (canStream(RE_ENCODED_AS) &&
+      canEncodeAudio !== null &&
+      (await answerOf(() =>
+        canEncodeAudio({
+          codec: 'opus',
+          sampleRate: 48_000,
+          numberOfChannels: 2,
+          bitrate: 192_000,
+        }),
+      )));
   const decoded =
     !canReEncode || canDecodeAudio === null
       ? []
@@ -156,10 +165,18 @@ const detectEngineSupport = async (browser: EnginesBrowser): Promise<EngineSuppo
         remuxTenBitVideoCodecs: REMUXED_TEN_BIT_VIDEO.filter(({ mimeType }) =>
           canStream(mimeType),
         ).map(({ codec }) => codec),
-        toneMapsHevc:
-          tenBitVideoCodecs.includes('hevc') &&
-          browser.canToneMap !== null &&
-          (await answerOf(browser.canToneMap)),
+        toneMappedCodecs:
+          browser.canToneMap === null
+            ? []
+            : (
+                await Promise.all(
+                  tenBitVideoCodecs.map(async (codec) =>
+                    (await answerOf(() => browser.canToneMap?.(codec) ?? Promise.resolve(false)))
+                      ? [codec]
+                      : [],
+                  ),
+                )
+              ).flat(),
         audioCodecs,
       };
 };

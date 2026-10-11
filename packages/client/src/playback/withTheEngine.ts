@@ -19,8 +19,8 @@ const unionOf = (...lists: readonly (readonly string[])[]): string[] => [...new 
  * claimed.
  *
  * An SDR film can be played by the browser's own player or repackaged for the element. An HDR film
- * only by repackaging, where the element shows it as HDR, or by the player where it is HEVC it can
- * tone map — and then HDR10, HDR10+ and HLG are claimed too, since the film no longer needs an HDR
+ * only by repackaging, where the element shows it as HDR, or by the player where it is a codec it
+ * can tone map — and then HDR10, HDR10+ and HLG are claimed too, since the film no longer needs an HDR
  * screen. Dolby Vision is never claimed as such: one with an HDR10 base plays as that base, and one
  * without is left for the server.
  *
@@ -34,7 +34,7 @@ const withTheEngine = (
   support: EngineSupport,
   film: { isHdr: boolean },
 ): DeviceProfile => {
-  const toneMapped = support.toneMapsHevc ? ['hevc'] : [];
+  const toneMapped = support.toneMappedCodecs;
   const videoCodecs = film.isHdr
     ? unionOf(support.remuxVideoCodecs, toneMapped)
     : unionOf(support.videoCodecs, support.remuxVideoCodecs);
@@ -61,7 +61,7 @@ const withTheEngine = (
   return {
     ...profile,
     supportedVideoRanges:
-      film.isHdr && support.toneMapsHevc
+      film.isHdr && support.toneMappedCodecs.length > 0
         ? [...new Set([...profile.supportedVideoRanges, ...TONE_MAPPED_RANGES])]
         : profile.supportedVideoRanges,
     tenBitVideoCodecs: unionOf(profile.tenBitVideoCodecs, tenBit),

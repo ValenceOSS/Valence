@@ -9,6 +9,7 @@ import {
 import { chooseSoundRoute } from './chooseSoundRoute';
 import { downmixToStereo } from './downmixToStereo';
 import { readAacChannelOrder } from './readAacChannelOrder';
+import { registerCodecExtensions } from './registerCodecExtensions';
 import type { Input, InputAudioTrack, InputVideoTrack, StreamTargetChunk } from 'mediabunny';
 import type { SoundRoute } from './chooseSoundRoute';
 
@@ -166,17 +167,14 @@ const createMediaFeed = async ({
   onFault: () => void;
 }): Promise<MediaFeed> => {
   const plays = (mimeType: string) => MediaSource.isTypeSupported(mimeType);
+
+  await registerCodecExtensions();
+
   const sound = await chooseSoundRoute(track, plays, await readAacChannelOrder());
   const pictureCodec = picture === null ? null : await picture.getCodecParameterString();
   const source = new MediaSource();
   const address = URL.createObjectURL(source);
   const opened = once(source, 'sourceopen');
-
-  if (sound.kind === 'encoded' && ['ac3', 'eac3'].includes(track.codec ?? '')) {
-    const { registerAc3Decoder } = await import('@mediabunny/ac3');
-
-    registerAc3Decoder();
-  }
 
   element.src = address;
   await opened;
@@ -298,13 +296,15 @@ const createMediaFeed = async ({
             ? {}
             : {
                 codec: sound.codec,
-                sampleRate: SAMPLE_RATE,
+                ...(sound.codec === 'flac' ? {} : { sampleRate: SAMPLE_RATE }),
                 forceTranscode: true,
-                ...(sound.numberOfChannels === 2
-                  ? { process: stereoOf, processedNumberOfChannels: 2 }
-                  : sound.isReordered
-                    ? { process: inAacOrder, processedNumberOfChannels: sound.numberOfChannels }
-                    : { numberOfChannels: sound.numberOfChannels }),
+                ...(sound.codec === 'flac'
+                  ? { numberOfChannels: sound.numberOfChannels, sampleFormat: 's16' }
+                  : sound.numberOfChannels === 2
+                    ? { process: stereoOf, processedNumberOfChannels: 2 }
+                    : sound.isReordered
+                      ? { process: inAacOrder, processedNumberOfChannels: sound.numberOfChannels }
+                      : { numberOfChannels: sound.numberOfChannels }),
               },
       trim: { start: seconds },
       copy: { boundaryPolicy: 'expand' },

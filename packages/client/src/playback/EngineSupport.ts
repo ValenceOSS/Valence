@@ -3,7 +3,7 @@ type EngineSupport = {
   tenBitVideoCodecs: string[];
   remuxVideoCodecs: string[];
   remuxTenBitVideoCodecs: string[];
-  toneMapsHevc: boolean;
+  toneMappedCodecs: string[];
   audioCodecs: string[];
 };
 

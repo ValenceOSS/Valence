@@ -7,7 +7,8 @@ import type { EngineSupport } from './EngineSupport';
  *
  * Repackaging is preferred wherever the element decodes the picture, since it costs least and keeps
  * the browser's own HDR. The player is chosen where it cannot, and for HDR HEVC on a screen that is
- * not HDR, which Valence tone maps itself rather than leaving the browser to clip it.
+ * not HDR in any codec it can tone map, which Valence does itself rather than leaving the browser to
+ * clip it.
  *
  * @param film - The film's picture codec, bit depth and range.
  * @param support - What the browser adds.
@@ -21,7 +22,7 @@ const chooseBrowserRoute = (
 ): 'remux' | 'webgpu' => {
   const isHdr = film.videoRange !== 'SDR';
 
-  if (isHdr && !isHdrScreen && film.videoCodec === 'hevc' && support.toneMapsHevc) {
+  if (isHdr && !isHdrScreen && support.toneMappedCodecs.includes(film.videoCodec)) {
     return 'webgpu';
   }
 

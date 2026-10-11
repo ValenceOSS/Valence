@@ -4,6 +4,10 @@ struct Grade {
   isWideGamut: u32,
   sourcePeak: f32,
   whiteNits: f32,
+  quarterTurns: u32,
+  pad0: u32,
+  pad1: u32,
+  pad2: u32,
 };
 
 @group(0) @binding(0) var pictureSampler: sampler;
@@ -81,9 +85,18 @@ fn vertexMain(@builtin(vertex_index) index: u32) -> Corner {
   return corner;
 }
 
+fn turned(uv: vec2f) -> vec2f {
+  switch grade.quarterTurns {
+    case 1u: { return vec2f(uv.y, 1.0 - uv.x); }
+    case 2u: { return vec2f(1.0 - uv.x, 1.0 - uv.y); }
+    case 3u: { return vec2f(1.0 - uv.y, uv.x); }
+    default: { return uv; }
+  }
+}
+
 @fragment
 fn fragmentMain(corner: Corner) -> @location(0) vec4f {
-  let sample = textureSampleBaseClampToEdge(picture, pictureSampler, corner.uv);
+  let sample = textureSampleBaseClampToEdge(picture, pictureSampler, turned(corner.uv));
 
   if (grade.signal == 0u) {
     return sample;

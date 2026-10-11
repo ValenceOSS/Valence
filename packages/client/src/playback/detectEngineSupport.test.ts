@@ -30,7 +30,7 @@ describe('detectEngineSupport', () => {
 
     expect(support.remuxVideoCodecs).toEqual(['h264']);
     expect(support.remuxTenBitVideoCodecs).toEqual(['hevc']);
-    expect(support.toneMapsHevc).toBe(true);
+    expect(support.toneMappedCodecs).toEqual(['hevc']);
   });
 
   it('leaves HDR alone where the browser does not hand the signal over untouched', async () => {
@@ -42,7 +42,7 @@ describe('detectEngineSupport', () => {
     );
 
     expect(support.videoCodecs).toContain('hevc');
-    expect(support.toneMapsHevc).toBe(false);
+    expect(support.toneMappedCodecs).toEqual([]);
   });
 
   it('claims the pictures WebCodecs decodes and the sounds the element takes or the page decodes', async () => {
@@ -51,7 +51,7 @@ describe('detectEngineSupport', () => {
       tenBitVideoCodecs: [],
       remuxVideoCodecs: [],
       remuxTenBitVideoCodecs: [],
-      toneMapsHevc: false,
+      toneMappedCodecs: [],
       audioCodecs: ['aac', 'opus', 'vorbis', 'ac3', 'eac3', 'pcm'],
     });
   });

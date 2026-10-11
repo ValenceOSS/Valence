@@ -13,6 +13,8 @@
     "@better-auth/passkey": "1.7.4",
     "@keyline-icons/react": "1.0.0",
     "@mediabunny/ac3": "1.60.0",
+    "@mediabunny/dts": "1.60.0",
+    "@mediabunny/flac-encoder": "1.60.0",
     "@tanstack/react-query": "5.102.8",
     "@tanstack/react-router": "1.170.36",
     "@valence/client": "workspace:*",

@@ -109,7 +109,13 @@ const attachEngine = async ({
     throw new Error('This browser has no WebGPU to draw with.');
   }
 
-  const shape = { width: video.squarePixelWidth, height: video.squarePixelHeight };
+  const quarterTurns = Math.round((await video.getRotation()) / 90);
+  const isSideways = quarterTurns % 2 === 1;
+  const shape = isSideways
+    ? { width: video.squarePixelHeight, height: video.squarePixelWidth }
+    : { width: video.squarePixelWidth, height: video.squarePixelHeight };
+  const frameRate =
+    (await video.computePacketStats(100).catch(() => null))?.averagePacketRate ?? null;
   const [decoder, container, channels, sampleRate] = await Promise.all([
     video.getCodecParameterString(),
     input.getMimeType(),
@@ -159,8 +165,13 @@ const attachEngine = async ({
 
   presenter.grade(
     hdr === null
-      ? { signal: 'sdr', isWideGamut: false, sourcePeakNits: ASSUMED_PEAK_NITS }
-      : { signal: hdr.signal, isWideGamut: hdr.isWideGamut, sourcePeakNits: ASSUMED_PEAK_NITS },
+      ? { signal: 'sdr', isWideGamut: false, sourcePeakNits: ASSUMED_PEAK_NITS, quarterTurns }
+      : {
+          signal: hdr.signal,
+          isWideGamut: hdr.isWideGamut,
+          sourcePeakNits: hdr.peakNits ?? ASSUMED_PEAK_NITS,
+          quarterTurns,
+        },
   );
   const soundInput = new Input({
     source: new UrlSource(url, {
@@ -244,7 +255,7 @@ const attachEngine = async ({
       mimeType: container,
       width: shape.width,
       height: shape.height,
-      frameRate: null,
+      frameRate,
       bitrateKbps: (() => {
         const picture = meter.read();
 

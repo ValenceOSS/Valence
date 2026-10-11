@@ -6,7 +6,7 @@ type EngineStats = {
   hdrSignal: HdrSignal | null;
   isHdrFilm: boolean;
   container: string | null;
-  sound: 'carried' | 'opus' | 'aac';
+  sound: 'carried' | 'flac' | 'opus' | 'aac';
   soundChannels: number | null;
   decodedFrames: number;
   drawnFrames: number;

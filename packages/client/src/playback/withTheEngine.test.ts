@@ -31,7 +31,7 @@ const SUPPORT: EngineSupport = {
   tenBitVideoCodecs: ['hevc'],
   remuxVideoCodecs: ['h264', 'av1'],
   remuxTenBitVideoCodecs: ['av1'],
-  toneMapsHevc: true,
+  toneMappedCodecs: ['hevc'],
   audioCodecs: ['ac3', 'aac'],
 };
 
@@ -61,7 +61,7 @@ describe('withTheEngine', () => {
   });
 
   it('claims no new range where nothing can tone map', () => {
-    const profile = withTheEngine(BROWSER, { ...SUPPORT, toneMapsHevc: false }, { isHdr: true });
+    const profile = withTheEngine(BROWSER, { ...SUPPORT, toneMappedCodecs: [] }, { isHdr: true });
 
     expect(profile.supportedVideoRanges).toEqual(['SDR']);
   });

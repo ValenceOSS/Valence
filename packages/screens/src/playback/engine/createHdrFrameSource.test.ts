@@ -17,9 +17,12 @@ const NO_PACKETS: Parameters<typeof createHdrFrameSource>[1] = {
  * @param codec - Its codec.
  * @returns The track.
  */
-const aTrack = (codec: 'hevc' | 'avc'): Pick<InputVideoTrack, 'codec' | 'getDecoderConfig'> => ({
+const aTrack = (
+  codec: 'hevc' | 'avc',
+): Pick<InputVideoTrack, 'codec' | 'getDecoderConfig' | 'getColorSpace'> => ({
   codec,
   getDecoderConfig: () => Promise.resolve(null),
+  getColorSpace: () => Promise.resolve({}),
 });
 
 describe('createHdrFrameSource', () => {

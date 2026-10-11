@@ -1,3 +1,5 @@
+import { fitWithin } from '@ValenceScreens/playback/engine/fitWithin';
+
 const FRAMES_PER_SECOND = 30;
 
 const MAX_WIDTH = 1280;
@@ -9,6 +11,8 @@ const BASELINE = 0.055;
 type PoppedOut = {
   stop: () => void;
 };
+
+type DrawnPicture = { canvas: HTMLCanvasElement; width: number; height: number };
 
 /**
  * Reads the cues showing on a video at this moment as plain lines, since a picture-in-picture window
@@ -44,17 +48,25 @@ const currentLines = (video: HTMLVideoElement): string[] => {
  * appear in a picture-in-picture window.
  *
  * @param context - The canvas to draw into.
- * @param video - The video to read the frame and its captions from.
+ * @param video - The video to read the captions from, and the frame where nothing else draws it.
+ * @param drawn - The canvas the browser's own player draws the frame onto instead, where it does.
  * @param width - How wide the canvas is.
  * @param height - How tall it is.
  */
 const compose = (
   context: CanvasRenderingContext2D,
   video: HTMLVideoElement,
+  drawn: DrawnPicture | null,
   width: number,
   height: number,
 ): void => {
-  context.drawImage(video, 0, 0, width, height);
+  if (drawn === null) {
+    context.drawImage(video, 0, 0, width, height);
+  } else {
+    const area = fitWithin(drawn, { width: drawn.canvas.width, height: drawn.canvas.height });
+
+    context.drawImage(drawn.canvas, area.x, area.y, area.width, area.height, 0, 0, width, height);
+  }
 
   const lines = currentLines(video);
 
@@ -87,16 +99,26 @@ const compose = (
  * the captions painted in — a picture-in-picture window shows a video element and nothing else, so
  * subtitles that live in a text track simply vanish.
  *
+ * The same carries the picture of the browser's own WebGPU player, whose video element holds only
+ * the sound: each frame is taken from the canvas it draws onto instead, without its black bars.
+ *
  * @param video - The video to pop out, and how its captions should look.
+ * @param drawn - The canvas the frame is drawn onto and the picture's size, where the browser's own
+ *   player draws it rather than the element.
  * @returns A handle on the window, for closing it and keeping it in step.
  */
-const popOutWithCaptions = async (video: HTMLVideoElement): Promise<PoppedOut | null> => {
+const popOutWithCaptions = async (
+  video: HTMLVideoElement,
+  drawn: DrawnPicture | null = null,
+): Promise<PoppedOut | null> => {
   if (!document.pictureInPictureEnabled) {
     return null;
   }
 
-  const ratio = video.videoHeight === 0 ? 9 / 16 : video.videoHeight / video.videoWidth;
-  const width = Math.min(video.videoWidth === 0 ? MAX_WIDTH : video.videoWidth, MAX_WIDTH);
+  const pictureWidth = drawn?.width ?? video.videoWidth;
+  const pictureHeight = drawn?.height ?? video.videoHeight;
+  const ratio = pictureHeight === 0 ? 9 / 16 : pictureHeight / pictureWidth;
+  const width = Math.min(pictureWidth === 0 ? MAX_WIDTH : pictureWidth, MAX_WIDTH);
   const height = Math.round(width * ratio);
 
   const canvas = document.createElement('canvas');
@@ -126,7 +148,7 @@ const popOutWithCaptions = async (video: HTMLVideoElement): Promise<PoppedOut | 
   let frame = 0;
 
   const tick = () => {
-    compose(context, video, width, height);
+    compose(context, video, drawn, width, height);
     frame = requestAnimationFrame(tick);
   };
 
@@ -160,6 +182,6 @@ const popOutWithCaptions = async (video: HTMLVideoElement): Promise<PoppedOut | 
   return { stop };
 };
 
-export type { PoppedOut };
+export type { DrawnPicture, PoppedOut };
 
 export { popOutWithCaptions, currentLines };

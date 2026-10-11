@@ -1090,6 +1090,12 @@ importers:
       '@mediabunny/ac3':
         specifier: 1.60.0
         version: 1.60.0(mediabunny@1.60.0)
+      '@mediabunny/dts':
+        specifier: 1.60.0
+        version: 1.60.0(mediabunny@1.60.0)
+      '@mediabunny/flac-encoder':
+        specifier: 1.60.0
+        version: 1.60.0(mediabunny@1.60.0)
       '@tanstack/react-query':
         specifier: 5.102.8
         version: 5.102.8(react@19.3.0)
@@ -3754,6 +3760,16 @@ packages:
 
   '@mediabunny/ac3@1.60.0':
     resolution: {integrity: sha512-A6VtPlQQ4ZJMtGXjs+miCkXGo/huh53tef0z/qwrqk+n33l/JYeN0P6D9NniPGQG0y2a1is37PEeZaNtZFJ7lA==}
+    peerDependencies:
+      mediabunny: ^1.0.0
+
+  '@mediabunny/dts@1.60.0':
+    resolution: {integrity: sha512-CjB72XAfu/09L+gDx2PUZ31p8ZQ/MGm18SpBi0kf7y092XuMpbNo0MWOdm6AYdKWX2D1zH8QBdIhlpUj9padbg==}
+    peerDependencies:
+      mediabunny: ^1.0.0
+
+  '@mediabunny/flac-encoder@1.60.0':
+    resolution: {integrity: sha512-h4wkyA/XnciSDpQ7ISQyTS/nexno5RZtLfGp4l8ivJ6sYjlSGR0X769R+Ns/HtLKDPu97VO6WCD1LgKWu8UmmQ==}
     peerDependencies:
       mediabunny: ^1.0.0
 
@@ -15005,6 +15021,14 @@ snapshots:
       - supports-color
 
   '@mediabunny/ac3@1.60.0(mediabunny@1.60.0)':
+    dependencies:
+      mediabunny: 1.60.0
+
+  '@mediabunny/dts@1.60.0(mediabunny@1.60.0)':
+    dependencies:
+      mediabunny: 1.60.0
+
+  '@mediabunny/flac-encoder@1.60.0(mediabunny@1.60.0)':
     dependencies:
       mediabunny: 1.60.0
 

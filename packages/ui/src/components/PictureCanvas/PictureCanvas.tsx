@@ -9,11 +9,21 @@ import type { PictureCanvasProps } from './PictureCanvas.types';
  * @param canvasRef - A handle on the canvas, for the player that draws onto it.
  * @param isShown - Whether anything is being drawn, since an empty canvas would hide the element.
  * @param className - Extra classes for the caller's own layout.
+ * @param aspectRatio - The shape to keep, width over height, where it should keep one — fitted
+ *   inside its parent, which must be a size container, as `object-fit: contain` fits a picture.
  */
-const PictureCanvas = ({ canvasRef, isShown, className }: PictureCanvasProps) => (
+const PictureCanvas = ({ canvasRef, isShown, className, aspectRatio }: PictureCanvasProps) => (
   <canvas
     ref={canvasRef}
     aria-hidden
+    {...(aspectRatio === undefined
+      ? {}
+      : {
+          style: {
+            aspectRatio,
+            width: `min(100cqw, calc(100cqh * ${aspectRatio.toString()}))`,
+          },
+        })}
     className={cn('pointer-events-none bg-shade', isShown ? null : 'hidden', className)}
   />
 );

@@ -7,7 +7,7 @@ const SUPPORT: EngineSupport = {
   tenBitVideoCodecs: ['hevc'],
   remuxVideoCodecs: ['h264', 'hevc'],
   remuxTenBitVideoCodecs: ['hevc'],
-  toneMapsHevc: true,
+  toneMappedCodecs: ['hevc'],
   audioCodecs: ['aac'],
 };
 

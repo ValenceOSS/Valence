@@ -78,6 +78,8 @@ const attachRemux = async ({
     video.hasHighDynamicRange(),
     input.getMimeType(),
   ]);
+  const frameRate =
+    (await video.computePacketStats(100).catch(() => null))?.averagePacketRate ?? null;
   const feed = await createMediaFeed({
     element,
     input,
@@ -108,7 +110,7 @@ const attachRemux = async ({
       mimeType: 'video/mp4',
       width: video.squarePixelWidth,
       height: video.squarePixelHeight,
-      frameRate: null,
+      frameRate,
       bitrateKbps: feed.bitrateAt(element.currentTime),
       audioSampleRate: feed.sound.kind === 'carried' ? sampleRate : 48_000,
       audioChannels: feed.sound.kind === 'carried' ? channels : feed.sound.numberOfChannels,
