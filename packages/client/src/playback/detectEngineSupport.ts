@@ -78,7 +78,9 @@ const answerOf = async (asking: () => Promise<boolean>): Promise<boolean> => {
  * What this browser can play beyond what the media element plays from a file by itself, by asking
  * each decoder rather than reading the browser's name: the pictures its own player decodes with
  * WebCodecs and draws with WebGPU, the pictures the element decodes once a file is repackaged here
- * into fragmented MP4, whether 10-bit HEVC can be decoded here for Valence to tone map, and the
+ * into fragmented MP4, whether 10-bit HEVC can be decoded here and reaches WebGPU untouched for
+ * Valence to tone map — proven by the browser rather than assumed, since not every browser honours
+ * the colour a decoder is told — and the
  * sounds either can be given.
  *
  * A picture counts for the player where WebCodecs decodes it at 4K, and for repackaging where Media
@@ -154,7 +156,10 @@ const detectEngineSupport = async (browser: EnginesBrowser): Promise<EngineSuppo
         remuxTenBitVideoCodecs: REMUXED_TEN_BIT_VIDEO.filter(({ mimeType }) =>
           canStream(mimeType),
         ).map(({ codec }) => codec),
-        toneMapsHevc: tenBitVideoCodecs.includes('hevc'),
+        toneMapsHevc:
+          tenBitVideoCodecs.includes('hevc') &&
+          browser.canToneMap !== null &&
+          (await answerOf(browser.canToneMap)),
         audioCodecs,
       };
 };

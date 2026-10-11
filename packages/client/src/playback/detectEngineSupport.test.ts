@@ -15,6 +15,7 @@ const aBrowser = (overrides: Partial<EnginesBrowser> = {}): EnginesBrowser => ({
   canDecodeAudio: ({ codec }) => Promise.resolve(codec === 'vorbis'),
   canEncodeAudio: () => Promise.resolve(true),
   canStream: (mimeType) => /mp4a|opus/.test(mimeType),
+  canToneMap: () => Promise.resolve(true),
   ...overrides,
 });
 
@@ -30,6 +31,18 @@ describe('detectEngineSupport', () => {
     expect(support.remuxVideoCodecs).toEqual(['h264']);
     expect(support.remuxTenBitVideoCodecs).toEqual(['hevc']);
     expect(support.toneMapsHevc).toBe(true);
+  });
+
+  it('leaves HDR alone where the browser does not hand the signal over untouched', async () => {
+    const support = await detectEngineSupport(
+      aBrowser({
+        canDecodeVideo: ({ codec }) => Promise.resolve(codec.startsWith('hvc1')),
+        canToneMap: () => Promise.resolve(false),
+      }),
+    );
+
+    expect(support.videoCodecs).toContain('hevc');
+    expect(support.toneMapsHevc).toBe(false);
   });
 
   it('claims the pictures WebCodecs decodes and the sounds the element takes or the page decodes', async () => {

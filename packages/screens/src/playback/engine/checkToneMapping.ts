@@ -1,0 +1,152 @@
+import { PICTURE_SHADER } from './PICTURE_SHADER';
+import { TONE_MAPPING_PROBE } from './TONE_MAPPING_PROBE';
+import { decoderColourOf } from './decoderColourOf';
+import { bytesOf } from './hevc/bytesOf';
+import { unlabelHevcConfig } from './hevc/unlabelHevcConfig';
+
+const TOLERANCE = 8;
+
+const ROW_BYTES = 256;
+
+/**
+ * Decodes the probe's one frame the way an HDR film is decoded for tone mapping — its sequence
+ * parameter set saying nothing of colour, the decoder told the colour instead.
+ *
+ * @returns The frame, or nothing where this browser will not decode it.
+ */
+const decodeProbe = async (): Promise<VideoFrame | null> => {
+  const unlabelled = unlabelHevcConfig(bytesOf(TONE_MAPPING_PROBE.description));
+
+  if (unlabelled === null) {
+    return null;
+  }
+
+  const config: VideoDecoderConfig = {
+    codec: TONE_MAPPING_PROBE.codec,
+    codedWidth: TONE_MAPPING_PROBE.size,
+    codedHeight: TONE_MAPPING_PROBE.size,
+    description: unlabelled.record,
+    colorSpace: decoderColourOf(true, false),
+  };
+
+  if ((await VideoDecoder.isConfigSupported(config)).supported !== true) {
+    return null;
+  }
+
+  return new Promise((resolve) => {
+    const decoder = new VideoDecoder({
+      output: (frame) => {
+        resolve(frame);
+      },
+      error: () => {
+        resolve(null);
+      },
+    });
+
+    decoder.configure(config);
+    decoder.decode(
+      new EncodedVideoChunk({ type: 'key', timestamp: 0, data: bytesOf(TONE_MAPPING_PROBE.frame) }),
+    );
+    void decoder
+      .flush()
+      .catch(() => {
+        resolve(null);
+      })
+      .finally(() => {
+        decoder.close();
+      });
+  });
+};
+
+/**
+ * Whether Valence's own tone mapping can be trusted in this browser: it decodes a tiny HDR frame
+ * of a known PQ grey through exactly the path a film takes and draws it through WebGPU untouched,
+ * then reads back what arrived. The encoded grey coming back means the browser left the HDR signal
+ * alone for the shader; anything else — the browser converting the frame its own way, as it may
+ * where it does not honour the colour a decoder is given — means the shader would be fed the wrong
+ * numbers, so HDR is left to the browser or the server instead.
+ *
+ * @returns Whether the signal arrives untouched.
+ */
+const checkToneMapping = async (): Promise<boolean> => {
+  if (typeof VideoDecoder === 'undefined' || !('gpu' in navigator)) {
+    return false;
+  }
+
+  const adapter = await navigator.gpu.requestAdapter();
+  const device = adapter === null ? null : await adapter.requestDevice().catch(() => null);
+  const frame = device === null ? null : await decodeProbe().catch(() => null);
+
+  if (device === null || frame === null) {
+    frame?.close();
+    device?.destroy();
+
+    return false;
+  }
+
+  try {
+    const size = TONE_MAPPING_PROBE.size;
+    const module = device.createShaderModule({ code: PICTURE_SHADER });
+    const pipeline = device.createRenderPipeline({
+      layout: 'auto',
+      vertex: { module, entryPoint: 'vertexMain' },
+      fragment: { module, entryPoint: 'fragmentMain', targets: [{ format: 'rgba8unorm' }] },
+      primitive: { topology: 'triangle-list' },
+    });
+    const target = device.createTexture({
+      size: [size, size],
+      format: 'rgba8unorm',
+      usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
+    });
+    const grade = device.createBuffer({ size: 16, usage: GPUBufferUsage.UNIFORM });
+    const readback = device.createBuffer({
+      size: ROW_BYTES * size,
+      usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+    });
+    const encoder = device.createCommandEncoder();
+    const pass = encoder.beginRenderPass({
+      colorAttachments: [
+        {
+          view: target.createView(),
+          clearValue: { r: 0, g: 0, b: 0, a: 1 },
+          loadOp: 'clear',
+          storeOp: 'store',
+        },
+      ],
+    });
+
+    pass.setPipeline(pipeline);
+    pass.setBindGroup(
+      0,
+      device.createBindGroup({
+        layout: pipeline.getBindGroupLayout(0),
+        entries: [
+          { binding: 0, resource: device.createSampler() },
+          { binding: 1, resource: device.importExternalTexture({ source: frame }) },
+          { binding: 2, resource: { buffer: grade } },
+        ],
+      }),
+    );
+    pass.draw(3);
+    pass.end();
+    encoder.copyTextureToBuffer({ texture: target }, { buffer: readback, bytesPerRow: ROW_BYTES }, [
+      size,
+      size,
+    ]);
+    device.queue.submit([encoder.finish()]);
+    await readback.mapAsync(GPUMapMode.READ);
+
+    const centre = new Uint8Array(readback.getMappedRange())[
+      (size / 2) * ROW_BYTES + (size / 2) * 4
+    ];
+
+    return centre !== undefined && Math.abs(centre - TONE_MAPPING_PROBE.encodedGrey) <= TOLERANCE;
+  } catch {
+    return false;
+  } finally {
+    frame.close();
+    device.destroy();
+  }
+};
+
+export { checkToneMapping };
