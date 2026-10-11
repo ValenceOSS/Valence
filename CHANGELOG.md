@@ -1,5 +1,75 @@
 # Changelog
 
+## [1.5.0](https://github.com/ValenceOSS/Valence/compare/v1.4.0...v1.5.0) (2026-10-11)
+
+
+### Added
+
+* choose which linked libraries to take, group sessions and watch history by viewer, and keep filters in the address ([#590](https://github.com/ValenceOSS/Valence/issues/590)) ([6d4e479](https://github.com/ValenceOSS/Valence/commit/6d4e479c57ee64a940c7fc4f6d8c91903e5e12d2))
+* **desktop:** check for updates on request, from the app menu or a new tray icon ([#582](https://github.com/ValenceOSS/Valence/issues/582)) ([4080e6d](https://github.com/ValenceOSS/Valence/commit/4080e6d1bd0f89d23e739679a24e1c18b6076c44))
+* **desktop:** pop-up notifications are off until turned on in profile settings ([#583](https://github.com/ValenceOSS/Valence/issues/583)) ([5a69ff1](https://github.com/ValenceOSS/Valence/commit/5a69ff1a1adabc3949d436c63b7d2b43187be979))
+* **landing:** the band in manrope with the mark, a ring over it, a sticky strip, a cursor and notes ([#546](https://github.com/ValenceOSS/Valence/issues/546)) ([506069d](https://github.com/ValenceOSS/Valence/commit/506069dba350e62f8eda09e6428b0f033d13ef88))
+* **landing:** the iphone duo opened out, turning a book's pages in a looping film ([#536](https://github.com/ValenceOSS/Valence/issues/536)) ([835e7e7](https://github.com/ValenceOSS/Valence/commit/835e7e77c6e9137f1c6218ceefb92669a6613930))
+* libass subtitles, watch history, Discord mentions and UI polish ([#589](https://github.com/ValenceOSS/Valence/issues/589)) ([efb47a7](https://github.com/ValenceOSS/Valence/commit/efb47a750a86ffb000210d5da8d0e2fbd2883400))
+* **repo:** mark films as watched, plus fixes for desktop reloads, right-click and the sign-in wall ([#580](https://github.com/ValenceOSS/Valence/issues/580)) ([7e22898](https://github.com/ValenceOSS/Valence/commit/7e22898465984d155dcf832e7c698ca24b09ee56))
+* **repo:** search finds only the library and points to discover, which has its own search ([#567](https://github.com/ValenceOSS/Valence/issues/567)) ([b1f05aa](https://github.com/ValenceOSS/Valence/commit/b1f05aad13dcc0bca6f7bce6f2b601a17f9fe894))
+* **repo:** small fixes across account setup, notifications, sessions and the desktop app ([#554](https://github.com/ValenceOSS/Valence/issues/554)) ([2a45bfe](https://github.com/ValenceOSS/Valence/commit/2a45bfe3959733d148be64de087a15d02ec77126))
+* **repo:** windows on arm and arm64 linux builds of the desktop app and the transcoder ([#547](https://github.com/ValenceOSS/Valence/issues/547)) ([041b9e0](https://github.com/ValenceOSS/Valence/commit/041b9e0ba12025e7ec91ac7df8fa821753980735))
+* **requests:** a film can be kept in two versions, each at its own quality profile ([#573](https://github.com/ValenceOSS/Valence/issues/573)) ([46729e0](https://github.com/ValenceOSS/Valence/commit/46729e0bede8bb4ea1d93459f3a485ad6cbffc1a))
+* **requests:** a followed artist fetches mixtapes, and albums, mixtapes and eps by default ([#571](https://github.com/ValenceOSS/Valence/issues/571)) ([1c59041](https://github.com/ValenceOSS/Valence/commit/1c59041366c20aef3ce73722d3c2c1757bcd3b59))
+* **requests:** a title handed to sonarr, radarr or lidarr can be picked by hand through the app ([#574](https://github.com/ValenceOSS/Valence/issues/574)) ([98b3d56](https://github.com/ValenceOSS/Valence/commit/98b3d56d830c72c365e89f63bda33fda620460e4))
+* **requests:** a title handed to sonarr, radarr or lidarr says so, and search missing asks the app ([#570](https://github.com/ValenceOSS/Valence/issues/570)) ([5b8cb3c](https://github.com/ValenceOSS/Valence/commit/5b8cb3c3c053ac66c83387f68594f4875c2f4b78))
+* **requests:** albums are fetched complete, collaborations filed together, lossy upgradable ([#577](https://github.com/ValenceOSS/Valence/issues/577)) ([16e83f7](https://github.com/ValenceOSS/Valence/commit/16e83f72af321f95a803d754013083173a3583c9))
+* **requests:** audiobooks keep their series' narrator, and an abridged one is refused ([#578](https://github.com/ValenceOSS/Valence/issues/578)) ([843819f](https://github.com/ValenceOSS/Valence/commit/843819f25bbf80feaa14ea8d794d162d7e4ae08c))
+* **requests:** books are searched for by themselves, as an ebook, an audiobook or both ([#572](https://github.com/ValenceOSS/Valence/issues/572)) ([18dab31](https://github.com/ValenceOSS/Valence/commit/18dab31f06d27b60dfb4aadfffb0ec8ee9d5a63f))
+* **requests:** discover's hero, arr formats carried whole, and a second copy kept by hand ([#579](https://github.com/ValenceOSS/Valence/issues/579)) ([d3e7d1f](https://github.com/ValenceOSS/Valence/commit/d3e7d1fc27c956e031f59de38a0c6cfc061e3699))
+* **requests:** downloads, blocklist and following of a handed-off title work through its app ([#575](https://github.com/ValenceOSS/Valence/issues/575)) ([3925299](https://github.com/ValenceOSS/Valence/commit/3925299b0da6e6aa33f63b6d18ccf3ca7827b05a))
+* **requests:** everyone who asks for something is kept, and can want it too ([#568](https://github.com/ValenceOSS/Valence/issues/568)) ([96123f3](https://github.com/ValenceOSS/Valence/commit/96123f3e56f1431b298fbdbfcc80cbf755a2294c))
+* **requests:** follow every title the libraries hold at once, without it showing as requested ([#585](https://github.com/ValenceOSS/Valence/issues/585)) ([9906052](https://github.com/ValenceOSS/Valence/commit/9906052048cbac96f26a5e1d7297b0fd7260c96e))
+* **requests:** only kinds a library takes requests for are offered, on every client ([#566](https://github.com/ValenceOSS/Valence/issues/566)) ([07eebb1](https://github.com/ValenceOSS/Valence/commit/07eebb1784b5da0c772a4ad4fb6b347c0c4e5de9))
+* **requests:** quality profiles keep an order, and a later ask at a higher one is settled ([#569](https://github.com/ValenceOSS/Valence/issues/569)) ([7cb552a](https://github.com/ValenceOSS/Valence/commit/7cb552a9efe59b8b696778a7622f2c08363a619f))
+* **requests:** release judging follows sonarr: combined qualities, custom formats, ranking and searching by id ([#564](https://github.com/ValenceOSS/Valence/issues/564)) ([7e884ba](https://github.com/ValenceOSS/Valence/commit/7e884ba35b70a7ac67248d88e8b39bba81850d58))
+* **server:** anime is a kind of library of its own ([#576](https://github.com/ValenceOSS/Valence/issues/576)) ([a4dcfc5](https://github.com/ValenceOSS/Valence/commit/a4dcfc532b6ef6f2f7b54f59079ce2d33540e466))
+* **server:** pre-transcoding makes a ladder of copies, and Auto switches between them mid-stream ([#588](https://github.com/ValenceOSS/Valence/issues/588)) ([0b63f7e](https://github.com/ValenceOSS/Valence/commit/0b63f7e03c514f8aa18adba0f613c48519ac8a8a))
+* **server:** request webhooks show the request as seerr does, with valence's mark, and music is ready to listen to ([#552](https://github.com/ValenceOSS/Valence/issues/552)) ([0382124](https://github.com/ValenceOSS/Valence/commit/038212410c47601823e9db01fadf5627afca252a))
+* **tv:** show smart tv and xbox browsers the tv layout at the server's usual address ([#541](https://github.com/ValenceOSS/Valence/issues/541)) ([d436eb9](https://github.com/ValenceOSS/Valence/commit/d436eb99fd3e838322fc625a33004d43776dc24b))
+* **web:** album details from Apple, subtitles from OpenSubtitles and SubDL, playback that keeps up over slow links, and a split file manager ([#563](https://github.com/ValenceOSS/Valence/issues/563)) ([2fde683](https://github.com/ValenceOSS/Valence/commit/2fde683ef43830737e5529cdfa61e5862daf3fc0))
+* **web:** requests get a catalogue of every title, with a page for each, in place of requested and search ([#561](https://github.com/ValenceOSS/Valence/issues/561)) ([9e072f8](https://github.com/ValenceOSS/Valence/commit/9e072f8e44d46af762626e687fada0f8d2af276f))
+
+
+### Fixed
+
+* **auth:** sign-in notices showed the proxy's address and a different browser name to opened valence ([#586](https://github.com/ValenceOSS/Valence/issues/586)) ([6dd53b7](https://github.com/ValenceOSS/Valence/commit/6dd53b7b46691206fa4fb8b39dce070fee20c892))
+* **desktop:** catalogue trailers were a blank white frame in the desktop app ([#551](https://github.com/ValenceOSS/Valence/issues/551)) ([aa81bcc](https://github.com/ValenceOSS/Valence/commit/aa81bcc21d67d3a70e4e700c829aff7efc950330))
+* **desktop:** opening or reloading the app showed every unread notification again ([#581](https://github.com/ValenceOSS/Valence/issues/581)) ([6b8e5d4](https://github.com/ValenceOSS/Valence/commit/6b8e5d4b27abd16205c27283eea7795b042dd159))
+* **landing:** share the site with a card of the current hero, at the size previews use ([#548](https://github.com/ValenceOSS/Valence/issues/548)) ([391294f](https://github.com/ValenceOSS/Valence/commit/391294fc827273f026e03f14c2c89fffeec23d3f))
+* **mobile:** a featured title stops its animations when it goes, so none outlive it ([#540](https://github.com/ValenceOSS/Valence/issues/540)) ([bd14007](https://github.com/ValenceOSS/Valence/commit/bd14007453c28fc4f048337f7889ffeb53aed30e))
+* **repo:** copy the dependency patches into every image that installs the workspace ([#545](https://github.com/ValenceOSS/Valence/issues/545)) ([37af0ca](https://github.com/ValenceOSS/Valence/commit/37af0ca02e6841ca43755ab11ed64b1b9db6bc42))
+* **repo:** everybody sees every request and how its download is going, not only admins ([#553](https://github.com/ValenceOSS/Valence/issues/553)) ([5c85d45](https://github.com/ValenceOSS/Valence/commit/5c85d45ceb370625bfa4241c8dd00e29ddb256ce))
+* **repo:** mount Postgres 18's volume where 18 keeps its data ([#591](https://github.com/ValenceOSS/Valence/issues/591)) ([0c0cd63](https://github.com/ValenceOSS/Valence/commit/0c0cd63c2dd1de59d4587e194f8927c8eecdd97b))
+* **repo:** requests stop waiting on searches, renames reach requests, admin fits a phone ([#592](https://github.com/ValenceOSS/Valence/issues/592)) ([207d00e](https://github.com/ValenceOSS/Valence/commit/207d00e287a99c1dd4641f5a2eff532655abdb69))
+* **repo:** the development build stays at the top of the release list ([#556](https://github.com/ValenceOSS/Valence/issues/556)) ([8ee6ebc](https://github.com/ValenceOSS/Valence/commit/8ee6ebcf7b8bb2e534179f50ffa76e733024f4f1))
+* **requests:** requests skip episodes you already have and file new ones in the show's own folder ([#560](https://github.com/ValenceOSS/Valence/issues/560)) ([4013c82](https://github.com/ValenceOSS/Valence/commit/4013c82abd96e7f1f41bc8929ddab178be1ca18a))
+* **requests:** specials and new seasons are separate choices, seasons can be added, and statuses match everywhere ([#562](https://github.com/ValenceOSS/Valence/issues/562)) ([e39292d](https://github.com/ValenceOSS/Valence/commit/e39292da01aebd7885b91683592e18b6e5c86e4c))
+* **server,web:** keep the server's release from anybody not signed in ([#542](https://github.com/ValenceOSS/Valence/issues/542)) ([44690a3](https://github.com/ValenceOSS/Valence/commit/44690a3cc796823399ca1a144bcf04277a2cbc9d))
+* **server:** serve the api reference again, which a music device field broke ([#544](https://github.com/ValenceOSS/Valence/issues/544)) ([1cc23b7](https://github.com/ValenceOSS/Valence/commit/1cc23b7ae476ee36b9718b843e7def220ec887f0))
+* **tv:** cancelling a request asks first ([#565](https://github.com/ValenceOSS/Valence/issues/565)) ([fc8bf9a](https://github.com/ValenceOSS/Valence/commit/fc8bf9aa96c995c9d5637445acc02d7780f5db97))
+* **tv:** television browsers stuck on a white desktop layout, listed as safari, and stuttering ([#550](https://github.com/ValenceOSS/Valence/issues/550)) ([5ca1ce0](https://github.com/ValenceOSS/Valence/commit/5ca1ce0a945e9d6332e5c20bb6a235672a9f8de0))
+* **tv:** the top shelf extension says it needs arm64, as the app store asks ([#538](https://github.com/ValenceOSS/Valence/issues/538)) ([481a642](https://github.com/ValenceOSS/Valence/commit/481a642fa2d21fd1e3e4e45c41c2ae09005e7fc9))
+* **ui:** smooth hero aurora and steady sizing on large screens ([#559](https://github.com/ValenceOSS/Valence/issues/559)) ([dbafa70](https://github.com/ValenceOSS/Valence/commit/dbafa70c6bf1eb8d75eee31cd04eab9aa15c813f))
+* **web:** draw title logos as they are, rather than whitening dark ones ([#543](https://github.com/ValenceOSS/Valence/issues/543)) ([7c246f6](https://github.com/ValenceOSS/Valence/commit/7c246f6beb29d2577c6a019cdf76adbd70bb480e))
+
+
+### Faster
+
+* **tv:** a lighter browser layout, focus that lands where you expect, and a way back from desktop ([#584](https://github.com/ValenceOSS/Valence/issues/584)) ([1408eb6](https://github.com/ValenceOSS/Valence/commit/1408eb650c9f45722aa31f8c938c37c6fd9402ef))
+
+
+### Documentation
+
+* **docs:** add AI-readable markdown feeds ([#555](https://github.com/ValenceOSS/Valence/issues/555)) ([7c29aeb](https://github.com/ValenceOSS/Valence/commit/7c29aeba3eb2022b8f082f5da39a196221d80db2))
+* **repo:** put trusted_proxies in the compose file, with its defaults ([#587](https://github.com/ValenceOSS/Valence/issues/587)) ([f8964e2](https://github.com/ValenceOSS/Valence/commit/f8964e20ddd92767b7f78cf7ec338af94bf2cb1f))
+
 ## [1.4.0](https://github.com/ValenceOSS/Valence/compare/v1.3.0...v1.4.0) (2026-10-07)
 
 
