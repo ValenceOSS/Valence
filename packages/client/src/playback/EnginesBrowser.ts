@@ -17,6 +17,7 @@ type EnginesBrowser = {
   }> | null;
   canStream: ((mimeType: string) => boolean) | null;
   canToneMap: ((codec: string) => Promise<boolean>) | null;
+  hasDecoders: () => Promise<boolean>;
 };
 
 export type { EnginesBrowser };

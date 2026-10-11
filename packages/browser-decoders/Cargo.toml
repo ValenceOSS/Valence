@@ -1,0 +1,19 @@
+[package]
+name = "valence-browser-decoders"
+description = "Decoders compiled to WebAssembly for the codecs no browser decodes: TrueHD and MPEG-2."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+truehd = { version = "=0.7.2", default-features = false }
+oxideav-mpeg12video = "=0.0.13"
+
+[lints]
+workspace = true
+

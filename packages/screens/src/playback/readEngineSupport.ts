@@ -1,6 +1,7 @@
 import { detectEngineSupport } from '@ValenceClient/playback/detectEngineSupport';
 import type { EngineSupport } from '@ValenceClient/playback/EngineSupport';
 import { checkToneMapping } from '@ValenceScreens/playback/engine/checkToneMapping';
+import { loadBrowserDecoders } from '@ValenceScreens/playback/engine/loadBrowserDecoders';
 
 const asked: { answer: Promise<EngineSupport> | null } = { answer: null };
 
@@ -31,6 +32,7 @@ const readEngineSupport = (): Promise<EngineSupport> => {
         ? null
         : (mimeType) => MediaSource.isTypeSupported(mimeType),
     canToneMap: checkToneMapping,
+    hasDecoders: async () => (await loadBrowserDecoders()) !== null,
   });
 
   return asked.answer;

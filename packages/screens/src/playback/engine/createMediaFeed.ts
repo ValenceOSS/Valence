@@ -1,5 +1,6 @@
 import {
   AudioSample,
+  AudioSampleSource,
   Conversion,
   ConversionCanceledError,
   Mp4OutputFormat,
@@ -10,7 +11,14 @@ import { chooseSoundRoute } from './chooseSoundRoute';
 import { downmixToStereo } from './downmixToStereo';
 import { readAacChannelOrder } from './readAacChannelOrder';
 import { registerCodecExtensions } from './registerCodecExtensions';
-import type { Input, InputAudioTrack, InputVideoTrack, StreamTargetChunk } from 'mediabunny';
+import { loadBrowserDecoders } from './loadBrowserDecoders';
+import type {
+  EncodedPacketSink,
+  Input,
+  InputAudioTrack,
+  InputVideoTrack,
+  StreamTargetChunk,
+} from 'mediabunny';
 import type { SoundRoute } from './chooseSoundRoute';
 
 const HELD_AHEAD_SECONDS = 30;
@@ -24,6 +32,10 @@ const FRAGMENT_SECONDS = 1;
 const SAMPLE_RATE = 48_000;
 
 const MEASURED_FRAGMENTS = 3;
+
+const LOSSLESS_TYPE = 'audio/mp4; codecs="flac"';
+
+const SIXTEEN_BITS = 32_767;
 
 const AAC_FROM_WAVE = [2, 0, 1, 4, 5, 3];
 
@@ -139,6 +151,9 @@ const stereoOf = (sample: AudioSample): AudioSample =>
  * It knows the size and start of every fragment it appends, so it can say the bitrate of what is
  * playing now — the file's own, where the picture is copied — at no cost.
  *
+ * A sound no browser decodes, such as TrueHD, is decoded here by Valence's own WebAssembly decoder
+ * and encoded as FLAC beside the picture's copy, since Mediabunny has no decoder of its own for it.
+ *
  * Starting counts as done once the element holds media to play, not merely the file's header, so
  * nothing waiting on the element mistakes a slow first fragment for a stream that failed.
  *
@@ -157,6 +172,8 @@ const createMediaFeed = async ({
   duration,
   track,
   picture = null,
+  decodesHere = null,
+  soundPackets = null,
   onFault,
 }: {
   element: HTMLVideoElement;
@@ -164,13 +181,33 @@ const createMediaFeed = async ({
   duration: number;
   track: Pick<InputAudioTrack, 'id' | 'codec' | 'getCodecParameterString' | 'getNumberOfChannels'>;
   picture?: Pick<InputVideoTrack, 'id' | 'getCodecParameterString'> | null;
+  decodesHere?: 'truehd' | null;
+  soundPackets?: Pick<EncodedPacketSink, 'getPacket' | 'getFirstPacket' | 'packets'> | null;
   onFault: () => void;
 }): Promise<MediaFeed> => {
   const plays = (mimeType: string) => MediaSource.isTypeSupported(mimeType);
 
   await registerCodecExtensions();
 
-  const sound = await chooseSoundRoute(track, plays, await readAacChannelOrder());
+  const decoders = decodesHere === null ? null : await loadBrowserDecoders();
+
+  if (
+    decodesHere !== null &&
+    (decoders === null || soundPackets === null || !plays(LOSSLESS_TYPE))
+  ) {
+    throw new Error('This browser cannot decode that sound here.');
+  }
+
+  const sound: SoundRoute =
+    decodesHere === null
+      ? await chooseSoundRoute(track, plays, await readAacChannelOrder())
+      : {
+          kind: 'encoded',
+          codec: 'flac',
+          parameter: 'flac',
+          numberOfChannels: 8,
+          isReordered: false,
+        };
   const pictureCodec = picture === null ? null : await picture.getCodecParameterString();
   const source = new MediaSource();
   const address = URL.createObjectURL(source);
@@ -183,12 +220,12 @@ const createMediaFeed = async ({
   const buffer = source.addSourceBuffer(typeOf(pictureCodec, sound.parameter));
   const state: {
     run: number;
-    conversion: Conversion | null;
+    cancel: (() => Promise<void>) | null;
     queue: Promise<void>;
     fragments: { at: number; bytes: number }[];
   } = {
     run: 0,
-    conversion: null,
+    cancel: null,
     queue: Promise.resolve(),
     fragments: [],
   };
@@ -290,7 +327,7 @@ const createMediaFeed = async ({
       output,
       video: (candidate) => (candidate.id === picture?.id ? {} : { discard: true }),
       audio: (candidate) =>
-        candidate.id !== track.id
+        candidate.id !== track.id || decodesHere !== null
           ? { discard: true }
           : sound.kind === 'carried'
             ? {}
@@ -309,16 +346,28 @@ const createMediaFeed = async ({
       trim: { start: seconds },
       copy: { boundaryPolicy: 'expand' },
       showWarnings: false,
+      composable: decodesHere !== null,
     });
 
     if (run !== state.run) {
       return;
     }
 
-    state.conversion = conversion;
+    state.cancel = async () => {
+      await conversion.cancel();
+
+      if (decodesHere !== null) {
+        await output.cancel();
+      }
+    };
 
     try {
-      await conversion.execute();
+      if (decodesHere !== null && decoders !== null && soundPackets !== null) {
+        await feedDecodedSound(output, conversion, seconds, run);
+      } else {
+        await conversion.execute();
+      }
+
       await inTurn(async () => {
         await settle();
 
@@ -335,13 +384,81 @@ const createMediaFeed = async ({
     }
   };
 
+  const feedDecodedSound = async (
+    output: Output,
+    conversion: Conversion,
+    seconds: number,
+    run: number,
+  ) => {
+    if (decoders === null || soundPackets === null) {
+      return;
+    }
+
+    const decoding = decoders.createTrueHd();
+    const voice = new AudioSampleSource({ codec: 'flac' });
+
+    output.addAudioTrack(voice);
+    await output.start();
+
+    const copyingPicture = conversion.execute();
+
+    try {
+      const first =
+        (await soundPackets.getPacket(seconds)) ?? (await soundPackets.getFirstPacket());
+      let clock: number | null = null;
+
+      for await (const packet of first === null ? [] : soundPackets.packets(first)) {
+        if (run !== state.run) {
+          return;
+        }
+
+        const decoded = decoding.push(packet.data);
+        const frames = decoded.channels === 0 ? 0 : decoded.samples.length / decoded.channels;
+
+        if (frames === 0) {
+          continue;
+        }
+
+        const lasts = frames / decoded.sampleRate;
+
+        clock ??= packet.timestamp + packet.duration - lasts;
+
+        if (clock + lasts > seconds) {
+          const sample = new AudioSample({
+            data: Int16Array.from(decoded.samples, (value) =>
+              Math.round(Math.max(-1, Math.min(1, value)) * SIXTEEN_BITS),
+            ),
+            format: 's16',
+            numberOfChannels: decoded.channels,
+            sampleRate: decoded.sampleRate,
+            timestamp: Math.max(0, clock - seconds),
+          });
+
+          try {
+            await voice.add(sample);
+          } finally {
+            sample.close();
+          }
+        }
+
+        clock += lasts;
+      }
+
+      voice.close();
+      await copyingPicture;
+      await output.finalize();
+    } finally {
+      decoding.free();
+    }
+  };
+
   const cancelRunning = async () => {
     state.run += 1;
 
-    const running = state.conversion;
+    const running = state.cancel;
 
-    state.conversion = null;
-    await running?.cancel().catch(() => undefined);
+    state.cancel = null;
+    await running?.().catch(() => undefined);
   };
 
   return {

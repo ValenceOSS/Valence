@@ -4,6 +4,8 @@ import type { EngineSupport } from './EngineSupport';
 
 const TONE_MAPPED_RANGES = ['HDR10', 'HDR10Plus', 'HLG'] as const;
 
+const TALLEST_MPEG2 = 576;
+
 /**
  * Every member of each list once, in the order first met.
  *
@@ -26,18 +28,24 @@ const unionOf = (...lists: readonly (readonly string[])[]): string[] => [...new 
  *
  * @param profile - What the media element plays by itself.
  * @param support - What the browser adds.
- * @param film - Whether the film to be played is HDR.
+ * MPEG-2 is decoded in the page, which keeps up with a DVD's 576 lines but not with HD, so it is
+ * only claimed for films no taller than that.
+ *
+ * @param film - Whether the film to be played is HDR, and how tall its picture is.
  * @returns The profile with both.
  */
 const withTheEngine = (
   profile: DeviceProfile,
   support: EngineSupport,
-  film: { isHdr: boolean },
+  film: { isHdr: boolean; height?: number },
 ): DeviceProfile => {
   const toneMapped = support.toneMappedCodecs;
-  const videoCodecs = film.isHdr
-    ? unionOf(support.remuxVideoCodecs, toneMapped)
-    : unionOf(support.videoCodecs, support.remuxVideoCodecs);
+  const isTooTallForMpeg2 = (film.height ?? 0) > TALLEST_MPEG2;
+  const videoCodecs = (
+    film.isHdr
+      ? unionOf(support.remuxVideoCodecs, toneMapped)
+      : unionOf(support.videoCodecs, support.remuxVideoCodecs)
+  ).filter((codec) => codec !== 'mpeg2' || !isTooTallForMpeg2);
   const tenBit = film.isHdr
     ? unionOf(support.remuxTenBitVideoCodecs, toneMapped)
     : unionOf(support.tenBitVideoCodecs, support.remuxTenBitVideoCodecs);

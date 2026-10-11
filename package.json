@@ -22,6 +22,7 @@
     "format:check": "oxfmt --check",
     "rust:check": "cargo clippy --all-targets -- -D warnings && cargo fmt --check",
     "rust:test": "cargo test",
+    "decoders:build": "cargo build -p valence-browser-decoders --release --target wasm32-unknown-unknown && mkdir -p apps/web/public/decoders && cp target/wasm32-unknown-unknown/release/valence_browser_decoders.wasm apps/web/public/decoders/valence-browser-decoders.wasm",
     "prepare": "husky && pnpm --filter @valence/lint build",
     "fixtures:sync": "tsx apps/transcoder/scripts/fixtures/syncFixtures.ts",
     "ffmpeg:sync": "tsx apps/transcoder/scripts/ffmpeg/syncFfmpeg.ts",

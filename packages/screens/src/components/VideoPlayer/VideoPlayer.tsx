@@ -879,7 +879,10 @@ const VideoPlayer = ({
           request.mediaId,
           engine === null || film === null
             ? deviceProfile
-            : withTheEngine(deviceProfile, engine, { isHdr: film.videoRange !== 'SDR' }),
+            : withTheEngine(deviceProfile, engine, {
+                isHdr: film.videoRange !== 'SDR',
+                height: film.height,
+              }),
           clientId,
           request.startSeconds,
           heardIndex,

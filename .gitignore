@@ -36,3 +36,5 @@ apps/mobile/android/
 apps/mobile/modules/*/android/build/
 apps/mobile/.expo/
 apps/mobile/build/
+
+apps/web/public/decoders/

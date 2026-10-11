@@ -12,7 +12,14 @@ WORKDIR /build
 COPY Cargo.toml Cargo.lock rustfmt.toml ./
 COPY apps/transcoder ./apps/transcoder
 COPY apps/desktop/native ./apps/desktop/native
+COPY packages/browser-decoders ./packages/browser-decoders
 RUN cargo build --release --bin valence-transcoder
+
+# The decoders the browser's own player uses for codecs no browser has — TrueHD and MPEG-2 —
+# built to WebAssembly and served beside the web app. A server built without them still plays
+# those films, by transcoding them as before.
+RUN rustup target add wasm32-unknown-unknown \
+  && cargo build --release -p valence-browser-decoders --target wasm32-unknown-unknown
 
 FROM node:24.21.0-bookworm-slim AS web-build
 WORKDIR /build
@@ -25,6 +32,7 @@ COPY apps/web ./apps/web
 COPY apps/tv ./apps/tv
 COPY apps/server ./apps/server
 RUN pnpm install --frozen-lockfile
+COPY --from=transcoder-build /build/target/wasm32-unknown-unknown/release/valence_browser_decoders.wasm ./apps/web/public/decoders/valence-browser-decoders.wasm
 RUN pnpm --filter @valence/web build
 RUN pnpm --filter @valence/tv build:web
 

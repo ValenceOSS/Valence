@@ -1,4 +1,5 @@
-import { ALL_FORMATS, Input, UrlSource } from 'mediabunny';
+import { ALL_FORMATS, EncodedPacketSink, Input, UrlSource } from 'mediabunny';
+import { soundDecodedHere } from './soundDecodedHere';
 import { createMediaFeed } from './createMediaFeed';
 import { createThroughputMeter } from './createThroughputMeter';
 import type { DeliveredFormat } from '@ValenceScreens/playback/attachShaka';
@@ -86,6 +87,8 @@ const attachRemux = async ({
     duration,
     track: audio,
     picture: video,
+    decodesHere: await soundDecodedHere(audio),
+    soundPackets: new EncodedPacketSink(audio),
     onFault: fail,
   });
 

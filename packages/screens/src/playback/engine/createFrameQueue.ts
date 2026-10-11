@@ -24,11 +24,14 @@ type FrameQueue<Sample extends Frame> = {
  *
  * @param sink - Where decoded frames come from, in presentation order from a given time.
  * @param onFault - Told that decoding failed.
+ * @param heldAhead - How many frames to keep ready: few for a hardware decoder's scarce surfaces,
+ *   more for frames decoded in the page, a group of pictures at a time.
  * @returns The queue.
  */
 const createFrameQueue = <Sample extends Frame>(
   sink: { samples: (startTimestamp: number) => AsyncIterable<Sample> },
   onFault: () => void,
+  heldAhead = HELD_AHEAD,
 ): FrameQueue<Sample> => {
   const state: {
     run: number;
@@ -65,7 +68,7 @@ const createFrameQueue = <Sample extends Frame>(
         state.produced = sample.timestamp;
         state.decoded += 1;
 
-        while (isCurrent() && state.held.length >= HELD_AHEAD) {
+        while (isCurrent() && state.held.length >= heldAhead) {
           await new Promise<void>((resolve) => {
             state.wake = resolve;
           });

@@ -2,8 +2,13 @@ import { ALL_FORMATS, EncodedPacketSink, Input, UrlSource, VideoSampleSink } fro
 import { createBitrateMeter } from './createBitrateMeter';
 import { createFrameQueue } from './createFrameQueue';
 import { createHdrFrameSource } from './createHdrFrameSource';
+import { loadBrowserDecoders } from './loadBrowserDecoders';
+import { createMpeg2FrameSource } from './mpeg2/createMpeg2FrameSource';
+import { createMpeg2Worker } from './mpeg2/createMpeg2Worker';
+import { isMpeg2Track } from './mpeg2/isMpeg2Track';
 import { createPicturePresenter } from './createPicturePresenter';
 import { createMediaFeed } from './createMediaFeed';
+import { soundDecodedHere } from './soundDecodedHere';
 import { createThroughputMeter } from './createThroughputMeter';
 import type { DeliveredFormat } from '@ValenceScreens/playback/attachShaka';
 import type { EngineStats } from './EngineStats';
@@ -13,6 +18,8 @@ const NEAR_THE_END_SECONDS = 0.25;
 const STILL_DECODING_SECONDS = 1;
 
 const ASSUMED_PEAK_NITS = 1000;
+
+const HELD_AHEAD_DECODED_HERE = 30;
 
 type Drawable = {
   timestamp: number;
@@ -39,6 +46,8 @@ type EngineOptions = {
  * The sound is read through a file of its own, so that running thirty seconds ahead never evicts
  * from the cache the pieces the picture is about to need — at a 4K film's bitrate the two would
  * otherwise take turns waiting on the network.
+ *
+ * MPEG-2, which no browser decodes, is decoded by Valence's own WebAssembly decoder instead.
  *
  * Each animation frame draws the newest decoded frame at or before the element's time, whether it
  * is playing, paused or being scrubbed. A seek the decoder is already ahead of costs nothing; any
@@ -95,7 +104,14 @@ const attachEngine = async ({
   ]);
   const audio = audioTracks[audioTrackAt] ?? audioTracks[0] ?? null;
 
-  if (video === null || audio === null || !(await video.canDecode())) {
+  const isMpeg2 = video !== null && (await isMpeg2Track(video));
+  const decoders = isMpeg2 ? await loadBrowserDecoders() : null;
+
+  if (
+    video === null ||
+    audio === null ||
+    (isMpeg2 ? decoders === null : !(await video.canDecode()))
+  ) {
     input.dispose();
 
     throw new Error('The file has no picture and sound this browser can decode.');
@@ -122,13 +138,26 @@ const attachEngine = async ({
     audio.getNumberOfChannels(),
     audio.getSampleRate(),
   ]);
-  const hdr = await createHdrFrameSource(video, new EncodedPacketSink(video));
-  const plain = new VideoSampleSink(video);
+  const hdr = isMpeg2 ? null : await createHdrFrameSource(video, new EncodedPacketSink(video));
+  const containerColour = await video.getColorSpace();
+  const mpeg2Worker = decoders === null ? null : createMpeg2Worker();
+  const mpeg2 =
+    mpeg2Worker === null
+      ? null
+      : createMpeg2FrameSource(new EncodedPacketSink(video), mpeg2Worker, {
+          primaries:
+            containerColour.primaries ?? (video.squarePixelHeight > 576 ? 'bt709' : 'smpte170m'),
+          transfer: containerColour.transfer ?? 'bt709',
+          matrix: containerColour.matrix ?? (video.squarePixelHeight > 576 ? 'bt709' : 'smpte170m'),
+          fullRange: containerColour.fullRange ?? false,
+        });
   const frames = createFrameQueue<Drawable>(
     {
       samples: async function* (from) {
-        if (hdr !== null) {
-          for await (const decoded of hdr.samples(from)) {
+        const decodedHere = hdr ?? mpeg2;
+
+        if (decodedHere !== null) {
+          for await (const decoded of decodedHere.samples(from)) {
             yield {
               timestamp: decoded.timestamp,
               close: decoded.close,
@@ -141,7 +170,7 @@ const attachEngine = async ({
           return;
         }
 
-        for await (const sample of plain.samples(from)) {
+        for await (const sample of new VideoSampleSink(video).samples(from)) {
           yield {
             timestamp: sample.timestamp,
             close: () => {
@@ -161,6 +190,7 @@ const attachEngine = async ({
       },
     },
     fail,
+    mpeg2 === null ? undefined : HELD_AHEAD_DECODED_HERE,
   );
 
   presenter.grade(
@@ -181,11 +211,14 @@ const attachEngine = async ({
     formats: ALL_FORMATS,
   });
   const soundTracks = await soundInput.getAudioTracks();
+  const soundTrack = soundTracks[audioTracks.indexOf(audio)] ?? audio;
   const feed = await createMediaFeed({
     element,
     input: soundInput,
     duration,
-    track: soundTracks[audioTracks.indexOf(audio)] ?? audio,
+    track: soundTrack,
+    decodesHere: await soundDecodedHere(soundTrack),
+    soundPackets: new EncodedPacketSink(soundTrack),
     onFault: fail,
   });
   const shown: { sample: Drawable | null } = { sample: null };
@@ -301,6 +334,7 @@ const attachEngine = async ({
       shown.sample = null;
       await feed.stop();
       presenter.destroy();
+      mpeg2Worker?.stop();
       input.dispose();
       soundInput.dispose();
       element.style.aspectRatio = '';

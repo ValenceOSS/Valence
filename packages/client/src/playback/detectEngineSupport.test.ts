@@ -16,6 +16,7 @@ const aBrowser = (overrides: Partial<EnginesBrowser> = {}): EnginesBrowser => ({
   canEncodeAudio: () => Promise.resolve(true),
   canStream: (mimeType) => /mp4a|opus/.test(mimeType),
   canToneMap: () => Promise.resolve(true),
+  hasDecoders: () => Promise.resolve(false),
   ...overrides,
 });
 
