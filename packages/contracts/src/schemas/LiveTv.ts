@@ -108,6 +108,7 @@ const LiveProgrammeSchema = z.object({
 });
 
 const LiveGuideSchema = z.object({
+  hasProxy: z.boolean().default(false),
   channels: z.array(LiveChannelSchema),
   programmes: z.array(LiveProgrammeSchema),
 });

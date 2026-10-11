@@ -7,6 +7,7 @@ type LiveChannelTableProps = {
   chosenId: string | null;
   onChoose: (channelId: string) => void;
   onToggleFavourite: (channel: LiveChannel) => void;
+  hasProxy?: boolean;
 };
 
 export type { LiveChannelTableProps };

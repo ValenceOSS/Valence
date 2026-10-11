@@ -149,6 +149,7 @@ const LiveTvPage = () => {
           onToggleFavourite={() => {
             toggleFavourite(chosen);
           }}
+          hasProxy={guide.data.hasProxy}
         />
       </div>
 
@@ -219,6 +220,7 @@ const LiveTvPage = () => {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
               onToggleFavourite={toggleFavourite}
+              hasProxy={guide.data.hasProxy}
             />
           ) : (
             <LiveGuideGrid

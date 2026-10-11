@@ -37,6 +37,7 @@ const timeOf = (at: string): string =>
  * @param chosenId - The channel playing, if any.
  * @param onChoose - Told which channel to play.
  * @param onToggleFavourite - Told which channel to keep, or stop keeping.
+ * @param hasProxy - Whether streams this server is refused are tried through a proxy too.
  */
 const LiveChannelTable = ({
   channels,
@@ -45,6 +46,7 @@ const LiveChannelTable = ({
   chosenId,
   onChoose,
   onToggleFavourite,
+  hasProxy = false,
 }: LiveChannelTableProps) => {
   const onNow = new Map<string, LiveProgramme>();
 
@@ -133,10 +135,10 @@ const LiveChannelTable = ({
             <Badge size="sm" tone="success">
               {say('screens.liveTvPage.onAir')}
             </Badge>
-            <ChannelTags channel={row.original} />
+            <ChannelTags channel={row.original} hasProxy={hasProxy} />
           </span>
         ) : (
-          <ChannelTags channel={row.original} />
+          <ChannelTags channel={row.original} hasProxy={hasProxy} />
         ),
     },
     {

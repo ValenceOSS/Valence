@@ -5652,6 +5652,7 @@ const ENGLISH = {
   'screens.libraryBrowser.readingYourLibrary': 'Loading your library',
   'screens.libraryBrowser.thisServerHasNoFilmsOr': 'This server has no films or programmes yet.',
   'screens.liveTvPage.allChannels': 'All channels',
+  'screens.liveTvPage.blockedEvenThroughTheVpn': 'Blocked, even through the VPN',
   'screens.liveTvPage.blockedHere': 'Blocked here',
   'screens.liveTvPage.blockedOutsideSomeCountries':
     'Only plays in some countries, and the playlist doesn’t say which.',

@@ -12,9 +12,10 @@ import type { ChannelTagsProps } from './ChannelTags.types';
  * here, or not working.
  *
  * @param channel - The channel.
+ * @param hasProxy - Whether a refusal was tried through the proxy too.
  * @param className - Extra classes for the caller's own layout.
  */
-const ChannelTags = ({ channel, className }: ChannelTagsProps) => {
+const ChannelTags = ({ channel, hasProxy = false, className }: ChannelTagsProps) => {
   const tags = channelTagsOf(channel.name);
   const trouble =
     channel.health === null || channel.health === 'onAir' || channel.health === 'unsure'
@@ -55,7 +56,9 @@ const ChannelTags = ({ channel, className }: ChannelTagsProps) => {
           {trouble === 'offAir'
             ? say('screens.liveTvPage.offAir')
             : trouble === 'refused'
-              ? say('screens.liveTvPage.blockedHere')
+              ? hasProxy
+                ? say('screens.liveTvPage.blockedEvenThroughTheVpn')
+                : say('screens.liveTvPage.blockedHere')
               : say('screens.liveTvPage.notWorking')}
         </Badge>
       )}

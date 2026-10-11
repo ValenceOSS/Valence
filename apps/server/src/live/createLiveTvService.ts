@@ -340,6 +340,7 @@ const createLiveTvService = ({
       }
 
       return {
+        hasProxy: routes?.hasProxy ?? false,
         channels: shown.map((channel) => ({
           id: channel.id,
           sourceId: channel.sourceId,

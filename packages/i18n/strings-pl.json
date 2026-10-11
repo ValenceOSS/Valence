@@ -22355,6 +22355,11 @@
     "context": "Option in the live TV guide’s filter showing every channel."
   },
   {
+    "handler": "screens.liveTvPage.blockedEvenThroughTheVpn",
+    "text": "Blocked, even through the VPN",
+    "context": "Badge on a live TV channel whose broadcaster refused this server both directly and through its VPN proxy when last checked."
+  },
+  {
     "handler": "screens.liveTvPage.blockedHere",
     "text": "Blocked here",
     "context": "Badge on a live TV channel whose broadcaster refused this server when last checked, even through the proxy."

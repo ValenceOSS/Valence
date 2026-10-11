@@ -46,8 +46,16 @@ const timeOf = (at: string): string =>
  * @param upNext - What follows, where the guide knows.
  * @param now - The time now, in milliseconds.
  * @param onToggleFavourite - Told to keep the channel, or stop.
+ * @param hasProxy - Whether streams this server is refused are tried through a proxy too.
  */
-const LivePlayer = ({ channel, onNow, upNext, now, onToggleFavourite }: LivePlayerProps) => {
+const LivePlayer = ({
+  channel,
+  onNow,
+  upNext,
+  now,
+  onToggleFavourite,
+  hasProxy = false,
+}: LivePlayerProps) => {
   const frameRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [state, setState] = useState<'starting' | 'playing' | 'failed'>('starting');
@@ -286,7 +294,7 @@ const LivePlayer = ({ channel, onNow, upNext, now, onToggleFavourite }: LivePlay
               <span className="tabular-nums">{channel.number}</span>
             )}
             <span className="truncate">{channelTagsOf(channel.name).name}</span>
-            <ChannelTags channel={channel} />
+            <ChannelTags channel={channel} hasProxy={hasProxy} />
           </span>
           <h1 className="truncate text-xl font-semibold text-text">
             {onNow?.title ?? channelTagsOf(channel.name).name}

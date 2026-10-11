@@ -6,6 +6,7 @@ type LivePlayerProps = {
   upNext: LiveProgramme | null;
   now: number;
   onToggleFavourite: () => void;
+  hasProxy?: boolean;
 };
 
 export type { LivePlayerProps };
