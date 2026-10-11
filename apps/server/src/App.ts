@@ -34,6 +34,7 @@ import { serveProgress } from '@ValenceServer/api/serveProgress';
 import { serveHistory } from '@ValenceServer/api/serveHistory';
 import { servePerson } from '@ValenceServer/api/servePerson';
 import { serveFavourite } from '@ValenceServer/api/serveFavourite';
+import { serveLiveTv } from '@ValenceServer/api/serveLiveTv';
 import { serveHidden } from '@ValenceServer/api/serveHidden';
 import { serveShare } from '@ValenceServer/api/serveShare';
 import { serveRating } from '@ValenceServer/api/serveRating';
@@ -96,6 +97,7 @@ const createApp = (options: CreateAppOptions) => {
   serveHistory(app, context);
   servePerson(app, context);
   serveFavourite(app, context);
+  serveLiveTv(app, context);
   serveHidden(app, context);
   serveShare(app, context);
   serveRating(app, context);

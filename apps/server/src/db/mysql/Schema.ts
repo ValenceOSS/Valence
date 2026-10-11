@@ -1804,6 +1804,75 @@ const authSchema = {
 
 const valenceSchema = { userProfile, viewerProfile, serverSetting, library, mediaItem };
 
+const liveSource = mysqlTable('live_source', {
+  id: identifier('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  kind: varchar('kind', { length: 32 }).notNull(),
+  address: mediumtext('address'),
+  guideUrl: mediumtext('guideUrl'),
+  logoUrl: mediumtext('logoUrl'),
+  playlist: longtext('playlist'),
+  channelCount: int('channelCount').notNull().default(0),
+  refreshedAt: moment('refreshedAt'),
+  problem: jsonColumn('problem').$type<Said>(),
+  createdAt: momentNow('createdAt').notNull(),
+});
+
+const liveChannel = mysqlTable(
+  'live_channel',
+  {
+    id: identifier('id').primaryKey(),
+    sourceId: identifier('sourceId')
+      .notNull()
+      .references(() => liveSource.id, { onDelete: 'cascade' }),
+    position: int('position').notNull(),
+    number: varchar('number', { length: 32 }),
+    name: varchar('name', { length: 255 }).notNull(),
+    groupName: varchar('groupName', { length: 255 }),
+    logoUrl: mediumtext('logoUrl'),
+    guideId: varchar('guideId', { length: 255 }),
+    streamUrl: mediumtext('streamUrl').notNull(),
+    userAgent: mediumtext('userAgent'),
+    referrer: mediumtext('referrer'),
+  },
+  (table) => [index('live_channel_source_idx').on(table.sourceId, table.position)],
+);
+
+const liveProgramme = mysqlTable(
+  'live_programme',
+  {
+    id: identifier('id').primaryKey(),
+    sourceId: identifier('sourceId')
+      .notNull()
+      .references(() => liveSource.id, { onDelete: 'cascade' }),
+    guideId: varchar('guideId', { length: 255 }).notNull(),
+    startsAt: moment('startsAt').notNull(),
+    endsAt: moment('endsAt').notNull(),
+    title: mediumtext('title').notNull(),
+    subtitle: mediumtext('subtitle'),
+    description: mediumtext('description'),
+    category: varchar('category', { length: 255 }),
+  },
+  (table) => [
+    index('live_programme_channel_idx').on(table.sourceId, table.guideId, table.startsAt),
+    index('live_programme_ends_idx').on(table.endsAt),
+  ],
+);
+
+const liveFavourite = mysqlTable(
+  'live_favourite',
+  {
+    profileId: identifier('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    channelId: identifier('channelId')
+      .notNull()
+      .references(() => liveChannel.id, { onDelete: 'cascade' }),
+    keptAt: momentNow('keptAt').notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.profileId, table.channelId] })],
+);
+
 export {
   calendarFeed,
   pluginInstallation,
@@ -1842,6 +1911,10 @@ export {
   pushSubscription,
   watchProgress,
   favourite,
+  liveChannel,
+  liveFavourite,
+  liveProgramme,
+  liveSource,
   preparedDownload,
   downloadHolding,
   share,

@@ -26,6 +26,7 @@ pub mod graphics;
 pub mod integrity;
 pub mod keyframe_index;
 pub mod keyframes;
+pub mod live;
 pub mod media;
 pub mod monitor;
 pub mod path_map;

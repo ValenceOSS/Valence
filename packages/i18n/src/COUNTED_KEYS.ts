@@ -16,6 +16,7 @@ const COUNTED_KEYS = [
   'common.count.albumsRequested',
   'common.count.artists',
   'common.count.books',
+  'common.count.channels',
   'common.count.chapters',
   'common.count.days',
   'common.count.downloading',

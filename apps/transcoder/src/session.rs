@@ -910,16 +910,32 @@ pub struct SessionRegistry {
     /// stream asks twice on its own, so this is the common case rather than
     /// the rare one.
     starting: Arc<Mutex<std::collections::HashSet<String>>>,
+    /// The live channels being made into HLS, which share this registry's
+    /// tools and scratch but none of a film's planning.
+    live: crate::live::LiveRegistry,
 }
 
 impl SessionRegistry {
     #[must_use]
     pub fn new(config: SessionConfig) -> Self {
+        let live = crate::live::LiveRegistry::new(
+            config.ffmpeg.clone(),
+            config.ffprobe.clone(),
+            config.cache_root.join("live"),
+        );
+
         Self {
             config,
             sessions: Arc::new(Mutex::new(HashMap::new())),
             starting: Arc::new(Mutex::new(std::collections::HashSet::new())),
+            live,
         }
+    }
+
+    /// The live channels being made into HLS.
+    #[must_use]
+    pub fn live(&self) -> &crate::live::LiveRegistry {
+        &self.live
     }
 
     #[must_use]

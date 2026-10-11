@@ -81,6 +81,8 @@ const MediaProbeSchema = z.object({
   subtitleStreams: z.array(ProbeSubtitleSchema),
 });
 
+const LiveStartedSchema = z.object({ id: z.string().regex(/^[0-9a-f]{24}$/u) });
+
 const SessionResponseSchema = z.object({
   id: z.string().min(1),
   manifest: z.string().min(1),
@@ -324,6 +326,11 @@ type Transcoder = {
     variants?: readonly SessionSpec[],
   ) => Promise<SessionResponse>;
   readSessionFile: (sessionId: string, name: string) => Promise<TranscoderStreamedFile | null>;
+  startLive?: (
+    address: string,
+    asking: { userAgent: string | null; referrer: string | null },
+  ) => Promise<string | null>;
+  readLiveFile?: (liveId: string, name: string) => Promise<TranscoderStreamedFile | null>;
   locateSessionFile?: (sessionId: string, name: string) => Promise<LocatedSessionFile | null>;
   readFile: (path: string, range: string | null) => Promise<TranscoderStreamedFile | null>;
   readAudioRendition: (
@@ -722,6 +729,26 @@ const createTranscoderClient = ({
             ...(variants.length === 0 ? {} : { variants }),
           })
         ).json(),
+      ),
+
+    startLive: async (address, asking) => {
+      const response = await callSlowly(`${origin}/live`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ address, ...asking }),
+      }).catch(() => null);
+      const read = LiveStartedSchema.safeParse(
+        response?.ok === true ? await response.json() : null,
+      );
+
+      return read.success ? read.data.id : null;
+    },
+
+    readLiveFile: async (liveId, name) =>
+      openStream(
+        `${origin}/live/${encodeURIComponent(liveId)}/${encodeURIComponent(name)}`,
+        null,
+        'application/octet-stream',
       ),
 
     readSessionFile: async (sessionId, name) =>

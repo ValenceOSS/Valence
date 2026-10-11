@@ -98,6 +98,8 @@ const CHECK_DISK_SPACE_JOB = 'server.checkDiskSpace';
 
 const SYNC_LINKED_CATALOGUES_JOB = 'linking.syncCatalogues';
 
+const REFRESH_LIVE_TV_JOB = 'live.refreshSources';
+
 const CHECK_REQUESTS_JOB = 'server.checkRequests';
 
 const SEND_MEDIA_DIGEST_JOB = 'server.sendMediaDigest';
@@ -230,6 +232,7 @@ export {
   CHECK_TRANSCODER_JOB,
   CHECK_DISK_SPACE_JOB,
   SYNC_LINKED_CATALOGUES_JOB,
+  REFRESH_LIVE_TV_JOB,
   CHECK_REQUESTS_JOB,
   SEND_MEDIA_DIGEST_JOB,
   DELIVER_WEBHOOK_JOB,

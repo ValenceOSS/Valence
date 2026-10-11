@@ -1,6 +1,7 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
   BookOpen as BookOpenIcon,
+  Broadcast as BroadcastIcon,
   Calendar as CalendarIcon,
   CircleUser as CircleUserIcon,
   Compass as CompassIcon,
@@ -22,6 +23,7 @@ import {
   DoorOpen as DoorOpenFilledIcon,
   Download as DownloadFilledIcon,
   Film as FilmFilledIcon,
+  Broadcast as BroadcastFilledIcon,
   Flame as FlameFilledIcon,
   Heart as HeartFilledIcon,
   Home as HomeFilledIcon,
@@ -97,7 +99,13 @@ const howSolid = (travelled: number): number => {
   return Math.min(Math.max(travelled / reach, 0), 1);
 };
 
-const STOCKED_ONLY: ReadonlySet<ShellSection> = new Set(['shows', 'films', 'read', 'music']);
+const STOCKED_ONLY: ReadonlySet<ShellSection> = new Set([
+  'shows',
+  'films',
+  'live',
+  'read',
+  'music',
+]);
 
 const SURPRISE_LABELS: Record<LibraryKind, string> = {
   movies: say('common.aFilm2'),
@@ -111,6 +119,7 @@ const SECTION_ICONS: Record<ShellSection, ReactNode> = {
   home: <Icon of={HomeIcon} size={18} />,
   shows: <Icon of={MonitorIcon} size={18} />,
   films: <Icon of={FilmIcon} size={18} />,
+  live: <Icon of={BroadcastIcon} size={18} />,
   new: <Icon of={FlameIcon} size={18} />,
   favourites: <Icon of={HeartIcon} size={18} />,
   read: <Icon of={BookOpenIcon} size={18} />,
@@ -125,6 +134,7 @@ const ACTIVE_SECTION_ICONS: Record<ShellSection, ReactNode> = {
   home: <Icon of={HomeFilledIcon} size={18} />,
   shows: <Icon of={MonitorFilledIcon} size={18} />,
   films: <Icon of={FilmFilledIcon} size={18} />,
+  live: <Icon of={BroadcastFilledIcon} size={18} />,
   new: <Icon of={FlameFilledIcon} size={18} />,
   favourites: <Icon of={HeartFilledIcon} size={18} />,
   read: <Icon of={BookOpenFilledIcon} size={18} />,
@@ -139,6 +149,7 @@ const SECTION_GESTURES: Record<ShellSection, IconGesture> = {
   home: 'settle',
   shows: 'settle',
   films: 'settle',
+  live: 'settle',
   new: 'fill',
   favourites: 'fill',
   read: 'settle',
@@ -153,6 +164,7 @@ const SECTION_LABELS: Record<ShellSection, string> = {
   home: say('common.home'),
   shows: say('common.shows'),
   films: say('common.films'),
+  live: say('common.liveTv'),
   new: say('common.newPopular'),
   favourites: say('common.favourites'),
   read: say('common.books'),

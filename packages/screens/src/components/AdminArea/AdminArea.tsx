@@ -7,6 +7,7 @@ import { Button } from '@ValenceUI/Button';
 import { TabPanel } from '@ValenceUI/TabPanel';
 import { SettingsPanel } from './components/SettingsPanel/SettingsPanel';
 import { EmailCard } from './components/EmailCard/EmailCard';
+import { LiveTvPanel } from '@ValenceScreens/components/AdminArea/components/LiveTvPanel/LiveTvPanel';
 import { SubtitlesCard } from '@ValenceScreens/components/AdminArea/components/SubtitlesCard/SubtitlesCard';
 import { WatchHistoryCard } from '@ValenceScreens/components/AdminArea/components/WatchHistoryCard/WatchHistoryCard';
 import { ActivityPanel } from './components/ActivityPanel/ActivityPanel';
@@ -1334,6 +1335,10 @@ const AdminArea = ({
 
           <TabPanel value="email">
             <EmailCard />
+          </TabPanel>
+
+          <TabPanel value="liveTv">
+            <LiveTvPanel />
           </TabPanel>
 
           <TabPanel value="subtitles">

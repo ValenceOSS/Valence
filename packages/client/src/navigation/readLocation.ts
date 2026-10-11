@@ -7,6 +7,7 @@ const SECTIONS = [
   'home',
   'shows',
   'films',
+  'live',
   'new',
   'favourites',
   'read',

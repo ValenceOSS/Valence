@@ -200,7 +200,7 @@ const AdminPage = () => {
           inert={!hasRoomForTheSidebar && !isDrawerOpen}
           className={
             hasRoomForTheSidebar
-              ? 'sticky h-[calc(100dvh-var(--valence-window-bar))] shrink-0 self-start'
+              ? 'sticky top-[var(--valence-window-bar)] h-[calc(100dvh-var(--valence-window-bar))] shrink-0 self-start'
               : cn(
                   'fixed bottom-0 left-0 top-[var(--valence-window-bar)] z-40',
                   'transition-[translate,box-shadow] duration-[var(--duration-slow)] ease-[var(--ease-out)] motion-reduce:transition-none',

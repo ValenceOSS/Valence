@@ -333,6 +333,13 @@ const WHAT_DELETION_REMOVES: readonly OwnedThing[] = [
     rule: 'meansNothingWithoutIt',
   },
   {
+    table: 'live_favourite',
+    column: 'profileId',
+    owner: 'profile',
+    fate: 'goesWithIt',
+    rule: 'isPersonal',
+  },
+  {
     table: 'link_grant',
     column: 'libraryId',
     owner: 'library',

@@ -70,6 +70,7 @@ type AttachOptions = {
   element: HTMLVideoElement;
   manifestUrl: string;
   startSeconds?: number;
+  isSomeoneElses?: boolean;
   buffer?: Buffer;
   onFault?: (fault: PlaybackFault) => void;
   loadShaka?: () => Promise<ShakaModule>;
@@ -189,8 +190,9 @@ const faultFrom = (event: Event): PlaybackFault | null => {
  * overwrite anything set before then — which looks exactly like a resume that worked for an instant
  * and then went back to the beginning.
  *
- * @param options - The element to attach to, the manifest to load, where to start, how much to hold
- *   ahead and behind, and how to report a fault the engine could not recover from.
+ * @param options - The element to attach to, the manifest to load, where to start, whether the
+ *   stream is one Valence did not make, how much to hold ahead and behind, and how to report a
+ *   fault the engine could not recover from.
  * @returns A handle carrying the teardown to call — an orphaned engine keeps buffering and holds
  *   the element open — a reading of what the engine is actually being sent, its estimate of what
  *   the connection carries, and how many qualities it can switch between on its own.
@@ -207,11 +209,16 @@ const faultFrom = (event: Event): PlaybackFault | null => {
  * go as tracks of their own. Looking means fetching the first, middle and last segments of the
  * film, and to a transcode positioned where somebody resumed, the first and the last are two seeks
  * that pull it away from them, so the film never loads.
+ *
+ * None of that holds for a stream Valence did not make, such as a live channel's: its segments'
+ * own timestamps are a broadcaster's, often starting far from nothing, and placed by them nothing
+ * ever plays. Such a stream is read the way the engine reads any HLS.
  */
 const attachShaka = async ({
   element,
   manifestUrl,
   startSeconds = 0,
+  isSomeoneElses = false,
   buffer,
   onFault,
   loadShaka = loadShakaPlayer,
@@ -226,7 +233,9 @@ const attachShaka = async ({
 
   const player = new shaka.Player();
 
-  player.configure?.(READING_THE_PLAYLIST);
+  if (!isSomeoneElses) {
+    player.configure?.(READING_THE_PLAYLIST);
+  }
   player.configure?.({ abr: { defaultBandwidthEstimate: FIRST_GUESS_AT_THE_CONNECTION } });
 
   if (buffer !== undefined) {

@@ -38,6 +38,7 @@ import type { SubtitleService } from '@ValenceServer/subtitles/SubtitleService';
 import type { SegmentService } from '@ValenceServer/segments/SegmentService';
 import type { WatchProgressService } from '@ValenceServer/progress/WatchProgressService';
 import type { DownloadService } from '@ValenceServer/downloads/DownloadService';
+import type { LiveTvOptions } from '@ValenceServer/live/LiveTvOptions';
 import type { FavouriteService } from '@ValenceServer/favourites/FavouriteService';
 import type { HiddenService } from '@ValenceServer/hiding/HiddenService';
 import type { RatingService } from '@ValenceServer/ratings/RatingService';
@@ -195,6 +196,7 @@ type CreateAppOptions = {
   progress: WatchProgressService;
   downloads?: DownloadService;
   favourites: FavouriteService;
+  liveTv?: LiveTvOptions;
   hiding?: HiddenService;
   ratings: RatingService;
   shares?: ShareService;

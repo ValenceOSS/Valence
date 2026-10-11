@@ -2581,6 +2581,66 @@ async fn watch_monitor(mut socket: WebSocket, state: AppState) {
     }
 }
 
+/// What starting a live channel asks for.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct StartLiveRequest {
+    address: String,
+    #[serde(default)]
+    user_agent: Option<String>,
+    #[serde(default)]
+    referrer: Option<String>,
+}
+
+/// The channel that was started or joined.
+#[derive(Debug, Serialize)]
+struct StartedLive {
+    id: String,
+}
+
+async fn start_live(
+    State(state): State<AppState>,
+    Json(request): Json<StartLiveRequest>,
+) -> Response {
+    let asking = crate::live::Asking {
+        user_agent: request.user_agent,
+        referrer: request.referrer,
+    };
+
+    match state.registry.live().start(&request.address, &asking).await {
+        Ok(id) => Json(StartedLive { id }).into_response(),
+        Err(crate::live::LiveError::NotAStream) => {
+            error(StatusCode::BAD_REQUEST, "That is not a network stream.")
+        }
+        Err(problem) => {
+            tracing::warn!("live channel did not start: {problem}");
+
+            error(StatusCode::BAD_GATEWAY, "The channel did not start.")
+        }
+    }
+}
+
+async fn live_file(
+    State(state): State<AppState>,
+    AxumPath((id, name)): AxumPath<(String, String)>,
+) -> Response {
+    let Some(path) = state.registry.live().file(&id, &name).await else {
+        return error(StatusCode::NOT_FOUND, "No such channel.");
+    };
+
+    match tokio::fs::read(&path).await {
+        Ok(bytes) => (
+            [
+                (header::CONTENT_TYPE, content_type_for(&name)),
+                (header::CACHE_CONTROL, "no-store"),
+            ],
+            bytes,
+        )
+            .into_response(),
+        Err(_) => error(StatusCode::NOT_FOUND, "Not written yet."),
+    }
+}
+
 /// Builds the media service routes.
 ///
 /// Returned as a router rather than a bound server so the whole surface can be
@@ -2627,6 +2687,8 @@ pub fn create_router(state: AppState) -> Router {
         .route("/trickplay/forget", post(forget_trickplay))
         .route("/trickplay/{id}/{name}", get(trickplay_file))
         .route("/renders/stop", post(stop_renders))
+        .route("/live", post(start_live))
+        .route("/live/{id}/{name}", get(live_file))
         .with_state(state)
 }
 

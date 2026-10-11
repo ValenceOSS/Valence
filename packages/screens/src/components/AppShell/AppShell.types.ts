@@ -6,6 +6,7 @@ const BROWSE_SECTIONS = [
   'home',
   'shows',
   'films',
+  'live',
   'music',
   'read',
   'requests',
@@ -16,6 +17,7 @@ type ShellSection =
   | 'home'
   | 'shows'
   | 'films'
+  | 'live'
   | 'new'
   | 'favourites'
   | 'read'

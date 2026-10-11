@@ -34,6 +34,8 @@ import { Button } from '@ValenceUI/Button';
 import { Slider } from '@ValenceUI/Slider';
 import { SettingsMenu } from '@ValenceUI/SettingsMenu';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
+import { Badge } from '@ValenceUI/Badge';
+import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 import { nextEpisode } from '@ValenceClient/library/pickFeatured';
 import { SUBTITLES_OFF } from '@ValenceClient/playback/fetchSubtitles';
@@ -125,6 +127,9 @@ const rateLabel = (rate: number): string => `${rate.toString()}x`;
  * @param onPlayOnTv - Called to send the film to one of this person's televisions, where one is open.
  * @param onPopOut - Called to move the video into a floating window.
  * @param isPoppedOut - Whether it is already in one.
+ * @param isLive - Whether this is a live channel, which has no timeline to move along, no
+ *   skipping and no speed: what is on now shows along the top in place of the timeline instead.
+ * @param liveDetail - For a live channel, when what is on now began and ends.
  * @param partyMenu - The watch party control, where this viewing can be one.
  * @param renderPreview - How to draw the frame under the pointer while scrubbing.
  */
@@ -153,6 +158,8 @@ const PlayerControls = ({
   selectedQuality,
   autoRung = 'original',
   isDisabled = false,
+  isLive = false,
+  liveDetail,
   onTogglePlay,
   onSeek,
   onSkip,
@@ -209,54 +216,78 @@ const PlayerControls = ({
 
   return (
     <div className="valence-solid flex flex-col gap-1 rounded-lg px-3 py-2 text-text sm:px-4">
-      <div className="flex items-center gap-3">
-        <Slider
-          label={say('common.moveThroughTitle', { title })}
-          value={shownPosition}
-          max={duration}
-          onValueChange={setScrubbedTo}
-          onValueCommit={(seconds) => {
-            setScrubbedTo(null);
-            onSeek(seconds);
-          }}
-          tone="glass"
-          className="min-w-0 flex-1"
-          {...(renderPreview === undefined ? {} : { renderPreview })}
-        />
+      {isLive ? (
+        <div className="flex items-center gap-3">
+          <Badge size="sm" tone="danger" className="shrink-0">
+            {say('common.live')}
+          </Badge>
+          {duration > 0 ? (
+            <ProgressBar
+              label={say('common.moveThroughTitle', { title })}
+              value={(Math.min(Math.max(position, 0), duration) / duration) * 100}
+              className="min-w-0 flex-1"
+            />
+          ) : (
+            <span className="flex-1" />
+          )}
+          {liveDetail === undefined ? null : (
+            <span className="shrink-0 text-xs tabular-nums text-text-muted sm:text-sm">
+              {liveDetail}
+            </span>
+          )}
+        </div>
+      ) : (
+        <div className="flex items-center gap-3">
+          <Slider
+            label={say('common.moveThroughTitle', { title })}
+            value={shownPosition}
+            max={duration}
+            onValueChange={setScrubbedTo}
+            onValueCommit={(seconds) => {
+              setScrubbedTo(null);
+              onSeek(seconds);
+            }}
+            tone="glass"
+            className="min-w-0 flex-1"
+            {...(renderPreview === undefined ? {} : { renderPreview })}
+          />
 
-        <Button
-          variant="ghost"
-          size="none"
-          aria-label={
-            isShowingRemaining
-              ? say('screens.videoPlayer.playerControls.showTheTimePlayed')
-              : say('screens.videoPlayer.playerControls.showTheTimeRemaining')
-          }
-          onClick={onToggleTimeDisplay}
-          className="shrink-0 px-1 text-xs tabular-nums sm:text-sm"
-        >
-          {isShowingRemaining
-            ? `-${formatDuration(Math.max(duration - shownPosition, 0))}`
-            : formatDuration(shownPosition)}{' '}
-          <span className="text-text-muted">/ {formatDuration(duration)}</span>
-        </Button>
-      </div>
+          <Button
+            variant="ghost"
+            size="none"
+            aria-label={
+              isShowingRemaining
+                ? say('screens.videoPlayer.playerControls.showTheTimePlayed')
+                : say('screens.videoPlayer.playerControls.showTheTimeRemaining')
+            }
+            onClick={onToggleTimeDisplay}
+            className="shrink-0 px-1 text-xs tabular-nums sm:text-sm"
+          >
+            {isShowingRemaining
+              ? `-${formatDuration(Math.max(duration - shownPosition, 0))}`
+              : formatDuration(shownPosition)}{' '}
+            <span className="text-text-muted">/ {formatDuration(duration)}</span>
+          </Button>
+        </div>
+      )}
 
       <div className="flex items-center gap-1 sm:gap-2">
-        <Button
-          isIconOnly
-          variant="ghost"
-          label={say('screens.videoPlayer.playerControls.backSKIPSECONDSSeconds', {
-            SKIP_SECONDS: SKIP_SECONDS.toString(),
-          })}
-          onClick={() => {
-            onSkip(-SKIP_SECONDS);
-          }}
-          disabled={isDisabled}
-          size="md"
-        >
-          <Icon of={RotateCcwIcon} size={22} />
-        </Button>
+        {isLive ? null : (
+          <Button
+            isIconOnly
+            variant="ghost"
+            label={say('screens.videoPlayer.playerControls.backSKIPSECONDSSeconds', {
+              SKIP_SECONDS: SKIP_SECONDS.toString(),
+            })}
+            onClick={() => {
+              onSkip(-SKIP_SECONDS);
+            }}
+            disabled={isDisabled}
+            size="md"
+          >
+            <Icon of={RotateCcwIcon} size={22} />
+          </Button>
+        )}
 
         <Button
           isIconOnly
@@ -273,20 +304,22 @@ const PlayerControls = ({
           )}
         </Button>
 
-        <Button
-          isIconOnly
-          variant="ghost"
-          label={say('screens.videoPlayer.playerControls.forwardSKIPSECONDSSeconds', {
-            SKIP_SECONDS: SKIP_SECONDS.toString(),
-          })}
-          onClick={() => {
-            onSkip(SKIP_SECONDS);
-          }}
-          disabled={isDisabled}
-          size="md"
-        >
-          <Icon of={RotateCwIcon} size={22} />
-        </Button>
+        {isLive ? null : (
+          <Button
+            isIconOnly
+            variant="ghost"
+            label={say('screens.videoPlayer.playerControls.forwardSKIPSECONDSSeconds', {
+              SKIP_SECONDS: SKIP_SECONDS.toString(),
+            })}
+            onClick={() => {
+              onSkip(SKIP_SECONDS);
+            }}
+            disabled={isDisabled}
+            size="md"
+          >
+            <Icon of={RotateCwIcon} size={22} />
+          </Button>
+        )}
 
         {following === null || onSelectEpisode === undefined ? null : (
           <Button
@@ -387,239 +420,241 @@ const PlayerControls = ({
           </Button>
         )}
 
-        <SettingsMenu
-          label={say('common.settings')}
-          tone="default"
-          {...(onMenuOpenChange === undefined ? {} : { onOpenChange: onMenuOpenChange })}
-          isDisabled={isDisabled}
-          trigger={<Icon of={SettingsIcon} size={20} />}
-          triggerWhenOpen={<Icon of={SettingsIcon} size={20} />}
-          rows={[
-            ...(audioTracks.length < 2
-              ? []
-              : [
-                  {
-                    kind: 'choice' as const,
-                    id: 'audio',
-                    label: say('screens.videoPlayer.playerControls.audioTrack'),
-                    icon: <Icon of={HeadphonesIcon} size={18} />,
-                    selectedId: (selectedAudioIndex ?? audioTracks[0]?.index ?? 0).toString(),
-                    onSelect: (id: string) => {
-                      onAudioChange(Number(id));
-                    },
-                    choices: audioTracks.map((track) => ({
-                      id: track.index.toString(),
-                      label: track.label,
-                    })),
-                  },
-                ]),
-            ...(subtitleTracks.length === 0 && fetchableSubtitles.length === 0
-              ? []
-              : [
-                  {
-                    kind: 'choice' as const,
-                    id: 'subtitles',
-                    label: say('screens.videoPlayer.playerControls.subtitlesAndCaptions'),
-                    icon: <Icon of={SubtitlesIcon} size={18} />,
-                    selectedId:
-                      fetchingSubtitle === null
-                        ? selectedSubtitleId
-                        : `${FETCH}${fetchingSubtitle}`,
-                    onSelect: (id: string) => {
-                      if (id.startsWith(FETCH)) {
-                        onFetchSubtitle?.(id.slice(FETCH.length));
-
-                        return;
-                      }
-
-                      onSubtitleChange(id);
-                    },
-                    choices: [
-                      { id: SUBTITLES_OFF, label: say('common.off') },
-                      ...subtitleTracks.map((track) => ({
-                        id: track.id,
+        {isLive ? null : (
+          <SettingsMenu
+            label={say('common.settings')}
+            tone="default"
+            {...(onMenuOpenChange === undefined ? {} : { onOpenChange: onMenuOpenChange })}
+            isDisabled={isDisabled}
+            trigger={<Icon of={SettingsIcon} size={20} />}
+            triggerWhenOpen={<Icon of={SettingsIcon} size={20} />}
+            rows={[
+              ...(audioTracks.length < 2
+                ? []
+                : [
+                    {
+                      kind: 'choice' as const,
+                      id: 'audio',
+                      label: say('screens.videoPlayer.playerControls.audioTrack'),
+                      icon: <Icon of={HeadphonesIcon} size={18} />,
+                      selectedId: (selectedAudioIndex ?? audioTracks[0]?.index ?? 0).toString(),
+                      onSelect: (id: string) => {
+                        onAudioChange(Number(id));
+                      },
+                      choices: audioTracks.map((track) => ({
+                        id: track.index.toString(),
                         label: track.label,
-                        ...(track.format === '' ? {} : { detail: track.format.toUpperCase() }),
                       })),
-                      ...(onFetchSubtitle === undefined ? [] : fetchableSubtitles).map(
-                        (language) => ({
-                          id: `${FETCH}${language.code}`,
-                          label: language.label,
-                          detail:
-                            fetchingSubtitle === language.code
-                              ? say('screens.videoPlayer.playerControls.fetchingSubtitle')
-                              : say('screens.videoPlayer.playerControls.fetchSubtitle'),
-                        }),
-                      ),
-                    ],
-                  },
-                ]),
-            ...(onFindSubtitles === undefined
-              ? []
-              : [
-                  {
-                    kind: 'action' as const,
-                    id: 'find-subtitles',
-                    label: say('screens.videoPlayer.playerControls.findSubtitles'),
-                    icon: <Icon of={SearchIcon} size={18} />,
-                    onSelect: onFindSubtitles,
-                  },
-                ]),
-            ...(selectedSubtitleId === SUBTITLES_OFF || onSubtitleOffsetChange === undefined
-              ? []
-              : [
-                  {
-                    kind: 'custom' as const,
-                    id: 'timing',
-                    label: say('common.subtitleTiming'),
-                    icon: <Icon of={ClockIcon} size={18} />,
-                    detail: describeSubtitleOffset(subtitleOffsetSeconds),
-                    control: (
-                      <span className="flex items-center gap-1">
-                        <Button
-                          isIconOnly
-                          variant="ghost"
-                          label={say('screens.videoPlayer.playerControls.subtitlesEarlier')}
-                          size="sm"
-                          onClick={() => {
-                            onSubtitleOffsetChange(subtitleOffsetSeconds - SUBTITLE_STEP_SECONDS);
-                          }}
-                        >
-                          <Icon of={MinusIcon} size={16} />
-                        </Button>
-
-                        <Button
-                          isIconOnly
-                          variant="ghost"
-                          label={say('screens.videoPlayer.playerControls.subtitlesInTime')}
-                          size="sm"
-                          onClick={() => {
-                            onSubtitleOffsetChange(0);
-                          }}
-                        >
-                          <Icon of={RefreshCwIcon} size={16} />
-                        </Button>
-
-                        <Button
-                          isIconOnly
-                          variant="ghost"
-                          label={say('screens.videoPlayer.playerControls.subtitlesLater')}
-                          size="sm"
-                          onClick={() => {
-                            onSubtitleOffsetChange(subtitleOffsetSeconds + SUBTITLE_STEP_SECONDS);
-                          }}
-                        >
-                          <Icon of={PlusIcon} size={16} />
-                        </Button>
-                      </span>
-                    ),
-                  },
-                ]),
-            ...(subtitleTracks.length === 0 || isChosenTrackStyled
-              ? []
-              : [
-                  {
-                    kind: 'panel' as const,
-                    id: 'appearance',
-                    label: say('common.captionSettings'),
-                    icon: <Icon of={TypeOutlineIcon} size={18} />,
-                    content: (
-                      <CaptionSettings
-                        style={captionStyle}
-                        onChange={onCaptionStyleChange}
-                        onReset={onCaptionStyleReset}
-                      />
-                    ),
-                  },
-                ]),
-            {
-              kind: 'choice' as const,
-              id: 'speed',
-              label: say('screens.videoPlayer.playerControls.playbackSpeed'),
-              icon: <Icon of={GaugeIcon} size={18} />,
-              selectedId: playbackRate.toString(),
-              onSelect: (id: string) => {
-                onPlaybackRateChange(Number(id));
-              },
-              choices: PLAYBACK_RATES.map((rate) => ({
-                id: rate.toString(),
-                label: describePlaybackRate(rate),
-              })),
-            },
-            {
-              kind: 'choice' as const,
-              id: 'boost',
-              label: say('screens.videoPlayer.playerControls.volumeBoost'),
-              icon: <Icon of={VolumeIcon} size={18} />,
-              selectedId: boost.toString(),
-              onSelect: (id: string) => {
-                onBoostChange(Number(id));
-              },
-              choices: BOOST_STEPS.map((step) => ({
-                id: step.toString(),
-                label: step === 1 ? say('common.off') : rateLabel(step),
-              })),
-            },
-            ...(availableQualitySteps.length === 0
-              ? []
-              : [
-                  {
-                    kind: 'choice' as const,
-                    id: 'quality',
-                    label: say('common.quality'),
-                    icon: <Icon of={MonitorIcon} size={18} />,
-                    selectedId: selectedQuality,
-                    onSelect: (id: string) => {
-                      onQualityChange(
-                        id === 'auto'
-                          ? 'auto'
-                          : (availableQualitySteps.find((step) => step === id) ?? 'original'),
-                      );
                     },
-                    choices: [
-                      {
-                        id: 'auto',
-                        label: say('common.auto'),
-                        detail:
-                          autoRung === 'original'
-                            ? originalLabel
-                            : (QUALITY_STEPS.find((entry) => entry.id === autoRung)?.label ??
-                              autoRung),
-                      },
-                      {
-                        id: 'original',
-                        label: originalLabel,
-                        ...(qualityStepCosts.original === undefined
-                          ? {}
-                          : { detail: qualityStepCosts.original }),
-                      },
-                      ...availableQualitySteps.map((id) => {
-                        const isNoSmaller = qualityStepsSavingNothing.includes(id);
-                        const detail = qualityStepDetail({
-                          cost: qualityStepCosts[id],
-                          isNoSmaller,
-                        });
+                  ]),
+              ...(subtitleTracks.length === 0 && fetchableSubtitles.length === 0
+                ? []
+                : [
+                    {
+                      kind: 'choice' as const,
+                      id: 'subtitles',
+                      label: say('screens.videoPlayer.playerControls.subtitlesAndCaptions'),
+                      icon: <Icon of={SubtitlesIcon} size={18} />,
+                      selectedId:
+                        fetchingSubtitle === null
+                          ? selectedSubtitleId
+                          : `${FETCH}${fetchingSubtitle}`,
+                      onSelect: (id: string) => {
+                        if (id.startsWith(FETCH)) {
+                          onFetchSubtitle?.(id.slice(FETCH.length));
 
-                        return {
-                          id,
-                          label: QUALITY_STEPS.find((entry) => entry.id === id)?.label ?? id,
-                          ...(detail === undefined ? {} : { detail }),
-                          ...(isNoSmaller ? { isDisabled: true } : {}),
-                        };
-                      }),
-                    ],
-                  },
-                ]),
-            {
-              kind: 'toggle' as const,
-              id: 'stats',
-              label: say('common.statsForNerds'),
-              icon: <Icon of={CircleActivityIcon} size={18} />,
-              isOn: isShowingStats,
-              onToggle: onToggleStats,
-            },
-          ]}
-        />
+                          return;
+                        }
+
+                        onSubtitleChange(id);
+                      },
+                      choices: [
+                        { id: SUBTITLES_OFF, label: say('common.off') },
+                        ...subtitleTracks.map((track) => ({
+                          id: track.id,
+                          label: track.label,
+                          ...(track.format === '' ? {} : { detail: track.format.toUpperCase() }),
+                        })),
+                        ...(onFetchSubtitle === undefined ? [] : fetchableSubtitles).map(
+                          (language) => ({
+                            id: `${FETCH}${language.code}`,
+                            label: language.label,
+                            detail:
+                              fetchingSubtitle === language.code
+                                ? say('screens.videoPlayer.playerControls.fetchingSubtitle')
+                                : say('screens.videoPlayer.playerControls.fetchSubtitle'),
+                          }),
+                        ),
+                      ],
+                    },
+                  ]),
+              ...(onFindSubtitles === undefined
+                ? []
+                : [
+                    {
+                      kind: 'action' as const,
+                      id: 'find-subtitles',
+                      label: say('screens.videoPlayer.playerControls.findSubtitles'),
+                      icon: <Icon of={SearchIcon} size={18} />,
+                      onSelect: onFindSubtitles,
+                    },
+                  ]),
+              ...(selectedSubtitleId === SUBTITLES_OFF || onSubtitleOffsetChange === undefined
+                ? []
+                : [
+                    {
+                      kind: 'custom' as const,
+                      id: 'timing',
+                      label: say('common.subtitleTiming'),
+                      icon: <Icon of={ClockIcon} size={18} />,
+                      detail: describeSubtitleOffset(subtitleOffsetSeconds),
+                      control: (
+                        <span className="flex items-center gap-1">
+                          <Button
+                            isIconOnly
+                            variant="ghost"
+                            label={say('screens.videoPlayer.playerControls.subtitlesEarlier')}
+                            size="sm"
+                            onClick={() => {
+                              onSubtitleOffsetChange(subtitleOffsetSeconds - SUBTITLE_STEP_SECONDS);
+                            }}
+                          >
+                            <Icon of={MinusIcon} size={16} />
+                          </Button>
+
+                          <Button
+                            isIconOnly
+                            variant="ghost"
+                            label={say('screens.videoPlayer.playerControls.subtitlesInTime')}
+                            size="sm"
+                            onClick={() => {
+                              onSubtitleOffsetChange(0);
+                            }}
+                          >
+                            <Icon of={RefreshCwIcon} size={16} />
+                          </Button>
+
+                          <Button
+                            isIconOnly
+                            variant="ghost"
+                            label={say('screens.videoPlayer.playerControls.subtitlesLater')}
+                            size="sm"
+                            onClick={() => {
+                              onSubtitleOffsetChange(subtitleOffsetSeconds + SUBTITLE_STEP_SECONDS);
+                            }}
+                          >
+                            <Icon of={PlusIcon} size={16} />
+                          </Button>
+                        </span>
+                      ),
+                    },
+                  ]),
+              ...(subtitleTracks.length === 0 || isChosenTrackStyled
+                ? []
+                : [
+                    {
+                      kind: 'panel' as const,
+                      id: 'appearance',
+                      label: say('common.captionSettings'),
+                      icon: <Icon of={TypeOutlineIcon} size={18} />,
+                      content: (
+                        <CaptionSettings
+                          style={captionStyle}
+                          onChange={onCaptionStyleChange}
+                          onReset={onCaptionStyleReset}
+                        />
+                      ),
+                    },
+                  ]),
+              {
+                kind: 'choice' as const,
+                id: 'speed',
+                label: say('screens.videoPlayer.playerControls.playbackSpeed'),
+                icon: <Icon of={GaugeIcon} size={18} />,
+                selectedId: playbackRate.toString(),
+                onSelect: (id: string) => {
+                  onPlaybackRateChange(Number(id));
+                },
+                choices: PLAYBACK_RATES.map((rate) => ({
+                  id: rate.toString(),
+                  label: describePlaybackRate(rate),
+                })),
+              },
+              {
+                kind: 'choice' as const,
+                id: 'boost',
+                label: say('screens.videoPlayer.playerControls.volumeBoost'),
+                icon: <Icon of={VolumeIcon} size={18} />,
+                selectedId: boost.toString(),
+                onSelect: (id: string) => {
+                  onBoostChange(Number(id));
+                },
+                choices: BOOST_STEPS.map((step) => ({
+                  id: step.toString(),
+                  label: step === 1 ? say('common.off') : rateLabel(step),
+                })),
+              },
+              ...(availableQualitySteps.length === 0
+                ? []
+                : [
+                    {
+                      kind: 'choice' as const,
+                      id: 'quality',
+                      label: say('common.quality'),
+                      icon: <Icon of={MonitorIcon} size={18} />,
+                      selectedId: selectedQuality,
+                      onSelect: (id: string) => {
+                        onQualityChange(
+                          id === 'auto'
+                            ? 'auto'
+                            : (availableQualitySteps.find((step) => step === id) ?? 'original'),
+                        );
+                      },
+                      choices: [
+                        {
+                          id: 'auto',
+                          label: say('common.auto'),
+                          detail:
+                            autoRung === 'original'
+                              ? originalLabel
+                              : (QUALITY_STEPS.find((entry) => entry.id === autoRung)?.label ??
+                                autoRung),
+                        },
+                        {
+                          id: 'original',
+                          label: originalLabel,
+                          ...(qualityStepCosts.original === undefined
+                            ? {}
+                            : { detail: qualityStepCosts.original }),
+                        },
+                        ...availableQualitySteps.map((id) => {
+                          const isNoSmaller = qualityStepsSavingNothing.includes(id);
+                          const detail = qualityStepDetail({
+                            cost: qualityStepCosts[id],
+                            isNoSmaller,
+                          });
+
+                          return {
+                            id,
+                            label: QUALITY_STEPS.find((entry) => entry.id === id)?.label ?? id,
+                            ...(detail === undefined ? {} : { detail }),
+                            ...(isNoSmaller ? { isDisabled: true } : {}),
+                          };
+                        }),
+                      ],
+                    },
+                  ]),
+              {
+                kind: 'toggle' as const,
+                id: 'stats',
+                label: say('common.statsForNerds'),
+                icon: <Icon of={CircleActivityIcon} size={18} />,
+                isOn: isShowingStats,
+                onToggle: onToggleStats,
+              },
+            ]}
+          />
+        )}
 
         {onPlayOnTv === undefined ? null : (
           <Button

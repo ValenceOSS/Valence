@@ -1,5 +1,6 @@
 import {
   Activity as ActivityIcon,
+  Broadcast as BroadcastIcon,
   Coupon as CouponIcon,
   Database as DatabaseIcon,
   Download as DownloadIcon,
@@ -24,6 +25,7 @@ import {
 } from '@keyline-icons/react';
 import {
   Activity as ActivityFilledIcon,
+  Broadcast as BroadcastFilledIcon,
   Coupon as CouponFilledIcon,
   Database as DatabaseFilledIcon,
   Download as DownloadFilledIcon,
@@ -102,6 +104,12 @@ const ADMIN_SECTIONS = [
         activeIcon: FolderOpenFilledIcon,
       },
       { id: 'encoding', label: say('common.encoding'), icon: TapeIcon, activeIcon: TapeFilledIcon },
+      {
+        id: 'liveTv',
+        label: say('common.liveTv'),
+        icon: BroadcastIcon,
+        activeIcon: BroadcastFilledIcon,
+      },
     ],
   },
   {

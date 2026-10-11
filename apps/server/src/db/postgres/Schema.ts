@@ -1820,6 +1820,75 @@ const authSchema = {
 
 const valenceSchema = { userProfile, viewerProfile, serverSetting, library, mediaItem };
 
+const liveSource = pgTable('live_source', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  kind: text('kind').notNull(),
+  address: text('address'),
+  guideUrl: text('guideUrl'),
+  logoUrl: text('logoUrl'),
+  playlist: text('playlist'),
+  channelCount: integer('channelCount').notNull().default(0),
+  refreshedAt: timestamp('refreshedAt'),
+  problem: jsonb('problem').$type<Said>(),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+});
+
+const liveChannel = pgTable(
+  'live_channel',
+  {
+    id: text('id').primaryKey(),
+    sourceId: text('sourceId')
+      .notNull()
+      .references(() => liveSource.id, { onDelete: 'cascade' }),
+    position: integer('position').notNull(),
+    number: text('number'),
+    name: text('name').notNull(),
+    groupName: text('groupName'),
+    logoUrl: text('logoUrl'),
+    guideId: text('guideId'),
+    streamUrl: text('streamUrl').notNull(),
+    userAgent: text('userAgent'),
+    referrer: text('referrer'),
+  },
+  (table) => [index('live_channel_source_idx').on(table.sourceId, table.position)],
+);
+
+const liveProgramme = pgTable(
+  'live_programme',
+  {
+    id: text('id').primaryKey(),
+    sourceId: text('sourceId')
+      .notNull()
+      .references(() => liveSource.id, { onDelete: 'cascade' }),
+    guideId: text('guideId').notNull(),
+    startsAt: timestamp('startsAt').notNull(),
+    endsAt: timestamp('endsAt').notNull(),
+    title: text('title').notNull(),
+    subtitle: text('subtitle'),
+    description: text('description'),
+    category: text('category'),
+  },
+  (table) => [
+    index('live_programme_channel_idx').on(table.sourceId, table.guideId, table.startsAt),
+    index('live_programme_ends_idx').on(table.endsAt),
+  ],
+);
+
+const liveFavourite = pgTable(
+  'live_favourite',
+  {
+    profileId: text('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    channelId: text('channelId')
+      .notNull()
+      .references(() => liveChannel.id, { onDelete: 'cascade' }),
+    keptAt: timestamp('keptAt').notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.profileId, table.channelId] })],
+);
+
 export {
   calendarFeed,
   pluginInstallation,
@@ -1858,6 +1927,10 @@ export {
   pushSubscription,
   watchProgress,
   favourite,
+  liveChannel,
+  liveFavourite,
+  liveProgramme,
+  liveSource,
   preparedDownload,
   downloadHolding,
   share,

@@ -2466,6 +2466,16 @@
     "context": "How many books there are, such as in a book library. {count} is the number."
   },
   {
+    "handler": "common.count.channels.one",
+    "text": "{count} channel",
+    "context": "How many live TV channels a source gives. {count} is the number."
+  },
+  {
+    "handler": "common.count.channels.other",
+    "text": "{count} channels",
+    "context": "How many live TV channels a source gives. {count} is the number."
+  },
+  {
     "handler": "common.count.chapters.one",
     "text": "{count} chapter",
     "context": "How many chapters a book has. {count} is the number."
@@ -3850,6 +3860,11 @@
     "handler": "common.live",
     "text": "Live",
     "context": "Shown, used in several places, among them the release type names in the requests and the sharing (from `shareStanding`)."
+  },
+  {
+    "handler": "common.liveTv",
+    "text": "Live TV",
+    "context": "The name of the live TV section in the navigation bar and the admin area."
   },
   {
     "handler": "common.loading",
@@ -8718,6 +8733,36 @@
     "handler": "error.listening.noSuchTrackInThatBook",
     "text": "No such track in that book.",
     "context": "An error the server answers with (HTTP 404) in the books on the server (from `registerListeningRoutes`)."
+  },
+  {
+    "handler": "error.live.iptvOrgCouldNotBeReached",
+    "text": "iptv-org couldn’t be reached.",
+    "context": "Refusal when the list of iptv-org playlists could not be fetched. iptv-org is a project’s name; keep it as is."
+  },
+  {
+    "handler": "error.live.noSuchChannel",
+    "text": "There’s no such channel.",
+    "context": "Refusal when somebody acts on a live TV channel that is not there."
+  },
+  {
+    "handler": "error.live.noSuchSource",
+    "text": "There’s no such live TV source.",
+    "context": "Refusal when an admin acts on a live TV source that is not there."
+  },
+  {
+    "handler": "error.live.thatChannelCouldNotBeStarted",
+    "text": "That channel couldn’t be started.",
+    "context": "Refusal when a live TV channel was chosen but its stream could not be opened."
+  },
+  {
+    "handler": "error.live.thatChannelHasNoLogo",
+    "text": "That channel has no logo.",
+    "context": "Refusal when a live TV channel’s logo is asked for and it has none."
+  },
+  {
+    "handler": "error.live.thatLinkHasRunOut",
+    "text": "That stream link has run out. Start the channel again.",
+    "context": "Refusal when a live TV stream link is expired or not genuine."
   },
   {
     "handler": "error.music.chooseAProfileFirst",
@@ -15980,6 +16025,166 @@
     "context": "Accessible label of the button withdrawing an open invite."
   },
   {
+    "handler": "screens.adminArea.liveTvPanel.addALiveTvSource",
+    "text": "Add a live TV source",
+    "context": "Title of the dialog that adds a live TV stream, playlist or tuner."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.addASource",
+    "text": "Add a source",
+    "context": "Button on the admin’s Live TV page that opens the add source dialog."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.addedNameWithCountChannels",
+    "text": "Added {name} with {count} channels.",
+    "context": "Toast after a live TV source is added. {name} is the source, {count} how many channels it gave."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.anHlsAddressOrAnyStream",
+    "text": "An HLS address ending in .m3u8 plays as it is; other streams are converted for the browser.",
+    "context": "Under the stream address field when adding a single live stream."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.anM3uPlaylistEachStream",
+    "text": "An M3U playlist. Each stream in it becomes a numbered channel.",
+    "context": "Under the playlist address field when adding a live TV playlist."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.anXmltvGuideSaysWhatsOn",
+    "text": "An XMLTV guide, which says what’s on each channel. A playlist that names its own guide uses that.",
+    "context": "Under the guide address field when adding a live TV source."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.byCategory",
+    "text": "By category",
+    "context": "Option: pick an iptv-org playlist by category, such as News or Sports."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.byCountry",
+    "text": "By country",
+    "context": "Option: pick an iptv-org playlist by country."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.channels",
+    "text": "Channels",
+    "context": "Column heading in the admin’s live TV sources table."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.chooseAPlaylist",
+    "text": "Choose a playlist",
+    "context": "Button that picks an M3U file to upload as a live TV source."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.fillInANameAndAnAddress",
+    "text": "Give it a name and a working address, or choose a playlist.",
+    "context": "Shown in the add live TV source dialog when something required is missing or not an address."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.formulaOneLive",
+    "text": "Formula 1 live",
+    "context": "Example name shown in the empty name field when adding a single live stream."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.guideAddressOptional",
+    "text": "Guide address (optional)",
+    "context": "Label of the field holding an XMLTV programme guide’s address."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.iptvOrg",
+    "text": "iptv-org",
+    "context": "A way to add live TV: picking a playlist from the iptv-org project. A project’s name; keep it as is."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.iptvOrgListsFreeChannels",
+    "text": "iptv-org lists publicly available channels. Some may not play in every country.",
+    "context": "Note under the iptv-org picker in the add live TV source dialog."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.iptvOrgName",
+    "text": "iptv-org · {name}",
+    "context": "The name given to a live TV source added from iptv-org. {name} is the country or category picked."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.itsChannelsAndGuideGoWithIt",
+    "text": "Its channels and guide go with it, and so does anyone’s favourite of those channels.",
+    "context": "Explanation in the confirmation before removing a live TV source."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.leftEmptyItIsNamedForYou",
+    "text": "Left empty, it’s named for you.",
+    "context": "Under the name field when adding a playlist file or iptv-org playlist."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.logoAddressOptional",
+    "text": "Logo address (optional)",
+    "context": "Label of the field holding a single stream’s logo address."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.myChannels",
+    "text": "My channels",
+    "context": "Example name shown in the empty name field when adding a live TV playlist or tuner."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.noSourcesYet",
+    "text": "No live TV yet. Add a stream, a playlist, a tuner or a playlist from iptv-org.",
+    "context": "Shown in the admin’s live TV sources table when there are none."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.oneStream",
+    "text": "One stream",
+    "context": "A kind of live TV source: a single stream added by its address, such as one sports channel."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.pickBy",
+    "text": "Pick by",
+    "context": "Label of the choice between picking an iptv-org playlist by country or by category."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.playlistAddress",
+    "text": "Playlist address",
+    "context": "A kind of live TV source: an M3U playlist of channels fetched from an address; also the field’s label."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.playlistFile",
+    "text": "Playlist file",
+    "context": "A kind of live TV source: an M3U playlist uploaded as a file."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.readNameCountChannels",
+    "text": "Read {count} channels from {name}.",
+    "context": "Toast after a live TV source is read again. {name} is the source, {count} how many channels."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.removeThisSource",
+    "text": "Remove this source?",
+    "context": "Title of the confirmation before removing a live TV source."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.streamAddress",
+    "text": "Stream address",
+    "context": "Label of the field holding a single live stream’s address."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.theHdHomeRunsAddress",
+    "text": "The HDHomeRun’s address on your network, such as http://192.168.1.50.",
+    "context": "Under the tuner address field when adding an HDHomeRun."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.tuner",
+    "text": "Tuner",
+    "context": "A kind of live TV source: an HDHomeRun antenna tuner on the network."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.tunerAddress",
+    "text": "Tuner address",
+    "context": "Label of the field holding an HDHomeRun tuner’s address on the network."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.whatToAdd",
+    "text": "What to add",
+    "context": "Label of the choice between kinds of live TV source in the add dialog."
+  },
+  {
     "handler": "screens.adminArea.matchPicker.choosingHereCorrectsEveryEpisodeOf",
     "text": "Your choice applies to every episode of this series and to future scans.",
     "context": "Shown in the match picker in the admin area."
@@ -22080,6 +22285,81 @@
     "context": "The detail of a nothing here in the library browser."
   },
   {
+    "handler": "screens.liveTvPage.allChannels",
+    "text": "All channels",
+    "context": "Option in the live TV guide’s filter showing every channel."
+  },
+  {
+    "handler": "screens.liveTvPage.findAChannel",
+    "text": "Find a channel",
+    "context": "Placeholder of the search field above the live TV guide."
+  },
+  {
+    "handler": "screens.liveTvPage.groups",
+    "text": "Groups",
+    "context": "Heading above the channel groups (such as News or Sports) in the live TV guide’s filter menu."
+  },
+  {
+    "handler": "screens.liveTvPage.keepName",
+    "text": "Keep {name} as a favourite",
+    "context": "Label of the star that keeps a live TV channel as a favourite. {name} is the channel."
+  },
+  {
+    "handler": "screens.liveTvPage.nextTimeTitle",
+    "text": "Next at {time}: {title}",
+    "context": "Under the live TV player, what follows on the channel. {time} is a clock time, {title} the programme."
+  },
+  {
+    "handler": "screens.liveTvPage.noChannelsYet",
+    "text": "There are no live TV channels yet. An admin can add a stream, a playlist or a tuner under Server → Live TV.",
+    "context": "Shown on the live TV page when no channels have been added."
+  },
+  {
+    "handler": "screens.liveTvPage.noFavouritesYet",
+    "text": "You haven’t kept any channels yet. Star one to find it here.",
+    "context": "Shown in the live TV guide when the favourites filter is on and nothing is kept."
+  },
+  {
+    "handler": "screens.liveTvPage.noGuideForThisChannel",
+    "text": "No guide for this channel",
+    "context": "Shown along a live TV channel’s row in the guide when nothing is known of what is on it."
+  },
+  {
+    "handler": "screens.liveTvPage.onNow",
+    "text": "On now",
+    "context": "Label of the progress bar showing how far through the current programme a live channel is."
+  },
+  {
+    "handler": "screens.liveTvPage.startingName",
+    "text": "Starting {name}…",
+    "context": "Shown over the live TV player while a channel is starting. {name} is the channel."
+  },
+  {
+    "handler": "screens.liveTvPage.stopKeepingName",
+    "text": "Stop keeping {name} as a favourite",
+    "context": "Label of the star that removes a live TV channel from favourites. {name} is the channel."
+  },
+  {
+    "handler": "screens.liveTvPage.thatChannelCouldNotBePlayed",
+    "text": "That channel couldn’t be played.",
+    "context": "Shown over the live TV player when a channel’s stream failed."
+  },
+  {
+    "handler": "screens.liveTvPage.thatCouldNotBeKept",
+    "text": "That channel couldn’t be kept.",
+    "context": "Toast when keeping a live TV channel as a favourite failed."
+  },
+  {
+    "handler": "screens.liveTvPage.watchName",
+    "text": "Watch {name}",
+    "context": "Label of the control that plays a live TV channel. {name} is the channel."
+  },
+  {
+    "handler": "screens.liveTvPage.whichChannels",
+    "text": "Which channels",
+    "context": "Heading of the live TV guide’s filter menu."
+  },
+  {
     "handler": "screens.logDetailDialog.happened",
     "text": "Occurrences",
     "context": "The name of a row in a log entry's details: how many times the same entry was written."
@@ -27366,6 +27646,11 @@
     "context": "The description of the pre-transcoding job on the jobs page. Encoding is the name of a section of the administration area."
   },
   {
+    "handler": "server.jobs.jobDefinitions.keepsTheChannelsAndGuideOfEach",
+    "text": "Keeps the channels and programme guide of each live TV source up to date.",
+    "context": "Description of the scheduled job that re-reads every live TV source."
+  },
+  {
     "handler": "server.jobs.jobDefinitions.keepsTheTitlesOtherValenceServers",
     "text": "Updates the list of titles other Valence servers share with this one, so you can browse them here.",
     "context": "Description of the job that reads what linked servers share."
@@ -27414,6 +27699,11 @@
     "handler": "server.jobs.jobDefinitions.readsJellyfinEmbyOrPlexWithoutWriting",
     "text": "Reads Jellyfin, Emby or Plex and reports what an import would bring in, without changing anything.",
     "context": "The description of the import's dry-run job in the jobs list on the server."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.readTheLiveTvSources",
+    "text": "Read the live TV sources",
+    "context": "The name of the scheduled job that re-reads every live TV playlist, tuner and guide."
   },
   {
     "handler": "server.jobs.jobDefinitions.readWhatLinkedServersShare",
@@ -27694,6 +27984,26 @@
     "handler": "server.library.withRottenTomatoes.oMDbCouldNotBeReachedFor",
     "text": "Couldn’t reach OMDb for {imdbId}",
     "context": "Shown in the library on the server (from `withRottenTomatoes`). {imdbId} is filled in by the app."
+  },
+  {
+    "handler": "server.live.theGuideCouldNotBeRead",
+    "text": "The guide couldn’t be read, so the channels show without what’s on.",
+    "context": "Shown on an admin’s live TV source when its XMLTV programme guide could not be fetched; the channels still work."
+  },
+  {
+    "handler": "server.live.thePlaylistCouldNotBeRead",
+    "text": "The playlist couldn’t be read.",
+    "context": "Shown on an admin’s live TV source when its M3U playlist could not be fetched or read."
+  },
+  {
+    "handler": "server.live.thePlaylistHasNoChannels",
+    "text": "The playlist has no channels in it.",
+    "context": "Shown on an admin’s live TV source when its M3U playlist was read but listed no streams."
+  },
+  {
+    "handler": "server.live.theTunerCouldNotBeReached",
+    "text": "The tuner couldn’t be reached.",
+    "context": "Shown on an admin’s live TV source when an HDHomeRun tuner on the network did not answer."
   },
   {
     "handler": "server.logging.describeFailure.itFailedAndSaidNothingAbout",

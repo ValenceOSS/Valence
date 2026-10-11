@@ -41,6 +41,8 @@ type PlayerControlsProps = {
   selectedQuality: QualityPreference;
   autoRung?: AutoRung;
   isDisabled?: boolean;
+  isLive?: boolean;
+  liveDetail?: string;
   onTogglePlay: () => void;
   onSeek: (seconds: number) => void;
   onSkip: (seconds: number) => void;
