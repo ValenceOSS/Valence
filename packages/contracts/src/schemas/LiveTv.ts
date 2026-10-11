@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
 
-const LIVE_SOURCE_KINDS = ['stream', 'playlistUrl', 'playlistFile', 'tuner'] as const;
+const LIVE_SOURCE_KINDS = ['stream', 'playlistUrl', 'playlistFile', 'tuner', 'embed'] as const;
 
 const LiveSourceKindSchema = z.enum(LIVE_SOURCE_KINDS);
 
@@ -26,6 +26,13 @@ const LiveAddressSchema = z
   .max(2000)
   .refine((address) => /^(https?|rtmp|rtsp|udp|rtp):\/\//iu.test(address));
 
+const PageAddressSchema = z
+  .string()
+  .trim()
+  .url()
+  .max(2000)
+  .refine((address) => /^https?:\/\//iu.test(address));
+
 const GuideAddressesSchema = z
   .string()
   .trim()
@@ -49,6 +56,7 @@ const LiveSourceSchema = z.object({
   address: z.string().nullable(),
   guideUrl: z.string().nullable(),
   logoUrl: z.string().nullable(),
+  hasPicture: z.boolean().default(false),
   channelCount: z.number().int().nonnegative(),
   refreshedAt: z.string().datetime().nullable(),
   problem: SaidSchema.nullable(),
@@ -80,6 +88,13 @@ const NewLiveSourceSchema = z.discriminatedUnion('kind', [
     address: LiveAddressSchema,
     guideUrl: GuideAddressesSchema.nullable().default(null),
   }),
+  z.object({
+    kind: z.literal('embed'),
+    name: z.string().trim().min(1).max(100),
+    address: PageAddressSchema,
+    logoUrl: PageAddressSchema.nullable().default(null),
+    guideUrl: GuideAddressesSchema.nullable().default(null),
+  }),
 ]);
 
 const LiveGuideChangeSchema = z.object({ guideUrl: GuideAddressesSchema.nullable() });
@@ -95,6 +110,7 @@ const LiveChannelSchema = z.object({
   checkedAt: z.string().datetime().nullable(),
   hasLogo: z.boolean(),
   isFavourite: z.boolean(),
+  isEmbedded: z.boolean().default(false),
 });
 
 const LiveProgrammeSchema = z.object({
@@ -115,7 +131,10 @@ const LiveGuideSchema = z.object({
 
 const LiveSourcesSchema = z.object({ sources: z.array(LiveSourceSchema) });
 
-const LiveStreamSchema = z.object({ manifestUrl: z.string() });
+const LiveStreamSchema = z.union([
+  z.object({ manifestUrl: z.string() }),
+  z.object({ embedUrl: z.string() }),
+]);
 
 type LiveSourceKind = z.infer<typeof LiveSourceKindSchema>;
 type LiveHealth = z.infer<typeof LiveHealthSchema>;
@@ -153,4 +172,5 @@ export {
   LiveStreamSchema,
   MOST_PLAYLIST_BYTES,
   NewLiveSourceSchema,
+  PageAddressSchema,
 };

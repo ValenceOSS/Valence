@@ -8770,6 +8770,11 @@
     "context": "Refusal when a live TV stream link is expired or not genuine."
   },
   {
+    "handler": "error.live.thatPageWillNotBeShownHere",
+    "text": "That page does not allow other sites to show it, so it cannot be played here.",
+    "context": "Why an embedded live TV channel would not play: the web page forbids being shown in a frame on another site."
+  },
+  {
     "handler": "error.live.theBroadcasterRefusedIt",
     "text": "The broadcaster refused to send it to this server. It’s most likely geo-blocked; a live TV proxy in its country can play it.",
     "context": "Why a live TV channel would not play: the stream answered 403 or 451."
@@ -16075,6 +16080,11 @@
     "context": "Under the guide address field when adding a live TV source."
   },
   {
+    "handler": "screens.adminArea.liveTvPanel.aPageWithItsOwnPlayer",
+    "text": "A web page with its own player, such as an embed link. It is shown as it is, with its own controls.",
+    "context": "Under the page address field when adding an embedded page as a live TV source."
+  },
+  {
     "handler": "screens.adminArea.liveTvPanel.byCategory",
     "text": "By category",
     "context": "Option: pick an iptv-org playlist by category, such as News or Sports."
@@ -16093,6 +16103,11 @@
     "handler": "screens.adminArea.liveTvPanel.chooseAPlaylist",
     "text": "Choose a playlist",
     "context": "Button that picks an M3U file to upload as a live TV source."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.embeddedPage",
+    "text": "Embedded page",
+    "context": "A kind of live TV source: a web page with its own video player, shown inside Valence. Option in the add source dialog and badge in the sources table."
   },
   {
     "handler": "screens.adminArea.liveTvPanel.fillInANameAndAnAddress",
@@ -16175,6 +16190,11 @@
     "context": "A kind of live TV source: a single stream added by its address, such as one sports channel."
   },
   {
+    "handler": "screens.adminArea.liveTvPanel.pageAddress",
+    "text": "Page address",
+    "context": "Label of the address field when adding an embedded page as a live TV source."
+  },
+  {
     "handler": "screens.adminArea.liveTvPanel.pickBy",
     "text": "Pick by",
     "context": "Label of the choice between picking an iptv-org playlist by country or by category."
@@ -16243,6 +16263,11 @@
     "handler": "screens.adminArea.liveTvPanel.ukGuideEpgShare",
     "text": "UK guide · epgshare01",
     "context": "Button adding a free UK programme guide from epgshare01 to a live TV source. epgshare01 is a site’s name; keep it."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.uploadAChannelPicture",
+    "text": "Upload a channel picture",
+    "context": "Button in the add live TV source dialog that picks an image file to show as the channel's logo."
   },
   {
     "handler": "screens.adminArea.liveTvPanel.whatToAdd",

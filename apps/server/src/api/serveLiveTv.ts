@@ -10,7 +10,11 @@ import {
   removeLiveSourceRoute,
   watchLiveChannelRoute,
 } from '@ValenceServer/routes/LiveTvRoute';
+import { checkEmbed } from '@ValenceServer/live/checkEmbed';
 import { probeStream } from '@ValenceServer/live/probeStream';
+import { UPLOADED_LOGO } from '@ValenceServer/live/UPLOADED_LOGO';
+import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
+import { bodyOf } from '@ValenceI18n/bodyOf';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
@@ -24,13 +28,23 @@ const MOST_GUIDE_MS = 8 * 24 * 60 * 60 * 1000;
 /**
  * Registers the live TV endpoints: the sources, which only an admin who may change the server's
  * settings adds, reads again or removes; and the guide, favourites and watching, which anybody
- * signed in may use. A channel is always played through this server, never from its provider.
+ * signed in may use. A channel is always played through this server, never from its provider,
+ * except an embedded page, which the browser frames itself once the server has seen it allows that.
+ * A single stream or embedded page can be given a picture an admin uploads, to show as its logo.
  *
  * @param app - The application to register them on.
  * @param context - What they are answered with.
  */
 const serveLiveTv = (app: OpenAPIHono, context: AppContext): void => {
-  const { liveTv, requires, readProfileId, readAccount, forwardedFileHeaders, neverKeep } = context;
+  const {
+    liveTv,
+    requires,
+    readProfileId,
+    readAccount,
+    forwardedFileHeaders,
+    neverKeep,
+    tooBigToRead,
+  } = context;
 
   const isAdmin = (headers: Headers) => requires(headers, 'server.settings');
 
@@ -155,6 +169,18 @@ const serveLiveTv = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.live.noSuchChannel'), 404);
     }
 
+    if (await liveTv.service.isEmbedded(channel)) {
+      const page = await checkEmbed(channel.streamUrl, channel, fetch);
+
+      if (!page.isFramable) {
+        return context.json(refuse('error.live.thatPageWillNotBeShownHere'), 502);
+      }
+
+      return page.health === 'gone'
+        ? context.json(refuse('error.live.theStreamIsGone'), 502)
+        : context.json({ embedUrl: channel.streamUrl }, 200);
+    }
+
     const { routes } = liveTv;
     const direct = await probeStream(channel.streamUrl, channel, routes.fetcherOf('direct'));
     const isFailing = direct === 'refused' || direct === 'unreachable';
@@ -248,8 +274,20 @@ const serveLiveTv = (app: OpenAPIHono, context: AppContext): void => {
       (await readAccount(context.req.raw.headers)) === null
         ? null
         : ((await liveTv?.service.channel(context.req.param('id'))) ?? null);
+    const uploaded =
+      channel?.logoUrl?.startsWith(UPLOADED_LOGO) === true
+        ? ((await liveTv?.pictures?.read(channel.sourceId)) ?? null)
+        : null;
+
+    if (uploaded !== null) {
+      return context.body(uploaded.body.slice().buffer, 200, {
+        'content-type': uploaded.contentType,
+        'cache-control': 'private, max-age=300',
+      });
+    }
+
     const logo =
-      channel?.logoUrl === null || channel === null
+      channel?.logoUrl === null || channel === null || channel.logoUrl.startsWith(UPLOADED_LOGO)
         ? null
         : await (liveTv?.routes.logos ?? fetch)(channel.logoUrl, {
             signal: AbortSignal.timeout(10_000),
@@ -266,6 +304,55 @@ const serveLiveTv = (app: OpenAPIHono, context: AppContext): void => {
         'cache-control': 'private, max-age=86400',
       },
     });
+  });
+
+  app.put('/api/live/sources/:id/picture', tooBigToRead(), async (context) => {
+    if (!(await isAdmin(context.req.raw.headers)) || liveTv === undefined) {
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
+    }
+
+    const id = context.req.param('id');
+    const source = (await liveTv.service.sources()).find((one) => one.id === id) ?? null;
+
+    if (source === null || (source.kind !== 'stream' && source.kind !== 'embed')) {
+      return context.json(refuse('error.live.noSuchSource'), 404);
+    }
+
+    const wrong =
+      liveTv.pictures === undefined
+        ? 'unreadable'
+        : await liveTv.pictures.save(id, {
+            body: new Uint8Array(await context.req.arrayBuffer()),
+            contentType: context.req.header('content-type') ?? '',
+          });
+
+    if (wrong !== null) {
+      const said = describePictureFault(wrong);
+
+      return context.json(bodyOf(said), said.status);
+    }
+
+    const changed = await liveTv.service.changeLogo(id, `${UPLOADED_LOGO}${Date.now().toString()}`);
+
+    return changed === null
+      ? context.json(refuse('error.live.noSuchSource'), 404)
+      : context.json(changed, 200);
+  });
+
+  app.delete('/api/live/sources/:id/picture', async (context) => {
+    if (!(await isAdmin(context.req.raw.headers)) || liveTv === undefined) {
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
+    }
+
+    const id = context.req.param('id');
+
+    await liveTv.pictures?.remove(id);
+
+    const changed = await liveTv.service.changeLogo(id, null);
+
+    return changed === null
+      ? context.json(refuse('error.live.noSuchSource'), 404)
+      : context.json(changed, 200);
   });
 };
 

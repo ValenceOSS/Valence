@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { X as XIcon } from '@keyline-icons/react/fill';
-import { FileArrowUp as FileArrowUpIcon } from '@keyline-icons/react';
+import { FileArrowUp as FileArrowUpIcon, Image as ImageIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -14,7 +14,9 @@ import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { SelectField } from '@ValenceUI/SelectField';
 import { Spinner } from '@ValenceUI/Spinner';
 import { TextField } from '@ValenceUI/TextField';
+import { notify } from '@ValenceUI/notify';
 import { addLiveSource } from '@ValenceClient/live/addLiveSource';
+import { changeLiveSourcePicture } from '@ValenceClient/live/changeLiveSourcePicture';
 import { liveQueries } from '@ValenceClient/query/liveQueries';
 import { NewLiveSourceSchema } from '@ValenceContracts/schemas/LiveTv';
 import { GuideSuggestions } from '@ValenceScreens/components/AdminArea/components/LiveTvPanel/components/GuideSuggestions/GuideSuggestions';
@@ -23,10 +25,11 @@ import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
 import { say } from '@ValenceI18n/say';
 import type { AddLiveSourceDialogProps } from './AddLiveSourceDialog.types';
 
-type Way = 'stream' | 'playlistUrl' | 'playlistFile' | 'tuner' | 'iptvOrg';
+type Way = 'stream' | 'embed' | 'playlistUrl' | 'playlistFile' | 'tuner' | 'iptvOrg';
 
 const WAYS: readonly { id: Way; label: string }[] = [
   { id: 'stream', label: say('screens.adminArea.liveTvPanel.oneStream') },
+  { id: 'embed', label: say('screens.adminArea.liveTvPanel.embeddedPage') },
   { id: 'playlistUrl', label: say('screens.adminArea.liveTvPanel.playlistAddress') },
   { id: 'playlistFile', label: say('screens.adminArea.liveTvPanel.playlistFile') },
   { id: 'tuner', label: say('screens.adminArea.liveTvPanel.tuner') },
@@ -34,7 +37,7 @@ const WAYS: readonly { id: Way; label: string }[] = [
 ];
 
 /**
- * Whether a choice of way in is one of the five on offer.
+ * Whether a choice of way in is one of the six on offer.
  *
  * @param id - The choice.
  * @returns Whether it is a way in.
@@ -42,11 +45,11 @@ const WAYS: readonly { id: Way; label: string }[] = [
 const isWay = (id: string): id is Way => WAYS.some((way) => way.id === id);
 
 /**
- * Adds a live TV source, one of five ways: a single stream by its address, such as a sports
- * channel's; a playlist of channels by address, or uploaded as a file; an HDHomeRun tuner on the
+ * Adds a live TV source, one of six ways: a single stream by its address, such as a sports
+ * channel's; a web page whose own player is shown in a frame; a playlist of channels by address, or uploaded as a file; an HDHomeRun tuner on the
  * network; or a country's or category's playlist from iptv-org, picked from a list. A guide's
- * address can go with any of them. The source's channels are read as it is added, and anything
- * wrong is said before the dialog closes.
+ * address can go with any of them, and a single stream or page can be given a picture for its logo.
+ * The source's channels are read as it is added, and anything wrong is said before the dialog closes.
  *
  * @param isOpen - Whether the dialog is raised.
  * @param onClose - Told to lower it.
@@ -59,6 +62,7 @@ const AddLiveSourceDialog = ({ isOpen, onClose, onAdded }: AddLiveSourceDialogPr
   const [logoUrl, setLogoUrl] = useState('');
   const [guideUrl, setGuideUrl] = useState('');
   const [playlist, setPlaylist] = useState<{ name: string; text: string } | null>(null);
+  const [picture, setPicture] = useState<File | null>(null);
   const [iptvBy, setIptvBy] = useState<'country' | 'category'>('country');
   const [iptvPick, setIptvPick] = useState('');
   const [problem, setProblem] = useState<string | null>(null);
@@ -83,6 +87,7 @@ const AddLiveSourceDialog = ({ isOpen, onClose, onAdded }: AddLiveSourceDialogPr
     setLogoUrl('');
     setGuideUrl('');
     setPlaylist(null);
+    setPicture(null);
     setIptvPick('');
     setProblem(null);
     onClose();
@@ -94,8 +99,9 @@ const AddLiveSourceDialog = ({ isOpen, onClose, onAdded }: AddLiveSourceDialogPr
 
     switch (way) {
       case 'stream':
+      case 'embed':
         return {
-          kind: 'stream',
+          kind: way,
           name: named,
           address: address.trim(),
           logoUrl: logoUrl.trim() === '' ? null : logoUrl.trim(),
@@ -137,7 +143,16 @@ const AddLiveSourceDialog = ({ isOpen, onClose, onAdded }: AddLiveSourceDialogPr
     setProblem(null);
 
     void addLiveSource(parsed.data)
-      .then((sent) => {
+      .then(async (sent) => {
+        const pictured =
+          sent.value === null || picture === null || (way !== 'stream' && way !== 'embed')
+            ? null
+            : await changeLiveSourcePicture(sent.value.id, picture);
+
+        if (pictured !== null && pictured.refusal !== null) {
+          notify.failed(pictured.refusal);
+        }
+
         const isAdded = tellOutcome(
           say('screens.adminArea.liveTvPanel.addedNameWithCountChannels', {
             name: sent.value?.name ?? parsed.data.name,
@@ -196,7 +211,7 @@ const AddLiveSourceDialog = ({ isOpen, onClose, onAdded }: AddLiveSourceDialogPr
               value={name}
               onValueChange={setName}
               placeholder={
-                way === 'stream'
+                way === 'stream' || way === 'embed'
                   ? say('screens.adminArea.liveTvPanel.formulaOneLive')
                   : say('screens.adminArea.liveTvPanel.myChannels')
               }
@@ -205,14 +220,16 @@ const AddLiveSourceDialog = ({ isOpen, onClose, onAdded }: AddLiveSourceDialogPr
                 : {})}
             />
 
-            {way === 'stream' || way === 'playlistUrl' || way === 'tuner' ? (
+            {way === 'stream' || way === 'embed' || way === 'playlistUrl' || way === 'tuner' ? (
               <TextField
                 label={
                   way === 'stream'
                     ? say('screens.adminArea.liveTvPanel.streamAddress')
-                    : way === 'tuner'
-                      ? say('screens.adminArea.liveTvPanel.tunerAddress')
-                      : say('screens.adminArea.liveTvPanel.playlistAddress')
+                    : way === 'embed'
+                      ? say('screens.adminArea.liveTvPanel.pageAddress')
+                      : way === 'tuner'
+                        ? say('screens.adminArea.liveTvPanel.tunerAddress')
+                        : say('screens.adminArea.liveTvPanel.playlistAddress')
                 }
                 value={address}
                 onValueChange={setAddress}
@@ -220,20 +237,39 @@ const AddLiveSourceDialog = ({ isOpen, onClose, onAdded }: AddLiveSourceDialogPr
                 description={
                   way === 'stream'
                     ? say('screens.adminArea.liveTvPanel.anHlsAddressOrAnyStream')
-                    : way === 'tuner'
-                      ? say('screens.adminArea.liveTvPanel.theHdHomeRunsAddress')
-                      : say('screens.adminArea.liveTvPanel.anM3uPlaylistEachStream')
+                    : way === 'embed'
+                      ? say('screens.adminArea.liveTvPanel.aPageWithItsOwnPlayer')
+                      : way === 'tuner'
+                        ? say('screens.adminArea.liveTvPanel.theHdHomeRunsAddress')
+                        : say('screens.adminArea.liveTvPanel.anM3uPlaylistEachStream')
                 }
               />
             ) : null}
 
-            {way === 'stream' ? (
+            {way === 'stream' || way === 'embed' ? (
               <TextField
                 label={say('screens.adminArea.liveTvPanel.logoAddressOptional')}
                 value={logoUrl}
                 onValueChange={setLogoUrl}
                 type="url"
               />
+            ) : null}
+
+            {way === 'stream' || way === 'embed' ? (
+              <div className="flex items-center gap-3">
+                <FilePicker
+                  label={say('screens.adminArea.liveTvPanel.uploadAChannelPicture')}
+                  accept="image/png,image/jpeg,image/webp,image/avif,image/gif"
+                  size="sm"
+                  onPick={setPicture}
+                >
+                  <Icon of={ImageIcon} size={15} />
+                  {picture === null
+                    ? say('screens.adminArea.liveTvPanel.uploadAChannelPicture')
+                    : say('common.chooseAnother')}
+                </FilePicker>
+                <span className="truncate text-xs text-text-muted">{picture?.name ?? ''}</span>
+              </div>
             ) : null}
 
             {way === 'playlistFile' ? (

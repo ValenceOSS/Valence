@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Star as StarIcon } from '@keyline-icons/react';
 import { Star as StarFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
+import { EmbeddedVideo } from '@ValenceUI/EmbeddedVideo';
 import { Icon } from '@ValenceUI/Icon';
 import { Spinner } from '@ValenceUI/Spinner';
 import { VideoSurface } from '@ValenceUI/VideoSurface';
@@ -39,7 +40,8 @@ const timeOf = (at: string): string =>
  * plays — in their live form, with what is on now along the top in place of a timeline — and with
  * what is on now and next beneath it, and the page lit in the colours of the picture as it plays. A channel counts as playing once pictures arrive, and one
  * that sends none in a while says it could not be played rather than staying black. Changing
- * channel stops the last one and starts the next.
+ * channel stops the last one and starts the next. A channel that is a web page is shown in a frame
+ * with its own player and controls in place of Valence's.
  *
  * @param channel - The channel.
  * @param onNow - What is on it now, where the guide knows.
@@ -60,6 +62,7 @@ const LivePlayer = ({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [state, setState] = useState<'starting' | 'playing' | 'failed'>('starting');
   const [why, setWhy] = useState<string | null>(null);
+  const [embedUrl, setEmbedUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(1);
@@ -99,6 +102,7 @@ const LivePlayer = ({
 
     setState('starting');
     setWhy(null);
+    setEmbedUrl(null);
     element?.addEventListener('playing', noticePlaying);
 
     void watchLiveChannel(channel.id).then(async (sent) => {
@@ -108,6 +112,14 @@ const LivePlayer = ({
 
       if (sent.value === null) {
         fail(sent.refusal?.message ?? say('error.live.thatChannelCouldNotBeStarted'));
+
+        return;
+      }
+
+      if ('embedUrl' in sent.value) {
+        clearTimeout(givingUp);
+        setEmbedUrl(sent.value.embedUrl);
+        setState('playing');
 
         return;
       }
@@ -187,9 +199,17 @@ const LivePlayer = ({
         <VideoSurface
           label={say('screens.liveTvPage.watchName', { name: channel.name })}
           videoRef={videoRef}
-          className="size-full"
+          className={cn('size-full', embedUrl === null ? null : 'hidden')}
           onPlayingChange={setIsPlaying}
         />
+
+        {embedUrl === null ? null : (
+          <EmbeddedVideo
+            label={say('screens.liveTvPage.watchName', { name: channel.name })}
+            src={embedUrl}
+            className="absolute inset-0 size-full"
+          />
+        )}
 
         {state === 'playing' ? null : (
           <div className="absolute inset-0 flex items-center justify-center bg-scrim/60 p-6 text-center text-sm text-on-scrim">
@@ -207,6 +227,7 @@ const LivePlayer = ({
         )}
 
         <div
+          hidden={embedUrl !== null}
           className={cn(
             'absolute inset-x-0 bottom-0 p-3 transition-opacity duration-[var(--duration-fast)] motion-reduce:transition-none',
             isPlaying

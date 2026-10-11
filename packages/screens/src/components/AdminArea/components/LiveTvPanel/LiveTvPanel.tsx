@@ -35,10 +35,12 @@ const KIND_NAMES: Readonly<Record<LiveSourceKind, string>> = {
   playlistUrl: say('screens.adminArea.liveTvPanel.playlistAddress'),
   playlistFile: say('screens.adminArea.liveTvPanel.playlistFile'),
   tuner: say('screens.adminArea.liveTvPanel.tuner'),
+  embed: say('screens.adminArea.liveTvPanel.embeddedPage'),
 };
 
 /**
- * The live TV sources this server plays from — single streams, playlists and tuners — each with
+ * The live TV sources this server plays from — single streams, embedded pages, playlists and
+ * tuners — each with
  * how many channels it gave when it was last read, when that was, and anything wrong with it, and
  * ways to add one, read one again now, or remove one with its channels and guide.
  */

@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { MOST_PLAYLIST_BYTES } from '@ValenceContracts/schemas/LiveTv';
 import { checkChannel } from './checkChannel';
+import { checkEmbed } from './checkEmbed';
 import { saying } from '@ValenceI18n/saying';
 import { isHlsPlaylist } from './isHlsPlaylist';
 import { liveChannelIdOf } from './liveChannelIdOf';
@@ -10,6 +11,7 @@ import { parseM3u } from './parseM3u';
 import { parseXmltv } from './parseXmltv';
 import { readRemoteText } from './readRemoteText';
 import { readTunerLineup } from './readTunerLineup';
+import { UPLOADED_LOGO } from './UPLOADED_LOGO';
 import type { LiveHealth, LiveSource } from '@ValenceContracts/schemas/LiveTv';
 import type { LiveRoutes } from './createLiveRoutes';
 import type { Said } from '@ValenceI18n/SaidSchema';
@@ -48,15 +50,16 @@ const shownOf = (source: StoredLiveSource): LiveSource => ({
   kind: source.kind,
   address: source.address,
   guideUrl: source.guideUrl,
-  logoUrl: source.logoUrl,
+  logoUrl: source.logoUrl?.startsWith(UPLOADED_LOGO) === true ? null : source.logoUrl,
+  hasPicture: source.logoUrl?.startsWith(UPLOADED_LOGO) === true,
   channelCount: source.channelCount,
   refreshedAt: source.refreshedAt?.toISOString() ?? null,
   problem: source.problem,
 });
 
 /**
- * Live TV: the sources an admin adds — one stream, a playlist by address or uploaded, or a tuner on
- * the network — read into numbered channels in the order each lists them, with what is on each from
+ * Live TV: the sources an admin adds — one stream, a playlist by address or uploaded, a tuner on
+ * the network, or a web page whose own player is shown in a frame — read into numbered channels in the order each lists them, with what is on each from
  * the guide a source names or comes with, and which channels each profile keeps as favourites.
  *
  * A source that cannot be read keeps the channels it had, and says why, so a provider that is down
@@ -110,6 +113,7 @@ const createLiveTvService = ({
   ): Promise<{ channels: ParsedChannel[]; guideUrl: string | null } | Said> => {
     switch (source.kind) {
       case 'stream':
+      case 'embed':
         return { channels: oneChannel(source, source.address ?? ''), guideUrl: null };
       case 'playlistUrl':
         return readPlaylist(
@@ -230,7 +234,7 @@ const createLiveTvService = ({
         kind: asked.kind,
         address: asked.kind === 'playlistFile' ? null : asked.address,
         guideUrl: asked.guideUrl,
-        logoUrl: asked.kind === 'stream' ? asked.logoUrl : null,
+        logoUrl: asked.kind === 'stream' || asked.kind === 'embed' ? asked.logoUrl : null,
         playlist: asked.kind === 'playlistFile' ? asked.playlist : null,
         channelCount: 0,
         refreshedAt: null,
@@ -250,6 +254,20 @@ const createLiveTvService = ({
 
       return source === null ? null : refreshed(source);
     },
+
+    changeLogo: async (id, logoUrl) => {
+      const source = await store.readSource(id);
+
+      if (source === null) {
+        return null;
+      }
+
+      await store.changeSource(id, { logoUrl });
+
+      return refreshed({ ...source, logoUrl });
+    },
+
+    isEmbedded: async (channel) => (await store.readSource(channel.sourceId))?.kind === 'embed',
 
     changeGuide: async (id, guideUrl) => {
       const source = await store.readSource(id);
@@ -283,7 +301,10 @@ const createLiveTvService = ({
         notAStream: 0,
         unsure: 0,
       };
-      const channels = await store.listChannels();
+      const [channels, sources] = await Promise.all([store.listChannels(), store.listSources()]);
+      const embedded = new Set(
+        sources.filter((source) => source.kind === 'embed').map((source) => source.id),
+      );
       let next = 0;
 
       const work = async () => {
@@ -292,7 +313,13 @@ const createLiveTvService = ({
 
           next += 1;
 
-          if (channel !== undefined) {
+          if (channel !== undefined && embedded.has(channel.sourceId)) {
+            const { health } = await checkEmbed(channel.streamUrl, channel, fetcher);
+
+            routes?.choose(channel.id, 'direct');
+            await store.noteHealth(channel.id, health, 'direct', now());
+            counts[health] += 1;
+          } else if (channel !== undefined) {
             const direct = await checkChannel(
               channel.streamUrl,
               channel,
@@ -326,6 +353,9 @@ const createLiveTvService = ({
         profileId === null ? Promise.resolve(new Set<string>()) : store.favouritesOf(profileId),
       ]);
       const order = new Map(sources.map((source, at) => [source.id, at]));
+      const embedded = new Set(
+        sources.filter((source) => source.kind === 'embed').map((source) => source.id),
+      );
       const shown = [...channels].sort(
         (left, right) =>
           (order.get(left.sourceId) ?? 0) - (order.get(right.sourceId) ?? 0) ||
@@ -354,6 +384,7 @@ const createLiveTvService = ({
           checkedAt: channel.checkedAt?.toISOString() ?? null,
           hasLogo: channel.logoUrl !== null,
           isFavourite: favourites.has(channel.id),
+          isEmbedded: embedded.has(channel.sourceId),
         })),
         programmes: programmes.flatMap((programme) =>
           (byGuide.get(`${programme.sourceId}\n${programme.guideId}`) ?? []).map((channelId) => ({

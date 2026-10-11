@@ -1422,6 +1422,7 @@ const liveTv: LiveTvOptions = {
   relay: createLiveRelay(),
   iptvOrg: createIptvOrgCatalogue(),
   routes: liveRoutes,
+  pictures: createServerPictures(join(env.PROFILE_IMAGE_DIR, 'live')),
   startTranscoded: async (channel, proxy) => {
     const liveId =
       (await transcoder.startLive?.(channel.streamUrl, {

@@ -40,6 +40,7 @@ type LiveTvStore = {
       refreshedAt?: Date;
       problem?: Said | null;
       guideUrl?: string | null;
+      logoUrl?: string | null;
     },
   ) => Promise<void>;
   removeSource: (id: string) => Promise<boolean>;

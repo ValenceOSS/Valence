@@ -2053,6 +2053,8 @@ const ENGLISH = {
   'error.live.thatChannelHasNoLogo': 'That channel has no logo.',
   'error.live.thatIsNotAStream': 'The address answered with a web page rather than a stream.',
   'error.live.thatLinkHasRunOut': 'That stream link has run out. Start the channel again.',
+  'error.live.thatPageWillNotBeShownHere':
+    'That page does not allow other sites to show it, so it cannot be played here.',
   'error.live.theBroadcasterRefusedIt':
     'The broadcaster refused to send it to this server. It’s most likely geo-blocked; a live TV proxy in its country can play it.',
   'error.live.theStreamDidNotAnswer':
@@ -4048,10 +4050,13 @@ const ENGLISH = {
     'An M3U playlist. Each stream in it becomes a numbered channel.',
   'screens.adminArea.liveTvPanel.anXmltvGuideSaysWhatsOn':
     'An XMLTV guide, which says what’s on each channel. A playlist that names its own guide uses that.',
+  'screens.adminArea.liveTvPanel.aPageWithItsOwnPlayer':
+    'A web page with its own player, such as an embed link. It is shown as it is, with its own controls.',
   'screens.adminArea.liveTvPanel.byCategory': 'By category',
   'screens.adminArea.liveTvPanel.byCountry': 'By country',
   'screens.adminArea.liveTvPanel.channels': 'Channels',
   'screens.adminArea.liveTvPanel.chooseAPlaylist': 'Choose a playlist',
+  'screens.adminArea.liveTvPanel.embeddedPage': 'Embedded page',
   'screens.adminArea.liveTvPanel.fillInANameAndAnAddress':
     'Give it a name and a working address, or choose a playlist.',
   'screens.adminArea.liveTvPanel.formulaOneLive': 'Formula 1 live',
@@ -4074,6 +4079,7 @@ const ENGLISH = {
   'screens.adminArea.liveTvPanel.oneOrMoreXmltvGuides':
     'One or more XMLTV guide addresses, separated by spaces.',
   'screens.adminArea.liveTvPanel.oneStream': 'One stream',
+  'screens.adminArea.liveTvPanel.pageAddress': 'Page address',
   'screens.adminArea.liveTvPanel.pickBy': 'Pick by',
   'screens.adminArea.liveTvPanel.playlistAddress': 'Playlist address',
   'screens.adminArea.liveTvPanel.playlistFile': 'Playlist file',
@@ -4090,6 +4096,7 @@ const ENGLISH = {
   'screens.adminArea.liveTvPanel.tunerAddress': 'Tuner address',
   'screens.adminArea.liveTvPanel.ukGuideEpgPw': 'UK guide · epg.pw',
   'screens.adminArea.liveTvPanel.ukGuideEpgShare': 'UK guide · epgshare01',
+  'screens.adminArea.liveTvPanel.uploadAChannelPicture': 'Upload a channel picture',
   'screens.adminArea.liveTvPanel.whatToAdd': 'What to add',
   'screens.adminArea.matchPicker.choosingHereCorrectsEveryEpisodeOf':
     'Your choice applies to every episode of this series and to future scans.',
