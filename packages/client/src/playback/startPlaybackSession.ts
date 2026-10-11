@@ -3,6 +3,7 @@ import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { z } from 'zod';
 import { PlaybackPlanSchema } from '@ValenceContracts/schemas/PlaybackPlan';
 import { TranscodeReuseSchema } from '@ValenceContracts/schemas/TranscodeReuse';
+import { KeptCopySchema } from '@ValenceContracts/schemas/KeptCopy';
 import type { DeviceProfile } from '@ValenceContracts/schemas/DeviceProfile';
 import type { PlaybackPlan } from '@ValenceContracts/schemas/PlaybackPlan';
 import type { QualityPreference } from './qualityPreference';
@@ -23,6 +24,7 @@ const StartedSessionSchema = z.object({
   plan: PlaybackPlanSchema,
   warnings: z.array(SaidSchema).default([]),
   reuse: TranscodeReuseSchema.nullable().default(null),
+  keptCopies: z.array(KeptCopySchema).default([]),
 });
 
 type StartedSession = z.infer<typeof StartedSessionSchema>;

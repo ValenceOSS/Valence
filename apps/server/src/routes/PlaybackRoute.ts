@@ -1,3 +1,4 @@
+import { KeptCopySchema } from '@ValenceContracts/schemas/KeptCopy';
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
@@ -39,6 +40,7 @@ const StartResponse = z
     plan: PlaybackPlanSchema,
     warnings: z.array(SaidSchema),
     reuse: TranscodeReuseSchema.nullable(),
+    keptCopies: z.array(KeptCopySchema).default([]),
   })
   .openapi('PlaybackStartResponse');
 

@@ -27,6 +27,7 @@ const aKeptSession = (mediaId: string, url: string): StartedSession => ({
   },
   warnings: [],
   reuse: null,
+  keptCopies: [],
 });
 
 export { aKeptSession };

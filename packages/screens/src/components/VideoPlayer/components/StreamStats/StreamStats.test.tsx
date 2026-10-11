@@ -93,6 +93,7 @@ const draw = (overrides: Partial<StreamStatsProps> = {}) => {
       plan,
       warnings: [],
       reuse: 'none',
+      keptCopies: [],
     },
     detail,
     health,
@@ -227,6 +228,7 @@ describe('StreamStats', () => {
         },
         warnings: [],
         reuse: null,
+        keptCopies: [],
       },
     });
 
@@ -290,6 +292,7 @@ describe('StreamStats', () => {
         plan,
         warnings: [],
         reuse: 'whole',
+        keptCopies: [],
       },
     });
 
@@ -305,6 +308,7 @@ describe('StreamStats', () => {
         plan,
         warnings: [],
         reuse: null,
+        keptCopies: [],
       },
     });
 
@@ -320,6 +324,7 @@ describe('StreamStats', () => {
         plan,
         warnings: [sayVerbatim('This server cannot tone map HDR to SDR.')],
         reuse: null,
+        keptCopies: [],
       },
     });
 

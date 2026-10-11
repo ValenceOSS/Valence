@@ -1,3 +1,4 @@
+import { keptCopiesFor } from '@ValenceCore/functions/keptCopiesFor';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { chooseSource } from '@ValenceCore/functions/chooseSource';
 import type { ChosenSource } from '@ValenceCore/functions/chooseSource';
@@ -243,6 +244,11 @@ const createPlaybackService = ({
             plan,
             warnings: [],
             reuse: null,
+            keptCopies: keptCopiesFor({
+              sources,
+              profile,
+              fileUrl: (sourceId) => `${file}?rendition=${encodeURIComponent(sourceId)}`,
+            }),
           },
         };
       }
@@ -311,6 +317,7 @@ const createPlaybackService = ({
             plan: delivered,
             warnings: outcome.warnings,
             reuse: session.reuse,
+            keptCopies: [],
           },
         };
       } catch (error) {

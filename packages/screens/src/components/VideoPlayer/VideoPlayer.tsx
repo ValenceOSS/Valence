@@ -120,6 +120,7 @@ import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
 import type { PlaybackHealth } from './components/StreamStats/StreamStats.types';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
 import type { AutoRung } from '@ValenceClient/playback/decideAutoQuality';
+import type { QualityStepId } from '@ValenceContracts/schemas/QualityStep';
 import type { PlayerState, VideoPlayerProps } from './VideoPlayer.types';
 import { FindSubtitlesDialog } from '@ValenceScreens/components/FindSubtitlesDialog/FindSubtitlesDialog';
 import { PlayOnDialog } from '@ValenceScreens/components/PlayOnDialog/PlayOnDialog';
@@ -292,6 +293,10 @@ const VideoPlayer = ({
   const [isDrawnByTheEngine, setIsDrawnByTheEngine] = useState(false);
   const engineRefusedRef = useRef(false);
   const engineStatsRef = useRef<(() => EngineStats) | null>(null);
+  const switchCopyRef = useRef<((rung: AutoRung) => Promise<void>) | null>(null);
+  const [browserRung, setBrowserRung] = useState<AutoRung | null>(null);
+  const [keptSteps, setKeptSteps] = useState<QualityStepId[]>([]);
+  const [canSwitchCopies, setCanSwitchCopies] = useState(false);
   const [engineStats, setEngineStats] = useState<EngineStats | null>(null);
 
   const stageRef = useRef<HTMLDivElement>(null);
@@ -782,6 +787,10 @@ const VideoPlayer = ({
     setSession(null);
     setIsDrawnByTheEngine(false);
     engineStatsRef.current = null;
+    switchCopyRef.current = null;
+    setBrowserRung(null);
+    setKeptSteps([]);
+    setCanSwitchCopies(false);
     setState('starting');
     setProblem(null);
     setIsPlaying(false);
@@ -1009,10 +1018,55 @@ const VideoPlayer = ({
             return;
           }
 
-          teardown = attached.detach;
-          releaseRef.current = attached.detach;
-          deliveredRef.current = attached.readDelivered;
-          engineStatsRef.current = attached.readEngine;
+          const original = outcome.session.delivery.url;
+          const copies = outcome.session.keptCopies;
+          const isHdrScreen = window.matchMedia('(dynamic-range: high)').matches;
+          const take = (playing: typeof attached) => {
+            teardown = playing.detach;
+            releaseRef.current = playing.detach;
+            deliveredRef.current = playing.readDelivered;
+            engineStatsRef.current = playing.readEngine;
+            estimatedRef.current = playing.readEstimatedKbps;
+          };
+
+          take(attached);
+          setKeptSteps(copies.map((copy) => copy.quality));
+          setCanSwitchCopies(true);
+          switchCopyRef.current = async (rung) => {
+            const copy = copies.find((one) => one.quality === rung) ?? null;
+            const url = rung === 'original' ? original : copy?.url;
+            const canvas = pictureRef.current;
+
+            if (url === undefined || canvas === null || isAbandoned()) {
+              return;
+            }
+
+            const at = element.currentTime;
+            const wasPlaying = !element.paused;
+            const copyRoute = copy === null ? route : chooseBrowserRoute(copy, engine, isHdrScreen);
+
+            await teardown?.();
+
+            const next = await (
+              copyRoute === 'webgpu'
+                ? attachEngine({ ...toPlay, url, startSeconds: at, canvas })
+                : attachRemux({ ...toPlay, url, startSeconds: at })
+            ).catch(() => null);
+
+            if (next === null) {
+              handOver();
+
+              return;
+            }
+
+            take(next);
+            setIsDrawnByTheEngine(copyRoute === 'webgpu');
+            setBrowserRung(rung);
+
+            if (wasPlaying) {
+              void element.play().catch(() => undefined);
+            }
+          };
         } else if (outcome.session.delivery.kind === 'direct') {
           element.src = outcome.session.delivery.url;
         } else {
@@ -1564,6 +1618,12 @@ const VideoPlayer = ({
 
       hold(element);
 
+      if (switchCopyRef.current !== null) {
+        void switchCopyRef.current(rung);
+
+        return;
+      }
+
       setRequest((asked) => ({
         ...asked,
         startSeconds: Math.floor(element?.currentTime ?? asked.startSeconds),
@@ -1601,8 +1661,8 @@ const VideoPlayer = ({
       !isOnALadder,
     videoRef,
     readEstimatedKbps: () => estimatedRef.current?.() ?? null,
-    current: request.autoRung,
-    steps: autoSteps,
+    current: canSwitchCopies ? (browserRung ?? 'original') : request.autoRung,
+    steps: canSwitchCopies ? keptSteps : autoSteps,
     sourceBitrateKbps: detail?.bitrateKbps ?? null,
     onChange: moveAutoRung,
   });
@@ -2434,7 +2494,7 @@ const VideoPlayer = ({
             autoRung={
               isOnALadder && typeof ladder?.activeHeight === 'number'
                 ? rungOfHeight(ladder.activeHeight)
-                : request.autoRung
+                : (browserRung ?? request.autoRung)
             }
             isDisabled={state !== 'playing'}
             onTogglePlay={togglePlay}

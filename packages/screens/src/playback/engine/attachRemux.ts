@@ -1,5 +1,6 @@
 import { ALL_FORMATS, Input, UrlSource } from 'mediabunny';
 import { createMediaFeed } from './createMediaFeed';
+import { createThroughputMeter } from './createThroughputMeter';
 import type { DeliveredFormat } from '@ValenceScreens/playback/attachShaka';
 import type { EngineStats } from './EngineStats';
 
@@ -26,7 +27,8 @@ type RemuxOptions = {
  *
  * @param options - The element, the file, where to start, which sound track (counted from the first
  *   in the file), and where to say a failure.
- * @returns A handle carrying the teardown to call, and readings of what is being played, for the
+ * @returns A handle carrying the teardown to call, how fast the connection is delivering the film,
+ *   and readings of what is being played, for the
  *   stats.
  */
 const attachRemux = async ({
@@ -39,6 +41,7 @@ const attachRemux = async ({
   detach: () => Promise<void>;
   readDelivered: () => DeliveredFormat;
   readEngine: () => EngineStats;
+  readEstimatedKbps: () => number | null;
 }> => {
   const life = { isOver: false, hasFailed: false };
   const fail = () => {
@@ -47,8 +50,12 @@ const attachRemux = async ({
       onFault();
     }
   };
+  const throughput = createThroughputMeter();
   const input = new Input({
-    source: new UrlSource(url, { requestInit: { credentials: 'same-origin' } }),
+    source: new UrlSource(url, {
+      requestInit: { credentials: 'same-origin' },
+      fetchFn: throughput.fetchFn,
+    }),
     formats: ALL_FORMATS,
   });
   const [video, audioTracks, duration] = await Promise.all([
@@ -106,6 +113,8 @@ const attachRemux = async ({
       audioSampleRate: feed.sound.kind === 'carried' ? sampleRate : 48_000,
       audioChannels: feed.sound.kind === 'carried' ? channels : feed.sound.numberOfChannels,
     }),
+
+    readEstimatedKbps: throughput.readKbps,
 
     readEngine: () => ({
       route: 'remux',

@@ -4,6 +4,7 @@ import type { PlaybackPlan } from '@ValenceContracts/schemas/PlaybackPlan';
 import type { PlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
 import type { QualityStepId } from '@ValenceContracts/schemas/QualityStep';
 import type { TranscodeReuse } from '@ValenceContracts/schemas/TranscodeReuse';
+import type { KeptCopy } from '@ValenceContracts/schemas/KeptCopy';
 type Explanation = {
   mode: PlaybackMode;
   plan: PlaybackPlan;
@@ -16,6 +17,7 @@ type StartedSession = Explanation & {
   delivery: Delivery;
   warnings: Said[];
   reuse: TranscodeReuse | null;
+  keptCopies: KeptCopy[];
 };
 
 type StartOutcome =
