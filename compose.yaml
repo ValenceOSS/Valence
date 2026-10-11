@@ -15,7 +15,11 @@ services:
       POSTGRES_DB: valence
       TZ: ${TZ:-UTC}
     volumes:
-      - db-data:/var/lib/postgresql/data
+      # /var/lib/postgresql rather than /var/lib/postgresql/data: from 18 the
+      # image keeps its data in a directory named for the major version, so a
+      # mount at the old path is left unused and the container refuses to start
+      # rather than quietly writing somewhere that is not kept.
+      - db-data:/var/lib/postgresql
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U valence']
       interval: 10s

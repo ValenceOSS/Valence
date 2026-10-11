@@ -48,7 +48,7 @@ db:
     POSTGRES_DB: valence
     TZ: ${TZ:-UTC}
   volumes:
-    - db-data:/var/lib/postgresql/data
+    - db-data:/var/lib/postgresql
   healthcheck:
     test: ['CMD-SHELL', 'pg_isready -U valence']
     interval: 10s
