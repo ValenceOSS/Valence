@@ -9727,7 +9727,7 @@
   {
     "handler": "phone.aTitle.favourite",
     "text": "Favourite",
-    "context": "Text shown in the title of the phone app."
+    "context": "The button that adds a title to the favourites or takes it out, on a title in the phone app and on a film in the television app."
   },
   {
     "handler": "phone.aTitle.preparingPercent",
@@ -29766,19 +29766,9 @@
     "context": "Shown in the enter password of the television app."
   },
   {
-    "handler": "tv.filmPage.addToMyList",
-    "text": "Add to My List",
-    "context": "Shown in the film page of the television app."
-  },
-  {
     "handler": "tv.filmPage.playFromTheBeginning",
     "text": "Play from the beginning",
     "context": "The label of a action row in the film page of the television app."
-  },
-  {
-    "handler": "tv.filmPage.removeFromMyList",
-    "text": "Remove from My List",
-    "context": "Shown in the film page of the television app."
   },
   {
     "handler": "tv.filmPage.thisFilmCouldNotBeFound",

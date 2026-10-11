@@ -167,19 +167,18 @@ describe('FilmPage', () => {
     expect(onPlay).toHaveBeenLastCalledWith(expect.objectContaining({ id: FILM }), 0);
   });
 
-  it('puts the film on this viewer’s list', async () => {
+  it('adds the film to this viewer’s favourites', async () => {
     const drawn = await drawFilm(aCacheHolding({}));
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Add to My List' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Favourite' }));
 
     expect(setFavourite).toHaveBeenCalledWith(FILM, true);
-    expect(await drawn.findByRole('button', { name: 'Remove from My List' })).toBeTruthy();
   });
 
-  it('takes a film already kept off the list', async () => {
+  it('takes a film already a favourite out of the favourites', async () => {
     const drawn = await drawFilm(aCacheHolding({ kept: [FILM] }));
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Remove from My List' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Favourite' }));
 
     await waitFor(() => {
       expect(setFavourite).toHaveBeenCalledWith(FILM, false);

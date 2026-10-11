@@ -183,11 +183,7 @@ const FilmPage = ({ mediaId, viewerId, onPlay, onOpenPerson }: FilmPageProps) =>
       )}
 
       <ActionRow
-        label={
-          favourites.isKept(film.id)
-            ? say('tv.filmPage.removeFromMyList')
-            : say('tv.filmPage.addToMyList')
-        }
+        label={say('phone.aTitle.favourite')}
         icon={favourites.isKept(film.id) ? HeartFilled : Heart}
         onPress={() => {
           favourites.toggle(film.id);
