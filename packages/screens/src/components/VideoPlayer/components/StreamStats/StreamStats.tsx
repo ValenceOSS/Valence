@@ -69,6 +69,8 @@ const StreamStats = ({
   const videoCodec = delivered?.videoCodec ?? detail?.videoCodec ?? null;
   const audioCodec = delivered?.audioCodec ?? audio?.codec ?? null;
   const channels = delivered?.audioChannels ?? audio?.channels ?? null;
+  const isHdrScreen =
+    typeof window !== 'undefined' && window.matchMedia('(dynamic-range: high)').matches === true;
 
   return (
     <section
@@ -108,15 +110,7 @@ const StreamStats = ({
       <div className="flex flex-col gap-2">
         <StatsSummary
           items={[
-            {
-              label: say('common.mode'),
-              value:
-                session === null
-                  ? null
-                  : engine === null
-                    ? session.mode
-                    : `${session.mode} · WebGPU`,
-            },
+            { label: say('common.mode'), value: session?.mode ?? null },
             { label: say('common.picture'), value: picture },
             { label: say('common.video'), value: videoCodec },
             {
@@ -209,26 +203,70 @@ const StreamStats = ({
 
         {engine === null ? null : (
           <StatsCard name="Browser player">
-            <StatsFact name="Renderer" value="WebGPU" />
-            <StatsFact name="GPU" value={engine.gpu} />
-            <StatsFact name="Decoder" value="WebCodecs" />
+            {engine.route === 'webgpu' ? (
+              <>
+                <StatsFact name="Renderer" value="WebGPU" />
+                <StatsFact name="GPU" value={engine.gpu} />
+                <StatsFact name="Decoder" value="WebCodecs" />
+              </>
+            ) : (
+              <>
+                <StatsFact name="Renderer" value="HTMLVideoElement" />
+                <StatsFact
+                  name="Repackaged by"
+                  value={say('screens.videoPlayer.streamStats.mediabunny')}
+                />
+                <StatsFact
+                  name="Container"
+                  value={
+                    engine.container === null
+                      ? null
+                      : `${engine.container.split(';')[0] ?? engine.container} → video/mp4`
+                  }
+                />
+              </>
+            )}
+            {engine.isHdrFilm ? (
+              <StatsFact
+                name="Tone mapping"
+                value={
+                  engine.hdrSignal !== null
+                    ? say('screens.videoPlayer.streamStats.signalToSdr', {
+                        signal: engine.hdrSignal.toUpperCase(),
+                      })
+                    : isHdrScreen
+                      ? say('screens.videoPlayer.streamStats.noneShownAsHdr')
+                      : say('screens.videoPlayer.streamStats.byTheBrowser')
+                }
+              />
+            ) : null}
             <StatsFact
               name="Sound"
               value={
-                engine.isSoundCarried
+                engine.sound === 'carried'
                   ? say('screens.videoPlayer.streamStats.carriedAsItIs')
-                  : say('screens.videoPlayer.streamStats.encodedAgainAsOpus')
+                  : say('screens.videoPlayer.streamStats.encodedAgainAsCodec', {
+                      codec: engine.sound,
+                      channels: (engine.soundChannels ?? 2).toString(),
+                    })
               }
             />
-            <StatsFact name="Frames drawn" value={<FormattedNumber value={engine.drawnFrames} />} />
-            <StatsFact
-              name="Decoded ahead"
-              value={
-                engine.decodedAheadSeconds === null ? null : (
-                  <StatsSeconds value={engine.decodedAheadSeconds} />
-                )
-              }
-            />
+            {engine.route === 'webgpu' ? (
+              <>
+                <StatsFact
+                  name="Frames drawn"
+                  value={<FormattedNumber value={engine.drawnFrames} />}
+                />
+                <StatsFact
+                  name="Decoded ahead"
+                  value={
+                    engine.decodedAheadSeconds === null ? null : (
+                      <StatsSeconds value={engine.decodedAheadSeconds} />
+                    )
+                  }
+                />
+              </>
+            ) : null}
           </StatsCard>
         )}
 
@@ -283,7 +321,7 @@ const StreamStats = ({
             <StatsFact
               name="Dropped"
               value={
-                engine !== null ? (
+                engine !== null && engine.route === 'webgpu' ? (
                   <>
                     <FormattedNumber value={engine.skippedFrames} /> /{' '}
                     <FormattedNumber value={engine.decodedFrames} />
@@ -305,6 +343,20 @@ const StreamStats = ({
                 session === null || session.reuse === null
                   ? null
                   : describeTranscodeReuse(session.reuse)
+              }
+            />
+            <StatsFact
+              name="Player"
+              value={
+                engine?.route === 'webgpu'
+                  ? say('screens.videoPlayer.streamStats.valencesWebGpuPlayer')
+                  : engine?.route === 'remux'
+                    ? say('screens.videoPlayer.streamStats.repackagedInTheBrowser')
+                    : session === null
+                      ? null
+                      : session.delivery.kind === 'hls'
+                        ? say('screens.videoPlayer.streamStats.shakaPlayingHls')
+                        : say('screens.videoPlayer.streamStats.theBrowsersMediaElement')
               }
             />
             <StatsFact name="Starts at" value={formatDuration(sessionStartSeconds)} />

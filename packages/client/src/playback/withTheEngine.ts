@@ -2,17 +2,47 @@ import { ENGINE_CONTAINERS } from './ENGINE_CONTAINERS';
 import type { DeviceProfile } from '@ValenceContracts/schemas/DeviceProfile';
 import type { EngineSupport } from './EngineSupport';
 
+const TONE_MAPPED_RANGES = ['HDR10', 'HDR10Plus', 'HLG'] as const;
+
 /**
- * A device profile that also claims what this browser's own player plays, so the server sends those
- * files as they are rather than converting them. Every container the player reads is claimed with
- * every codec it decodes, beside whatever the media element already claimed for it.
+ * Every member of each list once, in the order first met.
+ *
+ * @param lists - The lists.
+ * @returns Their members.
+ */
+const unionOf = (...lists: readonly (readonly string[])[]): string[] => [...new Set(lists.flat())];
+
+/**
+ * A device profile that also claims what this browser can play beyond the media element by itself,
+ * so the server sends those files as they are rather than converting them. Every container the
+ * browser reads is claimed with every codec it can play from it, beside whatever the element already
+ * claimed.
+ *
+ * An SDR film can be played by the browser's own player or repackaged for the element. An HDR film
+ * only by repackaging, where the element shows it as HDR, or by the player where it is HEVC it can
+ * tone map — and then HDR10, HDR10+ and HLG are claimed too, since the film no longer needs an HDR
+ * screen. Dolby Vision is never claimed as such: one with an HDR10 base plays as that base, and one
+ * without is left for the server.
  *
  * @param profile - What the media element plays by itself.
- * @param support - What the browser's own player adds.
+ * @param support - What the browser adds.
+ * @param film - Whether the film to be played is HDR.
  * @returns The profile with both.
  */
-const withTheEngine = (profile: DeviceProfile, support: EngineSupport): DeviceProfile => {
-  if (support.videoCodecs.length === 0 || support.audioCodecs.length === 0) {
+const withTheEngine = (
+  profile: DeviceProfile,
+  support: EngineSupport,
+  film: { isHdr: boolean },
+): DeviceProfile => {
+  const toneMapped = support.toneMapsHevc ? ['hevc'] : [];
+  const videoCodecs = film.isHdr
+    ? unionOf(support.remuxVideoCodecs, toneMapped)
+    : unionOf(support.videoCodecs, support.remuxVideoCodecs);
+  const tenBit = film.isHdr
+    ? unionOf(support.remuxTenBitVideoCodecs, toneMapped)
+    : unionOf(support.tenBitVideoCodecs, support.remuxTenBitVideoCodecs);
+
+  if (videoCodecs.length === 0 || support.audioCodecs.length === 0) {
     return profile;
   }
 
@@ -23,14 +53,18 @@ const withTheEngine = (profile: DeviceProfile, support: EngineSupport): DevicePr
 
     claimed.set(container, {
       container,
-      videoCodecs: [...new Set([...(already?.videoCodecs ?? []), ...support.videoCodecs])],
-      audioCodecs: [...new Set([...(already?.audioCodecs ?? []), ...support.audioCodecs])],
+      videoCodecs: unionOf(already?.videoCodecs ?? [], videoCodecs),
+      audioCodecs: unionOf(already?.audioCodecs ?? [], support.audioCodecs),
     });
   }
 
   return {
     ...profile,
-    tenBitVideoCodecs: [...new Set([...profile.tenBitVideoCodecs, ...support.tenBitVideoCodecs])],
+    supportedVideoRanges:
+      film.isHdr && support.toneMapsHevc
+        ? [...new Set([...profile.supportedVideoRanges, ...TONE_MAPPED_RANGES])]
+        : profile.supportedVideoRanges,
+    tenBitVideoCodecs: unionOf(profile.tenBitVideoCodecs, tenBit),
     directPlayProfiles: [...claimed.values()],
   };
 };

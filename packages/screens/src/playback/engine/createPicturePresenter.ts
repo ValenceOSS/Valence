@@ -1,8 +1,16 @@
 import { PICTURE_SHADER } from './PICTURE_SHADER';
 import { fitWithin } from './fitWithin';
+import type { HdrSignal } from './HdrSignal';
+
+const SDR_WHITE_NITS = 203;
+
+const SIGNALS: Readonly<Record<'sdr' | HdrSignal, number>> = { sdr: 0, pq: 1, hlg: 2 };
+
+type Grade = { signal: 'sdr' | HdrSignal; isWideGamut: boolean; sourcePeakNits: number };
 
 type PicturePresenter = {
   gpu: string | null;
+  grade: (grade: Grade) => void;
   show: (frame: VideoFrame, shape: { width: number; height: number }) => void;
   destroy: () => void;
 };
@@ -13,6 +21,10 @@ type PicturePresenter = {
  * bars for the rest. The canvas is kept at its laid-out size in device pixels, up to the largest
  * texture the GPU allows, and the last frame is drawn again whenever that size changes, so resizing
  * the window never leaves a stretched or empty picture.
+ *
+ * HDR frames that reach it as their encoded PQ or HLG signal are tone mapped on the way: decoded to
+ * light, rolled off from the film's peak to SDR white with the BT.2390 curve on the brightest
+ * channel, so colours keep their hue, and taken from BT.2020 to BT.709 where they are that wide.
  *
  * It names the GPU it drew with, where the browser says, for anybody reading the stats.
  *
@@ -51,6 +63,20 @@ const createPicturePresenter = async (
     primitive: { topology: 'triangle-list' },
   });
   const sampler = device.createSampler({ magFilter: 'linear', minFilter: 'linear' });
+  const grading = device.createBuffer({
+    size: 16,
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+  });
+
+  const writeGrade = ({ signal, isWideGamut, sourcePeakNits }: Grade) => {
+    const values = new ArrayBuffer(16);
+
+    new Uint32Array(values, 0, 2).set([SIGNALS[signal], isWideGamut ? 1 : 0]);
+    new Float32Array(values, 8, 2).set([Math.max(sourcePeakNits, SDR_WHITE_NITS), SDR_WHITE_NITS]);
+    device.queue.writeBuffer(grading, 0, values);
+  };
+
+  writeGrade({ signal: 'sdr', isWideGamut: false, sourcePeakNits: SDR_WHITE_NITS });
   const largest = device.limits.maxTextureDimension2D;
 
   context.configure({ device, format, alphaMode: 'opaque' });
@@ -76,6 +102,8 @@ const createPicturePresenter = async (
 
   return {
     gpu: named === '' ? null : named,
+
+    grade: writeGrade,
 
     show: (frame, shape) => {
       if (life.isOver) {
@@ -105,6 +133,7 @@ const createPicturePresenter = async (
           entries: [
             { binding: 0, resource: sampler },
             { binding: 1, resource: device.importExternalTexture({ source: frame }) },
+            { binding: 2, resource: { buffer: grading } },
           ],
         }),
       );

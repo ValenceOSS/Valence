@@ -1,12 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createSoundFeed } from '@ValenceScreens/playback/engine/createSoundFeed';
+import { createMediaFeed } from '@ValenceScreens/playback/engine/createMediaFeed';
 import { BufferSource, Input } from 'mediabunny';
 import type { InputAudioTrack } from 'mediabunny';
 
 const init = vi.fn<(options: object) => Promise<object>>();
 
 vi.mock('mediabunny', () => ({
+  AudioSample: class {},
   BufferSource: class {},
+  canEncodeAudio: () => Promise.resolve(false),
   Input: class {},
   Conversion: { init: (options: object) => init(options) },
   ConversionCanceledError: class extends Error {},
@@ -61,10 +63,11 @@ const aMediaSource = (plays: (mimeType: string) => boolean) => {
  */
 const aTrack = (
   codec: string,
-): Pick<InputAudioTrack, 'id' | 'codec' | 'getCodecParameterString'> => ({
+): Pick<InputAudioTrack, 'id' | 'codec' | 'getCodecParameterString' | 'getNumberOfChannels'> => ({
   id: 2,
   codec: null,
   getCodecParameterString: () => Promise.resolve(codec),
+  getNumberOfChannels: () => Promise.resolve(2),
 });
 
 /**
@@ -80,7 +83,25 @@ afterEach(() => {
   init.mockReset();
 });
 
-describe('createSoundFeed', () => {
+describe('createMediaFeed', () => {
+  it('copies the picture alongside the sound where it is given one', async () => {
+    const source = aMediaSource(() => true);
+
+    vi.stubGlobal('MediaSource', source.MediaSource);
+    vi.stubGlobal('URL', { ...URL, createObjectURL: () => 'blob:film', revokeObjectURL: vi.fn() });
+
+    await createMediaFeed({
+      element: document.createElement('video'),
+      input: anInput(),
+      duration: 60,
+      track: aTrack('mp4a.40.2'),
+      picture: { id: 1, getCodecParameterString: () => Promise.resolve('hvc1.2.4.L153.B0') },
+      onFault: vi.fn(),
+    });
+
+    expect(source.asked).toEqual(['video/mp4; codecs="hvc1.2.4.L153.B0, mp4a.40.2"']);
+  });
+
   it('hands the element the track as it is where the element plays it, placed at the start', async () => {
     const source = aMediaSource((mimeType) => mimeType.includes('mp4a'));
 
@@ -89,7 +110,7 @@ describe('createSoundFeed', () => {
     init.mockResolvedValue({ isValid: true, execute: () => Promise.resolve(), cancel: vi.fn() });
 
     const element = document.createElement('video');
-    const feed = await createSoundFeed({
+    const feed = await createMediaFeed({
       element,
       input: anInput(),
       duration: 60,
@@ -110,7 +131,7 @@ describe('createSoundFeed', () => {
     vi.stubGlobal('MediaSource', source.MediaSource);
     vi.stubGlobal('URL', { ...URL, createObjectURL: () => 'blob:sound', revokeObjectURL: vi.fn() });
 
-    await createSoundFeed({
+    await createMediaFeed({
       element: document.createElement('video'),
       input: anInput(),
       duration: 60,

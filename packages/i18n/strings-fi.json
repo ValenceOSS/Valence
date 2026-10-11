@@ -26736,6 +26736,11 @@
     "context": "Shown in the video player."
   },
   {
+    "handler": "screens.videoPlayer.streamStats.byTheBrowser",
+    "text": "By the browser",
+    "context": "Stats for nerds, tone mapping row: the browser tone maps the HDR picture for this SDR screen itself."
+  },
+  {
     "handler": "screens.videoPlayer.streamStats.carriedAsItIs",
     "text": "Carried as it is",
     "context": "Stats for nerds, browser player card: the film's sound is handed to the browser unchanged."
@@ -26746,14 +26751,49 @@
     "context": "The label of a button in the stream stats in the video player."
   },
   {
-    "handler": "screens.videoPlayer.streamStats.encodedAgainAsOpus",
-    "text": "Decoded here, encoded again as Opus",
-    "context": "Stats for nerds, browser player card: the browser can't play the film's sound, so the page decodes it and encodes it again as Opus."
+    "handler": "screens.videoPlayer.streamStats.encodedAgainAsCodec",
+    "text": "Decoded here, encoded again as {codec} {channels}ch",
+    "context": "Stats for nerds, browser player card: the browser can't play the film's sound, so the page decodes it and encodes it again. {codec} is the codec's technical name, opus or aac; {channels} how many channels."
+  },
+  {
+    "handler": "screens.videoPlayer.streamStats.mediabunny",
+    "text": "Mediabunny",
+    "context": "Stats for nerds, browser player card: the name of the library that repackages the file in the browser. A product name; usually left untranslated."
+  },
+  {
+    "handler": "screens.videoPlayer.streamStats.noneShownAsHdr",
+    "text": "None, shown as HDR",
+    "context": "Stats for nerds, tone mapping row: the screen shows HDR, so nothing is tone mapped."
+  },
+  {
+    "handler": "screens.videoPlayer.streamStats.repackagedInTheBrowser",
+    "text": "Repackaged in the browser",
+    "context": "Stats for nerds, which player is playing: Mediabunny repackages the file in the browser and hands it to the video element through Media Source Extensions. Technical names; usually left untranslated."
+  },
+  {
+    "handler": "screens.videoPlayer.streamStats.shakaPlayingHls",
+    "text": "Shaka, playing HLS",
+    "context": "Stats for nerds, which player is playing: the Shaka Player library plays a stream the server makes, in HLS. Technical names; usually left untranslated."
+  },
+  {
+    "handler": "screens.videoPlayer.streamStats.signalToSdr",
+    "text": "{signal} to SDR, BT.2390",
+    "context": "Stats for nerds, browser player card: the HDR picture is tone mapped for an SDR screen. {signal} is PQ or HLG; BT.2390 is the name of the curve."
+  },
+  {
+    "handler": "screens.videoPlayer.streamStats.theBrowsersMediaElement",
+    "text": "The browser’s media element",
+    "context": "Stats for nerds, which player is playing: the browser's own video element plays the file the server sends as it is."
   },
   {
     "handler": "screens.videoPlayer.streamStats.thisTabKeepsTime",
     "text": "this tab keeps time",
     "context": "Shown in the stream stats in the video player."
+  },
+  {
+    "handler": "screens.videoPlayer.streamStats.valencesWebGpuPlayer",
+    "text": "Valence’s WebGPU player",
+    "context": "Stats for nerds, which player is playing: Valence's own player, reading with Mediabunny, decoding with WebCodecs and drawing with WebGPU. Technical names; usually left untranslated."
   },
   {
     "handler": "screens.videoPlayer.streamStats.widthByHeightAtKbps",

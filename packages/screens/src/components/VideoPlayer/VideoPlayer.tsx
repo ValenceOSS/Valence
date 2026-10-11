@@ -126,6 +126,8 @@ import { PlayOnDialog } from '@ValenceScreens/components/PlayOnDialog/PlayOnDial
 import { useVideoDevices } from '@ValenceClient/video/useVideoDevices';
 import { PictureCanvas } from '@ValenceUI/PictureCanvas';
 import { attachEngine } from '@ValenceScreens/playback/engine/attachEngine';
+import { attachRemux } from '@ValenceScreens/playback/engine/attachRemux';
+import { chooseBrowserRoute } from '@ValenceClient/playback/chooseBrowserRoute';
 import { readEngineSupport } from '@ValenceScreens/playback/readEngineSupport';
 import { withTheEngine } from '@ValenceClient/playback/withTheEngine';
 import { isPlayedNatively } from '@ValenceClient/playback/isPlayedNatively';
@@ -611,7 +613,7 @@ const VideoPlayer = ({
 
   const wasCastingRef = useRef(false);
 
-  const start = useCallback((element: HTMLVideoElement) => {
+  const start = useCallback((element: HTMLVideoElement, mayReload = true) => {
     let attempts = 0;
 
     const attempt = () => {
@@ -635,7 +637,7 @@ const VideoPlayer = ({
     startTimerRef.current = setInterval(() => {
       attempts += 1;
 
-      if (attempts > START_ATTEMPTS || element.readyState > 0 || !element.paused) {
+      if (!mayReload || attempts > START_ATTEMPTS || element.readyState > 0 || !element.paused) {
         clearInterval(startTimerRef.current ?? undefined);
         startTimerRef.current = null;
 
@@ -832,12 +834,14 @@ const VideoPlayer = ({
         readPlaybackPreferences().playsInTheBrowser
           ? await cache.ensureQueryData(libraryQueries.detail(request.mediaId)).catch(() => null)
           : null;
-      const engine = film === null || film.videoRange !== 'SDR' ? null : await readEngineSupport();
+      const engine = film === null ? null : await readEngineSupport();
       const outcome =
         keptSource === undefined
           ? await startPlaybackSession(
               request.mediaId,
-              engine === null ? deviceProfile : withTheEngine(deviceProfile, engine),
+              engine === null || film === null
+                ? deviceProfile
+                : withTheEngine(deviceProfile, engine, { isHdr: film.videoRange !== 'SDR' }),
               clientId,
               request.startSeconds,
               request.audioStreamIndex,
@@ -909,32 +913,43 @@ const VideoPlayer = ({
             videoCodec: film.videoCodec,
             audioCodec: film.audioStreams[Math.max(heard, 0)]?.codec ?? '',
           });
+        const route =
+          engine === null || film === null
+            ? null
+            : chooseBrowserRoute(film, engine, window.matchMedia('(dynamic-range: high)').matches);
 
         if (
           isTheEngines &&
+          route !== null &&
           outcome.session.delivery.kind === 'direct' &&
           pictureRef.current !== null
         ) {
-          setIsDrawnByTheEngine(true);
+          const handOver = () => {
+            if (isAbandoned()) {
+              return;
+            }
 
-          const attached = await attachEngine({
+            engineRefusedRef.current = true;
+            setRequest((asked) => ({
+              ...asked,
+              startSeconds: Math.floor(videoRef.current?.currentTime ?? asked.startSeconds),
+            }));
+          };
+          const toPlay = {
             element,
-            canvas: pictureRef.current,
             url: outcome.session.delivery.url,
             startSeconds: request.startSeconds,
             audioTrackAt: Math.max(heard, 0),
-            onFault: () => {
-              if (isAbandoned()) {
-                return;
-              }
+            onFault: handOver,
+          };
 
-              engineRefusedRef.current = true;
-              setRequest((asked) => ({
-                ...asked,
-                startSeconds: Math.floor(videoRef.current?.currentTime ?? asked.startSeconds),
-              }));
-            },
-          }).catch(() => null);
+          setIsDrawnByTheEngine(route === 'webgpu');
+
+          const attached = await (
+            route === 'webgpu'
+              ? attachEngine({ ...toPlay, canvas: pictureRef.current })
+              : attachRemux(toPlay)
+          ).catch(() => null);
 
           if (attached === null) {
             if (!isAbandoned()) {
@@ -994,7 +1009,7 @@ const VideoPlayer = ({
           setState('playing');
           setPosition(element.currentTime);
 
-          start(element);
+          start(element, !isTheEngines);
         }
       } catch (error) {
         if (!isAbandoned()) {
@@ -2249,7 +2264,7 @@ const VideoPlayer = ({
               detail={detail}
               health={health}
               delivered={delivered}
-              engine={isDrawnByTheEngine ? engineStats : null}
+              engine={engineStats}
               sessionStartSeconds={request.startSeconds}
               {...(party === undefined
                 ? {}

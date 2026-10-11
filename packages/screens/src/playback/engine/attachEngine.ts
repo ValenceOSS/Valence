@@ -1,12 +1,22 @@
-import { ALL_FORMATS, Input, UrlSource, VideoSampleSink } from 'mediabunny';
+import { ALL_FORMATS, EncodedPacketSink, Input, UrlSource, VideoSampleSink } from 'mediabunny';
 import { createFrameQueue } from './createFrameQueue';
+import { createHdrFrameSource } from './createHdrFrameSource';
 import { createPicturePresenter } from './createPicturePresenter';
-import { createSoundFeed } from './createSoundFeed';
-import type { VideoSample } from 'mediabunny';
+import { createMediaFeed } from './createMediaFeed';
 import type { DeliveredFormat } from '@ValenceScreens/playback/attachShaka';
 import type { EngineStats } from './EngineStats';
 
+const NEAR_THE_END_SECONDS = 0.25;
+
 const STILL_DECODING_SECONDS = 1;
+
+const ASSUMED_PEAK_NITS = 1000;
+
+type Drawable = {
+  timestamp: number;
+  close: () => void;
+  present: (draw: (frame: VideoFrame) => void) => void;
+};
 
 type EngineOptions = {
   element: HTMLVideoElement;
@@ -23,6 +33,10 @@ type EngineOptions = {
  * and its sound handed to the media element underneath, which stays the clock — so the controls,
  * seeking, volume and the events everything else listens for work exactly as they do for a file the
  * element plays itself.
+ *
+ * The sound is read through a file of its own, so that running thirty seconds ahead never evicts
+ * from the cache the pieces the picture is about to need — at a 4K film's bitrate the two would
+ * otherwise take turns waiting on the network.
  *
  * Each animation frame draws the newest decoded frame at or before the element's time, whether it
  * is playing, paused or being scrubbed. A seek the decoder is already ahead of costs nothing; any
@@ -94,18 +108,70 @@ const attachEngine = async ({
     audio.getNumberOfChannels(),
     audio.getSampleRate(),
   ]);
-  const frames = createFrameQueue(new VideoSampleSink(video), fail);
-  const sound = await createSoundFeed({ element, input, duration, track: audio, onFault: fail });
-  const shown: { sample: VideoSample | null } = { sample: null };
+  const hdr = await createHdrFrameSource(video, new EncodedPacketSink(video));
+  const plain = new VideoSampleSink(video);
+  const frames = createFrameQueue<Drawable>(
+    {
+      samples: async function* (from) {
+        if (hdr !== null) {
+          for await (const decoded of hdr.samples(from)) {
+            yield {
+              timestamp: decoded.timestamp,
+              close: decoded.close,
+              present: (draw) => {
+                draw(decoded.frame);
+              },
+            };
+          }
 
-  const show = (sample: VideoSample) => {
-    const frame = sample.toVideoFrame();
+          return;
+        }
 
-    try {
+        for await (const sample of plain.samples(from)) {
+          yield {
+            timestamp: sample.timestamp,
+            close: () => {
+              sample.close();
+            },
+            present: (draw) => {
+              const frame = sample.toVideoFrame();
+
+              try {
+                draw(frame);
+              } finally {
+                frame.close();
+              }
+            },
+          };
+        }
+      },
+    },
+    fail,
+  );
+
+  presenter.grade(
+    hdr === null
+      ? { signal: 'sdr', isWideGamut: false, sourcePeakNits: ASSUMED_PEAK_NITS }
+      : { signal: hdr.signal, isWideGamut: hdr.isWideGamut, sourcePeakNits: ASSUMED_PEAK_NITS },
+  );
+  const soundInput = new Input({
+    source: new UrlSource(url, { requestInit: { credentials: 'same-origin' } }),
+    formats: ALL_FORMATS,
+  });
+  const soundTracks = await soundInput.getAudioTracks();
+  const feed = await createMediaFeed({
+    element,
+    input: soundInput,
+    duration,
+    track: soundTracks[audioTracks.indexOf(audio)] ?? audio,
+    onFault: fail,
+  });
+  const shown: { sample: Drawable | null } = { sample: null };
+
+  const show = (sample: Drawable) => {
+    sample.present((frame) => {
       presenter.show(frame, shape);
-    } finally {
-      frame.close();
-    }
+    });
   };
 
   const draw = () => {
@@ -143,8 +209,8 @@ const attachEngine = async ({
       frames.startAt(at);
     }
 
-    if (!sound.holds(at)) {
-      void sound.startAt(at).catch(() => {
+    if (!feed.holds(at) && at < duration - NEAR_THE_END_SECONDS) {
+      void feed.startAt(at).catch(() => {
         fail();
       });
     }
@@ -152,7 +218,7 @@ const attachEngine = async ({
 
   element.style.aspectRatio = `${shape.width.toString()} / ${shape.height.toString()}`;
   frames.startAt(startSeconds);
-  await sound.startAt(startSeconds);
+  await feed.startAt(startSeconds);
   element.currentTime = startSeconds;
   element.addEventListener('seeking', onSeeking);
   redraw.observe(canvas);
@@ -161,14 +227,14 @@ const attachEngine = async ({
   return {
     readDelivered: () => ({
       videoCodec: decoder,
-      audioCodec: sound.isCarried ? audio.codec : 'opus',
+      audioCodec: feed.sound.parameter,
       mimeType: container,
       width: shape.width,
       height: shape.height,
       frameRate: null,
       bitrateKbps: null,
-      audioSampleRate: sound.isCarried ? sampleRate : 48_000,
-      audioChannels: sound.isCarried ? channels : 2,
+      audioSampleRate: feed.sound.kind === 'carried' ? sampleRate : 48_000,
+      audioChannels: feed.sound.kind === 'carried' ? channels : feed.sound.numberOfChannels,
     }),
 
     readEngine: () => {
@@ -176,9 +242,13 @@ const attachEngine = async ({
       const reaches = frames.reaches();
 
       return {
+        route: 'webgpu',
         gpu: presenter.gpu,
-        decoder,
-        isSoundCarried: sound.isCarried,
+        hdrSignal: hdr?.signal ?? null,
+        isHdrFilm: hdr !== null,
+        container,
+        sound: feed.sound.kind === 'carried' ? 'carried' : feed.sound.codec,
+        soundChannels: feed.sound.kind === 'carried' ? channels : feed.sound.numberOfChannels,
         decodedFrames: counted.decoded,
         drawnFrames: life.drawn,
         skippedFrames: counted.skipped,
@@ -198,9 +268,10 @@ const attachEngine = async ({
       frames.stop();
       shown.sample?.close();
       shown.sample = null;
-      await sound.stop();
+      await feed.stop();
       presenter.destroy();
       input.dispose();
+      soundInput.dispose();
       element.style.aspectRatio = '';
     },
   };

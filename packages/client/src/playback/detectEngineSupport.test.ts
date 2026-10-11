@@ -19,10 +19,26 @@ const aBrowser = (overrides: Partial<EnginesBrowser> = {}): EnginesBrowser => ({
 });
 
 describe('detectEngineSupport', () => {
+  it('claims the pictures the element decodes once repackaged, and HEVC it can tone map', async () => {
+    const support = await detectEngineSupport(
+      aBrowser({
+        canDecodeVideo: ({ codec }) => Promise.resolve(codec.startsWith('hvc1')),
+        canStream: (mimeType) => /mp4a|opus|hvc1\.2|avc1/.test(mimeType),
+      }),
+    );
+
+    expect(support.remuxVideoCodecs).toEqual(['h264']);
+    expect(support.remuxTenBitVideoCodecs).toEqual(['hevc']);
+    expect(support.toneMapsHevc).toBe(true);
+  });
+
   it('claims the pictures WebCodecs decodes and the sounds the element takes or the page decodes', async () => {
     expect(await detectEngineSupport(aBrowser())).toEqual({
       videoCodecs: ['h264', 'hevc', 'av1'],
       tenBitVideoCodecs: [],
+      remuxVideoCodecs: [],
+      remuxTenBitVideoCodecs: [],
+      toneMapsHevc: false,
       audioCodecs: ['aac', 'opus', 'vorbis', 'ac3', 'eac3', 'pcm'],
     });
   });
@@ -42,7 +58,8 @@ describe('detectEngineSupport', () => {
   it('claims nothing without a GPU to draw with', async () => {
     const support = await detectEngineSupport(aBrowser({ hasGpu: () => Promise.resolve(false) }));
 
-    expect(support).toEqual({ videoCodecs: [], tenBitVideoCodecs: [], audioCodecs: [] });
+    expect(support.videoCodecs).toEqual([]);
+    expect(support.remuxVideoCodecs).toEqual([]);
   });
 
   it('counts a decoder that throws as one that cannot decode', async () => {

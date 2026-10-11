@@ -1,11 +1,15 @@
 import {
+  AudioSample,
   Conversion,
   ConversionCanceledError,
   Mp4OutputFormat,
   Output,
   StreamTarget,
 } from 'mediabunny';
-import type { Input, InputAudioTrack, StreamTargetChunk } from 'mediabunny';
+import { chooseSoundRoute } from './chooseSoundRoute';
+import { downmixToStereo } from './downmixToStereo';
+import type { Input, InputAudioTrack, InputVideoTrack, StreamTargetChunk } from 'mediabunny';
+import type { SoundRoute } from './chooseSoundRoute';
 
 const HELD_AHEAD_SECONDS = 30;
 
@@ -13,12 +17,12 @@ const KEPT_BEHIND_SECONDS = 30;
 
 const LOOKS_AGAIN_MS = 500;
 
-const FRAGMENT_SECONDS = 2;
+const FRAGMENT_SECONDS = 1;
 
-const RE_ENCODED_AS = 'audio/mp4; codecs="opus"';
+const SAMPLE_RATE = 48_000;
 
-type SoundFeed = {
-  isCarried: boolean;
+type MediaFeed = {
+  sound: SoundRoute;
   startAt: (seconds: number) => Promise<void>;
   holds: (seconds: number) => boolean;
   stop: () => Promise<void>;
@@ -37,42 +41,97 @@ const once = (target: EventTarget, name: string): Promise<void> =>
   });
 
 /**
- * Plays a file's sound through the media element, which stays the clock everything else follows:
- * the chosen track is repackaged into fragmented MP4 as it goes and appended to the element through
- * Media Source Extensions, as it is where the element plays that codec, and decoded and encoded
- * again as stereo Opus where it does not.
+ * The type a Media Source buffer is opened with for a picture and sound, or for sound alone.
+ *
+ * @param picture - The picture's codec string, where the picture goes too.
+ * @param sound - The sound's codec string.
+ * @returns The type.
+ */
+const typeOf = (picture: string | null, sound: string): string =>
+  picture === null ? `audio/mp4; codecs="${sound}"` : `video/mp4; codecs="${picture}, ${sound}"`;
+
+/**
+ * A sound sample folded into stereo by Valence's own downmix, which keeps the centre channel the
+ * dialogue is in.
+ *
+ * @param sample - The sample, in any number of channels.
+ * @returns The sample in two.
+ */
+const stereoOf = (sample: AudioSample): AudioSample => {
+  if (sample.numberOfChannels <= 2) {
+    return sample;
+  }
+
+  const planes = Array.from({ length: sample.numberOfChannels }, (_, planeIndex) => {
+    const plane = new Float32Array(sample.numberOfFrames);
+
+    sample.copyTo(plane, { planeIndex, format: 'f32-planar' });
+
+    return plane;
+  });
+  const [left, right] = downmixToStereo(planes);
+  const data = new Float32Array(left.length * 2);
+
+  data.set(left);
+  data.set(right, left.length);
+
+  const stereo = new AudioSample({
+    data,
+    format: 'f32-planar',
+    numberOfChannels: 2,
+    sampleRate: sample.sampleRate,
+    timestamp: sample.timestamp,
+  });
+
+  sample.close();
+
+  return stereo;
+};
+
+/**
+ * Plays a file through the media element by repackaging it here: the chosen sound track, and the
+ * picture too where it is given one, are written into fragmented MP4 as they go and appended to the
+ * element through Media Source Extensions. The picture is copied exactly as it was encoded, HDR and
+ * Dolby Vision included, so the element shows it as it would show any file of its own. The sound is
+ * copied where the element plays its codec, and decoded and encoded again otherwise, keeping every
+ * channel where this browser can encode that many and folded into stereo by Valence's own downmix
+ * where it cannot, so the dialogue in the centre channel is never lost.
+ *
+ * Starting counts as done once the element holds media to play, not merely the file's header, so
+ * nothing waiting on the element mistakes a slow first fragment for a stream that failed.
  *
  * The feed keeps thirty seconds ahead of the element and thirty behind, waiting rather than reading
  * the whole film into memory. Seeking somewhere the element already holds needs nothing; seeking
- * anywhere else empties the element and starts the sound again from there, placed at the right time
- * so the clock reads the film's own time throughout.
+ * anywhere else empties the element and starts again from the key frame before that point, placed
+ * at the right time so the clock reads the film's own time throughout.
  *
- * @param options - The element, the opened file, its length, the track to play, and where to say a
- *   failure.
+ * @param options - The element, the opened file, its length, the sound track, the picture where it
+ *   goes too, and where to say a failure.
  * @returns The feed, once the element has been given its source.
  */
-const createSoundFeed = async ({
+const createMediaFeed = async ({
   element,
   input,
   duration,
   track,
+  picture = null,
   onFault,
 }: {
   element: HTMLVideoElement;
   input: Input;
   duration: number;
-  track: Pick<InputAudioTrack, 'id' | 'codec' | 'getCodecParameterString'>;
+  track: Pick<InputAudioTrack, 'id' | 'codec' | 'getCodecParameterString' | 'getNumberOfChannels'>;
+  picture?: Pick<InputVideoTrack, 'id' | 'getCodecParameterString'> | null;
   onFault: () => void;
-}): Promise<SoundFeed> => {
-  const ownCodec = await track.getCodecParameterString();
-  const ownType = ownCodec === null ? null : `audio/mp4; codecs="${ownCodec}"`;
-  const carriedType = ownType !== null && MediaSource.isTypeSupported(ownType) ? ownType : null;
-  const isCarried = carriedType !== null;
+}): Promise<MediaFeed> => {
+  const plays = (mimeType: string) => MediaSource.isTypeSupported(mimeType);
+  const sound = await chooseSoundRoute(track, plays);
+  const pictureCodec = picture === null ? null : await picture.getCodecParameterString();
   const source = new MediaSource();
   const address = URL.createObjectURL(source);
   const opened = once(source, 'sourceopen');
 
-  if (!isCarried && ['ac3', 'eac3'].includes(track.codec ?? '')) {
+  if (sound.kind === 'encoded' && ['ac3', 'eac3'].includes(track.codec ?? '')) {
     const { registerAc3Decoder } = await import('@mediabunny/ac3');
 
     registerAc3Decoder();
@@ -82,7 +141,7 @@ const createSoundFeed = async ({
   await opened;
   source.duration = duration;
 
-  const buffer = source.addSourceBuffer(carriedType ?? RE_ENCODED_AS);
+  const buffer = source.addSourceBuffer(typeOf(pictureCodec, sound.parameter));
   const state: { run: number; conversion: Conversion | null; queue: Promise<void> } = {
     run: 0,
     conversion: null,
@@ -159,7 +218,11 @@ const createSoundFeed = async ({
             }
 
             await inTurn(() => append(chunk.data));
-            firstAppended();
+
+            if (buffer.buffered.length > 0) {
+              firstAppended();
+            }
+
             await roomFor(run);
           },
         }),
@@ -168,14 +231,22 @@ const createSoundFeed = async ({
     const conversion = await Conversion.init({
       input,
       output,
-      video: { discard: true },
+      video: (candidate) => (candidate.id === picture?.id ? {} : { discard: true }),
       audio: (candidate) =>
         candidate.id !== track.id
           ? { discard: true }
-          : isCarried
+          : sound.kind === 'carried'
             ? {}
-            : { codec: 'opus', numberOfChannels: 2, sampleRate: 48_000, forceTranscode: true },
+            : {
+                codec: sound.codec,
+                sampleRate: SAMPLE_RATE,
+                forceTranscode: true,
+                ...(sound.numberOfChannels === 2
+                  ? { process: stereoOf, processedNumberOfChannels: 2 }
+                  : { numberOfChannels: sound.numberOfChannels }),
+              },
       trim: { start: seconds },
+      copy: { boundaryPolicy: 'expand' },
       showWarnings: false,
     });
 
@@ -213,7 +284,7 @@ const createSoundFeed = async ({
   };
 
   return {
-    isCarried,
+    sound,
 
     startAt: async (seconds) => {
       await cancelRunning();
@@ -258,6 +329,6 @@ const createSoundFeed = async ({
   };
 };
 
-export type { SoundFeed };
+export type { MediaFeed };
 
-export { createSoundFeed };
+export { createMediaFeed };

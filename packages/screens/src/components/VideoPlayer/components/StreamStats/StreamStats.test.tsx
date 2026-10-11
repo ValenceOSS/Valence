@@ -110,9 +110,13 @@ describe('StreamStats', () => {
   it('says how the browser’s own player is keeping up, where it is the one playing', () => {
     draw({
       engine: {
+        route: 'webgpu',
         gpu: 'apple metal-3',
-        decoder: 'hvc1.1.6.L153.B0',
-        isSoundCarried: false,
+        hdrSignal: 'pq',
+        isHdrFilm: true,
+        container: 'video/x-matroska',
+        sound: 'opus',
+        soundChannels: 8,
         decodedFrames: 1440,
         drawnFrames: 1432,
         skippedFrames: 8,
@@ -120,11 +124,40 @@ describe('StreamStats', () => {
       },
     });
 
-    expect(screen.getByText('Transcode · WebGPU')).toBeInTheDocument();
-    expect(screen.getByText('WebGPU')).toBeInTheDocument();
+    expect(screen.getByText('Valence WebGPU (Mediabunny + WebCodecs)')).toBeInTheDocument();
     expect(screen.getByText('apple metal-3')).toBeInTheDocument();
-    expect(screen.getByText('WebCodecs')).toBeInTheDocument();
-    expect(screen.getByText('Decoded here, encoded again as Opus')).toBeInTheDocument();
+    expect(screen.getByText('PQ to SDR, BT.2390')).toBeInTheDocument();
+    expect(screen.getByText('Decoded here, encoded again as opus 8ch')).toBeInTheDocument();
+  });
+
+  it('says a file repackaged in the browser is shown by the media element', () => {
+    draw({
+      engine: {
+        route: 'remux',
+        gpu: null,
+        hdrSignal: null,
+        isHdrFilm: false,
+        container: 'video/x-matroska; codecs="hev1"',
+        sound: 'carried',
+        soundChannels: 6,
+        decodedFrames: 0,
+        drawnFrames: 0,
+        skippedFrames: 0,
+        decodedAheadSeconds: null,
+      },
+    });
+
+    expect(screen.getByText('Mediabunny → Media Source → <video>')).toBeInTheDocument();
+    expect(screen.getByText('video/x-matroska → video/mp4')).toBeInTheDocument();
+    expect(screen.queryByText('GPU')).not.toBeInTheDocument();
+    expect(screen.getByText('Carried as it is')).toBeInTheDocument();
+    expect(screen.queryByText('Frames drawn')).not.toBeInTheDocument();
+  });
+
+  it('names Shaka as the player for a stream the server makes', () => {
+    draw();
+
+    expect(screen.getByText('Shaka Player (HLS)')).toBeInTheDocument();
   });
 
   it('shows no browser player card where the browser is not the one playing', () => {

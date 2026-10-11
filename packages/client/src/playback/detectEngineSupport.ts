@@ -15,6 +15,19 @@ const TEN_BIT_VIDEO_PROBES = [
   { codec: 'vp9', config: 'vp09.02.41.10' },
 ] as const;
 
+const REMUXED_VIDEO = [
+  { codec: 'h264', mimeType: 'video/mp4; codecs="avc1.640033"' },
+  { codec: 'hevc', mimeType: 'video/mp4; codecs="hvc1.1.6.L153.B0"' },
+  { codec: 'av1', mimeType: 'video/mp4; codecs="av01.0.13M.08"' },
+  { codec: 'vp9', mimeType: 'video/mp4; codecs="vp09.00.41.08"' },
+] as const;
+
+const REMUXED_TEN_BIT_VIDEO = [
+  { codec: 'hevc', mimeType: 'video/mp4; codecs="hvc1.2.4.L153.B0"' },
+  { codec: 'av1', mimeType: 'video/mp4; codecs="av01.0.13M.10"' },
+  { codec: 'vp9', mimeType: 'video/mp4; codecs="vp09.02.41.10"' },
+] as const;
+
 const CARRIED_AUDIO = [
   { codec: 'aac', mimeType: 'audio/mp4; codecs="mp4a.40.2"' },
   { codec: 'opus', mimeType: 'audio/mp4; codecs="opus"' },
@@ -38,7 +51,14 @@ const RE_ENCODED_AS = 'audio/mp4; codecs="opus"';
 
 const UHD = { codedWidth: 3840, codedHeight: 2160 };
 
-const NOTHING: EngineSupport = { videoCodecs: [], tenBitVideoCodecs: [], audioCodecs: [] };
+const NOTHING: EngineSupport = {
+  videoCodecs: [],
+  tenBitVideoCodecs: [],
+  remuxVideoCodecs: [],
+  remuxTenBitVideoCodecs: [],
+  toneMapsHevc: false,
+  audioCodecs: [],
+};
 
 /**
  * Asks a probe without letting a browser that throws, rather than answering no, spoil the rest.
@@ -55,11 +75,14 @@ const answerOf = async (asking: () => Promise<boolean>): Promise<boolean> => {
 };
 
 /**
- * What this browser's own player — WebCodecs to decode, WebGPU to draw, and the media element fed
- * the sound — can play beyond what the media element plays by itself, by asking each decoder rather
- * than reading the browser's name.
+ * What this browser can play beyond what the media element plays from a file by itself, by asking
+ * each decoder rather than reading the browser's name: the pictures its own player decodes with
+ * WebCodecs and draws with WebGPU, the pictures the element decodes once a file is repackaged here
+ * into fragmented MP4, whether 10-bit HEVC can be decoded here for Valence to tone map, and the
+ * sounds either can be given.
  *
- * A picture counts where WebCodecs decodes it at 4K. A sound counts where the media element takes it
+ * A picture counts for the player where WebCodecs decodes it at 4K, and for repackaging where Media
+ * Source Extensions take it in MP4. A sound counts where the media element takes it
  * repackaged into fragmented MP4 as it is, or where it can be decoded here and an Opus encoder exists
  * to hand it on — AC-3, E-AC-3 and PCM are decoded in the page whatever the browser says, which is
  * how Dolby plays on a Linux browser that has no Dolby of its own. Nothing is claimed without a GPU,
@@ -117,9 +140,23 @@ const detectEngineSupport = async (browser: EnginesBrowser): Promise<EngineSuppo
   ];
   const videoCodecs = await decodes(VIDEO_PROBES);
 
-  return videoCodecs.length === 0 || audioCodecs.length === 0
+  const remuxVideoCodecs = REMUXED_VIDEO.filter(({ mimeType }) => canStream(mimeType)).map(
+    ({ codec }) => codec,
+  );
+  const tenBitVideoCodecs = await decodes(TEN_BIT_VIDEO_PROBES);
+
+  return (videoCodecs.length === 0 && remuxVideoCodecs.length === 0) || audioCodecs.length === 0
     ? NOTHING
-    : { videoCodecs, tenBitVideoCodecs: await decodes(TEN_BIT_VIDEO_PROBES), audioCodecs };
+    : {
+        videoCodecs,
+        tenBitVideoCodecs,
+        remuxVideoCodecs,
+        remuxTenBitVideoCodecs: REMUXED_TEN_BIT_VIDEO.filter(({ mimeType }) =>
+          canStream(mimeType),
+        ).map(({ codec }) => codec),
+        toneMapsHevc: tenBitVideoCodecs.includes('hevc'),
+        audioCodecs,
+      };
 };
 
 export { detectEngineSupport };
