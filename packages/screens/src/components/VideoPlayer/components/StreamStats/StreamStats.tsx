@@ -1,7 +1,7 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Icon } from '@ValenceUI/Icon';
-import { GripHorizontal as GripIcon, X as XIcon } from '@keyline-icons/react';
+import { GripVertical as GripIcon, X as XIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';

@@ -2295,7 +2295,7 @@ const VideoPlayer = ({
             dragMomentum={false}
             dragElastic={0}
             dragConstraints={stageRef}
-            className="pointer-events-none absolute left-3 top-16 w-[min(32rem,calc(100%-1.5rem))]"
+            className="pointer-events-none absolute left-3 top-16 z-50 w-[min(32rem,calc(100%-1.5rem))]"
           >
             <StreamStats
               onGrab={(event) => {
