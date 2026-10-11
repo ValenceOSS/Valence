@@ -15,6 +15,7 @@ type DataTableProps<Row extends RowData> = {
   getRowId?: (row: Row) => string;
   toolbar?: ReactNode;
   getSubRows?: (row: Row) => readonly Row[] | undefined;
+  isOpenAtFirst?: boolean;
   pageSize?: number;
   page?: number;
   onPageChange?: (page: number) => void;

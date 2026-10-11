@@ -86,7 +86,7 @@ import type { GrantedPermission, Permission } from '@ValenceContracts/schemas/Pe
 import type { CreateAppOptions } from '@ValenceServer/api/CreateAppOptions';
 import { refuse } from '@ValenceI18n/refuse';
 import { say } from '@ValenceI18n/say';
-import { webhookRequestOf } from '@ValenceServer/webhooks/webhookRequestOf';
+import { createWebhookRequestReader } from '@ValenceServer/webhooks/createWebhookRequestReader';
 
 const SHARE_JOINER = 'valence_share_joiner';
 
@@ -1220,6 +1220,8 @@ const createAppContext = (options: CreateAppOptions) => {
     realtime?.publish('requests', { changed: true }, { kind: 'everyone' });
   };
 
+  const describeForWebhooks = createWebhookRequestReader(discordIdOf);
+
   /**
    * Says a request's news to anything subscribed, where anything could be.
    *
@@ -1526,16 +1528,16 @@ const createAppContext = (options: CreateAppOptions) => {
     }
 
     void (async () => {
-      if (isNew) {
-        const discordId = (await discordIdOf?.(request.requestedBy.id).catch(() => null)) ?? null;
+      const described = await describeForWebhooks(request);
 
+      if (isNew) {
         sayOfRequest({
           event: 'requests.made',
           data: {
             title: request.title,
             kind: request.kind,
             requestedBy: request.requestedBy.name,
-            request: { ...webhookRequestOf(request), requestedByDiscordId: discordId },
+            request: described,
           },
         });
       }
@@ -1543,7 +1545,7 @@ const createAppContext = (options: CreateAppOptions) => {
       if (isApproved && (isNew || request.approval === 'approved')) {
         sayOfRequest({
           event: 'requests.approved',
-          data: { title: request.title, approvedBy: null, request: webhookRequestOf(request) },
+          data: { title: request.title, approvedBy: null, request: described },
         });
       }
     })();
@@ -1715,6 +1717,8 @@ const createAppContext = (options: CreateAppOptions) => {
     linkPersonOf,
     linkCatalogue: linkingOptions?.catalogue ?? (() => Promise.resolve(null)),
     syncLinkedServer: linkingOptions?.syncServer ?? (() => Promise.resolve(null)),
+    tellLinkedOfChange: linkingOptions?.tellChanged ?? (() => Promise.resolve()),
+    serverPictures: linkingOptions?.pictures,
     isLinkedServerReachable: linkingOptions?.isReachable ?? (() => true),
     linkParties: linkingOptions?.parties ?? null,
     linkedServerTakesRequests: linkingOptions?.takesRequests ?? (() => false),
@@ -1800,6 +1804,7 @@ const createAppContext = (options: CreateAppOptions) => {
     profilesFor,
     sayRequestsChanged,
     sayOfRequest,
+    describeForWebhooks,
     profileForAsk,
     profileOfAccount,
     catalogueFor,

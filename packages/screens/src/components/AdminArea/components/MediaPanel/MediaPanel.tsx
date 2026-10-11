@@ -1,7 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
   Bin as BinFilledIcon,
-  ChevronRight as ChevronRightIcon,
   Copy as CopyFilledIcon,
   EyeOff as EyeOffFilledIcon,
   Film as FilmFilledIcon,
@@ -15,6 +14,9 @@ import {
   Tape as TapeFilledIcon,
 } from '@keyline-icons/react/fill';
 import { useCallback, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { librariesByPlace } from '@ValenceClient/library/librariesByPlace';
+import { linkingQueries } from '@ValenceClient/query/linkingQueries';
 import { LeaveOutDialog } from '@ValenceScreens/components/AdminArea/components/LeaveOutDialog/LeaveOutDialog';
 import type { LeaveOutTarget } from '@ValenceScreens/components/AdminArea/components/LeaveOutDialog/LeaveOutDialog.types';
 import { FindSubtitlesDialog } from '@ValenceScreens/components/FindSubtitlesDialog/FindSubtitlesDialog';
@@ -22,8 +24,8 @@ import { MoveToLibraryDialog } from '@ValenceScreens/components/AdminArea/compon
 import type { MoveTarget } from '@ValenceScreens/components/AdminArea/components/MoveToLibraryDialog/MoveToLibraryDialog.types';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
-import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
+import { RowFoldButton } from '@ValenceScreens/components/AdminArea/components/RowFoldButton/RowFoldButton';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { DataTable } from '@ValenceUI/DataTable';
 import { TabPanel } from '@ValenceUI/TabPanel';
@@ -181,6 +183,7 @@ const MediaPanel = ({
       ),
     [libraries],
   );
+  const faces = useQuery(linkingQueries.faces());
   const [chosenLibrary, setChosenLibrary] = useState<string | null>(null);
   const libraryId = tabs.some((library) => library.id === chosenLibrary)
     ? (chosenLibrary ?? '')
@@ -600,10 +603,7 @@ const MediaPanel = ({
           return (
             <span className={cn('flex min-w-0 items-center gap-3', INDENTS[row.depth] ?? '')}>
               {!holdsParts ? null : row.getCanExpand() ? (
-                <Button
-                  variant="subtle"
-                  size="none"
-                  isIconOnly
+                <RowFoldButton
                   label={
                     title.kind === 'series'
                       ? say(
@@ -626,22 +626,11 @@ const MediaPanel = ({
                             { name: title.name },
                           )
                   }
-                  aria-expanded={isOpen}
-                  onClick={() => {
+                  isOpen={isOpen}
+                  onToggle={() => {
                     row.toggleExpanded();
                   }}
-                  className="size-6 shrink-0"
-                >
-                  <Icon
-                    of={ChevronRightIcon}
-                    size={15}
-                    className={cn(
-                      'transition-transform duration-[var(--duration-fast)] ease-[var(--ease-out)]',
-                      'motion-reduce:transition-none',
-                      isOpen ? 'rotate-90' : '',
-                    )}
-                  />
-                </Button>
+                />
               ) : (
                 <span className="size-6 shrink-0" />
               )}
@@ -765,7 +754,11 @@ const MediaPanel = ({
                   : [
                       {
                         label: say('common.whichLibrary'),
-                        options: tabs.map((library) => ({ id: library.id, label: library.name })),
+                        options: librariesByPlace(tabs, faces.data ?? []).map((one) => ({
+                          id: one.library.id,
+                          label: one.library.name,
+                          group: one.group,
+                        })),
                         value: libraryId,
                         onChange: setChosenLibrary,
                       },

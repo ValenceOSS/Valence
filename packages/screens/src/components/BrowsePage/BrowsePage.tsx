@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { BrowseArea } from '@ValenceScreens/components/BrowseArea/BrowseArea';
 import { showSlug } from '@ValenceCore/functions/showSlug';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
+import { filtersOf } from '@ValenceScreens/navigation/filtersOf';
 import { useShell } from '@ValenceClient/shell/useShell';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
@@ -30,7 +31,7 @@ const kindOf = (section: string): BrowseKind =>
  */
 const BrowsePage = () => {
   const { rememberItems, progress, setStartOverride } = useShell();
-  const { place, go } = usePlace();
+  const { place, go, replace } = usePlace();
   const navigate = useNavigate();
   const watching = useWatchingProfile();
   const favourites = useFavourites(watching);
@@ -49,6 +50,10 @@ const BrowsePage = () => {
       <BrowseArea
         kind={kindOf(place.section)}
         libraryId={place.library}
+        filters={filtersOf(place)}
+        onFiltersChange={(next) => {
+          replace({ genre: null, filters: next.size === 0 ? null : [...next].join(',') });
+        }}
         favourites={[...favourites.kept]}
         keptBooks={[...keptBooks.kept]}
         onOpenBook={(book) => {

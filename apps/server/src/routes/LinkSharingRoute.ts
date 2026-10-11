@@ -10,6 +10,7 @@ import {
   RemotePersonSchema,
   TheirActivitySchema,
   TheirLibrariesSchema,
+  TheirLibraryChoiceSchema,
 } from '@ValenceContracts/schemas/LinkSharing';
 
 const LinkSharingError = RefusalSchema.openapi('LinkSharingError');
@@ -19,6 +20,8 @@ const LinkSharing = LinkSharingSchema.openapi('LinkSharing');
 const RemotePerson = RemotePersonSchema.openapi('RemotePerson');
 
 const IdParams = z.object({ id: z.string().uuid() });
+
+const LibraryParams = z.object({ id: z.string().uuid(), libraryId: z.string().uuid() });
 
 const PersonParams = z.object({ id: z.string().uuid(), personId: z.string().uuid() });
 
@@ -153,6 +156,26 @@ const theirLibrariesRoute = createRoute({
   },
 });
 
+const chooseTheirLibraryRoute = createRoute({
+  method: 'put',
+  path: '/api/linked-servers/{id}/their-libraries/{libraryId}',
+  tags: ['Linked servers'],
+  summary: 'Take one library a linked server shares into this one, or leave it out',
+  request: {
+    params: LibraryParams,
+    body: { content: { 'application/json': { schema: TheirLibraryChoiceSchema } } },
+  },
+  responses: {
+    200: answered(
+      'Whether it is taken now',
+      TheirLibraryChoiceSchema.openapi('TheirLibraryChoice'),
+    ),
+    401: refused('Not signed in'),
+    403: refused('Not allowed to link this server with others'),
+    404: refused('No such linked server'),
+  },
+});
+
 const theirActivityRoute = createRoute({
   method: 'get',
   path: '/api/linked-servers/{id}/their-activity',
@@ -225,6 +248,7 @@ export {
   activityRoute,
   blockPersonRoute,
   changeSharingRoute,
+  chooseTheirLibraryRoute,
   readSharingRoute,
   remotePeopleRoute,
   theirActivityRoute,

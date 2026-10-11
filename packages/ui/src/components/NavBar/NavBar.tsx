@@ -9,6 +9,7 @@ import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { SlidingMark } from '@ValenceUI/SlidingMark';
 import { cn } from '@ValenceUI/cn';
 import { useFitWidth } from '@ValenceUI/useFitWidth';
+import { menuGroupsOf } from '@ValenceUI/menuGroupsOf';
 import { letterArrival, openSpring, popArrival } from '@ValenceUI/animations/reveal';
 import { useOpenAction } from './useOpenAction';
 import type { NavBarProps } from './NavBar.types';
@@ -293,17 +294,16 @@ const NavBar = ({
                   </Button>
                 );
 
+                const { choices } = item;
                 const groups =
-                  item.choices === undefined
+                  choices === undefined
                     ? []
-                    : [
-                        {
-                          name: item.choices.label,
-                          options: [...item.choices.options],
-                          selectedId: item.choices.selectedId,
-                          onSelect: item.choices.onSelect,
-                        },
-                      ];
+                    : menuGroupsOf(
+                        choices.label,
+                        choices.options,
+                        choices.selectedId,
+                        choices.onSelect,
+                      );
 
                 return (
                   <li key={item.id} className="flex shrink-0 items-center">

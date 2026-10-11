@@ -14,6 +14,7 @@ const aLinkIdentity = (change: Partial<LinkIdentity> = {}): LinkIdentity => ({
   publicKey: { kty: 'OKP', crv: 'Ed25519', x: 'AAAA' },
   fingerprint: '0123456789abcdef',
   dropsRequestsElsewhere: false,
+  pictureAt: null,
   ...change,
 });
 

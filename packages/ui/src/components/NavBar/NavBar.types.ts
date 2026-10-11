@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react';
+import type { MenuOption } from '@ValenceUI/OptionMenu.types';
 import type { MotionValue } from 'motion/react';
 import type { IconGesture } from '@ValenceUI/AnimatedIcon.types';
 
 type NavBarChoices = {
   label: string;
-  options: readonly { id: string; label: string }[];
+  options: readonly MenuOption[];
   selectedId: string;
   onSelect: (id: string) => void;
 };

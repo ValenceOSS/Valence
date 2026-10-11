@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@ValenceUI/Button';
-import { Callout } from '@ValenceUI/Callout';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Link } from '@ValenceUI/Link';
 import { MultiSelectField } from '@ValenceUI/MultiSelectField';
@@ -109,10 +108,6 @@ const SubtitlesCard = () => {
         <p className="font-body text-[0.8125rem] leading-snug text-text-muted">
           {say('screens.adminArea.subtitlesCard.findSubtitlesForWhatYourLibraries')}
         </p>
-
-        <Callout tone="quiet" title={say('screens.adminArea.subtitlesCard.whatLeavesTheServer')}>
-          {say('screens.adminArea.subtitlesCard.whenYouLookTheTitleAndA')}
-        </Callout>
 
         <SettingList>
           <SettingGroup

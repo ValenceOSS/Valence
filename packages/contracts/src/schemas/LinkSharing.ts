@@ -82,10 +82,14 @@ const FederationActivityListSchema = z.object({
   entries: z.array(FederationActivitySchema).max(500),
 });
 
+const TheirLibrarySchema = SharedLibrarySchema.extend({ isTaken: z.boolean() });
+
 const TheirLibrariesSchema = z.object({
   isReachable: z.boolean(),
-  libraries: z.array(SharedLibrarySchema),
+  libraries: z.array(TheirLibrarySchema),
 });
+
+const TheirLibraryChoiceSchema = z.object({ isTaken: z.boolean() });
 
 const TheirActivitySchema = z.object({
   standing: z.enum(['shown', 'notShown', 'unreachable']),
@@ -122,7 +126,9 @@ type LinkSharingChange = z.infer<typeof LinkSharingChangeSchema>;
 type SharedLibrary = z.infer<typeof SharedLibrarySchema>;
 type RemotePerson = z.infer<typeof RemotePersonSchema>;
 type FederationActivity = z.infer<typeof FederationActivitySchema>;
+type TheirLibrary = z.infer<typeof TheirLibrarySchema>;
 type TheirLibraries = z.infer<typeof TheirLibrariesSchema>;
+type TheirLibraryChoice = z.infer<typeof TheirLibraryChoiceSchema>;
 type TheirActivity = z.infer<typeof TheirActivitySchema>;
 
 export type {
@@ -137,6 +143,8 @@ export type {
   SharedLibrary,
   TheirActivity,
   TheirLibraries,
+  TheirLibrary,
+  TheirLibraryChoice,
 };
 
 export {
@@ -158,4 +166,6 @@ export {
   SharedLibrarySchema,
   TheirActivitySchema,
   TheirLibrariesSchema,
+  TheirLibraryChoiceSchema,
+  TheirLibrarySchema,
 };

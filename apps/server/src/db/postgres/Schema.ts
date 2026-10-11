@@ -1379,6 +1379,7 @@ const linkedServer = pgTable(
     allowsDownloads: boolean('allowsDownloads').notNull().default(false),
     takesTheirRequests: boolean('takesTheirRequests').notNull().default(false),
     playsDirect: boolean('playsDirect').notNull().default(false),
+    pictureAt: text('pictureAt'),
   },
   (table) => [
     uniqueIndex('linked_server_fingerprint_idx').on(table.fingerprint),
@@ -1404,6 +1405,18 @@ const linkGrant = pgTable(
     primaryKey({ columns: [table.linkedServerId, table.libraryId] }),
     index('link_grant_library_idx').on(table.libraryId),
   ],
+);
+
+const linkDecline = pgTable(
+  'link_decline',
+  {
+    linkedServerId: text('linkedServerId')
+      .notNull()
+      .references(() => linkedServer.id, { onDelete: 'cascade' }),
+    libraryId: text('libraryId').notNull(),
+    declinedAt: timestamp('declinedAt').notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.linkedServerId, table.libraryId] })],
 );
 
 const remotePerson = pgTable(
@@ -1835,6 +1848,7 @@ export {
   webhookSubscription,
   webhookDelivery,
   federationAudit,
+  linkDecline,
   linkGrant,
   linkInvite,
   linkedServer,

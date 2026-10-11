@@ -3,51 +3,64 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { RefreshCw as RefreshCwFilledIcon } from '@keyline-icons/react/fill';
 import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
+import { useSyncLinkedServer } from '@ValenceScreens/admin/useSyncLinkedServer';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
+import { chooseTheirLibrary } from '@ValenceClient/admin/chooseTheirLibrary';
 import { syncLinkedServer } from '@ValenceClient/admin/syncLinkedServer';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
+import { cn } from '@ValenceUI/cn';
 import { Spinner } from '@ValenceUI/Spinner';
+import { Switch } from '@ValenceUI/Switch';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { LIBRARY_KIND_NAMES } from '@ValenceClient/library/LIBRARY_KIND_NAMES';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
+import type { TheirLibrary } from '@ValenceContracts/schemas/LinkSharing';
 import type { TheirLibrariesCardProps } from './TheirLibrariesCard.types';
 import { say } from '@ValenceI18n/say';
 
 /**
  * What one linked server shares with this one, asked of it as the card opens: its libraries by name
- * and kind, that it shares nothing yet, or that it could not be reached — and a way to read it all
- * again now, rather than waiting for the next time it is read on its own.
+ * and kind, each with a switch for whether it shows on this server, that it shares nothing yet, or
+ * that it could not be reached — and a way to read it all again now, rather than waiting for the
+ * next time it is read on its own. Switching a library off takes it and everything in it off this
+ * server at once; switching it back on reads it in again.
  *
  * @param server - The linked server.
  */
 const TheirLibrariesCard = ({ server }: TheirLibrariesCardProps) => {
   const cache = useQueryClient();
   const asked = useQuery(adminQueries.theirLibraries(server.id));
-  const [isReading, setIsReading] = useState(false);
+  const { syncing, sync } = useSyncLinkedServer();
+  const [choosing, setChoosing] = useState<string | null>(null);
 
-  const readAgain = () => {
-    setIsReading(true);
+  const choose = (library: TheirLibrary) => {
+    const isTaken = !library.isTaken;
 
-    void syncLinkedServer(server.id)
+    setChoosing(library.id);
+
+    void chooseTheirLibrary(server.id, library.id, isTaken)
       .then(async (sent) => {
-        const isRead = tellOutcome(
-          say('screens.adminArea.linkedServersPanel.readCountTitlesFromName', {
-            count: String(sent.value?.kept ?? 0),
-            name: server.name,
-          }),
+        const isChosen = tellOutcome(
+          say(
+            isTaken
+              ? 'screens.adminArea.linkedServersPanel.nameShowsOnThisServer'
+              : 'screens.adminArea.linkedServersPanel.nameIsLeftOffThisServer',
+            { name: library.name },
+          ),
           failureOfRefusal(sent.refusal),
         );
 
-        if (isRead) {
-          await Promise.all([
-            cache.invalidateQueries({ queryKey: adminQueries.theirLibraries(server.id).queryKey }),
-            cache.invalidateQueries({ queryKey: libraryQueries.all().queryKey }),
-          ]);
+        if (isChosen) {
+          await cache.invalidateQueries({
+            queryKey: adminQueries.theirLibraries(server.id).queryKey,
+          });
+          await syncLinkedServer(server.id);
+          await cache.invalidateQueries({ queryKey: libraryQueries.all().queryKey });
         }
       })
       .finally(() => {
-        setIsReading(false);
+        setChoosing(null);
       });
   };
   const title = say('screens.adminArea.linkedServersPanel.whatNameSharesWithYou', {
@@ -59,7 +72,13 @@ const TheirLibrariesCard = ({ server }: TheirLibrariesCardProps) => {
       title={title}
       isFlush
       actions={
-        <PanelCardAction icon={RefreshCwFilledIcon} isLoading={isReading} onClick={readAgain}>
+        <PanelCardAction
+          icon={RefreshCwFilledIcon}
+          isLoading={syncing === server.id}
+          onClick={() => {
+            void sync(server.id, server.name);
+          }}
+        >
           {say('screens.adminArea.linkedServersPanel.readAgainNow')}
         </PanelCardAction>
       }
@@ -88,8 +107,28 @@ const TheirLibrariesCard = ({ server }: TheirLibrariesCardProps) => {
         <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
           {asked.data.libraries.map((library) => (
             <li key={library.id} className="flex items-center justify-between gap-3 px-4 py-3">
-              <span className="truncate text-sm font-medium">{library.name}</span>
-              <span className="text-xs text-text-muted">{LIBRARY_KIND_NAMES[library.kind]}</span>
+              <span className="flex min-w-0 flex-col">
+                <span
+                  className={cn(
+                    'truncate text-sm font-medium',
+                    library.isTaken ? '' : 'text-text-muted',
+                  )}
+                >
+                  {library.name}
+                </span>
+                <span className="text-xs text-text-muted">{LIBRARY_KIND_NAMES[library.kind]}</span>
+              </span>
+              <Switch
+                label={say('screens.adminArea.linkedServersPanel.showNameOnThisServer', {
+                  name: library.name,
+                })}
+                isLabelHidden
+                isOn={library.isTaken}
+                disabled={choosing !== null}
+                onToggle={() => {
+                  choose(library);
+                }}
+              />
             </li>
           ))}
         </ul>

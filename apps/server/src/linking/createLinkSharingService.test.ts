@@ -53,6 +53,8 @@ const twoSharingServers = async (limits?: { perServer: number; perPerson: number
     pair: () => Promise.resolve({ kind: 'unreachable' }),
     pairingState: () => Promise.resolve({ kind: 'unreachable' }),
     tellUnlinked: () => Promise.resolve(false),
+    tellChanged: () => Promise.resolve(false),
+    pictureAt: () => Promise.resolve(null),
     libraries: async (address, token) => {
       const admitted = await asking(address, '/api/federation/v1/libraries', token);
 
@@ -169,7 +171,7 @@ describe('createLinkSharingService', () => {
 
     expect(await filmsSharing.theirLibraries(animeAtFilms)).toEqual({
       isReachable: true,
-      libraries: [LIBRARIES[0]],
+      libraries: [{ ...LIBRARIES[0], isTaken: true }],
     });
   });
 

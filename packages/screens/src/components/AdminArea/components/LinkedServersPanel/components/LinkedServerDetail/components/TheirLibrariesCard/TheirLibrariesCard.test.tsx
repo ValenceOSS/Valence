@@ -25,7 +25,9 @@ const FILMS = aLinkedServer({ state: 'linked' });
 beforeEach(() => {
   fetchTheirLibraries.mockReset().mockResolvedValue({
     isReachable: true,
-    libraries: [{ id: '00000000-0000-4000-8000-0000000000f1', name: 'Cinema', kind: 'movies' }],
+    libraries: [
+      { id: '00000000-0000-4000-8000-0000000000f1', name: 'Cinema', kind: 'movies', isTaken: true },
+    ],
   });
   syncLinkedServer
     .mockReset()

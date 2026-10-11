@@ -4,7 +4,12 @@ import { Button } from '@ValenceUI/Button';
 import { TextField } from '@ValenceUI/TextField';
 import { notify } from '@ValenceUI/notify';
 import { ColourChoice } from '@ValenceScreens/components/ColourChoice/ColourChoice';
-import { FaceCircle } from '@ValenceScreens/components/FaceCircle/FaceCircle';
+import { Image as ImageIcon } from '@keyline-icons/react';
+import { FilePicker } from '@ValenceUI/FilePicker';
+import { Icon } from '@ValenceUI/Icon';
+import { ServerFace } from '@ValenceScreens/components/AdminArea/components/LinkedServersPanel/components/ServerFace/ServerFace';
+import { changeServerPicture } from '@ValenceClient/admin/changeServerPicture';
+import { serverPictureUrl } from '@ValenceClient/linking/serverPictureUrl';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { changeLinkIdentity } from '@ValenceClient/admin/changeLinkIdentity';
 import { groupFingerprint } from '@ValenceClient/linking/groupFingerprint';
@@ -15,10 +20,8 @@ import { Switch } from '@ValenceUI/Switch';
 import type { ThisServerCardProps } from './ThisServerCard.types';
 import { say } from '@ValenceI18n/say';
 
-const AN_INITIAL = { kind: 'initial', font: 'gilroy' } as const;
-
 /**
- * How other Valence servers see this one: its name and colour, which they draw beside what comes
+ * How other Valence servers see this one: its name, colour and picture, which they draw beside what comes
  * from here, where they reach it, and the fingerprint another admin checks an invite against.
  *
  * @param identity - This server as other servers see it.
@@ -29,6 +32,7 @@ const ThisServerCard = ({ identity }: ThisServerCardProps) => {
   const [colour, setColour] = useState(identity.colour);
   const [address, setAddress] = useState(identity.address);
   const [isSaving, setIsSaving] = useState(false);
+  const [uploading, setUploading] = useState<File | null>(null);
   const isChanged =
     name.trim() !== identity.name || colour !== identity.colour || address !== identity.address;
 
@@ -51,20 +55,71 @@ const ThisServerCard = ({ identity }: ThisServerCardProps) => {
       });
   };
 
+  const changePicture = (file: File | null) => {
+    setUploading(file);
+
+    void changeServerPicture(file)
+      .then(async (sent) => {
+        if (sent.refusal !== null) {
+          notify.failed(sent.refusal);
+
+          return;
+        }
+
+        notify.worked(
+          file === null
+            ? say('screens.adminArea.linkedServersPanel.thePictureIsRemoved')
+            : say('screens.adminArea.linkedServersPanel.thePictureIsSaved'),
+        );
+        await cache.invalidateQueries({ queryKey: adminQueries.linking().queryKey });
+      })
+      .finally(() => {
+        setUploading(null);
+      });
+  };
+
   return (
     <PanelCard title={say('common.thisServer')}>
       <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-3">
-          <FaceCircle
+        <div className="flex flex-wrap items-center gap-3">
+          <ServerFace
             name={name === '' ? identity.name : name}
             colour={colour}
-            avatar={AN_INITIAL}
-            source=""
+            picture={serverPictureUrl(null, identity.pictureAt)}
+            pending={uploading}
             className="size-10 text-base"
           />
-          <p className="text-xs leading-relaxed text-text-muted">
+          <p className="min-w-0 flex-1 text-xs leading-relaxed text-text-muted">
             {say('screens.adminArea.linkedServersPanel.howOtherServersSeeThisOne')}
           </p>
+          <span className="flex items-center gap-2">
+            <FilePicker
+              label={say('common.chooseAPicture')}
+              accept="image/png,image/jpeg,image/webp,image/avif,image/gif"
+              size="sm"
+              isLoading={uploading !== null}
+              onPick={(file) => {
+                changePicture(file);
+              }}
+            >
+              <Icon of={ImageIcon} size={15} />
+              {identity.pictureAt === null
+                ? say('common.chooseAPicture')
+                : say('common.chooseAnother')}
+            </FilePicker>
+            {identity.pictureAt === null ? null : (
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={uploading !== null}
+                onClick={() => {
+                  changePicture(null);
+                }}
+              >
+                {say('screens.adminArea.linkedServersPanel.removeThePicture')}
+              </Button>
+            )}
+          </span>
         </div>
 
         <div className="grid gap-3 md:grid-cols-2">

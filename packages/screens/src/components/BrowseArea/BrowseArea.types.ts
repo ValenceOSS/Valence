@@ -6,6 +6,8 @@ type BrowseKind = 'shows' | 'films' | 'new' | 'favourites';
 type BrowseAreaProps = {
   kind: BrowseKind;
   libraryId?: string | null;
+  filters?: ReadonlySet<string>;
+  onFiltersChange?: (next: ReadonlySet<string>) => void;
   onPlay: (media: MediaSummary, startSeconds: number) => void;
   onInspect: (media: MediaSummary) => void;
   onOpenShow?: (media: MediaSummary) => void;

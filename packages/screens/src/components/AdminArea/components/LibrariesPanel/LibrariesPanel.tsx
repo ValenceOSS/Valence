@@ -13,6 +13,10 @@ import {
   Settings as SettingsFilledIcon,
 } from '@keyline-icons/react/fill';
 import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { linkingQueries } from '@ValenceClient/query/linkingQueries';
+import { useSyncLinkedServer } from '@ValenceScreens/admin/useSyncLinkedServer';
+import { TableSection } from '@ValenceScreens/components/AdminArea/components/TableSection/TableSection';
 import { UploadMediaDialog } from '@ValenceScreens/components/AdminArea/components/UploadMediaDialog/UploadMediaDialog';
 import { AdminSetupGuide } from '@ValenceScreens/components/AdminArea/components/AdminSetupGuide/AdminSetupGuide';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
@@ -48,7 +52,9 @@ import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
  * The folders Valence reads and what it is doing to them: adding one, scanning one or all of them,
  * rebuilding from nothing, regenerating previews, and each library's own settings. Progress is shown
  * against the library it belongs to rather than in one list, since which library is being worked on
- * is usually the thing worth knowing.
+ * is usually the thing worth knowing. Libraries a linked server shares sit in a table of their own,
+ * saying which server they come from and offering only to read them again, since their files and
+ * settings are that server's to change.
  *
  * @param isUnreachable - Whether the service is not answering.
  * @param libraries - The libraries configured.
@@ -92,6 +98,8 @@ const LibrariesPanel = ({
   onOpenSettings,
   onHideSetup,
 }: LibrariesPanelProps) => {
+  const faces = useQuery(linkingQueries.faces());
+  const { syncing, sync } = useSyncLinkedServer();
   const [isAdding, setIsAdding] = useState(false);
 
   useAdminCommand('addLibrary', () => {
@@ -293,6 +301,64 @@ const LibrariesPanel = ({
     ],
     [onScan, onRegeneratePreviews, onOpenFolder, progress],
   );
+  const own = libraries.filter((library) => (library.linkedServerId ?? null) === null);
+  const linked = libraries.filter((library) => (library.linkedServerId ?? null) !== null);
+  const serverNameOf = (library: Library) =>
+    faces.data?.find((server) => server.id === library.linkedServerId)?.name ?? '';
+  const linkedColumns: DataTableColumn<Library>[] = [
+    {
+      id: 'name',
+      header: say('common.library'),
+      accessorFn: (library) => library.name,
+      cell: ({ row }) => (
+        <span className="flex min-w-0 flex-col gap-0.5">
+          <span className="flex items-center gap-2">
+            <span className="truncate font-medium text-text">{row.original.name}</span>
+            <Badge size="sm">
+              {row.original.flavour ?? LIBRARY_KIND_NAMES[row.original.kind].label}
+            </Badge>
+          </span>
+
+          <span className="truncate text-xs text-text-muted">
+            {say('common.fromName', { name: serverNameOf(row.original) })}
+          </span>
+        </span>
+      ),
+    },
+    ...columns.filter((column) => column.id === 'items' || column.id === 'scanned'),
+    {
+      id: 'act',
+      header: '',
+      enableSorting: false,
+      cell: ({ row }) => {
+        const serverId = row.original.linkedServerId ?? '';
+
+        return (
+          <span className="flex justify-end">
+            <ActionMenu
+              label={say('common.actionsForName', { name: row.original.name })}
+              trigger={<Icon of={MoreHorizontalIcon} size={16} />}
+              groups={[
+                {
+                  items: [
+                    {
+                      id: 'sync',
+                      label: say('screens.adminArea.linkedServersPanel.readAgainNow'),
+                      icon: <Icon of={RefreshCwFilledIcon} size={15} />,
+                      isDisabled: syncing !== null,
+                      onChoose: () => {
+                        void sync(serverId, serverNameOf(row.original));
+                      },
+                    },
+                  ],
+                },
+              ]}
+            />
+          </span>
+        );
+      },
+    },
+  ];
 
   return (
     <PanelCard
@@ -370,13 +436,35 @@ const LibrariesPanel = ({
             <p className="p-6 text-sm text-text-muted">
               {say('screens.adminArea.librariesPanel.noLibrariesYetAddOnePointing')}
             </p>
-          ) : (
+          ) : linked.length === 0 ? (
             <DataTable
               height="fills"
               label={say('screens.adminArea.librariesPanel.libraryRoots')}
               columns={columns}
-              rows={libraries}
+              rows={own}
             />
+          ) : (
+            <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto pb-2">
+              {own.length === 0 ? null : (
+                <TableSection title={say('common.thisServer')}>
+                  <DataTable
+                    height="compact"
+                    label={say('common.thisServer')}
+                    columns={columns}
+                    rows={own}
+                  />
+                </TableSection>
+              )}
+
+              <TableSection title={say('common.linkedServers')}>
+                <DataTable
+                  height="compact"
+                  label={say('common.linkedServers')}
+                  columns={linkedColumns}
+                  rows={linked}
+                />
+              </TableSection>
+            </div>
           )}
         </>
       )}

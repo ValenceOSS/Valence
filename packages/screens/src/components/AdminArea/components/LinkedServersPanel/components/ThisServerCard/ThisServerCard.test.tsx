@@ -17,6 +17,7 @@ const IDENTITY: LinkIdentity = {
   colour: '#3a8ee8',
   address: 'https://anime.example',
   dropsRequestsElsewhere: false,
+  pictureAt: null,
   protocols: ['valence-link/1'],
   publicKey: { kty: 'OKP', crv: 'Ed25519', x: 'AAAA' },
   fingerprint: '0123456789abcdef',

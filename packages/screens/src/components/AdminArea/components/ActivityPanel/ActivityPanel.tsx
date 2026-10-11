@@ -3,6 +3,10 @@ import { useState } from 'react';
 import { SessionCard } from '@ValenceScreens/components/AdminArea/components/SessionCard/SessionCard';
 import { SessionMessageDialog } from '@ValenceScreens/components/AdminArea/components/SessionMessageDialog/SessionMessageDialog';
 import { groupSessionsByViewer } from '@ValenceScreens/components/AdminArea/groupSessionsByViewer';
+import {
+  readSessionLayout,
+  saveSessionLayout,
+} from '@ValenceScreens/components/AdminArea/sessionLayoutPreference';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { SessionTable } from '@ValenceScreens/components/AdminArea/components/SessionTable/SessionTable';
 import { Grid2x2 as CardsIcon, Table as TableIcon } from '@keyline-icons/react';
@@ -41,7 +45,7 @@ const ActivityPanel = ({
   onMessage,
 }: ActivityPanelProps) => {
   const [messaging, setMessaging] = useState<string | null>(null);
-  const [layout, setLayout] = useState<'table' | 'cards'>('table');
+  const [layout, setLayout] = useState(readSessionLayout);
   const [lastMessaged, setLastMessaged] = useState('');
 
   const watcher = sessions.find((session) => session.clientId === messaging);
@@ -70,6 +74,7 @@ const ActivityPanel = ({
               )}
               onClick={() => {
                 setLayout(one.id);
+                saveSessionLayout(one.id);
               }}
             >
               <Icon of={one.glyph} size={15} />

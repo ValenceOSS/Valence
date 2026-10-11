@@ -4,6 +4,7 @@ import { Icon } from '@ValenceUI/Icon';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { TextField } from '@ValenceUI/TextField';
 import { cn } from '@ValenceUI/cn';
+import { menuGroupsOf } from '@ValenceUI/menuGroupsOf';
 import { JOINED_LOOKS } from '@ValenceUI/tokens/joinedLooks';
 import type { ScopedFieldProps } from './ScopedField.types';
 
@@ -67,14 +68,7 @@ const ScopedField = ({
         label={choice.label}
         triggerShape="fieldJoined"
         align="end"
-        groups={[
-          {
-            name: choice.label,
-            options: choice.options,
-            selectedId: choice.value,
-            onSelect: choice.onChange,
-          },
-        ]}
+        groups={menuGroupsOf(choice.label, choice.options, choice.value, choice.onChange)}
         trigger={
           <>
             <span className="whitespace-nowrap">

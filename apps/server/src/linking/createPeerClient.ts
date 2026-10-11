@@ -7,6 +7,7 @@ import {
 import { FEDERATION_PATH } from './FEDERATION_PATH';
 import type { FederationActivity, SharedLibrary } from '@ValenceContracts/schemas/LinkSharing';
 import { CataloguePageSchema } from './catalogue/CataloguePageSchema';
+import type { ServerPicture } from './createServerPictures';
 import type { CataloguePage } from './catalogue/CataloguePageSchema';
 import type {
   PairAnswer,
@@ -25,6 +26,7 @@ type PeerAnswer<Answer> =
 
 type PeerClient = {
   identityAt: (address: string) => Promise<ServerIdentity | null>;
+  pictureAt: (address: string) => Promise<ServerPicture | null>;
   pair: (address: string, request: PairRequest) => Promise<PeerAnswer<PairAnswer>>;
   pairingState: (
     address: string,
@@ -32,6 +34,7 @@ type PeerClient = {
     token: string,
   ) => Promise<PeerAnswer<PairAnswer>>;
   tellUnlinked: (address: string, token: string) => Promise<boolean>;
+  tellChanged: (address: string, token: string) => Promise<boolean>;
   libraries: (
     address: string,
     token: string,
@@ -109,6 +112,22 @@ const createPeerClient = (fetcher: typeof fetch = fetch): PeerClient => {
 
       return answered.kind === 'answered' ? answered.answer : null;
     },
+    pictureAt: async (address) => {
+      try {
+        const response = await fetcher(`${address}${FEDERATION_PATH}/server/picture`, {
+          signal: AbortSignal.timeout(WAITS_MS),
+        });
+
+        return response.ok
+          ? {
+              body: new Uint8Array(await response.arrayBuffer()),
+              contentType: response.headers.get('content-type') ?? '',
+            }
+          : null;
+      } catch {
+        return null;
+      }
+    },
     pair: (address, request) =>
       send(address, '/pair', { method: 'POST', body: JSON.stringify(request) }, PairAnswerSchema),
     pairingState: (address, pairingId, token) =>
@@ -124,6 +143,16 @@ const createPeerClient = (fetcher: typeof fetch = fetch): PeerClient => {
         '/unlink',
         { method: 'POST', headers: { authorization: `Bearer ${token}` }, body: '{}' },
         z.object({ isUnlinked: z.boolean() }),
+      );
+
+      return answered.kind === 'answered';
+    },
+    tellChanged: async (address, token) => {
+      const answered = await send(
+        address,
+        '/changed',
+        { method: 'POST', headers: { authorization: `Bearer ${token}` }, body: '{}' },
+        z.object({ isHeard: z.boolean() }),
       );
 
       return answered.kind === 'answered';

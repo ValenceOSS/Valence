@@ -1,10 +1,27 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render as renderAlone, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LibrariesPanel } from './LibrariesPanel';
+import type { ReactElement } from 'react';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { ScanEntry } from '@ValenceScreens/components/AdminArea/scanCoordinator';
 import { readsWhole } from '@ValenceScreens/testing/readsWhole';
+
+/**
+ * Draws the panel with a query client, since it asks which servers its linked libraries come from.
+ *
+ * @param panel - The panel.
+ * @returns What was drawn.
+ */
+const render = (panel: ReactElement) =>
+  renderAlone(
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
+      {panel}
+    </QueryClientProvider>,
+  );
 
 const library = (overrides: Partial<Library> = {}): Library => ({
   id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',

@@ -1362,6 +1362,7 @@ const linkedServer = mysqlTable(
     allowsDownloads: boolean('allowsDownloads').notNull().default(false),
     takesTheirRequests: boolean('takesTheirRequests').notNull().default(false),
     playsDirect: boolean('playsDirect').notNull().default(false),
+    pictureAt: varchar('pictureAt', { length: 40 }),
   },
   (table) => [
     uniqueIndex('linked_server_fingerprint_idx').on(table.fingerprint),
@@ -1387,6 +1388,18 @@ const linkGrant = mysqlTable(
     primaryKey({ columns: [table.linkedServerId, table.libraryId] }),
     index('link_grant_library_idx').on(table.libraryId),
   ],
+);
+
+const linkDecline = mysqlTable(
+  'link_decline',
+  {
+    linkedServerId: identifier('linkedServerId')
+      .notNull()
+      .references(() => linkedServer.id, { onDelete: 'cascade' }),
+    libraryId: identifier('libraryId').notNull(),
+    declinedAt: momentNow('declinedAt').notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.linkedServerId, table.libraryId] })],
 );
 
 const remotePerson = mysqlTable(
@@ -1819,6 +1832,7 @@ export {
   webhookSubscription,
   webhookDelivery,
   federationAudit,
+  linkDecline,
   linkGrant,
   linkInvite,
   linkedServer,

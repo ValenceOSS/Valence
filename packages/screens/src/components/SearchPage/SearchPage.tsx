@@ -14,7 +14,7 @@ import { showSlug } from '@ValenceCore/functions/showSlug';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { say } from '@ValenceI18n/say';
 import { viewOfDiscoverSearch } from '@ValenceScreens/requests/viewOfDiscoverSearch';
-import { filtersOf } from './filtersOf';
+import { filtersOf } from '@ValenceScreens/navigation/filtersOf';
 import { PageTitle } from '@ValenceScreens/components/PageTitle/PageTitle';
 
 /**

@@ -30,6 +30,7 @@ type LinkService = {
   pseudonymFor: (id: string, profileId: string) => Promise<string>;
   publicIdentity: () => Promise<ServerIdentity>;
   changeIdentity: (change: LinkIdentityChange) => Promise<LinkIdentity>;
+  changePicture: (pictureAt: string | null) => Promise<LinkIdentity>;
   linking: () => Promise<Linking>;
   makeInvite: () => Promise<MadeLinkInvite>;
   withdrawInvite: (id: string) => Promise<boolean>;

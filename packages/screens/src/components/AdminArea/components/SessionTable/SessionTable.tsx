@@ -18,15 +18,18 @@ import { describeSessionDelivery } from '@ValenceScreens/admin/describeSessionDe
 import { episodeOfSession } from '@ValenceScreens/admin/episodeOfSession';
 import { nameOfSession } from '@ValenceScreens/admin/nameOfSession';
 import { titleOfSession } from '@ValenceScreens/admin/titleOfSession';
+import { RowFoldButton } from '@ValenceScreens/components/AdminArea/components/RowFoldButton/RowFoldButton';
+import { groupSessionsByViewer } from '@ValenceScreens/components/AdminArea/groupSessionsByViewer';
 import { say } from '@ValenceI18n/say';
-import type { ActiveSession } from '@ValenceClient/admin/fetchAdmin';
+import { sayCount } from '@ValenceI18n/sayCount';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
-import type { SessionTableProps } from './SessionTable.types';
+import type { SessionRow, SessionTableProps } from './SessionTable.types';
 
 /**
  * Every open session as a row of a table: who has it, with their picture, what they have open, on what, whether it is
  * playing, how far through they are and how it reaches them, with the controls for intervening in
- * a menu at its end. The denser way of seeing the same sessions the cards show.
+ * a menu at its end. A viewer with more than one session open is one row, with their sessions
+ * indented beneath it. The denser way of seeing the same sessions the cards show.
  *
  * @param sessions - Every session open at the moment.
  * @param busyClientId - The session an instruction is in flight for, if any.
@@ -45,20 +48,70 @@ const SessionTable = ({
 }: SessionTableProps) => {
   const known = useQuery(adminQueries.accounts());
   const accounts = new Map((known.data ?? []).map((account) => [account.id, account]));
-  const columns: DataTableColumn<ActiveSession>[] = [
+  const groups = groupSessionsByViewer([...sessions]);
+  const isGrouped = groups.some((group) => group.sessions.length > 1);
+  const rows = groups.flatMap((group): SessionRow[] => {
+    const parts = group.sessions.map((session): SessionRow => ({
+      id: session.clientId,
+      session,
+      group: null,
+      parts: [],
+    }));
+    const [first] = group.sessions;
+
+    return parts.length > 1 && first !== undefined
+      ? [
+          {
+            id: `viewer:${group.key}`,
+            session: first,
+            group: { label: group.label, count: parts.length },
+            parts,
+          },
+        ]
+      : parts;
+  });
+  const columns: DataTableColumn<SessionRow>[] = [
     {
       id: 'viewer',
       header: say('screens.adminArea.sessionTable.viewer'),
-      accessorFn: (session) => nameOfSession(session),
+      accessorFn: (shown) => shown.group?.label ?? nameOfSession(shown.session),
       cell: ({ row }) => {
-        const account = accounts.get(row.original.accountId ?? '');
+        if (row.depth > 0) {
+          return null;
+        }
+
+        const { session, group } = row.original;
+        const account = accounts.get(session.accountId ?? '');
+        const name = group?.label ?? nameOfSession(session);
+        const isOpen = row.getIsExpanded();
 
         return (
-          <span className="flex items-center gap-2.5 whitespace-nowrap font-medium text-text">
-            {account === undefined || row.original.isGuest ? null : (
-              <AccountFace account={account} />
+          <span className="flex items-center gap-2.5 whitespace-nowrap">
+            {!isGrouped ? null : group === null ? (
+              <span className="size-6 shrink-0" />
+            ) : (
+              <RowFoldButton
+                label={say(
+                  isOpen
+                    ? 'screens.adminArea.sessionTable.hideTheSessionsOfName'
+                    : 'screens.adminArea.sessionTable.showTheSessionsOfName',
+                  { name },
+                )}
+                isOpen={isOpen}
+                onToggle={() => {
+                  row.toggleExpanded();
+                }}
+              />
             )}
-            {nameOfSession(row.original)}
+            {account === undefined || session.isGuest ? null : <AccountFace account={account} />}
+            <span className="flex min-w-0 flex-col">
+              <span className="font-medium text-text">{name}</span>
+              {group === null ? null : (
+                <span className="text-xs text-text-muted">
+                  {sayCount('common.count.sessions', group.count)}
+                </span>
+              )}
+            </span>
           </span>
         );
       },
@@ -66,13 +119,17 @@ const SessionTable = ({
     {
       id: 'watching',
       header: say('common.watching'),
-      accessorFn: (session) => titleOfSession(session),
+      accessorFn: (shown) => titleOfSession(shown.session),
       cell: ({ row }) => {
-        const episode = episodeOfSession(row.original);
+        if (row.original.group !== null) {
+          return null;
+        }
+
+        const episode = episodeOfSession(row.original.session);
 
         return (
           <span className="flex max-w-[20rem] min-w-0 flex-col">
-            <span className="truncate text-text">{titleOfSession(row.original)}</span>
+            <span className="truncate text-text">{titleOfSession(row.original.session)}</span>
             {episode === null ? null : (
               <span className="truncate text-xs text-text-muted">{episode}</span>
             )}
@@ -83,17 +140,25 @@ const SessionTable = ({
     {
       id: 'device',
       header: say('common.device'),
-      accessorFn: (session) => session.deviceLabel,
-      cell: ({ row }) => (
-        <DeviceLabel deviceLabel={row.original.deviceLabel} clientKind={row.original.clientKind} />
-      ),
+      accessorFn: (shown) => shown.session.deviceLabel,
+      cell: ({ row }) =>
+        row.original.group !== null ? null : (
+          <DeviceLabel
+            deviceLabel={row.original.session.deviceLabel}
+            clientKind={row.original.session.clientKind}
+          />
+        ),
     },
     {
       id: 'state',
       header: say('common.state'),
       enableSorting: false,
       cell: ({ row }) => {
-        const { playback, listening, bookListening, reading } = row.original;
+        if (row.original.group !== null) {
+          return null;
+        }
+
+        const { playback, listening, bookListening, reading } = row.original.session;
         const heard = listening ?? bookListening;
         const isActive = playback !== null || heard !== null;
         const isPlaying = playback?.isPlaying ?? heard?.isPlaying ?? false;
@@ -116,7 +181,11 @@ const SessionTable = ({
       header: say('common.progress'),
       enableSorting: false,
       cell: ({ row }) => {
-        const { playback, listening, bookListening } = row.original;
+        if (row.original.group !== null) {
+          return null;
+        }
+
+        const { playback, listening, bookListening } = row.original.session;
         const heard = listening ?? bookListening;
         const health = playback?.health ?? heard;
 
@@ -134,7 +203,11 @@ const SessionTable = ({
       header: say('tv.player.streamStats.delivery'),
       enableSorting: false,
       cell: ({ row }) => {
-        const { playback, listening } = row.original;
+        if (row.original.group !== null) {
+          return null;
+        }
+
+        const { playback, listening } = row.original.session;
 
         return playback !== null ? (
           <Badge size="sm">{describeSessionDelivery(playback).label}</Badge>
@@ -152,7 +225,11 @@ const SessionTable = ({
       header: '',
       enableSorting: false,
       cell: ({ row }) => {
-        const session = row.original;
+        if (row.original.group !== null) {
+          return null;
+        }
+
+        const session = row.original.session;
         const isBusy = busyClientId === session.clientId;
         const isPlaying = session.playback?.isPlaying ?? false;
 
@@ -220,8 +297,10 @@ const SessionTable = ({
     <DataTable
       label={say('common.sessions')}
       columns={columns}
-      rows={[...sessions]}
-      getRowId={(session) => session.clientId}
+      rows={rows}
+      getRowId={(shown) => shown.id}
+      getSubRows={(shown) => (shown.parts.length === 0 ? undefined : shown.parts)}
+      isOpenAtFirst
       emptyMessage={say('screens.adminArea.activityPanel.nobodyHasTheAppOpenRight')}
     />
   );

@@ -134,7 +134,7 @@ const Sidebar = ({
       aria-label={label}
       aria-hidden={isCollapsed && !isRail}
       className={cn(
-        'flex flex-col overflow-hidden py-3',
+        'flex flex-col overflow-clip py-3',
         'transition-[width,margin] duration-200 ease-out',
         isFloating ? 'self-stretch' : 'h-full',
         isRail
@@ -193,7 +193,7 @@ const Sidebar = ({
           }
         }}
         className={cn(
-          'valence-rail flex shrink-0 flex-1 flex-col overflow-y-auto pt-5',
+          'valence-rail flex min-h-0 flex-1 flex-col overflow-y-auto pt-5',
           isRail ? 'w-16 items-center gap-2 px-3' : 'w-60 gap-5 px-3',
         )}
       >

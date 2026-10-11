@@ -23,7 +23,10 @@ describe('createPeerClient', () => {
   it('asks a server who it is at its federation address', async () => {
     const fetcher = answering(200, IDENTITY);
 
-    expect(await createPeerClient(fetcher).identityAt('https://anime.example')).toEqual(IDENTITY);
+    expect(await createPeerClient(fetcher).identityAt('https://anime.example')).toEqual({
+      ...IDENTITY,
+      pictureAt: null,
+    });
     expect(fetcher).toHaveBeenCalledWith(
       'https://anime.example/api/federation/v1/server',
       expect.objectContaining({ method: 'GET' }),
