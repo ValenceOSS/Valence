@@ -22315,6 +22315,11 @@
     "context": "Label of the star that keeps a live TV channel as a favourite. {name} is the channel."
   },
   {
+    "handler": "screens.liveTvPage.liveNowNoGuide",
+    "text": "Live now · no guide",
+    "context": "Shown along a live TV channel’s row in the guide, from the time now onwards, when nothing is known of what is on it."
+  },
+  {
     "handler": "screens.liveTvPage.nextTimeTitle",
     "text": "Next at {time}: {title}",
     "context": "Under the live TV player, what follows on the channel. {time} is a clock time, {title} the programme."
@@ -22328,11 +22333,6 @@
     "handler": "screens.liveTvPage.noFavouritesYet",
     "text": "You haven’t kept any channels yet. Star one to find it here.",
     "context": "Shown in the live TV guide when the favourites filter is on and nothing is kept."
-  },
-  {
-    "handler": "screens.liveTvPage.noGuideForThisChannel",
-    "text": "No guide for this channel",
-    "context": "Shown along a live TV channel’s row in the guide when nothing is known of what is on it."
   },
   {
     "handler": "screens.liveTvPage.onNow",

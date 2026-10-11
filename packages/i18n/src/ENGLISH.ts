@@ -5638,12 +5638,12 @@ const ENGLISH = {
   'screens.liveTvPage.guide': 'Guide',
   'screens.liveTvPage.jumpToNow': 'Jump to now',
   'screens.liveTvPage.keepName': 'Keep {name} as a favourite',
+  'screens.liveTvPage.liveNowNoGuide': 'Live now · no guide',
   'screens.liveTvPage.nextTimeTitle': 'Next at {time}: {title}',
   'screens.liveTvPage.noChannelsYet':
     'There are no live TV channels yet. An admin can add a stream, a playlist or a tuner under Server → Live TV.',
   'screens.liveTvPage.noFavouritesYet':
     'You haven’t kept any channels yet. Star one to find it here.',
-  'screens.liveTvPage.noGuideForThisChannel': 'No guide for this channel',
   'screens.liveTvPage.onNow': 'On now',
   'screens.liveTvPage.startingName': 'Starting {name}…',
   'screens.liveTvPage.stopKeepingName': 'Stop keeping {name} as a favourite',

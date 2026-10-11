@@ -138,7 +138,7 @@ const serveLiveTv = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.live.noSuchChannel'), 404);
     }
 
-    const manifestUrl = (await isHlsAddress(channel.streamUrl, channel))
+    const manifestUrl = (await isHlsAddress(channel.streamUrl, channel, liveTv.fetcher))
       ? liveTv.relay.linkFor(channel.id, channel.streamUrl)
       : ((await liveTv.startTranscoded?.(channel)) ?? null);
 
@@ -185,7 +185,9 @@ const serveLiveTv = (app: OpenAPIHono, context: AppContext): void => {
     const logo =
       channel?.logoUrl === null || channel === null
         ? null
-        : await fetch(channel.logoUrl, { signal: AbortSignal.timeout(10_000) }).catch(() => null);
+        : await (liveTv?.fetcher ?? fetch)(channel.logoUrl, {
+            signal: AbortSignal.timeout(10_000),
+          }).catch(() => null);
 
     if (logo === null || !logo.ok || logo.body === null) {
       return context.json(refuse('error.live.thatChannelHasNoLogo'), 404);

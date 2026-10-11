@@ -245,8 +245,14 @@ const LiveGuideGrid = ({
                 style={{ width: `${timelineRem.toString()}rem` }}
               >
                 {shown.length === 0 ? (
-                  <span className="absolute inset-y-2 left-1.5 right-1.5 flex items-center rounded-xl border border-dashed border-[var(--surface-line)] px-3 text-xs text-text-muted">
-                    {say('screens.liveTvPage.noGuideForThisChannel')}
+                  <span
+                    className="absolute inset-y-2 flex items-center rounded-xl bg-[var(--surface-hover)] px-3 text-xs text-text-muted"
+                    style={{
+                      left: `calc(${(isNowShown ? remOf(now) : 0).toString()}rem + 0.5rem)`,
+                      right: '0.375rem',
+                    }}
+                  >
+                    {say('screens.liveTvPage.liveNowNoGuide')}
                   </span>
                 ) : (
                   shown.map((programme) => {
@@ -303,9 +309,11 @@ const LiveGuideGrid = ({
         {isNowShown ? (
           <span
             aria-hidden
-            className="pointer-events-none absolute bottom-0 top-11 z-[5] w-0.5 -translate-x-1/2 bg-accent"
+            className="pointer-events-none absolute bottom-0 top-11 z-[5] w-px -translate-x-1/2 bg-accent/80"
             style={{ left: nowLeft }}
-          />
+          >
+            <span className="absolute -left-[3px] -top-[3px] size-[7px] rounded-full bg-accent" />
+          </span>
         ) : null}
       </div>
     </div>

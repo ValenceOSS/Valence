@@ -1,5 +1,6 @@
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { headersFor } from './headersFor';
+import { FINAL_ADDRESS } from './FINAL_ADDRESS';
 
 const LINKS_LAST_MS = 6 * 60 * 60 * 1000;
 
@@ -103,13 +104,20 @@ const createLiveRelay = (now: () => number = Date.now, fetcher: typeof fetch = f
     if (isPlaylist) {
       const text = await response.text();
 
-      return new Response(rewritten(channelId, text, response.url || address), {
-        status: 200,
-        headers: {
-          'content-type': 'application/vnd.apple.mpegurl',
-          'cache-control': 'no-store',
+      return new Response(
+        rewritten(
+          channelId,
+          text,
+          response.headers.get(FINAL_ADDRESS) ?? (response.url || address),
+        ),
+        {
+          status: 200,
+          headers: {
+            'content-type': 'application/vnd.apple.mpegurl',
+            'cache-control': 'no-store',
+          },
         },
-      });
+      );
     }
 
     return new Response(response.body, {

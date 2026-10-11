@@ -91,6 +91,9 @@ fn id_of(address: &str) -> String {
 pub struct Asking {
     pub user_agent: Option<String>,
     pub referrer: Option<String>,
+    /// An HTTP proxy to fetch through, such as a VPN's, so a stream blocked
+    /// in this server's country can be read from another.
+    pub proxy: Option<String>,
 }
 
 /// The options that make a stream read over HTTP survive a hiccup rather
@@ -105,6 +108,14 @@ fn reading_options(address: &str, asking: &Asking) -> Vec<String> {
 
     if let Some(referrer) = &asking.referrer {
         options.extend(["-referer".into(), referrer.clone()]);
+    }
+
+    if let Some(proxy) = asking
+        .proxy
+        .as_ref()
+        .filter(|_| address.starts_with("http://") || address.starts_with("https://"))
+    {
+        options.extend(["-http_proxy".into(), proxy.clone()]);
     }
 
     if address.starts_with("http://") || address.starts_with("https://") {
@@ -408,6 +419,7 @@ mod tests {
         let asking = Asking {
             user_agent: Some("Enigma2".into()),
             referrer: None,
+            proxy: Some("http://gluetun:8888".into()),
         };
         let copied = ffmpeg_arguments("https://a.example/x.ts", &asking, Path::new("/tmp/x"), true);
         let encoded = ffmpeg_arguments(

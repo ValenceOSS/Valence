@@ -328,7 +328,7 @@ type Transcoder = {
   readSessionFile: (sessionId: string, name: string) => Promise<TranscoderStreamedFile | null>;
   startLive?: (
     address: string,
-    asking: { userAgent: string | null; referrer: string | null },
+    asking: { userAgent: string | null; referrer: string | null; proxy: string | null },
   ) => Promise<string | null>;
   readLiveFile?: (liveId: string, name: string) => Promise<TranscoderStreamedFile | null>;
   locateSessionFile?: (sessionId: string, name: string) => Promise<LocatedSessionFile | null>;

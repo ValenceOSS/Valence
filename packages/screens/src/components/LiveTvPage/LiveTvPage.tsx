@@ -9,6 +9,7 @@ import { useLiveWindow } from '@ValenceClient/live/useLiveWindow';
 import { liveQueries } from '@ValenceClient/query/liveQueries';
 import { LiveGuideGrid } from '@ValenceScreens/components/LiveTvPage/components/LiveGuideGrid/LiveGuideGrid';
 import { LivePlayer } from '@ValenceScreens/components/LiveTvPage/components/LivePlayer/LivePlayer';
+import { readLastChannel, saveLastChannel } from '@ValenceScreens/live/lastChannelPreference';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { say } from '@ValenceI18n/say';
 import type { LiveChannel, LiveGuide } from '@ValenceContracts/schemas/LiveTv';
@@ -20,15 +21,15 @@ const FAVOURITES = 'favourites';
 /**
  * Live TV: the channel playing at the top, with what is on it and what is next, and below it the
  * guide of every channel over the next few hours, which can be searched, narrowed to favourites or
- * to one group of channels, and from which any channel is played. The first favourite plays to
- * begin with, or else the first channel.
+ * to one group of channels, and from which any channel is played. The channel last watched on this
+ * device plays to begin with, or else the first favourite, or else the first channel.
  */
 const LiveTvPage = () => {
   const cache = useQueryClient();
   const { from, until, now } = useLiveWindow();
   const query = liveQueries.guide(new Date(from).toISOString(), new Date(until).toISOString());
   const guide = useQuery(query);
-  const [chosenId, setChosenId] = useState<string | null>(null);
+  const [chosenId, setChosenId] = useState<string | null>(readLastChannel);
   const [showing, setShowing] = useState(ALL);
   const [search, setSearch] = useState('');
 
@@ -167,6 +168,7 @@ const LiveTvPage = () => {
               chosenId={chosen.id}
               onChoose={(channelId) => {
                 setChosenId(channelId);
+                saveLastChannel(channelId);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
               onToggleFavourite={toggleFavourite}

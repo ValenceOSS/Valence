@@ -99,6 +99,12 @@ services:
       # nothing fetches posters, descriptions or cast.
       CATALOGUE_API_KEY: ${CATALOGUE_API_KEY:-}
 
+      # Optional: an HTTP proxy live TV is fetched through — its streams, playlists, guides and
+      # channel logos — so a channel blocked in this server's country can be watched from the
+      # proxy's. With the vpn profile below, gluetun's own proxy: http://gluetun:8888, once
+      # HTTPPROXY is on there. Empty fetches directly.
+      LIVE_TV_PROXY: ${LIVE_TV_PROXY:-}
+
       # Optional: email for password resets and setup links. Usually set in
       # Settings → Email instead; these override what is saved there.
       SMTP_URL: ${SMTP_URL:-}
@@ -229,6 +235,9 @@ services:
       SERVER_COUNTRIES: ${VPN_SERVER_COUNTRIES:-}
       # Lets the requests service ask how the tunnel is, with the key set as
       # VPN_API_KEY. `docker run --rm qmcgaw/gluetun genkey` makes one.
+      # Lets Valence fetch live TV through the VPN as well: set LIVE_TV_PROXY above to
+      # http://gluetun:8888 and this to on.
+      HTTPPROXY: ${VPN_HTTP_PROXY:-off}
       HTTP_CONTROL_SERVER_AUTH_DEFAULT_ROLE: '{"auth":"apikey","apikey":"${VPN_API_KEY:-}"}'
       TZ: ${TZ:-UTC}
 

@@ -8,6 +8,7 @@ type LiveTvOptions = {
   service: LiveTvService;
   relay: LiveRelay;
   iptvOrg: IptvOrgCatalogueReader;
+  fetcher: typeof fetch;
   startTranscoded?: (channel: StoredLiveChannel) => Promise<string | null>;
   readTranscoded?: (liveId: string, name: string) => Promise<TranscoderStreamedFile | null>;
 };

@@ -66,6 +66,10 @@ const EnvSchema = z.object({
   REQUESTS_SECRET: z.string().default(''),
   MEDIA_JOBS: z.coerce.number().int().positive().default(defaultMediaJobs()),
   CATALOGUE_API_KEY: z.string().default(''),
+  LIVE_TV_PROXY: z
+    .string()
+    .default('')
+    .transform((value) => value.trim()),
   IMAGE_CACHE_DIR: z.string().default('/cache/images'),
   PROFILE_IMAGE_DIR: z.string().default('/config/profiles'),
   SUBTITLE_DIR: z.string().optional(),

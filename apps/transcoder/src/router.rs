@@ -2590,6 +2590,8 @@ struct StartLiveRequest {
     user_agent: Option<String>,
     #[serde(default)]
     referrer: Option<String>,
+    #[serde(default)]
+    proxy: Option<String>,
 }
 
 /// The channel that was started or joined.
@@ -2605,6 +2607,7 @@ async fn start_live(
     let asking = crate::live::Asking {
         user_agent: request.user_agent,
         referrer: request.referrer,
+        proxy: request.proxy,
     };
 
     match state.registry.live().start(&request.address, &asking).await {
