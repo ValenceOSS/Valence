@@ -155,17 +155,38 @@ const createLiveTvService = ({
       return shownOf({ ...source, problem: read, refreshedAt: now() });
     }
 
-    const guideUrl = source.guideUrl ?? read.guideUrl;
-    const guideText =
-      guideUrl === null ? null : await readRemoteText(guideUrl, MOST_GUIDE_BYTES, fetcher);
+    const guideUrls = (source.guideUrl ?? read.guideUrl ?? '')
+      .split(/[\s,]+/u)
+      .filter((address) => address !== '');
     const at = now();
+    const window = {
+      from: new Date(at.getTime() - GUIDE_KEEPS_BEHIND_MS),
+      until: new Date(at.getTime() + GUIDE_KEEPS_AHEAD_MS),
+    };
+    const readGuides = await Promise.all(
+      guideUrls.map(async (address) => {
+        const text = await readRemoteText(address, MOST_GUIDE_BYTES, fetcher);
+
+        return text === null ? null : parseXmltv(text, window);
+      }),
+    );
+    const guides = readGuides.filter((one) => one !== null);
     const guide =
-      guideText === null
+      guides.length === 0
         ? null
-        : parseXmltv(guideText, {
-            from: new Date(at.getTime() - GUIDE_KEEPS_BEHIND_MS),
-            until: new Date(at.getTime() + GUIDE_KEEPS_AHEAD_MS),
-          });
+        : {
+            names: new Map(guides.flatMap((one) => [...one.names])),
+            programmes: [
+              ...new Map(
+                guides
+                  .flatMap((one) => one.programmes)
+                  .map((programme) => [
+                    `${programme.guideId}\n${programme.startsAt.toISOString()}`,
+                    programme,
+                  ]),
+              ).values(),
+            ],
+          };
     const channels = guide === null ? read.channels : matchGuideIds(read.channels, guide.names);
 
     await store.replaceChannels(
@@ -186,7 +207,7 @@ const createLiveTvService = ({
     }
 
     const problem =
-      guideUrl !== null && guideText === null ? saying('server.live.theGuideCouldNotBeRead') : null;
+      guides.length < guideUrls.length ? saying('server.live.theGuideCouldNotBeRead') : null;
 
     await store.changeSource(source.id, {
       channelCount: channels.length,
@@ -226,6 +247,18 @@ const createLiveTvService = ({
       const source = await store.readSource(id);
 
       return source === null ? null : refreshed(source);
+    },
+
+    changeGuide: async (id, guideUrl) => {
+      const source = await store.readSource(id);
+
+      if (source === null) {
+        return null;
+      }
+
+      await store.changeSource(id, { guideUrl });
+
+      return refreshed({ ...source, guideUrl });
     },
 
     refreshAll: async () => {

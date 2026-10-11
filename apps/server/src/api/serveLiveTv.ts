@@ -1,5 +1,6 @@
 import {
   addLiveSourceRoute,
+  changeLiveGuideRoute,
   dropLiveChannelRoute,
   iptvOrgCatalogueRoute,
   keepLiveChannelRoute,
@@ -65,6 +66,22 @@ const serveLiveTv = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const source = (await liveTv?.service.refresh(context.req.valid('param').id)) ?? null;
+
+    return source === null
+      ? context.json(refuse('error.live.noSuchSource'), 404)
+      : context.json(source, 200);
+  });
+
+  app.openapi(changeLiveGuideRoute, async (context) => {
+    if (!(await isAdmin(context.req.raw.headers))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
+    }
+
+    const source =
+      (await liveTv?.service.changeGuide(
+        context.req.valid('param').id,
+        context.req.valid('json').guideUrl,
+      )) ?? null;
 
     return source === null
       ? context.json(refuse('error.live.noSuchSource'), 404)

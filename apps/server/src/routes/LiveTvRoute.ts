@@ -1,6 +1,7 @@
 import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
+  LiveGuideChangeSchema,
   LiveGuideSchema,
   LiveSourceSchema,
   LiveSourcesSchema,
@@ -78,6 +79,25 @@ const refreshLiveSourceRoute = createRoute({
   tags: ['Live TV'],
   summary: 'Read a source’s channels and guide again now',
   request: { params: IdParams },
+  responses: {
+    200: {
+      description: 'The source, as read now',
+      content: { 'application/json': { schema: LiveSource } },
+    },
+    403: refused('Not allowed to change the server’s settings'),
+    404: refused('No such source'),
+  },
+});
+
+const changeLiveGuideRoute = createRoute({
+  method: 'put',
+  path: '/api/live/sources/{id}/guide',
+  tags: ['Live TV'],
+  summary: 'Change the guides a source reads what is on from, and read it again',
+  request: {
+    params: IdParams,
+    body: { content: { 'application/json': { schema: LiveGuideChangeSchema } } },
+  },
   responses: {
     200: {
       description: 'The source, as read now',
@@ -169,6 +189,7 @@ const watchLiveChannelRoute = createRoute({
 
 export {
   addLiveSourceRoute,
+  changeLiveGuideRoute,
   dropLiveChannelRoute,
   iptvOrgCatalogueRoute,
   keepLiveChannelRoute,

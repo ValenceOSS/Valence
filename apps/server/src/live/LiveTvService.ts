@@ -11,6 +11,7 @@ type LiveTvService = {
   add: (source: NewLiveSource) => Promise<LiveSource>;
   remove: (id: string) => Promise<boolean>;
   refresh: (id: string) => Promise<LiveSource | null>;
+  changeGuide: (id: string, guideUrl: string | null) => Promise<LiveSource | null>;
   refreshAll: () => Promise<number>;
   checkAll: () => Promise<Record<LiveHealth, number>>;
   guide: (profileId: string | null, from: Date, until: Date) => Promise<LiveGuide>;

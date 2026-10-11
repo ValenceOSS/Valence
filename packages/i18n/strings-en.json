@@ -16105,6 +16105,21 @@
     "context": "Example name shown in the empty name field when adding a single live stream."
   },
   {
+    "handler": "screens.adminArea.liveTvPanel.freeGuidesThatCoverManyChannels",
+    "text": "Free guides that cover many channels in free playlists. Add several; each fills in what the others miss.",
+    "context": "Above the suggested programme guide buttons when setting up a live TV source."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.guideAddresses",
+    "text": "Guide addresses",
+    "context": "Title and field label of the dialog that changes a live TV source’s programme guides."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.guideAddressesMenu",
+    "text": "Guide addresses…",
+    "context": "Menu item that opens the dialog changing a live TV source’s programme guides."
+  },
+  {
     "handler": "screens.adminArea.liveTvPanel.guideAddressOptional",
     "text": "Guide address (optional)",
     "context": "Label of the field holding an XMLTV programme guide’s address."
@@ -16150,6 +16165,11 @@
     "context": "Shown in the admin’s live TV sources table when there are none."
   },
   {
+    "handler": "screens.adminArea.liveTvPanel.oneOrMoreXmltvGuides",
+    "text": "One or more XMLTV guide addresses, separated by spaces.",
+    "context": "Under the guide addresses field."
+  },
+  {
     "handler": "screens.adminArea.liveTvPanel.oneStream",
     "text": "One stream",
     "context": "A kind of live TV source: a single stream added by its address, such as one sports channel."
@@ -16170,6 +16190,11 @@
     "context": "A kind of live TV source: an M3U playlist uploaded as a file."
   },
   {
+    "handler": "screens.adminArea.liveTvPanel.plutoTvGuide",
+    "text": "Pluto TV guide",
+    "context": "Button adding the free Pluto TV programme guide to a live TV source."
+  },
+  {
     "handler": "screens.adminArea.liveTvPanel.readNameCountChannels",
     "text": "Read {count} channels from {name}.",
     "context": "Toast after a live TV source is read again. {name} is the source, {count} how many channels."
@@ -16178,6 +16203,11 @@
     "handler": "screens.adminArea.liveTvPanel.removeThisSource",
     "text": "Remove this source?",
     "context": "Title of the confirmation before removing a live TV source."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.samsungTvPlusGuide",
+    "text": "Samsung TV Plus guide",
+    "context": "Button adding the free Samsung TV Plus programme guide to a live TV source."
   },
   {
     "handler": "screens.adminArea.liveTvPanel.streamAddress",
@@ -16190,6 +16220,11 @@
     "context": "Under the tuner address field when adding an HDHomeRun."
   },
   {
+    "handler": "screens.adminArea.liveTvPanel.thoseAreNotAllAddresses",
+    "text": "One of those isn’t a guide address. Each should start with https://.",
+    "context": "Shown when a live TV guide address is not a web address."
+  },
+  {
     "handler": "screens.adminArea.liveTvPanel.tuner",
     "text": "Tuner",
     "context": "A kind of live TV source: an HDHomeRun antenna tuner on the network."
@@ -16198,6 +16233,16 @@
     "handler": "screens.adminArea.liveTvPanel.tunerAddress",
     "text": "Tuner address",
     "context": "Label of the field holding an HDHomeRun tuner’s address on the network."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.ukGuideEpgPw",
+    "text": "UK guide · epg.pw",
+    "context": "Button adding a free UK programme guide from epg.pw to a live TV source. epg.pw is a site’s name; keep it."
+  },
+  {
+    "handler": "screens.adminArea.liveTvPanel.ukGuideEpgShare",
+    "text": "UK guide · epgshare01",
+    "context": "Button adding a free UK programme guide from epgshare01 to a live TV source. epgshare01 is a site’s name; keep it."
   },
   {
     "handler": "screens.adminArea.liveTvPanel.whatToAdd",

@@ -35,7 +35,12 @@ type LiveTvStore = {
   addSource: (source: StoredLiveSource) => Promise<void>;
   changeSource: (
     id: string,
-    change: { channelCount?: number; refreshedAt?: Date; problem?: Said | null },
+    change: {
+      channelCount?: number;
+      refreshedAt?: Date;
+      problem?: Said | null;
+      guideUrl?: string | null;
+    },
   ) => Promise<void>;
   removeSource: (id: string) => Promise<boolean>;
   replaceChannels: (sourceId: string, channels: readonly StoredLiveChannel[]) => Promise<void>;

@@ -9,12 +9,27 @@ import type { ParsedChannel } from './ParsedChannel';
 const keyOf = (name: string): string =>
   name
     .toLowerCase()
-    .replace(/\b(hd|fhd|uhd|4k|sd)\b/gu, '')
+    .replace(/\([^)]*\)|\[[^\]]*\]/gu, '')
+    .replace(/\b(hd|fhd|uhd|4k|sd|tv)\b/gu, '')
     .replace(/[^\p{L}\p{N}]+/gu, '');
 
 /**
- * Gives each channel that names no guide id the guide's own id for a channel of the same name, so a
- * playlist and a guide from different places still line up. A channel that already names an id the
+ * An iptv-org guide id brought down to the channel it names, without the feed: `BBCOne.uk@East`
+ * and `bbcone.uk` are the same channel.
+ *
+ * @param id - The id.
+ * @returns What is left to compare.
+ */
+const idKeyOf = (id: string): string =>
+  id
+    .toLowerCase()
+    .replace(/@.*$/u, '')
+    .replace(/[^a-z0-9.]/gu, '');
+
+/**
+ * Gives each channel whose guide id the guide does not know the guide's own id for the same channel —
+ * by the id without its feed, or else by a name with its quality and tags left out — so a playlist
+ * and a guide from different places still line up. A channel that already names an id the
  * guide knows keeps it.
  *
  * @param channels - The channels.
@@ -26,8 +41,11 @@ const matchGuideIds = (
   names: ReadonlyMap<string, readonly string[]>,
 ): ParsedChannel[] => {
   const byName = new Map<string, string>();
+  const byId = new Map<string, string>();
 
   for (const [id, spellings] of names) {
+    byId.set(idKeyOf(id), id);
+
     for (const spelling of spellings) {
       byName.set(keyOf(spelling), id);
     }
@@ -36,7 +54,13 @@ const matchGuideIds = (
   return channels.map((channel) =>
     channel.guideId !== null && names.has(channel.guideId)
       ? channel
-      : { ...channel, guideId: byName.get(keyOf(channel.name)) ?? channel.guideId },
+      : {
+          ...channel,
+          guideId:
+            (channel.guideId === null ? undefined : byId.get(idKeyOf(channel.guideId))) ??
+            byName.get(keyOf(channel.name)) ??
+            channel.guideId,
+        },
   );
 };
 

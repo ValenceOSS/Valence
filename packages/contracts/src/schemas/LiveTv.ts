@@ -26,6 +26,22 @@ const LiveAddressSchema = z
   .max(2000)
   .refine((address) => /^(https?|rtmp|rtsp|udp|rtp):\/\//iu.test(address));
 
+const GuideAddressesSchema = z
+  .string()
+  .trim()
+  .max(4000)
+  .refine((addresses) =>
+    addresses
+      .split(/[\s,]+/u)
+      .filter((address) => address !== '')
+      .every((address) => LiveAddressSchema.safeParse(address).success),
+  )
+  .transform((addresses) => {
+    const listed = addresses.split(/[\s,]+/u).filter((address) => address !== '');
+
+    return listed.length === 0 ? null : listed.join(' ');
+  });
+
 const LiveSourceSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1).max(100),
@@ -44,27 +60,29 @@ const NewLiveSourceSchema = z.discriminatedUnion('kind', [
     name: z.string().trim().min(1).max(100),
     address: LiveAddressSchema,
     logoUrl: LiveAddressSchema.nullable().default(null),
-    guideUrl: LiveAddressSchema.nullable().default(null),
+    guideUrl: GuideAddressesSchema.nullable().default(null),
   }),
   z.object({
     kind: z.literal('playlistUrl'),
     name: z.string().trim().min(1).max(100),
     address: LiveAddressSchema,
-    guideUrl: LiveAddressSchema.nullable().default(null),
+    guideUrl: GuideAddressesSchema.nullable().default(null),
   }),
   z.object({
     kind: z.literal('playlistFile'),
     name: z.string().trim().min(1).max(100),
     playlist: z.string().min(1).max(MOST_PLAYLIST_BYTES),
-    guideUrl: LiveAddressSchema.nullable().default(null),
+    guideUrl: GuideAddressesSchema.nullable().default(null),
   }),
   z.object({
     kind: z.literal('tuner'),
     name: z.string().trim().min(1).max(100),
     address: LiveAddressSchema,
-    guideUrl: LiveAddressSchema.nullable().default(null),
+    guideUrl: GuideAddressesSchema.nullable().default(null),
   }),
 ]);
+
+const LiveGuideChangeSchema = z.object({ guideUrl: GuideAddressesSchema.nullable() });
 
 const LiveChannelSchema = z.object({
   id: z.string().uuid(),
@@ -122,8 +140,10 @@ export {
   LIVE_HEALTHS,
   LIVE_SOURCE_KINDS,
   LiveHealthSchema,
+  GuideAddressesSchema,
   LiveAddressSchema,
   LiveChannelSchema,
+  LiveGuideChangeSchema,
   LiveGuideSchema,
   LiveProgrammeSchema,
   LiveSourceKindSchema,

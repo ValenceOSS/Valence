@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Bin as BinFilledIcon,
+  Calendar as CalendarFilledIcon,
   MoreHorizontal as MoreHorizontalIcon,
   Plus as PlusFilledIcon,
   RefreshCw as RefreshCwFilledIcon,
@@ -18,6 +19,7 @@ import { removeLiveSource } from '@ValenceClient/live/removeLiveSource';
 import { liveQueries } from '@ValenceClient/query/liveQueries';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
+import { LiveGuideDialog } from '@ValenceScreens/components/AdminArea/components/LiveTvPanel/components/LiveGuideDialog/LiveGuideDialog';
 import { AddLiveSourceDialog } from '@ValenceScreens/components/AdminArea/components/LiveTvPanel/components/AddLiveSourceDialog/AddLiveSourceDialog';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
@@ -46,6 +48,7 @@ const LiveTvPanel = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [removing, setRemoving] = useState<LiveSource | null>(null);
   const [reading, setReading] = useState<string | null>(null);
+  const [guiding, setGuiding] = useState<LiveSource | null>(null);
 
   const reread = () => cache.invalidateQueries({ queryKey: liveQueries.key });
 
@@ -130,6 +133,18 @@ const LiveTvPanel = () => {
               {
                 items: [
                   {
+                    id: 'guide',
+                    label: say('screens.adminArea.liveTvPanel.guideAddressesMenu'),
+                    icon: <Icon of={CalendarFilledIcon} size={15} />,
+                    onChoose: () => {
+                      setGuiding(row.original);
+                    },
+                  },
+                ],
+              },
+              {
+                items: [
+                  {
                     id: 'remove',
                     label: say('common.forget'),
                     icon: <Icon of={BinFilledIcon} size={15} />,
@@ -188,6 +203,16 @@ const LiveTvPanel = () => {
           setIsAdding(false);
         }}
         onAdded={() => {
+          void reread();
+        }}
+      />
+
+      <LiveGuideDialog
+        source={guiding}
+        onClose={() => {
+          setGuiding(null);
+        }}
+        onChanged={() => {
           void reread();
         }}
       />

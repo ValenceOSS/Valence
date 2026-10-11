@@ -4055,6 +4055,10 @@ const ENGLISH = {
   'screens.adminArea.liveTvPanel.fillInANameAndAnAddress':
     'Give it a name and a working address, or choose a playlist.',
   'screens.adminArea.liveTvPanel.formulaOneLive': 'Formula 1 live',
+  'screens.adminArea.liveTvPanel.freeGuidesThatCoverManyChannels':
+    'Free guides that cover many channels in free playlists. Add several; each fills in what the others miss.',
+  'screens.adminArea.liveTvPanel.guideAddresses': 'Guide addresses',
+  'screens.adminArea.liveTvPanel.guideAddressesMenu': 'Guide addresses…',
   'screens.adminArea.liveTvPanel.guideAddressOptional': 'Guide address (optional)',
   'screens.adminArea.liveTvPanel.iptvOrg': 'iptv-org',
   'screens.adminArea.liveTvPanel.iptvOrgListsFreeChannels':
@@ -4067,17 +4071,25 @@ const ENGLISH = {
   'screens.adminArea.liveTvPanel.myChannels': 'My channels',
   'screens.adminArea.liveTvPanel.noSourcesYet':
     'No live TV yet. Add a stream, a playlist, a tuner or a playlist from iptv-org.',
+  'screens.adminArea.liveTvPanel.oneOrMoreXmltvGuides':
+    'One or more XMLTV guide addresses, separated by spaces.',
   'screens.adminArea.liveTvPanel.oneStream': 'One stream',
   'screens.adminArea.liveTvPanel.pickBy': 'Pick by',
   'screens.adminArea.liveTvPanel.playlistAddress': 'Playlist address',
   'screens.adminArea.liveTvPanel.playlistFile': 'Playlist file',
+  'screens.adminArea.liveTvPanel.plutoTvGuide': 'Pluto TV guide',
   'screens.adminArea.liveTvPanel.readNameCountChannels': 'Read {count} channels from {name}.',
   'screens.adminArea.liveTvPanel.removeThisSource': 'Remove this source?',
+  'screens.adminArea.liveTvPanel.samsungTvPlusGuide': 'Samsung TV Plus guide',
   'screens.adminArea.liveTvPanel.streamAddress': 'Stream address',
   'screens.adminArea.liveTvPanel.theHdHomeRunsAddress':
     'The HDHomeRun’s address on your network, such as http://192.168.1.50.',
+  'screens.adminArea.liveTvPanel.thoseAreNotAllAddresses':
+    'One of those isn’t a guide address. Each should start with https://.',
   'screens.adminArea.liveTvPanel.tuner': 'Tuner',
   'screens.adminArea.liveTvPanel.tunerAddress': 'Tuner address',
+  'screens.adminArea.liveTvPanel.ukGuideEpgPw': 'UK guide · epg.pw',
+  'screens.adminArea.liveTvPanel.ukGuideEpgShare': 'UK guide · epgshare01',
   'screens.adminArea.liveTvPanel.whatToAdd': 'What to add',
   'screens.adminArea.matchPicker.choosingHereCorrectsEveryEpisodeOf':
     'Your choice applies to every episode of this series and to future scans.',

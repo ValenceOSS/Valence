@@ -17,6 +17,7 @@ import { TextField } from '@ValenceUI/TextField';
 import { addLiveSource } from '@ValenceClient/live/addLiveSource';
 import { liveQueries } from '@ValenceClient/query/liveQueries';
 import { NewLiveSourceSchema } from '@ValenceContracts/schemas/LiveTv';
+import { GuideSuggestions } from '@ValenceScreens/components/AdminArea/components/LiveTvPanel/components/GuideSuggestions/GuideSuggestions';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
 import { say } from '@ValenceI18n/say';
@@ -88,7 +89,7 @@ const AddLiveSourceDialog = ({ isOpen, onClose, onAdded }: AddLiveSourceDialogPr
   };
 
   const asked = () => {
-    const guide = guideUrl.trim() === '' ? null : guideUrl.trim();
+    const guide = guideUrl.trim() === '' ? null : guideUrl;
     const named = name.trim();
 
     switch (way) {
@@ -296,8 +297,13 @@ const AddLiveSourceDialog = ({ isOpen, onClose, onAdded }: AddLiveSourceDialogPr
               label={say('screens.adminArea.liveTvPanel.guideAddressOptional')}
               value={guideUrl}
               onValueChange={setGuideUrl}
-              type="url"
               description={say('screens.adminArea.liveTvPanel.anXmltvGuideSaysWhatsOn')}
+            />
+            <GuideSuggestions
+              chosen={guideUrl}
+              onAdd={(address) => {
+                setGuideUrl((was) => `${was.trim()} ${address}`.trim());
+              }}
             />
 
             {problem === null ? null : (
