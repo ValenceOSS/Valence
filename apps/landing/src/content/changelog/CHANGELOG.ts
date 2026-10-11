@@ -1,6 +1,7 @@
 import { dialogsSideBySide } from './dialogsSideBySide';
 import { facesAndArtCards } from './facesAndArtCards';
 import { linkedServersAndCalendars } from './linkedServersAndCalendars';
+import { liveTvAndTheBrowser } from './liveTvAndTheBrowser';
 import { musicRequestsAndHouseholds } from './musicRequestsAndHouseholds';
 import { patchedImages } from './patchedImages';
 import { phonesAndAudiobooks } from './phonesAndAudiobooks';
@@ -11,6 +12,7 @@ import { theFirstRelease } from './theFirstRelease';
 import type { ChangelogEntry } from './ChangelogEntry';
 
 const CHANGELOG: readonly ChangelogEntry[] = [
+  liveTvAndTheBrowser,
   televisionEverywhere,
   linkedServersAndCalendars,
   facesAndArtCards,
