@@ -34,8 +34,6 @@ import { Button } from '@ValenceUI/Button';
 import { Slider } from '@ValenceUI/Slider';
 import { SettingsMenu } from '@ValenceUI/SettingsMenu';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
-import { Badge } from '@ValenceUI/Badge';
-import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 import { nextEpisode } from '@ValenceClient/library/pickFeatured';
 import { SUBTITLES_OFF } from '@ValenceClient/playback/fetchSubtitles';
@@ -218,22 +216,24 @@ const PlayerControls = ({
     <div className="valence-solid flex flex-col gap-1 rounded-lg px-3 py-2 text-text sm:px-4">
       {isLive ? (
         <div className="flex items-center gap-3">
-          <Badge size="sm" tone="danger" className="shrink-0">
-            {say('common.live')}
-          </Badge>
-          {duration > 0 ? (
-            <ProgressBar
-              label={say('common.moveThroughTitle', { title })}
-              value={(Math.min(Math.max(position, 0), duration) / duration) * 100}
-              className="min-w-0 flex-1"
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-danger/15 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-danger">
+            <span
+              aria-hidden
+              className="size-1.5 rounded-full bg-danger motion-safe:animate-pulse"
             />
-          ) : (
-            <span className="flex-1" />
-          )}
+            {say('common.live')}
+          </span>
+          <Slider
+            label={say('common.moveThroughTitle', { title })}
+            value={Math.min(Math.max(position, 0), Math.max(duration, 1))}
+            max={Math.max(duration, 1)}
+            onValueChange={() => undefined}
+            tone="glass"
+            isDisabled
+            className="min-w-0 flex-1"
+          />
           {liveDetail === undefined ? null : (
-            <span className="shrink-0 text-xs tabular-nums text-text-muted sm:text-sm">
-              {liveDetail}
-            </span>
+            <span className="shrink-0 px-1 text-xs tabular-nums sm:text-sm">{liveDetail}</span>
           )}
         </div>
       ) : (
