@@ -10,10 +10,14 @@ import { DEFAULT_CAPTION_STYLE } from '@ValenceClient/playback/captionStyle';
 import { watchLiveChannel } from '@ValenceClient/live/watchLiveChannel';
 import { PlayerControls } from '@ValenceScreens/components/VideoPlayer/components/PlayerControls/PlayerControls';
 import { attachShaka } from '@ValenceScreens/playback/attachShaka';
+import { readLights } from '@ValenceScreens/library/readLights';
+import { setLiveLights } from '@ValenceScreens/library/liveLights';
 import { say } from '@ValenceI18n/say';
 import type { LivePlayerProps } from './LivePlayer.types';
 
 const GIVES_UP_AFTER_MS = 20_000;
+
+const LOOKS_EVERY_MS = 200;
 
 /**
  * A clock time as the viewer reads it, such as `19:30`.
@@ -27,7 +31,7 @@ const timeOf = (at: string): string =>
 /**
  * Plays one channel live, through the server, under the same controls as anything else Valence
  * plays — in their live form, with what is on now along the top in place of a timeline — and with
- * what is on now and next beneath it. A channel counts as playing once pictures arrive, and one
+ * what is on now and next beneath it, and the page lit in the colours of the picture as it plays. A channel counts as playing once pictures arrive, and one
  * that sends none in a while says it could not be played rather than staying black. Changing
  * channel stops the last one and starts the next.
  *
@@ -120,6 +124,26 @@ const LivePlayer = ({ channel, onNow, upNext, now, onToggleFavourite }: LivePlay
       void life.detach?.();
     };
   }, [channel.id]);
+
+  useEffect(() => {
+    const look = () => {
+      const element = videoRef.current;
+
+      if (element !== null && element.readyState > 1 && !element.paused) {
+        const found = readLights(element);
+
+        if (found.length > 0) {
+          setLiveLights(found);
+        }
+      }
+    };
+    const timer = setInterval(look, LOOKS_EVERY_MS);
+
+    return () => {
+      clearInterval(timer);
+      setLiveLights([]);
+    };
+  }, []);
 
   const startsAt = onNow === null ? null : Date.parse(onNow.startsAt);
   const endsAt = onNow === null ? null : Date.parse(onNow.endsAt);
