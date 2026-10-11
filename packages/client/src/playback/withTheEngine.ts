@@ -26,11 +26,11 @@ const unionOf = (...lists: readonly (readonly string[])[]): string[] => [...new 
  * screen. Dolby Vision is never claimed as such: one with an HDR10 base plays as that base, and one
  * without is left for the server.
  *
- * @param profile - What the media element plays by itself.
- * @param support - What the browser adds.
  * MPEG-2 is decoded in the page, which keeps up with a DVD's 576 lines but not with HD, so it is
  * only claimed for films no taller than that.
  *
+ * @param profile - What the media element plays by itself.
+ * @param support - What the browser adds.
  * @param film - Whether the film to be played is HDR, and how tall its picture is.
  * @returns The profile with both.
  */

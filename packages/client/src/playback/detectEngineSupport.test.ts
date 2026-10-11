@@ -46,6 +46,27 @@ describe('detectEngineSupport', () => {
     expect(support.toneMappedCodecs).toEqual([]);
   });
 
+  it('claims TrueHD and MPEG-2 where Valence’s own decoders load and the element takes FLAC', async () => {
+    const support = await detectEngineSupport(
+      aBrowser({
+        hasDecoders: () => Promise.resolve(true),
+        canStream: (mimeType) => /mp4a|opus|flac/.test(mimeType),
+      }),
+    );
+
+    expect(support.audioCodecs).toContain('truehd');
+    expect(support.videoCodecs).toContain('mpeg2');
+  });
+
+  it('leaves TrueHD to the server where the element cannot take FLAC to hand it on in', async () => {
+    const support = await detectEngineSupport(
+      aBrowser({ hasDecoders: () => Promise.resolve(true) }),
+    );
+
+    expect(support.audioCodecs).not.toContain('truehd');
+    expect(support.videoCodecs).toContain('mpeg2');
+  });
+
   it('claims the pictures WebCodecs decodes and the sounds the element takes or the page decodes', async () => {
     expect(await detectEngineSupport(aBrowser())).toEqual({
       videoCodecs: ['h264', 'hevc', 'av1'],
@@ -53,7 +74,7 @@ describe('detectEngineSupport', () => {
       remuxVideoCodecs: [],
       remuxTenBitVideoCodecs: [],
       toneMappedCodecs: [],
-      audioCodecs: ['aac', 'opus', 'vorbis', 'ac3', 'eac3', 'pcm'],
+      audioCodecs: ['aac', 'opus', 'vorbis', 'ac3', 'eac3', 'dts', 'pcm'],
     });
   });
 

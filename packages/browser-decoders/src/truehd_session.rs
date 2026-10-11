@@ -166,8 +166,7 @@ pub unsafe extern "C" fn truehd_push(
         return 0;
     }
 
-    // SAFETY: the caller promises the session came from `truehd_new` and is not in use elsewhere,
-    // and that the bytes are `length` readable bytes.
+    // SAFETY: the caller promises an unshared `truehd_new` session and `length` readable bytes.
     let (session, packet) = unsafe { (&mut *session, std::slice::from_raw_parts(bytes, length)) };
 
     session.push(packet)

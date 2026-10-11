@@ -6,6 +6,7 @@ const dispose = vi.fn();
 vi.mock('mediabunny', () => ({
   ALL_FORMATS: [],
   UrlSource: class {},
+  EncodedPacketSink: class {},
   Input: class {
     getPrimaryVideoTrack = () => Promise.resolve(null);
     getAudioTracks = () => Promise.resolve([]);

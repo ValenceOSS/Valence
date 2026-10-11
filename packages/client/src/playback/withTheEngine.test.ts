@@ -75,4 +75,17 @@ describe('withTheEngine', () => {
       ),
     ).toBe(BROWSER);
   });
+
+  it('claims MPEG-2 for a DVD but leaves an HD one to the server', () => {
+    const withMpeg2 = { ...SUPPORT, videoCodecs: ['mpeg2', 'h264'] };
+    const mp4Of = (profile: DeviceProfile) =>
+      profile.directPlayProfiles.find(({ container }) => container === 'mp4')?.videoCodecs;
+
+    expect(mp4Of(withTheEngine(BROWSER, withMpeg2, { isHdr: false, height: 576 }))).toContain(
+      'mpeg2',
+    );
+    expect(mp4Of(withTheEngine(BROWSER, withMpeg2, { isHdr: false, height: 1080 }))).not.toContain(
+      'mpeg2',
+    );
+  });
 });

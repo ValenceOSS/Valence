@@ -7,14 +7,23 @@ const init = vi.fn<(options: object) => Promise<object>>();
 
 vi.mock('mediabunny', () => ({
   AudioSample: class {},
+  AudioSampleSource: class {},
   BufferSource: class {},
-  canEncodeAudio: () => Promise.resolve(false),
+  canEncodeAudio: (codec: string) => Promise.resolve(codec === 'flac'),
   Input: class {},
   Conversion: { init: (options: object) => init(options) },
   ConversionCanceledError: class extends Error {},
   Mp4OutputFormat: class {},
   Output: class {},
   StreamTarget: class {},
+}));
+
+vi.mock('@ValenceScreens/playback/engine/registerCodecExtensions', () => ({
+  registerCodecExtensions: () => Promise.resolve(),
+}));
+
+vi.mock('@ValenceScreens/playback/engine/loadBrowserDecoders', () => ({
+  loadBrowserDecoders: () => Promise.resolve(null),
 }));
 
 /**
@@ -140,5 +149,22 @@ describe('createMediaFeed', () => {
     });
 
     expect(source.asked).toEqual(['audio/mp4; codecs="opus"']);
+  });
+
+  it('keeps the sound lossless as FLAC where the element takes FLAC', async () => {
+    const source = aMediaSource((mimeType) => mimeType.includes('flac'));
+
+    vi.stubGlobal('MediaSource', source.MediaSource);
+    vi.stubGlobal('URL', { ...URL, createObjectURL: () => 'blob:sound', revokeObjectURL: vi.fn() });
+
+    await createMediaFeed({
+      element: document.createElement('video'),
+      input: anInput(),
+      duration: 60,
+      track: aTrack('dtsc'),
+      onFault: vi.fn(),
+    });
+
+    expect(source.asked).toEqual(['audio/mp4; codecs="flac"']);
   });
 });

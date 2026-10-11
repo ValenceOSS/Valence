@@ -31,8 +31,7 @@ pub unsafe extern "C" fn buffer_free(buffer: *mut u8, length: usize) {
     }
 
     if let Some(layout) = layout_of(length) {
-        // SAFETY: the caller hands back a buffer `buffer_new` made with this same length, so it was
-        // allocated with this layout and has not been freed.
+        // SAFETY: the caller returns an unfreed `buffer_new` buffer of this length, so this layout.
         unsafe { dealloc(buffer, layout) }
     }
 }

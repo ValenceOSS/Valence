@@ -29,11 +29,26 @@ describe('chooseSoundRoute', () => {
     });
   });
 
+  it('keeps every channel as lossless FLAC wherever the element takes it', async () => {
+    canEncodeAudio.mockResolvedValue(true);
+
+    expect(
+      await chooseSoundRoute(aTrack('mlpa', 8), (mimeType) => !mimeType.includes('mlpa'), null),
+    ).toEqual({
+      kind: 'encoded',
+      codec: 'flac',
+      parameter: 'flac',
+      numberOfChannels: 8,
+      isReordered: false,
+    });
+    expect(canEncodeAudio).toHaveBeenCalledWith('flac', { numberOfChannels: 8 });
+  });
+
   it('keeps 5.1 as AAC, reordered where the encoder reads AAC’s own order', async () => {
     canEncodeAudio.mockResolvedValue(true);
 
     expect(
-      await chooseSoundRoute(aTrack('ac-3', 6), (mimeType) => !mimeType.includes('ac-3'), 'aac'),
+      await chooseSoundRoute(aTrack('ac-3', 6), (mimeType) => !/ac-3|flac/.test(mimeType), 'aac'),
     ).toEqual({
       kind: 'encoded',
       codec: 'aac',
@@ -47,7 +62,7 @@ describe('chooseSoundRoute', () => {
     canEncodeAudio.mockResolvedValue(true);
 
     expect(
-      await chooseSoundRoute(aTrack('ac-3', 6), (mimeType) => !mimeType.includes('ac-3'), null),
+      await chooseSoundRoute(aTrack('ac-3', 6), (mimeType) => !/ac-3|flac/.test(mimeType), null),
     ).toMatchObject({ codec: 'opus', numberOfChannels: 2 });
   });
 
@@ -55,7 +70,7 @@ describe('chooseSoundRoute', () => {
     canEncodeAudio.mockResolvedValue(true);
 
     expect(
-      await chooseSoundRoute(aTrack('mlpa', 8), (mimeType) => !mimeType.includes('mlpa'), 'wave'),
+      await chooseSoundRoute(aTrack('mlpa', 8), (mimeType) => !/mlpa|flac/.test(mimeType), 'wave'),
     ).toEqual({
       kind: 'encoded',
       codec: 'opus',
