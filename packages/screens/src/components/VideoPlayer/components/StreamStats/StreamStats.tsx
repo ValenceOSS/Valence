@@ -1,7 +1,7 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Icon } from '@ValenceUI/Icon';
-import { X as XIcon } from '@keyline-icons/react';
+import { GripHorizontal as GripIcon, X as XIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
@@ -93,9 +93,16 @@ const StreamStats = ({
           onGrab === undefined ? '' : 'cursor-grab touch-none select-none active:cursor-grabbing',
         )}
       >
-        <span className="flex min-w-0 flex-col">
-          <h3 className="text-sm font-medium tracking-tight">{say('common.statsForNerds')}</h3>
-          <span className="truncate text-[0.6875rem] text-text-muted">{media.title}</span>
+        <span className="flex min-w-0 items-center gap-2">
+          {onGrab === undefined ? null : (
+            <span className="shrink-0 text-text-muted">
+              <Icon of={GripIcon} size={16} />
+            </span>
+          )}
+          <span className="flex min-w-0 flex-col">
+            <h3 className="text-sm font-medium tracking-tight">{say('common.statsForNerds')}</h3>
+            <span className="truncate text-[0.6875rem] text-text-muted">{media.title}</span>
+          </span>
         </span>
 
         <Button

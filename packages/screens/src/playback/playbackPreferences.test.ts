@@ -80,6 +80,13 @@ describe('writePlaybackPreferences', () => {
     expect(readPlaybackPreferences().showsRemaining).toBe(true);
   });
 
+  it('remembers the language somebody chose to hear', () => {
+    writePlaybackPreferences({ audioLanguage: 'eng' });
+
+    expect(readPlaybackPreferences().audioLanguage).toBe('eng');
+    expect(DEFAULTS.audioLanguage).toBeNull();
+  });
+
   it('leaves the browser’s own player off until somebody turns it on, and remembers it', () => {
     expect(DEFAULTS.playsInTheBrowser).toBe(false);
 

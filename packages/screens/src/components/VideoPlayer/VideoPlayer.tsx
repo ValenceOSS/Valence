@@ -828,6 +828,19 @@ const VideoPlayer = ({
     window.addEventListener('pagehide', onPageHide);
 
     const run = async () => {
+      const rememberedAudio =
+        request.audioStreamIndex === undefined && keptSource === undefined
+          ? readPlaybackPreferences().audioLanguage
+          : null;
+      const known =
+        rememberedAudio === null
+          ? null
+          : await cache.ensureQueryData(libraryQueries.detail(request.mediaId)).catch(() => null);
+      const remembered =
+        known?.audioStreams.find((stream) => stream.language === rememberedAudio) ?? null;
+      const audioStreamIndex =
+        request.audioStreamIndex ??
+        (remembered === null || remembered.isDefault ? undefined : remembered.index);
       const film =
         keptSource === undefined &&
         !engineRefusedRef.current &&
@@ -836,10 +849,9 @@ const VideoPlayer = ({
           : null;
       const engine = film === null ? null : await readEngineSupport();
       const asked =
-        request.audioStreamIndex === undefined
+        audioStreamIndex === undefined
           ? null
-          : (film?.audioStreams.find((stream) => stream.index === request.audioStreamIndex) ??
-            null);
+          : (film?.audioStreams.find((stream) => stream.index === audioStreamIndex) ?? null);
       const picksItsOwnSound =
         engine !== null && asked !== null && engine.audioCodecs.includes(asked.codec);
       const outcome =
@@ -851,7 +863,7 @@ const VideoPlayer = ({
                 : withTheEngine(deviceProfile, engine, { isHdr: film.videoRange !== 'SDR' }),
               clientId,
               request.startSeconds,
-              picksItsOwnSound ? undefined : request.audioStreamIndex,
+              picksItsOwnSound ? undefined : audioStreamIndex,
               request.requestedQuality === 'auto' ? request.autoRung : request.requestedQuality,
               request.subtitleStreamIndex,
             )
@@ -879,12 +891,12 @@ const VideoPlayer = ({
         return;
       }
       setSession(
-        picksItsOwnSound && request.audioStreamIndex !== undefined
+        picksItsOwnSound && audioStreamIndex !== undefined
           ? {
               ...outcome.session,
               plan: {
                 ...outcome.session.plan,
-                audio: { ...outcome.session.plan.audio, streamIndex: request.audioStreamIndex },
+                audio: { ...outcome.session.plan.audio, streamIndex: audioStreamIndex },
               },
             }
           : outcome.session,
@@ -923,9 +935,7 @@ const VideoPlayer = ({
           film?.audioStreams.findIndex(
             (stream) =>
               stream.index ===
-              (picksItsOwnSound
-                ? request.audioStreamIndex
-                : outcome.session.plan.audio.streamIndex),
+              (picksItsOwnSound ? audioStreamIndex : outcome.session.plan.audio.streamIndex),
           ) ?? -1;
         const isTheEngines =
           outcome.session.delivery.kind === 'direct' &&
@@ -1623,6 +1633,12 @@ const VideoPlayer = ({
 
       hold(element);
 
+      const heard = detail?.audioStreams.find((stream) => stream.index === streamIndex);
+
+      if (heard?.language !== undefined && heard.language !== null) {
+        writePlaybackPreferences({ audioLanguage: heard.language });
+      }
+
       setSelectedAudioIndex(streamIndex);
       setRequest({
         mediaId: request.mediaId,
@@ -1642,6 +1658,7 @@ const VideoPlayer = ({
       request.subtitleStreamIndex,
       position,
       hold,
+      detail,
     ],
   );
 

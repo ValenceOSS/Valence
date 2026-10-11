@@ -9,6 +9,7 @@ const PreferencesSchema = z.object({
   boost: z.number().min(1).max(3).default(1),
   isMuted: z.boolean().default(false),
   subtitleLanguage: z.string().nullable().default(null),
+  audioLanguage: z.string().nullable().default(null),
   showsRemaining: z.boolean().default(false),
   playsInTheBrowser: z.boolean().default(false),
 });
@@ -20,12 +21,13 @@ const DEFAULTS: PlaybackPreferences = {
   boost: 1,
   isMuted: false,
   subtitleLanguage: null,
+  audioLanguage: null,
   showsRemaining: false,
   playsInTheBrowser: false,
 };
 
 /**
- * How this device likes to watch: the volume, whether the clock counts down, whether files the
+ * How this device likes to watch: the volume, the language it last chose to hear, whether the clock counts down, whether files the
  * browser cannot play by itself are played through its own player rather than converted, and the
  * rest of what survives between sessions. Held on the device rather than on the profile, since these follow the
  * screen and the speakers rather than the person.

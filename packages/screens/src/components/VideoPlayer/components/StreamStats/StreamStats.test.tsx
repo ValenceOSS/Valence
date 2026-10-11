@@ -1,5 +1,5 @@
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { StreamStats } from './StreamStats';
@@ -154,6 +154,17 @@ describe('StreamStats', () => {
     expect(screen.getByText('Carried as it is')).toBeInTheDocument();
     expect(screen.queryByText('Frames drawn')).not.toBeInTheDocument();
     expect(screen.getByText(/3,308/)).toBeInTheDocument();
+  });
+
+  it('shows a handle to drag it by only where it can be dragged', () => {
+    draw();
+
+    const still = document.querySelectorAll('header .valence-icon').length;
+
+    cleanup();
+    draw({ onGrab: vi.fn() });
+
+    expect(document.querySelectorAll('header .valence-icon').length).toBe(still + 1);
   });
 
   it('names Shaka as the player for a stream the server makes', () => {
