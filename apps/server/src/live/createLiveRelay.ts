@@ -24,10 +24,9 @@ type RelayAsk = { channelId: string; address: string; until: number; signature: 
  * said to.
  *
  * @param now - The clock, in milliseconds.
- * @param fetcher - How a request is sent, injectable for tests.
  * @returns The relay.
  */
-const createLiveRelay = (now: () => number = Date.now, fetcher: typeof fetch = fetch) => {
+const createLiveRelay = (now: () => number = Date.now) => {
   const secret = randomBytes(32);
 
   const signatureOf = (channelId: string, address: string, until: number): string =>
@@ -78,6 +77,7 @@ const createLiveRelay = (now: () => number = Date.now, fetcher: typeof fetch = f
     channelId: string,
     query: { u: string | undefined; e: string | undefined; s: string | undefined },
     asking: { userAgent: string | null; referrer: string | null },
+    fetcher: typeof fetch = fetch,
   ): Promise<Response | null> => {
     const address = query.u === undefined ? '' : Buffer.from(query.u, 'base64url').toString();
     const until = Number(query.e ?? 0);

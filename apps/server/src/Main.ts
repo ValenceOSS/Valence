@@ -120,7 +120,7 @@ import { createChangeTeller } from '@ValenceServer/linking/createChangeTeller';
 import { createLiveTvService } from '@ValenceServer/live/createLiveTvService';
 import { createDatabaseLiveTvStore } from '@ValenceServer/live/createDatabaseLiveTvStore';
 import { createLiveRelay } from '@ValenceServer/live/createLiveRelay';
-import { createLiveFetch } from '@ValenceServer/live/createLiveFetch';
+import { createLiveRoutes } from '@ValenceServer/live/createLiveRoutes';
 import { createIptvOrgCatalogue } from '@ValenceServer/live/createIptvOrgCatalogue';
 import type { LiveTvOptions } from '@ValenceServer/live/LiveTvOptions';
 import { createServerPictures } from '@ValenceServer/linking/createServerPictures';
@@ -1405,11 +1405,11 @@ const catalogueSync = createCatalogueSync({
   },
 });
 
-const liveFetch = createLiveFetch(env.LIVE_TV_PROXY);
+const liveRoutes = createLiveRoutes(env.LIVE_TV_PROXY);
 
 const liveTvService = createLiveTvService({
   store: createDatabaseLiveTvStore(db),
-  fetcher: liveFetch,
+  fetcher: liveRoutes.readings,
   warn: (message) => {
     log.warn('server', message);
   },
@@ -1417,15 +1417,15 @@ const liveTvService = createLiveTvService({
 
 const liveTv: LiveTvOptions = {
   service: liveTvService,
-  relay: createLiveRelay(Date.now, liveFetch),
+  relay: createLiveRelay(),
   iptvOrg: createIptvOrgCatalogue(),
-  fetcher: liveFetch,
-  startTranscoded: async (channel) => {
+  routes: liveRoutes,
+  startTranscoded: async (channel, proxy) => {
     const liveId =
       (await transcoder.startLive?.(channel.streamUrl, {
         userAgent: channel.userAgent,
         referrer: channel.referrer,
-        proxy: env.LIVE_TV_PROXY === '' ? null : env.LIVE_TV_PROXY,
+        proxy,
       })) ?? null;
 
     return liveId === null ? null : `/api/live/session/${encodeURIComponent(liveId)}/index.m3u8`;
