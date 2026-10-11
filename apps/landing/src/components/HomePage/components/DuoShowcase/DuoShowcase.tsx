@@ -4,7 +4,7 @@ import { revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
 import { useReached } from '@ValenceUI/useReached';
 import { VideoSurface } from '@ValenceUI/VideoSurface';
 import { DuoFrame } from './components/DuoFrame/DuoFrame';
-import { Airplay as TelevisionIcon } from '@keyline-icons/react/duotone';
+import { Tv as TelevisionIcon } from '@keyline-icons/react/duotone';
 import { ByTheWay } from '@ValenceLanding/components/HomePage/components/ByTheWay/ByTheWay';
 
 const OPEN = {

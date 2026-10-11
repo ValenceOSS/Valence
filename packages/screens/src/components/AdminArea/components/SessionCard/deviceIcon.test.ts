@@ -1,9 +1,9 @@
 import {
-  Cast as CastIcon,
   Compass as CompassIcon,
   Globe as GlobeIcon,
   Monitor as MonitorIcon,
   Smartphone as SmartphoneIcon,
+  Tv as TvIcon,
 } from '@keyline-icons/react/fill';
 import { describe, expect, it } from 'vitest';
 import { deviceIconFor } from './deviceIcon';
@@ -28,8 +28,8 @@ describe('deviceIconFor', () => {
     expect(deviceIconFor('Dan\u2019s iPhone', 'phone')).toBe(SmartphoneIcon);
   });
 
-  it('draws a television as something being cast to', () => {
-    expect(deviceIconFor('Living room', 'tv')).toBe(CastIcon);
+  it('draws a television as a television', () => {
+    expect(deviceIconFor('Living room', 'tv')).toBe(TvIcon);
   });
 
   it('draws the desktop application as a machine, not as a browser', () => {

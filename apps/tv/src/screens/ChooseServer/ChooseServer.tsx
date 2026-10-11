@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
-import { Clock, Plus, Server } from '@keyline-icons/react-native';
+import { History, Plus, Server } from '@keyline-icons/react-native';
 import { readServerAddress } from '@ValenceClient/session/readServerAddress';
 import { recentServerAddresses } from '@ValenceClient/session/serverAddress';
 import { Button } from '@ValenceTv/components/Button/Button';
@@ -203,7 +203,7 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
                 <ServerCard
                   name={withoutScheme(address)}
                   address={say('tv.chooseServer.usedBefore')}
-                  icon={Clock}
+                  icon={History}
                   isDisabled={isAsking}
                   hasPreferredFocus={nearby.length === 0 && index === 0}
                   onPress={() => {

@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { Download as DownloadIcon } from '@keyline-icons/react';
+import { Plus as PlusIcon } from '@keyline-icons/react';
 import type { MissingRowProps } from './MissingRow.types';
 import { say } from '@ValenceI18n/say';
 
@@ -26,7 +26,7 @@ const MissingRow = ({ episodeNumber, title, stillUrl, airs }: MissingRowProps) =
         )}
 
         <span className="absolute inset-0 flex items-center justify-center text-text-muted">
-          <Icon of={DownloadIcon} size={20} />
+          <Icon of={PlusIcon} size={20} />
         </span>
       </span>
 

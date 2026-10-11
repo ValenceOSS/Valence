@@ -18,7 +18,7 @@ import { Doodle } from '@ValenceUI/Doodle';
 import { Icon } from '@ValenceUI/Icon';
 import { NavBar } from '@ValenceUI/NavBar';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
-import { Shapes as PluginsIcon } from '@keyline-icons/react/duotone';
+import { Puzzle as PluginsIcon } from '@keyline-icons/react/duotone';
 import { ByTheWay } from '@ValenceLanding/components/HomePage/components/ByTheWay/ByTheWay';
 
 const STOPS = [

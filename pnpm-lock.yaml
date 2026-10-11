@@ -69,8 +69,8 @@ importers:
   apps/desktop:
     dependencies:
       '@keyline-icons/react':
-        specifier: 1.0.0
-        version: 1.0.0(react@19.3.0)
+        specifier: 1.8.0
+        version: 1.8.0(react@19.3.0)
       '@tanstack/react-query':
         specifier: 5.102.8
         version: 5.102.8(react@19.3.0)
@@ -172,8 +172,8 @@ importers:
   apps/docs:
     dependencies:
       '@keyline-icons/react':
-        specifier: 1.0.0
-        version: 1.0.0(react@19.3.0)
+        specifier: 1.8.0
+        version: 1.8.0(react@19.3.0)
       '@scalar/api-reference-react':
         specifier: 0.9.70
         version: 0.9.70(qrcode@1.5.4)(react@19.3.0)(tailwindcss@4.3.3)(typescript@7.0.2)(zod@4.6.4)
@@ -269,8 +269,8 @@ importers:
   apps/landing:
     dependencies:
       '@keyline-icons/react':
-        specifier: 1.0.0
-        version: 1.0.0(react@19.3.0)
+        specifier: 1.8.0
+        version: 1.8.0(react@19.3.0)
       '@remotion/player':
         specifier: 4.0.533
         version: 4.0.533(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -357,8 +357,8 @@ importers:
         specifier: 58.0.7
         version: 58.0.7(@babel/core@7.29.7)(expo@58.0.0-preview.7)(react-dom@19.3.0(react@19.3.0))(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0)
       '@keyline-icons/react-native':
-        specifier: 1.1.0
-        version: 1.1.0(react-native-svg@15.15.5(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0)
+        specifier: 1.8.0
+        version: 1.8.0(react-native-svg@15.15.5(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0)
       '@react-native-async-storage/async-storage':
         specifier: 2.2.0
         version: 2.2.0(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))
@@ -688,8 +688,8 @@ importers:
         specifier: 57.0.16
         version: 57.0.16(@expo/log-box@58.0.5)(expo@57.0.24)(react-dom@19.2.3(react@19.2.3))(react-native-tvos@0.86.3-0)(react@19.2.3)
       '@keyline-icons/react-native':
-        specifier: 1.1.0
-        version: 1.1.0(react-native-svg@15.15.4(react-native-tvos@0.86.3-0)(react@19.2.3))(react-native-tvos@0.86.3-0)(react@19.2.3)
+        specifier: 1.8.0
+        version: 1.8.0(react-native-svg@15.15.4(react-native-tvos@0.86.3-0)(react@19.2.3))(react-native-tvos@0.86.3-0)(react@19.2.3)
       '@react-native-community/netinfo':
         specifier: 12.0.1
         version: 12.0.1(react-native-tvos@0.86.3-0)(react@19.2.3)
@@ -1085,8 +1085,8 @@ importers:
         specifier: 1.7.4
         version: 1.7.4(@better-auth/core@1.7.4(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.0)(better-call@1.4.0(zod@4.6.4))(jose@6.2.8)(kysely@0.29.4)(nanostores@1.4.2))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.7.4(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(better-sqlite3@13.0.3)(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@electric-sql/pglite@0.5.8)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/pg@8.23.1)(better-sqlite3@13.0.3)(kysely@0.29.4)(mysql2@3.24.5(@types/node@24.13.4))(pg@8.23.0))(mysql2@3.24.5(@types/node@24.13.4))(pg@8.23.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(vitest@4.1.11)(vue@3.5.43(typescript@7.0.2)))(better-call@1.4.0(zod@4.6.4))(nanostores@1.4.2)
       '@keyline-icons/react':
-        specifier: 1.0.0
-        version: 1.0.0(react@19.3.0)
+        specifier: 1.8.0
+        version: 1.8.0(react@19.3.0)
       '@mediabunny/ac3':
         specifier: 1.60.0
         version: 1.60.0(mediabunny@1.60.0)
@@ -1194,8 +1194,8 @@ importers:
         specifier: 5.3.0
         version: 5.3.0
       '@keyline-icons/react':
-        specifier: 1.0.0
-        version: 1.0.0(react@19.3.0)
+        specifier: 1.8.0
+        version: 1.8.0(react@19.3.0)
       '@paper-design/shaders-react':
         specifier: 0.0.80
         version: 0.0.80(@types/react@19.3.0)(react@19.3.0)
@@ -3686,16 +3686,16 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@keyline-icons/react-native@1.1.0':
-    resolution: {integrity: sha512-6iD2w3ePGkHBw0iPRgrrjydBm8B/Fl60gFBrgaLoOV60R7ZLKvLZ2g9wHPT65iMcpMm4HgIjqcoqJDi5aUGIpQ==}
+  '@keyline-icons/react-native@1.8.0':
+    resolution: {integrity: sha512-MSOa2OCCy4597bw9nchF1KbrXo1o2Z8zjsHeFdeqv5rSdsWA+Frzw+Z3FjXqKo4zIFZVDlu/FGsRrR5dUSUXaQ==}
     engines: {node: '>=20.9.0'}
     peerDependencies:
       react: '>=18'
       react-native: '>=0.79'
       react-native-svg: '>=15'
 
-  '@keyline-icons/react@1.0.0':
-    resolution: {integrity: sha512-o09modhu7vqimzBVfGlLEX8YvKdFliI+G//dLWzVWbCNJt42trzv9fGzI1IyPTZbGI40c6kf5nkNRKli4YyleA==}
+  '@keyline-icons/react@1.8.0':
+    resolution: {integrity: sha512-ovIxVS4btsqeWU7H4f3QGdOpoemSAJXyyu8aO6LoKjYhHFKrovlUNsuXAH/jTDg8GC1TsiBNAjd6I0bKG00w+g==}
     engines: {node: '>=20.9.0'}
     peerDependencies:
       react: '>=18'
@@ -14883,19 +14883,19 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
 
-  '@keyline-icons/react-native@1.1.0(react-native-svg@15.15.4(react-native-tvos@0.86.3-0)(react@19.2.3))(react-native-tvos@0.86.3-0)(react@19.2.3)':
+  '@keyline-icons/react-native@1.8.0(react-native-svg@15.15.4(react-native-tvos@0.86.3-0)(react@19.2.3))(react-native-tvos@0.86.3-0)(react@19.2.3)':
     dependencies:
       react: 19.2.3
       react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
       react-native-svg: 15.15.4(react-native-tvos@0.86.3-0)(react@19.2.3)
 
-  '@keyline-icons/react-native@1.1.0(react-native-svg@15.15.5(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0)':
+  '@keyline-icons/react-native@1.8.0(react-native-svg@15.15.5(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0)':
     dependencies:
       react: 19.3.0
       react-native: 0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0)
       react-native-svg: 15.15.5(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0)
 
-  '@keyline-icons/react@1.0.0(react@19.3.0)':
+  '@keyline-icons/react@1.8.0(react@19.3.0)':
     dependencies:
       react: 19.3.0
 

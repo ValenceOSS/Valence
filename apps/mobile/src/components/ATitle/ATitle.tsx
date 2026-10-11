@@ -2,12 +2,12 @@ import {
   ChevronsUpDown,
   CircleCheck,
   Download,
-  Film,
   Heart,
   ListVideo,
   MoreHorizontal,
   RotateCcw,
   Share,
+  SquarePlay,
 } from '@keyline-icons/react-native';
 import { useVideoDevices } from '@ValenceClient/video/useVideoDevices';
 import { APlayOnSheet } from '@ValenceMobile/components/APlayOnSheet/APlayOnSheet';
@@ -340,7 +340,7 @@ const ATitle = ({
             }}
           >
             <View style={styles.action}>
-              <Icon of={Film} colour={colours.text} />
+              <Icon of={SquarePlay} colour={colours.text} />
               <Words size="small">{say('common.trailer')}</Words>
             </View>
           </Button>

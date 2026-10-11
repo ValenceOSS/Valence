@@ -4,6 +4,7 @@ import {
   Laptop as LaptopIcon,
   Monitor as MonitorIcon,
   Smartphone as SmartphoneIcon,
+  Tv as TvIcon,
 } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
@@ -29,7 +30,7 @@ const iconFor = (label: string): IconGlyph => {
   }
 
   if (/tv|television|chromecast|shield/.test(named)) {
-    return MonitorIcon;
+    return TvIcon;
   }
 
   return /mac|laptop|book/.test(named) ? LaptopIcon : MonitorIcon;

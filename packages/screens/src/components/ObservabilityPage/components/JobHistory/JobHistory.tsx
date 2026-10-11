@@ -3,9 +3,9 @@ import { JobRunMix } from '@ValenceScreens/components/ObservabilityPage/componen
 import { cn } from '@ValenceUI/cn';
 import { Icon } from '@ValenceUI/Icon';
 import {
-  Bookmark as BookmarkFilledIcon,
   Info as InfoIcon,
   MoreHorizontal as MoreHorizontalIcon,
+  Pin as PinFilledIcon,
 } from '@keyline-icons/react/fill';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
@@ -396,7 +396,7 @@ const JobHistoryPanel = ({
           <span className="flex max-w-[12rem] items-center gap-1.5 text-text-muted">
             {pinned.has(row.original.id) ? (
               <Icon
-                of={BookmarkFilledIcon}
+                of={PinFilledIcon}
                 size={14}
                 label={say('screens.observabilityPage.jobHistory.pinnedToTheTop')}
                 className="shrink-0"

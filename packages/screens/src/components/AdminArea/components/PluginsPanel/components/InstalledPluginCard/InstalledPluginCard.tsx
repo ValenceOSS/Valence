@@ -1,7 +1,7 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import {
   Bin as BinIcon,
-  Plug as PlugIcon,
+  Puzzle as PuzzleIcon,
   RotateCcw as RotateCcwIcon,
   Settings as SettingsIcon,
 } from '@keyline-icons/react/fill';
@@ -52,7 +52,7 @@ const InstalledPluginCard = ({
       <div className="flex items-start gap-3">
         {plugin.iconUrl === null || !plugin.iconUrl.startsWith('/api/') ? (
           <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-surface-raised text-text-muted">
-            <Icon of={PlugIcon} size={18} />
+            <Icon of={PuzzleIcon} size={18} />
           </span>
         ) : (
           <img src={plugin.iconUrl} alt="" className="size-10 shrink-0 rounded-lg object-cover" />

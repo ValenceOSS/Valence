@@ -2,7 +2,7 @@ import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Icon } from '@ValenceUI/Icon';
-import { Bell as BellIcon, Bin as BinIcon, Download as DownloadIcon } from '@keyline-icons/react';
+import { Bin as BinIcon, Download as DownloadIcon, Inbox as InboxIcon } from '@keyline-icons/react';
 import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -174,7 +174,7 @@ const DownloadList = () => {
     <div className="flex flex-col">
       {isAnyPreparing ? (
         <p className="flex items-start gap-2 px-5 pt-4 font-body text-sm text-text-muted">
-          <Icon of={BellIcon} size={16} className="mt-0.5 shrink-0" />
+          <Icon of={InboxIcon} size={16} className="mt-0.5 shrink-0" />
           {isKeepable
             ? say('screens.downloadList.theServerPreparesTheseByItself2')
             : say('screens.downloadList.theServerPreparesTheseByItself')}

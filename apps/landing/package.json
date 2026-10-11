@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@keyline-icons/react": "1.0.0",
+    "@keyline-icons/react": "1.8.0",
     "@remotion/player": "4.0.533",
     "@tabler/icons-react": "3.46.0",
     "@tanstack/react-router": "1.170.36",

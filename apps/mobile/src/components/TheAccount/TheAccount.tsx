@@ -1,14 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { StyleSheet, View } from 'react-native';
 import {
-  Clock,
-  DoorOpen,
   EyeOff,
+  History,
+  LaptopSmartphone,
   Link,
+  LogOut,
   Server,
   Settings,
   ShieldCheck,
-  Smartphone,
 } from '@keyline-icons/react-native';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { aboutQueries } from '@ValenceClient/query/aboutQueries';
@@ -94,7 +94,7 @@ const TheAccount = ({ onOut, onElsewhere, onOpen, header, onScrolled }: TheAccou
             }}
           />
           <AnAccountRow
-            icon={Smartphone}
+            icon={LaptopSmartphone}
             says={say('common.devices')}
             detail={say('phone.theAccount.devicesDetail')}
             onPress={() => {
@@ -106,7 +106,7 @@ const TheAccount = ({ onOut, onElsewhere, onOpen, header, onScrolled }: TheAccou
 
       <AGroup title={say('phone.theAccount.watchingAndSharing')}>
         <AnAccountRow
-          icon={Clock}
+          icon={History}
           says={say('common.history')}
           detail={say('phone.theAccount.historyDetail')}
           onPress={() => {
@@ -153,7 +153,7 @@ const TheAccount = ({ onOut, onElsewhere, onOpen, header, onScrolled }: TheAccou
           {say('common.useADifferentServer')}
         </Button>
 
-        <Button tone="ghost" icon={DoorOpen} isWide isDestructive onPress={onOut}>
+        <Button tone="ghost" icon={LogOut} isWide isDestructive onPress={onOut}>
           {say('common.signOut')}
         </Button>
       </View>

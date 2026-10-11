@@ -9,30 +9,30 @@ import {
   Flame as FlameIcon,
   Heart as HeartIcon,
   Home as HomeIcon,
-  Monitor as MonitorIcon,
   MusicNote as MusicNoteIcon,
   Search as SearchIcon,
+  Tv as TvIcon,
 } from '@keyline-icons/react';
 import {
-  Bell as BellFilledIcon,
   BookOpen as BookOpenFilledIcon,
+  Broadcast as BroadcastFilledIcon,
   Calendar as CalendarFilledIcon,
   CircleUser as CircleUserFilledIcon,
   Compass as CompassFilledIcon,
   Dice5 as Dice5FilledIcon,
-  DoorOpen as DoorOpenFilledIcon,
   Download as DownloadFilledIcon,
   Film as FilmFilledIcon,
-  Broadcast as BroadcastFilledIcon,
   Flame as FlameFilledIcon,
   Heart as HeartFilledIcon,
   Home as HomeFilledIcon,
+  Inbox as InboxFilledIcon,
   Laptop as LaptopFilledIcon,
-  Monitor as MonitorFilledIcon,
+  LogOut as LogOutFilledIcon,
   MusicNote as MusicNoteFilledIcon,
+  Question as QuestionFilledIcon,
   Search as SearchFilledIcon,
   Settings as SettingsFilledIcon,
-  Question as QuestionFilledIcon,
+  Tv as TvFilledIcon,
 } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -117,7 +117,7 @@ const SURPRISE_LABELS: Record<LibraryKind, string> = {
 
 const SECTION_ICONS: Record<ShellSection, ReactNode> = {
   home: <Icon of={HomeIcon} size={18} />,
-  shows: <Icon of={MonitorIcon} size={18} />,
+  shows: <Icon of={TvIcon} size={18} />,
   films: <Icon of={FilmIcon} size={18} />,
   live: <Icon of={BroadcastIcon} size={18} />,
   new: <Icon of={FlameIcon} size={18} />,
@@ -132,7 +132,7 @@ const SECTION_ICONS: Record<ShellSection, ReactNode> = {
 
 const ACTIVE_SECTION_ICONS: Record<ShellSection, ReactNode> = {
   home: <Icon of={HomeFilledIcon} size={18} />,
-  shows: <Icon of={MonitorFilledIcon} size={18} />,
+  shows: <Icon of={TvFilledIcon} size={18} />,
   films: <Icon of={FilmFilledIcon} size={18} />,
   live: <Icon of={BroadcastFilledIcon} size={18} />,
   new: <Icon of={FlameFilledIcon} size={18} />,
@@ -419,7 +419,7 @@ const AppShell = ({
           {
             id: 'notifications',
             label: say('common.notifications'),
-            icon: <Icon of={BellFilledIcon} size={20} />,
+            icon: <Icon of={InboxFilledIcon} size={20} />,
             control: notifications,
           },
         ]),
@@ -549,7 +549,7 @@ const AppShell = ({
                       {
                         id: 'sign-out',
                         label: say('common.signOut'),
-                        icon: <Icon of={DoorOpenFilledIcon} size={16} />,
+                        icon: <Icon of={LogOutFilledIcon} size={16} />,
                         isDestructive: true,
                         onChoose: onSignOut,
                       },

@@ -1,7 +1,7 @@
 import {
-  Monitor as MonitorIcon,
   Smartphone as SmartphoneIcon,
   Tablet as TabletIcon,
+  Tv as TvIcon,
 } from '@keyline-icons/react';
 import { Pause as PauseIcon, Stop as StopIcon } from '@keyline-icons/react/fill';
 import { Badge } from '@ValenceUI/Badge';
@@ -17,7 +17,7 @@ const SESSIONS = [
   {
     who: 'Maya',
     title: 'Harbour Lights',
-    device: MonitorIcon,
+    device: TvIcon,
     where: 'Living room TV',
     way: 'Direct',
     at: 71,

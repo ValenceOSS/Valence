@@ -1,4 +1,4 @@
-import { ChevronRight as ChevronRightIcon, Monitor as MonitorIcon } from '@keyline-icons/react';
+import { ChevronRight as ChevronRightIcon, Tv as TvIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -61,7 +61,7 @@ const PlayOnDialog = ({ media, startSeconds, onClose, onSent }: PlayOnDialogProp
                     onSent();
                   }}
                 >
-                  <Icon of={MonitorIcon} size={22} />
+                  <Icon of={TvIcon} size={22} />
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate text-sm font-semibold text-text">{device.label}</span>
                     <span className="truncate text-xs text-text-muted">

@@ -1,6 +1,6 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { Check, Laptop, Monitor, Smartphone } from '@keyline-icons/react-native';
+import { Check, Laptop, Monitor, Smartphone, Tv } from '@keyline-icons/react-native';
 import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
@@ -66,6 +66,10 @@ const iconFor = (label: string): KeylineIcon => {
     return Smartphone;
   }
 
+  if (/tv|television|chromecast|shield/.test(named)) {
+    return Tv;
+  }
+
   return /mac|laptop|book/.test(named) ? Laptop : Monitor;
 };
 
@@ -96,7 +100,7 @@ const DevicesPanel = ({ shown, onChosen }: DevicesPanelProps) => {
         <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
           <ActionRow
             label={remote === null ? thisTvPlayingHere : thisTv}
-            icon={remote === null ? Check : Monitor}
+            icon={remote === null ? Check : Tv}
             hasPreferredFocus={remote === null}
             onPress={() => {
               if (remote !== null) {

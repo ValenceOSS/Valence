@@ -1,4 +1,4 @@
-import { Mic } from '@keyline-icons/react-native';
+import { User } from '@keyline-icons/react-native';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ActivityIndicator } from 'react-native';
@@ -52,13 +52,13 @@ const TheArtists = ({ onArtist, onBack }: TheArtistsProps) => {
           {!artists.isPending && (artists.data ?? []).length === 0 ? (
             isFollowedOnly ? (
               <ANothingHere
-                of={Mic}
+                of={User}
                 title={say('common.notFollowingAnybodyYet')}
                 detail={say('common.followAnArtistFromTheirPage')}
               />
             ) : (
               <ANothingHere
-                of={Mic}
+                of={User}
                 title={say('common.noArtistsYet')}
                 detail={say('common.onceAMusicLibraryHasBeen2')}
               />

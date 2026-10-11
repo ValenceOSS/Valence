@@ -21,7 +21,7 @@ import {
   Flame as FlameIcon,
   FolderOpen as FolderOpenIcon,
   Heart as HeartIcon,
-  Monitor as MonitorIcon,
+  Tv as TvIcon,
 } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
@@ -60,7 +60,7 @@ const PAGES: Record<
     title: say('common.shows'),
     empty: say('common.noShowsYet'),
     emptyIsAbout: 'oneLibrary',
-    of: MonitorIcon,
+    of: TvIcon,
   },
   films: {
     title: say('common.films'),

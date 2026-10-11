@@ -18,7 +18,7 @@
     "sweep": "tsx src/build/sweepForLeaks.ts"
   },
   "dependencies": {
-    "@keyline-icons/react": "1.0.0",
+    "@keyline-icons/react": "1.8.0",
     "@tanstack/react-query": "5.102.8",
     "@tanstack/react-router": "1.170.36",
     "@valence/client": "workspace:*",

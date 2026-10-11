@@ -2,13 +2,12 @@ import { useState } from 'react';
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { Icon } from '@ValenceUI/Icon';
 import {
-  Bell as BellFilledIcon,
-  Inbox as InboxFilledIcon,
   Bin as BinFilledIcon,
   CircleCheck as CircleCheckFilledIcon,
   CircleCheck as CircleCheckIcon,
   Download as DownloadIcon,
   Film as FilmIcon,
+  Inbox as InboxFilledIcon,
   MusicNote as MusicNoteIcon,
   Sparkles as SparklesIcon,
   Unlink as UnlinkIcon,
@@ -106,10 +105,7 @@ const NotificationBell = ({
               : 'relative flex size-9 items-center justify-center'
           }
         >
-          <Icon
-            of={isInTheWindowBar ? InboxFilledIcon : BellFilledIcon}
-            size={isInTheWindowBar ? 15 : 20}
-          />
+          <Icon of={InboxFilledIcon} size={isInTheWindowBar ? 15 : 20} />
 
           {unread === 0 ? null : (
             <Badge

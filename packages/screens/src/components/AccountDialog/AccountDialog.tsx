@@ -2,7 +2,7 @@ import { accountHandleOf } from '@ValenceClient/accounts/accountHandleOf';
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Icon } from '@ValenceUI/Icon';
-import { DoorOpen as DoorOpenIcon, X as XIcon } from '@keyline-icons/react';
+import { LogOut as LogOutIcon, X as XIcon } from '@keyline-icons/react';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Dialog } from '@ValenceUI/Dialog';
@@ -227,7 +227,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
                   void leave();
                 }}
               >
-                <Icon of={DoorOpenIcon} size={16} />
+                <Icon of={LogOutIcon} size={16} />
                 {say('common.signOut')}
               </Button>
 

@@ -1,9 +1,10 @@
 import {
+  Bot as BotIcon,
   CodeXml as CodeXmlIcon,
   FileText as FileTextIcon,
   GitFork as GitForkIcon,
-  Plug as PlugIcon,
-  Route as RouteIcon,
+  Puzzle as PuzzleIcon,
+  Webhook as WebhookIcon,
 } from '@keyline-icons/react/fill';
 import { EditorialPage } from '@ValenceLanding/components/EditorialPage/EditorialPage';
 
@@ -21,12 +22,12 @@ const DevelopersPage = () => (
       {
         title: 'Plugin SDK',
         body: 'Plugins package server-side behavior with a manifest, permission summary and host API rather than reaching through private internals.',
-        icon: PlugIcon,
+        icon: PuzzleIcon,
       },
       {
         title: 'Webhooks',
         body: 'Server events can be delivered to the systems around a household: requests, scans, playback events and operational signals.',
-        icon: RouteIcon,
+        icon: WebhookIcon,
       },
       {
         title: 'Shared UI',
@@ -41,7 +42,7 @@ const DevelopersPage = () => (
       {
         title: 'Docs for machines too',
         body: 'Reference pages can expose raw text and markdown so search, AI readers and scrubbers can understand the project without a browser.',
-        icon: RouteIcon,
+        icon: BotIcon,
       },
     ]}
   />

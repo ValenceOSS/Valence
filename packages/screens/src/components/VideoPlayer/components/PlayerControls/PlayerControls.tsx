@@ -9,7 +9,6 @@ import {
   Maximize as MaximizeIcon,
   Minimize as MinimizeIcon,
   Minus as MinusIcon,
-  Monitor as MonitorIcon,
   PictureInPicture as PictureInPictureIcon,
   Plus as PlusIcon,
   RefreshCw as RefreshCwIcon,
@@ -17,11 +16,14 @@ import {
   RotateCw as RotateCwIcon,
   Search as SearchIcon,
   Settings as SettingsIcon,
+  SignalHigh as SignalHighIcon,
   SkipForward as SkipForwardIcon,
   Subtitles as SubtitlesIcon,
+  Tv as TvIcon,
   TypeOutline as TypeOutlineIcon,
   Volume as VolumeIcon,
   VolumeOff as VolumeOffIcon,
+  VolumePlus as VolumePlusIcon,
 } from '@keyline-icons/react';
 import {
   Cast as CastFilledIcon,
@@ -584,7 +586,7 @@ const PlayerControls = ({
                 kind: 'choice' as const,
                 id: 'boost',
                 label: say('screens.videoPlayer.playerControls.volumeBoost'),
-                icon: <Icon of={VolumeIcon} size={18} />,
+                icon: <Icon of={VolumePlusIcon} size={18} />,
                 selectedId: boost.toString(),
                 onSelect: (id: string) => {
                   onBoostChange(Number(id));
@@ -601,7 +603,7 @@ const PlayerControls = ({
                       kind: 'choice' as const,
                       id: 'quality',
                       label: say('common.quality'),
-                      icon: <Icon of={MonitorIcon} size={18} />,
+                      icon: <Icon of={SignalHighIcon} size={18} />,
                       selectedId: selectedQuality,
                       onSelect: (id: string) => {
                         onQualityChange(
@@ -664,7 +666,7 @@ const PlayerControls = ({
             onClick={onPlayOnTv}
             size="md"
           >
-            <Icon of={MonitorIcon} size={20} />
+            <Icon of={TvIcon} size={20} />
           </Button>
         )}
 

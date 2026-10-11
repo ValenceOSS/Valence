@@ -1,12 +1,12 @@
 import {
-  Book as BookIcon,
+  BookOpen as BookOpenIcon,
+  Compass as CompassIcon,
+  Film as FilmIcon,
   Heart as HeartIcon,
   Home as HomeIcon,
-  Monitor as MonitorIcon,
   MusicNote as MusicNoteIcon,
-  Plus as PlusIcon,
   Search as SearchIcon,
-  Tape as TapeIcon,
+  Tv as TvIcon,
 } from '@keyline-icons/react';
 import type { Place } from '@ValenceClient/navigation/readLocation';
 import type { IconGlyph } from '@ValenceUI/Icon.types';
@@ -30,13 +30,13 @@ const TOUR_STOPS: readonly TourStop[] = [
     section: 'films',
     title: say('common.films'),
     detail: say('screens.tour.tourStops.everyFilmInTheLibraryPress'),
-    icon: TapeIcon,
+    icon: FilmIcon,
   },
   {
     section: 'shows',
     title: say('common.shows'),
     detail: say('screens.tour.tourStops.seriesAndTheirSeasonsValenceRemembers'),
-    icon: MonitorIcon,
+    icon: TvIcon,
   },
   {
     section: 'music',
@@ -48,13 +48,13 @@ const TOUR_STOPS: readonly TourStop[] = [
     section: 'read',
     title: say('common.read'),
     detail: say('screens.tour.tourStops.booksAndComicsWithYourPlace'),
-    icon: BookIcon,
+    icon: BookOpenIcon,
   },
   {
     section: 'requests',
     title: say('common.requests'),
     detail: say('screens.tour.tourStops.askForSomethingThatIsNot'),
-    icon: PlusIcon,
+    icon: CompassIcon,
   },
   {
     section: 'favourites',

@@ -1,12 +1,12 @@
 import { isEpisodicKind } from '@ValenceContracts/functions/isEpisodicKind';
 import { AWrittenName } from '@ValenceMobile/components/AWrittenName/AWrittenName';
-import { Calendar, Film, Inbox, Monitor, ScanQrCode, SearchX } from '@keyline-icons/react-native';
+import { Calendar, Compass, Film, ScanQrCode, SearchX, Tv } from '@keyline-icons/react-native';
 import {
+  BookOpen as BookOpenFilled,
   Film as FilmFilled,
   Home as HomeFilled,
-  Monitor as MonitorFilled,
-  BookOpen as BookOpenFilled,
   MusicNote as MusicNoteFilled,
+  Tv as TvFilled,
 } from '@keyline-icons/react-native/fill';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -351,7 +351,7 @@ const TheLibrary = ({
       ? [{ id: 'films', label: say('common.films'), icon: FilmFilled }]
       : []),
     ...(programmes.length > 0 && stock?.shows !== false
-      ? [{ id: 'shows', label: say('common.shows'), icon: MonitorFilled }]
+      ? [{ id: 'shows', label: say('common.shows'), icon: TvFilled }]
       : []),
     ...(hasMusic && stock?.music !== false
       ? [{ id: 'music', label: say('common.music'), icon: MusicNoteFilled }]
@@ -458,7 +458,7 @@ const TheLibrary = ({
           </View>
           <View style={styles.aside}>
             {onRequested === undefined ? null : (
-              <AGlassCircle of={Inbox} label={say('common.requested')} onPress={onRequested} />
+              <AGlassCircle of={Compass} label={say('common.requested')} onPress={onRequested} />
             )}
             {onCalendar === undefined ? null : (
               <AGlassCircle of={Calendar} label={say('common.calendar')} onPress={onCalendar} />
@@ -597,7 +597,7 @@ const TheLibrary = ({
             {!drawsItsOwn && !isWaiting && cells.length === 0 ? (
               hasAnything ? (
                 <ANothingHere
-                  of={part === 'films' ? Film : Monitor}
+                  of={part === 'films' ? Film : Tv}
                   title={say('common.youHaveWatchedEverythingHere')}
                 />
               ) : isFiltered ? (
@@ -608,7 +608,7 @@ const TheLibrary = ({
                 />
               ) : (
                 <ANothingHere
-                  of={part === 'films' ? Film : Monitor}
+                  of={part === 'films' ? Film : Tv}
                   title={part === 'films' ? say('common.noFilmsYet') : say('common.noShowsYet')}
                   detail={howToFillIt(
                     chosen === EVERY && ofThisKind.length > 1 ? 'everyLibrary' : 'oneLibrary',

@@ -1,6 +1,6 @@
 import {
   BookOpen as BookOpenIcon,
-  Download as DownloadIcon,
+  Compass as CompassIcon,
   Film as FilmIcon,
   Gauge as GaugeIcon,
   Headphones as HeadphonesIcon,
@@ -32,7 +32,7 @@ const ProductTourPage = () => (
       {
         title: 'Requests',
         body: 'People can ask for media, operators can approve it, and the server can follow the release into the library.',
-        icon: DownloadIcon,
+        icon: CompassIcon,
       },
       {
         title: 'Household',

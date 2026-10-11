@@ -1,5 +1,5 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
-import { Bell } from '@keyline-icons/react-native';
+import { Inbox } from '@keyline-icons/react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import { describeWhen } from '@ValenceClient/history/describeWhen';
@@ -87,7 +87,7 @@ const TheNotifications = ({ onOpen, onJoin, onBack }: TheNotificationsProps) => 
       {inbox.isError ? <Words tone="danger">{say('common.thoseCouldNotBeRead')}</Words> : null}
 
       {!inbox.isPending && notifications.length === 0 ? (
-        <ANothingHere of={Bell} title={say('phone.theNotifications.nothingNew')} />
+        <ANothingHere of={Inbox} title={say('phone.theNotifications.nothingNew')} />
       ) : null}
 
       {notifications.map((notification) => {

@@ -10,9 +10,9 @@ import {
   Download as DownloadIcon,
   Info as InfoIcon,
   Layers as LayersIcon,
-  Link as LinkIcon,
   Plus as PlusIcon,
-  Tape as TapeIcon,
+  Share as ShareIcon,
+  SquarePlay as SquarePlayIcon,
   X as XIcon,
 } from '@keyline-icons/react';
 import {
@@ -455,7 +455,7 @@ const ShowDialog = ({
                     id: 'trailer',
                     isPinned: true,
                     label: say('common.watchTheTrailer'),
-                    icon: <Icon of={TapeIcon} size={18} />,
+                    icon: <Icon of={SquarePlayIcon} size={18} />,
                     onChoose: () => {
                       if (trailer === null) {
                         setIsWatchingTrailer(true);
@@ -545,7 +545,7 @@ const ShowDialog = ({
                     id: 'share',
                     isPinned: true,
                     label: say('common.share'),
-                    icon: <Icon of={LinkIcon} size={18} />,
+                    icon: <Icon of={ShareIcon} size={18} />,
                     onChoose: () => {
                       onShare(shown);
                     },

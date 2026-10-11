@@ -1,5 +1,5 @@
 import { StyleSheet, View } from 'react-native';
-import { Monitor, Pause, Play } from '@keyline-icons/react-native';
+import { Pause, Play, Tv } from '@keyline-icons/react-native';
 import { useVideoRemote } from '@ValenceClient/video/useVideoRemote';
 import { AGlass } from '@ValenceMobile/components/AGlass/AGlass';
 import { Button } from '@ValenceMobile/components/Button/Button';
@@ -44,7 +44,7 @@ const AVideoRemoteBar = ({ onOpen }: AVideoRemoteBarProps) => {
           onPress={onOpen}
         >
           <View style={styles.what}>
-            <Icon of={Monitor} colour={colours.text} />
+            <Icon of={Tv} colour={colours.text} />
             <View style={styles.said}>
               <Words lines={1}>{watching?.title ?? say('common.starting')}</Words>
               <Words size="small" tone="muted" lines={1}>

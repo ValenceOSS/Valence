@@ -1,8 +1,5 @@
 import { useState } from 'react';
-import {
-  Download as DownloadIcon,
-  MoreHorizontal as MoreHorizontalIcon,
-} from '@keyline-icons/react';
+import { MoreHorizontal as MoreHorizontalIcon, Plus as PlusIcon } from '@keyline-icons/react';
 import { Bin as BinFilledIcon } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Button } from '@ValenceUI/Button';
@@ -70,7 +67,7 @@ const MissingSongRow = ({
             )}
 
             <span className="absolute inset-0 flex items-center justify-center text-text-muted">
-              <Icon of={DownloadIcon} size={16} />
+              <Icon of={PlusIcon} size={16} />
             </span>
           </span>
         ) : null}
@@ -125,7 +122,7 @@ const MissingSongRow = ({
                       {
                         id: 'request',
                         label: say('common.requestItsAlbum'),
-                        icon: <Icon of={DownloadIcon} size={16} />,
+                        icon: <Icon of={PlusIcon} size={16} />,
                         onChoose,
                       },
                     ]),

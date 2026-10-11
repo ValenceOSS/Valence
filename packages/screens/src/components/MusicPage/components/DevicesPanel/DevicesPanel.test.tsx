@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   Laptop as LaptopIcon,
-  Monitor as MonitorIcon,
   Smartphone as SmartphoneIcon,
+  Tv as TvIcon,
 } from '@keyline-icons/react';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { aFakeMusicPlayer } from '@ValenceClient/testing/aFakeMusicPlayer';
@@ -73,7 +73,7 @@ describe('DevicesPanel', () => {
 
   it('draws a device by what it calls itself', () => {
     expect(iconFor('iPhone')).toBe(SmartphoneIcon);
-    expect(iconFor('Living room TV')).toBe(MonitorIcon);
+    expect(iconFor('Living room TV')).toBe(TvIcon);
     expect(iconFor('MacBook Pro')).toBe(LaptopIcon);
   });
 

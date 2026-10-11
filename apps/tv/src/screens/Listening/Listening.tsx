@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { ChevronLeft, Gauge, List, Moon } from '@keyline-icons/react-native';
+import { ChevronLeft, Gauge, ListOrdered, Moon } from '@keyline-icons/react-native';
 import {
   FastForward,
   Gauge as GaugeFilled,
@@ -303,7 +303,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
               <Button
                 onFocus={awayFromTheEdges}
                 label={say('common.chapters')}
-                icon={List}
+                icon={ListOrdered}
                 variant="ghost"
                 size="md"
                 onPress={() => {

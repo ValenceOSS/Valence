@@ -1,7 +1,7 @@
 import {
   Laptop as LaptopIcon,
-  Monitor as MonitorIcon,
   Smartphone as SmartphoneIcon,
+  Tv as TvIcon,
 } from '@keyline-icons/react';
 import {
   AbsoluteFill,
@@ -17,7 +17,7 @@ import { SceneCursor } from '@ValenceLanding/components/HomePage/components/Feat
 import { MockPanel } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/MockPanel/MockPanel';
 
 const DEVICES = [
-  { icon: MonitorIcon, name: 'Living room TV', source: '4K HEVC · HDR10 · TrueHD 7.1' },
+  { icon: TvIcon, name: 'Living room TV', source: '4K HEVC · HDR10 · TrueHD 7.1' },
   { icon: SmartphoneIcon, name: 'Maya’s phone', source: 'Converting to H.264 1080p on NVENC' },
   { icon: LaptopIcon, name: 'Study laptop', source: 'AV1 1080p · Opus 5.1' },
 ] as const;

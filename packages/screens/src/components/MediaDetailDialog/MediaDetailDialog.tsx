@@ -11,11 +11,11 @@ import {
   Info as InfoIcon,
   Layers as LayersIcon,
   Share as ShareIcon,
-  Tape as TapeIcon,
+  SquarePlay as SquarePlayIcon,
+  Tv as TvIcon,
   UserCheck as UserCheckIcon,
   Users as UsersIcon,
   X as XIcon,
-  Monitor as MonitorIcon,
 } from '@keyline-icons/react';
 import {
   CircleCheck as CircleCheckFilledIcon,
@@ -541,7 +541,7 @@ const MediaDetailDialog = ({
                     id: 'trailer',
                     isPinned: true,
                     label: say('common.watchTheTrailer'),
-                    icon: <Icon of={TapeIcon} size={18} />,
+                    icon: <Icon of={SquarePlayIcon} size={18} />,
                     onChoose: () => {
                       if (trailer === null) {
                         setIsWatchingTrailer(true);
@@ -619,7 +619,7 @@ const MediaDetailDialog = ({
                     id: 'play-on',
                     isPinned: true,
                     label: say('common.playOnTV'),
-                    icon: <Icon of={MonitorIcon} size={18} />,
+                    icon: <Icon of={TvIcon} size={18} />,
                     onChoose: () => {
                       onPlayOn(
                         chosenVersion ?? shown,

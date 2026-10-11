@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BookOpen, Gauge, List, Moon } from '@keyline-icons/react-native';
+import { BookOpen, Gauge, ListOrdered, Moon } from '@keyline-icons/react-native';
 import {
   FastForward as FastForwardFilled,
   Pause as PauseFilled,
@@ -244,7 +244,7 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
               setPanel('chapters');
             }}
           >
-            <ALitCircle of={List} size={20} isLit={panel === 'chapters'} />
+            <ALitCircle of={ListOrdered} size={20} isLit={panel === 'chapters'} />
           </Button>
         </View>
 

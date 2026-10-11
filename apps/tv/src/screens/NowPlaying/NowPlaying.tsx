@@ -5,11 +5,11 @@ import { useKeepsStill } from '@ValenceTv/platform/useKeepsStill';
 import { useRemote } from '@ValenceTv/remote/useRemote';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Cast,
   ChevronLeft,
   Heart as HeartOutline,
+  LaptopSmartphone,
   ListMusic,
-  Quote,
+  Mic,
   Repeat,
   Repeat1,
   Shuffle,
@@ -461,7 +461,7 @@ const NowPlaying = ({ onEmpty, onBack, watchParty }: NowPlayingProps) => {
                     ? say('tv.nowPlaying.hideTheWords')
                     : say('tv.nowPlaying.showTheWords')
                 }
-                icon={Quote}
+                icon={Mic}
                 variant={isBesideWords ? 'soft' : 'ghost'}
                 size="md"
                 isIconOnly
@@ -484,7 +484,7 @@ const NowPlaying = ({ onEmpty, onBack, watchParty }: NowPlayingProps) => {
               <Button
                 onFocus={awayFromTheEdges}
                 label={say('common.playOnAnotherDevice')}
-                icon={Cast}
+                icon={LaptopSmartphone}
                 variant={state.remote === null ? 'ghost' : 'soft'}
                 size="md"
                 isIconOnly

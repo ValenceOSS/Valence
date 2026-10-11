@@ -1,6 +1,7 @@
 import { Icon } from '@ValenceUI/Icon';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
-import { ListMusic as ListMusicIcon } from '@keyline-icons/react';
+import { ListVideo as ListVideoIcon } from '@keyline-icons/react';
+import { ListVideo as ListVideoFilledIcon } from '@keyline-icons/react/fill';
 import { useState } from 'react';
 import { PopoverPanel } from '@ValenceUI/PopoverPanel';
 import { MediaCard } from '@ValenceUI/MediaCard';
@@ -63,7 +64,7 @@ const EpisodeMenu = ({
       isOpen={isOpen}
       onOpenChange={show}
       trigger={
-        isOpen ? <Icon of={ListMusicIcon} size={20} /> : <Icon of={ListMusicIcon} size={20} />
+        isOpen ? <Icon of={ListVideoFilledIcon} size={20} /> : <Icon of={ListVideoIcon} size={20} />
       }
       className="w-80 sm:w-96 mb-7.5"
     >

@@ -1,9 +1,9 @@
 import {
-  Cast as CastIcon,
   Compass as CompassIcon,
   Globe as GlobeIcon,
   Monitor as MonitorIcon,
   Smartphone as SmartphoneIcon,
+  Tv as TvIcon,
 } from '@keyline-icons/react/fill';
 import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
 import type { IconGlyph } from '@ValenceUI/Icon.types';
@@ -39,7 +39,7 @@ const deviceIconFor = (deviceLabel: string, clientKind: ClientKind = 'browser'):
   }
 
   if (clientKind === 'tv') {
-    return CastIcon;
+    return TvIcon;
   }
 
   if (clientKind === 'desktop') {

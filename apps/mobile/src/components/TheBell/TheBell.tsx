@@ -1,4 +1,4 @@
-import { Bell } from '@keyline-icons/react-native';
+import { Inbox, InboxDot } from '@keyline-icons/react-native';
 import { useQuery } from '@tanstack/react-query';
 import { StyleSheet, View } from 'react-native';
 import { notificationQueries } from '@ValenceClient/query/notificationQueries';
@@ -12,15 +12,12 @@ import { say } from '@ValenceI18n/say';
 
 const ROUND = 40;
 
-const DOT = 10;
-
 const styles = StyleSheet.create({
-  dot: { borderRadius: DOT / 2, height: DOT, position: 'absolute', right: 6, top: 6, width: DOT },
   whole: { alignItems: 'center', height: ROUND, justifyContent: 'center', width: ROUND },
 });
 
 /**
- * The bell that opens what the server has told this account, with a dot on it while any of it is
+ * The inbox that opens what the server has told this account, drawn with a dot while any of it is
  * unread. On glass where the phone has it, as the AirPlay button beside it is. The socket says when
  * something new arrives, so the inbox is not asked for on a timer.
  *
@@ -43,8 +40,7 @@ const TheBell = ({ onPress }: TheBellProps) => {
     >
       <View style={styles.whole}>
         {hasLiquidGlass() ? <AGlass roundness={ROUND / 2} /> : null}
-        <Icon of={Bell} size={24} colour={colours.text} />
-        {unread === 0 ? null : <View style={[styles.dot, { backgroundColor: colours.accent }]} />}
+        <Icon of={unread === 0 ? Inbox : InboxDot} size={24} colour={colours.text} />
       </View>
     </Button>
   );

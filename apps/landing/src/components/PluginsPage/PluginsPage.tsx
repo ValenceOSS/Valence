@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
-import { IconChecklist, IconShieldLockFilled, IconSignature } from '@tabler/icons-react';
+import { ListTodo, ShieldLock, Signature } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { groupVariants, revealItemVariants } from '@ValenceUI/animations/reveal';
 import { useReached } from '@ValenceUI/useReached';
@@ -21,17 +21,17 @@ const PROMISES = [
   {
     title: 'Runs on your server',
     text: 'Sandboxed on the server. Never in your browser, phone or TV.',
-    glyph: IconShieldLockFilled,
+    glyph: ShieldLock,
   },
   {
     title: 'Asks first',
     text: 'You see everything it wants to reach before it is installed.',
-    glyph: IconChecklist,
+    glyph: ListTodo,
   },
   {
     title: 'Signed',
     text: 'Official plugins are signed and checked. Anything else is flagged.',
-    glyph: IconSignature,
+    glyph: Signature,
   },
 ] as const;
 

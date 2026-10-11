@@ -1,4 +1,4 @@
-import { Check, Monitor, ScanQrCode, X } from '@keyline-icons/react-native';
+import { Check, ScanQrCode, Tv, X } from '@keyline-icons/react-native';
 import { AGroup } from '@ValenceMobile/components/AGroup/AGroup';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
@@ -204,7 +204,7 @@ const SignInATelevision = ({ startsWith, askedFrom = null }: SignInATelevisionPr
               </Words>
             ) : null}
             <Button
-              icon={Monitor}
+              icon={Tv}
               isDisabled={tidyTheCode(typed) === ''}
               onPress={() => {
                 void check(tidyTheCode(typed));

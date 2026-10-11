@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Search } from '@keyline-icons/react-native';
-import { Film, Headphones, Home, Monitor, MusicNote } from '@keyline-icons/react-native/fill';
+import { Film, Headphones, Home, MusicNote, Tv } from '@keyline-icons/react-native/fill';
 import { Face } from '@ValenceTv/components/Face/Face';
 import { Glass } from '@ValenceTv/components/Glass/Glass';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
@@ -22,7 +22,7 @@ const HOME: TopTab = { id: 'home', label: say('common.home'), icon: Home };
 
 const FILMS: TopTab = { id: 'films', label: say('common.films'), icon: Film };
 
-const SHOWS: TopTab = { id: 'shows', label: say('common.shows'), icon: Monitor };
+const SHOWS: TopTab = { id: 'shows', label: say('common.shows'), icon: Tv };
 
 const MUSIC: TopTab = { id: 'music', label: say('common.music'), icon: MusicNote };
 

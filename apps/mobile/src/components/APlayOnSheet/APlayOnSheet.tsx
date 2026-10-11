@@ -1,5 +1,5 @@
 import { StyleSheet, View } from 'react-native';
-import { ChevronRight, Monitor } from '@keyline-icons/react-native';
+import { ChevronRight, Tv } from '@keyline-icons/react-native';
 import { controlDevice } from '@ValenceClient/video/controlledDevice';
 import { sendVideoCommand } from '@ValenceClient/video/videoDevices';
 import { useVideoDevices } from '@ValenceClient/video/useVideoDevices';
@@ -64,7 +64,7 @@ const APlayOnSheet = ({ media, startSeconds, onClose }: APlayOnSheetProps) => {
               }}
             >
               <View style={[styles.device, { backgroundColor: withAlpha(colours.text, 0.08) }]}>
-                <Icon of={Monitor} colour={colours.text} />
+                <Icon of={Tv} colour={colours.text} />
                 <View style={styles.said}>
                   <Words lines={1}>{device.label}</Words>
                   <Words size="small" tone="muted" lines={1}>

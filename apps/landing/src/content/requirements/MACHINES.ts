@@ -48,7 +48,7 @@ const MACHINES: readonly Machine[] = [
     support: 'image',
     body: 'Works in the container through /dev/dri with the driver the image already carries. AMF, AMD’s other encoder, needs the proprietary driver and is only used when the transcoder runs natively on Windows.',
     guide: '/install/hardware-transcoding#intel-and-amd',
-    icon: MonitorIcon,
+    icon: GaugeIcon,
   },
   {
     id: 'nvidia',

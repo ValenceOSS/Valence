@@ -1,4 +1,4 @@
-import { Mic } from '@keyline-icons/react-native';
+import { User } from '@keyline-icons/react-native';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator } from 'react-native';
@@ -107,7 +107,7 @@ const AnArtist = ({ artistId, onAlbum, onArtist, onPlaylist, onBack }: AnArtistP
         title={artist.name}
         detail={sayCount('common.count.albums', artist.albumCount)}
         artwork={artist.hasImage ? onThisServer(artistImageUrl(artist.id)) : null}
-        standIn={Mic}
+        standIn={User}
         isRound
         canPlay={popular.length > 0}
         onPlay={() => {

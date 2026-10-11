@@ -1,7 +1,7 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { Icon } from '@ValenceUI/Icon';
 import {
-  DoorOpen as DoorOpenFilledIcon,
+  LogOut as LogOutFilledIcon,
   MoreHorizontal as MoreHorizontalIcon,
 } from '@keyline-icons/react/fill';
 import { useCallback, useMemo, useState } from 'react';
@@ -78,7 +78,7 @@ const AccountDevices = ({ accountId }: AccountDevicesProps) => {
                     {
                       id: 'end',
                       label: say('common.signThisOut'),
-                      icon: <Icon of={DoorOpenFilledIcon} size={15} />,
+                      icon: <Icon of={LogOutFilledIcon} size={15} />,
                       isDestructive: true,
                       onChoose: () => {
                         setEnding(row.original);

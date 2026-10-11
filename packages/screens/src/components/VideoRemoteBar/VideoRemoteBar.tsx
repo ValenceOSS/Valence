@@ -1,4 +1,4 @@
-import { Monitor as MonitorIcon } from '@keyline-icons/react';
+import { Tv as TvIcon } from '@keyline-icons/react';
 import { Pause as PauseIcon, Play as PlayIcon } from '@keyline-icons/react/fill';
 import { useVideoRemote } from '@ValenceClient/video/useVideoRemote';
 import { Button } from '@ValenceUI/Button';
@@ -35,7 +35,7 @@ const VideoRemoteBar = ({ onOpen }: VideoRemoteBarProps) => {
             onClick={onOpen}
           >
             <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-hover">
-              <Icon of={MonitorIcon} size={20} />
+              <Icon of={TvIcon} size={20} />
             </span>
 
             <span className="flex min-w-0 flex-col items-start">

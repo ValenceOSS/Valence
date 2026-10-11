@@ -3,8 +3,8 @@ import {
   Bluetooth,
   ChevronRight,
   Laptop,
-  Monitor,
   Smartphone,
+  Tv,
 } from '@keyline-icons/react-native';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
  * @returns How it is drawn.
  */
 const glyphOf = (kind: ClientKind | null): AGlyph =>
-  kind === 'phone' ? Smartphone : kind === 'tv' ? Monitor : Laptop;
+  kind === 'phone' ? Smartphone : kind === 'tv' ? Tv : Laptop;
 
 /**
  * Where the music plays, as the web's devices panel offers it, laid out as a music app's connect

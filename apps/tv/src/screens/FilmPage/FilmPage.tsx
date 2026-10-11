@@ -2,16 +2,15 @@ import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Check,
   ChevronsUpDown,
   CircleCheck,
   EyeOff,
-  Film,
-  Plus,
+  Heart,
   RotateCcw,
+  SquarePlay,
   Star,
 } from '@keyline-icons/react-native';
-import { Play } from '@keyline-icons/react-native/fill';
+import { Heart as HeartFilled, Play } from '@keyline-icons/react-native/fill';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { qualityBadges } from '@ValenceClient/library/qualityBadges';
@@ -176,7 +175,7 @@ const FilmPage = ({ mediaId, viewerId, onPlay, onOpenPerson }: FilmPageProps) =>
       {trailer === null ? null : (
         <ActionRow
           label={say('common.trailer')}
-          icon={Film}
+          icon={SquarePlay}
           onPress={() => {
             onPlay(trailer, 0);
           }}
@@ -189,7 +188,7 @@ const FilmPage = ({ mediaId, viewerId, onPlay, onOpenPerson }: FilmPageProps) =>
             ? say('tv.filmPage.removeFromMyList')
             : say('tv.filmPage.addToMyList')
         }
-        icon={favourites.isKept(film.id) ? Check : Plus}
+        icon={favourites.isKept(film.id) ? HeartFilled : Heart}
         onPress={() => {
           favourites.toggle(film.id);
         }}

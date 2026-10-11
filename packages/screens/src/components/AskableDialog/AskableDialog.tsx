@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Play as PlayFilledIcon, Stop as StopFilledIcon } from '@keyline-icons/react/fill';
 import { useSample } from '@ValenceScreens/requests/useSample';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Tape as TapeIcon, X as XIcon } from '@keyline-icons/react';
+import { SquarePlay as SquarePlayIcon, X as XIcon } from '@keyline-icons/react';
 import { BackdropScrim } from '@ValenceUI/BackdropScrim';
 import { DownloadProgressReadout } from '@ValenceScreens/components/DownloadProgressReadout/DownloadProgressReadout';
 import { Badge } from '@ValenceUI/Badge';
@@ -511,7 +511,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                     setIsWatchingTrailer(true);
                   }}
                 >
-                  <Icon of={TapeIcon} size={16} />
+                  <Icon of={SquarePlayIcon} size={16} />
                   {say('common.watchTheTrailer')}
                 </Button>
               ),

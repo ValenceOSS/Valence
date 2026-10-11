@@ -1,9 +1,9 @@
 import {
   CodeXml as CodeXmlIcon,
-  Database as DatabaseIcon,
   Globe as GlobeIcon,
+  HardDrive as HardDriveIcon,
   KeyRound as KeyRoundIcon,
-  Plug as PlugIcon,
+  Puzzle as PuzzleIcon,
   Server as ServerIcon,
 } from '@keyline-icons/react/fill';
 import { EditorialPage } from '@ValenceLanding/components/EditorialPage/EditorialPage';
@@ -27,7 +27,7 @@ const ArchitecturePage = () => (
       {
         title: 'Media stays mounted',
         body: 'Libraries are read from folders you choose. Valence indexes and streams them; it does not need you to upload a library to a cloud product.',
-        icon: DatabaseIcon,
+        icon: HardDriveIcon,
       },
       {
         title: 'Transcoding is separate',
@@ -37,7 +37,7 @@ const ArchitecturePage = () => (
       {
         title: 'Plugins ask first',
         body: 'Server-side plugins describe what they need before they run. The host can explain, grant and revoke those capabilities.',
-        icon: PlugIcon,
+        icon: PuzzleIcon,
       },
       {
         title: 'Auth is part of the product',

@@ -1,7 +1,7 @@
 import {
   CodeXml as CodeXmlIcon,
   HandHeart as HandHeartIcon,
-  Monitor as MonitorIcon,
+  HouseHeart as HouseHeartIcon,
   Package as PackageIcon,
 } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
@@ -22,7 +22,7 @@ const PRINCIPLES = [
     title: 'One household',
     detail:
       'Profiles, permissions, watch history, downloads and sessions belong to the people who actually use the server.',
-    icon: MonitorIcon,
+    icon: HouseHeartIcon,
   },
   {
     title: 'Built in public',

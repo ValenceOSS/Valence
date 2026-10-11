@@ -1,4 +1,4 @@
-import { Plug as PlugIcon } from '@keyline-icons/react/fill';
+import { Puzzle as PuzzleIcon } from '@keyline-icons/react/fill';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
@@ -21,7 +21,7 @@ const CatalogueEntryRow = ({ entry, isBusy, onInstall }: CatalogueEntryRowProps)
     <li className="flex items-start gap-3 px-4 py-4">
       {entry.iconUrl === null || !entry.iconUrl.startsWith('/api/') ? (
         <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-surface-raised text-text-muted">
-          <Icon of={PlugIcon} size={18} />
+          <Icon of={PuzzleIcon} size={18} />
         </span>
       ) : (
         <img src={entry.iconUrl} alt="" className="size-10 shrink-0 rounded-lg object-cover" />

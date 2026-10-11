@@ -4,9 +4,9 @@ import { AccountFace } from '@ValenceScreens/components/AdminArea/components/Acc
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Icon } from '@ValenceUI/Icon';
 import {
+  Ban as BanFilledIcon,
   Bin as BinFilledIcon,
   ChevronsUpDown as ChevronsUpDownIcon,
-  CircleX as CircleXFilledIcon,
   Copy as CopyIcon,
   Link as LinkFilledIcon,
   Mail as MailFilledIcon,
@@ -15,7 +15,8 @@ import {
   Plus as PlusIcon,
   RefreshCw as RefreshCwIcon,
   TriangleAlert as TriangleAlertIcon,
-  UserCheck as UserCheckFilledIcon,
+  Unlink as UnlinkFilledIcon,
+  UserPen as UserPenFilledIcon,
   Users as UsersIcon,
 } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -658,7 +659,7 @@ const AccountsPanel = () => {
                       {
                         id: 'edit',
                         label: say('screens.adminArea.accountsPanel.editAccount'),
-                        icon: <Icon of={UserCheckFilledIcon} size={15} />,
+                        icon: <Icon of={UserPenFilledIcon} size={15} />,
                         onChoose: () => {
                           openEditor(account.id);
                         },
@@ -707,7 +708,7 @@ const AccountsPanel = () => {
                             {
                               id: 'revoke',
                               label: say('common.withdrawIt'),
-                              icon: <Icon of={CircleXFilledIcon} size={15} />,
+                              icon: <Icon of={UnlinkFilledIcon} size={15} />,
                               onChoose: () => {
                                 hold(account.id, null);
                                 void act(
@@ -726,7 +727,7 @@ const AccountsPanel = () => {
                         label: account.isBanned
                           ? say('common.letBackIn')
                           : say('screens.adminArea.accountsPanel.ban'),
-                        icon: <Icon of={CircleXFilledIcon} size={15} />,
+                        icon: <Icon of={BanFilledIcon} size={15} />,
                         onChoose: () => {
                           if (account.isBanned) {
                             void act(
