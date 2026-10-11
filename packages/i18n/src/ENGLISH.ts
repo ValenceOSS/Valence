@@ -5643,6 +5643,7 @@ const ENGLISH = {
   'screens.liveTvPage.blockedHere': 'Blocked here',
   'screens.liveTvPage.blockedOutsideSomeCountries':
     'Only plays in some countries, and the playlist doesn’t say which.',
+  'screens.liveTvPage.channel': 'Channel',
   'screens.liveTvPage.findAChannel': 'Find a channel',
   'screens.liveTvPage.geoBlocked': 'Geo-blocked',
   'screens.liveTvPage.geoBlockedCountry': 'Geo-blocked · {country}',
@@ -5659,6 +5660,7 @@ const ENGLISH = {
   'screens.liveTvPage.keepName': 'Keep {name} as a favourite',
   'screens.liveTvPage.likelyOnlyPlaysInCountry':
     'Most likely only plays in {country}. A live TV proxy in that country can play it.',
+  'screens.liveTvPage.list': 'List',
   'screens.liveTvPage.liveNowNoGuide': 'Live now · no guide',
   'screens.liveTvPage.nextTimeTitle': 'Next at {time}: {title}',
   'screens.liveTvPage.noChannelsYet':
@@ -5668,8 +5670,10 @@ const ENGLISH = {
   'screens.liveTvPage.notAllDay': 'Not 24/7',
   'screens.liveTvPage.notWorking': 'Not working',
   'screens.liveTvPage.offAir': 'Off air',
+  'screens.liveTvPage.onAir': 'On air',
   'screens.liveTvPage.onAirNow': 'On air now',
   'screens.liveTvPage.onNow': 'On now',
+  'screens.liveTvPage.showChannelsAs': 'Show channels as',
   'screens.liveTvPage.startingName': 'Starting {name}…',
   'screens.liveTvPage.stopKeepingName': 'Stop keeping {name} as a favourite',
   'screens.liveTvPage.thatChannelCouldNotBePlayed': 'That channel couldn’t be played.',

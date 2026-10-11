@@ -13,6 +13,9 @@ import { readLastChannel, saveLastChannel } from '@ValenceScreens/live/lastChann
 import { groupsOf } from '@ValenceClient/live/groupsOf';
 import { channelTagsOf } from '@ValenceClient/live/channelTagsOf';
 import { fuzzyScore } from '@ValenceCore/functions/fuzzyScore';
+import { SegmentedRow } from '@ValenceUI/SegmentedRow';
+import { LiveChannelTable } from '@ValenceScreens/components/LiveTvPage/components/LiveChannelTable/LiveChannelTable';
+import { readLiveView, saveLiveView } from '@ValenceScreens/live/liveViewPreference';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { say } from '@ValenceI18n/say';
 import type { LiveChannel, LiveGuide } from '@ValenceContracts/schemas/LiveTv';
@@ -24,8 +27,9 @@ const FAVOURITES = 'favourites';
 const ON_AIR = 'onAir';
 
 /**
- * Live TV: the channel playing at the top, with what is on it and what is next, and below it the
- * guide of every channel over the next few hours, which can be searched loosely — `cb` finds CBBC,
+ * Live TV: the channel playing at the top, with what is on it and what is next, and below it every
+ * channel — as a table of what is on, genre and state, or as a timeline guide, remembered on the
+ * device — the guide of every channel over the next few hours, which can be searched loosely — `cb` finds CBBC,
  * best matches first — narrowed to favourites or to one group of channels, and from which any
  * channel is played. The channel last watched on this
  * device plays to begin with, or else the first favourite, or else the first channel.
@@ -38,6 +42,7 @@ const LiveTvPage = () => {
   const [chosenId, setChosenId] = useState<string | null>(readLastChannel);
   const [showing, setShowing] = useState(ALL);
   const [search, setSearch] = useState('');
+  const [view, setView] = useState(readLiveView);
 
   const channels = guide.data?.channels ?? [];
   const chosen =
@@ -152,31 +157,48 @@ const LiveTvPage = () => {
           title={say('screens.liveTvPage.guide')}
           isFlush
           actions={
-            <ScopedField
-              className="w-full sm:w-96"
-              label={say('screens.liveTvPage.findAChannel')}
-              isLabelHidden
-              placeholder={say('screens.liveTvPage.findAChannel')}
-              value={search}
-              onValueChange={setSearch}
-              choices={[
-                {
-                  label: say('screens.liveTvPage.whichChannels'),
-                  options: [
-                    { id: ALL, label: say('screens.liveTvPage.allChannels') },
-                    { id: ON_AIR, label: say('screens.liveTvPage.onAirNow') },
-                    { id: FAVOURITES, label: say('common.favourites') },
-                    ...groups.map((group) => ({
-                      id: group,
-                      label: group,
-                      group: say('screens.liveTvPage.groups'),
-                    })),
-                  ],
-                  value: showing,
-                  onChange: setShowing,
-                },
-              ]}
-            />
+            <>
+              <SegmentedRow
+                label={say('screens.liveTvPage.showChannelsAs')}
+                size="sm"
+                items={[
+                  { id: 'list', label: say('screens.liveTvPage.list') },
+                  { id: 'guide', label: say('screens.liveTvPage.guide') },
+                ]}
+                value={view}
+                onSelect={(next) => {
+                  const chosen = next === 'guide' ? 'guide' : 'list';
+
+                  setView(chosen);
+                  saveLiveView(chosen);
+                }}
+              />
+              <ScopedField
+                className="w-full sm:w-96"
+                label={say('screens.liveTvPage.findAChannel')}
+                isLabelHidden
+                placeholder={say('screens.liveTvPage.findAChannel')}
+                value={search}
+                onValueChange={setSearch}
+                choices={[
+                  {
+                    label: say('screens.liveTvPage.whichChannels'),
+                    options: [
+                      { id: ALL, label: say('screens.liveTvPage.allChannels') },
+                      { id: ON_AIR, label: say('screens.liveTvPage.onAirNow') },
+                      { id: FAVOURITES, label: say('common.favourites') },
+                      ...groups.map((group) => ({
+                        id: group,
+                        label: group,
+                        group: say('screens.liveTvPage.groups'),
+                      })),
+                    ],
+                    value: showing,
+                    onChange: setShowing,
+                  },
+                ]}
+              />
+            </>
           }
         >
           {shown.length === 0 ? (
@@ -185,6 +207,19 @@ const LiveTvPage = () => {
                 ? say('screens.liveTvPage.noFavouritesYet')
                 : say('common.nothingHereMatchesThat')}
             </p>
+          ) : view === 'list' ? (
+            <LiveChannelTable
+              channels={shown}
+              programmes={guide.data.programmes}
+              now={now}
+              chosenId={chosen.id}
+              onChoose={(channelId) => {
+                setChosenId(channelId);
+                saveLastChannel(channelId);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              onToggleFavourite={toggleFavourite}
+            />
           ) : (
             <LiveGuideGrid
               channels={shown}

@@ -22320,6 +22320,11 @@
     "context": "Tooltip on a geo-blocked live TV channel whose country is unknown."
   },
   {
+    "handler": "screens.liveTvPage.channel",
+    "text": "Channel",
+    "context": "Column heading in the live TV channel table."
+  },
+  {
     "handler": "screens.liveTvPage.findAChannel",
     "text": "Find a channel",
     "context": "Placeholder of the search field above the live TV guide."
@@ -22380,6 +22385,11 @@
     "context": "Tooltip on a geo-blocked live TV channel. {country} is a country’s name."
   },
   {
+    "handler": "screens.liveTvPage.list",
+    "text": "List",
+    "context": "Option: show live TV channels as a table."
+  },
+  {
     "handler": "screens.liveTvPage.liveNowNoGuide",
     "text": "Live now · no guide",
     "context": "Shown along a live TV channel’s row in the guide, from the time now onwards, when nothing is known of what is on it."
@@ -22415,6 +22425,11 @@
     "context": "Badge on a live TV channel that was not broadcasting when last checked."
   },
   {
+    "handler": "screens.liveTvPage.onAir",
+    "text": "On air",
+    "context": "Badge on a live TV channel found broadcasting when last checked."
+  },
+  {
     "handler": "screens.liveTvPage.onAirNow",
     "text": "On air now",
     "context": "Option in the live TV guide’s filter showing only channels found broadcasting when last checked."
@@ -22423,6 +22438,11 @@
     "handler": "screens.liveTvPage.onNow",
     "text": "On now",
     "context": "Label of the progress bar showing how far through the current programme a live channel is."
+  },
+  {
+    "handler": "screens.liveTvPage.showChannelsAs",
+    "text": "Show channels as",
+    "context": "Label of the choice between a list and a timeline guide on the live TV page."
   },
   {
     "handler": "screens.liveTvPage.startingName",

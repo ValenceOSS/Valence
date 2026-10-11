@@ -6,7 +6,6 @@ import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
 import { groupsOf } from '@ValenceClient/live/groupsOf';
 import { TABLE_LOOKS } from '@ValenceUI/tokens/tableLooks';
-import { ChannelTags } from '@ValenceScreens/components/LiveTvPage/components/ChannelTags/ChannelTags';
 import { channelTagsOf } from '@ValenceClient/live/channelTagsOf';
 import { ChannelLogo } from '@ValenceScreens/components/LiveTvPage/components/ChannelLogo/ChannelLogo';
 import { say } from '@ValenceI18n/say';
@@ -219,29 +218,13 @@ const LiveGuideGrid = ({
                       isUnplayable(channel.health) ? 'opacity-55' : '',
                     )}
                   >
-                    <span className="relative shrink-0">
-                      <ChannelLogo
-                        channelId={channel.id}
-                        name={channel.name}
-                        hasLogo={channel.hasLogo}
-                        className="size-11"
-                      />
-                      {channel.health === null || channel.health === 'unsure' ? null : (
-                        <span
-                          aria-hidden
-                          className={cn(
-                            'absolute -bottom-0.5 -right-0.5 size-3 rounded-full ring-2 ring-[var(--card-face)]',
-                            channel.health === 'onAir'
-                              ? 'bg-success'
-                              : channel.health === 'offAir'
-                                ? 'bg-text-muted'
-                                : channel.health === 'refused'
-                                  ? 'bg-warning'
-                                  : 'bg-danger',
-                          )}
-                        />
-                      )}
-                    </span>
+                    <ChannelLogo
+                      channelId={channel.id}
+                      name={channel.name}
+                      hasLogo={channel.hasLogo}
+                      health={channel.health}
+                      className="size-11"
+                    />
                     <span className="flex min-w-0 flex-col">
                       <span className="flex min-w-0 items-baseline gap-1.5">
                         {channel.number === null ? null : (
@@ -249,11 +232,10 @@ const LiveGuideGrid = ({
                             {channel.number}
                           </span>
                         )}
-                        <span className="line-clamp-2 text-sm font-medium leading-tight text-text">
+                        <span className="truncate text-sm font-medium leading-tight text-text">
                           {channelTagsOf(channel.name).name}
                         </span>
                       </span>
-                      <ChannelTags channel={channel} className="mt-0.5" />
                       {channel.group === null ? null : (
                         <span className="truncate text-[0.6875rem] text-text-muted">
                           {groupsOf(channel.group).join(' · ')}
