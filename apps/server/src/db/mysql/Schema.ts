@@ -1834,6 +1834,9 @@ const liveChannel = mysqlTable(
     streamUrl: mediumtext('streamUrl').notNull(),
     userAgent: mediumtext('userAgent'),
     referrer: mediumtext('referrer'),
+    health: varchar('health', { length: 16 }),
+    route: varchar('route', { length: 16 }),
+    checkedAt: moment('checkedAt'),
   },
   (table) => [index('live_channel_source_idx').on(table.sourceId, table.position)],
 );

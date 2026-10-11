@@ -855,6 +855,13 @@
       "when": 1791689817516,
       "tag": "0121_live_channels_keep_their_headers",
       "breakpoints": true
+    },
+    {
+      "idx": 122,
+      "version": "7",
+      "when": 1791692386343,
+      "tag": "0122_live_channels_know_if_they_play",
+      "breakpoints": true
     }
   ]
 }

@@ -285,6 +285,7 @@ import {
   CHECK_TRANSCODER_JOB,
   SYNC_LINKED_CATALOGUES_JOB,
   REFRESH_LIVE_TV_JOB,
+  CHECK_LIVE_CHANNELS_JOB,
   CHECK_REQUESTS_JOB,
   CHECK_DISK_SPACE_JOB,
   SEND_MEDIA_DIGEST_JOB,
@@ -1409,6 +1410,7 @@ const liveRoutes = createLiveRoutes(env.LIVE_TV_PROXY);
 
 const liveTvService = createLiveTvService({
   store: createDatabaseLiveTvStore(db),
+  routes: liveRoutes,
   fetcher: liveRoutes.readings,
   warn: (message) => {
     log.warn('server', message);
@@ -2391,6 +2393,17 @@ const jobs = createJobQueue({
 
         jobs.reportProgress(jobId, saying('server.jobs.phase.checking'), 1, 1);
         log.info('jobs', `live tv: read ${read.toString()} sources again`);
+      },
+      [CHECK_LIVE_CHANNELS_JOB]: async (jobId) => {
+        jobs.reportProgress(jobId, saying('server.jobs.phase.checking'), 0, 1);
+
+        const counts = await liveTvService.checkAll();
+
+        jobs.reportProgress(jobId, saying('server.jobs.phase.checking'), 1, 1);
+        log.info(
+          'jobs',
+          `live tv: ${counts.onAir.toString()} channels on air, ${counts.offAir.toString()} off air, ${counts.refused.toString()} refused, ${(counts.gone + counts.unreachable + counts.notAStream).toString()} not working`,
+        );
       },
       [CHECK_TRANSCODER_JOB]: async (jobId) => {
         jobs.reportProgress(jobId, saying('server.jobs.phase.checking'), 0, 1);

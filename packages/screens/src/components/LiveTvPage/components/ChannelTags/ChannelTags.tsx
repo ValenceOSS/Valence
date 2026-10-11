@@ -7,16 +7,21 @@ import { say } from '@ValenceI18n/say';
 import type { ChannelTagsProps } from './ChannelTags.types';
 
 /**
- * What a channel's playlist says about its stream, as badges: that it is geo-blocked, with where it
- * most likely plays where its guide id says, and that it does not broadcast all day.
+ * What is known of a channel's stream, as badges: that its playlist calls it geo-blocked, with where
+ * it most likely plays, or not on all day; and how it was when last checked — off air, blocked from
+ * here, or not working.
  *
  * @param channel - The channel.
  * @param className - Extra classes for the caller's own layout.
  */
 const ChannelTags = ({ channel, className }: ChannelTagsProps) => {
   const tags = channelTagsOf(channel.name);
+  const trouble =
+    channel.health === null || channel.health === 'onAir' || channel.health === 'unsure'
+      ? null
+      : channel.health;
 
-  if (!tags.isGeoBlocked && !tags.isPartTime) {
+  if (!tags.isGeoBlocked && !tags.isPartTime && trouble === null) {
     return null;
   }
 
@@ -42,6 +47,18 @@ const ChannelTags = ({ channel, className }: ChannelTagsProps) => {
         </Tooltip>
       ) : null}
       {tags.isPartTime ? <Badge size="sm">{say('screens.liveTvPage.notAllDay')}</Badge> : null}
+      {trouble === null ? null : (
+        <Badge
+          size="sm"
+          tone={trouble === 'offAir' ? 'quiet' : trouble === 'refused' ? 'warning' : 'danger'}
+        >
+          {trouble === 'offAir'
+            ? say('screens.liveTvPage.offAir')
+            : trouble === 'refused'
+              ? say('screens.liveTvPage.blockedHere')
+              : say('screens.liveTvPage.notWorking')}
+        </Badge>
+      )}
     </span>
   );
 };

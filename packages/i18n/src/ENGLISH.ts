@@ -5640,6 +5640,7 @@ const ENGLISH = {
   'screens.libraryBrowser.readingYourLibrary': 'Loading your library',
   'screens.libraryBrowser.thisServerHasNoFilmsOr': 'This server has no films or programmes yet.',
   'screens.liveTvPage.allChannels': 'All channels',
+  'screens.liveTvPage.blockedHere': 'Blocked here',
   'screens.liveTvPage.blockedOutsideSomeCountries':
     'Only plays in some countries, and the playlist doesn’t say which.',
   'screens.liveTvPage.findAChannel': 'Find a channel',
@@ -5663,6 +5664,9 @@ const ENGLISH = {
   'screens.liveTvPage.noFavouritesYet':
     'You haven’t kept any channels yet. Star one to find it here.',
   'screens.liveTvPage.notAllDay': 'Not 24/7',
+  'screens.liveTvPage.notWorking': 'Not working',
+  'screens.liveTvPage.offAir': 'Off air',
+  'screens.liveTvPage.onAirNow': 'On air now',
   'screens.liveTvPage.onNow': 'On now',
   'screens.liveTvPage.startingName': 'Starting {name}…',
   'screens.liveTvPage.stopKeepingName': 'Stop keeping {name} as a favourite',
@@ -6968,6 +6972,8 @@ const ENGLISH = {
   'server.imports.sourceCaller.nameDidNotAnswerInTime': '{name} didn’t respond in time.',
   'server.imports.sourceCaller.nameRefusedTheKey':
     '{name} rejected the API key. Check you copied all of it.',
+  'server.jobs.jobDefinitions.asksEveryLiveChannelWhetherItIs':
+    'Asks every live TV channel’s stream for a moment of pictures, so the guide can show which are on air, off air, blocked or gone.',
   'server.jobs.jobDefinitions.bringEverythingAcross': 'Import from Jellyfin, Emby or Plex',
   'server.jobs.jobDefinitions.bringRequestsUpToDateWith': 'Sync requests with the catalogue',
   'server.jobs.jobDefinitions.bringsPeopleWatchingAndLibrariesAcross':
@@ -6983,6 +6989,7 @@ const ENGLISH = {
     'Checks TMDB for new episodes and changed release dates, and what the library already holds of each requested show.',
   'server.jobs.jobDefinitions.checkTheRequestsService': 'Check the requests service',
   'server.jobs.jobDefinitions.checkTheTranscoder': 'Check the transcoder',
+  'server.jobs.jobDefinitions.checkWhichLiveChannelsPlay': 'Check which live channels play',
   'server.jobs.jobDefinitions.cleanUpCachedImages': 'Clean up cached images',
   'server.jobs.jobDefinitions.cleanUpCachedPreviews': 'Clean up cached previews',
   'server.jobs.jobDefinitions.cleanUpSessions': 'Clean up sessions',

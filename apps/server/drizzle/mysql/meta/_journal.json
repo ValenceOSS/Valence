@@ -204,6 +204,13 @@
       "when": 1791689818143,
       "tag": "0028_live_channels_keep_their_headers",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "5",
+      "when": 1791692386990,
+      "tag": "0029_live_channels_know_if_they_play",
+      "breakpoints": true
     }
   ]
 }

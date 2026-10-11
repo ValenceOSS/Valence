@@ -7,6 +7,18 @@ const LiveSourceKindSchema = z.enum(LIVE_SOURCE_KINDS);
 
 const MOST_PLAYLIST_BYTES = 20 * 1024 * 1024;
 
+const LIVE_HEALTHS = [
+  'onAir',
+  'offAir',
+  'refused',
+  'gone',
+  'unreachable',
+  'notAStream',
+  'unsure',
+] as const;
+
+const LiveHealthSchema = z.enum(LIVE_HEALTHS);
+
 const LiveAddressSchema = z
   .string()
   .trim()
@@ -61,6 +73,8 @@ const LiveChannelSchema = z.object({
   name: z.string(),
   group: z.string().nullable(),
   region: z.string().length(2).nullable(),
+  health: LiveHealthSchema.nullable(),
+  checkedAt: z.string().datetime().nullable(),
   hasLogo: z.boolean(),
   isFavourite: z.boolean(),
 });
@@ -85,6 +99,7 @@ const LiveSourcesSchema = z.object({ sources: z.array(LiveSourceSchema) });
 const LiveStreamSchema = z.object({ manifestUrl: z.string() });
 
 type LiveSourceKind = z.infer<typeof LiveSourceKindSchema>;
+type LiveHealth = z.infer<typeof LiveHealthSchema>;
 type LiveSource = z.infer<typeof LiveSourceSchema>;
 type NewLiveSource = z.infer<typeof NewLiveSourceSchema>;
 type LiveChannel = z.infer<typeof LiveChannelSchema>;
@@ -95,6 +110,7 @@ type LiveStream = z.infer<typeof LiveStreamSchema>;
 export type {
   LiveChannel,
   LiveGuide,
+  LiveHealth,
   LiveProgramme,
   LiveSource,
   LiveSourceKind,
@@ -103,7 +119,9 @@ export type {
 };
 
 export {
+  LIVE_HEALTHS,
   LIVE_SOURCE_KINDS,
+  LiveHealthSchema,
   LiveAddressSchema,
   LiveChannelSchema,
   LiveGuideSchema,

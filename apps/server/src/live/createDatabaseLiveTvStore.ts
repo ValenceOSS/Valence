@@ -5,7 +5,7 @@ import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
 import { upsert } from '@ValenceDatabase/upsert';
 import { setEverythingFrom } from '@ValenceServer/linking/catalogue/setEverythingFrom';
 import { liveChannel, liveFavourite, liveProgramme, liveSource } from '#dialect/Schema';
-import { LiveSourceKindSchema } from '@ValenceContracts/schemas/LiveTv';
+import { LiveHealthSchema, LiveSourceKindSchema } from '@ValenceContracts/schemas/LiveTv';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { LiveTvStore, StoredLiveChannel, StoredLiveSource } from './LiveTvStore';
 
@@ -57,6 +57,9 @@ const channelOf = (row: typeof liveChannel.$inferSelect): StoredLiveChannel => (
   streamUrl: row.streamUrl,
   userAgent: row.userAgent,
   referrer: row.referrer,
+  health: LiveHealthSchema.safeParse(row.health).data ?? null,
+  route: row.route === 'proxy' ? 'proxy' : row.route === 'direct' ? 'direct' : null,
+  checkedAt: row.checkedAt,
 });
 
 /**
@@ -127,7 +130,7 @@ const createDatabaseLiveTvStore = (db: AnyValenceDatabase): LiveTvStore => ({
           referrer: channel.referrer,
         })),
         target: liveChannel.id,
-        set: setEverythingFrom(liveChannel, ['id']),
+        set: setEverythingFrom(liveChannel, ['id', 'health', 'route', 'checkedAt']),
       });
     });
   },
@@ -143,6 +146,13 @@ const createDatabaseLiveTvStore = (db: AnyValenceDatabase): LiveTvStore => ({
 
   listChannels: async () =>
     (await db.select().from(liveChannel).orderBy(asc(liveChannel.position))).map(channelOf),
+
+  noteHealth: async (channelId, health, route, at) => {
+    await db
+      .update(liveChannel)
+      .set({ health, route, checkedAt: at })
+      .where(eq(liveChannel.id, channelId));
+  },
 
   readChannel: async (id) => {
     const [row] = await db.select().from(liveChannel).where(eq(liveChannel.id, id));

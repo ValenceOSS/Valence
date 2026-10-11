@@ -1850,6 +1850,9 @@ const liveChannel = pgTable(
     streamUrl: text('streamUrl').notNull(),
     userAgent: text('userAgent'),
     referrer: text('referrer'),
+    health: text('health'),
+    route: text('route'),
+    checkedAt: timestamp('checkedAt'),
   },
   (table) => [index('live_channel_source_idx').on(table.sourceId, table.position)],
 );

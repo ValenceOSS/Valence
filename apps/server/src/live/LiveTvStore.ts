@@ -1,4 +1,5 @@
-import type { LiveSourceKind } from '@ValenceContracts/schemas/LiveTv';
+import type { LiveHealth, LiveSourceKind } from '@ValenceContracts/schemas/LiveTv';
+import type { LiveRoute } from './createLiveRoutes';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type { ParsedChannel } from './ParsedChannel';
 import type { ParsedProgramme } from './ParsedProgramme';
@@ -17,7 +18,14 @@ type StoredLiveSource = {
   createdAt: Date;
 };
 
-type StoredLiveChannel = ParsedChannel & { id: string; sourceId: string; position: number };
+type StoredLiveChannel = ParsedChannel & {
+  id: string;
+  sourceId: string;
+  position: number;
+  health: LiveHealth | null;
+  route: LiveRoute | null;
+  checkedAt: Date | null;
+};
 
 type StoredLiveProgramme = ParsedProgramme & { sourceId: string };
 
@@ -33,6 +41,7 @@ type LiveTvStore = {
   replaceChannels: (sourceId: string, channels: readonly StoredLiveChannel[]) => Promise<void>;
   replaceProgrammes: (sourceId: string, programmes: readonly ParsedProgramme[]) => Promise<void>;
   listChannels: () => Promise<StoredLiveChannel[]>;
+  noteHealth: (channelId: string, health: LiveHealth, route: LiveRoute, at: Date) => Promise<void>;
   readChannel: (id: string) => Promise<StoredLiveChannel | null>;
   listProgrammes: (from: Date, until: Date) => Promise<StoredLiveProgramme[]>;
   favouritesOf: (profileId: string) => Promise<Set<string>>;

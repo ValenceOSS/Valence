@@ -1,4 +1,9 @@
-import type { LiveGuide, LiveSource, NewLiveSource } from '@ValenceContracts/schemas/LiveTv';
+import type {
+  LiveGuide,
+  LiveHealth,
+  LiveSource,
+  NewLiveSource,
+} from '@ValenceContracts/schemas/LiveTv';
 import type { StoredLiveChannel } from './LiveTvStore';
 
 type LiveTvService = {
@@ -7,6 +12,7 @@ type LiveTvService = {
   remove: (id: string) => Promise<boolean>;
   refresh: (id: string) => Promise<LiveSource | null>;
   refreshAll: () => Promise<number>;
+  checkAll: () => Promise<Record<LiveHealth, number>>;
   guide: (profileId: string | null, from: Date, until: Date) => Promise<LiveGuide>;
   channel: (id: string) => Promise<StoredLiveChannel | null>;
   keep: (profileId: string, channelId: string) => Promise<boolean>;

@@ -10,10 +10,19 @@ import { ChannelTags } from '@ValenceScreens/components/LiveTvPage/components/Ch
 import { channelTagsOf } from '@ValenceClient/live/channelTagsOf';
 import { ChannelLogo } from '@ValenceScreens/components/LiveTvPage/components/ChannelLogo/ChannelLogo';
 import { say } from '@ValenceI18n/say';
-import type { LiveProgramme } from '@ValenceContracts/schemas/LiveTv';
+import type { LiveHealth, LiveProgramme } from '@ValenceContracts/schemas/LiveTv';
 import type { LiveGuideGridProps } from './LiveGuideGrid.types';
 
 const HALF_HOUR_MS = 30 * 60 * 1000;
+
+/**
+ * Whether a channel was found not to play when last checked.
+ *
+ * @param health - How it was.
+ * @returns Whether it would not play.
+ */
+const isUnplayable = (health: LiveHealth | null): boolean =>
+  health !== null && health !== 'onAir' && health !== 'unsure';
 
 const HOUR_MS = 60 * 60 * 1000;
 
@@ -205,14 +214,34 @@ const LiveGuideGrid = ({
                     onClick={() => {
                       onChoose(channel.id);
                     }}
-                    className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                    className={cn(
+                      'flex min-w-0 flex-1 items-center gap-3 text-left',
+                      isUnplayable(channel.health) ? 'opacity-55' : '',
+                    )}
                   >
-                    <ChannelLogo
-                      channelId={channel.id}
-                      name={channel.name}
-                      hasLogo={channel.hasLogo}
-                      className="size-11"
-                    />
+                    <span className="relative shrink-0">
+                      <ChannelLogo
+                        channelId={channel.id}
+                        name={channel.name}
+                        hasLogo={channel.hasLogo}
+                        className="size-11"
+                      />
+                      {channel.health === null || channel.health === 'unsure' ? null : (
+                        <span
+                          aria-hidden
+                          className={cn(
+                            'absolute -bottom-0.5 -right-0.5 size-3 rounded-full ring-2 ring-[var(--card-face)]',
+                            channel.health === 'onAir'
+                              ? 'bg-success'
+                              : channel.health === 'offAir'
+                                ? 'bg-text-muted'
+                                : channel.health === 'refused'
+                                  ? 'bg-warning'
+                                  : 'bg-danger',
+                          )}
+                        />
+                      )}
+                    </span>
                     <span className="flex min-w-0 flex-col">
                       <span className="flex min-w-0 items-baseline gap-1.5">
                         {channel.number === null ? null : (

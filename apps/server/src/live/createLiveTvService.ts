@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { MOST_PLAYLIST_BYTES } from '@ValenceContracts/schemas/LiveTv';
+import { checkChannel } from './checkChannel';
 import { saying } from '@ValenceI18n/saying';
 import { isHlsPlaylist } from './isHlsPlaylist';
 import { liveChannelIdOf } from './liveChannelIdOf';
@@ -9,13 +10,16 @@ import { parseM3u } from './parseM3u';
 import { parseXmltv } from './parseXmltv';
 import { readRemoteText } from './readRemoteText';
 import { readTunerLineup } from './readTunerLineup';
-import type { LiveSource } from '@ValenceContracts/schemas/LiveTv';
+import type { LiveHealth, LiveSource } from '@ValenceContracts/schemas/LiveTv';
+import type { LiveRoutes } from './createLiveRoutes';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type { LiveTvService } from './LiveTvService';
 import type { LiveTvStore, StoredLiveSource } from './LiveTvStore';
 import type { ParsedChannel } from './ParsedChannel';
 
 const MOST_GUIDE_BYTES = 300 * 1024 * 1024;
+
+const CHECKS_AT_ONCE = 16;
 
 const HOUR_MS = 60 * 60 * 1000;
 
@@ -25,6 +29,7 @@ const GUIDE_KEEPS_AHEAD_MS = 8 * 24 * HOUR_MS;
 
 type LiveTvServiceOptions = {
   store: LiveTvStore;
+  routes?: LiveRoutes;
   now?: () => Date;
   fetcher?: typeof fetch;
   warn?: (message: string) => void;
@@ -64,6 +69,7 @@ const shownOf = (source: StoredLiveSource): LiveSource => ({
  */
 const createLiveTvService = ({
   store,
+  routes,
   now = () => new Date(),
   fetcher = fetch,
   warn = () => undefined,
@@ -169,6 +175,9 @@ const createLiveTvService = ({
         id: liveChannelIdOf(source.id, channel.streamUrl),
         sourceId: source.id,
         position,
+        health: null,
+        route: null,
+        checkedAt: null,
       })),
     );
 
@@ -229,6 +238,51 @@ const createLiveTvService = ({
       return sources.length;
     },
 
+    checkAll: async () => {
+      const counts: Record<LiveHealth, number> = {
+        onAir: 0,
+        offAir: 0,
+        refused: 0,
+        gone: 0,
+        unreachable: 0,
+        notAStream: 0,
+        unsure: 0,
+      };
+      const channels = await store.listChannels();
+      let next = 0;
+
+      const work = async () => {
+        while (next < channels.length) {
+          const channel = channels[next];
+
+          next += 1;
+
+          if (channel !== undefined) {
+            const direct = await checkChannel(
+              channel.streamUrl,
+              channel,
+              routes?.fetcherOf('direct') ?? fetcher,
+            );
+            const proxied =
+              (direct === 'refused' || direct === 'unreachable') && routes?.hasProxy === true
+                ? await checkChannel(channel.streamUrl, channel, routes.fetcherOf('proxy'))
+                : null;
+            const usesProxy = proxied === 'onAir' || proxied === 'offAir';
+            const health = usesProxy ? proxied : direct;
+            const route = usesProxy ? 'proxy' : 'direct';
+
+            routes?.choose(channel.id, route);
+            await store.noteHealth(channel.id, health, route, now());
+            counts[health] += 1;
+          }
+        }
+      };
+
+      await Promise.all(Array.from({ length: CHECKS_AT_ONCE }, work));
+
+      return counts;
+    },
+
     guide: async (profileId, from, until) => {
       const [sources, channels, programmes, favourites] = await Promise.all([
         store.listSources(),
@@ -260,6 +314,8 @@ const createLiveTvService = ({
           name: channel.name,
           group: channel.group,
           region: likelyRegionOf(channel.guideId),
+          health: channel.health,
+          checkedAt: channel.checkedAt?.toISOString() ?? null,
           hasLogo: channel.logoUrl !== null,
           isFavourite: favourites.has(channel.id),
         })),

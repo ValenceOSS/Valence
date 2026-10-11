@@ -22310,6 +22310,11 @@
     "context": "Option in the live TV guide’s filter showing every channel."
   },
   {
+    "handler": "screens.liveTvPage.blockedHere",
+    "text": "Blocked here",
+    "context": "Badge on a live TV channel whose broadcaster refused this server when last checked, even through the proxy."
+  },
+  {
     "handler": "screens.liveTvPage.blockedOutsideSomeCountries",
     "text": "Only plays in some countries, and the playlist doesn’t say which.",
     "context": "Tooltip on a geo-blocked live TV channel whose country is unknown."
@@ -22393,6 +22398,21 @@
     "handler": "screens.liveTvPage.notAllDay",
     "text": "Not 24/7",
     "context": "Badge on a live TV channel that does not broadcast all day."
+  },
+  {
+    "handler": "screens.liveTvPage.notWorking",
+    "text": "Not working",
+    "context": "Badge on a live TV channel whose stream was gone or did not answer when last checked."
+  },
+  {
+    "handler": "screens.liveTvPage.offAir",
+    "text": "Off air",
+    "context": "Badge on a live TV channel that was not broadcasting when last checked."
+  },
+  {
+    "handler": "screens.liveTvPage.onAirNow",
+    "text": "On air now",
+    "context": "Option in the live TV guide’s filter showing only channels found broadcasting when last checked."
   },
   {
     "handler": "screens.liveTvPage.onNow",
@@ -27546,6 +27566,11 @@
     "context": "Why an import could not read the old server. {name} is Jellyfin, Emby, Plex or plex.tv."
   },
   {
+    "handler": "server.jobs.jobDefinitions.asksEveryLiveChannelWhetherItIs",
+    "text": "Asks every live TV channel’s stream for a moment of pictures, so the guide can show which are on air, off air, blocked or gone.",
+    "context": "Description of the scheduled job that checks every live TV channel."
+  },
+  {
     "handler": "server.jobs.jobDefinitions.bringEverythingAcross",
     "text": "Import from Jellyfin, Emby or Plex",
     "context": "The label of the import job in the jobs list on the server."
@@ -27599,6 +27624,11 @@
     "handler": "server.jobs.jobDefinitions.checkTheTranscoder",
     "text": "Check the transcoder",
     "context": "The label in the jobs on the server (from `jobDefinitions`)."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.checkWhichLiveChannelsPlay",
+    "text": "Check which live channels play",
+    "context": "The name of the scheduled job that checks every live TV channel’s stream."
   },
   {
     "handler": "server.jobs.jobDefinitions.cleanUpCachedImages",

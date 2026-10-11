@@ -21,6 +21,8 @@ const ALL = 'all';
 
 const FAVOURITES = 'favourites';
 
+const ON_AIR = 'onAir';
+
 /**
  * Live TV: the channel playing at the top, with what is on it and what is next, and below it the
  * guide of every channel over the next few hours, which can be searched loosely — `cb` finds CBBC,
@@ -50,6 +52,7 @@ const LiveTvPage = () => {
   const narrowed = channels.filter(
     (channel) =>
       showing === ALL ||
+      (showing === ON_AIR && channel.health === 'onAir') ||
       (showing === FAVOURITES ? channel.isFavourite : groupsOf(channel.group).includes(showing)),
   );
   const shown =
@@ -161,6 +164,7 @@ const LiveTvPage = () => {
                   label: say('screens.liveTvPage.whichChannels'),
                   options: [
                     { id: ALL, label: say('screens.liveTvPage.allChannels') },
+                    { id: ON_AIR, label: say('screens.liveTvPage.onAirNow') },
                     { id: FAVOURITES, label: say('common.favourites') },
                     ...groups.map((group) => ({
                       id: group,
