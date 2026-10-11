@@ -38,7 +38,7 @@ const DocPageView = ({ page }: DocPageViewProps) => {
           <Reveal key={`${page.path}-header`}>
             <Badge>{page.sectionTitle}</Badge>
 
-            <h1 className="mt-4 text-balance text-4xl font-semibold tracking-[-0.03em] text-text sm:text-5xl">
+            <h1 className="mt-4 text-balance text-4xl font-semibold tracking-headline sm:tracking-display text-text sm:text-5xl">
               {page.title}
             </h1>
 

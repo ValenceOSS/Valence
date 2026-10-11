@@ -19,7 +19,7 @@ const StatsSummary = ({ items }: StatsSummaryProps) => (
           className={
             item.value === null
               ? 'text-sm text-text-muted'
-              : 'truncate text-sm font-semibold tabular-nums tracking-tight text-text'
+              : 'truncate text-sm font-semibold tabular-nums text-text'
           }
         >
           {item.value ?? '—'}

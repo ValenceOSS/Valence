@@ -59,7 +59,7 @@ const SetupStepFrame = ({
         <h1
           ref={heading}
           tabIndex={-1}
-          className="text-[clamp(2rem,4.4vw,3.25rem)] font-semibold leading-[1.04] tracking-[-0.045em] text-text outline-none"
+          className="text-[clamp(2rem,4.4vw,3.25rem)] font-semibold leading-[1.04] tracking-headline lg:tracking-display text-text outline-none"
         >
           <span className="sr-only">{title}</span>
           {title.split(' ').map((word, at) => (

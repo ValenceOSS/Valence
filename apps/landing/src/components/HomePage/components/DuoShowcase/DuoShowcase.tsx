@@ -67,7 +67,7 @@ const DuoShowcase = () => {
         className="mx-auto mb-16 flex max-w-2xl flex-col items-center gap-4 px-5 text-center"
       >
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-accent">iPhone Duo</p>
-        <h2 className="text-balance text-4xl font-semibold tracking-tight text-text lg:text-5xl">
+        <h2 className="text-balance text-4xl font-semibold tracking-headline lg:tracking-display text-text lg:text-5xl">
           Folded or open,{' '}
           <span className="font-accent font-normal italic tracking-normal">it fits</span>.
         </h2>

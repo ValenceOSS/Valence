@@ -47,7 +47,7 @@ const DownloadCard = ({
             {eyebrow}
           </p>
 
-          <h3 className="flex items-center gap-3 text-xl font-semibold tracking-tight text-text lg:text-2xl">
+          <h3 className="flex items-center gap-3 text-xl font-semibold tracking-title text-text lg:text-2xl">
             <Glyph size={20} className="shrink-0 text-text-muted" />
             {title}
           </h3>

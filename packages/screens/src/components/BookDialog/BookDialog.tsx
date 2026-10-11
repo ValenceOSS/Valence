@@ -209,7 +209,7 @@ const BookDialog = ({
                 <DialogHeadlinePart
                   as="h2"
                   isTitle
-                  className="text-[clamp(1.5rem,4vw,2.25rem)] font-semibold leading-tight tracking-[-0.02em] text-text"
+                  className="text-[clamp(1.5rem,4vw,2.25rem)] font-semibold leading-tight tracking-title md:tracking-headline text-text"
                 >
                   {book.title}
                 </DialogHeadlinePart>

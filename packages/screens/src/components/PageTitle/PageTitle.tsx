@@ -8,7 +8,9 @@ import type { PageTitleProps } from './PageTitle.types';
  * @param className - Extra classes for the caller's own layout.
  */
 const PageTitle = ({ children, className }: PageTitleProps) => (
-  <h1 className={cn('text-3xl font-semibold tracking-tight text-text', className)}>{children}</h1>
+  <h1 className={cn('text-3xl font-semibold tracking-headline text-text', className)}>
+    {children}
+  </h1>
 );
 
 PageTitle.displayName = 'PageTitle';

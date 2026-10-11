@@ -57,7 +57,7 @@ const CalendarToolbar = ({
   onFilter,
 }: CalendarToolbarProps) => (
   <div className="flex flex-wrap items-center gap-3">
-    <h2 className="mr-auto text-xl font-semibold tracking-tight text-text">
+    <h2 className="mr-auto text-xl font-semibold tracking-title text-text">
       {view === 'timeline'
         ? nameTheSpan(daysShownIn(view, day, today))
         : view === 'month'

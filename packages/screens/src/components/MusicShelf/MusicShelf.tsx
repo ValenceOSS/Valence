@@ -52,7 +52,7 @@ const MusicShelf = ({ heading, layout = 'rail', count, action, tiles }: MusicShe
   return (
     <section aria-label={heading} className="flex flex-col gap-4 px-[var(--music-lane)]">
       <header className="flex items-end justify-between gap-4">
-        <h2 className="flex items-baseline gap-2 text-lg font-semibold tracking-tight text-text">
+        <h2 className="flex items-baseline gap-2 text-lg font-semibold text-text">
           {heading}
           {count === undefined ? null : (
             <FormattedNumber value={count} className="text-sm font-normal text-text-muted/70" />

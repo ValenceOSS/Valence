@@ -36,7 +36,7 @@ const ProblemCard = ({ icon, headline, reason, said, actions }: ProblemCardProps
           </span>
 
           <div className="flex flex-col gap-1.5">
-            <h1 className="text-xl font-semibold tracking-tight text-text">{headline}</h1>
+            <h1 className="text-xl font-semibold tracking-title text-text">{headline}</h1>
             <p className="font-body text-sm leading-relaxed text-text-muted">{reason}</p>
           </div>
 

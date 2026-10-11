@@ -136,7 +136,7 @@ const ConnectToServer = ({
           transition={revealTransition(prefersReducedMotion, 'heavy')}
           className="flex flex-col items-center gap-2 text-center"
         >
-          <h1 className="text-balance text-[clamp(1.75rem,5vw,3rem)] font-semibold leading-tight tracking-[-0.04em] text-text">
+          <h1 className="text-balance text-[clamp(1.75rem,5vw,3rem)] font-semibold leading-tight tracking-headline md:tracking-display text-text">
             {say('common.whichValenceIsYours')}
           </h1>
 

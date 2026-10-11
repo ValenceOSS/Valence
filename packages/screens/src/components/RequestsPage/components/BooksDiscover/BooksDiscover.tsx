@@ -117,7 +117,7 @@ const BooksDiscover = ({ onAsk }: BooksDiscoverProps) => {
         shelves.map((shelf, at) => (
           <Reveal key={shelf.id} delay={at * SHELF_STEP}>
             <section aria-label={shelf.title} className="flex flex-col gap-4">
-              <h2 className="text-2xl font-semibold tracking-tight text-text">{shelf.title}</h2>
+              <h2 className="text-2xl font-semibold tracking-title text-text">{shelf.title}</h2>
 
               {grid(shelf.titles, shelf.title)}
             </section>

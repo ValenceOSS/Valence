@@ -132,7 +132,7 @@ const PersonDialog = ({
               <DialogHeadlinePart
                 as="h2"
                 isTitle
-                className="text-3xl font-semibold tracking-[-0.02em] text-text"
+                className="text-3xl font-semibold tracking-headline text-text"
               >
                 {person?.name ?? say('screens.personDialog.somebodyInTheCast')}
               </DialogHeadlinePart>

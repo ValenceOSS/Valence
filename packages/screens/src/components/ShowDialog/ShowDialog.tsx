@@ -270,7 +270,7 @@ const ShowDialog = ({
               isTitle
               className={
                 lettered === null || unlettered === lettered.id
-                  ? 'max-w-[16ch] text-[clamp(2rem,6vw,3.75rem)] font-semibold leading-[0.95] tracking-[-0.03em] text-on-scrim'
+                  ? 'max-w-[16ch] text-[clamp(2rem,6vw,3.75rem)] font-semibold leading-[0.95] tracking-headline sm:tracking-display text-on-scrim'
                   : 'flex'
               }
             >

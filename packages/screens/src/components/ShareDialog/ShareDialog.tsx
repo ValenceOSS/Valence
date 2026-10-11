@@ -138,7 +138,7 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
               {say('common.share')}
             </span>
 
-            <h2 className="max-w-[24ch] truncate text-xl font-semibold leading-tight tracking-[-0.02em] text-on-scrim">
+            <h2 className="max-w-[24ch] truncate text-xl font-semibold leading-tight tracking-title text-on-scrim">
               {isLettered ? (
                 <TitleLogo
                   src={titleLogoUrl(media.id)}

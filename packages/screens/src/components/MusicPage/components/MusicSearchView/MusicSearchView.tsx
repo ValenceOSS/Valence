@@ -104,9 +104,7 @@ const MusicSearchView = ({ query }: MusicSearchViewProps) => {
               aria-label={say('common.songs2')}
               className={`flex flex-col gap-3 ${MUSIC_LANES.tracks}`}
             >
-              <h2 className="px-3 text-lg font-semibold tracking-tight text-text">
-                {say('common.songs2')}
-              </h2>
+              <h2 className="px-3 text-lg font-semibold text-text">{say('common.songs2')}</h2>
               <TrackList
                 label={say('screens.musicPage.musicSearchView.songsMatchingQuery', { query })}
                 tracks={found?.tracks ?? []}

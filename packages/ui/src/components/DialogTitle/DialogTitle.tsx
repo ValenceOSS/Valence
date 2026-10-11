@@ -52,7 +52,7 @@ const DialogTitle = ({
             <h2
               className={cn(
                 'truncate font-semibold text-text',
-                isCompact ? 'shrink-0 text-base' : 'text-2xl tracking-[-0.02em]',
+                isCompact ? 'shrink-0 text-base' : 'text-2xl tracking-title',
               )}
             >
               {title}

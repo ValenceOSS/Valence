@@ -77,7 +77,7 @@ const FeatureCard = ({ feature, index }: FeatureCardProps) => {
         </div>
 
         <div className="flex flex-col gap-3 px-2 pb-3 sm:px-3">
-          <h3 className="text-balance text-2xl font-semibold leading-tight tracking-[-0.02em] lg:text-[1.75rem] text-text">
+          <h3 className="text-balance text-2xl font-semibold leading-tight tracking-title lg:tracking-headline lg:text-[1.75rem] text-text">
             {feature.title}
           </h3>
 

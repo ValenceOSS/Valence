@@ -44,7 +44,7 @@ const MusicHeader = ({ eyebrow, title, artwork, details, actions }: MusicHeaderP
         <motion.h1
           variants={rises}
           transition={moves}
-          className="text-[clamp(1.5rem,10cqi,5rem)] font-bold leading-[0.95] tracking-[-0.035em] text-balance text-text"
+          className="text-[clamp(1.5rem,10cqi,5rem)] font-bold leading-[0.95] tracking-headline @md:tracking-display @2xl:tracking-hero text-balance text-text"
         >
           {title}
         </motion.h1>

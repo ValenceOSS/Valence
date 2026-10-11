@@ -130,7 +130,7 @@ const SiteFooter = ({ here, InSiteLink, logoSrc }: SiteFooterProps) => {
                   className="size-[2.125rem] rounded-[0.5rem] shadow-[var(--shadow-raised)]"
                 />
               )}
-              <span className="text-3xl font-semibold tracking-tight text-text">
+              <span className="text-3xl font-semibold tracking-headline text-text">
                 {say('common.valence')}
               </span>
             </span>
@@ -218,7 +218,7 @@ const SiteFooter = ({ here, InSiteLink, logoSrc }: SiteFooterProps) => {
             '[-webkit-mask-image:linear-gradient(to_bottom,black_15%,transparent)]',
           )}
         >
-          <p className="absolute inset-x-0 top-0 select-none whitespace-nowrap text-center text-[22vw] font-bold leading-none tracking-tighter text-on-scrim xl:text-[20rem]">
+          <p className="absolute inset-x-0 top-0 select-none whitespace-nowrap text-center text-[22vw] font-bold leading-none tracking-hero text-on-scrim xl:text-[20rem]">
             {say('common.valence')}
           </p>
         </div>

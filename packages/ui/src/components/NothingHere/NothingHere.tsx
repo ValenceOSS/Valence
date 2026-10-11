@@ -28,7 +28,9 @@ const NothingHere = ({ of, title, detail, action, fills = false }: NothingHerePr
     <Icon of={of} size={56} tone="faint" />
 
     <div className="flex flex-col gap-2">
-      <h2 className="text-2xl font-semibold tracking-tight text-text sm:text-3xl">{title}</h2>
+      <h2 className="text-2xl font-semibold tracking-title sm:tracking-headline text-text sm:text-3xl">
+        {title}
+      </h2>
 
       {detail === undefined ? null : <p className="max-w-md text-text-muted">{detail}</p>}
     </div>

@@ -67,7 +67,7 @@ const OfflineApp = ({ title }: OfflineAppProps) => {
           <span className="flex items-center gap-2.5">
             <Logo size={28} isSolid />
 
-            <span className="hidden font-sans text-xl font-medium tracking-tight text-text sm:inline">
+            <span className="hidden font-sans text-xl font-medium tracking-title text-text sm:inline">
               {title}
             </span>
           </span>
@@ -115,7 +115,7 @@ const OfflineApp = ({ title }: OfflineAppProps) => {
 
       <main className="flex min-h-screen flex-col gap-10 px-4 pb-16 pt-28 sm:px-6">
         <header className="flex flex-col gap-1.5">
-          <h1 className="font-sans text-3xl font-semibold tracking-tight text-text">
+          <h1 className="font-sans text-3xl font-semibold tracking-headline text-text">
             {say('common.onThisDevice')}
           </h1>
 

@@ -141,6 +141,8 @@ Icons come from `@keyline-icons/react` and are drawn by `@ValenceUI/Icon`. Other
 
 A colour written into a component is a colour only one theme is right about, so `valence/no-raw-colours` fails literal colours and `white` or `black` palette utilities in `packages/ui`, `packages/screens`, `apps/web` and `apps/landing` source. Tests, stylesheets and token files are exempt.
 
+Letter spacing follows the size of the text, from four steps in `valence.css`: nothing at 18px and under, `tracking-title` (−1%) at 20–24px, `tracking-headline` (−2%) at 28–36px, `tracking-display` (−3%) at 40–56px and `tracking-hero` (−4%) at 64px and up. Text that changes size changes step at the same breakpoint. `tracking-tight`, `tracking-tighter` and negative `tracking-[…]` values are banned, so a heading is never tightened by eye on one screen and not another. Uppercase labels are loosened rather than tightened.
+
 ## Animation
 
 Motion is preferred over raw CSS animations, because declarative and interruptible beats keyframes. CSS transitions remain fine for trivial hover and focus states. Shared animations live in `packages/ui/src/animations`, and an animation used by several files inside one component lives in that component's `animations/` folder. Everything must respect `prefers-reduced-motion`, which the stylesheet also honours through the `still` variant and a `data-motion` attribute.

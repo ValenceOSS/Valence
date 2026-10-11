@@ -35,7 +35,7 @@ const PROMISES = [
   },
 ] as const;
 
-const SECTION_TITLE = 'text-2xl font-semibold tracking-tight text-text';
+const SECTION_TITLE = 'text-2xl font-semibold tracking-title text-text';
 
 /**
  * The official plugins, as the signed catalogue lists them: an opening card with a short word on

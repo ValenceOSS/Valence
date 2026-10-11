@@ -70,7 +70,7 @@ const ArtCard = ({
               }}
             />
           ) : (
-            <span className="absolute inset-x-[6%] bottom-[14%] line-clamp-2 text-left text-lg font-bold leading-tight tracking-tight text-on-scrim drop-shadow-lg">
+            <span className="absolute inset-x-[6%] bottom-[14%] line-clamp-2 text-left text-lg font-bold leading-tight text-on-scrim drop-shadow-lg">
               {title}
             </span>
           )}

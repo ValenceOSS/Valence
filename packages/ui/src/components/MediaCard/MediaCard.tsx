@@ -125,7 +125,7 @@ const MediaCard = ({
             {!showsImage ? (
               <span
                 aria-hidden
-                className="absolute bottom-[-0.15em] left-[-0.06em] text-[9rem] font-semibold leading-none tracking-tighter text-on-scrim/[0.07]"
+                className="absolute bottom-[-0.15em] left-[-0.06em] text-[9rem] font-semibold leading-none tracking-hero text-on-scrim/[0.07]"
               >
                 {title.slice(0, 1).toUpperCase()}
               </span>
@@ -255,7 +255,7 @@ const MediaCard = ({
                   <span className="text-[0.65rem] font-medium text-on-scrim/60">{eyebrow}</span>
                 )}
 
-                <span className="text-2xl font-semibold leading-tight tracking-tight text-on-scrim sm:text-3xl">
+                <span className="text-2xl font-semibold leading-tight tracking-title sm:tracking-headline text-on-scrim sm:text-3xl">
                   {title}
                 </span>
                 <span className="font-body text-xs text-on-scrim/70">{subtitle}</span>

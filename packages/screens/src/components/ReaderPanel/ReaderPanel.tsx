@@ -71,7 +71,7 @@ const ReaderPanel = ({
 
       <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 pb-5">
         <div className="flex flex-col gap-2">
-          <span className="flex items-start gap-2.5 text-base font-semibold tracking-tight text-text">
+          <span className="flex items-start gap-2.5 text-base font-semibold text-text">
             <Icon of={BookIcon} size={18} tone="muted" className="mt-0.5 shrink-0" />
             <span className="min-w-0">{bookTitle}</span>
           </span>

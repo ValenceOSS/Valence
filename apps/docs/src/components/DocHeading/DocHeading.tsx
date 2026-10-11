@@ -3,8 +3,8 @@ import { cn } from '@ValenceUI/cn';
 import type { DocHeadingProps } from './DocHeading.types';
 
 const LEVEL_CLASSES = {
-  2: 'mt-14 border-b border-border pb-3 text-2xl font-semibold tracking-tight',
-  3: 'mt-10 text-xl font-semibold tracking-tight',
+  2: 'mt-14 border-b border-border pb-3 text-2xl font-semibold tracking-title',
+  3: 'mt-10 text-xl font-semibold tracking-title',
   4: 'mt-8 text-base font-semibold',
 } as const;
 

@@ -162,7 +162,7 @@ const WelcomePage = ({ name }: WelcomePageProps) => {
         transition={{ duration: 0.6, ease: 'easeOut' }}
       >
         <Logo size={44} isSolid label={say('common.valence')} />
-        <span className="text-lg font-semibold tracking-[-0.04em] text-text">{name}</span>
+        <span className="text-lg font-semibold text-text">{name}</span>
       </motion.span>
 
       <GlassPanel
@@ -174,7 +174,7 @@ const WelcomePage = ({ name }: WelcomePageProps) => {
           <Spinner label={say('screens.welcomePage.readingYourLink')} />
         ) : details === null ? (
           <>
-            <h1 className="text-center text-2xl font-semibold tracking-tight text-text">
+            <h1 className="text-center text-2xl font-semibold tracking-title text-text">
               {say('server.email.composeLinkEmail.setUpYourAccount')}
             </h1>
 
@@ -186,7 +186,7 @@ const WelcomePage = ({ name }: WelcomePageProps) => {
           </>
         ) : finish === 'needsSignIn' ? (
           <>
-            <h1 className="text-center text-2xl font-semibold tracking-tight text-text">
+            <h1 className="text-center text-2xl font-semibold tracking-title text-text">
               {say('server.email.composeLinkEmail.welcomeName', { name: details.name })}
             </h1>
 
@@ -198,7 +198,7 @@ const WelcomePage = ({ name }: WelcomePageProps) => {
           </>
         ) : finish === 'passkeyFailed' ? (
           <>
-            <h1 className="text-center text-2xl font-semibold tracking-tight text-text">
+            <h1 className="text-center text-2xl font-semibold tracking-title text-text">
               {say('screens.welcomePage.yourPasskeyWasNotMade')}
             </h1>
 
@@ -249,7 +249,7 @@ const WelcomePage = ({ name }: WelcomePageProps) => {
               void submit();
             }}
           >
-            <h1 className="text-center text-2xl font-semibold tracking-tight text-text">
+            <h1 className="text-center text-2xl font-semibold tracking-title text-text">
               {say('server.email.composeLinkEmail.welcomeName', { name: details.name })}
             </h1>
 

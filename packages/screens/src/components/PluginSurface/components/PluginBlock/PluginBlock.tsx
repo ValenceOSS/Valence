@@ -50,7 +50,7 @@ const BUTTON_TONES = {
 const PluginBlock = ({ pluginId, block, fields, onField, onAct, isActing }: PluginBlockProps) => {
   switch (block.type) {
     case 'heading':
-      return <h3 className="text-base font-semibold tracking-tight text-text">{block.text}</h3>;
+      return <h3 className="text-base font-semibold text-text">{block.text}</h3>;
     case 'text':
       return (
         <p

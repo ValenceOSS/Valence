@@ -33,7 +33,7 @@ const RequirementsPage = () => (
       <section aria-labelledby="machines" className={SECTION}>
         <div className="flex max-w-2xl flex-col gap-3">
           <p className={EYEBROW}>Real machines</p>
-          <h2 id="machines" className="text-4xl font-semibold tracking-tight text-text">
+          <h2 id="machines" className="text-4xl font-semibold tracking-headline text-text">
             What people run it on.
           </h2>
           <p className="text-pretty text-text-muted">
@@ -55,7 +55,7 @@ const RequirementsPage = () => (
       <section aria-labelledby="sizing" className={SECTION}>
         <div className="flex max-w-2xl flex-col gap-3">
           <p className={EYEBROW}>Sizing</p>
-          <h2 id="sizing" className="text-4xl font-semibold tracking-tight text-text">
+          <h2 id="sizing" className="text-4xl font-semibold tracking-headline text-text">
             What a server needs.
           </h2>
           <p className="text-pretty text-text-muted">

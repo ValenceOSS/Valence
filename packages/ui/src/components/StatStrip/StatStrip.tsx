@@ -34,7 +34,7 @@ const StatStrip = ({ items, label, className }: StatStripProps) => (
 
         <dd
           className={cn(
-            'relative text-xl font-semibold tabular-nums leading-none tracking-tight',
+            'relative text-xl font-semibold tabular-nums leading-none tracking-title',
             item.isAlarming === true ? 'text-danger' : 'text-text',
           )}
         >

@@ -257,6 +257,11 @@
 
   --font-body: 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
+  --tracking-title: -0.01em;
+  --tracking-headline: -0.02em;
+  --tracking-display: -0.03em;
+  --tracking-hero: -0.04em;
+
   --color-surface: oklch(0.985 0.006 170);
   --color-surface-raised: oklch(0.9555 0.0118 170);
   --color-border: oklch(0.87 0.016 200);

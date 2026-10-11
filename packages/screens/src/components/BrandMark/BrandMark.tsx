@@ -9,7 +9,7 @@ import { say } from '@ValenceI18n/say';
 const WORD = say('common.valence');
 
 const LOOKS = {
-  md: { mark: 28, word: 'pl-2.5 text-xl' },
+  md: { mark: 28, word: 'pl-2.5 text-xl tracking-title' },
   sm: { mark: 24, word: 'pl-2 text-base' },
 } as const;
 

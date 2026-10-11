@@ -116,9 +116,7 @@ const Rail = ({
         <h2
           className={cn(
             'flex items-baseline gap-2',
-            look === 'section'
-              ? RAIL.sectionTitle
-              : 'text-lg font-semibold tracking-tight text-text',
+            look === 'section' ? RAIL.sectionTitle : 'text-lg font-semibold text-text',
           )}
         >
           {onOpenTitle === undefined ? (

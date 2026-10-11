@@ -26,7 +26,7 @@ const ChangelogSummary = ({ entry, index }: ChangelogSummaryProps) => (
       <Link
         to="/changelog/$slug"
         params={{ slug: entry.slug }}
-        className="text-3xl font-semibold tracking-tight text-text transition-colors hover:text-accent sm:text-4xl"
+        className="text-3xl font-semibold tracking-headline text-text transition-colors hover:text-accent sm:text-4xl"
       >
         {entry.title}
       </Link>

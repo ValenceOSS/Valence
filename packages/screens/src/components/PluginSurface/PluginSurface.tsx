@@ -33,7 +33,7 @@ const PluginSurface = ({
   return (
     <div className={cn('flex flex-col gap-4', className)}>
       {surface.title === undefined ? null : (
-        <h2 className="text-lg font-semibold tracking-tight text-text">{surface.title}</h2>
+        <h2 className="text-lg font-semibold text-text">{surface.title}</h2>
       )}
 
       {surface.blocks.map((block, at) => (

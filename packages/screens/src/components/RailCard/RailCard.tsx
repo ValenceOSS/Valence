@@ -414,7 +414,7 @@ const RailCard = ({
                 {onOpenShow === undefined ||
                 media.seriesTitle === null ||
                 media.seriesTitle === undefined ? (
-                  <span className="text-xl font-semibold leading-tight tracking-[-0.02em] text-text">
+                  <span className="text-xl font-semibold leading-tight tracking-title text-text">
                     {media.seriesTitle ?? media.title}
                   </span>
                 ) : (
@@ -428,7 +428,7 @@ const RailCard = ({
                       event.stopPropagation();
                       onOpenShow(media);
                     }}
-                    className="relative z-10 self-start text-left text-xl font-semibold leading-tight tracking-[-0.02em] text-text underline-offset-4 hover:underline"
+                    className="relative z-10 self-start text-left text-xl font-semibold leading-tight tracking-title text-text underline-offset-4 hover:underline"
                   >
                     {media.seriesTitle}
                   </Button>

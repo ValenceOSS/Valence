@@ -33,7 +33,7 @@ const FeatureGroupGrid = ({ group, number }: FeatureGroupGridProps) => {
         transition={revealTransition(prefersReducedMotion, 'bouncy')}
         className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between sm:gap-10"
       >
-        <h3 className="flex items-baseline gap-4 text-3xl font-semibold tracking-tight text-text lg:text-4xl">
+        <h3 className="flex items-baseline gap-4 text-3xl font-semibold tracking-headline text-text lg:text-4xl">
           <span className="text-base font-medium tabular-nums text-accent">
             {number.toString().padStart(2, '0')}
           </span>

@@ -73,7 +73,7 @@ const WelcomeToValence = ({ name, household, onFinished, children }: WelcomeToVa
       </motion.span>
 
       <motion.div {...rises(0.35)} className="flex flex-col items-center gap-3">
-        <h1 className="bg-gradient-to-br from-text via-text to-accent bg-clip-text text-[clamp(2rem,6vw,3.25rem)] font-semibold tracking-[-0.04em] text-transparent">
+        <h1 className="bg-gradient-to-br from-text via-text to-accent bg-clip-text text-[clamp(2rem,6vw,3.25rem)] font-semibold tracking-headline sm:tracking-display text-transparent">
           {say('common.welcomeToName', { name })}
         </h1>
 

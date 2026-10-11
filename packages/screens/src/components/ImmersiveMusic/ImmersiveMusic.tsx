@@ -144,9 +144,7 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
                     transition={CLOSING}
                     className="flex min-w-0 flex-col"
                   >
-                    <h2 className="truncate text-lg font-semibold tracking-[-0.01em]">
-                      {shown.title}
-                    </h2>
+                    <h2 className="truncate text-lg font-semibold">{shown.title}</h2>
                     <p className="truncate text-on-scrim/65">
                       {[shown.artists.map((artist) => artist.name).join(', '), shown.albumTitle]
                         .filter((part) => part !== null && part !== '')

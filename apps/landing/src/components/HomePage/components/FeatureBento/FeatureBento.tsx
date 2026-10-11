@@ -28,7 +28,7 @@ const FeatureBento = () => {
         transition={revealTransition(prefersReducedMotion, 'bouncy')}
         className="mb-14 grid gap-4 lg:grid-cols-2 lg:items-end lg:gap-16"
       >
-        <h2 className="max-w-xl text-balance text-4xl font-semibold tracking-tight text-text lg:text-6xl">
+        <h2 className="max-w-xl text-balance text-4xl font-semibold tracking-headline lg:tracking-display text-text lg:text-6xl">
           Everything a server for your{' '}
           <span className="relative inline-block font-accent font-normal italic tracking-normal">
             whole house

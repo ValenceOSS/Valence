@@ -53,7 +53,7 @@ const PageHero = ({ eyebrow, lead, accent, trail, description, actions, aside }:
 
             <motion.h1
               {...arrives}
-              className="max-w-[18ch] text-balance text-[clamp(2.75rem,6vw,5rem)] font-semibold leading-[0.95] tracking-[-0.035em] text-on-scrim"
+              className="max-w-[18ch] text-balance text-[clamp(2.75rem,6vw,5rem)] font-semibold leading-[0.95] tracking-display lg:tracking-hero text-on-scrim"
             >
               <span className={cn('box-decoration-clone', LIT_TEXT)}>{lead}</span>
               {accent === undefined ? null : (

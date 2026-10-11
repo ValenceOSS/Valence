@@ -60,7 +60,7 @@ const ChangelogEntryPage = () => {
 
           {entry.sections.map((section) => (
             <section key={section.title} className="flex flex-col gap-4">
-              <h2 className="text-2xl font-semibold tracking-tight text-text">{section.title}</h2>
+              <h2 className="text-2xl font-semibold tracking-title text-text">{section.title}</h2>
               <p className="text-base leading-relaxed text-text-muted">{section.body}</p>
               {section.picture === undefined ? null : (
                 <ChangelogPicture picture={section.picture} />
