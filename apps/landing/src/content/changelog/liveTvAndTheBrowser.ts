@@ -4,10 +4,9 @@ const liveTvAndTheBrowser: ChangelogEntry = {
   slug: 'live-tv-and-the-browser',
   version: 'v1.5.0',
   date: '2026-10-11',
-  title:
-    'Live TV, far more films playing straight in the browser, and requests that work hand in hand with Sonarr, Radarr and Lidarr',
+  title: 'Live TV, and far more films in the browser',
   summary:
-    'Valence 1.5 adds live television with a guide, plays DTS, TrueHD, lossless 7.1 and HDR films in the browser without the server converting them, keeps a ladder of smaller copies that Auto moves between as your connection changes, and rebuilds requests around a catalogue of every title, working alongside Sonarr, Radarr and Lidarr.',
+    'Valence 1.5 adds live television with a guide, plays DTS, TrueHD, 7.1 and HDR films in the browser without the server converting them, and rebuilds requests around a catalogue of every title that works alongside Sonarr, Radarr and Lidarr.',
   picture: {
     src: '/changelog/live-tv-and-the-browser.webp',
     alt: 'The Live TV guide in Valence, with channels down the side and what is on now and next laid along a time bar',
