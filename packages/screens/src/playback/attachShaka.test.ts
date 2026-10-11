@@ -122,7 +122,12 @@ describe('attachShaka', () => {
 
     raise({ severity: CRITICAL, category: 3, code: 3016 });
 
-    expect(onFault).toHaveBeenCalledWith({ severity: CRITICAL, category: 3, code: 3016 });
+    expect(onFault).toHaveBeenCalledWith({
+      severity: CRITICAL,
+      category: 3,
+      code: 3016,
+      httpStatus: null,
+    });
   });
 
   it('says nothing about an event that carries no failure', async () => {
