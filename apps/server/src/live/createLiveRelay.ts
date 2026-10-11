@@ -94,8 +94,14 @@ const createLiveRelay = (now: () => number = Date.now, fetcher: typeof fetch = f
       signal: AbortSignal.timeout(WAITS_MS),
     }).catch(() => null);
 
-    if (response === null || !response.ok || response.body === null) {
-      return new Response(null, { status: 502 });
+    if (response === null) {
+      return new Response(null, { status: 504 });
+    }
+
+    if (!response.ok || response.body === null) {
+      void response.body?.cancel();
+
+      return new Response(null, { status: response.status >= 400 ? response.status : 502 });
     }
 
     const type = response.headers.get('content-type') ?? '';

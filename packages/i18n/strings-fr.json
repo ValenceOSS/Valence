@@ -8760,9 +8760,29 @@
     "context": "Refusal when a live TV channel’s logo is asked for and it has none."
   },
   {
+    "handler": "error.live.thatIsNotAStream",
+    "text": "The address answered with a web page rather than a stream.",
+    "context": "Why a live TV channel would not play: the stream address returned HTML."
+  },
+  {
     "handler": "error.live.thatLinkHasRunOut",
     "text": "That stream link has run out. Start the channel again.",
     "context": "Refusal when a live TV stream link is expired or not genuine."
+  },
+  {
+    "handler": "error.live.theBroadcasterRefusedIt",
+    "text": "The broadcaster refused to send it to this server. It’s most likely geo-blocked; a live TV proxy in its country can play it.",
+    "context": "Why a live TV channel would not play: the stream answered 403 or 451."
+  },
+  {
+    "handler": "error.live.theStreamDidNotAnswer",
+    "text": "The stream’s server didn’t answer. It may be down, or not reachable from here.",
+    "context": "Why a live TV channel would not play: no answer, a timeout or a server error."
+  },
+  {
+    "handler": "error.live.theStreamIsGone",
+    "text": "The stream isn’t there any more. The playlist it came from may be out of date.",
+    "context": "Why a live TV channel would not play: the stream answered 404 or 410."
   },
   {
     "handler": "error.music.chooseAProfileFirst",
@@ -22320,6 +22340,16 @@
     "context": "Title of the programme guide card on the live TV page."
   },
   {
+    "handler": "screens.liveTvPage.itSentNoPictures",
+    "text": "It started but sent no pictures. It may be off air right now; some channels aren’t on all day.",
+    "context": "Why a live TV channel would not play: the stream opened but no video arrived within 20 seconds."
+  },
+  {
+    "handler": "screens.liveTvPage.itStoppedAnswering",
+    "text": "The stream stopped answering part of the way in.",
+    "context": "Why a live TV channel would not play: its segments failed to load after it started."
+  },
+  {
     "handler": "screens.liveTvPage.jumpToNow",
     "text": "Jump to now",
     "context": "Button in the live TV guide’s corner that scrolls the timeline back to the time now."
@@ -22393,6 +22423,11 @@
     "handler": "screens.liveTvPage.whichChannels",
     "text": "Which channels",
     "context": "Heading of the live TV guide’s filter menu."
+  },
+  {
+    "handler": "screens.liveTvPage.yourBrowserCannotPlayIt",
+    "text": "This browser can’t play the stream’s format.",
+    "context": "Why a live TV channel would not play: the browser could not decode its video or audio."
   },
   {
     "handler": "screens.logDetailDialog.happened",

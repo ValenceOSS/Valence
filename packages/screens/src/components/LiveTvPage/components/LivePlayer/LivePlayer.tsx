@@ -21,6 +21,8 @@ const GIVES_UP_AFTER_MS = 20_000;
 
 const LOOKS_EVERY_MS = 200;
 
+const NETWORK = 1;
+
 /**
  * A clock time as the viewer reads it, such as `19:30`.
  *
@@ -47,6 +49,7 @@ const LivePlayer = ({ channel, onNow, upNext, now, onToggleFavourite }: LivePlay
   const frameRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [state, setState] = useState<'starting' | 'playing' | 'failed'>('starting');
+  const [why, setWhy] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(1);
@@ -71,9 +74,13 @@ const LivePlayer = ({ channel, onNow, upNext, now, onToggleFavourite }: LivePlay
       detach: null,
     };
     const hasLeft = () => life.isGone;
+    const fail = (reason: string) => {
+      setWhy(reason);
+      setState('failed');
+    };
     const givingUp = setTimeout(() => {
       if (element === null || element.readyState < 3) {
-        setState('failed');
+        fail(say('screens.liveTvPage.itSentNoPictures'));
       }
     }, GIVES_UP_AFTER_MS);
     const noticePlaying = () => {
@@ -81,6 +88,7 @@ const LivePlayer = ({ channel, onNow, upNext, now, onToggleFavourite }: LivePlay
     };
 
     setState('starting');
+    setWhy(null);
     element?.addEventListener('playing', noticePlaying);
 
     void watchLiveChannel(channel.id).then(async (sent) => {
@@ -89,7 +97,7 @@ const LivePlayer = ({ channel, onNow, upNext, now, onToggleFavourite }: LivePlay
       }
 
       if (sent.value === null) {
-        setState('failed');
+        fail(sent.refusal?.message ?? say('error.live.thatChannelCouldNotBeStarted'));
 
         return;
       }
@@ -98,13 +106,17 @@ const LivePlayer = ({ channel, onNow, upNext, now, onToggleFavourite }: LivePlay
         element,
         manifestUrl: sent.value.manifestUrl,
         isSomeoneElses: true,
-        onFault: () => {
-          setState('failed');
+        onFault: (fault) => {
+          fail(
+            fault.category === NETWORK
+              ? say('screens.liveTvPage.itStoppedAnswering')
+              : say('screens.liveTvPage.yourBrowserCannotPlayIt'),
+          );
         },
       }).catch(() => null);
 
       if (attached === null) {
-        setState('failed');
+        fail(say('screens.liveTvPage.yourBrowserCannotPlayIt'));
 
         return;
       }
@@ -168,7 +180,12 @@ const LivePlayer = ({ channel, onNow, upNext, now, onToggleFavourite }: LivePlay
             {state === 'starting' ? (
               <Spinner label={say('screens.liveTvPage.startingName', { name: channel.name })} />
             ) : (
-              say('screens.liveTvPage.thatChannelCouldNotBePlayed')
+              <span className="flex max-w-md flex-col gap-1">
+                <span className="font-medium">
+                  {say('screens.liveTvPage.thatChannelCouldNotBePlayed')}
+                </span>
+                {why === null ? null : <span className="text-on-scrim/80">{why}</span>}
+              </span>
             )}
           </div>
         )}

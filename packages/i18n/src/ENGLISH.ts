@@ -2051,7 +2051,14 @@ const ENGLISH = {
   'error.live.noSuchSource': 'There’s no such live TV source.',
   'error.live.thatChannelCouldNotBeStarted': 'That channel couldn’t be started.',
   'error.live.thatChannelHasNoLogo': 'That channel has no logo.',
+  'error.live.thatIsNotAStream': 'The address answered with a web page rather than a stream.',
   'error.live.thatLinkHasRunOut': 'That stream link has run out. Start the channel again.',
+  'error.live.theBroadcasterRefusedIt':
+    'The broadcaster refused to send it to this server. It’s most likely geo-blocked; a live TV proxy in its country can play it.',
+  'error.live.theStreamDidNotAnswer':
+    'The stream’s server didn’t answer. It may be down, or not reachable from here.',
+  'error.live.theStreamIsGone':
+    'The stream isn’t there any more. The playlist it came from may be out of date.',
   'error.music.chooseAProfileFirst': 'Choose a profile first.',
   'error.music.noCoverForThatAlbum': 'No cover for that album.',
   'error.music.noCoverWasFoundForThat': 'No cover was found for that album.',
@@ -5640,6 +5647,9 @@ const ENGLISH = {
   'screens.liveTvPage.geoBlockedCountry': 'Geo-blocked · {country}',
   'screens.liveTvPage.groups': 'Groups',
   'screens.liveTvPage.guide': 'Guide',
+  'screens.liveTvPage.itSentNoPictures':
+    'It started but sent no pictures. It may be off air right now; some channels aren’t on all day.',
+  'screens.liveTvPage.itStoppedAnswering': 'The stream stopped answering part of the way in.',
   'screens.liveTvPage.jumpToNow': 'Jump to now',
   'screens.liveTvPage.keepName': 'Keep {name} as a favourite',
   'screens.liveTvPage.likelyOnlyPlaysInCountry':
@@ -5658,6 +5668,7 @@ const ENGLISH = {
   'screens.liveTvPage.thatCouldNotBeKept': 'That channel couldn’t be kept.',
   'screens.liveTvPage.watchName': 'Watch {name}',
   'screens.liveTvPage.whichChannels': 'Which channels',
+  'screens.liveTvPage.yourBrowserCannotPlayIt': 'This browser can’t play the stream’s format.',
   'screens.logDetailDialog.happened': 'Occurrences',
   'screens.logDetailDialog.level': 'Level',
   'screens.logExplorer.levelToggles.levels': 'Levels',

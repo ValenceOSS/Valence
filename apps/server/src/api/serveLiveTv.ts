@@ -9,7 +9,7 @@ import {
   removeLiveSourceRoute,
   watchLiveChannelRoute,
 } from '@ValenceServer/routes/LiveTvRoute';
-import { isHlsAddress } from '@ValenceServer/live/isHlsAddress';
+import { probeStream } from '@ValenceServer/live/probeStream';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
@@ -138,9 +138,28 @@ const serveLiveTv = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.live.noSuchChannel'), 404);
     }
 
-    const manifestUrl = (await isHlsAddress(channel.streamUrl, channel, liveTv.fetcher))
-      ? liveTv.relay.linkFor(channel.id, channel.streamUrl)
-      : ((await liveTv.startTranscoded?.(channel)) ?? null);
+    const health = await probeStream(channel.streamUrl, channel, liveTv.fetcher);
+
+    if (health === 'refused') {
+      return context.json(refuse('error.live.theBroadcasterRefusedIt'), 502);
+    }
+
+    if (health === 'gone') {
+      return context.json(refuse('error.live.theStreamIsGone'), 502);
+    }
+
+    if (health === 'unreachable') {
+      return context.json(refuse('error.live.theStreamDidNotAnswer'), 502);
+    }
+
+    if (health === 'notAStream') {
+      return context.json(refuse('error.live.thatIsNotAStream'), 502);
+    }
+
+    const manifestUrl =
+      health === 'hls'
+        ? liveTv.relay.linkFor(channel.id, channel.streamUrl)
+        : ((await liveTv.startTranscoded?.(channel)) ?? null);
 
     return manifestUrl === null
       ? context.json(refuse('error.live.thatChannelCouldNotBeStarted'), 502)
