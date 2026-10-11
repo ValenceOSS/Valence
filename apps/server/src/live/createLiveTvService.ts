@@ -135,10 +135,12 @@ const createLiveTvService = ({
   const refreshed = async (source: StoredLiveSource): Promise<LiveSource> => {
     try {
       return await readAgain(source);
-    } catch {
+    } catch (error) {
       const problem = saying('server.live.thePlaylistCouldNotBeRead');
 
-      warn(`live tv: reading ${source.name} failed part of the way through`);
+      warn(
+        `live tv: reading ${source.name} failed part of the way through: ${error instanceof Error ? error.message : String(error)}`,
+      );
       await store.changeSource(source.id, { problem, refreshedAt: now() });
 
       return shownOf({ ...source, problem, refreshedAt: now() });

@@ -43,7 +43,8 @@ const titleOf = (line: string): string | null => {
  * the channel's number, group, logo and guide, the address it streams from, and the user agent and
  * referrer a stream insists on being asked with, as `#EXTVLCOPT` lines say. Lines that are not
  * a stream, and entries with no stream after them, are passed over, so a playlist with a few broken
- * lines still gives the rest. A playlist of bare addresses with no `#EXTINF` lines names each
+ * lines still gives the rest. An address listed twice, as a placeholder under each heading often is,
+ * is kept once, under the first name given it. A playlist of bare addresses with no `#EXTINF` lines names each
  * channel by its position.
  *
  * @param text - The playlist.
@@ -97,14 +98,24 @@ const parseM3u = (text: string): { channels: ParsedChannel[]; guideUrl: string |
     }
   }
 
+  const firstAt = new Map<string, number>();
+
+  channels.forEach((channel, at) => {
+    if (!firstAt.has(channel.streamUrl)) {
+      firstAt.set(channel.streamUrl, at);
+    }
+  });
+
   return {
-    channels: channels.map((channel) => ({
-      ...channel,
-      number: channel.number === '' ? null : channel.number,
-      group: channel.group === '' ? null : channel.group,
-      logoUrl: channel.logoUrl === '' ? null : channel.logoUrl,
-      guideId: channel.guideId === '' ? null : channel.guideId,
-    })),
+    channels: channels
+      .filter((channel, at) => firstAt.get(channel.streamUrl) === at)
+      .map((channel) => ({
+        ...channel,
+        number: channel.number === '' ? null : channel.number,
+        group: channel.group === '' ? null : channel.group,
+        logoUrl: channel.logoUrl === '' ? null : channel.logoUrl,
+        guideId: channel.guideId === '' ? null : channel.guideId,
+      })),
     guideUrl: guideUrl === '' ? null : guideUrl,
   };
 };
