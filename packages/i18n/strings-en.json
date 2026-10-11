@@ -22340,6 +22340,11 @@
     "context": "Title of the programme guide card on the live TV page."
   },
   {
+    "handler": "screens.liveTvPage.itIsNotBroadcastingNow",
+    "text": "This channel isn’t broadcasting right now. Some, like event channels, only come on for a programme.",
+    "context": "Why a live TV channel would not play: its stream exists but its pictures are missing (404), as an event channel’s are between events."
+  },
+  {
     "handler": "screens.liveTvPage.itSentNoPictures",
     "text": "It started but sent no pictures. It may be off air right now; some channels aren’t on all day.",
     "context": "Why a live TV channel would not play: the stream opened but no video arrived within 20 seconds."

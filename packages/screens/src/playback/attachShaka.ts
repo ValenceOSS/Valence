@@ -64,7 +64,16 @@ const PlaybackFaultSchema = z.object({
   }),
 });
 
-type PlaybackFault = z.infer<typeof PlaybackFaultSchema>['detail'];
+const BAD_HTTP_STATUS = 1001;
+
+const HttpStatusSchema = z.object({
+  detail: z.object({
+    code: z.literal(BAD_HTTP_STATUS),
+    data: z.tuple([z.string(), z.number().int()], z.json()),
+  }),
+});
+
+type PlaybackFault = z.infer<typeof PlaybackFaultSchema>['detail'] & { httpStatus: number | null };
 
 type AttachOptions = {
   element: HTMLVideoElement;
@@ -179,8 +188,11 @@ const loadShakaPlayer = async (): Promise<ShakaModule> => {
  */
 const faultFrom = (event: Event): PlaybackFault | null => {
   const found = PlaybackFaultSchema.safeParse(event);
+  const status = HttpStatusSchema.safeParse(event);
 
-  return found.success ? found.data.detail : null;
+  return found.success
+    ? { ...found.data.detail, httpStatus: status.success ? status.data.detail.data[1] : null }
+    : null;
 };
 
 /**

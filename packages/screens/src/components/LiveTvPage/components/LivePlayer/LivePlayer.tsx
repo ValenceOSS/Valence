@@ -108,9 +108,13 @@ const LivePlayer = ({ channel, onNow, upNext, now, onToggleFavourite }: LivePlay
         isSomeoneElses: true,
         onFault: (fault) => {
           fail(
-            fault.category === NETWORK
-              ? say('screens.liveTvPage.itStoppedAnswering')
-              : say('screens.liveTvPage.yourBrowserCannotPlayIt'),
+            fault.httpStatus === 404 || fault.httpStatus === 410
+              ? say('screens.liveTvPage.itIsNotBroadcastingNow')
+              : fault.httpStatus === 401 || fault.httpStatus === 403 || fault.httpStatus === 451
+                ? say('error.live.theBroadcasterRefusedIt')
+                : fault.category === NETWORK
+                  ? say('screens.liveTvPage.itStoppedAnswering')
+                  : say('screens.liveTvPage.yourBrowserCannotPlayIt'),
           );
         },
       }).catch(() => null);

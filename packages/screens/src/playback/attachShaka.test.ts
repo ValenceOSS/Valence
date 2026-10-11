@@ -100,7 +100,7 @@ describe('faultFrom', () => {
       value: { severity: 2, category: 3, code: 3016 },
     });
 
-    expect(faultFrom(event)).toEqual({ severity: 2, category: 3, code: 3016 });
+    expect(faultFrom(event)).toEqual({ severity: 2, category: 3, code: 3016, httpStatus: null });
   });
 
   it('has nothing to report for an event carrying no error', () => {

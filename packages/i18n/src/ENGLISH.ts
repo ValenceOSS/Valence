@@ -5647,6 +5647,8 @@ const ENGLISH = {
   'screens.liveTvPage.geoBlockedCountry': 'Geo-blocked · {country}',
   'screens.liveTvPage.groups': 'Groups',
   'screens.liveTvPage.guide': 'Guide',
+  'screens.liveTvPage.itIsNotBroadcastingNow':
+    'This channel isn’t broadcasting right now. Some, like event channels, only come on for a programme.',
   'screens.liveTvPage.itSentNoPictures':
     'It started but sent no pictures. It may be off air right now; some channels aren’t on all day.',
   'screens.liveTvPage.itStoppedAnswering': 'The stream stopped answering part of the way in.',
