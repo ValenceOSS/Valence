@@ -16,6 +16,10 @@ type RelayAsk = { channelId: string; address: string; until: number; signature: 
  * the browser never talks to the provider, never sees its address or credentials, and is never
  * refused by it for asking from another site.
  *
+ * A DASH manifest, whose segments are numbered by the player as it goes, cannot have each of their
+ * addresses signed ahead of time, so it is given one base address here instead, signed for the
+ * manifest's own directory on the provider, and the player builds every segment's address under it.
+ *
  * Each link is signed for its channel and lasts a few hours, and the playlists a player keeps
  * fetching hand it fresh ones, so this is never a way to fetch any address through the server — only
  * the ones a channel's own playlist named.
@@ -43,6 +47,35 @@ const createLiveRelay = (now: () => number = Date.now) => {
     });
 
     return `/api/live/relay/${encodeURIComponent(channelId)}?${query.toString()}`;
+  };
+
+  const directoryLinkFor = (channelId: string, directory: string): string => {
+    const until = now() + LINKS_LAST_MS;
+    const signature = signatureOf(channelId, `directory:${directory}`, until);
+
+    return `/api/live/relayed/${encodeURIComponent(channelId)}/${Buffer.from(directory).toString('base64url')}.${until.toString()}.${signature}/`;
+  };
+
+  const dashRewritten = (channelId: string, manifest: string, base: string): string => {
+    const directoryOf = (address: string) => new URL('.', new URL(address, base)).toString();
+    const located = manifest.replace(
+      /<Location>([^<]+)<\/Location>/gu,
+      (_, address: string) =>
+        `<Location>${linkFor(channelId, new URL(address.trim(), base).toString())}</Location>`,
+    );
+
+    if (/<BaseURL[^>]*>/u.test(located)) {
+      return located.replace(
+        /(<BaseURL[^>]*>)([^<]*)(<\/BaseURL>)/gu,
+        (_, open: string, address: string, close: string) =>
+          `${open}${directoryLinkFor(channelId, directoryOf(address.trim() === '' ? base : address.trim()))}${close}`,
+      );
+    }
+
+    return located.replace(
+      /(<MPD\b[^>]*>)/u,
+      `$1<BaseURL>${directoryLinkFor(channelId, directoryOf(base))}</BaseURL>`,
+    );
   };
 
   const isSigned = ({ channelId, address, until, signature }: RelayAsk): boolean => {
@@ -105,25 +138,27 @@ const createLiveRelay = (now: () => number = Date.now) => {
     }
 
     const type = response.headers.get('content-type') ?? '';
+    const base = response.headers.get(FINAL_ADDRESS) ?? (response.url || address);
+
+    if (/dash\+xml/iu.test(type) || /\.mpd(\?|$)/iu.test(new URL(address).pathname)) {
+      return new Response(dashRewritten(channelId, await response.text(), base), {
+        status: 200,
+        headers: { 'content-type': 'application/dash+xml', 'cache-control': 'no-store' },
+      });
+    }
+
     const isPlaylist = /mpegurl/iu.test(type) || /\.m3u8?(\?|$)/iu.test(new URL(address).pathname);
 
     if (isPlaylist) {
       const text = await response.text();
 
-      return new Response(
-        rewritten(
-          channelId,
-          text,
-          response.headers.get(FINAL_ADDRESS) ?? (response.url || address),
-        ),
-        {
-          status: 200,
-          headers: {
-            'content-type': 'application/vnd.apple.mpegurl',
-            'cache-control': 'no-store',
-          },
+      return new Response(rewritten(channelId, text, base), {
+        status: 200,
+        headers: {
+          'content-type': 'application/vnd.apple.mpegurl',
+          'cache-control': 'no-store',
         },
-      );
+      });
     }
 
     return new Response(response.body, {
@@ -135,7 +170,50 @@ const createLiveRelay = (now: () => number = Date.now) => {
     });
   };
 
-  return { linkFor, answer };
+  const answerInDirectory = async (
+    channelId: string,
+    token: string,
+    path: string,
+    asking: { userAgent: string | null; referrer: string | null },
+    fetcher: typeof fetch = fetch,
+  ): Promise<Response | null> => {
+    const [encoded = '', until = '0', signature = ''] = token.split('.');
+    const directory = Buffer.from(encoded, 'base64url').toString();
+    const address = /^https?:\/\//iu.test(directory) ? new URL(path, directory).toString() : '';
+
+    if (
+      address === '' ||
+      !address.startsWith(directory) ||
+      !isSigned({ channelId, address: `directory:${directory}`, until: Number(until), signature })
+    ) {
+      return null;
+    }
+
+    const response = await fetcher(address, {
+      headers: headersFor(asking),
+      signal: AbortSignal.timeout(WAITS_MS),
+    }).catch(() => null);
+
+    if (response === null) {
+      return new Response(null, { status: 504 });
+    }
+
+    if (!response.ok || response.body === null) {
+      void response.body?.cancel();
+
+      return new Response(null, { status: response.status >= 400 ? response.status : 502 });
+    }
+
+    return new Response(response.body, {
+      status: 200,
+      headers: {
+        'content-type': response.headers.get('content-type') ?? 'video/mp4',
+        'cache-control': 'private, max-age=60',
+      },
+    });
+  };
+
+  return { linkFor, answer, answerInDirectory };
 };
 
 type LiveRelay = ReturnType<typeof createLiveRelay>;

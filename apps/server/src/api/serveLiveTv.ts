@@ -168,7 +168,7 @@ const serveLiveTv = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const manifestUrl =
-      health === 'hls'
+      health === 'hls' || health === 'dash'
         ? liveTv.relay.linkFor(channel.id, channel.streamUrl)
         : ((await liveTv.startTranscoded?.(channel, usesProxy ? routes.proxy : null)) ?? null);
 
@@ -206,6 +206,24 @@ const serveLiveTv = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     return context.body(file.body, 200, forwardedFileHeaders(file, neverKeep()));
+  });
+
+  app.get('/api/live/relayed/:channelId/:token/*', async (context) => {
+    const channel = (await liveTv?.service.channel(context.req.param('channelId'))) ?? null;
+    const prefix = `/api/live/relayed/${context.req.param('channelId')}/${context.req.param('token')}/`;
+    const url = new URL(context.req.url);
+    const answered =
+      channel === null || liveTv === undefined || !url.pathname.startsWith(prefix)
+        ? null
+        : await liveTv.relay.answerInDirectory(
+            channel.id,
+            context.req.param('token'),
+            `${url.pathname.slice(prefix.length)}${url.search}`,
+            channel,
+            liveTv.routes.fetcherOf(liveTv.routes.routeOf(channel.id)),
+          );
+
+    return answered ?? context.json(refuse('error.live.thatLinkHasRunOut'), 403);
   });
 
   app.get('/api/live/channels/:id/logo', async (context) => {

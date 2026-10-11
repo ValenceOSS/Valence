@@ -2,7 +2,7 @@ import { headersFor } from './headersFor';
 
 const PROBES_FOR_MS = 10_000;
 
-type StreamHealth = 'hls' | 'other' | 'refused' | 'gone' | 'unreachable' | 'notAStream';
+type StreamHealth = 'hls' | 'dash' | 'other' | 'refused' | 'gone' | 'unreachable' | 'notAStream';
 
 /**
  * Asks a channel's stream whether it will play, before anybody waits on it, and says why not where
@@ -13,7 +13,7 @@ type StreamHealth = 'hls' | 'other' | 'refused' | 'gone' | 'unreachable' | 'notA
  * @param address - Where the stream is.
  * @param asking - The user agent and referrer it insists on.
  * @param fetcher - How a request is sent.
- * @returns Whether it is HLS, something else to make into HLS, or why it will not play.
+ * @returns Whether it is HLS or DASH, something else to make into HLS, or why it will not play.
  */
 const probeStream = async (
   address: string,
@@ -62,6 +62,10 @@ const probeStream = async (
 
   if (/mpegurl/iu.test(type) || start.startsWith('#EXTM3U')) {
     return 'hls';
+  }
+
+  if (/dash\+xml/iu.test(type) || /<MPD\b/u.test(start)) {
+    return 'dash';
   }
 
   return /text\/html/iu.test(type) || start.startsWith('<') ? 'notAStream' : 'other';
