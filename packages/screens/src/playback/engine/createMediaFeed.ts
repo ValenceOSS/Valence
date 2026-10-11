@@ -8,6 +8,7 @@ import {
 } from 'mediabunny';
 import { chooseSoundRoute } from './chooseSoundRoute';
 import { downmixToStereo } from './downmixToStereo';
+import { readAacChannelOrder } from './readAacChannelOrder';
 import type { Input, InputAudioTrack, InputVideoTrack, StreamTargetChunk } from 'mediabunny';
 import type { SoundRoute } from './chooseSoundRoute';
 
@@ -20,6 +21,8 @@ const LOOKS_AGAIN_MS = 500;
 const FRAGMENT_SECONDS = 1;
 
 const SAMPLE_RATE = 48_000;
+
+const AAC_FROM_WAVE = [2, 0, 1, 4, 5, 3];
 
 type MediaFeed = {
   sound: SoundRoute;
@@ -51,51 +54,83 @@ const typeOf = (picture: string | null, sound: string): string =>
   picture === null ? `audio/mp4; codecs="${sound}"` : `video/mp4; codecs="${picture}, ${sound}"`;
 
 /**
- * A sound sample folded into stereo by Valence's own downmix, which keeps the centre channel the
- * dialogue is in.
+ * The planes of a sound sample, one per channel, as 32-bit floats.
  *
- * @param sample - The sample, in any number of channels.
- * @returns The sample in two.
+ * @param sample - The sample.
+ * @returns Its planes.
  */
-const stereoOf = (sample: AudioSample): AudioSample => {
-  if (sample.numberOfChannels <= 2) {
-    return sample;
-  }
-
-  const planes = Array.from({ length: sample.numberOfChannels }, (_, planeIndex) => {
+const planesOf = (sample: AudioSample): Float32Array[] =>
+  Array.from({ length: sample.numberOfChannels }, (_, planeIndex) => {
     const plane = new Float32Array(sample.numberOfFrames);
 
     sample.copyTo(plane, { planeIndex, format: 'f32-planar' });
 
     return plane;
   });
-  const [left, right] = downmixToStereo(planes);
-  const data = new Float32Array(left.length * 2);
 
-  data.set(left);
-  data.set(right, left.length);
+/**
+ * A sound sample made from planes, closing the one it replaces.
+ *
+ * @param planes - The planes.
+ * @param was - The sample it replaces, for its rate and time.
+ * @returns The new sample.
+ */
+const sampleOf = (planes: readonly Float32Array[], was: AudioSample): AudioSample => {
+  const frames = planes[0]?.length ?? 0;
+  const data = new Float32Array(frames * planes.length);
 
-  const stereo = new AudioSample({
-    data,
-    format: 'f32-planar',
-    numberOfChannels: 2,
-    sampleRate: sample.sampleRate,
-    timestamp: sample.timestamp,
+  planes.forEach((plane, at) => {
+    data.set(plane, at * frames);
   });
 
-  sample.close();
+  const made = new AudioSample({
+    data,
+    format: 'f32-planar',
+    numberOfChannels: planes.length,
+    sampleRate: was.sampleRate,
+    timestamp: was.timestamp,
+  });
 
-  return stereo;
+  was.close();
+
+  return made;
 };
+
+/**
+ * A 5.1 sample with its channels put into AAC's own order, centre first, for an encoder that reads
+ * them so.
+ *
+ * @param sample - The sample, in the order WAVE and FFmpeg use.
+ * @returns The sample in AAC's order.
+ */
+const inAacOrder = (sample: AudioSample): AudioSample => {
+  const planes = planesOf(sample);
+
+  return sampleOf(
+    AAC_FROM_WAVE.map((from) => planes[from] ?? new Float32Array(sample.numberOfFrames)),
+    sample,
+  );
+};
+
+/**
+ * A sound sample folded into stereo by Valence's own downmix, which keeps the centre channel the
+ * dialogue is in.
+ *
+ * @param sample - The sample, in any number of channels.
+ * @returns The sample in two.
+ */
+const stereoOf = (sample: AudioSample): AudioSample =>
+  sample.numberOfChannels <= 2 ? sample : sampleOf(downmixToStereo(planesOf(sample)), sample);
 
 /**
  * Plays a file through the media element by repackaging it here: the chosen sound track, and the
  * picture too where it is given one, are written into fragmented MP4 as they go and appended to the
  * element through Media Source Extensions. The picture is copied exactly as it was encoded, HDR and
  * Dolby Vision included, so the element shows it as it would show any file of its own. The sound is
- * copied where the element plays its codec, and decoded and encoded again otherwise, keeping every
- * channel where this browser can encode that many and folded into stereo by Valence's own downmix
- * where it cannot, so the dialogue in the centre channel is never lost.
+ * copied where the element plays its codec, and decoded and encoded again otherwise: 5.1 stays 5.1
+ * where this browser's AAC encoder takes it and the order it reads channels in is known, and
+ * everything else is folded into stereo by Valence's own downmix, so the dialogue in the centre
+ * channel is never lost or moved.
  *
  * Starting counts as done once the element holds media to play, not merely the file's header, so
  * nothing waiting on the element mistakes a slow first fragment for a stream that failed.
@@ -125,7 +160,7 @@ const createMediaFeed = async ({
   onFault: () => void;
 }): Promise<MediaFeed> => {
   const plays = (mimeType: string) => MediaSource.isTypeSupported(mimeType);
-  const sound = await chooseSoundRoute(track, plays);
+  const sound = await chooseSoundRoute(track, plays, await readAacChannelOrder());
   const pictureCodec = picture === null ? null : await picture.getCodecParameterString();
   const source = new MediaSource();
   const address = URL.createObjectURL(source);
@@ -243,7 +278,9 @@ const createMediaFeed = async ({
                 forceTranscode: true,
                 ...(sound.numberOfChannels === 2
                   ? { process: stereoOf, processedNumberOfChannels: 2 }
-                  : { numberOfChannels: sound.numberOfChannels }),
+                  : sound.isReordered
+                    ? { process: inAacOrder, processedNumberOfChannels: sound.numberOfChannels }
+                    : { numberOfChannels: sound.numberOfChannels }),
               },
       trim: { start: seconds },
       copy: { boundaryPolicy: 'expand' },

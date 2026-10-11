@@ -35,7 +35,7 @@ import { say } from '@ValenceI18n/say';
  * @param delivered - What the engine is actually being sent, where it has chosen a variant.
  * @param engine - How the browser's own player is keeping up — the GPU drawing, the decoder, how
  *   the sound reaches the element, and the frames decoded, drawn and skipped — where it is the one
- *   playing.
+ *   playing. It plays the file itself, so the file's own bitrate is what it is being sent.
  * @param sessionStartSeconds - Where the session itself began, which is not always where the viewer
  *   is now.
  * @param party - How the watch party is faring, where this viewing is part of one.
@@ -69,6 +69,8 @@ const StreamStats = ({
   const videoCodec = delivered?.videoCodec ?? detail?.videoCodec ?? null;
   const audioCodec = delivered?.audioCodec ?? audio?.codec ?? null;
   const channels = delivered?.audioChannels ?? audio?.channels ?? null;
+  const bitrateKbps =
+    delivered?.bitrateKbps ?? (engine === null ? null : (detail?.bitrateKbps ?? null));
   const isHdrScreen =
     typeof window !== 'undefined' && window.matchMedia('(dynamic-range: high)').matches === true;
 
@@ -123,8 +125,8 @@ const StreamStats = ({
             {
               label: say('common.bitrate'),
               value:
-                delivered === null || delivered.bitrateKbps === null ? null : (
-                  <FormattedNumber value={delivered.bitrateKbps} suffix=" kbps" />
+                bitrateKbps === null ? null : (
+                  <FormattedNumber value={bitrateKbps} suffix=" kbps" />
                 ),
             },
             { label: say('common.position'), value: formatDuration(health.positionSeconds) },

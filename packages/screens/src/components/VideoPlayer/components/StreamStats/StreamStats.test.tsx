@@ -132,6 +132,7 @@ describe('StreamStats', () => {
 
   it('says a file repackaged in the browser is shown by the media element', () => {
     draw({
+      delivered: { ...delivered, bitrateKbps: null },
       engine: {
         route: 'remux',
         gpu: null,
@@ -152,6 +153,7 @@ describe('StreamStats', () => {
     expect(screen.queryByText('GPU')).not.toBeInTheDocument();
     expect(screen.getByText('Carried as it is')).toBeInTheDocument();
     expect(screen.queryByText('Frames drawn')).not.toBeInTheDocument();
+    expect(screen.getByText(/3,308/)).toBeInTheDocument();
   });
 
   it('names Shaka as the player for a stream the server makes', () => {
