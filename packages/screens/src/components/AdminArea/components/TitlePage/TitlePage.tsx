@@ -24,6 +24,7 @@ import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { catalogueArtUrl } from '@ValenceClient/requests/catalogueArtUrl';
 import { downloadsOfHandOff } from '@ValenceClient/requests/downloadsOfHandOff';
 import { downloadsOfRequest } from '@ValenceClient/requests/downloadsOfRequest';
+import { isAskedFor } from '@ValenceContracts/functions/isAskedFor';
 import {
   approveMediaRequest,
   askForMedia,
@@ -654,7 +655,7 @@ const TitlePage = ({ titleKey, onBack, onOpenFolder }: TitlePageProps) => {
         status={entry.status}
         facts={heroFacts}
         overview={known?.overview ?? null}
-        askedBy={request === null ? null : <AskerStrip request={request} />}
+        askedBy={request === null || !isAskedFor(request) ? null : <AskerStrip request={request} />}
         actions={actions}
       />
 

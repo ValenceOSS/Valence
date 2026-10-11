@@ -161,6 +161,38 @@ describe('TitlePage', () => {
     });
   });
 
+  it.each([
+    ['names who asked for a title', 'asked', true],
+    ['names nobody for a title only followed', 'monitored', false],
+  ] as const)('%s', async (_, origin, isNamed) => {
+    const request = aMediaRequest({
+      kind: 'series',
+      tmdbId: 42,
+      seasons: [1],
+      origin,
+      requestedBy: { id: 'u1', name: 'Dan' },
+      items: [aRequestItem({ id: 'a', season: 1, episode: 1, state: 'wanted' })],
+    });
+
+    requested.requests = [request];
+    catalogue.entries = [
+      aCatalogueEntry({
+        key: 'series:42',
+        tab: 'shows',
+        kind: 'series',
+        catalogueId: '42',
+        status: 'missing',
+        requestId: request.id,
+      }),
+    ];
+
+    renderInAnAddress(<TitlePage titleKey="series:42" onBack={vi.fn()} />);
+
+    await screen.findByRole('switch', { name: 'Follow Season 1' });
+
+    expect(screen.queryByText(/Asked for by Dan/) !== null).toBe(isNamed);
+  });
+
   it('follows a season the request did not ask for, and stops following one it did', async () => {
     const request = aMediaRequest({
       kind: 'series',

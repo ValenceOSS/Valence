@@ -77,6 +77,16 @@ describe('calendarEntriesOfRequests', () => {
     });
   });
 
+  it('names nobody as the asker of a title only followed', () => {
+    const entries = calendarEntriesOfRequests(
+      [aRequest({ origin: 'monitored' })],
+      '2026-10-01',
+      '2026-12-31',
+    );
+
+    expect(entries.map((entry) => entry.requestedBy)).toEqual([null, null]);
+  });
+
   it('opens a film that has arrived as the film', () => {
     const [entry] = calendarEntriesOfRequests(
       [aRequest({ mediaId: 'media-1', items: [anItem({ state: 'available' })] })],

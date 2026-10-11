@@ -1,6 +1,7 @@
 import { calendarStateOfItem } from '@ValenceServer/calendar/calendarStateOfItem';
 import { episodeEntryId } from '@ValenceServer/calendar/episodeEntryId';
 import { catalogueTitleKey } from '@ValenceServer/calendar/catalogueTitleKey';
+import { isAskedFor } from '@ValenceContracts/functions/isAskedFor';
 import type { CatalogueArtwork } from '@ValenceServer/calendar/CatalogueArtwork';
 import type { CalendarEntry, CalendarRelease } from '@ValenceContracts/schemas/ReleaseCalendar';
 import type { MediaRequest, ReleaseDates } from '@ValenceContracts/schemas/MediaRequest';
@@ -19,7 +20,8 @@ const FILM_RELEASES: readonly (readonly [keyof ReleaseDates, CalendarRelease])[]
  * Lays requested films and episodes out on the calendar: each of a film's three releases on its
  * own day, and each episode of a requested season on the day it airs.
  *
- * A refused request is not shown, since nothing is coming. Albums, artists and books are left to
+ * A refused request is not shown, since nothing is coming. A title only followed is shown with
+ * nobody as its asker, since nobody asked for it. Albums, artists and books are left to
  * pages of their own; a release calendar is for what is watched.
  *
  * @param requests - The requests the viewer may see.
@@ -55,7 +57,7 @@ const calendarEntriesOfRequests = (
       backdropUrl: pictures?.backdropUrl ?? null,
       logoUrl: pictures?.logoUrl ?? null,
       source: 'request' as const,
-      requestedBy: request.requestedBy,
+      requestedBy: isAskedFor(request) ? request.requestedBy : null,
     };
 
     if (request.kind === 'film') {

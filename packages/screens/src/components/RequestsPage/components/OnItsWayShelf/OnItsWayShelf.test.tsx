@@ -74,6 +74,24 @@ describe('OnItsWayShelf', () => {
     expect(screen.queryByText(/4K/)).not.toBeInTheDocument();
   });
 
+  it('shows a title only followed without saying anybody asked for it', async () => {
+    held.requests = [
+      aMediaRequest({
+        id: 'a',
+        title: 'Followed Show',
+        tmdbId: 7,
+        state: 'wanted',
+        origin: 'monitored',
+        requestedBy: { id: 'me', name: 'Ada' },
+      }),
+    ];
+
+    renderInAnAddress(<OnItsWayShelf onAsk={vi.fn()} onOpenAll={vi.fn()} />);
+
+    expect(await screen.findByRole('button', { name: /Followed Show/ })).toBeInTheDocument();
+    expect(screen.queryByText(/Requested by/)).not.toBeInTheDocument();
+  });
+
   it('draws nothing where nothing is on its way', async () => {
     held.requests = [];
 
