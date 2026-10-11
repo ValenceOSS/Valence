@@ -80,6 +80,14 @@ describe('writePlaybackPreferences', () => {
     expect(readPlaybackPreferences().showsRemaining).toBe(true);
   });
 
+  it('leaves the browser’s own player off until somebody turns it on, and remembers it', () => {
+    expect(DEFAULTS.playsInTheBrowser).toBe(false);
+
+    writePlaybackPreferences({ playsInTheBrowser: true });
+
+    expect(readPlaybackPreferences().playsInTheBrowser).toBe(true);
+  });
+
   it('carries on where storage is refused, rather than stopping the film', () => {
     vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
       throw new Error('private mode');

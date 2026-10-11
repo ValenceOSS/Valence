@@ -124,6 +124,12 @@ import type { PlayerState, VideoPlayerProps } from './VideoPlayer.types';
 import { FindSubtitlesDialog } from '@ValenceScreens/components/FindSubtitlesDialog/FindSubtitlesDialog';
 import { PlayOnDialog } from '@ValenceScreens/components/PlayOnDialog/PlayOnDialog';
 import { useVideoDevices } from '@ValenceClient/video/useVideoDevices';
+import { PictureCanvas } from '@ValenceUI/PictureCanvas';
+import { attachEngine } from '@ValenceScreens/playback/engine/attachEngine';
+import { readEngineSupport } from '@ValenceScreens/playback/readEngineSupport';
+import { withTheEngine } from '@ValenceClient/playback/withTheEngine';
+import { isPlayedNatively } from '@ValenceClient/playback/isPlayedNatively';
+import type { EngineStats } from '@ValenceScreens/playback/engine/EngineStats';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
@@ -280,6 +286,11 @@ const VideoPlayer = ({
   keptDownloadId,
 }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const pictureRef = useRef<HTMLCanvasElement>(null);
+  const [isDrawnByTheEngine, setIsDrawnByTheEngine] = useState(false);
+  const engineRefusedRef = useRef(false);
+  const engineStatsRef = useRef<(() => EngineStats) | null>(null);
+  const [engineStats, setEngineStats] = useState<EngineStats | null>(null);
 
   const stageRef = useRef<HTMLDivElement>(null);
   const statsDrag = useDragControls();
@@ -767,6 +778,8 @@ const VideoPlayer = ({
 
   useEffect(() => {
     setSession(null);
+    setIsDrawnByTheEngine(false);
+    engineStatsRef.current = null;
     setState('starting');
     setProblem(null);
     setIsPlaying(false);
@@ -813,11 +826,18 @@ const VideoPlayer = ({
     window.addEventListener('pagehide', onPageHide);
 
     const run = async () => {
+      const film =
+        keptSource === undefined &&
+        !engineRefusedRef.current &&
+        readPlaybackPreferences().playsInTheBrowser
+          ? await cache.ensureQueryData(libraryQueries.detail(request.mediaId)).catch(() => null)
+          : null;
+      const engine = film === null || film.videoRange !== 'SDR' ? null : await readEngineSupport();
       const outcome =
         keptSource === undefined
           ? await startPlaybackSession(
               request.mediaId,
-              deviceProfile,
+              engine === null ? deviceProfile : withTheEngine(deviceProfile, engine),
               clientId,
               request.startSeconds,
               request.audioStreamIndex,
@@ -875,7 +895,61 @@ const VideoPlayer = ({
       }
 
       try {
-        if (outcome.session.delivery.kind === 'direct') {
+        const heard =
+          film?.audioStreams.findIndex(
+            (stream) => stream.index === outcome.session.plan.audio.streamIndex,
+          ) ?? -1;
+        const isTheEngines =
+          outcome.session.delivery.kind === 'direct' &&
+          engine !== null &&
+          film !== null &&
+          pictureRef.current !== null &&
+          !isPlayedNatively(deviceProfile, {
+            container: film.container,
+            videoCodec: film.videoCodec,
+            audioCodec: film.audioStreams[Math.max(heard, 0)]?.codec ?? '',
+          });
+
+        if (
+          isTheEngines &&
+          outcome.session.delivery.kind === 'direct' &&
+          pictureRef.current !== null
+        ) {
+          setIsDrawnByTheEngine(true);
+
+          const attached = await attachEngine({
+            element,
+            canvas: pictureRef.current,
+            url: outcome.session.delivery.url,
+            startSeconds: request.startSeconds,
+            audioTrackAt: Math.max(heard, 0),
+            onFault: () => {
+              if (isAbandoned()) {
+                return;
+              }
+
+              engineRefusedRef.current = true;
+              setRequest((asked) => ({
+                ...asked,
+                startSeconds: Math.floor(videoRef.current?.currentTime ?? asked.startSeconds),
+              }));
+            },
+          }).catch(() => null);
+
+          if (attached === null) {
+            if (!isAbandoned()) {
+              engineRefusedRef.current = true;
+              setRequest((asked) => ({ ...asked }));
+            }
+
+            return;
+          }
+
+          teardown = attached.detach;
+          releaseRef.current = attached.detach;
+          deliveredRef.current = attached.readDelivered;
+          engineStatsRef.current = attached.readEngine;
+        } else if (outcome.session.delivery.kind === 'direct') {
           element.src = outcome.session.delivery.url;
         } else {
           const { plan } = outcome.session;
@@ -908,7 +982,11 @@ const VideoPlayer = ({
           ladderRef.current = attached.readLadder;
         }
 
-        if (request.startSeconds > 0 && outcome.session.delivery.kind === 'direct') {
+        if (
+          request.startSeconds > 0 &&
+          outcome.session.delivery.kind === 'direct' &&
+          !isTheEngines
+        ) {
           element.currentTime = request.startSeconds;
         }
 
@@ -1203,6 +1281,7 @@ const VideoPlayer = ({
       if (element !== null) {
         setHealth(readPlaybackHealth(element, frameSkewRef.current));
         setDelivered(deliveredRef.current?.() ?? null);
+        setEngineStats(engineStatsRef.current?.() ?? null);
       }
     };
 
@@ -2036,6 +2115,12 @@ const VideoPlayer = ({
           {...asItPlays}
         />
 
+        <PictureCanvas
+          canvasRef={pictureRef}
+          isShown={isDrawnByTheEngine}
+          className="absolute inset-0 size-full"
+        />
+
         <div
           data-slot="picture-cover"
           aria-hidden
@@ -2164,6 +2249,7 @@ const VideoPlayer = ({
               detail={detail}
               health={health}
               delivered={delivered}
+              engine={isDrawnByTheEngine ? engineStats : null}
               sessionStartSeconds={request.startSeconds}
               {...(party === undefined
                 ? {}

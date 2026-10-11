@@ -9,6 +9,7 @@ import { ProfileSettings } from './ProfileSettings';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ProfileDraft } from './ProfileSettings.types';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
+import { readPlaybackPreferences } from '@ValenceScreens/playback/playbackPreferences';
 
 const PROFILE: ViewerProfile = {
   id: '00000000-0000-4000-8000-000000000002',
@@ -110,6 +111,30 @@ describe('ProfileSettings', () => {
     renderInAnAddress(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={vi.fn()} />);
 
     expect(screen.queryByRole('switch', { name: 'Desktop notifications' })).not.toBeInTheDocument();
+  });
+
+  it('turns playing more films in this browser on at once, on this device, where there is WebGPU', async () => {
+    vi.stubGlobal('navigator', { ...navigator, gpu: {} });
+    window.localStorage.clear();
+
+    const onDraft = vi.fn();
+
+    renderInAnAddress(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={onDraft} />);
+
+    await userEvent.click(screen.getByRole('switch', { name: 'Play more films in this browser' }));
+
+    expect(readPlaybackPreferences().playsInTheBrowser).toBe(true);
+    expect(onDraft).not.toHaveBeenCalled();
+
+    vi.unstubAllGlobals();
+  });
+
+  it('offers no browser player where there is no WebGPU to draw with', () => {
+    renderInAnAddress(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={vi.fn()} />);
+
+    expect(
+      screen.queryByRole('switch', { name: 'Play more films in this browser' }),
+    ).not.toBeInTheDocument();
   });
 
   it('writes preferring the best copy into the draft', async () => {

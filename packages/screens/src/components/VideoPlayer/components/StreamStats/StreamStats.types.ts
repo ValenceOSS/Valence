@@ -2,6 +2,7 @@ import type { PointerEvent } from 'react';
 import type { DeliveredFormat } from '@ValenceScreens/playback/attachShaka';
 import type { StartedSession } from '@ValenceClient/playback/startPlaybackSession';
 import type { MediaDetail, MediaSummary } from '@ValenceContracts/schemas/Library';
+import type { EngineStats } from '@ValenceScreens/playback/engine/EngineStats';
 
 type PlaybackHealth = {
   positionSeconds: number;
@@ -30,6 +31,7 @@ type StreamStatsProps = {
   detail: MediaDetail | null;
   health: PlaybackHealth;
   delivered: DeliveredFormat | null;
+  engine?: EngineStats | null;
   sessionStartSeconds: number;
   party?: PartyHealth;
   onClose: () => void;

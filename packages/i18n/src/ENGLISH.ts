@@ -2846,12 +2846,16 @@ const ENGLISH = {
     'After this many episodes autoplay in a row, Valence asks if you’re still watching.',
   'screens.accountArea.profileSettings.aPhotoOrGIFAnIllustratedAvatar':
     'A photo or GIF, an illustrated avatar, or the first letter of your name.',
+  'screens.accountArea.profileSettings.decodesWhatThisBrowserCannotPlay':
+    "Decodes films this browser can't play by itself here, using WebGPU, so the server doesn't have to convert them. HDR films are still converted for now.",
   'screens.accountArea.profileSettings.desktopNotifications': 'Desktop notifications',
   'screens.accountArea.profileSettings.displayName': 'Display name',
   'screens.accountArea.profileSettings.followingTheMachineUsesWhateverYour':
     'System uses your device’s motion setting. Reduced cuts animation in Valence only.',
   'screens.accountArea.profileSettings.keptOnThisDeviceRatherThan':
     'Saved on this device, not your account, and applied immediately.',
+  'screens.accountArea.profileSettings.playMoreFilmsInThisBrowser':
+    'Play more films in this browser',
   'screens.accountArea.profileSettings.preferTheBestCopy': 'Prefer the best version',
   'screens.accountArea.profileSettings.showsANoticeOnThisComputer':
     'Shows a notice on this computer when something new arrives in your inbox. Saved on this device.',
@@ -6731,7 +6735,9 @@ const ENGLISH = {
   'screens.videoPlayer.playerControls.volumeBoost': 'Volume boost',
   'screens.videoPlayer.playingInAFloatingWindow': 'Playing in a floating window',
   'screens.videoPlayer.preparingPlayback': 'Preparing playback',
+  'screens.videoPlayer.streamStats.carriedAsItIs': 'Carried as it is',
   'screens.videoPlayer.streamStats.closeStats': 'Close stats',
+  'screens.videoPlayer.streamStats.encodedAgainAsOpus': 'Decoded here, encoded again as Opus',
   'screens.videoPlayer.streamStats.thisTabKeepsTime': 'this tab keeps time',
   'screens.videoPlayer.streamStats.widthByHeightAtKbps': '{width}×{height} · {kbps} kbps',
   'screens.videoPlayer.thatDeviceWouldNotTakeThis': 'That device couldn’t play this stream.',

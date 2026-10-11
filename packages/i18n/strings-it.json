@@ -11665,6 +11665,11 @@
     "context": "Shown in the profile settings in the account area."
   },
   {
+    "handler": "screens.accountArea.profileSettings.decodesWhatThisBrowserCannotPlay",
+    "text": "Decodes films this browser can't play by itself here, using WebGPU, so the server doesn't have to convert them. HDR films are still converted for now.",
+    "context": "Description under the 'Play more films in this browser' setting."
+  },
+  {
     "handler": "screens.accountArea.profileSettings.desktopNotifications",
     "text": "Desktop notifications",
     "context": "The title of a setting row in the profile settings, shown only in the desktop app, turning the computer's own notification pop-ups on or off. Off until turned on."
@@ -11683,6 +11688,11 @@
     "handler": "screens.accountArea.profileSettings.keptOnThisDeviceRatherThan",
     "text": "Saved on this device, not your account, and applied immediately.",
     "context": "The description of a setting row in the profile settings in the account area."
+  },
+  {
+    "handler": "screens.accountArea.profileSettings.playMoreFilmsInThisBrowser",
+    "text": "Play more films in this browser",
+    "context": "Title of a setting on this device: decode films the browser can't play by itself in the page, using WebGPU, instead of having the server convert them."
   },
   {
     "handler": "screens.accountArea.profileSettings.preferTheBestCopy",
@@ -26726,9 +26736,19 @@
     "context": "Shown in the video player."
   },
   {
+    "handler": "screens.videoPlayer.streamStats.carriedAsItIs",
+    "text": "Carried as it is",
+    "context": "Stats for nerds, browser player card: the film's sound is handed to the browser unchanged."
+  },
+  {
     "handler": "screens.videoPlayer.streamStats.closeStats",
     "text": "Close stats",
     "context": "The label of a button in the stream stats in the video player."
+  },
+  {
+    "handler": "screens.videoPlayer.streamStats.encodedAgainAsOpus",
+    "text": "Decoded here, encoded again as Opus",
+    "context": "Stats for nerds, browser player card: the browser can't play the film's sound, so the page decodes it and encodes it again as Opus."
   },
   {
     "handler": "screens.videoPlayer.streamStats.thisTabKeepsTime",

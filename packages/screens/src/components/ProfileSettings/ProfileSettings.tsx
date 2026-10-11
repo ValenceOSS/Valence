@@ -13,6 +13,10 @@ import { readMotion } from '@ValenceClient/shell/motion';
 import { MOTION_CHOICES } from '@ValenceScreens/motion/motionChoices';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { Switch } from '@ValenceUI/Switch';
+import {
+  readPlaybackPreferences,
+  writePlaybackPreferences,
+} from '@ValenceScreens/playback/playbackPreferences';
 import { PROFILE_COLOURS } from '@ValenceContracts/schemas/ViewerProfile';
 import { STILL_WATCHING_OFF } from '@ValenceContracts/schemas/StillWatching';
 import { STILL_WATCHING_CHOICES } from '@ValenceClient/profiles/STILL_WATCHING_CHOICES';
@@ -25,7 +29,9 @@ import { say } from '@ValenceI18n/say';
 
 /**
  * Everything about how somebody appears: their name, their picture, the colour behind it, and how
- * patient Valence is about asking whether they are still there. In the desktop app, whether this
+ * patient Valence is about asking whether they are still there. In a browser with WebGPU, whether
+ * this device plays files it cannot play by itself through its own player rather than having the
+ * server convert them, which, like the theme, is kept on this device and changes at once. In the desktop app, whether this
  * computer puts a notice up when something new reaches the inbox, which is off until turned on and,
  * though it is kept on this computer rather than the account, waits for the same button.
  *
@@ -45,6 +51,10 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
   const { theme, choose } = useTheme();
   const { motion, choose: chooseMovement } = useMotion();
   const isOnTheDesktop = platformInUse().thisClientKind() === 'desktop';
+  const hasAGpu = typeof navigator !== 'undefined' && 'gpu' in navigator;
+  const [playsInTheBrowser, setPlaysInTheBrowser] = useState(
+    () => readPlaybackPreferences().playsInTheBrowser,
+  );
 
   const [isEditing, setIsEditing] = useState(false);
   const isReady = profile !== null && draft !== null;
@@ -147,6 +157,23 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
           }}
         />
       </SettingRow>
+
+      {hasAGpu ? (
+        <SettingRow
+          title={say('screens.accountArea.profileSettings.playMoreFilmsInThisBrowser')}
+          description={say('screens.accountArea.profileSettings.decodesWhatThisBrowserCannotPlay')}
+        >
+          <Switch
+            label={say('screens.accountArea.profileSettings.playMoreFilmsInThisBrowser')}
+            isLabelHidden
+            isOn={playsInTheBrowser}
+            onToggle={() => {
+              writePlaybackPreferences({ playsInTheBrowser: !playsInTheBrowser });
+              setPlaysInTheBrowser(!playsInTheBrowser);
+            }}
+          />
+        </SettingRow>
+      ) : null}
 
       {isOnTheDesktop ? (
         <SettingRow

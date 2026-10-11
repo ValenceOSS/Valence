@@ -107,6 +107,32 @@ const draw = (overrides: Partial<StreamStatsProps> = {}) => {
 };
 
 describe('StreamStats', () => {
+  it('says how the browser’s own player is keeping up, where it is the one playing', () => {
+    draw({
+      engine: {
+        gpu: 'apple metal-3',
+        decoder: 'hvc1.1.6.L153.B0',
+        isSoundCarried: false,
+        decodedFrames: 1440,
+        drawnFrames: 1432,
+        skippedFrames: 8,
+        decodedAheadSeconds: 0.125,
+      },
+    });
+
+    expect(screen.getByText('Transcode · WebGPU')).toBeInTheDocument();
+    expect(screen.getByText('WebGPU')).toBeInTheDocument();
+    expect(screen.getByText('apple metal-3')).toBeInTheDocument();
+    expect(screen.getByText('WebCodecs')).toBeInTheDocument();
+    expect(screen.getByText('Decoded here, encoded again as Opus')).toBeInTheDocument();
+  });
+
+  it('shows no browser player card where the browser is not the one playing', () => {
+    draw();
+
+    expect(screen.queryByText('Renderer')).not.toBeInTheDocument();
+  });
+
   it('names itself so it can be found and dismissed', () => {
     draw();
 

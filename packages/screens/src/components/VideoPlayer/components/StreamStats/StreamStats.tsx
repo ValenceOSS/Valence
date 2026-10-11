@@ -33,6 +33,9 @@ import { say } from '@ValenceI18n/say';
  * @param detail - What the catalogue holds about the item.
  * @param health - How the stream is faring.
  * @param delivered - What the engine is actually being sent, where it has chosen a variant.
+ * @param engine - How the browser's own player is keeping up — the GPU drawing, the decoder, how
+ *   the sound reaches the element, and the frames decoded, drawn and skipped — where it is the one
+ *   playing.
  * @param sessionStartSeconds - Where the session itself began, which is not always where the viewer
  *   is now.
  * @param party - How the watch party is faring, where this viewing is part of one.
@@ -46,6 +49,7 @@ const StreamStats = ({
   detail,
   health,
   delivered,
+  engine = null,
   sessionStartSeconds,
   party,
   onClose,
@@ -104,7 +108,15 @@ const StreamStats = ({
       <div className="flex flex-col gap-2">
         <StatsSummary
           items={[
-            { label: say('common.mode'), value: session?.mode ?? null },
+            {
+              label: say('common.mode'),
+              value:
+                session === null
+                  ? null
+                  : engine === null
+                    ? session.mode
+                    : `${session.mode} · WebGPU`,
+            },
             { label: say('common.picture'), value: picture },
             { label: say('common.video'), value: videoCodec },
             {
@@ -195,6 +207,31 @@ const StreamStats = ({
           </StatsCard>
         </div>
 
+        {engine === null ? null : (
+          <StatsCard name="Browser player">
+            <StatsFact name="Renderer" value="WebGPU" />
+            <StatsFact name="GPU" value={engine.gpu} />
+            <StatsFact name="Decoder" value="WebCodecs" />
+            <StatsFact
+              name="Sound"
+              value={
+                engine.isSoundCarried
+                  ? say('screens.videoPlayer.streamStats.carriedAsItIs')
+                  : say('screens.videoPlayer.streamStats.encodedAgainAsOpus')
+              }
+            />
+            <StatsFact name="Frames drawn" value={<FormattedNumber value={engine.drawnFrames} />} />
+            <StatsFact
+              name="Decoded ahead"
+              value={
+                engine.decodedAheadSeconds === null ? null : (
+                  <StatsSeconds value={engine.decodedAheadSeconds} />
+                )
+              }
+            />
+          </StatsCard>
+        )}
+
         <StatsCard name="Plan">
           <PlanAxis
             name="Container"
@@ -246,7 +283,12 @@ const StreamStats = ({
             <StatsFact
               name="Dropped"
               value={
-                health.droppedFrames === null || health.decodedFrames === null ? null : (
+                engine !== null ? (
+                  <>
+                    <FormattedNumber value={engine.skippedFrames} /> /{' '}
+                    <FormattedNumber value={engine.decodedFrames} />
+                  </>
+                ) : health.droppedFrames === null || health.decodedFrames === null ? null : (
                   <>
                     <FormattedNumber value={health.droppedFrames} /> /{' '}
                     <FormattedNumber value={health.decodedFrames} />

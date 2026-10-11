@@ -10,6 +10,7 @@ const PreferencesSchema = z.object({
   isMuted: z.boolean().default(false),
   subtitleLanguage: z.string().nullable().default(null),
   showsRemaining: z.boolean().default(false),
+  playsInTheBrowser: z.boolean().default(false),
 });
 
 type PlaybackPreferences = z.infer<typeof PreferencesSchema>;
@@ -20,11 +21,13 @@ const DEFAULTS: PlaybackPreferences = {
   isMuted: false,
   subtitleLanguage: null,
   showsRemaining: false,
+  playsInTheBrowser: false,
 };
 
 /**
- * How this device likes to watch: the volume, whether the clock counts down, and the rest of what
- * survives between sessions. Held on the device rather than on the profile, since these follow the
+ * How this device likes to watch: the volume, whether the clock counts down, whether files the
+ * browser cannot play by itself are played through its own player rather than converted, and the
+ * rest of what survives between sessions. Held on the device rather than on the profile, since these follow the
  * screen and the speakers rather than the person.
  */
 const readPlaybackPreferences = (): PlaybackPreferences => {
