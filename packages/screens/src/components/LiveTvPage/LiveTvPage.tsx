@@ -11,6 +11,8 @@ import { LiveGuideGrid } from '@ValenceScreens/components/LiveTvPage/components/
 import { LivePlayer } from '@ValenceScreens/components/LiveTvPage/components/LivePlayer/LivePlayer';
 import { readLastChannel, saveLastChannel } from '@ValenceScreens/live/lastChannelPreference';
 import { groupsOf } from '@ValenceClient/live/groupsOf';
+import { channelTagsOf } from '@ValenceClient/live/channelTagsOf';
+import { fuzzyScore } from '@ValenceCore/functions/fuzzyScore';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { say } from '@ValenceI18n/say';
 import type { LiveChannel, LiveGuide } from '@ValenceContracts/schemas/LiveTv';
@@ -21,8 +23,9 @@ const FAVOURITES = 'favourites';
 
 /**
  * Live TV: the channel playing at the top, with what is on it and what is next, and below it the
- * guide of every channel over the next few hours, which can be searched, narrowed to favourites or
- * to one group of channels, and from which any channel is played. The channel last watched on this
+ * guide of every channel over the next few hours, which can be searched loosely — `cb` finds CBBC,
+ * best matches first — narrowed to favourites or to one group of channels, and from which any
+ * channel is played. The channel last watched on this
  * device plays to begin with, or else the first favourite, or else the first channel.
  */
 const LiveTvPage = () => {
@@ -44,16 +47,32 @@ const LiveTvPage = () => {
     (left, right) => left.localeCompare(right),
   );
   const searched = search.trim().toLowerCase();
-  const shown = channels.filter(
+  const narrowed = channels.filter(
     (channel) =>
-      (showing === ALL ||
-        (showing === FAVOURITES
-          ? channel.isFavourite
-          : groupsOf(channel.group).includes(showing))) &&
-      (searched === '' ||
-        channel.name.toLowerCase().includes(searched) ||
-        channel.number === searched),
+      showing === ALL ||
+      (showing === FAVOURITES ? channel.isFavourite : groupsOf(channel.group).includes(showing)),
   );
+  const shown =
+    searched === ''
+      ? narrowed
+      : narrowed
+          .map((channel, at) => ({
+            channel,
+            at,
+            score:
+              channel.number === searched
+                ? Number.POSITIVE_INFINITY
+                : fuzzyScore(
+                    searched,
+                    `${channelTagsOf(channel.name).name} ${groupsOf(channel.group).join(' ')}`,
+                  ),
+          }))
+          .filter(
+            (found): found is { channel: LiveChannel; at: number; score: number } =>
+              found.score !== null,
+          )
+          .sort((left, right) => right.score - left.score || left.at - right.at)
+          .map((found) => found.channel);
   const programmesOf = (channel: LiveChannel | null) =>
     channel === null
       ? []

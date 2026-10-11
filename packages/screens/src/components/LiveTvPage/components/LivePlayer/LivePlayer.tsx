@@ -9,6 +9,8 @@ import { cn } from '@ValenceUI/cn';
 import { DEFAULT_CAPTION_STYLE } from '@ValenceClient/playback/captionStyle';
 import { watchLiveChannel } from '@ValenceClient/live/watchLiveChannel';
 import { PlayerControls } from '@ValenceScreens/components/VideoPlayer/components/PlayerControls/PlayerControls';
+import { ChannelTags } from '@ValenceScreens/components/LiveTvPage/components/ChannelTags/ChannelTags';
+import { channelTagsOf } from '@ValenceClient/live/channelTagsOf';
 import { attachShaka } from '@ValenceScreens/playback/attachShaka';
 import { readLights } from '@ValenceScreens/library/readLights';
 import { setLiveLights } from '@ValenceScreens/library/liveLights';
@@ -258,10 +260,11 @@ const LivePlayer = ({ channel, onNow, upNext, now, onToggleFavourite }: LivePlay
             {channel.number === null ? null : (
               <span className="tabular-nums">{channel.number}</span>
             )}
-            <span className="truncate">{channel.name}</span>
+            <span className="truncate">{channelTagsOf(channel.name).name}</span>
+            <ChannelTags channel={channel} />
           </span>
           <h1 className="truncate text-xl font-semibold text-text">
-            {onNow?.title ?? channel.name}
+            {onNow?.title ?? channelTagsOf(channel.name).name}
           </h1>
           {onNow?.description === null || onNow === null ? null : (
             <p className="line-clamp-2 text-sm text-text-muted">{onNow.description}</p>

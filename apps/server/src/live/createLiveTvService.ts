@@ -3,6 +3,7 @@ import { MOST_PLAYLIST_BYTES } from '@ValenceContracts/schemas/LiveTv';
 import { saying } from '@ValenceI18n/saying';
 import { isHlsPlaylist } from './isHlsPlaylist';
 import { liveChannelIdOf } from './liveChannelIdOf';
+import { likelyRegionOf } from './likelyRegionOf';
 import { matchGuideIds } from './matchGuideIds';
 import { parseM3u } from './parseM3u';
 import { parseXmltv } from './parseXmltv';
@@ -258,6 +259,7 @@ const createLiveTvService = ({
           number: channel.number,
           name: channel.name,
           group: channel.group,
+          region: likelyRegionOf(channel.guideId),
           hasLogo: channel.logoUrl !== null,
           isFavourite: favourites.has(channel.id),
         })),

@@ -5633,17 +5633,24 @@ const ENGLISH = {
   'screens.libraryBrowser.readingYourLibrary': 'Loading your library',
   'screens.libraryBrowser.thisServerHasNoFilmsOr': 'This server has no films or programmes yet.',
   'screens.liveTvPage.allChannels': 'All channels',
+  'screens.liveTvPage.blockedOutsideSomeCountries':
+    'Only plays in some countries, and the playlist doesn’t say which.',
   'screens.liveTvPage.findAChannel': 'Find a channel',
+  'screens.liveTvPage.geoBlocked': 'Geo-blocked',
+  'screens.liveTvPage.geoBlockedCountry': 'Geo-blocked · {country}',
   'screens.liveTvPage.groups': 'Groups',
   'screens.liveTvPage.guide': 'Guide',
   'screens.liveTvPage.jumpToNow': 'Jump to now',
   'screens.liveTvPage.keepName': 'Keep {name} as a favourite',
+  'screens.liveTvPage.likelyOnlyPlaysInCountry':
+    'Most likely only plays in {country}. A live TV proxy in that country can play it.',
   'screens.liveTvPage.liveNowNoGuide': 'Live now · no guide',
   'screens.liveTvPage.nextTimeTitle': 'Next at {time}: {title}',
   'screens.liveTvPage.noChannelsYet':
     'There are no live TV channels yet. An admin can add a stream, a playlist or a tuner under Server → Live TV.',
   'screens.liveTvPage.noFavouritesYet':
     'You haven’t kept any channels yet. Star one to find it here.',
+  'screens.liveTvPage.notAllDay': 'Not 24/7',
   'screens.liveTvPage.onNow': 'On now',
   'screens.liveTvPage.startingName': 'Starting {name}…',
   'screens.liveTvPage.stopKeepingName': 'Stop keeping {name} as a favourite',

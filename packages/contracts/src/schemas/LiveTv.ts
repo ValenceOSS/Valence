@@ -60,6 +60,7 @@ const LiveChannelSchema = z.object({
   number: z.string().nullable(),
   name: z.string(),
   group: z.string().nullable(),
+  region: z.string().length(2).nullable(),
   hasLogo: z.boolean(),
   isFavourite: z.boolean(),
 });

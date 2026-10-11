@@ -22290,9 +22290,24 @@
     "context": "Option in the live TV guide’s filter showing every channel."
   },
   {
+    "handler": "screens.liveTvPage.blockedOutsideSomeCountries",
+    "text": "Only plays in some countries, and the playlist doesn’t say which.",
+    "context": "Tooltip on a geo-blocked live TV channel whose country is unknown."
+  },
+  {
     "handler": "screens.liveTvPage.findAChannel",
     "text": "Find a channel",
     "context": "Placeholder of the search field above the live TV guide."
+  },
+  {
+    "handler": "screens.liveTvPage.geoBlocked",
+    "text": "Geo-blocked",
+    "context": "Badge on a live TV channel whose stream only plays in some countries."
+  },
+  {
+    "handler": "screens.liveTvPage.geoBlockedCountry",
+    "text": "Geo-blocked · {country}",
+    "context": "Badge on a live TV channel whose stream most likely only plays in one country. {country} is a two-letter country code such as US."
   },
   {
     "handler": "screens.liveTvPage.groups",
@@ -22315,6 +22330,11 @@
     "context": "Label of the star that keeps a live TV channel as a favourite. {name} is the channel."
   },
   {
+    "handler": "screens.liveTvPage.likelyOnlyPlaysInCountry",
+    "text": "Most likely only plays in {country}. A live TV proxy in that country can play it.",
+    "context": "Tooltip on a geo-blocked live TV channel. {country} is a country’s name."
+  },
+  {
     "handler": "screens.liveTvPage.liveNowNoGuide",
     "text": "Live now · no guide",
     "context": "Shown along a live TV channel’s row in the guide, from the time now onwards, when nothing is known of what is on it."
@@ -22333,6 +22353,11 @@
     "handler": "screens.liveTvPage.noFavouritesYet",
     "text": "You haven’t kept any channels yet. Star one to find it here.",
     "context": "Shown in the live TV guide when the favourites filter is on and nothing is kept."
+  },
+  {
+    "handler": "screens.liveTvPage.notAllDay",
+    "text": "Not 24/7",
+    "context": "Badge on a live TV channel that does not broadcast all day."
   },
   {
     "handler": "screens.liveTvPage.onNow",

@@ -6,6 +6,8 @@ import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
 import { groupsOf } from '@ValenceClient/live/groupsOf';
 import { TABLE_LOOKS } from '@ValenceUI/tokens/tableLooks';
+import { ChannelTags } from '@ValenceScreens/components/LiveTvPage/components/ChannelTags/ChannelTags';
+import { channelTagsOf } from '@ValenceClient/live/channelTagsOf';
 import { ChannelLogo } from '@ValenceScreens/components/LiveTvPage/components/ChannelLogo/ChannelLogo';
 import { say } from '@ValenceI18n/say';
 import type { LiveProgramme } from '@ValenceContracts/schemas/LiveTv';
@@ -219,9 +221,10 @@ const LiveGuideGrid = ({
                           </span>
                         )}
                         <span className="line-clamp-2 text-sm font-medium leading-tight text-text">
-                          {channel.name}
+                          {channelTagsOf(channel.name).name}
                         </span>
                       </span>
+                      <ChannelTags channel={channel} className="mt-0.5" />
                       {channel.group === null ? null : (
                         <span className="truncate text-[0.6875rem] text-text-muted">
                           {groupsOf(channel.group).join(' · ')}
