@@ -2847,7 +2847,7 @@ const ENGLISH = {
   'screens.accountArea.profileSettings.aPhotoOrGIFAnIllustratedAvatar':
     'A photo or GIF, an illustrated avatar, or the first letter of your name.',
   'screens.accountArea.profileSettings.decodesWhatThisBrowserCannotPlay':
-    "Decodes films this browser can't play by itself here, using WebGPU, so the server doesn't have to convert them. HDR films are still converted for now.",
+    "Plays films this browser can't play by itself, using WebGPU, so the server doesn't have to convert them. Kept in this browser, for this address.",
   'screens.accountArea.profileSettings.desktopNotifications': 'Desktop notifications',
   'screens.accountArea.profileSettings.displayName': 'Display name',
   'screens.accountArea.profileSettings.followingTheMachineUsesWhateverYour':

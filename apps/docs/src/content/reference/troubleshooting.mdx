@@ -20,6 +20,7 @@ If you do not know where to look first, read the log. See [Reading the logs](#re
 | Everyone signed out after a restart             | `BETTER_AUTH_SECRET` changed                                                       | Keep the same secret, and sign in again                                                       |
 | `429` when signing in                           | The rate limiter                                                                   | Wait for `X-Retry-After` seconds, and set `X-Forwarded-For` at the proxy                      |
 | Video stalls or restarts                        | A buffering proxy, a slow disk, or software transcoding                            | Turn buffering off, check hardware acceleration                                               |
+| The browser player is never used                | The setting is off in this browser, or a proxy's policy forbids WebAssembly        | See [below](#the-browser-player-is-not-used)                                                  |
 | `/api/health` says `degraded`                   | The media service is not reachable                                                 | Check `TRANSCODER_URL` and the container log                                                  |
 | Scan finds nothing                              | Library path is the host path, or the mount is unreadable                          | Use `/media` paths, check permissions                                                         |
 | Re-encode says it cannot write                  | Media is mounted read only                                                         | Set `MEDIA_ACCESS` to an empty string                                                         |
@@ -117,6 +118,26 @@ curl -s https://valence.example.com/api/health
 | Many viewers, one stutters                  | The concurrent transcode limit                                                       | `VALENCE_MAX_CONCURRENT_TRANSCODES` defaults to 2                                                                        |
 
 To see how an item would be played without starting anything, call `POST /api/playback/{mediaId}/explain`, or open the item in the web client and read what it says about the playback mode.
+
+## The browser player is not used
+
+With **Play more films in this browser** on, a film with DTS or Dolby sound, or in a container the browser does not read, should show **Valence WebGPU (Mediabunny + WebCodecs)** as the player in **Stats for nerds**. If it shows **Shaka Player (HLS)** with the sound being transcoded instead:
+
+| Cause                                                 | How to tell                                                                                             | Fix                                                                                           |
+| :---------------------------------------------------- | :------------------------------------------------------------------------------------------------------ | :-------------------------------------------------------------------------------------------- |
+| The setting is off in this browser                    | It is kept per browser and per address, so turning it on elsewhere does not count                       | Turn it on under **My account** in this browser, at this address                              |
+| A proxy's content security policy forbids WebAssembly | `curl -sI` your address shows a `content-security-policy` whose `script-src` lacks `'wasm-unsafe-eval'` | Add `'wasm-unsafe-eval'` to `script-src` in the proxy's header, then reload the proxy         |
+| The page is not secure                                | The address is plain HTTP                                                                               | Serve Valence over HTTPS                                                                      |
+| The browser has no WebGPU                             | `navigator.gpu` is missing in the browser console                                                       | Use a current Chrome, Edge or Safari                                                          |
+| TrueHD or MPEG-2 alone is converted                   | `/decoders/valence-browser-decoders.wasm` does not answer with a WebAssembly file                       | Use the published image, or run `pnpm decoders:build` before building the web client yourself |
+
+A policy without `'wasm-unsafe-eval'` looks like this in nginx, with the fix added:
+
+```nginx
+add_header Content-Security-Policy "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob:;" always;
+```
+
+Valence sets no such policy itself, so this only applies when your proxy adds one.
 
 ## Hardware acceleration does not work
 

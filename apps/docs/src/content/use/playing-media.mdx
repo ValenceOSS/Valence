@@ -59,6 +59,31 @@ Valence decides how to deliver each file to each device, one part at a time: con
 
 Every decision carries a reason (for example "Client does not support the mkv container" or "Quality step limits resolution to 1280x720"), and the administrator can see how each live session is being delivered in the admin **Sessions** panel. Transcoding uses your server's processor or graphics card, so prefer direct play where you can. If the server has a supported graphics card, see [Hardware transcoding](/install/hardware-transcoding).
 
+### Playing more in the browser
+
+A browser with WebGPU can play many files it could not play by itself, so the server does not have to convert them. Turn it on under **My account**, then **Play more films in this browser**. The setting is kept in that browser for that address, not on your account. Turn it on again in each browser you use, and again if you reach the same server at a second address.
+
+With it on, the browser reads the file straight from the server and does the work the server would otherwise do:
+
+| Part               | What the browser does                                                                                                                                                                                                                                      |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Container          | Repackages MKV, AVI and other containers for its own player, so a remux costs the server nothing.                                                                                                                                                          |
+| Picture            | Decodes with WebCodecs and draws with WebGPU. HDR films in HEVC, AV1 and VP9 are tone mapped from each film's own brightness, so they look right on an ordinary screen. DVDs in MPEG-2, up to 576 lines, are decoded by Valence's own decoder in the page. |
+| Sound              | Decodes Dolby Digital, Dolby Digital Plus, DTS, Dolby TrueHD and PCM, and passes the sound on as lossless FLAC, so 5.1 and 7.1 stay surround. A browser that cannot take FLAC gets 5.1 AAC or stereo Opus instead.                                         |
+| Styled subtitles   | Draws ASS and SSA with libass, with the fonts in the file.                                                                                                                                                                                                 |
+| Picture in picture | Pops out the drawn picture, subtitles included.                                                                                                                                                                                                            |
+
+Before every film, the browser is asked what it can actually do, rather than going by its name. Anything it cannot do is still converted by the server, and so are VC-1 pictures, Dolby Vision without an HDR10 base, and image based subtitles that are turned on. If the browser player fails partway through starting, Valence quietly asks the server to convert the film instead.
+
+It needs all of these:
+
+- **HTTPS.** WebGPU and WebCodecs only exist on a secure page.
+- **WebGPU and WebCodecs.** Current Chrome, Edge and Safari have both. Firefox does not draw HDR this way yet, so HDR films are converted there.
+- **WebAssembly.** The sound and subtitle decoders are WebAssembly. A reverse proxy that sets its own `Content-Security-Policy` must include `'wasm-unsafe-eval'` in `script-src`, or the browser refuses to load them. See [Reverse proxy](/install/reverse-proxy).
+- **The decoders file** for TrueHD and MPEG-2, served at `/decoders/valence-browser-decoders.wasm`. The published image includes it. Without it, those two are converted by the server.
+
+**Stats for nerds** says which player is in use. **Valence WebGPU (Mediabunny + WebCodecs)** is the browser player. **Shaka Player (HLS)** with a remux or transcode in the plan means the server is converting.
+
 ### Quality
 
 Open **Settings** then **Quality**. The default is **Original**, which means the file as it is, sized for the screen in front of you. A display smaller than the file does not force a re-encode, since the browser downsamples the picture well.
@@ -86,7 +111,7 @@ A step caps the bitrate and does not aim at it, so a well compressed film often 
 
 Press the subtitles button to turn them on and off, or open **Settings** then **Subtitles/CC** to pick a track. Valence finds subtitles in three places:
 
-- **Embedded** in the video file, extracted on demand and converted to WebVTT for the browser.
+- **Embedded** in the video file, extracted on demand. Text tracks are converted to WebVTT, and styled ASS and SSA tracks are drawn as they were made, with their positions, effects and the fonts attached to the file.
 - **Beside the video**, as text files (`srt`, `vtt`, `ass` or `ssa`) whose name starts with the video's name, for example `Film (2016).en.srt`. Files in a folder called `Subs` or `Subtitles` are found too.
 - Image based subtitles (`sup`, `sub`, `idx` and disc formats) cannot be drawn as text, so they are burned into the picture, which forces a transcode.
 

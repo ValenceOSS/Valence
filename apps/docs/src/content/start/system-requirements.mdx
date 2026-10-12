@@ -77,6 +77,8 @@ Two browser requirements are stated in the configuration itself:
 - **Passkeys** need a secure context, so they are unavailable over plain HTTP on a LAN address. Use HTTPS. A passkey also only works on the hostname it was registered against.
 - **Secure cookies** are never stored by a browser from an insecure origin. Serve Valence over HTTPS in normal use.
 
+Playing more films in the browser without the server converting them needs HTTPS, WebGPU, WebCodecs and WebAssembly. Current Chrome, Edge and Safari have all four. See [Playing more in the browser](/use/playing-media#playing-more-in-the-browser).
+
 Other devices, such as televisions, sign in with a device authorisation code flow. Support for particular television platforms is not documented in the repository, so do not assume it.
 
 ## Network ports

@@ -11666,7 +11666,7 @@
   },
   {
     "handler": "screens.accountArea.profileSettings.decodesWhatThisBrowserCannotPlay",
-    "text": "Decodes films this browser can't play by itself here, using WebGPU, so the server doesn't have to convert them. HDR films are still converted for now.",
+    "text": "Plays films this browser can't play by itself, using WebGPU, so the server doesn't have to convert them. Kept in this browser, for this address.",
     "context": "Description under the 'Play more films in this browser' setting."
   },
   {
