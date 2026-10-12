@@ -17,6 +17,7 @@ const aBrowser = (overrides: Partial<EnginesBrowser> = {}): EnginesBrowser => ({
   canStream: (mimeType) => /mp4a|opus/.test(mimeType),
   canToneMap: () => Promise.resolve(true),
   hasDecoders: () => Promise.resolve(false),
+  canRunWebAssembly: () => true,
   ...overrides,
 });
 
@@ -65,6 +66,22 @@ describe('detectEngineSupport', () => {
 
     expect(support.audioCodecs).not.toContain('truehd');
     expect(support.videoCodecs).toContain('mpeg2');
+  });
+
+  it('leaves Dolby, DTS, TrueHD and MPEG-2 to the server where the page may not compile WebAssembly', async () => {
+    const support = await detectEngineSupport(
+      aBrowser({
+        canRunWebAssembly: () => false,
+        hasDecoders: () => Promise.resolve(true),
+        canStream: (mimeType) => /mp4a|opus|flac/.test(mimeType),
+      }),
+    );
+
+    expect(support.audioCodecs).not.toContain('dts');
+    expect(support.audioCodecs).not.toContain('ac3');
+    expect(support.audioCodecs).not.toContain('truehd');
+    expect(support.audioCodecs).toContain('pcm');
+    expect(support.videoCodecs).not.toContain('mpeg2');
   });
 
   it('claims the pictures WebCodecs decodes and the sounds the element takes or the page decodes', async () => {

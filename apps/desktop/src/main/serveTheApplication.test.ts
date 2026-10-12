@@ -204,7 +204,7 @@ describe('the policy a page is held to', () => {
   });
 
   it('still refuses script from anywhere but this client and the cast sender', () => {
-    expect(POLICY).toContain("script-src 'self' valence://www.gstatic.com;");
+    expect(POLICY).toContain("script-src 'self' 'wasm-unsafe-eval' valence://www.gstatic.com;");
   });
 
   it('frames the video host’s player, which is what a catalogue trailer plays in, and nothing else', () => {

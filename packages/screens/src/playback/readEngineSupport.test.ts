@@ -30,6 +30,32 @@ describe('readEngineSupport', () => {
     expect(isConfigSupported).toHaveBeenCalledTimes(asked);
   });
 
+  it('leaves Dolby and DTS to the server where the page’s policy forbids compiling WebAssembly', async () => {
+    const isConfigSupported = vi.fn(() => Promise.resolve({ supported: true }));
+
+    vi.stubGlobal('isSecureContext', true);
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      gpu: { requestAdapter: () => Promise.resolve({}) },
+    });
+    vi.stubGlobal('VideoDecoder', { isConfigSupported });
+    vi.stubGlobal('AudioDecoder', { isConfigSupported });
+    vi.stubGlobal('AudioEncoder', { isConfigSupported });
+    vi.stubGlobal('MediaSource', { isTypeSupported: () => true });
+    vi.stubGlobal('WebAssembly', {
+      ...WebAssembly,
+      Module: class {
+        constructor() {
+          throw new Error('Refused by the content security policy');
+        }
+      },
+    });
+
+    const { readEngineSupport } = await import('@ValenceScreens/playback/readEngineSupport');
+
+    expect((await readEngineSupport()).audioCodecs).not.toContain('dts');
+  });
+
   it('claims nothing in a browser without WebCodecs', async () => {
     vi.stubGlobal('isSecureContext', true);
     vi.stubGlobal('VideoDecoder', undefined);

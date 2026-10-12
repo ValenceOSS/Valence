@@ -45,7 +45,9 @@ const DECODED_AUDIO = [
   { codec: 'vorbis', config: 'vorbis' },
 ] as const;
 
-const DECODED_IN_THE_PAGE = ['ac3', 'eac3', 'dts', 'pcm'] as const;
+const DECODED_IN_THE_PAGE = ['pcm'] as const;
+
+const DECODED_WITH_WEBASSEMBLY = ['ac3', 'eac3', 'dts'] as const;
 
 const LOSSLESS_AS = 'audio/mp4; codecs="flac"';
 
@@ -93,8 +95,9 @@ const answerOf = async (asking: () => Promise<boolean>): Promise<boolean> => {
  * Source Extensions take it in MP4. A sound counts where the media element takes it
  * repackaged into fragmented MP4 as it is, or where it can be decoded here and handed on — as
  * lossless FLAC wherever the element takes it, Valence bringing its own encoder, or else as Opus
- * where this browser encodes it. AC-3, E-AC-3, DTS and PCM are decoded in the page whatever the
- * browser says, which is how Dolby and DTS play in a browser that has neither of its own, and TrueHD
+ * where this browser encodes it. PCM is decoded in the page whatever the browser says, and AC-3,
+ * E-AC-3 and DTS too wherever the page may compile WebAssembly — a policy from a proxy in front of
+ * the server can forbid it — which is how Dolby and DTS play in a browser that has neither of its own, and TrueHD
  * where Valence's own WebAssembly decoders were built and the element takes FLAC to hand it on in;
  * those decoders also bring MPEG-2 pictures, drawn by the browser's own player. Nothing is claimed without a GPU,
  * a secure page and somewhere to put the sound, since the player needs all three.
@@ -152,12 +155,14 @@ const detectEngineSupport = async (browser: EnginesBrowser): Promise<EngineSuppo
             ),
           )
         ).flat();
-  const hasDecoders = await answerOf(browser.hasDecoders);
+  const runsWebAssembly = browser.canRunWebAssembly();
+  const hasDecoders = runsWebAssembly && (await answerOf(browser.hasDecoders));
   const hasOwnDecoders = canStream(LOSSLESS_AS) && hasDecoders;
   const audioCodecs = [
     ...new Set([
       ...carried,
       ...decoded,
+      ...(canReEncode && runsWebAssembly ? DECODED_WITH_WEBASSEMBLY : []),
       ...(canReEncode ? DECODED_IN_THE_PAGE : []),
       ...(hasOwnDecoders ? DECODED_BY_VALENCE : []),
     ]),

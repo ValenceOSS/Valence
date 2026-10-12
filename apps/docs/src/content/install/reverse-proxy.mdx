@@ -25,6 +25,8 @@ Two more are worth doing:
 - **Allow large request bodies.** Photos and avatars are uploaded whole, and uploading media from the admin page sends files. The default of 1 MB in nginx rejects most of them.
 - **Use long timeouts.** A film is longer than a minute, and so is the socket. Timeouts of an hour are a reasonable choice.
 
+If the proxy adds a `Content-Security-Policy` of its own, its `script-src` must include `'wasm-unsafe-eval'`. The browser's own player decodes DTS, Dolby Digital and TrueHD, and draws styled subtitles, with WebAssembly, and a policy without it stops all of that from loading. Valence then has the server convert those films instead, so nothing visibly breaks, but the server does work the browser could have done.
+
 Also pass the original `Host` and `X-Forwarded-Proto` headers so Valence sees the address the browser used.
 
 ## Settings that must agree

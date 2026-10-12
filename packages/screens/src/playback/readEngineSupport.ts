@@ -5,6 +5,22 @@ import { loadBrowserDecoders } from '@ValenceScreens/playback/engine/loadBrowser
 
 const asked: { answer: Promise<EngineSupport> | null } = { answer: null };
 
+const EMPTY_MODULE = Uint8Array.of(0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00);
+
+/**
+ * Whether this page may compile WebAssembly, which a content security policy without
+ * `'wasm-unsafe-eval'` forbids even where the browser supports it.
+ *
+ * @returns Whether a module compiles.
+ */
+const canRunWebAssembly = (): boolean => {
+  try {
+    return new WebAssembly.Module(EMPTY_MODULE) instanceof WebAssembly.Module;
+  } catch {
+    return false;
+  }
+};
+
 /**
  * What this browser's own player can play, asked of the browser once and remembered for as long as
  * the page lives, since a decoder does not come or go while it is open.
@@ -33,6 +49,7 @@ const readEngineSupport = (): Promise<EngineSupport> => {
         : (mimeType) => MediaSource.isTypeSupported(mimeType),
     canToneMap: checkToneMapping,
     hasDecoders: async () => (await loadBrowserDecoders()) !== null,
+    canRunWebAssembly,
   });
 
   return asked.answer;
