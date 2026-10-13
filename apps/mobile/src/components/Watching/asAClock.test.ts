@@ -32,4 +32,8 @@ describe('asAClock', () => {
   it('manages a film longer than a day, rather than wrapping round', () => {
     expect(asAClock(90000)).toBe('25:00:00');
   });
+
+  it('reads a time it cannot say as the beginning, rather than as NaN', () => {
+    expect(asAClock(Number.NaN)).toBe('0:00');
+  });
 });
