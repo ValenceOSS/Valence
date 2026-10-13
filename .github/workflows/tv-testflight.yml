@@ -76,6 +76,9 @@ jobs:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
 
+      # EAS gives "expo doctor" thirty seconds, then kills it and every process under it. A process
+      # that has already exited by then makes that kill throw, nothing catches it, and the whole
+      # build fails, although the doctor's findings are only ever warnings. It is left out here.
       - name: Build
         working-directory: apps/tv
         run: >
@@ -85,6 +88,7 @@ jobs:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EXPO_TV: '1'
           PROFILE: ${{ inputs.profile }}
+          EAS_BUILD_DISABLE_EXPO_DOCTOR_STEP: '1'
 
       - name: Send to TestFlight
         run: >
