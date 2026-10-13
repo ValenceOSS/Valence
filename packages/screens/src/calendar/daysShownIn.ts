@@ -1,7 +1,7 @@
 import { addDays } from '@ValenceCore/functions/addDays';
 import { monthGridOf } from '@ValenceCore/functions/monthGridOf';
 import { startOfWeek } from '@ValenceCore/functions/startOfWeek';
-import { timelineDaysOf } from '@ValenceScreens/calendar/timelineDaysOf';
+import { timelineDaysOf } from '@ValenceClient/calendar/timelineDaysOf';
 import type { CalendarView } from '@ValenceScreens/calendar/CALENDAR_VIEWS';
 
 const UPCOMING_DAYS = 60;

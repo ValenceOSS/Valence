@@ -1,5 +1,5 @@
 import type { CalendarEntry } from '@ValenceContracts/schemas/ReleaseCalendar';
-import type { CalendarTimelineRow } from '@ValenceScreens/calendar/CalendarTimelineRow';
+import type { CalendarTimelineRow } from '@ValenceClient/calendar/CalendarTimelineRow';
 
 type CalendarTimelineBarProps = {
   row: CalendarTimelineRow;

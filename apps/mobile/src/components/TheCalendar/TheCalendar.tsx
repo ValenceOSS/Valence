@@ -25,7 +25,8 @@ import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { SegmentedRow } from '@ValenceMobile/components/SegmentedRow/SegmentedRow';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { pageInTheLibrary } from '@ValenceMobile/components/SignedIn/pageInTheLibrary';
-import { whatAPhoneAsksFor } from '@ValenceMobile/components/TheSearch/whatAPhoneAsksFor';
+import { ACalendarTimeline } from '@ValenceMobile/components/TheCalendar/components/ACalendarTimeline/ACalendarTimeline';
+import { timelineDaysOf } from '@ValenceClient/calendar/timelineDaysOf';
 import { ACalendarSubscribeSheet } from '@ValenceMobile/components/ACalendarSubscribeSheet/ACalendarSubscribeSheet';
 import { ACalendarDaySheet } from '@ValenceMobile/components/TheCalendar/components/ACalendarDaySheet/ACalendarDaySheet';
 import { ACalendarEntry } from '@ValenceMobile/components/TheCalendar/components/ACalendarEntry/ACalendarEntry';
@@ -57,13 +58,19 @@ const TheCalendar = ({ onOpen, onBack }: TheCalendarProps) => {
   const cache = useQueryClient();
   const colours = useTheColours();
   const today = localDayOf();
-  const [view, setView] = useState<'month' | 'upcoming'>('month');
+  const [view, setView] = useState<'month' | 'timeline' | 'upcoming'>('month');
   const [day, setDay] = useState(today);
   const [isPicking, setIsPicking] = useState(false);
   const [isSubscribing, setIsSubscribing] = useState(false);
   const grid = monthGridOf(day);
-  const from = view === 'month' ? grid[0] : today;
-  const to = view === 'month' ? grid[grid.length - 1] : addDays(today, UPCOMING_DAYS - 1);
+  const weeks = timelineDaysOf(day);
+  const from = view === 'month' ? grid[0] : view === 'timeline' ? weeks[0] : today;
+  const to =
+    view === 'month'
+      ? grid[grid.length - 1]
+      : view === 'timeline'
+        ? weeks[weeks.length - 1]
+        : addDays(today, UPCOMING_DAYS - 1);
   const asked = useQuery(calendarQueries.releases(from ?? today, to ?? today, 'mine'));
   const entries = asked.data ?? [];
   const onTheDay = entries.filter((entry) => entry.date === day);
@@ -77,9 +84,7 @@ const TheCalendar = ({ onOpen, onBack }: TheCalendarProps) => {
         onOpen({ kind: 'title', mediaId: opens.mediaId });
         break;
       case 'asking':
-        if (whatAPhoneAsksFor(opens.requestKind)) {
-          onOpen({ kind: 'asking', about: opens.requestKind, id: opens.catalogueId });
-        }
+        onOpen({ kind: 'asking', about: opens.requestKind, id: opens.catalogueId });
         break;
       case 'show':
         void findAShow(cache, opens.showId)
@@ -112,13 +117,67 @@ const TheCalendar = ({ onOpen, onBack }: TheCalendarProps) => {
         label={say('common.calendarViews')}
         items={[
           { id: 'month', label: say('common.month') },
+          { id: 'timeline', label: say('common.timeline') },
           { id: 'upcoming', label: say('common.upcoming') },
         ]}
         value={view}
         onSelect={(id) => {
-          setView(id === 'upcoming' ? 'upcoming' : 'month');
+          setView(id === 'upcoming' ? 'upcoming' : id === 'timeline' ? 'timeline' : 'month');
         }}
       />
+
+      {view === 'timeline' ? (
+        <View style={styles.month}>
+          <Words size="heading">{nameTheMonth(day)}</Words>
+          <View style={styles.turns}>
+            {day === today ? null : (
+              <Button
+                tone="quiet"
+                onPress={() => {
+                  setDay(today);
+                }}
+              >
+                {say('common.today')}
+              </Button>
+            )}
+            <AGlassCircle
+              of={ChevronLeft}
+              label={say('common.previous')}
+              onPress={() => {
+                setDay(addDays(day, -7));
+              }}
+            />
+            <AGlassCircle
+              of={ChevronRight}
+              label={say('common.next')}
+              onPress={() => {
+                setDay(addDays(day, 7));
+              }}
+            />
+          </View>
+        </View>
+      ) : null}
+
+      {view === 'timeline' ? (
+        <ARising key={`timeline:${day}`}>
+          {asked.isPending ? (
+            <View style={styles.quiet}>
+              <ActivityIndicator color={colours.textMuted} />
+            </View>
+          ) : (
+            <>
+              <ACalendarTimeline day={day} today={today} entries={entries} onOpen={open} />
+              {entries.length === 0 ? (
+                <ANothingHere
+                  of={CalendarIcon}
+                  title={say('common.nothingComesOutOnTheseDays')}
+                  detail={say('common.episodesAndRequestsAppearHere')}
+                />
+              ) : null}
+            </>
+          )}
+        </ARising>
+      ) : null}
 
       {view === 'month' ? (
         <>
@@ -189,7 +248,7 @@ const TheCalendar = ({ onOpen, onBack }: TheCalendarProps) => {
             </AGroup>
           </ARising>
         </>
-      ) : asked.isPending ? (
+      ) : view === 'timeline' ? null : asked.isPending ? (
         <ActivityIndicator color={colours.textMuted} />
       ) : entries.length === 0 ? (
         <ANothingHere

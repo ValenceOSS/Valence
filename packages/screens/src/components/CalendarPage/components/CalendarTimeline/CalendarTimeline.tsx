@@ -7,8 +7,8 @@ import { say } from '@ValenceI18n/say';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { cn } from '@ValenceUI/cn';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
-import { timelineDaysOf } from '@ValenceScreens/calendar/timelineDaysOf';
-import { timelineRowsOf } from '@ValenceScreens/calendar/timelineRowsOf';
+import { timelineDaysOf } from '@ValenceClient/calendar/timelineDaysOf';
+import { timelineRowsOf } from '@ValenceClient/calendar/timelineRowsOf';
 import { CalendarTimelineBar } from '@ValenceScreens/components/CalendarPage/components/CalendarTimelineBar/CalendarTimelineBar';
 import type { CalendarTimelineProps } from './CalendarTimeline.types';
 

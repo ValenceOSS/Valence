@@ -1,6 +1,6 @@
 import type { CalendarEntry } from '@ValenceContracts/schemas/ReleaseCalendar';
-import { timelineRowKeyOf } from '@ValenceScreens/calendar/timelineRowKeyOf';
-import type { CalendarTimelineRow } from '@ValenceScreens/calendar/CalendarTimelineRow';
+import { timelineRowKeyOf } from '@ValenceClient/calendar/timelineRowKeyOf';
+import type { CalendarTimelineRow } from '@ValenceClient/calendar/CalendarTimelineRow';
 
 /**
  * The rows of the calendar's timeline: one for each show or film, running from its first release
