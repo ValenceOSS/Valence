@@ -1,6 +1,11 @@
+import type { AGlyph } from '@ValenceMobile/components/Icon/Icon.types';
+
+type ABadgeTone = 'plain' | 'solid' | 'accent' | 'success' | 'busy' | 'danger' | 'quiet';
+
 type ABadgeProps = {
   children: string;
-  tone?: 'plain' | 'solid' | 'accent';
+  tone?: ABadgeTone;
+  icon?: AGlyph;
 };
 
-export type { ABadgeProps };
+export type { ABadgeProps, ABadgeTone };

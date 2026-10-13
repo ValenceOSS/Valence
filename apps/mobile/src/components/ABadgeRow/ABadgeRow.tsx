@@ -16,7 +16,11 @@ const ABadgeRow = ({ badges }: ABadgeRowProps) =>
   badges.length === 0 ? null : (
     <View style={styles.row}>
       {badges.map((badge) => (
-        <ABadge key={badge.label} {...(badge.tone === undefined ? {} : { tone: badge.tone })}>
+        <ABadge
+          key={badge.label}
+          {...(badge.tone === undefined ? {} : { tone: badge.tone })}
+          {...(badge.icon === undefined ? {} : { icon: badge.icon })}
+        >
           {badge.label}
         </ABadge>
       ))}

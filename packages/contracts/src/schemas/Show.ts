@@ -47,6 +47,8 @@ const ShowDetailSchema = ShowSummarySchema.extend({
   shape: z.array(SeasonShapeSchema).nullish(),
   extras: z.array(MediaSummarySchema).optional(),
   trailerKey: z.string().nullish(),
+  certification: z.string().nullish(),
+  certificationRegion: z.string().nullish(),
   status: z.string().nullish(),
   overview: z.string().nullish(),
   nextEpisode: NextEpisodeSchema.nullish(),

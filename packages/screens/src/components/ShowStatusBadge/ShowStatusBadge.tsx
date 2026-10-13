@@ -7,27 +7,17 @@ import {
 } from '@keyline-icons/react/fill';
 import { Badge } from '@ValenceUI/Badge';
 import { cn } from '@ValenceUI/cn';
-import { say } from '@ValenceI18n/say';
-import type { BadgeTone } from '@ValenceUI/Badge.types';
+import { describeShowStatus } from '@ValenceClient/library/describeShowStatus';
+import type { ShowStatusKind } from '@ValenceClient/library/describeShowStatus';
 import type { IconGlyph } from '@ValenceUI/Icon.types';
 import type { ShowStatusBadgeProps } from './ShowStatusBadge.types';
 
-const LOOKS: Readonly<Record<string, { label: string; tone: BadgeTone; icon: IconGlyph }>> = {
-  'returning series': {
-    label: say('screens.showStatusBadge.returning'),
-    tone: 'success',
-    icon: RefreshCwIcon,
-  },
-  'in production': {
-    label: say('screens.showStatusBadge.inProduction'),
-    tone: 'busy',
-    icon: ClockIcon,
-  },
-  planned: { label: say('screens.showStatusBadge.planned'), tone: 'accent', icon: CalendarIcon },
-  pilot: { label: say('screens.showStatusBadge.pilot'), tone: 'accent', icon: CalendarIcon },
-  ended: { label: say('screens.showStatusBadge.ended'), tone: 'quiet', icon: CircleCheckIcon },
-  canceled: { label: say('screens.showStatusBadge.cancelled'), tone: 'danger', icon: CircleXIcon },
-  cancelled: { label: say('screens.showStatusBadge.cancelled'), tone: 'danger', icon: CircleXIcon },
+const ICONS: Readonly<Record<ShowStatusKind, IconGlyph>> = {
+  returning: RefreshCwIcon,
+  production: ClockIcon,
+  planned: CalendarIcon,
+  ended: CircleCheckIcon,
+  cancelled: CircleXIcon,
 };
 
 /**
@@ -39,16 +29,16 @@ const LOOKS: Readonly<Record<string, { label: string; tone: BadgeTone; icon: Ico
  * @param className - Extra classes for the caller's own layout.
  */
 const ShowStatusBadge = ({ status, className }: ShowStatusBadgeProps) => {
-  const look = LOOKS[status.trim().toLowerCase()];
+  const look = describeShowStatus(status);
 
   return (
     <Badge
       size="sm"
       tone={look?.tone ?? 'quiet'}
-      {...(look === undefined ? {} : { icon: look.icon })}
+      {...(look === null ? {} : { icon: ICONS[look.kind] })}
       className={cn(
         'bg-shade/60 backdrop-blur-md',
-        look?.tone === 'quiet' || look === undefined ? 'text-on-scrim/90' : '',
+        look?.tone === 'quiet' || look === null ? 'text-on-scrim/90' : '',
         className,
       )}
     >

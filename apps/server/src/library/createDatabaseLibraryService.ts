@@ -2784,15 +2784,25 @@ const createDatabaseLibraryService = ({
       const extras = await extrasOfShow(viewer, libraryId, detail);
 
       const [cover] = await db
-        .select({ trailerKey: mediaItem.trailerKey, externalId: mediaItem.externalId })
+        .select({
+          trailerKey: mediaItem.trailerKey,
+          externalId: mediaItem.externalId,
+          certifications: mediaItem.certifications,
+        })
         .from(mediaItem)
         .where(eq(mediaItem.id, detail.coverMediaId))
         .limit(1);
       const externalId = cover?.externalId ?? '';
+      const region = (await certificationRegion()).trim().toUpperCase();
 
       const whole = {
         ...detail,
         extras,
+        certification:
+          readStoredCertifications(JsonValueSchema.parse(cover?.certifications ?? null))?.[
+            region
+          ] ?? null,
+        certificationRegion: region,
         trailerKey: cover?.trailerKey ?? null,
         tmdbId: /^\d+$/.test(externalId) ? Number(externalId) : null,
       };

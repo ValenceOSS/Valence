@@ -10,6 +10,11 @@ import {
 import {
   CircleCheck as CircleCheckFilled,
   Play as PlayFilled,
+  Calendar as StatusCalendar,
+  CircleCheck as StatusEnded,
+  CircleX as StatusCancelled,
+  Clock as StatusClock,
+  RefreshCw as StatusReturning,
 } from '@keyline-icons/react-native/fill';
 import { isWatchedThrough } from '@ValenceClient/library/isWatchedThrough';
 import { markWatched } from '@ValenceClient/playback/markWatched';
@@ -55,7 +60,20 @@ import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
 import { sayCount } from '@ValenceI18n/sayCount';
 import { ABadgeRow } from '@ValenceMobile/components/ABadgeRow/ABadgeRow';
+import { TheBadges } from '@ValenceMobile/components/TheBadges/TheBadges';
+import { qualityBadges } from '@ValenceClient/library/qualityBadges';
+import { describeShowStatus } from '@ValenceClient/library/describeShowStatus';
+import type { ShowStatusKind } from '@ValenceClient/library/describeShowStatus';
+import type { AGlyph } from '@ValenceMobile/components/Icon/Icon.types';
 import { AChoiceMenu } from '@ValenceMobile/components/AChoiceMenu/AChoiceMenu';
+
+const STATUS_ICONS: Readonly<Record<ShowStatusKind, AGlyph>> = {
+  returning: StatusReturning,
+  production: StatusClock,
+  planned: StatusCalendar,
+  ended: StatusEnded,
+  cancelled: StatusCancelled,
+};
 
 const OTHER = 'other';
 
@@ -214,11 +232,20 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack, onRequestMore }: 
     sayCount('common.count.seasons', show.seasonCount),
     show.rating === null || show.rating === undefined ? null : `★ ${show.rating.toFixed(1)}`,
   ].filter((fact) => fact !== null);
+  const status =
+    show.status === null || show.status === undefined ? null : describeShowStatus(show.status);
+  const sharpest = held.reduce<(typeof held)[number] | null>(
+    (best, episode) =>
+      best === null || episode.width * episode.height > best.width * best.height ? episode : best,
+    null,
+  );
   const badges = [
     ...(isSeenThrough ? [{ label: say('common.watched'), tone: 'accent' as const }] : []),
-    ...(show.status === null || show.status === undefined || show.status === ''
-      ? []
-      : [{ label: show.status }]),
+    ...(status === null
+      ? show.status === null || show.status === undefined || show.status === ''
+        ? []
+        : [{ label: show.status, tone: 'quiet' as const }]
+      : [{ label: status.label, tone: status.tone, icon: STATUS_ICONS[status.kind] }]),
     ...(show.genres ?? []).slice(0, 3).map((genre) => ({ label: genre, tone: 'solid' as const })),
   ];
 
@@ -237,6 +264,19 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack, onRequestMore }: 
       }
     >
       <Words tone="muted">{facts.join(' · ')}</Words>
+
+      <TheBadges
+        badges={
+          sharpest === null ? [] : qualityBadges({ ...sharpest, videoRange: sharpest.videoRange })
+        }
+        rating={
+          typeof show.certification === 'string' &&
+          show.certification !== '' &&
+          typeof show.certificationRegion === 'string'
+            ? { certification: show.certification, region: show.certificationRegion }
+            : null
+        }
+      />
 
       <ABadgeRow badges={badges} />
 
