@@ -39,6 +39,7 @@ import { serveHidden } from '@ValenceServer/api/serveHidden';
 import { serveShare } from '@ValenceServer/api/serveShare';
 import { serveRating } from '@ValenceServer/api/serveRating';
 import { serveSegment } from '@ValenceServer/api/serveSegment';
+import { servePreRoll } from '@ValenceServer/api/servePreRoll';
 import { serveBook } from '@ValenceServer/api/serveBook';
 import { serveCollections } from '@ValenceServer/api/serveCollections';
 import { serveImage } from '@ValenceServer/api/serveImage';
@@ -76,6 +77,7 @@ const createApp = (options: CreateAppOptions) => {
   serveAdmin(app, context);
   serveHealth(app, context);
   servePlayback(app, context);
+  servePreRoll(app, context);
   serveDownloads(app, context);
   serveApiKey(app, context);
   serveWebhook(app, context);

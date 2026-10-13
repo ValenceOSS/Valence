@@ -2093,6 +2093,7 @@ const ENGLISH = {
   'error.plugins.thePluginCouldNotHandleThat': 'The plugin couldn’t handle that message.',
   'error.plugins.thereIsNoSuchPluginOr': 'No such plugin, or it’s turned off.',
   'error.plugins.tooManyMessagesTryAgainIn': 'Too many messages. Try again in a minute.',
+  'error.preRoll.noSuchClip': 'That clip isn’t in the pre-roll folder.',
   'error.profile.noSuchProfileOrItIs': 'No such profile, or it’s the only one left.',
   'error.profile.sayWhichOrderToPut': 'Say which order to put the profiles in.',
   'error.profile.thatAddressAlreadyHasAnAccount': 'That email address already has an account.',
@@ -4252,6 +4253,25 @@ const ENGLISH = {
   'screens.adminArea.pluginsPanel.turnedNameOn': 'Turned {name} on.',
   'screens.adminArea.pluginsPanel.versionComesBackWithWhat':
     'Rolls the plugin back to {version} and restores the data it had saved before the upgrade. Anything it saved after the upgrade is deleted.',
+  'screens.adminArea.preRollCard.aShortClipPlaysFirst':
+    'Play a short clip before a film or episode starts from the beginning, such as your own intro or a cinema ident. One is chosen at random each time, and anyone watching can skip it. Nothing plays when someone resumes partway through or joins a watch party.',
+  'screens.adminArea.preRollCard.clipsFolder': 'Clips folder',
+  'screens.adminArea.preRollCard.countClips.one': '{count} clip found',
+  'screens.adminArea.preRollCard.countClips.other': '{count} clips found',
+  'screens.adminArea.preRollCard.everyAppPlaysTheClip':
+    'Every app plays the clip before the title, then carries on as normal.',
+  'screens.adminArea.preRollCard.filmsAndEpisodes': 'Both',
+  'screens.adminArea.preRollCard.mp4OrMovFiles':
+    "MP4, M4V or MOV files in a folder on the machine running Valence. They're sent as they are, so every app can play them without converting.",
+  'screens.adminArea.preRollCard.noClipsInThatFolder':
+    'There are no MP4, M4V or MOV files in that folder.',
+  'screens.adminArea.preRollCard.playAClipFirst': 'Play a clip first',
+  'screens.adminArea.preRollCard.playsBefore': 'Plays before',
+  'screens.adminArea.preRollCard.preRoll': 'Pre-roll',
+  'screens.adminArea.preRollCard.readingThePreRollSettings': 'Loading the pre-roll settings',
+  'screens.adminArea.preRollCard.savedThePreRollSettings': 'Pre-roll settings saved',
+  'screens.adminArea.preRollCard.thePreRollSettingsCouldNotBe':
+    'Couldn’t load the pre-roll settings.',
   'screens.adminArea.preTranscodingCard.aCopyIsMadeAtEveryRung':
     'A copy is made at every rung the original stands above, so each film has one for a slow connection as well as a fast one. H.264 in MP4 plays directly on the most devices, and a copy is never larger than its original. Leave the ceiling empty to use the limit for that resolution.',
   'screens.adminArea.preTranscodingCard.addARung': 'Add a rung',
@@ -6153,6 +6173,7 @@ const ENGLISH = {
   'screens.pluginSurfaceView.askingThePlugin': 'Loading plugin',
   'screens.pluginSurfaceView.itMayBeTurnedOffOr': 'It may be disabled or still starting.',
   'screens.pluginSurfaceView.thisPluginCouldNotDrawIts': 'This plugin couldn’t load its page',
+  'screens.preRoll.skip': 'Skip',
   'screens.previewMomentPicker.backToAutomatic': 'Reset to automatic',
   'screens.previewMomentPicker.previewMomentForTitle': 'Preview moment for {title}',
   'screens.previewMomentPicker.putThePreviewBackToAutomatic': 'Reset the preview to automatic.',

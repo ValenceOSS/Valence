@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { SplashScreen } from '@ValenceUI/SplashScreen';
 import { VideoPlayer } from '@ValenceScreens/components/VideoPlayer/VideoPlayer';
+import { PreRoll } from '@ValenceScreens/components/PreRoll/PreRoll';
+import { usePreRoll } from '@ValenceClient/playback/usePreRoll';
 import { PartyMenu } from '@ValenceScreens/components/PartyMenu/PartyMenu';
 import { PartyPasswordDialog } from '@ValenceScreens/components/PartyPasswordDialog/PartyPasswordDialog';
 import { useWhereToBegin } from '@ValenceClient/party/useWhereToBegin';
@@ -23,7 +25,9 @@ import { say } from '@ValenceI18n/say';
 const PROGRESS_EVERY_SECONDS = 5;
 
 /**
- * The player, filling the screen, and the watch party that may be watching along with it.
+ * The player, filling the screen, and the watch party that may be watching along with it. A
+ * pre-roll clip plays first where the server has one, before the title it was opened on, from the
+ * beginning and outside a watch party.
  */
 const WatchPage = () => {
   useQuietMusic();
@@ -51,6 +55,7 @@ const WatchPage = () => {
   const carriedOnToRef = useRef<string | null>(null);
 
   const playing = place.playing === null ? null : (known.get(place.playing) ?? null);
+  const [openedOn] = useState(place.playing);
   const seasonMates = useSeasonMates(playing, [...known.values()]);
   const showEpisodes = useShowEpisodes(playing, [...known.values()]);
   const season =
@@ -99,6 +104,16 @@ const WatchPage = () => {
     isReady: isProgressReady || (playing !== null && startOverride?.mediaId === playing.id),
   });
 
+  const preRoll = usePreRoll(
+    playing?.id ?? null,
+    playing !== null &&
+      playing.id === openedOn &&
+      beginning.kind !== 'wait' &&
+      beginning.atSeconds === 0 &&
+      filmParty === null &&
+      place.party === null,
+  );
+
   if (playing === null) {
     return <SplashScreen name={title} label={say('common.loadingTitle', { title })} />;
   }
@@ -109,6 +124,22 @@ const WatchPage = () => {
 
   if (beginning.kind === 'wait') {
     return <SplashScreen name={title} label={say('common.joiningTheWatchParty')} />;
+  }
+
+  if (preRoll.kind === 'asking') {
+    return <SplashScreen name={title} label={say('common.loadingTitle', { title })} />;
+  }
+
+  if (preRoll.kind === 'clip') {
+    return (
+      <main className="valence-below-the-bar z-40 flex flex-col bg-shade">
+        <PreRoll
+          address={preRoll.address}
+          label={say('common.loadingTitle', { title: playing.title })}
+          onDone={preRoll.onDone}
+        />
+      </main>
+    );
   }
 
   return (

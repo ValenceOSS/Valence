@@ -8,6 +8,7 @@ import { TabPanel } from '@ValenceUI/TabPanel';
 import { SettingsPanel } from './components/SettingsPanel/SettingsPanel';
 import { EmailCard } from './components/EmailCard/EmailCard';
 import { LiveTvPanel } from '@ValenceScreens/components/AdminArea/components/LiveTvPanel/LiveTvPanel';
+import { PreRollCard } from '@ValenceScreens/components/AdminArea/components/PreRollCard/PreRollCard';
 import { SubtitlesCard } from '@ValenceScreens/components/AdminArea/components/SubtitlesCard/SubtitlesCard';
 import { WatchHistoryCard } from '@ValenceScreens/components/AdminArea/components/WatchHistoryCard/WatchHistoryCard';
 import { ActivityPanel } from './components/ActivityPanel/ActivityPanel';
@@ -1330,6 +1331,8 @@ const AdminArea = ({
                   void cache.invalidateQueries({ queryKey: sessionQueries.wayIn().queryKey });
                 }}
               />
+
+              <PreRollCard />
             </div>
           </TabPanel>
 

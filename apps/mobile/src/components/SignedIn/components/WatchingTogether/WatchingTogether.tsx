@@ -1,13 +1,21 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import { useWhereToBegin } from '@ValenceClient/party/useWhereToBegin';
+import { usePreRoll } from '@ValenceClient/playback/usePreRoll';
+import { APreRoll } from '@ValenceMobile/components/APreRoll/APreRoll';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { Watching } from '@ValenceMobile/components/Watching/Watching';
+import { PLAYER_LOOK } from '@ValenceMobile/components/Watching/PLAYER_LOOK';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { WatchingTogetherProps } from './WatchingTogether.types';
 import { say } from '@ValenceI18n/say';
 import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
+
+const styles = StyleSheet.create({
+  asking: { alignItems: 'center', backgroundColor: '#000000', flex: 1, justifyContent: 'center' },
+});
 
 /**
  * The player, for somebody who may be arriving into a watch party: the party they were invited to
@@ -15,7 +23,8 @@ import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
  * everybody else has got to rather than where this account last left it. Stopping watching leaves
  * the party, as closing the web's player does, including one still being joined. Moving on to
  * another title while in a watch party, such as the next episode, leaves it too, since nobody can
- * watch two things with one room.
+ * watch two things with one room. A pre-roll clip plays first where the server has one, before
+ * the title this was opened on, from the beginning and outside a watch party.
  *
  * @param watchParty - The party this phone holds.
  * @param invitedTo - The party they were invited to, or nothing.
@@ -48,6 +57,15 @@ const WatchingTogether = ({
     resumeSeconds: startSeconds,
     isReady: true,
   });
+  const [openedOn] = useState(mediaId);
+  const preRoll = usePreRoll(
+    mediaId,
+    mediaId === openedOn &&
+      beginning.kind !== 'wait' &&
+      beginning.atSeconds === 0 &&
+      invitedTo === null &&
+      partyMediaId === null,
+  );
   const stop = () => {
     if (invitedTo !== null || watchParty.party?.kind === 'watch') {
       watchParty.leave();
@@ -63,6 +81,18 @@ const WatchingTogether = ({
         <Words tone="muted">{say('common.joiningTheWatchParty')}</Words>
       </Screen>
     );
+  }
+
+  if (preRoll.kind === 'asking') {
+    return (
+      <View style={styles.asking}>
+        <ASpinner colour="#ffffff" size={PLAYER_LOOK.middle} />
+      </View>
+    );
+  }
+
+  if (preRoll.kind === 'clip') {
+    return <APreRoll address={preRoll.address} onDone={preRoll.onDone} />;
   }
 
   return (

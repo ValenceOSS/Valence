@@ -8945,6 +8945,11 @@
     "context": "An error the server answers with (HTTP 429) in the app on the server (from `servePlugins`)."
   },
   {
+    "handler": "error.preRoll.noSuchClip",
+    "text": "That clip isn’t in the pre-roll folder.",
+    "context": "Refusal when a player asks for a pre-roll clip, played before a film or episode, that is no longer in the folder the administrator chose."
+  },
+  {
     "handler": "error.profile.noSuchProfileOrItIs",
     "text": "No such profile, or it’s the only one left.",
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveProfile`)."
@@ -16920,6 +16925,76 @@
     "context": "The detail of the dialog confirming a plugin is rolled back to its earlier version, in the admin's plugins panel. {version} is the earlier version's number, such as 1.2.0."
   },
   {
+    "handler": "screens.adminArea.preRollCard.aShortClipPlaysFirst",
+    "text": "Play a short clip before a film or episode starts from the beginning, such as your own intro or a cinema ident. One is chosen at random each time, and anyone watching can skip it. Nothing plays when someone resumes partway through or joins a watch party.",
+    "context": "The pre-roll card in the admin area: a short clip the server plays before a film or episode, like a cinema's ident. What it does, under the title."
+  },
+  {
+    "handler": "screens.adminArea.preRollCard.clipsFolder",
+    "text": "Clips folder",
+    "context": "The pre-roll card in the admin area: a short clip the server plays before a film or episode, like a cinema's ident. The folder on the server the clips are kept in."
+  },
+  {
+    "handler": "screens.adminArea.preRollCard.countClips.one",
+    "text": "{count} clip found",
+    "context": "The pre-roll card in the admin area: a short clip the server plays before a film or episode, like a cinema's ident. How many clips the folder holds, one."
+  },
+  {
+    "handler": "screens.adminArea.preRollCard.countClips.other",
+    "text": "{count} clips found",
+    "context": "The pre-roll card in the admin area: a short clip the server plays before a film or episode, like a cinema's ident. How many clips the folder holds."
+  },
+  {
+    "handler": "screens.adminArea.preRollCard.everyAppPlaysTheClip",
+    "text": "Every app plays the clip before the title, then carries on as normal.",
+    "context": "The pre-roll card in the admin area: a short clip the server plays before a film or episode, like a cinema's ident. Under the switch."
+  },
+  {
+    "handler": "screens.adminArea.preRollCard.filmsAndEpisodes",
+    "text": "Both",
+    "context": "The pre-roll card in the admin area: a short clip the server plays before a film or episode, like a cinema's ident. The choice that plays a clip before films and episodes alike."
+  },
+  {
+    "handler": "screens.adminArea.preRollCard.mp4OrMovFiles",
+    "text": "MP4, M4V or MOV files in a folder on the machine running Valence. They're sent as they are, so every app can play them without converting.",
+    "context": "The pre-roll card in the admin area: a short clip the server plays before a film or episode, like a cinema's ident. Under the folder field."
+  },
+  {
+    "handler": "screens.adminArea.preRollCard.noClipsInThatFolder",
+    "text": "There are no MP4, M4V or MOV files in that folder.",
+    "context": "The pre-roll card in the admin area: a short clip the server plays before a film or episode, like a cinema's ident. Shown when the folder holds none."
+  },
+  {
+    "handler": "screens.adminArea.preRollCard.playAClipFirst",
+    "text": "Play a clip first",
+    "context": "The pre-roll card in the admin area: a short clip the server plays before a film or episode, like a cinema's ident. The switch that turns it on."
+  },
+  {
+    "handler": "screens.adminArea.preRollCard.playsBefore",
+    "text": "Plays before",
+    "context": "The pre-roll card in the admin area: a short clip the server plays before a film or episode, like a cinema's ident. A choice of films, episodes or both."
+  },
+  {
+    "handler": "screens.adminArea.preRollCard.preRoll",
+    "text": "Pre-roll",
+    "context": "The pre-roll card in the admin area: a short clip the server plays before a film or episode, like a cinema's ident. Its title."
+  },
+  {
+    "handler": "screens.adminArea.preRollCard.readingThePreRollSettings",
+    "text": "Loading the pre-roll settings",
+    "context": "The pre-roll card in the admin area: a short clip the server plays before a film or episode, like a cinema's ident. Read out while they load."
+  },
+  {
+    "handler": "screens.adminArea.preRollCard.savedThePreRollSettings",
+    "text": "Pre-roll settings saved",
+    "context": "The pre-roll card in the admin area: a short clip the server plays before a film or episode, like a cinema's ident. Toast after saving."
+  },
+  {
+    "handler": "screens.adminArea.preRollCard.thePreRollSettingsCouldNotBe",
+    "text": "Couldn’t load the pre-roll settings.",
+    "context": "The pre-roll card in the admin area: a short clip the server plays before a film or episode, like a cinema's ident. When they could not be read."
+  },
+  {
     "handler": "screens.adminArea.preTranscodingCard.aCopyIsMadeAtEveryRung",
     "text": "A copy is made at every rung the original stands above, so each film has one for a slow connection as well as a fast one. H.264 in MP4 plays directly on the most devices, and a copy is never larger than its original. Leave the ceiling empty to use the limit for that resolution.",
     "context": "Shown in the pre-transcoding card in the encoding section of the admin area."
@@ -24464,6 +24539,11 @@
     "handler": "screens.pluginSurfaceView.thisPluginCouldNotDrawIts",
     "text": "This plugin couldn’t load its page",
     "context": "The title of a callout in the plugin surface view."
+  },
+  {
+    "handler": "screens.preRoll.skip",
+    "text": "Skip",
+    "context": "The button on a pre-roll clip, played before a film or episode, that skips straight to the title."
   },
   {
     "handler": "screens.previewMomentPicker.backToAutomatic",
