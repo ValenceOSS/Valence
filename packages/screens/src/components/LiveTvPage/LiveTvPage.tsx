@@ -1,30 +1,33 @@
 import { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { ScopedField } from '@ValenceUI/ScopedField';
 import { Spinner } from '@ValenceUI/Spinner';
 import { notify } from '@ValenceUI/notify';
-import { keepLiveChannel } from '@ValenceClient/live/keepLiveChannel';
+import { useKeepLiveChannel } from '@ValenceClient/live/useKeepLiveChannel';
+import { narrowLiveChannels } from '@ValenceClient/live/narrowLiveChannels';
+import { onNowAndNext } from '@ValenceClient/live/onNowAndNext';
+import { LIVE_SHOWING } from '@ValenceClient/live/LIVE_SHOWING';
 import { useLiveWindow } from '@ValenceClient/live/useLiveWindow';
 import { liveQueries } from '@ValenceClient/query/liveQueries';
 import { LiveGuideGrid } from '@ValenceScreens/components/LiveTvPage/components/LiveGuideGrid/LiveGuideGrid';
 import { LivePlayer } from '@ValenceScreens/components/LiveTvPage/components/LivePlayer/LivePlayer';
 import { readLastChannel, saveLastChannel } from '@ValenceScreens/live/lastChannelPreference';
 import { groupsOf } from '@ValenceClient/live/groupsOf';
-import { channelTagsOf } from '@ValenceClient/live/channelTagsOf';
-import { fuzzyScore } from '@ValenceCore/functions/fuzzyScore';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { LiveChannelTable } from '@ValenceScreens/components/LiveTvPage/components/LiveChannelTable/LiveChannelTable';
 import { readLiveView, saveLiveView } from '@ValenceScreens/live/liveViewPreference';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { say } from '@ValenceI18n/say';
-import type { LiveChannel, LiveGuide } from '@ValenceContracts/schemas/LiveTv';
 
-const ALL = 'all';
+const { all: ALL, favourites: FAVOURITES, onAir: ON_AIR } = LIVE_SHOWING;
 
-const FAVOURITES = 'favourites';
-
-const ON_AIR = 'onAir';
+/**
+ * Says a channel could not be kept as a favourite.
+ */
+const failedToKeep = () => {
+  notify.failed(say('screens.liveTvPage.thatCouldNotBeKept'));
+};
 
 /**
  * Live TV: the channel playing at the top, with what is on it and what is next, and below it every
@@ -35,12 +38,11 @@ const ON_AIR = 'onAir';
  * device plays to begin with, or else the first favourite, or else the first channel.
  */
 const LiveTvPage = () => {
-  const cache = useQueryClient();
   const { from, until, now } = useLiveWindow();
   const query = liveQueries.guide(new Date(from).toISOString(), new Date(until).toISOString());
   const guide = useQuery(query);
   const [chosenId, setChosenId] = useState<string | null>(readLastChannel);
-  const [showing, setShowing] = useState(ALL);
+  const [showing, setShowing] = useState<string>(ALL);
   const [search, setSearch] = useState('');
   const [view, setView] = useState(readLiveView);
 
@@ -53,66 +55,9 @@ const LiveTvPage = () => {
   const groups = [...new Set(channels.flatMap((channel) => groupsOf(channel.group)))].sort(
     (left, right) => left.localeCompare(right),
   );
-  const searched = search.trim().toLowerCase();
-  const narrowed = channels.filter(
-    (channel) =>
-      showing === ALL ||
-      (showing === ON_AIR && channel.health === 'onAir') ||
-      (showing === FAVOURITES ? channel.isFavourite : groupsOf(channel.group).includes(showing)),
-  );
-  const shown =
-    searched === ''
-      ? narrowed
-      : narrowed
-          .map((channel, at) => ({
-            channel,
-            at,
-            score:
-              channel.number === searched
-                ? Number.POSITIVE_INFINITY
-                : fuzzyScore(
-                    searched,
-                    `${channelTagsOf(channel.name).name} ${groupsOf(channel.group).join(' ')}`,
-                  ),
-          }))
-          .filter(
-            (found): found is { channel: LiveChannel; at: number; score: number } =>
-              found.score !== null,
-          )
-          .sort((left, right) => right.score - left.score || left.at - right.at)
-          .map((found) => found.channel);
-  const programmesOf = (channel: LiveChannel | null) =>
-    channel === null
-      ? []
-      : (guide.data?.programmes ?? []).filter((programme) => programme.channelId === channel.id);
-  const onChosen = programmesOf(chosen);
-  const onNow =
-    onChosen.find(
-      (programme) => Date.parse(programme.startsAt) <= now && now < Date.parse(programme.endsAt),
-    ) ?? null;
-  const upNext = onChosen.find((programme) => Date.parse(programme.startsAt) > now) ?? null;
-
-  const toggleFavourite = (channel: LiveChannel) => {
-    const isKept = !channel.isFavourite;
-
-    cache.setQueryData(query.queryKey, (was: LiveGuide | undefined) =>
-      was === undefined
-        ? was
-        : {
-            ...was,
-            channels: was.channels.map((one) =>
-              one.id === channel.id ? { ...one, isFavourite: isKept } : one,
-            ),
-          },
-    );
-
-    void keepLiveChannel(channel.id, isKept).then((isDone) => {
-      if (!isDone) {
-        notify.failed(say('screens.liveTvPage.thatCouldNotBeKept'));
-        void cache.invalidateQueries({ queryKey: liveQueries.key });
-      }
-    });
-  };
+  const shown = narrowLiveChannels(channels, showing, search);
+  const { onNow, upNext } = onNowAndNext(guide.data?.programmes ?? [], chosen?.id ?? null, now);
+  const toggleFavourite = useKeepLiveChannel(query.queryKey, failedToKeep);
 
   if (guide.isError) {
     return (

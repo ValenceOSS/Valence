@@ -9760,6 +9760,16 @@
     "context": "Shown on the CarPlay screen in place of the music tabs when the server the phone is signed in to has no music library."
   },
   {
+    "handler": "phone.liveTv.nextChannel",
+    "text": "Next channel",
+    "context": "The down button down the side of the phone's live TV player, which moves to the channel after in the list."
+  },
+  {
+    "handler": "phone.liveTv.previousChannel",
+    "text": "Previous channel",
+    "context": "The up button down the side of the phone's live TV player, which moves to the channel before in the list."
+  },
+  {
     "handler": "phone.platform.describeThisPhone.anEmulator",
     "text": "Emulator",
     "context": "The name an Android emulator is given in the sessions list on the admin page, in place of the build code it reports for a model."

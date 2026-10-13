@@ -6,6 +6,7 @@ import {
   Film as FilmFilled,
   Home as HomeFilled,
   MusicNote as MusicNoteFilled,
+  Broadcast as BroadcastFilled,
   Tv as TvFilled,
 } from '@keyline-icons/react-native/fill';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -32,6 +33,9 @@ import { AGlassCircle } from '@ValenceMobile/components/AGlassCircle/AGlassCircl
 import { AMoodBackground } from '@ValenceMobile/components/AMoodBackground/AMoodBackground';
 import { TheSearchBox } from '@ValenceMobile/components/TheSearch/components/TheSearchBox/TheSearchBox';
 import { TheBell } from '@ValenceMobile/components/TheBell/TheBell';
+import { TheLiveTv } from '@ValenceMobile/components/TheLiveTv/TheLiveTv';
+import { useLiveWindow } from '@ValenceClient/live/useLiveWindow';
+import { liveQueries } from '@ValenceClient/query/liveQueries';
 import { ACarriedMark } from '@ValenceMobile/components/ACarriedMark/ACarriedMark';
 import { TheFilters } from '@ValenceMobile/components/TheLibrary/components/TheFilters/TheFilters';
 import { TheHome } from '@ValenceMobile/components/TheLibrary/components/TheHome/TheHome';
@@ -336,7 +340,15 @@ const TheLibrary = ({
     };
   }, [libraries.data]);
   const stock = useStockedKinds();
-  const drawsItsOwn = part === 'home' || part === 'music' || part === 'books';
+  const liveWindow = useLiveWindow();
+  const live = useQuery(
+    liveQueries.guide(
+      new Date(liveWindow.from).toISOString(),
+      new Date(liveWindow.until).toISOString(),
+    ),
+  );
+  const hasLiveTv = (live.data?.channels.length ?? 0) > 0;
+  const drawsItsOwn = part === 'home' || part === 'music' || part === 'books' || part === 'live';
   const ofThisKind = useMemo(
     () => (part === 'films' ? films : part === 'shows' ? programmes : NO_LIBRARIES),
     [part, films, programmes],
@@ -353,6 +365,7 @@ const TheLibrary = ({
     ...(programmes.length > 0 && stock?.shows !== false
       ? [{ id: 'shows', label: say('common.shows'), icon: TvFilled }]
       : []),
+    ...(hasLiveTv ? [{ id: 'live', label: say('common.liveTv'), icon: BroadcastFilled }] : []),
     ...(hasMusic && stock?.music !== false
       ? [{ id: 'music', label: say('common.music'), icon: MusicNoteFilled }]
       : []),
@@ -744,7 +757,9 @@ const TheLibrary = ({
         style={[StyleSheet.absoluteFill, { transform: [{ translateX: slides.home }] }]}
       >
         {home}
-        {part === 'home' ? null : part === 'books' ? (
+        {part === 'home' ? null : part === 'live' ? (
+          <TheLiveTv header={header} onScrolled={partScrolled} />
+        ) : part === 'books' ? (
           <TheBooks
             header={header}
             libraryIds={bookLibraries}

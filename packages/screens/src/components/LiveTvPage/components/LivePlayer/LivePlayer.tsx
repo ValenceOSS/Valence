@@ -9,6 +9,7 @@ import { VideoSurface } from '@ValenceUI/VideoSurface';
 import { cn } from '@ValenceUI/cn';
 import { DEFAULT_CAPTION_STYLE } from '@ValenceClient/playback/captionStyle';
 import { watchLiveChannel } from '@ValenceClient/live/watchLiveChannel';
+import { liveClockTime } from '@ValenceClient/live/liveClockTime';
 import { PlayerControls } from '@ValenceScreens/components/VideoPlayer/components/PlayerControls/PlayerControls';
 import { ChannelTags } from '@ValenceScreens/components/LiveTvPage/components/ChannelTags/ChannelTags';
 import { channelTagsOf } from '@ValenceClient/live/channelTagsOf';
@@ -25,15 +26,6 @@ const LOOKS_EVERY_MS = 200;
 const NETWORK = 1;
 
 const MANIFEST = 4;
-
-/**
- * A clock time as the viewer reads it, such as `19:30`.
- *
- * @param at - The moment, as an ISO string.
- * @returns The time.
- */
-const timeOf = (at: string): string =>
-  new Date(at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 
 /**
  * Plays one channel live, through the server, under the same controls as anything else Valence
@@ -240,7 +232,9 @@ const LivePlayer = ({
             isLive
             {...(onNow === null
               ? {}
-              : { liveDetail: `${timeOf(onNow.startsAt)} – ${timeOf(onNow.endsAt)}` })}
+              : {
+                  liveDetail: `${liveClockTime(onNow.startsAt)} – ${liveClockTime(onNow.endsAt)}`,
+                })}
             isPlaying={isPlaying}
             position={startsAt === null ? 0 : (now - startsAt) / 1000}
             duration={startsAt === null || endsAt === null ? 0 : (endsAt - startsAt) / 1000}
@@ -326,7 +320,7 @@ const LivePlayer = ({
           {upNext === null ? null : (
             <span className="text-xs text-text-muted">
               {say('screens.liveTvPage.nextTimeTitle', {
-                time: timeOf(upNext.startsAt),
+                time: liveClockTime(upNext.startsAt),
                 title: upNext.title,
               })}
             </span>

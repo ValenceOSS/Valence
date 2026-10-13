@@ -2296,6 +2296,8 @@ const ENGLISH = {
     'Open Valence on your iPhone and sign in to play your music here.',
   'phone.carPlay.useCarPlay.thisServerHasNoMusicLibrary':
     'This server has no music library set up.',
+  'phone.liveTv.nextChannel': 'Next channel',
+  'phone.liveTv.previousChannel': 'Previous channel',
   'phone.platform.describeThisPhone.anEmulator': 'Emulator',
   'phone.platform.describeThisPhone.aPhone': 'Phone',
   'phone.platform.describeThisPhone.nameOnAndroid': '{name} on Android',
