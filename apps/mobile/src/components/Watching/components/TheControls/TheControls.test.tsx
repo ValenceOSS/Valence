@@ -18,7 +18,14 @@ const theControls = (overrides: Partial<TheControlsProps> = {}) => (
     onSeek={jest.fn()}
     onTouched={jest.fn()}
     onClose={jest.fn()}
-    onSettings={jest.fn()}
+    rate={1}
+    qualityLabel="Auto"
+    onLock={jest.fn()}
+    onPictureInPicture={jest.fn()}
+    onSpeed={jest.fn()}
+    onAudioAndSubtitles={jest.fn()}
+    onQuality={jest.fn()}
+    onStats={jest.fn()}
     {...overrides}
   />
 );
@@ -85,13 +92,38 @@ describe('TheControls', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it('keeps everything else behind one button, rather than on the picture', async () => {
-    const onSettings = jest.fn();
-    const drawn = await render(theControls({ onSettings }));
+  it('names each panel along the foot, saying the speed and quality playing', async () => {
+    const onAudioAndSubtitles = jest.fn();
+    const drawn = await render(theControls({ onAudioAndSubtitles }));
 
-    await userEvent.press(drawn.getByLabelText('Subtitles, audio and quality'));
+    expect(drawn.getByText('Speed (Normal)')).toBeTruthy();
+    expect(drawn.getByText('Quality (Auto)')).toBeTruthy();
 
-    expect(onSettings).toHaveBeenCalled();
+    await userEvent.press(drawn.getByLabelText('Audio & Subtitles'));
+
+    expect(onAudioAndSubtitles).toHaveBeenCalled();
+  });
+
+  it('opens stats for nerds and locks the controls from the top', async () => {
+    const onStats = jest.fn();
+    const onLock = jest.fn();
+    const drawn = await render(theControls({ onStats, onLock }));
+
+    await userEvent.press(drawn.getByLabelText('Stats for nerds'));
+    await userEvent.press(drawn.getByLabelText('Lock the controls'));
+
+    expect(onStats).toHaveBeenCalled();
+    expect(onLock).toHaveBeenCalled();
+  });
+
+  it('offers the next episode only where there is one', async () => {
+    const onNext = jest.fn();
+    const drawn = await render(theControls({ onNext }));
+
+    await userEvent.press(drawn.getByLabelText('Next Episode'));
+
+    expect(onNext).toHaveBeenCalled();
+    expect((await render(theControls())).queryByLabelText('Next Episode')).toBeNull();
   });
 
   it('says where in the film the line stands, for anybody who cannot see it', async () => {
