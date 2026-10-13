@@ -1,6 +1,6 @@
 import { Bin } from '@keyline-icons/react-native';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { AGroup } from '@ValenceMobile/components/AGroup/AGroup';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
@@ -19,6 +19,7 @@ import { describeKeyLastUsed } from '@ValenceClient/account/describeKeyLastUsed'
 import type { ApiKey } from '@ValenceContracts/schemas/ApiKey';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const NOT_ALLOWED = 403;
 
@@ -88,7 +89,7 @@ const TheApiKeys = () => {
     <AGroup title={say('screens.accountArea.aPIKeys')}>
       <View style={styles.whole}>
         {isReading ? (
-          <ActivityIndicator color={colours.textMuted} />
+          <ASpinner colour={colours.textMuted} />
         ) : isNotAllowed ? (
           <Words tone="muted">{say('screens.apiKeyPanel.thisAccountIsNotAllowedTo')}</Words>
         ) : keys === null ? (

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Linking, Share, StyleSheet, View } from 'react-native';
+import { Alert, Linking, Share, StyleSheet, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   CalendarPlus as CalendarPlusIcon,
@@ -24,6 +24,7 @@ import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { AGlyph } from '@ValenceMobile/components/Icon/Icon.types';
 import type { ACalendarSubscribeSheetProps } from './ACalendarSubscribeSheet.types';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const GOOGLE_CALENDAR = 'https://calendar.google.com/calendar/render';
 
@@ -168,7 +169,7 @@ const ACalendarSubscribeSheet = ({ isOpen, onClose }: ACalendarSubscribeSheetPro
           </View>
         ) : token === null ? (
           <View style={styles.waiting}>
-            <ActivityIndicator color={colours.textMuted} />
+            <ASpinner colour={colours.textMuted} />
           </View>
         ) : (
           <AGroup>

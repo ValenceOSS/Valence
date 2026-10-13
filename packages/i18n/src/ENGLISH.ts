@@ -2424,10 +2424,6 @@ const ENGLISH = {
     'No results for “{asked}” in the library.',
   'phone.theServerIsAway.tryingAgainEveryFewSeconds': 'Trying again every few seconds.',
   'phone.theServerIsAway.tryNow': 'Try now',
-  'phone.theStars.householdAverageFromCountRatings.one':
-    'Household average {average} from {count} rating',
-  'phone.theStars.householdAverageFromCountRatings.other':
-    'Household average {average} from {count} ratings',
   'phone.theWayIn.aWallFace.signInAsName': 'Sign in as {name}',
   'phone.theWayIn.itMayBeRestartingValenceTries':
     'The server may be restarting. Valence retries every few seconds, or pull down to retry now.',

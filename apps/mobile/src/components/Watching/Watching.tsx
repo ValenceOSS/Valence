@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Animated, StyleSheet, View } from 'react-native';
+import { Alert, Animated, StyleSheet, View } from 'react-native';
 import { useEvent, useEventListener } from 'expo';
 import { useQuery } from '@tanstack/react-query';
 import { FINISHED_WITHIN_SECONDS } from '@ValenceContracts/schemas/WatchProgress';
@@ -78,6 +78,7 @@ import type { MediaSegment } from '@ValenceClient/playback/fetchSegments';
 import type { StartedSession } from '@ValenceClient/playback/startPlaybackSession';
 import type { StreamReading } from '@ValenceClient/playback/describeStreamStats';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const SAY_IT_IS_ALIVE_EVERY = 30_000;
 
@@ -123,6 +124,15 @@ const NEVER_REFUSES = () => undefined;
 
 const styles = StyleSheet.create({
   picture: { backgroundColor: '#000000', flex: 1 },
+  waiting: {
+    alignItems: 'center',
+    bottom: 0,
+    justifyContent: 'center',
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
 });
 
 /**
@@ -411,6 +421,7 @@ const Watching = ({
   });
 
   const status = useEvent(player, 'statusChange', { status: player.status });
+  const isWaiting = status.status === 'loading';
   const partyPlayback = usePartyPlayback(watchParty, mediaId);
   const party = isKept || partyPlayback === null ? undefined : partyPlayback;
   const playerOf = useCallback(() => roomPlayerOfExpo(player), [player]);
@@ -790,7 +801,7 @@ const Watching = ({
   if (source === null) {
     return (
       <Screen centres>
-        <ActivityIndicator color={colours.textMuted} />
+        <ASpinner colour={colours.textMuted} />
       </Screen>
     );
   }
@@ -875,6 +886,7 @@ const Watching = ({
           title: called?.name ?? '',
           year: called?.year ?? null,
           isPlaying: moving.isPlaying,
+          isWaiting,
           trickplay: (isKept ? keptFrames.data : frames.data) ?? null,
           onPlayPause: () => {
             keepThemUp();
@@ -954,6 +966,12 @@ const Watching = ({
                 },
         }}
       />
+
+      {isWaiting && !areControlsDrawn && panel === null ? (
+        <View style={styles.waiting} pointerEvents="none">
+          <ASpinner colour="#ffffff" size={64} />
+        </View>
+      ) : null}
 
       {isLocked && areControlsDrawn ? (
         <TheUnlock

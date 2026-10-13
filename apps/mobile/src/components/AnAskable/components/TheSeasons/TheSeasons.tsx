@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { nameSeason } from '@ValenceClient/library/nameSeason';
 import { SEASON_STANDING_NAMES } from '@ValenceClient/requests/SEASON_STANDING_NAMES';
@@ -13,6 +13,7 @@ import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { TheSeasonsProps } from './TheSeasons.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const styles = StyleSheet.create({
   row: { alignItems: 'center', flexDirection: 'row', gap: 12, paddingVertical: 6 },
@@ -56,7 +57,7 @@ const TheSeasons = ({
       open.every((row) => ticked.includes(row.season) || alreadyAsked.includes(row.season)));
 
   if (listed.isPending) {
-    return <ActivityIndicator color={colours.textMuted} />;
+    return <ASpinner colour={colours.textMuted} />;
   }
 
   return (

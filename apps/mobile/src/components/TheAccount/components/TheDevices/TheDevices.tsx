@@ -1,7 +1,7 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AGroup } from '@ValenceMobile/components/AGroup/AGroup';
-import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { endDevice, endOtherDevices, fetchDevices } from '@ValenceClient/account/fetchDevices';
 import { saidWhen } from '@ValenceClient/format/saidWhen';
 import { Button } from '@ValenceMobile/components/Button/Button';
@@ -10,6 +10,7 @@ import { SignInATelevision } from '@ValenceMobile/components/TheAccount/componen
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { say } from '@ValenceI18n/say';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const DEVICES = ['account', 'devices'] as const;
 
@@ -75,7 +76,7 @@ const TheDevices = () => {
   };
 
   if (devices.isPending) {
-    return <ActivityIndicator color={colours.textMuted} />;
+    return <ASpinner colour={colours.textMuted} />;
   }
 
   if (devices.isError) {

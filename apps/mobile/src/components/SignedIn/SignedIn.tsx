@@ -5,7 +5,7 @@ import { AVideoRemoteBar } from '@ValenceMobile/components/AVideoRemoteBar/AVide
 import { CircleUser, Download, Home, Search } from '@keyline-icons/react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
@@ -94,6 +94,7 @@ import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { APage, SignedInProps } from './SignedIn.types';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const A_SERVER = /^[a-z][a-z0-9+.-]*:\/\/[^/?#\s]+/iu;
 
@@ -500,7 +501,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   if (session.isPending) {
     return (
       <Screen centres>
-        <ActivityIndicator />
+        <ASpinner />
       </Screen>
     );
   }

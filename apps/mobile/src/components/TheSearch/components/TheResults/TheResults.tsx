@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { collapseToShows } from '@ValenceClient/library/pickFeatured';
 import { ACard } from '@ValenceMobile/components/ACard/ACard';
@@ -10,6 +10,7 @@ import { useGridCells } from '@ValenceMobile/hooks/useGridCells';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { TheResultsProps } from './TheResults.types';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const AS_MANY_AS_ARE_WORTH_SHOWING = 60;
 
@@ -47,7 +48,7 @@ const TheResultsSection = ({
   );
 
   if (found.isPending) {
-    return <ActivityIndicator color={colours.textMuted} />;
+    return <ASpinner colour={colours.textMuted} />;
   }
 
   const results = collapseToShows(found.data ?? []);

@@ -2,7 +2,7 @@ import { Film, FolderOpen } from '@keyline-icons/react-native';
 import { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { freshFlags } from '@ValenceClient/library/freshFlags';
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { collectionQueries } from '@ValenceClient/query/collectionQueries';
@@ -25,6 +25,7 @@ import type { Collection } from '@ValenceContracts/schemas/Collection';
 import type { AShelfOf } from '@ValenceMobile/components/TheLibrary/components/TheHome/components/AHomeShelf/AHomeShelf.types';
 import type { TheHomeProps } from './TheHome.types';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const FEATURED = 5;
 
@@ -215,7 +216,7 @@ const TheHomePage = ({
             />
           </AnArrival>
         </View>
-        {home.isReading ? <ActivityIndicator color={colours.textMuted} /> : null}
+        {home.isReading ? <ASpinner colour={colours.textMuted} /> : null}
       </View>
     ),
     [
@@ -271,9 +272,7 @@ const TheHomePage = ({
           )
         ) : undefined
       }
-      ListFooterComponent={
-        isReadingMore ? <ActivityIndicator color={colours.textMuted} /> : undefined
-      }
+      ListFooterComponent={isReadingMore ? <ASpinner colour={colours.textMuted} /> : undefined}
       onEndReached={onEndReached}
       onEndReachedThreshold={1.5}
       contentContainerStyle={spacing}

@@ -1,4 +1,4 @@
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { APluginSurface } from '@ValenceMobile/components/APluginSurface/APluginSurface';
@@ -8,6 +8,7 @@ import { PHONE_SURFACE_HOST } from '@ValenceMobile/plugins/PHONE_SURFACE_HOST';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { APluginPageProps } from './APluginPage.types';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const styles = StyleSheet.create({
   page: { gap: 14 },
@@ -40,10 +41,7 @@ const APluginPage = ({ pluginId, pageId, onLookAt }: APluginPageProps) => {
             </Button>
           </>
         ) : (
-          <ActivityIndicator
-            color={colours.textMuted}
-            accessibilityLabel={say('phone.aPluginPage.readingThePage')}
-          />
+          <ASpinner colour={colours.textMuted} label={say('phone.aPluginPage.readingThePage')} />
         )}
       </View>
     );

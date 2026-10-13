@@ -15,7 +15,7 @@ import { describeTimeToGo } from '@ValenceCore/functions/describeTimeToGo';
 import { Heart as HeartFilled, Play as PlayFilled } from '@keyline-icons/react-native/fill';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
@@ -64,6 +64,7 @@ import { ABadgeRow } from '@ValenceMobile/components/ABadgeRow/ABadgeRow';
 import { AnAddToCollectionSheet } from '@ValenceMobile/components/AnAddToCollectionSheet/AnAddToCollectionSheet';
 import { subjectOfMedia } from '@ValenceClient/collections/subjectOfMedia';
 import type { CollectionSubject } from '@ValenceContracts/schemas/Collection';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const PLAY_HEIGHT = 46;
 
@@ -151,7 +152,7 @@ const ATitle = ({
   if (asking.isPending) {
     return (
       <Screen centres onBack={onBack}>
-        <ActivityIndicator color={colours.textMuted} />
+        <ASpinner colour={colours.textMuted} />
       </Screen>
     );
   }

@@ -20,7 +20,7 @@ import { isWatchedThrough } from '@ValenceClient/library/isWatchedThrough';
 import { markWatched } from '@ValenceClient/playback/markWatched';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 import { describeAirDate } from '@ValenceCore/functions/describeAirDate';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
@@ -66,6 +66,7 @@ import { describeShowStatus } from '@ValenceClient/library/describeShowStatus';
 import type { ShowStatusKind } from '@ValenceClient/library/describeShowStatus';
 import type { AGlyph } from '@ValenceMobile/components/Icon/Icon.types';
 import { AChoiceMenu } from '@ValenceMobile/components/AChoiceMenu/AChoiceMenu';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const STATUS_ICONS: Readonly<Record<ShowStatusKind, AGlyph>> = {
   returning: StatusReturning,
@@ -130,7 +131,7 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack, onRequestMore }: 
   if (asking.isPending) {
     return (
       <Screen centres onBack={onBack}>
-        <ActivityIndicator color={colours.textMuted} />
+        <ASpinner colour={colours.textMuted} />
       </Screen>
     );
   }

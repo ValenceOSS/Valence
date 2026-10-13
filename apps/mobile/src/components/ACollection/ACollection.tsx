@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Layers } from '@keyline-icons/react-native';
 import { arrangeCollection } from '@ValenceClient/collections/arrangeCollection';
 import { collectionCoverPath } from '@ValenceClient/collections/collectionCoverPath';
@@ -20,6 +20,7 @@ import type { CollectionOrder } from '@ValenceContracts/schemas/Collection';
 import type { ACollectionProps } from './ACollection.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const COVER_WIDE = 132;
 
@@ -61,7 +62,7 @@ const ACollection = ({ collectionId, onLookAt, onLookAtShow, onBack }: ACollecti
   if (asked.isPending) {
     return (
       <Screen centres onBack={onBack}>
-        <ActivityIndicator color={colours.textMuted} />
+        <ASpinner colour={colours.textMuted} />
       </Screen>
     );
   }

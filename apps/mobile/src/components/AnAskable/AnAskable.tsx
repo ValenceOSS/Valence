@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
@@ -44,6 +44,7 @@ import type { BookFormat, ReleaseType } from '@ValenceContracts/schemas/MediaReq
 import { linkingQueries } from '@ValenceClient/query/linkingQueries';
 import type { AnAskableProps } from './AnAskable.types';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const WHILE_IT_MOVES = 5000;
 
@@ -237,7 +238,7 @@ const AnAskable = ({ kind, id, isMore = false, onOpen, onAskAbout, onBack }: AnA
   if (asking.isPending) {
     return (
       <Screen centres onBack={onBack}>
-        <ActivityIndicator color={colours.textMuted} />
+        <ASpinner colour={colours.textMuted} />
       </Screen>
     );
   }

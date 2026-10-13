@@ -5,7 +5,7 @@ import {
   Headphones as HeadphonesFilled,
 } from '@keyline-icons/react-native/fill';
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { describeReadingPlace } from '@ValenceClient/books/describeReadingPlace';
 import { chaptersOf } from '@ValenceClient/books/createAudiobookPlayer';
@@ -36,6 +36,7 @@ import type { ABookProps } from './ABook.types';
 import { say } from '@ValenceI18n/say';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const COVER = 128;
 
@@ -120,7 +121,7 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
   if (read.isPending) {
     return (
       <Screen centres onBack={onBack}>
-        <ActivityIndicator color={colours.textMuted} />
+        <ASpinner colour={colours.textMuted} />
       </Screen>
     );
   }

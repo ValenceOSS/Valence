@@ -1,7 +1,7 @@
 import { SearchX } from '@keyline-icons/react-native';
 import { memo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { albumArtworkUrl, artistImageUrl } from '@ValenceClient/music/fetchMusic';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { AMusicTile } from '@ValenceMobile/components/AMusicTile/AMusicTile';
@@ -16,6 +16,7 @@ import { playlistArtworkUrl } from '@ValenceClient/music/fetchPlaylists';
 import type { TheMusicResultsProps } from './TheMusicResults.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const SONGS_BESIDE_FILMS = 5;
 
@@ -52,7 +53,7 @@ const TheMusicResultsSection = ({
     tracks.length === 0 && albums.length === 0 && artists.length === 0 && playlists.length === 0;
 
   if (found.isPending) {
-    return isOnItsOwn ? <ActivityIndicator color={colours.textMuted} /> : null;
+    return isOnItsOwn ? <ASpinner colour={colours.textMuted} /> : null;
   }
 
   if (isEmpty) {

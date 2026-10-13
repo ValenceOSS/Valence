@@ -1,6 +1,6 @@
 import { Check, Plus } from '@keyline-icons/react-native';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ASheet } from '@ValenceMobile/components/ASheet/ASheet';
 import { Button } from '@ValenceMobile/components/Button/Button';
@@ -12,6 +12,7 @@ import { addToCollection, createCollection } from '@ValenceClient/collections/fe
 import { collectionQueries } from '@ValenceClient/query/collectionQueries';
 import type { AnAddToCollectionSheetProps } from './AnAddToCollectionSheet.types';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const styles = StyleSheet.create({
   make: { gap: 10, paddingTop: 12 },
@@ -97,7 +98,7 @@ const AnAddToCollectionSheet = ({ subject, title, onClose }: AnAddToCollectionSh
     >
       <View style={styles.whole}>
         {every.isPending ? (
-          <ActivityIndicator color={colours.textMuted} />
+          <ASpinner colour={colours.textMuted} />
         ) : (every.data ?? []).length === 0 ? (
           <Words tone="muted">
             {say('screens.addToCollectionDialog.thereAreNoCollectionsYet')}

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator } from 'react-native';
+
 import { lyricLineAt } from '@ValenceClient/music/lyricLineAt';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { AFadedEdge } from '@ValenceMobile/components/AFadedEdge/AFadedEdge';
@@ -9,6 +9,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { TheLyricsProps } from './TheLyrics.types';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const FADES_IN_OVER = 24;
 
@@ -33,7 +34,7 @@ const TheLyrics = ({ trackId, onSeek }: TheLyricsProps) => {
   const atSeconds = useWhereTheSongIs();
 
   if (read.isPending) {
-    return <ActivityIndicator color={colours.textMuted} />;
+    return <ASpinner colour={colours.textMuted} />;
   }
 
   const lines = read.data?.lines ?? [];

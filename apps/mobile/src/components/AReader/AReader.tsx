@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ActivityIndicator } from 'react-native';
+
 import { saveReadingProgress } from '@ValenceClient/books/fetchBooks';
 import { whereToOpen } from '@ValenceClient/books/whereToOpen';
 import { useNowReading } from '@ValenceClient/books/useNowReading';
@@ -12,6 +12,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { AReaderProps } from './AReader.types';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 /**
  * Reading one book, opened where the web's reading page opens it: in the chapter somebody last read
@@ -80,7 +81,7 @@ const AReader = ({ bookId, chapterId, isFromTheStart, onBack }: AReaderProps) =>
   if (asked.data === undefined || asked.data === null || read.data === undefined) {
     return (
       <Screen centres onBack={onBack}>
-        <ActivityIndicator color={colours.textMuted} />
+        <ASpinner colour={colours.textMuted} />
       </Screen>
     );
   }

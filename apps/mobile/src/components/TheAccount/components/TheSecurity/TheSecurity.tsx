@@ -2,7 +2,7 @@ import { Bin, PenLine } from '@keyline-icons/react-native';
 import { AGroup } from '@ValenceMobile/components/AGroup/AGroup';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ActivityIndicator, Alert, Linking, StyleSheet, View } from 'react-native';
+import { Alert, Linking, StyleSheet, View } from 'react-native';
 import { saidWhen } from '@ValenceClient/format/saidWhen';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import {
@@ -19,6 +19,7 @@ import { TextField } from '@ValenceMobile/components/TextField/TextField';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const PASSKEYS = ['account', 'passkeys'] as const;
 
@@ -225,7 +226,7 @@ const TheSecurity = () => {
       <View style={styles.section}>
         <Words isStrong>{say('common.passkeys')}</Words>
 
-        {passkeys.isPending ? <ActivityIndicator color={colours.textMuted} /> : null}
+        {passkeys.isPending ? <ASpinner colour={colours.textMuted} /> : null}
 
         {(passkeys.data ?? []).length === 0 && !passkeys.isPending ? (
           <Words tone="muted">{say('phone.theAccount.theSecurity.noPasskeysYetAddOneFrom')}</Words>

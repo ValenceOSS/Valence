@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { AGroup } from '@ValenceMobile/components/AGroup/AGroup';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { revokeShare } from '@ValenceClient/sharing/fetchShares';
 import { saidOpened } from '@ValenceClient/sharing/saidOpened';
 import { shareStanding } from '@ValenceClient/sharing/shareStanding';
@@ -12,6 +12,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { Share } from '@ValenceContracts/schemas/Share';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const styles = StyleSheet.create({
   row: {
@@ -72,7 +73,7 @@ const TheShares = () => {
     <>
       <Words tone="muted">{say('phone.theAccount.theShares.linksYouHaveHandedOutShare')}</Words>
 
-      {read.isPending ? <ActivityIndicator color={colours.textMuted} /> : null}
+      {read.isPending ? <ASpinner colour={colours.textMuted} /> : null}
 
       {read.isError ? <Words tone="danger">{say('common.yourLinksCouldNotBeRead')}</Words> : null}
 

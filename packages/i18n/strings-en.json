@@ -10265,16 +10265,6 @@
     "context": "The label of a button in the server is away of the phone app."
   },
   {
-    "handler": "phone.theStars.householdAverageFromCountRatings.one",
-    "text": "Household average {average} from {count} rating",
-    "context": "Text shown in the stars of the phone app. {average} is filled in by the app; {count} is a number."
-  },
-  {
-    "handler": "phone.theStars.householdAverageFromCountRatings.other",
-    "text": "Household average {average} from {count} ratings",
-    "context": "Text shown in the stars of the phone app. {average} is filled in by the app; {count} is a number."
-  },
-  {
     "handler": "phone.theWayIn.aWallFace.signInAsName",
     "text": "Sign in as {name}",
     "context": "The label of a button in the wall face in the way in of the phone app. {name} is filled in by the app."

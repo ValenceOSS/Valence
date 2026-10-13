@@ -1,6 +1,6 @@
 import { Fragment, memo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator } from 'react-native';
+
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { AShelf } from '@ValenceMobile/components/AShelf/AShelf';
 import { Words } from '@ValenceMobile/components/Words/Words';
@@ -11,6 +11,7 @@ import { AStudiosRail } from '@ValenceMobile/components/TheSearch/components/ASt
 import { discoverHeroTitles } from '@ValenceClient/requests/discoverHeroTitles';
 import type { DiscoveredProps } from './Discovered.types';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const STUDIOS_AFTER = 1;
 
@@ -25,7 +26,7 @@ const DiscoveredSection = ({ onAsk, onSeeAll }: DiscoveredProps) => {
   const colours = useTheColours();
 
   if (discovered.isPending) {
-    return <ActivityIndicator color={colours.textMuted} />;
+    return <ASpinner colour={colours.textMuted} />;
   }
 
   if (discovered.isError) {

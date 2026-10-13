@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { isAskedFor } from '@ValenceContracts/functions/isAskedFor';
-import { ActivityIndicator } from 'react-native';
+
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { Words } from '@ValenceMobile/components/Words/Words';
@@ -8,6 +8,7 @@ import { ARequest } from '@ValenceMobile/components/TheSearch/components/AReques
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { AskedProps } from './Asked.types';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 /**
  * Everything asked for — films, programmes, music and books — newest first, and where each has got
@@ -25,7 +26,7 @@ const Asked = ({ onAsk }: AskedProps) => {
   );
 
   if (requests.isPending) {
-    return <ActivityIndicator color={colours.textMuted} />;
+    return <ASpinner colour={colours.textMuted} />;
   }
 
   if (requests.isError) {

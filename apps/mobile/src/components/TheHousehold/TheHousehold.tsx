@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { AskForThePassword } from '@ValenceMobile/components/AskForThePassword/AskForThePassword';
 import { SignedIn } from '@ValenceMobile/components/SignedIn/SignedIn';
@@ -19,6 +19,7 @@ import type { TheHouseholdProps } from './TheHousehold.types';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { ARectOnScreen } from '@ValenceMobile/hooks/useArrivingFrom.types';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const styles = StyleSheet.create({
   whole: { flex: 1 },
@@ -106,7 +107,7 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
   if (session.isPending && !isAway) {
     return (
       <Screen centres>
-        <ActivityIndicator />
+        <ASpinner />
       </Screen>
     );
   }

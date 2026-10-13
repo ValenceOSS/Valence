@@ -1,9 +1,10 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
 import type { ButtonProps } from './Button.types';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const styles = StyleSheet.create({
   bare: {},
@@ -113,7 +114,7 @@ const Button = ({
       {...(label === undefined ? {} : { accessibilityLabel: label })}
     >
       {isBusy ? (
-        <ActivityIndicator color={isBright || isGhost ? said : colours.accent} />
+        <ASpinner colour={isBright || isGhost ? said : colours.accent} />
       ) : isBare ? (
         children
       ) : (

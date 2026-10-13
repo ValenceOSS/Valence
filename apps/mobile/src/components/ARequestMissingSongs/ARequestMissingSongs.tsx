@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { askForEveryAlbum } from '@ValenceClient/requests/askForEveryAlbum';
 import { describeStanding } from '@ValenceClient/requests/describeStanding';
@@ -15,6 +15,7 @@ import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { ARequestMissingSongsProps } from './ARequestMissingSongs.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const COVER = 44;
 
@@ -103,7 +104,7 @@ const ARequestMissingSongs = ({
       ) : null}
 
       {matching.data === undefined && !matching.isError ? (
-        <ActivityIndicator color={colours.textMuted} />
+        <ASpinner colour={colours.textMuted} />
       ) : null}
 
       <View>
@@ -132,7 +133,7 @@ const ARequestMissingSongs = ({
               </View>
 
               {!album.isMatched ? (
-                <ActivityIndicator color={colours.textMuted} />
+                <ASpinner colour={colours.textMuted} />
               ) : found === null ? (
                 <Words size="small" tone="muted">
                   {say('common.notFound')}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Calendar as CalendarIcon,
@@ -35,6 +35,7 @@ import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { say } from '@ValenceI18n/say';
 import type { CalendarEntry } from '@ValenceContracts/schemas/ReleaseCalendar';
 import type { TheCalendarProps } from './TheCalendar.types';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const UPCOMING_DAYS = 60;
 
@@ -162,7 +163,7 @@ const TheCalendar = ({ onOpen, onBack }: TheCalendarProps) => {
         <ARising key={`timeline:${day}`}>
           {asked.isPending ? (
             <View style={styles.quiet}>
-              <ActivityIndicator color={colours.textMuted} />
+              <ASpinner colour={colours.textMuted} />
             </View>
           ) : (
             <>
@@ -232,7 +233,7 @@ const TheCalendar = ({ onOpen, onBack }: TheCalendarProps) => {
             <AGroup title={nameTheDay(day, today)}>
               {asked.isPending ? (
                 <View style={styles.quiet}>
-                  <ActivityIndicator color={colours.textMuted} />
+                  <ASpinner colour={colours.textMuted} />
                 </View>
               ) : onTheDay.length === 0 ? (
                 <View style={styles.quiet}>
@@ -249,7 +250,7 @@ const TheCalendar = ({ onOpen, onBack }: TheCalendarProps) => {
           </ARising>
         </>
       ) : view === 'timeline' ? null : asked.isPending ? (
-        <ActivityIndicator color={colours.textMuted} />
+        <ASpinner colour={colours.textMuted} />
       ) : entries.length === 0 ? (
         <ANothingHere
           of={CalendarIcon}

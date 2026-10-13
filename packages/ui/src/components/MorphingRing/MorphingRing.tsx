@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
+import { segmentsLitAt } from '@ValenceCore/functions/segmentsLitAt';
 import { RingSegments } from './components/RingSegments/RingSegments';
 import type { MorphingRingProps } from './MorphingRing.types';
 
@@ -35,10 +36,9 @@ const MorphingRing = ({
   const [ticks, setTicks] = useState(0);
   const [finish, setFinish] = useState<{ lit: number; from: number } | null>(null);
   const isTicking = progress === undefined && !isStill;
-  const phase = ticks % (SEGMENTS * 2);
-  const isEmptying = phase >= SEGMENTS;
-  const lit = finish?.lit ?? (isEmptying ? SEGMENTS : phase + 1);
-  const litFrom = finish?.from ?? (isEmptying ? phase - SEGMENTS + 1 : 0);
+  const ticking = segmentsLitAt(ticks, SEGMENTS);
+  const lit = finish?.lit ?? ticking.lit;
+  const litFrom = finish?.from ?? ticking.from;
   const shownRef = useRef({ lit, from: litFrom });
 
   useEffect(() => {

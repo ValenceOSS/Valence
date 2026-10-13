@@ -1,6 +1,6 @@
 import { Sparkles } from '@keyline-icons/react-native';
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator } from 'react-native';
+
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { AMoodBackground } from '@ValenceMobile/components/AMoodBackground/AMoodBackground';
@@ -15,6 +15,7 @@ import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { AMixProps } from './AMix.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 /**
  * One of the mixes Valence makes for a profile, as the liked songs are drawn: its cover of the
@@ -40,7 +41,7 @@ const AMix = ({ mixId, onAlbum, onArtist, onPlaylist, onBack }: AMixProps) => {
   if (read.isPending) {
     return (
       <Screen centres onBack={onBack}>
-        <ActivityIndicator color={colours.textMuted} />
+        <ASpinner colour={colours.textMuted} />
       </Screen>
     );
   }

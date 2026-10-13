@@ -1,7 +1,7 @@
 import { ListPlus, Record } from '@keyline-icons/react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useMyPlaylists } from '@ValenceClient/music/useMyPlaylists';
-import { ActivityIndicator } from 'react-native';
+
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { AMoodBackground } from '@ValenceMobile/components/AMoodBackground/AMoodBackground';
@@ -20,6 +20,7 @@ import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { AnAlbumProps } from './AnAlbum.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 /**
  * One album, as the web's album page draws it: its cover, who it is by, when it came out and how
@@ -44,7 +45,7 @@ const AnAlbum = ({ albumId, onAlbum, onArtist, onPlaylist, onBack }: AnAlbumProp
   if (read.isPending) {
     return (
       <Screen centres onBack={onBack}>
-        <ActivityIndicator color={colours.textMuted} />
+        <ASpinner colour={colours.textMuted} />
       </Screen>
     );
   }

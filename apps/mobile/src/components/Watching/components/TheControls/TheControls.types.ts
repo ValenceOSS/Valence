@@ -6,6 +6,7 @@ type TheControlsProps = {
   title: string;
   year: number | null;
   isPlaying: boolean;
+  isWaiting?: boolean;
   at: number;
   runsFor: number;
   buffered: number;

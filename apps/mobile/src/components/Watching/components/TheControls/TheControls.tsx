@@ -18,6 +18,7 @@ import { Animated, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 import { TheFrameAt } from '@ValenceMobile/components/Watching/components/TheFrameAt/TheFrameAt';
 import { Slider } from '@ValenceMobile/components/Slider/Slider';
 import { asAClock } from '@ValenceMobile/components/Watching/asAClock';
@@ -82,6 +83,7 @@ const styles = StyleSheet.create({
     width: '62%',
   },
   reach: { padding: 16 },
+  waiting: { alignItems: 'center', height: 68, justifyContent: 'center', width: 68 },
   said: {
     alignItems: 'baseline',
     flex: 1,
@@ -132,6 +134,8 @@ const styles = StyleSheet.create({
  * @param title - What is playing.
  * @param year - When it came out, where that is known.
  * @param isPlaying - Whether the picture is moving.
+ * @param isWaiting - Whether it is waiting for more of the film, which turns play and pause into
+ *   Valence's own loading mark.
  * @param at - How far in they are.
  * @param runsFor - How long it runs.
  * @param buffered - How much of it has arrived.
@@ -158,6 +162,7 @@ const TheControls = ({
   title,
   year,
   isPlaying,
+  isWaiting = false,
   at,
   runsFor,
   buffered,
@@ -280,7 +285,13 @@ const TheControls = ({
             onPress={onPlayPause}
           >
             <View style={styles.reach}>
-              <Icon of={isPlaying ? Pause : Play} size={68} colour={colours.text} />
+              {isWaiting ? (
+                <View style={styles.waiting}>
+                  <ASpinner colour={colours.text} size={64} />
+                </View>
+              ) : (
+                <Icon of={isPlaying ? Pause : Play} size={68} colour={colours.text} />
+              )}
             </View>
           </Button>
 

@@ -2,7 +2,7 @@ import { showActionSheet } from '@ValenceMobile/platform/showActionSheet';
 import { Download, ListMusic, MoreHorizontal } from '@keyline-icons/react-native';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ActivityIndicator, Alert } from 'react-native';
+import { Alert } from 'react-native';
 import {
   UIImagePickerPreferredAssetRepresentationMode,
   launchImageLibraryAsync,
@@ -43,6 +43,7 @@ import { profileHeaders } from '@ValenceClient/profiles/currentProfile';
 import type { APlaylistProps } from './APlaylist.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 /**
  * One playlist, as the web's playlist page draws it: the cover of its first album, whose it is and
@@ -91,7 +92,7 @@ const APlaylist = ({
   if (read.isPending) {
     return (
       <Screen centres onBack={onBack}>
-        <ActivityIndicator color={colours.textMuted} />
+        <ASpinner colour={colours.textMuted} />
       </Screen>
     );
   }

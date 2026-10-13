@@ -1,6 +1,6 @@
 import { Broadcast, Search } from '@keyline-icons/react-native';
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { AFilterChips } from '@ValenceMobile/components/AFilterChips/AFilterChips';
 import { ALivePlayer } from '@ValenceMobile/components/ALivePlayer/ALivePlayer';
@@ -18,6 +18,7 @@ import { useLiveWindow } from '@ValenceClient/live/useLiveWindow';
 import { liveQueries } from '@ValenceClient/query/liveQueries';
 import type { TheLiveTvProps } from './TheLiveTv.types';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const styles = StyleSheet.create({
   list: { paddingBottom: 140, paddingHorizontal: 20 },
@@ -103,7 +104,7 @@ const TheLiveTv = ({ header, onScrolled }: TheLiveTvProps) => {
 
       {guide.isPending ? (
         <View style={styles.waiting}>
-          <ActivityIndicator color={colours.textMuted} />
+          <ASpinner colour={colours.textMuted} />
         </View>
       ) : channels.length === 0 ? (
         <ANothingHere

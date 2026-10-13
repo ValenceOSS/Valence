@@ -1,7 +1,7 @@
 import { BookOpen } from '@keyline-icons/react-native';
 import { useState } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import { describeReadingPlace } from '@ValenceClient/books/describeReadingPlace';
 import { readingFractionOf } from '@ValenceClient/books/readingFractionOf';
@@ -22,6 +22,7 @@ import type { Book } from '@ValenceContracts/schemas/Book';
 import type { BookSeries } from '@ValenceClient/books/gatherSeries';
 import type { TheBooksProps } from './TheBooks.types';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const styles = StyleSheet.create({
   header: { gap: 20 },
@@ -134,7 +135,7 @@ const TheBooks = ({
               <Words size="heading">{say('phone.theLibrary.theBooks.everyBook')}</Words>
             )}
 
-            {isReading ? <ActivityIndicator color={colours.textMuted} /> : null}
+            {isReading ? <ASpinner colour={colours.textMuted} /> : null}
 
             {!isReading && books.length === 0 ? (
               <ANothingHere

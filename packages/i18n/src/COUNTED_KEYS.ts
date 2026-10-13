@@ -68,7 +68,6 @@ const COUNTED_KEYS = [
   'core.partsOfTimeLeft.days',
   'desktop.main.aDiscordActivity.withOthers',
   'phone.aShow.aChoiceOfEpisodes.downloadEpisodes',
-  'phone.theStars.householdAverageFromCountRatings',
   'requests.mediaRequests.albumsOut',
   'requests.mediaRequests.episodesOut',
   'requests.mediaRequests.foundByIndexers',

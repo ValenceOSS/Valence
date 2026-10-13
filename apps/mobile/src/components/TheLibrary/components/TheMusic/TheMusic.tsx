@@ -1,7 +1,7 @@
 import { Heart, ListMusic, MusicNote, Plus, Sparkles, User } from '@keyline-icons/react-native';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { albumArtworkUrl, artistImageUrl } from '@ValenceClient/music/fetchMusic';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { AMusicTile } from '@ValenceMobile/components/AMusicTile/AMusicTile';
@@ -22,6 +22,7 @@ import type { PlaylistSummary } from '@ValenceContracts/schemas/Playlist';
 import type { TheMusicProps } from './TheMusic.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const RECENT = 18;
 
@@ -201,7 +202,7 @@ const TheMusic = ({
           </View>
         ) : null}
 
-        {albums.isPending ? <ActivityIndicator color={colours.textMuted} /> : null}
+        {albums.isPending ? <ASpinner colour={colours.textMuted} /> : null}
 
         {!albums.isPending && recent.length === 0 && mine.length === 0 && shared.length === 0 ? (
           <ANothingHere

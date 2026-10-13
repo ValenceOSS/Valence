@@ -1,7 +1,7 @@
 import { Check, ScanQrCode, Tv, X } from '@keyline-icons/react-native';
 import { AGroup } from '@ValenceMobile/components/AGroup/AGroup';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 import { answerDeviceRequest, readDeviceRequest } from '@ValenceClient/session/auth';
 import { theCodeInAScan } from '@ValenceClient/session/theCodeInAScan';
 import { tidyTheCode } from '@ValenceCore/functions/tidyTheCode';
@@ -13,6 +13,7 @@ import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import type { SignInATelevisionProps } from './SignInATelevision.types';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 type Standing = 'asking' | 'reading' | 'waiting' | 'allowed' | 'refused' | 'wrong';
 
@@ -136,7 +137,7 @@ const SignInATelevision = ({ startsWith, askedFrom = null }: SignInATelevisionPr
             </Button>
           </>
         ) : standing === 'reading' ? (
-          <ActivityIndicator color={colours.textMuted} />
+          <ASpinner colour={colours.textMuted} />
         ) : standing === 'waiting' ? (
           <>
             <Words>{say('common.aTelevisionIsAskingToSign')}</Words>

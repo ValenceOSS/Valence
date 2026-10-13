@@ -1,7 +1,7 @@
 import { User } from '@keyline-icons/react-native';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ActivityIndicator } from 'react-native';
+
 import {
   albumArtworkUrl,
   artistImageUrl,
@@ -27,6 +27,7 @@ import type { MusicAlbum } from '@ValenceContracts/schemas/Music';
 import type { AnArtistProps } from './AnArtist.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const POPULAR_AT_FIRST = 5;
 
@@ -56,7 +57,7 @@ const AnArtist = ({ artistId, onAlbum, onArtist, onPlaylist, onBack }: AnArtistP
   if (read.isPending) {
     return (
       <Screen centres onBack={onBack}>
-        <ActivityIndicator color={colours.textMuted} />
+        <ASpinner colour={colours.textMuted} />
       </Screen>
     );
   }

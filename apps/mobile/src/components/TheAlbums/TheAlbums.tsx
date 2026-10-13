@@ -1,7 +1,7 @@
 import { Record } from '@keyline-icons/react-native';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator } from 'react-native';
+
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { AMusicTile } from '@ValenceMobile/components/AMusicTile/AMusicTile';
@@ -15,6 +15,7 @@ import { useAskAboutAnAlbum } from '@ValenceMobile/music/useAskAboutAnAlbum';
 import type { AlbumOrder } from '@ValenceClient/music/fetchMusic';
 import type { TheAlbumsProps } from './TheAlbums.types';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const ORDERS: readonly { id: AlbumOrder; label: string }[] = [
   { id: 'recent', label: say('common.recentlyAdded') },
@@ -52,7 +53,7 @@ const TheAlbums = ({ onAlbum, onBack }: TheAlbumsProps) => {
               setOrder(ORDERS.find((one) => one.id === id)?.id ?? 'recent');
             }}
           />
-          {albums.isPending ? <ActivityIndicator color={colours.textMuted} /> : null}
+          {albums.isPending ? <ASpinner colour={colours.textMuted} /> : null}
           {!albums.isPending && (albums.data ?? []).length === 0 ? (
             <ANothingHere
               of={Record}

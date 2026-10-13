@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { ImagePlus } from '@keyline-icons/react-native';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
@@ -19,6 +19,7 @@ import { sendAPhoto } from '@ValenceMobile/platform/sendAPhoto';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { Avatar, ProfileColour } from '@ValenceContracts/schemas/ViewerProfile';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const styles = StyleSheet.create({
   asks: { gap: 4 },
@@ -50,7 +51,7 @@ const TheProfile = () => {
 
   if (profile === null) {
     return asked.isPending ? (
-      <ActivityIndicator color={colours.textMuted} />
+      <ASpinner colour={colours.textMuted} />
     ) : (
       <Words tone="danger">{say('phone.theAccount.theProfile.thatProfileCouldNotBeRead')}</Words>
     );

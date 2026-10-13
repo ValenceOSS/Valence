@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { describeBirthLine } from '@ValenceClient/people/describeBirthLine';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
@@ -12,6 +12,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { APersonProps } from './APerson.types';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const PORTRAIT = 140;
 
@@ -41,7 +42,7 @@ const APerson = ({ personId, onLookAt, onLookAtShow, onBack }: APersonProps) => 
   if (person.isPending) {
     return (
       <Screen centres onBack={onBack}>
-        <ActivityIndicator color={colours.textMuted} />
+        <ASpinner colour={colours.textMuted} />
       </Screen>
     );
   }

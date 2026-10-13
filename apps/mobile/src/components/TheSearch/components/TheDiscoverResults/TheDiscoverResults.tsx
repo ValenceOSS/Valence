@@ -1,5 +1,5 @@
 import { ChevronLeft } from '@keyline-icons/react-native';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useDiscoverSearch } from '@ValenceClient/requests/useDiscoverSearch';
 import { ACatalogueCard } from '@ValenceMobile/components/ACatalogueCard/ACatalogueCard';
 import { AShelf } from '@ValenceMobile/components/AShelf/AShelf';
@@ -8,6 +8,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { TheDiscoverResultsProps } from './TheDiscoverResults.types';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const styles = StyleSheet.create({
   head: { alignItems: 'flex-start', gap: 8 },
@@ -43,7 +44,7 @@ const TheDiscoverResults = ({ asked, onAsk, onBack }: TheDiscoverResultsProps) =
       </View>
 
       {found.isPending ? (
-        <ActivityIndicator color={colours.textMuted} />
+        <ASpinner colour={colours.textMuted} />
       ) : shelves.length === 0 ? (
         <Words tone="muted">
           {say('screens.requestsPage.nothingInTheCataloguesMatches', { query: asked })}

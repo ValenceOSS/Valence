@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { ActivityIndicator } from 'react-native';
+
 import { useWhereToBegin } from '@ValenceClient/party/useWhereToBegin';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { Watching } from '@ValenceMobile/components/Watching/Watching';
@@ -7,6 +7,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { WatchingTogetherProps } from './WatchingTogether.types';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 /**
  * The player, for somebody who may be arriving into a watch party: the party they were invited to
@@ -58,7 +59,7 @@ const WatchingTogether = ({
   if (beginning.kind === 'wait') {
     return (
       <Screen centres onBack={stop}>
-        <ActivityIndicator color={colours.textMuted} />
+        <ASpinner colour={colours.textMuted} />
         <Words tone="muted">{say('common.joiningTheWatchParty')}</Words>
       </Screen>
     );

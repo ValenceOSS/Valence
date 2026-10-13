@@ -1,7 +1,7 @@
 import { User } from '@keyline-icons/react-native';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator } from 'react-native';
+
 import { artistImageUrl } from '@ValenceClient/music/fetchMusic';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { AMusicTile } from '@ValenceMobile/components/AMusicTile/AMusicTile';
@@ -13,6 +13,7 @@ import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { TheArtistsProps } from './TheArtists.types';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const WHICH = [
   { id: 'all', label: say('common.everyone') },
@@ -48,7 +49,7 @@ const TheArtists = ({ onArtist, onBack }: TheArtistsProps) => {
               setIsFollowedOnly(id === 'followed');
             }}
           />
-          {artists.isPending ? <ActivityIndicator color={colours.textMuted} /> : null}
+          {artists.isPending ? <ASpinner colour={colours.textMuted} /> : null}
           {!artists.isPending && (artists.data ?? []).length === 0 ? (
             isFollowedOnly ? (
               <ANothingHere

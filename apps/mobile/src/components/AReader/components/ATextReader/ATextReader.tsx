@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  ActivityIndicator,
   Animated,
   Linking,
   PanResponder,
@@ -43,6 +42,7 @@ import type { ComponentRef } from 'react';
 import type { TextPreferences } from '@ValenceClient/books/textPreferences';
 import type { ATextReaderProps } from './ATextReader.types';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const SLIDER_STEPS = 1000;
 
@@ -414,7 +414,7 @@ const ATextReader = ({
               }}
             >
               {document.isPending || part === null ? (
-                <ActivityIndicator color={colours.ink} />
+                <ASpinner colour={colours.ink} />
               ) : (
                 <Button
                   tone="bare"

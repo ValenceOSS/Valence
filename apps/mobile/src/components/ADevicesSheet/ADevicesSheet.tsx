@@ -8,7 +8,7 @@ import {
 } from '@keyline-icons/react-native';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator, Linking, Platform, StyleSheet, View } from 'react-native';
+import { Linking, Platform, StyleSheet, View } from 'react-native';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
@@ -24,6 +24,7 @@ import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
 import type { AGlyph } from '@ValenceMobile/components/Icon/Icon.types';
 import type { ADevicesSheetProps } from './ADevicesSheet.types';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const TILE_HIGH = 76;
 
@@ -167,7 +168,7 @@ const ADevicesSheet = ({ isOpen, onClose }: ADevicesSheetProps) => {
           </Button>
         ))}
 
-        {devices.isPending ? <ActivityIndicator color={colours.textMuted} /> : null}
+        {devices.isPending ? <ASpinner colour={colours.textMuted} /> : null}
 
         {!devices.isPending && everyOther.length === 0 ? (
           <Words tone="muted">{say('phone.aDevicesSheet.noOtherValenceIsOpenOn')}</Words>

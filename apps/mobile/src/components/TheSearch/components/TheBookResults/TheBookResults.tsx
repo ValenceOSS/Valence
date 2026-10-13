@@ -1,7 +1,7 @@
 import { SearchX } from '@keyline-icons/react-native';
 import { memo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator } from 'react-native';
+
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { ANothingHere } from '@ValenceMobile/components/ANothingHere/ANothingHere';
@@ -12,6 +12,7 @@ import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { TheBookResultsProps } from './TheBookResults.types';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 /**
  * The books whose title or author matches what was typed, across every book library, as the web's
@@ -28,7 +29,7 @@ const TheBookResultsSection = ({ asked, isOnItsOwn, onBook }: TheBookResultsProp
   const books = found.data ?? [];
 
   if (found.isPending) {
-    return isOnItsOwn ? <ActivityIndicator color={colours.textMuted} /> : null;
+    return isOnItsOwn ? <ASpinner colour={colours.textMuted} /> : null;
   }
 
   if (books.length === 0) {

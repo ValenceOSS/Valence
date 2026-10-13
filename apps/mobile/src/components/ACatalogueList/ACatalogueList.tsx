@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { ActivityIndicator } from 'react-native';
+
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { ACatalogueCard } from '@ValenceMobile/components/ACatalogueCard/ACatalogueCard';
 import { APosterGrid } from '@ValenceMobile/components/APosterGrid/APosterGrid';
@@ -10,6 +10,7 @@ import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { ACatalogueListProps } from './ACatalogueList.types';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 /**
  * What a card is known by in the grid, since a film and a series can share a number.
@@ -56,7 +57,7 @@ const ACatalogueList = ({ browsing, title, onAsk, onBack }: ACatalogueListProps)
       header={
         <>
           <Words size="title">{title}</Words>
-          {pages.isPending ? <ActivityIndicator color={colours.textMuted} /> : null}
+          {pages.isPending ? <ASpinner colour={colours.textMuted} /> : null}
           {pages.isError ? <Words tone="danger">{say('common.thatCouldNotBeRead')}</Words> : null}
         </>
       }
@@ -64,7 +65,7 @@ const ACatalogueList = ({ browsing, title, onAsk, onBack }: ACatalogueListProps)
       keyOf={keyOfTitle}
       drawn={drawn}
       onNearTheEnd={readOn}
-      footer={isFetchingNextPage ? <ActivityIndicator color={colours.textMuted} /> : null}
+      footer={isFetchingNextPage ? <ASpinner colour={colours.textMuted} /> : null}
       onBack={onBack}
     />
   );

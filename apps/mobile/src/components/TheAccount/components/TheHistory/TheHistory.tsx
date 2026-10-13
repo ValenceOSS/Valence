@@ -2,7 +2,7 @@ import { Bin } from '@keyline-icons/react-native';
 import { AGroup } from '@ValenceMobile/components/AGroup/AGroup';
 import { useMemo } from 'react';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { describeReadingPlace } from '@ValenceClient/books/describeReadingPlace';
 import { forgetReading } from '@ValenceClient/books/fetchBooks';
@@ -17,6 +17,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { BookReading } from '@ValenceContracts/schemas/Book';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const styles = StyleSheet.create({
   forget: { padding: 10 },
@@ -88,7 +89,7 @@ const TheHistory = () => {
   };
 
   if (history.isPending || reading.isPending) {
-    return <ActivityIndicator color={colours.textMuted} />;
+    return <ASpinner colour={colours.textMuted} />;
   }
 
   if (history.isError) {

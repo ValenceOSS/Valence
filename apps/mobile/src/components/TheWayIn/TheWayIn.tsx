@@ -1,7 +1,7 @@
 import { Download, RotateCw } from '@keyline-icons/react-native';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { aboutQueries } from '@ValenceClient/query/aboutQueries';
 import { describeTheBuild } from '@ValenceClient/about/describeTheBuild';
 import { theBuildInfo } from '@ValenceClient/about/theBuildInfo';
@@ -21,6 +21,7 @@ import type { TheWayInProps } from './TheWayIn.types';
 import { ABadge } from '@ValenceMobile/components/ABadge/ABadge';
 import { useIsDemoServer } from '@ValenceClient/about/useIsDemoServer';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const MARK_HIGH = 40;
 
@@ -140,7 +141,7 @@ const TheWayIn = ({
 
             {isDemoServer ? <ABadge>{say('common.demoMode')}</ABadge> : null}
 
-            {asking.isPending ? <ActivityIndicator color={colours.textMuted} /> : null}
+            {asking.isPending ? <ASpinner colour={colours.textMuted} /> : null}
 
             <View style={styles.faces}>
               {profiles.map((profile, at) => (

@@ -1,6 +1,6 @@
 import { Heart } from '@keyline-icons/react-native';
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator } from 'react-native';
+
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { AMusicHead } from '@ValenceMobile/components/AMusicHead/AMusicHead';
 import { ATrackList } from '@ValenceMobile/components/ATrackList/ATrackList';
@@ -16,6 +16,7 @@ import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import type { TheLikedSongsProps } from './TheLikedSongs.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const SOURCE = { kind: 'liked' as const, id: null, name: say('common.likedSongs') };
 
@@ -41,7 +42,7 @@ const TheLikedSongs = ({ onAlbum, onArtist, onPlaylist, onBack }: TheLikedSongsP
   if (read.isPending) {
     return (
       <Screen centres onBack={onBack}>
-        <ActivityIndicator color={colours.textMuted} />
+        <ASpinner colour={colours.textMuted} />
       </Screen>
     );
   }

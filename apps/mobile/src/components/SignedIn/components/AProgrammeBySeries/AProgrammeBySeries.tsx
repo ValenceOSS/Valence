@@ -1,8 +1,8 @@
-import { ActivityIndicator } from 'react-native';
 import { AShow } from '@ValenceMobile/components/AShow/AShow';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { useTheProgrammeOf } from '@ValenceMobile/components/SignedIn/useTheProgrammeOf';
 import type { AProgrammeBySeriesProps } from './AProgrammeBySeries.types';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 /**
  * A programme's page, found by the series it belongs to, for whatever knows a series and not where
@@ -25,7 +25,7 @@ const AProgrammeBySeries = ({
 
   return sought === null ? (
     <Screen centres onBack={onBack}>
-      <ActivityIndicator />
+      <ASpinner />
     </Screen>
   ) : (
     <AShow

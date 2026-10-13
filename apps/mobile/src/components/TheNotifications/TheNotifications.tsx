@@ -1,7 +1,7 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { Inbox } from '@keyline-icons/react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { describeWhen } from '@ValenceClient/history/describeWhen';
 import {
   clearNotifications,
@@ -17,6 +17,7 @@ import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { ANothingHere } from '@ValenceMobile/components/ANothingHere/ANothingHere';
 import type { TheNotificationsProps } from './TheNotifications.types';
 import { say } from '@ValenceI18n/say';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const DOT = 8;
 
@@ -82,7 +83,7 @@ const TheNotifications = ({ onOpen, onJoin, onBack }: TheNotificationsProps) => 
         </View>
       )}
 
-      {inbox.isPending ? <ActivityIndicator color={colours.textMuted} /> : null}
+      {inbox.isPending ? <ASpinner colour={colours.textMuted} /> : null}
 
       {inbox.isError ? <Words tone="danger">{say('common.thoseCouldNotBeRead')}</Words> : null}
 

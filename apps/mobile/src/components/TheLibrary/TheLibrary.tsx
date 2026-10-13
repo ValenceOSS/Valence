@@ -11,7 +11,7 @@ import {
 } from '@keyline-icons/react-native/fill';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator, Animated, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Animated, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
@@ -69,6 +69,7 @@ import type { TheLibraryProps } from './TheLibrary.types';
 import { say } from '@ValenceI18n/say';
 import { useStockedKinds } from '@ValenceClient/library/useStockedKinds';
 import { AChoiceMenu } from '@ValenceMobile/components/AChoiceMenu/AChoiceMenu';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const EVERY = 'every';
 
@@ -605,7 +606,7 @@ const TheLibrary = ({
               />
             )}
 
-            {isWaiting ? <ActivityIndicator color={colours.textMuted} /> : null}
+            {isWaiting ? <ASpinner colour={colours.textMuted} /> : null}
 
             {!drawsItsOwn && !isWaiting && cells.length === 0 ? (
               hasAnything ? (
