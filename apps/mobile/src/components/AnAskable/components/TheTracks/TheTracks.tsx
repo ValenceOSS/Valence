@@ -38,7 +38,7 @@ const TheTracks = ({ tracks, label }: TheTracksProps) => {
         <View key={disc}>
           {discs.length < 2 ? null : (
             <Words size="small" tone="muted">
-              {say('phone.anAskable.discNumber', { number: disc.toString() })}
+              {say('screens.albumTracks.discNumber', { number: disc.toString() })}
             </Words>
           )}
 

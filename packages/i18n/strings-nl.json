@@ -9470,11 +9470,6 @@
     "context": "A message in an alert in the askable of the phone app."
   },
   {
-    "handler": "phone.anAskable.discNumber",
-    "text": "Disc {number}",
-    "context": "A heading over one disc's songs, in an album's song list on the phone's request page. {number} is the disc."
-  },
-  {
     "handler": "phone.aPlaylist.thatPlaylistCouldNotBeRead",
     "text": "Couldn’t load that playlist.",
     "context": "Text shown in the playlist of the phone app."
