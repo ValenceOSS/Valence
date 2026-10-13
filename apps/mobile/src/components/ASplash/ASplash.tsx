@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Image, StyleSheet, View, useWindowDimensions } from 'react-native';
 import type { ComponentRef } from 'react';
 import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
@@ -52,8 +52,26 @@ const RING_SIZE = 50;
 const RING_FROM_THE_FOOT = 64;
 
 const styles = StyleSheet.create({
-  card: { overflow: 'hidden', position: 'absolute' },
-  face: { alignItems: 'center', justifyContent: 'center', position: 'absolute' },
+  card: {
+    borderRadius: CARD_ROUND,
+    bottom: 0,
+    left: 0,
+    overflow: 'hidden',
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+  clip: { overflow: 'hidden', position: 'absolute' },
+  face: {
+    alignItems: 'center',
+    bottom: 0,
+    justifyContent: 'center',
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+  fixed: { position: 'absolute' },
   mark: { height: MARK_HIGH, width: MARK_HIGH * WIDER_BY },
   ring: { alignItems: 'center', left: 0, position: 'absolute', right: 0 },
   row: { alignItems: 'center', flexDirection: 'row' },
@@ -96,12 +114,36 @@ const ASplash = ({ isReady, isDark, onGone }: ASplashProps) => {
   const [bottom] = useState(() => new Animated.Value(0));
   const [round] = useState(() => new Animated.Value(SCREEN_ROUND));
   const [faceShown] = useState(() => new Animated.Value(1));
+  const [drawnIn] = useState(() => new Animated.Value(0));
+  const [opening] = useState(() => new Animated.Value(0));
+  const [wordWide, setWordWide] = useState(0);
   const [follows] = useState(() => ({
     markShown: Animated.multiply(risen, markHere),
     markRises: risen.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }),
     left: Animated.multiply(left, -1),
     top: Animated.multiply(top, -1),
   }));
+  const scales = useMemo(() => {
+    const across = drawnIn.interpolate({
+      inputRange: [0, 1],
+      outputRange: [1, (width - INSET * 2) / width],
+    });
+    const down = drawnIn.interpolate({
+      inputRange: [0, 1],
+      outputRange: [1, (height - INSET * 2) / height],
+    });
+
+    return {
+      across,
+      down,
+      backAcross: Animated.divide(1, across),
+      backDown: Animated.divide(1, down),
+    };
+  }, [drawnIn, width, height]);
+  const slides = useMemo(
+    () => opening.interpolate({ inputRange: [0, 1], outputRange: [wordWide / 2, 0] }),
+    [opening, wordWide],
+  );
   const markAt = useRef<ComponentRef<typeof View>>(null);
   const hasLeft = useRef(false);
 
@@ -145,17 +187,24 @@ const ASplash = ({ isReady, isDark, onGone }: ASplashProps) => {
       return;
     }
 
-    Animated.parallel(
-      [top, left, right, bottom, round].map((edge, at) =>
-        Animated.timing(edge, {
-          toValue: at === 4 ? CARD_ROUND : INSET,
-          duration: isStill ? 0 : CARD_OPENS_MS,
-          easing: EASINGS.outEager,
-          useNativeDriver: false,
-        }),
-      ),
-    ).start();
-  }, [hasLanded, isStill, top, left, right, bottom, round]);
+    Animated.parallel([
+      Animated.timing(drawnIn, {
+        toValue: 1,
+        duration: isStill ? 0 : CARD_OPENS_MS,
+        easing: EASINGS.outEager,
+        useNativeDriver: true,
+      }),
+      isStill
+        ? Animated.timing(opening, { toValue: 1, duration: 0, useNativeDriver: true })
+        : Animated.spring(opening, {
+            toValue: 1,
+            stiffness: 260,
+            damping: 24,
+            mass: 1,
+            useNativeDriver: true,
+          }),
+    ]).start();
+  }, [hasLanded, isStill, drawnIn, opening]);
 
   useEffect(() => {
     if (!isRingFull) {
@@ -215,14 +264,14 @@ const ASplash = ({ isReady, isDark, onGone }: ASplashProps) => {
       toValue: 0,
       duration: FADES_MS,
       easing: EASINGS.outQuad,
-      useNativeDriver: false,
+      useNativeDriver: true,
     }).start();
 
     Animated.timing(ground, {
       toValue: 0,
       duration: FADES_MS,
       easing: EASINGS.outQuad,
-      useNativeDriver: false,
+      useNativeDriver: true,
     }).start();
 
     const fade = (after: number) =>
@@ -231,7 +280,7 @@ const ASplash = ({ isReady, isDark, onGone }: ASplashProps) => {
         duration: FADES_MS,
         delay: after,
         easing: EASINGS.outQuad,
-        useNativeDriver: false,
+        useNativeDriver: true,
       });
 
     const land = (target: ARectOnScreen | null) => {
@@ -249,6 +298,11 @@ const ASplash = ({ isReady, isDark, onGone }: ASplashProps) => {
         Math.max(0, width - target.x - target.width),
         Math.max(0, height - target.y - target.height),
       ];
+
+      [top, left, right, bottom].forEach((edge) => {
+        edge.setValue(INSET);
+      });
+      round.setValue(CARD_ROUND);
 
       Animated.parallel([
         ...[top, left, right, bottom].map((edge, at) =>
@@ -308,71 +362,74 @@ const ASplash = ({ isReady, isDark, onGone }: ASplashProps) => {
         ]}
       />
 
-      <Animated.View
-        style={[
-          styles.card,
-          {
-            backgroundColor: colours.surface,
-            borderRadius: round,
-            bottom,
-            left,
-            opacity: cardShown,
-            right,
-            top,
-          },
-        ]}
-      >
-        <Animated.View
-          style={[
-            styles.face,
-            {
-              height,
-              opacity: faceShown,
-              left: follows.left,
-              top: follows.top,
-              width,
-            },
-          ]}
-        >
-          <View style={styles.row}>
+      <Animated.View style={[StyleSheet.absoluteFill, { opacity: cardShown }]}>
+        <Animated.View style={[styles.clip, { borderRadius: round, bottom, left, right, top }]}>
+          <Animated.View
+            style={[styles.fixed, { height, left: follows.left, top: follows.top, width }]}
+          >
             <Animated.View
-              ref={markAt}
-              collapsable={false}
-              style={{
-                opacity: follows.markShown,
-                transform: [{ translateY: follows.markRises }],
-              }}
+              style={[
+                styles.card,
+                {
+                  backgroundColor: colours.surface,
+                  transform: [{ scaleX: scales.across }, { scaleY: scales.down }],
+                },
+              ]}
             >
-              <Image
-                source={mark}
-                resizeMode="contain"
-                accessibilityRole="image"
-                accessibilityLabel={say('common.valence')}
-                style={[styles.mark, { tintColor: colours.text }]}
-              />
+              <Animated.View
+                style={[
+                  styles.face,
+                  {
+                    opacity: faceShown,
+                    transform: [{ scaleX: scales.backAcross }, { scaleY: scales.backDown }],
+                  },
+                ]}
+              >
+                <Animated.View style={[styles.row, { transform: [{ translateX: slides }] }]}>
+                  <Animated.View
+                    ref={markAt}
+                    collapsable={false}
+                    style={{
+                      opacity: follows.markShown,
+                      transform: [{ translateY: follows.markRises }],
+                    }}
+                  >
+                    <Image
+                      source={mark}
+                      resizeMode="contain"
+                      accessibilityRole="image"
+                      accessibilityLabel={say('common.valence')}
+                      style={[styles.mark, { tintColor: colours.text }]}
+                    />
+                  </Animated.View>
+
+                  <AWordOpening
+                    word={say('common.valence')}
+                    isShown={hasLanded}
+                    isStill={isStill}
+                    before={13}
+                    onWide={setWordWide}
+                    style={{
+                      color: colours.text,
+                      fontFamily: FONTS.sans.regular,
+                      fontSize: NAME_SIZE,
+                      letterSpacing: NAME_SIZE * -0.03,
+                    }}
+                  />
+                </Animated.View>
+
+                <Animated.View
+                  style={[styles.ring, { bottom: RING_FROM_THE_FOOT, opacity: ringShown }]}
+                >
+                  <ARing
+                    colour={withAlpha(colours.text, 0.4)}
+                    size={RING_SIZE}
+                    isFinishing={isReady}
+                    onFilled={ringFilled}
+                  />
+                </Animated.View>
+              </Animated.View>
             </Animated.View>
-
-            <AWordOpening
-              word={say('common.valence')}
-              isShown={hasLanded}
-              isStill={isStill}
-              before={13}
-              style={{
-                color: colours.text,
-                fontFamily: FONTS.sans.regular,
-                fontSize: NAME_SIZE,
-                letterSpacing: NAME_SIZE * -0.03,
-              }}
-            />
-          </View>
-
-          <Animated.View style={[styles.ring, { bottom: RING_FROM_THE_FOOT, opacity: ringShown }]}>
-            <ARing
-              colour={withAlpha(colours.text, 0.4)}
-              size={RING_SIZE}
-              isFinishing={isReady}
-              onFilled={ringFilled}
-            />
           </Animated.View>
         </Animated.View>
       </Animated.View>

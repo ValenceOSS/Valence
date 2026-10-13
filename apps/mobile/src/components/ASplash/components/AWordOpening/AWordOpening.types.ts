@@ -6,6 +6,7 @@ type AWordOpeningProps = {
   isStill: boolean;
   style: TextStyle;
   before: number;
+  onWide: (wide: number) => void;
 };
 
 export type { AWordOpeningProps };
