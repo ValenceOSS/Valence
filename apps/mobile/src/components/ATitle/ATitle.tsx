@@ -61,6 +61,9 @@ import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNu
 import { say } from '@ValenceI18n/say';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { ABadgeRow } from '@ValenceMobile/components/ABadgeRow/ABadgeRow';
+import { AnAddToCollectionSheet } from '@ValenceMobile/components/AnAddToCollectionSheet/AnAddToCollectionSheet';
+import { subjectOfMedia } from '@ValenceClient/collections/subjectOfMedia';
+import type { CollectionSubject } from '@ValenceContracts/schemas/Collection';
 
 const PLAY_HEIGHT = 46;
 
@@ -117,6 +120,7 @@ const ATitle = ({
   const cache = useQueryClient();
   const held = useHeldFiles().find((file) => file.mediaId === mediaId) ?? null;
   const [sharing, setSharing] = useState<ShareSubject | null>(null);
+  const [collecting, setCollecting] = useState<CollectionSubject | null>(null);
   const [isPlayingOn, setIsPlayingOn] = useState(false);
   const hasTelevision = useVideoDevices().some((device) => device.kind === 'tv');
   const preparing =
@@ -454,6 +458,16 @@ const ATitle = ({
                   ]
                 : []),
               {
+                label: say('screens.addToCollectionDialog.addTitleToACollection', {
+                  title: title.title,
+                }),
+                onChoose: () => {
+                  setCollecting(
+                    subjectOfMedia({ id: title.id, seriesId: programme?.seriesId ?? null }),
+                  );
+                },
+              },
+              {
                 label: say('common.hide'),
                 onChoose: () => {
                   hiding.ask({ id: title.id, title: title.title, seriesId: null, seriesTitle });
@@ -468,6 +482,14 @@ const ATitle = ({
           </View>
         </Button>
       </View>
+
+      <AnAddToCollectionSheet
+        subject={collecting}
+        title={title.title}
+        onClose={() => {
+          setCollecting(null);
+        }}
+      />
 
       <AShareSheet
         subject={sharing}

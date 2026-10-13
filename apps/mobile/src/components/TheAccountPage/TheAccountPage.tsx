@@ -9,6 +9,7 @@ import { TheDevices } from '@ValenceMobile/components/TheAccount/components/TheD
 import { TheHidden } from '@ValenceMobile/components/TheAccount/components/TheHidden/TheHidden';
 import { TheHistory } from '@ValenceMobile/components/TheAccount/components/TheHistory/TheHistory';
 import { TheShares } from '@ValenceMobile/components/TheAccount/components/TheShares/TheShares';
+import { TheApiKeys } from '@ValenceMobile/components/TheAccount/components/TheApiKeys/TheApiKeys';
 import { TheSecurity } from '@ValenceMobile/components/TheAccount/components/TheSecurity/TheSecurity';
 import { TheProfile } from '@ValenceMobile/components/TheAccount/components/TheProfile/TheProfile';
 import { useAccountPanels } from '@ValenceMobile/components/TheAccount/useAccountPanels';
@@ -47,7 +48,10 @@ const TheAccountPage = ({ panel, onBack }: TheAccountPageProps) => {
       {pluginPage !== null ? (
         <APluginPage key={panel} pluginId={pluginPage.pluginId} pageId={pluginPage.pageId} />
       ) : panel === 'security' ? (
-        <TheSecurity />
+        <>
+          <TheSecurity />
+          <TheApiKeys />
+        </>
       ) : panel === 'devices' ? (
         <TheDevices />
       ) : panel === 'history' ? (

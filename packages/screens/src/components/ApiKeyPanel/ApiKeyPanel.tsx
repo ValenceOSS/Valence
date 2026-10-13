@@ -18,33 +18,11 @@ import {
   setApiKeyEnabled,
   revokeApiKey,
 } from '@ValenceClient/account/fetchApiKeys';
+import { describeKeyLastUsed } from '@ValenceClient/account/describeKeyLastUsed';
 import type { ApiKey } from '@ValenceContracts/schemas/ApiKey';
 import type { ApiKeyPanelProps } from './ApiKeyPanel.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
-
-/**
- * Says when a key was last used in words rather than as a timestamp, and says plainly when it never
- * has been — which is the thing worth noticing in a list of keys.
- *
- * @param at - When it was last used, or nothing where it never has been.
- * @returns The phrase to show.
- */
-const lastUsed = (at: string | null): string => {
-  if (at === null) {
-    return say('common.neverUsed');
-  }
-
-  const days = Math.floor((Date.now() - Date.parse(at)) / 86_400_000);
-
-  if (days < 1) {
-    return say('screens.apiKeyPanel.usedToday');
-  }
-
-  return days === 1
-    ? say('screens.apiKeyPanel.usedYesterday')
-    : say('screens.apiKeyPanel.usedDaysDaysAgo', { days: days.toString() });
-};
 
 const NOT_ALLOWED = 403;
 /**
@@ -213,7 +191,7 @@ const ApiKeyPanel = ({ showKeyForMilliseconds }: ApiKeyPanelProps) => {
                 <span className="flex flex-wrap items-center gap-2 text-xs text-text-muted">
                   <code className="font-mono">{key.start ?? '—'}…</code>
                   <span aria-hidden>·</span>
-                  {lastUsed(key.lastRequestAt)}
+                  {describeKeyLastUsed(key.lastRequestAt)}
                   {key.rateLimit === null ? null : (
                     <Badge size="sm">
                       {say('screens.apiKeyPanel.maxPerEverySecondsS', {
