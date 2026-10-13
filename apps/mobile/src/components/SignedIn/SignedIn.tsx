@@ -209,6 +209,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   }, [partyNotice, forgetPartyNotice]);
   const [carriedOn, setCarriedOn] = useState(0);
   const [isRemoteOpen, setIsRemoteOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [tabsHigh, setTabsHigh] = useState(0);
   const settingUp = useQuery(householdQueries.onboarding());
   const [watchingHeld, setWatchingHeld] = useState<HeldFile | null>(null);
@@ -606,8 +607,6 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
             onBack={back}
           />
         );
-      case 'notifications':
-        return <TheNotifications onOpen={open} onJoin={join} onBack={back} />;
       case 'calendar':
         return <TheCalendar onOpen={open} onBack={back} />;
       case 'account':
@@ -713,7 +712,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
           onLookAt={lookAt}
           onLookAtShow={lookAtShow}
           onNotifications={() => {
-            open({ kind: 'notifications' });
+            setIsNotificationsOpen(true);
           }}
           onScan={() => {
             void scanATelevision();
@@ -832,6 +831,15 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
           setIsRemoteOpen(false);
         }}
         onPlayHere={choose}
+      />
+
+      <TheNotifications
+        isOpen={isNotificationsOpen}
+        onOpen={open}
+        onJoin={join}
+        onClose={() => {
+          setIsNotificationsOpen(false);
+        }}
       />
     </>
   );

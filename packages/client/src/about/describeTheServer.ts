@@ -7,7 +7,8 @@ import { say } from '@ValenceI18n/say';
  *
  * A server older than this question answers with a commit alone, and one started somewhere it could
  * not read its own commit says `unknown`; each is left out rather than printed, so a line never reads
- * "Server unknown". A server tells neither to somebody who has not signed in.
+ * "Server unknown". A development build whose version already carries its commit does not say it
+ * twice. A server tells neither to somebody who has not signed in.
  *
  * @param about - What the server said, where it has said anything.
  * @returns The phrase, or nothing where the server said nothing worth repeating.
@@ -26,7 +27,7 @@ const describeTheServer = (about: About | null): string | null => {
     return commit === null ? null : say('client.about.describeTheServer.serverCommit', { commit });
   }
 
-  return commit === null
+  return commit === null || about.version.includes(commit)
     ? say('client.about.describeTheServer.serverVersion', { version: about.version })
     : say('client.about.describeTheServer.serverVersionCommit', { version: about.version, commit });
 };

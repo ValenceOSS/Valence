@@ -26,4 +26,10 @@ describe('describeTheServer', () => {
   it('says nothing where the server keeps its build from somebody not signed in', () => {
     expect(describeTheServer({ features: ['server.reportsFeatures'] })).toBeNull();
   });
+
+  it('does not say the commit twice where the version already carries it', () => {
+    expect(
+      describeTheServer({ version: '1.6.0-dev.8f2fc92', commit: '8f2fc92', features: [] }),
+    ).toBe('Server 1.6.0-dev.8f2fc92');
+  });
 });

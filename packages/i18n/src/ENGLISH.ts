@@ -2283,6 +2283,8 @@ const ENGLISH = {
     'If {name} has an email address on their account, we’ve sent a password reset link to it. The link works once, for one hour.',
   'phone.aTextReader.theBookText.followTheLink': 'Open link',
   'phone.aTextReader.theBookText.followTheLinkToValue': 'Open link to {value}',
+  'phone.aThemeChoice.lightDarkOrAsThePhoneIs':
+    'Light, dark, or matching your phone’s own setting. Only changes this phone.',
   'phone.aThemeChoice.lightOrDark': 'Appearance',
   'phone.aThemeChoice.nameFromPluginName': '{name}, from {pluginName}',
   'phone.aTitle.allEpisodes': 'All episodes',
@@ -2323,6 +2325,8 @@ const ENGLISH = {
   'phone.theAccount.theHidden.showTheNameLibrary': 'Show the {name} library',
   'phone.theAccount.theHistory.forgetEverythingYouHaveWatchedAnd':
     'Clear your watch history and reading history?',
+  'phone.theAccount.theHistory.itIsTakenOffYourHistory':
+    'It’s removed from your history. This can’t be undone.',
   'phone.theAccount.theHistory.nothingWatchedOrReadYet': 'Nothing watched or read yet.',
   'phone.theAccount.theHistory.viewingsAreForgottenAutomaticallyAfterA':
     'Watch history is deleted automatically after one year.',

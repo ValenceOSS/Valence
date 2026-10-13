@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
   key: { alignItems: 'center', flexDirection: 'row', gap: 12, paddingVertical: 10 },
   made: { borderRadius: 12, borderWidth: 1, gap: 6, padding: 12 },
   said: { flex: 1, gap: 2 },
-  whole: { gap: 12 },
+  whole: { gap: 12, padding: 16 },
 });
 
 /**

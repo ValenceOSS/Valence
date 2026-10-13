@@ -14,7 +14,7 @@ describe('ASheet', () => {
     expect(drawn.getByText('Play on')).toBeTruthy();
     expect(drawn.getByText('Living room')).toBeTruthy();
 
-    await userEvent.press(drawn.getByText('Done'));
+    await userEvent.press(drawn.getByRole('button', { name: 'Done' }));
 
     expect(onClose).toHaveBeenCalled();
   });
@@ -26,6 +26,6 @@ describe('ASheet', () => {
       </ASheet>,
     );
 
-    expect(drawn.getByText('Cancel')).toBeTruthy();
+    expect(drawn.getByRole('button', { name: 'Cancel' })).toBeTruthy();
   });
 });

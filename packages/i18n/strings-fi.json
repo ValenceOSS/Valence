@@ -9705,6 +9705,11 @@
     "context": "The label of a button in the book text in the text reader of the phone app. {value} is filled in by the app."
   },
   {
+    "handler": "phone.aThemeChoice.lightDarkOrAsThePhoneIs",
+    "text": "Light, dark, or matching your phone’s own setting. Only changes this phone.",
+    "context": "Under Appearance in the phone app's theme choice, explaining the light, dark and system choices beneath it."
+  },
+  {
     "handler": "phone.aThemeChoice.lightOrDark",
     "text": "Appearance",
     "context": "The label of a segmented row in the theme choice of the phone app."
@@ -9873,6 +9878,11 @@
     "handler": "phone.theAccount.theHistory.forgetEverythingYouHaveWatchedAnd",
     "text": "Clear your watch history and reading history?",
     "context": "A message in an alert in the history in the account of the phone app."
+  },
+  {
+    "handler": "phone.theAccount.theHistory.itIsTakenOffYourHistory",
+    "text": "It’s removed from your history. This can’t be undone.",
+    "context": "The phone app asks before removing one film, episode or book from the account's history; this explains what happens."
   },
   {
     "handler": "phone.theAccount.theHistory.nothingWatchedOrReadYet",

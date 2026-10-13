@@ -17,7 +17,6 @@ type APage =
   | { kind: 'collection'; collectionId: string }
   | { kind: 'asking'; about: MediaRequestKind; id: string; isMore?: boolean }
   | { kind: 'browsing'; browsing: CatalogueBrowse; title: string }
-  | { kind: 'notifications' }
   | { kind: 'calendar' }
   | { kind: 'album'; albumId: string }
   | { kind: 'artist'; artistId: string }

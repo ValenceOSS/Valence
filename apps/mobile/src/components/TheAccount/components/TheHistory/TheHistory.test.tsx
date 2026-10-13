@@ -58,10 +58,20 @@ describe('TheHistory', () => {
     expect(drawn.getByText(/42% read/u)).toBeTruthy();
   });
 
-  it('forgets one book', async () => {
+  it('forgets one book once asked', async () => {
+    const asking = jest.spyOn(Alert, 'alert');
     const drawn = await render(<TheHistory />, { wrapper: CacheScope });
 
     await userEvent.press(await drawn.findByRole('button', { name: 'Remove Dune' }));
+
+    expect(forgetReading).not.toHaveBeenCalled();
+
+    await act(() => {
+      asking.mock.calls
+        .at(-1)?.[2]
+        ?.find((button) => button.style === 'destructive')
+        ?.onPress?.();
+    });
 
     expect(forgetReading).toHaveBeenCalledWith(aBook().id);
   });

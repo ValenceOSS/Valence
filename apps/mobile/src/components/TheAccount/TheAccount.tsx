@@ -14,6 +14,7 @@ import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { aboutQueries } from '@ValenceClient/query/aboutQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { describeTheBuild } from '@ValenceClient/about/describeTheBuild';
+import { describeTheServer } from '@ValenceClient/about/describeTheServer';
 import { theBuildInfo } from '@ValenceClient/about/theBuildInfo';
 import { useServerHas } from '@ValenceClient/about/useServerHas';
 import { AFace } from '@ValenceMobile/components/AFace/AFace';
@@ -30,7 +31,7 @@ import { say } from '@ValenceI18n/say';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 
 const styles = StyleSheet.create({
-  about: { alignItems: 'center', gap: 4 },
+  about: { alignItems: 'center', gap: 4, paddingHorizontal: 12 },
   head: { alignItems: 'center', gap: 12, paddingVertical: 8 },
   leaving: { gap: 10 },
 });
@@ -57,7 +58,8 @@ const TheAccount = ({ onOut, onElsewhere, onOpen, header, onScrolled }: TheAccou
     ACCOUNT_PANELS.every((ours) => ours.id !== panel.id),
   );
   const address = platformInUse().serverAddress();
-  const builds = describeTheBuild(theBuildInfo(), server.data ?? null);
+  const builds = describeTheBuild(theBuildInfo(), null);
+  const serverRuns = describeTheServer(server.data ?? null);
   const profile = watching.data ?? null;
 
   return (
@@ -160,25 +162,31 @@ const TheAccount = ({ onOut, onElsewhere, onOpen, header, onScrolled }: TheAccou
 
       <View style={styles.about}>
         {isDemo ? (
-          <Words size="small" tone="muted">
+          <Words size="small" tone="muted" isCentred>
             {say('common.thisIsASharedDemoAccount')}
           </Words>
         ) : null}
 
         {address === null ? null : (
-          <Words size="small" tone="muted">
+          <Words size="small" tone="muted" isCentred>
             {say('common.watchingOnAddress', { address })}
           </Words>
         )}
 
         {builds === null ? null : (
-          <Words size="small" tone="muted">
+          <Words size="small" tone="muted" isCentred>
             {builds}
           </Words>
         )}
 
+        {serverRuns === null ? null : (
+          <Words size="small" tone="muted" isCentred>
+            {serverRuns}
+          </Words>
+        )}
+
         {reportsFeatures === false ? (
-          <Words size="small" tone="muted">
+          <Words size="small" tone="muted" isCentred>
             {say('client.about.someFeaturesNeedANewerServer')}
           </Words>
         ) : null}

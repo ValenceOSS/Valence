@@ -19,7 +19,9 @@ const SCHEMES = [
 ] as const;
 
 const styles = StyleSheet.create({
-  themes: { gap: 8 },
+  asks: { gap: 4 },
+  row: { gap: 12, padding: 16 },
+  themes: { gap: 8, paddingBottom: 16, paddingHorizontal: 16 },
 });
 
 /**
@@ -36,14 +38,24 @@ const AThemeChoice = () => {
 
   return (
     <AGroup title={say('common.theme')}>
-      <SegmentedRow
-        label={say('phone.aThemeChoice.lightOrDark')}
-        items={SCHEMES}
-        value={theme}
-        onSelect={(said) => {
-          choose(readTheme(said));
-        }}
-      />
+      <View style={styles.row}>
+        <View style={styles.asks}>
+          <Words>{say('phone.aThemeChoice.lightOrDark')}</Words>
+          <Words size="small" tone="muted">
+            {say('phone.aThemeChoice.lightDarkOrAsThePhoneIs')}
+          </Words>
+        </View>
+
+        <SegmentedRow
+          label={say('phone.aThemeChoice.lightOrDark')}
+          items={SCHEMES}
+          value={theme}
+          onSelect={(said) => {
+            choose(readTheme(said));
+          }}
+          fills
+        />
+      </View>
 
       {themes.length === 0 ? null : (
         <View style={styles.themes}>

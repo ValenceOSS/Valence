@@ -145,13 +145,26 @@ const TheHistory = () => {
                   tone="bare"
                   label={say('common.forgetName', { name })}
                   onPress={() => {
-                    if (entry.kind === 'reading') {
-                      void forgetABook(entry.reading.book.id);
+                    Alert.alert(
+                      say('common.forgetTitle', { title: name }),
+                      say('phone.theAccount.theHistory.itIsTakenOffYourHistory'),
+                      [
+                        { text: say('common.keepIt'), style: 'cancel' },
+                        {
+                          text: say('common.forget'),
+                          style: 'destructive',
+                          onPress: () => {
+                            if (entry.kind === 'reading') {
+                              void forgetABook(entry.reading.book.id);
 
-                      return;
-                    }
+                              return;
+                            }
 
-                    void forgetViewing(entry.viewing.id).then(reread);
+                            void forgetViewing(entry.viewing.id).then(reread);
+                          },
+                        },
+                      ],
+                    );
                   }}
                 >
                   <View style={styles.forget}>
