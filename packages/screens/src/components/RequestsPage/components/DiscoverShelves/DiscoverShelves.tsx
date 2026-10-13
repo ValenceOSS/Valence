@@ -4,6 +4,7 @@ import { DiscoverHero } from '@ValenceScreens/components/RequestsPage/components
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Spinner } from '@ValenceUI/Spinner';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
+import { discoverHeroTitles } from '@ValenceClient/requests/discoverHeroTitles';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { AskableMusicShelf } from '@ValenceScreens/components/RequestsPage/components/AskableMusicShelf/AskableMusicShelf';
@@ -35,8 +36,6 @@ const isMusicShelf = (shelf: CatalogueShelf): boolean =>
  */
 const isBookShelf = (shelf: CatalogueShelf): boolean =>
   shelf.titles.every((title) => isBookRequest(title.kind));
-
-const HERO_PAIRS = 3;
 
 const STUDIOS_AFTER = 1;
 
@@ -80,14 +79,7 @@ const DiscoverShelves = ({
   const { shelves, studios } = discovered.data;
 
   const films = shelves.filter((shelf) => !isMusicShelf(shelf) && !isBookShelf(shelf));
-  const trendingFilms = shelves.find((shelf) => shelf.id === 'trending-films')?.titles ?? [];
-  const trendingSeries = shelves.find((shelf) => shelf.id === 'trending-series')?.titles ?? [];
-  const featured = Array.from({ length: HERO_PAIRS }, (_, at) => [
-    trendingFilms[at],
-    trendingSeries[at],
-  ])
-    .flat()
-    .filter((title) => title !== undefined);
+  const featured = discoverHeroTitles(shelves);
   const music = shelves.filter((shelf) => isMusicShelf(shelf));
   const studiosAfter = Math.min(STUDIOS_AFTER, films.length - 1);
 

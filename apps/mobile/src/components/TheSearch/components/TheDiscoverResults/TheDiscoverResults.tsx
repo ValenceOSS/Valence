@@ -27,6 +27,8 @@ const TheDiscoverResults = ({ asked, onAsk, onBack }: TheDiscoverResultsProps) =
   const shelves = [
     { id: 'films', title: say('common.films'), titles: found.films },
     { id: 'shows', title: say('common.shows'), titles: found.shows },
+    { id: 'artists', title: say('common.artists'), titles: found.artists },
+    { id: 'books', title: say('common.books'), titles: found.books },
   ].filter((shelf) => shelf.titles.length > 0);
 
   return (

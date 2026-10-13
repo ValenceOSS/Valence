@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groupReleases } from '@ValenceScreens/requests/groupReleases';
+import { groupReleases } from '@ValenceClient/requests/groupReleases';
 import type { CatalogueAlbum, ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 
 let counted = 0;

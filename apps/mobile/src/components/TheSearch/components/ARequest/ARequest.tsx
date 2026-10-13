@@ -46,6 +46,10 @@ const ARequest = ({ request, progress, myId, onAsk }: ARequestProps) => {
   const going = request.state === 'downloading' ? progressOfRequest(request, progress) : null;
   const saidOfGoing = going === null ? null : describeDownloadLine(going);
   const { kind, tmdbId } = request;
+  const openAs =
+    tmdbId !== null
+      ? tmdbId.toString()
+      : (request.musicBrainzId ?? request.openLibraryId?.toString() ?? null);
   const { help } = badge;
   const cache = useQueryClient();
   const readAheadAs =
@@ -106,12 +110,12 @@ const ARequest = ({ request, progress, myId, onAsk }: ARequestProps) => {
 
   return (
     <View>
-      {whatAPhoneAsksFor(kind) && tmdbId !== null ? (
+      {openAs !== null ? (
         <Button
           tone="bare"
           label={request.title}
           onPress={() => {
-            onAsk(kind, tmdbId.toString());
+            onAsk(kind, openAs);
           }}
         >
           {card}

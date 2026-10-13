@@ -1,8 +1,9 @@
-import type { CatalogueBrowseKind, CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
+import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
+import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
 
 type ACatalogueCardProps = {
   title: CatalogueTitle;
-  onAsk: (kind: CatalogueBrowseKind, id: string) => void;
+  onAsk: (kind: MediaRequestKind, id: string) => void;
   wide?: number;
 };
 

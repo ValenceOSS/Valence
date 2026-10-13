@@ -48,7 +48,7 @@ const catalogueShown = (
           entry.title.toLocaleLowerCase().includes(query) ||
           (entry.subtitle ?? '').toLocaleLowerCase().includes(query)),
     )
-    .toSorted((left, right) =>
+    .sort((left, right) =>
       view.sort === 'title'
         ? left.title.localeCompare(right.title)
         : (right.addedAt ?? '').localeCompare(left.addedAt ?? '') ||

@@ -50,9 +50,7 @@ const downloadsOfRequest = (
       items,
       queued: queue.find((one) => one.id === downloadId) ?? null,
     }))
-    .toSorted((left, right) =>
-      (left.queued?.sentAt ?? '').localeCompare(right.queued?.sentAt ?? ''),
-    );
+    .sort((left, right) => (left.queued?.sentAt ?? '').localeCompare(right.queued?.sentAt ?? ''));
 };
 
 export type { RequestDownload };

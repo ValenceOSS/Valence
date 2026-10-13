@@ -1,7 +1,7 @@
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { pageInTheLibrary } from './pageInTheLibrary';
 import type { QueryClient } from '@tanstack/react-query';
-import type { CatalogueBrowseKind } from '@ValenceContracts/schemas/CatalogueTitle';
+import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 import type { APage } from './SignedIn.types';
 
 /**
@@ -14,10 +14,12 @@ import type { APage } from './SignedIn.types';
  * @param id - The id it was listed under.
  * @returns The page to open.
  */
-const pageToAskAbout = (cache: QueryClient, about: CatalogueBrowseKind, id: string): APage => {
+const pageToAskAbout = (cache: QueryClient, about: MediaRequestKind, id: string): APage => {
   const standing = cache.getQueryData(requestsQueries.askable(about, id).queryKey)?.standing;
 
-  return standing?.status === 'library' && standing.mediaId !== null
+  return standing?.status === 'library' &&
+    standing.mediaId !== null &&
+    (about === 'film' || about === 'series')
     ? pageInTheLibrary(about, standing.mediaId)
     : { kind: 'asking', about, id };
 };

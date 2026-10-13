@@ -1,13 +1,11 @@
+import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 import type { ReactNode } from 'react';
-import type {
-  CatalogueBrowse,
-  CatalogueBrowseKind,
-} from '@ValenceContracts/schemas/CatalogueTitle';
+import type { CatalogueBrowse } from '@ValenceContracts/schemas/CatalogueTitle';
 
 type TheSearchProps = {
   onLookAt: (mediaId: string) => void;
   onLookAtShow: (libraryId: string, showId: string) => void;
-  onAsk: ((about: CatalogueBrowseKind, id: string) => void) | null;
+  onAsk: ((about: MediaRequestKind, id: string) => void) | null;
   onAlbum: (albumId: string) => void;
   onArtist: (artistId: string) => void;
   onPlaylist: (playlistId: string) => void;

@@ -44,7 +44,7 @@ const groupReleases = <Album extends CatalogueAlbum>(
     .map(({ id, title, of }) => ({
       id,
       title,
-      albums: albums.filter((album) => album.type === of).toSorted(newestFirst),
+      albums: albums.filter((album) => album.type === of).sort(newestFirst),
     }))
     .filter((group) => group.albums.length > 0);
 };

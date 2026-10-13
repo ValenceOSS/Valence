@@ -50,7 +50,7 @@ const seasonsOfTitle = (
     )?.path ?? null;
 
   return [...numbers]
-    .toSorted((left, right) => left - right)
+    .sort((left, right) => left - right)
     .map((season): TitleSeason => {
       const asked = (request?.items ?? []).filter((item) => item.season === season);
       const listed = seasons.find((one) => one.season === season)?.episodeCount ?? 0;

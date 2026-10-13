@@ -1,7 +1,7 @@
-import type { CatalogueBrowseKind } from '@ValenceContracts/schemas/CatalogueTitle';
+import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 
 type AskedProps = {
-  onAsk: (kind: CatalogueBrowseKind, id: string) => void;
+  onAsk: (kind: MediaRequestKind, id: string) => void;
 };
 
 export type { AskedProps };

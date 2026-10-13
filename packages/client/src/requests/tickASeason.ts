@@ -25,7 +25,7 @@ const tickASeason = (
 
   return open.length > 0 && !next.includes(0) && open.every((one) => next.includes(one.season))
     ? null
-    : next.toSorted((left, right) => left - right);
+    : [...next].sort((left, right) => left - right);
 };
 
 export { tickASeason };

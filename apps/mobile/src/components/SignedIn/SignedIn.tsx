@@ -588,6 +588,9 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
             onOpen={(kind, mediaId) => {
               swap(pageInTheLibrary(kind, mediaId));
             }}
+            onAskAbout={(about, id) => {
+              open(pageToAskAbout(cache, about, id));
+            }}
             onBack={back}
           />
         );

@@ -50,7 +50,7 @@ import { describeStanding } from '@ValenceClient/requests/describeStanding';
 import { readAsking } from './readAsking';
 import { progressOfRequest } from '@ValenceClient/requests/progressOfRequest';
 import { catalogueTrailerUrl } from '@ValenceScreens/library/catalogueTrailerUrl';
-import { groupReleases } from '@ValenceScreens/requests/groupReleases';
+import { groupReleases } from '@ValenceClient/requests/groupReleases';
 import { DialogSection } from '@ValenceScreens/components/DialogSection/DialogSection';
 import { DialogSections } from '@ValenceScreens/components/DialogSections/DialogSections';
 import { DialogArrival } from '@ValenceScreens/components/DialogArrival/DialogArrival';

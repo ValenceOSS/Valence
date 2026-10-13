@@ -5,7 +5,6 @@ import { isTitleWatched } from '@ValenceClient/requests/isTitleWatched';
 import { describeStanding } from '@ValenceClient/requests/describeStanding';
 import { APoster } from '@ValenceMobile/components/APoster/APoster';
 import { Button } from '@ValenceMobile/components/Button/Button';
-import { whatAPhoneAsksFor } from '@ValenceMobile/components/TheSearch/whatAPhoneAsksFor';
 import { pictureOnThisServer } from '@ValenceMobile/platform/pictureOnThisServer';
 import type { ACatalogueCardProps } from './ACatalogueCard.types';
 
@@ -20,10 +19,6 @@ const ACatalogueCard = ({ title, onAsk, wide }: ACatalogueCardProps) => {
   const { kind } = title;
   const watched = useQuery(viewingQueries.progress());
   const isWatched = isTitleWatched(title, byMediaId(watched.data ?? []));
-
-  if (!whatAPhoneAsksFor(kind)) {
-    return null;
-  }
 
   return (
     <Button

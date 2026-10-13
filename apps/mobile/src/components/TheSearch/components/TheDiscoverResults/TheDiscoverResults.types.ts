@@ -1,8 +1,8 @@
-import type { CatalogueBrowseKind } from '@ValenceContracts/schemas/CatalogueTitle';
+import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 
 type TheDiscoverResultsProps = {
   asked: string;
-  onAsk: (about: CatalogueBrowseKind, id: string) => void;
+  onAsk: (about: MediaRequestKind, id: string) => void;
   onBack: () => void;
 };
 
