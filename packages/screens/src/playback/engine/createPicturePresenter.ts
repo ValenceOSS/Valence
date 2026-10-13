@@ -2,7 +2,7 @@ import { PICTURE_SHADER } from './PICTURE_SHADER';
 import { fitWithin } from './fitWithin';
 import type { HdrSignal } from './HdrSignal';
 
-const SDR_WHITE_NITS = 203;
+const SDR_WHITE_NITS = 100;
 
 const SIGNALS: Readonly<Record<'sdr' | HdrSignal, number>> = { sdr: 0, pq: 1, hlg: 2 };
 
@@ -30,6 +30,8 @@ type PicturePresenter = {
  * HDR frames that reach it as their encoded PQ or HLG signal are tone mapped on the way: decoded to
  * light, rolled off from the film's peak to SDR white with the BT.2390 curve on the brightest
  * channel, so colours keep their hue, and taken from BT.2020 to BT.709 where they are that wide.
+ * SDR white is 100 nits, as the server takes it when it tone maps, so a film looks the same however
+ * it reaches the screen.
  *
  * A picture filmed on its side, as a phone records one, is turned upright as it is drawn.
  *
