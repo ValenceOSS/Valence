@@ -6,13 +6,11 @@ import { prepareHdrDecoding } from './prepareHdrDecoding';
 
 const TOLERANCE = 8;
 
-const SIZE = 64;
-
 const ENCODED_GREY = 128;
 
 type Probe = (typeof TONE_MAPPING_PROBES)[number];
 
-const ROW_BYTES = 256;
+const ROW_ALIGNMENT = 256;
 
 /**
  * Decodes a probe's one frame the way an HDR film of its codec is decoded for tone mapping.
@@ -27,8 +25,8 @@ const decodeProbe = async (probe: Probe): Promise<VideoFrame | 'notDecodable' | 
     codec: probe.codec,
     config: {
       codec: probe.config,
-      codedWidth: SIZE,
-      codedHeight: SIZE,
+      codedWidth: probe.size,
+      codedHeight: probe.size,
       ...(probe.description === null ? {} : { description: bytesOf(probe.description) }),
     },
     containerColour: {
@@ -76,8 +74,9 @@ const decodeProbe = async (probe: Probe): Promise<VideoFrame | 'notDecodable' | 
 };
 
 /**
- * Whether Valence's own tone mapping can be trusted in this browser for a codec: it decodes a tiny
- * HDR frame of a known PQ grey through exactly the path a film takes and draws it through WebGPU untouched,
+ * Whether Valence's own tone mapping can be trusted in this browser for a codec: it decodes a small
+ * HDR frame of a known PQ grey — 256 pixels square for H.265, since NVIDIA's decoder refuses any
+ * frame under 144 and browsers bring no H.265 decoder of their own — through exactly the path a film takes and draws it through WebGPU untouched,
  * then reads back what arrived. The encoded grey coming back means the browser left the HDR signal
  * alone for the shader; anything else — the browser converting the frame its own way, as it may
  * where it does not honour the colour a decoder is given — means the shader would be fed the wrong
@@ -114,7 +113,8 @@ const checkToneMapping = async (codec: string): Promise<ToneMappingCheck> => {
   }
 
   try {
-    const size = SIZE;
+    const { size } = probe;
+    const rowBytes = Math.ceil((size * 4) / ROW_ALIGNMENT) * ROW_ALIGNMENT;
     const module = device.createShaderModule({ code: PICTURE_SHADER });
     const pipeline = device.createRenderPipeline({
       layout: 'auto',
@@ -129,7 +129,7 @@ const checkToneMapping = async (codec: string): Promise<ToneMappingCheck> => {
     });
     const grade = device.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM });
     const readback = device.createBuffer({
-      size: ROW_BYTES * size,
+      size: rowBytes * size,
       usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
     });
     const encoder = device.createCommandEncoder();
@@ -158,7 +158,7 @@ const checkToneMapping = async (codec: string): Promise<ToneMappingCheck> => {
     );
     pass.draw(3);
     pass.end();
-    encoder.copyTextureToBuffer({ texture: target }, { buffer: readback, bytesPerRow: ROW_BYTES }, [
+    encoder.copyTextureToBuffer({ texture: target }, { buffer: readback, bytesPerRow: rowBytes }, [
       size,
       size,
     ]);
@@ -166,7 +166,7 @@ const checkToneMapping = async (codec: string): Promise<ToneMappingCheck> => {
     await readback.mapAsync(GPUMapMode.READ);
 
     const centre =
-      new Uint8Array(readback.getMappedRange())[(size / 2) * ROW_BYTES + (size / 2) * 4] ?? 0;
+      new Uint8Array(readback.getMappedRange())[(size / 2) * rowBytes + (size / 2) * 4] ?? 0;
 
     return Math.abs(centre - ENCODED_GREY) <= TOLERANCE
       ? { outcome: 'trusted' }
