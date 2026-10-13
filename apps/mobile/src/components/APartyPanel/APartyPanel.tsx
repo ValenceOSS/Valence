@@ -1,4 +1,4 @@
-import { Share, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
@@ -7,7 +7,8 @@ import { APanelButton } from '@ValenceMobile/components/APanelButton/APanelButto
 import { TextField } from '@ValenceMobile/components/TextField/TextField';
 import { Toggle } from '@ValenceMobile/components/Toggle/Toggle';
 import { SIDE_PANEL } from '@ValenceMobile/components/ASidePanel/SIDE_PANEL';
-import { ASidePanel } from '@ValenceMobile/components/ASidePanel/ASidePanel';
+import { APlayerPanel } from '@ValenceMobile/components/Watching/components/APlayerPanel/APlayerPanel';
+import { PLAYER_LOOK } from '@ValenceMobile/components/Watching/PLAYER_LOOK';
 import { ABottomSheet } from '@ValenceMobile/components/ABottomSheet/ABottomSheet';
 import { ASharedTimeline } from '@ValenceMobile/components/ASharedTimeline/ASharedTimeline';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
@@ -26,6 +27,14 @@ import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 
 const styles = StyleSheet.create({
+  whole: {
+    alignSelf: 'center',
+    gap: 22,
+    maxWidth: 560,
+    paddingBottom: 24,
+    paddingTop: 4,
+    width: '100%',
+  },
   ...SIDE_PANEL.styles,
   actions: { flexDirection: 'row', gap: 4, paddingHorizontal: 10 },
   textAction: {
@@ -42,14 +51,15 @@ const styles = StyleSheet.create({
 });
 
 /**
- * A watch party or a listening party, from a side panel over the player, as the web's party panels
+ * A watch party or a listening party, from a panel over the player, as the web's party panels
  * have them: the way to start one around what is playing; and once there is one, who is in it and
  * whether they are watching or listening and in step, whoever the room is waiting for, the
  * invitation to send through the phone's own share sheet, the household to ask along, and — for
  * whoever runs it — who may do what, who is put out, and its password. Where a party asks this
  * phone for its password, that is asked here. A listening party is not offered to somebody already
- * in a watch party, since nobody can be in two at once. A watch party sits beside the film; a
- * listening party rises from the foot only as far as it needs, as picking a device does.
+ * in a watch party, since nobody can be in two at once. A watch party fills the picture in frosted
+ * glass, as the player's other panels do; a listening party rises from the foot only as far as it
+ * needs, as picking a device does.
  *
  * @param kind - Which kind of party this is about.
  * @param watchParty - The party this phone holds.
@@ -91,13 +101,16 @@ const APartyPanel = ({
         {children}
       </ABottomSheet>
     ) : (
-      <ASidePanel
-        title={words.title}
-        closeLabel={say('common.partyPanel.closeTheParty')}
-        onClose={onClose}
-      >
-        {children}
-      </ASidePanel>
+      <APlayerPanel label={say('common.partyPanel.closeTheParty')} onClose={onClose}>
+        <ScrollView
+          contentContainerStyle={styles.whole}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={PLAYER_LOOK.styles.heading}>{words.title}</Text>
+          {children}
+        </ScrollView>
+      </APlayerPanel>
     );
 
   if (passwordWanted !== null) {
