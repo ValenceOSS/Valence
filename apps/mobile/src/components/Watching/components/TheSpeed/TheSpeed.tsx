@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { Button } from '@ValenceMobile/components/Button/Button';
+import { ASystemSlider } from '@ValenceMobile/components/ASystemSlider/ASystemSlider';
 import { APlayerPanel } from '@ValenceMobile/components/Watching/components/APlayerPanel/APlayerPanel';
 import { PLAYER_LOOK } from '@ValenceMobile/components/Watching/PLAYER_LOOK';
 import { PLAYBACK_RATES } from '@ValenceClient/playback/PLAYBACK_RATES';
@@ -8,82 +8,60 @@ import type { TheSpeedProps } from './TheSpeed.types';
 import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
-  centre: { flex: 1, justifyContent: 'center', paddingHorizontal: '10%' },
-  dot: {
-    backgroundColor: PLAYER_LOOK.colours.rest,
-    borderRadius: 8,
-    height: 16,
-    width: 16,
-  },
-  dotChosen: {
-    backgroundColor: PLAYER_LOOK.colours.text,
-    borderRadius: 14,
-    height: 28,
-    width: 28,
-  },
-  heading: { ...PLAYER_LOOK.styles.heading, marginBottom: 44, textAlign: 'center' },
-  line: {
-    backgroundColor: PLAYER_LOOK.colours.rest,
-    height: 2,
-    left: '8%',
-    position: 'absolute',
-    right: '8%',
-    top: 13,
-  },
-  stop: { alignItems: 'center', gap: 16, height: 80, justifyContent: 'flex-start', width: 90 },
-  stopDot: { alignItems: 'center', height: 28, justifyContent: 'center' },
-  stops: { flexDirection: 'row', justifyContent: 'space-between' },
+  stop: { alignItems: 'center', width: 76 },
+  stops: { flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: -26 },
+  whole: { gap: 10, paddingBottom: 6, paddingHorizontal: '16%' },
 });
 
 /**
- * How fast the film plays, as stops along a line from half speed to double — the one in force
- * drawn larger — so the whole range is seen at once and changing it is a single tap.
+ * How fast the film plays, on the system's own slider stepping from half speed to double, along the
+ * foot of the picture so the film stays in view while it changes. Each stop is named beneath it, the
+ * one in force drawn bolder.
  *
  * @param rate - How fast it is playing.
- * @param onRate - Told the speed they want.
+ * @param onRate - Told each speed as the slider reaches it.
  * @param onClose - Told they are done.
  */
-const TheSpeed = ({ rate, onRate, onClose }: TheSpeedProps) => (
-  <APlayerPanel label={say('phone.watching.closeTheSpeed')} onClose={onClose}>
-    <View style={styles.centre}>
-      <Text style={styles.heading}>{say('common.speed')}</Text>
+const TheSpeed = ({ rate, onRate, onClose }: TheSpeedProps) => {
+  const at = Math.max(
+    0,
+    PLAYBACK_RATES.findIndex((one) => one === rate),
+  );
+  const choose = (step: number) => {
+    const chosen = PLAYBACK_RATES[step];
 
-      <View>
-        <View style={styles.line} />
+    if (chosen !== undefined) {
+      onRate(chosen);
+    }
+  };
+
+  return (
+    <APlayerPanel label={say('phone.watching.closeTheSpeed')} onClose={onClose} isAlongTheFoot>
+      <View style={styles.whole}>
+        <ASystemSlider
+          label={say('common.speed')}
+          value={at}
+          furthest={PLAYBACK_RATES.length - 1}
+          tint={PLAYER_LOOK.colours.text}
+          onScrubbing={choose}
+          onScrubbed={choose}
+        />
 
         <View style={styles.stops}>
-          {PLAYBACK_RATES.map((one) => {
-            const isChosen = one === rate;
-            const said = one === 1 ? say('phone.watching.normalSpeed') : describePlaybackRate(one);
-
-            return (
-              <Button
-                key={one}
-                tone="bare"
-                isChosen={isChosen}
-                label={said}
-                onPress={() => {
-                  onRate(one);
-                }}
+          {PLAYBACK_RATES.map((one, place) => (
+            <View key={one} style={styles.stop}>
+              <Text
+                style={place === at ? PLAYER_LOOK.styles.labelChosen : PLAYER_LOOK.styles.label}
               >
-                <View style={styles.stop}>
-                  <View style={styles.stopDot}>
-                    <View style={isChosen ? styles.dotChosen : styles.dot} />
-                  </View>
-                  <Text
-                    style={isChosen ? PLAYER_LOOK.styles.labelChosen : PLAYER_LOOK.styles.label}
-                  >
-                    {said}
-                  </Text>
-                </View>
-              </Button>
-            );
-          })}
+                {describePlaybackRate(one)}
+              </Text>
+            </View>
+          ))}
         </View>
       </View>
-    </View>
-  </APlayerPanel>
-);
+    </APlayerPanel>
+  );
+};
 
 TheSpeed.displayName = 'TheSpeed';
 

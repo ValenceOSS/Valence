@@ -2441,7 +2441,6 @@ const ENGLISH = {
   'phone.watching.closeTheSpeed': 'Close the speed',
   'phone.watching.closeTheStats': 'Close stats for nerds',
   'phone.watching.lockTheControls': 'Lock the controls',
-  'phone.watching.normalSpeed': '1x (Normal)',
   'phone.watching.noSubtitlesForThis': 'There are no subtitles for this.',
   'phone.watching.playbackWasStopped': 'Playback was stopped',
   'phone.watching.playingNow': 'Playing now',

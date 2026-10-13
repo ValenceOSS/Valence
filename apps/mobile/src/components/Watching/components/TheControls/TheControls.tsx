@@ -38,7 +38,7 @@ const { colours, edge } = PLAYER_LOOK;
 
 const styles = StyleSheet.create({
   actions: { alignItems: 'center', flexDirection: 'row', gap: 4, justifyContent: 'center' },
-  brightness: { bottom: 0, justifyContent: 'center', position: 'absolute', top: 0 },
+  brightness: { justifyContent: 'center', position: 'absolute' },
   clock: {
     color: colours.text,
     fontFamily: FONTS.sans.semibold,
@@ -182,6 +182,8 @@ const TheControls = ({
   const room = useSafeAreaInsets();
   const [scrubbingTo, setScrubbingTo] = useState<number | null>(null);
   const [lineWide, setLineWide] = useState(0);
+  const [headTall, setHeadTall] = useState(0);
+  const [footTall, setFootTall] = useState(0);
   const left = Math.max(room.left, edge);
   const right = Math.max(room.right, edge);
 
@@ -196,6 +198,9 @@ const TheControls = ({
       <View
         pointerEvents="box-none"
         style={[styles.head, { paddingLeft: left, paddingRight: right }]}
+        onLayout={(event) => {
+          setHeadTall(event.nativeEvent.layout.y + event.nativeEvent.layout.height);
+        }}
       >
         <View style={styles.said}>
           <Text style={styles.title} numberOfLines={1}>
@@ -296,13 +301,19 @@ const TheControls = ({
         </View>
       </View>
 
-      <View style={[styles.brightness, { left: left - 8 }]} pointerEvents="box-none">
+      <View
+        style={[styles.brightness, { left: left - 8, top: headTall, bottom: footTall }]}
+        pointerEvents="box-none"
+      >
         <ABrightness onTouched={onTouched} />
       </View>
 
       <View
         style={[styles.foot, { paddingLeft: left, paddingRight: right }]}
         pointerEvents="box-none"
+        onLayout={(event) => {
+          setFootTall(event.nativeEvent.layout.height + room.bottom + 14);
+        }}
       >
         <View
           style={styles.line}
@@ -335,7 +346,7 @@ const TheControls = ({
               value={at}
               furthest={runsFor}
               buffered={buffered}
-              colour={colours.played}
+              colour={colours.text}
               restColour={colours.rest}
               aheadColour={colours.ahead}
               onScrubbing={(to) => {
@@ -363,11 +374,13 @@ const TheControls = ({
             <APlayerAction icon={ListVideo} label={say('common.episodes')} onPress={onEpisodes} />
           )}
 
-          <APlayerAction
-            icon={MessageSquareLines}
-            label={say('phone.watching.audioAndSubtitles')}
-            onPress={onAudioAndSubtitles}
-          />
+          {onAudioAndSubtitles === undefined ? null : (
+            <APlayerAction
+              icon={MessageSquareLines}
+              label={say('phone.watching.audioAndSubtitles')}
+              onPress={onAudioAndSubtitles}
+            />
+          )}
 
           {onQuality === undefined ? null : (
             <APlayerAction

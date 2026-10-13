@@ -8,7 +8,7 @@ import { PLAYER_LOOK } from '@ValenceMobile/components/Watching/PLAYER_LOOK';
 import type { ABrightnessProps } from './ABrightness.types';
 import { say } from '@ValenceI18n/say';
 
-const TALL = 170;
+const TALL = 130;
 
 const REACH = 44;
 

@@ -10335,11 +10335,6 @@
     "context": "The button in the phone's video player that locks its controls so a stray touch does nothing."
   },
   {
-    "handler": "phone.watching.normalSpeed",
-    "text": "1x (Normal)",
-    "context": "The normal speed stop in the speed panel of the phone's video player."
-  },
-  {
     "handler": "phone.watching.noSubtitlesForThis",
     "text": "There are no subtitles for this.",
     "context": "Under Subtitles in the phone's video player when the file has none."

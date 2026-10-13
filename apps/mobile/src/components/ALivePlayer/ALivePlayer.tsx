@@ -26,7 +26,7 @@ const { colours, edge } = PLAYER_LOOK;
 
 const styles = StyleSheet.create({
   bar: { backgroundColor: colours.rest, borderRadius: 2, height: 4, overflow: 'hidden' },
-  barFilled: { backgroundColor: colours.played, height: '100%' },
+  barFilled: { backgroundColor: colours.text, height: '100%' },
   centre: {
     alignItems: 'center',
     bottom: 0,

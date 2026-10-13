@@ -789,7 +789,7 @@ const Watching = ({
 
   if (source === null) {
     return (
-      <Screen centres onBack={onDone}>
+      <Screen centres>
         <ActivityIndicator color={colours.textMuted} />
       </Screen>
     );
@@ -912,9 +912,12 @@ const Watching = ({
           onSpeed: () => {
             setPanel('speed');
           },
-          onAudioAndSubtitles: () => {
-            setPanel('audio');
-          },
+          onAudioAndSubtitles:
+            settings.audio === null && settings.subtitles === null
+              ? undefined
+              : () => {
+                  setPanel('audio');
+                },
           onQuality:
             settings.quality === null
               ? undefined
@@ -1000,16 +1003,7 @@ const Watching = ({
 
       {panel === 'style' ? <TheChoices sets={settings.captions} onClose={stopChoosing} /> : null}
 
-      {panel === 'speed' ? (
-        <TheSpeed
-          rate={rate}
-          onRate={(chosen) => {
-            setRate(chosen);
-            setPanel(null);
-          }}
-          onClose={stopChoosing}
-        />
-      ) : null}
+      {panel === 'speed' ? <TheSpeed rate={rate} onRate={setRate} onClose={stopChoosing} /> : null}
 
       {panel === 'quality' && settings.quality !== null ? (
         <APlayerPanel label={say('phone.watching.closeTheQuality')} onClose={stopChoosing}>

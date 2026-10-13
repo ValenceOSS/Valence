@@ -4,6 +4,7 @@ type APlayerPanelProps = {
   label: string;
   onClose: () => void;
   children: ReactNode;
+  isAlongTheFoot?: boolean;
 };
 
 export type { APlayerPanelProps };
