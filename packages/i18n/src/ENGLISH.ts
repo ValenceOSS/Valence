@@ -6738,6 +6738,7 @@ const ENGLISH = {
   'screens.videoPlayer.playerControls.fetchSubtitle': 'Download and turn on',
   'screens.videoPlayer.playerControls.findSubtitles': 'Find subtitles…',
   'screens.videoPlayer.playerControls.forwardSKIPSECONDSSeconds': 'Forward {SKIP_SECONDS} seconds',
+  'screens.videoPlayer.playerControls.hdrBrightness': 'HDR brightness',
   'screens.videoPlayer.playerControls.nextEpisodeNumberTitle': 'Next episode: {number}. {title}',
   'screens.videoPlayer.playerControls.nextEpisodeTitle': 'Next episode: {title}',
   'screens.videoPlayer.playerControls.playbackSpeed': 'Playback speed',
@@ -6760,6 +6761,7 @@ const ENGLISH = {
   'screens.videoPlayer.streamStats.closeStats': 'Close stats',
   'screens.videoPlayer.streamStats.encodedAgainAsCodec':
     'Decoded here, encoded again as {codec} {channels}ch',
+  'screens.videoPlayer.streamStats.filmPeakMappedFrom': '{nits} nits, mapped from 1,000',
   'screens.videoPlayer.streamStats.mediabunny': 'Mediabunny',
   'screens.videoPlayer.streamStats.noneShownAsHdr': 'None, shown as HDR',
   'screens.videoPlayer.streamStats.repackagedInTheBrowser': 'Mediabunny → Media Source → <video>',

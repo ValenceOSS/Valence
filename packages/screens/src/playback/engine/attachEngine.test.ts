@@ -24,6 +24,7 @@ describe('attachEngine', () => {
         url: '/api/playback/film/stream',
         startSeconds: 0,
         audioTrackAt: 0,
+        brightness: 1,
         onFault: vi.fn(),
       }),
     ).rejects.toThrow();

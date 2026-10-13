@@ -256,6 +256,14 @@ const StreamStats = ({
                 }
               />
             ) : null}
+            {engine.filmPeakNits === null ? null : (
+              <StatsFact
+                name="Film peak"
+                value={say('screens.videoPlayer.streamStats.filmPeakMappedFrom', {
+                  nits: Math.round(engine.filmPeakNits).toLocaleString(),
+                })}
+              />
+            )}
             {toneMappingCheck === null || filmCodec === null ? null : (
               <StatsFact
                 name="Valence tone mapping"

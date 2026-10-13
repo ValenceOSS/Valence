@@ -654,7 +654,9 @@ impl SessionSpec {
 /// The `zscale` route linearises the transfer curve, converts primaries to
 /// BT.709, tone maps in linear light, then re-encodes the BT.709 curve. Each
 /// step matters: skipping the linearisation is what produces the washed out
-/// picture people recognise as "HDR played wrong".
+/// picture people recognise as "HDR played wrong". It linearises against 203 nits, the SDR
+/// white every other mapper here and the browser's own player use, so it is no darker than they
+/// are; only its curve differs, since the stock `tonemap` has no BT.2390.
 ///
 /// `tonemapx` and `libplacebo` are both told BT.2390 with the spec's knee of 0.5 rather than
 /// the 1.0 both default to, which starts the highlights rolling off at about 88 nits rather than
@@ -669,7 +671,7 @@ pub fn tone_map_filter(method: ToneMapping) -> Option<&'static str> {
             "tonemapx=tonemap=bt2390:param=0.5:peak=100:desat=0:t=bt709:m=bt709:p=bt709:format=yuv420p",
         ),
         ToneMapping::Zscale => Some(
-            "zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,\
+            "zscale=t=linear:npl=203,format=gbrpf32le,zscale=p=bt709,\
 tonemap=tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv",
         ),
         ToneMapping::Libplacebo => Some(
@@ -1238,9 +1240,8 @@ pub struct HardwarePipeline {
     ///
     /// The whole expression rather than the name, because the three that exist
     /// do not take the same options: `tonemap_vaapi` is fixed-function VPP with
-    /// no algorithm to choose, `tonemap_cuda` has one but — unlike every other
-    /// `tonemap_*` — no `desat`, and `tonemap_videotoolbox` adds `tonemap_mode`
-    /// and `apply_dovi` that neither of the others offers.
+    /// no algorithm to choose, `tonemap_cuda` has one, and `tonemap_videotoolbox`
+    /// adds `tonemap_mode` and `apply_dovi` that neither of the others offers.
     ///
     /// `VideoToolbox`'s options are read out of the macOS package VAL-110
     /// built, and the expression below was run against it on Apple silicon
@@ -1422,10 +1423,10 @@ impl HardwareAccel {
     /// Vision on an HDR10 base, and so does this: anything else comes down to the software
     /// tone mapper.
     ///
-    /// The BT.2390 mappers are given a fixed peak so a file's own `MaxCLL` cannot darken them,
-    /// and a fixed peak is also what switches off Dolby Vision's per-scene L1 brightness, which
-    /// is better than any fixed number where it is there. So a Dolby Vision source is given the
-    /// same mapper without its peak. See VAL-344.
+    /// The BT.2390 mappers are given a fixed peak so a file's own `MaxCLL` cannot darken them.
+    /// On `VideoToolbox`, and on CUDA at its full-quality setting, a fixed peak also switches off
+    /// Dolby Vision's per-scene L1 brightness, which is better than any fixed number where it is
+    /// there. So a Dolby Vision source is given the same mapper without its peak. See VAL-344.
     #[must_use]
     pub fn tone_map_on(
         self,

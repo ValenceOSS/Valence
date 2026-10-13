@@ -128,6 +128,7 @@ describe('StreamStats', () => {
         gpu: 'apple metal-3',
         hdrSignal: 'pq',
         isHdrFilm: true,
+        filmPeakNits: 4000,
         container: 'video/x-matroska',
         sound: 'opus',
         soundChannels: 8,
@@ -141,6 +142,7 @@ describe('StreamStats', () => {
     expect(screen.getByText('Valence WebGPU (Mediabunny + WebCodecs)')).toBeInTheDocument();
     expect(screen.getByText('apple metal-3')).toBeInTheDocument();
     expect(screen.getByText('PQ to SDR, BT.2390')).toBeInTheDocument();
+    expect(screen.getByText('4,000 nits, mapped from 1,000')).toBeInTheDocument();
     expect(screen.getByText('Decoded here, encoded again as opus 8ch')).toBeInTheDocument();
   });
 
@@ -152,6 +154,7 @@ describe('StreamStats', () => {
         gpu: null,
         hdrSignal: null,
         isHdrFilm: false,
+        filmPeakNits: null,
         container: 'video/x-matroska; codecs="hev1"',
         sound: 'carried',
         soundChannels: 6,
@@ -177,6 +180,7 @@ describe('StreamStats', () => {
         gpu: null,
         hdrSignal: null,
         isHdrFilm: true,
+        filmPeakNits: null,
         container: 'video/x-matroska',
         sound: 'carried',
         soundChannels: 6,

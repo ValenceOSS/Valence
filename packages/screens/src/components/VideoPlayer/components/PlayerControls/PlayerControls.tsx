@@ -19,6 +19,7 @@ import {
   SignalHigh as SignalHighIcon,
   SkipForward as SkipForwardIcon,
   Subtitles as SubtitlesIcon,
+  Sun as SunIcon,
   Tv as TvIcon,
   TypeOutline as TypeOutlineIcon,
   Volume as VolumeIcon,
@@ -54,6 +55,8 @@ import { say } from '@ValenceI18n/say';
 
 const FETCH = 'fetch:';
 
+const HDR_BRIGHTNESS_PERCENT = { least: 50, most: 300, step: 10 } as const;
+
 /**
  * Formats a playback rate the way a viewer reads it rather than the way a float prints, so the menu
  * offers "1.5x" and not "1.5000000000000002x".
@@ -75,6 +78,8 @@ const rateLabel = (rate: number): string => `${rate.toString()}x`;
  * @param position - Where the viewer is.
  * @param duration - How long it runs.
  * @param volume - How loud it is.
+ * @param hdrBrightness - How bright HDR is drawn on this screen, where it is tone mapped for one
+ *   that is not HDR; nothing offers the control.
  * @param isMuted - Whether it is silenced.
  * @param isFullscreen - Whether the player fills the screen.
  * @param isShowingStats - Whether the statistics panel is open.
@@ -115,6 +120,7 @@ const rateLabel = (rate: number): string => `${rate.toString()}x`;
  * @param onCaptionStyleChange - Called with a change to that.
  * @param onCaptionStyleReset - Called to put caption appearance back to its defaults.
  * @param onVolumeChange - Called with the volume they set.
+ * @param onHdrBrightnessChange - Called with the HDR brightness they set.
  * @param onToggleMute - Called to silence or unsilence.
  * @param onToggleFullscreen - Called to enter or leave fullscreen.
  * @param onToggleStats - Called to open or close the statistics panel.
@@ -140,6 +146,7 @@ const PlayerControls = ({
   duration,
   volume,
   boost,
+  hdrBrightness,
   isMuted,
   isFullscreen,
   isShowingStats,
@@ -180,6 +187,7 @@ const PlayerControls = ({
   onCaptionStyleReset,
   onVolumeChange,
   onBoostChange,
+  onHdrBrightnessChange,
   onToggleMute,
   onToggleFullscreen,
   onPopOut,
@@ -596,6 +604,31 @@ const PlayerControls = ({
                   label: step === 1 ? say('common.off') : rateLabel(step),
                 })),
               },
+              ...(hdrBrightness === undefined || onHdrBrightnessChange === undefined
+                ? []
+                : [
+                    {
+                      kind: 'custom' as const,
+                      id: 'hdr-brightness',
+                      label: say('screens.videoPlayer.playerControls.hdrBrightness'),
+                      icon: <Icon of={SunIcon} size={18} />,
+                      detail: `${Math.round(hdrBrightness * 100).toString()}%`,
+                      control: (
+                        <Slider
+                          label={say('screens.videoPlayer.playerControls.hdrBrightness')}
+                          tone="glass"
+                          className="w-28 shrink-0"
+                          value={Math.round(hdrBrightness * 100)}
+                          min={HDR_BRIGHTNESS_PERCENT.least}
+                          max={HDR_BRIGHTNESS_PERCENT.most}
+                          step={HDR_BRIGHTNESS_PERCENT.step}
+                          onValueChange={(percent) => {
+                            onHdrBrightnessChange(percent / 100);
+                          }}
+                        />
+                      ),
+                    },
+                  ]),
               ...(availableQualitySteps.length === 0
                 ? []
                 : [

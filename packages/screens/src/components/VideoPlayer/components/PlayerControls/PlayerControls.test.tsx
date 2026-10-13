@@ -167,6 +167,33 @@ describe('PlayerControls', () => {
     expect(await screen.findByRole('switch', { name: /Stats for nerds/ })).toBeChecked();
   });
 
+  it('offers HDR brightness, as a percentage, only where the player tone maps for this screen', async () => {
+    const user = userEvent.setup();
+
+    draw();
+    await user.click(screen.getByRole('button', { name: 'Settings' }));
+
+    expect(screen.queryByRole('slider', { name: 'HDR brightness' })).not.toBeInTheDocument();
+  });
+
+  it('reports HDR brightness back as a multiple, not a percentage', async () => {
+    const user = userEvent.setup();
+    const onHdrBrightnessChange = vi.fn();
+
+    draw({ hdrBrightness: 1.5, onHdrBrightnessChange });
+    await user.click(screen.getByRole('button', { name: 'Settings' }));
+
+    const slider = await screen.findByRole('slider', { name: 'HDR brightness' });
+
+    expect(slider).toHaveAttribute('aria-valuenow', '150');
+    expect(screen.getByText('150%')).toBeInTheDocument();
+
+    slider.focus();
+    await user.keyboard('{ArrowRight}');
+
+    expect(onHdrBrightnessChange).toHaveBeenCalledWith(1.6);
+  });
+
   it('offers to leave full screen once in it', () => {
     draw({ isFullscreen: true });
 

@@ -26756,6 +26756,11 @@
     "context": "The label of a button in the player controls in the video player. {SKIP_SECONDS} is filled in by the app."
   },
   {
+    "handler": "screens.videoPlayer.playerControls.hdrBrightness",
+    "text": "HDR brightness",
+    "context": "Video player settings menu: a slider, shown only for an HDR film on a screen that is not HDR, that draws the tone mapped picture brighter or darker. Also the slider's own label."
+  },
+  {
     "handler": "screens.videoPlayer.playerControls.nextEpisodeNumberTitle",
     "text": "Next episode: {number}. {title}",
     "context": "The label of the player's button that skips to the next episode. {number} is its number in the season, such as \"4\" or \"4–5\"; {title} is its title."
@@ -26854,6 +26859,11 @@
     "handler": "screens.videoPlayer.streamStats.encodedAgainAsCodec",
     "text": "Decoded here, encoded again as {codec} {channels}ch",
     "context": "Stats for nerds, browser player card: the browser can't play the film's sound, so the page decodes it and encodes it again. {codec} is the codec's technical name, opus or aac; {channels} how many channels."
+  },
+  {
+    "handler": "screens.videoPlayer.streamStats.filmPeakMappedFrom",
+    "text": "{nits} nits, mapped from 1,000",
+    "context": "Stats for nerds, Film peak row: the peak brightness the HDR film's metadata gives, and that Valence tone maps it as if its peak were 1,000 nits, as the server does. {nits} is a whole number such as 4,000."
   },
   {
     "handler": "screens.videoPlayer.streamStats.mediabunny",

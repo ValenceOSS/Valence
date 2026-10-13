@@ -5,6 +5,7 @@ type EngineStats = {
   gpu: string | null;
   hdrSignal: HdrSignal | null;
   isHdrFilm: boolean;
+  filmPeakNits: number | null;
   container: string | null;
   sound: 'carried' | 'flac' | 'opus' | 'aac';
   soundChannels: number | null;

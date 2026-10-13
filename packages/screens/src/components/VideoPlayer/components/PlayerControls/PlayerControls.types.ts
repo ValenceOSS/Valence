@@ -23,6 +23,7 @@ type PlayerControlsProps = {
   duration: number;
   volume: number;
   boost: number;
+  hdrBrightness?: number;
   isMuted: boolean;
   isFullscreen: boolean;
   isShowingStats: boolean;
@@ -63,6 +64,7 @@ type PlayerControlsProps = {
   onCaptionStyleReset: () => void;
   onVolumeChange: (volume: number) => void;
   onBoostChange: (boost: number) => void;
+  onHdrBrightnessChange?: (brightness: number) => void;
   onToggleMute: () => void;
   onToggleFullscreen: () => void;
   onToggleStats: () => void;

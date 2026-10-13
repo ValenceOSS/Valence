@@ -29,8 +29,8 @@ type RemuxOptions = {
  * @param options - The element, the file, where to start, which sound track (counted from the first
  *   in the file), and where to say a failure.
  * @returns A handle carrying the teardown to call, how fast the connection is delivering the film,
- *   and readings of what is being played, for the
- *   stats.
+ *   readings of what is being played, for the stats, and a brightness setting that does nothing
+ *   here, since the browser draws the picture and the player brightens the element itself.
  */
 const attachRemux = async ({
   element,
@@ -43,6 +43,7 @@ const attachRemux = async ({
   readDelivered: () => DeliveredFormat;
   readEngine: () => EngineStats;
   readEstimatedKbps: () => number | null;
+  setBrightness: (brightness: number) => void;
 }> => {
   const life = { isOver: false, hasFailed: false };
   const fail = () => {
@@ -121,11 +122,14 @@ const attachRemux = async ({
 
     readEstimatedKbps: throughput.readKbps,
 
+    setBrightness: () => undefined,
+
     readEngine: () => ({
       route: 'remux',
       gpu: null,
       hdrSignal: null,
       isHdrFilm,
+      filmPeakNits: null,
       container,
       sound: feed.sound.kind === 'carried' ? 'carried' : feed.sound.codec,
       soundChannels: feed.sound.kind === 'carried' ? channels : feed.sound.numberOfChannels,

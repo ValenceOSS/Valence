@@ -12,12 +12,13 @@ import { soundDecodedHere } from './soundDecodedHere';
 import { createThroughputMeter } from './createThroughputMeter';
 import type { DeliveredFormat } from '@ValenceScreens/playback/attachShaka';
 import type { EngineStats } from './EngineStats';
+import type { Grade } from './createPicturePresenter';
 
 const NEAR_THE_END_SECONDS = 0.25;
 
 const STILL_DECODING_SECONDS = 1;
 
-const ASSUMED_PEAK_NITS = 1000;
+const MAPPED_PEAK_NITS = 1000;
 
 const HELD_AHEAD_DECODED_HERE = 30;
 
@@ -33,6 +34,7 @@ type EngineOptions = {
   url: string;
   startSeconds: number;
   audioTrackAt: number;
+  brightness: number;
   onFault: () => void;
 };
 
@@ -55,14 +57,17 @@ type EngineOptions = {
  * already hold that moment. The element is given the picture's shape, since it has no picture of
  * its own to take it from.
  *
+ * HDR is tone mapped from a peak of 1000 nits whatever the film says, as the server maps it, so a
+ * film looks the same whichever of them draws it; the film's own peak is kept for the stats.
+ *
  * Anything that fails — the file, a decoder, the GPU — is said once through `onFault`, for the
  * player to hand the film to the server instead.
  *
  * @param options - The element and canvas, the file, where to start, which sound track (counted
- *   from the first in the file), and where to say a failure.
+ *   from the first in the file), how bright to draw HDR, and where to say a failure.
  * @returns A handle carrying the teardown to call, how fast the connection is delivering the film,
- *   and readings of what is being played and how the
- *   player is keeping up, for the stats.
+ *   readings of what is being played and how the player is keeping up, for the stats, and a way to
+ *   draw HDR brighter or darker as it plays.
  */
 const attachEngine = async ({
   element,
@@ -70,12 +75,14 @@ const attachEngine = async ({
   url,
   startSeconds,
   audioTrackAt,
+  brightness,
   onFault,
 }: EngineOptions): Promise<{
   detach: () => Promise<void>;
   readDelivered: () => DeliveredFormat;
   readEngine: () => EngineStats;
   readEstimatedKbps: () => number | null;
+  setBrightness: (brightness: number) => void;
 }> => {
   const life: { isOver: boolean; hasFailed: boolean; drawing: number | null; drawn: number } = {
     isOver: false,
@@ -193,16 +200,15 @@ const attachEngine = async ({
     mpeg2 === null ? undefined : HELD_AHEAD_DECODED_HERE,
   );
 
-  presenter.grade(
-    hdr === null
-      ? { signal: 'sdr', isWideGamut: false, sourcePeakNits: ASSUMED_PEAK_NITS, quarterTurns }
-      : {
-          signal: hdr.signal,
-          isWideGamut: hdr.isWideGamut,
-          sourcePeakNits: hdr.peakNits ?? ASSUMED_PEAK_NITS,
-          quarterTurns,
-        },
-  );
+  const grading: Grade = {
+    signal: hdr?.signal ?? 'sdr',
+    isWideGamut: hdr?.isWideGamut ?? false,
+    sourcePeakNits: MAPPED_PEAK_NITS,
+    brightness,
+    quarterTurns,
+  };
+
+  presenter.grade(grading);
   const soundInput = new Input({
     source: new UrlSource(url, {
       requestInit: { credentials: 'same-origin' },
@@ -309,6 +315,7 @@ const attachEngine = async ({
         gpu: presenter.gpu,
         hdrSignal: hdr?.signal ?? null,
         isHdrFilm: hdr !== null,
+        filmPeakNits: hdr?.peakNits ?? null,
         container,
         sound: feed.sound.kind === 'carried' ? 'carried' : feed.sound.codec,
         soundChannels: feed.sound.kind === 'carried' ? channels : feed.sound.numberOfChannels,
@@ -317,6 +324,11 @@ const attachEngine = async ({
         skippedFrames: counted.skipped,
         decodedAheadSeconds: reaches === null ? null : Math.max(0, reaches - element.currentTime),
       };
+    },
+
+    setBrightness: (brighter) => {
+      grading.brightness = brighter;
+      presenter.grade(grading);
     },
 
     detach: async () => {

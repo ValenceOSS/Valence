@@ -297,6 +297,7 @@ const VideoPlayer = ({
     null,
   );
   const engineStatsRef = useRef<(() => EngineStats) | null>(null);
+  const brightenRef = useRef<((brightness: number) => void) | null>(null);
   const switchCopyRef = useRef<((rung: AutoRung) => Promise<void>) | null>(null);
   const [browserRung, setBrowserRung] = useState<AutoRung | null>(null);
   const [keptSteps, setKeptSteps] = useState<QualityStepId[]>([]);
@@ -336,6 +337,12 @@ const VideoPlayer = ({
   );
   const [volume, setVolume] = useState(() => readPlaybackPreferences().volume);
   const [boost, setBoost] = useState(() => readPlaybackPreferences().boost);
+  const [hdrBrightness, setHdrBrightness] = useState(() => readPlaybackPreferences().hdrBrightness);
+  const hdrBrightnessRef = useRef(hdrBrightness);
+  const isToneMappedHere =
+    detail !== null &&
+    detail.videoRange !== 'SDR' &&
+    !window.matchMedia('(dynamic-range: high)').matches;
   const [isMuted, setIsMuted] = useState(() => readPlaybackPreferences().isMuted);
   const [isShowingRemaining, setIsShowingRemaining] = useState(
     () => readPlaybackPreferences().showsRemaining,
@@ -795,6 +802,7 @@ const VideoPlayer = ({
     setEnginePicture(null);
     enginePictureRef.current = null;
     engineStatsRef.current = null;
+    brightenRef.current = null;
     switchCopyRef.current = null;
     setBrowserRung(null);
     setKeptSteps([]);
@@ -1016,7 +1024,11 @@ const VideoPlayer = ({
 
           const attached = await (
             route === 'webgpu'
-              ? attachEngine({ ...toPlay, canvas: pictureRef.current })
+              ? attachEngine({
+                  ...toPlay,
+                  canvas: pictureRef.current,
+                  brightness: hdrBrightnessRef.current,
+                })
               : attachRemux(toPlay)
           ).catch(() => null);
 
@@ -1048,6 +1060,7 @@ const VideoPlayer = ({
             releaseRef.current = playing.detach;
             deliveredRef.current = playing.readDelivered;
             engineStatsRef.current = playing.readEngine;
+            brightenRef.current = playing.setBrightness;
             estimatedRef.current = playing.readEstimatedKbps;
           };
 
@@ -1071,7 +1084,13 @@ const VideoPlayer = ({
 
             const next = await (
               copyRoute === 'webgpu'
-                ? attachEngine({ ...toPlay, url, startSeconds: at, canvas })
+                ? attachEngine({
+                    ...toPlay,
+                    url,
+                    startSeconds: at,
+                    canvas,
+                    brightness: hdrBrightnessRef.current,
+                  })
                 : attachRemux({ ...toPlay, url, startSeconds: at })
             ).catch(() => null);
 
@@ -1401,6 +1420,22 @@ const VideoPlayer = ({
 
     writePlaybackPreferences({ volume, isMuted, boost });
   }, [volume, isMuted, boost]);
+
+  useEffect(() => {
+    hdrBrightnessRef.current = hdrBrightness;
+    brightenRef.current?.(hdrBrightness);
+
+    const element = videoRef.current;
+
+    if (element !== null) {
+      element.style.filter =
+        isToneMappedHere && !isDrawnByTheEngine && hdrBrightness !== 1
+          ? `brightness(${hdrBrightness.toString()})`
+          : '';
+    }
+
+    writePlaybackPreferences({ hdrBrightness });
+  }, [hdrBrightness, isToneMappedHere, isDrawnByTheEngine]);
 
   useEffect(() => {
     const element = videoRef.current;
@@ -2501,6 +2536,9 @@ const VideoPlayer = ({
             volume={volume}
             boost={boost}
             onBoostChange={setBoost}
+            {...(isToneMappedHere
+              ? { hdrBrightness, onHdrBrightnessChange: setHdrBrightness }
+              : {})}
             isMuted={isMuted}
             isFullscreen={isFullscreen}
             isShowingStats={isShowingStats}

@@ -53,13 +53,14 @@ fn hlgToNits(encoded: vec3f) -> vec3f {
 }
 
 fn rollOff(nits: f32) -> f32 {
+  let held = min(nits, grade.sourcePeak);
   let sourcePq = nitsToPq(grade.sourcePeak);
   let reach = nitsToPq(grade.whiteNits) / sourcePq;
   let knee = 1.5 * reach - 0.5;
-  let level = nitsToPq(nits) / sourcePq;
+  let level = nitsToPq(held) / sourcePq;
 
-  if (level <= knee) {
-    return nits;
+  if (knee >= 1.0 || level <= knee) {
+    return held;
   }
 
   let t = (level - knee) / (1.0 - knee);
@@ -69,11 +70,8 @@ fn rollOff(nits: f32) -> f32 {
   return pqToNits(curved * sourcePq);
 }
 
-fn toSrgb(linear: vec3f) -> vec3f {
-  let clipped = clamp(linear, vec3f(0.0), vec3f(1.0));
-  let low = clipped * 12.92;
-  let high = 1.055 * pow(clipped, vec3f(1.0 / 2.4)) - 0.055;
-  return select(high, low, clipped <= vec3f(0.0031308));
+fn toVideoCurve(linear: vec3f) -> vec3f {
+  return pow(clamp(linear, vec3f(0.0), vec3f(1.0)), vec3f(1.0 / 2.4));
 }
 
 @vertex
@@ -114,7 +112,7 @@ fn fragmentMain(corner: Corner) -> @location(0) vec4f {
   let mapped = nits * (rollOff(brightest) / brightest) / grade.whiteNits;
   let shown = select(mapped, TO_BT709 * mapped, grade.isWideGamut == 1u);
 
-  return vec4f(toSrgb(shown), 1.0);
+  return vec4f(toVideoCurve(shown), 1.0);
 }
 `;
 

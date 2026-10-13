@@ -10,6 +10,7 @@ type Grade = {
   signal: 'sdr' | HdrSignal;
   isWideGamut: boolean;
   sourcePeakNits: number;
+  brightness: number;
   quarterTurns: number;
 };
 
@@ -30,6 +31,11 @@ type PicturePresenter = {
  * HDR frames that reach it as their encoded PQ or HLG signal are tone mapped on the way: decoded to
  * light, rolled off from the film's peak to SDR white with the BT.2390 curve on the brightest
  * channel, so colours keep their hue, and taken from BT.2020 to BT.709 where they are that wide.
+ * SDR white is 203 nits, as the server takes it when it tone maps, divided by how much brighter the
+ * viewer has asked HDR to be drawn. The result is encoded with the 2.4 curve the server writes into
+ * BT.709 video rather than with sRGB's, since a browser shows BT.709 video as it would sRGB: drawn
+ * this way, a film tone mapped here looks as it does tone mapped by the server and played by the
+ * browser, down to its shadows.
  *
  * A picture filmed on its side, as a phone records one, is turned upright as it is drawn.
  *
@@ -76,11 +82,12 @@ const createPicturePresenter = async (
     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
   });
 
-  const writeGrade = ({ signal, isWideGamut, sourcePeakNits, quarterTurns }: Grade) => {
+  const writeGrade = ({ signal, isWideGamut, sourcePeakNits, brightness, quarterTurns }: Grade) => {
     const values = new ArrayBuffer(32);
+    const whiteNits = SDR_WHITE_NITS / brightness;
 
     new Uint32Array(values, 0, 2).set([SIGNALS[signal], isWideGamut ? 1 : 0]);
-    new Float32Array(values, 8, 2).set([Math.max(sourcePeakNits, SDR_WHITE_NITS), SDR_WHITE_NITS]);
+    new Float32Array(values, 8, 2).set([Math.max(sourcePeakNits, whiteNits), whiteNits]);
     new Uint32Array(values, 16, 1).set([((quarterTurns % 4) + 4) % 4]);
     device.queue.writeBuffer(grading, 0, values);
   };
@@ -89,6 +96,7 @@ const createPicturePresenter = async (
     signal: 'sdr',
     isWideGamut: false,
     sourcePeakNits: SDR_WHITE_NITS,
+    brightness: 1,
     quarterTurns: 0,
   });
   const largest = device.limits.maxTextureDimension2D;
@@ -165,6 +173,6 @@ const createPicturePresenter = async (
   };
 };
 
-export type { PicturePresenter };
+export type { Grade, PicturePresenter };
 
 export { createPicturePresenter };
