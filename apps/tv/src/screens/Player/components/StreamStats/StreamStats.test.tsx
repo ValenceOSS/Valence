@@ -3,7 +3,7 @@ import { render } from '@testing-library/react-native';
 import { MediaDetailSchema } from '@ValenceContracts/schemas/Library';
 import { StreamStats } from '@ValenceTv/screens/Player/components/StreamStats/StreamStats';
 import type { StartedSession } from '@ValenceClient/playback/startPlaybackSession';
-import type { StreamReading } from '@ValenceTv/screens/Player/components/StreamStats/StreamStats.types';
+import type { StreamReading } from '@ValenceClient/playback/describeStreamStats';
 
 const DETAIL = MediaDetailSchema.parse({
   id: '00000000-0000-4000-8000-000000000001',
