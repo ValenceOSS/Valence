@@ -51,7 +51,6 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { TheLeap } from '@ValenceMobile/components/Watching/components/TheLeap/TheLeap';
 import { useTapsOnThePicture } from '@ValenceMobile/components/Watching/useTapsOnThePicture';
 import { TheChoices } from '@ValenceMobile/components/Watching/components/TheChoices/TheChoices';
@@ -256,7 +255,6 @@ const Watching = ({
   kept,
   watchParty,
 }: WatchingProps) => {
-  const colours = useTheColours();
   const cache = useQueryClient();
   const [source, setSource] = useState<VideoSource | null>(null);
   const [seekTo, setSeekTo] = useState(0);
@@ -312,6 +310,23 @@ const Watching = ({
           startSeconds),
     requestedQuality: kept === undefined ? readQualityPreference() : 'original',
   }));
+  const [askingFor, setAskingFor] = useState(mediaId);
+
+  if (askingFor !== mediaId) {
+    setAskingFor(mediaId);
+    setAsking((asked) =>
+      asked.requestedQuality === undefined
+        ? { from: startSeconds }
+        : { from: startSeconds, requestedQuality: asked.requestedQuality },
+    );
+    setRefusal(null);
+    setPanel(null);
+    setSession(null);
+    setSessionId(null);
+    setStreamReading(NOTHING_READ);
+    setSubtitleOffset(0);
+  }
+
   const clientId = platformInUse().thisClientId();
   const title = useQuery({ ...libraryQueries.detail(mediaId), enabled: !isKept });
   const called =
@@ -474,7 +489,7 @@ const Watching = ({
   });
 
   const status = useEvent(player, 'statusChange', { status: player.status });
-  const wait = useTheWait(status.status === 'loading');
+  const wait = useTheWait(source === null || status.status === 'loading');
   const partyPlayback = usePartyPlayback(watchParty, mediaId);
   const party = isKept || partyPlayback === null ? undefined : partyPlayback;
   const playerOf = useCallback(() => roomPlayerOfExpo(player), [player]);
@@ -524,6 +539,11 @@ const Watching = ({
 
   const seekedToTheEnd = useRef(false);
   const [isHeldAtTheEnd, setIsHeldAtTheEnd] = useState(false);
+
+  useEffect(() => {
+    seekedToTheEnd.current = false;
+    setIsHeldAtTheEnd(false);
+  }, [mediaId]);
 
   const moveTo = useCallback(
     (seconds: number) => {
@@ -690,6 +710,8 @@ const Watching = ({
     if (sessionId === null && !isKept) {
       return;
     }
+
+    whereTheyGotTo.current = null;
 
     const looking = setInterval(() => {
       if (player.duration > 0) {
@@ -858,14 +880,6 @@ const Watching = ({
     return (
       <Screen centres onBack={onDone}>
         <Words tone="danger">{refusal}</Words>
-      </Screen>
-    );
-  }
-
-  if (source === null) {
-    return (
-      <Screen centres>
-        <ASpinner colour={colours.textMuted} />
       </Screen>
     );
   }

@@ -786,7 +786,6 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
       />
     ) : watching !== null ? (
       <WatchingTogether
-        key={watching.mediaId}
         watchParty={watchParty}
         invitedTo={watching.invitedTo ?? null}
         mediaId={watching.mediaId}
