@@ -10335,19 +10335,9 @@
     "context": "The button that closes stats for nerds in the phone's video player."
   },
   {
-    "handler": "phone.watching.iLikeThis",
-    "text": "I like this",
-    "context": "The thumbs-up rating button at the top of the phone's video player. It gives four stars."
-  },
-  {
     "handler": "phone.watching.lockTheControls",
     "text": "Lock the controls",
     "context": "The button in the phone's video player that locks its controls so a stray touch does nothing."
-  },
-  {
-    "handler": "phone.watching.loveThis",
-    "text": "Love this!",
-    "context": "The heart rating button at the top of the phone's video player. It gives five stars."
   },
   {
     "handler": "phone.watching.normalSpeed",
@@ -10358,11 +10348,6 @@
     "handler": "phone.watching.noSubtitlesForThis",
     "text": "There are no subtitles for this.",
     "context": "Under Subtitles in the phone's video player when the file has none."
-  },
-  {
-    "handler": "phone.watching.notForMe",
-    "text": "Not for me",
-    "context": "The thumbs-down rating button at the top of the phone's video player. It gives one star."
   },
   {
     "handler": "phone.watching.playbackWasStopped",

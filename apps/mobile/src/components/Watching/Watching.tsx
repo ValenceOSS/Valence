@@ -64,9 +64,6 @@ import {
   readQualityPreference,
   saveQualityPreference,
 } from '@ValenceClient/playback/qualityPreference';
-import { useRate } from '@ValenceClient/library/useRate';
-import { useStars } from '@ValenceClient/library/useStars';
-import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 import { originalLabel } from '@ValenceCore/functions/originalLabel';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
 import { APartyPanel } from '@ValenceMobile/components/APartyPanel/APartyPanel';
@@ -259,9 +256,6 @@ const Watching = ({
   const [streamReading, setStreamReading] = useState<StreamReading>(NOTHING_READ);
   const isChoosing = panel !== null && panel !== 'party';
   const isPartying = panel === 'party';
-  const watcher = useWatchingProfile();
-  const given = useStars(watcher, { mediaId });
-  const rateIt = useRate(watcher);
   const [heard, setHeard] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const isKept = kept !== undefined;
@@ -908,15 +902,6 @@ const Watching = ({
           onClose: onDone,
           rate,
           qualityLabel,
-          rating: isKept
-            ? undefined
-            : {
-                given,
-                onRate: (stars) => {
-                  keepThemUp();
-                  rateIt({ mediaId }, stars);
-                },
-              },
           onLock: () => {
             setIsLocked(true);
             setAreControlsUp(false);

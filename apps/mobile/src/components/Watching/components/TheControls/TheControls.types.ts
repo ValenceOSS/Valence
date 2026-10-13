@@ -12,7 +12,6 @@ type TheControlsProps = {
   trickplay: Trickplay | null;
   rate: number;
   qualityLabel: string;
-  rating?: { given: number | null; onRate: (stars: number | null) => void } | undefined;
   onPlayPause: () => void;
   onSkip: (by: number) => void;
   onSeek: (to: number) => void;

@@ -24,7 +24,6 @@ import { asAClock } from '@ValenceMobile/components/Watching/asAClock';
 import { AirPlayButton } from '@ValenceMobile/components/AirPlayButton/AirPlayButton';
 import { ABrightness } from '@ValenceMobile/components/Watching/components/ABrightness/ABrightness';
 import { APlayerAction } from '@ValenceMobile/components/Watching/components/APlayerAction/APlayerAction';
-import { TheRating } from '@ValenceMobile/components/Watching/components/TheRating/TheRating';
 import { PLAYER_LOOK } from '@ValenceMobile/components/Watching/PLAYER_LOOK';
 import { describePlaybackRate } from '@ValenceClient/playback/describePlaybackRate';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
@@ -116,7 +115,7 @@ const styles = StyleSheet.create({
  * Everything a viewer reaches for while a film plays, laid out the way the big streaming players
  * have taught everybody to expect.
  *
- * Along the top: what is playing, the three ways of saying whether it was any good, and the things
+ * Along the top: what is playing, and the things
  * done to the player itself — the watch party, the stats for nerds, AirPlay, locking the controls,
  * picture in picture and leaving. Down the left side, the screen's brightness. In the middle, ten
  * seconds back, play or pause, and ten seconds on, spread across the picture so a thumb on either
@@ -139,7 +138,6 @@ const styles = StyleSheet.create({
  * @param trickplay - The film's thumbnails, to show the moment being scrubbed to, where it has any.
  * @param rate - How fast it is playing.
  * @param qualityLabel - What quality is playing, to say beside the button that changes it.
- * @param rating - The stars they gave it and how to give some, where it can be rated.
  * @param onPlayPause - Told to stop or start it.
  * @param onSkip - Told to jump, in seconds, forwards or back.
  * @param onSeek - Told where they scrubbed to.
@@ -166,7 +164,6 @@ const TheControls = ({
   trickplay,
   rate,
   qualityLabel,
-  rating,
   onPlayPause,
   onSkip,
   onSeek,
@@ -207,8 +204,6 @@ const TheControls = ({
 
           {year === null ? null : <Text style={styles.year}>{year}</Text>}
         </View>
-
-        {rating === undefined ? null : <TheRating given={rating.given} onRate={rating.onRate} />}
 
         <View style={styles.headEnd} pointerEvents="box-none">
           {onParty === undefined ? null : (
