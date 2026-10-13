@@ -15,7 +15,7 @@ const aBrowser = (overrides: Partial<EnginesBrowser> = {}): EnginesBrowser => ({
   canDecodeAudio: ({ codec }) => Promise.resolve(codec === 'vorbis'),
   canEncodeAudio: () => Promise.resolve(true),
   canStream: (mimeType) => /mp4a|opus/.test(mimeType),
-  canToneMap: () => Promise.resolve(true),
+  checkToneMapping: () => Promise.resolve({ outcome: 'trusted' }),
   hasDecoders: () => Promise.resolve(false),
   ...overrides,
 });
@@ -38,11 +38,38 @@ describe('detectEngineSupport', () => {
     const support = await detectEngineSupport(
       aBrowser({
         canDecodeVideo: ({ codec }) => Promise.resolve(codec.startsWith('hvc1')),
-        canToneMap: () => Promise.resolve(false),
+        checkToneMapping: () => Promise.resolve({ outcome: 'changed', grey: 97 }),
       }),
     );
 
     expect(support.videoCodecs).toContain('hevc');
+    expect(support.toneMappedCodecs).toEqual([]);
+  });
+
+  it('keeps how each 10-bit codec’s check went, so the player can say why it was not used', async () => {
+    const support = await detectEngineSupport(
+      aBrowser({
+        canDecodeVideo: ({ codec }) => Promise.resolve(codec.startsWith('hvc1')),
+        checkToneMapping: () => Promise.resolve({ outcome: 'changed', grey: 97 }),
+      }),
+    );
+
+    expect(support.toneMappingChecks).toEqual({
+      hevc: { outcome: 'changed', grey: 97 },
+      av1: { outcome: 'notDecodable' },
+      vp9: { outcome: 'notDecodable' },
+    });
+  });
+
+  it('keeps what a check threw as the reason it failed', async () => {
+    const support = await detectEngineSupport(
+      aBrowser({
+        canDecodeVideo: ({ codec }) => Promise.resolve(codec.startsWith('hvc1')),
+        checkToneMapping: () => Promise.reject(new Error('device lost')),
+      }),
+    );
+
+    expect(support.toneMappingChecks.hevc).toEqual({ outcome: 'failed', reason: 'device lost' });
     expect(support.toneMappedCodecs).toEqual([]);
   });
 
@@ -74,6 +101,11 @@ describe('detectEngineSupport', () => {
       remuxVideoCodecs: [],
       remuxTenBitVideoCodecs: [],
       toneMappedCodecs: [],
+      toneMappingChecks: {
+        hevc: { outcome: 'notDecodable' },
+        av1: { outcome: 'notDecodable' },
+        vp9: { outcome: 'notDecodable' },
+      },
       audioCodecs: ['aac', 'opus', 'vorbis', 'ac3', 'eac3', 'dts', 'pcm'],
     });
   });

@@ -7,6 +7,19 @@ import type { PlaybackHealth, StreamStatsProps } from './StreamStats.types';
 import type { PlaybackPlan, Reason } from '@ValenceContracts/schemas/PlaybackPlan';
 import type { MediaDetail } from '@ValenceContracts/schemas/Library';
 
+vi.mock('@ValenceScreens/playback/readEngineSupport', () => ({
+  readEngineSupport: () =>
+    Promise.resolve({
+      videoCodecs: [],
+      tenBitVideoCodecs: ['hevc'],
+      remuxVideoCodecs: [],
+      remuxTenBitVideoCodecs: ['hevc'],
+      toneMappedCodecs: [],
+      toneMappingChecks: { hevc: { outcome: 'changed', grey: 97 } },
+      audioCodecs: ['aac'],
+    }),
+}));
+
 const reason: Reason = {
   code: 'VideoCodecNotSupported',
   detail: sayVerbatim('Client does not support hevc'),
@@ -155,6 +168,29 @@ describe('StreamStats', () => {
     expect(screen.getByText('Carried as it is')).toBeInTheDocument();
     expect(screen.queryByText('Frames drawn')).not.toBeInTheDocument();
     expect(screen.getByText(/3,308/)).toBeInTheDocument();
+  });
+
+  it('says why Valence’s own tone mapping was not used, where the browser tone maps an HDR film', async () => {
+    draw({
+      engine: {
+        route: 'remux',
+        gpu: null,
+        hdrSignal: null,
+        isHdrFilm: true,
+        container: 'video/x-matroska',
+        sound: 'carried',
+        soundChannels: 6,
+        decodedFrames: 0,
+        drawnFrames: 0,
+        skippedFrames: 0,
+        decodedAheadSeconds: null,
+      },
+    });
+
+    expect(screen.getByText('By the browser')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Not used: its test grey came back as 97, not 128'),
+    ).toBeInTheDocument();
   });
 
   it('shows a handle to drag it by only where it can be dragged', () => {

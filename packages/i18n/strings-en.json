@@ -26891,6 +26891,36 @@
     "context": "Shown in the stream stats in the video player."
   },
   {
+    "handler": "screens.videoPlayer.streamStats.toneMappingChanged",
+    "text": "Not used: its test grey came back as {grey}, not 128",
+    "context": "Stats for nerds, Valence tone mapping row, on an SDR screen where the browser tone maps an HDR film: it was not used because the browser changed the colours of its HDR test frame. {grey} is the 0–255 value that came back, and 128 is the value it sent."
+  },
+  {
+    "handler": "screens.videoPlayer.streamStats.toneMappingFailed",
+    "text": "Not used: its check failed ({reason})",
+    "context": "Stats for nerds, Valence tone mapping row, on an SDR screen where the browser tone maps an HDR film: it was not used because its start-up check threw an error. {reason} is the browser's own error message, in English."
+  },
+  {
+    "handler": "screens.videoPlayer.streamStats.toneMappingNotDecodable",
+    "text": "Not used: WebCodecs won’t decode 10-bit {codec}",
+    "context": "Stats for nerds, Valence tone mapping row, on an SDR screen where the browser tone maps an HDR film: it was not used because the browser's WebCodecs decoder refuses 10-bit pictures of this codec. {codec} is a codec name such as hevc."
+  },
+  {
+    "handler": "screens.videoPlayer.streamStats.toneMappingNotDecoded",
+    "text": "Not used: its test frame didn’t decode",
+    "context": "Stats for nerds, Valence tone mapping row, on an SDR screen where the browser tone maps an HDR film: it was not used because the small HDR test frame it decodes at start-up produced no picture."
+  },
+  {
+    "handler": "screens.videoPlayer.streamStats.toneMappingNoWebGpu",
+    "text": "Not used: WebGPU isn’t available",
+    "context": "Stats for nerds, Valence tone mapping row, on an SDR screen where the browser tone maps an HDR film: it was not used because the browser gave no WebGPU device."
+  },
+  {
+    "handler": "screens.videoPlayer.streamStats.toneMappingTrusted",
+    "text": "Passed its check",
+    "context": "Stats for nerds, Valence tone mapping row, on an SDR screen where the browser tone maps an HDR film: Valence's own tone mapping passed its start-up check in this browser."
+  },
+  {
     "handler": "screens.videoPlayer.streamStats.valencesWebGpuPlayer",
     "text": "Valence WebGPU (Mediabunny + WebCodecs)",
     "context": "Stats for nerds, which player is playing: Valence's own player, reading with Mediabunny, decoding with WebCodecs and drawing with WebGPU. Technical names; usually left untranslated."

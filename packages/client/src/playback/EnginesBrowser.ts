@@ -1,3 +1,5 @@
+import type { ToneMappingCheck } from './ToneMappingCheck';
+
 type ConfigProbe<Config> = (config: Config) => Promise<boolean>;
 
 type EnginesBrowser = {
@@ -16,7 +18,7 @@ type EnginesBrowser = {
     bitrate: number;
   }> | null;
   canStream: ((mimeType: string) => boolean) | null;
-  canToneMap: ((codec: string) => Promise<boolean>) | null;
+  checkToneMapping: ((codec: string) => Promise<ToneMappingCheck>) | null;
   hasDecoders: () => Promise<boolean>;
 };
 

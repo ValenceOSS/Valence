@@ -1,5 +1,6 @@
 import type { EngineSupport } from './EngineSupport';
 import type { EnginesBrowser } from './EnginesBrowser';
+import type { ToneMappingCheck } from './ToneMappingCheck';
 
 const VIDEO_PROBES = [
   { codec: 'h264', config: 'avc1.640033' },
@@ -63,6 +64,7 @@ const NOTHING: EngineSupport = {
   remuxVideoCodecs: [],
   remuxTenBitVideoCodecs: [],
   toneMappedCodecs: [],
+  toneMappingChecks: {},
   audioCodecs: [],
 };
 
@@ -81,13 +83,32 @@ const answerOf = async (asking: () => Promise<boolean>): Promise<boolean> => {
 };
 
 /**
+ * Runs a browser's tone mapping check for a codec without letting one that throws spoil the rest,
+ * keeping what it threw as the reason.
+ *
+ * @param check - The browser's check.
+ * @param codec - The codec, as Valence names it.
+ * @returns How the check went.
+ */
+const toneMappingCheckOf = async (
+  check: (codec: string) => Promise<ToneMappingCheck>,
+  codec: string,
+): Promise<ToneMappingCheck> => {
+  try {
+    return await check(codec);
+  } catch (error) {
+    return { outcome: 'failed', reason: error instanceof Error ? error.message : String(error) };
+  }
+};
+
+/**
  * What this browser can play beyond what the media element plays from a file by itself, by asking
  * each decoder rather than reading the browser's name: the pictures its own player decodes with
  * WebCodecs and draws with WebGPU, the pictures the element decodes once a file is repackaged here
  * into fragmented MP4, which 10-bit pictures can be decoded here and reach WebGPU untouched for
  * Valence to tone map — proven by the browser rather than assumed, since not every browser honours
- * the colour a decoder is told — and the
- * sounds either can be given.
+ * the colour a decoder is told, and kept with how each check went so the player can say why it was
+ * not used — and the sounds either can be given.
  *
  * A picture counts for the player where WebCodecs decodes it at 4K, and for repackaging where Media
  * Source Extensions take it in MP4. A sound counts where the media element takes it
@@ -171,6 +192,20 @@ const detectEngineSupport = async (browser: EnginesBrowser): Promise<EngineSuppo
     ({ codec }) => codec,
   );
   const tenBitVideoCodecs = await decodes(TEN_BIT_VIDEO_PROBES);
+  const { checkToneMapping } = browser;
+  const toneMappingChecks: Partial<Record<string, ToneMappingCheck>> =
+    checkToneMapping === null
+      ? {}
+      : Object.fromEntries(
+          await Promise.all(
+            TEN_BIT_VIDEO_PROBES.map(async ({ codec }): Promise<[string, ToneMappingCheck]> => [
+              codec,
+              tenBitVideoCodecs.includes(codec)
+                ? await toneMappingCheckOf(checkToneMapping, codec)
+                : { outcome: 'notDecodable' },
+            ]),
+          ),
+        );
 
   return (videoCodecs.length === 0 && remuxVideoCodecs.length === 0) || audioCodecs.length === 0
     ? NOTHING
@@ -181,18 +216,10 @@ const detectEngineSupport = async (browser: EnginesBrowser): Promise<EngineSuppo
         remuxTenBitVideoCodecs: REMUXED_TEN_BIT_VIDEO.filter(({ mimeType }) =>
           canStream(mimeType),
         ).map(({ codec }) => codec),
-        toneMappedCodecs:
-          browser.canToneMap === null
-            ? []
-            : (
-                await Promise.all(
-                  tenBitVideoCodecs.map(async (codec) =>
-                    (await answerOf(() => browser.canToneMap?.(codec) ?? Promise.resolve(false)))
-                      ? [codec]
-                      : [],
-                  ),
-                )
-              ).flat(),
+        toneMappedCodecs: Object.entries(toneMappingChecks)
+          .filter(([, check]) => check?.outcome === 'trusted')
+          .map(([codec]) => codec),
+        toneMappingChecks,
         audioCodecs,
       };
 };

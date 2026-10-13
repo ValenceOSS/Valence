@@ -6767,6 +6767,14 @@ const ENGLISH = {
   'screens.videoPlayer.streamStats.signalToSdr': '{signal} to SDR, BT.2390',
   'screens.videoPlayer.streamStats.theBrowsersMediaElement': 'HTML5 <video>, playing the file',
   'screens.videoPlayer.streamStats.thisTabKeepsTime': 'this tab keeps time',
+  'screens.videoPlayer.streamStats.toneMappingChanged':
+    'Not used: its test grey came back as {grey}, not 128',
+  'screens.videoPlayer.streamStats.toneMappingFailed': 'Not used: its check failed ({reason})',
+  'screens.videoPlayer.streamStats.toneMappingNotDecodable':
+    'Not used: WebCodecs won’t decode 10-bit {codec}',
+  'screens.videoPlayer.streamStats.toneMappingNotDecoded': 'Not used: its test frame didn’t decode',
+  'screens.videoPlayer.streamStats.toneMappingNoWebGpu': 'Not used: WebGPU isn’t available',
+  'screens.videoPlayer.streamStats.toneMappingTrusted': 'Passed its check',
   'screens.videoPlayer.streamStats.valencesWebGpuPlayer': 'Valence WebGPU (Mediabunny + WebCodecs)',
   'screens.videoPlayer.streamStats.widthByHeightAtKbps': '{width}×{height} · {kbps} kbps',
   'screens.videoPlayer.thatDeviceWouldNotTakeThis': 'That device couldn’t play this stream.',

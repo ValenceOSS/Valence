@@ -11,7 +11,9 @@ import { StatsFact } from './components/StatsFact/StatsFact';
 import { StatsSummary } from './components/StatsSummary/StatsSummary';
 import { StatsSeconds } from './components/StatsSeconds/StatsSeconds';
 import { PlanAxis } from './components/PlanAxis/PlanAxis';
+import { useToneMappingCheck } from '@ValenceScreens/playback/useToneMappingCheck';
 import { describeSize } from './describeSize';
+import { describeToneMappingCheck } from './describeToneMappingCheck';
 import type { StreamStatsProps } from './StreamStats.types';
 import { say } from '@ValenceI18n/say';
 
@@ -73,6 +75,11 @@ const StreamStats = ({
     delivered?.bitrateKbps ?? (engine === null ? null : (detail?.bitrateKbps ?? null));
   const isHdrScreen =
     typeof window !== 'undefined' && window.matchMedia('(dynamic-range: high)').matches === true;
+  const filmCodec = detail?.videoCodec ?? null;
+  const toneMappingCheck = useToneMappingCheck(
+    filmCodec,
+    engine !== null && engine.isHdrFilm && engine.route === 'remux' && !isHdrScreen,
+  );
 
   return (
     <section
@@ -249,6 +256,12 @@ const StreamStats = ({
                 }
               />
             ) : null}
+            {toneMappingCheck === null || filmCodec === null ? null : (
+              <StatsFact
+                name="Valence tone mapping"
+                value={describeToneMappingCheck(toneMappingCheck, filmCodec)}
+              />
+            )}
             <StatsFact
               name="Sound"
               value={

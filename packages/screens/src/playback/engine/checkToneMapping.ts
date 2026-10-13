@@ -1,3 +1,4 @@
+import type { ToneMappingCheck } from '@ValenceClient/playback/ToneMappingCheck';
 import { PICTURE_SHADER } from './PICTURE_SHADER';
 import { TONE_MAPPING_PROBES } from './TONE_MAPPING_PROBES';
 import { bytesOf } from './hevc/bytesOf';
@@ -17,9 +18,10 @@ const ROW_BYTES = 256;
  * Decodes a probe's one frame the way an HDR film of its codec is decoded for tone mapping.
  *
  * @param probe - The probe.
- * @returns The frame, or nothing where this browser will not decode it.
+ * @returns The frame, or why there is none: this browser will not take the decoder's settings, or
+ *   took them and gave no frame back.
  */
-const decodeProbe = async (probe: Probe): Promise<VideoFrame | null> => {
+const decodeProbe = async (probe: Probe): Promise<VideoFrame | 'notDecodable' | 'notDecoded'> => {
   const frameBytes = bytesOf(probe.frame);
   const prepared = prepareHdrDecoding({
     codec: probe.codec,
@@ -42,7 +44,7 @@ const decodeProbe = async (probe: Probe): Promise<VideoFrame | null> => {
     prepared === null ||
     (await VideoDecoder.isConfigSupported(prepared.config)).supported !== true
   ) {
-    return null;
+    return 'notDecodable';
   }
 
   return new Promise((resolve) => {
@@ -51,7 +53,7 @@ const decodeProbe = async (probe: Probe): Promise<VideoFrame | null> => {
         resolve(frame);
       },
       error: () => {
-        resolve(null);
+        resolve('notDecoded');
       },
     });
 
@@ -61,8 +63,11 @@ const decodeProbe = async (probe: Probe): Promise<VideoFrame | null> => {
     );
     void decoder
       .flush()
+      .then(() => {
+        resolve('notDecoded');
+      })
       .catch(() => {
-        resolve(null);
+        resolve('notDecoded');
       })
       .finally(() => {
         decoder.close();
@@ -79,24 +84,33 @@ const decodeProbe = async (probe: Probe): Promise<VideoFrame | null> => {
  * numbers, so HDR is left to the browser or the server instead.
  *
  * @param codec - The codec, as Valence names it.
- * @returns Whether the signal arrives untouched.
+ * @returns How the check went: trusted where the signal arrives untouched, and otherwise where it
+ *   stopped, with the grey that came back where the browser changed it.
  */
-const checkToneMapping = async (codec: string): Promise<boolean> => {
+const checkToneMapping = async (codec: string): Promise<ToneMappingCheck> => {
   const probe = TONE_MAPPING_PROBES.find((one) => one.codec === codec);
 
-  if (probe === undefined || typeof VideoDecoder === 'undefined' || !('gpu' in navigator)) {
-    return false;
+  if (probe === undefined || typeof VideoDecoder === 'undefined') {
+    return { outcome: 'notDecodable' };
+  }
+
+  if (!('gpu' in navigator)) {
+    return { outcome: 'noWebGpu' };
   }
 
   const adapter = await navigator.gpu.requestAdapter();
   const device = adapter === null ? null : await adapter.requestDevice().catch(() => null);
-  const frame = device === null ? null : await decodeProbe(probe).catch(() => null);
 
-  if (device === null || frame === null) {
-    frame?.close();
-    device?.destroy();
+  if (device === null) {
+    return { outcome: 'noWebGpu' };
+  }
 
-    return false;
+  const frame = await decodeProbe(probe).catch(() => 'notDecoded' as const);
+
+  if (typeof frame === 'string') {
+    device.destroy();
+
+    return { outcome: frame };
   }
 
   try {
@@ -151,13 +165,14 @@ const checkToneMapping = async (codec: string): Promise<boolean> => {
     device.queue.submit([encoder.finish()]);
     await readback.mapAsync(GPUMapMode.READ);
 
-    const centre = new Uint8Array(readback.getMappedRange())[
-      (size / 2) * ROW_BYTES + (size / 2) * 4
-    ];
+    const centre =
+      new Uint8Array(readback.getMappedRange())[(size / 2) * ROW_BYTES + (size / 2) * 4] ?? 0;
 
-    return centre !== undefined && Math.abs(centre - ENCODED_GREY) <= TOLERANCE;
-  } catch {
-    return false;
+    return Math.abs(centre - ENCODED_GREY) <= TOLERANCE
+      ? { outcome: 'trusted' }
+      : { outcome: 'changed', grey: centre };
+  } catch (error) {
+    return { outcome: 'failed', reason: error instanceof Error ? error.message : String(error) };
   } finally {
     frame.close();
     device.destroy();

@@ -32,6 +32,7 @@ const SUPPORT: EngineSupport = {
   remuxVideoCodecs: ['h264', 'av1'],
   remuxTenBitVideoCodecs: ['av1'],
   toneMappedCodecs: ['hevc'],
+  toneMappingChecks: { hevc: { outcome: 'trusted' } },
   audioCodecs: ['ac3', 'aac'],
 };
 

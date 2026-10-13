@@ -31,7 +31,7 @@ const readEngineSupport = (): Promise<EngineSupport> => {
       typeof MediaSource === 'undefined'
         ? null
         : (mimeType) => MediaSource.isTypeSupported(mimeType),
-    canToneMap: checkToneMapping,
+    checkToneMapping,
     hasDecoders: async () => (await loadBrowserDecoders()) !== null,
   });
 
