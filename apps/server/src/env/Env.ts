@@ -89,6 +89,7 @@ const EnvSchema = z.object({
     .enum(['true', 'false'])
     .default('true')
     .transform((value) => value === 'true'),
+  IOS_APP_STORE_ID: z.string().regex(/^\d*$/u).default('6815748526'),
   SMTP_URL: z.string().default(''),
   SMTP_FROM: z.string().default(''),
 });

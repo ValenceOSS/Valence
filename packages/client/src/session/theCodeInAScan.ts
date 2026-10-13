@@ -1,4 +1,4 @@
-import { tidyTheCode } from '@ValenceClient/session/tidyTheCode';
+import { tidyTheCode } from '@ValenceCore/functions/tidyTheCode';
 
 const AN_ADDRESS = /^[a-z][a-z0-9+.-]*:\/\//iu;
 

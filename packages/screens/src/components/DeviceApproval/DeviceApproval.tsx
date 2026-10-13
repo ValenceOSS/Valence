@@ -3,7 +3,7 @@ import { Button } from '@ValenceUI/Button';
 import { Spinner } from '@ValenceUI/Spinner';
 import { TextField } from '@ValenceUI/TextField';
 import { answerDeviceRequest, readDeviceRequest } from '@ValenceClient/session/auth';
-import { tidyTheCode } from '@ValenceClient/session/tidyTheCode';
+import { tidyTheCode } from '@ValenceCore/functions/tidyTheCode';
 import type { DeviceApprovalProps } from './DeviceApproval.types';
 import { say } from '@ValenceI18n/say';
 

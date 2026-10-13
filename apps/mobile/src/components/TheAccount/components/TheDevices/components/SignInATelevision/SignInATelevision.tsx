@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
 import { answerDeviceRequest, readDeviceRequest } from '@ValenceClient/session/auth';
 import { theCodeInAScan } from '@ValenceClient/session/theCodeInAScan';
-import { tidyTheCode } from '@ValenceClient/session/tidyTheCode';
+import { tidyTheCode } from '@ValenceCore/functions/tidyTheCode';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { TextField } from '@ValenceMobile/components/TextField/TextField';
 import { Words } from '@ValenceMobile/components/Words/Words';

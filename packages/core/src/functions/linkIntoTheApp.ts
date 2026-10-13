@@ -1,4 +1,4 @@
-import { tidyTheCode } from '@ValenceClient/session/tidyTheCode';
+import { tidyTheCode } from '@ValenceCore/functions/tidyTheCode';
 
 /**
  * The link that opens the Valence app on a phone at the same place somebody is on the web: signing

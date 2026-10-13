@@ -1,4 +1,4 @@
-import { tidyTheCode } from '@ValenceClient/session/tidyTheCode';
+import { tidyTheCode } from '@ValenceCore/functions/tidyTheCode';
 import type { ALinkIntoTheApp } from './readALinkIntoTheApp.types';
 
 const A_LINK = /^valence:\/\/(device|open)(?:\?(.*))?$/u;

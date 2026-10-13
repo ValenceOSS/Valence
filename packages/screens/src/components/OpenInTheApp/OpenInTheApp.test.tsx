@@ -17,10 +17,43 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  document.head.querySelector('meta[name="apple-itunes-app"]')?.remove();
 });
+
+/**
+ * Gives the page the App Store banner's tag, as the server does where a listing is set.
+ */
+const withTheBanner = () => {
+  const tag = document.createElement('meta');
+
+  tag.name = 'apple-itunes-app';
+  tag.content = 'app-id=6815748526, app-argument=valence://open';
+  document.head.append(tag);
+};
 
 describe('OpenInTheApp', () => {
   it('offers the app on an iPhone', async () => {
+    renderInAnAddress(<OpenInTheApp />);
+
+    expect(await screen.findByRole('button', { name: 'Open in the app' })).toBeInTheDocument();
+  });
+
+  it('leaves Safari to its own App Store banner where the server gives it one', async () => {
+    withTheBanner();
+    renderInAnAddress(<OpenInTheApp />);
+
+    await new Promise((settle) => {
+      setTimeout(settle, 0);
+    });
+
+    expect(screen.queryByRole('button', { name: 'Open in the app' })).not.toBeInTheDocument();
+  });
+
+  it('still offers the app in another iPhone browser, which shows no banner', async () => {
+    withTheBanner();
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/140.0.0.0 Mobile/15E148 Safari/604.1',
+    );
     renderInAnAddress(<OpenInTheApp />);
 
     expect(await screen.findByRole('button', { name: 'Open in the app' })).toBeInTheDocument();

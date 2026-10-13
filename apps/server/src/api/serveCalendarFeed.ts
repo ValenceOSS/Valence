@@ -2,7 +2,7 @@ import { addDays } from '@ValenceCore/functions/addDays';
 import { ADMINISTRATOR } from '@ValenceContracts/schemas/Permission';
 import { calendarEvents } from '@ValenceServer/calendar/calendarEvents';
 import { createCalendarReader } from '@ValenceServer/calendar/createCalendarReader';
-import { feedOriginOf } from '@ValenceServer/calendar/feedOriginOf';
+import { askedOriginOf } from '@ValenceServer/web/askedOriginOf';
 import { writeICalendar } from '@ValenceServer/calendar/writeICalendar';
 import {
   calendarFeedRoute,
@@ -128,7 +128,7 @@ const serveCalendarFeed = (app: OpenAPIHono, context: AppContext): void => {
 
     return context.body(
       writeICalendar(
-        calendarEvents(entries, feedOriginOf(context.req.url, context.req.raw.headers)),
+        calendarEvents(entries, askedOriginOf(context.req.url, context.req.raw.headers)),
         {
           name: say('server.api.serveCalendarFeed.valenceCalendar'),
           stamp: new Date(),

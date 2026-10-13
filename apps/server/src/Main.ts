@@ -35,6 +35,7 @@ import { serve } from '@hono/node-server';
 import { createNodeWebSocket } from '@hono/node-ws';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { serveTheTvLayout } from '@ValenceServer/web/serveTheTvLayout';
+import { offerTheIphoneApp } from '@ValenceServer/web/offerTheIphoneApp';
 import { refuseUnknownAddresses } from '@ValenceServer/api/refuseUnknownAddresses';
 import { isAppAddress } from '@ValenceServer/web/isAppAddress';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
@@ -4962,6 +4963,8 @@ app.get(
 );
 
 refuseUnknownAddresses(app);
+
+app.use('*', offerTheIphoneApp(env.IOS_APP_STORE_ID));
 
 app.use('*', serveTheTvLayout(TV_ROOT));
 

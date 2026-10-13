@@ -3,7 +3,7 @@ import { X as XIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
-import { linkIntoTheApp } from '@ValenceClient/session/linkIntoTheApp';
+import { linkIntoTheApp } from '@ValenceCore/functions/linkIntoTheApp';
 import { say } from '@ValenceI18n/say';
 
 const PUT_AWAY = 'valence.openInTheApp.putAway';
@@ -16,6 +16,20 @@ const PUT_AWAY = 'valence.openInTheApp.putAway';
  */
 const isAnIPhone = (): boolean =>
   platformInUse().thisClientKind() === 'browser' && /iPhone|iPod/u.test(navigator.userAgent);
+
+/**
+ * Whether Safari itself is showing the page and the server has given it the App Store banner's tag,
+ * in which case Safari offers the app on its own, with Open or Get as the phone needs, and this offer
+ * would only say it twice. Other browsers on an iPhone name themselves and show no such banner.
+ *
+ * @returns Whether Safari offers the app already.
+ */
+const isOfferedBySafari = (): boolean =>
+  !/CriOS|FxiOS|EdgiOS|OPiOS|OPT\/|GSA\/|DuckDuckGo|FBAN|FBAV|Instagram/u.test(
+    navigator.userAgent,
+  ) &&
+  /Safari\//u.test(navigator.userAgent) &&
+  document.querySelector('meta[name="apple-itunes-app"]') !== null;
 
 /**
  * Whether somebody has already put the offer away this visit, read carefully because a private
@@ -53,13 +67,19 @@ const rememberPutAway = (): boolean => {
  * code with the camera is often looking at the way in rather than the approval.
  *
  * It says it is for somebody who has the app, because a page cannot see which apps a phone holds,
- * and it can be put away for the rest of the visit. It is not offered on the page the app itself
+ * and it can be put away for the rest of the visit. Safari is left to its own App Store banner where
+ * the server gives it one, since that offers Get to a phone without the app, which this cannot. It is not offered on the page the app itself
  * opened to be signed in through, since that is already the app.
  */
 const OpenInTheApp = () => {
   const [isPutAway, setIsPutAway] = useState(wasPutAway);
 
-  if (isPutAway || !isAnIPhone() || window.location.pathname.startsWith('/phone-sign-in')) {
+  if (
+    isPutAway ||
+    !isAnIPhone() ||
+    isOfferedBySafari() ||
+    window.location.pathname.startsWith('/phone-sign-in')
+  ) {
     return null;
   }
 

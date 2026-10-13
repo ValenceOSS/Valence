@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Linking } from 'react-native';
-import { readALinkIntoTheApp } from '@ValenceClient/session/readALinkIntoTheApp';
-import type { ALinkIntoTheApp } from '@ValenceClient/session/readALinkIntoTheApp.types';
+import { readALinkIntoTheApp } from '@ValenceCore/functions/readALinkIntoTheApp';
+import type { ALinkIntoTheApp } from '@ValenceCore/functions/readALinkIntoTheApp.types';
 
 const followed = new Set<string>();
 
