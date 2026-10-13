@@ -22,6 +22,7 @@ const PLAYER_LOOK = {
   },
   edge: 28,
   icon: 26,
+  middle: 34,
   slot: 44,
   styles: StyleSheet.create({
     heading: { color: TEXT, fontFamily: FONTS.sans.bold, fontSize: 22 },

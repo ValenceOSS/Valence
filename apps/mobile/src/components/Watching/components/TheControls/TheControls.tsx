@@ -35,7 +35,7 @@ const A_STEP = 10;
 
 const FRAME_WIDE = 224;
 
-const { colours, edge, icon: ICON, slot: SLOT } = PLAYER_LOOK;
+const { colours, edge, icon: ICON, middle: MIDDLE, slot: SLOT } = PLAYER_LOOK;
 
 const styles = StyleSheet.create({
   actions: { alignItems: 'center', flexDirection: 'row', gap: 4, justifyContent: 'center' },
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     width: '62%',
   },
   reach: { padding: 16 },
-  waiting: { alignItems: 'center', height: ICON, justifyContent: 'center', width: ICON },
+  waiting: { alignItems: 'center', height: MIDDLE, justifyContent: 'center', width: MIDDLE },
   said: {
     alignItems: 'baseline',
     flex: 1,
@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
   stepHowFar: {
     color: colours.text,
     fontFamily: FONTS.sans.bold,
-    fontSize: 8,
+    fontSize: 10,
     position: 'absolute',
   },
   title: { color: colours.text, flexShrink: 1, fontFamily: FONTS.sans.bold, fontSize: 18 },
@@ -134,8 +134,8 @@ const styles = StyleSheet.create({
  * @param title - What is playing.
  * @param year - When it came out, where that is known.
  * @param isPlaying - Whether the picture is moving.
- * @param isWaiting - Whether it is waiting for more of the film, which turns play and pause into
- *   Valence's own loading mark.
+ * @param wait - Whether it is waiting for more of the film, which turns play and pause into
+ *   Valence's own loading mark, and whether that mark is finishing.
  * @param at - How far in they are.
  * @param runsFor - How long it runs.
  * @param buffered - How much of it has arrived.
@@ -162,7 +162,7 @@ const TheControls = ({
   title,
   year,
   isPlaying,
-  isWaiting = false,
+  wait,
   at,
   runsFor,
   buffered,
@@ -216,6 +216,12 @@ const TheControls = ({
         </View>
 
         <View style={styles.headEnd} pointerEvents="box-none">
+          <Button tone="bare" label={say('common.statsForNerds')} onPress={onStats}>
+            <View style={styles.icon}>
+              <Icon of={Info} size={ICON} colour={colours.text} />
+            </View>
+          </Button>
+
           {onParty === undefined ? null : (
             <Button tone="bare" label={say('common.partyMenu.watchParty')} onPress={onParty}>
               <View style={styles.icon}>
@@ -223,12 +229,6 @@ const TheControls = ({
               </View>
             </Button>
           )}
-
-          <Button tone="bare" label={say('common.statsForNerds')} onPress={onStats}>
-            <View style={styles.icon}>
-              <Icon of={Info} size={ICON} colour={colours.text} />
-            </View>
-          </Button>
 
           <View style={styles.icon}>
             <AirPlayButton isOverPicture />
@@ -274,7 +274,7 @@ const TheControls = ({
             }}
           >
             <View style={[styles.step, styles.reach]}>
-              <Icon of={RotateCcw} size={ICON} colour={colours.text} />
+              <Icon of={RotateCcw} size={MIDDLE} colour={colours.text} />
               <Text style={styles.stepHowFar}>{A_STEP}</Text>
             </View>
           </Button>
@@ -285,12 +285,17 @@ const TheControls = ({
             onPress={onPlayPause}
           >
             <View style={styles.reach}>
-              {isWaiting ? (
+              {wait?.isShown === true ? (
                 <View style={styles.waiting}>
-                  <ASpinner colour={colours.text} size={ICON} />
+                  <ASpinner
+                    colour={colours.text}
+                    size={MIDDLE}
+                    isFinishing={wait.isFinishing}
+                    onFilled={wait.onFilled}
+                  />
                 </View>
               ) : (
-                <Icon of={isPlaying ? Pause : Play} size={ICON} colour={colours.text} />
+                <Icon of={isPlaying ? Pause : Play} size={MIDDLE} colour={colours.text} />
               )}
             </View>
           </Button>
@@ -305,7 +310,7 @@ const TheControls = ({
             }}
           >
             <View style={[styles.step, styles.reach]}>
-              <Icon of={RotateCw} size={ICON} colour={colours.text} />
+              <Icon of={RotateCw} size={MIDDLE} colour={colours.text} />
               <Text style={styles.stepHowFar}>{A_STEP}</Text>
             </View>
           </Button>

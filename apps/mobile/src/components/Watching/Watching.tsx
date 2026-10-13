@@ -53,6 +53,7 @@ import { howBigToDrawIt } from '@ValenceMobile/components/Watching/howBigToDrawI
 import { usePinchToFill } from '@ValenceMobile/components/Watching/usePinchToFill';
 import { theChoicesOn } from '@ValenceMobile/components/Watching/theChoicesOn';
 import { PLAYER_LOOK } from '@ValenceMobile/components/Watching/PLAYER_LOOK';
+import { useTheWait } from '@ValenceMobile/components/Watching/useTheWait';
 import { TheAudioAndSubtitles } from '@ValenceMobile/components/Watching/components/TheAudioAndSubtitles/TheAudioAndSubtitles';
 import { TheSpeed } from '@ValenceMobile/components/Watching/components/TheSpeed/TheSpeed';
 import { TheEpisodes } from '@ValenceMobile/components/Watching/components/TheEpisodes/TheEpisodes';
@@ -422,7 +423,7 @@ const Watching = ({
   });
 
   const status = useEvent(player, 'statusChange', { status: player.status });
-  const isWaiting = status.status === 'loading';
+  const wait = useTheWait(status.status === 'loading');
   const partyPlayback = usePartyPlayback(watchParty, mediaId);
   const party = isKept || partyPlayback === null ? undefined : partyPlayback;
   const playerOf = useCallback(() => roomPlayerOfExpo(player), [player]);
@@ -887,7 +888,7 @@ const Watching = ({
           title: called?.name ?? '',
           year: called?.year ?? null,
           isPlaying: moving.isPlaying,
-          isWaiting,
+          wait,
           trickplay: (isKept ? keptFrames.data : frames.data) ?? null,
           onPlayPause: () => {
             keepThemUp();
@@ -968,9 +969,14 @@ const Watching = ({
         }}
       />
 
-      {isWaiting && !areControlsDrawn && panel === null ? (
+      {wait.isShown && !areControlsDrawn && panel === null ? (
         <View style={styles.waiting} pointerEvents="none">
-          <ASpinner colour="#ffffff" size={PLAYER_LOOK.icon} />
+          <ASpinner
+            colour="#ffffff"
+            size={PLAYER_LOOK.middle}
+            isFinishing={wait.isFinishing}
+            onFilled={wait.onFilled}
+          />
         </View>
       ) : null}
 

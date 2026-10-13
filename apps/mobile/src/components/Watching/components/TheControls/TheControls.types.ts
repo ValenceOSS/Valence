@@ -6,7 +6,7 @@ type TheControlsProps = {
   title: string;
   year: number | null;
   isPlaying: boolean;
-  isWaiting?: boolean;
+  wait?: { isShown: boolean; isFinishing: boolean; onFilled: () => void } | undefined;
   at: number;
   runsFor: number;
   buffered: number;
