@@ -121,19 +121,38 @@ const TheFeaturedTitles = ({
     [items, count, lead],
   );
   const pager = useRef<ComponentRef<typeof ScrollView>>(null);
-  const landsHere = useRef<ComponentRef<typeof View>>(null);
+  const tallness = width > height ? TALL_ON_A_WIDE_SCREEN : TALL_ON_A_PHONE;
+  const across = Math.min(
+    width - (PEEK + GAP) * 2,
+    Math.round((height * AT_MOST_OF_THE_HEIGHT) / tallness),
+  );
+  const aside = (width - across) / 2;
+  const step = across + GAP;
+  const cardHigh = Math.round(across * tallness);
+  const cardSize = useRef({ across, high: cardHigh });
+
+  useEffect(() => {
+    cardSize.current = { across, high: cardHigh };
+  }, [across, cardHigh]);
 
   useEffect(() => {
     const measure = () =>
       new Promise<ARectOnScreen | null>((told) => {
-        if (landsHere.current === null) {
+        if (pager.current === null) {
           told(null);
 
           return;
         }
 
-        landsHere.current.measureInWindow((x, y, wide, high) => {
-          told({ x, y, width: wide, height: high });
+        pager.current.measureInWindow((x, y, wide) => {
+          const size = cardSize.current;
+
+          told({
+            x: x + (wide - size.across) / 2,
+            y: y + ROOM_FOR_THE_SHADOW,
+            width: size.across,
+            height: size.high,
+          });
         });
       });
 
@@ -145,13 +164,6 @@ const TheFeaturedTitles = ({
       }
     };
   }, []);
-  const tallness = width > height ? TALL_ON_A_WIDE_SCREEN : TALL_ON_A_PHONE;
-  const across = Math.min(
-    width - (PEEK + GAP) * 2,
-    Math.round((height * AT_MOST_OF_THE_HEIGHT) / tallness),
-  );
-  const aside = (width - across) / 2;
-  const step = across + GAP;
   const [scrolled] = useState(() => new Animated.Value(0));
   const [pointedAt, setPointedAt] = useState<number | null>(null);
   const followScrolling = useMemo(
@@ -389,8 +401,6 @@ const TheFeaturedTitles = ({
           return (
             <Animated.View
               key={`${media.id}:${index.toString()}`}
-              ref={index === lead + turn ? landsHere : undefined}
-              collapsable={false}
               style={{ transform: leaning[index]?.transform }}
             >
               <AFeature

@@ -17,11 +17,11 @@ import { say } from '@ValenceI18n/say';
 
 const GROUND = { dark: '#1c1c1c', light: '#ffffff' } as const;
 
-const MARK_HIGH = 56;
+const MARK_HIGH = 36;
 
 const WIDER_BY = 624 / 458;
 
-const NAME_SIZE = 60;
+const NAME_SIZE = 38;
 
 const MARK_RISES_MS = 220;
 
@@ -35,7 +35,11 @@ const DONE_AT_MS = NAME_AT_MS + CARD_OPENS_MS;
 
 const INSET = 12;
 
-const CARD_ROUND = 20;
+const SCREEN_ROUND = 62;
+
+const CARD_ROUND = SCREEN_ROUND - INSET;
+
+const LANDS_ROUND = 20;
 
 const LANDS_MS = 650;
 
@@ -63,8 +67,9 @@ const styles = StyleSheet.create({
  * fades.
  *
  * Once everything has arrived and the first screen is ready, the ground around the card fades to
- * show the page, the mark flies off to its place on the page, and where the home has a featured
- * card the splash card's edges draw in onto it before fading over it. The mark is held until then,
+ * show the page, the mark flies off to its place on the page, the name fades, and where the home
+ * has a featured card the splash card's edges and corners draw in onto it before fading over it.
+ * Inset, its corners follow the screen's own, as a card inside a phone's rounded screen should. The mark is held until then,
  * so the page's own mark waits for it rather than showing twice.
  *
  * @param isReady - Whether the first screen is ready to be seen.
@@ -89,7 +94,14 @@ const ASplash = ({ isReady, isDark, onGone }: ASplashProps) => {
   const [left] = useState(() => new Animated.Value(0));
   const [right] = useState(() => new Animated.Value(0));
   const [bottom] = useState(() => new Animated.Value(0));
-  const [round] = useState(() => new Animated.Value(0));
+  const [round] = useState(() => new Animated.Value(SCREEN_ROUND));
+  const [faceShown] = useState(() => new Animated.Value(1));
+  const [follows] = useState(() => ({
+    markShown: Animated.multiply(risen, markHere),
+    markRises: risen.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }),
+    left: Animated.multiply(left, -1),
+    top: Animated.multiply(top, -1),
+  }));
   const markAt = useRef<ComponentRef<typeof View>>(null);
   const hasLeft = useRef(false);
 
@@ -183,8 +195,12 @@ const ASplash = ({ isReady, isDark, onGone }: ASplashProps) => {
     hasLeft.current = true;
 
     const handOn = (from: ARectOnScreen | null) => {
-      markHere.setValue(0);
       way.release(from ?? { x: 0, y: 0, width: 0, height: 0 });
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          markHere.setValue(0);
+        });
+      });
     };
 
     if (markAt.current === null) {
@@ -194,6 +210,13 @@ const ASplash = ({ isReady, isDark, onGone }: ASplashProps) => {
         handOn({ x, y, width: wide, height: high });
       });
     }
+
+    Animated.timing(faceShown, {
+      toValue: 0,
+      duration: FADES_MS,
+      easing: EASINGS.outQuad,
+      useNativeDriver: false,
+    }).start();
 
     Animated.timing(ground, {
       toValue: 0,
@@ -236,6 +259,12 @@ const ASplash = ({ isReady, isDark, onGone }: ASplashProps) => {
             useNativeDriver: false,
           }),
         ),
+        Animated.timing(round, {
+          toValue: LANDS_ROUND,
+          duration: LANDS_MS,
+          easing: EASINGS.outEager,
+          useNativeDriver: false,
+        }),
         fade(LANDS_MS),
       ]).start(onGone);
     };
@@ -252,6 +281,8 @@ const ASplash = ({ isReady, isDark, onGone }: ASplashProps) => {
     way,
     markHere,
     ground,
+    faceShown,
+    round,
     cardShown,
     top,
     left,
@@ -296,8 +327,9 @@ const ASplash = ({ isReady, isDark, onGone }: ASplashProps) => {
             styles.face,
             {
               height,
-              left: Animated.multiply(left, -1),
-              top: Animated.multiply(top, -1),
+              opacity: faceShown,
+              left: follows.left,
+              top: follows.top,
               width,
             },
           ]}
@@ -307,10 +339,8 @@ const ASplash = ({ isReady, isDark, onGone }: ASplashProps) => {
               ref={markAt}
               collapsable={false}
               style={{
-                opacity: Animated.multiply(risen, markHere),
-                transform: [
-                  { translateY: risen.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) },
-                ],
+                opacity: follows.markShown,
+                transform: [{ translateY: follows.markRises }],
               }}
             >
               <Image
@@ -326,7 +356,7 @@ const ASplash = ({ isReady, isDark, onGone }: ASplashProps) => {
               word={say('common.valence')}
               isShown={hasLanded}
               isStill={isStill}
-              before={20}
+              before={13}
               style={{
                 color: colours.text,
                 fontFamily: FONTS.sans.regular,
