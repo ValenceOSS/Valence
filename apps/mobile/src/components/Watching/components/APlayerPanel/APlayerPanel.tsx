@@ -100,7 +100,7 @@ const APlayerPanel = ({ label, onClose, children, isAlongTheFoot = false }: APla
         ]}
       >
         <Button tone="bare" label={label} onPress={leave}>
-          <Icon of={X} size={30} colour={PLAYER_LOOK.colours.text} />
+          <Icon of={X} size={PLAYER_LOOK.icon} colour={PLAYER_LOOK.colours.text} />
         </Button>
       </View>
     </Animated.View>

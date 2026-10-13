@@ -21,6 +21,8 @@ const PLAYER_LOOK = {
     line: 'rgba(255, 255, 255, 0.16)',
   },
   edge: 28,
+  icon: 26,
+  slot: 44,
   styles: StyleSheet.create({
     heading: { color: TEXT, fontFamily: FONTS.sans.bold, fontSize: 22 },
     label: { color: QUIET, fontFamily: FONTS.sans.semibold, fontSize: 17 },

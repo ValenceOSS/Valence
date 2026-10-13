@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
 const APlayerAction = ({ icon, label, onPress }: APlayerActionProps) => (
   <Button tone="bare" label={label} onPress={onPress}>
     <View style={styles.row}>
-      <Icon of={icon} size={24} colour={PLAYER_LOOK.colours.text} />
+      <Icon of={icon} size={PLAYER_LOOK.icon} colour={PLAYER_LOOK.colours.text} />
       <Text style={PLAYER_LOOK.styles.action} numberOfLines={1}>
         {label}
       </Text>

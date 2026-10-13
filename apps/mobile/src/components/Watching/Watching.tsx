@@ -52,6 +52,7 @@ import { useCaptionStyle } from '@ValenceClient/playback/useCaptionStyle';
 import { howBigToDrawIt } from '@ValenceMobile/components/Watching/howBigToDrawIt';
 import { usePinchToFill } from '@ValenceMobile/components/Watching/usePinchToFill';
 import { theChoicesOn } from '@ValenceMobile/components/Watching/theChoicesOn';
+import { PLAYER_LOOK } from '@ValenceMobile/components/Watching/PLAYER_LOOK';
 import { TheAudioAndSubtitles } from '@ValenceMobile/components/Watching/components/TheAudioAndSubtitles/TheAudioAndSubtitles';
 import { TheSpeed } from '@ValenceMobile/components/Watching/components/TheSpeed/TheSpeed';
 import { TheEpisodes } from '@ValenceMobile/components/Watching/components/TheEpisodes/TheEpisodes';
@@ -969,7 +970,7 @@ const Watching = ({
 
       {isWaiting && !areControlsDrawn && panel === null ? (
         <View style={styles.waiting} pointerEvents="none">
-          <ASpinner colour="#ffffff" size={64} />
+          <ASpinner colour="#ffffff" size={PLAYER_LOOK.icon} />
         </View>
       ) : null}
 

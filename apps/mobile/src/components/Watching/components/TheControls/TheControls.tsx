@@ -1,6 +1,6 @@
 import {
-  Activity,
   Gauge,
+  Info,
   Layers,
   ListVideo,
   Lock,
@@ -35,7 +35,7 @@ const A_STEP = 10;
 
 const FRAME_WIDE = 224;
 
-const { colours, edge } = PLAYER_LOOK;
+const { colours, edge, icon: ICON, slot: SLOT } = PLAYER_LOOK;
 
 const styles = StyleSheet.create({
   actions: { alignItems: 'center', flexDirection: 'row', gap: 4, justifyContent: 'center' },
@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
     gap: 0,
     justifyContent: 'flex-end',
   },
-  icon: { padding: 9 },
+  icon: { alignItems: 'center', height: SLOT, justifyContent: 'center', width: SLOT },
   line: { alignItems: 'center', flexDirection: 'row', gap: 14 },
   middle: {
     alignItems: 'center',
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     width: '62%',
   },
   reach: { padding: 16 },
-  waiting: { alignItems: 'center', height: 68, justifyContent: 'center', width: 68 },
+  waiting: { alignItems: 'center', height: ICON, justifyContent: 'center', width: ICON },
   said: {
     alignItems: 'baseline',
     flex: 1,
@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
   stepHowFar: {
     color: colours.text,
     fontFamily: FONTS.sans.bold,
-    fontSize: 13,
+    fontSize: 8,
     position: 'absolute',
   },
   title: { color: colours.text, flexShrink: 1, fontFamily: FONTS.sans.bold, fontSize: 18 },
@@ -219,14 +219,14 @@ const TheControls = ({
           {onParty === undefined ? null : (
             <Button tone="bare" label={say('common.partyMenu.watchParty')} onPress={onParty}>
               <View style={styles.icon}>
-                <Icon of={Users} size={26} colour={colours.text} />
+                <Icon of={Users} size={ICON} colour={colours.text} />
               </View>
             </Button>
           )}
 
           <Button tone="bare" label={say('common.statsForNerds')} onPress={onStats}>
             <View style={styles.icon}>
-              <Icon of={Activity} size={26} colour={colours.text} />
+              <Icon of={Info} size={ICON} colour={colours.text} />
             </View>
           </Button>
 
@@ -236,7 +236,7 @@ const TheControls = ({
 
           <Button tone="bare" label={say('phone.watching.lockTheControls')} onPress={onLock}>
             <View style={styles.icon}>
-              <Icon of={Lock} size={26} colour={colours.text} />
+              <Icon of={Lock} size={ICON} colour={colours.text} />
             </View>
           </Button>
 
@@ -246,7 +246,7 @@ const TheControls = ({
             onPress={onPictureInPicture}
           >
             <View style={styles.icon}>
-              <Icon of={PictureInPicture} size={26} colour={colours.text} />
+              <Icon of={PictureInPicture} size={ICON} colour={colours.text} />
             </View>
           </Button>
 
@@ -256,7 +256,7 @@ const TheControls = ({
             onPress={onClose}
           >
             <View style={styles.icon}>
-              <Icon of={X} size={30} colour={colours.text} />
+              <Icon of={X} size={ICON} colour={colours.text} />
             </View>
           </Button>
         </View>
@@ -274,7 +274,7 @@ const TheControls = ({
             }}
           >
             <View style={[styles.step, styles.reach]}>
-              <Icon of={RotateCcw} size={52} colour={colours.text} />
+              <Icon of={RotateCcw} size={ICON} colour={colours.text} />
               <Text style={styles.stepHowFar}>{A_STEP}</Text>
             </View>
           </Button>
@@ -287,10 +287,10 @@ const TheControls = ({
             <View style={styles.reach}>
               {isWaiting ? (
                 <View style={styles.waiting}>
-                  <ASpinner colour={colours.text} size={64} />
+                  <ASpinner colour={colours.text} size={ICON} />
                 </View>
               ) : (
-                <Icon of={isPlaying ? Pause : Play} size={68} colour={colours.text} />
+                <Icon of={isPlaying ? Pause : Play} size={ICON} colour={colours.text} />
               )}
             </View>
           </Button>
@@ -305,7 +305,7 @@ const TheControls = ({
             }}
           >
             <View style={[styles.step, styles.reach]}>
-              <Icon of={RotateCw} size={52} colour={colours.text} />
+              <Icon of={RotateCw} size={ICON} colour={colours.text} />
               <Text style={styles.stepHowFar}>{A_STEP}</Text>
             </View>
           </Button>
