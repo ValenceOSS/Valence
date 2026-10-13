@@ -5,6 +5,7 @@ type AChoiceMenuProps = {
   items: readonly Segment[];
   value: string | null;
   onSelect: (id: string) => void;
+  isDark?: boolean;
 };
 
 export type { AChoiceMenuProps };

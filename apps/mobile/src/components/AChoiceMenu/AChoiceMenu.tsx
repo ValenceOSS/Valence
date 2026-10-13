@@ -14,14 +14,16 @@ import type { AChoiceMenuProps } from './AChoiceMenu.types';
  * @param items - What there is to choose from.
  * @param value - Which is chosen.
  * @param onSelect - Told which was chosen.
+ * @param isDark - Whether it is drawn over something dark, such as a playing film, whatever the
+ *   page's own theme.
  */
-const AChoiceMenu = ({ label, items, value, onSelect }: AChoiceMenuProps) => {
+const AChoiceMenu = ({ label, items, value, onSelect, isDark = false }: AChoiceMenuProps) => {
   if (Platform.OS !== 'ios') {
     return <SegmentedRow label={label} items={items} value={value} onSelect={onSelect} />;
   }
 
   return (
-    <Host matchContents>
+    <Host matchContents {...(isDark ? { colorScheme: 'dark' as const } : {})}>
       <Picker
         label={label}
         selection={value}
