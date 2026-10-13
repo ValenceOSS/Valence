@@ -75,9 +75,9 @@ const decodeProbe = async (probe: Probe): Promise<VideoFrame | 'notDecodable' | 
 
 /**
  * Whether Valence's own tone mapping can be trusted in this browser for a codec: it decodes a small
- * HDR frame of a known PQ grey — 256 pixels square for H.265, since NVIDIA's decoder refuses any
- * frame under 144 and browsers bring no H.265 decoder of their own — through exactly the path a film takes and draws it through WebGPU untouched,
- * then reads back what arrived. The encoded grey coming back means the browser left the HDR signal
+ * HDR frame of a known PQ grey through exactly the path a film takes, draws it through WebGPU
+ * untouched, then reads back what arrived. The H.265 frame is 256 pixels square, since NVIDIA's
+ * decoder refuses one of 64 and browsers bring no H.265 decoder of their own. The encoded grey coming back means the browser left the HDR signal
  * alone for the shader; anything else — the browser converting the frame its own way, as it may
  * where it does not honour the colour a decoder is given — means the shader would be fed the wrong
  * numbers, so HDR is left to the browser or the server instead.
