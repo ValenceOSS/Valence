@@ -27,12 +27,22 @@ type EmbeddedLookup = {
   find: (mediaId: string) => Promise<{ path: string; streams: EmbeddedStream[] } | null>;
 };
 
+type PictureWords =
+  | { state: 'ready'; content: string }
+  | { state: 'working' }
+  | { state: 'unavailable' };
+
 type Extractor = {
   readSubtitle: (request: {
     inputPath: string;
     streamIndex: number;
     format?: 'webvtt' | 'ass';
   }) => Promise<string>;
+  readPictureSubtitle?: (request: {
+    inputPath: string;
+    streamIndex: number;
+    language: string | null;
+  }) => Promise<PictureWords>;
 };
 
 type CreateEmbeddedSubtitleServiceOptions = {
@@ -80,7 +90,9 @@ const marksHearingImpaired = (title: string | null | undefined): boolean => {
 
 /**
  * Subtitles read out of the video container itself, converted to the one format a browser will
- * take. Extracting means reading the whole file, since a track's cues are spread through it, so the
+ * take. A Blu-ray's picture subtitles are read into words by the media service the first time
+ * anybody asks, and once they have been, the words are offered as a text track beside the
+ * pictures, which stay for anybody the reading served badly. Extracting means reading the whole file, since a track's cues are spread through it, so the
  * media service keeps what it reads and reading begins the moment a player asks what tracks there
  * are — by the time a viewer turns subtitles on, the read has usually finished.
  *
@@ -114,6 +126,40 @@ const createEmbeddedSubtitleService = ({
    * @returns The track identifier.
    */
   const idFor = (path: string, index: number): string => trackId(`${path}#${index.toString()}`);
+
+  /**
+   * Builds the identifier for the words read out of a picture stream, apart from the picture
+   * stream's own, so both can be offered side by side.
+   *
+   * @param path - The file the stream is in.
+   * @param index - The stream's index inside the container.
+   * @returns The track identifier.
+   */
+  const wordsIdFor = (path: string, index: number): string =>
+    trackId(`${path}#${index.toString()}#words`);
+
+  /**
+   * The words of a picture stream where they have been read, starting the read where they have not.
+   *
+   * @param path - The file the stream is in.
+   * @param stream - The picture stream.
+   * @returns The words as WebVTT, or nothing while they are being read or where they cannot be.
+   */
+  const wordsOf = async (path: string, stream: EmbeddedStream): Promise<string | null> => {
+    if (transcoder.readPictureSubtitle === undefined || stream.format.toLowerCase() !== 'pgs') {
+      return null;
+    }
+
+    const read = await transcoder
+      .readPictureSubtitle({
+        inputPath: path,
+        streamIndex: stream.index,
+        language: stream.language ?? null,
+      })
+      .catch(() => null);
+
+    return read?.state === 'ready' ? read.content : null;
+  };
 
   /**
    * Starts the media service reading a file's text tracks without waiting for it, so the read is
@@ -171,18 +217,61 @@ const createEmbeddedSubtitleService = ({
         ? await canBurnImageSubtitles()
         : false;
 
-      const tracks: SubtitleTrack[] = found.streams
-        .filter((stream) => !isImageSubtitle(stream.format) || canBurn)
-        .map((stream, position) => ({
-          id: idFor(found.path, stream.index),
+      const read = await Promise.all(
+        found.streams.map(async (stream) =>
+          isImageSubtitle(stream.format) ? (await wordsOf(found.path, stream)) !== null : false,
+        ),
+      );
+
+      const tracks: SubtitleTrack[] = found.streams.flatMap((stream, position) => {
+        const label = describeSubtitle(stream, position + 1);
+        const shared = {
           language: readLanguage(stream.language),
-          label: describeSubtitle(stream, position + 1),
-          format: stream.format,
           isForced: stream.isForced,
           isHearingImpaired: marksHearingImpaired(stream.title),
-          delivery: isImageSubtitle(stream.format) ? ('burnIn' as const) : ('text' as const),
           streamIndex: stream.index,
-        }));
+        };
+
+        if (!isImageSubtitle(stream.format)) {
+          return [
+            {
+              ...shared,
+              id: idFor(found.path, stream.index),
+              label,
+              format: stream.format,
+              delivery: 'text' as const,
+            },
+          ];
+        }
+
+        return [
+          ...(read[position] === true
+            ? [
+                {
+                  ...shared,
+                  id: wordsIdFor(found.path, stream.index),
+                  label,
+                  format: 'ocr',
+                  delivery: 'text' as const,
+                },
+              ]
+            : []),
+          ...(canBurn
+            ? [
+                {
+                  ...shared,
+                  id: idFor(found.path, stream.index),
+                  label:
+                    read[position] === true
+                      ? say('server.subtitles.embeddedSubtitleService.labelAsPictures', { label })
+                      : label,
+                  format: stream.format,
+                  delivery: 'burnIn' as const,
+                },
+              ]
+            : []),
+        ];
+      });
 
       return tracks;
     },
@@ -190,6 +279,13 @@ const createEmbeddedSubtitleService = ({
     read: async (mediaId, id) => {
       const found = await discover(mediaId);
       const stream = found?.streams.find((candidate) => idFor(found.path, candidate.index) === id);
+      const pictures = found?.streams.find(
+        (candidate) => wordsIdFor(found.path, candidate.index) === id,
+      );
+
+      if (found !== null && pictures !== undefined) {
+        return wordsOf(found.path, pictures);
+      }
 
       if (found === null || stream === undefined) {
         return null;

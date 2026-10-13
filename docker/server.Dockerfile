@@ -118,6 +118,19 @@ RUN apt-get update \
 ENV VALENCE_FFMPEG=/usr/lib/valence-ffmpeg/ffmpeg
 ENV VALENCE_FFPROBE=/usr/lib/valence-ffmpeg/ffprobe
 
+# Blu-ray subtitles are pictures. The transcoder reads them into text once, with
+# Tesseract, so they play as ordinary subtitles rather than being burned into the
+# video. A track in a language with no data here keeps its picture version only.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends tesseract-ocr \
+    tesseract-ocr-eng tesseract-ocr-fra tesseract-ocr-deu tesseract-ocr-spa \
+    tesseract-ocr-ita tesseract-ocr-por tesseract-ocr-nld tesseract-ocr-swe \
+    tesseract-ocr-dan tesseract-ocr-nor tesseract-ocr-fin tesseract-ocr-pol \
+    tesseract-ocr-ces tesseract-ocr-rus tesseract-ocr-ukr tesseract-ocr-tur \
+    tesseract-ocr-ell tesseract-ocr-heb tesseract-ocr-ara tesseract-ocr-jpn \
+    tesseract-ocr-kor tesseract-ocr-chi-sim tesseract-ocr-chi-tra \
+  && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 RUN corepack enable
 

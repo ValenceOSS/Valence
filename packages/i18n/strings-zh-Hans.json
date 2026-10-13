@@ -29086,6 +29086,11 @@
     "context": "Shown in the subtitles on the server (from `describeSubtitleCharset`). {charset} is filled in by the app; {why} is filled in by the app."
   },
   {
+    "handler": "server.subtitles.embeddedSubtitleService.labelAsPictures",
+    "text": "{label} (picture)",
+    "context": "A Blu-ray subtitle track offered as its original pictures, burned into the video, beside the same track read into text. {label} is the track's own name, such as English SDH."
+  },
+  {
     "handler": "server.subtitles.findSidecarSubtitles.unknown",
     "text": "Unknown",
     "context": "Shown in the subtitles on the server (from `findSidecarSubtitles`)."

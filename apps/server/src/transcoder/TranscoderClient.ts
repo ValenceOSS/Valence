@@ -141,6 +141,12 @@ const FingerprintSchema = z.object({
 
 const SubtitleTrackSchema = z.object({ content: z.string() });
 
+const PictureSubtitleSchema = z.discriminatedUnion('state', [
+  z.object({ state: z.literal('ready'), content: z.string() }),
+  z.object({ state: z.literal('working') }),
+  z.object({ state: z.literal('unavailable') }),
+]);
+
 const FontListSchema = z.object({ names: z.array(z.string()) });
 
 const ForgetReportSchema = z.object({ forgotten: z.boolean() });
@@ -344,6 +350,11 @@ type Transcoder = {
     streamIndex: number;
     format?: 'webvtt' | 'ass';
   }) => Promise<string>;
+  readPictureSubtitle?: (request: {
+    inputPath: string;
+    streamIndex: number;
+    language: string | null;
+  }) => Promise<z.infer<typeof PictureSubtitleSchema>>;
   listFonts: (request: { inputPath: string }) => Promise<string[]>;
   readFont: (request: { inputPath: string; name: string }) => Promise<ArrayBuffer>;
   readMonitor: () => Promise<JsonValue>;
@@ -857,6 +868,9 @@ const createTranscoderClient = ({
 
     readSubtitle: async (request) =>
       SubtitleTrackSchema.parse(await (await postRender('/subtitles', request)).json()).content,
+
+    readPictureSubtitle: async (request) =>
+      PictureSubtitleSchema.parse(await (await postRender('/subtitles/pictures', request)).json()),
 
     requestDownload: async (request) =>
       DownloadFileSchema.parse(await (await postJson('/downloads', request)).json()),

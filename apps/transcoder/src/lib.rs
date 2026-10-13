@@ -31,6 +31,8 @@ pub mod media;
 pub mod monitor;
 pub mod path_map;
 pub mod pci_names;
+pub mod pgs;
+pub mod picture_subtitles;
 pub mod playlist;
 pub mod preview;
 pub mod probe;

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { Mock } from 'vitest';
 import {
   createEmbeddedSubtitleService,
   describeSubtitle,
@@ -8,6 +9,10 @@ import type { EmbeddedStream } from './createEmbeddedSubtitleService';
 
 const MEDIA_ID = '9c858901-8a57-4791-81fe-4c455b099bc9';
 const PATH = '/media/Parasite (2019).mkv';
+
+type ReadsPictures = NonNullable<
+  Parameters<typeof createEmbeddedSubtitleService>[0]['transcoder']['readPictureSubtitle']
+>;
 
 const streamOf = (changes: Partial<EmbeddedStream> = {}): EmbeddedStream => ({
   index: 2,
@@ -225,5 +230,77 @@ describe('createEmbeddedSubtitleService', () => {
     await service.read(MEDIA_ID, tracks?.[0]?.id ?? '');
 
     expect(onProblem).toHaveBeenCalledWith(PATH, 'no such stream');
+  });
+
+  describe('pictures read into words', () => {
+    const READ = 'WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nHello.\n';
+
+    const buildReading = (readPictureSubtitle: Mock<ReadsPictures>, canBurnImageSubtitles = true) =>
+      createEmbeddedSubtitleService({
+        media: {
+          find: (mediaId) =>
+            Promise.resolve(
+              mediaId === MEDIA_ID ? { path: PATH, streams: [streamOf({ format: 'pgs' })] } : null,
+            ),
+        },
+        transcoder: { readSubtitle: vi.fn().mockResolvedValue('WEBVTT'), readPictureSubtitle },
+        canBurnImageSubtitles: () => Promise.resolve(canBurnImageSubtitles),
+        onProblem: vi.fn(),
+      });
+
+    it('offers the words beside the pictures once they have been read', async () => {
+      const service = buildReading(
+        vi.fn<ReadsPictures>().mockResolvedValue({ state: 'ready', content: READ }),
+      );
+
+      expect(await service.list(MEDIA_ID)).toMatchObject([
+        { format: 'ocr', delivery: 'text', streamIndex: 2 },
+        { format: 'pgs', delivery: 'burnIn', streamIndex: 2 },
+      ]);
+    });
+
+    it('asks for the track in the language the file names', async () => {
+      const readPictureSubtitle = vi.fn<ReadsPictures>().mockResolvedValue({ state: 'working' });
+
+      await buildReading(readPictureSubtitle).list(MEDIA_ID);
+
+      expect(readPictureSubtitle).toHaveBeenCalledWith({
+        inputPath: PATH,
+        streamIndex: 2,
+        language: 'eng',
+      });
+    });
+
+    it('offers only the pictures while the words are still being read', async () => {
+      const service = buildReading(vi.fn<ReadsPictures>().mockResolvedValue({ state: 'working' }));
+
+      expect(await service.list(MEDIA_ID)).toMatchObject([{ delivery: 'burnIn' }]);
+    });
+
+    it('offers the words even where this machine cannot draw the pictures', async () => {
+      const service = buildReading(
+        vi.fn<ReadsPictures>().mockResolvedValue({ state: 'ready', content: READ }),
+        false,
+      );
+
+      expect(await service.list(MEDIA_ID)).toMatchObject([{ format: 'ocr', delivery: 'text' }]);
+    });
+
+    it('answers with the words when the read track is asked for', async () => {
+      const service = buildReading(
+        vi.fn<ReadsPictures>().mockResolvedValue({ state: 'ready', content: READ }),
+      );
+      const tracks = await service.list(MEDIA_ID);
+
+      await expect(service.read(MEDIA_ID, tracks?.[0]?.id ?? '')).resolves.toBe(READ);
+    });
+
+    it('lists the pictures as before when the media service cannot be asked', async () => {
+      const service = buildReading(
+        vi.fn<ReadsPictures>().mockRejectedValue(new Error('unreachable')),
+      );
+
+      expect(await service.list(MEDIA_ID)).toMatchObject([{ delivery: 'burnIn' }]);
+    });
   });
 });

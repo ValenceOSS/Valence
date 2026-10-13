@@ -528,6 +528,15 @@ describe('every question the client asks the media service', () => {
     expect(asked[0]?.url).toContain('/subtitles');
   });
 
+  it('asks for the words of a track of pictures, and says where the reading has got to', async () => {
+    const { client, asked } = scripted({ body: { state: 'working' } });
+
+    await expect(
+      client.readPictureSubtitle?.({ inputPath: '/a.mkv', streamIndex: 4, language: 'eng' }),
+    ).resolves.toEqual({ state: 'working' });
+    expect(asked[0]?.url).toContain('/subtitles/pictures');
+  });
+
   it('reads what the service says about how it is doing', async () => {
     const { client, asked } = scripted({ body: { sessions: 2 } });
 

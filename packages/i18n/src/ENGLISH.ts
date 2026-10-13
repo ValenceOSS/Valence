@@ -7376,6 +7376,7 @@ const ENGLISH = {
   'server.subtitles.describeSubtitleCharset.fromTheTrackLanguage': 'from the track language',
   'server.subtitles.describeSubtitleCharset.readAsCharsetWhyNotValid':
     'read as {charset} ({why}; not valid UTF-8)',
+  'server.subtitles.embeddedSubtitleService.labelAsPictures': '{label} (picture)',
   'server.subtitles.findSidecarSubtitles.unknown': 'Unknown',
   'server.subtitles.sidecarSubtitleService.aSubtitleHeldAsPicturesRather':
     'An image-based subtitle, which can’t be shown yet.',

@@ -89,6 +89,8 @@ pub struct AppState {
     /// Keeps one file from being read for its subtitles twice at once, and
     /// what was read from being read again.
     pub subtitles: SubtitleRegistry,
+    /// Keeps a picture subtitle track from being read into words twice at once.
+    pub picture_subtitles: crate::picture_subtitles::PictureSubtitleRegistry,
     /// Keeps one download from being prepared twice at once, and remembers how
     /// far through each is.
     ///
@@ -1852,6 +1854,36 @@ async fn start_subtitle(
     )
 }
 
+/// Answers with the words of a picture subtitle track where they have been
+/// read, and otherwise starts reading them and says so.
+async fn read_picture_subtitle(
+    State(state): State<AppState>,
+    Json(request): Json<crate::picture_subtitles::PictureSubtitleRequest>,
+) -> Response {
+    let path = PathBuf::from(&request.input_path);
+
+    if !state.is_readable(&path) {
+        return error(
+            StatusCode::FORBIDDEN,
+            "That file is outside the media roots.",
+        );
+    }
+
+    let config = state.registry.config();
+    let answer = state
+        .picture_subtitles
+        .read_or_start(
+            &config.ffmpeg,
+            &config.artefact_root,
+            path,
+            request.stream_index,
+            request.language.as_deref(),
+        )
+        .await;
+
+    (StatusCode::OK, Json(answer)).into_response()
+}
+
 /// Renders seek-bar previews for a file.
 ///
 /// Answers with the index rather than the images: the player fetches sheets
@@ -2676,6 +2708,7 @@ pub fn create_router(state: AppState) -> Router {
         .route("/previews/forget", post(forget_preview))
         .route("/previews/{id}/{name}", get(preview_file))
         .route("/subtitles", post(start_subtitle))
+        .route("/subtitles/pictures", post(read_picture_subtitle))
         .route("/fonts", post(list_fonts))
         .route("/fonts/read", post(read_font))
         .route("/renditions", post(start_rendition))
@@ -2723,6 +2756,7 @@ mod tests {
             renditions: crate::progress_registry::ProgressRegistry::new(),
             trickplay: crate::trickplay::TrickplayRegistry::new(),
             subtitles: crate::subtitle::SubtitleRegistry::new(),
+            picture_subtitles: crate::picture_subtitles::PictureSubtitleRegistry::new(),
             previews: crate::preview::PreviewRegistry::new(),
             monitor: crate::monitor::Monitor::new(crate::monitor::Journal::new()),
             audio: crate::audio::AudioRegistry::new(),
