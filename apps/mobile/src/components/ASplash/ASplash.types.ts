@@ -1,5 +1,6 @@
 type ASplashProps = {
-  isDone: boolean;
+  isReady: boolean;
+  isDark: boolean;
   onGone: () => void;
 };
 

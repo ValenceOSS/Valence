@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { buildQueryClient } from '@ValenceClient/query/queryClient';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { rememberServerAddress } from '@ValenceClient/session/serverAddress';
+import { chosenTheme } from '@ValenceClient/shell/theme';
+import { theThemeToDrawIn } from '@ValenceMobile/theme/theThemeToDrawIn';
 import { installPhonePlatform } from '@ValenceMobile/platform/installPhonePlatform';
 import { whatThePhoneRemembers } from '@ValenceMobile/platform/whatThePhoneRemembers';
 import { holdThisPhoneUpright } from '@ValenceMobile/platform/holdThisPhoneUpright';
@@ -33,8 +36,9 @@ const answers = buildQueryClient();
  * The server it knows is counted as one it has used, as the desktop counts it, so it is offered
  * again when somebody goes looking for a different one.
  *
- * What it holds the screen with is drawn dark and without the theme, because the theme is a
- * preference and the preference is in the storage being read. There is nothing yet to ask.
+ * What it holds the screen with follows the phone's own light or dark until the storage has been
+ * read, and the theme chosen in it from then on. The mark flying between screens is drawn above
+ * it, so the splash's mark is never covered by the card it leaves.
  *
  * The phone is held upright from here on. Only a film is worth turning it for, and the screen
  * showing one asks for that itself.
@@ -46,6 +50,7 @@ const Phone = () => {
   const [isHomeReady, setIsHomeReady] = useState(false);
   const [isSplashDone, setIsSplashDone] = useState(false);
   const [isSplashGone, setIsSplashGone] = useState(false);
+  const scheme = useColorScheme();
 
   const homeIsReady = useCallback(() => {
     setIsHomeReady(true);
@@ -103,9 +108,8 @@ const Phone = () => {
                 />
               </IfThisAppIsOn>
             )}
-            <TheFlyingMark />
             <TheChosenAppearance />
-            <StatusBar style={isSplashGone ? 'auto' : 'light'} />
+            <StatusBar style="auto" />
             <TheFirstScreenWatch
               hasServer={address !== null && !isAsking}
               isHomeReady={isHomeReady}
@@ -115,7 +119,20 @@ const Phone = () => {
         </QueryClientProvider>
       ) : null}
 
-      {isSplashGone ? null : <ASplash isDone={isSplashDone} onGone={splashGone} />}
+      {isSplashGone ? null : (
+        <ASplash
+          isReady={isSplashDone}
+          isDark={
+            (isReady
+              ? theThemeToDrawIn(chosenTheme(), scheme)
+              : scheme === 'light'
+                ? 'light'
+                : 'dark') === 'dark'
+          }
+          onGone={splashGone}
+        />
+      )}
+      {isReady ? <TheFlyingMark /> : null}
     </SafeAreaProvider>
   );
 };

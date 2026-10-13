@@ -1,6 +1,8 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Animated, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { THE_SPLASH_LANDS } from '@ValenceMobile/components/ASplash/THE_SPLASH_LANDS';
+import type { ARectOnScreen } from '@ValenceMobile/hooks/useArrivingFrom.types';
 import type { ComponentRef } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent, ScrollView } from 'react-native';
 import { showIdOf } from '@ValenceClient/library/showIdOf';
@@ -119,6 +121,30 @@ const TheFeaturedTitles = ({
     [items, count, lead],
   );
   const pager = useRef<ComponentRef<typeof ScrollView>>(null);
+  const landsHere = useRef<ComponentRef<typeof View>>(null);
+
+  useEffect(() => {
+    const measure = () =>
+      new Promise<ARectOnScreen | null>((told) => {
+        if (landsHere.current === null) {
+          told(null);
+
+          return;
+        }
+
+        landsHere.current.measureInWindow((x, y, wide, high) => {
+          told({ x, y, width: wide, height: high });
+        });
+      });
+
+    THE_SPLASH_LANDS.measure = measure;
+
+    return () => {
+      if (THE_SPLASH_LANDS.measure === measure) {
+        THE_SPLASH_LANDS.measure = null;
+      }
+    };
+  }, []);
   const tallness = width > height ? TALL_ON_A_WIDE_SCREEN : TALL_ON_A_PHONE;
   const across = Math.min(
     width - (PEEK + GAP) * 2,
@@ -363,6 +389,8 @@ const TheFeaturedTitles = ({
           return (
             <Animated.View
               key={`${media.id}:${index.toString()}`}
+              ref={index === lead + turn ? landsHere : undefined}
+              collapsable={false}
               style={{ transform: leaning[index]?.transform }}
             >
               <AFeature

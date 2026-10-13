@@ -8,6 +8,7 @@ const EASINGS = {
   inQuad: Easing.in((t) => Easing.quad(t)),
   linear: (t: number) => Easing.linear(t),
   outCubic: Easing.out((t) => Easing.cubic(t)),
+  outEager: Easing.bezier(0.22, 1, 0.36, 1),
   outQuad: Easing.out((t) => Easing.quad(t)),
 } as const;
 
