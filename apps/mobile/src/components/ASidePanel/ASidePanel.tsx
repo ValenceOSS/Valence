@@ -1,6 +1,6 @@
 import { X } from '@keyline-icons/react-native/fill';
 import { useEffect, useState } from 'react';
-import { Animated, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Animated, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
@@ -9,6 +9,8 @@ import { FONTS } from '@ValenceMobile/theme/FONTS';
 import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import { ABlur } from '@ValenceMobile/components/ABlur/ABlur';
 import type { ASidePanelProps } from './ASidePanel.types';
+
+const WIDE = 300;
 
 const styles = StyleSheet.create({
   behind: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
@@ -19,7 +21,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     top: 0,
-    width: 300,
+    width: WIDE,
   },
   tint: {
     backgroundColor: 'rgba(0, 0, 0, 0.32)',
@@ -47,7 +49,6 @@ const styles = StyleSheet.create({
  */
 const ASidePanel = ({ title, closeLabel, onClose, children }: ASidePanelProps) => {
   const room = useSafeAreaInsets();
-  const { height } = useWindowDimensions();
   const [shown] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
@@ -82,7 +83,7 @@ const ASidePanel = ({ title, closeLabel, onClose, children }: ASidePanelProps) =
           {
             paddingRight: Math.max(room.right, SIDE_PANEL.edge),
             transform: [
-              { translateY: shown.interpolate({ inputRange: [0, 1], outputRange: [height, 0] }) },
+              { translateX: shown.interpolate({ inputRange: [0, 1], outputRange: [WIDE, 0] }) },
             ],
           },
         ]}
