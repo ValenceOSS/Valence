@@ -53,7 +53,12 @@ const APlayerPanel = ({ label, onClose, children }: APlayerPanelProps) => {
     >
       {children}
 
-      <View style={[styles.close, { right: Math.max(room.right, PLAYER_LOOK.edge) - 6, top: Math.max(room.top, 10) }]}>
+      <View
+        style={[
+          styles.close,
+          { right: Math.max(room.right, PLAYER_LOOK.edge) - 6, top: Math.max(room.top, 10) },
+        ]}
+      >
         <Button tone="bare" label={label} onPress={onClose}>
           <Icon of={X} size={30} colour={PLAYER_LOOK.colours.text} />
         </Button>

@@ -5,7 +5,13 @@ import { PLAYER_LOOK } from '@ValenceMobile/components/Watching/PLAYER_LOOK';
 import type { APlayerActionProps } from './APlayerAction.types';
 
 const styles = StyleSheet.create({
-  row: { alignItems: 'center', flexDirection: 'row', gap: 8, paddingHorizontal: 10, paddingVertical: 8 },
+  row: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
 });
 
 /**

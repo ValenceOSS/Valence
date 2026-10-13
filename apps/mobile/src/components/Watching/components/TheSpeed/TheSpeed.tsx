@@ -70,7 +70,9 @@ const TheSpeed = ({ rate, onRate, onClose }: TheSpeedProps) => (
                   <View style={styles.stopDot}>
                     <View style={isChosen ? styles.dotChosen : styles.dot} />
                   </View>
-                  <Text style={isChosen ? PLAYER_LOOK.styles.labelChosen : PLAYER_LOOK.styles.label}>
+                  <Text
+                    style={isChosen ? PLAYER_LOOK.styles.labelChosen : PLAYER_LOOK.styles.label}
+                  >
                     {said}
                   </Text>
                 </View>

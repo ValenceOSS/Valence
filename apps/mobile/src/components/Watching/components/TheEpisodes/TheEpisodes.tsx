@@ -40,7 +40,12 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
   },
-  nowLabel: { color: PLAYER_LOOK.colours.text, fontFamily: FONTS.sans.bold, fontSize: 13, marginTop: 6 },
+  nowLabel: {
+    color: PLAYER_LOOK.colours.text,
+    fontFamily: FONTS.sans.bold,
+    fontSize: 13,
+    marginTop: 6,
+  },
   picture: { height: '100%', width: '100%' },
   row: { gap: 16, paddingRight: 24, paddingTop: 22 },
   still: {
@@ -78,7 +83,11 @@ const TheEpisodes = ({ seasons, playing, onChoose, onClose }: TheEpisodesProps) 
         <Text style={styles.heading}>{say('common.episodes')}</Text>
 
         {seasons.length > 1 ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.chips}
+          >
             {seasons.map((one, at) => (
               <Button
                 key={one.seasonNumber ?? at}
@@ -99,7 +108,11 @@ const TheEpisodes = ({ seasons, playing, onChoose, onClose }: TheEpisodesProps) 
           </ScrollView>
         ) : null}
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.row}
+        >
           {(season?.episodes ?? []).map((episode) => {
             const isPlaying = episode.id === playing;
 
@@ -130,11 +143,16 @@ const TheEpisodes = ({ seasons, playing, onChoose, onClose }: TheEpisodesProps) 
                   </View>
 
                   <Text style={styles.cardTitle} numberOfLines={1}>
-                    {numberedEpisodeTitle(episode.title, episode.episodeNumber, episode.episodeNumberEnd)}
+                    {numberedEpisodeTitle(
+                      episode.title,
+                      episode.episodeNumber,
+                      episode.episodeNumberEnd,
+                    )}
                   </Text>
 
-                  <Text style={PLAYER_LOOK.styles.small}>{howLongItRuns(episode.durationSeconds)}</Text>
-
+                  <Text style={PLAYER_LOOK.styles.small}>
+                    {howLongItRuns(episode.durationSeconds)}
+                  </Text>
                 </View>
               </Button>
             );

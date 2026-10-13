@@ -24,7 +24,12 @@ const styles = StyleSheet.create({
   },
   cards: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingBottom: 24, paddingTop: 16 },
   heading: { ...PLAYER_LOOK.styles.heading, paddingRight: 60 },
-  name: { color: PLAYER_LOOK.colours.quiet, fontFamily: FONTS.sans.semibold, fontSize: 12, width: 110 },
+  name: {
+    color: PLAYER_LOOK.colours.quiet,
+    fontFamily: FONTS.sans.semibold,
+    fontSize: 12,
+    width: 110,
+  },
   row: { flexDirection: 'row', gap: 10 },
   value: {
     color: PLAYER_LOOK.colours.text,

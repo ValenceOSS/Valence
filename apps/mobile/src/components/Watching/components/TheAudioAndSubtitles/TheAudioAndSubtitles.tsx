@@ -51,7 +51,13 @@ const styles = StyleSheet.create({
  * @param onStyle - Told they want to change how the words are drawn, where a track is being read.
  * @param onClose - Told they are done choosing.
  */
-const TheAudioAndSubtitles = ({ audio, subtitles, timing, onStyle, onClose }: TheAudioAndSubtitlesProps) => {
+const TheAudioAndSubtitles = ({
+  audio,
+  subtitles,
+  timing,
+  onStyle,
+  onClose,
+}: TheAudioAndSubtitlesProps) => {
   const nudge = (by: number) => {
     if (timing !== null) {
       timing.onChange(Math.min(FURTHEST, Math.max(-FURTHEST, timing.offset + by)));

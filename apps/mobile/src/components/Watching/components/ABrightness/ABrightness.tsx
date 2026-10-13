@@ -73,7 +73,11 @@ const ABrightness = ({ onTouched }: ABrightnessProps) => {
   );
 
   return (
-    <View style={styles.whole} accessibilityLabel={say('phone.watching.brightness')} accessibilityRole="adjustable">
+    <View
+      style={styles.whole}
+      accessibilityLabel={say('phone.watching.brightness')}
+      accessibilityRole="adjustable"
+    >
       <Icon of={Sun} size={24} colour={PLAYER_LOOK.colours.text} />
       <View style={styles.reach} {...dragging.panHandlers}>
         <View style={styles.track}>
