@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
   stepHowFar: {
     color: colours.text,
     fontFamily: FONTS.sans.bold,
-    fontSize: 10,
+    fontSize: 13,
     position: 'absolute',
   },
   title: { color: colours.text, flexShrink: 1, fontFamily: FONTS.sans.bold, fontSize: 18 },

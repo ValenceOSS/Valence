@@ -1,12 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Animated, StyleSheet, View } from 'react-native';
 import { useEvent, useEventListener } from 'expo';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FINISHED_WITHIN_SECONDS } from '@ValenceContracts/schemas/WatchProgress';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
-import { fetchSubtitleTracks, SUBTITLES_OFF } from '@ValenceClient/playback/fetchSubtitles';
+import {
+  fetchSubtitleTracks,
+  SUBTITLES_OFF,
+  trackForLanguage,
+} from '@ValenceClient/playback/fetchSubtitles';
+import {
+  readAudioLanguage,
+  readSubtitleLanguage,
+  saveAudioLanguage,
+  saveSubtitleLanguage,
+} from '@ValenceClient/playback/languagePreference';
 import { fetchSegments } from '@ValenceClient/playback/fetchSegments';
 import { namePlaying } from '@ValenceClient/playback/namePlaying';
 import {
@@ -247,6 +257,7 @@ const Watching = ({
   watchParty,
 }: WatchingProps) => {
   const colours = useTheColours();
+  const cache = useQueryClient();
   const [source, setSource] = useState<VideoSource | null>(null);
   const [seekTo, setSeekTo] = useState(0);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -325,6 +336,27 @@ const Watching = ({
     enabled: !isKept,
   });
   const [reading, setReading] = useState(SUBTITLES_OFF);
+  const carriedOver = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (carriedOver.current === mediaId || tracks.data === undefined) {
+      return;
+    }
+
+    carriedOver.current = mediaId;
+
+    const remembered = readSubtitleLanguage();
+
+    if (remembered === null || remembered === SUBTITLES_OFF) {
+      return;
+    }
+
+    const continuing = trackForLanguage(tracks.data, remembered);
+
+    if (continuing !== null) {
+      setReading(continuing.id);
+    }
+  }, [tracks.data, mediaId]);
   const beingRead = (tracks.data ?? []).find((track) => track.id === reading) ?? null;
   const cues = useTheSubtitles(mediaId, reading, beingRead?.delivery === 'burnIn');
 
@@ -356,54 +388,73 @@ const Watching = ({
 
     setSource(null);
 
-    void startPlaybackSession(
-      mediaId,
-      thePhonesProfile(),
-      clientId,
-      Math.floor(asking.from),
-      asking.audioStreamIndex,
-      asking.requestedQuality,
-      asking.subtitleStreamIndex,
-    ).then((outcome) => {
-      if (outcome.kind === 'failed') {
-        setRefusal(outcome.reason);
+    const rememberedAudio = asking.audioStreamIndex === undefined ? readAudioLanguage() : null;
 
-        return;
-      }
+    void (
+      rememberedAudio === null
+        ? Promise.resolve(asking.audioStreamIndex)
+        : cache
+            .ensureQueryData(libraryQueries.detail(mediaId))
+            .then((known) => {
+              const heard = known?.audioStreams.find(
+                (stream) => stream.language === rememberedAudio,
+              );
 
-      started = outcome.session.sessionId;
-      setSession(outcome.session);
-      setSentAudio(outcome.session.plan.audio.streamIndex);
+              return heard === undefined || heard.isDefault ? undefined : heard.index;
+            })
+            .catch(() => undefined)
+    )
+      .then((audioStreamIndex) =>
+        startPlaybackSession(
+          mediaId,
+          thePhonesProfile(),
+          clientId,
+          Math.floor(asking.from),
+          audioStreamIndex,
+          asking.requestedQuality,
+          asking.subtitleStreamIndex,
+        ),
+      )
+      .then((outcome) => {
+        if (outcome.kind === 'failed') {
+          setRefusal(outcome.reason);
 
-      if (leftAlready) {
-        void stopPlaybackSession(started, clientId);
-
-        return;
-      }
-
-      const uri = onThisServer(
-        outcome.session.delivery.kind === 'direct'
-          ? outcome.session.delivery.url
-          : outcome.session.delivery.manifestUrl,
-      );
-      const wasStarted = started;
-
-      void theCookiesThisPhoneHolds(uri).then((cookie) => {
-        if (leftAlready) {
           return;
         }
 
-        setSeekTo(asking.from);
-        setSessionId(wasStarted);
-        const artwork = onThisServer(artworkUrl(mediaId, 'poster'));
-        const told = {
-          uri,
-          metadata: named.current === undefined ? { artwork } : { title: named.current, artwork },
-        };
+        started = outcome.session.sessionId;
+        setSession(outcome.session);
+        setSentAudio(outcome.session.plan.audio.streamIndex);
 
-        setSource(cookie === null ? told : { ...told, headers: { Cookie: cookie } });
+        if (leftAlready) {
+          void stopPlaybackSession(started, clientId);
+
+          return;
+        }
+
+        const uri = onThisServer(
+          outcome.session.delivery.kind === 'direct'
+            ? outcome.session.delivery.url
+            : outcome.session.delivery.manifestUrl,
+        );
+        const wasStarted = started;
+
+        void theCookiesThisPhoneHolds(uri).then((cookie) => {
+          if (leftAlready) {
+            return;
+          }
+
+          setSeekTo(asking.from);
+          setSessionId(wasStarted);
+          const artwork = onThisServer(artworkUrl(mediaId, 'poster'));
+          const told = {
+            uri,
+            metadata: named.current === undefined ? { artwork } : { title: named.current, artwork },
+          };
+
+          setSource(cookie === null ? told : { ...told, headers: { Cookie: cookie } });
+        });
       });
-    });
 
     return () => {
       leftAlready = true;
@@ -414,7 +465,7 @@ const Watching = ({
 
       letGo();
     };
-  }, [mediaId, asking, clientId, isKept]);
+  }, [mediaId, asking, clientId, isKept, cache]);
 
   const player = useVideoPlayer(source, (ready) => {
     ready.timeUpdateEventInterval = HOW_OFTEN_IT_SAYS_WHERE_IT_IS;
@@ -541,6 +592,9 @@ const Watching = ({
       const wanted = (tracks.data ?? []).find((track) => track.id === trackId) ?? null;
 
       setReading(trackId);
+      saveSubtitleLanguage(
+        trackId === SUBTITLES_OFF ? SUBTITLES_OFF : (wanted?.language ?? SUBTITLES_OFF),
+      );
 
       const burning = wanted?.delivery === 'burnIn' ? (wanted.streamIndex ?? undefined) : undefined;
 
@@ -754,6 +808,14 @@ const Watching = ({
         chosenAudio: asking.audioStreamIndex ?? sentAudio,
         chosenQuality: asking.requestedQuality ?? 'auto',
         onAudio: (audioStreamIndex) => {
+          const heard = title.data?.audioStreams.find(
+            (stream) => stream.index === audioStreamIndex,
+          );
+
+          if (heard?.language !== undefined && heard.language !== null) {
+            saveAudioLanguage(heard.language);
+          }
+
           askAgain({ audioStreamIndex });
         },
         onQuality: (requestedQuality) => {
