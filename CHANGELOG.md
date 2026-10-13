@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.6.0](https://github.com/ValenceOSS/Valence/compare/v1.5.0...v1.6.0) (2026-10-13)
+
+
+### Added
+
+* hdr tone mapped in the browser matches the server's, with an hdr brightness slider ([#607](https://github.com/ValenceOSS/Valence/issues/607)) ([8785fb9](https://github.com/ValenceOSS/Valence/commit/8785fb95317ca8ecae59568b8abb895ac2e28fea))
+* **mobile:** a redesigned player with stats for nerds, and the web's live TV, discover, requests and calendar on the phone ([#603](https://github.com/ValenceOSS/Valence/issues/603)) ([80ae7e1](https://github.com/ValenceOSS/Valence/commit/80ae7e18b3cb464cb2455d367bcb4372ab893497))
+* **mobile:** web parity on the player, the splash screen and cards, and Blu-ray subtitles read as text ([#609](https://github.com/ValenceOSS/Valence/issues/609)) ([0213364](https://github.com/ValenceOSS/Valence/commit/0213364732391cda3c6ac0522667284ed51707a0))
+* safari on an iphone offers the valence app through apple's app store banner ([#608](https://github.com/ValenceOSS/Valence/issues/608)) ([5f19833](https://github.com/ValenceOSS/Valence/commit/5f19833fa0c2e3fa9bcd814c347fc04db63db253))
+
+
+### Fixed
+
+* **server:** the web app drew a blank page, as adding the app store banner cut it short ([8f2fc92](https://github.com/ValenceOSS/Valence/commit/8f2fc92c30dd1b59222241659ba31267aed2ae9f))
+* the browser player and WebAssembly behind a content security policy, with docs ([#602](https://github.com/ValenceOSS/Valence/issues/602)) ([8949986](https://github.com/ValenceOSS/Valence/commit/89499868c5f92cb3a363a432a578a0ff3336012a))
+* **web:** hdr hevc gets valence's tone mapping on nvidia, and stats for nerds says why it wasn't used ([#605](https://github.com/ValenceOSS/Valence/issues/605)) ([65486b0](https://github.com/ValenceOSS/Valence/commit/65486b063ff73c44378fbd497e7445e67bc560df))
+
 ## [1.5.0](https://github.com/ValenceOSS/Valence/compare/v1.4.0...v1.5.0) (2026-10-11)
 
 
