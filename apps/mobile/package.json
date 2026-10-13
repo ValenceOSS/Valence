@@ -21,6 +21,7 @@
     "@valence/core": "workspace:*",
     "@valence/i18n": "workspace:*",
     "expo": "58.0.0-preview.7",
+    "expo-brightness": "58.0.2",
     "expo-build-properties": "58.0.7",
     "expo-crypto": "58.0.2",
     "expo-device": "58.0.2",

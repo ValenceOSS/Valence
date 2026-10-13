@@ -18,8 +18,6 @@ import { rememberWatchedOffline, watchedOffline } from '@ValenceClient/offline/w
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { holdWatching } from '@ValenceClient/playback/holdWatching';
 import { onPresenceEvent } from '@ValenceClient/presence/presenceEvents';
-import { nameSeason } from '@ValenceClient/library/nameSeason';
-import { howLongItRuns } from '@ValenceMobile/components/ATitle/howLongItRuns';
 import { fetchTrickplay } from '@ValenceClient/playback/fetchTrickplay';
 import { setThePace } from '@ValenceMobile/playback/setThePace';
 import {
@@ -54,6 +52,23 @@ import { useCaptionStyle } from '@ValenceClient/playback/useCaptionStyle';
 import { howBigToDrawIt } from '@ValenceMobile/components/Watching/howBigToDrawIt';
 import { usePinchToFill } from '@ValenceMobile/components/Watching/usePinchToFill';
 import { theChoicesOn } from '@ValenceMobile/components/Watching/theChoicesOn';
+import { TheAudioAndSubtitles } from '@ValenceMobile/components/Watching/components/TheAudioAndSubtitles/TheAudioAndSubtitles';
+import { TheSpeed } from '@ValenceMobile/components/Watching/components/TheSpeed/TheSpeed';
+import { TheEpisodes } from '@ValenceMobile/components/Watching/components/TheEpisodes/TheEpisodes';
+import { TheStats } from '@ValenceMobile/components/Watching/components/TheStats/TheStats';
+import { TheUnlock } from '@ValenceMobile/components/Watching/components/TheUnlock/TheUnlock';
+import { APlayerPanel } from '@ValenceMobile/components/Watching/components/APlayerPanel/APlayerPanel';
+import { APlayerList } from '@ValenceMobile/components/Watching/components/APlayerList/APlayerList';
+import { describeStreamStats } from '@ValenceClient/playback/describeStreamStats';
+import {
+  readQualityPreference,
+  saveQualityPreference,
+} from '@ValenceClient/playback/qualityPreference';
+import { useRate } from '@ValenceClient/library/useRate';
+import { useStars } from '@ValenceClient/library/useStars';
+import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
+import { originalLabel } from '@ValenceCore/functions/originalLabel';
+import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
 import { APartyPanel } from '@ValenceMobile/components/APartyPanel/APartyPanel';
 import { roomPlayerOfExpo } from '@ValenceNative/party/roomPlayerOfExpo';
 import { useFollowTheRoom } from '@ValenceClient/party/useFollowTheRoom';
@@ -63,7 +78,8 @@ import type { WatchingProps } from './Watching.types';
 import type { VideoSource, VideoView as VideoViewRef } from 'expo-video';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
 import type { MediaSegment } from '@ValenceClient/playback/fetchSegments';
-import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
+import type { StartedSession } from '@ValenceClient/playback/startPlaybackSession';
+import type { StreamReading } from '@ValenceClient/playback/describeStreamStats';
 import { say } from '@ValenceI18n/say';
 
 const SAY_IT_IS_ALIVE_EVERY = 30_000;
@@ -87,6 +103,21 @@ const NO_SEASONS: NonNullable<WatchingProps['seasons']> = [];
 const NO_SEGMENTS: MediaSegment[] = [];
 
 const SAID_FOR = 4000;
+
+const READ_THE_STATS_EVERY = 1000;
+
+const NOTHING_READ: StreamReading = {
+  positionSeconds: 0,
+  bufferedSeconds: 0,
+  width: null,
+  height: null,
+  mimeType: null,
+  bitrate: null,
+  frameRate: null,
+  range: null,
+};
+
+type APanel = 'audio' | 'speed' | 'quality' | 'style' | 'episodes' | 'stats' | 'party';
 
 /**
  * Nothing, for a player that cannot refuse to start the way a browser can.
@@ -222,9 +253,15 @@ const Watching = ({
   const [screen, setScreen] = useState({ width: 0, height: 0 });
   const [howBig] = useState(() => new Animated.Value(1));
   const [lastTouched, setLastTouched] = useState(0);
-  const [isChoosing, setIsChoosing] = useState(false);
-  const [isPickingAnEpisode, setIsPickingAnEpisode] = useState(false);
-  const [isPartying, setIsPartying] = useState(false);
+  const [panel, setPanel] = useState<APanel | null>(null);
+  const [isLocked, setIsLocked] = useState(false);
+  const [session, setSession] = useState<StartedSession | null>(null);
+  const [streamReading, setStreamReading] = useState<StreamReading>(NOTHING_READ);
+  const isChoosing = panel !== null && panel !== 'party';
+  const isPartying = panel === 'party';
+  const watcher = useWatchingProfile();
+  const given = useStars(watcher, { mediaId });
+  const rateIt = useRate(watcher);
   const [heard, setHeard] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const isKept = kept !== undefined;
@@ -256,6 +293,7 @@ const Watching = ({
         ? startSeconds
         : (watchedOffline().find((one) => one.mediaId === mediaId)?.positionSeconds ??
           startSeconds),
+    requestedQuality: kept === undefined ? readQualityPreference() : 'original',
   }));
   const clientId = platformInUse().thisClientId();
   const title = useQuery({ ...libraryQueries.detail(mediaId), enabled: !isKept });
@@ -328,6 +366,7 @@ const Watching = ({
       }
 
       started = outcome.session.sessionId;
+      setSession(outcome.session);
       setSentAudio(outcome.session.plan.audio.streamIndex);
 
       if (leftAlready) {
@@ -495,7 +534,6 @@ const Watching = ({
       const wanted = (tracks.data ?? []).find((track) => track.id === trackId) ?? null;
 
       setReading(trackId);
-      setIsChoosing(false);
 
       const burning = wanted?.delivery === 'burnIn' ? (wanted.streamIndex ?? undefined) : undefined;
 
@@ -514,7 +552,7 @@ const Watching = ({
 
   const askAgain = useCallback(
     (changed: { audioStreamIndex?: number; requestedQuality?: QualityPreference }) => {
-      setIsChoosing(false);
+      setPanel(null);
       setAsking((asked) => ({ ...asked, ...changed, from: player.currentTime }));
     },
     [player],
@@ -669,35 +707,33 @@ const Watching = ({
     [player, onDone],
   );
 
-  const stopPickingAnEpisode = useCallback(() => {
-    setIsPickingAnEpisode(false);
-  }, []);
+  useEffect(() => {
+    if (panel !== 'stats') {
+      return undefined;
+    }
 
-  const episodes = useMemo(
-    () =>
-      onChooseEpisode === undefined
-        ? []
-        : seasons.map((season) => ({
-            heading: nameSeason(season.seasonNumber),
-            chosen: mediaId,
-            choices: season.episodes.map((episode) => ({
-              id: episode.id,
-              label:
-                episode.episodeNumber === null || episode.episodeNumber === undefined
-                  ? episode.title
-                  : `${describeEpisodeNumbers(episode.episodeNumber, episode.episodeNumberEnd)}. ${episode.title}`,
-              detail: howLongItRuns(episode.durationSeconds),
-            })),
-            onChoose: (id: string) => {
-              setIsPickingAnEpisode(false);
+    const read = () => {
+      const track = player.videoTrack;
 
-              if (id !== mediaId) {
-                onChooseEpisode(id);
-              }
-            },
-          })),
-    [seasons, mediaId, onChooseEpisode],
-  );
+      setStreamReading({
+        positionSeconds: player.currentTime,
+        bufferedSeconds: player.bufferedPosition,
+        width: track?.size.width ?? null,
+        height: track?.size.height ?? null,
+        mimeType: track?.mimeType ?? null,
+        bitrate: track?.bitrate ?? track?.averageBitrate ?? null,
+        frameRate: track?.frameRate ?? null,
+        range: track?.videoRange ?? null,
+      });
+    };
+
+    read();
+    const again = setInterval(read, READ_THE_STATS_EVERY);
+
+    return () => {
+      clearInterval(again);
+    };
+  }, [panel, player]);
 
   const settings = useMemo(
     () =>
@@ -709,17 +745,14 @@ const Watching = ({
         media: isKept ? null : (title.data ?? null),
         profile: thePhonesProfile(),
         chosenAudio: asking.audioStreamIndex ?? sentAudio,
-        chosenQuality: asking.requestedQuality ?? 'original',
+        chosenQuality: asking.requestedQuality ?? 'auto',
         onAudio: (audioStreamIndex) => {
           askAgain({ audioStreamIndex });
         },
         onQuality: (requestedQuality) => {
+          saveQualityPreference(requestedQuality);
           askAgain({ requestedQuality });
         },
-        rate,
-        onRate: setRate,
-        subtitleOffset,
-        onSubtitleOffset: setSubtitleOffset,
         captionStyle: captions.style,
         onCaptionStyle: captions.change,
       }),
@@ -733,18 +766,25 @@ const Watching = ({
       sentAudio,
       asking.requestedQuality,
       askAgain,
-      rate,
-      subtitleOffset,
       captions.style,
       captions.change,
     ],
   );
 
   const stopChoosing = useCallback(() => {
-    setIsChoosing(false);
+    setPanel(null);
     keepThemUp();
   }, [keepThemUp]);
 
+  const chosenQuality = asking.requestedQuality ?? 'auto';
+  const qualityLabel =
+    chosenQuality === 'auto'
+      ? say('common.auto')
+      : chosenQuality === 'original'
+        ? title.data === undefined || title.data === null
+          ? say('common.original')
+          : originalLabel(title.data)
+        : (QUALITY_STEPS.find((step) => step.id === chosenQuality)?.label ?? chosenQuality);
   if (refusal !== null) {
     return (
       <Screen centres onBack={onDone}>
@@ -785,7 +825,7 @@ const Watching = ({
         tone="bare"
         fills
         label={areControlsUp ? say('common.hideTheControls') : say('common.showTheControls')}
-        onPress={tapped}
+        onPress={isLocked ? toggleTheControls : tapped}
       />
 
       {notice === null ? null : (
@@ -813,17 +853,13 @@ const Watching = ({
         cues={cues}
         subtitleOffset={subtitleOffset}
         captionStyle={captions.style}
-        areControlsDrawn={areControlsDrawn}
+        areControlsDrawn={areControlsDrawn && !isLocked && panel === null}
         onMoveTo={(seconds) => {
           keepThemUp();
           moveTo(seconds);
         }}
         next={
-          following === null ||
-          onChooseEpisode === undefined ||
-          isChoosing ||
-          isPickingAnEpisode ||
-          isPartying
+          following === null || onChooseEpisode === undefined || panel !== null
             ? null
             : {
                 isCounting: willCarryOn && !isHeldAtTheEnd,
@@ -870,31 +906,146 @@ const Watching = ({
           },
           onTouched: keepThemUp,
           onClose: onDone,
-          onSettings: () => {
-            setIsChoosing(true);
+          rate,
+          qualityLabel,
+          rating: isKept
+            ? undefined
+            : {
+                given,
+                onRate: (stars) => {
+                  keepThemUp();
+                  rateIt({ mediaId }, stars);
+                },
+              },
+          onLock: () => {
+            setIsLocked(true);
+            setAreControlsUp(false);
+          },
+          onPictureInPicture: () => {
+            void picture.current?.startPictureInPicture().catch(() => undefined);
+          },
+          onSpeed: () => {
+            setPanel('speed');
+          },
+          onAudioAndSubtitles: () => {
+            setPanel('audio');
+          },
+          onQuality:
+            settings.quality === null
+              ? undefined
+              : () => {
+                  setPanel('quality');
+                },
+          onStats: () => {
+            setPanel('stats');
           },
           onEpisodes:
             onChooseEpisode === undefined || seasons.length === 0
               ? undefined
               : () => {
-                  setIsPickingAnEpisode(true);
+                  setPanel('episodes');
+                },
+          onNext:
+            following === null || onChooseEpisode === undefined
+              ? undefined
+              : () => {
+                  if (player.duration > 0) {
+                    whereTheyGotTo.current = {
+                      positionSeconds: player.currentTime,
+                      durationSeconds: player.duration,
+                    };
+                  }
+
+                  onChooseEpisode(following.id);
                 },
           onParty:
             isKept || watchParty === undefined
               ? undefined
               : () => {
-                  setIsPartying(true);
+                  setPanel('party');
                 },
         }}
       />
 
-      {leap === null ? null : <TheLeap leap={leap} />}
-
-      {isPickingAnEpisode && onChooseEpisode !== undefined ? (
-        <TheChoices sets={episodes} onClose={stopPickingAnEpisode} />
+      {isLocked && areControlsDrawn ? (
+        <TheUnlock
+          onUnlock={() => {
+            setIsLocked(false);
+            keepThemUp();
+          }}
+        />
       ) : null}
 
-      {isChoosing ? <TheChoices sets={settings} onClose={stopChoosing} /> : null}
+      {leap === null ? null : <TheLeap leap={leap} />}
+
+      {panel === 'episodes' && onChooseEpisode !== undefined ? (
+        <TheEpisodes
+          seasons={seasons}
+          playing={mediaId}
+          onChoose={(id) => {
+            setPanel(null);
+
+            if (id !== mediaId) {
+              onChooseEpisode(id);
+            }
+          }}
+          onClose={stopChoosing}
+        />
+      ) : null}
+
+      {panel === 'audio' ? (
+        <TheAudioAndSubtitles
+          audio={settings.audio}
+          subtitles={settings.subtitles}
+          timing={
+            reading === SUBTITLES_OFF
+              ? null
+              : { offset: subtitleOffset, onChange: setSubtitleOffset }
+          }
+          onStyle={
+            settings.captions.length === 0
+              ? undefined
+              : () => {
+                  setPanel('style');
+                }
+          }
+          onClose={stopChoosing}
+        />
+      ) : null}
+
+      {panel === 'style' ? <TheChoices sets={settings.captions} onClose={stopChoosing} /> : null}
+
+      {panel === 'speed' ? (
+        <TheSpeed
+          rate={rate}
+          onRate={(chosen) => {
+            setRate(chosen);
+            setPanel(null);
+          }}
+          onClose={stopChoosing}
+        />
+      ) : null}
+
+      {panel === 'quality' && settings.quality !== null ? (
+        <APlayerPanel label={say('phone.watching.closeTheQuality')} onClose={stopChoosing}>
+          <APlayerList set={settings.quality} />
+        </APlayerPanel>
+      ) : null}
+
+      {panel === 'stats' ? (
+        <TheStats
+          groups={describeStreamStats({
+            title: called?.name ?? '',
+            mediaId,
+            detail: isKept ? null : (title.data ?? null),
+            session,
+            sessionStartSeconds: asking.from,
+            quality: chosenQuality,
+            reading: streamReading,
+          })}
+          onClose={stopChoosing}
+        />
+      ) : null}
 
       {watchParty !== undefined && !isKept && (isPartying || watchParty.passwordWanted !== null) ? (
         <APartyPanel
@@ -907,7 +1058,7 @@ const Watching = ({
               watchParty.stopAsking();
             }
 
-            setIsPartying(false);
+            setPanel(null);
             keepThemUp();
           }}
         />

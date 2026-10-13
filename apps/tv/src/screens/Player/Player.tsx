@@ -56,7 +56,7 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import { useAskableAlong } from '@ValenceClient/party/useAskableAlong';
 import type { HWEvent } from 'react-native';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
-import type { StreamReading } from '@ValenceTv/screens/Player/components/StreamStats/StreamStats.types';
+import type { StreamReading } from '@ValenceClient/playback/describeStreamStats';
 import type { PlayerProps } from './Player.types';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 import { placeOfEpisode } from '@ValenceTv/library/placeOfEpisode';

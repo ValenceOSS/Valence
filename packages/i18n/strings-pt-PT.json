@@ -10285,9 +10285,99 @@
     "context": "The label of a button in the way in of the phone app."
   },
   {
+    "handler": "phone.watching.audioAndSubtitles",
+    "text": "Audio & Subtitles",
+    "context": "The button along the foot of the phone's video player that opens the audio and subtitle choices."
+  },
+  {
+    "handler": "phone.watching.brightness",
+    "text": "Brightness",
+    "context": "The slider up the side of the phone's video player that sets the screen's brightness."
+  },
+  {
+    "handler": "phone.watching.closeAudioAndSubtitles",
+    "text": "Close audio and subtitles",
+    "context": "The button that closes the audio and subtitles panel in the phone's video player."
+  },
+  {
+    "handler": "phone.watching.closeTheEpisodes",
+    "text": "Close the episodes",
+    "context": "The button that closes the episodes panel in the phone's video player."
+  },
+  {
+    "handler": "phone.watching.closeTheQuality",
+    "text": "Close the quality",
+    "context": "The button that closes the quality panel in the phone's video player."
+  },
+  {
+    "handler": "phone.watching.closeTheSpeed",
+    "text": "Close the speed",
+    "context": "The button that closes the speed panel in the phone's video player."
+  },
+  {
+    "handler": "phone.watching.closeTheStats",
+    "text": "Close stats for nerds",
+    "context": "The button that closes stats for nerds in the phone's video player."
+  },
+  {
+    "handler": "phone.watching.iLikeThis",
+    "text": "I like this",
+    "context": "The thumbs-up rating button at the top of the phone's video player. It gives four stars."
+  },
+  {
+    "handler": "phone.watching.lockTheControls",
+    "text": "Lock the controls",
+    "context": "The button in the phone's video player that locks its controls so a stray touch does nothing."
+  },
+  {
+    "handler": "phone.watching.loveThis",
+    "text": "Love this!",
+    "context": "The heart rating button at the top of the phone's video player. It gives five stars."
+  },
+  {
+    "handler": "phone.watching.normalSpeed",
+    "text": "1x (Normal)",
+    "context": "The normal speed stop in the speed panel of the phone's video player."
+  },
+  {
+    "handler": "phone.watching.noSubtitlesForThis",
+    "text": "There are no subtitles for this.",
+    "context": "Under Subtitles in the phone's video player when the file has none."
+  },
+  {
+    "handler": "phone.watching.notForMe",
+    "text": "Not for me",
+    "context": "The thumbs-down rating button at the top of the phone's video player. It gives one star."
+  },
+  {
     "handler": "phone.watching.playbackWasStopped",
     "text": "Playback was stopped",
     "context": "A message in an alert in the watching of the phone app."
+  },
+  {
+    "handler": "phone.watching.playingNow",
+    "text": "Playing now",
+    "context": "Over the still of the episode that is playing, in the episodes panel of the phone's video player."
+  },
+  {
+    "handler": "phone.watching.qualityNow",
+    "text": "Quality ({quality})",
+    "context": "The button along the foot of the phone's video player that opens the quality choices. {quality} is the quality playing, such as Auto or 1080p."
+  },
+  {
+    "handler": "phone.watching.speedNow",
+    "text": "Speed ({rate})",
+    "context": "The button along the foot of the phone's video player that opens the speed choices. {rate} is the speed playing, such as 1x."
+  },
+  {
+    "handler": "phone.watching.subtitlesEarlier",
+    "text": "Show the subtitles earlier",
+    "context": "The minus button beside subtitle timing in the phone's video player."
+  },
+  {
+    "handler": "phone.watching.subtitlesLater",
+    "text": "Show the subtitles later",
+    "context": "The plus button beside subtitle timing in the phone's video player."
   },
   {
     "handler": "phone.watching.theChoices.closeTheSettings",
@@ -10298,6 +10388,11 @@
     "handler": "phone.watching.theChoicesOn.asItIsOnTheServer",
     "text": "Original quality",
     "context": "The detail in the watching of the phone app (from `theChoicesOn`)."
+  },
+  {
+    "handler": "phone.watching.theChoicesOn.movesWithYourConnection",
+    "text": "Moves with your connection",
+    "context": "Beside Auto in the quality choices of the phone's video player: the phone moves between the copies the server keeps as the connection allows."
   },
   {
     "handler": "phone.watching.theControls.backASTEPSeconds",
@@ -10318,6 +10413,16 @@
     "handler": "phone.watching.theControls.subtitlesAudioAndQuality",
     "text": "Subtitles, audio and quality",
     "context": "The label of a button in the controls in the watching of the phone app."
+  },
+  {
+    "handler": "phone.watching.theOneSoundtrack",
+    "text": "This has one soundtrack.",
+    "context": "Under Audio in the phone's video player when the file has only one soundtrack to choose."
+  },
+  {
+    "handler": "phone.watching.unlockTheControls",
+    "text": "Unlock the controls",
+    "context": "The one button drawn while the phone's video player's controls are locked."
   },
   {
     "handler": "phone.whereIsYourValence.aServerChoice.useName",

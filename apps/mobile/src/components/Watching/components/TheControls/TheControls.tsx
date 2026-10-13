@@ -1,13 +1,18 @@
 import {
+  Activity,
+  Gauge,
+  Layers,
   ListVideo,
-  Pause,
-  Play,
+  Lock,
+  MessageSquareLines,
+  PictureInPicture,
   RotateCcw,
   RotateCw,
-  Settings,
+  SkipForward,
   Users,
   X,
-} from '@keyline-icons/react-native/fill';
+} from '@keyline-icons/react-native';
+import { Pause, Play } from '@keyline-icons/react-native/fill';
 import { useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,68 +21,87 @@ import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { TheFrameAt } from '@ValenceMobile/components/Watching/components/TheFrameAt/TheFrameAt';
 import { Slider } from '@ValenceMobile/components/Slider/Slider';
 import { asAClock } from '@ValenceMobile/components/Watching/asAClock';
-import { FONTS } from '@ValenceMobile/theme/FONTS';
 import { AirPlayButton } from '@ValenceMobile/components/AirPlayButton/AirPlayButton';
+import { ABrightness } from '@ValenceMobile/components/Watching/components/ABrightness/ABrightness';
+import { APlayerAction } from '@ValenceMobile/components/Watching/components/APlayerAction/APlayerAction';
+import { TheRating } from '@ValenceMobile/components/Watching/components/TheRating/TheRating';
+import { PLAYER_LOOK } from '@ValenceMobile/components/Watching/PLAYER_LOOK';
+import { describePlaybackRate } from '@ValenceClient/playback/describePlaybackRate';
+import { FONTS } from '@ValenceMobile/theme/FONTS';
 import type { TheControlsProps } from './TheControls.types';
 import { say } from '@ValenceI18n/say';
 
-const OVER_THE_PICTURE = '#ffffff';
-
-const SCRIM = 'rgba(0, 0, 0, 0.45)';
-
-const THE_REST = 'rgba(255, 255, 255, 0.3)';
-
-const ARRIVED = 'rgba(255, 255, 255, 0.5)';
-
-const QUIETLY = 'rgba(255, 255, 255, 0.65)';
-
 const A_STEP = 10;
-
-const EDGE = 24;
 
 const FRAME_WIDE = 224;
 
+const { colours, edge } = PLAYER_LOOK;
+
 const styles = StyleSheet.create({
+  actions: { alignItems: 'center', flexDirection: 'row', gap: 4, justifyContent: 'center' },
+  brightness: { bottom: 0, justifyContent: 'center', position: 'absolute', top: 0 },
   clock: {
-    color: OVER_THE_PICTURE,
+    color: colours.text,
     fontFamily: FONTS.sans.semibold,
-    fontSize: 13,
+    fontSize: 15,
     fontVariant: ['tabular-nums'],
+    minWidth: 64,
+    textAlign: 'right',
   },
-  foot: { gap: 2, paddingHorizontal: EDGE },
+  foot: { gap: 2 },
   frameAt: { alignItems: 'center', bottom: '100%', gap: 4, marginBottom: 8, position: 'absolute' },
   frameClock: {
-    color: '#ffffff',
+    color: colours.text,
+    fontFamily: FONTS.sans.semibold,
     fontSize: 13,
     fontVariant: ['tabular-nums'],
-    fontFamily: FONTS.sans.semibold,
   },
-  head: { alignItems: 'center', flexDirection: 'row', gap: 14 },
+  head: { alignItems: 'center', flexDirection: 'row', gap: 12 },
+  headEnd: {
+    alignItems: 'center',
+    flex: 1,
+    flexDirection: 'row',
+    gap: 0,
+    justifyContent: 'flex-end',
+  },
+  icon: { padding: 9 },
+  line: { alignItems: 'center', flexDirection: 'row', gap: 14 },
   middle: {
     alignItems: 'center',
     bottom: 0,
     flexDirection: 'row',
-    gap: 56,
     justifyContent: 'center',
     left: 0,
     position: 'absolute',
     right: 0,
     top: 0,
   },
-  reach: { padding: 14 },
+  middleRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '62%',
+  },
+  reach: { padding: 16 },
+  said: {
+    alignItems: 'baseline',
+    flex: 1,
+    flexDirection: 'row',
+    gap: 8,
+    minWidth: 0,
+    overflow: 'hidden',
+  },
+  slider: { flex: 1 },
   step: { alignItems: 'center', justifyContent: 'center' },
   stepHowFar: {
-    color: OVER_THE_PICTURE,
-    fontSize: 9,
+    color: colours.text,
     fontFamily: FONTS.sans.bold,
+    fontSize: 13,
     position: 'absolute',
   },
-  times: { flexDirection: 'row', justifyContent: 'space-between' },
-  said: { alignItems: 'baseline', flex: 1, flexDirection: 'row', gap: 7 },
-  title: { color: OVER_THE_PICTURE, fontSize: 15, fontFamily: FONTS.sans.semibold },
-  year: { color: QUIETLY, fontFamily: FONTS.sans.semibold, fontSize: 13 },
+  title: { color: colours.text, flexShrink: 1, fontFamily: FONTS.sans.bold, fontSize: 18 },
   whole: {
-    backgroundColor: SCRIM,
+    backgroundColor: colours.scrim,
     bottom: 0,
     justifyContent: 'space-between',
     left: 0,
@@ -85,35 +109,25 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
   },
+  year: { color: colours.quiet, fontFamily: FONTS.sans.semibold, fontSize: 14 },
 });
 
 /**
- * Everything a viewer can reach while a film is playing, and nothing else.
+ * Everything a viewer reaches for while a film plays, laid out the way the big streaming players
+ * have taught everybody to expect.
  *
- * Three rows and one way out to more: the way out is the whole idea. A player that puts its
- * settings on the picture becomes a settings panel with a film behind it, and there is no shortage
- * of those. What is here is what somebody reaches for without thinking — stop it, go back a bit,
- * find a moment — and everything they would have to think about first lives behind one button.
+ * Along the top: what is playing, the three ways of saying whether it was any good, and the things
+ * done to the player itself — the watch party, the stats for nerds, AirPlay, locking the controls,
+ * picture in picture and leaving. Down the left side, the screen's brightness. In the middle, ten
+ * seconds back, play or pause, and ten seconds on, spread across the picture so a thumb on either
+ * side reaches its own. Along the foot, the line through the film with how long is left, and under
+ * it, by name, everything that opens a panel of its own: the speed, the episodes, the sound and the
+ * subtitles, the quality, and the next episode.
  *
  * It is drawn white on a scrim rather than in the theme, because what it sits on is a film and not
- * a page, and a light theme over a dark scene is unreadable either way round.
- *
- * Nothing but the controls themselves takes a touch, so a tap on the picture reaches what is
- * behind this and puts it away — which is what a tap on a playing film means everywhere else.
- *
- * It fades rather than appearing. Controls that snap on over a moving picture read as a fault in
- * the picture, and ones that snap off take a moment of the film with them.
- *
- * The middle row is centred on the screen rather than between the other two, because those two are
- * different heights and centring between them puts the play button above the middle of the film.
- *
- * Each of the three reaches further than it is drawn. A thumb on a phone held sideways is nowhere
- * near as precise as a cursor, and a control that has to be aimed at is one somebody misses.
- *
- * Only the top row is held off the cutout. Sideways, the cutout is a band down the middle of one
- * long edge and nothing else: holding everything off it would indent the scrubber by an inch for
- * the sake of something it never reaches, which is how a phone with a screen this size ends up
- * drawing a picture the size of an older one's.
+ * a page. Nothing but the controls themselves takes a touch, so a tap on the picture reaches what is
+ * behind and puts them away. It fades rather than appearing, and the middle row is centred on the
+ * screen rather than between the other two, which are different heights.
  *
  * @param fade - How far in or out it is, which whoever decides it is showing keeps hold of.
  * @param title - What is playing.
@@ -123,13 +137,22 @@ const styles = StyleSheet.create({
  * @param runsFor - How long it runs.
  * @param buffered - How much of it has arrived.
  * @param trickplay - The film's thumbnails, to show the moment being scrubbed to, where it has any.
+ * @param rate - How fast it is playing.
+ * @param qualityLabel - What quality is playing, to say beside the button that changes it.
+ * @param rating - The stars they gave it and how to give some, where it can be rated.
  * @param onPlayPause - Told to stop or start it.
  * @param onSkip - Told to jump, in seconds, forwards or back.
  * @param onSeek - Told where they scrubbed to.
  * @param onTouched - Told they are still there, so this does not fade out from under them.
  * @param onClose - Told they are done watching.
- * @param onSettings - Told they want the rest of it.
+ * @param onLock - Told to lock the controls.
+ * @param onPictureInPicture - Told to carry the film on in a picture over everything else.
+ * @param onSpeed - Told they want to change the speed.
+ * @param onAudioAndSubtitles - Told they want the sound and subtitle choices.
+ * @param onQuality - Told they want the quality choices, where there are any.
+ * @param onStats - Told they want the stats for nerds.
  * @param onEpisodes - Told they want another episode, where this is one.
+ * @param onNext - Told they want the next episode now, where there is one.
  * @param onParty - Told they want the watch party, where one can be had.
  */
 const TheControls = ({
@@ -141,45 +164,42 @@ const TheControls = ({
   runsFor,
   buffered,
   trickplay,
+  rate,
+  qualityLabel,
+  rating,
   onPlayPause,
   onSkip,
   onSeek,
   onTouched,
   onClose,
-  onSettings,
+  onLock,
+  onPictureInPicture,
+  onSpeed,
+  onAudioAndSubtitles,
+  onQuality,
+  onStats,
   onEpisodes,
+  onNext,
   onParty,
 }: TheControlsProps) => {
   const room = useSafeAreaInsets();
   const [scrubbingTo, setScrubbingTo] = useState<number | null>(null);
   const [lineWide, setLineWide] = useState(0);
+  const left = Math.max(room.left, edge);
+  const right = Math.max(room.right, edge);
 
   return (
     <Animated.View
       pointerEvents="box-none"
       style={[
         styles.whole,
-        { opacity: fade, paddingBottom: room.bottom + 12, paddingTop: room.top + 12 },
+        { opacity: fade, paddingBottom: room.bottom + 14, paddingTop: Math.max(room.top, 14) },
       ]}
     >
       <View
         pointerEvents="box-none"
-        style={[
-          styles.head,
-          {
-            paddingLeft: Math.max(room.left, EDGE),
-            paddingRight: Math.max(room.right, EDGE),
-          },
-        ]}
+        style={[styles.head, { paddingLeft: left, paddingRight: right }]}
       >
-        <Button
-          tone="bare"
-          label={say('phone.watching.theControls.stopWatching')}
-          onPress={onClose}
-        >
-          <Icon of={X} size={26} colour={OVER_THE_PICTURE} />
-        </Button>
-
         <View style={styles.said}>
           <Text style={styles.title} numberOfLines={1}>
             {title}
@@ -188,117 +208,183 @@ const TheControls = ({
           {year === null ? null : <Text style={styles.year}>{year}</Text>}
         </View>
 
-        {onEpisodes === undefined ? null : (
-          <Button tone="bare" label={say('common.episodes')} onPress={onEpisodes}>
-            <Icon of={ListVideo} size={26} colour={OVER_THE_PICTURE} />
+        {rating === undefined ? null : <TheRating given={rating.given} onRate={rating.onRate} />}
+
+        <View style={styles.headEnd} pointerEvents="box-none">
+          {onParty === undefined ? null : (
+            <Button tone="bare" label={say('common.partyMenu.watchParty')} onPress={onParty}>
+              <View style={styles.icon}>
+                <Icon of={Users} size={26} colour={colours.text} />
+              </View>
+            </Button>
+          )}
+
+          <Button tone="bare" label={say('common.statsForNerds')} onPress={onStats}>
+            <View style={styles.icon}>
+              <Icon of={Activity} size={26} colour={colours.text} />
+            </View>
           </Button>
-        )}
 
-        {onParty === undefined ? null : (
-          <Button tone="bare" label={say('common.partyMenu.watchParty')} onPress={onParty}>
-            <Icon of={Users} size={26} colour={OVER_THE_PICTURE} />
+          <View style={styles.icon}>
+            <AirPlayButton isOverPicture />
+          </View>
+
+          <Button tone="bare" label={say('phone.watching.lockTheControls')} onPress={onLock}>
+            <View style={styles.icon}>
+              <Icon of={Lock} size={26} colour={colours.text} />
+            </View>
           </Button>
-        )}
 
-        <AirPlayButton isOverPicture />
+          <Button
+            tone="bare"
+            label={say('screens.videoPlayer.playerControls.popOut')}
+            onPress={onPictureInPicture}
+          >
+            <View style={styles.icon}>
+              <Icon of={PictureInPicture} size={26} colour={colours.text} />
+            </View>
+          </Button>
 
-        <Button
-          tone="bare"
-          label={say('phone.watching.theControls.subtitlesAudioAndQuality')}
-          onPress={onSettings}
-        >
-          <Icon of={Settings} size={26} colour={OVER_THE_PICTURE} />
-        </Button>
+          <Button
+            tone="bare"
+            label={say('phone.watching.theControls.stopWatching')}
+            onPress={onClose}
+          >
+            <View style={styles.icon}>
+              <Icon of={X} size={30} colour={colours.text} />
+            </View>
+          </Button>
+        </View>
       </View>
 
       <View style={styles.middle} pointerEvents="box-none">
-        <Button
-          tone="bare"
-          label={say('phone.watching.theControls.backASTEPSeconds', { A_STEP: A_STEP.toString() })}
-          onPress={() => {
-            onSkip(-A_STEP);
-          }}
-        >
-          <View style={[styles.step, styles.reach]}>
-            <Icon of={RotateCcw} size={40} colour={OVER_THE_PICTURE} />
-            <Text style={styles.stepHowFar}>{A_STEP}</Text>
-          </View>
-        </Button>
+        <View style={styles.middleRow} pointerEvents="box-none">
+          <Button
+            tone="bare"
+            label={say('phone.watching.theControls.backASTEPSeconds', {
+              A_STEP: A_STEP.toString(),
+            })}
+            onPress={() => {
+              onSkip(-A_STEP);
+            }}
+          >
+            <View style={[styles.step, styles.reach]}>
+              <Icon of={RotateCcw} size={52} colour={colours.text} />
+              <Text style={styles.stepHowFar}>{A_STEP}</Text>
+            </View>
+          </Button>
 
-        <Button
-          tone="bare"
-          label={isPlaying ? say('common.pause') : say('common.play')}
-          onPress={onPlayPause}
-        >
-          <View style={styles.reach}>
-            <Icon of={isPlaying ? Pause : Play} size={62} colour={OVER_THE_PICTURE} />
-          </View>
-        </Button>
+          <Button
+            tone="bare"
+            label={isPlaying ? say('common.pause') : say('common.play')}
+            onPress={onPlayPause}
+          >
+            <View style={styles.reach}>
+              <Icon of={isPlaying ? Pause : Play} size={68} colour={colours.text} />
+            </View>
+          </Button>
 
-        <Button
-          tone="bare"
-          label={say('phone.watching.theControls.forwardASTEPSeconds', {
-            A_STEP: A_STEP.toString(),
-          })}
-          onPress={() => {
-            onSkip(A_STEP);
-          }}
-        >
-          <View style={[styles.step, styles.reach]}>
-            <Icon of={RotateCw} size={40} colour={OVER_THE_PICTURE} />
-            <Text style={styles.stepHowFar}>{A_STEP}</Text>
-          </View>
-        </Button>
+          <Button
+            tone="bare"
+            label={say('phone.watching.theControls.forwardASTEPSeconds', {
+              A_STEP: A_STEP.toString(),
+            })}
+            onPress={() => {
+              onSkip(A_STEP);
+            }}
+          >
+            <View style={[styles.step, styles.reach]}>
+              <Icon of={RotateCw} size={52} colour={colours.text} />
+              <Text style={styles.stepHowFar}>{A_STEP}</Text>
+            </View>
+          </Button>
+        </View>
+      </View>
+
+      <View style={[styles.brightness, { left: left - 8 }]} pointerEvents="box-none">
+        <ABrightness onTouched={onTouched} />
       </View>
 
       <View
-        style={styles.foot}
+        style={[styles.foot, { paddingLeft: left, paddingRight: right }]}
         pointerEvents="box-none"
-        onLayout={(event) => {
-          setLineWide(event.nativeEvent.layout.width - EDGE * 2);
-        }}
       >
-        {trickplay === null || scrubbingTo === null || runsFor <= 0 ? null : (
-          <View
-            style={[
-              styles.frameAt,
-              {
-                left:
-                  EDGE +
-                  Math.min(
+        <View
+          style={styles.line}
+          pointerEvents="box-none"
+          onLayout={(event) => {
+            setLineWide(event.nativeEvent.layout.width - 78);
+          }}
+        >
+          {trickplay === null || scrubbingTo === null || runsFor <= 0 ? null : (
+            <View
+              style={[
+                styles.frameAt,
+                {
+                  left: Math.min(
                     Math.max((scrubbingTo / runsFor) * lineWide - FRAME_WIDE / 2, 0),
                     Math.max(lineWide - FRAME_WIDE, 0),
                   ),
-              },
-            ]}
-            pointerEvents="none"
-          >
-            <TheFrameAt trickplay={trickplay} seconds={scrubbingTo} wide={FRAME_WIDE} />
-            <Text style={styles.frameClock}>{asAClock(scrubbingTo)}</Text>
+                },
+              ]}
+              pointerEvents="none"
+            >
+              <TheFrameAt trickplay={trickplay} seconds={scrubbingTo} wide={FRAME_WIDE} />
+              <Text style={styles.frameClock}>{asAClock(scrubbingTo)}</Text>
+            </View>
+          )}
+
+          <View style={styles.slider}>
+            <Slider
+              label={say('common.moveThroughTitle', { title })}
+              value={at}
+              furthest={runsFor}
+              buffered={buffered}
+              colour={colours.played}
+              restColour={colours.rest}
+              aheadColour={colours.ahead}
+              onScrubbing={(to) => {
+                setScrubbingTo(to);
+                onTouched();
+              }}
+              onScrubbed={(to) => {
+                setScrubbingTo(null);
+                onSeek(to);
+              }}
+            />
           </View>
-        )}
 
-        <Slider
-          label={say('common.moveThroughTitle', { title })}
-          value={at}
-          furthest={runsFor}
-          buffered={buffered}
-          colour={OVER_THE_PICTURE}
-          restColour={THE_REST}
-          aheadColour={ARRIVED}
-          onScrubbing={(to) => {
-            setScrubbingTo(to);
-            onTouched();
-          }}
-          onScrubbed={(to) => {
-            setScrubbingTo(null);
-            onSeek(to);
-          }}
-        />
+          <Text style={styles.clock}>{asAClock(Math.max(runsFor - (scrubbingTo ?? at), 0))}</Text>
+        </View>
 
-        <View style={styles.times}>
-          <Text style={styles.clock}>{asAClock(at)}</Text>
-          <Text style={styles.clock}>{`−${asAClock(Math.max(runsFor - at, 0))}`}</Text>
+        <View style={styles.actions} pointerEvents="box-none">
+          <APlayerAction
+            icon={Gauge}
+            label={say('phone.watching.speedNow', { rate: describePlaybackRate(rate) })}
+            onPress={onSpeed}
+          />
+
+          {onEpisodes === undefined ? null : (
+            <APlayerAction icon={ListVideo} label={say('common.episodes')} onPress={onEpisodes} />
+          )}
+
+          <APlayerAction
+            icon={MessageSquareLines}
+            label={say('phone.watching.audioAndSubtitles')}
+            onPress={onAudioAndSubtitles}
+          />
+
+          {onQuality === undefined ? null : (
+            <APlayerAction
+              icon={Layers}
+              label={say('phone.watching.qualityNow', { quality: qualityLabel })}
+              onPress={onQuality}
+            />
+          )}
+
+          {onNext === undefined ? null : (
+            <APlayerAction icon={SkipForward} label={say('common.nextEpisode')} onPress={onNext} />
+          )}
         </View>
       </View>
     </Animated.View>

@@ -380,6 +380,9 @@ importers:
       expo:
         specifier: 58.0.0-preview.7
         version: 58.0.0-preview.7(@babel/core@7.29.7)(@expo/dom-webview@57.0.1)(react-dom@19.3.0(react@19.3.0))(react-native-web@0.21.3(patch_hash=bebd075d39fcc6e9153483f5f1c23434710e1321318ebfb5faa02a689d94f1ea)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0)(typescript@7.0.2)
+      expo-brightness:
+        specifier: 58.0.2
+        version: 58.0.2(expo@58.0.0-preview.7)(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))
       expo-build-properties:
         specifier: 58.0.7
         version: 58.0.7(expo@58.0.0-preview.7)
@@ -7896,6 +7899,12 @@ packages:
       expo: '*'
       expo-asset: '*'
       react: '*'
+      react-native: '*'
+
+  expo-brightness@58.0.2:
+    resolution: {integrity: sha512-daZgKhKkVKXVz9NdDny02DSG+8SOu3+vJe8twAnTFcPFU7UWTt4HTanzjRI2bSPKkMQMPxR4kh4M+rrW50UAQw==}
+    peerDependencies:
+      expo: '*'
       react-native: '*'
 
   expo-build-properties@58.0.7:
@@ -19223,6 +19232,11 @@ snapshots:
       expo-asset: 57.0.18(expo@57.0.24)(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@7.0.2)
       react: 19.2.3
       react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
+
+  expo-brightness@58.0.2(expo@58.0.0-preview.7)(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0)):
+    dependencies:
+      expo: 58.0.0-preview.7(@babel/core@7.29.7)(@expo/dom-webview@57.0.1)(react-dom@19.3.0(react@19.3.0))(react-native-web@0.21.3(patch_hash=bebd075d39fcc6e9153483f5f1c23434710e1321318ebfb5faa02a689d94f1ea)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0)(typescript@7.0.2)
+      react-native: 0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0)
 
   expo-build-properties@58.0.7(expo@58.0.0-preview.7):
     dependencies:

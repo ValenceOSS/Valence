@@ -10,13 +10,22 @@ type TheControlsProps = {
   runsFor: number;
   buffered: number;
   trickplay: Trickplay | null;
+  rate: number;
+  qualityLabel: string;
+  rating?: { given: number | null; onRate: (stars: number | null) => void } | undefined;
   onPlayPause: () => void;
   onSkip: (by: number) => void;
   onSeek: (to: number) => void;
   onTouched: () => void;
   onClose: () => void;
-  onSettings: () => void;
+  onLock: () => void;
+  onPictureInPicture: () => void;
+  onSpeed: () => void;
+  onAudioAndSubtitles: () => void;
+  onQuality?: (() => void) | undefined;
+  onStats: () => void;
   onEpisodes?: (() => void) | undefined;
+  onNext?: (() => void) | undefined;
   onParty?: (() => void) | undefined;
 };
 

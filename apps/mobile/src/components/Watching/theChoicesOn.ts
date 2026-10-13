@@ -7,10 +7,6 @@ import { stepsThatSaveNothing } from '@ValenceClient/playback/stepsThatSaveNothi
 import { qualityStepDetail } from '@ValenceClient/playback/qualityStepDetail';
 import type { DeviceProfile } from '@ValenceContracts/schemas/DeviceProfile';
 import { SUBTITLES_OFF } from '@ValenceClient/playback/fetchSubtitles';
-import { PLAYBACK_RATES } from '@ValenceClient/playback/PLAYBACK_RATES';
-import { SUBTITLE_NUDGES } from '@ValenceClient/playback/SUBTITLE_NUDGES';
-import { describePlaybackRate } from '@ValenceClient/playback/describePlaybackRate';
-import { describeSubtitleOffset } from '@ValenceClient/playback/describeSubtitleOffset';
 import type { SubtitleTrack } from '@ValenceClient/playback/fetchSubtitles';
 import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
 import type { MediaDetail } from '@ValenceContracts/schemas/Library';
@@ -23,6 +19,8 @@ import { say } from '@ValenceI18n/say';
 
 const AS_SENT = 'original';
 
+const ADAPTIVE = 'auto';
+
 type WhatThereIsToChoose = {
   streams: readonly AudioStream[];
   subtitles: readonly SubtitleTrack[];
@@ -34,25 +32,28 @@ type WhatThereIsToChoose = {
   chosenQuality: QualityPreference;
   onAudio: (streamIndex: number) => void;
   onQuality: (quality: QualityPreference) => void;
-  rate: number;
-  onRate: (rate: number) => void;
-  subtitleOffset: number;
-  onSubtitleOffset: (seconds: number) => void;
   captionStyle: CaptionStyle;
   onCaptionStyle: (style: CaptionStyle) => void;
 };
 
+type ThePlayersChoices = {
+  subtitles: ASetOfChoices | null;
+  audio: ASetOfChoices | null;
+  quality: ASetOfChoices | null;
+  captions: ASetOfChoices[];
+};
+
 /**
- * What there is to choose about a particular film on a particular phone.
+ * What there is to choose about a particular film on a particular phone, one set for each panel
+ * that offers it: the subtitles, the sound, the quality, and how the words are drawn.
  *
- * Both answers are given to the server rather than acted on here: a session is one picture with one
- * sound on it, chosen when it starts, so changing either means asking for a new one. That is why
- * neither of these is a switch — a switch implies something that flips, and what happens is the
- * film is fetched again from where they had got to.
+ * The sound and the quality are given to the server rather than acted on here: a session is one
+ * picture with one sound on it, chosen when it starts, so changing either means asking for a new
+ * one. Auto asks for every copy the server keeps beside the film, and the phone's own player moves
+ * between them as the connection allows.
  *
- * A set with one thing in it is left out. Offering somebody a choice between one option and nothing
- * is not a choice, and a film with a single soundtrack should not have a menu saying so. Subtitles
- * are the exception, because off is a real answer there and one track plus off is a real choice.
+ * A set with one thing in it is left out, since a choice between one option and nothing is not a
+ * choice. Subtitles are the exception, because off is a real answer there.
  *
  * @param streams - The soundtracks the file carries.
  * @param subtitles - The subtitle tracks there are to read.
@@ -61,12 +62,12 @@ type WhatThereIsToChoose = {
  * @param media - The file itself, which decides what qualities are worth offering.
  * @param profile - What this phone can play, which decides what each quality would cost.
  * @param chosenAudio - Which soundtrack is playing, or none chosen and the file's own default.
- * @param chosenQuality - What was asked for, or the file as it is.
+ * @param chosenQuality - What was asked for: auto, the file as it is, or a step down.
  * @param onAudio - Told which soundtrack they want.
  * @param onQuality - Told how much of their connection to spend.
  * @param captionStyle - How the lines are drawn, whose parts are offered while a track is read.
  * @param onCaptionStyle - Told the whole style whenever one part of it changes.
- * @returns The sets to show, in the order they should be read.
+ * @returns The sets, each where there is anything to choose.
  */
 const theChoicesOn = ({
   streams,
@@ -79,130 +80,107 @@ const theChoicesOn = ({
   chosenQuality,
   onAudio,
   onQuality,
-  rate,
-  onRate,
-  subtitleOffset,
-  onSubtitleOffset,
   captionStyle,
   onCaptionStyle,
-}: WhatThereIsToChoose): ASetOfChoices[] => {
-  const sets: ASetOfChoices[] = [];
+}: WhatThereIsToChoose): ThePlayersChoices => {
+  const subtitleSet: ASetOfChoices | null =
+    subtitles.length === 0
+      ? null
+      : {
+          heading: say('common.subtitles'),
+          chosen: chosenSubtitle,
+          choices: [
+            { id: SUBTITLES_OFF, label: say('common.off') },
+            ...subtitles.map((track) => ({
+              id: track.id,
+              label: track.label,
+              detail: track.format.toUpperCase(),
+            })),
+          ],
+          onChoose: onSubtitle,
+        };
 
-  if (subtitles.length > 0) {
-    sets.push({
-      heading: say('common.subtitles'),
-      chosen: chosenSubtitle,
-      choices: [
-        { id: SUBTITLES_OFF, label: say('common.off') },
-        ...subtitles.map((track) => ({
-          id: track.id,
-          label: track.label,
-          detail: track.format.toUpperCase(),
-        })),
-      ],
-      onChoose: onSubtitle,
-    });
-  }
+  const captions =
+    subtitles.length > 0 && chosenSubtitle !== SUBTITLES_OFF
+      ? captionChoices(captionStyle).map((set) => ({
+          heading: set.heading,
+          chosen: set.chosen,
+          choices: set.choices,
+          onChoose: (id: string) => {
+            onCaptionStyle(set.choose(id));
+          },
+        }))
+      : [];
 
-  if (subtitles.length > 0 && chosenSubtitle !== SUBTITLES_OFF) {
-    sets.push({
-      heading: say('common.subtitleTiming'),
-      chosen: subtitleOffset.toString(),
-      choices: SUBTITLE_NUDGES.map((nudge) => ({
-        id: nudge.toString(),
-        label: describeSubtitleOffset(nudge),
-      })),
-      onChoose: (id) => {
-        onSubtitleOffset(Number(id));
-      },
-    });
-
-    for (const set of captionChoices(captionStyle)) {
-      sets.push({
-        heading: set.heading,
-        chosen: set.chosen,
-        choices: set.choices,
-        onChoose: (id) => {
-          onCaptionStyle(set.choose(id));
-        },
-      });
-    }
-  }
-
-  if (streams.length > 1) {
-    sets.push({
-      heading: say('common.audio'),
-      chosen: (
-        chosenAudio ??
-        streams.find((one) => one.isDefault)?.index ??
-        streams[0]?.index ??
-        0
-      ).toString(),
-      choices: streams.map((stream, place) => ({
-        id: stream.index.toString(),
-        label: describeAudioTrack(stream, place + 1),
-      })),
-      onChoose: (id) => {
-        onAudio(Number(id));
-      },
-    });
-  }
+  const audio: ASetOfChoices | null =
+    streams.length > 1
+      ? {
+          heading: say('common.audio'),
+          chosen: (
+            chosenAudio ??
+            streams.find((one) => one.isDefault)?.index ??
+            streams[0]?.index ??
+            0
+          ).toString(),
+          choices: streams.map((stream, place) => ({
+            id: stream.index.toString(),
+            label: describeAudioTrack(stream, place + 1),
+          })),
+          onChoose: (id) => {
+            onAudio(Number(id));
+          },
+        }
+      : null;
 
   const rungs = media === null ? [] : listAvailableQualitySteps(media);
   const costs = media === null ? {} : qualityStepCostsFor({ media, profile });
   const savingNothing = media === null ? [] : stepsThatSaveNothing({ media, profile });
 
-  if (rungs.length > 0) {
-    sets.push({
-      heading: say('common.quality'),
-      chosen: chosenQuality,
-      choices: [
-        {
-          id: AS_SENT,
-          label: media === null ? say('common.original') : originalLabel(media),
-          detail: say('phone.watching.theChoicesOn.asItIsOnTheServer'),
-        },
-        ...rungs.flatMap((rung) => {
-          const step = QUALITY_STEPS.find((one) => one.id === rung);
-
-          if (step === undefined) {
-            return [];
-          }
-
-          const isNoSmaller = savingNothing.includes(rung);
-          const detail = qualityStepDetail({ cost: costs[rung], isNoSmaller });
-
-          return [
+  const quality: ASetOfChoices | null =
+    media === null
+      ? null
+      : {
+          heading: say('common.quality'),
+          chosen: chosenQuality,
+          choices: [
             {
-              id: rung,
-              label: step.label,
-              ...(detail === undefined ? {} : { detail }),
-              ...(isNoSmaller ? { isDisabled: true } : {}),
+              id: ADAPTIVE,
+              label: say('common.auto'),
+              detail: say('phone.watching.theChoicesOn.movesWithYourConnection'),
             },
-          ];
-        }),
-      ],
-      onChoose: (id) => {
-        onQuality(QualityPreferenceSchema.parse(id));
-      },
-    });
-  }
+            {
+              id: AS_SENT,
+              label: originalLabel(media),
+              detail: say('phone.watching.theChoicesOn.asItIsOnTheServer'),
+            },
+            ...rungs.flatMap((rung) => {
+              const step = QUALITY_STEPS.find((one) => one.id === rung);
 
-  sets.push({
-    heading: say('common.speed'),
-    chosen: rate.toString(),
-    choices: PLAYBACK_RATES.map((one) => ({
-      id: one.toString(),
-      label: describePlaybackRate(one),
-    })),
-    onChoose: (id) => {
-      onRate(Number(id));
-    },
-  });
+              if (step === undefined) {
+                return [];
+              }
 
-  return sets;
+              const isNoSmaller = savingNothing.includes(rung);
+              const detail = qualityStepDetail({ cost: costs[rung], isNoSmaller });
+
+              return [
+                {
+                  id: rung,
+                  label: step.label,
+                  ...(detail === undefined ? {} : { detail }),
+                  ...(isNoSmaller ? { isDisabled: true } : {}),
+                },
+              ];
+            }),
+          ],
+          onChoose: (id) => {
+            onQuality(QualityPreferenceSchema.parse(id));
+          },
+        };
+
+  return { subtitles: subtitleSet, audio, quality, captions };
 };
 
-export type { WhatThereIsToChoose };
+export type { ThePlayersChoices, WhatThereIsToChoose };
 
 export { theChoicesOn };
