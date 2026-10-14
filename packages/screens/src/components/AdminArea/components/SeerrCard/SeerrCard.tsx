@@ -15,6 +15,7 @@ import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { Choice } from '@ValenceScreens/components/Choice/Choice';
 import { CopyableAddress } from '@ValenceScreens/components/CopyableAddress/CopyableAddress';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { seerrServerOf } from './seerrServerOf';
 import type { Sent } from '@ValenceClient/requests/sendToRequests';
@@ -101,24 +102,26 @@ const SeerrCard = ({ origin }: SeerrCardProps) => {
     <PanelCard
       title={title}
       actions={
-        link.isEnabled ? (
-          <PanelCardAction
-            icon={KeyFilledIcon}
-            isLoading={isSaving}
-            onClick={() => {
-              void keep(rotateSeerrKey(), say('screens.adminArea.seerrCard.madeANewKey'));
-            }}
-          >
-            {say('screens.adminArea.seerrCard.makeANewKey')}
-          </PanelCardAction>
-        ) : null
+        <>
+          {link.isEnabled ? (
+            <PanelCardAction
+              icon={KeyFilledIcon}
+              isLoading={isSaving}
+              onClick={() => {
+                void keep(rotateSeerrKey(), say('screens.adminArea.seerrCard.madeANewKey'));
+              }}
+            >
+              {say('screens.adminArea.seerrCard.makeANewKey')}
+            </PanelCardAction>
+          ) : null}
+          <PanelCardInfo
+            label={say('screens.adminArea.statStrip.aboutLabel', { label: title })}
+            detail={say('screens.adminArea.seerrCard.keepAskingInOverseerrOr')}
+          />
+        </>
       }
     >
       <div className="flex flex-col gap-5">
-        <p className="font-body text-[0.8125rem] leading-snug text-text-muted">
-          {say('screens.adminArea.seerrCard.keepAskingInOverseerrOr')}
-        </p>
-
         {link.isRequestingOn ? (
           <>
             <SettingList>
