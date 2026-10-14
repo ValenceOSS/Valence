@@ -4202,6 +4202,7 @@ const ENGLISH = {
   'screens.adminArea.overviewPanel.allWork': 'All work',
   'screens.adminArea.overviewPanel.how': 'How',
   'screens.adminArea.overviewPanel.kindOfWork': 'Kind of work',
+  'screens.adminArea.overviewPanel.loadAgainstCores': 'Load (share of cores)',
   'screens.adminArea.overviewPanel.loadFigures.average': 'Average',
   'screens.adminArea.overviewPanel.loadFigures.latest': 'Latest',
   'screens.adminArea.overviewPanel.loadFigures.loadAverage': 'Load average',

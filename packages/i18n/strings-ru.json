@@ -16720,6 +16720,11 @@
     "context": "A column heading in a table on the admin overview."
   },
   {
+    "handler": "screens.adminArea.overviewPanel.loadAgainstCores",
+    "text": "Load (share of cores)",
+    "context": "In the key beneath the server load graph: the load average, drawn as a share of how many processor cores the machine has."
+  },
+  {
     "handler": "screens.adminArea.overviewPanel.loadFigures.average",
     "text": "Average",
     "context": "Above the average processor share over the range shown, over the server load chart on the admin overview."

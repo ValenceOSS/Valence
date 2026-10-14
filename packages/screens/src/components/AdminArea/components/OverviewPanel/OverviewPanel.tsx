@@ -260,6 +260,7 @@ const OverviewPanel = ({
         </Region>
 
         <Region
+          isFlush
           title={say('screens.adminArea.overviewPanel.activeNow')}
           action={say('screens.adminArea.overviewPanel.allSessions')}
           onAction={() => {
@@ -284,6 +285,7 @@ const OverviewPanel = ({
         </Region>
 
         <Region
+          isFlush
           title={say('screens.adminArea.overviewPanel.runningNow')}
           action={say('screens.adminArea.overviewPanel.allJobs')}
           onAction={() => {
@@ -315,6 +317,7 @@ const OverviewPanel = ({
         </Region>
 
         <Region
+          isFlush
           title={say('common.libraries')}
           className="sm:col-span-2 xl:col-span-2"
           action={say('common.manage')}

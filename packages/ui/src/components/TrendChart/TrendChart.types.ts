@@ -1,7 +1,13 @@
 import type { ReactNode } from 'react';
 
+type TrendLine = {
+  values: number[];
+  colour: string;
+};
+
 type TrendChartProps = {
   values: number[];
+  lines?: readonly TrendLine[];
   ceiling: number;
   label: string;
   caption?: ReactNode;
@@ -12,4 +18,4 @@ type TrendChartProps = {
   className?: string;
 };
 
-export type { TrendChartProps };
+export type { TrendChartProps, TrendLine };

@@ -13,6 +13,10 @@ const GRID_LINES = [0, 25, 50, 75, 100] as const;
 
 const MOST_DRAWN = 120;
 
+const LOAD_COLOUR = 'var(--color-highlight)';
+
+const MEMORY_COLOUR = 'var(--color-success)';
+
 /**
  * How hard the server has been working over the range chosen: where the processor stands now (or
  * last stood), its average and its peak, the load and the memory beside them, and the processor
@@ -73,6 +77,24 @@ const LoadChart = ({ readings, range }: LoadChartProps) => {
 
       <TrendChart
         values={drawn.map((reading) => reading.systemCpuPercent)}
+        lines={[
+          {
+            values: drawn.map((reading) =>
+              reading.cpuCount === 0
+                ? 0
+                : Math.min(100, (reading.loadAverage / reading.cpuCount) * 100),
+            ),
+            colour: LOAD_COLOUR,
+          },
+          {
+            values: drawn.map((reading) =>
+              reading.systemMemoryTotalBytes === 0
+                ? 0
+                : (reading.systemMemoryUsedBytes / reading.systemMemoryTotalBytes) * 100,
+            ),
+            colour: MEMORY_COLOUR,
+          },
+        ]}
         ceiling={100}
         isTall
         gridLines={GRID_LINES}
@@ -106,6 +128,22 @@ const LoadChart = ({ readings, range }: LoadChartProps) => {
           );
         }}
       />
+
+      <ul className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-text-muted">
+        {[
+          { label: say('screens.adminArea.processor'), colour: 'text-accent' },
+          {
+            label: say('screens.adminArea.overviewPanel.loadAgainstCores'),
+            colour: 'text-highlight',
+          },
+          { label: say('screens.adminArea.memory'), colour: 'text-success' },
+        ].map((key) => (
+          <li key={key.label} className="flex items-center gap-1.5">
+            <span aria-hidden className={`h-0.5 w-3 rounded-full bg-current ${key.colour}`} />
+            {key.label}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };
