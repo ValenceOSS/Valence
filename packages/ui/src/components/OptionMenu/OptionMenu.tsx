@@ -216,7 +216,7 @@ const OptionMenu = ({
                 key={group.name}
                 className={cn(MENU.group, 'min-w-44 [&:not(:first-child)]:mt-2')}
               >
-                <RadixMenu.Label className={MENU.label}>{group.name}</RadixMenu.Label>
+                <RadixMenu.Label className={MENU.stickyLabel}>{group.name}</RadixMenu.Label>
 
                 {'selectedIds' in group ? (
                   <div className="flex flex-col">

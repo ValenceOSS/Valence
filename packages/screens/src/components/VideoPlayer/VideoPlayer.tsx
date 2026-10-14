@@ -1224,16 +1224,7 @@ const VideoPlayer = ({
         }
 
         if (event.kind === 'message') {
-          const said = notify.say(event.text, {
-            where: PLAYER_TOASTS,
-            staysUntilDismissed: true,
-            action: {
-              label: say('common.dismiss'),
-              onPress: () => {
-                notify.forget(said);
-              },
-            },
-          });
+          notify.say(event.text, { where: PLAYER_TOASTS, staysUntilDismissed: true });
 
           return;
         }

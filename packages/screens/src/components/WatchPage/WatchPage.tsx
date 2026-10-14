@@ -25,8 +25,9 @@ const PROGRESS_EVERY_SECONDS = 5;
 
 /**
  * The player, filling the screen, and the watch party that may be watching along with it. Moving
- * on to another title keeps the player in place, on the title before until the next is known, so
- * a player in fullscreen stays in fullscreen rather than being swapped for the loading screen.
+ * on to another title once something has played keeps the player in place, on the title before
+ * until the next is known, so a player in fullscreen stays in fullscreen rather than being swapped
+ * for the loading screen. The first title still waits for where to begin.
  */
 const WatchPage = () => {
   useQuietMusic();
@@ -55,6 +56,7 @@ const WatchPage = () => {
 
   const playing = place.playing === null ? null : (known.get(place.playing) ?? null);
   const [lastShown, setLastShown] = useState<MediaSummary | null>(null);
+  const [hasPlayed, setHasPlayed] = useState(false);
   const seasonMates = useSeasonMates(playing, [...known.values()]);
   const showEpisodes = useShowEpisodes(playing, [...known.values()]);
   const season =
@@ -109,8 +111,19 @@ const WatchPage = () => {
     isReady: isProgressReady || (playing !== null && startOverride?.mediaId === playing.id),
   });
 
-  const isCarryingOn = lastShown !== null && place.playing !== null && place.party === null;
+  const isCarryingOn =
+    hasPlayed && lastShown !== null && place.playing !== null && place.party === null;
   const shown = playing ?? (isCarryingOn ? lastShown : null);
+  const isWaiting =
+    shown === null ||
+    (!isCarryingOn && !isProgressReady && startOverride?.mediaId !== shown.id) ||
+    (!isCarryingOn && beginning.kind === 'wait');
+
+  useEffect(() => {
+    if (!isWaiting) {
+      setHasPlayed(true);
+    }
+  }, [isWaiting]);
 
   if (shown === null) {
     return <SplashScreen name={title} label={say('common.loadingTitle', { title })} />;
