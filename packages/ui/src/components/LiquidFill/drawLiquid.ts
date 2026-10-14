@@ -38,7 +38,7 @@ const traceSurface = (
 };
 
 /**
- * Draws a liquid: a fainter body behind, the body in front, and a bright line along its surface
+ * Draws a liquid, ripples and swell together: a fainter body behind, the body in front, and a bright line along its surface
  * where light would catch it. Nothing at all once it has drained.
  *
  * @param context - Where to draw.
@@ -67,12 +67,15 @@ const drawLiquid = (
   context.fillStyle = colour;
   context.strokeStyle = colour;
 
+  const front = state.heights.map((rise, index) => rise + (state.swell[index] ?? 0));
+  const back = state.back.map((rise, index) => rise + (state.backSwell[index] ?? 0));
+
   context.globalAlpha = 0.28;
-  traceSurface(context, state.back, top - lift, width, height);
+  traceSurface(context, back, top - lift, width, height);
   context.fill();
 
   context.globalAlpha = 0.45;
-  traceSurface(context, state.heights, top, width, height);
+  traceSurface(context, front, top, width, height);
   context.fill();
 
   context.globalAlpha = 0.95;

@@ -5,7 +5,7 @@ import { drawLiquid } from './drawLiquid';
 import { stepLiquid } from './stepLiquid';
 import type { LiquidFillProps, LiquidState } from './LiquidFill.types';
 
-const POINTS = 10;
+const POINTS = 16;
 
 /**
  * A level drawn as liquid in whatever holds it: water that ripples, sloshes when the level moves
@@ -13,8 +13,8 @@ const POINTS = 10;
  * it, which runs only while it is on screen and stands still for anybody who asked for less
  * motion.
  *
- * A change of level tips the surface as well as moving it — up on one side and down on the other —
- * so a figure that jumps reads as liquid poured or drained.
+ * The surface carries a swell of crossing waves, so it never pivots about one point, and a change
+ * of level splashes it at a random spot, the ripple spreading out from there.
  *
  * @param level - How full it is, from nothing to full.
  * @param tone - Which of the theme's status colours the liquid is.
@@ -30,6 +30,10 @@ const LiquidFill = ({ level, tone, className }: LiquidFillProps) => {
     speeds: Array.from({ length: POINTS }, () => 0),
     back: Array.from({ length: POINTS }, () => 0),
     backSpeeds: Array.from({ length: POINTS }, () => 0),
+    seconds: 0,
+    phases: Array.from({ length: 6 }, () => Math.random() * 2 * Math.PI),
+    swell: Array.from({ length: POINTS }, () => 0),
+    backSwell: Array.from({ length: POINTS }, () => 0),
   });
   const prefersReducedMotion = useReducedMotionConfig() === true;
 
@@ -37,7 +41,7 @@ const LiquidFill = ({ level, tone, className }: LiquidFillProps) => {
     const was = targetRef.current;
     const state = stateRef.current;
     const canvas = canvasRef.current;
-    const tilt = (level - was) * (canvas?.height ?? 40) * 0.15;
+    const splash = (was - level) * (canvas?.height ?? 40) * 0.25;
 
     targetRef.current = level;
 
@@ -58,9 +62,9 @@ const LiquidFill = ({ level, tone, className }: LiquidFillProps) => {
       return;
     }
 
-    state.speeds.forEach((speed, index) => {
-      state.speeds[index] = speed + tilt * (index / (POINTS - 1) - 0.5);
-    });
+    const at = Math.floor(Math.random() * POINTS);
+
+    state.speeds[at] = (state.speeds[at] ?? 0) + splash;
   }, [level, tone, prefersReducedMotion]);
 
   useEffect(() => {

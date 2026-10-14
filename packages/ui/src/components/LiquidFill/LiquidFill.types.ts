@@ -13,6 +13,10 @@ type LiquidState = {
   speeds: number[];
   back: number[];
   backSpeeds: number[];
+  seconds: number;
+  phases: number[];
+  swell: number[];
+  backSwell: number[];
 };
 
 export type { LiquidFillProps, LiquidState, LiquidTone };
