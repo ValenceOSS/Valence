@@ -25,6 +25,7 @@ import { failureOfAnswer, failureOfMissing } from '@ValenceScreens/admin/failure
 import { readBitrate } from '@ValenceScreens/admin/readBitrate';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { LibraryPicker } from '@ValenceScreens/components/AdminArea/components/LibraryPicker/LibraryPicker';
 import { StatStrip } from '@ValenceScreens/components/AdminArea/components/StatStrip/StatStrip';
@@ -223,39 +224,43 @@ const PreTranscodingCard = ({ libraries }: PreTranscodingCardProps) => {
     <PanelCard
       title={say('common.preTranscoding')}
       actions={
-        saved.isEnabled ? (
-          <>
-            <PanelCardAction
-              icon={saved.isPaused ? PlayFilledIcon : PauseFilledIcon}
-              isLoading={isSaving}
-              onClick={() => {
-                void store(
-                  { ...saved, isPaused: !saved.isPaused },
-                  saved.isPaused
-                    ? say('screens.adminArea.preTranscodingCard.preTranscodingCarriesOn')
-                    : say('screens.adminArea.preTranscodingCard.preTranscodingIsPaused'),
-                );
-              }}
-            >
-              {saved.isPaused ? say('common.resume') : say('common.pause')}
-            </PanelCardAction>
+        <>
+          {saved.isEnabled ? (
+            <>
+              <PanelCardAction
+                icon={saved.isPaused ? PlayFilledIcon : PauseFilledIcon}
+                isLoading={isSaving}
+                onClick={() => {
+                  void store(
+                    { ...saved, isPaused: !saved.isPaused },
+                    saved.isPaused
+                      ? say('screens.adminArea.preTranscodingCard.preTranscodingCarriesOn')
+                      : say('screens.adminArea.preTranscodingCard.preTranscodingIsPaused'),
+                  );
+                }}
+              >
+                {saved.isPaused ? say('common.resume') : say('common.pause')}
+              </PanelCardAction>
 
-            <PanelCardAction
-              icon={PlayFilledIcon}
-              isLoading={isRunning}
-              onClick={() => void runNow()}
-            >
-              {say('screens.adminArea.preTranscodingCard.makeTheNextCopyNow')}
-            </PanelCardAction>
-          </>
-        ) : null
+              <PanelCardAction
+                icon={PlayFilledIcon}
+                isLoading={isRunning}
+                onClick={() => void runNow()}
+              >
+                {say('screens.adminArea.preTranscodingCard.makeTheNextCopyNow')}
+              </PanelCardAction>
+            </>
+          ) : null}
+          <PanelCardInfo
+            label={say('screens.adminArea.statStrip.aboutLabel', {
+              label: say('common.preTranscoding'),
+            })}
+            detail={say('screens.adminArea.preTranscodingCard.keepsACopyOfEachFilm')}
+          />
+        </>
       }
     >
       <div className="flex flex-col gap-5">
-        <p className="font-body text-[0.8125rem] leading-snug text-text-muted">
-          {say('screens.adminArea.preTranscodingCard.keepsACopyOfEachFilm')}
-        </p>
-
         {status === undefined || !saved.isEnabled ? null : (
           <StatStrip
             stats={[

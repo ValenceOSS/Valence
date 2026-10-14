@@ -17,7 +17,7 @@ import type { PanelCardChoiceProps } from './PanelCardChoice.types';
 const PanelCardChoice = ({ label, options, value, onSelect }: PanelCardChoiceProps) => (
   <OptionMenu
     label={label}
-    triggerShape="quiet"
+    triggerShape="button"
     align="end"
     trigger={
       <>

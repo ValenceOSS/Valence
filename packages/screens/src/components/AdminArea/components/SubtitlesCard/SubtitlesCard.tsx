@@ -15,6 +15,7 @@ import { saveSubtitleSetup } from '@ValenceClient/admin/saveSubtitleSetup';
 import { SUBTITLE_LANGUAGES } from '@ValenceContracts/constants/SUBTITLE_LANGUAGES';
 import { failureOfMissing } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
+import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import type { SubtitleSetup } from '@ValenceContracts/schemas/SubtitleFinding';
 import { say } from '@ValenceI18n/say';
@@ -103,12 +104,16 @@ const SubtitlesCard = () => {
   };
 
   return (
-    <PanelCard title={title}>
+    <PanelCard
+      title={title}
+      actions={
+        <PanelCardInfo
+          label={say('screens.adminArea.statStrip.aboutLabel', { label: title })}
+          detail={say('screens.adminArea.subtitlesCard.findSubtitlesForWhatYourLibraries')}
+        />
+      }
+    >
       <div className="flex flex-col gap-5">
-        <p className="font-body text-[0.8125rem] leading-snug text-text-muted">
-          {say('screens.adminArea.subtitlesCard.findSubtitlesForWhatYourLibraries')}
-        </p>
-
         <SettingList>
           <SettingGroup
             title={say('screens.adminArea.subtitlesCard.openSubtitles')}

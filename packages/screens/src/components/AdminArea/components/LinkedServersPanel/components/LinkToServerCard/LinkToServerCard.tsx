@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@ValenceUI/Button';
 import { TextField } from '@ValenceUI/TextField';
 import { notify } from '@ValenceUI/notify';
+import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { linkWithInvite } from '@ValenceClient/admin/linkWithInvite';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
@@ -44,11 +45,18 @@ const LinkToServerCard = () => {
   };
 
   return (
-    <PanelCard title={say('screens.adminArea.linkedServersPanel.linkToAServer')}>
+    <PanelCard
+      title={say('screens.adminArea.linkedServersPanel.linkToAServer')}
+      actions={
+        <PanelCardInfo
+          label={say('screens.adminArea.statStrip.aboutLabel', {
+            label: say('screens.adminArea.linkedServersPanel.linkToAServer'),
+          })}
+          detail={say('screens.adminArea.linkedServersPanel.pasteAnInvite')}
+        />
+      }
+    >
       <div className="flex flex-col gap-3">
-        <p className="text-xs leading-relaxed text-text-muted">
-          {say('screens.adminArea.linkedServersPanel.pasteAnInvite')}
-        </p>
         <div className="flex items-end gap-2">
           <TextField
             label={say('screens.adminArea.linkedServersPanel.theirInvite')}

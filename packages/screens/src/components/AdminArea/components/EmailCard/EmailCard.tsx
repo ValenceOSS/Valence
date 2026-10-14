@@ -19,6 +19,7 @@ import { EMAIL_SECURITIES } from '@ValenceContracts/schemas/EmailSettings';
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { failureOfMissing } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
+import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { useTicking } from '@ValenceScreens/clock/useTicking';
 import { A_CAPTION_AGES_EVERY } from '@ValenceScreens/clock/A_CAPTION_AGES_EVERY';
@@ -165,13 +166,21 @@ const EmailCard = () => {
   };
 
   return (
-    <PanelCard title={title}>
+    <PanelCard
+      title={title}
+      actions={
+        <PanelCardInfo
+          label={say('screens.adminArea.statStrip.aboutLabel', { label: title })}
+          detail={
+            <>
+              {say('screens.adminArea.emailCard.sendPasswordResetLinksAndSetup')}{' '}
+              <Link href={EMAIL_DOCS}>{say('screens.adminArea.emailCard.howToSetUpEmail')}</Link>
+            </>
+          }
+        />
+      }
+    >
       <div className="flex flex-col gap-5">
-        <p className="font-body text-[0.8125rem] leading-snug text-text-muted">
-          {say('screens.adminArea.emailCard.sendPasswordResetLinksAndSetup')}{' '}
-          <Link href={EMAIL_DOCS}>{say('screens.adminArea.emailCard.howToSetUpEmail')}</Link>
-        </p>
-
         {isFixed ? (
           <Callout tone="quiet" title={say('screens.adminArea.emailCard.setByTheEnvironment')}>
             {say('screens.adminArea.emailCard.smtpUrlIsSetSoTheMail')}

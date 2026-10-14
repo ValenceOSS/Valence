@@ -1,6 +1,8 @@
+import type { ReactNode } from 'react';
+
 type PanelCardInfoProps = {
   label: string;
-  detail: string;
+  detail: ReactNode;
 };
 
 export type { PanelCardInfoProps };

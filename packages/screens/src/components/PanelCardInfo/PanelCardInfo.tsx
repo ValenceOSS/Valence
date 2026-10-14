@@ -15,7 +15,7 @@ const PanelCardInfo = ({ label, detail }: PanelCardInfoProps) => (
   <HoverCard
     side="bottom"
     align="end"
-    detail={<p className="max-w-72 text-xs leading-relaxed normal-case">{detail}</p>}
+    detail={<div className="max-w-72 text-xs leading-relaxed normal-case">{detail}</div>}
   >
     <Button variant="subtle" size="xs" isIconOnly label={label} hasTooltip={false}>
       <Icon of={InfoIcon} size={15} />
