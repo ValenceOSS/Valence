@@ -67,6 +67,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     bookDevices,
     listUsers,
     capabilities,
+    hardware,
     artworkUsage,
     bookPageUsage,
     libraryBytes,
@@ -167,13 +168,15 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
-    const [users, current, libraries, transcoderCapabilities, isReachable] = await Promise.all([
-      listUsers?.() ?? Promise.resolve([]),
-      settings.read(),
-      library.list(asTheServer),
-      within(capabilities?.().catch(() => null) ?? Promise.resolve(null), null),
-      within(isTranscoderReachable(), false),
-    ]);
+    const [users, current, libraries, transcoderCapabilities, isReachable, machine] =
+      await Promise.all([
+        listUsers?.() ?? Promise.resolve([]),
+        settings.read(),
+        library.list(asTheServer),
+        within(capabilities?.().catch(() => null) ?? Promise.resolve(null), null),
+        within(isTranscoderReachable(), false),
+        within(hardware?.().catch(() => null) ?? Promise.resolve(null), null),
+      ]);
 
     return context.json(
       {
@@ -209,6 +212,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           toneMapping: transcoderCapabilities?.toneMapping ?? 'unavailable',
           hardwareToneMaps: transcoderCapabilities?.hardwareToneMaps ?? [],
         },
+        hardware: machine,
         library: {
           libraryCount: libraries.length,
           itemCount: libraries.reduce((total, entry) => total + entry.itemCount, 0),

@@ -1,3 +1,5 @@
+import { HardwareSchema } from '@ValenceContracts/schemas/Hardware';
+import type { Hardware } from '@ValenceContracts/schemas/Hardware';
 import type { PreviewQuality } from '@ValenceContracts/schemas/PreviewQuality';
 import { Agent, fetch as undiciFetch, WebSocket as UndiciWebSocket } from 'undici';
 import { z } from 'zod';
@@ -401,6 +403,7 @@ type Transcoder = {
   stopSession: (id: string, deviceId?: string) => Promise<boolean>;
   heartbeatSession: (id: string, isPlaying: boolean) => Promise<boolean>;
   capabilities: () => Promise<TranscoderCapabilities>;
+  hardware?: () => Promise<Hardware>;
 };
 
 type TranscoderWithQueueControl = Transcoder & { controlQueue: QueueControl };
@@ -938,6 +941,8 @@ const createTranscoderClient = ({
     },
 
     capabilities: async () => CapabilitiesSchema.parse(await (await call('/capabilities')).json()),
+
+    hardware: async () => HardwareSchema.parse(await (await call('/hardware')).json()),
   };
 };
 

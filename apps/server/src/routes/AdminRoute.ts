@@ -1,3 +1,4 @@
+import { HardwareSchema } from '@ValenceContracts/schemas/Hardware';
 import { RecentViewingListSchema } from '@ValenceContracts/schemas/RecentViewing';
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { createRoute, z } from '@hono/zod-openapi';
@@ -100,6 +101,7 @@ const AdminOverviewSchema = z
         )
         .default([]),
     }),
+    hardware: HardwareSchema.nullable().default(null),
     library: z.object({
       itemCount: z.number().int().nonnegative(),
       libraryCount: z.number().int().nonnegative(),

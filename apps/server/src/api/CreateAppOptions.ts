@@ -1,3 +1,4 @@
+import type { Hardware } from '@ValenceContracts/schemas/Hardware';
 import type { SubtitleFinder } from '@ValenceServer/subtitles/finding/SubtitleFinder';
 import type { Context } from 'hono';
 import type { CalendarFeedService } from '@ValenceServer/calendarFeed/CalendarFeedService';
@@ -254,6 +255,7 @@ type CreateAppOptions = {
       reason: string | null;
     }[];
   }>;
+  hardware?: () => Promise<Hardware | null>;
   monitor?: () => Promise<JsonValue>;
   stalledJobs?: () => (JobStall & { label: Said })[];
   artworkUsage?: () => { count: number; bytes: number; atMs: number } | null;

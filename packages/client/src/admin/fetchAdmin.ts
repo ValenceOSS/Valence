@@ -1,3 +1,4 @@
+import { HardwareSchema } from '@ValenceContracts/schemas/Hardware';
 import {
   BookListeningSessionSchema,
   ReadingSessionSchema,
@@ -88,6 +89,7 @@ const AdminOverviewSchema = z.object({
       )
       .default([]),
   }),
+  hardware: HardwareSchema.nullable().default(null),
   library: z.object({
     itemCount: z.number(),
     libraryCount: z.number(),

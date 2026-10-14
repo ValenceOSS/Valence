@@ -4387,6 +4387,7 @@ const app = createApp({
       ...(changes.colour === undefined ? {} : { colour: changes.colour }),
     }),
   capabilities: () => transcoder.capabilities(),
+  hardware: async () => (await transcoder.hardware?.()) ?? null,
   artworkUsage: () => artworkUsage.read(),
   bookPageUsage: () => bookPageUsage.read(),
   libraryBytes: () => readLibraryBytes(),
