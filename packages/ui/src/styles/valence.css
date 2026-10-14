@@ -87,6 +87,12 @@
   initial-value: oklch(0.55 0.15 145);
 }
 
+@property --color-warning {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: oklch(0.7 0.15 80);
+}
+
 @custom-variant still {
   @media (prefers-reduced-motion: reduce) {
     :root:not([data-motion='full']) & {
@@ -278,6 +284,7 @@
   --color-busy: oklch(0.6 0.16 50);
   --color-danger: oklch(0.55 0.17 25);
   --color-success: oklch(0.55 0.15 145);
+  --color-warning: oklch(0.7 0.15 80);
 
   --color-scrim: color-mix(in oklab, black 55%, transparent);
   --color-on-scrim: oklch(0.99 0 0);
@@ -400,6 +407,7 @@
       --color-busy: oklch(0.76 0.15 55);
       --color-danger: oklch(0.68 0.16 25);
       --color-success: oklch(0.72 0.17 145);
+      --color-warning: oklch(0.85 0.16 90);
       color-scheme: dark;
       --glass-tint: color-mix(in oklab, oklch(0.24 0 0) 62%, transparent);
       --glass-edge: color-mix(in oklab, white 16%, transparent);
@@ -441,6 +449,7 @@
     --color-busy: oklch(0.76 0.15 55);
     --color-danger: oklch(0.68 0.16 25);
     --color-success: oklch(0.72 0.17 145);
+    --color-warning: oklch(0.85 0.16 90);
     color-scheme: dark;
     --glass-tint: color-mix(in oklab, oklch(0.24 0 0) 62%, transparent);
     --glass-edge: color-mix(in oklab, white 16%, transparent);
@@ -701,7 +710,8 @@ body :is(input, textarea, [contenteditable]) {
     --color-highlight-contrast var(--duration-theme) var(--ease-out),
     --color-busy var(--duration-theme) var(--ease-out),
     --color-danger var(--duration-theme) var(--ease-out),
-    --color-success var(--duration-theme) var(--ease-out);
+    --color-success var(--duration-theme) var(--ease-out),
+    --color-warning var(--duration-theme) var(--ease-out);
 }
 
 .valence-mood-fade {
