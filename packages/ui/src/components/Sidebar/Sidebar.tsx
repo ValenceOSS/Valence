@@ -62,6 +62,7 @@ const Sidebar = ({
 }: SidebarProps) => {
   const [pointedAt, setPointedAt] = useState<string | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
+  const chosenHere = useRef<string | null>(null);
   const prefersReducedMotion = useReducedMotionConfig();
   const markGroup = `sidebar-mark-${label}`;
   const isFloating = variant === 'floating';
@@ -107,6 +108,12 @@ const Sidebar = ({
 
   useEffect(() => {
     const list = scroller.current;
+
+    if (chosenHere.current === value) {
+      chosenHere.current = null;
+
+      return;
+    }
 
     if (list === null || list.clientHeight === 0) {
       return;
@@ -213,7 +220,10 @@ const Sidebar = ({
                 })}
             items={group.items}
             value={value}
-            onSelect={onSelect}
+            onSelect={(next: string) => {
+              chosenHere.current = next;
+              onSelect(next);
+            }}
             markGroup={markGroup}
             pointedAt={pointedAt}
             onPointAt={setPointedAt}
