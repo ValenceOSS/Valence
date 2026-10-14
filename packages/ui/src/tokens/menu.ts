@@ -1,25 +1,27 @@
 const MENU = {
   content: [
-    'z-50 valence-menu min-w-44 overflow-hidden rounded-lg p-1 text-[0.8125rem] text-text outline-none',
-    'coarse:min-w-72 coarse:p-2 coarse:text-base',
+    'z-50 valence-menu min-w-52 overflow-hidden rounded-[1.25rem] p-2 text-sm text-text outline-none',
+    'coarse:min-w-72 coarse:p-2.5 coarse:text-base',
   ].join(' '),
   group: 'relative z-10 flex flex-col',
-  groupAfterFirst: 'mt-1 border-t border-[var(--surface-line)] pt-1',
-  label: 'px-2.5 pb-1 pt-1.5 text-xs font-medium text-text-muted',
+  groupAfterFirst: 'mt-2',
+  label: 'px-3 pb-1 pt-2 text-[0.8125rem] font-medium text-text-muted',
   stickyLabel: [
-    'sticky top-0 z-30 mb-1 border-b border-[var(--surface-line)] px-2.5 pb-1.5 pt-1',
-    'bg-[var(--menu-surface)] text-[0.6875rem] font-medium text-text-muted',
+    'sticky top-0 z-30 px-3 pb-1 pt-2',
+    'bg-[var(--menu-surface)] text-[0.8125rem] font-medium text-text-muted',
   ].join(' '),
   item: [
-    'flex cursor-default items-center gap-2.5 rounded-md px-2.5 py-1.5 font-medium outline-none',
+    'flex min-h-9 cursor-default items-center gap-3 rounded-[0.625rem] px-3 py-1.5 outline-none',
     'coarse:gap-4 coarse:px-4 coarse:py-3.5',
     'data-[disabled]:cursor-not-allowed data-[disabled]:opacity-40',
   ].join(' '),
   itemDestructive: 'text-danger',
   itemPlain: 'text-text',
-  icon: 'flex size-4 shrink-0 items-center justify-center text-text-muted coarse:size-5',
+  marker: 'flex w-3.5 shrink-0 items-center justify-center text-text',
+  dot: 'size-1.5 rounded-full bg-current',
+  icon: 'flex size-4 shrink-0 items-center justify-center text-text coarse:size-5',
   itemLabel: 'flex-1 truncate text-left',
-  detail: 'shrink-0 text-xs text-text-muted',
+  detail: 'shrink-0 pl-4 text-[0.8125rem] text-text-muted',
   hint: 'flex shrink-0 items-center text-text-muted',
 } as const;
 

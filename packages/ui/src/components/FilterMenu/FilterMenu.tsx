@@ -77,12 +77,17 @@ const FilterMenu = ({ label, groups, selected, hasLabel = false, onChange }: Fil
           sideOffset={8}
           aria-label={label}
           className={cn(
-            'valence-menu z-50 flex max-h-96 min-w-56 flex-col overflow-y-auto rounded-lg p-1 text-[0.8125rem] font-medium text-text',
+            MENU.content,
+            'flex max-h-[min(70vh,34rem)] flex-col overflow-y-auto',
             POPUP_MOTION,
           )}
         >
           {groups.map((group) => (
-            <RadixMenu.Group key={group.name} aria-label={group.name} className="flex flex-col">
+            <RadixMenu.Group
+              key={group.name}
+              aria-label={group.name}
+              className={cn(MENU.group, '[&:not(:first-child)]:mt-2')}
+            >
               <RadixMenu.Label className={MENU.stickyLabel}>{group.name}</RadixMenu.Label>
 
               {group.options.map((option) => (
@@ -111,17 +116,21 @@ const FilterMenu = ({ label, groups, selected, hasLabel = false, onChange }: Fil
                   }}
                   className={cn(
                     MENU.item,
-                    'min-h-8 justify-between py-1.5 data-[highlighted]:bg-[var(--surface-hover)] data-[highlighted]:text-text',
-                    selected.has(option.id)
-                      ? 'bg-[var(--surface-hover)] text-text'
-                      : 'text-text-muted',
+                    MENU.itemPlain,
+                    'data-[highlighted]:bg-[var(--surface-hover)]',
                   )}
                 >
-                  <span className="truncate">{option.label}</span>
+                  <span className={MENU.marker}>
+                    <RadixMenu.ItemIndicator className="flex items-center justify-center">
+                      {group.isSingle === true ? (
+                        <span className={MENU.dot} />
+                      ) : (
+                        <Icon of={CheckIcon} size={14} />
+                      )}
+                    </RadixMenu.ItemIndicator>
+                  </span>
 
-                  <RadixMenu.ItemIndicator className="flex size-4 shrink-0 items-center justify-center text-text">
-                    <Icon of={CheckIcon} size={15} />
-                  </RadixMenu.ItemIndicator>
+                  <span className={MENU.itemLabel}>{option.label}</span>
                 </RadixMenu.CheckboxItem>
               ))}
             </RadixMenu.Group>
